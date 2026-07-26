@@ -1,0 +1,22 @@
+name: Notify landing of docs changes
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+
+permissions:
+  contents: read
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Trigger landing rebuild
+        env:
+          GH_TOKEN: ${{ secrets.LANDING_DISPATCH_TOKEN }}
+        run: |
+          gh api "repos/businesslens/landing/dispatches" \
+            --field event_type=pdd-docs-updated
