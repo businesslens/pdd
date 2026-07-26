@@ -1,6 +1,6 @@
 {
   "name": "businesslens",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Product-Driven Design for coding agents: build and maintain a git-tracked product map in .businesslens/.",
   "author": {
     "name": "BusinessLens",
