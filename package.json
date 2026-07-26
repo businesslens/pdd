@@ -1,0 +1,52 @@
+{
+  "name": "businesslens",
+  "version": "0.4.0",
+  "description": "Product-Driven Design for coding agents: a git-tracked product map in .businesslens/, built from code evidence.",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/businesslens/pdd.git"
+  },
+  "homepage": "https://github.com/businesslens/pdd#readme",
+  "bugs": {
+    "url": "https://github.com/businesslens/pdd/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "bin": {
+    "businesslens": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "docs",
+    "skills"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "check": "node scripts/check-repo.mjs",
+    "verify": "npm run typecheck && npm test && npm run check && npm run build",
+    "version": "node scripts/sync-version.mjs",
+    "prepack": "npm run build"
+  },
+  "engines": {
+    "node": ">=20.12.0"
+  },
+  "dependencies": {
+    "@clack/prompts": "^1.7.0",
+    "yaml": "^2.6.0",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsdown": "^0.12.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  },
+  "overrides": {
+    "rolldown": "1.0.0-beta.19"
+  }
+}

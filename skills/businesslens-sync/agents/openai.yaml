@@ -1,0 +1,4 @@
+interface:
+  display_name: "BusinessLens Sync"
+  short_description: "Refresh the product map after code changes"
+  default_prompt: "Use $businesslens-sync to update the BusinessLens product map for the changes in this repository."

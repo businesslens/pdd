@@ -1,0 +1,4 @@
+interface:
+  display_name: "BusinessLens Validate"
+  short_description: "Validate and explain the product map"
+  default_prompt: "Use $businesslens-validate to validate this repository's BusinessLens product map and explain every result."

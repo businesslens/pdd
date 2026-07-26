@@ -1,0 +1,89 @@
+name: Publish
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    if: github.repository == 'businesslens/pdd' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+
+      - name: Use OIDC-capable npm
+        run: npm install --global npm@11.9.0
+
+      - name: Verify release tag
+        shell: bash
+        run: |
+          package_version="$(node --print "require('./package.json').version")"
+          if [[ "$GITHUB_REF_NAME" != "v${package_version}" ]]; then
+            echo "Tag $GITHUB_REF_NAME does not match package version ${package_version}." >&2
+            exit 1
+          fi
+
+      - run: npm ci
+      - run: npm run verify
+
+      - name: Pack release artifact
+        id: pack
+        shell: bash
+        run: |
+          pack_dir="$(mktemp -d)"
+          package_version="$(node --print "require('./package.json').version")"
+          npm pack --pack-destination "$pack_dir"
+          tarball="$pack_dir/businesslens-${package_version}.tgz"
+          test -f "$tarball"
+          echo "tarball=$tarball" >> "$GITHUB_OUTPUT"
+
+      - name: Smoke-test release artifact
+        shell: bash
+        run: |
+          smoke_root="$(mktemp -d)"
+          mkdir -p "$smoke_root/project/.claude" "$smoke_root/project/.agents"
+          cd "$smoke_root/project"
+
+          npx --yes --package "${{ steps.pack.outputs.tarball }}" businesslens --version
+          npx --yes --package "${{ steps.pack.outputs.tarball }}" businesslens install \
+            --providers claude,codex \
+            --project \
+            --yes
+
+          for skills_root in .claude/skills .agents/skills; do
+            test -f "$skills_root/.businesslens-install.json"
+            for skill in \
+              businesslens-init \
+              businesslens-sync \
+              businesslens-deep-dive \
+              businesslens-validate \
+              businesslens-doctor; do
+              test -f "$skills_root/$skill/SKILL.md"
+            done
+          done
+
+          test ! -e .businesslens
+          test ! -e AGENTS.md
+
+      - name: Publish to npm
+        shell: bash
+        run: |
+          package_version="$(node --print "require('./package.json').version")"
+          if npm view "businesslens@${package_version}" version >/dev/null 2>&1; then
+            echo "businesslens@${package_version} is already published; skipping."
+            exit 0
+          fi
+          npm publish "${{ steps.pack.outputs.tarball }}"

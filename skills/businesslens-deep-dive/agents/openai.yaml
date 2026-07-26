@@ -1,0 +1,4 @@
+interface:
+  display_name: "BusinessLens Deep Dive"
+  short_description: "Expand one mapped product area"
+  default_prompt: "Use $businesslens-deep-dive to map this product area exhaustively from repository evidence."

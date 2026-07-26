@@ -1,0 +1,9 @@
+scenarioKinds:
+  - id: primary
+    name: Primary
+    description: Expected path through a user goal.
+    colorSlot: 1
+  - id: edge
+    name: Edge case
+    description: Alternative or failure path.
+    colorSlot: 6

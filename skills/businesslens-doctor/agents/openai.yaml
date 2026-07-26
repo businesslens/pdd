@@ -1,0 +1,4 @@
+interface:
+  display_name: "BusinessLens Doctor"
+  short_description: "Diagnose product-map health and drift"
+  default_prompt: "Use $businesslens-doctor to diagnose the BusinessLens map and explain how to fix every issue."
