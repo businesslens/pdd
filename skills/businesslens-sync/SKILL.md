@@ -44,4 +44,5 @@ Read [references/format.md](references/format.md) and
 - Never execute target repository code.
 - Never rewrite the entire map when a targeted update is sufficient.
 - Never copy prescriptive SDD text into the descriptive product map.
-- Never publish or connect to the platform; both are outside this skill.
+- Never publish or connect to the platform from this skill; publishing is
+  the separate `businesslens-publish` workflow.

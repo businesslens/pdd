@@ -67,11 +67,14 @@ BusinessLens has two deliberate surfaces:
 | Terminal | `npx businesslens install` | Install the agent skills |
 | Terminal | `npx businesslens update` | Refresh managed skill installations |
 | Terminal | `npx businesslens validate` | Deterministically validate the map |
+| Terminal | `npx businesslens build` | Compile the map into the portable project document |
+| Terminal | `npx businesslens publish` | Submit the map to the platform as a commit-pinned snapshot |
 | AI harness | `businesslens-init` | Build the initial map |
 | AI harness | `businesslens-sync` | Update the map after behavior changes |
 | AI harness | `businesslens-deep-dive` | Expand one journey or experience |
 | AI harness | `businesslens-validate` | Validate the map and explain every result |
 | AI harness | `businesslens-doctor` | Diagnose validation, drift, and coverage |
+| AI harness | `businesslens-publish` | Publish the map to the platform on explicit request |
 
 The installer never creates `.businesslens/` or modifies `AGENTS.md`. Those
 require repository analysis and belong to the initialization skill.
@@ -85,6 +88,7 @@ require repository analysis and belong to the initialization skill.
 | `businesslens-deep-dive` | One journey or experience needs exhaustive coverage |
 | `businesslens-validate` | The map needs a read-only deterministic check |
 | `businesslens-doctor` | The map fails validation, looks stale, or needs a health report |
+| `businesslens-publish` | The user explicitly wants the map on the platform |
 
 Every skill is self-contained and follows the open Agent Skills folder format.
 The CLI currently supports Claude Code, Codex, Cursor, Gemini CLI, and GitHub
@@ -122,10 +126,13 @@ or `AGENTS.md`.
 
 ## Documentation
 
-- [CLI reference](./docs/cli.md)
+- [Introduction](./docs/index.md)
+- [Quickstart](./docs/quickstart.md)
 - [`.businesslens/` format](./docs/format.md)
+- [CLI reference](./docs/cli.md)
+- [Skills reference](./docs/skills.md)
+- [CI validation and publishing](./docs/ci.md)
 - [PDD and SDD](./docs/pdd-and-sdd.md)
-- [CI validation](./docs/ci.md)
 
 ## Safety
 
@@ -133,7 +140,9 @@ or `AGENTS.md`.
 - Installation refuses to overwrite unowned `businesslens-*` directories
   unless `--force` is explicit.
 - Updates replace only artifacts marked as BusinessLens-managed.
-- No platform connection or publishing occurs during installation or mapping.
+- No platform connection or publishing occurs during installation or mapping;
+  publishing happens only through the explicit `publish` command or the
+  `businesslens-publish` skill.
 
 ## License
 

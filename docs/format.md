@@ -1,3 +1,9 @@
+---
+title: The .businesslens/ format
+description: The contract for the git-tracked product map — folder layout, universal conventions, entities, and codeRefs.
+order: 3
+---
+
 # The `.businesslens/` Format
 
 This document is the contract for the BusinessLens PDD folder: the git-tracked

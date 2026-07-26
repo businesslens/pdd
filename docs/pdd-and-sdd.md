@@ -1,3 +1,9 @@
+---
+title: PDD ♥ SDD
+description: How Product-Driven Design coexists with spec-driven development frameworks like OpenSpec and spec-kit.
+order: 7
+---
+
 # PDD ♥ SDD
 
 BusinessLens deliberately does not compete with spec-driven development

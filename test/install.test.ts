@@ -33,7 +33,7 @@ afterEach(() => {
 })
 
 describe('skill installation', () => {
-  it('installs only the five namespaced skills into every selected project harness', async () => {
+  it('installs only the six namespaced skills into every selected project harness', async () => {
     const project = temporary('bl-install-')
     vi.spyOn(console, 'log').mockImplementation(() => undefined)
 

@@ -45,5 +45,6 @@ Do not modify files.
 - Never execute the target repository's application, tests, build, migrations,
   or package scripts.
 - Never suppress, rewrite, or reinterpret validator findings.
-- Never connect to or publish to the BusinessLens platform.
+- Never connect to or publish to the BusinessLens platform from this skill;
+  publishing is the separate `businesslens-publish` workflow.
 - Do not repair the map; recommend `businesslens-doctor` for that workflow.

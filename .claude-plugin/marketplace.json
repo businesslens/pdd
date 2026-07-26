@@ -11,7 +11,7 @@
     {
       "name": "businesslens",
       "source": "./",
-      "description": "Product-Driven Design skills: initialize, synchronize, deepen, validate, and diagnose the .businesslens/ product map.",
+      "description": "Product-Driven Design skills: initialize, synchronize, deepen, validate, diagnose, and publish the .businesslens/ product map.",
       "category": "engineering",
       "keywords": [
         "pdd",
