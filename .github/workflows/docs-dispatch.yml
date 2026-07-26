@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'docs/**'
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -17,6 +18,13 @@ jobs:
       - name: Trigger landing rebuild
         env:
           GH_TOKEN: ${{ secrets.LANDING_DISPATCH_TOKEN }}
+          PDD_SHA: ${{ github.sha }}
         run: |
+          if [[ -z "$GH_TOKEN" ]]; then
+            echo "LANDING_DISPATCH_TOKEN is not configured." >&2
+            exit 1
+          fi
           gh api "repos/businesslens/landing/dispatches" \
-            --field event_type=pdd-docs-updated
+            --method POST \
+            --field event_type=pdd-docs-updated \
+            --field "client_payload[pdd_sha]=$PDD_SHA"
