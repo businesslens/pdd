@@ -10,6 +10,7 @@ import {
 } from './frontmatter.js'
 import { stem } from './ids.js'
 import { bulletList, orderedList, parseMarkdown, section } from './markdown.js'
+import { DEFAULT_PLATFORM_URL, trustedPlatformUrl } from './platform-url.js'
 
 export interface EntityFile {
   id: string
@@ -71,7 +72,6 @@ export interface PddModel {
 }
 
 export const FOLDER = '.businesslens'
-export const DEFAULT_PLATFORM_URL = 'https://app.businesslens.io'
 
 function listMarkdown(directory: string): string[] {
   if (!existsSync(directory)) return []
@@ -113,6 +113,11 @@ export function loadModel(cwd: string): PddModel {
         schema: Number(raw?.schema ?? 1),
         platformUrl: String(raw?.platform?.url || DEFAULT_PLATFORM_URL),
         sddPaths: Array.isArray(raw?.sdd?.paths) ? raw.sdd.paths.map(String) : []
+      }
+      try {
+        trustedPlatformUrl(config.platformUrl)
+      } catch (error) {
+        issues.push(`config.yaml: ${(error as Error).message}`)
       }
     } catch (error) {
       issues.push(`config.yaml failed to parse (${(error as Error).message})`)

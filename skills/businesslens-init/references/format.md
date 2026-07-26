@@ -79,6 +79,7 @@ Explain what was inspected, what remains unmapped, and why.
 Create `.gitignore` with:
 
 ```gitignore
+build/
 cache/
 ```
 

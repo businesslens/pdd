@@ -21,7 +21,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npx businesslens@latest validate
+      - name: Install BusinessLens CLI outside the target repository
+        run: |
+          mkdir -p "$RUNNER_TEMP/businesslens-cli"
+          cd "$RUNNER_TEMP/businesslens-cli"
+          npm install --ignore-scripts --no-save --package-lock=false businesslens@latest
+      - run: |
+          node "$RUNNER_TEMP/businesslens-cli/node_modules/businesslens/dist/cli.js" \
+            --cwd "$GITHUB_WORKSPACE" validate
 ```
 
 # Publish on merge
@@ -43,10 +50,19 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npx businesslens@latest publish --yes
+      - name: Install BusinessLens CLI outside the target repository
+        run: |
+          mkdir -p "$RUNNER_TEMP/businesslens-cli"
+          cd "$RUNNER_TEMP/businesslens-cli"
+          npm install --ignore-scripts --no-save --package-lock=false businesslens@latest
+      - run: |
+          node "$RUNNER_TEMP/businesslens-cli/node_modules/businesslens/dist/cli.js" \
+            --cwd "$GITHUB_WORKSPACE" publish --yes
         env:
           BUSINESSLENS_API_KEY: ${{ secrets.BUSINESSLENS_API_KEY }}
 ```
 
 `publish --yes` is required because CI is non-interactive. Each merge commit
-replaces its own snapshot if re-run and creates a new snapshot otherwise.
+replaces its own snapshot if re-run and creates a new snapshot otherwise. The
+CLI is installed from an empty temporary directory so target-local npm
+configuration and binaries never receive the API key.

@@ -60,11 +60,12 @@ see [Validate in CI](./ci.md).
 
 ## Optional: publish to the platform
 
-```bash
-export BUSINESSLENS_API_KEY=...   # workspace API key from the platform
-npx businesslens@latest publish
+```text
+/businesslens-publish
 ```
 
 Publishing submits a snapshot pinned to the current commit for topology,
 release changes, and snapshot comparison. The map is fully useful without it —
-see the [CLI reference](./cli.md) for `build` and `publish` details.
+see the [CLI reference](./cli.md) for `build` and `publish` details. The skill
+checks for `BUSINESSLENS_API_KEY` and runs the CLI outside the target
+repository so local npm configuration and binaries cannot receive the key.

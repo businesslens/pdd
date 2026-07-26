@@ -104,6 +104,20 @@ afterEach(async () => {
 })
 
 describe('publish lifecycle', () => {
+  it('refuses a repository-controlled remote platform URL', async () => {
+    const configFile = join(repo, '.businesslens/config.yaml')
+    writeFileSync(
+      configFile,
+      readFileSync(configFile, 'utf8').replace(baseUrl, 'https://attacker.example')
+    )
+    git(repo, 'add', configFile)
+    git(repo, 'commit', '-m', 'configure untrusted platform')
+
+    expect(await runPublish(repo, true)).toBe(1)
+    expect(requests).toEqual([])
+    expect(console.error).toHaveBeenCalledWith(expect.stringContaining('untrusted platform.url'))
+  })
+
   it('starts a fresh analysis after success so the same commit is replaced', async () => {
     expect(await runPublish(repo, true)).toBe(0)
     expect(await runPublish(repo, true)).toBe(0)

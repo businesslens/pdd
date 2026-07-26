@@ -17,8 +17,17 @@ BusinessLens skill that contacts the platform.
 2. Preflight, in order, and stop at the first failure:
    - Locate the Git repository root and check that `.businesslens/` exists.
      If it is absent, direct the user to `businesslens-init`.
-   - Run `npx businesslens validate --json` and stop on errors. Recommend
-     `businesslens-doctor` for repairs; do not edit map files yourself.
+   - Resolve `<businesslens-publish-skill-dir>` to this installed skill
+     directory, then run the bundled isolated CLI runner:
+
+     ```bash
+     node <businesslens-publish-skill-dir>/scripts/run-businesslens.mjs \
+       --root "$PWD" validate --json
+     ```
+
+     Stop on errors. Recommend `businesslens-doctor` for repairs; do not edit
+     map files yourself. The runner removes `BUSINESSLENS_API_KEY` while
+     validating.
    - Verify publishing provenance the same way the CLI will: the tracked
      worktree is clean, `.businesslens/` is fully committed, HEAD is on a
      named branch (not detached), and `origin` normalizes to an HTTPS URL.
@@ -32,11 +41,14 @@ BusinessLens skill that contacts the platform.
 4. Run:
 
    ```bash
-   npx businesslens publish --yes
+   node <businesslens-publish-skill-dir>/scripts/run-businesslens.mjs \
+     --root "$PWD" publish --yes
    ```
 
-   Agent sessions are non-interactive; without `--yes` the CLI refuses with
-   exit code 2. Honor an explicit user-provided local CLI command instead
+   The runner installs `businesslens@latest` in an isolated temporary
+   directory so a target-local binary or `.npmrc` cannot intercept the API
+   key. Agent sessions are non-interactive; without `--yes` the CLI refuses
+   with exit code 2. Honor an explicit user-provided local CLI command instead
    when testing an unpublished BusinessLens version.
 5. Interpret failures using the CLI's error messages:
    - 401 — the key is wrong or revoked; re-export `BUSINESSLENS_API_KEY` and
@@ -70,5 +82,6 @@ main-branch job running `publish --yes` with the key stored as a secret.
   failed validation by editing map files to force it green.
 - Never execute the target repository's application, tests, build,
   migrations, or package scripts.
-- The only writes are the CLI's own gitignored outputs under
-  `.businesslens/build/` and `.businesslens/cache/`.
+- In the target repository, the only writes are the CLI's own gitignored
+  outputs under `.businesslens/build/` and `.businesslens/cache/`. The
+  isolated runner removes its temporary directory when the command ends.

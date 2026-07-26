@@ -35,7 +35,7 @@ function sh(cwd: string, command: string, ...args: string[]): void {
 let repo: string
 
 beforeAll(() => {
-  if (!existsSync(CLI)) execSync('npm run build', { cwd: ROOT, stdio: 'pipe' })
+  execSync('npm run build', { cwd: ROOT, stdio: 'pipe' })
   repo = mkdtempSync(join(tmpdir(), 'bl-cli-'))
   cpSync(FIXTURE, repo, { recursive: true })
   sh(repo, 'git', 'init', '--initial-branch=main')
@@ -56,11 +56,12 @@ describe('cli dispatch', () => {
     expect(result.status).toBe(0)
     expect(result.stdout).toContain('build ')
     expect(result.stdout).toContain('publish [--yes]')
+    expect(result.stdout).toContain('--cwd <path>')
     expect(result.stdout).toContain('/businesslens-publish')
   })
 
-  it('builds the fixture map into project.json', () => {
-    const result = cli(repo, process.env, 'build')
+  it('builds the selected repository into project.json', () => {
+    const result = cli(ROOT, process.env, '--cwd', repo, 'build')
     expect(result.status).toBe(0)
     expect(existsSync(join(repo, '.businesslens', 'build', 'project.json'))).toBe(true)
   })

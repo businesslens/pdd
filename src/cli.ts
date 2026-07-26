@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { resolve } from 'node:path'
 import { parseArgs } from 'node:util'
 import { runBuild } from './commands/build.js'
 import { runInstall } from './commands/install.js'
@@ -32,6 +33,7 @@ Publish options:
                               workspace API key from BUSINESSLENS_API_KEY.
 
 General options:
+  --cwd <path>                Run against this repository instead of the current directory
   --help                      Show this help
   --version                   Show the CLI version
 
@@ -59,6 +61,7 @@ async function main(): Promise<number> {
       user: { type: 'boolean', default: false },
       yes: { type: 'boolean', default: false },
       force: { type: 'boolean', default: false },
+      cwd: { type: 'string' },
       help: { type: 'boolean', default: false },
       version: { type: 'boolean', default: false }
     }
@@ -78,7 +81,7 @@ async function main(): Promise<number> {
     return 2
   }
 
-  const cwd = process.cwd()
+  const cwd = resolve(process.cwd(), values.cwd || '.')
   switch (command) {
     case 'install':
       return runInstall(cwd, {

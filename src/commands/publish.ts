@@ -1,10 +1,11 @@
 import { createHash, randomUUID } from 'node:crypto'
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { existsSync, readFileSync } from 'node:fs'
 import { createInterface } from 'node:readline/promises'
-import { loadModel } from '../core/model.js'
-import { repoRoot } from '../core/git.js'
 import { PlatformApiError, recordEvent, startAnalysis, submitProject } from '../core/api.js'
+import { generatedFilePath, writeGeneratedFile } from '../core/generated-files.js'
+import { repoRoot } from '../core/git.js'
+import { loadModel } from '../core/model.js'
+import { trustedPlatformUrl } from '../core/platform-url.js'
 import { buildProject } from './build.js'
 
 interface PublishState {
@@ -49,8 +50,12 @@ function readState(file: string, identity: PublishIdentity): PublishState {
   return newState(identity)
 }
 
-function writeState(file: string, state: PublishState): void {
-  writeFileSync(file, `${JSON.stringify(state, null, 2)}\n`)
+function writeState(root: string, state: PublishState): void {
+  writeGeneratedFile(
+    root,
+    ['.businesslens', 'cache', 'analysis.json'],
+    `${JSON.stringify(state, null, 2)}\n`
+  )
 }
 
 export async function runPublish(cwd: string, yes: boolean): Promise<number> {
@@ -60,16 +65,27 @@ export async function runPublish(cwd: string, yes: boolean): Promise<number> {
     return 1
   }
 
+  let root: string
+  let model: ReturnType<typeof loadModel>
+  let baseUrl: string
+  try {
+    root = repoRoot(cwd)
+    model = loadModel(root)
+    baseUrl = trustedPlatformUrl(model.config.platformUrl)
+  } catch (error) {
+    console.error((error as Error).message)
+    return 1
+  }
+
   let outcome
   try {
-    outcome = buildProject(cwd)
+    outcome = buildProject(root)
   } catch (error) {
     console.error((error as Error).message)
     return 1
   }
   const { project } = outcome
-  const model = loadModel(repoRoot(cwd))
-  const api = { baseUrl: model.config.platformUrl, apiKey }
+  const api = { baseUrl, apiKey }
 
   if (!yes) {
     if (!process.stdin.isTTY) {
@@ -85,14 +101,20 @@ export async function runPublish(cwd: string, yes: boolean): Promise<number> {
     }
   }
 
-  const stateFile = join(model.root, 'cache', 'analysis.json')
-  const state = readState(stateFile, {
-    commit: project.source.commit,
-    repositoryUrl: project.source.repositoryUrl,
-    platformUrl: api.baseUrl,
-    credentialFingerprint: createHash('sha256').update(apiKey).digest('hex')
-  })
-  mkdirSync(join(model.root, 'cache'), { recursive: true })
+  let stateFile: string
+  let state: PublishState
+  try {
+    stateFile = generatedFilePath(root, '.businesslens', 'cache', 'analysis.json')
+    state = readState(stateFile, {
+      commit: project.source.commit,
+      repositoryUrl: project.source.repositoryUrl,
+      platformUrl: api.baseUrl,
+      credentialFingerprint: createHash('sha256').update(apiKey).digest('hex')
+    })
+  } catch (error) {
+    console.error((error as Error).message)
+    return 1
+  }
 
   try {
     if (!state.analysisId) {
@@ -103,7 +125,7 @@ export async function runPublish(cwd: string, yes: boolean): Promise<number> {
         generator: project.generator
       })
       state.analysisId = started.analysisId
-      writeState(stateFile, state)
+      writeState(root, state)
     }
 
     const { summary } = project
@@ -121,13 +143,13 @@ export async function runPublish(cwd: string, yes: boolean): Promise<number> {
 
     const result = await submitProject(api, state.analysisId!, project)
     state.status = 'completed'
-    writeState(stateFile, state)
+    writeState(root, state)
     console.log(`${result.created ? 'Created' : 'Updated'} snapshot ${result.versionKey}: ${result.href}`)
     return 0
   } catch (error) {
     if (error instanceof PlatformApiError && error.status === 404) {
       state.status = 'completed'
-      writeState(stateFile, state)
+      writeState(root, state)
     }
     console.error((error as Error).message)
     return 1

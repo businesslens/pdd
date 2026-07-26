@@ -9,6 +9,8 @@ order: 4
 `npx businesslens@latest <command>` requires Node.js 20.12 or newer.
 
 Exit codes are `0` for success, `1` for failure, and `2` for invalid usage.
+Pass `--cwd <path>` to run a command against a repository other than the
+current directory.
 
 ## `install`
 
@@ -137,7 +139,8 @@ Building pins provenance to the current commit and refuses to run when:
 - `origin` does not normalize to a credential-free HTTPS URL.
 
 `.businesslens/build/` and `.businesslens/cache/` are CLI outputs and should
-stay gitignored.
+stay gitignored. The CLI refuses to write these outputs through symbolic
+links.
 
 ## `publish`
 
@@ -150,6 +153,21 @@ npx businesslens@latest publish --yes
 Runs `build`, then submits the compiled project to the platform configured in
 `.businesslens/config.yaml` (`platform.url`, default
 `https://app.businesslens.io`) as a snapshot pinned to the current commit.
+Agent sessions should invoke `businesslens-publish`, whose bundled runner
+isolates the npm package from target-local binaries and configuration.
+
+For credential safety, `platform.url` accepts only the official origin or a
+literal loopback development host. Local development can use HTTP and any
+port:
+
+```yaml
+platform:
+  url: http://localhost:3000
+```
+
+`127.x.x.x` and `::1` are also accepted. Remote custom origins, URL paths,
+query strings, fragments, and embedded credentials are rejected before any
+network request.
 
 - The key is read only from the `BUSINESSLENS_API_KEY` environment variable.
 - Without `--yes` the CLI asks for confirmation; in a non-interactive session

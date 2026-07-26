@@ -1,8 +1,7 @@
-import { mkdirSync, writeFileSync } from 'node:fs'
-import { join } from 'node:path'
 import type { PddModel } from '../core/model.js'
 import type { PortableProjectV3 } from '../core/portable.js'
 import type { Provenance } from '../core/git.js'
+import { writeGeneratedFile } from '../core/generated-files.js'
 import { lsFiles, provenance, repoRoot } from '../core/git.js'
 import { loadModel } from '../core/model.js'
 import { PortableProjectV3Schema } from '../core/portable.js'
@@ -132,14 +131,16 @@ export function buildProject(cwd: string): BuildOutcome {
   const today = new Date().toISOString().slice(0, 10)
   const project = compileProject(model, pinned, tracked.length, today)
 
-  const buildDir = join(model.root, 'build')
-  mkdirSync(buildDir, { recursive: true })
-  const outputFile = join(buildDir, 'project.json')
-  writeFileSync(outputFile, `${JSON.stringify(project, null, 2)}\n`)
-
-  const cacheDir = join(model.root, 'cache')
-  mkdirSync(cacheDir, { recursive: true })
-  writeFileSync(join(cacheDir, 'build.json'), `${JSON.stringify({ commit: pinned.commit, builtAt: new Date().toISOString() }, null, 2)}\n`)
+  const outputFile = writeGeneratedFile(
+    root,
+    ['.businesslens', 'build', 'project.json'],
+    `${JSON.stringify(project, null, 2)}\n`
+  )
+  writeGeneratedFile(
+    root,
+    ['.businesslens', 'cache', 'build.json'],
+    `${JSON.stringify({ commit: pinned.commit, builtAt: new Date().toISOString() }, null, 2)}\n`
+  )
   return { project, outputFile }
 }
 
