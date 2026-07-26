@@ -19,7 +19,8 @@ export const BUSINESSLENS_SKILLS = [
   'businesslens-sync',
   'businesslens-deep-dive',
   'businesslens-validate',
-  'businesslens-doctor'
+  'businesslens-doctor',
+  'businesslens-publish'
 ] as const
 
 export type BusinessLensSkill = (typeof BUSINESSLENS_SKILLS)[number]

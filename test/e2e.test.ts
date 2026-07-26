@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process'
-import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { cpSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
@@ -69,5 +69,39 @@ describe('end to end on a real git repo', () => {
     writeFileSync(untracked, '# Uncommitted actor\n\nA map entity that does not exist at HEAD.\n')
     expect(() => buildProject(repo)).toThrow(/authored \.businesslens\/ map has uncommitted or untracked files/)
     rmSync(untracked)
+  })
+
+  it('refuses to overwrite a generated-output symlink', () => {
+    const external = mkdtempSync(join(tmpdir(), 'bl-external-'))
+    const target = join(external, 'do-not-overwrite.json')
+    const output = join(repo, '.businesslens/build/project.json')
+    writeFileSync(target, 'keep me\n')
+    rmSync(output, { force: true })
+    symlinkSync(target, output)
+
+    try {
+      expect(() => buildProject(repo)).toThrow(/symbolic link/)
+      expect(readFileSync(target, 'utf8')).toBe('keep me\n')
+    } finally {
+      rmSync(output, { force: true })
+      rmSync(external, { recursive: true, force: true })
+    }
+  })
+
+  it('refuses to traverse a generated-output directory symlink', () => {
+    const external = mkdtempSync(join(tmpdir(), 'bl-external-dir-'))
+    const buildDir = join(repo, '.businesslens/build')
+    rmSync(buildDir, { recursive: true, force: true })
+    symlinkSync(external, buildDir)
+    sh(repo, 'git', 'add', '--force', '.businesslens/build')
+    sh(repo, 'git', 'commit', '-m', 'track malicious generated-output symlink')
+
+    try {
+      expect(() => buildProject(repo)).toThrow(/symbolic link/)
+      expect(() => readFileSync(join(external, 'project.json'), 'utf8')).toThrow()
+    } finally {
+      rmSync(buildDir, { force: true })
+      rmSync(external, { recursive: true, force: true })
+    }
   })
 })

@@ -31,7 +31,8 @@ const expectedSkills = [
   'businesslens-sync',
   'businesslens-deep-dive',
   'businesslens-validate',
-  'businesslens-doctor'
+  'businesslens-doctor',
+  'businesslens-publish'
 ]
 
 if (pkg.name !== 'businesslens') errors.push(`package.json name must be businesslens, found ${pkg.name}`)

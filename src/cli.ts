@@ -1,6 +1,9 @@
 #!/usr/bin/env node
+import { resolve } from 'node:path'
 import { parseArgs } from 'node:util'
+import { runBuild } from './commands/build.js'
 import { runInstall } from './commands/install.js'
+import { runPublish } from './commands/publish.js'
 import { runUpdate } from './commands/update.js'
 import { runValidate } from './commands/validate.js'
 import { cliVersion } from './version.js'
@@ -13,6 +16,8 @@ Commands:
   install                     Install BusinessLens skills for detected AI harnesses
   update                      Refresh managed BusinessLens skill installations
   validate [--json]           Validate the .businesslens/ product map
+  build                       Compile .businesslens/ into .businesslens/build/project.json
+  publish [--yes]             Build and submit the map to the BusinessLens platform
 
 Install options:
   --providers <list>          Comma-separated: claude,codex,cursor,gemini,github
@@ -22,7 +27,13 @@ Install options:
   --yes                       Accept detected providers and project scope
   --force                     Replace an unmarked businesslens-* skill directory
 
+Publish options:
+  --yes                       Skip the confirmation prompt (required in
+                              non-interactive sessions). Publishing reads the
+                              workspace API key from BUSINESSLENS_API_KEY.
+
 General options:
+  --cwd <path>                Run against this repository instead of the current directory
   --help                      Show this help
   --version                   Show the CLI version
 
@@ -32,6 +43,7 @@ Agent workflows:
   /businesslens-deep-dive     Expand one journey or experience
   /businesslens-validate      Validate the map and explain every result
   /businesslens-doctor        Diagnose validation, drift, and coverage
+  /businesslens-publish       Publish the map to the BusinessLens platform
 
 Exit codes: 0 success · 1 failure · 2 usage error`
 
@@ -49,6 +61,7 @@ async function main(): Promise<number> {
       user: { type: 'boolean', default: false },
       yes: { type: 'boolean', default: false },
       force: { type: 'boolean', default: false },
+      cwd: { type: 'string' },
       help: { type: 'boolean', default: false },
       version: { type: 'boolean', default: false }
     }
@@ -68,7 +81,7 @@ async function main(): Promise<number> {
     return 2
   }
 
-  const cwd = process.cwd()
+  const cwd = resolve(process.cwd(), values.cwd || '.')
   switch (command) {
     case 'install':
       return runInstall(cwd, {
@@ -91,6 +104,10 @@ async function main(): Promise<number> {
       })
     case 'validate':
       return runValidate(cwd, Boolean(values.json))
+    case 'build':
+      return runBuild(cwd)
+    case 'publish':
+      return runPublish(cwd, values.yes)
     default:
       console.error(`Unknown command "${command}".\n`)
       console.log(HELP)

@@ -28,7 +28,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "check": "node scripts/check-repo.mjs",
-    "verify": "npm run typecheck && npm test && npm run check && npm run build",
+    "verify": "npm run typecheck && npm run build && npm test && npm run check",
     "version": "node scripts/sync-version.mjs",
     "prepack": "npm run build"
   },

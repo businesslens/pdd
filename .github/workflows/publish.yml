@@ -70,13 +70,21 @@ jobs:
               businesslens-sync \
               businesslens-deep-dive \
               businesslens-validate \
-              businesslens-doctor; do
+              businesslens-doctor \
+              businesslens-publish; do
               test -f "$skills_root/$skill/SKILL.md"
             done
           done
 
           test ! -e .businesslens
           test ! -e AGENTS.md
+
+          if npx --yes --package "${{ steps.pack.outputs.tarball }}" businesslens publish --yes 2>publish-error.log; then
+            echo "publish unexpectedly succeeded without BUSINESSLENS_API_KEY" >&2
+            exit 1
+          fi
+          grep -q "BUSINESSLENS_API_KEY is not set" publish-error.log
+          rm publish-error.log
 
       - name: Publish to npm
         shell: bash

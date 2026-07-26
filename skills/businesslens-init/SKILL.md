@@ -83,5 +83,6 @@ Read these references before authoring:
 - Describe evidenced behavior, never desired behavior.
 - Do not infer authorization, access, or operational guarantees from names.
 - Do not create empty entity stubs and call initialization complete.
-- Do not connect to or publish to the BusinessLens platform.
+- Do not connect to or publish to the BusinessLens platform from this skill;
+  publishing is the separate `businesslens-publish` workflow.
 - Do not overwrite a mature existing map without explicit user approval.

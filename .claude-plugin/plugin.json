@@ -20,6 +20,7 @@
     "./skills/businesslens-sync",
     "./skills/businesslens-deep-dive",
     "./skills/businesslens-validate",
-    "./skills/businesslens-doctor"
+    "./skills/businesslens-doctor",
+    "./skills/businesslens-publish"
   ]
 }

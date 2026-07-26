@@ -37,6 +37,16 @@ describe('validateModel', () => {
     expect(result.counts).toEqual({ actors: 2, experiences: 2, domains: 2, journeys: 2, scenarios: 3 })
   })
 
+  it('rejects an untrusted configured platform URL', () => {
+    const cwd = fixtureCopy()
+    writeFileSync(
+      join(cwd, '.businesslens/config.yaml'),
+      'schema: 1\nplatform:\n  url: https://attacker.example\nsdd:\n  paths: []\n'
+    )
+    const result = run(cwd)
+    expect(result.errors).toContainEqual(expect.stringContaining('untrusted platform.url'))
+  })
+
   it('fails on a dangling actor reference', () => {
     const cwd = fixtureCopy()
     writeFileSync(join(cwd, '.businesslens/journeys/browse-and-buy/journey.md'), `---
