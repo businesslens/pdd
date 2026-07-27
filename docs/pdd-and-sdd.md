@@ -1,6 +1,6 @@
 ---
 title: PDD ♥ SDD
-description: How Product-Driven Design coexists with spec-driven development frameworks like OpenSpec and spec-kit.
+description: How Product-Driven Development coexists with spec-driven development frameworks like OpenSpec and spec-kit.
 section: open-source
 group: Concepts
 order: 6

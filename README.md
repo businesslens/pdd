@@ -4,7 +4,7 @@
 [![Check](https://github.com/businesslens/pdd/actions/workflows/check.yml/badge.svg)](https://github.com/businesslens/pdd/actions/workflows/check.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
-**Product-Driven Design for coding agents.** BusinessLens builds a
+**Product-Driven Development for coding agents.** BusinessLens builds a
 Git-tracked product map in `.businesslens/`: who the product serves, what
 they accomplish, and where the code proves it.
 

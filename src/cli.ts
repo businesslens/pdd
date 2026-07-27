@@ -8,7 +8,7 @@ import { runUpdate } from './commands/update.js'
 import { runValidate } from './commands/validate.js'
 import { cliVersion } from './version.js'
 
-const HELP = `businesslens — Product-Driven Design for coding agents
+const HELP = `businesslens — Product-Driven Development for coding agents
 
 Usage: businesslens <command> [options]
 

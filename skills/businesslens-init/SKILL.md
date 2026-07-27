@@ -1,6 +1,6 @@
 ---
 name: businesslens-init
-description: Initialize Product-Driven Design in a repository by inspecting the codebase and building a complete, evidence-backed .businesslens/ product map. Use for first-time BusinessLens setup, replacing an incomplete scaffold, or rebuilding the map from scratch; use businesslens-plan for a blank repository with no code to map.
+description: Initialize Product-Driven Development in a repository by inspecting the codebase and building a complete, evidence-backed .businesslens/ product map. Use for first-time BusinessLens setup, replacing an incomplete scaffold, or rebuilding the map from scratch; use businesslens-plan for a blank repository with no code to map.
 ---
 
 # Initialize BusinessLens
@@ -62,7 +62,7 @@ Read these references before authoring:
    <!-- businesslens:begin -->
    ## BusinessLens product map
 
-   This repository maintains its product truth in `.businesslens/` (Product-Driven Design).
+   This repository maintains its product truth in `.businesslens/` (Product-Driven Development).
 
    - **Before** building or changing behavior: read the relevant experience/journey/scenario files to understand current behavior and where it lives (`codeRefs`).
    - **Plan** product changes by updating the map first (`businesslens-plan`), implement, then attach evidence with `businesslens-verify`.

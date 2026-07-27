@@ -53,7 +53,7 @@ Insert (or leave intact) exactly one such block in the repository root
 <!-- businesslens:begin -->
 ## BusinessLens product map
 
-This repository maintains its product truth in `.businesslens/` (Product-Driven Design).
+This repository maintains its product truth in `.businesslens/` (Product-Driven Development).
 
 - **Before** building or changing behavior: read the relevant experience/journey/scenario files to understand current behavior and where it lives (`codeRefs`).
 - **Plan** product changes by updating the map first (`businesslens-plan`), implement, then attach evidence with `businesslens-verify`.

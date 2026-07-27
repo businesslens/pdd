@@ -1,6 +1,6 @@
 ---
 title: Introduction
-description: BusinessLens is Product-Driven Design for coding agents — a git-tracked product map with code evidence, where planning is editing the map and validation green means done.
+description: BusinessLens is Product-Driven Development for coding agents — a git-tracked product map with code evidence, where planning is editing the map and validation green means done.
 section: open-source
 group: Get started
 order: 1
@@ -8,7 +8,7 @@ order: 1
 
 # Introduction
 
-**BusinessLens is Product-Driven Design (PDD) for coding agents.** It keeps
+**BusinessLens is Product-Driven Development (PDD) for coding agents.** It keeps
 one artifact: a git-tracked product map in `.businesslens/` — who the
 product serves, what they accomplish, and where the code proves it.
 
