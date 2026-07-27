@@ -1,47 +1,45 @@
 ---
 title: Quickstart
-description: Install the skills, build the map in your AI harness, review, and commit.
-order: 2
+description: Install the skills, pick your entry — map existing code or plan a new product — then run the plan → implement → verify loop.
+section: open-source
+group: Get started
+order: 3
 ---
 
 # Quickstart
 
-Requires Node.js 20.12 or newer.
-
 ## 1. Install the skills
 
-Run this in the repository you want to map:
+Run this in the repository (Node.js 20.12+):
 
 ```bash
 npx businesslens@latest install
 ```
 
-The installer detects supported AI harnesses (Claude Code, Codex, Cursor,
-Gemini CLI, GitHub Copilot), lets you customize the selection, asks for
-project or global scope, and installs only the BusinessLens skills.
+The installer detects your AI harnesses and installs only the BusinessLens
+skills — providers, scopes, and non-interactive setup are covered in
+[Installation](./installation.md).
 
-Non-interactive setup:
+## 2. Get a map
 
-```bash
-npx businesslens@latest install \
-  --providers claude,codex \
-  --scope project \
-  --yes
-```
-
-## 2. Build the map
-
-Invoke the initialization skill in your AI harness:
+**Existing product** — build it from the code:
 
 ```text
 /businesslens-init
 ```
 
-Codex users invoke the same skill as `$businesslens-init`. The skill inspects
-the repository without executing its code, authors the full map, installs the
-managed `AGENTS.md` guidance, and validates the result.
+(Codex users invoke skills as `$businesslens-init`.)
 
-## 3. Review and commit
+**Blank repository** — plan the product first:
+
+```text
+/businesslens-plan
+```
+
+The skill interviews you and authors the whole product as a draft map — no
+code, no evidence yet, validation green with warnings.
+
+Either way, review the diff like any pull request, then:
 
 ```bash
 npx businesslens@latest validate
@@ -49,23 +47,30 @@ git add .businesslens AGENTS.md
 git commit -m "docs: add BusinessLens product map"
 ```
 
-Review the map like any other change: the entities are Markdown, and every
-claim carries `codeRefs` your reviewers can open.
-
-## 4. Keep it current
-
-After behavior changes, invoke `businesslens-sync` in your harness, then
-validate. Add the deterministic validator to every pull request —
-see [Validate in CI](./ci.md).
-
-## Optional: publish to the platform
+## 3. The loop for every feature
 
 ```text
-/businesslens-publish
+/businesslens-plan add guest checkout     # map describes intended behavior
+… implement with your coding agent …
+/businesslens-verify                      # evidence attached, gaps reported
+npx businesslens@latest validate          # green = done
 ```
 
-Publishing submits a snapshot pinned to the current commit for topology,
-release changes, and snapshot comparison. The map is fully useful without it —
-see the [CLI reference](./cli.md) for `build` and `publish` details. The skill
-checks for `BUSINESSLENS_API_KEY` and runs the CLI outside the target
-repository so local npm configuration and binaries cannot receive the key.
+`validate` failing in between is not a problem: its missing-evidence errors
+identify new journeys and scenarios that still need proof. The verifier also
+checks changed and deleted work from the complete map diff.
+
+## 4. Keep it honest
+
+- Gate every pull request with the validator — see [Validate in CI](./ci.md).
+- If code changed without a plan, repair the map with `/businesslens-sync` —
+  see [Recover from drift](./tutorial-recover-from-drift.md).
+
+## Optional: the platform
+
+The map is fully useful on its own. When you want hosted topology, release
+changes, and snapshot comparison across your workspace, publish
+commit-pinned snapshots with `/businesslens-publish` — setup, snapshots,
+and workspaces are covered in the **Platform** section of the docs. The
+`build` and `publish` commands themselves are in the
+[CLI reference](./cli.md).

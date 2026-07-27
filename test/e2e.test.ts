@@ -58,6 +58,26 @@ describe('end to end on a real git repo', () => {
     expect(JSON.stringify(second.project)).toBe(JSON.stringify(first.project))
   })
 
+  it('refuses to build a draft (planned) map', () => {
+    const isolated = mkdtempSync(join(tmpdir(), 'bl-e2e-draft-'))
+    try {
+      cpSync(FIXTURE, isolated, { recursive: true })
+      writeFileSync(
+        join(isolated, '.businesslens/coverage.md'),
+        '---\nstatus: draft\nmethod: ["Planned before implementation"]\nsourceAreas: []\nunmapped: []\nlimitations: []\n---\n\n# Coverage\n\nPlanned map.\n'
+      )
+      sh(isolated, 'git', 'init', '--initial-branch=main')
+      sh(isolated, 'git', 'config', 'user.email', 'fixture@example.com')
+      sh(isolated, 'git', 'config', 'user.name', 'Fixture')
+      sh(isolated, 'git', 'remote', 'add', 'origin', 'https://github.com/example/fixture-shop.git')
+      sh(isolated, 'git', 'add', '.')
+      sh(isolated, 'git', 'commit', '-m', 'fixture')
+      expect(() => buildProject(isolated)).toThrow(/draft/)
+    } finally {
+      rmSync(isolated, { recursive: true, force: true })
+    }
+  })
+
   it('refuses to build with a dirty tracked worktree', () => {
     sh(repo, 'bash', '-c', 'echo "// dirty" >> src/models/order.ts')
     expect(() => buildProject(repo)).toThrow(/uncommitted changes/)

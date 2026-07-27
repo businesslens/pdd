@@ -1,12 +1,16 @@
 ---
 title: Validate in CI
 description: Run the deterministic validator on every pull request and publish snapshots on merge.
-order: 6
+section: open-source
+group: Reference
+order: 23
 ---
 
 # Validate the map in CI
 
-Run the deterministic validator on every pull request:
+Run the deterministic validator on every pull request. Green means the map
+and the code agree — a branch that plans behavior in the map merges only
+after `businesslens-verify` attached the evidence:
 
 ```yaml
 # .github/workflows/businesslens-validate.yml

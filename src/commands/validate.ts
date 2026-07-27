@@ -26,6 +26,14 @@ export function validateModel(model: PddModel, trackedFiles: string[]): Validati
     if (!lead) errors.push(`${label}: missing lead paragraph (description)`)
   }
 
+  // A draft map is planned, not yet implemented: missing evidence is a
+  // warning until coverage leaves draft, when it becomes an error again.
+  const draft = model.coverage.status === 'draft'
+  const requireEvidence = (label: string) => {
+    if (draft) warnings.push(`${label}: needs at least one codeRef before coverage can leave draft`)
+    else errors.push(`${label}: needs at least one codeRef`)
+  }
+
   if (model.product.id && !isId(model.product.id)) errors.push('product.md: id must be lowercase kebab-case')
   if (!model.product.id) errors.push('product.md: missing id')
   requireTitle('product.md', model.product.doc.title, model.product.doc.lead)
@@ -81,7 +89,7 @@ export function validateModel(model: PddModel, trackedFiles: string[]): Validati
     for (const experienceId of journey.experiences) {
       if (!experienceIds.has(experienceId)) errors.push(`${label}: references missing experience "${experienceId}"`)
     }
-    if (!journey.codeRefs.length) errors.push(`${label}: needs at least one codeRef`)
+    if (!journey.codeRefs.length) requireEvidence(label)
     if (!journey.scenarios.length) errors.push(`${label}: needs at least one scenario`)
 
     for (const scenario of journey.scenarios) {
@@ -97,7 +105,7 @@ export function validateModel(model: PddModel, trackedFiles: string[]): Validati
       if (!scenario.trigger) errors.push(`${scenarioLabel}: missing "## Trigger" section`)
       if (!scenario.steps.length) errors.push(`${scenarioLabel}: "## Steps" needs at least one ordered item`)
       if (!scenario.outcome) errors.push(`${scenarioLabel}: missing "## Outcome" section`)
-      if (!scenario.codeRefs.length) errors.push(`${scenarioLabel}: needs at least one codeRef`)
+      if (!scenario.codeRefs.length) requireEvidence(scenarioLabel)
     }
   }
 

@@ -1,7 +1,9 @@
 ---
 title: CLI reference
 description: Commands, options, and exit codes for the businesslens CLI.
-order: 4
+section: open-source
+group: Reference
+order: 21
 ---
 
 # CLI reference
@@ -14,24 +16,19 @@ current directory.
 
 ## `install`
 
-Install the six bundled BusinessLens skills:
+Install the eight bundled BusinessLens skills:
 
 ```bash
 npx businesslens@latest install
 ```
 
-Interactive setup:
-
-1. Shows detected AI harnesses and their paths.
-2. Offers detected-only or custom provider selection.
-3. Asks for project or global scope.
-4. Installs `businesslens-init`, `businesslens-sync`,
-   `businesslens-deep-dive`, `businesslens-validate`,
-   `businesslens-doctor`, and `businesslens-publish`.
-5. Records an ownership/version marker beside the installed skills.
-
-The installer does not create `.businesslens/`, alter `AGENTS.md`, install
-hooks, connect to the platform, or publish data.
+The interactive flow detects harnesses, lets you customize the selection,
+asks for project or global scope, installs the eight `businesslens-*`
+skills, and records an ownership/version marker beside them. Supported
+providers, their paths, and scope guidance live in
+[Installation](./installation.md). The installer does not create
+`.businesslens/`, alter `AGENTS.md`, install hooks, connect to the
+platform, or publish data.
 
 Options:
 
@@ -52,19 +49,6 @@ npx businesslens@latest install \
   --scope project \
   --yes
 ```
-
-Project paths:
-
-| Provider | Skills directory |
-| --- | --- |
-| Claude Code | `.claude/skills/` |
-| Codex | `.agents/skills/` |
-| Cursor | `.cursor/skills/` |
-| Gemini CLI | `.gemini/skills/` |
-| GitHub Copilot | `.github/skills/` |
-
-Global paths respect `CLAUDE_CONFIG_DIR` and `CODEX_HOME`; other providers use
-their standard user directories.
 
 ## `update`
 
@@ -96,9 +80,15 @@ Validation checks:
 - at least one scenario per journey;
 - globally unique scenario IDs;
 - required scenario sections;
-- journey and scenario `codeRefs`;
+- journey and scenario `codeRefs` — while `coverage.md` is `status: draft`
+  (a planned, not-yet-implemented map) missing codeRefs are warnings
+  instead of errors;
 - `codeRef` paths against `git ls-files`;
 - dangling local links as warnings.
+
+On a feature branch, `needs at least one codeRef` errors on freshly planned
+entities are expected — they list the behavior the implementation still has
+to evidence (see [How BusinessLens works](./guide.md)).
 
 JSON output is:
 
@@ -135,6 +125,8 @@ Building pins provenance to the current commit and refuses to run when:
 
 - the tracked worktree has uncommitted changes;
 - `.businesslens/` contains untracked or modified files;
+- `coverage.md` has `status: draft` — a planned map has no evidence to
+  publish; verify the implementation and move coverage off draft first;
 - `HEAD` is detached instead of on a named branch;
 - `origin` does not normalize to a credential-free HTTPS URL.
 

@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `businesslens-plan` and `businesslens-verify` skills for planning in the
+  product map and verifying implementation evidence before merge.
+- Draft greenfield maps, with missing-evidence warnings during planning and
+  build/publish refusal until verification is complete.
+- A structured open-source documentation section with tutorials, individual
+  skill pages, and deterministic navigation frontmatter.
+
 ### Fixed
 
 - Docs dispatch sends an immutable commit-pinned revision to the landing

@@ -17,9 +17,26 @@ or validator behavior.
 - `src/core/` — parsers, model loading, Git evidence, portable schema, and the
   platform client.
 - `skills/businesslens-*/SKILL.md` — one independent skill per workflow:
-  `businesslens-init`, `businesslens-sync`, `businesslens-deep-dive`,
-  `businesslens-validate`, `businesslens-doctor`, and `businesslens-publish`.
+  `businesslens-init`, `businesslens-plan`, `businesslens-verify`,
+  `businesslens-sync`, `businesslens-deep-dive`, `businesslens-validate`,
+  `businesslens-doctor`, and `businesslens-publish`.
 - `test/fixtures/fixture-shop/` — the golden validation fixture.
+
+## Documentation structure
+
+- `docs/` stays flat; the landing repository pulls it on push and builds
+  the docs site navigation from frontmatter.
+- Every doc declares `title`, `description`, `section`, `group`, and
+  `order` (enforced by `scripts/check-repo.mjs`). `section` is the
+  top-level docs tab (`open-source` or `platform`); `group` is the sidebar
+  cluster; `order` is global within the section.
+- Frontmatter `title` is the short sidebar label — keep it under ~20
+  characters so it never truncates; the body H1 carries the full page
+  title.
+- This repository authors the `open-source` section with groups
+  Get started, Concepts, Tutorials, Skills (one page per skill), and
+  Reference. Platform docs live in the landing repository and follow the
+  same contract.
 
 ## Skill-writing standards
 

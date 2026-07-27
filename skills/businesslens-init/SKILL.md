@@ -1,6 +1,6 @@
 ---
 name: businesslens-init
-description: Initialize Product-Driven Design in a repository by inspecting the codebase and building a complete, evidence-backed .businesslens/ product map. Use for first-time BusinessLens setup, replacing an incomplete scaffold, or rebuilding the map from scratch.
+description: Initialize Product-Driven Design in a repository by inspecting the codebase and building a complete, evidence-backed .businesslens/ product map. Use for first-time BusinessLens setup, replacing an incomplete scaffold, or rebuilding the map from scratch; use businesslens-plan for a blank repository with no code to map.
 ---
 
 # Initialize BusinessLens
@@ -18,6 +18,9 @@ Read these references before authoring:
 
 1. Confirm the working directory is a Git repository. Never execute the
    repository's application, build, migrations, or tests; inspect files only.
+   If the repository contains no meaningful implementation to describe, stop
+   and direct the user to `businesslens-plan` — a new product is planned as
+   a draft map, not initialized from empty code.
 2. Inspect existing instructions and product material first: `AGENTS.md`,
    `CLAUDE.md`, READMEs, documentation, architecture notes, and any SDD roots
    such as `openspec/`, `specs/`, or `.kiro/`.
@@ -62,7 +65,8 @@ Read these references before authoring:
    This repository maintains its product truth in `.businesslens/` (Product-Driven Design).
 
    - **Before** building or changing behavior: read the relevant experience/journey/scenario files to understand current behavior and where it lives (`codeRefs`).
-   - **After** changing user-facing behavior: update the affected entity files and run `npx businesslens validate`.
+   - **Plan** product changes by updating the map first (`businesslens-plan`), implement, then attach evidence with `businesslens-verify`.
+   - **After** unplanned behavior changes: update the affected entity files and run `npx businesslens validate`.
    - Never edit `.businesslens/cache/` — generated.
    <!-- businesslens:end -->
    ```

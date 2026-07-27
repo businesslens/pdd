@@ -38,8 +38,10 @@ General options:
   --version                   Show the CLI version
 
 Agent workflows:
-  /businesslens-init          Build the initial product map
-  /businesslens-sync          Refresh the map after behavior changes
+  /businesslens-init          Build the initial product map from existing code
+  /businesslens-plan          Plan a product or feature in the product map
+  /businesslens-verify        Verify implementation against the planned map
+  /businesslens-sync          Repair the map after unplanned code changes
   /businesslens-deep-dive     Expand one journey or experience
   /businesslens-validate      Validate the map and explain every result
   /businesslens-doctor        Diagnose validation, drift, and coverage

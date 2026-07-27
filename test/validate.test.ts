@@ -163,4 +163,69 @@ Lead.
     const result = run(cwd)
     expect(result.errors.some(error => error.includes('unknown frontmatter key "color"'))).toBe(true)
   })
+
+  it('downgrades missing evidence to warnings while coverage status is draft', () => {
+    const cwd = fixtureCopy()
+    writeFileSync(join(cwd, '.businesslens/coverage.md'), `---
+status: draft
+method: ["Planned before implementation"]
+sourceAreas: []
+unmapped: []
+limitations: []
+---
+
+# Coverage
+
+Planned map.
+`)
+    writeFileSync(join(cwd, '.businesslens/journeys/manage-orders/journey.md'), `---
+domain: ordering
+actors: [store-admin]
+experiences: [admin-console]
+---
+
+# Manage orders
+
+An admin reviews and refunds orders.
+`)
+    writeFileSync(join(cwd, '.businesslens/journeys/manage-orders/scenarios/refund-order.md'), `---
+kind: edge
+---
+
+# Refund an order
+
+## Trigger
+
+t.
+
+## Steps
+
+1. s
+
+## Outcome
+
+o.
+`)
+    const result = run(cwd)
+    expect(result.errors).toEqual([])
+    expect(result.ok).toBe(true)
+    expect(result.warnings.filter(warning => warning.includes('needs at least one codeRef'))).toHaveLength(2)
+  })
+
+  it('keeps missing evidence an error once coverage leaves draft', () => {
+    const cwd = fixtureCopy()
+    writeFileSync(join(cwd, '.businesslens/journeys/manage-orders/journey.md'), `---
+domain: ordering
+actors: [store-admin]
+experiences: [admin-console]
+---
+
+# Manage orders
+
+An admin reviews and refunds orders.
+`)
+    const result = run(cwd)
+    expect(result.ok).toBe(false)
+    expect(result.errors.some(error => error.includes('needs at least one codeRef'))).toBe(true)
+  })
 })

@@ -5,11 +5,12 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
 **Product-Driven Design for coding agents.** BusinessLens builds a
-Git-tracked product map in `.businesslens/`: who the product serves, what they
-accomplish, and where the code proves it.
+Git-tracked product map in `.businesslens/`: who the product serves, what
+they accomplish, and where the code proves it.
 
-The map is Markdown, reviewable in pull requests, and useful without a hosted
-service.
+The map is Markdown, reviewable in pull requests, and useful without a
+hosted service. One rule holds it together: behavioral claims need code
+evidence, and a green `validate` means the map and the code agree.
 
 ```text
 .businesslens/
@@ -24,43 +25,43 @@ service.
 
 ## Getting started
 
-### 1. Install the skills
-
-Run this in the repository you want to map:
+Install the skills in the repository:
 
 ```bash
 npx businesslens@latest install
 ```
 
-The installer detects supported AI harnesses, lets you customize the
-selection, asks for project or global scope, and installs only the
-BusinessLens skills.
+The installer detects supported AI harnesses (Claude Code, Codex, Cursor,
+Gemini CLI, GitHub Copilot), lets you customize the selection, asks for
+project or global scope, and installs only the BusinessLens skills. For
+automated setup: `npx businesslens@latest install --providers claude,codex
+--scope project --yes`.
 
-For automated setup:
+Then get a map:
 
-```bash
-npx businesslens@latest install \
-  --providers claude,codex,cursor \
-  --scope project \
-  --yes
-```
+- **Existing product** — `/businesslens-init` inspects the code and builds
+  the evidence-backed map.
+- **Blank repository** — `/businesslens-plan` interviews you and authors the
+  whole product as a draft map, before any code exists.
 
-### 2. Build the map in your AI harness
+(Codex users invoke skills as `$businesslens-init` / `$businesslens-plan`.)
 
-Invoke the initialization skill:
+## The loop for every feature
+
+Planning is editing the map. Git is the change model — branches hold plans,
+pull requests review them, history archives them:
 
 ```text
-/businesslens-init
+/businesslens-plan add guest checkout   # map describes intended behavior
+… implement with your coding agent …
+/businesslens-verify                    # code checked against the plan, evidence attached
+npx businesslens validate               # green = done; CI gates the PR
 ```
 
-Codex users can invoke the same skill as `$businesslens-init`. The skill
-inspects the repository without executing its application, authors the full
-map, installs the managed `AGENTS.md` guidance, and validates the result.
-
-### 3. Review and commit
-
-Review `.businesslens/`, then commit its authored files. Generated cache files
-stay ignored.
+Between plan and verify, new journeys and scenarios without `codeRefs`
+appear as expected validation findings. `/businesslens-verify` also derives
+changed and deleted work from the map diff, so the full plan is checked.
+Code changed without a plan? `/businesslens-sync` repairs the map.
 
 ## Terminal or agent?
 
@@ -73,50 +74,49 @@ BusinessLens has two deliberate surfaces:
 | Terminal | `npx businesslens validate` | Deterministically validate the map |
 | Terminal | `npx businesslens build` | Compile the map into the portable project document |
 | Terminal | `npx businesslens publish` | Submit the map to the platform as a commit-pinned snapshot |
-| AI harness | `businesslens-init` | Build the initial map |
-| AI harness | `businesslens-sync` | Update the map after behavior changes |
-| AI harness | `businesslens-deep-dive` | Expand one journey or experience |
-| AI harness | `businesslens-validate` | Validate the map and explain every result |
-| AI harness | `businesslens-doctor` | Diagnose validation, drift, and coverage |
-| AI harness | `businesslens-publish` | Publish the map to the platform on explicit request |
+| AI harness | the eight `businesslens-*` skills | Map, plan, verify, and maintain the product truth |
 
 The installer never creates `.businesslens/` or modifies `AGENTS.md`. Those
-require repository analysis and belong to the initialization skill.
+require repository analysis and belong to the skills.
 
 ## Skills
 
 | Skill | Use it when |
 | --- | --- |
-| `businesslens-init` | Adopting BusinessLens or rebuilding an incomplete map |
-| `businesslens-sync` | Code changes affected product behavior |
+| `businesslens-init` | Adopting BusinessLens in a repository that already has code |
+| `businesslens-plan` | Planning a product (blank repo) or a feature (mapped repo) before code |
+| `businesslens-verify` | Planned map changes were implemented and need evidence-backed checking |
+| `businesslens-sync` | Code changed without a plan and the map drifted |
 | `businesslens-deep-dive` | One journey or experience needs exhaustive coverage |
 | `businesslens-validate` | The map needs a read-only deterministic check |
 | `businesslens-doctor` | The map fails validation, looks stale, or needs a health report |
 | `businesslens-publish` | The user explicitly wants the map on the platform |
 
-Every skill is self-contained and follows the open Agent Skills folder format.
-The CLI currently supports Claude Code, Codex, Cursor, Gemini CLI, and GitHub
-Copilot installation paths.
+Every skill is self-contained and follows the open Agent Skills folder
+format. Claude Code plugin users may alternatively install from this
+repository's marketplace manifest; the standalone CLI remains the primary
+installation experience.
 
-`businesslens-validate` is the read-only agent interface to the deterministic
-CLI validator. `businesslens-doctor` goes further: it investigates drift,
-coverage, and hygiene, and can repair problems when explicitly requested.
+## Documentation
 
-Claude Code plugin users may alternatively install from this repository's
-marketplace manifest. The standalone CLI remains the primary installation
-experience.
+Learn the flow:
 
-## Keep the map current
+- [Introduction](./docs/index.md) · [Installation](./docs/installation.md) ·
+  [Quickstart](./docs/quickstart.md)
+- [How it works](./docs/guide.md) · [The product map](./docs/product-map.md)
+- [Map existing code](./docs/tutorial-map-existing-product.md)
+- [Plan a new product](./docs/tutorial-plan-new-product.md)
+- [Ship a feature](./docs/tutorial-ship-a-feature.md)
+- [Recover from drift](./docs/tutorial-recover-from-drift.md)
 
-1. Before changing behavior, read the relevant experiences, journeys, and
-   scenarios.
-2. Build against the repository's SDD change when one exists.
-3. Invoke `businesslens-sync` after behavior changes.
-4. Run `npx businesslens validate`.
+Reference:
 
-PDD records what **is**. OpenSpec, spec-kit, and other SDD systems prescribe
-what **will change**. BusinessLens links that intent without copying it. See
-[PDD and SDD](./docs/pdd-and-sdd.md).
+- [Skills overview](./docs/skills.md) (one page per skill)
+- [Format contract](./docs/format.md)
+- [CLI reference](./docs/cli.md)
+- [Validation rules](./docs/validation-rules.md)
+- [CI validation and publishing](./docs/ci.md)
+- [PDD and SDD](./docs/pdd-and-sdd.md)
 
 ## Updating the skills
 
@@ -128,25 +128,15 @@ Update discovers BusinessLens-managed installations through ownership markers
 and refreshes only those skill directories. It does not touch `.businesslens/`
 or `AGENTS.md`.
 
-## Documentation
-
-- [Introduction](./docs/index.md)
-- [Quickstart](./docs/quickstart.md)
-- [`.businesslens/` format](./docs/format.md)
-- [CLI reference](./docs/cli.md)
-- [Skills reference](./docs/skills.md)
-- [CI validation and publishing](./docs/ci.md)
-- [PDD and SDD](./docs/pdd-and-sdd.md)
-
 ## Safety
 
 - Skills inspect target repositories statically; they do not run target code.
 - Installation refuses to overwrite unowned `businesslens-*` directories
   unless `--force` is explicit.
 - Updates replace only artifacts marked as BusinessLens-managed.
-- No platform connection or publishing occurs during installation or mapping;
-  publishing happens only through the explicit `publish` command or the
-  `businesslens-publish` skill.
+- No platform connection or publishing occurs during installation, mapping,
+  or planning; publishing happens only through the explicit `publish`
+  command or the `businesslens-publish` skill.
 
 ## License
 

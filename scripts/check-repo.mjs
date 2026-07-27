@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-import { readFile, access } from 'node:fs/promises'
+import { readFile, readdir, access } from 'node:fs/promises'
 import { resolve } from 'node:path'
+import { parse as parseYaml } from 'yaml'
 
 const root = process.cwd()
 const errors = []
@@ -29,6 +30,8 @@ const plugin = JSON.parse(await readFile(resolve(root, '.claude-plugin/plugin.js
 const marketplace = JSON.parse(await readFile(resolve(root, '.claude-plugin/marketplace.json'), 'utf8'))
 const expectedSkills = [
   'businesslens-init',
+  'businesslens-plan',
+  'businesslens-verify',
   'businesslens-sync',
   'businesslens-deep-dive',
   'businesslens-validate',
@@ -90,6 +93,52 @@ for (const skillPath of plugin.skills || []) {
   }
   if (!await exists(`${dir}/agents/openai.yaml`)) {
     errors.push(`${dir}/agents/openai.yaml is missing`)
+  }
+}
+
+// Docs frontmatter contract, consumed by the landing repository's nav:
+// section = top-level tab, group = sidebar cluster, order = global within section.
+const DOC_SECTIONS = new Set(['open-source', 'platform'])
+const docFiles = (await readdir(resolve(root, 'docs'))).filter(name => name.endsWith('.md')).sort()
+const docOrders = new Map()
+for (const name of docFiles) {
+  const source = await readFile(resolve(root, `docs/${name}`), 'utf8')
+  const match = source.match(/^---\n([\s\S]*?)\n---/)
+  if (!match) {
+    errors.push(`docs/${name} is missing frontmatter`)
+    continue
+  }
+  let data
+  try {
+    data = parseYaml(match[1])
+  } catch (error) {
+    errors.push(`docs/${name} frontmatter is invalid YAML (${error.message})`)
+    continue
+  }
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    errors.push(`docs/${name} frontmatter must be a YAML mapping`)
+    continue
+  }
+  for (const key of ['title', 'description', 'section', 'group']) {
+    if (typeof data[key] !== 'string' || !data[key].trim()) {
+      errors.push(`docs/${name} frontmatter is missing "${key}"`)
+    }
+  }
+  const section = data.section
+  if (section && !DOC_SECTIONS.has(section)) {
+    errors.push(`docs/${name} section "${section}" must be one of: ${[...DOC_SECTIONS].join('|')}`)
+  }
+  const order = data.order
+  if (!Number.isInteger(order) || order < 1) {
+    errors.push(`docs/${name} order must be a positive integer`)
+  } else if (DOC_SECTIONS.has(section)) {
+    const key = `${section}:${order}`
+    const previous = docOrders.get(key)
+    if (previous) {
+      errors.push(`docs/${name} order ${order} duplicates docs/${previous} in section "${section}"`)
+    } else {
+      docOrders.set(key, name)
+    }
   }
 }
 
