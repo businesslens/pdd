@@ -16,6 +16,7 @@ async function exists(path) {
 
 const REQUIRED = [
   'README.md', 'LICENSE', 'package.json', 'tsconfig.json', 'src/cli.ts',
+  'CHANGELOG.md', 'SECURITY.md', 'CONTRIBUTING.md',
   'docs/format.md', 'docs/cli.md', 'docs/ci.md', 'docs/pdd-and-sdd.md',
   '.claude-plugin/plugin.json', '.claude-plugin/marketplace.json'
 ]
@@ -48,7 +49,7 @@ if (plugin.repository !== 'https://github.com/businesslens/pdd') {
 if (!marketplace.plugins?.some(entry => entry.name === plugin.name)) {
   errors.push(`marketplace.json does not expose the "${plugin.name}" plugin`)
 }
-for (const required of ['dist', 'docs', 'skills']) {
+for (const required of ['CHANGELOG.md', 'dist', 'docs', 'skills']) {
   if (!pkg.files?.includes(required)) errors.push(`package.json files must include "${required}"`)
 }
 if (plugin.commands?.length) {

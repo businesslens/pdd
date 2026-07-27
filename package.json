@@ -19,6 +19,7 @@
     "businesslens": "dist/cli.js"
   },
   "files": [
+    "CHANGELOG.md",
     "dist",
     "docs",
     "skills"

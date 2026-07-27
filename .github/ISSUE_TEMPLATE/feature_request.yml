@@ -1,0 +1,30 @@
+name: Feature request
+description: Propose an improvement to BusinessLens
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What problem would this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: What should happen instead?
+    validations:
+      required: true
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Affected surface
+      options:
+        - CLI
+        - A skill
+        - Format contract
+        - Docs
+        - Other
+    validations:
+      required: true
