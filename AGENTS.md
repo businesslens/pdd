@@ -9,16 +9,16 @@ or validator behavior.
 
 ## Layout
 
-- `src/cli.ts` — public command dispatch: `install`, `update`, and `validate`.
-- `src/commands/` — public command implementations plus internal compilation
-  and publishing work retained for a later release.
+- `src/cli.ts` — public command dispatch: `install`, `update`, `validate`,
+  `build`, and `publish`.
+- `src/commands/` — public command implementations.
 - `src/core/providers.ts` — supported harness paths and detection.
 - `src/core/skill-installation.ts` — ownership-safe skill installation.
 - `src/core/` — parsers, model loading, Git evidence, portable schema, and the
   platform client.
 - `skills/businesslens-*/SKILL.md` — one independent skill per workflow:
   `businesslens-init`, `businesslens-sync`, `businesslens-deep-dive`,
-  `businesslens-validate`, and `businesslens-doctor`.
+  `businesslens-validate`, `businesslens-doctor`, and `businesslens-publish`.
 - `test/fixtures/fixture-shop/` — the golden validation fixture.
 
 ## Skill-writing standards
@@ -45,8 +45,10 @@ or validator behavior.
 
 ## Change and release checks
 
-- Run `npm run typecheck && npm test && npm run check` after any change.
-- Run `npm run build` and inspect `npm pack --dry-run`.
+- Run `npm run verify` after any change.
+- Inspect `npm pack --dry-run` before a release.
+- Roll the `[Unreleased]` section of `CHANGELOG.md` into a new version heading
+  before dispatching a release.
 - Validate every skill with the skill-creator `quick_validate.py`.
 - Validate the Claude plugin with `claude plugin validate . --strict` when the
   Claude CLI is available.

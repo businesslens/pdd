@@ -12,5 +12,5 @@ stays reusable, self-contained, and well-scoped.
 4. For skills: update the matching `SKILL.md`, keep references self-contained,
    keep names prefixed with `businesslens-`, update `agents/openai.yaml`, and
    list new skills in `.claude-plugin/plugin.json`.
-5. Run `npm run typecheck && npm test && npm run check` before opening a PR.
+5. Run `npm run verify` before opening a PR.
 6. Do not add secrets, customer data, or private repository URLs.

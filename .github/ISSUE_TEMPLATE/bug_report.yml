@@ -1,0 +1,31 @@
+name: Bug report
+description: Report a defect in the CLI, a skill, or the format contract
+labels: [bug]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: Expected and actual behavior. Do not include credentials or private repository URLs.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      description: Minimal steps to reproduce the behavior.
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: BusinessLens version and harness
+      description: The businesslens version you ran and the AI harness (Claude Code, Codex, Cursor, ...)
+    validations:
+      required: true
+  - type: textarea
+    id: validate-output
+    attributes:
+      label: Validate output (optional)
+      description: Output of `npx businesslens validate` if relevant. Redact anything private.
+      render: shell
