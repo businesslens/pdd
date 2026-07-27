@@ -33,7 +33,7 @@ afterEach(() => {
 })
 
 describe('skill installation', () => {
-  it('installs only the six namespaced skills into every selected project harness', async () => {
+  it('installs only the eight namespaced skills into every selected project harness', async () => {
     const project = temporary('bl-install-')
     vi.spyOn(console, 'log').mockImplementation(() => undefined)
 
@@ -62,6 +62,8 @@ describe('skill installation', () => {
     expect(existsSync(join(project, '.claude', 'commands'))).toBe(false)
     expect(existsSync(join(project, '.claude', 'skills', 'businesslens-init', 'references', 'format.md'))).toBe(true)
     expect(existsSync(join(project, '.claude', 'skills', 'businesslens-init', 'scripts', 'inventory-repository.mjs'))).toBe(true)
+    expect(existsSync(join(project, '.claude', 'skills', 'businesslens-plan', 'scripts', 'run-businesslens.mjs'))).toBe(true)
+    expect(existsSync(join(project, '.claude', 'skills', 'businesslens-verify', 'scripts', 'run-businesslens.mjs'))).toBe(true)
     expect(existsSync(join(project, '.claude', 'skills', 'businesslens-publish', 'scripts', 'run-businesslens.mjs'))).toBe(true)
   })
 

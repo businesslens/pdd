@@ -1,11 +1,14 @@
 ---
 name: businesslens-sync
-description: Refresh an existing .businesslens/ product map after code or behavior changes, correcting affected entities and stale evidence without rebuilding unrelated areas. Use after implementing features, fixing behavior, removing functionality, or when the map has drifted.
+description: Repair an existing .businesslens/ product map after code changed without the map being planned first, correcting affected entities and stale evidence without rebuilding unrelated areas. Use when the map has drifted from unplanned work; for planned work use businesslens-plan before implementing and businesslens-verify after.
 ---
 
 # Synchronize the product map
 
-Update only the product truth affected by the repository changes.
+Recover map truth after unplanned code changes. The primary loop is plan
+(update the map) → implement → verify; sync is the repair lane for
+everything that bypassed it. Update only the product truth affected by the
+repository changes.
 
 Read [references/format.md](references/format.md) and
 [references/evidence-policy.md](references/evidence-policy.md) before editing.

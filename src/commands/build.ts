@@ -127,6 +127,9 @@ export function buildProject(cwd: string): BuildOutcome {
   if (!result.ok) {
     throw new Error(`Validation failed:\n${result.errors.map(error => `- ${error}`).join('\n')}`)
   }
+  if (model.coverage.status === 'draft') {
+    throw new Error('coverage.md status is draft — a planned map cannot be built or published. Implement the planned behavior, verify it with businesslens-verify, and set coverage to partial or complete.')
+  }
   const pinned = provenance(root)
   const today = new Date().toISOString().slice(0, 10)
   const project = compileProject(model, pinned, tracked.length, today)

@@ -16,6 +16,8 @@ import { providerSkillsDir } from './providers.js'
 
 export const BUSINESSLENS_SKILLS = [
   'businesslens-init',
+  'businesslens-plan',
+  'businesslens-verify',
   'businesslens-sync',
   'businesslens-deep-dive',
   'businesslens-validate',

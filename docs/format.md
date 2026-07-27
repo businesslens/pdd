@@ -1,17 +1,31 @@
 ---
-title: The .businesslens/ format
+title: Format contract
 description: The contract for the git-tracked product map — folder layout, universal conventions, entities, and codeRefs.
-order: 3
+section: open-source
+group: Reference
+order: 20
 ---
 
 # The `.businesslens/` Format
 
 This document is the contract for the BusinessLens PDD folder: the git-tracked
 product map that lives inside a repository. Everything the public CLI validates
-is defined here. The map is **descriptive product truth** — what the product
-does today, for whom, with code evidence. Prescriptive change intent (what will
-be built next) belongs to your SDD tool of choice and is deliberately out of
-scope.
+is defined here. The map is **evidence-backed product truth**: every
+behavioral claim (journeys and scenarios) must cite tracked code, and a green
+`validate` means the map and the code agree.
+
+Planning uses the same file: describe intended behavior by editing the map on
+a branch. Until the implementation lands and evidence is attached, `validate`
+reports new, unevidenced journeys and scenarios as missing `codeRefs`.
+`businesslens-verify` derives the complete worklist from the map diff too, so
+changed higher-level contracts and deleted behavior are not invisible merely
+because they need no new evidence field. Git is the change model: branches
+hold plans, pull requests review them, history archives them. The one
+exception is a brand-new product with no code at all, where
+`coverage.md` `status: draft` marks the whole map as planned (see
+[coverage](#coveragemd)). The technical *how* of a change (specs, designs,
+task lists) still belongs to your SDD tool of choice and is referenced via
+`links`.
 
 ## Folder layout
 
@@ -66,6 +80,11 @@ codeRef must point at a tracked file. `codeRefs` are accepted and preserved on
 every entity. Journeys and scenarios require at least one because they make
 behavioral claims; actors, experiences, and domains may carry evidence when
 their boundary is directly represented in code.
+
+While `coverage.md` has `status: draft` (a planned, not-yet-implemented
+map), a journey or scenario without `codeRefs` is a **warning** instead of
+an error. A codeRef that is present must always point at a tracked file —
+planned behavior carries no evidence rather than invented evidence.
 
 ## links (the PDD → SDD bridge)
 
@@ -253,6 +272,13 @@ repository evidence. Entity and file counts in the portable output are
 computed by `build` from the model and the tracked file list — they are never
 authored. The validator checks the authored entities and relationships; it
 does not compile or publish the map.
+
+`status: draft` marks a **planned map**: a greenfield product authored
+before any implementation exists. While draft, missing journey and scenario
+`codeRefs` validate as warnings instead of errors, and `build`/`publish`
+refuse the map — an unimplemented product has no evidence to show. Once the
+implementation is verified and evidence is attached, set the status to
+`partial` or `complete`; from then on evidence is strictly required.
 
 ## Generated files
 

@@ -33,6 +33,10 @@ Do not modify files.
    - **Counts** — actors, experiences, domains, journeys, and scenarios;
    - **Next action** — none for a clean result, `businesslens-init` for a
      missing map, or `businesslens-doctor` when diagnosis or repair is needed.
+   `needs at least one codeRef` findings usually mean planned behavior whose
+   implementation has not been verified yet — the next action there is
+   `businesslens-verify` (they appear as warnings while `coverage.md` is
+   `status: draft`, the planned-greenfield state).
 5. When explaining a finding, read the referenced authored file if necessary
    to provide context. Do not broaden this into a semantic coverage or drift
    audit.

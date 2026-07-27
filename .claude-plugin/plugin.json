@@ -1,7 +1,7 @@
 {
   "name": "businesslens",
   "version": "0.5.0",
-  "description": "Product-Driven Design for coding agents: build and maintain a git-tracked product map in .businesslens/.",
+  "description": "Product-Driven Development for coding agents: build and maintain a git-tracked product map in .businesslens/.",
   "author": {
     "name": "BusinessLens",
     "url": "https://github.com/businesslens"
@@ -17,6 +17,8 @@
   ],
   "skills": [
     "./skills/businesslens-init",
+    "./skills/businesslens-plan",
+    "./skills/businesslens-verify",
     "./skills/businesslens-sync",
     "./skills/businesslens-deep-dive",
     "./skills/businesslens-validate",

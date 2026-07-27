@@ -17,6 +17,9 @@ Diagnose without changing files unless the user explicitly asks for repair.
    - unresolved actors, experiences, domains, kinds, or scenario IDs;
    - `codeRefs` whose paths no longer exist in `git ls-files`;
    - journeys without scenarios or experiences;
+   - evidence-less journeys or scenarios sitting on the default branch, or
+     `coverage.md` stuck in `draft` after implementation shipped — planned
+     work that never went through `businesslens-verify`;
    - placeholder prose, unsupported certainty, or weak coverage claims;
    - generated `cache/` content accidentally tracked by Git.
 4. Check root `AGENTS.md` for one well-formed

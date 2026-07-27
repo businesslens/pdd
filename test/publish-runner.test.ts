@@ -12,7 +12,28 @@ import { tmpdir } from 'node:os'
 import { delimiter, join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 
-const RUNNER = join(__dirname, '..', 'skills', 'businesslens-publish', 'scripts', 'run-businesslens.mjs')
+const VALIDATE_RUNNERS = [
+  {
+    name: 'plan',
+    file: join(__dirname, '..', 'skills', 'businesslens-plan', 'scripts', 'run-businesslens.mjs')
+  },
+  {
+    name: 'verify',
+    file: join(__dirname, '..', 'skills', 'businesslens-verify', 'scripts', 'run-businesslens.mjs')
+  },
+  {
+    name: 'publish',
+    file: join(__dirname, '..', 'skills', 'businesslens-publish', 'scripts', 'run-businesslens.mjs')
+  }
+]
+const PUBLISH_RUNNER = join(
+  __dirname,
+  '..',
+  'skills',
+  'businesslens-publish',
+  'scripts',
+  'run-businesslens.mjs'
+)
 const temporaryDirectories: string[] = []
 
 function temporary(prefix: string): string {
@@ -27,8 +48,8 @@ afterEach(() => {
   }
 })
 
-describe.skipIf(process.platform === 'win32')('isolated publish-skill runner', () => {
-  it('runs npm outside the target and scrubs the key during validation', () => {
+describe.skipIf(process.platform === 'win32')('isolated skill runners', () => {
+  it.each(VALIDATE_RUNNERS)('$name runs npm outside the target and scrubs the key during validation', ({ file }) => {
     const repo = temporary('bl-runner-repo-')
     const bin = temporary('bl-runner-bin-')
     const capture = join(temporary('bl-runner-capture-'), 'npm.json')
@@ -55,7 +76,7 @@ fs.writeFileSync(process.env.CAPTURE_FILE, JSON.stringify({
 
     execFileSync(
       process.execPath,
-      [RUNNER, '--root', repo, 'validate', '--json'],
+      [file, '--root', repo, 'validate', '--json'],
       {
         env: {
           ...process.env,
@@ -106,7 +127,7 @@ require('node:fs').writeFileSync(process.env.CAPTURE_FILE, JSON.stringify({
 
     execFileSync(
       process.execPath,
-      [RUNNER, '--root', repo, 'publish', '--yes'],
+      [PUBLISH_RUNNER, '--root', repo, 'publish', '--yes'],
       {
         env: {
           ...process.env,

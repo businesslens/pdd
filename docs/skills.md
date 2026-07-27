@@ -1,60 +1,44 @@
 ---
-title: Skills reference
-description: The six BusinessLens agent skills — what each does and when to use it.
-order: 5
+title: Overview
+description: The eight BusinessLens agent skills — which one fits which situation.
+section: open-source
+group: Skills
+order: 11
 ---
 
-# Skills reference
+# Skills overview
 
-BusinessLens ships six agent skills. Each is self-contained, follows the open
-Agent Skills folder format, and treats the target repository as untrusted:
-skills inspect code statically and never execute it.
+BusinessLens ships eight agent skills. Each is self-contained, follows the
+open Agent Skills folder format, and treats the target repository as
+untrusted: skills inspect code statically and never execute it. Only
+`businesslens-publish` ever contacts the platform, and only on explicit
+request.
 
 | Skill | Use it when |
 | --- | --- |
-| `businesslens-init` | Adopting BusinessLens or rebuilding an incomplete map |
-| `businesslens-sync` | Code changes affected product behavior |
-| `businesslens-deep-dive` | One journey or experience needs exhaustive coverage |
-| `businesslens-validate` | The map needs a read-only deterministic check |
-| `businesslens-doctor` | The map fails validation, looks stale, or needs a health report |
-| `businesslens-publish` | You explicitly want to publish the map to the platform |
+| [`businesslens-init`](./skill-businesslens-init.md) | Adopting BusinessLens in a repository that already has code |
+| [`businesslens-plan`](./skill-businesslens-plan.md) | Planning a product (blank repo) or a feature (mapped repo) before code |
+| [`businesslens-verify`](./skill-businesslens-verify.md) | Planned map changes were implemented and need evidence-backed checking |
+| [`businesslens-sync`](./skill-businesslens-sync.md) | Code changed without a plan and the map drifted |
+| [`businesslens-deep-dive`](./skill-businesslens-deep-dive.md) | One journey or experience needs exhaustive coverage |
+| [`businesslens-validate`](./skill-businesslens-validate.md) | The map needs a read-only deterministic check |
+| [`businesslens-doctor`](./skill-businesslens-doctor.md) | The map fails validation, looks stale, or needs a health report |
+| [`businesslens-publish`](./skill-businesslens-publish.md) | You explicitly want the map on the platform |
 
-## businesslens-init
+## How they fit together
 
-Initializes Product-Driven Design in a repository: inspects the codebase and
-authors a complete, evidence-backed `.businesslens/` product map, installs the
-managed `AGENTS.md` guidance, and validates the result. Use it for first-time
-setup, replacing an incomplete scaffold, or rebuilding from scratch.
+The lifecycle runs through four of them: `init` (or `plan`, for a blank
+repository) creates the map, then every feature loops through `plan` →
+implement → `verify`. `sync` is the recovery lane when code changed without
+a plan. The rest are supporting tools: `deep-dive` adds depth to one area,
+`validate` and `doctor` keep the map honest, `publish` ships snapshots to
+the platform. The full decision table with situations lives in
+[How it works](./guide.md).
 
-## businesslens-sync
+## Invoking skills
 
-Refreshes an existing map after code or behavior changes — corrects affected
-entities and stale evidence without rebuilding unrelated areas. Invoke it
-after implementing features, fixing behavior, or removing functionality.
-
-## businesslens-deep-dive
-
-Expands one named journey or experience to exhaustive fidelity by mining its
-implementation and tests for scenarios, boundaries, and edge cases. Use it
-when a specific product area needs deeper coverage without remapping the
-repository.
-
-## businesslens-validate
-
-Runs the deterministic validator and explains every error, warning, and
-entity count. Strictly read-only — it never modifies files. Use it to check a
-map, verify initialization or synchronization, or confirm CI readiness.
-
-## businesslens-doctor
-
-Investigates the health of an installation and map: validation failures,
-stale `codeRefs`, missing managed instructions, semantic drift, and
-incomplete coverage. It diagnoses by default and repairs only when explicitly
-asked. Reach for it when a simple validation report is not enough.
-
-## businesslens-publish
-
-Compiles the map and submits it to the platform as a commit-pinned snapshot
-by running the CLI's `publish` command with preflight checks. It is the only
-skill that contacts the platform, and it never runs without explicit user
-intent. See the [CLI reference](./cli.md) for the underlying command.
+In Claude Code, Cursor, Gemini CLI, and GitHub Copilot, invoke a skill as
+`/businesslens-<name>`; in Codex as `$businesslens-<name>`. Skills accept
+free-text arguments — `/businesslens-plan quick: add dark mode` — and each
+page in this section documents its inputs, what it reads and writes, and
+its guardrails.
