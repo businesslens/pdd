@@ -59,14 +59,12 @@ BusinessLens skill that contacts the platform.
      and snapshots follow commits.
    - 400 with issues — fix the listed map problems (or route the user to
      `businesslens-doctor`) and re-run.
-   - 404 — a cached analysis went stale; re-run publish to start fresh.
    - Build refusals (dirty worktree, untracked map files, detached HEAD,
      non-HTTPS origin) — resolve the repository state from step 2.
-6. Report the returned snapshot line (`Created`/`Updated snapshot
-   <versionKey>: <href>`) and the URL. Explain resume semantics: an
-   interrupted publish resumes its active analysis from
-   `.businesslens/cache/analysis.json`; re-publishing the same commit
-   replaces that commit's snapshot; new commits create new snapshots.
+6. Report the returned version line (`Published version <versionKey>:
+   <href>`) and the URL. Every publish reports a new immutable version into
+   the current branch's track; versions are never replaced, and a failed
+   publish is safe to simply re-run.
 
 ## CI
 

@@ -164,9 +164,9 @@ network request.
 - The key is read only from the `BUSINESSLENS_API_KEY` environment variable.
 - Without `--yes` the CLI asks for confirmation; in a non-interactive session
   it refuses with exit code `2`, so agents and CI must pass `--yes`.
-- An interrupted publish resumes its active analysis from
-  `.businesslens/cache/analysis.json`. Re-publishing the same commit replaces
-  that commit's snapshot; new commits create new snapshots.
+- Publishing is a single submission call. Every publish reports a new
+  immutable version into the current branch's track; versions are never
+  replaced, and a failed publish is safe to simply re-run.
 
 Failure responses:
 
@@ -174,8 +174,7 @@ Failure responses:
 | --- | --- |
 | `401` | The platform rejected the API key; check `BUSINESSLENS_API_KEY` |
 | `403` | The key cannot submit projects; create a workspace project key |
-| `404` | The cached analysis went stale; re-run publish to start fresh |
-| `409` | Submission conflicts with the project (for example a branch mismatch — the error names the tracked and submitted branches) |
+| `409` | Submission conflicts with the project (for example the declared repository or branch does not match — the error lists the conflicts) |
 | `400` | The payload was rejected; the error lists the map issues to fix |
 
 The `businesslens-publish` agent skill wraps this command with preflight
