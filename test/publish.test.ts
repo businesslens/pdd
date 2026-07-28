@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process'
 import { createServer, type Server } from 'node:http'
-import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -19,7 +19,6 @@ let server: Server
 let baseUrl: string
 let requests: RecordedRequest[]
 let failNextSubmission: boolean
-let rejectEventsAsMissing: boolean
 let originalApiKey: string | undefined
 
 function git(cwd: string, ...args: string[]): void {
@@ -29,7 +28,6 @@ function git(cwd: string, ...args: string[]): void {
 beforeEach(async () => {
   requests = []
   failNextSubmission = false
-  rejectEventsAsMissing = false
   server = createServer(async (request, response) => {
     const chunks: Buffer[] = []
     for await (const chunk of request) chunks.push(Buffer.from(chunk))
@@ -38,21 +36,7 @@ beforeEach(async () => {
     requests.push({ path, body })
 
     response.setHeader('content-type', 'application/json')
-    if (path === '/api/v2/analyses') {
-      const analysisId = `analysis-${requests.filter(entry => entry.path === path).length}`
-      response.end(JSON.stringify({ analysisId, href: `/analyses/${analysisId}` }))
-      return
-    }
-    if (/^\/api\/v2\/analyses\/[^/]+\/events$/.test(path)) {
-      if (rejectEventsAsMissing) {
-        response.statusCode = 404
-        response.end(JSON.stringify({ message: 'Analysis not found' }))
-        return
-      }
-      response.end(JSON.stringify({ recorded: true }))
-      return
-    }
-    if (path === '/api/v2/projects') {
+    if (path === '/api/v3/projects') {
       if (failNextSubmission) {
         failNextSubmission = false
         response.statusCode = 500
@@ -61,9 +45,8 @@ beforeEach(async () => {
       }
       const submissionCount = requests.filter(entry => entry.path === path).length
       response.end(JSON.stringify({
-        href: '/workspace/test/projects/fixture-shop',
-        created: submissionCount === 1,
-        versionKey: 'main-abcdef12'
+        href: `/workspace/test/projects/fixture-shop/tracks/main?v=v${submissionCount}`,
+        versionKey: `v${submissionCount}`
       }))
       return
     }
@@ -118,45 +101,36 @@ describe('publish lifecycle', () => {
     expect(console.error).toHaveBeenCalledWith(expect.stringContaining('untrusted platform.url'))
   })
 
-  it('starts a fresh analysis after success so the same commit is replaced', async () => {
+  it('submits the portable project targeting its slug in a single call', async () => {
+    expect(await runPublish(repo, true)).toBe(0)
+
+    expect(requests).toHaveLength(1)
+    const submission = requests[0]!
+    expect(submission.path).toBe('/api/v3/projects')
+    expect(submission.body.target).toEqual({ projectSlug: submission.body.project.id })
+    expect(submission.body.project.source.commit).toMatch(/^[a-f0-9]{40}$/)
+    expect(JSON.stringify(submission.body)).not.toContain(API_KEY)
+    expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Published version v1'))
+
+    expect(existsSync(join(repo, '.businesslens/cache/analysis.json'))).toBe(false)
+  })
+
+  it('reports a new version on every publish of the same commit', async () => {
     expect(await runPublish(repo, true)).toBe(0)
     expect(await runPublish(repo, true)).toBe(0)
 
-    const starts = requests.filter(request => request.path === '/api/v2/analyses')
-    const submissions = requests.filter(request => request.path === '/api/v2/projects')
-    expect(starts).toHaveLength(2)
-    expect(starts[0]!.body.clientRunId).not.toBe(starts[1]!.body.clientRunId)
+    const submissions = requests.filter(request => request.path === '/api/v3/projects')
     expect(submissions).toHaveLength(2)
     expect(submissions[0]!.body.project.source.commit).toBe(submissions[1]!.body.project.source.commit)
-
-    const state = JSON.parse(readFileSync(join(repo, '.businesslens/cache/analysis.json'), 'utf8'))
-    expect(state).toMatchObject({ schema: 1, status: 'completed', platformUrl: baseUrl })
-    expect(JSON.stringify(state)).not.toContain(API_KEY)
+    expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Published version v2'))
   })
 
-  it('resumes the active analysis after an interrupted submission', async () => {
+  it('surfaces a failed submission and succeeds on retry', async () => {
     failNextSubmission = true
     expect(await runPublish(repo, true)).toBe(1)
+    expect(console.error).toHaveBeenCalledWith(expect.stringContaining('status 500'))
+
     expect(await runPublish(repo, true)).toBe(0)
-
-    const starts = requests.filter(request => request.path === '/api/v2/analyses')
-    const submissions = requests.filter(request => request.path === '/api/v2/projects')
-    expect(starts).toHaveLength(1)
-    expect(submissions).toHaveLength(2)
-    expect(submissions[0]!.body.analysisId).toBe(submissions[1]!.body.analysisId)
-  })
-
-  it('retires stale cached state after the platform reports a missing analysis', async () => {
-    failNextSubmission = true
-    expect(await runPublish(repo, true)).toBe(1)
-
-    rejectEventsAsMissing = true
-    expect(await runPublish(repo, true)).toBe(1)
-    const staleState = JSON.parse(readFileSync(join(repo, '.businesslens/cache/analysis.json'), 'utf8'))
-    expect(staleState.status).toBe('completed')
-
-    rejectEventsAsMissing = false
-    expect(await runPublish(repo, true)).toBe(0)
-    expect(requests.filter(request => request.path === '/api/v2/analyses')).toHaveLength(2)
+    expect(requests.filter(request => request.path === '/api/v3/projects')).toHaveLength(2)
   })
 })

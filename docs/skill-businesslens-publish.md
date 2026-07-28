@@ -37,9 +37,9 @@ tracked worktree is clean, `.businesslens/` is fully committed, `HEAD` is on
 a named branch, and `origin` normalizes to a credential-free HTTPS URL.
 Publishing then runs through a bundled isolated runner that installs the
 CLI in a temporary directory — so a target-local binary or `.npmrc` can
-never intercept the key — and reports the returned snapshot URL. An
-interrupted publish resumes from `.businesslens/cache/analysis.json`;
-re-publishing the same commit replaces that commit's snapshot.
+never intercept the key — and reports the returned version URL. Every
+publish reports a new immutable version into the current branch's track;
+a failed publish is safe to simply re-run.
 
 Draft maps (`coverage: draft`) refuse to build or publish — an
 unimplemented product has no evidence to show.
