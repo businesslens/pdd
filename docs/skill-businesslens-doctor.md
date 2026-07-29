@@ -1,21 +1,21 @@
 ---
 title: doctor
-description: Investigate installation and map health — diagnose by default, repair only on explicit request.
+description: Investigate installation and Product Model health — diagnose by default, repair only on explicit request.
 section: open-source
 group: Skills
-order: 18
+order: 19
 ---
 
 # businesslens-doctor
 
-Root-cause analysis for a map that fails validation, looks stale, or just
+Root-cause analysis for a model that fails validation, looks stale, or just
 feels wrong. Doctor diagnoses by default and never mutates anything unless
 you explicitly ask for repairs.
 
 ## When to use it
 
 - A simple validation report is not enough — findings need investigation.
-- The map may have drifted semantically even though validation is green.
+- The model may have drifted semantically even though validation is green.
 - You want a health report before a release or a publish.
 
 ## Invocation
@@ -29,7 +29,8 @@ you explicitly ask for repairs.
 
 - Validator output, parsed in full.
 - Missing files, unresolved relations, `codeRefs` no longer in
-  `git ls-files`, journeys without scenarios or experiences.
+  `git ls-files`, features without experiences, journeys without features or
+  scenarios, and disconnected business rules.
 - Evidence-less entities sitting on the default branch, or `coverage.md`
   stuck in `draft` after implementation shipped — planned work that never
   went through [`businesslens-verify`](./skill-businesslens-verify.md).
@@ -42,7 +43,7 @@ you explicitly ask for repairs.
 
 ## What it reports
 
-Findings classified as **blocking** (validator cannot accept the map),
+Findings classified as **blocking** (validator cannot accept the model),
 **drift** (authored truth likely no longer matches the implementation),
 **coverage** (material surfaces unmapped), or **hygiene** (generated files,
 duplicated markers, weak evidence) — with the exact files involved and an
@@ -51,6 +52,6 @@ repairs and re-validates until green.
 
 ## Guardrails
 
-- Never mutates the map during a diagnostic-only request.
+- Never mutates the model during a diagnostic-only request.
 - Never treats a green structural validator as proof of complete coverage.
 - Never executes target code, never contacts the platform.

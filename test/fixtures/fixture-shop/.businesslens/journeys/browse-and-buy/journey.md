@@ -2,6 +2,7 @@
 domain: ordering
 actors: [shopper]
 experiences: [storefront]
+features: [catalog-browsing, checkout]
 entryPoints:
   - web: src/routes/storefront.ts
 codeRefs:

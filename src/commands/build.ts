@@ -1,80 +1,121 @@
-import type { PddModel } from '../core/model.js'
-import type { PortableProjectV3 } from '../core/portable.js'
-import type { Provenance } from '../core/git.js'
+import type { EntityFile, PddModel } from '../core/model.js'
+import type { ProductReportV4 } from '../core/portable.js'
 import { writeGeneratedFile } from '../core/generated-files.js'
-import { lsFiles, provenance, repoRoot } from '../core/git.js'
+import { lsFiles, repoRoot } from '../core/git.js'
+import { section, supportingContent } from '../core/markdown.js'
 import { loadModel } from '../core/model.js'
-import { PortableProjectV3Schema } from '../core/portable.js'
-import { validateModel } from './validate.js'
+import {
+  ProductReportV4Schema,
+  REPORT_SCHEMA_VERSION,
+  validateProductReport
+} from '../core/portable.js'
 import { cliVersion } from '../version.js'
+import { validateModel } from './validate.js'
 
 const byId = <T extends { id: string }>(items: T[]): T[] => [...items].sort((a, b) => a.id.localeCompare(b.id))
+const sorted = (items: string[]): string[] => [...items].sort()
 
-/** Compile a validated model + pinned provenance into the portable document. */
-export function compileProject(model: PddModel, pinned: Provenance, trackedFileCount: number, today: string): PortableProjectV3 {
+function entityContent(entity: EntityFile, recognized: string[]) {
+  return {
+    intent: section(entity.doc, 'Intent') || '',
+    supportingContent: supportingContent(entity.doc, ['Intent', ...recognized]),
+    codeRefs: entity.codeRefs,
+    links: entity.links.map(link => ({
+      rel: link.rel as 'spec' | 'proposal' | 'doc' | 'adr',
+      href: link.href,
+      ...(link.title ? { title: link.title } : {})
+    }))
+  }
+}
+
+/** Compile a validated model into a source-free Product Report. */
+export function compileReport(
+  model: PddModel,
+  trackedFileCount: number,
+  today: string
+): ProductReportV4 {
   const scenarios = model.journeys.flatMap(journey => journey.scenarios)
-  const mappedCount = (items: Array<{ codeRefs: unknown[] }>) => items.filter(item => item.codeRefs.length > 0).length
+  const mappedCount = (items: Array<{ codeRefs: unknown[] }>) =>
+    items.filter(item => item.codeRefs.length > 0).length
 
-  const document: PortableProjectV3 = {
-    schemaVersion: '3.0.0',
+  const report: ProductReportV4 = {
+    schemaVersion: REPORT_SCHEMA_VERSION,
     id: model.product.id,
     title: model.product.doc.title,
     description: model.product.doc.lead,
-    tags: model.product.tags,
+    intent: section(model.product.doc, 'Intent') || '',
+    supportingContent: supportingContent(model.product.doc, ['Intent']),
+    links: model.product.links.map(link => ({
+      rel: link.rel as 'spec' | 'proposal' | 'doc' | 'adr',
+      href: link.href,
+      ...(link.title ? { title: link.title } : {})
+    })),
+    tags: sorted(model.product.tags),
     generatedAt: today,
-    source: {
-      repository: pinned.repository,
-      repositoryUrl: pinned.repositoryUrl,
-      branch: pinned.branch,
-      commit: pinned.commit,
-      committedAt: pinned.committedAt,
-      analyzedAt: today
-    },
     generator: { name: 'businesslens-cli', version: cliVersion() },
     summary: {
       actors: model.actors.length,
       experiences: model.experiences.length,
       domains: model.domains.length,
+      features: model.features.length,
       journeys: model.journeys.length,
-      scenarios: scenarios.length
+      scenarios: scenarios.length,
+      businessRules: model.businessRules.length
     },
     limitations: model.product.limitations,
     model: {
       taxonomies: {
         scenarioKinds: byId(model.scenarioKinds).map(kind => ({
-          id: kind.id, name: kind.name, description: kind.description,
+          id: kind.id,
+          name: kind.name,
+          description: kind.description,
           ...(kind.colorSlot !== undefined ? { colorSlot: kind.colorSlot } : {})
         }))
       },
       actors: byId(model.actors).map(actor => ({
-        id: actor.id, name: actor.doc.title, description: actor.doc.lead,
-        codeRefs: actor.codeRefs
+        id: actor.id,
+        name: actor.doc.title,
+        description: actor.doc.lead,
+        ...entityContent(actor, [])
       })),
       experiences: byId(model.experiences).map(experience => ({
         id: experience.id,
         title: experience.doc.title,
         description: experience.doc.lead,
-        actorIds: [...experience.actors].sort(),
+        actorIds: sorted(experience.actors),
         accessMode: experience.access as 'public' | 'authenticated' | 'restricted',
         capabilities: experience.capabilities,
         entryPoints: experience.entryPoints,
         exitContract: experience.exit,
-        codeRefs: experience.codeRefs
+        ...entityContent(experience, ['Capability boundary'])
       })),
       domains: byId(model.domains).map(domain => ({
-        id: domain.id, name: domain.doc.title, description: domain.doc.lead,
+        id: domain.id,
+        name: domain.doc.title,
+        description: domain.doc.lead,
         ...(domain.colorSlot !== undefined ? { colorSlot: domain.colorSlot } : {}),
-        codeRefs: domain.codeRefs
+        ...entityContent(domain, [])
+      })),
+      features: byId(model.features).map(feature => ({
+        id: feature.id,
+        title: feature.doc.title,
+        description: feature.doc.lead,
+        domainId: feature.domain,
+        actorIds: sorted(feature.actors),
+        experienceIds: sorted(feature.experiences),
+        businessRuleIds: sorted(feature.businessRules),
+        ...entityContent(feature, [])
       })),
       journeys: byId(model.journeys).map(journey => ({
         id: journey.id,
         title: journey.doc.title,
         summary: journey.doc.lead,
         domainId: journey.domain,
-        actorIds: [...journey.actors].sort(),
-        experienceIds: [...journey.experiences].sort(),
+        actorIds: sorted(journey.actors),
+        experienceIds: sorted(journey.experiences),
+        featureIds: sorted(journey.features),
         entryPoints: journey.entryPoints,
-        codeRefs: journey.codeRefs
+        ...entityContent(journey, [])
       })),
       scenarios: byId(scenarios).map(scenario => ({
         id: scenario.id,
@@ -83,9 +124,22 @@ export function compileProject(model: PddModel, pinned: Provenance, trackedFileC
         kindId: scenario.kind,
         trigger: scenario.trigger,
         steps: scenario.steps,
+        decisionPoints: scenario.decisionPoints,
         outcome: scenario.outcome,
         edgeCases: scenario.edgeCases,
-        codeRefs: scenario.codeRefs
+        businessRuleIds: sorted(scenario.businessRules),
+        ...entityContent(scenario, ['Trigger', 'Steps', 'Decision points', 'Outcome', 'Edge cases'])
+      })),
+      businessRules: byId(model.businessRules).map(rule => ({
+        id: rule.id,
+        title: rule.doc.title,
+        statement: rule.doc.lead,
+        rationale: rule.rationale,
+        domainIds: sorted(rule.domains),
+        featureIds: sorted(rule.features),
+        journeyIds: sorted(rule.journeys),
+        scenarioIds: sorted(rule.scenarios),
+        ...entityContent(rule, ['Rationale'])
       }))
     },
     coverage: {
@@ -97,25 +151,34 @@ export function compileProject(model: PddModel, pinned: Provenance, trackedFileC
         actors: model.actors.length,
         experiences: model.experiences.length,
         domains: model.domains.length,
+        features: model.features.length,
         journeys: model.journeys.length,
-        scenarios: scenarios.length
+        scenarios: scenarios.length,
+        businessRules: model.businessRules.length
       },
       mapped: {
         actors: mappedCount(model.actors),
         experiences: mappedCount(model.experiences),
         domains: mappedCount(model.domains),
+        features: mappedCount(model.features),
         journeys: mappedCount(model.journeys),
-        scenarios: mappedCount(scenarios)
+        scenarios: mappedCount(scenarios),
+        businessRules: mappedCount(model.businessRules)
       },
       unmapped: model.coverage.unmapped,
-      limitations: model.coverage.limitations
+      limitations: model.coverage.limitations,
+      rationale: model.coverage.rationale
     }
   }
-  return PortableProjectV3Schema.parse(document)
+
+  const parsed = ProductReportV4Schema.parse(report)
+  const issues = validateProductReport(parsed)
+  if (issues.length) throw new Error(`Report validation failed:\n- ${issues.join('\n- ')}`)
+  return parsed
 }
 
 export interface BuildOutcome {
-  project: PortableProjectV3
+  report: ProductReportV4
   outputFile: string
 }
 
@@ -127,32 +190,32 @@ export function buildProject(cwd: string): BuildOutcome {
   if (!result.ok) {
     throw new Error(`Validation failed:\n${result.errors.map(error => `- ${error}`).join('\n')}`)
   }
-  if (model.coverage.status === 'draft') {
-    throw new Error('coverage.md status is draft — a planned map cannot be built or published. Implement the planned behavior, verify it with businesslens-verify, and set coverage to partial or complete.')
-  }
-  const pinned = provenance(root)
   const today = new Date().toISOString().slice(0, 10)
-  const project = compileProject(model, pinned, tracked.length, today)
+  const report = compileReport(model, tracked.length, today)
 
   const outputFile = writeGeneratedFile(
     root,
-    ['.businesslens', 'build', 'project.json'],
-    `${JSON.stringify(project, null, 2)}\n`
+    ['.businesslens', 'build', 'report.json'],
+    `${JSON.stringify(report, null, 2)}\n`
   )
   writeGeneratedFile(
     root,
     ['.businesslens', 'cache', 'build.json'],
-    `${JSON.stringify({ commit: pinned.commit, builtAt: new Date().toISOString() }, null, 2)}\n`
+    `${JSON.stringify({ builtAt: new Date().toISOString(), schemaVersion: REPORT_SCHEMA_VERSION }, null, 2)}\n`
   )
-  return { project, outputFile }
+  return { report, outputFile }
 }
 
 export function runBuild(cwd: string): number {
   try {
-    const { project, outputFile } = buildProject(cwd)
-    const { summary } = project
-    console.log(`Compiled ${summary.actors} actors, ${summary.experiences} experiences, ${summary.domains} domains, ${summary.journeys} journeys, ${summary.scenarios} scenarios.`)
-    console.log(`Wrote ${outputFile} (commit ${project.source.commit.slice(0, 12)}, branch ${project.source.branch}).`)
+    const { report, outputFile } = buildProject(cwd)
+    const { summary } = report
+    console.log(
+      `Compiled ${summary.actors} actors, ${summary.experiences} experiences, `
+      + `${summary.domains} domains, ${summary.features} features, ${summary.journeys} journeys, `
+      + `${summary.scenarios} scenarios, and ${summary.businessRules} business rules.`
+    )
+    console.log(`Wrote ${outputFile}.`)
     return 0
   } catch (error) {
     console.error((error as Error).message)

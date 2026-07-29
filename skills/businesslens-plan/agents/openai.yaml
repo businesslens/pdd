@@ -1,4 +1,4 @@
 interface:
   display_name: "BusinessLens Plan"
-  short_description: "Plan a product or feature in the product map"
-  default_prompt: "Use $businesslens-plan to plan this product or feature directly in the BusinessLens product map before implementation."
+  short_description: "Plan a product or feature in the product model"
+  default_prompt: "Use $businesslens-plan to plan this product or feature directly in the BusinessLens product model before implementation."

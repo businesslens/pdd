@@ -36,7 +36,7 @@ beforeEach(async () => {
     requests.push({ path, body })
 
     response.setHeader('content-type', 'application/json')
-    if (path === '/api/v3/projects') {
+    if (path === '/api/v4/projects') {
       if (failNextSubmission) {
         failNextSubmission = false
         response.statusCode = 500
@@ -96,19 +96,25 @@ describe('publish lifecycle', () => {
     git(repo, 'add', configFile)
     git(repo, 'commit', '-m', 'configure untrusted platform')
 
-    expect(await runPublish(repo, true)).toBe(1)
+    expect(await runPublish(repo, { yes: true })).toBe(1)
     expect(requests).toEqual([])
     expect(console.error).toHaveBeenCalledWith(expect.stringContaining('untrusted platform.url'))
   })
 
-  it('submits the portable project targeting its slug in a single call', async () => {
-    expect(await runPublish(repo, true)).toBe(0)
+  it('submits the report with separate target and provenance in a single call', async () => {
+    expect(await runPublish(repo, { yes: true })).toBe(0)
 
     expect(requests).toHaveLength(1)
     const submission = requests[0]!
-    expect(submission.path).toBe('/api/v3/projects')
-    expect(submission.body.target).toEqual({ projectSlug: submission.body.project.id })
-    expect(submission.body.project.source.commit).toMatch(/^[a-f0-9]{40}$/)
+    expect(submission.path).toBe('/api/v4/projects')
+    expect(submission.body.submissionVersion).toBe('1.0.0')
+    expect(submission.body.target).toEqual({
+      projectSlug: submission.body.report.id,
+      ref: { type: 'branch', name: 'main' }
+    })
+    expect(submission.body.provenance.resources[0].commit).toMatch(/^[a-f0-9]{40}$/)
+    expect(submission.body.report.source).toBeUndefined()
+    expect(JSON.stringify(submission.body.report)).not.toContain('github.com/example/fixture-shop')
     expect(JSON.stringify(submission.body)).not.toContain(API_KEY)
     expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Published version v1'))
 
@@ -116,21 +122,66 @@ describe('publish lifecycle', () => {
   })
 
   it('reports a new version on every publish of the same commit', async () => {
-    expect(await runPublish(repo, true)).toBe(0)
-    expect(await runPublish(repo, true)).toBe(0)
+    expect(await runPublish(repo, { yes: true })).toBe(0)
+    expect(await runPublish(repo, { yes: true })).toBe(0)
 
-    const submissions = requests.filter(request => request.path === '/api/v3/projects')
+    const submissions = requests.filter(request => request.path === '/api/v4/projects')
     expect(submissions).toHaveLength(2)
-    expect(submissions[0]!.body.project.source.commit).toBe(submissions[1]!.body.project.source.commit)
+    expect(submissions[0]!.body.provenance.resources[0].commit)
+      .toBe(submissions[1]!.body.provenance.resources[0].commit)
     expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Published version v2'))
   })
 
   it('surfaces a failed submission and succeeds on retry', async () => {
     failNextSubmission = true
-    expect(await runPublish(repo, true)).toBe(1)
+    expect(await runPublish(repo, { yes: true })).toBe(1)
     expect(console.error).toHaveBeenCalledWith(expect.stringContaining('status 500'))
 
-    expect(await runPublish(repo, true)).toBe(0)
-    expect(requests.filter(request => request.path === '/api/v3/projects')).toHaveLength(2)
+    expect(await runPublish(repo, { yes: true })).toBe(0)
+    expect(requests.filter(request => request.path === '/api/v4/projects')).toHaveLength(2)
+  })
+
+  it('refuses dirty authored map provenance even though local build is allowed', async () => {
+    writeFileSync(
+      join(repo, '.businesslens/product.md'),
+      `${readFileSync(join(repo, '.businesslens/product.md'), 'utf8')}\nDirty edit.\n`
+    )
+    expect(await runPublish(repo, { yes: true })).toBe(1)
+    expect(requests).toEqual([])
+    expect(console.error).toHaveBeenCalledWith(expect.stringContaining('uncommitted'))
+  })
+
+  it('publishes an exact tag from a detached checkout', async () => {
+    git(repo, 'tag', 'v0.6.0')
+    git(repo, 'checkout', '--detach', 'v0.6.0')
+
+    expect(await runPublish(repo, { yes: true, tag: 'v0.6.0' })).toBe(0)
+    expect(requests[0]!.body.target.ref).toEqual({ type: 'tag', name: 'v0.6.0' })
+    expect(requests[0]!.body.provenance.resources[0].branch).toBe('v0.6.0')
+  })
+
+  it('publishes a pull request track with its base metadata', async () => {
+    expect(await runPublish(repo, {
+      yes: true,
+      pullRequest: 42,
+      baseBranch: 'main',
+      prTitle: 'Add checkout',
+      prUrl: 'https://github.com/example/fixture-shop/pull/42'
+    })).toBe(0)
+
+    expect(requests[0]!.body.target.ref).toEqual({
+      type: 'pull-request',
+      number: 42,
+      baseBranch: 'main',
+      title: 'Add checkout',
+      url: 'https://github.com/example/fixture-shop/pull/42'
+    })
+    expect(requests[0]!.body.provenance.resources[0].branch).toBe('main')
+  })
+
+  it('rejects incomplete pull-request targeting before building or submitting', async () => {
+    expect(await runPublish(repo, { yes: true, pullRequest: 42 })).toBe(2)
+    expect(requests).toEqual([])
+    expect(console.error).toHaveBeenCalledWith(expect.stringContaining('--base-branch'))
   })
 })

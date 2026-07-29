@@ -3,12 +3,12 @@ title: Validation rules
 description: Every businesslens validate error and warning — what it means and how to fix it.
 section: open-source
 group: Reference
-order: 22
+order: 23
 ---
 
 # Validation rules
 
-`npx businesslens validate` is deterministic: the same map always produces
+`npx businesslens validate` is deterministic: the same model always produces
 the same findings. This page lists every finding with its meaning and fix.
 Exit codes: `0` when there are no errors (warnings may remain), `1` for
 validation failure, and `2` for invalid usage.
@@ -24,7 +24,7 @@ attaching evidence.
 Reported when files cannot be read into the model at all.
 
 - `.businesslens/ does not exist — invoke the businesslens-init skill first`
-  — no map yet. Run `businesslens-init` (existing code) or
+  — no model yet. Run `businesslens-init` (existing code) or
   `businesslens-plan` (blank repository).
 - `config.yaml is missing` / `product.md is missing` /
   `coverage.md is missing` / `taxonomies.yaml is missing` — a required
@@ -56,8 +56,9 @@ Reported when files cannot be read into the model at all.
 
 ## Structure errors
 
-- `product.md: missing id` / `id must be lowercase kebab-case` — the
-  product manifest needs a kebab-case `id`.
+- `product.md: missing id` / `id must be lowercase kebab-case` /
+  `id must be at most 64 characters` — the product manifest needs a
+  Platform-compatible kebab-case `id`.
 - `<collection>: id "<id>" must be lowercase kebab-case` — entity IDs are
   filename stems and must match `^[a-z0-9]+(?:-[a-z0-9]+)*$`.
 - `<file>: missing H1 title` / `missing lead paragraph (description)` —
@@ -82,9 +83,9 @@ Reported when files cannot be read into the model at all.
   `needs at least one scenario` — journeys and experiences have minimum
   relations; empty ones are not product claims.
 - `scenario id "…" already used in <journey> (ids are global)` — scenario
-  IDs are unique across the whole map, so every scenario is addressable.
+  IDs are unique across the whole model, so every scenario is addressable.
   Rename one of them.
-- `experiences/: the map needs at least one experience` — an empty map is
+- `experiences/: the model needs at least one experience` — an empty model is
   only valid transiently; build it with `businesslens-init` or plan it with
   `businesslens-plan`.
 
@@ -97,10 +98,11 @@ Reported when files cannot be read into the model at all.
 - `codeRef path "…" is not a tracked file` — every codeRef path must exist
   in `git ls-files`. Fix the path, commit the file, or remove the stale
   ref.
-- While `coverage.md` has `status: draft` (a planned greenfield map),
+- While `coverage.md` has `status: draft` (a planned greenfield model),
   missing codeRefs appear as **warnings** instead —
   `needs at least one codeRef before coverage can leave draft` — and the
-  map stays green. `build` and `publish` refuse draft maps.
+  model stays green. Draft models may build and be reported privately; the warning
+  continues to distinguish planned knowledge from implementation evidence.
 
 ## Warnings
 

@@ -10,6 +10,10 @@
 ## Entities
 
 - Actors are defined by goals or privileges, never by UI screens.
+- Features are stable capabilities, not screen labels or one-off sequence
+  steps.
+- Business rules are durable assertions or policies, not implementation
+  checks.
 - Journeys express stable user or operator goals; scenarios are observable
   paths through a goal, not implementation branches.
 - Cover the scenario space deliberately: primary success, permission or
@@ -17,12 +21,16 @@
   paths — when the planned behavior genuinely distinguishes them.
 - Keep prose at product altitude: what a user observes, not how the system
   achieves it.
+- Use a Decision point only when one product condition creates two or more
+  materially different outcomes.
+- Record intent when the reason behind a boundary, rule, or behavior would
+  guide future implementation choices.
 
 ## Scenarios are the acceptance contract
 
 `businesslens-verify` will check the implementation against each scenario's
-Trigger, Steps, and Outcome. Write them so a reviewer could check them
-against source code without executing anything:
+Trigger, Steps, Decision points, and Outcome. Write them so a reviewer could
+check them against source code without executing anything:
 
 - Good: "Submitting an empty cart shows an error and keeps the cart."
 - Too vague: "Cart validation works."

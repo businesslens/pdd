@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest'
 import { parseCodeRef, formatCodeRef } from '../src/core/coderefs.js'
 import { splitFrontmatter, entryPointsField } from '../src/core/frontmatter.js'
 import { isId, slugify, stem } from '../src/core/ids.js'
-import { bulletList, orderedList, parseMarkdown, section } from '../src/core/markdown.js'
+import {
+  bulletList, decisionPoints, orderedList, parseMarkdown, section, supportingContent
+} from '../src/core/markdown.js'
 
 describe('ids', () => {
   it('accepts kebab-case and rejects everything else', () => {
@@ -91,5 +93,22 @@ describe('markdown', () => {
     const fenced = parseMarkdown('# Title\n\nLead.\n\n```\n## trap\n```\n\n## Real\n\nBody.\n')
     expect(fenced.sections.map(entry => entry.heading)).toEqual(['Real'])
     expect(fenced.lead).toContain('## trap')
+  })
+  it('parses decision points and preserves unrecognized sections', () => {
+    const withDecision = parseMarkdown(
+      '# Scenario\n\n## Decision points\n\n### Access\n\nCan the actor continue?\n\n'
+      + '- allowed → continue\n- denied -> stop\n\n## Notes\n\nKeep this context.\n'
+    )
+    const issues: string[] = []
+    expect(decisionPoints(section(withDecision, 'Decision points')!, issues, 'scenario')).toEqual([{
+      title: 'Access',
+      question: 'Can the actor continue?',
+      branches: [
+        { condition: 'allowed', outcome: 'continue' },
+        { condition: 'denied', outcome: 'stop' }
+      ]
+    }])
+    expect(issues).toEqual([])
+    expect(supportingContent(withDecision, ['Decision points'])).toBe('## Notes\n\nKeep this context.')
   })
 })

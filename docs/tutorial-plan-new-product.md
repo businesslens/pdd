@@ -1,15 +1,15 @@
 ---
 title: Plan a new product
-description: Blank repository — plan the whole product as a draft map, implement it, verify it, and watch the map become evidence-backed truth.
+description: Blank repository — plan the whole product as a draft model, implement it, verify it, and watch the model become evidence-backed truth.
 section: open-source
 group: Tutorials
-order: 8
+order: 9
 ---
 
 # Plan a new product from scratch
 
 **Goal:** a complete planned product before any code exists — and, once you
-build it, an evidence-backed map that grew straight out of the plan.
+build it, an evidence-backed model that grew straight out of the plan.
 
 **Prerequisites:** a fresh Git repository (`git init`), Node.js 20.12+, an
 AI harness, and the skills installed (`npx businesslens@latest install`).
@@ -22,32 +22,33 @@ AI harness, and the skills installed (`npx businesslens@latest install`).
    /businesslens-plan
    ```
 
-   With no map and no code, the skill runs the full product interview: why
+   With no model and no code, the skill runs the full product interview: why
    the product exists, who it serves (actors), which surfaces it has
-   (experiences), which goals matter (journeys), and how each plays out
-   observably (scenarios with Trigger, Steps, Outcome). It proposes drafts
-   after every answer — you correct rather than dictate.
+   (experiences), its domains and stable features, the business rules that
+   constrain it, which goals matter (journeys), and how each plays out
+   observably (scenarios with Trigger, Steps, Decision points, and Outcome).
+   It proposes drafts after every answer — you correct rather than dictate.
 
-2. Review what it authored: a complete `.businesslens/` map with **no
+2. Review what it authored: a complete `.businesslens/` Product Model with **no
    codeRefs** and `coverage.md` at `status: draft`. Validation is green with
-   warnings — a draft map is planned, not proven. Iterate by invoking
+   warnings — a draft model is planned, not proven. Iterate by invoking
    `/businesslens-plan` again with corrections, then commit:
 
    ```bash
    npx businesslens@latest validate
    git add .businesslens AGENTS.md
-   git commit -m "plan: initial product map (draft)"
+   git commit -m "plan: initial product model (draft)"
    ```
 
-   If nobody ever implements it, this draft map is itself a portable,
+   If nobody ever implements it, this draft model is itself a portable,
    validated product design — plain Markdown you can hand to anyone.
 
-3. Implement with your coding agent, pointing it at the map as the product
+3. Implement with your coding agent, pointing it at the model as the product
    spec:
 
    ```text
-   Implement the product described in .businesslens/ — the journeys and
-   scenarios are the behavior contract.
+   Implement the product described in .businesslens/ — its features, business
+   rules, journeys, decisions, and scenarios are the product contract.
    ```
 
    Before verification, stage every new or changed implementation file with
@@ -72,14 +73,14 @@ AI harness, and the skills installed (`npx businesslens@latest install`).
    ```bash
    npx businesslens@latest validate
    git add .businesslens
-   git commit -m "feat: verify implementation against the planned map"
+   git commit -m "feat: verify implementation against the planned model"
    ```
 
    The commit includes the implementation staged in step 3 and the verified
-   map staged here.
+   model staged here.
 
 ## Outcome
 
-A green, evidence-backed map born from the plan. From here the product uses
+A green, evidence-backed model born from the plan. From here the product uses
 the same loop as any mapped repository —
 [plan and ship a feature](./tutorial-ship-a-feature.md).

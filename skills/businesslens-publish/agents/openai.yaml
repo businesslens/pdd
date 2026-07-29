@@ -1,4 +1,4 @@
 interface:
   display_name: "BusinessLens Publish"
-  short_description: "Publish the product map to the platform"
-  default_prompt: "Use $businesslens-publish to publish this repository's BusinessLens product map to the platform."
+  short_description: "Publish the product model to the platform"
+  default_prompt: "Use $businesslens-publish to publish this repository's BusinessLens product model to the platform."

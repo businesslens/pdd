@@ -1,14 +1,14 @@
 ---
 title: Map existing code
-description: Build an evidence-backed product map of what your product does today.
+description: Build an evidence-backed product model of what your product does today.
 section: open-source
 group: Tutorials
-order: 7
+order: 8
 ---
 
 # Map an existing product
 
-**Goal:** an evidence-backed `.businesslens/` map of what your product does
+**Goal:** an evidence-backed `.businesslens/` Product Model of what your product does
 today, so agents and reviewers start from product context instead of
 repository archaeology.
 
@@ -24,15 +24,16 @@ GitHub Copilot).
    npx businesslens@latest install
    ```
 
-2. Build the map in your harness:
+2. Build the model in your harness:
 
    ```text
    /businesslens-init
    ```
 
    (Codex: `$businesslens-init`.) The skill inspects the code without
-   executing it, authors actors, experiences, domains, journeys, and
-   scenarios with `codeRefs`, and installs the managed `AGENTS.md` block.
+   executing it, authors actors, experiences, domains, features, journeys,
+   scenarios, business rules, and decision points with direct evidence, and
+   installs the managed `AGENTS.md` block.
    Answer only the questions the code cannot — the skill drafts everything
    it can from evidence.
 
@@ -44,7 +45,7 @@ GitHub Copilot).
    ```bash
    npx businesslens@latest validate
    git add .businesslens AGENTS.md
-   git commit -m "docs: add BusinessLens product map"
+   git commit -m "docs: add BusinessLens product model"
    ```
 
 5. Optional: deepen the highest-value area.
@@ -53,11 +54,11 @@ GitHub Copilot).
    /businesslens-deep-dive <journey-id>
    ```
 
-6. Add the validator to CI so the map cannot rot — see
+6. Add the validator to CI so the model cannot rot — see
    [Validate in CI](./ci.md).
 
 ## Outcome
 
-`npx businesslens validate` is green; the map describes today's product
+`npx businesslens validate` is green; the model describes today's product
 with evidence. From here, plan every new feature with
 [the feature loop](./tutorial-ship-a-feature.md).

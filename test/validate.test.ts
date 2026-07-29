@@ -1,4 +1,4 @@
-import { cpSync, mkdtempSync, rmSync, writeFileSync, unlinkSync } from 'node:fs'
+import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync, unlinkSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
@@ -34,7 +34,15 @@ describe('validateModel', () => {
     const result = run(fixtureCopy())
     expect(result.errors).toEqual([])
     expect(result.ok).toBe(true)
-    expect(result.counts).toEqual({ actors: 2, experiences: 2, domains: 2, journeys: 2, scenarios: 3 })
+    expect(result.counts).toEqual({
+      actors: 2,
+      experiences: 2,
+      domains: 2,
+      features: 3,
+      journeys: 2,
+      scenarios: 3,
+      businessRules: 2
+    })
   })
 
   it('rejects an untrusted configured platform URL', () => {
@@ -45,6 +53,17 @@ describe('validateModel', () => {
     )
     const result = run(cwd)
     expect(result.errors).toContainEqual(expect.stringContaining('untrusted platform.url'))
+  })
+
+  it('rejects product ids longer than the Platform project-slug limit', () => {
+    const cwd = fixtureCopy()
+    const product = join(cwd, '.businesslens/product.md')
+    writeFileSync(
+      product,
+      readFileSync(product, 'utf8').replace('id: fixture-shop', `id: ${'a'.repeat(65)}`)
+    )
+    const result = run(cwd)
+    expect(result.errors).toContain('product.md: id must be at most 64 characters')
   })
 
   it('fails on a dangling actor reference', () => {
@@ -182,6 +201,7 @@ Planned map.
 domain: ordering
 actors: [store-admin]
 experiences: [admin-console]
+features: [order-management]
 ---
 
 # Manage orders

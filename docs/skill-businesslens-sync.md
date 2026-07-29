@@ -1,14 +1,14 @@
 ---
 title: sync
-description: Repair the map after code changed without a plan — targeted drift recovery, not the routine loop.
+description: Repair the model after code changed without a plan — targeted drift recovery, not the routine loop.
 section: open-source
 group: Skills
-order: 15
+order: 16
 ---
 
 # businesslens-sync
 
-Recovers map truth after **unplanned** code changes — a hotfix, a refactor
+Recovers model truth after **unplanned** code changes — a hotfix, a refactor
 that moved evidence, a feature that skipped planning. The primary loop is
 plan → implement → verify; sync is the repair lane for everything that
 bypassed it, and it updates only the product truth the changes actually
@@ -16,8 +16,8 @@ affected.
 
 ## When to use it
 
-- The map drifted: `validate` reports stale `codeRefs`, or the code does
-  something the map does not say.
+- The model drifted: `validate` reports stale `codeRefs`, or the code does
+  something the model does not say.
 - After merging work that never went through
   [`businesslens-plan`](./skill-businesslens-plan.md).
 - Not after planned work — run
@@ -34,10 +34,10 @@ affected.
 
 Reads the change range — explicit user context first, otherwise the working
 tree, staged diff, and recent commits — and the affected implementation.
-Writes only affected entities: revised journey and scenario prose and
-evidence, the smallest justified new entities, deleted obsolete ones,
-repaired `codeRefs`, and `coverage.md` when the inspected surface
-materially changed.
+Writes only affected entities: revised feature, rule, journey, scenario,
+intent, decision, and evidence content; the smallest justified new entities;
+deleted obsolete ones; repaired `codeRefs`; and `coverage.md` when the
+inspected surface materially changed.
 
 ## How it works
 
@@ -49,8 +49,8 @@ and validates until green.
 
 ## Guardrails
 
-- Never rewrites the whole map when a targeted update suffices.
-- Never copies prescriptive SDD text into the descriptive map.
+- Never rewrites the whole model when a targeted update suffices.
+- Never copies prescriptive SDD text into the descriptive model.
 - Never executes target code, never contacts the platform.
 
 Tutorial: [Recover from drift](./tutorial-recover-from-drift.md).

@@ -3,7 +3,7 @@ title: Overview
 description: The eight BusinessLens agent skills — which one fits which situation.
 section: open-source
 group: Skills
-order: 11
+order: 12
 ---
 
 # Skills overview
@@ -18,20 +18,20 @@ request.
 | --- | --- |
 | [`businesslens-init`](./skill-businesslens-init.md) | Adopting BusinessLens in a repository that already has code |
 | [`businesslens-plan`](./skill-businesslens-plan.md) | Planning a product (blank repo) or a feature (mapped repo) before code |
-| [`businesslens-verify`](./skill-businesslens-verify.md) | Planned map changes were implemented and need evidence-backed checking |
-| [`businesslens-sync`](./skill-businesslens-sync.md) | Code changed without a plan and the map drifted |
+| [`businesslens-verify`](./skill-businesslens-verify.md) | Planned model changes were implemented and need evidence-backed checking |
+| [`businesslens-sync`](./skill-businesslens-sync.md) | Code changed without a plan and the model drifted |
 | [`businesslens-deep-dive`](./skill-businesslens-deep-dive.md) | One journey or experience needs exhaustive coverage |
-| [`businesslens-validate`](./skill-businesslens-validate.md) | The map needs a read-only deterministic check |
-| [`businesslens-doctor`](./skill-businesslens-doctor.md) | The map fails validation, looks stale, or needs a health report |
-| [`businesslens-publish`](./skill-businesslens-publish.md) | You explicitly want the map on the platform |
+| [`businesslens-validate`](./skill-businesslens-validate.md) | The model needs a read-only deterministic check |
+| [`businesslens-doctor`](./skill-businesslens-doctor.md) | The model fails validation, looks stale, or needs a health report |
+| [`businesslens-publish`](./skill-businesslens-publish.md) | You explicitly want the model on the platform |
 
 ## How they fit together
 
 The lifecycle runs through four of them: `init` (or `plan`, for a blank
-repository) creates the map, then every feature loops through `plan` →
+repository) creates the model, then every feature loops through `plan` →
 implement → `verify`. `sync` is the recovery lane when code changed without
 a plan. The rest are supporting tools: `deep-dive` adds depth to one area,
-`validate` and `doctor` keep the map honest, `publish` ships snapshots to
+`validate` and `doctor` keep the model honest, `publish` reports immutable Product Model Versions to
 the platform. The full decision table with situations lives in
 [How it works](./guide.md).
 

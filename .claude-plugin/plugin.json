@@ -1,7 +1,7 @@
 {
   "name": "businesslens",
-  "version": "0.5.0",
-  "description": "Product-Driven Development for coding agents: build and maintain a git-tracked product map in .businesslens/.",
+  "version": "0.6.0",
+  "description": "Product-Driven Development for coding agents: build and maintain a git-tracked Product Model in .businesslens/.",
   "author": {
     "name": "BusinessLens",
     "url": "https://github.com/businesslens"
@@ -11,7 +11,7 @@
   "keywords": [
     "pdd",
     "product-driven-design",
-    "product-map",
+    "product-model",
     "repository-analysis",
     "evidence"
   ],

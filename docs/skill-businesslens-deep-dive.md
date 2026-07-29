@@ -3,7 +3,7 @@ title: deep-dive
 description: Expand one journey or experience to exhaustive, evidence-backed fidelity.
 section: open-source
 group: Skills
-order: 16
+order: 17
 ---
 
 # businesslens-deep-dive
@@ -35,7 +35,7 @@ Reads the target's relations, scenarios, links, and `codeRefs`, then
 follows the evidence into entry points, implementation, adjacent services,
 persistence, configuration, and tests. Writes new or tightened scenarios
 under the target journey, corrected experience boundaries, stronger
-`path#symbol` evidence, and a `coverage.md` update when the mapped surface
+`path#symbol` evidence, and a `coverage.md` update when the modelped surface
 materially changed.
 
 ## How it works

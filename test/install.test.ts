@@ -111,7 +111,7 @@ describe('skill installation', () => {
     const unrelatedSync = join(skillsDir, 'sync')
     mkdirSync(oldMap, { recursive: true })
     mkdirSync(unrelatedSync, { recursive: true })
-    writeFileSync(join(oldMap, 'SKILL.md'), '---\nname: map\n---\nBuild a BusinessLens .businesslens/ map.\n')
+    writeFileSync(join(oldMap, 'SKILL.md'), '---\nname: map\n---\nBuild a BusinessLens .businesslens/ Product Model.\n')
     writeFileSync(join(unrelatedSync, 'SKILL.md'), '---\nname: sync\n---\nUnrelated synchronization.\n')
 
     const result = installSkillsToTarget(

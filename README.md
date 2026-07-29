@@ -5,12 +5,12 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
 **Product-Driven Development for coding agents.** BusinessLens builds a
-Git-tracked product map in `.businesslens/`: who the product serves, what
+Git-tracked product model in `.businesslens/`: who the product serves, what
 they accomplish, and where the code proves it.
 
-The map is Markdown, reviewable in pull requests, and useful without a
+The model is Markdown, reviewable in pull requests, and useful without a
 hosted service. One rule holds it together: behavioral claims need code
-evidence, and a green `validate` means the map and the code agree.
+evidence, and a green `validate` means the model and the code agree.
 
 ```text
 .businesslens/
@@ -18,6 +18,8 @@ evidence, and a green `validate` means the map and the code agree.
 ├── actors/
 ├── experiences/
 ├── domains/
+├── features/
+├── business-rules/
 ├── journeys/<id>/journey.md
 │   └── scenarios/<id>.md
 └── coverage.md
@@ -37,22 +39,22 @@ project or global scope, and installs only the BusinessLens skills. For
 automated setup: `npx businesslens@latest install --providers claude,codex
 --scope project --yes`.
 
-Then get a map:
+Then create a Product Model:
 
 - **Existing product** — `/businesslens-init` inspects the code and builds
-  the evidence-backed map.
+  the evidence-backed model.
 - **Blank repository** — `/businesslens-plan` interviews you and authors the
-  whole product as a draft map, before any code exists.
+  whole product as a draft model, before any code exists.
 
 (Codex users invoke skills as `$businesslens-init` / `$businesslens-plan`.)
 
 ## The loop for every feature
 
-Planning is editing the map. Git is the change model — branches hold plans,
+Planning is editing the model. Git is the change model — branches hold plans,
 pull requests review them, history archives them:
 
 ```text
-/businesslens-plan add guest checkout   # map describes intended behavior
+/businesslens-plan add guest checkout   # model describes intended behavior
 … implement with your coding agent …
 /businesslens-verify                    # code checked against the plan, evidence attached
 npx businesslens validate               # green = done; CI gates the PR
@@ -60,8 +62,8 @@ npx businesslens validate               # green = done; CI gates the PR
 
 Between plan and verify, new journeys and scenarios without `codeRefs`
 appear as expected validation findings. `/businesslens-verify` also derives
-changed and deleted work from the map diff, so the full plan is checked.
-Code changed without a plan? `/businesslens-sync` repairs the map.
+changed and deleted work from the model diff, so the full plan is checked.
+Code changed without a plan? `/businesslens-sync` repairs the model.
 
 ## Terminal or agent?
 
@@ -71,9 +73,10 @@ BusinessLens has two deliberate surfaces:
 | --- | --- | --- |
 | Terminal | `npx businesslens install` | Install the agent skills |
 | Terminal | `npx businesslens update` | Refresh managed skill installations |
-| Terminal | `npx businesslens validate` | Deterministically validate the map |
-| Terminal | `npx businesslens build` | Compile the map into the portable project document |
-| Terminal | `npx businesslens publish` | Submit the map to the platform as a commit-pinned snapshot |
+| Terminal | `npx businesslens validate` | Deterministically validate the model |
+| Terminal | `npx businesslens build` | Compile the model into source-free `report.json` |
+| Terminal | `npx businesslens open` | Expand a local or trusted Hub `report.json` into a canonical Product Model |
+| Terminal | `npx businesslens publish` | Submit the report with separate commit provenance |
 | AI harness | the eight `businesslens-*` skills | Map, plan, verify, and maintain the product truth |
 
 The installer never creates `.businesslens/` or modifies `AGENTS.md`. Those
@@ -85,12 +88,12 @@ require repository analysis and belong to the skills.
 | --- | --- |
 | `businesslens-init` | Adopting BusinessLens in a repository that already has code |
 | `businesslens-plan` | Planning a product (blank repo) or a feature (mapped repo) before code |
-| `businesslens-verify` | Planned map changes were implemented and need evidence-backed checking |
-| `businesslens-sync` | Code changed without a plan and the map drifted |
+| `businesslens-verify` | Planned model changes were implemented and need evidence-backed checking |
+| `businesslens-sync` | Code changed without a plan and the model drifted |
 | `businesslens-deep-dive` | One journey or experience needs exhaustive coverage |
-| `businesslens-validate` | The map needs a read-only deterministic check |
-| `businesslens-doctor` | The map fails validation, looks stale, or needs a health report |
-| `businesslens-publish` | The user explicitly wants the map on the platform |
+| `businesslens-validate` | The model needs a read-only deterministic check |
+| `businesslens-doctor` | The model fails validation, looks stale, or needs a health report |
+| `businesslens-publish` | The user explicitly wants the model on the platform |
 
 Every skill is self-contained and follows the open Agent Skills folder
 format. Claude Code plugin users may alternatively install from this
@@ -103,7 +106,8 @@ Learn the flow:
 
 - [Introduction](./docs/index.md) · [Installation](./docs/installation.md) ·
   [Quickstart](./docs/quickstart.md)
-- [How it works](./docs/guide.md) · [The product map](./docs/product-map.md)
+- [How it works](./docs/guide.md) · [The product model](./docs/product-map.md) ·
+  [Terminology](./docs/terminology.md)
 - [Map existing code](./docs/tutorial-map-existing-product.md)
 - [Plan a new product](./docs/tutorial-plan-new-product.md)
 - [Ship a feature](./docs/tutorial-ship-a-feature.md)

@@ -1,6 +1,6 @@
 # BusinessLens analysis rubric
 
-The map is descriptive: record what the product does today. Keep desired
+The model is descriptive: record what the product does today. Keep desired
 behavior in the repository's SDD layer.
 
 ## Entity quality

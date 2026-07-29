@@ -1,20 +1,20 @@
 ---
 title: Validate in CI
-description: Run the deterministic validator on every pull request and publish snapshots on merge.
+description: Run the deterministic validator on every pull request and report Product Model Versions on merge.
 section: open-source
 group: Reference
-order: 23
+order: 24
 ---
 
-# Validate the map in CI
+# Validate the model in CI
 
-Run the deterministic validator on every pull request. Green means the map
-and the code agree — a branch that plans behavior in the map merges only
+Run the deterministic validator on every pull request. Green means the model
+and the code agree — a branch that plans behavior in the model merges only
 after `businesslens-verify` attached the evidence:
 
 ```yaml
 # .github/workflows/businesslens-validate.yml
-name: Validate BusinessLens map
+name: Validate BusinessLens Product Model
 on:
   pull_request:
 jobs:
@@ -37,12 +37,12 @@ jobs:
 
 # Publish on merge
 
-To keep the platform snapshot current, publish from the default branch with
+To keep the Platform's living Product Model history current, publish from the default branch with
 the workspace API key stored as a repository secret:
 
 ```yaml
 # .github/workflows/businesslens-publish.yml
-name: Publish BusinessLens map
+name: Publish BusinessLens Product Model
 on:
   push:
     branches: [main]
@@ -66,7 +66,10 @@ jobs:
           BUSINESSLENS_API_KEY: ${{ secrets.BUSINESSLENS_API_KEY }}
 ```
 
-`publish --yes` is required because CI is non-interactive. Each merge commit
-replaces its own snapshot if re-run and creates a new snapshot otherwise. The
-CLI is installed from an empty temporary directory so target-local npm
-configuration and binaries never receive the API key.
+`publish --yes` is required because CI is non-interactive. Each successful run
+reports a new immutable Product Model Version into the branch Track. A release
+job may add `--tag "$TAG_NAME"` after checking out that exact tag. A
+pull-request reporting job may add `--pull-request "$PR_NUMBER"` and
+`--base-branch "$BASE_BRANCH"` plus optional PR title/URL metadata. The CLI is
+installed from an empty temporary directory so target-local npm configuration
+and binaries never receive the API key.

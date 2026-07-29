@@ -1,23 +1,23 @@
 ---
 title: verify
-description: Statically verify the implementation delivers the planned map changes — evidence attached, gaps reported honestly.
+description: Statically verify the implementation delivers the planned model changes — evidence attached, gaps reported honestly.
 section: open-source
 group: Skills
-order: 14
+order: 15
 ---
 
 # businesslens-verify
 
-Closes the gap between what the map claims and what the code proves. It
-derives the planned delta fresh on every run — the map diff against your
+Closes the gap between what the model claims and what the code proves. It
+derives the planned delta fresh on every run — the model diff against your
 merge base, plus every journey and scenario still lacking `codeRefs` — so
 the plan can keep evolving while you implement.
 
 ## When to use it
 
-- After implementing behavior that was planned in the map with
+- After implementing behavior that was planned in the model with
   [`businesslens-plan`](./skill-businesslens-plan.md), before merging.
-- To finish a greenfield draft map: a fully verified product moves
+- To finish a greenfield draft model: a fully verified product moves
   `coverage.md` off `draft`.
 - Not for unplanned drift — that is
   [`businesslens-sync`](./skill-businesslens-sync.md)'s direction.
@@ -30,11 +30,11 @@ the plan can keep evolving while you implement.
 ```
 
 Without a base it uses the merge base with the default branch; with no base
-at all (fresh greenfield repo) it treats the whole map as planned.
+at all (fresh greenfield repo) it treats the whole model as planned.
 
 ## What it reads and writes
 
-Reads the map diff and the implementation. Writes only map files:
+Reads the model diff and the implementation. Writes only model files:
 `codeRefs` on met scenarios and journeys (preferring `path#symbol`),
 user-confirmed prose corrections where the implementation deliberately
 diverged, repaired stale refs, and the coverage update on a completed
@@ -49,10 +49,10 @@ contract. The skill also verifies deleted behavior is absent and checks
 changed access, entry points, capability boundaries, and relationships on
 higher-level entities. It records **met**, **gap**, or **unverifiable** for
 implementation-bearing work and explicitly classifies product-only work as
-**map-only**, then runs the validator through its bundled isolated runner.
-Completion requires all implementation-bearing work to be met, all map-only
+**model-only**, then runs the validator through its bundled isolated runner.
+Completion requires all implementation-bearing work to be met, all model-only
 work to be classified, coverage to be off `draft`, no validation errors, and
-no missing-evidence warnings; a draft map's zero exit status alone is not
+no missing-evidence warnings; a draft model's zero exit status alone is not
 completion.
 
 ## Guardrails

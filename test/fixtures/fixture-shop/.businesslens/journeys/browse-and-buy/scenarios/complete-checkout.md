@@ -1,5 +1,6 @@
 ---
 kind: primary
+businessRules: [payment-before-confirmation]
 codeRefs:
   - src/services/orders.ts#OrderService.submit
   - src/services/payments.ts#PaymentGateway.charge
@@ -16,6 +17,15 @@ The shopper presses "Place order" with a non-empty cart.
 1. The cart is validated against the catalog
 2. The payment gateway charges the total
 3. The order is persisted
+
+## Decision points
+
+### Payment result
+
+Did the payment gateway accept the charge?
+
+- accepted → persist and confirm the order
+- declined → preserve the cart and show the failure
 
 ## Outcome
 

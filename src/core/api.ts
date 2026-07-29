@@ -1,4 +1,4 @@
-import type { PortableProjectV3 } from './portable.js'
+import type { ProjectSubmissionV4 } from './portable.js'
 
 export interface ApiClientOptions {
   baseUrl: string
@@ -43,10 +43,7 @@ async function post(options: ApiClientOptions, path: string, body: unknown): Pro
 
 export async function submitProject(
   options: ApiClientOptions,
-  project: PortableProjectV3
+  submission: ProjectSubmissionV4
 ): Promise<{ href: string, versionKey: string }> {
-  return post(options, '/api/v3/projects', {
-    target: { projectSlug: project.id },
-    project
-  })
+  return post(options, '/api/v4/projects', submission)
 }

@@ -1,5 +1,6 @@
 ---
 kind: edge
+businessRules: [refund-existing-orders]
 codeRefs:
   - src/services/orders.ts#OrderService.refund
 ---

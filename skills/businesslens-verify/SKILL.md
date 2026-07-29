@@ -1,11 +1,11 @@
 ---
 name: businesslens-verify
-description: Statically verify that the implementation delivers the product behavior planned in the .businesslens/ map — diff the map against the merge base, check every planned addition/change/removal, attach codeRefs, and report a verdict per work item. Use after implementing planned map changes and before merging; use businesslens-sync when code changed without a plan.
+description: Statically verify that the implementation delivers the product behavior planned in the .businesslens/ Product Model — diff the model against the merge base, check every planned addition/change/removal, attach codeRefs, and report a verdict per work item. Use after implementing planned model changes and before merging; use businesslens-sync when code changed without a plan.
 ---
 
 # Verify implementation against the plan
 
-Close the gap between what the map claims and what the code proves. The
+Close the gap between what the model claims and what the code proves. The
 scenario contract (Trigger, Steps, Outcome) is the acceptance criteria.
 
 Read [references/format.md](references/format.md) and
@@ -15,7 +15,7 @@ verifying.
 ## Workflow
 
 1. Confirm the working directory is a Git repository with a `.businesslens/`
-   map. Never execute the repository's application, build, migrations, or
+   Product Model. Never execute the repository's application, build, migrations, or
    tests; inspect files only. List untracked files with
    `git ls-files --others --exclude-standard`. If implementation evidence
    depends on an untracked file, stop and ask the user to stage or commit it;
@@ -24,26 +24,27 @@ verifying.
 2. Determine the comparison base: an explicit user-provided branch or ref
    first; otherwise the merge base with the default branch (for example
    `git merge-base HEAD origin/main`); on a repository with no base to
-   compare against, treat the whole map as planned.
+   compare against, treat the whole model as planned.
 3. Build the verification worklist, fresh on every run — the plan may have
    evolved while implementing, so never reuse an earlier report:
-   - every authored map file added, modified, **or deleted** in
-     `git diff <base>...HEAD -- .businesslens/`, plus uncommitted map edits;
+   - every authored model file added, modified, **or deleted** in
+     `git diff <base>...HEAD -- .businesslens/`, plus uncommitted model edits;
      retain the base version of a deleted entity as the removal contract;
    - independently, every journey and scenario lacking `codeRefs`
-     (on a new `coverage: draft` map, that is initially the entire map).
+     (on a new `coverage: draft` model, that is initially the entire model).
 4. Verify every work item, not only extant scenarios:
    - for added or changed scenarios, treat Trigger, Steps, Outcome, and edge
      cases as the acceptance contract and trace the observable behavior;
    - for deleted entities, use the base version and its old evidence to prove
      the retired behavior, entry point, or surface is absent from the code;
-   - for changed experiences, actors, domains, journeys, product metadata,
-     or taxonomies, check each changed contract — especially access,
-     entry points, capability boundaries, and relationships — against direct
-     repository evidence. Explicitly classify vocabulary, organization,
-     configuration, or other product-only changes with no implementation
-     contract as map-only; never use that classification for observable
-     access, entry-point, capability, relationship, or behavior changes.
+   - for changed experiences, actors, domains, features, business rules,
+     journeys, product metadata, or taxonomies, check each changed contract —
+     especially access, entry points, capability boundaries, constraints,
+     intent, and relationships — against direct repository evidence.
+     Explicitly classify vocabulary, organization, configuration, or other
+     product-only changes with no implementation contract as model-only; never
+     use that classification for observable access, entry-point, capability,
+     rule, relationship, decision, or behavior changes.
 5. Record one verdict per work item:
    - **met** — direct implementation evidence proves the addition/change or
      proves the planned removal; attach `codeRefs` (prefer `path#symbol`) to
@@ -52,7 +53,7 @@ verifying.
      is still implemented; state expected versus found and attach nothing;
    - **unverifiable** — cannot be established from source alone; never
      guess.
-   - **map-only** — no implementation change is required; identify the exact
+   - **model-only** — no implementation change is required; identify the exact
      product or organizational decision and why source evidence does not
      apply.
 6. Where the implementation deliberately diverged and the user confirms it
@@ -60,10 +61,10 @@ verifying.
    the correction in the report. Never silently rewrite the plan to match
    the code.
 7. Repair `codeRefs` the implementation invalidated on modified entities.
-8. On a draft map, update `coverage.md` honestly off `draft` (`partial` or
+8. On a draft model, update `coverage.md` honestly off `draft` (`partial` or
    `complete`) only after every planned journey and scenario has evidence and
    every implementation-bearing addition, change, and removal on the
-   worklist is met, and every map-only item is explicitly classified.
+   worklist is met, and every model-only item is explicitly classified.
    Refresh `method`, `sourceAreas`, `unmapped`, and `limitations`. Leave it
    `draft` while any gap or unverifiable verdict remains.
 9. Resolve `<businesslens-verify-skill-dir>` to this installed skill
@@ -74,13 +75,13 @@ verifying.
      --root "$PWD" validate --json
    ```
 
-   A zero exit status alone is not completion because a draft map reports
+   A zero exit status alone is not completion because a draft model reports
    missing evidence as warnings. Verification is complete only when every
-   implementation-bearing work item is met, every map-only item is
+   implementation-bearing work item is met, every model-only item is
    classified, coverage is no longer `draft`, validation has no errors, and
    no missing-evidence warning remains.
 10. Report in the conversation, grouped by journey and then other entity:
-    met/gap/unverifiable/map-only per work item with the evidence cited,
+    met/gap/unverifiable/model-only per work item with the evidence cited,
     prose corrections made, coverage change, the validation result, and the
     next step — fix the gaps and re-run, or commit and open the pull request
     (the report pastes well into its description).

@@ -6,6 +6,7 @@ A journey at `journeys/<id>/journey.md` requires:
 domain: ordering
 actors: [shopper]
 experiences: [storefront]
+features: [checkout]
 entryPoints:
   - web: /checkout
 codeRefs:
@@ -17,6 +18,7 @@ Each scenario at `journeys/<journey-id>/scenarios/<id>.md` requires:
 ```markdown
 ---
 kind: primary
+businessRules: [stock-must-be-available]
 codeRefs:
   - src/services/orders.ts#OrderService.submit
 ---
@@ -31,6 +33,15 @@ Concrete initiating condition.
 
 1. Observable user or system step.
 
+## Decision points
+
+### Material branch
+
+What product condition changes the result?
+
+- accepted → continue toward the expected outcome
+- rejected → preserve state and explain recovery
+
 ## Outcome
 
 Observable result.
@@ -41,6 +52,7 @@ Observable result.
 ```
 
 Scenario IDs are globally unique. `kind` must exist in `taxonomies.yaml`.
+Each optional decision point has a question and at least two branches.
 Compact evidence uses `path[#symbol][:start[-end]]` and must point at
 Git-tracked files.
 

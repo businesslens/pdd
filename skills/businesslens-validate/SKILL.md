@@ -1,11 +1,11 @@
 ---
 name: businesslens-validate
-description: Run the deterministic BusinessLens validator against an existing .businesslens/ product map and return a clear, read-only explanation of every error, warning, and entity count. Use when asked to validate or check a map, verify initialization or synchronization, or confirm readiness for review or CI; use businesslens-doctor instead for drift investigation or repairs.
+description: Run the deterministic BusinessLens validator against an existing .businesslens/ product model and return a clear, read-only explanation of every error, warning, and entity count. Use when asked to validate or check a model, verify initialization or synchronization, or confirm readiness for review or CI; use businesslens-doctor instead for drift investigation or repairs.
 ---
 
-# Validate the BusinessLens map
+# Validate the BusinessLens Product Model
 
-Report whether the authored map satisfies the deterministic format contract.
+Report whether the authored model satisfies the deterministic format contract.
 Do not modify files.
 
 ## Workflow
@@ -30,9 +30,10 @@ Do not modify files.
    - **Result** — pass or fail;
    - **Errors** — every error, grouped by file when a path is available;
    - **Warnings** — every warning, clearly separated from errors;
-   - **Counts** — actors, experiences, domains, journeys, and scenarios;
+   - **Counts** — actors, experiences, domains, features, journeys,
+     scenarios, and business rules;
    - **Next action** — none for a clean result, `businesslens-init` for a
-     missing map, or `businesslens-doctor` when diagnosis or repair is needed.
+     missing model, or `businesslens-doctor` when diagnosis or repair is needed.
    `needs at least one codeRef` findings usually mean planned behavior whose
    implementation has not been verified yet — the next action there is
    `businesslens-verify` (they appear as warnings while `coverage.md` is
@@ -51,4 +52,4 @@ Do not modify files.
 - Never suppress, rewrite, or reinterpret validator findings.
 - Never connect to or publish to the BusinessLens platform from this skill;
   publishing is the separate `businesslens-publish` workflow.
-- Do not repair the map; recommend `businesslens-doctor` for that workflow.
+- Do not repair the model; recommend `businesslens-doctor` for that workflow.

@@ -2,6 +2,7 @@
 domain: ordering
 actors: [store-admin]
 experiences: [admin-console]
+features: [order-management]
 entryPoints:
   - web: src/routes/admin.ts
 codeRefs:

@@ -1,4 +1,4 @@
 interface:
   display_name: "BusinessLens Verify"
-  short_description: "Verify implementation against the planned map"
-  default_prompt: "Use $businesslens-verify to check this repository's implementation against the planned BusinessLens map changes and attach evidence."
+  short_description: "Verify implementation against the planned model"
+  default_prompt: "Use $businesslens-verify to check this repository's implementation against the planned BusinessLens model changes and attach evidence."

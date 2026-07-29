@@ -1,7 +1,7 @@
 {
   "name": "businesslens",
-  "version": "0.5.0",
-  "description": "Product-Driven Development for coding agents: a git-tracked product map in .businesslens/, built from code evidence.",
+  "version": "0.6.0",
+  "description": "Product-Driven Development for coding agents: a git-tracked product model in .businesslens/, built from code evidence.",
   "type": "module",
   "license": "MIT",
   "repository": {
@@ -17,6 +17,17 @@
   },
   "bin": {
     "businesslens": "dist/cli.js"
+  },
+  "exports": {
+    "./report": {
+      "types": "./dist/report.d.ts",
+      "default": "./dist/report.js"
+    },
+    "./report/digest": {
+      "types": "./dist/report-digest.d.ts",
+      "default": "./dist/report-digest.js"
+    },
+    "./package.json": "./package.json"
   },
   "files": [
     "CHANGELOG.md",

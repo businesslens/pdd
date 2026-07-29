@@ -56,14 +56,16 @@ describe('cli dispatch', () => {
     expect(result.status).toBe(0)
     expect(result.stdout).toContain('build ')
     expect(result.stdout).toContain('publish [--yes]')
+    expect(result.stdout).toContain('--tag <name>')
+    expect(result.stdout).toContain('--pull-request <number>')
     expect(result.stdout).toContain('--cwd <path>')
     expect(result.stdout).toContain('/businesslens-publish')
   })
 
-  it('builds the selected repository into project.json', () => {
+  it('builds the selected repository into report.json', () => {
     const result = cli(ROOT, process.env, '--cwd', repo, 'build')
     expect(result.status).toBe(0)
-    expect(existsSync(join(repo, '.businesslens', 'build', 'project.json'))).toBe(true)
+    expect(existsSync(join(repo, '.businesslens', 'build', 'report.json'))).toBe(true)
   })
 
   it('refuses to publish without BUSINESSLENS_API_KEY', () => {

@@ -12,6 +12,8 @@
 ├── actors/<id>.md
 ├── experiences/<id>.md
 ├── domains/<id>.md
+├── features/<id>.md
+├── business-rules/<id>.md
 └── journeys/<id>/journey.md
     └── scenarios/<id>.md
 ```
@@ -60,6 +62,9 @@ limitations: []
 One paragraph describing what the product does and for whom.
 ```
 
+Keep the product `id` lowercase kebab-case and at most 64 characters; it is
+also the default Platform Project slug.
+
 Create `coverage.md`:
 
 ```markdown
@@ -97,6 +102,10 @@ codeRefs:
 The grammar is `path[#symbol][:start[-end]]`. Every path must be tracked by
 Git. Journeys and scenarios require direct evidence. Other entities may carry
 evidence when their boundary is represented directly in code.
+
+Any entity body may contain `## Intent`: structured prose explaining why the
+entity exists and which outcome it protects. Other unrecognized H2 sections
+are preserved as supporting context.
 
 Use optional `links:` for SDD and documentation:
 
@@ -155,6 +164,46 @@ Visitors can browse products and begin checkout; administration is excluded.
 
 `access` is `public`, `authenticated`, or `restricted`.
 
+Feature:
+
+```markdown
+---
+domain: ordering
+actors: [shopper]
+experiences: [storefront]
+businessRules: [stock-must-be-available]
+codeRefs: [src/services/orders.ts#OrderService.submit]
+---
+
+# Checkout
+
+Turns a valid cart into a confirmed order.
+
+## Intent
+
+Complete a purchase without losing cart state after a recoverable failure.
+```
+
+Business rule:
+
+```markdown
+---
+domains: [ordering]
+features: [checkout]
+journeys: [browse-and-buy]
+scenarios: [complete-checkout]
+codeRefs: [src/services/orders.ts#OrderService.submit]
+---
+
+# Stock must be available
+
+An order can be confirmed only while every item has sufficient stock.
+
+## Rationale
+
+Checkout must revalidate inventory that changed after browsing.
+```
+
 Journey:
 
 ```markdown
@@ -162,6 +211,7 @@ Journey:
 domain: ordering
 actors: [shopper]
 experiences: [storefront]
+features: [checkout]
 entryPoints:
   - web: /checkout
 codeRefs:
@@ -178,6 +228,7 @@ Scenario:
 ```markdown
 ---
 kind: primary
+businessRules: [stock-must-be-available]
 codeRefs:
   - src/services/orders.ts#OrderService.submit
 ---
@@ -194,6 +245,15 @@ The shopper submits a valid checkout.
 2. Payment is authorized.
 3. The order is persisted.
 
+## Decision points
+
+### Stock result
+
+Can every requested item still be fulfilled?
+
+- available → continue to payment
+- unavailable → preserve the cart and show the affected items
+
 ## Outcome
 
 The shopper receives an order confirmation.
@@ -204,6 +264,8 @@ The shopper receives an order confirmation.
 ```
 
 Scenario IDs are globally unique. Every journey needs at least one actor,
-experience, code reference, and scenario. Every experience needs at least one
-actor. Every scenario needs a known kind, Trigger, ordered Steps, Outcome, and
-direct code evidence.
+experience, feature, code reference, and scenario. Every feature needs a
+domain and experience. Every business rule relates to at least one entity.
+Every scenario needs a known kind, Trigger, ordered Steps, Outcome, and direct
+code evidence. Each optional decision point needs a question and at least two
+`condition → outcome` branches.

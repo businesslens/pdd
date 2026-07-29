@@ -1,4 +1,4 @@
 interface:
   display_name: "BusinessLens Sync"
   short_description: "Repair drift after unplanned code changes"
-  default_prompt: "Use $businesslens-sync to repair the BusinessLens product map after unplanned code changes caused drift."
+  default_prompt: "Use $businesslens-sync to repair the BusinessLens product model after unplanned code changes caused drift."

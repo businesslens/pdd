@@ -3,6 +3,7 @@ import { resolve } from 'node:path'
 import { parseArgs } from 'node:util'
 import { runBuild } from './commands/build.js'
 import { runInstall } from './commands/install.js'
+import { runOpen } from './commands/open.js'
 import { runPublish } from './commands/publish.js'
 import { runUpdate } from './commands/update.js'
 import { runValidate } from './commands/validate.js'
@@ -15,9 +16,10 @@ Usage: businesslens <command> [options]
 Commands:
   install                     Install BusinessLens skills for detected AI harnesses
   update                      Refresh managed BusinessLens skill installations
-  validate [--json]           Validate the .businesslens/ product map
-  build                       Compile .businesslens/ into .businesslens/build/project.json
-  publish [--yes]             Build and submit the map to the BusinessLens platform
+  validate [--json]           Validate the .businesslens/ product model
+  build                       Compile .businesslens/ into .businesslens/build/report.json
+  publish [--yes]             Report an immutable Product Model Version to the Platform
+  open <report> [--force]     Expand a local or trusted Hub report into .businesslens/
 
 Install options:
   --providers <list>          Comma-separated: claude,codex,cursor,gemini,github
@@ -31,6 +33,14 @@ Publish options:
   --yes                       Skip the confirmation prompt (required in
                               non-interactive sessions). Publishing reads the
                               workspace API key from BUSINESSLENS_API_KEY.
+  --tag <name>                Publish HEAD into the named tag Track
+  --pull-request <number>     Publish into a pull-request Track
+  --base-branch <name>        Required base branch for --pull-request
+  --pr-title <title>          Optional pull-request title
+  --pr-url <url>              Optional pull-request URL
+
+Open options:
+  --force                     Back up a non-empty .businesslens/ before opening
 
 General options:
   --cwd <path>                Run against this repository instead of the current directory
@@ -38,14 +48,14 @@ General options:
   --version                   Show the CLI version
 
 Agent workflows:
-  /businesslens-init          Build the initial product map from existing code
-  /businesslens-plan          Plan a product or feature in the product map
-  /businesslens-verify        Verify implementation against the planned map
-  /businesslens-sync          Repair the map after unplanned code changes
+  /businesslens-init          Build the initial product model from existing code
+  /businesslens-plan          Plan a product or feature in the product model
+  /businesslens-verify        Verify implementation against the planned model
+  /businesslens-sync          Repair the model after unplanned code changes
   /businesslens-deep-dive     Expand one journey or experience
-  /businesslens-validate      Validate the map and explain every result
+  /businesslens-validate      Validate the model and explain every result
   /businesslens-doctor        Diagnose validation, drift, and coverage
-  /businesslens-publish       Publish the map to the BusinessLens platform
+  /businesslens-publish       Report the model to the BusinessLens Platform
 
 Exit codes: 0 success · 1 failure · 2 usage error`
 
@@ -63,6 +73,11 @@ async function main(): Promise<number> {
       user: { type: 'boolean', default: false },
       yes: { type: 'boolean', default: false },
       force: { type: 'boolean', default: false },
+      tag: { type: 'string' },
+      'pull-request': { type: 'string' },
+      'base-branch': { type: 'string' },
+      'pr-title': { type: 'string' },
+      'pr-url': { type: 'string' },
       cwd: { type: 'string' },
       help: { type: 'boolean', default: false },
       version: { type: 'boolean', default: false }
@@ -78,8 +93,12 @@ async function main(): Promise<number> {
     console.log(HELP)
     return command ? 0 : 2
   }
-  if (positionals.length > 1) {
+  if (command !== 'open' && positionals.length > 1) {
     console.error(`Unexpected argument "${positionals[1]}".`)
+    return 2
+  }
+  if (command === 'open' && positionals.length !== 2) {
+    console.error('open requires one local report path or trusted Hub report URL.')
     return 2
   }
 
@@ -109,7 +128,16 @@ async function main(): Promise<number> {
     case 'build':
       return runBuild(cwd)
     case 'publish':
-      return runPublish(cwd, values.yes)
+      return runPublish(cwd, {
+        yes: values.yes,
+        tag: values.tag,
+        pullRequest: values['pull-request'] === undefined ? undefined : Number(values['pull-request']),
+        baseBranch: values['base-branch'],
+        prTitle: values['pr-title'],
+        prUrl: values['pr-url']
+      })
+    case 'open':
+      return runOpen(cwd, positionals[1]!, values.force)
     default:
       console.error(`Unknown command "${command}".\n`)
       console.log(HELP)

@@ -1,29 +1,30 @@
 ---
 title: plan
-description: Plan a product or feature directly in the map before implementation — guided greenfield definition or quick/thorough feature planning.
+description: Plan a product or feature directly in the model before implementation — guided greenfield definition or quick/thorough feature planning.
 section: open-source
 group: Skills
-order: 13
+order: 14
 ---
 
 # businesslens-plan
 
-Plans product behavior by editing the map itself: describe the intended
-actors, journeys, and scenarios before (or instead of) writing code. Git is
-the change model — the branch holds the plan, and validation's
+Plans product behavior by editing the model itself: describe the intended
+actors, capabilities, business rules, journeys, scenarios, intent, and
+decision points before (or instead of) writing code. Git is the change
+model — the branch holds the plan, and validation's
 `needs at least one codeRef` findings on the planned entities are the
-evidence checklist for new journeys and scenarios. The map diff remains the
+evidence checklist for new journeys and scenarios. The model diff remains the
 complete plan, including changes and removals.
 
 ## When to use it
 
 - A **blank repository**: it runs the full guided product interview and
-  authors the whole product as a draft map (`coverage: draft`).
-- A **mapped repository**: it edits the map on your branch to the intended
+  authors the whole product as a draft model (`coverage: draft`).
+- A **mapped repository**: it edits the model on your branch to the intended
   state for a new feature.
-- A **design deliverable**: a draft map nobody implements yet is a
+- A **design deliverable**: a draft model nobody implements yet is a
   validated, portable product spec.
-- A repository with code but no map gets routed to
+- A repository with code but no model gets routed to
   [`businesslens-init`](./skill-businesslens-init.md) first — it never
   plans against unmapped code.
 
@@ -35,14 +36,14 @@ complete plan, including changes and removals.
 /businesslens-plan thorough: rethink the onboarding flow
 ```
 
-`quick` asks at most a few batched questions and drafts the rest from map
-context; `thorough` runs the full interview (why, who, surfaces, journeys,
-scenario space, removals, done-when). Without a keyword it infers the depth
-from the ask.
+`quick` asks at most a few batched questions and drafts the rest from model
+context; `thorough` runs the full interview (why, who, surfaces, features,
+rules, journeys, scenario and decision space, removals, done-when). Without
+a keyword it infers the depth from the ask.
 
 ## What it reads and writes
 
-Reads the existing map and repository material. Writes map entity files to
+Reads the existing model and repository material. Writes model entity files to
 their desired state (new files carry **no** codeRefs — planned behavior has
 no evidence yet), new scenario kinds in `taxonomies.yaml`, and on
 greenfield the minimal scaffold (`config.yaml`, `taxonomies.yaml`,

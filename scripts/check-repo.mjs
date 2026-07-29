@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { readFile, readdir, access } from 'node:fs/promises'
-import { resolve } from 'node:path'
+import { dirname, resolve } from 'node:path'
 import { parse as parseYaml } from 'yaml'
 
 const root = process.cwd()
@@ -16,7 +16,7 @@ async function exists(path) {
 }
 
 const REQUIRED = [
-  'README.md', 'LICENSE', 'package.json', 'tsconfig.json', 'src/cli.ts',
+  'README.md', 'LICENSE', 'package.json', 'package-lock.json', 'tsconfig.json', 'src/cli.ts',
   'CHANGELOG.md', 'SECURITY.md', 'CONTRIBUTING.md',
   'docs/format.md', 'docs/cli.md', 'docs/ci.md', 'docs/pdd-and-sdd.md',
   '.claude-plugin/plugin.json', '.claude-plugin/marketplace.json'
@@ -26,6 +26,7 @@ for (const file of REQUIRED) {
 }
 
 const pkg = JSON.parse(await readFile(resolve(root, 'package.json'), 'utf8'))
+const lock = JSON.parse(await readFile(resolve(root, 'package-lock.json'), 'utf8'))
 const plugin = JSON.parse(await readFile(resolve(root, '.claude-plugin/plugin.json'), 'utf8'))
 const marketplace = JSON.parse(await readFile(resolve(root, '.claude-plugin/marketplace.json'), 'utf8'))
 const expectedSkills = [
@@ -45,6 +46,16 @@ if (pkg.repository?.url !== 'git+https://github.com/businesslens/pdd.git') {
 }
 if (pkg.version !== plugin.version) {
   errors.push(`version mismatch: package.json ${pkg.version} vs plugin.json ${plugin.version}`)
+}
+if (pkg.version !== lock.version || pkg.version !== lock.packages?.['']?.version) {
+  errors.push(
+    `version mismatch: package.json ${pkg.version} vs package-lock.json `
+    + `${lock.version}/${lock.packages?.['']?.version}`
+  )
+}
+const changelog = await readFile(resolve(root, 'CHANGELOG.md'), 'utf8')
+if (!changelog.includes(`## [${pkg.version}]`)) {
+  errors.push(`CHANGELOG.md is missing a [${pkg.version}] release heading`)
 }
 if (plugin.repository !== 'https://github.com/businesslens/pdd') {
   errors.push('plugin.json repository must be https://github.com/businesslens/pdd')
@@ -138,6 +149,20 @@ for (const name of docFiles) {
       errors.push(`docs/${name} order ${order} duplicates docs/${previous} in section "${section}"`)
     } else {
       docOrders.set(key, name)
+    }
+  }
+}
+
+for (const file of ['README.md', ...docFiles.map(name => `docs/${name}`)]) {
+  const source = await readFile(resolve(root, file), 'utf8')
+  for (const match of source.matchAll(/\[[^\]]*]\(([^)]+)\)/g)) {
+    const rawHref = match[1].trim().replace(/^<|>$/g, '')
+    const href = rawHref.split(/\s+["']/)[0].split(/[?#]/)[0]
+    if (!href || href.startsWith('#') || /^[a-z][a-z0-9+.-]*:/i.test(href)) continue
+    const target = resolve(root, dirname(file), href)
+    if (!await exists(target)) {
+      const line = source.slice(0, match.index).split('\n').length
+      errors.push(`${file}:${line} links to missing local file "${href}"`)
     }
   }
 }

@@ -9,7 +9,9 @@ import {
   entryPointsField, linksField, rejectUnknownKeys, splitFrontmatter, stringField, stringListField
 } from './frontmatter.js'
 import { stem } from './ids.js'
-import { bulletList, orderedList, parseMarkdown, section } from './markdown.js'
+import {
+  bulletList, decisionPoints, orderedList, parseMarkdown, section
+} from './markdown.js'
 import { DEFAULT_PLATFORM_URL, trustedPlatformUrl } from './platform-url.js'
 
 export interface EntityFile {
@@ -29,6 +31,12 @@ export interface ExperienceEntity extends EntityFile {
   exit: string
   capabilities: string
 }
+export interface FeatureEntity extends EntityFile {
+  domain: string
+  actors: string[]
+  experiences: string[]
+  businessRules: string[]
+}
 export interface ScenarioEntity extends EntityFile {
   journeyId: string
   kind: string
@@ -36,13 +44,23 @@ export interface ScenarioEntity extends EntityFile {
   steps: string[]
   outcome: string
   edgeCases: string[]
+  businessRules: string[]
+  decisionPoints: ReturnType<typeof decisionPoints>
 }
 export interface JourneyEntity extends EntityFile {
   domain: string
   actors: string[]
   experiences: string[]
+  features: string[]
   entryPoints: CompactEntryPoint[]
   scenarios: ScenarioEntity[]
+}
+export interface BusinessRuleEntity extends EntityFile {
+  domains: string[]
+  features: string[]
+  journeys: string[]
+  scenarios: string[]
+  rationale: string
 }
 
 export interface ScenarioKind {
@@ -63,10 +81,13 @@ export interface PddModel {
     sourceAreas: string[]
     unmapped: string[]
     limitations: string[]
+    rationale: string
   }
   actors: ActorEntity[]
   domains: DomainEntity[]
   experiences: ExperienceEntity[]
+  features: FeatureEntity[]
+  businessRules: BusinessRuleEntity[]
   journeys: JourneyEntity[]
   issues: string[]
 }
@@ -165,18 +186,21 @@ export function loadModel(cwd: string): PddModel {
     issues.push('product.md is missing')
   }
 
-  let coverage: PddModel['coverage'] = { status: 'draft', method: [], sourceAreas: [], unmapped: [], limitations: [] }
+  let coverage: PddModel['coverage'] = {
+    status: 'draft', method: [], sourceAreas: [], unmapped: [], limitations: [], rationale: ''
+  }
   const coverageFile = join(root, 'coverage.md')
   if (existsSync(coverageFile)) {
     const source = readFileSync(coverageFile, 'utf8')
-    const { data } = splitFrontmatter(source, issues, 'coverage.md')
+    const { data, body } = splitFrontmatter(source, issues, 'coverage.md')
     rejectUnknownKeys(data, ['status', 'method', 'sourceAreas', 'unmapped', 'limitations', 'links'], issues, 'coverage.md')
     coverage = {
       status: stringField(data, 'status', issues, 'coverage.md') || 'draft',
       method: stringListField(data, 'method', issues, 'coverage.md'),
       sourceAreas: stringListField(data, 'sourceAreas', issues, 'coverage.md'),
       unmapped: stringListField(data, 'unmapped', issues, 'coverage.md'),
-      limitations: stringListField(data, 'limitations', issues, 'coverage.md')
+      limitations: stringListField(data, 'limitations', issues, 'coverage.md'),
+      rationale: parseMarkdown(body).lead
     }
   } else if (existsSync(root)) {
     issues.push('coverage.md is missing')
@@ -210,6 +234,47 @@ export function loadModel(cwd: string): PddModel {
     }
   })
 
+  const features: FeatureEntity[] = listMarkdown(join(root, 'features')).map((name) => {
+    const file = join(root, 'features', name)
+    const { data, doc, codeRefs, links } = readEntity(
+      file,
+      ['domain', 'actors', 'experiences', 'businessRules'],
+      issues
+    )
+    return {
+      id: stem(name),
+      file,
+      doc,
+      codeRefs,
+      links,
+      domain: stringField(data, 'domain', issues, file) || '',
+      actors: stringListField(data, 'actors', issues, file),
+      experiences: stringListField(data, 'experiences', issues, file),
+      businessRules: stringListField(data, 'businessRules', issues, file)
+    }
+  })
+
+  const businessRules: BusinessRuleEntity[] = listMarkdown(join(root, 'business-rules')).map((name) => {
+    const file = join(root, 'business-rules', name)
+    const { data, doc, codeRefs, links } = readEntity(
+      file,
+      ['domains', 'features', 'journeys', 'scenarios'],
+      issues
+    )
+    return {
+      id: stem(name),
+      file,
+      doc,
+      codeRefs,
+      links,
+      domains: stringListField(data, 'domains', issues, file),
+      features: stringListField(data, 'features', issues, file),
+      journeys: stringListField(data, 'journeys', issues, file),
+      scenarios: stringListField(data, 'scenarios', issues, file),
+      rationale: section(doc, 'Rationale') || ''
+    }
+  })
+
   const journeys: JourneyEntity[] = listDirectories(join(root, 'journeys')).map((journeyId) => {
     const journeyDir = join(root, 'journeys', journeyId)
     const file = join(journeyDir, 'journey.md')
@@ -217,10 +282,14 @@ export function loadModel(cwd: string): PddModel {
       issues.push(`journeys/${journeyId}/ is missing journey.md`)
       return null
     }
-    const { data, doc, codeRefs, links } = readEntity(file, ['domain', 'actors', 'experiences', 'entryPoints'], issues)
+    const { data, doc, codeRefs, links } = readEntity(
+      file,
+      ['domain', 'actors', 'experiences', 'features', 'entryPoints'],
+      issues
+    )
     const scenarios: ScenarioEntity[] = listMarkdown(join(journeyDir, 'scenarios')).map((scenarioName) => {
       const scenarioFile = join(journeyDir, 'scenarios', scenarioName)
-      const entity = readEntity(scenarioFile, ['kind'], issues)
+      const entity = readEntity(scenarioFile, ['kind', 'businessRules'], issues)
       const scenarioDoc = entity.doc
       return {
         id: stem(scenarioName),
@@ -233,7 +302,9 @@ export function loadModel(cwd: string): PddModel {
         trigger: section(scenarioDoc, 'Trigger') || '',
         steps: orderedList(section(scenarioDoc, 'Steps') || ''),
         outcome: section(scenarioDoc, 'Outcome') || '',
-        edgeCases: bulletList(section(scenarioDoc, 'Edge cases') || '')
+        edgeCases: bulletList(section(scenarioDoc, 'Edge cases') || ''),
+        businessRules: stringListField(entity.data, 'businessRules', issues, scenarioFile),
+        decisionPoints: decisionPoints(section(scenarioDoc, 'Decision points') || '', issues, scenarioFile)
       }
     })
     return {
@@ -241,10 +312,24 @@ export function loadModel(cwd: string): PddModel {
       domain: stringField(data, 'domain', issues, file) || '',
       actors: stringListField(data, 'actors', issues, file),
       experiences: stringListField(data, 'experiences', issues, file),
+      features: stringListField(data, 'features', issues, file),
       entryPoints: entryPointsField(data, issues, file),
       scenarios
     }
   }).filter((journey): journey is JourneyEntity => Boolean(journey))
 
-  return { root, config, product, scenarioKinds, coverage, actors, domains, experiences, journeys, issues }
+  return {
+    root,
+    config,
+    product,
+    scenarioKinds,
+    coverage,
+    actors,
+    domains,
+    experiences,
+    features,
+    businessRules,
+    journeys,
+    issues
+  }
 }
