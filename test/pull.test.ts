@@ -102,6 +102,14 @@ describe('Blueprint pull', () => {
     expect(existsSync(join(target, '.businesslens/build/report.json'))).toBe(false)
     expect(readFileSync(join(target, '.businesslens/coverage.md'), 'utf8'))
       .toContain('status: draft')
+    expect(readFileSync(
+      join(target, '.businesslens/journeys/browse-and-buy/journey.md'),
+      'utf8'
+    )).not.toContain('src/routes/storefront.ts')
+    expect(readFileSync(
+      join(target, '.businesslens/experiences/storefront.md'),
+      'utf8'
+    )).toContain('- web: /')
     expect(console.log).toHaveBeenCalledWith(expect.stringContaining('version 3'))
     expect(JSON.stringify(vi.mocked(console.log).mock.calls)).not.toContain(accessToken)
   })

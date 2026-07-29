@@ -97,8 +97,8 @@ the Platform.
 
 The Hub identifies every public Blueprint with a globally unique canonical
 name. To use one in a repository, authorize the CLI once with
-`businesslens login`, then run `businesslens pull <blueprint-name>`.
-Latest is the default; `--version N` pins an exact immutable Blueprint
-revision. The Product Report remains an internal transport response: `pull`
-verifies it and invokes the same canonical expansion used by `open` without a
-browser download.
+`npx businesslens@latest login`, then run
+`npx businesslens@latest pull <blueprint-name>`. Latest is the default;
+`--version N` pins an exact immutable Blueprint revision. The Product Report
+remains an internal transport response: `pull` verifies it and invokes the
+same canonical expansion used by `open` without a browser download.

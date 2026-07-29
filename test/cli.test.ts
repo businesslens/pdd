@@ -90,6 +90,16 @@ describe('cli dispatch', () => {
     expect(result.stdout).not.toContain('0.6.0')
   })
 
+  it('does not treat option values named pull as the pull command', () => {
+    const cwdResult = cli(ROOT, process.env, '--cwd', 'pull', '--version')
+    expect(cwdResult.status).toBe(0)
+    expect(cwdResult.stdout.trim()).toBe('0.6.0')
+
+    const tagResult = cli(repo, process.env, 'publish', '--tag', 'pull', '--version')
+    expect(tagResult.status).toBe(0)
+    expect(tagResult.stdout.trim()).toBe('0.6.0')
+  })
+
   it('rejects unknown commands with usage exit code', () => {
     const result = cli(repo, process.env, 'bogus')
     expect(result.status).toBe(2)

@@ -50,7 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `codeRefs`, repository `entryPoints`, repository-relative `links`, and
   `coverage.sourceAreas` — so a downloadable or public Hub report never
   discloses the origin repository's layout, file paths, or symbol names.
-  Product-facing routes and absolute URLs are kept. `coverage.mapped` is
+  Product-facing routes and HTTP(S) URLs are kept. `coverage.mapped` is
   preserved as a model-quality signal, and `coverage.evidenceRedacted` records
   both that those counts describe the origin repository and that validation
   must reject any repository path still present.

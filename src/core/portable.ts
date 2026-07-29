@@ -390,7 +390,7 @@ export function validateProductReport(report: ProductReportV4): string[] {
     const entryPointHosts = [...model.experiences, ...model.journeys]
     for (const host of entryPointHosts) {
       for (const point of host.entryPoints) {
-        if (isRepositoryPath(point.path)) {
+        if (isRepositoryEntryPoint(point.path)) {
           issues.push(`"${host.id}": redacted report still exposes the repository entry point "${point.path}"`)
         }
       }
@@ -402,7 +402,7 @@ export function validateProductReport(report: ProductReportV4): string[] {
     ]
     for (const host of linkHosts) {
       for (const link of host.links) {
-        if (isRepositoryPath(link.href)) {
+        if (isRepositoryLink(link.href)) {
           issues.push(`"${host.id}": redacted report still exposes the repository link "${link.href}"`)
         }
       }
@@ -435,18 +435,37 @@ export function validateProductReport(report: ProductReportV4): string[] {
 }
 
 /**
- * A repository-relative path, as opposed to a product-facing route.
+ * Local filesystem values that must not leave the owning workspace.
  *
- * `/checkout` and `https://example.com/orders` describe how an actor reaches
- * a surface and stay meaningful outside the origin repository.
- * `src/routes/storefront.ts` describes that repository's layout and must not
- * leave it. A value with no separator at all (`businesslens build`, an event
- * name) is not a path.
+ * The report contract is browser-portable, so this deliberately avoids Node
+ * path helpers. It recognizes Windows separators and drive/UNC paths, local
+ * file URLs, and standard POSIX filesystem roots. Rooted product routes are
+ * handled separately because `/checkout` is meaningful outside a repository.
  */
-function isRepositoryPath(value: string): boolean {
+function isAbsoluteFilesystemPath(value: string): boolean {
+  if (/^file:/i.test(value)) return true
+  if (value.includes('\\')) return true
+  if (/^[a-z]:[\\/]/i.test(value) || /^(?:\\\\|\/\/)/.test(value)) return true
+  return /^\/Users(?:\/|$)/.test(value)
+    || /^\/home\/[^/]+(?:\/|$)/.test(value)
+    || /^\/(?:private|var|tmp|etc|usr|opt|srv|mnt|media|Volumes|workspace|workspaces|repo|repos)(?:\/|$)/.test(value)
+}
+
+function isHttpUrl(value: string): boolean {
+  return /^https?:\/\//i.test(value)
+}
+
+function isRepositoryEntryPoint(value: string): boolean {
   const path = value.trim()
+  if (isAbsoluteFilesystemPath(path)) return true
+  if (isHttpUrl(path)) return false
   if (!path.includes('/')) return false
-  return !path.startsWith('/') && !/^[a-z][a-z0-9+.-]*:\/\//i.test(path)
+  return !path.startsWith('/')
+}
+
+function isRepositoryLink(value: string): boolean {
+  const href = value.trim()
+  return isAbsoluteFilesystemPath(href) || !isHttpUrl(href)
 }
 
 /**
@@ -474,9 +493,9 @@ function isRepositoryPath(value: string): boolean {
  */
 export function redactSourceEvidence(report: ProductReportV4): ProductReportV4 {
   const publicLinks = <T extends { href: string }>(items: T[]): T[] =>
-    items.filter(link => !isRepositoryPath(link.href))
+    items.filter(link => !isRepositoryLink(link.href))
   const publicEntryPoints = <T extends { path: string }>(items: T[]): T[] =>
-    items.filter(point => !isRepositoryPath(point.path))
+    items.filter(point => !isRepositoryEntryPoint(point.path))
 
   const strip = <T extends { codeRefs: unknown[], links: Array<{ href: string }> }>(items: T[]): T[] =>
     items.map(item => ({ ...item, codeRefs: [], links: publicLinks(item.links) }))

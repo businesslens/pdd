@@ -11,7 +11,7 @@ order: 28
 Pull a Hub Blueprint into the current directory:
 
 ```bash
-businesslens pull <blueprint-name>
+npx businesslens@latest pull <blueprint-name>
 ```
 
 The argument is the Blueprint's globally unique canonical Hub name. Omitting a
@@ -19,7 +19,7 @@ version selects the latest version available to the logged-in user. Pin an
 exact immutable version when reproducibility matters:
 
 ```bash
-businesslens pull <blueprint-name> --version 3
+npx businesslens@latest pull <blueprint-name> --version 3
 ```
 
 Run [`businesslens login`](./cli-login.md) first. `pull` fetches the Product
@@ -34,8 +34,8 @@ The pulled report becomes a canonical `.businesslens/` Product Model:
 
 - repository-specific `codeRefs` are removed;
 - `coverage.md` is written with `status: draft`;
-- product behavior, relationships, intent, links, and supporting content are
-  preserved; and
+- product behavior, relationships, intent, product routes, HTTP(S) links, and
+  supporting content are preserved; and
 - missing local implementation evidence remains visible as validation
   warnings.
 
@@ -76,9 +76,9 @@ The Hub Blueprint page presents a single **Use this Blueprint** modal with
 three vertical steps. Each command has its own copy action.
 
 ```bash
-npx businesslens install
-npx businesslens login
-npx businesslens pull content-feed-reader
+npx businesslens@latest install
+npx businesslens@latest login
+npx businesslens@latest pull content-feed-reader
 ```
 
 Selecting **Pin version N** adds `--version N` to the third command.

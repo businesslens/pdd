@@ -75,8 +75,8 @@ BusinessLens has two deliberate surfaces:
 | Terminal | `npx businesslens update` | Refresh managed skill installations |
 | Terminal | `npx businesslens validate` | Deterministically validate the model |
 | Terminal | `npx businesslens build` | Compile the model into source-free `report.json` |
-| Terminal | `businesslens login` | Authorize the CLI through the Platform browser flow |
-| Terminal | `businesslens pull blueprint-name` | Pull the latest or a pinned Blueprint into a canonical Product Model |
+| Terminal | `npx businesslens@latest login` | Authorize the CLI through the Platform browser flow |
+| Terminal | `npx businesslens@latest pull blueprint-name` | Pull the latest or a pinned Blueprint into a canonical Product Model |
 | Terminal | `npx businesslens open` | Expand a local Product Report into a canonical Product Model |
 | Terminal | `npx businesslens publish` | Submit the report with separate commit provenance |
 | AI harness | the eight `businesslens-*` skills | Map, plan, verify, and maintain the product truth |

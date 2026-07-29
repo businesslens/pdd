@@ -72,11 +72,43 @@ Agent workflows:
 
 Exit codes: 0 success · 1 failure · 2 usage error`
 
+const STRING_OPTIONS = new Set([
+  'providers',
+  'scope',
+  'tag',
+  'pull-request',
+  'base-branch',
+  'pr-title',
+  'pr-url',
+  'platform',
+  'blueprint-version',
+  'cwd'
+])
+
+function commandArgumentIndex(args: string[]): number {
+  for (let index = 0; index < args.length; index += 1) {
+    const argument = args[index]!
+    if (argument === '--') return -1
+    if (!argument.startsWith('--')) return index
+
+    const equals = argument.indexOf('=')
+    const name = argument.slice(2, equals < 0 ? undefined : equals)
+    if (equals < 0 && STRING_OPTIONS.has(name)) index += 1
+  }
+  return -1
+}
+
 function normalizedArgs(args: string[]): string[] {
-  const commandIndex = args.indexOf('pull')
-  if (commandIndex < 0) return args
+  const commandIndex = commandArgumentIndex(args)
+  if (commandIndex < 0 || args[commandIndex] !== 'pull') return args
+  const separatorIndex = args.indexOf('--', commandIndex + 1)
   return args.map((argument, index) => {
-    if (index <= commandIndex) return argument
+    if (
+      index <= commandIndex
+      || (separatorIndex >= 0 && index >= separatorIndex)
+    ) {
+      return argument
+    }
     if (argument === '--version') return '--blueprint-version'
     if (argument.startsWith('--version=')) {
       return `--blueprint-version=${argument.slice('--version='.length)}`

@@ -40,6 +40,7 @@ describe('report SDK entry point', () => {
       'SubmissionProvenanceSchema',
       'validateProductReport',
       'parseProductReport',
+      'redactSourceEvidence',
       'canonicalReportJson'
     ]) {
       expect(sdk, `missing export ${name}`).toHaveProperty(name)
@@ -154,7 +155,22 @@ describe('redactSourceEvidence', () => {
     const withLinks = structuredClone(report)
     withLinks.model.actors[0]!.links = [
       { rel: 'spec', href: 'openspec/specs/checkout/spec.md', title: 'Local spec' },
+      { rel: 'doc', href: 'README.md', title: 'Local root doc' },
+      { rel: 'doc', href: '/Users/owner/project/README.md', title: 'Absolute local doc' },
+      { rel: 'doc', href: String.raw`C:\workspace\project\README.md`, title: 'Windows local doc' },
+      { rel: 'doc', href: 'file:///Users/owner/project/README.md', title: 'Local file URL' },
       { rel: 'doc', href: 'https://example.com/handbook', title: 'Public doc' }
+    ]
+    withLinks.model.journeys[0]!.entryPoints = [
+      { type: 'posix-relative', path: 'src/routes/storefront.ts' },
+      { type: 'windows-relative', path: String.raw`src\routes\storefront.ts` },
+      { type: 'windows-absolute', path: String.raw`C:\workspace\src\routes\storefront.ts` },
+      { type: 'unc', path: String.raw`\\server\share\storefront.ts` },
+      { type: 'file-url', path: 'file:///Users/owner/project/src/routes/storefront.ts' },
+      { type: 'posix-absolute', path: '/Users/owner/project/src/routes/storefront.ts' },
+      { type: 'route', path: '/checkout' },
+      { type: 'url', path: 'https://example.com/checkout' },
+      { type: 'cli', path: 'businesslens build' }
     ]
     const redacted = sdk.redactSourceEvidence(withLinks)
 
@@ -164,23 +180,35 @@ describe('redactSourceEvidence', () => {
     // Experiences reach actors through real routes; those stay.
     expect(redacted.model.experiences.flatMap(item => item.entryPoints.map(point => point.path)))
       .toEqual(expect.arrayContaining(['/']))
-    // Journey entry points named repository files; those go.
-    expect(redacted.model.journeys.flatMap(item => item.entryPoints)).toEqual([])
+    expect(redacted.model.journeys[0]!.entryPoints).toEqual([
+      { type: 'route', path: '/checkout' },
+      { type: 'url', path: 'https://example.com/checkout' },
+      { type: 'cli', path: 'businesslens build' }
+    ])
     expect(redacted.coverage.sourceAreas).toEqual([])
   })
 
   it('rejects a redacted report that still names repository paths', () => {
     const base = sdk.redactSourceEvidence(report)
 
-    const withEntryPoint = structuredClone(base)
-    withEntryPoint.model.journeys[0]!.entryPoints = [{ type: 'web', path: 'src/routes/storefront.ts' }]
-    expect(sdk.validateProductReport(withEntryPoint).join('\n'))
-      .toContain('still exposes the repository entry point "src/routes/storefront.ts"')
+    for (const path of [
+      'src/routes/storefront.ts',
+      String.raw`src\routes\storefront.ts`,
+      String.raw`C:\workspace\src\routes\storefront.ts`,
+      String.raw`\\server\share\storefront.ts`,
+      'file:///Users/owner/project/src/routes/storefront.ts',
+      '/Users/owner/project/src/routes/storefront.ts'
+    ]) {
+      const withEntryPoint = structuredClone(base)
+      withEntryPoint.model.journeys[0]!.entryPoints = [{ type: 'web', path }]
+      expect(sdk.validateProductReport(withEntryPoint).join('\n'))
+        .toContain(`still exposes the repository entry point "${path}"`)
+    }
 
     const withLink = structuredClone(base)
-    withLink.model.actors[0]!.links = [{ rel: 'spec', href: 'openspec/specs/checkout/spec.md' }]
+    withLink.model.actors[0]!.links = [{ rel: 'spec', href: '/local/spec.md' }]
     expect(sdk.validateProductReport(withLink).join('\n'))
-      .toContain('still exposes the repository link "openspec/specs/checkout/spec.md"')
+      .toContain('still exposes the repository link "/local/spec.md"')
 
     const withSourceAreas = structuredClone(base)
     withSourceAreas.coverage.sourceAreas = ['src']

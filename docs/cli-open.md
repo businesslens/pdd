@@ -43,8 +43,8 @@ source `codeRefs` are not valid evidence in the new target. `open` therefore:
 - removes repository evidence from every imported entity;
 - writes `coverage.md` with `status: draft`;
 - records that implementation evidence must be established locally; and
-- preserves product behavior, relationships, intent, links, and supporting
-  content.
+- preserves product behavior, relationships, intent, product routes, HTTP(S)
+  links, and supporting content.
 
 The resulting draft validates and builds. Missing journey and scenario
 evidence remains visible as warnings until the new implementation is verified.

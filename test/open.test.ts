@@ -7,6 +7,7 @@ import { buildProject } from '../src/commands/build.js'
 import { runOpen } from '../src/commands/open.js'
 import { lsFiles } from '../src/core/git.js'
 import { loadModel } from '../src/core/model.js'
+import { redactSourceEvidence, type ProductReportV4 } from '../src/core/portable.js'
 import { validateModel } from '../src/commands/validate.js'
 
 const FIXTURE = join(__dirname, 'fixtures', 'fixture-shop')
@@ -24,21 +25,22 @@ function initialize(cwd: string): void {
   git(cwd, 'commit', '--allow-empty', '-m', 'fixture')
 }
 
-function withoutRepositoryEvidence(report: Record<string, any>): Record<string, any> {
+function withoutRepositoryEvidence(report: ProductReportV4): Record<string, any> {
+  const redacted = redactSourceEvidence(report)
   const strip = (items: Array<Record<string, any>>) => items.map(({ codeRefs: _codeRefs, ...item }) => item)
   return {
-    ...report,
+    ...redacted,
     generatedAt: '<date>',
-    generator: { ...report.generator, version: '<version>' },
+    generator: { ...redacted.generator, version: '<version>' },
     model: {
-      ...report.model,
-      actors: strip(report.model.actors),
-      experiences: strip(report.model.experiences),
-      domains: strip(report.model.domains),
-      features: strip(report.model.features),
-      journeys: strip(report.model.journeys),
-      scenarios: strip(report.model.scenarios),
-      businessRules: strip(report.model.businessRules)
+      ...redacted.model,
+      actors: strip(redacted.model.actors),
+      experiences: strip(redacted.model.experiences),
+      domains: strip(redacted.model.domains),
+      features: strip(redacted.model.features),
+      journeys: strip(redacted.model.journeys),
+      scenarios: strip(redacted.model.scenarios),
+      businessRules: strip(redacted.model.businessRules)
     },
     coverage: '<repository-specific>'
   }
@@ -67,12 +69,16 @@ describe('open report', () => {
     git(target, 'add', '.')
     git(target, 'commit', '-m', 'open product model')
 
-    const validation = validateModel(loadModel(target), lsFiles(target))
+    const imported = loadModel(target)
+    const validation = validateModel(imported, lsFiles(target))
     expect(validation.ok).toBe(true)
     expect(validation.errors).toEqual([])
     expect(validation.warnings).toEqual(expect.arrayContaining([
       expect.stringContaining('needs at least one codeRef before coverage can leave draft')
     ]))
+    expect(imported.journeys.flatMap(journey => journey.entryPoints)).toEqual([])
+    expect(imported.experiences.flatMap(experience => experience.entryPoints))
+      .toEqual(expect.arrayContaining([{ type: 'web', path: '/' }]))
 
     const rebuilt = buildProject(target)
     expect(withoutRepositoryEvidence(rebuilt.report)).toEqual(withoutRepositoryEvidence(original.report))

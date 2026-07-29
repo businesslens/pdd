@@ -422,14 +422,17 @@ serve(redactSourceEvidence(version.report))
 | Field | Delivered report |
 | --- | --- |
 | `codeRefs` | emptied on every entity |
-| `entryPoints` | repository paths dropped; routes like `/checkout` and absolute URLs kept |
-| `links` | repository-relative hrefs dropped; absolute URLs kept |
+| `entryPoints` | repository paths dropped; routes like `/checkout` and HTTP(S) URLs kept |
+| `links` | local hrefs dropped; HTTP(S) URLs kept |
 | `coverage.sourceAreas` | emptied |
 | `coverage.evidenceRedacted` | set to `true` |
 
-A value counts as a repository path when it contains `/` but is neither
-rooted (`/checkout`) nor absolute (`https://…`). A value with no separator at
-all, such as a CLI entry point, is not a path and is kept.
+Relative POSIX paths, Windows paths, UNC paths, local `file:` URLs, and
+recognizable absolute filesystem paths are repository evidence. A rooted
+entry point such as `/checkout` is a product route and is kept; root-relative
+links are local and are dropped. HTTP(S) URLs are kept in either field. A
+value with no path separator at all, such as a CLI entry point, is not a path
+and is kept.
 
 Author-written prose — `method`, `unmapped`, `limitations`, `rationale`,
 `intent`, and `supportingContent` — is never rewritten. It carries product
@@ -458,13 +461,13 @@ receiving repository regardless of whether the report was redacted.
 The inverse command is:
 
 ```bash
-npx businesslens open ./report.json
+npx businesslens@latest open ./report.json
 ```
 
 `open` validates the report and expands it into canonical Markdown/YAML under
-`.businesslens/`. `businesslens pull <blueprint-name>` retrieves the latest
-accessible Blueprint version through the stored CLI login and then invokes
-the same expansion path without saving a user-facing report download.
+`.businesslens/`. `npx businesslens@latest pull <blueprint-name>` retrieves
+the latest accessible Blueprint version through the stored CLI login and then
+invokes the same expansion path without saving a user-facing report download.
 `--version N` selects an exact immutable version.
 
 Both commands refuse a non-empty target by default. The semantic round-trip

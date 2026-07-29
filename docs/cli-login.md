@@ -11,7 +11,7 @@ order: 27
 Authorize the CLI to pull accessible Hub Blueprints:
 
 ```bash
-businesslens login
+npx businesslens@latest login
 ```
 
 The command starts a browser-based device authorization flow. It never asks
@@ -28,7 +28,7 @@ The official Platform is the default. A literal loopback origin may be
 selected for local development:
 
 ```bash
-businesslens login --platform http://localhost:3000
+npx businesslens@latest login --platform http://localhost:3000
 ```
 
 Only `https://app.businesslens.io`, `localhost`, `127.x.x.x`, and `::1` are

@@ -15,7 +15,7 @@ import { stringify } from 'yaml'
 import type { ProductReportV4 } from '../core/portable.js'
 import { validateModel } from './validate.js'
 import { loadModel } from '../core/model.js'
-import { parseProductReport } from '../core/portable.js'
+import { parseProductReport, redactSourceEvidence } from '../core/portable.js'
 
 const MAX_REPORT_BYTES = 8 * 1024 * 1024
 const OPEN_COVERAGE_METHOD = 'Opened from a Product Report; source repository evidence was intentionally removed.'
@@ -249,7 +249,8 @@ export interface ExpandedProductReport {
 export function expandProductReport(cwd: string, input: unknown, force: boolean): ExpandedProductReport {
   let staging: string | undefined
   try {
-    const report = parseProductReport(input)
+    const sourceReport = parseProductReport(input)
+    const report = parseProductReport(redactSourceEvidence(sourceReport))
     const targetParent = dirname(resolve(cwd, '.businesslens'))
     mkdirSync(targetParent, { recursive: true })
     staging = mkdtempSync(join(targetParent, '.businesslens-open-'))
