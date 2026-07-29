@@ -3,7 +3,7 @@ title: Format contract
 description: The contract for the git-tracked product model — folder layout, universal conventions, entities, and codeRefs.
 section: open-source
 group: Reference
-order: 21
+order: 28
 ---
 
 # The `.businesslens/` Format
