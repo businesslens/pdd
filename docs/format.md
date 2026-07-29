@@ -3,7 +3,7 @@ title: Format contract
 description: The contract for the git-tracked product model — folder layout, universal conventions, entities, and codeRefs.
 section: open-source
 group: Reference
-order: 28
+order: 30
 ---
 
 # The `.businesslens/` Format
@@ -406,6 +406,55 @@ entity count or mapped key that is present must still match the report.
 New non-draft reports produced from a Product Model have journey and scenario
 evidence because `validate` and `build` enforce that source rule.
 
+### Source evidence and redaction
+
+Several report fields name the origin repository rather than the product. That
+evidence is the point of the model inside its own workspace, but it must not
+leave it. Every report delivered outside its owning workspace — a download, or
+a public Hub Blueprint — is first passed through one shared projection:
+
+```ts
+import { redactSourceEvidence } from 'businesslens/report'
+
+serve(redactSourceEvidence(version.report))
+```
+
+| Field | Delivered report |
+| --- | --- |
+| `codeRefs` | emptied on every entity |
+| `entryPoints` | repository paths dropped; routes like `/checkout` and absolute URLs kept |
+| `links` | repository-relative hrefs dropped; absolute URLs kept |
+| `coverage.sourceAreas` | emptied |
+| `coverage.evidenceRedacted` | set to `true` |
+
+A value counts as a repository path when it contains `/` but is neither
+rooted (`/checkout`) nor absolute (`https://…`). A value with no separator at
+all, such as a CLI entry point, is not a path and is kept.
+
+Author-written prose — `method`, `unmapped`, `limitations`, `rationale`,
+`intent`, and `supportingContent` — is never rewritten. It carries product
+meaning and belongs to the author, so keep repository internals out of it.
+
+The projection is idempotent and does not mutate its input. Because both the
+framework and the Platform apply this same exported function, the two sides
+cannot disagree about what a delivered report exposes, and
+`validateProductReport` rejects a report marked `evidenceRedacted` that still
+names a repository path.
+
+`coverage.mapped` is deliberately preserved. How much of the model was
+evidence-backed upstream is a model-quality signal, not a disclosure. Since a
+redacted report no longer carries the `codeRefs` those counts were derived
+from, validation adapts:
+
+| `coverage.evidenceRedacted` | `coverage.mapped` rule |
+| --- | --- |
+| absent or `false` | must equal the entities carrying `codeRefs` |
+| `true` | must not exceed the entity counts, and no entity may carry a `codeRef` |
+
+`publish` sends the unredacted report: a Product Model Version is private to
+its workspace. `open` and `pull` never transplant imported evidence into the
+receiving repository regardless of whether the report was redacted.
+
 The inverse command is:
 
 ```bash
@@ -413,8 +462,13 @@ npx businesslens open ./report.json
 ```
 
 `open` validates the report and expands it into canonical Markdown/YAML under
-`.businesslens/`. It refuses a non-empty target by default. The semantic
-round-trip guarantee is:
+`.businesslens/`. `businesslens pull <blueprint-name>` retrieves the latest
+accessible Blueprint version through the stored CLI login and then invokes
+the same expansion path without saving a user-facing report download.
+`--version N` selects an exact immutable version.
+
+Both commands refuse a non-empty target by default. The semantic round-trip
+guarantee is:
 
 ```text
 report A → open → .businesslens/ → build → report B

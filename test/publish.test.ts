@@ -121,6 +121,17 @@ describe('publish lifecycle', () => {
     expect(existsSync(join(repo, '.businesslens/cache/analysis.json'))).toBe(false)
   })
 
+  it('truncates an over-long commit subject instead of failing the publish', async () => {
+    const subject = `feat: ${'x'.repeat(700)}`
+    execFileSync('git', ['commit', '--allow-empty', '-m', subject], { cwd: repo, stdio: 'pipe' })
+
+    expect(await runPublish(repo, { yes: true })).toBe(0)
+    const message = requests.at(-1)!.body.provenance.resources[0].commitMessage as string
+    expect(message).toHaveLength(500)
+    expect(message.endsWith('…')).toBe(true)
+    expect(subject.startsWith(message.slice(0, 100))).toBe(true)
+  })
+
   it('reports a new version on every publish of the same commit', async () => {
     expect(await runPublish(repo, { yes: true })).toBe(0)
     expect(await runPublish(repo, { yes: true })).toBe(0)

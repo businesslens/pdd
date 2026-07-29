@@ -3,7 +3,7 @@ title: Validate in CI
 description: Run the deterministic validator on every pull request and report Product Model Versions on merge.
 section: open-source
 group: Reference
-order: 30
+order: 32
 ---
 
 # Validate the model in CI

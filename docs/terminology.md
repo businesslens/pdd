@@ -139,10 +139,12 @@ feature is enabled, shipped, or deprecated.
 - A **Product Model Version** is the Platform's immutable record of one
   reported Product Report plus separately stored provenance.
 - A **Blueprint** is a Platform-owned reusable identity around selected Product
-  Model Versions. A local model, draft model, build, or publish is never
+  Model Versions. Its globally unique canonical name is the stable CLI pull
+  identifier. A local model, draft model, build, or publish is never
   automatically a Blueprint.
 - A **Blueprint Revision** points to exactly one immutable Product Model
-  Version. Public visibility is a separate Platform curation action.
+  Version. The CLI's `pull --version N` option selects this revision number.
+  Public visibility is a separate Platform curation action.
 - A **product map** is a visual or navigable view of the Product Model. It is
   not the `.businesslens/` artifact itself.
 - A git **branch** may hold intended product behavior while implementation is
@@ -151,5 +153,5 @@ feature is enabled, shipped, or deprecated.
   hosted BusinessLens workflow, not to the `.businesslens/` product model.
 
 For a narrative walkthrough of how the entities work together, continue to
-[The product model](./product-map.md). For field-level authoring rules, use the
+[The product model](./product-model.md). For field-level authoring rules, use the
 [format contract](./format.md).

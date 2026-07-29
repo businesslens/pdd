@@ -92,3 +92,13 @@ Version. Both can run from CI on the default branch (see
 [Validate in CI](./ci.md)). PDD submissions are Blueprint-neutral: Blueprint
 creation, revision selection, and public Hub visibility happen separately in
 the Platform.
+
+## Where Blueprint pull fits
+
+The Hub identifies every public Blueprint with a globally unique canonical
+name. To use one in a repository, authorize the CLI once with
+`businesslens login`, then run `businesslens pull <blueprint-name>`.
+Latest is the default; `--version N` pins an exact immutable Blueprint
+revision. The Product Report remains an internal transport response: `pull`
+verifies it and invokes the same canonical expansion used by `open` without a
+browser download.

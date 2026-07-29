@@ -28,7 +28,9 @@ npx businesslens@latest <command> [options]
 | [`validate`](./cli-validate.md) | Check the structure, relationships, and code evidence in `.businesslens/` |
 | [`build`](./cli-build.md) | Compile `.businesslens/` into a portable Product Report |
 | [`publish`](./cli-publish.md) | Report an immutable Product Model Version to the Platform |
-| [`open`](./cli-open.md) | Expand a local or trusted Hub Product Report into `.businesslens/` |
+| [`login`](./cli-login.md) | Authorize the CLI through the Platform's browser flow |
+| [`pull`](./cli-pull.md) | Pull the latest or an exact Blueprint version by canonical name |
+| [`open`](./cli-open.md) | Expand a local Product Report into `.businesslens/` |
 
 The CLI changes only what the selected command owns. In particular, `install`
 and `update` manage skills but never create or edit `.businesslens/`, while

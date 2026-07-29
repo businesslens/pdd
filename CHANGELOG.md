@@ -23,19 +23,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the CLI, docs, and skills. "Product map" is reserved for a visual or
   navigable view of that model. Draft coverage is an evidence state and no
   longer implies a reusable blueprint.
-- Files written by `open` use default umask permissions instead of owner-only
-  `0600`, so an expanded model is readable by the whole team.
 - Product Report validation now rejects content that cannot round-trip into
   canonical Markdown and inconsistent mapped-coverage counts. Product Model
   validation continues to reject non-draft behavioral claims without evidence.
 
 ### Added
 
-- `businesslens open <report>` expands a local or trusted Hub `report.json`
-  back into a canonical `.businesslens/` Product Model, making `build` and
-  `open` semantic inverses. Remote sources are restricted to official Hub
-  report URLs, refuse redirects, enforce an 8 MiB limit, and verify the
-  advertised report digest before writing.
+- `businesslens open <report>` expands a local Product Report back into a
+  canonical `.businesslens/` Product Model, making `build` and `open`
+  semantic inverses.
+- `businesslens login` authorizes a dedicated CLI session through the browser,
+  and `businesslens pull <blueprint-name> [--version N]` retrieves the
+  latest or an exact Blueprint version and expands it without a user-facing
+  `report.json` download.
 - `publish --tag` and `publish --pull-request` target tag and pull-request
   Tracks explicitly; ordinary publish targets the current branch Track.
 - **Features** and **business rules** are first-class product-model entities
@@ -45,6 +45,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Platform consumes this contract instead of vendoring a parallel copy, so
   ingestion and delivery cannot drift from the framework. It depends only on
   `zod` and never loads the CLI.
+- `redactSourceEvidence` in the `businesslens/report` contract strips every
+  repository reference from a report before it leaves its owning workspace —
+  `codeRefs`, repository `entryPoints`, repository-relative `links`, and
+  `coverage.sourceAreas` — so a downloadable or public Hub report never
+  discloses the origin repository's layout, file paths, or symbol names.
+  Product-facing routes and absolute URLs are kept. `coverage.mapped` is
+  preserved as a model-quality signal, and `coverage.evidenceRedacted` records
+  both that those counts describe the origin repository and that validation
+  must reject any repository path still present.
 - `businesslens-plan` and `businesslens-verify` skills for planning in the
   Product Model and verifying implementation evidence before merge.
 - Draft greenfield product models, with missing-evidence warnings during

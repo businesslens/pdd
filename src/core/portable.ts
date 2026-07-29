@@ -177,7 +177,11 @@ export const ReportCoverageSchema = z.strictObject({
   mapped: z.record(z.string(), z.number().int().min(0)),
   unmapped: z.array(z.string()),
   limitations: z.array(z.string()),
-  rationale: z.string()
+  rationale: z.string(),
+  // Set only by `redactSourceEvidence`. Marks a report whose `codeRefs` were
+  // removed for delivery, so `mapped` describes the origin repository rather
+  // than the evidence still present in this document.
+  evidenceRedacted: z.boolean().optional()
 })
 
 export const ProductReportV4Schema = z.strictObject({
@@ -371,6 +375,40 @@ export function validateProductReport(report: ProductReportV4): string[] {
     scenarios: model.scenarios.filter(item => item.codeRefs.length > 0).length,
     businessRules: model.businessRules.filter(item => item.codeRefs.length > 0).length
   }
+  // A redacted report carries no `codeRefs`, so `mapped` describes the origin
+  // repository and can no longer be recomputed from this document. It stays
+  // bounded by the entity counts instead.
+  const redacted = report.coverage.evidenceRedacted === true
+  if (redacted) {
+    const carriers = Object.values(expectedMapped).reduce((total, count) => total + count, 0)
+    if (carriers > 0) {
+      issues.push('coverage.evidenceRedacted is true but entities still carry codeRefs')
+    }
+    if (report.coverage.sourceAreas.length) {
+      issues.push('coverage.evidenceRedacted is true but coverage.sourceAreas names repository areas')
+    }
+    const entryPointHosts = [...model.experiences, ...model.journeys]
+    for (const host of entryPointHosts) {
+      for (const point of host.entryPoints) {
+        if (isRepositoryPath(point.path)) {
+          issues.push(`"${host.id}": redacted report still exposes the repository entry point "${point.path}"`)
+        }
+      }
+    }
+    const linkHosts = [
+      { id: 'product', links: report.links },
+      ...model.actors, ...model.experiences, ...model.domains,
+      ...model.features, ...model.journeys, ...model.scenarios, ...model.businessRules
+    ]
+    for (const host of linkHosts) {
+      for (const link of host.links) {
+        if (isRepositoryPath(link.href)) {
+          issues.push(`"${host.id}": redacted report still exposes the repository link "${link.href}"`)
+        }
+      }
+    }
+  }
+
   for (const key of Object.keys(expectedSummary) as Array<keyof typeof expectedSummary>) {
     const value = expectedSummary[key]
     if (report.summary[key] !== value) {
@@ -382,16 +420,91 @@ export function validateProductReport(report: ProductReportV4): string[] {
     ) {
       issues.push(`coverage.counts.${key} must equal ${value}`)
     }
-    const mapped = expectedMapped[key as keyof typeof expectedMapped]
-    if (
-      report.coverage.mapped[key] !== undefined
-      && report.coverage.mapped[key] !== mapped
-    ) {
-      issues.push(`coverage.mapped.${key} must equal ${mapped}`)
+    const declaredMapped = report.coverage.mapped[key]
+    if (declaredMapped === undefined) continue
+    if (redacted) {
+      if (declaredMapped > value) {
+        issues.push(`coverage.mapped.${key} must be at most ${value}`)
+      }
+    } else if (declaredMapped !== expectedMapped[key]) {
+      issues.push(`coverage.mapped.${key} must equal ${expectedMapped[key]}`)
     }
   }
 
   return issues
+}
+
+/**
+ * A repository-relative path, as opposed to a product-facing route.
+ *
+ * `/checkout` and `https://example.com/orders` describe how an actor reaches
+ * a surface and stay meaningful outside the origin repository.
+ * `src/routes/storefront.ts` describes that repository's layout and must not
+ * leave it. A value with no separator at all (`businesslens build`, an event
+ * name) is not a path.
+ */
+function isRepositoryPath(value: string): boolean {
+  const path = value.trim()
+  if (!path.includes('/')) return false
+  return !path.startsWith('/') && !/^[a-z][a-z0-9+.-]*:\/\//i.test(path)
+}
+
+/**
+ * Remove source evidence for delivery.
+ *
+ * A Product Model Version keeps full evidence inside the owning workspace, but
+ * a downloadable or public Hub report must not disclose the origin
+ * repository's layout, file paths, or symbol names. Every consumer that serves
+ * a report outside its owning workspace applies this exact projection, so the
+ * redaction cannot drift between the framework and the Platform.
+ *
+ * Redacted, because each is structurally a repository reference:
+ * `codeRefs`, `entryPoints` that name a repository path, `links` to
+ * repository-relative documents, and `coverage.sourceAreas`.
+ *
+ * Not redacted: author-written prose (`method`, `unmapped`, `limitations`,
+ * `rationale`, `intent`, `supportingContent`). Those carry product meaning and
+ * are the author's to control — authors must keep repository internals out of
+ * them.
+ *
+ * `coverage.mapped` is preserved: how much of the model was evidence-backed
+ * upstream is a model-quality signal, not a disclosure. `evidenceRedacted`
+ * records that those counts can no longer be recomputed from the document.
+ * The projection is idempotent and does not mutate its input.
+ */
+export function redactSourceEvidence(report: ProductReportV4): ProductReportV4 {
+  const publicLinks = <T extends { href: string }>(items: T[]): T[] =>
+    items.filter(link => !isRepositoryPath(link.href))
+  const publicEntryPoints = <T extends { path: string }>(items: T[]): T[] =>
+    items.filter(point => !isRepositoryPath(point.path))
+
+  const strip = <T extends { codeRefs: unknown[], links: Array<{ href: string }> }>(items: T[]): T[] =>
+    items.map(item => ({ ...item, codeRefs: [], links: publicLinks(item.links) }))
+  const stripWithEntryPoints = <
+    T extends { codeRefs: unknown[], links: Array<{ href: string }>, entryPoints: Array<{ path: string }> }
+  >(items: T[]): T[] =>
+    items.map(item => ({
+      ...item,
+      codeRefs: [],
+      links: publicLinks(item.links),
+      entryPoints: publicEntryPoints(item.entryPoints)
+    }))
+
+  return {
+    ...report,
+    links: publicLinks(report.links),
+    model: {
+      ...report.model,
+      actors: strip(report.model.actors),
+      experiences: stripWithEntryPoints(report.model.experiences),
+      domains: strip(report.model.domains),
+      features: strip(report.model.features),
+      journeys: stripWithEntryPoints(report.model.journeys),
+      scenarios: strip(report.model.scenarios),
+      businessRules: strip(report.model.businessRules)
+    },
+    coverage: { ...report.coverage, sourceAreas: [], evidenceRedacted: true }
+  }
 }
 
 export function parseProductReport(input: unknown): ProductReportV4 {

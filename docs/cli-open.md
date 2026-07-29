@@ -1,9 +1,9 @@
 ---
 title: open
-description: Expand a local or trusted BusinessLens Hub Product Report into a canonical draft Product Model.
+description: Expand a local Product Report into a canonical draft Product Model.
 section: open-source
 group: CLI
-order: 27
+order: 29
 ---
 
 # `businesslens open`
@@ -22,25 +22,18 @@ choose where `.businesslens/` will be created:
 npx businesslens@latest --cwd ./new-product open ./report.json
 ```
 
-## Report sources
+## Report source
 
-A local report works offline and must be a regular, non-symbolic-link file no
-larger than 8 MiB.
+The local report works offline and must be a regular, non-symbolic-link file no
+larger than 8 MiB. Hub users do not download Product Reports manually; use
+[`businesslens pull`](./cli-pull.md) with the Blueprint's canonical name.
+`pull` retrieves the report and invokes this expansion path internally.
 
-Remote reports are limited to the official BusinessLens Hub report endpoint
-or its loopback development equivalent:
-
-```bash
-npx businesslens@latest open \
-  https://app.businesslens.io/api/v1/hub/blueprints/example/report.json
-```
-
-Accepted Hub paths identify either the current Blueprint report or a numbered
-release. Remote URLs may not contain credentials, query strings, or fragments.
-The command refuses redirects, enforces an 8 MiB response limit and a
-15-second timeout, and verifies the advertised SHA-256 report digest when the
-response includes one. HTTP is accepted only for literal loopback development
-hosts.
+A relative report path resolves against the current shell directory, not
+against `--cwd`. `--cwd` chooses the repository that receives
+`.businesslens/`; the report argument is an ordinary input file. In the
+example above, `./report.json` is read from the shell's directory while the
+model is written into `./new-product`.
 
 ## Imported evidence
 

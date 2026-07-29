@@ -71,8 +71,10 @@ checks changed and deleted work from the complete model diff.
 The model is fully useful on its own. When you want hosted evolution,
 topology, and comparison across your workspace, report immutable Product Model
 Versions with `/businesslens-publish`. Blueprint creation and public
-publication are separate Platform actions. The
-source-free `report.json` can also be expanded locally with
-`businesslens open`, including reports downloaded from BusinessLens Hub.
-The `build`, `open`, and `publish` commands are in the
+publication are separate Platform actions. To start from a Hub Blueprint,
+install the CLI, run `businesslens login`, then
+`businesslens pull <blueprint-name>`; add `--version N` only when an exact
+immutable version is required. The CLI retrieves and expands the Product
+Report without asking the user to download it. The `build`, `open`, `pull`,
+and `publish` commands are in the
 [CLI reference](./cli.md).

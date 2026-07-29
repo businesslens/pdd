@@ -76,6 +76,18 @@ function targetRef(options: PublishOptions, branch: string): SubmissionRef {
   return { type: 'branch', name: branch }
 }
 
+const COMMIT_MESSAGE_LIMIT = 500
+
+/**
+ * Provenance is a courtesy label, not the artifact. An unusually long commit
+ * subject must not fail a publish whose report is otherwise valid.
+ */
+function fitCommitMessage(subject: string): string {
+  const trimmed = subject.trim()
+  if (trimmed.length <= COMMIT_MESSAGE_LIMIT) return trimmed
+  return `${trimmed.slice(0, COMMIT_MESSAGE_LIMIT - 1).trimEnd()}…`
+}
+
 function describeRef(ref: SubmissionRef): string {
   if (ref.type === 'pull-request') return `pull request #${ref.number} into ${ref.baseBranch}`
   return `${ref.type} "${ref.name}"`
@@ -139,7 +151,7 @@ export async function runPublish(cwd: string, options: PublishOptions): Promise<
           url: pinned.repositoryUrl,
           branch: pinned.branch,
           commit: pinned.commit,
-          ...(pinned.commitMessage ? { commitMessage: pinned.commitMessage } : {}),
+          ...(pinned.commitMessage ? { commitMessage: fitCommitMessage(pinned.commitMessage) } : {}),
           committedAt: pinned.committedAt
         }],
         analyzedAt: new Date().toISOString()

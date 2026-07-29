@@ -1,12 +1,10 @@
 import { execFileSync } from 'node:child_process'
-import { createHash } from 'node:crypto'
 import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { buildProject } from '../src/commands/build.js'
 import { runOpen } from '../src/commands/open.js'
-import { canonicalReportJson } from '../src/core/portable.js'
 import { lsFiles } from '../src/core/git.js'
 import { loadModel } from '../src/core/model.js'
 import { validateModel } from '../src/commands/validate.js'
@@ -48,12 +46,10 @@ function withoutRepositoryEvidence(report: Record<string, any>): Record<string, 
 
 let source: string
 let target: string
-let remoteTarget: string
 
 beforeAll(() => {
   source = mkdtempSync(join(tmpdir(), 'bl-open-source-'))
   target = mkdtempSync(join(tmpdir(), 'bl-open-target-'))
-  remoteTarget = mkdtempSync(join(tmpdir(), 'bl-open-remote-'))
   cpSync(FIXTURE, source, { recursive: true })
   initialize(source)
   initialize(target)
@@ -62,7 +58,6 @@ beforeAll(() => {
 afterAll(() => {
   rmSync(source, { recursive: true, force: true })
   rmSync(target, { recursive: true, force: true })
-  rmSync(remoteTarget, { recursive: true, force: true })
 })
 
 describe('open report', () => {
@@ -94,50 +89,22 @@ describe('open report', () => {
     )).toContain('## Decision points')
   })
 
+  it('omits the frontmatter block for entities that carry no frontmatter fields', () => {
+    const actor = readFileSync(join(target, '.businesslens/actors/shopper.md'), 'utf8')
+    expect(actor).not.toContain('{}')
+    expect(actor.startsWith('# ')).toBe(true)
+
+    // Entities that do carry fields keep a real frontmatter block.
+    expect(readFileSync(join(target, '.businesslens/features/checkout.md'), 'utf8'))
+      .toMatch(/^---\ndomain: ordering\n/)
+  })
+
   it('refuses to overwrite a non-empty product model without force', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => undefined)
     const report = join(source, '.businesslens/build/report.json')
     expect(await runOpen(target, report, false)).toBe(1)
     expect(console.error).toHaveBeenCalledWith(expect.stringContaining('is not empty'))
     vi.restoreAllMocks()
-  })
-
-  it('verifies a remote Hub report digest before writing files', async () => {
-    const original = buildProject(source)
-    const report = JSON.parse(readFileSync(original.outputFile, 'utf8')) as unknown
-    const digest = createHash('sha256').update(canonicalReportJson(report)).digest('hex')
-    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify(report), {
-      headers: { 'x-businesslens-report-digest': digest }
-    }))
-
-    expect(await runOpen(
-      remoteTarget,
-      'https://app.businesslens.io/api/v1/hub/blueprints/fixture-shop/releases/1/report.json',
-      false
-    )).toBe(0)
-    expect(fetchMock).toHaveBeenCalledWith(expect.any(URL), expect.objectContaining({ redirect: 'manual' }))
-    vi.restoreAllMocks()
-  })
-
-  it('rejects a remote report whose digest header is invalid', async () => {
-    const rejectedTarget = mkdtempSync(join(tmpdir(), 'bl-open-rejected-'))
-    const original = buildProject(source)
-    const report = readFileSync(original.outputFile, 'utf8')
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(report, {
-      headers: { 'x-businesslens-report-digest': '0'.repeat(64) }
-    }))
-    vi.spyOn(console, 'error').mockImplementation(() => undefined)
-
-    expect(await runOpen(
-      rejectedTarget,
-      'https://app.businesslens.io/api/v1/hub/blueprints/fixture-shop/report.json',
-      false
-    )).toBe(1)
-    expect(console.error).toHaveBeenCalledWith(expect.stringContaining('digest does not match'))
-    expect(() => readFileSync(join(rejectedTarget, '.businesslens/product.md'))).toThrow()
-
-    vi.restoreAllMocks()
-    rmSync(rejectedTarget, { recursive: true, force: true })
   })
 
   it('rejects report fields that cannot be written as canonical entity Markdown', async () => {
@@ -196,37 +163,16 @@ describe('open report', () => {
     rmSync(legacyTarget, { recursive: true, force: true })
   })
 
-  it('rejects query-bearing remote report URLs before fetching', async () => {
-    const rejectedTarget = mkdtempSync(join(tmpdir(), 'bl-open-query-'))
-    const fetchMock = vi.spyOn(globalThis, 'fetch')
+  it('directs remote Hub users to pull instead of accepting a URL', async () => {
+    const rejectedTarget = mkdtempSync(join(tmpdir(), 'bl-open-remote-'))
     vi.spyOn(console, 'error').mockImplementation(() => undefined)
 
     expect(await runOpen(
       rejectedTarget,
-      'https://app.businesslens.io/api/v1/hub/blueprints/fixture-shop/report.json?token=secret',
+      'https://app.businesslens.io/api/v1/hub/blueprints/acme/fixture-shop/report.json',
       false
     )).toBe(1)
-    expect(fetchMock).not.toHaveBeenCalled()
-
-    vi.restoreAllMocks()
-    rmSync(rejectedTarget, { recursive: true, force: true })
-  })
-
-  it('stops streaming a remote report once it exceeds the byte limit', async () => {
-    const rejectedTarget = mkdtempSync(join(tmpdir(), 'bl-open-oversized-'))
-    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(new Uint8Array((8 * 1024 * 1024) + 1))
-    )
-    vi.spyOn(console, 'error').mockImplementation(() => undefined)
-
-    expect(await runOpen(
-      rejectedTarget,
-      'https://app.businesslens.io/api/v1/hub/blueprints/fixture-shop/report.json',
-      false
-    )).toBe(1)
-    expect(fetchMock).toHaveBeenCalledOnce()
-    expect(console.error).toHaveBeenCalledWith(expect.stringContaining('8 MiB'))
-    expect(() => readFileSync(join(rejectedTarget, '.businesslens/product.md'))).toThrow()
+    expect(console.error).toHaveBeenCalledWith(expect.stringContaining('businesslens pull'))
 
     vi.restoreAllMocks()
     rmSync(rejectedTarget, { recursive: true, force: true })

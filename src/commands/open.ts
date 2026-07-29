@@ -16,87 +16,16 @@ import type { ProductReportV4 } from '../core/portable.js'
 import { validateModel } from './validate.js'
 import { loadModel } from '../core/model.js'
 import { parseProductReport } from '../core/portable.js'
-import { reportDigest } from '../core/report-digest.js'
-import { DEFAULT_PLATFORM_URL } from '../core/platform-url.js'
 
 const MAX_REPORT_BYTES = 8 * 1024 * 1024
 const OPEN_COVERAGE_METHOD = 'Opened from a Product Report; source repository evidence was intentionally removed.'
 const OPEN_COVERAGE_LIMITATION = 'Implementation evidence must be established in this repository.'
 const OPEN_COVERAGE_RATIONALE = 'Product behavior and relationships were imported from a Product Report. Source-repository code references were removed because they are not evidence for this repository.'
 
-function isLoopback(hostname: string): boolean {
-  const host = hostname.replace(/^\[(.*)\]$/, '$1')
-  return host === 'localhost' || host === '::1' || /^127(?:\.\d{1,3}){3}$/.test(host)
-}
-
-function trustedReportUrl(source: string): URL {
-  const url = new URL(source)
-  const official = url.origin === DEFAULT_PLATFORM_URL && url.protocol === 'https:'
-  const loopback = isLoopback(url.hostname) && (url.protocol === 'http:' || url.protocol === 'https:')
-  if (
-    (!official && !loopback)
-    || url.username
-    || url.password
-    || url.search
-    || url.hash
-    || !/^\/api\/v1\/hub\/blueprints\/[^/]+(?:\/releases\/\d+)?\/report\.json$/.test(url.pathname)
-  ) {
-    throw new Error('Remote reports must use an official BusinessLens Hub report URL or the equivalent loopback development URL.')
+function readReportSource(source: string): unknown {
+  if (/^https?:\/\//i.test(source)) {
+    throw new Error('`open` accepts local Product Report files. Use `businesslens pull <blueprint>` for Hub Blueprints.')
   }
-  return url
-}
-
-async function readLimitedBody(response: Response): Promise<string> {
-  if (!response.body) return ''
-  const reader = response.body.getReader()
-  const chunks: Uint8Array[] = []
-  let total = 0
-  while (true) {
-    const { done, value } = await reader.read()
-    if (done) break
-    total += value.byteLength
-    if (total > MAX_REPORT_BYTES) {
-      await reader.cancel()
-      throw new Error('The Hub report exceeds the 8 MiB safety limit.')
-    }
-    chunks.push(value)
-  }
-  const bytes = new Uint8Array(total)
-  let offset = 0
-  for (const chunk of chunks) {
-    bytes.set(chunk, offset)
-    offset += chunk.byteLength
-  }
-  return new TextDecoder().decode(bytes)
-}
-
-async function readRemoteReport(source: string): Promise<unknown> {
-  const url = trustedReportUrl(source)
-  const response = await fetch(url, {
-    headers: { accept: 'application/vnd.businesslens.report+json; version=4, application/json' },
-    redirect: 'manual',
-    signal: AbortSignal.timeout(15_000)
-  })
-  if (response.status >= 300 && response.status < 400) {
-    throw new Error('Refusing a redirected Hub report response.')
-  }
-  if (!response.ok) throw new Error(`Hub report request failed with status ${response.status}.`)
-  const length = Number(response.headers.get('content-length') || 0)
-  if (length > MAX_REPORT_BYTES) throw new Error('The Hub report exceeds the 8 MiB safety limit.')
-  const text = await readLimitedBody(response)
-  const report = JSON.parse(text) as unknown
-  const expectedDigest = response.headers.get('x-businesslens-report-digest')
-  if (expectedDigest) {
-    const actualDigest = reportDigest(report)
-    if (!/^[a-f0-9]{64}$/i.test(expectedDigest) || actualDigest !== expectedDigest.toLowerCase()) {
-      throw new Error('The Hub report digest does not match its response header.')
-    }
-  }
-  return report
-}
-
-async function readReportSource(source: string): Promise<unknown> {
-  if (/^https?:\/\//i.test(source)) return readRemoteReport(source)
   const file = isAbsolute(source) ? source : resolve(process.cwd(), source)
   const stat = lstatSync(file)
   if (stat.isSymbolicLink() || !stat.isFile()) throw new Error('The report source must be a regular file, not a symbolic link.')
@@ -104,7 +33,9 @@ async function readReportSource(source: string): Promise<unknown> {
   return JSON.parse(readFileSync(file, 'utf8'))
 }
 
+/** Entities with no frontmatter fields get no frontmatter block, not `{}`. */
 function frontmatter(data: Record<string, unknown>): string {
+  if (!Object.keys(data).length) return ''
   return `---\n${stringify(data, { lineWidth: 0 }).trimEnd()}\n---\n\n`
 }
 
@@ -310,10 +241,15 @@ function writeReport(root: string, report: ProductReportV4): void {
   }
 }
 
-export async function runOpen(cwd: string, source: string, force: boolean): Promise<number> {
+export interface ExpandedProductReport {
+  report: ProductReportV4
+  root: string
+}
+
+export function expandProductReport(cwd: string, input: unknown, force: boolean): ExpandedProductReport {
   let staging: string | undefined
   try {
-    const report = parseProductReport(await readReportSource(source))
+    const report = parseProductReport(input)
     const targetParent = dirname(resolve(cwd, '.businesslens'))
     mkdirSync(targetParent, { recursive: true })
     staging = mkdtempSync(join(targetParent, '.businesslens-open-'))
@@ -329,12 +265,19 @@ export async function runOpen(cwd: string, source: string, force: boolean): Prom
     }
     const root = prepareTarget(cwd, force)
     renameSync(stagedRoot, root)
-    console.log(`Opened ${report.title} into ${root}.`)
+    return { report, root }
+  } finally {
+    if (staging) rmSync(staging, { recursive: true, force: true })
+  }
+}
+
+export async function runOpen(cwd: string, source: string, force: boolean): Promise<number> {
+  try {
+    const opened = expandProductReport(cwd, readReportSource(source), force)
+    console.log(`Opened ${opened.report.title} into ${opened.root}.`)
     return 0
   } catch (error) {
     console.error((error as Error).message)
     return 1
-  } finally {
-    if (staging) rmSync(staging, { recursive: true, force: true })
   }
 }

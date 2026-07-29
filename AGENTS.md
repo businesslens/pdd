@@ -34,9 +34,9 @@ or validator behavior.
   characters so it never truncates; the body H1 carries the full page
   title.
 - This repository authors the `open-source` section with groups
-  Get started, Concepts, Tutorials, Skills (one page per skill), and
-  Reference. Platform docs live in the landing repository and follow the
-  same contract.
+  Get started, Concepts, Tutorials, Skills (one page per skill), CLI (one
+  page per command), and Reference. Platform docs live in the landing
+  repository and follow the same contract.
 
 ## Skill-writing standards
 

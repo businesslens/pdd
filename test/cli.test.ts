@@ -51,13 +51,16 @@ afterAll(() => {
 })
 
 describe('cli dispatch', () => {
-  it('lists build and publish in help', () => {
+  it('lists build, publish, login, pull, and open in help', () => {
     const result = cli(repo, process.env, 'validate', '--help')
     expect(result.status).toBe(0)
     expect(result.stdout).toContain('build ')
     expect(result.stdout).toContain('publish [--yes]')
     expect(result.stdout).toContain('--tag <name>')
     expect(result.stdout).toContain('--pull-request <number>')
+    expect(result.stdout).toContain('login ')
+    expect(result.stdout).toContain('pull <blueprint>')
+    expect(result.stdout).toContain('--version <number>')
     expect(result.stdout).toContain('--cwd <path>')
     expect(result.stdout).toContain('/businesslens-publish')
   })
@@ -74,6 +77,17 @@ describe('cli dispatch', () => {
     const result = cli(repo, env, 'publish', '--yes')
     expect(result.status).toBe(1)
     expect(result.stderr).toContain('BUSINESSLENS_API_KEY is not set')
+  })
+
+  it('parses a pull-specific --version without treating it as the CLI version', () => {
+    const env = {
+      ...process.env,
+      BUSINESSLENS_CONFIG_DIR: join(repo, 'empty-cli-config')
+    }
+    const result = cli(repo, env, 'pull', 'example', '--version', '3')
+    expect(result.status).toBe(1)
+    expect(result.stderr).toContain('businesslens login')
+    expect(result.stdout).not.toContain('0.6.0')
   })
 
   it('rejects unknown commands with usage exit code', () => {

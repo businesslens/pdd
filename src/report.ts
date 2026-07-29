@@ -43,6 +43,7 @@ export {
   // Semantics shared across repositories
   validateProductReport,
   parseProductReport,
+  redactSourceEvidence,
   canonicalReportJson
 } from './core/portable.js'
 

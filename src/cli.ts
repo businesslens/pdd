@@ -3,8 +3,10 @@ import { resolve } from 'node:path'
 import { parseArgs } from 'node:util'
 import { runBuild } from './commands/build.js'
 import { runInstall } from './commands/install.js'
+import { runLogin } from './commands/login.js'
 import { runOpen } from './commands/open.js'
 import { runPublish } from './commands/publish.js'
+import { runPull } from './commands/pull.js'
 import { runUpdate } from './commands/update.js'
 import { runValidate } from './commands/validate.js'
 import { cliVersion } from './version.js'
@@ -19,7 +21,9 @@ Commands:
   validate [--json]           Validate the .businesslens/ product model
   build                       Compile .businesslens/ into .businesslens/build/report.json
   publish [--yes]             Report an immutable Product Model Version to the Platform
-  open <report> [--force]     Expand a local or trusted Hub report into .businesslens/
+  login                       Authorize CLI access through the Platform browser flow
+  pull <blueprint>            Pull the latest or an exact Blueprint version
+  open <report> [--force]     Expand a local Product Report into .businesslens/
 
 Install options:
   --providers <list>          Comma-separated: claude,codex,cursor,gemini,github
@@ -41,6 +45,15 @@ Publish options:
 
 Open options:
   --force                     Back up a non-empty .businesslens/ before opening
+                              A relative <report> path resolves against the
+                              current shell directory, not against --cwd.
+
+Login options:
+  --platform <origin>         Official Platform or loopback development origin
+
+Pull options:
+  --version <number>          Pull an exact version instead of latest
+  --force                     Back up a non-empty .businesslens/ before pulling
 
 General options:
   --cwd <path>                Run against this repository instead of the current directory
@@ -59,9 +72,22 @@ Agent workflows:
 
 Exit codes: 0 success · 1 failure · 2 usage error`
 
+function normalizedArgs(args: string[]): string[] {
+  const commandIndex = args.indexOf('pull')
+  if (commandIndex < 0) return args
+  return args.map((argument, index) => {
+    if (index <= commandIndex) return argument
+    if (argument === '--version') return '--blueprint-version'
+    if (argument.startsWith('--version=')) {
+      return `--blueprint-version=${argument.slice('--version='.length)}`
+    }
+    return argument
+  })
+}
+
 async function main(): Promise<number> {
   const { values, positionals } = parseArgs({
-    args: process.argv.slice(2),
+    args: normalizedArgs(process.argv.slice(2)),
     allowPositionals: true,
     strict: true,
     options: {
@@ -78,6 +104,8 @@ async function main(): Promise<number> {
       'base-branch': { type: 'string' },
       'pr-title': { type: 'string' },
       'pr-url': { type: 'string' },
+      platform: { type: 'string' },
+      'blueprint-version': { type: 'string' },
       cwd: { type: 'string' },
       help: { type: 'boolean', default: false },
       version: { type: 'boolean', default: false }
@@ -93,12 +121,16 @@ async function main(): Promise<number> {
     console.log(HELP)
     return command ? 0 : 2
   }
-  if (command !== 'open' && positionals.length > 1) {
+  if (command !== 'open' && command !== 'pull' && positionals.length > 1) {
     console.error(`Unexpected argument "${positionals[1]}".`)
     return 2
   }
   if (command === 'open' && positionals.length !== 2) {
-    console.error('open requires one local report path or trusted Hub report URL.')
+    console.error('open requires one local Product Report path.')
+    return 2
+  }
+  if (command === 'pull' && positionals.length !== 2) {
+    console.error('pull requires one canonical Blueprint name.')
     return 2
   }
 
@@ -135,6 +167,15 @@ async function main(): Promise<number> {
         baseBranch: values['base-branch'],
         prTitle: values['pr-title'],
         prUrl: values['pr-url']
+      })
+    case 'login':
+      return runLogin({ platform: values.platform })
+    case 'pull':
+      return runPull(cwd, positionals[1]!, {
+        version: values['blueprint-version'] === undefined
+          ? undefined
+          : Number(values['blueprint-version']),
+        force: values.force
       })
     case 'open':
       return runOpen(cwd, positionals[1]!, values.force)

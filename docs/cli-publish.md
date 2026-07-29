@@ -87,6 +87,26 @@ Without `--yes`, an interactive terminal displays the product, abbreviated
 commit, target, and Platform origin before asking for confirmation. A
 non-interactive session without `--yes` is refused with exit code `2`.
 
+## What the submission exposes
+
+The report names the origin repository in several places: `codeRefs`, journey
+`entryPoints`, repository-relative `links`, and `coverage.sourceAreas`. A
+published Product Model Version is private to its workspace, and that evidence
+is what makes it useful there.
+
+Evidence never travels further. Before the Platform serves a report as a
+download or as a public Hub Blueprint, it applies `redactSourceEvidence` from
+the shared [`businesslens/report`](./format.md#source-evidence-and-redaction)
+contract, which removes all of it. Publishing does not make anything public: it
+records an immutable Version, and Blueprint creation and visibility are
+separate Platform actions.
+
+Author-written prose is delivered as written, so keep repository internals out
+of `method`, `unmapped`, `limitations`, and entity prose.
+
+Git provenance — repository URL, branch, commit, and commit subject — travels
+beside the report in the submission envelope, never inside it.
+
 ## Platform and credential safety
 
 The destination comes from `platform.url` in `.businesslens/config.yaml` and

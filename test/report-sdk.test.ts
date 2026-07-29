@@ -1,8 +1,14 @@
+import { execFileSync } from 'node:child_process'
+import { cpSync, mkdtempSync, rmSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import * as sdk from '../src/report.js'
 import { reportDigest } from '../src/report-digest.js'
+import { buildProject } from '../src/commands/build.js'
+import type { ProductReportV4 } from '../src/core/portable.js'
 
 const packageJson = JSON.parse(
   await readFile(fileURLToPath(new URL('../package.json', import.meta.url)), 'utf8')
@@ -74,5 +80,156 @@ describe('report SDK entry point', () => {
     const digest = reportDigest({ b: 1, a: [{ d: 2, c: 3 }] })
     expect(reportDigest({ a: [{ c: 3, d: 2 }], b: 1 })).toBe(digest)
     expect(sdk.canonicalReportJson({ b: 1, a: 2 })).toBe('{"a":2,"b":1}')
+  })
+})
+
+/**
+ * A Product Model Version keeps full evidence inside its owning workspace.
+ * Anything delivered outside that workspace — a download or a public Hub
+ * report — goes through this projection first.
+ */
+describe('redactSourceEvidence', () => {
+  const FIXTURE = join(fileURLToPath(new URL('.', import.meta.url)), 'fixtures', 'fixture-shop')
+  let repo: string
+  let report: ProductReportV4
+
+  const allCodeRefs = (value: ProductReportV4) =>
+    Object.values(value.model).flatMap(entry =>
+      Array.isArray(entry) ? entry.flatMap(item => item.codeRefs ?? []) : [])
+
+  beforeAll(() => {
+    repo = mkdtempSync(join(tmpdir(), 'bl-redact-'))
+    cpSync(FIXTURE, repo, { recursive: true })
+    const git = (...args: string[]) => execFileSync('git', args, { cwd: repo, stdio: 'pipe' })
+    git('init', '--initial-branch=main')
+    git('config', 'user.email', 'fixture@example.com')
+    git('config', 'user.name', 'Fixture')
+    git('remote', 'add', 'origin', 'https://github.com/example/fixture-shop.git')
+    git('add', '.')
+    git('commit', '-m', 'fixture')
+    report = buildProject(repo).report
+  })
+
+  afterAll(() => {
+    rmSync(repo, { recursive: true, force: true })
+  })
+
+  it('removes every source path and symbol from the delivered report', () => {
+    expect(allCodeRefs(report).length).toBeGreaterThan(0)
+    const redacted = sdk.redactSourceEvidence(report)
+
+    expect(allCodeRefs(redacted)).toEqual([])
+    expect(JSON.stringify(redacted)).not.toContain('src/services/payments.ts')
+    expect(JSON.stringify(redacted)).not.toContain('PaymentGateway.charge')
+    expect(redacted.coverage.evidenceRedacted).toBe(true)
+  })
+
+  /**
+   * `codeRefs` are not the only field that structurally names the repository:
+   * journey entry points, SDD links, and coverage source areas do too. This
+   * walks the whole delivered document rather than trusting a field list.
+   */
+  it('leaves no repository-relative path anywhere in the delivered document', () => {
+    const repositoryPaths = (value: unknown, path = 'report'): string[] => {
+      if (typeof value === 'string') {
+        return /(?:^|["\s(])(?:\.{1,2}\/|src\/|test\/|lib\/|app\/|openspec\/)/.test(value)
+          ? [`${path}: ${value}`]
+          : []
+      }
+      if (Array.isArray(value)) {
+        return value.flatMap((item, index) => repositoryPaths(item, `${path}[${index}]`))
+      }
+      if (value && typeof value === 'object') {
+        return Object.entries(value).flatMap(([key, item]) => repositoryPaths(item, `${path}.${key}`))
+      }
+      return []
+    }
+
+    // The unredacted report is where that evidence legitimately lives.
+    expect(repositoryPaths(report).length).toBeGreaterThan(0)
+    expect(repositoryPaths(sdk.redactSourceEvidence(report))).toEqual([])
+  })
+
+  it('drops repository entry points and links but keeps product-facing ones', () => {
+    const withLinks = structuredClone(report)
+    withLinks.model.actors[0]!.links = [
+      { rel: 'spec', href: 'openspec/specs/checkout/spec.md', title: 'Local spec' },
+      { rel: 'doc', href: 'https://example.com/handbook', title: 'Public doc' }
+    ]
+    const redacted = sdk.redactSourceEvidence(withLinks)
+
+    expect(redacted.model.actors[0]!.links).toEqual([
+      { rel: 'doc', href: 'https://example.com/handbook', title: 'Public doc' }
+    ])
+    // Experiences reach actors through real routes; those stay.
+    expect(redacted.model.experiences.flatMap(item => item.entryPoints.map(point => point.path)))
+      .toEqual(expect.arrayContaining(['/']))
+    // Journey entry points named repository files; those go.
+    expect(redacted.model.journeys.flatMap(item => item.entryPoints)).toEqual([])
+    expect(redacted.coverage.sourceAreas).toEqual([])
+  })
+
+  it('rejects a redacted report that still names repository paths', () => {
+    const base = sdk.redactSourceEvidence(report)
+
+    const withEntryPoint = structuredClone(base)
+    withEntryPoint.model.journeys[0]!.entryPoints = [{ type: 'web', path: 'src/routes/storefront.ts' }]
+    expect(sdk.validateProductReport(withEntryPoint).join('\n'))
+      .toContain('still exposes the repository entry point "src/routes/storefront.ts"')
+
+    const withLink = structuredClone(base)
+    withLink.model.actors[0]!.links = [{ rel: 'spec', href: 'openspec/specs/checkout/spec.md' }]
+    expect(sdk.validateProductReport(withLink).join('\n'))
+      .toContain('still exposes the repository link "openspec/specs/checkout/spec.md"')
+
+    const withSourceAreas = structuredClone(base)
+    withSourceAreas.coverage.sourceAreas = ['src']
+    expect(sdk.validateProductReport(withSourceAreas)).toContain(
+      'coverage.evidenceRedacted is true but coverage.sourceAreas names repository areas'
+    )
+  })
+
+  it('leaves the source report untouched and stays idempotent', () => {
+    const before = JSON.stringify(report)
+    const once = sdk.redactSourceEvidence(report)
+    expect(JSON.stringify(report)).toBe(before)
+    expect(sdk.redactSourceEvidence(once)).toEqual(once)
+  })
+
+  it('keeps mapped coverage as an origin-repository quality signal', () => {
+    const redacted = sdk.redactSourceEvidence(report)
+    expect(redacted.coverage.mapped).toEqual(report.coverage.mapped)
+    expect(redacted.coverage.mapped.scenarios).toBeGreaterThan(0)
+    expect(redacted.coverage.counts).toEqual(report.coverage.counts)
+  })
+
+  it('still parses and validates as a Product Report', () => {
+    const redacted = sdk.redactSourceEvidence(report)
+    expect(sdk.validateProductReport(redacted)).toEqual([])
+    expect(() => sdk.parseProductReport(JSON.parse(JSON.stringify(redacted)))).not.toThrow()
+  })
+
+  it('rejects a redacted report that still carries evidence', () => {
+    const tampered = structuredClone(sdk.redactSourceEvidence(report))
+    tampered.model.scenarios[0]!.codeRefs = [{ path: 'src/services/payments.ts' }]
+    expect(sdk.validateProductReport(tampered)).toContain(
+      'coverage.evidenceRedacted is true but entities still carry codeRefs'
+    )
+  })
+
+  it('rejects redacted mapped counts that exceed the entity counts', () => {
+    const tampered = structuredClone(sdk.redactSourceEvidence(report))
+    tampered.coverage.mapped.scenarios = tampered.summary.scenarios + 1
+    expect(sdk.validateProductReport(tampered)).toContain(
+      `coverage.mapped.scenarios must be at most ${tampered.summary.scenarios}`
+    )
+  })
+
+  it('keeps the exact mapped cross-check for unredacted reports', () => {
+    const tampered = structuredClone(report)
+    tampered.coverage.mapped.scenarios = tampered.summary.scenarios + 1
+    expect(sdk.validateProductReport(tampered)).toContain(
+      `coverage.mapped.scenarios must equal ${report.coverage.mapped.scenarios}`
+    )
   })
 })
