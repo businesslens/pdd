@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { stringify } from 'yaml'
 import { parseCanonicalName } from '../core/canonical-name.js'
-import { provenance } from '../core/git.js'
+import { lsFiles, provenance } from '../core/git.js'
 import { loadModel } from '../core/model.js'
 import { resolveModelRoot } from '../core/model-root.js'
 import { redactSourceEvidence } from '../core/portable.js'
@@ -57,13 +57,18 @@ function bestEffortOrigin(cwd: string): { repository: string, commit: string } |
 export async function runContribute(cwd: string, options: ContributeOptions): Promise<number> {
   let workspace: string | undefined
   try {
+    // Cheapest checks first: a bad slug or a missing `gh` should not cost the
+    // user a build.
+    if (options.slug !== undefined) parseCanonicalName(options.slug)
     requireGh()
 
-    const { modelRoot } = resolveModelRoot(cwd)
+    const { modelRoot, gitRoot } = resolveModelRoot(cwd)
     const model = loadModel(modelRoot)
 
-    // Errors fail; draft warnings are the expected state for an unbuilt model.
-    const validation = validateModel(model, [])
+    // Validate against the repository's tracked files, exactly as `validate`
+    // does. Passing an empty set would report every codeRef in a brownfield
+    // model as untracked — and a brownfield model is the common case here.
+    const validation = validateModel(model, gitRoot ? lsFiles(gitRoot) : [])
     if (!validation.ok) {
       throw new Error(
         `The Product Model has validation errors:\n${validation.errors.map(error => `- ${error}`).join('\n')}`
