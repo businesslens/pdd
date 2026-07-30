@@ -28,6 +28,11 @@ change their read state, save and unsave items, tag saved items, search, create
 and edit their own collections, publish or unlist them, and subscribe to
 collections others published.
 
+A reader can also change their display name here. It is the only thing about
+them anyone else ever sees — it appears on the collections they publish — so it
+belongs on the surface they already work in rather than behind a settings area
+this product does not otherwise need.
+
 A reader cannot see another reader's library, sources, reading state, or
 unpublished collections, and cannot modify a collection they do not own — a
 subscribed collection is read-only here in exactly the way it is for a visitor.
