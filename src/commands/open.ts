@@ -123,7 +123,13 @@ function writeReport(root: string, report: ProductReportV4): void {
       method: [OPEN_COVERAGE_METHOD],
       sourceAreas: [],
       unmapped: [],
-      limitations: [...report.coverage.limitations, OPEN_COVERAGE_LIMITATION]
+      // Deduplicated so expansion is idempotent. A Blueprint's committed model is
+      // itself an expanded report, so re-expanding it must reproduce the same
+      // files byte for byte; an unconditional append accumulated one copy of this
+      // limitation per open/pull cycle.
+      limitations: report.coverage.limitations.includes(OPEN_COVERAGE_LIMITATION)
+        ? [...report.coverage.limitations]
+        : [...report.coverage.limitations, OPEN_COVERAGE_LIMITATION]
     }) + body('Coverage', OPEN_COVERAGE_RATIONALE, '', [], '')
   )
 

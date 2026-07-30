@@ -95,6 +95,26 @@ describe('open report', () => {
     )).toContain('## Decision points')
   })
 
+  it('expands to a fixed point so a re-opened model is byte-identical', async () => {
+    // A catalog Blueprint's committed model is itself an expanded report, so
+    // `pull` re-expands it and the result has to match what is committed. The
+    // open-coverage limitation used to be appended unconditionally, gaining one
+    // copy per cycle and making that comparison fail from the second pull on.
+    const first = readFileSync(join(target, '.businesslens/coverage.md'), 'utf8')
+    expect(first.match(/Implementation evidence must be established/g)).toHaveLength(1)
+
+    const roundTrip = mkdtempSync(join(tmpdir(), 'businesslens-open-fixed-point-'))
+    try {
+      initialize(roundTrip)
+      expect(await runOpen(roundTrip, buildProject(target).outputFile, false)).toBe(0)
+      const second = readFileSync(join(roundTrip, '.businesslens/coverage.md'), 'utf8')
+      expect(second.match(/Implementation evidence must be established/g)).toHaveLength(1)
+      expect(second).toEqual(first)
+    } finally {
+      rmSync(roundTrip, { recursive: true, force: true })
+    }
+  })
+
   it('omits the frontmatter block for entities that carry no frontmatter fields', () => {
     const actor = readFileSync(join(target, '.businesslens/actors/shopper.md'), 'utf8')
     expect(actor).not.toContain('{}')
