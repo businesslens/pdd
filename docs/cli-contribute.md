@@ -27,6 +27,16 @@ gh auth login
 
 `contribute` refuses to run without it, rather than failing halfway through.
 
+## Where contributions go
+
+By default, `businesslens/pdd`. Set `BUSINESSLENS_CONTRIBUTE_UPSTREAM` to an
+`owner/repo` pair to target another Blueprint repository — anyone running their
+own catalog needs their own sources behind it, and the two have to point at the
+same deployment.
+
+`contribute` forks when you do not own the upstream and clones it directly when
+you do, because GitHub refuses to let one account own both a parent and a fork.
+
 ## What it does
 
 1. Resolves and loads the Product Model, and validates it. Errors stop the run;

@@ -43,7 +43,7 @@ function initialize(cwd: string): void {
  * side effect the flow depends on: `repo fork --clone` must leave a repository
  * behind for the Blueprint to be written into.
  */
-function fakeGh(bin: string, capture: string, options: { authenticated?: boolean } = {}): void {
+function fakeGh(bin: string, capture: string, options: { authenticated?: boolean, ownsUpstream?: boolean } = {}): void {
   const file = join(bin, 'gh')
   writeFileSync(
     file,
@@ -62,6 +62,19 @@ fs.writeFileSync(process.env.CAPTURE_FILE, JSON.stringify(record))
 
 if (args[0] === '--version') { console.log('gh version 2.0.0'); process.exit(0) }
 if (args[0] === 'auth') { process.exit(${options.authenticated === false ? 1 : 0}) }
+if (args[0] === 'api' && args[1] === 'user') { console.log('contributor'); process.exit(0) }
+if (args[0] === 'repo' && args[1] === 'view') { console.log(${options.ownsUpstream ? "'contributor'" : "'businesslens'"}); process.exit(0) }
+if (args[0] === 'repo' && args[1] === 'clone') {
+  const target = args[3]
+  fs.mkdirSync(target, { recursive: true })
+  execFileSync('git', ['init', '--initial-branch=main'], { cwd: target, stdio: 'pipe' })
+  execFileSync('git', ['config', 'user.email', 'owner@example.com'], { cwd: target, stdio: 'pipe' })
+  execFileSync('git', ['config', 'user.name', 'Owner'], { cwd: target, stdio: 'pipe' })
+  fs.writeFileSync(path.join(target, 'README.md'), '# pdd\\n')
+  execFileSync('git', ['add', '-A'], { cwd: target, stdio: 'pipe' })
+  execFileSync('git', ['commit', '-m', 'base'], { cwd: target, stdio: 'pipe' })
+  process.exit(0)
+}
 if (args[0] === 'repo' && args[1] === 'fork') {
   const target = path.join(process.cwd(), 'pdd')
   fs.mkdirSync(target, { recursive: true })
@@ -146,9 +159,13 @@ describe('contribute', { timeout: 30_000 }, () => {
     process.env.CAPTURE_FILE = capture
     writeFileSync(capture, '{}')
     vi.spyOn(console, 'log').mockImplementation(() => undefined)
+    const failures: string[] = []
+    vi.spyOn(console, 'error').mockImplementation((m: string) => { failures.push(m) })
 
     try {
-      expect(await runContribute(model, { slug: 'fixture-shop', yes: true })).toBe(0)
+      const code = await runContribute(model, { slug: 'fixture-shop', yes: true })
+      expect(failures.join('\n')).toBe('')
+      expect(code).toBe(0)
     } finally {
       process.env.PATH = previousPath
       if (previousCapture === undefined) delete process.env.CAPTURE_FILE
@@ -188,6 +205,38 @@ describe('contribute', { timeout: 30_000 }, () => {
     const manifest = parseYaml(contents['blueprints/fixture-shop/blueprint.yaml']!) as Record<string, unknown>
     expect(manifest.slug).toBe('fixture-shop')
     expect(manifest.license).toBe('MIT')
+  })
+
+  it('clones instead of forking when the contributor owns the upstream', async () => {
+    // GitHub refuses to let one account own both a parent and a fork, so a
+    // maintainer contributing to their own repository cannot fork it. Found by
+    // running the real flow against a scratch upstream.
+    const model = temporary('bl-contribute-own-model-')
+    const bin = temporary('bl-contribute-own-bin-')
+    const capture = join(temporary('bl-contribute-own-capture-'), 'gh.json')
+
+    cpSync(FIXTURE, model, { recursive: true })
+    initialize(model)
+    fakeGh(bin, capture, { ownsUpstream: true })
+    fakeGitPush(bin)
+
+    const previousPath = process.env.PATH
+    process.env.PATH = `${bin}${delimiter}${previousPath || ''}`
+    process.env.CAPTURE_FILE = capture
+    writeFileSync(capture, '{}')
+    vi.spyOn(console, 'log').mockImplementation(() => undefined)
+
+    try {
+      expect(await runContribute(model, { slug: 'fixture-shop', yes: true })).toBe(0)
+    } finally {
+      process.env.PATH = previousPath
+      delete process.env.CAPTURE_FILE
+    }
+
+    const recorded = JSON.parse(readFileSync(capture, 'utf8')) as { calls: string[][], prFiles?: string[] }
+    expect(recorded.calls.some(call => call[0] === 'repo' && call[1] === 'clone')).toBe(true)
+    expect(recorded.calls.some(call => call[0] === 'repo' && call[1] === 'fork')).toBe(false)
+    expect(recorded.prFiles?.some(file => file.startsWith('blueprints/fixture-shop/'))).toBe(true)
   })
 
   it('refuses without an authenticated GitHub CLI, before touching anything', async () => {

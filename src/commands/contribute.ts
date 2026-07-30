@@ -1,5 +1,5 @@
 import { execFileSync, spawnSync } from 'node:child_process'
-import { cpSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { cpSync, existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { createInterface } from 'node:readline/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -13,7 +13,21 @@ import { buildProject } from './export.js'
 import { expandProductReport } from './open.js'
 import { validateModel } from './validate.js'
 
-const UPSTREAM = 'businesslens/pdd'
+/**
+ * Where contributions go.
+ *
+ * Overridable for the same reason the catalog origin is: anyone running their
+ * own catalog needs their own Blueprint repository behind it, and the two have
+ * to be able to point at the same deployment.
+ */
+function upstreamRepository(env: NodeJS.ProcessEnv = process.env): string {
+  const configured = env.BUSINESSLENS_CONTRIBUTE_UPSTREAM?.trim()
+  if (!configured) return 'businesslens/pdd'
+  if (!/^[\w.-]+\/[\w.-]+$/.test(configured)) {
+    throw new Error('BUSINESSLENS_CONTRIBUTE_UPSTREAM must be an "owner/repo" pair.')
+  }
+  return configured
+}
 
 export interface ContributeOptions {
   slug?: string
@@ -44,6 +58,23 @@ function requireGh(): void {
   }
 }
 
+/**
+ * Whether the authenticated user can push to the upstream directly.
+ *
+ * Best-effort: if either call fails we assume they cannot and fork, which is the
+ * safe direction — a failed fork is a clear error, whereas a failed push to
+ * someone else's repository is a confusing one.
+ */
+function ownsUpstream(upstream: string): boolean {
+  try {
+    const viewer = gh(['api', 'user', '--jq', '.login'])
+    const owner = gh(['repo', 'view', upstream, '--json', 'owner', '--jq', '.owner.login'])
+    return viewer.toLowerCase() === owner.toLowerCase()
+  } catch {
+    return false
+  }
+}
+
 /** Best-effort attribution. A Blueprint author may have no repository at all. */
 function bestEffortOrigin(cwd: string): { repository: string, commit: string } | undefined {
   try {
@@ -57,6 +88,7 @@ function bestEffortOrigin(cwd: string): { repository: string, commit: string } |
 export async function runContribute(cwd: string, options: ContributeOptions): Promise<number> {
   let workspace: string | undefined
   try {
+    const UPSTREAM = upstreamRepository()
     // Cheapest checks first: a bad slug or a missing `gh` should not cost the
     // user a build.
     if (options.slug !== undefined) parseCanonicalName(options.slug)
@@ -121,11 +153,19 @@ export async function runContribute(cwd: string, options: ContributeOptions): Pr
     }
 
     const checkout = join(workspace, 'pdd')
-    console.log(`Forking and cloning ${UPSTREAM}…`)
-    gh(['repo', 'fork', UPSTREAM, '--clone=true', '--remote=false', `--fork-name=pdd`], workspace)
-    // gh clones into a directory named after the repo.
-    const cloned = join(workspace, 'pdd')
-    if (cloned !== checkout) throw new Error('Unexpected clone location.')
+
+    // Fork when the contributor does not own the upstream, clone directly when
+    // they do. GitHub refuses to let one account own both a parent and a fork,
+    // so a maintainer contributing to their own repository cannot fork it — and
+    // does not need to, because they can push a branch to it.
+    if (ownsUpstream(UPSTREAM)) {
+      console.log(`Cloning ${UPSTREAM}…`)
+      gh(['repo', 'clone', UPSTREAM, checkout], workspace)
+    } else {
+      console.log(`Forking and cloning ${UPSTREAM}…`)
+      gh(['repo', 'fork', UPSTREAM, '--clone=true', '--remote=false', '--fork-name=pdd'], workspace)
+      if (!existsSync(checkout)) throw new Error('Unexpected clone location.')
+    }
 
     const branch = `blueprint/${slug}`
     execFileSync('git', ['-C', checkout, 'checkout', '-b', branch], { stdio: 'pipe' })
