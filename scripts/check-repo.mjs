@@ -30,14 +30,16 @@ const lock = JSON.parse(await readFile(resolve(root, 'package-lock.json'), 'utf8
 const plugin = JSON.parse(await readFile(resolve(root, '.claude-plugin/plugin.json'), 'utf8'))
 const marketplace = JSON.parse(await readFile(resolve(root, '.claude-plugin/marketplace.json'), 'utf8'))
 const expectedSkills = [
+  'businesslens-ideate',
   'businesslens-init',
   'businesslens-plan',
+  'businesslens-implement',
   'businesslens-verify',
   'businesslens-sync',
   'businesslens-deep-dive',
   'businesslens-validate',
   'businesslens-doctor',
-  'businesslens-publish'
+  'businesslens-contribute'
 ]
 
 if (pkg.name !== 'businesslens') errors.push(`package.json name must be businesslens, found ${pkg.name}`)

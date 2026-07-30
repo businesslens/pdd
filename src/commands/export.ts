@@ -207,7 +207,7 @@ export function buildProject(cwd: string): BuildOutcome {
   return { report, outputFile }
 }
 
-export function runBuild(cwd: string): number {
+export function runExport(cwd: string): number {
   try {
     const { report, outputFile } = buildProject(cwd)
     const { summary } = report

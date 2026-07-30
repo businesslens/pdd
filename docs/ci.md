@@ -1,9 +1,9 @@
 ---
 title: Validate in CI
-description: Run the deterministic validator on every pull request and report Product Model Versions on merge.
+description: Run the deterministic validator on every pull request.
 section: open-source
 group: Reference
-order: 32
+order: 35
 ---
 
 # Validate the model in CI
@@ -35,41 +35,23 @@ jobs:
             --cwd "$GITHUB_WORKSPACE" validate
 ```
 
-# Publish on merge
+# Contributing a Blueprint
 
-To keep the Platform's living Product Model history current, publish from the default branch with
-the workspace API key stored as a repository secret:
+There is nothing to publish from CI. A Product Model is useful in its own
+repository, and the public catalog is curated by pull request rather than
+pushed to.
 
-```yaml
-# .github/workflows/businesslens-publish.yml
-name: Publish BusinessLens Product Model
-on:
-  push:
-    branches: [main]
-jobs:
-  publish:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - name: Install BusinessLens CLI outside the target repository
-        run: |
-          mkdir -p "$RUNNER_TEMP/businesslens-cli"
-          cd "$RUNNER_TEMP/businesslens-cli"
-          npm install --ignore-scripts --no-save --package-lock=false businesslens@latest
-      - run: |
-          node "$RUNNER_TEMP/businesslens-cli/node_modules/businesslens/dist/cli.js" \
-            --cwd "$GITHUB_WORKSPACE" publish --yes
-        env:
-          BUSINESSLENS_API_KEY: ${{ secrets.BUSINESSLENS_API_KEY }}
+To propose your model as a catalog Blueprint, run it from a workstation where
+the [GitHub CLI](https://cli.github.com) is authenticated as you:
+
+```bash
+gh auth login
+npx businesslens@latest contribute --slug my-blueprint
 ```
 
-`publish --yes` is required because CI is non-interactive. Each successful run
-reports a new immutable Product Model Version into the branch Track. A release
-job may add `--tag "$TAG_NAME"` after checking out that exact tag. A
-pull-request reporting job may add `--pull-request "$PR_NUMBER"` and
-`--base-branch "$BASE_BRANCH"` plus optional PR title/URL metadata. The CLI is
-installed from an empty temporary directory so target-local npm configuration
-and binaries never receive the API key.
+See [Contributing a Blueprint](./contributing-blueprints.md).
+
+This is deliberately a human action. The pull request is public, carries your
+product model, and is opened under your GitHub identity — none of which should
+happen automatically on a push.
+

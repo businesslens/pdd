@@ -3,7 +3,7 @@ title: doctor
 description: Investigate installation and Product Model health — diagnose by default, repair only on explicit request.
 section: open-source
 group: Skills
-order: 19
+order: 22
 ---
 
 # businesslens-doctor

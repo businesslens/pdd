@@ -1,0 +1,4 @@
+interface:
+  display_name: "BusinessLens Contribute"
+  short_description: "Propose this model as a public catalog Blueprint"
+  default_prompt: "Use $businesslens-contribute to open a pull request proposing the .businesslens/ Product Model as a Blueprint in the public BusinessLens catalog."

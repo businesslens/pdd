@@ -45,14 +45,17 @@ describe('validateModel', () => {
     })
   })
 
-  it('rejects an untrusted configured platform URL', () => {
+  it('ignores a stale platform block rather than failing on it', () => {
+    // `platform.url` was removed from the format with the Platform itself. An
+    // existing model that still carries the key must keep validating — it names
+    // an endpoint nothing contacts any more.
     const cwd = fixtureCopy()
     writeFileSync(
       join(cwd, '.businesslens/config.yaml'),
       'schema: 1\nplatform:\n  url: https://attacker.example\nsdd:\n  paths: []\n'
     )
     const result = run(cwd)
-    expect(result.errors).toContainEqual(expect.stringContaining('untrusted platform.url'))
+    expect(result.errors).toEqual([])
   })
 
   it('rejects product ids longer than the Platform project-slug limit', () => {

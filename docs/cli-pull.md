@@ -1,84 +1,99 @@
 ---
 title: pull
-description: Pull the latest or an exact BusinessLens Hub Blueprint version by canonical name.
+description: Pull a Blueprint from the public catalog into the current directory.
 section: open-source
 group: CLI
-order: 28
+order: 30
 ---
 
 # `businesslens pull`
 
-Pull a Hub Blueprint into the current directory:
+Pull a Blueprint into the current directory:
 
 ```bash
-npx businesslens@latest pull <blueprint-name>
+npx businesslens@latest pull <blueprint-slug>
 ```
 
-The argument is the Blueprint's globally unique canonical Hub name. Omitting a
-version selects the latest version available to the logged-in user. Pin an
-exact immutable version when reproducibility matters:
+The argument is the Blueprint's catalog slug: lowercase kebab-case, at most 80
+characters. **No account, sign-in, or credential is involved** — the catalog is
+anonymous to read.
 
-```bash
-npx businesslens@latest pull <blueprint-name> --version 3
-```
-
-Run [`businesslens login`](./cli-login.md) first. `pull` fetches the Product
-Report with that stored session, verifies its mandatory SHA-256 digest and
-resolved version, and passes it directly to the same expansion primitive as
-[`open`](./cli-open.md). The report is not offered as, or saved as, a
-user-facing download.
+`pull` fetches the Product Report, verifies its mandatory SHA-256 digest, and
+passes it to the same expansion primitive as [`open`](./cli-open.md).
 
 ## Result
 
 The pulled report becomes a canonical `.businesslens/` Product Model:
 
-- repository-specific `codeRefs` are removed;
 - `coverage.md` is written with `status: draft`;
-- product behavior, relationships, intent, product routes, HTTP(S) links, and
-  supporting content are preserved; and
-- missing local implementation evidence remains visible as validation
-  warnings.
+- product behavior, relationships, intent, routes, HTTP(S) links, and supporting
+  content are preserved;
+- there are no `codeRefs`, because nothing is implemented yet; and
+- missing implementation evidence remains visible as validation warnings — that
+  is the worklist.
 
-Use `--cwd <path>` to choose the target directory. By default, `pull` refuses
-a non-empty `.businesslens/`; `--force` first moves it to a timestamped backup.
+`pull` also writes a managed block into `AGENTS.md` telling a coding agent what
+it is looking at: a specification for a product that has not been built, whose
+scenarios are the acceptance contract. Without it, "hand the model to your
+agent" would depend on you writing that prompt yourself.
+
+The expansion is a fixed point. What lands in your directory is byte-identical
+to the model committed under `blueprints/<slug>/` in `businesslens/pdd`.
+
+Use `--cwd <path>` to choose the target directory. By default `pull` refuses a
+non-empty `.businesslens/`; `--force` first moves it to a timestamped backup.
+
+## Choosing a catalog
+
+```bash
+npx businesslens@latest pull <slug> --catalog http://localhost:3200
+```
+
+Precedence is `--catalog`, then `BUSINESSLENS_CATALOG_URL`, then the public
+catalog at `https://businesslens.io`.
+
+Any origin is accepted, so you may run your own catalog. The origin allowlist
+that used to guard this path existed to protect an API key that the read path no
+longer sends. The shape is still checked: a bare origin, no credentials, path,
+query, or fragment, and https except on a loopback development host.
 
 ## Safety
 
 Before writing any Product Model files, `pull` refuses:
 
-- an invalid canonical name or version;
-- a missing or expired CLI login;
+- a slug that is not lowercase kebab-case;
+- a plaintext catalog origin that is not loopback;
 - redirects;
 - responses larger than 8 MiB;
-- missing or invalid report digests;
-- a response for a different Blueprint or requested version; and
-- authentication, entitlement, withdrawn-version, and not-found responses.
+- a missing or malformed report digest, or one that does not match the body;
+- a response served for a different Blueprint; and
+- not-found, withdrawn, and catalog-unavailable responses.
 
-## Platform contract
-
-Canonical names use lowercase kebab-case and are at most 80 characters. Pull
-requests reuse the stable Hub report endpoints:
+## Catalog contract
 
 ```text
-GET /api/v1/hub/blueprints/:canonicalName/report.json
-GET /api/v1/hub/blueprints/:canonicalName/releases/:version/report.json
+GET /api/v1/blueprints/:slug/report.json
 ```
 
-The stored login is sent as a Bearer token. A successful response is the
-Product Report body and must include
-`x-businesslens-blueprint`, `x-businesslens-revision`, and
-`x-businesslens-report-digest`. Latest resolution happens on the Platform;
-the resolved immutable version is always returned in the version header.
+The request is anonymous and carries `user-agent: businesslens/<version>`, so
+catalog operators can tell a CLI pull from a page view. A successful response is
+the Product Report body and must include `x-businesslens-blueprint` and
+`x-businesslens-report-digest`.
 
-## Hub modal
+| Status | Meaning |
+| --- | --- |
+| `200` | The Product Report |
+| `304` | Your `if-none-match` matched; nothing changed |
+| `404` | No such Blueprint |
+| `410` | The Blueprint was withdrawn from the catalog |
+| `503` | The catalog is temporarily unavailable |
 
-The Hub Blueprint page presents a single **Use this Blueprint** modal with
-three vertical steps. Each command has its own copy action.
+## After pulling
 
 ```bash
-npx businesslens@latest install
-npx businesslens@latest login
 npx businesslens@latest pull content-feed-reader
 ```
 
-Selecting **Pin version N** adds `--version N` to the third command.
+Then either hand the directory to a coding agent and ask it to build the
+product, or refine the model first with `businesslens-plan` and build after. See
+[Build from a Blueprint](./tutorial-build-from-a-blueprint.md).

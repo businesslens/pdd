@@ -3,7 +3,7 @@ import { cpSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync }
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { buildProject } from '../src/commands/build.js'
+import { buildProject } from '../src/commands/export.js'
 import { loadModel } from '../src/core/model.js'
 import { validateModel } from '../src/commands/validate.js'
 import { lsFiles } from '../src/core/git.js'

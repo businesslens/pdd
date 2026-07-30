@@ -64,7 +64,7 @@ Code changed without a plan? `/businesslens-sync` repairs the model.
 | `businesslens` CLI | Installs the skills and validates the model deterministically — [CLI reference](./cli.md) |
 | Agent skills | Plan, build, verify, and maintain the model inside your AI harness — [Skills reference](./skills.md) |
 | `.businesslens/` | The durable, git-tracked product model — [format contract](./format.md) |
-| Platform (optional) | Records immutable Product Model Versions, their evolution, and reusable Blueprints — covered in the **Platform** section of the docs |
+| The catalog (optional) | A curated, anonymously browsable collection of Blueprints at [businesslens.io/blueprints](https://businesslens.io/blueprints) — pull one and build from it |
 
 Start with the [Quickstart](./quickstart.md), then read
 [How BusinessLens works](./guide.md).

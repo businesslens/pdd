@@ -1,11 +1,10 @@
 #!/usr/bin/env node
 import { resolve } from 'node:path'
 import { parseArgs } from 'node:util'
-import { runBuild } from './commands/build.js'
+import { runExport } from './commands/export.js'
 import { runInstall } from './commands/install.js'
-import { runLogin } from './commands/login.js'
 import { runOpen } from './commands/open.js'
-import { runPublish } from './commands/publish.js'
+import { runContribute } from './commands/contribute.js'
 import { runPull } from './commands/pull.js'
 import { runUpdate } from './commands/update.js'
 import { runValidate } from './commands/validate.js'
@@ -19,10 +18,9 @@ Commands:
   install                     Install BusinessLens skills for detected AI harnesses
   update                      Refresh managed BusinessLens skill installations
   validate [--json]           Validate the .businesslens/ product model
-  build                       Compile .businesslens/ into .businesslens/build/report.json
-  publish [--yes]             Report an immutable Product Model Version to the Platform
-  login                       Authorize CLI access through the Platform browser flow
-  pull <blueprint>            Pull the latest or an exact Blueprint version
+  export                      Compile .businesslens/ into .businesslens/build/report.json
+  contribute [--yes]          Open a pull request adding this model to the Blueprint catalog
+  pull <blueprint>            Pull a Blueprint from the catalog
   open <report> [--force]     Expand a local Product Report into .businesslens/
 
 Install options:
@@ -33,26 +31,19 @@ Install options:
   --yes                       Accept detected providers and project scope
   --force                     Replace an unmarked businesslens-* skill directory
 
-Publish options:
+Contribute options:
+  --slug <name>               Catalog slug (defaults to the product id)
   --yes                       Skip the confirmation prompt (required in
-                              non-interactive sessions). Publishing reads the
-                              workspace API key from BUSINESSLENS_API_KEY.
-  --tag <name>                Publish HEAD into the named tag Track
-  --pull-request <number>     Publish into a pull-request Track
-  --base-branch <name>        Required base branch for --pull-request
-  --pr-title <title>          Optional pull-request title
-  --pr-url <url>              Optional pull-request URL
+                              non-interactive sessions). Requires an
+                              authenticated GitHub CLI.
 
 Open options:
   --force                     Back up a non-empty .businesslens/ before opening
                               A relative <report> path resolves against the
                               current shell directory, not against --cwd.
 
-Login options:
-  --platform <origin>         Official Platform or loopback development origin
-
 Pull options:
-  --version <number>          Pull an exact version instead of latest
+  --catalog <origin>          Catalog origin to pull from (default https://businesslens.io)
   --force                     Back up a non-empty .businesslens/ before pulling
 
 General options:
@@ -75,13 +66,8 @@ Exit codes: 0 success · 1 failure · 2 usage error`
 const STRING_OPTIONS = new Set([
   'providers',
   'scope',
-  'tag',
-  'pull-request',
-  'base-branch',
-  'pr-title',
-  'pr-url',
-  'platform',
-  'blueprint-version',
+  'catalog',
+  'slug',
   'cwd'
 ])
 
@@ -98,28 +84,9 @@ function commandArgumentIndex(args: string[]): number {
   return -1
 }
 
-function normalizedArgs(args: string[]): string[] {
-  const commandIndex = commandArgumentIndex(args)
-  if (commandIndex < 0 || args[commandIndex] !== 'pull') return args
-  const separatorIndex = args.indexOf('--', commandIndex + 1)
-  return args.map((argument, index) => {
-    if (
-      index <= commandIndex
-      || (separatorIndex >= 0 && index >= separatorIndex)
-    ) {
-      return argument
-    }
-    if (argument === '--version') return '--blueprint-version'
-    if (argument.startsWith('--version=')) {
-      return `--blueprint-version=${argument.slice('--version='.length)}`
-    }
-    return argument
-  })
-}
-
 async function main(): Promise<number> {
   const { values, positionals } = parseArgs({
-    args: normalizedArgs(process.argv.slice(2)),
+    args: process.argv.slice(2),
     allowPositionals: true,
     strict: true,
     options: {
@@ -131,13 +98,8 @@ async function main(): Promise<number> {
       user: { type: 'boolean', default: false },
       yes: { type: 'boolean', default: false },
       force: { type: 'boolean', default: false },
-      tag: { type: 'string' },
-      'pull-request': { type: 'string' },
-      'base-branch': { type: 'string' },
-      'pr-title': { type: 'string' },
-      'pr-url': { type: 'string' },
-      platform: { type: 'string' },
-      'blueprint-version': { type: 'string' },
+      catalog: { type: 'string' },
+      slug: { type: 'string' },
       cwd: { type: 'string' },
       help: { type: 'boolean', default: false },
       version: { type: 'boolean', default: false }
@@ -189,24 +151,19 @@ async function main(): Promise<number> {
       })
     case 'validate':
       return runValidate(cwd, Boolean(values.json))
+    case 'export':
+      return runExport(cwd)
     case 'build':
-      return runBuild(cwd)
-    case 'publish':
-      return runPublish(cwd, {
-        yes: values.yes,
-        tag: values.tag,
-        pullRequest: values['pull-request'] === undefined ? undefined : Number(values['pull-request']),
-        baseBranch: values['base-branch'],
-        prTitle: values['pr-title'],
-        prUrl: values['pr-url']
-      })
-    case 'login':
-      return runLogin({ platform: values.platform })
+      // Deprecated alias kept through 0.7.x. `build` is purely local, so
+      // renaming it would break CI scripts that nothing else in this release
+      // touches.
+      console.warn('`businesslens build` is deprecated; use `businesslens export`.')
+      return runExport(cwd)
+    case 'contribute':
+      return runContribute(cwd, { slug: values.slug, yes: values.yes })
     case 'pull':
       return runPull(cwd, positionals[1]!, {
-        version: values['blueprint-version'] === undefined
-          ? undefined
-          : Number(values['blueprint-version']),
+        catalog: values.catalog,
         force: values.force
       })
     case 'open':

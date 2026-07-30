@@ -3,7 +3,7 @@ import { cpSync, mkdirSync, mkdtempSync, realpathSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
-import { buildProject } from '../src/commands/build.js'
+import { buildProject } from '../src/commands/export.js'
 import { resolveModelRoot } from '../src/core/model-root.js'
 
 const FIXTURE = join(__dirname, 'fixtures', 'fixture-shop')

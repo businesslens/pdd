@@ -54,6 +54,7 @@ function trustedCatalogOrigin(value) {
 }
 
 const catalog = trustedCatalogOrigin(origin)
+const isLoopbackCatalog = /^https?:\/\/(localhost|127(\.\d+){3}|\[?::1\]?)(:\d+)?$/.test(catalog)
 const key = process.env.BUSINESSLENS_CATALOG_KEY
 if (!key) fail('BUSINESSLENS_CATALOG_KEY is not set.')
 
@@ -62,10 +63,19 @@ function git(...gitArgs) {
 }
 
 // A publish is a production write derived from the working tree, so the working
-// tree has to be exactly what review approved.
-if (git('status', '--porcelain')) fail('The working tree is dirty. Publish from a clean checkout.')
+// tree has to be exactly what review approved. A loopback catalog is a developer
+// round trip against their own machine, where insisting on a clean main would
+// only mean you cannot test the branch you are working on.
 const branch = git('rev-parse', '--abbrev-ref', 'HEAD')
-if (branch !== 'main') fail(`Publish runs from main, not "${branch}". Merging a contribution is what approves it.`)
+const dirty = Boolean(git('status', '--porcelain'))
+if (isLoopbackCatalog) {
+  if (dirty || branch !== 'main') {
+    console.warn(`note: publishing ${dirty ? 'a dirty tree' : 'a clean tree'} from "${branch}" to a local catalog.`)
+  }
+} else {
+  if (dirty) fail('The working tree is dirty. Publish from a clean checkout.')
+  if (branch !== 'main') fail(`Publish runs from main, not "${branch}". Merging a contribution is what approves it.`)
+}
 const commit = git('rev-parse', 'HEAD')
 
 if (!existsSync(blueprintsDir)) fail('No blueprints/ directory.')

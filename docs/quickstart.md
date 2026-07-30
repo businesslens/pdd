@@ -70,7 +70,7 @@ checks changed and deleted work from the complete model diff.
 
 The model is fully useful on its own. When you want hosted evolution,
 topology, and comparison across your workspace, report immutable Product Model
-Versions with `/businesslens-publish`. Blueprint creation and public
+Propose it as a catalog Blueprint with `/businesslens-contribute`. Public
 publication are separate Platform actions. To start from a Hub Blueprint, run
 `npx businesslens@latest login`, then
 `npx businesslens@latest pull <blueprint-name>`; add `--version N` only when

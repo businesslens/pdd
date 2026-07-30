@@ -21,19 +21,7 @@ const VALIDATE_RUNNERS = [
     name: 'verify',
     file: join(__dirname, '..', 'skills', 'businesslens-verify', 'scripts', 'run-businesslens.mjs')
   },
-  {
-    name: 'publish',
-    file: join(__dirname, '..', 'skills', 'businesslens-publish', 'scripts', 'run-businesslens.mjs')
-  }
 ]
-const PUBLISH_RUNNER = join(
-  __dirname,
-  '..',
-  'skills',
-  'businesslens-publish',
-  'scripts',
-  'run-businesslens.mjs'
-)
 const temporaryDirectories: string[] = []
 
 function temporary(prefix: string): string {
@@ -106,20 +94,33 @@ fs.writeFileSync(process.env.CAPTURE_FILE, JSON.stringify({
     expect(recorded.apiKey).toBeNull()
   })
 
-  it('passes the key only to the isolated publish invocation', () => {
-    const repo = temporary('bl-runner-publish-repo-')
-    const bin = temporary('bl-runner-publish-bin-')
-    const capture = join(temporary('bl-runner-publish-capture-'), 'npm.json')
-    const fakeNpm = join(bin, 'npm')
+  it('pins the CLI to the version the skills were installed from', () => {
+    // `businesslens@latest` would validate a model against whatever is published
+    // rather than against the release these skills shipped with, reporting the
+    // current format's frontmatter keys as unknown.
+    const skills = temporary('bl-runner-pinned-skills-')
+    const repo = temporary('bl-runner-pinned-repo-')
+    const bin = temporary('bl-runner-pinned-bin-')
+    const capture = join(temporary('bl-runner-pinned-capture-'), 'npm.json')
 
     execFileSync('git', ['init', '--initial-branch=main'], { cwd: repo, stdio: 'pipe' })
+    writeFileSync(
+      join(skills, '.businesslens-install.json'),
+      JSON.stringify({ schema: 1, package: 'businesslens', version: '9.9.9' })
+    )
+    const runnerDir = join(skills, 'businesslens-plan', 'scripts')
+    mkdirSync(runnerDir, { recursive: true })
+    writeFileSync(
+      join(runnerDir, 'run-businesslens.mjs'),
+      readFileSync(VALIDATE_RUNNERS[0]!.file, 'utf8')
+    )
+
+    const fakeNpm = join(bin, 'npm')
     writeFileSync(
       fakeNpm,
       `#!/usr/bin/env node
 require('node:fs').writeFileSync(process.env.CAPTURE_FILE, JSON.stringify({
-  cwd: process.cwd(),
-  args: process.argv.slice(2),
-  apiKey: process.env.BUSINESSLENS_API_KEY || null
+  args: process.argv.slice(2)
 }))
 `
     )
@@ -127,21 +128,18 @@ require('node:fs').writeFileSync(process.env.CAPTURE_FILE, JSON.stringify({
 
     execFileSync(
       process.execPath,
-      [PUBLISH_RUNNER, '--root', repo, 'publish', '--yes'],
+      [join(runnerDir, 'run-businesslens.mjs'), '--root', repo, 'validate'],
       {
         env: {
           ...process.env,
           PATH: `${bin}${delimiter}${process.env.PATH || ''}`,
-          CAPTURE_FILE: capture,
-          BUSINESSLENS_API_KEY: 'publish-test-key'
+          CAPTURE_FILE: capture
         },
         stdio: 'pipe'
       }
     )
 
     const recorded = JSON.parse(readFileSync(capture, 'utf8'))
-    expect(recorded.cwd).not.toBe(repo)
-    expect(recorded.args.slice(-2)).toEqual(['publish', '--yes'])
-    expect(recorded.apiKey).toBe('publish-test-key')
+    expect(recorded.args).toContain('--package=businesslens@9.9.9')
   })
 })

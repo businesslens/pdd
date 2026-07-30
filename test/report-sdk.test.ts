@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import * as sdk from '../src/report.js'
 import { reportDigest } from '../src/report-digest.js'
-import { buildProject } from '../src/commands/build.js'
+import { buildProject } from '../src/commands/export.js'
 import type { ProductReportV4 } from '../src/core/portable.js'
 
 const packageJson = JSON.parse(

@@ -7,6 +7,70 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0-alpha.1] - 2026-07-30
+
+BusinessLens consolidates onto one site. The Platform is retired; the Blueprint
+catalog moves to `businesslens.io` and becomes anonymous to browse and to pull.
+
+**The breaking changes are smaller than they look.** npm's latest release was
+`0.5.0` and `0.6.0` was never published, so `login`, authenticated `pull`, and
+the `--platform` flag never reached a user — removing them withdraws an
+unreleased feature rather than breaking an installed base. The only real break
+against `0.5.0` is `build` → `export`, and the old name still works.
+
+### Added
+
+- `businesslens-implement` — build the software a Product Model describes, with
+  its scenarios as the acceptance contract. This is the second half of the
+  catalog's promise: `pull` gives you a specification, `implement` turns it into
+  software.
+- `businesslens-ideate` — propose candidate product directions as a shortlist.
+  The only skill that never writes to the model.
+- `blueprints/` — the Blueprint source layout, with a `blueprint.yaml` manifest
+  and MIT-licensed content.
+- `blueprints:check`, wired into `verify`: parses every manifest, builds every
+  Blueprint, and rejects any that carries source evidence. It does not trust
+  `contribute`, because anyone can open a pull request by hand.
+- `blueprints:publish` — push built Blueprints to the catalog.
+- `pull` now writes a greenfield block into `AGENTS.md`, telling a coding agent
+  that the repository holds a specification and no implementation.
+- `pull` sends `user-agent: businesslens/<version>`, so catalog pulls are
+  distinguishable from page views.
+- `resolveModelRoot` — the model no longer has to sit at the Git root, and may
+  have no repository at all. General monorepo support, not a Blueprint case.
+
+### Changed
+
+- **`businesslens publish` is now `businesslens contribute`**, and opens a pull
+  request against `businesslens/pdd` through the `gh` CLI rather than submitting
+  to a Platform. No API key is involved. The model in the pull request is
+  regenerated from a redacted report, so it carries no source paths and is
+  byte-identical to what `pull` produces.
+- **`businesslens build` is now `businesslens export`.** `build` still works and
+  warns; it will be removed after 0.7.x. The output stays at
+  `.businesslens/build/report.json`.
+- **`pull` is anonymous.** No login, no credential, no `--version`.
+- `--platform` is now `--catalog`, defaulting to `https://businesslens.io`, and
+  accepts any origin — the allowlist existed to protect an API key the read path
+  no longer sends. Precedence: `--catalog`, `BUSINESSLENS_CATALOG_URL`, default.
+- `businesslens-publish` is now `businesslens-contribute`.
+- Skill runners pin the CLI to the version the skills were installed from rather
+  than `@latest`, which could validate a model against an older published
+  format.
+
+### Fixed
+
+- Report expansion is idempotent. `open` appended its coverage limitation
+  unconditionally, so every open/pull cycle gained another copy — which broke the
+  guarantee that a pulled Blueprint matches what the catalog holds.
+
+### Removed
+
+- `businesslens login`, the stored credential file, and `BUSINESSLENS_API_KEY`.
+- `pull --version` and Blueprint revisions. A Blueprint owns one Product Report.
+- `platform.url` from the model config format.
+
+
 ## [0.6.0] - 2026-07-29
 
 ### Changed

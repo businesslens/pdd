@@ -15,20 +15,25 @@ import type { InstallScope, Provider } from './providers.js'
 import { providerSkillsDir } from './providers.js'
 
 export const BUSINESSLENS_SKILLS = [
+  'businesslens-ideate',
   'businesslens-init',
   'businesslens-plan',
+  'businesslens-implement',
   'businesslens-verify',
   'businesslens-sync',
   'businesslens-deep-dive',
   'businesslens-validate',
   'businesslens-doctor',
-  'businesslens-publish'
+  'businesslens-contribute'
 ] as const
 
 export type BusinessLensSkill = (typeof BUSINESSLENS_SKILLS)[number]
 
 const MANIFEST_FILE = '.businesslens-install.json'
 const LEGACY_SKILLS = [
+  // Renamed in 0.7.0: the catalog's push action is `publish`, so the skill that
+  // proposes a Blueprint by pull request is `contribute`.
+  'businesslens-publish',
   'map',
   'sync',
   'deep-dive',

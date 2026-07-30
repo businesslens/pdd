@@ -74,11 +74,11 @@ BusinessLens has two deliberate surfaces:
 | Terminal | `npx businesslens install` | Install the agent skills |
 | Terminal | `npx businesslens update` | Refresh managed skill installations |
 | Terminal | `npx businesslens validate` | Deterministically validate the model |
-| Terminal | `npx businesslens build` | Compile the model into source-free `report.json` |
+| Terminal | `npx businesslens export` | Compile the model into source-free `report.json` |
 | Terminal | `npx businesslens@latest login` | Authorize the CLI through the Platform browser flow |
 | Terminal | `npx businesslens@latest pull blueprint-name` | Pull the latest or a pinned Blueprint into a canonical Product Model |
 | Terminal | `npx businesslens open` | Expand a local Product Report into a canonical Product Model |
-| Terminal | `npx businesslens publish` | Submit the report with separate commit provenance |
+| Terminal | `npx businesslens contribute` | Propose the model as a public catalog Blueprint |
 | AI harness | the eight `businesslens-*` skills | Map, plan, verify, and maintain the product truth |
 
 The installer never creates `.businesslens/` or modifies `AGENTS.md`. Those
@@ -95,7 +95,9 @@ require repository analysis and belong to the skills.
 | `businesslens-deep-dive` | One journey or experience needs exhaustive coverage |
 | `businesslens-validate` | The model needs a read-only deterministic check |
 | `businesslens-doctor` | The model fails validation, looks stale, or needs a health report |
-| `businesslens-publish` | The user explicitly wants the model on the platform |
+| `businesslens-ideate` | The user is deciding what to build |
+| `businesslens-implement` | A model exists with no implementation |
+| `businesslens-contribute` | The user explicitly wants the model in the public catalog |
 
 Every skill is self-contained and follows the open Agent Skills folder
 format. Claude Code plugin users may alternatively install from this
@@ -142,7 +144,7 @@ or `AGENTS.md`.
 - Updates replace only artifacts marked as BusinessLens-managed.
 - No platform connection or publishing occurs during installation, mapping,
   or planning; publishing happens only through the explicit `publish`
-  command or the `businesslens-publish` skill.
+  command or the `businesslens-contribute` skill.
 
 ## License
 

@@ -1,4 +1,4 @@
-import { execFileSync, execSync } from 'node:child_process'
+import { execFileSync, execSync, spawnSync } from 'node:child_process'
 import { cpSync, existsSync, mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -15,16 +15,14 @@ interface CliResult {
 }
 
 function cli(cwd: string, env: NodeJS.ProcessEnv, ...args: string[]): CliResult {
-  try {
-    const stdout = execFileSync('node', [CLI, ...args], { cwd, env, stdio: 'pipe' }).toString()
-    return { status: 0, stdout, stderr: '' }
-  } catch (error) {
-    const failure = error as { status?: number, stdout?: Buffer, stderr?: Buffer }
-    return {
-      status: failure.status ?? 1,
-      stdout: failure.stdout?.toString() ?? '',
-      stderr: failure.stderr?.toString() ?? ''
-    }
+  // spawnSync rather than execFileSync so stderr is captured on success too —
+  // a command that warns while succeeding is exactly what the deprecated
+  // `build` alias does.
+  const result = spawnSync('node', [CLI, ...args], { cwd, env, encoding: 'utf8' })
+  return {
+    status: result.status ?? 1,
+    stdout: result.stdout ?? '',
+    stderr: result.stderr ?? ''
   }
 }
 
@@ -51,53 +49,59 @@ afterAll(() => {
 })
 
 describe('cli dispatch', () => {
-  it('lists build, publish, login, pull, and open in help', () => {
+  it('lists the catalog commands in help and no retired ones', () => {
     const result = cli(repo, process.env, 'validate', '--help')
     expect(result.status).toBe(0)
-    expect(result.stdout).toContain('build ')
-    expect(result.stdout).toContain('publish [--yes]')
-    expect(result.stdout).toContain('--tag <name>')
-    expect(result.stdout).toContain('--pull-request <number>')
-    expect(result.stdout).toContain('login ')
+    expect(result.stdout).toContain('export ')
+    expect(result.stdout).toContain('contribute [--yes]')
     expect(result.stdout).toContain('pull <blueprint>')
-    expect(result.stdout).toContain('--version <number>')
+    expect(result.stdout).toContain('--catalog <origin>')
     expect(result.stdout).toContain('--cwd <path>')
-    expect(result.stdout).toContain('/businesslens-publish')
+
+    // Retired with the Platform.
+    expect(result.stdout).not.toContain('login ')
+    expect(result.stdout).not.toContain('--tag <name>')
+    expect(result.stdout).not.toContain('--pull-request <number>')
   })
 
-  it('builds the selected repository into report.json', () => {
-    const result = cli(ROOT, process.env, '--cwd', repo, 'build')
+  it('exports the selected repository into report.json', () => {
+    const result = cli(ROOT, process.env, '--cwd', repo, 'export')
     expect(result.status).toBe(0)
     expect(existsSync(join(repo, '.businesslens', 'build', 'report.json'))).toBe(true)
   })
 
-  it('refuses to publish without BUSINESSLENS_API_KEY', () => {
-    const env = { ...process.env }
-    delete env.BUSINESSLENS_API_KEY
-    const result = cli(repo, env, 'publish', '--yes')
-    expect(result.status).toBe(1)
-    expect(result.stderr).toContain('BUSINESSLENS_API_KEY is not set')
+  it('keeps `build` working as a deprecated alias that warns', () => {
+    // Purely local, and it would otherwise survive this release untouched, so
+    // renaming it outright would break CI scripts nothing else here affects.
+    rmSync(join(repo, '.businesslens', 'build'), { recursive: true, force: true })
+    const result = cli(ROOT, process.env, '--cwd', repo, 'build')
+    expect(result.status).toBe(0)
+    expect(result.stderr).toContain('deprecated')
+    expect(existsSync(join(repo, '.businesslens', 'build', 'report.json'))).toBe(true)
   })
 
-  it('parses a pull-specific --version without treating it as the CLI version', () => {
-    const env = {
-      ...process.env,
-      BUSINESSLENS_CONFIG_DIR: join(repo, 'empty-cli-config')
-    }
-    const result = cli(repo, env, 'pull', 'example', '--version', '3')
-    expect(result.status).toBe(1)
-    expect(result.stderr).toContain('businesslens login')
-    expect(result.stdout).not.toContain('0.6.0')
+  it('no longer accepts the retired login command', () => {
+    const result = cli(repo, process.env, 'login')
+    expect(result.status).toBe(2)
+    expect(result.stderr).toContain('Unknown command')
+  })
+
+  it('treats --version as the CLI version now that pull has no version flag', () => {
+    // `pull --version <n>` used to mean a Blueprint version, which required
+    // remapping the flag before parsing. Blueprints have no versions any more.
+    const result = cli(repo, process.env, '--version')
+    expect(result.status).toBe(0)
+    expect(result.stdout.trim()).toMatch(/^\d+\.\d+\.\d+/)
   })
 
   it('does not treat option values named pull as the pull command', () => {
     const cwdResult = cli(ROOT, process.env, '--cwd', 'pull', '--version')
     expect(cwdResult.status).toBe(0)
-    expect(cwdResult.stdout.trim()).toBe('0.6.0')
+    expect(cwdResult.stdout.trim()).toMatch(/^\d+\.\d+\.\d+/)
 
-    const tagResult = cli(repo, process.env, 'publish', '--tag', 'pull', '--version')
-    expect(tagResult.status).toBe(0)
-    expect(tagResult.stdout.trim()).toBe('0.6.0')
+    const catalogResult = cli(repo, process.env, '--catalog', 'pull', '--version')
+    expect(catalogResult.status).toBe(0)
+    expect(catalogResult.stdout.trim()).toMatch(/^\d+\.\d+\.\d+/)
   })
 
   it('rejects unknown commands with usage exit code', () => {

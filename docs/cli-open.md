@@ -3,7 +3,7 @@ title: open
 description: Expand a local Product Report into a canonical draft Product Model.
 section: open-source
 group: CLI
-order: 29
+order: 31
 ---
 
 # `businesslens open`

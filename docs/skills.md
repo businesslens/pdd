@@ -3,7 +3,7 @@ title: Overview
 description: The eight BusinessLens agent skills — which one fits which situation.
 section: open-source
 group: Skills
-order: 12
+order: 13
 ---
 
 # Skills overview
@@ -11,7 +11,7 @@ order: 12
 BusinessLens ships eight agent skills. Each is self-contained, follows the
 open Agent Skills folder format, and treats the target repository as
 untrusted: skills inspect code statically and never execute it. Only
-`businesslens-publish` ever contacts the platform, and only on explicit
+`businesslens-contribute` ever publishes anything, and only on explicit
 request.
 
 | Skill | Use it when |
@@ -23,7 +23,9 @@ request.
 | [`businesslens-deep-dive`](./skill-businesslens-deep-dive.md) | One journey or experience needs exhaustive coverage |
 | [`businesslens-validate`](./skill-businesslens-validate.md) | The model needs a read-only deterministic check |
 | [`businesslens-doctor`](./skill-businesslens-doctor.md) | The model fails validation, looks stale, or needs a health report |
-| [`businesslens-publish`](./skill-businesslens-publish.md) | You explicitly want the model on the platform |
+| [`businesslens-ideate`](./skill-businesslens-ideate.md) | You are deciding what to build |
+| [`businesslens-implement`](./skill-businesslens-implement.md) | A model exists with no implementation |
+| [`businesslens-contribute`](./skill-businesslens-contribute.md) | You explicitly want the model in the public catalog |
 
 ## How they fit together
 
@@ -31,7 +33,7 @@ The lifecycle runs through four of them: `init` (or `plan`, for a blank
 repository) creates the model, then every feature loops through `plan` →
 implement → `verify`. `sync` is the recovery lane when code changed without
 a plan. The rest are supporting tools: `deep-dive` adds depth to one area,
-`validate` and `doctor` keep the model honest, `publish` reports immutable Product Model Versions to
+`validate` and `doctor` keep the model honest, `contribute` proposes the model to
 the platform. The full decision table with situations lives in
 [How it works](./guide.md).
 

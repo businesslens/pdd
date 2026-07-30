@@ -1,0 +1,4 @@
+interface:
+  display_name: "BusinessLens Ideate"
+  short_description: "Propose what to build, without changing the model"
+  default_prompt: "Use $businesslens-ideate to propose candidate product directions as a shortlist I can choose from."

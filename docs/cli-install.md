@@ -3,7 +3,7 @@ title: install
 description: Install the bundled BusinessLens agent skills safely for selected AI harnesses and scopes.
 section: open-source
 group: CLI
-order: 22
+order: 25
 ---
 
 # `businesslens install`

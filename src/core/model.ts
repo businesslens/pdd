@@ -12,7 +12,6 @@ import { stem } from './ids.js'
 import {
   bulletList, decisionPoints, orderedList, parseMarkdown, section
 } from './markdown.js'
-import { DEFAULT_PLATFORM_URL, trustedPlatformUrl } from './platform-url.js'
 
 export interface EntityFile {
   id: string
@@ -72,7 +71,7 @@ export interface ScenarioKind {
 
 export interface PddModel {
   root: string
-  config: { schema: number, platformUrl: string, sddPaths: string[] }
+  config: { schema: number, sddPaths: string[] }
   product: { id: string, tags: string[], limitations: string[], doc: MarkdownDoc, links: EntityLink[] }
   scenarioKinds: ScenarioKind[]
   coverage: {
@@ -125,20 +124,14 @@ export function loadModel(cwd: string): PddModel {
     issues.push(`${FOLDER}/ does not exist — invoke the \`businesslens-init\` skill first`)
   }
 
-  let config = { schema: 1, platformUrl: DEFAULT_PLATFORM_URL, sddPaths: [] as string[] }
+  let config = { schema: 1, sddPaths: [] as string[] }
   const configFile = join(root, 'config.yaml')
   if (existsSync(configFile)) {
     try {
       const raw = parse(readFileSync(configFile, 'utf8')) as Record<string, any> | null
       config = {
         schema: Number(raw?.schema ?? 1),
-        platformUrl: String(raw?.platform?.url || DEFAULT_PLATFORM_URL),
         sddPaths: Array.isArray(raw?.sdd?.paths) ? raw.sdd.paths.map(String) : []
-      }
-      try {
-        trustedPlatformUrl(config.platformUrl)
-      } catch (error) {
-        issues.push(`config.yaml: ${(error as Error).message}`)
       }
     } catch (error) {
       issues.push(`config.yaml failed to parse (${(error as Error).message})`)

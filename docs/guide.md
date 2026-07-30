@@ -73,7 +73,9 @@ model drifted (unplanned change)? → /businesslens-sync
 | One journey or experience needs exhaustive depth | `businesslens-deep-dive` |
 | Deterministic check, CI readiness | `businesslens-validate` |
 | Something looks wrong, stale, or stuck | `businesslens-doctor` |
-| Report a Product Model Version to the Platform | `businesslens-publish` |
+| Build the software a model describes | `businesslens-implement` |
+| Decide what to build next | `businesslens-ideate` |
+| Propose the model as a catalog Blueprint | `businesslens-contribute` |
 
 ## Scenarios are the acceptance criteria
 

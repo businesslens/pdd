@@ -1,9 +1,31 @@
 #!/usr/bin/env node
 
 import { execFileSync } from 'node:child_process'
-import { mkdtempSync, rmSync } from 'node:fs'
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
+
+/**
+ * Pin the CLI to the version these skills were installed from.
+ *
+ * `businesslens@latest` is wrong here: the skills and the CLI are one release,
+ * and a skill installed from version X must validate with version X. Resolving
+ * `latest` at run time means a model authored against a newer format gets
+ * validated by an older published CLI, which reports the new frontmatter keys as
+ * unknown — a confusing failure with no obvious cause.
+ */
+function installedPackageSpec() {
+  try {
+    const manifestFile = new URL('../../.businesslens-install.json', import.meta.url)
+    const manifest = JSON.parse(readFileSync(manifestFile, 'utf8'))
+    if (manifest?.package === 'businesslens' && typeof manifest.version === 'string') {
+      return `businesslens@${manifest.version}`
+    }
+  } catch {
+    // Not installed through `businesslens install`; fall back below.
+  }
+  return 'businesslens@latest'
+}
 
 function fail(message) {
   process.stderr.write(`${message}\n`)
@@ -46,7 +68,7 @@ try {
       'exec',
       '--yes',
       '--ignore-scripts',
-      '--package=businesslens@latest',
+      `--package=${installedPackageSpec()}`,
       '--',
       'businesslens',
       '--cwd',

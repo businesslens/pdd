@@ -3,7 +3,7 @@ title: validate
 description: Run the deterministic validator and explain every error, warning, and count — strictly read-only.
 section: open-source
 group: Skills
-order: 18
+order: 21
 ---
 
 # businesslens-validate

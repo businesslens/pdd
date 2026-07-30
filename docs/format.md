@@ -3,7 +3,7 @@ title: Format contract
 description: The contract for the git-tracked product model — folder layout, universal conventions, entities, and codeRefs.
 section: open-source
 group: Reference
-order: 30
+order: 33
 ---
 
 # The `.businesslens/` Format
@@ -118,19 +118,8 @@ sdd:
   paths: [openspec/]               # detected/declared SDD roots; empty if none
 ```
 
-The optional publishing endpoint is deliberately restricted because
-`BUSINESSLENS_API_KEY` is sent to it:
-
-```yaml
-platform:
-  url: https://app.businesslens.io
-```
-
-The public CLI accepts only the official `https://app.businesslens.io` origin
-or a literal loopback development host: `localhost`, any `127.x.x.x` address,
-or `::1`. Loopback endpoints may use HTTP and any port, for example
-`http://localhost:3000`. Paths, query strings, fragments, and embedded
-credentials are not allowed. Omit `platform` to use the official origin.
+`config.yaml` has no other keys. A `platform:` block from an older model is
+ignored rather than rejected — it named an endpoint nothing contacts any more.
 
 ### `product.md`
 
@@ -372,11 +361,11 @@ does not compile or publish the model.
 `status: draft` marks a **planned model**: a greenfield product authored before
 any implementation exists. While draft, missing journey and scenario
 `codeRefs` validate as warnings instead of errors. Draft, partial, and complete
-models may all build and publish. Publishing reports a private immutable
-Product Model Version; creating a Blueprint and selecting a public Blueprint
-revision are separate Platform actions. Once implementation is
-verified and evidence is attached, set status to `partial` or `complete`; from
-then on evidence is strictly required.
+models may all be exported. Proposing a model as a catalog Blueprint is a
+separate, explicit action, and a Blueprint is listed publicly only when an
+administrator lists it. Once implementation is verified and evidence is
+attached, set status to `partial` or `complete`; from then on evidence is
+strictly required.
 
 ## Generated files
 
@@ -454,9 +443,11 @@ from, validation adapts:
 | absent or `false` | must equal the entities carrying `codeRefs` |
 | `true` | must not exceed the entity counts, and no entity may carry a `codeRef` |
 
-`publish` sends the unredacted report: a Product Model Version is private to
-its workspace. `open` and `pull` never transplant imported evidence into the
-receiving repository regardless of whether the report was redacted.
+`export` writes the unredacted report, because a local report never leaves the
+repository that produced it. Everything that does leave — a catalog Blueprint, a
+contribution pull request — is redacted first. `open` and `pull` never
+transplant imported evidence into the receiving repository regardless of whether
+the report was redacted.
 
 The inverse command is:
 

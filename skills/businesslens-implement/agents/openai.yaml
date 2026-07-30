@@ -1,0 +1,4 @@
+interface:
+  display_name: "BusinessLens Implement"
+  short_description: "Build the software the Product Model describes"
+  default_prompt: "Use $businesslens-implement to build the product described by the .businesslens/ Product Model, treating its scenarios as the acceptance contract."

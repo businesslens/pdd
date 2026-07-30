@@ -1,6 +1,6 @@
 {
   "name": "businesslens",
-  "version": "0.6.0",
+  "version": "0.7.0-alpha.1",
   "description": "Product-Driven Development for coding agents: build and maintain a git-tracked Product Model in .businesslens/.",
   "author": {
     "name": "BusinessLens",
@@ -16,13 +16,15 @@
     "evidence"
   ],
   "skills": [
+    "./skills/businesslens-ideate",
     "./skills/businesslens-init",
     "./skills/businesslens-plan",
+    "./skills/businesslens-implement",
     "./skills/businesslens-verify",
     "./skills/businesslens-sync",
     "./skills/businesslens-deep-dive",
     "./skills/businesslens-validate",
     "./skills/businesslens-doctor",
-    "./skills/businesslens-publish"
+    "./skills/businesslens-contribute"
   ]
 }

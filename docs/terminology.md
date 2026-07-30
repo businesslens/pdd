@@ -136,21 +136,38 @@ feature is enabled, shipped, or deprecated.
   contains the entities and their relationships.
 - A **Product Report** is the generated, source-free representation of that
   model. It is a transport artifact and does not add another entity layer.
-- A **Product Model Version** is the Platform's immutable record of one
-  reported Product Report plus separately stored provenance.
-- A **Blueprint** is a Platform-owned reusable identity around selected Product
-  Model Versions. Its globally unique canonical name is the stable CLI pull
-  identifier. A local model, draft model, build, or publish is never
-  automatically a Blueprint.
-- A **Blueprint Revision** points to exactly one immutable Product Model
-  Version. The CLI's `pull --version N` option selects this revision number.
-  Public visibility is a separate Platform curation action.
+- A **Blueprint** is a Product Model curated into the public catalog. It has a
+  slug, a stored Product Report, and a catalog record whose identity is
+  independent of that slug — a slug can be withdrawn and later reused for
+  something unrelated, and the result is a new Blueprint rather than the old one
+  returning. A local model is never automatically a Blueprint; it becomes one
+  when a pull request adding it is merged and a publish run pushes it.
+- The **catalog** is the public collection of Blueprints at
+  `businesslens.io/blueprints`. Browsing it and pulling from it are anonymous.
 - A **product map** is a visual or navigable view of the Product Model. It is
   not the `.businesslens/` artifact itself.
 - A git **branch** may hold intended product behavior while implementation is
   in progress; it is the plan, not a Product Model entity.
-- Platform concepts such as Project, Track, Hub, Blueprint, and revision belong to the
-  hosted BusinessLens workflow, not to the `.businesslens/` product model.
+
+## Verbs
+
+Each action has exactly one name.
+
+| Verb | Meaning |
+| --- | --- |
+| **ideate** | Propose candidate directions. Never writes to the model. |
+| **plan** | Turn a decided intent into entities. The only skill that authors model files. |
+| **implement** | Build the software the model describes, with its scenarios as the acceptance contract. |
+| **verify** | Attach implementation evidence once the code exists. |
+| **sync** | Repair a model after code changed without being planned first. |
+| **export** | Compile a Product Model into a Product Report. |
+| **contribute** | Propose your model as a Blueprint, by pull request against `businesslens/pdd`. |
+| **publish** | The maintainer pushing built Blueprints into the catalog. |
+| **pull** | Anyone anonymously fetching a Blueprint and expanding it locally. |
+
+A Blueprint is **listed** when an administrator has approved it for public
+display, and **withdrawn** when its slug no longer exists in `businesslens/pdd`.
+Only an administrator changes the first; only a publish run changes the second.
 
 For a narrative walkthrough of how the entities work together, continue to
 [The product model](./product-model.md). For field-level authoring rules, use the

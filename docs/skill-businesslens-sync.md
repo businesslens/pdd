@@ -3,7 +3,7 @@ title: sync
 description: Repair the model after code changed without a plan — targeted drift recovery, not the routine loop.
 section: open-source
 group: Skills
-order: 16
+order: 19
 ---
 
 # businesslens-sync
