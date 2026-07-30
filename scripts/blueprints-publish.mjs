@@ -17,6 +17,7 @@ import { readdir, readFile } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { parse as parseYaml } from 'yaml'
+import { redactSourceEvidence } from '../dist/report.js'
 
 const root = process.cwd()
 const cli = resolve(root, 'dist/cli.js')
@@ -99,7 +100,11 @@ for (const slug of slugs) {
   } catch (error) {
     fail(`blueprints/${slug}: build failed — ${(error.stderr || error.message).toString().trim()}`)
   }
-  const report = JSON.parse(await readFile(join(dir, '.businesslens/build/report.json'), 'utf8'))
+  // Redact here as well as server-side. The catalog does not trust this client,
+  // but source paths should not travel over the wire in the first place.
+  const report = redactSourceEvidence(
+    JSON.parse(await readFile(join(dir, '.businesslens/build/report.json'), 'utf8'))
+  )
   payloads.push({ slug, manifest, report, sourcePath: `blueprints/${slug}`, sourceCommit: commit })
   console.log(`built  ${slug}`)
 }
