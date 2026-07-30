@@ -1,9 +1,8 @@
-import { existsSync } from 'node:fs'
-import { join } from 'node:path'
 import type { PddModel } from '../core/model.js'
-import { lsFiles, repoRoot } from '../core/git.js'
+import { lsFiles } from '../core/git.js'
 import { isId } from '../core/ids.js'
 import { loadModel } from '../core/model.js'
+import { resolveModelRoot } from '../core/model-root.js'
 
 export interface ValidationResult {
   ok: boolean
@@ -195,19 +194,18 @@ export function validateModel(model: PddModel, trackedFiles: string[]): Validati
 }
 
 export function runValidate(cwd: string, json: boolean): number {
-  let root: string
+  let modelRoot: string
+  let gitRoot: string | undefined
   try {
-    root = repoRoot(cwd)
-  } catch {
-    console.error('businesslens validate must run inside a git repository.')
+    ({ modelRoot, gitRoot } = resolveModelRoot(cwd))
+  } catch (error) {
+    console.error((error as Error).message)
     return 1
   }
-  if (!existsSync(join(root, '.businesslens'))) {
-    console.error('.businesslens/ does not exist — invoke the `businesslens-init` skill first')
-    return 1
-  }
-  const model = loadModel(root)
-  const result = validateModel(model, lsFiles(root))
+  const model = loadModel(modelRoot)
+  // codeRefs are resolved against tracked files, which only a repository has.
+  // Outside one the tracked set is empty, so every codeRef is reported unknown.
+  const result = validateModel(model, gitRoot ? lsFiles(gitRoot) : [])
   if (json) {
     console.log(JSON.stringify(result, null, 2))
   } else {

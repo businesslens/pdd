@@ -1,7 +1,8 @@
 import { createInterface } from 'node:readline/promises'
 import { submitProject } from '../core/api.js'
-import { git, provenance, repoRoot } from '../core/git.js'
+import { git, provenance } from '../core/git.js'
 import { loadModel } from '../core/model.js'
+import { resolveModelRoot } from '../core/model-root.js'
 import { trustedPlatformUrl } from '../core/platform-url.js'
 import type { SubmissionRef } from '../core/portable.js'
 import { ProjectSubmissionV4Schema, SUBMISSION_SCHEMA_VERSION } from '../core/portable.js'
@@ -108,10 +109,16 @@ export async function runPublish(cwd: string, options: PublishOptions): Promise<
   }
 
   let root: string
+  let gitRoot: string
   let model: ReturnType<typeof loadModel>
   let baseUrl: string
   try {
-    root = repoRoot(cwd)
+    const resolved = resolveModelRoot(cwd)
+    // Publishing pins a Git revision, so unlike validate and build it cannot
+    // work on a model that sits outside a repository.
+    if (!resolved.gitRoot) throw new Error('businesslens publish must run inside a git repository.')
+    root = resolved.modelRoot
+    gitRoot = resolved.gitRoot
     model = loadModel(root)
     baseUrl = trustedPlatformUrl(model.config.platformUrl)
   } catch (error) {
@@ -131,8 +138,8 @@ export async function runPublish(cwd: string, options: PublishOptions): Promise<
 
   let pinned: ReturnType<typeof provenance>
   try {
-    if (options.tag) verifyTagAtHead(root, options.tag)
-    pinned = provenance(root, { detachedHeadName: options.tag })
+    if (options.tag) verifyTagAtHead(gitRoot, options.tag)
+    pinned = provenance(gitRoot, { detachedHeadName: options.tag })
   } catch (error) {
     console.error((error as Error).message)
     return 1

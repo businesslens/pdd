@@ -1,9 +1,10 @@
 import type { EntityFile, PddModel } from '../core/model.js'
 import type { ProductReportV4 } from '../core/portable.js'
 import { writeGeneratedFile } from '../core/generated-files.js'
-import { lsFiles, repoRoot } from '../core/git.js'
+import { lsFiles } from '../core/git.js'
 import { section, supportingContent } from '../core/markdown.js'
 import { loadModel } from '../core/model.js'
+import { resolveModelRoot } from '../core/model-root.js'
 import {
   ProductReportV4Schema,
   REPORT_SCHEMA_VERSION,
@@ -183,9 +184,9 @@ export interface BuildOutcome {
 }
 
 export function buildProject(cwd: string): BuildOutcome {
-  const root = repoRoot(cwd)
+  const { modelRoot: root, gitRoot } = resolveModelRoot(cwd)
   const model = loadModel(root)
-  const tracked = lsFiles(root)
+  const tracked = gitRoot ? lsFiles(gitRoot) : []
   const result = validateModel(model, tracked)
   if (!result.ok) {
     throw new Error(`Validation failed:\n${result.errors.map(error => `- ${error}`).join('\n')}`)
