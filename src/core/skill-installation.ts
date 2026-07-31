@@ -31,7 +31,7 @@ export type BusinessLensSkill = (typeof BUSINESSLENS_SKILLS)[number]
 
 const MANIFEST_FILE = '.businesslens-install.json'
 const LEGACY_SKILLS = [
-  // Renamed in 0.7.0: the catalog's push action is `publish`, so the skill that
+  // Renamed in 0.6.0: the catalog's push action is `publish`, so the skill that
   // proposes a Blueprint by pull request is `contribute`.
   'businesslens-publish',
   'map',

@@ -156,7 +156,7 @@ async function main(): Promise<number> {
     case 'export':
       return runExport(cwd)
     case 'build':
-      // Deprecated alias kept through 0.7.x. `build` is purely local, so
+      // Deprecated alias kept through 0.6.x. `build` is purely local, so
       // renaming it would break CI scripts that nothing else in this release
       // touches.
       console.warn('`businesslens build` is deprecated; use `businesslens export`.')

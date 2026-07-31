@@ -34,7 +34,7 @@ every existing model's `.gitignore` stale for no user-visible benefit.
 `businesslens build` still works and prints a deprecation warning. It is purely
 local, so renaming it outright would break CI scripts that nothing else in this
 release affects. The alias is undocumented in help and will be removed after
-0.7.x.
+0.6.x.
 
 ## Where the report goes
 
