@@ -106,7 +106,7 @@ for (const slug of slugs) {
   const dir = join(blueprintsDir, slug)
   const manifest = parseYaml(await readFile(join(dir, 'blueprint.yaml'), 'utf8'))
   try {
-    execFileSync(process.execPath, [cli, '--cwd', dir, 'build'], { stdio: 'pipe' })
+    execFileSync(process.execPath, [cli, '--cwd', dir, 'export'], { stdio: 'pipe' })
   } catch (error) {
     fail(`blueprints/${slug}: build failed — ${(error.stderr || error.message).toString().trim()}`)
   }

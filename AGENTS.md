@@ -10,16 +10,17 @@ or validator behavior.
 ## Layout
 
 - `src/cli.ts` — public command dispatch: `install`, `update`, `validate`,
-  `build`, and `publish`.
+  `export`, `contribute`, `pull`, and `open` (`build` is a deprecated alias).
 - `src/commands/` — public command implementations.
 - `src/core/providers.ts` — supported harness paths and detection.
 - `src/core/skill-installation.ts` — ownership-safe skill installation.
-- `src/core/` — parsers, model loading, Git evidence, portable schema, and the
-  platform client.
+- `src/core/` — parsers, model loading, Git evidence, portable schema, and
+  catalog/contribution support.
 - `skills/businesslens-*/SKILL.md` — one independent skill per workflow:
   `businesslens-init`, `businesslens-plan`, `businesslens-verify`,
   `businesslens-sync`, `businesslens-deep-dive`, `businesslens-validate`,
-  `businesslens-doctor`, and `businesslens-publish`.
+  `businesslens-doctor`, `businesslens-ideate`, `businesslens-implement`, and
+  `businesslens-contribute`.
 - `test/fixtures/fixture-shop/` — the golden validation fixture.
 
 ## Documentation structure
@@ -27,16 +28,14 @@ or validator behavior.
 - `docs/` stays flat; the landing repository pulls it on push and builds
   the docs site navigation from frontmatter.
 - Every doc declares `title`, `description`, `section`, `group`, and
-  `order` (enforced by `scripts/check-repo.mjs`). `section` is the
-  top-level docs tab (`open-source` or `platform`); `group` is the sidebar
-  cluster; `order` is global within the section.
+  `order` (enforced by `scripts/check-repo.mjs`). `section` is
+  `open-source`; `group` is the sidebar cluster; `order` is global.
 - Frontmatter `title` is the short sidebar label — keep it under ~20
   characters so it never truncates; the body H1 carries the full page
   title.
-- This repository authors the `open-source` section with groups
+- This repository authors the documentation with groups
   Get started, Concepts, Tutorials, Skills (one page per skill), CLI (one
-  page per command), and Reference. Platform docs live in the landing
-  repository and follow the same contract.
+  page per command), and Reference.
 
 ## Skill-writing standards
 
@@ -53,7 +52,7 @@ or validator behavior.
 ## Installer standards
 
 - `install` distributes skills only. It never creates `.businesslens/`,
-  changes `AGENTS.md`, connects to the platform, or publishes.
+  changes `AGENTS.md`, or submits model data.
 - Overwrite only BusinessLens-owned artifacts. An unmarked collision requires
   explicit `--force`.
 - `update` changes only installations with a valid BusinessLens marker.

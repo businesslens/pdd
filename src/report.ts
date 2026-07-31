@@ -2,9 +2,9 @@
  * `businesslens/report` — the Product Report contract as a library.
  *
  * The open framework owns the product-model content contract. Anything that
- * ingests, stores, validates, or serves a Product Report — including
- * BusinessLens Platform — consumes this module instead of re-declaring the
- * schema, so the two sides cannot drift.
+ * ingests, stores, validates, or serves a Product Report — including the
+ * public Blueprint catalog — consumes this module instead of re-declaring the
+ * schema, so producers and consumers cannot drift.
  *
  * This entry point depends only on `zod` and stays free of Node built-ins so
  * that browser bundles can import it. The digest lives in
@@ -34,7 +34,7 @@ export {
   ReportCoverageSchema,
   ProductReportV4Schema,
 
-  // Publish envelope
+  // Legacy submission envelope (retained for schema compatibility)
   GitRepositoryProvenanceSchema,
   SubmissionProvenanceSchema,
   SubmissionRefSchema,

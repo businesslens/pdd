@@ -56,6 +56,6 @@ finishes `coverage.md` honestly, and runs
 - Never executes the repository's application, build, migrations, or tests.
 - Never overwrites a mature existing model without explicit approval (that is
   [`businesslens-sync`](./skill-businesslens-sync.md)'s job).
-- Never contacts the platform.
+- Never submits or contributes the Product Model.
 
 Tutorial: [Map existing code](./tutorial-map-existing-product.md).

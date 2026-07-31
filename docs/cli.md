@@ -9,8 +9,8 @@ order: 24
 # BusinessLens CLI
 
 The `businesslens` CLI installs and updates the agent skills, validates and
-builds the local Product Model, and moves Product Reports between repositories
-and the BusinessLens Platform.
+exports the local Product Model, proposes public catalog contributions, and
+opens Product Reports from local files or the public catalog.
 
 It requires Node.js 20.12 or newer. Run the current package without installing
 it globally:
@@ -23,12 +23,12 @@ npx businesslens@latest <command> [options]
 
 | Command | Purpose |
 | --- | --- |
-| [`install`](./cli-install.md) | Install the eight bundled BusinessLens skills into one or more AI harnesses |
+| [`install`](./cli-install.md) | Install the ten bundled BusinessLens skills into one or more AI harnesses |
 | [`update`](./cli-update.md) | Refresh BusinessLens-managed skill installations |
 | [`validate`](./cli-validate.md) | Check the structure, relationships, and code evidence in `.businesslens/` |
 | [`export`](./cli-export.md) | Compile `.businesslens/` into a portable Product Report |
 | [`contribute`](./cli-contribute.md) | Propose this model as a catalog Blueprint, by pull request |
-| [`pull`](./cli-pull.md) | Pull the latest or an exact Blueprint version by canonical name |
+| [`pull`](./cli-pull.md) | Anonymously pull the current Blueprint by canonical name |
 | [`open`](./cli-open.md) | Expand a local Product Report into `.businesslens/` |
 
 The CLI changes only what the selected command owns. In particular, `install`

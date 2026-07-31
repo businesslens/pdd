@@ -24,7 +24,7 @@ const OPEN_COVERAGE_RATIONALE = 'Product behavior and relationships were importe
 
 function readReportSource(source: string): unknown {
   if (/^https?:\/\//i.test(source)) {
-    throw new Error('`open` accepts local Product Report files. Use `businesslens pull <blueprint>` for Hub Blueprints.')
+    throw new Error('`open` accepts local Product Report files. Use `businesslens pull <blueprint>` for catalog Blueprints.')
   }
   const file = isAbsolute(source) ? source : resolve(process.cwd(), source)
   const stat = lstatSync(file)

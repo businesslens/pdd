@@ -95,4 +95,4 @@ verifying.
   require the user's confirmation.
 - Never modify implementation code.
 - Never execute target repository code.
-- Never publish or contact the platform from this skill.
+- Never submit or contribute the Product Model from this skill.

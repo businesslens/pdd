@@ -16,7 +16,7 @@ you explicitly ask for repairs.
 
 - A simple validation report is not enough — findings need investigation.
 - The model may have drifted semantically even though validation is green.
-- You want a health report before a release or a publish.
+- You want a health report before a release or catalog contribution.
 
 ## Invocation
 
@@ -54,4 +54,4 @@ repairs and re-validates until green.
 
 - Never mutates the model during a diagnostic-only request.
 - Never treats a green structural validator as proof of complete coverage.
-- Never executes target code, never contacts the platform.
+- Never executes target code or submits the Product Model.

@@ -46,4 +46,4 @@ integrity — not complete or current product coverage.
 
 - Strictly read-only, even when validation fails.
 - Never suppresses, rewrites, or reinterprets validator findings.
-- Never executes target code, never contacts the platform.
+- Never executes target code or submits the Product Model.

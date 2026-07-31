@@ -39,11 +39,10 @@ already has all three:
 
 The one special state is a brand-new product with no code at all:
 `coverage.md` `status: draft` marks the whole model as planned, downgrading
-missing evidence to warnings so the draft validates green. `build` and
-`publish` can preserve that planned model as an immutable private Product
-Model Version. It does not create or publish a Blueprint. A fully successful
-verify moves coverage off draft, and evidence is
-strictly required from then on.
+missing evidence to warnings so the draft validates green. Draft models can
+be exported or proposed as catalog Blueprints while their missing evidence
+remains visible. A fully successful verify moves coverage off draft, and
+evidence is strictly required from then on.
 
 ## The loop
 
@@ -86,21 +85,19 @@ executing anything — "submitting an empty cart shows an error and keeps the
 cart", not "cart validation works". `businesslens-verify` verifies exactly
 that, statically, and never marks a scenario met without direct evidence.
 
-## Where publishing fits
+## Where catalog contribution fits
 
-`build` compiles the model into a source-free Product Report; `publish` submits
-that report with separate commit provenance as a new immutable Product Model
-Version. Both can run from CI on the default branch (see
-[Validate in CI](./ci.md)). PDD submissions are Blueprint-neutral: Blueprint
-creation, revision selection, and public Hub visibility happen separately in
-the Platform.
+`export` compiles the model into a portable Product Report. `contribute`
+redacts repository evidence and opens a pull request that proposes the model
+as a public catalog Blueprint. Maintainers review the contribution, decide
+whether it is listed, and run the separate catalog publisher after merge. CI
+needs only to validate the model (see [Validate in CI](./ci.md)).
 
 ## Where Blueprint pull fits
 
-The Hub identifies every public Blueprint with a globally unique canonical
-name. To use one in a repository, authorize the CLI once with
-`npx businesslens@latest login`, then run
-`npx businesslens@latest pull <blueprint-name>`. Latest is the default;
-`--version N` pins an exact immutable Blueprint revision. The Product Report
-remains an internal transport response: `pull` verifies it and invokes the
-same canonical expansion used by `open` without a browser download.
+The catalog identifies every public Blueprint with a globally unique canonical
+name. To use one in a repository, run
+`npx businesslens@latest pull <blueprint-name>`. Pull is anonymous and fetches
+the current report for that name. The Product Report remains an internal
+transport response: `pull` verifies it and invokes the same canonical
+expansion used by `open` without a browser download.

@@ -25,7 +25,7 @@ npx businesslens@latest --cwd ./new-product open ./report.json
 ## Report source
 
 The local report works offline and must be a regular, non-symbolic-link file no
-larger than 8 MiB. Hub users do not download Product Reports manually; use
+larger than 8 MiB. Catalog users do not download Product Reports manually; use
 [`businesslens pull`](./cli-pull.md) with the Blueprint's canonical name.
 `pull` retrieves the report and invokes this expansion path internally.
 

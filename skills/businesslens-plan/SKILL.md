@@ -37,7 +37,7 @@ Read these references before authoring:
    behavior materially guides implementation. Propose concrete drafts after
    each answer; the user corrects rather than dictates.
 4. New product — scaffold and author the whole model: `config.yaml`
-   (`schema: 1`, empty `sdd.paths`, no platform), `taxonomies.yaml`,
+   (`schema: 1`, empty `sdd.paths`, no obsolete hosted-service settings),
    `product.md`, `.gitignore`, every entity file **without codeRefs**, and
    `coverage.md` with `status: draft` and a method noting the model was
    planned before implementation. Insert the managed `AGENTS.md` block from
@@ -87,4 +87,4 @@ Read these references before authoring:
   deliberately retires it — and say so in the report.
 - Never present planned behavior as current; unevidenced entities are open
   work by definition.
-- Never execute target code; never publish or contact the platform.
+- Never execute target code; never submit or contribute the Product Model.

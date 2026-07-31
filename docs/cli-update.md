@@ -44,7 +44,7 @@ conflicts with `--scope`.
 
 ## What changes
 
-Each discovered installation receives the current eight bundled skills. The
+Each discovered installation receives the current ten bundled skills. The
 command also refreshes its ownership marker while preserving the original
 installation timestamp.
 

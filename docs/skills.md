@@ -1,6 +1,6 @@
 ---
 title: Overview
-description: The eight BusinessLens agent skills — which one fits which situation.
+description: The ten BusinessLens agent skills — which one fits which situation.
 section: open-source
 group: Skills
 order: 13
@@ -8,10 +8,10 @@ order: 13
 
 # Skills overview
 
-BusinessLens ships eight agent skills. Each is self-contained, follows the
+BusinessLens ships ten agent skills. Each is self-contained, follows the
 open Agent Skills folder format, and treats the target repository as
 untrusted: skills inspect code statically and never execute it. Only
-`businesslens-contribute` ever publishes anything, and only on explicit
+`businesslens-contribute` proposes anything publicly, and only on explicit
 request.
 
 | Skill | Use it when |
@@ -33,8 +33,8 @@ The lifecycle runs through four of them: `init` (or `plan`, for a blank
 repository) creates the model, then every feature loops through `plan` →
 implement → `verify`. `sync` is the recovery lane when code changed without
 a plan. The rest are supporting tools: `deep-dive` adds depth to one area,
-`validate` and `doctor` keep the model honest, `contribute` proposes the model to
-the platform. The full decision table with situations lives in
+`validate` and `doctor` keep the model honest, and `contribute` proposes the
+model to the catalog. The full decision table with situations lives in
 [How it works](./guide.md).
 
 ## Invoking skills

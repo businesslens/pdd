@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { stringify } from 'yaml'
 import { parseCanonicalName } from '../core/canonical-name.js'
-import { lsFiles, provenance } from '../core/git.js'
+import { lsFiles } from '../core/git.js'
 import { loadModel } from '../core/model.js'
 import { resolveModelRoot } from '../core/model-root.js'
 import { redactSourceEvidence } from '../core/portable.js'
@@ -75,16 +75,6 @@ function ownsUpstream(upstream: string): boolean {
   }
 }
 
-/** Best-effort attribution. A Blueprint author may have no repository at all. */
-function bestEffortOrigin(cwd: string): { repository: string, commit: string } | undefined {
-  try {
-    const pinned = provenance(cwd, { requireClean: false })
-    return { repository: pinned.repositoryUrl, commit: pinned.commit }
-  } catch {
-    return undefined
-  }
-}
-
 export async function runContribute(cwd: string, options: ContributeOptions): Promise<number> {
   let workspace: string | undefined
   try {
@@ -121,7 +111,13 @@ export async function runContribute(cwd: string, options: ContributeOptions): Pr
     mkdirSync(regenerated, { recursive: true })
     expandProductReport(regenerated, redacted, false)
 
-    const origin = bestEffortOrigin(modelRoot)
+    // Deliberately carries no origin repository or commit. The point of
+    // regenerating from a redacted report is that the contribution discloses
+    // nothing about where it came from, and a private repository's URL is
+    // exactly the kind of thing that must not land in a public pull request.
+    // The catalog does not store it either — its manifest schema has no such
+    // field — so publishing it would leak without buying anything. Provenance a
+    // maintainer legitimately needs is already on the pull request itself.
     const manifest = {
       slug,
       title: redacted.title,
@@ -131,8 +127,7 @@ export async function runContribute(cwd: string, options: ContributeOptions): Pr
       icon: 'i-lucide-box',
       accent: '#b8965c',
       authors: ['Unattributed'],
-      license: 'MIT',
-      ...(origin ? { origin } : {})
+      license: 'MIT'
     }
 
     if (!options.yes) {
@@ -193,9 +188,9 @@ export async function runContribute(cwd: string, options: ContributeOptions): Pr
         `- **Title:** ${manifest.title}`,
         `- **Summary:** ${manifest.summary}`,
         '',
-        'The model in this pull request was regenerated from a redacted Product Report,',
-        'so it carries no `codeRefs` and no source paths, and is byte-identical to what',
-        '`businesslens pull` produces.',
+        'Everything in this pull request was regenerated from a redacted Product Report,',
+        'so it carries no `codeRefs`, no source paths, and no reference to the repository',
+        'it came from, and is byte-identical to what `businesslens pull` produces.',
         '',
         'Please review the category, tags, icon, accent, and authors in `blueprint.yaml` —',
         '`contribute` fills them with placeholders it cannot infer.'

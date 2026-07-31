@@ -292,7 +292,7 @@ function missingRelation(
   }
 }
 
-/** Cross-entity and computed-field validation shared with Platform fixtures. */
+/** Cross-entity and computed-field validation, shared with the catalog. */
 export function validateProductReport(report: ProductReportV4): string[] {
   const issues: string[] = []
   const { model } = report
@@ -471,11 +471,11 @@ function isRepositoryLink(value: string): boolean {
 /**
  * Remove source evidence for delivery.
  *
- * A Product Model Version keeps full evidence inside the owning workspace, but
- * a downloadable or public Hub report must not disclose the origin
+ * An authored Product Model keeps full evidence inside its own repository, but
+ * a downloadable or public Blueprint report must not disclose the origin
  * repository's layout, file paths, or symbol names. Every consumer that serves
- * a report outside its owning workspace applies this exact projection, so the
- * redaction cannot drift between the framework and the Platform.
+ * a report outside its own repository applies this exact projection, so the
+ * redaction cannot drift between the framework and the catalog.
  *
  * Redacted, because each is structurally a repository reference:
  * `codeRefs`, `entryPoints` that name a repository path, `links` to

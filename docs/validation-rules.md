@@ -58,7 +58,7 @@ Reported when files cannot be read into the model at all.
 
 - `product.md: missing id` / `id must be lowercase kebab-case` /
   `id must be at most 64 characters` — the product manifest needs a
-  Platform-compatible kebab-case `id`.
+  portable kebab-case `id`.
 - `<collection>: id "<id>" must be lowercase kebab-case` — entity IDs are
   filename stems and must match `^[a-z0-9]+(?:-[a-z0-9]+)*$`.
 - `<file>: missing H1 title` / `missing lead paragraph (description)` —

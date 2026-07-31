@@ -25,7 +25,8 @@
   planned journey and scenario is evidenced, every implementation-bearing
   addition/change/removal is met, and every product-only item is explicitly
   classified as model-only; refresh `method`, `sourceAreas`, `unmapped`, and
-  `limitations` at the same time. Draft models may build and publish, but remain
+  `limitations` at the same time. Draft models may be exported or proposed as
+  catalog Blueprints, but remain
   explicitly planned rather than evidence-backed.
 - Verification writes only model files (`codeRefs`, confirmed prose
   corrections, coverage). The met/gap report lives in the conversation.

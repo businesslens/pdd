@@ -50,5 +50,5 @@ Read [references/format.md](references/format.md) and
 - Never execute target repository code.
 - Never rewrite the entire model when a targeted update is sufficient.
 - Never copy prescriptive SDD text into the descriptive product model.
-- Never publish or connect to the platform from this skill; publishing is
-  the separate `businesslens-publish` workflow.
+- Never submit or contribute the Product Model from this skill;
+  `businesslens-contribute` is the explicit public-catalog workflow.

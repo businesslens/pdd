@@ -51,6 +51,6 @@ and validates until green.
 
 - Never rewrites the whole model when a targeted update suffices.
 - Never copies prescriptive SDD text into the descriptive model.
-- Never executes target code, never contacts the platform.
+- Never executes target code or submits the Product Model.
 
 Tutorial: [Recover from drift](./tutorial-recover-from-drift.md).

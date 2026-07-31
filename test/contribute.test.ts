@@ -202,9 +202,18 @@ describe('contribute', { timeout: 30_000 }, () => {
     expect(files.some(file => file.includes('/.businesslens/build/'))).toBe(false)
     expect(files.some(file => file.includes('/.businesslens/cache/'))).toBe(false)
 
-    const manifest = parseYaml(contents['blueprints/fixture-shop/blueprint.yaml']!) as Record<string, unknown>
+    const manifestSource = contents['blueprints/fixture-shop/blueprint.yaml']!
+    const manifest = parseYaml(manifestSource) as Record<string, unknown>
     expect(manifest.slug).toBe('fixture-shop')
     expect(manifest.license).toBe('MIT')
+
+    // The manifest is the one file not regenerated from the redacted report, so
+    // it is the one place a repository reference can still slip into a public
+    // pull request. The fixture has an `origin` remote precisely so this would
+    // catch it: contributing from a private repository must not disclose it.
+    expect(manifest.origin, 'the manifest discloses the origin repository').toBeUndefined()
+    expect(manifestSource).not.toContain('fixture-shop.git')
+    expect(manifestSource).not.toContain('github.com/example')
   })
 
   it('clones instead of forking when the contributor owns the upstream', async () => {

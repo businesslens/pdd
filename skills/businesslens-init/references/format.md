@@ -23,7 +23,7 @@ is its directory name. Only `product.md` declares an `id:` field.
 
 ## Top-level files
 
-Create `config.yaml` without platform settings:
+Create `config.yaml` without any legacy `platform` block:
 
 ```yaml
 schema: 1
@@ -62,8 +62,7 @@ limitations: []
 One paragraph describing what the product does and for whom.
 ```
 
-Keep the product `id` lowercase kebab-case and at most 64 characters; it is
-also the default Platform Project slug.
+Keep the product `id` lowercase kebab-case and at most 64 characters.
 
 Create `coverage.md`:
 

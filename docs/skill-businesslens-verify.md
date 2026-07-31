@@ -61,6 +61,6 @@ completion.
   documentation alone proves nothing.
 - Never deletes or waters down planned claims to force validation green.
 - Never modifies implementation code, never executes target code, never
-  contacts the platform.
+  submits the Product Model.
 
 Tutorial: [Ship a feature](./tutorial-ship-a-feature.md).

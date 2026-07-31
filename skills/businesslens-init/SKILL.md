@@ -38,7 +38,7 @@ Read these references before authoring:
    is absent or clearly an unfinished scaffold, continue.
 5. Create the authored layout from `references/format.md`. Initialize:
    - `config.yaml` with `schema: 1` and detected SDD paths only. Do not add a
-     platform URL or credentials.
+     obsolete hosted-service settings or credentials.
    - `taxonomies.yaml`, `product.md`, `coverage.md`, and `.gitignore`.
    - `actors/`, `experiences/`, `domains/`, `features/`,
      `business-rules/`, and `journeys/`.
@@ -91,6 +91,6 @@ Read these references before authoring:
 - Describe evidenced behavior, never desired behavior.
 - Do not infer authorization, access, or operational guarantees from names.
 - Do not create empty entity stubs and call initialization complete.
-- Do not connect to or publish to the BusinessLens platform from this skill;
-  publishing is the separate `businesslens-publish` workflow.
+- Do not submit or contribute the Product Model from this skill;
+  `businesslens-contribute` is the explicit public-catalog workflow.
 - Do not overwrite a mature existing model without explicit user approval.

@@ -50,6 +50,6 @@ Do not modify files.
 - Never execute the target repository's application, tests, build, migrations,
   or package scripts.
 - Never suppress, rewrite, or reinterpret validator findings.
-- Never connect to or publish to the BusinessLens platform from this skill;
-  publishing is the separate `businesslens-publish` workflow.
+- Never submit or contribute the Product Model from this skill;
+  `businesslens-contribute` is the explicit public-catalog workflow.
 - Do not repair the model; recommend `businesslens-doctor` for that workflow.

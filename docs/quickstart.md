@@ -66,15 +66,14 @@ checks changed and deleted work from the complete model diff.
 - If code changed without a plan, repair the model with `/businesslens-sync` —
   see [Recover from drift](./tutorial-recover-from-drift.md).
 
-## Optional: the platform
+## Optional: share or reuse a Blueprint
 
-The model is fully useful on its own. When you want hosted evolution,
-topology, and comparison across your workspace, report immutable Product Model
-Propose it as a catalog Blueprint with `/businesslens-contribute`. Public
-publication are separate Platform actions. To start from a Hub Blueprint, run
-`npx businesslens@latest login`, then
-`npx businesslens@latest pull <blueprint-name>`; add `--version N` only when
-an exact immutable version is required. The CLI retrieves and expands the
-Product Report without asking the user to download it. The `build`, `open`,
-`pull`, and `publish` commands are in the
-[CLI reference](./cli.md).
+The model is fully useful on its own. To propose it for the public catalog,
+run `/businesslens-contribute` (or `npx businesslens@latest contribute`). This
+opens a pull request for maintainer review; merging approves the contribution,
+and a separate maintainer publish run updates the catalog.
+
+To start from an existing catalog Blueprint, run
+`npx businesslens@latest pull <blueprint-name>`. Pull is anonymous and expands
+the catalog's current Product Report directly into `.businesslens/`. See the
+[`contribute`](./cli-contribute.md) and [`pull`](./cli-pull.md) references.

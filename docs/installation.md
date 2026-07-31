@@ -18,7 +18,7 @@ npx businesslens@latest install
 The installer detects supported AI harnesses, lets you customize the
 selection, asks for project or global scope, and installs only the
 BusinessLens skills. It never creates `.businesslens/`, alters `AGENTS.md`,
-installs hooks, connects to the platform, or publishes data — building the
+installs hooks, contributes to the catalog, or submits data — building the
 model belongs to the skills themselves.
 
 ## Supported harnesses

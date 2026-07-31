@@ -64,7 +64,7 @@ unevidenced journeys and scenarios. Implement, then run
 - Never adds a codeRef for behavior that does not exist.
 - Never weakens evidenced current truth except where the plan deliberately
   retires it.
-- Never implements, executes target code, or contacts the platform.
+- Never implements, executes target code, or submits the Product Model.
 
 Tutorials: [Plan a new product](./tutorial-plan-new-product.md) ·
 [Ship a feature](./tutorial-ship-a-feature.md).

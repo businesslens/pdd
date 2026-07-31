@@ -55,4 +55,4 @@ green and reports unresolved limitations honestly.
 - Never inflates scenario counts with implementation detail invisible to
   the user or operator.
 - Treats ambiguous behavior as a limitation, not a fact.
-- Never executes target code, never contacts the platform.
+- Never executes target code or submits the Product Model.

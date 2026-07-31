@@ -59,7 +59,9 @@ Agent workflows:
   /businesslens-deep-dive     Expand one journey or experience
   /businesslens-validate      Validate the model and explain every result
   /businesslens-doctor        Diagnose validation, drift, and coverage
-  /businesslens-publish       Report the model to the BusinessLens Platform
+  /businesslens-ideate        Decide what to build next
+  /businesslens-implement     Build the software described by a model
+  /businesslens-contribute    Propose the model as a catalog Blueprint
 
 Exit codes: 0 success · 1 failure · 2 usage error`
 

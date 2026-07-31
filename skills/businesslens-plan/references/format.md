@@ -12,7 +12,7 @@ difference is evidence: planned journeys and scenarios carry **no**
   missing-evidence finding.
 - On a new product, `coverage.md` `status: draft` marks the whole model as
   planned: the same findings appear as warnings and validation stays green.
-  Draft models may build and publish as planned Product Reports.
+  Draft models may be exported or proposed as catalog Blueprints.
 
 ## Entity shapes
 
@@ -44,7 +44,7 @@ difference is evidence: planned journeys and scenarios carry **no**
 
 ## Greenfield scaffold (new product)
 
-- `config.yaml`: `schema: 1` and `sdd:\n  paths: []`. No platform block.
+- `config.yaml`: `schema: 1` and `sdd:\n  paths: []`. No legacy `platform` block.
 - `taxonomies.yaml`: at least `primary` and `edge` scenario kinds.
 - `product.md`: lowercase kebab-case `id` of at most 64 characters, `tags`,
   `limitations`, H1 name, lead description.

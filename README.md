@@ -75,11 +75,10 @@ BusinessLens has two deliberate surfaces:
 | Terminal | `npx businesslens update` | Refresh managed skill installations |
 | Terminal | `npx businesslens validate` | Deterministically validate the model |
 | Terminal | `npx businesslens export` | Compile the model into source-free `report.json` |
-| Terminal | `npx businesslens@latest login` | Authorize the CLI through the Platform browser flow |
-| Terminal | `npx businesslens@latest pull blueprint-name` | Pull the latest or a pinned Blueprint into a canonical Product Model |
+| Terminal | `npx businesslens@latest pull blueprint-name` | Anonymously pull a catalog Blueprint into a canonical Product Model |
 | Terminal | `npx businesslens open` | Expand a local Product Report into a canonical Product Model |
 | Terminal | `npx businesslens contribute` | Propose the model as a public catalog Blueprint |
-| AI harness | the eight `businesslens-*` skills | Map, plan, verify, and maintain the product truth |
+| AI harness | the ten `businesslens-*` skills | Map, plan, implement, verify, and maintain the product truth |
 
 The installer never creates `.businesslens/` or modifies `AGENTS.md`. Those
 require repository analysis and belong to the skills.
@@ -123,7 +122,7 @@ Reference:
 - [Format contract](./docs/format.md)
 - [CLI reference](./docs/cli.md)
 - [Validation rules](./docs/validation-rules.md)
-- [CI validation and publishing](./docs/ci.md)
+- [CI validation](./docs/ci.md)
 - [PDD and SDD](./docs/pdd-and-sdd.md)
 
 ## Updating the skills
@@ -142,9 +141,9 @@ or `AGENTS.md`.
 - Installation refuses to overwrite unowned `businesslens-*` directories
   unless `--force` is explicit.
 - Updates replace only artifacts marked as BusinessLens-managed.
-- No platform connection or publishing occurs during installation, mapping,
-  or planning; publishing happens only through the explicit `publish`
-  command or the `businesslens-contribute` skill.
+- Installation, mapping, planning, validation, and export do not submit your
+  model anywhere. Only the explicit `contribute` command or
+  `businesslens-contribute` skill proposes a public catalog contribution.
 
 ## License
 
