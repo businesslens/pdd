@@ -32,8 +32,8 @@ GitHub Copilot).
 
    (Codex: `$businesslens-init`.) The skill inspects the code without
    executing it, authors actors, experiences, domains, features, journeys,
-   scenarios, business rules, and decision points with direct evidence, and
-   installs the managed `AGENTS.md` block.
+   scenarios, business rules, and decision points with direct evidence.
+   Nothing outside `.businesslens/` is touched.
    Answer only the questions the code cannot — the skill drafts everything
    it can from evidence.
 

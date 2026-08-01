@@ -80,8 +80,9 @@ BusinessLens has two deliberate surfaces:
 | Terminal | `npx businesslens contribute` | Propose the model as a public catalog Blueprint |
 | AI harness | the eight `businesslens-*` skills | Map, plan, verify, and maintain the product truth |
 
-The installer never creates `.businesslens/` or modifies `AGENTS.md`. Those
-require repository analysis and belong to the skills.
+Nothing creates `.businesslens/` except the skills, and only `pull` and
+`open` write to `AGENTS.md` — a model that arrived from another repository
+needs a note saying what it is; one you authored does not.
 
 ## Skills
 

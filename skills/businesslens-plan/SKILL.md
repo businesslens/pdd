@@ -40,8 +40,7 @@ Read these references before authoring:
    (`schema: 1`, empty `sdd.paths`, no obsolete hosted-service settings),
    `product.md`, `.gitignore`, every entity file **without codeRefs**, and
    `coverage.md` with `status: draft` and a method noting the model was
-   planned before implementation. Insert the managed `AGENTS.md` block from
-   `references/format.md`. Continue at step 7.
+   planned before implementation. Continue at step 7.
 5. Feature planning — choose depth. If the user says `quick` or `thorough`,
    honor it; otherwise infer: a small, well-specified ask is quick, a vague
    or cross-cutting one is thorough.
@@ -88,3 +87,5 @@ Read these references before authoring:
 - Never present planned behavior as current; unevidenced entities are open
   work by definition.
 - Never execute target code; never submit or contribute the Product Model.
+- Never write into `AGENTS.md`. The managed block belongs to a model that
+  arrived from elsewhere; a model you authored needs no cover letter.

@@ -59,30 +59,11 @@ Read these references before authoring:
      behavior genuinely branches.
 8. Add direct `codeRefs` to every journey and scenario. Prefer symbols over
    fragile line numbers. Keep uncertainty in limitations.
-9. Insert or refresh this managed block in the repository-root `AGENTS.md`,
-   preserving all content outside the markers:
-
-   ```markdown
-   <!-- businesslens:begin -->
-   ## BusinessLens product model
-
-   This repository maintains its product truth in `.businesslens/` (Product-Driven Development).
-
-   - **Before** building or changing behavior: read the relevant experience/journey/scenario files to understand current behavior and where it lives (`codeRefs`).
-   - **Plan** product changes by updating the model first (`businesslens-plan`), implement, then attach evidence with `businesslens-verify`.
-   - **After** unplanned behavior changes: update the affected entity files and run `npx businesslens validate`.
-   - Never edit `.businesslens/cache/` — generated.
-   <!-- businesslens:end -->
-   ```
-
-   When an SDD root exists, add one bullet explaining that the model records
-   what IS while SDD prescribes what WILL BE, and that the two should link
-   rather than duplicate content.
-10. Run `npx businesslens validate --json`. Fix every error and reassess all
-    warnings. Repeat until validation is green.
-11. Finish `coverage.md` honestly. Use `complete` only when every high-signal
+9. Run `npx businesslens validate --json`. Fix every error and reassess all
+   warnings. Repeat until validation is green.
+10. Finish `coverage.md` honestly. Use `complete` only when every high-signal
     surface was inspected and no material area remains unmapped.
-12. Report entity counts, inspected areas, unmapped areas, limitations, and
+11. Report entity counts, inspected areas, unmapped areas, limitations, and
     the validation result. Remind the user to review and commit authored model
     files; never recommend committing `.businesslens/cache/`.
 
@@ -94,3 +75,6 @@ Read these references before authoring:
 - Do not submit or contribute the Product Model from this skill;
   `businesslens-contribute` is the explicit public-catalog workflow.
 - Do not overwrite a mature existing model without explicit user approval.
+- Do not write into `AGENTS.md`. The managed block is reserved for a model
+  that arrived from elsewhere and has no implementation; a repository you
+  mapped has both, and its owner already knows what the model is.

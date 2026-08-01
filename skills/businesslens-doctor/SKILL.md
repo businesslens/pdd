@@ -24,9 +24,11 @@ Diagnose without changing files unless the user explicitly asks for repair.
      work that never went through `businesslens-verify`;
    - placeholder prose, unsupported certainty, or weak coverage claims;
    - generated `cache/` content accidentally tracked by Git.
-4. Check root `AGENTS.md` for one well-formed
-   `<!-- businesslens:begin/end -->` managed block. Confirm that it tells
-   agents to read the model before behavior changes and update it afterward.
+4. Only when the model has no implementation — `coverage.md` is `draft` and no
+   entity carries a `codeRef` — check root `AGENTS.md` for one well-formed
+   `<!-- businesslens:begin/end -->` managed block, and confirm it presents the
+   model as the specification. A repository whose model describes existing code
+   should carry no managed block at all; report one as stale if you find it.
 5. Inspect relevant diffs and recent commits for behavior changes touching
    mapped evidence. Report likely drift; do not call inference proven.
 6. Classify findings:

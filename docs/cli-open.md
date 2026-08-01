@@ -15,6 +15,10 @@ directory:
 npx businesslens@latest open ./report.json
 ```
 
+`open` also writes a managed block into `AGENTS.md` telling a coding agent
+that this repository holds a specification with no implementation behind it.
+It is the same block [`pull`](./cli-pull.md) writes, for the same reason.
+
 The target directory does not need to be a Git repository. Use `--cwd` to
 choose where `.businesslens/` will be created:
 

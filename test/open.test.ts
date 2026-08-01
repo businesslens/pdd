@@ -95,6 +95,45 @@ describe('open report', () => {
     )).toContain('## Decision points')
   })
 
+  it('writes the greenfield agent block, because the model arrived from elsewhere', async () => {
+    // A fresh repository: the suite's shared target already holds a model, and
+    // `open` refuses a non-empty `.businesslens/` without --force.
+    const fresh = mkdtempSync(join(tmpdir(), 'bl-open-agents-'))
+    initialize(fresh)
+    try {
+      const original = buildProject(source)
+      expect(await runOpen(fresh, original.outputFile, false)).toBe(0)
+
+      // The only AGENTS.md BusinessLens writes anywhere. `init` and `plan`
+      // author models in place and leave AGENTS.md alone — see adr/0001.
+      const agents = readFileSync(join(fresh, 'AGENTS.md'), 'utf8')
+      expect(agents).toContain('<!-- businesslens:begin -->')
+      expect(agents).toContain('<!-- businesslens:end -->')
+      expect(agents).toContain('**no implementation**')
+      expect(agents).toContain('The scenarios are the acceptance contract.')
+    } finally {
+      rmSync(fresh, { recursive: true, force: true })
+    }
+  })
+
+  it('preserves content outside the markers and stays idempotent', async () => {
+    const fresh = mkdtempSync(join(tmpdir(), 'bl-open-agents-'))
+    initialize(fresh)
+    try {
+      const original = buildProject(source)
+      writeFileSync(join(fresh, 'AGENTS.md'), '# House rules\n\nRun the linter.\n')
+      expect(await runOpen(fresh, original.outputFile, false)).toBe(0)
+      expect(await runOpen(fresh, original.outputFile, true)).toBe(0)
+
+      const agents = readFileSync(join(fresh, 'AGENTS.md'), 'utf8')
+      expect(agents).toContain('# House rules')
+      expect(agents).toContain('Run the linter.')
+      expect(agents.match(/<!-- businesslens:begin -->/g)).toHaveLength(1)
+    } finally {
+      rmSync(fresh, { recursive: true, force: true })
+    }
+  })
+
   it('expands to a fixed point so a re-opened model is byte-identical', async () => {
     // A catalog Blueprint's committed model is itself an expanded report, so
     // `pull` re-expands it and the result has to match what is committed. The

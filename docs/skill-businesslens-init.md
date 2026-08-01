@@ -35,8 +35,7 @@ Reads repository instructions (`AGENTS.md`, `CLAUDE.md`, READMEs), docs,
 detected SDD roots (`openspec/`, `specs/`, `.kiro/`), and the high-signal
 files surfaced by its bundled inventory script. Writes the whole authored
 `.businesslens/` tree — `config.yaml`, `taxonomies.yaml`, `product.md`,
-`coverage.md`, all entity files — plus the managed
-`<!-- businesslens:begin/end -->` block in the root `AGENTS.md`.
+`coverage.md`, all entity files. It does not touch `AGENTS.md`.
 
 ## How it works
 

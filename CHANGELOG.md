@@ -21,6 +21,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 BusinessLens now ships **eight** skills. Neither removal changes what a
 Product Model looks like or how it is validated.
 
+- **The brownfield `AGENTS.md` block.** `businesslens-init` and
+  `businesslens-plan` no longer write to `AGENTS.md` at all. One managed block
+  survives — the greenfield one — and only the CLI writes it. See
+  [adr/0001](./adr/0001-drop-the-brownfield-agents-block.md).
+
+  This also fixes a bug: `businesslens-plan` handled *new products* and
+  inserted the **brownfield** block, telling agents to read `codeRefs` for
+  current behavior in a repository that had neither code nor `codeRefs`.
+
+### Changed
+
+- `businesslens open` now writes the greenfield `AGENTS.md` block, matching
+  `businesslens pull`. Both are the "this model came from another repository"
+  door, and a model with no implementation needs a note saying so.
+
 ### Added
 
 - **Find your flow** (`docs/flows.md`) — a routing page covering every

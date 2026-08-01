@@ -36,7 +36,7 @@ AI harness, and the skills installed (`npx businesslens@latest install`).
 
    ```bash
    npx businesslens@latest validate
-   git add .businesslens AGENTS.md
+   git add .businesslens
    git commit -m "plan: initial product model (draft)"
    ```
 

@@ -38,6 +38,9 @@ gap is exactly what `businesslens-verify` closes before merge.
   the strongest drift signal (`businesslens-sync`).
 
 The `businesslens-init` skill detects SDD roots (`openspec/`, `specs/`,
-`.kiro/`), records them in `.businesslens/config.yaml`, and includes the
-coexistence rule in the managed `AGENTS.md` block only when one is present.
-Bring your own SDD — or none at all.
+`.kiro/`) and records them in `.businesslens/config.yaml`. Bring your own
+SDD — or none at all.
+
+The two never compete for the implementation step. A model states the
+acceptance criteria before the work starts and `businesslens-verify` checks
+the result after; what writes the code in between is yours to choose.

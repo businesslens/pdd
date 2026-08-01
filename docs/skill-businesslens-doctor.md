@@ -36,8 +36,9 @@ you explicitly ask for repairs.
   went through [`businesslens-verify`](./skill-businesslens-verify.md).
 - Placeholder prose, unsupported certainty, weak coverage claims, generated
   `cache/` content accidentally tracked.
-- Exactly one well-formed `<!-- businesslens:begin/end -->` managed block in
-  the root `AGENTS.md`.
+- For a model with no implementation, exactly one well-formed
+  `<!-- businesslens:begin/end -->` managed block in the root `AGENTS.md` —
+  and for a model that describes existing code, no managed block at all.
 - Recent diffs and commits for likely drift — reported as likely, never as
   proven.
 
