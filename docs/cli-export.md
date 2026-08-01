@@ -40,12 +40,16 @@ deliberately leaves to whatever tool you already use.
 The output directory keeps its name. Renaming `.businesslens/build/` would make
 every existing model's `.gitignore` stale for no user-visible benefit.
 
-## The deprecated `build` alias
+## The retired `build` and bare spellings
 
-`businesslens build` still works and prints a deprecation warning. It is purely
-local, so renaming it outright would break CI scripts that nothing else in this
-release affects. The alias is undocumented in help and will be removed after
-0.6.x.
+`businesslens build`, and the bare `export`, `open`, `pull`, and `contribute`,
+are refused with a message naming the replacement. They are not aliases.
+
+That is deliberate. An alias would have blocked reusing `export` at the top
+level for the evidenced report profile later — and reusing it while the alias
+existed would have silently changed what a disclosure-relevant command emits.
+A command that no longer exists can say so; a command that quietly means
+something else cannot.
 
 ## Where the report goes
 

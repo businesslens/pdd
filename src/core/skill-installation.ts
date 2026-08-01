@@ -17,7 +17,6 @@ import { providerSkillsDir } from './providers.js'
 export const BUSINESSLENS_SKILLS = [
   'businesslens-ideate',
   'businesslens-init',
-  'businesslens-plan',
   'businesslens-sync',
   'businesslens-deep-dive',
   'businesslens-doctor',
@@ -28,6 +27,9 @@ export type BusinessLensSkill = (typeof BUSINESSLENS_SKILLS)[number]
 
 const MANIFEST_FILE = '.businesslens-install.json'
 const LEGACY_SKILLS = [
+  // Folded into `businesslens-ideate`: deciding what to build and writing that
+  // decision into the model are one converging conversation, not two skills.
+  'businesslens-plan',
   // Renamed in 0.6.0: the catalog's push action is `publish`, so the skill that
   // proposes a Blueprint by pull request is `contribute`.
   'businesslens-publish',

@@ -72,20 +72,21 @@ describe('cli dispatch', () => {
     expect(existsSync(join(repo, '.businesslens', 'build', 'report.json'))).toBe(true)
   })
 
-  it('keeps the bare catalog spellings working, with a deprecation warning', () => {
-    // `Not_Canonical` is neither a readable report path nor a valid Blueprint
-    // name, so each command fails locally — the warning is what is under test,
-    // and nothing here should reach the network or the GitHub CLI.
+  it('refuses the bare catalog spellings and names the replacement', () => {
+    // Removed rather than aliased. Keeping `export` would have blocked reusing
+    // that name for the evidenced report profile later, and reusing it while an
+    // alias existed would silently change a disclosure-relevant default.
     for (const command of ['export', 'open', 'pull', 'contribute']) {
-      const result = cli(ROOT, process.env, '--cwd', repo, command, 'Not_Canonical')
+      const result = cli(ROOT, process.env, '--cwd', repo, command)
+      expect(result.status, command).toBe(2)
       expect(result.stderr, command).toContain(
-        `\`businesslens ${command}\` is deprecated; use \`businesslens blueprint ${command}\`.`
+        `\`businesslens ${command}\` has moved. Use \`businesslens blueprint ${command}\`.`
       )
     }
-    // …and the deprecated spelling still does the work, not just warn.
+    // Nothing ran: no report was produced by the refused invocation.
     rmSync(join(repo, '.businesslens', 'build'), { recursive: true, force: true })
-    expect(cli(ROOT, process.env, '--cwd', repo, 'export').status).toBe(0)
-    expect(existsSync(join(repo, '.businesslens', 'build', 'report.json'))).toBe(true)
+    expect(cli(ROOT, process.env, '--cwd', repo, 'export').status).toBe(2)
+    expect(existsSync(join(repo, '.businesslens', 'build', 'report.json'))).toBe(false)
   })
 
   it('rejects a blueprint invocation with no or an unknown subcommand', () => {
@@ -98,14 +99,14 @@ describe('cli dispatch', () => {
     expect(unknown.stderr).toContain('Unknown blueprint command "frobnicate"')
   })
 
-  it('keeps `build` working as a deprecated alias that warns', () => {
-    // Purely local, and it would otherwise survive this release untouched, so
-    // renaming it outright would break CI scripts nothing else here affects.
+  it('retires `build` and points at what replaced it', () => {
+    // `build` now means writing the software a model describes, which this
+    // project deliberately leaves to whatever tool you already use.
     rmSync(join(repo, '.businesslens', 'build'), { recursive: true, force: true })
     const result = cli(ROOT, process.env, '--cwd', repo, 'build')
-    expect(result.status).toBe(0)
-    expect(result.stderr).toContain('deprecated')
-    expect(existsSync(join(repo, '.businesslens', 'build', 'report.json'))).toBe(true)
+    expect(result.status).toBe(2)
+    expect(result.stderr).toContain('Use `businesslens blueprint export`')
+    expect(existsSync(join(repo, '.businesslens', 'build', 'report.json'))).toBe(false)
   })
 
   it('no longer accepts the retired login command', () => {

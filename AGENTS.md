@@ -10,18 +10,19 @@ or validator behavior.
 ## Layout
 
 - `src/cli.ts` — public command dispatch: `install`, `update`, `validate`,
-  and the `blueprint` namespace (`export`, `open`, `pull`, `contribute`). The
-  bare spellings of the blueprint commands still work and warn; `build` is a
-  deprecated alias of `blueprint export`.
+  and the `blueprint` namespace (`export`, `open`, `pull`, `contribute`).
+  Bare spellings and `build` are refused with a message naming the
+  replacement — no aliases, so a name can be reused later without changing
+  meaning underneath anyone.
 - `src/commands/` — public command implementations.
 - `src/core/providers.ts` — supported harness paths and detection.
 - `src/core/skill-installation.ts` — ownership-safe skill installation.
 - `src/core/` — parsers, model loading, Git evidence, portable schema, and
   catalog/contribution support.
 - `skills/businesslens-*/SKILL.md` — one independent skill per workflow:
-  `businesslens-init`, `businesslens-plan`, `businesslens-sync`,
-  `businesslens-sync`, `businesslens-deep-dive`, `businesslens-doctor`,
-  `businesslens-ideate`, and `businesslens-contribute`.
+  `businesslens-init`, `businesslens-ideate`, `businesslens-sync`,
+  `businesslens-deep-dive`, `businesslens-doctor`, and
+  `businesslens-contribute`.
 - `test/fixtures/fixture-shop/` — the golden validation fixture.
 
 ## Documentation structure

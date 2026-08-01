@@ -30,9 +30,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   entire content, and states it to spec-driven toolchains and freestyle
   sessions too, which a skill never reaches. Writing the code was never
   BusinessLens's job; stating the acceptance contract is.
+- **`businesslens-plan`** — folded into `businesslens-ideate`. Deciding what to
+  build and writing that decision into the model are one converging
+  conversation, not two skills; nothing enters `.businesslens/` without
+  explicit approval either way.
 
-BusinessLens now ships **eight** skills. Neither removal changes what a
-Product Model looks like or how it is validated.
+BusinessLens now ships **six** skills: `init`, `ideate`, `sync`, `deep-dive`,
+`doctor`, and `contribute`. Every removed name is listed as a legacy skill, so
+`businesslens update` clears it from existing installations rather than leaving
+it behind. None of this changes what a Product Model looks like or how it is
+validated.
 
 - **The brownfield `AGENTS.md` block.** `businesslens-init` and
   `businesslens-plan` no longer write to `AGENTS.md` at all. One managed block
@@ -86,8 +93,13 @@ Product Model looks like or how it is validated.
   all of them carry a model across a repository boundary, which is a different
   job from the everyday `install` / `update` / `validate` verbs. The top level
   is now three commands you run constantly plus one noun for the occasional
-  work. The bare spellings still work and print a deprecation warning; `build`
-  remains an alias of `blueprint export`.
+  work.
+
+  **The bare spellings are removed, not deprecated**, along with `build`. Each
+  is refused with a message naming its replacement. Keeping `export` as an
+  alias would have blocked reusing that name for the evidenced report profile,
+  and reusing it while an alias existed would silently change what a
+  disclosure-relevant command emits.
 - **`blueprint export` now strips source evidence.** Every export produces a
   Blueprint: no `codeRefs`, no repository-relative links or entry points, and
   `coverage.evidenceRedacted` set. `contribute` and `open` each redacted

@@ -62,7 +62,7 @@ describe('skill installation', () => {
     expect(existsSync(join(project, '.claude', 'commands'))).toBe(false)
     expect(existsSync(join(project, '.claude', 'skills', 'businesslens-init', 'references', 'format.md'))).toBe(true)
     expect(existsSync(join(project, '.claude', 'skills', 'businesslens-init', 'scripts', 'inventory-repository.mjs'))).toBe(true)
-    expect(existsSync(join(project, '.claude', 'skills', 'businesslens-plan', 'scripts', 'run-businesslens.mjs'))).toBe(true)
+    expect(existsSync(join(project, '.claude', 'skills', 'businesslens-ideate', 'scripts', 'run-businesslens.mjs'))).toBe(true)
     expect(existsSync(join(project, '.claude', 'skills', 'businesslens-sync', 'scripts', 'run-businesslens.mjs'))).toBe(true)
     // `contribute` drives `gh` against the user's own model directory, so it has
     // no isolated runner and no key to isolate.
@@ -111,10 +111,13 @@ describe('skill installation', () => {
     const project = temporary('bl-legacy-')
     const skillsDir = join(project, '.agents', 'skills')
     const oldMap = join(skillsDir, 'map')
+    const oldPlan = join(skillsDir, 'businesslens-plan')
     const unrelatedSync = join(skillsDir, 'sync')
     mkdirSync(oldMap, { recursive: true })
+    mkdirSync(oldPlan, { recursive: true })
     mkdirSync(unrelatedSync, { recursive: true })
     writeFileSync(join(oldMap, 'SKILL.md'), '---\nname: map\n---\nBuild a BusinessLens .businesslens/ Product Model.\n')
+    writeFileSync(join(oldPlan, 'SKILL.md'), '---\nname: businesslens-plan\n---\nPlan behavior in the .businesslens/ model.\n')
     writeFileSync(join(unrelatedSync, 'SKILL.md'), '---\nname: sync\n---\nUnrelated synchronization.\n')
 
     const result = installSkillsToTarget(
@@ -123,8 +126,11 @@ describe('skill installation', () => {
       '9.9.9'
     )
 
-    expect(result.removedLegacySkills).toEqual(['map'])
+    // `plan` folded into `ideate`, so an installed copy is a skill an agent
+    // could still invoke and must go.
+    expect(result.removedLegacySkills).toEqual(['businesslens-plan', 'map'])
     expect(existsSync(oldMap)).toBe(false)
+    expect(existsSync(oldPlan)).toBe(false)
     expect(existsSync(unrelatedSync)).toBe(true)
 
     const oldCommand = join(project, '.claude', 'commands', 'businesslens', 'init.md')

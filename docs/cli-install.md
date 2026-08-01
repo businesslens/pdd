@@ -8,7 +8,7 @@ order: 19
 
 # `businesslens install`
 
-Install all seven bundled `businesslens-*` agent skills into one or more
+Install all six bundled `businesslens-*` agent skills into one or more
 supported AI harnesses:
 
 ```bash
@@ -72,4 +72,4 @@ The command distributes skills only. It does not:
 - export or contribute a Product Model.
 
 After installation, invoke `businesslens-init` in the selected AI harness to
-map an existing product, or `businesslens-plan` to define a new product.
+map an existing product, or `businesslens-ideate` to define a new product.

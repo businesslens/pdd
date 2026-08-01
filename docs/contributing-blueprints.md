@@ -35,7 +35,7 @@ Anything you had to explain is a gap in the Blueprint, not in the agent.
 
 ## Authoring
 
-Use the [`businesslens-plan`](./skill-businesslens-plan.md) skill's greenfield
+Use the [`businesslens-ideate`](./skill-businesslens-ideate.md) skill's greenfield
 interview in a scratch repository. This is curation, not hand-authoring
 Markdown.
 

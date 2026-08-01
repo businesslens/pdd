@@ -62,15 +62,15 @@ Work journey by journey, with a test per scenario.
 **Refine first**, when you want something adjacent:
 
 ```text
-/businesslens-plan
+/businesslens-ideate
 ```
 
 Change the model to describe your product — add an actor, drop a journey, revise
 a rule — then implement. Editing the model first is what keeps it true; editing
 the code first is how models start lying.
 
-Not sure what to change? `/businesslens-ideate` reads the model and proposes
-what is missing, without writing anything.
+Not sure what to change? Invoke it with no argument. It reads the model,
+proposes directions, and writes nothing until you pick one.
 
 ## 5. Attach evidence
 

@@ -20,7 +20,7 @@ no BusinessLens account and no API key anywhere in this flow.
    model.
 2. Preflight, in order, stopping at the first failure:
    - `.businesslens/` exists. If not, direct the user to `businesslens-init` or
-     `businesslens-plan`.
+     `businesslens-ideate`.
    - `gh --version` succeeds. If not, point at https://cli.github.com.
    - `gh auth status` succeeds. If not, tell them to run `gh auth login`.
    - `npx businesslens validate` reports no errors. Draft warnings are expected

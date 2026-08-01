@@ -20,7 +20,7 @@ const cli = resolve(root, 'dist/cli.js')
 /** Compile a Blueprint through the real CLI and return its Product Report. */
 async function buildBlueprint(dir) {
   try {
-    execFileSync(process.execPath, [cli, '--cwd', dir, 'build'], { stdio: 'pipe', encoding: 'utf8' })
+    execFileSync(process.execPath, [cli, '--cwd', dir, 'blueprint', 'export'], { stdio: 'pipe', encoding: 'utf8' })
   } catch (error) {
     throw new Error((error.stderr || error.stdout || error.message).trim())
   }

@@ -25,7 +25,7 @@ Reported when files cannot be read into the model at all.
 
 - `.businesslens/ does not exist — invoke the businesslens-init skill first`
   — no model yet. Run `businesslens-init` (existing code) or
-  `businesslens-plan` (blank repository).
+  `businesslens-ideate` (blank repository).
 - `config.yaml is missing` / `product.md is missing` /
   `coverage.md is missing` / `taxonomies.yaml is missing` — a required
   top-level file is absent. Restore it from the
@@ -87,7 +87,7 @@ Reported when files cannot be read into the model at all.
   Rename one of them.
 - `experiences/: the model needs at least one experience` — an empty model is
   only valid transiently; build it with `businesslens-init` or plan it with
-  `businesslens-plan`.
+  `businesslens-ideate`.
 
 ## Evidence errors and the draft rule
 

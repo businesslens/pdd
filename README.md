@@ -43,10 +43,10 @@ Then create a Product Model:
 
 - **Existing product** — `/businesslens-init` inspects the code and builds
   the evidence-backed model.
-- **Blank repository** — `/businesslens-plan` interviews you and authors the
+- **Blank repository** — `/businesslens-ideate` interviews you and authors the
   whole product as a draft model, before any code exists.
 
-(Codex users invoke skills as `$businesslens-init` / `$businesslens-plan`.)
+(Codex users invoke skills as `$businesslens-init` / `$businesslens-ideate`.)
 
 ## The loop for every feature
 
@@ -54,7 +54,7 @@ Planning is editing the model. Git is the change model — branches hold plans,
 pull requests review them, history archives them:
 
 ```text
-/businesslens-plan add guest checkout   # model describes intended behavior
+/businesslens-ideate add guest checkout  # model describes intended behavior
 … implement with your coding agent …
 /businesslens-sync                    # code checked against the plan, evidence attached
 npx businesslens validate               # green = done; CI gates the PR
@@ -79,7 +79,7 @@ BusinessLens has two deliberate surfaces:
 | Terminal | `npx businesslens blueprint pull <name>` | Anonymously pull a catalog Blueprint into a Product Model |
 | Terminal | `npx businesslens blueprint open <report>` | Expand a Blueprint into a Product Model |
 | Terminal | `npx businesslens blueprint contribute` | Propose the model as a public catalog Blueprint |
-| AI harness | the seven `businesslens-*` skills | Map, plan, reconcile, and maintain the product truth |
+| AI harness | the six `businesslens-*` skills | Map, decide, reconcile, and maintain the product truth |
 
 Nothing creates `.businesslens/` except the skills, and only `blueprint pull` and
 `blueprint open` write to `AGENTS.md` — a model that arrived from another repository
@@ -90,11 +90,10 @@ needs a note saying what it is; one you authored does not.
 | Skill | Use it when |
 | --- | --- |
 | `businesslens-init` | Adopting BusinessLens in a repository that already has code |
-| `businesslens-plan` | Planning a product (blank repo) or a feature (mapped repo) before code |
+| `businesslens-ideate` | Deciding what the product should do, and writing that decision into the model |
 | `businesslens-sync` | The code moved and the model needs to catch up — with or without a plan |
 | `businesslens-deep-dive` | One journey or experience needs exhaustive coverage |
 | `businesslens-doctor` | The model fails validation, looks stale, or needs a health report |
-| `businesslens-ideate` | The user is deciding what to build |
 | `businesslens-contribute` | The user explicitly wants the model in the public catalog |
 
 Every skill is self-contained and follows the open Agent Skills folder

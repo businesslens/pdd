@@ -3,7 +3,7 @@ title: init
 description: Build the initial evidence-backed product model by inspecting an existing codebase.
 section: open-source
 group: Skills
-order: 11
+order: 12
 ---
 
 # `businesslens-init`
@@ -18,7 +18,7 @@ guidance block, and validates until green.
 - Adopting BusinessLens in a repository that already has code.
 - Replacing an incomplete scaffold or rebuilding the model from scratch.
 - Not for blank repositories — a new product is planned as a draft model with
-  [`businesslens-plan`](./skill-businesslens-plan.md), and init will route
+  [`businesslens-ideate`](./skill-businesslens-ideate.md), and init will route
   you there.
 
 ## Invocation

@@ -55,16 +55,15 @@ General options:
 
 Agent workflows:
   /businesslens-init          Build the initial product model from existing code
-  /businesslens-plan          Plan a product or feature in the product model
+  /businesslens-ideate        Decide what to build, and write it into the model
   /businesslens-sync          Reconcile the model with the code, either way
   /businesslens-deep-dive     Expand one journey or experience
   /businesslens-doctor        Diagnose validation, drift, and coverage
-  /businesslens-ideate        Decide what to build next
   /businesslens-contribute    Propose the model as a catalog Blueprint
 
 Exit codes: 0 success · 1 failure · 2 usage error`
 
-/** Commands reachable both as `blueprint <name>` and, deprecated, bare. */
+/** Subcommands of `blueprint`. Refused, with guidance, when typed bare. */
 const BLUEPRINT_COMMANDS = new Set(['export', 'open', 'pull', 'contribute'])
 
 /** Positionals each command consumes after its own name. */
@@ -101,10 +100,14 @@ async function main(): Promise<number> {
     return positionals.length ? 0 : 2
   }
 
-  // Each of these produces or consumes a Blueprint and carries a model across a
-  // repository boundary, which is a different job from the everyday
-  // `install`/`update`/`validate` verbs. The flat spellings still work — they
-  // were the only spelling through 0.6.x.
+  // Each of these produces or consumes a Product Report and carries a model
+  // across a repository boundary, which is a different job from the everyday
+  // `install`/`update`/`validate` verbs.
+  //
+  // The bare spellings are gone rather than deprecated. Keeping `export` as an
+  // alias would have blocked reusing that name for the evidenced profile later,
+  // and reusing it while an alias existed would silently change a
+  // disclosure-relevant default. A command that no longer exists says so.
   let command = positionals[0]!
   let rest = positionals.slice(1)
   if (command === 'blueprint') {
@@ -117,8 +120,10 @@ async function main(): Promise<number> {
         : `blueprint requires a subcommand: ${known}.`)
       return 2
     }
-  } else if (BLUEPRINT_COMMANDS.has(command)) {
-    console.warn(`\`businesslens ${command}\` is deprecated; use \`businesslens blueprint ${command}\`.`)
+  } else if (BLUEPRINT_COMMANDS.has(command) || command === 'build') {
+    const moved = command === 'build' ? 'export' : command
+    console.error(`\`businesslens ${command}\` has moved. Use \`businesslens blueprint ${moved}\`.`)
+    return 2
   }
 
   const expected = ARGUMENT_COUNT[command] ?? 0
@@ -157,18 +162,6 @@ async function main(): Promise<number> {
     case 'validate':
       return runValidate(cwd, Boolean(values.json))
     case 'export':
-      return runExport(cwd)
-    case 'build':
-      // Deprecated alias kept through 0.6.x. `build` is purely local, so
-      // renaming it would break CI scripts that nothing else in this release
-      // touches.
-      //
-      // Note for whoever removes the bare aliases: do not reuse `export` at the
-      // top level in the same release. It redacts today, and a future top-level
-      // `export` means the evidenced profile — the same command silently
-      // beginning to carry source paths is the worst direction for a
-      // disclosure-relevant default. See adr/0003.
-      console.warn('`businesslens build` is deprecated; use `businesslens blueprint export`.')
       return runExport(cwd)
     case 'contribute':
       return runContribute(cwd, { slug: values.slug, yes: values.yes })

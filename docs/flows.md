@@ -21,7 +21,7 @@ Find the row that matches your situation.
 | Where you're coming from | First move | What you get |
 | --- | --- | --- |
 | The code already exists | `/businesslens-init` | A model of what the code does **today**, proven by the code |
-| Nothing exists yet | `/businesslens-plan` | A model of what you **intend** to build |
+| Nothing exists yet | `/businesslens-ideate` | A model of what you **intend** to build |
 | You want to start from a Blueprint | `npx businesslens@latest blueprint pull <name>` | A ready-made model of a proven product shape |
 
 The first row is a **brownfield** start: the product is real, and the model has
@@ -35,7 +35,7 @@ the code has to catch up to *it*.
 
 | Situation | What you do |
 | --- | --- |
-| The Blueprint describes something different from what you want | `/businesslens-plan` — edit the model before you write any code |
+| The Blueprint describes something different from what you want | `/businesslens-ideate` — change the model before you write any code |
 | The model is right, and no code exists yet | **Write the code.** The scenarios are your acceptance criteria |
 | You've written code for what the model describes | `/businesslens-sync` — attach the evidence |
 
@@ -84,6 +84,22 @@ Changing the code without planning first is a legitimate way to work. Planning
 first is the default because it gets the thinking done before the code sets, but
 a small or obvious change is often faster to make and then record.
 
+### Does this change touch the model at all?
+
+Most commits don't. One test: **if a user could notice the difference and
+describe it without mentioning code, the model changes. Otherwise it doesn't.**
+
+| Change | Model edit? |
+| --- | --- |
+| New capability, changed rule, new surface, retired journey | **Yes** — `/businesslens-ideate` |
+| A bug fix where the documented behavior was itself wrong | **Yes** — `/businesslens-ideate` |
+| Refactor, rename, file move, perf work, dependency bump | No — only `codeRefs` go stale |
+| A bug fix restoring behavior the model already describes | No — the model was already right |
+
+The bottom two rows are the last note above: behavior didn't move, so `validate`
+catches the stale `codeRefs` and `/businesslens-sync` repairs them. BusinessLens
+is not meant to be a tax on every commit.
+
 ## Day to day — everything else
 
 | Situation | What you do |
@@ -91,7 +107,7 @@ a small or obvious change is often faster to make and then record.
 | You don't know which row above you're in | `npx businesslens validate` |
 | Something looks wrong and `validate` doesn't explain it | `/businesslens-doctor` |
 | One area of the model is described too thinly | `/businesslens-deep-dive <id>` |
-| You don't know what to build next | `/businesslens-ideate` |
+| You don't know what to build next | `/businesslens-ideate` — it proposes, and writes only what you pick |
 
 **You rarely type `validate` yourself.** Every skill runs it, `blueprint
 export` and `blueprint contribute` run it before they produce anything, and CI
@@ -140,6 +156,7 @@ anywhere.
 
 ## Where to go next
 
+- [How it fits](./how-it-fits.md) — where these sit next to your harness's plan mode and your SDD framework
 - [The product model](./product-model.md) — what the model holds, and why git is the change model
 - [Skills overview](./skills.md) — what each skill reads, writes, and refuses to do
 - [CLI reference](./cli.md) — every command and option

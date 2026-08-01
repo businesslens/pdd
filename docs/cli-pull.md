@@ -95,5 +95,5 @@ npx businesslens@latest blueprint pull content-feed-reader
 ```
 
 Then either hand the directory to a coding agent and ask it to build the
-product, or refine the model first with `businesslens-plan` and build after. See
+product, or refine the model first with `businesslens-ideate` and build after. See
 [Build from a Blueprint](./from-a-blueprint.md).

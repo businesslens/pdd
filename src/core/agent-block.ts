@@ -8,12 +8,12 @@ const END = '<!-- businesslens:end -->'
  * The managed block written into `AGENTS.md` when a Blueprint is pulled or a
  * Product Report is opened. It is the only block BusinessLens writes anywhere.
  *
- * A brownfield variant used to exist, written by `businesslens-init` and
- * `businesslens-plan`. It was advisory nudging — read the model first, update
- * it after — for a situation that already has a named recovery path in
- * `businesslens-sync`, and it cost two variants across three files that drifted
- * (`plan` handed new products the brownfield text, telling agents to read
- * `codeRefs` in a repository that had none). See adr/0001.
+ * A brownfield variant used to exist, written by `businesslens-init` and the
+ * since-merged `businesslens-plan`. It was advisory nudging — read the model
+ * first, update it after — for a situation that already has a named recovery
+ * path in `businesslens-sync`, and it cost two variants across three files that
+ * drifted (`plan` handed new products the brownfield text, telling agents to
+ * read `codeRefs` in a repository that had none). See adr/0001.
  *
  * This variant is load-bearing instead: without it, "pull it and hand it to
  * your agent" depends on every user inventing the prompt themselves — and since
@@ -39,7 +39,7 @@ The model is the specification for a product that has not been built yet.
   implied. Choose them yourself and stay consistent.
 - **When the product runs, attach evidence** with the \`businesslens-sync\` skill, then run
   \`npx businesslens validate\`. Coverage is \`draft\` until you do.
-- To change *what* the product should do rather than implement it, use the \`businesslens-plan\`
+- To change *what* the product should do rather than implement it, use the \`businesslens-ideate\`
   skill so the model stays the source of truth.
 - Never edit \`.businesslens/cache/\` — generated.
 ${END}`

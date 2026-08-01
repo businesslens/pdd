@@ -1,6 +1,6 @@
 ---
 name: businesslens-init
-description: Initialize Product-Driven Development in a repository by inspecting the codebase and building a complete, evidence-backed .businesslens/ product model. Use for first-time BusinessLens setup, replacing an incomplete scaffold, or rebuilding the model from scratch; use businesslens-plan for a blank repository with no code to map.
+description: Initialize Product-Driven Development in a repository by inspecting the codebase and building a complete, evidence-backed .businesslens/ product model. Use for first-time BusinessLens setup, replacing an incomplete scaffold, or rebuilding the model from scratch; use businesslens-ideate for a blank repository with no code to map.
 ---
 
 # Initialize BusinessLens
@@ -19,7 +19,7 @@ Read these references before authoring:
 1. Confirm the working directory is a Git repository. Never execute the
    repository's application, build, migrations, or tests; inspect files only.
    If the repository contains no meaningful implementation to describe, stop
-   and direct the user to `businesslens-plan` — a new product is planned as
+   and direct the user to `businesslens-ideate` — a new product is planned as
    a draft model, not initialized from empty code.
 2. Inspect existing instructions and product material first: `AGENTS.md`,
    `CLAUDE.md`, READMEs, documentation, architecture notes, and any SDD roots

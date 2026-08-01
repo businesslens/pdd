@@ -3,7 +3,7 @@ title: sync
 description: Reconcile the Product Model with the code — attach evidence where they already agree, and settle everything else one decision at a time.
 section: open-source
 group: Skills
-order: 13
+order: 14
 ---
 
 # `businesslens-sync`

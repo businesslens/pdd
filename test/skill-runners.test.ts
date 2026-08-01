@@ -14,8 +14,8 @@ import { afterEach, describe, expect, it } from 'vitest'
 
 const VALIDATE_RUNNERS = [
   {
-    name: 'plan',
-    file: join(__dirname, '..', 'skills', 'businesslens-plan', 'scripts', 'run-businesslens.mjs')
+    name: 'ideate',
+    file: join(__dirname, '..', 'skills', 'businesslens-ideate', 'scripts', 'run-businesslens.mjs')
   },
   {
     name: 'sync',
@@ -109,7 +109,7 @@ fs.writeFileSync(process.env.CAPTURE_FILE, JSON.stringify({
       join(skills, '.businesslens-install.json'),
       JSON.stringify({ schema: 1, package: 'businesslens', version: '9.9.9' })
     )
-    const runnerDir = join(skills, 'businesslens-plan', 'scripts')
+    const runnerDir = join(skills, 'businesslens-ideate', 'scripts')
     mkdirSync(runnerDir, { recursive: true })
     writeFileSync(
       join(runnerDir, 'run-businesslens.mjs'),

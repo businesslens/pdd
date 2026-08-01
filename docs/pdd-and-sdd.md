@@ -3,7 +3,7 @@ title: PDD ♥ SDD
 description: How Product-Driven Development coexists with spec-driven development frameworks like OpenSpec and spec-kit.
 section: open-source
 group: Concepts
-order: 9
+order: 10
 ---
 
 # PDD ♥ SDD
@@ -31,8 +31,8 @@ gap is exactly what `businesslens-sync` closes before merge.
   X" becomes a reviewable claim.
 - **PDD → SDD**: model entities point at specs and design docs with `links:`
   (`rel: spec|proposal|doc|adr`). The model never copies spec content.
-- **The loop**: plan the product delta by updating the model
-  (`businesslens-plan`), design and implement against your SDD change, then
+- **The loop**: settle the product delta by updating the model
+  (`businesslens-ideate`), design and implement against your SDD change, then
   `businesslens-sync` checks the code delivers the planned behavior and
   attaches evidence. An archived SDD change with no matching model update is
   the strongest drift signal (`businesslens-sync`).
@@ -44,3 +44,6 @@ SDD — or none at all.
 The two never compete for the implementation step. A model states the
 acceptance criteria before the work starts and `businesslens-sync` checks
 the result after; what writes the code in between is yours to choose.
+
+Your harness's plan mode is a third layer below both, and it is the one most
+people touch daily. [How it fits](./how-it-fits.md) places all three.

@@ -50,13 +50,13 @@ pull requests review them, history archives them.
 
 - **Existing product** — `/businesslens-init` inspects the code and builds
   the evidence-backed model.
-- **Blank repository** — `/businesslens-plan` interviews you and authors the
+- **Blank repository** — `/businesslens-ideate` interviews you and authors the
   whole product as a draft model (evidence relaxed until the code exists).
 
 Then, for every feature:
 
 ```text
-/businesslens-plan   →   implement   →   /businesslens-sync   →   green
+/businesslens-ideate →   implement   →   /businesslens-sync   →   green
 ```
 
 Code changed without a plan? `/businesslens-sync` repairs the model.

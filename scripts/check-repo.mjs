@@ -32,7 +32,6 @@ const marketplace = JSON.parse(await readFile(resolve(root, '.claude-plugin/mark
 const expectedSkills = [
   'businesslens-ideate',
   'businesslens-init',
-  'businesslens-plan',
   'businesslens-sync',
   'businesslens-deep-dive',
   'businesslens-doctor',

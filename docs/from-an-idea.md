@@ -17,40 +17,39 @@ AI harness, and the skills installed (`npx businesslens@latest install`).
 
 ## Steps
 
-1. If you have not settled on what to build, start by choosing a shape:
+1. Start the conversation:
 
    ```text
    /businesslens-ideate
    ```
 
-   It proposes three to five genuinely distinct product shapes — who each
-   serves, the one job it does, why someone would pick it, and what it
-   deliberately is not — then stops. It writes nothing. Choosing is yours.
+   If you have not settled on what to build, it proposes three to five
+   genuinely distinct product shapes — who each serves, the one job it does,
+   why someone would pick it, and what it deliberately is not — then stops.
+   Choosing is yours; it writes nothing until you pick one.
 
-   Skip this step if you already know what you are building.
+   If you already know what you are building, say so and it goes straight to
+   the next step.
 
-2. Start the guided planning dialogue:
-
-   ```text
-   /businesslens-plan
-   ```
-
-   With no model and no code, the skill runs the full product interview: why
-   the product exists, who it serves (actors), which surfaces it has
-   (experiences), its domains and stable features, the business rules that
-   constrain it, which goals matter (journeys), and how each plays out
+2. Once you have chosen, the same conversation runs the full product
+   interview: why the product exists, who it serves (actors), which surfaces
+   it has (experiences), its domains and stable features, the business rules
+   that constrain it, which goals matter (journeys), and how each plays out
    observably (scenarios with Trigger, Steps, Decision points, and Outcome).
    It proposes drafts after every answer — you correct rather than dictate.
+
+   It then shows you the model it intends to write and waits for your
+   approval before writing anything.
 
 3. Review what it authored: a complete `.businesslens/` Product Model with **no
    codeRefs** and `coverage.md` at `status: draft`. Validation is green with
    warnings — a draft model is planned, not proven. Iterate by invoking
-   `/businesslens-plan` again with corrections, then commit:
+   `/businesslens-ideate` again with corrections, then commit:
 
    ```bash
    npx businesslens@latest validate
    git add .businesslens
-   git commit -m "plan: initial product model (draft)"
+   git commit -m "model: initial product model (draft)"
    ```
 
    If nobody ever implements it, this draft model is itself a portable,

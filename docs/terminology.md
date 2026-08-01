@@ -162,7 +162,9 @@ feature is enabled, shipped, or deprecated.
 - A **product map** is a visual or navigable view of the Product Model. It is
   not the `.businesslens/` artifact itself.
 - A git **branch** may hold intended product behavior while implementation is
-  in progress; it is the plan, not a Product Model entity.
+  in progress; it is the plan, not a Product Model entity. This is a different
+  sense of "plan" from your harness's plan mode, which plans the agent's next
+  edits and dies with the conversation — see [How it fits](./how-it-fits.md).
 
 ## Verbs
 
@@ -170,8 +172,7 @@ Each action has exactly one name.
 
 | Verb | Meaning |
 | --- | --- |
-| **ideate** | Propose candidate directions. Never writes to the model. |
-| **plan** | Turn a decided intent into entities, before the code exists. |
+| **ideate** | Propose candidate directions, then turn the one the user picks into entities, before the code exists. Writes only what the user approved. |
 | **map** | Author a model from code that already exists — what `businesslens-init` does. |
 | **implement** | Build the software the model describes, with its scenarios as the acceptance contract. BusinessLens ships no skill for this; see [Find your flow](./flows.md). |
 | **sync** | Reconcile the model with the code: attach evidence where they already agree, and settle everything else with the user. |
