@@ -18,12 +18,12 @@ Commands:
   install                     Install BusinessLens skills for detected AI harnesses
   update                      Refresh managed BusinessLens skill installations
   validate [--json]           Validate the .businesslens/ product model
-  contribute [--yes]          Open a pull request adding this model to the Blueprint catalog
 
 Blueprint commands (moving a model between repositories):
   blueprint export                    Compile .businesslens/ into a Blueprint
   blueprint open <report> [--force]   Expand a Blueprint into .businesslens/
   blueprint pull <name> [--force]     Pull a Blueprint from the catalog
+  blueprint contribute [--yes]        Propose this Blueprint for the catalog
 
 Install options:
   --providers <list>          Comma-separated: claude,codex,cursor,gemini,github
@@ -33,7 +33,7 @@ Install options:
   --yes                       Accept detected providers and project scope
   --force                     Replace an unmarked businesslens-* skill directory
 
-Contribute options:
+Blueprint contribute options:
   --slug <name>               Catalog slug (defaults to the product id)
   --yes                       Skip the confirmation prompt (required in
                               non-interactive sessions). Requires an
@@ -66,7 +66,7 @@ Agent workflows:
 Exit codes: 0 success · 1 failure · 2 usage error`
 
 /** Commands reachable both as `blueprint <name>` and, deprecated, bare. */
-const BLUEPRINT_COMMANDS = new Set(['export', 'open', 'pull'])
+const BLUEPRINT_COMMANDS = new Set(['export', 'open', 'pull', 'contribute'])
 
 /** Positionals each command consumes after its own name. */
 const ARGUMENT_COUNT: Record<string, number> = { open: 1, pull: 1 }

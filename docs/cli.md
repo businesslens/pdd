@@ -27,7 +27,7 @@ npx businesslens@latest <command> [options]
 | [`update`](./cli-update.md) | Refresh BusinessLens-managed skill installations |
 | [`validate`](./cli-validate.md) | Check the structure, relationships, and code evidence in `.businesslens/` |
 | [`blueprint export`](./cli-export.md) | Compile `.businesslens/` into a Blueprint |
-| [`contribute`](./cli-contribute.md) | Propose this model as a catalog Blueprint, by pull request |
+| [`blueprint contribute`](./cli-contribute.md) | Propose this Blueprint for the catalog, by pull request |
 | [`blueprint pull`](./cli-pull.md) | Anonymously pull a Blueprint by canonical name |
 | [`blueprint open`](./cli-open.md) | Expand a Blueprint into `.businesslens/` |
 

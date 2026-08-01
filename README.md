@@ -77,7 +77,7 @@ BusinessLens has two deliberate surfaces:
 | Terminal | `npx businesslens blueprint export` | Compile the model into a Blueprint |
 | Terminal | `npx businesslens blueprint pull <name>` | Anonymously pull a catalog Blueprint into a Product Model |
 | Terminal | `npx businesslens blueprint open <report>` | Expand a Blueprint into a Product Model |
-| Terminal | `npx businesslens contribute` | Propose the model as a public catalog Blueprint |
+| Terminal | `npx businesslens blueprint contribute` | Propose the model as a public catalog Blueprint |
 | AI harness | the eight `businesslens-*` skills | Map, plan, verify, and maintain the product truth |
 
 Nothing creates `.businesslens/` except the skills, and only `blueprint pull` and

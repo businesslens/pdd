@@ -69,7 +69,7 @@ checks changed and deleted work from the complete model diff.
 ## Optional: share or reuse a Blueprint
 
 The model is fully useful on its own. To propose it for the public catalog,
-run `/businesslens-contribute` (or `npx businesslens@latest contribute`). This
+run `/businesslens-contribute` (or `npx businesslens@latest blueprint contribute`). This
 opens a pull request for maintainer review; merging approves the contribution,
 and a separate maintainer publish run updates the catalog.
 

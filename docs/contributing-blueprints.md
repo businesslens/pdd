@@ -48,10 +48,10 @@ more complete.
 
 ```bash
 gh auth login
-npx businesslens@latest contribute --slug my-blueprint
+npx businesslens@latest blueprint contribute --slug my-blueprint
 ```
 
-See [`businesslens contribute`](./cli-contribute.md) for what that does.
+See [`businesslens blueprint contribute`](./cli-contribute.md) for what that does.
 
 ## What review looks at
 

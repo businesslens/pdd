@@ -1,17 +1,17 @@
 ---
-title: contribute
+title: blueprint contribute
 description: Open a pull request proposing your Product Model as a catalog Blueprint.
 section: open-source
 group: CLI
 order: 30
 ---
 
-# `businesslens contribute`
+# `businesslens blueprint contribute`
 
 Propose your Product Model for the public Blueprint catalog:
 
 ```bash
-npx businesslens@latest contribute --slug my-blueprint
+npx businesslens@latest blueprint contribute --slug my-blueprint
 ```
 
 This opens a pull request against

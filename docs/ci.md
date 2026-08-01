@@ -46,7 +46,7 @@ the [GitHub CLI](https://cli.github.com) is authenticated as you:
 
 ```bash
 gh auth login
-npx businesslens@latest contribute --slug my-blueprint
+npx businesslens@latest blueprint contribute --slug my-blueprint
 ```
 
 See [Contributing a Blueprint](./contributing-blueprints.md).

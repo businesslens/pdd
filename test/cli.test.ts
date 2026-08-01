@@ -55,7 +55,7 @@ describe('cli dispatch', () => {
     expect(result.stdout).toContain('blueprint export')
     expect(result.stdout).toContain('blueprint open <report>')
     expect(result.stdout).toContain('blueprint pull <name>')
-    expect(result.stdout).toContain('contribute [--yes]')
+    expect(result.stdout).toContain('blueprint contribute [--yes]')
     expect(result.stdout).toContain('--catalog <origin>')
     expect(result.stdout).toContain('--cwd <path>')
 
@@ -72,8 +72,11 @@ describe('cli dispatch', () => {
   })
 
   it('keeps the bare catalog spellings working, with a deprecation warning', () => {
-    for (const command of ['export', 'open', 'pull']) {
-      const result = cli(ROOT, process.env, '--cwd', repo, command, 'ignored-arg')
+    // `Not_Canonical` is neither a readable report path nor a valid Blueprint
+    // name, so each command fails locally — the warning is what is under test,
+    // and nothing here should reach the network or the GitHub CLI.
+    for (const command of ['export', 'open', 'pull', 'contribute']) {
+      const result = cli(ROOT, process.env, '--cwd', repo, command, 'Not_Canonical')
       expect(result.stderr, command).toContain(
         `\`businesslens ${command}\` is deprecated; use \`businesslens blueprint ${command}\`.`
       )

@@ -50,9 +50,11 @@ Product Model looks like or how it is validated.
 
 ### Changed
 
-- **`export`, `open`, and `pull` moved under `businesslens blueprint`.** All
-  three carry a model across a repository boundary, which is a different job
-  from the everyday `install` / `update` / `validate` verbs — so the top level
+- **`export`, `open`, `pull`, and `contribute` moved under `businesslens
+  blueprint`.** Each of the four produces or consumes a Blueprint — export
+  makes one, open consumes one, pull fetches one, contribute submits one — and
+  all of them carry a model across a repository boundary, which is a different
+  job from the everyday `install` / `update` / `validate` verbs. The top level
   is now three commands you run constantly plus one noun for the occasional
   work. The bare spellings still work and print a deprecation warning; `build`
   remains an alias of `blueprint export`.

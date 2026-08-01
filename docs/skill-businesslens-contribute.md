@@ -42,7 +42,7 @@ anything if either fails.
    nothing is missing, generic rather than a named third-party product, and
    written at product altitude.
 4. Agrees a slug with you.
-5. Runs [`businesslens contribute`](./cli-contribute.md), which regenerates the
+5. Runs [`businesslens blueprint contribute`](./cli-contribute.md), which regenerates the
    model from a redacted Product Report and opens the pull request.
 6. Reports the URL and what happens next.
 

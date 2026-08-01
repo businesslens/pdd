@@ -42,7 +42,7 @@ no BusinessLens account and no API key anywhere in this flow.
    credentials and the model, so do not isolate the working directory:
 
    ```bash
-   npx businesslens@latest contribute --slug <slug>
+   npx businesslens@latest blueprint contribute --slug <slug>
    ```
 
    Let the confirmation prompt reach the user. Pass `--yes` only if they have

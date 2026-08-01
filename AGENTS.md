@@ -10,7 +10,7 @@ or validator behavior.
 ## Layout
 
 - `src/cli.ts` — public command dispatch: `install`, `update`, `validate`,
-  `contribute`, and the `blueprint` namespace (`export`, `open`, `pull`). The
+  and the `blueprint` namespace (`export`, `open`, `pull`, `contribute`). The
   bare spellings of the blueprint commands still work and warn; `build` is a
   deprecated alias of `blueprint export`.
 - `src/commands/` — public command implementations.
