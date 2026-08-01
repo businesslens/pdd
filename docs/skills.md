@@ -3,7 +3,7 @@ title: Overview
 description: The ten BusinessLens agent skills — which one fits which situation.
 section: open-source
 group: Skills
-order: 13
+order: 14
 ---
 
 # Skills overview

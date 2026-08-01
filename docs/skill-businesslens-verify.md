@@ -3,7 +3,7 @@ title: verify
 description: Statically verify the implementation delivers the planned model changes — evidence attached, gaps reported honestly.
 section: open-source
 group: Skills
-order: 18
+order: 19
 ---
 
 # businesslens-verify

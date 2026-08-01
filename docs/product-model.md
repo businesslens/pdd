@@ -3,7 +3,7 @@ title: The product model
 description: What actors, experiences, domains, features, journeys, scenarios, business rules, intent, and decision points mean in a BusinessLens product model.
 section: open-source
 group: Concepts
-order: 5
+order: 6
 ---
 
 # The product model

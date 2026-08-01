@@ -3,7 +3,7 @@ title: Recover from drift
 description: Make the model true again after unplanned changes — sync, doctor, and getting back to the loop.
 section: open-source
 group: Tutorials
-order: 11
+order: 12
 ---
 
 # Recover when code changed without a plan

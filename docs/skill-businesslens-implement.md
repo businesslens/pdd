@@ -3,7 +3,7 @@ title: businesslens-implement
 description: Build the software a Product Model describes, treating its scenarios as the acceptance contract.
 section: open-source
 group: Skills
-order: 17
+order: 18
 ---
 
 # `businesslens-implement`

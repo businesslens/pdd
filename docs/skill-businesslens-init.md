@@ -3,7 +3,7 @@ title: init
 description: Build the initial evidence-backed product model by inspecting an existing codebase.
 section: open-source
 group: Skills
-order: 15
+order: 16
 ---
 
 # businesslens-init

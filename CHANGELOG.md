@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Find your flow** (`docs/flows.md`) — a routing page covering every
+  situation a Product Model can be in. Brownfield, greenfield, and
+  greenfield-from-a-Blueprint each get a starting row; after the first
+  evidence is attached they converge on one four-row matrix built from the
+  only two things that can change, the model and the code.
+
 ## [0.6.0] - 2026-07-31
 
 BusinessLens consolidates onto one site. The Platform is retired; the Blueprint

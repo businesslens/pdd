@@ -3,7 +3,7 @@ title: export
 description: Compile a Product Model into a source-free Product Report.
 section: open-source
 group: CLI
-order: 28
+order: 29
 ---
 
 # `businesslens export`

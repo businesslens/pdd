@@ -3,7 +3,7 @@ title: How it works
 description: The framework guide — one artifact, git as the change model, and which skill to use when.
 section: open-source
 group: Concepts
-order: 4
+order: 5
 ---
 
 # How BusinessLens works

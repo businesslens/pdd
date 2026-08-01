@@ -3,7 +3,7 @@ title: plan
 description: Plan a product or feature directly in the model before implementation — guided greenfield definition or quick/thorough feature planning.
 section: open-source
 group: Skills
-order: 16
+order: 17
 ---
 
 # businesslens-plan

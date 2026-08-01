@@ -3,7 +3,7 @@ title: Plan a new product
 description: Blank repository — plan the whole product as a draft model, implement it, verify it, and watch the model become evidence-backed truth.
 section: open-source
 group: Tutorials
-order: 9
+order: 10
 ---
 
 # Plan a new product from scratch

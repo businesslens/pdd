@@ -3,7 +3,7 @@ title: Ship a feature
 description: The feature loop — describe intended behavior in the model, implement, verify with evidence, merge green.
 section: open-source
 group: Tutorials
-order: 10
+order: 11
 ---
 
 # Plan and ship a feature
