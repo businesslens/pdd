@@ -26,10 +26,10 @@ npx businesslens@latest <command> [options]
 | [`install`](./cli-install.md) | Install the eight bundled BusinessLens skills into one or more AI harnesses |
 | [`update`](./cli-update.md) | Refresh BusinessLens-managed skill installations |
 | [`validate`](./cli-validate.md) | Check the structure, relationships, and code evidence in `.businesslens/` |
-| [`export`](./cli-export.md) | Compile `.businesslens/` into a portable Product Report |
+| [`blueprint export`](./cli-export.md) | Compile `.businesslens/` into a Blueprint |
 | [`contribute`](./cli-contribute.md) | Propose this model as a catalog Blueprint, by pull request |
-| [`pull`](./cli-pull.md) | Anonymously pull the current Blueprint by canonical name |
-| [`open`](./cli-open.md) | Expand a local Product Report into `.businesslens/` |
+| [`blueprint pull`](./cli-pull.md) | Anonymously pull a Blueprint by canonical name |
+| [`blueprint open`](./cli-open.md) | Expand a Blueprint into `.businesslens/` |
 
 The CLI changes only what the selected command owns. In particular, `install`
 and `update` manage skills but never create or edit `.businesslens/`, while

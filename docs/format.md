@@ -452,7 +452,7 @@ the report was redacted.
 The inverse command is:
 
 ```bash
-npx businesslens@latest open ./report.json
+npx businesslens@latest blueprint open ./report.json
 ```
 
 `open` validates the report and expands it into canonical Markdown/YAML under

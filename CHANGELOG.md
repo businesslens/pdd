@@ -32,6 +32,12 @@ Product Model looks like or how it is validated.
 
 ### Changed
 
+- **`export`, `open`, and `pull` moved under `businesslens blueprint`.** All
+  three carry a model across a repository boundary, which is a different job
+  from the everyday `install` / `update` / `validate` verbs — so the top level
+  is now three commands you run constantly plus one noun for the occasional
+  work. The bare spellings still work and print a deprecation warning; `build`
+  remains an alias of `blueprint export`.
 - `businesslens open` now writes the greenfield `AGENTS.md` block, matching
   `businesslens pull`. Both are the "this model came from another repository"
   door, and a model with no implementation needs a note saying so.

@@ -1,17 +1,17 @@
 ---
-title: pull
+title: blueprint pull
 description: Pull a Blueprint from the public catalog into the current directory.
 section: open-source
 group: CLI
 order: 31
 ---
 
-# `businesslens pull`
+# `businesslens blueprint pull`
 
 Pull a Blueprint into the current directory:
 
 ```bash
-npx businesslens@latest pull <blueprint-slug>
+npx businesslens@latest blueprint pull <blueprint-slug>
 ```
 
 The argument is the Blueprint's catalog slug: lowercase kebab-case, at most 80
@@ -46,7 +46,7 @@ non-empty `.businesslens/`; `--force` first moves it to a timestamped backup.
 ## Choosing a catalog
 
 ```bash
-npx businesslens@latest pull <slug> --catalog http://localhost:3200
+npx businesslens@latest blueprint pull <slug> --catalog http://localhost:3200
 ```
 
 Precedence is `--catalog`, then `BUSINESSLENS_CATALOG_URL`, then the public
@@ -91,7 +91,7 @@ the Product Report body and must include `x-businesslens-blueprint` and
 ## After pulling
 
 ```bash
-npx businesslens@latest pull content-feed-reader
+npx businesslens@latest blueprint pull content-feed-reader
 ```
 
 Then either hand the directory to a coding agent and ask it to build the

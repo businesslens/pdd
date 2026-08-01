@@ -22,7 +22,7 @@ Find the row that matches your situation.
 | --- | --- | --- |
 | The code already exists | `/businesslens-init` | A model of what the code does **today**, proven by the code |
 | Nothing exists yet | `/businesslens-plan` | A model of what you **intend** to build |
-| You want to start from a Blueprint | `npx businesslens@latest pull <name>` | A ready-made model of a proven product shape |
+| You want to start from a Blueprint | `npx businesslens@latest blueprint pull <name>` | A ready-made model of a proven product shape |
 
 The first row is a **brownfield** start: the product is real, and the model has
 to catch up to it. The other two are **greenfield**: the model comes first, and
@@ -41,7 +41,7 @@ the code has to catch up to *it*.
 
 Writing the code is not something BusinessLens does for you — use your usual
 coding workflow, or a spec-driven toolchain alongside it. When the model
-arrived by `pull` or `open`, the managed block in your `AGENTS.md` already
+arrived by `blueprint pull` or `blueprint open`, the managed block in your `AGENTS.md` already
 tells whatever writes the code that the model is the specification and its
 scenarios are the definition of done.
 
@@ -94,7 +94,7 @@ explaining or the model looks stale in ways a validator can't see.
 
 | Situation | What you do |
 | --- | --- |
-| Hand the model to another repository | `npx businesslens export`, then `npx businesslens open <report>` in the target |
+| Hand the model to another repository | `npx businesslens blueprint export`, then `npx businesslens blueprint open <report>` in the target |
 | Propose it for the public catalog | `/businesslens-contribute` |
 
 Both produce a **Blueprint** — the same product behavior with this

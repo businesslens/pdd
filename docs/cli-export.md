@@ -1,17 +1,17 @@
 ---
-title: export
+title: blueprint export
 description: Compile a Product Model into a source-free Product Report.
 section: open-source
 group: CLI
 order: 29
 ---
 
-# `businesslens export`
+# `businesslens blueprint export`
 
 Compile `.businesslens/` into a Product Report:
 
 ```bash
-npx businesslens@latest export
+npx businesslens@latest blueprint export
 ```
 
 The report is written to `.businesslens/build/report.json`. It is a generated

@@ -57,7 +57,7 @@ into a pull request would publish your source paths.
 
 Regenerating from the redacted report is the only way to be sure nothing
 repository-specific travels, and it has a second benefit: the contents are then
-byte-identical to what `businesslens pull <slug>` produces for everyone else.
+byte-identical to what `businesslens blueprint pull <slug>` produces for everyone else.
 
 The gate does not take this on trust. `blueprints:check` runs on every pull
 request and independently rejects any Blueprint carrying source evidence,

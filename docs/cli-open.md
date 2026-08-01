@@ -1,18 +1,18 @@
 ---
-title: open
+title: blueprint open
 description: Expand a local Product Report into a canonical draft Product Model.
 section: open-source
 group: CLI
 order: 32
 ---
 
-# `businesslens open`
+# `businesslens blueprint open`
 
 Validate a Product Report v4 and expand it into a canonical `.businesslens/`
 directory:
 
 ```bash
-npx businesslens@latest open ./report.json
+npx businesslens@latest blueprint open ./report.json
 ```
 
 `open` also writes a managed block into `AGENTS.md` telling a coding agent
@@ -58,7 +58,7 @@ evidence remains visible as warnings until the new implementation is verified.
 By default, `open` refuses a non-empty `.businesslens/` directory:
 
 ```bash
-npx businesslens@latest open ./report.json --force
+npx businesslens@latest blueprint open ./report.json --force
 ```
 
 With `--force`, the existing directory is first moved to a timestamped

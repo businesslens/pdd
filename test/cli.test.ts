@@ -52,9 +52,10 @@ describe('cli dispatch', () => {
   it('lists the catalog commands in help and no retired ones', () => {
     const result = cli(repo, process.env, 'validate', '--help')
     expect(result.status).toBe(0)
-    expect(result.stdout).toContain('export ')
+    expect(result.stdout).toContain('blueprint export')
+    expect(result.stdout).toContain('blueprint open <report>')
+    expect(result.stdout).toContain('blueprint pull <name>')
     expect(result.stdout).toContain('contribute [--yes]')
-    expect(result.stdout).toContain('pull <blueprint>')
     expect(result.stdout).toContain('--catalog <origin>')
     expect(result.stdout).toContain('--cwd <path>')
 
@@ -65,9 +66,32 @@ describe('cli dispatch', () => {
   })
 
   it('exports the selected repository into report.json', () => {
-    const result = cli(ROOT, process.env, '--cwd', repo, 'export')
+    const result = cli(ROOT, process.env, '--cwd', repo, 'blueprint', 'export')
     expect(result.status).toBe(0)
     expect(existsSync(join(repo, '.businesslens', 'build', 'report.json'))).toBe(true)
+  })
+
+  it('keeps the bare catalog spellings working, with a deprecation warning', () => {
+    for (const command of ['export', 'open', 'pull']) {
+      const result = cli(ROOT, process.env, '--cwd', repo, command, 'ignored-arg')
+      expect(result.stderr, command).toContain(
+        `\`businesslens ${command}\` is deprecated; use \`businesslens blueprint ${command}\`.`
+      )
+    }
+    // …and the deprecated spelling still does the work, not just warn.
+    rmSync(join(repo, '.businesslens', 'build'), { recursive: true, force: true })
+    expect(cli(ROOT, process.env, '--cwd', repo, 'export').status).toBe(0)
+    expect(existsSync(join(repo, '.businesslens', 'build', 'report.json'))).toBe(true)
+  })
+
+  it('rejects a blueprint invocation with no or an unknown subcommand', () => {
+    const bare = cli(ROOT, process.env, '--cwd', repo, 'blueprint')
+    expect(bare.status).toBe(2)
+    expect(bare.stderr).toContain('blueprint requires a subcommand')
+
+    const unknown = cli(ROOT, process.env, '--cwd', repo, 'blueprint', 'frobnicate')
+    expect(unknown.status).toBe(2)
+    expect(unknown.stderr).toContain('Unknown blueprint command "frobnicate"')
   })
 
   it('keeps `build` working as a deprecated alias that warns', () => {

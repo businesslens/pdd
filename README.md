@@ -74,14 +74,14 @@ BusinessLens has two deliberate surfaces:
 | Terminal | `npx businesslens install` | Install the agent skills |
 | Terminal | `npx businesslens update` | Refresh managed skill installations |
 | Terminal | `npx businesslens validate` | Deterministically validate the model |
-| Terminal | `npx businesslens export` | Compile the model into source-free `report.json` |
-| Terminal | `npx businesslens@latest pull blueprint-name` | Anonymously pull a catalog Blueprint into a canonical Product Model |
-| Terminal | `npx businesslens open` | Expand a local Product Report into a canonical Product Model |
+| Terminal | `npx businesslens blueprint export` | Compile the model into a Blueprint |
+| Terminal | `npx businesslens blueprint pull <name>` | Anonymously pull a catalog Blueprint into a Product Model |
+| Terminal | `npx businesslens blueprint open <report>` | Expand a Blueprint into a Product Model |
 | Terminal | `npx businesslens contribute` | Propose the model as a public catalog Blueprint |
 | AI harness | the eight `businesslens-*` skills | Map, plan, verify, and maintain the product truth |
 
-Nothing creates `.businesslens/` except the skills, and only `pull` and
-`open` write to `AGENTS.md` — a model that arrived from another repository
+Nothing creates `.businesslens/` except the skills, and only `blueprint pull` and
+`blueprint open` write to `AGENTS.md` — a model that arrived from another repository
 needs a note saying what it is; one you authored does not.
 
 ## Skills
