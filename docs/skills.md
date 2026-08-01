@@ -1,6 +1,6 @@
 ---
 title: Overview
-description: The eight BusinessLens agent skills — which one fits which situation.
+description: The seven BusinessLens agent skills — which one fits which situation.
 section: open-source
 group: Skills
 order: 14
@@ -8,7 +8,7 @@ order: 14
 
 # Skills overview
 
-BusinessLens ships eight agent skills. Each is self-contained, follows the
+BusinessLens ships seven agent skills. Each is self-contained, follows the
 open Agent Skills folder format, and treats the target repository as
 untrusted: skills inspect code statically and never execute it. Only
 `businesslens-contribute` proposes anything publicly, and only on explicit
@@ -18,8 +18,7 @@ request.
 | --- | --- |
 | [`businesslens-init`](./skill-businesslens-init.md) | Adopting BusinessLens in a repository that already has code |
 | [`businesslens-plan`](./skill-businesslens-plan.md) | Planning a product (blank repo) or a feature (mapped repo) before code |
-| [`businesslens-verify`](./skill-businesslens-verify.md) | Planned model changes were implemented and need evidence-backed checking |
-| [`businesslens-sync`](./skill-businesslens-sync.md) | Code changed without a plan and the model drifted |
+| [`businesslens-sync`](./skill-businesslens-sync.md) | The code moved and the model needs to catch up — with or without a plan |
 | [`businesslens-deep-dive`](./skill-businesslens-deep-dive.md) | One journey or experience needs exhaustive coverage |
 | [`businesslens-doctor`](./skill-businesslens-doctor.md) | The model fails validation, looks stale, or needs a health report |
 | [`businesslens-ideate`](./skill-businesslens-ideate.md) | You are deciding what to build |
@@ -27,13 +26,18 @@ request.
 
 ## How they fit together
 
-The lifecycle runs through four of them: `init` (or `plan`, for a blank
+The lifecycle runs through three of them: `init` (or `plan`, for a blank
 repository) creates the model, then every feature loops through `plan` →
-implement → `verify`. `sync` is the recovery lane when code changed without
-a plan. The rest are supporting tools: `deep-dive` adds depth to one area,
-`validate` and `doctor` keep the model honest, and `contribute` proposes the
-model to the catalog. The full decision table with situations lives in
-[How it works](./guide.md).
+implement → `sync`.
+
+`sync` covers both directions. When a plan exists it checks the code against
+it; when none does, it works out what the code became. You never pick between
+those — it reads which situation you are in from git and tells you.
+
+The rest are supporting tools: `deep-dive` adds depth to one area, `doctor`
+diagnoses what `businesslens validate` cannot explain, `ideate` proposes what
+to build next, and `contribute` proposes the model to the catalog. The full
+decision table with situations lives in [Find your flow](./flows.md).
 
 ## Invoking skills
 

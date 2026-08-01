@@ -37,6 +37,8 @@
   ],
   "scripts": {
     "build": "tsdown",
+    "dev": "node scripts/dev.mjs",
+    "dev:unlink": "node scripts/dev.mjs --unlink",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "blueprints:check": "node scripts/blueprints-check.mjs",

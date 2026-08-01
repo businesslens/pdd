@@ -3,7 +3,7 @@ title: contribute
 description: Propose your Product Model as a Blueprint in the public catalog, by pull request.
 section: open-source
 group: Skills
-order: 22
+order: 21
 ---
 
 # `businesslens-contribute`

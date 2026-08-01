@@ -3,7 +3,7 @@ title: validate
 description: Validate Product Model structure, relationships, taxonomy, and repository evidence.
 section: open-source
 group: CLI
-order: 26
+order: 25
 ---
 
 # `businesslens validate`
@@ -45,7 +45,7 @@ On feat/guest-checkout, against main:
   code   11 file(s) changed
 
 You described a change and wrote code for it, but nothing has checked that
-the code matches. /businesslens-verify checks every planned addition,
+the code matches. /businesslens-sync checks every planned addition,
 change, and removal, and attaches evidence.
 ```
 
@@ -83,7 +83,7 @@ draft.
 
 On a feature branch with non-draft coverage, new missing-evidence errors are
 the implementation checklist produced by planning. The
-[`businesslens-verify`](./skill-businesslens-verify.md) skill checks the
+[`businesslens-sync`](./skill-businesslens-sync.md) skill checks the
 implementation and attaches valid evidence.
 
 ## JSON output

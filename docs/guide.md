@@ -32,7 +32,7 @@ already has all three:
 - **Review is the pull request.** The model diff shows the product delta;
   reviewers approve behavior before or alongside code.
 - **Done is verification complete and validation green.**
-  `businesslens-verify` checks every planned addition, change, and removal;
+  `businesslens-sync` checks every planned addition, change, and removal;
   scenario Trigger, Steps, and Outcome are the behavioral acceptance
   contract. It attaches evidence to what exists and reports every verdict.
 - **The archive is git history.**
@@ -41,7 +41,7 @@ The one special state is a brand-new product with no code at all:
 `coverage.md` `status: draft` marks the whole model as planned, downgrading
 missing evidence to warnings so the draft validates green. Draft models can
 be exported or proposed as catalog Blueprints while their missing evidence
-remains visible. A fully successful verify moves coverage off draft, and
+remains visible. A fully successful sync moves coverage off draft, and
 evidence is strictly required from then on.
 
 ## The loop
@@ -53,7 +53,7 @@ model exists?  no + code    → /businesslens-init      (evidence-backed model)
 every feature:
   /businesslens-plan …    edit the model to the intended behavior
   implement               your coding agent + your SDD tool
-  /businesslens-verify    evidence attached, gaps reported
+  /businesslens-sync    evidence attached, gaps reported
   validate green          merge; CI gates the PR
 
 model drifted (unplanned change)? → /businesslens-sync
@@ -67,7 +67,7 @@ model drifted (unplanned change)? → /businesslens-sync
 | Blank repository, new product | `businesslens-plan` |
 | New feature or product decision, before code | `businesslens-plan` (quick or thorough) |
 | A design deliverable nobody will implement yet | `businesslens-plan` (the draft model is the deliverable) |
-| Planned behavior implemented, needs checking | `businesslens-verify` |
+| Planned behavior implemented, needs checking | `businesslens-sync` |
 | Code changed without a plan | `businesslens-sync` |
 | One journey or experience needs exhaustive depth | `businesslens-deep-dive` |
 | Something looks wrong, stale, or stuck | `businesslens-doctor` |
@@ -80,7 +80,7 @@ There is no separate acceptance-criteria artifact: a scenario's Trigger,
 ordered Steps, and Outcome are already an observable, checkable contract.
 Write them so a reviewer could check them against source code without
 executing anything — "submitting an empty cart shows an error and keeps the
-cart", not "cart validation works". `businesslens-verify` verifies exactly
+cart", not "cart validation works". `businesslens-sync` verifies exactly
 that, statically, and never marks a scenario met without direct evidence.
 
 ## Where catalog contribution fits

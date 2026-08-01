@@ -56,7 +56,7 @@ skills installed.
 4. Verify:
 
    ```text
-   /businesslens-verify
+   /businesslens-sync
    ```
 
    The skill diffs the model against the merge base, checks every planned

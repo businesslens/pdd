@@ -6,7 +6,7 @@ description: Plan product behavior directly in the .businesslens/ product model 
 # Plan in the product model
 
 Planning is editing the model to describe intended behavior. Git is the change
-model: the branch holds the plan, `businesslens-verify` attaches evidence
+model: the branch holds the plan, `businesslens-sync` attaches evidence
 after implementation, and the verified model returns to evidence-backed truth.
 
 Read these references before authoring:
@@ -72,7 +72,7 @@ Read these references before authoring:
    entity needs no implementation work; the model diff is the full plan.
 8. Report: what was planned (entities added, changed, removed), open
    questions recorded, the full implementation worklist, the missing-evidence
-   subset, and the next steps — implement, then `businesslens-verify`; commit
+   subset, and the next steps — implement, then `businesslens-sync`; commit
    the planned model to the working branch. For a design nobody will implement
    yet, the planned model itself is the deliverable.
 

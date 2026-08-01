@@ -171,8 +171,7 @@ Each action has exactly one name.
 | **plan** | Turn a decided intent into entities, before the code exists. |
 | **map** | Author a model from code that already exists — what `businesslens-init` does. |
 | **implement** | Build the software the model describes, with its scenarios as the acceptance contract. BusinessLens ships no skill for this; see [Find your flow](./flows.md). |
-| **verify** | Attach implementation evidence once the code exists, against a plan. |
-| **sync** | Bring a model up to date after code changed without being planned first. |
+| **sync** | Reconcile the model with the code: attach evidence where they already agree, and settle everything else with the user. |
 | **export** | Compile a Product Model into a Blueprint. |
 | **open** | Expand a Blueprint back into a Product Model, from a local file. |
 | **pull** | Anyone anonymously fetching a Catalog Entry and expanding it locally. |

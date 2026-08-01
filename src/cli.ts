@@ -56,8 +56,7 @@ General options:
 Agent workflows:
   /businesslens-init          Build the initial product model from existing code
   /businesslens-plan          Plan a product or feature in the product model
-  /businesslens-verify        Verify implementation against the planned model
-  /businesslens-sync          Repair the model after unplanned code changes
+  /businesslens-sync          Reconcile the model with the code, either way
   /businesslens-deep-dive     Expand one journey or experience
   /businesslens-doctor        Diagnose validation, drift, and coverage
   /businesslens-ideate        Decide what to build next
@@ -102,19 +101,20 @@ async function main(): Promise<number> {
     return positionals.length ? 0 : 2
   }
 
-  // `export`, `open`, and `pull` moved under `blueprint`: all three carry a
-  // model across a repository boundary, which is a different job from the
-  // everyday `install`/`update`/`validate` verbs. The flat spellings still
-  // work — they were the only spelling through 0.6.x.
+  // Each of these produces or consumes a Blueprint and carries a model across a
+  // repository boundary, which is a different job from the everyday
+  // `install`/`update`/`validate` verbs. The flat spellings still work — they
+  // were the only spelling through 0.6.x.
   let command = positionals[0]!
   let rest = positionals.slice(1)
   if (command === 'blueprint') {
     command = rest[0] ?? ''
     rest = rest.slice(1)
     if (!BLUEPRINT_COMMANDS.has(command)) {
+      const known = [...BLUEPRINT_COMMANDS].join(', ')
       console.error(command
-        ? `Unknown blueprint command "${command}". Expected export, open, or pull.`
-        : 'blueprint requires a subcommand: export, open, or pull.')
+        ? `Unknown blueprint command "${command}". Expected one of: ${known}.`
+        : `blueprint requires a subcommand: ${known}.`)
       return 2
     }
   } else if (BLUEPRINT_COMMANDS.has(command)) {

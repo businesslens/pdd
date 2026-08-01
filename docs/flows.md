@@ -37,13 +37,13 @@ the code has to catch up to *it*.
 | --- | --- |
 | The Blueprint describes something different from what you want | `/businesslens-plan` — edit the model before you write any code |
 | The model is right, and no code exists yet | **Write the code.** The scenarios are your acceptance criteria |
-| You've written code for what the model describes | `/businesslens-verify` — attach the evidence |
+| You've written code for what the model describes | `/businesslens-sync` — attach the evidence |
 
 Writing the code is not something BusinessLens does for you — use your usual
 coding workflow, or a spec-driven toolchain alongside it. When the model
-arrived by `blueprint pull` or `blueprint open`, the managed block in your `AGENTS.md` already
-tells whatever writes the code that the model is the specification and its
-scenarios are the definition of done.
+arrived by `blueprint pull` or `blueprint open`, the managed block in your
+`AGENTS.md` already tells whatever writes the code that the model is the
+specification and its scenarios are the definition of done.
 
 Until evidence is attached, `coverage.md` stays at `status: draft` and missing
 evidence appears as warnings rather than errors. That is the expected state for
@@ -57,12 +57,19 @@ no third mode.
 | The model | The code | Where that leaves you | What you do |
 | --- | --- | --- | --- |
 | — | — | Nothing has moved | Nothing |
-| **edited** | — | You've described a change nobody has written yet | **Write the code**, then verify |
-| **edited** | **edited** | You described a change and wrote it, but nothing has checked that the code matches | `/businesslens-verify` |
+| **edited** | — | You've described a change nobody has written yet | **Write the code**, then sync |
+| **edited** | **edited** | You described a change and wrote it, but nothing has checked that the code matches | `/businesslens-sync` |
 | — | **edited** | The code behaves differently, and the model still describes the old behavior | `/businesslens-sync` |
 
 Those four rows are every possibility. Two things can change, each of them
 either did or didn't, and that is the whole space.
+
+**You never have to work out which row you're in.** `sync` reads it from git
+and tells you. When a plan exists it checks the code against the plan; when
+none does, it works out what the code became. Either way it attaches evidence
+where the model and the code already agree, and brings you everything else one
+decision at a time — so nothing about what your product *does* changes without
+you saying so.
 
 Two notes on the last row:
 
@@ -98,7 +105,7 @@ On feat/guest-checkout, against main:
   code   11 file(s) changed
 
 You described a change and wrote code for it, but nothing has checked that
-the code matches. /businesslens-verify checks every planned addition,
+the code matches. /businesslens-sync checks every planned addition,
 change, and removal, and attaches evidence.
 ```
 

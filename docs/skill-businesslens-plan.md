@@ -55,7 +55,7 @@ Interview → author → validate. It proposes concrete drafts you correct
 rather than interrogating from a blank page, keeps prose at product
 altitude, and ends with only expected missing-evidence findings on newly
 unevidenced journeys and scenarios. Implement, then run
-[`businesslens-verify`](./skill-businesslens-verify.md).
+[`businesslens-sync`](./skill-businesslens-sync.md).
 
 ## Guardrails
 

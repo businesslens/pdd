@@ -3,7 +3,7 @@ title: update
 description: Refresh only BusinessLens-managed skill installations in project or global scope.
 section: open-source
 group: CLI
-order: 25
+order: 24
 ---
 
 # `businesslens update`
@@ -44,7 +44,7 @@ conflicts with `--scope`.
 
 ## What changes
 
-Each discovered installation receives the current eight bundled skills. The
+Each discovered installation receives the current seven bundled skills. The
 command also refreshes its ownership marker while preserving the original
 installation timestamp.
 

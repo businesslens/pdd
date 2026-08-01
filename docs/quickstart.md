@@ -1,6 +1,6 @@
 ---
 title: Quickstart
-description: Install the skills, pick your entry — map existing code or plan a new product — then run the plan → implement → verify loop.
+description: Install the skills, pick your entry — map existing code or plan a new product — then run the plan → implement → sync loop.
 section: open-source
 group: Get started
 order: 3
@@ -52,7 +52,7 @@ git commit -m "docs: add BusinessLens product model"
 ```text
 /businesslens-plan add guest checkout     # model describes intended behavior
 … implement with your coding agent …
-/businesslens-verify                      # evidence attached, gaps reported
+/businesslens-sync                      # evidence attached, gaps reported
 npx businesslens@latest validate          # green = done
 ```
 

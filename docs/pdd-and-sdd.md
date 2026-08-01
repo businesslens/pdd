@@ -22,7 +22,7 @@ is designed, built, and broken into tasks. The borderline:
 
 On the default branch the model is always descriptive, evidence-backed truth.
 On a working branch it may briefly claim more than the code delivers — that
-gap is exactly what `businesslens-verify` closes before merge.
+gap is exactly what `businesslens-sync` closes before merge.
 
 ## How they link
 
@@ -33,7 +33,7 @@ gap is exactly what `businesslens-verify` closes before merge.
   (`rel: spec|proposal|doc|adr`). The model never copies spec content.
 - **The loop**: plan the product delta by updating the model
   (`businesslens-plan`), design and implement against your SDD change, then
-  `businesslens-verify` checks the code delivers the planned behavior and
+  `businesslens-sync` checks the code delivers the planned behavior and
   attaches evidence. An archived SDD change with no matching model update is
   the strongest drift signal (`businesslens-sync`).
 
@@ -42,5 +42,5 @@ The `businesslens-init` skill detects SDD roots (`openspec/`, `specs/`,
 SDD — or none at all.
 
 The two never compete for the implementation step. A model states the
-acceptance criteria before the work starts and `businesslens-verify` checks
+acceptance criteria before the work starts and `businesslens-sync` checks
 the result after; what writes the code in between is yours to choose.

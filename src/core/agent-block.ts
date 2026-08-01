@@ -37,7 +37,7 @@ The model is the specification for a product that has not been built yet.
   last.
 - **Nothing here prescribes a stack.** No framework, database, architecture, or interface is
   implied. Choose them yourself and stay consistent.
-- **When the product runs, attach evidence** with the \`businesslens-verify\` skill, then run
+- **When the product runs, attach evidence** with the \`businesslens-sync\` skill, then run
   \`npx businesslens validate\`. Coverage is \`draft\` until you do.
 - To change *what* the product should do rather than implement it, use the \`businesslens-plan\`
   skill so the model stays the source of truth.

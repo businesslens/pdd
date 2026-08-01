@@ -18,7 +18,6 @@ export const BUSINESSLENS_SKILLS = [
   'businesslens-ideate',
   'businesslens-init',
   'businesslens-plan',
-  'businesslens-verify',
   'businesslens-sync',
   'businesslens-deep-dive',
   'businesslens-doctor',

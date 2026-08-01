@@ -19,7 +19,7 @@ or validator behavior.
 - `src/core/` — parsers, model loading, Git evidence, portable schema, and
   catalog/contribution support.
 - `skills/businesslens-*/SKILL.md` — one independent skill per workflow:
-  `businesslens-init`, `businesslens-plan`, `businesslens-verify`,
+  `businesslens-init`, `businesslens-plan`, `businesslens-sync`,
   `businesslens-sync`, `businesslens-deep-dive`, `businesslens-doctor`,
   `businesslens-ideate`, and `businesslens-contribute`.
 - `test/fixtures/fixture-shop/` — the golden validation fixture.

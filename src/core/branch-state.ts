@@ -6,20 +6,13 @@ import { git, repoRoot } from './git.js'
  * Which of the two things that can change has changed, since you branched.
  *
  * A Product Model has exactly two moving parts — the model and the code — so
- * "where do I stand" has four answers, and which one you are in decides which
- * skill to reach for. That decision is mechanical, and this is the mechanism:
- * nobody should have to remember whether they planned first.
+ * "where do I stand" has four answers. `businesslens-sync` reads this on entry
+ * so the user never has to work out whether they planned first: the answer is
+ * derived from git, not remembered.
  *
  * Deliberately separate from `validateModel`, which is a pure function of the
  * authored files. Whether the model is *sound* and where you *stand* are
  * different questions, and only the first one belongs in an exit code.
- */
-/**
- * The four rows of the flow table, as a value a caller can switch on.
- *
- * Named so a skill can route on it without re-deriving anything: reaching for
- * `businesslens-verify` when the situation is `unplanned-code` is a mistake the
- * skill can catch on entry instead of discovering half-way through.
  */
 export type Situation =
   | 'at-rest'
@@ -116,17 +109,17 @@ const ADVICE: Record<Situation, string[]> = {
   ],
   planned: [
     'You have described a change nobody has written yet. Build it, then run',
-    '/businesslens-verify to attach the evidence.'
+    '/businesslens-sync to attach the evidence.'
   ],
   implemented: [
     'You described a change and wrote code for it, but nothing has checked that',
-    'the code matches. /businesslens-verify checks every planned addition,',
-    'change, and removal, and attaches evidence.'
+    'the code matches. /businesslens-sync checks every planned addition, change,',
+    'and removal against the code, and attaches evidence.'
   ],
   'unplanned-code': [
     'The model is unchanged while the code moved. If any of that altered what the',
     'product does, the model still describes the old behavior — /businesslens-sync',
-    'brings it up to date.'
+    'works out what changed and brings it up to date.'
   ]
 }
 

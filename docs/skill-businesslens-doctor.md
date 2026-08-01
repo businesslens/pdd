@@ -3,7 +3,7 @@ title: doctor
 description: Investigate installation and Product Model health — diagnose by default, repair only on explicit request.
 section: open-source
 group: Skills
-order: 20
+order: 19
 ---
 
 # `businesslens-doctor`
@@ -33,7 +33,7 @@ you explicitly ask for repairs.
   scenarios, and disconnected business rules.
 - Evidence-less entities sitting on the default branch, or `coverage.md`
   stuck in `draft` after implementation shipped — planned work that never
-  went through [`businesslens-verify`](./skill-businesslens-verify.md).
+  went through [`businesslens-sync`](./skill-businesslens-sync.md).
 - Placeholder prose, unsupported certainty, weak coverage claims, generated
   `cache/` content accidentally tracked.
 - For a model with no implementation, exactly one well-formed

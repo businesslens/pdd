@@ -3,6 +3,26 @@
 Keep contributions focused: the CLI stays dependency-light, and every skill
 stays reusable, self-contained, and well-scoped.
 
+## Local development
+
+Activate the current PDD worktree as the machine-wide development CLI and keep
+all published package outputs current:
+
+```bash
+npm ci
+npm run dev
+```
+
+The initial build must succeed before `~/.local/bin/bl` is atomically linked to
+this worktree. The command then runs `tsdown --watch` in the foreground; stopping
+the watcher leaves `bl` pointing at the last successful build. Run `npm run
+dev` in another worktree to switch the link, `bl --dev-info` to inspect it, and
+`npm run dev:unlink` from the active worktree to remove it.
+
+From any target repository, `bl validate` and the other public commands use the
+active checkout. Installed plan and sync skills recognize the same explicit
+development launcher; without it they retain their release-pinned npm runner.
+
 1. Format changes start in `docs/format.md`, then flow into `src/core/` and
    `src/commands/validate.ts` with a failing-case test per new rule.
 2. Keep `src/core/portable.ts` byte-compatible with the platform's portable

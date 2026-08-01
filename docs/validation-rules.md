@@ -3,7 +3,7 @@ title: Validation rules
 description: Every businesslens validate error and warning — what it means and how to fix it.
 section: open-source
 group: Reference
-order: 33
+order: 32
 ---
 
 # Validation rules
@@ -16,7 +16,7 @@ validation failure, and `2` for invalid usage.
 One rule of thumb first: on a feature branch,
 `needs at least one codeRef` errors on entities you just planned are **not
 a problem** — they are the evidence checklist, and
-[`businesslens-verify`](./skill-businesslens-verify.md) clears them by
+[`businesslens-sync`](./skill-businesslens-sync.md) clears them by
 attaching evidence.
 
 ## Loading errors
@@ -94,7 +94,7 @@ Reported when files cannot be read into the model at all.
 - `<journey or scenario>: needs at least one codeRef` — a behavioral claim
   without evidence. On the default branch this is drift or an unverified
   merge; on a feature branch it is the planning evidence checklist —
-  `businesslens-verify` attaches the evidence after implementation.
+  `businesslens-sync` attaches the evidence after implementation.
 - `codeRef path "…" is not a tracked file` — every codeRef path must exist
   in `git ls-files`. Fix the path, commit the file, or remove the stale
   ref.

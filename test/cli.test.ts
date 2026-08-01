@@ -33,7 +33,8 @@ function sh(cwd: string, command: string, ...args: string[]): void {
 let repo: string
 
 beforeAll(() => {
-  execSync('npm run build', { cwd: ROOT, stdio: 'pipe' })
+  // dist/ is built once in test/global-setup.ts. Building here raced with the
+  // other suites that spawn from it.
   repo = mkdtempSync(join(tmpdir(), 'bl-cli-'))
   cpSync(FIXTURE, repo, { recursive: true })
   sh(repo, 'git', 'init', '--initial-branch=main')

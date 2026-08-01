@@ -2,7 +2,7 @@
 
 Planned behavior lives in the same model as current behavior. The only
 difference is evidence: planned journeys and scenarios carry **no**
-`codeRefs` until `businesslens-verify` attaches them after implementation.
+`codeRefs` until `businesslens-sync` attaches them after implementation.
 
 - On an existing model (coverage `partial`/`complete`), `validate` reports new
   unevidenced journeys and scenarios as errors:

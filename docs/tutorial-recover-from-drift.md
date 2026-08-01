@@ -9,7 +9,7 @@ order: 12
 # Recover when code changed without a plan
 
 **Goal:** the model matches reality again after code changed outside the
-plan → implement → verify loop — a hotfix, a refactor that moved evidence,
+plan → implement → sync loop — a hotfix, a refactor that moved evidence,
 or a feature that skipped planning.
 
 **Prerequisites:** a repository with an existing `.businesslens/` Product Model.

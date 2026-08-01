@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- **`businesslens-verify`** — folded into `businesslens-sync`. The two were
+  distinguished only by whether a plan existed, which the tool now derives from
+  git rather than asking you to remember. Worse, `verify` and `validate` are
+  synonyms in ordinary English, and the textbook distinction is *inverted*
+  here: `validate` checks the model against a specification (verification by
+  the book) while `verify` checked the code against intent (validation by the
+  book). A reader who knew the convention got them backwards.
+
+  Nothing is lost. `sync` does everything `verify` did when a plan exists,
+  including deriving deletions from the model diff and proving retired
+  behavior is gone.
+
+
 - **`businesslens-validate`** — 55 lines that ran `npx businesslens validate
   --json` and reformatted the output. Run the CLI directly; a green result
   needs no narration, and `businesslens-doctor` explains a failing one far
@@ -100,12 +113,15 @@ Product Model looks like or how it is validated.
 - **`validate --json` gains an additive `branch` key** carrying that state,
   including a `situation` of `at-rest`, `planned`, `implemented`, or
   `unplanned-code`. `ok`, `errors`, `warnings`, and `counts` are unchanged.
-- **`businesslens-verify` and `businesslens-sync` now check they are the right
-  skill before doing anything.** The two are distinguished by whether a plan
-  exists, which is derived from git rather than inferred — so invoking `verify`
-  on unplanned code now redirects to `sync` instead of hunting for a plan that
-  was never written, and `sync` on a planned branch refuses rather than
-  overwriting the plan with whatever the code currently does.
+- **`businesslens-sync` resolves what it cannot decide alone, one question at a
+  time.** It separates every finding into *proof* — the code already does what
+  the model says, so only `codeRefs` change — and *decisions*, which are
+  anything that would alter what the model or the code says. Proof is attached
+  and reported. Decisions are sorted so that answering one settles the ones it
+  determines, asked individually with a recommendation, and re-derived from a
+  fresh validation run after every answer, until nothing is left.
+
+  Nothing about what your product *does* changes without you saying so.
 - **Find your flow** (`docs/flows.md`) — a routing page covering every
   situation a Product Model can be in. Brownfield, greenfield, and
   greenfield-from-a-Blueprint each get a starting row; after the first

@@ -75,7 +75,7 @@ steps into fake choices.
 
 Scenarios are deliberately the smallest unit that can be *verified*: their
 Trigger/Steps/Outcome are the acceptance contract that
-[`businesslens-verify`](./skill-businesslens-verify.md) checks against the
+[`businesslens-sync`](./skill-businesslens-sync.md) checks against the
 implementation. Scenario IDs are globally unique across the model, so any
 scenario can be referenced unambiguously.
 

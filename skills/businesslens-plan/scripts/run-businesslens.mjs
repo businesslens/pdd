@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
 import { execFileSync } from 'node:child_process'
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
-import { tmpdir } from 'node:os'
-import { join, resolve } from 'node:path'
+import { mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs'
+import { homedir, tmpdir } from 'node:os'
+import { dirname, isAbsolute, join, resolve } from 'node:path'
 
 /**
  * Pin the CLI to the version these skills were installed from.
@@ -25,6 +25,30 @@ function installedPackageSpec() {
     // Not installed through `businesslens install`; fall back below.
   }
   return 'businesslens@latest'
+}
+
+/**
+ * Maintainers can explicitly activate one local PDD worktree through
+ * `~/.local/bin/bl`. Resolve only that fixed development command, outside the
+ * untrusted target repository; ordinary installations retain the pinned npm
+ * fallback above.
+ */
+function activeDevelopmentCli(runnerRoot, env) {
+  const binDirectory = resolve(env.BUSINESSLENS_DEV_BIN_DIR || join(homedir(), '.local', 'bin'))
+  try {
+    const cli = execFileSync(join(binDirectory, 'bl'), ['--dev-cli'], {
+      cwd: runnerRoot,
+      env,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore']
+    }).trim()
+    if (!isAbsolute(cli) || !statSync(cli).isFile()) return undefined
+    const packageRoot = dirname(dirname(cli))
+    const manifest = JSON.parse(readFileSync(join(packageRoot, 'package.json'), 'utf8'))
+    return manifest?.name === 'businesslens' ? cli : undefined
+  } catch {
+    return undefined
+  }
 }
 
 function fail(message) {
@@ -62,25 +86,34 @@ const env = { ...process.env }
 delete env.BUSINESSLENS_API_KEY
 
 try {
-  execFileSync(
-    'npm',
-    [
-      'exec',
-      '--yes',
-      '--ignore-scripts',
-      `--package=${installedPackageSpec()}`,
-      '--',
-      'businesslens',
-      '--cwd',
-      root,
-      ...commandArgs
-    ],
-    {
+  const developmentCli = activeDevelopmentCli(runnerRoot, env)
+  if (developmentCli) {
+    execFileSync(process.execPath, [developmentCli, '--cwd', root, ...commandArgs], {
       cwd: runnerRoot,
       env,
       stdio: 'inherit'
-    }
-  )
+    })
+  } else {
+    execFileSync(
+      'npm',
+      [
+        'exec',
+        '--yes',
+        '--ignore-scripts',
+        `--package=${installedPackageSpec()}`,
+        '--',
+        'businesslens',
+        '--cwd',
+        root,
+        ...commandArgs
+      ],
+      {
+        cwd: runnerRoot,
+        env,
+        stdio: 'inherit'
+      }
+    )
+  }
 } catch (error) {
   process.exitCode = typeof error.status === 'number' ? error.status : 1
 } finally {

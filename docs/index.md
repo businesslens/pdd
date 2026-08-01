@@ -36,7 +36,7 @@ model and the code agree.
 
 That one rule makes planning simple: **plan by editing the model.** Describe
 the intended behavior on your branch; `validate` lists new journeys and
-scenarios that still lack evidence. Implement, then `businesslens-verify`
+scenarios that still lack evidence. Implement, then `businesslens-sync`
 checks every planned addition, change, and removal from the complete model diff
 and attaches evidence to implemented behavior. Verification complete plus
 validation green means done. Git is the change model: branches hold plans,
@@ -52,7 +52,7 @@ pull requests review them, history archives them.
 Then, for every feature:
 
 ```text
-/businesslens-plan   →   implement   →   /businesslens-verify   →   green
+/businesslens-plan   →   implement   →   /businesslens-sync   →   green
 ```
 
 Code changed without a plan? `/businesslens-sync` repairs the model.
@@ -62,7 +62,7 @@ Code changed without a plan? `/businesslens-sync` repairs the model.
 | Piece | What it does |
 | --- | --- |
 | `businesslens` CLI | Installs the skills and validates the model deterministically — [CLI reference](./cli.md) |
-| Agent skills | Plan, build, verify, and maintain the model inside your AI harness — [Skills reference](./skills.md) |
+| Agent skills | Plan, build, reconcile, and maintain the model inside your AI harness — [Skills reference](./skills.md) |
 | `.businesslens/` | The durable, git-tracked product model — [format contract](./format.md) |
 | The catalog (optional) | A curated, anonymously browsable collection of Blueprints at [businesslens.io/blueprints](https://businesslens.io/blueprints) — pull one and build from it |
 | [Find your flow](./flows.md) | Every situation a model can be in, and which surface handles it |

@@ -33,7 +33,6 @@ const expectedSkills = [
   'businesslens-ideate',
   'businesslens-init',
   'businesslens-plan',
-  'businesslens-verify',
   'businesslens-sync',
   'businesslens-deep-dive',
   'businesslens-doctor',

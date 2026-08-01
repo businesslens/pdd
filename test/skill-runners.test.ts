@@ -18,8 +18,8 @@ const VALIDATE_RUNNERS = [
     file: join(__dirname, '..', 'skills', 'businesslens-plan', 'scripts', 'run-businesslens.mjs')
   },
   {
-    name: 'verify',
-    file: join(__dirname, '..', 'skills', 'businesslens-verify', 'scripts', 'run-businesslens.mjs')
+    name: 'sync',
+    file: join(__dirname, '..', 'skills', 'businesslens-sync', 'scripts', 'run-businesslens.mjs')
   },
 ]
 const temporaryDirectories: string[] = []
@@ -69,6 +69,7 @@ fs.writeFileSync(process.env.CAPTURE_FILE, JSON.stringify({
         env: {
           ...process.env,
           PATH: `${bin}${delimiter}${process.env.PATH || ''}`,
+          BUSINESSLENS_DEV_BIN_DIR: temporary('bl-runner-no-dev-bin-'),
           CAPTURE_FILE: capture,
           BUSINESSLENS_API_KEY: 'must-not-reach-validation'
         },
@@ -133,6 +134,7 @@ require('node:fs').writeFileSync(process.env.CAPTURE_FILE, JSON.stringify({
         env: {
           ...process.env,
           PATH: `${bin}${delimiter}${process.env.PATH || ''}`,
+          BUSINESSLENS_DEV_BIN_DIR: temporary('bl-runner-pinned-no-dev-bin-'),
           CAPTURE_FILE: capture
         },
         stdio: 'pipe'
@@ -141,5 +143,49 @@ require('node:fs').writeFileSync(process.env.CAPTURE_FILE, JSON.stringify({
 
     const recorded = JSON.parse(readFileSync(capture, 'utf8'))
     expect(recorded.args).toContain('--package=businesslens@9.9.9')
+  })
+
+  it.each(VALIDATE_RUNNERS)('$name prefers the explicitly active local development CLI', ({ file }) => {
+    const repo = temporary('bl-runner-dev-repo-')
+    const developmentRoot = temporary('bl-runner-dev-pdd-')
+    const bin = temporary('bl-runner-dev-bin-')
+    const capture = join(temporary('bl-runner-dev-capture-'), 'cli.json')
+    const cli = join(developmentRoot, 'dist', 'cli.js')
+
+    execFileSync('git', ['init', '--initial-branch=main'], { cwd: repo, stdio: 'pipe' })
+    mkdirSync(join(developmentRoot, 'dist'), { recursive: true })
+    writeFileSync(join(developmentRoot, 'package.json'), JSON.stringify({ name: 'businesslens' }))
+    writeFileSync(
+      cli,
+      `require('node:fs').writeFileSync(process.env.CAPTURE_FILE, JSON.stringify({
+  cwd: process.cwd(),
+  args: process.argv.slice(2),
+  apiKey: process.env.BUSINESSLENS_API_KEY || null
+}))\n`
+    )
+    writeFileSync(
+      join(bin, 'bl'),
+      `#!/usr/bin/env node
+if (process.argv[2] !== '--dev-cli') process.exit(2)
+console.log(${JSON.stringify(cli)})
+`
+    )
+    chmodSync(join(bin, 'bl'), 0o755)
+
+    execFileSync(process.execPath, [file, '--root', repo, 'validate', '--json'], {
+      env: {
+        ...process.env,
+        BUSINESSLENS_DEV_BIN_DIR: bin,
+        BUSINESSLENS_API_KEY: 'must-not-reach-validation',
+        CAPTURE_FILE: capture
+      },
+      stdio: 'pipe'
+    })
+
+    const recorded = JSON.parse(readFileSync(capture, 'utf8'))
+    expect(recorded.cwd).not.toBe(repo)
+    expect(recorded.cwd).toContain('businesslens-cli-')
+    expect(recorded.args).toEqual(['--cwd', realpathSync(repo), 'validate', '--json'])
+    expect(recorded.apiKey).toBeNull()
   })
 })

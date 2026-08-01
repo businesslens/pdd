@@ -3,7 +3,7 @@ title: blueprint contribute
 description: Open a pull request proposing your Product Model as a catalog Blueprint.
 section: open-source
 group: CLI
-order: 30
+order: 29
 ---
 
 # `businesslens blueprint contribute`

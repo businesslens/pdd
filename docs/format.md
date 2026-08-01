@@ -3,7 +3,7 @@ title: Format contract
 description: The contract for the git-tracked product model — folder layout, universal conventions, entities, and codeRefs.
 section: open-source
 group: Reference
-order: 32
+order: 31
 ---
 
 # The `.businesslens/` Format
@@ -17,7 +17,7 @@ behavioral claim (journeys and scenarios) must cite tracked code, and a green
 Planning uses the same file: describe intended behavior by editing the model on
 a branch. Until the implementation lands and evidence is attached, `validate`
 reports new, unevidenced journeys and scenarios as missing `codeRefs`.
-`businesslens-verify` derives the complete worklist from the model diff too, so
+`businesslens-sync` derives the complete worklist from the model diff too, so
 changed higher-level contracts and deleted behavior are not invisible merely
 because they need no new evidence field. Git is the change model: branches
 hold plans, pull requests review them, history archives them. The one

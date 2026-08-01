@@ -56,14 +56,15 @@ pull requests review them, history archives them:
 ```text
 /businesslens-plan add guest checkout   # model describes intended behavior
 … implement with your coding agent …
-/businesslens-verify                    # code checked against the plan, evidence attached
+/businesslens-sync                    # code checked against the plan, evidence attached
 npx businesslens validate               # green = done; CI gates the PR
 ```
 
-Between plan and verify, new journeys and scenarios without `codeRefs`
-appear as expected validation findings. `/businesslens-verify` also derives
-changed and deleted work from the model diff, so the full plan is checked.
-Code changed without a plan? `/businesslens-sync` repairs the model.
+Between planning and syncing, new journeys and scenarios without `codeRefs`
+appear as expected validation findings. `/businesslens-sync` derives changed
+and deleted work from the model diff too, so the full plan is checked — and it
+handles the no-plan case the same way, working out which one you are in rather
+than asking.
 
 ## Terminal or agent?
 
@@ -78,7 +79,7 @@ BusinessLens has two deliberate surfaces:
 | Terminal | `npx businesslens blueprint pull <name>` | Anonymously pull a catalog Blueprint into a Product Model |
 | Terminal | `npx businesslens blueprint open <report>` | Expand a Blueprint into a Product Model |
 | Terminal | `npx businesslens blueprint contribute` | Propose the model as a public catalog Blueprint |
-| AI harness | the eight `businesslens-*` skills | Map, plan, verify, and maintain the product truth |
+| AI harness | the seven `businesslens-*` skills | Map, plan, reconcile, and maintain the product truth |
 
 Nothing creates `.businesslens/` except the skills, and only `blueprint pull` and
 `blueprint open` write to `AGENTS.md` — a model that arrived from another repository
@@ -90,8 +91,7 @@ needs a note saying what it is; one you authored does not.
 | --- | --- |
 | `businesslens-init` | Adopting BusinessLens in a repository that already has code |
 | `businesslens-plan` | Planning a product (blank repo) or a feature (mapped repo) before code |
-| `businesslens-verify` | Planned model changes were implemented and need evidence-backed checking |
-| `businesslens-sync` | Code changed without a plan and the model drifted |
+| `businesslens-sync` | The code moved and the model needs to catch up — with or without a plan |
 | `businesslens-deep-dive` | One journey or experience needs exhaustive coverage |
 | `businesslens-doctor` | The model fails validation, looks stale, or needs a health report |
 | `businesslens-ideate` | The user is deciding what to build |

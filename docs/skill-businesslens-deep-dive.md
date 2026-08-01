@@ -3,7 +3,7 @@ title: deep-dive
 description: Expand one journey or experience to exhaustive, evidence-backed fidelity.
 section: open-source
 group: Skills
-order: 19
+order: 18
 ---
 
 # `businesslens-deep-dive`

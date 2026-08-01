@@ -77,7 +77,7 @@ what is missing, without writing anything.
 Once it runs:
 
 ```text
-/businesslens-verify
+/businesslens-sync
 ```
 
 This adds `codeRefs` linking journeys and scenarios to the code that implements

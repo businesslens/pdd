@@ -21,7 +21,7 @@ Diagnose without changing files unless the user explicitly asks for repair.
      experiences, or disconnected business rules;
    - evidence-less journeys or scenarios sitting on the default branch, or
      `coverage.md` stuck in `draft` after implementation shipped — planned
-     work that never went through `businesslens-verify`;
+     work that never went through `businesslens-sync`;
    - placeholder prose, unsupported certainty, or weak coverage claims;
    - generated `cache/` content accidentally tracked by Git.
 4. Only when the model has no implementation — `coverage.md` is `draft` and no

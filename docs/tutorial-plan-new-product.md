@@ -59,7 +59,7 @@ AI harness, and the skills installed (`npx businesslens@latest install`).
 4. Verify the implementation against the plan:
 
    ```text
-   /businesslens-verify
+   /businesslens-sync
    ```
 
    Every planned addition, change, and removal gets a verdict — met with

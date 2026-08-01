@@ -63,7 +63,7 @@ describe('skill installation', () => {
     expect(existsSync(join(project, '.claude', 'skills', 'businesslens-init', 'references', 'format.md'))).toBe(true)
     expect(existsSync(join(project, '.claude', 'skills', 'businesslens-init', 'scripts', 'inventory-repository.mjs'))).toBe(true)
     expect(existsSync(join(project, '.claude', 'skills', 'businesslens-plan', 'scripts', 'run-businesslens.mjs'))).toBe(true)
-    expect(existsSync(join(project, '.claude', 'skills', 'businesslens-verify', 'scripts', 'run-businesslens.mjs'))).toBe(true)
+    expect(existsSync(join(project, '.claude', 'skills', 'businesslens-sync', 'scripts', 'run-businesslens.mjs'))).toBe(true)
     // `contribute` drives `gh` against the user's own model directory, so it has
     // no isolated runner and no key to isolate.
     expect(existsSync(join(project, '.claude', 'skills', 'businesslens-contribute', 'SKILL.md'))).toBe(true)

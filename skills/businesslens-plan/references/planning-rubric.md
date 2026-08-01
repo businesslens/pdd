@@ -28,7 +28,7 @@
 
 ## Scenarios are the acceptance contract
 
-`businesslens-verify` will check the implementation against each scenario's
+`businesslens-sync` will check the implementation against each scenario's
 Trigger, Steps, Decision points, and Outcome. Write them so a reviewer could
 check them against source code without executing anything:
 

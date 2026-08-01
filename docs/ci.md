@@ -3,14 +3,14 @@ title: Validate in CI
 description: Run the deterministic validator on every pull request.
 section: open-source
 group: Reference
-order: 34
+order: 33
 ---
 
 # Validate the model in CI
 
 Run the deterministic validator on every pull request. Green means the model
 and the code agree — a branch that plans behavior in the model merges only
-after `businesslens-verify` attached the evidence:
+after `businesslens-sync` attached the evidence:
 
 ```yaml
 # .github/workflows/businesslens-validate.yml

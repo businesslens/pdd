@@ -3,7 +3,7 @@ title: blueprint pull
 description: Pull a Blueprint from the public catalog into the current directory.
 section: open-source
 group: CLI
-order: 29
+order: 28
 ---
 
 # `businesslens blueprint pull`
