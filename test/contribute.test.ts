@@ -43,7 +43,11 @@ function initialize(cwd: string): void {
  * side effect the flow depends on: `repo fork --clone` must leave a repository
  * behind for the Blueprint to be written into.
  */
-function fakeGh(bin: string, capture: string, options: { authenticated?: boolean, ownsUpstream?: boolean } = {}): void {
+function fakeGh(
+  bin: string,
+  capture: string,
+  options: { authenticated?: boolean, ownsUpstream?: boolean, syncFails?: boolean, existingPr?: string } = {}
+): void {
   const file = join(bin, 'gh')
   writeFileSync(
     file,
@@ -75,15 +79,12 @@ if (args[0] === 'repo' && args[1] === 'clone') {
   execFileSync('git', ['commit', '-m', 'base'], { cwd: target, stdio: 'pipe' })
   process.exit(0)
 }
-if (args[0] === 'repo' && args[1] === 'fork') {
-  const target = path.join(process.cwd(), 'pdd')
-  fs.mkdirSync(target, { recursive: true })
-  execFileSync('git', ['init', '--initial-branch=main'], { cwd: target, stdio: 'pipe' })
-  execFileSync('git', ['config', 'user.email', 'fork@example.com'], { cwd: target, stdio: 'pipe' })
-  execFileSync('git', ['config', 'user.name', 'Fork'], { cwd: target, stdio: 'pipe' })
-  fs.writeFileSync(path.join(target, 'README.md'), '# pdd\\n')
-  execFileSync('git', ['add', '-A'], { cwd: target, stdio: 'pipe' })
-  execFileSync('git', ['commit', '-m', 'base'], { cwd: target, stdio: 'pipe' })
+// Creating the fork has no local side effect: the flow passes --clone=false and
+// clones the fork by name in a separate step, so the checkout path is its own.
+if (args[0] === 'repo' && args[1] === 'fork') { process.exit(0) }
+if (args[0] === 'repo' && args[1] === 'sync') { process.exit(${options.syncFails ? 1 : 0}) }
+if (args[0] === 'pr' && args[1] === 'list') {
+  ${options.existingPr ? `console.log(${JSON.stringify(options.existingPr)})` : ""}
   process.exit(0)
 }
 if (args[0] === 'pr' && args[1] === 'create') {
@@ -109,7 +110,11 @@ process.exit(0)
   chmodSync(file, 0o755)
 }
 
-/** `git push` has nowhere to go in a test; stub it and let everything else be real. */
+/**
+ * `git push` has nowhere to go in a test; stub it and let everything else be
+ * real. The stub records what it was asked to push, because how the branch is
+ * pushed is itself behavior worth pinning.
+ */
 function fakeGitPush(bin: string): void {
   const file = join(bin, 'git')
   const realGit = execFileSync('which', ['git'], { encoding: 'utf8' }).trim()
@@ -117,8 +122,16 @@ function fakeGitPush(bin: string): void {
     file,
     `#!/usr/bin/env node
 const { spawnSync } = require('node:child_process')
+const fs = require('node:fs')
 const args = process.argv.slice(2)
-if (args.includes('push')) process.exit(0)
+if (args.includes('push')) {
+  const record = { calls: [], pushes: [] }
+  try { Object.assign(record, JSON.parse(fs.readFileSync(process.env.CAPTURE_FILE, 'utf8'))) } catch {}
+  record.pushes = record.pushes || []
+  record.pushes.push(args)
+  fs.writeFileSync(process.env.CAPTURE_FILE, JSON.stringify(record))
+  process.exit(0)
+}
 const result = spawnSync(${JSON.stringify(realGit)}, args, { stdio: 'inherit' })
 process.exit(result.status ?? 1)
 `
@@ -246,6 +259,115 @@ describe('contribute', { timeout: 30_000 }, () => {
     expect(recorded.calls.some(call => call[0] === 'repo' && call[1] === 'clone')).toBe(true)
     expect(recorded.calls.some(call => call[0] === 'repo' && call[1] === 'fork')).toBe(false)
     expect(recorded.prFiles?.some(file => file.startsWith('blueprints/fixture-shop/'))).toBe(true)
+  })
+
+  it('syncs the fork from upstream before branching off it', async () => {
+    // A fork left from an earlier contribution keeps whatever `main` it had
+    // then. Branching off that stale history puts unrelated commits — or a
+    // conflict — into the pull request.
+    const model = temporary('bl-contribute-sync-model-')
+    const bin = temporary('bl-contribute-sync-bin-')
+    const capture = join(temporary('bl-contribute-sync-capture-'), 'gh.json')
+
+    cpSync(FIXTURE, model, { recursive: true })
+    initialize(model)
+    fakeGh(bin, capture)
+    fakeGitPush(bin)
+
+    const previousPath = process.env.PATH
+    process.env.PATH = `${bin}${delimiter}${previousPath || ''}`
+    process.env.CAPTURE_FILE = capture
+    writeFileSync(capture, '{}')
+    vi.spyOn(console, 'log').mockImplementation(() => undefined)
+
+    try {
+      expect(await runContribute(model, { slug: 'fixture-shop', yes: true })).toBe(0)
+    } finally {
+      process.env.PATH = previousPath
+      delete process.env.CAPTURE_FILE
+    }
+
+    const recorded = JSON.parse(readFileSync(capture, 'utf8')) as { calls: string[][] }
+    const index = (first: string, second: string) =>
+      recorded.calls.findIndex(call => call[0] === first && call[1] === second)
+
+    const sync = recorded.calls.find(call => call[0] === 'repo' && call[1] === 'sync')
+    expect(sync).toEqual(['repo', 'sync', 'contributor/pdd', '--source', 'businesslens/pdd', '--branch', 'main', '--force'])
+
+    // Order is the whole point: syncing after the clone would fix nothing.
+    expect(index('repo', 'fork')).toBeLessThan(index('repo', 'sync'))
+    expect(index('repo', 'sync')).toBeLessThan(index('repo', 'clone'))
+  })
+
+  it('force-pushes its own branch, and reports an existing pull request', async () => {
+    // Every run rebuilds from upstream main, so a revised submission always
+    // diverges from whatever the previous attempt left on `blueprint/<slug>`.
+    // GitHub also rejects a second pull request for a branch that already has
+    // one — and by then the push has already updated it.
+    const model = temporary('bl-contribute-again-model-')
+    const bin = temporary('bl-contribute-again-bin-')
+    const capture = join(temporary('bl-contribute-again-capture-'), 'gh.json')
+
+    cpSync(FIXTURE, model, { recursive: true })
+    initialize(model)
+    fakeGh(bin, capture, { existingPr: 'https://github.com/businesslens/pdd/pull/7' })
+    fakeGitPush(bin)
+
+    const previousPath = process.env.PATH
+    process.env.PATH = `${bin}${delimiter}${previousPath || ''}`
+    process.env.CAPTURE_FILE = capture
+    writeFileSync(capture, '{}')
+    const logs: string[] = []
+    vi.spyOn(console, 'log').mockImplementation(message => { logs.push(String(message)) })
+
+    try {
+      expect(await runContribute(model, { slug: 'fixture-shop', yes: true })).toBe(0)
+    } finally {
+      process.env.PATH = previousPath
+      delete process.env.CAPTURE_FILE
+    }
+
+    const recorded = JSON.parse(readFileSync(capture, 'utf8')) as { calls: string[][], pushes?: string[][] }
+    const push = recorded.pushes?.find(args => args.includes('push'))
+    expect(push).toContain('--force')
+    expect(push).toContain('HEAD:refs/heads/blueprint/fixture-shop')
+
+    // The head is qualified with the fork owner, or GitHub cannot find it.
+    expect(recorded.calls.find(call => call[0] === 'pr' && call[1] === 'list'))
+      .toContain('contributor:blueprint/fixture-shop')
+
+    expect(logs.join('\n')).toContain('Updated https://github.com/businesslens/pdd/pull/7')
+    expect(recorded.calls.some(call => call[0] === 'pr' && call[1] === 'create')).toBe(false)
+  })
+
+  it('refuses rather than contributing from a fork it could not sync', async () => {
+    const model = temporary('bl-contribute-stale-model-')
+    const bin = temporary('bl-contribute-stale-bin-')
+    const capture = join(temporary('bl-contribute-stale-capture-'), 'gh.json')
+
+    cpSync(FIXTURE, model, { recursive: true })
+    initialize(model)
+    fakeGh(bin, capture, { syncFails: true })
+    fakeGitPush(bin)
+
+    const previousPath = process.env.PATH
+    process.env.PATH = `${bin}${delimiter}${previousPath || ''}`
+    process.env.CAPTURE_FILE = capture
+    writeFileSync(capture, '{}')
+    vi.spyOn(console, 'log').mockImplementation(() => undefined)
+    const errors: string[] = []
+    vi.spyOn(console, 'error').mockImplementation(message => { errors.push(String(message)) })
+
+    try {
+      expect(await runContribute(model, { slug: 'fixture-shop', yes: true })).toBe(1)
+    } finally {
+      process.env.PATH = previousPath
+      delete process.env.CAPTURE_FILE
+    }
+
+    expect(errors.join('\n')).toContain('Could not bring contributor/pdd up to date')
+    const recorded = JSON.parse(readFileSync(capture, 'utf8')) as { calls: string[][] }
+    expect(recorded.calls.some(call => call[0] === 'pr' && call[1] === 'create')).toBe(false)
   })
 
   it('refuses without an authenticated GitHub CLI, before touching anything', async () => {

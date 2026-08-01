@@ -30,6 +30,24 @@ Product Model looks like or how it is validated.
   inserted the **brownfield** block, telling agents to read `codeRefs` for
   current behavior in a repository that had neither code nor `codeRefs`.
 
+### Fixed
+
+- **`contribute` no longer branches off a stale fork.** A fork left from an
+  earlier contribution kept whatever default branch it had then, and nothing
+  synced it — so a second contribution could open a pull request carrying
+  unrelated commits or a conflict. The fork's default branch is now brought up
+  to date from upstream before branching, and the command stops rather than
+  proceeding if that fails.
+- **`contribute` can be run twice for the same Blueprint.** The
+  `blueprint/<slug>` branch is force-pushed — it is owned by the command on the
+  contributor's own fork — and an already-open pull request is reported and
+  updated instead of failing.
+- `contribute` no longer depends on the fork's directory name to find its
+  checkout, which broke for anyone who had renamed theirs. It forks with
+  `--clone=false` and clones by name into a path it controls.
+- `contribute` now says that forking left a repository behind, and that GitHub
+  needs it until the Blueprint is merged.
+
 ### Changed
 
 - **`export`, `open`, and `pull` moved under `businesslens blueprint`.** All

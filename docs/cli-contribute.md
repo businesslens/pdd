@@ -41,13 +41,42 @@ you do, because GitHub refuses to let one account own both a parent and a fork.
 
 1. Resolves and loads the Product Model, and validates it. Errors stop the run;
    draft warnings do not, because a Blueprint is an unimplemented model.
-2. Exports a Product Report and applies source redaction.
-3. **Regenerates the model from the redacted report.** This is what goes in the
+2. Exports a Blueprint — the model with every `codeRef` stripped.
+3. **Regenerates the model from that Blueprint.** This is what goes in the
    pull request.
 4. Derives the slug from `--slug`, or from the product id.
-5. Writes `blueprints/<slug>/{blueprint.yaml,.businesslens/}` on a
-   `blueprint/<slug>` branch of your fork.
-6. Opens the pull request and prints its URL.
+5. Forks `businesslens/pdd` if you have no fork yet, brings its default branch
+   up to date with upstream, and clones it.
+6. Writes `blueprints/<slug>/{blueprint.yaml,.businesslens/}` on a
+   `blueprint/<slug>` branch.
+7. Opens the pull request and prints its URL.
+
+## Your own repository is never touched
+
+Every step above happens in a temporary directory that is deleted when the
+command finishes. Your repository is only ever **read** — it never gains a
+branch, a remote, a commit, or a copy of anything from the catalog.
+
+Its layout does not matter either. Step 3 rebuilds the model in canonical form
+rather than copying your files, so a Product Model contributes the same way
+whether it sits at the root of a tiny repository or deep inside a monorepo.
+
+## Contributing more than once
+
+Revising a Blueprint is the same command again.
+
+- The fork's default branch is **synced from upstream** before branching, so a
+  fork left from an earlier contribution cannot drag stale history into the
+  pull request. If it cannot be synced, the command stops rather than opening a
+  pull request full of unrelated changes.
+- The `blueprint/<slug>` branch is **force-pushed**. It is owned by this
+  command on your own fork, and nothing else is ever pushed to it.
+- If a pull request for that branch is already open, the push updates it and
+  the command reports that URL rather than failing.
+
+Forking leaves a repository in your GitHub account. GitHub needs it to keep the
+pull request open, so leave it there until the Blueprint is merged — after that
+it is yours to delete.
 
 ## Why the model is regenerated
 
