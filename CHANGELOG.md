@@ -63,17 +63,23 @@ Product Model looks like or how it is validated.
 
 ### Changed
 
-- **A Blueprint is now defined as a Product Model with no source evidence** —
-  no `codeRefs`, no repository-relative links or entry points. It previously
-  meant "a Product Model curated into the public catalog"; that concept is now
-  a **Catalog Entry**, and the `listed` / `withdrawn` states belong to it. The
-  test is structural: does the artifact cite this checkout's files? See
-  [adr/0002](./adr/0002-blueprint-means-source-free.md).
+- **A Product Report has two profiles**, and *source-free* is one of them
+  rather than a separate kind of artifact:
 
-  The catalog wire contract keeps the old vocabulary — `/api/v1/blueprints/:slug`
-  and `x-businesslens-blueprint` name what the glossary now calls a Catalog
-  Entry — because renaming it would be a coordinated change with the hosted
-  catalog for no user-visible benefit.
+  - **source-free** (`coverage.evidenceRedacted: true`) — no `codeRefs`, no
+    repository-relative links or entry points. Required whenever a report
+    crosses an ownership boundary, and the only profile the catalog accepts.
+  - **evidenced** — `codeRefs` intact, for a full product instance inside the
+    boundary that owns the code.
+
+  **Blueprint** keeps its existing meaning: a Product Report curated into the
+  public catalog, under a slug. See
+  [adr/0003](./adr/0003-source-free-is-a-report-profile.md), which supersedes
+  ADR-0002 and withdraws the short-lived **Catalog Entry** term.
+
+  No behavior changes: `blueprint export` still redacts, and the wire contract
+  is untouched. This restores agreement with the landing repository's
+  `CONTEXT.md`, which requires the two glossaries to match.
 - **`export`, `open`, `pull`, and `contribute` moved under `businesslens
   blueprint`.** Each of the four produces or consumes a Blueprint — export
   makes one, open consumes one, pull fetches one, contribute submits one — and

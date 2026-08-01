@@ -1,4 +1,15 @@
+---
+status: superseded by ADR-0003
+---
+
 # A Blueprint is a source-free Product Model
+
+> **Superseded by [ADR-0003](./0003-source-free-is-a-report-profile.md).** A
+> Product Report will not always be source-free — exporting a full product
+> instance keeps its evidence — so redaction is a profile a report can be in,
+> not the identity of a Blueprint. Blueprint returns to meaning a Product Report
+> curated into the catalog, and Catalog Entry is withdrawn. The decision below
+> is kept for the reasoning it records; its vocabulary is no longer in force.
 
 **Blueprint** used to mean "a Product Model curated into the public catalog."
 It now means "a Product Model with no source evidence" — no `codeRefs`, no

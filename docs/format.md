@@ -384,7 +384,7 @@ files are derived artifacts and must not be edited or committed.
 contains the product entities, relationships, intent, links, supporting
 content, and coverage needed to reconstruct the model.
 
-It carries **no source evidence**: `export` strips every `codeRef`, every
+As written by `blueprint export` it carries the **source-free profile**: every `codeRef`, every
 repository-relative link, and every repository-relative entry point, and sets
 `coverage.evidenceRedacted`. It also contains no repository URL, branch,
 commit, catalog listing state, pricing, or entitlement data. A report that has

@@ -1,6 +1,6 @@
 ---
 title: blueprint export
-description: Compile a Product Model into a Blueprint — the same behavior with this repository's code evidence removed.
+description: Compile a Product Model into a source-free Product Report — the same behavior with this repository's code evidence removed.
 section: open-source
 group: CLI
 order: 22
@@ -8,24 +8,25 @@ order: 22
 
 # `businesslens blueprint export`
 
-Compile `.businesslens/` into a **Blueprint**:
+Compile `.businesslens/` into a **source-free Product Report**:
 
 ```bash
 npx businesslens@latest blueprint export
 ```
 
-The Blueprint is written to `.businesslens/build/report.json`. It is a
-generated artifact: gitignored, never edited, and regenerated on every run.
+The report is written to `.businesslens/build/report.json`. It is a generated
+artifact: gitignored, never edited, and regenerated on every run. It is the
+profile the catalog accepts, which is what makes it a Blueprint once merged.
 
 ## No code evidence leaves this repository
 
 Export strips every `codeRef`, along with repository-relative links and entry
 points. A `codeRef` names a path in *this* checkout and proves nothing in any
-other, so a Blueprint states what the product does without claiming where any
-of it lives.
+other, so the report states what the product does without claiming where any of
+it lives.
 
-Coverage keeps its `mapped` counts, so a Blueprint still records how much of
-the original model was evidence-backed — just not by what.
+Coverage keeps its `mapped` counts, so the report still records how much of the
+original model was evidence-backed — just not by what.
 
 `export` validates before it compiles. A model with validation errors does not
 produce a report; a draft model with missing-evidence warnings does.

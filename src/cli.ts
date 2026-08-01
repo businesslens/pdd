@@ -20,7 +20,7 @@ Commands:
   validate [--json]           Validate the .businesslens/ product model
 
 Blueprint commands (moving a model between repositories):
-  blueprint export                    Compile .businesslens/ into a Blueprint
+  blueprint export                    Compile .businesslens/ into a source-free report
   blueprint open <report> [--force]   Expand a Blueprint into .businesslens/
   blueprint pull <name> [--force]     Pull a Blueprint from the catalog
   blueprint contribute [--yes]        Propose this Blueprint for the catalog
@@ -162,6 +162,12 @@ async function main(): Promise<number> {
       // Deprecated alias kept through 0.6.x. `build` is purely local, so
       // renaming it would break CI scripts that nothing else in this release
       // touches.
+      //
+      // Note for whoever removes the bare aliases: do not reuse `export` at the
+      // top level in the same release. It redacts today, and a future top-level
+      // `export` means the evidenced profile — the same command silently
+      // beginning to carry source paths is the worst direction for a
+      // disclosure-relevant default. See adr/0003.
       console.warn('`businesslens build` is deprecated; use `businesslens blueprint export`.')
       return runExport(cwd)
     case 'contribute':

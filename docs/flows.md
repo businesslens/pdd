@@ -132,9 +132,9 @@ inherited, evidence that looks stale in ways a validator can't detect.
 | Hand the model to another repository | `npx businesslens blueprint export`, then `npx businesslens blueprint open <report>` in the target |
 | Propose it for the public catalog | `/businesslens-contribute` |
 
-Both produce a **Blueprint** — the same product behavior with this
-repository's code evidence removed, because those paths prove nothing anywhere
-else. Contributing opens a public pull request under your own GitHub identity;
+Both produce a **source-free Product Report** — the same product behavior with
+this repository's code evidence removed, because those paths prove nothing
+anywhere else. A report becomes a **Blueprint** when the catalog accepts it. Contributing opens a public pull request under your own GitHub identity;
 it is never automatic, and nothing else in BusinessLens sends your model
 anywhere.
 

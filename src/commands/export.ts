@@ -199,10 +199,12 @@ export function buildProject(cwd: string): BuildOutcome {
     throw new Error(`Validation failed:\n${result.errors.map(error => `- ${error}`).join('\n')}`)
   }
   const today = new Date().toISOString().slice(0, 10)
-  // Export produces a Blueprint, and a Blueprint carries no source evidence:
-  // `codeRefs` name paths in *this* repository, which prove nothing anywhere
-  // else. `contribute` and `open` each redacted separately before; doing it
-  // once, here, means every consumer of the artifact gets the same guarantee.
+  // Export emits the source-free profile: no `codeRefs`, because they name
+  // paths in *this* repository and prove nothing anywhere else. That is the
+  // only profile the catalog accepts, and this command exists to feed it.
+  // `contribute` and `open` each redacted separately before; doing it once,
+  // here, means every consumer gets the same guarantee. See adr/0003 — an
+  // evidenced profile is a future top-level `export`, not a flag on this one.
   const report = redactSourceEvidence(compileReport(model, tracked.length, today))
 
   const outputFile = writeGeneratedFile(

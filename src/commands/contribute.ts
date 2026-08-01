@@ -141,8 +141,8 @@ export async function runContribute(cwd: string, options: ContributeOptions): Pr
       )
     }
 
-    // `buildProject` already redacts — every export is a Blueprint now. This
-    // second pass is deliberate rather than leftover: it is the only path that
+    // `buildProject` already emits the source-free profile. This second pass
+    // is deliberate rather than leftover: it is the only path that
     // publishes the user's model to a public repository, redaction is
     // idempotent, and the guarantee should not depend on a caller further up
     // continuing to hold.
