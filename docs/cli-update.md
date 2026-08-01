@@ -3,7 +3,7 @@ title: update
 description: Refresh only BusinessLens-managed skill installations in project or global scope.
 section: open-source
 group: CLI
-order: 24
+order: 20
 ---
 
 # `businesslens update`

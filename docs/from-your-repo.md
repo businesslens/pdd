@@ -1,12 +1,12 @@
 ---
-title: Map existing code
-description: Build an evidence-backed product model of what your product does today.
+title: From your repo
+description: You have code and no shared model. Build an evidence-backed Product Model of what the product does today.
 section: open-source
-group: Tutorials
-order: 9
+group: Get started
+order: 3
 ---
 
-# Map an existing product
+# Start from your repo
 
 **Goal:** an evidence-backed `.businesslens/` Product Model of what your product does
 today, so agents and reviewers start from product context instead of
@@ -61,4 +61,4 @@ GitHub Copilot).
 
 `npx businesslens validate` is green; the model describes today's product
 with evidence. From here, plan every new feature with
-[the feature loop](./tutorial-ship-a-feature.md).
+the loop in [Find your flow](./flows.md).

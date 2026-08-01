@@ -3,7 +3,7 @@ title: plan
 description: Plan a product or feature directly in the model before implementation — guided greenfield definition or quick/thorough feature planning.
 section: open-source
 group: Skills
-order: 16
+order: 12
 ---
 
 # `businesslens-plan`
@@ -66,5 +66,5 @@ unevidenced journeys and scenarios. Implement, then run
   retires it.
 - Never implements, executes target code, or submits the Product Model.
 
-Tutorials: [Plan a new product](./tutorial-plan-new-product.md) ·
-[Ship a feature](./tutorial-ship-a-feature.md).
+Tutorials: [Plan a new product](./from-an-idea.md) ·
+[Find your flow](./flows.md).

@@ -3,7 +3,7 @@ title: blueprint open
 description: Expand a Blueprint held in a local file into a canonical draft Product Model.
 section: open-source
 group: CLI
-order: 27
+order: 23
 ---
 
 # `businesslens blueprint open`

@@ -3,7 +3,7 @@ title: The product model
 description: What actors, experiences, domains, features, journeys, scenarios, business rules, intent, and decision points mean in a BusinessLens product model.
 section: open-source
 group: Concepts
-order: 6
+order: 7
 ---
 
 # The product model
@@ -99,8 +99,31 @@ without inventing another relationship graph.
 Every journey and scenario cites tracked code with compact `codeRefs`
 (`src/services/orders.ts#OrderService.submit`). The validator checks every
 path against `git ls-files`, which is what keeps the model from drifting into
-fiction. A claim without evidence is, by definition, unfinished work — see
-[How it works](./guide.md) for how that powers planning.
+fiction. A claim without evidence is, by definition, unfinished work — which is
+what makes planning possible without inventing anything to hold it.
+
+## Git is the change model
+
+Planning needs no folder of its own, no lifecycle, and no status fields. Git
+already has all three:
+
+- **A plan is a branch**, where the model describes intended behavior. New
+  journeys and scenarios have no `codeRefs` yet, so `validate` lists them —
+  that is the evidence checklist, not a problem to suppress. The model diff is
+  the complete plan, including changed and deleted entities.
+- **Review is the pull request.** The model diff shows the product delta, so
+  reviewers approve behavior before or alongside the code.
+- **Done is validation green**, with every claim carrying evidence.
+- **The archive is git history.**
+
+One state is special: a brand-new product with no code at all. `coverage.md`
+`status: draft` marks the whole model as planned, downgrading missing evidence
+to warnings so the draft validates green. A draft can be exported or proposed
+to the catalog with its gaps still visible. Once evidence is attached and
+coverage leaves draft, evidence is strictly required from then on.
+
+[Find your flow](./flows.md) turns this into the four situations you can
+actually be in.
 
 ## Coverage — how honest the model is
 

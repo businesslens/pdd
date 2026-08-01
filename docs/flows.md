@@ -2,8 +2,8 @@
 title: Find your flow
 description: Every situation you can be in with a Product Model, and what to do about it — starting from existing code, from nothing, or from a Blueprint.
 section: open-source
-group: Get started
-order: 4
+group: Concepts
+order: 6
 ---
 
 # Find the flow you're in
@@ -140,7 +140,6 @@ anywhere.
 
 ## Where to go next
 
-- [Quickstart](./quickstart.md) — install the skills and walk the loop once
-- [How it works](./guide.md) — why the loop is shaped this way
+- [The product model](./product-model.md) — what the model holds, and why git is the change model
 - [Skills overview](./skills.md) — what each skill reads, writes, and refuses to do
 - [CLI reference](./cli.md) — every command and option

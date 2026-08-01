@@ -3,7 +3,7 @@ title: validate
 description: Validate Product Model structure, relationships, taxonomy, and repository evidence.
 section: open-source
 group: CLI
-order: 25
+order: 21
 ---
 
 # `businesslens validate`

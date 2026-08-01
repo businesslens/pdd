@@ -3,7 +3,7 @@ title: blueprint pull
 description: Pull a Blueprint from the public catalog into the current directory.
 section: open-source
 group: CLI
-order: 28
+order: 24
 ---
 
 # `businesslens blueprint pull`
@@ -96,4 +96,4 @@ npx businesslens@latest blueprint pull content-feed-reader
 
 Then either hand the directory to a coding agent and ask it to build the
 product, or refine the model first with `businesslens-plan` and build after. See
-[Build from a Blueprint](./tutorial-build-from-a-blueprint.md).
+[Build from a Blueprint](./from-a-blueprint.md).

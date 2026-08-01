@@ -71,4 +71,5 @@ Claude Code users may alternatively install from this repository's
 marketplace manifest. The standalone CLI remains the primary installation
 experience.
 
-Next: the [Quickstart](./quickstart.md).
+Next, pick your door: [From your repo](./from-your-repo.md),
+[From a Blueprint](./from-a-blueprint.md), or [From an idea](./from-an-idea.md).

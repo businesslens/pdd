@@ -3,7 +3,7 @@ title: sync
 description: Reconcile the Product Model with the code — attach evidence where they already agree, and settle everything else one decision at a time.
 section: open-source
 group: Skills
-order: 17
+order: 13
 ---
 
 # `businesslens-sync`
@@ -85,4 +85,4 @@ left. It repeats until the queue is empty.
 - Never copies prescriptive SDD text into the descriptive model.
 - Never submits or contributes the Product Model.
 
-Tutorial: [Recover from drift](./tutorial-recover-from-drift.md).
+Every situation it covers: [Find your flow](./flows.md).

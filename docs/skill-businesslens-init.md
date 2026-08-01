@@ -3,7 +3,7 @@ title: init
 description: Build the initial evidence-backed product model by inspecting an existing codebase.
 section: open-source
 group: Skills
-order: 15
+order: 11
 ---
 
 # `businesslens-init`
@@ -57,4 +57,4 @@ finishes `coverage.md` honestly, and runs
   [`businesslens-sync`](./skill-businesslens-sync.md)'s job).
 - Never submits or contributes the Product Model.
 
-Tutorial: [Map existing code](./tutorial-map-existing-product.md).
+Tutorial: [Map existing code](./from-your-repo.md).

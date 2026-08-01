@@ -106,14 +106,12 @@ installation experience.
 
 Learn the flow:
 
-- [Introduction](./docs/index.md) · [Installation](./docs/installation.md) ·
-  [Quickstart](./docs/quickstart.md) · [Find your flow](./docs/flows.md)
-- [How it works](./docs/guide.md) · [The product model](./docs/product-model.md) ·
+- [Introduction](./docs/index.md) · [Installation](./docs/installation.md)
+- Pick a door: [From your repo](./docs/from-your-repo.md) ·
+  [From a Blueprint](./docs/from-a-blueprint.md) ·
+  [From an idea](./docs/from-an-idea.md)
+- [Find your flow](./docs/flows.md) · [The product model](./docs/product-model.md) ·
   [Terminology](./docs/terminology.md)
-- [Map existing code](./docs/tutorial-map-existing-product.md)
-- [Plan a new product](./docs/tutorial-plan-new-product.md)
-- [Ship a feature](./docs/tutorial-ship-a-feature.md)
-- [Recover from drift](./docs/tutorial-recover-from-drift.md)
 
 Reference:
 

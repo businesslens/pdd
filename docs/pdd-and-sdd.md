@@ -3,7 +3,7 @@ title: PDD ♥ SDD
 description: How Product-Driven Development coexists with spec-driven development frameworks like OpenSpec and spec-kit.
 section: open-source
 group: Concepts
-order: 8
+order: 9
 ---
 
 # PDD ♥ SDD

@@ -3,7 +3,7 @@ title: Terminology
 description: A glossary of every BusinessLens product-model entity and the supporting concepts that connect them.
 section: open-source
 group: Concepts
-order: 7
+order: 8
 ---
 
 # BusinessLens terminology

@@ -3,7 +3,7 @@ title: ideate
 description: Propose candidate product directions, as a shortlist to choose from. The only skill that never writes.
 section: open-source
 group: Skills
-order: 20
+order: 16
 ---
 
 # `businesslens-ideate`

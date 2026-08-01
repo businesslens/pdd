@@ -1,12 +1,12 @@
 ---
-title: Build from a Blueprint
-description: Pull a curated Product Model from the catalog and turn it into working software.
+title: From a Blueprint
+description: You want a reviewed starting point. Pull a curated Product Model from the catalog and build from it.
 section: open-source
-group: Tutorials
-order: 13
+group: Get started
+order: 4
 ---
 
-# Build from a Blueprint
+# Start from a Blueprint
 
 The fastest path from nothing to a working product: start from a Product Model
 someone already got right.
@@ -96,5 +96,5 @@ the code.
 
 ## Where to go next
 
-- [Ship a feature](./tutorial-ship-a-feature.md) — the loop, on a live model.
+- [Find your flow](./flows.md) — every situation a live model can be in.
 - [Contributing a Blueprint](./contributing-blueprints.md) — propose your own.

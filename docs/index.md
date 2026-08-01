@@ -8,12 +8,16 @@ order: 1
 
 # Introduction
 
-**BusinessLens is Product-Driven Development (PDD) for coding agents.** It keeps
-one artifact: a git-tracked product model in `.businesslens/` — who the
+**Product-Driven Development is a practice: plan behavior into a Product Model,
+implement from that model, and check the evidence when the code lands.**
+
+**BusinessLens is the open-source implementation of it** — an open format, a
+CLI, and a set of agent skills that create and maintain the model. It keeps one
+artifact: a git-tracked Product Model in `.businesslens/` describing who the
 product serves, what they accomplish, and where the code proves it.
 
-The model is Markdown, reviewable in pull requests, and useful without a
-hosted service.
+The model is Markdown, reviewable in pull requests, MIT licensed, and fully
+useful without the catalog or any hosted service.
 
 ```text
 .businesslens/
@@ -67,5 +71,5 @@ Code changed without a plan? `/businesslens-sync` repairs the model.
 | The catalog (optional) | A curated, anonymously browsable collection of Blueprints at [businesslens.io/blueprints](https://businesslens.io/blueprints) — pull one and build from it |
 | [Find your flow](./flows.md) | Every situation a model can be in, and which surface handles it |
 
-Start with the [Quickstart](./quickstart.md), then read
-[How BusinessLens works](./guide.md).
+Pick the door that matches where you are: [From your repo](./from-your-repo.md),
+[From a Blueprint](./from-a-blueprint.md), or [From an idea](./from-an-idea.md).
