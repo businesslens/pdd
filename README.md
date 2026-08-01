@@ -74,7 +74,7 @@ BusinessLens has two deliberate surfaces:
 | --- | --- | --- |
 | Terminal | `npx businesslens install` | Install the agent skills |
 | Terminal | `npx businesslens update` | Refresh managed skill installations |
-| Terminal | `npx businesslens validate` | Deterministically validate the model |
+| Terminal | `npx businesslens validate` | Gate CI, and see where a branch stands. Skills run it for you |
 | Terminal | `npx businesslens blueprint export` | Compile the model into a Blueprint |
 | Terminal | `npx businesslens blueprint pull <name>` | Anonymously pull a catalog Blueprint into a Product Model |
 | Terminal | `npx businesslens blueprint open <report>` | Expand a Blueprint into a Product Model |

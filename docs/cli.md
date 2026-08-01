@@ -26,7 +26,7 @@ npx businesslens@latest <command> [options]
 | --- | --- |
 | [`install`](./cli-install.md) | Install the seven bundled BusinessLens skills into one or more AI harnesses |
 | [`update`](./cli-update.md) | Refresh BusinessLens-managed skill installations |
-| [`validate`](./cli-validate.md) | Check the structure, relationships, and code evidence in `.businesslens/` |
+| [`validate`](./cli-validate.md) | Check the structure, relationships, and code evidence in `.businesslens/`, and report where a branch stands. Skills and CI run it for you |
 | [`blueprint export`](./cli-export.md) | Compile `.businesslens/` into a Blueprint |
 | [`blueprint contribute`](./cli-contribute.md) | Propose this Blueprint for the catalog, by pull request |
 | [`blueprint pull`](./cli-pull.md) | Anonymously pull a Blueprint by canonical name |

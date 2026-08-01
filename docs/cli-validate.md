@@ -18,7 +18,39 @@ The command must run inside a Git repository that contains a
 `.businesslens/` directory. It loads the model, compares repository evidence
 with `git ls-files`, prints every finding, and exits without changing files.
 
-Validation checks include:
+## When it runs itself
+
+Most of the time you never type this. Validation is the shared authority, so
+everything that touches the model defers to it:
+
+| What | When | Why |
+| --- | --- | --- |
+| **Every skill** | on entry, and again until green | so no skill decides for itself what a valid model is |
+| **`blueprint export`** | before compiling | an invalid model never becomes a Blueprint |
+| **`blueprint contribute`** | before opening the pull request | an invalid model never reaches the catalog |
+| **CI** | every pull request | the merge gate — see [Validate in CI](./ci.md) |
+
+Setting up the CI workflow is a one-time job. After that, a model that stops
+being sound fails the pull request whether or not anyone remembered to check.
+
+## When you run it yourself
+
+Four reasons, and only the first is routine:
+
+1. **"Where do I stand?"** — the branch picture below. This is the main reason
+   to type it: what moved, and what to do next.
+2. **You edited `.businesslens/` by hand.** Skills validate their own work;
+   nothing has checked yours.
+3. **Before pushing**, when you would rather know now than wait for CI.
+4. **Reproducing a CI failure** locally, with exactly the output CI saw.
+
+If you only ever change the model through skills and let CI gate your pull
+requests, you can go a long time without running it — and nothing will slip
+through.
+
+## What it checks
+
+Validation covers:
 
 - required top-level files and parseable, schema-conforming frontmatter;
 - lowercase kebab-case IDs and globally unique scenario IDs;
@@ -107,6 +139,13 @@ The output shape is:
     "journeys": 3,
     "scenarios": 8,
     "businessRules": 4
+  },
+  "branch": {
+    "base": "main",
+    "branch": "feat/guest-checkout",
+    "modelFiles": 3,
+    "codeFiles": 11,
+    "situation": "implemented"
   }
 }
 ```
@@ -114,3 +153,11 @@ The output shape is:
 `ok` is true whenever `errors` is empty, even when warnings remain. This
 format is suitable for CI and other automated consumers; see
 [Validate in CI](./ci.md) for a complete workflow.
+
+`branch` is the machine-readable form of [where you
+stand](#where-you-stand), and `situation` is one of `at-rest`, `planned`,
+`implemented`, or `unplanned-code`. It is how
+[`businesslens-sync`](./skill-businesslens-sync.md) works out what you did
+without asking. The key is **absent** whenever the answer cannot be trusted, so
+consumers should treat it as optional; `ok`, `errors`, `warnings`, and `counts`
+are always present.

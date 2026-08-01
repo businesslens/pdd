@@ -93,7 +93,13 @@ a small or obvious change is often faster to make and then record.
 | One area of the model is described too thinly | `/businesslens-deep-dive <id>` |
 | You don't know what to build next | `/businesslens-ideate` |
 
-`validate` answers both questions at once. It checks the model against the
+**You rarely type `validate` yourself.** Every skill runs it, `blueprint
+export` and `blueprint contribute` run it before they produce anything, and CI
+runs it on every pull request. Type it when you want the picture below, when
+you edited `.businesslens/` by hand, or to reproduce a CI failure locally.
+[Full breakdown](./cli-validate.md#when-it-runs-itself).
+
+When you do, it answers both questions at once. It checks the model against the
 format contract — the deterministic gate, the one to run in [CI](./ci.md), and
 it needs no agent — and then tells you which of the four rows above you are in:
 
