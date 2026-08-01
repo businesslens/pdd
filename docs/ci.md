@@ -22,6 +22,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Optional. `validate` also reports which files moved on this branch
+          # against the default one, and needs history to work that out.
+          # Without it the check still runs and gates exactly the same; you
+          # just lose that part of the output.
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 22

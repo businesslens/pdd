@@ -1,4 +1,6 @@
+import { join } from 'node:path'
 import type { PddModel } from '../core/model.js'
+import { branchState, describeBranchState } from '../core/branch-state.js'
 import { lsFiles } from '../core/git.js'
 import { isId } from '../core/ids.js'
 import { loadModel } from '../core/model.js'
@@ -206,13 +208,27 @@ export function runValidate(cwd: string, json: boolean): number {
   // codeRefs are resolved against tracked files, which only a repository has.
   // Outside one the tracked set is empty, so every codeRef is reported unknown.
   const result = validateModel(model, gitRoot ? lsFiles(gitRoot) : [])
+  const state = branchState(cwd, join(modelRoot, '.businesslens'))
   if (json) {
-    console.log(JSON.stringify(result, null, 2))
+    // Additive only. `ok`, `errors`, `warnings`, `counts`, and the exit code
+    // are the CI contract and do not move. `branch` is here so a skill can
+    // route on `situation` rather than re-deriving it from git or, worse,
+    // parsing the prose below. Absent whenever the answer cannot be trusted.
+    console.log(JSON.stringify(state ? { ...result, branch: state } : result, null, 2))
   } else {
     for (const error of result.errors) console.error(`error: ${error}`)
     for (const warning of result.warnings) console.warn(`warning: ${warning}`)
     const summary = Object.entries(result.counts).map(([key, value]) => `${value} ${key}`).join(', ')
     console.log(result.ok ? `Product Model is valid (${summary}).` : `Validation failed with ${result.errors.length} error(s).`)
+
+    // Soundness and standing are different questions, and the second one has no
+    // bearing on the exit code. Edit code without touching the model and this
+    // model still validates green — the drift is semantic, and no rule can see
+    // it. That gap is exactly what these lines cover.
+    if (state) {
+      console.log('')
+      for (const line of describeBranchState(state)) console.log(line)
+    }
   }
   return result.ok ? 0 : 1
 }

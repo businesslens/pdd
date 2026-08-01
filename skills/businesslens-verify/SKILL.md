@@ -14,25 +14,42 @@ verifying.
 
 ## Workflow
 
-1. Confirm the working directory is a Git repository with a `.businesslens/`
+1. Run `npx businesslens validate --json` and read `branch.situation`. Verify
+   checks an implementation against a **plan**, so it needs one to exist:
+   - `implemented` — the expected case. Continue.
+   - `planned` — the model describes a change nobody has written yet. Say so
+     and stop; there is nothing to verify until the code exists.
+   - `unplanned-code` — the code moved and the model did not, so there is no
+     plan to check it against. Direct the user to `businesslens-sync` and stop.
+   - `at-rest` — nothing changed on this branch. Ask what they expected to be
+     verified rather than proceeding.
+   - `branch` absent — no merge base to compare against, so the situation is
+     unknown rather than any of the above. Continue to step 3, which handles
+     that case.
+
+   Never override a `situation` on your own judgment. It is derived from git,
+   not inferred, and disagreeing with it means the working tree is not what you
+   think it is. A user who explicitly asks to verify anyway may of course
+   override it — say what you are overriding.
+2. Confirm the working directory is a Git repository with a `.businesslens/`
    Product Model. Never execute the repository's application, build, migrations, or
    tests; inspect files only. List untracked files with
    `git ls-files --others --exclude-standard`. If implementation evidence
    depends on an untracked file, stop and ask the user to stage or commit it;
    never change the index yourself. A `codeRef` can cite only a path already
    returned by `git ls-files`.
-2. Determine the comparison base: an explicit user-provided branch or ref
+3. Determine the comparison base: an explicit user-provided branch or ref
    first; otherwise the merge base with the default branch (for example
    `git merge-base HEAD origin/main`); on a repository with no base to
    compare against, treat the whole model as planned.
-3. Build the verification worklist, fresh on every run — the plan may have
+4. Build the verification worklist, fresh on every run — the plan may have
    evolved while implementing, so never reuse an earlier report:
    - every authored model file added, modified, **or deleted** in
      `git diff <base>...HEAD -- .businesslens/`, plus uncommitted model edits;
      retain the base version of a deleted entity as the removal contract;
    - independently, every journey and scenario lacking `codeRefs`
      (on a new `coverage: draft` model, that is initially the entire model).
-4. Verify every work item, not only extant scenarios:
+5. Verify every work item, not only extant scenarios:
    - for added or changed scenarios, treat Trigger, Steps, Outcome, and edge
      cases as the acceptance contract and trace the observable behavior;
    - for deleted entities, use the base version and its old evidence to prove
@@ -45,7 +62,7 @@ verifying.
      product-only changes with no implementation contract as model-only; never
      use that classification for observable access, entry-point, capability,
      rule, relationship, decision, or behavior changes.
-5. Record one verdict per work item:
+6. Record one verdict per work item:
    - **met** — direct implementation evidence proves the addition/change or
      proves the planned removal; attach `codeRefs` (prefer `path#symbol`) to
      extant scenarios and their journeys;
@@ -56,18 +73,18 @@ verifying.
    - **model-only** — no implementation change is required; identify the exact
      product or organizational decision and why source evidence does not
      apply.
-6. Where the implementation deliberately diverged and the user confirms it
+7. Where the implementation deliberately diverged and the user confirms it
    is intended, correct the entity prose to the implemented truth and note
    the correction in the report. Never silently rewrite the plan to match
    the code.
-7. Repair `codeRefs` the implementation invalidated on modified entities.
-8. On a draft model, update `coverage.md` honestly off `draft` (`partial` or
+8. Repair `codeRefs` the implementation invalidated on modified entities.
+9. On a draft model, update `coverage.md` honestly off `draft` (`partial` or
    `complete`) only after every planned journey and scenario has evidence and
    every implementation-bearing addition, change, and removal on the
    worklist is met, and every model-only item is explicitly classified.
    Refresh `method`, `sourceAreas`, `unmapped`, and `limitations`. Leave it
    `draft` while any gap or unverifiable verdict remains.
-9. Resolve `<businesslens-verify-skill-dir>` to this installed skill
+10. Resolve `<businesslens-verify-skill-dir>` to this installed skill
    directory, then run the bundled validator outside the untrusted target:
 
    ```bash
@@ -80,7 +97,7 @@ verifying.
    implementation-bearing work item is met, every model-only item is
    classified, coverage is no longer `draft`, validation has no errors, and
    no missing-evidence warning remains.
-10. Report in the conversation, grouped by journey and then other entity:
+11. Report in the conversation, grouped by journey and then other entity:
     met/gap/unverifiable/model-only per work item with the evidence cited,
     prose corrections made, coverage change, the validation result, and the
     next step — fix the gaps and re-run, or commit and open the pull request

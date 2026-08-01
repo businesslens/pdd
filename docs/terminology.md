@@ -133,16 +133,28 @@ feature is enabled, shipped, or deprecated.
 ## Artifacts that are not product entities
 
 - The **Product Model** is the complete `.businesslens/` source artifact that
-  contains the entities and their relationships.
-- A **Product Report** is the generated, source-free representation of that
-  model. It is a transport artifact and does not add another entity layer.
-- A **Blueprint** is a Product Model curated into the public catalog. It has a
-  slug, a stored Product Report, and a catalog record whose identity is
-  independent of that slug — a slug can be withdrawn and later reused for
-  something unrelated, and the result is a new Blueprint rather than the old one
-  returning. A local model is never automatically a Blueprint; it becomes one
-  when a pull request adding it is merged and a publish run pushes it.
-- The **catalog** is the public collection of Blueprints at
+  contains the entities and their relationships. It cites this repository's
+  code as evidence.
+- A **Blueprint** is a Product Model with **no source evidence** — the same
+  product behavior, with every `codeRef`, repository-relative link, and
+  repository-relative entry point removed. That is the whole test: a model
+  citing this checkout's files is a Product Model; one citing none is a
+  Blueprint. `businesslens blueprint export` produces one, and
+  `blueprint open` and `blueprint pull` expand one back into a Product Model.
+
+  A `codeRef` names a path in the repository that authored it and proves
+  nothing in any other, which is why a portable model cannot carry one.
+- A **Product Report** is the file format a Blueprint travels in:
+  `schemaVersion: "4.0.0"`, written to `build/report.json`. It is a
+  serialization, not another entity layer — every Product Report holds exactly
+  one Blueprint.
+- A **Catalog Entry** is a Blueprint the catalog stores under a slug. Its
+  identity is independent of that slug: a slug can be withdrawn and later
+  reused for something unrelated, and the result is a new entry rather than
+  the old one returning. A Blueprint is never automatically a Catalog Entry;
+  it becomes one when a pull request adding it is merged and a publish run
+  pushes it.
+- The **catalog** is the public collection of Catalog Entries at
   `businesslens.io/blueprints`. Browsing it and pulling from it are anonymous.
 - A **product map** is a visual or navigable view of the Product Model. It is
   not the `.businesslens/` artifact itself.
@@ -156,16 +168,18 @@ Each action has exactly one name.
 | Verb | Meaning |
 | --- | --- |
 | **ideate** | Propose candidate directions. Never writes to the model. |
-| **plan** | Turn a decided intent into entities. The only skill that authors model files. |
-| **implement** | Build the software the model describes, with its scenarios as the acceptance contract. |
-| **verify** | Attach implementation evidence once the code exists. |
-| **sync** | Repair a model after code changed without being planned first. |
-| **export** | Compile a Product Model into a Product Report. |
-| **contribute** | Propose your model as a Blueprint, by pull request against `businesslens/pdd`. |
-| **publish** | The maintainer pushing built Blueprints into the catalog. |
-| **pull** | Anyone anonymously fetching a Blueprint and expanding it locally. |
+| **plan** | Turn a decided intent into entities, before the code exists. |
+| **map** | Author a model from code that already exists — what `businesslens-init` does. |
+| **implement** | Build the software the model describes, with its scenarios as the acceptance contract. BusinessLens ships no skill for this; see [Find your flow](./flows.md). |
+| **verify** | Attach implementation evidence once the code exists, against a plan. |
+| **sync** | Bring a model up to date after code changed without being planned first. |
+| **export** | Compile a Product Model into a Blueprint. |
+| **open** | Expand a Blueprint back into a Product Model, from a local file. |
+| **pull** | Anyone anonymously fetching a Catalog Entry and expanding it locally. |
+| **contribute** | Propose your Blueprint for the catalog, by pull request against `businesslens/pdd`. |
+| **publish** | The maintainer pushing merged Blueprints into the catalog as Catalog Entries. |
 
-A Blueprint is **listed** when an administrator has approved it for public
+A Catalog Entry is **listed** when an administrator has approved it for public
 display, and **withdrawn** when its slug no longer exists in `businesslens/pdd`.
 Only an administrator changes the first; only a publish run changes the second.
 

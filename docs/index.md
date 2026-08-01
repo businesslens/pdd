@@ -65,6 +65,7 @@ Code changed without a plan? `/businesslens-sync` repairs the model.
 | Agent skills | Plan, build, verify, and maintain the model inside your AI harness — [Skills reference](./skills.md) |
 | `.businesslens/` | The durable, git-tracked product model — [format contract](./format.md) |
 | The catalog (optional) | A curated, anonymously browsable collection of Blueprints at [businesslens.io/blueprints](https://businesslens.io/blueprints) — pull one and build from it |
+| [Find your flow](./flows.md) | Every situation a model can be in, and which surface handles it |
 
 Start with the [Quickstart](./quickstart.md), then read
 [How BusinessLens works](./guide.md).

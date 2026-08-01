@@ -50,6 +50,17 @@ Product Model looks like or how it is validated.
 
 ### Changed
 
+- **A Blueprint is now defined as a Product Model with no source evidence** —
+  no `codeRefs`, no repository-relative links or entry points. It previously
+  meant "a Product Model curated into the public catalog"; that concept is now
+  a **Catalog Entry**, and the `listed` / `withdrawn` states belong to it. The
+  test is structural: does the artifact cite this checkout's files? See
+  [adr/0002](./adr/0002-blueprint-means-source-free.md).
+
+  The catalog wire contract keeps the old vocabulary — `/api/v1/blueprints/:slug`
+  and `x-businesslens-blueprint` name what the glossary now calls a Catalog
+  Entry — because renaming it would be a coordinated change with the hosted
+  catalog for no user-visible benefit.
 - **`export`, `open`, `pull`, and `contribute` moved under `businesslens
   blueprint`.** Each of the four produces or consumes a Blueprint — export
   makes one, open consumes one, pull fetches one, contribute submits one — and
@@ -73,6 +84,28 @@ Product Model looks like or how it is validated.
 
 ### Added
 
+- **`validate` now reports where you stand**, after the findings: which of the
+  two things that can change — the model or the code — has changed on this
+  branch, and what that means.
+
+  This is a second answer, not a change to the first. **The exit code is
+  untouched**: whether the model is *sound* and where you *stand* are different
+  questions, and only the first gates a merge. A model whose code moved out
+  from under it still validates green — that drift is semantic and no rule can
+  see it, which is exactly the gap this covers.
+
+  Uncommitted and untracked files count, so it works mid-change. It is skipped
+  whenever the answer cannot be trusted: outside a repository, before the first
+  commit, or in a shallow clone with no merge base.
+- **`validate --json` gains an additive `branch` key** carrying that state,
+  including a `situation` of `at-rest`, `planned`, `implemented`, or
+  `unplanned-code`. `ok`, `errors`, `warnings`, and `counts` are unchanged.
+- **`businesslens-verify` and `businesslens-sync` now check they are the right
+  skill before doing anything.** The two are distinguished by whether a plan
+  exists, which is derived from git rather than inferred — so invoking `verify`
+  on unplanned code now redirects to `sync` instead of hunting for a plan that
+  was never written, and `sync` on a planned branch refuses rather than
+  overwriting the plan with whatever the code currently does.
 - **Find your flow** (`docs/flows.md`) — a routing page covering every
   situation a Product Model can be in. Brownfield, greenfield, and
   greenfield-from-a-Blueprint each get a starting row; after the first

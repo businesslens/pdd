@@ -17,7 +17,21 @@ Read [references/format.md](references/format.md) and
 
 1. Require an existing `.businesslens/` Product Model. If it is absent, stop and direct
    the user to `businesslens-init`.
-2. Run `npx businesslens validate --json` to establish the current baseline.
+2. Run `npx businesslens validate --json` to establish the current baseline, and
+   read `branch.situation`. Sync is the lane for code that was **not** planned
+   first, so a plan on this branch means the user wants a different skill:
+   - `unplanned-code` — the expected case. Continue.
+   - `implemented` or `planned` — the model changed on this branch, so there is
+     a plan. `businesslens-verify` checks the code against it and attaches
+     evidence; syncing here would overwrite the plan with whatever the code
+     currently does. Direct the user there and stop.
+   - `at-rest` — nothing changed on this branch. Ask what drifted; syncing
+     against no change would rewrite the model for no reason.
+   - `branch` absent — no merge base, so the situation is unknown. Ask the user
+     which changes to sync against before touching anything.
+
+   A user who explicitly asks to sync anyway may override this — say what you
+   are overriding, and that a plan may be lost.
    Record pre-existing errors separately from drift introduced by the change.
 3. Determine the change range from explicit user context first. Otherwise
    inspect the working tree, staged diff, and recent commits. Do not assume a

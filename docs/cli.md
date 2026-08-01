@@ -8,9 +8,10 @@ order: 25
 
 # BusinessLens CLI
 
-The `businesslens` CLI installs and updates the agent skills, validates and
-exports the local Product Model, proposes public catalog contributions, and
-opens Product Reports from local files or the public catalog.
+The `businesslens` CLI installs and updates the agent skills and validates the
+local Product Model. Its `blueprint` commands move a model between
+repositories: compiling one into a Blueprint, expanding a Blueprint back into a
+model, pulling one from the public catalog, and proposing one for it.
 
 It requires Node.js 20.12 or newer. Run the current package without installing
 it globally:

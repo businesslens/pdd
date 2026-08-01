@@ -32,6 +32,39 @@ Validation checks include:
 The complete finding catalog and fixes are in
 [Validation rules](./validation-rules.md).
 
+## Where you stand
+
+After the findings, `validate` reports which of the two things that can change
+has changed on this branch, and what that means:
+
+```text
+Product Model is valid (2 actors, 2 experiences, 2 domains, …).
+
+On feat/guest-checkout, against main:
+  model  3 file(s) changed
+  code   11 file(s) changed
+
+You described a change and wrote code for it, but nothing has checked that
+the code matches. /businesslens-verify checks every planned addition,
+change, and removal, and attaches evidence.
+```
+
+The four combinations and what each one means are in
+[Find your flow](./flows.md).
+
+**This does not affect the exit code.** Whether the model is *sound* and where
+you *stand* are different questions, and only the first gates a merge. A model
+whose code moved out from under it still validates green — that drift is
+semantic, and no rule can detect it — which is exactly why the second half is
+worth printing.
+
+Uncommitted and untracked files count, so this works mid-change rather than
+only after a commit. It is skipped entirely when the answer cannot be trusted:
+outside a repository, before the first commit, or in a shallow clone with no
+merge base. See [Validate in CI](./ci.md) for the `fetch-depth` note.
+
+`--json` output is unchanged.
+
 ## Options
 
 | Option | Meaning |

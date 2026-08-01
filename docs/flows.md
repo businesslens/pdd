@@ -81,14 +81,36 @@ a small or obvious change is often faster to make and then record.
 
 | Situation | What you do |
 | --- | --- |
-| You don't know where you stand, or something looks wrong | `/businesslens-doctor` |
+| You don't know which row above you're in | `npx businesslens validate` |
+| Something looks wrong and `validate` doesn't explain it | `/businesslens-doctor` |
 | One area of the model is described too thinly | `/businesslens-deep-dive <id>` |
 | You don't know what to build next | `/businesslens-ideate` |
-| You want to check the model is sound | `npx businesslens validate` |
 
-`validate` is the deterministic check and the one to run in
-[CI](./ci.md) — it needs no agent. `doctor` is for when a result needs
-explaining or the model looks stale in ways a validator can't see.
+`validate` answers both questions at once. It checks the model against the
+format contract — the deterministic gate, the one to run in [CI](./ci.md), and
+it needs no agent — and then tells you which of the four rows above you are in:
+
+```text
+Product Model is valid (2 actors, 2 experiences, 2 domains, …).
+
+On feat/guest-checkout, against main:
+  model  3 file(s) changed
+  code   11 file(s) changed
+
+You described a change and wrote code for it, but nothing has checked that
+the code matches. /businesslens-verify checks every planned addition,
+change, and removal, and attaches evidence.
+```
+
+Those are separate answers, and only the first one sets the exit code. **A
+model can be perfectly valid while the code has moved out from under it** —
+the drift is semantic, and no rule can see it. That's the case the second half
+exists for.
+
+`--json` output is unchanged, so nothing in CI has to care.
+
+`doctor` is for what's left: a finding you can't account for, a model you
+inherited, evidence that looks stale in ways a validator can't detect.
 
 ## Sharing a model
 

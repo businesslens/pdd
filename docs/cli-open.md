@@ -1,6 +1,6 @@
 ---
 title: blueprint open
-description: Expand a local Product Report into a canonical draft Product Model.
+description: Expand a Blueprint held in a local file into a canonical draft Product Model.
 section: open-source
 group: CLI
 order: 32
