@@ -382,9 +382,13 @@ files are derived artifacts and must not be edited or committed.
 
 `build/report.json` is a Product Report with `schemaVersion: "4.0.0"`. It
 contains the product entities, relationships, intent, links, supporting
-content, evidence, and coverage needed to reconstruct the model. It does not
-contain repository URL, branch, commit, catalog listing state, pricing, or
-entitlement data.
+content, and coverage needed to reconstruct the model.
+
+It carries **no source evidence**: `export` strips every `codeRef`, every
+repository-relative link, and every repository-relative entry point, and sets
+`coverage.evidenceRedacted`. It also contains no repository URL, branch,
+commit, catalog listing state, pricing, or entitlement data. A report that has
+been through `export` is a Blueprint.
 
 The report schema accepts only content that can expand into canonical entity
 Markdown: titles and list items are single-line, required descriptions and

@@ -7,7 +7,10 @@ import { fileURLToPath } from 'node:url'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import * as sdk from '../src/report.js'
 import { reportDigest } from '../src/report-digest.js'
-import { buildProject } from '../src/commands/export.js'
+import { compileReport } from '../src/commands/export.js'
+import { lsFiles } from '../src/core/git.js'
+import { loadModel } from '../src/core/model.js'
+import { resolveModelRoot } from '../src/core/model-root.js'
 import type { ProductReportV4 } from '../src/core/portable.js'
 
 const packageJson = JSON.parse(
@@ -108,7 +111,10 @@ describe('redactSourceEvidence', () => {
     git('remote', 'add', 'origin', 'https://github.com/example/fixture-shop.git')
     git('add', '.')
     git('commit', '-m', 'fixture')
-    report = buildProject(repo).report
+    // Deliberately the unredacted compiler output: `buildProject` now redacts
+    // before writing, so it would hand these tests nothing left to remove.
+    const { modelRoot } = resolveModelRoot(repo)
+    report = compileReport(loadModel(modelRoot), lsFiles(repo).length, '2026-01-01')
   })
 
   afterAll(() => {

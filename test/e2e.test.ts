@@ -53,12 +53,18 @@ describe('end to end on a real git repo', () => {
       businessRules: 2
     })
     expect(parsed.model.journeys[0]!.experienceIds).toEqual(['storefront'])
-    expect(parsed.model.actors.find(actor => actor.id === 'shopper')?.codeRefs).toEqual([
-      { path: 'src/routes/storefront.ts' }
-    ])
-    expect(parsed.model.domains.find(domain => domain.id === 'catalog')?.codeRefs).toEqual([
-      { path: 'src/services/catalog.ts' }
-    ])
+
+    // Export produces a Blueprint, and a Blueprint carries no source evidence.
+    // The fixture's model is full of codeRefs; none of them survive the trip.
+    expect(parsed.model.actors.find(actor => actor.id === 'shopper')?.codeRefs).toEqual([])
+    expect(parsed.model.domains.find(domain => domain.id === 'catalog')?.codeRefs).toEqual([])
+    expect(Object.values(parsed.model).flatMap(entry =>
+      Array.isArray(entry) ? entry.flatMap(item => item.codeRefs ?? []) : []
+    )).toEqual([])
+    expect(parsed.coverage.evidenceRedacted).toBe(true)
+
+    // `mapped` still counts what the authored model proved, so coverage does
+    // not silently collapse to zero just because the paths were stripped.
     expect(parsed.coverage.mapped).toMatchObject({ actors: 1, domains: 2 })
     expect(parsed.model.features.find(feature => feature.id === 'checkout')?.businessRuleIds)
       .toEqual(['payment-before-confirmation'])

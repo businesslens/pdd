@@ -38,6 +38,15 @@ Product Model looks like or how it is validated.
   is now three commands you run constantly plus one noun for the occasional
   work. The bare spellings still work and print a deprecation warning; `build`
   remains an alias of `blueprint export`.
+- **`blueprint export` now strips source evidence.** Every export produces a
+  Blueprint: no `codeRefs`, no repository-relative links or entry points, and
+  `coverage.evidenceRedacted` set. `contribute` and `open` each redacted
+  separately before, so the artifact in `build/report.json` was the one shape
+  nothing actually consumed. Coverage keeps its `mapped` counts, so a Blueprint
+  still records how much of the original model was evidence-backed.
+
+  If you were reading `build/report.json` to link a rendered model back to
+  source, that no longer works — read `.businesslens/` directly instead.
 - `businesslens open` now writes the greenfield `AGENTS.md` block, matching
   `businesslens pull`. Both are the "this model came from another repository"
   door, and a model with no implementation needs a note saying so.

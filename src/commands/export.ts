@@ -8,6 +8,7 @@ import { resolveModelRoot } from '../core/model-root.js'
 import {
   ProductReportV4Schema,
   REPORT_SCHEMA_VERSION,
+  redactSourceEvidence,
   validateProductReport
 } from '../core/portable.js'
 import { cliVersion } from '../version.js'
@@ -29,7 +30,13 @@ function entityContent(entity: EntityFile, recognized: string[]) {
   }
 }
 
-/** Compile a validated model into a source-free Product Report. */
+/**
+ * Compile a validated model into a Product Report, source evidence intact.
+ *
+ * The pure compiler. `buildProject` redacts what this returns before writing
+ * it, so a delivered Blueprint never carries `codeRefs`; this stays unredacted
+ * because redaction is what the tests around it need something to remove.
+ */
 export function compileReport(
   model: PddModel,
   trackedFileCount: number,
@@ -192,7 +199,11 @@ export function buildProject(cwd: string): BuildOutcome {
     throw new Error(`Validation failed:\n${result.errors.map(error => `- ${error}`).join('\n')}`)
   }
   const today = new Date().toISOString().slice(0, 10)
-  const report = compileReport(model, tracked.length, today)
+  // Export produces a Blueprint, and a Blueprint carries no source evidence:
+  // `codeRefs` name paths in *this* repository, which prove nothing anywhere
+  // else. `contribute` and `open` each redacted separately before; doing it
+  // once, here, means every consumer of the artifact gets the same guarantee.
+  const report = redactSourceEvidence(compileReport(model, tracked.length, today))
 
   const outputFile = writeGeneratedFile(
     root,
