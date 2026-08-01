@@ -3,10 +3,10 @@ title: doctor
 description: Investigate installation and Product Model health — diagnose by default, repair only on explicit request.
 section: open-source
 group: Skills
-order: 23
+order: 20
 ---
 
-# businesslens-doctor
+# `businesslens-doctor`
 
 Root-cause analysis for a model that fails validation, looks stale, or just
 feels wrong. Doctor diagnoses by default and never mutates anything unless

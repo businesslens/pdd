@@ -3,10 +3,10 @@ title: verify
 description: Statically verify the implementation delivers the planned model changes — evidence attached, gaps reported honestly.
 section: open-source
 group: Skills
-order: 19
+order: 17
 ---
 
-# businesslens-verify
+# `businesslens-verify`
 
 Closes the gap between what the model claims and what the code proves. It
 derives the planned delta fresh on every run — the model diff against your

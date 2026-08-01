@@ -3,7 +3,7 @@ title: Validation rules
 description: Every businesslens validate error and warning — what it means and how to fix it.
 section: open-source
 group: Reference
-order: 35
+order: 33
 ---
 
 # Validation rules

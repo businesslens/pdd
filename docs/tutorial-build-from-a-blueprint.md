@@ -1,5 +1,5 @@
 ---
-title: "Tutorial: build from a Blueprint"
+title: Build from a Blueprint
 description: Pull a curated Product Model from the catalog and turn it into working software.
 section: open-source
 group: Tutorials

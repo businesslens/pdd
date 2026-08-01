@@ -1,9 +1,9 @@
 ---
-title: Contributing a Blueprint
+title: Contributing
 description: How to propose a Product Model for the public Blueprint catalog.
 section: open-source
 group: Reference
-order: 33
+order: 31
 ---
 
 # Contributing a Blueprint

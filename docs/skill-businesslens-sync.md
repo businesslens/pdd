@@ -3,10 +3,10 @@ title: sync
 description: Repair the model after code changed without a plan — targeted drift recovery, not the routine loop.
 section: open-source
 group: Skills
-order: 20
+order: 18
 ---
 
-# businesslens-sync
+# `businesslens-sync`
 
 Recovers model truth after **unplanned** code changes — a hotfix, a refactor
 that moved evidence, a feature that skipped planning. The primary loop is

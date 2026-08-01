@@ -3,10 +3,10 @@ title: init
 description: Build the initial evidence-backed product model by inspecting an existing codebase.
 section: open-source
 group: Skills
-order: 16
+order: 15
 ---
 
-# businesslens-init
+# `businesslens-init`
 
 Builds the repository's durable description of what the product does today:
 inspects the codebase statically, authors the complete `.businesslens/` Product Model

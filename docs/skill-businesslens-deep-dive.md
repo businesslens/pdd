@@ -3,10 +3,10 @@ title: deep-dive
 description: Expand one journey or experience to exhaustive, evidence-backed fidelity.
 section: open-source
 group: Skills
-order: 21
+order: 19
 ---
 
-# businesslens-deep-dive
+# `businesslens-deep-dive`
 
 Takes one named journey or experience to exhaustive fidelity by mining its
 implementation and tests for scenarios, boundaries, and edge cases — depth
