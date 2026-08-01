@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- **`businesslens-validate`** — 55 lines that ran `npx businesslens validate
+  --json` and reformatted the output. Run the CLI directly; a green result
+  needs no narration, and `businesslens-doctor` explains a failing one far
+  better, having already run the same command.
+- **`businesslens-implement`** — the greenfield `AGENTS.md` block states its
+  entire content, and states it to spec-driven toolchains and freestyle
+  sessions too, which a skill never reaches. Writing the code was never
+  BusinessLens's job; stating the acceptance contract is.
+
+BusinessLens now ships **eight** skills. Neither removal changes what a
+Product Model looks like or how it is validated.
+
 ### Added
 
 - **Find your flow** (`docs/flows.md`) — a routing page covering every

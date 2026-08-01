@@ -23,8 +23,8 @@ produce a report; a draft model with missing-evidence warnings does.
 ## Why "export"
 
 The command turns a model into a transport artifact, which is what "export"
-says. "Build" now means implementing the software a model describes — the job of
-the `businesslens-implement` skill.
+says. "Build" now means writing the software a model describes, which BusinessLens
+deliberately leaves to whatever tool you already use.
 
 The output directory keeps its name. Renaming `.businesslens/build/` would make
 every existing model's `.gitignore` stale for no user-visible benefit.

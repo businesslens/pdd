@@ -1,6 +1,6 @@
 ---
 title: Overview
-description: The ten BusinessLens agent skills — which one fits which situation.
+description: The eight BusinessLens agent skills — which one fits which situation.
 section: open-source
 group: Skills
 order: 14
@@ -8,7 +8,7 @@ order: 14
 
 # Skills overview
 
-BusinessLens ships ten agent skills. Each is self-contained, follows the
+BusinessLens ships eight agent skills. Each is self-contained, follows the
 open Agent Skills folder format, and treats the target repository as
 untrusted: skills inspect code statically and never execute it. Only
 `businesslens-contribute` proposes anything publicly, and only on explicit
@@ -21,10 +21,8 @@ request.
 | [`businesslens-verify`](./skill-businesslens-verify.md) | Planned model changes were implemented and need evidence-backed checking |
 | [`businesslens-sync`](./skill-businesslens-sync.md) | Code changed without a plan and the model drifted |
 | [`businesslens-deep-dive`](./skill-businesslens-deep-dive.md) | One journey or experience needs exhaustive coverage |
-| [`businesslens-validate`](./skill-businesslens-validate.md) | The model needs a read-only deterministic check |
 | [`businesslens-doctor`](./skill-businesslens-doctor.md) | The model fails validation, looks stale, or needs a health report |
 | [`businesslens-ideate`](./skill-businesslens-ideate.md) | You are deciding what to build |
-| [`businesslens-implement`](./skill-businesslens-implement.md) | A model exists with no implementation |
 | [`businesslens-contribute`](./skill-businesslens-contribute.md) | You explicitly want the model in the public catalog |
 
 ## How they fit together

@@ -54,4 +54,3 @@ The handoff is yours.
 | --- | --- |
 | `businesslens-ideate` | A shortlist. Writes nothing. |
 | [`businesslens-plan`](./skill-businesslens-plan.md) | Entities in the model. |
-| [`businesslens-implement`](./skill-businesslens-implement.md) | Code. |

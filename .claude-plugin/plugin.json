@@ -19,11 +19,9 @@
     "./skills/businesslens-ideate",
     "./skills/businesslens-init",
     "./skills/businesslens-plan",
-    "./skills/businesslens-implement",
     "./skills/businesslens-verify",
     "./skills/businesslens-sync",
     "./skills/businesslens-deep-dive",
-    "./skills/businesslens-validate",
     "./skills/businesslens-doctor",
     "./skills/businesslens-contribute"
   ]

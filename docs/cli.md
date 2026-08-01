@@ -23,7 +23,7 @@ npx businesslens@latest <command> [options]
 
 | Command | Purpose |
 | --- | --- |
-| [`install`](./cli-install.md) | Install the ten bundled BusinessLens skills into one or more AI harnesses |
+| [`install`](./cli-install.md) | Install the eight bundled BusinessLens skills into one or more AI harnesses |
 | [`update`](./cli-update.md) | Refresh BusinessLens-managed skill installations |
 | [`validate`](./cli-validate.md) | Check the structure, relationships, and code evidence in `.businesslens/` |
 | [`export`](./cli-export.md) | Compile `.businesslens/` into a portable Product Report |

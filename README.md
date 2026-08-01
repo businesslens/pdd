@@ -78,7 +78,7 @@ BusinessLens has two deliberate surfaces:
 | Terminal | `npx businesslens@latest pull blueprint-name` | Anonymously pull a catalog Blueprint into a canonical Product Model |
 | Terminal | `npx businesslens open` | Expand a local Product Report into a canonical Product Model |
 | Terminal | `npx businesslens contribute` | Propose the model as a public catalog Blueprint |
-| AI harness | the ten `businesslens-*` skills | Map, plan, implement, verify, and maintain the product truth |
+| AI harness | the eight `businesslens-*` skills | Map, plan, verify, and maintain the product truth |
 
 The installer never creates `.businesslens/` or modifies `AGENTS.md`. Those
 require repository analysis and belong to the skills.
@@ -92,10 +92,8 @@ require repository analysis and belong to the skills.
 | `businesslens-verify` | Planned model changes were implemented and need evidence-backed checking |
 | `businesslens-sync` | Code changed without a plan and the model drifted |
 | `businesslens-deep-dive` | One journey or experience needs exhaustive coverage |
-| `businesslens-validate` | The model needs a read-only deterministic check |
 | `businesslens-doctor` | The model fails validation, looks stale, or needs a health report |
 | `businesslens-ideate` | The user is deciding what to build |
-| `businesslens-implement` | A model exists with no implementation |
 | `businesslens-contribute` | The user explicitly wants the model in the public catalog |
 
 Every skill is self-contained and follows the open Agent Skills folder
@@ -108,7 +106,7 @@ installation experience.
 Learn the flow:
 
 - [Introduction](./docs/index.md) · [Installation](./docs/installation.md) ·
-  [Quickstart](./docs/quickstart.md)
+  [Quickstart](./docs/quickstart.md) · [Find your flow](./docs/flows.md)
 - [How it works](./docs/guide.md) · [The product model](./docs/product-model.md) ·
   [Terminology](./docs/terminology.md)
 - [Map existing code](./docs/tutorial-map-existing-product.md)

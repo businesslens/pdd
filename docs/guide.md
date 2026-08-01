@@ -70,9 +70,7 @@ model drifted (unplanned change)? → /businesslens-sync
 | Planned behavior implemented, needs checking | `businesslens-verify` |
 | Code changed without a plan | `businesslens-sync` |
 | One journey or experience needs exhaustive depth | `businesslens-deep-dive` |
-| Deterministic check, CI readiness | `businesslens-validate` |
 | Something looks wrong, stale, or stuck | `businesslens-doctor` |
-| Build the software a model describes | `businesslens-implement` |
 | Decide what to build next | `businesslens-ideate` |
 | Propose the model as a catalog Blueprint | `businesslens-contribute` |
 

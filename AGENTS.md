@@ -18,9 +18,8 @@ or validator behavior.
   catalog/contribution support.
 - `skills/businesslens-*/SKILL.md` — one independent skill per workflow:
   `businesslens-init`, `businesslens-plan`, `businesslens-verify`,
-  `businesslens-sync`, `businesslens-deep-dive`, `businesslens-validate`,
-  `businesslens-doctor`, `businesslens-ideate`, `businesslens-implement`, and
-  `businesslens-contribute`.
+  `businesslens-sync`, `businesslens-deep-dive`, `businesslens-doctor`,
+  `businesslens-ideate`, and `businesslens-contribute`.
 - `test/fixtures/fixture-shop/` — the golden validation fixture.
 
 ## Documentation structure

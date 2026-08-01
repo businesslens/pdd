@@ -156,17 +156,17 @@ describe('skill installation', () => {
       readFileSync(manifestFile, 'utf8')
     )
     originalManifest.skills = originalManifest.skills.filter(
-      (skill: string) => skill !== 'businesslens-validate'
+      (skill: string) => skill !== 'businesslens-deep-dive'
     )
     writeFileSync(manifestFile, `${JSON.stringify(originalManifest, null, 2)}\n`)
-    rmSync(join(skillsDir, 'businesslens-validate'), { recursive: true })
+    rmSync(join(skillsDir, 'businesslens-deep-dive'), { recursive: true })
     const product = join(project, '.businesslens', 'product.md')
     mkdirSync(join(project, '.businesslens'), { recursive: true })
     writeFileSync(product, '# Keep me\n')
 
     expect(await runUpdate(project, { project: true })).toBe(0)
     expect(readFileSync(product, 'utf8')).toBe('# Keep me\n')
-    expect(existsSync(join(skillsDir, 'businesslens-validate', 'SKILL.md'))).toBe(true)
+    expect(existsSync(join(skillsDir, 'businesslens-deep-dive', 'SKILL.md'))).toBe(true)
     const manifest = JSON.parse(readFileSync(manifestFile, 'utf8'))
     expect(manifest.version).not.toBe('0.0.1')
     expect(manifest.installedAt).toBe(originalManifest.installedAt)

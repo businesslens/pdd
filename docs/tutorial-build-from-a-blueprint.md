@@ -51,14 +51,13 @@ that hold across everything else.
 
 Two paths.
 
-**Straight to implementation**, when the Blueprint is what you want:
+**Straight to implementation**, when the Blueprint is what you want: hand the
+repository to your coding agent and tell it to build. `pull` already wrote the
+contract into `AGENTS.md`, so the agent knows the model is the specification,
+that the scenarios are the acceptance contract, and that nothing here
+prescribes a stack.
 
-```text
-/businesslens-implement
-```
-
-It reads the model, chooses a stack, and works journey by journey, writing a
-test per scenario. Scenarios are the acceptance contract.
+Work journey by journey, with a test per scenario.
 
 **Refine first**, when you want something adjacent:
 

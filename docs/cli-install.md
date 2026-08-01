@@ -8,7 +8,7 @@ order: 26
 
 # `businesslens install`
 
-Install all ten bundled `businesslens-*` agent skills into one or more
+Install all eight bundled `businesslens-*` agent skills into one or more
 supported AI harnesses:
 
 ```bash

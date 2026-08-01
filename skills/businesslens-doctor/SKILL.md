@@ -1,6 +1,6 @@
 ---
 name: businesslens-doctor
-description: Investigate and optionally repair the health of a BusinessLens installation and .businesslens/ product model, including validation failures, stale codeRefs, missing managed instructions, semantic drift, and incomplete coverage. Use when a simple validation report is insufficient, findings need root-cause analysis, the model looks stale, or the user explicitly requests repairs; use businesslens-validate for a read-only deterministic check.
+description: Investigate and optionally repair the health of a BusinessLens installation and .businesslens/ product model, including validation failures, stale codeRefs, missing managed instructions, semantic drift, and incomplete coverage. Use when a simple validation report is insufficient, findings need root-cause analysis, the model looks stale, or the user explicitly requests repairs; run `npx businesslens validate` directly for a read-only deterministic check.
 ---
 
 # Diagnose BusinessLens

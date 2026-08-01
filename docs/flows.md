@@ -39,10 +39,10 @@ the code has to catch up to *it*.
 | The model is right, and no code exists yet | **Write the code.** The scenarios are your acceptance criteria |
 | You've written code for what the model describes | `/businesslens-verify` — attach the evidence |
 
-Writing the code is not something BusinessLens has to do for you. Use
-`/businesslens-implement` if you want a skill to drive it, your usual coding
-workflow if you don't, or a spec-driven toolchain alongside it. Whatever writes
-the code, the managed block in your `AGENTS.md` tells it that the model's
+Writing the code is not something BusinessLens does for you — use your usual
+coding workflow, or a spec-driven toolchain alongside it. When the model
+arrived by `pull` or `open`, the managed block in your `AGENTS.md` already
+tells whatever writes the code that the model is the specification and its
 scenarios are the definition of done.
 
 Until evidence is attached, `coverage.md` stays at `status: draft` and missing
