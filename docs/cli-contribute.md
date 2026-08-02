@@ -3,7 +3,7 @@ title: blueprint contribute
 description: Open a pull request proposing your Product Model as a catalog Blueprint.
 section: open-source
 group: CLI
-order: 25
+order: 35
 ---
 
 # `businesslens blueprint contribute`
@@ -125,6 +125,35 @@ working product.
 The acceptance test is literal. Pull it into an empty directory, hand it to an
 agent with no prompt beyond "build this", and see whether what comes out is
 recognisable to someone who knows the domain. Anything you had to explain is a
-gap in the Blueprint.
+gap in the Blueprint, not in the agent.
 
-See [Contributing a Blueprint](./contributing-blueprints.md) for the full guide.
+Three things the bar comes down to:
+
+- **Small enough to build end to end.** Not a platform, not a suite. One product
+  a competent agent can finish.
+- **Complete enough that nothing is missing.** Every actor, journey, and rule
+  the product needs, with scenarios covering the paths that matter — success,
+  permission, validation, conflict, and external failure.
+- **Generic.** Archetypes, not models of named third-party products.
+
+Author it with the [`businesslens-ideate`](./skill-businesslens-ideate.md)
+greenfield interview in a scratch repository, and keep prose at product
+altitude — what a user observes, not how the system achieves it. Naming a
+framework, database, or architecture narrows the Blueprint's usefulness without
+making it more complete.
+
+## What review looks at
+
+- **The acceptance test.** A maintainer will run it.
+- **Scenario quality.** Each scenario must be checkable against an
+  implementation without running it. "Cart validation works" is too vague;
+  "submitting an empty cart shows an error and keeps the cart" is not.
+- **No source evidence.** `blueprints:check` fails the pull request on any
+  `codeRef`, coverage source area, repository link, or repository entry point.
+  This is automated and not negotiable.
+- **The manifest.** Set `category`, `icon`, `accent`, and `authors` properly.
+
+Merging is approval, not publication. A maintainer runs the publish script,
+which pushes built Blueprints to the catalog. A new Blueprint arrives
+**unlisted**; an administrator lists it. That keeps listing a human decision
+that a publish run can never overwrite.

@@ -1,12 +1,12 @@
----
-title: Format contract
-description: The contract for the git-tracked product model — folder layout, universal conventions, entities, and codeRefs.
-section: open-source
-group: Reference
-order: 27
----
-
 # The `.businesslens/` Format
+
+> **This is engineering documentation, not a docs-site page.** It is the
+> contract the parser, the validator, and the catalog server must agree on, and
+> it changes *before* their behavior does.
+>
+> The user-facing explanation of the same entities lives in the Product model
+> group under `docs/` — one page per entity, each carrying its file shape and
+> the `validate` findings that constrain it. Keep the two consistent.
 
 This document is the contract for the BusinessLens PDD folder: the git-tracked
 product model that lives inside a repository. Everything the public CLI validates

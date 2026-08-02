@@ -110,17 +110,29 @@ Learn the flow:
 - Pick a door: [From your repo](./docs/from-your-repo.md) ·
   [From a Blueprint](./docs/from-a-blueprint.md) ·
   [From an idea](./docs/from-an-idea.md)
-- [Find your flow](./docs/flows.md) · [The product model](./docs/product-model.md) ·
-  [Terminology](./docs/terminology.md)
+- [Find your flow](./docs/flows.md)
+
+The product model — one page per entity:
+
+- [Overview](./docs/product-model.md) (the folder, and how to read it)
+- [Actors](./docs/actors.md) · [Experiences](./docs/experiences.md) ·
+  [Domains](./docs/domains.md) · [Features](./docs/features.md)
+- [Journeys](./docs/journeys.md) · [Scenarios](./docs/scenarios.md) ·
+  [Business rules](./docs/business-rules.md)
+- [Evidence & coverage](./docs/evidence.md)
+
+Integrating it with what you already use:
+
+- [Overview](./docs/integration.md) · [With plan mode](./docs/with-plan-mode.md) ·
+  [With SDD tools](./docs/with-sdd.md)
+- [Validate in CI](./docs/ci.md) · [Your commit loop](./docs/commit-loop.md)
 
 Reference:
 
 - [Skills overview](./docs/skills.md) (one page per skill)
-- [Format contract](./docs/format.md)
-- [CLI reference](./docs/cli.md)
-- [Validation rules](./docs/validation-rules.md)
-- [CI validation](./docs/ci.md)
-- [PDD and SDD](./docs/pdd-and-sdd.md)
+- [CLI reference](./docs/cli.md) (one page per command)
+- [Format contract](./spec/format.md) — the wire contract for the folder and
+  the portable Product Report
 
 ## Updating the skills
 

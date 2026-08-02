@@ -3,7 +3,7 @@ title: blueprint export
 description: Compile a Product Model into a source-free Product Report — the same behavior with this repository's code evidence removed.
 section: open-source
 group: CLI
-order: 22
+order: 32
 ---
 
 # `businesslens blueprint export`

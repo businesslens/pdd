@@ -2,7 +2,7 @@
 title: Find your flow
 description: Every situation you can be in with a Product Model, and what to do about it — starting from existing code, from nothing, or from a Blueprint.
 section: open-source
-group: Concepts
+group: Get started
 order: 6
 ---
 
@@ -89,16 +89,9 @@ a small or obvious change is often faster to make and then record.
 Most commits don't. One test: **if a user could notice the difference and
 describe it without mentioning code, the model changes. Otherwise it doesn't.**
 
-| Change | Model edit? |
-| --- | --- |
-| New capability, changed rule, new surface, retired journey | **Yes** — `/businesslens-ideate` |
-| A bug fix where the documented behavior was itself wrong | **Yes** — `/businesslens-ideate` |
-| Refactor, rename, file move, perf work, dependency bump | No — only `codeRefs` go stale |
-| A bug fix restoring behavior the model already describes | No — the model was already right |
-
-The bottom two rows are the last note above: behavior didn't move, so `validate`
-catches the stale `codeRefs` and `/businesslens-sync` repairs them. BusinessLens
-is not meant to be a tax on every commit.
+The full table is in [Your commit loop](./commit-loop.md), along with whether to
+plan first or record after. BusinessLens is not meant to be a tax on every
+commit.
 
 ## Day to day — everything else
 
@@ -156,7 +149,7 @@ anywhere.
 
 ## Where to go next
 
-- [How it fits](./how-it-fits.md) — where these sit next to your harness's plan mode and your SDD framework
-- [The product model](./product-model.md) — what the model holds, and why git is the change model
+- [Integration](./integration.md) — where these sit next to your harness's plan mode and your SDD framework
+- [The Product Model](./product-model.md) — what the model holds, and why git is the change model
 - [Skills overview](./skills.md) — what each skill reads, writes, and refuses to do
 - [CLI reference](./cli.md) — every command and option

@@ -3,7 +3,7 @@ title: validate
 description: Validate Product Model structure, relationships, taxonomy, and repository evidence.
 section: open-source
 group: CLI
-order: 21
+order: 31
 ---
 
 # `businesslens validate`
@@ -61,8 +61,11 @@ Validation covers:
 - `codeRef` paths against Git-tracked files; and
 - dangling local links, reported as warnings.
 
-The complete finding catalog and fixes are in
-[Validation rules](./validation-rules.md).
+Every finding is documented on the page for the entity it constrains — see
+[Actors](./actors.md), [Experiences](./experiences.md), [Domains](./domains.md),
+[Features](./features.md), [Journeys](./journeys.md),
+[Scenarios](./scenarios.md), [Business rules](./business-rules.md), and
+[Evidence & coverage](./evidence.md).
 
 ## Where you stand
 

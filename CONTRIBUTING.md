@@ -23,8 +23,9 @@ From any target repository, `bl validate` and the other public commands use the
 active checkout. Installed plan and sync skills recognize the same explicit
 development launcher; without it they retain their release-pinned npm runner.
 
-1. Format changes start in `docs/format.md`, then flow into `src/core/` and
-   `src/commands/validate.ts` with a failing-case test per new rule.
+1. Format changes start in `spec/format.md`, then flow into `src/core/` and
+   `src/commands/validate.ts` with a failing-case test per new rule, and into
+   the matching entity page under `docs/`.
 2. Keep `src/core/portable.ts` byte-compatible with the platform's portable
    schema; coordinate schema-version bumps across both repositories.
 3. Update the golden fixture (`test/fixtures/fixture-shop/`) and its expected

@@ -18,7 +18,7 @@ async function exists(path) {
 const REQUIRED = [
   'README.md', 'LICENSE', 'package.json', 'package-lock.json', 'tsconfig.json', 'src/cli.ts',
   'CHANGELOG.md', 'SECURITY.md', 'CONTRIBUTING.md',
-  'docs/format.md', 'docs/cli.md', 'docs/ci.md', 'docs/pdd-and-sdd.md',
+  'spec/format.md', 'docs/cli.md', 'docs/ci.md', 'docs/integration.md',
   '.claude-plugin/plugin.json', '.claude-plugin/marketplace.json'
 ]
 for (const file of REQUIRED) {

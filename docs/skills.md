@@ -3,7 +3,7 @@ title: Overview
 description: The six BusinessLens agent skills — which one fits which situation.
 section: open-source
 group: Skills
-order: 11
+order: 21
 ---
 
 # Skills overview
@@ -51,7 +51,7 @@ proposes the model to the catalog.
 
 The full decision table lives in [Find your flow](./flows.md); where these sit
 next to your harness's plan mode and your SDD framework is in
-[How it fits](./how-it-fits.md).
+[Integration](./integration.md).
 
 ## Invoking skills
 

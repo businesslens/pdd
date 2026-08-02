@@ -99,4 +99,4 @@ the code.
 ## Where to go next
 
 - [Find your flow](./flows.md) — every situation a live model can be in.
-- [Contributing a Blueprint](./contributing-blueprints.md) — propose your own.
+- [`blueprint contribute`](./cli-contribute.md) — propose your own.

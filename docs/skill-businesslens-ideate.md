@@ -3,7 +3,7 @@ title: ideate
 description: Decide what the product should do — propose directions, or write a decided change into the model. Nothing is written without your approval.
 section: open-source
 group: Skills
-order: 13
+order: 23
 ---
 
 # `businesslens-ideate`
@@ -112,6 +112,6 @@ uncommitted on your branch, reviewable as a diff before you commit it.
 
 It writes files, so run it in normal mode — your harness's plan mode is
 read-only and will block the write. See
-[How it fits](./how-it-fits.md).
+[With plan mode](./with-plan-mode.md).
 
 Tutorials: [From an idea](./from-an-idea.md) · [Find your flow](./flows.md).

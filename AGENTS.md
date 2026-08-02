@@ -4,8 +4,10 @@
 
 This repository is the BusinessLens OSS core: the `businesslens` npm package
 plus the agent skills that build and maintain the `.businesslens/` product
-map. `docs/format.md` is the format contract—change it before changing parser
-or validator behavior.
+map. `spec/format.md` is the format contract—change it before changing parser
+or validator behavior. It is engineering documentation, not a docs-site page:
+the user-facing explanation of the same entities lives in the Product model
+group under `docs/`, and the two must not contradict each other.
 
 ## Layout
 
@@ -35,9 +37,13 @@ or validator behavior.
 - Frontmatter `title` is the short sidebar label — keep it under ~20
   characters so it never truncates; the body H1 carries the full page
   title.
-- This repository authors the documentation with groups
-  Get started, Concepts, Tutorials, Skills (one page per skill), CLI (one
-  page per command), and Reference.
+- This repository authors the documentation with groups Get started, Product
+  model (one page per entity), Integration (one page per thing you integrate
+  with), Skills (one page per skill), and CLI (one page per command).
+- Each entity is explained in exactly one place. An entity page carries its
+  narrative, when to create one, its file shape, and the `validate` findings
+  that constrain it — do not reintroduce a separate glossary, a separate
+  format page, or a separate error catalog.
 
 ## Skill-writing standards
 

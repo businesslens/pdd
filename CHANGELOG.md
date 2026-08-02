@@ -9,6 +9,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **The documentation is restructured around the product model.** The eight
+  model entities were previously explained three times over — narratively in
+  `docs/product-model.md`, as definitions in `docs/terminology.md`, and as
+  file schemas in `docs/format.md` — across 939 lines that drifted against
+  each other. They now get **one page each**, carrying the narrative, when to
+  create one, the file shape, and the `validate` findings that constrain it.
+
+  Two new groups replace the old `Concepts` cluster: **Product model** (one
+  page per entity) and **Integration** (one page per thing you integrate with —
+  plan mode, SDD frameworks, CI, and your commit loop). `Reference` is reduced
+  to the authoring conventions shared by every entity file.
+
+  `docs/terminology.md`, `docs/validation-rules.md`,
+  `docs/contributing-blueprints.md`, `docs/pdd-and-sdd.md`, and
+  `docs/how-it-fits.md` are removed; their content lives on the pages where it
+  is needed rather than in catalogs you had to know existed. The
+  "does this change need a model edit?" test existed verbatim in two places
+  and now exists in one.
+
+- **`docs/format.md` moved to `spec/format.md`.** It remains the contract that
+  changes before parser or validator behavior, but it is engineering
+  documentation for this repository rather than a page in the user-facing
+  sidebar — the report wire format, the redaction projection, and the
+  round-trip guarantee are agreements between the CLI and the catalog server.
+
 - **BusinessLens writes nothing outside `.businesslens/`.** The managed
   `AGENTS.md` block is gone; `blueprint open` and `blueprint pull` now write
   `.businesslens/README.md` instead. The block's one claimed advantage was
