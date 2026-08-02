@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **BusinessLens writes nothing outside `.businesslens/`.** The managed
+  `AGENTS.md` block is gone; `blueprint open` and `blueprint pull` now write
+  `.businesslens/README.md` instead. The block's one claimed advantage was
+  reach — speaking to an agent not running a BusinessLens skill — but it only
+  ever survived for a repository holding a model and *no implementation*, and
+  in that case `.businesslens/` is the only thing there to read. The reach
+  argument was weakest exactly where the block was load-bearing. See
+  [adr/0002](./adr/0002-write-nothing-outside-businesslens.md).
+
+  A repository carrying a block from an earlier version keeps it — nothing
+  removes it, and the skill it names still exists, so it is stale rather than
+  wrong. `businesslens-doctor` now reports it and leaves removal to you.
+
 ### Removed
 
 - **`businesslens-verify`** — folded into `businesslens-sync`. The two were

@@ -1,0 +1,62 @@
+import { writeFileSync } from 'node:fs'
+import { join } from 'node:path'
+
+/**
+ * The README written into `.businesslens/` when a Blueprint is pulled or a
+ * Product Report is opened — the one thing that tells an agent what the
+ * directory is for when the model arrived from another repository.
+ *
+ * It used to be a managed block in the repository's root `AGENTS.md`. That
+ * location was chosen for reach: speaking to an agent not running a
+ * BusinessLens skill. But the block only ever survived for the greenfield case
+ * (a model, no implementation), and in that case `.businesslens/` is the only
+ * thing in the repository — an agent asked to build has nothing else to read.
+ * The reach argument was weakest exactly where the block was load-bearing. See
+ * adr/0002.
+ *
+ * Living inside the directory also kills the greenfield/brownfield variant
+ * problem: a file describing the directory is correct in both states, where a
+ * block making claims about the whole repository had to pick one.
+ *
+ * BusinessLens now writes nothing outside `.businesslens/`, without exception.
+ */
+export const MODEL_README = `# Product Model
+
+This directory is a **BusinessLens Product Model**: what this product does, for
+whom, and — wherever the code exists — the evidence that proves it. It is plain
+Markdown tracked in Git, and it is the source of truth for product behavior.
+
+## If you are an agent working in this repository
+
+- **Read \`product.md\` first**, then the actors, experiences, domains, features,
+  and business rules.
+- **The scenarios are the acceptance contract.** Every file under
+  \`journeys/*/scenarios/\` states a Trigger, ordered Steps, and an Outcome the
+  finished product must exhibit. Treat them as the definition of done, not as
+  suggestions.
+- **Business rules are invariants.** They hold across every journey, including
+  the ones written last.
+- **Nothing here prescribes a stack.** No framework, database, architecture, or
+  interface is implied. Choose them yourself and stay consistent.
+- **Behavior carrying no \`codeRefs\` has not been built yet.** Build it. When
+  \`coverage.md\` says \`status: draft\`, none of it has.
+- **After changing code**, run the \`businesslens-sync\` skill to reconcile this
+  model with what you built and attach evidence, then run
+  \`npx businesslens validate\`.
+- **To change what the product should do** rather than implement it, use the
+  \`businesslens-ideate\` skill, so this model stays the source of truth.
+- **Never edit \`cache/\`** — generated.
+
+Documentation: https://businesslens.io
+`
+
+/**
+ * Write the model README, overwriting unconditionally. BusinessLens owns every
+ * file in this directory, and an unconditional write is what keeps a re-opened
+ * model byte-identical to the first expansion.
+ */
+export function writeModelReadme(root: string): string {
+  const file = join(root, '.businesslens', 'README.md')
+  writeFileSync(file, MODEL_README, { encoding: 'utf8' })
+  return file
+}

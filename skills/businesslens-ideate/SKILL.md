@@ -139,7 +139,7 @@ Read these references before authoring:
 - Never present planned behavior as current; unevidenced entities are open
   work by definition.
 - Never execute target code; never submit or contribute the Product Model.
-- Never write into `AGENTS.md`. The managed block belongs to a model that
-  arrived from elsewhere; a model you authored needs no cover letter.
+- Never write outside `.businesslens/`. BusinessLens owns that directory and
+  nothing else — not `AGENTS.md`, not `CLAUDE.md`, not the repository README.
 - Do not pad a shortlist. Three real options beat six with three of them
   filler. Say when the honest answer is that nothing substantial is missing.

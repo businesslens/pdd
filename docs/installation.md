@@ -17,9 +17,9 @@ npx businesslens@latest install
 
 The installer detects supported AI harnesses, lets you customize the
 selection, asks for project or global scope, and installs only the
-BusinessLens skills. It never creates `.businesslens/`, alters `AGENTS.md`,
-installs hooks, contributes to the catalog, or submits data — building the
-model belongs to the skills themselves.
+BusinessLens skills. It never creates `.businesslens/`, installs hooks,
+contributes to the catalog, or submits data — building the model belongs to
+the skills themselves.
 
 ## Supported harnesses
 
@@ -62,7 +62,7 @@ npx businesslens@latest update
 
 Update discovers BusinessLens-managed installations through their ownership
 markers and refreshes only those skill directories. It never touches
-`.businesslens/` or `AGENTS.md`. Narrow it with `--scope project|global` or
+`.businesslens/`. Narrow it with `--scope project|global` or
 `--providers <list>`.
 
 ## Claude Code plugin

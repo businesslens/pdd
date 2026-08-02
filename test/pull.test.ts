@@ -86,16 +86,16 @@ describe('pull', () => {
     expect(headers['user-agent']).toMatch(/^businesslens\//)
   })
 
-  it('writes a greenfield agent block telling an agent to build the product', async () => {
-    const target = temporary('bl-pull-agents-md-')
+  it('writes a model README telling an agent to build the product', async () => {
+    const target = temporary('bl-pull-readme-')
     const fetch = vi.fn(async () => reportResponse()) as unknown as typeof globalThis.fetch
 
     expect(await runPull(target, 'fixture-shop', { force: false }, { fetch, env: {} })).toBe(0)
 
-    const agents = readFileSync(join(target, 'AGENTS.md'), 'utf8')
-    expect(agents).toContain('<!-- businesslens:begin -->')
-    expect(agents).toContain('no implementation')
-    expect(agents).toContain('acceptance contract')
+    const readme = readFileSync(join(target, '.businesslens', 'README.md'), 'utf8')
+    expect(readme).toContain('BusinessLens Product Model')
+    expect(readme).toContain('acceptance contract')
+    expect(existsSync(join(target, 'AGENTS.md'))).toBe(false)
   })
 
   it('accepts an arbitrary catalog origin, because no credential is sent', async () => {

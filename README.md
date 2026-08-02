@@ -81,9 +81,10 @@ BusinessLens has two deliberate surfaces:
 | Terminal | `npx businesslens blueprint contribute` | Propose the model as a public catalog Blueprint |
 | AI harness | the six `businesslens-*` skills | Map, decide, reconcile, and maintain the product truth |
 
-Nothing creates `.businesslens/` except the skills, and only `blueprint pull` and
-`blueprint open` write to `AGENTS.md` — a model that arrived from another repository
-needs a note saying what it is; one you authored does not.
+Nothing creates `.businesslens/` except the skills, and **BusinessLens never
+writes a file your repository owns** — not `AGENTS.md`, not `CLAUDE.md`, not
+your README. A model that arrived from another repository gets a
+`.businesslens/README.md` saying what it is; one you authored does not need one.
 
 ## Skills
 
@@ -128,8 +129,7 @@ npx businesslens@latest update
 ```
 
 Update discovers BusinessLens-managed installations through ownership markers
-and refreshes only those skill directories. It does not touch `.businesslens/`
-or `AGENTS.md`.
+and refreshes only those skill directories. It does not touch `.businesslens/`.
 
 ## Safety
 

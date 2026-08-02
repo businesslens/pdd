@@ -49,4 +49,4 @@ command also refreshes its ownership marker while preserving the original
 installation timestamp.
 
 `update` does not discover or overwrite unmarked installations. It never
-changes the repository's `.businesslens/` Product Model or `AGENTS.md`.
+changes the repository's `.businesslens/` Product Model.

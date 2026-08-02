@@ -1,4 +1,4 @@
-import { writeGreenfieldAgentBlock } from '../core/agent-block.js'
+import { writeModelReadme } from '../core/model-readme.js'
 import { CanonicalNameError, parseCanonicalName } from '../core/canonical-name.js'
 import { resolveCatalogUrl } from '../core/catalog-url.js'
 import { reportDigest } from '../core/report-digest.js'
@@ -149,9 +149,9 @@ export async function runPull(
     // A pulled Blueprint has no implementation, so it arrives with nothing
     // telling an agent what it is. This is what makes "hand it to your agent"
     // work without the user inventing the prompt.
-    const agentsFile = writeGreenfieldAgentBlock(cwd)
+    const readmeFile = writeModelReadme(cwd)
     console.log(`Pulled ${parsedName} into ${opened.root}.`)
-    console.log(`Wrote the greenfield agent block to ${agentsFile}.`)
+    console.log(`Wrote the model README to ${readmeFile}.`)
     return 0
   } catch (error) {
     console.error((error as Error).message)

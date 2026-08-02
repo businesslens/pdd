@@ -44,7 +44,7 @@ GitHub Copilot).
 
    ```bash
    npx businesslens@latest validate
-   git add .businesslens AGENTS.md
+   git add .businesslens
    git commit -m "docs: add BusinessLens product model"
    ```
 

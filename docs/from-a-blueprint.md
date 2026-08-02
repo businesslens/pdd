@@ -32,7 +32,9 @@ You now have:
 
 - `.businesslens/` — the complete Product Model: actors, experiences, domains,
   features, business rules, journeys, and scenarios;
-- `AGENTS.md` — a managed block telling a coding agent what this repository is.
+- `.businesslens/README.md` — what the directory is, for whatever agent reads it.
+
+Nothing outside `.businesslens/` was touched.
 
 Nothing is implemented. `coverage.md` says `status: draft`, and validation
 reports missing evidence as warnings. That is the worklist, not a problem:
@@ -53,7 +55,7 @@ Two paths.
 
 **Straight to implementation**, when the Blueprint is what you want: hand the
 repository to your coding agent and tell it to build. `pull` already wrote the
-contract into `AGENTS.md`, so the agent knows the model is the specification,
+contract into `.businesslens/README.md`, so the agent knows the model is the specification,
 that the scenarios are the acceptance contract, and that nothing here
 prescribes a stack.
 

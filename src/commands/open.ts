@@ -12,7 +12,7 @@ import {
 } from 'node:fs'
 import { dirname, isAbsolute, join, resolve } from 'node:path'
 import { stringify } from 'yaml'
-import { writeGreenfieldAgentBlock } from '../core/agent-block.js'
+import { writeModelReadme } from '../core/model-readme.js'
 import type { ProductReportV4 } from '../core/portable.js'
 import { validateModel } from './validate.js'
 import { loadModel } from '../core/model.js'
@@ -285,10 +285,10 @@ export async function runOpen(cwd: string, source: string, force: boolean): Prom
     // Same reasoning as `pull`: the model arrived from another repository with
     // no implementation, so nothing here tells an agent what it is. Written by
     // the command, not by `expandProductReport` — `contribute` expands into a
-    // throwaway checkout that must not grow an AGENTS.md.
-    const agentsFile = writeGreenfieldAgentBlock(cwd)
+    // throwaway checkout that has no reader to orient.
+    const readmeFile = writeModelReadme(cwd)
     console.log(`Opened ${opened.report.title} into ${opened.root}.`)
-    console.log(`Wrote the greenfield agent block to ${agentsFile}.`)
+    console.log(`Wrote the model README to ${readmeFile}.`)
     return 0
   } catch (error) {
     console.error((error as Error).message)

@@ -32,10 +32,11 @@ The pulled report becomes a canonical `.businesslens/` Product Model:
 - missing implementation evidence remains visible as validation warnings — that
   is the worklist.
 
-`pull` also writes a managed block into `AGENTS.md` telling a coding agent what
-it is looking at: a specification for a product that has not been built, whose
-scenarios are the acceptance contract. Without it, "hand the model to your
-agent" would depend on you writing that prompt yourself.
+`pull` also writes `.businesslens/README.md`, telling a coding agent what it is
+looking at: a specification whose scenarios are the acceptance contract, with
+behavior that carries no `codeRefs` still to build. Without it, "hand the model
+to your agent" would depend on you writing that prompt yourself. Nothing outside
+`.businesslens/` is touched.
 
 The expansion is a fixed point. What lands in your directory is byte-identical
 to the model committed under `blueprints/<slug>/` in `businesslens/pdd`.

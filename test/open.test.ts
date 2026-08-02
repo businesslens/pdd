@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process'
-import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { cpSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
@@ -95,29 +95,28 @@ describe('open report', () => {
     )).toContain('## Decision points')
   })
 
-  it('writes the greenfield agent block, because the model arrived from elsewhere', async () => {
+  it('writes the model README, because the model arrived from elsewhere', async () => {
     // A fresh repository: the suite's shared target already holds a model, and
     // `open` refuses a non-empty `.businesslens/` without --force.
-    const fresh = mkdtempSync(join(tmpdir(), 'bl-open-agents-'))
+    const fresh = mkdtempSync(join(tmpdir(), 'bl-open-readme-'))
     initialize(fresh)
     try {
       const original = buildProject(source)
       expect(await runOpen(fresh, original.outputFile, false)).toBe(0)
 
-      // The only AGENTS.md BusinessLens writes anywhere. `init` and `plan`
-      // author models in place and leave AGENTS.md alone — see adr/0001.
-      const agents = readFileSync(join(fresh, 'AGENTS.md'), 'utf8')
-      expect(agents).toContain('<!-- businesslens:begin -->')
-      expect(agents).toContain('<!-- businesslens:end -->')
-      expect(agents).toContain('**no implementation**')
-      expect(agents).toContain('The scenarios are the acceptance contract.')
+      const readme = readFileSync(join(fresh, '.businesslens', 'README.md'), 'utf8')
+      expect(readme).toContain('BusinessLens Product Model')
+      expect(readme).toContain('The scenarios are the acceptance contract.')
+      expect(readme).toContain('has not been built yet')
     } finally {
       rmSync(fresh, { recursive: true, force: true })
     }
   })
 
-  it('preserves content outside the markers and stays idempotent', async () => {
-    const fresh = mkdtempSync(join(tmpdir(), 'bl-open-agents-'))
+  it('writes nothing outside .businesslens/, including AGENTS.md', async () => {
+    // The invariant adr/0002 buys: BusinessLens owns one directory and touches
+    // nothing else, so a repository's own instruction files are never contested.
+    const fresh = mkdtempSync(join(tmpdir(), 'bl-open-outside-'))
     initialize(fresh)
     try {
       const original = buildProject(source)
@@ -125,10 +124,12 @@ describe('open report', () => {
       expect(await runOpen(fresh, original.outputFile, false)).toBe(0)
       expect(await runOpen(fresh, original.outputFile, true)).toBe(0)
 
-      const agents = readFileSync(join(fresh, 'AGENTS.md'), 'utf8')
-      expect(agents).toContain('# House rules')
-      expect(agents).toContain('Run the linter.')
-      expect(agents.match(/<!-- businesslens:begin -->/g)).toHaveLength(1)
+      expect(readFileSync(join(fresh, 'AGENTS.md'), 'utf8')).toBe('# House rules\n\nRun the linter.\n')
+
+      // `.businesslens/` and — because the second open passed --force — its
+      // timestamped backup. Nothing the repository owns for its own purposes.
+      const created = readdirSync(fresh).filter(entry => entry !== '.git' && entry !== 'AGENTS.md')
+      expect(created.every(entry => entry.startsWith('.businesslens'))).toBe(true)
     } finally {
       rmSync(fresh, { recursive: true, force: true })
     }

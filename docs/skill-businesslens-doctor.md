@@ -36,9 +36,10 @@ you explicitly ask for repairs.
   went through [`businesslens-sync`](./skill-businesslens-sync.md).
 - Placeholder prose, unsupported certainty, weak coverage claims, generated
   `cache/` content accidentally tracked.
-- For a model with no implementation, exactly one well-formed
-  `<!-- businesslens:begin/end -->` managed block in the root `AGENTS.md` —
-  and for a model that describes existing code, no managed block at all.
+- Any `<!-- businesslens:begin/end -->` managed block still sitting in the root
+  `AGENTS.md`, left by a version that wrote there. BusinessLens no longer
+  writes outside `.businesslens/`, so the block is stale — doctor reports it
+  and leaves removal to you, because `AGENTS.md` is yours.
 - Recent diffs and commits for likely drift — reported as likely, never as
   proven.
 

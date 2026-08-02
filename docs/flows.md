@@ -41,9 +41,9 @@ the code has to catch up to *it*.
 
 Writing the code is not something BusinessLens does for you — use your usual
 coding workflow, or a spec-driven toolchain alongside it. When the model
-arrived by `blueprint pull` or `blueprint open`, the managed block in your
-`AGENTS.md` already tells whatever writes the code that the model is the
-specification and its scenarios are the definition of done.
+arrived by `blueprint pull` or `blueprint open`, `.businesslens/README.md`
+already tells whatever writes the code that the model is the specification and
+its scenarios are the definition of done.
 
 Until evidence is attached, `coverage.md` stays at `status: draft` and missing
 evidence appears as warnings rather than errors. That is the expected state for

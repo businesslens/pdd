@@ -1,6 +1,6 @@
 ---
 name: businesslens-doctor
-description: Investigate and optionally repair the health of a BusinessLens installation and .businesslens/ product model, including validation failures, stale codeRefs, missing managed instructions, semantic drift, and incomplete coverage. Use when a simple validation report is insufficient, findings need root-cause analysis, the model looks stale, or the user explicitly requests repairs; run `npx businesslens validate` directly for a read-only deterministic check.
+description: Investigate and optionally repair the health of a BusinessLens installation and .businesslens/ product model, including validation failures, stale codeRefs, semantic drift, and incomplete coverage. Use when a simple validation report is insufficient, findings need root-cause analysis, the model looks stale, or the user explicitly requests repairs; run `npx businesslens validate` directly for a read-only deterministic check.
 ---
 
 # Diagnose BusinessLens
@@ -24,11 +24,11 @@ Diagnose without changing files unless the user explicitly asks for repair.
      work that never went through `businesslens-sync`;
    - placeholder prose, unsupported certainty, or weak coverage claims;
    - generated `cache/` content accidentally tracked by Git.
-4. Only when the model has no implementation — `coverage.md` is `draft` and no
-   entity carries a `codeRef` — check root `AGENTS.md` for one well-formed
-   `<!-- businesslens:begin/end -->` managed block, and confirm it presents the
-   model as the specification. A repository whose model describes existing code
-   should carry no managed block at all; report one as stale if you find it.
+4. Report any `<!-- businesslens:begin/end -->` managed block left in root
+   `AGENTS.md` as stale. BusinessLens no longer writes outside `.businesslens/`;
+   the orientation text lives in `.businesslens/README.md`, which `blueprint
+   open` and `blueprint pull` rewrite. Never edit `AGENTS.md` yourself — say
+   what is stale and let the user remove it.
 5. Inspect relevant diffs and recent commits for behavior changes touching
    mapped evidence. Report likely drift; do not call inference proven.
 6. Classify findings:

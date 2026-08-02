@@ -66,7 +66,6 @@ the installation unless `--force` is explicit.
 The command distributes skills only. It does not:
 
 - create `.businesslens/`;
-- change `AGENTS.md`;
 - install hooks;
 - connect an account; or
 - export or contribute a Product Model.

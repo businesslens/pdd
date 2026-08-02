@@ -53,8 +53,13 @@ or validator behavior.
 
 ## Installer standards
 
-- `install` distributes skills only. It never creates `.businesslens/`,
-  changes `AGENTS.md`, or submits model data.
+- `install` distributes skills only. It never creates `.businesslens/` or
+  submits model data.
+- Nothing writes a file the repository owns — not `AGENTS.md`, not `CLAUDE.md`,
+  not the repository README. BusinessLens writes `.businesslens/` and, only on
+  explicit `--force`, a timestamped `.businesslens.backup-<ts>/` copy of it. The
+  orientation text a pulled model needs lives in `.businesslens/README.md`.
+  See adr/0002.
 - Overwrite only BusinessLens-owned artifacts. An unmarked collision requires
   explicit `--force`.
 - `update` changes only installations with a valid BusinessLens marker.

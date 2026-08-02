@@ -10,8 +10,7 @@ order: 12
 
 Builds the repository's durable description of what the product does today:
 inspects the codebase statically, authors the complete `.businesslens/` Product Model
-with `codeRefs` on every behavioral claim, installs the managed `AGENTS.md`
-guidance block, and validates until green.
+with `codeRefs` on every behavioral claim, and validates until green.
 
 ## When to use it
 
@@ -35,7 +34,7 @@ Reads repository instructions (`AGENTS.md`, `CLAUDE.md`, READMEs), docs,
 detected SDD roots (`openspec/`, `specs/`, `.kiro/`), and the high-signal
 files surfaced by its bundled inventory script. Writes the whole authored
 `.businesslens/` tree — `config.yaml`, `taxonomies.yaml`, `product.md`,
-`coverage.md`, all entity files. It does not touch `AGENTS.md`.
+`coverage.md`, all entity files. It writes nothing outside `.businesslens/`.
 
 ## How it works
 

@@ -75,6 +75,5 @@ Read these references before authoring:
 - Do not submit or contribute the Product Model from this skill;
   `businesslens-contribute` is the explicit public-catalog workflow.
 - Do not overwrite a mature existing model without explicit user approval.
-- Do not write into `AGENTS.md`. The managed block is reserved for a model
-  that arrived from elsewhere and has no implementation; a repository you
-  mapped has both, and its owner already knows what the model is.
+- Do not write outside `.businesslens/`. BusinessLens owns that directory and
+  nothing else — not `AGENTS.md`, not `CLAUDE.md`, not the repository README.
