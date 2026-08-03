@@ -1,3 +1,7 @@
+---
+status: accepted
+---
+
 # Write nothing outside `.businesslens/`
 
 Supersedes the greenfield-block decision in

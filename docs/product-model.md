@@ -51,4 +51,5 @@ Entity files, config, taxonomy, coverage, and orientation are committed.
 
 Use `businesslens lint` for deterministic structural checks and
 `businesslens-verify` for semantic alignment. See
-[Code references and coverage](./evidence.md) and [Conventions](./conventions.md).
+[Code refs and coverage](./code-refs-and-coverage.md) and
+[Conventions](./conventions.md).

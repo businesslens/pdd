@@ -203,8 +203,8 @@ export function buildProject(cwd: string): BuildOutcome {
   // paths in *this* repository and navigate nowhere else. That is the
   // only profile the catalog accepts, and this command exists to feed it.
   // `contribute` and `open` each redacted separately before; doing it once,
-  // here, means every consumer gets the same guarantee. See adr/0003 — an
-    // source-linked profile is a future top-level `export`, not a flag on this one.
+  // here, means every consumer gets the same guarantee. See adr/0003 — a
+  // source-linked profile is a future top-level `export`, not a flag on this one.
   const report = redactSourceEvidence(compileReport(model, tracked.length, today))
 
   const outputFile = writeGeneratedFile(

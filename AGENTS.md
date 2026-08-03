@@ -31,7 +31,8 @@ group under `docs/`, and the two must not contradict each other.
   the docs site navigation from frontmatter.
 - Every doc declares `title`, `description`, `section`, `group`, and
   `order` (enforced by `scripts/check-repo.mjs`). `section` is
-  `open-source`; `group` is the sidebar cluster; `order` is global.
+  `open-source`; `group` is the sidebar cluster; `order` is globally unique and
+  contiguous from 1 within each section.
 - Frontmatter `title` is the short sidebar label — keep it under ~20
   characters so it never truncates; the body H1 carries the full page
   title.
@@ -65,7 +66,7 @@ group under `docs/`, and the two must not contradict each other.
   not the repository README. BusinessLens writes `.businesslens/` and, only on
   explicit `--force`, a timestamped `.businesslens.backup-<ts>/` copy of it. The
   orientation text a pulled model needs lives in `.businesslens/README.md`.
-  See adr/0002.
+  See `adr/0004-write-nothing-outside-businesslens.md`.
 - Overwrite only BusinessLens-owned artifacts. An unmarked collision requires
   explicit `--force`.
 - `update` changes only installations with a valid BusinessLens marker.

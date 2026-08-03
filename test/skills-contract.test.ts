@@ -9,6 +9,10 @@ function skill(name: string): string {
   return readFileSync(join(SKILLS, name, 'SKILL.md'), 'utf8')
 }
 
+function normalizedSkill(name: string): string {
+  return skill(name).replace(/\s+/g, ' ').trim()
+}
+
 function publicSkills(): string[] {
   return readdirSync(SKILLS)
     .filter(name => existsSync(join(SKILLS, name, 'SKILL.md')))
@@ -39,13 +43,41 @@ describe('public workflow contract', () => {
   })
 
   it('makes one verify invocation own resolution and reinspection', () => {
-    const source = skill('businesslens-verify')
-    expect(source).toContain('must not have to\ninvoke map or ideate manually')
-    expect(source).toContain('return directly to step 4')
+    const source = normalizedSkill('businesslens-verify')
+    expect(source).toContain('must not have to invoke map or ideate manually')
+    expect(source).toContain('After every mutation, discard the earlier findings and inspect again')
     expect(source).toContain('injected external builder')
     expect(source).toContain('same gap returns unchanged')
     expect(source).toContain('Report-only mode forbids writes')
     expect(source).toContain('Persist no receipt')
+  })
+
+  it('keeps the complete verify classification and routing structure', () => {
+    const source = skill('businesslens-verify')
+    const classifications = source.slice(
+      source.indexOf('6. Classify each scoped item:'),
+      source.indexOf('Group findings that share one authority decision')
+    )
+    const routes = source.slice(
+      source.indexOf('7. Route each group'),
+      source.indexOf('8. A BusinessLens analysis phase')
+    )
+
+    expect([...classifications.matchAll(/^\s*- \*\*([a-z-]+)\*\* —/gm)].map(match => match[1])).toEqual([
+      'aligned',
+      'model-right',
+      'code-right',
+      'neither-right',
+      'unmapped',
+      'unverifiable'
+    ])
+    expect([...routes.matchAll(/^\s*\*\*([A-Z][A-Za-z-]+)\*\*$/gm)].map(match => match[1])).toEqual([
+      'Model-right',
+      'Code-right',
+      'Neither-right',
+      'Unmapped',
+      'Unverifiable'
+    ])
   })
 
   it('forbids workflow writes to repository-owned instructions', () => {

@@ -73,7 +73,7 @@ half an agent cannot infer from your code.
 | `missing H1 title` / `missing lead paragraph (description)` | Every experience needs both. |
 
 Experiences may carry optional `codeRefs` for navigation. See
-[Code references and coverage](./evidence.md).
+[Code refs and coverage](./code-refs-and-coverage.md).
 
 > **Entry point vs codeRef.** An entry point says how an actor *reaches* the
 > surface. A `codeRef` is an optional bookmark into relevant tracked source.

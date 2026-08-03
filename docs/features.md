@@ -70,4 +70,4 @@ Complete a purchase without confirming an unpaid order.
 | `unknown frontmatter key "<key>"` | The schema is a strict allowlist, so typos fail loudly. |
 
 Features may carry optional `codeRefs` for navigation; no entity requires them.
-See [Code references and coverage](./evidence.md).
+See [Code refs and coverage](./code-refs-and-coverage.md).

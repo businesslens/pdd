@@ -49,3 +49,22 @@ Catalog contribution remains `businesslens blueprint contribute`.
 - User approval remains required for changed product meaning and authorization
   remains required for implementation changes.
 - `/businesslens-verify report only` disables writes and delegation.
+
+## Verification review matrix
+
+Use these cases when reviewing the workflow or building a future agent-evaluation
+harness. Unit tests lock stable structure and guardrails, not exact prose for
+each case.
+
+1. Planned behavior is aligned.
+2. The model is right and the builder must fix code.
+3. The code is right and an approved model delta is needed.
+4. Neither side is right.
+5. Established behavior is not mapped.
+6. A refactor changes bookmarks but not behavior.
+7. A full current-state audit has no Git diff.
+8. Report-only mode.
+9. An unverifiable gap.
+10. The same gap returns unchanged after a build attempt.
+11. No injected builder is available.
+12. Target `AGENTS.md`, `CLAUDE.md`, and root README remain byte-identical.

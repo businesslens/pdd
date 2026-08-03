@@ -3,7 +3,7 @@ title: Overview
 description: Install skills, lint Product Model structure, and move Blueprints between repositories with the BusinessLens CLI.
 section: open-source
 group: CLI
-order: 28
+order: 24
 ---
 
 # BusinessLens CLI

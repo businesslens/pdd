@@ -68,4 +68,4 @@ ADR-0002 named a **profile** of its contents. One term cannot carry both.
 
 The v4 field and API function retain the historical names
 `coverage.evidenceRedacted` and `redactSourceEvidence` for wire compatibility.
-ADR-0004 defines the current semantics: codeRefs are bookmarks, never proof.
+ADR-0005 defines the current semantics: codeRefs are bookmarks, never proof.

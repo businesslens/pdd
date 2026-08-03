@@ -131,8 +131,8 @@ describe('open report', () => {
   })
 
   it('writes nothing outside .businesslens/, including repository instructions', async () => {
-    // The invariant adr/0002 buys: BusinessLens owns one directory and touches
-    // nothing else, so a repository's own instruction files are never contested.
+    // The invariant adr/0004-write-nothing-outside-businesslens.md buys:
+    // BusinessLens owns one directory, so repository instructions are untouched.
     const fresh = mkdtempSync(join(tmpdir(), 'bl-open-outside-'))
     initialize(fresh)
     try {

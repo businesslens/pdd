@@ -109,7 +109,7 @@ writes target `AGENTS.md`, `CLAUDE.md`, or root README files.
   [from a Blueprint](./docs/from-a-blueprint.md), or
   [from an idea](./docs/from-an-idea.md)
 - [Product Model](./docs/product-model.md) ·
-  [Code refs & coverage](./docs/evidence.md)
+  [Code refs & coverage](./docs/code-refs-and-coverage.md)
 - [Skills](./docs/skills.md) · [CLI](./docs/cli.md) ·
   [Lint in CI](./docs/ci.md)
 - [Format contract](./spec/format.md)

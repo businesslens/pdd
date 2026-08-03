@@ -102,6 +102,36 @@ for (const skillPath of plugin.skills || []) {
   }
 }
 
+// The model shape contract and isolated runner are duplicated because every
+// installed skill must remain self-contained. Keep those common copies exact;
+// workflow-specific format guidance may follow the shared contract.
+const canonicalFormatReference = 'skills/businesslens-map/references/format.md'
+const canonicalFormatSource = await readFile(resolve(root, canonicalFormatReference), 'utf8')
+const formatContractPattern = /^# Product Model format\n[\s\S]*?^`\.gitignore` contains `build\/` and `cache\/`\.$/m
+const canonicalFormatContract = canonicalFormatSource.match(formatContractPattern)?.[0]
+if (!canonicalFormatContract) {
+  errors.push(`${canonicalFormatReference} does not expose the shared model format contract`)
+} else {
+  for (const skill of expectedSkills) {
+    const reference = `skills/${skill}/references/format.md`
+    const source = await readFile(resolve(root, reference), 'utf8')
+    const contract = source.match(formatContractPattern)?.[0]
+    if (contract !== canonicalFormatContract) {
+      errors.push(`${reference} must embed the shared model format contract exactly`)
+    }
+  }
+}
+
+const canonicalRunner = 'skills/businesslens-map/scripts/run-businesslens.mjs'
+const canonicalRunnerSource = await readFile(resolve(root, canonicalRunner), 'utf8')
+for (const skill of expectedSkills) {
+  const runner = `skills/${skill}/scripts/run-businesslens.mjs`
+  const source = await readFile(resolve(root, runner), 'utf8')
+  if (source !== canonicalRunnerSource) {
+    errors.push(`${runner} must match the canonical isolated runner ${canonicalRunner}`)
+  }
+}
+
 // Every workflow that can create a model carries the same orientation text.
 // Skills are installed independently, so their copies must be self-contained;
 // this check prevents those necessary copies from drifting from the CLI writer.
@@ -164,6 +194,20 @@ for (const name of docFiles) {
     } else {
       docOrders.set(key, name)
     }
+  }
+}
+
+for (const section of DOC_SECTIONS) {
+  const orders = [...docOrders.keys()]
+    .filter(key => key.startsWith(`${section}:`))
+    .map(key => Number(key.slice(section.length + 1)))
+    .sort((left, right) => left - right)
+  if (!orders.length) continue
+  const expected = orders.map((_, index) => index + 1)
+  if (orders.some((order, index) => order !== expected[index])) {
+    errors.push(
+      `docs section "${section}" orders must be contiguous from 1; found ${orders.join(', ')}`
+    )
   }
 }
 

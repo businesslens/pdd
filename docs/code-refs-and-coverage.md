@@ -6,7 +6,7 @@ group: Product model
 order: 15
 ---
 
-# Code references and coverage
+# Code refs and coverage
 
 `codeRefs` and coverage answer different, deliberately limited questions:
 

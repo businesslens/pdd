@@ -12,7 +12,7 @@ import { join } from 'node:path'
  * (a model, no implementation), and in that case `.businesslens/` is the only
  * thing in the repository — an agent asked to build has nothing else to read.
  * The reach argument was weakest exactly where the block was load-bearing. See
- * adr/0002.
+ * adr/0004-write-nothing-outside-businesslens.md.
  *
  * Living inside the directory also kills the greenfield/brownfield variant
  * problem: a file describing the directory is correct in both states, where a

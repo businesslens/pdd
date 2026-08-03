@@ -1,32 +1,65 @@
 # Product Model format
 
-IDs are lowercase kebab-case filename stems; scenario IDs are globally unique.
-Only `product.md` declares `id:`. H1 is title, lead prose is description or
-journey summary. Relations and navigation live in frontmatter; meaning lives in
-prose.
+## Layout
 
-- Product: `id`, optional `tags`, `limitations`, H1, lead, optional Intent.
-- Actor/Domain: H1 and lead; Domain may have `colorSlot`.
-- Experience: actors, access, entry points, exit, Capability boundary.
-- Feature: domain, actors, at least one experience, business-rule relations.
-- Business Rule: relates to a domain, feature, journey, or scenario; optional
-  Rationale.
-- Journey: domain, at least one actor, experience, feature, and scenario.
-- Scenario: taxonomy kind, optional business rules, Trigger, ordered Steps,
-  Outcome, optional Edge cases and Decision points.
-- Coverage: status, method, source areas, unmapped areas, limitations, rationale.
-  `draft|partial|complete` describes model breadth only.
+```text
+.businesslens/
+├── README.md
+├── config.yaml
+├── product.md
+├── taxonomies.yaml
+├── coverage.md
+├── .gitignore
+├── actors/<id>.md
+├── experiences/<id>.md
+├── domains/<id>.md
+├── features/<id>.md
+├── business-rules/<id>.md
+└── journeys/<journey-id>/
+    ├── journey.md
+    └── scenarios/<scenario-id>.md
+```
 
-Optional `links` use `rel: spec|proposal|doc|adr`. Optional `codeRefs` use
-`path[#symbol][:start[-end]]`, must point at tracked files, and are navigational
-bookmarks—not proof, implementation state, or verification receipts. Missing
-bookmarks are valid at every coverage status.
+IDs are lowercase kebab-case filename stems and scenario IDs are globally
+unique. Only `product.md` declares `id:`. The first H1 is the title; lead prose
+is the description or journey summary. Put relations and navigation in
+frontmatter and meaning in prose.
 
-Product meaning may change only in `product.md`, taxonomies, coverage prose, and
-entity prose/relationships after approval. A post-alignment bookmark refresh may
-change only `codeRefs`.
+## Required shapes
+
+- `config.yaml`: `schema: 1` and `sdd.paths`.
+- `product.md`: `id`, optional `tags`, `limitations`, H1, lead description, and
+  optional `## Intent`.
+- `taxonomies.yaml`: `scenarioKinds` entries with `id`, `name`, `description`,
+  and optional `colorSlot`.
+- Actor and Domain: H1 and lead description. Domain may have `colorSlot`.
+- Experience: `actors`, `access` (`public|authenticated|restricted`),
+  `entryPoints`, `exit`, H1, lead description, and `## Capability boundary`.
+- Feature: `domain`, `actors`, at least one `experience`, `businessRules`, H1,
+  and lead description.
+- Business Rule: one or more relations across `domains`, `features`, `journeys`,
+  or `scenarios`; H1 and lead rule statement; optional `## Rationale`.
+- Journey: `domain`, at least one actor, experience, feature, and scenario;
+  optional `entryPoints`; H1 and lead summary.
+- Scenario: taxonomy `kind`, optional `businessRules`, H1, `## Trigger`, ordered
+  `## Steps`, and `## Outcome`. Optional `## Edge cases` is a bullet list.
+  Optional `## Decision points` uses H3 title, question, and at least two
+  `condition → outcome` branches.
+- `coverage.md`: `status`, `method`, `sourceAreas`, `unmapped`, `limitations`,
+  H1, and rationale. Status is model breadth only: `draft|partial|complete`.
+
+Optional `links` use `rel: spec|proposal|doc|adr`, `href`, and optional title.
+Optional `codeRefs` use `path[#symbol][:start[-end]]`, point at tracked files,
+and are navigational bookmarks—not proof or lifecycle state.
 
 `.gitignore` contains `build/` and `cache/`.
+
+## Verification edit boundaries
+
+Missing bookmarks are valid at every coverage status. Product meaning may
+change only in `product.md`, taxonomies, coverage prose, and entity
+prose/relationships after approval. A post-alignment bookmark refresh may
+change only `codeRefs`.
 
 ## Canonical `.businesslens/README.md`
 

@@ -3,7 +3,7 @@ title: Conventions
 description: The authoring rules every entity file shares — how IDs, titles, and descriptions are derived, and what belongs in frontmatter.
 section: open-source
 group: Reference
-order: 36
+order: 32
 ---
 
 # Authoring conventions

@@ -18,8 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `report only` verification mode, an explicit missing-builder handoff, and an
   unchanged-gap stopping rule. Verification findings are re-derived rather than
   persisted in a receipt or ledger.
-- A checked-in [workflow redesign plan](./plan.md) and accepted ADRs covering
-  bookmarks, non-persisted verification, and the three-skill boundary.
+- Accepted decisions covering [repository-owned files](./adr/0004-write-nothing-outside-businesslens.md),
+  [code bookmarks](./adr/0005-coderefs-are-bookmarks.md),
+  [non-persisted verification](./adr/0006-verification-is-not-persisted.md),
+  and the [three-skill boundary](./adr/0007-three-skills-and-one-verification-loop.md).
 
 ### Changed
 

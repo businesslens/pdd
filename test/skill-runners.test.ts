@@ -99,7 +99,7 @@ fs.writeFileSync(process.env.CAPTURE_FILE, JSON.stringify({
     expect(recorded.apiKey).toBeNull()
   })
 
-  it('pins the CLI to the version the skills were installed from', () => {
+  it.each(LINT_RUNNERS)('$name pins the CLI to the version the skills were installed from', ({ name, file }) => {
     // `businesslens@latest` would lint a model against whatever is published
     // rather than against the release these skills shipped with, reporting the
     // current format's frontmatter keys as unknown.
@@ -113,11 +113,11 @@ fs.writeFileSync(process.env.CAPTURE_FILE, JSON.stringify({
       join(skills, '.businesslens-install.json'),
       JSON.stringify({ schema: 1, package: 'businesslens', version: '9.9.9' })
     )
-    const runnerDir = join(skills, 'businesslens-ideate', 'scripts')
+    const runnerDir = join(skills, `businesslens-${name}`, 'scripts')
     mkdirSync(runnerDir, { recursive: true })
     writeFileSync(
       join(runnerDir, 'run-businesslens.mjs'),
-      readFileSync(LINT_RUNNERS[0]!.file, 'utf8')
+      readFileSync(file, 'utf8')
     )
 
     const fakeNpm = join(bin, 'npm')

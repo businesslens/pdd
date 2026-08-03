@@ -15,7 +15,8 @@
 ├── domains/<id>.md
 ├── features/<id>.md
 ├── business-rules/<id>.md
-└── journeys/<journey-id>/journey.md
+└── journeys/<journey-id>/
+    ├── journey.md
     └── scenarios/<scenario-id>.md
 ```
 

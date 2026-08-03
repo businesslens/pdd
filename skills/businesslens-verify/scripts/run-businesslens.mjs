@@ -5,6 +5,15 @@ import { mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs'
 import { homedir, tmpdir } from 'node:os'
 import { dirname, isAbsolute, join, resolve } from 'node:path'
 
+/**
+ * Pin the CLI to the version these skills were installed from.
+ *
+ * `businesslens@latest` is wrong here: the skills and the CLI are one release,
+ * and a skill installed from version X must lint with version X. Resolving
+ * `latest` at run time means a model authored against a newer format gets
+ * linted by an older published CLI, which reports the new frontmatter keys as
+ * unknown — a confusing failure with no obvious cause.
+ */
 function installedPackageSpec() {
   try {
     const manifestFile = new URL('../../.businesslens-install.json', import.meta.url)
@@ -13,11 +22,17 @@ function installedPackageSpec() {
       return `businesslens@${manifest.version}`
     }
   } catch {
-    // Not installed through BusinessLens; use the public package below.
+    // Not installed through `businesslens install`; fall back below.
   }
   return 'businesslens@latest'
 }
 
+/**
+ * Maintainers can explicitly activate one local PDD worktree through
+ * `~/.local/bin/bl`. Resolve only that fixed development command, outside the
+ * untrusted target repository; ordinary installations retain the pinned npm
+ * fallback above.
+ */
 function activeDevelopmentCli(runnerRoot, env) {
   const binDirectory = resolve(env.BUSINESSLENS_DEV_BIN_DIR || join(homedir(), '.local', 'bin'))
   try {
@@ -28,7 +43,8 @@ function activeDevelopmentCli(runnerRoot, env) {
       stdio: ['ignore', 'pipe', 'ignore']
     }).trim()
     if (!isAbsolute(cli) || !statSync(cli).isFile()) return undefined
-    const manifest = JSON.parse(readFileSync(join(dirname(dirname(cli)), 'package.json'), 'utf8'))
+    const packageRoot = dirname(dirname(cli))
+    const manifest = JSON.parse(readFileSync(join(packageRoot, 'package.json'), 'utf8'))
     return manifest?.name === 'businesslens' ? cli : undefined
   } catch {
     return undefined
@@ -43,10 +59,16 @@ function fail(message) {
 const args = process.argv.slice(2)
 const rootIndex = args.indexOf('--root')
 const requestedRoot = rootIndex >= 0 ? args[rootIndex + 1] : undefined
-if (!requestedRoot) fail('Usage: run-businesslens.mjs --root <repository> lint [--json]')
+if (!requestedRoot) {
+  fail('Usage: run-businesslens.mjs --root <repository> lint [--json]')
+}
 
-const commandArgs = args.filter((_, index) => index !== rootIndex && index !== rootIndex + 1)
-if (commandArgs[0] !== 'lint') fail('The isolated BusinessLens runner supports only lint.')
+const commandArgs = args.filter(
+  (_, index) => index !== rootIndex && index !== rootIndex + 1
+)
+if (commandArgs[0] !== 'lint') {
+  fail('The isolated BusinessLens runner supports only lint.')
+}
 
 let root
 try {
@@ -72,10 +94,25 @@ try {
       stdio: 'inherit'
     })
   } else {
-    execFileSync('npm', [
-      'exec', '--yes', '--ignore-scripts', `--package=${installedPackageSpec()}`,
-      '--', 'businesslens', '--cwd', root, ...commandArgs
-    ], { cwd: runnerRoot, env, stdio: 'inherit' })
+    execFileSync(
+      'npm',
+      [
+        'exec',
+        '--yes',
+        '--ignore-scripts',
+        `--package=${installedPackageSpec()}`,
+        '--',
+        'businesslens',
+        '--cwd',
+        root,
+        ...commandArgs
+      ],
+      {
+        cwd: runnerRoot,
+        env,
+        stdio: 'inherit'
+      }
+    )
   }
 } catch (error) {
   process.exitCode = typeof error.status === 'number' ? error.status : 1
