@@ -271,8 +271,8 @@ describe('open report', () => {
       rejectedTarget,
       'https://app.businesslens.io/api/v1/hub/blueprints/acme/fixture-shop/report.json',
       false
-    )).toBe(1)
-    expect(console.error).toHaveBeenCalledWith(expect.stringContaining('businesslens pull'))
+    )).toBe(2)
+    expect(console.error).toHaveBeenCalledWith(expect.stringContaining('businesslens blueprint pull'))
 
     vi.restoreAllMocks()
     rmSync(rejectedTarget, { recursive: true, force: true })

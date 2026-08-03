@@ -3,7 +3,7 @@ title: Screens
 description: Optional meaningful visual Product views placed in exact Interface–Experience contexts without embedding screenshots or layouts.
 section: open-source
 group: Product model
-order: 11
+order: 12
 ---
 
 # Screens
@@ -107,7 +107,8 @@ external `doc` or `visual` Reference.
 Screenshots, mockups, prototypes, and Figma files stay outside
 `.businesslens/`. Attach them with [References](./references.md) when useful;
 the role distinguishes a curated design from an implementation capture or
-context. BusinessLens does not take or assess screenshots.
+context. The model stores only the attachment metadata, and `lint` neither
+fetches nor assesses the visual itself.
 
 ## What `lint` checks
 

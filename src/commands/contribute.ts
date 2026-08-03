@@ -12,6 +12,7 @@ import { projectPortableReport } from '../core/portable.js'
 import { buildProject } from './export.js'
 import { expandProductReport } from './open.js'
 import { lintModel } from './lint.js'
+import { UsageError } from '../core/usage-error.js'
 
 /**
  * Where contributions go.
@@ -34,7 +35,7 @@ export interface ContributeOptions {
   yes: boolean
 }
 
-class ContributeUsageError extends Error {}
+class ContributeUsageError extends UsageError {}
 
 function gh(args: string[], cwd?: string): string {
   const result = spawnSync('gh', args, { encoding: 'utf8', cwd, maxBuffer: 32 * 1024 * 1024 })
@@ -302,7 +303,7 @@ export async function runContribute(cwd: string, options: ContributeOptions): Pr
     return 0
   } catch (error) {
     console.error((error as Error).message)
-    return error instanceof ContributeUsageError ? 2 : 1
+    return error instanceof UsageError ? 2 : 1
   } finally {
     if (workspace) rmSync(workspace, { recursive: true, force: true })
   }

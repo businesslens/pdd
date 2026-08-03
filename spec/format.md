@@ -46,6 +46,11 @@ still belongs to your SDD tool of choice and may be attached through
 
 ## Universal conventions
 
+- **The committed shell is complete.** `README.md` and `.gitignore` are
+  required alongside the semantic files. `.gitignore` must ignore `build/`
+  and `cache/`; those generated directories are never part of the committed
+  model.
+
 - **ID = filename stem.** An entity's id is its filename without `.md`
   (journeys: the directory name). IDs are lowercase kebab-case:
   `^[a-z0-9]+(?:-[a-z0-9]+)*$`. Never write `id:` in frontmatter — the
@@ -110,8 +115,9 @@ and backslash paths are invalid.
 
 References connect the self-contained Product Model to material maintained
 outside it. A model may contain no references at any Coverage status.
-BusinessLens does not copy, download, generate, execute, or assess referenced
-content.
+The deterministic CLI does not copy, download, generate, execute, or assess
+referenced content. BusinessLens skills may follow curated References as leads,
+but the artifact remains evidence to assess rather than proof to trust.
 
 ## Entity files
 
@@ -486,12 +492,12 @@ Guest presses "Place order" with a non-empty cart.
 
 ## Decision points
 
-### Stock result
+### Fulfillment path
 
-Can every requested item still be fulfilled?
+Does the cart contain physical items?
 
-- available → continue to payment
-- unavailable → preserve the cart and show the affected items
+- physical items → collect a delivery address before payment
+- digital only → continue to payment without delivery details
 
 ## Outcome
 
@@ -499,7 +505,7 @@ Order is stored and a confirmation is shown.
 
 ## Edge cases
 
-- Payment declined → cart preserved, error shown
+- Receipt delivery unavailable → order remains confirmed and the receipt is available in the account
 ```
 
 `kind` must exist in `taxonomies.yaml`. `availability` is optional and, when
@@ -512,7 +518,9 @@ optional bullet list.
 `## Decision points` is optional. Each decision uses an H3 title, a non-empty
 question paragraph, then at least two bullet branches. Each branch uses
 `condition → outcome` with the Unicode arrow or `condition -> outcome` with
-ASCII characters. Decision points are embedded in the Scenario report entity,
+ASCII characters. Its branches stay within and converge on the Scenario's one
+observable outcome. A branch with a materially different outcome belongs in a
+separate Scenario. Decision points are embedded in the Scenario report entity,
 not promoted to standalone files. `journeyId` is derived from the path.
 
 ### `coverage.md`

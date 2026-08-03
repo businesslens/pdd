@@ -203,6 +203,8 @@ describe('contribute', { timeout: 30_000 }, () => {
     // The point of the whole flow: the model in the pull request is regenerated
     // from a portable report, so no workspace reference survives into it.
     const contents = recorded.prContents ?? {}
+    expect(contents['blueprints/fixture-shop/.businesslens/README.md'])
+      .toContain('BusinessLens Product Model')
     const modelFiles = Object.entries(contents)
       .filter(([file]) => file.startsWith('blueprints/fixture-shop/.businesslens/'))
     expect(modelFiles.length).toBeGreaterThan(0)
@@ -445,7 +447,7 @@ describe('contribute', { timeout: 30_000 }, () => {
     vi.spyOn(console, 'error').mockImplementation((message: string) => { errors.push(message) })
 
     try {
-      expect(await runContribute(model, { slug: 'Not A Slug', yes: true })).toBe(1)
+      expect(await runContribute(model, { slug: 'Not A Slug', yes: true })).toBe(2)
     } finally {
       process.env.PATH = previousPath
       delete process.env.CAPTURE_FILE

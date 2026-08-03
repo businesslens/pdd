@@ -23,8 +23,9 @@
 ```
 
 IDs are lowercase kebab-case filename stems and Scenario IDs are globally
-unique. Only `product.md` declares `id:`. The first H1 is the title; lead prose
-is the description or Journey summary. Put relations and navigation in
+unique. Only `product.md` declares `id:`. The first H1 is the title. Lead prose
+is the entity description or Journey summary; Scenarios instead begin with the
+required `## Trigger` section and have no lead. Put relations and navigation in
 frontmatter and Product meaning in prose.
 
 ## Required shapes
@@ -60,7 +61,8 @@ frontmatter and Product meaning in prose.
 - Scenario: taxonomy `kind`, optional availability subset of its Journey, H1,
   `## Trigger`, ordered `## Steps`, and `## Outcome`. Optional `## Edge cases`
   is a bullet list. Optional `## Decision points` uses H3 title, question, and
-  at least two `condition → outcome` branches.
+  at least two `condition → outcome` branches that converge on the Scenario's
+  one observable outcome; materially different outcomes are separate Scenarios.
 - `coverage.md`: `status`, `method`, `sourceAreas`, `unmapped`, `limitations`,
   H1, and rationale. Status is model breadth only: `draft|partial|complete`.
 

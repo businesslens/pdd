@@ -116,6 +116,23 @@ describe('cli dispatch', () => {
     expect(unknown.stderr).toContain('Unknown blueprint command "frobnicate"')
   })
 
+  it('uses the usage exit code for invalid options, providers, and scopes', () => {
+    const unknownOption = cli(repo, process.env, 'lint', '--frobnicate')
+    expect(unknownOption.status).toBe(2)
+
+    const unknownProvider = cli(
+      repo, process.env, 'install', '--providers', 'frobnicate', '--scope', 'project', '--yes'
+    )
+    expect(unknownProvider.status).toBe(2)
+    expect(unknownProvider.stderr).toContain('Unknown provider')
+
+    const invalidScope = cli(
+      repo, process.env, 'install', '--providers', 'codex', '--scope', 'workspace', '--yes'
+    )
+    expect(invalidScope.status).toBe(2)
+    expect(invalidScope.stderr).toContain('--scope must be project or global')
+  })
+
   it('retires `build` and points at what replaced it', () => {
     // `build` now means writing the software a model describes, which this
     // project deliberately leaves to whatever tool you already use.

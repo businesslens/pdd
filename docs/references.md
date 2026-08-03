@@ -3,7 +3,7 @@ title: References
 description: Attach intent, implementation, or context artifacts to any Product Model entity without moving external material into the model.
 section: open-source
 group: Product model
-order: 17
+order: 18
 ---
 
 # References
@@ -78,8 +78,10 @@ targets are syntax-checked but never fetched. A missing local target warns
 without failing lint. Absolute paths, `file:` URLs, unsupported schemes, and
 backslash paths are invalid. Duplicate targets on one entity are invalid.
 
-BusinessLens does not capture, copy, download, execute, inspect, compare, or
-certify referenced content. Users curate references themselves.
+The deterministic CLI does not fetch or inspect referenced content, and a
+Reference never certifies alignment. BusinessLens skills may follow curated
+References as leads while mapping or verifying the repository, but the
+artifact is evidence to assess rather than proof to trust.
 
 ## Report profiles
 
@@ -89,9 +91,11 @@ source checkout, so export projects it to `referenceProfile: portable` and
 keeps only HTTP(S) References whose role is `intent` or `context`.
 
 The portable projection removes all code References, all implementation
-References, and all repository-relative targets. `open`, `pull`, and
-`contribute` apply the same projection. Coverage is unchanged except that
-repository-local `sourceAreas` are removed; Coverage never counts References.
+References, all repository-relative targets, and repository-local Coverage
+`sourceAreas`. Expansion through `open`, `pull`, or `contribute` preserves the
+Coverage status, `unmapped` areas, and existing limitations, while replacing
+the workspace mapping method and rationale and adding a portable-expansion
+limitation. Coverage never counts References.
 
 ## What `lint` checks
 

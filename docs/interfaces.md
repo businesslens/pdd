@@ -3,7 +3,7 @@ title: Interfaces
 description: Supported interaction forms through which Actors access the Product and for which behavior can be required independently.
 section: open-source
 group: Product model
-order: 9
+order: 10
 ---
 
 # Interfaces

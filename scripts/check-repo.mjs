@@ -18,7 +18,8 @@ async function exists(path) {
 const REQUIRED = [
   'README.md', 'LICENSE', 'package.json', 'package-lock.json', 'tsconfig.json', 'src/cli.ts',
   'CHANGELOG.md', 'SECURITY.md', 'CONTRIBUTING.md',
-  'spec/format.md', 'docs/cli.md', 'docs/ci.md', 'docs/integration.md',
+  'spec/format.md', 'docs/product-model.md', 'docs/product.md',
+  'docs/cli.md', 'docs/ci.md', 'docs/integration.md',
   '.claude-plugin/plugin.json', '.claude-plugin/marketplace.json'
 ]
 for (const file of REQUIRED) {
@@ -154,6 +155,7 @@ if (!modelReadmeMatch) {
 // Docs frontmatter contract, consumed by the landing repository's nav:
 // section = top-level tab, group = sidebar cluster, order = global within section.
 const DOC_SECTIONS = new Set(['open-source', 'platform'])
+const DOC_GROUPS = new Set(['Get started', 'Product model', 'Integration', 'Skills', 'CLI'])
 const docFiles = (await readdir(resolve(root, 'docs'))).filter(name => name.endsWith('.md')).sort()
 const docOrders = new Map()
 for (const name of docFiles) {
@@ -182,6 +184,10 @@ for (const name of docFiles) {
   const section = data.section
   if (section && !DOC_SECTIONS.has(section)) {
     errors.push(`docs/${name} section "${section}" must be one of: ${[...DOC_SECTIONS].join('|')}`)
+  }
+  const group = data.group
+  if (group && !DOC_GROUPS.has(group)) {
+    errors.push(`docs/${name} group "${group}" must be one of: ${[...DOC_GROUPS].join('|')}`)
   }
   const order = data.order
   if (!Number.isInteger(order) || order < 1) {

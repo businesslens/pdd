@@ -4,8 +4,8 @@
  * that are no longer here.
  *
  * The maintainer runs this; contributors never do. It carries a real write
- * credential, which is why — unlike `businesslens pull` — it keeps an origin
- * allowlist. See docs/adr/0004 in the landing repository.
+ * credential, which is why — unlike `businesslens blueprint pull` — it keeps
+ * an origin allowlist. See docs/adr/0004 in the landing repository.
  *
  * Blast radius is one Blueprint per call: there is no reconcile endpoint. The
  * script reads the live slug set, PUTs what is on disk, and issues one DELETE

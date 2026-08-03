@@ -65,6 +65,21 @@ describe('lintModel', () => {
     expect(run(cwd).errors).toContain('features/: unsupported schema 2 collection; use capabilities/ with schema 3')
   })
 
+  it('requires the committed orientation and generated-path ignores', () => {
+    const cwd = fixtureCopy()
+    unlinkSync(join(cwd, '.businesslens/README.md'))
+    writeFileSync(join(cwd, '.businesslens/.gitignore'), 'build/\n')
+    const errors = run(cwd).errors
+    expect(errors).toContain('README.md is missing')
+    expect(errors).toContain('.gitignore must ignore cache/')
+  })
+
+  it('requires the model gitignore file', () => {
+    const cwd = fixtureCopy()
+    unlinkSync(join(cwd, '.businesslens/.gitignore'))
+    expect(run(cwd).errors).toContain('.gitignore is missing')
+  })
+
   it('requires both Actor classifications', () => {
     const cwd = fixtureCopy()
     writeFileSync(join(cwd, '.businesslens/actors/shopper.md'), `# Shopper

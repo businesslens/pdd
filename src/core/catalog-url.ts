@@ -1,4 +1,5 @@
 import { isIP } from 'node:net'
+import { UsageError } from './usage-error.js'
 
 export const DEFAULT_CATALOG_URL = 'https://businesslens.io'
 
@@ -27,11 +28,11 @@ export function trustedCatalogUrl(value: string): string {
   try {
     url = new URL(value)
   } catch {
-    throw new Error(`"${value}" is not a valid catalog origin.`)
+    throw new UsageError(`"${value}" is not a valid catalog origin.`)
   }
 
   if (url.username || url.password || url.pathname !== '/' || url.search || url.hash) {
-    throw new Error(
+    throw new UsageError(
       'The catalog origin must be a bare origin, with no credentials, path, query string, or fragment.'
     )
   }
@@ -39,7 +40,7 @@ export function trustedCatalogUrl(value: string): string {
   if (url.protocol === 'https:') return url.origin
   if (url.protocol === 'http:' && isLoopbackHostname(url.hostname)) return url.origin
 
-  throw new Error(
+  throw new UsageError(
     'The catalog origin must use https, except on a loopback development host (localhost, 127.x.x.x, or ::1).'
   )
 }

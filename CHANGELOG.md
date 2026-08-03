@@ -74,6 +74,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Every model creation path carries canonical orientation in
   `.businesslens/README.md`. BusinessLens still never writes target-root
   `AGENTS.md`, `CLAUDE.md`, or README files.
+- Canonical report expansion now owns that orientation file for `open`, `pull`,
+  and `contribute`; Blueprint contributions accept every valid model-breadth
+  Coverage status and publish no source-repository provenance.
+- Lint now requires the complete committed model shell (`README.md` plus a
+  `.gitignore` covering `build/` and `cache/`), and CLI argument, provider,
+  scope, slug, and catalog-origin errors consistently exit with usage code 2.
 - Documentation now teaches three starting doors and one ongoing loop:
   `ideate → injected build → verify (including final lint) → merge`. Map is explicitly not a
   daily maintenance command, and lint is explicitly not semantic verification.

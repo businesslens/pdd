@@ -155,6 +155,23 @@ export function loadModel(cwd: string): PddModel {
   const issues: string[] = []
   if (!existsSync(root)) {
     issues.push(`${FOLDER}/ does not exist — use \`businesslens-map\` for established code or \`businesslens-ideate\` for a new product`)
+  } else {
+    if (!existsSync(join(root, 'README.md'))) issues.push('README.md is missing')
+
+    const gitignoreFile = join(root, '.gitignore')
+    if (!existsSync(gitignoreFile)) {
+      issues.push('.gitignore is missing')
+    } else {
+      const patterns = new Set(
+        readFileSync(gitignoreFile, 'utf8')
+          .split(/\r?\n/)
+          .map(line => line.trim())
+          .filter(line => line.length > 0 && !line.startsWith('#'))
+      )
+      for (const generated of ['build/', 'cache/']) {
+        if (!patterns.has(generated)) issues.push(`.gitignore must ignore ${generated}`)
+      }
+    }
   }
 
   let config = { schema: 3, sddPaths: [] as string[] }

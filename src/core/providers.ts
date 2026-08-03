@@ -1,6 +1,7 @@
 import { existsSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join, resolve, sep } from 'node:path'
+import { UsageError } from './usage-error.js'
 
 export type ProviderId = 'claude' | 'codex' | 'cursor' | 'gemini' | 'github'
 export type InstallScope = 'project' | 'global'
@@ -84,7 +85,7 @@ export function providerById(id: ProviderId): Provider {
 export function parseProviderIds(input: string | undefined): ProviderId[] | undefined {
   if (input === undefined) return undefined
   const tokens = input.split(',').map(token => token.trim().toLowerCase()).filter(Boolean)
-  if (tokens.length === 0) throw new Error('--providers requires at least one provider.')
+  if (tokens.length === 0) throw new UsageError('--providers requires at least one provider.')
 
   const ids: ProviderId[] = []
   const invalid: string[] = []
@@ -94,7 +95,7 @@ export function parseProviderIds(input: string | undefined): ProviderId[] | unde
     else if (!ids.includes(id)) ids.push(id)
   }
   if (invalid.length > 0) {
-    throw new Error(
+    throw new UsageError(
       `Unknown provider(s): ${invalid.join(', ')}. Supported providers: ${PROVIDERS.map(provider => provider.id).join(', ')}.`
     )
   }

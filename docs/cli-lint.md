@@ -3,7 +3,7 @@ title: lint
 description: Check Product Model structure, relationships, Reference grammar, and tracked code-reference paths without claiming semantic alignment.
 section: open-source
 group: CLI
-order: 29
+order: 30
 ---
 
 # `businesslens lint`
@@ -14,18 +14,20 @@ npx businesslens@latest lint [--json]
 
 Lint is deterministic and read-only. It checks:
 
-- required files, frontmatter allowlists, IDs, titles, and behavior sections;
+- required files, including the orientation README and generated-path
+  `.gitignore`, plus frontmatter allowlists, IDs, titles, and behavior sections;
 - Actor classifications; Interface and Experience relations; exact
   availability; Capability, Domain, Rule, Journey, Scenario, and taxonomy
   relationships;
 - access modes, scenario step/decision shapes, and globally unique scenario IDs;
 - strict Reference shape, kinds, roles, targets, and duplicate targets;
 - whether present code-reference paths are tracked by Git, and whether local
-  non-code targets exist.
+  non-code targets exist in the tracked repository file set.
 
 Missing References are valid at every Coverage status because they are optional
 attachments. Lint does not inspect referenced content, symbols, line existence,
-runtime behavior, semantic drift, or implementation completeness. A green
+runtime behavior, semantic drift, or implementation completeness. It warns
+when a local non-code target is not tracked. A green
 result means the model is structurally sound—not that model and code agree.
 
 Use `businesslens-verify` for semantic alignment.

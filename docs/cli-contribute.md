@@ -3,7 +3,7 @@ title: blueprint contribute
 description: Open a pull request proposing your Product Model as a catalog Blueprint.
 section: open-source
 group: CLI
-order: 33
+order: 34
 ---
 
 # `businesslens blueprint contribute`
@@ -27,6 +27,13 @@ gh auth login
 
 `contribute` refuses to run without it, rather than failing halfway through.
 
+## Options
+
+| Option | Effect |
+| --- | --- |
+| `--slug <name>` | Override the product ID used as the lowercase kebab-case catalog slug. |
+| `--yes` | Skip the confirmation prompt; required when no interactive terminal is available. |
+
 ## Where it goes
 
 By default, `businesslens/pdd`. Set `BUSINESSLENS_CONTRIBUTE_UPSTREAM` to an
@@ -40,8 +47,8 @@ you do, because GitHub refuses to let one account own both a parent and a fork.
 ## What it does
 
 1. Resolves and loads the Product Model, and lints its structure. Errors stop
-   the run; Coverage status and missing References do not imply implementation
-   state and therefore are not lint findings.
+   the run; `draft`, `partial`, and `complete` Coverage statuses are all valid
+   model-breadth statements, and missing References are not lint findings.
 2. Exports a Blueprint using the portable Reference profile.
 3. **Regenerates the model from that Blueprint.** This is what goes in the
    pull request.
@@ -114,9 +121,10 @@ license: MIT
 Expect to edit `category`, `icon`, `accent`, and `authors` in the pull request.
 Blueprint content is MIT, the same as the code.
 
-Git provenance is recorded as an optional `origin` block when your model is in a
-repository with an HTTPS remote, and skipped otherwise — a Blueprint author may
-have no repository at all.
+The manifest deliberately carries no origin repository or commit. Portable
+content must stand on its own, and the pull request supplies the contribution's
+review provenance without publishing source-repository metadata in the
+Blueprint.
 
 ## A good Blueprint
 

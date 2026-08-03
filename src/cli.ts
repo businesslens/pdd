@@ -66,8 +66,8 @@ const BLUEPRINT_COMMANDS = new Set(['export', 'open', 'pull', 'contribute'])
 /** Positionals each command consumes after its own name. */
 const ARGUMENT_COUNT: Record<string, number> = { open: 1, pull: 1 }
 
-async function main(): Promise<number> {
-  const { values, positionals } = parseArgs({
+function parseCliArgs() {
+  return parseArgs({
     args: process.argv.slice(2),
     allowPositionals: true,
     strict: true,
@@ -87,6 +87,17 @@ async function main(): Promise<number> {
       version: { type: 'boolean', default: false }
     }
   })
+}
+
+async function main(): Promise<number> {
+  let parsed: ReturnType<typeof parseCliArgs>
+  try {
+    parsed = parseCliArgs()
+  } catch (error) {
+    console.error((error as Error).message)
+    return 2
+  }
+  const { values, positionals } = parsed
 
   if (values.version) {
     console.log(cliVersion())

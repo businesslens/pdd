@@ -17,6 +17,7 @@ import type { ProductReportV6, ReportAvailability } from '../core/portable.js'
 import { lintModel } from './lint.js'
 import { loadModel } from '../core/model.js'
 import { parseProductReport, projectPortableReport } from '../core/portable.js'
+import { UsageError } from '../core/usage-error.js'
 
 const MAX_REPORT_BYTES = 8 * 1024 * 1024
 const OPEN_COVERAGE_METHOD = 'Opened from a portable Product Report; source-repository navigation was intentionally removed.'
@@ -25,7 +26,9 @@ const OPEN_COVERAGE_RATIONALE = 'Product behavior, relationships, and model brea
 
 function readReportSource(source: string): unknown {
   if (/^https?:\/\//i.test(source)) {
-    throw new Error('`open` accepts local Product Report files. Use `businesslens pull <blueprint>` for catalog Blueprints.')
+    throw new UsageError(
+      '`open` accepts local Product Report files. Use `businesslens blueprint pull <blueprint>` for catalog Blueprints.'
+    )
   }
   const file = isAbsolute(source) ? source : resolve(process.cwd(), source)
   const stat = lstatSync(file)
@@ -312,6 +315,10 @@ export function expandProductReport(cwd: string, input: unknown, force: boolean)
     staging = mkdtempSync(join(targetParent, '.businesslens-open-'))
     const stagedRoot = join(staging, '.businesslens')
     writeReport(stagedRoot, report)
+    // Expansion is the one canonical report-to-model primitive used by open,
+    // pull, and contribution. Keeping orientation here makes their model trees
+    // identical and lets lint require the complete committed layout.
+    writeModelReadme(staging)
     const lint = lintModel(loadModel(staging), [])
     if (!lint.ok) {
       throw new Error(
@@ -331,16 +338,12 @@ export function expandProductReport(cwd: string, input: unknown, force: boolean)
 export async function runOpen(cwd: string, source: string, force: boolean): Promise<number> {
   try {
     const opened = expandProductReport(cwd, readReportSource(source), force)
-    // Same reasoning as `pull`: the model arrived from another repository with
-    // no implementation, so nothing here tells an agent what it is. Written by
-    // the command, not by `expandProductReport` — `contribute` expands into a
-    // throwaway checkout that has no reader to orient.
-    const readmeFile = writeModelReadme(cwd)
+    const readmeFile = join(opened.root, 'README.md')
     console.log(`Opened ${opened.report.title} into ${opened.root}.`)
     console.log(`Wrote the model README to ${readmeFile}.`)
     return 0
   } catch (error) {
     console.error((error as Error).message)
-    return 1
+    return error instanceof UsageError ? 2 : 1
   }
 }

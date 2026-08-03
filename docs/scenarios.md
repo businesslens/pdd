@@ -3,7 +3,7 @@ title: Scenarios
 description: Observable acceptance paths through a Journey, optionally narrowed to particular Interface–Experience pairs.
 section: open-source
 group: Product model
-order: 15
+order: 16
 ---
 
 # Scenarios
@@ -50,12 +50,12 @@ The shopper presses "Place order" with a non-empty cart.
 
 ## Decision points
 
-### Payment result
+### Fulfillment path
 
-Did the payment provider accept the charge?
+Does the cart contain physical items?
 
-- accepted → persist and confirm the order
-- declined → preserve the cart and show the failure
+- physical items → collect a delivery address before payment
+- digital only → continue to payment without delivery details
 
 ## Outcome
 
@@ -75,7 +75,9 @@ Business Rules own their Scenario relations; Scenarios do not duplicate a
 
 Each decision has an H3 title, one non-empty Product question, and at least two
 `condition → outcome` branches. Use decisions for real behavioral forks, not
-ordinary sequential steps.
+ordinary sequential steps. Its branches remain inside and converge on this
+Scenario's one observable Outcome. When a branch produces a materially
+different Outcome, give it a separate Scenario instead.
 
 ## What `lint` checks
 

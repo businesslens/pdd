@@ -3,7 +3,7 @@ title: blueprint pull
 description: Pull a Blueprint from the public catalog into the current directory.
 section: open-source
 group: CLI
-order: 32
+order: 33
 ---
 
 # `businesslens blueprint pull`
@@ -37,8 +37,10 @@ it, "hand the model
 to your agent" would depend on you writing that prompt yourself. Nothing outside
 `.businesslens/` is touched.
 
-The expansion is a fixed point. What lands in your directory is byte-identical
-to the model committed under `blueprints/<slug>/` in `businesslens/pdd`.
+The expansion is a fixed point. For the public catalog, what lands in your
+directory is byte-identical to the canonical model committed under
+`blueprints/<slug>/` in `businesslens/pdd`; a custom catalog is responsible for
+serving an equivalently canonical report.
 
 Use `--cwd <path>` to choose the target directory. By default `pull` refuses a
 non-empty `.businesslens/`; `--force` first moves it to a timestamped backup.
@@ -83,7 +85,6 @@ the Product Report body and must include `x-businesslens-blueprint` and
 | Status | Meaning |
 | --- | --- |
 | `200` | The Product Report |
-| `304` | Your `if-none-match` matched; nothing changed |
 | `404` | No such Blueprint |
 | `410` | The Blueprint was withdrawn from the catalog |
 | `503` | The catalog is temporarily unavailable |

@@ -2,10 +2,10 @@
 /**
  * Gate every Blueprint under `blueprints/` before it can reach the catalog.
  *
- * This deliberately does not trust `businesslens contribute`. Anyone can open a
- * pull request by hand, so the checks that matter — above all that no Blueprint
- * carries workspace material out of the repository it was authored in — are
- * re-run here against what is actually on disk.
+ * This deliberately does not trust `businesslens blueprint contribute`.
+ * Anyone can open a pull request by hand, so the checks that matter — above all
+ * that no Blueprint carries workspace material out of the repository it was
+ * authored in — are re-run here against what is actually on disk.
  */
 import { execFileSync } from 'node:child_process'
 import { readdir, readFile } from 'node:fs/promises'
@@ -129,10 +129,6 @@ for (const slug of entries) {
   } catch (error) {
     errors.push(`${label}: ${error.message}`)
     continue
-  }
-
-  if (report.coverage?.status !== 'draft') {
-    errors.push(`${label}: coverage status is "${report.coverage?.status}"; a Blueprint is a draft model`)
   }
 
   const leaked = workspaceMaterial(report)

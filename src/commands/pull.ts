@@ -1,9 +1,10 @@
-import { writeModelReadme } from '../core/model-readme.js'
-import { CanonicalNameError, parseCanonicalName } from '../core/canonical-name.js'
+import { join } from 'node:path'
+import { parseCanonicalName } from '../core/canonical-name.js'
 import { resolveCatalogUrl } from '../core/catalog-url.js'
 import { reportDigest } from '../core/report-digest.js'
 import { cliVersion } from '../version.js'
 import { expandProductReport } from './open.js'
+import { UsageError } from '../core/usage-error.js'
 
 const MAX_REPORT_BYTES = 8 * 1024 * 1024
 
@@ -75,7 +76,7 @@ export async function runPull(
     catalog = resolveCatalogUrl(options.catalog, dependencies.env ?? process.env)
   } catch (error) {
     console.error((error as Error).message)
-    return error instanceof CanonicalNameError ? 2 : 1
+    return error instanceof UsageError ? 2 : 1
   }
 
   const blueprint = encodeURIComponent(parsedName)
@@ -146,10 +147,7 @@ export async function runPull(
 
   try {
     const opened = expandProductReport(cwd, report, options.force)
-    // A pulled Blueprint has no implementation, so it arrives with nothing
-    // telling an agent what it is. This is what makes "hand it to your agent"
-    // work without the user inventing the prompt.
-    const readmeFile = writeModelReadme(cwd)
+    const readmeFile = join(opened.root, 'README.md')
     console.log(`Pulled ${parsedName} into ${opened.root}.`)
     console.log(`Wrote the model README to ${readmeFile}.`)
     return 0

@@ -3,7 +3,7 @@ title: Journeys
 description: Complete Actor goals assembled from Capabilities and promised through exact Interface–Experience availability.
 section: open-source
 group: Product model
-order: 14
+order: 15
 ---
 
 # Journeys

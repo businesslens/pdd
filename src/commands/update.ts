@@ -12,6 +12,7 @@ import {
   installSkillsToTarget
 } from '../core/skill-installation.js'
 import { cliVersion } from '../version.js'
+import { UsageError } from '../core/usage-error.js'
 
 export interface UpdateOptions {
   providers?: string
@@ -27,20 +28,20 @@ function resolveScopes(options: UpdateOptions): InstallScope[] {
     options.project ? 'project' : undefined,
     options.global || options.user ? 'global' : undefined
   ].filter(Boolean)
-  if (aliases.length > 1) throw new Error('Choose only one of --project, --global, or --user.')
+  if (aliases.length > 1) throw new UsageError('Choose only one of --project, --global, or --user.')
 
   if (!options.scope && aliases.length === 0) return ['project', 'global']
   const normalized = options.scope?.trim().toLowerCase()
   if (normalized && normalized !== 'project' && normalized !== 'global' && normalized !== 'user') {
-    throw new Error('--scope must be project or global.')
+    throw new UsageError('--scope must be project or global.')
   }
   const scope = normalized === 'user' ? 'global' : normalized
   if (scope && aliases[0] && scope !== aliases[0]) {
-    throw new Error('--scope conflicts with the selected scope flag.')
+    throw new UsageError('--scope conflicts with the selected scope flag.')
   }
   if ((scope || aliases[0]) === 'project') return ['project']
   if ((scope || aliases[0]) === 'global') return ['global']
-  throw new Error('--scope must be project or global.')
+  throw new UsageError('--scope must be project or global.')
 }
 
 export async function runUpdate(cwd: string, options: UpdateOptions = {}): Promise<number> {
@@ -68,6 +69,6 @@ export async function runUpdate(cwd: string, options: UpdateOptions = {}): Promi
     return 0
   } catch (error) {
     console.error((error as Error).message)
-    return 1
+    return error instanceof UsageError ? 2 : 1
   }
 }

@@ -1,7 +1,9 @@
+import { UsageError } from './usage-error.js'
+
 export const CANONICAL_NAME = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 export const CANONICAL_NAME_MAX_LENGTH = 80
 
-export class CanonicalNameError extends Error {}
+export class CanonicalNameError extends UsageError {}
 
 /**
  * A Blueprint's canonical name — its catalog slug.

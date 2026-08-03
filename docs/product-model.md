@@ -15,6 +15,7 @@ must remain true.
 
 | Entity | Answers | Lives in |
 | --- | --- | --- |
+| [Product](./product.md) | Which coherent value promise this model describes | `product.md` |
 | [Actor](./actors.md) | Who acts, and on which side of the Product boundary | `actors/<id>.md` |
 | [Interface](./interfaces.md) | Through which supported interaction form | `interfaces/<id>.md` |
 | [Experience](./experiences.md) | In which coherent context | `experiences/<id>.md` |
@@ -25,24 +26,26 @@ must remain true.
 | [Scenario](./scenarios.md) | Which observable acceptance path | `journeys/<id>/scenarios/<id>.md` |
 | [Business Rule](./business-rules.md) | What must remain true | `business-rules/<id>.md` |
 
-`product.md` names the Product. `taxonomies.yaml` defines Scenario kinds.
-`config.yaml` records folder schema and SDD roots. `coverage.md` describes model
-breadth. `.businesslens/README.md` orients an agent that encounters the model.
+`taxonomies.yaml` defines Scenario kinds. `config.yaml` records folder schema
+and SDD roots. `coverage.md` describes model breadth.
+`.businesslens/README.md` orients an agent that encounters the model.
 
-## Several Interfaces
+## Authoring conventions
 
-Website, mobile application, CLI, and supported API are not Product types. They
-are possible Interfaces of one Product. A repository containing all four can
-use one model when they serve the same coherent value promise.
+Entity IDs come from lowercase kebab-case filename stems; Journey IDs come from
+their directories. Only `product.md` declares `id:`. Scenario IDs are unique
+across the whole model, not merely within a Journey.
 
-Genuinely independent Products use independent `.businesslens/` model roots.
-Repository layout does not decide this: packages and deployables may implement
-one Product, while one repository may contain several Products.
+The first H1 supplies an entity's title. Lead prose supplies its description,
+or a Journey's summary. Scenarios are the exception: they begin with the
+required `## Trigger` section and have no lead paragraph. Relations and
+navigation belong in frontmatter; Product meaning belongs in prose. The
+frontmatter schema is a strict allowlist, so `lint` reports unknown keys rather
+than silently ignoring them.
 
-Interfaces describe supported Product contracts, not every technical surface.
-An internal API supporting a website normally stays outside the model. A
-partner API becomes an Interface when independent Actors use it and its
-behavior matters as Product scope.
+Optional `## Intent` prose explains why a Product or entity exists and which
+outcome it protects. It adds meaning without becoming another entity or
+relationship graph.
 
 ## Experience matrix
 
@@ -109,5 +112,6 @@ context. References are optional navigation and supporting material, never
 Product truth or proof of model/code agreement.
 
 Entity files, config, taxonomy, coverage, and orientation are committed.
-`build/` and `cache/` are generated and gitignored. Use `businesslens lint` for
-structure and `businesslens-verify` for implementation alignment.
+The model's `.gitignore` ignores `build/` and `cache/`, which are generated and
+never committed. Use `businesslens lint` for structure and
+`businesslens-verify` for implementation alignment.

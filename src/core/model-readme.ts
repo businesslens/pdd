@@ -2,8 +2,8 @@ import { writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 /**
- * The README written into `.businesslens/` when a Blueprint is pulled or a
- * Product Report is opened — the one thing that tells an agent what the
+ * The README written into every `.businesslens/` model created by canonical
+ * Product Report expansion — the one thing that tells an agent what the
  * directory is for when the model arrived from another repository.
  *
  * It used to be a managed block in the repository's root `AGENTS.md`. That
@@ -45,8 +45,8 @@ Documentation: https://businesslens.io
 
 /**
  * Write the model README, overwriting unconditionally. BusinessLens owns every
- * file in this directory, and an unconditional write is what keeps a re-opened
- * model byte-identical to the first expansion.
+ * file in this directory, and an unconditional write is what keeps open,
+ * pull, and contribution expansion byte-identical.
  */
 export function writeModelReadme(root: string): string {
   const file = join(root, '.businesslens', 'README.md')

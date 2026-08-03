@@ -144,7 +144,7 @@ describe('pull', () => {
       'fixture-shop',
       { force: false, catalog: 'http://catalog.example.com' },
       { fetch, env: {} }
-    )).toBe(1)
+    )).toBe(2)
     expect(fetch).not.toHaveBeenCalled()
   })
 
