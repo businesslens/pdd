@@ -1,6 +1,6 @@
 ---
 title: Installation
-description: Install the BusinessLens skills into your AI harnesses — providers, scopes, non-interactive setup, and updating.
+description: Install the BusinessLens skills into a supported AI harness at project or global scope.
 section: open-source
 group: Get started
 order: 2
@@ -17,9 +17,8 @@ npx businesslens@latest install
 
 The installer detects supported AI harnesses, lets you customize the
 selection, asks for project or global scope, and installs only the
-BusinessLens skills. It never creates `.businesslens/`, installs hooks,
-contributes to the catalog, or submits data — building the model belongs to
-the skills themselves.
+BusinessLens skills. Building the Product Model happens later through those
+skills.
 
 ## Supported harnesses
 
@@ -41,35 +40,14 @@ providers use their standard user directories.
 - **Global** installs into your user directory, making the skills available
   in every repository you open.
 
-## Non-interactive
-
-```bash
-npx businesslens@latest install \
-  --providers claude,codex \
-  --scope project \
-  --yes
-```
-
-`--yes` accepts detected providers and defaults to project scope. `--force`
-replaces an unmarked colliding `businesslens-*` directory — without it, the
-installer refuses to overwrite skills it does not own.
-
-## Updating
-
-```bash
-npx businesslens@latest update
-```
-
-Update discovers BusinessLens-managed installations through their ownership
-markers and refreshes only those skill directories. It never touches
-`.businesslens/`. Narrow it with `--scope project|global` or
-`--providers <list>`.
+For non-interactive installation, provider flags, and collision safety, see
+[`businesslens install`](./cli-install.md). To refresh an installation, see
+[`businesslens update`](./cli-update.md).
 
 ## Claude Code plugin
 
-Claude Code users may alternatively install from this repository's
-marketplace manifest. The standalone CLI remains the primary installation
-experience.
+Claude Code users may alternatively install from this repository's marketplace
+manifest.
 
 Next, pick your door: [From your repo](./from-your-repo.md),
 [From a Blueprint](./from-a-blueprint.md), or [From an idea](./from-an-idea.md).

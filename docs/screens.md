@@ -77,18 +77,18 @@ The product can be added to the cart.
 The Screen does not change product or inventory data.
 ```
 
-| Key | Required | Meaning |
+| Field or section | Required | Constraint |
 | --- | --- | --- |
-| `availability` | yes | Exact Interface–Experience placement |
-| `capabilities` | yes | At least one Capability exposed by the Screen |
-| `scenarios` | no | Observable paths in which the Screen participates |
-| `entryPoints` | no | Public routes or deep links keyed by an available Interface |
-| `references` | no | External intent, implementation, or context artifacts |
-
-Every Capability must support every Screen availability pair.
-`## Information presented` and `## Capability boundary` are required.
-`## Available actions` and `## Product states` are optional but must contain
-valid content when present.
+| `availability` | yes | Declare at least one valid Interface–Experience pair. |
+| `capabilities` | yes | Name at least one existing Capability; each must support every Screen availability pair. |
+| `scenarios` | no | Name existing observable paths in which the Screen participates. |
+| `entryPoints` | no | Key public routes or deep links by an Interface in Screen availability. |
+| `references` | no | Use the documented [Reference](./references.md) shape. |
+| H1 and lead paragraph | yes | Name the Screen and describe its Product purpose. |
+| `## Information presented` | yes | Include at least one meaningful bullet item. |
+| `## Available actions` | no | Include a bullet list when present. |
+| `## Product states` | no | Give every H3 state a description. |
+| `## Capability boundary` | yes | State what the Screen supports and excludes. |
 
 ## Web and mobile
 
@@ -109,15 +109,3 @@ Screenshots, mockups, prototypes, and Figma files stay outside
 the role distinguishes a curated design from an implementation capture or
 context. The model stores only the attachment metadata, and `lint` neither
 fetches nor assesses the visual itself.
-
-## What `lint` checks
-
-| Finding | Meaning |
-| --- | --- |
-| `needs at least one availability pair` | Place the Screen in the Interface–Experience matrix. |
-| `needs at least one capability` | Name what the Screen exposes. |
-| `capability "…" is not available in "interface/experience"` | Screen placement exceeds Capability scope. |
-| `references missing …` | An Interface, Experience, Capability, or Scenario ID has no entity. |
-| `"## Information presented" needs at least one bullet item` | State meaningful visible information. |
-| `missing "## Capability boundary" section` | State what the Screen supports and excludes. |
-| Product-state finding | Begin each state with an H3 and give it a description. |

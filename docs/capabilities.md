@@ -19,9 +19,9 @@ from a [Journey](./journeys.md), which is one complete Actor goal.
 ## When you create one
 
 Create a Capability when an ability is reusable across goals or independently
-important to Product scope, availability, Screens, or Rules. It should remain
-meaningful beyond one route, command, or implementation module and should not
-merely repeat a Journey title.
+important to Product scope, availability, Screens, or Business Rules. It should
+remain meaningful beyond one route, command, or implementation module and
+should not merely repeat a Journey title.
 
 Every Capability declares its exact Interface–Experience availability. An
 optional [Domain](./domains.md) can organize it, but Domains are not required.
@@ -53,11 +53,12 @@ Turns a valid cart into a confirmed order.
 Complete a purchase without confirming an unpaid order.
 ```
 
-| Key | Required | Meaning |
+| Field or section | Required | Constraint |
 | --- | --- | --- |
-| `availability` | yes | At least one exact Interface–Experience pair |
-| `domain` | no | One Domain ID when the grouping is useful |
-| `references` | no | Intent, implementation, or context artifacts; see [References](./references.md) |
+| `availability` | yes | Declare at least one valid Interface–Experience pair, with one record per Interface and each Experience listed once. |
+| `domain` | no | Name one existing Domain when the grouping is useful. |
+| `references` | no | Use the documented [Reference](./references.md) shape. |
+| H1 and lead paragraph | yes | Name the Capability and describe the durable Product ability. |
 
 Capabilities do not duplicate Actor or Business Rule lists. Actors are
 expressed through Journeys and Actor-bound Interfaces and Experiences. Business
@@ -78,14 +79,3 @@ availability:
 This does not promise `public-discovery` on `reader-mobile`. Availability is
 intended Product scope, not implementation status; `businesslens-verify`
 checks whether the implementation satisfies it.
-
-## What `lint` checks
-
-| Finding | Meaning |
-| --- | --- |
-| `needs at least one availability pair` | Declare where the Capability exists. |
-| `references missing interface/experience "…"` | A pair names no entity. |
-| `experience "…" does not declare interface "…"` | The pair is impossible in the Experience matrix. |
-| Duplicate availability finding | Use one record per Interface and list each Experience once. |
-| `references missing domain "…"` | The optional Domain ID has no file. |
-| `missing H1 title` / `missing lead paragraph (description)` | Every Capability needs both. |

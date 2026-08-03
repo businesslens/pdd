@@ -17,15 +17,14 @@ the durable product level above them.
 | Change | SDD proposal/design | How should this change be designed and split? | Until landed/archived |
 | Session | Harness plan | What edits should the agent make next? | Current conversation |
 
-The build step is injected between BusinessLens phases:
+Your implementation workflow sits between the BusinessLens phases:
 
 ```text
 ideate → plan mode / SDD / builder → verify (including final lint)
 ```
 
-Verify can return an acceptance packet to that builder and resume automatically.
-BusinessLens analysis remains static and never executes target code; the builder
-uses separate normal repository permissions.
+BusinessLens analysis remains static and never executes target code. See the
+[development loop](./the-loop.md) for the shared workflow.
 
 Read [Plan mode](./with-plan-mode.md), [SDD tools](./with-sdd.md), or
 [CI/CD](./ci.md).

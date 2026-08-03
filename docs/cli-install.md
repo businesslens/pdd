@@ -31,7 +31,6 @@ guidance on choosing project or global scope.
 | `--scope project\|global` | Install into the current project or the current user's configuration |
 | `--project` | Shortcut for `--scope project` |
 | `--global` | Shortcut for `--scope global` |
-| `--user` | Alias for `--global` |
 | `--yes` | Accept detected providers and use project scope when those choices were not supplied |
 | `--force` | Replace an unmarked colliding `businesslens-*` skill directory |
 
@@ -59,9 +58,8 @@ The installer writes `.businesslens-install.json` into each managed skills
 directory. That marker records the provider, scope, package version, and owned
 skill names so a later [`update`](./cli-update.md) can find the installation.
 
-An existing skill that is marked or recognizable as BusinessLens-owned can be
-refreshed. An unrelated directory with the same `businesslens-*` name stops
-the installation unless `--force` is explicit.
+A managed BusinessLens skill can be refreshed. An unrelated directory with the
+same `businesslens-*` name stops the installation unless `--force` is explicit.
 
 The command distributes skills only. It does not:
 

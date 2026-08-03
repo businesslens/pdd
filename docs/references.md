@@ -86,16 +86,11 @@ artifact is evidence to assess rather than proof to trust.
 ## Report profiles
 
 A compiled workspace Product Report retains all References and declares
-`referenceProfile: workspace`. A Blueprint must navigate independently of its
-source checkout, so export projects it to `referenceProfile: portable` and
-keeps only HTTP(S) References whose role is `intent` or `context`.
+`referenceProfile: workspace`. A portable Product Report keeps only HTTP(S)
+References whose role is `intent` or `context`.
 
-The portable projection removes all code References, all implementation
-References, all repository-relative targets, and repository-local Coverage
-`sourceAreas`. Expansion through `open`, `pull`, or `contribute` preserves the
-Coverage status, `unmapped` areas, and existing limitations, while replacing
-the workspace mapping method and rationale and adding a portable-expansion
-limitation. Coverage never counts References.
+[`blueprint export`](./cli-export.md#portable-export) defines the complete
+portable projection. `open`, `pull`, and `contribute` apply the same projection.
 
 ## What `lint` checks
 

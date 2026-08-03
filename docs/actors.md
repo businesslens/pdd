@@ -52,18 +52,15 @@ references:
 An employee who manages orders on behalf of the store.
 ```
 
-The H1 is the name and the lead paragraph is the description. Optional
-[References](./references.md) attach navigation or supporting context.
+| Field or section | Required | Constraint |
+| --- | --- | --- |
+| Filename | yes | Use a lowercase kebab-case stem as the Actor ID. |
+| `kind` | yes | Use `person` or `system`. |
+| `relationship` | yes | Use `external` or `internal` relative to the Product boundary. |
+| `references` | no | Use the documented [Reference](./references.md) shape. |
+| H1 and lead paragraph | yes | Name and describe the Actor. |
 
-## What `lint` checks
-
-| Finding | Meaning |
-| --- | --- |
-| `kind "…" must be person\|system` | Add one of the two Actor kinds. |
-| `relationship "…" must be external\|internal` | Classify the Actor relative to the Product boundary. |
-| `id "…" must be lowercase kebab-case` | The filename stem is the ID. |
-| `missing H1 title` / `missing lead paragraph (description)` | Every Actor needs both. |
-| `references missing actor "…"` | An Interface, Experience, or Journey names no existing Actor. |
+Every Actor ID named by another entity must have a corresponding file.
 
 ## Referenced by
 

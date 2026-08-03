@@ -44,16 +44,15 @@ references:
 Everything between a full cart and a fulfilled order.
 ```
 
-`colorSlot` is an optional display hint. [References](./references.md) are
-optional navigation or context.
+| Field or section | Required | Constraint |
+| --- | --- | --- |
+| Filename | yes | Use a lowercase kebab-case stem as the Domain ID. |
+| `colorSlot` | no | Provide a display hint when useful. |
+| `references` | no | Use the documented [Reference](./references.md) shape. |
+| H1 and lead paragraph | yes | Name and describe the Domain. |
 
-## What `lint` checks
-
-| Finding | Meaning |
-| --- | --- |
-| `id "…" must be lowercase kebab-case` | The filename stem is the ID. |
-| `missing H1 title` / `missing lead paragraph (description)` | Every authored Domain needs both. |
-| `references missing domain "…"` | A Capability or Business Rule names no existing Domain. |
+Every Domain ID named by a Capability or Business Rule must have a corresponding
+file.
 
 ## Referenced by
 

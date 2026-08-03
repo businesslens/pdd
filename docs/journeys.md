@@ -62,27 +62,14 @@ entryPoints:
 A shopper finds a product and completes checkout.
 ```
 
-| Key | Required | Meaning |
+| Field or section | Required | Constraint |
 | --- | --- | --- |
-| `actors` | yes | At least one Actor pursuing the goal |
-| `capabilities` | yes | At least one durable ability used by the goal |
-| `availability` | yes | At least one exact Interface–Experience pair |
-| `entryPoints` | no | Product-facing entry points keyed by an available Interface |
-| `references` | no | Intent, implementation, or context artifacts; see [References](./references.md) |
+| `actors` | yes | Name at least one existing Actor pursuing the goal. |
+| `capabilities` | yes | Name at least one existing Capability; each must support every Journey availability pair. |
+| `availability` | yes | Declare at least one valid Interface–Experience pair. |
+| `entryPoints` | no | Key Product-facing entry points by an Interface in Journey availability. |
+| `references` | no | Use the documented [Reference](./references.md) shape. |
+| `scenarios/` | yes | Include at least one valid Scenario. |
+| H1 and lead paragraph | yes | Name the Journey and summarize the complete goal. |
 
-The lead paragraph is the Journey summary. Optional
-[References](./references.md) attach navigation or supporting context.
-
-Every Capability used by the Journey must support every Journey availability
-pair. This makes the promise implementable as written: the complete goal cannot
-be required on an Interface where one of its required abilities is absent.
-
-## What `lint` checks
-
-| Finding | Meaning |
-| --- | --- |
-| `needs at least one actor/capability/availability pair/scenario` | Each is part of a complete, verifiable goal. |
-| `references missing actor/capability/interface/experience "…"` | A relationship names no entity. |
-| `capability "…" is not available in "interface/experience"` | Narrow the Journey availability or add the pair to the Capability. |
-| `entry point references undeclared interface "…"` | Use an Interface present in Journey availability. |
-| `journeys/<id>/ is missing journey.md` | Add the Journey file or remove the incomplete directory. |
+Every Journey directory must contain `journey.md`.

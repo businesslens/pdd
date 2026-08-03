@@ -19,18 +19,15 @@ BusinessLens installs exactly three skills:
 Map and ideate answer opposite questions: “what already exists?” and “what
 should exist?” Verify owns the loop between those authorities after code moves.
 
-Users invoke verify once. It runs narrow mapping or intent-resolution protocols
-internally and calls the harness-injected builder when code must change. The
-three installed skills remain self-contained; none loads a sibling skill file.
+The three installed skills are self-contained. See the
+[development loop](./the-loop.md) for how ideate and verify surround your build
+workflow.
 
 Catalog contribution is a deterministic CLI workflow:
 
 ```bash
 npx businesslens@latest blueprint contribute
 ```
-
-There is no contribution, doctor, deep-dive, init, or sync skill. Named depth is
-a map/verify scope; diagnosis and repair belong to verify.
 
 Claude Code uses `/businesslens-map`; Codex commonly uses `$businesslens-map`.
 See [Installation](./installation.md) for provider paths.

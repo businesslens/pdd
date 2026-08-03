@@ -28,7 +28,6 @@ installation, it exits with an error and suggests running
 | `--scope project\|global` | Search only one installation scope |
 | `--project` | Shortcut for `--scope project` |
 | `--global` | Shortcut for `--scope global` |
-| `--user` | Alias for `--global` |
 | `--force` | Replace an unmarked colliding `businesslens-*` directory inside a managed target |
 
 For example, update only project-scoped Claude Code and Codex installations:

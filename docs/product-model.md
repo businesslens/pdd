@@ -51,7 +51,8 @@ relationship graph.
 
 Interface and Experience are orthogonal and many-to-many. Interface says the
 interaction form; Experience says the coherent Actor context. Capabilities,
-Journeys, Screens, Scenarios, and Rules can declare exact `availability` pairs:
+Journeys, Screens, Scenarios, and Business Rules can declare exact
+`availability` pairs:
 
 | Experience | Customer web | Customer mobile | Operator CLI |
 | --- | --- | --- | --- |
@@ -61,13 +62,6 @@ Journeys, Screens, Scenarios, and Rules can declare exact `availability` pairs:
 
 This matrix is intended Product meaning. It is not inferred from shared code,
 routes, packages, or protocols.
-
-## Optional concepts
-
-Domains are optional navigation for large Capability collections. Journeys may
-cross Domains. Screens are optional meaningful visual views; non-visual
-Interfaces need none. Screenshots, prototypes, and other visual artifacts stay
-external and may be attached through [References](./references.md).
 
 ## Coverage
 
@@ -104,14 +98,7 @@ Availability and Coverage do not claim implementation status. Every status may
 describe planned, implemented, or mixed behavior, and a complete model may have
 no References. `businesslens-verify` checks semantic alignment.
 
-## References
-
-Any semantic entity may attach the same [References](./references.md) shape.
-Kinds identify artifacts; roles distinguish intent, implementation, and
-context. References are optional navigation and supporting material, never
-Product truth or proof of model/code agreement.
-
 Entity files, config, taxonomy, coverage, and orientation are committed.
 The model's `.gitignore` ignores `build/` and `cache/`, which are generated and
-never committed. Use `businesslens lint` for structure and
-`businesslens-verify` for implementation alignment.
+never committed. See [References](./references.md) for optional external
+artifacts.

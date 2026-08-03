@@ -13,11 +13,7 @@ or deliberately untrusted.
 
 ## Steps
 
-1. Install the skills:
-
-   ```bash
-   npx businesslens@latest install
-   ```
+1. [Install the BusinessLens skills](./installation.md).
 
 2. Run the mapping skill:
 

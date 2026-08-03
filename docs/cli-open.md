@@ -1,6 +1,6 @@
 ---
 title: blueprint open
-description: Expand a Blueprint held in a local file into a canonical Product Model while preserving model completeness.
+description: Expand a local Product Report into a canonical Product Model.
 section: open-source
 group: CLI
 order: 32
@@ -8,17 +8,15 @@ order: 32
 
 # `businesslens blueprint open`
 
-Parse and check a strict Product Report v6, then expand it into a canonical
-schema 3 `.businesslens/` directory:
+Parse and validate a Product Report v6, apply the portable projection, then
+expand it into a canonical schema 3 `.businesslens/` directory:
 
 ```bash
 npx businesslens@latest blueprint open ./report.json
 ```
 
-`open` also writes `.businesslens/README.md`, telling a coding agent that this
-model is a specification and its scenarios are the acceptance contract. It is
-the same file [`pull`](./cli-pull.md) writes, for the same reason. Nothing
-outside `.businesslens/` is touched.
+`open` also writes the model's orientation README. Nothing outside
+`.businesslens/` is touched.
 
 The target directory does not need to be a Git repository. Use `--cwd` to
 choose where `.businesslens/` will be created:
@@ -31,7 +29,7 @@ npx businesslens@latest --cwd ./new-product blueprint open ./report.json
 
 The local report works offline and must be a regular, non-symbolic-link file no
 larger than 8 MiB. Catalog users do not download Product Reports manually; use
-[`businesslens blueprint pull`](./cli-pull.md) with the Blueprint's canonical name.
+[`businesslens blueprint pull`](./cli-pull.md) with the Blueprint's catalog slug.
 `pull` retrieves the report and invokes this expansion path internally.
 
 A relative report path resolves against the current shell directory, not
@@ -42,18 +40,15 @@ model is written into `./new-product`.
 
 ## Imported navigation
 
-A Product Report may describe behavior from a different repository, so `open`
-projects every input to the portable Reference profile and therefore:
+`open` uses the same [portable projection](./cli-export.md#portable-export) as
+`export`. Product behavior, relationships, exact availability, supporting
+content, Product routes, commands, non-file deep links, and portable References
+are preserved. Repository-specific navigation is removed.
 
-- removes code, implementation, and repository-relative References;
-- preserves the report's model-breadth coverage status;
-- records that implementation alignment must be verified locally; and
-- preserves Product behavior, Interfaces, Experiences, exact availability,
-  Capabilities, relationships, intent, Screens, Product routes,
-  mobile deep links, portable HTTP(S) References, and supporting content.
-
-The resulting model lints and exports. Missing References are valid because
-attachments are not implementation state.
+Coverage status, unmapped Product areas, and limitations are preserved. The
+expanded model records that implementation alignment must be verified in its
+new repository. See [Coverage](./product-model.md#coverage) for what the status
+means.
 
 ## Existing targets
 

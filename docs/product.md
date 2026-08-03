@@ -51,18 +51,12 @@ A storefront where shoppers discover products and complete purchases.
 Let shoppers move from discovery to a confirmed order with confidence.
 ```
 
-`id` is required, lowercase kebab-case, and at most 64 characters. Unlike
-entity IDs, it is declared in frontmatter because it names the whole model and
-may differ from the repository name. `tags`, `limitations`, and
-[References](./references.md) are optional. The first H1 is the Product title,
-the lead paragraph is its description, and optional `## Intent` explains the
-outcome its shape protects.
-
-## What `lint` checks
-
-| Finding | Meaning |
-| --- | --- |
-| `product.md is missing` | Add the single Product manifest. |
-| `missing id` or invalid-id finding | Supply a lowercase kebab-case ID of at most 64 characters. |
-| Missing H1 or lead finding | Supply the Product title and description. |
-| Unknown frontmatter or Reference finding | Use only `id`, `tags`, `limitations`, and optional `references`, with the documented Reference shape. |
+| Field or section | Required | Constraint |
+| --- | --- | --- |
+| `product.md` | yes | Provide exactly one Product manifest. |
+| `id` | yes | Use lowercase kebab-case with at most 64 characters. The Product ID may differ from the repository name. |
+| `tags` | no | List Product classification tags. |
+| `limitations` | no | State known Product boundaries. |
+| `references` | no | Use the documented [Reference](./references.md) shape. |
+| H1 and lead paragraph | yes | Name and describe the Product. |
+| `## Intent` | no | Explain the outcome the Product shape protects. |

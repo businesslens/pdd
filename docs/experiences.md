@@ -53,28 +53,18 @@ Where authorized operators manage the Product and its users.
 Supports operational administration. It does not grant customer privileges.
 ```
 
-| Key | Required | Meaning |
+| Field or section | Required | Constraint |
 | --- | --- | --- |
-| `actors` | yes | At least one Actor participating in this context |
-| `interfaces` | yes | At least one Interface offering it |
-| `access` | yes | `public`, `authenticated`, or `restricted` |
-| `entryPoints` | no | Interface-keyed Product entry points; every key must be declared in `interfaces` |
-| `references` | no | Intent, implementation, or context artifacts; see [References](./references.md) |
+| `actors` | yes | Name at least one existing Actor. Every Actor must be supported by every declared Interface. |
+| `interfaces` | yes | Name at least one existing Interface offering the Experience. |
+| `access` | yes | Use `public`, `authenticated`, or `restricted`. |
+| `entryPoints` | no | Key Product entry points by an Interface declared in `interfaces`. |
+| `references` | no | Use the documented [Reference](./references.md) shape. |
+| H1 | yes | Name the Experience. |
+| Lead paragraph | yes | Describe the coherent usage context. |
+| `## Capability boundary` | yes | State what the Experience supports and excludes. |
+
+Every model needs at least one Experience.
 
 There is no `exit` field. A persistent context does not have one useful success
 exit; Journey and Scenario outcomes state what Actors accomplish.
-
-Every Experience Actor must also be supported by each declared Interface. This
-makes the audience promise consistent before more exact availability is added.
-
-## What `lint` checks
-
-| Finding | Meaning |
-| --- | --- |
-| `needs at least one actor` / `needs at least one interface` | Both relationships are required. |
-| `access "…" must be public\|authenticated\|restricted` | Use one access mode. |
-| `references missing actor/interface "…"` | A relationship names no entity. |
-| `actor "…" is not supported by interface "…"` | Add the Actor to the Interface or correct the Experience relation. |
-| `entry point references undeclared interface "…"` | Entry-point keys are Interface IDs, not generic platform labels. |
-| `missing "## Capability boundary" section` | State what this Experience supports and excludes. |
-| `experiences/: the model needs at least one experience` | Every Product needs a coherent usage context. |

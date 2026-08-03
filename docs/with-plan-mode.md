@@ -11,18 +11,9 @@ order: 20
 Plan mode decides the agent's next edits. BusinessLens decides the durable
 product contract.
 
-```text
-/businesslens-ideate guest checkout
-        → approve and write the Product Model delta
-
-plan mode
-        → read .businesslens/ and approve the implementation approach
-
-build
-
-/businesslens-verify
-        → inspect, resolve gaps through the injected builder, re-check
-```
+Use plan mode for the Build step in the
+[development loop](./the-loop.md): ideate the Product contract first, plan and
+implement against `.businesslens/`, then verify the result.
 
 Run ideate outside a read-only plan mode because it writes only after its own
 explicit product-meaning approval. Every model creation path places orientation

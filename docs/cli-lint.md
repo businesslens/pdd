@@ -17,18 +17,18 @@ Lint is deterministic and read-only. It checks:
 - required files, including the orientation README and generated-path
   `.gitignore`, plus frontmatter allowlists, IDs, titles, and behavior sections;
 - Actor classifications; Interface and Experience relations; exact
-  availability; Capability, Domain, Rule, Journey, Scenario, and taxonomy
+  availability; Capability, Domain, Business Rule, Journey, Scenario, and taxonomy
   relationships;
 - access modes, scenario step/decision shapes, and globally unique scenario IDs;
 - strict Reference shape, kinds, roles, targets, and duplicate targets;
 - whether present code-reference paths are tracked by Git, and whether local
   non-code targets exist in the tracked repository file set.
 
-Missing References are valid at every Coverage status because they are optional
-attachments. Lint does not inspect referenced content, symbols, line existence,
-runtime behavior, semantic drift, or implementation completeness. It warns
-when a local non-code target is not tracked. A green
-result means the model is structurally sound—not that model and code agree.
+Lint validates References only when present. It does not inspect referenced
+content, symbols, line existence, runtime behavior, semantic drift, or
+implementation completeness. It warns when a local non-code target is not
+tracked. A green result means the model is structurally sound—not that model
+and code agree. See [References](./references.md) for the full target rules.
 
 Use `businesslens-verify` for semantic alignment.
 
@@ -57,6 +57,3 @@ The output contains no branch situation or authority inference.
 
 Exit code `0` means no errors, `1` means lint errors or an unreadable model, and
 `2` means invalid usage. Warnings do not fail lint.
-
-`businesslens validate` is refused with exit code 2 and a message naming
-`businesslens lint`; it is not an alias.

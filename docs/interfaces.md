@@ -49,14 +49,16 @@ The browser Interface through which shoppers browse and buy.
 Supports customer shopping. It does not expose store administration.
 ```
 
-| Key | Required | Meaning |
+| Field or section | Required | Constraint |
 | --- | --- | --- |
-| `actors` | yes | At least one Actor allowed to use some part of the Interface |
-| `entryPoints` | no | Product-facing roots such as `/`, `reader://home`, `product admin`, or `/v1` |
-| `references` | no | Intent, implementation, or context artifacts; see [References](./references.md) |
+| `actors` | yes | Name at least one existing Actor allowed to use some part of the Interface. |
+| `entryPoints` | no | List Product-facing roots such as `/`, `reader://home`, `product admin`, or `/v1`. |
+| `references` | no | Use the documented [Reference](./references.md) shape. |
+| H1 | yes | Name the Interface. |
+| Lead paragraph | yes | Describe the supported interaction form. |
+| `## Capability boundary` | yes | State what the Interface supports and excludes. |
 
-The H1, lead description, and `## Capability boundary` are required. Say what
-the Interface excludes as well as what it supports.
+Every model needs at least one Interface.
 
 An Interface does not declare one access mode: the same web application can
 contain public and restricted Experiences. It also has no success exit;
@@ -64,21 +66,6 @@ Journeys and Scenarios own outcomes.
 
 ## With Experiences
 
-An Interface is the supported interaction form. An
-[Experience](./experiences.md) is the coherent context in which it is used. The
-relationship is many-to-many: administration might exist through both an admin
-web Interface and an operator CLI, while one web Interface might offer public
-discovery and a personal workspace.
-
-Capabilities, Journeys, Screens, Scenarios, and Rules use exact `availability`
-pairs to say which combinations they support.
-
-## What `lint` checks
-
-| Finding | Meaning |
-| --- | --- |
-| `interfaces/: the model needs at least one interface` | Every Product needs at least one supported interaction form. |
-| `needs at least one actor` | The Interface must serve a valid Actor. |
-| `references missing actor "…"` | An Actor ID has no file. |
-| `missing "## Capability boundary" section` | State what the Interface supports and excludes. |
-| `missing H1 title` / `missing lead paragraph (description)` | Every Interface needs both. |
+Interface and [Experience](./experiences.md) are many-to-many. The
+[Experience matrix](./product-model.md#experience-matrix) shows how exact
+`availability` pairs express supported combinations.

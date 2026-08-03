@@ -14,12 +14,11 @@ Propose your Product Model for the public Blueprint catalog:
 npx businesslens@latest blueprint contribute --slug my-blueprint
 ```
 
-This opens a pull request against
-[`businesslens/pdd`](https://github.com/businesslens/pdd). Merging it is
-approval; a maintainer then publishes the catalog.
+A [Blueprint](./cli-export.md) is a portable Product Report. This command opens
+a pull request containing its canonical expanded Product Model and manifest.
 
-There is no API key and no account with BusinessLens. Authentication is your
-own GitHub identity, through the [GitHub CLI](https://cli.github.com):
+Authentication uses your GitHub identity through the
+[GitHub CLI](https://cli.github.com):
 
 ```bash
 gh auth login
@@ -34,72 +33,55 @@ gh auth login
 | `--slug <name>` | Override the product ID used as the lowercase kebab-case catalog slug. |
 | `--yes` | Skip the confirmation prompt; required when no interactive terminal is available. |
 
-## Where it goes
+## A good Blueprint
 
-By default, `businesslens/pdd`. Set `BUSINESSLENS_CONTRIBUTE_UPSTREAM` to an
-`owner/repo` pair to target another Blueprint repository — anyone running their
-own catalog needs their own sources behind it, and the two have to point at the
-same deployment.
+A Blueprint should be small enough to build end to end and complete enough that
+a coding agent can produce a recognizable product from the pulled model alone.
 
-`contribute` forks when you do not own the upstream and clones it directly when
-you do, because GitHub refuses to let one account own both a parent and a fork.
+Check these before contributing:
+
+- **Focused scope:** one product, not a platform or suite.
+- **Complete contract:** all necessary Actors, Journeys, Business Rules, and meaningful
+  success, permission, validation, conflict, and external-failure Scenarios.
+- **Observable Scenarios:** each path can be checked against implementation.
+  Prefer “submitting an empty cart shows an error and keeps the cart” over
+  “cart validation works.”
+- **Product-level prose:** describe what users observe, not frameworks,
+  databases, or architecture.
+- **Generic shape:** model an archetype rather than a named third-party product.
+- **Portable content:** no code or implementation References, local Reference
+  targets, Coverage source areas, or repository-relative entry points.
+
+The portability rules are enforced automatically. Author a greenfield model
+with [`businesslens-ideate`](./skill-businesslens-ideate.md), then test it by
+pulling it into an empty directory and asking an agent to build it without extra
+product instructions.
 
 ## What it does
 
-1. Resolves and loads the Product Model, and lints its structure. Errors stop
-   the run; `draft`, `partial`, and `complete` Coverage statuses are all valid
-   model-breadth statements, and missing References are not lint findings.
-2. Exports a Blueprint using the portable Reference profile.
-3. **Regenerates the model from that Blueprint.** This is what goes in the
-   pull request.
-4. Derives the slug from `--slug`, or from the product id.
-5. Forks `businesslens/pdd` if you have no fork yet, brings its default branch
-   up to date with upstream, and clones it.
-6. Writes `blueprints/<slug>/{blueprint.yaml,.businesslens/}` on a
+1. Loads and lints the Product Model. Lint errors stop the run.
+2. Exports it through the [portable projection](./cli-export.md#portable-export).
+3. Expands that Blueprint into canonical `.businesslens/` files.
+4. Derives the slug from `--slug` or the Product ID.
+5. Writes `blueprints/<slug>/{blueprint.yaml,.businesslens/}` on a
    `blueprint/<slug>` branch.
-7. Opens the pull request and prints its URL.
+6. Opens or updates the pull request and prints its URL.
 
 ## Your repo is safe
 
-Every step above happens in a temporary directory that is deleted when the
-command finishes. Your repository is only ever **read** — it never gains a
-branch, a remote, a commit, or a copy of anything from the catalog.
+The contribution is prepared in a temporary directory. Your repository is only
+read; it does not gain a branch, remote, commit, or catalog files.
 
-Its layout does not matter either. Step 3 rebuilds the model in canonical form
-rather than copying your files, so a Product Model contributes the same way
-whether it sits at the root of a tiny repository or deep inside a monorepo.
+Only the canonical portable expansion is submitted, so repository-specific
+source navigation is never copied into the pull request.
 
 ## Contributing again
 
-Revising a Blueprint is the same command again.
+Run the same command to revise a contribution. It syncs the fork, force-pushes
+only the command-owned `blueprint/<slug>` branch, and updates an existing pull
+request when one is open. If the fork cannot be synchronized, the command stops.
 
-- The fork's default branch is **synced from upstream** before branching, so a
-  fork left from an earlier contribution cannot drag stale history into the
-  pull request. If it cannot be synced, the command stops rather than opening a
-  pull request full of unrelated changes.
-- The `blueprint/<slug>` branch is **force-pushed**. It is owned by this
-  command on your own fork, and nothing else is ever pushed to it.
-- If a pull request for that branch is already open, the push updates it and
-  the command reports that URL rather than failing.
-
-Forking leaves a repository in your GitHub account. GitHub needs it to keep the
-pull request open, so leave it there until the Blueprint is merged — after that
-it is yours to delete.
-
-## Why it regenerates
-
-Workspace References live in the frontmatter of the `.businesslens/**/*.md`
-files you authored, and portable projection operates on a built report. Copying
-your authored files into a pull request could publish source paths or
-implementation artifacts.
-
-Regenerating from the portable report ensures repository-specific material does
-not travel, and it has a second benefit: the contents are then
-byte-identical to what `businesslens blueprint pull <slug>` produces for everyone else.
-
-The gate does not take this on trust. `blueprints:check` runs on every pull
-request and independently rejects any Blueprint carrying repository-specific
-source metadata, because anyone can open a pull request by hand.
+Leave the fork in your GitHub account until the pull request is merged.
 
 ## The manifest
 
@@ -121,50 +103,11 @@ license: MIT
 Expect to edit `category`, `icon`, `accent`, and `authors` in the pull request.
 Blueprint content is MIT, the same as the code.
 
-The manifest deliberately carries no origin repository or commit. Portable
-content must stand on its own, and the pull request supplies the contribution's
-review provenance without publishing source-repository metadata in the
-Blueprint.
+## Destination and publication
 
-## A good Blueprint
+The default upstream is `businesslens/pdd`. Set
+`BUSINESSLENS_CONTRIBUTE_UPSTREAM` to another `owner/repo` when contributing to
+a custom catalog source.
 
-A Blueprint is an executable brief: small enough to build end to end, complete
-enough that a coding agent handed nothing but the pulled model produces a
-working product.
-
-The acceptance test is literal. Pull it into an empty directory, hand it to an
-agent with no prompt beyond "build this", and see whether what comes out is
-recognisable to someone who knows the domain. Anything you had to explain is a
-gap in the Blueprint, not in the agent.
-
-Three things the bar comes down to:
-
-- **Small enough to build end to end.** Not a platform, not a suite. One product
-  a competent agent can finish.
-- **Complete enough that nothing is missing.** Every actor, journey, and rule
-  the product needs, with scenarios covering the paths that matter — success,
-  permission, validation, conflict, and external failure.
-- **Generic.** Archetypes, not models of named third-party products.
-
-Author it with the [`businesslens-ideate`](./skill-businesslens-ideate.md)
-greenfield interview in a scratch repository, and keep prose at product
-altitude — what a user observes, not how the system achieves it. Naming a
-framework, database, or architecture narrows the Blueprint's usefulness without
-making it more complete.
-
-## Review criteria
-
-- **The acceptance test.** A maintainer will run it.
-- **Scenario quality.** Each scenario must be checkable against an
-  implementation without running it. "Cart validation works" is too vague;
-  "submitting an empty cart shows an error and keeps the cart" is not.
-- **No repository-specific source metadata.** `blueprints:check` fails the pull request on any
-  code or implementation Reference, local Reference target, Coverage source
-  area, or repository entry point.
-  This is automated and not negotiable.
-- **The manifest.** Set `category`, `icon`, `accent`, and `authors` properly.
-
-Merging is approval, not publication. A maintainer runs the publish script,
-which pushes built Blueprints to the catalog. A new Blueprint arrives
-**unlisted**; an administrator lists it. That keeps listing a human decision
-that a publish run can never overwrite.
+Merging approves the Blueprint. A maintainer publishes it to the catalog, and
+catalog listing remains a separate decision.

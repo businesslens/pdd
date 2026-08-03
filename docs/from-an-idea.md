@@ -10,11 +10,7 @@ order: 5
 
 Use this door when no established implementation exists.
 
-1. Install BusinessLens and invoke ideate:
-
-   ```bash
-   npx businesslens@latest install
-   ```
+1. [Install the BusinessLens skills](./installation.md), then invoke ideate:
 
    ```text
    /businesslens-ideate
@@ -23,7 +19,7 @@ Use this door when no established implementation exists.
 2. If the idea is open, ideate proposes genuinely different product shapes and
    writes nothing. Once you choose—or if you already know the outcome—it drafts
    Actors, Interfaces, Experiences, optional Screens and Domains,
-   Capabilities, Rules, Journeys, Scenarios, and limitations.
+   Capabilities, Business Rules, Journeys, Scenarios, and limitations.
 3. Approve the exact Product Model delta. Only then does ideate write
    `.businesslens/`, including its canonical README. Lint checks structure:
 
@@ -31,9 +27,7 @@ Use this door when no established implementation exists.
    npx businesslens@latest lint
    ```
 
-   Coverage status describes model breadth, not implementation. Optional
-   References may be absent at any status.
-4. Hand the approved scenario and rule contract to your normal plan/build flow.
+4. Hand the approved Scenario and Business Rule contract to your normal plan/build flow.
    BusinessLens does not own implementation.
 5. Invoke verify once:
 
@@ -41,10 +35,5 @@ Use this door when no established implementation exists.
    /businesslens-verify
    ```
 
-   If code is wrong, verify hands the approved contract to the builder injected
-   by your harness and checks again. If intended behavior changed while building,
-   it drafts the smallest model delta, asks for approval, writes it, and checks
-   again. If neither side is right, it resolves intent before building.
-
-The result is aligned for the inspected scope or a precise blocker—not a request
-for you to manually invoke another BusinessLens skill.
+   Verify resolves the inspected scope or returns a precise blocker. See the
+   [`verify` skill](./skill-businesslens-verify.md) for resolution behavior.

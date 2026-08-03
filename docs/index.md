@@ -10,7 +10,7 @@ order: 1
 
 BusinessLens is Product-Driven Development for coding agents. It stores the
 durable Product contract in `.businesslens/`: Actors, Interfaces, Experiences,
-optional Screens and Domains, Capabilities, Rules, Journeys, and observable
+optional Screens and Domains, Capabilities, Business Rules, Journeys, and observable
 Scenarios.
 
 The Product Model says what the product is intended to do. It does not prescribe
@@ -30,11 +30,9 @@ All three create the same artifact. After that, changes use one loop:
 ideate → your plan/build flow → verify (including final lint) → merge
 ```
 
-`verify` is one invocation, not a checklist of skills. It inspects the requested
-scope, negotiates only real authority decisions, automatically runs narrow
-intent-resolution or mapping phases when needed, delegates implementation to the
-builder injected by your harness, and checks again until aligned or blocked.
-Its final report includes the structural lint result.
+See the [development loop](./the-loop.md) for the everyday workflow and the
+[`verify` skill](./skill-businesslens-verify.md) for inspection and resolution
+modes.
 
 ## Two checks
 
@@ -47,12 +45,10 @@ A green lint result never claims model/code agreement.
 
 ## Context and scope
 
-[References](./references.md) optionally attach intent, implementation, or
-context artifacts to an entity. They do not prove alignment or carry lifecycle
-state.
-Coverage describes only how much intended Product scope is modeled; a complete
-model can have no References.
+[Coverage](./product-model.md#coverage) describes how much intended Product
+scope is modeled. [References](./references.md) attach optional external
+material. Neither claims implementation alignment.
 
 Choose your starting door: [from your repo](./from-your-repo.md),
 [from a Blueprint](./from-a-blueprint.md), or [from an idea](./from-an-idea.md).
-Then read the [development loop](./the-loop.md).
+Then follow the [development loop](./the-loop.md).

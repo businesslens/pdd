@@ -8,8 +8,9 @@ order: 4
 
 # Start from a Blueprint
 
-Browse [businesslens.io/blueprints](https://businesslens.io/blueprints), then
-pull a canonical name:
+[Install the BusinessLens skills](./installation.md), browse
+[businesslens.io/blueprints](https://businesslens.io/blueprints), then pull a
+catalog slug:
 
 ```bash
 mkdir my-reader && cd my-reader
@@ -17,10 +18,8 @@ git init
 npx businesslens@latest blueprint pull content-feed-reader
 ```
 
-The command writes only `.businesslens/`, including its orientation README.
-Source-repository and implementation References are removed because they cannot
-navigate or describe this new repository. The Blueprint's model-completeness
-status is preserved because Coverage is independent from References.
+The command writes only `.businesslens/`, including its orientation README, and
+applies the [portable projection](./cli-export.md#portable-export).
 
 Lint the imported structure:
 
@@ -40,9 +39,8 @@ After implementation, invoke:
 /businesslens-verify
 ```
 
-Verify treats the existing model as the intended contract even if it was
-committed before the implementation branch. A Git diff narrows inspection; it
-does not erase the plan or choose authority.
+Verify treats the existing model as the intended contract. See the
+[`verify` skill](./skill-businesslens-verify.md) for scope and resolution modes.
 
 Next: [Development loop](./the-loop.md) ·
 [`blueprint contribute`](./cli-contribute.md)

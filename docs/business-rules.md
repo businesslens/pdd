@@ -52,17 +52,10 @@ Never create a fulfilled customer promise without a successful charge.
 Confirmation is the durable customer-facing boundary of checkout.
 ```
 
-`domains`, `capabilities`, `journeys`, `scenarios`, and `availability` are all
-optional individually, but at least one scope relation is required. The lead is
-the Rule statement. `## Rationale` explains why the constraint exists. Optional
-[References](./references.md) attach intent, implementation, or context
-artifacts.
-
-## What `lint` checks
-
-| Finding | Meaning |
-| --- | --- |
-| `must relate to a domain, capability, journey, scenario, or availability pair` | Give the Rule Product scope. |
-| `references missing …` | A Domain, Capability, Journey, Scenario, Interface, or Experience does not exist. |
-| Availability relationship finding | Correct an impossible or duplicate pair. |
-| `missing H1 title` / `missing lead paragraph (description)` | Every Rule needs a title and assertion. |
+| Field or section | Required | Constraint |
+| --- | --- | --- |
+| `domains`, `capabilities`, `journeys`, `scenarios`, `availability` | one or more | Give the Rule scope through valid entity IDs or Interface–Experience pairs. |
+| `references` | no | Use the documented [Reference](./references.md) shape. |
+| H1 and lead paragraph | yes | Name the Rule and state its durable assertion. |
+| `## Intent` | no | Explain the outcome the Rule protects. |
+| `## Rationale` | no | Explain why the constraint exists. |

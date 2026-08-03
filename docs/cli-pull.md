@@ -19,28 +19,14 @@ characters. **No account, sign-in, or credential is involved** — the catalog i
 anonymous to read.
 
 `pull` fetches the Product Report, verifies its mandatory SHA-256 digest, and
-passes it to the same expansion primitive as [`open`](./cli-open.md).
+passes it to [`open`](./cli-open.md) for portable expansion.
 
 ## Result
 
-The pulled report becomes a canonical `.businesslens/` Product Model:
-
-- the Blueprint's model-breadth coverage status is preserved;
-- product behavior, relationships, intent, routes, portable HTTP(S) References,
-  and supporting content are preserved;
-- code, implementation, and repository-relative References are removed because
-  they do not describe or navigate this repository.
-
-`pull` also writes `.businesslens/README.md`, telling a coding agent what it is
-looking at: a specification whose scenarios are the acceptance contract. Without
-it, "hand the model
-to your agent" would depend on you writing that prompt yourself. Nothing outside
-`.businesslens/` is touched.
-
-The expansion is a fixed point. For the public catalog, what lands in your
-directory is byte-identical to the canonical model committed under
-`blueprints/<slug>/` in `businesslens/pdd`; a custom catalog is responsible for
-serving an equivalently canonical report.
+The Blueprint becomes a canonical `.businesslens/` Product Model with its
+orientation README. It follows the same
+[portable projection](./cli-export.md#portable-export) and Coverage handling as
+`open`. Nothing outside `.businesslens/` is touched.
 
 Use `--cwd <path>` to choose the target directory. By default `pull` refuses a
 non-empty `.businesslens/`; `--force` first moves it to a timestamped backup.
@@ -54,10 +40,9 @@ npx businesslens@latest blueprint pull <slug> --catalog http://localhost:3200
 Precedence is `--catalog`, then `BUSINESSLENS_CATALOG_URL`, then the public
 catalog at `https://businesslens.io`.
 
-Any origin is accepted, so you may run your own catalog. The origin allowlist
-that used to guard this path existed to protect an API key that the read path no
-longer sends. The shape is still checked: a bare origin, no credentials, path,
-query, or fragment, and https except on a loopback development host.
+You may run your own catalog. Its URL must be a bare origin without credentials,
+a path, a query, or a fragment. HTTPS is required except for a loopback
+development host.
 
 ## Safety
 
@@ -91,11 +76,5 @@ the Product Report body and must include `x-businesslens-blueprint` and
 
 ## After pulling
 
-```bash
-npx businesslens@latest blueprint pull content-feed-reader
-```
-
-Then either hand the directory to a coding agent and ask it to build the
-product, or refine the model first with `businesslens-ideate` and build after.
-Then run `businesslens-verify` once to resolve implementation gaps. See
-[Build from a Blueprint](./from-a-blueprint.md).
+Continue with [Start from a Blueprint](./from-a-blueprint.md) to review, adapt,
+build, and verify the model.

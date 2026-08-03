@@ -9,7 +9,7 @@ order: 21
 # Use BusinessLens with spec-driven development tools
 
 BusinessLens owns Product meaning: Actors, Interfaces, Experiences,
-Capabilities, optional Screens and Domains, exact availability, Rules,
+Capabilities, optional Screens and Domains, exact availability, Business Rules,
 Journeys, and observable Scenarios. OpenSpec, spec-kit, and similar
 frameworks own technical design and task decomposition.
 
@@ -17,8 +17,7 @@ frameworks own technical design and task decomposition.
 businesslens-ideate       → approved product delta
 OpenSpec / spec-kit       → technical proposal citing affected entity IDs
 builder                   → implementation
-businesslens-verify       → semantic comparison and automatic resolution loop
-businesslens lint         → deterministic structure
+businesslens-verify       → semantic resolution and final structural lint
 ```
 
 Model entities may attach technical documents without copying them:

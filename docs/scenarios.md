@@ -62,11 +62,17 @@ Does the cart contain physical items?
 The order is stored and a confirmation is shown.
 ```
 
-`journeyId` is derived from the path. `kind` must name an entry in
-`taxonomies.yaml`. Required body sections are `## Trigger`, an ordered
-`## Steps` list, and `## Outcome`. `## Edge cases` is an optional bullet list.
-Optional [References](./references.md) attach intent, implementation, or
-context artifacts without changing the acceptance contract.
+| Field or section | Required | Constraint |
+| --- | --- | --- |
+| Filename | yes | Use a globally unique lowercase kebab-case Scenario ID. The Journey ID comes from the path. |
+| `kind` | yes | Name an entry in `taxonomies.yaml`. |
+| `availability` | no | Narrow, but never expand, the Journey's availability. |
+| `references` | no | Use the documented [Reference](./references.md) shape. |
+| `## Trigger` | yes | State the observable starting condition. |
+| `## Steps` | yes | Provide a non-empty ordered list. |
+| `## Decision points` | no | Give each H3 decision one Product question and at least two `condition → outcome` branches. |
+| `## Edge cases` | no | Provide a bullet list when present. |
+| `## Outcome` | yes | State the one observable result. |
 
 Business Rules own their Scenario relations; Scenarios do not duplicate a
 `businessRules` list.
@@ -78,13 +84,3 @@ Each decision has an H3 title, one non-empty Product question, and at least two
 ordinary sequential steps. Its branches remain inside and converge on this
 Scenario's one observable Outcome. When a branch produces a materially
 different Outcome, give it a separate Scenario instead.
-
-## What `lint` checks
-
-| Finding | Meaning |
-| --- | --- |
-| Missing Trigger/Steps/Outcome finding | Supply all required acceptance sections. |
-| `kind "…" is not defined in taxonomies.yaml` | Add or correct the Scenario kind. |
-| `scenario id "…" already used in …` | Rename one Scenario; IDs are global. |
-| `availability "interface/experience" is outside journey "…"` | Scenario availability may only narrow its Journey. |
-| Availability relationship finding | Correct malformed, duplicate, or missing Interface/Experience references. |
