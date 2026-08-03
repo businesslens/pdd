@@ -1,7 +1,10 @@
 ---
-experiences:
-  - reading-app
-features:
+availability:
+  - interface: reader-web
+    experiences: [reading-app]
+  - interface: reader-mobile
+    experiences: [reading-app]
+capabilities:
   - collection-sharing
   - collection-subscription
   - collections
@@ -16,10 +19,9 @@ scenarios:
   - unlist-a-published-collection
   - unsave-an-item-that-is-in-a-collection
 entryPoints:
-  - web: /collections
-  - web: /collections/:collectionId
-  - ios: content-reader://library/collections/:collectionId
-  - android: content-reader://library/collections/:collectionId
+  - reader-web: /collections
+  - reader-web: /collections/:collectionId
+  - reader-mobile: content-reader://library/collections/:collectionId
 ---
 
 # Collection workspace

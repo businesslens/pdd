@@ -1,7 +1,5 @@
 ---
 kind: primary
-businessRules:
-  - saved-items-outlive-their-source
 ---
 
 # Unfollowing removes a source but keeps what was saved

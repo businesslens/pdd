@@ -1,8 +1,9 @@
 ---
 kind: edge
-businessRules: [refund-existing-orders]
-codeRefs:
-  - src/services/orders.ts#OrderService.refund
+references:
+  - kind: code
+    role: implementation
+    target: src/services/orders.ts#OrderService.refund
 ---
 
 # Refund an order

@@ -11,55 +11,82 @@
 ├── coverage.md
 ├── .gitignore
 ├── actors/<id>.md
+├── interfaces/<id>.md
 ├── experiences/<id>.md
-├── screens/<id>.md
-├── domains/<id>.md
-├── features/<id>.md
+├── screens/<id>.md              # optional collection
+├── domains/<id>.md              # optional collection
+├── capabilities/<id>.md
 ├── business-rules/<id>.md
 └── journeys/<journey-id>/
     ├── journey.md
     └── scenarios/<scenario-id>.md
 ```
 
-IDs are lowercase kebab-case filename stems and scenario IDs are globally
+IDs are lowercase kebab-case filename stems and Scenario IDs are globally
 unique. Only `product.md` declares `id:`. The first H1 is the title; lead prose
-is the description or journey summary. Put relations and navigation in
-frontmatter and meaning in prose.
+is the description or Journey summary. Put relations and navigation in
+frontmatter and Product meaning in prose.
 
 ## Required shapes
 
-- `config.yaml`: `schema: 2` and `sdd.paths`. Historical schema 1 remains valid
-  only while the model contains no Screens.
+- `config.yaml`: exactly `schema: 3` and `sdd.paths`. Older schemas are not
+  accepted.
 - `product.md`: `id`, optional `tags`, `limitations`, H1, lead description, and
   optional `## Intent`.
 - `taxonomies.yaml`: `scenarioKinds` entries with `id`, `name`, `description`,
   and optional `colorSlot`.
-- Actor and Domain: H1 and lead description. Domain may have `colorSlot`.
-- Experience: `actors`, `access` (`public|authenticated|restricted`),
-  `entryPoints`, `exit`, H1, lead description, and `## Capability boundary`.
-- Screen: at least one `experience` and `feature`; optional `scenarios` and
-  product-facing `entryPoints`; H1, lead description, bullet
-  `## Information presented`, optional bullet `## Available actions`, optional
-  H3 `## Product states`, and `## Capability boundary`. Screens are optional
-  for the whole model and describe product views, not components or layouts.
-- Feature: `domain`, `actors`, at least one `experience`, `businessRules`, H1,
-  and lead description.
-- Business Rule: one or more relations across `domains`, `features`, `journeys`,
-  or `scenarios`; H1 and lead rule statement; optional `## Rationale`.
-- Journey: `domain`, at least one actor, experience, feature, and scenario;
-  optional `entryPoints`; H1 and lead summary.
-- Scenario: taxonomy `kind`, optional `businessRules`, H1, `## Trigger`, ordered
-  `## Steps`, and `## Outcome`. Optional `## Edge cases` is a bullet list.
-  Optional `## Decision points` uses H3 title, question, and at least two
-  `condition → outcome` branches.
+- Actor: required `kind: person|system` and `relationship: external|internal`,
+  H1, and lead description.
+- Interface: at least one `actors` relation; optional Product-facing
+  `entryPoints`; H1, lead description, and `## Capability boundary`.
+- Experience: at least one `actors` and `interfaces`; `access`
+  (`public|authenticated|restricted`); optional Interface-keyed `entryPoints`;
+  H1, lead description, and `## Capability boundary`.
+- Capability: at least one exact `availability` pair; optional singular
+  `domain`; H1 and lead description.
+- Domain: H1 and lead description; optional `colorSlot`. The collection is
+  optional and only organizes Capabilities.
+- Screen: at least one exact `availability` pair and `capabilities` relation;
+  optional `scenarios` and Interface-keyed Product entry points; H1, lead,
+  bullet `## Information presented`, optional bullet `## Available actions`,
+  optional H3 `## Product states`, and `## Capability boundary`. The whole
+  collection is optional.
+- Business Rule: one or more relations across `domains`, `capabilities`,
+  `journeys`, `scenarios`, or `availability`; H1 and lead assertion; optional
+  `## Rationale`.
+- Journey: at least one Actor, Capability, availability pair, and Scenario;
+  optional Interface-keyed `entryPoints`; H1 and lead summary. Journey has no
+  singular Domain.
+- Scenario: taxonomy `kind`, optional availability subset of its Journey, H1,
+  `## Trigger`, ordered `## Steps`, and `## Outcome`. Optional `## Edge cases`
+  is a bullet list. Optional `## Decision points` uses H3 title, question, and
+  at least two `condition → outcome` branches.
 - `coverage.md`: `status`, `method`, `sourceAreas`, `unmapped`, `limitations`,
   H1, and rationale. Status is model breadth only: `draft|partial|complete`.
 
-Optional `links` use `rel: spec|proposal|doc|adr|visual|research`, `href`, and
-optional title. Visuals and research stay outside `.businesslens/`; a valid
-link is context, not proof.
-Optional `codeRefs` use `path[#symbol][:start[-end]]`, point at tracked files,
-and are navigational bookmarks—not proof or lifecycle state.
+Exact availability uses this shared shape:
+
+```yaml
+availability:
+  - interface: reader-web
+    experiences: [personal-workspace, account-management]
+  - interface: reader-mobile
+    experiences: [personal-workspace]
+```
+
+Each Interface appears at most once and each Experience list is non-empty and
+unique. Every Experience must declare that Interface. Journey and Screen pairs
+must be supported by every Capability they reference. Scenario availability,
+when present, must be a subset of its Journey. Availability is intended Product
+scope, not implementation status.
+
+Every semantic entity may contain optional `references`. Each strict item needs
+`kind: code|spec|proposal|doc|adr|visual|research`,
+`role: intent|implementation|context`, `target`, and optional `title`. Code
+targets use `path[#symbol][:start[-end]]` and their path must be tracked. Other
+targets use HTTP(S) or a repository-relative path. Duplicate targets on one
+entity are invalid. References are attachments, never proof or lifecycle state.
+Coverage, config, and taxonomies do not accept them.
 
 `.gitignore` contains `build/` and `cache/`.
 
@@ -76,11 +103,12 @@ intended product behavior.
 
 ## If you are an agent working in this repository
 
-- Read `product.md` first, then the actors, experiences, optional screens,
-  domains, features, business rules, journeys, and scenarios.
+- Read `product.md` first, then Actors, Interfaces, Experiences, optional
+  Screens and Domains, Capabilities, Business Rules, Journeys, and Scenarios.
 - Treat scenarios as the acceptance contract and business rules as invariants.
 - Do not infer a stack or architecture from the model.
-- Treat `codeRefs` as optional navigation, never proof or implementation state.
+- References are optional navigation and context. Their role explains why an
+  artifact is attached; it never proves alignment or replaces product prose.
 - After code changes, use `businesslens-verify`; run `npx businesslens lint`
   for structural checks.
 - Use `businesslens-ideate` to change intended behavior and `businesslens-map`

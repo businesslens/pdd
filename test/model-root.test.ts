@@ -65,20 +65,20 @@ describe('resolveModelRoot', () => {
 
   it('builds a Blueprint model outside a repository with an empty tracked set', () => {
     const loose = scratch('businesslens-model-root-build-')
-    // A Blueprint carries no codeRefs, so it is the case that can legitimately
-    // build with nothing tracked. A model that does carry bookmarks still fails,
-    // because an empty tracked set makes every one of its codeRefs unresolvable.
+    // A Blueprint carries no local references, so it can legitimately build
+    // with nothing tracked. A model with code references still fails because
+    // an empty tracked set makes their paths unresolvable.
     cpSync(BLUEPRINT, join(loose, '.businesslens'), { recursive: true })
 
     const { report } = buildProject(loose)
     expect(report.coverage.sourceAreas).toEqual([])
     expect(Object.values(report.model).flatMap(value =>
-      Array.isArray(value) ? value.flatMap(item => item.codeRefs || []) : []
-    )).toEqual([])
+      Array.isArray(value) ? value.flatMap(item => item.references || []) : []
+    ).every(reference => /^https?:\/\//.test(reference.target))).toBe(true)
   })
 
-  it('refuses to build a model carrying bookmarks when nothing is tracked', () => {
-    const loose = scratch('businesslens-model-root-bookmarks-')
+  it('refuses to build a model carrying code references when nothing is tracked', () => {
+    const loose = scratch('businesslens-model-root-references-')
     cpSync(join(FIXTURE, '.businesslens'), join(loose, '.businesslens'), { recursive: true })
 
     expect(() => buildProject(loose)).toThrow(/is not a tracked file/)

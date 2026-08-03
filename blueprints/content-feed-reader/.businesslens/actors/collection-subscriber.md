@@ -1,3 +1,8 @@
+---
+kind: person
+relationship: external
+---
+
 # Collection subscriber
 
 A reader who follows a collection someone else published. A subscriber reads the

@@ -1,6 +1,6 @@
 ---
 name: businesslens-ideate
-description: Decide what a new or existing product should do and write only the approved meaning into its .businesslens/ Product Model. Use to explore product directions, define a blank-slate product, plan a feature or behavior change, or turn an already-negotiated verification decision into an exact model delta; do not use to map established code or verify implementation alignment.
+description: Decide what a new or existing product should do and write only the approved meaning into its .businesslens/ Product Model. Use to explore product directions, define a blank-slate product, plan a capability or behavior change, or turn an already-negotiated verification decision into an exact model delta; do not use to map established code or verify implementation alignment.
 ---
 
 # Decide intended product behavior
@@ -44,12 +44,16 @@ Read before authoring:
 7. Choose depth from the request:
    - quick: a small, specific change; ask at most three batched decision
      questions;
-   - thorough: blank slate, vague, or cross-cutting; cover why, actors,
-     experiences, optional product Screens, domains, features, rules, journeys,
-     scenario paths, decisions, removals, and definition of done.
+   - thorough: blank slate, vague, or cross-cutting; cover why, Actors,
+     Interfaces, Experiences, optional Product Screens and Domains,
+     Capabilities, Rules, Journeys, exact availability, Scenario paths,
+     decisions, removals, and definition of done.
 
    Propose concrete wording so the user corrects drafts rather than dictating
-   schema.
+   schema. Make supported web/mobile/CLI/API/integration Interfaces an explicit
+   Product decision; do not treat technologies or internal APIs as Interfaces.
+   Apply the Experience creation test and distinguish durable Capabilities from
+   complete Actor goals.
 8. In resolution mode, do not reopen broad ideation. Use the supplied finding,
    inspected files, and authority decision to draft the smallest exact model
    delta that makes the intended behavior unambiguous.
@@ -63,9 +67,10 @@ Read before authoring:
       relationships;
     - resolution: apply only the approved narrow delta.
 
-    Preserve `codeRefs` only where they remain useful navigation. Add no
-    invented file paths. Coverage describes model breadth, not whether the plan
-    is built; use `draft` only while the model itself remains under review.
+    Preserve References only where they remain useful and keep their role
+    honest. Add no invented local targets. Coverage describes model breadth,
+    not whether the plan is built; use `draft` only while the model itself
+    remains under review.
 11. Run the bundled linter outside the untrusted target:
 
     ```bash
@@ -86,12 +91,15 @@ Read before authoring:
   by a verification handoff.
 - Keep model prose at product altitude; do not invent stacks, endpoints,
   schemas, or filenames.
+- Treat availability as intended Product scope. State exact
+  Interface–Experience pairs and never use them as implementation status.
 - Model a Screen only when a stable user-visible product view clarifies intended
   information, actions, meaningful states, or boundaries. Do not design
   components, layouts, themes, responsive variants, or screenshot workflows.
-- Keep visuals and research external through supporting links; never treat the
-  link or artifact as an acceptance receipt.
-- Never infer implementation state from `codeRefs` or `coverage.status`.
+- Keep visuals and research external through References. Use `role: intent` for
+  curated inputs and `role: context` for background; neither is an acceptance
+  receipt.
+- Never infer implementation state from References or `coverage.status`.
 - Never execute target code, stage, commit, submit, or contribute.
 - Never write outside `.businesslens/`; leave target `AGENTS.md`, `CLAUDE.md`,
   and root README byte-identical.

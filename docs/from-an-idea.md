@@ -22,8 +22,8 @@ Use this door when no established implementation exists.
 
 2. If the idea is open, ideate proposes genuinely different product shapes and
    writes nothing. Once you choose—or if you already know the outcome—it drafts
-   actors, experiences, optional Screens, domains, features, rules, journeys,
-   scenarios, and limitations.
+   Actors, Interfaces, Experiences, optional Screens and Domains,
+   Capabilities, Rules, Journeys, Scenarios, and limitations.
 3. Approve the exact Product Model delta. Only then does ideate write
    `.businesslens/`, including its canonical README. Lint checks structure:
 
@@ -32,7 +32,7 @@ Use this door when no established implementation exists.
    ```
 
    Coverage status describes model breadth, not implementation. Optional
-   `codeRefs` may be absent at any status.
+   References may be absent at any status.
 4. Hand the approved scenario and rule contract to your normal plan/build flow.
    BusinessLens does not own implementation.
 5. Invoke verify once:

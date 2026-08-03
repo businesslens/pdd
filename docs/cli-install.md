@@ -3,7 +3,7 @@ title: install
 description: Install the bundled BusinessLens agent skills safely for selected AI harnesses and scopes.
 section: open-source
 group: CLI
-order: 26
+order: 27
 ---
 
 # `businesslens install`
@@ -53,7 +53,7 @@ npx businesslens@latest install \
 `--yes` by itself selects the detected providers, or Claude Code and Codex
 when none are detected, and defaults to project scope.
 
-## Ownership and safety
+## Install safety
 
 The installer writes `.businesslens-install.json` into each managed skills
 directory. That marker records the provider, scope, package version, and owned

@@ -31,13 +31,13 @@ The build flow in the middle is deliberately yours. It may be plan mode, an SDD
 framework, a coding agent, or a team workflow. BusinessLens supplies the product
 contract and the verification loop around it.
 
-## Before building: ideate
+## Ideate first
 
 Use ideate when product meaning changes. It explores only when the direction is
 open, drafts the exact Product Model delta, and waits for approval before
 writing. The model is intentionally ahead of code during the build phase.
 
-## After building: verify once
+## Verify once
 
 You do not choose or invoke follow-up skills. Verify inspects a branch, named
 area, or full current state and classifies each gap:
@@ -53,27 +53,29 @@ area, or full current state and classifies each gap:
 The user still owns product decisions and authorization to change code. The
 routing, internal phases, and return to verification are automatic.
 
-## Branch verification versus current-state verification
+## Verification scope
 
 - `verify this branch` uses Git changes to choose likely work. It includes
   model and code additions, edits, deletions, staged files, and working-tree
   changes.
 - `verify current` or `verify full` inspects present behavior without needing a
   merge base or diff.
-- `verify <named scope>` inspects one domain, experience, Screen, feature,
-  journey, scenario, or path plus necessary dependencies.
+- `verify <named scope>` inspects one Actor, Interface, Experience, Screen,
+  Domain, Capability, Journey, Scenario, availability pair, or path plus
+  necessary dependencies.
 
 Git is a scope tool, never an authority tool. A model committed on the default
 branch can still be the approved plan for code added later.
 
-## What verify may change
+## Allowed changes
 
 The semantic verification phase changes nothing. Resolution may:
 
 - write product meaning only after the user approves an exact delta;
 - delegate implementation to a builder injected by the harness, under its own
   repository permissions;
-- refresh optional `codeRefs` after alignment as navigation bookkeeping.
+- refresh optional implementation References after alignment as navigation
+  bookkeeping.
 
 BusinessLens analysis phases never execute target code. The injected builder
 may run the project's normal checks, but must not edit `.businesslens/`.
@@ -85,7 +87,7 @@ persists no ledger or receipt.
 ## Read-only reporting
 
 Invoke `businesslens-verify report only` to prohibit model writes, builder
-delegation, and bookmark refresh. You receive the same classified findings and
+delegation, and Reference refresh. You receive the same classified findings and
 recommendations with no mutations.
 
 ## Where map belongs

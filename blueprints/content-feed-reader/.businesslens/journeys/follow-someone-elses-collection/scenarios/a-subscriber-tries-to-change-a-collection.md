@@ -1,8 +1,5 @@
 ---
 kind: permission
-businessRules:
-  - a-subscription-never-grants-write-access
-  - only-an-owner-changes-a-collection
 ---
 
 # A subscriber cannot change a collection they follow

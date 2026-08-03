@@ -1,15 +1,10 @@
 ---
 domain: sharing
-actors:
-  - collection-owner
-  - collection-subscriber
-  - visitor
-experiences:
-  - public-collection
-  - reading-app
-businessRules:
-  - a-subscription-never-grants-write-access
-  - unlisting-revokes-anonymous-access
+availability:
+  - interface: reader-web
+    experiences: [public-collection, reading-app]
+  - interface: reader-mobile
+    experiences: [public-collection, reading-app]
 ---
 
 # Collection subscription

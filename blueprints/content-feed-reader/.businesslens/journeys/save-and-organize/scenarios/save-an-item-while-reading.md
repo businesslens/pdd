@@ -1,7 +1,5 @@
 ---
 kind: primary
-businessRules:
-  - saved-items-outlive-their-source
 ---
 
 # A reader saves an item while reading it

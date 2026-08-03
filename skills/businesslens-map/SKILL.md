@@ -46,12 +46,19 @@ Read before authoring:
 5. Trace observable behavior end to end. Treat tests and docs as leads; confirm
    claims in implementation. Do not infer permissions, guarantees, or live
    operational state from names.
-6. Draft actors, experiences, optional product Screens, domains, features,
-   business rules, journeys, scenarios, relationships, and coverage. A Screen
+6. Draft Actors, Interfaces, Experiences, optional Product Screens and Domains,
+   Capabilities, Business Rules, Journeys, Scenarios, exact availability, and
+   coverage. Repository deployables, routes, commands, APIs, and integrations
+   are evidence, not automatic Interfaces. Create an Interface only for a
+   supported Product interaction contract, and do not infer cross-Interface
+   parity from shared implementation. Apply the Experience creation test: a
+   coherent Actor context, stable access and capability boundary, meaning beyond
+   current navigation, and independently meaningful Interface availability. A Screen
    is warranted only for a stable user-visible product view; do not turn every
    route, component, viewport, or visual variant into one. Preserve valid
-   existing meaning in a scoped expansion. Add optional `codeRefs` only where
-   they are useful navigation into tracked files; never call them proof.
+   existing meaning in a scoped expansion. Add optional `references` only when
+   they help: implementation References for established artifacts and context
+   References for supporting material. Never call them proof.
 7. Present the proposed model delta before writing. Include added, changed, and
    removed entities; mapped and unmapped areas; limitations; and any material
    uncertainty. Get explicit approval for product meaning. Do not silently
@@ -72,7 +79,7 @@ Read before authoring:
    Fix every error and assess every warning. A green lint result proves
    structure only, not semantic alignment.
 10. Report the approved files written, entity counts, inspected areas, unmapped
-    areas, limitations, useful bookmarks added, and lint result. Recommend
+    areas, limitations, useful References added, and lint result. Recommend
     `businesslens-verify` for a semantic current-state audit.
 
 ## Guardrails
@@ -83,5 +90,8 @@ Read before authoring:
   and root README byte-identical.
 - Never stage, commit, submit, or contribute the model.
 - Never persist verification receipts or lifecycle state.
-- Never capture, copy, or assess screenshots. External `visual` and `research`
-  links are supporting context, never evidence by themselves.
+- Never capture, copy, or assess screenshots. External visual and research
+  References may guide inspection; their role does not make them proof.
+- Do not promote internal APIs, adapters, command namespaces, or services to
+  Interfaces or system Actors unless their independent Product contract is
+  established by inspected behavior.

@@ -1,6 +1,6 @@
 ---
 title: Actors
-description: Who uses the product — people, systems, and operators distinguished by a goal or a privilege.
+description: Product-significant people and systems, classified by kind and by their relationship to the Product boundary.
 section: open-source
 group: Product model
 order: 8
@@ -8,56 +8,67 @@ order: 8
 
 # Actors
 
-**An actor is someone — or something — with a goal or a privilege.** A shopper,
-a store admin, a billing webhook.
+**An Actor is a person or system whose goal, privilege, trigger, or outcome
+changes Product behavior.** A shopper, store administrator, partner system, and
+content source can all be Actors.
 
-Actors are defined by what they are trying to accomplish, never by UI screens or
-database roles.
+Every Actor declares two independent classifications:
+
+- `kind: person|system` says whether the Actor is human;
+- `relationship: external|internal` says whether it acts independently outside
+  the Product owner's boundary or on the Product owner's behalf.
+
+The relationship is about the Product, not network location. A staff operator
+is usually internal even when working remotely. A partner system is usually
+external even when connected over a private network.
 
 ## When you create one
 
-Create an actor when its goal or privilege **changes product behavior**.
+Create an Actor only when its responsibility or privilege is
+product-significant. If two roles have the same goals and permissions, they are
+one Actor. An internal service is not an Actor merely because it calls another
+service; a system becomes an Actor when its autonomous trigger, permissions, or
+outcome belongs in the Product contract.
 
-If two "roles" share the same goals and the same permissions, they are one
-actor. Demographics, job titles, and database roles alone do not create actors —
-a `premium_user` row in a table is an actor only if the product actually behaves
-differently for it.
-
-> **Actor vs persona.** A persona describes who someone is. An actor exists
-> because of what the product must do differently for them.
+> **Actor vs persona.** A persona describes who someone is. An Actor exists
+> because the Product must behave differently for them.
 
 ## The file
 
 Actors live at `actors/<actor-id>.md`.
 
-```md [actors/shopper.md]
+```md [actors/store-admin.md]
 ---
-codeRefs:
-  - src/routes/storefront.ts
+kind: person
+relationship: internal
+references:
+  - kind: code
+    role: implementation
+    target: src/routes/admin.ts
 ---
 
-# Shopper
+# Store administrator
 
-A visitor who browses the catalog and buys products.
+An employee who manages orders on behalf of the store.
 ```
 
-No required frontmatter. The H1 is the name and the lead paragraph is the
-description. Optional `codeRefs` provide navigation when the actor boundary is
-represented in code. They are never required and do not prove the boundary.
+The H1 is the name and the lead paragraph is the description. Optional
+[References](./references.md) attach navigation or supporting context.
 
 ## What `lint` checks
 
 | Finding | Meaning |
 | --- | --- |
-| `id "<id>" must be lowercase kebab-case` | The filename stem is the ID and must match `^[a-z0-9]+(?:-[a-z0-9]+)*$`. |
-| `missing H1 title` | Every actor needs a `# Heading`. |
-| `missing lead paragraph (description)` | Add prose between the H1 and the first `##`. |
-| `references missing actor "<id>"` | Reported on the *other* entity — an experience, feature, or journey points at an actor file that does not exist. Create it or fix the ID. |
+| `kind "…" must be person\|system` | Add one of the two Actor kinds. |
+| `relationship "…" must be external\|internal` | Classify the Actor relative to the Product boundary. |
+| `id "…" must be lowercase kebab-case` | The filename stem is the ID. |
+| `missing H1 title` / `missing lead paragraph (description)` | Every Actor needs both. |
+| `references missing actor "…"` | An Interface, Experience, or Journey names no existing Actor. |
 
 ## Referenced by
 
 | From | Key | Meaning |
 | --- | --- | --- |
-| [Experiences](./experiences.md) | `actors:` | Who may enter this surface |
-| [Features](./features.md) | `actors:` | Who this capability is for |
-| [Journeys](./journeys.md) | `actors:` | Who pursues this goal — at least one required |
+| [Interfaces](./interfaces.md) | `actors:` | Who may use any part of the Interface |
+| [Experiences](./experiences.md) | `actors:` | Who participates in that coherent context |
+| [Journeys](./journeys.md) | `actors:` | Who pursues the complete goal |

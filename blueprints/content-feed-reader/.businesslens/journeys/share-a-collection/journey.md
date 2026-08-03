@@ -1,14 +1,14 @@
 ---
-domain: sharing
 actors:
   - collection-owner
-  - visitor
-experiences:
-  - public-collection
-  - reading-app
-features:
+capabilities:
   - collection-sharing
   - collections
+availability:
+  - interface: reader-web
+    experiences: [reading-app]
+  - interface: reader-mobile
+    experiences: [reading-app]
 ---
 
 # Share a collection

@@ -2,7 +2,7 @@
 domains:
   - library
   - sources
-features:
+capabilities:
   - source-refresh
 ---
 

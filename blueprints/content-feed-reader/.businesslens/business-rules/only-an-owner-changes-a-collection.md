@@ -2,7 +2,7 @@
 domains:
   - curation
   - sharing
-features:
+capabilities:
   - collection-sharing
   - collections
 ---

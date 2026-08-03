@@ -1,10 +1,12 @@
 ---
 domain: ordering
-actors: [store-admin]
-experiences: [admin-console]
-businessRules: [refund-existing-orders]
-codeRefs:
-  - src/services/orders.ts#OrderService
+availability:
+  - interface: admin-web
+    experiences: [admin-console]
+references:
+  - kind: code
+    role: implementation
+    target: src/services/orders.ts#OrderService
 ---
 
 # Order management

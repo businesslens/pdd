@@ -1,8 +1,12 @@
 ---
-status: accepted
+status: superseded by ADR-0008
 ---
 
 # Code references are bookmarks, not proof
+
+> **Superseded by [ADR-0008](./0008-unified-references-and-portable-reports.md).**
+> Code navigation keeps this non-proof meaning as `kind: code` within the
+> universal References model.
 
 ## Context
 

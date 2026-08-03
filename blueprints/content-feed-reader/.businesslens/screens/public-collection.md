@@ -1,7 +1,10 @@
 ---
-experiences:
-  - public-collection
-features:
+availability:
+  - interface: reader-web
+    experiences: [public-collection]
+  - interface: reader-mobile
+    experiences: [public-collection]
+capabilities:
   - collection-sharing
   - collection-subscription
 scenarios:
@@ -10,9 +13,8 @@ scenarios:
   - return-to-a-shared-collection-after-signing-in
   - subscribe-to-a-published-collection
 entryPoints:
-  - web: /c/:collectionSlug
-  - ios: content-reader://collections/:collectionSlug
-  - android: content-reader://collections/:collectionSlug
+  - reader-web: /c/:collectionSlug
+  - reader-mobile: content-reader://collections/:collectionSlug
 ---
 
 # Public collection

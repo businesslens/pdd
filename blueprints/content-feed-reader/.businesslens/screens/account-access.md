@@ -1,7 +1,10 @@
 ---
-experiences:
-  - account-access
-features:
+availability:
+  - interface: reader-web
+    experiences: [account-access]
+  - interface: reader-mobile
+    experiences: [account-access]
+capabilities:
   - account-access
 scenarios:
   - create-an-account
@@ -9,10 +12,9 @@ scenarios:
   - return-to-a-shared-collection-after-signing-in
   - sign-in-to-an-existing-library
 entryPoints:
-  - web: /signin
-  - web: /register
-  - ios: content-reader://account
-  - android: content-reader://account
+  - reader-web: /signin
+  - reader-web: /register
+  - reader-mobile: content-reader://account
 ---
 
 # Account access

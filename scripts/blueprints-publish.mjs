@@ -17,7 +17,7 @@ import { readdir, readFile } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { parse as parseYaml } from 'yaml'
-import { redactSourceEvidence } from '../dist/report.js'
+import { projectPortableReport } from '../dist/report.js'
 
 const root = process.cwd()
 const cli = resolve(root, 'dist/cli.js')
@@ -106,13 +106,13 @@ for (const slug of slugs) {
   const dir = join(blueprintsDir, slug)
   const manifest = parseYaml(await readFile(join(dir, 'blueprint.yaml'), 'utf8'))
   try {
-    execFileSync(process.execPath, [cli, '--cwd', dir, 'export'], { stdio: 'pipe' })
+    execFileSync(process.execPath, [cli, '--cwd', dir, 'blueprint', 'export'], { stdio: 'pipe' })
   } catch (error) {
     fail(`blueprints/${slug}: build failed — ${(error.stderr || error.message).toString().trim()}`)
   }
-  // Redact here as well as server-side. The catalog does not trust this client,
-  // but source paths should not travel over the wire in the first place.
-  const report = redactSourceEvidence(
+  // Project here as well as server-side. The catalog does not trust this
+  // client, but workspace material should not travel over the wire.
+  const report = projectPortableReport(
     JSON.parse(await readFile(join(dir, '.businesslens/build/report.json'), 'utf8'))
   )
   payloads.push({ slug, manifest, report, sourcePath: `blueprints/${slug}`, sourceCommit: commit })

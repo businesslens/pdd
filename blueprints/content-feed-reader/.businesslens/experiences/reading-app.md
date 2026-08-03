@@ -3,17 +3,18 @@ actors:
   - collection-owner
   - collection-subscriber
   - reader
+interfaces:
+  - reader-web
+  - reader-mobile
 access: authenticated
 entryPoints:
-  - web: /
-  - web: /unread
-  - web: /saved
-  - web: /search
-  - web: /sources
-  - web: /collections
-  - ios: content-reader://library
-  - android: content-reader://library
-exit: Reader signs out; every source, item, reading state, saved item, tag, and collection is preserved for the next session
+  - reader-web: /
+  - reader-web: /unread
+  - reader-web: /saved
+  - reader-web: /search
+  - reader-web: /sources
+  - reader-web: /collections
+  - reader-mobile: content-reader://library
 ---
 
 # Reading application

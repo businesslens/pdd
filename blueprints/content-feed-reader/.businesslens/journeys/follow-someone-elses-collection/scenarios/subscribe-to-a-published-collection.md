@@ -1,7 +1,5 @@
 ---
 kind: primary
-businessRules:
-  - a-subscription-never-grants-write-access
 ---
 
 # A reader subscribes to a published collection

@@ -1,3 +1,8 @@
+---
+kind: person
+relationship: external
+---
+
 # Collection owner
 
 The reader who created a collection. Only the owner changes what is in a

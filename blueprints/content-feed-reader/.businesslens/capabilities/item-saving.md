@@ -1,11 +1,10 @@
 ---
 domain: curation
-actors:
-  - reader
-experiences:
-  - reading-app
-businessRules:
-  - saved-items-outlive-their-source
+availability:
+  - interface: reader-web
+    experiences: [reading-app]
+  - interface: reader-mobile
+    experiences: [reading-app]
 ---
 
 # Item saving

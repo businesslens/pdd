@@ -18,10 +18,11 @@ resolution loop.
 ├── README.md
 ├── product.md
 ├── actors/
+├── interfaces/
 ├── experiences/
 ├── screens/                  # optional product views
-├── domains/
-├── features/
+├── domains/                  # optional organization
+├── capabilities/
 ├── business-rules/
 ├── journeys/<id>/journey.md
 │   └── scenarios/<id>.md
@@ -90,16 +91,22 @@ Catalog contribution stays in the CLI; there is no contribution skill.
 
 ## Product Model semantics
 
-- `codeRefs` are optional tracked-file bookmarks. They are not proof,
-  implementation state, or verification receipts.
+- `references` optionally attach intent, implementation, or context artifacts
+  to any semantic entity. They are navigation and supporting material, not
+  proof or verification receipts.
 - `coverage.status` describes model breadth: `draft` while the model itself is
   under review, `partial` with known unmapped areas, and `complete` when the
   intended product scope is modeled.
-- A complete model may contain zero codeRefs.
+- A complete model may contain zero References.
+- A Product may expose several Interfaces—such as web, mobile, CLI, and a
+  supported API—without being classified as one of those delivery forms.
+- Experiences are coherent usage contexts across Interfaces; exact
+  Interface–Experience availability says where behavior is promised.
+- Domains are optional Capability groupings, and Journeys may cross them.
 - Screens are optional platform-neutral product views. Screenshots and other
-  supporting visuals remain external links, not model assets or evidence.
-- `lint` checks format, required content, relationships, link/reference grammar,
-  and tracked bookmark paths. `verify` checks meaning against current code.
+  visuals remain external References, not model assets or proof.
+- `lint` checks format, required content, relationships, Reference grammar, and
+  tracked code-reference paths. `verify` checks meaning against current code.
 
 Every model creation path writes `.businesslens/README.md`. BusinessLens never
 writes target `AGENTS.md`, `CLAUDE.md`, or root README files.
@@ -112,7 +119,7 @@ writes target `AGENTS.md`, `CLAUDE.md`, or root README files.
   [from a Blueprint](./docs/from-a-blueprint.md), or
   [from an idea](./docs/from-an-idea.md)
 - [Product Model](./docs/product-model.md) ·
-  [Code refs & coverage](./docs/code-refs-and-coverage.md)
+  [References](./docs/references.md)
 - [Skills](./docs/skills.md) · [CLI](./docs/cli.md) ·
   [Lint in CI](./docs/ci.md)
 - [Format contract](./spec/format.md)

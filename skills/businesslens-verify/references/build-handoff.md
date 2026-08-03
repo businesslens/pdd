@@ -3,8 +3,8 @@
 Send one self-contained packet to the harness-supplied builder:
 
 - **Expected behavior:** the exact approved model contract.
-- **Affected model entities:** IDs of relevant features, rules, journeys, and
-  scenarios.
+- **Affected model entities:** IDs of relevant Interfaces, Experiences,
+  Capabilities, Rules, Journeys, Scenarios, and availability pairs.
 - **Observed gap:** current behavior and why it differs.
 - **Acceptance criteria:** observable trigger, steps, decisions, outcome, edge
   cases, and applicable invariants.

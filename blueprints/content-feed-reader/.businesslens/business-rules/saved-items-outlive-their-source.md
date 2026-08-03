@@ -2,7 +2,7 @@
 domains:
   - curation
   - library
-features:
+capabilities:
   - item-saving
 ---
 

@@ -1,7 +1,5 @@
 ---
 kind: primary
-businessRules:
-  - reading-state-is-private-to-its-reader
 ---
 
 # A reader works through the unread backlog

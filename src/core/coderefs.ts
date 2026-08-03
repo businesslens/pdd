@@ -1,4 +1,4 @@
-export interface CodeRef {
+export interface ParsedCodeTarget {
   path: string
   symbol?: string
   startLine?: number
@@ -10,10 +10,10 @@ export interface CodeRef {
  * The line suffix is the last ":" whose remainder is digits or digits-digits;
  * the symbol is everything after the first "#" of what remains.
  */
-export function parseCodeRef(value: string, issues: string[], label: string): CodeRef | undefined {
+export function parseCodeTarget(value: string, issues: string[], label: string): ParsedCodeTarget | undefined {
   let rest = value.trim()
   if (!rest) {
-    issues.push(`${label}: empty codeRef`)
+    issues.push(`${label}: code reference target must not be empty`)
     return undefined
   }
   let startLine: number | undefined
@@ -35,25 +35,30 @@ export function parseCodeRef(value: string, issues: string[], label: string): Co
     rest = rest.slice(0, hash)
   }
   if (!rest) {
-    issues.push(`${label}: codeRef "${value}" has no path`)
+    issues.push(`${label}: code reference target "${value}" has no path`)
     return undefined
   }
-  if (rest.startsWith('/')) {
-    issues.push(`${label}: codeRef "${value}" must be repository-relative`)
+  if (
+    /^(?:[/\\]|~[/\\]|[a-z]:[/\\])/i.test(rest)
+    || rest.includes('\\')
+    || /^[a-z][a-z0-9+.-]*:/i.test(rest)
+    || rest.split('/').includes('..')
+  ) {
+    issues.push(`${label}: code reference target "${value}" must be a repository-relative path`)
     return undefined
   }
   if (symbol !== undefined && !symbol) {
-    issues.push(`${label}: codeRef "${value}" has an empty symbol`)
+    issues.push(`${label}: code reference target "${value}" has an empty symbol`)
     return undefined
   }
   if (startLine !== undefined && endLine !== undefined && endLine < startLine) {
-    issues.push(`${label}: codeRef "${value}" has an inverted line range`)
+    issues.push(`${label}: code reference target "${value}" has an inverted line range`)
     return undefined
   }
   return { path: rest, symbol, startLine, endLine }
 }
 
-export function formatCodeRef(ref: CodeRef): string {
+export function formatCodeTarget(ref: ParsedCodeTarget): string {
   let result = ref.path
   if (ref.symbol) result += `#${ref.symbol}`
   if (ref.startLine !== undefined) {

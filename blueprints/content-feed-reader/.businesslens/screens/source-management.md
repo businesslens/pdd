@@ -1,7 +1,10 @@
 ---
-experiences:
-  - reading-app
-features:
+availability:
+  - interface: reader-web
+    experiences: [reading-app]
+  - interface: reader-mobile
+    experiences: [reading-app]
+capabilities:
   - source-following
   - source-refresh
 scenarios:
@@ -15,9 +18,8 @@ scenarios:
   - follow-an-address-with-no-feed
   - unfollow-a-source-that-is-gone
 entryPoints:
-  - web: /sources
-  - ios: content-reader://library/sources
-  - android: content-reader://library/sources
+  - reader-web: /sources
+  - reader-mobile: content-reader://library/sources
 ---
 
 # Source management

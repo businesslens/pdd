@@ -1,10 +1,12 @@
 ---
 domains: [ordering]
-features: [order-management]
+capabilities: [order-management]
 journeys: [manage-orders]
 scenarios: [refund-order]
-codeRefs:
-  - src/services/orders.ts#OrderService.refund
+references:
+  - kind: code
+    role: implementation
+    target: src/services/orders.ts#OrderService.refund
 ---
 
 # Refund existing orders

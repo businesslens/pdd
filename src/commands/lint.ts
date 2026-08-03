@@ -1,5 +1,6 @@
+import type { Availability } from '../core/frontmatter.js'
 import type { PddModel } from '../core/model.js'
-import { repositoryLinkPath } from '../core/frontmatter.js'
+import { repositoryReferencePath } from '../core/frontmatter.js'
 import { lsFiles } from '../core/git.js'
 import { isId } from '../core/ids.js'
 import { section } from '../core/markdown.js'
@@ -14,7 +15,13 @@ export interface LintResult {
 }
 
 const ACCESS_MODES = new Set(['public', 'authenticated', 'restricted'])
+const ACTOR_KINDS = new Set(['person', 'system'])
+const ACTOR_RELATIONSHIPS = new Set(['external', 'internal'])
 const COVERAGE_STATUSES = new Set(['complete', 'partial', 'draft'])
+
+function pairKey(interfaceId: string, experienceId: string): string {
+  return `${interfaceId}\0${experienceId}`
+}
 
 /** Pure structural rule engine over a loaded model; trackedFiles injected for testability. */
 export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
@@ -38,10 +45,11 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
 
   const collections: Array<[string, Array<{ id: string }>]> = [
     ['actors', model.actors],
+    ['interfaces', model.interfaces],
     ['experiences', model.experiences],
     ['screens', model.screens],
     ['domains', model.domains],
-    ['features', model.features],
+    ['capabilities', model.capabilities],
     ['businessRules', model.businessRules],
     ['journeys', model.journeys],
     ['scenarioKinds', model.scenarioKinds]
@@ -53,16 +61,83 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
   }
 
   const actorIds = new Set(model.actors.map(actor => actor.id))
+  const interfaceIds = new Set(model.interfaces.map(item => item.id))
+  const interfacesById = new Map(model.interfaces.map(item => [item.id, item]))
   const experienceIds = new Set(model.experiences.map(experience => experience.id))
+  const experiencesById = new Map(model.experiences.map(experience => [experience.id, experience]))
   const domainIds = new Set(model.domains.map(domain => domain.id))
-  const featureIds = new Set(model.features.map(feature => feature.id))
-  const businessRuleIds = new Set(model.businessRules.map(rule => rule.id))
+  const capabilityIds = new Set(model.capabilities.map(capability => capability.id))
   const journeyIds = new Set(model.journeys.map(journey => journey.id))
   const scenarioIds = new Set(model.journeys.flatMap(journey => journey.scenarios).map(scenario => scenario.id))
   const kindIds = new Set(model.scenarioKinds.map(kind => kind.id))
 
-  for (const actor of model.actors) requireTitle(actor.file, actor.doc.title, actor.doc.lead)
-  for (const domain of model.domains) requireTitle(domain.file, domain.doc.title, domain.doc.lead)
+  const validateAvailability = (label: string, items: Availability[]): Set<string> => {
+    const pairs = new Set<string>()
+    const seenInterfaces = new Set<string>()
+    for (const item of items) {
+      if (!item.interface) errors.push(`${label}: availability needs a non-empty interface`)
+      if (seenInterfaces.has(item.interface)) {
+        errors.push(`${label}: duplicate availability interface "${item.interface}"`)
+      }
+      seenInterfaces.add(item.interface)
+      if (!interfaceIds.has(item.interface)) {
+        errors.push(`${label}: references missing interface "${item.interface}"`)
+      }
+      if (!item.experiences.length) {
+        errors.push(`${label}: availability for interface "${item.interface}" needs at least one experience`)
+      }
+      const seenExperiences = new Set<string>()
+      for (const experienceId of item.experiences) {
+        if (seenExperiences.has(experienceId)) {
+          errors.push(`${label}: duplicate availability experience "${experienceId}" for interface "${item.interface}"`)
+        }
+        seenExperiences.add(experienceId)
+        const experience = experiencesById.get(experienceId)
+        if (!experience) {
+          errors.push(`${label}: references missing experience "${experienceId}"`)
+        } else if (!experience.interfaces.includes(item.interface)) {
+          errors.push(`${label}: experience "${experienceId}" does not declare interface "${item.interface}"`)
+        }
+        const key = pairKey(item.interface, experienceId)
+        if (pairs.has(key)) errors.push(`${label}: duplicate availability pair "${item.interface}/${experienceId}"`)
+        pairs.add(key)
+      }
+    }
+    return pairs
+  }
+
+  const validateEntryPointInterfaces = (
+    label: string,
+    points: Array<{ type: string }>,
+    allowed: Set<string>
+  ) => {
+    for (const point of points) {
+      if (!allowed.has(point.type)) {
+        errors.push(`${label}: entry point references undeclared interface "${point.type}"`)
+      }
+    }
+  }
+
+  for (const actor of model.actors) {
+    requireTitle(actor.file, actor.doc.title, actor.doc.lead)
+    if (!ACTOR_KINDS.has(actor.kind)) {
+      errors.push(`${actor.file}: kind "${actor.kind}" must be person|system`)
+    }
+    if (!ACTOR_RELATIONSHIPS.has(actor.relationship)) {
+      errors.push(`${actor.file}: relationship "${actor.relationship}" must be external|internal`)
+    }
+  }
+
+  for (const productInterface of model.interfaces) {
+    requireTitle(productInterface.file, productInterface.doc.title, productInterface.doc.lead)
+    if (!productInterface.actors.length) errors.push(`${productInterface.file}: needs at least one actor`)
+    for (const actorId of productInterface.actors) {
+      if (!actorIds.has(actorId)) errors.push(`${productInterface.file}: references missing actor "${actorId}"`)
+    }
+    if (!productInterface.capabilityBoundary) {
+      errors.push(`${productInterface.file}: missing "## Capability boundary" section`)
+    }
+  }
 
   for (const experience of model.experiences) {
     requireTitle(experience.file, experience.doc.title, experience.doc.lead)
@@ -70,28 +145,70 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
       errors.push(`${experience.file}: access "${experience.access}" must be public|authenticated|restricted`)
     }
     if (!experience.actors.length) errors.push(`${experience.file}: needs at least one actor`)
+    if (!experience.interfaces.length) errors.push(`${experience.file}: needs at least one interface`)
     for (const actorId of experience.actors) {
       if (!actorIds.has(actorId)) errors.push(`${experience.file}: references missing actor "${actorId}"`)
     }
+    for (const interfaceId of experience.interfaces) {
+      const productInterface = interfacesById.get(interfaceId)
+      if (!productInterface) {
+        errors.push(`${experience.file}: references missing interface "${interfaceId}"`)
+        continue
+      }
+      for (const actorId of experience.actors) {
+        if (!productInterface.actors.includes(actorId)) {
+          errors.push(`${experience.file}: actor "${actorId}" is not supported by interface "${interfaceId}"`)
+        }
+      }
+    }
+    if (!experience.capabilityBoundary) {
+      errors.push(`${experience.file}: missing "## Capability boundary" section`)
+    }
+    validateEntryPointInterfaces(experience.file, experience.entryPoints, new Set(experience.interfaces))
+  }
+
+  for (const domain of model.domains) requireTitle(domain.file, domain.doc.title, domain.doc.lead)
+
+  const capabilityPairs = new Map<string, Set<string>>()
+  for (const capability of model.capabilities) {
+    requireTitle(capability.file, capability.doc.title, capability.doc.lead)
+    if (!capability.availability.length) errors.push(`${capability.file}: needs at least one availability pair`)
+    if (capability.domain && !domainIds.has(capability.domain)) {
+      errors.push(`${capability.file}: references missing domain "${capability.domain}"`)
+    }
+    capabilityPairs.set(capability.id, validateAvailability(capability.file, capability.availability))
   }
 
   for (const screen of model.screens) {
     requireTitle(screen.file, screen.doc.title, screen.doc.lead)
-    if (!screen.experiences.length) errors.push(`${screen.file}: needs at least one experience`)
-    for (const experienceId of screen.experiences) {
-      if (!experienceIds.has(experienceId)) errors.push(`${screen.file}: references missing experience "${experienceId}"`)
-    }
-    if (!screen.features.length) errors.push(`${screen.file}: needs at least one feature`)
-    for (const featureId of screen.features) {
-      if (!featureIds.has(featureId)) errors.push(`${screen.file}: references missing feature "${featureId}"`)
+    if (!screen.availability.length) errors.push(`${screen.file}: needs at least one availability pair`)
+    const pairs = validateAvailability(screen.file, screen.availability)
+    if (!screen.capabilities.length) errors.push(`${screen.file}: needs at least one capability`)
+    for (const capabilityId of screen.capabilities) {
+      if (!capabilityIds.has(capabilityId)) {
+        errors.push(`${screen.file}: references missing capability "${capabilityId}"`)
+        continue
+      }
+      const supported = capabilityPairs.get(capabilityId) || new Set<string>()
+      for (const pair of pairs) {
+        if (!supported.has(pair)) {
+          const [interfaceId, experienceId] = pair.split('\0')
+          errors.push(`${screen.file}: capability "${capabilityId}" is not available in "${interfaceId}/${experienceId}"`)
+        }
+      }
     }
     for (const scenarioId of screen.scenarios) {
       if (!scenarioIds.has(scenarioId)) errors.push(`${screen.file}: references missing scenario "${scenarioId}"`)
     }
+    validateEntryPointInterfaces(
+      screen.file,
+      screen.entryPoints,
+      new Set(screen.availability.map(item => item.interface))
+    )
     if (!screen.information.length) {
       errors.push(`${screen.file}: "## Information presented" needs at least one bullet item`)
     }
-    if (!screen.capabilities) errors.push(`${screen.file}: missing "## Capability boundary" section`)
+    if (!screen.capabilityBoundary) errors.push(`${screen.file}: missing "## Capability boundary" section`)
     if (section(screen.doc, 'Available actions') !== undefined && !screen.actions.length) {
       errors.push(`${screen.file}: "## Available actions" needs at least one bullet item when present`)
     }
@@ -106,73 +223,76 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     }
   }
 
-  for (const feature of model.features) {
-    requireTitle(feature.file, feature.doc.title, feature.doc.lead)
-    if (!feature.domain || !domainIds.has(feature.domain)) {
-      errors.push(`${feature.file}: references missing domain "${feature.domain}"`)
-    }
-    for (const actorId of feature.actors) {
-      if (!actorIds.has(actorId)) errors.push(`${feature.file}: references missing actor "${actorId}"`)
-    }
-    if (!feature.experiences.length) errors.push(`${feature.file}: needs at least one experience`)
-    for (const experienceId of feature.experiences) {
-      if (!experienceIds.has(experienceId)) errors.push(`${feature.file}: references missing experience "${experienceId}"`)
-    }
-    for (const ruleId of feature.businessRules) {
-      if (!businessRuleIds.has(ruleId)) errors.push(`${feature.file}: references missing business rule "${ruleId}"`)
-    }
-  }
-
   const seenScenarioIds = new Map<string, string>()
   for (const journey of model.journeys) {
-    const label = journey.file
-    requireTitle(label, journey.doc.title, journey.doc.lead)
-    if (!journey.domain || !domainIds.has(journey.domain)) {
-      errors.push(`${label}: references missing domain "${journey.domain}"`)
-    }
-    if (!journey.actors.length) errors.push(`${label}: needs at least one actor`)
+    requireTitle(journey.file, journey.doc.title, journey.doc.lead)
+    if (!journey.actors.length) errors.push(`${journey.file}: needs at least one actor`)
     for (const actorId of journey.actors) {
-      if (!actorIds.has(actorId)) errors.push(`${label}: references missing actor "${actorId}"`)
+      if (!actorIds.has(actorId)) errors.push(`${journey.file}: references missing actor "${actorId}"`)
     }
-    if (!journey.experiences.length) errors.push(`${label}: must belong to at least one experience`)
-    for (const experienceId of journey.experiences) {
-      if (!experienceIds.has(experienceId)) errors.push(`${label}: references missing experience "${experienceId}"`)
+    if (!journey.capabilities.length) errors.push(`${journey.file}: needs at least one capability`)
+    if (!journey.availability.length) errors.push(`${journey.file}: needs at least one availability pair`)
+    const pairs = validateAvailability(journey.file, journey.availability)
+    validateEntryPointInterfaces(
+      journey.file,
+      journey.entryPoints,
+      new Set(journey.availability.map(item => item.interface))
+    )
+    for (const capabilityId of journey.capabilities) {
+      if (!capabilityIds.has(capabilityId)) {
+        errors.push(`${journey.file}: references missing capability "${capabilityId}"`)
+        continue
+      }
+      const supported = capabilityPairs.get(capabilityId) || new Set<string>()
+      for (const pair of pairs) {
+        if (!supported.has(pair)) {
+          const [interfaceId, experienceId] = pair.split('\0')
+          errors.push(`${journey.file}: capability "${capabilityId}" is not available in "${interfaceId}/${experienceId}"`)
+        }
+      }
     }
-    if (!journey.features.length) errors.push(`${label}: must belong to at least one feature`)
-    for (const featureId of journey.features) {
-      if (!featureIds.has(featureId)) errors.push(`${label}: references missing feature "${featureId}"`)
-    }
-    if (!journey.scenarios.length) errors.push(`${label}: needs at least one scenario`)
+    if (!journey.scenarios.length) errors.push(`${journey.file}: needs at least one scenario`)
 
     for (const scenario of journey.scenarios) {
-      const scenarioLabel = scenario.file
-      if (!isId(scenario.id)) errors.push(`${scenarioLabel}: id must be lowercase kebab-case`)
+      if (!isId(scenario.id)) errors.push(`${scenario.file}: id must be lowercase kebab-case`)
       const previous = seenScenarioIds.get(scenario.id)
-      if (previous) errors.push(`${scenarioLabel}: scenario id "${scenario.id}" already used in ${previous} (ids are global)`)
+      if (previous) errors.push(`${scenario.file}: scenario id "${scenario.id}" already used in ${previous} (ids are global)`)
       seenScenarioIds.set(scenario.id, journey.id)
-      if (!scenario.doc.title) errors.push(`${scenarioLabel}: missing H1 title`)
+      if (!scenario.doc.title) errors.push(`${scenario.file}: missing H1 title`)
       if (!scenario.kind || !kindIds.has(scenario.kind)) {
-        errors.push(`${scenarioLabel}: kind "${scenario.kind}" is not defined in taxonomies.yaml`)
+        errors.push(`${scenario.file}: kind "${scenario.kind}" is not defined in taxonomies.yaml`)
       }
-      if (!scenario.trigger) errors.push(`${scenarioLabel}: missing "## Trigger" section`)
-      if (!scenario.steps.length) errors.push(`${scenarioLabel}: "## Steps" needs at least one ordered item`)
-      if (!scenario.outcome) errors.push(`${scenarioLabel}: missing "## Outcome" section`)
-      for (const ruleId of scenario.businessRules) {
-        if (!businessRuleIds.has(ruleId)) errors.push(`${scenarioLabel}: references missing business rule "${ruleId}"`)
+      if (!scenario.trigger) errors.push(`${scenario.file}: missing "## Trigger" section`)
+      if (!scenario.steps.length) errors.push(`${scenario.file}: "## Steps" needs at least one ordered item`)
+      if (!scenario.outcome) errors.push(`${scenario.file}: missing "## Outcome" section`)
+      if (scenario.availability.length) {
+        const scenarioPairs = validateAvailability(scenario.file, scenario.availability)
+        for (const pair of scenarioPairs) {
+          if (!pairs.has(pair)) {
+            const [interfaceId, experienceId] = pair.split('\0')
+            errors.push(`${scenario.file}: availability "${interfaceId}/${experienceId}" is outside journey "${journey.id}"`)
+          }
+        }
       }
     }
   }
 
   for (const rule of model.businessRules) {
     requireTitle(rule.file, rule.doc.title, rule.doc.lead)
-    if (!rule.domains.length && !rule.features.length && !rule.journeys.length && !rule.scenarios.length) {
-      errors.push(`${rule.file}: must relate to a domain, feature, journey, or scenario`)
+    if (
+      !rule.domains.length
+      && !rule.capabilities.length
+      && !rule.journeys.length
+      && !rule.scenarios.length
+      && !rule.availability.length
+    ) {
+      errors.push(`${rule.file}: must relate to a domain, capability, journey, scenario, or availability pair`)
     }
     for (const domainId of rule.domains) {
       if (!domainIds.has(domainId)) errors.push(`${rule.file}: references missing domain "${domainId}"`)
     }
-    for (const featureId of rule.features) {
-      if (!featureIds.has(featureId)) errors.push(`${rule.file}: references missing feature "${featureId}"`)
+    for (const capabilityId of rule.capabilities) {
+      if (!capabilityIds.has(capabilityId)) errors.push(`${rule.file}: references missing capability "${capabilityId}"`)
     }
     for (const journeyId of rule.journeys) {
       if (!journeyIds.has(journeyId)) errors.push(`${rule.file}: references missing journey "${journeyId}"`)
@@ -180,28 +300,38 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     for (const scenarioId of rule.scenarios) {
       if (!scenarioIds.has(scenarioId)) errors.push(`${rule.file}: references missing scenario "${scenarioId}"`)
     }
+    validateAvailability(rule.file, rule.availability)
   }
 
+  if (model.interfaces.length === 0) errors.push('interfaces/: the model needs at least one interface')
   if (model.experiences.length === 0) errors.push('experiences/: the model needs at least one experience')
 
   const allEntities = [
-    ...model.actors, ...model.domains, ...model.experiences,
-    ...model.screens, ...model.features, ...model.businessRules,
-    ...model.journeys, ...model.journeys.flatMap(journey => journey.scenarios)
+    ...model.actors,
+    ...model.interfaces,
+    ...model.experiences,
+    ...model.screens,
+    ...model.domains,
+    ...model.capabilities,
+    ...model.businessRules,
+    ...model.journeys,
+    ...model.journeys.flatMap(journey => journey.scenarios)
   ]
-  for (const entity of allEntities) {
-    for (const ref of entity.codeRefs) {
-      if (!tracked.has(ref.path)) errors.push(`${entity.file}: codeRef path "${ref.path}" is not a tracked file`)
-    }
-  }
-  const linkHosts = [
-    { file: 'product.md', links: model.product.links },
-    ...allEntities
-  ]
-  for (const entity of linkHosts) {
-    for (const link of entity.links) {
-      const path = repositoryLinkPath(link.href)
-      if (path && !tracked.has(path)) warnings.push(`${entity.file}: link href "${link.href}" does not exist in the repository`)
+  const referenceHosts = [{ file: 'product.md', references: model.product.references }, ...allEntities]
+  for (const entity of referenceHosts) {
+    const targets = new Set<string>()
+    for (const reference of entity.references) {
+      if (targets.has(reference.target)) {
+        errors.push(`${entity.file}: duplicate reference target "${reference.target}"`)
+      }
+      targets.add(reference.target)
+      const path = repositoryReferencePath(reference)
+      if (!path || tracked.has(path)) continue
+      if (reference.kind === 'code') {
+        errors.push(`${entity.file}: code reference path "${path}" is not a tracked file`)
+      } else {
+        warnings.push(`${entity.file}: reference target "${reference.target}" does not exist in the repository`)
+      }
     }
   }
 
@@ -212,10 +342,11 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     warnings,
     counts: {
       actors: model.actors.length,
+      interfaces: model.interfaces.length,
       experiences: model.experiences.length,
       screens: model.screens.length,
       domains: model.domains.length,
-      features: model.features.length,
+      capabilities: model.capabilities.length,
       journeys: model.journeys.length,
       scenarios: scenarios.length,
       businessRules: model.businessRules.length
@@ -233,8 +364,6 @@ export function runLint(cwd: string, json: boolean): number {
     return 1
   }
   const model = loadModel(modelRoot)
-  // codeRefs are resolved against tracked files, which only a repository has.
-  // Outside one the tracked set is empty, so every present codeRef is unknown.
   const result = lintModel(model, gitRoot ? lsFiles(gitRoot) : [])
   if (json) {
     console.log(JSON.stringify(result, null, 2))

@@ -1,7 +1,5 @@
 ---
 kind: primary
-businessRules:
-  - items-are-deduplicated-per-source
 ---
 
 # A reader follows a source by its feed address

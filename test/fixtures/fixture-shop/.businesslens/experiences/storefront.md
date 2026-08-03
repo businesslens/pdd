@@ -1,16 +1,16 @@
 ---
 actors: [shopper]
+interfaces: [customer-web, customer-mobile]
 access: public
 entryPoints:
-  - web: /
-  - ios: fixture-shop://storefront
-exit: "Order confirmed and receipt shown"
+  - customer-web: /
+  - customer-mobile: fixture-shop://storefront
 ---
 
-# Storefront
+# Shopping
 
-The public web store where shoppers browse and buy.
+The customer shopping experience shared by web and mobile.
 
 ## Capability boundary
 
-Anonymous browsing; checkout creates an order. No administrative actions.
+Browsing is public; checkout creates an order. No administrative actions.

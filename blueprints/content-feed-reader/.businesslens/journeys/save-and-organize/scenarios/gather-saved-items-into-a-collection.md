@@ -1,7 +1,5 @@
 ---
 kind: primary
-businessRules:
-  - only-an-owner-changes-a-collection
 ---
 
 # A reader gathers saved items into a collection

@@ -5,7 +5,7 @@ import { join } from 'node:path'
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { buildProject } from '../src/commands/export.js'
 import { runPull } from '../src/commands/pull.js'
-import { redactSourceEvidence } from '../src/core/portable.js'
+import { projectPortableReport } from '../src/core/portable.js'
 import { reportDigest } from '../src/core/report-digest.js'
 
 const FIXTURE = join(__dirname, 'fixtures', 'fixture-shop')
@@ -31,7 +31,7 @@ function reportResponse(canonicalName = 'fixture-shop'): Response {
   return new Response(JSON.stringify(report), {
     status: 200,
     headers: {
-      'content-type': 'application/vnd.businesslens.report+json; version=5',
+      'content-type': 'application/vnd.businesslens.report+json; version=6',
       'x-businesslens-blueprint': canonicalName,
       'x-businesslens-report-digest': reportDigest(report)
     }
@@ -42,7 +42,7 @@ beforeAll(() => {
   const source = temporary('bl-pull-source-')
   cpSync(FIXTURE, source, { recursive: true })
   initialize(source)
-  report = redactSourceEvidence(buildProject(source).report) as unknown as Record<string, unknown>
+  report = projectPortableReport(buildProject(source).report) as unknown as Record<string, unknown>
 })
 
 afterEach(() => {
@@ -71,8 +71,7 @@ describe('pull', () => {
     expect(requested?.url).toBe('https://businesslens.io/api/v1/blueprints/fixture-shop/report.json')
     // No credential is read, sent, or required.
     expect((requested?.init.headers as Record<string, string>).authorization).toBeUndefined()
-    expect((requested?.init.headers as Record<string, string>).accept).toContain('version=5')
-    expect((requested?.init.headers as Record<string, string>).accept).toContain('version=4')
+    expect((requested?.init.headers as Record<string, string>).accept).toContain('version=6')
     expect(existsSync(join(target, '.businesslens/product.md'))).toBe(true)
     expect(existsSync(join(target, '.businesslens/screens/product-record.md'))).toBe(true)
   })
@@ -184,7 +183,7 @@ describe('pull', () => {
     const fetch = vi.fn(async () => new Response(JSON.stringify(report), {
       status: 200,
       headers: {
-        'content-type': 'application/vnd.businesslens.report+json; version=5',
+        'content-type': 'application/vnd.businesslens.report+json; version=6',
         'x-businesslens-blueprint': 'fixture-shop',
         'x-businesslens-report-digest': 'a'.repeat(64)
       }
@@ -221,7 +220,7 @@ describe('pull', () => {
     const fetch = vi.fn(async () => new Response(JSON.stringify(report), {
       status: 200,
       headers: {
-        'content-type': 'application/vnd.businesslens.report+json; version=5',
+        'content-type': 'application/vnd.businesslens.report+json; version=6',
         'content-length': String(9 * 1024 * 1024),
         'x-businesslens-blueprint': 'fixture-shop',
         'x-businesslens-report-digest': reportDigest(report)

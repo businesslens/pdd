@@ -1,38 +1,39 @@
 ---
 title: Journeys
-description: Durable user and operator goals — the backbone of the model and the parent of observable acceptance scenarios.
+description: Complete Actor goals assembled from Capabilities and promised through exact Interface–Experience availability.
 section: open-source
 group: Product model
-order: 13
+order: 14
 ---
 
 # Journeys
 
-**A journey is a stable user or operator goal:** *browse and buy*, *refund an
-order*, *rotate an API key*.
+**A Journey is one complete Actor goal:** browse and buy, refund an order,
+catch up on unread items, rotate an API key.
 
-It belongs to a domain, is performed by actors through experiences, and uses one
-or more features. Optional `codeRefs` can point a reader toward relevant code.
+A Journey is performed by Actors, uses one or more Capabilities, and declares
+the exact Interface–Experience pairs through which the whole goal is promised.
+It owns its observable acceptance Scenarios.
 
-Journeys are the model's backbone. If a goal disappears from the product, its
-journey is **deleted, not archived** — git history is the archive.
+Journeys do not belong to one Domain. A goal can cross several Product areas;
+its Domains are derived from its Capabilities.
 
 ## When you create one
 
-Create a journey for a goal someone would describe as a complete thing they came
-to do. "Buy a product" is a journey. "Validate a cart" is a step inside one.
+Create a Journey for a goal someone would describe as a complete thing they
+came to do. “Buy a product” is a Journey. “Validate a cart” is a step or
+Capability inside one.
 
-> **Journey vs scenario.** A journey stays stable while its success, permission,
-> validation, conflict, and failure paths become separate
-> [scenarios](./scenarios.md) whenever their observable outcomes differ
-> materially.
+> **Journey vs Capability.** A Journey has an Actor goal and an end-to-end
+> outcome. A [Capability](./capabilities.md) is a durable ability reused by
+> goals and has no necessary beginning or end.
 >
-> **Journey vs feature.** A journey is an end-to-end goal and may use several
-> [features](./features.md); a feature is reusable across goals.
+> **Journey vs Scenario.** A Journey stays stable while materially different
+> observable paths become separate [Scenarios](./scenarios.md).
 
 ## The file
 
-A journey is a **directory**, not a single file. The directory name is the ID.
+The directory name is the Journey ID.
 
 ```text
 journeys/browse-and-buy/
@@ -42,50 +43,46 @@ journeys/browse-and-buy/
     └── complete-checkout.md
 ```
 
-The journey file itself lives at `journeys/<journey-id>/journey.md`.
-
 ```md [journeys/browse-and-buy/journey.md]
 ---
-domain: ordering
 actors: [shopper]
-experiences: [storefront]
-features: [catalog-browsing, checkout]
+capabilities: [catalog-browsing, checkout]
+availability:
+  - interface: customer-web
+    experiences: [shopping]
+  - interface: customer-mobile
+    experiences: [shopping]
 entryPoints:
-  - web: src/routes/storefront.ts
-codeRefs:
-  - src/services/catalog.ts#CatalogService
-  - src/services/orders.ts#OrderService.submit
+  - customer-web: /
+  - customer-mobile: shop://home
 ---
 
 # Browse and buy
 
-A shopper finds a product in the catalog and completes checkout.
+A shopper finds a product and completes checkout.
 ```
 
 | Key | Required | Meaning |
 | --- | --- | --- |
-| `domain` | yes | Exactly one domain ID |
-| `actors` | yes | At least one actor ID |
-| `experiences` | yes | At least one experience ID |
-| `features` | yes | At least one feature ID |
-| `entryPoints` | no | How the goal is reached |
-| `codeRefs` | no | Optional tracked-file navigation |
+| `actors` | yes | At least one Actor pursuing the goal |
+| `capabilities` | yes | At least one durable ability used by the goal |
+| `availability` | yes | At least one exact Interface–Experience pair |
+| `entryPoints` | no | Product-facing entry points keyed by an available Interface |
+| `references` | no | Intent, implementation, or context artifacts; see [References](./references.md) |
 
-The lead paragraph is the journey's **summary**, not a description — one
-sentence on what the actor accomplishes.
+The lead paragraph is the Journey summary. Optional
+[References](./references.md) attach navigation or supporting context.
+
+Every Capability used by the Journey must support every Journey availability
+pair. This makes the promise implementable as written: the complete goal cannot
+be required on an Interface where one of its required abilities is absent.
 
 ## What `lint` checks
 
 | Finding | Meaning |
 | --- | --- |
-| `journeys/<id>/ is missing journey.md` | A journey directory without its journey file. Add it or delete the directory. |
-| `needs at least one actor` | A goal nobody pursues is not a product claim. |
-| `must belong to at least one experience` | A goal with no surface is unreachable. |
-| `needs at least one scenario` | A goal with no observable path cannot be verified. |
-| `references missing domain "…"` / `missing feature "…"` | A relation names an entity that does not exist. |
-
-## Planning
-
-Approved planned behavior belongs in the model before implementation. Missing
-codeRefs are not lifecycle state, so use `businesslens-verify`—not bookmarks—to
-check whether the journey is implemented. See [The loop](./the-loop.md).
+| `needs at least one actor/capability/availability pair/scenario` | Each is part of a complete, verifiable goal. |
+| `references missing actor/capability/interface/experience "…"` | A relationship names no entity. |
+| `capability "…" is not available in "interface/experience"` | Narrow the Journey availability or add the pair to the Capability. |
+| `entry point references undeclared interface "…"` | Use an Interface present in Journey availability. |
+| `journeys/<id>/ is missing journey.md` | Add the Journey file or remove the incomplete directory. |

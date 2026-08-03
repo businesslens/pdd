@@ -1,7 +1,5 @@
 ---
 kind: primary
-businessRules:
-  - unlisting-revokes-anonymous-access
 ---
 
 # An owner unlists a published collection

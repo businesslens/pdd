@@ -1,7 +1,5 @@
 ---
 kind: edge
-businessRules:
-  - saved-items-outlive-their-source
 ---
 
 # A saved item outlives the source that published it

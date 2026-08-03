@@ -1,14 +1,10 @@
 ---
 domain: sources
-actors:
-  - reader
-  - syndication-source
-experiences:
-  - reading-app
-businessRules:
-  - a-source-failure-never-empties-the-library
-  - failing-sources-back-off-and-surface-status
-  - items-are-deduplicated-per-source
+availability:
+  - interface: reader-web
+    experiences: [reading-app]
+  - interface: reader-mobile
+    experiences: [reading-app]
 ---
 
 # Source refresh

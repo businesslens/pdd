@@ -8,15 +8,23 @@
 
 ## Entities
 
-- Actors differ by goals or privileges, never screens.
-- Experiences are audience-and-capability boundaries.
+- Actors differ by Product goals, triggers, responsibilities, or privileges;
+  classify each as person/system and internal/external.
+- Interfaces are supported interaction contracts. Decide web, mobile, CLI,
+  partner API, and integration commitments independently; internal APIs and
+  frameworks are not Product Interfaces.
+- Experiences are coherent Actor contexts with stable audience, access, and
+  capability boundaries across Interfaces. A page or command group alone is
+  not an Experience.
 - Screens are optional stable user-visible product views. State their
   information, available actions, product-significant states, and capability
   boundary without specifying components, layouts, or visual variants.
 - Reuse one Screen across web and mobile when its product semantics are shared;
   separate it only for a material product difference. Public routes and deep
   links may be entry points, but internal navigation identifiers do not belong.
-- Features are durable capabilities, not UI labels or sequence steps.
+- Domains are optional Capability organization; Journeys may cross them.
+- Capabilities are durable Product abilities, not UI labels, Journey titles,
+  or sequence steps. Declare exact intended Interface–Experience availability.
 - Business rules are reusable policies or invariants.
 - Journeys express stable user or operator goals.
 - Scenarios express observable paths through a goal, not implementation
@@ -26,6 +34,8 @@
   different outcomes.
 - Record intent where the reason behind a boundary or behavior will guide
   implementation choices.
+- Do not assume parity across Interfaces. Decide each availability pair and
+  allow Scenarios to narrow a Journey only when behavior materially differs.
 
 ## Scenarios are the acceptance contract
 
@@ -42,5 +52,6 @@ Outcome so a reviewer can compare source behavior without executing it.
 - Batch related open questions; ask only decisions the user must make.
 - State a recommendation and its tradeoff when multiple directions remain.
 - Record unresolved points as limitations instead of guessing.
-- Keep screenshots, mockups, research, and sitemaps external. Supporting links
-  may reference them, but BusinessLens neither creates nor certifies them.
+- Keep screenshots, mockups, research, and sitemaps external. References may
+  attach them with `role: intent` or `role: context`, but BusinessLens neither
+  creates nor certifies them.

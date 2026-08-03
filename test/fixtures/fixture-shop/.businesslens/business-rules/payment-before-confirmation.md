@@ -1,10 +1,12 @@
 ---
 domains: [ordering]
-features: [checkout]
+capabilities: [checkout]
 journeys: [browse-and-buy]
 scenarios: [complete-checkout]
-codeRefs:
-  - src/services/payments.ts#PaymentGateway.charge
+references:
+  - kind: code
+    role: implementation
+    target: src/services/payments.ts#PaymentGateway.charge
 ---
 
 # Payment before confirmation

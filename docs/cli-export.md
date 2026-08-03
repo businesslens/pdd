@@ -3,12 +3,12 @@ title: blueprint export
 description: Compile a Product Model into a source-free Product Report with repository-specific navigation removed.
 section: open-source
 group: CLI
-order: 29
+order: 30
 ---
 
 # `businesslens blueprint export`
 
-Compile `.businesslens/` into a **source-free Product Report**:
+Compile schema 3 `.businesslens/` into a **source-free Product Report v6**:
 
 ```bash
 npx businesslens@latest blueprint export
@@ -18,18 +18,18 @@ The report is written to `.businesslens/build/report.json`. It is a generated
 artifact: gitignored, never edited, and regenerated on every run. It is the
 profile the catalog accepts, which is what makes it a Blueprint once merged.
 
-## No repository navigation leaves
+## Portable export
 
-Export strips every `codeRef`, along with repository-relative links and entry
-points. A `codeRef` names a path in *this* checkout and navigates nowhere in any
-other, so the report states what the product does without leaking source paths.
+Export projects `referenceProfile: workspace` to `referenceProfile: portable`.
+It removes code References, implementation References, repository-relative
+Reference targets and entry points, and Coverage source areas. Only HTTP(S)
+intent and context References survive.
 
-Coverage keeps its `mapped` counts for Product Report compatibility. They
-record how many entities carried bookmarks before redaction, not proof or model
-completeness.
+Coverage never counts References. Entity totals live in the report Summary;
+Coverage remains a model-breadth assessment.
 
 `export` lints before it compiles. A model with lint errors does not produce a
-report. Missing codeRefs are valid for every coverage status.
+report. Missing References are valid for every Coverage status.
 
 ## Why "export"
 

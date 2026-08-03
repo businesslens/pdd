@@ -1,12 +1,14 @@
 ---
-domain: curation
 actors:
   - reader
-experiences:
-  - reading-app
-features:
+capabilities:
   - item-tagging
   - library-search
+availability:
+  - interface: reader-web
+    experiences: [reading-app]
+  - interface: reader-mobile
+    experiences: [reading-app]
 ---
 
 # Rediscover something read months ago

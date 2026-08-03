@@ -1,7 +1,7 @@
 ---
 domains:
   - sharing
-features:
+capabilities:
   - collection-sharing
   - collection-subscription
 ---

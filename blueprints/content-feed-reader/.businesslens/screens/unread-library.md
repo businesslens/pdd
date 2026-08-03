@@ -1,7 +1,10 @@
 ---
-experiences:
-  - reading-app
-features:
+availability:
+  - interface: reader-web
+    experiences: [reading-app]
+  - interface: reader-mobile
+    experiences: [reading-app]
+capabilities:
   - item-saving
   - reading-state
   - source-refresh
@@ -11,15 +14,16 @@ scenarios:
   - refresh-adds-nothing-new
   - work-through-the-unread-backlog
 entryPoints:
-  - web: /unread
-  - ios: content-reader://library/unread
-  - android: content-reader://library/unread
-links:
-  - rel: visual
-    href: https://github.com/businesslens/pdd/blob/main/blueprints/content-feed-reader/references/screen-map.md
+  - reader-web: /unread
+  - reader-mobile: content-reader://library/unread
+references:
+  - kind: visual
+    role: intent
+    target: https://github.com/businesslens/pdd/blob/main/blueprints/content-feed-reader/references/screen-map.md
     title: Cross-platform screen map
-  - rel: research
-    href: https://github.com/businesslens/pdd/blob/main/blueprints/content-feed-reader/references/reader-research.md
+  - kind: research
+    role: context
+    target: https://github.com/businesslens/pdd/blob/main/blueprints/content-feed-reader/references/reader-research.md
     title: Reader research assumptions
 ---
 

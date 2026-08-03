@@ -1,7 +1,5 @@
 ---
 kind: external-failure
-businessRules:
-  - a-source-failure-never-empties-the-library
 ---
 
 # An empty feed is not a deletion

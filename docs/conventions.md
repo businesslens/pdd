@@ -3,7 +3,7 @@ title: Conventions
 description: The authoring rules every entity file shares — how IDs, titles, and descriptions are derived, and what belongs in frontmatter.
 section: open-source
 group: Reference
-order: 33
+order: 34
 ---
 
 # Authoring conventions
@@ -49,8 +49,10 @@ a structured section.
 
 ```md [actors/shopper.md]
 ---
-codeRefs:
-  - src/routes/storefront.ts
+references:
+  - kind: code
+    role: implementation
+    target: src/routes/storefront.ts
 ---
 
 # Shopper
@@ -63,8 +65,8 @@ declared in frontmatter.
 
 ## Frontmatter
 
-Frontmatter holds relations, optional `codeRefs`, `links`, and structured values such as
-`access` or `kind`. **Never prose.**
+Frontmatter holds relations, optional [References](./references.md), and
+structured values such as `access` or `kind`. **Never prose.**
 
 The schema is a **strict allowlist** — an unrecognized key is an error, not a
 value that gets ignored:
@@ -79,8 +81,9 @@ Typos fail loudly and immediately rather than silently dropping a relation.
 
 Intent explains why the product or entity exists and which outcome its shape
 protects. It is available on the product, [actors](./actors.md),
-[experiences](./experiences.md), [domains](./domains.md),
-[features](./features.md), [screens](./screens.md), [journeys](./journeys.md), and
+[interfaces](./interfaces.md), [experiences](./experiences.md),
+[domains](./domains.md), [capabilities](./capabilities.md),
+[screens](./screens.md), [journeys](./journeys.md), and
 [business rules](./business-rules.md).
 
 Intent is structured prose, not a separate entity — it adds meaning to an entity
@@ -90,6 +93,6 @@ without inventing another relationship graph.
 
 This page is the authoring view. The machine contract that the parser, the
 linter, and the catalog server agree on — including the portable Product Report
-schema and source-navigation redaction — lives in
+schema and portable source-navigation projection — lives in
 `spec/format.md` in the
 [`businesslens/pdd`](https://github.com/businesslens/pdd) repository.

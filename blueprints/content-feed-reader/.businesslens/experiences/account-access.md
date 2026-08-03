@@ -2,13 +2,14 @@
 actors:
   - reader
   - visitor
+interfaces:
+  - reader-web
+  - reader-mobile
 access: public
 entryPoints:
-  - web: /signin
-  - web: /register
-  - ios: content-reader://account
-  - android: content-reader://account
-exit: Reader holds a session and lands in the reading application, or leaves without one
+  - reader-web: /signin
+  - reader-web: /register
+  - reader-mobile: content-reader://account
 ---
 
 # Account access

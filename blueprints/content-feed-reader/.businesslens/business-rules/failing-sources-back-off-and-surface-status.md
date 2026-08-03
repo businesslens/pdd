@@ -1,7 +1,7 @@
 ---
 domains:
   - sources
-features:
+capabilities:
   - source-refresh
 ---
 

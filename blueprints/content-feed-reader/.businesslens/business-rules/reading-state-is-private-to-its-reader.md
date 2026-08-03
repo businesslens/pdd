@@ -3,7 +3,7 @@ domains:
   - accounts
   - library
   - sharing
-features:
+capabilities:
   - collection-sharing
   - reading-state
 ---

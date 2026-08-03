@@ -3,7 +3,7 @@ title: verify
 description: Inspect model/code alignment and automatically resolve every scoped gap until aligned or explicitly blocked.
 section: open-source
 group: Skills
-order: 24
+order: 25
 ---
 
 # `businesslens-verify`
@@ -18,9 +18,10 @@ before release, or for a named/full current-state audit.
 /businesslens-verify report only
 ```
 
-Verify lints structure, inspects source without executing target code, and
-classifies aligned, model-right, code-right, neither-right, unmapped, and
-unverifiable cases. It groups root decisions and recommends an authority.
+Verify lints structure, independently traces each declared
+Interface–Experience pair without executing target code, and classifies
+aligned, model-right, code-right, neither-right, unmapped, and unverifiable
+cases. It groups root decisions and recommends an authority.
 
 In resolution mode it automatically runs the next bounded phase:
 
@@ -33,4 +34,4 @@ It re-derives findings after every change. An unchanged recurring gap stops the
 loop, and a missing builder produces a complete handoff packet. The user never
 has to manually invoke map or ideate to continue verification.
 
-`report only` disables writes, delegation, and bookmark refresh.
+`report only` disables writes, delegation, and Reference refresh.

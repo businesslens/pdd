@@ -102,7 +102,7 @@ async function main(): Promise<number> {
   // `install`/`update`/`lint` verbs.
   //
   // The bare spellings are gone rather than deprecated. Keeping `export` as an
-  // alias would have blocked reusing that name for the evidenced profile later,
+  // alias would have blocked reusing that name for a workspace profile later,
   // and reusing it while an alias existed would silently change a
   // disclosure-relevant default. A command that no longer exists says so.
   let command = positionals[0]!

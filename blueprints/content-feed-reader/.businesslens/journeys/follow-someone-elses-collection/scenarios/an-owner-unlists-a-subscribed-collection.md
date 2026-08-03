@@ -1,7 +1,5 @@
 ---
 kind: permission
-businessRules:
-  - unlisting-revokes-anonymous-access
 ---
 
 # A subscription ends when its collection is unlisted

@@ -1,4 +1,5 @@
 import { parse } from 'yaml'
+import { parseCodeTarget } from './coderefs.js'
 
 export interface FrontmatterFile {
   data: Record<string, unknown>
@@ -57,6 +58,11 @@ export interface CompactEntryPoint {
   path: string
 }
 
+export interface Availability {
+  interface: string
+  experiences: string[]
+}
+
 /** Parse `entryPoints: [- web: /path]` compact single-key maps. */
 export function entryPointsField(data: Record<string, unknown>, issues: string[], label: string): CompactEntryPoint[] {
   const value = data.entryPoints
@@ -82,77 +88,139 @@ export function entryPointsField(data: Record<string, unknown>, issues: string[]
   return result
 }
 
-export interface EntityLink {
-  rel: EntityLinkRel
-  href: string
+/** Parse exact Interface–Experience availability records. */
+export function availabilityField(data: Record<string, unknown>, issues: string[], label: string): Availability[] {
+  const value = data.availability
+  if (value === undefined || value === null) return []
+  if (!Array.isArray(value)) {
+    issues.push(`${label}: "availability" must be a list`)
+    return []
+  }
+  const result: Availability[] = []
+  for (const item of value) {
+    if (typeof item !== 'object' || item === null || Array.isArray(item)) {
+      issues.push(`${label}: each availability item needs "interface" and "experiences"`)
+      continue
+    }
+    const record = item as Record<string, unknown>
+    const unknown = Object.keys(record).filter(key => key !== 'interface' && key !== 'experiences')
+    if (
+      unknown.length
+      || typeof record.interface !== 'string'
+      || !Array.isArray(record.experiences)
+      || record.experiences.some(value => typeof value !== 'string')
+    ) {
+      issues.push(`${label}: each availability item needs only a string "interface" and an "experiences" string list`)
+      continue
+    }
+    result.push({ interface: record.interface, experiences: record.experiences as string[] })
+  }
+  return result
+}
+
+export interface EntityReference {
+  kind: ReferenceKind
+  role: ReferenceRole
+  target: string
   title?: string
 }
 
-export type EntityLinkRel = 'spec' | 'proposal' | 'doc' | 'adr' | 'visual' | 'research'
+export type ReferenceKind = 'code' | 'spec' | 'proposal' | 'doc' | 'adr' | 'visual' | 'research'
+export type ReferenceRole = 'intent' | 'implementation' | 'context'
 
-export const LINK_RELS = new Set<EntityLinkRel>(['spec', 'proposal', 'doc', 'adr', 'visual', 'research'])
+export const REFERENCE_KINDS = new Set<ReferenceKind>(['code', 'spec', 'proposal', 'doc', 'adr', 'visual', 'research'])
+export const REFERENCE_ROLES = new Set<ReferenceRole>(['intent', 'implementation', 'context'])
 
-/** The tracked repository path named by a local href, without query or fragment. */
-export function repositoryLinkPath(href: string): string | undefined {
-  if (/^https?:\/\//i.test(href)) return undefined
-  return href.split(/[?#]/, 1)[0]?.replace(/^\.\//, '') || undefined
+/** The tracked repository path named by a reference, if it is repository-local. */
+export function repositoryReferencePath(reference: EntityReference): string | undefined {
+  if (reference.kind === 'code') return parseCodeTarget(reference.target, [], 'reference')?.path
+  if (/^https?:\/\//i.test(reference.target)) return undefined
+  return reference.target.split(/[?#]/, 1)[0]?.replace(/^\.\//, '') || undefined
 }
 
-function validateLinkHref(href: string, issues: string[], label: string): boolean {
-  if (!href.trim()) {
-    issues.push(`${label}: link "href" must not be empty`)
+function validateReferenceTarget(target: string, kind: ReferenceKind, issues: string[], label: string): boolean {
+  if (!target.trim()) {
+    issues.push(`${label}: reference "target" must not be empty`)
     return false
   }
-  if (/^https?:\/\//i.test(href)) {
+  if (/[\r\n]/.test(target)) {
+    issues.push(`${label}: reference "target" must be a single line`)
+    return false
+  }
+  if (kind === 'code') return Boolean(parseCodeTarget(target, issues, label))
+  if (/^https?:\/\//i.test(target)) {
     try {
-      const url = new URL(href)
+      const url = new URL(target)
       if (!url.hostname) throw new Error('missing hostname')
       return true
     } catch {
-      issues.push(`${label}: link href "${href}" is not a valid HTTP(S) URL`)
+      issues.push(`${label}: reference target "${target}" is not a valid HTTP(S) URL`)
       return false
     }
   }
-  if (/^[a-z][a-z0-9+.-]*:/i.test(href)) {
-    issues.push(`${label}: link href "${href}" must use HTTP(S) or a repository-relative path`)
+  if (/^[a-z][a-z0-9+.-]*:/i.test(target)) {
+    issues.push(`${label}: reference target "${target}" must use HTTP(S) or a repository-relative path`)
     return false
   }
-  if (/^(?:[/\\]|~[/\\]|[a-z]:[/\\])/i.test(href) || href.includes('\\')) {
-    issues.push(`${label}: link href "${href}" must be repository-relative, not an absolute filesystem path`)
+  const path = target.split(/[?#]/, 1)[0] || ''
+  if (!path.trim()) {
+    issues.push(`${label}: reference target "${target}" must name a repository-relative path`)
+    return false
+  }
+  if (
+    /^(?:[/\\]|~[/\\]|[a-z]:[/\\])/i.test(target)
+    || target.includes('\\')
+    || path.split('/').includes('..')
+  ) {
+    issues.push(`${label}: reference target "${target}" must be repository-relative, not an absolute filesystem path`)
     return false
   }
   return true
 }
 
-export function linksField(data: Record<string, unknown>, issues: string[], label: string): EntityLink[] {
-  const value = data.links
+export function referencesField(data: Record<string, unknown>, issues: string[], label: string): EntityReference[] {
+  const value = data.references
   if (value === undefined || value === null) return []
   if (!Array.isArray(value)) {
-    issues.push(`${label}: "links" must be a list`)
+    issues.push(`${label}: "references" must be a list`)
     return []
   }
-  const result: EntityLink[] = []
+  const result: EntityReference[] = []
   for (const item of value) {
+    if (typeof item !== 'object' || item === null || Array.isArray(item)) {
+      issues.push(`${label}: each reference needs "kind", "role", and "target"`)
+      continue
+    }
     const record = item as Record<string, unknown>
-    if (typeof record !== 'object' || record === null || typeof record.rel !== 'string' || typeof record.href !== 'string') {
-      issues.push(`${label}: each link needs "rel" and "href"`)
+    const unknown = Object.keys(record).filter(key => !['kind', 'role', 'target', 'title'].includes(key))
+    if (unknown.length) {
+      issues.push(`${label}: reference has unknown key "${unknown[0]}"`)
       continue
     }
-    if (!LINK_RELS.has(record.rel as EntityLinkRel)) {
-      issues.push(`${label}: link rel "${record.rel}" must be one of spec|proposal|doc|adr|visual|research`)
+    if (typeof record.kind !== 'string' || typeof record.role !== 'string' || typeof record.target !== 'string') {
+      issues.push(`${label}: each reference needs string "kind", "role", and "target"`)
       continue
     }
-    if (!validateLinkHref(record.href, issues, label)) continue
+    if (!REFERENCE_KINDS.has(record.kind as ReferenceKind)) {
+      issues.push(`${label}: reference kind "${record.kind}" must be one of code|spec|proposal|doc|adr|visual|research`)
+      continue
+    }
+    if (!REFERENCE_ROLES.has(record.role as ReferenceRole)) {
+      issues.push(`${label}: reference role "${record.role}" must be one of intent|implementation|context`)
+      continue
+    }
+    if (!validateReferenceTarget(record.target, record.kind as ReferenceKind, issues, label)) continue
     if (
       record.title !== undefined
-      && (typeof record.title !== 'string' || !record.title.trim())
+      && (typeof record.title !== 'string' || !record.title.trim() || /[\r\n]/.test(record.title))
     ) {
-      issues.push(`${label}: link "title" must be a non-empty string when present`)
+      issues.push(`${label}: reference "title" must be a non-empty single-line string when present`)
       continue
     }
     result.push({
-      rel: record.rel as EntityLinkRel,
-      href: record.href,
+      kind: record.kind as ReferenceKind,
+      role: record.role as ReferenceRole,
+      target: record.target,
       title: typeof record.title === 'string' ? record.title : undefined
     })
   }

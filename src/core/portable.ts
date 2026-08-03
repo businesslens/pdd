@@ -1,8 +1,7 @@
 import * as z from 'zod'
+import { parseCodeTarget } from './coderefs.js'
 
-export const REPORT_SCHEMA_VERSION = '5.0.0'
-export const LEGACY_REPORT_SCHEMA_VERSION = '4.0.0'
-export const SUBMISSION_SCHEMA_VERSION = '1.0.0'
+export const REPORT_SCHEMA_VERSION = '6.0.0'
 
 const IdSchema = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
 const ProductIdSchema = IdSchema.max(64)
@@ -26,34 +25,51 @@ const RequiredMarkdownFragmentSchema = z.string().min(1)
   .refine(value => value.trim().length > 0, 'Expected non-whitespace text')
   .refine(value => !containsStructuralHeading(value), 'Markdown fragment must not contain H1 or H2 headings')
 
-export const CodeReferenceSchema = z.strictObject({
-  path: z.string().min(1),
-  symbol: z.string().min(1).optional(),
-  startLine: z.number().int().positive().optional(),
-  endLine: z.number().int().positive().optional()
-}).superRefine((reference, context) => {
-  if (reference.endLine !== undefined && reference.startLine === undefined) {
-    context.addIssue({ code: 'custom', path: ['endLine'], message: 'endLine requires startLine' })
-  } else if (
-    reference.startLine !== undefined
-    && reference.endLine !== undefined
-    && reference.endLine < reference.startLine
-  ) {
-    context.addIssue({ code: 'custom', path: ['endLine'], message: 'endLine must be greater than or equal to startLine' })
+function validHttpUrl(value: string): boolean {
+  if (!/^https?:\/\//i.test(value)) return false
+  try {
+    return Boolean(new URL(value).hostname)
+  } catch {
+    return false
   }
-})
+}
 
-export const EntityLinkSchema = z.strictObject({
-  rel: z.enum(['spec', 'proposal', 'doc', 'adr', 'visual', 'research']),
-  href: z.string().min(1),
-  title: z.string().min(1).optional()
+function validRepositoryTarget(value: string): boolean {
+  const path = value.split(/[?#]/, 1)[0] || ''
+  return Boolean(value.trim())
+    && Boolean(path.trim())
+    && !/^[a-z][a-z0-9+.-]*:/i.test(value)
+    && !/^(?:[/\\]|~[/\\]|[a-z]:[/\\])/i.test(value)
+    && !value.includes('\\')
+    && !path.split('/').includes('..')
+}
+
+export const ReportReferenceSchema = z.strictObject({
+  kind: z.enum(['code', 'spec', 'proposal', 'doc', 'adr', 'visual', 'research']),
+  role: z.enum(['intent', 'implementation', 'context']),
+  target: SingleLineTextSchema,
+  title: SingleLineTextSchema.optional()
+}).superRefine((reference, context) => {
+  if (reference.kind === 'code') {
+    const issues: string[] = []
+    if (!parseCodeTarget(reference.target, issues, 'reference')) {
+      context.addIssue({ code: 'custom', path: ['target'], message: issues[0] || 'Invalid code reference target' })
+    }
+    return
+  }
+  if (!validHttpUrl(reference.target) && !validRepositoryTarget(reference.target)) {
+    context.addIssue({
+      code: 'custom',
+      path: ['target'],
+      message: 'Reference target must use HTTP(S) or a repository-relative path'
+    })
+  }
 })
 
 const EntityContentSchema = {
   intent: z.string(),
   supportingContent: z.string(),
-  codeRefs: z.array(CodeReferenceSchema),
-  links: z.array(EntityLinkSchema)
+  references: z.array(ReportReferenceSchema)
 }
 
 export const TaxonomyEntrySchema = z.strictObject({
@@ -63,24 +79,13 @@ export const TaxonomyEntrySchema = z.strictObject({
   colorSlot: z.number().int().optional()
 })
 
-const ReportEntityCountV4Shape = {
-  actors: z.number().int().min(0),
-  experiences: z.number().int().min(0),
-  domains: z.number().int().min(0),
-  features: z.number().int().min(0),
-  journeys: z.number().int().min(0),
-  scenarios: z.number().int().min(0),
-  businessRules: z.number().int().min(0)
-}
-
-const ReportSummaryV4Schema = z.strictObject(ReportEntityCountV4Shape)
-
 const ReportEntityCountShape = {
   actors: z.number().int().min(0),
+  interfaces: z.number().int().min(0),
   experiences: z.number().int().min(0),
   screens: z.number().int().min(0),
   domains: z.number().int().min(0),
-  features: z.number().int().min(0),
+  capabilities: z.number().int().min(0),
   journeys: z.number().int().min(0),
   scenarios: z.number().int().min(0),
   businessRules: z.number().int().min(0)
@@ -93,10 +98,44 @@ export const ReportGeneratorSchema = z.strictObject({
   version: z.string().min(1)
 })
 
+export const ReportEntryPointSchema = z.strictObject({
+  type: SingleLineTextSchema,
+  path: SingleLineTextSchema
+})
+
+export const ReportAvailabilitySchema = z.strictObject({
+  interfaceId: IdSchema,
+  experienceIds: z.array(IdSchema).min(1)
+})
+
 export const ReportActorSchema = z.strictObject({
   id: IdSchema,
   name: SingleLineTextSchema,
   description: RequiredMarkdownFragmentSchema,
+  kind: z.enum(['person', 'system']),
+  relationship: z.enum(['external', 'internal']),
+  ...EntityContentSchema
+})
+
+export const ReportInterfaceSchema = z.strictObject({
+  id: IdSchema,
+  title: SingleLineTextSchema,
+  description: RequiredMarkdownFragmentSchema,
+  actorIds: z.array(IdSchema).min(1),
+  entryPoints: z.array(ReportEntryPointSchema),
+  capabilityBoundary: RequiredMarkdownFragmentSchema,
+  ...EntityContentSchema
+})
+
+export const ReportExperienceSchema = z.strictObject({
+  id: IdSchema,
+  title: SingleLineTextSchema,
+  description: RequiredMarkdownFragmentSchema,
+  actorIds: z.array(IdSchema).min(1),
+  interfaceIds: z.array(IdSchema).min(1),
+  accessMode: z.enum(['public', 'authenticated', 'restricted']),
+  entryPoints: z.array(ReportEntryPointSchema),
+  capabilityBoundary: RequiredMarkdownFragmentSchema,
   ...EntityContentSchema
 })
 
@@ -108,31 +147,12 @@ export const ReportDomainSchema = z.strictObject({
   ...EntityContentSchema
 })
 
-export const ReportEntryPointSchema = z.strictObject({
-  type: SingleLineTextSchema,
-  path: SingleLineTextSchema
-})
-
-export const ReportExperienceSchema = z.strictObject({
+export const ReportCapabilitySchema = z.strictObject({
   id: IdSchema,
   title: SingleLineTextSchema,
   description: RequiredMarkdownFragmentSchema,
-  actorIds: z.array(IdSchema).min(1),
-  accessMode: z.enum(['public', 'authenticated', 'restricted']),
-  capabilities: z.string(),
-  entryPoints: z.array(ReportEntryPointSchema),
-  exitContract: z.string(),
-  ...EntityContentSchema
-})
-
-export const ReportFeatureSchema = z.strictObject({
-  id: IdSchema,
-  title: SingleLineTextSchema,
-  description: RequiredMarkdownFragmentSchema,
-  domainId: IdSchema,
-  actorIds: z.array(IdSchema),
-  experienceIds: z.array(IdSchema),
-  businessRuleIds: z.array(IdSchema),
+  domainId: IdSchema.optional(),
+  availability: z.array(ReportAvailabilitySchema).min(1),
   ...EntityContentSchema
 })
 
@@ -145,14 +165,14 @@ export const ReportScreenSchema = z.strictObject({
   id: IdSchema,
   title: SingleLineTextSchema,
   description: RequiredMarkdownFragmentSchema,
-  experienceIds: z.array(IdSchema).min(1),
-  featureIds: z.array(IdSchema).min(1),
+  availability: z.array(ReportAvailabilitySchema).min(1),
+  capabilityIds: z.array(IdSchema).min(1),
   scenarioIds: z.array(IdSchema),
   entryPoints: z.array(ReportEntryPointSchema),
   information: z.array(SingleLineTextSchema).min(1),
   actions: z.array(SingleLineTextSchema),
   states: z.array(ReportScreenStateSchema),
-  capabilities: RequiredMarkdownFragmentSchema,
+  capabilityBoundary: RequiredMarkdownFragmentSchema,
   ...EntityContentSchema
 })
 
@@ -160,10 +180,9 @@ export const ReportJourneySchema = z.strictObject({
   id: IdSchema,
   title: SingleLineTextSchema,
   summary: RequiredMarkdownFragmentSchema,
-  domainId: IdSchema,
-  actorIds: z.array(IdSchema),
-  experienceIds: z.array(IdSchema),
-  featureIds: z.array(IdSchema),
+  actorIds: z.array(IdSchema).min(1),
+  capabilityIds: z.array(IdSchema).min(1),
+  availability: z.array(ReportAvailabilitySchema).min(1),
   entryPoints: z.array(ReportEntryPointSchema),
   ...EntityContentSchema
 })
@@ -182,12 +201,12 @@ export const ReportScenarioSchema = z.strictObject({
   journeyId: IdSchema,
   title: SingleLineTextSchema,
   kindId: IdSchema,
+  availability: z.array(ReportAvailabilitySchema),
   trigger: RequiredMarkdownFragmentSchema,
   steps: z.array(SingleLineTextSchema).min(1),
   decisionPoints: z.array(ReportDecisionPointSchema),
   outcome: RequiredMarkdownFragmentSchema,
   edgeCases: z.array(SingleLineTextSchema),
-  businessRuleIds: z.array(IdSchema),
   ...EntityContentSchema
 })
 
@@ -197,9 +216,10 @@ export const ReportBusinessRuleSchema = z.strictObject({
   statement: RequiredMarkdownFragmentSchema,
   rationale: z.string(),
   domainIds: z.array(IdSchema),
-  featureIds: z.array(IdSchema),
+  capabilityIds: z.array(IdSchema),
   journeyIds: z.array(IdSchema),
   scenarioIds: z.array(IdSchema),
+  availability: z.array(ReportAvailabilitySchema),
   ...EntityContentSchema
 })
 
@@ -207,53 +227,20 @@ export const ReportCoverageSchema = z.strictObject({
   status: z.enum(['complete', 'partial', 'draft']),
   method: z.array(z.string()),
   sourceAreas: z.array(z.string()),
-  counts: z.record(z.string(), z.number().int().min(0)),
-  mapped: z.record(z.string(), z.number().int().min(0)),
   unmapped: z.array(z.string()),
   limitations: z.array(z.string()),
-  rationale: z.string(),
-  // Set only by `redactSourceEvidence`. Marks a report whose `codeRefs` were
-  // removed for delivery, so `mapped` describes the origin repository rather
-  // than the evidence still present in this document.
-  evidenceRedacted: z.boolean().optional()
+  rationale: z.string()
 })
 
-export const ProductReportV4Schema = z.strictObject({
-  schemaVersion: z.literal(LEGACY_REPORT_SCHEMA_VERSION),
-  id: ProductIdSchema,
-  title: SingleLineTextSchema.max(160),
-  description: RequiredMarkdownFragmentSchema.max(2000),
-  intent: z.string(),
-  supportingContent: z.string(),
-  links: z.array(EntityLinkSchema),
-  tags: z.array(z.string().min(1).max(48)).max(24),
-  generatedAt: z.iso.date(),
-  generator: ReportGeneratorSchema,
-  summary: ReportSummaryV4Schema,
-  limitations: z.array(z.string()),
-  model: z.strictObject({
-    taxonomies: z.strictObject({
-      scenarioKinds: z.array(TaxonomyEntrySchema)
-    }),
-    actors: z.array(ReportActorSchema),
-    experiences: z.array(ReportExperienceSchema).min(1),
-    domains: z.array(ReportDomainSchema),
-    features: z.array(ReportFeatureSchema),
-    journeys: z.array(ReportJourneySchema),
-    scenarios: z.array(ReportScenarioSchema),
-    businessRules: z.array(ReportBusinessRuleSchema)
-  }),
-  coverage: ReportCoverageSchema
-})
-
-export const ProductReportV5Schema = z.strictObject({
+export const ProductReportV6Schema = z.strictObject({
   schemaVersion: z.literal(REPORT_SCHEMA_VERSION),
   id: ProductIdSchema,
   title: SingleLineTextSchema.max(160),
   description: RequiredMarkdownFragmentSchema.max(2000),
   intent: z.string(),
   supportingContent: z.string(),
-  links: z.array(EntityLinkSchema),
+  references: z.array(ReportReferenceSchema),
+  referenceProfile: z.enum(['workspace', 'portable']),
   tags: z.array(z.string().min(1).max(48)).max(24),
   generatedAt: z.iso.date(),
   generator: ReportGeneratorSchema,
@@ -264,10 +251,11 @@ export const ProductReportV5Schema = z.strictObject({
       scenarioKinds: z.array(TaxonomyEntrySchema)
     }),
     actors: z.array(ReportActorSchema),
+    interfaces: z.array(ReportInterfaceSchema).min(1),
     experiences: z.array(ReportExperienceSchema).min(1),
     screens: z.array(ReportScreenSchema),
     domains: z.array(ReportDomainSchema),
-    features: z.array(ReportFeatureSchema),
+    capabilities: z.array(ReportCapabilitySchema),
     journeys: z.array(ReportJourneySchema),
     scenarios: z.array(ReportScenarioSchema),
     businessRules: z.array(ReportBusinessRuleSchema)
@@ -275,84 +263,25 @@ export const ProductReportV5Schema = z.strictObject({
   coverage: ReportCoverageSchema
 })
 
-export const ProductReportSchema = z.union([ProductReportV5Schema, ProductReportV4Schema])
+export const ProductReportSchema = ProductReportV6Schema
 
-const SubmissionDateSchema = z.string().refine(value => !Number.isNaN(Date.parse(value)), 'Expected a parseable date')
-
-export const GitRepositoryProvenanceSchema = z.strictObject({
-  kind: z.literal('git-repository'),
-  name: z.string().min(1),
-  url: z.url().refine(value => value.startsWith('https://'), 'Repository URL must use HTTPS'),
-  logoUrl: z.url().optional(),
-  branch: z.string().min(1),
-  commit: z.string().regex(/^[a-f0-9]{7,64}$/),
-  commitMessage: z.string().trim().min(1).max(500).optional(),
-  committedAt: SubmissionDateSchema
-})
-
-export const SubmissionProvenanceSchema = z.strictObject({
-  resources: z.array(GitRepositoryProvenanceSchema).length(1),
-  analyzedAt: SubmissionDateSchema
-})
-
-export const SubmissionRefSchema = z.discriminatedUnion('type', [
-  z.strictObject({ type: z.literal('branch'), name: z.string().min(1).max(200) }),
-  z.strictObject({ type: z.literal('tag'), name: z.string().min(1).max(200) }),
-  z.strictObject({
-    type: z.literal('pull-request'),
-    number: z.number().int().positive(),
-    baseBranch: z.string().min(1).max(200),
-    title: z.string().trim().min(1).max(200).optional(),
-    url: z.url().optional()
-  })
-])
-
-export const ProjectSubmissionV4Schema = z.strictObject({
-  submissionVersion: z.literal(SUBMISSION_SCHEMA_VERSION),
-  target: z.strictObject({
-    projectSlug: IdSchema.max(64),
-    ref: SubmissionRefSchema.optional()
-  }),
-  provenance: SubmissionProvenanceSchema,
-  report: ProductReportV4Schema
-})
-
-export type ProductReportV4 = z.infer<typeof ProductReportV4Schema>
-export type ProductReportV5 = z.infer<typeof ProductReportV5Schema>
-export type ProductReport = ProductReportV5
-export type ProjectSubmissionV4 = z.infer<typeof ProjectSubmissionV4Schema>
+export type ProductReportV6 = z.infer<typeof ProductReportV6Schema>
+export type ProductReport = ProductReportV6
 export type ReportDecisionPoint = z.infer<typeof ReportDecisionPointSchema>
 export type ReportScreenState = z.infer<typeof ReportScreenStateSchema>
-export type SubmissionProvenance = z.infer<typeof SubmissionProvenanceSchema>
-export type GitRepositoryProvenance = z.infer<typeof GitRepositoryProvenanceSchema>
-export type SubmissionRef = z.infer<typeof SubmissionRefSchema>
 export type ReportCoverage = z.infer<typeof ReportCoverageSchema>
 export type ReportSummary = z.infer<typeof ReportSummarySchema>
 export type ReportActor = z.infer<typeof ReportActorSchema>
+export type ReportInterface = z.infer<typeof ReportInterfaceSchema>
 export type ReportExperience = z.infer<typeof ReportExperienceSchema>
 export type ReportDomain = z.infer<typeof ReportDomainSchema>
-export type ReportFeature = z.infer<typeof ReportFeatureSchema>
+export type ReportCapability = z.infer<typeof ReportCapabilitySchema>
+export type ReportAvailability = z.infer<typeof ReportAvailabilitySchema>
 export type ReportScreen = z.infer<typeof ReportScreenSchema>
 export type ReportJourney = z.infer<typeof ReportJourneySchema>
 export type ReportScenario = z.infer<typeof ReportScenarioSchema>
 export type ReportBusinessRule = z.infer<typeof ReportBusinessRuleSchema>
-export type ReportCodeReference = z.infer<typeof CodeReferenceSchema>
-export type ReportEntityLink = z.infer<typeof EntityLinkSchema>
-
-/** Normalize a historical v4 report into the current in-memory v5 shape. */
-export function upgradeProductReportV4(report: ProductReportV4): ProductReportV5 {
-  return ProductReportV5Schema.parse({
-    ...report,
-    schemaVersion: REPORT_SCHEMA_VERSION,
-    summary: { ...report.summary, screens: 0 },
-    model: { ...report.model, screens: [] },
-    coverage: {
-      ...report.coverage,
-      counts: { ...report.coverage.counts, screens: 0 },
-      mapped: { ...report.coverage.mapped, screens: 0 }
-    }
-  })
-}
+export type ReportReference = z.infer<typeof ReportReferenceSchema>
 
 function duplicateIssues(label: string, ids: string[]): string[] {
   const seen = new Set<string>()
@@ -376,28 +305,87 @@ function missingRelation(
   }
 }
 
-/** Cross-entity and computed-field validation, shared with the catalog. */
-export function validateProductReport(report: ProductReportV4 | ProductReportV5): string[] {
-  if (report.schemaVersion === LEGACY_REPORT_SCHEMA_VERSION) {
-    return validateProductReport(upgradeProductReportV4(report))
+function pairKey(interfaceId: string, experienceId: string): string {
+  return `${interfaceId}\0${experienceId}`
+}
+
+function availabilityPairs(
+  issues: string[],
+  label: string,
+  availability: ReportAvailability[],
+  interfaceIds: Set<string>,
+  experiencesById: Map<string, ReportExperience>
+): Set<string> {
+  const pairs = new Set<string>()
+  const seenInterfaces = new Set<string>()
+  for (const item of availability) {
+    if (seenInterfaces.has(item.interfaceId)) {
+      issues.push(`${label}: duplicate availability interface "${item.interfaceId}"`)
+    }
+    seenInterfaces.add(item.interfaceId)
+    if (!interfaceIds.has(item.interfaceId)) {
+      issues.push(`${label}: references missing interface "${item.interfaceId}"`)
+    }
+    const seenExperiences = new Set<string>()
+    for (const experienceId of item.experienceIds) {
+      if (seenExperiences.has(experienceId)) {
+        issues.push(`${label}: duplicate availability experience "${experienceId}" for interface "${item.interfaceId}"`)
+      }
+      seenExperiences.add(experienceId)
+      const experience = experiencesById.get(experienceId)
+      if (!experience) {
+        issues.push(`${label}: references missing experience "${experienceId}"`)
+      } else if (!experience.interfaceIds.includes(item.interfaceId)) {
+        issues.push(`${label}: experience "${experienceId}" does not declare interface "${item.interfaceId}"`)
+      }
+      const key = pairKey(item.interfaceId, experienceId)
+      if (pairs.has(key)) issues.push(`${label}: duplicate availability pair "${item.interfaceId}/${experienceId}"`)
+      pairs.add(key)
+    }
   }
+  return pairs
+}
+
+function interfaceIdsFromAvailability(availability: ReportAvailability[]): Set<string> {
+  return new Set(availability.map(item => item.interfaceId))
+}
+
+function requireEntryPointInterfaces(
+  issues: string[],
+  label: string,
+  entryPoints: Array<{ type: string }>,
+  interfaces: Set<string>
+): void {
+  for (const point of entryPoints) {
+    if (!interfaces.has(point.type)) {
+      issues.push(`${label}: entry point references undeclared interface "${point.type}"`)
+    }
+  }
+}
+
+/** Cross-entity and computed-field validation, shared with every report consumer. */
+export function validateProductReport(report: ProductReportV6): string[] {
   const issues: string[] = []
   const { model } = report
   const actorIds = new Set(model.actors.map(item => item.id))
+  const interfaceIds = new Set(model.interfaces.map(item => item.id))
+  const interfacesById = new Map(model.interfaces.map(item => [item.id, item]))
   const experienceIds = new Set(model.experiences.map(item => item.id))
+  const experiencesById = new Map(model.experiences.map(item => [item.id, item]))
   const domainIds = new Set(model.domains.map(item => item.id))
-  const featureIds = new Set(model.features.map(item => item.id))
+  const capabilityIds = new Set(model.capabilities.map(item => item.id))
+  const capabilityPairs = new Map<string, Set<string>>()
   const journeyIds = new Set(model.journeys.map(item => item.id))
   const scenarioIds = new Set(model.scenarios.map(item => item.id))
-  const ruleIds = new Set(model.businessRules.map(item => item.id))
   const kindIds = new Set(model.taxonomies.scenarioKinds.map(item => item.id))
 
   const collections: Array<[string, string[]]> = [
     ['actors', model.actors.map(item => item.id)],
+    ['interfaces', model.interfaces.map(item => item.id)],
     ['experiences', model.experiences.map(item => item.id)],
     ['screens', model.screens.map(item => item.id)],
     ['domains', model.domains.map(item => item.id)],
-    ['features', model.features.map(item => item.id)],
+    ['capabilities', model.capabilities.map(item => item.id)],
     ['journeys', model.journeys.map(item => item.id)],
     ['scenarios', model.scenarios.map(item => item.id)],
     ['businessRules', model.businessRules.map(item => item.id)],
@@ -405,20 +393,68 @@ export function validateProductReport(report: ProductReportV4 | ProductReportV5)
   ]
   for (const [label, ids] of collections) issues.push(...duplicateIssues(label, ids))
 
+  for (const productInterface of model.interfaces) {
+    missingRelation(issues, `interface "${productInterface.id}"`, 'actor', productInterface.actorIds, actorIds)
+  }
   for (const experience of model.experiences) {
     missingRelation(issues, `experience "${experience.id}"`, 'actor', experience.actorIds, actorIds)
+    missingRelation(issues, `experience "${experience.id}"`, 'interface', experience.interfaceIds, interfaceIds)
+    for (const interfaceId of experience.interfaceIds) {
+      const supportedActors = new Set(interfacesById.get(interfaceId)?.actorIds || [])
+      for (const actorId of experience.actorIds) {
+        if (!supportedActors.has(actorId)) {
+          issues.push(`experience "${experience.id}": actor "${actorId}" is not supported by interface "${interfaceId}"`)
+        }
+      }
+    }
+    requireEntryPointInterfaces(
+      issues,
+      `experience "${experience.id}"`,
+      experience.entryPoints,
+      new Set(experience.interfaceIds)
+    )
   }
-  for (const feature of model.features) {
-    if (!feature.experienceIds.length) issues.push(`feature "${feature.id}": needs at least one experience`)
-    if (!domainIds.has(feature.domainId)) issues.push(`feature "${feature.id}": references missing domain "${feature.domainId}"`)
-    missingRelation(issues, `feature "${feature.id}"`, 'actor', feature.actorIds, actorIds)
-    missingRelation(issues, `feature "${feature.id}"`, 'experience', feature.experienceIds, experienceIds)
-    missingRelation(issues, `feature "${feature.id}"`, 'business rule', feature.businessRuleIds, ruleIds)
+  for (const capability of model.capabilities) {
+    if (capability.domainId && !domainIds.has(capability.domainId)) {
+      issues.push(`capability "${capability.id}": references missing domain "${capability.domainId}"`)
+    }
+    capabilityPairs.set(
+      capability.id,
+      availabilityPairs(
+        issues,
+        `capability "${capability.id}"`,
+        capability.availability,
+        interfaceIds,
+        experiencesById
+      )
+    )
   }
   for (const screen of model.screens) {
-    missingRelation(issues, `screen "${screen.id}"`, 'experience', screen.experienceIds, experienceIds)
-    missingRelation(issues, `screen "${screen.id}"`, 'feature', screen.featureIds, featureIds)
+    const pairs = availabilityPairs(
+      issues,
+      `screen "${screen.id}"`,
+      screen.availability,
+      interfaceIds,
+      experiencesById
+    )
+    missingRelation(issues, `screen "${screen.id}"`, 'capability', screen.capabilityIds, capabilityIds)
     missingRelation(issues, `screen "${screen.id}"`, 'scenario', screen.scenarioIds, scenarioIds)
+    requireEntryPointInterfaces(
+      issues,
+      `screen "${screen.id}"`,
+      screen.entryPoints,
+      interfaceIdsFromAvailability(screen.availability)
+    )
+    for (const capabilityId of screen.capabilityIds) {
+      const supported = capabilityPairs.get(capabilityId)
+      if (!supported) continue
+      for (const pair of pairs) {
+        if (!supported.has(pair)) {
+          const [interfaceId, experienceId] = pair.split('\0')
+          issues.push(`screen "${screen.id}": capability "${capabilityId}" is not available in "${interfaceId}/${experienceId}"`)
+        }
+      }
+    }
     const stateTitles = new Set<string>()
     for (const state of screen.states) {
       const normalized = state.title.toLowerCase()
@@ -426,85 +462,138 @@ export function validateProductReport(report: ProductReportV4 | ProductReportV5)
       stateTitles.add(normalized)
     }
   }
+  const journeyPairs = new Map<string, Set<string>>()
   for (const journey of model.journeys) {
-    if (!journey.actorIds.length) issues.push(`journey "${journey.id}": needs at least one actor`)
-    if (!journey.experienceIds.length) issues.push(`journey "${journey.id}": needs at least one experience`)
-    if (!journey.featureIds.length) issues.push(`journey "${journey.id}": needs at least one feature`)
-    if (!domainIds.has(journey.domainId)) issues.push(`journey "${journey.id}": references missing domain "${journey.domainId}"`)
     missingRelation(issues, `journey "${journey.id}"`, 'actor', journey.actorIds, actorIds)
-    missingRelation(issues, `journey "${journey.id}"`, 'experience', journey.experienceIds, experienceIds)
-    missingRelation(issues, `journey "${journey.id}"`, 'feature', journey.featureIds, featureIds)
+    missingRelation(issues, `journey "${journey.id}"`, 'capability', journey.capabilityIds, capabilityIds)
+    const pairs = availabilityPairs(
+      issues,
+      `journey "${journey.id}"`,
+      journey.availability,
+      interfaceIds,
+      experiencesById
+    )
+    journeyPairs.set(journey.id, pairs)
+    requireEntryPointInterfaces(
+      issues,
+      `journey "${journey.id}"`,
+      journey.entryPoints,
+      interfaceIdsFromAvailability(journey.availability)
+    )
+    for (const capabilityId of journey.capabilityIds) {
+      const supported = capabilityPairs.get(capabilityId)
+      if (!supported) continue
+      for (const pair of pairs) {
+        if (!supported.has(pair)) {
+          const [interfaceId, experienceId] = pair.split('\0')
+          issues.push(`journey "${journey.id}": capability "${capabilityId}" is not available in "${interfaceId}/${experienceId}"`)
+        }
+      }
+    }
     if (!model.scenarios.some(scenario => scenario.journeyId === journey.id)) {
       issues.push(`journey "${journey.id}": needs at least one scenario`)
     }
   }
   for (const scenario of model.scenarios) {
-    if (!journeyIds.has(scenario.journeyId)) issues.push(`scenario "${scenario.id}": references missing journey "${scenario.journeyId}"`)
-    if (!kindIds.has(scenario.kindId)) issues.push(`scenario "${scenario.id}": references missing scenario kind "${scenario.kindId}"`)
-    missingRelation(issues, `scenario "${scenario.id}"`, 'business rule', scenario.businessRuleIds, ruleIds)
-    for (const decision of scenario.decisionPoints) {
-      if (decision.branches.length < 2) issues.push(`scenario "${scenario.id}": decision "${decision.title}" needs at least two branches`)
+    if (!journeyIds.has(scenario.journeyId)) {
+      issues.push(`scenario "${scenario.id}": references missing journey "${scenario.journeyId}"`)
+    }
+    if (!kindIds.has(scenario.kindId)) {
+      issues.push(`scenario "${scenario.id}": references missing scenario kind "${scenario.kindId}"`)
+    }
+    if (scenario.availability.length) {
+      const pairs = availabilityPairs(
+        issues,
+        `scenario "${scenario.id}"`,
+        scenario.availability,
+        interfaceIds,
+        experiencesById
+      )
+      const parentPairs = journeyPairs.get(scenario.journeyId) || new Set<string>()
+      for (const pair of pairs) {
+        if (!parentPairs.has(pair)) {
+          const [interfaceId, experienceId] = pair.split('\0')
+          issues.push(`scenario "${scenario.id}": availability "${interfaceId}/${experienceId}" is outside journey "${scenario.journeyId}"`)
+        }
+      }
     }
   }
   for (const rule of model.businessRules) {
     missingRelation(issues, `business rule "${rule.id}"`, 'domain', rule.domainIds, domainIds)
-    missingRelation(issues, `business rule "${rule.id}"`, 'feature', rule.featureIds, featureIds)
+    missingRelation(issues, `business rule "${rule.id}"`, 'capability', rule.capabilityIds, capabilityIds)
     missingRelation(issues, `business rule "${rule.id}"`, 'journey', rule.journeyIds, journeyIds)
     missingRelation(issues, `business rule "${rule.id}"`, 'scenario', rule.scenarioIds, scenarioIds)
-    if (!rule.domainIds.length && !rule.featureIds.length && !rule.journeyIds.length && !rule.scenarioIds.length) {
-      issues.push(`business rule "${rule.id}": must relate to a domain, feature, journey, or scenario`)
+    availabilityPairs(
+      issues,
+      `business rule "${rule.id}"`,
+      rule.availability,
+      interfaceIds,
+      experiencesById
+    )
+    if (
+      !rule.domainIds.length
+      && !rule.capabilityIds.length
+      && !rule.journeyIds.length
+      && !rule.scenarioIds.length
+      && !rule.availability.length
+    ) {
+      issues.push(`business rule "${rule.id}": must relate to a domain, capability, journey, scenario, or availability pair`)
     }
   }
 
   const expectedSummary = {
     actors: model.actors.length,
+    interfaces: model.interfaces.length,
     experiences: model.experiences.length,
     screens: model.screens.length,
     domains: model.domains.length,
-    features: model.features.length,
+    capabilities: model.capabilities.length,
     journeys: model.journeys.length,
     scenarios: model.scenarios.length,
     businessRules: model.businessRules.length
   }
-  const expectedMapped = {
-    actors: model.actors.filter(item => item.codeRefs.length > 0).length,
-    experiences: model.experiences.filter(item => item.codeRefs.length > 0).length,
-    screens: model.screens.filter(item => item.codeRefs.length > 0).length,
-    domains: model.domains.filter(item => item.codeRefs.length > 0).length,
-    features: model.features.filter(item => item.codeRefs.length > 0).length,
-    journeys: model.journeys.filter(item => item.codeRefs.length > 0).length,
-    scenarios: model.scenarios.filter(item => item.codeRefs.length > 0).length,
-    businessRules: model.businessRules.filter(item => item.codeRefs.length > 0).length
+  const referenceHosts = [
+    { id: 'product', references: report.references },
+    ...model.actors,
+    ...model.interfaces,
+    ...model.experiences,
+    ...model.screens,
+    ...model.domains,
+    ...model.capabilities,
+    ...model.journeys,
+    ...model.scenarios,
+    ...model.businessRules
+  ]
+  for (const host of referenceHosts) {
+    const targets = new Set<string>()
+    for (const reference of host.references) {
+      if (targets.has(reference.target)) {
+        issues.push(`"${host.id}": duplicate reference target "${reference.target}"`)
+      }
+      targets.add(reference.target)
+    }
   }
-  // A redacted report carries no `codeRefs`, so `mapped` describes the origin
-  // repository and can no longer be recomputed from this document. It stays
-  // bounded by the entity counts instead.
-  const redacted = report.coverage.evidenceRedacted === true
-  if (redacted) {
-    const carriers = Object.values(expectedMapped).reduce((total, count) => total + count, 0)
-    if (carriers > 0) {
-      issues.push('coverage.evidenceRedacted is true but entities still carry codeRefs')
-    }
+
+  if (report.referenceProfile === 'portable') {
     if (report.coverage.sourceAreas.length) {
-      issues.push('coverage.evidenceRedacted is true but coverage.sourceAreas names repository areas')
+      issues.push('referenceProfile is portable but coverage.sourceAreas names repository areas')
     }
-    const entryPointHosts = [...model.experiences, ...model.screens, ...model.journeys]
+    const entryPointHosts = [...model.interfaces, ...model.experiences, ...model.screens, ...model.journeys]
     for (const host of entryPointHosts) {
       for (const point of host.entryPoints) {
         if (isRepositoryEntryPoint(point.path)) {
-          issues.push(`"${host.id}": redacted report still exposes the repository entry point "${point.path}"`)
+          issues.push(`"${host.id}": portable report still exposes the repository entry point "${point.path}"`)
         }
       }
     }
-    const linkHosts = [
-      { id: 'product', links: report.links },
-      ...model.actors, ...model.experiences, ...model.domains,
-      ...model.screens, ...model.features, ...model.journeys, ...model.scenarios, ...model.businessRules
-    ]
-    for (const host of linkHosts) {
-      for (const link of host.links) {
-        if (isRepositoryLink(link.href)) {
-          issues.push(`"${host.id}": redacted report still exposes the repository link "${link.href}"`)
+    for (const host of referenceHosts) {
+      for (const reference of host.references) {
+        if (
+          reference.kind === 'code'
+          || reference.role === 'implementation'
+          || !isHttpUrl(reference.target)
+        ) {
+          issues.push(`"${host.id}": portable report still exposes reference "${reference.target}"`)
         }
       }
     }
@@ -512,37 +601,12 @@ export function validateProductReport(report: ProductReportV4 | ProductReportV5)
 
   for (const key of Object.keys(expectedSummary) as Array<keyof typeof expectedSummary>) {
     const value = expectedSummary[key]
-    if (report.summary[key] !== value) {
-      issues.push(`summary.${key} must equal ${value}`)
-    }
-    if (
-      report.coverage.counts[key] !== undefined
-      && report.coverage.counts[key] !== value
-    ) {
-      issues.push(`coverage.counts.${key} must equal ${value}`)
-    }
-    const declaredMapped = report.coverage.mapped[key]
-    if (declaredMapped === undefined) continue
-    if (redacted) {
-      if (declaredMapped > value) {
-        issues.push(`coverage.mapped.${key} must be at most ${value}`)
-      }
-    } else if (declaredMapped !== expectedMapped[key]) {
-      issues.push(`coverage.mapped.${key} must equal ${expectedMapped[key]}`)
-    }
+    if (report.summary[key] !== value) issues.push(`summary.${key} must equal ${value}`)
   }
 
   return issues
 }
 
-/**
- * Local filesystem values that must not leave the owning workspace.
- *
- * The report contract is browser-portable, so this deliberately avoids Node
- * path helpers. It recognizes Windows separators and drive/UNC paths, local
- * file URLs, and standard POSIX filesystem roots. Rooted product routes are
- * handled separately because `/checkout` is meaningful outside a repository.
- */
 function isAbsoluteFilesystemPath(value: string): boolean {
   if (/^file:/i.test(value)) return true
   if (value.includes('\\')) return true
@@ -565,88 +629,56 @@ function isRepositoryEntryPoint(value: string): boolean {
   return !path.startsWith('/')
 }
 
-function isRepositoryLink(value: string): boolean {
-  const href = value.trim()
-  return isAbsoluteFilesystemPath(href) || !isHttpUrl(href)
-}
-
-/**
- * Remove source evidence for delivery.
- *
- * An authored Product Model keeps full evidence inside its own repository, but
- * a downloadable or public Blueprint report must not disclose the origin
- * repository's layout, file paths, or symbol names. Every consumer that serves
- * a report outside its own repository applies this exact projection, so the
- * redaction cannot drift between the framework and the catalog.
- *
- * Redacted, because each is structurally a repository reference:
- * `codeRefs`, `entryPoints` that name a repository path, `links` to
- * repository-relative documents, and `coverage.sourceAreas`.
- *
- * Not redacted: author-written prose (`method`, `unmapped`, `limitations`,
- * `rationale`, `intent`, `supportingContent`). Those carry product meaning and
- * are the author's to control — authors must keep repository internals out of
- * them.
- *
- * `coverage.mapped` is preserved for Product Report compatibility: it
- * counts entities that carried implementation-linked bookmarks upstream.
- * It is navigation metadata, not proof or model completeness. `evidenceRedacted`
- * records that those counts can no longer be recomputed from the document.
- * The projection is idempotent and does not mutate its input.
- */
-export function redactSourceEvidence(report: ProductReportV4 | ProductReportV5): ProductReportV5 {
-  const normalized = report.schemaVersion === LEGACY_REPORT_SCHEMA_VERSION
-    ? upgradeProductReportV4(report)
-    : report
-  const publicLinks = <T extends { href: string }>(items: T[]): T[] =>
-    items.filter(link => !isRepositoryLink(link.href))
+/** Project a report into the source-free profile delivered outside its repository. */
+export function projectPortableReport(report: ProductReportV6): ProductReportV6 {
+  const portableReferences = <T extends { kind: string, role: string, target: string }>(items: T[]): T[] =>
+    items.filter(reference =>
+      reference.kind !== 'code'
+      && reference.role !== 'implementation'
+      && isHttpUrl(reference.target)
+    )
   const publicEntryPoints = <T extends { path: string }>(items: T[]): T[] =>
     items.filter(point => !isRepositoryEntryPoint(point.path))
 
-  const strip = <T extends { codeRefs: unknown[], links: Array<{ href: string }> }>(items: T[]): T[] =>
-    items.map(item => ({ ...item, codeRefs: [], links: publicLinks(item.links) }))
+  const strip = <T extends { references: Array<{ kind: string, role: string, target: string }> }>(items: T[]): T[] =>
+    items.map(item => ({ ...item, references: portableReferences(item.references) }))
   const stripWithEntryPoints = <
-    T extends { codeRefs: unknown[], links: Array<{ href: string }>, entryPoints: Array<{ path: string }> }
+    T extends { references: Array<{ kind: string, role: string, target: string }>, entryPoints: Array<{ path: string }> }
   >(items: T[]): T[] =>
     items.map(item => ({
       ...item,
-      codeRefs: [],
-      links: publicLinks(item.links),
+      references: portableReferences(item.references),
       entryPoints: publicEntryPoints(item.entryPoints)
     }))
 
   return {
-    ...normalized,
-    links: publicLinks(normalized.links),
+    ...report,
+    referenceProfile: 'portable',
+    references: portableReferences(report.references),
     model: {
-      ...normalized.model,
-      actors: strip(normalized.model.actors),
-      experiences: stripWithEntryPoints(normalized.model.experiences),
-      screens: stripWithEntryPoints(normalized.model.screens),
-      domains: strip(normalized.model.domains),
-      features: strip(normalized.model.features),
-      journeys: stripWithEntryPoints(normalized.model.journeys),
-      scenarios: strip(normalized.model.scenarios),
-      businessRules: strip(normalized.model.businessRules)
+      ...report.model,
+      actors: strip(report.model.actors),
+      interfaces: stripWithEntryPoints(report.model.interfaces),
+      experiences: stripWithEntryPoints(report.model.experiences),
+      screens: stripWithEntryPoints(report.model.screens),
+      domains: strip(report.model.domains),
+      capabilities: strip(report.model.capabilities),
+      journeys: stripWithEntryPoints(report.model.journeys),
+      scenarios: strip(report.model.scenarios),
+      businessRules: strip(report.model.businessRules)
     },
-    coverage: { ...normalized.coverage, sourceAreas: [], evidenceRedacted: true }
+    coverage: { ...report.coverage, sourceAreas: [] }
   }
 }
 
-export function parseProductReport(input: unknown): ProductReportV5 {
-  const parsed = ProductReportSchema.parse(input)
-  const report = parsed.schemaVersion === LEGACY_REPORT_SCHEMA_VERSION
-    ? upgradeProductReportV4(parsed)
-    : parsed
+export function parseProductReport(input: unknown): ProductReportV6 {
+  const report = ProductReportV6Schema.parse(input)
   const issues = validateProductReport(report)
   if (issues.length) throw new Error(`Report validation failed:\n- ${issues.join('\n- ')}`)
   return report
 }
 
-/**
- * Key-sorted JSON used for report digests. Every consumer that computes or
- * verifies `x-businesslens-report-digest` must use this exact serialization.
- */
+/** Key-sorted JSON shared by report digest producers and consumers. */
 export function canonicalReportJson(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map(canonicalReportJson).join(',')}]`
   if (value && typeof value === 'object') {

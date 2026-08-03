@@ -1,7 +1,5 @@
 ---
 kind: primary
-businessRules:
-  - reading-state-is-private-to-its-reader
 ---
 
 # A visitor reads a published collection without an account

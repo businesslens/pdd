@@ -1,33 +1,23 @@
 /**
- * `businesslens/report` — the Product Report contract as a library.
- *
- * The open framework owns the product-model content contract. Anything that
- * ingests, stores, validates, or serves a Product Report — including the
- * public Blueprint catalog — consumes this module instead of re-declaring the
- * schema, so producers and consumers cannot drift.
+ * `businesslens/report` — strict Product Report v6 contract as a library.
  *
  * This entry point depends only on `zod` and stays free of Node built-ins so
- * that browser bundles can import it. The digest lives in
- * `businesslens/report/digest`. It must never import the CLI, its prompts, the
- * filesystem, or any command module.
+ * browser consumers can validate, project, and digest reports consistently.
  */
 
 export {
   REPORT_SCHEMA_VERSION,
-  LEGACY_REPORT_SCHEMA_VERSION,
-  SUBMISSION_SCHEMA_VERSION,
-
-  // Report entities
-  CodeReferenceSchema,
-  EntityLinkSchema,
+  ReportReferenceSchema,
   TaxonomyEntrySchema,
   ReportSummarySchema,
   ReportGeneratorSchema,
-  ReportActorSchema,
-  ReportDomainSchema,
   ReportEntryPointSchema,
+  ReportAvailabilitySchema,
+  ReportActorSchema,
+  ReportInterfaceSchema,
   ReportExperienceSchema,
-  ReportFeatureSchema,
+  ReportDomainSchema,
+  ReportCapabilitySchema,
   ReportScreenStateSchema,
   ReportScreenSchema,
   ReportJourneySchema,
@@ -35,44 +25,30 @@ export {
   ReportScenarioSchema,
   ReportBusinessRuleSchema,
   ReportCoverageSchema,
-  ProductReportV4Schema,
-  ProductReportV5Schema,
+  ProductReportV6Schema,
   ProductReportSchema,
-
-  // Legacy submission envelope (retained for schema compatibility)
-  GitRepositoryProvenanceSchema,
-  SubmissionProvenanceSchema,
-  SubmissionRefSchema,
-  ProjectSubmissionV4Schema,
-
-  // Semantics shared across repositories
   validateProductReport,
-  upgradeProductReportV4,
   parseProductReport,
-  redactSourceEvidence,
+  projectPortableReport,
   canonicalReportJson
 } from './core/portable.js'
 
 export type {
-  ProductReportV4,
-  ProductReportV5,
+  ProductReportV6,
   ProductReport,
-  ProjectSubmissionV4,
-  SubmissionProvenance,
-  GitRepositoryProvenance,
-  SubmissionRef,
   ReportCoverage,
   ReportSummary,
   ReportActor,
+  ReportInterface,
   ReportExperience,
   ReportDomain,
-  ReportFeature,
+  ReportCapability,
+  ReportAvailability,
   ReportScreen,
   ReportScreenState,
   ReportJourney,
   ReportScenario,
   ReportBusinessRule,
   ReportDecisionPoint,
-  ReportCodeReference,
-  ReportEntityLink
+  ReportReference
 } from './core/portable.js'

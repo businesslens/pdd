@@ -1,3 +1,8 @@
+---
+kind: person
+relationship: external
+---
+
 # Reader
 
 A person who follows more sources than they have time for and wants one place to

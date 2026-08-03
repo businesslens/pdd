@@ -9,6 +9,15 @@ limitations:
   - Full-text search covers item titles and body text the product fetched; it does not follow links out to the original page.
   - Sharing is one-directional. A subscriber reads a collection; there is no commenting, reply, or co-editing.
   - The product reads syndicated content. It does not publish feeds of its own.
+references:
+  - kind: visual
+    role: intent
+    target: https://github.com/businesslens/pdd/blob/main/blueprints/content-feed-reader/references/screen-map.md
+    title: Cross-platform screen map
+  - kind: research
+    role: context
+    target: https://github.com/businesslens/pdd/blob/main/blueprints/content-feed-reader/references/reader-research.md
+    title: Reader research assumptions
 ---
 
 # Content & Feed Reader

@@ -1,7 +1,5 @@
 ---
 kind: permission
-businessRules:
-  - unlisting-revokes-anonymous-access
 ---
 
 # An unlisted collection stops serving its old link

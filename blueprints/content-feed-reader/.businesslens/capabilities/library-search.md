@@ -1,9 +1,10 @@
 ---
 domain: curation
-actors:
-  - reader
-experiences:
-  - reading-app
+availability:
+  - interface: reader-web
+    experiences: [reading-app]
+  - interface: reader-mobile
+    experiences: [reading-app]
 ---
 
 # Library search

@@ -3,7 +3,7 @@ title: Lint in CI
 description: Gate Product Model structure in CI without pretending a deterministic linter can prove semantic agreement.
 section: open-source
 group: Integration
-order: 20
+order: 21
 ---
 
 # Lint the Product Model in CI
@@ -14,7 +14,7 @@ order: 20
 ```
 
 This catches malformed files, missing required content, broken relationships,
-invalid grammar, and codeRef paths that are not tracked. It is safe and
+invalid grammar, and code-reference paths that are not tracked. It is safe and
 deterministic, but it is not a semantic gate: it does not prove symbols, lines,
 runtime behavior, completeness, or model/code agreement.
 

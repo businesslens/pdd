@@ -1,49 +1,42 @@
 ---
 title: Business rules
-description: Durable constraints stated as assertions, reusable across the domains, features, journeys, and scenarios they govern.
+description: Durable assertions that own their scope across Domains, Capabilities, Journeys, Scenarios, or Interface–Experience pairs.
 section: open-source
 group: Product model
-order: 15
+order: 16
 ---
 
 # Business rules
 
-**A business rule is a durable constraint, stated as an assertion:** *an order
-can be refunded only while unsettled*, or *a private blueprint is never returned
-by an anonymous endpoint*.
+**A Business Rule is a durable constraint stated as an assertion:** an order is
+confirmed only after payment succeeds; a subscription never grants write
+access.
 
-Rules connect to the domains, features, journeys, and scenarios they govern.
-That is what makes the same constraint **reusable and reviewable** instead of
-being copied into several scenario descriptions and drifting apart.
+The Rule is the single owner of its scope. It connects to the Domains,
+Capabilities, Journeys, Scenarios, or exact availability pairs it governs.
+Other entities do not copy Rule IDs, so one constraint remains reusable and
+reviewable instead of drifting across several files.
 
 ## When you create one
 
-Create a rule when a constraint must hold across more than one behavior, or when
-it is the kind of thing a reviewer would want stated once and pointed at.
+Create a Rule when a constraint applies across behavior or deserves to be
+stated once for review. Write something that must remain true, not a sequential
+step.
 
-Write it as something that is **true**, not as something that happens. "An order
-is confirmed only after payment succeeds" is a rule. "Charge the card, then
-confirm" is a step.
-
-> **Business rule vs decision point.** A rule states what must remain true and
-> can govern many entities. A [decision point](./scenarios.md#decision-points)
-> records one question and its branches inside a single scenario.
-
-A rule must relate to at least one domain, feature, journey, or scenario. A
-constraint governing nothing is not a constraint.
+A Rule must relate to at least one Domain, Capability, Journey, Scenario, or
+availability pair. Use availability only when the constraint is specific to an
+Interface–Experience context.
 
 ## The file
 
-Business rules live at `business-rules/<rule-id>.md`.
+Business Rules live at `business-rules/<rule-id>.md`.
 
 ```md [business-rules/payment-before-confirmation.md]
 ---
 domains: [ordering]
-features: [checkout]
+capabilities: [checkout]
 journeys: [browse-and-buy]
 scenarios: [complete-checkout]
-codeRefs:
-  - src/services/payments.ts#PaymentGateway.charge
 ---
 
 # Payment before confirmation
@@ -59,19 +52,17 @@ Never create a fulfilled customer promise without a successful charge.
 Confirmation is the durable customer-facing boundary of checkout.
 ```
 
-The **lead paragraph is the rule statement** — the assertion itself. All four
-relation lists are optional individually, but at least one must be present.
-
-`## Rationale` is a supporting section: why the constraint exists, as opposed to
-`## Intent`, which is the outcome it protects.
+`domains`, `capabilities`, `journeys`, `scenarios`, and `availability` are all
+optional individually, but at least one scope relation is required. The lead is
+the Rule statement. `## Rationale` explains why the constraint exists. Optional
+[References](./references.md) attach intent, implementation, or context
+artifacts.
 
 ## What `lint` checks
 
 | Finding | Meaning |
 | --- | --- |
-| `references missing domain "…"` / `missing feature "…"` / `missing journey "…"` / `missing scenario "…"` | A relation names an entity that does not exist. |
-| `missing H1 title` | Every rule needs a `# Heading`. |
-| `missing lead paragraph (description)` | The rule statement is missing. |
-
-Business rules may carry optional `codeRefs` when one location is a useful
-starting point for reading the constraint. The bookmark does not prove it.
+| `must relate to a domain, capability, journey, scenario, or availability pair` | Give the Rule Product scope. |
+| `references missing …` | A Domain, Capability, Journey, Scenario, Interface, or Experience does not exist. |
+| Availability relationship finding | Correct an impossible or duplicate pair. |
+| `missing H1 title` / `missing lead paragraph (description)` | Every Rule needs a title and assertion. |

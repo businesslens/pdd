@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { parseCodeRef, formatCodeRef } from '../src/core/coderefs.js'
-import { splitFrontmatter, entryPointsField, linksField, repositoryLinkPath } from '../src/core/frontmatter.js'
+import { formatCodeTarget, parseCodeTarget } from '../src/core/coderefs.js'
+import { entryPointsField, referencesField, repositoryReferencePath, splitFrontmatter } from '../src/core/frontmatter.js'
 import { isId, slugify, stem } from '../src/core/ids.js'
 import {
   bulletList, decisionPoints, orderedList, parseMarkdown, screenStates, section, supportingContent
@@ -19,10 +19,10 @@ describe('ids', () => {
   })
 })
 
-describe('coderefs', () => {
+describe('code reference targets', () => {
   const parse = (value: string) => {
     const issues: string[] = []
-    const ref = parseCodeRef(value, issues, 't')
+    const ref = parseCodeTarget(value, issues, 't')
     return { ref, issues }
   }
   it('parses path only', () => {
@@ -38,12 +38,14 @@ describe('coderefs', () => {
   })
   it('rejects absolute paths and inverted ranges', () => {
     expect(parse('/etc/passwd').ref).toBeUndefined()
+    expect(parse('../outside.ts').ref).toBeUndefined()
+    expect(parse('https://example.com/app.ts').ref).toBeUndefined()
     expect(parse('src/app.ts:9-3').ref).toBeUndefined()
   })
   it('round-trips through format', () => {
     for (const value of ['src/app.ts', 'src/app.ts#App.run', 'src/app.ts:42-88', 'src/app.ts#App:7-9']) {
       const { ref } = parse(value)
-      expect(formatCodeRef(ref!)).toBe(value)
+      expect(formatCodeTarget(ref!)).toBe(value)
     }
   })
 })
@@ -71,18 +73,35 @@ describe('frontmatter', () => {
     expect(doc.title).toBe('T')
     expect(doc.lead).toBe('Lead.')
   })
-  it('accepts typed visual references and validates safe hrefs', () => {
+  it('accepts typed references and validates targets', () => {
     const issues: string[] = []
-    expect(linksField({ links: [
-      { rel: 'visual', href: 'docs/ui/screen.png#empty', title: 'Empty state' },
-      { rel: 'research', href: 'https://example.com/research' }
-    ] }, issues, 't')).toHaveLength(2)
-    expect(repositoryLinkPath('docs/ui/screen.png?raw=1#empty')).toBe('docs/ui/screen.png')
+    const references = referencesField({ references: [
+      { kind: 'visual', role: 'intent', target: 'docs/ui/screen.png#empty', title: 'Empty state' },
+      { kind: 'research', role: 'context', target: 'https://example.com/research' },
+      { kind: 'code', role: 'implementation', target: 'src/screen.ts#render' }
+    ] }, issues, 't')
+    expect(references).toHaveLength(3)
+    expect(repositoryReferencePath(references[0]!)).toBe('docs/ui/screen.png')
+    expect(repositoryReferencePath(references[2]!)).toBe('src/screen.ts')
     expect(issues).toEqual([])
 
     const unsafe: string[] = []
-    expect(linksField({ links: [{ rel: 'visual', href: 'file:///tmp/screen.png' }] }, unsafe, 't')).toEqual([])
+    expect(referencesField({ references: [
+      { kind: 'visual', role: 'intent', target: 'file:///tmp/screen.png' }
+    ] }, unsafe, 't')).toEqual([])
     expect(unsafe.join('\n')).toContain('must use HTTP(S) or a repository-relative path')
+  })
+
+  it('rejects missing, unknown, and extra reference fields', () => {
+    const issues: string[] = []
+    expect(referencesField({ references: [
+      { kind: 'visual', target: 'https://example.com' },
+      { kind: 'binary', role: 'context', target: 'https://example.com' },
+      { kind: 'doc', role: 'context', target: 'https://example.com', verified: true }
+    ] }, issues, 't')).toEqual([])
+    expect(issues.join('\n')).toContain('needs string "kind", "role", and "target"')
+    expect(issues.join('\n')).toContain('reference kind "binary"')
+    expect(issues.join('\n')).toContain('unknown key "verified"')
   })
 })
 

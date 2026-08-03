@@ -9,11 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- First-class Interface entities for supported Product interaction contracts,
+  with exact Interface–Experience availability across Capabilities, Journeys,
+  Screens, Scenarios, and Business Rules.
+- Required Actor classification as `person|system` and `external|internal`.
 - Platform-neutral Screen entities for meaningful web and mobile product views,
   including product-visible information, actions, states, capability boundaries,
   relationships, and optional public routes or deep links.
-- `visual` and `research` supporting-link relations. Referenced content remains
-  external to the Product Model and is never treated as verification evidence.
+- Universal References on every semantic entity, with independent artifact
+  kinds (`code|spec|proposal|doc|adr|visual|research`) and attachment roles
+  (`intent|implementation|context`). Referenced content stays outside the
+  Product Model and never replaces its prose or proves alignment.
 - `businesslens-map` for initial adoption, scoped remapping, and deliberate
   Product Model coverage expansion without executing target code.
 - `businesslens-verify` as the single post-build invocation. It classifies
@@ -24,15 +30,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   unchanged-gap stopping rule. Verification findings are re-derived rather than
   persisted in a receipt or ledger.
 - Accepted decisions covering [repository-owned files](./adr/0004-write-nothing-outside-businesslens.md),
-  [code bookmarks](./adr/0005-coderefs-are-bookmarks.md),
+  [unified References](./adr/0008-unified-references-and-portable-reports.md),
   [non-persisted verification](./adr/0006-verification-is-not-persisted.md),
   and the [three-skill boundary](./adr/0007-three-skills-and-one-verification-loop.md).
 
 ### Changed
 
-- **Breaking.** New authored models use folder schema 2 and new exports use
-  Product Report v5. Historical screenless schema 1 models and Product Report
-  v4 inputs remain readable.
+- **Breaking.** Folder schema 3 and Product Report v6 are now the only accepted
+  formats. Schema 1/2, Product Report v4/v5, and their compatibility paths are
+  removed rather than migrated.
+- **Breaking.** Feature is renamed Capability throughout the folder format,
+  parser, SDK, CLI, skills, docs, fixtures, and Blueprint. `features/` is
+  rejected; Capabilities live in `capabilities/`.
+- **Breaking.** Experiences now declare their Interfaces and no longer carry
+  `exit`. Journeys use Capabilities and exact availability, may cross Domains,
+  and no longer declare one Domain. Business Rules exclusively own Rule scope.
+- Domains are optional Capability groupings. Screens remain optional and now
+  use exact availability without embedding visual evidence.
 - The bundled Content & Feed Reader Blueprint now demonstrates the complete
   model, including cross-platform Screens, product states, mobile deep links,
   and external visual and research references.
@@ -43,17 +57,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   spelling is refused with exit code 2 and a replacement message; it is not an
   alias. Lint output contains only `ok`, `errors`, `warnings`, and `counts`—no
   branch situation or authority inference.
-- `codeRefs` are optional navigational bookmarks on every entity. Missing refs
-  never fail lint; present refs still require valid grammar and tracked paths.
-  They are not proof, implementation state, completeness, or verification
-  receipts.
+- **Breaking.** `references` replaces both `codeRefs` and `links`. Reference
+  records are strict, duplicate targets fail lint, code targets require tracked
+  files, and missing local non-code targets warn.
 - `coverage.status` now describes model breadth only: `draft` while the model
   itself is under review, `partial` with known unmapped areas, and `complete`
   when intended product scope is modeled. A complete model may have zero
-  codeRefs.
-- Blueprint open and pull preserve the report's model-completeness status while
-  stripping source-repository bookmarks. `coverage.mapped` remains Product
-  Report compatibility metadata and counts bookmark-bearing entities.
+  References.
+- **Breaking.** Product Report v6 declares a `workspace` or `portable` Reference
+  profile. Portable projection replaces evidence-redaction terminology and
+  keeps only HTTP(S) intent/context References.
+- **Breaking.** Coverage no longer contains counts, mapped entities, or a
+  redaction flag. Entity totals live only in Summary; Coverage is independent
+  from References. Blueprint open and pull preserve model breadth while
+  removing repository-local Coverage source areas.
 - Every model creation path carries canonical orientation in
   `.businesslens/README.md`. BusinessLens still never writes target-root
   `AGENTS.md`, `CLAUDE.md`, or README files.

@@ -18,9 +18,9 @@ npx businesslens@latest blueprint pull content-feed-reader
 ```
 
 The command writes only `.businesslens/`, including its orientation README.
-Source-repository bookmarks are removed because they cannot navigate this new
-repository. The Blueprint's model-completeness status is preserved; it is not
-downgraded merely because codeRefs were redacted.
+Source-repository and implementation References are removed because they cannot
+navigate or describe this new repository. The Blueprint's model-completeness
+status is preserved because Coverage is independent from References.
 
 Lint the imported structure:
 
@@ -28,8 +28,10 @@ Lint the imported structure:
 npx businesslens@latest lint
 ```
 
-Read `product.md`, the business rules, and the scenarios. If the model is what
-you want, send it to your normal plan/build flow. If you want adjacent behavior,
+Read `product.md`, then its Actors, Interfaces, Experiences, Capabilities,
+Business Rules, Journeys, and Scenarios. Confirm that exact availability matches
+the web, mobile, CLI, API, or integration commitments you want. If it does,
+send the model to your normal plan/build flow. If you want adjacent behavior,
 run `businesslens-ideate`, approve the model delta, then build.
 
 After implementation, invoke:

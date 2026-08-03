@@ -1,7 +1,5 @@
 ---
 kind: conflict
-businessRules:
-  - saved-items-outlive-their-source
 ---
 
 # Unsaving an item that a collection depends on

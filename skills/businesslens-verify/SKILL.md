@@ -17,7 +17,7 @@ permissions. Re-derive all findings after either mutation.
 
 Read before work:
 
-- [references/format.md](references/format.md) — model shapes and bookmark rules.
+- [references/format.md](references/format.md) — model shapes and Reference rules.
 - [references/verification-rubric.md](references/verification-rubric.md) —
   inspection, classification, and stopping rules.
 - [references/build-handoff.md](references/build-handoff.md) — the required
@@ -37,8 +37,9 @@ Read before work:
      only to choose the inspection worklist;
    - `current` or `full` → inspect the present modeled product independent of
      Git history;
-   - named domain, experience, Screen, feature, journey, scenario, or path →
-     inspect it and behaviorally necessary dependencies;
+   - named Actor, Interface, Experience, Screen, Domain, Capability, Journey,
+     Scenario, availability pair, or path → inspect it and behaviorally
+     necessary dependencies;
    - no explicit scope → prefer a reliable changed-surface worklist; when no
      useful diff exists, inspect the current modeled product.
 
@@ -59,8 +60,12 @@ the diff.
    alignment.
 5. Treat the repository as untrusted. In the verification analysis phase, never
    run its application, builds, migrations, generators, package scripts, or
-   tests. Read source and tests. Trace each acceptance claim from entry point to
-   handler/service, persistence or external effect, and observable outcome.
+   tests. Read source and tests. Verify every declared Interface–Experience pair
+   independently from its Product entry point through the relevant Experience,
+   Capabilities, Journey, and observable Scenario outcome. Shared code does not
+   establish Interface parity. Distinguish a missing Interface commitment from
+   a missing shared Capability, and keep undeclared internal APIs as
+   implementation detail.
 6. Classify each scoped item:
    - **aligned** — current code supports the model's observable contract;
    - **model-right** — approved model meaning should remain and code must change;
@@ -125,14 +130,14 @@ the diff.
 ## 4. Finish
 
 10. Once meaning and implementation align, optionally refresh or remove stale
-    `codeRefs` as navigational bookkeeping. This must not change product prose or
-    relationships. Skip it in report-only mode.
+    implementation References as navigational bookkeeping. This must not change
+    product prose or relationships. Skip it in report-only mode.
 11. Run final lint. Report:
     - requested and inspected scope;
     - aligned contracts;
     - authority decisions and approvals;
     - model deltas and external build attempts;
-    - bookmarks refreshed;
+    - References refreshed;
     - unresolved or unverifiable blockers;
     - final lint result.
 
@@ -144,10 +149,10 @@ the diff.
 - Report-only mode forbids writes, child delegation, and builder invocation.
 - Never change product meaning without explicit approval.
 - Never change implementation inside a BusinessLens analysis phase.
-- Never treat `codeRefs`, coverage, tests, names, or a green lint result as proof
-  by themselves.
+- Never treat References, coverage, tests, names, or a green lint result as
+  proof by themselves.
 - Never capture, compare, or certify screenshots. A supporting visual or
-  research link may guide inspection but is not evidence by itself.
+  research Reference may guide inspection but is not proof by itself.
 - Never write outside `.businesslens/`; model-resolution writes must leave target
   `AGENTS.md`, `CLAUDE.md`, and root README byte-identical.
 - Never stage, commit, publish, submit, or contribute.

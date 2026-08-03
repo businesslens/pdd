@@ -1,9 +1,9 @@
 ---
 title: lint
-description: Check Product Model structure, relationships, grammar, links, and tracked code-reference paths without claiming semantic alignment.
+description: Check Product Model structure, relationships, Reference grammar, and tracked code-reference paths without claiming semantic alignment.
 section: open-source
 group: CLI
-order: 28
+order: 29
 ---
 
 # `businesslens lint`
@@ -15,16 +15,18 @@ npx businesslens@latest lint [--json]
 Lint is deterministic and read-only. It checks:
 
 - required files, frontmatter allowlists, IDs, titles, and behavior sections;
-- actor, experience, domain, feature, rule, journey, scenario, and taxonomy
+- Actor classifications; Interface and Experience relations; exact
+  availability; Capability, Domain, Rule, Journey, Scenario, and taxonomy
   relationships;
 - access modes, scenario step/decision shapes, and globally unique scenario IDs;
-- link and codeRef grammar;
-- whether present codeRef paths are tracked by Git.
+- strict Reference shape, kinds, roles, targets, and duplicate targets;
+- whether present code-reference paths are tracked by Git, and whether local
+  non-code targets exist.
 
-Missing codeRefs are valid at every coverage status because they are optional
-navigation. Lint does not inspect symbols, line existence, runtime behavior,
-semantic drift, or implementation completeness. A green result means the model
-is structurally sound—not that model and code agree.
+Missing References are valid at every Coverage status because they are optional
+attachments. Lint does not inspect referenced content, symbols, line existence,
+runtime behavior, semantic drift, or implementation completeness. A green
+result means the model is structurally sound—not that model and code agree.
 
 Use `businesslens-verify` for semantic alignment.
 
@@ -37,10 +39,11 @@ Use `businesslens-verify` for semantic alignment.
   "warnings": [],
   "counts": {
     "actors": 2,
+    "interfaces": 3,
     "experiences": 2,
     "screens": 1,
     "domains": 2,
-    "features": 3,
+    "capabilities": 3,
     "journeys": 2,
     "scenarios": 3,
     "businessRules": 2

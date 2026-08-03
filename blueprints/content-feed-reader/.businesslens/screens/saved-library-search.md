@@ -1,7 +1,10 @@
 ---
-experiences:
-  - reading-app
-features:
+availability:
+  - interface: reader-web
+    experiences: [reading-app]
+  - interface: reader-mobile
+    experiences: [reading-app]
+capabilities:
   - item-saving
   - item-tagging
   - library-search
@@ -13,10 +16,9 @@ scenarios:
   - save-an-item-while-reading
   - tag-a-saved-item
 entryPoints:
-  - web: /saved
-  - web: /search
-  - ios: content-reader://library/saved
-  - android: content-reader://library/saved
+  - reader-web: /saved
+  - reader-web: /search
+  - reader-mobile: content-reader://library/saved
 ---
 
 # Saved library and search

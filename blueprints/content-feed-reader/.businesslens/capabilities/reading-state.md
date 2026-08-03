@@ -1,11 +1,10 @@
 ---
 domain: library
-actors:
-  - reader
-experiences:
-  - reading-app
-businessRules:
-  - reading-state-is-private-to-its-reader
+availability:
+  - interface: reader-web
+    experiences: [reading-app]
+  - interface: reader-mobile
+    experiences: [reading-app]
 ---
 
 # Reading state

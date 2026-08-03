@@ -1,9 +1,12 @@
 ---
 kind: primary
-businessRules: [payment-before-confirmation]
-codeRefs:
-  - src/services/orders.ts#OrderService.submit
-  - src/services/payments.ts#PaymentGateway.charge
+references:
+  - kind: code
+    role: implementation
+    target: src/services/orders.ts#OrderService.submit
+  - kind: code
+    role: implementation
+    target: src/services/payments.ts#PaymentGateway.charge
 ---
 
 # Complete checkout

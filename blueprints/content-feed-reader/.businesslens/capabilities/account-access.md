@@ -1,10 +1,10 @@
 ---
 domain: accounts
-actors:
-  - reader
-  - visitor
-experiences:
-  - account-access
+availability:
+  - interface: reader-web
+    experiences: [account-access]
+  - interface: reader-mobile
+    experiences: [account-access]
 ---
 
 # Account access

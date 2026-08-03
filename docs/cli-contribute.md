@@ -3,7 +3,7 @@ title: blueprint contribute
 description: Open a pull request proposing your Product Model as a catalog Blueprint.
 section: open-source
 group: CLI
-order: 32
+order: 33
 ---
 
 # `businesslens blueprint contribute`
@@ -40,9 +40,9 @@ you do, because GitHub refuses to let one account own both a parent and a fork.
 ## What it does
 
 1. Resolves and loads the Product Model, and lints its structure. Errors stop
-   the run; coverage status and missing bookmarks do not imply implementation
+   the run; Coverage status and missing References do not imply implementation
    state and therefore are not lint findings.
-2. Exports a Blueprint — the model with every `codeRef` stripped.
+2. Exports a Blueprint using the portable Reference profile.
 3. **Regenerates the model from that Blueprint.** This is what goes in the
    pull request.
 4. Derives the slug from `--slug`, or from the product id.
@@ -81,12 +81,13 @@ it is yours to delete.
 
 ## Why it regenerates
 
-`codeRefs` live in the frontmatter of the `.businesslens/**/*.md` files you
-authored, and redaction operates on a built report. Copying your authored files
-into a pull request would publish your source paths.
+Workspace References live in the frontmatter of the `.businesslens/**/*.md`
+files you authored, and portable projection operates on a built report. Copying
+your authored files into a pull request could publish source paths or
+implementation artifacts.
 
-Regenerating from the redacted report is the only way to be sure nothing
-repository-specific travels, and it has a second benefit: the contents are then
+Regenerating from the portable report ensures repository-specific material does
+not travel, and it has a second benefit: the contents are then
 byte-identical to what `businesslens blueprint pull <slug>` produces for everyone else.
 
 The gate does not take this on trust. `blueprints:check` runs on every pull
@@ -143,14 +144,15 @@ altitude — what a user observes, not how the system achieves it. Naming a
 framework, database, or architecture narrows the Blueprint's usefulness without
 making it more complete.
 
-## What review looks at
+## Review criteria
 
 - **The acceptance test.** A maintainer will run it.
 - **Scenario quality.** Each scenario must be checkable against an
   implementation without running it. "Cart validation works" is too vague;
   "submitting an empty cart shows an error and keeps the cart" is not.
 - **No repository-specific source metadata.** `blueprints:check` fails the pull request on any
-  `codeRef`, coverage source area, repository link, or repository entry point.
+  code or implementation Reference, local Reference target, Coverage source
+  area, or repository entry point.
   This is automated and not negotiable.
 - **The manifest.** Set `category`, `icon`, `accent`, and `authors` properly.
 

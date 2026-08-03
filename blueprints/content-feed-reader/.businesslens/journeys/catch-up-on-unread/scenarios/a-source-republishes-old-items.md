@@ -1,7 +1,5 @@
 ---
 kind: conflict
-businessRules:
-  - items-are-deduplicated-per-source
 ---
 
 # Republished items do not refill a cleared backlog

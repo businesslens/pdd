@@ -1,12 +1,14 @@
 ---
-domain: accounts
 actors:
   - reader
   - visitor
-experiences:
+capabilities:
   - account-access
-features:
-  - account-access
+availability:
+  - interface: reader-web
+    experiences: [account-access]
+  - interface: reader-mobile
+    experiences: [account-access]
 ---
 
 # Establish an account

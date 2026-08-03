@@ -1,15 +1,10 @@
 ---
 domain: sharing
-actors:
-  - collection-owner
-  - visitor
-experiences:
-  - public-collection
-  - reading-app
-businessRules:
-  - only-an-owner-changes-a-collection
-  - reading-state-is-private-to-its-reader
-  - unlisting-revokes-anonymous-access
+availability:
+  - interface: reader-web
+    experiences: [public-collection, reading-app]
+  - interface: reader-mobile
+    experiences: [public-collection, reading-app]
 ---
 
 # Collection sharing

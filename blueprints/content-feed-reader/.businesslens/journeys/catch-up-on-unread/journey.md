@@ -1,13 +1,15 @@
 ---
-domain: library
 actors:
   - reader
-experiences:
-  - reading-app
-features:
+capabilities:
   - item-saving
   - reading-state
   - source-refresh
+availability:
+  - interface: reader-web
+    experiences: [reading-app]
+  - interface: reader-mobile
+    experiences: [reading-app]
 ---
 
 # Catch up on unread

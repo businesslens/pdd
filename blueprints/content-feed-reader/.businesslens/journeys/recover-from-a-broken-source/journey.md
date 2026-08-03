@@ -1,13 +1,15 @@
 ---
-domain: sources
 actors:
   - reader
   - syndication-source
-experiences:
-  - reading-app
-features:
+capabilities:
   - source-following
   - source-refresh
+availability:
+  - interface: reader-web
+    experiences: [reading-app]
+  - interface: reader-mobile
+    experiences: [reading-app]
 ---
 
 # Recover from a broken source

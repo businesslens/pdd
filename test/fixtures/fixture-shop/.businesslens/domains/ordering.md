@@ -1,7 +1,9 @@
 ---
 colorSlot: 4
-codeRefs:
-  - src/services/orders.ts
+references:
+  - kind: code
+    role: implementation
+    target: src/services/orders.ts
 ---
 
 # Ordering

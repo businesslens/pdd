@@ -1,8 +1,5 @@
 ---
 kind: external-failure
-businessRules:
-  - a-source-failure-never-empties-the-library
-  - failing-sources-back-off-and-surface-status
 ---
 
 # A source that stops responding is marked, not dropped

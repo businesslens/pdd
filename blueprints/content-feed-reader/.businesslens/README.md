@@ -6,11 +6,12 @@ intended product behavior.
 
 ## If you are an agent working in this repository
 
-- Read `product.md` first, then the actors, experiences, optional screens,
-  domains, features, business rules, journeys, and scenarios.
+- Read `product.md` first, then Actors, Interfaces, Experiences, optional
+  Screens and Domains, Capabilities, Business Rules, Journeys, and Scenarios.
 - Treat scenarios as the acceptance contract and business rules as invariants.
 - Do not infer a stack or architecture from the model.
-- Treat `codeRefs` as optional navigation, never proof or implementation state.
+- References are optional navigation and context. Their role explains why an
+  artifact is attached; it never proves alignment or replaces product prose.
 - After code changes, use `businesslens-verify`; run `npx businesslens lint`
   for structural checks.
 - Use `businesslens-ideate` to change intended behavior and `businesslens-map`

@@ -1,8 +1,5 @@
 ---
 kind: primary
-businessRules:
-  - only-an-owner-changes-a-collection
-  - reading-state-is-private-to-its-reader
 ---
 
 # An owner publishes a collection

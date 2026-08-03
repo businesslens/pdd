@@ -1,16 +1,22 @@
 ---
-experiences: [storefront]
-features: [catalog-browsing]
+availability:
+  - interface: customer-web
+    experiences: [storefront]
+  - interface: customer-mobile
+    experiences: [storefront]
+capabilities: [catalog-browsing]
 scenarios: [browse-catalog]
 entryPoints:
-  - web: /products/:id
-  - ios: fixture-shop://products/:id
-links:
-  - rel: visual
-    href: https://example.com/designs/product-record
+  - customer-web: /products/:id
+  - customer-mobile: fixture-shop://products/:id
+references:
+  - kind: visual
+    role: intent
+    target: https://example.com/designs/product-record
     title: Product record visual reference
-codeRefs:
-  - src/routes/storefront.ts
+  - kind: code
+    role: implementation
+    target: src/routes/storefront.ts
 ---
 
 # Product record

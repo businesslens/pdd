@@ -30,8 +30,11 @@ or deliberately untrusted.
    It never executes target code. It shows the proposed model and coverage
    assessment before writing product meaning.
 
-3. Review the `.businesslens/` diff. Check relationships, scenario contracts,
-   explicit unmapped areas, limitations, and any optional code bookmarks.
+3. Review the `.businesslens/` diff. Check that supported Interfaces are Product
+   contracts rather than discovered technologies, Experiences are coherent
+   contexts, availability is exact, and Capabilities differ from complete
+   Journey goals. Also check Scenario contracts, unmapped areas, limitations,
+   and optional implementation References.
 
 4. Lint and commit:
 

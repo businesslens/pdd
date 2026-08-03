@@ -8,7 +8,7 @@ import { parseCanonicalName } from '../core/canonical-name.js'
 import { lsFiles } from '../core/git.js'
 import { loadModel } from '../core/model.js'
 import { resolveModelRoot } from '../core/model-root.js'
-import { redactSourceEvidence } from '../core/portable.js'
+import { projectPortableReport } from '../core/portable.js'
 import { buildProject } from './export.js'
 import { expandProductReport } from './open.js'
 import { lintModel } from './lint.js'
@@ -132,7 +132,7 @@ export async function runContribute(cwd: string, options: ContributeOptions): Pr
     const model = loadModel(modelRoot)
 
     // Lint against the repository's tracked files, exactly as `lint`
-    // does. Passing an empty set would report every codeRef in a brownfield
+    // does. Passing an empty set would report every code reference in a brownfield
     // model as untracked — and a brownfield model is the common case here.
     const lint = lintModel(model, gitRoot ? lsFiles(gitRoot) : [])
     if (!lint.ok) {
@@ -143,25 +143,25 @@ export async function runContribute(cwd: string, options: ContributeOptions): Pr
 
     // `buildProject` already emits the source-free profile. This second pass
     // is deliberate rather than leftover: it is the only path that
-    // publishes the user's model to a public repository, redaction is
+    // publishes the user's model to a public repository, projection is
     // idempotent, and the guarantee should not depend on a caller further up
     // continuing to hold.
     const { report } = buildProject(modelRoot)
-    const redacted = redactSourceEvidence(report)
+    const portable = projectPortableReport(report)
 
-    const slug = parseCanonicalName(options.slug ?? redacted.id)
+    const slug = parseCanonicalName(options.slug ?? portable.id)
 
-    // Regenerate the model from the redacted report rather than copying the
-    // authored files. codeRefs live in authored frontmatter and survive a copy;
-    // only expansion strips them. It also makes the pull request byte-identical
+    // Regenerate the model from the portable report rather than copying the
+    // authored files. Workspace references survive a copy; only projection and
+    // expansion strip them. It also makes the pull request byte-identical
     // to what `businesslens blueprint pull <slug>` produces.
     workspace = mkdtempSync(join(tmpdir(), 'businesslens-contribute-'))
     const regenerated = join(workspace, 'model')
     mkdirSync(regenerated, { recursive: true })
-    expandProductReport(regenerated, redacted, false)
+    expandProductReport(regenerated, portable, false)
 
     // Deliberately carries no origin repository or commit. The point of
-    // regenerating from a redacted report is that the contribution discloses
+    // regenerating from a portable report is that the contribution discloses
     // nothing about where it came from, and a private repository's URL is
     // exactly the kind of thing that must not land in a public pull request.
     // The catalog does not store it either — its manifest schema has no such
@@ -169,10 +169,10 @@ export async function runContribute(cwd: string, options: ContributeOptions): Pr
     // maintainer legitimately needs is already on the pull request itself.
     const manifest = {
       slug,
-      title: redacted.title,
-      summary: redacted.description.split('\n')[0]!.slice(0, 400),
+      title: portable.title,
+      summary: portable.description.split('\n')[0]!.slice(0, 400),
       category: 'Uncategorized',
-      tags: redacted.tags?.length ? redacted.tags : [slug],
+      tags: portable.tags?.length ? portable.tags : [slug],
       icon: 'i-lucide-box',
       accent: '#b8965c',
       authors: ['Unattributed'],
@@ -287,8 +287,9 @@ export async function runContribute(cwd: string, options: ContributeOptions): Pr
         `- **Title:** ${manifest.title}`,
         `- **Summary:** ${manifest.summary}`,
         '',
-        'Everything in this pull request was regenerated from a redacted Product Report,',
-        'so it carries no `codeRefs`, no source paths, and no reference to the repository',
+        'Everything in this pull request was regenerated from a portable Product Report,',
+        'so it carries no implementation or repository-local references, no source paths,',
+        'and no reference to the repository',
         'it came from, and is byte-identical to what `businesslens blueprint pull` produces.',
         '',
         'Please review the category, tags, icon, accent, and authors in `blueprint.yaml` —',

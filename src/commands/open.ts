@@ -13,15 +13,15 @@ import {
 import { dirname, isAbsolute, join, resolve } from 'node:path'
 import { stringify } from 'yaml'
 import { writeModelReadme } from '../core/model-readme.js'
-import type { ProductReportV5 } from '../core/portable.js'
+import type { ProductReportV6, ReportAvailability } from '../core/portable.js'
 import { lintModel } from './lint.js'
 import { loadModel } from '../core/model.js'
-import { parseProductReport, redactSourceEvidence } from '../core/portable.js'
+import { parseProductReport, projectPortableReport } from '../core/portable.js'
 
 const MAX_REPORT_BYTES = 8 * 1024 * 1024
-const OPEN_COVERAGE_METHOD = 'Opened from a Product Report; source repository bookmarks were intentionally removed.'
+const OPEN_COVERAGE_METHOD = 'Opened from a portable Product Report; source-repository navigation was intentionally removed.'
 const OPEN_COVERAGE_LIMITATION = 'Implementation alignment must be verified in this repository.'
-const OPEN_COVERAGE_RATIONALE = 'Product behavior, relationships, and model breadth were imported from a Product Report. Source-repository code references were removed because they do not navigate this repository.'
+const OPEN_COVERAGE_RATIONALE = 'Product behavior, relationships, and model breadth were imported from a Product Report. Source-repository references were removed because they do not navigate this repository.'
 
 function readReportSource(source: string): unknown {
   if (/^https?:\/\//i.test(source)) {
@@ -40,16 +40,21 @@ function frontmatter(data: Record<string, unknown>): string {
   return `---\n${stringify(data, { lineWidth: 0 }).trimEnd()}\n---\n\n`
 }
 
-function links(value: ProductReportV5['links']): Array<Record<string, string>> {
-  return value.map(link => ({
-    rel: link.rel,
-    href: link.href,
-    ...(link.title ? { title: link.title } : {})
+function references(value: ProductReportV6['references']): Array<Record<string, string>> {
+  return value.map(reference => ({
+    kind: reference.kind,
+    role: reference.role,
+    target: reference.target,
+    ...(reference.title ? { title: reference.title } : {})
   }))
 }
 
 function entryPoints(value: Array<{ type: string, path: string }>): Array<Record<string, string>> {
   return value.map(point => ({ [point.type]: point.path }))
+}
+
+function availability(value: ReportAvailability[]): Array<{ interface: string, experiences: string[] }> {
+  return value.map(item => ({ interface: item.interfaceId, experiences: item.experienceIds }))
 }
 
 function compactRecord(input: Record<string, unknown>): Record<string, unknown> {
@@ -101,8 +106,8 @@ function prepareTarget(cwd: string, force: boolean): string {
   return root
 }
 
-function writeReport(root: string, report: ProductReportV5): void {
-  write(join(root, 'config.yaml'), stringify({ schema: 2, sdd: { paths: [] } }, { lineWidth: 0 }))
+function writeReport(root: string, report: ProductReportV6): void {
+  write(join(root, 'config.yaml'), stringify({ schema: 3, sdd: { paths: [] } }, { lineWidth: 0 }))
   write(join(root, '.gitignore'), 'build/\ncache/\n')
   write(
     join(root, 'taxonomies.yaml'),
@@ -114,7 +119,7 @@ function writeReport(root: string, report: ProductReportV5): void {
       id: report.id,
       tags: report.tags,
       limitations: report.limitations,
-      links: links(report.links)
+      references: references(report.references)
     })) + body(report.title, report.description, report.intent, [], report.supportingContent)
   )
   write(
@@ -139,8 +144,28 @@ function writeReport(root: string, report: ProductReportV5): void {
   for (const actor of report.model.actors) {
     write(
       join(root, 'actors', `${actor.id}.md`),
-      frontmatter(compactRecord({ links: links(actor.links) }))
+      frontmatter(compactRecord({
+        kind: actor.kind,
+        relationship: actor.relationship,
+        references: references(actor.references)
+      }))
       + body(actor.name, actor.description, actor.intent, [], actor.supportingContent)
+    )
+  }
+  for (const productInterface of report.model.interfaces) {
+    write(
+      join(root, 'interfaces', `${productInterface.id}.md`),
+      frontmatter(compactRecord({
+        actors: productInterface.actorIds,
+        entryPoints: entryPoints(productInterface.entryPoints),
+        references: references(productInterface.references)
+      })) + body(
+        productInterface.title,
+        productInterface.description,
+        productInterface.intent,
+        [{ heading: 'Capability boundary', content: productInterface.capabilityBoundary }],
+        productInterface.supportingContent
+      )
     )
   }
   for (const domain of report.model.domains) {
@@ -148,7 +173,7 @@ function writeReport(root: string, report: ProductReportV5): void {
       join(root, 'domains', `${domain.id}.md`),
       frontmatter(compactRecord({
         colorSlot: domain.colorSlot,
-        links: links(domain.links)
+        references: references(domain.references)
       })) + body(domain.name, domain.description, domain.intent, [], domain.supportingContent)
     )
   }
@@ -157,15 +182,15 @@ function writeReport(root: string, report: ProductReportV5): void {
       join(root, 'experiences', `${experience.id}.md`),
       frontmatter(compactRecord({
         actors: experience.actorIds,
+        interfaces: experience.interfaceIds,
         access: experience.accessMode,
         entryPoints: entryPoints(experience.entryPoints),
-        exit: experience.exitContract,
-        links: links(experience.links)
+        references: references(experience.references)
       })) + body(
         experience.title,
         experience.description,
         experience.intent,
-        [{ heading: 'Capability boundary', content: experience.capabilities }],
+        [{ heading: 'Capability boundary', content: experience.capabilityBoundary }],
         experience.supportingContent
       )
     )
@@ -175,11 +200,11 @@ function writeReport(root: string, report: ProductReportV5): void {
     write(
       join(root, 'screens', `${screen.id}.md`),
       frontmatter(compactRecord({
-        experiences: screen.experienceIds,
-        features: screen.featureIds,
+        availability: availability(screen.availability),
+        capabilities: screen.capabilityIds,
         scenarios: screen.scenarioIds,
         entryPoints: entryPoints(screen.entryPoints),
-        links: links(screen.links)
+        references: references(screen.references)
       })) + body(
         screen.title,
         screen.description,
@@ -188,22 +213,20 @@ function writeReport(root: string, report: ProductReportV5): void {
           { heading: 'Information presented', content: screen.information.map(item => `- ${item}`).join('\n') },
           { heading: 'Available actions', content: screen.actions.map(item => `- ${item}`).join('\n') },
           { heading: 'Product states', content: states },
-          { heading: 'Capability boundary', content: screen.capabilities }
+          { heading: 'Capability boundary', content: screen.capabilityBoundary }
         ],
         screen.supportingContent
       )
     )
   }
-  for (const feature of report.model.features) {
+  for (const capability of report.model.capabilities) {
     write(
-      join(root, 'features', `${feature.id}.md`),
+      join(root, 'capabilities', `${capability.id}.md`),
       frontmatter(compactRecord({
-        domain: feature.domainId,
-        actors: feature.actorIds,
-        experiences: feature.experienceIds,
-        businessRules: feature.businessRuleIds,
-        links: links(feature.links)
-      })) + body(feature.title, feature.description, feature.intent, [], feature.supportingContent)
+        domain: capability.domainId,
+        availability: availability(capability.availability),
+        references: references(capability.references)
+      })) + body(capability.title, capability.description, capability.intent, [], capability.supportingContent)
     )
   }
   for (const rule of report.model.businessRules) {
@@ -211,10 +234,11 @@ function writeReport(root: string, report: ProductReportV5): void {
       join(root, 'business-rules', `${rule.id}.md`),
       frontmatter(compactRecord({
         domains: rule.domainIds,
-        features: rule.featureIds,
+        capabilities: rule.capabilityIds,
         journeys: rule.journeyIds,
         scenarios: rule.scenarioIds,
-        links: links(rule.links)
+        availability: availability(rule.availability),
+        references: references(rule.references)
       })) + body(
         rule.title,
         rule.statement,
@@ -225,7 +249,7 @@ function writeReport(root: string, report: ProductReportV5): void {
     )
   }
 
-  const scenariosByJourney = new Map<string, ProductReportV5['model']['scenarios']>()
+  const scenariosByJourney = new Map<string, ProductReportV6['model']['scenarios']>()
   for (const scenario of report.model.scenarios) {
     const current = scenariosByJourney.get(scenario.journeyId) || []
     current.push(scenario)
@@ -236,12 +260,11 @@ function writeReport(root: string, report: ProductReportV5): void {
     write(
       join(journeyRoot, 'journey.md'),
       frontmatter(compactRecord({
-        domain: journey.domainId,
         actors: journey.actorIds,
-        experiences: journey.experienceIds,
-        features: journey.featureIds,
+        capabilities: journey.capabilityIds,
+        availability: availability(journey.availability),
         entryPoints: entryPoints(journey.entryPoints),
-        links: links(journey.links)
+        references: references(journey.references)
       })) + body(journey.title, journey.summary, journey.intent, [], journey.supportingContent)
     )
     for (const scenario of scenariosByJourney.get(journey.id) || []) {
@@ -254,8 +277,8 @@ function writeReport(root: string, report: ProductReportV5): void {
         join(journeyRoot, 'scenarios', `${scenario.id}.md`),
         frontmatter(compactRecord({
           kind: scenario.kindId,
-          businessRules: scenario.businessRuleIds,
-          links: links(scenario.links)
+          availability: availability(scenario.availability),
+          references: references(scenario.references)
         })) + body(
           scenario.title,
           '',
@@ -275,7 +298,7 @@ function writeReport(root: string, report: ProductReportV5): void {
 }
 
 export interface ExpandedProductReport {
-  report: ProductReportV5
+  report: ProductReportV6
   root: string
 }
 
@@ -283,7 +306,7 @@ export function expandProductReport(cwd: string, input: unknown, force: boolean)
   let staging: string | undefined
   try {
     const sourceReport = parseProductReport(input)
-    const report = parseProductReport(redactSourceEvidence(sourceReport))
+    const report = parseProductReport(projectPortableReport(sourceReport))
     const targetParent = dirname(resolve(cwd, '.businesslens'))
     mkdirSync(targetParent, { recursive: true })
     staging = mkdtempSync(join(targetParent, '.businesslens-open-'))

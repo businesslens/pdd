@@ -3,7 +3,7 @@ title: blueprint pull
 description: Pull a Blueprint from the public catalog into the current directory.
 section: open-source
 group: CLI
-order: 31
+order: 32
 ---
 
 # `businesslens blueprint pull`
@@ -26,10 +26,10 @@ passes it to the same expansion primitive as [`open`](./cli-open.md).
 The pulled report becomes a canonical `.businesslens/` Product Model:
 
 - the Blueprint's model-breadth coverage status is preserved;
-- product behavior, relationships, intent, routes, HTTP(S) links, and supporting
-  content are preserved;
-- source-repository `codeRefs` are removed because they do not navigate this
-  repository.
+- product behavior, relationships, intent, routes, portable HTTP(S) References,
+  and supporting content are preserved;
+- code, implementation, and repository-relative References are removed because
+  they do not describe or navigate this repository.
 
 `pull` also writes `.businesslens/README.md`, telling a coding agent what it is
 looking at: a specification whose scenarios are the acceptance contract. Without

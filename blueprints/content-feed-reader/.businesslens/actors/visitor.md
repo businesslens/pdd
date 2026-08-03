@@ -1,3 +1,8 @@
+---
+kind: person
+relationship: external
+---
+
 # Visitor
 
 Someone reading a publicly shared collection without an account. A visitor sees

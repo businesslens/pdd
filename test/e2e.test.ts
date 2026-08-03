@@ -7,7 +7,7 @@ import { buildProject } from '../src/commands/export.js'
 import { loadModel } from '../src/core/model.js'
 import { lintModel } from '../src/commands/lint.js'
 import { lsFiles } from '../src/core/git.js'
-import { ProductReportV5Schema } from '../src/core/portable.js'
+import { ProductReportV6Schema } from '../src/core/portable.js'
 
 const FIXTURE = join(__dirname, 'fixtures', 'fixture-shop')
 
@@ -41,23 +41,30 @@ describe('end to end on a real git repo', () => {
   it('builds a schema-valid source-free report deterministically', () => {
     const first = buildProject(repo)
     const output = JSON.parse(readFileSync(first.outputFile, 'utf8'))
-    const parsed = ProductReportV5Schema.parse(output)
+    const parsed = ProductReportV6Schema.parse(output)
     expect(parsed.id).toBe('fixture-shop')
     expect(parsed.summary).toEqual({
       actors: 2,
+      interfaces: 3,
       experiences: 2,
       screens: 1,
       domains: 2,
-      features: 3,
+      capabilities: 3,
       journeys: 2,
       scenarios: 3,
       businessRules: 2
     })
-    expect(parsed.model.journeys[0]!.experienceIds).toEqual(['storefront'])
+    expect(parsed.model.journeys[0]!.availability).toEqual([
+      { interfaceId: 'customer-mobile', experienceIds: ['storefront'] },
+      { interfaceId: 'customer-web', experienceIds: ['storefront'] }
+    ])
     const screen = parsed.model.screens.find(item => item.id === 'product-record')
     expect(screen).toMatchObject({
-      experienceIds: ['storefront'],
-      featureIds: ['catalog-browsing'],
+      availability: [
+        { interfaceId: 'customer-mobile', experienceIds: ['storefront'] },
+        { interfaceId: 'customer-web', experienceIds: ['storefront'] }
+      ],
+      capabilityIds: ['catalog-browsing'],
       scenarioIds: ['browse-catalog'],
       information: ['Product name and description', 'Price and availability']
     })
@@ -65,26 +72,24 @@ describe('end to end on a real git repo', () => {
       '/products/:id',
       'fixture-shop://products/:id'
     ])
-    expect(screen?.links).toEqual([{
-      rel: 'visual',
-      href: 'https://example.com/designs/product-record',
+    expect(screen?.references).toEqual([{
+      kind: 'visual',
+      role: 'intent',
+      target: 'https://example.com/designs/product-record',
       title: 'Product record visual reference'
     }])
 
-    // Export produces a Blueprint, and a Blueprint carries no source evidence.
-    // The fixture's model is full of codeRefs; none of them survive the trip.
-    expect(parsed.model.actors.find(actor => actor.id === 'shopper')?.codeRefs).toEqual([])
-    expect(parsed.model.domains.find(domain => domain.id === 'catalog')?.codeRefs).toEqual([])
-    expect(Object.values(parsed.model).flatMap(entry =>
-      Array.isArray(entry) ? entry.flatMap(item => item.codeRefs ?? []) : []
-    )).toEqual([])
-    expect(parsed.coverage.evidenceRedacted).toBe(true)
-
-    // `mapped` still counts which authored entities carried bookmarks, so coverage does
-    // not silently collapse to zero just because the paths were stripped.
-    expect(parsed.coverage.mapped).toMatchObject({ actors: 1, screens: 1, domains: 2 })
-    expect(parsed.model.features.find(feature => feature.id === 'checkout')?.businessRuleIds)
-      .toEqual(['payment-before-confirmation'])
+    // Export produces a Blueprint with only portable references. The fixture's
+    // model carries code references, but none survive the projection.
+    expect(parsed.referenceProfile).toBe('portable')
+    const references = [parsed.references, ...Object.values(parsed.model).map(entry =>
+      Array.isArray(entry) ? entry.flatMap(item => item.references ?? []) : []
+    )].flat()
+    expect(references.some(reference => reference.kind === 'code')).toBe(false)
+    expect(references.some(reference => reference.role === 'implementation')).toBe(false)
+    expect(parsed.coverage.sourceAreas).toEqual([])
+    expect(parsed.model.businessRules.find(rule => rule.id === 'payment-before-confirmation')?.capabilityIds)
+      .toEqual(['checkout'])
     expect(parsed.model.scenarios.find(scenario => scenario.id === 'complete-checkout')?.decisionPoints)
       .toHaveLength(1)
     expect(JSON.stringify(parsed)).not.toContain('github.com/example/fixture-shop')
@@ -121,7 +126,15 @@ describe('end to end on a real git repo', () => {
 
   it('build validates untracked authored product-model files without requiring publish provenance', () => {
     const untracked = join(repo, '.businesslens/actors/uncommitted.md')
-    writeFileSync(untracked, '# Uncommitted actor\n\nA model entity that does not exist at HEAD.\n')
+    writeFileSync(untracked, `---
+kind: person
+relationship: external
+---
+
+# Uncommitted actor
+
+A model entity that does not exist at HEAD.
+`)
     expect(buildProject(repo).report.model.actors.some(actor => actor.id === 'uncommitted')).toBe(true)
     rmSync(untracked)
   })

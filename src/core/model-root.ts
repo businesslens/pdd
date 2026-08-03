@@ -18,9 +18,9 @@ export interface ModelRoot {
  * repository at all.
  *
  * `gitRoot` is reported separately because it means something different: it is
- * where `codeRefs` are resolved and tracked files are listed. A model outside a
- * repository has no tracked files, so repository-specific code bookmarks are
- * invalid there.
+ * where code-reference targets are resolved and tracked files are listed. A
+ * model outside a repository has no tracked files, so repository-specific code
+ * references are invalid there.
  */
 export function resolveModelRoot(cwd: string): ModelRoot {
   let gitRoot: string | undefined

@@ -1,12 +1,16 @@
 import { readdirSync, readFileSync, existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { parse } from 'yaml'
-import type { CodeRef } from './coderefs.js'
-import type { CompactEntryPoint, EntityLink } from './frontmatter.js'
+import type { Availability, CompactEntryPoint, EntityReference } from './frontmatter.js'
 import type { MarkdownDoc } from './markdown.js'
-import { parseCodeRef } from './coderefs.js'
 import {
-  entryPointsField, linksField, rejectUnknownKeys, splitFrontmatter, stringField, stringListField
+  availabilityField,
+  entryPointsField,
+  referencesField,
+  rejectUnknownKeys,
+  splitFrontmatter,
+  stringField,
+  stringListField
 } from './frontmatter.js'
 import { stem } from './ids.js'
 import {
@@ -17,58 +21,73 @@ export interface EntityFile {
   id: string
   file: string
   doc: MarkdownDoc
-  codeRefs: CodeRef[]
-  links: EntityLink[]
+  references: EntityReference[]
 }
 
-export interface ActorEntity extends EntityFile {}
-export interface DomainEntity extends EntityFile { colorSlot?: number }
+export interface ActorEntity extends EntityFile {
+  kind: string
+  relationship: string
+}
+
+export interface InterfaceEntity extends EntityFile {
+  actors: string[]
+  entryPoints: CompactEntryPoint[]
+  capabilityBoundary: string
+}
+
 export interface ExperienceEntity extends EntityFile {
   actors: string[]
+  interfaces: string[]
   access: string
   entryPoints: CompactEntryPoint[]
-  exit: string
-  capabilities: string
+  capabilityBoundary: string
 }
-export interface FeatureEntity extends EntityFile {
-  domain: string
-  actors: string[]
-  experiences: string[]
-  businessRules: string[]
+
+export interface DomainEntity extends EntityFile {
+  colorSlot?: number
 }
+
+export interface CapabilityEntity extends EntityFile {
+  domain?: string
+  availability: Availability[]
+}
+
 export interface ScreenEntity extends EntityFile {
-  experiences: string[]
-  features: string[]
+  availability: Availability[]
+  capabilities: string[]
   scenarios: string[]
   entryPoints: CompactEntryPoint[]
   information: string[]
   actions: string[]
   states: ReturnType<typeof screenStates>
-  capabilities: string
+  capabilityBoundary: string
 }
+
 export interface ScenarioEntity extends EntityFile {
   journeyId: string
   kind: string
+  availability: Availability[]
   trigger: string
   steps: string[]
   outcome: string
   edgeCases: string[]
-  businessRules: string[]
   decisionPoints: ReturnType<typeof decisionPoints>
 }
+
 export interface JourneyEntity extends EntityFile {
-  domain: string
   actors: string[]
-  experiences: string[]
-  features: string[]
+  capabilities: string[]
+  availability: Availability[]
   entryPoints: CompactEntryPoint[]
   scenarios: ScenarioEntity[]
 }
+
 export interface BusinessRuleEntity extends EntityFile {
   domains: string[]
-  features: string[]
+  capabilities: string[]
   journeys: string[]
   scenarios: string[]
+  availability: Availability[]
   rationale: string
 }
 
@@ -82,7 +101,7 @@ export interface ScenarioKind {
 export interface PddModel {
   root: string
   config: { schema: number, sddPaths: string[] }
-  product: { id: string, tags: string[], limitations: string[], doc: MarkdownDoc, links: EntityLink[] }
+  product: { id: string, tags: string[], limitations: string[], doc: MarkdownDoc, references: EntityReference[] }
   scenarioKinds: ScenarioKind[]
   coverage: {
     status: string
@@ -93,10 +112,11 @@ export interface PddModel {
     rationale: string
   }
   actors: ActorEntity[]
-  domains: DomainEntity[]
+  interfaces: InterfaceEntity[]
   experiences: ExperienceEntity[]
   screens: ScreenEntity[]
-  features: FeatureEntity[]
+  domains: DomainEntity[]
+  capabilities: CapabilityEntity[]
   businessRules: BusinessRuleEntity[]
   journeys: JourneyEntity[]
   issues: string[]
@@ -111,23 +131,25 @@ function listMarkdown(directory: string): string[] {
 
 function listDirectories(directory: string): string[] {
   if (!existsSync(directory)) return []
-  return readdirSync(directory, { withFileTypes: true }).filter(entry => entry.isDirectory()).map(entry => entry.name).sort()
+  return readdirSync(directory, { withFileTypes: true })
+    .filter(entry => entry.isDirectory())
+    .map(entry => entry.name)
+    .sort()
 }
 
-function codeRefsField(data: Record<string, unknown>, issues: string[], label: string): CodeRef[] {
-  const raw = stringListField(data, 'codeRefs', issues, label)
-  return raw.map(value => parseCodeRef(value, issues, label)).filter((ref): ref is CodeRef => Boolean(ref))
-}
-
-function readEntity(file: string, allowedKeys: string[], issues: string[]): { data: Record<string, unknown>, doc: MarkdownDoc, codeRefs: CodeRef[], links: EntityLink[] } {
+function readEntity(
+  file: string,
+  allowedKeys: string[],
+  issues: string[]
+): { data: Record<string, unknown>, doc: MarkdownDoc, references: EntityReference[] } {
   const source = readFileSync(file, 'utf8')
   const { data, body } = splitFrontmatter(source, issues, file)
-  rejectUnknownKeys(data, [...allowedKeys, 'links', 'codeRefs'], issues, file)
+  rejectUnknownKeys(data, [...allowedKeys, 'references'], issues, file)
   const doc = parseMarkdown(body)
-  return { data, doc, codeRefs: codeRefsField(data, issues, file), links: linksField(data, issues, file) }
+  return { data, doc, references: referencesField(data, issues, file) }
 }
 
-/** Load the whole .businesslens/ folder into memory, collecting parse issues. */
+/** Load the strict schema 3 .businesslens/ folder, collecting parse issues. */
 export function loadModel(cwd: string): PddModel {
   const root = join(cwd, FOLDER)
   const issues: string[] = []
@@ -135,13 +157,22 @@ export function loadModel(cwd: string): PddModel {
     issues.push(`${FOLDER}/ does not exist — use \`businesslens-map\` for established code or \`businesslens-ideate\` for a new product`)
   }
 
-  let config = { schema: 1, sddPaths: [] as string[] }
+  let config = { schema: 3, sddPaths: [] as string[] }
   const configFile = join(root, 'config.yaml')
   if (existsSync(configFile)) {
     try {
       const raw = parse(readFileSync(configFile, 'utf8')) as Record<string, any> | null
+      const keys = Object.keys(raw || {}).filter(key => key !== 'schema' && key !== 'sdd')
+      for (const key of keys) issues.push(`config.yaml: unknown key "${key}"`)
+      if (raw?.sdd !== undefined && (typeof raw.sdd !== 'object' || raw.sdd === null || Array.isArray(raw.sdd))) {
+        issues.push('config.yaml: "sdd" must be a mapping')
+      } else if (raw?.sdd) {
+        for (const key of Object.keys(raw.sdd).filter(key => key !== 'paths')) {
+          issues.push(`config.yaml: sdd has unknown key "${key}"`)
+        }
+      }
       config = {
-        schema: Number(raw?.schema ?? 1),
+        schema: Number(raw?.schema ?? 0),
         sddPaths: Array.isArray(raw?.sdd?.paths) ? raw.sdd.paths.map(String) : []
       }
     } catch (error) {
@@ -150,8 +181,11 @@ export function loadModel(cwd: string): PddModel {
   } else if (existsSync(root)) {
     issues.push('config.yaml is missing')
   }
-  if (config.schema !== 1 && config.schema !== 2) {
-    issues.push(`config.yaml: schema ${config.schema} is not supported (expected 1 or 2)`)
+  if (config.schema !== 3) {
+    issues.push(`config.yaml: schema ${config.schema} is not supported (expected 3)`)
+  }
+  if (existsSync(join(root, 'features'))) {
+    issues.push('features/: unsupported schema 2 collection; use capabilities/ with schema 3')
   }
 
   let scenarioKinds: ScenarioKind[] = []
@@ -176,18 +210,20 @@ export function loadModel(cwd: string): PddModel {
     issues.push('taxonomies.yaml is missing')
   }
 
-  let product: PddModel['product'] = { id: '', tags: [], limitations: [], doc: { title: '', lead: '', sections: [] }, links: [] }
+  let product: PddModel['product'] = {
+    id: '', tags: [], limitations: [], doc: { title: '', lead: '', sections: [] }, references: []
+  }
   const productFile = join(root, 'product.md')
   if (existsSync(productFile)) {
     const source = readFileSync(productFile, 'utf8')
     const { data, body } = splitFrontmatter(source, issues, 'product.md')
-    rejectUnknownKeys(data, ['id', 'tags', 'limitations', 'links'], issues, 'product.md')
+    rejectUnknownKeys(data, ['id', 'tags', 'limitations', 'references'], issues, 'product.md')
     product = {
       id: stringField(data, 'id', issues, 'product.md') || '',
       tags: stringListField(data, 'tags', issues, 'product.md'),
       limitations: stringListField(data, 'limitations', issues, 'product.md'),
       doc: parseMarkdown(body),
-      links: linksField(data, issues, 'product.md')
+      references: referencesField(data, issues, 'product.md')
     }
   } else if (existsSync(root)) {
     issues.push('product.md is missing')
@@ -200,7 +236,7 @@ export function loadModel(cwd: string): PddModel {
   if (existsSync(coverageFile)) {
     const source = readFileSync(coverageFile, 'utf8')
     const { data, body } = splitFrontmatter(source, issues, 'coverage.md')
-    rejectUnknownKeys(data, ['status', 'method', 'sourceAreas', 'unmapped', 'limitations', 'links'], issues, 'coverage.md')
+    rejectUnknownKeys(data, ['status', 'method', 'sourceAreas', 'unmapped', 'limitations'], issues, 'coverage.md')
     coverage = {
       status: stringField(data, 'status', issues, 'coverage.md') || 'draft',
       method: stringListField(data, 'method', issues, 'coverage.md'),
@@ -215,96 +251,95 @@ export function loadModel(cwd: string): PddModel {
 
   const actors: ActorEntity[] = listMarkdown(join(root, 'actors')).map((name) => {
     const file = join(root, 'actors', name)
-    const { doc, codeRefs, links } = readEntity(file, [], issues)
-    return { id: stem(name), file, doc, codeRefs, links }
+    const { data, doc, references } = readEntity(file, ['kind', 'relationship'], issues)
+    return {
+      id: stem(name), file, doc, references,
+      kind: stringField(data, 'kind', issues, file) || '',
+      relationship: stringField(data, 'relationship', issues, file) || ''
+    }
   })
 
-  const domains: DomainEntity[] = listMarkdown(join(root, 'domains')).map((name) => {
-    const file = join(root, 'domains', name)
-    const { data, doc, codeRefs, links } = readEntity(file, ['colorSlot'], issues)
+  const interfaces: InterfaceEntity[] = listMarkdown(join(root, 'interfaces')).map((name) => {
+    const file = join(root, 'interfaces', name)
+    const { data, doc, references } = readEntity(file, ['actors', 'entryPoints'], issues)
     return {
-      id: stem(name), file, doc, codeRefs, links,
-      colorSlot: typeof data.colorSlot === 'number' ? data.colorSlot : undefined
+      id: stem(name), file, doc, references,
+      actors: stringListField(data, 'actors', issues, file),
+      entryPoints: entryPointsField(data, issues, file),
+      capabilityBoundary: section(doc, 'Capability boundary') || ''
     }
   })
 
   const experiences: ExperienceEntity[] = listMarkdown(join(root, 'experiences')).map((name) => {
     const file = join(root, 'experiences', name)
-    const { data, doc, codeRefs, links } = readEntity(file, ['actors', 'access', 'entryPoints', 'exit'], issues)
+    const { data, doc, references } = readEntity(
+      file,
+      ['actors', 'interfaces', 'access', 'entryPoints'],
+      issues
+    )
     return {
-      id: stem(name), file, doc, codeRefs, links,
+      id: stem(name), file, doc, references,
       actors: stringListField(data, 'actors', issues, file),
+      interfaces: stringListField(data, 'interfaces', issues, file),
       access: stringField(data, 'access', issues, file) || '',
       entryPoints: entryPointsField(data, issues, file),
-      exit: stringField(data, 'exit', issues, file) || '',
-      capabilities: section(doc, 'Capability boundary') || ''
+      capabilityBoundary: section(doc, 'Capability boundary') || ''
+    }
+  })
+
+  const domains: DomainEntity[] = listMarkdown(join(root, 'domains')).map((name) => {
+    const file = join(root, 'domains', name)
+    const { data, doc, references } = readEntity(file, ['colorSlot'], issues)
+    return {
+      id: stem(name), file, doc, references,
+      colorSlot: typeof data.colorSlot === 'number' ? data.colorSlot : undefined
+    }
+  })
+
+  const capabilities: CapabilityEntity[] = listMarkdown(join(root, 'capabilities')).map((name) => {
+    const file = join(root, 'capabilities', name)
+    const { data, doc, references } = readEntity(file, ['domain', 'availability'], issues)
+    return {
+      id: stem(name), file, doc, references,
+      domain: stringField(data, 'domain', issues, file),
+      availability: availabilityField(data, issues, file)
     }
   })
 
   const screens: ScreenEntity[] = listMarkdown(join(root, 'screens')).map((name) => {
     const file = join(root, 'screens', name)
-    const { data, doc, codeRefs, links } = readEntity(
+    const { data, doc, references } = readEntity(
       file,
-      ['experiences', 'features', 'scenarios', 'entryPoints'],
+      ['availability', 'capabilities', 'scenarios', 'entryPoints'],
       issues
     )
     return {
-      id: stem(name),
-      file,
-      doc,
-      codeRefs,
-      links,
-      experiences: stringListField(data, 'experiences', issues, file),
-      features: stringListField(data, 'features', issues, file),
+      id: stem(name), file, doc, references,
+      availability: availabilityField(data, issues, file),
+      capabilities: stringListField(data, 'capabilities', issues, file),
       scenarios: stringListField(data, 'scenarios', issues, file),
       entryPoints: entryPointsField(data, issues, file),
       information: bulletList(section(doc, 'Information presented') || ''),
       actions: bulletList(section(doc, 'Available actions') || ''),
       states: screenStates(section(doc, 'Product states') || '', issues, file),
-      capabilities: section(doc, 'Capability boundary') || ''
-    }
-  })
-  if (screens.length && config.schema !== 2) {
-    issues.push('screens/: Screen entities require config.yaml schema 2')
-  }
-
-  const features: FeatureEntity[] = listMarkdown(join(root, 'features')).map((name) => {
-    const file = join(root, 'features', name)
-    const { data, doc, codeRefs, links } = readEntity(
-      file,
-      ['domain', 'actors', 'experiences', 'businessRules'],
-      issues
-    )
-    return {
-      id: stem(name),
-      file,
-      doc,
-      codeRefs,
-      links,
-      domain: stringField(data, 'domain', issues, file) || '',
-      actors: stringListField(data, 'actors', issues, file),
-      experiences: stringListField(data, 'experiences', issues, file),
-      businessRules: stringListField(data, 'businessRules', issues, file)
+      capabilityBoundary: section(doc, 'Capability boundary') || ''
     }
   })
 
   const businessRules: BusinessRuleEntity[] = listMarkdown(join(root, 'business-rules')).map((name) => {
     const file = join(root, 'business-rules', name)
-    const { data, doc, codeRefs, links } = readEntity(
+    const { data, doc, references } = readEntity(
       file,
-      ['domains', 'features', 'journeys', 'scenarios'],
+      ['domains', 'capabilities', 'journeys', 'scenarios', 'availability'],
       issues
     )
     return {
-      id: stem(name),
-      file,
-      doc,
-      codeRefs,
-      links,
+      id: stem(name), file, doc, references,
       domains: stringListField(data, 'domains', issues, file),
-      features: stringListField(data, 'features', issues, file),
+      capabilities: stringListField(data, 'capabilities', issues, file),
       journeys: stringListField(data, 'journeys', issues, file),
       scenarios: stringListField(data, 'scenarios', issues, file),
+      availability: availabilityField(data, issues, file),
       rationale: section(doc, 'Rationale') || ''
     }
   })
@@ -316,37 +351,35 @@ export function loadModel(cwd: string): PddModel {
       issues.push(`journeys/${journeyId}/ is missing journey.md`)
       return null
     }
-    const { data, doc, codeRefs, links } = readEntity(
+    const { data, doc, references } = readEntity(
       file,
-      ['domain', 'actors', 'experiences', 'features', 'entryPoints'],
+      ['actors', 'capabilities', 'availability', 'entryPoints'],
       issues
     )
     const scenarios: ScenarioEntity[] = listMarkdown(join(journeyDir, 'scenarios')).map((scenarioName) => {
       const scenarioFile = join(journeyDir, 'scenarios', scenarioName)
-      const entity = readEntity(scenarioFile, ['kind', 'businessRules'], issues)
+      const entity = readEntity(scenarioFile, ['kind', 'availability'], issues)
       const scenarioDoc = entity.doc
       return {
         id: stem(scenarioName),
         file: scenarioFile,
         doc: scenarioDoc,
-        codeRefs: entity.codeRefs,
-        links: entity.links,
+        references: entity.references,
         journeyId,
         kind: stringField(entity.data, 'kind', issues, scenarioFile) || '',
+        availability: availabilityField(entity.data, issues, scenarioFile),
         trigger: section(scenarioDoc, 'Trigger') || '',
         steps: orderedList(section(scenarioDoc, 'Steps') || ''),
         outcome: section(scenarioDoc, 'Outcome') || '',
         edgeCases: bulletList(section(scenarioDoc, 'Edge cases') || ''),
-        businessRules: stringListField(entity.data, 'businessRules', issues, scenarioFile),
         decisionPoints: decisionPoints(section(scenarioDoc, 'Decision points') || '', issues, scenarioFile)
       }
     })
     return {
-      id: journeyId, file, doc, codeRefs, links,
-      domain: stringField(data, 'domain', issues, file) || '',
+      id: journeyId, file, doc, references,
       actors: stringListField(data, 'actors', issues, file),
-      experiences: stringListField(data, 'experiences', issues, file),
-      features: stringListField(data, 'features', issues, file),
+      capabilities: stringListField(data, 'capabilities', issues, file),
+      availability: availabilityField(data, issues, file),
       entryPoints: entryPointsField(data, issues, file),
       scenarios
     }
@@ -359,10 +392,11 @@ export function loadModel(cwd: string): PddModel {
     scenarioKinds,
     coverage,
     actors,
-    domains,
+    interfaces,
     experiences,
     screens,
-    features,
+    domains,
+    capabilities,
     businessRules,
     journeys,
     issues

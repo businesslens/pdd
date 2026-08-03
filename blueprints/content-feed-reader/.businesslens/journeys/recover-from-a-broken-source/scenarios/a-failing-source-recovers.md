@@ -1,7 +1,5 @@
 ---
 kind: primary
-businessRules:
-  - failing-sources-back-off-and-surface-status
 ---
 
 # A source that comes back resumes immediately

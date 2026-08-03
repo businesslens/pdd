@@ -4,7 +4,7 @@
  *
  * This deliberately does not trust `businesslens contribute`. Anyone can open a
  * pull request by hand, so the checks that matter — above all that no Blueprint
- * carries source evidence out of the repository it was authored in — are
+ * carries workspace material out of the repository it was authored in — are
  * re-run here against what is actually on disk.
  */
 import { execFileSync } from 'node:child_process'
@@ -62,15 +62,26 @@ if (!existsSync(join(blueprintsDir, 'LICENSE'))) {
   errors.push('blueprints/LICENSE is missing — Blueprint content must state its license')
 }
 
-/** Every place a Blueprint could carry evidence of the repository it came from. */
-function sourceEvidence(report) {
+/** Every place a Blueprint could carry workspace-only material. */
+function workspaceMaterial(report) {
   const found = []
+  if (report.referenceProfile !== 'portable') {
+    found.push(`referenceProfile is ${JSON.stringify(report.referenceProfile)}`)
+  }
+  const hosts = [{ id: 'product', references: report.references ?? [] }]
   for (const [kind, items] of Object.entries(report.model)) {
     if (!Array.isArray(items)) continue
     for (const item of items) {
-      if (item.codeRefs?.length) {
-        found.push(`${kind}/${item.id}: codeRefs ${JSON.stringify(item.codeRefs)}`)
-      }
+      if (item.references) hosts.push({ id: `${kind}/${item.id}`, references: item.references })
+    }
+  }
+  for (const host of hosts) {
+    for (const reference of host.references) {
+      if (
+        reference.kind === 'code'
+        || reference.role === 'implementation'
+        || !/^https?:\/\//i.test(reference.target)
+      ) found.push(`${host.id}: non-portable reference ${JSON.stringify(reference)}`)
     }
   }
   if (report.coverage?.sourceAreas?.length) {
@@ -78,9 +89,6 @@ function sourceEvidence(report) {
   }
   if (report.repository?.link) found.push(`repository.link ${report.repository.link}`)
   if (report.repository?.entryPoint) found.push(`repository.entryPoint ${report.repository.entryPoint}`)
-  for (const link of report.links ?? []) {
-    if (link.href && !/^https?:\/\//i.test(link.href)) found.push(`links: local href ${link.href}`)
-  }
   return found
 }
 
@@ -127,8 +135,8 @@ for (const slug of entries) {
     errors.push(`${label}: coverage status is "${report.coverage?.status}"; a Blueprint is a draft model`)
   }
 
-  const leaked = sourceEvidence(report)
-  for (const item of leaked) errors.push(`${label}: carries source evidence — ${item}`)
+  const leaked = workspaceMaterial(report)
+  for (const item of leaked) errors.push(`${label}: carries workspace material — ${item}`)
 }
 
 if (errors.length > 0) {

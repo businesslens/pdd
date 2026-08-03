@@ -1,4 +1,13 @@
+---
+status: superseded by ADR-0008
+---
+
 # Source-free is a Report profile, not what a Blueprint is
+
+> **Superseded by [ADR-0008](./0008-unified-references-and-portable-reports.md).**
+> The profile distinction remains, but it is now explicit as
+> `referenceProfile: workspace|portable`; unified References replace `codeRefs`
+> and `links`, and Coverage no longer carries reference-derived metadata.
 
 Supersedes [ADR-0002](./0002-blueprint-means-source-free.md).
 

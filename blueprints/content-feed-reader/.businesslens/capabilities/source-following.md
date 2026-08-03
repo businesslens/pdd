@@ -1,11 +1,10 @@
 ---
 domain: sources
-actors:
-  - reader
-experiences:
-  - reading-app
-businessRules:
-  - a-source-failure-never-empties-the-library
+availability:
+  - interface: reader-web
+    experiences: [reading-app]
+  - interface: reader-mobile
+    experiences: [reading-app]
 ---
 
 # Source following

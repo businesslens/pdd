@@ -1,61 +1,60 @@
 ---
 title: Screens
-description: Meaningful user-visible product views, shared across web and mobile when their product semantics are the same.
+description: Optional meaningful visual Product views placed in exact Interface–Experience contexts without embedding screenshots or layouts.
 section: open-source
 group: Product model
-order: 10
+order: 11
 ---
 
 # Screens
 
-**A Screen is a meaningful user-visible view** where product information or
-capabilities are exposed. It describes what users understand and can do there,
+**A Screen is a meaningful user-visible view** where Product information or
+Capabilities are exposed. It describes what users understand and can do there,
 not how the view is implemented or drawn.
 
-A Screen does not need a URL, fill a device display, or correspond to one page,
-component, route module, or mobile view controller. Models for CLI, API, and
-other non-visual products may contain no Screens.
+Screens are optional. A visual Product may need them; a CLI, supported API, or
+other non-visual Interface may not. A Screen need not have a URL, fill a device,
+or correspond to one component, route module, or view controller.
 
 ## When you create one
 
-Create a Screen when a view has a stable product purpose, meaningful
+Create a Screen when a view has a stable Product purpose, meaningful
 information or actions, and a capability boundary worth preserving. Do not
-create Screens for components, responsive layouts, themes, hover variants,
-loading skeletons, or every route mechanically discovered in source.
+create Screens for responsive layouts, themes, hover variants, skeletons,
+components, or every route found in source.
 
-> **Experience vs Screen.** An [Experience](./experiences.md) is the audience
-> and capability boundary of a whole product surface. A Screen is one
-> meaningful view inside one or more Experiences.
-
-> **Screen vs Scenario.** A Screen says what is visible and possible at one
-> product view. A [Scenario](./scenarios.md) is an observable path through a
-> user goal and may pass through several Screens.
+> **Experience vs Screen.** An [Experience](./experiences.md) is a coherent
+> context across one or more Interfaces. A Screen is one meaningful visual view
+> available in exact Interface–Experience pairs.
+>
+> **Screen vs Scenario.** A Screen says what is visible and possible at a view.
+> A [Scenario](./scenarios.md) is an observable path through a complete goal.
 
 ## The file
 
-Screens live at `screens/<screen-id>.md` and require folder schema `2`.
+Screens live at `screens/<screen-id>.md`. The whole directory is optional.
 
 ```md [screens/product-record.md]
 ---
-experiences: [storefront]
-features: [catalog-browsing]
+availability:
+  - interface: customer-web
+    experiences: [shopping]
+  - interface: customer-mobile
+    experiences: [shopping]
+capabilities: [catalog-browsing]
 scenarios: [browse-catalog]
 entryPoints:
-  - web: /products/:id
-  - ios: acme-shop://products/:id
-links:
-  - rel: visual
-    href: docs/ui/product-record.png
-    title: Current visual reference
+  - customer-web: /products/:id
+  - customer-mobile: shop://products/:id
+references:
+  - kind: visual
+    role: intent
+    target: https://example.com/designs/product-record
 ---
 
 # Product record
 
 Shows the information a shopper needs to evaluate one product.
-
-## Intent
-
-Help a shopper decide whether to add the product to the cart.
 
 ## Information presented
 
@@ -73,79 +72,51 @@ Help a shopper decide whether to add the product to the cart.
 
 The product can be added to the cart.
 
-### Unavailable
-
-The reason it cannot be purchased is explained.
-
 ## Capability boundary
 
-The screen does not change product or inventory data.
+The Screen does not change product or inventory data.
 ```
 
 | Key | Required | Meaning |
 | --- | --- | --- |
-| `experiences` | yes | Experience IDs containing the Screen — at least one |
-| `features` | yes | Feature IDs exposed by the Screen — at least one |
+| `availability` | yes | Exact Interface–Experience placement |
+| `capabilities` | yes | At least one Capability exposed by the Screen |
 | `scenarios` | no | Observable paths in which the Screen participates |
-| `entryPoints` | no | Public routes or supported deep links that reach it directly |
-| `links` | no | Supporting specs, visuals, research, or other external content |
+| `entryPoints` | no | Public routes or deep links keyed by an available Interface |
+| `references` | no | External intent, implementation, or context artifacts |
 
+Every Capability must support every Screen availability pair.
 `## Information presented` and `## Capability boundary` are required.
-`## Available actions` and `## Product states` are optional, but must contain
-valid content when authored. Other H2 sections survive as supporting content.
+`## Available actions` and `## Product states` are optional but must contain
+valid content when present.
 
-Relations are declared only on the Screen. Consumers derive backlinks from
-Experiences, Features, and Scenarios instead of maintaining the same relation
-twice.
+## Web and mobile
 
-## Product states
+Use one Screen across web and mobile when its purpose, information, actions,
+states, and boundary are the same. Exact availability still records both
+Interfaces. Split Screens only when Product semantics materially differ.
 
-Add a state when it changes what a user understands, can do, or achieves.
-Empty, unavailable, unauthorized, validation-failure, and completed states
-usually qualify. Give each state an H3 name and non-empty explanation.
+## Navigation
 
-Visual variations are not product states. Theme, viewport, platform styling,
-hover, skeleton, and component variants stay outside the Product Model.
-
-## Websites and mobile apps
-
-There is no `platform` field. Use one Screen across web and mobile when its
-purpose, information, actions, meaningful states, and capability boundary are
-the same. Relate it to every relevant Experience and add any supported public
-routes or deep links as entry points.
-
-Create separate Screens only when product semantics materially differ. Internal
-navigation identifiers are implementation details and do not belong in
-`entryPoints`.
-
-## Sitemaps and navigation
-
-A Screen collection is not an authored sitemap. Consumers can generate a
-screen map grouped by Experience. Journeys and Scenarios describe
-goal-oriented movement, so Screens do not carry parent, next, or generic
-transition relations.
-
-XML sitemaps are SEO implementation artifacts. UX sitemaps and
-information-architecture diagrams may be external `doc` or `visual` links.
-
-## External visuals
+Screens are not an authored sitemap. Consumers can generate a Screen map by
+Interface and Experience, while Journeys and Scenarios describe goal-oriented
+movement. Parent, next, generic transition, route-tree, and XML sitemap data do
+not belong in the Product Model. An information-architecture diagram can be an
+external `doc` or `visual` Reference.
 
 Screenshots, mockups, prototypes, and Figma files stay outside
-`.businesslens/`. Link them with `rel: visual` when they are useful context.
-BusinessLens validates the reference shape and local target, but does not
-capture, copy, download, inspect, compare, or certify the visual.
+`.businesslens/`. Attach them with [References](./references.md) when useful;
+the role distinguishes a curated design from an implementation capture or
+context. BusinessLens does not take or assess screenshots.
 
 ## What `lint` checks
 
 | Finding | Meaning |
 | --- | --- |
-| `needs at least one experience` | Add a valid Experience relation. |
-| `needs at least one feature` | Add a valid Feature relation. |
-| `references missing …` | An Experience, Feature, or Scenario ID has no entity. |
-| `"## Information presented" needs at least one bullet item` | State the meaningful information visible to the user. |
-| `missing "## Capability boundary" section` | State what this Screen can and cannot do. |
+| `needs at least one availability pair` | Place the Screen in the Interface–Experience matrix. |
+| `needs at least one capability` | Name what the Screen exposes. |
+| `capability "…" is not available in "interface/experience"` | Screen placement exceeds Capability scope. |
+| `references missing …` | An Interface, Experience, Capability, or Scenario ID has no entity. |
+| `"## Information presented" needs at least one bullet item` | State meaningful visible information. |
+| `missing "## Capability boundary" section` | State what the Screen supports and excludes. |
 | Product-state finding | Begin each state with an H3 and give it a description. |
-| `missing H1 title` / `missing lead paragraph (description)` | Every Screen needs both. |
-
-Screens may carry optional `codeRefs` as repository navigation, but a bookmark
-is never required and never proves that the Screen is implemented.

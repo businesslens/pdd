@@ -9,8 +9,9 @@ order: 1
 # Product context that survives the session
 
 BusinessLens is Product-Driven Development for coding agents. It stores the
-durable product contract in `.businesslens/`: actors, experiences, optional
-Screens, domains, features, rules, journeys, and observable scenarios.
+durable Product contract in `.businesslens/`: Actors, Interfaces, Experiences,
+optional Screens and Domains, Capabilities, Rules, Journeys, and observable
+Scenarios.
 
 The Product Model says what the product is intended to do. It does not prescribe
 the stack or replace your plan mode, SDD framework, coding agent, or tests.
@@ -35,20 +36,22 @@ intent-resolution or mapping phases when needed, delegates implementation to the
 builder injected by your harness, and checks again until aligned or blocked.
 Its final report includes the structural lint result.
 
-## Two different checks
+## Two checks
 
-- `businesslens lint` is deterministic structure: files, fields, relationships,
-  grammar, and tracked bookmark paths.
+- `businesslens lint` is deterministic structure: files, fields, availability, relationships,
+  grammar, and tracked code-reference paths.
 - `businesslens-verify` is semantic inspection: whether current code supports
   the model's observable contract.
 
 A green lint result never claims model/code agreement.
 
-## Bookmarks and breadth
+## Context and scope
 
-`codeRefs` are optional navigation into tracked source. They are not evidence or
-lifecycle state. Coverage describes only how much intended product scope is
-modeled; a complete model can have no codeRefs.
+[References](./references.md) optionally attach intent, implementation, or
+context artifacts to an entity. They do not prove alignment or carry lifecycle
+state.
+Coverage describes only how much intended Product scope is modeled; a complete
+model can have no References.
 
 Choose your starting door: [from your repo](./from-your-repo.md),
 [from a Blueprint](./from-a-blueprint.md), or [from an idea](./from-an-idea.md).

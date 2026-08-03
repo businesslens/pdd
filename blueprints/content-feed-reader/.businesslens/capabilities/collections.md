@@ -1,12 +1,10 @@
 ---
 domain: curation
-actors:
-  - collection-owner
-  - reader
-experiences:
-  - reading-app
-businessRules:
-  - only-an-owner-changes-a-collection
+availability:
+  - interface: reader-web
+    experiences: [reading-app]
+  - interface: reader-mobile
+    experiences: [reading-app]
 ---
 
 # Collections

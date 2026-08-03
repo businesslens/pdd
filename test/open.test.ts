@@ -7,7 +7,7 @@ import { buildProject } from '../src/commands/export.js'
 import { runOpen } from '../src/commands/open.js'
 import { lsFiles } from '../src/core/git.js'
 import { loadModel } from '../src/core/model.js'
-import { redactSourceEvidence, type ProductReportV5 } from '../src/core/portable.js'
+import { projectPortableReport, type ProductReportV6 } from '../src/core/portable.js'
 import { lintModel } from '../src/commands/lint.js'
 
 const FIXTURE = join(__dirname, 'fixtures', 'fixture-shop')
@@ -25,24 +25,12 @@ function initialize(cwd: string): void {
   git(cwd, 'commit', '--allow-empty', '-m', 'fixture')
 }
 
-function withoutRepositoryEvidence(report: ProductReportV5): Record<string, any> {
-  const redacted = redactSourceEvidence(report)
-  const strip = (items: Array<Record<string, any>>) => items.map(({ codeRefs: _codeRefs, ...item }) => item)
+function withoutRepositoryEvidence(report: ProductReportV6): Record<string, any> {
+  const portable = projectPortableReport(report)
   return {
-    ...redacted,
+    ...portable,
     generatedAt: '<date>',
-    generator: { ...redacted.generator, version: '<version>' },
-    model: {
-      ...redacted.model,
-      actors: strip(redacted.model.actors),
-      experiences: strip(redacted.model.experiences),
-      screens: strip(redacted.model.screens),
-      domains: strip(redacted.model.domains),
-      features: strip(redacted.model.features),
-      journeys: strip(redacted.model.journeys),
-      scenarios: strip(redacted.model.scenarios),
-      businessRules: strip(redacted.model.businessRules)
-    },
+    generator: { ...portable.generator, version: '<version>' },
     coverage: '<repository-specific>'
   }
 }
@@ -75,14 +63,21 @@ describe('open report', () => {
     expect(lint.ok).toBe(true)
     expect(lint.errors).toEqual([])
     expect(lint.warnings).toEqual([])
-    expect(imported.journeys.flatMap(journey => journey.entryPoints)).toEqual([])
+    expect(imported.journeys.flatMap(journey => journey.entryPoints))
+      .toEqual(expect.arrayContaining([
+        { type: 'customer-web', path: '/' },
+        { type: 'customer-mobile', path: 'fixture-shop://storefront' }
+      ]))
     expect(imported.experiences.flatMap(experience => experience.entryPoints))
-      .toEqual(expect.arrayContaining([{ type: 'web', path: '/' }]))
+      .toEqual(expect.arrayContaining([{ type: 'customer-web', path: '/' }]))
     expect(imported.screens).toHaveLength(1)
     expect(imported.screens[0]).toMatchObject({
       id: 'product-record',
-      experiences: ['storefront'],
-      features: ['catalog-browsing'],
+      availability: [
+        { interface: 'customer-mobile', experiences: ['storefront'] },
+        { interface: 'customer-web', experiences: ['storefront'] }
+      ],
+      capabilities: ['catalog-browsing'],
       scenarios: ['browse-catalog']
     })
     expect(imported.screens[0]!.entryPoints.map(point => point.path)).toEqual([
@@ -94,11 +89,17 @@ describe('open report', () => {
     expect(withoutRepositoryEvidence(rebuilt.report)).toEqual(withoutRepositoryEvidence(original.report))
     expect(rebuilt.report.coverage.status).toBe(original.report.coverage.status)
     expect(rebuilt.report.coverage.sourceAreas).toEqual([])
-    expect(Object.values(rebuilt.report.model).flatMap((value) =>
-      Array.isArray(value) ? value.flatMap(item => item.codeRefs || []) : []
-    )).toEqual([])
-    expect(readFileSync(join(target, '.businesslens/features/checkout.md'), 'utf8'))
-      .toContain('businessRules:')
+    expect(Object.values(rebuilt.report.model).flatMap(value =>
+      Array.isArray(value) ? value.flatMap(item => item.references || []) : []
+    ).every(reference =>
+      reference.kind !== 'code'
+      && reference.role !== 'implementation'
+      && /^https?:\/\//.test(reference.target)
+    )).toBe(true)
+    expect(readFileSync(join(target, '.businesslens/capabilities/checkout.md'), 'utf8'))
+      .toContain('availability:')
+    expect(readFileSync(join(target, '.businesslens/business-rules/payment-before-confirmation.md'), 'utf8'))
+      .toContain('capabilities:')
     expect(readFileSync(
       join(target, '.businesslens/journeys/browse-and-buy/scenarios/complete-checkout.md'),
       'utf8'
@@ -138,7 +139,7 @@ describe('open report', () => {
       const readme = readFileSync(join(fresh, '.businesslens', 'README.md'), 'utf8')
       expect(readme).toContain('BusinessLens Product Model')
       expect(readme).toContain('Treat scenarios as the acceptance contract')
-      expect(readme).toContain('codeRefs` as optional navigation')
+      expect(readme).toContain('References are optional navigation and context')
     } finally {
       rmSync(fresh, { recursive: true, force: true })
     }
@@ -191,14 +192,12 @@ describe('open report', () => {
     }
   })
 
-  it('omits the frontmatter block for entities that carry no frontmatter fields', () => {
+  it('writes required classifications and omits absent optional fields', () => {
     const actor = readFileSync(join(target, '.businesslens/actors/shopper.md'), 'utf8')
-    expect(actor).not.toContain('{}')
-    expect(actor.startsWith('# ')).toBe(true)
+    expect(actor).toMatch(/^---\nkind: person\nrelationship: external\n---\n/)
 
-    // Entities that do carry fields keep a real frontmatter block.
-    expect(readFileSync(join(target, '.businesslens/features/checkout.md'), 'utf8'))
-      .toMatch(/^---\ndomain: ordering\n/)
+    expect(readFileSync(join(target, '.businesslens/capabilities/checkout.md'), 'utf8'))
+      .toMatch(/^---\ndomain: ordering\navailability:/)
   })
 
   it('refuses to overwrite a non-empty product model without force', async () => {
@@ -226,64 +225,40 @@ describe('open report', () => {
     rmSync(rejectedTarget, { recursive: true, force: true })
   })
 
-  it('rejects inconsistent mapped coverage before writing files', async () => {
-    const rejectedTarget = mkdtempSync(join(tmpdir(), 'bl-open-invalid-coverage-'))
+  it('rejects a portable report that exposes a local reference before writing files', async () => {
+    const rejectedTarget = mkdtempSync(join(tmpdir(), 'bl-open-invalid-reference-'))
     const original = buildProject(source)
     const report = structuredClone(original.report)
-    report.coverage.mapped.actors = 999
+    report.model.actors[0]!.references = [
+      { kind: 'doc', role: 'context', target: 'docs/private.md' }
+    ]
     const file = join(rejectedTarget, 'invalid.json')
     writeFileSync(file, JSON.stringify(report))
     vi.spyOn(console, 'error').mockImplementation(() => undefined)
 
     expect(await runOpen(rejectedTarget, file, false)).toBe(1)
-    expect(console.error).toHaveBeenCalledWith(expect.stringContaining('coverage.mapped.actors'))
+    expect(console.error).toHaveBeenCalledWith(expect.stringContaining('portable report still exposes reference'))
     expect(() => readFileSync(join(rejectedTarget, '.businesslens/product.md'))).toThrow()
 
     vi.restoreAllMocks()
     rmSync(rejectedTarget, { recursive: true, force: true })
   })
 
-  it('accepts historical v4 coverage metric names', async () => {
-    const legacyTarget = mkdtempSync(join(tmpdir(), 'bl-open-legacy-coverage-'))
-    const original = buildProject(source)
-    const report = structuredClone(original.report)
-    report.coverage.counts = {
-      trackedFiles: original.report.coverage.counts.files!
-    }
-    report.coverage.mapped = {
-      journeysWithScenarios: original.report.summary.journeys
-    }
-    for (const journey of report.model.journeys) journey.codeRefs = []
-    for (const scenario of report.model.scenarios) scenario.codeRefs = []
-    const file = join(legacyTarget, 'legacy.json')
-    writeFileSync(file, JSON.stringify(report))
-
-    expect(await runOpen(legacyTarget, file, false)).toBe(0)
-    expect(readFileSync(join(legacyTarget, '.businesslens/product.md'), 'utf8'))
-      .toContain('# Fixture Shop')
-
-    rmSync(legacyTarget, { recursive: true, force: true })
-  })
-
-  it('accepts and expands a historical Product Report v4 without Screens', async () => {
-    const legacyTarget = mkdtempSync(join(tmpdir(), 'bl-open-v4-'))
+  it('rejects historical Product Reports instead of migrating them', async () => {
+    const legacyTarget = mkdtempSync(join(tmpdir(), 'bl-open-v5-'))
     initialize(legacyTarget)
     try {
       const report = structuredClone(buildProject(source).report) as Record<string, any>
-      report.schemaVersion = '4.0.0'
-      delete report.summary.screens
-      delete report.model.screens
-      delete report.coverage.counts.screens
-      delete report.coverage.mapped.screens
-      const file = join(legacyTarget, 'v4.json')
+      report.schemaVersion = '5.0.0'
+      const file = join(legacyTarget, 'v5.json')
       writeFileSync(file, JSON.stringify(report))
+      vi.spyOn(console, 'error').mockImplementation(() => undefined)
 
-      expect(await runOpen(legacyTarget, file, false)).toBe(0)
-      const imported = loadModel(legacyTarget)
-      expect(imported.config.schema).toBe(2)
-      expect(imported.screens).toEqual([])
-      expect(lintModel(imported, lsFiles(legacyTarget)).errors).toEqual([])
+      expect(await runOpen(legacyTarget, file, false)).toBe(1)
+      expect(console.error).toHaveBeenCalled()
+      expect(() => readFileSync(join(legacyTarget, '.businesslens/product.md'))).toThrow()
     } finally {
+      vi.restoreAllMocks()
       rmSync(legacyTarget, { recursive: true, force: true })
     }
   })

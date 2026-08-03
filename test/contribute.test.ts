@@ -153,16 +153,16 @@ afterEach(() => {
 // expansion. Under the default 5s these pass alone and time out when the whole
 // suite runs in parallel.
 describe('contribute', { timeout: 30_000 }, () => {
-  it('opens a pull request whose Blueprint carries no source evidence', async () => {
+  it('opens a pull request whose Blueprint carries no workspace material', async () => {
     const model = temporary('bl-contribute-model-')
     const bin = temporary('bl-contribute-bin-')
     const capture = join(temporary('bl-contribute-capture-'), 'gh.json')
 
-    // The fixture deliberately carries codeRefs — that is the leak being tested.
+    // The fixture deliberately carries code references — that is the leak being tested.
     cpSync(FIXTURE, model, { recursive: true })
     initialize(model)
     expect(readFileSync(join(model, '.businesslens/journeys/browse-and-buy/journey.md'), 'utf8'))
-      .toContain('codeRefs:')
+      .toContain('kind: code')
 
     fakeGh(bin, capture)
     fakeGitPush(bin)
@@ -201,13 +201,14 @@ describe('contribute', { timeout: 30_000 }, () => {
     expect(files.some(file => file.startsWith('blueprints/fixture-shop/.businesslens/'))).toBe(true)
 
     // The point of the whole flow: the model in the pull request is regenerated
-    // from a redacted report, so no authored codeRef survives into it.
+    // from a portable report, so no workspace reference survives into it.
     const contents = recorded.prContents ?? {}
     const modelFiles = Object.entries(contents)
       .filter(([file]) => file.startsWith('blueprints/fixture-shop/.businesslens/'))
     expect(modelFiles.length).toBeGreaterThan(0)
     for (const [file, body] of modelFiles) {
-      expect(body, `${file} leaks codeRefs`).not.toContain('codeRefs:')
+      expect(body, `${file} leaks a code reference`).not.toContain('kind: code')
+      expect(body, `${file} leaks an implementation reference`).not.toContain('role: implementation')
       expect(body, `${file} leaks a source path`).not.toMatch(/src\/(services|routes)\//)
     }
 
@@ -220,7 +221,7 @@ describe('contribute', { timeout: 30_000 }, () => {
     expect(manifest.slug).toBe('fixture-shop')
     expect(manifest.license).toBe('MIT')
 
-    // The manifest is the one file not regenerated from the redacted report, so
+    // The manifest is the one file not regenerated from the portable report, so
     // it is the one place a repository reference can still slip into a public
     // pull request. The fixture has an `origin` remote precisely so this would
     // catch it: contributing from a private repository must not disclose it.

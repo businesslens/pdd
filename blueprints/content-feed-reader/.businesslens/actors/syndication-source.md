@@ -1,3 +1,8 @@
+---
+kind: system
+relationship: external
+---
+
 # Syndication source
 
 An external system that publishes a feed of items at an address. It is outside

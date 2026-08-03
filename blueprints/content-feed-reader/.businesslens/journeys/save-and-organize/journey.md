@@ -1,14 +1,16 @@
 ---
-domain: curation
 actors:
   - collection-owner
   - reader
-experiences:
-  - reading-app
-features:
+capabilities:
   - collections
   - item-saving
   - item-tagging
+availability:
+  - interface: reader-web
+    experiences: [reading-app]
+  - interface: reader-mobile
+    experiences: [reading-app]
 ---
 
 # Save and organize

@@ -1,86 +1,80 @@
 ---
 title: Experiences
-description: Where the product is used — a surface with a stable audience, an access mode, and a capability boundary.
+description: Coherent contexts of Product use with a stable audience, access boundary, and capability boundary across one or more Interfaces.
 section: open-source
 group: Product model
-order: 9
+order: 10
 ---
 
 # Experiences
 
-**An experience is a surface of the product** with a stable audience and a
-capability boundary: the public storefront, the admin console, a CLI, a partner
-API.
+**An Experience is a coherent context in which Actors use the Product.** Public
+discovery, personal workspace, administration, account management, and partner
+automation are possible Experiences.
 
-Each one declares who uses it, how it is reached, what protects it, what a
-successful visit ends with, and — most importantly — **what it can and cannot
-do**.
+An Experience has a stable audience, access boundary, and capability boundary.
+It may be offered through one or more [Interfaces](./interfaces.md): the same
+administration Experience might exist in an admin website and an operator CLI.
 
 ## When you create one
 
-Create an experience when a surface has its own audience *and* its own
-capability boundary. The test is the boundary: if the same actors can do the
-same things, it is one experience with two entry points, not two experiences.
+Create an Experience when all of these are true:
 
-> **Experience vs feature.** An experience is **where** capabilities are
-> exposed; a [feature](./features.md) is **what** capability exists there. One
-> storefront exposes both catalog browsing and checkout.
+1. it represents a coherent Actor context;
+2. it has a meaningful capability boundary and exclusions;
+3. it remains meaningful if routes, commands, or navigation are reorganized;
+4. it normally supports several goals, Capabilities, Screens, or commands; and
+5. its availability through different Interfaces has product meaning.
 
-> **Experience vs Screen.** An experience is the stable audience and capability
-> boundary of a whole surface. A [Screen](./screens.md) is one meaningful
-> user-visible view inside one or more experiences.
-
-Every model needs at least one experience — a product with no surface is not a
-product.
+An overview page is usually a Screen, not an Experience. A command group is an
+Experience only when it represents a durable operating context, not just parser
+organization.
 
 ## The file
 
 Experiences live at `experiences/<experience-id>.md`.
 
-```md [experiences/storefront.md]
+```md [experiences/administration.md]
 ---
-actors: [shopper]
-access: public
+actors: [store-admin]
+interfaces: [admin-web, operator-cli]
+access: restricted
 entryPoints:
-  - web: /
-exit: "Order confirmed and receipt shown"
+  - admin-web: /admin
+  - operator-cli: product admin
 ---
 
-# Storefront
+# Administration
 
-The public web store where shoppers browse and buy.
+Where authorized operators manage the Product and its users.
 
 ## Capability boundary
 
-Anonymous browsing; checkout creates an order. No administrative actions.
+Supports operational administration. It does not grant customer privileges.
 ```
 
-| Key | Meaning |
-| --- | --- |
-| `actors` | Actor IDs allowed on this surface |
-| `access` | `public`, `authenticated`, or `restricted` |
-| `entryPoints` | How the surface is reached — single `type: path` maps such as `web: /admin`, `api: /v1/orders`, or `ios: acme-shop://home` |
-| `exit` | The exit contract: the successful state a visit ends in |
+| Key | Required | Meaning |
+| --- | --- | --- |
+| `actors` | yes | At least one Actor participating in this context |
+| `interfaces` | yes | At least one Interface offering it |
+| `access` | yes | `public`, `authenticated`, or `restricted` |
+| `entryPoints` | no | Interface-keyed Product entry points; every key must be declared in `interfaces` |
+| `references` | no | Intent, implementation, or context artifacts; see [References](./references.md) |
 
-`## Capability boundary` is a recognized section and carries the most weight on
-this entity. Say what the surface cannot do, not only what it can — that is the
-half an agent cannot infer from your code.
+There is no `exit` field. A persistent context does not have one useful success
+exit; Journey and Scenario outcomes state what Actors accomplish.
+
+Every Experience Actor must also be supported by each declared Interface. This
+makes the audience promise consistent before more exact availability is added.
 
 ## What `lint` checks
 
 | Finding | Meaning |
 | --- | --- |
-| `access "…" must be public\|authenticated\|restricted` | The only allowed access modes. |
-| `references missing actor "…"` | An `actors:` entry names no existing actor file. |
-| `experiences/: the model needs at least one experience` | An empty model is only valid transiently. Map established behavior with `businesslens-map` or author intended behavior with `businesslens-ideate`. |
-| `"entryPoints" must be a list` / `each entry point must be a single "type: path" map` | Entry-point shape. One key per list item. |
-| `missing H1 title` / `missing lead paragraph (description)` | Every experience needs both. |
-
-Experiences may carry optional `codeRefs` for navigation. See
-[Code refs and coverage](./code-refs-and-coverage.md).
-
-> **Entry point vs codeRef.** An entry point says how an actor *reaches* the
-> surface. A `codeRef` is an optional bookmark into relevant tracked source.
-
-Rooted product routes and non-`file:` mobile deep links remain portable when a
-model is exported. Repository paths and local file URLs do not.
+| `needs at least one actor` / `needs at least one interface` | Both relationships are required. |
+| `access "…" must be public\|authenticated\|restricted` | Use one access mode. |
+| `references missing actor/interface "…"` | A relationship names no entity. |
+| `actor "…" is not supported by interface "…"` | Add the Actor to the Interface or correct the Experience relation. |
+| `entry point references undeclared interface "…"` | Entry-point keys are Interface IDs, not generic platform labels. |
+| `missing "## Capability boundary" section` | State what this Experience supports and excludes. |
+| `experiences/: the model needs at least one experience` | Every Product needs a coherent usage context. |
