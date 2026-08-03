@@ -7,7 +7,7 @@ import { buildProject } from '../src/commands/export.js'
 import { loadModel } from '../src/core/model.js'
 import { lintModel } from '../src/commands/lint.js'
 import { lsFiles } from '../src/core/git.js'
-import { ProductReportV4Schema } from '../src/core/portable.js'
+import { ProductReportV5Schema } from '../src/core/portable.js'
 
 const FIXTURE = join(__dirname, 'fixtures', 'fixture-shop')
 
@@ -41,11 +41,12 @@ describe('end to end on a real git repo', () => {
   it('builds a schema-valid source-free report deterministically', () => {
     const first = buildProject(repo)
     const output = JSON.parse(readFileSync(first.outputFile, 'utf8'))
-    const parsed = ProductReportV4Schema.parse(output)
+    const parsed = ProductReportV5Schema.parse(output)
     expect(parsed.id).toBe('fixture-shop')
     expect(parsed.summary).toEqual({
       actors: 2,
       experiences: 2,
+      screens: 1,
       domains: 2,
       features: 3,
       journeys: 2,
@@ -53,6 +54,22 @@ describe('end to end on a real git repo', () => {
       businessRules: 2
     })
     expect(parsed.model.journeys[0]!.experienceIds).toEqual(['storefront'])
+    const screen = parsed.model.screens.find(item => item.id === 'product-record')
+    expect(screen).toMatchObject({
+      experienceIds: ['storefront'],
+      featureIds: ['catalog-browsing'],
+      scenarioIds: ['browse-catalog'],
+      information: ['Product name and description', 'Price and availability']
+    })
+    expect(screen?.entryPoints.map(point => point.path)).toEqual([
+      '/products/:id',
+      'fixture-shop://products/:id'
+    ])
+    expect(screen?.links).toEqual([{
+      rel: 'visual',
+      href: 'https://example.com/designs/product-record',
+      title: 'Product record visual reference'
+    }])
 
     // Export produces a Blueprint, and a Blueprint carries no source evidence.
     // The fixture's model is full of codeRefs; none of them survive the trip.
@@ -65,7 +82,7 @@ describe('end to end on a real git repo', () => {
 
     // `mapped` still counts which authored entities carried bookmarks, so coverage does
     // not silently collapse to zero just because the paths were stripped.
-    expect(parsed.coverage.mapped).toMatchObject({ actors: 1, domains: 2 })
+    expect(parsed.coverage.mapped).toMatchObject({ actors: 1, screens: 1, domains: 2 })
     expect(parsed.model.features.find(feature => feature.id === 'checkout')?.businessRuleIds)
       .toEqual(['payment-before-confirmation'])
     expect(parsed.model.scenarios.find(scenario => scenario.id === 'complete-checkout')?.decisionPoints)

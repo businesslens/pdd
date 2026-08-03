@@ -11,7 +11,7 @@ import { compileReport } from '../src/commands/export.js'
 import { lsFiles } from '../src/core/git.js'
 import { loadModel } from '../src/core/model.js'
 import { resolveModelRoot } from '../src/core/model-root.js'
-import type { ProductReportV4 } from '../src/core/portable.js'
+import type { ProductReportV5 } from '../src/core/portable.js'
 
 const packageJson = JSON.parse(
   await readFile(fileURLToPath(new URL('../package.json', import.meta.url)), 'utf8')
@@ -35,10 +35,14 @@ describe('report SDK entry point', () => {
   })
 
   it('exports the schema, the semantic validator, and the canonical digest', () => {
-    expect(sdk.REPORT_SCHEMA_VERSION).toBe('4.0.0')
+    expect(sdk.REPORT_SCHEMA_VERSION).toBe('5.0.0')
     expect(sdk.SUBMISSION_SCHEMA_VERSION).toBe('1.0.0')
     for (const name of [
       'ProductReportV4Schema',
+      'ProductReportV5Schema',
+      'ProductReportSchema',
+      'ReportScreenSchema',
+      'ReportScreenStateSchema',
       'ProjectSubmissionV4Schema',
       'SubmissionProvenanceSchema',
       'validateProductReport',
@@ -95,9 +99,9 @@ describe('report SDK entry point', () => {
 describe('redactSourceEvidence', () => {
   const FIXTURE = join(fileURLToPath(new URL('.', import.meta.url)), 'fixtures', 'fixture-shop')
   let repo: string
-  let report: ProductReportV4
+  let report: ProductReportV5
 
-  const allCodeRefs = (value: ProductReportV4) =>
+  const allCodeRefs = (value: ProductReportV5) =>
     Object.values(value.model).flatMap(entry =>
       Array.isArray(entry) ? entry.flatMap(item => item.codeRefs ?? []) : [])
 
@@ -167,6 +171,10 @@ describe('redactSourceEvidence', () => {
       { rel: 'doc', href: 'file:///Users/owner/project/README.md', title: 'Local file URL' },
       { rel: 'doc', href: 'https://example.com/handbook', title: 'Public doc' }
     ]
+    withLinks.model.screens[0]!.links = [
+      { rel: 'visual', href: 'docs/ui/product-record.png', title: 'Local visual' },
+      { rel: 'visual', href: 'https://example.com/product-record.png', title: 'Public visual' }
+    ]
     withLinks.model.journeys[0]!.entryPoints = [
       { type: 'posix-relative', path: 'src/routes/storefront.ts' },
       { type: 'windows-relative', path: String.raw`src\routes\storefront.ts` },
@@ -183,6 +191,9 @@ describe('redactSourceEvidence', () => {
     expect(redacted.model.actors[0]!.links).toEqual([
       { rel: 'doc', href: 'https://example.com/handbook', title: 'Public doc' }
     ])
+    expect(redacted.model.screens[0]!.links).toEqual([
+      { rel: 'visual', href: 'https://example.com/product-record.png', title: 'Public visual' }
+    ])
     // Experiences reach actors through real routes; those stay.
     expect(redacted.model.experiences.flatMap(item => item.entryPoints.map(point => point.path)))
       .toEqual(expect.arrayContaining(['/']))
@@ -191,7 +202,27 @@ describe('redactSourceEvidence', () => {
       { type: 'url', path: 'https://example.com/checkout' },
       { type: 'cli', path: 'businesslens build' }
     ])
+    expect(redacted.model.screens[0]!.entryPoints.map(point => point.path)).toEqual([
+      '/products/:id',
+      'fixture-shop://products/:id'
+    ])
     expect(redacted.coverage.sourceAreas).toEqual([])
+  })
+
+  it('normalizes historical Product Report v4 input with an empty Screen collection', () => {
+    const legacy = structuredClone(report) as Record<string, any>
+    legacy.schemaVersion = '4.0.0'
+    delete legacy.summary.screens
+    delete legacy.model.screens
+    delete legacy.coverage.counts.screens
+    delete legacy.coverage.mapped.screens
+
+    const parsedV4 = sdk.ProductReportV4Schema.parse(legacy)
+    const normalized = sdk.parseProductReport(parsedV4)
+    expect(normalized.schemaVersion).toBe('5.0.0')
+    expect(normalized.summary.screens).toBe(0)
+    expect(normalized.model.screens).toEqual([])
+    expect(sdk.validateProductReport(parsedV4)).toEqual([])
   })
 
   it('rejects a redacted report that still names repository paths', () => {

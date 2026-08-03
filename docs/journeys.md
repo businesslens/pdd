@@ -3,7 +3,7 @@ title: Journeys
 description: Durable user and operator goals — the backbone of the model and the parent of observable acceptance scenarios.
 section: open-source
 group: Product model
-order: 12
+order: 13
 ---
 
 # Journeys

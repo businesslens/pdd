@@ -3,7 +3,7 @@ title: Lint in CI
 description: Gate Product Model structure in CI without pretending a deterministic linter can prove semantic agreement.
 section: open-source
 group: Integration
-order: 19
+order: 20
 ---
 
 # Lint the Product Model in CI

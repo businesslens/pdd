@@ -14,6 +14,12 @@
 - Actors differ by goals or privileges, not screens.
 - Experiences are audience-and-capability boundaries such as a storefront,
   admin surface, API, or CLI.
+- Screens are optional stable user-visible views. Model their information,
+  actions, product-significant states, and capability boundary—not components,
+  layouts, routes mechanically discovered from source, or visual variants.
+- Reuse one Screen across web and mobile when its product semantics are shared;
+  separate it only when purpose, information, actions, states, or boundaries
+  materially differ.
 - Domains group recognizable product areas.
 - Features are durable capabilities, not UI labels or sequence steps.
 - Business rules are reusable policies or invariants.
@@ -38,3 +44,7 @@ better than a broad model built from guesses.
 `codeRefs` are optional navigation. Prefer `path#symbol` over line ranges and
 use only tracked files. A bookmark is not proof; no bookmark is required for
 any coverage status.
+
+Supporting `links` may point to external visuals or research. Validate and use
+them as leads, but never treat their existence as proof or run screenshot
+capture workflows.

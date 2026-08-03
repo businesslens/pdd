@@ -26,6 +26,10 @@ same things, it is one experience with two entry points, not two experiences.
 > exposed; a [feature](./features.md) is **what** capability exists there. One
 > storefront exposes both catalog browsing and checkout.
 
+> **Experience vs Screen.** An experience is the stable audience and capability
+> boundary of a whole surface. A [Screen](./screens.md) is one meaningful
+> user-visible view inside one or more experiences.
+
 Every model needs at least one experience — a product with no surface is not a
 product.
 
@@ -55,7 +59,7 @@ Anonymous browsing; checkout creates an order. No administrative actions.
 | --- | --- |
 | `actors` | Actor IDs allowed on this surface |
 | `access` | `public`, `authenticated`, or `restricted` |
-| `entryPoints` | How the surface is reached — a list of single `type: path` maps, such as `web: /admin` or `api: /v1/orders` |
+| `entryPoints` | How the surface is reached — single `type: path` maps such as `web: /admin`, `api: /v1/orders`, or `ios: acme-shop://home` |
 | `exit` | The exit contract: the successful state a visit ends in |
 
 `## Capability boundary` is a recognized section and carries the most weight on
@@ -77,3 +81,6 @@ Experiences may carry optional `codeRefs` for navigation. See
 
 > **Entry point vs codeRef.** An entry point says how an actor *reaches* the
 > surface. A `codeRef` is an optional bookmark into relevant tracked source.
+
+Rooted product routes and non-`file:` mobile deep links remain portable when a
+model is exported. Repository paths and local file URLs do not.

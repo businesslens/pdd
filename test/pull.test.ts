@@ -31,7 +31,7 @@ function reportResponse(canonicalName = 'fixture-shop'): Response {
   return new Response(JSON.stringify(report), {
     status: 200,
     headers: {
-      'content-type': 'application/vnd.businesslens.report+json; version=4',
+      'content-type': 'application/vnd.businesslens.report+json; version=5',
       'x-businesslens-blueprint': canonicalName,
       'x-businesslens-report-digest': reportDigest(report)
     }
@@ -71,7 +71,10 @@ describe('pull', () => {
     expect(requested?.url).toBe('https://businesslens.io/api/v1/blueprints/fixture-shop/report.json')
     // No credential is read, sent, or required.
     expect((requested?.init.headers as Record<string, string>).authorization).toBeUndefined()
+    expect((requested?.init.headers as Record<string, string>).accept).toContain('version=5')
+    expect((requested?.init.headers as Record<string, string>).accept).toContain('version=4')
     expect(existsSync(join(target, '.businesslens/product.md'))).toBe(true)
+    expect(existsSync(join(target, '.businesslens/screens/product-record.md'))).toBe(true)
   })
 
   it('identifies itself so catalog pulls are distinguishable from page views', async () => {
@@ -181,7 +184,7 @@ describe('pull', () => {
     const fetch = vi.fn(async () => new Response(JSON.stringify(report), {
       status: 200,
       headers: {
-        'content-type': 'application/vnd.businesslens.report+json; version=4',
+        'content-type': 'application/vnd.businesslens.report+json; version=5',
         'x-businesslens-blueprint': 'fixture-shop',
         'x-businesslens-report-digest': 'a'.repeat(64)
       }
@@ -218,7 +221,7 @@ describe('pull', () => {
     const fetch = vi.fn(async () => new Response(JSON.stringify(report), {
       status: 200,
       headers: {
-        'content-type': 'application/vnd.businesslens.report+json; version=4',
+        'content-type': 'application/vnd.businesslens.report+json; version=5',
         'content-length': String(9 * 1024 * 1024),
         'x-businesslens-blueprint': 'fixture-shop',
         'x-businesslens-report-digest': reportDigest(report)

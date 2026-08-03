@@ -37,6 +37,7 @@ describe('lintModel', () => {
     expect(result.counts).toEqual({
       actors: 2,
       experiences: 2,
+      screens: 1,
       domains: 2,
       features: 3,
       journeys: 2,
@@ -45,11 +46,63 @@ describe('lintModel', () => {
     })
   })
 
+  it('keeps historical schema 1 models valid when they contain no Screens', () => {
+    const cwd = fixtureCopy()
+    rmSync(join(cwd, '.businesslens/screens'), { recursive: true })
+    writeFileSync(join(cwd, '.businesslens/config.yaml'), 'schema: 1\nsdd:\n  paths: []\n')
+    const result = run(cwd)
+    expect(result.errors).toEqual([])
+    expect(result.counts.screens).toBe(0)
+  })
+
+  it('requires folder schema 2 when Screens are authored', () => {
+    const cwd = fixtureCopy()
+    writeFileSync(join(cwd, '.businesslens/config.yaml'), 'schema: 1\nsdd:\n  paths: []\n')
+    expect(run(cwd).errors).toContain('screens/: Screen entities require config.yaml schema 2')
+  })
+
+  it('rejects unsupported future folder schemas explicitly', () => {
+    const cwd = fixtureCopy()
+    writeFileSync(join(cwd, '.businesslens/config.yaml'), 'schema: 99\nsdd:\n  paths: []\n')
+    expect(run(cwd).errors).toContain('config.yaml: schema 99 is not supported (expected 1 or 2)')
+  })
+
+  it('validates Screen relationships and product content', () => {
+    const cwd = fixtureCopy()
+    writeFileSync(join(cwd, '.businesslens/screens/product-record.md'), `---
+experiences: [missing-experience]
+features: []
+scenarios: [missing-scenario]
+---
+
+# Product record
+
+Lead.
+
+## Information presented
+
+No bullet.
+
+## Product states
+
+### Empty
+
+## Capability boundary
+`)
+    const errors = run(cwd).errors.join('\n')
+    expect(errors).toContain('references missing experience "missing-experience"')
+    expect(errors).toContain('needs at least one feature')
+    expect(errors).toContain('references missing scenario "missing-scenario"')
+    expect(errors).toContain('"## Information presented" needs at least one bullet item')
+    expect(errors).toContain('product state "Empty" needs a description')
+    expect(errors).toContain('missing "## Capability boundary" section')
+  })
+
   it('ignores a stale platform block rather than failing', () => {
     const cwd = fixtureCopy()
     writeFileSync(
       join(cwd, '.businesslens/config.yaml'),
-      'schema: 1\nplatform:\n  url: https://attacker.example\nsdd:\n  paths: []\n'
+      'schema: 2\nplatform:\n  url: https://attacker.example\nsdd:\n  paths: []\n'
     )
     expect(run(cwd).errors).toEqual([])
   })
@@ -169,6 +222,38 @@ Lead.
     const result = run(cwd)
     expect(result.ok).toBe(true)
     expect(result.warnings.some(warning => warning.includes('docs/missing.md'))).toBe(true)
+  })
+
+  it('checks the local path behind a reference query or fragment', () => {
+    const cwd = fixtureCopy()
+    writeFileSync(join(cwd, '.businesslens/actors/shopper.md'), `---
+links:
+  - rel: research
+    href: README.md?plain=1#method
+---
+
+# Shopper
+
+Lead.
+`)
+    const result = run(cwd)
+    expect(result.errors).toEqual([])
+    expect(result.warnings).toEqual([])
+  })
+
+  it('rejects unsafe supporting-reference schemes', () => {
+    const cwd = fixtureCopy()
+    writeFileSync(join(cwd, '.businesslens/actors/shopper.md'), `---
+links:
+  - rel: visual
+    href: file:///tmp/screen.png
+---
+
+# Shopper
+
+Lead.
+`)
+    expect(run(cwd).errors.join('\n')).toContain('must use HTTP(S) or a repository-relative path')
   })
 
   it('rejects unknown frontmatter keys', () => {

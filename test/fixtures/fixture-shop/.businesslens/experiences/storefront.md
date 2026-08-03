@@ -3,6 +3,7 @@ actors: [shopper]
 access: public
 entryPoints:
   - web: /
+  - ios: fixture-shop://storefront
 exit: "Order confirmed and receipt shown"
 ---
 

@@ -13,7 +13,7 @@ import {
 import { dirname, isAbsolute, join, resolve } from 'node:path'
 import { stringify } from 'yaml'
 import { writeModelReadme } from '../core/model-readme.js'
-import type { ProductReportV4 } from '../core/portable.js'
+import type { ProductReportV5 } from '../core/portable.js'
 import { lintModel } from './lint.js'
 import { loadModel } from '../core/model.js'
 import { parseProductReport, redactSourceEvidence } from '../core/portable.js'
@@ -40,7 +40,7 @@ function frontmatter(data: Record<string, unknown>): string {
   return `---\n${stringify(data, { lineWidth: 0 }).trimEnd()}\n---\n\n`
 }
 
-function links(value: ProductReportV4['links']): Array<Record<string, string>> {
+function links(value: ProductReportV5['links']): Array<Record<string, string>> {
   return value.map(link => ({
     rel: link.rel,
     href: link.href,
@@ -101,8 +101,8 @@ function prepareTarget(cwd: string, force: boolean): string {
   return root
 }
 
-function writeReport(root: string, report: ProductReportV4): void {
-  write(join(root, 'config.yaml'), stringify({ schema: 1, sdd: { paths: [] } }, { lineWidth: 0 }))
+function writeReport(root: string, report: ProductReportV5): void {
+  write(join(root, 'config.yaml'), stringify({ schema: 2, sdd: { paths: [] } }, { lineWidth: 0 }))
   write(join(root, '.gitignore'), 'build/\ncache/\n')
   write(
     join(root, 'taxonomies.yaml'),
@@ -170,6 +170,30 @@ function writeReport(root: string, report: ProductReportV4): void {
       )
     )
   }
+  for (const screen of report.model.screens) {
+    const states = screen.states.map(state => `### ${state.title}\n\n${state.description}`).join('\n\n')
+    write(
+      join(root, 'screens', `${screen.id}.md`),
+      frontmatter(compactRecord({
+        experiences: screen.experienceIds,
+        features: screen.featureIds,
+        scenarios: screen.scenarioIds,
+        entryPoints: entryPoints(screen.entryPoints),
+        links: links(screen.links)
+      })) + body(
+        screen.title,
+        screen.description,
+        screen.intent,
+        [
+          { heading: 'Information presented', content: screen.information.map(item => `- ${item}`).join('\n') },
+          { heading: 'Available actions', content: screen.actions.map(item => `- ${item}`).join('\n') },
+          { heading: 'Product states', content: states },
+          { heading: 'Capability boundary', content: screen.capabilities }
+        ],
+        screen.supportingContent
+      )
+    )
+  }
   for (const feature of report.model.features) {
     write(
       join(root, 'features', `${feature.id}.md`),
@@ -201,7 +225,7 @@ function writeReport(root: string, report: ProductReportV4): void {
     )
   }
 
-  const scenariosByJourney = new Map<string, ProductReportV4['model']['scenarios']>()
+  const scenariosByJourney = new Map<string, ProductReportV5['model']['scenarios']>()
   for (const scenario of report.model.scenarios) {
     const current = scenariosByJourney.get(scenario.journeyId) || []
     current.push(scenario)
@@ -251,7 +275,7 @@ function writeReport(root: string, report: ProductReportV4): void {
 }
 
 export interface ExpandedProductReport {
-  report: ProductReportV4
+  report: ProductReportV5
   root: string
 }
 

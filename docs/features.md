@@ -3,7 +3,7 @@ title: Features
 description: Stable product capabilities that sit inside a domain and connect actors and experiences to the rules that constrain them.
 section: open-source
 group: Product model
-order: 11
+order: 12
 ---
 
 # Features

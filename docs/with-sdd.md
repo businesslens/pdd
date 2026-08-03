@@ -3,14 +3,14 @@ title: With SDD tools
 description: Keep product intent durable in BusinessLens while technical proposals and build tasks remain in your spec-driven workflow.
 section: open-source
 group: Integration
-order: 18
+order: 19
 ---
 
 # With a spec-driven framework
 
-BusinessLens owns product meaning: actors, capabilities, rules, journeys, and
-observable scenarios. OpenSpec, spec-kit, and similar frameworks own technical
-design and task decomposition.
+BusinessLens owns product meaning: actors, capabilities, optional Screens,
+rules, journeys, and observable scenarios. OpenSpec, spec-kit, and similar
+frameworks own technical design and task decomposition.
 
 ```text
 businesslens-ideate       → approved product delta

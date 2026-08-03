@@ -45,8 +45,8 @@ Read before authoring:
    - quick: a small, specific change; ask at most three batched decision
      questions;
    - thorough: blank slate, vague, or cross-cutting; cover why, actors,
-     experiences, domains, features, rules, journeys, scenario paths, decisions,
-     removals, and definition of done.
+     experiences, optional product Screens, domains, features, rules, journeys,
+     scenario paths, decisions, removals, and definition of done.
 
    Propose concrete wording so the user corrects drafts rather than dictating
    schema.
@@ -86,6 +86,11 @@ Read before authoring:
   by a verification handoff.
 - Keep model prose at product altitude; do not invent stacks, endpoints,
   schemas, or filenames.
+- Model a Screen only when a stable user-visible product view clarifies intended
+  information, actions, meaningful states, or boundaries. Do not design
+  components, layouts, themes, responsive variants, or screenshot workflows.
+- Keep visuals and research external through supporting links; never treat the
+  link or artifact as an acceptance receipt.
 - Never infer implementation state from `codeRefs` or `coverage.status`.
 - Never execute target code, stage, commit, submit, or contribute.
 - Never write outside `.businesslens/`; leave target `AGENTS.md`, `CLAUDE.md`,

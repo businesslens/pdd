@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Platform-neutral Screen entities for meaningful web and mobile product views,
+  including product-visible information, actions, states, capability boundaries,
+  relationships, and optional public routes or deep links.
+- `visual` and `research` supporting-link relations. Referenced content remains
+  external to the Product Model and is never treated as verification evidence.
 - `businesslens-map` for initial adoption, scoped remapping, and deliberate
   Product Model coverage expansion without executing target code.
 - `businesslens-verify` as the single post-build invocation. It classifies
@@ -25,6 +30,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Breaking.** New authored models use folder schema 2 and new exports use
+  Product Report v5. Historical screenless schema 1 models and Product Report
+  v4 inputs remain readable.
+- The bundled Content & Feed Reader Blueprint now demonstrates the complete
+  model, including cross-platform Screens, product states, mobile deep links,
+  and external visual and research references.
 - **Breaking.** The public skill set is exactly `businesslens-map`,
   `businesslens-ideate`, and `businesslens-verify`. Ideate also handles a narrow
   already-decided verification handoff without reopening broad brainstorming.
@@ -42,7 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   codeRefs.
 - Blueprint open and pull preserve the report's model-completeness status while
   stripping source-repository bookmarks. `coverage.mapped` remains Product
-  Report v4 compatibility metadata and counts bookmark-bearing entities.
+  Report compatibility metadata and counts bookmark-bearing entities.
 - Every model creation path carries canonical orientation in
   `.businesslens/README.md`. BusinessLens still never writes target-root
   `AGENTS.md`, `CLAUDE.md`, or README files.

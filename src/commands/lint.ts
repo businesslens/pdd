@@ -1,6 +1,8 @@
 import type { PddModel } from '../core/model.js'
+import { repositoryLinkPath } from '../core/frontmatter.js'
 import { lsFiles } from '../core/git.js'
 import { isId } from '../core/ids.js'
+import { section } from '../core/markdown.js'
 import { loadModel } from '../core/model.js'
 import { resolveModelRoot } from '../core/model-root.js'
 
@@ -37,6 +39,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
   const collections: Array<[string, Array<{ id: string }>]> = [
     ['actors', model.actors],
     ['experiences', model.experiences],
+    ['screens', model.screens],
     ['domains', model.domains],
     ['features', model.features],
     ['businessRules', model.businessRules],
@@ -69,6 +72,37 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     if (!experience.actors.length) errors.push(`${experience.file}: needs at least one actor`)
     for (const actorId of experience.actors) {
       if (!actorIds.has(actorId)) errors.push(`${experience.file}: references missing actor "${actorId}"`)
+    }
+  }
+
+  for (const screen of model.screens) {
+    requireTitle(screen.file, screen.doc.title, screen.doc.lead)
+    if (!screen.experiences.length) errors.push(`${screen.file}: needs at least one experience`)
+    for (const experienceId of screen.experiences) {
+      if (!experienceIds.has(experienceId)) errors.push(`${screen.file}: references missing experience "${experienceId}"`)
+    }
+    if (!screen.features.length) errors.push(`${screen.file}: needs at least one feature`)
+    for (const featureId of screen.features) {
+      if (!featureIds.has(featureId)) errors.push(`${screen.file}: references missing feature "${featureId}"`)
+    }
+    for (const scenarioId of screen.scenarios) {
+      if (!scenarioIds.has(scenarioId)) errors.push(`${screen.file}: references missing scenario "${scenarioId}"`)
+    }
+    if (!screen.information.length) {
+      errors.push(`${screen.file}: "## Information presented" needs at least one bullet item`)
+    }
+    if (!screen.capabilities) errors.push(`${screen.file}: missing "## Capability boundary" section`)
+    if (section(screen.doc, 'Available actions') !== undefined && !screen.actions.length) {
+      errors.push(`${screen.file}: "## Available actions" needs at least one bullet item when present`)
+    }
+    if (section(screen.doc, 'Product states') !== undefined && !screen.states.length) {
+      errors.push(`${screen.file}: "## Product states" needs at least one H3 state when present`)
+    }
+    const stateNames = new Set<string>()
+    for (const state of screen.states) {
+      const normalized = state.title.toLowerCase()
+      if (stateNames.has(normalized)) errors.push(`${screen.file}: duplicate product state "${state.title}"`)
+      stateNames.add(normalized)
     }
   }
 
@@ -152,17 +186,22 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
 
   const allEntities = [
     ...model.actors, ...model.domains, ...model.experiences,
-    ...model.features, ...model.businessRules,
+    ...model.screens, ...model.features, ...model.businessRules,
     ...model.journeys, ...model.journeys.flatMap(journey => journey.scenarios)
   ]
   for (const entity of allEntities) {
     for (const ref of entity.codeRefs) {
       if (!tracked.has(ref.path)) errors.push(`${entity.file}: codeRef path "${ref.path}" is not a tracked file`)
     }
+  }
+  const linkHosts = [
+    { file: 'product.md', links: model.product.links },
+    ...allEntities
+  ]
+  for (const entity of linkHosts) {
     for (const link of entity.links) {
-      if (!/^https?:\/\//.test(link.href) && !tracked.has(link.href)) {
-        warnings.push(`${entity.file}: link href "${link.href}" does not exist in the repository`)
-      }
+      const path = repositoryLinkPath(link.href)
+      if (path && !tracked.has(path)) warnings.push(`${entity.file}: link href "${link.href}" does not exist in the repository`)
     }
   }
 
@@ -174,6 +213,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     counts: {
       actors: model.actors.length,
       experiences: model.experiences.length,
+      screens: model.screens.length,
       domains: model.domains.length,
       features: model.features.length,
       journeys: model.journeys.length,

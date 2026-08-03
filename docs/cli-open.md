@@ -3,13 +3,13 @@ title: blueprint open
 description: Expand a Blueprint held in a local file into a canonical Product Model while preserving model completeness.
 section: open-source
 group: CLI
-order: 29
+order: 30
 ---
 
 # `businesslens blueprint open`
 
-Parse and check a Product Report v4, then expand it into a canonical `.businesslens/`
-directory:
+Parse and check a Product Report v5, or a compatible historical v4 report, then
+expand it into a canonical `.businesslens/` directory:
 
 ```bash
 npx businesslens@latest blueprint open ./report.json
@@ -48,8 +48,8 @@ source `codeRefs` do not navigate the new target. `open` therefore:
 - removes repository-specific bookmarks from every imported entity;
 - preserves the report's model-breadth coverage status;
 - records that implementation alignment must be verified locally; and
-- preserves product behavior, relationships, intent, product routes, HTTP(S)
-  links, and supporting content.
+- preserves product behavior, relationships, intent, Screens, product routes,
+  mobile deep links, HTTP(S) links, and supporting content.
 
 The resulting model lints and exports. Missing codeRefs are valid because
 bookmarks are not implementation state.

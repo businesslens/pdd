@@ -10,6 +10,12 @@
 
 - Actors differ by goals or privileges, never screens.
 - Experiences are audience-and-capability boundaries.
+- Screens are optional stable user-visible product views. State their
+  information, available actions, product-significant states, and capability
+  boundary without specifying components, layouts, or visual variants.
+- Reuse one Screen across web and mobile when its product semantics are shared;
+  separate it only for a material product difference. Public routes and deep
+  links may be entry points, but internal navigation identifiers do not belong.
 - Features are durable capabilities, not UI labels or sequence steps.
 - Business rules are reusable policies or invariants.
 - Journeys express stable user or operator goals.
@@ -36,3 +42,5 @@ Outcome so a reviewer can compare source behavior without executing it.
 - Batch related open questions; ask only decisions the user must make.
 - State a recommendation and its tradeoff when multiple directions remain.
 - Record unresolved points as limitations instead of guessing.
+- Keep screenshots, mockups, research, and sitemaps external. Supporting links
+  may reference them, but BusinessLens neither creates nor certifies them.

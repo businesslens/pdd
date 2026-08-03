@@ -15,7 +15,8 @@ matter, how they play out observably, and which rules remain true.
 | Entity | Answers | Lives in |
 | --- | --- | --- |
 | [Actor](./actors.md) | Who | `actors/<id>.md` |
-| [Experience](./experiences.md) | Where | `experiences/<id>.md` |
+| [Experience](./experiences.md) | Which product surface | `experiences/<id>.md` |
+| [Screen](./screens.md) | What users see and can do there | `screens/<id>.md` |
 | [Domain](./domains.md) | Which area | `domains/<id>.md` |
 | [Feature](./features.md) | Which durable capability | `features/<id>.md` |
 | [Journey](./journeys.md) | Which complete goal | `journeys/<id>/journey.md` |
@@ -26,6 +27,10 @@ matter, how they play out observably, and which rules remain true.
 scenario kinds. `config.yaml` records folder schema and SDD roots.
 `coverage.md` describes model breadth. `.businesslens/README.md` orients any
 agent that encounters the model.
+
+Screens are optional. They model stable user-visible views for products that
+need them without forcing visual concepts into CLI, API, or other non-visual
+products.
 
 ## Coverage is model breadth
 

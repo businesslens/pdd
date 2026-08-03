@@ -3,7 +3,7 @@ title: Business rules
 description: Durable constraints stated as assertions, reusable across the domains, features, journeys, and scenarios they govern.
 section: open-source
 group: Product model
-order: 14
+order: 15
 ---
 
 # Business rules

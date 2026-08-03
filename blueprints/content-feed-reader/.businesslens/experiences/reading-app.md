@@ -11,6 +11,8 @@ entryPoints:
   - web: /search
   - web: /sources
   - web: /collections
+  - ios: content-reader://library
+  - android: content-reader://library
 exit: Reader signs out; every source, item, reading state, saved item, tag, and collection is preserved for the next session
 ---
 

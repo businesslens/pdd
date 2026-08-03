@@ -7,7 +7,7 @@ import { buildProject } from '../src/commands/export.js'
 import { runOpen } from '../src/commands/open.js'
 import { lsFiles } from '../src/core/git.js'
 import { loadModel } from '../src/core/model.js'
-import { redactSourceEvidence, type ProductReportV4 } from '../src/core/portable.js'
+import { redactSourceEvidence, type ProductReportV5 } from '../src/core/portable.js'
 import { lintModel } from '../src/commands/lint.js'
 
 const FIXTURE = join(__dirname, 'fixtures', 'fixture-shop')
@@ -25,7 +25,7 @@ function initialize(cwd: string): void {
   git(cwd, 'commit', '--allow-empty', '-m', 'fixture')
 }
 
-function withoutRepositoryEvidence(report: ProductReportV4): Record<string, any> {
+function withoutRepositoryEvidence(report: ProductReportV5): Record<string, any> {
   const redacted = redactSourceEvidence(report)
   const strip = (items: Array<Record<string, any>>) => items.map(({ codeRefs: _codeRefs, ...item }) => item)
   return {
@@ -36,6 +36,7 @@ function withoutRepositoryEvidence(report: ProductReportV4): Record<string, any>
       ...redacted.model,
       actors: strip(redacted.model.actors),
       experiences: strip(redacted.model.experiences),
+      screens: strip(redacted.model.screens),
       domains: strip(redacted.model.domains),
       features: strip(redacted.model.features),
       journeys: strip(redacted.model.journeys),
@@ -77,6 +78,17 @@ describe('open report', () => {
     expect(imported.journeys.flatMap(journey => journey.entryPoints)).toEqual([])
     expect(imported.experiences.flatMap(experience => experience.entryPoints))
       .toEqual(expect.arrayContaining([{ type: 'web', path: '/' }]))
+    expect(imported.screens).toHaveLength(1)
+    expect(imported.screens[0]).toMatchObject({
+      id: 'product-record',
+      experiences: ['storefront'],
+      features: ['catalog-browsing'],
+      scenarios: ['browse-catalog']
+    })
+    expect(imported.screens[0]!.entryPoints.map(point => point.path)).toEqual([
+      '/products/:id',
+      'fixture-shop://products/:id'
+    ])
 
     const rebuilt = buildProject(target)
     expect(withoutRepositoryEvidence(rebuilt.report)).toEqual(withoutRepositoryEvidence(original.report))
@@ -91,6 +103,8 @@ describe('open report', () => {
       join(target, '.businesslens/journeys/browse-and-buy/scenarios/complete-checkout.md'),
       'utf8'
     )).toContain('## Decision points')
+    expect(readFileSync(join(target, '.businesslens/screens/product-record.md'), 'utf8'))
+      .toContain('## Product states')
   })
 
   it('preserves known unmapped product areas as model-breadth context', async () => {
@@ -249,6 +263,29 @@ describe('open report', () => {
       .toContain('# Fixture Shop')
 
     rmSync(legacyTarget, { recursive: true, force: true })
+  })
+
+  it('accepts and expands a historical Product Report v4 without Screens', async () => {
+    const legacyTarget = mkdtempSync(join(tmpdir(), 'bl-open-v4-'))
+    initialize(legacyTarget)
+    try {
+      const report = structuredClone(buildProject(source).report) as Record<string, any>
+      report.schemaVersion = '4.0.0'
+      delete report.summary.screens
+      delete report.model.screens
+      delete report.coverage.counts.screens
+      delete report.coverage.mapped.screens
+      const file = join(legacyTarget, 'v4.json')
+      writeFileSync(file, JSON.stringify(report))
+
+      expect(await runOpen(legacyTarget, file, false)).toBe(0)
+      const imported = loadModel(legacyTarget)
+      expect(imported.config.schema).toBe(2)
+      expect(imported.screens).toEqual([])
+      expect(lintModel(imported, lsFiles(legacyTarget)).errors).toEqual([])
+    } finally {
+      rmSync(legacyTarget, { recursive: true, force: true })
+    }
   })
 
   it('directs remote Hub users to pull instead of accepting a URL', async () => {

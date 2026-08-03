@@ -46,10 +46,12 @@ Read before authoring:
 5. Trace observable behavior end to end. Treat tests and docs as leads; confirm
    claims in implementation. Do not infer permissions, guarantees, or live
    operational state from names.
-6. Draft actors, experiences, domains, features, business rules, journeys,
-   scenarios, relationships, and coverage. Preserve valid existing meaning in
-   a scoped expansion. Add optional `codeRefs` only where they are useful
-   navigation into tracked files; never call them proof.
+6. Draft actors, experiences, optional product Screens, domains, features,
+   business rules, journeys, scenarios, relationships, and coverage. A Screen
+   is warranted only for a stable user-visible product view; do not turn every
+   route, component, viewport, or visual variant into one. Preserve valid
+   existing meaning in a scoped expansion. Add optional `codeRefs` only where
+   they are useful navigation into tracked files; never call them proof.
 7. Present the proposed model delta before writing. Include added, changed, and
    removed entities; mapped and unmapped areas; limitations; and any material
    uncertainty. Get explicit approval for product meaning. Do not silently
@@ -81,3 +83,5 @@ Read before authoring:
   and root README byte-identical.
 - Never stage, commit, submit, or contribute the model.
 - Never persist verification receipts or lifecycle state.
+- Never capture, copy, or assess screenshots. External `visual` and `research`
+  links are supporting context, never evidence by themselves.

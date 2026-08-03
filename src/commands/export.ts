@@ -1,12 +1,12 @@
 import type { EntityFile, PddModel } from '../core/model.js'
-import type { ProductReportV4 } from '../core/portable.js'
+import type { ProductReportV5 } from '../core/portable.js'
 import { writeGeneratedFile } from '../core/generated-files.js'
 import { lsFiles } from '../core/git.js'
 import { section, supportingContent } from '../core/markdown.js'
 import { loadModel } from '../core/model.js'
 import { resolveModelRoot } from '../core/model-root.js'
 import {
-  ProductReportV4Schema,
+  ProductReportV5Schema,
   REPORT_SCHEMA_VERSION,
   redactSourceEvidence,
   validateProductReport
@@ -23,7 +23,7 @@ function entityContent(entity: EntityFile, recognized: string[]) {
     supportingContent: supportingContent(entity.doc, ['Intent', ...recognized]),
     codeRefs: entity.codeRefs,
     links: entity.links.map(link => ({
-      rel: link.rel as 'spec' | 'proposal' | 'doc' | 'adr',
+      rel: link.rel,
       href: link.href,
       ...(link.title ? { title: link.title } : {})
     }))
@@ -41,12 +41,12 @@ export function compileReport(
   model: PddModel,
   trackedFileCount: number,
   today: string
-): ProductReportV4 {
+): ProductReportV5 {
   const scenarios = model.journeys.flatMap(journey => journey.scenarios)
   const mappedCount = (items: Array<{ codeRefs: unknown[] }>) =>
     items.filter(item => item.codeRefs.length > 0).length
 
-  const report: ProductReportV4 = {
+  const report: ProductReportV5 = {
     schemaVersion: REPORT_SCHEMA_VERSION,
     id: model.product.id,
     title: model.product.doc.title,
@@ -54,7 +54,7 @@ export function compileReport(
     intent: section(model.product.doc, 'Intent') || '',
     supportingContent: supportingContent(model.product.doc, ['Intent']),
     links: model.product.links.map(link => ({
-      rel: link.rel as 'spec' | 'proposal' | 'doc' | 'adr',
+      rel: link.rel,
       href: link.href,
       ...(link.title ? { title: link.title } : {})
     })),
@@ -64,6 +64,7 @@ export function compileReport(
     summary: {
       actors: model.actors.length,
       experiences: model.experiences.length,
+      screens: model.screens.length,
       domains: model.domains.length,
       features: model.features.length,
       journeys: model.journeys.length,
@@ -96,6 +97,20 @@ export function compileReport(
         entryPoints: experience.entryPoints,
         exitContract: experience.exit,
         ...entityContent(experience, ['Capability boundary'])
+      })),
+      screens: byId(model.screens).map(screen => ({
+        id: screen.id,
+        title: screen.doc.title,
+        description: screen.doc.lead,
+        experienceIds: sorted(screen.experiences),
+        featureIds: sorted(screen.features),
+        scenarioIds: sorted(screen.scenarios),
+        entryPoints: screen.entryPoints,
+        information: screen.information,
+        actions: screen.actions,
+        states: screen.states,
+        capabilities: screen.capabilities,
+        ...entityContent(screen, ['Information presented', 'Available actions', 'Product states', 'Capability boundary'])
       })),
       domains: byId(model.domains).map(domain => ({
         id: domain.id,
@@ -158,6 +173,7 @@ export function compileReport(
         files: trackedFileCount,
         actors: model.actors.length,
         experiences: model.experiences.length,
+        screens: model.screens.length,
         domains: model.domains.length,
         features: model.features.length,
         journeys: model.journeys.length,
@@ -167,6 +183,7 @@ export function compileReport(
       mapped: {
         actors: mappedCount(model.actors),
         experiences: mappedCount(model.experiences),
+        screens: mappedCount(model.screens),
         domains: mappedCount(model.domains),
         features: mappedCount(model.features),
         journeys: mappedCount(model.journeys),
@@ -179,14 +196,14 @@ export function compileReport(
     }
   }
 
-  const parsed = ProductReportV4Schema.parse(report)
+  const parsed = ProductReportV5Schema.parse(report)
   const issues = validateProductReport(parsed)
   if (issues.length) throw new Error(`Report validation failed:\n- ${issues.join('\n- ')}`)
   return parsed
 }
 
 export interface BuildOutcome {
-  report: ProductReportV4
+  report: ProductReportV5
   outputFile: string
 }
 
@@ -226,7 +243,7 @@ export function runExport(cwd: string): number {
     const { summary } = report
     console.log(
       `Compiled ${summary.actors} actors, ${summary.experiences} experiences, `
-      + `${summary.domains} domains, ${summary.features} features, ${summary.journeys} journeys, `
+      + `${summary.screens} screens, ${summary.domains} domains, ${summary.features} features, ${summary.journeys} journeys, `
       + `${summary.scenarios} scenarios, and ${summary.businessRules} business rules.`
     )
     console.log(`Wrote ${outputFile}.`)

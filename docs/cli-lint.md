@@ -3,7 +3,7 @@ title: lint
 description: Check Product Model structure, relationships, grammar, links, and tracked code-reference paths without claiming semantic alignment.
 section: open-source
 group: CLI
-order: 27
+order: 28
 ---
 
 # `businesslens lint`
@@ -38,6 +38,7 @@ Use `businesslens-verify` for semantic alignment.
   "counts": {
     "actors": 2,
     "experiences": 2,
+    "screens": 1,
     "domains": 2,
     "features": 3,
     "journeys": 2,

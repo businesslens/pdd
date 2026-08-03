@@ -37,8 +37,8 @@ Read before work:
      only to choose the inspection worklist;
    - `current` or `full` → inspect the present modeled product independent of
      Git history;
-   - named domain, experience, feature, journey, scenario, or path → inspect it
-     and behaviorally necessary dependencies;
+   - named domain, experience, Screen, feature, journey, scenario, or path →
+     inspect it and behaviorally necessary dependencies;
    - no explicit scope → prefer a reliable changed-surface worklist; when no
      useful diff exists, inspect the current modeled product.
 
@@ -146,6 +146,8 @@ the diff.
 - Never change implementation inside a BusinessLens analysis phase.
 - Never treat `codeRefs`, coverage, tests, names, or a green lint result as proof
   by themselves.
+- Never capture, compare, or certify screenshots. A supporting visual or
+  research link may guide inspection but is not evidence by itself.
 - Never write outside `.businesslens/`; model-resolution writes must leave target
   `AGENTS.md`, `CLAUDE.md`, and root README byte-identical.
 - Never stage, commit, publish, submit, or contribute.

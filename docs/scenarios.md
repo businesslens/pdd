@@ -3,7 +3,7 @@ title: Scenarios
 description: Observable paths through a journey — Trigger, Steps, Outcome, and decision points. The smallest unit that can be verified.
 section: open-source
 group: Product model
-order: 13
+order: 14
 ---
 
 # Scenarios

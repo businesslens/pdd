@@ -3,7 +3,9 @@ domain: sharing
 actors:
   - collection-owner
   - collection-subscriber
+  - visitor
 experiences:
+  - public-collection
   - reading-app
 businessRules:
   - a-subscription-never-grants-write-access

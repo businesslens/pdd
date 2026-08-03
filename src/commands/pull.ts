@@ -86,7 +86,7 @@ export async function runPull(
   try {
     response = await (dependencies.fetch ?? globalThis.fetch)(url, {
       headers: {
-        accept: 'application/vnd.businesslens.report+json; version=4, application/json',
+        accept: 'application/vnd.businesslens.report+json; version=5, application/vnd.businesslens.report+json; version=4, application/json',
         // Identify the CLI so catalog pulls are distinguishable from browser
         // fetches. Without it every pull is indistinguishable from a page view.
         'user-agent': `businesslens/${cliVersion()}`

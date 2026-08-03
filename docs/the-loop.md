@@ -60,8 +60,8 @@ routing, internal phases, and return to verification are automatic.
   changes.
 - `verify current` or `verify full` inspects present behavior without needing a
   merge base or diff.
-- `verify <named scope>` inspects one domain, experience, feature, journey,
-  scenario, or path plus necessary dependencies.
+- `verify <named scope>` inspects one domain, experience, Screen, feature,
+  journey, scenario, or path plus necessary dependencies.
 
 Git is a scope tool, never an authority tool. A model committed on the default
 branch can still be the approved plan for code added later.

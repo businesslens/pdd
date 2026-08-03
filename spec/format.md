@@ -31,6 +31,7 @@ still belongs to your SDD tool of choice and is referenced via `links`.
 ├── actors/<actor-id>.md
 ├── domains/<domain-id>.md
 ├── experiences/<experience-id>.md
+├── screens/<screen-id>.md
 ├── features/<feature-id>.md
 ├── business-rules/<rule-id>.md
 ├── journeys/<journey-id>/journey.md
@@ -82,32 +83,45 @@ inspection; they are not proof, completeness, implementation state, or
 verification receipts. A model, including one with `coverage.status: complete`,
 may contain no codeRefs. Missing bookmarks never produce a lint finding.
 
-## links (the PDD → SDD bridge)
+## links (supporting references)
 
 Optional on any entity:
 
 ```yaml
 links:
-  - rel: spec        # spec | proposal | doc | adr
+  - rel: spec        # spec | proposal | doc | adr | visual | research
     href: openspec/specs/checkout/spec.md
     title: Checkout spec
 ```
 
-Links connect model entities to prescriptive documents (OpenSpec specs, design
-docs, ADRs). `lint` warns when a local href does not exist.
+Links connect model entities to supporting content maintained outside the
+Product Model. `rel` is one of `spec`, `proposal`, `doc`, `adr`, `visual`, or
+`research`. `visual` covers screenshots, mockups, prototypes, and design
+references; `research` covers supporting product research.
+
+Repository-relative hrefs are resolved from the repository root. `lint` ignores
+their query string and fragment when checking that the referenced path is
+tracked, and warns when it is not. HTTP(S) hrefs are syntax-checked but never
+fetched. Absolute filesystem paths, `file:` URLs, and unsupported URL schemes
+are invalid. A link is supporting context, never proof of product or
+implementation alignment. BusinessLens does not copy, download, generate,
+inspect, or assess linked content.
 
 ## Entity files
 
 ### `config.yaml`
 
 ```yaml
-schema: 1                          # folder-format version
+schema: 2                          # folder-format version
 sdd:
   paths: [openspec/]               # detected/declared SDD roots; empty if none
 ```
 
 `config.yaml` has no other keys. A `platform:` block from an older model is
 ignored rather than rejected — it named an endpoint nothing contacts any more.
+Schema 1 remains readable for screenless historical models. `screens/` requires
+schema 2. Unsupported future schema numbers fail explicitly rather than being
+silently interpreted.
 
 ### `product.md`
 
@@ -248,6 +262,89 @@ Anonymous browsing; checkout requires a session. No administrative actions.
 exit contract, and `## Capability boundary` defines the surface's supported
 capabilities. Each `entryPoints` item is a compact `type: path` map.
 
+An entry point is a product-facing way to reach an Experience: for example a
+rooted web route, public HTTP(S) URL, supported mobile deep link, or command.
+Repository file paths and `file:` URLs are source navigation, not portable
+product entry points.
+
+### `screens/<id>.md`
+
+A Screen is a meaningful user-visible view where product information or
+capabilities are exposed. It is platform-neutral: it need not be a web page,
+have a URL, fill a device display, or correspond to one implementation module.
+The whole `screens/` collection is optional so non-visual products remain valid.
+
+```markdown
+---
+experiences: [storefront]
+features: [catalog-browsing]
+scenarios: [browse-catalog]
+entryPoints:
+  - web: /products/:id
+  - ios: acme-shop://products/:id
+links:
+  - rel: visual
+    href: docs/ui/product-record.png
+    title: Current visual reference
+---
+
+# Product record
+
+Shows the information a shopper needs to evaluate one product.
+
+## Intent
+
+Help a shopper decide whether to add the product to the cart.
+
+## Information presented
+
+- Product name and description
+- Price and availability
+
+## Available actions
+
+- Add the product to the cart
+- Return to the catalog
+
+## Product states
+
+### Available
+
+The product can be added to the cart.
+
+### Unavailable
+
+The reason it cannot be purchased is explained.
+
+## Capability boundary
+
+The screen does not change product or inventory data.
+```
+
+`experiences` and `features` are lists of IDs and each needs at least one item.
+`scenarios` and `entryPoints` are optional. The H1, lead description,
+`## Information presented` bullet list, and `## Capability boundary` prose are
+required. `## Available actions` is optional but, when present, must contain a
+bullet list. `## Product states` is optional; each state is an H3 name followed
+by non-empty prose. States remain embedded in the Screen report entity.
+
+Only product-significant states belong here: a state changes what the user
+understands, can do, or achieves. Empty, unavailable, unauthorized,
+validation-failure, and completed states commonly qualify. Themes, viewport
+variants, hover states, skeletons, component variants, and screenshot baselines
+do not. Visual evidence stays external and may be linked with `rel: visual`.
+
+One Screen may relate to multiple Experiences when its product semantics are
+shared across web and mobile. Separate Screens are warranted only when purpose,
+information, actions, meaningful states, or capability boundaries differ. Do
+not add a platform field: Experience boundaries and optional entry points carry
+the product-significant distinction.
+
+Screens do not author a sitemap or transition graph. A screen inventory is a
+generated projection grouped by Experience; goal-oriented movement belongs in
+Journeys and Scenarios. XML sitemaps remain implementation artifacts, and UX
+sitemaps may be external `doc` or `visual` links.
+
 ### `journeys/<id>/journey.md`
 
 ```markdown
@@ -360,7 +457,7 @@ administrator decision.
 ## Generated files
 
 - `cache/build.json` — metadata for the most recent portable build.
-- `build/report.json` — portable Product Report v4 generated by
+- `build/report.json` — portable Product Report v5 generated by
   `blueprint export` (`build` is refused, not aliased).
 
 The map inventory is emitted to stdout and writes no cache file. All of
@@ -369,7 +466,7 @@ files are derived artifacts and must not be edited or committed.
 
 ## Portable report and expansion
 
-`build/report.json` is a Product Report with `schemaVersion: "4.0.0"`. It
+`build/report.json` is a Product Report with `schemaVersion: "5.0.0"`. It
 contains the product entities, relationships, intent, links, supporting
 content, and coverage needed to reconstruct the model.
 
@@ -384,8 +481,10 @@ Markdown: titles and list items are single-line, required descriptions and
 behavior sections are non-empty, standard mapped counts equal the entities
 carrying one or more navigational `codeRefs`, and relationships resolve to
 existing entities.
-Historical v4 reports may retain older coverage metric names; any standard
-entity count or mapped key that is present must still match the report.
+Readers accept historical v4 reports and normalize them in memory with an empty
+Screen collection. New exports are v5. Historical v4 reports may retain older
+coverage metric names; any standard entity count or mapped key that is present
+must still match the report.
 No report profile requires a codeRef. Present codeRefs remain subject to the
 same grammar, tracked-path, and redaction rules.
 
@@ -394,8 +493,8 @@ same grammar, tracked-path, and redaction rules.
 Several report fields name the origin repository rather than the product. That
 navigation is useful inside its repository but must not be published. Every
 report proposed or served as a public catalog Blueprint is first passed through
-one shared projection. The API and `evidenceRedacted` field retain their v4
-names for compatibility:
+one shared projection. The API and `evidenceRedacted` field retain their
+historical names for compatibility:
 
 ```ts
 import { redactSourceEvidence } from 'businesslens/report'
@@ -406,17 +505,18 @@ serve(redactSourceEvidence(report))
 | Field | Delivered report |
 | --- | --- |
 | `codeRefs` | emptied on every entity |
-| `entryPoints` | repository paths dropped; routes like `/checkout` and HTTP(S) URLs kept |
+| `entryPoints` | repository paths and `file:` URLs dropped; routes, HTTP(S) URLs, non-file mobile deep links, and commands kept |
 | `links` | local hrefs dropped; HTTP(S) URLs kept |
 | `coverage.sourceAreas` | emptied |
 | `coverage.evidenceRedacted` | set to `true` |
 
 Relative POSIX paths, Windows paths, UNC paths, local `file:` URLs, and
 recognizable absolute filesystem paths are repository-origin metadata. A rooted
-entry point such as `/checkout` is a product route and is kept; root-relative
-links are local and are dropped. HTTP(S) URLs are kept in either field. A
-value with no path separator at all, such as a CLI entry point, is not a path
-and is kept.
+entry point such as `/checkout` is a product route and is kept. An absolute URI
+with a non-file scheme such as `acme-shop://products/42` is a product deep link
+and is also kept. Root-relative links are local and are dropped. HTTP(S) links
+are kept. A value with no path separator at all, such as a CLI entry point, is
+not a path and is kept.
 
 Author-written prose — `method`, `unmapped`, `limitations`, `rationale`,
 `intent`, and `supportingContent` — is never rewritten. It carries product
@@ -428,7 +528,7 @@ the server cannot disagree about what a delivered report exposes, and
 `validateProductReport` rejects a report marked `evidenceRedacted` that still
 names a repository path.
 
-`coverage.mapped` is deliberately preserved for Product Report v4 wire
+`coverage.mapped` is deliberately preserved for Product Report wire
 compatibility. It counts entities that carried implementation-linked bookmarks
 upstream; it is a navigation signal, not proof or model completeness. Since a
 redacted report no longer carries the `codeRefs` those counts were derived

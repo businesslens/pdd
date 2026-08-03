@@ -3,7 +3,7 @@ title: Overview
 description: Three self-contained skills cover adoption, intended product change, and automatic verification-to-resolution.
 section: open-source
 group: Skills
-order: 20
+order: 21
 ---
 
 # BusinessLens skills

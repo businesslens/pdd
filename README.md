@@ -19,6 +19,7 @@ resolution loop.
 ├── product.md
 ├── actors/
 ├── experiences/
+├── screens/                  # optional product views
 ├── domains/
 ├── features/
 ├── business-rules/
@@ -95,6 +96,8 @@ Catalog contribution stays in the CLI; there is no contribution skill.
   under review, `partial` with known unmapped areas, and `complete` when the
   intended product scope is modeled.
 - A complete model may contain zero codeRefs.
+- Screens are optional platform-neutral product views. Screenshots and other
+  supporting visuals remain external links, not model assets or evidence.
 - `lint` checks format, required content, relationships, link/reference grammar,
   and tracked bookmark paths. `verify` checks meaning against current code.
 

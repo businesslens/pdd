@@ -10,7 +10,7 @@ import {
 } from './frontmatter.js'
 import { stem } from './ids.js'
 import {
-  bulletList, decisionPoints, orderedList, parseMarkdown, section
+  bulletList, decisionPoints, orderedList, parseMarkdown, screenStates, section
 } from './markdown.js'
 
 export interface EntityFile {
@@ -35,6 +35,16 @@ export interface FeatureEntity extends EntityFile {
   actors: string[]
   experiences: string[]
   businessRules: string[]
+}
+export interface ScreenEntity extends EntityFile {
+  experiences: string[]
+  features: string[]
+  scenarios: string[]
+  entryPoints: CompactEntryPoint[]
+  information: string[]
+  actions: string[]
+  states: ReturnType<typeof screenStates>
+  capabilities: string
 }
 export interface ScenarioEntity extends EntityFile {
   journeyId: string
@@ -85,6 +95,7 @@ export interface PddModel {
   actors: ActorEntity[]
   domains: DomainEntity[]
   experiences: ExperienceEntity[]
+  screens: ScreenEntity[]
   features: FeatureEntity[]
   businessRules: BusinessRuleEntity[]
   journeys: JourneyEntity[]
@@ -138,6 +149,9 @@ export function loadModel(cwd: string): PddModel {
     }
   } else if (existsSync(root)) {
     issues.push('config.yaml is missing')
+  }
+  if (config.schema !== 1 && config.schema !== 2) {
+    issues.push(`config.yaml: schema ${config.schema} is not supported (expected 1 or 2)`)
   }
 
   let scenarioKinds: ScenarioKind[] = []
@@ -226,6 +240,33 @@ export function loadModel(cwd: string): PddModel {
       capabilities: section(doc, 'Capability boundary') || ''
     }
   })
+
+  const screens: ScreenEntity[] = listMarkdown(join(root, 'screens')).map((name) => {
+    const file = join(root, 'screens', name)
+    const { data, doc, codeRefs, links } = readEntity(
+      file,
+      ['experiences', 'features', 'scenarios', 'entryPoints'],
+      issues
+    )
+    return {
+      id: stem(name),
+      file,
+      doc,
+      codeRefs,
+      links,
+      experiences: stringListField(data, 'experiences', issues, file),
+      features: stringListField(data, 'features', issues, file),
+      scenarios: stringListField(data, 'scenarios', issues, file),
+      entryPoints: entryPointsField(data, issues, file),
+      information: bulletList(section(doc, 'Information presented') || ''),
+      actions: bulletList(section(doc, 'Available actions') || ''),
+      states: screenStates(section(doc, 'Product states') || '', issues, file),
+      capabilities: section(doc, 'Capability boundary') || ''
+    }
+  })
+  if (screens.length && config.schema !== 2) {
+    issues.push('screens/: Screen entities require config.yaml schema 2')
+  }
 
   const features: FeatureEntity[] = listMarkdown(join(root, 'features')).map((name) => {
     const file = join(root, 'features', name)
@@ -320,6 +361,7 @@ export function loadModel(cwd: string): PddModel {
     actors,
     domains,
     experiences,
+    screens,
     features,
     businessRules,
     journeys,

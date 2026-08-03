@@ -3,7 +3,7 @@ title: Overview
 description: BusinessLens supplies durable product intent around your session plan, technical specification, and injected build flow.
 section: open-source
 group: Integration
-order: 16
+order: 17
 ---
 
 # Integrating BusinessLens

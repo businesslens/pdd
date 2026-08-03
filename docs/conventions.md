@@ -3,7 +3,7 @@ title: Conventions
 description: The authoring rules every entity file shares — how IDs, titles, and descriptions are derived, and what belongs in frontmatter.
 section: open-source
 group: Reference
-order: 32
+order: 33
 ---
 
 # Authoring conventions
@@ -80,7 +80,7 @@ Typos fail loudly and immediately rather than silently dropping a relation.
 Intent explains why the product or entity exists and which outcome its shape
 protects. It is available on the product, [actors](./actors.md),
 [experiences](./experiences.md), [domains](./domains.md),
-[features](./features.md), [journeys](./journeys.md), and
+[features](./features.md), [screens](./screens.md), [journeys](./journeys.md), and
 [business rules](./business-rules.md).
 
 Intent is structured prose, not a separate entity — it adds meaning to an entity

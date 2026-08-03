@@ -5,6 +5,8 @@ actors:
 access: public
 entryPoints:
   - web: /c/:collectionSlug
+  - ios: content-reader://collections/:collectionSlug
+  - android: content-reader://collections/:collectionSlug
 exit: Visitor leaves, or follows the call to action to establish an account and subscribe
 ---
 

@@ -14,6 +14,7 @@
 
 export {
   REPORT_SCHEMA_VERSION,
+  LEGACY_REPORT_SCHEMA_VERSION,
   SUBMISSION_SCHEMA_VERSION,
 
   // Report entities
@@ -27,12 +28,16 @@ export {
   ReportEntryPointSchema,
   ReportExperienceSchema,
   ReportFeatureSchema,
+  ReportScreenStateSchema,
+  ReportScreenSchema,
   ReportJourneySchema,
   ReportDecisionPointSchema,
   ReportScenarioSchema,
   ReportBusinessRuleSchema,
   ReportCoverageSchema,
   ProductReportV4Schema,
+  ProductReportV5Schema,
+  ProductReportSchema,
 
   // Legacy submission envelope (retained for schema compatibility)
   GitRepositoryProvenanceSchema,
@@ -42,6 +47,7 @@ export {
 
   // Semantics shared across repositories
   validateProductReport,
+  upgradeProductReportV4,
   parseProductReport,
   redactSourceEvidence,
   canonicalReportJson
@@ -49,6 +55,8 @@ export {
 
 export type {
   ProductReportV4,
+  ProductReportV5,
+  ProductReport,
   ProjectSubmissionV4,
   SubmissionProvenance,
   GitRepositoryProvenance,
@@ -59,6 +67,8 @@ export type {
   ReportExperience,
   ReportDomain,
   ReportFeature,
+  ReportScreen,
+  ReportScreenState,
   ReportJourney,
   ReportScenario,
   ReportBusinessRule,

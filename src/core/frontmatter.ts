@@ -83,12 +83,46 @@ export function entryPointsField(data: Record<string, unknown>, issues: string[]
 }
 
 export interface EntityLink {
-  rel: string
+  rel: EntityLinkRel
   href: string
   title?: string
 }
 
-const LINK_RELS = new Set(['spec', 'proposal', 'doc', 'adr'])
+export type EntityLinkRel = 'spec' | 'proposal' | 'doc' | 'adr' | 'visual' | 'research'
+
+export const LINK_RELS = new Set<EntityLinkRel>(['spec', 'proposal', 'doc', 'adr', 'visual', 'research'])
+
+/** The tracked repository path named by a local href, without query or fragment. */
+export function repositoryLinkPath(href: string): string | undefined {
+  if (/^https?:\/\//i.test(href)) return undefined
+  return href.split(/[?#]/, 1)[0]?.replace(/^\.\//, '') || undefined
+}
+
+function validateLinkHref(href: string, issues: string[], label: string): boolean {
+  if (!href.trim()) {
+    issues.push(`${label}: link "href" must not be empty`)
+    return false
+  }
+  if (/^https?:\/\//i.test(href)) {
+    try {
+      const url = new URL(href)
+      if (!url.hostname) throw new Error('missing hostname')
+      return true
+    } catch {
+      issues.push(`${label}: link href "${href}" is not a valid HTTP(S) URL`)
+      return false
+    }
+  }
+  if (/^[a-z][a-z0-9+.-]*:/i.test(href)) {
+    issues.push(`${label}: link href "${href}" must use HTTP(S) or a repository-relative path`)
+    return false
+  }
+  if (/^(?:[/\\]|~[/\\]|[a-z]:[/\\])/i.test(href) || href.includes('\\')) {
+    issues.push(`${label}: link href "${href}" must be repository-relative, not an absolute filesystem path`)
+    return false
+  }
+  return true
+}
 
 export function linksField(data: Record<string, unknown>, issues: string[], label: string): EntityLink[] {
   const value = data.links
@@ -104,11 +138,23 @@ export function linksField(data: Record<string, unknown>, issues: string[], labe
       issues.push(`${label}: each link needs "rel" and "href"`)
       continue
     }
-    if (!LINK_RELS.has(record.rel)) {
-      issues.push(`${label}: link rel "${record.rel}" must be one of spec|proposal|doc|adr`)
+    if (!LINK_RELS.has(record.rel as EntityLinkRel)) {
+      issues.push(`${label}: link rel "${record.rel}" must be one of spec|proposal|doc|adr|visual|research`)
       continue
     }
-    result.push({ rel: record.rel, href: record.href, title: typeof record.title === 'string' ? record.title : undefined })
+    if (!validateLinkHref(record.href, issues, label)) continue
+    if (
+      record.title !== undefined
+      && (typeof record.title !== 'string' || !record.title.trim())
+    ) {
+      issues.push(`${label}: link "title" must be a non-empty string when present`)
+      continue
+    }
+    result.push({
+      rel: record.rel as EntityLinkRel,
+      href: record.href,
+      title: typeof record.title === 'string' ? record.title : undefined
+    })
   }
   return result
 }

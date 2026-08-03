@@ -10,6 +10,11 @@ export interface MarkdownDecisionPoint {
   branches: Array<{ condition: string, outcome: string }>
 }
 
+export interface MarkdownScreenState {
+  title: string
+  description: string
+}
+
 /**
  * Deterministic parser for the constrained entity-markdown shape:
  * one H1, a lead paragraph, then optional `##` sections.
@@ -133,5 +138,39 @@ export function decisionPoints(
     if (!question) issues.push(`${label}: decision "${chunk.title}" needs a question`)
     if (branches.length < 2) issues.push(`${label}: decision "${chunk.title}" needs at least two branches`)
     return { title: chunk.title, question, branches }
+  })
+}
+
+/** Parse Screen product states: one H3 name followed by non-empty prose. */
+export function screenStates(
+  body: string,
+  issues: string[],
+  label: string
+): MarkdownScreenState[] {
+  if (!body.trim()) return []
+  const lines = body.split('\n')
+  const chunks: Array<{ title: string, lines: string[] }> = []
+  let current: { title: string, lines: string[] } | undefined
+
+  for (const line of lines) {
+    const heading = line.match(/^### (.+)$/)
+    if (heading) {
+      if (current) chunks.push(current)
+      current = { title: heading[1]!.trim(), lines: [] }
+      continue
+    }
+    if (!current) {
+      if (line.trim()) issues.push(`${label}: "## Product states" content must begin with an H3 title`)
+      continue
+    }
+    current.lines.push(line)
+  }
+  if (current) chunks.push(current)
+
+  return chunks.map((chunk) => {
+    const description = chunk.lines.join('\n').trim()
+    if (!chunk.title) issues.push(`${label}: product state needs a title`)
+    if (!description) issues.push(`${label}: product state "${chunk.title}" needs a description`)
+    return { title: chunk.title, description }
   })
 }

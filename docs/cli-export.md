@@ -3,7 +3,7 @@ title: blueprint export
 description: Compile a Product Model into a source-free Product Report with repository-specific navigation removed.
 section: open-source
 group: CLI
-order: 28
+order: 29
 ---
 
 # `businesslens blueprint export`
@@ -24,7 +24,7 @@ Export strips every `codeRef`, along with repository-relative links and entry
 points. A `codeRef` names a path in *this* checkout and navigates nowhere in any
 other, so the report states what the product does without leaking source paths.
 
-Coverage keeps its `mapped` counts for Product Report v4 compatibility. They
+Coverage keeps its `mapped` counts for Product Report compatibility. They
 record how many entities carried bookmarks before redaction, not proof or model
 completeness.
 

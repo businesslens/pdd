@@ -3,7 +3,7 @@ title: Domains
 description: Recognizable product areas that group features and journeys — named in product language, not code architecture.
 section: open-source
 group: Product model
-order: 10
+order: 11
 ---
 
 # Domains

@@ -7,8 +7,13 @@
   named outcome.
 - Tests corroborate source; they do not replace inspecting implementation.
 - Partial implementation is a gap, not alignment.
+- For Screens, compare product-visible information, actions, meaningful states,
+  and capability boundaries. Do not require component, layout, theme, viewport,
+  or screenshot similarity that the Product Model does not claim.
 - Do not claim deployed configuration, external systems, or live data state from
   source code.
+- External visuals and research are context. Do not capture or fetch them as a
+  verification workflow, and never treat their existence as proof.
 
 ## Separate scope from authority
 

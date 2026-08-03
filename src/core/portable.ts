@@ -1,6 +1,7 @@
 import * as z from 'zod'
 
-export const REPORT_SCHEMA_VERSION = '4.0.0'
+export const REPORT_SCHEMA_VERSION = '5.0.0'
+export const LEGACY_REPORT_SCHEMA_VERSION = '4.0.0'
 export const SUBMISSION_SCHEMA_VERSION = '1.0.0'
 
 const IdSchema = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
@@ -43,7 +44,7 @@ export const CodeReferenceSchema = z.strictObject({
 })
 
 export const EntityLinkSchema = z.strictObject({
-  rel: z.enum(['spec', 'proposal', 'doc', 'adr']),
+  rel: z.enum(['spec', 'proposal', 'doc', 'adr', 'visual', 'research']),
   href: z.string().min(1),
   title: z.string().min(1).optional()
 })
@@ -62,9 +63,22 @@ export const TaxonomyEntrySchema = z.strictObject({
   colorSlot: z.number().int().optional()
 })
 
+const ReportEntityCountV4Shape = {
+  actors: z.number().int().min(0),
+  experiences: z.number().int().min(0),
+  domains: z.number().int().min(0),
+  features: z.number().int().min(0),
+  journeys: z.number().int().min(0),
+  scenarios: z.number().int().min(0),
+  businessRules: z.number().int().min(0)
+}
+
+const ReportSummaryV4Schema = z.strictObject(ReportEntityCountV4Shape)
+
 const ReportEntityCountShape = {
   actors: z.number().int().min(0),
   experiences: z.number().int().min(0),
+  screens: z.number().int().min(0),
   domains: z.number().int().min(0),
   features: z.number().int().min(0),
   journeys: z.number().int().min(0),
@@ -119,6 +133,26 @@ export const ReportFeatureSchema = z.strictObject({
   actorIds: z.array(IdSchema),
   experienceIds: z.array(IdSchema),
   businessRuleIds: z.array(IdSchema),
+  ...EntityContentSchema
+})
+
+export const ReportScreenStateSchema = z.strictObject({
+  title: SingleLineTextSchema,
+  description: RequiredMarkdownFragmentSchema
+})
+
+export const ReportScreenSchema = z.strictObject({
+  id: IdSchema,
+  title: SingleLineTextSchema,
+  description: RequiredMarkdownFragmentSchema,
+  experienceIds: z.array(IdSchema).min(1),
+  featureIds: z.array(IdSchema).min(1),
+  scenarioIds: z.array(IdSchema),
+  entryPoints: z.array(ReportEntryPointSchema),
+  information: z.array(SingleLineTextSchema).min(1),
+  actions: z.array(SingleLineTextSchema),
+  states: z.array(ReportScreenStateSchema),
+  capabilities: RequiredMarkdownFragmentSchema,
   ...EntityContentSchema
 })
 
@@ -185,6 +219,34 @@ export const ReportCoverageSchema = z.strictObject({
 })
 
 export const ProductReportV4Schema = z.strictObject({
+  schemaVersion: z.literal(LEGACY_REPORT_SCHEMA_VERSION),
+  id: ProductIdSchema,
+  title: SingleLineTextSchema.max(160),
+  description: RequiredMarkdownFragmentSchema.max(2000),
+  intent: z.string(),
+  supportingContent: z.string(),
+  links: z.array(EntityLinkSchema),
+  tags: z.array(z.string().min(1).max(48)).max(24),
+  generatedAt: z.iso.date(),
+  generator: ReportGeneratorSchema,
+  summary: ReportSummaryV4Schema,
+  limitations: z.array(z.string()),
+  model: z.strictObject({
+    taxonomies: z.strictObject({
+      scenarioKinds: z.array(TaxonomyEntrySchema)
+    }),
+    actors: z.array(ReportActorSchema),
+    experiences: z.array(ReportExperienceSchema).min(1),
+    domains: z.array(ReportDomainSchema),
+    features: z.array(ReportFeatureSchema),
+    journeys: z.array(ReportJourneySchema),
+    scenarios: z.array(ReportScenarioSchema),
+    businessRules: z.array(ReportBusinessRuleSchema)
+  }),
+  coverage: ReportCoverageSchema
+})
+
+export const ProductReportV5Schema = z.strictObject({
   schemaVersion: z.literal(REPORT_SCHEMA_VERSION),
   id: ProductIdSchema,
   title: SingleLineTextSchema.max(160),
@@ -203,6 +265,7 @@ export const ProductReportV4Schema = z.strictObject({
     }),
     actors: z.array(ReportActorSchema),
     experiences: z.array(ReportExperienceSchema).min(1),
+    screens: z.array(ReportScreenSchema),
     domains: z.array(ReportDomainSchema),
     features: z.array(ReportFeatureSchema),
     journeys: z.array(ReportJourneySchema),
@@ -211,6 +274,8 @@ export const ProductReportV4Schema = z.strictObject({
   }),
   coverage: ReportCoverageSchema
 })
+
+export const ProductReportSchema = z.union([ProductReportV5Schema, ProductReportV4Schema])
 
 const SubmissionDateSchema = z.string().refine(value => !Number.isNaN(Date.parse(value)), 'Expected a parseable date')
 
@@ -253,8 +318,11 @@ export const ProjectSubmissionV4Schema = z.strictObject({
 })
 
 export type ProductReportV4 = z.infer<typeof ProductReportV4Schema>
+export type ProductReportV5 = z.infer<typeof ProductReportV5Schema>
+export type ProductReport = ProductReportV5
 export type ProjectSubmissionV4 = z.infer<typeof ProjectSubmissionV4Schema>
 export type ReportDecisionPoint = z.infer<typeof ReportDecisionPointSchema>
+export type ReportScreenState = z.infer<typeof ReportScreenStateSchema>
 export type SubmissionProvenance = z.infer<typeof SubmissionProvenanceSchema>
 export type GitRepositoryProvenance = z.infer<typeof GitRepositoryProvenanceSchema>
 export type SubmissionRef = z.infer<typeof SubmissionRefSchema>
@@ -264,11 +332,27 @@ export type ReportActor = z.infer<typeof ReportActorSchema>
 export type ReportExperience = z.infer<typeof ReportExperienceSchema>
 export type ReportDomain = z.infer<typeof ReportDomainSchema>
 export type ReportFeature = z.infer<typeof ReportFeatureSchema>
+export type ReportScreen = z.infer<typeof ReportScreenSchema>
 export type ReportJourney = z.infer<typeof ReportJourneySchema>
 export type ReportScenario = z.infer<typeof ReportScenarioSchema>
 export type ReportBusinessRule = z.infer<typeof ReportBusinessRuleSchema>
 export type ReportCodeReference = z.infer<typeof CodeReferenceSchema>
 export type ReportEntityLink = z.infer<typeof EntityLinkSchema>
+
+/** Normalize a historical v4 report into the current in-memory v5 shape. */
+export function upgradeProductReportV4(report: ProductReportV4): ProductReportV5 {
+  return ProductReportV5Schema.parse({
+    ...report,
+    schemaVersion: REPORT_SCHEMA_VERSION,
+    summary: { ...report.summary, screens: 0 },
+    model: { ...report.model, screens: [] },
+    coverage: {
+      ...report.coverage,
+      counts: { ...report.coverage.counts, screens: 0 },
+      mapped: { ...report.coverage.mapped, screens: 0 }
+    }
+  })
+}
 
 function duplicateIssues(label: string, ids: string[]): string[] {
   const seen = new Set<string>()
@@ -293,7 +377,10 @@ function missingRelation(
 }
 
 /** Cross-entity and computed-field validation, shared with the catalog. */
-export function validateProductReport(report: ProductReportV4): string[] {
+export function validateProductReport(report: ProductReportV4 | ProductReportV5): string[] {
+  if (report.schemaVersion === LEGACY_REPORT_SCHEMA_VERSION) {
+    return validateProductReport(upgradeProductReportV4(report))
+  }
   const issues: string[] = []
   const { model } = report
   const actorIds = new Set(model.actors.map(item => item.id))
@@ -308,6 +395,7 @@ export function validateProductReport(report: ProductReportV4): string[] {
   const collections: Array<[string, string[]]> = [
     ['actors', model.actors.map(item => item.id)],
     ['experiences', model.experiences.map(item => item.id)],
+    ['screens', model.screens.map(item => item.id)],
     ['domains', model.domains.map(item => item.id)],
     ['features', model.features.map(item => item.id)],
     ['journeys', model.journeys.map(item => item.id)],
@@ -326,6 +414,17 @@ export function validateProductReport(report: ProductReportV4): string[] {
     missingRelation(issues, `feature "${feature.id}"`, 'actor', feature.actorIds, actorIds)
     missingRelation(issues, `feature "${feature.id}"`, 'experience', feature.experienceIds, experienceIds)
     missingRelation(issues, `feature "${feature.id}"`, 'business rule', feature.businessRuleIds, ruleIds)
+  }
+  for (const screen of model.screens) {
+    missingRelation(issues, `screen "${screen.id}"`, 'experience', screen.experienceIds, experienceIds)
+    missingRelation(issues, `screen "${screen.id}"`, 'feature', screen.featureIds, featureIds)
+    missingRelation(issues, `screen "${screen.id}"`, 'scenario', screen.scenarioIds, scenarioIds)
+    const stateTitles = new Set<string>()
+    for (const state of screen.states) {
+      const normalized = state.title.toLowerCase()
+      if (stateTitles.has(normalized)) issues.push(`screen "${screen.id}": duplicate product state "${state.title}"`)
+      stateTitles.add(normalized)
+    }
   }
   for (const journey of model.journeys) {
     if (!journey.actorIds.length) issues.push(`journey "${journey.id}": needs at least one actor`)
@@ -360,6 +459,7 @@ export function validateProductReport(report: ProductReportV4): string[] {
   const expectedSummary = {
     actors: model.actors.length,
     experiences: model.experiences.length,
+    screens: model.screens.length,
     domains: model.domains.length,
     features: model.features.length,
     journeys: model.journeys.length,
@@ -369,6 +469,7 @@ export function validateProductReport(report: ProductReportV4): string[] {
   const expectedMapped = {
     actors: model.actors.filter(item => item.codeRefs.length > 0).length,
     experiences: model.experiences.filter(item => item.codeRefs.length > 0).length,
+    screens: model.screens.filter(item => item.codeRefs.length > 0).length,
     domains: model.domains.filter(item => item.codeRefs.length > 0).length,
     features: model.features.filter(item => item.codeRefs.length > 0).length,
     journeys: model.journeys.filter(item => item.codeRefs.length > 0).length,
@@ -387,7 +488,7 @@ export function validateProductReport(report: ProductReportV4): string[] {
     if (report.coverage.sourceAreas.length) {
       issues.push('coverage.evidenceRedacted is true but coverage.sourceAreas names repository areas')
     }
-    const entryPointHosts = [...model.experiences, ...model.journeys]
+    const entryPointHosts = [...model.experiences, ...model.screens, ...model.journeys]
     for (const host of entryPointHosts) {
       for (const point of host.entryPoints) {
         if (isRepositoryEntryPoint(point.path)) {
@@ -398,7 +499,7 @@ export function validateProductReport(report: ProductReportV4): string[] {
     const linkHosts = [
       { id: 'product', links: report.links },
       ...model.actors, ...model.experiences, ...model.domains,
-      ...model.features, ...model.journeys, ...model.scenarios, ...model.businessRules
+      ...model.screens, ...model.features, ...model.journeys, ...model.scenarios, ...model.businessRules
     ]
     for (const host of linkHosts) {
       for (const link of host.links) {
@@ -459,6 +560,7 @@ function isRepositoryEntryPoint(value: string): boolean {
   const path = value.trim()
   if (isAbsoluteFilesystemPath(path)) return true
   if (isHttpUrl(path)) return false
+  if (/^[a-z][a-z0-9+.-]*:/i.test(path)) return false
   if (!path.includes('/')) return false
   return !path.startsWith('/')
 }
@@ -486,13 +588,16 @@ function isRepositoryLink(value: string): boolean {
  * are the author's to control — authors must keep repository internals out of
  * them.
  *
- * `coverage.mapped` is preserved for Product Report v4 compatibility: it
+ * `coverage.mapped` is preserved for Product Report compatibility: it
  * counts entities that carried implementation-linked bookmarks upstream.
  * It is navigation metadata, not proof or model completeness. `evidenceRedacted`
  * records that those counts can no longer be recomputed from the document.
  * The projection is idempotent and does not mutate its input.
  */
-export function redactSourceEvidence(report: ProductReportV4): ProductReportV4 {
+export function redactSourceEvidence(report: ProductReportV4 | ProductReportV5): ProductReportV5 {
+  const normalized = report.schemaVersion === LEGACY_REPORT_SCHEMA_VERSION
+    ? upgradeProductReportV4(report)
+    : report
   const publicLinks = <T extends { href: string }>(items: T[]): T[] =>
     items.filter(link => !isRepositoryLink(link.href))
   const publicEntryPoints = <T extends { path: string }>(items: T[]): T[] =>
@@ -511,24 +616,28 @@ export function redactSourceEvidence(report: ProductReportV4): ProductReportV4 {
     }))
 
   return {
-    ...report,
-    links: publicLinks(report.links),
+    ...normalized,
+    links: publicLinks(normalized.links),
     model: {
-      ...report.model,
-      actors: strip(report.model.actors),
-      experiences: stripWithEntryPoints(report.model.experiences),
-      domains: strip(report.model.domains),
-      features: strip(report.model.features),
-      journeys: stripWithEntryPoints(report.model.journeys),
-      scenarios: strip(report.model.scenarios),
-      businessRules: strip(report.model.businessRules)
+      ...normalized.model,
+      actors: strip(normalized.model.actors),
+      experiences: stripWithEntryPoints(normalized.model.experiences),
+      screens: stripWithEntryPoints(normalized.model.screens),
+      domains: strip(normalized.model.domains),
+      features: strip(normalized.model.features),
+      journeys: stripWithEntryPoints(normalized.model.journeys),
+      scenarios: strip(normalized.model.scenarios),
+      businessRules: strip(normalized.model.businessRules)
     },
-    coverage: { ...report.coverage, sourceAreas: [], evidenceRedacted: true }
+    coverage: { ...normalized.coverage, sourceAreas: [], evidenceRedacted: true }
   }
 }
 
-export function parseProductReport(input: unknown): ProductReportV4 {
-  const report = ProductReportV4Schema.parse(input)
+export function parseProductReport(input: unknown): ProductReportV5 {
+  const parsed = ProductReportSchema.parse(input)
+  const report = parsed.schemaVersion === LEGACY_REPORT_SCHEMA_VERSION
+    ? upgradeProductReportV4(parsed)
+    : parsed
   const issues = validateProductReport(report)
   if (issues.length) throw new Error(`Report validation failed:\n- ${issues.join('\n- ')}`)
   return report

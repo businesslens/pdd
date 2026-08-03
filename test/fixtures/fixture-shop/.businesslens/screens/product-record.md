@@ -1,0 +1,46 @@
+---
+experiences: [storefront]
+features: [catalog-browsing]
+scenarios: [browse-catalog]
+entryPoints:
+  - web: /products/:id
+  - ios: fixture-shop://products/:id
+links:
+  - rel: visual
+    href: https://example.com/designs/product-record
+    title: Product record visual reference
+codeRefs:
+  - src/routes/storefront.ts
+---
+
+# Product record
+
+Shows the information a shopper needs to evaluate one product.
+
+## Intent
+
+Help a shopper decide whether to add the product to the cart.
+
+## Information presented
+
+- Product name and description
+- Price and availability
+
+## Available actions
+
+- Add the product to the cart
+- Return to the catalog
+
+## Product states
+
+### Available
+
+The product can be added to the cart.
+
+### Unavailable
+
+The reason it cannot be purchased is explained.
+
+## Capability boundary
+
+The screen does not change product or inventory data.

@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { parseCodeRef, formatCodeRef } from '../src/core/coderefs.js'
-import { splitFrontmatter, entryPointsField } from '../src/core/frontmatter.js'
+import { splitFrontmatter, entryPointsField, linksField, repositoryLinkPath } from '../src/core/frontmatter.js'
 import { isId, slugify, stem } from '../src/core/ids.js'
 import {
-  bulletList, decisionPoints, orderedList, parseMarkdown, section, supportingContent
+  bulletList, decisionPoints, orderedList, parseMarkdown, screenStates, section, supportingContent
 } from '../src/core/markdown.js'
 
 describe('ids', () => {
@@ -71,6 +71,19 @@ describe('frontmatter', () => {
     expect(doc.title).toBe('T')
     expect(doc.lead).toBe('Lead.')
   })
+  it('accepts typed visual references and validates safe hrefs', () => {
+    const issues: string[] = []
+    expect(linksField({ links: [
+      { rel: 'visual', href: 'docs/ui/screen.png#empty', title: 'Empty state' },
+      { rel: 'research', href: 'https://example.com/research' }
+    ] }, issues, 't')).toHaveLength(2)
+    expect(repositoryLinkPath('docs/ui/screen.png?raw=1#empty')).toBe('docs/ui/screen.png')
+    expect(issues).toEqual([])
+
+    const unsafe: string[] = []
+    expect(linksField({ links: [{ rel: 'visual', href: 'file:///tmp/screen.png' }] }, unsafe, 't')).toEqual([])
+    expect(unsafe.join('\n')).toContain('must use HTTP(S) or a repository-relative path')
+  })
 })
 
 describe('markdown', () => {
@@ -110,5 +123,18 @@ describe('markdown', () => {
     }])
     expect(issues).toEqual([])
     expect(supportingContent(withDecision, ['Decision points'])).toBe('## Notes\n\nKeep this context.')
+  })
+  it('parses embedded Screen product states', () => {
+    const body = '### Available\n\nThe item can be selected.\n\n### Unavailable\n\nThe reason is shown.'
+    const issues: string[] = []
+    expect(screenStates(body, issues, 'screen')).toEqual([
+      { title: 'Available', description: 'The item can be selected.' },
+      { title: 'Unavailable', description: 'The reason is shown.' }
+    ])
+    expect(issues).toEqual([])
+
+    const invalid: string[] = []
+    screenStates('Prose before a state.', invalid, 'screen')
+    expect(invalid.join('\n')).toContain('must begin with an H3 title')
   })
 })

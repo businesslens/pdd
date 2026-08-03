@@ -22,8 +22,8 @@ Use this door when no established implementation exists.
 
 2. If the idea is open, ideate proposes genuinely different product shapes and
    writes nothing. Once you choose—or if you already know the outcome—it drafts
-   actors, experiences, domains, features, rules, journeys, scenarios, and
-   limitations.
+   actors, experiences, optional Screens, domains, features, rules, journeys,
+   scenarios, and limitations.
 3. Approve the exact Product Model delta. Only then does ideate write
    `.businesslens/`, including its canonical README. Lint checks structure:
 

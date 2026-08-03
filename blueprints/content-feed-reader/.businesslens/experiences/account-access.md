@@ -6,6 +6,8 @@ access: public
 entryPoints:
   - web: /signin
   - web: /register
+  - ios: content-reader://account
+  - android: content-reader://account
 exit: Reader holds a session and lands in the reading application, or leaves without one
 ---
 

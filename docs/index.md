@@ -9,8 +9,8 @@ order: 1
 # Product context that survives the session
 
 BusinessLens is Product-Driven Development for coding agents. It stores the
-durable product contract in `.businesslens/`: actors, experiences, domains,
-features, rules, journeys, and observable scenarios.
+durable product contract in `.businesslens/`: actors, experiences, optional
+Screens, domains, features, rules, journeys, and observable scenarios.
 
 The Product Model says what the product is intended to do. It does not prescribe
 the stack or replace your plan mode, SDD framework, coding agent, or tests.
