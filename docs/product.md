@@ -2,7 +2,7 @@
 title: Product
 description: The coherent value promise named by one Product Model, including its identity, intent, tags, limitations, and optional References.
 section: open-source
-group: Product model
+group: Product Model
 order: 8
 ---
 

@@ -2,7 +2,7 @@
 title: Overview
 description: BusinessLens supplies durable product intent around your session plan, technical specification, and injected build flow.
 section: open-source
-group: Integration
+group: Integrations
 order: 19
 ---
 
@@ -27,5 +27,5 @@ Verify can return an acceptance packet to that builder and resume automatically.
 BusinessLens analysis remains static and never executes target code; the builder
 uses separate normal repository permissions.
 
-Read [With plan mode](./with-plan-mode.md), [With SDD tools](./with-sdd.md), or
-[Lint in CI](./ci.md).
+Read [Plan mode](./with-plan-mode.md), [SDD tools](./with-sdd.md), or
+[CI/CD](./ci.md).

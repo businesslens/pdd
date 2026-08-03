@@ -2,7 +2,7 @@
 title: Scenarios
 description: Observable acceptance paths through a Journey, optionally narrowed to particular Interface–Experience pairs.
 section: open-source
-group: Product model
+group: Product Model
 order: 16
 ---
 

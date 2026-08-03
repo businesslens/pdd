@@ -114,14 +114,14 @@ writes target `AGENTS.md`, `CLAUDE.md`, or root README files.
 ## Documentation
 
 - [Introduction](./docs/index.md) · [Installation](./docs/installation.md) ·
-  [The loop](./docs/the-loop.md)
+  [Development loop](./docs/the-loop.md)
 - Start [from your repo](./docs/from-your-repo.md),
   [from a Blueprint](./docs/from-a-blueprint.md), or
   [from an idea](./docs/from-an-idea.md)
 - [Product Model](./docs/product-model.md) ·
   [References](./docs/references.md)
 - [Skills](./docs/skills.md) · [CLI](./docs/cli.md) ·
-  [Lint in CI](./docs/ci.md)
+  [CI/CD](./docs/ci.md)
 - [Format contract](./spec/format.md)
 
 ## Safety

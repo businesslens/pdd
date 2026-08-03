@@ -1,12 +1,12 @@
 ---
-title: With plan mode
+title: Plan mode
 description: Use BusinessLens for approved product meaning and plan mode for the implementation approach, then return to automatic verification.
 section: open-source
-group: Integration
+group: Integrations
 order: 20
 ---
 
-# With Claude Code or Codex plan mode
+# Use BusinessLens with Claude Code or Codex plan mode
 
 Plan mode decides the agent's next edits. BusinessLens decides the durable
 product contract.

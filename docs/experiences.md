@@ -2,7 +2,7 @@
 title: Experiences
 description: Coherent contexts of Product use with a stable audience, access boundary, and capability boundary across one or more Interfaces.
 section: open-source
-group: Product model
+group: Product Model
 order: 11
 ---
 

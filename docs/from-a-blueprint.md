@@ -44,5 +44,5 @@ Verify treats the existing model as the intended contract even if it was
 committed before the implementation branch. A Git diff narrows inspection; it
 does not erase the plan or choose authority.
 
-Next: [The loop](./the-loop.md) ·
+Next: [Development loop](./the-loop.md) ·
 [`blueprint contribute`](./cli-contribute.md)

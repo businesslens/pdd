@@ -155,7 +155,7 @@ if (!modelReadmeMatch) {
 // Docs frontmatter contract, consumed by the landing repository's nav:
 // section = top-level tab, group = sidebar cluster, order = global within section.
 const DOC_SECTIONS = new Set(['open-source', 'platform'])
-const DOC_GROUPS = new Set(['Get started', 'Product model', 'Integration', 'Skills', 'CLI'])
+const DOC_GROUPS = new Set(['Get started', 'Product Model', 'Integrations', 'Skills', 'CLI'])
 const docFiles = (await readdir(resolve(root, 'docs'))).filter(name => name.endsWith('.md')).sort()
 const docOrders = new Map()
 for (const name of docFiles) {

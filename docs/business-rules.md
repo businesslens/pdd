@@ -2,7 +2,7 @@
 title: Business rules
 description: Durable assertions that own their scope across Domains, Capabilities, Journeys, Scenarios, or Interface–Experience pairs.
 section: open-source
-group: Product model
+group: Product Model
 order: 17
 ---
 

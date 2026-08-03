@@ -2,7 +2,7 @@
 title: Screens
 description: Optional meaningful visual Product views placed in exact Interface–Experience contexts without embedding screenshots or layouts.
 section: open-source
-group: Product model
+group: Product Model
 order: 12
 ---
 

@@ -1,8 +1,8 @@
 ---
-title: Overview
+title: Model overview
 description: The .businesslens/ folder models one coherent Product across Actors, Interfaces, Experiences, Capabilities, goals, and constraints.
 section: open-source
-group: Product model
+group: Product Model
 order: 7
 ---
 

@@ -1,102 +1,96 @@
 ---
-title: The loop
-description: Decide intended behavior, build through your own flow, invoke verify once, and let it resolve gaps until aligned or blocked.
+title: Development loop
+description: Ideate intended behavior, build through your own flow, and invoke verify once before starting the next change.
 section: open-source
 group: Get started
 order: 6
 ---
 
-# One loop after every starting door
+# Ideate, build, verify
+
+After your Product Model exists, use the same loop for every product change:
 
 ```text
-          approved meaning
-ideate ─────────────────────► Product Model
-                                  │
-                                  ▼
-                       injected plan / build flow
-                                  │
-                                  ▼
-                              verify once
-                       ┌──────────┼──────────┐
-                       │          │          │
-                 model change  code change  scoped map
-                       │          │          │
-                       └──────► re-verify ◄──┘
-                                  │
-                                  ▼
-                      aligned + final lint → merge
+ideate → build → verify
+   ▲                 │
+   └── next change ──┘
 ```
 
-The build flow in the middle is deliberately yours. It may be plan mode, an SDD
-framework, a coding agent, or a team workflow. BusinessLens supplies the product
-contract and the verification loop around it.
+| Step | What happens | What to use |
+| --- | --- | --- |
+| Ideate | Decide what must be true and approve the Product Model change. | `businesslens-ideate` |
+| Build | Implement against the approved model. | Your own plan/build flow |
+| Verify | Check that the model and code agree. | `businesslens-verify this branch` |
 
-## Ideate first
+Ideate and Verify are BusinessLens skills. Build is deliberately yours:
+BusinessLens does not provide or replace your plan mode, SDD framework, coding
+agent, or team workflow.
 
-Use ideate when product meaning changes. It explores only when the direction is
-open, drafts the exact Product Model delta, and waits for approval before
-writing. The model is intentionally ahead of code during the build phase.
+Invoke skills inside your coding agent, not in the terminal. Claude Code uses
+`/businesslens-ideate`; Codex commonly uses `$businesslens-ideate`. The same
+prefix convention applies to `businesslens-verify`.
 
-## Verify once
+## 1. Ideate
 
-You do not choose or invoke follow-up skills. Verify inspects a branch, named
-area, or full current state and classifies each gap:
+Use `businesslens-ideate` when intended behavior changes:
 
-| Finding | Automatic route |
-| --- | --- |
-| Model is right | Send the approved acceptance packet to the injected builder, then verify again |
-| Code is right | Draft the smallest model delta, get approval, write it, then verify again |
-| Neither is right | Resolve intended behavior, approve the model, build, then verify again |
-| Established area is absent/untrusted | Run a scoped mapping phase, approve it, then verify again |
-| Source cannot establish the answer | Stop with an explicit unverifiable blocker |
+```text
+/businesslens-ideate guest checkout
+```
 
-The user still owns product decisions and authorization to change code. The
-routing, internal phases, and return to verification are automatic.
+Ideate decides the observable outcome, drafts the exact Product Model delta,
+and waits for approval before writing. The approved model is intentionally
+ahead of the code during the build phase.
 
-## Verification scope
+## 2. Build
 
-- `verify this branch` uses Git changes to choose likely work. It includes
-  model and code additions, edits, deletions, staged files, and working-tree
-  changes.
-- `verify current` or `verify full` inspects present behavior without needing a
-  merge base or diff.
-- `verify <named scope>` inspects one Actor, Interface, Experience, Screen,
-  Domain, Capability, Journey, Scenario, availability pair, or path plus
-  necessary dependencies.
+Use your normal implementation workflow. Build against the approved Scenarios,
+Rules, and other Product Model meaning; BusinessLens does not prescribe how you
+plan or change the code.
 
-Git is a scope tool, never an authority tool. A model committed on the default
-branch can still be the approved plan for code added later.
+## 3. Verify
 
-## Allowed changes
+After implementation, invoke `businesslens-verify` once:
 
-The semantic verification phase changes nothing. Resolution may:
+```text
+/businesslens-verify this branch
+```
 
-- write product meaning only after the user approves an exact delta;
-- delegate implementation to a builder injected by the harness, under its own
-  repository permissions;
-- refresh optional implementation References after alignment as navigation
-  bookkeeping.
+Verify compares the changed code with the Product Model, resolves scoped gaps,
+checks again after any change, and runs final structural lint. It finishes
+aligned or with a precise blocker. You do not invoke another BusinessLens skill
+to complete the loop.
 
-BusinessLens analysis phases never execute target code. The injected builder
-may run the project's normal checks, but must not edit `.businesslens/`.
+## How Verify closes gaps
 
-After every mutation, verify discards old findings and inspects again. If the
-same build-directed gap returns unchanged, it stops instead of looping. It
-persists no ledger or receipt.
+The everyday loop above is all you need to remember. Internally, Verify runs a
+smaller automatic loop:
 
-## Read-only reporting
+```text
+inspect → resolve one gap
+   ▲             │
+   └── re-check ──┘
+```
 
-Invoke `businesslens-verify report only` to prohibit model writes, builder
-delegation, and Reference refresh. You receive the same classified findings and
-recommendations with no mutations.
+- If the model is right, Verify sends the approved acceptance packet to the
+  builder supplied by your coding harness.
+- If intended behavior changed, Verify drafts the smallest model delta and asks
+  for approval before writing it.
+- If an established area is absent or untrusted, Verify maps only that area.
+- If the source cannot establish the answer, or the same build-directed gap
+  returns unchanged, Verify stops with an explicit blocker.
 
-## Where map belongs
+The user still owns product decisions and authorization to change code. Verify
+owns the routing and the return to inspection.
 
-Map is outside the daily loop. Use it once for adoption, or deliberately for an
-absent/untrusted area or coverage expansion. Use verify to answer “is this still
-true?”—whether that question comes after a code change or on an ordinary day.
+## Beyond the daily loop
 
-Verify runs final lint before it finishes, so the user does not need another
-invocation to complete the loop. `businesslens lint` remains available as a
-fast standalone structural check and CI command; verification is what
-establishes alignment for the inspected scope.
+1. **Initial adoption:** Use `businesslens-map` to create a Product Model from
+   an established codebase.
+2. **Later mapping:** Map is not limited to initial adoption. Use
+   `businesslens-map` again for deliberate coverage expansion or when an
+   established area can no longer be trusted. It is not a daily step.
+3. **Whole-codebase verification:** Use `businesslens-verify current` for an
+   occasional full audit, such as before a release, after a broad refactor, or
+   when you suspect drift. The daily change loop normally uses
+   `businesslens-verify this branch`.

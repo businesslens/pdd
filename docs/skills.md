@@ -6,7 +6,7 @@ group: Skills
 order: 23
 ---
 
-# BusinessLens skills
+# BusinessLens agent skills
 
 BusinessLens installs exactly three skills:
 

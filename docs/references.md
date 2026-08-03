@@ -2,7 +2,7 @@
 title: References
 description: Attach intent, implementation, or context artifacts to any Product Model entity without moving external material into the model.
 section: open-source
-group: Product model
+group: Product Model
 order: 18
 ---
 

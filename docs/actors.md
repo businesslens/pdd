@@ -2,7 +2,7 @@
 title: Actors
 description: Product-significant people and systems, classified by kind and by their relationship to the Product boundary.
 section: open-source
-group: Product model
+group: Product Model
 order: 9
 ---
 

@@ -1,12 +1,12 @@
 ---
 title: Introduction
-description: BusinessLens keeps intended product behavior durable, gives every repository three starting doors, and verifies changes through one automatic loop.
+description: BusinessLens brings Product-Driven Development to coding agents through a Git-tracked Product Model and an automatic verification loop.
 section: open-source
 group: Get started
 order: 1
 ---
 
-# Product context that survives the session
+# BusinessLens: Product-Driven Development for coding agents
 
 BusinessLens is Product-Driven Development for coding agents. It stores the
 durable Product contract in `.businesslens/`: Actors, Interfaces, Experiences,
@@ -55,4 +55,4 @@ model can have no References.
 
 Choose your starting door: [from your repo](./from-your-repo.md),
 [from a Blueprint](./from-a-blueprint.md), or [from an idea](./from-an-idea.md).
-Then read [the loop](./the-loop.md).
+Then read the [development loop](./the-loop.md).

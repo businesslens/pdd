@@ -8,8 +8,8 @@ order: 26
 
 # `businesslens-verify`
 
-Use verify after implementation, after a refactor, when drift is suspected,
-before release, or for a named/full current-state audit.
+Use Verify after implementation, after a refactor, when drift is suspected,
+before release, or for a named or full current-state audit.
 
 ```text
 /businesslens-verify this branch
@@ -23,7 +23,23 @@ Interface–Experience pair without executing target code, and classifies
 aligned, model-right, code-right, neither-right, unmapped, and unverifiable
 cases. It groups root decisions and recommends an authority.
 
-In resolution mode it automatically runs the next bounded phase:
+## Scope
+
+- `verify this branch` uses Git changes to choose likely work. It includes
+  model and code additions, edits, deletions, staged files, and working-tree
+  changes.
+- `verify current` or `verify full` inspects present behavior without needing a
+  merge base or diff.
+- `verify <named scope>` inspects one Actor, Interface, Experience, Screen,
+  Domain, Capability, Journey, Scenario, availability pair, or path plus its
+  necessary dependencies.
+
+Git is a scope tool, never an authority tool. A model committed on the default
+branch can still be the approved plan for code added later.
+
+## Automatic resolution
+
+In resolution mode, Verify automatically runs the next bounded phase:
 
 - approved code correction through the builder injected by your harness;
 - an approved narrow model delta;
@@ -32,6 +48,28 @@ In resolution mode it automatically runs the next bounded phase:
 
 It re-derives findings after every change. An unchanged recurring gap stops the
 loop, and a missing builder produces a complete handoff packet. The user never
-has to manually invoke map or ideate to continue verification.
+has to manually invoke Map or Ideate to continue verification. Verify persists
+no receipt, ledger, or lifecycle state.
 
-`report only` disables writes, delegation, and Reference refresh.
+## Allowed changes
+
+The semantic inspection changes nothing. Automatic resolution may:
+
+- write product meaning only after the user approves an exact delta;
+- delegate implementation to an injected builder under its own repository
+  permissions;
+- refresh optional implementation References after alignment as navigation
+  bookkeeping.
+
+BusinessLens analysis phases never execute target code. The injected builder
+may run the project's normal checks, but must not edit `.businesslens/`.
+
+## Read-only reporting
+
+`businesslens-verify report only` disables model writes, builder delegation,
+and Reference refresh. It returns the same classified findings and
+recommendations without mutations.
+
+Verify runs final structural lint before it finishes. A green standalone lint
+result checks the model's format; only Verify establishes semantic alignment for
+the inspected scope.

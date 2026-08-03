@@ -2,7 +2,7 @@
 title: Capabilities
 description: Durable Product abilities with exact Interface–Experience availability, reusable across goals and optionally organized by Domain.
 section: open-source
-group: Product model
+group: Product Model
 order: 14
 ---
 

@@ -2,7 +2,7 @@
 title: Domains
 description: Optional recognizable Product areas that organize related Capabilities without owning Journeys or mirroring code architecture.
 section: open-source
-group: Product model
+group: Product Model
 order: 13
 ---
 
