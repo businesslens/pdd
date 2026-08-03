@@ -15,9 +15,9 @@ places pinned the old meaning against one place needing a new one.
 ## What decided it
 
 A Product Report will not always be source-free. Exporting for the catalog
-strips evidence because the report crosses an ownership boundary; exporting a
-full product instance, inside the boundary that owns the code, has every reason
-to keep it. So a Report with `codeRefs` is still a Product Report — and is
+strips repository-specific navigation because the report crosses an ownership
+boundary; exporting a full product instance inside the boundary that owns the
+code may keep it. So a Report with `codeRefs` is still a Product Report—and is
 definitively not a Blueprint. Redaction cannot be the identity of anything.
 
 The format already said so. `src/core/portable.ts` carries
@@ -36,7 +36,7 @@ ADR-0002 named a **profile** of its contents. One term cannot carry both.
 | **Product Model** | `.businesslens/` — cites this repository's code |
 | **Product Report** | the portable serialization of a Product Model. One format, two profiles |
 | — *source-free* | `evidenceRedacted: true`. No `codeRefs`, no repository-relative links or entry points. Required whenever a report crosses an ownership boundary |
-| — *evidenced* | `codeRefs` intact. For a full product instance, inside the boundary that owns the code |
+| — *source-linked* | `codeRefs` intact as optional navigation. For a full product instance, inside the boundary that owns the code |
 | **Blueprint** | a Product Report curated into the public catalog, under a slug. Always the source-free profile, because that is what the catalog accepts |
 
 `listed` and `withdrawn` return to Blueprint, where they were before.
@@ -44,8 +44,8 @@ ADR-0002 named a **profile** of its contents. One term cannot carry both.
 ## Consequences
 
 - **No behavior changes.** `blueprint export` still redacts, `contribute` still
-  redacts again before publishing, and `blueprints:check` still rejects source
-  evidence on every pull request independently. The good decision from ADR-0002
+  redacts again before publishing, and `blueprints:check` still rejects
+  repository-specific source metadata on every pull request independently. The good decision from ADR-0002
   survives; only its vocabulary is withdrawn.
 - **The CLI namespace stops being aspirational.** `businesslens blueprint export`
   means *export for blueprint purposes*, and produces exactly the profile the
@@ -55,13 +55,17 @@ ADR-0002 named a **profile** of its contents. One term cannot carry both.
   this restores it without the landing repository changing anything.
 - **A future top-level `export` cannot reuse the deprecated alias.** Bare
   `export` currently aliases `blueprint export`, which redacts. If a later
-  top-level `export` means *evidenced*, the same command a user types today
+  top-level `export` means *source-linked*, the same command a user types today
   would silently begin carrying source paths — the worst direction for a
   disclosure-relevant default. The alias must be removed, and a release apart,
   before that name is reused.
 - **`open` will eventually need to tell the profiles apart.** It strips
   `codeRefs` on every expansion today, which is right for the only case that
-  exists — a report arriving from elsewhere. An evidenced instance report
+  exists—a report arriving from elsewhere. A source-linked instance report
   reopened into its origin repository should keep them, so `open` will need to
-  establish that it is expanding into the origin, and refuse to keep evidence
+  establish that it is expanding into the origin, and refuse to keep source navigation
   when it cannot.
+
+The v4 field and API function retain the historical names
+`coverage.evidenceRedacted` and `redactSourceEvidence` for wire compatibility.
+ADR-0004 defines the current semantics: codeRefs are bookmarks, never proof.

@@ -66,7 +66,7 @@ describe('resolveModelRoot', () => {
   it('builds a Blueprint model outside a repository with an empty tracked set', () => {
     const loose = scratch('businesslens-model-root-build-')
     // A Blueprint carries no codeRefs, so it is the case that can legitimately
-    // build with nothing tracked. A model that does claim evidence still fails,
+    // build with nothing tracked. A model that does carry bookmarks still fails,
     // because an empty tracked set makes every one of its codeRefs unresolvable.
     cpSync(BLUEPRINT, join(loose, '.businesslens'), { recursive: true })
 
@@ -77,8 +77,8 @@ describe('resolveModelRoot', () => {
     )).toEqual([])
   })
 
-  it('refuses to build a model claiming evidence when nothing is tracked', () => {
-    const loose = scratch('businesslens-model-root-evidence-')
+  it('refuses to build a model carrying bookmarks when nothing is tracked', () => {
+    const loose = scratch('businesslens-model-root-bookmarks-')
     cpSync(join(FIXTURE, '.businesslens'), join(loose, '.businesslens'), { recursive: true })
 
     expect(() => buildProject(loose)).toThrow(/is not a tracked file/)
@@ -86,6 +86,6 @@ describe('resolveModelRoot', () => {
 
   it('reports a missing model rather than a missing repository', () => {
     const empty = scratch('businesslens-model-root-empty-')
-    expect(() => resolveModelRoot(empty)).toThrow(/No \.businesslens\/ product model found/)
+    expect(() => resolveModelRoot(empty)).toThrow(/No \.businesslens\/ Product Model found/)
   })
 })

@@ -11,7 +11,7 @@ import { resolveModelRoot } from '../core/model-root.js'
 import { redactSourceEvidence } from '../core/portable.js'
 import { buildProject } from './export.js'
 import { expandProductReport } from './open.js'
-import { validateModel } from './validate.js'
+import { lintModel } from './lint.js'
 
 /**
  * Where contributions go.
@@ -131,13 +131,13 @@ export async function runContribute(cwd: string, options: ContributeOptions): Pr
     const { modelRoot, gitRoot } = resolveModelRoot(cwd)
     const model = loadModel(modelRoot)
 
-    // Validate against the repository's tracked files, exactly as `validate`
+    // Lint against the repository's tracked files, exactly as `lint`
     // does. Passing an empty set would report every codeRef in a brownfield
     // model as untracked — and a brownfield model is the common case here.
-    const validation = validateModel(model, gitRoot ? lsFiles(gitRoot) : [])
-    if (!validation.ok) {
+    const lint = lintModel(model, gitRoot ? lsFiles(gitRoot) : [])
+    if (!lint.ok) {
       throw new Error(
-        `The Product Model has validation errors:\n${validation.errors.map(error => `- ${error}`).join('\n')}`
+        `The Product Model has lint errors:\n${lint.errors.map(error => `- ${error}`).join('\n')}`
       )
     }
 

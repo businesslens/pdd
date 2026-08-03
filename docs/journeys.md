@@ -1,6 +1,6 @@
 ---
 title: Journeys
-description: Durable user and operator goals — the backbone of the model, and the first entity that requires code evidence.
+description: Durable user and operator goals — the backbone of the model and the parent of observable acceptance scenarios.
 section: open-source
 group: Product model
 order: 12
@@ -11,9 +11,8 @@ order: 12
 **A journey is a stable user or operator goal:** *browse and buy*, *refund an
 order*, *rotate an API key*.
 
-It belongs to a domain, is performed by actors through experiences, uses one or
-more features, and carries `codeRefs` proving the goal is really served by the
-code.
+It belongs to a domain, is performed by actors through experiences, and uses one
+or more features. Optional `codeRefs` can point a reader toward relevant code.
 
 Journeys are the model's backbone. If a goal disappears from the product, its
 journey is **deleted, not archived** — git history is the archive.
@@ -70,14 +69,12 @@ A shopper finds a product in the catalog and completes checkout.
 | `experiences` | yes | At least one experience ID |
 | `features` | yes | At least one feature ID |
 | `entryPoints` | no | How the goal is reached |
-| `codeRefs` | yes¹ | At least one, outside a draft model |
-
-¹ See [the draft rule](./evidence.md#the-draft-rule).
+| `codeRefs` | no | Optional tracked-file navigation |
 
 The lead paragraph is the journey's **summary**, not a description — one
 sentence on what the actor accomplishes.
 
-## What `validate` checks
+## What `lint` checks
 
 | Finding | Meaning |
 | --- | --- |
@@ -85,11 +82,10 @@ sentence on what the actor accomplishes.
 | `needs at least one actor` | A goal nobody pursues is not a product claim. |
 | `must belong to at least one experience` | A goal with no surface is unreachable. |
 | `needs at least one scenario` | A goal with no observable path cannot be verified. |
-| `needs at least one codeRef` | A behavioral claim without evidence. On a branch this is the planning checklist, not a failure — `businesslens-sync` attaches evidence after implementation. |
 | `references missing domain "…"` / `missing feature "…"` | A relation names an entity that does not exist. |
 
-## Planning with journeys
+## Planning
 
-On a feature branch, a new journey with no `codeRefs` is exactly what planning
-looks like. `validate` lists it, `businesslens-sync` clears it. See
-[Your commit loop](./commit-loop.md).
+Approved planned behavior belongs in the model before implementation. Missing
+codeRefs are not lifecycle state, so use `businesslens-verify`—not bookmarks—to
+check whether the journey is implemented. See [The loop](./the-loop.md).

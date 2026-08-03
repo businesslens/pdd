@@ -1,4 +1,0 @@
-interface:
-  display_name: "BusinessLens Sync"
-  short_description: "Reconcile the product model with the code"
-  default_prompt: "Use $businesslens-sync to reconcile this repository's BusinessLens product model with the code — attach evidence where they already agree, and resolve everything else one decision at a time."

@@ -34,14 +34,14 @@ the skills themselves.
 Global installs respect `CLAUDE_CONFIG_DIR` and `CODEX_HOME`; other
 providers use their standard user directories.
 
-## Project or global scope
+## Project or global
 
 - **Project** installs into the repository, so the skills travel with it and
   teammates get them on checkout.
 - **Global** installs into your user directory, making the skills available
   in every repository you open.
 
-## Non-interactive setup
+## Non-interactive
 
 ```bash
 npx businesslens@latest install \

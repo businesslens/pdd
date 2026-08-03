@@ -1,6 +1,6 @@
 ---
 title: From an idea
-description: You have a domain, not yet a product. Choose a shape, plan it into a Product Model, then build it.
+description: Decide a product, approve its Product Model, build it with your own flow, and let verify resolve the result.
 section: open-source
 group: Get started
 order: 5
@@ -8,91 +8,43 @@ order: 5
 
 # Start from an idea
 
-You have a domain, not yet a product. This door decides what to build, plans it
-into a Product Model before any code exists, and — once you build it — leaves
-you an evidence-backed model that grew straight out of the plan.
+Use this door when no established implementation exists.
 
-**Prerequisites:** a fresh Git repository (`git init`), Node.js 20.12+, an
-AI harness, and the skills installed (`npx businesslens@latest install`).
+1. Install BusinessLens and invoke ideate:
 
-## Steps
-
-1. Start the conversation:
+   ```bash
+   npx businesslens@latest install
+   ```
 
    ```text
    /businesslens-ideate
    ```
 
-   If you have not settled on what to build, it proposes three to five
-   genuinely distinct product shapes — who each serves, the one job it does,
-   why someone would pick it, and what it deliberately is not — then stops.
-   Choosing is yours; it writes nothing until you pick one.
-
-   If you already know what you are building, say so and it goes straight to
-   the next step.
-
-2. Once you have chosen, the same conversation runs the full product
-   interview: why the product exists, who it serves (actors), which surfaces
-   it has (experiences), its domains and stable features, the business rules
-   that constrain it, which goals matter (journeys), and how each plays out
-   observably (scenarios with Trigger, Steps, Decision points, and Outcome).
-   It proposes drafts after every answer — you correct rather than dictate.
-
-   It then shows you the model it intends to write and waits for your
-   approval before writing anything.
-
-3. Review what it authored: a complete `.businesslens/` Product Model with **no
-   codeRefs** and `coverage.md` at `status: draft`. Validation is green with
-   warnings — a draft model is planned, not proven. Iterate by invoking
-   `/businesslens-ideate` again with corrections, then commit:
+2. If the idea is open, ideate proposes genuinely different product shapes and
+   writes nothing. Once you choose—or if you already know the outcome—it drafts
+   actors, experiences, domains, features, rules, journeys, scenarios, and
+   limitations.
+3. Approve the exact Product Model delta. Only then does ideate write
+   `.businesslens/`, including its canonical README. Lint checks structure:
 
    ```bash
-   npx businesslens@latest validate
-   git add .businesslens
-   git commit -m "model: initial product model (draft)"
+   npx businesslens@latest lint
    ```
 
-   If nobody ever implements it, this draft model is itself a portable,
-   validated product design — plain Markdown you can hand to anyone.
-
-4. Implement with your coding agent, pointing it at the model as the product
-   spec:
+   Coverage status describes model breadth, not implementation. Optional
+   `codeRefs` may be absent at any status.
+4. Hand the approved scenario and rule contract to your normal plan/build flow.
+   BusinessLens does not own implementation.
+5. Invoke verify once:
 
    ```text
-   Implement the product described in .businesslens/ — its features, business
-   rules, journeys, decisions, and scenarios are the product contract.
+   /businesslens-verify
    ```
 
-   Before verification, stage every new or changed implementation file with
-   `git add <paths>` (replace `<paths>` with the actual files and review the
-   staged diff). BusinessLens never changes the Git index itself, and
-   `codeRefs` can cite only paths already returned by `git ls-files`.
+   If code is wrong, verify hands the approved contract to the builder injected
+   by your harness and checks again. If intended behavior changed while building,
+   it drafts the smallest model delta, asks for approval, writes it, and checks
+   again. If neither side is right, it resolves intent before building.
 
-5. Reconcile the model with what you built:
-
-   ```text
-   /businesslens-sync
-   ```
-
-   Every planned addition, change, and removal gets a verdict — met with
-   evidence, or a gap with expected-versus-found. Gaps are the remaining
-   to-do list; fix and re-run until everything is met. On success the skill
-   attaches `codeRefs` to every journey and scenario and moves `coverage.md`
-   off `draft`.
-
-6. Validate and commit:
-
-   ```bash
-   npx businesslens@latest validate
-   git add .businesslens
-   git commit -m "feat: implement the planned product model"
-   ```
-
-   The commit includes the implementation staged in step 4 and the reconciled
-   model staged here.
-
-## Outcome
-
-A green, evidence-backed model born from the plan. From here the product uses
-the same loop as any mapped repository —
-the loop in [Find your flow](./flows.md).
+The result is aligned for the inspected scope or a precise blocker—not a request
+for you to manually invoke another BusinessLens skill.

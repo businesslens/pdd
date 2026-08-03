@@ -22,30 +22,22 @@ import { join } from 'node:path'
  */
 export const MODEL_README = `# Product Model
 
-This directory is a **BusinessLens Product Model**: what this product does, for
-whom, and — wherever the code exists — the evidence that proves it. It is plain
-Markdown tracked in Git, and it is the source of truth for product behavior.
+This directory is a **BusinessLens Product Model**: what this product does and
+for whom. It is plain Markdown tracked in Git, and it is the source of truth for
+intended product behavior.
 
 ## If you are an agent working in this repository
 
-- **Read \`product.md\` first**, then the actors, experiences, domains, features,
-  and business rules.
-- **The scenarios are the acceptance contract.** Every file under
-  \`journeys/*/scenarios/\` states a Trigger, ordered Steps, and an Outcome the
-  finished product must exhibit. Treat them as the definition of done, not as
-  suggestions.
-- **Business rules are invariants.** They hold across every journey, including
-  the ones written last.
-- **Nothing here prescribes a stack.** No framework, database, architecture, or
-  interface is implied. Choose them yourself and stay consistent.
-- **Behavior carrying no \`codeRefs\` has not been built yet.** Build it. When
-  \`coverage.md\` says \`status: draft\`, none of it has.
-- **After changing code**, run the \`businesslens-sync\` skill to reconcile this
-  model with what you built and attach evidence, then run
-  \`npx businesslens validate\`.
-- **To change what the product should do** rather than implement it, use the
-  \`businesslens-ideate\` skill, so this model stays the source of truth.
-- **Never edit \`cache/\`** — generated.
+- Read \`product.md\` first, then the actors, experiences, domains, features,
+  business rules, journeys, and scenarios.
+- Treat scenarios as the acceptance contract and business rules as invariants.
+- Do not infer a stack or architecture from the model.
+- Treat \`codeRefs\` as optional navigation, never proof or implementation state.
+- After code changes, use \`businesslens-verify\`; run \`npx businesslens lint\`
+  for structural checks.
+- Use \`businesslens-ideate\` to change intended behavior and \`businesslens-map\`
+  only to map established absent or deliberately untrusted behavior.
+- Never edit \`cache/\`.
 
 Documentation: https://businesslens.io
 `

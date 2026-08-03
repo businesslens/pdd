@@ -30,12 +30,9 @@ const lock = JSON.parse(await readFile(resolve(root, 'package-lock.json'), 'utf8
 const plugin = JSON.parse(await readFile(resolve(root, '.claude-plugin/plugin.json'), 'utf8'))
 const marketplace = JSON.parse(await readFile(resolve(root, '.claude-plugin/marketplace.json'), 'utf8'))
 const expectedSkills = [
+  'businesslens-map',
   'businesslens-ideate',
-  'businesslens-init',
-  'businesslens-sync',
-  'businesslens-deep-dive',
-  'businesslens-doctor',
-  'businesslens-contribute'
+  'businesslens-verify'
 ]
 
 if (pkg.name !== 'businesslens') errors.push(`package.json name must be businesslens, found ${pkg.name}`)
@@ -102,6 +99,25 @@ for (const skillPath of plugin.skills || []) {
   }
   if (!await exists(`${dir}/agents/openai.yaml`)) {
     errors.push(`${dir}/agents/openai.yaml is missing`)
+  }
+}
+
+// Every workflow that can create a model carries the same orientation text.
+// Skills are installed independently, so their copies must be self-contained;
+// this check prevents those necessary copies from drifting from the CLI writer.
+const modelReadmeSource = await readFile(resolve(root, 'src/core/model-readme.ts'), 'utf8')
+const modelReadmeMatch = modelReadmeSource.match(/export const MODEL_README = `((?:\\`|[^`])*)`\n/)
+if (!modelReadmeMatch) {
+  errors.push('src/core/model-readme.ts does not expose the canonical MODEL_README template')
+} else {
+  const canonicalReadme = modelReadmeMatch[1].replaceAll('\\`', '`')
+  for (const skill of expectedSkills) {
+    const reference = `skills/${skill}/references/format.md`
+    const source = await readFile(resolve(root, reference), 'utf8')
+    const fenced = source.match(/## Canonical `.businesslens\/README.md`[\s\S]*?```markdown\n([\s\S]*?)```/)
+    if (!fenced || fenced[1] !== canonicalReadme) {
+      errors.push(`${reference} must embed the canonical MODEL_README template exactly`)
+    }
   }
 }
 

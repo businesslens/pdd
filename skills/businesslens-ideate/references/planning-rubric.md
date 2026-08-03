@@ -2,46 +2,37 @@
 
 ## Scope
 
-- Plan one coherent intent at a time — something a reviewer can approve or
-  reject as a whole on one branch. Split anything that could ship
-  separately.
-- Prefer the smallest well-defined plan over a speculative epic.
+- Plan one coherent intent a reviewer can approve or reject as a whole.
+- Prefer the smallest product-complete change over a speculative epic.
+- In a verification handoff, solve the exact gap; do not broaden the product.
 
 ## Entities
 
-- Actors are defined by goals or privileges, never by UI screens.
-- Features are stable capabilities, not screen labels or one-off sequence
-  steps.
-- Business rules are durable assertions or policies, not implementation
-  checks.
-- Journeys express stable user or operator goals; scenarios are observable
-  paths through a goal, not implementation branches.
-- Cover the scenario space deliberately: primary success, permission or
-  authorization failure, validation failure, conflict, and external-failure
-  paths — when the planned behavior genuinely distinguishes them.
-- Keep prose at product altitude: what a user observes, not how the system
-  achieves it.
-- Use a Decision point only when one product condition creates two or more
-  materially different outcomes.
-- Record intent when the reason behind a boundary, rule, or behavior would
-  guide future implementation choices.
+- Actors differ by goals or privileges, never screens.
+- Experiences are audience-and-capability boundaries.
+- Features are durable capabilities, not UI labels or sequence steps.
+- Business rules are reusable policies or invariants.
+- Journeys express stable user or operator goals.
+- Scenarios express observable paths through a goal, not implementation
+  branches. Cover primary, permission, validation, conflict, and
+  external-failure behavior where the product distinguishes them.
+- Use a decision point only when one condition creates two or more materially
+  different outcomes.
+- Record intent where the reason behind a boundary or behavior will guide
+  implementation choices.
 
 ## Scenarios are the acceptance contract
 
-`businesslens-sync` will check the implementation against each scenario's
-Trigger, Steps, Decision points, and Outcome. Write them so a reviewer could
-check them against source code without executing anything:
+Write Trigger, ordered Steps, Decision points when behavior branches, and
+Outcome so a reviewer can compare source behavior without executing it.
 
-- Good: "Submitting an empty cart shows an error and keeps the cart."
-- Too vague: "Cart validation works."
-- Wrong altitude: "POST /cart returns 400."
-
-A scenario that yields nothing checkable is too vague to plan.
+- Good: “Submitting an empty cart shows an error and keeps the cart.”
+- Too vague: “Cart validation works.”
+- Wrong altitude: “POST /cart returns 400.”
 
 ## Dialogue
 
-- Propose concrete drafts and let the user correct them; do not interrogate
-  from a blank page.
-- Batch open questions; ask only what the user must actually decide.
-- Record undecided points as limitations or open questions in the report
-  rather than guessing.
+- Propose concrete drafts and let the user correct them.
+- Batch related open questions; ask only decisions the user must make.
+- State a recommendation and its tradeoff when multiple directions remain.
+- Record unresolved points as limitations instead of guessing.

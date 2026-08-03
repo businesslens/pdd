@@ -1,33 +1,24 @@
 # The `.businesslens/` Format
 
 > **This is engineering documentation, not a docs-site page.** It is the
-> contract the parser, the validator, and the catalog server must agree on, and
+> contract the parser, the linter, and the catalog server must agree on, and
 > it changes *before* their behavior does.
 >
 > The user-facing explanation of the same entities lives in the Product model
 > group under `docs/` — one page per entity, each carrying its file shape and
-> the `validate` findings that constrain it. Keep the two consistent.
+> the `lint` findings that constrain it. Keep the two consistent.
 
 This document is the contract for the BusinessLens PDD folder: the git-tracked
-product model that lives inside a repository. Everything the public CLI validates
-is defined here. The model is **evidence-backed product truth**: every
-behavioral claim (journeys and scenarios) must cite tracked code, and a green
-`validate` means the model and the code agree.
+product model that lives inside a repository. Everything the public CLI lints is
+defined here. `businesslens lint` checks whether this folder is structurally
+sound; it does not claim that the model and implementation agree.
 
-Planning uses the same file: describe intended behavior by editing the model on
-a branch. Until the implementation lands and evidence is attached, `validate`
-reports new, unevidenced journeys and scenarios as missing `codeRefs`.
-`businesslens-sync` derives the complete worklist from the model diff too, so
-changed higher-level contracts and deleted behavior are not invisible merely
-because they need no new evidence field. Git is the change model: branches
-hold plans, pull requests review them, history archives them. The one
-exception is a brand-new product with no code at all, where
-`coverage.md` `status: draft` marks the whole model as planned (see
-[coverage](#coveragemd)). Draft models are valid Product Model sources: they
-may be exported or proposed as catalog Blueprints even though missing evidence
-remains visible as warnings. The technical *how* of a change (specs, designs,
-task lists) still
-belongs to your SDD tool of choice and is referenced via `links`.
+Planning uses the same files: approved intended behavior is written into the
+model before implementation. `businesslens-verify` performs the separate,
+semantic comparison with the implementation and owns any resolution loop. Git
+may narrow that inspection to a branch, but a diff never decides which side is
+authoritative. The technical *how* of a change (specs, designs, task lists)
+still belongs to your SDD tool of choice and is referenced via `links`.
 
 ## Folder layout
 
@@ -44,7 +35,8 @@ belongs to your SDD tool of choice and is referenced via `links`.
 ├── business-rules/<rule-id>.md
 ├── journeys/<journey-id>/journey.md
 ├── journeys/<journey-id>/scenarios/<scenario-id>.md
-├── .gitignore               # written by businesslens-init
+├── README.md                # canonical agent orientation
+├── .gitignore               # generated paths only
 ├── build/                   # generated Product Report — never committed
 └── cache/                   # generated artifacts — never committed
 ```
@@ -63,7 +55,7 @@ belongs to your SDD tool of choice and is referenced via `links`.
   `##` heading is the description for actors, domains, experiences, and the
   product, or the summary for journeys. Later sections provide supporting
   context except where a structured section is required below.
-- **Frontmatter = relations and evidence only.** Never prose.
+- **Frontmatter = relations and navigation only.** Never prose.
 - **Intent = a recognized prose section.** `## Intent` explains why the
   product or entity exists and which outcome it protects. Intent is structured
   prose, not a separate entity.
@@ -83,16 +75,12 @@ codeRefs:
 
 Grammar: `path[#symbol][:start[-end]]`. The line suffix is the last `:` whose
 remainder matches `^\d+(-\d+)?$`; the symbol is everything after the first `#`
-of what remains. `validate` checks every path against `git ls-files` — a
-codeRef must point at a tracked file. `codeRefs` are accepted and preserved on
-every entity. Journeys and scenarios require at least one because they make
-behavioral claims; actors, experiences, domains, features, and business rules
-may carry evidence when their boundary is directly represented in code.
-
-While `coverage.md` has `status: draft` (a planned, not-yet-implemented
-model), a journey or scenario without `codeRefs` is a **warning** instead of
-an error. A codeRef that is present must always point at a tracked file —
-planned behavior carries no evidence rather than invented evidence.
+of what remains. `lint` checks every present path against `git ls-files` — a
+codeRef must point at a tracked file. `codeRefs` are optional navigational
+bookmarks accepted and preserved on every entity. They help a reader start an
+inspection; they are not proof, completeness, implementation state, or
+verification receipts. A model, including one with `coverage.status: complete`,
+may contain no codeRefs. Missing bookmarks never produce a lint finding.
 
 ## links (the PDD → SDD bridge)
 
@@ -106,7 +94,7 @@ links:
 ```
 
 Links connect model entities to prescriptive documents (OpenSpec specs, design
-docs, ADRs). `validate` warns when a local href does not exist.
+docs, ADRs). `lint` warns when a local href does not exist.
 
 ## Entity files
 
@@ -164,7 +152,7 @@ scenarioKinds:
 ### `actors/<id>.md`
 
 No required frontmatter. H1 = name, lead paragraph = description. Optional
-`codeRefs` provide direct evidence for the actor boundary.
+`codeRefs` provide navigation into a directly represented actor boundary.
 
 ### `domains/<id>.md`
 
@@ -283,7 +271,7 @@ A shopper finds a product and completes checkout.
 Compilation: `domain` → `domainId`, `actors` → `actorIds`, `experiences` →
 `experienceIds`, and `features` → `featureIds`. Every journey must belong to
 at least one experience and feature, and have at least one actor and one
-scenario. A non-draft journey also needs at least one codeRef.
+scenario. `codeRefs` are optional.
 
 ### `journeys/<jid>/scenarios/<id>.md`
 
@@ -352,30 +340,31 @@ Free prose rationale retained with the coverage assessment.
 ```
 
 The coverage frontmatter (`status`, `method`, `sourceAreas`, `unmapped`,
-`limitations`) and the prose rationale are authored by the agent from
-repository evidence. Entity and file counts in the portable output are
-computed by `export` from the model and the tracked file list — they are never
-authored. The validator checks the authored entities and relationships; it
-does not compile or publish the model.
+`limitations`) and the prose rationale are authored from the inspection that
+created or expanded the model. Entity and file counts in the portable output
+are computed by `export` from the model and tracked file list — they are never
+authored. The linter checks authored entities and relationships; it does not
+compile, publish, or semantically verify the model.
 
-`status: draft` marks a **planned model**: a greenfield product authored before
-any implementation exists. While draft, missing journey and scenario
-`codeRefs` validate as warnings instead of errors. Draft, partial, and complete
-models may all be exported. Proposing a model as a catalog Blueprint is a
-separate, explicit action, and a Blueprint is listed publicly only when an
-administrator lists it. Once implementation is verified and evidence is
-attached, set status to `partial` or `complete`; from then on evidence is
-strictly required.
+`status` describes **model breadth**, never implementation or verification:
+
+- `draft` — the model itself is still being authored or reviewed.
+- `partial` — the model is useful and has known unmapped areas.
+- `complete` — the intended product scope is modeled.
+
+All three statuses may be exported. A complete model may describe planned,
+implemented, or mixed behavior and may contain zero codeRefs. Proposing it as a
+catalog Blueprint is a separate, explicit action; public listing remains an
+administrator decision.
 
 ## Generated files
 
-- `cache/inventory.json` — repository inventory generated by the
-  `businesslens-init` skill's bundled inventory script.
 - `cache/build.json` — metadata for the most recent portable build.
-- `build/report.json` — portable Product Report v4 generated by `export`
-  (`build` remains a deprecated alias).
+- `build/report.json` — portable Product Report v4 generated by
+  `blueprint export` (`build` is refused, not aliased).
 
-All of `build/` and `cache/` are gitignored by `businesslens-init`. Generated
+The map inventory is emitted to stdout and writes no cache file. All of
+`build/` and `cache/` are gitignored by model-creation workflows. Generated
 files are derived artifacts and must not be edited or committed.
 
 ## Portable report and expansion
@@ -384,27 +373,29 @@ files are derived artifacts and must not be edited or committed.
 contains the product entities, relationships, intent, links, supporting
 content, and coverage needed to reconstruct the model.
 
-As written by `blueprint export` it carries the **source-free profile**: every `codeRef`, every
-repository-relative link, and every repository-relative entry point, and sets
-`coverage.evidenceRedacted`. It also contains no repository URL, branch,
+As written by `blueprint export` it carries the **source-free profile**: it
+removes every `codeRef`, repository-relative link, and repository-relative
+entry point, and sets `coverage.evidenceRedacted`. It also contains no repository URL, branch,
 commit, catalog listing state, pricing, or entitlement data. A report that has
 been through `export` is a Blueprint.
 
 The report schema accepts only content that can expand into canonical entity
 Markdown: titles and list items are single-line, required descriptions and
 behavior sections are non-empty, standard mapped counts equal the entities
-carrying `codeRefs`, and relationships resolve to existing entities.
+carrying one or more navigational `codeRefs`, and relationships resolve to
+existing entities.
 Historical v4 reports may retain older coverage metric names; any standard
 entity count or mapped key that is present must still match the report.
-New non-draft reports produced from a Product Model have journey and scenario
-evidence because `validate` and `build` enforce that source rule.
+No report profile requires a codeRef. Present codeRefs remain subject to the
+same grammar, tracked-path, and redaction rules.
 
-### Source evidence and redaction
+### Source navigation and redaction
 
 Several report fields name the origin repository rather than the product. That
-evidence is the point of the model inside its repository, but it must not be
-published. Every report proposed or served as a public catalog Blueprint is
-first passed through one shared projection:
+navigation is useful inside its repository but must not be published. Every
+report proposed or served as a public catalog Blueprint is first passed through
+one shared projection. The API and `evidenceRedacted` field retain their v4
+names for compatibility:
 
 ```ts
 import { redactSourceEvidence } from 'businesslens/report'
@@ -421,7 +412,7 @@ serve(redactSourceEvidence(report))
 | `coverage.evidenceRedacted` | set to `true` |
 
 Relative POSIX paths, Windows paths, UNC paths, local `file:` URLs, and
-recognizable absolute filesystem paths are repository evidence. A rooted
+recognizable absolute filesystem paths are repository-origin metadata. A rooted
 entry point such as `/checkout` is a product route and is kept; root-relative
 links are local and are dropped. HTTP(S) URLs are kept in either field. A
 value with no path separator at all, such as a CLI entry point, is not a path
@@ -437,21 +428,21 @@ the server cannot disagree about what a delivered report exposes, and
 `validateProductReport` rejects a report marked `evidenceRedacted` that still
 names a repository path.
 
-`coverage.mapped` is deliberately preserved. How much of the model was
-evidence-backed upstream is a model-quality signal, not a disclosure. Since a
+`coverage.mapped` is deliberately preserved for Product Report v4 wire
+compatibility. It counts entities that carried implementation-linked bookmarks
+upstream; it is a navigation signal, not proof or model completeness. Since a
 redacted report no longer carries the `codeRefs` those counts were derived
-from, validation adapts:
+from, report validation adapts:
 
 | `coverage.evidenceRedacted` | `coverage.mapped` rule |
 | --- | --- |
 | absent or `false` | must equal the entities carrying `codeRefs` |
 | `true` | must not exceed the entity counts, and no entity may carry a `codeRef` |
 
-`export` writes the unredacted report, because a local report never leaves the
-repository that produced it. Everything that does leave — a catalog Blueprint, a
-contribution pull request — is redacted first. `open` and `pull` never
-transplant imported evidence into the receiving repository regardless of whether
-the report was redacted.
+`blueprint export` writes the redacted, source-free report. Contribution applies
+the same idempotent projection before opening a public pull request. `open` and
+`pull` never transplant imported source bookmarks into the receiving repository
+regardless of whether the input was already redacted.
 
 The inverse command is:
 
@@ -460,7 +451,7 @@ npx businesslens@latest blueprint open ./report.json
 ```
 
 `open` validates the report and expands it into canonical Markdown/YAML under
-`.businesslens/`. `npx businesslens@latest pull <blueprint-name>` anonymously
+`.businesslens/`. `npx businesslens@latest blueprint pull <blueprint-name>` anonymously
 retrieves the current public Blueprint for that canonical name and invokes the
 same expansion path without saving a user-facing report download.
 
@@ -468,7 +459,7 @@ Both commands refuse a non-empty target by default. The semantic round-trip
 guarantee is:
 
 ```text
-report A → open → .businesslens/ → build → report B
+report A → blueprint open → .businesslens/ → blueprint export → report B
 ```
 
 After normalizing `generatedAt` and generator version, A and B describe the

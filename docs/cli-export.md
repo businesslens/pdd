@@ -1,6 +1,6 @@
 ---
 title: blueprint export
-description: Compile a Product Model into a source-free Product Report — the same behavior with this repository's code evidence removed.
+description: Compile a Product Model into a source-free Product Report with repository-specific navigation removed.
 section: open-source
 group: CLI
 order: 32
@@ -18,18 +18,18 @@ The report is written to `.businesslens/build/report.json`. It is a generated
 artifact: gitignored, never edited, and regenerated on every run. It is the
 profile the catalog accepts, which is what makes it a Blueprint once merged.
 
-## No code evidence leaves this repository
+## No repository navigation leaves
 
 Export strips every `codeRef`, along with repository-relative links and entry
-points. A `codeRef` names a path in *this* checkout and proves nothing in any
-other, so the report states what the product does without claiming where any of
-it lives.
+points. A `codeRef` names a path in *this* checkout and navigates nowhere in any
+other, so the report states what the product does without leaking source paths.
 
-Coverage keeps its `mapped` counts, so the report still records how much of the
-original model was evidence-backed — just not by what.
+Coverage keeps its `mapped` counts for Product Report v4 compatibility. They
+record how many entities carried bookmarks before redaction, not proof or model
+completeness.
 
-`export` validates before it compiles. A model with validation errors does not
-produce a report; a draft model with missing-evidence warnings does.
+`export` lints before it compiles. A model with lint errors does not produce a
+report. Missing codeRefs are valid for every coverage status.
 
 ## Why "export"
 
@@ -40,18 +40,18 @@ deliberately leaves to whatever tool you already use.
 The output directory keeps its name. Renaming `.businesslens/build/` would make
 every existing model's `.gitignore` stale for no user-visible benefit.
 
-## The retired `build` and bare spellings
+## Retired spellings
 
 `businesslens build`, and the bare `export`, `open`, `pull`, and `contribute`,
 are refused with a message naming the replacement. They are not aliases.
 
 That is deliberate. An alias would have blocked reusing `export` at the top
-level for the evidenced report profile later — and reusing it while the alias
-existed would have silently changed what a disclosure-relevant command emits.
-A command that no longer exists can say so; a command that quietly means
+level for a different report profile later—and reusing it while the alias
+existed could silently change what a disclosure-relevant command emits. A
+command that no longer exists can say so; a command that quietly means
 something else cannot.
 
-## Where the report goes
+## Where it lands
 
 - [`contribute`](./cli-contribute.md) builds one and opens a pull request
   proposing it as a catalog Blueprint.

@@ -4,16 +4,18 @@
 [![Check](https://github.com/businesslens/pdd/actions/workflows/check.yml/badge.svg)](https://github.com/businesslens/pdd/actions/workflows/check.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
-**Product-Driven Development for coding agents.** BusinessLens builds a
-Git-tracked product model in `.businesslens/`: who the product serves, what
-they accomplish, and where the code proves it.
+**Product-Driven Development for coding agents.** BusinessLens keeps intended
+product behavior in a Git-tracked `.businesslens/` Product Model: who the
+product serves, what they accomplish, and which rules must remain true.
 
-The model is Markdown, reviewable in pull requests, and useful without a
-hosted service. One rule holds it together: behavioral claims need code
-evidence, and a green `validate` means the model and the code agree.
+The model is Markdown, reviewable in pull requests, and useful without a hosted
+service. `businesslens lint` checks its structure. The `businesslens-verify`
+skill performs the separate semantic comparison with code and owns the
+resolution loop.
 
 ```text
 .businesslens/
+├── README.md
 ├── product.md
 ├── actors/
 ├── experiences/
@@ -27,131 +29,101 @@ evidence, and a green `validate` means the model and the code agree.
 
 ## Getting started
 
-Install the skills in the repository:
+Install the skills:
 
 ```bash
 npx businesslens@latest install
 ```
 
-The installer detects supported AI harnesses (Claude Code, Codex, Cursor,
-Gemini CLI, GitHub Copilot), lets you customize the selection, asks for
-project or global scope, and installs only the BusinessLens skills. For
-automated setup: `npx businesslens@latest install --providers claude,codex
---scope project --yes`.
+Then choose one starting door:
 
-Then create a Product Model:
+- **Existing product** — `/businesslens-map` creates the model from established
+  repository behavior.
+- **Blank repository** — `/businesslens-ideate` decides and authors the product
+  before implementation.
+- **Blueprint** — `npx businesslens@latest blueprint pull <name>` opens a
+  reviewed starting model.
 
-- **Existing product** — `/businesslens-init` inspects the code and builds
-  the evidence-backed model.
-- **Blank repository** — `/businesslens-ideate` interviews you and authors the
-  whole product as a draft model, before any code exists.
+Codex users invoke skills with `$`, for example `$businesslens-map`.
 
-(Codex users invoke skills as `$businesslens-init` / `$businesslens-ideate`.)
-
-## The loop for every feature
-
-Planning is editing the model. Git is the change model — branches hold plans,
-pull requests review them, history archives them:
+## The ongoing loop
 
 ```text
-/businesslens-ideate add guest checkout  # model describes intended behavior
-… implement with your coding agent …
-/businesslens-sync                    # code checked against the plan, evidence attached
-npx businesslens validate               # green = done; CI gates the PR
+/businesslens-ideate guest checkout
+        ↓ approved Product Model delta
+your injected plan / build flow
+        ↓ implementation
+/businesslens-verify this branch
+        ↓ automatically resolve gaps, re-check, and run final lint
+merge
 ```
 
-Between planning and syncing, new journeys and scenarios without `codeRefs`
-appear as expected validation findings. `/businesslens-sync` derives changed
-and deleted work from the model diff too, so the full plan is checked — and it
-handles the no-plan case the same way, working out which one you are in rather
-than asking.
+You invoke verify once. When it finds a gap, it groups the authority decision
+and routes automatically: update approved model meaning through its internal
+ideation protocol, map an absent established area, or hand an acceptance packet
+to the builder supplied by your harness. It re-verifies after every change and
+stops explicitly when blocked. Its completion report includes final structural
+lint, so no second skill or command is required to finish the loop. Use `report
+only` to disable all writes and delegation.
 
-## Terminal or agent?
+`map` is not daily maintenance. Use it for adoption, a deliberately untrusted
+area, or coverage expansion. Use `verify` after changes, refactors, suspected
+drift, before release, or for a named/full current-state audit.
 
-BusinessLens has two deliberate surfaces:
+## Terminal and agent surfaces
 
 | Where | Command | Purpose |
 | --- | --- | --- |
-| Terminal | `npx businesslens install` | Install the agent skills |
+| Terminal | `npx businesslens install` | Install the three skills |
 | Terminal | `npx businesslens update` | Refresh managed skill installations |
-| Terminal | `npx businesslens validate` | Gate CI, and see where a branch stands. Skills run it for you |
-| Terminal | `npx businesslens blueprint export` | Compile the model into a Blueprint |
-| Terminal | `npx businesslens blueprint pull <name>` | Anonymously pull a catalog Blueprint into a Product Model |
-| Terminal | `npx businesslens blueprint open <report>` | Expand a Blueprint into a Product Model |
-| Terminal | `npx businesslens blueprint contribute` | Propose the model as a public catalog Blueprint |
-| AI harness | the six `businesslens-*` skills | Map, decide, reconcile, and maintain the product truth |
+| Terminal | `npx businesslens lint` | Check Product Model structure; no semantic claim |
+| Terminal | `npx businesslens blueprint export` | Compile the model into a source-free Blueprint |
+| Terminal | `npx businesslens blueprint pull <name>` | Pull a catalog Blueprint |
+| Terminal | `npx businesslens blueprint open <report>` | Expand a local Blueprint |
+| Terminal | `npx businesslens blueprint contribute` | Propose a Blueprint by pull request |
+| AI harness | `businesslens-map` | Map established repository behavior |
+| AI harness | `businesslens-ideate` | Decide intended behavior and write approved meaning |
+| AI harness | `businesslens-verify` | Verify and automatically resolve model/code gaps |
 
-Nothing creates `.businesslens/` except the skills, and **BusinessLens never
-writes a file your repository owns** — not `AGENTS.md`, not `CLAUDE.md`, not
-your README. A model that arrived from another repository gets a
-`.businesslens/README.md` saying what it is; one you authored does not need one.
+Catalog contribution stays in the CLI; there is no contribution skill.
 
-## Skills
+## Product Model semantics
 
-| Skill | Use it when |
-| --- | --- |
-| `businesslens-init` | Adopting BusinessLens in a repository that already has code |
-| `businesslens-ideate` | Deciding what the product should do, and writing that decision into the model |
-| `businesslens-sync` | The code moved and the model needs to catch up — with or without a plan |
-| `businesslens-deep-dive` | One journey or experience needs exhaustive coverage |
-| `businesslens-doctor` | The model fails validation, looks stale, or needs a health report |
-| `businesslens-contribute` | The user explicitly wants the model in the public catalog |
+- `codeRefs` are optional tracked-file bookmarks. They are not proof,
+  implementation state, or verification receipts.
+- `coverage.status` describes model breadth: `draft` while the model itself is
+  under review, `partial` with known unmapped areas, and `complete` when the
+  intended product scope is modeled.
+- A complete model may contain zero codeRefs.
+- `lint` checks format, required content, relationships, link/reference grammar,
+  and tracked bookmark paths. `verify` checks meaning against current code.
 
-Every skill is self-contained and follows the open Agent Skills folder
-format. Claude Code plugin users may alternatively install from this
-repository's marketplace manifest; the standalone CLI remains the primary
-installation experience.
+Every model creation path writes `.businesslens/README.md`. BusinessLens never
+writes target `AGENTS.md`, `CLAUDE.md`, or root README files.
 
 ## Documentation
 
-Learn the flow:
-
-- [Introduction](./docs/index.md) · [Installation](./docs/installation.md)
-- Pick a door: [From your repo](./docs/from-your-repo.md) ·
-  [From a Blueprint](./docs/from-a-blueprint.md) ·
-  [From an idea](./docs/from-an-idea.md)
-- [Find your flow](./docs/flows.md)
-
-The product model — one page per entity:
-
-- [Overview](./docs/product-model.md) (the folder, and how to read it)
-- [Actors](./docs/actors.md) · [Experiences](./docs/experiences.md) ·
-  [Domains](./docs/domains.md) · [Features](./docs/features.md)
-- [Journeys](./docs/journeys.md) · [Scenarios](./docs/scenarios.md) ·
-  [Business rules](./docs/business-rules.md)
-- [Evidence & coverage](./docs/evidence.md)
-
-Integrating it with what you already use:
-
-- [Overview](./docs/integration.md) · [With plan mode](./docs/with-plan-mode.md) ·
-  [With SDD tools](./docs/with-sdd.md)
-- [Validate in CI](./docs/ci.md) · [Your commit loop](./docs/commit-loop.md)
-
-Reference:
-
-- [Skills overview](./docs/skills.md) (one page per skill)
-- [CLI reference](./docs/cli.md) (one page per command)
-- [Format contract](./spec/format.md) — the wire contract for the folder and
-  the portable Product Report
-
-## Updating the skills
-
-```bash
-npx businesslens@latest update
-```
-
-Update discovers BusinessLens-managed installations through ownership markers
-and refreshes only those skill directories. It does not touch `.businesslens/`.
+- [Introduction](./docs/index.md) · [Installation](./docs/installation.md) ·
+  [The loop](./docs/the-loop.md)
+- Start [from your repo](./docs/from-your-repo.md),
+  [from a Blueprint](./docs/from-a-blueprint.md), or
+  [from an idea](./docs/from-an-idea.md)
+- [Product Model](./docs/product-model.md) ·
+  [Code refs & coverage](./docs/evidence.md)
+- [Skills](./docs/skills.md) · [CLI](./docs/cli.md) ·
+  [Lint in CI](./docs/ci.md)
+- [Format contract](./spec/format.md)
 
 ## Safety
 
-- Skills inspect target repositories statically; they do not run target code.
-- Installation refuses to overwrite unowned `businesslens-*` directories
-  unless `--force` is explicit.
-- Updates replace only artifacts marked as BusinessLens-managed.
-- Installation, mapping, planning, validation, and export do not submit your
-  model anywhere. Only the explicit `contribute` command or
-  `businesslens-contribute` skill proposes a public catalog contribution.
+- BusinessLens analysis phases inspect untrusted repositories without executing
+  target code. A separately injected builder may run normal project checks under
+  its own permissions.
+- Installation refuses to overwrite unowned skill directories unless `--force`
+  is explicit; update touches only marked installations.
+- Nothing submits model data except the explicit
+  `businesslens blueprint contribute` command.
+- No command publishes, tags, or pushes implicitly.
 
 ## License
 

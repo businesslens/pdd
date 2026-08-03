@@ -5,7 +5,7 @@ import { join } from 'node:path'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { buildProject } from '../src/commands/export.js'
 import { loadModel } from '../src/core/model.js'
-import { validateModel } from '../src/commands/validate.js'
+import { lintModel } from '../src/commands/lint.js'
 import { lsFiles } from '../src/core/git.js'
 import { ProductReportV4Schema } from '../src/core/portable.js'
 
@@ -33,8 +33,8 @@ afterAll(() => {
 })
 
 describe('end to end on a real git repo', () => {
-  it('validates the fixture against real git ls-files', () => {
-    const result = validateModel(loadModel(repo), lsFiles(repo))
+  it('lints the fixture against real git ls-files', () => {
+    const result = lintModel(loadModel(repo), lsFiles(repo))
     expect(result.errors).toEqual([])
   })
 
@@ -63,7 +63,7 @@ describe('end to end on a real git repo', () => {
     )).toEqual([])
     expect(parsed.coverage.evidenceRedacted).toBe(true)
 
-    // `mapped` still counts what the authored model proved, so coverage does
+    // `mapped` still counts which authored entities carried bookmarks, so coverage does
     // not silently collapse to zero just because the paths were stripped.
     expect(parsed.coverage.mapped).toMatchObject({ actors: 1, domains: 2 })
     expect(parsed.model.features.find(feature => feature.id === 'checkout')?.businessRuleIds)

@@ -51,7 +51,7 @@ afterAll(() => {
 
 describe('cli dispatch', () => {
   it('lists the catalog commands in help and no retired ones', () => {
-    const result = cli(repo, process.env, 'validate', '--help')
+    const result = cli(repo, process.env, 'lint', '--help')
     expect(result.status).toBe(0)
     expect(result.stdout).toContain('blueprint export')
     expect(result.stdout).toContain('blueprint open <report>')
@@ -59,11 +59,28 @@ describe('cli dispatch', () => {
     expect(result.stdout).toContain('blueprint contribute [--yes]')
     expect(result.stdout).toContain('--catalog <origin>')
     expect(result.stdout).toContain('--cwd <path>')
+    expect(result.stdout).toContain('businesslens-map')
+    expect(result.stdout).toContain('businesslens-verify')
+    expect(result.stdout).not.toContain('businesslens-sync')
 
     // Retired with the Platform.
     expect(result.stdout).not.toContain('login ')
     expect(result.stdout).not.toContain('--tag <name>')
     expect(result.stdout).not.toContain('--pull-request <number>')
+  })
+
+  it('lints structure without emitting branch authority', () => {
+    const result = cli(ROOT, process.env, '--cwd', repo, 'lint', '--json')
+    expect(result.status).toBe(0)
+    const output = JSON.parse(result.stdout)
+    expect(output).toMatchObject({ ok: true, errors: [], warnings: [] })
+    expect(output.branch).toBeUndefined()
+  })
+
+  it('refuses validate and names lint as the replacement', () => {
+    const result = cli(ROOT, process.env, '--cwd', repo, 'validate')
+    expect(result.status).toBe(2)
+    expect(result.stderr).toContain('Use `businesslens lint`')
   })
 
   it('exports the selected repository into report.json', () => {
@@ -74,7 +91,7 @@ describe('cli dispatch', () => {
 
   it('refuses the bare catalog spellings and names the replacement', () => {
     // Removed rather than aliased. Keeping `export` would have blocked reusing
-    // that name for the evidenced report profile later, and reusing it while an
+    // that name for a source-linked report profile later, and reusing it while an
     // alias existed would silently change a disclosure-relevant default.
     for (const command of ['export', 'open', 'pull', 'contribute']) {
       const result = cli(ROOT, process.env, '--cwd', repo, command)

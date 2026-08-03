@@ -8,7 +8,7 @@ order: 29
 
 # `businesslens install`
 
-Install all six bundled `businesslens-*` agent skills into one or more
+Install the three bundled `businesslens-*` agent skills into one or more
 supported AI harnesses:
 
 ```bash
@@ -38,7 +38,7 @@ guidance on choosing project or global scope.
 Scope flags are mutually exclusive. The CLI also rejects a scope flag that
 conflicts with `--scope`.
 
-## Non-interactive installation
+## Non-interactive
 
 Pass the provider and scope choices explicitly in CI or any session without an
 interactive terminal:
@@ -70,5 +70,6 @@ The command distributes skills only. It does not:
 - connect an account; or
 - export or contribute a Product Model.
 
-After installation, invoke `businesslens-init` in the selected AI harness to
-map an existing product, or `businesslens-ideate` to define a new product.
+After installation, invoke `businesslens-map` for established code,
+`businesslens-ideate` for a new product, or `businesslens-verify` for an
+existing Product Model.

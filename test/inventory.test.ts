@@ -3,7 +3,6 @@ import {
   existsSync,
   mkdirSync,
   mkdtempSync,
-  readFileSync,
   rmSync,
   writeFileSync
 } from 'node:fs'
@@ -11,7 +10,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 
-const SCRIPT = join(__dirname, '..', 'skills', 'businesslens-init', 'scripts', 'inventory-repository.mjs')
+const SCRIPT = join(__dirname, '..', 'skills', 'businesslens-map', 'scripts', 'inventory-repository.mjs')
 const temporaryDirectories: string[] = []
 
 function git(cwd: string, ...args: string[]): void {
@@ -25,7 +24,7 @@ afterEach(() => {
 })
 
 describe('repository inventory', () => {
-  it('uses tracked files only and writes deterministic candidate groups', () => {
+  it('uses tracked files only and remains read-only', () => {
     const repository = mkdtempSync(join(tmpdir(), 'bl-inventory-'))
     temporaryDirectories.push(repository)
     mkdirSync(join(repository, 'src', 'routes'), { recursive: true })
@@ -38,22 +37,16 @@ describe('repository inventory', () => {
 
     const output = execFileSync(
       process.execPath,
-      [SCRIPT, '--root', repository, '--write'],
+      [SCRIPT, '--root', repository],
       { encoding: 'utf8' }
     )
     const inventory = JSON.parse(output)
 
     expect(inventory.trackedFileCount).toBe(2)
-    expect(inventory.files).toEqual([
-      'docs/README.md',
-      'src/routes/checkout.ts'
-    ])
-    expect(inventory.candidates.documentation).toEqual(['docs/README.md'])
-    expect(inventory.candidates.entryPoints).toEqual(['src/routes/checkout.ts'])
-    expect(inventory.files).not.toContain('untracked.ts')
-    expect(existsSync(join(repository, '.businesslens', 'cache', 'inventory.json'))).toBe(true)
-    expect(JSON.parse(
-      readFileSync(join(repository, '.businesslens', 'cache', 'inventory.json'), 'utf8')
-    )).toEqual(inventory)
+    expect(inventory.files).toBeUndefined()
+    expect(inventory.candidates.documentation).toEqual({ files: ['docs/README.md'], omitted: 0 })
+    expect(inventory.candidates.entryPoints).toEqual({ files: ['src/routes/checkout.ts'], omitted: 0 })
+    expect(JSON.stringify(inventory)).not.toContain('untracked.ts')
+    expect(existsSync(join(repository, '.businesslens'))).toBe(false)
   })
 })

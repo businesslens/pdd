@@ -1,6 +1,6 @@
 ---
 title: From a Blueprint
-description: You want a reviewed starting point. Pull a curated Product Model from the catalog and build from it.
+description: Pull a reviewed Product Model, preserve its completeness, adapt it if needed, then build and verify.
 section: open-source
 group: Get started
 order: 4
@@ -8,95 +8,39 @@ order: 4
 
 # Start from a Blueprint
 
-The fastest path from nothing to a working product: start from a Product Model
-someone already got right.
-
-## 1. Find a Blueprint
-
-Browse [businesslens.io/blueprints](https://businesslens.io/blueprints). No
-account is needed, to browse or to pull.
-
-Each Blueprint is an **executable brief** — small enough to build end to end,
-complete enough that an agent handed nothing but the model produces a working
-product.
-
-## 2. Pull it
+Browse [businesslens.io/blueprints](https://businesslens.io/blueprints), then
+pull a canonical name:
 
 ```bash
 mkdir my-reader && cd my-reader
 git init
-npx businesslens@latest pull content-feed-reader
+npx businesslens@latest blueprint pull content-feed-reader
 ```
 
-You now have:
+The command writes only `.businesslens/`, including its orientation README.
+Source-repository bookmarks are removed because they cannot navigate this new
+repository. The Blueprint's model-completeness status is preserved; it is not
+downgraded merely because codeRefs were redacted.
 
-- `.businesslens/` — the complete Product Model: actors, experiences, domains,
-  features, business rules, journeys, and scenarios;
-- `.businesslens/README.md` — what the directory is, for whatever agent reads it.
-
-Nothing outside `.businesslens/` was touched.
-
-Nothing is implemented. `coverage.md` says `status: draft`, and validation
-reports missing evidence as warnings. That is the worklist, not a problem:
+Lint the imported structure:
 
 ```bash
-npx businesslens@latest validate
+npx businesslens@latest lint
 ```
 
-## 3. Read it yourself first
+Read `product.md`, the business rules, and the scenarios. If the model is what
+you want, send it to your normal plan/build flow. If you want adjacent behavior,
+run `businesslens-ideate`, approve the model delta, then build.
 
-Worth ten minutes. Start with `.businesslens/product.md` for what the product is
-and the outcome it protects, then the business rules — those are the invariants
-that hold across everything else.
-
-## 4. Build it
-
-Two paths.
-
-**Straight to implementation**, when the Blueprint is what you want: hand the
-repository to your coding agent and tell it to build. `pull` already wrote the
-contract into `.businesslens/README.md`, so the agent knows the model is the specification,
-that the scenarios are the acceptance contract, and that nothing here
-prescribes a stack.
-
-Work journey by journey, with a test per scenario.
-
-**Refine first**, when you want something adjacent:
+After implementation, invoke:
 
 ```text
-/businesslens-ideate
+/businesslens-verify
 ```
 
-Change the model to describe your product — add an actor, drop a journey, revise
-a rule — then implement. Editing the model first is what keeps it true; editing
-the code first is how models start lying.
+Verify treats the existing model as the intended contract even if it was
+committed before the implementation branch. A Git diff narrows inspection; it
+does not erase the plan or choose authority.
 
-Not sure what to change? Invoke it with no argument. It reads the model,
-proposes directions, and writes nothing until you pick one.
-
-## 5. Attach evidence
-
-Once it runs:
-
-```text
-/businesslens-sync
-```
-
-This adds `codeRefs` linking journeys and scenarios to the code that implements
-them, and moves coverage off `draft`. From then on `validate` requires evidence,
-and the model stays honest as the product changes.
-
-```bash
-npx businesslens@latest validate
-```
-
-## What you end up with
-
-A working product **and** a live Product Model of it — so the next feature can
-be planned in the model, implemented, and verified, rather than guessed at from
-the code.
-
-## Where to go next
-
-- [Find your flow](./flows.md) — every situation a live model can be in.
-- [`blueprint contribute`](./cli-contribute.md) — propose your own.
+Next: [The loop](./the-loop.md) ·
+[`blueprint contribute`](./cli-contribute.md)

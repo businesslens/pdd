@@ -25,16 +25,15 @@ passes it to the same expansion primitive as [`open`](./cli-open.md).
 
 The pulled report becomes a canonical `.businesslens/` Product Model:
 
-- `coverage.md` is written with `status: draft`;
+- the Blueprint's model-breadth coverage status is preserved;
 - product behavior, relationships, intent, routes, HTTP(S) links, and supporting
   content are preserved;
-- there are no `codeRefs`, because nothing is implemented yet; and
-- missing implementation evidence remains visible as validation warnings — that
-  is the worklist.
+- source-repository `codeRefs` are removed because they do not navigate this
+  repository.
 
 `pull` also writes `.businesslens/README.md`, telling a coding agent what it is
-looking at: a specification whose scenarios are the acceptance contract, with
-behavior that carries no `codeRefs` still to build. Without it, "hand the model
+looking at: a specification whose scenarios are the acceptance contract. Without
+it, "hand the model
 to your agent" would depend on you writing that prompt yourself. Nothing outside
 `.businesslens/` is touched.
 
@@ -96,5 +95,6 @@ npx businesslens@latest blueprint pull content-feed-reader
 ```
 
 Then either hand the directory to a coding agent and ask it to build the
-product, or refine the model first with `businesslens-ideate` and build after. See
+product, or refine the model first with `businesslens-ideate` and build after.
+Then run `businesslens-verify` once to resolve implementation gaps. See
 [Build from a Blueprint](./from-a-blueprint.md).

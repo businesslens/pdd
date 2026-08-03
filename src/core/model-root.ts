@@ -19,8 +19,8 @@ export interface ModelRoot {
  *
  * `gitRoot` is reported separately because it means something different: it is
  * where `codeRefs` are resolved and tracked files are listed. A model outside a
- * repository has no tracked files, which is exactly right for a Blueprint —
- * planned behavior carries no evidence.
+ * repository has no tracked files, so repository-specific code bookmarks are
+ * invalid there.
  */
 export function resolveModelRoot(cwd: string): ModelRoot {
   let gitRoot: string | undefined
@@ -38,6 +38,6 @@ export function resolveModelRoot(cwd: string): ModelRoot {
   }
 
   throw new Error(
-    'No .businesslens/ product model found here or at the repository root — invoke the `businesslens-init` skill first'
+    'No .businesslens/ Product Model found here or at the repository root — use `businesslens-map` for established code or `businesslens-ideate` for a new product'
   )
 }

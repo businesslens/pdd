@@ -9,9 +9,9 @@ import { dirname, isAbsolute, join, resolve } from 'node:path'
  * Pin the CLI to the version these skills were installed from.
  *
  * `businesslens@latest` is wrong here: the skills and the CLI are one release,
- * and a skill installed from version X must validate with version X. Resolving
+ * and a skill installed from version X must lint with version X. Resolving
  * `latest` at run time means a model authored against a newer format gets
- * validated by an older published CLI, which reports the new frontmatter keys as
+ * linted by an older published CLI, which reports the new frontmatter keys as
  * unknown — a confusing failure with no obvious cause.
  */
 function installedPackageSpec() {
@@ -60,14 +60,14 @@ const args = process.argv.slice(2)
 const rootIndex = args.indexOf('--root')
 const requestedRoot = rootIndex >= 0 ? args[rootIndex + 1] : undefined
 if (!requestedRoot) {
-  fail('Usage: run-businesslens.mjs --root <repository> validate [--json]')
+  fail('Usage: run-businesslens.mjs --root <repository> lint [--json]')
 }
 
 const commandArgs = args.filter(
   (_, index) => index !== rootIndex && index !== rootIndex + 1
 )
-if (commandArgs[0] !== 'validate') {
-  fail('The isolated BusinessLens runner supports only validate.')
+if (commandArgs[0] !== 'lint') {
+  fail('The isolated BusinessLens runner supports only lint.')
 }
 
 let root

@@ -53,8 +53,9 @@ code and a model, where an agent might never look inside `.businesslens/`. ADR
   entities rather than the file tree, so `open` regenerates the README on
   expansion and boilerplate stays out of the schema.
 - Repositories carrying a block written by an earlier version keep it. Nothing
-  removes it, and the instruction it contains still names a real skill
-  (`businesslens-sync`) — it is stale, not wrong. `doctor` reports it.
+  removes it. Its retired skill names may now be stale, but BusinessLens does
+  not rewrite repository-owned instructions; users remove or revise the block
+  explicitly.
 
 ## Considered options
 

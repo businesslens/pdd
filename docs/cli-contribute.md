@@ -27,7 +27,7 @@ gh auth login
 
 `contribute` refuses to run without it, rather than failing halfway through.
 
-## Where contributions go
+## Where it goes
 
 By default, `businesslens/pdd`. Set `BUSINESSLENS_CONTRIBUTE_UPSTREAM` to an
 `owner/repo` pair to target another Blueprint repository — anyone running their
@@ -39,8 +39,9 @@ you do, because GitHub refuses to let one account own both a parent and a fork.
 
 ## What it does
 
-1. Resolves and loads the Product Model, and validates it. Errors stop the run;
-   draft warnings do not, because a Blueprint is an unimplemented model.
+1. Resolves and loads the Product Model, and lints its structure. Errors stop
+   the run; coverage status and missing bookmarks do not imply implementation
+   state and therefore are not lint findings.
 2. Exports a Blueprint — the model with every `codeRef` stripped.
 3. **Regenerates the model from that Blueprint.** This is what goes in the
    pull request.
@@ -51,7 +52,7 @@ you do, because GitHub refuses to let one account own both a parent and a fork.
    `blueprint/<slug>` branch.
 7. Opens the pull request and prints its URL.
 
-## Your own repository is never touched
+## Your repo is safe
 
 Every step above happens in a temporary directory that is deleted when the
 command finishes. Your repository is only ever **read** — it never gains a
@@ -61,7 +62,7 @@ Its layout does not matter either. Step 3 rebuilds the model in canonical form
 rather than copying your files, so a Product Model contributes the same way
 whether it sits at the root of a tiny repository or deep inside a monorepo.
 
-## Contributing more than once
+## Contributing again
 
 Revising a Blueprint is the same command again.
 
@@ -78,7 +79,7 @@ Forking leaves a repository in your GitHub account. GitHub needs it to keep the
 pull request open, so leave it there until the Blueprint is merged — after that
 it is yours to delete.
 
-## Why the model is regenerated
+## Why it regenerates
 
 `codeRefs` live in the frontmatter of the `.businesslens/**/*.md` files you
 authored, and redaction operates on a built report. Copying your authored files
@@ -89,8 +90,8 @@ repository-specific travels, and it has a second benefit: the contents are then
 byte-identical to what `businesslens blueprint pull <slug>` produces for everyone else.
 
 The gate does not take this on trust. `blueprints:check` runs on every pull
-request and independently rejects any Blueprint carrying source evidence,
-because anyone can open a pull request by hand.
+request and independently rejects any Blueprint carrying repository-specific
+source metadata, because anyone can open a pull request by hand.
 
 ## The manifest
 
@@ -116,7 +117,7 @@ Git provenance is recorded as an optional `origin` block when your model is in a
 repository with an HTTPS remote, and skipped otherwise — a Blueprint author may
 have no repository at all.
 
-## What makes a good Blueprint
+## A good Blueprint
 
 A Blueprint is an executable brief: small enough to build end to end, complete
 enough that a coding agent handed nothing but the pulled model produces a
@@ -148,7 +149,7 @@ making it more complete.
 - **Scenario quality.** Each scenario must be checkable against an
   implementation without running it. "Cart validation works" is too vague;
   "submitting an empty cart shows an error and keeps the cart" is not.
-- **No source evidence.** `blueprints:check` fails the pull request on any
+- **No repository-specific source metadata.** `blueprints:check` fails the pull request on any
   `codeRef`, coverage source area, repository link, or repository entry point.
   This is automated and not negotiable.
 - **The manifest.** Set `category`, `icon`, `accent`, and `authors` properly.

@@ -26,7 +26,7 @@ IDs are lowercase kebab-case, matching `^[a-z0-9]+(?:-[a-z0-9]+)*$`.
 
 **Never write `id:` in frontmatter.** The filesystem is the ID authority, so an
 ID cannot disagree with the file that holds it. Renaming the file renames the
-entity, and `validate` catches every relation that still points at the old name.
+entity, and `lint` catches every relation that still points at the old name.
 
 The one exception is `product.md`, whose `id:` names the whole Product Model
 rather than an entity inside it. It may differ from the repository name and is
@@ -41,7 +41,7 @@ anywhere.
 The first `# Heading` in the body is the entity's title. [Actors](./actors.md)
 and [domains](./domains.md) call it `name`.
 
-## Lead paragraph = description
+## Lead = description
 
 The prose between the H1 and the first `##` is the description — the summary for
 journeys. Later sections are supporting context, except where an entity requires
@@ -61,9 +61,9 @@ A visitor who browses the catalog and buys products.
 `Shopper` is the name. The sentence below it is the description. Neither is
 declared in frontmatter.
 
-## Frontmatter = relations and evidence only
+## Frontmatter
 
-Frontmatter holds IDs, `codeRefs`, `links`, and structured values such as
+Frontmatter holds relations, optional `codeRefs`, `links`, and structured values such as
 `access` or `kind`. **Never prose.**
 
 The schema is a **strict allowlist** — an unrecognized key is an error, not a
@@ -75,7 +75,7 @@ unknown frontmatter key "actor"
 
 Typos fail loudly and immediately rather than silently dropping a relation.
 
-## `## Intent` is a recognized section
+## The `Intent` section
 
 Intent explains why the product or entity exists and which outcome its shape
 protects. It is available on the product, [actors](./actors.md),
@@ -89,7 +89,7 @@ without inventing another relationship graph.
 ## The format contract
 
 This page is the authoring view. The machine contract that the parser, the
-validator, and the catalog server agree on — including the portable Product
-Report schema and the source-evidence redaction projection — lives in
+linter, and the catalog server agree on — including the portable Product Report
+schema and source-navigation redaction — lives in
 `spec/format.md` in the
 [`businesslens/pdd`](https://github.com/businesslens/pdd) repository.

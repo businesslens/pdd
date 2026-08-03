@@ -62,19 +62,18 @@ Anonymous browsing; checkout creates an order. No administrative actions.
 this entity. Say what the surface cannot do, not only what it can — that is the
 half an agent cannot infer from your code.
 
-## What `validate` checks
+## What `lint` checks
 
 | Finding | Meaning |
 | --- | --- |
 | `access "…" must be public\|authenticated\|restricted` | The only allowed access modes. |
 | `references missing actor "…"` | An `actors:` entry names no existing actor file. |
-| `experiences/: the model needs at least one experience` | An empty model is only valid transiently. Build it with `businesslens-init` or plan it with `businesslens-ideate`. |
+| `experiences/: the model needs at least one experience` | An empty model is only valid transiently. Map established behavior with `businesslens-map` or author intended behavior with `businesslens-ideate`. |
 | `"entryPoints" must be a list` / `each entry point must be a single "type: path" map` | Entry-point shape. One key per list item. |
 | `missing H1 title` / `missing lead paragraph (description)` | Every experience needs both. |
 
-Experiences may carry `codeRefs` but do not require them — the surface is a
-product boundary, not a behavioral claim. See
-[Evidence & coverage](./evidence.md).
+Experiences may carry optional `codeRefs` for navigation. See
+[Code references and coverage](./evidence.md).
 
 > **Entry point vs codeRef.** An entry point says how an actor *reaches* the
-> surface. A `codeRef` cites tracked source that *proves* it exists.
+> surface. A `codeRef` is an optional bookmark into relevant tracked source.

@@ -12,7 +12,7 @@ import {
   validateProductReport
 } from '../core/portable.js'
 import { cliVersion } from '../version.js'
-import { validateModel } from './validate.js'
+import { lintModel } from './lint.js'
 
 const byId = <T extends { id: string }>(items: T[]): T[] => [...items].sort((a, b) => a.id.localeCompare(b.id))
 const sorted = (items: string[]): string[] => [...items].sort()
@@ -31,7 +31,7 @@ function entityContent(entity: EntityFile, recognized: string[]) {
 }
 
 /**
- * Compile a validated model into a Product Report, source evidence intact.
+ * Compile a linted model into a Product Report, source bookmarks intact.
  *
  * The pure compiler. `buildProject` redacts what this returns before writing
  * it, so a delivered Blueprint never carries `codeRefs`; this stays unredacted
@@ -194,17 +194,17 @@ export function buildProject(cwd: string): BuildOutcome {
   const { modelRoot: root, gitRoot } = resolveModelRoot(cwd)
   const model = loadModel(root)
   const tracked = gitRoot ? lsFiles(gitRoot) : []
-  const result = validateModel(model, tracked)
+  const result = lintModel(model, tracked)
   if (!result.ok) {
-    throw new Error(`Validation failed:\n${result.errors.map(error => `- ${error}`).join('\n')}`)
+    throw new Error(`Lint failed:\n${result.errors.map(error => `- ${error}`).join('\n')}`)
   }
   const today = new Date().toISOString().slice(0, 10)
   // Export emits the source-free profile: no `codeRefs`, because they name
-  // paths in *this* repository and prove nothing anywhere else. That is the
+  // paths in *this* repository and navigate nowhere else. That is the
   // only profile the catalog accepts, and this command exists to feed it.
   // `contribute` and `open` each redacted separately before; doing it once,
   // here, means every consumer gets the same guarantee. See adr/0003 — an
-  // evidenced profile is a future top-level `export`, not a flag on this one.
+    // source-linked profile is a future top-level `export`, not a flag on this one.
   const report = redactSourceEvidence(compileReport(model, tracked.length, today))
 
   const outputFile = writeGeneratedFile(

@@ -19,12 +19,12 @@ the watcher leaves `bl` pointing at the last successful build. Run `npm run
 dev` in another worktree to switch the link, `bl --dev-info` to inspect it, and
 `npm run dev:unlink` from the active worktree to remove it.
 
-From any target repository, `bl validate` and the other public commands use the
-active checkout. Installed plan and sync skills recognize the same explicit
+From any target repository, `bl lint` and the other public commands use the
+active checkout. Installed map, ideate, and verify skills recognize the same explicit
 development launcher; without it they retain their release-pinned npm runner.
 
 1. Format changes start in `spec/format.md`, then flow into `src/core/` and
-   `src/commands/validate.ts` with a failing-case test per new rule, and into
+   `src/commands/lint.ts` with a failing-case test per new structural rule, and into
    the matching entity page under `docs/`.
 2. Keep `src/core/portable.ts` byte-compatible with the platform's portable
    schema; coordinate schema-version bumps across both repositories.
@@ -32,6 +32,8 @@ development launcher; without it they retain their release-pinned npm runner.
    counts when the format gains required content.
 4. For skills: update the matching `SKILL.md`, keep references self-contained,
    keep names prefixed with `businesslens-`, update `agents/openai.yaml`, and
-   list new skills in `.claude-plugin/plugin.json`.
+   list new skills in `.claude-plugin/plugin.json`. BusinessLens analysis never
+   executes target code; verify delegates implementation to a harness-supplied
+   builder and then inspects again.
 5. Run `npm run verify` before opening a PR.
 6. Do not add secrets, customer data, or private repository URLs.

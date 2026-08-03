@@ -1,64 +1,52 @@
 ---
 title: From your repo
-description: You have code and no shared model. Build an evidence-backed Product Model of what the product does today.
+description: Map established repository behavior into an honest Product Model, then verify the current state.
 section: open-source
 group: Get started
 order: 3
 ---
 
-# Start from your repo
+# Start from your repository
 
-**Goal:** an evidence-backed `.businesslens/` Product Model of what your product does
-today, so agents and reviewers start from product context instead of
-repository archaeology.
-
-**Prerequisites:** a Git repository with the product's code, Node.js
-20.12+, and an AI harness (Claude Code, Codex, Cursor, Gemini CLI, or
-GitHub Copilot).
+Use this door when implementation already exists and `.businesslens/` is absent
+or deliberately untrusted.
 
 ## Steps
 
-1. Install the skills in the repository:
+1. Install the skills:
 
    ```bash
    npx businesslens@latest install
    ```
 
-2. Build the model in your harness:
+2. Run the mapping skill:
 
    ```text
-   /businesslens-init
+   /businesslens-map
    ```
 
-   (Codex: `$businesslens-init`.) The skill inspects the code without
-   executing it, authors actors, experiences, domains, features, journeys,
-   scenarios, business rules, and decision points with direct evidence.
-   Nothing outside `.businesslens/` is touched.
-   Answer only the questions the code cannot — the skill drafts everything
-   it can from evidence.
+   Codex: `$businesslens-map`. It statically inspects repository instructions,
+   entry points, services, persistence, integrations, configuration, and tests.
+   It never executes target code. It shows the proposed model and coverage
+   assessment before writing product meaning.
 
-3. Review the diff like any pull request. Every behavioral claim carries a
-   `codeRef` you can open. Check `coverage.md` for honest gaps.
+3. Review the `.businesslens/` diff. Check relationships, scenario contracts,
+   explicit unmapped areas, limitations, and any optional code bookmarks.
 
-4. Validate and commit:
+4. Lint and commit:
 
    ```bash
-   npx businesslens@latest validate
+   npx businesslens@latest lint
    git add .businesslens
-   git commit -m "docs: add BusinessLens product model"
+   git commit -m "docs: add BusinessLens Product Model"
    ```
 
-5. Optional: deepen the highest-value area.
+5. Run a semantic current-state audit:
 
    ```text
-   /businesslens-deep-dive <journey-id>
+   /businesslens-verify current
    ```
 
-6. Add the validator to CI so the model cannot rot — see
-   [Validate in CI](./ci.md).
-
-## Outcome
-
-`npx businesslens validate` is green; the model describes today's product
-with evidence. From here, plan every new feature with
-the loop in [Find your flow](./flows.md).
+`map` is not a daily command. Return to it only to expand coverage or remap a
+named area you deliberately stopped trusting. Use `verify` for routine changes,
+refactors, suspected drift, and release checks.

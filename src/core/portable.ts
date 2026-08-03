@@ -486,8 +486,9 @@ function isRepositoryLink(value: string): boolean {
  * are the author's to control — authors must keep repository internals out of
  * them.
  *
- * `coverage.mapped` is preserved: how much of the model was evidence-backed
- * upstream is a model-quality signal, not a disclosure. `evidenceRedacted`
+ * `coverage.mapped` is preserved for Product Report v4 compatibility: it
+ * counts entities that carried implementation-linked bookmarks upstream.
+ * It is navigation metadata, not proof or model completeness. `evidenceRedacted`
  * records that those counts can no longer be recomputed from the document.
  * The projection is idempotent and does not mutate its input.
  */

@@ -1,75 +1,55 @@
 ---
 title: Introduction
-description: BusinessLens is Product-Driven Development for coding agents — a git-tracked product model with code evidence, where planning is editing the model and validation green means done.
+description: BusinessLens keeps intended product behavior durable, gives every repository three starting doors, and verifies changes through one automatic loop.
 section: open-source
 group: Get started
 order: 1
 ---
 
-# Introduction
+# Product context that survives the session
 
-**Product-Driven Development is a practice: plan behavior into a Product Model,
-implement from that model, and check the evidence when the code lands.**
+BusinessLens is Product-Driven Development for coding agents. It stores the
+durable product contract in `.businesslens/`: actors, experiences, domains,
+features, rules, journeys, and observable scenarios.
 
-**BusinessLens is the open-source implementation of it** — an open format, a
-CLI, and a set of agent skills that create and maintain the model. It keeps one
-artifact: a git-tracked Product Model in `.businesslens/` describing who the
-product serves, what they accomplish, and where the code proves it.
+The Product Model says what the product is intended to do. It does not prescribe
+the stack or replace your plan mode, SDD framework, coding agent, or tests.
 
-The model is Markdown, reviewable in pull requests, MIT licensed, and fully
-useful without the catalog or any hosted service.
+## Three ways in
 
-```text
-.businesslens/
-├── product.md
-├── actors/
-├── experiences/
-├── domains/
-├── features/
-├── business-rules/
-├── journeys/<id>/journey.md
-│   └── scenarios/<id>.md
-└── coverage.md
-```
-
-## One artifact, one rule
-
-Every behavioral claim (journeys and scenarios) must cite tracked code —
-`codeRefs` validated against `git ls-files`. A green `validate` means the
-model and the code agree.
-
-That one rule makes planning simple: **plan by editing the model.** Describe
-the intended behavior on your branch; `validate` lists new journeys and
-scenarios that still lack evidence. Implement, then `businesslens-sync`
-checks every planned addition, change, and removal from the complete model diff
-and attaches evidence to implemented behavior. Verification complete plus
-validation green means done. Git is the change model: branches hold plans,
-pull requests review them, history archives them.
-
-## Two ways in, one loop after
-
-- **Existing product** — `/businesslens-init` inspects the code and builds
-  the evidence-backed model.
-- **Blank repository** — `/businesslens-ideate` interviews you and authors the
-  whole product as a draft model (evidence relaxed until the code exists).
-
-Then, for every feature:
-
-```text
-/businesslens-ideate →   implement   →   /businesslens-sync   →   green
-```
-
-Code changed without a plan? `/businesslens-sync` repairs the model.
-
-## The pieces
-
-| Piece | What it does |
+| Starting point | Use |
 | --- | --- |
-| `businesslens` CLI | Installs the skills and validates the model deterministically — [CLI reference](./cli.md) |
-| Agent skills | Plan, build, reconcile, and maintain the model inside your AI harness — [Skills reference](./skills.md) |
-| `.businesslens/` | The durable, git-tracked product model — [Product model](./product-model.md) |
-| The catalog (optional) | A curated, anonymously browsable collection of Blueprints at [businesslens.io/blueprints](https://businesslens.io/blueprints) — pull one and build from it |
-| [Find your flow](./flows.md) | Every situation a model can be in, and which surface handles it |
+| Existing repository, no trusted model | `businesslens-map` |
+| Blank idea or desired behavior change | `businesslens-ideate` |
+| Reviewed reusable starting point | `businesslens blueprint pull <name>` |
 
-Pick the door that matches where you are: [From your repo](./from-your-repo.md),
-[From a Blueprint](./from-a-blueprint.md), or [From an idea](./from-an-idea.md).
+All three create the same artifact. After that, changes use one loop:
+
+```text
+ideate → your plan/build flow → verify (including final lint) → merge
+```
+
+`verify` is one invocation, not a checklist of skills. It inspects the requested
+scope, negotiates only real authority decisions, automatically runs narrow
+intent-resolution or mapping phases when needed, delegates implementation to the
+builder injected by your harness, and checks again until aligned or blocked.
+Its final report includes the structural lint result.
+
+## Two different checks
+
+- `businesslens lint` is deterministic structure: files, fields, relationships,
+  grammar, and tracked bookmark paths.
+- `businesslens-verify` is semantic inspection: whether current code supports
+  the model's observable contract.
+
+A green lint result never claims model/code agreement.
+
+## Bookmarks and breadth
+
+`codeRefs` are optional navigation into tracked source. They are not evidence or
+lifecycle state. Coverage describes only how much intended product scope is
+modeled; a complete model can have no codeRefs.
+
+Choose your starting door: [from your repo](./from-your-repo.md),
+[from a Blueprint](./from-a-blueprint.md), or [from an idea](./from-an-idea.md).
+Then read [the loop](./the-loop.md).

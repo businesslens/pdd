@@ -7,184 +7,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `businesslens-map` for initial adoption, scoped remapping, and deliberate
+  Product Model coverage expansion without executing target code.
+- `businesslens-verify` as the single post-build invocation. It classifies
+  model/code gaps, negotiates only authority decisions, automatically runs
+  internal intent-resolution or scoped-mapping phases, hands code corrections
+  to a harness-injected builder, and re-verifies until aligned or blocked.
+- `report only` verification mode, an explicit missing-builder handoff, and an
+  unchanged-gap stopping rule. Verification findings are re-derived rather than
+  persisted in a receipt or ledger.
+- A checked-in [workflow redesign plan](./plan.md) and accepted ADRs covering
+  bookmarks, non-persisted verification, and the three-skill boundary.
+
 ### Changed
 
-- **The documentation is restructured around the product model.** The eight
-  model entities were previously explained three times over — narratively in
-  `docs/product-model.md`, as definitions in `docs/terminology.md`, and as
-  file schemas in `docs/format.md` — across 939 lines that drifted against
-  each other. They now get **one page each**, carrying the narrative, when to
-  create one, the file shape, and the `validate` findings that constrain it.
-
-  Two new groups replace the old `Concepts` cluster: **Product model** (one
-  page per entity) and **Integration** (one page per thing you integrate with —
-  plan mode, SDD frameworks, CI, and your commit loop). `Reference` is reduced
-  to the authoring conventions shared by every entity file.
-
-  `docs/terminology.md`, `docs/validation-rules.md`,
-  `docs/contributing-blueprints.md`, `docs/pdd-and-sdd.md`, and
-  `docs/how-it-fits.md` are removed; their content lives on the pages where it
-  is needed rather than in catalogs you had to know existed. The
-  "does this change need a model edit?" test existed verbatim in two places
-  and now exists in one.
-
-- **`docs/format.md` moved to `spec/format.md`.** It remains the contract that
-  changes before parser or validator behavior, but it is engineering
-  documentation for this repository rather than a page in the user-facing
-  sidebar — the report wire format, the redaction projection, and the
-  round-trip guarantee are agreements between the CLI and the catalog server.
-
-- **BusinessLens writes nothing outside `.businesslens/`.** The managed
-  `AGENTS.md` block is gone; `blueprint open` and `blueprint pull` now write
-  `.businesslens/README.md` instead. The block's one claimed advantage was
-  reach — speaking to an agent not running a BusinessLens skill — but it only
-  ever survived for a repository holding a model and *no implementation*, and
-  in that case `.businesslens/` is the only thing there to read. The reach
-  argument was weakest exactly where the block was load-bearing. See
-  [adr/0002](./adr/0002-write-nothing-outside-businesslens.md).
-
-  A repository carrying a block from an earlier version keeps it — nothing
-  removes it, and the skill it names still exists, so it is stale rather than
-  wrong. `businesslens-doctor` now reports it and leaves removal to you.
+- **Breaking.** The public skill set is exactly `businesslens-map`,
+  `businesslens-ideate`, and `businesslens-verify`. Ideate also handles a narrow
+  already-decided verification handoff without reopening broad brainstorming.
+- **Breaking.** `businesslens validate` is now `businesslens lint`. The old
+  spelling is refused with exit code 2 and a replacement message; it is not an
+  alias. Lint output contains only `ok`, `errors`, `warnings`, and `counts`—no
+  branch situation or authority inference.
+- `codeRefs` are optional navigational bookmarks on every entity. Missing refs
+  never fail lint; present refs still require valid grammar and tracked paths.
+  They are not proof, implementation state, completeness, or verification
+  receipts.
+- `coverage.status` now describes model breadth only: `draft` while the model
+  itself is under review, `partial` with known unmapped areas, and `complete`
+  when intended product scope is modeled. A complete model may have zero
+  codeRefs.
+- Blueprint open and pull preserve the report's model-completeness status while
+  stripping source-repository bookmarks. `coverage.mapped` remains Product
+  Report v4 compatibility metadata and counts bookmark-bearing entities.
+- Every model creation path carries canonical orientation in
+  `.businesslens/README.md`. BusinessLens still never writes target-root
+  `AGENTS.md`, `CLAUDE.md`, or README files.
+- Documentation now teaches three starting doors and one ongoing loop:
+  `ideate → injected build → verify (including final lint) → merge`. Map is explicitly not a
+  daily maintenance command, and lint is explicitly not semantic verification.
 
 ### Removed
 
-- **`businesslens-verify`** — folded into `businesslens-sync`. The two were
-  distinguished only by whether a plan existed, which the tool now derives from
-  git rather than asking you to remember. Worse, `verify` and `validate` are
-  synonyms in ordinary English, and the textbook distinction is *inverted*
-  here: `validate` checks the model against a specification (verification by
-  the book) while `verify` checked the code against intent (validation by the
-  book). A reader who knew the convention got them backwards.
-
-  Nothing is lost. `sync` does everything `verify` did when a plan exists,
-  including deriving deletions from the model diff and proving retired
-  behavior is gone.
-
-
-- **`businesslens-validate`** — 55 lines that ran `npx businesslens validate
-  --json` and reformatted the output. Run the CLI directly; a green result
-  needs no narration, and `businesslens-doctor` explains a failing one far
-  better, having already run the same command.
-- **`businesslens-implement`** — the greenfield `AGENTS.md` block states its
-  entire content, and states it to spec-driven toolchains and freestyle
-  sessions too, which a skill never reaches. Writing the code was never
-  BusinessLens's job; stating the acceptance contract is.
-- **`businesslens-plan`** — folded into `businesslens-ideate`. Deciding what to
-  build and writing that decision into the model are one converging
-  conversation, not two skills; nothing enters `.businesslens/` without
-  explicit approval either way.
-
-BusinessLens now ships **six** skills: `init`, `ideate`, `sync`, `deep-dive`,
-`doctor`, and `contribute`. Every removed name is listed as a legacy skill, so
-`businesslens update` clears it from existing installations rather than leaving
-it behind. None of this changes what a Product Model looks like or how it is
-validated.
-
-- **The brownfield `AGENTS.md` block.** `businesslens-init` and
-  `businesslens-plan` no longer write to `AGENTS.md` at all. One managed block
-  survives — the greenfield one — and only the CLI writes it. See
-  [adr/0001](./adr/0001-drop-the-brownfield-agents-block.md).
-
-  This also fixes a bug: `businesslens-plan` handled *new products* and
-  inserted the **brownfield** block, telling agents to read `codeRefs` for
-  current behavior in a repository that had neither code nor `codeRefs`.
-
-### Fixed
-
-- **`contribute` no longer branches off a stale fork.** A fork left from an
-  earlier contribution kept whatever default branch it had then, and nothing
-  synced it — so a second contribution could open a pull request carrying
-  unrelated commits or a conflict. The fork's default branch is now brought up
-  to date from upstream before branching, and the command stops rather than
-  proceeding if that fails.
-- **`contribute` can be run twice for the same Blueprint.** The
-  `blueprint/<slug>` branch is force-pushed — it is owned by the command on the
-  contributor's own fork — and an already-open pull request is reported and
-  updated instead of failing.
-- `contribute` no longer depends on the fork's directory name to find its
-  checkout, which broke for anyone who had renamed theirs. It forks with
-  `--clone=false` and clones by name into a path it controls.
-- `contribute` now says that forking left a repository behind, and that GitHub
-  needs it until the Blueprint is merged.
-
-### Changed
-
-- **A Product Report has two profiles**, and *source-free* is one of them
-  rather than a separate kind of artifact:
-
-  - **source-free** (`coverage.evidenceRedacted: true`) — no `codeRefs`, no
-    repository-relative links or entry points. Required whenever a report
-    crosses an ownership boundary, and the only profile the catalog accepts.
-  - **evidenced** — `codeRefs` intact, for a full product instance inside the
-    boundary that owns the code.
-
-  **Blueprint** keeps its existing meaning: a Product Report curated into the
-  public catalog, under a slug. See
-  [adr/0003](./adr/0003-source-free-is-a-report-profile.md), which supersedes
-  ADR-0002 and withdraws the short-lived **Catalog Entry** term.
-
-  No behavior changes: `blueprint export` still redacts, and the wire contract
-  is untouched. This restores agreement with the landing repository's
-  `CONTEXT.md`, which requires the two glossaries to match.
-- **`export`, `open`, `pull`, and `contribute` moved under `businesslens
-  blueprint`.** Each of the four produces or consumes a Blueprint — export
-  makes one, open consumes one, pull fetches one, contribute submits one — and
-  all of them carry a model across a repository boundary, which is a different
-  job from the everyday `install` / `update` / `validate` verbs. The top level
-  is now three commands you run constantly plus one noun for the occasional
-  work.
-
-  **The bare spellings are removed, not deprecated**, along with `build`. Each
-  is refused with a message naming its replacement. Keeping `export` as an
-  alias would have blocked reusing that name for the evidenced report profile,
-  and reusing it while an alias existed would silently change what a
-  disclosure-relevant command emits.
-- **`blueprint export` now strips source evidence.** Every export produces a
-  Blueprint: no `codeRefs`, no repository-relative links or entry points, and
-  `coverage.evidenceRedacted` set. `contribute` and `open` each redacted
-  separately before, so the artifact in `build/report.json` was the one shape
-  nothing actually consumed. Coverage keeps its `mapped` counts, so a Blueprint
-  still records how much of the original model was evidence-backed.
-
-  If you were reading `build/report.json` to link a rendered model back to
-  source, that no longer works — read `.businesslens/` directly instead.
-- `businesslens open` now writes the greenfield `AGENTS.md` block, matching
-  `businesslens pull`. Both are the "this model came from another repository"
-  door, and a model with no implementation needs a note saying so.
-
-### Added
-
-- **`validate` now reports where you stand**, after the findings: which of the
-  two things that can change — the model or the code — has changed on this
-  branch, and what that means.
-
-  This is a second answer, not a change to the first. **The exit code is
-  untouched**: whether the model is *sound* and where you *stand* are different
-  questions, and only the first gates a merge. A model whose code moved out
-  from under it still validates green — that drift is semantic and no rule can
-  see it, which is exactly the gap this covers.
-
-  Uncommitted and untracked files count, so it works mid-change. It is skipped
-  whenever the answer cannot be trusted: outside a repository, before the first
-  commit, or in a shallow clone with no merge base.
-- **`validate --json` gains an additive `branch` key** carrying that state,
-  including a `situation` of `at-rest`, `planned`, `implemented`, or
-  `unplanned-code`. `ok`, `errors`, `warnings`, and `counts` are unchanged.
-- **`businesslens-sync` resolves what it cannot decide alone, one question at a
-  time.** It separates every finding into *proof* — the code already does what
-  the model says, so only `codeRefs` change — and *decisions*, which are
-  anything that would alter what the model or the code says. Proof is attached
-  and reported. Decisions are sorted so that answering one settles the ones it
-  determines, asked individually with a recommendation, and re-derived from a
-  fresh validation run after every answer, until nothing is left.
-
-  Nothing about what your product *does* changes without you saying so.
-- **Find your flow** (`docs/flows.md`) — a routing page covering every
-  situation a Product Model can be in. Brownfield, greenfield, and
-  greenfield-from-a-Blueprint each get a starting row; after the first
-  evidence is attached they converge on one four-row matrix built from the
-  only two things that can change, the model and the code.
+- `businesslens-init`, `businesslens-sync`, `businesslens-doctor`, and
+  `businesslens-deep-dive`. Their useful scopes now belong to map or verify.
+- The `businesslens-contribute` skill. Catalog contribution remains the
+  deterministic `businesslens blueprint contribute` CLI command.
+- Git branch-state routing from lint and the internal `branch-state` module.
 
 ## [0.6.0] - 2026-07-31
 

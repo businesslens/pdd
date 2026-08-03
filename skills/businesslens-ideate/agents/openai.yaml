@@ -1,4 +1,4 @@
 interface:
   display_name: "BusinessLens Ideate"
-  short_description: "Decide what to build, and write it into the product model"
-  default_prompt: "Use $businesslens-ideate to think through what this product or feature should do and, once I approve, write it into the BusinessLens product model."
+  short_description: "Decide behavior and write approved model changes"
+  default_prompt: "Use $businesslens-ideate to decide what this product or feature should do and, after I approve the exact delta, write it into the BusinessLens Product Model."

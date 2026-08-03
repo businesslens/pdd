@@ -7,7 +7,7 @@ import { runOpen } from './commands/open.js'
 import { runContribute } from './commands/contribute.js'
 import { runPull } from './commands/pull.js'
 import { runUpdate } from './commands/update.js'
-import { runValidate } from './commands/validate.js'
+import { runLint } from './commands/lint.js'
 import { cliVersion } from './version.js'
 
 const HELP = `businesslens — Product-Driven Development for coding agents
@@ -17,7 +17,7 @@ Usage: businesslens <command> [options]
 Commands:
   install                     Install BusinessLens skills for detected AI harnesses
   update                      Refresh managed BusinessLens skill installations
-  validate [--json]           Validate the .businesslens/ product model
+  lint [--json]               Lint the .businesslens/ Product Model structure
 
 Blueprint commands (moving a model between repositories):
   blueprint export                    Compile .businesslens/ into a source-free report
@@ -54,12 +54,9 @@ General options:
   --version                   Show the CLI version
 
 Agent workflows:
-  /businesslens-init          Build the initial product model from existing code
-  /businesslens-ideate        Decide what to build, and write it into the model
-  /businesslens-sync          Reconcile the model with the code, either way
-  /businesslens-deep-dive     Expand one journey or experience
-  /businesslens-doctor        Diagnose validation, drift, and coverage
-  /businesslens-contribute    Propose the model as a catalog Blueprint
+  /businesslens-map           Create or expand the model from existing code
+  /businesslens-ideate        Decide what to build and write approved intent
+  /businesslens-verify        Check model/code alignment and resolve gaps
 
 Exit codes: 0 success · 1 failure · 2 usage error`
 
@@ -102,7 +99,7 @@ async function main(): Promise<number> {
 
   // Each of these produces or consumes a Product Report and carries a model
   // across a repository boundary, which is a different job from the everyday
-  // `install`/`update`/`validate` verbs.
+  // `install`/`update`/`lint` verbs.
   //
   // The bare spellings are gone rather than deprecated. Keeping `export` as an
   // alias would have blocked reusing that name for the evidenced profile later,
@@ -123,6 +120,11 @@ async function main(): Promise<number> {
   } else if (BLUEPRINT_COMMANDS.has(command) || command === 'build') {
     const moved = command === 'build' ? 'export' : command
     console.error(`\`businesslens ${command}\` has moved. Use \`businesslens blueprint ${moved}\`.`)
+    return 2
+  }
+
+  if (command === 'validate') {
+    console.error('`businesslens validate` has been renamed. Use `businesslens lint`.')
     return 2
   }
 
@@ -159,8 +161,8 @@ async function main(): Promise<number> {
         user: values.user,
         force: values.force
       })
-    case 'validate':
-      return runValidate(cwd, Boolean(values.json))
+    case 'lint':
+      return runLint(cwd, Boolean(values.json))
     case 'export':
       return runExport(cwd)
     case 'contribute':

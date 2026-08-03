@@ -13,14 +13,11 @@
     "product-driven-design",
     "product-model",
     "repository-analysis",
-    "evidence"
+    "verification"
   ],
   "skills": [
+    "./skills/businesslens-map",
     "./skills/businesslens-ideate",
-    "./skills/businesslens-init",
-    "./skills/businesslens-sync",
-    "./skills/businesslens-deep-dive",
-    "./skills/businesslens-doctor",
-    "./skills/businesslens-contribute"
+    "./skills/businesslens-verify"
   ]
 }

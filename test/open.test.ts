@@ -8,7 +8,7 @@ import { runOpen } from '../src/commands/open.js'
 import { lsFiles } from '../src/core/git.js'
 import { loadModel } from '../src/core/model.js'
 import { redactSourceEvidence, type ProductReportV4 } from '../src/core/portable.js'
-import { validateModel } from '../src/commands/validate.js'
+import { lintModel } from '../src/commands/lint.js'
 
 const FIXTURE = join(__dirname, 'fixtures', 'fixture-shop')
 
@@ -63,26 +63,24 @@ afterAll(() => {
 })
 
 describe('open report', () => {
-  it('opens into an empty repository as a valid draft without transplanting source evidence', async () => {
+  it('opens into an empty repository without downgrading model completeness', async () => {
     const original = buildProject(source)
     expect(await runOpen(target, original.outputFile, false)).toBe(0)
     git(target, 'add', '.')
     git(target, 'commit', '-m', 'open product model')
 
     const imported = loadModel(target)
-    const validation = validateModel(imported, lsFiles(target))
-    expect(validation.ok).toBe(true)
-    expect(validation.errors).toEqual([])
-    expect(validation.warnings).toEqual(expect.arrayContaining([
-      expect.stringContaining('needs at least one codeRef before coverage can leave draft')
-    ]))
+    const lint = lintModel(imported, lsFiles(target))
+    expect(lint.ok).toBe(true)
+    expect(lint.errors).toEqual([])
+    expect(lint.warnings).toEqual([])
     expect(imported.journeys.flatMap(journey => journey.entryPoints)).toEqual([])
     expect(imported.experiences.flatMap(experience => experience.entryPoints))
       .toEqual(expect.arrayContaining([{ type: 'web', path: '/' }]))
 
     const rebuilt = buildProject(target)
     expect(withoutRepositoryEvidence(rebuilt.report)).toEqual(withoutRepositoryEvidence(original.report))
-    expect(rebuilt.report.coverage.status).toBe('draft')
+    expect(rebuilt.report.coverage.status).toBe(original.report.coverage.status)
     expect(rebuilt.report.coverage.sourceAreas).toEqual([])
     expect(Object.values(rebuilt.report.model).flatMap((value) =>
       Array.isArray(value) ? value.flatMap(item => item.codeRefs || []) : []
@@ -93,6 +91,25 @@ describe('open report', () => {
       join(target, '.businesslens/journeys/browse-and-buy/scenarios/complete-checkout.md'),
       'utf8'
     )).toContain('## Decision points')
+  })
+
+  it('preserves known unmapped product areas as model-breadth context', async () => {
+    const fresh = mkdtempSync(join(tmpdir(), 'bl-open-unmapped-'))
+    initialize(fresh)
+    try {
+      const report = structuredClone(buildProject(source).report)
+      report.coverage.status = 'partial'
+      report.coverage.unmapped = ['Back-office dispute handling']
+      const file = join(fresh, 'partial.json')
+      writeFileSync(file, JSON.stringify(report))
+
+      expect(await runOpen(fresh, file, false)).toBe(0)
+      const imported = loadModel(fresh)
+      expect(imported.coverage.status).toBe('partial')
+      expect(imported.coverage.unmapped).toEqual(['Back-office dispute handling'])
+    } finally {
+      rmSync(fresh, { recursive: true, force: true })
+    }
   })
 
   it('writes the model README, because the model arrived from elsewhere', async () => {
@@ -106,14 +123,14 @@ describe('open report', () => {
 
       const readme = readFileSync(join(fresh, '.businesslens', 'README.md'), 'utf8')
       expect(readme).toContain('BusinessLens Product Model')
-      expect(readme).toContain('The scenarios are the acceptance contract.')
-      expect(readme).toContain('has not been built yet')
+      expect(readme).toContain('Treat scenarios as the acceptance contract')
+      expect(readme).toContain('codeRefs` as optional navigation')
     } finally {
       rmSync(fresh, { recursive: true, force: true })
     }
   })
 
-  it('writes nothing outside .businesslens/, including AGENTS.md', async () => {
+  it('writes nothing outside .businesslens/, including repository instructions', async () => {
     // The invariant adr/0002 buys: BusinessLens owns one directory and touches
     // nothing else, so a repository's own instruction files are never contested.
     const fresh = mkdtempSync(join(tmpdir(), 'bl-open-outside-'))
@@ -121,14 +138,19 @@ describe('open report', () => {
     try {
       const original = buildProject(source)
       writeFileSync(join(fresh, 'AGENTS.md'), '# House rules\n\nRun the linter.\n')
+      writeFileSync(join(fresh, 'CLAUDE.md'), '# Claude rules\n\nPreserve this file.\n')
+      writeFileSync(join(fresh, 'README.md'), '# Existing repository\n')
       expect(await runOpen(fresh, original.outputFile, false)).toBe(0)
       expect(await runOpen(fresh, original.outputFile, true)).toBe(0)
 
       expect(readFileSync(join(fresh, 'AGENTS.md'), 'utf8')).toBe('# House rules\n\nRun the linter.\n')
+      expect(readFileSync(join(fresh, 'CLAUDE.md'), 'utf8')).toBe('# Claude rules\n\nPreserve this file.\n')
+      expect(readFileSync(join(fresh, 'README.md'), 'utf8')).toBe('# Existing repository\n')
 
       // `.businesslens/` and — because the second open passed --force — its
       // timestamped backup. Nothing the repository owns for its own purposes.
-      const created = readdirSync(fresh).filter(entry => entry !== '.git' && entry !== 'AGENTS.md')
+      const owned = new Set(['.git', 'AGENTS.md', 'CLAUDE.md', 'README.md'])
+      const created = readdirSync(fresh).filter(entry => !owned.has(entry))
       expect(created.every(entry => entry.startsWith('.businesslens'))).toBe(true)
     } finally {
       rmSync(fresh, { recursive: true, force: true })
@@ -141,14 +163,14 @@ describe('open report', () => {
     // open-coverage limitation used to be appended unconditionally, gaining one
     // copy per cycle and making that comparison fail from the second pull on.
     const first = readFileSync(join(target, '.businesslens/coverage.md'), 'utf8')
-    expect(first.match(/Implementation evidence must be established/g)).toHaveLength(1)
+    expect(first.match(/Implementation alignment must be verified/g)).toHaveLength(1)
 
     const roundTrip = mkdtempSync(join(tmpdir(), 'businesslens-open-fixed-point-'))
     try {
       initialize(roundTrip)
       expect(await runOpen(roundTrip, buildProject(target).outputFile, false)).toBe(0)
       const second = readFileSync(join(roundTrip, '.businesslens/coverage.md'), 'utf8')
-      expect(second.match(/Implementation evidence must be established/g)).toHaveLength(1)
+      expect(second.match(/Implementation alignment must be verified/g)).toHaveLength(1)
       expect(second).toEqual(first)
     } finally {
       rmSync(roundTrip, { recursive: true, force: true })

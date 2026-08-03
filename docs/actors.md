@@ -42,11 +42,10 @@ A visitor who browses the catalog and buys products.
 ```
 
 No required frontmatter. The H1 is the name and the lead paragraph is the
-description. Optional `codeRefs` give direct evidence for the actor boundary
-when it is represented in code — actors do not require evidence, because an
-actor is a product fact rather than a behavioral claim.
+description. Optional `codeRefs` provide navigation when the actor boundary is
+represented in code. They are never required and do not prove the boundary.
 
-## What `validate` checks
+## What `lint` checks
 
 | Finding | Meaning |
 | --- | --- |
@@ -55,7 +54,7 @@ actor is a product fact rather than a behavioral claim.
 | `missing lead paragraph (description)` | Add prose between the H1 and the first `##`. |
 | `references missing actor "<id>"` | Reported on the *other* entity — an experience, feature, or journey points at an actor file that does not exist. Create it or fix the ID. |
 
-## Where actors are referenced
+## Referenced by
 
 | From | Key | Meaning |
 | --- | --- | --- |

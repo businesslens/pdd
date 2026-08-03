@@ -1,7 +1,7 @@
 {
   "name": "businesslens",
   "version": "0.6.0",
-  "description": "Product-Driven Development for coding agents: a git-tracked product model in .businesslens/, built from code evidence.",
+  "description": "Product-Driven Development for coding agents: a git-tracked Product Model in .businesslens/, verified against implementation.",
   "type": "module",
   "license": "MIT",
   "repository": {

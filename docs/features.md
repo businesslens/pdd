@@ -61,7 +61,7 @@ Complete a purchase without confirming an unpaid order.
 | `experiences` | Experience IDs exposing it — at least one |
 | `businessRules` | Rule IDs constraining it |
 
-## What `validate` checks
+## What `lint` checks
 
 | Finding | Meaning |
 | --- | --- |
@@ -69,6 +69,5 @@ Complete a purchase without confirming an unpaid order.
 | `missing H1 title` / `missing lead paragraph (description)` | Every feature needs both. |
 | `unknown frontmatter key "<key>"` | The schema is a strict allowlist, so typos fail loudly. |
 
-Features may carry `codeRefs` but do not require them. Only journeys and
-scenarios make behavioral claims that demand evidence — see
-[Evidence & coverage](./evidence.md).
+Features may carry optional `codeRefs` for navigation; no entity requires them.
+See [Code references and coverage](./evidence.md).

@@ -121,7 +121,7 @@ export function loadModel(cwd: string): PddModel {
   const root = join(cwd, FOLDER)
   const issues: string[] = []
   if (!existsSync(root)) {
-    issues.push(`${FOLDER}/ does not exist — invoke the \`businesslens-init\` skill first`)
+    issues.push(`${FOLDER}/ does not exist — use \`businesslens-map\` for established code or \`businesslens-ideate\` for a new product`)
   }
 
   let config = { schema: 1, sddPaths: [] as string[] }

@@ -11,7 +11,7 @@
     {
       "name": "businesslens",
       "source": "./",
-      "description": "Product-Driven Development skills: initialize, plan, verify, synchronize, deepen, validate, diagnose, and publish the .businesslens/ Product Model.",
+      "description": "Product-Driven Development skills to map established behavior, decide intended behavior, and verify the .businesslens/ Product Model against code.",
       "category": "engineering",
       "keywords": [
         "pdd",

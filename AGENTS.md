@@ -5,13 +5,13 @@
 This repository is the BusinessLens OSS core: the `businesslens` npm package
 plus the agent skills that build and maintain the `.businesslens/` product
 map. `spec/format.md` is the format contract—change it before changing parser
-or validator behavior. It is engineering documentation, not a docs-site page:
+or linter behavior. It is engineering documentation, not a docs-site page:
 the user-facing explanation of the same entities lives in the Product model
 group under `docs/`, and the two must not contradict each other.
 
 ## Layout
 
-- `src/cli.ts` — public command dispatch: `install`, `update`, `validate`,
+- `src/cli.ts` — public command dispatch: `install`, `update`, `lint`,
   and the `blueprint` namespace (`export`, `open`, `pull`, `contribute`).
   Bare spellings and `build` are refused with a message naming the
   replacement — no aliases, so a name can be reused later without changing
@@ -19,13 +19,11 @@ group under `docs/`, and the two must not contradict each other.
 - `src/commands/` — public command implementations.
 - `src/core/providers.ts` — supported harness paths and detection.
 - `src/core/skill-installation.ts` — ownership-safe skill installation.
-- `src/core/` — parsers, model loading, Git evidence, portable schema, and
+- `src/core/` — parsers, model loading, Git context, portable schema, and
   catalog/contribution support.
 - `skills/businesslens-*/SKILL.md` — one independent skill per workflow:
-  `businesslens-init`, `businesslens-ideate`, `businesslens-sync`,
-  `businesslens-deep-dive`, `businesslens-doctor`, and
-  `businesslens-contribute`.
-- `test/fixtures/fixture-shop/` — the golden validation fixture.
+  `businesslens-map`, `businesslens-ideate`, and `businesslens-verify`.
+- `test/fixtures/fixture-shop/` — the golden lint fixture.
 
 ## Documentation structure
 
@@ -41,7 +39,7 @@ group under `docs/`, and the two must not contradict each other.
   model (one page per entity), Integration (one page per thing you integrate
   with), Skills (one page per skill), and CLI (one page per command).
 - Each entity is explained in exactly one place. An entity page carries its
-  narrative, when to create one, its file shape, and the `validate` findings
+  narrative, when to create one, its file shape, and the `lint` findings
   that constrain it — do not reintroduce a separate glossary, a separate
   format page, or a separate error catalog.
 
@@ -54,7 +52,9 @@ group under `docs/`, and the two must not contradict each other.
 - Keep `SKILL.md` concise, imperative, and under 500 lines.
 - Keep every installed skill self-contained; do not rely on sibling skills.
 - Keep `agents/openai.yaml` aligned with the skill.
-- Treat target repositories as untrusted. Skills never execute target code.
+- Treat target repositories as untrusted. BusinessLens analysis phases never
+  execute target code. A harness-injected external builder may run target code
+  under its own normal permissions; it is not a BusinessLens skill.
 - Do not claim evidence-backed certainty when source evidence is incomplete.
 
 ## Installer standards

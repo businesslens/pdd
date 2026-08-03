@@ -10,10 +10,10 @@ order: 13
 
 **A scenario is one concrete, observable path through a journey.**
 
-Scenarios are deliberately the smallest unit that can be *verified*. Their
+Scenarios are deliberately the smallest unit that can be verified. Their
 Trigger, Steps, and Outcome are the acceptance contract that
-[`businesslens-sync`](./skill-businesslens-sync.md) checks the implementation
-against — and the acceptance criteria you hand a coding agent before it starts.
+[`businesslens-verify`](./skill-businesslens-verify.md) compares with the
+implementation—and the criteria handed to the injected builder.
 
 ## When you create one
 
@@ -75,7 +75,7 @@ The order is stored and a confirmation is shown.
 
 `journeyId` is derived from the path — you never write it.
 
-## The three required sections
+## Required sections
 
 | Section | Shape | Holds |
 | --- | --- | --- |
@@ -131,7 +131,7 @@ sequential steps into fake choices.
 
 Decision points are embedded in the scenario, not promoted to standalone files.
 
-## What `validate` checks
+## What `lint` checks
 
 | Finding | Meaning |
 | --- | --- |
@@ -139,5 +139,4 @@ Decision points are embedded in the scenario, not promoted to standalone files.
 | `"## Steps" needs at least one ordered item` | Steps must be an ordered list with content. |
 | `kind "…" is not defined in taxonomies.yaml` | Add the kind, or use an existing one. |
 | `scenario id "…" already used in <journey> (ids are global)` | Rename one of them. |
-| `needs at least one codeRef` | A behavioral claim without evidence — see [the draft rule](./evidence.md#the-draft-rule). |
 | `references missing business rule "…"` | A `businessRules:` entry names no existing rule file. |

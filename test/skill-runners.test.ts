@@ -12,14 +12,18 @@ import { tmpdir } from 'node:os'
 import { delimiter, join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 
-const VALIDATE_RUNNERS = [
+const LINT_RUNNERS = [
+  {
+    name: 'map',
+    file: join(__dirname, '..', 'skills', 'businesslens-map', 'scripts', 'run-businesslens.mjs')
+  },
   {
     name: 'ideate',
     file: join(__dirname, '..', 'skills', 'businesslens-ideate', 'scripts', 'run-businesslens.mjs')
   },
   {
-    name: 'sync',
-    file: join(__dirname, '..', 'skills', 'businesslens-sync', 'scripts', 'run-businesslens.mjs')
+    name: 'verify',
+    file: join(__dirname, '..', 'skills', 'businesslens-verify', 'scripts', 'run-businesslens.mjs')
   },
 ]
 const temporaryDirectories: string[] = []
@@ -37,7 +41,7 @@ afterEach(() => {
 })
 
 describe.skipIf(process.platform === 'win32')('isolated skill runners', () => {
-  it.each(VALIDATE_RUNNERS)('$name runs npm outside the target and scrubs the key during validation', ({ file }) => {
+  it.each(LINT_RUNNERS)('$name runs npm outside the target and scrubs the key during lint', ({ file }) => {
     const repo = temporary('bl-runner-repo-')
     const bin = temporary('bl-runner-bin-')
     const capture = join(temporary('bl-runner-capture-'), 'npm.json')
@@ -64,14 +68,14 @@ fs.writeFileSync(process.env.CAPTURE_FILE, JSON.stringify({
 
     execFileSync(
       process.execPath,
-      [file, '--root', repo, 'validate', '--json'],
+      [file, '--root', repo, 'lint', '--json'],
       {
         env: {
           ...process.env,
           PATH: `${bin}${delimiter}${process.env.PATH || ''}`,
           BUSINESSLENS_DEV_BIN_DIR: temporary('bl-runner-no-dev-bin-'),
           CAPTURE_FILE: capture,
-          BUSINESSLENS_API_KEY: 'must-not-reach-validation'
+          BUSINESSLENS_API_KEY: 'must-not-reach-lint'
         },
         stdio: 'pipe'
       }
@@ -89,14 +93,14 @@ fs.writeFileSync(process.env.CAPTURE_FILE, JSON.stringify({
       'businesslens',
       '--cwd',
       realpathSync(repo),
-      'validate',
+      'lint',
       '--json'
     ])
     expect(recorded.apiKey).toBeNull()
   })
 
   it('pins the CLI to the version the skills were installed from', () => {
-    // `businesslens@latest` would validate a model against whatever is published
+    // `businesslens@latest` would lint a model against whatever is published
     // rather than against the release these skills shipped with, reporting the
     // current format's frontmatter keys as unknown.
     const skills = temporary('bl-runner-pinned-skills-')
@@ -113,7 +117,7 @@ fs.writeFileSync(process.env.CAPTURE_FILE, JSON.stringify({
     mkdirSync(runnerDir, { recursive: true })
     writeFileSync(
       join(runnerDir, 'run-businesslens.mjs'),
-      readFileSync(VALIDATE_RUNNERS[0]!.file, 'utf8')
+      readFileSync(LINT_RUNNERS[0]!.file, 'utf8')
     )
 
     const fakeNpm = join(bin, 'npm')
@@ -129,7 +133,7 @@ require('node:fs').writeFileSync(process.env.CAPTURE_FILE, JSON.stringify({
 
     execFileSync(
       process.execPath,
-      [join(runnerDir, 'run-businesslens.mjs'), '--root', repo, 'validate'],
+      [join(runnerDir, 'run-businesslens.mjs'), '--root', repo, 'lint'],
       {
         env: {
           ...process.env,
@@ -145,7 +149,7 @@ require('node:fs').writeFileSync(process.env.CAPTURE_FILE, JSON.stringify({
     expect(recorded.args).toContain('--package=businesslens@9.9.9')
   })
 
-  it.each(VALIDATE_RUNNERS)('$name prefers the explicitly active local development CLI', ({ file }) => {
+  it.each(LINT_RUNNERS)('$name prefers the explicitly active local development CLI', ({ file }) => {
     const repo = temporary('bl-runner-dev-repo-')
     const developmentRoot = temporary('bl-runner-dev-pdd-')
     const bin = temporary('bl-runner-dev-bin-')
@@ -172,11 +176,11 @@ console.log(${JSON.stringify(cli)})
     )
     chmodSync(join(bin, 'bl'), 0o755)
 
-    execFileSync(process.execPath, [file, '--root', repo, 'validate', '--json'], {
+    execFileSync(process.execPath, [file, '--root', repo, 'lint', '--json'], {
       env: {
         ...process.env,
         BUSINESSLENS_DEV_BIN_DIR: bin,
-        BUSINESSLENS_API_KEY: 'must-not-reach-validation',
+        BUSINESSLENS_API_KEY: 'must-not-reach-lint',
         CAPTURE_FILE: capture
       },
       stdio: 'pipe'
@@ -185,7 +189,7 @@ console.log(${JSON.stringify(cli)})
     const recorded = JSON.parse(readFileSync(capture, 'utf8'))
     expect(recorded.cwd).not.toBe(repo)
     expect(recorded.cwd).toContain('businesslens-cli-')
-    expect(recorded.args).toEqual(['--cwd', realpathSync(repo), 'validate', '--json'])
+    expect(recorded.args).toEqual(['--cwd', realpathSync(repo), 'lint', '--json'])
     expect(recorded.apiKey).toBeNull()
   })
 })

@@ -1,0 +1,4 @@
+interface:
+  display_name: "BusinessLens Verify"
+  short_description: "Verify and resolve model-code alignment"
+  default_prompt: "Use $businesslens-verify to check this Product Model against the current repository and automatically resolve gaps until aligned or blocked."

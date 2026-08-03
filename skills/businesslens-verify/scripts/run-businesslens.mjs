@@ -1,0 +1,84 @@
+#!/usr/bin/env node
+
+import { execFileSync } from 'node:child_process'
+import { mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs'
+import { homedir, tmpdir } from 'node:os'
+import { dirname, isAbsolute, join, resolve } from 'node:path'
+
+function installedPackageSpec() {
+  try {
+    const manifestFile = new URL('../../.businesslens-install.json', import.meta.url)
+    const manifest = JSON.parse(readFileSync(manifestFile, 'utf8'))
+    if (manifest?.package === 'businesslens' && typeof manifest.version === 'string') {
+      return `businesslens@${manifest.version}`
+    }
+  } catch {
+    // Not installed through BusinessLens; use the public package below.
+  }
+  return 'businesslens@latest'
+}
+
+function activeDevelopmentCli(runnerRoot, env) {
+  const binDirectory = resolve(env.BUSINESSLENS_DEV_BIN_DIR || join(homedir(), '.local', 'bin'))
+  try {
+    const cli = execFileSync(join(binDirectory, 'bl'), ['--dev-cli'], {
+      cwd: runnerRoot,
+      env,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore']
+    }).trim()
+    if (!isAbsolute(cli) || !statSync(cli).isFile()) return undefined
+    const manifest = JSON.parse(readFileSync(join(dirname(dirname(cli)), 'package.json'), 'utf8'))
+    return manifest?.name === 'businesslens' ? cli : undefined
+  } catch {
+    return undefined
+  }
+}
+
+function fail(message) {
+  process.stderr.write(`${message}\n`)
+  process.exit(2)
+}
+
+const args = process.argv.slice(2)
+const rootIndex = args.indexOf('--root')
+const requestedRoot = rootIndex >= 0 ? args[rootIndex + 1] : undefined
+if (!requestedRoot) fail('Usage: run-businesslens.mjs --root <repository> lint [--json]')
+
+const commandArgs = args.filter((_, index) => index !== rootIndex && index !== rootIndex + 1)
+if (commandArgs[0] !== 'lint') fail('The isolated BusinessLens runner supports only lint.')
+
+let root
+try {
+  root = resolve(execFileSync(
+    'git',
+    ['-C', resolve(requestedRoot), 'rev-parse', '--show-toplevel'],
+    { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }
+  ).trim())
+} catch {
+  fail('The BusinessLens runner must target a Git repository.')
+}
+
+const runnerRoot = mkdtempSync(join(tmpdir(), 'businesslens-cli-'))
+const env = { ...process.env }
+delete env.BUSINESSLENS_API_KEY
+
+try {
+  const developmentCli = activeDevelopmentCli(runnerRoot, env)
+  if (developmentCli) {
+    execFileSync(process.execPath, [developmentCli, '--cwd', root, ...commandArgs], {
+      cwd: runnerRoot,
+      env,
+      stdio: 'inherit'
+    })
+  } else {
+    execFileSync('npm', [
+      'exec', '--yes', '--ignore-scripts', `--package=${installedPackageSpec()}`,
+      '--', 'businesslens', '--cwd', root, ...commandArgs
+    ], { cwd: runnerRoot, env, stdio: 'inherit' })
+  }
+} catch (error) {
+  process.exitCode = typeof error.status === 'number' ? error.status : 1
+} finally {
+  rmSync(runnerRoot, { recursive: true, force: true })
+}

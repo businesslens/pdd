@@ -14,14 +14,14 @@ import { dirname, isAbsolute, join, resolve } from 'node:path'
 import { stringify } from 'yaml'
 import { writeModelReadme } from '../core/model-readme.js'
 import type { ProductReportV4 } from '../core/portable.js'
-import { validateModel } from './validate.js'
+import { lintModel } from './lint.js'
 import { loadModel } from '../core/model.js'
 import { parseProductReport, redactSourceEvidence } from '../core/portable.js'
 
 const MAX_REPORT_BYTES = 8 * 1024 * 1024
-const OPEN_COVERAGE_METHOD = 'Opened from a Product Report; source repository evidence was intentionally removed.'
-const OPEN_COVERAGE_LIMITATION = 'Implementation evidence must be established in this repository.'
-const OPEN_COVERAGE_RATIONALE = 'Product behavior and relationships were imported from a Product Report. Source-repository code references were removed because they are not evidence for this repository.'
+const OPEN_COVERAGE_METHOD = 'Opened from a Product Report; source repository bookmarks were intentionally removed.'
+const OPEN_COVERAGE_LIMITATION = 'Implementation alignment must be verified in this repository.'
+const OPEN_COVERAGE_RATIONALE = 'Product behavior, relationships, and model breadth were imported from a Product Report. Source-repository code references were removed because they do not navigate this repository.'
 
 function readReportSource(source: string): unknown {
   if (/^https?:\/\//i.test(source)) {
@@ -120,10 +120,12 @@ function writeReport(root: string, report: ProductReportV4): void {
   write(
     join(root, 'coverage.md'),
     frontmatter({
-      status: 'draft',
+      status: report.coverage.status,
       method: [OPEN_COVERAGE_METHOD],
       sourceAreas: [],
-      unmapped: [],
+      // Unmapped product areas explain model breadth and survive the
+      // source-free projection. Source paths live in sourceAreas, not here.
+      unmapped: report.coverage.unmapped,
       // Deduplicated so expansion is idempotent. A Blueprint's committed model is
       // itself an expanded report, so re-expanding it must reproduce the same
       // files byte for byte; an unconditional append accumulated one copy of this
@@ -263,11 +265,11 @@ export function expandProductReport(cwd: string, input: unknown, force: boolean)
     staging = mkdtempSync(join(targetParent, '.businesslens-open-'))
     const stagedRoot = join(staging, '.businesslens')
     writeReport(stagedRoot, report)
-    const validation = validateModel(loadModel(staging), [])
-    if (!validation.ok) {
+    const lint = lintModel(loadModel(staging), [])
+    if (!lint.ok) {
       throw new Error(
-        `The report cannot be expanded into a valid Product Model:\n${
-          validation.errors.map(error => `- ${error}`).join('\n')
+        `The report cannot be expanded into a structurally sound Product Model:\n${
+          lint.errors.map(error => `- ${error}`).join('\n')
         }`
       )
     }

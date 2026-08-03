@@ -65,7 +65,7 @@ relation lists are optional individually, but at least one must be present.
 `## Rationale` is a supporting section: why the constraint exists, as opposed to
 `## Intent`, which is the outcome it protects.
 
-## What `validate` checks
+## What `lint` checks
 
 | Finding | Meaning |
 | --- | --- |
@@ -73,6 +73,5 @@ relation lists are optional individually, but at least one must be present.
 | `missing H1 title` | Every rule needs a `# Heading`. |
 | `missing lead paragraph (description)` | The rule statement is missing. |
 
-Business rules may carry `codeRefs` but do not require them — a rule is a
-constraint, not a behavioral claim. Cite code when the constraint is enforced in
-one identifiable place.
+Business rules may carry optional `codeRefs` when one location is a useful
+starting point for reading the constraint. The bookmark does not prove it.

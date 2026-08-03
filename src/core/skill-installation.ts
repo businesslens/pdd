@@ -15,18 +15,24 @@ import type { InstallScope, Provider } from './providers.js'
 import { providerSkillsDir } from './providers.js'
 
 export const BUSINESSLENS_SKILLS = [
+  'businesslens-map',
   'businesslens-ideate',
-  'businesslens-init',
-  'businesslens-sync',
-  'businesslens-deep-dive',
-  'businesslens-doctor',
-  'businesslens-contribute'
+  'businesslens-verify'
 ] as const
 
 export type BusinessLensSkill = (typeof BUSINESSLENS_SKILLS)[number]
 
 const MANIFEST_FILE = '.businesslens-install.json'
 const LEGACY_SKILLS = [
+  // Retired in favor of map, ideate, and the verification-owned resolution
+  // loop. Contribution remains a deterministic CLI workflow.
+  'businesslens-init',
+  'businesslens-sync',
+  'businesslens-deep-dive',
+  'businesslens-doctor',
+  'businesslens-contribute',
+  'businesslens-implement',
+  'businesslens-validate',
   // Folded into `businesslens-ideate`: deciding what to build and writing that
   // decision into the model are one converging conversation, not two skills.
   'businesslens-plan',

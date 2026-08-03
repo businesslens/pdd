@@ -1,53 +1,81 @@
-# BusinessLens planning format
+# Product Model format
 
-Planned behavior lives in the same model as current behavior. The only
-difference is evidence: planned journeys and scenarios carry **no**
-`codeRefs` until `businesslens-sync` attaches them after implementation.
+## Layout
 
-- On an existing model (coverage `partial`/`complete`), `validate` reports new
-  unevidenced journeys and scenarios as errors:
-  `needs at least one codeRef`. That is the expected planning end state for
-  those entities — the evidence checklist. The complete plan is the model
-  diff, including modified and deleted entities that may produce no
-  missing-evidence finding.
-- On a new product, `coverage.md` `status: draft` marks the whole model as
-  planned: the same findings appear as warnings and validation stays green.
-  Draft models may be exported or proposed as catalog Blueprints.
+```text
+.businesslens/
+├── README.md
+├── config.yaml
+├── product.md
+├── taxonomies.yaml
+├── coverage.md
+├── .gitignore
+├── actors/<id>.md
+├── experiences/<id>.md
+├── domains/<id>.md
+├── features/<id>.md
+├── business-rules/<id>.md
+└── journeys/<journey-id>/journey.md
+    └── scenarios/<scenario-id>.md
+```
 
-## Entity shapes
+IDs are lowercase kebab-case filename stems and scenario IDs are globally
+unique. Only `product.md` declares `id:`. The first H1 is the title; lead prose
+is the description or journey summary. Put relations and navigation in
+frontmatter and meaning in prose.
 
-- IDs are lowercase kebab-case filename stems; a journey ID is its directory
-  name. Never write `id:` in entity frontmatter (only `product.md` has one).
-- Actors: `actors/<id>.md` — no required frontmatter; H1 name + lead.
-- Domains: `domains/<id>.md` — optional `colorSlot`; H1 name + lead.
-- Experiences: `experiences/<id>.md` — `actors`, `access`
-  (`public|authenticated|restricted`), `entryPoints` (compact `type: path`
-  items), `exit`, H1 + lead, and a `## Capability boundary` section.
-- Features: `features/<id>.md` — `domain`, `actors`, `experiences`,
-  `businessRules`; H1 + lead and optional `## Intent`.
-- Business rules: `business-rules/<id>.md` — relation lists for `domains`,
-  `features`, `journeys`, and `scenarios`; H1 + statement lead, optional
-  `## Intent` and `## Rationale`.
-- Journeys: `journeys/<id>/journey.md` — `domain`, `actors`, `experiences`,
-  `features`, optional `entryPoints`; H1 + lead summary; needs at least one
-  scenario.
-- Scenarios: `journeys/<jid>/scenarios/<id>.md` — taxonomy `kind`, optional
-  `businessRules`, H1,
-  `## Trigger` (paragraph), `## Steps` (ordered list, ≥1), `## Outcome`
-  (paragraph), optional `## Decision points` and `## Edge cases` (bullets).
-  Scenario IDs are globally unique across the whole model.
-- `codeRefs` grammar is `path[#symbol][:start[-end]]`; every path present
-  must be Git-tracked. During planning, omit them entirely for new behavior
-  and keep only still-valid ones on modified entities.
-- Optional `links:` (`rel: spec|proposal|doc|adr`) connect entities to SDD
-  specs and design docs; link technical designs instead of describing them.
+## Required shapes
 
-## Greenfield scaffold (new product)
+- `config.yaml`: `schema: 1` and `sdd.paths`.
+- `product.md`: `id`, optional `tags`, `limitations`, H1, lead description, and
+  optional `## Intent`.
+- `taxonomies.yaml`: `scenarioKinds` entries with `id`, `name`, `description`,
+  and optional `colorSlot`.
+- Actor and Domain: H1 and lead description. Domain may have `colorSlot`.
+- Experience: `actors`, `access` (`public|authenticated|restricted`),
+  `entryPoints`, `exit`, H1, lead description, and `## Capability boundary`.
+- Feature: `domain`, `actors`, at least one `experience`, `businessRules`, H1,
+  and lead description.
+- Business Rule: one or more relations across `domains`, `features`, `journeys`,
+  or `scenarios`; H1 and lead rule statement; optional `## Rationale`.
+- Journey: `domain`, at least one actor, experience, feature, and scenario;
+  optional `entryPoints`; H1 and lead summary.
+- Scenario: taxonomy `kind`, optional `businessRules`, H1, `## Trigger`, ordered
+  `## Steps`, and `## Outcome`. Optional `## Edge cases` is a bullet list.
+  Optional `## Decision points` uses H3 title, question, and at least two
+  `condition → outcome` branches.
+- `coverage.md`: `status`, `method`, `sourceAreas`, `unmapped`, `limitations`,
+  H1, and rationale. Status is model breadth only: `draft|partial|complete`.
 
-- `config.yaml`: `schema: 1` and `sdd:\n  paths: []`. No legacy `platform` block.
-- `taxonomies.yaml`: at least `primary` and `edge` scenario kinds.
-- `product.md`: lowercase kebab-case `id` of at most 64 characters, `tags`,
-  `limitations`, H1 name, lead description.
-- `coverage.md`: `status: draft`, method noting the model was planned before
-  implementation, empty `sourceAreas`.
-- `.gitignore`: `build/` and `cache/`.
+Optional `links` use `rel: spec|proposal|doc|adr`, `href`, and optional title.
+Optional `codeRefs` use `path[#symbol][:start[-end]]`, point at tracked files,
+and are navigational bookmarks—not proof or lifecycle state.
+
+`.gitignore` contains `build/` and `cache/`.
+
+## Canonical `.businesslens/README.md`
+
+Write this orientation for every new Product Model:
+
+```markdown
+# Product Model
+
+This directory is a **BusinessLens Product Model**: what this product does and
+for whom. It is plain Markdown tracked in Git, and it is the source of truth for
+intended product behavior.
+
+## If you are an agent working in this repository
+
+- Read `product.md` first, then the actors, experiences, domains, features,
+  business rules, journeys, and scenarios.
+- Treat scenarios as the acceptance contract and business rules as invariants.
+- Do not infer a stack or architecture from the model.
+- Treat `codeRefs` as optional navigation, never proof or implementation state.
+- After code changes, use `businesslens-verify`; run `npx businesslens lint`
+  for structural checks.
+- Use `businesslens-ideate` to change intended behavior and `businesslens-map`
+  only to map established absent or deliberately untrusted behavior.
+- Never edit `cache/`.
+
+Documentation: https://businesslens.io
+```

@@ -43,10 +43,10 @@ Everything between a full cart and a fulfilled order.
 ```
 
 Both frontmatter keys are optional. `colorSlot` is a display hint for visual
-product maps. `codeRefs` give direct evidence when the domain boundary is
+product maps. `codeRefs` provide navigation when the domain boundary is
 represented in code.
 
-## What `validate` checks
+## What `lint` checks
 
 | Finding | Meaning |
 | --- | --- |
@@ -54,7 +54,7 @@ represented in code.
 | `missing H1 title` / `missing lead paragraph (description)` | Every domain needs both. |
 | `references missing domain "<id>"` | Reported on a feature or journey whose `domain:` names no existing domain file. |
 
-## Where domains are referenced
+## Referenced by
 
 | From | Key | Cardinality |
 | --- | --- | --- |
