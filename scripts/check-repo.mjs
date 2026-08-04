@@ -77,7 +77,8 @@ if (lock.packages?.['viewer/app']?.version !== pkg.version) {
 if (pkg.exports?.['./nuxt/report-viewer'] !== './layers/nuxt/report-viewer/nuxt.config.ts'
   || pkg.exports?.['./nuxt/theme'] !== './layers/nuxt/theme/nuxt.config.ts'
   || pkg.exports?.['./nuxt/theme-lab'] !== './layers/nuxt/theme-lab/nuxt.config.ts'
-  || pkg.exports?.['./theme-lab/variants'] !== './layers/nuxt/theme-lab/app/utils/businesslensThemeLabVariants.ts'
+  || pkg.exports?.['./theme-lab/variants']?.types !== './dist/businesslensThemeLabVariants.d.ts'
+  || pkg.exports?.['./theme-lab/variants']?.default !== './dist/businesslensThemeLabVariants.js'
   || !pkg.exports?.['./report/view-model']
   || !pkg.exports?.['./logo']) {
   errors.push('businesslens must export its logo contract, report view model, and Nuxt report-viewer/theme/theme-lab Layers')

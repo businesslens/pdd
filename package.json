@@ -1,6 +1,6 @@
 {
   "name": "businesslens",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "Product-Driven Development for coding agents: a git-tracked Product Model in .businesslens/, verified against implementation.",
   "type": "module",
   "license": "MIT",
@@ -41,7 +41,10 @@
     "./nuxt/report-viewer": "./layers/nuxt/report-viewer/nuxt.config.ts",
     "./nuxt/theme": "./layers/nuxt/theme/nuxt.config.ts",
     "./nuxt/theme-lab": "./layers/nuxt/theme-lab/nuxt.config.ts",
-    "./theme-lab/variants": "./layers/nuxt/theme-lab/app/utils/businesslensThemeLabVariants.ts",
+    "./theme-lab/variants": {
+      "types": "./dist/businesslensThemeLabVariants.d.ts",
+      "default": "./dist/businesslensThemeLabVariants.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [

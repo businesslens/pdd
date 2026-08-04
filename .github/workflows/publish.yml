@@ -70,6 +70,11 @@ jobs:
           mkdir -p "$cli_only"
           npm install --prefix "$cli_only" --ignore-scripts "${{ steps.pack.outputs.tarball }}"
           node "$cli_only/node_modules/businesslens/dist/cli.js" --version
+          (
+            cd "$cli_only"
+            node --input-type=module --eval \
+              "import { BUSINESSLENS_DEFAULT_LIGHT_BACKGROUND } from 'businesslens/theme-lab/variants'; if (BUSINESSLENS_DEFAULT_LIGHT_BACKGROUND !== 'l4') process.exit(1)"
+          )
           for ui_dependency in \
             nuxt \
             vue \
