@@ -41,7 +41,10 @@ const tabs: Array<{ value: ReportViewerSection, label: string }> = [
 </script>
 
 <template>
-  <article :class="['businesslens-report', ui?.root]">
+  <article
+    data-businesslens-report-viewer
+    :class="['businesslens-report', ui?.root]"
+  >
     <UPageSection :ui="{ container: ['max-w-5xl pt-12 pb-6 sm:pt-16', ui?.headerSection].filter(Boolean).join(' ') }">
       <div v-if="$slots.navigation" class="mb-6">
         <slot name="navigation" />
