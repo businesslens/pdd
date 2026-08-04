@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Open the `BL` ligature apart in the generated tab icons, so a browser tab shows
+  two letters instead of one blob at 16px. Only the favicon family is respaced —
+  the logo artwork and the larger app icons keep the ligature as drawn.
+
 ## [0.7.1] - 2026-08-04
 
 ### Fixed
