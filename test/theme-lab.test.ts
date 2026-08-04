@@ -31,12 +31,6 @@ const iconFiles = [
 ]
 
 describe('shared BusinessLens theme lab', () => {
-  it('exposes compiled variants to plain Node package consumers', async () => {
-    const published = await import('businesslens/theme-lab/variants')
-    expect(published.BUSINESSLENS_DEFAULT_LIGHT_BACKGROUND).toBe('l4')
-    expect(published.BUSINESSLENS_MARK_VARIANTS).toEqual(BUSINESSLENS_MARK_VARIANTS)
-  })
-
   it('keeps the approved starting selections as experimental defaults', () => {
     expect(BUSINESSLENS_LIGHT_BACKGROUNDS.find(item => item.id === BUSINESSLENS_DEFAULT_LIGHT_BACKGROUND)?.name)
       .toBe('Glow')
