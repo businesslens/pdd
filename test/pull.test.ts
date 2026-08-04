@@ -79,7 +79,7 @@ describe('pull', () => {
 
     expect(requested?.url).toBe('https://businesslens.io/api/v1/blueprints/fixture-shop/report.json')
     expect(urls).toContain(
-      'https://raw.githubusercontent.com/businesslens/pdd/main/blueprints/fixture-shop/.businesslens/logo.svg'
+      'https://businesslens.io/api/v1/blueprints/fixture-shop/logo.svg'
     )
     // No credential is read, sent, or required.
     expect((requested?.init.headers as Record<string, string>).authorization).toBeUndefined()
@@ -125,11 +125,11 @@ describe('pull', () => {
 
   it('accepts an arbitrary catalog origin, because no credential is sent', async () => {
     const target = temporary('bl-pull-origin-')
-    let reportUrl = ''
+    const urls: string[] = []
     const fetch = vi.fn(async (requestUrl: string) => {
       const url = String(requestUrl)
+      urls.push(url)
       if (url.endsWith('/logo.svg')) return logoResponse()
-      reportUrl = url
       return reportResponse()
     }) as unknown as typeof globalThis.fetch
 
@@ -139,7 +139,10 @@ describe('pull', () => {
       { force: false, catalog: 'https://catalog.example.com' },
       { fetch, env: {} }
     )).toBe(0)
-    expect(reportUrl.startsWith('https://catalog.example.com/')).toBe(true)
+    expect(urls).toEqual([
+      'https://catalog.example.com/api/v1/blueprints/fixture-shop/report.json',
+      'https://catalog.example.com/api/v1/blueprints/fixture-shop/logo.svg'
+    ])
   })
 
   it('prefers --catalog over BUSINESSLENS_CATALOG_URL', async () => {

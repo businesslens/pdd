@@ -7,7 +7,6 @@ import { UsageError } from '../core/usage-error.js'
 import { MAX_PRODUCT_LOGO_BYTES, validateProductLogo } from '../logo.js'
 
 const MAX_REPORT_BYTES = 8 * 1024 * 1024
-const BLUEPRINT_SOURCE_ROOT = 'https://raw.githubusercontent.com/businesslens/pdd/main/blueprints'
 
 export interface PullOptions {
   catalog?: string
@@ -66,11 +65,12 @@ function catalogError(status: number, body: string): string {
 
 async function fetchOptionalLogo(
   fetch: typeof globalThis.fetch,
+  catalog: string,
   blueprint: string
 ): Promise<Uint8Array | undefined> {
   try {
     const response = await fetch(
-      `${BLUEPRINT_SOURCE_ROOT}/${blueprint}/.businesslens/logo.svg`,
+      `${catalog}/api/v1/blueprints/${blueprint}/logo.svg`,
       {
         headers: {
           accept: 'image/svg+xml',
@@ -181,7 +181,7 @@ export async function runPull(
     return 1
   }
 
-  const logo = await fetchOptionalLogo(fetch, blueprint)
+  const logo = await fetchOptionalLogo(fetch, catalog, blueprint)
 
   try {
     const opened = expandProductReport(cwd, report, options.force, logo ? { logo } : {})

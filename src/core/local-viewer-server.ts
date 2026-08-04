@@ -182,6 +182,10 @@ function json(response: ServerResponse, status: number, value: unknown, head: bo
 }
 
 function productLogo(response: ServerResponse, file: string | undefined, head: boolean): void {
+  response.setHeader(
+    'content-security-policy',
+    "default-src 'none'; script-src 'none'; style-src 'none'; img-src 'none'; connect-src 'none'; sandbox"
+  )
   if (!file) {
     json(response, 404, { message: 'This Product Model has no logo.' }, head)
     return

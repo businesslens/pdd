@@ -18,8 +18,9 @@ The argument is the Blueprint's catalog slug: lowercase kebab-case, at most 80
 characters. **No account, sign-in, or credential is involved** — the catalog is
 anonymous to read.
 
-`pull` fetches and validates the Blueprint, then passes it to
-[`open`](./cli-open.md) for portable expansion.
+`pull` fetches and validates the Blueprint and its optional Product logo from
+the same catalog, then passes them to [`open`](./cli-open.md) for portable
+expansion.
 
 ## Result
 
@@ -61,12 +62,15 @@ Before writing any Product Model files, `pull` refuses:
 
 ```text
 GET /api/v1/blueprints/:slug/report.json
+GET /api/v1/blueprints/:slug/logo.svg
 ```
 
-The request is anonymous and carries `user-agent: businesslens/<version>`, so
-catalog operators can tell a CLI pull from a page view. A successful response is
-the Product Report body and must include `x-businesslens-blueprint` and
-`x-businesslens-report-digest`.
+Both requests are anonymous and carry `user-agent: businesslens/<version>`, so
+catalog operators can tell a CLI pull from a page view. A successful report
+response is the Product Report body and must include
+`x-businesslens-blueprint` and `x-businesslens-report-digest`. The logo endpoint
+keeps visual identity on the same catalog and revision as the report; a missing
+logo does not prevent the Product Model itself from being pulled.
 
 | Status | Meaning |
 | --- | --- |

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-08-04
+
 ### Added
 
 - `businesslens view` renders the current Product Model privately on localhost,
@@ -113,6 +115,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Documentation now teaches three starting doors and one ongoing loop:
   `ideate → injected build → verify (including final lint) → merge`. Map is explicitly not a
   daily maintenance command, and lint is explicitly not semantic verification.
+
+### Fixed
+
+- Product logos are parsed as namespace-aware XML and restricted to a static SVG
+  allowlist, closing namespace-prefix and escaped-reference paths around the
+  active-content checks. Logo responses from the local viewer also carry a
+  script-free sandbox CSP.
+- `blueprint pull` retrieves the optional logo from the selected catalog's
+  same-origin endpoint, so custom catalogs and commit-pinned reports cannot be
+  paired with the current logo from the official PDD `main` branch.
+- Releases tag an already prepared package and changelog exactly once; the tag
+  push is now the single automatic publication trigger.
 
 ### Removed
 
@@ -232,7 +246,8 @@ Initial public launch of the repository.
   `docs/format.md`.
 - Claude plugin manifest and marketplace entry.
 
-[Unreleased]: https://github.com/businesslens/pdd/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/businesslens/pdd/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/businesslens/pdd/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/businesslens/pdd/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/businesslens/pdd/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/businesslens/pdd/releases/tag/v0.4.0

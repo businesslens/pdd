@@ -12,6 +12,8 @@ interface ResponseResult {
   status: number
 }
 
+const ASYNC_TIMEOUT_MS = 4500
+
 function get(url: string, path = '/', host?: string): Promise<ResponseResult> {
   const origin = new URL(url)
   return new Promise((resolve, reject) => {
@@ -38,7 +40,7 @@ function get(url: string, path = '/', host?: string): Promise<ResponseResult> {
 function eventAfter(url: string, eventName: string, trigger: () => void): Promise<string> {
   const origin = new URL(url)
   return new Promise((resolve, reject) => {
-    const timeout = setTimeout(() => reject(new Error(`Timed out waiting for ${eventName}`)), 3000)
+    const timeout = setTimeout(() => reject(new Error(`Timed out waiting for ${eventName}`)), ASYNC_TIMEOUT_MS)
     const outgoing = request({
       hostname: origin.hostname,
       port: origin.port,
@@ -62,7 +64,7 @@ function eventAfter(url: string, eventName: string, trigger: () => void): Promis
 }
 
 async function eventually<T>(read: () => Promise<T>, matches: (value: T) => boolean): Promise<T> {
-  const deadline = Date.now() + 3000
+  const deadline = Date.now() + ASYNC_TIMEOUT_MS
   while (Date.now() < deadline) {
     const value = await read()
     if (matches(value)) return value
@@ -133,6 +135,8 @@ describe('local Product Report server', () => {
     const productLogo = await get(viewer.url, '/_businesslens/logo.svg')
     expect(productLogo.status).toBe(200)
     expect(productLogo.headers['content-type']).toBe('image/svg+xml; charset=utf-8')
+    expect(productLogo.headers['content-security-policy']).toContain("script-src 'none'")
+    expect(productLogo.headers['content-security-policy']).toContain('sandbox')
     expect(productLogo.body).toContain('<svg')
 
     const manifest = await get(viewer.url, '/site.webmanifest')

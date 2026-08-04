@@ -1,6 +1,6 @@
 {
   "name": "businesslens",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Product-Driven Development for coding agents: a git-tracked Product Model in .businesslens/, verified against implementation.",
   "type": "module",
   "license": "MIT",
@@ -76,6 +76,7 @@
   "dependencies": {
     "@clack/prompts": "^1.7.0",
     "commander": "^14.0.3",
+    "saxes": "^6.0.0",
     "yaml": "^2.6.0",
     "zod": "^4.0.0"
   },

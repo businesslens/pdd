@@ -35,8 +35,8 @@ The implementation review was resolved as part of this delivery:
   self-contained, and always rendered as a decorative `<img>` beside visible
   text rather than injected into the document.
 - `contribute` copies the logo into the reviewed Blueprint directory. `pull`
-  retrieves it directly from that canonical GitHub source and restores it into
-  the expanded model when available.
+  retrieves it through the selected catalog's same-origin, commit-pinned logo
+  endpoint and restores it into the expanded model when available.
 - The local viewer serves the logo directly from the model filesystem and
   refreshes it during watch mode. A locally seeded landing catalog reads only
   from an explicitly allowed source root. The shared logo component falls back
