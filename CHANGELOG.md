@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `businesslens view` renders the current Product Model privately on localhost,
+  recompiles automatically after debounced source edits, streams revisions to
+  open browsers, retains the last valid report during lint errors, writes no
+  generated report, and opens no network listener beyond `127.0.0.1`.
+- Root `businesslens` exports for the pure Product Report view-model projection,
+  the shared Nuxt report renderer, and a sibling BusinessLens-wide theme Layer,
+  so hosts share UI without a second public npm package.
+- An opt-in shared Nuxt theme-lab Layer for auditioning the same backgrounds,
+  marks, lockups, and favicon families across the landing site and local report
+  viewer without promoting undecided presentation into the stable theme.
+- An optional `.businesslens/logo.svg` Product logo used by the local viewer and
+  Blueprint presentation.
 - First-class Interface entities for supported Product interaction contracts,
   with exact Interface–Experience availability across Capabilities, Journeys,
   Screens, Scenarios, and Business Rules.
@@ -36,8 +48,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Breaking.** Folder schema 3 and Product Report v6 are now the only accepted
-  formats. Schema 1/2, Product Report v4/v5, and their compatibility paths are
+- The CLI now uses a real hierarchical command parser with concise root help,
+  command-specific options, nested Blueprint help, standard `-h`/`-V` flags,
+  strict option ownership, and usage validation before command execution.
+- `-c, --cwd` now always means "run from this directory". A model directly in the
+  current directory wins over the Git-root model whether or not `--cwd .` was
+  typed explicitly.
+- **Breaking.** A catalog Blueprint has no separate `blueprint.yaml`. Product
+  ID, title, summary, description, category, tags, authors, license, and report
+  content come from `product.md`; visual identity comes only from
+  `.businesslens/logo.svg`, and catalog operational state remains outside the
+  Product Model.
+- **Breaking.** Product Report v7 is the only accepted report contract. It
+  carries portable Product identity and attribution, uses `summary` for the
+  short Product description, and renames computed entity totals to `counts`.
+- **Breaking.** `blueprint contribute` no longer accepts `--slug`; the Product
+  ID is the canonical contribution directory, branch suffix, catalog slug, and
+  pull name.
+
+- **Breaking.** Folder schema 3 and Product Report v7 are now the only accepted
+  formats. Schema 1/2, Product Report v4/v5/v6, and their compatibility paths are
   removed rather than migrated.
 - **Breaking.** Feature is renamed Capability throughout the folder format,
   parser, SDK, CLI, skills, docs, fixtures, and Blueprint. `features/` is
@@ -64,11 +94,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   itself is under review, `partial` with known unmapped areas, and `complete`
   when intended product scope is modeled. A complete model may have zero
   References.
-- **Breaking.** Product Report v6 declares a `workspace` or `portable` Reference
+- **Breaking.** Product Report v7 declares a `workspace` or `portable` Reference
   profile. Portable projection replaces evidence-redaction terminology and
   keeps only HTTP(S) intent/context References.
 - **Breaking.** Coverage no longer contains counts, mapped entities, or a
-  redaction flag. Entity totals live only in Summary; Coverage is independent
+  redaction flag. Entity totals live only in Counts; Coverage is independent
   from References. Blueprint open and pull preserve model breadth while
   removing repository-local Coverage source areas.
 - Every model creation path carries canonical orientation in
@@ -169,8 +199,8 @@ pull-request contribution flow described below.
   Precedence is `--catalog`, `BUSINESSLENS_CATALOG_URL`, then the default.
 - `businesslens-publish` is now `businesslens-contribute`.
 - Skill runners pin the CLI to the version the skills were installed from rather
-  than `@latest`, which could validate a model against an older published
-  format.
+  than resolving the latest published version, which could validate a model
+  against an older published format.
 
 ### Fixed
 

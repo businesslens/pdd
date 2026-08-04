@@ -13,11 +13,12 @@ import {
 import { dirname, isAbsolute, join, resolve } from 'node:path'
 import { stringify } from 'yaml'
 import { writeModelReadme } from '../core/model-readme.js'
-import type { ProductReportV6, ReportAvailability } from '../core/portable.js'
+import type { ProductReportV7, ReportAvailability } from '../core/portable.js'
 import { lintModel } from './lint.js'
 import { loadModel } from '../core/model.js'
 import { parseProductReport, projectPortableReport } from '../core/portable.js'
 import { UsageError } from '../core/usage-error.js'
+import { validateProductLogo } from '../logo.js'
 
 const MAX_REPORT_BYTES = 8 * 1024 * 1024
 const OPEN_COVERAGE_METHOD = 'Opened from a portable Product Report; source-repository navigation was intentionally removed.'
@@ -43,7 +44,7 @@ function frontmatter(data: Record<string, unknown>): string {
   return `---\n${stringify(data, { lineWidth: 0 }).trimEnd()}\n---\n\n`
 }
 
-function references(value: ProductReportV6['references']): Array<Record<string, string>> {
+function references(value: ProductReportV7['references']): Array<Record<string, string>> {
   return value.map(reference => ({
     kind: reference.kind,
     role: reference.role,
@@ -62,7 +63,7 @@ function availability(value: ReportAvailability[]): Array<{ interface: string, e
 
 function compactRecord(input: Record<string, unknown>): Record<string, unknown> {
   return Object.fromEntries(Object.entries(input).filter(([, value]) => {
-    if (value === undefined) return false
+    if (value === undefined || value === null || value === '') return false
     return !Array.isArray(value) || value.length > 0
   }))
 }
@@ -90,6 +91,11 @@ function write(path: string, content: string): void {
   writeFileSync(path, content, { encoding: 'utf8', flag: 'wx' })
 }
 
+function writeBytes(path: string, content: Uint8Array): void {
+  mkdirSync(resolve(path, '..'), { recursive: true })
+  writeFileSync(path, content, { flag: 'wx' })
+}
+
 function prepareTarget(cwd: string, force: boolean): string {
   const root = resolve(cwd, '.businesslens')
   if (existsSync(root)) {
@@ -109,7 +115,7 @@ function prepareTarget(cwd: string, force: boolean): string {
   return root
 }
 
-function writeReport(root: string, report: ProductReportV6): void {
+function writeReport(root: string, report: ProductReportV7): void {
   write(join(root, 'config.yaml'), stringify({ schema: 3, sdd: { paths: [] } }, { lineWidth: 0 }))
   write(join(root, '.gitignore'), 'build/\ncache/\n')
   write(
@@ -120,7 +126,11 @@ function writeReport(root: string, report: ProductReportV6): void {
     join(root, 'product.md'),
     frontmatter(compactRecord({
       id: report.id,
+      summary: report.summary,
+      category: report.category,
       tags: report.tags,
+      authors: report.authors,
+      license: report.license,
       limitations: report.limitations,
       references: references(report.references)
     })) + body(report.title, report.description, report.intent, [], report.supportingContent)
@@ -252,7 +262,7 @@ function writeReport(root: string, report: ProductReportV6): void {
     )
   }
 
-  const scenariosByJourney = new Map<string, ProductReportV6['model']['scenarios']>()
+  const scenariosByJourney = new Map<string, ProductReportV7['model']['scenarios']>()
   for (const scenario of report.model.scenarios) {
     const current = scenariosByJourney.get(scenario.journeyId) || []
     current.push(scenario)
@@ -301,11 +311,21 @@ function writeReport(root: string, report: ProductReportV6): void {
 }
 
 export interface ExpandedProductReport {
-  report: ProductReportV6
+  report: ProductReportV7
   root: string
 }
 
-export function expandProductReport(cwd: string, input: unknown, force: boolean): ExpandedProductReport {
+export interface ExpandProductReportOptions {
+  /** Optional Product logo to restore into the expanded model. */
+  logo?: Uint8Array
+}
+
+export function expandProductReport(
+  cwd: string,
+  input: unknown,
+  force: boolean,
+  options: ExpandProductReportOptions = {}
+): ExpandedProductReport {
   let staging: string | undefined
   try {
     const sourceReport = parseProductReport(input)
@@ -315,6 +335,11 @@ export function expandProductReport(cwd: string, input: unknown, force: boolean)
     staging = mkdtempSync(join(targetParent, '.businesslens-open-'))
     const stagedRoot = join(staging, '.businesslens')
     writeReport(stagedRoot, report)
+    if (options.logo) {
+      const issues = validateProductLogo(options.logo)
+      if (issues.length) throw new Error(`The Product logo is invalid: ${issues.join('; ')}`)
+      writeBytes(join(stagedRoot, 'logo.svg'), options.logo)
+    }
     // Expansion is the one canonical report-to-model primitive used by open,
     // pull, and contribution. Keeping orientation here makes their model trees
     // identical and lets lint require the complete committed layout.
@@ -338,9 +363,7 @@ export function expandProductReport(cwd: string, input: unknown, force: boolean)
 export async function runOpen(cwd: string, source: string, force: boolean): Promise<number> {
   try {
     const opened = expandProductReport(cwd, readReportSource(source), force)
-    const readmeFile = join(opened.root, 'README.md')
-    console.log(`Opened ${opened.report.title} into ${opened.root}.`)
-    console.log(`Wrote the model README to ${readmeFile}.`)
+    console.log(`Opened Blueprint "${opened.report.title}" into ${opened.root}.`)
     return 0
   } catch (error) {
     console.error((error as Error).message)

@@ -1,6 +1,11 @@
 ---
 id: fixture-shop
+summary: Browse a product catalog, buy products, and manage the resulting orders.
+category: commerce
 tags: [commerce, fixture]
+authors:
+  - name: BusinessLens
+license: MIT
 limitations: []
 ---
 

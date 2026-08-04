@@ -19,7 +19,14 @@ const REQUIRED = [
   'README.md', 'LICENSE', 'package.json', 'package-lock.json', 'tsconfig.json', 'src/cli.ts',
   'CHANGELOG.md', 'SECURITY.md', 'CONTRIBUTING.md',
   'spec/format.md', 'docs/product-model.md', 'docs/product.md',
-  'docs/cli.md', 'docs/ci.md', 'docs/integration.md',
+  'docs/cli.md', 'docs/cli-view.md', 'docs/ci.md', 'docs/integration.md',
+  'src/report-view-model.ts', 'src/logo.ts', 'layers/nuxt/report-viewer/nuxt.config.ts',
+  'layers/nuxt/report-viewer/app/components/BusinessLensReportViewer.vue',
+  'layers/nuxt/theme/nuxt.config.ts', 'layers/nuxt/theme-lab/nuxt.config.ts',
+  'layers/nuxt/theme-lab/app/components/BusinessLensThemeLabBar.vue',
+  'layers/nuxt/theme-lab/app/components/BusinessLensBrand.vue',
+  'viewer/app/package.json',
+  'viewer/app/app/pages/index.vue', 'src/core/local-viewer-server.ts',
   '.claude-plugin/plugin.json', '.claude-plugin/marketplace.json'
 ]
 for (const file of REQUIRED) {
@@ -30,6 +37,7 @@ const pkg = JSON.parse(await readFile(resolve(root, 'package.json'), 'utf8'))
 const lock = JSON.parse(await readFile(resolve(root, 'package-lock.json'), 'utf8'))
 const plugin = JSON.parse(await readFile(resolve(root, '.claude-plugin/plugin.json'), 'utf8'))
 const marketplace = JSON.parse(await readFile(resolve(root, '.claude-plugin/marketplace.json'), 'utf8'))
+const localViewer = JSON.parse(await readFile(resolve(root, 'viewer/app/package.json'), 'utf8'))
 const expectedSkills = [
   'businesslens-map',
   'businesslens-ideate',
@@ -49,6 +57,45 @@ if (pkg.version !== lock.version || pkg.version !== lock.packages?.['']?.version
     + `${lock.version}/${lock.packages?.['']?.version}`
   )
 }
+if (!pkg.workspaces?.includes('viewer/app') || pkg.workspaces?.includes('packages/*')) {
+  errors.push('package.json workspaces must include only the private viewer app, not a public viewer package')
+}
+if (localViewer.version !== pkg.version) {
+  errors.push(
+    `viewer version mismatch: root ${pkg.version}, local ${localViewer.version}`
+  )
+}
+if (localViewer.private !== true) {
+  errors.push('viewer/app must remain private; its static output ships inside businesslens')
+}
+if (localViewer.dependencies?.['@businesslens/report-viewer']) {
+  errors.push('viewer/app must consume root-owned Layers, not @businesslens/report-viewer')
+}
+if (lock.packages?.['viewer/app']?.version !== pkg.version) {
+  errors.push('package-lock.json workspace versions must match package.json')
+}
+if (pkg.exports?.['./nuxt/report-viewer'] !== './layers/nuxt/report-viewer/nuxt.config.ts'
+  || pkg.exports?.['./nuxt/theme'] !== './layers/nuxt/theme/nuxt.config.ts'
+  || pkg.exports?.['./nuxt/theme-lab'] !== './layers/nuxt/theme-lab/nuxt.config.ts'
+  || pkg.exports?.['./theme-lab/variants'] !== './layers/nuxt/theme-lab/app/utils/businesslensThemeLabVariants.ts'
+  || !pkg.exports?.['./report/view-model']
+  || !pkg.exports?.['./logo']) {
+  errors.push('businesslens must export its logo contract, report view model, and Nuxt report-viewer/theme/theme-lab Layers')
+}
+for (const peer of [
+  '@fontsource-variable/archivo',
+  '@fontsource-variable/inter',
+  '@fontsource/ibm-plex-mono',
+  '@iconify-json/lucide',
+  '@nuxt/ui',
+  'nuxt',
+  'tailwindcss',
+  'vue'
+]) {
+  if (!pkg.peerDependencies?.[peer] || !pkg.peerDependenciesMeta?.[peer]?.optional) {
+    errors.push(`package.json must declare optional Nuxt Layer peer "${peer}"`)
+  }
+}
 const changelog = await readFile(resolve(root, 'CHANGELOG.md'), 'utf8')
 if (!changelog.includes(`## [${pkg.version}]`)) {
   errors.push(`CHANGELOG.md is missing a [${pkg.version}] release heading`)
@@ -59,7 +106,7 @@ if (plugin.repository !== 'https://github.com/businesslens/pdd') {
 if (!marketplace.plugins?.some(entry => entry.name === plugin.name)) {
   errors.push(`marketplace.json does not expose the "${plugin.name}" plugin`)
 }
-for (const required of ['CHANGELOG.md', 'dist', 'docs', 'skills']) {
+for (const required of ['CHANGELOG.md', 'dist', 'docs', 'layers', 'skills']) {
   if (!pkg.files?.includes(required)) errors.push(`package.json files must include "${required}"`)
 }
 if (plugin.commands?.length) {

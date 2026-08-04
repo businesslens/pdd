@@ -3,26 +3,26 @@ title: blueprint open
 description: Expand a local Product Report into a canonical Product Model.
 section: open-source
 group: CLI
-order: 32
+order: 33
 ---
 
 # `businesslens blueprint open`
 
-Parse and validate a Product Report v6, apply the portable projection, then
+Parse and validate a Product Report v7, apply the portable projection, then
 expand it into a canonical schema 3 `.businesslens/` directory:
 
 ```bash
-npx businesslens@latest blueprint open ./report.json
+npx businesslens blueprint open ./report.json
 ```
 
 `open` also writes the model's orientation README. Nothing outside
 `.businesslens/` is touched.
 
-The target directory does not need to be a Git repository. Use `--cwd` to
-choose where `.businesslens/` will be created:
+The target directory does not need to be a Git repository. Use
+`-c, --cwd <path>` to choose where `.businesslens/` will be created:
 
 ```bash
-npx businesslens@latest --cwd ./new-product blueprint open ./report.json
+npx businesslens --cwd ./new-product blueprint open ./report.json
 ```
 
 ## Report source
@@ -55,7 +55,7 @@ means.
 By default, `open` refuses a non-empty `.businesslens/` directory:
 
 ```bash
-npx businesslens@latest blueprint open ./report.json --force
+npx businesslens blueprint open ./report.json --force
 ```
 
 With `--force`, the existing directory is first moved to a timestamped

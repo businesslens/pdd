@@ -15,7 +15,7 @@ catalog slug:
 ```bash
 mkdir my-reader && cd my-reader
 git init
-npx businesslens@latest blueprint pull content-feed-reader
+npx businesslens blueprint pull content-feed-reader
 ```
 
 The command writes only `.businesslens/`, including its orientation README, and
@@ -24,7 +24,7 @@ applies the [portable projection](./cli-export.md#portable-export).
 Lint the imported structure:
 
 ```bash
-npx businesslens@latest lint
+npx businesslens lint
 ```
 
 Read `product.md`, then its Actors, Interfaces, Experiences, Capabilities,

@@ -1,0 +1,4 @@
+/* Host-neutral structure for the shared Product Report renderer. */
+.businesslens-report {
+  min-height: 100%;
+}

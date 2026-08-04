@@ -1,13 +1,13 @@
 import type { EntityFile, PddModel } from '../core/model.js'
 import type { Availability } from '../core/frontmatter.js'
-import type { ProductReportV6 } from '../core/portable.js'
+import type { ProductReportV7 } from '../core/portable.js'
 import { writeGeneratedFile } from '../core/generated-files.js'
 import { lsFiles } from '../core/git.js'
 import { section, supportingContent } from '../core/markdown.js'
 import { loadModel } from '../core/model.js'
-import { resolveModelRoot } from '../core/model-root.js'
+import { resolveModelRoot, type ModelRoot } from '../core/model-root.js'
 import {
-  ProductReportV6Schema,
+  ProductReportV7Schema,
   REPORT_SCHEMA_VERSION,
   projectPortableReport,
   validateProductReport
@@ -43,14 +43,18 @@ function entityContent(entity: EntityFile, recognized: string[]) {
 export function compileReport(
   model: PddModel,
   today: string
-): ProductReportV6 {
+): ProductReportV7 {
   const scenarios = model.journeys.flatMap(journey => journey.scenarios)
 
-  const report: ProductReportV6 = {
+  const report: ProductReportV7 = {
     schemaVersion: REPORT_SCHEMA_VERSION,
     id: model.product.id,
     title: model.product.doc.title,
+    summary: model.product.summary || model.product.doc.lead,
     description: model.product.doc.lead,
+    category: model.product.category ?? null,
+    authors: model.product.authors,
+    license: model.product.license ?? null,
     intent: section(model.product.doc, 'Intent') || '',
     supportingContent: supportingContent(model.product.doc, ['Intent']),
     references: model.product.references.map(reference => ({
@@ -63,7 +67,7 @@ export function compileReport(
     tags: sorted(model.product.tags),
     generatedAt: today,
     generator: { name: 'businesslens-cli', version: cliVersion() },
-    summary: {
+    counts: {
       actors: model.actors.length,
       interfaces: model.interfaces.length,
       experiences: model.experiences.length,
@@ -187,37 +191,47 @@ export function compileReport(
     }
   }
 
-  const parsed = ProductReportV6Schema.parse(report)
+  const parsed = ProductReportV7Schema.parse(report)
   const issues = validateProductReport(parsed)
   if (issues.length) throw new Error(`Report validation failed:\n- ${issues.join('\n- ')}`)
   return parsed
 }
 
 export interface BuildOutcome {
-  report: ProductReportV6
+  report: ProductReportV7
   outputFile: string
 }
 
-export function buildProject(cwd: string): BuildOutcome {
-  const { modelRoot: root, gitRoot } = resolveModelRoot(cwd)
-  const model = loadModel(root)
+/** Compile the current workspace without writing generated artifacts. */
+export function compileWorkspaceReport(cwd: string): ProductReportV7 {
+  return compileResolvedWorkspaceReport(resolveModelRoot(cwd))
+}
+
+/** Compile a model whose ownership boundary has already been resolved. */
+export function compileResolvedWorkspaceReport({ modelRoot, gitRoot }: ModelRoot): ProductReportV7 {
+  const model = loadModel(modelRoot)
   const tracked = gitRoot ? lsFiles(gitRoot) : []
   const result = lintModel(model, tracked)
   if (!result.ok) {
     throw new Error(`Lint failed:\n${result.errors.map(error => `- ${error}`).join('\n')}`)
   }
   const today = new Date().toISOString().slice(0, 10)
+  return compileReport(model, today)
+}
+
+export function buildProject(cwd: string): BuildOutcome {
+  const resolved = resolveModelRoot(cwd)
   // Export emits the portable profile. Source navigation belongs to this
   // workspace and would be misleading in a Blueprint opened elsewhere.
-  const report = projectPortableReport(compileReport(model, today))
+  const report = projectPortableReport(compileResolvedWorkspaceReport(resolved))
 
   const outputFile = writeGeneratedFile(
-    root,
+    resolved.modelRoot,
     ['.businesslens', 'build', 'report.json'],
     `${JSON.stringify(report, null, 2)}\n`
   )
   writeGeneratedFile(
-    root,
+    resolved.modelRoot,
     ['.businesslens', 'cache', 'build.json'],
     `${JSON.stringify({ builtAt: new Date().toISOString(), schemaVersion: REPORT_SCHEMA_VERSION }, null, 2)}\n`
   )
@@ -226,14 +240,8 @@ export function buildProject(cwd: string): BuildOutcome {
 
 export function runExport(cwd: string): number {
   try {
-    const { report, outputFile } = buildProject(cwd)
-    const { summary } = report
-    console.log(
-      `Compiled ${summary.actors} actors, ${summary.interfaces} interfaces, ${summary.experiences} experiences, `
-      + `${summary.screens} screens, ${summary.domains} domains, ${summary.capabilities} capabilities, ${summary.journeys} journeys, `
-      + `${summary.scenarios} scenarios, and ${summary.businessRules} business rules.`
-    )
-    console.log(`Wrote ${outputFile}.`)
+    const { outputFile } = buildProject(cwd)
+    console.log(`Exported Blueprint to ${outputFile}.`)
     return 0
   } catch (error) {
     console.error((error as Error).message)

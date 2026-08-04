@@ -12,7 +12,7 @@ Install the three bundled `businesslens-*` agent skills into one or more
 supported AI harnesses:
 
 ```bash
-npx businesslens@latest install
+npx businesslens install
 ```
 
 The interactive flow detects available harnesses, lets you keep or customize
@@ -29,13 +29,8 @@ guidance on choosing project or global scope.
 | --- | --- |
 | `--providers <list>` | Install for a comma-separated list of `claude,codex,cursor,gemini,github` |
 | `--scope project\|global` | Install into the current project or the current user's configuration |
-| `--project` | Shortcut for `--scope project` |
-| `--global` | Shortcut for `--scope global` |
 | `--yes` | Accept detected providers and use project scope when those choices were not supplied |
 | `--force` | Replace an unmarked colliding `businesslens-*` skill directory |
-
-Scope flags are mutually exclusive. The CLI also rejects a scope flag that
-conflicts with `--scope`.
 
 ## Non-interactive
 
@@ -43,7 +38,7 @@ Pass the provider and scope choices explicitly in CI or any session without an
 interactive terminal:
 
 ```bash
-npx businesslens@latest install \
+npx businesslens install \
   --providers claude,codex \
   --scope project \
   --yes

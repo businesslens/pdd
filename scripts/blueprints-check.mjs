@@ -8,11 +8,11 @@
  * authored in — are re-run here against what is actually on disk.
  */
 import { execFileSync } from 'node:child_process'
-import { readdir, readFile } from 'node:fs/promises'
+import { lstat, readdir, readFile } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import { join, resolve } from 'node:path'
-import { parse as parseYaml } from 'yaml'
-import { z } from 'zod'
+import { validateBlueprintReport } from '../dist/report.js'
+import { validateProductLogo } from '../dist/logo.js'
 
 const root = process.cwd()
 const cli = resolve(root, 'dist/cli.js')
@@ -28,24 +28,6 @@ async function buildBlueprint(dir) {
 }
 const blueprintsDir = resolve(root, 'blueprints')
 const errors = []
-
-const ManifestSchema = z.object({
-  slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'must be lowercase kebab-case').max(80),
-  title: z.string().min(1).max(120),
-  summary: z.string().min(1).max(400),
-  category: z.string().min(1).max(60),
-  tags: z.array(z.string().min(1)).min(1).max(12),
-  icon: z.string().min(1),
-  accent: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'must be a #rrggbb hex color'),
-  authors: z.array(z.string().min(1)).min(1),
-  license: z.literal('MIT'),
-  origin: z
-    .object({
-      repository: z.string().url(),
-      commit: z.string().regex(/^[0-9a-f]{7,40}$/)
-    })
-    .optional()
-}).strict()
 
 if (!existsSync(blueprintsDir)) {
   console.log('No blueprints/ directory — nothing to check.')
@@ -95,30 +77,22 @@ function workspaceMaterial(report) {
 for (const slug of entries) {
   const dir = join(blueprintsDir, slug)
   const label = `blueprints/${slug}`
-  const manifestPath = join(dir, 'blueprint.yaml')
-
-  if (!existsSync(manifestPath)) {
-    errors.push(`${label}: blueprint.yaml is missing`)
-    continue
-  }
   if (!existsSync(join(dir, '.businesslens'))) {
     errors.push(`${label}: .businesslens/ is missing`)
     continue
   }
-
-  let manifest
-  try {
-    manifest = ManifestSchema.parse(parseYaml(await readFile(manifestPath, 'utf8')))
-  } catch (error) {
-    const detail = error.issues
-      ? error.issues.map(issue => `${issue.path.join('.') || '(root)'}: ${issue.message}`).join('; ')
-      : error.message
-    errors.push(`${label}/blueprint.yaml: ${detail}`)
-    continue
-  }
-
-  if (manifest.slug !== slug) {
-    errors.push(`${label}/blueprint.yaml: slug "${manifest.slug}" does not match its directory`)
+  const logoFile = join(dir, '.businesslens', 'logo.svg')
+  if (!existsSync(logoFile)) {
+    errors.push(`${label}: .businesslens/logo.svg is required`)
+  } else {
+    const stat = await lstat(logoFile)
+    if (stat.isSymbolicLink() || !stat.isFile()) {
+      errors.push(`${label}: .businesslens/logo.svg must be a regular file, not a symbolic link`)
+    } else {
+      for (const issue of validateProductLogo(await readFile(logoFile))) {
+        errors.push(`${label}: ${issue}`)
+      }
+    }
   }
 
   // Build rather than validate alone: a Blueprint that cannot compile into a
@@ -129,6 +103,13 @@ for (const slug of entries) {
   } catch (error) {
     errors.push(`${label}: ${error.message}`)
     continue
+  }
+
+  if (report.id !== slug) {
+    errors.push(`${label}: Product ID "${report.id}" does not match its directory`)
+  }
+  for (const issue of validateBlueprintReport(report)) {
+    errors.push(`${label}: ${issue}`)
   }
 
   const leaked = workspaceMaterial(report)

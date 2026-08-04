@@ -11,7 +11,7 @@ group under `docs/`, and the two must not contradict each other.
 
 ## Layout
 
-- `src/cli.ts` — public command dispatch: `install`, `update`, `lint`,
+- `src/cli.ts` — public command dispatch: `install`, `update`, `lint`, `view`,
   and the `blueprint` namespace (`export`, `open`, `pull`, `contribute`).
   Bare spellings and `build` are refused with a message naming the
   replacement — no aliases, so a name can be reused later without changing
@@ -21,6 +21,13 @@ group under `docs/`, and the two must not contradict each other.
 - `src/core/skill-installation.ts` — ownership-safe skill installation.
 - `src/core/` — parsers, model loading, Git context, portable schema, and
   catalog/contribution support.
+- `layers/nuxt/report-viewer/` — the host-neutral Nuxt Product Report renderer.
+- `layers/nuxt/theme/` — the separately extendable BusinessLens-wide visual
+  foundation used across Nuxt hosts, not only report pages.
+- `layers/nuxt/theme-lab/` — the optional shared experiment layer for
+  backgrounds, brand variants, favicons, and their audition controls.
+- `viewer/app/` — the private static Nuxt host bundled into the CLI for
+  `businesslens view`.
 - `skills/businesslens-*/SKILL.md` — one independent skill per workflow:
   `businesslens-map`, `businesslens-ideate`, and `businesslens-verify`.
 - `test/fixtures/fixture-shop/` — the golden lint fixture.

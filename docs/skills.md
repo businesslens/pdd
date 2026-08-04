@@ -26,7 +26,7 @@ workflow.
 Catalog contribution is a deterministic CLI workflow:
 
 ```bash
-npx businesslens@latest blueprint contribute
+npx businesslens blueprint contribute
 ```
 
 Claude Code uses `/businesslens-map`; Codex commonly uses `$businesslens-map`.

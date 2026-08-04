@@ -1,6 +1,6 @@
 ---
 title: Product
-description: The coherent value promise named by one Product Model, including its identity, intent, tags, limitations, and optional References.
+description: The coherent value promise named by one Product Model, including its identity, attribution, intent, classification, limitations, and optional References.
 section: open-source
 group: Product Model
 order: 8
@@ -34,7 +34,13 @@ The Product lives at `product.md`:
 ```md [product.md]
 ---
 id: acme-shop
+summary: Discover products and complete purchases with confidence.
+category: commerce
 tags: [commerce]
+authors:
+  - name: Acme
+    url: https://example.com
+license: MIT
 limitations: [In-store purchasing is outside this Product]
 references:
   - kind: doc
@@ -55,8 +61,16 @@ Let shoppers move from discovery to a confirmed order with confidence.
 | --- | --- | --- |
 | `product.md` | yes | Provide exactly one Product manifest. |
 | `id` | yes | Use lowercase kebab-case with at most 64 characters. The Product ID may differ from the repository name. |
+| `summary` | no | Supply a single-line short description up to 400 characters. Reports fall back to the lead description when omitted. |
+| `category` | no | Use a lowercase kebab-case Product classification. |
 | `tags` | no | List Product classification tags. |
+| `authors` | no | List attribution records with a required `name` and optional HTTP(S) `url`. |
+| `license` | no | Use one SPDX license identifier such as `MIT`. |
 | `limitations` | no | State known Product boundaries. |
 | `references` | no | Use the documented [Reference](./references.md) shape. |
 | H1 and lead paragraph | yes | Name and describe the Product. |
 | `## Intent` | no | Explain the outcome the Product shape protects. |
+
+## Visual identity
+
+Optionally add `.businesslens/logo.svg` as the Product logo.

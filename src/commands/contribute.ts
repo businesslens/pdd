@@ -1,18 +1,18 @@
 import { execFileSync, spawnSync } from 'node:child_process'
-import { cpSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { cpSync, mkdirSync, mkdtempSync, rmSync } from 'node:fs'
 import { createInterface } from 'node:readline/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { stringify } from 'yaml'
 import { parseCanonicalName } from '../core/canonical-name.js'
 import { lsFiles } from '../core/git.js'
 import { loadModel } from '../core/model.js'
 import { resolveModelRoot } from '../core/model-root.js'
-import { projectPortableReport } from '../core/portable.js'
+import { projectPortableReport, validateBlueprintReport } from '../core/portable.js'
 import { buildProject } from './export.js'
 import { expandProductReport } from './open.js'
 import { lintModel } from './lint.js'
 import { UsageError } from '../core/usage-error.js'
+import { readProductLogo } from '../core/logo-file.js'
 
 /**
  * Where contributions go.
@@ -31,7 +31,6 @@ function upstreamRepository(env: NodeJS.ProcessEnv = process.env): string {
 }
 
 export interface ContributeOptions {
-  slug?: string
   yes: boolean
 }
 
@@ -124,9 +123,6 @@ export async function runContribute(cwd: string, options: ContributeOptions): Pr
   let workspace: string | undefined
   try {
     const UPSTREAM = upstreamRepository()
-    // Cheapest checks first: a bad slug or a missing `gh` should not cost the
-    // user a build.
-    if (options.slug !== undefined) parseCanonicalName(options.slug)
     requireGh()
 
     const { modelRoot, gitRoot } = resolveModelRoot(cwd)
@@ -149,8 +145,20 @@ export async function runContribute(cwd: string, options: ContributeOptions): Pr
     // continuing to hold.
     const { report } = buildProject(modelRoot)
     const portable = projectPortableReport(report)
+    const publicationIssues = validateBlueprintReport(portable)
+    if (publicationIssues.length) {
+      throw new Error(
+        `The Product is missing public Blueprint metadata:\n${publicationIssues.map(issue => `- ${issue}`).join('\n')}`
+      )
+    }
+    const logo = readProductLogo(modelRoot)
+    if (!logo) {
+      throw new Error('A public Blueprint requires .businesslens/logo.svg.')
+    }
 
-    const slug = parseCanonicalName(options.slug ?? portable.id)
+    // A Blueprint has no catalog-specific identity. Its Product ID is the
+    // route, directory, contribution branch, and pull name everywhere.
+    const slug = parseCanonicalName(portable.id)
 
     // Regenerate the model from the portable report rather than copying the
     // authored files. Workspace references survive a copy; only projection and
@@ -159,26 +167,7 @@ export async function runContribute(cwd: string, options: ContributeOptions): Pr
     workspace = mkdtempSync(join(tmpdir(), 'businesslens-contribute-'))
     const regenerated = join(workspace, 'model')
     mkdirSync(regenerated, { recursive: true })
-    expandProductReport(regenerated, portable, false)
-
-    // Deliberately carries no origin repository or commit. The point of
-    // regenerating from a portable report is that the contribution discloses
-    // nothing about where it came from, and a private repository's URL is
-    // exactly the kind of thing that must not land in a public pull request.
-    // The catalog does not store it either — its manifest schema has no such
-    // field — so publishing it would leak without buying anything. Provenance a
-    // maintainer legitimately needs is already on the pull request itself.
-    const manifest = {
-      slug,
-      title: portable.title,
-      summary: portable.description.split('\n')[0]!.slice(0, 400),
-      category: 'Uncategorized',
-      tags: portable.tags?.length ? portable.tags : [slug],
-      icon: 'i-lucide-box',
-      accent: '#b8965c',
-      authors: ['Unattributed'],
-      license: 'MIT'
-    }
+    expandProductReport(regenerated, portable, false, { logo: logo.bytes })
 
     if (!options.yes) {
       if (!process.stdin.isTTY) {
@@ -245,7 +234,6 @@ export async function runContribute(cwd: string, options: ContributeOptions): Pr
     cpSync(join(regenerated, '.businesslens'), join(target, '.businesslens'), { recursive: true })
     rmSync(join(target, '.businesslens', 'build'), { recursive: true, force: true })
     rmSync(join(target, '.businesslens', 'cache'), { recursive: true, force: true })
-    writeFileSync(join(target, 'blueprint.yaml'), stringify(manifest), 'utf8')
 
     execFileSync('git', ['-C', checkout, 'add', '-A'], { stdio: 'pipe' })
     execFileSync('git', ['-C', checkout, 'commit', '-m', `feat: add the ${slug} Blueprint`], { stdio: 'pipe' })
@@ -285,16 +273,13 @@ export async function runContribute(cwd: string, options: ContributeOptions): Pr
       '--body', [
         `Adds \`blueprints/${slug}\`.`,
         '',
-        `- **Title:** ${manifest.title}`,
-        `- **Summary:** ${manifest.summary}`,
+        `- **Title:** ${portable.title}`,
+        `- **Summary:** ${portable.summary}`,
         '',
         'Everything in this pull request was regenerated from a portable Product Report,',
         'so it carries no implementation or repository-local references, no source paths,',
         'and no reference to the repository',
-        'it came from, and is byte-identical to what `businesslens blueprint pull` produces.',
-        '',
-        'Please review the category, tags, icon, accent, and authors in `blueprint.yaml` —',
-        '`contribute` fills them with placeholders it cannot infer.'
+        'it came from, and is byte-identical to what `businesslens blueprint pull` produces.'
       ].join('\n')
     ], checkout)
 

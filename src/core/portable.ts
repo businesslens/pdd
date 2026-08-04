@@ -1,7 +1,7 @@
 import * as z from 'zod'
 import { parseCodeTarget } from './coderefs.js'
 
-export const REPORT_SCHEMA_VERSION = '6.0.0'
+export const REPORT_SCHEMA_VERSION = '7.0.0'
 
 const IdSchema = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
 const ProductIdSchema = IdSchema.max(64)
@@ -91,7 +91,12 @@ const ReportEntityCountShape = {
   businessRules: z.number().int().min(0)
 }
 
-export const ReportSummarySchema = z.strictObject(ReportEntityCountShape)
+export const ReportCountsSchema = z.strictObject(ReportEntityCountShape)
+
+export const ReportAuthorSchema = z.strictObject({
+  name: SingleLineTextSchema.max(120),
+  url: z.string().refine(validHttpUrl, 'Author URL must use HTTP(S)').optional()
+})
 
 export const ReportGeneratorSchema = z.strictObject({
   name: z.string().min(1),
@@ -232,11 +237,15 @@ export const ReportCoverageSchema = z.strictObject({
   rationale: z.string()
 })
 
-export const ProductReportV6Schema = z.strictObject({
+export const ProductReportV7Schema = z.strictObject({
   schemaVersion: z.literal(REPORT_SCHEMA_VERSION),
   id: ProductIdSchema,
   title: SingleLineTextSchema.max(160),
+  summary: SingleLineTextSchema.max(400),
   description: RequiredMarkdownFragmentSchema.max(2000),
+  category: IdSchema.max(60).nullable(),
+  authors: z.array(ReportAuthorSchema),
+  license: z.string().regex(/^[A-Za-z0-9][A-Za-z0-9.+-]*$/).max(80).nullable(),
   intent: z.string(),
   supportingContent: z.string(),
   references: z.array(ReportReferenceSchema),
@@ -244,7 +253,7 @@ export const ProductReportV6Schema = z.strictObject({
   tags: z.array(z.string().min(1).max(48)).max(24),
   generatedAt: z.iso.date(),
   generator: ReportGeneratorSchema,
-  summary: ReportSummarySchema,
+  counts: ReportCountsSchema,
   limitations: z.array(z.string()),
   model: z.strictObject({
     taxonomies: z.strictObject({
@@ -263,14 +272,15 @@ export const ProductReportV6Schema = z.strictObject({
   coverage: ReportCoverageSchema
 })
 
-export const ProductReportSchema = ProductReportV6Schema
+export const ProductReportSchema = ProductReportV7Schema
 
-export type ProductReportV6 = z.infer<typeof ProductReportV6Schema>
-export type ProductReport = ProductReportV6
+export type ProductReportV7 = z.infer<typeof ProductReportV7Schema>
+export type ProductReport = ProductReportV7
 export type ReportDecisionPoint = z.infer<typeof ReportDecisionPointSchema>
 export type ReportScreenState = z.infer<typeof ReportScreenStateSchema>
 export type ReportCoverage = z.infer<typeof ReportCoverageSchema>
-export type ReportSummary = z.infer<typeof ReportSummarySchema>
+export type ReportCounts = z.infer<typeof ReportCountsSchema>
+export type ReportAuthor = z.infer<typeof ReportAuthorSchema>
 export type ReportActor = z.infer<typeof ReportActorSchema>
 export type ReportInterface = z.infer<typeof ReportInterfaceSchema>
 export type ReportExperience = z.infer<typeof ReportExperienceSchema>
@@ -364,7 +374,7 @@ function requireEntryPointInterfaces(
 }
 
 /** Cross-entity and computed-field validation, shared with every report consumer. */
-export function validateProductReport(report: ProductReportV6): string[] {
+export function validateProductReport(report: ProductReportV7): string[] {
   const issues: string[] = []
   const { model } = report
   const actorIds = new Set(model.actors.map(item => item.id))
@@ -541,7 +551,7 @@ export function validateProductReport(report: ProductReportV6): string[] {
     }
   }
 
-  const expectedSummary = {
+  const expectedCounts = {
     actors: model.actors.length,
     interfaces: model.interfaces.length,
     experiences: model.experiences.length,
@@ -599,9 +609,9 @@ export function validateProductReport(report: ProductReportV6): string[] {
     }
   }
 
-  for (const key of Object.keys(expectedSummary) as Array<keyof typeof expectedSummary>) {
-    const value = expectedSummary[key]
-    if (report.summary[key] !== value) issues.push(`summary.${key} must equal ${value}`)
+  for (const key of Object.keys(expectedCounts) as Array<keyof typeof expectedCounts>) {
+    const value = expectedCounts[key]
+    if (report.counts[key] !== value) issues.push(`counts.${key} must equal ${value}`)
   }
 
   return issues
@@ -630,7 +640,7 @@ function isRepositoryEntryPoint(value: string): boolean {
 }
 
 /** Project a report into the source-free profile delivered outside its repository. */
-export function projectPortableReport(report: ProductReportV6): ProductReportV6 {
+export function projectPortableReport(report: ProductReportV7): ProductReportV7 {
   const portableReferences = <T extends { kind: string, role: string, target: string }>(items: T[]): T[] =>
     items.filter(reference =>
       reference.kind !== 'code'
@@ -671,11 +681,21 @@ export function projectPortableReport(report: ProductReportV6): ProductReportV6 
   }
 }
 
-export function parseProductReport(input: unknown): ProductReportV6 {
-  const report = ProductReportV6Schema.parse(input)
+export function parseProductReport(input: unknown): ProductReportV7 {
+  const report = ProductReportV7Schema.parse(input)
   const issues = validateProductReport(report)
   if (issues.length) throw new Error(`Report validation failed:\n- ${issues.join('\n- ')}`)
   return report
+}
+
+/** Additional publication policy for a Product Report entering the public Blueprint catalog. */
+export function validateBlueprintReport(report: ProductReportV7): string[] {
+  const issues: string[] = []
+  if (!report.category) issues.push('category is required for a public Blueprint')
+  if (!report.tags.length) issues.push('at least one tag is required for a public Blueprint')
+  if (!report.authors.length) issues.push('at least one author is required for a public Blueprint')
+  if (!report.license) issues.push('license is required for a public Blueprint')
+  return issues
 }
 
 /** Key-sorted JSON shared by report digest producers and consumers. */

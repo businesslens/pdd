@@ -10,7 +10,7 @@ import { reportDigest } from '../src/report-digest.js'
 import { compileReport } from '../src/commands/export.js'
 import { loadModel } from '../src/core/model.js'
 import { resolveModelRoot } from '../src/core/model-root.js'
-import type { ProductReportV6, ReportReference } from '../src/core/portable.js'
+import type { ProductReportV7, ReportReference } from '../src/core/portable.js'
 
 const packageJson = JSON.parse(
   await readFile(fileURLToPath(new URL('../package.json', import.meta.url)), 'utf8')
@@ -29,9 +29,9 @@ describe('report SDK entry point', () => {
   })
 
   it('exports the schema, semantic validator, portable projection, and digest', () => {
-    expect(sdk.REPORT_SCHEMA_VERSION).toBe('6.0.0')
+    expect(sdk.REPORT_SCHEMA_VERSION).toBe('7.0.0')
     for (const name of [
-      'ProductReportV6Schema',
+      'ProductReportV7Schema',
       'ProductReportSchema',
       'ReportReferenceSchema',
       'ReportInterfaceSchema',
@@ -40,6 +40,7 @@ describe('report SDK entry point', () => {
       'ReportScreenSchema',
       'ReportScreenStateSchema',
       'validateProductReport',
+      'validateBlueprintReport',
       'parseProductReport',
       'projectPortableReport',
       'canonicalReportJson'
@@ -83,9 +84,9 @@ describe('report SDK entry point', () => {
 describe('projectPortableReport', () => {
   const FIXTURE = join(fileURLToPath(new URL('.', import.meta.url)), 'fixtures', 'fixture-shop')
   let repo: string
-  let report: ProductReportV6
+  let report: ProductReportV7
 
-  const allReferences = (value: ProductReportV6): ReportReference[] => [
+  const allReferences = (value: ProductReportV7): ReportReference[] => [
     ...value.references,
     ...Object.values(value.model).flatMap(entry =>
       Array.isArray(entry) ? entry.flatMap(item => item.references ?? []) : [])
@@ -220,6 +221,22 @@ describe('projectPortableReport', () => {
     expect(() => sdk.parseProductReport(JSON.parse(JSON.stringify(once)))).not.toThrow()
   })
 
+  it('validates the stricter public Blueprint metadata profile', () => {
+    expect(sdk.validateBlueprintReport(report)).toEqual([])
+    expect(sdk.validateBlueprintReport({
+      ...report,
+      category: null,
+      tags: [],
+      authors: [],
+      license: null
+    })).toEqual([
+      'category is required for a public Blueprint',
+      'at least one tag is required for a public Blueprint',
+      'at least one author is required for a public Blueprint',
+      'license is required for a public Blueprint'
+    ])
+  })
+
   it('keeps Coverage independent from References', () => {
     const withoutReferences = structuredClone(report)
     withoutReferences.references = []
@@ -233,7 +250,7 @@ describe('projectPortableReport', () => {
   })
 
   it('rejects historical Product Reports without normalization', () => {
-    for (const schemaVersion of ['4.0.0', '5.0.0']) {
+    for (const schemaVersion of ['4.0.0', '5.0.0', '6.0.0']) {
       const legacy = structuredClone(report) as Record<string, any>
       legacy.schemaVersion = schemaVersion
       expect(sdk.ProductReportSchema.safeParse(legacy).success).toBe(false)

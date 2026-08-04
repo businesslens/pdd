@@ -12,7 +12,7 @@ BusinessLens is installed once per repository (or once per machine) with the
 `businesslens` CLI. It requires Node.js 20.12 or newer.
 
 ```bash
-npx businesslens@latest install
+npx businesslens install
 ```
 
 The installer detects supported AI harnesses, lets you customize the

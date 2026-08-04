@@ -13,11 +13,11 @@
  */
 import { execFileSync } from 'node:child_process'
 import { createInterface } from 'node:readline/promises'
-import { readdir, readFile } from 'node:fs/promises'
+import { lstat, readdir, readFile } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import { join, resolve } from 'node:path'
-import { parse as parseYaml } from 'yaml'
 import { projectPortableReport } from '../dist/report.js'
+import { validateProductLogo } from '../dist/logo.js'
 
 const root = process.cwd()
 const cli = resolve(root, 'dist/cli.js')
@@ -104,7 +104,14 @@ async function request(method, path, body) {
 const payloads = []
 for (const slug of slugs) {
   const dir = join(blueprintsDir, slug)
-  const manifest = parseYaml(await readFile(join(dir, 'blueprint.yaml'), 'utf8'))
+  const logoFile = join(dir, '.businesslens', 'logo.svg')
+  if (!existsSync(logoFile)) fail(`blueprints/${slug}: .businesslens/logo.svg is required`)
+  const logoStat = await lstat(logoFile)
+  if (logoStat.isSymbolicLink() || !logoStat.isFile()) {
+    fail(`blueprints/${slug}: .businesslens/logo.svg must be a regular file`)
+  }
+  const logoIssues = validateProductLogo(await readFile(logoFile))
+  if (logoIssues.length) fail(`blueprints/${slug}: ${logoIssues.join('; ')}`)
   try {
     execFileSync(process.execPath, [cli, '--cwd', dir, 'blueprint', 'export'], { stdio: 'pipe' })
   } catch (error) {
@@ -115,7 +122,14 @@ for (const slug of slugs) {
   const report = projectPortableReport(
     JSON.parse(await readFile(join(dir, '.businesslens/build/report.json'), 'utf8'))
   )
-  payloads.push({ slug, manifest, report, sourcePath: `blueprints/${slug}`, sourceCommit: commit })
+  if (report.id !== slug) fail(`blueprints/${slug}: Product ID "${report.id}" does not match its directory`)
+  payloads.push({
+    slug,
+    report,
+    sourceRepository: 'https://github.com/businesslens/pdd',
+    sourcePath: `blueprints/${slug}`,
+    sourceCommit: commit
+  })
   console.log(`built  ${slug}`)
 }
 

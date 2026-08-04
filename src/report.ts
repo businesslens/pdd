@@ -1,5 +1,5 @@
 /**
- * `businesslens/report` — strict Product Report v6 contract as a library.
+ * `businesslens/report` — strict Product Report v7 contract as a library.
  *
  * This entry point depends only on `zod` and stays free of Node built-ins so
  * browser consumers can validate, project, and digest reports consistently.
@@ -9,7 +9,8 @@ export {
   REPORT_SCHEMA_VERSION,
   ReportReferenceSchema,
   TaxonomyEntrySchema,
-  ReportSummarySchema,
+  ReportCountsSchema,
+  ReportAuthorSchema,
   ReportGeneratorSchema,
   ReportEntryPointSchema,
   ReportAvailabilitySchema,
@@ -25,19 +26,21 @@ export {
   ReportScenarioSchema,
   ReportBusinessRuleSchema,
   ReportCoverageSchema,
-  ProductReportV6Schema,
+  ProductReportV7Schema,
   ProductReportSchema,
   validateProductReport,
+  validateBlueprintReport,
   parseProductReport,
   projectPortableReport,
   canonicalReportJson
 } from './core/portable.js'
 
 export type {
-  ProductReportV6,
+  ProductReportV7,
   ProductReport,
   ReportCoverage,
-  ReportSummary,
+  ReportCounts,
+  ReportAuthor,
   ReportActor,
   ReportInterface,
   ReportExperience,

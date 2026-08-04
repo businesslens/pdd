@@ -1,0 +1,111 @@
+/* BusinessLens-wide design foundation; no report-specific selectors belong here. */
+@import "tailwindcss" theme(static);
+@import "@nuxt/ui";
+
+@theme static {
+  --font-sans: "Inter Variable", Inter, ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+
+  --color-brass-50: #fbf7ee;
+  --color-brass-100: #f5ecd6;
+  --color-brass-200: #e8d9b8;
+  --color-brass-300: #dcbc7d;
+  --color-brass-400: #cca055;
+  --color-brass-500: #b8965c;
+  --color-brass-600: #a06f31;
+  --color-brass-700: #80552b;
+  --color-brass-800: #6a4529;
+  --color-brass-900: #4a3f30;
+  --color-brass-950: #231f1a;
+
+  --color-terracotta-50: #fdf4f0;
+  --color-terracotta-100: #fae5db;
+  --color-terracotta-200: #f4c8b6;
+  --color-terracotta-300: #eba287;
+  --color-terracotta-400: #de7454;
+  --color-terracotta-500: #ce5231;
+  --color-terracotta-600: #b03e26;
+  --color-terracotta-700: #922f22;
+  --color-terracotta-800: #772a21;
+  --color-terracotta-900: #63261f;
+  --color-terracotta-950: #35100c;
+
+  --color-umber-50: #faf8f4;
+  --color-umber-100: #f2eee5;
+  --color-umber-200: #e4ddcc;
+  --color-umber-300: #cec3ab;
+  --color-umber-400: #ab9d81;
+  --color-umber-500: #746651;
+  --color-umber-600: #605440;
+  --color-umber-700: #514839;
+  --color-umber-800: #38312a;
+  --color-umber-900: #1b1713;
+  --color-umber-950: #100e0b;
+}
+
+:root {
+  --businesslens-font-heading: "Archivo Variable", "Inter Variable", sans-serif;
+  --ui-primary: var(--ui-color-primary-700);
+  --ui-secondary: var(--ui-color-secondary-700);
+  --ui-success: var(--ui-color-success-800);
+  --ui-text-dimmed: var(--ui-color-neutral-500);
+  color-scheme: light;
+  scrollbar-color: var(--ui-border-accented) var(--ui-bg);
+}
+
+.dark {
+  --ui-primary: var(--ui-color-primary-400);
+  --ui-secondary: var(--ui-color-secondary-400);
+  --ui-success: var(--ui-color-success-400);
+  --ui-text-dimmed: var(--ui-color-neutral-400);
+  color-scheme: dark;
+}
+
+@layer base {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--businesslens-font-heading);
+  }
+
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  [role="button"][aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+
+  * {
+    scrollbar-width: thin;
+  }
+}
+
+@supports not (scrollbar-color: auto) {
+  ::-webkit-scrollbar {
+    width: 0.5rem;
+    height: 0.5rem;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--ui-bg);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--ui-border-accented);
+    border-radius: 9999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--ui-text-dimmed);
+  }
+}
+
+::selection {
+  background: color-mix(in srgb, var(--color-brass-500) 30%, transparent);
+}

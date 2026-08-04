@@ -28,7 +28,7 @@ Product prose, prove alignment, or claim freshness. Code targets keep their
 compact grammar and tracked-file requirement. Other targets use HTTP(S) or a
 repository-relative path.
 
-Product Report v6 declares `referenceProfile: workspace|portable`. The portable
+Product Report v7 declares `referenceProfile: workspace|portable`. The portable
 projection keeps only HTTP(S) intent/context References and removes repository
 entry points and Coverage source areas. Blueprint export, open, pull, and
 contribute use this shared projection.

@@ -3,7 +3,7 @@ title: blueprint pull
 description: Pull a Blueprint from the public catalog into the current directory.
 section: open-source
 group: CLI
-order: 33
+order: 34
 ---
 
 # `businesslens blueprint pull`
@@ -11,15 +11,15 @@ order: 33
 Pull a Blueprint into the current directory:
 
 ```bash
-npx businesslens@latest blueprint pull <blueprint-slug>
+npx businesslens blueprint pull <blueprint-slug>
 ```
 
 The argument is the Blueprint's catalog slug: lowercase kebab-case, at most 80
 characters. **No account, sign-in, or credential is involved** — the catalog is
 anonymous to read.
 
-`pull` fetches the Product Report, verifies its mandatory SHA-256 digest, and
-passes it to [`open`](./cli-open.md) for portable expansion.
+`pull` fetches and validates the Blueprint, then passes it to
+[`open`](./cli-open.md) for portable expansion.
 
 ## Result
 
@@ -28,13 +28,14 @@ orientation README. It follows the same
 [portable projection](./cli-export.md#portable-export) and Coverage handling as
 `open`. Nothing outside `.businesslens/` is touched.
 
-Use `--cwd <path>` to choose the target directory. By default `pull` refuses a
-non-empty `.businesslens/`; `--force` first moves it to a timestamped backup.
+Use `-c, --cwd <path>` to choose the target directory. By default `pull`
+refuses a non-empty `.businesslens/`; `--force` first moves it to a timestamped
+backup.
 
 ## Choosing a catalog
 
 ```bash
-npx businesslens@latest blueprint pull <slug> --catalog http://localhost:3200
+npx businesslens blueprint pull <slug> --catalog http://localhost:3200
 ```
 
 Precedence is `--catalog`, then `BUSINESSLENS_CATALOG_URL`, then the public
@@ -51,7 +52,7 @@ Before writing any Product Model files, `pull` refuses:
 - a slug that is not lowercase kebab-case;
 - a plaintext catalog origin that is not loopback;
 - redirects;
-- responses larger than 8 MiB;
+- reports larger than 8 MiB;
 - a missing or malformed report digest, or one that does not match the body;
 - a response served for a different Blueprint; and
 - not-found, withdrawn, and catalog-unavailable responses.

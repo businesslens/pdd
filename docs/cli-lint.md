@@ -9,7 +9,7 @@ order: 30
 # `businesslens lint`
 
 ```bash
-npx businesslens@latest lint [--json]
+npx businesslens lint [--json]
 ```
 
 Lint is deterministic and read-only. It checks:

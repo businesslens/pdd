@@ -13,7 +13,6 @@ import {
 import { tmpdir } from 'node:os'
 import { delimiter, join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { parse as parseYaml } from 'yaml'
 import { runContribute } from '../src/commands/contribute.js'
 
 const FIXTURE = join(__dirname, 'fixtures', 'fixture-shop')
@@ -176,7 +175,7 @@ describe('contribute', { timeout: 30_000 }, () => {
     vi.spyOn(console, 'error').mockImplementation((m: string) => { failures.push(m) })
 
     try {
-      const code = await runContribute(model, { slug: 'fixture-shop', yes: true })
+      const code = await runContribute(model, { yes: true })
       expect(failures.join('\n')).toBe('')
       expect(code).toBe(0)
     } finally {
@@ -197,14 +196,16 @@ describe('contribute', { timeout: 30_000 }, () => {
     expect(recorded.calls.some(call => call[0] === 'repo' && call[1] === 'fork')).toBe(true)
 
     const files = recorded.prFiles ?? []
-    expect(files.some(file => file === 'blueprints/fixture-shop/blueprint.yaml')).toBe(true)
+    expect(files.some(file => file === 'blueprints/fixture-shop/blueprint.yaml')).toBe(false)
     expect(files.some(file => file.startsWith('blueprints/fixture-shop/.businesslens/'))).toBe(true)
+    expect(files).toContain('blueprints/fixture-shop/.businesslens/logo.svg')
 
     // The point of the whole flow: the model in the pull request is regenerated
     // from a portable report, so no workspace reference survives into it.
     const contents = recorded.prContents ?? {}
     expect(contents['blueprints/fixture-shop/.businesslens/README.md'])
       .toContain('BusinessLens Product Model')
+    expect(contents['blueprints/fixture-shop/.businesslens/logo.svg']).toContain('<svg')
     const modelFiles = Object.entries(contents)
       .filter(([file]) => file.startsWith('blueprints/fixture-shop/.businesslens/'))
     expect(modelFiles.length).toBeGreaterThan(0)
@@ -218,18 +219,13 @@ describe('contribute', { timeout: 30_000 }, () => {
     expect(files.some(file => file.includes('/.businesslens/build/'))).toBe(false)
     expect(files.some(file => file.includes('/.businesslens/cache/'))).toBe(false)
 
-    const manifestSource = contents['blueprints/fixture-shop/blueprint.yaml']!
-    const manifest = parseYaml(manifestSource) as Record<string, unknown>
-    expect(manifest.slug).toBe('fixture-shop')
-    expect(manifest.license).toBe('MIT')
-
-    // The manifest is the one file not regenerated from the portable report, so
-    // it is the one place a repository reference can still slip into a public
-    // pull request. The fixture has an `origin` remote precisely so this would
-    // catch it: contributing from a private repository must not disclose it.
-    expect(manifest.origin, 'the manifest discloses the origin repository').toBeUndefined()
-    expect(manifestSource).not.toContain('fixture-shop.git')
-    expect(manifestSource).not.toContain('github.com/example')
+    // There is no catalog-specific manifest: every Product-facing field comes
+    // from this canonical model, and every contributed file is BusinessLens-owned.
+    expect(files
+      .filter(file => file.startsWith('blueprints/fixture-shop/'))
+      .every(file => file.startsWith('blueprints/fixture-shop/.businesslens/'))).toBe(true)
+    expect(JSON.stringify(contents)).not.toContain('fixture-shop.git')
+    expect(JSON.stringify(contents)).not.toContain('github.com/example')
   })
 
   it('clones instead of forking when the contributor owns the upstream', async () => {
@@ -252,7 +248,7 @@ describe('contribute', { timeout: 30_000 }, () => {
     vi.spyOn(console, 'log').mockImplementation(() => undefined)
 
     try {
-      expect(await runContribute(model, { slug: 'fixture-shop', yes: true })).toBe(0)
+      expect(await runContribute(model, { yes: true })).toBe(0)
     } finally {
       process.env.PATH = previousPath
       delete process.env.CAPTURE_FILE
@@ -284,7 +280,7 @@ describe('contribute', { timeout: 30_000 }, () => {
     vi.spyOn(console, 'log').mockImplementation(() => undefined)
 
     try {
-      expect(await runContribute(model, { slug: 'fixture-shop', yes: true })).toBe(0)
+      expect(await runContribute(model, { yes: true })).toBe(0)
     } finally {
       process.env.PATH = previousPath
       delete process.env.CAPTURE_FILE
@@ -324,7 +320,7 @@ describe('contribute', { timeout: 30_000 }, () => {
     vi.spyOn(console, 'log').mockImplementation(message => { logs.push(String(message)) })
 
     try {
-      expect(await runContribute(model, { slug: 'fixture-shop', yes: true })).toBe(0)
+      expect(await runContribute(model, { yes: true })).toBe(0)
     } finally {
       process.env.PATH = previousPath
       delete process.env.CAPTURE_FILE
@@ -362,7 +358,7 @@ describe('contribute', { timeout: 30_000 }, () => {
     vi.spyOn(console, 'error').mockImplementation(message => { errors.push(String(message)) })
 
     try {
-      expect(await runContribute(model, { slug: 'fixture-shop', yes: true })).toBe(1)
+      expect(await runContribute(model, { yes: true })).toBe(1)
     } finally {
       process.env.PATH = previousPath
       delete process.env.CAPTURE_FILE
@@ -390,7 +386,7 @@ describe('contribute', { timeout: 30_000 }, () => {
     vi.spyOn(console, 'error').mockImplementation((message: string) => { errors.push(message) })
 
     try {
-      expect(await runContribute(model, { slug: 'fixture-shop', yes: true })).toBe(1)
+      expect(await runContribute(model, { yes: true })).toBe(1)
     } finally {
       process.env.PATH = previousPath
       delete process.env.CAPTURE_FILE
@@ -419,7 +415,7 @@ describe('contribute', { timeout: 30_000 }, () => {
 
     try {
       // vitest runs without a TTY, which is the condition being exercised.
-      expect(await runContribute(model, { slug: 'fixture-shop', yes: false })).toBe(2)
+      expect(await runContribute(model, { yes: false })).toBe(2)
     } finally {
       process.env.PATH = previousPath
       delete process.env.CAPTURE_FILE
@@ -428,32 +424,6 @@ describe('contribute', { timeout: 30_000 }, () => {
     expect(errors.join('\n')).toContain('--yes')
     const recorded = JSON.parse(readFileSync(capture, 'utf8')) as { calls: string[][] }
     expect(recorded.calls.some(call => call[0] === 'repo')).toBe(false)
-  })
-
-  it('rejects a slug that is not a canonical name', async () => {
-    const model = temporary('bl-contribute-slug-model-')
-    const bin = temporary('bl-contribute-slug-bin-')
-    const capture = join(temporary('bl-contribute-slug-capture-'), 'gh.json')
-
-    cpSync(FIXTURE, model, { recursive: true })
-    initialize(model)
-    fakeGh(bin, capture)
-
-    const previousPath = process.env.PATH
-    process.env.PATH = `${bin}${delimiter}${previousPath || ''}`
-    process.env.CAPTURE_FILE = capture
-    writeFileSync(capture, '{}')
-    const errors: string[] = []
-    vi.spyOn(console, 'error').mockImplementation((message: string) => { errors.push(message) })
-
-    try {
-      expect(await runContribute(model, { slug: 'Not A Slug', yes: true })).toBe(2)
-    } finally {
-      process.env.PATH = previousPath
-      delete process.env.CAPTURE_FILE
-    }
-
-    expect(errors.join('\n')).toContain('kebab-case')
   })
 
   it('leaves no temporary working directory behind', async () => {
@@ -475,7 +445,7 @@ describe('contribute', { timeout: 30_000 }, () => {
     vi.spyOn(console, 'log').mockImplementation(() => undefined)
 
     try {
-      await runContribute(model, { slug: 'fixture-shop', yes: true })
+      await runContribute(model, { yes: true })
     } finally {
       process.env.PATH = previousPath
       delete process.env.CAPTURE_FILE

@@ -10,7 +10,7 @@ order: 22
 
 ```yaml
 - name: Lint BusinessLens Product Model
-  run: npx businesslens@latest lint
+  run: npx businesslens lint
 ```
 
 This catches malformed files, missing required content, broken relationships,
@@ -25,5 +25,5 @@ or expose a semantic CI command, so CI must not infer verification from lint.
 For machine-readable structural findings:
 
 ```bash
-npx businesslens@latest lint --json
+npx businesslens lint --json
 ```

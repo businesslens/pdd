@@ -38,6 +38,31 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
   if (model.product.id.length > 64) errors.push('product.md: id must be at most 64 characters')
   if (!model.product.id) errors.push('product.md: missing id')
   requireTitle('product.md', model.product.doc.title, model.product.doc.lead)
+  if (model.product.summary && (/\r|\n/.test(model.product.summary) || model.product.summary.length > 400)) {
+    errors.push('product.md: summary must be a single line with at most 400 characters')
+  }
+  if (model.product.category && !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(model.product.category)) {
+    errors.push('product.md: category must be lowercase kebab-case')
+  }
+  if (model.product.category && model.product.category.length > 60) {
+    errors.push('product.md: category must be at most 60 characters')
+  }
+  if (model.product.license && !/^[A-Za-z0-9][A-Za-z0-9.+-]*$/.test(model.product.license)) {
+    errors.push('product.md: license must be one SPDX license identifier')
+  }
+  for (const [index, author] of model.product.authors.entries()) {
+    if (!author.name.trim() || author.name.length > 120) {
+      errors.push(`product.md: author ${index + 1} name must contain 1–120 characters`)
+    }
+    if (author.url) {
+      try {
+        const url = new URL(author.url)
+        if (!['http:', 'https:'].includes(url.protocol)) throw new Error('unsupported protocol')
+      } catch {
+        errors.push(`product.md: author ${index + 1} url must use HTTP(S)`)
+      }
+    }
+  }
 
   if (!COVERAGE_STATUSES.has(model.coverage.status)) {
     errors.push(`coverage.md: status "${model.coverage.status}" must be complete|partial|draft`)
@@ -360,7 +385,12 @@ export function runLint(cwd: string, json: boolean): number {
   try {
     ({ modelRoot, gitRoot } = resolveModelRoot(cwd))
   } catch (error) {
-    console.error((error as Error).message)
+    const message = (error as Error).message
+    if (json) {
+      console.log(JSON.stringify({ ok: false, errors: [message], warnings: [], counts: {} }, null, 2))
+    } else {
+      console.error(`error: ${message}`)
+    }
     return 1
   }
   const model = loadModel(modelRoot)
@@ -370,9 +400,8 @@ export function runLint(cwd: string, json: boolean): number {
   } else {
     for (const error of result.errors) console.error(`error: ${error}`)
     for (const warning of result.warnings) console.warn(`warning: ${warning}`)
-    const summary = Object.entries(result.counts).map(([key, value]) => `${value} ${key}`).join(', ')
     console.log(result.ok
-      ? `Product Model structure is sound (${summary}).`
+      ? 'Product Model structure is sound.'
       : `Lint failed with ${result.errors.length} error(s).`)
   }
   return result.ok ? 0 : 1

@@ -30,8 +30,9 @@ try {
   const tsdown = join(root, 'node_modules', '.bin', process.platform === 'win32' ? 'tsdown.cmd' : 'tsdown')
   if (!existsSync(tsdown)) fail('Dependencies are not installed. Run `npm ci` first.')
 
-  console.log('Building BusinessLens before activation...')
-  const build = spawnSync(tsdown, [], { cwd: root, stdio: 'inherit' })
+  const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm'
+  console.log('Building BusinessLens and the local viewer before activation...')
+  const build = spawnSync(npm, ['run', 'build'], { cwd: root, stdio: 'inherit' })
   if (build.error) fail(build.error.message)
   if (build.status !== 0) process.exit(build.status ?? 1)
 
@@ -42,7 +43,9 @@ try {
   console.log(`Branch: ${branch.status === 0 ? branch.stdout.trim() || '(detached)' : '(unknown)'}`)
   console.log('Watching BusinessLens package outputs. Press Ctrl+C to stop watching; the link remains active.')
 
-  const watcher = spawn(tsdown, ['--watch'], { cwd: root, stdio: 'inherit' })
+  // The initial full build owns cleanup. Preserve its packaged viewer while
+  // tsdown refreshes the CLI bundle during development.
+  const watcher = spawn(tsdown, ['--watch', '--no-clean'], { cwd: root, stdio: 'inherit' })
   watcher.on('error', error => fail(error.message))
   watcher.on('exit', (code, signal) => {
     if (signal) process.kill(process.pid, signal)

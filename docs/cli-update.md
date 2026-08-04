@@ -11,7 +11,7 @@ order: 29
 Refresh installed BusinessLens skills from the CLI package:
 
 ```bash
-npx businesslens@latest update
+npx businesslens update
 ```
 
 With no filters, the command searches every supported provider in both project
@@ -26,20 +26,15 @@ installation, it exits with an error and suggests running
 | --- | --- |
 | `--providers <list>` | Limit discovery to a comma-separated list of `claude,codex,cursor,gemini,github` |
 | `--scope project\|global` | Search only one installation scope |
-| `--project` | Shortcut for `--scope project` |
-| `--global` | Shortcut for `--scope global` |
 | `--force` | Replace an unmarked colliding `businesslens-*` directory inside a managed target |
 
 For example, update only project-scoped Claude Code and Codex installations:
 
 ```bash
-npx businesslens@latest update \
+npx businesslens update \
   --providers claude,codex \
-  --project
+  --scope project
 ```
-
-Scope flags are mutually exclusive. The CLI also rejects a scope flag that
-conflicts with `--scope`.
 
 ## What changes
 

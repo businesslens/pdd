@@ -3,7 +3,7 @@ title: blueprint contribute
 description: Open a pull request proposing your Product Model as a catalog Blueprint.
 section: open-source
 group: CLI
-order: 34
+order: 35
 ---
 
 # `businesslens blueprint contribute`
@@ -11,11 +11,12 @@ order: 34
 Propose your Product Model for the public Blueprint catalog:
 
 ```bash
-npx businesslens@latest blueprint contribute --slug my-blueprint
+npx businesslens blueprint contribute
 ```
 
-A [Blueprint](./cli-export.md) is a portable Product Report. This command opens
-a pull request containing its canonical expanded Product Model and manifest.
+A [Blueprint](./cli-export.md) is a portable Product Report. This command
+validates the current model and opens a pull request containing its portable
+content.
 
 Authentication uses your GitHub identity through the
 [GitHub CLI](https://cli.github.com):
@@ -30,13 +31,15 @@ gh auth login
 
 | Option | Effect |
 | --- | --- |
-| `--slug <name>` | Override the product ID used as the lowercase kebab-case catalog slug. |
 | `--yes` | Skip the confirmation prompt; required when no interactive terminal is available. |
 
 ## A good Blueprint
 
 A Blueprint should be small enough to build end to end and complete enough that
 a coding agent can produce a recognizable product from the pulled model alone.
+
+Before contributing, add a category, at least one tag, at least one author, and
+an SPDX license identifier to `product.md`, plus `.businesslens/logo.svg`.
 
 Check these before contributing:
 
@@ -62,9 +65,9 @@ product instructions.
 1. Loads and lints the Product Model. Lint errors stop the run.
 2. Exports it through the [portable projection](./cli-export.md#portable-export).
 3. Expands that Blueprint into canonical `.businesslens/` files.
-4. Derives the slug from `--slug` or the Product ID.
-5. Writes `blueprints/<slug>/{blueprint.yaml,.businesslens/}` on a
-   `blueprint/<slug>` branch.
+4. Uses the Product ID as the canonical catalog slug.
+5. Writes `blueprints/<product-id>/.businesslens/` on a
+   `blueprint/<product-id>` branch.
 6. Opens or updates the pull request and prints its URL.
 
 ## Your repo is safe
@@ -78,30 +81,11 @@ source navigation is never copied into the pull request.
 ## Contributing again
 
 Run the same command to revise a contribution. It syncs the fork, force-pushes
-only the command-owned `blueprint/<slug>` branch, and updates an existing pull
-request when one is open. If the fork cannot be synchronized, the command stops.
+only the command-owned `blueprint/<product-id>` branch, and updates an existing
+pull request when one is open. If the fork cannot be synchronized, the command
+stops.
 
 Leave the fork in your GitHub account until the pull request is merged.
-
-## The manifest
-
-`contribute` writes a `blueprint.yaml` with what it can infer and placeholders
-for what it cannot:
-
-```yaml
-slug: content-feed-reader
-title: Content & Feed Reader
-summary: One sentence on what the product is.
-category: Content
-tags: [content, reading]
-icon: i-lucide-rss
-accent: "#b8965c"
-authors: [Your Name]
-license: MIT
-```
-
-Expect to edit `category`, `icon`, `accent`, and `authors` in the pull request.
-Blueprint content is MIT, the same as the code.
 
 ## Destination and publication
 

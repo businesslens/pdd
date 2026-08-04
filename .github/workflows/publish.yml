@@ -25,7 +25,7 @@ jobs:
           package-manager-cache: false
 
       - name: Use OIDC-capable npm
-        run: npm install --global npm@11.9.0
+        run: npm install --global npm@11.9.0 pnpm@10.15.0
 
       - name: Verify release tag
         shell: bash
@@ -48,6 +48,7 @@ jobs:
           npm pack --pack-destination "$pack_dir"
           tarball="$pack_dir/businesslens-${package_version}.tgz"
           test -f "$tarball"
+          test "$(stat --format=%s "$tarball")" -le 2097152
           echo "tarball=$tarball" >> "$GITHUB_OUTPUT"
 
       - name: Smoke-test release artifact
@@ -58,33 +59,104 @@ jobs:
           cd "$smoke_root/project"
 
           npx --yes --package "${{ steps.pack.outputs.tarball }}" businesslens --version
+          npx --yes --package "${{ steps.pack.outputs.tarball }}" businesslens --help \
+            | grep 'view \[options\]' >/dev/null
           npx --yes --package "${{ steps.pack.outputs.tarball }}" businesslens install \
             --providers claude,codex \
             --project \
             --yes
 
+          cli_only="$smoke_root/cli-only"
+          mkdir -p "$cli_only"
+          npm install --prefix "$cli_only" --ignore-scripts "${{ steps.pack.outputs.tarball }}"
+          node "$cli_only/node_modules/businesslens/dist/cli.js" --version
+          for ui_dependency in \
+            nuxt \
+            vue \
+            tailwindcss \
+            @nuxt/ui \
+            @fontsource-variable/archivo \
+            @fontsource-variable/inter \
+            @fontsource/ibm-plex-mono; do
+            test ! -e "$cli_only/node_modules/$ui_dependency"
+          done
+
           for skills_root in .claude/skills .agents/skills; do
             test -f "$skills_root/.businesslens-install.json"
             for skill in \
-              businesslens-init \
-              businesslens-sync \
-              businesslens-deep-dive \
-              businesslens-validate \
-              businesslens-doctor \
-              businesslens-publish; do
+              businesslens-map \
+              businesslens-ideate \
+              businesslens-verify; do
               test -f "$skills_root/$skill/SKILL.md"
             done
           done
 
           test ! -e .businesslens
           test ! -e AGENTS.md
+          tar -tzf "${{ steps.pack.outputs.tarball }}" | grep '^package/dist/viewer/index.html$' >/dev/null
+          tar -tzf "${{ steps.pack.outputs.tarball }}" | grep '^package/layers/nuxt/report-viewer/nuxt.config.ts$' >/dev/null
+          tar -tzf "${{ steps.pack.outputs.tarball }}" | grep '^package/layers/nuxt/theme/nuxt.config.ts$' >/dev/null
+          tar -tzf "${{ steps.pack.outputs.tarball }}" | grep '^package/layers/nuxt/theme-lab/nuxt.config.ts$' >/dev/null
+          tar -tzf "${{ steps.pack.outputs.tarball }}" | grep '^package/layers/nuxt/theme-lab/public/brand/logo/variants/mark-10.svg$' >/dev/null
+          tar -tzf "${{ steps.pack.outputs.tarball }}" | grep '^package/dist/report-view-model.js$' >/dev/null
+          tar -tzf "${{ steps.pack.outputs.tarball }}" | grep '^package/dist/logo.js$' >/dev/null
 
-          if npx --yes --package "${{ steps.pack.outputs.tarball }}" businesslens publish --yes 2>publish-error.log; then
-            echo "publish unexpectedly succeeded without BUSINESSLENS_API_KEY" >&2
-            exit 1
-          fi
-          grep -q "BUSINESSLENS_API_KEY is not set" publish-error.log
-          rm publish-error.log
+          nuxt_smoke="$smoke_root/nuxt-layer-consumer"
+          cp -R "$GITHUB_WORKSPACE/test/fixtures/nuxt-layer-consumer" "$nuxt_smoke"
+          npm install --prefix "$nuxt_smoke" --ignore-scripts
+          npm install --prefix "$nuxt_smoke" --ignore-scripts --no-save \
+            "${{ steps.pack.outputs.tarball }}"
+          npm run --prefix "$nuxt_smoke" prepare:nuxt
+          npm run --prefix "$nuxt_smoke" typecheck
+          npm run --prefix "$nuxt_smoke" build
+
+          pnpm_smoke="$smoke_root/pnpm-nuxt-layer-consumer"
+          cp -R "$GITHUB_WORKSPACE/test/fixtures/nuxt-layer-consumer" "$pnpm_smoke"
+          pnpm --dir "$pnpm_smoke" install --ignore-scripts
+          pnpm --dir "$pnpm_smoke" add --ignore-scripts --save-dev \
+            "${{ steps.pack.outputs.tarball }}"
+          pnpm --dir "$pnpm_smoke" run prepare:nuxt
+          pnpm --dir "$pnpm_smoke" run typecheck
+          pnpm --dir "$pnpm_smoke" run build
+
+          view_project="$smoke_root/view-project"
+          view_runner="$smoke_root/view-runner"
+          mkdir -p "$view_project" "$view_runner"
+          cp -R "$GITHUB_WORKSPACE/test/fixtures/fixture-shop/." "$view_project"
+          git -C "$view_project" init --initial-branch=main
+          git -C "$view_project" config user.email fixture@example.com
+          git -C "$view_project" config user.name Fixture
+          git -C "$view_project" add .
+          git -C "$view_project" commit -m fixture
+          npm install --prefix "$view_runner" --ignore-scripts "${{ steps.pack.outputs.tarball }}"
+
+          view_log="$smoke_root/view.log"
+          node "$view_runner/node_modules/businesslens/dist/cli.js" \
+            --cwd "$view_project" view --no-open >"$view_log" 2>&1 &
+          viewer_pid=$!
+          cleanup_viewer() {
+            if kill -0 "$viewer_pid" 2>/dev/null; then kill -TERM "$viewer_pid"; fi
+          }
+          trap cleanup_viewer EXIT
+          for _ in $(seq 1 50); do
+            viewer_url="$(sed -n 's/^Viewing the local Product Model at \(http:\/\/127\.0\.0\.1:[0-9]*\)$/\1/p' "$view_log")"
+            if [[ -n "$viewer_url" ]]; then break; fi
+            if ! kill -0 "$viewer_pid" 2>/dev/null; then cat "$view_log"; exit 1; fi
+            sleep 0.2
+          done
+          test -n "$viewer_url"
+          curl --fail --silent "$viewer_url/_businesslens/health" | grep '"ok":true' >/dev/null
+          curl --fail --silent "$viewer_url/" | grep -i '<!DOCTYPE html>' >/dev/null
+          curl --fail --silent "$viewer_url/_businesslens/report.json" \
+            | grep '"id":"fixture-shop"' >/dev/null
+          curl --fail --silent "$viewer_url/_businesslens/logo.svg" \
+            | grep '<svg' >/dev/null
+          curl --fail --silent "$viewer_url/brand/icons/marks/m10/favicon.svg" \
+            | grep '<svg' >/dev/null
+          test ! -e "$view_project/.businesslens/build/report.json"
+          kill -TERM "$viewer_pid"
+          wait "$viewer_pid"
+          trap - EXIT
 
       - name: Publish to npm
         shell: bash

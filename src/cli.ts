@@ -1,200 +1,262 @@
 #!/usr/bin/env node
 import { resolve } from 'node:path'
-import { parseArgs } from 'node:util'
+import { Command, CommanderError, Help, InvalidArgumentError, Option } from 'commander'
+import { runContribute } from './commands/contribute.js'
 import { runExport } from './commands/export.js'
 import { runInstall } from './commands/install.js'
+import { runLint } from './commands/lint.js'
 import { runOpen } from './commands/open.js'
-import { runContribute } from './commands/contribute.js'
 import { runPull } from './commands/pull.js'
 import { runUpdate } from './commands/update.js'
-import { runLint } from './commands/lint.js'
+import { runView } from './commands/view.js'
 import { cliVersion } from './version.js'
 
-const HELP = `businesslens — Product-Driven Development for coding agents
-
-Usage: businesslens <command> [options]
-
-Commands:
-  install                     Install BusinessLens skills for detected AI harnesses
-  update                      Refresh managed BusinessLens skill installations
-  lint [--json]               Lint the .businesslens/ Product Model structure
-
-Blueprint commands (moving a model between repositories):
-  blueprint export                    Compile .businesslens/ into a source-free report
-  blueprint open <report> [--force]   Expand a Blueprint into .businesslens/
-  blueprint pull <name> [--force]     Pull a Blueprint from the catalog
-  blueprint contribute [--yes]        Propose this Blueprint for the catalog
-
-Install options:
-  --providers <list>          Comma-separated: claude,codex,cursor,gemini,github
-  --scope <scope>             project or global
-  --project                   Shortcut for --scope project
-  --global, --user            Shortcut for --scope global
-  --yes                       Accept detected providers and project scope
-  --force                     Replace an unmarked businesslens-* skill directory
-
-Blueprint contribute options:
-  --slug <name>               Catalog slug (defaults to the product id)
-  --yes                       Skip the confirmation prompt (required in
-                              non-interactive sessions). Requires an
-                              authenticated GitHub CLI.
-
-Blueprint open options:
-  --force                     Back up a non-empty .businesslens/ before opening
-                              A relative <report> path resolves against the
-                              current shell directory, not against --cwd.
-
-Blueprint pull options:
-  --catalog <origin>          Catalog origin to pull from (default https://businesslens.io)
-  --force                     Back up a non-empty .businesslens/ before pulling
-
-General options:
-  --cwd <path>                Run against this repository instead of the current directory
-  --help                      Show this help
-  --version                   Show the CLI version
-
-Agent workflows:
-  /businesslens-map           Create or expand the model from existing code
-  /businesslens-ideate        Decide what to build and write approved intent
-  /businesslens-verify        Check model/code alignment and resolve gaps
-
-Exit codes: 0 success · 1 failure · 2 usage error`
-
-/** Subcommands of `blueprint`. Refused, with guidance, when typed bare. */
-const BLUEPRINT_COMMANDS = new Set(['export', 'open', 'pull', 'contribute'])
-
-/** Positionals each command consumes after its own name. */
-const ARGUMENT_COUNT: Record<string, number> = { open: 1, pull: 1 }
-
-function parseCliArgs() {
-  return parseArgs({
-    args: process.argv.slice(2),
-    allowPositionals: true,
-    strict: true,
-    options: {
-      json: { type: 'boolean', default: false },
-      providers: { type: 'string' },
-      scope: { type: 'string' },
-      project: { type: 'boolean', default: false },
-      global: { type: 'boolean', default: false },
-      user: { type: 'boolean', default: false },
-      yes: { type: 'boolean', default: false },
-      force: { type: 'boolean', default: false },
-      catalog: { type: 'string' },
-      slug: { type: 'string' },
-      cwd: { type: 'string' },
-      help: { type: 'boolean', default: false },
-      version: { type: 'boolean', default: false }
-    }
-  })
+interface InstallCliOptions {
+  providers?: string
+  scope?: string
+  project?: boolean
+  global?: boolean
+  user?: boolean
+  yes?: boolean
+  force?: boolean
 }
 
-async function main(): Promise<number> {
-  let parsed: ReturnType<typeof parseCliArgs>
-  try {
-    parsed = parseCliArgs()
-  } catch (error) {
-    console.error((error as Error).message)
-    return 2
-  }
-  const { values, positionals } = parsed
+interface UpdateCliOptions {
+  providers?: string
+  scope?: string
+  project?: boolean
+  global?: boolean
+  user?: boolean
+  force?: boolean
+}
 
-  if (values.version) {
-    console.log(cliVersion())
+interface LintCliOptions {
+  json?: boolean
+}
+
+interface ViewCliOptions {
+  open: boolean
+  port?: number
+}
+
+interface ForceCliOptions {
+  force?: boolean
+}
+
+interface PullCliOptions extends ForceCliOptions {
+  catalog?: string
+}
+
+interface ContributeCliOptions {
+  yes?: boolean
+}
+
+function cwdFor(command: Command): string {
+  const { cwd, C: legacyCwd } = command.optsWithGlobals() as { cwd?: string; C?: string }
+  return resolve(process.cwd(), cwd || legacyCwd || '.')
+}
+
+function scope(value: string): 'project' | 'global' {
+  const normalized = value.trim().toLowerCase()
+  if (normalized !== 'project' && normalized !== 'global') {
+    throw new InvalidArgumentError('expected "project" or "global"')
+  }
+  return normalized
+}
+
+function port(value: string): number {
+  if (!/^\d+$/.test(value)) {
+    throw new InvalidArgumentError('expected an integer from 1 to 65535')
+  }
+  const parsed = Number(value)
+  if (parsed < 1 || parsed > 65535) {
+    throw new InvalidArgumentError('expected an integer from 1 to 65535')
+  }
+  return parsed
+}
+
+function legacyScopeOptions(command: Command): Command {
+  return command
+    .addOption(new Option('--project').hideHelp())
+    .addOption(new Option('--global').hideHelp())
+    .addOption(new Option('--user').hideHelp())
+}
+
+function retiredCommand(program: Command, name: string, replacement: string): void {
+  program
+    .command(`${name} [arguments...]`, { hidden: true })
+    .allowUnknownOption(true)
+    .description(`Use businesslens ${replacement}`)
+    .action((_arguments: string[], _options: Record<string, never>, command: Command) => {
+      command.error(`error: \`businesslens ${name}\` has moved. Use \`businesslens ${replacement}\`.`)
+    })
+}
+
+function commandsBeforeOptions(output: string): string {
+  const trailingNewline = output.endsWith('\n') ? '\n' : ''
+  const sections = output.trimEnd().split(/\n{2,}/)
+  const commands = sections.findIndex(section => section.startsWith('Commands:'))
+  const options = sections.findIndex(section => section.startsWith('Options:'))
+  if (commands < 0 || options < 0 || commands < options) return output
+
+  const [commandSection] = sections.splice(commands, 1)
+  sections.splice(options, 0, commandSection!)
+  return sections.join('\n\n') + trailingNewline
+}
+
+function createProgram(setExitCode: (code: number) => void): Command {
+  const program = new Command()
+    .name('businesslens')
+    .description('Product-Driven Development for coding agents')
+    .usage('<command> [options]')
+    .option('-c, --cwd <path>', 'Run from another directory')
+    .addOption(new Option('-C <path>').hideHelp().conflicts('cwd'))
+    .version(cliVersion(), '-V, --version', 'Show the CLI version')
+    .helpOption('-h, --help', 'Show help for command')
+    .helpCommand('help [command]', 'Show help for command')
+    .showSuggestionAfterError()
+    .configureHelp({
+      showGlobalOptions: true,
+      formatHelp(command, helper) {
+        const output = Help.prototype.formatHelp.call(helper, command, helper)
+        return command.parent ? output : commandsBeforeOptions(output)
+      }
+    })
+    .exitOverride()
+
+  legacyScopeOptions(program
+    .command('install')
+    .summary('Install BusinessLens skills')
+    .description('Install BusinessLens skills for detected AI harnesses.')
+    .option('--providers <list>', 'Comma-separated providers: claude,codex,cursor,gemini,github')
+    .option('--scope <scope>', 'Installation scope: project or global', scope)
+    .option('--yes', 'Accept detected providers and default to project scope')
+    .option('--force', 'Replace an unmarked colliding BusinessLens skill directory'))
+    .action(async (options: InstallCliOptions, command: Command) => {
+      setExitCode(await runInstall(cwdFor(command), options))
+    })
+
+  legacyScopeOptions(program
+    .command('update')
+    .summary('Update managed skill installations')
+    .description('Update BusinessLens-managed skill installations.')
+    .option('--providers <list>', 'Limit discovery to: claude,codex,cursor,gemini,github')
+    .option('--scope <scope>', 'Installation scope: project or global', scope)
+    .option('--force', 'Replace an unmarked collision inside a managed installation'))
+    .action(async (options: UpdateCliOptions, command: Command) => {
+      setExitCode(await runUpdate(cwdFor(command), options))
+    })
+
+  program
+    .command('lint')
+    .summary('Lint a Product Model')
+    .description('Lint the current .businesslens/ Product Model.')
+    .option('--json', 'Write the lint result as JSON')
+    .action((options: LintCliOptions, command: Command) => {
+      setExitCode(runLint(cwdFor(command), Boolean(options.json)))
+    })
+
+  program
+    .command('view')
+    .summary('View a Product Model locally')
+    .description('View the current Product Model on localhost.')
+    .option('--no-open', 'Do not open the default browser')
+    .option('--port <port>', 'Port to listen on', port)
+    .action(async (options: ViewCliOptions, command: Command) => {
+      setExitCode(await runView(cwdFor(command), options))
+    })
+
+  const blueprint = program
+    .command('blueprint')
+    .summary('Move Product Models between repositories')
+    .description('Export, open, pull, or contribute portable Product Model Blueprints.')
+    .usage('<command> [options]')
+    .helpOption('-h, --help', 'Show help for command')
+    .helpCommand('help [command]', 'Show help for command')
+    .argument('[command]')
+    .action((unknown: string | undefined, _options: Record<string, never>, command: Command) => {
+      if (unknown) command.error(`error: unknown command '${unknown}' for 'businesslens blueprint'`)
+      command.outputHelp()
+    })
+
+  blueprint
+    .command('export')
+    .summary('Export a Blueprint')
+    .description('Compile .businesslens/ into a portable Product Report.')
+    .action((_: Record<string, never>, command: Command) => {
+      setExitCode(runExport(cwdFor(command)))
+    })
+
+  blueprint
+    .command('open <report>')
+    .summary('Open a local Blueprint')
+    .description('Expand a local Product Report into .businesslens/.')
+    .option('--force', 'Back up and replace a non-empty .businesslens/ directory')
+    .action(async (report: string, options: ForceCliOptions, command: Command) => {
+      setExitCode(await runOpen(cwdFor(command), report, Boolean(options.force)))
+    })
+
+  blueprint
+    .command('pull <name>')
+    .summary('Pull a catalog Blueprint')
+    .description('Pull a Blueprint from a catalog into .businesslens/.')
+    .option('--catalog <origin>', 'Catalog origin (default: BUSINESSLENS_CATALOG_URL or https://businesslens.io)')
+    .option('--force', 'Back up and replace a non-empty .businesslens/ directory')
+    .action(async (name: string, options: PullCliOptions, command: Command) => {
+      setExitCode(await runPull(cwdFor(command), name, {
+        catalog: options.catalog,
+        force: Boolean(options.force)
+      }))
+    })
+
+  blueprint
+    .command('contribute')
+    .summary('Contribute a Blueprint')
+    .description('Propose the current Product Model for the Blueprint catalog.')
+    .option('--yes', 'Skip the confirmation prompt')
+    .action(async (options: ContributeCliOptions, command: Command) => {
+      setExitCode(await runContribute(cwdFor(command), { yes: Boolean(options.yes) }))
+    })
+
+  for (const name of ['export', 'open', 'pull', 'contribute']) {
+    retiredCommand(program, name, `blueprint ${name}`)
+  }
+  retiredCommand(program, 'build', 'blueprint export')
+
+  program
+    .command('validate [arguments...]', { hidden: true })
+    .allowUnknownOption(true)
+    .action((_arguments: string[], _options: Record<string, never>, command: Command) => {
+      command.error('error: `businesslens validate` has been renamed. Use `businesslens lint`.')
+    })
+
+  return program
+}
+
+async function main(argv = process.argv): Promise<number> {
+  let exitCode = 0
+  const program = createProgram(code => { exitCode = code })
+
+  if (argv.length === 2) {
+    program.outputHelp()
     return 0
   }
-  if (values.help || !positionals.length) {
-    console.log(HELP)
-    return positionals.length ? 0 : 2
-  }
 
-  // Each of these produces or consumes a Product Report and carries a model
-  // across a repository boundary, which is a different job from the everyday
-  // `install`/`update`/`lint` verbs.
-  //
-  // The bare spellings are gone rather than deprecated. Keeping `export` as an
-  // alias would have blocked reusing that name for a workspace profile later,
-  // and reusing it while an alias existed would silently change a
-  // disclosure-relevant default. A command that no longer exists says so.
-  let command = positionals[0]!
-  let rest = positionals.slice(1)
-  if (command === 'blueprint') {
-    command = rest[0] ?? ''
-    rest = rest.slice(1)
-    if (!BLUEPRINT_COMMANDS.has(command)) {
-      const known = [...BLUEPRINT_COMMANDS].join(', ')
-      console.error(command
-        ? `Unknown blueprint command "${command}". Expected one of: ${known}.`
-        : `blueprint requires a subcommand: ${known}.`)
-      return 2
+  try {
+    await program.parseAsync(argv)
+    return exitCode
+  } catch (error) {
+    if (error instanceof CommanderError) {
+      return error.exitCode === 0 || error.code === 'commander.help' ? 0 : 2
     }
-  } else if (BLUEPRINT_COMMANDS.has(command) || command === 'build') {
-    const moved = command === 'build' ? 'export' : command
-    console.error(`\`businesslens ${command}\` has moved. Use \`businesslens blueprint ${moved}\`.`)
-    return 2
-  }
-
-  if (command === 'validate') {
-    console.error('`businesslens validate` has been renamed. Use `businesslens lint`.')
-    return 2
-  }
-
-  const expected = ARGUMENT_COUNT[command] ?? 0
-  if (rest.length > expected) {
-    console.error(`Unexpected argument "${rest[expected]}".`)
-    return 2
-  }
-  if (rest.length < expected) {
-    console.error(command === 'open'
-      ? 'open requires one local Product Report path.'
-      : 'pull requires one canonical Blueprint name.')
-    return 2
-  }
-
-  const cwd = resolve(process.cwd(), values.cwd || '.')
-  switch (command) {
-    case 'install':
-      return runInstall(cwd, {
-        providers: values.providers,
-        scope: values.scope,
-        project: values.project,
-        global: values.global,
-        user: values.user,
-        yes: values.yes,
-        force: values.force
-      })
-    case 'update':
-      return runUpdate(cwd, {
-        providers: values.providers,
-        scope: values.scope,
-        project: values.project,
-        global: values.global,
-        user: values.user,
-        force: values.force
-      })
-    case 'lint':
-      return runLint(cwd, Boolean(values.json))
-    case 'export':
-      return runExport(cwd)
-    case 'contribute':
-      return runContribute(cwd, { slug: values.slug, yes: values.yes })
-    case 'pull':
-      return runPull(cwd, rest[0]!, {
-        catalog: values.catalog,
-        force: values.force
-      })
-    case 'open':
-      return runOpen(cwd, rest[0]!, values.force)
-    default:
-      console.error(`Unknown command "${command}".\n`)
-      console.log(HELP)
-      return 2
+    console.error(`error: ${(error as Error).message}`)
+    return 1
   }
 }
 
 main().then((code) => {
   process.exitCode = code
 }, (error) => {
-  console.error((error as Error).message)
+  console.error(`error: ${(error as Error).message}`)
   process.exitCode = 1
 })

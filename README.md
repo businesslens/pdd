@@ -34,7 +34,7 @@ resolution loop.
 Install the skills:
 
 ```bash
-npx businesslens@latest install
+npx businesslens install
 ```
 
 Then choose one starting door:
@@ -43,7 +43,7 @@ Then choose one starting door:
   repository behavior.
 - **Blank repository** — `/businesslens-ideate` decides and authors the product
   before implementation.
-- **Blueprint** — `npx businesslens@latest blueprint pull <name>` opens a
+- **Blueprint** — `npx businesslens blueprint pull <name>` opens a
   reviewed starting model.
 
 Codex users invoke skills with `$`, for example `$businesslens-map`.
@@ -79,6 +79,7 @@ drift, before release, or for a named/full current-state audit.
 | Terminal | `npx businesslens install` | Install the three skills |
 | Terminal | `npx businesslens update` | Refresh managed skill installations |
 | Terminal | `npx businesslens lint` | Check Product Model structure; no semantic claim |
+| Terminal | `npx businesslens view` | View the current Product Model privately on localhost |
 | Terminal | `npx businesslens blueprint export` | Compile the model into a source-free Blueprint |
 | Terminal | `npx businesslens blueprint pull <name>` | Pull a catalog Blueprint |
 | Terminal | `npx businesslens blueprint open <report>` | Expand a local Blueprint |
@@ -123,6 +124,19 @@ writes target `AGENTS.md`, `CLAUDE.md`, or root README files.
 - [Skills](./docs/skills.md) · [CLI](./docs/cli.md) ·
   [CI/CD](./docs/ci.md)
 - [Format contract](./spec/format.md)
+
+## Nuxt layers
+
+The package also exposes separately composable Nuxt layers:
+
+- `businesslens/nuxt/report-viewer` renders a Product Report without owning its
+  host navigation or page shell.
+- `businesslens/nuxt/theme` provides the stable BusinessLens palette, type, and
+  semantic UI foundation.
+- `businesslens/nuxt/theme-lab` extends that stable theme with the shared,
+  opt-in background and brand experiments used by the landing site and local
+  report viewer. Its ownership and promotion rules are recorded in
+  [`plans/shared-theme-lab.md`](./plans/shared-theme-lab.md).
 
 ## Safety
 

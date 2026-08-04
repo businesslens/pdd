@@ -1,5 +1,5 @@
-import { execFileSync, execSync, spawnSync } from 'node:child_process'
-import { cpSync, existsSync, mkdtempSync, rmSync } from 'node:fs'
+import { execFileSync, spawnSync } from 'node:child_process'
+import { cpSync, existsSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
@@ -15,9 +15,6 @@ interface CliResult {
 }
 
 function cli(cwd: string, env: NodeJS.ProcessEnv, ...args: string[]): CliResult {
-  // spawnSync rather than execFileSync so stderr is captured on success too —
-  // a command that warns while succeeding is exactly what the deprecated
-  // `build` alias does.
   const result = spawnSync('node', [CLI, ...args], { cwd, env, encoding: 'utf8' })
   return {
     status: result.status ?? 1,
@@ -49,26 +46,82 @@ afterAll(() => {
   rmSync(repo, { recursive: true, force: true })
 })
 
-describe('cli dispatch', () => {
-  it('lists the catalog commands in help and no retired ones', () => {
-    const result = cli(repo, process.env, 'lint', '--help')
-    expect(result.status).toBe(0)
-    expect(result.stdout).toContain('blueprint export')
-    expect(result.stdout).toContain('blueprint open <report>')
-    expect(result.stdout).toContain('blueprint pull <name>')
-    expect(result.stdout).toContain('blueprint contribute [--yes]')
-    expect(result.stdout).toContain('--catalog <origin>')
-    expect(result.stdout).toContain('--cwd <path>')
-    expect(result.stdout).toContain('businesslens-map')
-    expect(result.stdout).toContain('businesslens-verify')
-    expect(result.stdout).not.toContain('businesslens-sync')
+describe('cli help', () => {
+  it('shows concise root help for no arguments, --help, and -h', () => {
+    for (const args of [[], ['--help'], ['-h']]) {
+      const result = cli(repo, process.env, ...args)
+      expect(result.status, args.join(' ')).toBe(0)
+      expect(result.stderr).toBe('')
+      expect(result.stdout).toContain('Usage: businesslens <command> [options]')
+      expect(result.stdout).toContain('install [options]')
+      expect(result.stdout).toContain('update [options]')
+      expect(result.stdout).toContain('lint [options]')
+      expect(result.stdout).toContain('view [options]')
+      expect(result.stdout).toContain('blueprint')
+      expect(result.stdout).toContain('-c, --cwd <path>')
+      expect(result.stdout).not.toContain('-C <path>')
+      expect(result.stdout).toContain('-V, --version')
+      expect(result.stdout.indexOf('Commands:')).toBeLessThan(result.stdout.indexOf('Options:'))
 
-    // Retired with the Platform.
-    expect(result.stdout).not.toContain('login ')
-    expect(result.stdout).not.toContain('--tag <name>')
-    expect(result.stdout).not.toContain('--pull-request <number>')
+      expect(result.stdout).not.toContain('--providers')
+      expect(result.stdout).not.toContain('--catalog')
+      expect(result.stdout).not.toContain('--no-open')
+      expect(result.stdout).not.toContain('Model selection')
+      expect(result.stdout).not.toContain('Agent workflows')
+      expect(result.stdout).not.toContain('businesslens-map')
+    }
   })
 
+  it('shows only view options in view help', () => {
+    const result = cli(repo, process.env, 'view', '--help')
+    expect(result.status).toBe(0)
+    expect(result.stderr).toBe('')
+    expect(result.stdout).toContain('Usage: businesslens view [options]')
+    expect(result.stdout).toContain('--no-open')
+    expect(result.stdout).toContain('--port <port>')
+    expect(result.stdout).toContain('--cwd <path>')
+    expect(result.stdout).not.toContain('--providers')
+    expect(result.stdout).not.toContain('--catalog')
+    expect(result.stdout).not.toContain('Agent workflows')
+  })
+
+  it('shows Blueprint subcommands separately from pull options', () => {
+    const group = cli(repo, process.env, 'blueprint', '--help')
+    expect(group.status).toBe(0)
+    expect(group.stdout).toContain('Usage: businesslens blueprint <command> [options]')
+    expect(group.stdout).toContain('export')
+    expect(group.stdout).toContain('open [options] <report>')
+    expect(group.stdout).toContain('pull [options] <name>')
+    expect(group.stdout).toContain('contribute [options]')
+    expect(group.stdout).not.toContain('--catalog')
+    expect(group.stdout).not.toContain('--force')
+
+    const pull = cli(repo, process.env, 'blueprint', 'pull', '--help')
+    expect(pull.status).toBe(0)
+    expect(pull.stdout).toContain('Usage: businesslens blueprint pull [options] <name>')
+    expect(pull.stdout).toContain('--catalog <origin>')
+    expect(pull.stdout).toContain('--force')
+    expect(pull.stdout).not.toContain('--no-open')
+    expect(pull.stdout).not.toContain('--providers')
+  })
+
+  it('keeps legacy scope shortcuts out of install help', () => {
+    const result = cli(repo, process.env, 'install', '--help')
+    expect(result.status).toBe(0)
+    expect(result.stdout).toContain('--scope <scope>')
+    expect(result.stdout).not.toContain('--project')
+    expect(result.stdout).not.toContain('--global')
+    expect(result.stdout).not.toContain('--user')
+  })
+
+  it('supports the standard short version option', () => {
+    const result = cli(repo, process.env, '-V')
+    expect(result.status).toBe(0)
+    expect(result.stdout.trim()).toMatch(/^\d+\.\d+\.\d+/)
+  })
+})
+
+describe('cli dispatch', () => {
   it('lints structure without emitting branch authority', () => {
     const result = cli(ROOT, process.env, '--cwd', repo, 'lint', '--json')
     expect(result.status).toBe(0)
@@ -77,10 +130,36 @@ describe('cli dispatch', () => {
     expect(output.branch).toBeUndefined()
   })
 
-  it('refuses validate and names lint as the replacement', () => {
-    const result = cli(ROOT, process.env, '--cwd', repo, 'validate')
-    expect(result.status).toBe(2)
-    expect(result.stderr).toContain('Use `businesslens lint`')
+  it('accepts --cwd and -c before or after a command, plus legacy -C', () => {
+    for (const args of [
+      ['--cwd', repo, 'lint', '--json'],
+      ['lint', '--cwd', repo, '--json'],
+      ['-c', repo, 'lint', '--json'],
+      ['lint', '-c', repo, '--json'],
+      ['-C', repo, 'lint', '--json']
+    ]) {
+      const result = cli(ROOT, process.env, ...args)
+      expect(result.status, args.join(' ')).toBe(0)
+      expect(JSON.parse(result.stdout)).toMatchObject({ ok: true, errors: [] })
+    }
+  })
+
+  it('treats the current directory and an explicit --cwd . identically', () => {
+    const nested = mkdtempSync(join(repo, 'nested-product-'))
+    try {
+      cpSync(join(FIXTURE, '.businesslens'), join(nested, '.businesslens'), { recursive: true })
+      writeFileSync(join(nested, '.businesslens', 'config.yaml'), 'schema: 99\nsdd:\n  paths: []\n')
+
+      for (const args of [['lint', '--json'], ['--cwd', '.', 'lint', '--json']]) {
+        const result = cli(nested, process.env, ...args)
+        expect(result.status, args.join(' ')).toBe(1)
+        expect(JSON.parse(result.stdout).errors).toContain(
+          'config.yaml: schema 99 is not supported (expected 3)'
+        )
+      }
+    } finally {
+      rmSync(nested, { recursive: true, force: true })
+    }
   })
 
   it('exports the selected repository into report.json', () => {
@@ -89,10 +168,7 @@ describe('cli dispatch', () => {
     expect(existsSync(join(repo, '.businesslens', 'build', 'report.json'))).toBe(true)
   })
 
-  it('refuses the bare catalog spellings and names the replacement', () => {
-    // Removed rather than aliased. Keeping `export` would have blocked reusing
-    // that name for a source-linked report profile later, and reusing it while an
-    // alias existed would silently change a disclosure-relevant default.
+  it('refuses retired command spellings and names their replacements', () => {
     for (const command of ['export', 'open', 'pull', 'contribute']) {
       const result = cli(ROOT, process.env, '--cwd', repo, command)
       expect(result.status, command).toBe(2)
@@ -100,26 +176,49 @@ describe('cli dispatch', () => {
         `\`businesslens ${command}\` has moved. Use \`businesslens blueprint ${command}\`.`
       )
     }
-    // Nothing ran: no report was produced by the refused invocation.
-    rmSync(join(repo, '.businesslens', 'build'), { recursive: true, force: true })
-    expect(cli(ROOT, process.env, '--cwd', repo, 'export').status).toBe(2)
-    expect(existsSync(join(repo, '.businesslens', 'build', 'report.json'))).toBe(false)
+
+    const build = cli(ROOT, process.env, '--cwd', repo, 'build')
+    expect(build.status).toBe(2)
+    expect(build.stderr).toContain('Use `businesslens blueprint export`')
+
+    const validate = cli(ROOT, process.env, '--cwd', repo, 'validate')
+    expect(validate.status).toBe(2)
+    expect(validate.stderr).toContain('Use `businesslens lint`')
   })
 
-  it('rejects a blueprint invocation with no or an unknown subcommand', () => {
-    const bare = cli(ROOT, process.env, '--cwd', repo, 'blueprint')
-    expect(bare.status).toBe(2)
-    expect(bare.stderr).toContain('blueprint requires a subcommand')
-
-    const unknown = cli(ROOT, process.env, '--cwd', repo, 'blueprint', 'frobnicate')
-    expect(unknown.status).toBe(2)
-    expect(unknown.stderr).toContain('Unknown blueprint command "frobnicate"')
+  it('shows Blueprint help without running anything when the group is bare', () => {
+    const result = cli(ROOT, process.env, '--cwd', repo, 'blueprint')
+    expect(result.status).toBe(0)
+    expect(result.stdout).toContain('Usage: businesslens blueprint <command> [options]')
   })
 
-  it('uses the usage exit code for invalid options, providers, and scopes', () => {
-    const unknownOption = cli(repo, process.env, 'lint', '--frobnicate')
-    expect(unknownOption.status).toBe(2)
+  it('rejects unknown root and Blueprint commands with usage exit code', () => {
+    const root = cli(repo, process.env, 'bogus')
+    expect(root.status).toBe(2)
+    expect(root.stderr).toContain("unknown command 'bogus'")
 
+    const blueprint = cli(repo, process.env, 'blueprint', 'frobnicate')
+    expect(blueprint.status).toBe(2)
+    expect(blueprint.stderr).toContain("unknown command 'frobnicate'")
+  })
+
+  it('rejects options that do not belong to the selected command', () => {
+    const cases = [
+      ['lint', '--force'],
+      ['lint', '--no-open'],
+      ['view', '--providers', 'codex'],
+      ['blueprint', 'export', '--force'],
+      ['blueprint', 'contribute', '--catalog', 'https://example.com'],
+      ['blueprint', 'contribute', '--slug', 'other-name']
+    ]
+    for (const args of cases) {
+      const result = cli(repo, process.env, ...args)
+      expect(result.status, args.join(' ')).toBe(2)
+      expect(result.stderr, args.join(' ')).toContain('unknown option')
+    }
+  })
+
+  it('uses the usage exit code for invalid providers and scopes', () => {
     const unknownProvider = cli(
       repo, process.env, 'install', '--providers', 'frobnicate', '--scope', 'project', '--yes'
     )
@@ -130,46 +229,40 @@ describe('cli dispatch', () => {
       repo, process.env, 'install', '--providers', 'codex', '--scope', 'workspace', '--yes'
     )
     expect(invalidScope.status).toBe(2)
-    expect(invalidScope.stderr).toContain('--scope must be project or global')
+    expect(invalidScope.stderr).toContain('expected "project" or "global"')
   })
 
-  it('retires `build` and points at what replaced it', () => {
-    // `build` now means writing the software a model describes, which this
-    // project deliberately leaves to whatever tool you already use.
+  it('rejects invalid viewer ports as usage errors before loading the model', () => {
+    const empty = mkdtempSync(join(tmpdir(), 'bl-view-port-'))
+    try {
+      for (const value of ['0', '65536', '1.5', 'nope']) {
+        const result = cli(empty, process.env, 'view', '--no-open', '--port', value)
+        expect(result.status, value).toBe(2)
+        expect(result.stderr, value).toContain('expected an integer from 1 to 65535')
+        expect(result.stderr, value).not.toContain('No .businesslens/')
+      }
+    } finally {
+      rmSync(empty, { recursive: true, force: true })
+    }
+  })
+
+  it('does not accept retired commands or options as aliases', () => {
     rmSync(join(repo, '.businesslens', 'build'), { recursive: true, force: true })
-    const result = cli(ROOT, process.env, '--cwd', repo, 'build')
-    expect(result.status).toBe(2)
-    expect(result.stderr).toContain('Use `businesslens blueprint export`')
+    expect(cli(ROOT, process.env, '--cwd', repo, 'export').status).toBe(2)
     expect(existsSync(join(repo, '.businesslens', 'build', 'report.json'))).toBe(false)
+
+    const login = cli(repo, process.env, 'login')
+    expect(login.status).toBe(2)
+    expect(login.stderr).toContain('unknown command')
   })
 
-  it('no longer accepts the retired login command', () => {
-    const result = cli(repo, process.env, 'login')
-    expect(result.status).toBe(2)
-    expect(result.stderr).toContain('Unknown command')
-  })
-
-  it('treats --version as the CLI version now that pull has no version flag', () => {
-    // `pull --version <n>` used to mean a Blueprint version, which required
-    // remapping the flag before parsing. Blueprints have no versions any more.
-    const result = cli(repo, process.env, '--version')
-    expect(result.status).toBe(0)
-    expect(result.stdout.trim()).toMatch(/^\d+\.\d+\.\d+/)
-  })
-
-  it('does not treat option values named pull as the pull command', () => {
+  it('does not treat option values named pull as commands', () => {
     const cwdResult = cli(ROOT, process.env, '--cwd', 'pull', '--version')
     expect(cwdResult.status).toBe(0)
     expect(cwdResult.stdout.trim()).toMatch(/^\d+\.\d+\.\d+/)
 
-    const catalogResult = cli(repo, process.env, '--catalog', 'pull', '--version')
+    const catalogResult = cli(repo, process.env, 'blueprint', 'pull', '--catalog', 'pull', '--version')
     expect(catalogResult.status).toBe(0)
     expect(catalogResult.stdout.trim()).toMatch(/^\d+\.\d+\.\d+/)
-  })
-
-  it('rejects unknown commands with usage exit code', () => {
-    const result = cli(repo, process.env, 'bogus')
-    expect(result.status).toBe(2)
-    expect(result.stderr).toContain('Unknown command "bogus"')
   })
 })

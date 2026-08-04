@@ -12,6 +12,7 @@ const FIXTURE = join(__dirname, 'fixtures', 'fixture-shop')
 const temporaryDirectories: string[] = []
 
 let report: Record<string, unknown>
+let logo: Buffer
 
 function temporary(prefix: string): string {
   const directory = mkdtempSync(join(tmpdir(), prefix))
@@ -31,11 +32,15 @@ function reportResponse(canonicalName = 'fixture-shop'): Response {
   return new Response(JSON.stringify(report), {
     status: 200,
     headers: {
-      'content-type': 'application/vnd.businesslens.report+json; version=6',
+      'content-type': 'application/vnd.businesslens.report+json; version=7',
       'x-businesslens-blueprint': canonicalName,
       'x-businesslens-report-digest': reportDigest(report)
     }
   })
+}
+
+function logoResponse(): Response {
+  return new Response(logo, { status: 200, headers: { 'content-type': 'image/svg+xml' } })
 }
 
 beforeAll(() => {
@@ -43,6 +48,7 @@ beforeAll(() => {
   cpSync(FIXTURE, source, { recursive: true })
   initialize(source)
   report = projectPortableReport(buildProject(source).report) as unknown as Record<string, unknown>
+  logo = readFileSync(join(source, '.businesslens', 'logo.svg'))
 })
 
 afterEach(() => {
@@ -61,7 +67,10 @@ describe('pull', () => {
   it('pulls anonymously from the default catalog and expands the model', async () => {
     const target = temporary('bl-pull-target-')
     let requested: { url: string, init: RequestInit } | undefined
+    const urls: string[] = []
     const fetch = vi.fn(async (url: string, init: RequestInit) => {
+      urls.push(String(url))
+      if (String(url).endsWith('/logo.svg')) return logoResponse()
       requested = { url: String(url), init }
       return reportResponse()
     }) as unknown as typeof globalThis.fetch
@@ -69,11 +78,25 @@ describe('pull', () => {
     expect(await runPull(target, 'fixture-shop', { force: false }, { fetch, env: {} })).toBe(0)
 
     expect(requested?.url).toBe('https://businesslens.io/api/v1/blueprints/fixture-shop/report.json')
+    expect(urls).toContain(
+      'https://raw.githubusercontent.com/businesslens/pdd/main/blueprints/fixture-shop/.businesslens/logo.svg'
+    )
     // No credential is read, sent, or required.
     expect((requested?.init.headers as Record<string, string>).authorization).toBeUndefined()
-    expect((requested?.init.headers as Record<string, string>).accept).toContain('version=6')
+    expect((requested?.init.headers as Record<string, string>).accept).toContain('version=7')
     expect(existsSync(join(target, '.businesslens/product.md'))).toBe(true)
     expect(existsSync(join(target, '.businesslens/screens/product-record.md'))).toBe(true)
+    expect(readFileSync(join(target, '.businesslens/logo.svg'))).toEqual(logo)
+  })
+
+  it('does not require the optional GitHub logo', async () => {
+    const target = temporary('bl-pull-no-logo-')
+    const fetch = vi.fn(async (url: string) => String(url).endsWith('/logo.svg')
+      ? new Response('', { status: 404 })
+      : reportResponse()) as unknown as typeof globalThis.fetch
+
+    expect(await runPull(target, 'fixture-shop', { force: false }, { fetch, env: {} })).toBe(0)
+    expect(existsSync(join(target, '.businesslens/logo.svg'))).toBe(false)
   })
 
   it('identifies itself so catalog pulls are distinguishable from page views', async () => {
@@ -81,7 +104,7 @@ describe('pull', () => {
     let headers: Record<string, string> = {}
     const fetch = vi.fn(async (_url: string, init: RequestInit) => {
       headers = init.headers as Record<string, string>
-      return reportResponse()
+      return String(_url).endsWith('/logo.svg') ? logoResponse() : reportResponse()
     }) as unknown as typeof globalThis.fetch
 
     await runPull(target, 'fixture-shop', { force: false }, { fetch, env: {} })
@@ -90,7 +113,7 @@ describe('pull', () => {
 
   it('writes a model README telling an agent to build the product', async () => {
     const target = temporary('bl-pull-readme-')
-    const fetch = vi.fn(async () => reportResponse()) as unknown as typeof globalThis.fetch
+    const fetch = vi.fn(async (url: string) => String(url).endsWith('/logo.svg') ? logoResponse() : reportResponse()) as unknown as typeof globalThis.fetch
 
     expect(await runPull(target, 'fixture-shop', { force: false }, { fetch, env: {} })).toBe(0)
 
@@ -102,9 +125,11 @@ describe('pull', () => {
 
   it('accepts an arbitrary catalog origin, because no credential is sent', async () => {
     const target = temporary('bl-pull-origin-')
-    let url = ''
+    let reportUrl = ''
     const fetch = vi.fn(async (requestUrl: string) => {
-      url = String(requestUrl)
+      const url = String(requestUrl)
+      if (url.endsWith('/logo.svg')) return logoResponse()
+      reportUrl = url
       return reportResponse()
     }) as unknown as typeof globalThis.fetch
 
@@ -114,14 +139,16 @@ describe('pull', () => {
       { force: false, catalog: 'https://catalog.example.com' },
       { fetch, env: {} }
     )).toBe(0)
-    expect(url.startsWith('https://catalog.example.com/')).toBe(true)
+    expect(reportUrl.startsWith('https://catalog.example.com/')).toBe(true)
   })
 
   it('prefers --catalog over BUSINESSLENS_CATALOG_URL', async () => {
     const target = temporary('bl-pull-precedence-')
-    let url = ''
+    let reportUrl = ''
     const fetch = vi.fn(async (requestUrl: string) => {
-      url = String(requestUrl)
+      const url = String(requestUrl)
+      if (url.endsWith('/logo.svg')) return logoResponse()
+      reportUrl = url
       return reportResponse()
     }) as unknown as typeof globalThis.fetch
 
@@ -131,7 +158,7 @@ describe('pull', () => {
       { force: false, catalog: 'http://localhost:3200' },
       { fetch, env: { BUSINESSLENS_CATALOG_URL: 'https://env.example.com' } }
     )
-    expect(url.startsWith('http://localhost:3200/')).toBe(true)
+    expect(reportUrl.startsWith('http://localhost:3200/')).toBe(true)
   })
 
   it('refuses a plaintext catalog that is not loopback', async () => {

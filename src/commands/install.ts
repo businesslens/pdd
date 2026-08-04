@@ -181,8 +181,6 @@ export async function runInstall(cwd: string, options: InstallOptions = {}): Pro
     if (removedCommands.length > 0) {
       console.log(`Removed retired BusinessLens commands: ${[...new Set(removedCommands)].join(', ')}.`)
     }
-    console.log()
-    console.log('Done! Run /businesslens-map for established code or /businesslens-ideate for a new product.')
     return 0
   } catch (error) {
     console.error((error as Error).message)

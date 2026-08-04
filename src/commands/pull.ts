@@ -1,12 +1,13 @@
-import { join } from 'node:path'
 import { parseCanonicalName } from '../core/canonical-name.js'
 import { resolveCatalogUrl } from '../core/catalog-url.js'
 import { reportDigest } from '../core/report-digest.js'
 import { cliVersion } from '../version.js'
 import { expandProductReport } from './open.js'
 import { UsageError } from '../core/usage-error.js'
+import { MAX_PRODUCT_LOGO_BYTES, validateProductLogo } from '../logo.js'
 
 const MAX_REPORT_BYTES = 8 * 1024 * 1024
+const BLUEPRINT_SOURCE_ROOT = 'https://raw.githubusercontent.com/businesslens/pdd/main/blueprints'
 
 export interface PullOptions {
   catalog?: string
@@ -18,8 +19,8 @@ export interface PullDependencies {
   env: NodeJS.ProcessEnv
 }
 
-async function readLimitedBody(response: Response): Promise<string> {
-  if (!response.body) return ''
+async function readLimitedBytes(response: Response, limit: number, message: string): Promise<Uint8Array> {
+  if (!response.body) return new Uint8Array()
   const reader = response.body.getReader()
   const chunks: Uint8Array[] = []
   let total = 0
@@ -27,9 +28,9 @@ async function readLimitedBody(response: Response): Promise<string> {
     const { done, value } = await reader.read()
     if (done) break
     total += value.byteLength
-    if (total > MAX_REPORT_BYTES) {
+    if (total > limit) {
       await reader.cancel()
-      throw new Error('The Blueprint report exceeds the 8 MiB safety limit.')
+      throw new Error(message)
     }
     chunks.push(value)
   }
@@ -39,7 +40,7 @@ async function readLimitedBody(response: Response): Promise<string> {
     bytes.set(chunk, offset)
     offset += chunk.byteLength
   }
-  return new TextDecoder().decode(bytes)
+  return bytes
 }
 
 function catalogError(status: number, body: string): string {
@@ -63,6 +64,36 @@ function catalogError(status: number, body: string): string {
   return detail && !base.includes(detail) ? `${base} ${detail}` : base
 }
 
+async function fetchOptionalLogo(
+  fetch: typeof globalThis.fetch,
+  blueprint: string
+): Promise<Uint8Array | undefined> {
+  try {
+    const response = await fetch(
+      `${BLUEPRINT_SOURCE_ROOT}/${blueprint}/.businesslens/logo.svg`,
+      {
+        headers: {
+          accept: 'image/svg+xml',
+          'user-agent': `businesslens/${cliVersion()}`
+        },
+        redirect: 'manual',
+        signal: AbortSignal.timeout(15_000)
+      }
+    )
+    if (!response.ok || (response.status >= 300 && response.status < 400)) return undefined
+    const length = Number(response.headers.get('content-length') || 0)
+    if (length > MAX_PRODUCT_LOGO_BYTES) return undefined
+    const logo = await readLimitedBytes(
+      response,
+      MAX_PRODUCT_LOGO_BYTES,
+      'The Product logo exceeds the 256 KiB safety limit.'
+    )
+    return validateProductLogo(logo).length ? undefined : logo
+  } catch {
+    return undefined
+  }
+}
+
 export async function runPull(
   cwd: string,
   name: string,
@@ -81,13 +112,14 @@ export async function runPull(
 
   const blueprint = encodeURIComponent(parsedName)
   const url = `${catalog}/api/v1/blueprints/${blueprint}/report.json`
+  const fetch = dependencies.fetch ?? globalThis.fetch
 
   let response: Response
   let body: string
   try {
-    response = await (dependencies.fetch ?? globalThis.fetch)(url, {
+    response = await fetch(url, {
       headers: {
-        accept: 'application/vnd.businesslens.report+json; version=6, application/json',
+        accept: 'application/vnd.businesslens.report+json; version=7, application/json',
         // Identify the CLI so catalog pulls are distinguishable from browser
         // fetches. Without it every pull is indistinguishable from a page view.
         'user-agent': `businesslens/${cliVersion()}`
@@ -102,7 +134,11 @@ export async function runPull(
     if (length > MAX_REPORT_BYTES) {
       throw new Error('The Blueprint report exceeds the 8 MiB safety limit.')
     }
-    body = await readLimitedBody(response)
+    body = new TextDecoder().decode(await readLimitedBytes(
+      response,
+      MAX_REPORT_BYTES,
+      'The Blueprint report exceeds the 8 MiB safety limit.'
+    ))
   } catch (error) {
     console.error((error as Error).message)
     return 1
@@ -145,11 +181,11 @@ export async function runPull(
     return 1
   }
 
+  const logo = await fetchOptionalLogo(fetch, blueprint)
+
   try {
-    const opened = expandProductReport(cwd, report, options.force)
-    const readmeFile = join(opened.root, 'README.md')
+    const opened = expandProductReport(cwd, report, options.force, logo ? { logo } : {})
     console.log(`Pulled ${parsedName} into ${opened.root}.`)
-    console.log(`Wrote the model README to ${readmeFile}.`)
     return 0
   } catch (error) {
     console.error((error as Error).message)

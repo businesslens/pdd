@@ -1,10 +1,15 @@
 ---
 id: content-feed-reader
+summary: Collect, organize, read, and rediscover syndicated content across web and mobile, with collections you can share.
+category: content
 tags:
   - content
   - curation
   - reading
   - syndication
+authors:
+  - name: BusinessLens
+license: MIT
 limitations:
   - Full-text search covers item titles and body text the product fetched; it does not follow links out to the original page.
   - Sharing is one-directional. A subscriber reads a collection; there is no commenting, reply, or co-editing.

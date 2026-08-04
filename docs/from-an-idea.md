@@ -24,7 +24,7 @@ Use this door when no established implementation exists.
    `.businesslens/`, including its canonical README. Lint checks structure:
 
    ```bash
-   npx businesslens@latest lint
+   npx businesslens lint
    ```
 
 4. Hand the approved Scenario and Business Rule contract to your normal plan/build flow.

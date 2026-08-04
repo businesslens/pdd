@@ -65,7 +65,6 @@ export async function runUpdate(cwd: string, options: UpdateOptions = {}): Promi
     progress?.stop('BusinessLens skills updated.')
 
     console.log(`Updated BusinessLens in: ${results.map(result => formatDisplayPath(dirname(result.skillsDir))).join(', ')}.`)
-    console.log('The product model and AGENTS.md were not changed.')
     return 0
   } catch (error) {
     console.error((error as Error).message)

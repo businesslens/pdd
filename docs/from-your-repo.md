@@ -35,7 +35,7 @@ or deliberately untrusted.
 4. Lint and commit:
 
    ```bash
-   npx businesslens@latest lint
+   npx businesslens lint
    git add .businesslens
    git commit -m "docs: add BusinessLens Product Model"
    ```

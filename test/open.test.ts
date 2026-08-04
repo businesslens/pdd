@@ -7,7 +7,7 @@ import { buildProject } from '../src/commands/export.js'
 import { runOpen } from '../src/commands/open.js'
 import { lsFiles } from '../src/core/git.js'
 import { loadModel } from '../src/core/model.js'
-import { projectPortableReport, type ProductReportV6 } from '../src/core/portable.js'
+import { projectPortableReport, type ProductReportV7 } from '../src/core/portable.js'
 import { lintModel } from '../src/commands/lint.js'
 
 const FIXTURE = join(__dirname, 'fixtures', 'fixture-shop')
@@ -25,7 +25,7 @@ function initialize(cwd: string): void {
   git(cwd, 'commit', '--allow-empty', '-m', 'fixture')
 }
 
-function withoutRepositoryEvidence(report: ProductReportV6): Record<string, any> {
+function withoutRepositoryEvidence(report: ProductReportV7): Record<string, any> {
   const portable = projectPortableReport(report)
   return {
     ...portable,
@@ -193,6 +193,13 @@ describe('open report', () => {
   })
 
   it('writes required classifications and omits absent optional fields', () => {
+    const product = readFileSync(join(target, '.businesslens/product.md'), 'utf8')
+    expect(product).toContain('summary: Browse a product catalog, buy products, and manage the resulting orders.')
+    expect(product).toContain('category: commerce')
+    expect(product).not.toContain('icon:')
+    expect(product).not.toContain('accent:')
+    expect(product).toContain('license: MIT')
+
     const actor = readFileSync(join(target, '.businesslens/actors/shopper.md'), 'utf8')
     expect(actor).toMatch(/^---\nkind: person\nrelationship: external\n---\n/)
 
@@ -245,12 +252,12 @@ describe('open report', () => {
   })
 
   it('rejects historical Product Reports instead of migrating them', async () => {
-    const legacyTarget = mkdtempSync(join(tmpdir(), 'bl-open-v5-'))
+    const legacyTarget = mkdtempSync(join(tmpdir(), 'bl-open-v6-'))
     initialize(legacyTarget)
     try {
       const report = structuredClone(buildProject(source).report) as Record<string, any>
-      report.schemaVersion = '5.0.0'
-      const file = join(legacyTarget, 'v5.json')
+      report.schemaVersion = '6.0.0'
+      const file = join(legacyTarget, 'v6.json')
       writeFileSync(file, JSON.stringify(report))
       vi.spyOn(console, 'error').mockImplementation(() => undefined)
 

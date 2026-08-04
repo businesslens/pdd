@@ -13,6 +13,7 @@ import {
   stringListField
 } from './frontmatter.js'
 import { stem } from './ids.js'
+import { readProductLogo } from './logo-file.js'
 import {
   bulletList, decisionPoints, orderedList, parseMarkdown, screenStates, section
 } from './markdown.js'
@@ -98,10 +99,25 @@ export interface ScenarioKind {
   colorSlot?: number
 }
 
+export interface ProductAuthor {
+  name: string
+  url?: string
+}
+
 export interface PddModel {
   root: string
   config: { schema: number, sddPaths: string[] }
-  product: { id: string, tags: string[], limitations: string[], doc: MarkdownDoc, references: EntityReference[] }
+  product: {
+    id: string
+    summary?: string
+    category?: string
+    tags: string[]
+    authors: ProductAuthor[]
+    license?: string
+    limitations: string[]
+    doc: MarkdownDoc
+    references: EntityReference[]
+  }
   scenarioKinds: ScenarioKind[]
   coverage: {
     status: string
@@ -174,6 +190,14 @@ export function loadModel(cwd: string): PddModel {
     }
   }
 
+  if (existsSync(root)) {
+    try {
+      readProductLogo(cwd)
+    } catch (error) {
+      issues.push(`logo.svg: ${(error as Error).message}`)
+    }
+  }
+
   let config = { schema: 3, sddPaths: [] as string[] }
   const configFile = join(root, 'config.yaml')
   if (existsSync(configFile)) {
@@ -228,16 +252,51 @@ export function loadModel(cwd: string): PddModel {
   }
 
   let product: PddModel['product'] = {
-    id: '', tags: [], limitations: [], doc: { title: '', lead: '', sections: [] }, references: []
+    id: '', tags: [], authors: [], limitations: [], doc: { title: '', lead: '', sections: [] }, references: []
   }
   const productFile = join(root, 'product.md')
   if (existsSync(productFile)) {
     const source = readFileSync(productFile, 'utf8')
     const { data, body } = splitFrontmatter(source, issues, 'product.md')
-    rejectUnknownKeys(data, ['id', 'tags', 'limitations', 'references'], issues, 'product.md')
+    rejectUnknownKeys(
+      data,
+      ['id', 'summary', 'category', 'tags', 'authors', 'license', 'limitations', 'references'],
+      issues,
+      'product.md'
+    )
+    const rawAuthors = data.authors
+    const authors: ProductAuthor[] = []
+    if (rawAuthors !== undefined && rawAuthors !== null) {
+      if (!Array.isArray(rawAuthors)) {
+        issues.push('product.md: "authors" must be a list')
+      } else {
+        for (const [index, item] of rawAuthors.entries()) {
+          if (typeof item !== 'object' || item === null || Array.isArray(item)) {
+            issues.push(`product.md: author ${index + 1} must contain "name" and optional "url"`)
+            continue
+          }
+          const author = item as Record<string, unknown>
+          const unknown = Object.keys(author).filter(key => key !== 'name' && key !== 'url')
+          if (unknown.length) issues.push(`product.md: author ${index + 1} has unknown field(s): ${unknown.join(', ')}`)
+          if (typeof author.name !== 'string') {
+            issues.push(`product.md: author ${index + 1} "name" must be a string`)
+            continue
+          }
+          if (author.url !== undefined && typeof author.url !== 'string') {
+            issues.push(`product.md: author ${index + 1} "url" must be a string`)
+            continue
+          }
+          authors.push({ name: author.name, ...(author.url ? { url: author.url } : {}) })
+        }
+      }
+    }
     product = {
       id: stringField(data, 'id', issues, 'product.md') || '',
+      summary: stringField(data, 'summary', issues, 'product.md'),
+      category: stringField(data, 'category', issues, 'product.md'),
       tags: stringListField(data, 'tags', issues, 'product.md'),
+      authors,
+      license: stringField(data, 'license', issues, 'product.md'),
       limitations: stringListField(data, 'limitations', issues, 'product.md'),
       doc: parseMarkdown(body),
       references: referencesField(data, issues, 'product.md')

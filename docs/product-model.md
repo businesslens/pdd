@@ -30,6 +30,9 @@ must remain true.
 and SDD roots. `coverage.md` describes model breadth.
 `.businesslens/README.md` orients an agent that encounters the model.
 
+Use [`businesslens view`](./cli-view.md) to browse the current model as a local
+report while editing.
+
 ## Authoring conventions
 
 Entity IDs come from lowercase kebab-case filename stems; Journey IDs come from
@@ -92,7 +95,7 @@ The mapped scope and why known gaps remain.
 inspected repository areas, `unmapped` names intentionally absent Product
 scope, `limitations` states what could not be established, and the lead prose
 is the rationale. Coverage has no entity counts or Reference-derived fields;
-entity totals belong to the Product Report Summary.
+entity totals belong to the Product Report Counts.
 
 Availability and Coverage do not claim implementation status. Every status may
 describe planned, implemented, or mixed behavior, and a complete model may have
