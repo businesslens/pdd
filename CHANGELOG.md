@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-08-04
+
+### Fixed
+
+- Compile the public `businesslens/theme-lab/variants` subpath into `dist` so
+  plain Node consumers such as Playwright can import it from `node_modules`
+  without relying on unsupported TypeScript stripping.
+
 ## [0.7.0] - 2026-08-04
 
 ### Added
@@ -246,7 +254,8 @@ Initial public launch of the repository.
   `docs/format.md`.
 - Claude plugin manifest and marketplace entry.
 
-[Unreleased]: https://github.com/businesslens/pdd/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/businesslens/pdd/compare/v0.7.1...HEAD
+[0.7.1]: https://github.com/businesslens/pdd/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/businesslens/pdd/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/businesslens/pdd/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/businesslens/pdd/compare/v0.4.0...v0.5.0
