@@ -14,6 +14,7 @@ concurrency:
 
 permissions:
   contents: write
+  actions: write
 
 jobs:
   release:
@@ -47,8 +48,12 @@ jobs:
           fi
           tag="v${version}"
           if git rev-parse --verify --quiet "refs/tags/$tag" >/dev/null; then
-            echo "Tag $tag already exists." >&2
-            exit 1
+            tagged_commit="$(git rev-list -n 1 "$tag")"
+            if [[ "$tagged_commit" != "$GITHUB_SHA" ]]; then
+              echo "Tag $tag already points at $tagged_commit, not $GITHUB_SHA." >&2
+              exit 1
+            fi
+            echo "Tag $tag already points at this release; continuing idempotently."
           fi
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
@@ -62,5 +67,17 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag --annotate "$TAG" --message "$TAG"
+          if ! git rev-parse --verify --quiet "refs/tags/$TAG" >/dev/null; then
+            git tag --annotate "$TAG" --message "$TAG"
+          fi
           git push origin "$TAG"
+
+      # A tag pushed with GITHUB_TOKEN intentionally does not start another
+      # workflow. Dispatch Publish explicitly so a successful release always
+      # hands its exact tag to the OIDC npm publisher exactly once.
+      - name: Publish tagged release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: gh workflow run publish.yml --ref "$TAG"
