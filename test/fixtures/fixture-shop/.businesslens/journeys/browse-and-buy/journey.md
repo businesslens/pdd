@@ -1,12 +1,21 @@
 ---
-domain: ordering
 actors: [shopper]
-experiences: [storefront]
+capabilities: [catalog-browsing, checkout]
+availability:
+  - interface: customer-web
+    experiences: [storefront]
+  - interface: customer-mobile
+    experiences: [storefront]
 entryPoints:
-  - web: src/routes/storefront.ts
-codeRefs:
-  - src/services/catalog.ts#CatalogService
-  - src/services/orders.ts#OrderService.submit
+  - customer-web: /
+  - customer-mobile: fixture-shop://storefront
+references:
+  - kind: code
+    role: implementation
+    target: src/services/catalog.ts#CatalogService
+  - kind: code
+    role: implementation
+    target: src/services/orders.ts#OrderService.submit
 ---
 
 # Browse and buy

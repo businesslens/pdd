@@ -1,6 +1,10 @@
 ---
-codeRefs:
-  - src/routes/storefront.ts
+kind: person
+relationship: external
+references:
+  - kind: code
+    role: implementation
+    target: src/routes/storefront.ts
 ---
 
 # Shopper

@@ -1,66 +1,75 @@
 ---
 title: verify
-description: Statically verify the implementation delivers the planned map changes — evidence attached, gaps reported honestly.
+description: Inspect model/code alignment and automatically resolve every scoped gap until aligned or explicitly blocked.
 section: open-source
 group: Skills
-order: 14
+order: 26
 ---
 
-# businesslens-verify
+# `businesslens-verify`
 
-Closes the gap between what the map claims and what the code proves. It
-derives the planned delta fresh on every run — the map diff against your
-merge base, plus every journey and scenario still lacking `codeRefs` — so
-the plan can keep evolving while you implement.
-
-## When to use it
-
-- After implementing behavior that was planned in the map with
-  [`businesslens-plan`](./skill-businesslens-plan.md), before merging.
-- To finish a greenfield draft map: a fully verified product moves
-  `coverage.md` off `draft`.
-- Not for unplanned drift — that is
-  [`businesslens-sync`](./skill-businesslens-sync.md)'s direction.
-
-## Invocation
+Use Verify after implementation, after a refactor, when drift is suspected,
+before release, or for a named or full current-state audit.
 
 ```text
-/businesslens-verify
-/businesslens-verify against origin/main
+/businesslens-verify this branch
+/businesslens-verify current
+/businesslens-verify checkout
+/businesslens-verify report only
 ```
 
-Without a base it uses the merge base with the default branch; with no base
-at all (fresh greenfield repo) it treats the whole map as planned.
+Verify lints structure, independently traces each declared
+Interface–Experience pair without executing target code, and classifies
+aligned, model-right, code-right, neither-right, unmapped, and unverifiable
+cases. It groups root decisions and recommends an authority.
 
-## What it reads and writes
+## Scope
 
-Reads the map diff and the implementation. Writes only map files:
-`codeRefs` on met scenarios and journeys (preferring `path#symbol`),
-user-confirmed prose corrections where the implementation deliberately
-diverged, repaired stale refs, and the coverage update on a completed
-greenfield. The met/gap report goes to the conversation — it pastes well
-into a PR description. It never stages files; new implementation paths must
-already be staged or committed before they can be used as evidence.
+- `verify this branch` uses Git changes to choose likely work. It includes
+  model and code additions, edits, deletions, staged files, and working-tree
+  changes.
+- `verify current` or `verify full` inspects present behavior without needing a
+  merge base or diff.
+- `verify <named scope>` inspects one Actor, Interface, Experience, Screen,
+  Domain, Capability, Journey, Scenario, availability pair, or path plus its
+  necessary dependencies.
 
-## How it works
+Git is a scope tool, never an authority tool. A model committed on the default
+branch can still be the approved plan for code added later.
 
-Each planned scenario's Trigger, Steps, and Outcome is the acceptance
-contract. The skill also verifies deleted behavior is absent and checks
-changed access, entry points, capability boundaries, and relationships on
-higher-level entities. It records **met**, **gap**, or **unverifiable** for
-implementation-bearing work and explicitly classifies product-only work as
-**map-only**, then runs the validator through its bundled isolated runner.
-Completion requires all implementation-bearing work to be met, all map-only
-work to be classified, coverage to be off `draft`, no validation errors, and
-no missing-evidence warnings; a draft map's zero exit status alone is not
-completion.
+## Automatic resolution
 
-## Guardrails
+In resolution mode, Verify automatically runs the next bounded phase:
 
-- Never marks a scenario met without direct evidence; tests corroborate but
-  documentation alone proves nothing.
-- Never deletes or waters down planned claims to force validation green.
-- Never modifies implementation code, never executes target code, never
-  contacts the platform.
+- approved code correction through the builder injected by your harness;
+- an approved narrow model delta;
+- intent negotiation followed by model and code changes;
+- scoped mapping of established absent behavior.
 
-Tutorial: [Ship a feature](./tutorial-ship-a-feature.md).
+It re-derives findings after every change. An unchanged recurring gap stops the
+loop, and a missing builder produces a complete handoff packet. The user never
+has to manually invoke Map or Ideate to continue verification. Verify persists
+no receipt, ledger, or lifecycle state.
+
+## Allowed changes
+
+The semantic inspection changes nothing. Automatic resolution may:
+
+- write product meaning only after the user approves an exact delta;
+- delegate implementation to an injected builder under its own repository
+  permissions;
+- refresh optional implementation References after alignment as navigation
+  bookkeeping.
+
+BusinessLens analysis phases never execute target code. The injected builder
+may run the project's normal checks, but must not edit `.businesslens/`.
+
+## Read-only reporting
+
+`businesslens-verify report only` disables model writes, builder delegation,
+and Reference refresh. It returns the same classified findings and
+recommendations without mutations.
+
+Verify runs final structural lint before it finishes. A green standalone lint
+result checks the model's format; only Verify establishes semantic alignment for
+the inspected scope.

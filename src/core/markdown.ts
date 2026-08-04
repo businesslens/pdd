@@ -4,6 +4,17 @@ export interface MarkdownDoc {
   sections: Array<{ heading: string, body: string }>
 }
 
+export interface MarkdownDecisionPoint {
+  title: string
+  question: string
+  branches: Array<{ condition: string, outcome: string }>
+}
+
+export interface MarkdownScreenState {
+  title: string
+  description: string
+}
+
 /**
  * Deterministic parser for the constrained entity-markdown shape:
  * one H1, a lead paragraph, then optional `##` sections.
@@ -66,4 +77,100 @@ export function bulletList(body: string): string[] {
   return body.split('\n')
     .map(line => line.match(/^\s*[-*]\s+(.*)$/)?.[1]?.trim())
     .filter((item): item is string => Boolean(item))
+}
+
+/** Preserve all unrecognized H2 sections as canonical Markdown. */
+export function supportingContent(doc: MarkdownDoc, recognizedHeadings: string[]): string {
+  const recognized = new Set(recognizedHeadings.map(heading => heading.toLowerCase()))
+  return doc.sections
+    .filter(candidate => !recognized.has(candidate.heading.toLowerCase()))
+    .map(candidate => `## ${candidate.heading}${candidate.body ? `\n\n${candidate.body}` : ''}`)
+    .join('\n\n')
+}
+
+/**
+ * Parse the constrained Decision points section:
+ * H3 title, question prose, then `condition → outcome` bullet branches.
+ */
+export function decisionPoints(
+  body: string,
+  issues: string[],
+  label: string
+): MarkdownDecisionPoint[] {
+  if (!body.trim()) return []
+  const lines = body.split('\n')
+  const chunks: Array<{ title: string, lines: string[] }> = []
+  let current: { title: string, lines: string[] } | undefined
+
+  for (const line of lines) {
+    const heading = line.match(/^### (.+)$/)
+    if (heading) {
+      if (current) chunks.push(current)
+      current = { title: heading[1]!.trim(), lines: [] }
+      continue
+    }
+    if (!current) {
+      if (line.trim()) issues.push(`${label}: "## Decision points" content must begin with an H3 title`)
+      continue
+    }
+    current.lines.push(line)
+  }
+  if (current) chunks.push(current)
+
+  return chunks.map((chunk) => {
+    const questionLines: string[] = []
+    const branches: Array<{ condition: string, outcome: string }> = []
+    for (const line of chunk.lines) {
+      const bullet = line.match(/^\s*[-*]\s+(.+)$/)
+      if (!bullet) {
+        if (!branches.length) questionLines.push(line)
+        else if (line.trim()) issues.push(`${label}: decision "${chunk.title}" has prose after its branches`)
+        continue
+      }
+      const branch = bullet[1]!.split(/\s*(?:→|->)\s*/, 2)
+      if (branch.length !== 2 || !branch[0]?.trim() || !branch[1]?.trim()) {
+        issues.push(`${label}: decision "${chunk.title}" branch must use "condition → outcome"`)
+        continue
+      }
+      branches.push({ condition: branch[0].trim(), outcome: branch[1].trim() })
+    }
+    const question = questionLines.join('\n').trim()
+    if (!question) issues.push(`${label}: decision "${chunk.title}" needs a question`)
+    if (branches.length < 2) issues.push(`${label}: decision "${chunk.title}" needs at least two branches`)
+    return { title: chunk.title, question, branches }
+  })
+}
+
+/** Parse Screen product states: one H3 name followed by non-empty prose. */
+export function screenStates(
+  body: string,
+  issues: string[],
+  label: string
+): MarkdownScreenState[] {
+  if (!body.trim()) return []
+  const lines = body.split('\n')
+  const chunks: Array<{ title: string, lines: string[] }> = []
+  let current: { title: string, lines: string[] } | undefined
+
+  for (const line of lines) {
+    const heading = line.match(/^### (.+)$/)
+    if (heading) {
+      if (current) chunks.push(current)
+      current = { title: heading[1]!.trim(), lines: [] }
+      continue
+    }
+    if (!current) {
+      if (line.trim()) issues.push(`${label}: "## Product states" content must begin with an H3 title`)
+      continue
+    }
+    current.lines.push(line)
+  }
+  if (current) chunks.push(current)
+
+  return chunks.map((chunk) => {
+    const description = chunk.lines.join('\n').trim()
+    if (!chunk.title) issues.push(`${label}: product state needs a title`)
+    if (!description) issues.push(`${label}: product state "${chunk.title}" needs a description`)
+    return { title: chunk.title, description }
+  })
 }

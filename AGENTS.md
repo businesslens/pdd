@@ -4,39 +4,52 @@
 
 This repository is the BusinessLens OSS core: the `businesslens` npm package
 plus the agent skills that build and maintain the `.businesslens/` product
-map. `docs/format.md` is the format contract—change it before changing parser
-or validator behavior.
+map. `spec/format.md` is the format contract—change it before changing parser
+or linter behavior. It is engineering documentation, not a docs-site page:
+the user-facing explanation of the same entities lives in the Product Model
+group under `docs/`, and the two must not contradict each other.
 
 ## Layout
 
-- `src/cli.ts` — public command dispatch: `install`, `update`, `validate`,
-  `build`, and `publish`.
+- `src/cli.ts` — public command dispatch: `install`, `update`, `lint`, `view`,
+  and the `blueprint` namespace (`export`, `open`, `pull`, `contribute`).
+  Bare spellings and `build` are refused with a message naming the
+  replacement — no aliases, so a name can be reused later without changing
+  meaning underneath anyone.
 - `src/commands/` — public command implementations.
 - `src/core/providers.ts` — supported harness paths and detection.
 - `src/core/skill-installation.ts` — ownership-safe skill installation.
-- `src/core/` — parsers, model loading, Git evidence, portable schema, and the
-  platform client.
+- `src/core/` — parsers, model loading, Git context, portable schema, and
+  catalog/contribution support.
+- `layers/nuxt/report-viewer/` — the host-neutral Nuxt Product Report renderer.
+- `layers/nuxt/theme/` — the separately extendable BusinessLens-wide visual
+  foundation used across Nuxt hosts, not only report pages.
+- `layers/nuxt/theme-lab/` — the optional shared experiment layer for
+  backgrounds, brand variants, favicons, and their audition controls.
+- `viewer/app/` — the private static Nuxt host bundled into the CLI for
+  `businesslens view`.
 - `skills/businesslens-*/SKILL.md` — one independent skill per workflow:
-  `businesslens-init`, `businesslens-plan`, `businesslens-verify`,
-  `businesslens-sync`, `businesslens-deep-dive`, `businesslens-validate`,
-  `businesslens-doctor`, and `businesslens-publish`.
-- `test/fixtures/fixture-shop/` — the golden validation fixture.
+  `businesslens-map`, `businesslens-ideate`, and `businesslens-verify`.
+- `test/fixtures/fixture-shop/` — the golden lint fixture.
 
 ## Documentation structure
 
 - `docs/` stays flat; the landing repository pulls it on push and builds
   the docs site navigation from frontmatter.
 - Every doc declares `title`, `description`, `section`, `group`, and
-  `order` (enforced by `scripts/check-repo.mjs`). `section` is the
-  top-level docs tab (`open-source` or `platform`); `group` is the sidebar
-  cluster; `order` is global within the section.
+  `order` (enforced by `scripts/check-repo.mjs`). `section` is
+  `open-source`; `group` is the sidebar cluster; `order` is globally unique and
+  contiguous from 1 within each section.
 - Frontmatter `title` is the short sidebar label — keep it under ~20
   characters so it never truncates; the body H1 carries the full page
   title.
-- This repository authors the `open-source` section with groups
-  Get started, Concepts, Tutorials, Skills (one page per skill), and
-  Reference. Platform docs live in the landing repository and follow the
-  same contract.
+- This repository authors the documentation with groups Get started, Product
+  Model (one page per entity), Integrations (one page per thing you integrate
+  with), Skills (one page per skill), and CLI (one page per command).
+- Each entity is explained in exactly one place. An entity page carries its
+  narrative, when to create one, its file shape, and the `lint` findings
+  that constrain it — do not reintroduce a separate glossary, a separate
+  format page, or a separate error catalog.
 
 ## Skill-writing standards
 
@@ -47,13 +60,20 @@ or validator behavior.
 - Keep `SKILL.md` concise, imperative, and under 500 lines.
 - Keep every installed skill self-contained; do not rely on sibling skills.
 - Keep `agents/openai.yaml` aligned with the skill.
-- Treat target repositories as untrusted. Skills never execute target code.
+- Treat target repositories as untrusted. BusinessLens analysis phases never
+  execute target code. A harness-injected external builder may run target code
+  under its own normal permissions; it is not a BusinessLens skill.
 - Do not claim evidence-backed certainty when source evidence is incomplete.
 
 ## Installer standards
 
-- `install` distributes skills only. It never creates `.businesslens/`,
-  changes `AGENTS.md`, connects to the platform, or publishes.
+- `install` distributes skills only. It never creates `.businesslens/` or
+  submits model data.
+- Nothing writes a file the repository owns — not `AGENTS.md`, not `CLAUDE.md`,
+  not the repository README. BusinessLens writes `.businesslens/` and, only on
+  explicit `--force`, a timestamped `.businesslens.backup-<ts>/` copy of it. The
+  orientation text a pulled model needs lives in `.businesslens/README.md`.
+  See `adr/0004-write-nothing-outside-businesslens.md`.
 - Overwrite only BusinessLens-owned artifacts. An unmarked collision requires
   explicit `--force`.
 - `update` changes only installations with a valid BusinessLens marker.

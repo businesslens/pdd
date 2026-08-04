@@ -1,181 +1,60 @@
 ---
-title: CLI reference
-description: Commands, options, and exit codes for the businesslens CLI.
+title: Overview
+description: Install skills, lint and view a Product Model locally, and move Blueprints between repositories with the BusinessLens CLI.
 section: open-source
-group: Reference
-order: 21
+group: CLI
+order: 27
 ---
 
-# CLI reference
+# BusinessLens CLI
 
-`npx businesslens@latest <command>` requires Node.js 20.12 or newer.
-
-Exit codes are `0` for success, `1` for failure, and `2` for invalid usage.
-Pass `--cwd <path>` to run a command against a repository other than the
-current directory.
-
-## `install`
-
-Install the eight bundled BusinessLens skills:
+Run the current package without a global install:
 
 ```bash
-npx businesslens@latest install
+npx businesslens <command> [options]
 ```
 
-The interactive flow detects harnesses, lets you customize the selection,
-asks for project or global scope, installs the eight `businesslens-*`
-skills, and records an ownership/version marker beside them. Supported
-providers, their paths, and scope guidance live in
-[Installation](./installation.md). The installer does not create
-`.businesslens/`, alter `AGENTS.md`, install hooks, connect to the
-platform, or publish data.
-
-Options:
-
-| Option | Meaning |
+| Command | Purpose |
 | --- | --- |
-| `--providers <list>` | Comma-separated `claude,codex,cursor,gemini,github` |
-| `--scope project\|global` | Choose the installation scope |
-| `--project` | Shortcut for project scope |
-| `--global`, `--user` | Shortcut for global scope |
-| `--yes` | Accept detected providers and default to project scope |
-| `--force` | Replace an unmarked colliding `businesslens-*` directory |
+| [`install`](./cli-install.md) | Install map, ideate, and verify |
+| [`update`](./cli-update.md) | Refresh marked skill installations |
+| [`lint`](./cli-lint.md) | Check Product Model structure without semantic claims |
+| [`view`](./cli-view.md) | Render the current Product Model on localhost without exporting it |
+| [`blueprint export`](./cli-export.md) | Compile a portable Product Report (a Blueprint) |
+| [`blueprint open`](./cli-open.md) | Expand a local Blueprint into `.businesslens/` |
+| [`blueprint pull`](./cli-pull.md) | Pull a catalog Blueprint by name |
+| [`blueprint contribute`](./cli-contribute.md) | Propose a Blueprint by pull request |
 
-Example:
-
-```bash
-npx businesslens@latest install \
-  --providers claude,codex \
-  --scope project \
-  --yes
-```
-
-## `update`
-
-Refresh every managed BusinessLens installation found in the current project
-and user scope:
+Global options are `-c, --cwd <path>`, `-h, --help`, and `-V, --version`.
+Each command's help lists only the arguments and options that command accepts:
 
 ```bash
-npx businesslens@latest update
+npx businesslens view --help
+npx businesslens blueprint pull --help
 ```
 
-Use `--scope project|global`, its `--project`/`--global` shortcuts, or
-`--providers <list>` to narrow the update. Update only replaces skills listed
-in a valid `.businesslens-install.json` marker. It never changes product-map
-files or repository instructions.
+## Choosing the Product Model
 
-## `validate`
+`lint`, `view`, `blueprint export`, and `blueprint contribute` start from the
+current directory. If that directory directly contains `.businesslens/`, that
+model is used; otherwise BusinessLens checks the Git repository root. This lets
+a nested Blueprint take precedence when the command runs from its directory,
+while ordinary repository subdirectories still use the repository model.
+
+Pass `-c, --cwd <path>` to run from another directory. `--cwd .` is identical
+to omitting the option. Point to the directory containing `.businesslens/`, not
+to `.businesslens/` itself.
 
 ```bash
-npx businesslens@latest validate
-npx businesslens@latest validate --json
+# A nested Blueprint in the current repository
+npx businesslens view --cwd ./blueprints/content-feed-reader
+
+# A model in another directory or repository
+npx businesslens lint --cwd ../fixture-shop --json
 ```
 
-Validation checks:
+For `blueprint open` and `blueprint pull`, `--cwd` is instead the exact target
+directory where `.businesslens/` will be created. For `install` and `update`, it
+is the project used for harness detection and project-scoped skill installation.
 
-- required top-level files and parseable frontmatter;
-- lowercase kebab-case IDs;
-- actor, experience, domain, journey, and taxonomy relations;
-- at least one experience;
-- at least one scenario per journey;
-- globally unique scenario IDs;
-- required scenario sections;
-- journey and scenario `codeRefs` — while `coverage.md` is `status: draft`
-  (a planned, not-yet-implemented map) missing codeRefs are warnings
-  instead of errors;
-- `codeRef` paths against `git ls-files`;
-- dangling local links as warnings.
-
-On a feature branch, `needs at least one codeRef` errors on freshly planned
-entities are expected — they list the behavior the implementation still has
-to evidence (see [How BusinessLens works](./guide.md)).
-
-JSON output is:
-
-```json
-{
-  "ok": true,
-  "errors": [],
-  "warnings": [],
-  "counts": {
-    "actors": 2,
-    "experiences": 2,
-    "domains": 2,
-    "journeys": 3,
-    "scenarios": 8
-  }
-}
-```
-
-The `businesslens-validate` agent skill runs this command and explains the
-result without changing files. Use `businesslens-doctor` for deeper drift or
-coverage investigation and explicitly requested repairs.
-
-## `build`
-
-```bash
-npx businesslens@latest build
-```
-
-Compiles `.businesslens/` into the portable project document at
-`.businesslens/build/project.json` without contacting the platform. Use it as
-a local or CI dry run of exactly what `publish` would submit.
-
-Building pins provenance to the current commit and refuses to run when:
-
-- the tracked worktree has uncommitted changes;
-- `.businesslens/` contains untracked or modified files;
-- `coverage.md` has `status: draft` — a planned map has no evidence to
-  publish; verify the implementation and move coverage off draft first;
-- `HEAD` is detached instead of on a named branch;
-- `origin` does not normalize to a credential-free HTTPS URL.
-
-`.businesslens/build/` and `.businesslens/cache/` are CLI outputs and should
-stay gitignored. The CLI refuses to write these outputs through symbolic
-links.
-
-## `publish`
-
-```bash
-export BUSINESSLENS_API_KEY=...   # workspace API key from the platform
-npx businesslens@latest publish
-npx businesslens@latest publish --yes
-```
-
-Runs `build`, then submits the compiled project to the platform configured in
-`.businesslens/config.yaml` (`platform.url`, default
-`https://app.businesslens.io`) as a snapshot pinned to the current commit.
-Agent sessions should invoke `businesslens-publish`, whose bundled runner
-isolates the npm package from target-local binaries and configuration.
-
-For credential safety, `platform.url` accepts only the official origin or a
-literal loopback development host. Local development can use HTTP and any
-port:
-
-```yaml
-platform:
-  url: http://localhost:3000
-```
-
-`127.x.x.x` and `::1` are also accepted. Remote custom origins, URL paths,
-query strings, fragments, and embedded credentials are rejected before any
-network request.
-
-- The key is read only from the `BUSINESSLENS_API_KEY` environment variable.
-- Without `--yes` the CLI asks for confirmation; in a non-interactive session
-  it refuses with exit code `2`, so agents and CI must pass `--yes`.
-- Publishing is a single submission call. Every publish reports a new
-  immutable version into the current branch's track; versions are never
-  replaced, and a failed publish is safe to simply re-run.
-
-Failure responses:
-
-| Status | Meaning |
-| --- | --- |
-| `401` | The platform rejected the API key; check `BUSINESSLENS_API_KEY` |
-| `403` | The key cannot submit projects; create a workspace project key |
-| `409` | Submission conflicts with the project (for example the declared repository or branch does not match — the error lists the conflicts) |
-| `400` | The payload was rejected; the error lists the map issues to fix |
-
-The `businesslens-publish` agent skill wraps this command with preflight
-checks and never runs without explicit user intent.
+Exit codes: `0` success, `1` operation failure, and `2` invalid usage.

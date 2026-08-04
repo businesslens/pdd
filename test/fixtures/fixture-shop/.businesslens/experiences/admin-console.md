@@ -1,9 +1,9 @@
 ---
 actors: [store-admin]
+interfaces: [admin-web]
 access: restricted
 entryPoints:
-  - web: /admin
-exit: ""
+  - admin-web: /admin
 ---
 
 # Admin console

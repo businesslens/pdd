@@ -32,25 +32,33 @@ export interface Provenance {
   repositoryUrl: string
   branch: string
   commit: string
+  commitMessage?: string
   committedAt: string
 }
 
-/** Pin the repository revision. Requires a clean tracked worktree and a named branch. */
-export function provenance(cwd: string, options: { requireClean?: boolean } = {}): Provenance {
+/** Pin the repository revision. Detached HEAD is allowed only with an explicit ref label. */
+export function provenance(
+  cwd: string,
+  options: { requireClean?: boolean, detachedHeadName?: string } = {}
+): Provenance {
   const root = repoRoot(cwd)
   if (options.requireClean !== false && git(root, 'status', '--porcelain', '--untracked-files=no')) {
-    throw new Error('Tracked files have uncommitted changes. Commit or stash them so the map matches the pinned revision.')
+    throw new Error('Tracked files have uncommitted changes. Commit or stash them so the model matches the pinned revision.')
   }
   if (options.requireClean !== false && git(root, 'status', '--porcelain', '--untracked-files=all', '--', '.businesslens')) {
-    throw new Error('The authored .businesslens/ map has uncommitted or untracked files. Commit it so the published map exists at the pinned revision.')
+    throw new Error('The authored .businesslens/ Product Model has uncommitted or untracked files. Commit it so the reported model exists at the pinned revision.')
   }
   const repositoryUrl = normalizeRepositoryUrl(git(root, 'remote', 'get-url', 'origin'))
-  const branch = git(root, 'rev-parse', '--abbrev-ref', 'HEAD')
+  let branch = git(root, 'rev-parse', '--abbrev-ref', 'HEAD')
   if (branch === 'HEAD') {
-    throw new Error('The repository is in detached HEAD state. Check out the branch you want BusinessLens to track.')
+    if (!options.detachedHeadName) {
+      throw new Error('The repository is in detached HEAD state. Check out a branch, or publish an exact tag with --tag.')
+    }
+    branch = options.detachedHeadName
   }
   const commit = git(root, 'rev-parse', 'HEAD')
+  const commitMessage = git(root, 'show', '-s', '--format=%s', 'HEAD')
   const committedAt = git(root, 'show', '-s', '--format=%cI', 'HEAD')
   const repository = new URL(repositoryUrl).pathname.replace(/^\//, '')
-  return { repository, repositoryUrl, branch, commit, committedAt }
+  return { repository, repositoryUrl, branch, commit, commitMessage, committedAt }
 }

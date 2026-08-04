@@ -20,6 +20,7 @@ import {
   installSkillsToTarget
 } from '../core/skill-installation.js'
 import { cliVersion } from '../version.js'
+import { UsageError } from '../core/usage-error.js'
 
 export interface InstallOptions {
   providers?: string
@@ -40,16 +41,16 @@ function resolveScope(options: InstallOptions): InstallScope | undefined {
     options.project ? 'project' : undefined,
     options.global || options.user ? 'global' : undefined
   ].filter(Boolean)
-  if (aliases.length > 1) throw new Error('Choose only one of --project, --global, or --user.')
+  if (aliases.length > 1) throw new UsageError('Choose only one of --project, --global, or --user.')
 
   const explicit = options.scope?.trim().toLowerCase()
   if (explicit && explicit !== 'project' && explicit !== 'global' && explicit !== 'user') {
-    throw new Error('--scope must be project or global.')
+    throw new UsageError('--scope must be project or global.')
   }
   const normalized = explicit === 'user' ? 'global' : explicit
   const alias = aliases[0]
   if (normalized && alias && normalized !== alias) {
-    throw new Error('--scope conflicts with the selected scope flag.')
+    throw new UsageError('--scope conflicts with the selected scope flag.')
   }
   return (normalized || alias) as InstallScope | undefined
 }
@@ -180,11 +181,9 @@ export async function runInstall(cwd: string, options: InstallOptions = {}): Pro
     if (removedCommands.length > 0) {
       console.log(`Removed retired BusinessLens commands: ${[...new Set(removedCommands)].join(', ')}.`)
     }
-    console.log()
-    console.log('Done! Run /businesslens-init in your AI harness.')
     return 0
   } catch (error) {
     console.error((error as Error).message)
-    return 1
+    return error instanceof UsageError ? 2 : 1
   }
 }

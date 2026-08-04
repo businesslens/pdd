@@ -3,11 +3,11 @@ import { cpSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync }
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { buildProject } from '../src/commands/build.js'
+import { buildProject } from '../src/commands/export.js'
 import { loadModel } from '../src/core/model.js'
-import { validateModel } from '../src/commands/validate.js'
+import { lintModel } from '../src/commands/lint.js'
 import { lsFiles } from '../src/core/git.js'
-import { PortableProjectV3Schema } from '../src/core/portable.js'
+import { ProductReportV7Schema } from '../src/core/portable.js'
 
 const FIXTURE = join(__dirname, 'fixtures', 'fixture-shop')
 
@@ -33,32 +33,79 @@ afterAll(() => {
 })
 
 describe('end to end on a real git repo', () => {
-  it('validates the fixture against real git ls-files', () => {
-    const result = validateModel(loadModel(repo), lsFiles(repo))
+  it('lints the fixture against real git ls-files', () => {
+    const result = lintModel(loadModel(repo), lsFiles(repo))
     expect(result.errors).toEqual([])
   })
 
-  it('builds a schema-valid portable project deterministically', () => {
+  it('builds a schema-valid source-free report deterministically', () => {
     const first = buildProject(repo)
     const output = JSON.parse(readFileSync(first.outputFile, 'utf8'))
-    const parsed = PortableProjectV3Schema.parse(output)
+    const parsed = ProductReportV7Schema.parse(output)
     expect(parsed.id).toBe('fixture-shop')
-    expect(parsed.summary).toEqual({ actors: 2, experiences: 2, domains: 2, journeys: 2, scenarios: 3 })
-    expect(parsed.model.journeys[0]!.experienceIds).toEqual(['storefront'])
-    expect(parsed.model.actors.find(actor => actor.id === 'shopper')?.codeRefs).toEqual([
-      { path: 'src/routes/storefront.ts' }
+    expect(parsed).toMatchObject({
+      schemaVersion: '7.0.0',
+      summary: 'Browse a product catalog, buy products, and manage the resulting orders.',
+      category: 'commerce',
+      authors: [{ name: 'BusinessLens' }],
+      license: 'MIT'
+    })
+    expect(parsed.counts).toEqual({
+      actors: 2,
+      interfaces: 3,
+      experiences: 2,
+      screens: 1,
+      domains: 2,
+      capabilities: 3,
+      journeys: 2,
+      scenarios: 3,
+      businessRules: 2
+    })
+    expect(parsed.model.journeys[0]!.availability).toEqual([
+      { interfaceId: 'customer-mobile', experienceIds: ['storefront'] },
+      { interfaceId: 'customer-web', experienceIds: ['storefront'] }
     ])
-    expect(parsed.model.domains.find(domain => domain.id === 'catalog')?.codeRefs).toEqual([
-      { path: 'src/services/catalog.ts' }
+    const screen = parsed.model.screens.find(item => item.id === 'product-record')
+    expect(screen).toMatchObject({
+      availability: [
+        { interfaceId: 'customer-mobile', experienceIds: ['storefront'] },
+        { interfaceId: 'customer-web', experienceIds: ['storefront'] }
+      ],
+      capabilityIds: ['catalog-browsing'],
+      scenarioIds: ['browse-catalog'],
+      information: ['Product name and description', 'Price and availability']
+    })
+    expect(screen?.entryPoints.map(point => point.path)).toEqual([
+      '/products/:id',
+      'fixture-shop://products/:id'
     ])
-    expect(parsed.coverage.mapped).toMatchObject({ actors: 1, domains: 2 })
-    expect(parsed.source.repositoryUrl).toBe('https://github.com/example/fixture-shop')
+    expect(screen?.references).toEqual([{
+      kind: 'visual',
+      role: 'intent',
+      target: 'https://example.com/designs/product-record',
+      title: 'Product record visual reference'
+    }])
+
+    // Export produces a Blueprint with only portable references. The fixture's
+    // model carries code references, but none survive the projection.
+    expect(parsed.referenceProfile).toBe('portable')
+    const references = [parsed.references, ...Object.values(parsed.model).map(entry =>
+      Array.isArray(entry) ? entry.flatMap(item => item.references ?? []) : []
+    )].flat()
+    expect(references.some(reference => reference.kind === 'code')).toBe(false)
+    expect(references.some(reference => reference.role === 'implementation')).toBe(false)
+    expect(parsed.coverage.sourceAreas).toEqual([])
+    expect(parsed.model.businessRules.find(rule => rule.id === 'payment-before-confirmation')?.capabilityIds)
+      .toEqual(['checkout'])
+    expect(parsed.model.scenarios.find(scenario => scenario.id === 'complete-checkout')?.decisionPoints)
+      .toHaveLength(1)
+    expect(JSON.stringify(parsed)).not.toContain('github.com/example/fixture-shop')
 
     const second = buildProject(repo)
-    expect(JSON.stringify(second.project)).toBe(JSON.stringify(first.project))
+    expect(JSON.stringify(second.report)).toBe(JSON.stringify(first.report))
   })
 
-  it('refuses to build a draft (planned) map', () => {
+  it('builds a draft planned model', () => {
     const isolated = mkdtempSync(join(tmpdir(), 'bl-e2e-draft-'))
     try {
       cpSync(FIXTURE, isolated, { recursive: true })
@@ -72,29 +119,37 @@ describe('end to end on a real git repo', () => {
       sh(isolated, 'git', 'remote', 'add', 'origin', 'https://github.com/example/fixture-shop.git')
       sh(isolated, 'git', 'add', '.')
       sh(isolated, 'git', 'commit', '-m', 'fixture')
-      expect(() => buildProject(isolated)).toThrow(/draft/)
+      expect(buildProject(isolated).report.coverage.status).toBe('draft')
     } finally {
       rmSync(isolated, { recursive: true, force: true })
     }
   })
 
-  it('refuses to build with a dirty tracked worktree', () => {
+  it('build remains source-free and works with a dirty tracked worktree', () => {
     sh(repo, 'bash', '-c', 'echo "// dirty" >> src/models/order.ts')
-    expect(() => buildProject(repo)).toThrow(/uncommitted changes/)
+    expect(buildProject(repo).report.id).toBe('fixture-shop')
     sh(repo, 'git', 'checkout', '--', 'src/models/order.ts')
   })
 
-  it('refuses to build when authored product-map files are untracked', () => {
+  it('build validates untracked authored product-model files without requiring publish provenance', () => {
     const untracked = join(repo, '.businesslens/actors/uncommitted.md')
-    writeFileSync(untracked, '# Uncommitted actor\n\nA map entity that does not exist at HEAD.\n')
-    expect(() => buildProject(repo)).toThrow(/authored \.businesslens\/ map has uncommitted or untracked files/)
+    writeFileSync(untracked, `---
+kind: person
+relationship: external
+---
+
+# Uncommitted actor
+
+A model entity that does not exist at HEAD.
+`)
+    expect(buildProject(repo).report.model.actors.some(actor => actor.id === 'uncommitted')).toBe(true)
     rmSync(untracked)
   })
 
   it('refuses to overwrite a generated-output symlink', () => {
     const external = mkdtempSync(join(tmpdir(), 'bl-external-'))
     const target = join(external, 'do-not-overwrite.json')
-    const output = join(repo, '.businesslens/build/project.json')
+    const output = join(repo, '.businesslens/build/report.json')
     writeFileSync(target, 'keep me\n')
     rmSync(output, { force: true })
     symlinkSync(target, output)
@@ -118,9 +173,9 @@ describe('end to end on a real git repo', () => {
 
     try {
       expect(() => buildProject(repo)).toThrow(/symbolic link/)
-      expect(() => readFileSync(join(external, 'project.json'), 'utf8')).toThrow()
+      expect(() => readFileSync(join(external, 'report.json'), 'utf8')).toThrow()
     } finally {
-      rmSync(buildDir, { force: true })
+      rmSync(buildDir, { recursive: true, force: true })
       rmSync(external, { recursive: true, force: true })
     }
   })

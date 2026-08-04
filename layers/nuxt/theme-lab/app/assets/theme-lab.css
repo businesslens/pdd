@@ -1,0 +1,177 @@
+/*
+  Shared BusinessLens presentation variants, still under evaluation.
+
+  The stable palette and type come from businesslens/nuxt/theme —
+  this optional lab only chooses what opted-in hosts are made of. The light and
+  dark treatments are
+  selected independently via `<html data-bg-light="…" data-bg-dark="…">`,
+  both set from cookies during SSR so switching never flashes the previous
+  background.
+
+  These blocks override Nuxt UI's *semantic* tokens (`--ui-bg`, `--ui-text-*`,
+  `--ui-border-*`), which is the supported extension point — the same mechanism
+  Nuxt UI uses for its own `.dark` block. They deliberately do not touch the
+  colour ramps; those come from the shared theme.
+
+  Contrast: each variant carries its own text, border and primary values rather
+  than sharing one set. A `--ui-text-dimmed` that clears AA on near-white bone
+  is far too pale on mid-tone parchment. Values are checked against the
+  *darkest* surface each variant paints text on — usually `bg-accented`, or the
+  dark end of a gradient — not just the base colour.
+
+  Once a background wins, promote its stable values to the theme and delete the
+  rejected variants from this lab.
+*/
+
+:root {
+  --businesslens-theme-lab-row-height: 2.75rem;
+  --businesslens-theme-lab-height: 0px;
+  --businesslens-theme-lab-gradient: linear-gradient(
+    135deg,
+    var(--color-brass-700),
+    var(--color-brass-600) 50%,
+    var(--color-brass-400)
+  );
+  --businesslens-page-glows:
+    radial-gradient(
+      circle at 18% 18%,
+      color-mix(in srgb, var(--color-brass-500) 6%, transparent),
+      transparent 30rem
+    ),
+    radial-gradient(
+      circle at 82% 32%,
+      color-mix(in srgb, var(--color-terracotta-500) 7%, transparent),
+      transparent 34rem
+    );
+}
+
+:root[data-businesslens-theme-lab="shown"][data-businesslens-theme-lab-rows="2"] {
+  --businesslens-theme-lab-height: calc(var(--businesslens-theme-lab-row-height) * 2 + 2px);
+}
+
+:root[data-businesslens-theme-lab="shown"][data-businesslens-theme-lab-rows="5"] {
+  --businesslens-theme-lab-height: calc(var(--businesslens-theme-lab-row-height) * 5 + 5px);
+}
+
+.businesslens-page-surface {
+  background: var(--businesslens-page-glows);
+}
+
+.businesslens-theme-lab-gradient-text {
+  background: var(--businesslens-theme-lab-gradient);
+  background-clip: text;
+  color: transparent;
+}
+
+/* ================================================================== *
+ * LIGHT BACKGROUNDS
+ *
+ * The BusinessLens logo artwork sits on textured parchment (#e1d2b7); the
+ * surviving variants walk it back toward white, keeping the warmth. Every
+ * variant carries the same paper grain so the page reads as stock rather than
+ * flat fill, and cards sit *lighter* than the page — paper laid on a desk —
+ * which holds up across the whole range. Rejected candidates (L1 Bone,
+ * L3 Wash, L5 Parchment, D5 Leather) were removed.
+ * ================================================================== */
+
+/* Grain rides on the body background layer rather than an overlay: an overlay
+  above the content would be painted over by every section that sets its own
+  `bg-default`, and one below it would be hidden by those same surfaces. */
+:root:not(.dark) body {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23g)' opacity='0.3'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-attachment: fixed;
+}
+
+/* ---- L2 · Oat — a clear step off white, still light ---- */
+:root[data-bg-light="l2"]:not(.dark) {
+  --ui-bg: #f5efe2;
+  --ui-bg-muted: #f9f5ec;
+  --ui-bg-elevated: #fdfbf6;
+  --ui-bg-accented: #eae0cc;
+  --ui-border: #ddd2ba;
+  --ui-border-muted: #e6dcc8;
+  --ui-border-accented: #cbbc9f;
+  --ui-text-dimmed: #6e614c;
+  --ui-text-muted: #6e614c;
+  --ui-primary: #80552b;
+}
+
+/* ---- L4 · Glow — light pooling at the top, mirroring the dark Ember variant ---- */
+:root[data-bg-light="l4"]:not(.dark) {
+  --ui-bg: #f4ecdb;
+  --ui-bg-muted: #f8f2e5;
+  --ui-bg-elevated: #fcf8ef;
+  --ui-bg-accented: #e9ddc4;
+  --ui-border: #dbcfb4;
+  --ui-border-muted: #e5dac2;
+  --ui-border-accented: #c9b898;
+  --ui-text-dimmed: #695c48;
+  --ui-text-muted: #695c48;
+  --ui-primary: #80552b;
+}
+
+:root[data-bg-light="l4"]:not(.dark) body {
+  background-image:
+    radial-gradient(ellipse 100% 62% at 50% 0%, #fefcf7 0%, rgba(254, 252, 247, 0) 72%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23g)' opacity='0.3'/%3E%3C/svg%3E");
+}
+
+/* ================================================================== *
+ * DARK BACKGROUNDS
+ *
+ * `--ui-primary` is left to the shared theme's `.dark` rule; only the surfaces
+ * change here, except where a gradient lifts the canvas enough to need its own
+ * dimmed step.
+ * ================================================================== */
+
+/* ---- D1 · Espresso — flat, the current dark canvas ---- */
+:root[data-bg-dark="d1"].dark {
+  --ui-bg: #1b1713;
+  --ui-bg-muted: #38312a;
+  --ui-bg-elevated: #38312a;
+  --ui-bg-accented: #514839;
+}
+
+/* ---- D2 · Wash — vertical gradient, lifted at the top ---- */
+:root[data-bg-dark="d2"].dark {
+  --ui-bg: #1b1713;
+  --ui-bg-muted: #3b342c;
+  --ui-bg-elevated: #3b342c;
+  --ui-bg-accented: #514839;
+}
+
+:root[data-bg-dark="d2"].dark body {
+  background-image: linear-gradient(180deg, #241e18 0%, #1b1713 52%, #141110 100%);
+  background-attachment: fixed;
+}
+
+/* ---- D3 · Ember — warm light pooling behind the hero ---- */
+:root[data-bg-dark="d3"].dark {
+  --ui-bg: #1b1713;
+  --ui-bg-muted: #342b23;
+  --ui-bg-elevated: #342b23;
+  --ui-bg-accented: #4c4133;
+  /* The glow lifts the canvas to #2a2019 at its peak, so dimmed text steps up
+    a shade to stay clear of it. */
+  --ui-text-dimmed: #b8ab90;
+  --ui-text-muted: #b8ab90;
+}
+
+:root[data-bg-dark="d3"].dark body {
+  background-image: radial-gradient(ellipse 92% 55% at 50% 0%, #2a2019 0%, rgba(42, 32, 25, 0) 70%);
+  background-attachment: fixed;
+}
+
+/* ---- D4 · Ink — deepest, with a soft vignette ---- */
+:root[data-bg-dark="d4"].dark {
+  --ui-bg: #141110;
+  --ui-bg-muted: #2e2925;
+  --ui-bg-elevated: #2e2925;
+  --ui-bg-accented: #443c31;
+}
+
+:root[data-bg-dark="d4"].dark body {
+  background-image: radial-gradient(ellipse 78% 62% at 50% 38%, #1c1815 0%, rgba(28, 24, 21, 0) 78%);
+  background-attachment: fixed;
+}

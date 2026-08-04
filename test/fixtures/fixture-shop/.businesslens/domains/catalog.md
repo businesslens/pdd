@@ -1,7 +1,9 @@
 ---
 colorSlot: 2
-codeRefs:
-  - src/services/catalog.ts
+references:
+  - kind: code
+    role: implementation
+    target: src/services/catalog.ts
 ---
 
 # Catalog

@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { parseCodeRef, formatCodeRef } from '../src/core/coderefs.js'
-import { splitFrontmatter, entryPointsField } from '../src/core/frontmatter.js'
+import { formatCodeTarget, parseCodeTarget } from '../src/core/coderefs.js'
+import { entryPointsField, referencesField, repositoryReferencePath, splitFrontmatter } from '../src/core/frontmatter.js'
 import { isId, slugify, stem } from '../src/core/ids.js'
-import { bulletList, orderedList, parseMarkdown, section } from '../src/core/markdown.js'
+import {
+  bulletList, decisionPoints, orderedList, parseMarkdown, screenStates, section, supportingContent
+} from '../src/core/markdown.js'
 
 describe('ids', () => {
   it('accepts kebab-case and rejects everything else', () => {
@@ -17,10 +19,10 @@ describe('ids', () => {
   })
 })
 
-describe('coderefs', () => {
+describe('code reference targets', () => {
   const parse = (value: string) => {
     const issues: string[] = []
-    const ref = parseCodeRef(value, issues, 't')
+    const ref = parseCodeTarget(value, issues, 't')
     return { ref, issues }
   }
   it('parses path only', () => {
@@ -36,12 +38,14 @@ describe('coderefs', () => {
   })
   it('rejects absolute paths and inverted ranges', () => {
     expect(parse('/etc/passwd').ref).toBeUndefined()
+    expect(parse('../outside.ts').ref).toBeUndefined()
+    expect(parse('https://example.com/app.ts').ref).toBeUndefined()
     expect(parse('src/app.ts:9-3').ref).toBeUndefined()
   })
   it('round-trips through format', () => {
     for (const value of ['src/app.ts', 'src/app.ts#App.run', 'src/app.ts:42-88', 'src/app.ts#App:7-9']) {
       const { ref } = parse(value)
-      expect(formatCodeRef(ref!)).toBe(value)
+      expect(formatCodeTarget(ref!)).toBe(value)
     }
   })
 })
@@ -69,6 +73,36 @@ describe('frontmatter', () => {
     expect(doc.title).toBe('T')
     expect(doc.lead).toBe('Lead.')
   })
+  it('accepts typed references and validates targets', () => {
+    const issues: string[] = []
+    const references = referencesField({ references: [
+      { kind: 'visual', role: 'intent', target: 'docs/ui/screen.png#empty', title: 'Empty state' },
+      { kind: 'research', role: 'context', target: 'https://example.com/research' },
+      { kind: 'code', role: 'implementation', target: 'src/screen.ts#render' }
+    ] }, issues, 't')
+    expect(references).toHaveLength(3)
+    expect(repositoryReferencePath(references[0]!)).toBe('docs/ui/screen.png')
+    expect(repositoryReferencePath(references[2]!)).toBe('src/screen.ts')
+    expect(issues).toEqual([])
+
+    const unsafe: string[] = []
+    expect(referencesField({ references: [
+      { kind: 'visual', role: 'intent', target: 'file:///tmp/screen.png' }
+    ] }, unsafe, 't')).toEqual([])
+    expect(unsafe.join('\n')).toContain('must use HTTP(S) or a repository-relative path')
+  })
+
+  it('rejects missing, unknown, and extra reference fields', () => {
+    const issues: string[] = []
+    expect(referencesField({ references: [
+      { kind: 'visual', target: 'https://example.com' },
+      { kind: 'binary', role: 'context', target: 'https://example.com' },
+      { kind: 'doc', role: 'context', target: 'https://example.com', verified: true }
+    ] }, issues, 't')).toEqual([])
+    expect(issues.join('\n')).toContain('needs string "kind", "role", and "target"')
+    expect(issues.join('\n')).toContain('reference kind "binary"')
+    expect(issues.join('\n')).toContain('unknown key "verified"')
+  })
 })
 
 describe('markdown', () => {
@@ -91,5 +125,35 @@ describe('markdown', () => {
     const fenced = parseMarkdown('# Title\n\nLead.\n\n```\n## trap\n```\n\n## Real\n\nBody.\n')
     expect(fenced.sections.map(entry => entry.heading)).toEqual(['Real'])
     expect(fenced.lead).toContain('## trap')
+  })
+  it('parses decision points and preserves unrecognized sections', () => {
+    const withDecision = parseMarkdown(
+      '# Scenario\n\n## Decision points\n\n### Access\n\nCan the actor continue?\n\n'
+      + '- allowed → continue\n- denied -> stop\n\n## Notes\n\nKeep this context.\n'
+    )
+    const issues: string[] = []
+    expect(decisionPoints(section(withDecision, 'Decision points')!, issues, 'scenario')).toEqual([{
+      title: 'Access',
+      question: 'Can the actor continue?',
+      branches: [
+        { condition: 'allowed', outcome: 'continue' },
+        { condition: 'denied', outcome: 'stop' }
+      ]
+    }])
+    expect(issues).toEqual([])
+    expect(supportingContent(withDecision, ['Decision points'])).toBe('## Notes\n\nKeep this context.')
+  })
+  it('parses embedded Screen product states', () => {
+    const body = '### Available\n\nThe item can be selected.\n\n### Unavailable\n\nThe reason is shown.'
+    const issues: string[] = []
+    expect(screenStates(body, issues, 'screen')).toEqual([
+      { title: 'Available', description: 'The item can be selected.' },
+      { title: 'Unavailable', description: 'The reason is shown.' }
+    ])
+    expect(issues).toEqual([])
+
+    const invalid: string[] = []
+    screenStates('Prose before a state.', invalid, 'screen')
+    expect(invalid.join('\n')).toContain('must begin with an H3 title')
   })
 })

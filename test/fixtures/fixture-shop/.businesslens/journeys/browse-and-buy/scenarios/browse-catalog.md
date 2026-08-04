@@ -1,8 +1,12 @@
 ---
 kind: primary
-codeRefs:
-  - src/services/catalog.ts#CatalogService.list
-  - src/routes/storefront.ts:1-3
+references:
+  - kind: code
+    role: implementation
+    target: src/services/catalog.ts#CatalogService.list
+  - kind: code
+    role: implementation
+    target: src/routes/storefront.ts:1-3
 ---
 
 # Browse the catalog

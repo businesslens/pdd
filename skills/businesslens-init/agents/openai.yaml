@@ -1,4 +1,0 @@
-interface:
-  display_name: "BusinessLens Init"
-  short_description: "Build an evidence-backed product map"
-  default_prompt: "Use $businesslens-init to inspect this repository and build its complete BusinessLens product map."

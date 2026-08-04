@@ -1,72 +1,29 @@
 ---
-title: Validate in CI
-description: Run the deterministic validator on every pull request and publish snapshots on merge.
+title: CI/CD
+description: Gate Product Model structure in CI without pretending a deterministic linter can prove semantic agreement.
 section: open-source
-group: Reference
-order: 23
+group: Integrations
+order: 22
 ---
 
-# Validate the map in CI
-
-Run the deterministic validator on every pull request. Green means the map
-and the code agree — a branch that plans behavior in the map merges only
-after `businesslens-verify` attached the evidence:
+# Lint the Product Model in CI
 
 ```yaml
-# .github/workflows/businesslens-validate.yml
-name: Validate BusinessLens map
-on:
-  pull_request:
-jobs:
-  validate:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - name: Install BusinessLens CLI outside the target repository
-        run: |
-          mkdir -p "$RUNNER_TEMP/businesslens-cli"
-          cd "$RUNNER_TEMP/businesslens-cli"
-          npm install --ignore-scripts --no-save --package-lock=false businesslens@latest
-      - run: |
-          node "$RUNNER_TEMP/businesslens-cli/node_modules/businesslens/dist/cli.js" \
-            --cwd "$GITHUB_WORKSPACE" validate
+- name: Lint BusinessLens Product Model
+  run: npx businesslens lint
 ```
 
-# Publish on merge
+This catches malformed files, missing required content, broken relationships,
+invalid grammar, and code-reference paths that are not tracked. It is safe and
+deterministic, but it is not a semantic gate: it does not prove symbols, lines,
+runtime behavior, completeness, or model/code agreement.
 
-To keep the platform snapshot current, publish from the default branch with
-the workspace API key stored as a repository secret:
+Run `businesslens-verify` before merge or release when semantic alignment is
+required. The first version intentionally does not persist verification receipts
+or expose a semantic CI command, so CI must not infer verification from lint.
 
-```yaml
-# .github/workflows/businesslens-publish.yml
-name: Publish BusinessLens map
-on:
-  push:
-    branches: [main]
-jobs:
-  publish:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - name: Install BusinessLens CLI outside the target repository
-        run: |
-          mkdir -p "$RUNNER_TEMP/businesslens-cli"
-          cd "$RUNNER_TEMP/businesslens-cli"
-          npm install --ignore-scripts --no-save --package-lock=false businesslens@latest
-      - run: |
-          node "$RUNNER_TEMP/businesslens-cli/node_modules/businesslens/dist/cli.js" \
-            --cwd "$GITHUB_WORKSPACE" publish --yes
-        env:
-          BUSINESSLENS_API_KEY: ${{ secrets.BUSINESSLENS_API_KEY }}
+For machine-readable structural findings:
+
+```bash
+npx businesslens lint --json
 ```
-
-`publish --yes` is required because CI is non-interactive. Each merge commit
-replaces its own snapshot if re-run and creates a new snapshot otherwise. The
-CLI is installed from an empty temporary directory so target-local npm
-configuration and binaries never receive the API key.

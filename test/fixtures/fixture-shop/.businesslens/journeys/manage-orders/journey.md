@@ -1,11 +1,15 @@
 ---
-domain: ordering
 actors: [store-admin]
-experiences: [admin-console]
+capabilities: [order-management]
+availability:
+  - interface: admin-web
+    experiences: [admin-console]
 entryPoints:
-  - web: src/routes/admin.ts
-codeRefs:
-  - src/services/orders.ts#OrderService
+  - admin-web: /admin
+references:
+  - kind: code
+    role: implementation
+    target: src/services/orders.ts#OrderService
 ---
 
 # Manage orders

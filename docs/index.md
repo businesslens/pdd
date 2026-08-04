@@ -1,68 +1,54 @@
 ---
 title: Introduction
-description: BusinessLens is Product-Driven Development for coding agents — a git-tracked product map with code evidence, where planning is editing the map and validation green means done.
+description: BusinessLens brings Product-Driven Development to coding agents through a Git-tracked Product Model and an automatic verification loop.
 section: open-source
 group: Get started
 order: 1
 ---
 
-# Introduction
+# BusinessLens: Product-Driven Development for coding agents
 
-**BusinessLens is Product-Driven Development (PDD) for coding agents.** It keeps
-one artifact: a git-tracked product map in `.businesslens/` — who the
-product serves, what they accomplish, and where the code proves it.
+BusinessLens is Product-Driven Development for coding agents. It stores the
+durable Product contract in `.businesslens/`: Actors, Interfaces, Experiences,
+optional Screens and Domains, Capabilities, Business Rules, Journeys, and observable
+Scenarios.
 
-The map is Markdown, reviewable in pull requests, and useful without a
-hosted service.
+The Product Model says what the product is intended to do. It does not prescribe
+the stack or replace your plan mode, SDD framework, coding agent, or tests.
 
-```text
-.businesslens/
-├── product.md
-├── actors/
-├── experiences/
-├── domains/
-├── journeys/<id>/journey.md
-│   └── scenarios/<id>.md
-└── coverage.md
-```
+## Three ways in
 
-## One artifact, one rule
-
-Every behavioral claim (journeys and scenarios) must cite tracked code —
-`codeRefs` validated against `git ls-files`. A green `validate` means the
-map and the code agree.
-
-That one rule makes planning simple: **plan by editing the map.** Describe
-the intended behavior on your branch; `validate` lists new journeys and
-scenarios that still lack evidence. Implement, then `businesslens-verify`
-checks every planned addition, change, and removal from the complete map diff
-and attaches evidence to implemented behavior. Verification complete plus
-validation green means done. Git is the change model: branches hold plans,
-pull requests review them, history archives them.
-
-## Two ways in, one loop after
-
-- **Existing product** — `/businesslens-init` inspects the code and builds
-  the evidence-backed map.
-- **Blank repository** — `/businesslens-plan` interviews you and authors the
-  whole product as a draft map (evidence relaxed until the code exists).
-
-Then, for every feature:
-
-```text
-/businesslens-plan   →   implement   →   /businesslens-verify   →   green
-```
-
-Code changed without a plan? `/businesslens-sync` repairs the map.
-
-## The pieces
-
-| Piece | What it does |
+| Starting point | Use |
 | --- | --- |
-| `businesslens` CLI | Installs the skills and validates the map deterministically — [CLI reference](./cli.md) |
-| Agent skills | Plan, build, verify, and maintain the map inside your AI harness — [Skills reference](./skills.md) |
-| `.businesslens/` | The durable, git-tracked product map — [format contract](./format.md) |
-| Platform (optional) | Hosts published commit-pinned snapshots for topology, release changes, and comparison — covered in the **Platform** section of the docs |
+| Existing repository, no trusted model | `businesslens-map` |
+| Blank idea or desired behavior change | `businesslens-ideate` |
+| Reviewed reusable starting point | `businesslens blueprint pull <name>` |
 
-Start with the [Quickstart](./quickstart.md), then read
-[How BusinessLens works](./guide.md).
+All three create the same artifact. After that, changes use one loop:
+
+```text
+ideate → your plan/build flow → verify (including final lint) → merge
+```
+
+See the [development loop](./the-loop.md) for the everyday workflow and the
+[`verify` skill](./skill-businesslens-verify.md) for inspection and resolution
+modes.
+
+## Two checks
+
+- `businesslens lint` is deterministic structure: files, fields, availability, relationships,
+  grammar, and tracked code-reference paths.
+- `businesslens-verify` is semantic inspection: whether current code supports
+  the model's observable contract.
+
+A green lint result never claims model/code agreement.
+
+## Context and scope
+
+[Coverage](./product-model.md#coverage) describes how much intended Product
+scope is modeled. [References](./references.md) attach optional external
+material. Neither claims implementation alignment.
+
+Choose your starting door: [from your repo](./from-your-repo.md),
+[from a Blueprint](./from-a-blueprint.md), or [from an idea](./from-an-idea.md).
+Then follow the [development loop](./the-loop.md).
