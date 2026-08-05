@@ -16,22 +16,58 @@ import { createInterface } from 'node:readline/promises'
 import { lstat, readdir, readFile } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import { join, resolve } from 'node:path'
-import { projectPortableReport } from '../dist/report.js'
-import { validateProductLogo } from '../dist/logo.js'
 
 const root = process.cwd()
 const cli = resolve(root, 'dist/cli.js')
 const blueprintsDir = resolve(root, 'blueprints')
 
 const args = process.argv.slice(2)
-const assumeYes = args.includes('--yes')
-const dryRun = args.includes('--dry-run')
-const catalogArg = args.indexOf('--catalog')
-const origin = catalogArg >= 0 ? args[catalogArg + 1] : process.env.BUSINESSLENS_CATALOG_URL ?? 'https://businesslens.io'
 
 function fail(message) {
   console.error(`error: ${message}`)
   process.exit(1)
+}
+
+function showHelp() {
+  console.log(`Usage: npm run blueprints:publish -- [options]
+
+Build and publish every Blueprint under blueprints/ to a catalog. Blueprints
+present in the catalog but absent locally are withdrawn.
+
+Options:
+  --catalog <origin>  Catalog origin (default: BUSINESSLENS_CATALOG_URL or
+                      https://businesslens.io)
+  --dry-run           Build and show the planned changes without catalog writes
+  --yes               Skip the confirmation prompt
+  -h, --help          Show this help
+
+Environment:
+  BUSINESSLENS_CATALOG_KEY  Required bearer credential
+  BUSINESSLENS_CATALOG_URL  Default catalog origin when --catalog is omitted`)
+}
+
+if (args.includes('--help') || args.includes('-h')) {
+  showHelp()
+  process.exit(0)
+}
+
+let assumeYes = false
+let dryRun = false
+let origin = process.env.BUSINESSLENS_CATALOG_URL ?? 'https://businesslens.io'
+for (let index = 0; index < args.length; index += 1) {
+  const arg = args[index]
+  if (arg === '--yes') {
+    assumeYes = true
+  } else if (arg === '--dry-run') {
+    dryRun = true
+  } else if (arg === '--catalog') {
+    const value = args[index + 1]
+    if (!value || value.startsWith('-')) fail('--catalog requires an origin.')
+    origin = value
+    index += 1
+  } else {
+    fail(`Unknown option "${arg}". Run \`npm run blueprints:publish -- --help\` for usage.`)
+  }
 }
 
 /**
@@ -48,15 +84,22 @@ function trustedCatalogOrigin(value) {
   if (url.username || url.password || url.search || url.hash || url.pathname !== '/') {
     fail('The catalog origin must be a bare origin with no credentials, path, query, or fragment.')
   }
-  const loopback = url.hostname === 'localhost' || url.hostname === '::1' || /^127(\.\d+){3}$/.test(url.hostname)
-  if (url.protocol === 'https:' || (loopback && url.protocol === 'http:')) return url.origin
-  fail('The catalog origin must use https, except on a loopback host.')
+  const loopback = url.hostname === 'localhost'
+    || url.hostname === '::1'
+    || url.hostname === '[::1]'
+    || /^127(\.\d+){3}$/.test(url.hostname)
+  if (url.origin === 'https://businesslens.io') return url.origin
+  if (loopback && (url.protocol === 'http:' || url.protocol === 'https:')) return url.origin
+  fail('The publisher catalog must be https://businesslens.io or a loopback origin.')
 }
 
 const catalog = trustedCatalogOrigin(origin)
 const isLoopbackCatalog = /^https?:\/\/(localhost|127(\.\d+){3}|\[?::1\]?)(:\d+)?$/.test(catalog)
 const key = process.env.BUSINESSLENS_CATALOG_KEY
 if (!key) fail('BUSINESSLENS_CATALOG_KEY is not set.')
+
+const { projectPortableReport } = await import('../dist/report.js')
+const { validateProductLogo } = await import('../dist/logo.js')
 
 function git(...gitArgs) {
   return execFileSync('git', ['-C', root, ...gitArgs], { encoding: 'utf8' }).trim()
