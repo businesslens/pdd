@@ -1,6 +1,6 @@
 ---
 title: Journeys
-description: Complete Actor goals assembled from Capabilities and promised through exact Interface–Experience availability.
+description: Complete Actor goals assembled from Capabilities and promised through exact Interface availability, optionally scoped by Experience.
 section: open-source
 group: Product Model
 order: 15
@@ -12,8 +12,9 @@ order: 15
 catch up on unread items, rotate an API key.
 
 A Journey is performed by Actors, uses one or more Capabilities, and declares
-the exact Interface–Experience pairs through which the whole goal is promised.
-It owns its observable acceptance Scenarios.
+the exact Interface scopes through which the whole goal is promised. It names
+Experiences where the Interface uses them and owns its observable acceptance
+Scenarios.
 
 Journeys do not belong to one Domain. A goal can cross several Product areas;
 its Domains are derived from its Capabilities.
@@ -65,8 +66,8 @@ A shopper finds a product and completes checkout.
 | Field or section | Required | Constraint |
 | --- | --- | --- |
 | `actors` | yes | Name at least one existing Actor pursuing the goal. |
-| `capabilities` | yes | Name at least one existing Capability; each must support every Journey availability pair. |
-| `availability` | yes | Declare at least one valid Interface–Experience pair. |
+| `capabilities` | yes | Name at least one existing Capability; each must support every Journey availability scope. |
+| `availability` | yes | Declare at least one valid Interface scope, naming Experiences when that Interface uses them. |
 | `entryPoints` | no | Key Product-facing entry points by an Interface in Journey availability. |
 | `references` | no | Use the documented [Reference](./references.md) shape. |
 | `scenarios/` | yes | Include at least one valid Scenario. |

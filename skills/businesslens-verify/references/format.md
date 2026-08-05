@@ -12,7 +12,7 @@
 ├── .gitignore
 ├── actors/<id>.md
 ├── interfaces/<id>.md
-├── experiences/<id>.md
+├── experiences/<id>.md          # optional collection
 ├── screens/<id>.md              # optional collection
 ├── domains/<id>.md              # optional collection
 ├── capabilities/<id>.md
@@ -30,7 +30,7 @@ frontmatter and Product meaning in prose.
 
 ## Required shapes
 
-- `config.yaml`: exactly `schema: 3` and `sdd.paths`. Older schemas are not
+- `config.yaml`: exactly `schema: 4` and `sdd.paths`. Older schemas are not
   accepted.
 - `product.md`: `id`, optional `tags`, `limitations`, H1, lead description, and
   optional `## Intent`.
@@ -42,12 +42,13 @@ frontmatter and Product meaning in prose.
   `entryPoints`; H1, lead description, and `## Capability boundary`.
 - Experience: at least one `actors` and `interfaces`; `access`
   (`public|authenticated|restricted`); optional Interface-keyed `entryPoints`;
-  H1, lead description, and `## Capability boundary`.
-- Capability: at least one exact `availability` pair; optional singular
+  H1, lead description, and `## Capability boundary`. The collection is
+  optional.
+- Capability: at least one exact `availability` scope; optional singular
   `domain`; H1 and lead description.
 - Domain: H1 and lead description; optional `colorSlot`. The collection is
   optional and only organizes Capabilities.
-- Screen: at least one exact `availability` pair and `capabilities` relation;
+- Screen: at least one exact `availability` scope and `capabilities` relation;
   optional `scenarios` and Interface-keyed Product entry points; H1, lead,
   bullet `## Information presented`, optional bullet `## Available actions`,
   optional H3 `## Product states`, and `## Capability boundary`. The whole
@@ -55,7 +56,7 @@ frontmatter and Product meaning in prose.
 - Business Rule: one or more relations across `domains`, `capabilities`,
   `journeys`, `scenarios`, or `availability`; H1 and lead assertion; optional
   `## Rationale`.
-- Journey: at least one Actor, Capability, availability pair, and Scenario;
+- Journey: at least one Actor, Capability, availability scope, and Scenario;
   optional Interface-keyed `entryPoints`; H1 and lead summary. Journey has no
   singular Domain.
 - Scenario: taxonomy `kind`, optional availability subset of its Journey, H1,
@@ -74,13 +75,16 @@ availability:
     experiences: [personal-workspace, account-management]
   - interface: reader-mobile
     experiences: [personal-workspace]
+  - interface: operator-cli
 ```
 
-Each Interface appears at most once and each Experience list is non-empty and
-unique. Every Experience must declare that Interface. Journey and Screen pairs
-must be supported by every Capability they reference. Scenario availability,
-when present, must be a subset of its Journey. Availability is intended Product
-scope, not implementation status.
+Each Interface appears at most once. If any Experience declares an Interface,
+every availability record for it needs a non-empty, unique Experience list and
+every named Experience must declare that Interface. If no Experience declares
+an Interface, omit `experiences` and make the scope direct; an explicit empty
+list is invalid. Journey and Screen scopes must be supported by every Capability
+they reference. Scenario availability, when present, must be a subset of its
+Journey. Availability is intended Product scope, not implementation status.
 
 Every semantic entity may contain optional `references`. Each strict item needs
 `kind: code|spec|proposal|doc|adr|visual|research`,
@@ -113,8 +117,9 @@ intended product behavior.
 
 ## If you are an agent working in this repository
 
-- Read `product.md` first, then Actors, Interfaces, Experiences, optional
-  Screens and Domains, Capabilities, Business Rules, Journeys, and Scenarios.
+- Read `product.md` first, then Actors and Interfaces, optional Experiences,
+  Screens, and Domains, followed by Capabilities, Business Rules, Journeys, and
+  Scenarios.
 - Treat scenarios as the acceptance contract and business rules as invariants.
 - Do not infer a stack or architecture from the model.
 - References are optional navigation and context. Their role explains why an

@@ -27,10 +27,10 @@ or deliberately untrusted.
    assessment before writing product meaning.
 
 3. Review the `.businesslens/` diff. Check that supported Interfaces are Product
-   contracts rather than discovered technologies, Experiences are coherent
-   contexts, availability is exact, and Capabilities differ from complete
-   Journey goals. Also check Scenario contracts, unmapped areas, limitations,
-   and optional implementation References.
+   contracts rather than discovered technologies, optional Experiences exist
+   only for meaningful contexts, availability is exact, and Capabilities differ
+   from complete Journey goals. Also check Scenario contracts, unmapped areas,
+   limitations, and optional implementation References.
 
 4. Lint and commit:
 

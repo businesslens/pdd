@@ -1,13 +1,13 @@
 import type { EntityFile, PddModel } from '../core/model.js'
 import type { Availability } from '../core/frontmatter.js'
-import type { ProductReportV7 } from '../core/portable.js'
+import type { ProductReportV8 } from '../core/portable.js'
 import { writeGeneratedFile } from '../core/generated-files.js'
 import { lsFiles } from '../core/git.js'
 import { section, supportingContent } from '../core/markdown.js'
 import { loadModel } from '../core/model.js'
 import { resolveModelRoot, type ModelRoot } from '../core/model-root.js'
 import {
-  ProductReportV7Schema,
+  ProductReportV8Schema,
   REPORT_SCHEMA_VERSION,
   projectPortableReport,
   validateProductReport
@@ -43,10 +43,10 @@ function entityContent(entity: EntityFile, recognized: string[]) {
 export function compileReport(
   model: PddModel,
   today: string
-): ProductReportV7 {
+): ProductReportV8 {
   const scenarios = model.journeys.flatMap(journey => journey.scenarios)
 
-  const report: ProductReportV7 = {
+  const report: ProductReportV8 = {
     schemaVersion: REPORT_SCHEMA_VERSION,
     id: model.product.id,
     title: model.product.doc.title,
@@ -191,24 +191,24 @@ export function compileReport(
     }
   }
 
-  const parsed = ProductReportV7Schema.parse(report)
+  const parsed = ProductReportV8Schema.parse(report)
   const issues = validateProductReport(parsed)
   if (issues.length) throw new Error(`Report validation failed:\n- ${issues.join('\n- ')}`)
   return parsed
 }
 
 export interface BuildOutcome {
-  report: ProductReportV7
+  report: ProductReportV8
   outputFile: string
 }
 
 /** Compile the current workspace without writing generated artifacts. */
-export function compileWorkspaceReport(cwd: string): ProductReportV7 {
+export function compileWorkspaceReport(cwd: string): ProductReportV8 {
   return compileResolvedWorkspaceReport(resolveModelRoot(cwd))
 }
 
 /** Compile a model whose ownership boundary has already been resolved. */
-export function compileResolvedWorkspaceReport({ modelRoot, gitRoot }: ModelRoot): ProductReportV7 {
+export function compileResolvedWorkspaceReport({ modelRoot, gitRoot }: ModelRoot): ProductReportV8 {
   const model = loadModel(modelRoot)
   const tracked = gitRoot ? lsFiles(gitRoot) : []
   const result = lintModel(model, tracked)

@@ -13,7 +13,7 @@ import {
 import { dirname, isAbsolute, join, resolve } from 'node:path'
 import { stringify } from 'yaml'
 import { writeModelReadme } from '../core/model-readme.js'
-import type { ProductReportV7, ReportAvailability } from '../core/portable.js'
+import type { ProductReportV8, ReportAvailability } from '../core/portable.js'
 import { lintModel } from './lint.js'
 import { loadModel } from '../core/model.js'
 import { parseProductReport, projectPortableReport } from '../core/portable.js'
@@ -44,7 +44,7 @@ function frontmatter(data: Record<string, unknown>): string {
   return `---\n${stringify(data, { lineWidth: 0 }).trimEnd()}\n---\n\n`
 }
 
-function references(value: ProductReportV7['references']): Array<Record<string, string>> {
+function references(value: ProductReportV8['references']): Array<Record<string, string>> {
   return value.map(reference => ({
     kind: reference.kind,
     role: reference.role,
@@ -57,8 +57,11 @@ function entryPoints(value: Array<{ type: string, path: string }>): Array<Record
   return value.map(point => ({ [point.type]: point.path }))
 }
 
-function availability(value: ReportAvailability[]): Array<{ interface: string, experiences: string[] }> {
-  return value.map(item => ({ interface: item.interfaceId, experiences: item.experienceIds }))
+function availability(value: ReportAvailability[]): Array<{ interface: string, experiences?: string[] }> {
+  return value.map(item => ({
+    interface: item.interfaceId,
+    ...(item.experienceIds.length ? { experiences: item.experienceIds } : {})
+  }))
 }
 
 function compactRecord(input: Record<string, unknown>): Record<string, unknown> {
@@ -115,8 +118,8 @@ function prepareTarget(cwd: string, force: boolean): string {
   return root
 }
 
-function writeReport(root: string, report: ProductReportV7): void {
-  write(join(root, 'config.yaml'), stringify({ schema: 3, sdd: { paths: [] } }, { lineWidth: 0 }))
+function writeReport(root: string, report: ProductReportV8): void {
+  write(join(root, 'config.yaml'), stringify({ schema: 4, sdd: { paths: [] } }, { lineWidth: 0 }))
   write(join(root, '.gitignore'), 'build/\ncache/\n')
   write(
     join(root, 'taxonomies.yaml'),
@@ -262,7 +265,7 @@ function writeReport(root: string, report: ProductReportV7): void {
     )
   }
 
-  const scenariosByJourney = new Map<string, ProductReportV7['model']['scenarios']>()
+  const scenariosByJourney = new Map<string, ProductReportV8['model']['scenarios']>()
   for (const scenario of report.model.scenarios) {
     const current = scenariosByJourney.get(scenario.journeyId) || []
     current.push(scenario)
@@ -311,7 +314,7 @@ function writeReport(root: string, report: ProductReportV7): void {
 }
 
 export interface ExpandedProductReport {
-  report: ProductReportV7
+  report: ProductReportV8
   root: string
 }
 

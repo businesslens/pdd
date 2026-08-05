@@ -2,19 +2,16 @@
 domain: library
 availability:
   - interface: reader-web
-    experiences: [reading-app]
+    experiences: [personal-library]
   - interface: reader-mobile
-    experiences: [reading-app]
+    experiences: [personal-library]
 ---
 
 # Reading state
 
-Tracking which items a reader has read, presenting the unread backlog, and
-letting a reader mark items read or unread individually or in bulk.
+Tracks which library items the Reader has read and presents a finite unread
+backlog that can be reduced individually or in bulk.
 
 ## Intent
 
-A backlog has to feel finite or the reader stops opening the product. That makes
-bulk "mark all read" a required capability rather than a convenience: the reader
-needs a way to declare bankruptcy on a backlog without unfollowing the source
-that produced it.
+Make progress through a busy reading stream visible and achievable.

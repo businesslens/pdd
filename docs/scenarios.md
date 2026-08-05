@@ -1,6 +1,6 @@
 ---
 title: Scenarios
-description: Observable acceptance paths through a Journey, optionally narrowed to particular Interface–Experience pairs.
+description: Observable acceptance paths through a Journey, optionally narrowed to particular Interface scopes or Experiences.
 section: open-source
 group: Product Model
 order: 16
@@ -18,9 +18,10 @@ Split a Scenario when a condition produces a materially different observable
 outcome. Checkout succeeding and payment being declined are separate Scenarios;
 checkout succeeding on Tuesday is not.
 
-By default a Scenario inherits every availability pair from its Journey. Add
+By default a Scenario inherits every availability scope from its Journey. Add
 optional `availability` only when its behavior or outcome applies to a narrower
-Interface–Experience subset. Do not copy the Journey matrix mechanically.
+Interface or Experience subset. Do not copy the Journey availability
+mechanically.
 
 Scenario IDs are globally unique across the model.
 

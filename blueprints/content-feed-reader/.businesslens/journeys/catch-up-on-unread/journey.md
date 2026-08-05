@@ -1,18 +1,16 @@
 ---
-actors:
-  - reader
-capabilities:
-  - item-saving
-  - reading-state
-  - source-refresh
+actors: [reader]
+capabilities: [reading-state, item-saving]
 availability:
   - interface: reader-web
-    experiences: [reading-app]
+    experiences: [personal-library]
   - interface: reader-mobile
-    experiences: [reading-app]
+    experiences: [personal-library]
+entryPoints:
+  - reader-web: /unread
+  - reader-mobile: content-reader://library/unread
 ---
 
 # Catch up on unread
 
-The daily loop: see what arrived, read it, and leave the backlog smaller than it
-was.
+A Reader works through new items and leaves the unread backlog smaller.

@@ -1,21 +1,14 @@
 ---
-actors:
-  - collection-owner
-  - collection-subscriber
-  - reader
-  - visitor
+actors: [reader]
 entryPoints:
-  - ios: content-reader://library
-  - android: content-reader://library
+  - mobile: content-reader://library
 ---
 
 # Reader mobile application
 
-The supported mobile interface for reading, curation, accounts, and shared
-collections.
+The supported mobile Interface for working in a Reader's private library.
 
 ## Capability boundary
 
-Supports the same intended reader-facing and visitor-facing capabilities as the
-web application. It does not expose product administration or internal
-operations.
+Supports following, reading, saving, organizing, and publishing from the
+private library. Anonymous public collection links remain a web commitment.

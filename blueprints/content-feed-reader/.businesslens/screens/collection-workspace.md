@@ -1,78 +1,48 @@
 ---
 availability:
   - interface: reader-web
-    experiences: [reading-app]
+    experiences: [personal-library]
   - interface: reader-mobile
-    experiences: [reading-app]
-capabilities:
-  - collection-sharing
-  - collection-subscription
-  - collections
-  - item-saving
+    experiences: [personal-library]
+capabilities: [item-saving, collections, collection-sharing]
 scenarios:
-  - a-subscriber-tries-to-change-a-collection
-  - an-owner-unlists-a-subscribed-collection
   - gather-saved-items-into-a-collection
+  - remove-an-item-from-a-collection
   - publish-a-collection
-  - subscribe-to-a-published-collection
-  - the-owner-adds-an-item-to-a-subscribed-collection
   - unlist-a-published-collection
-  - unsave-an-item-that-is-in-a-collection
 entryPoints:
   - reader-web: /collections
-  - reader-web: /collections/:collectionId
-  - reader-mobile: content-reader://library/collections/:collectionId
+  - reader-mobile: content-reader://library/collections
 ---
 
 # Collection workspace
 
-Lets a reader curate saved items into owned collections and read collections to
-which they subscribe.
-
-## Intent
-
-Keep private curation, deliberate publishing, and read-only subscription
-distinct so readers always understand what they own and what others can see.
+Lets a Reader organize saved items and control whether an owned collection is
+public.
 
 ## Information presented
 
-- Collection name, description, owner, and ordered saved items
-- Whether the collection is private, published, unlisted, or subscribed
-- Which collection actions belong to the signed-in reader
-- Whether an item remains saved independently of collection membership
+- Collection name and ordered saved items
+- Whether the collection is private or published
+- The public link when the collection is published
 
 ## Available actions
 
 - Create and edit an owned collection
-- Add, remove, and reorder saved items in an owned collection
-- Publish or unlist an owned collection
-- Subscribe or unsubscribe from someone else's published collection
-- Save an item from a subscribed collection into the reader's own library
+- Add, remove, and reorder saved items
+- Publish or unlist the collection
 
 ## Product states
 
-### Private owned collection
+### Private
 
-Only the owner can see and change the collection, and no public address serves
-its contents.
+Only the owner can see the collection.
 
-### Published owned collection
+### Published
 
-The owner can see that anonymous readers may open the public collection and can
-unlist it immediately.
-
-### Subscribed collection
-
-The collection updates as its owner changes it but remains read-only to the
-subscriber.
-
-### Subscription no longer public
-
-An unlisted collection no longer serves anonymous access; the subscriber is
-told that availability changed without receiving write access.
+The owner sees the public link and can revoke it immediately.
 
 ## Capability boundary
 
-Only an owner changes a collection. Subscription never grants edit rights, and
-removing an item from a collection does not unsave it. The Screen does not
-expose the owner's private library or other unpublished collections.
+Only the owner changes the collection. Collection membership and item saving
+remain independent decisions.

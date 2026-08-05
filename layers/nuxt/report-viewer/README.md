@@ -1,6 +1,6 @@
 # BusinessLens Nuxt Layers
 
-The OSS Product Report v7 renderer and BusinessLens-wide Nuxt theme used by
+The OSS Product Report v8 renderer and BusinessLens-wide Nuxt theme used by
 `businesslens view` and the public BusinessLens site. Both are exported from
 the single `businesslens` npm package.
 

@@ -1,16 +1,17 @@
 ---
-actors:
-  - collection-owner
-capabilities:
-  - collection-sharing
-  - collections
+actors: [reader]
+capabilities: [collections, collection-sharing]
 availability:
   - interface: reader-web
-    experiences: [reading-app]
+    experiences: [personal-library]
   - interface: reader-mobile
-    experiences: [reading-app]
+    experiences: [personal-library]
+entryPoints:
+  - reader-web: /collections/:collectionId
+  - reader-mobile: content-reader://library/collections/:collectionId
 ---
 
 # Share a collection
 
-An owner publishes a collection to a link anyone can open, and can take it back.
+A Reader publishes an owned collection to a web link and can later revoke that
+link.

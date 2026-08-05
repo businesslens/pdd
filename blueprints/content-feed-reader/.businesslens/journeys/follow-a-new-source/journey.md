@@ -1,16 +1,17 @@
 ---
-actors:
-  - reader
-capabilities:
-  - source-following
-  - source-refresh
+actors: [reader]
+capabilities: [source-following]
 availability:
   - interface: reader-web
-    experiences: [reading-app]
+    experiences: [personal-library]
   - interface: reader-mobile
-    experiences: [reading-app]
+    experiences: [personal-library]
+entryPoints:
+  - reader-web: /sources
+  - reader-mobile: content-reader://library/sources
 ---
 
 # Follow a new source
 
-A reader adds a feed to their library and sees its items arrive.
+A Reader adds a feed to the private library so its items can join the reading
+stream.

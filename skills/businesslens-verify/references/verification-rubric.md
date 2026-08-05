@@ -3,10 +3,10 @@
 ## Trace behavior
 
 - Compare the model's observable contract, not matching vocabulary.
-- Trace each declared Interface–Experience availability pair from its Product
-  entry point → relevant Experience and Capabilities → Journey path →
-  persistence or external effect → named outcome.
-- Verify Interface pairs independently. Shared services do not prove web,
+- Trace each declared availability scope from its Product entry point → any
+  relevant Experience and Capabilities → Journey path → persistence or
+  external effect → named outcome.
+- Verify Interface scopes independently. Shared services do not prove web,
   mobile, CLI, or supported API parity.
 - Distinguish a missing Interface implementation from a missing shared
   Capability. Undeclared internal APIs remain implementation details.
@@ -40,7 +40,7 @@ Group questions by root decision. Do not ask a menu of symptoms.
 ## Internal intent resolution
 
 Use when code-right or neither-right is chosen. Draft the smallest exact Product
-Model delta. Cover affected Interfaces, Experiences, Capabilities, exact
+Model delta. Cover affected Interfaces, optional Experiences, Capabilities, exact
 availability, Rules, Journeys, Scenarios, relationships, and removals. Get
 approval before writing. Skip broad brainstorming because the verification
 finding already supplies the problem.

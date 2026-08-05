@@ -1,6 +1,7 @@
 <script setup lang="ts">
 const props = withDefaults(defineProps<{
-  rowCount?: 2 | 5
+  /** Rows the host actually renders, including anything in the slots. */
+  rowCount?: 2 | 3 | 4 | 5
 }>(), {
   rowCount: 2
 })

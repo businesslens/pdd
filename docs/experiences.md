@@ -12,9 +12,10 @@ order: 11
 discovery, personal workspace, administration, account management, and partner
 automation are possible Experiences.
 
-An Experience has a stable audience, access boundary, and capability boundary.
-It may be offered through one or more [Interfaces](./interfaces.md): the same
-administration Experience might exist in an admin website and an operator CLI.
+Experiences are optional. An Experience has a stable audience, access boundary,
+and capability boundary. It may be offered through one or more
+[Interfaces](./interfaces.md): the same administration Experience might exist
+in an admin website and an operator CLI.
 
 ## When you create one
 
@@ -29,6 +30,11 @@ Create an Experience when all of these are true:
 An overview page is usually a Screen, not an Experience. A command group is an
 Experience only when it represents a durable operating context, not just parser
 organization.
+
+Use no Experiences when every Interface is already one coherent context. In
+that case, availability names the Interface directly. Do not create a
+one-to-one Experience merely to satisfy the file shape or make the report look
+full.
 
 ## The file
 
@@ -64,7 +70,14 @@ Supports operational administration. It does not grant customer privileges.
 | Lead paragraph | yes | Describe the coherent usage context. |
 | `## Capability boundary` | yes | State what the Experience supports and excludes. |
 
-Every model needs at least one Experience.
+The entire `experiences/` directory is optional. If any Experience names an
+Interface, all availability for that Interface must name one or more of its
+Experiences. An Interface with no Experiences uses direct availability:
+
+```yaml
+availability:
+  - interface: release-cli
+```
 
 There is no `exit` field. A persistent context does not have one useful success
 exit; Journey and Scenario outcomes state what Actors accomplish.

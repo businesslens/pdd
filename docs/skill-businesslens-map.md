@@ -3,7 +3,7 @@ title: map
 description: Create or expand a Product Model from established repository behavior without executing target code.
 section: open-source
 group: Skills
-order: 24
+order: 25
 ---
 
 # `businesslens-map`
@@ -15,7 +15,8 @@ It inventories tracked files without writing or dumping the whole file list,
 then statically traces behavior from entry points through effects and outcomes.
 It treats deployables, routes, commands, APIs, and integrations as evidence—not
 automatic Interfaces—and drafts only supported Product contracts with exact
-Interface–Experience availability. It asks for approval, writes only inside
+Interface availability, narrowed by Experience where meaningful contexts
+exist. It asks for approval, writes only inside
 `.businesslens/`, and runs structural lint in an isolated runner.
 
 Map never executes target code and never silently replaces a mature model.

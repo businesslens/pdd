@@ -16,8 +16,11 @@ async function bytes(path) {
 const budgets = [
   { path: 'dist/viewer', label: 'bundled local viewer', maximum: 5 * 1024 * 1024 },
   // Theme-lab intentionally packages the active SVG and favicon experiment
-  // families. Keep enough room for those assets without making this unbounded.
-  { path: 'layers/nuxt', label: 'Nuxt Layer source', maximum: 1536 * 1024 }
+  // families, and report-lab carries ten complete report designs while the
+  // audition runs. Keep enough room for both without making this unbounded;
+  // the report-lab share shrinks again when a design wins and the rest of the
+  // lab is deleted.
+  { path: 'layers/nuxt', label: 'Nuxt Layer source', maximum: 1792 * 1024 }
 ]
 
 let failed = false

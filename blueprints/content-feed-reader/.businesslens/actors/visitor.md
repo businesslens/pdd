@@ -5,7 +5,5 @@ relationship: external
 
 # Visitor
 
-Someone reading a publicly shared collection without an account. A visitor sees
-the collection and the saved items in it, and nothing else — no library, no
-sources, no reading state, and no other collection the owner has not published.
-A visitor who wants to keep anything must become a reader first.
+Someone opening a published collection without an account. A Visitor can read
+that collection and nothing else from its owner's private library.

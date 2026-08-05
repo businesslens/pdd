@@ -3,7 +3,7 @@ title: CI/CD
 description: Gate Product Model structure in CI without pretending a deterministic linter can prove semantic agreement.
 section: open-source
 group: Integrations
-order: 22
+order: 23
 ---
 
 # Lint the Product Model in CI

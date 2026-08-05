@@ -28,8 +28,9 @@ intended product behavior.
 
 ## If you are an agent working in this repository
 
-- Read \`product.md\` first, then Actors, Interfaces, Experiences, optional
-  Screens and Domains, Capabilities, Business Rules, Journeys, and Scenarios.
+- Read \`product.md\` first, then Actors and Interfaces, optional Experiences,
+  Screens, and Domains, followed by Capabilities, Business Rules, Journeys, and
+  Scenarios.
 - Treat scenarios as the acceptance contract and business rules as invariants.
 - Do not infer a stack or architecture from the model.
 - References are optional navigation and context. Their role explains why an

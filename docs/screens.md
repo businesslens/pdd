@@ -1,6 +1,6 @@
 ---
 title: Screens
-description: Optional meaningful visual Product views placed in exact Interface–Experience contexts without embedding screenshots or layouts.
+description: Optional meaningful visual Product views placed in exact Interface availability scopes without embedding screenshots or layouts.
 section: open-source
 group: Product Model
 order: 12
@@ -25,7 +25,7 @@ components, or every route found in source.
 
 > **Experience vs Screen.** An [Experience](./experiences.md) is a coherent
 > context across one or more Interfaces. A Screen is one meaningful visual view
-> available in exact Interface–Experience pairs.
+> available in exact Interface scopes, optionally narrowed by Experience.
 >
 > **Screen vs Scenario.** A Screen says what is visible and possible at a view.
 > A [Scenario](./scenarios.md) is an observable path through a complete goal.
@@ -79,8 +79,8 @@ The Screen does not change product or inventory data.
 
 | Field or section | Required | Constraint |
 | --- | --- | --- |
-| `availability` | yes | Declare at least one valid Interface–Experience pair. |
-| `capabilities` | yes | Name at least one existing Capability; each must support every Screen availability pair. |
+| `availability` | yes | Declare at least one valid Interface scope, naming Experiences when that Interface uses them. |
+| `capabilities` | yes | Name at least one existing Capability; each must support every Screen availability scope. |
 | `scenarios` | no | Name existing observable paths in which the Screen participates. |
 | `entryPoints` | no | Key public routes or deep links by an Interface in Screen availability. |
 | `references` | no | Use the documented [Reference](./references.md) shape. |
@@ -109,3 +109,7 @@ Screenshots, mockups, prototypes, and Figma files stay outside
 the role distinguishes a curated design from an implementation capture or
 context. The model stores only the attachment metadata, and `lint` neither
 fetches nor assesses the visual itself.
+
+A CLI or API does not need substitute Command or Endpoint entities. Keep
+command syntax in CLI help and endpoint schemas in the API contract; model the
+durable Capabilities, Journeys, Scenarios, and Rules they expose.

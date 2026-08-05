@@ -66,6 +66,8 @@ Journeys and Scenarios own outcomes.
 
 ## With Experiences
 
-Interface and [Experience](./experiences.md) are many-to-many. The
-[Experience matrix](./product-model.md#experience-matrix) shows how exact
-`availability` pairs express supported combinations.
+[Experience](./experiences.md) is optional and many-to-many with Interface.
+When an Interface has meaningful Experience contexts, availability names the
+exact combinations. When it has none, availability names the Interface
+directly. The [availability rules](./product-model.md#availability) show both
+forms.

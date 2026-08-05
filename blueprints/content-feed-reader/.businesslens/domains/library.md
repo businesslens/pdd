@@ -1,9 +1,8 @@
 ---
-colorSlot: 3
+colorSlot: 2
 ---
 
 # Library
 
-Everything a reader's sources have produced, and the reader's position in it.
-Owns item identity and deduplication, read and unread state, and the ordering
-that makes working through a backlog feel finite.
+The incoming reading stream and the Reader's progress through it: which sources
+are followed, which items arrived, and which items remain unread.

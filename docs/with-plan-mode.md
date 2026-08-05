@@ -3,7 +3,7 @@ title: Plan mode
 description: Use BusinessLens for approved product meaning and plan mode for the implementation approach, then return to automatic verification.
 section: open-source
 group: Integrations
-order: 20
+order: 21
 ---
 
 # Use BusinessLens with Claude Code or Codex plan mode

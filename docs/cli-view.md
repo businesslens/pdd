@@ -3,7 +3,7 @@ title: view
 description: Open the current Product Model as a private local report that stays updated while you edit.
 section: open-source
 group: CLI
-order: 31
+order: 32
 ---
 
 # `businesslens view`

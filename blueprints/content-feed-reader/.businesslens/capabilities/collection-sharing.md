@@ -1,22 +1,17 @@
 ---
-domain: sharing
+domain: curation
 availability:
   - interface: reader-web
-    experiences: [public-collection, reading-app]
+    experiences: [personal-library, public-reading]
   - interface: reader-mobile
-    experiences: [public-collection, reading-app]
+    experiences: [personal-library]
 ---
 
 # Collection sharing
 
-Publishing a collection to a public address, and unlisting it again.
+Publishes an owned collection to a read-only web link and removes public access
+when the owner unlists it.
 
 ## Intent
 
-Publishing is one deliberate action with one reversal, and both take effect
-immediately. Anything more elaborate — per-person access, expiring links,
-approval — would make the reader reason about a permission system in a reading
-product.
-
-A collection is private until published, and publishing exposes the collection
-and nothing else about its owner.
+Expose one deliberate piece of curation without exposing the Reader's library.

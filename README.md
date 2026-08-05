@@ -101,8 +101,9 @@ Catalog contribution stays in the CLI; there is no contribution skill.
 - A complete model may contain zero References.
 - A Product may expose several Interfaces—such as web, mobile, CLI, and a
   supported API—without being classified as one of those delivery forms.
-- Experiences are coherent usage contexts across Interfaces; exact
-  Interface–Experience availability says where behavior is promised.
+- Experiences are optional coherent usage contexts across Interfaces. An
+  Interface without Experiences uses direct availability; an Interface with
+  Experiences uses exact Interface–Experience availability.
 - Domains are optional Capability groupings, and Journeys may cross them.
 - Screens are optional platform-neutral product views. Screenshots and other
   visuals remain external References, not model assets or proof.
@@ -120,6 +121,7 @@ writes target `AGENTS.md`, `CLAUDE.md`, or root README files.
   [from a Blueprint](./docs/from-a-blueprint.md), or
   [from an idea](./docs/from-an-idea.md)
 - [Product Model](./docs/product-model.md) ·
+  [Feed reader example](./docs/feed-reader-example.md) ·
   [References](./docs/references.md)
 - [Skills](./docs/skills.md) · [CLI](./docs/cli.md) ·
   [CI/CD](./docs/ci.md)

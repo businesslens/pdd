@@ -1,7 +1,7 @@
 import * as z from 'zod'
 import { parseCodeTarget } from './coderefs.js'
 
-export const REPORT_SCHEMA_VERSION = '7.0.0'
+export const REPORT_SCHEMA_VERSION = '8.0.0'
 
 const IdSchema = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
 const ProductIdSchema = IdSchema.max(64)
@@ -110,7 +110,7 @@ export const ReportEntryPointSchema = z.strictObject({
 
 export const ReportAvailabilitySchema = z.strictObject({
   interfaceId: IdSchema,
-  experienceIds: z.array(IdSchema).min(1)
+  experienceIds: z.array(IdSchema)
 })
 
 export const ReportActorSchema = z.strictObject({
@@ -237,7 +237,7 @@ export const ReportCoverageSchema = z.strictObject({
   rationale: z.string()
 })
 
-export const ProductReportV7Schema = z.strictObject({
+export const ProductReportV8Schema = z.strictObject({
   schemaVersion: z.literal(REPORT_SCHEMA_VERSION),
   id: ProductIdSchema,
   title: SingleLineTextSchema.max(160),
@@ -261,7 +261,7 @@ export const ProductReportV7Schema = z.strictObject({
     }),
     actors: z.array(ReportActorSchema),
     interfaces: z.array(ReportInterfaceSchema).min(1),
-    experiences: z.array(ReportExperienceSchema).min(1),
+    experiences: z.array(ReportExperienceSchema),
     screens: z.array(ReportScreenSchema),
     domains: z.array(ReportDomainSchema),
     capabilities: z.array(ReportCapabilitySchema),
@@ -272,10 +272,10 @@ export const ProductReportV7Schema = z.strictObject({
   coverage: ReportCoverageSchema
 })
 
-export const ProductReportSchema = ProductReportV7Schema
+export const ProductReportSchema = ProductReportV8Schema
 
-export type ProductReportV7 = z.infer<typeof ProductReportV7Schema>
-export type ProductReport = ProductReportV7
+export type ProductReportV8 = z.infer<typeof ProductReportV8Schema>
+export type ProductReport = ProductReportV8
 export type ReportDecisionPoint = z.infer<typeof ReportDecisionPointSchema>
 export type ReportScreenState = z.infer<typeof ReportScreenStateSchema>
 export type ReportCoverage = z.infer<typeof ReportCoverageSchema>
@@ -319,6 +319,11 @@ function pairKey(interfaceId: string, experienceId: string): string {
   return `${interfaceId}\0${experienceId}`
 }
 
+function availabilityLabel(key: string): string {
+  const [interfaceId, experienceId] = key.split('\0')
+  return experienceId ? `${interfaceId}/${experienceId}` : (interfaceId || '')
+}
+
 function availabilityPairs(
   issues: string[],
   label: string,
@@ -328,6 +333,9 @@ function availabilityPairs(
 ): Set<string> {
   const pairs = new Set<string>()
   const seenInterfaces = new Set<string>()
+  const experienceScopedInterfaces = new Set(
+    [...experiencesById.values()].flatMap(experience => experience.interfaceIds)
+  )
   for (const item of availability) {
     if (seenInterfaces.has(item.interfaceId)) {
       issues.push(`${label}: duplicate availability interface "${item.interfaceId}"`)
@@ -335,6 +343,12 @@ function availabilityPairs(
     seenInterfaces.add(item.interfaceId)
     if (!interfaceIds.has(item.interfaceId)) {
       issues.push(`${label}: references missing interface "${item.interfaceId}"`)
+    }
+    if (!item.experienceIds.length) {
+      if (experienceScopedInterfaces.has(item.interfaceId)) {
+        issues.push(`${label}: availability for interface "${item.interfaceId}" needs at least one experience because the interface uses Experience contexts`)
+      }
+      pairs.add(pairKey(item.interfaceId, ''))
     }
     const seenExperiences = new Set<string>()
     for (const experienceId of item.experienceIds) {
@@ -349,7 +363,7 @@ function availabilityPairs(
         issues.push(`${label}: experience "${experienceId}" does not declare interface "${item.interfaceId}"`)
       }
       const key = pairKey(item.interfaceId, experienceId)
-      if (pairs.has(key)) issues.push(`${label}: duplicate availability pair "${item.interfaceId}/${experienceId}"`)
+      if (pairs.has(key)) issues.push(`${label}: duplicate availability scope "${item.interfaceId}/${experienceId}"`)
       pairs.add(key)
     }
   }
@@ -374,13 +388,12 @@ function requireEntryPointInterfaces(
 }
 
 /** Cross-entity and computed-field validation, shared with every report consumer. */
-export function validateProductReport(report: ProductReportV7): string[] {
+export function validateProductReport(report: ProductReportV8): string[] {
   const issues: string[] = []
   const { model } = report
   const actorIds = new Set(model.actors.map(item => item.id))
   const interfaceIds = new Set(model.interfaces.map(item => item.id))
   const interfacesById = new Map(model.interfaces.map(item => [item.id, item]))
-  const experienceIds = new Set(model.experiences.map(item => item.id))
   const experiencesById = new Map(model.experiences.map(item => [item.id, item]))
   const domainIds = new Set(model.domains.map(item => item.id))
   const capabilityIds = new Set(model.capabilities.map(item => item.id))
@@ -460,8 +473,7 @@ export function validateProductReport(report: ProductReportV7): string[] {
       if (!supported) continue
       for (const pair of pairs) {
         if (!supported.has(pair)) {
-          const [interfaceId, experienceId] = pair.split('\0')
-          issues.push(`screen "${screen.id}": capability "${capabilityId}" is not available in "${interfaceId}/${experienceId}"`)
+          issues.push(`screen "${screen.id}": capability "${capabilityId}" is not available in "${availabilityLabel(pair)}"`)
         }
       }
     }
@@ -495,8 +507,7 @@ export function validateProductReport(report: ProductReportV7): string[] {
       if (!supported) continue
       for (const pair of pairs) {
         if (!supported.has(pair)) {
-          const [interfaceId, experienceId] = pair.split('\0')
-          issues.push(`journey "${journey.id}": capability "${capabilityId}" is not available in "${interfaceId}/${experienceId}"`)
+          issues.push(`journey "${journey.id}": capability "${capabilityId}" is not available in "${availabilityLabel(pair)}"`)
         }
       }
     }
@@ -522,8 +533,7 @@ export function validateProductReport(report: ProductReportV7): string[] {
       const parentPairs = journeyPairs.get(scenario.journeyId) || new Set<string>()
       for (const pair of pairs) {
         if (!parentPairs.has(pair)) {
-          const [interfaceId, experienceId] = pair.split('\0')
-          issues.push(`scenario "${scenario.id}": availability "${interfaceId}/${experienceId}" is outside journey "${scenario.journeyId}"`)
+          issues.push(`scenario "${scenario.id}": availability "${availabilityLabel(pair)}" is outside journey "${scenario.journeyId}"`)
         }
       }
     }
@@ -547,7 +557,7 @@ export function validateProductReport(report: ProductReportV7): string[] {
       && !rule.scenarioIds.length
       && !rule.availability.length
     ) {
-      issues.push(`business rule "${rule.id}": must relate to a domain, capability, journey, scenario, or availability pair`)
+      issues.push(`business rule "${rule.id}": must relate to a domain, capability, journey, scenario, or availability scope`)
     }
   }
 
@@ -640,7 +650,7 @@ function isRepositoryEntryPoint(value: string): boolean {
 }
 
 /** Project a report into the source-free profile delivered outside its repository. */
-export function projectPortableReport(report: ProductReportV7): ProductReportV7 {
+export function projectPortableReport(report: ProductReportV8): ProductReportV8 {
   const portableReferences = <T extends { kind: string, role: string, target: string }>(items: T[]): T[] =>
     items.filter(reference =>
       reference.kind !== 'code'
@@ -681,15 +691,15 @@ export function projectPortableReport(report: ProductReportV7): ProductReportV7 
   }
 }
 
-export function parseProductReport(input: unknown): ProductReportV7 {
-  const report = ProductReportV7Schema.parse(input)
+export function parseProductReport(input: unknown): ProductReportV8 {
+  const report = ProductReportV8Schema.parse(input)
   const issues = validateProductReport(report)
   if (issues.length) throw new Error(`Report validation failed:\n- ${issues.join('\n- ')}`)
   return report
 }
 
 /** Additional publication policy for a Product Report entering the public Blueprint catalog. */
-export function validateBlueprintReport(report: ProductReportV7): string[] {
+export function validateBlueprintReport(report: ProductReportV8): string[] {
   const issues: string[] = []
   if (!report.category) issues.push('category is required for a public Blueprint')
   if (!report.tags.length) issues.push('at least one tag is required for a public Blueprint')

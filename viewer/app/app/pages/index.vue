@@ -1,20 +1,7 @@
 <script setup lang="ts">
-import type { ProductReportV7 } from 'businesslens/report'
-import type { ReportViewModel } from 'businesslens/report/view-model'
-import { projectReportView } from 'businesslens/report/view-model'
+import type { ProductReportV8 } from 'businesslens/report'
 
-type ReportSection = 'overview' | 'journeys' | 'rules'
-
-const route = useRoute()
-const sections: ReportSection[] = ['overview', 'journeys', 'rules']
-const section = computed<ReportSection>({
-  get: () => sections.includes(route.query.tab as ReportSection)
-    ? route.query.tab as ReportSection
-    : 'overview',
-  set: value => navigateTo({ query: { tab: value === 'overview' ? undefined : value } })
-})
-
-const { data, error, refresh, status } = await useFetch<ProductReportV7>(
+const { data, error, refresh, status } = await useFetch<ProductReportV8>(
   '/_businesslens/report.json',
   { server: false, cache: 'no-store' }
 )
@@ -55,10 +42,6 @@ onMounted(() => {
 
 onBeforeUnmount(() => events?.close())
 
-const report = computed<ReportViewModel | null>(() => data.value
-  ? projectReportView(data.value)
-  : null)
-
 const errorMessage = computed(() => {
   const failure = error.value as { data?: { message?: string }, message?: string } | null
   return failure?.data?.message ?? failure?.message ?? 'The Product Model could not be compiled.'
@@ -67,14 +50,14 @@ const errorMessage = computed(() => {
 
 <template>
   <div>
-    <UContainer v-if="status === 'pending' && !report" class="py-16">
+    <UContainer v-if="status === 'pending' && !data" class="py-16">
       <div class="flex items-center gap-3 text-sm text-dimmed">
         <UIcon name="i-lucide-loader-circle" class="size-5 animate-spin" />
         Compiling the Product Model…
       </div>
     </UContainer>
 
-    <UContainer v-else-if="error && !report" class="py-16">
+    <UContainer v-else-if="error && !data" class="py-16">
       <UAlert
         icon="i-lucide-triangle-alert"
         color="error"
@@ -85,7 +68,7 @@ const errorMessage = computed(() => {
       />
     </UContainer>
 
-    <template v-else-if="report">
+    <template v-else-if="data">
       <UContainer v-if="liveError" class="pt-6">
         <UAlert
           icon="i-lucide-triangle-alert"
@@ -95,11 +78,7 @@ const errorMessage = computed(() => {
           :description="liveError"
         />
       </UContainer>
-      <BusinessLensReportViewer
-        v-model:section="section"
-        :report="report"
-        :logo-src="logoSrc"
-      />
+      <BusinessLensReportLab :report="data" :logo-src="logoSrc" />
     </template>
   </div>
 </template>

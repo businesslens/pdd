@@ -1,4 +1,4 @@
-import { cpSync, mkdtempSync, readFileSync, rmSync, unlinkSync, writeFileSync } from 'node:fs'
+import { cpSync, mkdtempSync, readFileSync, readdirSync, rmSync, unlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
@@ -50,19 +50,19 @@ describe('lintModel', () => {
   it('rejects historical folder schemas', () => {
     const cwd = fixtureCopy()
     writeFileSync(join(cwd, '.businesslens/config.yaml'), 'schema: 2\nsdd:\n  paths: []\n')
-    expect(run(cwd).errors).toContain('config.yaml: schema 2 is not supported (expected 3)')
+    expect(run(cwd).errors).toContain('config.yaml: schema 2 is not supported (expected 4)')
   })
 
   it('rejects unsupported future folder schemas explicitly', () => {
     const cwd = fixtureCopy()
     writeFileSync(join(cwd, '.businesslens/config.yaml'), 'schema: 99\nsdd:\n  paths: []\n')
-    expect(run(cwd).errors).toContain('config.yaml: schema 99 is not supported (expected 3)')
+    expect(run(cwd).errors).toContain('config.yaml: schema 99 is not supported (expected 4)')
   })
 
   it('rejects the removed Feature collection explicitly', () => {
     const cwd = fixtureCopy()
     cpSync(join(cwd, '.businesslens/capabilities'), join(cwd, '.businesslens/features'), { recursive: true })
-    expect(run(cwd).errors).toContain('features/: unsupported schema 2 collection; use capabilities/ with schema 3')
+    expect(run(cwd).errors).toContain('features/: unsupported schema 2 collection; use capabilities/ with schema 4')
   })
 
   it('requires the committed orientation and generated-path ignores', () => {
@@ -130,6 +130,54 @@ An internal system that initiates store operations.
     expect(result.errors).toEqual([])
     expect(result.counts.domains).toBe(0)
     expect(result.counts.screens).toBe(0)
+  })
+
+  it('allows direct Interface availability when the Product has no Experiences', () => {
+    const cwd = fixtureCopy()
+    rmSync(join(cwd, '.businesslens/experiences'), { recursive: true })
+    for (const collection of ['capabilities', 'business-rules', 'screens']) {
+      for (const name of readdirSync(join(cwd, `.businesslens/${collection}`))) {
+        const file = join(cwd, `.businesslens/${collection}/${name}`)
+        writeFileSync(file, readFileSync(file, 'utf8').replace(/^    experiences: .*\n/gm, ''))
+      }
+    }
+    for (const journey of ['browse-and-buy', 'manage-orders']) {
+      const root = join(cwd, `.businesslens/journeys/${journey}`)
+      const file = join(root, 'journey.md')
+      writeFileSync(file, readFileSync(file, 'utf8').replace(/^    experiences: .*\n/gm, ''))
+      for (const name of readdirSync(join(root, 'scenarios'))) {
+        const scenario = join(root, 'scenarios', name)
+        writeFileSync(scenario, readFileSync(scenario, 'utf8').replace(/^    experiences: .*\n/gm, ''))
+      }
+    }
+
+    const result = run(cwd)
+    expect(result.errors).toEqual([])
+    expect(result.counts.experiences).toBe(0)
+  })
+
+  it('requires Experience scope when an Interface declares Experiences', () => {
+    const cwd = fixtureCopy()
+    const capability = join(cwd, '.businesslens/capabilities/checkout.md')
+    writeFileSync(
+      capability,
+      readFileSync(capability, 'utf8').replace('    experiences: [storefront]\n', '')
+    )
+    expect(run(cwd).errors.join('\n')).toContain(
+      'availability for interface "customer-web" needs at least one experience because the interface uses Experience contexts'
+    )
+  })
+
+  it('rejects an explicit empty Experience list instead of treating it as direct availability', () => {
+    const cwd = fixtureCopy()
+    const capability = join(cwd, '.businesslens/capabilities/checkout.md')
+    writeFileSync(
+      capability,
+      readFileSync(capability, 'utf8').replace('experiences: [storefront]', 'experiences: []')
+    )
+    expect(run(cwd).errors.join('\n')).toContain(
+      'optional non-empty "experiences" string list'
+    )
   })
 
   it('supports a non-visual CLI Interface alongside visual Interfaces', () => {
@@ -263,7 +311,7 @@ No bullet.
     const cwd = fixtureCopy()
     writeFileSync(
       join(cwd, '.businesslens/config.yaml'),
-      'schema: 3\nplatform:\n  url: https://attacker.example\nsdd:\n  paths: []\n'
+      'schema: 4\nplatform:\n  url: https://attacker.example\nsdd:\n  paths: []\n'
     )
     expect(run(cwd).errors).toContain('config.yaml: unknown key "platform"')
   })

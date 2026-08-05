@@ -3,13 +3,13 @@ title: blueprint open
 description: Expand a local Product Report into a canonical Product Model.
 section: open-source
 group: CLI
-order: 33
+order: 34
 ---
 
 # `businesslens blueprint open`
 
-Parse and validate a Product Report v7, apply the portable projection, then
-expand it into a canonical schema 3 `.businesslens/` directory:
+Parse and validate a Product Report v8, apply the portable projection, then
+expand it into a canonical schema 4 `.businesslens/` directory:
 
 ```bash
 npx businesslens blueprint open ./report.json

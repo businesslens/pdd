@@ -1,18 +1,15 @@
 ---
-actors:
-  - collection-owner
-  - collection-subscriber
-  - reader
-  - visitor
+actors: [reader, visitor]
 entryPoints:
   - web: /
 ---
 
 # Reader web application
 
-The browser interface for reading, curation, accounts, and public collections.
+The supported browser Interface for a Reader's private library and public
+collection links.
 
 ## Capability boundary
 
-Supports every reader-facing and visitor-facing capability in the Product. It
-does not expose product administration or internal operations.
+Supports every Product capability. Private library behavior requires a Reader
+session; public collection reading does not.

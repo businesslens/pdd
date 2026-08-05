@@ -1,27 +1,16 @@
 ---
-domains:
-  - sharing
-capabilities:
-  - collection-sharing
-  - collection-subscription
+domains: [curation]
+capabilities: [collection-sharing]
+journeys: [share-a-collection, read-a-shared-collection]
+scenarios: [unlist-a-published-collection, open-an-unlisted-collection]
 ---
 
-# Unlisting takes a collection back
+# Unlisting revokes anonymous access
 
-When an owner unlists a collection, its public address stops serving it
-immediately, and subscribers lose access to it.
-
-## Intent
-
-Publishing must be reversible in fact and not merely in appearance. A reader who
-decides they shared too much needs one action that actually takes it back.
+Once an owner unlists a collection, its public address serves no collection
+contents.
 
 ## Rationale
 
-Reversibility is only credible if it is immediate and total, so the public
-address and existing subscriptions both stop working at once rather than the
-collection quietly persisting for people who already found it. A subscription is
-a relationship with a published collection, so it cannot outlive publication.
-
-What the product cannot revoke is what someone already read. Unlisting is not a
-promise about copies, and the product should not imply otherwise.
+Publication must have one immediate and reliable reversal without deleting the
+owner's collection.

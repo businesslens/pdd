@@ -3,7 +3,7 @@ import { createServer, type IncomingMessage, type Server, type ServerResponse } 
 import { lstatSync, readFileSync, watch, type FSWatcher } from 'node:fs'
 import { basename, extname, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import type { ProductReportV7 } from './portable.js'
+import type { ProductReportV8 } from './portable.js'
 import { MAX_PRODUCT_LOGO_BYTES, validateProductLogo } from '../logo.js'
 
 const LOOPBACK_HOST = '127.0.0.1'
@@ -38,8 +38,8 @@ export interface LocalViewer {
 
 export interface LocalViewerOptions {
   port?: number
-  compile: () => ProductReportV7
-  initialReport?: ProductReportV7
+  compile: () => ProductReportV8
+  initialReport?: ProductReportV8
   watchRoot?: string
   debounceMs?: number
   viewerRoot?: string
@@ -47,7 +47,7 @@ export interface LocalViewerOptions {
 }
 
 interface ReportSnapshot {
-  report?: ProductReportV7
+  report?: ProductReportV8
   error?: string
   revision: number
 }
@@ -66,7 +66,7 @@ interface ReportEvent {
  * report means one temporarily invalid file never blanks the whole viewer.
  */
 class LocalReportStore {
-  private report?: ProductReportV7
+  private report?: ProductReportV8
   private serialized?: string
   private error?: string
   private revision = 0
@@ -135,7 +135,7 @@ class LocalReportStore {
       || Boolean(this.options.watchRoot && normalized === basename(this.options.watchRoot))
   }
 
-  private accept(report: ProductReportV7, notify: boolean, forceNotify = false): void {
+  private accept(report: ProductReportV8, notify: boolean, forceNotify = false): void {
     const serialized = JSON.stringify(report)
     const recovered = this.error !== undefined
     const changed = serialized !== this.serialized

@@ -1,22 +1,20 @@
 ---
-kind: primary
+kind: edge
 ---
 
-# An owner unlists a published collection
+# Unlist a published collection
 
 ## Trigger
 
-The owner of a published collection chooses to unlist it.
+The Reader revokes public access to an owned published collection.
 
 ## Steps
 
-1. The product states that the link will stop working and that current subscribers will lose access
-2. It is explicit that this cannot affect anything already read or copied
-3. The owner confirms
-4. The public address stops serving the collection immediately and every subscription to it ends
-5. The collection returns to being private and keeps all of its items
+1. The Product explains that the current public link will stop working
+2. The Reader confirms unlisting
+3. The collection returns to its private state
 
 ## Outcome
 
-The collection is the owner's alone again, in fact and not just in appearance,
-and the owner was not led to believe more was reversible than actually is.
+The public link no longer serves collection contents while the owner's
+collection remains intact.

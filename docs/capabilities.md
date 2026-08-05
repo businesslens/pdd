@@ -1,6 +1,6 @@
 ---
 title: Capabilities
-description: Durable Product abilities with exact Interface–Experience availability, reusable across goals and optionally organized by Domain.
+description: Durable Product abilities with exact Interface availability, optionally scoped by Experience and organized by Domain.
 section: open-source
 group: Product Model
 order: 14
@@ -23,8 +23,9 @@ important to Product scope, availability, Screens, or Business Rules. It should
 remain meaningful beyond one route, command, or implementation module and
 should not merely repeat a Journey title.
 
-Every Capability declares its exact Interface–Experience availability. An
-optional [Domain](./domains.md) can organize it, but Domains are not required.
+Every Capability declares its exact Interface availability, naming
+[Experiences](./experiences.md) only where the Interface uses them. An optional
+[Domain](./domains.md) can organize it, but Domains are not required.
 
 ## The file
 
@@ -55,14 +56,14 @@ Complete a purchase without confirming an unpaid order.
 
 | Field or section | Required | Constraint |
 | --- | --- | --- |
-| `availability` | yes | Declare at least one valid Interface–Experience pair, with one record per Interface and each Experience listed once. |
+| `availability` | yes | Declare at least one valid Interface scope, with one record per Interface. Name Experiences when that Interface uses them. |
 | `domain` | no | Name one existing Domain when the grouping is useful. |
 | `references` | no | Use the documented [Reference](./references.md) shape. |
 | H1 and lead paragraph | yes | Name the Capability and describe the durable Product ability. |
 
 Capabilities do not duplicate Actor or Business Rule lists. Actors are
-expressed through Journeys and Actor-bound Interfaces and Experiences. Business
-Rules own their own scope, and consumers derive backlinks.
+expressed through Journeys, Actor-bound Interfaces, and optional Experiences.
+Business Rules own their own scope, and consumers derive backlinks.
 
 ## Availability
 
@@ -79,3 +80,10 @@ availability:
 This does not promise `public-discovery` on `reader-mobile`. Availability is
 intended Product scope, not implementation status; `businesslens-verify`
 checks whether the implementation satisfies it.
+
+For an Interface with no Experiences, omit the `experiences` key:
+
+```yaml
+availability:
+  - interface: operator-cli
+```

@@ -165,7 +165,7 @@ function readEntity(
   return { data, doc, references: referencesField(data, issues, file) }
 }
 
-/** Load the strict schema 3 .businesslens/ folder, collecting parse issues. */
+/** Load the strict schema 4 .businesslens/ folder, collecting parse issues. */
 export function loadModel(cwd: string): PddModel {
   const root = join(cwd, FOLDER)
   const issues: string[] = []
@@ -198,7 +198,7 @@ export function loadModel(cwd: string): PddModel {
     }
   }
 
-  let config = { schema: 3, sddPaths: [] as string[] }
+  let config = { schema: 4, sddPaths: [] as string[] }
   const configFile = join(root, 'config.yaml')
   if (existsSync(configFile)) {
     try {
@@ -222,11 +222,11 @@ export function loadModel(cwd: string): PddModel {
   } else if (existsSync(root)) {
     issues.push('config.yaml is missing')
   }
-  if (config.schema !== 3) {
-    issues.push(`config.yaml: schema ${config.schema} is not supported (expected 3)`)
+  if (config.schema !== 4) {
+    issues.push(`config.yaml: schema ${config.schema} is not supported (expected 4)`)
   }
   if (existsSync(join(root, 'features'))) {
-    issues.push('features/: unsupported schema 2 collection; use capabilities/ with schema 3')
+    issues.push('features/: unsupported schema 2 collection; use capabilities/ with schema 4')
   }
 
   let scenarioKinds: ScenarioKind[] = []

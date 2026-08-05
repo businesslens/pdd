@@ -23,6 +23,11 @@ function pairKey(interfaceId: string, experienceId: string): string {
   return `${interfaceId}\0${experienceId}`
 }
 
+function availabilityLabel(key: string): string {
+  const [interfaceId, experienceId] = key.split('\0')
+  return experienceId ? `${interfaceId}/${experienceId}` : (interfaceId || '')
+}
+
 /** Pure structural rule engine over a loaded model; trackedFiles injected for testability. */
 export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
   const errors = [...model.issues]
@@ -88,8 +93,8 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
   const actorIds = new Set(model.actors.map(actor => actor.id))
   const interfaceIds = new Set(model.interfaces.map(item => item.id))
   const interfacesById = new Map(model.interfaces.map(item => [item.id, item]))
-  const experienceIds = new Set(model.experiences.map(experience => experience.id))
   const experiencesById = new Map(model.experiences.map(experience => [experience.id, experience]))
+  const experienceScopedInterfaces = new Set(model.experiences.flatMap(experience => experience.interfaces))
   const domainIds = new Set(model.domains.map(domain => domain.id))
   const capabilityIds = new Set(model.capabilities.map(capability => capability.id))
   const journeyIds = new Set(model.journeys.map(journey => journey.id))
@@ -109,7 +114,10 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
         errors.push(`${label}: references missing interface "${item.interface}"`)
       }
       if (!item.experiences.length) {
-        errors.push(`${label}: availability for interface "${item.interface}" needs at least one experience`)
+        if (experienceScopedInterfaces.has(item.interface)) {
+          errors.push(`${label}: availability for interface "${item.interface}" needs at least one experience because the interface uses Experience contexts`)
+        }
+        pairs.add(pairKey(item.interface, ''))
       }
       const seenExperiences = new Set<string>()
       for (const experienceId of item.experiences) {
@@ -124,7 +132,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
           errors.push(`${label}: experience "${experienceId}" does not declare interface "${item.interface}"`)
         }
         const key = pairKey(item.interface, experienceId)
-        if (pairs.has(key)) errors.push(`${label}: duplicate availability pair "${item.interface}/${experienceId}"`)
+        if (pairs.has(key)) errors.push(`${label}: duplicate availability scope "${item.interface}/${experienceId}"`)
         pairs.add(key)
       }
     }
@@ -197,7 +205,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
   const capabilityPairs = new Map<string, Set<string>>()
   for (const capability of model.capabilities) {
     requireTitle(capability.file, capability.doc.title, capability.doc.lead)
-    if (!capability.availability.length) errors.push(`${capability.file}: needs at least one availability pair`)
+    if (!capability.availability.length) errors.push(`${capability.file}: needs at least one availability scope`)
     if (capability.domain && !domainIds.has(capability.domain)) {
       errors.push(`${capability.file}: references missing domain "${capability.domain}"`)
     }
@@ -206,7 +214,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
 
   for (const screen of model.screens) {
     requireTitle(screen.file, screen.doc.title, screen.doc.lead)
-    if (!screen.availability.length) errors.push(`${screen.file}: needs at least one availability pair`)
+    if (!screen.availability.length) errors.push(`${screen.file}: needs at least one availability scope`)
     const pairs = validateAvailability(screen.file, screen.availability)
     if (!screen.capabilities.length) errors.push(`${screen.file}: needs at least one capability`)
     for (const capabilityId of screen.capabilities) {
@@ -217,8 +225,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
       const supported = capabilityPairs.get(capabilityId) || new Set<string>()
       for (const pair of pairs) {
         if (!supported.has(pair)) {
-          const [interfaceId, experienceId] = pair.split('\0')
-          errors.push(`${screen.file}: capability "${capabilityId}" is not available in "${interfaceId}/${experienceId}"`)
+          errors.push(`${screen.file}: capability "${capabilityId}" is not available in "${availabilityLabel(pair)}"`)
         }
       }
     }
@@ -256,7 +263,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
       if (!actorIds.has(actorId)) errors.push(`${journey.file}: references missing actor "${actorId}"`)
     }
     if (!journey.capabilities.length) errors.push(`${journey.file}: needs at least one capability`)
-    if (!journey.availability.length) errors.push(`${journey.file}: needs at least one availability pair`)
+    if (!journey.availability.length) errors.push(`${journey.file}: needs at least one availability scope`)
     const pairs = validateAvailability(journey.file, journey.availability)
     validateEntryPointInterfaces(
       journey.file,
@@ -271,8 +278,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
       const supported = capabilityPairs.get(capabilityId) || new Set<string>()
       for (const pair of pairs) {
         if (!supported.has(pair)) {
-          const [interfaceId, experienceId] = pair.split('\0')
-          errors.push(`${journey.file}: capability "${capabilityId}" is not available in "${interfaceId}/${experienceId}"`)
+          errors.push(`${journey.file}: capability "${capabilityId}" is not available in "${availabilityLabel(pair)}"`)
         }
       }
     }
@@ -294,8 +300,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
         const scenarioPairs = validateAvailability(scenario.file, scenario.availability)
         for (const pair of scenarioPairs) {
           if (!pairs.has(pair)) {
-            const [interfaceId, experienceId] = pair.split('\0')
-            errors.push(`${scenario.file}: availability "${interfaceId}/${experienceId}" is outside journey "${journey.id}"`)
+            errors.push(`${scenario.file}: availability "${availabilityLabel(pair)}" is outside journey "${journey.id}"`)
           }
         }
       }
@@ -311,7 +316,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
       && !rule.scenarios.length
       && !rule.availability.length
     ) {
-      errors.push(`${rule.file}: must relate to a domain, capability, journey, scenario, or availability pair`)
+      errors.push(`${rule.file}: must relate to a domain, capability, journey, scenario, or availability scope`)
     }
     for (const domainId of rule.domains) {
       if (!domainIds.has(domainId)) errors.push(`${rule.file}: references missing domain "${domainId}"`)
@@ -329,7 +334,6 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
   }
 
   if (model.interfaces.length === 0) errors.push('interfaces/: the model needs at least one interface')
-  if (model.experiences.length === 0) errors.push('experiences/: the model needs at least one experience')
 
   const allEntities = [
     ...model.actors,

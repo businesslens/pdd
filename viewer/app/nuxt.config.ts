@@ -1,12 +1,49 @@
+import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { createRequire } from 'node:module'
+import { defineEventHandler, setHeader } from 'h3'
 
 const { version: pddVersion } = createRequire(import.meta.url)('../../package.json')
 
+// `businesslens view` serves these paths from the CLI. `nuxt dev` has no CLI in
+// front of it, so dev-only handlers stand in with a catalog Blueprint — a model
+// rich enough to exercise every entity kind a design has to render. They are
+// dev handlers, so nothing here reaches the generated viewer.
+const fixtureRoot = resolve('../../blueprints/content-feed-reader/.businesslens')
+
+const devHandlers = [
+  {
+    route: '/_businesslens/report.json',
+    handler: defineEventHandler((event) => {
+      setHeader(event, 'cache-control', 'no-store')
+      return JSON.parse(readFileSync(resolve(fixtureRoot, 'build/report.json'), 'utf8'))
+    })
+  },
+  {
+    route: '/_businesslens/logo.svg',
+    handler: defineEventHandler((event) => {
+      setHeader(event, 'content-type', 'image/svg+xml')
+      setHeader(event, 'cache-control', 'no-store')
+      return readFileSync(resolve(fixtureRoot, 'logo.svg'), 'utf8')
+    })
+  },
+  {
+    // The viewer opens a stream immediately; without this the dev console fills
+    // with reconnect noise that hides real errors.
+    route: '/_businesslens/events',
+    handler: defineEventHandler((event) => {
+      setHeader(event, 'content-type', 'text/event-stream')
+      setHeader(event, 'cache-control', 'no-store')
+      return ': businesslens dev viewer\n\n'
+    })
+  }
+]
+
 export default defineNuxtConfig({
   extends: [
-    resolve('../../layers/nuxt/report-viewer'),
-    resolve('../../layers/nuxt/theme-lab')
+    // report-lab pulls in report-viewer and theme-lab; it is listed alone so
+    // the layer order stays the one the lab was developed against.
+    resolve('../../layers/nuxt/report-lab')
   ],
   ssr: false,
   devtools: { enabled: false },
@@ -25,6 +62,7 @@ export default defineNuxtConfig({
     'businesslens/report/view-model': resolve('../../src/report-view-model.ts'),
     'businesslens/report': resolve('../../src/report.ts')
   },
+  nitro: { devHandlers },
   runtimeConfig: {
     public: {
       pddVersion

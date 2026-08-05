@@ -88,7 +88,7 @@ export function entryPointsField(data: Record<string, unknown>, issues: string[]
   return result
 }
 
-/** Parse exact Interface–Experience availability records. */
+/** Parse exact Interface availability, optionally scoped by Experience. */
 export function availabilityField(data: Record<string, unknown>, issues: string[], label: string): Availability[] {
   const value = data.availability
   if (value === undefined || value === null) return []
@@ -99,21 +99,28 @@ export function availabilityField(data: Record<string, unknown>, issues: string[
   const result: Availability[] = []
   for (const item of value) {
     if (typeof item !== 'object' || item === null || Array.isArray(item)) {
-      issues.push(`${label}: each availability item needs "interface" and "experiences"`)
+      issues.push(`${label}: each availability item needs "interface" and optional "experiences"`)
       continue
     }
     const record = item as Record<string, unknown>
     const unknown = Object.keys(record).filter(key => key !== 'interface' && key !== 'experiences')
+    const experiences = record.experiences
     if (
       unknown.length
       || typeof record.interface !== 'string'
-      || !Array.isArray(record.experiences)
-      || record.experiences.some(value => typeof value !== 'string')
+      || (
+        experiences !== undefined
+        && (
+          !Array.isArray(experiences)
+          || experiences.length === 0
+          || experiences.some(value => typeof value !== 'string')
+        )
+      )
     ) {
-      issues.push(`${label}: each availability item needs only a string "interface" and an "experiences" string list`)
+      issues.push(`${label}: each availability item needs only a string "interface" and an optional non-empty "experiences" string list`)
       continue
     }
-    result.push({ interface: record.interface, experiences: record.experiences as string[] })
+    result.push({ interface: record.interface, experiences: (experiences as string[] | undefined) || [] })
   }
   return result
 }

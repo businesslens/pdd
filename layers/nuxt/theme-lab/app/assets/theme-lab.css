@@ -49,6 +49,14 @@
   --businesslens-theme-lab-height: calc(var(--businesslens-theme-lab-row-height) * 2 + 2px);
 }
 
+:root[data-businesslens-theme-lab="shown"][data-businesslens-theme-lab-rows="3"] {
+  --businesslens-theme-lab-height: calc(var(--businesslens-theme-lab-row-height) * 3 + 3px);
+}
+
+:root[data-businesslens-theme-lab="shown"][data-businesslens-theme-lab-rows="4"] {
+  --businesslens-theme-lab-height: calc(var(--businesslens-theme-lab-row-height) * 4 + 4px);
+}
+
 :root[data-businesslens-theme-lab="shown"][data-businesslens-theme-lab-rows="5"] {
   --businesslens-theme-lab-height: calc(var(--businesslens-theme-lab-row-height) * 5 + 5px);
 }

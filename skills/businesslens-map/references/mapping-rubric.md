@@ -15,8 +15,9 @@
   classify each as person/system and internal/external.
 - Interfaces are supported interaction contracts such as customer web, reader
   mobile, operator CLI, or partner API—not every deployable or internal API.
-- Experiences are coherent Actor contexts with stable access and capability
-  boundaries across one or more Interfaces. Do not equate them with a page,
+- Experiences are optional coherent Actor contexts with stable access and
+  capability boundaries across one or more Interfaces. Omit them when an
+  Interface is already one coherent context; do not equate them with a page,
   command group, route tree, API, or CLI.
 - Screens are optional stable user-visible views. Model their information,
   actions, product-significant states, and capability boundary—not components,
@@ -26,8 +27,8 @@
   materially differ.
 - Domains optionally group recognizable Product areas; zero is valid.
 - Capabilities are durable Product abilities, not UI labels, Journey titles, or
-  sequence steps. Map exact Interface–Experience availability only when the
-  repository supports that claim.
+  sequence steps. Map exact Interface scopes, narrowed by Experience only when
+  the repository supports that claim.
 - Business rules are reusable policies or invariants.
 - Journeys represent stable user or operator goals.
 - Scenarios are observable paths through a journey. Cover primary, permission,
@@ -35,7 +36,7 @@
 - Add a decision point only when one condition creates at least two materially
   different product outcomes.
 - Treat shared backend code as no evidence of web/mobile/API/CLI parity. Verify
-  each declared availability pair independently.
+  each declared availability scope independently.
 
 ## Judge coverage
 

@@ -26,6 +26,10 @@ group under `docs/`, and the two must not contradict each other.
   foundation used across Nuxt hosts, not only report pages.
 - `layers/nuxt/theme-lab/` — the optional shared experiment layer for
   backgrounds, brand variants, favicons, and their audition controls.
+- `layers/nuxt/report-lab/` — the optional experiment layer for whole-report
+  designs, the full report projection they share, and the dependency-free
+  topology engine. Designs live here until one wins and is promoted into
+  `report-viewer`; rejected ones are deleted.
 - `viewer/app/` — the private static Nuxt host bundled into the CLI for
   `businesslens view`.
 - `skills/businesslens-*/SKILL.md` — one independent skill per workflow:
@@ -44,8 +48,9 @@ group under `docs/`, and the two must not contradict each other.
   characters so it never truncates; the body H1 carries the full page
   title.
 - This repository authors the documentation with groups Get started, Product
-  Model (one page per entity), Integrations (one page per thing you integrate
-  with), Skills (one page per skill), and CLI (one page per command).
+  Model (one page per entity), Learn from examples (guided catalog Blueprints),
+  Integrations (one page per thing you integrate with), Skills (one page per
+  skill), and CLI (one page per command).
 - Each entity is explained in exactly one place. An entity page carries its
   narrative, when to create one, its file shape, and the `lint` findings
   that constrain it — do not reintroduce a separate glossary, a separate

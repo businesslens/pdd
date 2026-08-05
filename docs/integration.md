@@ -3,7 +3,7 @@ title: Overview
 description: BusinessLens supplies durable product intent around your session plan, technical specification, and injected build flow.
 section: open-source
 group: Integrations
-order: 19
+order: 20
 ---
 
 # Integrating BusinessLens
@@ -13,7 +13,7 @@ the durable product level above them.
 
 | Layer | Artifact | Answers | Lifetime |
 | --- | --- | --- | --- |
-| Product | `.businesslens/` | What should the Product do, for whom, and through which Interfaces and Experiences? | Product lifetime |
+| Product | `.businesslens/` | What should the Product do, for whom, and through which Interfaces and optional Experience contexts? | Product lifetime |
 | Change | SDD proposal/design | How should this change be designed and split? | Until landed/archived |
 | Session | Harness plan | What edits should the agent make next? | Current conversation |
 

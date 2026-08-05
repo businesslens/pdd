@@ -31,8 +31,8 @@ still belongs to your SDD tool of choice and may be attached through
 ├── coverage.md              # coverage assessment (committed)
 ├── actors/<actor-id>.md
 ├── interfaces/<interface-id>.md
-├── experiences/<experience-id>.md
-├── screens/<screen-id>.md
+├── experiences/<experience-id>.md # optional contexts
+├── screens/<screen-id>.md          # optional visual views
 ├── domains/<domain-id>.md   # optional grouping
 ├── capabilities/<capability-id>.md
 ├── business-rules/<rule-id>.md
@@ -124,12 +124,12 @@ but the artifact remains evidence to assess rather than proof to trust.
 ### `config.yaml`
 
 ```yaml
-schema: 3                          # folder-format version
+schema: 4                          # folder-format version
 sdd:
   paths: [openspec/]               # detected/declared SDD roots; empty if none
 ```
 
-`config.yaml` has no other keys. Schema 3 is the only supported folder format.
+`config.yaml` has no other keys. Schema 4 is the only supported folder format.
 
 ### `product.md`
 
@@ -248,7 +248,9 @@ exit contract.
 
 An Experience is a coherent context of Product use with a stable audience,
 access boundary, and capability boundary. It may be offered through one or more
-Interfaces.
+Interfaces. The entire Experience collection is optional: create Experiences
+only when named contexts distinguish meaningful Product scope within an
+Interface or express one context shared across Interfaces.
 
 ```markdown
 ---
@@ -273,26 +275,31 @@ Supports store operations. It does not expose a shopper's private account.
 be supported by each referenced Interface. `access` is required. Optional
 `entryPoints` use Interface IDs as keys and may name only Interfaces declared by
 the Experience. H1, lead description, and `## Capability boundary` are required.
-There is no `exit` field.
+There is no `exit` field. An Interface with one undivided usage context does not
+need a ceremonial Experience.
 
 ### Availability
 
 Capabilities, Journeys, Screens, Scenarios, and Business Rules use one exact
-Interface–Experience relation shape:
+availability shape. An Interface without Experiences is named directly; an
+Interface divided into Experiences names the exact contexts:
 
 ```yaml
 availability:
+  - interface: operator-cli
   - interface: customer-web
     experiences: [storefront, account-management]
   - interface: customer-mobile
     experiences: [storefront]
 ```
 
-Each record creates only the listed Interface–Experience pairs. `interface`
-must name one Interface, `experiences` must be a non-empty unique list, and
-every Experience must declare that Interface. Duplicate Interfaces or pairs are
-invalid. Availability states intended Product scope, never implementation
-status.
+Each record names one independently supported Interface scope. When no
+Experience declares that Interface, omit `experiences`; the record means direct
+availability through the Interface. When one or more Experiences declare that
+Interface, `experiences` is required and must be a non-empty unique list of
+Experiences that declare it. An Interface cannot mix direct and
+Experience-scoped availability. Duplicate Interfaces or scopes are invalid.
+Availability states intended Product scope, never implementation status.
 
 ### `domains/<id>.md`
 
@@ -328,10 +335,10 @@ Let a shopper complete a purchase without losing cart state on a recoverable
 failure.
 ```
 
-`availability` is required and needs at least one pair. `domain` is optional
-and, when present, names exactly one Domain. Actors are expressed by Journeys
-and Actor-bound Experiences. Business Rules own their scope, so Capability
-files do not duplicate Rule IDs.
+`availability` is required and needs at least one Interface scope. `domain` is
+optional and, when present, names exactly one Domain. Actors are expressed by
+Journeys, Actor-bound Interfaces, and optional Experiences. Business Rules own
+their scope, so Capability files do not duplicate Rule IDs.
 
 ### `business-rules/<id>.md`
 
@@ -370,9 +377,10 @@ revalidate it.
 
 The lead paragraph is the rule statement. `domains`, `capabilities`,
 `journeys`, and `scenarios` are relation lists. `availability` optionally limits
-the rule to exact Interface–Experience pairs. A rule must relate to at least one
-Domain, Capability, Journey, Scenario, or availability pair. Business Rule owns
-these relations; consumers derive backlinks.
+the rule to exact Interface scopes, optionally narrowed by Experience. A rule
+must relate to at least one Domain, Capability, Journey, Scenario, or
+availability scope. Business Rule owns these relations; consumers derive
+backlinks.
 
 ### `screens/<id>.md`
 
@@ -433,8 +441,8 @@ The reason it cannot be purchased is explained.
 The screen does not change product or inventory data.
 ```
 
-`availability` and `capabilities` each need at least one item. Every Screen pair
-must also be declared by every referenced Capability. `scenarios` and
+`availability` and `capabilities` each need at least one item. Every Screen
+scope must also be declared by every referenced Capability. `scenarios` and
 `entryPoints` are optional; entry-point keys must name an Interface in the
 Screen's availability. The H1, lead description,
 `## Information presented` bullet list, and `## Capability boundary` prose are
@@ -450,8 +458,8 @@ do not. Visual artifacts stay external and may be attached with
 `kind: visual`; their role distinguishes curated intent from implementation or
 supporting context.
 
-One Screen may relate to multiple Interfaces and Experiences when its product
-semantics are shared. Separate Screens are warranted only when purpose,
+One Screen may relate to multiple Interfaces and optional Experiences when its
+product semantics are shared. Separate Screens are warranted only when purpose,
 information, actions, meaningful states, or capability boundaries differ.
 
 Screens do not author a sitemap or transition graph. A screen inventory is a
@@ -481,9 +489,9 @@ references:
 A shopper finds a product and completes checkout.
 ```
 
-Every Journey needs at least one Actor, Capability, availability pair, and
+Every Journey needs at least one Actor, Capability, availability scope, and
 Scenario. Every referenced Capability must declare every Journey availability
-pair. A Journey has no Domain; consumers derive its Domains from its
+scope. A Journey has no Domain; consumers derive its Domains from its
 Capabilities. `entryPoints` and `references` are optional, and entry-point keys
 must name an Interface in the Journey's availability.
 
@@ -532,8 +540,8 @@ Order is stored and a confirmation is shown.
 ```
 
 `kind` must exist in `taxonomies.yaml`. `availability` is optional and, when
-present, must be a subset of the parent Journey's pairs; omission means the
-Scenario applies to every Journey pair. Business Rules own Scenario scope, so
+present, must be a subset of the parent Journey's scopes; omission means the
+Scenario applies to every Journey scope. Business Rules own Scenario scope, so
 Scenarios do not duplicate Rule IDs. `## Trigger` and `## Outcome` are
 paragraphs, `## Steps` is an ordered list (≥1 item), and `## Edge cases` is an
 optional bullet list.
@@ -583,7 +591,7 @@ administrator decision.
 ## Generated files
 
 - `cache/build.json` — metadata for the most recent portable build.
-- `build/report.json` — portable Product Report v7 generated by
+- `build/report.json` — portable Product Report v8 generated by
   `blueprint export`.
 
 The map inventory is emitted to stdout and writes no cache file. All of
@@ -592,7 +600,7 @@ files are derived artifacts and must not be edited or committed.
 
 ## Portable report and expansion
 
-`build/report.json` is a Product Report with `schemaVersion: "7.0.0"`. It
+`build/report.json` is a Product Report with `schemaVersion: "8.0.0"`. It
 contains the product entities, relationships, intent, portable references,
 supporting content, identity, attribution, entity counts, and coverage needed
 to reconstruct the model. Its top-level `summary` is the short Product
@@ -608,9 +616,9 @@ through `export` is a Blueprint.
 
 The report schema accepts only content that can expand into canonical entity
 Markdown: titles and list items are single-line, required descriptions and
-behavior sections are non-empty, availability pairs and other
+behavior sections are non-empty, availability scopes and other
 relationships resolve to existing entities, and Interface/Capability
-consistency holds. Product Report v7 is the only accepted report version.
+consistency holds. Product Report v8 is the only accepted report version.
 No report profile requires a reference. Present references remain subject to
 the same strict shape and target rules.
 

@@ -1,27 +1,20 @@
 ---
-kind: primary
+kind: edge
 ---
 
-# A reader declares bankruptcy on a source's backlog
+# Mark one source read in bulk
 
 ## Trigger
 
-A reader with an unmanageable backlog chooses to mark everything from one source,
-or their whole library, as read.
+The Reader decides not to inspect the remaining unread items from one source.
 
 ## Steps
 
-1. The product states how many items will be affected
-2. The reader confirms
-3. Every affected item becomes read
-4. The unread count updates and the backlog empties of those items
+1. The Reader selects the source in the unread library
+2. The Product shows how many items will be marked read
+3. The Reader confirms the bulk action
 
 ## Outcome
 
-The backlog is cleared without unfollowing anything, so the source keeps
-delivering and the reader keeps their saved items and their sources.
-
-## Edge cases
-
-- Items saved by the reader are marked read like any other; saving and reading are independent
-- New items arriving after the confirmation are unread, because they were not part of what the reader confirmed
+Every unread item from that source is marked read without unfollowing the source
+or removing saved items.

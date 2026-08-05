@@ -7,7 +7,7 @@ import { buildProject } from '../src/commands/export.js'
 import { runOpen } from '../src/commands/open.js'
 import { lsFiles } from '../src/core/git.js'
 import { loadModel } from '../src/core/model.js'
-import { projectPortableReport, type ProductReportV7 } from '../src/core/portable.js'
+import { projectPortableReport, type ProductReportV8 } from '../src/core/portable.js'
 import { lintModel } from '../src/commands/lint.js'
 
 const FIXTURE = join(__dirname, 'fixtures', 'fixture-shop')
@@ -25,7 +25,7 @@ function initialize(cwd: string): void {
   git(cwd, 'commit', '--allow-empty', '-m', 'fixture')
 }
 
-function withoutRepositoryEvidence(report: ProductReportV7): Record<string, any> {
+function withoutRepositoryEvidence(report: ProductReportV8): Record<string, any> {
   const portable = projectPortableReport(report)
   return {
     ...portable,
@@ -122,6 +122,52 @@ describe('open report', () => {
       const imported = loadModel(fresh)
       expect(imported.coverage.status).toBe('partial')
       expect(imported.coverage.unmapped).toEqual(['Back-office dispute handling'])
+    } finally {
+      rmSync(fresh, { recursive: true, force: true })
+    }
+  })
+
+  it('round-trips direct Interface availability without creating Experiences', async () => {
+    const fresh = mkdtempSync(join(tmpdir(), 'bl-open-direct-'))
+    initialize(fresh)
+    try {
+      const report = structuredClone(buildProject(source).report)
+      report.model.experiences = []
+      report.counts.experiences = 0
+      for (const collection of [
+        report.model.capabilities,
+        report.model.screens,
+        report.model.journeys,
+        report.model.scenarios,
+        report.model.businessRules
+      ]) {
+        for (const entity of collection) {
+          if ('availability' in entity) {
+            entity.availability = entity.availability.map(scope => ({
+              interfaceId: scope.interfaceId,
+              experienceIds: []
+            }))
+          }
+        }
+      }
+      const file = join(fresh, 'direct-report.json')
+      writeFileSync(file, JSON.stringify(report))
+
+      expect(await runOpen(fresh, file, false)).toBe(0)
+      const imported = loadModel(fresh)
+      expect(imported.experiences).toEqual([])
+      expect(imported.capabilities.flatMap(capability => capability.availability))
+        .toEqual(expect.arrayContaining([
+          { interface: 'customer-web', experiences: [] },
+          { interface: 'customer-mobile', experiences: [] }
+        ]))
+      expect(readFileSync(join(fresh, '.businesslens/capabilities/checkout.md'), 'utf8'))
+        .not.toContain('experiences:')
+      expect(readFileSync(join(fresh, '.businesslens/config.yaml'), 'utf8'))
+        .toContain('schema: 4')
+
+      const rebuilt = buildProject(fresh)
+      expect(withoutRepositoryEvidence(rebuilt.report)).toEqual(withoutRepositoryEvidence(report))
     } finally {
       rmSync(fresh, { recursive: true, force: true })
     }

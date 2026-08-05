@@ -1,0 +1,98 @@
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const currentDir = dirname(fileURLToPath(import.meta.url))
+
+export default defineNuxtConfig({
+  $meta: {
+    name: 'businesslens-nuxt-report-lab'
+  },
+  extends: [join(currentDir, '../report-viewer'), join(currentDir, '../theme-lab')],
+  css: [join(currentDir, './app/assets/report-lab.css')],
+  // The local report viewer is a generated SPA with no Nuxt icon endpoint at
+  // runtime, and the scanner does not reliably traverse components inherited
+  // from a packaged Layer, so every icon a design uses is bundled explicitly.
+  icon: {
+    clientBundle: {
+      icons: [
+        'lucide:anchor',
+        'lucide:arrow-down',
+        'lucide:arrow-left',
+        'lucide:arrow-right',
+        'lucide:arrow-up',
+        'lucide:book-open',
+        'lucide:boxes',
+        'lucide:check',
+        'lucide:chevron-down',
+        'lucide:chevron-right',
+        'lucide:chevron-up',
+        'lucide:circle-check',
+        'lucide:circle-dashed',
+        'lucide:circle-help',
+        'lucide:circle-slash',
+        'lucide:columns-2',
+        'lucide:columns-3',
+        'lucide:compass',
+        'lucide:corner-down-left',
+        'lucide:corner-down-right',
+        'lucide:corner-right-down',
+        'lucide:cpu',
+        'lucide:door-open',
+        'lucide:file-code',
+        'lucide:file-diff',
+        'lucide:file-text',
+        'lucide:flag',
+        'lucide:funnel',
+        'lucide:gavel',
+        'lucide:git-branch',
+        'lucide:git-fork',
+        'lucide:globe',
+        'lucide:grid-3x3',
+        'lucide:heart-handshake',
+        'lucide:house',
+        'lucide:image',
+        'lucide:info',
+        'lucide:layout-dashboard',
+        'lucide:layout-grid',
+        'lucide:layout-list',
+        'lucide:layout-panel-left',
+        'lucide:layout-template',
+        'lucide:link',
+        'lucide:link-2',
+        'lucide:list',
+        'lucide:list-checks',
+        'lucide:list-ordered',
+        'lucide:map',
+        'lucide:maximize-2',
+        'lucide:microscope',
+        'lucide:minimize-2',
+        'lucide:monitor',
+        'lucide:mouse-pointer-click',
+        'lucide:package',
+        'lucide:panel-right',
+        'lucide:panel-top',
+        'lucide:pen-line',
+        'lucide:play',
+        'lucide:plug',
+        'lucide:plus',
+        'lucide:radar',
+        'lucide:route',
+        'lucide:scale',
+        'lucide:scan',
+        'lucide:scroll-text',
+        'lucide:search',
+        'lucide:split',
+        'lucide:table',
+        'lucide:table-2',
+        'lucide:triangle-alert',
+        'lucide:unlink-2',
+        'lucide:user-round',
+        'lucide:users',
+        'lucide:waypoints',
+        'lucide:workflow',
+        'lucide:x',
+        'lucide:zap'
+      ]
+    }
+  }
+})

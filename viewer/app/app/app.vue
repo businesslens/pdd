@@ -23,7 +23,11 @@ useHead({
   <UApp>
     <div class="flex min-h-dvh flex-col">
       <NuxtLoadingIndicator />
-      <BusinessLensThemeLabBar />
+      <BusinessLensThemeLabBar :row-count="3">
+        <template #after>
+          <BusinessLensReportLabRow />
+        </template>
+      </BusinessLensThemeLabBar>
       <UHeader :ui="{ root: 'top-(--businesslens-theme-lab-height)', right: 'gap-0.5' }">
         <template #left>
           <div class="flex items-center gap-2">

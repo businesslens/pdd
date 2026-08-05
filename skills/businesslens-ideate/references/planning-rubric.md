@@ -13,8 +13,9 @@
 - Interfaces are supported interaction contracts. Decide web, mobile, CLI,
   partner API, and integration commitments independently; internal APIs and
   frameworks are not Product Interfaces.
-- Experiences are coherent Actor contexts with stable audience, access, and
-  capability boundaries across Interfaces. A page or command group alone is
+- Experiences are optional coherent Actor contexts with stable audience,
+  access, and capability boundaries across Interfaces. Omit them when an
+  Interface is already one coherent context. A page or command group alone is
   not an Experience.
 - Screens are optional stable user-visible product views. State their
   information, available actions, product-significant states, and capability
@@ -24,7 +25,8 @@
   links may be entry points, but internal navigation identifiers do not belong.
 - Domains are optional Capability organization; Journeys may cross them.
 - Capabilities are durable Product abilities, not UI labels, Journey titles,
-  or sequence steps. Declare exact intended Interface–Experience availability.
+  or sequence steps. Declare exact intended Interface scopes, narrowed by
+  Experience where those contexts exist.
 - Business rules are reusable policies or invariants.
 - Journeys express stable user or operator goals.
 - Scenarios express observable paths through a goal, not implementation
@@ -34,7 +36,7 @@
   different outcomes.
 - Record intent where the reason behind a boundary or behavior will guide
   implementation choices.
-- Do not assume parity across Interfaces. Decide each availability pair and
+- Do not assume parity across Interfaces. Decide each availability scope and
   allow Scenarios to narrow a Journey only when behavior materially differs.
 
 ## Scenarios are the acceptance contract

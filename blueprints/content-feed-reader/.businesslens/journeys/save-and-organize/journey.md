@@ -1,19 +1,16 @@
 ---
-actors:
-  - collection-owner
-  - reader
-capabilities:
-  - collections
-  - item-saving
-  - item-tagging
+actors: [reader]
+capabilities: [item-saving, collections]
 availability:
   - interface: reader-web
-    experiences: [reading-app]
+    experiences: [personal-library]
   - interface: reader-mobile
-    experiences: [reading-app]
+    experiences: [personal-library]
+entryPoints:
+  - reader-web: /collections
+  - reader-mobile: content-reader://library/collections
 ---
 
 # Save and organize
 
-A reader keeps what is worth keeping, files it, and gathers it into something
-coherent.
+A Reader keeps worthwhile items and groups them into an owned collection.

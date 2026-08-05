@@ -2,24 +2,18 @@
 kind: primary
 ---
 
-# A reader follows a source by its feed address
+# Follow a source by feed address
 
 ## Trigger
 
-A reader submits the address of a feed.
+The Reader submits the address of a readable syndicated feed.
 
 ## Steps
 
-1. The product fetches the address and confirms it is a feed it can parse
-2. The source is added to the reader's library with the title the feed declares
-3. The items currently in the feed are added to the library as unread
-4. The source appears in the reader's source list as healthy
+1. The Product validates that the address returns a supported feed
+2. The source is added to the Reader's followed sources
+3. Available items are added to the private library
 
 ## Outcome
 
-The source is followed, its current items are in the unread backlog, and the
-reader can open them immediately.
-
-## Edge cases
-
-- The feed declares no title → the product uses the feed's address as the title until a later fetch supplies one
+The source is followed and its items can appear in the Reader's unread backlog.

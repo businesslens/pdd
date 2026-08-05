@@ -1,0 +1,66 @@
+/*
+  Structure shared by the report designs on audition.
+
+  Only what several designs need lives here; anything one design owns stays in
+  that design's own scoped block so a rejected design deletes cleanly.
+*/
+
+:root {
+  /* Header height plus the theme lab bar, so a design that fills the viewport
+     can size itself without measuring. */
+  --blr-chrome: calc(4rem + var(--businesslens-theme-lab-height, 0px));
+  --blr-rail: 17rem;
+}
+
+.blr-pane {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* A hairline technical rule, used by the drawing-led designs. */
+.blr-hairline {
+  border-color: color-mix(in srgb, var(--ui-border-accented) 70%, transparent);
+}
+
+/* Column rules for the multi-column document designs. Column breaks inside a
+   card would split a definition across columns, so cards opt out. */
+.blr-columns {
+  column-gap: 2.5rem;
+  column-rule: 1px solid var(--ui-border-muted);
+}
+
+.blr-columns > * {
+  break-inside: avoid;
+}
+
+.blr-sticky-heading {
+  position: sticky;
+  top: calc(var(--blr-chrome) + 0.25rem);
+  z-index: 10;
+}
+
+/* Numbered clauses for the document designs: the counter is presentation, so
+   it is generated rather than authored into the model. */
+.blr-numbered {
+  counter-reset: blr-clause;
+}
+
+.blr-numbered > * {
+  counter-increment: blr-clause;
+}
+
+.blr-clause-number::before {
+  content: counter(blr-clause);
+}
+
+@media print {
+  [data-businesslens-theme-lab-bar],
+  .blr-no-print {
+    display: none !important;
+  }
+
+  .blr-lab {
+    --blr-chrome: 0px;
+  }
+}
