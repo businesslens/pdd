@@ -84,9 +84,13 @@ function trustedCatalogOrigin(value) {
   if (url.username || url.password || url.search || url.hash || url.pathname !== '/') {
     fail('The catalog origin must be a bare origin with no credentials, path, query, or fragment.')
   }
-  const loopback = url.hostname === 'localhost' || url.hostname === '::1' || /^127(\.\d+){3}$/.test(url.hostname)
-  if (url.protocol === 'https:' || (loopback && url.protocol === 'http:')) return url.origin
-  fail('The catalog origin must use https, except on a loopback host.')
+  const loopback = url.hostname === 'localhost'
+    || url.hostname === '::1'
+    || url.hostname === '[::1]'
+    || /^127(\.\d+){3}$/.test(url.hostname)
+  if (url.origin === 'https://businesslens.io') return url.origin
+  if (loopback && (url.protocol === 'http:' || url.protocol === 'https:')) return url.origin
+  fail('The publisher catalog must be https://businesslens.io or a loopback origin.')
 }
 
 const catalog = trustedCatalogOrigin(origin)
