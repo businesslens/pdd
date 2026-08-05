@@ -11,9 +11,11 @@
  * contexts. Tabs complete the report: Promises (journey cards ⇄ table, full
  * scenario reading), Abilities (domain-grouped capabilities + two named
  * matrices), Constraints (rule impact, direct vs derived), About (identity,
- * coverage, references). Any entity opens the docked inspector: full
- * BlrEntityDetail with a "Map" toggle to the contextual BlrTopology.
+ * coverage, references). Any entity opens the shared inspector slideover:
+ * full BlrEntityDetail with a "Map" tab to the contextual BlrTopology.
  */
+import { h } from 'vue'
+import type { TableColumn, TabsItem } from '@nuxt/ui'
 import type {
   ActorView,
   AnyEntityView,
@@ -32,16 +34,18 @@ import { buildScreenMap } from '../utils/flowGraph'
 import { firstSentence } from '../utils/reportMarkdown'
 import { slotColor } from '../utils/reportPalette'
 
+const UButton = resolveComponent('UButton')
+
 const props = defineProps<{ workspace: ReportWorkspace, logoSrc?: string | null }>()
 
 type TabId = 'surface' | 'promises' | 'abilities' | 'constraints' | 'about'
 
-const TABS: Array<{ id: TabId, label: string, icon: string }> = [
-  { id: 'surface', label: 'Surface', icon: 'i-lucide-door-open' },
-  { id: 'promises', label: 'Promises', icon: 'i-lucide-route' },
-  { id: 'abilities', label: 'Abilities', icon: 'i-lucide-zap' },
-  { id: 'constraints', label: 'Constraints', icon: 'i-lucide-scale' },
-  { id: 'about', label: 'About', icon: 'i-lucide-info' }
+const TABS: TabsItem[] = [
+  { value: 'surface', label: 'Surface', icon: 'i-lucide-door-open' },
+  { value: 'promises', label: 'Promises', icon: 'i-lucide-route' },
+  { value: 'abilities', label: 'Abilities', icon: 'i-lucide-zap' },
+  { value: 'constraints', label: 'Constraints', icon: 'i-lucide-scale' },
+  { value: 'about', label: 'About', icon: 'i-lucide-info' }
 ]
 
 const ACCESS_TONE: Record<string, 'success' | 'warning' | 'error'> = {
@@ -98,6 +102,10 @@ function keyLabel(key: string | null): string {
   if (!key) return 'Whole product'
   const pair = props.workspace.pairs.find(item => item.key === key)
   return pair ? pairLabel(pair) : 'Whole product'
+}
+
+function isActiveContext(key: string): boolean {
+  return contextKey.value === key && !compareOn.value
 }
 
 interface RailGroup {
@@ -360,6 +368,73 @@ function titlesOf(ids: string[]): string {
   return resolveEntities(props.workspace, ids).map(entity => entity.title).join(', ')
 }
 
+function sortableHeader(label: string) {
+  return ({ column }: { column: { getIsSorted: () => false | 'asc' | 'desc', toggleSorting: (desc: boolean) => void } }) => {
+    const sorted = column.getIsSorted()
+    return h(UButton, {
+      color: 'neutral',
+      variant: 'ghost',
+      size: 'sm',
+      label,
+      trailingIcon: sorted ? (sorted === 'asc' ? 'i-lucide-arrow-up' : 'i-lucide-arrow-down') : 'i-lucide-arrow-up-down',
+      class: '-mx-2.5 font-medium',
+      onClick: () => column.toggleSorting(sorted === 'asc')
+    })
+  }
+}
+
+const countCell = (count: number, hint: string) =>
+  h('span', { class: 'blr-meta', title: hint || undefined }, String(count))
+
+const journeyColumns: TableColumn<JourneyView>[] = [
+  {
+    accessorKey: 'title',
+    header: sortableHeader('Journey'),
+    cell: ({ row }) => h('span', { class: 'font-medium text-highlighted' }, row.original.title)
+  },
+  {
+    id: 'actors',
+    accessorFn: journey => titlesOf(journey.actorIds),
+    header: sortableHeader('Actors'),
+    cell: ({ row }) => h('span', { class: 'text-muted' }, titlesOf(row.original.actorIds))
+  },
+  {
+    id: 'contexts',
+    accessorFn: journey => journey.availability.length,
+    header: sortableHeader('Contexts'),
+    cell: ({ row }) => countCell(row.original.availability.length, row.original.availability.map(pairLabel).join(', '))
+  },
+  {
+    id: 'capabilities',
+    accessorFn: journey => journey.capabilityIds.length,
+    header: sortableHeader('Capabilities'),
+    cell: ({ row }) => countCell(row.original.capabilityIds.length, titlesOf(row.original.capabilityIds))
+  },
+  {
+    id: 'screens',
+    accessorFn: journey => journey.screenIds.length,
+    header: sortableHeader('Screens'),
+    cell: ({ row }) => countCell(row.original.screenIds.length, titlesOf(row.original.screenIds))
+  },
+  {
+    id: 'scenarios',
+    accessorFn: journey => journey.scenarioIds.length,
+    header: sortableHeader('Scenarios'),
+    cell: ({ row }) => countCell(row.original.scenarioIds.length, titlesOf(row.original.scenarioIds))
+  },
+  {
+    id: 'rules',
+    accessorFn: journey => journey.ruleIds.length,
+    header: sortableHeader('Rules'),
+    cell: ({ row }) => countCell(row.original.ruleIds.length, titlesOf(row.original.ruleIds))
+  },
+  {
+    accessorKey: 'stepCount',
+    header: sortableHeader('Steps'),
+    cell: ({ row }) => countCell(row.original.stepCount, '')
+  }
+]
+
 /* ------------------------------------------------------------------ */
 /* Abilities                                                           */
 /* ------------------------------------------------------------------ */
@@ -513,38 +588,33 @@ const countEntries = computed(() => {
 </script>
 
 <template>
-  <div class="gw-root flex h-full min-h-0 flex-col">
-    <!-- Identity strip + tab bar -->
+  <div class="flex h-full min-h-0 flex-col">
+    <!-- Identity strip + view nav -->
     <header class="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1 border-b border-default px-4 py-2">
       <img v-if="logoSrc" :src="logoSrc" alt="" class="size-6 shrink-0 rounded">
       <UIcon v-else name="i-lucide-door-open" class="size-5 shrink-0 text-primary" />
       <div class="min-w-0">
-        <p class="truncate text-sm leading-tight font-semibold text-highlighted">{{ workspace.identity.title }}</p>
-        <p class="hidden max-w-xl truncate text-[11px] leading-tight text-dimmed sm:block">{{ workspace.identity.summary }}</p>
+        <p class="truncate text-sm leading-tight font-semibold tracking-tight text-highlighted">{{ workspace.identity.title }}</p>
+        <p class="hidden max-w-xl truncate text-xs text-dimmed sm:block">{{ workspace.identity.summary }}</p>
       </div>
-      <nav class="ms-auto flex flex-wrap items-center gap-1">
-        <button
-          v-for="item in TABS"
-          :key="item.id"
-          type="button"
-          class="gw-tab"
-          :class="{ 'is-active': tab === item.id }"
-          @click="tab = item.id"
-        >
-          <UIcon :name="item.icon" class="size-3.5" />
-          {{ item.label }}
-        </button>
-      </nav>
+      <UTabs
+        v-model="tab"
+        :items="TABS"
+        :content="false"
+        color="neutral"
+        size="sm"
+        class="ms-auto"
+      />
     </header>
 
     <div class="relative flex min-h-0 flex-1">
       <!-- ============ SURFACE: the front door ============ -->
       <div v-if="tab === 'surface'" class="flex min-h-0 min-w-0 flex-1">
         <!-- Context switcher rail -->
-        <nav class="blr-pane w-64 shrink-0 border-e border-default">
+        <nav class="blr-pane w-72 shrink-0 border-e border-default">
           <div class="space-y-1 p-3">
-            <div class="flex items-center justify-between gap-2">
-              <p class="gw-label">Access contexts</p>
+            <div class="flex items-center justify-between gap-2 pb-1">
+              <p class="blr-field">Access contexts</p>
               <UButton
                 icon="i-lucide-columns-2"
                 size="xs"
@@ -563,10 +633,13 @@ const countEntries = computed(() => {
             >
               <span class="flex items-center gap-1.5">
                 <UIcon name="i-lucide-globe" class="size-3.5 shrink-0 text-dimmed" />
-                <span class="truncate text-xs font-medium text-highlighted">Whole product</span>
+                <span
+                  class="truncate text-sm"
+                  :class="!contextKey && !compareOn ? 'font-medium text-highlighted' : 'text-default'"
+                >Whole product</span>
               </span>
-              <span class="gw-counts" title="Counts from the model">
-                {{ workspace.counts.screens }} scr · {{ workspace.counts.capabilities }} cap · {{ workspace.counts.journeys }} jny
+              <span class="blr-meta mt-0.5 block" title="Counts from the model">
+                {{ workspace.counts.screens }} screens · {{ workspace.counts.capabilities }} capabilities · {{ workspace.counts.journeys }} journeys
               </span>
             </button>
 
@@ -575,23 +648,26 @@ const countEntries = computed(() => {
                 v-if="group.direct"
                 type="button"
                 class="gw-context gw-context--direct"
-                :class="{ 'is-active': contextKey === group.direct.key && !compareOn }"
+                :class="{ 'is-active': isActiveContext(group.direct.key) }"
                 @click="pickContext(group.direct.key)"
               >
                 <span class="flex items-center gap-1.5">
                   <BlrKind kind="interface" :labelled="false" size="xs" />
-                  <span class="truncate text-xs font-medium text-highlighted">{{ group.iface.title }}</span>
-                  <span class="text-[10px] text-dimmed">direct</span>
-                  <span v-if="compareOn && compareA === group.direct.key" class="gw-slot">A</span>
-                  <span v-if="compareOn && compareB === group.direct.key" class="gw-slot">B</span>
+                  <span
+                    class="truncate text-sm"
+                    :class="isActiveContext(group.direct.key) ? 'font-medium text-highlighted' : 'text-default'"
+                  >{{ group.iface.title }}</span>
+                  <span class="blr-meta shrink-0">direct</span>
+                  <UBadge v-if="compareOn && compareA === group.direct.key" color="primary" variant="outline" size="sm">A</UBadge>
+                  <UBadge v-if="compareOn && compareB === group.direct.key" color="primary" variant="outline" size="sm">B</UBadge>
                 </span>
-                <span class="gw-counts" title="Derived: entities declaring availability here">
-                  {{ countsFor(group.direct.key).screens }} scr · {{ countsFor(group.direct.key).capabilities }} cap · {{ countsFor(group.direct.key).journeys }} jny
+                <span class="blr-meta mt-0.5 block" title="Derived: entities declaring availability here">
+                  {{ countsFor(group.direct.key).screens }} screens · {{ countsFor(group.direct.key).capabilities }} capabilities · {{ countsFor(group.direct.key).journeys }} journeys
                 </span>
               </button>
               <p v-else class="flex items-center gap-1.5 px-2 py-1">
                 <BlrKind kind="interface" :labelled="false" size="xs" />
-                <span class="truncate text-xs font-medium text-toned">{{ group.iface.title }}</span>
+                <span class="truncate text-sm font-medium text-muted">{{ group.iface.title }}</span>
               </p>
 
               <button
@@ -599,26 +675,28 @@ const countEntries = computed(() => {
                 :key="entry.pair.key"
                 type="button"
                 class="gw-context gw-context--nested"
-                :class="{ 'is-active': contextKey === entry.pair.key && !compareOn }"
+                :class="{ 'is-active': isActiveContext(entry.pair.key) }"
                 @click="pickContext(entry.pair.key)"
               >
                 <span class="flex items-center gap-1.5">
                   <BlrKind kind="experience" :labelled="false" size="xs" />
-                  <span class="truncate text-xs font-medium text-highlighted">{{ entry.pair.experienceTitle }}</span>
+                  <span
+                    class="truncate text-sm"
+                    :class="isActiveContext(entry.pair.key) ? 'font-medium text-highlighted' : 'text-default'"
+                  >{{ entry.pair.experienceTitle }}</span>
                   <UBadge
                     v-if="entry.experience"
                     :color="ACCESS_TONE[entry.experience.accessMode] || 'neutral'"
                     variant="subtle"
                     size="sm"
-                    class="text-[9px]"
                   >
                     {{ entry.experience.accessMode }}
                   </UBadge>
-                  <span v-if="compareOn && compareA === entry.pair.key" class="gw-slot">A</span>
-                  <span v-if="compareOn && compareB === entry.pair.key" class="gw-slot">B</span>
+                  <UBadge v-if="compareOn && compareA === entry.pair.key" color="primary" variant="outline" size="sm">A</UBadge>
+                  <UBadge v-if="compareOn && compareB === entry.pair.key" color="primary" variant="outline" size="sm">B</UBadge>
                 </span>
-                <span class="gw-counts" title="Derived: entities declaring availability here">
-                  {{ countsFor(entry.pair.key).screens }} scr · {{ countsFor(entry.pair.key).capabilities }} cap · {{ countsFor(entry.pair.key).journeys }} jny
+                <span class="blr-meta mt-0.5 block" title="Derived: entities declaring availability here">
+                  {{ countsFor(entry.pair.key).screens }} screens · {{ countsFor(entry.pair.key).capabilities }} capabilities · {{ countsFor(entry.pair.key).journeys }} journeys
                 </span>
               </button>
             </div>
@@ -633,22 +711,22 @@ const countEntries = computed(() => {
                 v-for="actor in workspace.actors"
                 :key="actor.id"
                 type="button"
-                class="gw-actor"
+                class="flex min-w-60 max-w-72 flex-col rounded-xl border border-default bg-default px-3 py-2 text-start transition hover:border-accented"
                 @click="inspect(actor.id)"
               >
                 <span class="flex items-center gap-1.5">
                   <BlrKind kind="actor" :labelled="false" size="xs" />
-                  <span class="truncate text-xs font-medium text-highlighted">{{ actor.title }}</span>
-                  <UBadge color="neutral" variant="subtle" size="sm" class="text-[9px]">
+                  <span class="min-w-0 flex-1 truncate text-sm font-medium text-highlighted">{{ actor.title }}</span>
+                  <UBadge color="neutral" variant="subtle" size="sm">
                     {{ actor.actorKind }} · {{ actor.relationship }}
                   </UBadge>
                 </span>
-                <span class="mt-0.5 flex items-baseline gap-1 text-[11px] text-dimmed">
-                  <UIcon name="i-lucide-arrow-right" class="size-3 shrink-0 self-center" />
-                  <span class="truncate">enters {{ actorEntryLabel(actor) }}</span>
+                <span class="mt-1 flex items-baseline gap-1.5">
+                  <span class="blr-field shrink-0">Enters</span>
+                  <span class="truncate text-sm text-default" :title="actorEntryLabel(actor)">{{ actorEntryLabel(actor) }}</span>
                 </span>
               </button>
-              <p v-if="!workspace.actors.length" class="self-center text-xs text-dimmed italic">
+              <p v-if="!workspace.actors.length" class="self-center text-sm text-muted italic">
                 No Actors authored in this model.
               </p>
             </div>
@@ -657,24 +735,30 @@ const countEntries = computed(() => {
           <div class="relative min-h-0 flex-1">
             <!-- Compare delta replaces the map when both contexts are chosen -->
             <div v-if="compareData" class="blr-pane h-full">
-              <div class="space-y-4 p-4">
+              <div class="space-y-4 p-4 sm:p-6">
                 <div class="flex flex-wrap items-center gap-2">
-                  <p class="gw-label">Context comparison</p>
-                  <span class="gw-chip"><span class="gw-slot">A</span>{{ pairLabel(compareData.pairA) }}</span>
-                  <span class="text-xs text-dimmed">vs</span>
-                  <span class="gw-chip"><span class="gw-slot">B</span>{{ pairLabel(compareData.pairB) }}</span>
-                  <span class="ms-auto text-[11px] text-dimmed">Set membership by declared availability — nothing is ranked.</span>
+                  <h3 class="text-base font-semibold tracking-tight text-highlighted">Context comparison</h3>
+                  <span class="inline-flex items-center gap-1.5 text-sm font-medium text-highlighted">
+                    <UBadge color="primary" variant="outline" size="sm">A</UBadge>
+                    {{ pairLabel(compareData.pairA) }}
+                  </span>
+                  <span class="text-sm text-muted">vs</span>
+                  <span class="inline-flex items-center gap-1.5 text-sm font-medium text-highlighted">
+                    <UBadge color="primary" variant="outline" size="sm">B</UBadge>
+                    {{ pairLabel(compareData.pairB) }}
+                  </span>
+                  <span class="ms-auto text-sm text-muted">Set membership by declared availability — nothing is ranked.</span>
                   <UButton icon="i-lucide-x" size="xs" color="neutral" variant="ghost" label="Exit compare" @click="toggleCompare" />
                 </div>
                 <div class="grid gap-3 lg:grid-cols-3">
                   <section
                     v-for="column in compareColumns"
                     :key="column.id"
-                    class="space-y-3 rounded-xl border border-default p-3"
+                    class="space-y-3 rounded-xl border border-default bg-default p-4"
                   >
-                    <h4 class="flex items-baseline gap-2 text-xs font-medium text-highlighted">
+                    <h4 class="text-base font-semibold tracking-tight text-highlighted">
                       {{ column.title }}
-                      <span class="font-mono text-[10px] text-dimmed">{{ compareColumnCount(column.field) }}</span>
+                      <span class="blr-meta ms-1">{{ compareColumnCount(column.field) }}</span>
                     </h4>
                     <template v-for="bucket in compareData.buckets" :key="bucket.kind">
                       <BlrLinks
@@ -686,7 +770,7 @@ const countEntries = computed(() => {
                         @select="inspectEntity"
                       />
                     </template>
-                    <p v-if="!compareColumnCount(column.field)" class="text-xs text-dimmed italic">
+                    <p v-if="!compareColumnCount(column.field)" class="text-sm text-muted italic">
                       None in this set.
                     </p>
                   </section>
@@ -703,7 +787,7 @@ const countEntries = computed(() => {
               />
               <div
                 v-if="compareOn"
-                class="absolute top-2 left-1/2 -translate-x-1/2 rounded-full border border-default bg-elevated/90 px-3 py-1 text-xs text-toned shadow-sm"
+                class="absolute top-2 left-1/2 -translate-x-1/2 rounded-full border border-default bg-elevated/90 px-3 py-1 text-sm text-muted shadow-sm"
               >
                 Pick two contexts in the rail to compare — {{ compareA || compareB ? '1 of 2' : '0 of 2' }} chosen.
               </div>
@@ -719,8 +803,8 @@ const countEntries = computed(() => {
           <div class="space-y-4 p-4">
             <div class="flex items-start gap-2">
               <div class="min-w-0 flex-1">
-                <p class="gw-label">Selected context</p>
-                <p class="mt-1 flex flex-wrap items-center gap-1.5 text-sm font-medium text-highlighted">
+                <p class="blr-field">Selected context</p>
+                <p class="mt-1 flex flex-wrap items-center gap-1.5 text-sm font-semibold tracking-tight text-highlighted">
                   <BlrKind kind="interface" :labelled="false" size="xs" />
                   {{ activeScope.pair.interfaceTitle }}
                   <template v-if="activeScope.pair.experienceTitle">
@@ -764,7 +848,7 @@ const countEntries = computed(() => {
             </div>
 
             <div v-if="activeScope.boundary" class="space-y-1.5">
-              <p class="gw-label">Capability boundary</p>
+              <p class="blr-field">Capability boundary</p>
               <BlrProse :text="activeScope.boundary" />
             </div>
 
@@ -776,10 +860,10 @@ const countEntries = computed(() => {
               <BlrLinks :workspace="workspace" :ids="activeScope.journeyIds" kind="journey" label="Journeys completable" interactive @select="inspectEntity" />
               <BlrLinks :workspace="workspace" :ids="activeScope.screenIds" kind="screen" label="Screens here" interactive @select="inspectEntity" />
               <BlrLinks :workspace="workspace" :ids="activeScope.ruleIds" kind="rule" label="Rules narrowed here" interactive @select="inspectEntity" />
-              <p v-if="!activeScope.ruleIds.length" class="text-xs text-dimmed italic">
+              <p v-if="!activeScope.ruleIds.length" class="text-sm text-muted italic">
                 No Business Rule is narrowed to this context.
               </p>
-              <p class="text-[10px] text-dimmed">
+              <p class="text-sm text-dimmed">
                 Lists are derived from declared availability in the model.
               </p>
             </div>
@@ -791,10 +875,10 @@ const countEntries = computed(() => {
       <div v-else-if="tab === 'promises'" class="flex min-h-0 min-w-0 flex-1 flex-col">
         <div
           v-if="contextKey"
-          class="flex shrink-0 flex-wrap items-center gap-2 border-b border-default bg-elevated/40 px-4 py-1.5 text-xs"
+          class="flex shrink-0 flex-wrap items-center gap-2 border-b border-default bg-elevated/40 px-4 py-1.5"
         >
           <UIcon name="i-lucide-funnel" class="size-3.5 text-dimmed" />
-          <span class="text-toned">
+          <span class="text-sm text-muted">
             Scoped to <span class="font-medium text-highlighted">{{ keyLabel(contextKey) }}</span>
             — {{ scopedJourneys.length }} of {{ workspace.journeys.length }} Journeys declare availability there.
           </span>
@@ -815,29 +899,30 @@ const countEntries = computed(() => {
 
             <header class="space-y-2">
               <BlrKind kind="journey" />
-              <h2 class="text-2xl tracking-tight text-highlighted">{{ openJourney.title }}</h2>
-              <BlrProse :text="openJourney.lead" />
+              <h2 class="text-2xl font-semibold tracking-[-0.03em] text-highlighted">{{ openJourney.title }}</h2>
+              <BlrProse :text="openJourney.lead" size="base" />
             </header>
 
-            <section class="space-y-1.5 rounded-xl border border-default bg-elevated/30 p-3">
-              <p class="gw-label">Available in — click to scope the Surface</p>
+            <section class="space-y-1.5 rounded-xl border border-default bg-default p-4">
+              <p class="blr-field">Available in — click to scope the Surface</p>
               <div class="flex flex-wrap gap-1.5">
-                <button
+                <UButton
                   v-for="pair in openJourney.availability"
                   :key="pair.key"
-                  type="button"
-                  class="gw-chip"
+                  icon="i-lucide-door-open"
+                  size="xs"
+                  color="neutral"
+                  variant="outline"
+                  class="rounded-full"
+                  :label="pairLabel(pair)"
                   @click="goToContext(pair.key)"
-                >
-                  <UIcon name="i-lucide-door-open" class="size-3 text-dimmed" />
-                  {{ pairLabel(pair) }}
-                </button>
+                />
               </div>
               <BlrAvail :pairs="[]" :entry-points="openJourney.entryPoints" label="" />
             </section>
 
             <section v-if="openJourney.intent" class="space-y-1.5">
-              <p class="gw-label">Intent</p>
+              <p class="blr-field">Intent</p>
               <BlrProse :text="openJourney.intent" />
             </section>
 
@@ -850,22 +935,21 @@ const countEntries = computed(() => {
             </section>
 
             <section class="space-y-4">
-              <h3 class="flex items-baseline gap-2 border-b border-default pb-2 text-sm font-medium text-highlighted">
-                Scenarios
-                <span class="font-mono text-[11px] text-dimmed">{{ openJourneyScenarios.length }}</span>
+              <h3 class="border-b border-default pb-2 text-base font-semibold tracking-tight text-highlighted">
+                Scenarios <span class="blr-meta ms-1">{{ openJourneyScenarios.length }}</span>
               </h3>
-              <p v-if="!openJourneyScenarios.length" class="text-sm text-dimmed italic">
+              <p v-if="!openJourneyScenarios.length" class="text-sm text-muted italic">
                 No Scenarios authored for this Journey.
               </p>
               <article
                 v-for="(scenario, scenarioIndex) in openJourneyScenarios"
                 :key="scenario.id"
-                class="gw-scenario space-y-4"
+                class="space-y-4 rounded-xl border border-default bg-default p-4"
               >
                 <header class="flex flex-wrap items-center gap-2">
-                  <span class="font-mono text-[11px] text-dimmed tabular-nums">{{ scenarioIndex + 1 }}</span>
+                  <span class="blr-meta">{{ scenarioIndex + 1 }}</span>
                   <BlrKind kind="scenario" :labelled="false" />
-                  <span class="text-sm font-medium text-highlighted">{{ scenario.title }}</span>
+                  <span class="text-base font-semibold tracking-tight text-highlighted">{{ scenario.title }}</span>
                   <UBadge color="neutral" variant="subtle" size="sm">{{ scenario.kindName }}</UBadge>
                   <span class="ms-auto flex items-center gap-1.5">
                     <UButton icon="i-lucide-book-open" size="xs" color="neutral" variant="ghost" title="Open the full Scenario record" @click="inspect(scenario.id)" />
@@ -874,36 +958,37 @@ const countEntries = computed(() => {
 
                 <div class="flex flex-wrap items-center gap-1.5">
                   <template v-if="scenario.availability.length">
-                    <button
+                    <UButton
                       v-for="pair in scenario.availability"
                       :key="pair.key"
-                      type="button"
-                      class="gw-chip"
+                      size="xs"
+                      color="neutral"
+                      variant="outline"
+                      class="rounded-full"
+                      :label="pairLabel(pair)"
                       @click="goToContext(pair.key)"
-                    >
-                      {{ pairLabel(pair) }}
-                    </button>
+                    />
                   </template>
-                  <span v-else class="text-[11px] text-dimmed italic">Applies to every context its Journey declares.</span>
+                  <span v-else class="text-sm text-muted italic">Applies to every context its Journey declares.</span>
                 </div>
 
                 <div class="space-y-1.5">
-                  <p class="gw-label">Trigger</p>
+                  <p class="blr-field">Trigger</p>
                   <BlrProse :text="scenario.trigger" />
                 </div>
 
                 <div class="space-y-1.5">
-                  <p class="gw-label">Steps · {{ scenario.steps.length }}</p>
+                  <p class="blr-field">Steps · {{ scenario.steps.length }}</p>
                   <ol class="space-y-1.5 border-s-2 border-accented ps-4">
-                    <li v-for="(step, stepIndex) in scenario.steps" :key="stepIndex" class="flex gap-3 text-sm leading-relaxed">
-                      <span class="mt-0.5 w-5 shrink-0 text-end font-mono text-[11px] text-dimmed tabular-nums">{{ stepIndex + 1 }}</span>
-                      <span class="text-toned">{{ step }}</span>
+                    <li v-for="(step, stepIndex) in scenario.steps" :key="stepIndex" class="flex gap-3 text-sm leading-6">
+                      <span class="blr-meta w-5 shrink-0 pt-0.5 text-end">{{ stepIndex + 1 }}</span>
+                      <span class="text-default">{{ step }}</span>
                     </li>
                   </ol>
                 </div>
 
                 <div v-if="scenario.decisionPoints.length" class="space-y-2">
-                  <p class="gw-label">Decision points · {{ scenario.decisionPoints.length }}</p>
+                  <p class="blr-field">Decision points · {{ scenario.decisionPoints.length }}</p>
                   <div
                     v-for="(point, pointIndex) in scenario.decisionPoints"
                     :key="pointIndex"
@@ -917,7 +1002,7 @@ const countEntries = computed(() => {
                         :key="branchIndex"
                         class="flex flex-wrap items-baseline gap-1.5 text-xs"
                       >
-                        <span class="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] text-toned">{{ branch.condition }}</span>
+                        <span class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs text-default">{{ branch.condition }}</span>
                         <UIcon name="i-lucide-arrow-right" class="size-3 self-center text-dimmed" />
                         <span class="text-dimmed">{{ branch.outcome }}</span>
                       </li>
@@ -926,12 +1011,12 @@ const countEntries = computed(() => {
                 </div>
 
                 <div class="space-y-1.5">
-                  <p class="gw-label">Outcome</p>
+                  <p class="blr-field">Outcome</p>
                   <BlrProse :text="scenario.outcome" />
                 </div>
 
                 <div v-if="scenario.edgeCases.length" class="space-y-1.5">
-                  <p class="gw-label">Edge cases · {{ scenario.edgeCases.length }}</p>
+                  <p class="blr-field">Edge cases · {{ scenario.edgeCases.length }}</p>
                   <ul class="list-disc space-y-1 ps-5 text-sm text-dimmed marker:text-dimmed">
                     <li v-for="(edge, edgeIndex) in scenario.edgeCases" :key="edgeIndex">{{ edge }}</li>
                   </ul>
@@ -948,15 +1033,24 @@ const countEntries = computed(() => {
 
         <!-- Journey browser: cards ⇄ table -->
         <template v-else>
-          <div class="flex shrink-0 items-center gap-2 border-b border-default px-4 py-2">
-            <p class="gw-label">Journeys · {{ scopedJourneys.length }}</p>
-            <span class="ms-auto flex gap-1">
-              <UButton icon="i-lucide-layout-grid" size="xs" color="neutral" :variant="journeyView === 'cards' ? 'solid' : 'outline'" label="Cards" @click="journeyView = 'cards'" />
-              <UButton icon="i-lucide-table" size="xs" color="neutral" :variant="journeyView === 'table' ? 'solid' : 'outline'" label="Table" @click="journeyView = 'table'" />
-            </span>
+          <div class="flex shrink-0 flex-wrap items-center gap-2 border-b border-default px-4 py-2">
+            <h3 class="text-base font-semibold tracking-tight text-highlighted">
+              Journeys <span class="blr-meta ms-1">{{ scopedJourneys.length }}</span>
+            </h3>
+            <UTabs
+              v-model="journeyView"
+              :items="[
+                { value: 'cards', label: 'Cards', icon: 'i-lucide-layout-grid' },
+                { value: 'table', label: 'Table', icon: 'i-lucide-table' }
+              ]"
+              :content="false"
+              color="neutral"
+              size="xs"
+              class="ms-auto"
+            />
           </div>
           <div class="blr-pane flex-1">
-            <p v-if="!scopedJourneys.length" class="p-6 text-sm text-dimmed italic">
+            <p v-if="!scopedJourneys.length" class="p-6 text-sm text-muted italic">
               No Journeys declare availability in this context.
             </p>
 
@@ -965,17 +1059,17 @@ const countEntries = computed(() => {
                 v-for="journey in scopedJourneys"
                 :key="journey.id"
                 type="button"
-                class="gw-card"
+                class="flex flex-col gap-2.5 rounded-xl border border-default bg-default p-4 text-start transition hover:border-accented"
                 @click="openJourneyId = journey.id"
               >
                 <span class="flex items-center gap-2">
                   <BlrKind kind="journey" :labelled="false" />
-                  <span class="min-w-0 flex-1 truncate text-start text-sm font-medium text-highlighted">{{ journey.title }}</span>
-                  <span class="gw-counts">{{ journey.stepCount }} steps</span>
+                  <span class="min-w-0 flex-1 truncate text-start text-base font-semibold tracking-tight text-highlighted">{{ journey.title }}</span>
+                  <span class="blr-meta shrink-0">{{ journey.stepCount }} steps</span>
                 </span>
-                <span class="line-clamp-3 text-start text-xs leading-relaxed text-toned">{{ firstSentence(journey.lead, 220) }}</span>
+                <span class="line-clamp-3 text-start text-sm leading-6 text-muted">{{ firstSentence(journey.lead, 220) }}</span>
                 <span class="flex flex-wrap gap-1">
-                  <span v-for="pair in journey.availability" :key="pair.key" class="gw-chip">{{ pairLabel(pair) }}</span>
+                  <UBadge v-for="pair in journey.availability" :key="pair.key" color="neutral" variant="outline" size="sm">{{ pairLabel(pair) }}</UBadge>
                 </span>
                 <span class="space-y-1 text-start">
                   <BlrLinks :workspace="workspace" :ids="journey.actorIds" kind="actor" />
@@ -983,46 +1077,22 @@ const countEntries = computed(() => {
                   <BlrLinks :workspace="workspace" :ids="journey.screenIds" kind="screen" :max="3" />
                   <BlrLinks :workspace="workspace" :ids="journey.ruleIds" kind="rule" :max="2" />
                 </span>
-                <span class="mt-auto border-t border-muted pt-2 text-start text-[11px] text-dimmed">
-                  <span class="font-medium text-toned">{{ journey.scenarioIds.length }} Scenarios</span>
+                <span class="mt-auto border-t border-default pt-2 text-start text-sm text-dimmed">
+                  <span class="font-medium text-muted">{{ journey.scenarioIds.length }} scenarios</span>
                   <template v-if="journey.scenarioIds.length"> — {{ scenarioNames(journey) }}</template>
                 </span>
               </button>
             </div>
 
-            <div v-else class="overflow-x-auto p-4">
-              <table class="gw-table">
-                <thead>
-                  <tr>
-                    <th>Journey</th>
-                    <th>Actors</th>
-                    <th>Contexts</th>
-                    <th>Capabilities</th>
-                    <th>Screens</th>
-                    <th>Scenarios</th>
-                    <th>Rules</th>
-                    <th>Authored steps</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr
-                    v-for="journey in scopedJourneys"
-                    :key="journey.id"
-                    class="cursor-pointer"
-                    @click="openJourneyId = journey.id"
-                  >
-                    <td class="font-medium text-highlighted">{{ journey.title }}</td>
-                    <td>{{ titlesOf(journey.actorIds) }}</td>
-                    <td>{{ journey.availability.map(pairLabel).join('; ') }}</td>
-                    <td class="tabular-nums" :title="titlesOf(journey.capabilityIds)">{{ journey.capabilityIds.length }}</td>
-                    <td class="tabular-nums" :title="titlesOf(journey.screenIds)">{{ journey.screenIds.length }}</td>
-                    <td class="tabular-nums" :title="titlesOf(journey.scenarioIds)">{{ journey.scenarioIds.length }}</td>
-                    <td class="tabular-nums" :title="titlesOf(journey.ruleIds)">{{ journey.ruleIds.length }}</td>
-                    <td class="tabular-nums">{{ journey.stepCount }}</td>
-                  </tr>
-                </tbody>
-              </table>
-              <p class="mt-2 text-[11px] text-dimmed">
+            <div v-else class="p-4">
+              <UTable
+                :data="scopedJourneys"
+                :columns="journeyColumns"
+                class="rounded-xl border border-default bg-default"
+                :ui="{ tr: 'cursor-pointer' }"
+                :on-select="(_event: Event, row: any) => { openJourneyId = row.original.id }"
+              />
+              <p class="pt-2 text-sm text-muted">
                 Counts are derived from the model; hover a count for the names behind it. Click a row for the full Journey.
               </p>
             </div>
@@ -1034,10 +1104,10 @@ const countEntries = computed(() => {
       <div v-else-if="tab === 'abilities'" class="flex min-h-0 min-w-0 flex-1 flex-col">
         <div
           v-if="contextKey"
-          class="flex shrink-0 flex-wrap items-center gap-2 border-b border-default bg-elevated/40 px-4 py-1.5 text-xs"
+          class="flex shrink-0 flex-wrap items-center gap-2 border-b border-default bg-elevated/40 px-4 py-1.5"
         >
           <UIcon name="i-lucide-funnel" class="size-3.5 text-dimmed" />
-          <span class="text-toned">
+          <span class="text-sm text-muted">
             Scoped to <span class="font-medium text-highlighted">{{ keyLabel(contextKey) }}</span>
             — {{ scopedCapabilities.length }} of {{ workspace.capabilities.length }} Capabilities. Matrices stay whole-product; the scoped column is tinted.
           </span>
@@ -1049,17 +1119,23 @@ const countEntries = computed(() => {
           <div class="mx-auto max-w-6xl space-y-8 p-4 sm:p-6">
             <!-- Capability map grouped by Domain -->
             <section class="space-y-5">
-              <h3 class="gw-label border-b border-default pb-2">Capabilities by Domain</h3>
+              <h3 class="border-b border-default pb-2 text-base font-semibold tracking-tight text-highlighted">Capabilities by Domain</h3>
               <div v-for="group in domainGroups" :key="group.id || 'no-domain'" class="space-y-2">
                 <div class="flex flex-wrap items-baseline gap-2">
                   <template v-if="group.domain">
-                    <BlrKind kind="domain" :labelled="false" size="xs" />
-                    <button type="button" class="gw-inline text-sm" @click="inspect(group.domain.id)">{{ group.domain.title }}</button>
-                    <span class="min-w-0 flex-1 truncate text-xs text-dimmed">{{ firstSentence(group.domain.lead) }}</span>
+                    <button
+                      type="button"
+                      class="inline-flex items-center gap-2 text-base font-semibold tracking-tight text-highlighted hover:text-primary"
+                      @click="inspect(group.domain.id)"
+                    >
+                      <BlrKind kind="domain" :labelled="false" size="xs" />
+                      {{ group.domain.title }}
+                    </button>
+                    <span class="min-w-0 flex-1 truncate text-sm text-muted">{{ firstSentence(group.domain.lead) }}</span>
                   </template>
-                  <span v-else class="text-sm font-medium text-toned">Without a Domain</span>
+                  <span v-else class="text-base font-semibold tracking-tight text-highlighted">Without a Domain</span>
                 </div>
-                <p v-if="!group.capabilities.length" class="text-xs text-dimmed italic">
+                <p v-if="!group.capabilities.length" class="text-sm text-muted italic">
                   No Capability of this Domain is available in the selected context.
                 </p>
                 <div class="grid gap-2.5 md:grid-cols-2 xl:grid-cols-3">
@@ -1067,18 +1143,18 @@ const countEntries = computed(() => {
                     v-for="capability in group.capabilities"
                     :key="capability.id"
                     type="button"
-                    class="gw-card"
+                    class="flex flex-col gap-2 rounded-xl border border-default bg-default p-4 text-start transition hover:border-accented"
                     @click="inspect(capability.id)"
                   >
                     <span class="flex items-center gap-2">
                       <BlrKind kind="capability" :labelled="false" />
-                      <span class="min-w-0 flex-1 truncate text-start text-sm font-medium text-highlighted">{{ capability.title }}</span>
+                      <span class="min-w-0 flex-1 truncate text-start text-base font-semibold tracking-tight text-highlighted">{{ capability.title }}</span>
                     </span>
-                    <span class="line-clamp-2 text-start text-xs leading-relaxed text-toned">{{ firstSentence(capability.lead, 180) }}</span>
+                    <span class="line-clamp-2 text-start text-sm leading-6 text-muted">{{ firstSentence(capability.lead, 180) }}</span>
                     <span class="flex flex-wrap gap-1">
-                      <span v-for="pair in capability.availability" :key="pair.key" class="gw-chip">{{ pairLabel(pair) }}</span>
+                      <UBadge v-for="pair in capability.availability" :key="pair.key" color="neutral" variant="outline" size="sm">{{ pairLabel(pair) }}</UBadge>
                     </span>
-                    <span class="gw-counts" title="Derived: backlinks resolved from the model">
+                    <span class="blr-meta" title="Derived: backlinks resolved from the model">
                       {{ capability.journeyIds.length }} journeys · {{ capability.screenIds.length }} screens · {{ capability.ruleIds.length }} rules
                     </span>
                   </button>
@@ -1088,15 +1164,18 @@ const countEntries = computed(() => {
 
             <!-- Named matrix 1: the signature availability matrix -->
             <section class="space-y-2">
-              <h3 class="text-sm font-medium text-highlighted">Where can each Capability be reached?</h3>
-              <p class="text-xs text-dimmed">
-                Capabilities × access contexts. A filled cell is a declared availability; click any cell for the facts behind it.
+              <header>
+                <p class="blr-field">Matrix · Capabilities × Access contexts</p>
+                <h3 class="mt-0.5 text-lg font-semibold tracking-tight text-highlighted">Where can each Capability be reached?</h3>
+              </header>
+              <p class="text-sm text-muted">
+                A filled cell is a declared availability; click any cell for the facts behind it.
               </p>
-              <div class="overflow-x-auto rounded-xl border border-default p-3">
+              <div class="overflow-x-auto rounded-xl border border-default bg-default p-3.5">
                 <table class="gw-matrix">
                   <thead>
                     <tr>
-                      <th class="text-start"><span class="gw-label">Capability</span></th>
+                      <th class="text-start"><span class="blr-field">Capability</span></th>
                       <th v-for="pair in workspace.pairs" :key="pair.key">
                         <button type="button" class="gw-colhead" :title="`Scope the Surface to ${pairLabel(pair)}`" @click="goToContext(pair.key)">
                           {{ pairLabel(pair) }}
@@ -1107,7 +1186,7 @@ const countEntries = computed(() => {
                   <tbody>
                     <tr v-for="capability in workspace.capabilities" :key="capability.id">
                       <th>
-                        <button type="button" class="gw-inline" @click="inspect(capability.id)">{{ capability.title }}</button>
+                        <button type="button" :title="capability.title" @click="inspect(capability.id)">{{ capability.title }}</button>
                       </th>
                       <td
                         v-for="pair in workspace.pairs"
@@ -1131,15 +1210,18 @@ const countEntries = computed(() => {
 
             <!-- Named matrix 2 -->
             <section class="space-y-2">
-              <h3 class="text-sm font-medium text-highlighted">Which promises depend on each Capability?</h3>
-              <p class="text-xs text-dimmed">
-                Capabilities × Journeys. A filled cell means the Journey lists the Capability among what it uses.
+              <header>
+                <p class="blr-field">Matrix · Capabilities × Journeys</p>
+                <h3 class="mt-0.5 text-lg font-semibold tracking-tight text-highlighted">Which promises depend on each Capability?</h3>
+              </header>
+              <p class="text-sm text-muted">
+                A filled cell means the Journey lists the Capability among what it uses.
               </p>
-              <div class="overflow-x-auto rounded-xl border border-default p-3">
+              <div class="overflow-x-auto rounded-xl border border-default bg-default p-3.5">
                 <table class="gw-matrix">
                   <thead>
                     <tr>
-                      <th class="text-start"><span class="gw-label">Capability</span></th>
+                      <th class="text-start"><span class="blr-field">Capability</span></th>
                       <th v-for="journey in workspace.journeys" :key="journey.id">
                         <button type="button" class="gw-colhead" :title="`Open ${journey.title}`" @click="inspect(journey.id)">
                           {{ journey.title }}
@@ -1150,7 +1232,7 @@ const countEntries = computed(() => {
                   <tbody>
                     <tr v-for="capability in workspace.capabilities" :key="capability.id">
                       <th>
-                        <button type="button" class="gw-inline" @click="inspect(capability.id)">{{ capability.title }}</button>
+                        <button type="button" :title="capability.title" @click="inspect(capability.id)">{{ capability.title }}</button>
                       </th>
                       <td v-for="journey in workspace.journeys" :key="journey.id">
                         <button
@@ -1169,10 +1251,10 @@ const countEntries = computed(() => {
             </section>
 
             <!-- Cell explanation strip -->
-            <div v-if="matrixDetail" class="flex items-start gap-3 rounded-xl border border-accented bg-elevated/40 p-3">
+            <div v-if="matrixDetail" class="flex items-start gap-3 rounded-xl border border-default bg-default px-4 py-3">
               <UIcon name="i-lucide-corner-down-right" class="mt-1 size-4 shrink-0 text-dimmed" />
               <div class="min-w-0 flex-1 space-y-2">
-                <p class="text-sm text-toned">
+                <p class="text-sm leading-6 text-default">
                   <button type="button" class="gw-inline" @click="inspect(matrixDetail.capability.id)">{{ matrixDetail.capability.title }}</button>
                   <template v-if="matrixDetail.matrix === 'reach' && matrixDetail.pair">
                     {{ matrixDetail.on ? ' is declared available in ' : ' is not declared available in ' }}
@@ -1192,7 +1274,7 @@ const countEntries = computed(() => {
                   interactive
                   @select="inspectEntity"
                 />
-                <p v-else-if="matrixDetail.on && matrixDetail.matrix === 'reach'" class="text-xs text-dimmed">
+                <p v-else-if="matrixDetail.on && matrixDetail.matrix === 'reach'" class="text-sm text-muted">
                   No mapped Screen exposes it in this context.
                 </p>
               </div>
@@ -1205,25 +1287,25 @@ const countEntries = computed(() => {
       <!-- ============ CONSTRAINTS: rule impact ============ -->
       <div v-else-if="tab === 'constraints'" class="flex min-h-0 min-w-0 flex-1">
         <nav class="blr-pane w-72 shrink-0 border-e border-default">
-          <div class="space-y-1 p-3">
-            <p class="gw-label">Business rules · {{ workspace.rules.length }}</p>
+          <div class="space-y-1.5 p-3">
+            <p class="blr-field pb-1">Business rules <span class="blr-meta">{{ workspace.rules.length }}</span></p>
             <button
               v-for="rule in workspace.rules"
               :key="rule.id"
               type="button"
-              class="gw-context gw-context--direct"
-              :class="{ 'is-active': selectedRule?.id === rule.id }"
+              class="w-full rounded-xl border bg-default p-3 text-start transition"
+              :class="selectedRule?.id === rule.id ? 'border-primary bg-primary/5' : 'border-default hover:border-accented hover:bg-elevated/40'"
               @click="selectedRuleId = rule.id"
             >
-              <span class="flex items-center gap-1.5">
+              <span class="flex items-center gap-2">
                 <BlrKind kind="rule" :labelled="false" size="xs" />
-                <span class="truncate text-xs font-medium text-highlighted">{{ rule.title }}</span>
+                <span class="min-w-0 flex-1 truncate text-sm font-medium text-highlighted">{{ rule.title }}</span>
               </span>
-              <span class="gw-counts">
+              <span class="blr-meta mt-1 block">
                 <template v-if="rule.availability.length">narrowed · </template>{{ rule.domainIds.length + rule.capabilityIds.length + rule.journeyIds.length + rule.scenarioIds.length }} direct attachments
               </span>
             </button>
-            <p v-if="!workspace.rules.length" class="text-xs text-dimmed italic">
+            <p v-if="!workspace.rules.length" class="text-sm text-muted italic">
               No Business Rules authored in this model.
             </p>
           </div>
@@ -1238,60 +1320,61 @@ const countEntries = computed(() => {
                 <UButton icon="i-lucide-waypoints" size="xs" color="neutral" variant="outline" label="Topology" @click="openTopology(selectedRule.id)" />
               </span>
             </div>
-            <h2 class="text-xl tracking-tight text-highlighted">{{ selectedRule.title }}</h2>
+            <h2 class="text-xl font-semibold tracking-tight text-highlighted">{{ selectedRule.title }}</h2>
 
-            <section class="rounded-lg border-s-2 border-primary bg-elevated/40 p-3">
+            <section class="rounded-lg border-s-2 border-primary bg-default p-3.5">
               <BlrProse :text="selectedRule.statement" />
             </section>
 
             <section v-if="selectedRule.rationale" class="space-y-1.5">
-              <p class="gw-label">Rationale</p>
+              <p class="blr-field">Rationale</p>
               <BlrProse :text="selectedRule.rationale" />
             </section>
 
             <section class="space-y-1.5">
-              <p class="gw-label">Narrowed availability</p>
+              <p class="blr-field">Narrowed availability</p>
               <div v-if="selectedRule.availability.length" class="flex flex-wrap gap-1.5">
-                <button
+                <UButton
                   v-for="pair in selectedRule.availability"
                   :key="pair.key"
-                  type="button"
-                  class="gw-chip"
+                  icon="i-lucide-door-open"
+                  size="xs"
+                  color="neutral"
+                  variant="outline"
+                  class="rounded-full"
+                  :label="pairLabel(pair)"
                   :title="`Scope the Surface to ${pairLabel(pair)}`"
                   @click="goToContext(pair.key)"
-                >
-                  <UIcon name="i-lucide-door-open" class="size-3 text-dimmed" />
-                  {{ pairLabel(pair) }}
-                </button>
+                />
               </div>
-              <p v-else class="text-xs text-dimmed italic">
+              <p v-else class="text-sm text-muted italic">
                 Not narrowed to specific Interface availability scopes.
               </p>
             </section>
 
-            <section class="gw-impact--direct space-y-2">
-              <p class="gw-label">Directly constrains — authored on the Rule</p>
+            <section class="space-y-2.5 rounded-xl border border-default bg-default p-4">
+              <p class="blr-field">Directly constrains — authored on the Rule</p>
               <BlrLinks :workspace="workspace" :ids="selectedRule.domainIds" kind="domain" interactive @select="inspectEntity" />
               <BlrLinks :workspace="workspace" :ids="selectedRule.capabilityIds" kind="capability" interactive @select="inspectEntity" />
               <BlrLinks :workspace="workspace" :ids="selectedRule.journeyIds" kind="journey" interactive @select="inspectEntity" />
               <BlrLinks :workspace="workspace" :ids="selectedRule.scenarioIds" kind="scenario" interactive @select="inspectEntity" />
-              <p v-if="!ruleImpact.directTotal" class="text-xs text-dimmed italic">
+              <p v-if="!ruleImpact.directTotal" class="text-sm text-muted italic">
                 This Rule names no Domain, Capability, Journey, or Scenario directly.
               </p>
             </section>
 
-            <section class="gw-impact--derived space-y-2">
-              <p class="gw-label">Derived impact — computed from the model</p>
+            <section class="space-y-2.5 rounded-xl border border-dashed border-accented p-4">
+              <p class="blr-field">Derived impact — computed from the model</p>
               <BlrLinks :workspace="workspace" :ids="ruleImpact.derivedDomainIds" kind="domain" label="Domains, via constrained Capabilities" interactive @select="inspectEntity" />
               <BlrLinks :workspace="workspace" :ids="ruleImpact.derivedCapabilityIds" kind="capability" label="Capabilities, via constrained Domains" interactive @select="inspectEntity" />
               <BlrLinks :workspace="workspace" :ids="ruleImpact.derivedJourneyIds" kind="journey" label="Journeys, via Capabilities and Scenarios" interactive @select="inspectEntity" />
               <BlrLinks :workspace="workspace" :ids="ruleImpact.derivedScreenIds" kind="screen" label="Screens, via Capabilities and Scenarios" interactive @select="inspectEntity" />
-              <p v-if="!ruleImpact.derivedTotal" class="text-xs text-dimmed italic">
+              <p v-if="!ruleImpact.derivedTotal" class="text-sm text-muted italic">
                 No reach beyond the direct attachments.
               </p>
             </section>
           </div>
-          <p v-else class="p-6 text-sm text-dimmed italic">
+          <p v-else class="p-6 text-sm text-muted italic">
             No Business Rules authored in this model.
           </p>
         </div>
@@ -1302,8 +1385,8 @@ const countEntries = computed(() => {
         <div class="mx-auto max-w-3xl space-y-6 p-4 sm:p-6">
           <header class="space-y-2">
             <img v-if="logoSrc" :src="logoSrc" alt="" class="size-10 rounded">
-            <h2 class="text-2xl tracking-tight text-highlighted">{{ workspace.identity.title }}</h2>
-            <p class="text-sm text-toned">{{ workspace.identity.summary }}</p>
+            <h2 class="text-2xl font-semibold tracking-[-0.03em] text-highlighted">{{ workspace.identity.title }}</h2>
+            <p class="text-base leading-7 text-default">{{ workspace.identity.summary }}</p>
             <div class="flex flex-wrap items-center gap-1.5">
               <UBadge v-if="workspace.identity.categoryLabel" color="primary" variant="subtle" size="sm">{{ workspace.identity.categoryLabel }}</UBadge>
               <UBadge v-for="tag in workspace.identity.tags" :key="tag" color="neutral" variant="subtle" size="sm">{{ tag }}</UBadge>
@@ -1314,61 +1397,61 @@ const countEntries = computed(() => {
           <BlrProse :text="workspace.identity.description" />
 
           <section v-if="workspace.identity.intent" class="space-y-1.5">
-            <p class="gw-label">Intent</p>
+            <p class="blr-field">Intent</p>
             <BlrProse :text="workspace.identity.intent" />
           </section>
 
           <section v-if="workspace.identity.supportingContent" class="space-y-1.5">
-            <p class="gw-label">Supporting context</p>
+            <p class="blr-field">Supporting context</p>
             <BlrProse :text="workspace.identity.supportingContent" />
           </section>
 
-          <section class="space-y-3 rounded-xl border border-default p-4">
+          <section class="space-y-3 rounded-xl border border-default bg-default p-4 sm:p-5">
             <div class="flex flex-wrap items-center gap-2">
-              <p class="gw-label">Coverage</p>
+              <h3 class="text-base font-semibold tracking-tight text-highlighted">Coverage</h3>
               <UBadge :color="STATUS_TONE[workspace.coverage.status] || 'neutral'" variant="subtle" size="sm">
                 {{ workspace.coverage.status }}
               </UBadge>
             </div>
             <BlrProse v-if="workspace.coverage.rationale" :text="workspace.coverage.rationale" />
             <div v-if="workspace.coverage.method.length" class="space-y-1">
-              <p class="gw-label">Method</p>
-              <ul class="list-disc space-y-0.5 ps-5 text-sm text-toned marker:text-dimmed">
+              <p class="blr-field">Method</p>
+              <ul class="list-disc space-y-0.5 ps-5 text-sm text-muted marker:text-dimmed">
                 <li v-for="(item, index) in workspace.coverage.method" :key="index">{{ item }}</li>
               </ul>
             </div>
-            <div v-if="workspace.coverage.sourceAreas.length" class="space-y-1">
-              <p class="gw-label">Source areas</p>
+            <div v-if="workspace.coverage.sourceAreas.length" class="space-y-1.5">
+              <p class="blr-field">Source areas</p>
               <div class="flex flex-wrap gap-1.5">
-                <code v-for="(item, index) in workspace.coverage.sourceAreas" :key="index" class="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] text-toned">{{ item }}</code>
+                <UBadge v-for="(item, index) in workspace.coverage.sourceAreas" :key="index" color="neutral" variant="soft" size="sm" class="font-mono">{{ item }}</UBadge>
               </div>
             </div>
             <div v-if="workspace.coverage.unmapped.length" class="space-y-1">
-              <p class="gw-label">Unmapped</p>
-              <ul class="list-disc space-y-0.5 ps-5 text-sm text-dimmed marker:text-dimmed">
+              <p class="blr-field">Unmapped</p>
+              <ul class="list-disc space-y-0.5 ps-5 text-sm text-muted marker:text-dimmed">
                 <li v-for="(item, index) in workspace.coverage.unmapped" :key="index">{{ item }}</li>
               </ul>
             </div>
             <div v-if="workspace.coverage.limitations.length" class="space-y-1">
-              <p class="gw-label">Coverage limitations</p>
-              <ul class="list-disc space-y-0.5 ps-5 text-sm text-dimmed marker:text-dimmed">
+              <p class="blr-field">Coverage limitations</p>
+              <ul class="list-disc space-y-0.5 ps-5 text-sm text-muted marker:text-dimmed">
                 <li v-for="(item, index) in workspace.coverage.limitations" :key="index">{{ item }}</li>
               </ul>
             </div>
             <div v-if="workspace.identity.limitations.length" class="space-y-1">
-              <p class="gw-label">Report limitations</p>
-              <ul class="list-disc space-y-0.5 ps-5 text-sm text-dimmed marker:text-dimmed">
+              <p class="blr-field">Report limitations</p>
+              <ul class="list-disc space-y-0.5 ps-5 text-sm text-muted marker:text-dimmed">
                 <li v-for="(item, index) in workspace.identity.limitations" :key="index">{{ item }}</li>
               </ul>
             </div>
           </section>
 
-          <section class="space-y-2">
-            <p class="gw-label">Counted from the model</p>
+          <section class="space-y-2.5">
+            <h3 class="text-base font-semibold tracking-tight text-highlighted">Counted from the model</h3>
             <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
-              <div v-for="entry in countEntries" :key="entry.label" class="gw-stat">
+              <div v-for="entry in countEntries" :key="entry.label" class="rounded-xl border border-default bg-default p-3.5">
                 <p class="font-mono text-lg text-highlighted tabular-nums">{{ entry.value }}</p>
-                <p class="text-[11px] text-dimmed">{{ entry.label }}</p>
+                <p class="blr-field">{{ entry.label }}</p>
               </div>
             </div>
           </section>
@@ -1376,12 +1459,14 @@ const countEntries = computed(() => {
           <BlrRefs :references="workspace.identity.references" variant="list" label="Product references" />
 
           <section v-if="workspace.references.length" class="space-y-2">
-            <p class="gw-label">Every reference in the model · {{ workspace.references.length }}</p>
+            <h3 class="text-base font-semibold tracking-tight text-highlighted">
+              Every reference in the model <span class="blr-meta ms-1">{{ workspace.references.length }}</span>
+            </h3>
             <ul class="space-y-1">
               <li
                 v-for="(group, index) in workspace.references"
                 :key="`${group.ownerId}-${group.reference.target}-${index}`"
-                class="flex min-w-0 items-center gap-2 text-xs"
+                class="flex min-w-0 items-center gap-2 text-sm"
               >
                 <BlrKind :kind="group.ownerKind" :labelled="false" size="xs" />
                 <button
@@ -1392,14 +1477,14 @@ const countEntries = computed(() => {
                 >
                   {{ group.ownerTitle }}
                 </button>
-                <span v-else class="shrink-0 font-medium text-toned">{{ group.ownerTitle }}</span>
-                <span class="truncate font-mono text-[11px] text-dimmed">{{ group.reference.title || group.reference.target }}</span>
-                <UBadge color="neutral" variant="subtle" size="sm" class="ms-auto shrink-0 text-[9px] uppercase">{{ group.reference.role }}</UBadge>
+                <span v-else class="shrink-0 font-medium text-default">{{ group.ownerTitle }}</span>
+                <span class="blr-meta truncate">{{ group.reference.title || group.reference.target }}</span>
+                <UBadge color="neutral" variant="subtle" size="sm" class="ms-auto shrink-0">{{ group.reference.role }}</UBadge>
               </li>
             </ul>
           </section>
 
-          <footer class="space-y-1 border-t border-default pt-4 font-mono text-[11px] text-dimmed">
+          <footer class="blr-meta space-y-1 border-t border-default pt-4 leading-relaxed">
             <p v-for="author in workspace.identity.authors" :key="author.name">
               Author —
               <a v-if="author.url" :href="author.url" target="_blank" rel="noopener noreferrer" class="underline underline-offset-2">{{ author.name }}</a>
@@ -1411,71 +1496,19 @@ const countEntries = computed(() => {
         </div>
       </div>
 
-      <!-- ============ INSPECTOR: full entity content + contextual topology ============ -->
-      <aside
-        v-if="inspectorEntity"
-        class="absolute inset-y-0 right-0 z-20 flex w-full max-w-md flex-col border-s border-default bg-default shadow-xl"
-      >
-        <div class="flex shrink-0 items-center gap-2 border-b border-default px-3 py-2">
-          <BlrKind :kind="inspectorEntity.kind" :labelled="false" />
-          <span class="min-w-0 flex-1 truncate text-sm font-medium text-highlighted">{{ inspectorEntity.title }}</span>
-          <UButton
-            :icon="inspectorMode === 'detail' ? 'i-lucide-waypoints' : 'i-lucide-file-text'"
-            size="xs"
-            color="neutral"
-            variant="outline"
-            :label="inspectorMode === 'detail' ? 'Map' : 'Detail'"
-            :title="inspectorMode === 'detail' ? 'Show this entity\'s neighbourhood' : 'Back to the full record'"
-            @click="inspectorMode = inspectorMode === 'detail' ? 'map' : 'detail'"
-          />
-          <UButton icon="i-lucide-x" size="xs" color="neutral" variant="ghost" title="Close" @click="closeInspector" />
-        </div>
-        <div v-if="inspectorMode === 'detail'" class="blr-pane flex-1 p-4">
-          <BlrEntityDetail :workspace="workspace" :entity="inspectorEntity" @select="inspectEntity" />
-        </div>
-        <div v-else class="min-h-0 flex-1">
-          <BlrTopology :workspace="workspace" :focus-id="inspectorEntity.id" @inspect="inspectEntity" />
-        </div>
-      </aside>
+      <!-- Inspector: the shared slideover every selection lands in -->
+      <BlrInspector
+        v-model:tab="inspectorMode"
+        :workspace="workspace"
+        :entity="inspectorEntity"
+        @select="inspectEntity"
+        @close="closeInspector"
+      />
     </div>
   </div>
 </template>
 
 <style scoped>
-.gw-label {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--ui-text-dimmed);
-}
-
-.gw-tab {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.35rem 0.6rem;
-  border: 1px solid transparent;
-  border-radius: 7px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--ui-text-muted);
-  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
-}
-
-.gw-tab:hover {
-  color: var(--ui-text-highlighted);
-  background: var(--ui-bg-elevated);
-}
-
-.gw-tab.is-active {
-  color: var(--ui-primary);
-  border-color: color-mix(in srgb, var(--ui-primary) 45%, transparent);
-  background: color-mix(in srgb, var(--ui-primary) 8%, transparent);
-}
-
 /* Rail entries: solid structure line for Interface-level scopes, dashed for
    Experience floors — echoing the Screen map's containment vocabulary. */
 .gw-context {
@@ -1510,77 +1543,7 @@ const countEntries = computed(() => {
   border-inline-start-color: var(--ui-primary);
 }
 
-.gw-counts {
-  display: block;
-  margin-top: 0.15rem;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  color: var(--ui-text-dimmed);
-}
-
-.gw-slot {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 1rem;
-  border: 1px solid var(--ui-primary);
-  border-radius: 4px;
-  padding: 0 0.2rem;
-  font-family: var(--font-mono);
-  font-size: 9px;
-  font-weight: 600;
-  color: var(--ui-primary);
-}
-
-.gw-actor {
-  min-width: 15rem;
-  max-width: 19rem;
-  padding: 0.5rem 0.65rem;
-  border: 1px solid var(--ui-border);
-  border-radius: 10px;
-  background: var(--ui-bg);
-  text-align: start;
-  transition: border-color 0.15s ease;
-}
-
-.gw-actor:hover {
-  border-color: var(--ui-border-accented);
-}
-
-.gw-card {
-  display: flex;
-  flex-direction: column;
-  gap: 0.55rem;
-  padding: 0.9rem;
-  border: 1px solid var(--ui-border);
-  border-radius: 12px;
-  background: var(--ui-bg);
-  cursor: pointer;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
-
-.gw-card:hover {
-  border-color: var(--ui-border-accented);
-  box-shadow: 0 4px 16px color-mix(in srgb, var(--ui-text) 8%, transparent);
-}
-
-.gw-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  padding: 0.1rem 0.55rem;
-  border: 1px solid var(--ui-border);
-  border-radius: 9999px;
-  font-size: 11px;
-  color: var(--ui-text-toned);
-  transition: border-color 0.15s ease, color 0.15s ease;
-}
-
-button.gw-chip:hover {
-  border-color: var(--ui-primary);
-  color: var(--ui-primary);
-}
-
+/* Entity names woven into running sentences. */
 .gw-inline {
   font-weight: 500;
   color: var(--ui-text-highlighted);
@@ -1593,43 +1556,13 @@ button.gw-chip:hover {
   color: var(--ui-primary);
 }
 
-.gw-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.78rem;
-}
-
-.gw-table th {
-  padding: 0.45rem 0.6rem;
-  border-bottom: 1px solid var(--ui-border);
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.08em;
-  text-align: start;
-  text-transform: uppercase;
-  color: var(--ui-text-dimmed);
-  white-space: nowrap;
-}
-
-.gw-table td {
-  padding: 0.5rem 0.6rem;
-  border-bottom: 1px solid var(--ui-border-muted);
-  vertical-align: top;
-  color: var(--ui-text-toned);
-}
-
-.gw-table tbody tr:hover {
-  background: var(--ui-bg-elevated);
-}
-
+/* Matrices: row heads truncate, column heads run vertical, cells stay square. */
 .gw-matrix {
   border-collapse: collapse;
-  font-size: 0.78rem;
 }
 
 .gw-matrix thead th {
-  padding: 0.3rem 0.25rem;
+  padding: 0.3rem 0.25rem 0.5rem;
   border-bottom: 1px solid var(--ui-border);
   vertical-align: bottom;
 }
@@ -1639,10 +1572,9 @@ button.gw-chip:hover {
   overflow: hidden;
   writing-mode: vertical-rl;
   transform: rotate(180deg);
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.06em;
-  color: var(--ui-text-muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--ui-text-toned);
   white-space: nowrap;
   text-overflow: ellipsis;
 }
@@ -1652,12 +1584,25 @@ button.gw-chip:hover {
 }
 
 .gw-matrix tbody th {
+  max-width: 15rem;
   padding: 0.25rem 0.75rem 0.25rem 0;
   border-bottom: 1px solid var(--ui-border-muted);
+  font-size: 0.75rem;
   font-weight: 500;
   text-align: start;
   color: var(--ui-text-toned);
+}
+
+.gw-matrix tbody th button {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.gw-matrix tbody th button:hover {
+  color: var(--ui-primary);
 }
 
 .gw-matrix td {
@@ -1692,29 +1637,5 @@ button.gw-chip:hover {
 .gw-cell.is-picked {
   outline: 2px solid var(--ui-primary);
   outline-offset: 1px;
-}
-
-.gw-scenario {
-  padding: 1rem;
-  border: 1px solid var(--ui-border);
-  border-radius: 12px;
-}
-
-.gw-impact--direct {
-  padding: 0.9rem;
-  border: 1.5px solid var(--ui-border-accented);
-  border-radius: 12px;
-}
-
-.gw-impact--derived {
-  padding: 0.9rem;
-  border: 1.5px dashed var(--ui-border);
-  border-radius: 12px;
-}
-
-.gw-stat {
-  padding: 0.6rem 0.75rem;
-  border: 1px solid var(--ui-border);
-  border-radius: 10px;
 }
 </style>

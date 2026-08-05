@@ -33,7 +33,7 @@ const isExternal = (target: string) => /^https?:\/\//i.test(target)
 
 <template>
   <div v-if="references.length" class="space-y-2">
-    <p v-if="label" class="font-mono text-[10px] tracking-[0.12em] text-dimmed uppercase">
+    <p v-if="label" class="blr-field">
       {{ label }} · {{ references.length }}
     </p>
     <ul :class="variant === 'inline' ? 'flex flex-wrap gap-1.5' : 'space-y-1.5'">
@@ -52,14 +52,14 @@ const isExternal = (target: string) => /^https?:\/\//i.test(target)
           :title="`${reference.kind} · ${reference.role} · ${reference.target}`"
         >
           <UIcon :name="KIND_ICON[reference.kind] || 'i-lucide-link'" class="size-3.5 shrink-0 text-dimmed" />
-          <span class="truncate font-mono text-[11px] text-toned">
+          <span class="truncate text-sm text-default">
             {{ reference.title || reference.target }}
           </span>
           <UBadge
             :color="ROLE_TONE[reference.role] || 'neutral'"
             variant="subtle"
             size="sm"
-            class="shrink-0 text-[9px] tracking-wide uppercase"
+            class="shrink-0"
           >
             {{ reference.role }}
           </UBadge>

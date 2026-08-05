@@ -135,8 +135,8 @@ const colorVar = computed(() => `var(--blr-slot-${meta.value.slot})`)
 
 .blr-flow-node__sub {
   font-family: var(--font-mono);
-  font-size: 8.5px;
-  letter-spacing: 0.1em;
+  font-size: 10px;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ui-text-dimmed);
   white-space: nowrap;

@@ -9,8 +9,8 @@
  * (cards ⇄ table ⇄ full detail with complete Scenarios), Capabilities by
  * Domain plus three named matrices, Business-rule impact (direct vs derived),
  * Scenario flow reading, and contextual topology behind an entity picker.
- * Selecting an entity in any expanded view docks a full BlrEntityDetail
- * inspector with a topology toggle. Tile state survives collapse.
+ * Selecting an entity anywhere opens the shared BlrInspector slideover with
+ * its Detail and Map tabs. Tile state survives collapse.
  */
 import type {
   ActorView,
@@ -310,13 +310,15 @@ const topoKind = ref<ReportEntityKind>(
     ? 'journey'
     : REPORT_ENTITY_KINDS.find(meta => entitiesOfKind(meta.kind).length > 0)?.kind ?? 'journey'
 )
-const topoEntityId = ref<string | null>(null)
+const topoEntityId = ref<string | undefined>(undefined)
 const topoOptions = computed(() => entitiesOfKind(topoKind.value))
+const topoKindItems = computed(() => topoKinds.value.map(meta => ({ label: meta.plural, value: meta.kind })))
+const topoEntityItems = computed(() => topoOptions.value.map(entity => ({ label: entity.title, value: entity.id })))
 const topoEntity = computed<AnyEntityView | null>(() =>
   (topoEntityId.value ? props.workspace.byId.get(topoEntityId.value) : null) ?? null)
 
 watch(topoKind, () => {
-  topoEntityId.value = null
+  topoEntityId.value = undefined
 })
 </script>
 
@@ -328,18 +330,18 @@ watch(topoKind, () => {
         <article
           v-for="tile in WALL"
           :key="tile"
-          class="pano-tile"
+          class="pano-tile rounded-xl border border-default bg-default transition hover:border-accented"
           :class="[`pano-tile--${tile}`, { 'cursor-pointer': tile !== 'topology' }]"
           :role="tile !== 'topology' ? 'button' : undefined"
           :tabindex="tile !== 'topology' ? 0 : undefined"
           @click="wallOpen(tile)"
           @keydown.enter="wallOpen(tile)"
         >
-          <header class="pano-head">
-            <UIcon :name="TILES[tile].icon" class="pano-head-icon" />
+          <header class="flex items-center gap-2.5 border-b border-default px-4 py-3">
+            <UIcon :name="TILES[tile].icon" class="size-4 shrink-0 text-dimmed" />
             <div class="min-w-0 flex-1">
-              <h2 class="pano-title">{{ TILES[tile].name }}</h2>
-              <p class="pano-question">{{ TILES[tile].question }}</p>
+              <h2 class="truncate text-base font-semibold tracking-tight text-highlighted">{{ TILES[tile].name }}</h2>
+              <p class="truncate text-sm text-muted">{{ TILES[tile].question }}</p>
             </div>
             <UButton icon="i-lucide-maximize-2" color="neutral" variant="ghost" size="xs" :aria-label="`Expand ${TILES[tile].name}`" @click.stop="expandTile(tile)" />
           </header>
@@ -349,16 +351,16 @@ watch(topoKind, () => {
             <div class="flex items-center gap-3">
               <img v-if="logoSrc" :src="logoSrc" alt="" class="size-9 shrink-0 rounded-md">
               <div class="min-w-0">
-                <p class="truncate text-lg font-medium tracking-tight text-highlighted">{{ workspace.identity.title }}</p>
-                <p v-if="workspace.identity.categoryLabel" class="text-[11px] text-dimmed">{{ workspace.identity.categoryLabel }}</p>
+                <p class="truncate text-lg font-semibold tracking-tight text-highlighted">{{ workspace.identity.title }}</p>
+                <p v-if="workspace.identity.categoryLabel" class="text-sm text-dimmed">{{ workspace.identity.categoryLabel }}</p>
               </div>
-              <UBadge :color="COVERAGE_TONE[workspace.coverage.status] || 'neutral'" variant="subtle" size="sm" class="ms-auto shrink-0 uppercase">
+              <UBadge :color="COVERAGE_TONE[workspace.coverage.status] || 'neutral'" variant="subtle" size="sm" class="ms-auto shrink-0">
                 {{ workspace.coverage.status }}
               </UBadge>
             </div>
-            <p class="text-sm leading-relaxed text-toned">{{ firstSentence(workspace.identity.summary, 220) }}</p>
+            <p class="text-sm leading-6 text-default">{{ firstSentence(workspace.identity.summary, 220) }}</p>
             <div class="flex flex-wrap gap-x-3 gap-y-1.5 border-t border-muted pt-3">
-              <BlrKind v-for="fact in kindFacts" :key="fact.meta.kind" :kind="fact.meta.kind" :count="fact.count" size="xs" />
+              <BlrKind v-for="fact in kindFacts" :key="fact.meta.kind" :kind="fact.meta.kind" :count="fact.count" />
             </div>
           </div>
 
@@ -368,16 +370,16 @@ watch(topoKind, () => {
               <li v-for="actor in workspace.actors" :key="actor.id">
                 <div class="flex items-center gap-1.5">
                   <UIcon :name="actor.actorKind === 'system' ? 'i-lucide-cpu' : 'i-lucide-user-round'" class="size-3.5 shrink-0 text-dimmed" />
-                  <span class="truncate text-xs font-medium text-highlighted">{{ actor.title }}</span>
-                  <span class="shrink-0 text-[10px] text-dimmed">{{ actor.actorKind }} · {{ actor.relationship }}</span>
+                  <span class="truncate text-sm font-medium text-highlighted">{{ actor.title }}</span>
+                  <span class="shrink-0 text-xs text-dimmed">{{ actor.actorKind }} · {{ actor.relationship }}</span>
                 </div>
                 <div class="mt-1 flex flex-wrap gap-1 ps-5">
-                  <span v-for="context in actorContexts(actor)" :key="context.id" class="pano-chip">{{ context.title }}</span>
-                  <span v-if="!actorContexts(actor).length" class="pano-empty">No declared entry context</span>
+                  <UBadge v-for="context in actorContexts(actor)" :key="context.id" color="neutral" variant="outline" size="sm">{{ context.title }}</UBadge>
+                  <span v-if="!actorContexts(actor).length" class="text-sm text-muted italic">No declared entry context</span>
                 </div>
               </li>
             </ul>
-            <p v-else class="pano-empty">No Actors authored.</p>
+            <p v-else class="text-sm text-muted italic">No Actors authored.</p>
           </div>
 
           <!-- The surface -->
@@ -386,77 +388,72 @@ watch(topoKind, () => {
               <BlrFlowCanvas :nodes="homeSurface.nodes" :show-controls="false" :fit-padding="0.06" :max-zoom="1" />
               <button type="button" class="absolute inset-0 z-10 cursor-pointer" aria-label="Expand the Screen map" @click="expandTile('surface')" />
             </template>
-            <p v-else class="pano-empty p-4">No Interfaces authored — the Product declares no delivery surface.</p>
+            <p v-else class="p-4 text-sm text-muted italic">No Interfaces authored — the Product declares no delivery surface.</p>
           </div>
 
           <!-- The promises -->
           <div v-else-if="tile === 'promises'" class="flex-1 space-y-2.5 overflow-hidden p-4">
-            <div v-for="journey in workspace.journeys.slice(0, 3)" :key="journey.id" class="rounded-lg border border-muted bg-elevated/40 p-2.5">
+            <div v-for="journey in workspace.journeys.slice(0, 3)" :key="journey.id" class="rounded-lg border border-default p-2.5">
               <div class="flex items-center gap-1.5">
-                <BlrKind kind="journey" :labelled="false" size="xs" />
-                <span class="min-w-0 truncate text-xs font-medium text-highlighted">{{ journey.title }}</span>
-                <span class="ms-auto shrink-0 font-mono text-[10px] text-dimmed tabular-nums">{{ journey.scenarioIds.length }} scenarios</span>
+                <BlrKind kind="journey" :labelled="false" />
+                <span class="min-w-0 truncate text-sm font-medium text-highlighted">{{ journey.title }}</span>
+                <span class="blr-meta ms-auto shrink-0">{{ journey.scenarioIds.length }} scenarios</span>
               </div>
-              <p class="mt-1 text-[11px] leading-relaxed text-dimmed">{{ firstSentence(journey.lead, 110) }}</p>
+              <p class="mt-1 text-sm leading-6 text-muted">{{ firstSentence(journey.lead, 110) }}</p>
             </div>
-            <p v-if="workspace.journeys.length > 3" class="text-[11px] text-dimmed">+ {{ workspace.journeys.length - 3 }} more promises</p>
-            <p v-else-if="!workspace.journeys.length" class="pano-empty">No Journeys authored.</p>
+            <p v-if="workspace.journeys.length > 3" class="text-sm text-dimmed">+ {{ workspace.journeys.length - 3 }} more promises</p>
+            <p v-else-if="!workspace.journeys.length" class="text-sm text-muted italic">No Journeys authored.</p>
           </div>
 
           <!-- What it can do -->
           <div v-else-if="tile === 'capabilities'" class="blr-pane flex-1 space-y-3 p-4">
             <div v-for="group in domainGroups" :key="group.domain?.id ?? 'none'">
-              <p class="pano-label">{{ group.domain?.title ?? 'No Domain' }}</p>
+              <p class="blr-field">{{ group.domain?.title ?? 'No Domain' }}</p>
               <div class="mt-1.5 flex flex-wrap gap-1">
-                <span v-for="capability in group.capabilities" :key="capability.id" class="pano-chip">{{ capability.title }}</span>
+                <UBadge v-for="capability in group.capabilities" :key="capability.id" color="neutral" variant="outline" size="sm">{{ capability.title }}</UBadge>
               </div>
             </div>
-            <p v-if="!workspace.capabilities.length" class="pano-empty">No Capabilities authored.</p>
+            <p v-if="!workspace.capabilities.length" class="text-sm text-muted italic">No Capabilities authored.</p>
           </div>
 
           <!-- What must hold -->
           <div v-else-if="tile === 'rules'" class="blr-pane flex-1 p-4">
             <ul v-if="workspace.rules.length" class="space-y-2">
-              <li v-for="rule in workspace.rules" :key="rule.id" class="flex gap-2 text-[11px] leading-relaxed text-dimmed">
-                <UIcon name="i-lucide-scale" class="mt-0.5 size-3 shrink-0" />
+              <li v-for="rule in workspace.rules" :key="rule.id" class="flex gap-2 text-sm leading-6 text-muted">
+                <UIcon name="i-lucide-scale" class="mt-1 size-3.5 shrink-0 text-dimmed" />
                 <span>{{ firstSentence(rule.statement, 120) }}</span>
               </li>
             </ul>
-            <p v-else class="pano-empty">No Business rules authored.</p>
+            <p v-else class="text-sm text-muted italic">No Business rules authored.</p>
           </div>
 
           <!-- One case at a time -->
           <div v-else-if="tile === 'flow' && firstScenario" class="flex-1 space-y-2 p-4">
             <div class="flex items-center gap-1.5">
-              <BlrKind kind="scenario" :labelled="false" size="xs" />
-              <span class="min-w-0 truncate text-xs font-medium text-highlighted">{{ firstScenario.title }}</span>
+              <BlrKind kind="scenario" :labelled="false" />
+              <span class="min-w-0 truncate text-sm font-medium text-highlighted">{{ firstScenario.title }}</span>
               <UBadge color="neutral" variant="subtle" size="sm" class="ms-auto shrink-0">{{ firstScenario.kindName }}</UBadge>
             </div>
-            <div class="space-y-1 text-[11px] leading-relaxed text-toned">
-              <div class="pano-lane-seg"><span class="pano-label">Trigger</span>{{ firstSentence(firstScenario.trigger, 90) }}</div>
+            <div class="space-y-1 text-sm leading-6 text-default">
+              <div class="pano-lane-seg"><span class="blr-field mb-0.5 block">Trigger</span>{{ firstSentence(firstScenario.trigger, 90) }}</div>
               <div class="flex justify-center"><UIcon name="i-lucide-arrow-down" class="size-3 text-dimmed" /></div>
-              <div class="pano-lane-seg"><span class="pano-label">Steps</span>{{ firstScenario.steps.length }} steps · {{ firstScenario.decisionPoints.length }} decisions</div>
+              <div class="pano-lane-seg"><span class="blr-field mb-0.5 block">Steps</span>{{ firstScenario.steps.length }} steps · {{ firstScenario.decisionPoints.length }} decisions</div>
               <div class="flex justify-center"><UIcon name="i-lucide-arrow-down" class="size-3 text-dimmed" /></div>
-              <div class="pano-lane-seg"><span class="pano-label">Outcome</span>{{ firstSentence(firstScenario.outcome, 90) }}</div>
+              <div class="pano-lane-seg"><span class="blr-field mb-0.5 block">Outcome</span>{{ firstSentence(firstScenario.outcome, 90) }}</div>
             </div>
           </div>
-          <p v-else-if="tile === 'flow'" class="pano-empty flex-1 p-4">No Scenarios authored.</p>
+          <p v-else-if="tile === 'flow'" class="flex-1 p-4 text-sm text-muted italic">No Scenarios authored.</p>
 
           <!-- What connects here -->
           <div v-else-if="tile === 'topology'" class="flex min-h-0 flex-1 flex-col gap-2 p-3">
             <div class="flex gap-2">
-              <select v-model="topoKind" class="pano-select" aria-label="Entity kind">
-                <option v-for="meta in topoKinds" :key="meta.kind" :value="meta.kind">{{ meta.plural }}</option>
-              </select>
-              <select v-model="topoEntityId" class="pano-select min-w-0 flex-1" aria-label="Entity">
-                <option :value="null">Choose…</option>
-                <option v-for="entity in topoOptions" :key="entity.id" :value="entity.id">{{ entity.title }}</option>
-              </select>
+              <USelect v-model="topoKind" :items="topoKindItems" size="sm" aria-label="Entity kind" class="shrink-0" />
+              <USelect v-model="topoEntityId" :items="topoEntityItems" placeholder="Choose…" size="sm" aria-label="Entity" class="min-w-0 flex-1" />
             </div>
             <div v-if="topoEntity" class="min-h-[11rem] flex-1 overflow-hidden rounded-lg border border-muted">
               <BlrTopology :workspace="workspace" :focus-id="topoEntity.id" :explain="false" @inspect="inspectFromWall" />
             </div>
-            <p v-else class="pano-empty flex flex-1 items-center justify-center text-center">
+            <p v-else class="flex flex-1 items-center justify-center text-center text-sm text-muted italic">
               Topology is contextual — pick an entity to draw its neighbourhood.
             </p>
           </div>
@@ -466,78 +463,78 @@ watch(topoKind, () => {
 
     <!-- ============================ EXPANDED TILE =========================== -->
     <template v-else>
-      <div class="flex items-center gap-2 border-b border-default px-4 py-2">
+      <div class="flex items-center gap-2 border-b border-default px-4 py-2.5">
         <UButton icon="i-lucide-arrow-left" color="neutral" variant="ghost" size="xs" aria-label="Back to the wall" @click="collapse" />
-        <button type="button" class="shrink-0 text-xs text-dimmed transition hover:text-toned" @click="collapse">Panorama</button>
-        <UIcon name="i-lucide-chevron-right" class="size-3 shrink-0 text-dimmed" />
-        <span class="shrink-0 text-xs font-medium text-highlighted">{{ expandedMeta?.name }}</span>
-        <span class="hidden min-w-0 truncate text-[11px] text-dimmed lg:inline">— {{ expandedMeta?.question }}</span>
-        <UButton class="ms-auto" icon="i-lucide-x" color="neutral" variant="ghost" size="xs" aria-label="Close this view" @click="collapse" />
+        <button type="button" class="shrink-0 text-sm text-muted transition hover:text-default" @click="collapse">Panorama</button>
+        <UIcon name="i-lucide-chevron-right" class="size-3.5 shrink-0 text-dimmed" />
+        <h2 class="shrink-0 text-xl font-semibold tracking-tight text-highlighted">{{ expandedMeta?.name }}</h2>
+        <span class="hidden min-w-0 truncate text-sm text-muted lg:inline">{{ expandedMeta?.question }}</span>
+        <UButton class="ms-auto" icon="i-lucide-minimize-2" color="neutral" variant="ghost" size="xs" aria-label="Collapse this view" @click="collapse" />
       </div>
 
-      <div class="relative min-h-0 flex-1">
+      <div class="min-h-0 flex-1">
         <!-- The Product -->
         <div v-if="expanded === 'product'" class="blr-pane h-full">
           <div class="mx-auto max-w-4xl space-y-8 p-6">
             <header class="flex items-start gap-4">
               <img v-if="logoSrc" :src="logoSrc" alt="" class="size-12 shrink-0 rounded-lg">
               <div class="min-w-0 flex-1 space-y-1.5">
-                <h1 class="text-2xl tracking-tight text-highlighted">{{ workspace.identity.title }}</h1>
-                <div class="flex flex-wrap items-center gap-2 text-xs text-dimmed">
+                <h1 class="text-2xl font-semibold tracking-tight text-highlighted">{{ workspace.identity.title }}</h1>
+                <div class="flex flex-wrap items-center gap-2 text-sm text-dimmed">
                   <span v-if="workspace.identity.categoryLabel">{{ workspace.identity.categoryLabel }}</span>
-                  <UBadge :color="COVERAGE_TONE[workspace.coverage.status] || 'neutral'" variant="subtle" size="sm" class="uppercase">
+                  <UBadge :color="COVERAGE_TONE[workspace.coverage.status] || 'neutral'" variant="subtle" size="sm">
                     coverage {{ workspace.coverage.status }}
                   </UBadge>
-                  <span v-for="tag in workspace.identity.tags" :key="tag" class="pano-chip">#{{ tag }}</span>
+                  <UBadge v-for="tag in workspace.identity.tags" :key="tag" color="neutral" variant="outline" size="sm">{{ tag }}</UBadge>
                 </div>
               </div>
             </header>
             <BlrProse :text="workspace.identity.summary" size="base" />
             <BlrProse :text="workspace.identity.description" />
             <section v-if="workspace.identity.intent" class="space-y-1.5">
-              <h4 class="pano-label">Intent</h4>
+              <h4 class="blr-field">Intent</h4>
               <BlrProse :text="workspace.identity.intent" />
             </section>
 
             <section class="space-y-3">
-              <h4 class="pano-label">What the model contains</h4>
+              <h4 class="text-base font-semibold tracking-tight text-highlighted">What the model contains</h4>
               <div class="flex flex-wrap gap-x-4 gap-y-2">
                 <BlrKind v-for="fact in kindFacts" :key="fact.meta.kind" :kind="fact.meta.kind" :count="fact.count" />
               </div>
-              <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                <div v-for="fact in depthFacts" :key="fact.label" class="rounded-lg border border-muted bg-elevated/40 p-2.5">
+              <div class="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+                <div v-for="fact in depthFacts" :key="fact.label" class="rounded-xl border border-default bg-default p-3.5">
                   <p class="font-mono text-lg text-highlighted tabular-nums">{{ fact.value }}</p>
-                  <p class="text-[10px] tracking-[0.1em] text-dimmed uppercase">{{ fact.label }}</p>
+                  <p class="blr-field">{{ fact.label }}</p>
                 </div>
               </div>
-              <p class="pano-empty">Depth figures are derived by counting the model, never authored.</p>
+              <p class="text-sm text-dimmed">Depth figures are derived by counting the model, never authored.</p>
             </section>
 
             <section class="space-y-2">
-              <h4 class="pano-label">Coverage</h4>
-              <div class="space-y-3 rounded-lg border border-default p-4">
+              <h4 class="text-base font-semibold tracking-tight text-highlighted">Coverage</h4>
+              <div class="space-y-3 rounded-xl border border-default bg-default p-4">
                 <BlrProse v-if="workspace.coverage.rationale" :text="workspace.coverage.rationale" />
-                <div v-if="workspace.coverage.method.length" class="space-y-1">
-                  <h5 class="pano-label">Method</h5>
-                  <ul class="list-disc space-y-1 ps-5 text-sm text-toned marker:text-dimmed">
+                <div v-if="workspace.coverage.method.length" class="space-y-1.5">
+                  <h5 class="blr-field">Method</h5>
+                  <ul class="list-disc space-y-1 ps-5 text-sm text-muted marker:text-dimmed">
                     <li v-for="(item, index) in workspace.coverage.method" :key="index">{{ item }}</li>
                   </ul>
                 </div>
-                <div v-if="workspace.coverage.sourceAreas.length" class="space-y-1">
-                  <h5 class="pano-label">Source areas</h5>
+                <div v-if="workspace.coverage.sourceAreas.length" class="space-y-1.5">
+                  <h5 class="blr-field">Source areas</h5>
                   <div class="flex flex-wrap gap-1.5">
-                    <span v-for="area in workspace.coverage.sourceAreas" :key="area" class="pano-chip font-mono">{{ area }}</span>
+                    <UBadge v-for="area in workspace.coverage.sourceAreas" :key="area" color="neutral" variant="soft" size="sm" class="font-mono">{{ area }}</UBadge>
                   </div>
                 </div>
-                <div v-if="workspace.coverage.unmapped.length" class="space-y-1">
-                  <h5 class="pano-label">Not yet mapped</h5>
-                  <ul class="list-disc space-y-1 ps-5 text-sm text-dimmed marker:text-dimmed">
+                <div v-if="workspace.coverage.unmapped.length" class="space-y-1.5">
+                  <h5 class="blr-field">Not yet mapped</h5>
+                  <ul class="list-disc space-y-1 ps-5 text-sm text-muted marker:text-dimmed">
                     <li v-for="(item, index) in workspace.coverage.unmapped" :key="index">{{ item }}</li>
                   </ul>
                 </div>
-                <div v-if="workspace.identity.limitations.length" class="space-y-1">
-                  <h5 class="pano-label">Limitations</h5>
-                  <ul class="list-disc space-y-1 ps-5 text-sm text-dimmed marker:text-dimmed">
+                <div v-if="workspace.identity.limitations.length" class="space-y-1.5">
+                  <h5 class="blr-field">Limitations</h5>
+                  <ul class="list-disc space-y-1 ps-5 text-sm text-muted marker:text-dimmed">
                     <li v-for="(item, index) in workspace.identity.limitations" :key="index">{{ item }}</li>
                   </ul>
                 </div>
@@ -545,24 +542,24 @@ watch(topoKind, () => {
             </section>
 
             <section v-if="workspace.identity.supportingContent" class="space-y-1.5">
-              <h4 class="pano-label">Supporting context</h4>
+              <h4 class="blr-field">Supporting context</h4>
               <BlrProse :text="workspace.identity.supportingContent" />
             </section>
 
             <section v-if="workspace.identity.authors.length || workspace.identity.license" class="space-y-2">
-              <h4 class="pano-label">Authors & license</h4>
-              <div class="flex flex-wrap items-center gap-2 text-xs text-toned">
+              <h4 class="blr-field">Authors & license</h4>
+              <div class="flex flex-wrap items-center gap-2 text-sm text-muted">
                 <template v-for="author in workspace.identity.authors" :key="author.name">
                   <a v-if="author.url" :href="author.url" target="_blank" rel="noopener noreferrer" class="text-primary underline underline-offset-2">{{ author.name }}</a>
                   <span v-else>{{ author.name }}</span>
                 </template>
-                <span v-if="workspace.identity.license" class="pano-chip">{{ workspace.identity.license }}</span>
+                <UBadge v-if="workspace.identity.license" color="neutral" variant="outline" size="sm">{{ workspace.identity.license }}</UBadge>
               </div>
             </section>
 
             <BlrRefs :references="workspace.identity.references" variant="list" label="Product references" />
 
-            <footer class="border-t border-muted pt-4 font-mono text-[11px] leading-relaxed text-dimmed">
+            <footer class="blr-meta border-t border-muted pt-4 leading-relaxed">
               Generated by {{ workspace.identity.generator.name }} {{ workspace.identity.generator.version }}
               · schema {{ workspace.identity.schemaVersion }} · {{ workspace.identity.generatedAt }}
               · {{ workspace.identity.referenceProfile }} reference profile
@@ -575,31 +572,28 @@ watch(topoKind, () => {
         <div v-else-if="expanded === 'access'" class="blr-pane h-full">
           <div class="mx-auto max-w-6xl space-y-8 p-6">
             <section class="space-y-3">
-              <h3 class="text-sm font-medium text-highlighted">Interfaces — the delivery surfaces</h3>
-              <p v-if="!workspace.interfaces.length" class="pano-empty">No Interfaces authored.</p>
+              <h3 class="text-base font-semibold tracking-tight text-highlighted">Interfaces — the delivery surfaces</h3>
+              <p v-if="!workspace.interfaces.length" class="text-sm text-muted italic">No Interfaces authored.</p>
               <div v-else class="grid gap-4 lg:grid-cols-2">
-                <article v-for="item in workspace.interfaces" :key="item.id" class="pano-card space-y-3">
+                <article v-for="item in workspace.interfaces" :key="item.id" class="space-y-3 rounded-xl border border-default bg-default p-4">
                   <header class="flex items-center gap-2">
                     <BlrKind kind="interface" :labelled="false" />
-                    <button type="button" class="min-w-0 truncate text-sm font-medium text-highlighted hover:text-primary" @click="openInspector(item)">
+                    <button type="button" class="min-w-0 truncate text-base font-semibold tracking-tight text-highlighted hover:text-primary" @click="openInspector(item)">
                       {{ item.title }}
                     </button>
                   </header>
-                  <p class="text-xs leading-relaxed text-dimmed">{{ firstSentence(item.lead, 200) }}</p>
+                  <p class="text-sm leading-6 text-muted">{{ firstSentence(item.lead, 200) }}</p>
                   <div class="space-y-1">
-                    <h5 class="pano-label">Who enters</h5>
-                    <div class="flex flex-wrap gap-1">
-                      <button v-for="actor in resolveEntities(workspace, item.actorIds)" :key="actor.id" type="button" class="pano-chip" @click="openInspector(actor)">{{ actor.title }}</button>
-                      <span v-if="!item.actorIds.length" class="pano-empty">No Actors declared.</span>
-                    </div>
+                    <BlrLinks :workspace="workspace" :ids="item.actorIds" kind="actor" label="Who enters" interactive @select="openInspector" />
+                    <p v-if="!item.actorIds.length" class="text-sm text-muted italic">No Actors declared.</p>
                   </div>
                   <BlrAvail :pairs="[]" :entry-points="item.entryPoints" label="Entry points" />
                   <div class="space-y-1">
-                    <h5 class="pano-label">Capability boundary</h5>
+                    <p class="blr-field">Capability boundary</p>
                     <BlrProse :text="item.capabilityBoundary" />
                   </div>
                   <div class="space-y-1.5 border-t border-muted pt-2.5">
-                    <h5 class="pano-label">In scope here (derived)</h5>
+                    <p class="blr-field">In scope here (derived)</p>
                     <BlrLinks :workspace="workspace" :ids="item.experienceIds" kind="experience" label="Experiences within" interactive @select="openInspector" />
                     <BlrLinks :workspace="workspace" :ids="item.screenIds" kind="screen" interactive @select="openInspector" />
                     <BlrLinks :workspace="workspace" :ids="item.capabilityIds" kind="capability" interactive @select="openInspector" />
@@ -609,35 +603,32 @@ watch(topoKind, () => {
               </div>
             </section>
             <section class="space-y-3">
-              <h3 class="text-sm font-medium text-highlighted">Experiences — access contexts within an Interface</h3>
-              <p v-if="!workspace.experiences.length" class="pano-empty">
+              <h3 class="text-base font-semibold tracking-tight text-highlighted">Experiences — access contexts within an Interface</h3>
+              <p v-if="!workspace.experiences.length" class="text-sm text-muted italic">
                 This Product declares no Experiences — every availability scope is direct Interface availability.
               </p>
               <div v-else class="grid gap-4 lg:grid-cols-2">
-                <article v-for="item in workspace.experiences" :key="item.id" class="pano-card space-y-3">
+                <article v-for="item in workspace.experiences" :key="item.id" class="space-y-3 rounded-xl border border-default bg-default p-4">
                   <header class="flex items-center gap-2">
                     <BlrKind kind="experience" :labelled="false" />
-                    <button type="button" class="min-w-0 truncate text-sm font-medium text-highlighted hover:text-primary" @click="openInspector(item)">
+                    <button type="button" class="min-w-0 truncate text-base font-semibold tracking-tight text-highlighted hover:text-primary" @click="openInspector(item)">
                       {{ item.title }}
                     </button>
                     <UBadge :color="ACCESS_TONE[item.accessMode] || 'neutral'" variant="subtle" size="sm" class="ms-auto shrink-0">{{ item.accessMode }}</UBadge>
                   </header>
-                  <p class="text-xs leading-relaxed text-dimmed">{{ firstSentence(item.lead, 200) }}</p>
+                  <p class="text-sm leading-6 text-muted">{{ firstSentence(item.lead, 200) }}</p>
                   <BlrLinks :workspace="workspace" :ids="item.interfaceIds" kind="interface" label="Within" interactive @select="openInspector" />
                   <div class="space-y-1">
-                    <h5 class="pano-label">Who enters</h5>
-                    <div class="flex flex-wrap gap-1">
-                      <button v-for="actor in resolveEntities(workspace, item.actorIds)" :key="actor.id" type="button" class="pano-chip" @click="openInspector(actor)">{{ actor.title }}</button>
-                      <span v-if="!item.actorIds.length" class="pano-empty">No Actors declared.</span>
-                    </div>
+                    <BlrLinks :workspace="workspace" :ids="item.actorIds" kind="actor" label="Who enters" interactive @select="openInspector" />
+                    <p v-if="!item.actorIds.length" class="text-sm text-muted italic">No Actors declared.</p>
                   </div>
                   <BlrAvail :pairs="[]" :entry-points="item.entryPoints" label="Entry points" />
                   <div class="space-y-1">
-                    <h5 class="pano-label">Capability boundary</h5>
+                    <p class="blr-field">Capability boundary</p>
                     <BlrProse :text="item.capabilityBoundary" />
                   </div>
                   <div class="space-y-1.5 border-t border-muted pt-2.5">
-                    <h5 class="pano-label">In scope here (derived)</h5>
+                    <p class="blr-field">In scope here (derived)</p>
                     <BlrLinks :workspace="workspace" :ids="item.screenIds" kind="screen" interactive @select="openInspector" />
                     <BlrLinks :workspace="workspace" :ids="item.capabilityIds" kind="capability" interactive @select="openInspector" />
                     <BlrLinks :workspace="workspace" :ids="item.journeyIds" kind="journey" interactive @select="openInspector" />
@@ -651,19 +642,26 @@ watch(topoKind, () => {
         <!-- The surface -->
         <div v-else-if="expanded === 'surface'" class="flex h-full min-h-0 flex-col">
           <div class="flex flex-wrap items-center gap-1.5 border-b border-default px-4 py-2">
-            <span class="pano-label me-1">Journey overlay</span>
-            <button type="button" class="pano-chip" :class="{ 'pano-chip--on': overlayJourneyId === null }" @click="overlayJourneyId = null">Every Screen</button>
-            <button
+            <span class="blr-field me-1">Journey overlay</span>
+            <UButton
+              label="Every Screen"
+              :color="overlayJourneyId === null ? 'primary' : 'neutral'"
+              :variant="overlayJourneyId === null ? 'soft' : 'outline'"
+              size="xs"
+              class="rounded-full"
+              @click="overlayJourneyId = null"
+            />
+            <UButton
               v-for="journey in workspace.journeys"
               :key="journey.id"
-              type="button"
-              class="pano-chip"
-              :class="{ 'pano-chip--on': overlayJourneyId === journey.id }"
+              :label="journey.title"
+              :color="overlayJourneyId === journey.id ? 'primary' : 'neutral'"
+              :variant="overlayJourneyId === journey.id ? 'soft' : 'outline'"
+              size="xs"
+              class="rounded-full"
               @click="overlayJourneyId = overlayJourneyId === journey.id ? null : journey.id"
-            >
-              {{ journey.title }}
-            </button>
-            <span v-if="overlayJourney" class="ms-auto text-[11px] text-dimmed">
+            />
+            <span v-if="overlayJourney" class="ms-auto text-sm text-muted">
               {{ overlayScreenIds?.size ?? 0 }} of {{ workspace.screens.length }} Screens participate — participation, not navigation order.
             </span>
           </div>
@@ -671,7 +669,7 @@ watch(topoKind, () => {
             <BlrFlowCanvas :nodes="surfaceMap.nodes" @select="inspectId" @focus="inspectId" />
           </div>
           <div v-else class="flex flex-1 items-center justify-center p-6">
-            <p class="pano-empty">No Interfaces authored — the Product declares no delivery surface.</p>
+            <p class="text-sm text-muted italic">No Interfaces authored — the Product declares no delivery surface.</p>
           </div>
         </div>
 
@@ -687,31 +685,39 @@ watch(topoKind, () => {
               <header class="space-y-1.5">
                 <div class="flex flex-wrap items-center gap-2">
                   <BlrKind kind="journey" />
-                  <code class="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] text-dimmed">{{ selectedJourney.id }}</code>
+                  <code class="blr-meta rounded bg-muted px-1.5 py-0.5">{{ selectedJourney.id }}</code>
                 </div>
-                <h2 class="text-xl tracking-tight text-highlighted">{{ selectedJourney.title }}</h2>
+                <h2 class="text-xl font-semibold tracking-tight text-highlighted">{{ selectedJourney.title }}</h2>
               </header>
               <BlrProse :text="selectedJourney.lead" />
               <section v-if="selectedJourney.intent" class="space-y-1.5">
-                <h4 class="pano-label">Intent</h4>
+                <h4 class="blr-field">Intent</h4>
                 <BlrProse :text="selectedJourney.intent" />
               </section>
               <BlrAvail :pairs="selectedJourney.availability" :entry-points="selectedJourney.entryPoints" />
-              <div class="space-y-1.5 rounded-lg border border-default p-3">
+              <div class="space-y-1.5 rounded-xl border border-default bg-default p-4">
                 <BlrLinks :workspace="workspace" :ids="selectedJourney.actorIds" kind="actor" interactive @select="openInspector" />
                 <BlrLinks :workspace="workspace" :ids="selectedJourney.capabilityIds" kind="capability" interactive @select="openInspector" />
                 <BlrLinks :workspace="workspace" :ids="selectedJourney.domainIds" kind="domain" label="Domains (derived)" interactive @select="openInspector" />
                 <BlrLinks :workspace="workspace" :ids="selectedJourney.screenIds" kind="screen" interactive @select="openInspector" />
                 <BlrLinks :workspace="workspace" :ids="selectedJourney.ruleIds" kind="rule" label="Constrained by" interactive @select="openInspector" />
               </div>
-              <div class="flex items-center gap-2 border-b border-default pb-2">
-                <UButton :variant="journeyTab === 'scenarios' ? 'soft' : 'ghost'" color="neutral" size="xs" :label="`Scenarios · ${journeyScenarios.length}`" @click="journeyTab = 'scenarios'" />
-                <UButton :variant="journeyTab === 'map' ? 'soft' : 'ghost'" color="neutral" size="xs" label="Map" @click="journeyTab = 'map'" />
+              <div class="border-b border-default pb-2">
+                <UTabs
+                  v-model="journeyTab"
+                  :items="[
+                    { value: 'scenarios', label: `Scenarios · ${journeyScenarios.length}`, icon: 'i-lucide-list-checks' },
+                    { value: 'map', label: 'Map', icon: 'i-lucide-waypoints' }
+                  ]"
+                  :content="false"
+                  color="neutral"
+                  size="xs"
+                />
               </div>
               <template v-if="journeyTab === 'scenarios'">
-                <p v-if="!journeyScenarios.length" class="pano-empty">No Scenarios authored for this Journey.</p>
+                <p v-if="!journeyScenarios.length" class="text-sm text-muted italic">No Scenarios authored for this Journey.</p>
                 <!-- Complete acceptance contract per Scenario — BlrEntityDetail is the completeness guarantee. -->
-                <article v-for="scenario in journeyScenarios" :key="scenario.id" class="pano-card">
+                <article v-for="scenario in journeyScenarios" :key="scenario.id" class="rounded-xl border border-default bg-default p-4">
                   <BlrEntityDetail :workspace="workspace" :entity="scenario" @select="openInspector" />
                 </article>
               </template>
@@ -723,17 +729,25 @@ watch(topoKind, () => {
             <!-- Journey browser: cards ⇄ table -->
             <template v-else>
               <div class="flex items-center gap-2">
-                <UButton :variant="journeyMode === 'cards' ? 'soft' : 'ghost'" color="neutral" size="xs" icon="i-lucide-layout-grid" label="Cards" @click="journeyMode = 'cards'" />
-                <UButton :variant="journeyMode === 'table' ? 'soft' : 'ghost'" color="neutral" size="xs" icon="i-lucide-table-2" label="Table" @click="journeyMode = 'table'" />
-                <span class="ms-auto text-[11px] text-dimmed">{{ workspace.journeys.length }} promises · {{ workspace.counts.scenarios }} Scenarios</span>
+                <UTabs
+                  v-model="journeyMode"
+                  :items="[
+                    { value: 'cards', label: 'Cards', icon: 'i-lucide-layout-grid' },
+                    { value: 'table', label: 'Table', icon: 'i-lucide-table-2' }
+                  ]"
+                  :content="false"
+                  color="neutral"
+                  size="xs"
+                />
+                <span class="blr-meta ms-auto">{{ workspace.journeys.length }} promises · {{ workspace.counts.scenarios }} Scenarios</span>
               </div>
-              <p v-if="!workspace.journeys.length" class="pano-empty">No Journeys authored.</p>
+              <p v-if="!workspace.journeys.length" class="text-sm text-muted italic">No Journeys authored.</p>
 
               <div v-else-if="journeyMode === 'cards'" class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                 <article
                   v-for="journey in workspace.journeys"
                   :key="journey.id"
-                  class="pano-card cursor-pointer space-y-2.5 transition hover:border-accented"
+                  class="cursor-pointer space-y-2.5 rounded-xl border border-default bg-default p-4 transition hover:border-accented"
                   role="button"
                   tabindex="0"
                   @click="openJourney(journey.id)"
@@ -741,10 +755,10 @@ watch(topoKind, () => {
                 >
                   <header class="flex items-center gap-1.5">
                     <BlrKind kind="journey" :labelled="false" />
-                    <span class="min-w-0 flex-1 truncate text-sm font-medium text-highlighted">{{ journey.title }}</span>
+                    <span class="min-w-0 flex-1 truncate text-base font-semibold tracking-tight text-highlighted">{{ journey.title }}</span>
                     <UBadge color="neutral" variant="subtle" size="sm" class="shrink-0">{{ journey.scenarioIds.length }} scenarios</UBadge>
                   </header>
-                  <p class="text-xs leading-relaxed text-toned">{{ firstSentence(journey.lead, 200) }}</p>
+                  <p class="text-sm leading-6 text-muted">{{ firstSentence(journey.lead, 200) }}</p>
                   <BlrAvail :pairs="journey.availability" label="" />
                   <div class="space-y-1 border-t border-muted pt-2">
                     <BlrLinks :workspace="workspace" :ids="journey.actorIds" kind="actor" :max="3" />
@@ -752,12 +766,12 @@ watch(topoKind, () => {
                     <BlrLinks :workspace="workspace" :ids="journey.screenIds" kind="screen" :max="3" />
                     <BlrLinks :workspace="workspace" :ids="journey.ruleIds" kind="rule" :max="2" />
                   </div>
-                  <p v-if="scenarioNames(journey)" class="text-[11px] leading-relaxed text-dimmed">{{ scenarioNames(journey) }}</p>
+                  <p v-if="scenarioNames(journey)" class="text-sm leading-6 text-dimmed">{{ scenarioNames(journey) }}</p>
                 </article>
               </div>
 
               <template v-else>
-                <div class="overflow-x-auto rounded-lg border border-default">
+                <div class="overflow-x-auto rounded-xl border border-default bg-default">
                   <table class="pano-table">
                     <thead>
                       <tr>
@@ -789,7 +803,7 @@ watch(topoKind, () => {
                     </tbody>
                   </table>
                 </div>
-                <p class="pano-empty">Screen, Scenario and Rule figures are derived counts; step depth sums the authored steps of each Journey’s Scenarios.</p>
+                <p class="text-sm text-dimmed">Screen, Scenario and Rule figures are derived counts; step depth sums the authored steps of each Journey’s Scenarios.</p>
               </template>
             </template>
           </div>
@@ -799,26 +813,26 @@ watch(topoKind, () => {
         <div v-else-if="expanded === 'capabilities'" class="blr-pane h-full">
           <div class="mx-auto max-w-6xl space-y-8 p-6">
             <section class="space-y-4">
-              <h3 class="text-sm font-medium text-highlighted">Capabilities by Domain</h3>
-              <p v-if="!workspace.capabilities.length" class="pano-empty">No Capabilities authored.</p>
+              <h3 class="text-base font-semibold tracking-tight text-highlighted">Capabilities by Domain</h3>
+              <p v-if="!workspace.capabilities.length" class="text-sm text-muted italic">No Capabilities authored.</p>
               <div v-for="group in domainGroups" :key="group.domain?.id ?? 'none'" class="space-y-2">
                 <header class="flex flex-wrap items-baseline gap-2">
                   <BlrKind kind="domain" :labelled="false" />
-                  <button v-if="group.domain" type="button" class="text-sm font-medium text-highlighted hover:text-primary" @click="openInspector(group.domain)">
+                  <button v-if="group.domain" type="button" class="text-base font-semibold tracking-tight text-highlighted hover:text-primary" @click="openInspector(group.domain)">
                     {{ group.domain.title }}
                   </button>
-                  <span v-else class="text-sm font-medium text-highlighted">No Domain</span>
-                  <span v-if="group.domain" class="text-[11px] text-dimmed">{{ firstSentence(group.domain.lead, 140) }}</span>
+                  <span v-else class="text-base font-semibold tracking-tight text-highlighted">No Domain</span>
+                  <span v-if="group.domain" class="min-w-0 truncate text-sm text-muted">{{ firstSentence(group.domain.lead, 140) }}</span>
                 </header>
                 <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                  <article v-for="capability in group.capabilities" :key="capability.id" class="pano-card space-y-2">
+                  <article v-for="capability in group.capabilities" :key="capability.id" class="space-y-2 rounded-xl border border-default bg-default p-4">
                     <header class="flex items-center gap-1.5">
                       <BlrKind kind="capability" :labelled="false" />
-                      <button type="button" class="min-w-0 flex-1 truncate text-start text-sm font-medium text-highlighted hover:text-primary" @click="openInspector(capability)">
+                      <button type="button" class="min-w-0 flex-1 truncate text-start text-base font-semibold tracking-tight text-highlighted hover:text-primary" @click="openInspector(capability)">
                         {{ capability.title }}
                       </button>
                     </header>
-                    <p class="text-xs leading-relaxed text-toned">{{ firstSentence(capability.lead, 170) }}</p>
+                    <p class="text-sm leading-6 text-muted">{{ firstSentence(capability.lead, 170) }}</p>
                     <BlrAvail :pairs="capability.availability" label="" />
                     <div class="space-y-1 border-t border-muted pt-2">
                       <BlrLinks :workspace="workspace" :ids="capability.journeyIds" kind="journey" label="Used by (derived)" interactive @select="openInspector" />
@@ -832,12 +846,12 @@ watch(topoKind, () => {
 
             <section v-for="matrix in matrices" :key="matrix.id" class="space-y-2">
               <header>
-                <h3 class="text-sm font-medium text-highlighted">{{ matrix.question }}</h3>
-                <p class="pano-label">{{ matrix.title }}</p>
+                <p class="blr-field">{{ matrix.title }}</p>
+                <h3 class="mt-0.5 text-lg font-semibold tracking-tight text-highlighted">{{ matrix.question }}</h3>
               </header>
-              <p v-if="!workspace.capabilities.length || !matrix.columns.length" class="pano-empty">{{ matrix.emptyNote }}</p>
+              <p v-if="!workspace.capabilities.length || !matrix.columns.length" class="text-sm text-muted italic">{{ matrix.emptyNote }}</p>
               <template v-else>
-                <div class="overflow-x-auto rounded-lg border border-default">
+                <div class="overflow-x-auto rounded-xl border border-default bg-default">
                   <table class="pano-matrix">
                     <thead>
                       <tr>
@@ -863,9 +877,9 @@ watch(topoKind, () => {
                     </tbody>
                   </table>
                 </div>
-                <div v-if="matrixExplanation && matrixExplanation.matrixId === matrix.id" class="flex flex-wrap items-center gap-2 rounded-lg border border-default bg-elevated/40 px-3 py-2">
+                <div v-if="matrixExplanation && matrixExplanation.matrixId === matrix.id" class="flex flex-wrap items-center gap-2 rounded-xl border border-default bg-default px-4 py-3">
                   <UIcon :name="matrixExplanation.related ? 'i-lucide-circle-check' : 'i-lucide-circle-slash'" class="size-4 shrink-0" :class="matrixExplanation.related ? 'text-primary' : 'text-dimmed'" />
-                  <span class="min-w-0 flex-1 text-xs text-toned">{{ matrixExplanation.text }}</span>
+                  <span class="min-w-0 flex-1 text-sm text-default">{{ matrixExplanation.text }}</span>
                   <UButton size="xs" color="neutral" variant="outline" :label="matrixExplanation.capability.title" @click="openInspector(matrixExplanation.capability)" />
                   <UButton size="xs" color="neutral" variant="outline" :label="matrixExplanation.column.title" @click="openInspector(matrixExplanation.column)" />
                 </div>
@@ -877,7 +891,7 @@ watch(topoKind, () => {
         <!-- What must hold -->
         <div v-else-if="expanded === 'rules'" class="flex h-full min-h-0">
           <aside class="blr-pane w-72 shrink-0 space-y-1 border-e border-default p-2">
-            <p v-if="!workspace.rules.length" class="pano-empty p-2">No Business rules authored.</p>
+            <p v-if="!workspace.rules.length" class="p-2 text-sm text-muted italic">No Business rules authored.</p>
             <button
               v-for="rule in workspace.rules"
               :key="rule.id"
@@ -886,8 +900,8 @@ watch(topoKind, () => {
               :class="{ 'bg-elevated': activeRule?.id === rule.id }"
               @click="selectRule(rule.id)"
             >
-              <span class="block text-xs font-medium text-highlighted">{{ rule.title }}</span>
-              <span class="mt-0.5 block text-[11px] leading-relaxed text-dimmed">{{ firstSentence(rule.statement, 90) }}</span>
+              <span class="block text-sm font-medium text-highlighted">{{ rule.title }}</span>
+              <span class="mt-0.5 block text-sm leading-6 text-muted">{{ firstSentence(rule.statement, 90) }}</span>
             </button>
           </aside>
           <div v-if="activeRule" class="blr-pane min-w-0 flex-1">
@@ -895,34 +909,42 @@ watch(topoKind, () => {
               <header class="space-y-1.5">
                 <div class="flex flex-wrap items-center gap-2">
                   <BlrKind kind="rule" />
-                  <code class="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] text-dimmed">{{ activeRule.id }}</code>
+                  <code class="blr-meta rounded bg-muted px-1.5 py-0.5">{{ activeRule.id }}</code>
                   <UButton class="ms-auto" icon="i-lucide-book-open" color="neutral" variant="outline" size="xs" label="Open full entity" @click="openInspector(activeRule)" />
                 </div>
-                <h2 class="text-xl tracking-tight text-highlighted">{{ activeRule.title }}</h2>
+                <h2 class="text-xl font-semibold tracking-tight text-highlighted">{{ activeRule.title }}</h2>
               </header>
-              <div class="rounded-lg border-s-2 border-primary bg-elevated/40 p-3">
+              <div class="rounded-lg border-s-2 border-primary bg-default p-3.5">
                 <BlrProse :text="activeRule.statement" />
               </div>
               <section v-if="activeRule.rationale" class="space-y-1.5">
-                <h4 class="pano-label">Rationale</h4>
+                <h4 class="blr-field">Rationale</h4>
                 <BlrProse :text="activeRule.rationale" />
               </section>
-              <div class="flex items-center gap-2 border-b border-default pb-2">
-                <UButton :variant="ruleTab === 'impact' ? 'soft' : 'ghost'" color="neutral" size="xs" label="Impact" @click="ruleTab = 'impact'" />
-                <UButton :variant="ruleTab === 'map' ? 'soft' : 'ghost'" color="neutral" size="xs" label="Map" @click="ruleTab = 'map'" />
+              <div class="border-b border-default pb-2">
+                <UTabs
+                  v-model="ruleTab"
+                  :items="[
+                    { value: 'impact', label: 'Impact', icon: 'i-lucide-radar' },
+                    { value: 'map', label: 'Map', icon: 'i-lucide-waypoints' }
+                  ]"
+                  :content="false"
+                  color="neutral"
+                  size="xs"
+                />
               </div>
               <template v-if="ruleTab === 'impact'">
-                <section class="space-y-2 rounded-lg border border-default p-4">
-                  <h4 class="pano-label flex items-center gap-1.5"><UIcon name="i-lucide-anchor" class="size-3" /> Directly attached — authored on the Rule</h4>
-                  <p v-if="!ruleHasDirect" class="pano-empty">This Rule names no Domains, Capabilities, Journeys or Scenarios directly.</p>
+                <section class="space-y-2 rounded-xl border border-default bg-default p-4">
+                  <p class="blr-field flex items-center gap-1.5"><UIcon name="i-lucide-anchor" class="size-3" /> Directly attached — authored on the Rule</p>
+                  <p v-if="!ruleHasDirect" class="text-sm text-muted italic">This Rule names no Domains, Capabilities, Journeys or Scenarios directly.</p>
                   <BlrLinks :workspace="workspace" :ids="activeRule.domainIds" kind="domain" interactive @select="openInspector" />
                   <BlrLinks :workspace="workspace" :ids="activeRule.capabilityIds" kind="capability" interactive @select="openInspector" />
                   <BlrLinks :workspace="workspace" :ids="activeRule.journeyIds" kind="journey" interactive @select="openInspector" />
                   <BlrLinks :workspace="workspace" :ids="activeRule.scenarioIds" kind="scenario" interactive @select="openInspector" />
                 </section>
-                <section v-if="ruleImpact" class="space-y-2 rounded-lg border border-dashed border-default p-4">
-                  <h4 class="pano-label flex items-center gap-1.5"><UIcon name="i-lucide-git-branch" class="size-3" /> Derived reach — through the constrained Capabilities and Scenarios</h4>
-                  <p v-if="!ruleImpact.journeys.length && !ruleImpact.screens.length && !ruleImpact.domains.length" class="pano-empty">Nothing further is reached indirectly.</p>
+                <section v-if="ruleImpact" class="space-y-2 rounded-xl border border-dashed border-accented p-4">
+                  <p class="blr-field flex items-center gap-1.5"><UIcon name="i-lucide-git-branch" class="size-3" /> Derived reach — through the constrained Capabilities and Scenarios</p>
+                  <p v-if="!ruleImpact.journeys.length && !ruleImpact.screens.length && !ruleImpact.domains.length" class="text-sm text-muted italic">Nothing further is reached indirectly.</p>
                   <BlrLinks :workspace="workspace" :ids="ruleImpact.domains" kind="domain" label="Domains (derived)" interactive @select="openInspector" />
                   <BlrLinks :workspace="workspace" :ids="ruleImpact.journeys" kind="journey" label="Journeys (derived)" interactive @select="openInspector" />
                   <BlrLinks :workspace="workspace" :ids="ruleImpact.screens" kind="screen" label="Screens (derived)" interactive @select="openInspector" />
@@ -934,15 +956,15 @@ watch(topoKind, () => {
               </div>
             </div>
           </div>
-          <p v-else class="pano-empty flex flex-1 items-center justify-center p-6">No Business rules authored.</p>
+          <p v-else class="flex flex-1 items-center justify-center p-6 text-sm text-muted italic">No Business rules authored.</p>
         </div>
 
         <!-- One case at a time -->
         <div v-else-if="expanded === 'flow'" class="flex h-full min-h-0">
           <aside class="blr-pane w-72 shrink-0 border-e border-default p-2">
-            <p v-if="!workspace.scenarios.length" class="pano-empty p-2">No Scenarios authored.</p>
+            <p v-if="!workspace.scenarios.length" class="p-2 text-sm text-muted italic">No Scenarios authored.</p>
             <div v-for="group in flowGroups" :key="group.journey.id" class="mb-2">
-              <p class="px-2.5 pt-2 pb-1 font-mono text-[10px] tracking-[0.12em] text-dimmed uppercase">{{ group.journey.title }}</p>
+              <p class="blr-field px-2.5 pt-2 pb-1">{{ group.journey.title }}</p>
               <button
                 v-for="scenario in group.scenarios"
                 :key="scenario.id"
@@ -951,8 +973,8 @@ watch(topoKind, () => {
                 :class="{ 'bg-elevated': activeScenario?.id === scenario.id }"
                 @click="flowScenarioId = scenario.id"
               >
-                <span class="block text-xs font-medium text-highlighted">{{ scenario.title }}</span>
-                <span class="mt-0.5 block text-[10px] text-dimmed">{{ scenario.kindName }} · {{ scenario.steps.length }} steps</span>
+                <span class="block text-sm font-medium text-highlighted">{{ scenario.title }}</span>
+                <span class="mt-0.5 block text-xs text-dimmed">{{ scenario.kindName }} · {{ scenario.steps.length }} steps</span>
               </button>
             </div>
           </aside>
@@ -962,26 +984,26 @@ watch(topoKind, () => {
                 <div class="flex flex-wrap items-center gap-2">
                   <BlrKind kind="scenario" />
                   <UBadge color="neutral" variant="subtle" size="sm">{{ activeScenario.kindName }}</UBadge>
-                  <code class="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] text-dimmed">{{ activeScenario.id }}</code>
+                  <code class="blr-meta rounded bg-muted px-1.5 py-0.5">{{ activeScenario.id }}</code>
                   <UButton class="ms-auto" icon="i-lucide-book-open" color="neutral" variant="outline" size="xs" label="Open full entity" @click="openInspector(activeScenario)" />
                 </div>
-                <h2 class="text-xl tracking-tight text-highlighted">{{ activeScenario.title }}</h2>
-                <p class="text-xs text-dimmed">
+                <h2 class="text-xl font-semibold tracking-tight text-highlighted">{{ activeScenario.title }}</h2>
+                <p class="text-sm text-muted">
                   In journey
                   <button type="button" class="text-primary underline underline-offset-2" @click="inspectId(activeScenario.journeyId)">{{ activeScenario.journeyTitle }}</button>
                 </p>
               </header>
               <div class="grid gap-4 lg:grid-cols-[1fr_1.6fr_1fr]">
-                <section class="pano-card space-y-1.5">
-                  <h4 class="pano-label flex items-center gap-1.5"><UIcon name="i-lucide-play" class="size-3" /> Trigger</h4>
+                <section class="space-y-1.5 rounded-xl border border-default bg-default p-4">
+                  <p class="blr-field flex items-center gap-1.5"><UIcon name="i-lucide-play" class="size-3" /> Trigger</p>
                   <BlrProse :text="activeScenario.trigger" />
                 </section>
-                <section class="pano-card space-y-3">
-                  <h4 class="pano-label flex items-center gap-1.5"><UIcon name="i-lucide-list-ordered" class="size-3" /> Steps and decisions</h4>
+                <section class="space-y-3 rounded-xl border border-default bg-default p-4">
+                  <p class="blr-field flex items-center gap-1.5"><UIcon name="i-lucide-list-ordered" class="size-3" /> Steps and decisions</p>
                   <ol class="space-y-1.5">
-                    <li v-for="(step, index) in activeScenario.steps" :key="index" class="flex gap-3 text-sm leading-relaxed">
-                      <span class="mt-0.5 w-5 shrink-0 text-end font-mono text-[11px] text-dimmed tabular-nums">{{ index + 1 }}</span>
-                      <span class="text-toned">{{ step }}</span>
+                    <li v-for="(step, index) in activeScenario.steps" :key="index" class="flex gap-3 text-sm leading-6">
+                      <span class="blr-meta w-5 shrink-0 pt-0.5 text-end">{{ index + 1 }}</span>
+                      <span class="text-default">{{ step }}</span>
                     </li>
                   </ol>
                   <div v-for="(point, pointIndex) in activeScenario.decisionPoints" :key="pointIndex" class="rounded-lg border border-dashed border-default p-3">
@@ -989,7 +1011,7 @@ watch(topoKind, () => {
                     <BlrProse :text="point.question" class="mt-1" />
                     <ul class="mt-2 space-y-1.5">
                       <li v-for="(branch, branchIndex) in point.branches" :key="branchIndex" class="flex flex-wrap items-baseline gap-1.5 text-xs">
-                        <span class="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] text-toned">{{ branch.condition }}</span>
+                        <span class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs text-default">{{ branch.condition }}</span>
                         <UIcon name="i-lucide-arrow-right" class="size-3 self-center text-dimmed" />
                         <span class="text-dimmed">{{ branch.outcome }}</span>
                       </li>
@@ -997,67 +1019,54 @@ watch(topoKind, () => {
                   </div>
                 </section>
                 <section class="space-y-4">
-                  <div class="pano-card space-y-1.5">
-                    <h4 class="pano-label flex items-center gap-1.5"><UIcon name="i-lucide-flag" class="size-3" /> Outcome</h4>
+                  <div class="space-y-1.5 rounded-xl border border-default bg-default p-4">
+                    <p class="blr-field flex items-center gap-1.5"><UIcon name="i-lucide-flag" class="size-3" /> Outcome</p>
                     <BlrProse :text="activeScenario.outcome" />
                   </div>
-                  <div v-if="activeScenario.edgeCases.length" class="pano-card space-y-1.5">
-                    <h4 class="pano-label">Edge cases · {{ activeScenario.edgeCases.length }}</h4>
-                    <ul class="list-disc space-y-1 ps-5 text-sm text-dimmed marker:text-dimmed">
+                  <div v-if="activeScenario.edgeCases.length" class="space-y-1.5 rounded-xl border border-default bg-default p-4">
+                    <p class="blr-field">Edge cases · {{ activeScenario.edgeCases.length }}</p>
+                    <ul class="list-disc space-y-1 ps-5 text-sm text-muted marker:text-dimmed">
                       <li v-for="(edge, edgeIndex) in activeScenario.edgeCases" :key="edgeIndex">{{ edge }}</li>
                     </ul>
                   </div>
                 </section>
               </div>
-              <div class="space-y-1.5 rounded-lg border border-default p-3">
+              <div class="space-y-1.5 rounded-xl border border-default bg-default p-4">
                 <BlrLinks :workspace="workspace" :ids="activeScenario.screenIds" kind="screen" label="On Screens" interactive @select="openInspector" />
                 <BlrLinks :workspace="workspace" :ids="activeScenario.ruleIds" kind="rule" label="Constrained by" interactive @select="openInspector" />
                 <BlrAvail :pairs="activeScenario.availability" inherited-note="Applies to every pair its Journey declares." />
               </div>
             </div>
           </div>
-          <p v-else class="pano-empty flex flex-1 items-center justify-center p-6">No Scenarios authored.</p>
+          <p v-else class="flex flex-1 items-center justify-center p-6 text-sm text-muted italic">No Scenarios authored.</p>
         </div>
 
         <!-- What connects here -->
         <div v-else-if="expanded === 'topology'" class="flex h-full min-h-0 flex-col">
           <div class="flex flex-wrap items-center gap-2 border-b border-default px-4 py-2">
-            <span class="pano-label">Focus</span>
-            <select v-model="topoKind" class="pano-select" aria-label="Entity kind">
-              <option v-for="meta in topoKinds" :key="meta.kind" :value="meta.kind">{{ meta.plural }}</option>
-            </select>
-            <select v-model="topoEntityId" class="pano-select max-w-72" aria-label="Entity">
-              <option :value="null">Choose…</option>
-              <option v-for="entity in topoOptions" :key="entity.id" :value="entity.id">{{ entity.title }}</option>
-            </select>
-            <span class="hidden text-[11px] text-dimmed sm:inline">Double-click a box to re-root; Expand widens the neighbourhood deliberately.</span>
+            <span class="blr-field">Focus</span>
+            <USelect v-model="topoKind" :items="topoKindItems" size="sm" aria-label="Entity kind" />
+            <USelect v-model="topoEntityId" :items="topoEntityItems" placeholder="Choose…" size="sm" aria-label="Entity" class="max-w-72" />
+            <span class="hidden text-sm text-dimmed sm:inline">Double-click a box to re-root; Expand widens the neighbourhood deliberately.</span>
           </div>
           <div v-if="topoEntity" class="min-h-0 flex-1">
             <BlrTopology :workspace="workspace" :focus-id="topoEntity.id" @inspect="openInspector" />
           </div>
           <div v-else class="flex flex-1 items-center justify-center p-6">
-            <p class="pano-empty">Topology is contextual — pick an entity above and the map shows what directly supports it.</p>
+            <p class="text-sm text-muted italic">Topology is contextual — pick an entity above and the map shows what directly supports it.</p>
           </div>
         </div>
-
-        <!-- Docked inspector -->
-        <aside v-if="inspectorEntity" class="absolute inset-y-0 end-0 z-30 flex w-full max-w-md flex-col border-s border-default bg-default shadow-2xl">
-          <header class="flex items-center gap-2 border-b border-default px-4 py-2.5">
-            <BlrKind :kind="inspectorEntity.kind" :labelled="false" />
-            <span class="min-w-0 flex-1 truncate text-sm font-medium text-highlighted">{{ inspectorEntity.title }}</span>
-            <UButton :variant="inspectorTab === 'detail' ? 'soft' : 'ghost'" color="neutral" size="xs" label="Detail" @click="inspectorTab = 'detail'" />
-            <UButton :variant="inspectorTab === 'map' ? 'soft' : 'ghost'" color="neutral" size="xs" label="Map" @click="inspectorTab = 'map'" />
-            <UButton icon="i-lucide-x" color="neutral" variant="ghost" size="xs" aria-label="Close inspector" @click="inspectorEntity = null" />
-          </header>
-          <div v-if="inspectorTab === 'detail'" class="blr-pane flex-1 p-4">
-            <BlrEntityDetail :workspace="workspace" :entity="inspectorEntity" @select="openInspector" />
-          </div>
-          <div v-else class="min-h-0 flex-1">
-            <BlrTopology :workspace="workspace" :focus-id="inspectorEntity.id" direction="TB" @inspect="openInspector" />
-          </div>
-        </aside>
       </div>
     </template>
+
+    <!-- Inspector: the shared slideover every selection lands in -->
+    <BlrInspector
+      v-model:tab="inspectorTab"
+      :workspace="workspace"
+      :entity="inspectorEntity"
+      @select="openInspector"
+      @close="inspectorEntity = null"
+    />
   </div>
 </template>
 
@@ -1089,90 +1098,17 @@ watch(topoKind, () => {
   min-width: 0;
   flex-direction: column;
   overflow: hidden;
-  border: 1px solid var(--ui-border);
-  border-radius: 0.9rem;
-  background: var(--ui-bg);
-  box-shadow:
-    0 1px 2px color-mix(in srgb, var(--ui-text) 4%, transparent),
-    0 10px 28px -20px color-mix(in srgb, var(--ui-text) 30%, transparent);
-  transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-.pano-tile:hover {
-  border-color: var(--ui-border-accented);
-  transform: translateY(-1px);
-  box-shadow:
-    0 2px 4px color-mix(in srgb, var(--ui-text) 6%, transparent),
-    0 16px 36px -20px color-mix(in srgb, var(--ui-text) 35%, transparent);
-}
-
-.pano-head { display: flex; align-items: center; gap: 0.6rem; border-bottom: 1px solid var(--ui-border-muted); padding: 0.65rem 0.9rem; }
-.pano-head-icon { width: 1rem; height: 1rem; flex: none; color: var(--ui-text-dimmed); }
-.pano-title { font-size: 0.8125rem; font-weight: 500; line-height: 1.2; color: var(--ui-text-highlighted); }
-
-.pano-question {
-  margin-top: 1px;
-  overflow: hidden;
-  font-size: 11px;
-  color: var(--ui-text-dimmed);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* Shared small parts. */
-.pano-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ui-text-dimmed); }
-.pano-empty { font-size: 12px; font-style: italic; color: var(--ui-text-dimmed); }
-
-.pano-card {
-  min-width: 0;
-  border: 1px solid var(--ui-border);
-  border-radius: 0.75rem;
-  background: color-mix(in srgb, var(--ui-bg-elevated) 35%, transparent);
-  padding: 1rem;
-}
-
-.pano-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  max-width: 100%;
-  overflow: hidden;
-  border: 1px solid var(--ui-border);
-  border-radius: 9999px;
-  padding: 0.1rem 0.55rem;
-  font-size: 11px;
-  color: var(--ui-text-toned);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
-}
-
-button.pano-chip:hover { border-color: var(--ui-border-accented); color: var(--ui-text-highlighted); }
-.pano-chip--on { border-color: var(--ui-primary); background: color-mix(in srgb, var(--ui-primary) 10%, transparent); color: var(--ui-primary); }
-
+/* One quiet segment per beat of the miniature Scenario lane. */
 .pano-lane-seg {
   border: 1px solid var(--ui-border-muted);
   border-radius: 0.5rem;
-  background: color-mix(in srgb, var(--ui-bg-elevated) 40%, transparent);
   padding: 0.4rem 0.6rem;
 }
 
-.pano-lane-seg .pano-label { display: block; margin-bottom: 0.15rem; }
-
-.pano-select {
-  min-width: 0;
-  border: 1px solid var(--ui-border);
-  border-radius: 0.5rem;
-  background: var(--ui-bg);
-  padding: 0.3rem 0.55rem;
-  font-size: 12px;
-  color: var(--ui-text-toned);
-}
-
-.pano-select:focus { outline: 2px solid var(--ui-primary); outline-offset: 1px; }
-
 /* The matrices: row heads stay put while columns scroll. */
-.pano-matrix { border-collapse: collapse; font-size: 12px; }
+.pano-matrix { border-collapse: collapse; font-size: var(--text-xs); }
 
 .pano-matrix-corner,
 .pano-matrix-row {
@@ -1191,11 +1127,7 @@ button.pano-chip:hover { border-color: var(--ui-border-accented); color: var(--u
 
 .pano-matrix-corner {
   vertical-align: bottom;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--ui-text-dimmed);
+  color: var(--ui-text-muted);
 }
 
 .pano-matrix-col { border-bottom: 1px solid var(--ui-border); padding: 0.5rem 0.25rem; vertical-align: bottom; }
@@ -1206,8 +1138,9 @@ button.pano-chip:hover { border-color: var(--ui-border-accented); color: var(--u
   overflow: hidden;
   writing-mode: vertical-rl;
   transform: rotate(180deg);
-  font-size: 11px;
-  color: var(--ui-text-dimmed);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--ui-text-toned);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -1229,18 +1162,16 @@ button.pano-chip:hover { border-color: var(--ui-border-accented); color: var(--u
 .pano-dot { width: 0.5rem; height: 0.5rem; border-radius: 9999px; background: var(--ui-primary); }
 
 /* The comparison table. */
-.pano-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.pano-table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
 
 .pano-table thead th {
   border-bottom: 1px solid var(--ui-border);
   background: color-mix(in srgb, var(--ui-bg-elevated) 50%, transparent);
   padding: 0.5rem 0.75rem;
   text-align: start;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--ui-text-dimmed);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--ui-text-muted);
   white-space: nowrap;
 }
 
@@ -1250,11 +1181,19 @@ button.pano-chip:hover { border-color: var(--ui-border-accented); color: var(--u
   padding: 0.55rem 0.75rem;
   text-align: start;
   vertical-align: top;
-  color: var(--ui-text-toned);
+  color: var(--ui-text-muted);
 }
 
 .pano-table tbody tr:last-child th,
 .pano-table tbody tr:last-child td { border-bottom: 0; }
 
-.pano-table .num { text-align: end; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.pano-table .num { text-align: end; }
+
+/* Derived counts read as meta: mono, 12px floor, tabular. */
+.pano-table tbody .num {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--ui-text-dimmed);
+  font-variant-numeric: tabular-nums;
+}
 </style>

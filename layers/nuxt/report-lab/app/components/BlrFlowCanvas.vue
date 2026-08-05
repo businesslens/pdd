@@ -95,7 +95,7 @@ watch(membershipKey, async () => {
     </VueFlow>
     <template #fallback>
       <div class="blr-flow blr-flow--loading">
-        <span class="font-mono text-[10px] tracking-[0.14em] text-dimmed uppercase">Drawing map…</span>
+        <span class="blr-field">Drawing map…</span>
       </div>
     </template>
   </ClientOnly>

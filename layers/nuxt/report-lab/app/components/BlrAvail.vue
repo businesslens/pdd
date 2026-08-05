@@ -16,34 +16,36 @@ withDefaults(defineProps<{
 
 <template>
   <div v-if="pairs.length || inheritedNote || entryPoints.length" class="space-y-2">
-    <p v-if="label" class="font-mono text-[10px] tracking-[0.12em] text-dimmed uppercase">
+    <p v-if="label" class="blr-field">
       {{ label }}
     </p>
     <div v-if="pairs.length" class="flex flex-wrap gap-1.5">
-      <span
+      <UBadge
         v-for="pair in pairs"
         :key="pair.key"
-        class="inline-flex items-center gap-1 rounded-full border border-default px-2 py-0.5 text-[11px]"
+        color="neutral"
+        variant="outline"
+        size="sm"
       >
-        <span class="text-toned">{{ pair.interfaceTitle }}</span>
+        <span class="text-default">{{ pair.interfaceTitle }}</span>
         <template v-if="pair.experienceTitle">
           <UIcon name="i-lucide-chevron-right" class="size-3 text-dimmed" />
-          <span class="text-dimmed">{{ pair.experienceTitle }}</span>
+          <span class="text-muted">{{ pair.experienceTitle }}</span>
         </template>
-      </span>
+      </UBadge>
     </div>
-    <p v-else-if="inheritedNote" class="text-xs text-dimmed italic">
+    <p v-else-if="inheritedNote" class="text-sm text-muted italic">
       {{ inheritedNote }}
     </p>
     <ul v-if="entryPoints.length" class="space-y-1">
       <li
         v-for="point in entryPoints"
         :key="`${point.interfaceId}-${point.path}`"
-        class="flex items-baseline gap-2 font-mono text-[11px]"
+        class="blr-meta flex items-baseline gap-2"
       >
-        <UIcon name="i-lucide-corner-down-right" class="size-3 shrink-0 self-center text-dimmed" />
-        <span class="text-dimmed">{{ point.interfaceTitle }}</span>
-        <span class="truncate text-toned">{{ point.path }}</span>
+        <UIcon name="i-lucide-corner-down-right" class="size-3 shrink-0 self-center" />
+        <span>{{ point.interfaceTitle }}</span>
+        <span class="truncate text-default">{{ point.path }}</span>
       </li>
     </ul>
   </div>

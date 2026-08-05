@@ -53,7 +53,7 @@ const ACCESS_TONE: Record<string, 'success' | 'warning' | 'error'> = {
     <header class="space-y-2">
       <div class="flex flex-wrap items-center gap-2">
         <BlrKind :kind="entity.kind" />
-        <code class="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] text-dimmed">{{ entity.id }}</code>
+        <code class="blr-meta rounded bg-muted px-1.5 py-0.5">{{ entity.id }}</code>
         <UBadge
           v-if="entity.kind === 'scenario'"
           color="neutral"
@@ -79,10 +79,10 @@ const ACCESS_TONE: Record<string, 'success' | 'warning' | 'error'> = {
           {{ asActor.actorKind }} · {{ asActor.relationship }}
         </UBadge>
       </div>
-      <h3 class="text-xl tracking-tight text-highlighted">
+      <h3 class="text-xl font-semibold tracking-tight text-highlighted">
         {{ entity.title }}
       </h3>
-      <p v-if="entity.kind === 'scenario'" class="text-xs text-dimmed">
+      <p v-if="entity.kind === 'scenario'" class="text-sm text-muted">
         In journey
         <button type="button" class="text-primary underline underline-offset-2" @click="emit('select', workspace.byId.get(asScenario.journeyId)!)">
           {{ asScenario.journeyTitle }}
@@ -97,14 +97,14 @@ const ACCESS_TONE: Record<string, 'success' | 'warning' | 'error'> = {
     <BlrProse v-else :text="entity.lead" />
 
     <section v-if="entity.intent" class="space-y-1.5">
-      <h4 class="font-mono text-[10px] tracking-[0.12em] text-dimmed uppercase">
+      <h4 class="blr-field">
         Intent
       </h4>
       <BlrProse :text="entity.intent" />
     </section>
 
     <section v-if="entity.kind === 'rule' && asRule.rationale" class="space-y-1.5">
-      <h4 class="font-mono text-[10px] tracking-[0.12em] text-dimmed uppercase">
+      <h4 class="blr-field">
         Rationale
       </h4>
       <BlrProse :text="asRule.rationale" />
@@ -113,14 +113,14 @@ const ACCESS_TONE: Record<string, 'success' | 'warning' | 'error'> = {
     <!-- Scenario body: the acceptance contract, in authored order. -->
     <template v-if="entity.kind === 'scenario'">
       <section class="space-y-1.5">
-        <h4 class="font-mono text-[10px] tracking-[0.12em] text-dimmed uppercase">
+        <h4 class="blr-field">
           Trigger
         </h4>
         <BlrProse :text="asScenario.trigger" />
       </section>
 
       <section class="space-y-2">
-        <h4 class="font-mono text-[10px] tracking-[0.12em] text-dimmed uppercase">
+        <h4 class="blr-field">
           Steps · {{ asScenario.steps.length }}
         </h4>
         <ol class="space-y-1.5">
@@ -129,14 +129,14 @@ const ACCESS_TONE: Record<string, 'success' | 'warning' | 'error'> = {
             :key="index"
             class="flex gap-3 text-sm leading-relaxed"
           >
-            <span class="mt-0.5 w-5 shrink-0 text-end font-mono text-[11px] text-dimmed tabular-nums">{{ index + 1 }}</span>
-            <span class="text-toned">{{ step }}</span>
+            <span class="blr-meta mt-0.5 w-5 shrink-0 text-end">{{ index + 1 }}</span>
+            <span class="text-default">{{ step }}</span>
           </li>
         </ol>
       </section>
 
       <section v-if="asScenario.decisionPoints.length" class="space-y-3">
-        <h4 class="font-mono text-[10px] tracking-[0.12em] text-dimmed uppercase">
+        <h4 class="blr-field">
           Decision points · {{ asScenario.decisionPoints.length }}
         </h4>
         <div
@@ -154,7 +154,7 @@ const ACCESS_TONE: Record<string, 'success' | 'warning' | 'error'> = {
               :key="branchIndex"
               class="flex flex-wrap items-baseline gap-1.5 text-xs"
             >
-              <span class="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] text-toned">{{ branch.condition }}</span>
+              <span class="rounded bg-muted px-1.5 py-0.5 font-mono text-xs text-default">{{ branch.condition }}</span>
               <UIcon name="i-lucide-arrow-right" class="size-3 self-center text-dimmed" />
               <span class="text-dimmed">{{ branch.outcome }}</span>
             </li>
@@ -163,14 +163,14 @@ const ACCESS_TONE: Record<string, 'success' | 'warning' | 'error'> = {
       </section>
 
       <section class="space-y-1.5">
-        <h4 class="font-mono text-[10px] tracking-[0.12em] text-dimmed uppercase">
+        <h4 class="blr-field">
           Outcome
         </h4>
         <BlrProse :text="asScenario.outcome" />
       </section>
 
       <section v-if="asScenario.edgeCases.length" class="space-y-1.5">
-        <h4 class="font-mono text-[10px] tracking-[0.12em] text-dimmed uppercase">
+        <h4 class="blr-field">
           Edge cases · {{ asScenario.edgeCases.length }}
         </h4>
         <ul class="list-disc space-y-1 ps-5 text-sm text-dimmed marker:text-dimmed">
@@ -184,20 +184,20 @@ const ACCESS_TONE: Record<string, 'success' | 'warning' | 'error'> = {
     <!-- Screen body: what it presents, what can be done, and its states. -->
     <template v-if="entity.kind === 'screen'">
       <section class="space-y-1.5">
-        <h4 class="font-mono text-[10px] tracking-[0.12em] text-dimmed uppercase">
+        <h4 class="blr-field">
           Information presented · {{ asScreen.information.length }}
         </h4>
-        <ul class="list-disc space-y-1 ps-5 text-sm text-toned marker:text-dimmed">
+        <ul class="list-disc space-y-1 ps-5 text-sm text-default marker:text-dimmed">
           <li v-for="(item, index) in asScreen.information" :key="index">
             {{ item }}
           </li>
         </ul>
       </section>
       <section v-if="asScreen.actions.length" class="space-y-1.5">
-        <h4 class="font-mono text-[10px] tracking-[0.12em] text-dimmed uppercase">
+        <h4 class="blr-field">
           Available actions · {{ asScreen.actions.length }}
         </h4>
-        <ul class="space-y-1 text-sm text-toned">
+        <ul class="space-y-1 text-sm text-default">
           <li v-for="(item, index) in asScreen.actions" :key="index" class="flex items-start gap-2">
             <UIcon name="i-lucide-mouse-pointer-click" class="mt-0.5 size-3.5 shrink-0 text-dimmed" />
             {{ item }}
@@ -205,7 +205,7 @@ const ACCESS_TONE: Record<string, 'success' | 'warning' | 'error'> = {
         </ul>
       </section>
       <section v-if="asScreen.states.length" class="space-y-2">
-        <h4 class="font-mono text-[10px] tracking-[0.12em] text-dimmed uppercase">
+        <h4 class="blr-field">
           Product states · {{ asScreen.states.length }}
         </h4>
         <div class="grid gap-2 sm:grid-cols-2">
@@ -227,7 +227,7 @@ const ACCESS_TONE: Record<string, 'success' | 'warning' | 'error'> = {
       v-if="['interface', 'experience', 'screen'].includes(entity.kind)"
       class="space-y-1.5"
     >
-      <h4 class="font-mono text-[10px] tracking-[0.12em] text-dimmed uppercase">
+      <h4 class="blr-field">
         Capability boundary
       </h4>
       <BlrProse
@@ -333,7 +333,7 @@ const ACCESS_TONE: Record<string, 'success' | 'warning' | 'error'> = {
       </section>
 
       <section v-if="entity.supportingContent" class="space-y-1.5 border-t border-default pt-4">
-        <h4 class="font-mono text-[10px] tracking-[0.12em] text-dimmed uppercase">
+        <h4 class="blr-field">
           Supporting context
         </h4>
         <BlrProse :text="entity.supportingContent" />

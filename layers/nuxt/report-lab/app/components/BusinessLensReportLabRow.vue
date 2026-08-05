@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { ReportWidth } from '../utils/reportDesigns'
+
 /**
  * Audition control for the report designs, built to sit in the theme lab bar.
  *
@@ -11,6 +13,13 @@ defineShortcuts({
   shift_arrowright: () => step(1),
   shift_arrowleft: () => step(-1)
 })
+
+const widthItems = widths.map(option => ({ value: option.id, label: option.label }))
+
+const widthModel = computed<string>({
+  get: () => widthChoice.value,
+  set: value => selectWidth(value as ReportWidth | 'auto')
+})
 </script>
 
 <template>
@@ -18,45 +27,37 @@ defineShortcuts({
     data-report-design-row
     class="flex h-(--businesslens-theme-lab-row-height) items-center gap-3 overflow-x-auto px-3 sm:px-4"
   >
-    <span class="hidden shrink-0 items-center gap-1.5 font-mono text-[10px] tracking-[0.14em] text-toned uppercase sm:inline-flex">
+    <span class="blr-field hidden shrink-0 items-center gap-1.5 sm:inline-flex">
       <UIcon name="i-lucide-layout-template" class="size-3.5" />
       Report
     </span>
 
     <div role="group" aria-label="Report design" class="flex shrink-0 items-center gap-1">
-      <button
+      <UButton
         v-for="design in designs"
         :key="design.id"
-        type="button"
-        class="flex items-center gap-1.5 rounded-full border px-2 py-1 text-xs whitespace-nowrap transition"
-        :class="design.id === active.id
-          ? 'border-primary bg-primary/10 text-highlighted'
-          : 'border-transparent text-toned hover:border-default hover:bg-default/60'"
+        :icon="design.icon"
+        :label="design.name"
+        size="xs"
+        :color="design.id === active.id ? 'primary' : 'neutral'"
+        :variant="design.id === active.id ? 'soft' : 'ghost'"
         :aria-pressed="design.id === active.id"
         :title="`${design.name} — ${design.tagline}`"
+        class="rounded-full"
         @click="selectDesign(design.id)"
-      >
-        <UIcon :name="design.icon" class="size-3.5 shrink-0" />
-        <span class="font-medium">{{ design.name }}</span>
-      </button>
+      />
     </div>
 
-    <div class="ms-auto flex shrink-0 items-center gap-1 ps-2">
-      <span class="hidden font-mono text-[10px] tracking-[0.12em] text-toned uppercase md:inline">Width</span>
-      <button
-        v-for="option in widths"
-        :key="option.id"
-        type="button"
-        class="rounded-full border px-2 py-1 text-[11px] whitespace-nowrap transition"
-        :class="option.id === widthChoice
-          ? 'border-primary bg-primary/10 text-highlighted'
-          : 'border-transparent text-toned hover:border-default hover:bg-default/60'"
-        :aria-pressed="option.id === widthChoice"
-        :title="option.hint"
-        @click="selectWidth(option.id)"
-      >
-        {{ option.label }}
-      </button>
+    <div class="ms-auto flex shrink-0 items-center gap-2 ps-2">
+      <span class="blr-field hidden md:inline">Width</span>
+      <UTabs
+        v-model="widthModel"
+        :items="widthItems"
+        :content="false"
+        color="neutral"
+        size="xs"
+        aria-label="Report width"
+      />
     </div>
   </div>
 </template>

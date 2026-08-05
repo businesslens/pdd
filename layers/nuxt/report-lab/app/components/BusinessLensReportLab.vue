@@ -61,8 +61,8 @@ const designComponent = computed(() => DESIGN_COMPONENTS[active.value.component]
           {{ active.name }}
         </span>
         <span class="text-xs text-dimmed">{{ active.approach }}</span>
-        <span class="ms-auto hidden font-mono text-[10px] tracking-wide text-dimmed uppercase lg:inline">
-          shift + ← → to compare
+        <span class="blr-meta ms-auto hidden lg:inline">
+          Shift + ← / → to compare
         </span>
       </div>
     </div>

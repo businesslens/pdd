@@ -137,7 +137,7 @@ function toggleKind(kind: ReportEntityKind) {
       <span v-if="focusEntity" class="inline-flex min-w-0 items-center gap-1.5">
         <BlrKind :kind="focusEntity.kind" :labelled="false" />
         <span class="truncate text-xs font-medium text-highlighted">{{ focusEntity.title }}</span>
-        <span class="font-mono text-[10px] tracking-[0.1em] text-dimmed uppercase">neighbourhood</span>
+        <span class="blr-field">Neighbourhood</span>
       </span>
       <div class="ms-auto flex flex-wrap items-center gap-1">
         <button

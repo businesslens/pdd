@@ -6,16 +6,16 @@
  * named matrices — Capabilities × Journeys, × Screens, × availability
  * contexts, × Business rules, and Domains × Journeys — each owning exactly
  * one question, never one universal grid with interchangeable axes. Clicking
- * a filled cell docks an explanation panel that names both entities, states
- * the relationship in a sentence, and lists the connecting evidence; clicking
- * a row or column header summarises that entity's relations and offers the
- * contextual topology as a Map tab. Three non-matrix entries complete the
- * report: "The promises" (the Journey browser with cards, a comparison table
- * and full Scenario detail), "The surface" (the shared Screen map with a
- * Journey overlay), and "About" (identity, coverage, counts, access contexts
- * and references). Full entity content always opens through BlrEntityDetail.
- * Filled marks are authored relations; rings are derived ones, and every
- * derived reading says so.
+ * a filled cell lands an explanation panel under the matrix that names both
+ * entities, states the relationship in a sentence, and lists the connecting
+ * evidence; clicking a row or column header opens the shared BlrInspector
+ * slideover, whose Detail tab carries the complete authored content and whose
+ * Map tab shows the contextual topology. Three non-matrix entries complete
+ * the report: "The promises" (the Journey browser with cards, a comparison
+ * table and full Scenario detail), "The surface" (the shared Screen map with
+ * a Journey overlay), and "About" (identity, coverage, counts, access
+ * contexts and references). Filled marks are authored relations; rings are
+ * derived ones, and every derived reading says so.
  */
 import type { ReportReference } from 'businesslens/report'
 import type {
@@ -229,24 +229,15 @@ const activeMatrix = computed(() => matrices.value.find(matrix => matrix.id === 
 const undomainedCapabilities = computed(() => props.workspace.capabilitiesByDomain.get('') ?? [])
 
 /* ------------------------------------------------------------------ */
-/* Matrix selection and the docked explanation panel                   */
+/* Matrix selection: picked cells explain inline, headers inspect      */
 /* ------------------------------------------------------------------ */
 
-type MatrixSelection =
-  | { type: 'cell', rowId: string, colId: string }
-  | { type: 'row', rowId: string }
-  | { type: 'col', colId: string }
-
-const selection = ref<MatrixSelection | null>(null)
-const panelTab = ref<'facts' | 'map'>('facts')
+const picked = ref<{ rowId: string, colId: string } | null>(null)
 const hoverCol = ref<number | null>(null)
 
 watch(activeViewId, () => {
-  selection.value = null
+  picked.value = null
   hoverCol.value = null
-})
-watch(selection, () => {
-  panelTab.value = 'facts'
 })
 
 function rowCells(matrix: MatrixDef, rowId: string): Array<{ col: MatrixCol, mark: MatrixMark | null }> {
@@ -265,28 +256,17 @@ function rowSub(row: AnyEntityView): string {
   return ENTITY_KIND_META[row.kind].label
 }
 
-const isCellSelected = (rowId: string, colId: string) => {
-  const sel = selection.value
-  return sel?.type === 'cell' && sel.rowId === rowId && sel.colId === colId
-}
-const isRowSelected = (rowId: string) => {
-  const sel = selection.value
-  return sel?.type === 'row' && sel.rowId === rowId
-}
-const isColSelected = (colId: string) => {
-  const sel = selection.value
-  return sel?.type === 'col' && sel.colId === colId
+const isCellPicked = (rowId: string, colId: string) =>
+  picked.value?.rowId === rowId && picked.value?.colId === colId
+
+function pickCell(rowId: string, colId: string) {
+  picked.value = isCellPicked(rowId, colId) ? null : { rowId, colId }
 }
 
-function selectCell(rowId: string, colId: string) {
-  selection.value = isCellSelected(rowId, colId) ? null : { type: 'cell', rowId, colId }
-}
-function selectRow(rowId: string) {
-  selection.value = isRowSelected(rowId) ? null : { type: 'row', rowId }
-}
-function selectCol(col: MatrixCol) {
-  if (!col.entityId && !col.pair) return
-  selection.value = isColSelected(col.id) ? null : { type: 'col', colId: col.id }
+/** A column header inspects its entity; an availability pair inspects its narrowest context. */
+function inspectCol(col: MatrixCol) {
+  const id = col.entityId || col.pair?.experienceId || col.pair?.interfaceId
+  if (id) inspectById(id)
 }
 
 function rowColorStyle(kind: ReportEntityKind) {
@@ -308,9 +288,9 @@ interface CellStory {
 }
 
 const cellStory = computed<CellStory | null>(() => {
-  const sel = selection.value
+  const sel = picked.value
   const matrix = activeMatrix.value
-  if (!matrix || sel?.type !== 'cell') return null
+  if (!matrix || !sel) return null
   const row = props.workspace.byId.get(sel.rowId)
   const col = matrix.cols.find(candidate => candidate.id === sel.colId)
   const mark = matrix.marks.get(markKey(sel.rowId, sel.colId))
@@ -381,62 +361,6 @@ const cellStory = computed<CellStory | null>(() => {
   return { row, col, colEntity, mark, sentence, derivedNote, quote, evidence: evidence.filter(group => group.ids.length), pairs }
 })
 
-const rowSummary = computed(() => {
-  const sel = selection.value
-  const matrix = activeMatrix.value
-  if (!matrix || sel?.type !== 'row') return null
-  const entity = props.workspace.byId.get(sel.rowId)
-  if (!entity) return null
-  const marks: Array<{ col: MatrixCol, mark: MatrixMark }> = []
-  for (const col of matrix.cols) {
-    const mark = matrix.marks.get(markKey(entity.id, col.id))
-    if (mark) marks.push({ col, mark })
-  }
-  return { entity, marks }
-})
-
-const colSummary = computed(() => {
-  const sel = selection.value
-  const matrix = activeMatrix.value
-  if (!matrix || sel?.type !== 'col') return null
-  const col = matrix.cols.find(candidate => candidate.id === sel.colId)
-  if (!col) return null
-  const direct: AnyEntityView[] = []
-  const derived: AnyEntityView[] = []
-  for (const row of matrix.rows) {
-    const mark = matrix.marks.get(markKey(row.id, col.id))
-    if (!mark) continue
-    if (mark.direct) direct.push(row)
-    else derived.push(row)
-  }
-  const entity = col.entityId ? props.workspace.byId.get(col.entityId) ?? null : null
-  const groups = [
-    { label: 'Direct', derived: false, rows: direct },
-    { label: 'Derived', derived: true, rows: derived }
-  ].filter(group => group.rows.length)
-  return { col, entity, groups, empty: !direct.length && !derived.length }
-})
-
-/** The entity the panel's Map tab focuses; a pair focuses its narrowest context. */
-const panelFocusId = computed<string | null>(() => {
-  const sel = selection.value
-  if (!sel || sel.type === 'cell') return null
-  if (sel.type === 'row') return props.workspace.byId.has(sel.rowId) ? sel.rowId : null
-  const col = activeMatrix.value?.cols.find(candidate => candidate.id === sel.colId)
-  if (!col) return null
-  if (col.entityId) return col.entityId
-  if (col.pair) return col.pair.experienceId || col.pair.interfaceId
-  return null
-})
-
-const panelTitle = computed(() => {
-  const sel = selection.value
-  if (sel?.type === 'cell') return 'Relationship'
-  if (sel?.type === 'row') return 'Selected row'
-  if (sel?.type === 'col') return 'Selected column'
-  return ''
-})
-
 /* ------------------------------------------------------------------ */
 /* The promises — Journey browser                                      */
 /* ------------------------------------------------------------------ */
@@ -468,13 +392,13 @@ const availLabel = (pairs: AvailabilityPair[]) => pairs.map(pairLabel).join(', '
 function journeyRowCells(journey: JourneyView): Array<{ key: string, text: string, cls: string }> {
   const countAnd = (ids: string[]) => (ids.length ? `${ids.length} · ${titlesOf(ids)}` : '0')
   return [
-    { key: 'actors', text: titlesOf(journey.actorIds) || '—', cls: 'max-w-40 truncate text-toned' },
-    { key: 'availability', text: availLabel(journey.availability) || '—', cls: 'max-w-48 truncate text-toned' },
-    { key: 'capabilities', text: countAnd(journey.capabilityIds), cls: 'max-w-48 truncate text-toned' },
-    { key: 'screens', text: countAnd(journey.screenIds), cls: 'max-w-44 truncate text-toned' },
-    { key: 'scenarios', text: String(journey.scenarioIds.length), cls: 'font-mono text-toned tabular-nums' },
-    { key: 'rules', text: countAnd(journey.ruleIds), cls: 'max-w-44 truncate text-toned' },
-    { key: 'steps', text: String(journey.stepCount), cls: 'text-end font-mono text-toned tabular-nums' }
+    { key: 'actors', text: titlesOf(journey.actorIds) || '—', cls: 'max-w-40 truncate text-muted' },
+    { key: 'availability', text: availLabel(journey.availability) || '—', cls: 'max-w-48 truncate text-muted' },
+    { key: 'capabilities', text: countAnd(journey.capabilityIds), cls: 'max-w-48 truncate text-muted' },
+    { key: 'screens', text: countAnd(journey.screenIds), cls: 'max-w-44 truncate text-muted' },
+    { key: 'scenarios', text: String(journey.scenarioIds.length), cls: 'blr-meta' },
+    { key: 'rules', text: countAnd(journey.ruleIds), cls: 'max-w-44 truncate text-muted' },
+    { key: 'steps', text: String(journey.stepCount), cls: 'blr-meta text-end' }
   ]
 }
 
@@ -581,43 +505,43 @@ const referenceGroups = computed<OwnerReferences[]>(() => {
 })
 
 /* ------------------------------------------------------------------ */
-/* Full entity content                                                 */
+/* The shared inspector: every entity selection lands in it            */
 /* ------------------------------------------------------------------ */
 
-const detailEntity = ref<AnyEntityView | null>(null)
+const inspected = ref<AnyEntityView | null>(null)
+const inspectorTab = ref<'detail' | 'map'>('detail')
 
-function openDetail(entity: AnyEntityView) {
-  detailEntity.value = entity
+function inspect(entity: AnyEntityView) {
+  inspected.value = entity
+  inspectorTab.value = 'detail'
 }
-function openById(id: string) {
+function inspectById(id: string) {
   const entity = props.workspace.byId.get(id)
-  if (entity) detailEntity.value = entity
+  if (entity) inspect(entity)
 }
 
 const short = (value: string, limit = 22) => (value.length > limit ? `${value.slice(0, limit - 1)}…` : value)
 </script>
 
 <template>
-  <div class="cg-root relative flex h-full min-h-0 flex-col overflow-hidden">
+  <div class="cg-root flex h-full min-h-0 flex-col overflow-hidden">
     <!-- Masthead: the report's identity is always in sight. -->
     <header class="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1 border-b border-default px-4 py-2.5">
       <img v-if="logoSrc" :src="logoSrc" alt="" class="size-6 rounded">
       <h1 class="text-sm font-semibold tracking-tight text-highlighted">
         {{ identity.title }}
       </h1>
-      <span class="hidden min-w-0 flex-1 truncate text-xs text-dimmed md:block">{{ identity.summary }}</span>
+      <span class="hidden min-w-0 flex-1 truncate text-sm text-muted md:block">{{ identity.summary }}</span>
       <UBadge :color="COVERAGE_TONE[workspace.coverage.status] || 'neutral'" variant="subtle" size="sm">
         coverage: {{ workspace.coverage.status }}
       </UBadge>
-      <span class="font-mono text-[10px] text-dimmed tabular-nums">{{ identity.generatedAt }}</span>
+      <span class="blr-meta">{{ identity.generatedAt }}</span>
     </header>
 
     <div class="flex min-h-0 flex-1">
       <!-- The spine: the question list. -->
       <nav class="blr-pane w-64 shrink-0 border-e border-default py-3 xl:w-72" aria-label="Report questions">
-        <p class="px-4 pb-1.5 font-mono text-[10px] tracking-[0.14em] text-dimmed uppercase">
-          The questions
-        </p>
+        <p class="blr-field px-4 pb-1.5">The questions</p>
         <button
           v-for="matrix in matrices"
           :key="matrix.id"
@@ -626,20 +550,18 @@ const short = (value: string, limit = 22) => (value.length > limit ? `${value.sl
           :class="activeViewId === matrix.id && 'is-active'"
           @click="activeViewId = matrix.id"
         >
-          <span class="cg-rail-num">{{ matrix.index }}</span>
+          <span class="blr-meta w-4 shrink-0 pt-0.5">{{ matrix.index }}</span>
           <span class="min-w-0">
-            <span class="block text-xs leading-snug font-medium" :class="activeViewId === matrix.id ? 'text-highlighted' : 'text-toned'">
+            <span class="block text-sm leading-snug font-medium" :class="activeViewId === matrix.id ? 'text-highlighted' : 'text-default'">
               {{ matrix.question }}
             </span>
-            <span class="mt-0.5 block font-mono text-[10px] text-dimmed tabular-nums">
+            <span class="blr-meta mt-0.5 block">
               {{ matrix.axes }} · {{ matrix.rows.length }}×{{ matrix.cols.length }}
             </span>
           </span>
         </button>
 
-        <p class="px-4 pt-4 pb-1.5 font-mono text-[10px] tracking-[0.14em] text-dimmed uppercase">
-          The report
-        </p>
+        <p class="blr-field px-4 pt-4 pb-1.5">The report</p>
         <button
           v-for="page in PAGES"
           :key="page.id"
@@ -648,12 +570,12 @@ const short = (value: string, limit = 22) => (value.length > limit ? `${value.sl
           :class="activeViewId === page.id && 'is-active'"
           @click="activeViewId = page.id"
         >
-          <UIcon :name="page.icon" class="mt-0.5 size-3.5 shrink-0 text-dimmed" />
+          <UIcon :name="page.icon" class="mt-1 size-3.5 shrink-0 text-dimmed" />
           <span class="min-w-0">
-            <span class="block text-xs leading-snug font-medium" :class="activeViewId === page.id ? 'text-highlighted' : 'text-toned'">
+            <span class="block text-sm leading-snug font-medium" :class="activeViewId === page.id ? 'text-highlighted' : 'text-default'">
               {{ page.label }}
             </span>
-            <span class="mt-0.5 block text-[10px] text-dimmed">{{ page.hint }}</span>
+            <span class="mt-0.5 block text-xs text-muted">{{ page.hint }}</span>
           </span>
         </button>
       </nav>
@@ -661,29 +583,29 @@ const short = (value: string, limit = 22) => (value.length > limit ? `${value.sl
       <main class="flex min-h-0 flex-1 flex-col">
         <!-- ============ Matrix surface ============ -->
         <template v-if="activeMatrix">
-          <div class="shrink-0 border-b border-default px-4 py-3">
-            <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-              <span class="font-mono text-[10px] tracking-[0.12em] text-dimmed uppercase">Matrix {{ activeMatrix.index }}</span>
-              <h2 class="text-base font-semibold tracking-tight text-highlighted">
-                {{ activeMatrix.question }}
-              </h2>
-              <span class="font-mono text-[11px] text-dimmed">{{ activeMatrix.axes }}</span>
-              <span class="ms-auto flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-dimmed">
+          <header class="shrink-0 space-y-1.5 border-b border-default px-6 pt-5 pb-4">
+            <p class="blr-eyebrow">Matrix {{ activeMatrix.index }}</p>
+            <h2 class="text-2xl font-semibold tracking-[-0.03em] text-highlighted">
+              {{ activeMatrix.question }}
+            </h2>
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-1">
+              <span class="blr-meta">{{ activeMatrix.axes }} · {{ activeMatrix.rows.length }}×{{ activeMatrix.cols.length }}</span>
+              <span class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
                 <span class="inline-flex items-center gap-1.5"><span class="cg-dot" /> direct, authored</span>
                 <span v-if="activeMatrix.derivedMeaning" class="inline-flex items-center gap-1.5">
                   <span class="cg-ring" /> derived — {{ activeMatrix.derivedMeaning }}
                 </span>
                 <span v-if="activeMatrix.countMeaning" class="inline-flex items-center gap-1.5">
-                  <span class="font-mono tabular-nums">n</span> = {{ activeMatrix.countMeaning }}
+                  <span class="blr-meta">n</span> = {{ activeMatrix.countMeaning }}
                 </span>
               </span>
             </div>
-            <p v-if="activeMatrix.note" class="mt-1 text-xs text-dimmed">
+            <p v-if="activeMatrix.note" class="text-sm text-muted">
               {{ activeMatrix.note }}
             </p>
-          </div>
+          </header>
 
-          <div class="flex min-h-0 flex-1">
+          <div class="flex min-h-0 flex-1 flex-col">
             <div class="blr-pane flex-1 overflow-x-auto">
               <table
                 v-if="activeMatrix.rows.length && activeMatrix.cols.length"
@@ -693,22 +615,20 @@ const short = (value: string, limit = 22) => (value.length > limit ? `${value.sl
                 <thead>
                   <tr>
                     <th class="cg-corner" scope="col">
-                      <span class="font-mono text-[10px] tracking-[0.12em] text-dimmed uppercase">
-                        {{ ENTITY_KIND_META[activeMatrix.rowKind].plural }} ↓
-                      </span>
+                      <span class="blr-field">{{ ENTITY_KIND_META[activeMatrix.rowKind].plural }} ↓</span>
                     </th>
                     <th
                       v-for="(col, colIndex) in activeMatrix.cols"
                       :key="col.id"
                       scope="col"
                       class="cg-colhead"
-                      :class="[hoverCol === colIndex && 'is-hot', isColSelected(col.id) && 'is-selected']"
+                      :class="hoverCol === colIndex && 'is-hot'"
                     >
                       <button
                         type="button"
                         class="cg-colhead-btn"
                         :title="`${col.title} — ${col.sub}`"
-                        @click="selectCol(col)"
+                        @click="inspectCol(col)"
                         @mouseenter="hoverCol = colIndex"
                       >
                         <span class="cg-colhead-text">{{ col.title }}</span>
@@ -722,12 +642,12 @@ const short = (value: string, limit = 22) => (value.length > limit ? `${value.sl
                     :key="row.id"
                     :style="rowColorStyle(row.kind)"
                   >
-                    <th class="cg-rowhead" scope="row" :class="isRowSelected(row.id) && 'is-selected'">
-                      <button type="button" class="cg-rowhead-btn" :title="`Summarise ${row.title}`" @click="selectRow(row.id)">
+                    <th class="cg-rowhead" scope="row">
+                      <button type="button" class="cg-rowhead-btn" :title="`Inspect ${row.title}`" @click="inspect(row)">
                         <UIcon :name="ENTITY_KIND_META[row.kind].icon" class="size-3.5 shrink-0" style="color: var(--row-color)" />
                         <span class="min-w-0">
-                          <span class="block truncate text-xs font-medium text-highlighted">{{ row.title }}</span>
-                          <span class="block truncate font-mono text-[10px] text-dimmed">
+                          <span class="block truncate text-sm font-medium text-highlighted">{{ row.title }}</span>
+                          <span class="blr-meta block truncate">
                             {{ rowSub(row) }}<template v-if="!rowMarkCount(activeMatrix, row.id)"> · {{ activeMatrix.emptyRowNote }}</template>
                           </span>
                         </span>
@@ -737,7 +657,7 @@ const short = (value: string, limit = 22) => (value.length > limit ? `${value.sl
                       v-for="(cell, colIndex) in rowCells(activeMatrix, row.id)"
                       :key="cell.col.id"
                       class="cg-cell"
-                      :class="[hoverCol === colIndex && 'is-hot', isCellSelected(row.id, cell.col.id) && 'is-selected']"
+                      :class="[hoverCol === colIndex && 'is-hot', isCellPicked(row.id, cell.col.id) && 'is-selected']"
                       @mouseenter="hoverCol = colIndex"
                     >
                       <button
@@ -745,23 +665,23 @@ const short = (value: string, limit = 22) => (value.length > limit ? `${value.sl
                         type="button"
                         class="cg-cell-btn"
                         :title="`Explain: ${row.title} × ${cell.col.title}`"
-                        @click="selectCell(row.id, cell.col.id)"
+                        @click="pickCell(row.id, cell.col.id)"
                       >
                         <span :class="cell.mark.direct ? 'cg-dot' : 'cg-ring'" />
-                        <span v-if="cell.mark.count" class="cg-count">{{ cell.mark.count }}</span>
+                        <span v-if="cell.mark.count" class="blr-meta">{{ cell.mark.count }}</span>
                       </button>
                     </td>
                   </tr>
                 </tbody>
               </table>
-              <p v-else class="p-8 text-sm text-dimmed italic">
+              <p v-else class="p-8 text-sm text-muted italic">
                 Nothing to cross yet: this model authors
                 {{ activeMatrix.rows.length }} {{ ENTITY_KIND_META[activeMatrix.rowKind].plural }}
                 and {{ activeMatrix.cols.length }} columns for this question.
               </p>
               <p
                 v-if="activeMatrix.id === 'domain-journeys' && undomainedCapabilities.length"
-                class="max-w-2xl px-4 pb-4 text-xs text-dimmed"
+                class="max-w-2xl px-4 pb-4 text-sm text-muted"
               >
                 {{ undomainedCapabilities.length }}
                 {{ undomainedCapabilities.length === 1 ? 'Capability has' : 'Capabilities have' }}
@@ -770,198 +690,125 @@ const short = (value: string, limit = 22) => (value.length > limit ? `${value.sl
               </p>
             </div>
 
-            <!-- Docked explanation panel. -->
-            <aside v-if="selection" class="flex w-[22rem] shrink-0 flex-col border-s border-default xl:w-96">
-              <div class="flex shrink-0 items-center gap-2 border-b border-default px-3 py-2">
-                <span class="font-mono text-[10px] tracking-[0.12em] text-dimmed uppercase">{{ panelTitle }}</span>
-                <span class="ms-auto flex items-center gap-1">
-                  <template v-if="panelFocusId">
-                    <UButton size="xs" color="neutral" :variant="panelTab === 'facts' ? 'soft' : 'ghost'" label="Facts" @click="panelTab = 'facts'" />
-                    <UButton size="xs" color="neutral" :variant="panelTab === 'map' ? 'soft' : 'ghost'" icon="i-lucide-waypoints" label="Map" @click="panelTab = 'map'" />
-                  </template>
-                  <UButton icon="i-lucide-x" size="xs" color="neutral" variant="ghost" aria-label="Close panel" @click="selection = null" />
-                </span>
-              </div>
-
-              <!-- Map tab: contextual topology for the selected row/column. -->
-              <div v-if="panelTab === 'map' && panelFocusId" class="min-h-0 flex-1">
-                <BlrTopology
-                  :workspace="workspace"
-                  :focus-id="panelFocusId"
-                  direction="TB"
-                  @inspect="openDetail"
-                />
-              </div>
-
-              <!-- Facts: the explanation the brief asks a cell to give. -->
-              <div v-else class="blr-pane flex-1">
-                <div v-if="cellStory" class="space-y-4 p-4" :style="rowColorStyle(cellStory.row.kind)">
-                  <div class="space-y-1">
-                    <button type="button" class="flex w-full items-center gap-1.5 rounded px-1 py-0.5 text-start hover:bg-elevated/60" @click="selectRow(cellStory.row.id)">
-                      <BlrKind :kind="cellStory.row.kind" :labelled="false" />
-                      <span class="truncate text-xs font-medium text-highlighted">{{ cellStory.row.title }}</span>
-                    </button>
-                    <span class="block ps-2 font-mono text-[10px] text-dimmed">×</span>
-                    <button type="button" class="flex w-full items-center gap-1.5 rounded px-1 py-0.5 text-start hover:bg-elevated/60" @click="selectCol(cellStory.col)">
-                      <BlrKind v-if="cellStory.colEntity" :kind="cellStory.colEntity.kind" :labelled="false" />
-                      <UIcon v-else name="i-lucide-plug" class="size-3.5 shrink-0 text-dimmed" />
-                      <span class="truncate text-xs font-medium text-highlighted">{{ cellStory.col.title }}</span>
-                    </button>
-                  </div>
-
-                  <p class="flex items-center gap-2 text-[11px] text-dimmed">
-                    <span :class="cellStory.mark.direct ? 'cg-dot' : 'cg-ring'" />
-                    {{ cellStory.mark.direct ? 'Direct — authored in the model.' : 'Derived — computed from authored links.' }}
-                  </p>
-
-                  <p class="text-sm leading-relaxed text-toned">
-                    {{ cellStory.sentence }}
-                  </p>
-                  <p v-if="cellStory.derivedNote" class="text-xs text-dimmed italic">
-                    {{ cellStory.derivedNote }}
-                  </p>
-                  <blockquote v-if="cellStory.quote" class="border-s-2 border-default ps-3 text-xs text-dimmed italic">
-                    {{ cellStory.quote }}
-                  </blockquote>
-
-                  <div v-if="cellStory.evidence.length || cellStory.pairs.length" class="space-y-2.5 border-t border-default pt-3">
-                    <p class="font-mono text-[10px] tracking-[0.12em] text-dimmed uppercase">
-                      Connecting evidence
-                    </p>
-                    <BlrLinks
-                      v-for="group in cellStory.evidence"
-                      :key="group.label"
-                      :workspace="workspace"
-                      :ids="group.ids"
-                      :kind="group.kind"
-                      :label="group.label"
-                      interactive
-                      @select="openDetail"
-                    />
-                    <div v-if="cellStory.pairs.length" class="flex flex-wrap items-baseline gap-1.5 text-xs">
-                      <span class="font-mono text-[10px] tracking-[0.1em] text-dimmed uppercase">Shared availability</span>
-                      <span v-for="pair in cellStory.pairs" :key="pair.key" class="rounded-full border border-default px-2 py-0.5 text-[11px] text-toned">
-                        {{ pairLabel(pair) }}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div class="flex flex-wrap gap-1.5 border-t border-default pt-3">
-                    <UButton size="xs" color="neutral" variant="outline" icon="i-lucide-book-open" :label="`Open ${short(cellStory.row.title)}`" @click="openDetail(cellStory.row)" />
-                    <UButton v-if="cellStory.colEntity" size="xs" color="neutral" variant="outline" icon="i-lucide-book-open" :label="`Open ${short(cellStory.colEntity.title)}`" @click="openDetail(cellStory.colEntity)" />
-                    <template v-else-if="cellStory.col.pair">
-                      <UButton size="xs" color="neutral" variant="outline" icon="i-lucide-book-open" :label="`Open ${short(cellStory.col.pair.interfaceTitle)}`" @click="openById(cellStory.col.pair.interfaceId)" />
-                      <UButton v-if="cellStory.col.pair.experienceId" size="xs" color="neutral" variant="outline" icon="i-lucide-book-open" :label="`Open ${short(cellStory.col.pair.experienceTitle)}`" @click="openById(cellStory.col.pair.experienceId)" />
-                    </template>
-                  </div>
-                </div>
-
-                <div v-else-if="rowSummary" class="space-y-4 p-4" :style="rowColorStyle(rowSummary.entity.kind)">
-                  <div class="flex items-center gap-1.5">
-                    <BlrKind :kind="rowSummary.entity.kind" :labelled="false" />
-                    <span class="min-w-0 flex-1 truncate text-sm font-medium text-highlighted">{{ rowSummary.entity.title }}</span>
-                  </div>
-                  <p class="text-xs leading-relaxed text-toned">
-                    {{ firstSentence(rowSummary.entity.lead, 220) }}
-                  </p>
-                  <p v-if="!rowSummary.marks.length && activeMatrix" class="text-xs text-dimmed italic">
-                    In this matrix: {{ activeMatrix.emptyRowNote }}. That is a fact of the model, not a fault of the row.
-                  </p>
-                  <div v-else class="space-y-1">
-                    <p class="font-mono text-[10px] tracking-[0.12em] text-dimmed uppercase">
-                      Its relations in this matrix · {{ rowSummary.marks.length }}
-                    </p>
-                    <button
-                      v-for="item in rowSummary.marks"
-                      :key="item.col.id"
-                      type="button"
-                      class="flex w-full items-center gap-2 rounded border border-transparent px-1.5 py-1 text-start text-xs text-toned hover:border-default hover:bg-elevated/60"
-                      @click="selectCell(rowSummary.entity.id, item.col.id)"
-                    >
-                      <span :class="item.mark.direct ? 'cg-dot' : 'cg-ring'" />
-                      <span class="min-w-0 flex-1 truncate">{{ item.col.title }}</span>
-                      <span v-if="item.mark.count" class="font-mono text-[10px] text-dimmed tabular-nums">{{ item.mark.count }}</span>
-                    </button>
-                  </div>
-                  <div class="border-t border-default pt-3">
-                    <UButton size="xs" color="neutral" variant="outline" icon="i-lucide-book-open" label="Open full content" @click="openDetail(rowSummary.entity)" />
-                  </div>
-                </div>
-
-                <div v-else-if="colSummary" class="space-y-4 p-4">
-                  <div class="flex items-center gap-1.5">
-                    <BlrKind v-if="colSummary.entity" :kind="colSummary.entity.kind" :labelled="false" />
+            <!-- The picked cell explains itself in a landing panel under the matrix. -->
+            <div
+              v-if="cellStory"
+              class="shrink-0 border-t border-default"
+              :style="rowColorStyle(cellStory.row.kind)"
+            >
+              <div class="blr-pane max-h-80 space-y-3 px-6 py-4">
+                <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                  <UIcon name="i-lucide-corner-down-right" class="size-3.5 shrink-0 text-dimmed" />
+                  <button type="button" class="inline-flex min-w-0 items-center gap-1.5 text-start" @click="inspect(cellStory.row)">
+                    <BlrKind :kind="cellStory.row.kind" :labelled="false" />
+                    <span class="truncate text-sm font-medium text-highlighted hover:text-primary">{{ cellStory.row.title }}</span>
+                  </button>
+                  <span class="blr-meta">×</span>
+                  <button type="button" class="inline-flex min-w-0 items-center gap-1.5 text-start" @click="inspectCol(cellStory.col)">
+                    <BlrKind v-if="cellStory.colEntity" :kind="cellStory.colEntity.kind" :labelled="false" />
                     <UIcon v-else name="i-lucide-plug" class="size-3.5 shrink-0 text-dimmed" />
-                    <span class="min-w-0 flex-1 truncate text-sm font-medium text-highlighted">{{ colSummary.col.title }}</span>
-                  </div>
-                  <p class="text-xs leading-relaxed text-toned">
-                    {{ colSummary.entity ? firstSentence(colSummary.entity.lead, 220) : colSummary.col.sub }}
-                  </p>
-                  <p v-if="colSummary.empty" class="text-xs text-dimmed italic">
-                    No row of this matrix relates to it.
-                  </p>
-                  <div v-for="group in colSummary.groups" :key="group.label" class="space-y-1">
-                    <p class="flex items-center gap-1.5 font-mono text-[10px] tracking-[0.12em] text-dimmed uppercase">
-                      <span :class="group.derived ? 'cg-ring' : 'cg-dot'" /> {{ group.label }} · {{ group.rows.length }}
-                    </p>
-                    <button
-                      v-for="row in group.rows"
-                      :key="row.id"
-                      type="button"
-                      class="flex w-full items-center gap-2 rounded border border-transparent px-1.5 py-1 text-start text-xs text-toned hover:border-default hover:bg-elevated/60"
-                      :style="rowColorStyle(row.kind)"
-                      @click="selectCell(row.id, colSummary.col.id)"
-                    >
-                      <UIcon :name="ENTITY_KIND_META[row.kind].icon" class="size-3.5 shrink-0" style="color: var(--row-color)" />
-                      <span class="min-w-0 flex-1 truncate">{{ row.title }}</span>
-                    </button>
-                  </div>
-                  <div v-if="colSummary.entity" class="border-t border-default pt-3">
-                    <UButton size="xs" color="neutral" variant="outline" icon="i-lucide-book-open" label="Open full content" @click="openDetail(colSummary.entity)" />
+                    <span class="truncate text-sm font-medium text-highlighted hover:text-primary">{{ cellStory.col.title }}</span>
+                  </button>
+                  <span class="ms-auto flex items-center gap-2">
+                    <span class="inline-flex items-center gap-1.5 text-sm text-muted">
+                      <span :class="cellStory.mark.direct ? 'cg-dot' : 'cg-ring'" />
+                      {{ cellStory.mark.direct ? 'Direct — authored in the model.' : 'Derived — computed from authored links.' }}
+                    </span>
+                    <UButton icon="i-lucide-x" size="xs" color="neutral" variant="ghost" aria-label="Close explanation" @click="picked = null" />
+                  </span>
+                </div>
+
+                <p class="max-w-3xl text-sm leading-6 text-default">
+                  {{ cellStory.sentence }}
+                </p>
+                <p v-if="cellStory.derivedNote" class="max-w-3xl text-sm text-muted">
+                  {{ cellStory.derivedNote }}
+                </p>
+                <blockquote v-if="cellStory.quote" class="max-w-3xl border-s-2 border-default ps-3 text-sm leading-6 text-muted italic">
+                  {{ cellStory.quote }}
+                </blockquote>
+
+                <div v-if="cellStory.evidence.length || cellStory.pairs.length" class="space-y-2 border-t border-default pt-3">
+                  <p class="blr-field">Connecting evidence</p>
+                  <BlrLinks
+                    v-for="group in cellStory.evidence"
+                    :key="group.label"
+                    :workspace="workspace"
+                    :ids="group.ids"
+                    :kind="group.kind"
+                    :label="group.label"
+                    interactive
+                    @select="inspect"
+                  />
+                  <div v-if="cellStory.pairs.length" class="flex flex-wrap items-baseline gap-1.5">
+                    <span class="blr-field">Shared availability</span>
+                    <span v-for="pair in cellStory.pairs" :key="pair.key" class="rounded-full border border-default px-2 py-0.5 text-xs text-muted">
+                      {{ pairLabel(pair) }}
+                    </span>
                   </div>
                 </div>
+
+                <div class="flex flex-wrap gap-1.5 border-t border-default pt-3">
+                  <UButton size="xs" color="neutral" variant="outline" icon="i-lucide-book-open" :label="`Open ${short(cellStory.row.title)}`" @click="inspect(cellStory.row)" />
+                  <UButton v-if="cellStory.colEntity" size="xs" color="neutral" variant="outline" icon="i-lucide-book-open" :label="`Open ${short(cellStory.colEntity.title)}`" @click="inspect(cellStory.colEntity)" />
+                  <template v-else-if="cellStory.col.pair">
+                    <UButton size="xs" color="neutral" variant="outline" icon="i-lucide-book-open" :label="`Open ${short(cellStory.col.pair.interfaceTitle)}`" @click="inspectById(cellStory.col.pair.interfaceId)" />
+                    <UButton v-if="cellStory.col.pair.experienceId" size="xs" color="neutral" variant="outline" icon="i-lucide-book-open" :label="`Open ${short(cellStory.col.pair.experienceTitle)}`" @click="inspectById(cellStory.col.pair.experienceId)" />
+                  </template>
+                </div>
               </div>
-            </aside>
+            </div>
+            <p v-else class="shrink-0 border-t border-default px-6 py-2.5 text-sm text-muted italic">
+              Select a filled cell to read what the relationship means; row and column headers open the inspector.
+            </p>
           </div>
         </template>
 
         <!-- ============ The promises: Journey browser ============ -->
         <template v-else-if="activeViewId === 'promises'">
           <template v-if="!openJourney">
-            <div class="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1 border-b border-default px-4 py-2.5">
-              <h2 class="text-base font-semibold tracking-tight text-highlighted">
-                The promises
-              </h2>
-              <span class="font-mono text-[11px] text-dimmed tabular-nums">
-                {{ workspace.journeys.length }} Journeys · {{ workspace.counts.scenarios }} Scenarios
-              </span>
-              <span class="ms-auto flex gap-1">
-                <UButton icon="i-lucide-layout-grid" size="xs" color="neutral" :variant="journeyMode === 'cards' ? 'soft' : 'ghost'" label="Cards" @click="journeyMode = 'cards'" />
-                <UButton icon="i-lucide-table" size="xs" color="neutral" :variant="journeyMode === 'table' ? 'soft' : 'ghost'" label="Table" @click="journeyMode = 'table'" />
-              </span>
+            <div class="flex shrink-0 flex-wrap items-end justify-between gap-3 border-b border-default px-6 pt-5 pb-4">
+              <div class="space-y-1.5">
+                <h2 class="text-2xl font-semibold tracking-[-0.03em] text-highlighted">
+                  The promises
+                </h2>
+                <p class="blr-meta">
+                  {{ workspace.journeys.length }} Journeys · {{ workspace.counts.scenarios }} Scenarios
+                </p>
+              </div>
+              <UTabs
+                v-model="journeyMode"
+                :items="[
+                  { value: 'cards', label: 'Cards', icon: 'i-lucide-layout-grid' },
+                  { value: 'table', label: 'Table', icon: 'i-lucide-table' }
+                ]"
+                :content="false"
+                color="neutral"
+                size="xs"
+              />
             </div>
 
-            <div v-if="!workspace.journeys.length" class="p-8 text-sm text-dimmed italic">
+            <div v-if="!workspace.journeys.length" class="p-8 text-sm text-muted italic">
               This model authors no Journeys yet.
             </div>
 
-            <div v-else-if="journeyMode === 'cards'" class="blr-pane flex-1 p-4">
+            <div v-else-if="journeyMode === 'cards'" class="blr-pane flex-1 px-6 py-5">
               <div class="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
                 <button
                   v-for="journey in workspace.journeys"
                   :key="journey.id"
                   type="button"
-                  class="flex flex-col gap-2.5 rounded-lg border border-default bg-elevated/30 p-4 text-start transition hover:border-accented hover:bg-elevated/60"
+                  class="flex flex-col gap-2.5 rounded-xl border border-default bg-default p-4 text-start transition hover:border-accented"
                   @click="openPromise(journey.id)"
                 >
                   <span class="flex items-center gap-2">
                     <BlrKind kind="journey" :labelled="false" />
-                    <span class="min-w-0 flex-1 truncate text-sm font-semibold tracking-tight text-highlighted">{{ journey.title }}</span>
-                    <span class="shrink-0 font-mono text-[10px] text-dimmed tabular-nums">{{ journey.stepCount }} steps</span>
+                    <span class="min-w-0 flex-1 truncate text-base font-semibold tracking-tight text-highlighted">{{ journey.title }}</span>
+                    <span class="blr-meta shrink-0">{{ journey.stepCount }} steps</span>
                   </span>
-                  <span class="line-clamp-3 text-xs leading-relaxed text-toned">{{ journey.lead }}</span>
+                  <span class="line-clamp-3 text-sm leading-6 text-muted">{{ journey.lead }}</span>
                   <span class="flex flex-wrap gap-1.5">
-                    <span v-for="pair in journey.availability" :key="pair.key" class="rounded-full border border-default px-2 py-0.5 text-[10px] text-dimmed">
+                    <span v-for="pair in journey.availability" :key="pair.key" class="rounded-full border border-default px-2 py-0.5 text-xs text-muted">
                       {{ pairLabel(pair) }}
                     </span>
                   </span>
@@ -969,14 +816,11 @@ const short = (value: string, limit = 22) => (value.length > limit ? `${value.sl
                   <BlrLinks :workspace="workspace" :ids="journey.capabilityIds" kind="capability" :max="4" />
                   <BlrLinks :workspace="workspace" :ids="journey.screenIds" kind="screen" :max="4" />
                   <BlrLinks :workspace="workspace" :ids="journey.ruleIds" kind="rule" :max="3" />
-                  <span class="mt-auto space-y-1 border-t border-muted pt-2">
-                    <span class="block font-mono text-[10px] tracking-[0.1em] text-dimmed uppercase">
-                      Scenarios · {{ journey.scenarioIds.length }}
-                    </span>
-                    <span v-for="scenario in journeyScenariosOf(journey.id)" :key="scenario.id" class="flex items-baseline gap-1.5 text-[11px] text-toned">
-                      <UIcon name="i-lucide-list-checks" class="size-3 shrink-0 self-center text-dimmed" />
-                      <span class="min-w-0 truncate">{{ scenario.title }}</span>
-                      <span class="shrink-0 font-mono text-[9px] text-dimmed uppercase">{{ scenario.kindName }}</span>
+                  <span class="mt-auto space-y-1 border-t border-default pt-2">
+                    <span class="blr-field block">Scenarios · {{ journey.scenarioIds.length }}</span>
+                    <span v-for="scenario in journeyScenariosOf(journey.id)" :key="scenario.id" class="flex items-baseline gap-2 text-sm">
+                      <span class="blr-field shrink-0">{{ scenario.kindName }}</span>
+                      <span class="min-w-0 truncate text-default">{{ scenario.title }}</span>
                     </span>
                   </span>
                 </button>
@@ -984,7 +828,7 @@ const short = (value: string, limit = 22) => (value.length > limit ? `${value.sl
             </div>
 
             <div v-else class="blr-pane flex-1 overflow-x-auto">
-              <table class="cg-jtable min-w-full text-xs">
+              <table class="cg-jtable min-w-full text-sm">
                 <thead>
                   <tr>
                     <th>Journey</th>
@@ -1003,12 +847,12 @@ const short = (value: string, limit = 22) => (value.length > limit ? `${value.sl
                   <tr
                     v-for="journey in workspace.journeys"
                     :key="journey.id"
-                    class="cursor-pointer border-t border-muted transition hover:bg-elevated/50"
+                    class="cursor-pointer border-t border-default transition hover:bg-elevated/50"
                     @click="openPromise(journey.id)"
                   >
                     <th class="max-w-64 px-3 py-2 text-start align-top" scope="row">
-                      <span class="block truncate text-xs font-medium text-highlighted">{{ journey.title }}</span>
-                      <span class="block truncate text-[11px] font-normal text-dimmed">{{ firstSentence(journey.lead, 90) }}</span>
+                      <span class="block truncate text-sm font-medium text-highlighted">{{ journey.title }}</span>
+                      <span class="block truncate text-xs font-normal text-muted">{{ firstSentence(journey.lead, 90) }}</span>
                     </th>
                     <td
                       v-for="cell in journeyRowCells(journey)"
@@ -1034,44 +878,42 @@ const short = (value: string, limit = 22) => (value.length > limit ? `${value.sl
               <span class="ms-auto flex gap-1">
                 <UButton size="xs" color="neutral" :variant="journeyTab === 'scenarios' ? 'soft' : 'ghost'" label="Scenarios" @click="journeyTab = 'scenarios'" />
                 <UButton size="xs" color="neutral" :variant="journeyTab === 'map' ? 'soft' : 'ghost'" icon="i-lucide-waypoints" label="Map" @click="journeyTab = 'map'" />
-                <UButton size="xs" color="neutral" variant="outline" icon="i-lucide-book-open" label="Open" @click="openDetail(openJourney)" />
+                <UButton size="xs" color="neutral" variant="outline" icon="i-lucide-book-open" label="Open" @click="inspect(openJourney)" />
               </span>
             </div>
 
             <div v-if="journeyTab === 'map'" class="min-h-0 flex-1">
-              <BlrTopology :workspace="workspace" :focus-id="openJourney.id" @inspect="openDetail" />
+              <BlrTopology :workspace="workspace" :focus-id="openJourney.id" @inspect="inspect" />
             </div>
 
             <div v-else class="blr-pane flex-1 p-4">
               <div class="mx-auto max-w-3xl space-y-5">
                 <BlrProse :text="openJourney.lead" />
                 <section v-if="openJourney.intent" class="space-y-1.5">
-                  <h4 class="font-mono text-[10px] tracking-[0.12em] text-dimmed uppercase">
-                    Intent
-                  </h4>
+                  <h4 class="blr-field">Intent</h4>
                   <BlrProse :text="openJourney.intent" />
                 </section>
                 <BlrAvail :pairs="openJourney.availability" :entry-points="openJourney.entryPoints" />
                 <div class="space-y-1.5 border-t border-default pt-4">
-                  <BlrLinks :workspace="workspace" :ids="openJourney.actorIds" kind="actor" interactive @select="openDetail" />
-                  <BlrLinks :workspace="workspace" :ids="openJourney.capabilityIds" kind="capability" interactive @select="openDetail" />
-                  <BlrLinks :workspace="workspace" :ids="openJourney.domainIds" kind="domain" label="Domains (derived)" interactive @select="openDetail" />
-                  <BlrLinks :workspace="workspace" :ids="openJourney.screenIds" kind="screen" interactive @select="openDetail" />
-                  <BlrLinks :workspace="workspace" :ids="openJourney.ruleIds" kind="rule" label="Constrained by" interactive @select="openDetail" />
+                  <BlrLinks :workspace="workspace" :ids="openJourney.actorIds" kind="actor" interactive @select="inspect" />
+                  <BlrLinks :workspace="workspace" :ids="openJourney.capabilityIds" kind="capability" interactive @select="inspect" />
+                  <BlrLinks :workspace="workspace" :ids="openJourney.domainIds" kind="domain" label="Domains (derived)" interactive @select="inspect" />
+                  <BlrLinks :workspace="workspace" :ids="openJourney.screenIds" kind="screen" interactive @select="inspect" />
+                  <BlrLinks :workspace="workspace" :ids="openJourney.ruleIds" kind="rule" label="Constrained by" interactive @select="inspect" />
                 </div>
 
-                <h3 class="border-t border-default pt-4 text-sm font-semibold tracking-tight text-highlighted">
-                  Scenarios · {{ openJourneyScenarios.length }}
+                <h3 class="border-t border-default pt-4 text-base font-semibold tracking-tight text-highlighted">
+                  Scenarios <span class="blr-meta ms-1">{{ openJourneyScenarios.length }}</span>
                 </h3>
-                <p v-if="!openJourneyScenarios.length" class="text-sm text-dimmed italic">
+                <p v-if="!openJourneyScenarios.length" class="text-sm text-muted italic">
                   No Scenarios authored for this Journey.
                 </p>
                 <section
                   v-for="scenario in openJourneyScenarios"
                   :key="scenario.id"
-                  class="rounded-lg border border-default p-4"
+                  class="rounded-xl border border-default bg-default p-4"
                 >
-                  <BlrEntityDetail :workspace="workspace" :entity="scenario" @select="openDetail" />
+                  <BlrEntityDetail :workspace="workspace" :entity="scenario" @select="inspect" />
                 </section>
               </div>
             </div>
@@ -1080,21 +922,25 @@ const short = (value: string, limit = 22) => (value.length > limit ? `${value.sl
 
         <!-- ============ The surface: Screen map ============ -->
         <template v-else-if="activeViewId === 'surface'">
-          <div class="shrink-0 border-b border-default px-4 py-2.5">
+          <header class="shrink-0 space-y-2 border-b border-default px-6 pt-5 pb-4">
+            <h2 class="text-2xl font-semibold tracking-[-0.03em] text-highlighted">
+              The surface
+            </h2>
             <div class="flex flex-wrap items-center gap-1.5">
-              <span class="me-1 font-mono text-[10px] tracking-[0.12em] text-dimmed uppercase">Journey overlay</span>
-              <UButton size="xs" color="neutral" :variant="!overlayJourneyId ? 'soft' : 'ghost'" label="All Screens" @click="overlayJourneyId = null" />
+              <span class="blr-field me-1">Journey overlay</span>
+              <UButton size="xs" :color="!overlayJourneyId ? 'primary' : 'neutral'" :variant="!overlayJourneyId ? 'soft' : 'outline'" class="rounded-full" label="All Screens" @click="overlayJourneyId = null" />
               <UButton
                 v-for="journey in workspace.journeys"
                 :key="journey.id"
                 size="xs"
-                color="neutral"
-                :variant="overlayJourneyId === journey.id ? 'soft' : 'ghost'"
+                :color="overlayJourneyId === journey.id ? 'primary' : 'neutral'"
+                :variant="overlayJourneyId === journey.id ? 'soft' : 'outline'"
+                class="rounded-full"
                 :label="`${journey.title} · ${journey.screenIds.length}`"
                 @click="overlayJourneyId = overlayJourneyId === journey.id ? null : journey.id"
               />
             </div>
-            <p class="mt-1 text-[11px] text-dimmed">
+            <p class="text-sm text-muted">
               <template v-if="overlayJourney">
                 Highlighted: Screens participating in “{{ overlayJourney.title }}” — participation is derived from its Scenarios and Capabilities, not an authored navigation order.
               </template>
@@ -1105,13 +951,13 @@ const short = (value: string, limit = 22) => (value.length > limit ? `${value.sl
                 Interfaces are columns; Screens sit directly under an Interface or inside its Experiences.
               </template>
             </p>
-          </div>
+          </header>
 
           <div class="min-h-0 flex-1">
             <BlrFlowCanvas
               :nodes="surfaceShape.nodes"
               @select="surfaceSelectedId = $event"
-              @focus="openById"
+              @focus="inspectById"
               @clear="surfaceSelectedId = null"
             />
           </div>
@@ -1119,11 +965,11 @@ const short = (value: string, limit = 22) => (value.length > limit ? `${value.sl
           <div class="flex min-h-10 shrink-0 flex-wrap items-center gap-x-3 gap-y-1 border-t border-default px-4 py-1.5">
             <template v-if="surfaceSelected">
               <BlrKind :kind="surfaceSelected.kind" :labelled="false" />
-              <span class="text-xs font-medium text-highlighted">{{ surfaceSelected.title }}</span>
-              <span class="min-w-0 flex-1 truncate text-xs text-dimmed">{{ firstSentence(surfaceSelected.lead) }}</span>
-              <UButton size="xs" color="neutral" variant="outline" icon="i-lucide-book-open" label="Open" @click="openDetail(surfaceSelected)" />
+              <span class="text-sm font-medium text-highlighted">{{ surfaceSelected.title }}</span>
+              <span class="min-w-0 flex-1 truncate text-sm text-muted">{{ firstSentence(surfaceSelected.lead) }}</span>
+              <UButton size="xs" color="neutral" variant="outline" icon="i-lucide-book-open" label="Open" @click="inspect(surfaceSelected)" />
             </template>
-            <span v-else class="text-xs text-dimmed italic">
+            <span v-else class="text-sm text-muted italic">
               Select a box to read what it is; double-click to open its full content.
             </span>
           </div>
@@ -1137,10 +983,10 @@ const short = (value: string, limit = 22) => (value.length > limit ? `${value.sl
                 <div class="flex items-center gap-3">
                   <img v-if="logoSrc" :src="logoSrc" alt="" class="size-9 rounded-md">
                   <div class="min-w-0">
-                    <h2 class="text-2xl tracking-tight text-highlighted">
+                    <h2 class="text-2xl font-semibold tracking-[-0.03em] text-highlighted">
                       {{ identity.title }}
                     </h2>
-                    <p class="text-sm text-dimmed">
+                    <p class="text-sm text-muted">
                       {{ identity.summary }}
                     </p>
                   </div>
@@ -1155,38 +1001,34 @@ const short = (value: string, limit = 22) => (value.length > limit ? `${value.sl
                 </div>
                 <BlrProse :text="identity.description" />
                 <section v-if="identity.intent" class="space-y-1.5">
-                  <h4 class="font-mono text-[10px] tracking-[0.12em] text-dimmed uppercase">
-                    Intent
-                  </h4>
+                  <h4 class="blr-field">Intent</h4>
                   <BlrProse :text="identity.intent" />
                 </section>
                 <section v-if="identity.supportingContent" class="space-y-1.5">
-                  <h4 class="font-mono text-[10px] tracking-[0.12em] text-dimmed uppercase">
-                    Supporting context
-                  </h4>
+                  <h4 class="blr-field">Supporting context</h4>
                   <BlrProse :text="identity.supportingContent" />
                 </section>
-                <dl class="grid gap-x-6 gap-y-1 font-mono text-[11px] text-dimmed sm:grid-cols-2">
-                  <div class="flex gap-2">
-                    <dt>Generated</dt>
-                    <dd class="text-toned tabular-nums">
+                <dl class="grid gap-x-6 gap-y-1 sm:grid-cols-2">
+                  <div class="flex items-baseline gap-2">
+                    <dt class="blr-field">Generated</dt>
+                    <dd class="blr-meta">
                       {{ identity.generatedAt }} · {{ identity.generator.name }} {{ identity.generator.version }}
                     </dd>
                   </div>
-                  <div class="flex gap-2">
-                    <dt>Schema</dt><dd class="text-toned">{{ identity.schemaVersion }}</dd>
+                  <div class="flex items-baseline gap-2">
+                    <dt class="blr-field">Schema</dt><dd class="blr-meta">{{ identity.schemaVersion }}</dd>
                   </div>
-                  <div class="flex gap-2">
-                    <dt>Reference profile</dt><dd class="text-toned">{{ identity.referenceProfile }}</dd>
+                  <div class="flex items-baseline gap-2">
+                    <dt class="blr-field">Reference profile</dt><dd class="blr-meta">{{ identity.referenceProfile }}</dd>
                   </div>
-                  <div v-if="identity.license" class="flex gap-2">
-                    <dt>License</dt><dd class="text-toned">{{ identity.license }}</dd>
+                  <div v-if="identity.license" class="flex items-baseline gap-2">
+                    <dt class="blr-field">License</dt><dd class="blr-meta">{{ identity.license }}</dd>
                   </div>
-                  <div v-if="identity.authors.length" class="flex gap-2">
-                    <dt>Authors</dt>
-                    <dd class="flex flex-wrap gap-x-2 text-toned">
+                  <div v-if="identity.authors.length" class="flex items-baseline gap-2">
+                    <dt class="blr-field">Authors</dt>
+                    <dd class="flex flex-wrap gap-x-2 text-sm text-muted">
                       <template v-for="author in identity.authors" :key="author.name">
-                        <a v-if="author.url" :href="author.url" target="_blank" rel="noopener noreferrer" class="underline underline-offset-2">{{ author.name }}</a>
+                        <a v-if="author.url" :href="author.url" target="_blank" rel="noopener noreferrer" class="text-primary underline underline-offset-2">{{ author.name }}</a>
                         <span v-else>{{ author.name }}</span>
                       </template>
                     </dd>
@@ -1195,7 +1037,7 @@ const short = (value: string, limit = 22) => (value.length > limit ? `${value.sl
               </section>
 
               <section class="space-y-3">
-                <h3 class="flex items-center gap-2 text-sm font-semibold tracking-tight text-highlighted">
+                <h3 class="flex items-center gap-2 text-base font-semibold tracking-tight text-highlighted">
                   Coverage
                   <UBadge :color="COVERAGE_TONE[workspace.coverage.status] || 'neutral'" variant="subtle" size="sm">
                     {{ workspace.coverage.status }}
@@ -1203,11 +1045,9 @@ const short = (value: string, limit = 22) => (value.length > limit ? `${value.sl
                 </h3>
                 <BlrProse :text="workspace.coverage.rationale" />
                 <div class="grid gap-4 sm:grid-cols-2">
-                  <div v-for="section in coverageLists" :key="section.label" class="space-y-1">
-                    <p class="font-mono text-[10px] tracking-[0.12em] text-dimmed uppercase">
-                      {{ section.label }}
-                    </p>
-                    <ul class="list-disc space-y-0.5 ps-5 text-xs text-toned marker:text-dimmed">
+                  <div v-for="section in coverageLists" :key="section.label" class="space-y-1.5">
+                    <p class="blr-field">{{ section.label }}</p>
+                    <ul class="list-disc space-y-1 ps-5 text-sm text-muted marker:text-dimmed">
                       <li v-for="(item, index) in section.items" :key="index">
                         {{ item }}
                       </li>
@@ -1217,19 +1057,19 @@ const short = (value: string, limit = 22) => (value.length > limit ? `${value.sl
               </section>
 
               <section class="space-y-3">
-                <h3 class="text-sm font-semibold tracking-tight text-highlighted">
+                <h3 class="text-base font-semibold tracking-tight text-highlighted">
                   What the model contains
                 </h3>
                 <template v-for="group in countGroups" :key="group.note">
-                  <p v-if="group.note" class="font-mono text-[10px] tracking-[0.12em] text-dimmed uppercase">
+                  <p v-if="group.note" class="blr-field">
                     {{ group.note }}
                   </p>
-                  <div class="grid grid-cols-3 gap-2 sm:grid-cols-5">
-                    <div v-for="[label, value] in group.items" :key="label" class="rounded-md border border-default px-3 py-2">
+                  <div class="grid grid-cols-3 gap-2.5 sm:grid-cols-5">
+                    <div v-for="[label, value] in group.items" :key="label" class="rounded-xl border border-default bg-default px-3 py-2.5">
                       <p class="font-mono text-lg text-highlighted tabular-nums">
                         {{ value }}
                       </p>
-                      <p class="text-[10px] text-dimmed">
+                      <p class="blr-field">
                         {{ label }}
                       </p>
                     </div>
@@ -1238,72 +1078,70 @@ const short = (value: string, limit = 22) => (value.length > limit ? `${value.sl
               </section>
 
               <section class="space-y-3">
-                <h3 class="text-sm font-semibold tracking-tight text-highlighted">
+                <h3 class="text-base font-semibold tracking-tight text-highlighted">
                   Access contexts — who enters, and what is available
                 </h3>
                 <div class="grid gap-4 lg:grid-cols-2">
-                  <article v-for="context in accessContexts" :key="context.id" class="space-y-2.5 rounded-lg border border-default p-4">
+                  <article v-for="context in accessContexts" :key="context.id" class="space-y-2.5 rounded-xl border border-default bg-default p-4">
                     <div class="flex items-center gap-2">
                       <BlrKind :kind="context.kind" :labelled="false" />
                       <span class="min-w-0 flex-1 truncate text-sm font-medium text-highlighted">{{ context.title }}</span>
                       <UBadge v-if="accessModeOf(context)" color="neutral" variant="subtle" size="sm">
                         {{ accessModeOf(context) }}
                       </UBadge>
-                      <UButton icon="i-lucide-book-open" size="xs" color="neutral" variant="ghost" aria-label="Open full content" @click="openDetail(context)" />
+                      <UButton icon="i-lucide-book-open" size="xs" color="neutral" variant="ghost" aria-label="Open full content" @click="inspect(context)" />
                     </div>
-                    <p class="text-xs leading-relaxed text-toned">
+                    <p class="text-sm leading-6 text-muted">
                       {{ firstSentence(context.lead, 200) }}
                     </p>
-                    <BlrLinks :workspace="workspace" :ids="context.actorIds" kind="actor" label="Who enters" interactive @select="openDetail" />
+                    <BlrLinks :workspace="workspace" :ids="context.actorIds" kind="actor" label="Who enters" interactive @select="inspect" />
                     <ul v-if="context.entryPoints.length" class="space-y-0.5">
-                      <li v-for="point in context.entryPoints" :key="`${point.interfaceId}-${point.path}`" class="flex items-baseline gap-2 font-mono text-[11px]">
+                      <li v-for="point in context.entryPoints" :key="`${point.interfaceId}-${point.path}`" class="flex items-baseline gap-2">
                         <UIcon name="i-lucide-corner-down-right" class="size-3 shrink-0 self-center text-dimmed" />
-                        <span class="truncate text-toned">{{ point.path }}</span>
+                        <span class="blr-meta truncate">{{ point.path }}</span>
                       </li>
                     </ul>
                     <div v-if="context.capabilityBoundary" class="space-y-1">
-                      <p class="font-mono text-[10px] tracking-[0.12em] text-dimmed uppercase">
-                        Boundary
-                      </p>
+                      <p class="blr-field">Boundary</p>
                       <BlrProse :text="context.capabilityBoundary" />
                     </div>
-                    <div class="space-y-1 border-t border-muted pt-2">
-                      <BlrLinks :workspace="workspace" :ids="context.capabilityIds" kind="capability" :max="6" interactive @select="openDetail" />
-                      <BlrLinks :workspace="workspace" :ids="context.screenIds" kind="screen" :max="6" interactive @select="openDetail" />
-                      <BlrLinks :workspace="workspace" :ids="context.journeyIds" kind="journey" label="Journeys completable here" :max="6" interactive @select="openDetail" />
+                    <div class="space-y-1 border-t border-default pt-2">
+                      <BlrLinks :workspace="workspace" :ids="context.capabilityIds" kind="capability" :max="6" interactive @select="inspect" />
+                      <BlrLinks :workspace="workspace" :ids="context.screenIds" kind="screen" :max="6" interactive @select="inspect" />
+                      <BlrLinks :workspace="workspace" :ids="context.journeyIds" kind="journey" label="Journeys completable here" :max="6" interactive @select="inspect" />
                     </div>
                   </article>
                 </div>
               </section>
 
               <section v-if="workspace.actors.length" class="space-y-3">
-                <h3 class="text-sm font-semibold tracking-tight text-highlighted">
+                <h3 class="text-base font-semibold tracking-tight text-highlighted">
                   Actors
                 </h3>
                 <div class="grid gap-3 sm:grid-cols-2">
-                  <article v-for="actor in workspace.actors" :key="actor.id" class="rounded-lg border border-default p-3">
+                  <article v-for="actor in workspace.actors" :key="actor.id" class="rounded-xl border border-default bg-default p-4">
                     <div class="flex items-center gap-2">
                       <BlrKind kind="actor" :labelled="false" />
                       <span class="min-w-0 flex-1 truncate text-sm font-medium text-highlighted">{{ actor.title }}</span>
                       <UBadge color="neutral" variant="subtle" size="sm">
                         {{ actor.actorKind }} · {{ actor.relationship }}
                       </UBadge>
-                      <UButton icon="i-lucide-book-open" size="xs" color="neutral" variant="ghost" aria-label="Open full content" @click="openDetail(actor)" />
+                      <UButton icon="i-lucide-book-open" size="xs" color="neutral" variant="ghost" aria-label="Open full content" @click="inspect(actor)" />
                     </div>
-                    <p class="mt-1.5 text-xs leading-relaxed text-toned">
+                    <p class="mt-1.5 text-sm leading-6 text-muted">
                       {{ firstSentence(actor.lead, 180) }}
                     </p>
-                    <BlrLinks class="mt-2" :workspace="workspace" :ids="actor.journeyIds" kind="journey" label="Performs" :max="4" interactive @select="openDetail" />
+                    <BlrLinks class="mt-2" :workspace="workspace" :ids="actor.journeyIds" kind="journey" label="Performs" :max="4" interactive @select="inspect" />
                   </article>
                 </div>
               </section>
 
               <section v-if="referenceGroups.length" class="space-y-3">
-                <h3 class="text-sm font-semibold tracking-tight text-highlighted">
-                  References · {{ workspace.counts.references }}
+                <h3 class="text-base font-semibold tracking-tight text-highlighted">
+                  References <span class="blr-meta ms-1">{{ workspace.counts.references }}</span>
                 </h3>
                 <div v-for="group in referenceGroups" :key="group.ownerId" class="space-y-1.5">
-                  <p class="flex items-center gap-1.5 text-xs text-dimmed">
+                  <p class="flex items-center gap-1.5 text-sm text-muted">
                     <BlrKind :kind="group.ownerKind" :labelled="false" size="xs" />
                     {{ group.ownerTitle }}
                   </p>
@@ -1316,19 +1154,14 @@ const short = (value: string, limit = 22) => (value.length > limit ? `${value.sl
       </main>
     </div>
 
-    <!-- Full entity content, guaranteed complete by BlrEntityDetail. -->
-    <div v-if="detailEntity" class="absolute inset-0 z-40">
-      <button type="button" class="cg-scrim" aria-label="Close entity detail" @click="detailEntity = null" />
-      <div class="absolute inset-y-0 right-0 flex w-full max-w-2xl flex-col border-s border-default bg-default shadow-2xl">
-        <div class="flex shrink-0 items-center gap-2 border-b border-default px-4 py-2.5">
-          <span class="font-mono text-[10px] tracking-[0.12em] text-dimmed uppercase">Entity content</span>
-          <UButton icon="i-lucide-x" size="xs" color="neutral" variant="ghost" class="ms-auto" aria-label="Close" @click="detailEntity = null" />
-        </div>
-        <div class="blr-pane flex-1 p-5">
-          <BlrEntityDetail :workspace="workspace" :entity="detailEntity" @select="openDetail" />
-        </div>
-      </div>
-    </div>
+    <!-- The shared inspector: every entity selection lands in it. -->
+    <BlrInspector
+      v-model:tab="inspectorTab"
+      :workspace="workspace"
+      :entity="inspected"
+      @select="inspect"
+      @close="inspected = null"
+    />
   </div>
 </template>
 
@@ -1363,13 +1196,6 @@ const short = (value: string, limit = 22) => (value.length > limit ? `${value.sl
   --blr-slot-9: #3987e5;
 }
 
-.cg-scrim {
-  position: absolute;
-  inset: 0;
-  cursor: default;
-  background: color-mix(in srgb, var(--ui-bg) 55%, transparent);
-}
-
 /* --- rail --- */
 .cg-rail-item {
   display: flex;
@@ -1389,21 +1215,6 @@ const short = (value: string, limit = 22) => (value.length > limit ? `${value.sl
 .cg-rail-item.is-active {
   border-inline-start-color: var(--ui-primary);
   background: color-mix(in srgb, var(--ui-bg-elevated) 85%, transparent);
-}
-
-.cg-rail-num {
-  flex-shrink: 0;
-  width: 1.1rem;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  line-height: 1.35;
-  color: var(--ui-text-dimmed);
-  font-variant-numeric: tabular-nums;
-}
-
-.cg-rail-item.is-active .cg-rail-num {
-  color: var(--ui-primary);
-  font-weight: 600;
 }
 
 /* --- matrix table --- */
@@ -1451,21 +1262,16 @@ const short = (value: string, limit = 22) => (value.length > limit ? `${value.sl
   writing-mode: vertical-rl;
   transform: rotate(180deg);
   text-overflow: ellipsis;
-  font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--text-xs);
+  font-weight: 500;
   line-height: 1.25;
-  color: var(--ui-text-toned);
+  color: var(--ui-text);
   transition: color 0.15s ease;
 }
 
 .cg-colhead.is-hot .cg-colhead-text,
 .cg-colhead-btn:hover .cg-colhead-text {
   color: var(--ui-text-highlighted);
-}
-
-.cg-colhead.is-selected .cg-colhead-text {
-  color: var(--ui-primary);
-  font-weight: 600;
 }
 
 .cg-rowhead {
@@ -1495,10 +1301,6 @@ const short = (value: string, limit = 22) => (value.length > limit ? `${value.sl
 .cg-table tbody tr:hover .cg-rowhead-btn,
 .cg-rowhead-btn:hover {
   background: color-mix(in srgb, var(--ui-bg-elevated) 75%, transparent);
-}
-
-.cg-rowhead.is-selected .cg-rowhead-btn {
-  background: color-mix(in srgb, var(--ui-primary) 10%, transparent);
 }
 
 .cg-cell {
@@ -1553,13 +1355,6 @@ const short = (value: string, limit = 22) => (value.length > limit ? `${value.sl
   background: transparent;
 }
 
-.cg-count {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  color: var(--ui-text-dimmed);
-  font-variant-numeric: tabular-nums;
-}
-
 /* --- journey comparison table --- */
 .cg-jtable thead th {
   position: sticky;
@@ -1569,11 +1364,8 @@ const short = (value: string, limit = 22) => (value.length > limit ? `${value.sl
   background: var(--ui-bg);
   border-bottom: 1px solid var(--ui-border-accented);
   text-align: start;
-  font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--text-xs);
   font-weight: 500;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--ui-text-dimmed);
+  color: var(--ui-text-muted);
 }
 </style>

@@ -18,6 +18,35 @@
   overscroll-behavior: contain;
 }
 
+/*
+  The three shared type roles, taken from the landing site so a report page
+  reads like the rest of BusinessLens. Eyebrows are the only uppercase text a
+  design may set, and there is at most one per view header.
+*/
+.blr-eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ui-primary);
+}
+
+/* A field label above a value or chip row: quiet, sentence case, never mono. */
+.blr-field {
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--ui-text-muted);
+}
+
+/* Derived counts and machine identifiers. Mono is the point; 12px is the floor. */
+.blr-meta {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--ui-text-dimmed);
+  font-variant-numeric: tabular-nums;
+}
+
 /* A hairline technical rule, used by the drawing-led designs. */
 .blr-hairline {
   border-color: color-mix(in srgb, var(--ui-border-accented) 70%, transparent);

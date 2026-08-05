@@ -33,8 +33,7 @@ const color = computed(() => slotColor(meta.value.slot, mounted.value && colorMo
 
 <template>
   <span
-    class="inline-flex items-center gap-1.5 whitespace-nowrap"
-    :class="size === 'xs' ? 'text-[10px]' : 'text-xs'"
+    class="inline-flex items-center gap-1.5 text-xs whitespace-nowrap"
     :title="meta.label"
   >
     <UIcon :name="meta.icon" class="size-3.5 shrink-0" :style="{ color }" />

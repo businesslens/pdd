@@ -19,6 +19,7 @@
  * - Access: Actor cards and Interface/Experience context comparison.
  * Every selection anywhere returns to Explore's split canvas: words + map.
  */
+import type { TabsItem } from '@nuxt/ui'
 import type {
   AnyEntityView,
   AvailabilityPair,
@@ -50,6 +51,13 @@ const VIEWS = [
   { id: 'access', label: 'Access', icon: 'i-lucide-door-open' }
 ] as const
 type ViewId = (typeof VIEWS)[number]['id']
+
+const VIEW_TABS: TabsItem[] = VIEWS.map(item => ({ value: item.id, label: item.label, icon: item.icon }))
+
+const JOURNEY_MODE_TABS: TabsItem[] = [
+  { value: 'cards', label: 'Cards', icon: 'i-lucide-layout-grid' },
+  { value: 'table', label: 'Table', icon: 'i-lucide-table-2' }
+]
 
 const view = ref<ViewId>('explore')
 
@@ -137,8 +145,13 @@ const query = ref('')
 const indexKind = ref<ReportEntityKind | null>(null)
 const activeKinds = ref<Set<ReportEntityKind>>(new Set(REPORT_ENTITY_KINDS.map(meta => meta.kind)))
 const resultIndex = ref(0)
-const searchInput = ref<HTMLInputElement | null>(null)
+/** The UInput component instance; its exposed `inputRef` is the native input. */
+const searchInput = ref<{ inputRef?: HTMLInputElement | null } | null>(null)
 const resultsPane = ref<HTMLElement | null>(null)
+
+function focusSearch() {
+  searchInput.value?.inputRef?.focus()
+}
 
 const presentKinds = computed(() => REPORT_ENTITY_KINDS.filter(meta => countOf(meta.kind) > 0))
 const kindsNarrowed = computed(() => presentKinds.value.some(meta => !activeKinds.value.has(meta.kind)))
@@ -257,7 +270,7 @@ async function browseKind(kind: ReportEntityKind) {
   query.value = ''
   view.value = 'explore'
   await nextTick()
-  searchInput.value?.focus()
+  focusSearch()
 }
 
 /** "/" focuses the omnibox from anywhere that is not already an input. */
@@ -266,7 +279,7 @@ function onGlobalKeydown(event: KeyboardEvent) {
   const target = event.target as HTMLElement | null
   if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return
   event.preventDefault()
-  searchInput.value?.focus()
+  focusSearch()
 }
 onMounted(() => window.addEventListener('keydown', onGlobalKeydown))
 onBeforeUnmount(() => window.removeEventListener('keydown', onGlobalKeydown))
@@ -514,47 +527,47 @@ const accessContexts = computed<AccessContextCard[]>(() => [
           </span>
         </button>
 
-        <div class="relative min-w-56 flex-1 basis-72">
-          <UIcon name="i-lucide-search" class="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-dimmed" />
-          <input
-            ref="searchInput"
-            v-model="query"
-            type="text"
-            class="blx-omni"
-            placeholder="Search the Product Model…"
-            aria-label="Search the Product Model"
-            autocomplete="off"
-            spellcheck="false"
-            @keydown="onSearchKeydown"
-          >
-          <button
-            v-if="query || indexKind"
-            type="button"
-            class="absolute end-2.5 top-1/2 -translate-y-1/2 rounded p-1 text-dimmed hover:text-toned"
-            title="Clear search"
-            @click="query = ''; indexKind = null"
-          >
-            <UIcon name="i-lucide-x" class="size-3.5" />
-          </button>
-          <kbd v-else class="blx-kbd">/</kbd>
-        </div>
+        <UInput
+          ref="searchInput"
+          v-model="query"
+          icon="i-lucide-search"
+          size="lg"
+          placeholder="Search the Product Model…"
+          aria-label="Search the Product Model"
+          autocomplete="off"
+          spellcheck="false"
+          class="min-w-56 flex-1 basis-72"
+          @keydown="onSearchKeydown"
+        >
+          <template #trailing>
+            <UButton
+              v-if="query || indexKind"
+              icon="i-lucide-x"
+              color="neutral"
+              variant="ghost"
+              size="xs"
+              aria-label="Clear search"
+              @click="query = ''; indexKind = null"
+            />
+            <UKbd v-else value="/" />
+          </template>
+        </UInput>
 
         <div class="flex flex-wrap items-center gap-1">
-          <button
+          <UButton
             v-for="meta in presentKinds"
             :key="meta.kind"
-            type="button"
-            class="rounded-full border px-1.5 py-0.5 transition"
-            :class="activeKinds.has(meta.kind)
-              ? 'border-default bg-elevated/50'
-              : 'border-transparent opacity-35 grayscale hover:opacity-60'"
+            :label="meta.label"
+            :icon="meta.icon"
+            :color="activeKinds.has(meta.kind) ? 'primary' : 'neutral'"
+            :variant="activeKinds.has(meta.kind) ? 'soft' : 'outline'"
+            size="xs"
+            class="rounded-full"
             :title="activeKinds.has(meta.kind)
               ? `Exclude ${meta.plural} from search`
               : `Include ${meta.plural} in search`"
             @click="toggleSearchKind(meta.kind)"
-          >
-            <BlrKind :kind="meta.kind" size="xs" />
-          </button>
+          />
           <UButton
             v-if="kindsNarrowed"
             label="All kinds"
@@ -566,25 +579,22 @@ const accessContexts = computed<AccessContextCard[]>(() => [
         </div>
       </div>
 
-      <nav class="flex items-center gap-1 overflow-x-auto px-4 pb-2 sm:px-6">
-        <button
-          v-for="tab in VIEWS"
-          :key="tab.id"
-          type="button"
-          class="blx-tab"
-          :data-on="view === tab.id"
-          @click="view = tab.id"
-        >
-          <UIcon :name="tab.icon" class="size-3.5" />
-          {{ tab.label }}
-        </button>
+      <nav class="overflow-x-auto px-4 pb-2 sm:px-6">
+        <UTabs
+          v-model="view"
+          :items="VIEW_TABS"
+          :content="false"
+          color="neutral"
+          size="xs"
+          class="w-fit"
+        />
       </nav>
     </header>
 
     <!-- EXPLORE: results list -->
     <div v-if="view === 'explore' && searching" ref="resultsPane" class="blr-pane flex-1">
       <div class="mx-auto w-full max-w-3xl px-4 py-4 sm:px-6">
-        <p class="mb-3 text-xs text-dimmed">
+        <p class="mb-3 text-sm text-muted">
           <template v-if="query.trim()">
             {{ flatResults.length }} {{ flatResults.length === 1 ? 'match' : 'matches' }} for
             “{{ query.trim() }}”<span v-if="kindsNarrowed"> in the selected kinds</span>
@@ -596,8 +606,8 @@ const accessContexts = computed<AccessContextCard[]>(() => [
         </p>
         <section v-for="group in groupedResults" :key="group.meta.kind" class="mb-4">
           <h3 class="mb-1.5 flex items-baseline gap-2">
-            <BlrKind :kind="group.meta.kind" size="xs" />
-            <span class="font-mono text-[10px] text-dimmed tabular-nums">{{ group.hits.length }}</span>
+            <BlrKind :kind="group.meta.kind" />
+            <span class="blr-meta">{{ group.hits.length }}</span>
           </h3>
           <ul class="space-y-0.5">
             <li v-for="(hit, index) in group.hits" :key="hit.entity.id">
@@ -610,7 +620,7 @@ const accessContexts = computed<AccessContextCard[]>(() => [
               >
                 <BlrKind :kind="hit.entity.kind" :labelled="false" />
                 <span class="shrink-0 text-sm font-medium text-highlighted">{{ hit.entity.title }}</span>
-                <span class="min-w-0 flex-1 truncate text-xs text-dimmed">{{ hit.snippet }}</span>
+                <span class="min-w-0 flex-1 truncate text-sm text-muted">{{ hit.snippet }}</span>
                 <UIcon
                   v-if="resultIndex === group.start + index"
                   name="i-lucide-corner-down-left"
@@ -620,7 +630,7 @@ const accessContexts = computed<AccessContextCard[]>(() => [
             </li>
           </ul>
         </section>
-        <p v-if="!flatResults.length" class="rounded-lg border border-dashed border-default p-6 text-center text-sm text-dimmed">
+        <p v-if="!flatResults.length" class="rounded-lg border border-dashed border-default p-6 text-center text-sm text-muted">
           Nothing in the Product Model matches “{{ query.trim() }}”<span v-if="kindsNarrowed"> within the selected kinds — try widening the kind filter</span>.
         </p>
       </div>
@@ -645,7 +655,7 @@ const accessContexts = computed<AccessContextCard[]>(() => [
               class="max-w-40 truncate rounded px-1 py-0.5 text-xs transition"
               :class="index === trail.length - 1
                 ? 'font-medium text-highlighted'
-                : 'text-dimmed hover:bg-elevated/60 hover:text-toned'"
+                : 'text-dimmed hover:bg-elevated/50 hover:text-default'"
               @click="trail = trail.slice(0, index + 1)"
             >
               {{ workspace.byId.get(id)?.title ?? id }}
@@ -684,7 +694,7 @@ const accessContexts = computed<AccessContextCard[]>(() => [
       <div class="mx-auto w-full max-w-3xl space-y-10 px-4 py-10 sm:px-6">
         <header class="space-y-3">
           <div class="flex flex-wrap items-center gap-2">
-            <UBadge v-if="workspace.identity.categoryLabel" color="neutral" variant="subtle" size="sm">
+            <UBadge v-if="workspace.identity.categoryLabel" color="primary" variant="subtle" size="sm">
               {{ workspace.identity.categoryLabel }}
             </UBadge>
             <UBadge :color="COVERAGE_TONE[workspace.coverage.status] ?? 'neutral'" variant="subtle" size="sm">
@@ -694,86 +704,89 @@ const accessContexts = computed<AccessContextCard[]>(() => [
               {{ workspace.identity.license }}
             </UBadge>
           </div>
-          <h1 class="text-3xl tracking-tight text-highlighted">
+          <h1 class="text-3xl font-semibold tracking-[-0.035em] text-highlighted">
             {{ workspace.identity.title }}
           </h1>
-          <p class="text-base leading-relaxed text-toned">
+          <p class="text-base leading-7 text-default">
             {{ workspace.identity.summary }}
           </p>
           <BlrProse :text="workspace.identity.description" />
           <section v-if="workspace.identity.intent" class="space-y-1.5">
-            <h4 class="font-mono text-[10px] tracking-[0.12em] text-dimmed uppercase">Intent</h4>
+            <h4 class="blr-field">Intent</h4>
             <BlrProse :text="workspace.identity.intent" />
           </section>
-          <div class="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs">
-            <span v-for="tag in workspace.identity.tags" :key="tag" class="rounded-full border border-default px-2 py-0.5 text-dimmed">
+          <div class="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+            <UBadge v-for="tag in workspace.identity.tags" :key="tag" color="neutral" variant="outline" size="sm">
               {{ tag }}
-            </span>
-            <span v-for="author in workspace.identity.authors" :key="author.name" class="inline-flex items-center gap-1 text-toned">
-              <UIcon name="i-lucide-pen-line" class="size-3 text-dimmed" />
-              <a v-if="author.url" :href="author.url" target="_blank" rel="noopener noreferrer" class="underline underline-offset-2">{{ author.name }}</a>
+            </UBadge>
+            <span v-for="author in workspace.identity.authors" :key="author.name" class="inline-flex items-center gap-1 text-sm text-dimmed">
+              <UIcon name="i-lucide-pen-line" class="size-3" />
+              <a v-if="author.url" :href="author.url" target="_blank" rel="noopener noreferrer" class="text-primary underline underline-offset-2">{{ author.name }}</a>
               <template v-else>{{ author.name }}</template>
             </span>
           </div>
         </header>
 
         <section class="space-y-3">
-          <h2 class="font-mono text-[10px] tracking-[0.12em] text-dimmed uppercase">
-            What this Product is made of — click a fact to browse that kind
-          </h2>
-          <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          <div class="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
+            <h2 class="text-base font-semibold tracking-tight text-highlighted">What this Product is made of</h2>
+            <span class="text-sm text-muted">Click a fact to browse that kind.</span>
+          </div>
+          <div class="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
             <button
               v-for="fact in compositionFacts"
               :key="fact.meta.kind"
               type="button"
-              class="flex flex-col items-start gap-1 rounded-xl border border-default p-3 text-start transition enabled:hover:border-accented enabled:hover:bg-elevated/50 disabled:opacity-45"
+              class="rounded-xl border border-default bg-default p-3.5 text-start transition enabled:hover:border-accented disabled:opacity-50"
               :disabled="!fact.count"
               @click="browseKind(fact.meta.kind)"
             >
-              <span class="text-2xl font-light text-highlighted tabular-nums">{{ fact.count }}</span>
-              <span class="inline-flex items-center gap-1.5 text-xs text-toned">
-                <BlrKind :kind="fact.meta.kind" :labelled="false" size="xs" />
-                {{ fact.count === 1 ? fact.meta.label : fact.meta.plural }}
-              </span>
+              <BlrKind :kind="fact.meta.kind" :labelled="false" />
+              <p class="mt-1.5 font-mono text-lg text-highlighted tabular-nums">{{ fact.count }}</p>
+              <p class="blr-field">{{ fact.count === 1 ? fact.meta.label : fact.meta.plural }}</p>
             </button>
           </div>
-          <p class="font-mono text-[10px] leading-relaxed text-dimmed">
-            Derived depth — {{ workspace.counts.steps }} steps ·
+          <p class="text-sm text-dimmed">
+            Derived depth: {{ workspace.counts.steps }} steps ·
             {{ workspace.counts.decisionPoints }} decision points ·
             {{ workspace.counts.branches }} branches ·
             {{ workspace.counts.edgeCases }} edge cases ·
             {{ workspace.counts.screenStates }} screen states ·
             {{ workspace.counts.entryPoints }} entry points ·
             {{ workspace.counts.availabilityPairs }} availability scopes ·
-            {{ workspace.counts.references }} references
+            {{ workspace.counts.references }} references.
           </p>
         </section>
 
         <section class="space-y-3">
-          <h2 class="font-mono text-[10px] tracking-[0.12em] text-dimmed uppercase">Coverage</h2>
-          <div class="space-y-3 rounded-xl border border-default p-4">
+          <h2 class="text-base font-semibold tracking-tight text-highlighted">Coverage</h2>
+          <div class="space-y-3 rounded-xl border border-default bg-default p-4">
             <BlrProse :text="workspace.coverage.rationale" />
-            <div v-if="workspace.coverage.method.length" class="flex flex-wrap items-baseline gap-1.5 text-xs">
-              <span class="font-mono text-[10px] tracking-[0.1em] text-dimmed uppercase">Method</span>
-              <span v-for="item in workspace.coverage.method" :key="item" class="rounded bg-muted px-1.5 py-0.5 text-toned">{{ item }}</span>
+            <div v-if="workspace.coverage.method.length" class="space-y-1.5">
+              <p class="blr-field">Method</p>
+              <div class="flex flex-wrap gap-1.5">
+                <UBadge v-for="item in workspace.coverage.method" :key="item" color="neutral" variant="soft" size="sm">{{ item }}</UBadge>
+              </div>
             </div>
-            <div v-if="workspace.coverage.sourceAreas.length" class="flex flex-wrap items-baseline gap-1.5 text-xs">
-              <span class="font-mono text-[10px] tracking-[0.1em] text-dimmed uppercase">Source areas</span>
-              <code v-for="item in workspace.coverage.sourceAreas" :key="item" class="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] text-toned">{{ item }}</code>
+            <div v-if="workspace.coverage.sourceAreas.length" class="space-y-1.5">
+              <p class="blr-field">Source areas</p>
+              <div class="flex flex-wrap gap-1.5">
+                <UBadge v-for="item in workspace.coverage.sourceAreas" :key="item" color="neutral" variant="soft" size="sm" class="font-mono">{{ item }}</UBadge>
+              </div>
             </div>
-            <div v-if="workspace.coverage.unmapped.length" class="space-y-1">
-              <p class="font-mono text-[10px] tracking-[0.1em] text-dimmed uppercase">Unmapped</p>
-              <ul class="space-y-1 text-xs text-dimmed">
+            <div v-if="workspace.coverage.unmapped.length" class="space-y-1.5">
+              <p class="blr-field">Unmapped</p>
+              <ul class="space-y-1 text-sm leading-6 text-muted">
                 <li v-for="item in workspace.coverage.unmapped" :key="item" class="flex items-start gap-1.5">
-                  <UIcon name="i-lucide-circle-dashed" class="mt-0.5 size-3 shrink-0" />{{ item }}
+                  <UIcon name="i-lucide-circle-dashed" class="mt-1.5 size-3.5 shrink-0 text-dimmed" />{{ item }}
                 </li>
               </ul>
             </div>
-            <div v-if="workspace.identity.limitations.length" class="space-y-1">
-              <p class="font-mono text-[10px] tracking-[0.1em] text-dimmed uppercase">Limitations</p>
-              <ul class="space-y-1 text-xs text-dimmed">
+            <div v-if="workspace.identity.limitations.length" class="space-y-1.5">
+              <p class="blr-field">Limitations</p>
+              <ul class="space-y-1 text-sm leading-6 text-muted">
                 <li v-for="item in workspace.identity.limitations" :key="item" class="flex items-start gap-1.5">
-                  <UIcon name="i-lucide-triangle-alert" class="mt-0.5 size-3 shrink-0" />{{ item }}
+                  <UIcon name="i-lucide-triangle-alert" class="mt-1.5 size-3.5 shrink-0 text-dimmed" />{{ item }}
                 </li>
               </ul>
             </div>
@@ -782,21 +795,23 @@ const accessContexts = computed<AccessContextCard[]>(() => [
 
         <section v-if="workspace.identity.references.length" class="space-y-3">
           <BlrRefs :references="workspace.identity.references" variant="list" label="Product references" />
-          <p class="text-[11px] text-dimmed">
+          <p class="text-sm text-dimmed">
             {{ workspace.counts.references }} references across the whole model — open any entity to see its own.
           </p>
         </section>
 
         <section v-if="workspace.identity.supportingContent" class="space-y-1.5">
-          <h2 class="font-mono text-[10px] tracking-[0.12em] text-dimmed uppercase">Supporting context</h2>
+          <h2 class="blr-field">Supporting context</h2>
           <BlrProse :text="workspace.identity.supportingContent" />
         </section>
 
-        <footer class="border-t border-muted pt-3 font-mono text-[10px] text-dimmed">
-          Generated {{ workspace.identity.generatedAt.slice(0, 10) }}
-          by {{ workspace.identity.generator.name }} {{ workspace.identity.generator.version }}
-          · schema {{ workspace.identity.schemaVersion }}
-          · {{ workspace.identity.referenceProfile }} references
+        <footer class="border-t border-default pt-3">
+          <p class="blr-meta leading-relaxed">
+            Generated {{ workspace.identity.generatedAt.slice(0, 10) }}
+            by {{ workspace.identity.generator.name }} {{ workspace.identity.generator.version }}
+            · schema {{ workspace.identity.schemaVersion }}
+            · {{ workspace.identity.referenceProfile }} references
+          </p>
         </footer>
       </div>
     </div>
@@ -806,21 +821,21 @@ const accessContexts = computed<AccessContextCard[]>(() => [
       <div class="mx-auto w-full max-w-6xl px-4 py-5 sm:px-6">
         <template v-if="!openJourney">
           <div class="mb-4 flex flex-wrap items-center gap-2">
-            <h2 class="text-sm font-medium text-highlighted">
-              Journeys · {{ workspace.journeys.length }}
+            <h2 class="text-base font-semibold tracking-tight text-highlighted">
+              Journeys <span class="blr-meta ms-1">{{ workspace.journeys.length }}</span>
             </h2>
-            <span class="text-xs text-dimmed">the promises this Product makes</span>
-            <span class="ms-auto flex gap-1">
-              <button type="button" class="blx-tab" :data-on="journeyMode === 'cards'" @click="journeyMode = 'cards'">
-                <UIcon name="i-lucide-layout-grid" class="size-3.5" /> Cards
-              </button>
-              <button type="button" class="blx-tab" :data-on="journeyMode === 'table'" @click="journeyMode = 'table'">
-                <UIcon name="i-lucide-table-2" class="size-3.5" /> Table
-              </button>
-            </span>
+            <span class="text-sm text-muted">the promises this Product makes</span>
+            <UTabs
+              v-model="journeyMode"
+              :items="JOURNEY_MODE_TABS"
+              :content="false"
+              color="neutral"
+              size="xs"
+              class="ms-auto"
+            />
           </div>
 
-          <p v-if="!workspace.journeys.length" class="rounded-lg border border-dashed border-default p-6 text-center text-sm text-dimmed">
+          <p v-if="!workspace.journeys.length" class="rounded-lg border border-dashed border-default p-6 text-center text-sm text-muted">
             This model declares no Journeys.
           </p>
 
@@ -828,14 +843,14 @@ const accessContexts = computed<AccessContextCard[]>(() => [
             <article
               v-for="journey in workspace.journeys"
               :key="journey.id"
-              class="cursor-pointer rounded-xl border border-default bg-elevated/30 p-4 transition hover:border-accented hover:bg-elevated/60"
+              class="cursor-pointer rounded-xl border border-default bg-default p-4 transition hover:border-accented"
               @click="openJourneyId = journey.id"
             >
               <div class="flex items-start justify-between gap-2">
-                <h3 class="text-sm font-medium text-highlighted">{{ journey.title }}</h3>
-                <span class="shrink-0 font-mono text-[10px] text-dimmed tabular-nums">{{ journey.stepCount }} steps</span>
+                <h3 class="text-base font-semibold tracking-tight text-highlighted">{{ journey.title }}</h3>
+                <span class="blr-meta shrink-0">{{ journey.stepCount }} steps</span>
               </div>
-              <p class="mt-1 text-xs leading-relaxed text-dimmed">{{ firstSentence(journey.lead, 200) }}</p>
+              <p class="mt-1 text-sm leading-6 text-muted">{{ firstSentence(journey.lead, 200) }}</p>
               <div class="mt-3 space-y-1.5">
                 <BlrLinks :workspace="workspace" :ids="journey.actorIds" kind="actor" :max="3" />
                 <BlrLinks :workspace="workspace" :ids="journey.capabilityIds" kind="capability" :max="3" />
@@ -843,17 +858,15 @@ const accessContexts = computed<AccessContextCard[]>(() => [
                 <BlrLinks :workspace="workspace" :ids="journey.ruleIds" kind="rule" :max="3" />
               </div>
               <div class="mt-3 border-t border-muted pt-2">
-                <p class="font-mono text-[10px] tracking-[0.1em] text-dimmed uppercase">
-                  Scenarios · {{ journey.scenarioIds.length }}
-                </p>
-                <ul class="mt-1 space-y-0.5 text-xs text-toned">
+                <p class="blr-field">Scenarios <span class="blr-meta">{{ journey.scenarioIds.length }}</span></p>
+                <ul class="mt-1 space-y-0.5 text-sm text-default">
                   <li v-for="scenario in scenariosOf(journey.id)" :key="scenario.id" class="truncate">
                     {{ scenario.title }}
                   </li>
                 </ul>
               </div>
               <div class="mt-2 flex flex-wrap gap-1">
-                <span v-for="pair in journey.availability" :key="pair.key" class="rounded-full border border-default px-2 py-0.5 text-[10px] text-dimmed">
+                <span v-for="pair in journey.availability" :key="pair.key" class="rounded-full border border-default px-2 py-0.5 text-xs text-dimmed">
                   {{ pairLabel(pair) }}
                 </span>
               </div>
@@ -861,11 +874,11 @@ const accessContexts = computed<AccessContextCard[]>(() => [
           </div>
 
           <template v-else>
-            <div class="overflow-x-auto rounded-lg border border-default">
-              <table class="min-w-full text-xs">
+            <div class="overflow-x-auto rounded-xl border border-default bg-default">
+              <table class="min-w-full text-sm">
                 <thead>
                   <tr class="border-b border-default">
-                    <th v-for="head in ['Journey', 'Actors', 'Availability', 'Capabilities', 'Screens', 'Scenarios', 'Rules', 'Steps']" :key="head" class="px-3 py-2 text-start font-mono text-[10px] font-medium tracking-[0.1em] text-dimmed uppercase">
+                    <th v-for="head in ['Journey', 'Actors', 'Availability', 'Capabilities', 'Screens', 'Scenarios', 'Rules', 'Steps']" :key="head" class="blr-field px-3 py-2 text-start">
                       {{ head }}
                     </th>
                   </tr>
@@ -874,25 +887,25 @@ const accessContexts = computed<AccessContextCard[]>(() => [
                   <tr
                     v-for="journey in workspace.journeys"
                     :key="journey.id"
-                    class="cursor-pointer border-b border-muted last:border-0 hover:bg-elevated/40"
+                    class="cursor-pointer border-b border-muted last:border-0 hover:bg-elevated/50"
                     @click="openJourneyId = journey.id"
                   >
                     <td class="px-3 py-2">
                       <div class="font-medium text-highlighted">{{ journey.title }}</div>
                       <div class="max-w-64 truncate text-dimmed">{{ firstSentence(journey.lead, 80) }}</div>
                     </td>
-                    <td class="px-3 py-2 text-toned">{{ nameList(journey.actorIds) }}</td>
-                    <td class="px-3 py-2 text-toned">{{ journey.availability.map(pairLabel).join(', ') || '—' }}</td>
-                    <td class="px-3 py-2 text-toned tabular-nums">{{ journey.capabilityIds.length }}</td>
-                    <td class="px-3 py-2 text-toned tabular-nums">{{ journey.screenIds.length }}</td>
-                    <td class="px-3 py-2 text-toned tabular-nums">{{ journey.scenarioIds.length }}</td>
-                    <td class="px-3 py-2 text-toned tabular-nums">{{ journey.ruleIds.length }}</td>
-                    <td class="px-3 py-2 text-toned tabular-nums">{{ journey.stepCount }}</td>
+                    <td class="px-3 py-2 text-muted">{{ nameList(journey.actorIds) }}</td>
+                    <td class="px-3 py-2 text-muted">{{ journey.availability.map(pairLabel).join(', ') || '—' }}</td>
+                    <td class="blr-meta px-3 py-2">{{ journey.capabilityIds.length }}</td>
+                    <td class="blr-meta px-3 py-2">{{ journey.screenIds.length }}</td>
+                    <td class="blr-meta px-3 py-2">{{ journey.scenarioIds.length }}</td>
+                    <td class="blr-meta px-3 py-2">{{ journey.ruleIds.length }}</td>
+                    <td class="blr-meta px-3 py-2">{{ journey.stepCount }}</td>
                   </tr>
                 </tbody>
               </table>
             </div>
-            <p class="mt-2 text-[11px] text-dimmed">
+            <p class="mt-2 text-sm text-muted">
               Counts are derived from authored relations; Steps is the authored step total across each Journey’s Scenarios.
             </p>
           </template>
@@ -906,10 +919,10 @@ const accessContexts = computed<AccessContextCard[]>(() => [
           </div>
           <header class="max-w-3xl space-y-2">
             <BlrKind kind="journey" />
-            <h2 class="text-2xl tracking-tight text-highlighted">{{ openJourney.title }}</h2>
-            <BlrProse :text="openJourney.lead" />
+            <h2 class="text-2xl font-semibold tracking-[-0.03em] text-highlighted">{{ openJourney.title }}</h2>
+            <BlrProse :text="openJourney.lead" size="base" />
             <section v-if="openJourney.intent" class="space-y-1.5">
-              <h4 class="font-mono text-[10px] tracking-[0.12em] text-dimmed uppercase">Intent</h4>
+              <h4 class="blr-field">Intent</h4>
               <BlrProse :text="openJourney.intent" />
             </section>
           </header>
@@ -923,10 +936,10 @@ const accessContexts = computed<AccessContextCard[]>(() => [
           <BlrAvail class="mt-4 max-w-3xl" :pairs="openJourney.availability" :entry-points="openJourney.entryPoints" />
 
           <section class="mt-8 max-w-3xl space-y-4">
-            <h3 class="font-mono text-[10px] tracking-[0.12em] text-dimmed uppercase">
-              Scenarios · {{ openJourney.scenarioIds.length }}
+            <h3 class="text-base font-semibold tracking-tight text-highlighted">
+              Scenarios <span class="blr-meta ms-1">{{ openJourney.scenarioIds.length }}</span>
             </h3>
-            <p v-if="!scenariosOf(openJourney.id).length" class="text-sm text-dimmed italic">
+            <p v-if="!scenariosOf(openJourney.id).length" class="text-sm text-muted italic">
               No Scenarios authored for this Journey.
             </p>
             <!-- BlrEntityDetail is the completeness guarantee: trigger, ordered
@@ -934,7 +947,7 @@ const accessContexts = computed<AccessContextCard[]>(() => [
             <article
               v-for="scenario in scenariosOf(openJourney.id)"
               :key="scenario.id"
-              class="rounded-xl border border-default p-4"
+              class="rounded-xl border border-default bg-default p-4"
             >
               <BlrEntityDetail :workspace="workspace" :entity="scenario" @select="open($event)" />
             </article>
@@ -947,26 +960,31 @@ const accessContexts = computed<AccessContextCard[]>(() => [
     <div v-else-if="view === 'surface'" class="flex min-h-0 flex-1 flex-col">
       <template v-if="workspace.interfaces.length">
         <div class="flex shrink-0 flex-wrap items-center gap-1.5 border-b border-default px-4 py-2 sm:px-6">
-          <span class="me-1 font-mono text-[10px] tracking-[0.1em] text-dimmed uppercase">Journey overlay</span>
-          <button type="button" class="blx-tab" :data-on="overlayJourneyId === null" @click="overlayJourneyId = null">
-            All Screens
-          </button>
-          <button
+          <span class="blr-field me-1">Journey overlay</span>
+          <UButton
+            label="All Screens"
+            :color="overlayJourneyId === null ? 'primary' : 'neutral'"
+            :variant="overlayJourneyId === null ? 'soft' : 'outline'"
+            size="xs"
+            class="rounded-full"
+            @click="overlayJourneyId = null"
+          />
+          <UButton
             v-for="journey in workspace.journeys"
             :key="journey.id"
-            type="button"
-            class="blx-tab"
-            :data-on="overlayJourneyId === journey.id"
+            :color="overlayJourneyId === journey.id ? 'primary' : 'neutral'"
+            :variant="overlayJourneyId === journey.id ? 'soft' : 'outline'"
+            size="xs"
+            class="rounded-full"
             @click="overlayJourneyId = overlayJourneyId === journey.id ? null : journey.id"
           >
-            <BlrKind kind="journey" :labelled="false" size="xs" />
             {{ journey.title }}
-            <span class="font-mono text-[10px] text-dimmed tabular-nums">{{ journey.screenIds.length }}</span>
-          </button>
-          <span v-if="overlayJourney" class="ms-auto text-[11px] text-dimmed">
+            <span class="blr-meta">{{ journey.screenIds.length }}</span>
+          </UButton>
+          <span v-if="overlayJourney" class="ms-auto text-sm text-muted">
             {{ overlayJourney.screenIds.length }} of {{ workspace.screens.length }} Screens serve “{{ overlayJourney.title }}” — click any box to open it.
           </span>
-          <span v-else class="ms-auto hidden text-[11px] text-dimmed sm:inline">
+          <span v-else class="ms-auto hidden text-sm text-muted sm:inline">
             Click a Screen, Experience or Interface to open it in Explore.
           </span>
         </div>
@@ -979,7 +997,7 @@ const accessContexts = computed<AccessContextCard[]>(() => [
           />
         </div>
       </template>
-      <p v-else class="m-auto max-w-md rounded-lg border border-dashed border-default p-6 text-center text-sm text-dimmed">
+      <p v-else class="m-auto max-w-md rounded-lg border border-dashed border-default p-6 text-center text-sm text-muted">
         This model declares no Interfaces — there is no visible surface to map.
       </p>
     </div>
@@ -987,14 +1005,14 @@ const accessContexts = computed<AccessContextCard[]>(() => [
     <!-- ABILITIES: capability map by Domain + named matrices -->
     <div v-else-if="view === 'abilities'" class="blr-pane flex-1">
       <div class="mx-auto w-full max-w-6xl space-y-8 px-4 py-5 sm:px-6">
-        <p v-if="!workspace.capabilities.length" class="rounded-lg border border-dashed border-default p-6 text-center text-sm text-dimmed">
+        <p v-if="!workspace.capabilities.length" class="rounded-lg border border-dashed border-default p-6 text-center text-sm text-muted">
           This model declares no Capabilities.
         </p>
         <section v-for="group in domainGroups" :key="group.id || 'none'" class="space-y-3">
           <div class="flex flex-wrap items-baseline gap-2">
             <BlrKind kind="domain" :labelled="false" />
-            <h2 class="text-sm font-medium text-highlighted">{{ group.title }}</h2>
-            <span class="text-xs text-dimmed">{{ group.lead }}</span>
+            <h2 class="text-base font-semibold tracking-tight text-highlighted">{{ group.title }}</h2>
+            <span class="min-w-0 flex-1 truncate text-sm text-muted">{{ group.lead }}</span>
             <UButton
               v-if="group.id"
               icon="i-lucide-compass"
@@ -1006,28 +1024,28 @@ const accessContexts = computed<AccessContextCard[]>(() => [
               @click="open(group.id)"
             />
           </div>
-          <p v-if="!group.capabilities.length" class="text-xs text-dimmed italic">
+          <p v-if="!group.capabilities.length" class="text-sm text-muted italic">
             No Capabilities mapped to this Domain.
           </p>
           <div v-else class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             <article
               v-for="capability in group.capabilities"
               :key="capability.id"
-              class="cursor-pointer rounded-xl border border-default bg-elevated/30 p-4 transition hover:border-accented hover:bg-elevated/60"
+              class="cursor-pointer rounded-xl border border-default bg-default p-4 transition hover:border-accented"
               @click="open(capability)"
             >
               <div class="flex items-center gap-2">
                 <BlrKind kind="capability" :labelled="false" />
-                <h3 class="text-sm font-medium text-highlighted">{{ capability.title }}</h3>
+                <h3 class="min-w-0 flex-1 truncate text-base font-semibold tracking-tight text-highlighted">{{ capability.title }}</h3>
               </div>
-              <p class="mt-1.5 text-xs leading-relaxed text-dimmed">{{ firstSentence(capability.lead, 180) }}</p>
+              <p class="mt-1.5 text-sm leading-6 text-muted">{{ firstSentence(capability.lead, 180) }}</p>
               <div class="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1" title="Derived from authored relations">
-                <BlrKind kind="journey" :count="capability.journeyIds.length" size="xs" />
-                <BlrKind kind="screen" :count="capability.screenIds.length" size="xs" />
-                <BlrKind kind="rule" :count="capability.ruleIds.length" size="xs" />
+                <BlrKind kind="journey" :count="capability.journeyIds.length" />
+                <BlrKind kind="screen" :count="capability.screenIds.length" />
+                <BlrKind kind="rule" :count="capability.ruleIds.length" />
               </div>
               <div class="mt-2 flex flex-wrap gap-1">
-                <span v-for="pair in capability.availability" :key="pair.key" class="rounded-full border border-default px-2 py-0.5 text-[10px] text-dimmed">
+                <span v-for="pair in capability.availability" :key="pair.key" class="rounded-full border border-default px-2 py-0.5 text-xs text-dimmed">
                   {{ pairLabel(pair) }}
                 </span>
               </div>
@@ -1035,17 +1053,17 @@ const accessContexts = computed<AccessContextCard[]>(() => [
           </div>
         </section>
 
-        <section v-for="matrix in matrices" :key="matrix.id" class="space-y-2">
-          <div>
-            <h3 class="text-sm font-medium text-highlighted">{{ matrix.question }}</h3>
-            <p class="text-xs text-dimmed">{{ matrix.note }} Click a filled cell for the relationship.</p>
-          </div>
-          <div class="overflow-x-auto rounded-lg border border-default">
+        <section v-for="matrix in matrices" :key="matrix.id" class="space-y-3">
+          <header>
+            <h3 class="text-base font-semibold tracking-tight text-highlighted">{{ matrix.question }}</h3>
+            <p class="text-sm text-muted">{{ matrix.note }} Click a filled cell for the relationship.</p>
+          </header>
+          <div class="overflow-x-auto rounded-xl border border-default bg-default">
             <table class="blx-matrix">
               <thead>
                 <tr>
                   <th class="blx-row-head">
-                    <span class="font-mono text-[10px] tracking-[0.1em] text-dimmed uppercase">Capability</span>
+                    <span class="blr-field">Capability</span>
                   </th>
                   <th v-for="column in matrix.columns" :key="column.id" class="blx-col-head" :title="column.title">
                     <span class="blx-col-label">{{ column.title }}</span>
@@ -1055,8 +1073,8 @@ const accessContexts = computed<AccessContextCard[]>(() => [
               <tbody>
                 <tr v-for="capability in workspace.capabilities" :key="capability.id">
                   <th class="blx-row-head">
-                    <button type="button" class="flex items-center gap-1.5 text-xs text-toned hover:text-highlighted" @click="open(capability)">
-                      <BlrKind kind="capability" :labelled="false" size="xs" />
+                    <button type="button" class="flex items-center gap-1.5 text-sm text-muted transition hover:text-highlighted" @click="open(capability)">
+                      <BlrKind kind="capability" :labelled="false" />
                       <span class="max-w-44 truncate">{{ capability.title }}</span>
                     </button>
                   </th>
@@ -1078,9 +1096,10 @@ const accessContexts = computed<AccessContextCard[]>(() => [
           </div>
           <div
             v-if="cellExplanation && cellExplanation.matrixId === matrix.id"
-            class="flex flex-wrap items-center gap-2 rounded-lg border border-default bg-elevated/40 px-3 py-2"
+            class="flex flex-wrap items-center gap-2 rounded-xl border border-default bg-default px-4 py-3"
           >
-            <p class="text-xs text-toned">{{ cellExplanation.text }}</p>
+            <UIcon name="i-lucide-corner-down-right" class="size-3.5 shrink-0 text-dimmed" />
+            <p class="min-w-0 flex-1 text-sm text-default">{{ cellExplanation.text }}</p>
             <UButton size="xs" color="neutral" variant="outline" :label="`Open ${cellExplanation.capTitle}`" @click="open(cellExplanation.capId)" />
             <UButton size="xs" color="neutral" variant="outline" :label="`Open ${cellExplanation.colTitle}`" @click="open(cellExplanation.colEntityId)" />
             <UButton icon="i-lucide-x" size="xs" color="neutral" variant="ghost" class="ms-auto" @click="matrixCell = null" />
@@ -1092,45 +1111,44 @@ const accessContexts = computed<AccessContextCard[]>(() => [
     <!-- CONSTRAINTS: rule impact -->
     <div v-else-if="view === 'constraints'" class="blr-pane flex-1">
       <div class="mx-auto w-full max-w-4xl space-y-5 px-4 py-5 sm:px-6">
-        <p v-if="!workspace.rules.length" class="rounded-lg border border-dashed border-default p-6 text-center text-sm text-dimmed">
+        <p v-if="!workspace.rules.length" class="rounded-lg border border-dashed border-default p-6 text-center text-sm text-muted">
           This model declares no Business rules.
         </p>
         <template v-else>
           <div class="flex flex-wrap gap-1.5">
-            <button
+            <UButton
               v-for="rule in workspace.rules"
               :key="rule.id"
-              type="button"
-              class="blx-tab"
-              :data-on="currentRule?.id === rule.id"
+              :label="rule.title"
+              :color="currentRule?.id === rule.id ? 'primary' : 'neutral'"
+              :variant="currentRule?.id === rule.id ? 'soft' : 'outline'"
+              size="xs"
+              class="rounded-full"
               @click="currentRuleId = rule.id"
-            >
-              <BlrKind kind="rule" :labelled="false" size="xs" />
-              {{ rule.title }}
-            </button>
+            />
           </div>
 
           <template v-if="currentRule">
             <header class="space-y-3">
               <div class="flex flex-wrap items-center gap-2">
                 <BlrKind kind="rule" />
-                <h2 class="text-xl tracking-tight text-highlighted">{{ currentRule.title }}</h2>
+                <h2 class="text-xl font-semibold tracking-tight text-highlighted">{{ currentRule.title }}</h2>
                 <UButton icon="i-lucide-compass" color="neutral" variant="outline" size="xs" label="Open impact map" class="ms-auto" title="Open in Explore — full content plus the contextual topology" @click="open(currentRule)" />
               </div>
-              <div class="rounded-xl border-s-2 border-primary bg-elevated/40 p-4">
+              <div class="rounded-lg border-s-2 border-primary bg-default p-3.5">
                 <BlrProse :text="currentRule.statement" size="base" />
               </div>
               <section v-if="currentRule.rationale" class="space-y-1.5">
-                <h4 class="font-mono text-[10px] tracking-[0.12em] text-dimmed uppercase">Rationale</h4>
+                <h4 class="blr-field">Rationale</h4>
                 <BlrProse :text="currentRule.rationale" />
               </section>
             </header>
 
             <section class="space-y-2">
-              <h3 class="font-mono text-[10px] tracking-[0.12em] text-dimmed uppercase">
-                Directly attached to · {{ ruleDirect.length }}
+              <h3 class="text-base font-semibold tracking-tight text-highlighted">
+                Directly attached to <span class="blr-meta ms-1">{{ ruleDirect.length }}</span>
               </h3>
-              <p v-if="!ruleDirect.length" class="text-xs text-dimmed italic">
+              <p v-if="!ruleDirect.length" class="text-sm text-muted italic">
                 This Rule names no direct attachments.
               </p>
               <div v-else class="flex flex-wrap gap-1.5">
@@ -1141,21 +1159,21 @@ const accessContexts = computed<AccessContextCard[]>(() => [
                   class="blx-chip blx-direct"
                   @click="open(entity)"
                 >
-                  <BlrKind :kind="entity.kind" :labelled="false" size="xs" />
+                  <BlrKind :kind="entity.kind" :labelled="false" />
                   {{ entity.title }}
                 </button>
               </div>
             </section>
 
             <section class="space-y-3">
-              <h3 class="font-mono text-[10px] tracking-[0.12em] text-dimmed uppercase">
-                Derived reach — dashed means implied, not authored
+              <h3 class="text-base font-semibold tracking-tight text-highlighted">
+                Derived reach <span class="text-sm font-normal text-muted">— dashed means implied, not authored</span>
               </h3>
-              <p v-if="!ruleDerived.length" class="text-xs text-dimmed italic">
+              <p v-if="!ruleDerived.length" class="text-sm text-muted italic">
                 No further reach derives from the direct attachments.
               </p>
               <div v-for="group in ruleDerived" :key="group.label" class="space-y-1.5">
-                <p class="text-[11px] text-dimmed">{{ group.label }}</p>
+                <p class="blr-field">{{ group.label }}</p>
                 <div class="flex flex-wrap gap-1.5">
                   <button
                     v-for="entity in group.entities"
@@ -1164,7 +1182,7 @@ const accessContexts = computed<AccessContextCard[]>(() => [
                     class="blx-chip blx-derived"
                     @click="open(entity)"
                   >
-                    <BlrKind :kind="entity.kind" :labelled="false" size="xs" />
+                    <BlrKind :kind="entity.kind" :labelled="false" />
                     {{ entity.title }}
                   </button>
                 </div>
@@ -1186,21 +1204,23 @@ const accessContexts = computed<AccessContextCard[]>(() => [
       <div class="mx-auto w-full max-w-6xl space-y-8 px-4 py-5 sm:px-6">
         <section class="space-y-3">
           <div>
-            <h2 class="text-sm font-medium text-highlighted">Actors · {{ workspace.actors.length }}</h2>
-            <p class="text-xs text-dimmed">Who the Product serves, and where each one gets in.</p>
+            <h2 class="text-base font-semibold tracking-tight text-highlighted">
+              Actors <span class="blr-meta ms-1">{{ workspace.actors.length }}</span>
+            </h2>
+            <p class="text-sm text-muted">Who the Product serves, and where each one gets in.</p>
           </div>
-          <p v-if="!workspace.actors.length" class="rounded-lg border border-dashed border-default p-6 text-center text-sm text-dimmed">
+          <p v-if="!workspace.actors.length" class="rounded-lg border border-dashed border-default p-6 text-center text-sm text-muted">
             This model declares no Actors.
           </p>
           <div v-else class="grid gap-3 md:grid-cols-2">
-            <article v-for="actor in workspace.actors" :key="actor.id" class="space-y-2.5 rounded-xl border border-default p-4">
+            <article v-for="actor in workspace.actors" :key="actor.id" class="space-y-2.5 rounded-xl border border-default bg-default p-4">
               <div class="flex flex-wrap items-center gap-2">
                 <BlrKind kind="actor" :labelled="false" />
-                <h3 class="text-sm font-medium text-highlighted">{{ actor.title }}</h3>
+                <h3 class="text-base font-semibold tracking-tight text-highlighted">{{ actor.title }}</h3>
                 <UBadge color="neutral" variant="subtle" size="sm">{{ actor.actorKind }} · {{ actor.relationship }}</UBadge>
                 <UButton icon="i-lucide-compass" color="neutral" variant="ghost" size="xs" class="ms-auto" title="Open in Explore" @click="open(actor)" />
               </div>
-              <p class="text-xs leading-relaxed text-dimmed">{{ firstSentence(actor.lead, 220) }}</p>
+              <p class="text-sm leading-6 text-muted">{{ firstSentence(actor.lead, 220) }}</p>
               <div class="space-y-1.5">
                 <BlrLinks :workspace="workspace" :ids="actor.interfaceIds" kind="interface" label="Enters" interactive @select="open($event)" />
                 <BlrLinks :workspace="workspace" :ids="actor.experienceIds" kind="experience" label="Within" interactive @select="open($event)" />
@@ -1212,25 +1232,25 @@ const accessContexts = computed<AccessContextCard[]>(() => [
 
         <section class="space-y-3">
           <div>
-            <h2 class="text-sm font-medium text-highlighted">
-              Access contexts · {{ workspace.interfaces.length + workspace.experiences.length }}
+            <h2 class="text-base font-semibold tracking-tight text-highlighted">
+              Access contexts <span class="blr-meta ms-1">{{ workspace.interfaces.length + workspace.experiences.length }}</span>
             </h2>
-            <p class="text-xs text-dimmed">
+            <p class="text-sm text-muted">
               Interfaces and the Experiences inside them — who enters, where, and what each context makes reachable. Scope counts are derived from authored availability.
             </p>
           </div>
-          <p v-if="!workspace.interfaces.length" class="rounded-lg border border-dashed border-default p-6 text-center text-sm text-dimmed">
+          <p v-if="!workspace.interfaces.length" class="rounded-lg border border-dashed border-default p-6 text-center text-sm text-muted">
             This model declares no Interfaces.
           </p>
           <div v-else class="grid gap-3 lg:grid-cols-2">
-            <article v-for="ctx in accessContexts" :key="ctx.entity.id" class="space-y-2.5 rounded-xl border border-default p-4">
+            <article v-for="ctx in accessContexts" :key="ctx.entity.id" class="space-y-2.5 rounded-xl border border-default bg-default p-4">
               <div class="flex flex-wrap items-center gap-2">
                 <BlrKind :kind="ctx.entity.kind" />
-                <h3 class="text-sm font-medium text-highlighted">{{ ctx.entity.title }}</h3>
+                <h3 class="text-base font-semibold tracking-tight text-highlighted">{{ ctx.entity.title }}</h3>
                 <UBadge v-if="ctx.badge" :color="ctx.badge.color" variant="subtle" size="sm">{{ ctx.badge.label }}</UBadge>
                 <UButton icon="i-lucide-compass" color="neutral" variant="ghost" size="xs" class="ms-auto" title="Open in Explore" @click="open(ctx.entity)" />
               </div>
-              <p class="text-xs leading-relaxed text-dimmed">{{ ctx.lead }}</p>
+              <p class="text-sm leading-6 text-muted">{{ ctx.lead }}</p>
               <div class="space-y-1.5">
                 <BlrLinks
                   v-for="row in ctx.links"
@@ -1245,14 +1265,14 @@ const accessContexts = computed<AccessContextCard[]>(() => [
                 <BlrAvail :pairs="[]" :entry-points="ctx.entryPoints" label="Entry points" />
               </div>
               <div v-if="ctx.boundary" class="space-y-1 border-t border-muted pt-2">
-                <p class="font-mono text-[10px] tracking-[0.1em] text-dimmed uppercase">Capability boundary</p>
-                <p class="text-xs leading-relaxed text-toned">{{ ctx.boundary }}</p>
+                <p class="blr-field">Capability boundary</p>
+                <p class="text-sm leading-6 text-default">{{ ctx.boundary }}</p>
               </div>
               <div class="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-muted pt-2" title="Derived from authored availability">
-                <BlrKind kind="capability" :count="ctx.scope.capabilities" size="xs" />
-                <BlrKind kind="screen" :count="ctx.scope.screens" size="xs" />
-                <BlrKind kind="journey" :count="ctx.scope.journeys" size="xs" />
-                <span class="font-mono text-[10px] text-dimmed">derived scope</span>
+                <BlrKind kind="capability" :count="ctx.scope.capabilities" />
+                <BlrKind kind="screen" :count="ctx.scope.screens" />
+                <BlrKind kind="journey" :count="ctx.scope.journeys" />
+                <span class="blr-meta">derived scope</span>
               </div>
             </article>
           </div>
@@ -1263,36 +1283,6 @@ const accessContexts = computed<AccessContextCard[]>(() => [
 </template>
 
 <style scoped>
-/* The omnibox: the design's one strong focal element. */
-.blx-omni {
-  width: 100%;
-  border: 1px solid var(--ui-border);
-  border-radius: 0.75rem;
-  background: var(--ui-bg-elevated);
-  padding: 0.55rem 2.5rem;
-  font-size: 0.95rem;
-  color: var(--ui-text-highlighted);
-  outline: none;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
-.blx-omni::placeholder { color: var(--ui-text-dimmed); }
-.blx-omni:focus {
-  border-color: color-mix(in srgb, var(--ui-primary) 60%, transparent);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ui-primary) 16%, transparent);
-}
-.blx-kbd {
-  position: absolute;
-  inset-inline-end: 0.7rem;
-  top: 50%;
-  transform: translateY(-50%);
-  border: 1px solid var(--ui-border);
-  border-radius: 0.3rem;
-  padding: 0.05rem 0.4rem;
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  color: var(--ui-text-dimmed);
-}
-
 /* One keyboard-navigable result row. */
 .blx-result {
   display: flex;
@@ -1303,30 +1293,14 @@ const accessContexts = computed<AccessContextCard[]>(() => [
   border-radius: 0.5rem;
   padding: 0.5rem 0.625rem;
   text-align: start;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+.blx-result:hover {
+  background: color-mix(in srgb, var(--ui-bg-elevated) 50%, transparent);
 }
 .blx-result[data-active='true'] {
   border-color: var(--ui-border);
   background: var(--ui-bg-elevated);
-}
-
-/* The quiet pill used for view tabs, mode toggles and overlay chips. */
-.blx-tab {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  white-space: nowrap;
-  border: 1px solid transparent;
-  border-radius: 9999px;
-  padding: 0.3rem 0.7rem;
-  font-size: 0.75rem;
-  color: var(--ui-text-dimmed);
-  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
-}
-.blx-tab:hover { color: var(--ui-text-toned); }
-.blx-tab[data-on='true'] {
-  border-color: var(--ui-border);
-  background: var(--ui-bg-elevated);
-  color: var(--ui-text-highlighted);
 }
 
 /* Rule impact chips: solid = authored attachment, dashed = derived reach. */
@@ -1336,8 +1310,8 @@ const accessContexts = computed<AccessContextCard[]>(() => [
   gap: 0.375rem;
   border-radius: 0.5rem;
   padding: 0.25rem 0.55rem;
-  font-size: 0.75rem;
-  color: var(--ui-text-toned);
+  font-size: var(--text-xs);
+  color: var(--ui-text);
   transition: background 0.15s ease;
 }
 .blx-chip:hover { background: var(--ui-bg-elevated); }
@@ -1348,7 +1322,7 @@ const accessContexts = computed<AccessContextCard[]>(() => [
 .blx-derived { border: 1px dashed var(--ui-border-accented); }
 
 /* Named matrices: sticky row heads, bottom-up column labels, dot cells. */
-.blx-matrix { border-collapse: separate; border-spacing: 0; font-size: 0.75rem; }
+.blx-matrix { border-collapse: separate; border-spacing: 0; }
 .blx-matrix th,
 .blx-matrix td { border-bottom: 1px solid var(--ui-border-muted); }
 .blx-matrix tr:last-child > * { border-bottom: 0; }
@@ -1370,8 +1344,8 @@ const accessContexts = computed<AccessContextCard[]>(() => [
   transform: rotate(180deg);
   white-space: nowrap;
   text-overflow: ellipsis;
-  font-size: 0.7rem;
-  color: var(--ui-text-dimmed);
+  font-size: var(--text-xs);
+  color: var(--ui-text-muted);
 }
 .blx-cell { padding: 0.2rem; text-align: center; }
 .blx-dot {
