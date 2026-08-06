@@ -35,12 +35,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The local viewer bundles the lab: the theme lab bar carries a report row for
   choosing a design and forcing its width to one column, wide, or edge to edge.
 
-### Fixed
-
-- Open the `BL` ligature apart in the generated tab icons, so a browser tab shows
-  two letters instead of one blob at 16px. Only the favicon family is respaced —
-  the logo artwork and the larger app icons keep the ligature as drawn.
-
 ### Changed
 
 - **Breaking.** Folder schema 4 and Product Report v8 make Experiences
@@ -53,6 +47,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   five Capabilities, five Journeys, ten Scenarios, and four Business Rules.
   It remains source-free; a future implementation can attach screenshots as
   external References without changing Product meaning.
+
+## [0.7.2] - 2026-08-05
+
+### Added
+
+- Add `--help` and strict option parsing to the Blueprint catalog publisher so
+  its maintainer-only production flow is discoverable before a credential is
+  configured.
+
+### Fixed
+
+- Open the `BL` ligature apart in the generated tab icons, so a browser tab shows
+  two letters instead of one blob at 16px. Only the favicon family is respaced —
+  the logo artwork and the larger app icons keep the ligature as drawn.
+- Restrict the Blueprint publisher credential to the exact production catalog
+  origin or a loopback development origin, preventing a mistaken `--catalog`
+  value from sending it to an arbitrary HTTPS host.
 
 ## [0.7.1] - 2026-08-04
 
@@ -301,7 +312,8 @@ Initial public launch of the repository.
   `docs/format.md`.
 - Claude plugin manifest and marketplace entry.
 
-[Unreleased]: https://github.com/businesslens/pdd/compare/v0.7.1...HEAD
+[Unreleased]: https://github.com/businesslens/pdd/compare/v0.7.2...HEAD
+[0.7.2]: https://github.com/businesslens/pdd/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/businesslens/pdd/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/businesslens/pdd/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/businesslens/pdd/compare/v0.5.0...v0.6.0
