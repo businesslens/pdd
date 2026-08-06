@@ -632,6 +632,7 @@ const short = (value: string, limit = 22) => (value.length > limit ? `${value.sl
                         @mouseenter="hoverCol = colIndex"
                       >
                         <span class="cg-colhead-text">{{ col.title }}</span>
+                        <span v-if="col.sub" class="cg-colhead-sub blr-meta">{{ col.sub }}</span>
                       </button>
                     </th>
                   </tr>
@@ -1218,8 +1219,14 @@ const short = (value: string, limit = 22) => (value.length > limit ? `${value.sl
 }
 
 /* --- matrix table --- */
+/* The matrix takes the whole pane: the row-head column is fixed and every
+   data column shares the remaining width, so column heads stay horizontal
+   and readable instead of rotating to fit. */
 .cg-table {
   --cg-grid: color-mix(in srgb, var(--ui-border) 60%, transparent);
+  width: 100%;
+  min-width: 44rem;
+  table-layout: fixed;
   border-collapse: separate;
   border-spacing: 0;
 }
@@ -1236,8 +1243,7 @@ const short = (value: string, limit = 22) => (value.length > limit ? `${value.sl
   position: sticky;
   left: 0;
   z-index: 4;
-  min-width: 15rem;
-  max-width: 15rem;
+  width: 16rem;
   padding: 0.5rem 0.75rem;
   border-inline-end: 1px solid var(--ui-border-accented);
   text-align: start;
@@ -1245,28 +1251,36 @@ const short = (value: string, limit = 22) => (value.length > limit ? `${value.sl
 }
 
 .cg-colhead {
-  padding: 0.45rem 0.15rem;
+  padding: 0.6rem 0.6rem;
   vertical-align: bottom;
 }
 
 .cg-colhead-btn {
   display: block;
-  margin-inline: auto;
+  width: 100%;
   cursor: pointer;
+  text-align: center;
 }
 
 .cg-colhead-text {
-  display: block;
-  max-height: 8.5rem;
+  display: -webkit-box;
   overflow: hidden;
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
-  text-overflow: ellipsis;
-  font-size: var(--text-xs);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  font-size: var(--text-sm);
   font-weight: 500;
-  line-height: 1.25;
+  line-height: 1.3;
   color: var(--ui-text);
+  text-wrap: balance;
   transition: color 0.15s ease;
+}
+
+.cg-colhead-sub {
+  display: block;
+  margin-top: 0.15rem;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .cg-colhead.is-hot .cg-colhead-text,
@@ -1278,8 +1292,6 @@ const short = (value: string, limit = 22) => (value.length > limit ? `${value.sl
   position: sticky;
   left: 0;
   z-index: 2;
-  min-width: 15rem;
-  max-width: 15rem;
   padding: 0;
   background: var(--ui-bg);
   border-inline-end: 1px solid var(--ui-border-accented);
@@ -1304,9 +1316,7 @@ const short = (value: string, limit = 22) => (value.length > limit ? `${value.sl
 }
 
 .cg-cell {
-  min-width: 2.75rem;
-  width: 2.75rem;
-  height: 2.5rem;
+  height: 2.75rem;
   padding: 0;
   text-align: center;
   border-bottom: 1px solid var(--cg-grid);
