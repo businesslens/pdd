@@ -87,6 +87,16 @@ export const REPORT_DESIGNS: ReportDesign[] = [
     component: 'BlrTripane'
   },
   {
+    id: 'workbench',
+    name: 'Workbench',
+    tagline: 'Tripane, entity-first: filter, group, drill down',
+    approach: 'The same three zones, one uniform entity surface: cards ⇄ table with filters and group-by on every kind, a Journey → Scenarios drill-down, and ⌘K to reach anything by name.',
+    icon: 'i-lucide-panels-top-left',
+    width: 'full',
+    fills: true,
+    component: 'BlrWorkbench'
+  },
+  {
     id: 'narrative',
     name: 'Narrative',
     tagline: 'One scrolling story from access to constraints',

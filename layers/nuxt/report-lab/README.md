@@ -1,6 +1,6 @@
 # BusinessLens Nuxt Report Lab
 
-An **optional** Nuxt layer that renders one Product Report through eleven
+An **optional** Nuxt layer that renders one Product Report through twelve
 competing designs so a direction can be chosen by looking rather than by
 argument. It is the report-shaped sibling of `theme-lab`: an audition surface,
 not a product surface.
@@ -24,14 +24,17 @@ stable renderer; when a design wins, its parts are promoted into
 
 ## The designs
 
-All eleven start from the conclusions in `REPORT-VISUALIZATION-BRIEF.md`: the
+All twelve start from the conclusions in `REPORT-VISUALIZATION-BRIEF.md`: the
 report is a collection of purpose-built views over one shared model, each view
 answers a named Product question, and topology is contextual rather than the
-home page. Every design contains the four required views — Journey browser
-(cards, table and detail), Screen map, Capability map with named matrices, and
-contextual topology — plus Scenario flows, Business Rule impact and
-access-context views. They differ in information architecture: which question
-comes first, and how a reader moves from overview to one entity.
+home page. Every design renders every entity kind and reaches the same four
+required views — Journey browser (cards, table and detail), Screen map,
+Capability map, and contextual topology — plus Scenario flows, Business Rule
+impact and access-context views. They differ in information architecture:
+which question comes first, and how a reader moves from overview to one
+entity. Workbench is the one deliberate subtraction: it drops the named
+Capability matrices, testing whether uniform filtering and grouping answers
+the same questions with less to read.
 
 | Design | Organising idea |
 | --- | --- |
@@ -39,6 +42,7 @@ comes first, and how a reader moves from overview to one entity.
 | Inquiry | The questions themselves are the navigation; each opens the view built to answer it |
 | Canvas | Scene-based topology with a docked inspector — as graph-forward as the brief allows |
 | Tripane | Nav, working view and inspector always on screen; selection never navigates away |
+| Workbench | Tripane made entity-first: cards ⇄ table with filters and group-by on every kind, Journey → Scenarios drill-down, ⌘K search |
 | Narrative | One scrolling story from access to constraints, detail unfolding inline |
 | Promises | Journeys first; Screens, Capabilities and Rules are reached through the promise they serve |
 | Gateway | The Screen map is the front door; a selected access context scopes every other view |
@@ -48,7 +52,7 @@ comes first, and how a reader moves from overview to one entity.
 | Orbit | The industry sitemap is the home: a top-down tree of Product, contexts and Screens, with a centralized radial drawing a toggle away |
 
 `Shipped` renders the current `BusinessLensReportViewer` unchanged, as the
-baseline to compare against. It is not counted among the eleven experiments.
+baseline to compare against. It is not counted among the twelve experiments.
 
 ## Use
 

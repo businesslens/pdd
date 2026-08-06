@@ -3,9 +3,13 @@
  * The shared entity inspector: a slideover over the working view.
  *
  * Every design opens the same panel for a selected entity, so inspection is
- * one behaviour learned once. It is non-modal — the view behind stays
- * interactive and a new selection re-targets the open panel instead of
- * stacking a second one.
+ * one behaviour learned once: the page dims behind it and a click outside
+ * closes it, which is what a slideover is expected to do.
+ *
+ * It stays non-modal, and the dimming overlay does not take pointer events, so
+ * the one gesture the designs depend on still works: clicking another entity
+ * in the working view re-targets the panel to it rather than forcing a close
+ * and a second click.
  */
 import type { TabsItem } from '@nuxt/ui'
 import type { AnyEntityView, ReportWorkspace } from '../utils/reportWorkspace'
@@ -24,11 +28,33 @@ const emit = defineEmits<{
 /** `detail` is complete authored content; `map` is the contextual topology. */
 const tab = defineModel<'detail' | 'map'>('tab', { default: 'detail' })
 
+/*
+  A click on another entity in the working view is both "outside the panel" and
+  "select this one", and the dismiss arrives around the same moment as the
+  selection. Closing on the spot would drop the incoming selection, so the close
+  is deferred one task and abandoned when the selection has already moved: a
+  click on empty space closes, a click on another entity re-targets, and neither
+  gesture needs a second click.
+*/
+let closingId: string | null = null
+
 const open = computed({
   get: () => props.entity !== null,
   set: (value) => {
-    if (!value) emit('close')
+    if (value) return
+    const id = props.entity?.id ?? null
+    closingId = id
+    setTimeout(() => {
+      if (closingId !== id) return
+      closingId = null
+      if (props.entity && props.entity.id !== id) return
+      emit('close')
+    })
   }
+})
+
+watch(() => props.entity, () => {
+  closingId = null
 })
 
 const TABS: TabsItem[] = [
@@ -37,25 +63,25 @@ const TABS: TabsItem[] = [
 ]
 
 const kindLabel = computed(() => props.entity ? ENTITY_KIND_META[props.entity.kind].label : '')
-
-/* Non-dismissible so a click in the working view re-targets rather than
-   closes; Escape still closes because the panel is transient, not modal. */
-function onKeydown(event: KeyboardEvent) {
-  if (event.key === 'Escape' && props.entity) emit('close')
-}
-
-onMounted(() => window.addEventListener('keydown', onKeydown))
-onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 </script>
 
 <template>
+  <!--
+    Reka only mounts its own overlay for a modal dialog, and a modal one would
+    swallow the click that re-targets the panel. So the dim is ours: same look,
+    no pointer events, painted under the panel (z-40 against the panel's z-50).
+  -->
+  <Teleport to="body">
+    <Transition name="blr-dim">
+      <div v-if="entity" class="blr-dim" aria-hidden="true" />
+    </Transition>
+  </Teleport>
+
   <USlideover
     v-model:open="open"
-    :overlay="false"
     :modal="false"
-    :dismissible="false"
     :ui="{
-      content: 'w-full max-w-md sm:max-w-lg',
+      content: 'z-50 w-full max-w-md sm:max-w-lg',
       body: tab === 'map' ? 'p-0 sm:p-0' : undefined
     }"
   >
@@ -105,3 +131,26 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
     </template>
   </USlideover>
 </template>
+
+<style scoped>
+/* Same wash Nuxt UI's own overlay uses (`bg-elevated/75`), so the panel reads
+   as a standard slideover in both colour modes. */
+.blr-dim {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--ui-bg-elevated) 75%, transparent);
+}
+
+/* Matched to the slideover's own 200ms slide, so panel and dim arrive together. */
+.blr-dim-enter-active,
+.blr-dim-leave-active {
+  transition: opacity 200ms ease-in-out;
+}
+
+.blr-dim-enter-from,
+.blr-dim-leave-to {
+  opacity: 0;
+}
+</style>

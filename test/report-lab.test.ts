@@ -4,12 +4,13 @@ import { describe, expect, it } from 'vitest'
 
 const LAB = join(__dirname, '..', 'layers', 'nuxt', 'report-lab')
 
-/** The eleven brief-driven designs currently on audition. */
+/** The twelve brief-driven designs currently on audition. */
 const DESIGNS = [
   ['meridian', 'BlrMeridian'],
   ['inquiry', 'BlrInquiry'],
   ['canvas', 'BlrCanvas'],
   ['tripane', 'BlrTripane'],
+  ['workbench', 'BlrWorkbench'],
   ['narrative', 'BlrNarrative'],
   ['promises', 'BlrPromises'],
   ['gateway', 'BlrGateway'],
@@ -52,7 +53,7 @@ function source(path: string): string {
 }
 
 describe('report-lab brief-driven designs', () => {
-  it('registers the eleven designs beside the shipped baseline', () => {
+  it('registers the twelve designs beside the shipped baseline', () => {
     const designs = source('app/utils/reportDesigns.ts')
     const renderer = source('app/components/BusinessLensReportLab.vue')
 

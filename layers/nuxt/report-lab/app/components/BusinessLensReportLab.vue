@@ -23,6 +23,7 @@ const DESIGN_COMPONENTS: Record<string, Component> = {
   BlrInquiry: defineAsyncComponent(() => import('./BlrInquiry.vue')),
   BlrCanvas: defineAsyncComponent(() => import('./BlrCanvas.vue')),
   BlrTripane: defineAsyncComponent(() => import('./BlrTripane.vue')),
+  BlrWorkbench: defineAsyncComponent(() => import('./BlrWorkbench.vue')),
   BlrNarrative: defineAsyncComponent(() => import('./BlrNarrative.vue')),
   BlrPromises: defineAsyncComponent(() => import('./BlrPromises.vue')),
   BlrGateway: defineAsyncComponent(() => import('./BlrGateway.vue')),
