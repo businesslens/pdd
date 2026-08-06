@@ -12,13 +12,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A new Learn from examples documentation group, beginning with a guided
   Content Feed Reader walkthrough that traces two complete Actor paths and
   explains why each optional entity earns its place.
-- `businesslens/nuxt/report-lab`, an optional Nuxt layer that auditions ten
+- `businesslens/nuxt/report-lab`, an optional Nuxt layer that auditions eleven
   different Product Report designs against the same model, each built from the
   conclusions in its visualization brief: purpose-built views over one shared
   projection, contextual topology instead of a universal graph, and complete
   entity content behind progressive disclosure. The set — Meridian, Inquiry,
-  Canvas, Tripane, Narrative, Promises, Gateway, Crossgrid, Beacon and
-  Panorama — differs in information architecture, not styling: each makes a
+  Canvas, Tripane, Narrative, Promises, Gateway, Crossgrid, Beacon, Panorama
+  and Orbit — differs in information architecture, not styling: each makes a
   different Product question primary while rendering every entity kind,
   availability, entry points, screen states, scenario steps, decision points,
   edge cases, references, supporting content, coverage, and the backlinks the
@@ -26,7 +26,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A shared Vue Flow foundation in the same layer (`@vue-flow/core` with a
   `@dagrejs/dagre` layered layout, both optional peer dependencies): one
   entity box and one container box for all nine kinds, a fixed relation-verb
-  vocabulary, a measured Interface → Experience → Screen containment map, and
+  vocabulary, a measured Interface → Experience → Screen containment map, a
+  sitemap of the same hierarchy drawn either as a top-down tree or radially
+  from the Product core, and
   `BlrTopology` — the contextual neighbourhood graph with intentional
   expansion, kind filtering that fades rather than removes, re-rooting with a
   back trail, and a plain-words explanation of the selected entity.

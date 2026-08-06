@@ -69,6 +69,8 @@ export default defineNuxtConfig({
         'lucide:minimize-2',
         'lucide:monitor',
         'lucide:mouse-pointer-click',
+        'lucide:network',
+        'lucide:orbit',
         'lucide:package',
         'lucide:panel-right',
         'lucide:panel-top',

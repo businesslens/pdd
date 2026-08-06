@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest'
 
 const LAB = join(__dirname, '..', 'layers', 'nuxt', 'report-lab')
 
-/** The ten brief-driven designs currently on audition. */
+/** The eleven brief-driven designs currently on audition. */
 const DESIGNS = [
   ['meridian', 'BlrMeridian'],
   ['inquiry', 'BlrInquiry'],
@@ -15,7 +15,8 @@ const DESIGNS = [
   ['gateway', 'BlrGateway'],
   ['crossgrid', 'BlrCrossgrid'],
   ['beacon', 'BlrBeacon'],
-  ['panorama', 'BlrPanorama']
+  ['panorama', 'BlrPanorama'],
+  ['orbit', 'BlrOrbit']
 ] as const
 
 /** Retired experiments must stay deleted, not linger half-registered. */
@@ -51,7 +52,7 @@ function source(path: string): string {
 }
 
 describe('report-lab brief-driven designs', () => {
-  it('registers the ten designs beside the shipped baseline', () => {
+  it('registers the eleven designs beside the shipped baseline', () => {
     const designs = source('app/utils/reportDesigns.ts')
     const renderer = source('app/components/BusinessLensReportLab.vue')
 
@@ -84,6 +85,8 @@ describe('report-lab brief-driven designs', () => {
     expect(flow).toContain('export function buildNeighbourhood')
     expect(flow).toContain('export function layoutFlow')
     expect(flow).toContain('export function buildScreenMap')
+    expect(flow).toContain('export function buildSitemapTree')
+    expect(flow).toContain('export function buildRadialSitemap')
 
     const topology = source('app/components/BlrTopology.vue')
     expect(topology).toContain('buildNeighbourhood')

@@ -28,7 +28,8 @@ const DESIGN_COMPONENTS: Record<string, Component> = {
   BlrGateway: defineAsyncComponent(() => import('./BlrGateway.vue')),
   BlrCrossgrid: defineAsyncComponent(() => import('./BlrCrossgrid.vue')),
   BlrBeacon: defineAsyncComponent(() => import('./BlrBeacon.vue')),
-  BlrPanorama: defineAsyncComponent(() => import('./BlrPanorama.vue'))
+  BlrPanorama: defineAsyncComponent(() => import('./BlrPanorama.vue')),
+  BlrOrbit: defineAsyncComponent(() => import('./BlrOrbit.vue'))
 }
 
 const props = defineProps<{

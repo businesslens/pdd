@@ -1,6 +1,6 @@
 # BusinessLens Nuxt Report Lab
 
-An **optional** Nuxt layer that renders one Product Report through ten
+An **optional** Nuxt layer that renders one Product Report through eleven
 competing designs so a direction can be chosen by looking rather than by
 argument. It is the report-shaped sibling of `theme-lab`: an audition surface,
 not a product surface.
@@ -24,7 +24,7 @@ stable renderer; when a design wins, its parts are promoted into
 
 ## The designs
 
-All ten start from the conclusions in `REPORT-VISUALIZATION-BRIEF.md`: the
+All eleven start from the conclusions in `REPORT-VISUALIZATION-BRIEF.md`: the
 report is a collection of purpose-built views over one shared model, each view
 answers a named Product question, and topology is contextual rather than the
 home page. Every design contains the four required views — Journey browser
@@ -45,9 +45,10 @@ comes first, and how a reader moves from overview to one entity.
 | Crossgrid | Named matrices are the spine; each answers one written question |
 | Beacon | Search-first explorer; any entity in two keystrokes, views as tabs |
 | Panorama | A wall of live view tiles, each expandable to the whole surface |
+| Orbit | The industry sitemap is the home: a top-down tree of Product, contexts and Screens, with a centralized radial drawing a toggle away |
 
 `Shipped` renders the current `BusinessLensReportViewer` unchanged, as the
-baseline to compare against. It is not counted among the ten experiments.
+baseline to compare against. It is not counted among the eleven experiments.
 
 ## Use
 

@@ -51,11 +51,49 @@ onNodeDoubleClick(({ node }) => {
 onPaneClick(() => emit('clear'))
 onNodesInitialized(() => fitView(fitParams.value))
 
-// Refit when the graph's membership changes, not on every emphasis toggle —
-// dim/select only rewrite data, and a stable viewport is what makes the
-// fade-not-remove filtering readable.
-const membershipKey = computed(() => props.nodes.map(node => node.id).sort().join('|'))
-watch(membershipKey, async () => {
+// The canvas is measured before the page settles — the theme lab bar and the
+// surrounding panes mount after the flow, which strands the fitted viewport.
+// Refit on every observed size, including the first (the initial fit may
+// already be stale by the time the observer attaches), then once more after
+// the animation, because a fit started mid-settle measures mid-settle. Any
+// newer resize cancels both.
+const shellEl = ref<HTMLElement | null>(null)
+watch(shellEl, (el, _previous, onCleanup) => {
+  if (!el || typeof ResizeObserver === 'undefined') return
+  let lastWidth = -1
+  let lastHeight = -1
+  let timer: ReturnType<typeof setTimeout> | undefined
+  let settleTimer: ReturnType<typeof setTimeout> | undefined
+  const observer = new ResizeObserver(([entry]) => {
+    if (!entry) return
+    const { width, height } = entry.contentRect
+    if (Math.abs(width - lastWidth) < 1 && Math.abs(height - lastHeight) < 1) return
+    lastWidth = width
+    lastHeight = height
+    clearTimeout(timer)
+    clearTimeout(settleTimer)
+    timer = setTimeout(() => {
+      fitView(fitParams.value)
+      settleTimer = setTimeout(() => fitView(fitParams.value), 500)
+    }, 120)
+  })
+  observer.observe(el)
+  onCleanup(() => {
+    observer.disconnect()
+    clearTimeout(timer)
+    clearTimeout(settleTimer)
+  })
+}, { immediate: true })
+
+// Refit when the graph's membership or layout changes, not on every emphasis
+// toggle — dim/select only rewrite data, and a stable viewport is what makes
+// the fade-not-remove filtering readable. Positions are part of the key so a
+// design switching between two drawings of the same nodes refits too.
+const layoutKey = computed(() => props.nodes
+  .map(node => `${node.id}@${Math.round(node.position.x)},${Math.round(node.position.y)}`)
+  .sort()
+  .join('|'))
+watch(layoutKey, async () => {
   await nextTick()
   requestAnimationFrame(() => fitView(fitParams.value))
 })
@@ -63,36 +101,38 @@ watch(membershipKey, async () => {
 
 <template>
   <ClientOnly>
-    <VueFlow
-      :id="flowId"
-      class="blr-flow"
+    <div ref="shellEl" class="blr-flow-shell">
+      <VueFlow
+        :id="flowId"
+        class="blr-flow"
       :nodes="nodes"
       :edges="edges"
-      :min-zoom="0.12"
-      :max-zoom="2"
-      :nodes-connectable="false"
-      :nodes-draggable="false"
-      :edges-updatable="false"
-      :zoom-on-double-click="false"
-      :prevent-scrolling="true"
-      fit-view-on-init
-    >
-      <template #node-blr="nodeProps">
-        <BlrFlowNode v-bind="(nodeProps as any)" />
-      </template>
-      <template #node-blr-group="nodeProps">
-        <BlrFlowGroup v-bind="(nodeProps as any)" />
-      </template>
-      <Background
-        :gap="30"
-        :size="2"
-        variant="dots"
-        :style="{ backgroundColor: 'transparent' }"
-        pattern-color="var(--blr-flow-dot)"
-      />
-      <Controls v-if="showControls" position="bottom-right" :show-interactive="false" :fit-view-params="fitParams" />
-      <slot />
-    </VueFlow>
+        :min-zoom="0.12"
+        :max-zoom="2"
+        :nodes-connectable="false"
+        :nodes-draggable="false"
+        :edges-updatable="false"
+        :zoom-on-double-click="false"
+        :prevent-scrolling="true"
+        fit-view-on-init
+      >
+        <template #node-blr="nodeProps">
+          <BlrFlowNode v-bind="(nodeProps as any)" />
+        </template>
+        <template #node-blr-group="nodeProps">
+          <BlrFlowGroup v-bind="(nodeProps as any)" />
+        </template>
+        <Background
+          :gap="30"
+          :size="2"
+          variant="dots"
+          :style="{ backgroundColor: 'transparent' }"
+          pattern-color="var(--blr-flow-dot)"
+        />
+        <Controls v-if="showControls" position="bottom-right" :show-interactive="false" :fit-view-params="fitParams" />
+        <slot />
+      </VueFlow>
+    </div>
     <template #fallback>
       <div class="blr-flow blr-flow--loading">
         <span class="blr-field">Drawing map…</span>
@@ -111,6 +151,12 @@ watch(membershipKey, async () => {
   CSS and never wait on a colour-mode ref. Slot 9 (product) reuses slot 0,
   matching slotColor()'s modulo.
 */
+.blr-flow-shell {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
 .blr-flow {
   --blr-slot-0: #2a78d6;
   --blr-slot-1: #eb6834;

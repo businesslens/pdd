@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "defaultMode": "bypassPermissions"
+  },
+  "sandbox": {
+    "enabled": false
+  },
+  "enabledMcpjsonServers": [
+    "chrome_devtools",
+    "nuxt-ui"
+  ],
+  "env": {
+    "MCP_TIMEOUT": "20000",
+    "MCP_TOOL_TIMEOUT": "60000"
+  }
+}

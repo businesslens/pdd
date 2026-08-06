@@ -6,11 +6,27 @@
  * geometry does the state — focused boxes are larger with a standing glow,
  * selection is a ring, and dimming is fade-not-remove so the layout never
  * jumps while a reader filters.
+ *
+ * Besides the default pair, every box carries an invisible handle per side so
+ * the radial sitemap can attach a spoke to whichever side faces the centre.
+ * Edges without a handle id keep binding to the default pair, which renders
+ * first.
  */
 import type { NodeProps } from '@vue-flow/core'
 import { Handle, Position } from '@vue-flow/core'
 import type { FlowNodeData } from '../utils/flowGraph'
 import { ENTITY_KIND_META } from '../utils/reportWorkspace'
+
+const SIDE_HANDLES = [
+  { id: 't-top', type: 'target', position: Position.Top },
+  { id: 't-right', type: 'target', position: Position.Right },
+  { id: 't-bottom', type: 'target', position: Position.Bottom },
+  { id: 't-left', type: 'target', position: Position.Left },
+  { id: 's-top', type: 'source', position: Position.Top },
+  { id: 's-right', type: 'source', position: Position.Right },
+  { id: 's-bottom', type: 'source', position: Position.Bottom },
+  { id: 's-left', type: 'source', position: Position.Left }
+] as const
 
 const props = defineProps<NodeProps<FlowNodeData>>()
 
@@ -40,6 +56,14 @@ const colorVar = computed(() => `var(--blr-slot-${meta.value.slot})`)
       <span v-if="data.count !== null" class="blr-flow-node__count">{{ data.count }}</span>
     </div>
     <Handle type="source" :position="sourcePosition ?? Position.Right" class="blr-flow-handle" />
+    <Handle
+      v-for="side in SIDE_HANDLES"
+      :id="side.id"
+      :key="side.id"
+      :type="side.type"
+      :position="side.position"
+      class="blr-flow-handle blr-flow-handle--side"
+    />
   </div>
 </template>
 
@@ -165,5 +189,11 @@ const colorVar = computed(() => `var(--blr-slot-${meta.value.slot})`)
   min-height: 0 !important;
   border: none !important;
   background: color-mix(in srgb, var(--ui-text-dimmed) 45%, transparent) !important;
+}
+
+/* Spoke anchors for the radial sitemap — geometry only, never drawn. */
+.blr-flow-handle--side {
+  opacity: 0 !important;
+  pointer-events: none !important;
 }
 </style>

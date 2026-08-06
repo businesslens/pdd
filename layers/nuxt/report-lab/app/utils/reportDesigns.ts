@@ -145,6 +145,16 @@ export const REPORT_DESIGNS: ReportDesign[] = [
     width: 'full',
     fills: true,
     component: 'BlrPanorama'
+  },
+  {
+    id: 'orbit',
+    name: 'Orbit',
+    tagline: 'The sitemap is the home — tree or radial',
+    approach: 'The industry sitemap as the hub of the report: a top-down tree by default, a centralized radial drawing a toggle away, and every other view scoped from the map.',
+    icon: 'i-lucide-orbit',
+    width: 'full',
+    fills: true,
+    component: 'BlrOrbit'
   }
 ]
 
