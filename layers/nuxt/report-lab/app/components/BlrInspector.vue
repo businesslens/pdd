@@ -78,7 +78,7 @@ function goBack() {
 
 const TABS: TabsItem[] = [
   { value: 'detail', label: 'Detail', icon: 'i-lucide-book-open' },
-  { value: 'map', label: 'Map', icon: 'i-lucide-waypoints' }
+  { value: 'map', label: 'Neighbourhood', icon: 'i-lucide-waypoints' }
 ]
 
 const kindLabel = computed(() => props.entity ? ENTITY_KIND_META[props.entity.kind].label : '')

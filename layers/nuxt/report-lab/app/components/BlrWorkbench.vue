@@ -14,6 +14,10 @@
  * - a drill-down, only where the model genuinely nests (Journey → Scenarios);
  * - ⌘K, for "I know its name, take me there".
  *
+ * Breadth has one product-level destination: Topology. Its named views answer
+ * fixed questions over several kinds without turning the kind rail into a
+ * view builder or changing what navigation means.
+ *
  * Scenarios have no page of their own here: they are steps of a promise, read
  * inside the Journey that declares them.
  */
@@ -42,7 +46,6 @@ import {
   hasSelections,
   relatedIds
 } from '../utils/entityFacets'
-import { buildRadialSitemap, buildSitemapTree } from '../utils/flowGraph'
 import type { EntityCardVariant } from '../utils/entityCards'
 import { DEFAULT_ENTITY_CARD_VARIANT, ENTITY_CARD_VARIANTS } from '../utils/entityCards'
 import { firstSentence } from '../utils/reportMarkdown'
@@ -59,16 +62,16 @@ const props = defineProps<{ workspace: ReportWorkspace, logoSrc?: string | null 
 /** Scenarios are read inside their Journey, so the rail never lists them. */
 const RAIL_KINDS = REPORT_ENTITY_KINDS.filter(meta => meta.kind !== 'scenario')
 
-type ViewMode = 'cards' | 'table' | 'sitemap'
+type ViewMode = 'cards' | 'table'
+type WorkbenchSection = 'overview' | 'topology' | ReportEntityKind
 
 const activeKind = ref<ReportEntityKind>('product')
+const activeSection = ref<WorkbenchSection>('overview')
 const activeId = ref<string | null>(null)
 const inspected = ref<AnyEntityView | null>(null)
 const inspectorTab = ref<'detail' | 'map'>('detail')
 const searchOpen = ref(false)
 const openJourneyId = ref<string | null>(null)
-const journeyOverlayId = ref<string | null>(null)
-const sitemapLayout = ref<'tree' | 'radial'>('tree')
 const entityCardVariant = ref<EntityCardVariant>(DEFAULT_ENTITY_CARD_VARIANT)
 
 /* Toolbar state is kept per kind: moving to another kind and back returns to
@@ -131,16 +134,10 @@ function facetOptions(kind: ReportEntityKind) {
 const groupOptions = computed(() => facetKinds.value
   .map(kind => ({ label: ENTITY_KIND_META[kind].plural, value: kind })))
 
-const VIEW_MODE_TABS = computed(() => {
-  const tabs = [
-    { value: 'cards', label: 'Cards', icon: 'i-lucide-layout-grid' },
-    { value: 'table', label: 'Table', icon: 'i-lucide-table' }
-  ]
-  if (activeKind.value === 'screen') {
-    tabs.push({ value: 'sitemap', label: 'Sitemap', icon: 'i-lucide-network' })
-  }
-  return tabs
-})
+const VIEW_MODE_TABS = [
+  { value: 'cards', label: 'Cards', icon: 'i-lucide-layout-grid' },
+  { value: 'table', label: 'Table', icon: 'i-lucide-table' }
+]
 
 const kindEntities = computed<AnyEntityView[]>(() => entitiesOfKind(props.workspace, activeKind.value))
 
@@ -171,10 +168,18 @@ const openJourney = computed<JourneyView | null>(() => {
 const openJourneyScenarios = computed<ScenarioView[]>(() =>
   openJourney.value ? props.workspace.scenariosByJourney.get(openJourney.value.id) ?? [] : [])
 
-const showToolbar = computed(() => activeKind.value !== 'product' && !openJourney.value)
+const topologyActive = computed(() => activeSection.value === 'topology')
+const showToolbar = computed(() => activeKind.value !== 'product' && !openJourney.value && !topologyActive.value)
 
 function setKind(kind: ReportEntityKind) {
   activeKind.value = kind
+  activeSection.value = kind === 'product' ? 'overview' : kind
+  activeId.value = null
+  openJourneyId.value = null
+}
+
+function openTopology() {
+  activeSection.value = 'topology'
   activeId.value = null
   openJourneyId.value = null
 }
@@ -209,6 +214,7 @@ function inspectId(id: string) {
 
 function openJourneyPage(journey: JourneyView) {
   activeKind.value = 'journey'
+  activeSection.value = 'journey'
   activeId.value = journey.id
   openJourneyId.value = journey.id
 }
@@ -222,6 +228,7 @@ function onSearchSelect(entity: AnyEntityView) {
     return
   }
   activeKind.value = entity.kind
+  activeSection.value = entity.kind
   activeId.value = entity.id
   openJourneyId.value = entity.kind === 'journey' ? entity.id : null
   inspect(entity)
@@ -401,36 +408,6 @@ const TABLE_NOTE: Partial<Record<ReportEntityKind, string>> = {
   rule: 'Counts are authored attachments; the card view adds the reach derived from them.'
 }
 
-/* ------------------------------------------------------------------ */
-/* Screens: the sitemap, drawn top-down or from the Product core        */
-/* ------------------------------------------------------------------ */
-
-const overlayJourney = computed<JourneyView | null>(() => {
-  if (!journeyOverlayId.value) return null
-  const entity = props.workspace.byId.get(journeyOverlayId.value)
-  return entity?.kind === 'journey' ? entity : null
-})
-
-const SITEMAP_TABS = [
-  { value: 'tree', label: 'Tree', icon: 'i-lucide-network' },
-  { value: 'radial', label: 'Radial', icon: 'i-lucide-orbit' }
-]
-
-const sitemap = computed(() => {
-  const build = sitemapLayout.value === 'tree' ? buildSitemapTree : buildRadialSitemap
-  const emphasize = overlayJourney.value
-    ? new Set(overlayJourney.value.screenIds)
-    : (filtersActive.value ? new Set(visibleEntities.value.map(entity => entity.id)) : null)
-  return build(props.workspace, {
-    emphasizeScreenIds: emphasize,
-    selectedId: inspected.value?.id ?? null
-  })
-})
-
-function toggleOverlay(journeyId: string) {
-  journeyOverlayId.value = journeyOverlayId.value === journeyId ? null : journeyId
-}
-
 /** Scenarios whose Journey is not in the model would otherwise be unreachable. */
 const orphanScenarios = computed(() => props.workspace.scenarios
   .filter(scenario => !props.workspace.byId.has(scenario.journeyId)))
@@ -516,6 +493,12 @@ const sections = reactive({ about: false, coverage: false, counts: false, refere
         <UIcon name="i-lucide-chevron-right" class="size-3.5 shrink-0 text-dimmed" />
         <span class="min-w-0 truncate text-sm font-medium text-highlighted">{{ openJourney.title }}</span>
       </template>
+      <template v-else-if="topologyActive">
+        <span class="blr-eyebrow inline-flex shrink-0 items-center gap-1.5">
+          <UIcon name="i-lucide-waypoints" class="size-3.5" style="color: var(--blr-slot-9)" />
+          Topology
+        </span>
+      </template>
       <template v-else>
         <span class="blr-eyebrow inline-flex shrink-0 items-center gap-1.5">
           <UIcon :name="activeMeta.icon" class="size-3.5" :style="{ color: `var(--blr-slot-${activeMeta.slot})` }" />
@@ -552,14 +535,15 @@ const sections = reactive({ about: false, coverage: false, counts: false, refere
     </header>
 
     <div class="flex min-h-0 flex-1">
-      <!-- LEFT: the kind switcher, and nothing else — the entities themselves
-           are the working view, and ⌘K reaches any one of them by name. -->
+      <!-- LEFT: stable navigation. Topology is a destination, never a mode
+           that silently changes these kind rows into filters. -->
       <nav class="blr-pane w-64 shrink-0 border-e border-default">
         <div class="p-2">
+          <p class="blr-navgroup">Explore</p>
           <button
             type="button"
             class="blr-navitem"
-            :data-current="activeKind === 'product'"
+            :data-current="activeSection === 'overview'"
             :style="{ '--kind-color': 'var(--blr-slot-9)' }"
             @click="setKind('product')"
           >
@@ -567,11 +551,23 @@ const sections = reactive({ about: false, coverage: false, counts: false, refere
             <span class="flex-1 truncate text-start">Overview</span>
           </button>
           <button
+            type="button"
+            class="blr-navitem"
+            :data-current="topologyActive"
+            :style="{ '--kind-color': 'var(--blr-slot-9)' }"
+            @click="openTopology"
+          >
+            <UIcon name="i-lucide-waypoints" class="size-4 shrink-0" style="color: var(--blr-slot-9)" />
+            <span class="flex-1 truncate text-start">Topology</span>
+          </button>
+
+          <p class="blr-navgroup mt-3">Browse</p>
+          <button
             v-for="meta in RAIL_KINDS"
             :key="meta.kind"
             type="button"
             class="blr-navitem"
-            :data-current="activeKind === meta.kind"
+            :data-current="activeSection === meta.kind"
             :style="{ '--kind-color': `var(--blr-slot-${meta.slot})` }"
             @click="setKind(meta.kind)"
           >
@@ -673,49 +669,14 @@ const sections = reactive({ about: false, coverage: false, counts: false, refere
           </span>
         </div>
 
-        <!-- Screens, sitemap mode: the map fills the pane. -->
-        <div v-if="activeKind === 'screen' && viewMode === 'sitemap'" class="flex min-h-0 flex-1 flex-col">
-          <div class="flex shrink-0 flex-wrap items-center gap-1.5 border-b border-default px-4 py-2">
-            <UTabs
-              v-model="sitemapLayout"
-              :items="SITEMAP_TABS"
-              :content="false"
-              color="neutral"
-              size="xs"
-            />
-            <template v-if="workspace.journeys.length">
-              <span class="blr-field ms-2 me-1">Journey overlay</span>
-              <UButton
-                v-for="journey in workspace.journeys"
-                :key="journey.id"
-                :label="journey.title"
-                :color="journeyOverlayId === journey.id ? 'primary' : 'neutral'"
-                :variant="journeyOverlayId === journey.id ? 'soft' : 'outline'"
-                size="xs"
-                class="rounded-full"
-                :title="`Fade Screens outside “${journey.title}”`"
-                @click="toggleOverlay(journey.id)"
-              />
-              <UButton v-if="journeyOverlayId" icon="i-lucide-x" color="neutral" variant="ghost" size="xs" label="Clear" @click="journeyOverlayId = null" />
-            </template>
-            <span v-if="overlayJourney" class="text-xs text-muted">
-              {{ overlayJourney.screenIds.length }} Screens participate (derived)
-            </span>
-            <span v-else-if="filtersActive" class="text-xs text-muted">
-              {{ visibleEntities.length }} Screens match the filters and are drawn solid
-            </span>
-          </div>
-          <div v-if="workspace.interfaces.length" class="min-h-0 flex-1">
-            <BlrFlowCanvas
-              :nodes="sitemap.nodes"
-              :edges="sitemap.edges"
-              @select="inspectId"
-              @clear="inspected = null"
-            />
-          </div>
-          <p v-else class="p-6 text-sm text-muted italic">
-            This model declares no Interfaces, so there is no visible surface to map.
-          </p>
+        <!-- Product-level breadth: all named topology views share one canvas. -->
+        <div v-if="topologyActive" class="min-h-0 flex-1">
+          <BlrProductTopology
+            :workspace="workspace"
+            :selected-id="inspected?.id ?? null"
+            @select="inspect"
+            @clear="inspected = null"
+          />
         </div>
 
         <div v-else class="blr-pane flex-1 p-5">
@@ -1114,6 +1075,16 @@ const sections = reactive({ about: false, coverage: false, counts: false, refere
 }
 
 /* Left rail: kind switcher rows */
+.blr-navgroup {
+  padding: 0.4rem 0.625rem 0.25rem;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ui-text-dimmed);
+}
+
 .blr-navitem {
   display: flex;
   align-items: center;

@@ -10,7 +10,7 @@
 import { VueFlow, useVueFlow } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
-import type { BlrFlowEdge, BlrFlowNode, FlowGroupData, FlowNodeData } from '../utils/flowGraph'
+import type { BlrFlowEdge, BlrFlowNode, FlowGroupData, FlowLabelData, FlowNodeData } from '../utils/flowGraph'
 
 const props = withDefaults(defineProps<{
   nodes: BlrFlowNode[]
@@ -33,10 +33,20 @@ const emit = defineEmits<{
   focus: [entityId: string]
   /** The empty canvas was clicked. */
   clear: []
+  /** An entity box was entered or left; synthetic chrome emits null. */
+  hover: [entityId: string | null]
 }>()
 
 const flowId = useId()
-const { fitView, onNodeClick, onNodeDoubleClick, onPaneClick, onNodesInitialized } = useVueFlow(flowId)
+const {
+  fitView,
+  onNodeClick,
+  onNodeDoubleClick,
+  onNodeMouseEnter,
+  onNodeMouseLeave,
+  onPaneClick,
+  onNodesInitialized
+} = useVueFlow(flowId)
 
 const fitParams = computed(() => ({ padding: props.fitPadding, maxZoom: props.maxZoom, duration: 240 }))
 
@@ -48,6 +58,11 @@ onNodeDoubleClick(({ node }) => {
   const data = node.data as FlowNodeData | FlowGroupData
   if (data?.entityId) emit('focus', data.entityId)
 })
+onNodeMouseEnter(({ node }) => {
+  const data = node.data as FlowNodeData | FlowGroupData | FlowLabelData
+  emit('hover', data?.entityId || null)
+})
+onNodeMouseLeave(() => emit('hover', null))
 onPaneClick(() => emit('clear'))
 onNodesInitialized(() => fitView(fitParams.value))
 
@@ -121,6 +136,9 @@ watch(layoutKey, async () => {
         </template>
         <template #node-blr-group="nodeProps">
           <BlrFlowGroup v-bind="(nodeProps as any)" />
+        </template>
+        <template #node-blr-label="nodeProps">
+          <BlrFlowLabel v-bind="(nodeProps as any)" />
         </template>
         <Background
           :gap="30"
@@ -205,6 +223,10 @@ watch(layoutKey, async () => {
 
 .blr-flow .vue-flow__node-blr-group {
   z-index: 1 !important;
+}
+
+.blr-flow .vue-flow__node-blr-label {
+  z-index: 20 !important;
 }
 
 /* Edges never intercept the pointer — boxes are the interaction surface. */

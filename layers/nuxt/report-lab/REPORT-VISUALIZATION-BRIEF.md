@@ -76,6 +76,13 @@ For example:
 The graph should explain one relationship question at a time. It should not
 attempt to prove that the entire model is connected.
 
+A product-level topology can still be an orientation destination when it is a
+collection of named, preconfigured readings rather than one universal graph or
+a view builder. Each reading must state its question and derivation. An
+"Everything" reading may expose the complete resolved web, but its edges stay
+latent until selection makes one neighbourhood meaningful. It is an entry
+point for finding a question, not a replacement for the purpose-built views.
+
 ### 4. Different relationships need different visual forms
 
 Not every relationship should be drawn as nodes and edges.
@@ -169,6 +176,7 @@ entity at once.
 At minimum, it should support:
 
 - A deliberately limited overview
+- Named views whose question and derivation are visible
 - Entity selection
 - Contextual expansion
 - Relationship filtering

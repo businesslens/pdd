@@ -46,7 +46,15 @@ export interface FlowGroupData {
   emptyNote: string
 }
 
-export type BlrFlowNode = Node<FlowNodeData | FlowGroupData>
+/** Non-interactive shelf or column caption used by designed topology views. */
+export interface FlowLabelData {
+  entityId: ''
+  kind: ReportEntityKind
+  label: string
+  count: number
+}
+
+export type BlrFlowNode = Node<FlowNodeData | FlowGroupData | FlowLabelData>
 export type BlrFlowEdge = Edge
 
 export const FLOW_NODE_WIDTH = 208
@@ -67,7 +75,7 @@ export interface FlowGraphShape {
   edges: BlrFlowEdge[]
 }
 
-function entityNode(
+export function entityNode(
   entity: AnyEntityView,
   options: { focus?: boolean, dimmed?: boolean, selected?: boolean, count?: number | null } = {}
 ): BlrFlowNode {
@@ -105,7 +113,10 @@ export function kindSlot(kind: ReportEntityKind): number {
   return ENTITY_KIND_META[kind].slot
 }
 
-export function relationEdge(relation: FlowRelation, options: { dimmed?: boolean, emphasized?: boolean } = {}): BlrFlowEdge {
+export function relationEdge(
+  relation: FlowRelation,
+  options: { dimmed?: boolean, emphasized?: boolean, minlen?: number } = {}
+): BlrFlowEdge {
   const dimmed = options.dimmed ?? false
   const emphasized = options.emphasized ?? false
   return {
@@ -123,6 +134,7 @@ export function relationEdge(relation: FlowRelation, options: { dimmed?: boolean
       height: 16,
       color: 'var(--blr-flow-edge-marker)'
     },
+    data: options.minlen ? { minlen: options.minlen } : undefined,
     style: {
       stroke: emphasized ? 'var(--blr-flow-edge-emphasis)' : 'var(--blr-flow-edge)',
       strokeWidth: emphasized ? 2 : 1.4,
@@ -334,7 +346,10 @@ export function layoutFlow(shape: FlowGraphShape, options: LayoutOptions = {}): 
   }
   for (const edge of shape.edges) {
     if (graph.hasNode(edge.source) && graph.hasNode(edge.target)) {
-      graph.setEdge(edge.source, edge.target, { weight: 1, minlen: 1 })
+      graph.setEdge(edge.source, edge.target, {
+        weight: 1,
+        minlen: Number((edge.data as { minlen?: number } | undefined)?.minlen) || 1
+      })
     }
   }
 

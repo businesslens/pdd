@@ -19,15 +19,17 @@ stable renderer; when a design wins, its parts are promoted into
   every entity kind, every authored field, plus the backlinks the format never
   stores because it records each relation in one direction only.
 - A shared Vue Flow foundation: one node component for every entity kind, a
-  deterministic layered layout, and `BlrTopology` — the contextual
-  neighbourhood graph every design opens from a selected entity.
+  deterministic layered layout, `BlrTopology` for one entity's contextual
+  neighbourhood, and Workbench's named product-level Topology views.
 
 ## The designs
 
 All twelve start from the conclusions in `REPORT-VISUALIZATION-BRIEF.md`: the
-report is a collection of purpose-built views over one shared model, each view
-answers a named Product question, and topology is contextual rather than the
-home page. Every design renders every entity kind and reaches the same four
+report is a collection of purpose-built views over one shared model, and each
+view answers a named Product question. Topology normally remains contextual;
+Workbench also auditions it as an explicit orientation destination made from
+fixed named views rather than a universal graph. Every design renders every
+entity kind and reaches the same four
 required views — Journey browser (cards, table and detail), Screen map,
 Capability map, and contextual topology — plus Scenario flows, Business Rule
 impact and access-context views. They differ in information architecture:
@@ -42,7 +44,7 @@ the same questions with less to read.
 | Inquiry | The questions themselves are the navigation; each opens the view built to answer it |
 | Canvas | Scene-based topology with a docked inspector — as graph-forward as the brief allows |
 | Tripane | Nav, working view and inspector always on screen; selection never navigates away |
-| Workbench | Tripane made entity-first: cards ⇄ table with filters and group-by on every kind, Journey → Scenarios drill-down, ⌘K search |
+| Workbench | Tripane made entity-first: cards ⇄ table, a Journey drill-down, ⌘K search, and seven named Product Topology views |
 | Narrative | One scrolling story from access to constraints, detail unfolding inline |
 | Promises | Journeys first; Screens, Capabilities and Rules are reached through the promise they serve |
 | Gateway | The Screen map is the front door; a selected access context scopes every other view |
@@ -67,6 +69,27 @@ The inspector is the completeness surface. Its wider, sectioned reading keeps
 authored content, access, derived connections, supporting context and references
 distinct, and relation navigation has a back action so exploration does not
 discard the previous entity.
+
+## Named Product Topology views in Workbench
+
+Workbench keeps its left rail as stable navigation: **Overview** and
+**Topology** are product-level destinations, and the entity kinds remain Browse
+destinations. The rail never turns into a topology configurator. The Topology
+surface opens populated on Value flow and offers seven accountable readings:
+
+| View | Question | Semantics |
+| --- | --- | --- |
+| Everything | What is the entire product, all at once? | identity, latent edges |
+| Value flow | Who uses the product to do what, and where does it land? | identity |
+| Access map | How does an Actor reach the product? | identity |
+| Sitemap | What does each Interface contain? | occurrence |
+| Domain anatomy | What is the product made of? | identity + containment |
+| Rule reach | Where is each invariant enforced? | identity |
+| Journey anatomy | How does one goal unfold? | identity + selected Journey |
+
+The inspector's **Neighbourhood** tab remains the local topology for one entity.
+Product Topology answers breadth questions; Neighbourhood answers what directly
+surrounds the selected entity.
 
 ## Use
 

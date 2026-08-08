@@ -89,8 +89,8 @@ export const REPORT_DESIGNS: ReportDesign[] = [
   {
     id: 'workbench',
     name: 'Workbench',
-    tagline: 'Tripane, entity-first: filter, group, drill down',
-    approach: 'The same three zones, one uniform entity surface: cards ⇄ table with filters and group-by on every kind, a Journey → Scenarios drill-down, and ⌘K to reach anything by name.',
+    tagline: 'Entity-first browsing plus named Product Topology',
+    approach: 'Stable Explore and Browse navigation: cards ⇄ table with filters and group-by, a Journey → Scenarios drill-down, ⌘K search, and seven named topology views over the whole model.',
     icon: 'i-lucide-panels-top-left',
     width: 'full',
     fills: true,

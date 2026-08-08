@@ -83,6 +83,7 @@ describe('report-lab brief-driven designs', () => {
   it('shares one Vue Flow foundation across the designs', () => {
     const flow = source('app/utils/flowGraph.ts')
     expect(flow).toContain('export function directRelations')
+    expect(flow).toContain('export function entityNode')
     expect(flow).toContain('export function buildNeighbourhood')
     expect(flow).toContain('export function layoutFlow')
     expect(flow).toContain('export function buildScreenMap')
@@ -98,13 +99,16 @@ describe('report-lab brief-driven designs', () => {
     expect(canvas).toContain('#node-blr')
   })
 
-  it('keeps topology contextual: every design draws graphs through the shared surfaces', () => {
+  it('keeps every graph on the shared surfaces, including Workbench product topology', () => {
     for (const [, component] of DESIGNS) {
       const design = source(`app/components/${component}.vue`)
       const usesSharedFlow = design.includes('BlrTopology') || design.includes('BlrFlowCanvas')
       expect(usesSharedFlow, `${component} should use BlrTopology or BlrFlowCanvas`).toBe(true)
       expect(design.includes('<VueFlow'), `${component} must not mount VueFlow directly`).toBe(false)
     }
+    const workbench = source('app/components/BlrWorkbench.vue')
+    expect(workbench).toContain('<BlrProductTopology')
+    expect(existsSync(join(LAB, 'app', 'components', 'BlrProductTopology.vue'))).toBe(true)
   })
 
   it('auditions one shared card system and keeps completeness in the inspector', () => {
