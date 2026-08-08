@@ -106,4 +106,27 @@ describe('report-lab brief-driven designs', () => {
       expect(design.includes('<VueFlow'), `${component} must not mount VueFlow directly`).toBe(false)
     }
   })
+
+  it('auditions one shared card system and keeps completeness in the inspector', () => {
+    const variants = source('app/utils/entityCards.ts')
+    const workbench = source('app/components/BlrWorkbench.vue')
+    const inspector = source('app/components/BlrInspector.vue')
+
+    for (const variant of ['catalog', 'index', 'editorial']) {
+      expect(variants).toContain(`id: '${variant}'`)
+    }
+    expect(workbench).toContain('v-for="entity in group.entities"')
+    expect(workbench).toContain(':variant="entityCardVariant"')
+    expect(workbench).toContain('<UCollapsible')
+    expect(workbench).toContain('2xl:grid-cols-4')
+    expect(workbench).not.toContain('BlrJourneyCard')
+    expect(inspector).toContain('<BlrInspectorDetail')
+    const card = source('app/components/BlrEntityCard.vue')
+    expect(card).toContain('<UTooltip')
+    expect(card).toContain('ENTITY_KIND_META[metric.kind].icon')
+    expect(card).toContain('v-for="id in metric.ids"')
+    expect(card).toContain('workspace.byId.get(id)?.title')
+    expect(card).toContain('mt-auto block pt-3')
+    expect(existsSync(join(LAB, 'app', 'components', 'BlrInspectorDetail.vue'))).toBe(true)
+  })
 })

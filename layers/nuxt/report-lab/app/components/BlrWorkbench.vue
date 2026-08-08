@@ -24,13 +24,11 @@ import type {
   AnyEntityView,
   AvailabilityPair,
   CapabilityView,
-  DomainView,
   ExperienceView,
   InterfaceView,
   JourneyView,
   ReportEntityKind,
   ReportWorkspace,
-  RuleView,
   ScenarioView,
   ScreenView
 } from '../utils/reportWorkspace'
@@ -45,6 +43,8 @@ import {
   relatedIds
 } from '../utils/entityFacets'
 import { buildRadialSitemap, buildSitemapTree } from '../utils/flowGraph'
+import type { EntityCardVariant } from '../utils/entityCards'
+import { DEFAULT_ENTITY_CARD_VARIANT, ENTITY_CARD_VARIANTS } from '../utils/entityCards'
 import { firstSentence } from '../utils/reportMarkdown'
 
 const UButton = resolveComponent('UButton')
@@ -69,7 +69,7 @@ const searchOpen = ref(false)
 const openJourneyId = ref<string | null>(null)
 const journeyOverlayId = ref<string | null>(null)
 const sitemapLayout = ref<'tree' | 'radial'>('tree')
-const expandedRules = ref<string[]>([])
+const entityCardVariant = ref<EntityCardVariant>(DEFAULT_ENTITY_CARD_VARIANT)
 
 /* Toolbar state is kept per kind: moving to another kind and back returns to
    the shape you left, which is the point of a persistent working view. */
@@ -147,6 +147,13 @@ const kindEntities = computed<AnyEntityView[]>(() => entitiesOfKind(props.worksp
 /** What every surface shows: the cards, the table, the counts in the bar. */
 const visibleEntities = computed(() => filterEntities(kindEntities.value, facets.value))
 
+const entityCardLayoutClass = computed(() => {
+  if (entityCardVariant.value === 'index') return 'space-y-2'
+  if (entityCardVariant.value === 'editorial') return 'grid gap-4 xl:grid-cols-2'
+  if (groupKind.value) return 'grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4'
+  return 'grid gap-3 sm:grid-cols-2 2xl:grid-cols-3'
+})
+
 const entityGroups = computed(() => {
   const by = groupKind.value
   /* The bucket is named after what is missing, so it reads as a model fact:
@@ -180,6 +187,12 @@ function activate(entity: AnyEntityView) {
     inspected.value = null
     return
   }
+  inspect(entity)
+}
+
+/** Cards always open the complete inspector, including Journey cards. */
+function openCard(entity: AnyEntityView) {
+  activeId.value = entity.id
   inspect(entity)
 }
 
@@ -418,65 +431,6 @@ function toggleOverlay(journeyId: string) {
   journeyOverlayId.value = journeyOverlayId.value === journeyId ? null : journeyId
 }
 
-/* ------------------------------------------------------------------ */
-/* Business rules: ranked by explicit binding count, impact on expand   */
-/* ------------------------------------------------------------------ */
-
-function ruleDirectCount(rule: RuleView): number {
-  return rule.domainIds.length + rule.capabilityIds.length
-    + rule.journeyIds.length + rule.scenarioIds.length
-}
-
-function rankRules(entities: AnyEntityView[]): RuleView[] {
-  return [...(entities as RuleView[])].sort((left, right) =>
-    ruleDirectCount(right) - ruleDirectCount(left) || left.title.localeCompare(right.title))
-}
-
-function toggleRule(id: string) {
-  expandedRules.value = expandedRules.value.includes(id)
-    ? expandedRules.value.filter(item => item !== id)
-    : [...expandedRules.value, id]
-}
-
-interface RuleImpact {
-  derivedCapabilities: CapabilityView[]
-  derivedJourneys: JourneyView[]
-  derivedScreens: ScreenView[]
-}
-
-/** Derived reach, each hop factual: via Domain, via Capability, via Scenario. */
-function ruleImpact(rule: RuleView): RuleImpact {
-  const directCapabilities = new Set(rule.capabilityIds)
-  const derivedCapabilities = props.workspace.capabilities.filter(capability =>
-    !!capability.domainId
-    && rule.domainIds.includes(capability.domainId)
-    && !directCapabilities.has(capability.id))
-  const reachedCapabilities = new Set([
-    ...rule.capabilityIds,
-    ...derivedCapabilities.map(capability => capability.id)
-  ])
-  const scenarioJourneyIds = new Set(rule.scenarioIds
-    .map((id) => {
-      const scenario = props.workspace.byId.get(id)
-      return scenario?.kind === 'scenario' ? scenario.journeyId : null
-    })
-    .filter((id): id is string => Boolean(id)))
-  const derivedJourneys = props.workspace.journeys.filter(journey =>
-    !rule.journeyIds.includes(journey.id)
-    && (journey.capabilityIds.some(id => reachedCapabilities.has(id)) || scenarioJourneyIds.has(journey.id)))
-  const derivedScreens = props.workspace.screens.filter(screen =>
-    screen.capabilityIds.some(id => reachedCapabilities.has(id)))
-  return { derivedCapabilities, derivedJourneys, derivedScreens }
-}
-
-/* ------------------------------------------------------------------ */
-/* Journeys                                                            */
-/* ------------------------------------------------------------------ */
-
-function scenarioTitles(journey: JourneyView): string[] {
-  return (props.workspace.scenariosByJourney.get(journey.id) ?? []).map(item => item.title)
-}
-
 /** Scenarios whose Journey is not in the model would otherwise be unreachable. */
 const orphanScenarios = computed(() => props.workspace.scenarios
   .filter(scenario => !props.workspace.byId.has(scenario.journeyId)))
@@ -489,12 +443,6 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
   complete: 'success',
   partial: 'warning',
   draft: 'neutral'
-}
-
-const ACCESS_TONE: Record<string, 'success' | 'warning' | 'error'> = {
-  public: 'success',
-  authenticated: 'warning',
-  restricted: 'error'
 }
 
 /** The one-line shape of the model, in the order the entities depend on. */
@@ -699,6 +647,30 @@ const sections = reactive({ about: false, coverage: false, counts: false, refere
               class="ms-1"
             />
           </div>
+        </div>
+
+        <!-- The card system is auditioned across every entity kind, not only Journeys. -->
+        <div
+          v-if="(showToolbar || openJourney) && viewMode === 'cards'"
+          class="flex shrink-0 flex-wrap items-center gap-1.5 border-b border-default bg-elevated/30 px-4 py-2"
+        >
+          <span class="blr-field me-1">Card style</span>
+          <UButton
+            v-for="option in ENTITY_CARD_VARIANTS"
+            :key="option.id"
+            :icon="option.icon"
+            :label="option.name"
+            size="xs"
+            :color="option.id === entityCardVariant ? 'primary' : 'neutral'"
+            :variant="option.id === entityCardVariant ? 'soft' : 'outline'"
+            :aria-pressed="option.id === entityCardVariant"
+            class="rounded-full"
+            :title="option.description"
+            @click="entityCardVariant = option.id"
+          />
+          <span class="ms-1 text-xs text-muted">
+            {{ ENTITY_CARD_VARIANTS.find(option => option.id === entityCardVariant)?.description }}
+          </span>
         </div>
 
         <!-- Screens, sitemap mode: the map fills the pane. -->
@@ -990,379 +962,80 @@ const sections = reactive({ about: false, coverage: false, counts: false, refere
               <p v-if="!openJourneyScenarios.length" class="text-sm text-muted italic">
                 This Journey declares no Scenarios.
               </p>
-              <article
-                v-for="scenario in openJourneyScenarios"
-                :key="scenario.id"
-                class="rounded-xl border bg-default p-4 transition"
-                :class="scenario.id === inspected?.id ? 'border-primary' : 'border-default'"
-              >
-                <header class="flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    class="text-sm font-medium text-highlighted hover:text-primary"
-                    @click="inspect(scenario)"
-                  >
-                    {{ scenario.title }}
-                  </button>
-                  <UBadge color="neutral" variant="subtle" size="sm">{{ scenario.kindName }}</UBadge>
-                  <span class="blr-meta ms-auto">{{ scenario.steps.length }} steps</span>
-                </header>
-                <div class="mt-2.5 flex items-stretch gap-1.5 overflow-x-auto pb-1.5">
-                  <div class="blr-lanecard blr-lanecard--trigger">
-                    <p class="blr-field">Trigger</p>
-                    <p class="mt-0.5">{{ scenario.trigger }}</p>
-                  </div>
-                  <template v-for="(step, index) in scenario.steps" :key="`step-${index}`">
-                    <UIcon name="i-lucide-arrow-right" class="size-3.5 shrink-0 self-center text-dimmed" />
-                    <div class="blr-lanecard">
-                      <p class="blr-field">Step {{ index + 1 }}</p>
-                      <p class="mt-0.5">{{ step }}</p>
-                    </div>
-                  </template>
-                  <template v-for="(point, index) in scenario.decisionPoints" :key="`decision-${index}`">
-                    <UIcon name="i-lucide-arrow-right" class="size-3.5 shrink-0 self-center text-dimmed" />
-                    <div class="blr-lanecard blr-lanecard--decision">
-                      <p class="blr-field flex items-center gap-1">
-                        <UIcon name="i-lucide-git-branch" class="size-3 shrink-0" /> {{ point.title }}
-                      </p>
-                      <p class="mt-0.5 text-muted">{{ point.question }}</p>
-                      <p v-for="(branch, branchIndex) in point.branches" :key="branchIndex" class="mt-1 text-xs">
-                        <span class="rounded bg-muted px-1 font-mono">{{ branch.condition }}</span>
-                        <span class="text-muted"> → {{ branch.outcome }}</span>
-                      </p>
-                    </div>
-                  </template>
-                  <UIcon name="i-lucide-arrow-right" class="size-3.5 shrink-0 self-center text-dimmed" />
-                  <div class="blr-lanecard blr-lanecard--outcome">
-                    <p class="blr-field">Outcome</p>
-                    <p class="mt-0.5">{{ scenario.outcome }}</p>
-                  </div>
-                </div>
-                <div class="mt-2 space-y-1.5">
-                  <p v-if="scenario.edgeCases.length" class="text-sm text-muted">
-                    <span class="blr-field me-1">Edge cases · {{ scenario.edgeCases.length }}</span>
-                    {{ scenario.edgeCases.join(' · ') }}
-                  </p>
-                  <BlrLinks :workspace="workspace" :ids="scenario.screenIds" kind="screen" interactive @select="inspect" />
-                  <BlrLinks :workspace="workspace" :ids="scenario.ruleIds" kind="rule" label="Constrained by" interactive @select="inspect" />
-                </div>
-              </article>
+              <div :class="entityCardLayoutClass">
+                <BlrEntityCard
+                  v-for="scenario in openJourneyScenarios"
+                  :key="scenario.id"
+                  :workspace="workspace"
+                  :entity="scenario"
+                  :variant="entityCardVariant"
+                  :active="scenario.id === inspected?.id"
+                  @open="openCard"
+                />
+              </div>
             </section>
           </article>
 
           <!-- ENTITY SURFACE: one shape for every kind -->
-          <div v-else class="space-y-6">
-            <section v-for="group in entityGroups" :key="group.key || 'all'" class="space-y-3">
-              <header v-if="groupKind" class="blr-groupheader">
-                <BlrKind v-if="group.kind" :kind="group.kind" :labelled="false" size="xs" />
-                <UIcon v-else name="i-lucide-minus" class="size-3.5 shrink-0 text-dimmed" />
-                <button
-                  v-if="group.kind"
-                  type="button"
-                  class="text-sm font-semibold tracking-tight text-highlighted hover:text-primary"
-                  @click="inspectId(group.key)"
+          <div v-else :class="groupKind ? 'space-y-3' : 'space-y-6'">
+            <UCollapsible
+              v-for="group in entityGroups"
+              :key="group.key || 'all'"
+              :default-open="true"
+              :disabled="!groupKind"
+              :class="groupKind && 'overflow-hidden rounded-xl border border-default bg-elevated/20'"
+              :ui="{ content: groupKind ? 'border-t border-muted p-2' : '' }"
+            >
+              <template v-if="groupKind" #default="{ open }">
+                <UButton
+                  color="neutral"
+                  variant="ghost"
+                  size="lg"
+                  block
+                  class="w-full justify-start rounded-none px-3 py-2 text-start"
                 >
-                  {{ group.title }}
-                </button>
-                <span v-else class="text-sm font-semibold tracking-tight text-muted">{{ group.title }}</span>
-                <span class="blr-meta ms-auto">{{ group.entities.length }}</span>
-              </header>
+                  <BlrKind v-if="group.kind" :kind="group.kind" :labelled="false" size="xs" />
+                  <UIcon v-else name="i-lucide-minus" class="size-3.5 shrink-0 text-dimmed" />
+                  <span
+                    class="min-w-0 truncate text-sm font-semibold tracking-tight"
+                    :class="group.kind ? 'text-highlighted' : 'text-muted'"
+                  >
+                    {{ group.title }}
+                  </span>
+                  <span class="blr-meta ms-auto">{{ group.entities.length }}</span>
+                  <UIcon
+                    name="i-lucide-chevron-down"
+                    class="size-3.5 shrink-0 text-dimmed transition-transform"
+                    :class="open && 'rotate-180'"
+                  />
+                </UButton>
+              </template>
 
-              <!-- TABLE: the same columns for the whole kind -->
-              <template v-if="viewMode === 'table'">
+              <template #content>
+                <!-- TABLE: the same columns for the whole kind -->
                 <UTable
+                  v-if="viewMode === 'table'"
                   :data="group.entities"
                   :columns="tableColumns"
                   class="rounded-xl border border-default bg-default"
                   :ui="{ tr: 'cursor-pointer' }"
                   :on-select="(_event: Event, row: any) => activate(row.original)"
                 />
-              </template>
 
-              <!-- CARDS: the kind's own reading -->
-              <template v-else>
-                <!-- ACTORS: who they are and where they enter -->
-                <div v-if="activeKind === 'actor'" class="grid gap-4 xl:grid-cols-2">
-                  <article
-                    v-for="actor in group.entities as ActorView[]"
-                    :key="actor.id"
-                    class="cursor-pointer rounded-xl border bg-default p-4 transition hover:border-accented"
-                    :class="actor.id === activeId ? 'border-primary bg-primary/5' : 'border-default'"
-                    @click="activate(actor)"
-                  >
-                    <header class="flex items-center gap-2">
-                      <BlrKind kind="actor" :labelled="false" />
-                      <h3 class="text-base font-semibold tracking-tight text-highlighted">{{ actor.title }}</h3>
-                      <UBadge color="neutral" variant="subtle" size="sm">{{ actor.actorKind }} · {{ actor.relationship }}</UBadge>
-                    </header>
-                    <p class="mt-1.5 line-clamp-3 text-sm leading-6 text-muted">{{ actor.lead }}</p>
-                    <div class="mt-2.5 space-y-1.5" @click.stop>
-                      <BlrLinks :workspace="workspace" :ids="actor.interfaceIds" kind="interface" label="Enters" interactive @select="inspect" />
-                      <BlrLinks :workspace="workspace" :ids="actor.experienceIds" kind="experience" label="Enters" interactive @select="inspect" />
-                      <BlrLinks :workspace="workspace" :ids="actor.journeyIds" kind="journey" label="Performs" interactive @select="inspect" />
-                      <p v-if="!actor.interfaceIds.length && !actor.experienceIds.length" class="text-sm text-muted italic">
-                        No access context lists this Actor.
-                      </p>
-                    </div>
-                  </article>
-                </div>
-
-                <!-- INTERFACES: access contexts — who enters, what is reachable -->
-                <div v-else-if="activeKind === 'interface'" class="grid gap-4 xl:grid-cols-2">
-                  <article
-                    v-for="item in group.entities as InterfaceView[]"
-                    :key="item.id"
-                    class="cursor-pointer rounded-xl border bg-default p-4 transition hover:border-accented"
-                    :class="item.id === activeId ? 'border-primary bg-primary/5' : 'border-default'"
-                    @click="activate(item)"
-                  >
-                    <header class="flex items-center gap-2">
-                      <BlrKind kind="interface" :labelled="false" />
-                      <h3 class="text-base font-semibold tracking-tight text-highlighted">{{ item.title }}</h3>
-                    </header>
-                    <p class="mt-1.5 line-clamp-3 text-sm leading-6 text-muted">{{ item.lead }}</p>
-                    <div class="mt-2.5 space-y-1.5" @click.stop>
-                      <BlrLinks :workspace="workspace" :ids="item.actorIds" kind="actor" label="Who enters" interactive @select="inspect" />
-                      <ul v-if="item.entryPoints.length" class="space-y-1">
-                        <li v-for="point in item.entryPoints" :key="point.path" class="flex items-center gap-1.5">
-                          <UIcon name="i-lucide-corner-down-right" class="size-3 shrink-0 text-dimmed" />
-                          <span class="blr-meta truncate">{{ point.path }}</span>
-                        </li>
-                      </ul>
-                      <div v-if="item.capabilityBoundary" class="space-y-0.5">
-                        <p class="blr-field">Capability boundary</p>
-                        <p class="text-sm leading-6 text-default">{{ item.capabilityBoundary }}</p>
-                      </div>
-                      <BlrLinks :workspace="workspace" :ids="item.experienceIds" kind="experience" label="Experiences within" interactive @select="inspect" />
-                      <div class="space-y-1.5 border-t border-default pt-2">
-                        <p class="blr-field">Available here (derived)</p>
-                        <BlrLinks :workspace="workspace" :ids="item.capabilityIds" kind="capability" :max="5" interactive @select="inspect" />
-                        <BlrLinks :workspace="workspace" :ids="item.screenIds" kind="screen" :max="5" interactive @select="inspect" />
-                        <BlrLinks :workspace="workspace" :ids="item.journeyIds" kind="journey" :max="5" interactive @select="inspect" />
-                        <p v-if="!item.screenIds.length" class="text-sm text-muted italic">
-                          No Screens — not a graphical surface, and that is fine.
-                        </p>
-                      </div>
-                    </div>
-                  </article>
-                </div>
-
-                <!-- EXPERIENCES: bounded contexts inside an Interface -->
-                <div v-else-if="activeKind === 'experience'" class="grid gap-4 xl:grid-cols-2">
-                  <article
-                    v-for="item in group.entities as ExperienceView[]"
-                    :key="item.id"
-                    class="cursor-pointer rounded-xl border bg-default p-4 transition hover:border-accented"
-                    :class="item.id === activeId ? 'border-primary bg-primary/5' : 'border-default'"
-                    @click="activate(item)"
-                  >
-                    <header class="flex items-center gap-2">
-                      <BlrKind kind="experience" :labelled="false" />
-                      <h3 class="text-base font-semibold tracking-tight text-highlighted">{{ item.title }}</h3>
-                      <UBadge :color="ACCESS_TONE[item.accessMode] || 'neutral'" variant="subtle" size="sm">{{ item.accessMode }}</UBadge>
-                    </header>
-                    <p class="mt-1.5 line-clamp-3 text-sm leading-6 text-muted">{{ item.lead }}</p>
-                    <div class="mt-2.5 space-y-1.5" @click.stop>
-                      <BlrLinks :workspace="workspace" :ids="item.actorIds" kind="actor" label="Who enters" interactive @select="inspect" />
-                      <BlrLinks :workspace="workspace" :ids="item.interfaceIds" kind="interface" label="Within" interactive @select="inspect" />
-                      <ul v-if="item.entryPoints.length" class="space-y-1">
-                        <li v-for="point in item.entryPoints" :key="point.path" class="flex items-center gap-1.5">
-                          <UIcon name="i-lucide-corner-down-right" class="size-3 shrink-0 text-dimmed" />
-                          <span class="blr-meta shrink-0">{{ point.interfaceTitle }}</span>
-                          <span class="blr-meta truncate">{{ point.path }}</span>
-                        </li>
-                      </ul>
-                      <div v-if="item.capabilityBoundary" class="space-y-0.5">
-                        <p class="blr-field">Capability boundary</p>
-                        <p class="text-sm leading-6 text-default">{{ item.capabilityBoundary }}</p>
-                      </div>
-                      <div class="space-y-1.5 border-t border-default pt-2">
-                        <p class="blr-field">Available here (derived)</p>
-                        <BlrLinks :workspace="workspace" :ids="item.capabilityIds" kind="capability" :max="5" interactive @select="inspect" />
-                        <BlrLinks :workspace="workspace" :ids="item.screenIds" kind="screen" :max="5" interactive @select="inspect" />
-                        <BlrLinks :workspace="workspace" :ids="item.journeyIds" kind="journey" :max="5" interactive @select="inspect" />
-                      </div>
-                    </div>
-                  </article>
-                </div>
-
-                <!-- SCREENS: the entity itself; the map is a view away -->
-                <div v-else-if="activeKind === 'screen'" class="grid gap-4 xl:grid-cols-2">
-                  <article
-                    v-for="screen in group.entities as ScreenView[]"
-                    :key="screen.id"
-                    class="cursor-pointer rounded-xl border bg-default p-4 transition hover:border-accented"
-                    :class="screen.id === activeId ? 'border-primary bg-primary/5' : 'border-default'"
-                    @click="activate(screen)"
-                  >
-                    <header class="flex items-center gap-2">
-                      <BlrKind kind="screen" :labelled="false" />
-                      <h3 class="text-base font-semibold tracking-tight text-highlighted">{{ screen.title }}</h3>
-                      <span class="blr-meta ms-auto">{{ screen.states.length }} states</span>
-                    </header>
-                    <p class="mt-1.5 line-clamp-3 text-sm leading-6 text-muted">{{ screen.lead }}</p>
-                    <div class="mt-2.5 space-y-1.5" @click.stop>
-                      <BlrAvail :pairs="screen.availability" :entry-points="screen.entryPoints" />
-                      <BlrLinks :workspace="workspace" :ids="screen.capabilityIds" kind="capability" :max="4" interactive @select="inspect" />
-                      <BlrLinks :workspace="workspace" :ids="screen.journeyIds" kind="journey" label="Journeys (derived)" :max="4" interactive @select="inspect" />
-                    </div>
-                  </article>
-                </div>
-
-                <!-- DOMAINS: capability areas and their derived reach -->
-                <div v-else-if="activeKind === 'domain'" class="grid gap-4 xl:grid-cols-2">
-                  <article
-                    v-for="domain in group.entities as DomainView[]"
-                    :key="domain.id"
-                    class="cursor-pointer rounded-xl border bg-default p-4 transition hover:border-accented"
-                    :class="domain.id === activeId ? 'border-primary bg-primary/5' : 'border-default'"
-                    @click="activate(domain)"
-                  >
-                    <header class="flex items-center gap-2">
-                      <BlrKind kind="domain" :labelled="false" />
-                      <h3 class="text-base font-semibold tracking-tight text-highlighted">{{ domain.title }}</h3>
-                      <span class="blr-meta ms-auto">{{ domain.capabilityIds.length }} capabilities</span>
-                    </header>
-                    <p class="mt-1.5 line-clamp-3 text-sm leading-6 text-muted">{{ domain.lead }}</p>
-                    <div class="mt-2.5 space-y-1.5" @click.stop>
-                      <BlrLinks :workspace="workspace" :ids="domain.capabilityIds" kind="capability" interactive @select="inspect" />
-                      <div class="space-y-1.5 border-t border-default pt-2">
-                        <p class="blr-field">Derived reach</p>
-                        <BlrLinks :workspace="workspace" :ids="domain.journeyIds" kind="journey" :max="5" interactive @select="inspect" />
-                        <BlrLinks :workspace="workspace" :ids="domain.screenIds" kind="screen" :max="5" interactive @select="inspect" />
-                        <BlrLinks :workspace="workspace" :ids="domain.ruleIds" kind="rule" :max="5" interactive @select="inspect" />
-                      </div>
-                    </div>
-                  </article>
-                </div>
-
-                <!-- CAPABILITIES: the entity itself, no matrices -->
-                <div v-else-if="activeKind === 'capability'" class="grid gap-4 xl:grid-cols-2">
-                  <article
-                    v-for="capability in group.entities as CapabilityView[]"
-                    :key="capability.id"
-                    class="cursor-pointer rounded-xl border bg-default p-4 transition hover:border-accented"
-                    :class="capability.id === activeId ? 'border-primary bg-primary/5' : 'border-default'"
-                    @click="activate(capability)"
-                  >
-                    <header class="flex items-center gap-2">
-                      <BlrKind kind="capability" :labelled="false" />
-                      <h3 class="text-base font-semibold tracking-tight text-highlighted">{{ capability.title }}</h3>
-                      <button
-                        v-if="capability.domainId"
-                        type="button"
-                        class="blr-meta ms-auto shrink-0 hover:text-primary"
-                        @click.stop="inspectId(capability.domainId!)"
-                      >
-                        {{ workspace.byId.get(capability.domainId)?.title ?? capability.domainId }}
-                      </button>
-                    </header>
-                    <p class="mt-1.5 line-clamp-3 text-sm leading-6 text-muted">{{ capability.lead }}</p>
-                    <div class="mt-2.5 space-y-1.5" @click.stop>
-                      <BlrAvail :pairs="capability.availability" />
-                      <BlrLinks :workspace="workspace" :ids="capability.journeyIds" kind="journey" label="Used by" :max="4" interactive @select="inspect" />
-                      <BlrLinks :workspace="workspace" :ids="capability.screenIds" kind="screen" label="Screens (derived)" :max="4" interactive @select="inspect" />
-                      <BlrLinks :workspace="workspace" :ids="capability.ruleIds" kind="rule" label="Constrained by" :max="3" interactive @select="inspect" />
-                    </div>
-                  </article>
-                </div>
-
-                <!-- JOURNEYS: the promise, opening into its own page -->
-                <div v-else-if="activeKind === 'journey'" class="grid gap-4 xl:grid-cols-2">
-                  <article
-                    v-for="journey in group.entities as JourneyView[]"
-                    :key="journey.id"
-                    class="cursor-pointer rounded-xl border bg-default p-4 transition hover:border-accented"
-                    :class="journey.id === activeId ? 'border-primary bg-primary/5' : 'border-default'"
-                    @click="openJourneyPage(journey)"
-                  >
-                    <div class="flex items-start justify-between gap-2">
-                      <h3 class="text-base font-semibold tracking-tight text-highlighted">{{ journey.title }}</h3>
-                      <BlrKind kind="scenario" :count="journey.scenarioIds.length" :labelled="false" size="xs" />
-                    </div>
-                    <p class="mt-1.5 line-clamp-3 text-sm leading-6 text-muted">{{ journey.lead }}</p>
-                    <div class="mt-2.5 space-y-1.5" @click.stop>
-                      <BlrLinks :workspace="workspace" :ids="journey.actorIds" kind="actor" interactive @select="inspect" />
-                      <BlrAvail :pairs="journey.availability" label="" />
-                      <div v-if="scenarioTitles(journey).length" class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                        <span class="blr-field">Scenarios</span>
-                        <span class="text-sm text-default">{{ scenarioTitles(journey).join(' · ') }}</span>
-                      </div>
-                      <BlrLinks :workspace="workspace" :ids="journey.capabilityIds" kind="capability" :max="4" interactive @select="inspect" />
-                      <BlrLinks :workspace="workspace" :ids="journey.screenIds" kind="screen" :max="4" interactive @select="inspect" />
-                      <BlrLinks :workspace="workspace" :ids="journey.ruleIds" kind="rule" :max="3" interactive @select="inspect" />
-                    </div>
-                    <p class="blr-meta mt-2.5 flex items-center gap-1">
-                      <UIcon name="i-lucide-corner-down-right" class="size-3" />
-                      Open to read its Scenarios
-                    </p>
-                  </article>
-                </div>
-
-                <!-- RULES: ranked by explicit binding count, expandable impact -->
-                <div v-else-if="activeKind === 'rule'" class="space-y-2.5">
-                  <article
-                    v-for="(rule, rank) in rankRules(group.entities)"
-                    :key="rule.id"
-                    class="rounded-xl border bg-default transition"
-                    :class="rule.id === activeId ? 'border-primary' : 'border-default hover:border-accented'"
-                  >
-                    <button
-                      type="button"
-                      class="flex w-full items-center gap-3 px-4 py-2.5 text-start"
-                      @click="toggleRule(rule.id); activate(rule)"
-                    >
-                      <span class="blr-meta w-5 shrink-0 text-end">{{ rank + 1 }}</span>
-                      <span class="min-w-0 flex-1">
-                        <span class="block truncate text-sm font-medium text-highlighted">{{ rule.title }}</span>
-                        <span class="block truncate text-sm text-muted">{{ firstSentence(rule.statement, 110) }}</span>
-                      </span>
-                      <span class="blr-meta shrink-0">{{ ruleDirectCount(rule) }} explicit bindings</span>
-                      <UIcon
-                        :name="expandedRules.includes(rule.id) ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
-                        class="size-4 shrink-0 text-dimmed"
-                      />
-                    </button>
-                    <div v-if="expandedRules.includes(rule.id)" class="space-y-3 border-t border-default px-4 py-3.5">
-                      <BlrProse :text="rule.statement" />
-                      <div v-if="rule.rationale" class="space-y-1">
-                        <p class="blr-field">Rationale</p>
-                        <BlrProse :text="rule.rationale" />
-                      </div>
-                      <div class="grid gap-4 lg:grid-cols-2">
-                        <div class="space-y-1.5 rounded-xl border border-default bg-default p-4">
-                          <p class="blr-field">Direct attachments (authored)</p>
-                          <BlrLinks :workspace="workspace" :ids="rule.domainIds" kind="domain" interactive @select="inspect" />
-                          <BlrLinks :workspace="workspace" :ids="rule.capabilityIds" kind="capability" interactive @select="inspect" />
-                          <BlrLinks :workspace="workspace" :ids="rule.journeyIds" kind="journey" interactive @select="inspect" />
-                          <BlrLinks :workspace="workspace" :ids="rule.scenarioIds" kind="scenario" interactive @select="inspect" />
-                          <p v-if="!ruleDirectCount(rule)" class="text-sm text-muted italic">
-                            Attached to nothing explicitly.
-                          </p>
-                        </div>
-                        <div class="space-y-1.5 rounded-xl border border-dashed border-accented p-4">
-                          <p class="blr-field">Derived reach (computed)</p>
-                          <BlrLinks :workspace="workspace" :ids="ruleImpact(rule).derivedCapabilities.map(item => item.id)" kind="capability" label="Capabilities · via Domain" interactive @select="inspect" />
-                          <BlrLinks :workspace="workspace" :ids="ruleImpact(rule).derivedJourneys.map(item => item.id)" kind="journey" label="Journeys · via Capability or Scenario" interactive @select="inspect" />
-                          <BlrLinks :workspace="workspace" :ids="ruleImpact(rule).derivedScreens.map(item => item.id)" kind="screen" label="Screens · via Capability" interactive @select="inspect" />
-                          <p
-                            v-if="!ruleImpact(rule).derivedCapabilities.length && !ruleImpact(rule).derivedJourneys.length && !ruleImpact(rule).derivedScreens.length"
-                            class="text-sm text-muted italic"
-                          >
-                            No further reach derives from the direct attachments.
-                          </p>
-                        </div>
-                      </div>
-                      <BlrAvail
-                        :pairs="rule.availability"
-                        label="Scoped to"
-                        inherited-note="Not narrowed to specific Interface availability scopes."
-                      />
-                    </div>
-                  </article>
+                <!-- CARDS: one recognition system, auditioned at three densities. -->
+                <div v-else :class="entityCardLayoutClass">
+                  <BlrEntityCard
+                    v-for="entity in group.entities"
+                    :key="entity.id"
+                    :workspace="workspace"
+                    :entity="entity"
+                    :variant="entityCardVariant"
+                    :active="entity.id === activeId"
+                    @open="openCard"
+                  />
                 </div>
               </template>
-            </section>
+            </UCollapsible>
 
             <p v-if="viewMode === 'table' && TABLE_NOTE[activeKind]" class="text-sm text-muted">
               {{ TABLE_NOTE[activeKind] }}
@@ -1465,21 +1138,6 @@ const sections = reactive({ about: false, coverage: false, counts: false, refere
   font-weight: 600;
 }
 
-/* Group headers: sticky, so the group a card belongs to stays named while
-   the group is being scrolled through. */
-.blr-groupheader {
-  position: sticky;
-  top: -1.25rem;
-  z-index: 5;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin: 0 -0.25rem;
-  padding: 0.5rem 0.25rem;
-  background: var(--ui-bg);
-  border-bottom: 1px solid var(--ui-border-muted);
-}
-
 /* Overview disclosures: a full-width row that reads as a heading. */
 .blr-disclosure {
   display: flex;
@@ -1494,28 +1152,4 @@ const sections = reactive({ about: false, coverage: false, counts: false, refere
   color: var(--ui-text-highlighted);
 }
 
-/* Scenario flow lane cards */
-.blr-lanecard {
-  flex-shrink: 0;
-  width: 13rem;
-  padding: 0.5rem 0.625rem;
-  border: 1px solid var(--ui-border);
-  border-radius: 0.5rem;
-  font-size: var(--text-xs);
-  line-height: 1.5;
-  color: var(--ui-text);
-}
-
-.blr-lanecard--trigger {
-  border-inline-start: 2px solid var(--blr-slot-7);
-}
-
-.blr-lanecard--decision {
-  border-style: dashed;
-  width: 15rem;
-}
-
-.blr-lanecard--outcome {
-  border-inline-start: 2px solid var(--ui-primary);
-}
 </style>

@@ -37,6 +37,8 @@ const tab = defineModel<'detail' | 'map'>('tab', { default: 'detail' })
   gesture needs a second click.
 */
 let closingId: string | null = null
+const history = ref<AnyEntityView[]>([])
+let movingBack = false
 
 const open = computed({
   get: () => props.entity !== null,
@@ -53,9 +55,26 @@ const open = computed({
   }
 })
 
-watch(() => props.entity, () => {
+watch(() => props.entity, (entity, previous) => {
   closingId = null
+  if (!entity) {
+    history.value = []
+    movingBack = false
+    return
+  }
+  if (previous && previous.id !== entity.id && !movingBack) {
+    history.value = [...history.value.slice(-19), previous]
+  }
+  movingBack = false
 })
+
+function goBack() {
+  const target = history.value.at(-1)
+  if (!target) return
+  history.value = history.value.slice(0, -1)
+  movingBack = true
+  emit('select', target)
+}
 
 const TABS: TabsItem[] = [
   { value: 'detail', label: 'Detail', icon: 'i-lucide-book-open' },
@@ -81,16 +100,25 @@ const kindLabel = computed(() => props.entity ? ENTITY_KIND_META[props.entity.ki
     v-model:open="open"
     :modal="false"
     :ui="{
-      content: 'z-50 w-full max-w-md sm:max-w-lg',
-      body: tab === 'map' ? 'p-0 sm:p-0' : undefined
+      content: 'z-50 w-full max-w-full sm:max-w-2xl',
+      body: tab === 'map' ? 'p-0 sm:p-0' : 'px-5 py-6 sm:px-7 sm:py-7'
     }"
   >
     <template #header>
-      <div v-if="entity" class="flex min-w-0 flex-1 items-center gap-3">
+      <div v-if="entity" class="flex min-w-0 flex-1 items-center gap-2.5">
+        <UButton
+          v-if="history.length"
+          icon="i-lucide-arrow-left"
+          color="neutral"
+          variant="ghost"
+          size="sm"
+          aria-label="Go back to previous entity"
+          @click="goBack"
+        />
         <BlrKind :kind="entity.kind" :labelled="false" />
         <div class="min-w-0 flex-1">
-          <p class="truncate text-sm font-semibold tracking-tight text-highlighted">{{ entity.title }}</p>
           <p class="blr-field">{{ kindLabel }}</p>
+          <p class="truncate text-base font-semibold leading-5 tracking-tight text-highlighted">{{ entity.title }}</p>
         </div>
         <UTabs
           v-model="tab"
@@ -113,7 +141,7 @@ const kindLabel = computed(() => props.entity ? ENTITY_KIND_META[props.entity.ki
 
     <template #body>
       <template v-if="entity">
-        <BlrEntityDetail
+        <BlrInspectorDetail
           v-if="tab === 'detail'"
           :workspace="workspace"
           :entity="entity"

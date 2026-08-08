@@ -54,6 +54,20 @@ the same questions with less to read.
 `Shipped` renders the current `BusinessLensReportViewer` unchanged, as the
 baseline to compare against. It is not counted among the twelve experiments.
 
+## Entity cards on audition in Workbench
+
+Workbench applies one card system to every entity kind and exposes three
+density choices above the working view. **Catalog** is the recognition-first
+default: two lines of description and three counts. **Index** reduces the same
+facts to a compact row for very large models. **Editorial** gives the entity
+more room and previews one contextual relationship. A card never expands into
+a miniature detail page; clicking anywhere on it opens the shared inspector.
+
+The inspector is the completeness surface. Its wider, sectioned reading keeps
+authored content, access, derived connections, supporting context and references
+distinct, and relation navigation has a back action so exploration does not
+discard the previous entity.
+
 ## Use
 
 ```ts
