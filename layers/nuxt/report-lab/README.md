@@ -91,6 +91,13 @@ The inspector's **Neighbourhood** tab remains the local topology for one entity.
 Product Topology answers breadth questions; Neighbourhood answers what directly
 surrounds the selected entity.
 
+Topology controls stay inside that destination. The relationship row is an
+interactive legend: its entity-kind pills hide or restore graph boxes without
+disabling the same kinds in the Browse rail. A searchable entity focus narrows
+the active named view to each match plus its directly connected context. View
+changes restore the new view's default kinds and discard only incompatible
+focus selections; Reset returns the current named view to its authored scope.
+
 ## Use
 
 ```ts

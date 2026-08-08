@@ -35,9 +35,11 @@ interface TestTopologyView {
 // root NodeNext typecheck reinterpret the whole Nuxt layer as Node modules.
 const workspaceModulePath = '../layers/nuxt/report-lab/app/utils/reportWorkspace.ts'
 const graphModulePath = '../layers/nuxt/report-lab/app/utils/productTopologyGraphs.ts'
+const filtersModulePath = '../layers/nuxt/report-lab/app/utils/productTopologyFilters.ts'
 const viewsModulePath = '../layers/nuxt/report-lab/app/utils/productTopologyViews.ts'
 const workspaceModule = await import(workspaceModulePath)
 const graphModule = await import(graphModulePath)
+const filtersModule = await import(filtersModulePath)
 const viewsModule = await import(viewsModulePath)
 
 const projectReportWorkspace = workspaceModule.projectReportWorkspace as (report: ReturnType<typeof compileReport>) => any
@@ -47,6 +49,10 @@ const buildProductTopologyGraph = graphModule.buildProductTopologyGraph as (
   options?: { journeyId?: string, highlightId?: string }
 ) => TestGraph
 const EVERYTHING_SHELF_ORDER = graphModule.EVERYTHING_SHELF_ORDER as string[]
+const filterProductTopologyGraph = filtersModule.filterProductTopologyGraph as (
+  graph: TestGraph,
+  options: { visibleKinds: string[], focusEntityIds?: string[] }
+) => TestGraph
 const PRODUCT_TOPOLOGY_VIEWS = viewsModule.PRODUCT_TOPOLOGY_VIEWS as TestTopologyView[]
 const DEFAULT_PRODUCT_TOPOLOGY_VIEW = viewsModule.DEFAULT_PRODUCT_TOPOLOGY_VIEW as string
 
@@ -150,5 +156,31 @@ describe('named Product Topology views', () => {
     const lit = buildProductTopologyGraph(workspace, 'everything', { highlightId: actor.id })
     expect(lit.edges.some(edge => Number((edge.style as { opacity?: number }).opacity) === 1)).toBe(true)
     expect(lit.nodes.some(node => node.data?.entityId !== actor.id && 'dimmed' in (node.data ?? {}) && node.data?.dimmed)).toBe(true)
+  })
+
+  it('hides entity kinds locally and removes their incident relations', () => {
+    const base = buildProductTopologyGraph(workspace, 'value-flow')
+    const filtered = filterProductTopologyGraph(base, {
+      visibleKinds: ['journey', 'capability', 'screen']
+    })
+    const nodeIds = new Set(filtered.nodes.map(node => node.id))
+
+    expect(filtered.nodes.some(node => node.data?.kind === 'actor')).toBe(false)
+    expect(filtered.edges.every(edge => nodeIds.has(edge.source) && nodeIds.has(edge.target))).toBe(true)
+    expect(base.nodes.some(node => node.data?.kind === 'actor')).toBe(true)
+  })
+
+  it('focuses entities with one-hop context instead of unrelated branches', () => {
+    const base = buildProductTopologyGraph(workspace, 'value-flow')
+    const capability = workspace.capabilities.find((item: any) =>
+      base.edges.some(edge => edge.source === item.id || edge.target === item.id))!
+    const expected = topologyNeighbourhood(capability.id, base.edges)
+    const filtered = filterProductTopologyGraph(base, {
+      visibleKinds: ['actor', 'journey', 'capability', 'screen'],
+      focusEntityIds: [capability.id]
+    })
+
+    expect(new Set(filtered.nodes.map(node => node.id))).toEqual(expected)
+    expect(filtered.nodes.length).toBeLessThan(base.nodes.length)
   })
 })
