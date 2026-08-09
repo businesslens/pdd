@@ -1,12 +1,14 @@
 import { parseCanonicalName } from '../core/canonical-name.js'
 import { resolveCatalogUrl } from '../core/catalog-url.js'
 import { reportDigest } from '../core/report-digest.js'
+import { REPORT_SCHEMA_VERSION } from '../core/portable.js'
 import { cliVersion } from '../version.js'
 import { expandProductReport } from './open.js'
 import { UsageError } from '../core/usage-error.js'
 import { MAX_PRODUCT_LOGO_BYTES, validateProductLogo } from '../logo.js'
 
 const MAX_REPORT_BYTES = 8 * 1024 * 1024
+const REPORT_MEDIA_TYPE_VERSION = REPORT_SCHEMA_VERSION.split('.')[0]
 
 export interface PullOptions {
   catalog?: string
@@ -119,7 +121,7 @@ export async function runPull(
   try {
     response = await fetch(url, {
       headers: {
-        accept: 'application/vnd.businesslens.report+json; version=7, application/json',
+        accept: `application/vnd.businesslens.report+json; version=${REPORT_MEDIA_TYPE_VERSION}, application/json`,
         // Identify the CLI so catalog pulls are distinguishable from browser
         // fetches. Without it every pull is indistinguishable from a page view.
         'user-agent': `businesslens/${cliVersion()}`

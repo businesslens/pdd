@@ -32,7 +32,7 @@ function reportResponse(canonicalName = 'fixture-shop'): Response {
   return new Response(JSON.stringify(report), {
     status: 200,
     headers: {
-      'content-type': 'application/vnd.businesslens.report+json; version=7',
+      'content-type': 'application/vnd.businesslens.report+json; version=8',
       'x-businesslens-blueprint': canonicalName,
       'x-businesslens-report-digest': reportDigest(report)
     }
@@ -83,7 +83,7 @@ describe('pull', () => {
     )
     // No credential is read, sent, or required.
     expect((requested?.init.headers as Record<string, string>).authorization).toBeUndefined()
-    expect((requested?.init.headers as Record<string, string>).accept).toContain('version=7')
+    expect((requested?.init.headers as Record<string, string>).accept).toContain('version=8')
     expect(existsSync(join(target, '.businesslens/product.md'))).toBe(true)
     expect(existsSync(join(target, '.businesslens/screens/product-record.md'))).toBe(true)
     expect(readFileSync(join(target, '.businesslens/logo.svg'))).toEqual(logo)
