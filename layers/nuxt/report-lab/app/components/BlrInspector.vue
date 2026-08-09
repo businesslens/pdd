@@ -25,6 +25,10 @@ const emit = defineEmits<{
   close: []
 }>()
 
+defineSlots<{
+  'detail-after'?: (props: { entity: AnyEntityView }) => any
+}>()
+
 /** `detail` is complete authored content; `map` is the contextual topology. */
 const tab = defineModel<'detail' | 'map'>('tab', { default: 'detail' })
 
@@ -141,12 +145,14 @@ const kindLabel = computed(() => props.entity ? ENTITY_KIND_META[props.entity.ki
 
     <template #body>
       <template v-if="entity">
-        <BlrInspectorDetail
-          v-if="tab === 'detail'"
-          :workspace="workspace"
-          :entity="entity"
-          @select="emit('select', $event)"
-        />
+        <template v-if="tab === 'detail'">
+          <BlrInspectorDetail
+            :workspace="workspace"
+            :entity="entity"
+            @select="emit('select', $event)"
+          />
+          <slot name="detail-after" :entity="entity" />
+        </template>
         <BlrTopology
           v-else
           :workspace="workspace"

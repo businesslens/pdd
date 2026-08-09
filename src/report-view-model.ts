@@ -12,21 +12,23 @@ export interface ProductReportViewInput {
   counts: {
     actors: number
     capabilities: number
+    capabilityScenarios: number
     journeys: number
-    scenarios: number
+    journeyScenarios: number
     businessRules: number
   }
   model: {
     actors: Array<{ id: string, name: string, description: string }>
     capabilities: Array<{ id: string, title: string, description: string }>
-    journeys: Array<{ id: string, title: string, summary: string }>
+    journeys: Array<{ id: string, title: string, goal: string }>
     businessRules: Array<{ id: string, statement: string }>
-    scenarios: Array<{ id: string, title: string }>
+    capabilityScenarios: Array<{ id: string, title: string }>
+    journeyScenarios: Array<{ id: string, title: string }>
   }
 }
 
 export interface ReportStat {
-  key: 'actors' | 'capabilities' | 'journeys' | 'scenarios' | 'rules'
+  key: 'actors' | 'capabilities' | 'capability-scenarios' | 'journeys' | 'journey-scenarios' | 'rules'
   label: string
   value: number
 }
@@ -62,7 +64,8 @@ export interface ReportViewModel {
   capabilities: ReportCard[]
   journeys: ReportCard[]
   rules: ReportRule[]
-  scenarios: ReportScenarioSummary[]
+  capabilityScenarios: ReportScenarioSummary[]
+  journeyScenarios: ReportScenarioSummary[]
 }
 
 /** Render a kebab-case Product category without title-casing conjunctions. */
@@ -94,8 +97,9 @@ export function projectReportView(report: ProductReportViewInput): ReportViewMod
     stats: [
       { key: 'actors', label: 'Actors', value: report.counts.actors },
       { key: 'capabilities', label: 'Capabilities', value: report.counts.capabilities },
+      { key: 'capability-scenarios', label: 'Capability scenarios', value: report.counts.capabilityScenarios },
       { key: 'journeys', label: 'Journeys', value: report.counts.journeys },
-      { key: 'scenarios', label: 'Scenarios', value: report.counts.scenarios },
+      { key: 'journey-scenarios', label: 'Journey scenarios', value: report.counts.journeyScenarios },
       { key: 'rules', label: 'Rules', value: report.counts.businessRules }
     ],
     actors: report.model.actors.map(actor => ({
@@ -111,13 +115,17 @@ export function projectReportView(report: ProductReportViewInput): ReportViewMod
     journeys: report.model.journeys.map(journey => ({
       id: journey.id,
       title: journey.title,
-      description: journey.summary
+      description: journey.goal
     })),
     rules: report.model.businessRules.map(rule => ({
       id: rule.id,
       statement: rule.statement
     })),
-    scenarios: report.model.scenarios.map(scenario => ({
+    capabilityScenarios: report.model.capabilityScenarios.map(scenario => ({
+      id: scenario.id,
+      title: scenario.title
+    })),
+    journeyScenarios: report.model.journeyScenarios.map(scenario => ({
       id: scenario.id,
       title: scenario.title
     }))

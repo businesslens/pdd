@@ -63,11 +63,15 @@ describe('open report', () => {
     expect(lint.ok).toBe(true)
     expect(lint.errors).toEqual([])
     expect(lint.warnings).toEqual([])
-    expect(imported.journeys.flatMap(journey => journey.entryPoints))
-      .toEqual(expect.arrayContaining([
-        { type: 'customer-web', path: '/' },
-        { type: 'customer-mobile', path: 'fixture-shop://storefront' }
-      ]))
+    expect(imported.journeys[0]).toMatchObject({
+      id: 'browse-and-buy',
+      goal: 'A shopper wants to purchase a suitable product.',
+      successCriterion: 'A confirmed order exists for the selected product.'
+    })
+    expect(imported.journeyScenarios[0]!.flow.map(item => item.operation)).toEqual([
+      'Find and select an available product',
+      'Submit payment and confirm the order'
+    ])
     expect(imported.experiences.flatMap(experience => experience.entryPoints))
       .toEqual(expect.arrayContaining([{ type: 'customer-web', path: '/' }]))
     expect(imported.screens).toHaveLength(1)
@@ -78,7 +82,8 @@ describe('open report', () => {
         { interface: 'customer-web', experiences: ['storefront'] }
       ],
       capabilities: ['catalog-browsing'],
-      scenarios: ['browse-catalog']
+      capabilityScenarios: ['browse-catalog'],
+      journeyScenarios: ['browse-and-complete-checkout']
     })
     expect(imported.screens[0]!.entryPoints.map(point => point.path)).toEqual([
       '/products/:id',
@@ -101,9 +106,13 @@ describe('open report', () => {
     expect(readFileSync(join(target, '.businesslens/business-rules/payment-before-confirmation.md'), 'utf8'))
       .toContain('capabilities:')
     expect(readFileSync(
-      join(target, '.businesslens/journeys/browse-and-buy/scenarios/complete-checkout.md'),
+      join(target, '.businesslens/capability-scenarios/complete-checkout.md'),
       'utf8'
     )).toContain('## Decision points')
+    expect(readFileSync(
+      join(target, '.businesslens/journey-scenarios/browse-and-complete-checkout.md'),
+      'utf8'
+    )).toContain('operation: Find and select an available product')
     expect(readFileSync(join(target, '.businesslens/screens/product-record.md'), 'utf8'))
       .toContain('## Product states')
   })
@@ -137,8 +146,7 @@ describe('open report', () => {
       for (const collection of [
         report.model.capabilities,
         report.model.screens,
-        report.model.journeys,
-        report.model.scenarios,
+        report.model.capabilityScenarios,
         report.model.businessRules
       ]) {
         for (const entity of collection) {
@@ -148,6 +156,14 @@ describe('open report', () => {
               experienceIds: []
             }))
           }
+        }
+      }
+      for (const scenario of report.model.journeyScenarios) {
+        for (const item of scenario.flow) {
+          item.availability = item.availability.map(scope => ({
+            interfaceId: scope.interfaceId,
+            experienceIds: []
+          }))
         }
       }
       const file = join(fresh, 'direct-report.json')
@@ -184,7 +200,7 @@ describe('open report', () => {
 
       const readme = readFileSync(join(fresh, '.businesslens', 'README.md'), 'utf8')
       expect(readme).toContain('BusinessLens Product Model')
-      expect(readme).toContain('Treat scenarios as the acceptance contract')
+      expect(readme).toContain('Treat Capability Scenarios as local acceptance contracts')
       expect(readme).toContain('References are optional navigation and context')
     } finally {
       rmSync(fresh, { recursive: true, force: true })

@@ -41,8 +41,9 @@ describe('lintModel', () => {
       screens: 1,
       domains: 2,
       capabilities: 3,
-      journeys: 2,
-      scenarios: 3,
+      capabilityScenarios: 4,
+      journeys: 1,
+      journeyScenarios: 1,
       businessRules: 2
     })
   })
@@ -135,19 +136,16 @@ An internal system that initiates store operations.
   it('allows direct Interface availability when the Product has no Experiences', () => {
     const cwd = fixtureCopy()
     rmSync(join(cwd, '.businesslens/experiences'), { recursive: true })
-    for (const collection of ['capabilities', 'business-rules', 'screens']) {
+    for (const collection of [
+      'capabilities',
+      'business-rules',
+      'screens',
+      'capability-scenarios',
+      'journey-scenarios'
+    ]) {
       for (const name of readdirSync(join(cwd, `.businesslens/${collection}`))) {
         const file = join(cwd, `.businesslens/${collection}/${name}`)
-        writeFileSync(file, readFileSync(file, 'utf8').replace(/^    experiences: .*\n/gm, ''))
-      }
-    }
-    for (const journey of ['browse-and-buy', 'manage-orders']) {
-      const root = join(cwd, `.businesslens/journeys/${journey}`)
-      const file = join(root, 'journey.md')
-      writeFileSync(file, readFileSync(file, 'utf8').replace(/^    experiences: .*\n/gm, ''))
-      for (const name of readdirSync(join(root, 'scenarios'))) {
-        const scenario = join(root, 'scenarios', name)
-        writeFileSync(scenario, readFileSync(scenario, 'utf8').replace(/^    experiences: .*\n/gm, ''))
+        writeFileSync(file, readFileSync(file, 'utf8').replace(/^[ \t]+experiences: .*\n/gm, ''))
       }
     }
 
@@ -205,7 +203,7 @@ Supports order administration without customer shopping.
     )
     for (const relative of [
       '.businesslens/capabilities/order-management.md',
-      '.businesslens/journeys/manage-orders/journey.md'
+      '.businesslens/capability-scenarios/refund-order.md'
     ]) {
       const file = join(cwd, relative)
       writeFileSync(
@@ -245,32 +243,92 @@ Supports order administration without customer shopping.
     const errors = run(cwd).errors.join('\n')
     expect(errors).toContain('duplicate availability interface "customer-web"')
     expect(errors).toContain('duplicate availability experience "storefront" for interface "customer-web"')
-    expect(errors).toContain('capability "checkout" is not available in "customer-mobile/storefront"')
+    expect(errors).toContain('availability "customer-mobile/storefront" is outside capability "checkout"')
   })
 
-  it('allows Scenario availability only as a Journey subset', () => {
+  it('requires Capability Scenario availability to be a Capability subset', () => {
     const cwd = fixtureCopy()
-    const scenario = join(cwd, '.businesslens/journeys/browse-and-buy/scenarios/complete-checkout.md')
+    const scenario = join(cwd, '.businesslens/capability-scenarios/complete-checkout.md')
     writeFileSync(
       scenario,
       readFileSync(scenario, 'utf8').replace(
-        'kind: primary',
-        'kind: primary\navailability:\n  - interface: admin-web\n    experiences: [admin-console]'
+        '  - interface: customer-web\n    experiences: [storefront]',
+        '  - interface: admin-web\n    experiences: [admin-console]'
       )
     )
     expect(run(cwd).errors.join('\n'))
-      .toContain('availability "admin-web/admin-console" is outside journey "browse-and-buy"')
+      .toContain('availability "admin-web/admin-console" is outside capability "checkout"')
+  })
+
+  it('requires every Scenario Actor to participate in a selected exact context', () => {
+    const cwd = fixtureCopy()
+    const scenario = join(cwd, '.businesslens/capability-scenarios/refund-order.md')
+    writeFileSync(scenario, readFileSync(scenario, 'utf8').replace(
+      'actors: [store-admin]',
+      'actors: [shopper]'
+    ))
+    const errors = run(cwd).errors.join('\n')
+    expect(errors).toContain('context "admin-web/admin-console" permits none of the Scenario Actors')
+    expect(errors).toContain('actor "shopper" is not supported by any selected context')
+  })
+
+  it('requires an operation and two distinct Capabilities on achieved Journey flows', () => {
+    const cwd = fixtureCopy()
+    const scenario = join(cwd, '.businesslens/journey-scenarios/browse-and-complete-checkout.md')
+    writeFileSync(
+      scenario,
+      readFileSync(scenario, 'utf8')
+        .replace('    operation: Find and select an available product\n', '')
+        .replace('  - capability: checkout', '  - capability: catalog-browsing')
+    )
+    const errors = run(cwd).errors.join('\n')
+    expect(errors).toContain('flow item 1: needs a non-empty operation')
+    expect(errors).toContain('an achieved Journey Scenario needs at least two distinct Capabilities')
+  })
+
+  it('treats kind and Journey result as orthogonal fields', () => {
+    const cwd = fixtureCopy()
+    const source = join(cwd, '.businesslens/journey-scenarios/browse-and-complete-checkout.md')
+    const scenario = join(cwd, '.businesslens/journey-scenarios/checkout-is-declined.md')
+    writeFileSync(
+      scenario,
+      readFileSync(source, 'utf8')
+        .replace('kind: primary', 'kind: edge')
+        .replace('result: achieved', 'result: not-achieved')
+        .replace('# Browse and complete checkout', '# Checkout is declined')
+    )
+    const result = run(cwd)
+    expect(result.errors).toEqual([])
+  })
+
+  it('grades missing Capability Scenario coverage by model coverage status', () => {
+    const cwd = fixtureCopy()
+    unlinkSync(join(cwd, '.businesslens/capability-scenarios/refund-order.md'))
+    const rule = join(cwd, '.businesslens/business-rules/refund-existing-orders.md')
+    writeFileSync(rule, readFileSync(rule, 'utf8').replace('capabilityScenarios: [refund-order]\n', ''))
+
+    expect(run(cwd).errors.join('\n')).toContain('needs at least one Capability Scenario')
+
+    const coverage = join(cwd, '.businesslens/coverage.md')
+    writeFileSync(coverage, readFileSync(coverage, 'utf8').replace('status: complete', 'status: partial'))
+    const partial = run(cwd)
+    expect(partial.errors.some(error => error.includes('needs at least one Capability Scenario'))).toBe(false)
+    expect(partial.warnings.some(warning => warning.includes('needs at least one Capability Scenario'))).toBe(true)
   })
 
   it('rejects removed Experience and Journey fields as unknown keys', () => {
     const cwd = fixtureCopy()
     const experience = join(cwd, '.businesslens/experiences/storefront.md')
     writeFileSync(experience, readFileSync(experience, 'utf8').replace('access: public', 'access: public\nexit: done'))
-    const journey = join(cwd, '.businesslens/journeys/browse-and-buy/journey.md')
-    writeFileSync(journey, readFileSync(journey, 'utf8').replace('actors:', 'domain: ordering\nactors:'))
+    const journey = join(cwd, '.businesslens/journeys/browse-and-buy.md')
+    writeFileSync(journey, readFileSync(journey, 'utf8').replace(
+      'actors:',
+      'domain: ordering\nentryPoints:\n  - customer-web: /\nactors:'
+    ))
     const errors = run(cwd).errors.join('\n')
     expect(errors).toContain('unknown frontmatter key "exit"')
     expect(errors).toContain('unknown frontmatter key "domain"')
+    expect(errors).toContain('unknown frontmatter key "entryPoints"')
   })
 
   it('validates Screen relationships and product content', () => {
@@ -280,7 +338,8 @@ availability:
   - interface: missing-interface
     experiences: [missing-experience]
 capabilities: []
-scenarios: [missing-scenario]
+capabilityScenarios: [missing-capability-scenario]
+journeyScenarios: [missing-journey-scenario]
 ---
 
 # Product record
@@ -301,10 +360,60 @@ No bullet.
     expect(errors).toContain('references missing experience "missing-experience"')
     expect(errors).toContain('references missing interface "missing-interface"')
     expect(errors).toContain('needs at least one capability')
-    expect(errors).toContain('references missing scenario "missing-scenario"')
+    expect(errors).toContain('references missing Capability Scenario "missing-capability-scenario"')
+    expect(errors).toContain('references missing Journey Scenario "missing-journey-scenario"')
     expect(errors).toContain('"## Information presented" needs at least one bullet item')
     expect(errors).toContain('product state "Empty" needs a description')
     expect(errors).toContain('missing "## Capability boundary" section')
+  })
+
+  it('requires Screen Scenario relations to match its Capabilities and exact contexts', () => {
+    const cwd = fixtureCopy()
+    const screen = join(cwd, '.businesslens/screens/product-record.md')
+    writeFileSync(
+      screen,
+      readFileSync(screen, 'utf8')
+        .replace('capabilityScenarios: [browse-catalog]', 'capabilityScenarios: [refund-order]')
+        .replace('journeyScenarios: [browse-and-complete-checkout]', 'journeyScenarios: [admin-and-checkout]')
+    )
+    writeFileSync(join(cwd, '.businesslens/journey-scenarios/admin-and-checkout.md'), `---
+kind: edge
+journey: browse-and-buy
+actors: [shopper, store-admin]
+result: not-achieved
+flow:
+  - capability: order-management
+    operation: Review an existing order
+    availability:
+      - interface: admin-web
+        experiences: [admin-console]
+  - capability: checkout
+    operation: Attempt a new checkout
+    availability:
+      - interface: customer-web
+        experiences: [storefront]
+---
+
+# Review an order before checkout
+
+## Trigger
+
+An operator reviews an order while a shopper attempts a new checkout.
+
+## Steps
+
+1. The operator reviews an existing order
+2. The shopper attempts checkout
+
+## Outcome
+
+The new checkout does not complete.
+`)
+
+    const errors = run(cwd).errors.join('\n')
+    expect(errors).toContain('Capability Scenario "refund-order" uses capability "order-management" outside the Screen capability list')
+    expect(errors).toContain('Capability Scenario "refund-order" shares no exact context with the Screen')
+    expect(errors).toContain('Journey Scenario "admin-and-checkout" has no flow item matching a Screen capability and exact context')
   })
 
   it('rejects unknown config keys', () => {
@@ -325,18 +434,25 @@ No bullet.
 
   it('fails on dangling relations and missing required relationships', () => {
     const cwd = fixtureCopy()
-    writeFileSync(join(cwd, '.businesslens/journeys/browse-and-buy/journey.md'), `---
+    writeFileSync(join(cwd, '.businesslens/journeys/browse-and-buy.md'), `---
 actors: [ghost]
-capabilities: [checkout]
-availability:
-  - interface: customer-web
-    experiences: [missing-experience]
 ---
 
 # Browse and buy
 
-Lead.
+## Goal
+
+Buy something.
+
+## Success criterion
+
+An order exists.
 `)
+    const scenario = join(cwd, '.businesslens/journey-scenarios/browse-and-complete-checkout.md')
+    writeFileSync(scenario, readFileSync(scenario, 'utf8').replace(
+      'experiences: [storefront]',
+      'experiences: [missing-experience]'
+    ))
     const errors = run(cwd).errors.join('\n')
     expect(errors).toContain('missing actor "ghost"')
     expect(errors).toContain('references missing experience "missing-experience"')
@@ -362,8 +478,8 @@ limitations: []
 
 Model breadth.
 `)
-      const journeyFile = join(cwd, '.businesslens/journeys/manage-orders/journey.md')
-      const scenarioFile = join(cwd, '.businesslens/journeys/manage-orders/scenarios/refund-order.md')
+      const journeyFile = join(cwd, '.businesslens/journeys/browse-and-buy.md')
+      const scenarioFile = join(cwd, '.businesslens/capability-scenarios/refund-order.md')
       const referenceBlock = /references:\n(?:  - kind: .*\n    role: .*\n    target: .*\n)+/
       writeFileSync(journeyFile, readFileSync(journeyFile, 'utf8').replace(referenceBlock, ''))
       writeFileSync(scenarioFile, readFileSync(scenarioFile, 'utf8').replace(referenceBlock, ''))
@@ -375,10 +491,24 @@ Model breadth.
     }
   })
 
-  it('fails on duplicate scenario ids across journeys', () => {
+  it('fails on duplicate ids across Scenario types', () => {
     const cwd = fixtureCopy()
-    writeFileSync(join(cwd, '.businesslens/journeys/manage-orders/scenarios/browse-catalog.md'), `---
+    writeFileSync(join(cwd, '.businesslens/journey-scenarios/browse-catalog.md'), `---
 kind: primary
+journey: browse-and-buy
+actors: [shopper]
+result: achieved
+flow:
+  - capability: catalog-browsing
+    operation: Select a product
+    availability:
+      - interface: customer-web
+        experiences: [storefront]
+  - capability: checkout
+    operation: Complete checkout
+    availability:
+      - interface: customer-web
+        experiences: [storefront]
 ---
 
 # Duplicate
@@ -413,10 +543,10 @@ Lead.
     expect(run(cwd).errors.some(error => error.includes('access "secret"'))).toBe(true)
   })
 
-  it('fails when a journey loses all scenarios', () => {
+  it('fails when a Journey loses all achieved Journey Scenarios', () => {
     const cwd = fixtureCopy()
-    unlinkSync(join(cwd, '.businesslens/journeys/manage-orders/scenarios/refund-order.md'))
-    expect(run(cwd).errors.some(error => error.includes('at least one scenario'))).toBe(true)
+    unlinkSync(join(cwd, '.businesslens/journey-scenarios/browse-and-complete-checkout.md'))
+    expect(run(cwd).errors.some(error => error.includes('at least one achieved Journey Scenario'))).toBe(true)
   })
 
   it('warns on a missing repository-relative reference without failing', () => {

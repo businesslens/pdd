@@ -265,6 +265,10 @@ const ruleImpact = computed(() => {
   for (const scenarioId of rule.scenarioIds) {
     const scenario = props.workspace.byId.get(scenarioId)
     if (scenario?.kind !== 'scenario') continue
+    if (scenario.scenarioType !== 'journey') {
+      for (const id of scenario.screenIds) screens.add(id)
+      continue
+    }
     if (!directJourneys.has(scenario.journeyId)) journeys.add(scenario.journeyId)
     for (const id of scenario.screenIds) screens.add(id)
   }
@@ -1034,7 +1038,7 @@ watch(topoKind, () => {
               <div class="space-y-1.5 rounded-xl border border-default bg-default p-4">
                 <BlrLinks :workspace="workspace" :ids="activeScenario.screenIds" kind="screen" label="On Screens" interactive @select="openInspector" />
                 <BlrLinks :workspace="workspace" :ids="activeScenario.ruleIds" kind="rule" label="Constrained by" interactive @select="openInspector" />
-                <BlrAvail :pairs="activeScenario.availability" inherited-note="Applies to every pair its Journey declares." />
+                <BlrAvail :pairs="activeScenario.availability" />
               </div>
             </div>
           </div>

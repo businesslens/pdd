@@ -28,21 +28,27 @@
   or sequence steps. Declare exact intended Interface scopes, narrowed by
   Experience where those contexts exist.
 - Business rules are reusable policies or invariants.
-- Journeys express stable user or operator goals.
-- Scenarios express observable paths through a goal, not implementation
-  branches. Cover primary, permission, validation, conflict, and
-  external-failure behavior where the product distinguishes them.
-- Use a decision point only when one condition creates two or more materially
-  different outcomes.
+- Capability Scenarios express observable acceptance for one Capability and
+  exact Actor contexts. Every Capability needs at least one; cover primary,
+  permission, validation, conflict, and external-failure behavior where the
+  product distinguishes them.
+- Journeys express stable user or operator goals whose achieved paths cross at
+  least two distinct Capabilities. Do not create a Journey to house acceptance
+  for one Capability.
+- Journey Scenarios express observable paths through a goal. Record each stage
+  as a Capability, one-line operation, and exact availability.
+- Use a decision point only when branches converge on the same result without
+  changing the Capability sequence. Otherwise write separate Scenarios.
 - Record intent where the reason behind a boundary or behavior will guide
   implementation choices.
 - Do not assume parity across Interfaces. Decide each availability scope and
-  allow Scenarios to narrow a Journey only when behavior materially differs.
+  decide every Scenario's exact contexts independently.
 
 ## Scenarios are the acceptance contract
 
-Write Trigger, ordered Steps, Decision points when behavior branches, and
-Outcome so a reviewer can compare source behavior without executing it.
+Write Trigger, ordered Steps, Decision points when a linear flow branches, and
+Outcome so a reviewer can compare source behavior without executing it. Keep a
+Journey Scenario's prose steps aligned with its authored flow operations.
 
 - Good: “Submitting an empty cart shows an error and keeps the cart.”
 - Too vague: “Cart validation works.”

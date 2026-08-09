@@ -30,11 +30,16 @@
   sequence steps. Map exact Interface scopes, narrowed by Experience only when
   the repository supports that claim.
 - Business rules are reusable policies or invariants.
-- Journeys represent stable user or operator goals.
-- Scenarios are observable paths through a journey. Cover primary, permission,
-  validation, conflict, and external-failure paths only where behavior differs.
-- Add a decision point only when one condition creates at least two materially
-  different product outcomes.
+- Capability Scenarios state observable acceptance for one Capability in exact
+  Actor contexts. Cover primary, permission, validation, conflict, and
+  external-failure behavior only where it differs.
+- Journeys represent stable user or operator goals, never a wrapper for one
+  Capability. Omit Journeys when no established goal crosses Capabilities.
+- Journey Scenarios are observable paths through a goal. Record each stage as a
+  Capability, one-line operation, and exact availability; an achieved path must
+  traverse at least two distinct Capabilities.
+- Add a decision point only when branches converge on one result without
+  changing the Capability sequence. Otherwise write separate Scenarios.
 - Treat shared backend code as no evidence of web/mobile/API/CLI parity. Verify
   each declared availability scope independently.
 

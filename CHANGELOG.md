@@ -19,13 +19,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   entity content behind progressive disclosure. The set — Meridian, Inquiry,
   Canvas, Tripane, Workbench, Narrative, Promises, Gateway, Crossgrid, Beacon,
   Panorama and Orbit — differs in information architecture, not styling: each makes a
-  different Product question primary while rendering every entity kind,
+  different Product question primary while rendering every entity collection,
   availability, entry points, screen states, scenario steps, decision points,
   edge cases, references, supporting content, coverage, and the backlinks the
   format stores in only one direction.
 - A shared Vue Flow foundation in the same layer (`@vue-flow/core` with a
   `@dagrejs/dagre` layered layout, both optional peer dependencies): one
-  entity box and one container box for all nine kinds, a fixed relation-verb
+  entity box and one container box for nine visual categories (with both
+  Scenario types distinguished in content), a fixed relation-verb
   vocabulary, a measured Interface → Experience → Screen containment map, a
   sitemap of the same hierarchy drawn either as a top-down tree or radially
   from the Product core, and
@@ -37,6 +38,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Schema 4 and Product Report v8 now separate Capability Scenarios from
+  Journey Scenarios. Capabilities own local acceptance coverage; optional,
+  route-free Journeys own only Actors, Goal, and Success criterion; Journey
+  Scenarios own ordered Capability/operation/context flows and their terminal
+  result. Lint grades missing Capability Scenario coverage by model breadth,
+  validates Scenario Actors against exact contexts, and constrains Screen
+  Scenario relations. The version identifiers remain unchanged because neither
+  unreleased contract needs a compatibility reader.
 - **Breaking.** Folder schema 4 and Product Report v8 make Experiences
   optional. Interfaces with no Experience contexts use direct availability;
   Interfaces with declared Experiences continue to require exact,
@@ -44,7 +53,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   accepted.
 - The Content Feed Reader catalog Blueprint is now a smaller teaching model
   with two Actors, two Interfaces, two Experiences, two Domains, four Screens,
-  five Capabilities, five Journeys, ten Scenarios, and four Business Rules.
+  five Capabilities, ten Capability Scenarios, three Journeys, six Journey
+  Scenarios, and four Business Rules.
   It remains source-free; a future implementation can attach screenshots as
   external References without changing Product meaning.
 

@@ -398,7 +398,9 @@ function ruleImpact(rule: RuleView): RuleImpact {
   const scenarioJourneyIds = new Set(rule.scenarioIds
     .map((id) => {
       const scenario = props.workspace.byId.get(id)
-      return scenario?.kind === 'scenario' ? scenario.journeyId : null
+      return scenario?.kind === 'scenario' && scenario.scenarioType === 'journey'
+        ? scenario.journeyId
+        : null
     })
     .filter((id): id is string => Boolean(id)))
   const derivedJourneys = props.workspace.journeys.filter(journey =>
@@ -418,7 +420,7 @@ const scenarioGroups = computed(() => props.workspace.journeys
   .filter(group => group.scenarios.length))
 
 const orphanScenarios = computed(() => props.workspace.scenarios
-  .filter(scenario => !props.workspace.byId.has(scenario.journeyId)))
+  .filter(scenario => scenario.scenarioType === 'journey' && !props.workspace.byId.has(scenario.journeyId)))
 
 /* ------------------------------------------------------------------ */
 /* Identity                                                            */
@@ -550,7 +552,9 @@ const ACCESS_TONE: Record<string, 'success' | 'warning' | 'error'> = {
                 <span
                   v-if="entity.kind === 'scenario'"
                   class="block truncate text-xs text-muted"
-                >{{ (entity as ScenarioView).journeyTitle }}</span>
+                >{{ (entity as ScenarioView).scenarioType === 'capability'
+                  ? (entity as ScenarioView).capabilityTitle
+                  : (entity as ScenarioView).journeyTitle }}</span>
               </span>
             </button>
             <p v-if="!listEntities.length" class="px-2 py-3 text-sm text-muted italic">
@@ -819,7 +823,7 @@ const ACCESS_TONE: Record<string, 'success' | 'warning' | 'error'> = {
               <section class="space-y-3">
                 <h4 class="text-base font-semibold tracking-tight text-highlighted">Scenarios <span class="blr-meta ms-1">{{ activeJourneyScenarios.length }}</span></h4>
                 <p v-if="!activeJourneyScenarios.length" class="text-sm text-muted italic">
-                  This Journey declares no Scenarios.
+                  No Journey Scenarios name this Journey.
                 </p>
                 <article
                   v-for="scenario in activeJourneyScenarios"

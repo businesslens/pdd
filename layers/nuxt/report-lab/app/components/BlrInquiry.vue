@@ -311,8 +311,8 @@ const scenarioGroups = computed(() => props.workspace.journeys
   .filter(group => group.scenarios.length > 0))
 const flowScenario = computed(() => {
   const entity = flowScenarioId.value ? props.workspace.byId.get(flowScenarioId.value) : null
-  if (entity?.kind === 'scenario') return entity
-  return props.workspace.scenarios[0] ?? null
+  if (entity?.kind === 'scenario' && entity.scenarioType === 'journey') return entity
+  return props.workspace.scenarios.find(scenario => scenario.scenarioType === 'journey') ?? null
 })
 
 /* ---------- Q8 topology picker ---------- */
@@ -829,7 +829,7 @@ const ACCESS_TONE: Record<string, 'success' | 'warning' | 'error'> = { public: '
         </aside>
         <div class="blr-pane min-w-0 flex-1 py-6 md:ps-8">
           <div class="mb-4 flex flex-wrap gap-1.5 md:hidden">
-            <UButton v-for="scenario in workspace.scenarios" :key="scenario.id" size="xs" class="rounded-full" :color="flowScenario?.id === scenario.id ? 'primary' : 'neutral'" :variant="flowScenario?.id === scenario.id ? 'soft' : 'outline'" :label="scenario.title" @click="flowScenarioId = scenario.id" />
+            <UButton v-for="scenario in workspace.scenarios.filter(item => item.scenarioType === 'journey')" :key="scenario.id" size="xs" class="rounded-full" :color="flowScenario?.id === scenario.id ? 'primary' : 'neutral'" :variant="flowScenario?.id === scenario.id ? 'soft' : 'outline'" :label="scenario.title" @click="flowScenarioId = scenario.id" />
           </div>
           <template v-if="flowScenario">
             <header class="max-w-3xl border-b border-default pb-5">
@@ -839,7 +839,7 @@ const ACCESS_TONE: Record<string, 'success' | 'warning' | 'error'> = { public: '
                 <UBadge color="neutral" variant="subtle" size="sm">{{ flowScenario.kindName }}</UBadge>
                 <UButton icon="i-lucide-book-open" size="xs" color="neutral" variant="ghost" class="ms-auto" title="Open the full entity" @click="inspect(flowScenario!)" />
               </div>
-              <BlrAvail class="mt-3" :pairs="flowScenario.availability" inherited-note="Applies to every pair its Journey declares." />
+              <BlrAvail class="mt-3" :pairs="flowScenario.availability" />
             </header>
             <div class="inq-flow mt-6 max-w-3xl space-y-5">
               <div class="inq-node">

@@ -3,7 +3,7 @@ title: blueprint contribute
 description: Open a pull request proposing your Product Model as a catalog Blueprint.
 section: open-source
 group: CLI
-order: 36
+order: 37
 ---
 
 # `businesslens blueprint contribute`
@@ -44,11 +44,14 @@ an SPDX license identifier to `product.md`, plus `.businesslens/logo.svg`.
 Check these before contributing:
 
 - **Focused scope:** one product, not a platform or suite.
-- **Complete contract:** all necessary Actors, Journeys, Business Rules, and meaningful
-  success, permission, validation, conflict, and external-failure Scenarios.
-- **Observable Scenarios:** each path can be checked against implementation.
-  Prefer “submitting an empty cart shows an error and keeps the cart” over
-  “cart validation works.”
+- **Complete contract:** all necessary Actors, Capabilities, Business Rules,
+  meaningful local Capability Scenarios, plus only coherent multi-Capability
+  Journeys and end-to-end Journey Scenarios the Product deliberately supports.
+- **Honest granularity:** Capability Scenarios vary one durable behavior; they
+  do not hide unrelated operations beneath a vague umbrella Capability.
+- **Observable cases:** each Capability Scenario and Journey Scenario can be
+  checked against implementation. Prefer “submitting an empty cart shows an
+  error and keeps the cart” over “cart validation works.”
 - **Product-level prose:** describe what users observe, not frameworks,
   databases, or architecture.
 - **Generic shape:** model an archetype rather than a named third-party product.

@@ -391,7 +391,9 @@ const ruleImpacts = computed<RuleImpact[]>(() => props.workspace.rules.map((rule
   const journeyIdsViaScenarios = unique(rule.scenarioIds
     .map((scenarioId) => {
       const scenario = byId(scenarioId)
-      return scenario && scenario.kind === 'scenario' ? scenario.journeyId : ''
+      return scenario && scenario.kind === 'scenario' && scenario.scenarioType === 'journey'
+        ? scenario.journeyId
+        : ''
     })
     .filter(Boolean))
   const derivedJourneys = journeyIdsViaScenarios

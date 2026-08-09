@@ -56,7 +56,8 @@ export interface CapabilityEntity extends EntityFile {
 export interface ScreenEntity extends EntityFile {
   availability: Availability[]
   capabilities: string[]
-  scenarios: string[]
+  capabilityScenarios: string[]
+  journeyScenarios: string[]
   entryPoints: CompactEntryPoint[]
   information: string[]
   actions: string[]
@@ -64,10 +65,9 @@ export interface ScreenEntity extends EntityFile {
   capabilityBoundary: string
 }
 
-export interface ScenarioEntity extends EntityFile {
-  journeyId: string
+interface ScenarioEntity extends EntityFile {
   kind: string
-  availability: Availability[]
+  actors: string[]
   trigger: string
   steps: string[]
   outcome: string
@@ -75,19 +75,35 @@ export interface ScenarioEntity extends EntityFile {
   decisionPoints: ReturnType<typeof decisionPoints>
 }
 
+export interface CapabilityScenarioEntity extends ScenarioEntity {
+  capability: string
+  availability: Availability[]
+}
+
+export interface JourneyFlowItem {
+  capability: string
+  operation: string
+  availability: Availability[]
+}
+
+export interface JourneyScenarioEntity extends ScenarioEntity {
+  journey: string
+  result: string
+  flow: JourneyFlowItem[]
+}
+
 export interface JourneyEntity extends EntityFile {
   actors: string[]
-  capabilities: string[]
-  availability: Availability[]
-  entryPoints: CompactEntryPoint[]
-  scenarios: ScenarioEntity[]
+  goal: string
+  successCriterion: string
 }
 
 export interface BusinessRuleEntity extends EntityFile {
   domains: string[]
   capabilities: string[]
   journeys: string[]
-  scenarios: string[]
+  capabilityScenarios: string[]
+  journeyScenarios: string[]
   availability: Availability[]
   rationale: string
 }
@@ -133,8 +149,10 @@ export interface PddModel {
   screens: ScreenEntity[]
   domains: DomainEntity[]
   capabilities: CapabilityEntity[]
+  capabilityScenarios: CapabilityScenarioEntity[]
   businessRules: BusinessRuleEntity[]
   journeys: JourneyEntity[]
+  journeyScenarios: JourneyScenarioEntity[]
   issues: string[]
 }
 
@@ -143,14 +161,6 @@ export const FOLDER = '.businesslens'
 function listMarkdown(directory: string): string[] {
   if (!existsSync(directory)) return []
   return readdirSync(directory).filter(name => name.endsWith('.md')).sort()
-}
-
-function listDirectories(directory: string): string[] {
-  if (!existsSync(directory)) return []
-  return readdirSync(directory, { withFileTypes: true })
-    .filter(entry => entry.isDirectory())
-    .map(entry => entry.name)
-    .sort()
 }
 
 function readEntity(
@@ -163,6 +173,45 @@ function readEntity(
   rejectUnknownKeys(data, [...allowedKeys, 'references'], issues, file)
   const doc = parseMarkdown(body)
   return { data, doc, references: referencesField(data, issues, file) }
+}
+
+function readScenarioSections(doc: MarkdownDoc, issues: string[], file: string) {
+  return {
+    trigger: section(doc, 'Trigger') || '',
+    steps: orderedList(section(doc, 'Steps') || ''),
+    outcome: section(doc, 'Outcome') || '',
+    edgeCases: bulletList(section(doc, 'Edge cases') || ''),
+    decisionPoints: decisionPoints(section(doc, 'Decision points') || '', issues, file)
+  }
+}
+
+function journeyFlowField(
+  data: Record<string, unknown>,
+  issues: string[],
+  label: string
+): JourneyFlowItem[] {
+  const value = data.flow
+  if (value === undefined || value === null) return []
+  if (!Array.isArray(value)) {
+    issues.push(`${label}: "flow" must be a list`)
+    return []
+  }
+  const flow: JourneyFlowItem[] = []
+  for (const [index, raw] of value.entries()) {
+    const itemLabel = `${label}: flow item ${index + 1}`
+    if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
+      issues.push(`${itemLabel} must be a mapping`)
+      continue
+    }
+    const item = raw as Record<string, unknown>
+    rejectUnknownKeys(item, ['capability', 'operation', 'availability'], issues, itemLabel)
+    flow.push({
+      capability: stringField(item, 'capability', issues, itemLabel) || '',
+      operation: stringField(item, 'operation', issues, itemLabel) || '',
+      availability: availabilityField(item, issues, itemLabel)
+    })
+  }
+  return flow
 }
 
 /** Load the strict schema 4 .businesslens/ folder, collecting parse issues. */
@@ -386,14 +435,15 @@ export function loadModel(cwd: string): PddModel {
     const file = join(root, 'screens', name)
     const { data, doc, references } = readEntity(
       file,
-      ['availability', 'capabilities', 'scenarios', 'entryPoints'],
+      ['availability', 'capabilities', 'capabilityScenarios', 'journeyScenarios', 'entryPoints'],
       issues
     )
     return {
       id: stem(name), file, doc, references,
       availability: availabilityField(data, issues, file),
       capabilities: stringListField(data, 'capabilities', issues, file),
-      scenarios: stringListField(data, 'scenarios', issues, file),
+      capabilityScenarios: stringListField(data, 'capabilityScenarios', issues, file),
+      journeyScenarios: stringListField(data, 'journeyScenarios', issues, file),
       entryPoints: entryPointsField(data, issues, file),
       information: bulletList(section(doc, 'Information presented') || ''),
       actions: bulletList(section(doc, 'Available actions') || ''),
@@ -406,7 +456,7 @@ export function loadModel(cwd: string): PddModel {
     const file = join(root, 'business-rules', name)
     const { data, doc, references } = readEntity(
       file,
-      ['domains', 'capabilities', 'journeys', 'scenarios', 'availability'],
+      ['domains', 'capabilities', 'journeys', 'capabilityScenarios', 'journeyScenarios', 'availability'],
       issues
     )
     return {
@@ -414,52 +464,50 @@ export function loadModel(cwd: string): PddModel {
       domains: stringListField(data, 'domains', issues, file),
       capabilities: stringListField(data, 'capabilities', issues, file),
       journeys: stringListField(data, 'journeys', issues, file),
-      scenarios: stringListField(data, 'scenarios', issues, file),
+      capabilityScenarios: stringListField(data, 'capabilityScenarios', issues, file),
+      journeyScenarios: stringListField(data, 'journeyScenarios', issues, file),
       availability: availabilityField(data, issues, file),
       rationale: section(doc, 'Rationale') || ''
     }
   })
 
-  const journeys: JourneyEntity[] = listDirectories(join(root, 'journeys')).map((journeyId) => {
-    const journeyDir = join(root, 'journeys', journeyId)
-    const file = join(journeyDir, 'journey.md')
-    if (!existsSync(file)) {
-      issues.push(`journeys/${journeyId}/ is missing journey.md`)
-      return null
-    }
-    const { data, doc, references } = readEntity(
-      file,
-      ['actors', 'capabilities', 'availability', 'entryPoints'],
-      issues
-    )
-    const scenarios: ScenarioEntity[] = listMarkdown(join(journeyDir, 'scenarios')).map((scenarioName) => {
-      const scenarioFile = join(journeyDir, 'scenarios', scenarioName)
-      const entity = readEntity(scenarioFile, ['kind', 'availability'], issues)
-      const scenarioDoc = entity.doc
-      return {
-        id: stem(scenarioName),
-        file: scenarioFile,
-        doc: scenarioDoc,
-        references: entity.references,
-        journeyId,
-        kind: stringField(entity.data, 'kind', issues, scenarioFile) || '',
-        availability: availabilityField(entity.data, issues, scenarioFile),
-        trigger: section(scenarioDoc, 'Trigger') || '',
-        steps: orderedList(section(scenarioDoc, 'Steps') || ''),
-        outcome: section(scenarioDoc, 'Outcome') || '',
-        edgeCases: bulletList(section(scenarioDoc, 'Edge cases') || ''),
-        decisionPoints: decisionPoints(section(scenarioDoc, 'Decision points') || '', issues, scenarioFile)
-      }
-    })
+  const capabilityScenarios: CapabilityScenarioEntity[] = listMarkdown(join(root, 'capability-scenarios')).map((name) => {
+    const file = join(root, 'capability-scenarios', name)
+    const { data, doc, references } = readEntity(file, ['kind', 'capability', 'actors', 'availability'], issues)
     return {
-      id: journeyId, file, doc, references,
+      id: stem(name), file, doc, references,
+      kind: stringField(data, 'kind', issues, file) || '',
+      capability: stringField(data, 'capability', issues, file) || '',
       actors: stringListField(data, 'actors', issues, file),
-      capabilities: stringListField(data, 'capabilities', issues, file),
       availability: availabilityField(data, issues, file),
-      entryPoints: entryPointsField(data, issues, file),
-      scenarios
+      ...readScenarioSections(doc, issues, file)
     }
-  }).filter((journey): journey is JourneyEntity => Boolean(journey))
+  })
+
+  const journeys: JourneyEntity[] = listMarkdown(join(root, 'journeys')).map((name) => {
+    const file = join(root, 'journeys', name)
+    const { data, doc, references } = readEntity(file, ['actors'], issues)
+    return {
+      id: stem(name), file, doc, references,
+      actors: stringListField(data, 'actors', issues, file),
+      goal: section(doc, 'Goal') || '',
+      successCriterion: section(doc, 'Success criterion') || ''
+    }
+  })
+
+  const journeyScenarios: JourneyScenarioEntity[] = listMarkdown(join(root, 'journey-scenarios')).map((name) => {
+    const file = join(root, 'journey-scenarios', name)
+    const { data, doc, references } = readEntity(file, ['kind', 'journey', 'actors', 'result', 'flow'], issues)
+    return {
+      id: stem(name), file, doc, references,
+      kind: stringField(data, 'kind', issues, file) || '',
+      journey: stringField(data, 'journey', issues, file) || '',
+      actors: stringListField(data, 'actors', issues, file),
+      result: stringField(data, 'result', issues, file) || '',
+      flow: journeyFlowField(data, issues, file),
+      ...readScenarioSections(doc, issues, file)
+    }
+  })
 
   return {
     root,
@@ -473,8 +521,10 @@ export function loadModel(cwd: string): PddModel {
     screens,
     domains,
     capabilities,
+    capabilityScenarios,
     businessRules,
     journeys,
+    journeyScenarios,
     issues
   }
 }

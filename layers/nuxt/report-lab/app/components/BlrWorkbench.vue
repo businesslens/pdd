@@ -10,16 +10,15 @@
  * every kind is the same surface — cards ⇄ table, facet filters, and group-by
  * over any related kind — so browsing is one behaviour learned once. Depth is
  * reached three ways, each for a different question:
- * - the shared BlrInspector slideover, for "tell me everything about this one";
- * - a drill-down, only where the model genuinely nests (Journey → Scenarios);
+ * - the inspector, with parent-specific Scenario disclosures;
+ * - a Journey → Scenarios centre page;
  * - ⌘K, for "I know its name, take me there".
  *
  * Breadth has one product-level destination: Topology. Its named views answer
  * fixed questions over several kinds without turning the kind rail into a
  * view builder or changing what navigation means.
  *
- * Scenarios have no page of their own here: they are steps of a promise, read
- * inside the Journey that declares them.
+ * Scenarios expand in parent inspectors and on the Journey page.
  */
 import { h } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
@@ -410,7 +409,7 @@ const TABLE_NOTE: Partial<Record<ReportEntityKind, string>> = {
 
 /** Scenarios whose Journey is not in the model would otherwise be unreachable. */
 const orphanScenarios = computed(() => props.workspace.scenarios
-  .filter(scenario => !props.workspace.byId.has(scenario.journeyId)))
+  .filter(scenario => scenario.scenarioType === 'journey' && !props.workspace.byId.has(scenario.journeyId)))
 
 /* ------------------------------------------------------------------ */
 /* Overview                                                            */
@@ -921,7 +920,7 @@ const sections = reactive({ about: false, coverage: false, counts: false, refere
                 </span>
               </header>
               <p v-if="!openJourneyScenarios.length" class="text-sm text-muted italic">
-                This Journey declares no Scenarios.
+                No Journey Scenarios name this Journey.
               </p>
               <div :class="entityCardLayoutClass">
                 <BlrEntityCard
@@ -1030,7 +1029,15 @@ const sections = reactive({ about: false, coverage: false, counts: false, refere
         :entity="inspected"
         @select="inspect($event)"
         @close="inspected = null"
-      />
+      >
+        <template #detail-after="{ entity }">
+          <BlrWorkbenchScenarioDrilldown
+            :workspace="workspace"
+            :entity="entity"
+            @select="inspect($event)"
+          />
+        </template>
+      </BlrInspector>
     </div>
 
     <BlrSearchPalette

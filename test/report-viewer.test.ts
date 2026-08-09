@@ -30,8 +30,9 @@ describe('shared Product Report projection', () => {
     expect(report.stats).toEqual([
       { key: 'actors', label: 'Actors', value: source.counts.actors },
       { key: 'capabilities', label: 'Capabilities', value: source.counts.capabilities },
+      { key: 'capability-scenarios', label: 'Capability scenarios', value: source.counts.capabilityScenarios },
       { key: 'journeys', label: 'Journeys', value: source.counts.journeys },
-      { key: 'scenarios', label: 'Scenarios', value: source.counts.scenarios },
+      { key: 'journey-scenarios', label: 'Journey scenarios', value: source.counts.journeyScenarios },
       { key: 'rules', label: 'Rules', value: source.counts.businessRules }
     ])
     expect(report.actors.map(actor => actor.id)).toEqual(
@@ -46,8 +47,11 @@ describe('shared Product Report projection', () => {
     expect(report.rules.map(rule => rule.id)).toEqual(
       source.model.businessRules.map(rule => rule.id)
     )
-    expect(report.scenarios.map(scenario => scenario.id)).toEqual(
-      source.model.scenarios.map(scenario => scenario.id)
+    expect(report.capabilityScenarios.map(scenario => scenario.id)).toEqual(
+      source.model.capabilityScenarios.map(scenario => scenario.id)
+    )
+    expect(report.journeyScenarios.map(scenario => scenario.id)).toEqual(
+      source.model.journeyScenarios.map(scenario => scenario.id)
     )
     expect(report).not.toHaveProperty('slug')
     expect(report).not.toHaveProperty('source')

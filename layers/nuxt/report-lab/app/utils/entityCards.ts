@@ -96,7 +96,7 @@ function ruleReachCount(workspace: ReportWorkspace, rule: RuleView): number {
     ...rule.journeyIds,
     ...rule.scenarioIds
       .map(id => workspace.byId.get(id))
-      .filter((entity): entity is ScenarioView => entity?.kind === 'scenario')
+      .filter((entity): entity is ScenarioView => entity?.kind === 'scenario' && entity.scenarioType === 'journey')
       .map(scenario => scenario.journeyId),
     ...workspace.journeys
       .filter(journey => journey.capabilityIds.some(id => capabilities.has(id)))
@@ -218,8 +218,8 @@ export function entityCardPresentation(
           { label: 'decisions', value: scenario.decisionPoints.length },
           { label: 'edge cases', value: scenario.edgeCases.length }
         ],
-        hookLabel: 'In journey',
-        hook: scenario.journeyTitle
+        hookLabel: scenario.scenarioType === 'capability' ? 'For capability' : 'In journey',
+        hook: scenario.scenarioType === 'capability' ? scenario.capabilityTitle : scenario.journeyTitle
       }
     }
     case 'rule': {

@@ -5,7 +5,8 @@ availability:
   - interface: customer-mobile
     experiences: [storefront]
 capabilities: [catalog-browsing]
-scenarios: [browse-catalog]
+capabilityScenarios: [browse-catalog]
+journeyScenarios: [browse-and-complete-checkout]
 entryPoints:
   - customer-web: /products/:id
   - customer-mobile: fixture-shop://products/:id

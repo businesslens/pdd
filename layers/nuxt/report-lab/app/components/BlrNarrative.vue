@@ -270,7 +270,9 @@ const ruleReach = computed(() => props.workspace.rules.map((rule) => {
   }
   for (const scenarioId of directScenarios) {
     const scenario = props.workspace.byId.get(scenarioId)
-    if (scenario?.kind === 'scenario' && !directJourneys.has(scenario.journeyId)) derivedJourneys.add(scenario.journeyId)
+    if (scenario?.kind === 'scenario'
+      && scenario.scenarioType === 'journey'
+      && !directJourneys.has(scenario.journeyId)) derivedJourneys.add(scenario.journeyId)
   }
   const derivedScenarios = new Set<string>()
   for (const journeyId of directJourneys) {
@@ -719,7 +721,7 @@ const pairUsage = computed(() => props.workspace.pairs.map(pair => ({
             <figure v-if="workspace.journeys.length" class="space-y-2">
               <figcaption class="text-sm leading-6 text-muted">
                 <span class="font-medium text-default">Matrix — Which Product promises depend on each Capability?</span>
-                A mark means the Journey declares the Capability as supporting it.
+                A mark means an achieved Journey Scenario uses the Capability.
                 <span class="blr-no-print">Click any cell for the exact relationship.</span>
               </figcaption>
               <div class="overflow-x-auto">

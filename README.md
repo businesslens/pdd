@@ -23,9 +23,10 @@ resolution loop.
 ├── screens/                  # optional product views
 ├── domains/                  # optional organization
 ├── capabilities/
+├── capability-scenarios/
 ├── business-rules/
-├── journeys/<id>/journey.md
-│   └── scenarios/<id>.md
+├── journeys/                 # optional goals
+├── journey-scenarios/        # cross-Capability goal paths
 └── coverage.md
 ```
 

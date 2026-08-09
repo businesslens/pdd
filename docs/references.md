@@ -3,7 +3,7 @@ title: References
 description: Attach intent, implementation, or context artifacts to any Product Model entity without moving external material into the model.
 section: open-source
 group: Product Model
-order: 18
+order: 19
 ---
 
 # References
@@ -15,8 +15,9 @@ context. The referenced artifact is not part of the model and never replaces
 the entity's Product prose.
 
 Every semantic entity supports the same optional field: Product, Actor,
-Interface, Experience, Screen, Domain, Capability, Journey, Scenario, and
-Business Rule. Configuration, Coverage, and taxonomies do not.
+Interface, Experience, Screen, Domain, Capability, Journey, Capability
+Scenario, Journey Scenario, and Business Rule. Configuration, Coverage, and
+taxonomies do not.
 
 ```yaml
 references:

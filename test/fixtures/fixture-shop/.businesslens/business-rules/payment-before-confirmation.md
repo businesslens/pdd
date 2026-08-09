@@ -2,7 +2,8 @@
 domains: [ordering]
 capabilities: [checkout]
 journeys: [browse-and-buy]
-scenarios: [complete-checkout]
+capabilityScenarios: [complete-checkout]
+journeyScenarios: [browse-and-complete-checkout]
 references:
   - kind: code
     role: implementation

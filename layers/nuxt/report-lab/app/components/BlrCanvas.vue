@@ -237,7 +237,9 @@ const ruleImpact = computed(() => {
   }
   for (const scenarioId of rule.scenarioIds) {
     const scenario = props.workspace.byId.get(scenarioId)
-    if (scenario?.kind === 'scenario') reach(scenario.journeyId, `contains “${scenario.title}”`)
+    if (scenario?.kind === 'scenario' && scenario.scenarioType === 'journey') {
+      reach(scenario.journeyId, `contains “${scenario.title}”`)
+    }
   }
   for (const domainId of rule.domainIds) {
     const domain = props.workspace.byId.get(domainId)

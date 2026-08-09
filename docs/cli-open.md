@@ -3,7 +3,7 @@ title: blueprint open
 description: Expand a local Product Report into a canonical Product Model.
 section: open-source
 group: CLI
-order: 34
+order: 35
 ---
 
 # `businesslens blueprint open`
@@ -41,9 +41,11 @@ model is written into `./new-product`.
 ## Imported navigation
 
 `open` uses the same [portable projection](./cli-export.md#portable-export) as
-`export`. Product behavior, relationships, exact availability, supporting
-content, Product routes, commands, non-file deep links, and portable References
-are preserved. Repository-specific navigation is removed.
+`export`. Product behavior, relationships, exact availability, Capability
+Scenarios, goal-focused Journeys, Journey Scenario flows, derived Journey
+Capability projections, supporting content, Product routes, commands, non-file
+deep links, and portable References are preserved. Repository-specific
+navigation is removed.
 
 Coverage status, unmapped Product areas, and limitations are preserved. The
 expanded model records that implementation alignment must be verified in its

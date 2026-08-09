@@ -86,8 +86,9 @@ const ReportEntityCountShape = {
   screens: z.number().int().min(0),
   domains: z.number().int().min(0),
   capabilities: z.number().int().min(0),
+  capabilityScenarios: z.number().int().min(0),
   journeys: z.number().int().min(0),
-  scenarios: z.number().int().min(0),
+  journeyScenarios: z.number().int().min(0),
   businessRules: z.number().int().min(0)
 }
 
@@ -172,7 +173,8 @@ export const ReportScreenSchema = z.strictObject({
   description: RequiredMarkdownFragmentSchema,
   availability: z.array(ReportAvailabilitySchema).min(1),
   capabilityIds: z.array(IdSchema).min(1),
-  scenarioIds: z.array(IdSchema),
+  capabilityScenarioIds: z.array(IdSchema),
+  journeyScenarioIds: z.array(IdSchema),
   entryPoints: z.array(ReportEntryPointSchema),
   information: z.array(SingleLineTextSchema).min(1),
   actions: z.array(SingleLineTextSchema),
@@ -184,11 +186,12 @@ export const ReportScreenSchema = z.strictObject({
 export const ReportJourneySchema = z.strictObject({
   id: IdSchema,
   title: SingleLineTextSchema,
-  summary: RequiredMarkdownFragmentSchema,
+  goal: RequiredMarkdownFragmentSchema,
+  successCriterion: RequiredMarkdownFragmentSchema,
   actorIds: z.array(IdSchema).min(1),
-  capabilityIds: z.array(IdSchema).min(1),
-  availability: z.array(ReportAvailabilitySchema).min(1),
-  entryPoints: z.array(ReportEntryPointSchema),
+  capabilityIds: z.array(IdSchema).min(2),
+  failureOnlyCapabilityIds: z.array(IdSchema),
+  domainIds: z.array(IdSchema),
   ...EntityContentSchema
 })
 
@@ -201,18 +204,37 @@ export const ReportDecisionPointSchema = z.strictObject({
   })).min(2)
 })
 
-export const ReportScenarioSchema = z.strictObject({
-  id: IdSchema,
-  journeyId: IdSchema,
+const ReportScenarioContentShape = {
   title: SingleLineTextSchema,
   kindId: IdSchema,
-  availability: z.array(ReportAvailabilitySchema),
+  actorIds: z.array(IdSchema).min(1),
   trigger: RequiredMarkdownFragmentSchema,
   steps: z.array(SingleLineTextSchema).min(1),
   decisionPoints: z.array(ReportDecisionPointSchema),
   outcome: RequiredMarkdownFragmentSchema,
   edgeCases: z.array(SingleLineTextSchema),
   ...EntityContentSchema
+}
+
+export const ReportCapabilityScenarioSchema = z.strictObject({
+  id: IdSchema,
+  capabilityId: IdSchema,
+  availability: z.array(ReportAvailabilitySchema).min(1),
+  ...ReportScenarioContentShape
+})
+
+export const ReportJourneyFlowItemSchema = z.strictObject({
+  capabilityId: IdSchema,
+  operation: SingleLineTextSchema,
+  availability: z.array(ReportAvailabilitySchema).min(1)
+})
+
+export const ReportJourneyScenarioSchema = z.strictObject({
+  id: IdSchema,
+  journeyId: IdSchema,
+  result: z.enum(['achieved', 'not-achieved']),
+  flow: z.array(ReportJourneyFlowItemSchema).min(1),
+  ...ReportScenarioContentShape
 })
 
 export const ReportBusinessRuleSchema = z.strictObject({
@@ -223,7 +245,8 @@ export const ReportBusinessRuleSchema = z.strictObject({
   domainIds: z.array(IdSchema),
   capabilityIds: z.array(IdSchema),
   journeyIds: z.array(IdSchema),
-  scenarioIds: z.array(IdSchema),
+  capabilityScenarioIds: z.array(IdSchema),
+  journeyScenarioIds: z.array(IdSchema),
   availability: z.array(ReportAvailabilitySchema),
   ...EntityContentSchema
 })
@@ -265,8 +288,9 @@ export const ProductReportV8Schema = z.strictObject({
     screens: z.array(ReportScreenSchema),
     domains: z.array(ReportDomainSchema),
     capabilities: z.array(ReportCapabilitySchema),
+    capabilityScenarios: z.array(ReportCapabilityScenarioSchema),
     journeys: z.array(ReportJourneySchema),
-    scenarios: z.array(ReportScenarioSchema),
+    journeyScenarios: z.array(ReportJourneyScenarioSchema),
     businessRules: z.array(ReportBusinessRuleSchema)
   }),
   coverage: ReportCoverageSchema
@@ -289,7 +313,9 @@ export type ReportCapability = z.infer<typeof ReportCapabilitySchema>
 export type ReportAvailability = z.infer<typeof ReportAvailabilitySchema>
 export type ReportScreen = z.infer<typeof ReportScreenSchema>
 export type ReportJourney = z.infer<typeof ReportJourneySchema>
-export type ReportScenario = z.infer<typeof ReportScenarioSchema>
+export type ReportCapabilityScenario = z.infer<typeof ReportCapabilityScenarioSchema>
+export type ReportJourneyFlowItem = z.infer<typeof ReportJourneyFlowItemSchema>
+export type ReportJourneyScenario = z.infer<typeof ReportJourneyScenarioSchema>
 export type ReportBusinessRule = z.infer<typeof ReportBusinessRuleSchema>
 export type ReportReference = z.infer<typeof ReportReferenceSchema>
 
@@ -374,6 +400,15 @@ function interfaceIdsFromAvailability(availability: ReportAvailability[]): Set<s
   return new Set(availability.map(item => item.interfaceId))
 }
 
+function intersects(left: Set<string>, right: Set<string>): boolean {
+  for (const value of left) if (right.has(value)) return true
+  return false
+}
+
+function sameIds(actual: string[], expected: Iterable<string>): boolean {
+  return JSON.stringify([...actual].sort()) === JSON.stringify([...expected].sort())
+}
+
 function requireEntryPointInterfaces(
   issues: string[],
   label: string,
@@ -399,7 +434,8 @@ export function validateProductReport(report: ProductReportV8): string[] {
   const capabilityIds = new Set(model.capabilities.map(item => item.id))
   const capabilityPairs = new Map<string, Set<string>>()
   const journeyIds = new Set(model.journeys.map(item => item.id))
-  const scenarioIds = new Set(model.scenarios.map(item => item.id))
+  const capabilityScenarioIds = new Set(model.capabilityScenarios.map(item => item.id))
+  const journeyScenarioIds = new Set(model.journeyScenarios.map(item => item.id))
   const kindIds = new Set(model.taxonomies.scenarioKinds.map(item => item.id))
 
   const collections: Array<[string, string[]]> = [
@@ -409,12 +445,18 @@ export function validateProductReport(report: ProductReportV8): string[] {
     ['screens', model.screens.map(item => item.id)],
     ['domains', model.domains.map(item => item.id)],
     ['capabilities', model.capabilities.map(item => item.id)],
+    ['capabilityScenarios', model.capabilityScenarios.map(item => item.id)],
     ['journeys', model.journeys.map(item => item.id)],
-    ['scenarios', model.scenarios.map(item => item.id)],
+    ['journeyScenarios', model.journeyScenarios.map(item => item.id)],
     ['businessRules', model.businessRules.map(item => item.id)],
     ['scenarioKinds', model.taxonomies.scenarioKinds.map(item => item.id)]
   ]
   for (const [label, ids] of collections) issues.push(...duplicateIssues(label, ids))
+  const capabilityScenarioFiles = new Map(model.capabilityScenarios.map(item => [item.id, `capability scenario "${item.id}"`]))
+  for (const scenario of model.journeyScenarios) {
+    const previous = capabilityScenarioFiles.get(scenario.id)
+    if (previous) issues.push(`journey scenario "${scenario.id}": id already used by ${previous}`)
+  }
 
   for (const productInterface of model.interfaces) {
     missingRelation(issues, `interface "${productInterface.id}"`, 'actor', productInterface.actorIds, actorIds)
@@ -452,112 +494,174 @@ export function validateProductReport(report: ProductReportV8): string[] {
       )
     )
   }
+  const supportedActorsForPair = (pair: string): Set<string> | undefined => {
+    const [interfaceId, experienceId] = pair.split('\0')
+    if (experienceId) {
+      const experience = experiencesById.get(experienceId)
+      return experience ? new Set(experience.actorIds) : undefined
+    }
+    const productInterface = interfacesById.get(interfaceId || '')
+    return productInterface ? new Set(productInterface.actorIds) : undefined
+  }
+  const validateScenarioActors = (label: string, scenarioActors: string[], pairs: Set<string>) => {
+    missingRelation(issues, label, 'actor', scenarioActors, actorIds)
+    const supportedSomewhere = new Set<string>()
+    for (const pair of pairs) {
+      const supported = supportedActorsForPair(pair)
+      if (!supported) continue
+      const participating = scenarioActors.filter(actorId => supported.has(actorId))
+      if (!participating.length) issues.push(`${label}: context "${availabilityLabel(pair)}" permits none of the Scenario Actors`)
+      for (const actorId of participating) supportedSomewhere.add(actorId)
+    }
+    for (const actorId of scenarioActors) {
+      if (actorIds.has(actorId) && !supportedSomewhere.has(actorId)) {
+        issues.push(`${label}: actor "${actorId}" is not supported by any selected context`)
+      }
+    }
+  }
+
+  const capabilityScenariosById = new Map(model.capabilityScenarios.map(item => [item.id, item]))
+  const capabilityScenarioPairs = new Map<string, Set<string>>()
+  const coveredCapabilities = new Set<string>()
+  for (const scenario of model.capabilityScenarios) {
+    const label = `capability scenario "${scenario.id}"`
+    if (!kindIds.has(scenario.kindId)) issues.push(`${label}: references missing scenario kind "${scenario.kindId}"`)
+    if (!capabilityIds.has(scenario.capabilityId)) {
+      issues.push(`${label}: references missing capability "${scenario.capabilityId}"`)
+    } else {
+      coveredCapabilities.add(scenario.capabilityId)
+    }
+    const pairs = availabilityPairs(issues, label, scenario.availability, interfaceIds, experiencesById)
+    capabilityScenarioPairs.set(scenario.id, pairs)
+    const supported = capabilityPairs.get(scenario.capabilityId) || new Set<string>()
+    for (const pair of pairs) {
+      if (!supported.has(pair)) {
+        issues.push(`${label}: availability "${availabilityLabel(pair)}" is outside capability "${scenario.capabilityId}"`)
+      }
+    }
+    validateScenarioActors(label, scenario.actorIds, pairs)
+  }
+  if (report.coverage.status === 'complete') {
+    for (const capabilityId of capabilityIds) {
+      if (!coveredCapabilities.has(capabilityId)) {
+        issues.push(`capability "${capabilityId}": needs at least one Capability Scenario`)
+      }
+    }
+  }
+
+  const journeysById = new Map(model.journeys.map(item => [item.id, item]))
+  const journeyScenariosById = new Map(model.journeyScenarios.map(item => [item.id, item]))
+  const journeyScenarioFlow = new Map<string, Array<{ capabilityId: string, pairs: Set<string> }>>()
+  for (const scenario of model.journeyScenarios) {
+    const label = `journey scenario "${scenario.id}"`
+    const journey = journeysById.get(scenario.journeyId)
+    if (!journey) issues.push(`${label}: references missing journey "${scenario.journeyId}"`)
+    if (!kindIds.has(scenario.kindId)) issues.push(`${label}: references missing scenario kind "${scenario.kindId}"`)
+    if (journey && !scenario.actorIds.some(actorId => journey.actorIds.includes(actorId))) {
+      issues.push(`${label}: actors must include at least one actor from journey "${scenario.journeyId}"`)
+    }
+    const allPairs = new Set<string>()
+    const flowEntries: Array<{ capabilityId: string, pairs: Set<string> }> = []
+    for (const [index, item] of scenario.flow.entries()) {
+      const flowLabel = `${label}: flow item ${index + 1}`
+      if (!capabilityIds.has(item.capabilityId)) {
+        issues.push(`${flowLabel}: references missing capability "${item.capabilityId}"`)
+      }
+      const pairs = availabilityPairs(issues, flowLabel, item.availability, interfaceIds, experiencesById)
+      flowEntries.push({ capabilityId: item.capabilityId, pairs })
+      for (const pair of pairs) allPairs.add(pair)
+      const supported = capabilityPairs.get(item.capabilityId) || new Set<string>()
+      for (const pair of pairs) {
+        if (!supported.has(pair)) {
+          issues.push(`${flowLabel}: availability "${availabilityLabel(pair)}" is outside capability "${item.capabilityId}"`)
+        }
+      }
+    }
+    journeyScenarioFlow.set(scenario.id, flowEntries)
+    validateScenarioActors(label, scenario.actorIds, allPairs)
+    if (scenario.result === 'achieved' && new Set(scenario.flow.map(item => item.capabilityId)).size < 2) {
+      issues.push(`${label}: an achieved Journey Scenario needs at least two distinct Capabilities`)
+    }
+  }
+
+  for (const journey of model.journeys) {
+    const label = `journey "${journey.id}"`
+    missingRelation(issues, label, 'actor', journey.actorIds, actorIds)
+    const scenarios = model.journeyScenarios.filter(scenario => scenario.journeyId === journey.id)
+    const achieved = scenarios.filter(scenario => scenario.result === 'achieved')
+    if (!achieved.length) issues.push(`${label}: needs at least one achieved Journey Scenario`)
+    const achievedCapabilities = new Set(achieved.flatMap(scenario => scenario.flow.map(item => item.capabilityId)))
+    const failedCapabilities = new Set(
+      scenarios.filter(scenario => scenario.result === 'not-achieved').flatMap(scenario => scenario.flow.map(item => item.capabilityId))
+    )
+    const failureOnly = new Set([...failedCapabilities].filter(capabilityId => !achievedCapabilities.has(capabilityId)))
+    const domains = new Set(
+      [...achievedCapabilities].map(capabilityId => model.capabilities.find(item => item.id === capabilityId)?.domainId).filter(Boolean) as string[]
+    )
+    missingRelation(issues, label, 'capability', journey.capabilityIds, capabilityIds)
+    missingRelation(issues, label, 'failure-only capability', journey.failureOnlyCapabilityIds, capabilityIds)
+    missingRelation(issues, label, 'domain', journey.domainIds, domainIds)
+    if (!sameIds(journey.capabilityIds, achievedCapabilities)) issues.push(`${label}: capabilityIds must equal the achieved-flow Capability union`)
+    if (!sameIds(journey.failureOnlyCapabilityIds, failureOnly)) issues.push(`${label}: failureOnlyCapabilityIds must equal the failure-only Capability set`)
+    if (!sameIds(journey.domainIds, domains)) issues.push(`${label}: domainIds must equal the Domains derived from achieved-flow Capabilities`)
+  }
+
   for (const screen of model.screens) {
-    const pairs = availabilityPairs(
-      issues,
-      `screen "${screen.id}"`,
-      screen.availability,
-      interfaceIds,
-      experiencesById
-    )
-    missingRelation(issues, `screen "${screen.id}"`, 'capability', screen.capabilityIds, capabilityIds)
-    missingRelation(issues, `screen "${screen.id}"`, 'scenario', screen.scenarioIds, scenarioIds)
-    requireEntryPointInterfaces(
-      issues,
-      `screen "${screen.id}"`,
-      screen.entryPoints,
-      interfaceIdsFromAvailability(screen.availability)
-    )
+    const label = `screen "${screen.id}"`
+    const pairs = availabilityPairs(issues, label, screen.availability, interfaceIds, experiencesById)
+    missingRelation(issues, label, 'capability', screen.capabilityIds, capabilityIds)
+    missingRelation(issues, label, 'Capability Scenario', screen.capabilityScenarioIds, capabilityScenarioIds)
+    missingRelation(issues, label, 'Journey Scenario', screen.journeyScenarioIds, journeyScenarioIds)
+    requireEntryPointInterfaces(issues, label, screen.entryPoints, interfaceIdsFromAvailability(screen.availability))
     for (const capabilityId of screen.capabilityIds) {
       const supported = capabilityPairs.get(capabilityId)
       if (!supported) continue
       for (const pair of pairs) {
-        if (!supported.has(pair)) {
-          issues.push(`screen "${screen.id}": capability "${capabilityId}" is not available in "${availabilityLabel(pair)}"`)
-        }
+        if (!supported.has(pair)) issues.push(`${label}: capability "${capabilityId}" is not available in "${availabilityLabel(pair)}"`)
       }
+    }
+    for (const scenarioId of screen.capabilityScenarioIds) {
+      const scenario = capabilityScenariosById.get(scenarioId)
+      if (!scenario) continue
+      if (!screen.capabilityIds.includes(scenario.capabilityId)) {
+        issues.push(`${label}: Capability Scenario "${scenarioId}" uses capability "${scenario.capabilityId}" outside the Screen capability list`)
+      }
+      if (!intersects(pairs, capabilityScenarioPairs.get(scenarioId) || new Set<string>())) {
+        issues.push(`${label}: Capability Scenario "${scenarioId}" shares no exact context with the Screen`)
+      }
+    }
+    for (const scenarioId of screen.journeyScenarioIds) {
+      if (!journeyScenariosById.has(scenarioId)) continue
+      const participates = (journeyScenarioFlow.get(scenarioId) || []).some(item =>
+        screen.capabilityIds.includes(item.capabilityId) && intersects(pairs, item.pairs)
+      )
+      if (!participates) issues.push(`${label}: Journey Scenario "${scenarioId}" has no flow item matching a Screen capability and exact context`)
     }
     const stateTitles = new Set<string>()
     for (const state of screen.states) {
       const normalized = state.title.toLowerCase()
-      if (stateTitles.has(normalized)) issues.push(`screen "${screen.id}": duplicate product state "${state.title}"`)
+      if (stateTitles.has(normalized)) issues.push(`${label}: duplicate product state "${state.title}"`)
       stateTitles.add(normalized)
     }
   }
-  const journeyPairs = new Map<string, Set<string>>()
-  for (const journey of model.journeys) {
-    missingRelation(issues, `journey "${journey.id}"`, 'actor', journey.actorIds, actorIds)
-    missingRelation(issues, `journey "${journey.id}"`, 'capability', journey.capabilityIds, capabilityIds)
-    const pairs = availabilityPairs(
-      issues,
-      `journey "${journey.id}"`,
-      journey.availability,
-      interfaceIds,
-      experiencesById
-    )
-    journeyPairs.set(journey.id, pairs)
-    requireEntryPointInterfaces(
-      issues,
-      `journey "${journey.id}"`,
-      journey.entryPoints,
-      interfaceIdsFromAvailability(journey.availability)
-    )
-    for (const capabilityId of journey.capabilityIds) {
-      const supported = capabilityPairs.get(capabilityId)
-      if (!supported) continue
-      for (const pair of pairs) {
-        if (!supported.has(pair)) {
-          issues.push(`journey "${journey.id}": capability "${capabilityId}" is not available in "${availabilityLabel(pair)}"`)
-        }
-      }
-    }
-    if (!model.scenarios.some(scenario => scenario.journeyId === journey.id)) {
-      issues.push(`journey "${journey.id}": needs at least one scenario`)
-    }
-  }
-  for (const scenario of model.scenarios) {
-    if (!journeyIds.has(scenario.journeyId)) {
-      issues.push(`scenario "${scenario.id}": references missing journey "${scenario.journeyId}"`)
-    }
-    if (!kindIds.has(scenario.kindId)) {
-      issues.push(`scenario "${scenario.id}": references missing scenario kind "${scenario.kindId}"`)
-    }
-    if (scenario.availability.length) {
-      const pairs = availabilityPairs(
-        issues,
-        `scenario "${scenario.id}"`,
-        scenario.availability,
-        interfaceIds,
-        experiencesById
-      )
-      const parentPairs = journeyPairs.get(scenario.journeyId) || new Set<string>()
-      for (const pair of pairs) {
-        if (!parentPairs.has(pair)) {
-          issues.push(`scenario "${scenario.id}": availability "${availabilityLabel(pair)}" is outside journey "${scenario.journeyId}"`)
-        }
-      }
-    }
-  }
+
   for (const rule of model.businessRules) {
-    missingRelation(issues, `business rule "${rule.id}"`, 'domain', rule.domainIds, domainIds)
-    missingRelation(issues, `business rule "${rule.id}"`, 'capability', rule.capabilityIds, capabilityIds)
-    missingRelation(issues, `business rule "${rule.id}"`, 'journey', rule.journeyIds, journeyIds)
-    missingRelation(issues, `business rule "${rule.id}"`, 'scenario', rule.scenarioIds, scenarioIds)
-    availabilityPairs(
-      issues,
-      `business rule "${rule.id}"`,
-      rule.availability,
-      interfaceIds,
-      experiencesById
-    )
+    const label = `business rule "${rule.id}"`
+    missingRelation(issues, label, 'domain', rule.domainIds, domainIds)
+    missingRelation(issues, label, 'capability', rule.capabilityIds, capabilityIds)
+    missingRelation(issues, label, 'journey', rule.journeyIds, journeyIds)
+    missingRelation(issues, label, 'Capability Scenario', rule.capabilityScenarioIds, capabilityScenarioIds)
+    missingRelation(issues, label, 'Journey Scenario', rule.journeyScenarioIds, journeyScenarioIds)
+    availabilityPairs(issues, label, rule.availability, interfaceIds, experiencesById)
     if (
       !rule.domainIds.length
       && !rule.capabilityIds.length
       && !rule.journeyIds.length
-      && !rule.scenarioIds.length
+      && !rule.capabilityScenarioIds.length
+      && !rule.journeyScenarioIds.length
       && !rule.availability.length
     ) {
-      issues.push(`business rule "${rule.id}": must relate to a domain, capability, journey, scenario, or availability scope`)
+      issues.push(`${label}: must relate to a domain, capability, journey, Scenario, or availability scope`)
     }
   }
 
@@ -568,8 +672,9 @@ export function validateProductReport(report: ProductReportV8): string[] {
     screens: model.screens.length,
     domains: model.domains.length,
     capabilities: model.capabilities.length,
+    capabilityScenarios: model.capabilityScenarios.length,
     journeys: model.journeys.length,
-    scenarios: model.scenarios.length,
+    journeyScenarios: model.journeyScenarios.length,
     businessRules: model.businessRules.length
   }
   const referenceHosts = [
@@ -580,8 +685,9 @@ export function validateProductReport(report: ProductReportV8): string[] {
     ...model.screens,
     ...model.domains,
     ...model.capabilities,
+    ...model.capabilityScenarios,
     ...model.journeys,
-    ...model.scenarios,
+    ...model.journeyScenarios,
     ...model.businessRules
   ]
   for (const host of referenceHosts) {
@@ -598,7 +704,7 @@ export function validateProductReport(report: ProductReportV8): string[] {
     if (report.coverage.sourceAreas.length) {
       issues.push('referenceProfile is portable but coverage.sourceAreas names repository areas')
     }
-    const entryPointHosts = [...model.interfaces, ...model.experiences, ...model.screens, ...model.journeys]
+    const entryPointHosts = [...model.interfaces, ...model.experiences, ...model.screens]
     for (const host of entryPointHosts) {
       for (const point of host.entryPoints) {
         if (isRepositoryEntryPoint(point.path)) {
@@ -683,8 +789,9 @@ export function projectPortableReport(report: ProductReportV8): ProductReportV8 
       screens: stripWithEntryPoints(report.model.screens),
       domains: strip(report.model.domains),
       capabilities: strip(report.model.capabilities),
-      journeys: stripWithEntryPoints(report.model.journeys),
-      scenarios: strip(report.model.scenarios),
+      capabilityScenarios: strip(report.model.capabilityScenarios),
+      journeys: strip(report.model.journeys),
+      journeyScenarios: strip(report.model.journeyScenarios),
       businessRules: strip(report.model.businessRules)
     },
     coverage: { ...report.coverage, sourceAreas: [] }
@@ -705,6 +812,12 @@ export function validateBlueprintReport(report: ProductReportV8): string[] {
   if (!report.tags.length) issues.push('at least one tag is required for a public Blueprint')
   if (!report.authors.length) issues.push('at least one author is required for a public Blueprint')
   if (!report.license) issues.push('license is required for a public Blueprint')
+  const covered = new Set(report.model.capabilityScenarios.map(scenario => scenario.capabilityId))
+  for (const capability of report.model.capabilities) {
+    if (!covered.has(capability.id)) {
+      issues.push(`capability "${capability.id}" needs at least one Capability Scenario for a public Blueprint`)
+    }
+  }
   return issues
 }
 

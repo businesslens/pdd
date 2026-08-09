@@ -1027,19 +1027,16 @@ const countEntries = computed(() => {
                 </header>
 
                 <div class="flex flex-wrap items-center gap-1.5">
-                  <template v-if="scenario.availability.length">
-                    <UButton
-                      v-for="pair in scenario.availability"
-                      :key="pair.key"
-                      size="xs"
-                      color="neutral"
-                      variant="outline"
-                      class="rounded-full"
-                      :label="pairLabel(pair)"
-                      @click="goToContext(pair.key)"
-                    />
-                  </template>
-                  <span v-else class="text-sm text-muted italic">Applies to every context its Journey declares.</span>
+                  <UButton
+                    v-for="pair in scenario.availability"
+                    :key="pair.key"
+                    size="xs"
+                    color="neutral"
+                    variant="outline"
+                    class="rounded-full"
+                    :label="pairLabel(pair)"
+                    @click="goToContext(pair.key)"
+                  />
                 </div>
 
                 <div class="space-y-1.5">

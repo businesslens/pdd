@@ -37,9 +37,9 @@ Read before work:
      only to choose the inspection worklist;
    - `current` or `full` → inspect the present modeled product independent of
      Git history;
-   - named Actor, Interface, Experience, Screen, Domain, Capability, Journey,
-     Scenario, availability scope, or path → inspect it and behaviorally
-     necessary dependencies;
+   - named Actor, Interface, Experience, Screen, Domain, Capability, Capability
+     Scenario, Journey, Journey Scenario, availability scope, or path → inspect
+     it and behaviorally necessary dependencies;
    - no explicit scope → prefer a reliable changed-surface worklist; when no
      useful diff exists, inspect the current modeled product.
 
@@ -62,7 +62,10 @@ the diff.
    run its application, builds, migrations, generators, package scripts, or
    tests. Read source and tests. Verify every declared availability scope
    independently from its Product entry point through any relevant Experience,
-   Capabilities, Journey, and observable Scenario outcome. Shared code does not
+   Capability Scenario, Journey flow, and observable Journey Scenario outcome.
+   For each Scenario, confirm that every Actor is supported in at least one
+   exact context and every exact context supports at least one named Actor.
+   Match Journey prose Steps to authored flow operations. Shared code does not
    establish Interface parity. Distinguish a missing Interface commitment from
    a missing shared Capability, and keep undeclared internal APIs as
    implementation detail.

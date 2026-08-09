@@ -2,7 +2,8 @@
 domains: [library]
 capabilities: [reading-state]
 journeys: [catch-up-on-unread]
-scenarios: [work-through-the-unread-backlog, mark-a-source-read-in-bulk]
+capabilityScenarios: [mark-an-item-read, mark-a-source-read-in-bulk]
+journeyScenarios: [work-through-the-unread-backlog, save-while-catching-up]
 availability:
   - interface: reader-web
     experiences: [personal-library]

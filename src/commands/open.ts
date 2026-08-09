@@ -218,7 +218,8 @@ function writeReport(root: string, report: ProductReportV8): void {
       frontmatter(compactRecord({
         availability: availability(screen.availability),
         capabilities: screen.capabilityIds,
-        scenarios: screen.scenarioIds,
+        capabilityScenarios: screen.capabilityScenarioIds,
+        journeyScenarios: screen.journeyScenarioIds,
         entryPoints: entryPoints(screen.entryPoints),
         references: references(screen.references)
       })) + body(
@@ -252,7 +253,8 @@ function writeReport(root: string, report: ProductReportV8): void {
         domains: rule.domainIds,
         capabilities: rule.capabilityIds,
         journeys: rule.journeyIds,
-        scenarios: rule.scenarioIds,
+        capabilityScenarios: rule.capabilityScenarioIds,
+        journeyScenarios: rule.journeyScenarioIds,
         availability: availability(rule.availability),
         references: references(rule.references)
       })) + body(
@@ -265,51 +267,83 @@ function writeReport(root: string, report: ProductReportV8): void {
     )
   }
 
-  const scenariosByJourney = new Map<string, ProductReportV8['model']['scenarios']>()
-  for (const scenario of report.model.scenarios) {
-    const current = scenariosByJourney.get(scenario.journeyId) || []
-    current.push(scenario)
-    scenariosByJourney.set(scenario.journeyId, current)
+  const scenarioSections = (
+    scenario:
+      | ProductReportV8['model']['capabilityScenarios'][number]
+      | ProductReportV8['model']['journeyScenarios'][number]
+  ) => {
+    const decisions = scenario.decisionPoints.map(decision =>
+      `### ${decision.title}\n\n${decision.question}\n\n${
+        decision.branches.map(branch => `- ${branch.condition} → ${branch.outcome}`).join('\n')
+      }`
+    ).join('\n\n')
+    return [
+      { heading: 'Trigger', content: scenario.trigger },
+      { heading: 'Steps', content: scenario.steps.map((step, index) => `${index + 1}. ${step}`).join('\n') },
+      { heading: 'Decision points', content: decisions },
+      { heading: 'Outcome', content: scenario.outcome },
+      { heading: 'Edge cases', content: scenario.edgeCases.map(item => `- ${item}`).join('\n') }
+    ]
+  }
+
+  for (const scenario of report.model.capabilityScenarios) {
+    write(
+      join(root, 'capability-scenarios', `${scenario.id}.md`),
+      frontmatter(compactRecord({
+        kind: scenario.kindId,
+        capability: scenario.capabilityId,
+        actors: scenario.actorIds,
+        availability: availability(scenario.availability),
+        references: references(scenario.references)
+      })) + body(
+        scenario.title,
+        '',
+        scenario.intent,
+        scenarioSections(scenario),
+        scenario.supportingContent
+      )
+    )
   }
   for (const journey of report.model.journeys) {
-    const journeyRoot = join(root, 'journeys', journey.id)
     write(
-      join(journeyRoot, 'journey.md'),
+      join(root, 'journeys', `${journey.id}.md`),
       frontmatter(compactRecord({
         actors: journey.actorIds,
-        capabilities: journey.capabilityIds,
-        availability: availability(journey.availability),
-        entryPoints: entryPoints(journey.entryPoints),
         references: references(journey.references)
-      })) + body(journey.title, journey.summary, journey.intent, [], journey.supportingContent)
-    )
-    for (const scenario of scenariosByJourney.get(journey.id) || []) {
-      const decisions = scenario.decisionPoints.map(decision =>
-        `### ${decision.title}\n\n${decision.question}\n\n${
-          decision.branches.map(branch => `- ${branch.condition} → ${branch.outcome}`).join('\n')
-        }`
-      ).join('\n\n')
-      write(
-        join(journeyRoot, 'scenarios', `${scenario.id}.md`),
-        frontmatter(compactRecord({
-          kind: scenario.kindId,
-          availability: availability(scenario.availability),
-          references: references(scenario.references)
-        })) + body(
-          scenario.title,
-          '',
-          scenario.intent,
-          [
-            { heading: 'Trigger', content: scenario.trigger },
-            { heading: 'Steps', content: scenario.steps.map((step, index) => `${index + 1}. ${step}`).join('\n') },
-            { heading: 'Decision points', content: decisions },
-            { heading: 'Outcome', content: scenario.outcome },
-            { heading: 'Edge cases', content: scenario.edgeCases.map(item => `- ${item}`).join('\n') }
-          ],
-          scenario.supportingContent
-        )
+      })) + body(
+        journey.title,
+        '',
+        journey.intent,
+        [
+          { heading: 'Goal', content: journey.goal },
+          { heading: 'Success criterion', content: journey.successCriterion }
+        ],
+        journey.supportingContent
       )
-    }
+    )
+  }
+  for (const scenario of report.model.journeyScenarios) {
+    write(
+      join(root, 'journey-scenarios', `${scenario.id}.md`),
+      frontmatter(compactRecord({
+        kind: scenario.kindId,
+        journey: scenario.journeyId,
+        actors: scenario.actorIds,
+        result: scenario.result,
+        flow: scenario.flow.map(item => ({
+          capability: item.capabilityId,
+          operation: item.operation,
+          availability: availability(item.availability)
+        })),
+        references: references(scenario.references)
+      })) + body(
+        scenario.title,
+        '',
+        scenario.intent,
+        scenarioSections(scenario),
+        scenario.supportingContent
+      )
+    )
   }
 }
 

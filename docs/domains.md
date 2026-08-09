@@ -26,6 +26,11 @@ Zero Domains is valid. A small Product often needs none.
 > **Domain vs Capability.** A Domain organizes a broad area; a
 > [Capability](./capabilities.md) is one durable ability the Product provides.
 
+Use a Domain when an umbrella is useful but does not describe one behavior. For
+example, Repository administration can organize create, configure, archive,
+and delete Capabilities without inventing a vague `manage-repositories`
+Capability whose Scenarios are actually hidden operations.
+
 ## The file
 
 Domains live at `domains/<domain-id>.md`. The entire directory is optional.

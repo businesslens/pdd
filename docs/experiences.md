@@ -80,4 +80,5 @@ availability:
 ```
 
 There is no `exit` field. A persistent context does not have one useful success
-exit; Journey and Scenario outcomes state what Actors accomplish.
+exit; Capability Scenario and Journey Scenario outcomes state what happens in
+concrete cases.

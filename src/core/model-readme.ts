@@ -30,8 +30,9 @@ intended product behavior.
 
 - Read \`product.md\` first, then Actors and Interfaces, optional Experiences,
   Screens, and Domains, followed by Capabilities, Business Rules, Journeys, and
-  Scenarios.
-- Treat scenarios as the acceptance contract and business rules as invariants.
+  both Scenario collections.
+- Treat Capability Scenarios as local acceptance contracts, Journey Scenarios
+  as end-to-end flow contracts, and Business Rules as invariants.
 - Do not infer a stack or architecture from the model.
 - References are optional navigation and context. Their role explains why an
   artifact is attached; it never proves alignment or replaces product prose.

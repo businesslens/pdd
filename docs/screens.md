@@ -28,7 +28,9 @@ components, or every route found in source.
 > available in exact Interface scopes, optionally narrowed by Experience.
 >
 > **Screen vs Scenario.** A Screen says what is visible and possible at a view.
-> A [Scenario](./scenarios.md) is an observable path through a complete goal.
+> A [Capability Scenario](./capability-scenarios.md) or
+> [Journey Scenario](./journey-scenarios.md) is a concrete observable behavior
+> contract in which that view may participate.
 
 ## The file
 
@@ -42,7 +44,8 @@ availability:
   - interface: customer-mobile
     experiences: [shopping]
 capabilities: [catalog-browsing]
-scenarios: [browse-catalog]
+capabilityScenarios: [browse-catalog]
+journeyScenarios: [browse-and-complete-checkout]
 entryPoints:
   - customer-web: /products/:id
   - customer-mobile: shop://products/:id
@@ -81,7 +84,8 @@ The Screen does not change product or inventory data.
 | --- | --- | --- |
 | `availability` | yes | Declare at least one valid Interface scope, naming Experiences when that Interface uses them. |
 | `capabilities` | yes | Name at least one existing Capability; each must support every Screen availability scope. |
-| `scenarios` | no | Name existing observable paths in which the Screen participates. |
+| `capabilityScenarios` | no | Name local Capability cases in which the Screen participates. |
+| `journeyScenarios` | no | Name end-to-end Journey variations in which the Screen participates. |
 | `entryPoints` | no | Key public routes or deep links by an Interface in Screen availability. |
 | `references` | no | Use the documented [Reference](./references.md) shape. |
 | H1 and lead paragraph | yes | Name the Screen and describe its Product purpose. |
@@ -89,6 +93,11 @@ The Screen does not change product or inventory data.
 | `## Available actions` | no | Include a bullet list when present. |
 | `## Product states` | no | Give every H3 state a description. |
 | `## Capability boundary` | yes | State what the Screen supports and excludes. |
+
+A referenced Capability Scenario must use a Capability named by the Screen and
+share at least one exact availability context with it. A referenced Journey
+Scenario must have a flow entry whose Capability is named by the Screen and
+whose exact context intersects the Screen's availability.
 
 ## Web and mobile
 
@@ -99,10 +108,11 @@ Interfaces. Split Screens only when Product semantics materially differ.
 ## Navigation
 
 Screens are not an authored sitemap. Consumers can generate a Screen map by
-Interface and Experience, while Journeys and Scenarios describe goal-oriented
-movement. Parent, next, generic transition, route-tree, and XML sitemap data do
-not belong in the Product Model. An information-architecture diagram can be an
-external `doc` or `visual` Reference.
+Interface and Experience, while Capability Scenarios and Journey Scenarios
+describe observable behavior and movement. Parent, next, generic transition,
+route-tree, and XML sitemap data do not belong in the Product Model. An
+information-architecture diagram can be an external `doc` or `visual`
+Reference.
 
 Screenshots, mockups, prototypes, and Figma files stay outside
 `.businesslens/`. Attach them with [References](./references.md) when useful;
@@ -112,4 +122,5 @@ fetches nor assesses the visual itself.
 
 A CLI or API does not need substitute Command or Endpoint entities. Keep
 command syntax in CLI help and endpoint schemas in the API contract; model the
-durable Capabilities, Journeys, Scenarios, and Rules they expose.
+durable Capabilities, both observable Scenario types, optional Journeys, and
+Rules they expose.

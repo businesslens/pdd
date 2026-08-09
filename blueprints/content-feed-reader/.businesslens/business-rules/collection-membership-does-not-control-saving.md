@@ -2,7 +2,8 @@
 domains: [curation]
 capabilities: [item-saving, collections]
 journeys: [save-and-organize]
-scenarios: [remove-an-item-from-a-collection]
+capabilityScenarios: [add-an-item-to-an-owned-collection]
+journeyScenarios: [save-an-item-into-a-new-collection, save-an-item-into-an-existing-collection]
 ---
 
 # Collection membership does not control saving

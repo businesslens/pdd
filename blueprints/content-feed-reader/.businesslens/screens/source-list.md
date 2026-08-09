@@ -5,7 +5,7 @@ availability:
   - interface: reader-mobile
     experiences: [personal-library]
 capabilities: [source-following]
-scenarios: [follow-a-source-by-feed-address, follow-an-address-with-no-feed]
+capabilityScenarios: [follow-a-source-by-feed-address, follow-an-address-with-no-feed]
 entryPoints:
   - reader-web: /sources
   - reader-mobile: content-reader://library/sources

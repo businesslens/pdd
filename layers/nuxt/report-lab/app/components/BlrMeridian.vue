@@ -349,7 +349,7 @@ const ruleReach = computed(() => {
     .filter(capability => !rule.capabilityIds.includes(capability.id) && ruleTouch(capability, rule) === 'domain')
     .map(capability => capability.id)
   const viaScenario = props.workspace.scenarios
-    .filter(scenario => rule.scenarioIds.includes(scenario.id))
+    .filter(scenario => scenario.scenarioType === 'journey' && rule.scenarioIds.includes(scenario.id))
     .map(scenario => scenario.journeyId)
   const viaCapability = props.workspace.journeys
     .filter(journey => journey.capabilityIds.some(id => rule.capabilityIds.includes(id)))
@@ -672,7 +672,7 @@ const ruleReach = computed(() => {
                 <footer class="space-y-1.5 border-t border-muted px-4 py-2.5">
                   <BlrLinks :workspace="workspace" :ids="scenario.screenIds" kind="screen" label="On screens" interactive @select="inspect($event)" />
                   <BlrLinks :workspace="workspace" :ids="scenario.ruleIds" kind="rule" label="Constrained by" interactive @select="inspect($event)" />
-                  <BlrAvail :pairs="scenario.availability" inherited-note="Applies in every context the Journey declares." />
+                  <BlrAvail :pairs="scenario.availability" />
                 </footer>
               </article>
             </section>

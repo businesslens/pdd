@@ -37,8 +37,11 @@ describe('report SDK entry point', () => {
       'ReportInterfaceSchema',
       'ReportAvailabilitySchema',
       'ReportCapabilitySchema',
+      'ReportCapabilityScenarioSchema',
       'ReportScreenSchema',
       'ReportScreenStateSchema',
+      'ReportJourneyScenarioSchema',
+      'ReportJourneyFlowItemSchema',
       'validateProductReport',
       'validateBlueprintReport',
       'parseProductReport',
@@ -129,8 +132,7 @@ describe('projectPortableReport', () => {
     for (const collection of [
       direct.model.capabilities,
       direct.model.screens,
-      direct.model.journeys,
-      direct.model.scenarios,
+      direct.model.capabilityScenarios,
       direct.model.businessRules
     ]) {
       for (const entity of collection) {
@@ -142,9 +144,58 @@ describe('projectPortableReport', () => {
         }
       }
     }
+    for (const scenario of direct.model.journeyScenarios) {
+      for (const item of scenario.flow) {
+        item.availability = item.availability.map(scope => ({
+          interfaceId: scope.interfaceId,
+          experienceIds: []
+        }))
+      }
+    }
 
     expect(sdk.validateProductReport(direct)).toEqual([])
     expect(() => sdk.parseProductReport(direct)).not.toThrow()
+  })
+
+  it('keeps failure-only Capabilities out of the Journey primary set', () => {
+    const withFailure = structuredClone(report)
+    withFailure.model.journeyScenarios.push({
+      id: 'checkout-needs-operator-help',
+      journeyId: 'browse-and-buy',
+      title: 'Checkout needs operator help',
+      kindId: 'edge',
+      actorIds: ['shopper', 'store-admin'],
+      result: 'not-achieved',
+      flow: [
+        {
+          capabilityId: 'checkout',
+          operation: 'Attempt checkout',
+          availability: [
+            { interfaceId: 'customer-web', experienceIds: ['storefront'] }
+          ]
+        },
+        {
+          capabilityId: 'order-management',
+          operation: 'Review the blocked order attempt',
+          availability: [
+            { interfaceId: 'admin-web', experienceIds: ['admin-console'] }
+          ]
+        }
+      ],
+      trigger: 'A shopper attempts checkout and needs operator help.',
+      steps: ['The shopper attempts checkout', 'The operator reviews the blocked attempt'],
+      decisionPoints: [],
+      outcome: 'The Journey goal is not achieved and the blocked attempt is ready for review.',
+      edgeCases: [],
+      intent: '',
+      supportingContent: '',
+      references: []
+    })
+    withFailure.counts.journeyScenarios += 1
+    withFailure.model.journeys[0]!.failureOnlyCapabilityIds = ['order-management']
+
+    expect(withFailure.model.journeys[0]!.capabilityIds).toEqual(['catalog-browsing', 'checkout'])
+    expect(sdk.validateProductReport(withFailure)).toEqual([])
   })
 
   it('keeps only HTTP(S) intent and context references', () => {
@@ -171,9 +222,9 @@ describe('projectPortableReport', () => {
     expect(JSON.stringify(portable)).not.toContain('src/services/payments.ts')
   })
 
-  it('drops repository entry points and Coverage source areas', () => {
+  it('drops repository Screen entry points and Coverage source areas', () => {
     const enriched = structuredClone(report)
-    enriched.model.journeys[0]!.entryPoints = [
+    enriched.model.screens[0]!.entryPoints = [
       { type: 'relative', path: 'src/routes/storefront.ts' },
       { type: 'windows', path: String.raw`src\routes\storefront.ts` },
       { type: 'absolute', path: '/Users/owner/project/src/routes/storefront.ts' },
@@ -185,7 +236,7 @@ describe('projectPortableReport', () => {
     ]
 
     const portable = sdk.projectPortableReport(enriched)
-    expect(portable.model.journeys[0]!.entryPoints).toEqual([
+    expect(portable.model.screens[0]!.entryPoints).toEqual([
       { type: 'route', path: '/checkout' },
       { type: 'url', path: 'https://example.com/checkout' },
       { type: 'mobile', path: 'fixture-shop://checkout' },

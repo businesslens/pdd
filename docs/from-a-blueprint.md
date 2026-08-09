@@ -28,9 +28,12 @@ npx businesslens lint
 ```
 
 Read `product.md`, then its Actors and Interfaces, optional Experiences,
-Screens, and Domains, followed by Capabilities, Business Rules, Journeys, and
-Scenarios. Confirm that exact availability matches the web, mobile, CLI, API,
-or integration commitments you want. The
+Screens, and Domains, followed by Capabilities, Capability Scenarios, Business
+Rules, optional Journeys, and Journey Scenarios. Confirm that every Capability
+has direct local acceptance coverage and that its Scenarios are genuine
+variations rather than hidden operations. Confirm that every Journey defines a
+deliberate Goal and every Journey Scenario traces a supported multi-Capability
+route. The
 [Content Feed Reader walkthrough](./feed-reader-example.md) demonstrates this
 review. If the contract fits, send the model to your normal plan/build flow. If
 you want adjacent behavior, run `businesslens-ideate`, approve the model delta,

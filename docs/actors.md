@@ -68,4 +68,6 @@ Every Actor ID named by another entity must have a corresponding file.
 | --- | --- | --- |
 | [Interfaces](./interfaces.md) | `actors:` | Who may use any part of the Interface |
 | [Experiences](./experiences.md) | `actors:` | Who participates in that coherent context |
-| [Journeys](./journeys.md) | `actors:` | Who pursues the complete goal |
+| [Capability Scenarios](./capability-scenarios.md) | `actors:` | Who participates in the local Capability case |
+| [Journeys](./journeys.md) | `actors:` | Who shares the stable intent and success criterion |
+| [Journey Scenarios](./journey-scenarios.md) | `actors:` | Who participates in the end-to-end Journey variation |

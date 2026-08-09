@@ -16,22 +16,21 @@
 ├── screens/<id>.md              # optional collection
 ├── domains/<id>.md              # optional collection
 ├── capabilities/<id>.md
-├── business-rules/<id>.md
-└── journeys/<journey-id>/
-    ├── journey.md
-    └── scenarios/<scenario-id>.md
+├── capability-scenarios/<id>.md
+├── journeys/<id>.md             # optional collection
+├── journey-scenarios/<id>.md    # required when Journeys exist
+└── business-rules/<id>.md
 ```
 
-IDs are lowercase kebab-case filename stems and Scenario IDs are globally
-unique. Only `product.md` declares `id:`. The first H1 is the title. Lead prose
-is the entity description or Journey summary; Scenarios instead begin with the
-required `## Trigger` section and have no lead. Put relations and navigation in
-frontmatter and Product meaning in prose.
+IDs are lowercase kebab-case filename stems. Capability Scenario and Journey
+Scenario IDs share one global namespace. Only `product.md` declares `id:`. The
+first H1 is the title. Most entities use lead prose as their description;
+Journeys and both Scenario types instead use required named sections. Put
+relations and navigation in frontmatter and Product meaning in prose.
 
 ## Required shapes
 
-- `config.yaml`: exactly `schema: 4` and `sdd.paths`. Older schemas are not
-  accepted.
+- `config.yaml`: exactly `schema: 4` and `sdd.paths`.
 - `product.md`: `id`, optional `tags`, `limitations`, H1, lead description, and
   optional `## Intent`.
 - `taxonomies.yaml`: `scenarioKinds` entries with `id`, `name`, `description`,
@@ -45,27 +44,41 @@ frontmatter and Product meaning in prose.
   H1, lead description, and `## Capability boundary`. The collection is
   optional.
 - Capability: at least one exact `availability` scope; optional singular
-  `domain`; H1 and lead description.
+  `domain`; H1 and lead description. Every Capability needs a Capability
+  Scenario: absence is an error at complete coverage and a warning at draft or
+  partial coverage.
+- Capability Scenario: taxonomy `kind`, one `capability`, at least one `actor`,
+  and non-empty exact `availability` supported by that Capability.
 - Domain: H1 and lead description; optional `colorSlot`. The collection is
   optional and only organizes Capabilities.
 - Screen: at least one exact `availability` scope and `capabilities` relation;
-  optional `scenarios` and Interface-keyed Product entry points; H1, lead,
-  bullet `## Information presented`, optional bullet `## Available actions`,
-  optional H3 `## Product states`, and `## Capability boundary`. The whole
-  collection is optional.
+  optional `capabilityScenarios`, `journeyScenarios`, and Interface-keyed Product
+  entry points; H1, lead, bullet `## Information presented`, optional bullet
+  `## Available actions`, optional H3 `## Product states`, and
+  `## Capability boundary`. The whole collection is optional.
 - Business Rule: one or more relations across `domains`, `capabilities`,
-  `journeys`, `scenarios`, or `availability`; H1 and lead assertion; optional
-  `## Rationale`.
-- Journey: at least one Actor, Capability, availability scope, and Scenario;
-  optional Interface-keyed `entryPoints`; H1 and lead summary. Journey has no
-  singular Domain.
-- Scenario: taxonomy `kind`, optional availability subset of its Journey, H1,
-  `## Trigger`, ordered `## Steps`, and `## Outcome`. Optional `## Edge cases`
-  is a bullet list. Optional `## Decision points` uses H3 title, question, and
-  at least two `condition → outcome` branches that converge on the Scenario's
-  one observable outcome; materially different outcomes are separate Scenarios.
+  `journeys`, `capabilityScenarios`, `journeyScenarios`, or `availability`; H1
+  and lead assertion; optional `## Rationale`.
+- Journey: at least one `actor`, H1, `## Goal`, and `## Success criterion`. A
+  Journey is a stable goal, not a route or Capability wrapper. Every Journey
+  needs at least one achieved Journey Scenario. It has no `entryPoints`; resolve
+  presentation routes from the first flow item of achieved Scenarios and the
+  matching Interface or Experience.
+- Journey Scenario: taxonomy `kind`, one `journey`, at least one `actor`,
+  `result: achieved|not-achieved`, and an ordered non-empty `flow`. Every flow
+  item needs `capability`, a one-line `operation`, and non-empty exact
+  `availability` supported by that Capability. An achieved Scenario traverses
+  at least two distinct Capabilities.
 - `coverage.md`: `status`, `method`, `sourceAreas`, `unmapped`, `limitations`,
   H1, and rationale. Status is model breadth only: `draft|partial|complete`.
+
+Both Scenario types have no lead prose and require `## Trigger`, ordered
+`## Steps`, and `## Outcome`. Optional `## Edge cases` is a bullet list.
+Optional `## Decision points` uses an H3 title, a question, and at least two
+`condition → outcome` branches that converge on the Scenario's one result. A
+branch that changes the Capability sequence or terminal result is a separate
+Scenario. `kind` describes the nature of the variation; `result` describes the
+terminal Journey goal outcome, so the fields are orthogonal.
 
 Exact availability uses this shared shape:
 
@@ -81,10 +94,16 @@ availability:
 Each Interface appears at most once. If any Experience declares an Interface,
 every availability record for it needs a non-empty, unique Experience list and
 every named Experience must declare that Interface. If no Experience declares
-an Interface, omit `experiences` and make the scope direct; an explicit empty
-list is invalid. Journey and Screen scopes must be supported by every Capability
-they reference. Scenario availability, when present, must be a subset of its
-Journey. Availability is intended Product scope, not implementation status.
+an Interface, omit `experiences`; an explicit empty list is invalid.
+Availability is intended Product scope, not implementation status.
+
+For each Scenario, every exact context must support at least one of its Actors,
+and every named Actor must be supported in at least one exact context. A
+Capability Scenario's availability is a subset of its Capability. Each Journey
+flow item is checked independently against its Capability. A Screen's
+Capability Scenario must target one of the Screen's Capabilities and intersect
+the Screen's exact contexts. A Screen's Journey Scenario must have at least one
+flow item whose Capability the Screen names in an intersecting exact context.
 
 Every semantic entity may contain optional `references`. Each strict item needs
 `kind: code|spec|proposal|doc|adr|visual|research`,
@@ -111,8 +130,9 @@ intended product behavior.
 
 - Read `product.md` first, then Actors and Interfaces, optional Experiences,
   Screens, and Domains, followed by Capabilities, Business Rules, Journeys, and
-  Scenarios.
-- Treat scenarios as the acceptance contract and business rules as invariants.
+  both Scenario collections.
+- Treat Capability Scenarios as local acceptance contracts, Journey Scenarios
+  as end-to-end flow contracts, and Business Rules as invariants.
 - Do not infer a stack or architecture from the model.
 - References are optional navigation and context. Their role explains why an
   artifact is attached; it never proves alignment or replaces product prose.

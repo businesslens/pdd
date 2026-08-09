@@ -28,9 +28,14 @@ or deliberately untrusted.
 
 3. Review the `.businesslens/` diff. Check that supported Interfaces are Product
    contracts rather than discovered technologies, optional Experiences exist
-   only for meaningful contexts, availability is exact, and Capabilities differ
-   from complete Journey goals. Also check Scenario contracts, unmapped areas,
-   limitations, and optional implementation References.
+   only for meaningful contexts, Capability availability is exact, and every
+   Capability has honest Capability Scenario coverage. Check that Capability
+   Scenarios are variations rather than hidden operations under vague umbrella
+   Capabilities. Optional Journeys should author coherent Goals rather than
+   flows or administrative grab bags, while Journey Scenario flow entries trace
+   exact supported behavior across Interfaces. Also check unmapped areas,
+   limitations, and optional
+   implementation References.
 
 4. Lint and commit:
 

@@ -3,9 +3,13 @@
 ## Trace behavior
 
 - Compare the model's observable contract, not matching vocabulary.
-- Trace each declared availability scope from its Product entry point → any
-  relevant Experience and Capabilities → Journey path → persistence or
-  external effect → named outcome.
+- Trace each Capability Scenario from its exact Actor context through the
+  Capability operation to its observable outcome.
+- Trace each Journey Scenario flow from its Product entry point through every
+  named Capability and operation to the terminal goal result. Verify each flow
+  item's exact availability independently.
+- Confirm every Scenario Actor is supported by at least one exact context and
+  every exact context supports at least one Scenario Actor.
 - Verify Interface scopes independently. Shared services do not prove web,
   mobile, CLI, or supported API parity.
 - Distinguish a missing Interface implementation from a missing shared
@@ -41,9 +45,9 @@ Group questions by root decision. Do not ask a menu of symptoms.
 
 Use when code-right or neither-right is chosen. Draft the smallest exact Product
 Model delta. Cover affected Interfaces, optional Experiences, Capabilities, exact
-availability, Rules, Journeys, Scenarios, relationships, and removals. Get
-approval before writing. Skip broad brainstorming because the verification
-finding already supplies the problem.
+  availability, Rules, Capability Scenarios, Journeys, Journey Scenarios,
+  relationships, and removals. Get approval before writing. Skip broad
+  brainstorming because the verification finding already supplies the problem.
 
 ## Internal scoped mapping
 

@@ -18,8 +18,9 @@ describe('Content Feed Reader teaching Blueprint', () => {
       screens: 4,
       domains: 2,
       capabilities: 5,
-      journeys: 5,
-      scenarios: 10,
+      capabilityScenarios: 10,
+      journeys: 3,
+      journeyScenarios: 6,
       businessRules: 4
     })
     expect(Object.values(result.counts).every(count => count >= 2)).toBe(true)

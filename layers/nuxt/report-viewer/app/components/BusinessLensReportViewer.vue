@@ -201,20 +201,39 @@ const tabs: Array<{ value: ReportViewerSection, label: string }> = [
           </ul>
         </section>
 
-        <section v-if="report.scenarios.length">
+        <section v-if="report.capabilityScenarios.length">
           <h2 class="text-lg tracking-tight">
-            Scenarios
+            Capability scenarios
           </h2>
           <p class="mt-1 text-sm text-dimmed">
-            The acceptance contract. An implementation is done when these hold.
+            Observable acceptance cases for individual Product abilities.
           </p>
           <ul class="mt-4 grid gap-2 sm:grid-cols-2">
             <li
-              v-for="scenario in report.scenarios"
+              v-for="scenario in report.capabilityScenarios"
               :key="scenario.id"
               class="flex items-start gap-2 text-sm text-dimmed"
             >
               <UIcon name="i-lucide-check" class="mt-0.5 size-4 shrink-0 text-primary" />
+              {{ scenario.title }}
+            </li>
+          </ul>
+        </section>
+
+        <section v-if="report.journeyScenarios.length">
+          <h2 class="text-lg tracking-tight">
+            Journey scenarios
+          </h2>
+          <p class="mt-1 text-sm text-dimmed">
+            End-to-end variations of coherent multi-Capability goals.
+          </p>
+          <ul class="mt-4 grid gap-2 sm:grid-cols-2">
+            <li
+              v-for="scenario in report.journeyScenarios"
+              :key="scenario.id"
+              class="flex items-start gap-2 text-sm text-dimmed"
+            >
+              <UIcon name="i-lucide-route" class="mt-0.5 size-4 shrink-0 text-primary" />
               {{ scenario.title }}
             </li>
           </ul>

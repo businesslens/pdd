@@ -3,7 +3,7 @@ availability:
   - interface: reader-web
     experiences: [public-reading]
 capabilities: [collection-sharing]
-scenarios: [read-a-published-collection, open-an-unlisted-collection]
+capabilityScenarios: [read-a-published-collection, open-an-unlisted-collection]
 entryPoints:
   - reader-web: /collections/:collectionSlug
 ---

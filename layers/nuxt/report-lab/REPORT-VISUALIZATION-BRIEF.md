@@ -21,8 +21,9 @@ The Product Model contains different kinds of information:
 - Screens
 - Domains
 - Capabilities
+- Capability Scenarios
 - Journeys
-- Scenarios
+- Journey Scenarios
 - Business Rules
 
 These entities describe different dimensions of the Product. Trying to place
@@ -241,8 +242,8 @@ Cards are for browsing and recognition. Each card should communicate:
 - Journey title
 - Intended outcome
 - Participating Actors
-- Availability contexts
-- Number and names of Scenarios
+- Availability contexts derived from achieved Journey Scenario flows
+- Number and names of Journey Scenarios
 - Important Screens
 - Supporting Capabilities
 - Relevant Rules
@@ -258,7 +259,7 @@ Journeys across dimensions such as:
 - Interfaces and Experiences
 - Capabilities
 - Screens
-- Scenarios
+- Journey Scenarios
 - Rules
 - Authored step depth
 
@@ -269,11 +270,11 @@ The table should remain factual. It should not introduce arbitrary rankings.
 Selecting a Journey should reveal:
 
 - The Journey’s goal or promise
-- Availability
+- Derived availability and entry routes
 - Actors
-- Supporting Capabilities
+- Primary and failure-only Capabilities derived from flows
 - Participating Screens
-- Complete Scenarios
+- Complete Journey Scenarios, including result and structured flow
 - Triggers
 - Ordered steps
 - Decisions
@@ -298,6 +299,7 @@ The main view should show:
 - Journey reuse
 - Screen exposure
 - Availability
+- Capability Scenarios
 - Governing Rules
 
 Matrices should be used where many-to-many comparison is genuinely useful.
@@ -327,9 +329,9 @@ it.
 These were not established as the four primary requirements, but the model
 will probably need them.
 
-### Scenario flow
+### Scenario acceptance and flow
 
-A Scenario benefits from a readable sequence:
+Both Scenario types benefit from a readable acceptance sequence:
 
 ```text
 Trigger → Steps and decisions → Outcome
@@ -339,6 +341,10 @@ Screens, Rules, and edge cases can be attached to the relevant parts of the
 flow. This should prioritize behavioral comprehension over decorative
 process-diagram styling.
 
+A Capability Scenario must identify its one Capability. A Journey Scenario
+must additionally show its terminal result and ordered Capability/operation/
+context flow; neither type may be presented as an untyped generic Scenario.
+
 ### Business Rule impact
 
 A Rule view should show:
@@ -346,7 +352,7 @@ A Rule view should show:
 - The Rule statement and rationale
 - Where it is directly attached
 - Affected Domains and Capabilities
-- Affected Journeys and Scenarios
+- Affected Journeys, Capability Scenarios, and Journey Scenarios
 - Narrowed availability, if applicable
 - A contextual impact topology
 

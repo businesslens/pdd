@@ -63,6 +63,14 @@ const ACCESS_TONE: Record<string, 'success' | 'warning' | 'error'> = {
           {{ asScenario.kindName }}
         </UBadge>
         <UBadge
+          v-if="entity.kind === 'scenario' && asScenario.result"
+          color="neutral"
+          variant="outline"
+          size="sm"
+        >
+          {{ asScenario.result }}
+        </UBadge>
+        <UBadge
           v-if="entity.kind === 'experience'"
           :color="ACCESS_TONE[asExperience.accessMode] || 'neutral'"
           variant="subtle"
@@ -83,9 +91,9 @@ const ACCESS_TONE: Record<string, 'success' | 'warning' | 'error'> = {
         {{ entity.title }}
       </h3>
       <p v-if="entity.kind === 'scenario'" class="text-sm text-muted">
-        In journey
-        <button type="button" class="text-primary underline underline-offset-2" @click="emit('select', workspace.byId.get(asScenario.journeyId)!)">
-          {{ asScenario.journeyTitle }}
+        {{ asScenario.scenarioType === 'capability' ? 'For capability' : 'In journey' }}
+        <button type="button" class="text-primary underline underline-offset-2" @click="emit('select', workspace.byId.get(asScenario.scenarioType === 'capability' ? asScenario.capabilityId : asScenario.journeyId)!)">
+          {{ asScenario.scenarioType === 'capability' ? asScenario.capabilityTitle : asScenario.journeyTitle }}
         </button>
       </p>
     </header>
@@ -110,6 +118,13 @@ const ACCESS_TONE: Record<string, 'success' | 'warning' | 'error'> = {
       <BlrProse :text="asRule.rationale" />
     </section>
 
+    <section v-if="entity.kind === 'journey'" class="space-y-1.5">
+      <h4 class="blr-field">
+        Success criterion
+      </h4>
+      <BlrProse :text="asJourney.successCriterion" />
+    </section>
+
     <!-- Scenario body: the acceptance contract, in authored order. -->
     <template v-if="entity.kind === 'scenario'">
       <section class="space-y-1.5">
@@ -131,6 +146,19 @@ const ACCESS_TONE: Record<string, 'success' | 'warning' | 'error'> = {
           >
             <span class="blr-meta mt-0.5 w-5 shrink-0 text-end">{{ index + 1 }}</span>
             <span class="text-default">{{ step }}</span>
+          </li>
+        </ol>
+      </section>
+
+      <section v-if="asScenario.flow.length" class="space-y-2">
+        <h4 class="blr-field">
+          Flow · {{ asScenario.flow.length }}
+        </h4>
+        <ol class="space-y-2">
+          <li v-for="(item, index) in asScenario.flow" :key="`${item.capabilityId}-${index}`" class="rounded-md border border-default p-2.5">
+            <p class="text-sm font-medium text-highlighted">{{ index + 1 }}. {{ item.operation }}</p>
+            <BlrLinks :workspace="workspace" :ids="[item.capabilityId]" kind="capability" label="Capability" interactive @select="emit('select', $event)" />
+            <BlrAvail :pairs="item.availability" label="Contexts" />
           </li>
         </ol>
       </section>
@@ -255,7 +283,6 @@ const ACCESS_TONE: Record<string, 'success' | 'warning' | 'error'> = {
       <BlrAvail
         v-else-if="entity.kind === 'scenario'"
         :pairs="asScenario.availability"
-        inherited-note="Applies to every pair its journey declares."
       />
       <BlrAvail
         v-else-if="entity.kind === 'rule'"
@@ -298,7 +325,8 @@ const ACCESS_TONE: Record<string, 'success' | 'warning' | 'error'> = {
         </template>
         <template v-else-if="entity.kind === 'screen'">
           <BlrLinks :workspace="workspace" :ids="asScreen.capabilityIds" kind="capability" interactive @select="emit('select', $event)" />
-          <BlrLinks :workspace="workspace" :ids="asScreen.scenarioIds" kind="scenario" interactive @select="emit('select', $event)" />
+          <BlrLinks :workspace="workspace" :ids="asScreen.capabilityScenarioIds" kind="scenario" label="Capability Scenarios" interactive @select="emit('select', $event)" />
+          <BlrLinks :workspace="workspace" :ids="asScreen.journeyScenarioIds" kind="scenario" label="Journey Scenarios" interactive @select="emit('select', $event)" />
           <BlrLinks :workspace="workspace" :ids="asScreen.journeyIds" kind="journey" label="Reached from" interactive @select="emit('select', $event)" />
         </template>
         <template v-else-if="entity.kind === 'domain'">
@@ -308,6 +336,7 @@ const ACCESS_TONE: Record<string, 'success' | 'warning' | 'error'> = {
         </template>
         <template v-else-if="entity.kind === 'capability'">
           <BlrLinks v-if="asCapability.domainId" :workspace="workspace" :ids="[asCapability.domainId]" kind="domain" label="Domain" interactive @select="emit('select', $event)" />
+          <BlrLinks :workspace="workspace" :ids="asCapability.scenarioIds" kind="scenario" label="Capability Scenarios" interactive @select="emit('select', $event)" />
           <BlrLinks :workspace="workspace" :ids="asCapability.journeyIds" kind="journey" interactive @select="emit('select', $event)" />
           <BlrLinks :workspace="workspace" :ids="asCapability.screenIds" kind="screen" interactive @select="emit('select', $event)" />
           <BlrLinks :workspace="workspace" :ids="asCapability.ruleIds" kind="rule" label="Constrained by" interactive @select="emit('select', $event)" />
@@ -315,12 +344,14 @@ const ACCESS_TONE: Record<string, 'success' | 'warning' | 'error'> = {
         <template v-else-if="entity.kind === 'journey'">
           <BlrLinks :workspace="workspace" :ids="asJourney.actorIds" kind="actor" interactive @select="emit('select', $event)" />
           <BlrLinks :workspace="workspace" :ids="asJourney.capabilityIds" kind="capability" interactive @select="emit('select', $event)" />
+          <BlrLinks :workspace="workspace" :ids="asJourney.failureOnlyCapabilityIds" kind="capability" label="Failure-only Capabilities" interactive @select="emit('select', $event)" />
           <BlrLinks :workspace="workspace" :ids="asJourney.domainIds" kind="domain" label="Domains (derived)" interactive @select="emit('select', $event)" />
           <BlrLinks :workspace="workspace" :ids="asJourney.scenarioIds" kind="scenario" interactive @select="emit('select', $event)" />
           <BlrLinks :workspace="workspace" :ids="asJourney.screenIds" kind="screen" interactive @select="emit('select', $event)" />
           <BlrLinks :workspace="workspace" :ids="asJourney.ruleIds" kind="rule" label="Constrained by" interactive @select="emit('select', $event)" />
         </template>
         <template v-else-if="entity.kind === 'scenario'">
+          <BlrLinks :workspace="workspace" :ids="asScenario.actorIds" kind="actor" interactive @select="emit('select', $event)" />
           <BlrLinks :workspace="workspace" :ids="asScenario.screenIds" kind="screen" interactive @select="emit('select', $event)" />
           <BlrLinks :workspace="workspace" :ids="asScenario.ruleIds" kind="rule" label="Constrained by" interactive @select="emit('select', $event)" />
         </template>
@@ -328,7 +359,8 @@ const ACCESS_TONE: Record<string, 'success' | 'warning' | 'error'> = {
           <BlrLinks :workspace="workspace" :ids="asRule.domainIds" kind="domain" interactive @select="emit('select', $event)" />
           <BlrLinks :workspace="workspace" :ids="asRule.capabilityIds" kind="capability" interactive @select="emit('select', $event)" />
           <BlrLinks :workspace="workspace" :ids="asRule.journeyIds" kind="journey" interactive @select="emit('select', $event)" />
-          <BlrLinks :workspace="workspace" :ids="asRule.scenarioIds" kind="scenario" interactive @select="emit('select', $event)" />
+          <BlrLinks :workspace="workspace" :ids="asRule.capabilityScenarioIds" kind="scenario" label="Capability Scenarios" interactive @select="emit('select', $event)" />
+          <BlrLinks :workspace="workspace" :ids="asRule.journeyScenarioIds" kind="scenario" label="Journey Scenarios" interactive @select="emit('select', $event)" />
         </template>
       </section>
 

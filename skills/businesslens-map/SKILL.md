@@ -47,8 +47,14 @@ Read before authoring:
    claims in implementation. Do not infer permissions, guarantees, or live
    operational state from names.
 6. Draft Actors, Interfaces, optional Experiences, Product Screens and Domains,
-   Capabilities, Business Rules, Journeys, Scenarios, exact availability, and
-   coverage. Repository deployables, routes, commands, APIs, and integrations
+   Capabilities, Capability Scenarios, Business Rules, optional Journeys and
+   their Journey Scenarios, exact availability, and coverage. Give every mapped
+   Capability evidence-backed per-Capability acceptance. Create a Journey only
+   for a stable goal whose achieved path crosses at least two Capabilities; do
+   not wrap a single Capability in a Journey. Give every Journey an achieved
+   Journey Scenario whose ordered flow names the Capability, one-line operation,
+   and exact availability at every stage. Repository deployables, routes,
+   commands, APIs, and integrations
    are evidence, not automatic Interfaces. Create an Interface only for a
    supported Product interaction contract, and do not infer cross-Interface
    parity from shared implementation. Apply the Experience creation test: a

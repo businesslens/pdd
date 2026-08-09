@@ -160,7 +160,7 @@ describe('contribute', { timeout: 30_000 }, () => {
     // The fixture deliberately carries code references — that is the leak being tested.
     cpSync(FIXTURE, model, { recursive: true })
     initialize(model)
-    expect(readFileSync(join(model, '.businesslens/journeys/browse-and-buy/journey.md'), 'utf8'))
+    expect(readFileSync(join(model, '.businesslens/journeys/browse-and-buy.md'), 'utf8'))
       .toContain('kind: code')
 
     fakeGh(bin, capture)

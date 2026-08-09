@@ -2,8 +2,11 @@
 domains: [curation]
 capabilities: [collections, collection-sharing]
 journeys: [save-and-organize, share-a-collection]
-scenarios:
-  - gather-saved-items-into-a-collection
+capabilityScenarios:
+  - reject-adding-to-another-owners-collection
+journeyScenarios:
+  - save-an-item-into-a-new-collection
+  - save-an-item-into-an-existing-collection
   - publish-a-collection
   - unlist-a-published-collection
 ---

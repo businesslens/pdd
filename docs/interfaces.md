@@ -62,7 +62,8 @@ Every model needs at least one Interface.
 
 An Interface does not declare one access mode: the same web application can
 contain public and restricted Experiences. It also has no success exit;
-Journeys and Scenarios own outcomes.
+Capability Scenarios own local observable outcomes. Journey Scenarios own
+complete variations of a coherent multi-Capability goal.
 
 ## With Experiences
 

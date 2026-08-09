@@ -13,8 +13,9 @@ const report = projectReportView({
   counts: {
     actors: 0,
     capabilities: 0,
+    capabilityScenarios: 0,
     journeys: 0,
-    scenarios: 0,
+    journeyScenarios: 0,
     businessRules: 0
   },
   model: {
@@ -22,7 +23,8 @@ const report = projectReportView({
     capabilities: [],
     journeys: [],
     businessRules: [],
-    scenarios: []
+    capabilityScenarios: [],
+    journeyScenarios: []
   }
 })
 </script>

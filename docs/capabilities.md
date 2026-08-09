@@ -1,6 +1,6 @@
 ---
 title: Capabilities
-description: Durable Product abilities with exact Interface availability, optionally scoped by Experience and organized by Domain.
+description: Durable Product abilities with exact Interface availability and explicit local Capability Scenario coverage.
 section: open-source
 group: Product Model
 order: 14
@@ -12,16 +12,32 @@ order: 14
 checkout, reading-state tracking, or release approval. It completes the
 sentence “the Product can …”.
 
-A Capability has no necessary beginning or end. It can support several
-Journeys, Experiences, Screens, and Interfaces. This is what distinguishes it
-from a [Journey](./journeys.md), which is one complete Actor goal.
+A Capability has no necessary beginning or end. It remains meaningful beyond
+one route, command, or implementation module and can participate in several
+Screens, Capability Scenarios, and optional [Journeys](./journeys.md).
+
+Capabilities and their observable
+[Capability Scenarios](./capability-scenarios.md) form the behavioral core of
+the Product Model. A Capability does not need a Journey, but it does need at
+least one Capability Scenario that accepts it directly.
 
 ## When you create one
 
 Create a Capability when an ability is reusable across goals or independently
-important to Product scope, availability, Screens, or Business Rules. It should
-remain meaningful beyond one route, command, or implementation module and
-should not merely repeat a Journey title.
+important to Product scope, availability, Screens, Business Rules, or
+verification. Do not create one for an implementation function, endpoint, UI
+label, or sequence step that has no durable Product meaning.
+
+A Capability is the smallest durable behavior that remains independently
+meaningful, not necessarily the smallest button, API operation, or code
+function. If supposed Scenarios describe different Product verbs with different
+purposes, outcomes, permissions, availability, or Business Rules, the
+Capability is probably too broad.
+
+For example, `manage-repositories` is not a useful umbrella when its cases are
+really create, configure, archive, and delete behaviors with distinct
+contracts. Split those into Capabilities and, when navigation benefits, group
+them under a Repository administration [Domain](./domains.md).
 
 Every Capability declares its exact Interface availability, naming
 [Experiences](./experiences.md) only where the Interface uses them. An optional
@@ -61,9 +77,18 @@ Complete a purchase without confirming an unpaid order.
 | `references` | no | Use the documented [Reference](./references.md) shape. |
 | H1 and lead paragraph | yes | Name the Capability and describe the durable Product ability. |
 
-Capabilities do not duplicate Actor or Business Rule lists. Actors are
-expressed through Journeys, Actor-bound Interfaces, and optional Experiences.
-Business Rules own their own scope, and consumers derive backlinks.
+Capability files do not list Actors, Capability Scenarios, Journey Scenarios,
+Journeys, Screens, or Business Rules. Other entities own those relations, and
+consumers derive backlinks. A Capability Scenario's `capability` field creates
+its direct acceptance relation, while a Journey Scenario names concrete
+Capability flow entries. Journey Capability backlinks are derived from those
+entries rather than authored on the Journey.
+
+Capability Scenario coverage is the only direct acceptance coverage for a
+Capability. Use of the Capability by a Journey Scenario does not satisfy it.
+Missing coverage is an error for a `complete` model, a warning for `partial` or
+`draft`, and an error when publishing a public Blueprint. A single-Capability
+goal remains local Capability behavior and never requires a Journey wrapper.
 
 ## Availability
 
@@ -87,3 +112,7 @@ For an Interface with no Experiences, omit the `experiences` key:
 availability:
   - interface: operator-cli
 ```
+
+Capability Scenario availability and Journey Scenario flow entries select exact
+contexts from this availability. They do not alter or expand the Capability's
+scope, and every selected context is verified independently.

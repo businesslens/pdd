@@ -3,7 +3,7 @@ title: verify
 description: Inspect model/code alignment and automatically resolve every scoped gap until aligned or explicitly blocked.
 section: open-source
 group: Skills
-order: 27
+order: 28
 ---
 
 # `businesslens-verify`
@@ -18,10 +18,10 @@ before release, or for a named or full current-state audit.
 /businesslens-verify report only
 ```
 
-Verify lints structure, independently traces each declared availability scope
-without executing target code, and classifies
-aligned, model-right, code-right, neither-right, unmapped, and unverifiable
-cases. It groups root decisions and recommends an authority.
+Verify lints structure, independently traces each declared availability scope,
+Capability Scenario, and Journey Scenario flow entry without executing target
+code, and classifies aligned, model-right, code-right, neither-right, unmapped,
+and unverifiable cases. It groups root decisions and recommends an authority.
 
 ## Scope
 
@@ -31,8 +31,8 @@ cases. It groups root decisions and recommends an authority.
 - `verify current` or `verify full` inspects present behavior without needing a
   merge base or diff.
 - `verify <named scope>` inspects one Actor, Interface, Experience, Screen,
-  Domain, Capability, Journey, Scenario, availability scope, or path plus its
-  necessary dependencies.
+  Domain, Capability, Capability Scenario, Journey, Journey Scenario,
+  availability scope, flow entry, or path plus its necessary dependencies.
 
 Git is a scope tool, never an authority tool. A model committed on the default
 branch can still be the approved plan for code added later.

@@ -96,7 +96,7 @@ const facts = computed<Fact[]>(() => {
     case 'capability': return [
       { label: 'Domain', value: badge.value || 'None' },
       { label: 'Contexts', value: asCapability.value.availability.length },
-      { label: 'Journeys', value: asCapability.value.journeyIds.length }
+      { label: 'Scenarios', value: asCapability.value.scenarioIds.length }
     ]
     case 'journey': return [
       { label: 'Actors', value: asJourney.value.actorIds.length },
@@ -104,7 +104,14 @@ const facts = computed<Fact[]>(() => {
       { label: 'Steps', value: asJourney.value.stepCount }
     ]
     case 'scenario': return [
-      { label: 'Journey', value: asScenario.value.journeyTitle },
+      {
+        label: asScenario.value.scenarioType === 'capability' ? 'Capability' : 'Journey',
+        value: asScenario.value.scenarioType === 'capability'
+          ? asScenario.value.capabilityTitle
+          : asScenario.value.journeyTitle
+      },
+      { label: 'Type', value: asScenario.value.scenarioType === 'capability' ? 'Capability Scenario' : 'Journey Scenario' },
+      ...(asScenario.value.result ? [{ label: 'Result', value: asScenario.value.result }] : []),
       { label: 'Steps', value: asScenario.value.steps.length },
       { label: 'Decision points', value: asScenario.value.decisionPoints.length }
     ]
@@ -123,9 +130,6 @@ const facts = computed<Fact[]>(() => {
 const entryPoints = computed(() => 'entryPoints' in props.entity ? props.entity.entryPoints : [])
 const availability = computed(() => 'availability' in props.entity ? props.entity.availability : [])
 const accessNote = computed(() => {
-  if (props.entity.kind === 'scenario' && !availability.value.length) {
-    return 'Applies to every Interface and Experience scope declared by its Journey.'
-  }
   if (props.entity.kind === 'rule' && !availability.value.length) {
     return 'Not narrowed to specific Interface or Experience scopes.'
   }
@@ -179,7 +183,8 @@ const relationGroups = computed<RelationGroup[]>(() => {
     case 'screen':
       groups.push(group('Authored', [
         row('Capabilities', 'capability', asScreen.value.capabilityIds),
-        row('Scenarios', 'scenario', asScreen.value.scenarioIds)
+        row('Capability Scenarios', 'scenario', asScreen.value.capabilityScenarioIds),
+        row('Journey Scenarios', 'scenario', asScreen.value.journeyScenarioIds)
       ]))
       groups.push(group('Derived', [row('Reached from Journeys', 'journey', asScreen.value.journeyIds)]))
       break
@@ -194,17 +199,17 @@ const relationGroups = computed<RelationGroup[]>(() => {
     case 'capability':
       groups.push(group('Authored', [row('Domain', 'domain', asCapability.value.domainId ? [asCapability.value.domainId] : [])]))
       groups.push(group('Derived', [
+        row('Capability Scenarios', 'scenario', asCapability.value.scenarioIds),
         row('Used by Journeys', 'journey', asCapability.value.journeyIds),
         row('Exposed by Screens', 'screen', asCapability.value.screenIds),
         row('Constrained by Rules', 'rule', asCapability.value.ruleIds)
       ]))
       break
     case 'journey':
-      groups.push(group('Authored', [
-        row('Actors', 'actor', asJourney.value.actorIds),
-        row('Capabilities', 'capability', asJourney.value.capabilityIds)
-      ]))
+      groups.push(group('Authored', [row('Actors', 'actor', asJourney.value.actorIds)]))
       groups.push(group('Derived', [
+        row('Primary Capabilities', 'capability', asJourney.value.capabilityIds),
+        row('Failure-only Capabilities', 'capability', asJourney.value.failureOnlyCapabilityIds),
         row('Domains', 'domain', asJourney.value.domainIds),
         row('Scenarios', 'scenario', asJourney.value.scenarioIds),
         row('Screens', 'screen', asJourney.value.screenIds),
@@ -212,7 +217,12 @@ const relationGroups = computed<RelationGroup[]>(() => {
       ]))
       break
     case 'scenario':
-      groups.push(group('Authored', [row('Journey', 'journey', [asScenario.value.journeyId])]))
+      groups.push(group('Authored', [
+        row('Actors', 'actor', asScenario.value.actorIds),
+        asScenario.value.scenarioType === 'capability'
+          ? row('Capability', 'capability', [asScenario.value.capabilityId])
+          : row('Journey', 'journey', [asScenario.value.journeyId])
+      ]))
       groups.push(group('Derived', [
         row('Shown on Screens', 'screen', asScenario.value.screenIds),
         row('Constrained by Rules', 'rule', asScenario.value.ruleIds)
@@ -223,7 +233,8 @@ const relationGroups = computed<RelationGroup[]>(() => {
         row('Domains', 'domain', asRule.value.domainIds),
         row('Capabilities', 'capability', asRule.value.capabilityIds),
         row('Journeys', 'journey', asRule.value.journeyIds),
-        row('Scenarios', 'scenario', asRule.value.scenarioIds)
+        row('Capability Scenarios', 'scenario', asRule.value.capabilityScenarioIds),
+        row('Journey Scenarios', 'scenario', asRule.value.journeyScenarioIds)
       ]))
       {
         const directCapabilities = new Set(asRule.value.capabilityIds)
@@ -235,7 +246,7 @@ const relationGroups = computed<RelationGroup[]>(() => {
         const reachedCapabilities = new Set([...asRule.value.capabilityIds, ...derivedCapabilities])
         const scenarioJourneyIds = new Set(asRule.value.scenarioIds
           .map(id => props.workspace.byId.get(id))
-          .filter((entity): entity is ScenarioView => entity?.kind === 'scenario')
+          .filter((entity): entity is ScenarioView => entity?.kind === 'scenario' && entity.scenarioType === 'journey')
           .map(scenario => scenario.journeyId))
         const derivedJourneys = props.workspace.journeys
           .filter(journey => !asRule.value.journeyIds.includes(journey.id)
@@ -309,10 +320,26 @@ function selectId(id: string) {
       </div>
     </section>
 
+    <section v-if="entity.kind === 'journey'" class="space-y-2">
+      <h3 class="blr-inspector-heading">Success criterion</h3>
+      <BlrProse :text="asJourney.successCriterion" />
+    </section>
+
     <section v-if="entity.kind === 'scenario'" class="space-y-5">
       <div class="space-y-2">
         <h3 class="blr-inspector-heading">Trigger</h3>
         <BlrProse :text="asScenario.trigger" size="base" />
+      </div>
+
+      <div v-if="asScenario.flow.length" class="space-y-3">
+        <h3 class="blr-inspector-heading">Flow <span class="blr-meta ms-1">{{ asScenario.flow.length }}</span></h3>
+        <ol class="space-y-2">
+          <li v-for="(item, index) in asScenario.flow" :key="`${item.capabilityId}-${index}`" class="rounded-lg border border-default px-3.5 py-3">
+            <p class="text-sm font-medium text-highlighted">{{ index + 1 }}. {{ item.operation }}</p>
+            <BlrLinks :workspace="workspace" :ids="[item.capabilityId]" kind="capability" label="Capability" interactive @select="emit('select', $event)" />
+            <BlrAvail :pairs="item.availability" label="Contexts" />
+          </li>
+        </ol>
       </div>
 
       <div class="space-y-3">

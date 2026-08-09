@@ -16,8 +16,8 @@ stable renderer; when a design wins, its parts are promoted into
 - `BusinessLensReportLabRow` — the audition control, built to sit in the
   theme lab bar's `#after` slot. `shift` + `←`/`→` steps through the designs.
 - `projectReportWorkspace()` — the complete projection of a Product Report v8:
-  every entity kind, every authored field, plus the backlinks the format never
-  stores because it records each relation in one direction only.
+  every entity collection, every authored field, plus the backlinks the format
+  never stores because it records each relation in one direction only.
 - A shared Vue Flow foundation: one node component for every entity kind, a
   deterministic layered layout, `BlrTopology` for one entity's contextual
   neighbourhood, and Workbench's named product-level Topology views.
@@ -29,9 +29,10 @@ report is a collection of purpose-built views over one shared model, and each
 view answers a named Product question. Topology normally remains contextual;
 Workbench also auditions it as an explicit orientation destination made from
 fixed named views rather than a universal graph. Every design renders every
-entity kind and reaches the same four
+entity collection and reaches the same four
 required views — Journey browser (cards, table and detail), Screen map,
-Capability map, and contextual topology — plus Scenario flows, Business Rule
+Capability map, and contextual topology — plus distinct Capability and Journey
+Scenario content, Business Rule
 impact and access-context views. They differ in information architecture:
 which question comes first, and how a reader moves from overview to one
 entity. Workbench is the one deliberate subtraction: it drops the named
@@ -132,6 +133,7 @@ be forced to one column, wide, or edge to edge.
 
 Categorical colour uses one fixed slot order, validated against the
 BusinessLens surfaces in both modes (`app/utils/reportPalette.ts` records the
-result). Nine entity kinds is past what hue alone can separate, so colour is
-never the only encoding: every coloured mark ships with a label, and graph
-nodes additionally carry a per-kind silhouette and icon.
+result). The two Scenario types share one visual category but remain explicitly
+labelled in content. Nine visual categories is already past what hue alone can
+separate, so colour is never the only encoding: every coloured mark ships with
+a label, and graph nodes additionally carry a per-kind silhouette and icon.

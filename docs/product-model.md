@@ -27,9 +27,10 @@ add optional entities only when they communicate a real Product distinction.
 | [Experience](./experiences.md) | Optional | A durable context of use when one Interface or several Interfaces contain meaningful audience, access, or capability boundaries |
 | [Screen](./screens.md) | Optional | A meaningful visual view; non-visual Products do not need one |
 | [Domain](./domains.md) | Optional | A Product-language grouping that makes a larger Capability set easier to navigate |
-| [Capability](./capabilities.md) | Optional by itself; required by every Screen and Journey | A durable Product ability reused across views or goals |
-| [Journey](./journeys.md) | Optional | One complete Actor goal |
-| [Scenario](./scenarios.md) | At least one per Journey | One concrete, observable acceptance path through that goal |
+| [Capability](./capabilities.md) | Optional collection; every authored Capability needs Capability Scenario coverage | A durable Product ability reused across views, behavior contracts, or goals |
+| [Capability Scenario](./capability-scenarios.md) | Required by every authored Capability | One concrete local acceptance case for exactly one Capability |
+| [Journey](./journeys.md) | Optional | One coherent Actor Goal and Success criterion whose achieved variations compose multiple Capabilities |
+| [Journey Scenario](./journey-scenarios.md) | Required by every authored Journey | One concrete end-to-end variation of exactly one Journey |
 | [Business Rule](./business-rules.md) | Optional | A durable assertion that must remain true |
 
 Do not add an Experience, Domain, Screen, or any other entity to make the model
@@ -51,26 +52,31 @@ report while editing.
 
 ## Authoring conventions
 
-Entity IDs come from lowercase kebab-case filename stems; Journey IDs come from
-their directories. Only `product.md` declares `id:`. Scenario IDs are unique
-across the whole model, not merely within a Journey.
+Entity IDs come from lowercase kebab-case filename stems. Only `product.md`
+declares `id:`. Scenario IDs are globally unique across the Capability Scenario
+and Journey Scenario collections.
 
-The first H1 supplies an entity's title. Lead prose supplies its description,
-or a Journey's summary. Scenarios are the exception: they begin with the
-required `## Trigger` section and have no lead paragraph. Relations and
+The first H1 supplies an entity's title. Lead prose normally supplies its
+description. Journeys instead require `## Goal` and `## Success criterion`;
+both Scenario types begin with the required `## Trigger` section. Relations and
 navigation belong in frontmatter; Product meaning belongs in prose. The
 frontmatter schema is a strict allowlist, so `lint` reports unknown keys rather
 than silently ignoring them.
 
-Optional `## Intent` prose explains why a Product or entity exists and which
-outcome it protects. It adds meaning without becoming another entity or
-relationship graph.
+`## Intent` prose explains why a Product or entity exists and which outcome it
+protects. It is optional where documented. A Journey uses required `## Goal`
+prose for its Actor intent. Neither becomes another entity or relationship
+graph.
 
 ## Availability
 
 Interface says the supported interaction form. Optional Experience says the
-coherent Actor context within that form. Capabilities, Journeys, Screens,
-Scenarios, and Business Rules declare exact availability scopes.
+coherent Actor context within that form. An **availability scope** is simply one
+supported interaction context: an Interface plus, when that Interface uses
+Experiences, one or more Experiences. Capabilities, Screens, and Business Rules
+declare those exact contexts. Capability Scenarios select contexts from their
+one Capability. Journey Scenario flow entries select ordered contexts from
+existing Capabilities. Journeys do not declare availability or Capabilities.
 
 When an Interface has Experiences, every availability record for it names the
 applicable Experiences:
@@ -93,6 +99,45 @@ context. Conversely, once any Experience uses an Interface, all availability
 for that Interface is Experience-scoped; direct and Experience-scoped records
 cannot be mixed. Availability is intended Product meaning. It is not inferred
 from shared code, routes, packages, or protocols.
+
+## Behavioral core
+
+Capabilities state what the Product can durably do. Capability Scenarios make
+each ability observable and verifiable. Every authored Capability must have at
+least one Capability Scenario; appearing in a Journey Scenario does not satisfy
+that local acceptance coverage.
+
+Journeys are optional high-level goals. A Journey authors only the Actors, Goal,
+and Success criterion. Journey Scenarios own concrete Capability selection,
+order, branches, repetition, and terminal results. Every Journey needs at least
+one achieved Journey Scenario using at least two distinct Capabilities. A
+complete Product Model may have zero Journeys.
+
+The report derives a Journey's primary Capabilities and Domains from achieved
+Journey Scenario flows. Capabilities found only in not-achieved flows are
+marked separately as failure-only. These describe modeled coverage, not one
+mandatory flow or proof that partial mapping is exhaustive.
+
+## Which behavioral entity?
+
+These are not alternative ways to describe the same contract:
+
+| Entity | Identity | It must contain | It must never contain |
+| --- | --- | --- | --- |
+| Capability | The smallest durable behavior that remains independently meaningful | Product behavior and exact supported contexts | Unrelated operations grouped only by a vague umbrella verb |
+| Capability Scenario | One local variation of exactly one Capability | Trigger, context, Steps, and local Outcome | A Journey or multiple Capabilities |
+| Journey | One coherent Actor Goal whose achieved variations require multiple Capabilities | Actors, Goal, and Success criterion | Capability list, flow, branches, or one concrete variation |
+| Journey Scenario | One end-to-end variation of exactly one Journey | Trigger, ordered Capability flow with operations, Steps, goal result, and Outcome | Local acceptance coverage for its Capabilities |
+
+A local case is always a Capability Scenario. A coherent multi-Capability goal
+is always a Journey. A complete variation of pursuing that goal is always a
+Journey Scenario. A file cannot switch between these meanings by adding an
+optional relation.
+
+Capability Scenarios must remain variations rather than hidden operations. If
+`manage-repositories` produces create, configure, archive, and delete cases
+with independent Product meaning, split those into Capabilities and use a
+Domain as the optional umbrella.
 
 ## Coverage
 

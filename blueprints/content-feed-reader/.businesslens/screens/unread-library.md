@@ -5,7 +5,8 @@ availability:
   - interface: reader-mobile
     experiences: [personal-library]
 capabilities: [reading-state, item-saving]
-scenarios: [work-through-the-unread-backlog, mark-a-source-read-in-bulk]
+capabilityScenarios: [mark-an-item-read, mark-a-source-read-in-bulk, save-an-accessible-item]
+journeyScenarios: [work-through-the-unread-backlog, save-while-catching-up]
 entryPoints:
   - reader-web: /unread
   - reader-mobile: content-reader://library/unread

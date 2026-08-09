@@ -5,9 +5,13 @@ availability:
   - interface: reader-mobile
     experiences: [personal-library]
 capabilities: [item-saving, collections, collection-sharing]
-scenarios:
-  - gather-saved-items-into-a-collection
-  - remove-an-item-from-a-collection
+capabilityScenarios:
+  - save-an-accessible-item
+  - add-an-item-to-an-owned-collection
+  - reject-adding-to-another-owners-collection
+journeyScenarios:
+  - save-an-item-into-a-new-collection
+  - save-an-item-into-an-existing-collection
   - publish-a-collection
   - unlist-a-published-collection
 entryPoints:

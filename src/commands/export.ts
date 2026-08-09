@@ -44,7 +44,11 @@ export function compileReport(
   model: PddModel,
   today: string
 ): ProductReportV8 {
-  const scenarios = model.journeys.flatMap(journey => journey.scenarios)
+  const capabilityById = new Map(model.capabilities.map(capability => [capability.id, capability]))
+  const journeyScenariosByJourney = new Map(model.journeys.map(journey => [
+    journey.id,
+    model.journeyScenarios.filter(scenario => scenario.journey === journey.id)
+  ]))
 
   const report: ProductReportV8 = {
     schemaVersion: REPORT_SCHEMA_VERSION,
@@ -74,8 +78,9 @@ export function compileReport(
       screens: model.screens.length,
       domains: model.domains.length,
       capabilities: model.capabilities.length,
+      capabilityScenarios: model.capabilityScenarios.length,
       journeys: model.journeys.length,
-      scenarios: scenarios.length,
+      journeyScenarios: model.journeyScenarios.length,
       businessRules: model.businessRules.length
     },
     limitations: model.product.limitations,
@@ -122,7 +127,8 @@ export function compileReport(
         description: screen.doc.lead,
         availability: availability(screen.availability),
         capabilityIds: sorted(screen.capabilities),
-        scenarioIds: sorted(screen.scenarios),
+        capabilityScenarioIds: sorted(screen.capabilityScenarios),
+        journeyScenarioIds: sorted(screen.journeyScenarios),
         entryPoints: screen.entryPoints,
         information: screen.information,
         actions: screen.actions,
@@ -145,22 +151,56 @@ export function compileReport(
         availability: availability(capability.availability),
         ...entityContent(capability, [])
       })),
-      journeys: byId(model.journeys).map(journey => ({
-        id: journey.id,
-        title: journey.doc.title,
-        summary: journey.doc.lead,
-        actorIds: sorted(journey.actors),
-        capabilityIds: sorted(journey.capabilities),
-        availability: availability(journey.availability),
-        entryPoints: journey.entryPoints,
-        ...entityContent(journey, [])
-      })),
-      scenarios: byId(scenarios).map(scenario => ({
+      capabilityScenarios: byId(model.capabilityScenarios).map(scenario => ({
         id: scenario.id,
-        journeyId: scenario.journeyId,
+        capabilityId: scenario.capability,
         title: scenario.doc.title,
         kindId: scenario.kind,
+        actorIds: sorted(scenario.actors),
         availability: availability(scenario.availability),
+        trigger: scenario.trigger,
+        steps: scenario.steps,
+        decisionPoints: scenario.decisionPoints,
+        outcome: scenario.outcome,
+        edgeCases: scenario.edgeCases,
+        ...entityContent(scenario, ['Trigger', 'Steps', 'Decision points', 'Outcome', 'Edge cases'])
+      })),
+      journeys: byId(model.journeys).map((journey) => {
+        const scenarios = journeyScenariosByJourney.get(journey.id) || []
+        const achievedCapabilityIds = new Set(
+          scenarios.filter(scenario => scenario.result === 'achieved').flatMap(scenario => scenario.flow.map(item => item.capability))
+        )
+        const failedCapabilityIds = new Set(
+          scenarios.filter(scenario => scenario.result === 'not-achieved').flatMap(scenario => scenario.flow.map(item => item.capability))
+        )
+        const failureOnlyCapabilityIds = [...failedCapabilityIds].filter(id => !achievedCapabilityIds.has(id))
+        const domainIds = [...achievedCapabilityIds]
+          .map(id => capabilityById.get(id)?.domain)
+          .filter((id): id is string => Boolean(id))
+        return {
+          id: journey.id,
+          title: journey.doc.title,
+          goal: journey.goal,
+          successCriterion: journey.successCriterion,
+          actorIds: sorted(journey.actors),
+          capabilityIds: sorted([...achievedCapabilityIds]),
+          failureOnlyCapabilityIds: sorted(failureOnlyCapabilityIds),
+          domainIds: sorted([...new Set(domainIds)]),
+          ...entityContent(journey, ['Goal', 'Success criterion'])
+        }
+      }),
+      journeyScenarios: byId(model.journeyScenarios).map(scenario => ({
+        id: scenario.id,
+        journeyId: scenario.journey,
+        title: scenario.doc.title,
+        kindId: scenario.kind,
+        actorIds: sorted(scenario.actors),
+        result: scenario.result as 'achieved' | 'not-achieved',
+        flow: scenario.flow.map(item => ({
+          capabilityId: item.capability,
+          operation: item.operation,
+          availability: availability(item.availability)
+        })),
         trigger: scenario.trigger,
         steps: scenario.steps,
         decisionPoints: scenario.decisionPoints,
@@ -176,7 +216,8 @@ export function compileReport(
         domainIds: sorted(rule.domains),
         capabilityIds: sorted(rule.capabilities),
         journeyIds: sorted(rule.journeys),
-        scenarioIds: sorted(rule.scenarios),
+        capabilityScenarioIds: sorted(rule.capabilityScenarios),
+        journeyScenarioIds: sorted(rule.journeyScenarios),
         availability: availability(rule.availability),
         ...entityContent(rule, ['Rationale'])
       }))

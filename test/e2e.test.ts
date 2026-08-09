@@ -57,14 +57,15 @@ describe('end to end on a real git repo', () => {
       screens: 1,
       domains: 2,
       capabilities: 3,
-      journeys: 2,
-      scenarios: 3,
+      capabilityScenarios: 4,
+      journeys: 1,
+      journeyScenarios: 1,
       businessRules: 2
     })
-    expect(parsed.model.journeys[0]!.availability).toEqual([
-      { interfaceId: 'customer-mobile', experienceIds: ['storefront'] },
-      { interfaceId: 'customer-web', experienceIds: ['storefront'] }
-    ])
+    expect(parsed.model.journeys[0]).toMatchObject({
+      capabilityIds: ['catalog-browsing', 'checkout'],
+      failureOnlyCapabilityIds: []
+    })
     const screen = parsed.model.screens.find(item => item.id === 'product-record')
     expect(screen).toMatchObject({
       availability: [
@@ -72,7 +73,8 @@ describe('end to end on a real git repo', () => {
         { interfaceId: 'customer-web', experienceIds: ['storefront'] }
       ],
       capabilityIds: ['catalog-browsing'],
-      scenarioIds: ['browse-catalog'],
+      capabilityScenarioIds: ['browse-catalog'],
+      journeyScenarioIds: ['browse-and-complete-checkout'],
       information: ['Product name and description', 'Price and availability']
     })
     expect(screen?.entryPoints.map(point => point.path)).toEqual([
@@ -97,8 +99,12 @@ describe('end to end on a real git repo', () => {
     expect(parsed.coverage.sourceAreas).toEqual([])
     expect(parsed.model.businessRules.find(rule => rule.id === 'payment-before-confirmation')?.capabilityIds)
       .toEqual(['checkout'])
-    expect(parsed.model.scenarios.find(scenario => scenario.id === 'complete-checkout')?.decisionPoints)
+    expect(parsed.model.capabilityScenarios.find(scenario => scenario.id === 'complete-checkout')?.decisionPoints)
       .toHaveLength(1)
+    expect(parsed.model.journeyScenarios[0]!.flow.map(item => item.operation)).toEqual([
+      'Find and select an available product',
+      'Submit payment and confirm the order'
+    ])
     expect(JSON.stringify(parsed)).not.toContain('github.com/example/fixture-shop')
 
     const second = buildProject(repo)

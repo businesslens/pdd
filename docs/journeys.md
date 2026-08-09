@@ -1,76 +1,115 @@
 ---
 title: Journeys
-description: Complete Actor goals assembled from Capabilities and promised through exact Interface availability, optionally scoped by Experience.
+description: Optional coherent Actor goals that deliberately compose multiple durable Product Capabilities.
 section: open-source
 group: Product Model
-order: 15
+order: 16
 ---
 
 # Journeys
 
-**A Journey is one complete Actor goal:** browse and buy, refund an order,
-catch up on unread items, rotate an API key.
+**A Journey is one coherent Actor goal that requires deliberate composition of
+multiple [Capabilities](./capabilities.md):** contribute a code change, deliver
+an application, recover a deployment, or browse and buy.
 
-A Journey is performed by Actors, uses one or more Capabilities, and declares
-the exact Interface scopes through which the whole goal is promised. It names
-Experiences where the Interface uses them and owns its observable acceptance
-Scenarios.
+A Journey owns only its high-level Goal, Success criterion, and Actors. Concrete
+Capability selection, order, branches, repetition, and failure belong to its
+[Journey Scenario](./journey-scenarios.md) variations.
 
-Journeys do not belong to one Domain. A goal can cross several Product areas;
-its Domains are derived from its Capabilities.
+Journeys are optional. A complete Product Model can contain none when its
+behavior is better expressed as independently verifiable Capabilities.
 
 ## When you create one
 
-Create a Journey for a goal someone would describe as a complete thing they
-came to do. “Buy a product” is a Journey. “Validate a cart” is a step or
-Capability inside one.
+Create a Journey only when all of these are true:
 
-> **Journey vs Capability.** A Journey has an Actor goal and an end-to-end
-> outcome. A [Capability](./capabilities.md) is a durable ability reused by
-> goals and has no necessary beginning or end.
+1. one or more named Actors pursue one recognizable Goal and Success criterion;
+2. at least one achieved Journey Scenario uses two or more durable Capabilities;
+3. the Product deliberately connects those Capabilities through a handoff,
+   orchestration, shared state, navigation, command, or supported
+   cross-Interface transition;
+4. at least one achieved end-to-end Journey Scenario is evidence-backed—or
+   approved as intended behavior during ideation; and
+5. the Journey is not merely a plausible sequence or an administrative grouping.
+
+A wizard is strong Journey evidence, but it is not required. Product
+documentation, controller orchestration, integration tests, UI handoffs, and a
+supported transition from Git transport to a web pull-request flow can also
+establish one.
+
+“Publish a branch and open it for review” can be a Journey when the Product
+supports that handoff. “Browse source and later change notification settings”
+is only a possible sequence. “Create a repository” is one Capability with
+Capability Scenarios, not a Journey wrapper.
+
+> **Journey vs Capability.** A Journey is a coherent Actor goal that requires
+> several abilities. A Capability is one durable ability that remains useful
+> outside that Journey.
 >
-> **Journey vs Scenario.** A Journey stays stable while materially different
-> observable paths become separate [Scenarios](./scenarios.md).
+> **Journey vs Journey Scenario.** A Journey states the Goal and Success
+> criterion. A Journey Scenario states one concrete Capability flow and result.
+> One achieved Scenario is enough for Journey coverage; the number of variations
+> does not define the Journey.
 
 ## The file
 
-The directory name is the Journey ID.
+Journeys live at `journeys/<journey-id>.md`. The whole collection is optional.
 
-```text
-journeys/browse-and-buy/
-├── journey.md
-└── scenarios/
-    ├── browse-catalog.md
-    └── complete-checkout.md
-```
-
-```md [journeys/browse-and-buy/journey.md]
+```md [journeys/contribute-a-code-change.md]
 ---
-actors: [shopper]
-capabilities: [catalog-browsing, checkout]
-availability:
-  - interface: customer-web
-    experiences: [shopping]
-  - interface: customer-mobile
-    experiences: [shopping]
-entryPoints:
-  - customer-web: /
-  - customer-mobile: shop://home
+actors: [repository-contributor]
+references:
+  - kind: doc
+    role: context
+    target: docs/usage/pull-requests.md
 ---
 
-# Browse and buy
+# Contribute a code change
 
-A shopper finds a product and completes checkout.
+## Goal
+
+A repository contributor wants to propose a code change for review.
+
+## Success criterion
+
+A reviewable change proposal exists for the repository.
 ```
 
 | Field or section | Required | Constraint |
 | --- | --- | --- |
-| `actors` | yes | Name at least one existing Actor pursuing the goal. |
-| `capabilities` | yes | Name at least one existing Capability; each must support every Journey availability scope. |
-| `availability` | yes | Declare at least one valid Interface scope, naming Experiences when that Interface uses them. |
-| `entryPoints` | no | Key Product-facing entry points by an Interface in Journey availability. |
+| `actors` | yes | Name at least one existing Actor who pursues the Goal. |
 | `references` | no | Use the documented [Reference](./references.md) shape. |
-| `scenarios/` | yes | Include at least one valid Scenario. |
-| H1 and lead paragraph | yes | Name the Journey and summarize the complete goal. |
+| H1 | yes | Name the coherent Actor goal rather than one route or variation. |
+| `## Goal` | yes | State the stable Actor intent. |
+| `## Success criterion` | yes | State how achievement is recognized without prescribing a route. |
 
-Every Journey directory must contain `journey.md`.
+A Journey does not declare `availability`, `entryPoints`, Trigger, Steps, decisions, a
+concrete Outcome, authored Capability list, or authored Scenario list.
+Capabilities, Domains, Interfaces, and Experiences are derived from concrete
+Journey Scenario flow entries. Product routes remain on Interfaces,
+Experiences, and Screens.
+
+To present a Journey entry route, a report consumer starts with the first flow
+item of each achieved Journey Scenario and resolves the matching Interface or
+Experience entry point. The route remains derived rather than becoming Journey
+frontmatter.
+
+Consumers derive the primary Capability and Domain sets from achieved flows.
+Capabilities seen only in not-achieved flows are marked separately as
+failure-only. These are modeled coverage projections, not a mandatory canonical
+flow or proof that partial mapping is exhaustive.
+
+At least one Journey Scenario must name every Journey with `result: achieved`.
+That achieved Scenario must use at least two distinct Capabilities. This gives
+the Journey acceptance coverage without pushing flow into the Journey itself.
+
+## Relationship to code
+
+A Journey does not need one matching class, controller, route, test, or wizard.
+Like other Product entities, it is a Product-level projection over code. During
+mapping, however, its Goal, Capability handoffs, and achieved path must remain
+traceable through supported behavior rather than invented from plausible
+actions.
+
+When no achieved deliberate multi-Capability composition can be established,
+omit the Journey and keep the independently verifiable Capability Scenarios.
