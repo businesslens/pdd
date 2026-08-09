@@ -4,16 +4,20 @@ availability:
     experiences: [personal-library]
   - interface: reader-mobile
     experiences: [personal-library]
-capabilities: [item-saving, collections, collection-sharing]
+capabilities: [collections, collection-publication]
 capabilityScenarios:
-  - save-an-accessible-item
+  - create-an-owned-collection
+  - rename-an-owned-collection
   - add-an-item-to-an-owned-collection
+  - remove-an-item-from-an-owned-collection
+  - reorder-an-owned-collection
   - reject-adding-to-another-owners-collection
+  - publish-an-owned-collection
+  - unlist-an-owned-collection
+  - reject-publishing-another-owners-collection
 journeyScenarios:
   - save-an-item-into-a-new-collection
   - save-an-item-into-an-existing-collection
-  - publish-a-collection
-  - unlist-a-published-collection
 entryPoints:
   - reader-web: /collections
   - reader-mobile: content-reader://library/collections

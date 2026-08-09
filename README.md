@@ -114,6 +114,36 @@ Catalog contribution stays in the CLI; there is no contribution skill.
 Every model creation path writes `.businesslens/README.md`. BusinessLens never
 writes target `AGENTS.md`, `CLAUDE.md`, or root README files.
 
+## Where the Product Model is defined
+
+Use these sources in this order:
+
+1. Read the [Product Model overview](./docs/product-model.md) for the mental
+   model and relationship overview.
+2. Use [`spec/format.md`](./spec/format.md) as the normative contract for the
+   authored `.businesslens/` files. It defines every entity, file shape,
+   relation, and semantic boundary, and changes before parser or linter
+   behavior changes.
+3. Use the individual entity pages under [`docs/`](./docs/) for approachable
+   explanations, examples, and the relevant `lint` findings. They restate the
+   format contract and must not introduce a second definition.
+4. Follow [`src/core/model.ts`](./src/core/model.ts),
+   [`src/core/frontmatter.ts`](./src/core/frontmatter.ts),
+   [`src/core/markdown.ts`](./src/core/markdown.ts), and
+   [`src/commands/lint.ts`](./src/commands/lint.ts) to understand what the CLI
+   parses and enforces today.
+5. Use [`src/core/portable.ts`](./src/core/portable.ts) for the generated Product
+   Report JSON schema and relationship validation, and
+   [`src/commands/export.ts`](./src/commands/export.ts) for the authored-model to
+   report projection.
+
+The installed skills carry self-contained format summaries and semantic
+rubrics so agents can judge concepts that structural lint cannot prove—for
+example, whether something is genuinely a durable Capability or a coherent
+multi-Capability Journey. Those guides must remain consistent with
+`spec/format.md`; they do not supersede it. Viewer backlinks and topology are
+derived report projections, not additional authored relationships.
+
 ## Documentation
 
 - [Introduction](./docs/index.md) · [Installation](./docs/installation.md) ·

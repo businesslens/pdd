@@ -1,72 +1,112 @@
+import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { compileReport } from '../src/commands/export.js'
 import { loadModel } from '../src/core/model.js'
-import { formatReportCategory, projectReportView } from '../src/report-view-model.js'
 
-const MODEL_ROOT = join(
-  fileURLToPath(new URL('.', import.meta.url)),
-  'fixtures',
-  'fixture-shop'
-)
+const VIEWER = join(__dirname, '..', 'layers', 'nuxt', 'report-viewer')
+const workspaceModulePath = '../layers/nuxt/report-viewer/app/utils/reportWorkspace.ts'
+const { projectReportWorkspace } = await import(workspaceModulePath)
+const FIXTURE = join(__dirname, 'fixtures', 'fixture-shop')
 
-describe('shared Product Report projection', () => {
-  it('projects stable report content without catalog metadata', () => {
-    const source = compileReport(loadModel(MODEL_ROOT), '2026-01-01')
-    const report = projectReportView(source)
+function source(path: string): string {
+  return readFileSync(join(VIEWER, path), 'utf8')
+}
 
-    expect(report).toMatchObject({
-      id: 'fixture-shop',
-      title: source.title,
-      summary: source.summary,
-      description: source.description,
-      category: 'Commerce',
-      authors: source.authors,
-      license: 'MIT',
-      intent: source.intent,
-      limitations: source.limitations
+describe('stable Product Report Workbench', () => {
+  it('projects every report entity and keeps scenario types distinct', () => {
+    const report = compileReport(loadModel(FIXTURE), '2026-08-08')
+    const workspace = projectReportWorkspace(report)
+
+    expect(workspace.identity).toMatchObject({
+      id: report.id,
+      title: report.title,
+      description: report.description,
+      schemaVersion: report.schemaVersion
     })
-    expect(report.stats).toEqual([
-      { key: 'actors', label: 'Actors', value: source.counts.actors },
-      { key: 'capabilities', label: 'Capabilities', value: source.counts.capabilities },
-      { key: 'capability-scenarios', label: 'Capability scenarios', value: source.counts.capabilityScenarios },
-      { key: 'journeys', label: 'Journeys', value: source.counts.journeys },
-      { key: 'journey-scenarios', label: 'Journey scenarios', value: source.counts.journeyScenarios },
-      { key: 'rules', label: 'Rules', value: source.counts.businessRules }
-    ])
-    expect(report.actors.map(actor => actor.id)).toEqual(
-      source.model.actors.map(actor => actor.id)
+    expect(workspace.actors).toHaveLength(report.model.actors.length)
+    expect(workspace.interfaces).toHaveLength(report.model.interfaces.length)
+    expect(workspace.experiences).toHaveLength(report.model.experiences.length)
+    expect(workspace.screens).toHaveLength(report.model.screens.length)
+    expect(workspace.domains).toHaveLength(report.model.domains.length)
+    expect(workspace.capabilities).toHaveLength(report.model.capabilities.length)
+    expect(workspace.journeys).toHaveLength(report.model.journeys.length)
+    expect(workspace.rules).toHaveLength(report.model.businessRules.length)
+    expect(workspace.capabilityScenarios.every((item: any) => item.scenarioType === 'capability')).toBe(true)
+    expect(workspace.journeyScenarios.every((item: any) => item.scenarioType === 'journey')).toBe(true)
+    expect(workspace.counts.scenarios).toBe(
+      report.counts.capabilityScenarios + report.counts.journeyScenarios
     )
-    expect(report.capabilities.map(capability => capability.id)).toEqual(
-      source.model.capabilities.map(capability => capability.id)
-    )
-    expect(report.journeys.map(journey => journey.id)).toEqual(
-      source.model.journeys.map(journey => journey.id)
-    )
-    expect(report.rules.map(rule => rule.id)).toEqual(
-      source.model.businessRules.map(rule => rule.id)
-    )
-    expect(report.capabilityScenarios.map(scenario => scenario.id)).toEqual(
-      source.model.capabilityScenarios.map(scenario => scenario.id)
-    )
-    expect(report.journeyScenarios.map(scenario => scenario.id)).toEqual(
-      source.model.journeyScenarios.map(scenario => scenario.id)
-    )
-    expect(report).not.toHaveProperty('slug')
-    expect(report).not.toHaveProperty('source')
   })
 
-  it('formats categories for people without title-casing every word', () => {
-    expect(formatReportCategory('content-and-feeds')).toBe('Content and feeds')
+  it('derives backlinks without mutating the canonical report', () => {
+    const report = compileReport(loadModel(FIXTURE), '2026-08-08')
+    const before = structuredClone(report)
+    const workspace = projectReportWorkspace(report)
+
+    expect(workspace.capabilities.some((item: any) => item.journeyIds.length || item.ruleIds.length)).toBe(true)
+    expect(workspace.domains.some((item: any) => item.screenIds.length)).toBe(true)
+    expect(report).toEqual(before)
   })
 
-  it('does not mutate the Product Report', () => {
-    const source = compileReport(loadModel(MODEL_ROOT), '2026-01-01')
-    const before = structuredClone(source)
+  it('keeps same-id entities distinct across collections', () => {
+    const report = compileReport(loadModel(FIXTURE), '2026-08-08')
+    const sharedId = report.model.interfaces[0]!.id
+    report.model.actors[0] = { ...report.model.actors[0]!, id: sharedId }
 
-    projectReportView(source)
+    const workspace = projectReportWorkspace(report)
+    expect(workspace.entitiesById.get(sharedId)).toHaveLength(2)
+    expect(workspace.byKey.get(`actor:${sharedId}`)?.kind).toBe('actor')
+    expect(workspace.byKey.get(`interface:${sharedId}`)?.kind).toBe('interface')
+  })
 
-    expect(source).toEqual(before)
+  it('derives Journey availability only from achieved flows', () => {
+    const report = compileReport(loadModel(FIXTURE), '2026-08-08')
+    const scenario = report.model.journeyScenarios[0]!
+    report.model.journeyScenarios[0] = { ...scenario, result: 'not-achieved' }
+
+    const workspace = projectReportWorkspace(report)
+    const journey = workspace.journeys.find((item: any) => item.id === scenario.journeyId)!
+    expect(journey.availability).toEqual([])
+    expect(journey.entryPoints).toEqual([])
+  })
+
+  it('ships Workbench as the only report renderer', () => {
+    const renderer = source('app/components/BusinessLensReportViewer.vue')
+    const workbench = source('app/components/BlrWorkbench.vue')
+    const layer = source('nuxt.config.ts')
+
+    expect(renderer).toContain('ProductReportV8')
+    expect(renderer).toContain('projectReportWorkspace')
+    expect(renderer).toContain('<BlrWorkbench')
+    expect(workbench).toContain('<BlrProductTopology')
+    expect(workbench).not.toContain('groupKind')
+    expect(workbench).not.toContain('groupOptions')
+    expect(layer).toContain("extends: [join(currentDir, '../theme')]")
+  })
+
+  it('uses shared flow surfaces for contextual and Product topology', () => {
+    const flow = source('app/utils/flowGraph.ts')
+    const topology = source('app/components/BlrTopology.vue')
+    const canvas = source('app/components/BlrFlowCanvas.vue')
+
+    expect(flow).toContain('export function directRelations')
+    expect(flow).toContain('export function buildNeighbourhood')
+    expect(flow).toContain('export function buildScreenMap')
+    expect(topology).toContain('buildNeighbourhood')
+    expect(canvas).toContain('@vue-flow/core')
+    expect(canvas).toContain('#node-blr')
+  })
+
+  it('keeps completeness in the inspector and Scenario drilldowns', () => {
+    const workbench = source('app/components/BlrWorkbench.vue')
+    const inspector = source('app/components/BlrInspector.vue')
+    const drilldown = source('app/components/BlrWorkbenchScenarioDrilldown.vue')
+
+    expect(workbench).toContain('<BlrWorkbenchScenarioDrilldown')
+    expect(inspector).toContain('<BlrInspectorDetail')
+    expect(drilldown).toContain("entity.kind === 'capability'")
+    expect(drilldown).toContain("entity.kind === 'journey'")
+    expect(drilldown).toContain('<BlrInspectorDetail')
   })
 })

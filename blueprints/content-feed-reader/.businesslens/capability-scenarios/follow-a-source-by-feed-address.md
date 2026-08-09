@@ -19,8 +19,7 @@ The Reader submits the address of a readable syndicated feed.
 
 1. The Product validates that the address returns a supported feed
 2. The source is added to the Reader's followed sources
-3. Available items are added to the private library
 
 ## Outcome
 
-The source is followed and its items can appear in the Reader's unread backlog.
+The source is followed and future synchronization may add its items to the Reader's library.

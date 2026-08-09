@@ -1,20 +1,16 @@
-# BusinessLens Nuxt Layers
+# BusinessLens Product Report Workbench
 
-The OSS Product Report v8 renderer and BusinessLens-wide Nuxt theme used by
-`businesslens view` and the public BusinessLens site. Both are exported from
-the single `businesslens` npm package.
+The stable Product Report v8 renderer used by `businesslens view` and exported
+from the `businesslens` package. It projects the complete portable report into
+an entity-first Workbench with browse, inspect, search, scenario, journey, and
+named topology views.
 
-The supplied report is the sole source of Product identity, title, summary,
-description, category, tags, authors, license, statistics, and body content.
-The separate `logoSrc` prop resolves the Product's `.businesslens/logo.svg`:
-the localhost host serves it from disk and catalog hosts resolve it from source
-provenance. The shared `BusinessLensProductLogo` component renders a packaged,
-neutral placeholder when no source was supplied or the source cannot load.
-Hosts may add navigation, actions, or provenance around the
-component, but the renderer intentionally offers no Product-presentation
-override that could make a catalog view disagree with the report it delivers.
+The report is the sole source of Product identity and content. The separate
+`logoSrc` prop resolves the Product's optional `.businesslens/logo.svg`; the
+shared `BusinessLensProductLogo` component falls back to a packaged neutral
+placeholder. Hosts own navigation and actions outside the report.
 
-Extend the report layer from a Nuxt application:
+Extend the layer from a Nuxt application:
 
 ```ts
 export default defineNuxtConfig({
@@ -22,40 +18,24 @@ export default defineNuxtConfig({
 })
 ```
 
-Add the sibling BusinessLens theme Layer when the host wants the shared palette,
-typography, semantic Nuxt UI mapping, and global interaction foundation:
+Render the canonical report directly:
 
-```ts
-export default defineNuxtConfig({
-  extends: [
-    'businesslens/nuxt/report-viewer',
-    'businesslens/nuxt/theme'
-  ]
-})
+```vue
+<BusinessLensReportViewer :report="report" :logo-src="logoSrc" />
 ```
 
-The consuming Nuxt project has final authority over configuration and CSS. The
-report-viewer Layer uses semantic Nuxt UI roles and declares no concrete palette.
-It can therefore be consumed without the BusinessLens theme, or styled by a
-different design system. The core registers `@nuxt/ui`; a host that omits the
-optional theme must provide its own Tailwind/Nuxt UI stylesheet and semantic
-color mapping.
+`report` must be a `ProductReportV8` from `businesslens/report`. There is no
+second, lossy public view-model contract.
 
-Because the Layers are optional subpaths of a CLI package, their Nuxt, Vue,
-Nuxt UI, Tailwind, and Fontsource requirements are optional peer dependencies.
-The consuming Nuxt project must install the peers used by the Layers it extends.
+The Workbench needs a bounded viewport. By default it fills the browser height.
+A host with persistent chrome can set `--businesslens-report-chrome` to the
+chrome height. The bundled local viewer sets it to `4rem` for its header.
 
-The theme is not scoped to the report renderer. It is the stable visual
-foundation for the complete BusinessLens Nuxt host: palette, typography,
-semantic Nuxt UI mapping, selection, scrollbar, and base interaction behavior.
-Host CSS still loads later and can override semantic tokens, palette ramps,
-page backgrounds, or component `ui` slots without changing this package.
-Marketing layout, site chrome, catalog actions, and decorative treatments
-remain in the host application.
+The report viewer extends the stable BusinessLens theme because the promoted
+Workbench is the canonical BusinessLens report experience. The theme remains a
+separately exported layer for other BusinessLens Nuxt surfaces. Hosts retain
+final authority over configuration and CSS.
 
-The pure report projection used by the renderer is available separately from
-Nuxt:
-
-```ts
-import { projectReportView } from 'businesslens/report/view-model'
-```
+Nuxt, Vue, Nuxt UI, Tailwind, Vue Flow, Dagre, icons, and fonts remain optional
+peer dependencies of the CLI package; Nuxt consumers install the UI peers they
+use.

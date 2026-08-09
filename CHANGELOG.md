@@ -12,18 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A new Learn from examples documentation group, beginning with a guided
   Content Feed Reader walkthrough that traces two complete Actor paths and
   explains why each optional entity earns its place.
-- `businesslens/nuxt/report-lab`, an optional Nuxt layer that auditions twelve
-  different Product Report designs against the same model, each built from the
-  conclusions in its visualization brief: purpose-built views over one shared
-  projection, contextual topology instead of a universal graph, and complete
-  entity content behind progressive disclosure. The set — Meridian, Inquiry,
-  Canvas, Tripane, Workbench, Narrative, Promises, Gateway, Crossgrid, Beacon,
-  Panorama and Orbit — differs in information architecture, not styling: each makes a
-  different Product question primary while rendering every entity collection,
-  availability, entry points, screen states, scenario steps, decision points,
-  edge cases, references, supporting content, coverage, and the backlinks the
-  format stores in only one direction.
-- A shared Vue Flow foundation in the same layer (`@vue-flow/core` with a
+- The stable Product Report Workbench: an entity-first browse, inspect, search,
+  scenario, journey, and named-topology experience over one complete report
+  projection. It renders every entity collection, availability scope, entry
+  point, screen state, scenario step, decision point, edge case, reference,
+  supporting-content field, coverage statement, and derived backlink.
+- A shared Vue Flow foundation in the report-viewer layer (`@vue-flow/core` with a
   `@dagrejs/dagre` layered layout, both optional peer dependencies): one
   entity box and one container box for nine visual categories (with both
   Scenario types distinguished in content), a fixed relation-verb
@@ -33,10 +27,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `BlrTopology` — the contextual neighbourhood graph with intentional
   expansion, kind filtering that fades rather than removes, re-rooting with a
   back trail, and a plain-words explanation of the selected entity.
-- The local viewer bundles the lab: the theme lab bar carries a report row for
-  choosing a design and forcing its width to one column, wide, or edge to edge.
 
 ### Changed
+
+- **Breaking.** `businesslens/nuxt/report-viewer` now accepts the canonical
+  `ProductReportV8` directly and owns the complete Workbench projection and
+  topology engine. The lossy `businesslens/report/view-model` export and the
+  whole-report `businesslens/nuxt/report-lab` audition layer were removed. The
+  local viewer now ships only the promoted Workbench with stable chrome.
+- The Workbench now keeps entity identity collision-safe across collections,
+  preserves focus across live recompiles, separates Capability and Journey
+  Scenario readings, shows Screen-to-Journey derivation provenance, renders
+  ordered Journey flow lanes, and uses fixed named views instead of a generic
+  cross-kind grouping builder. Mobile navigation is a dedicated drawer.
 
 - Schema 4 and Product Report v8 now separate Capability Scenarios from
   Journey Scenarios. Capabilities own local acceptance coverage; optional,
@@ -51,10 +54,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Interfaces with declared Experiences continue to require exact,
   non-empty Experience scopes. Schema 3 and Product Report v7 are no longer
   accepted.
-- The Content Feed Reader catalog Blueprint is now a smaller teaching model
-  with two Actors, two Interfaces, two Experiences, two Domains, four Screens,
-  five Capabilities, ten Capability Scenarios, three Journeys, six Journey
-  Scenarios, and four Business Rules.
+- The Content Feed Reader catalog Blueprint now models three distinct access
+  boundaries: Reader work, Visitor consumption, and external feed collection.
+  It has three Actors, three Interfaces, two Experiences, two Domains, four
+  Screens, eight Capabilities, twenty-three Capability Scenarios, two Journeys,
+  four Journey Scenarios, and four Business Rules.
   It remains source-free; a future implementation can attach screenshots as
   external References without changing Product meaning.
 

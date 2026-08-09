@@ -24,13 +24,13 @@ references:
 # Content Feed Reader
 
 A focused reading product for people who follow more sources than they can keep
-up with. It collects feed items into a private library, remembers reading
+up with. It synchronizes followed feeds into a private library, remembers reading
 progress, lets readers save and group worthwhile items, and publishes a
 collection as a read-only web link.
 
 ## Intent
 
 Make a growing stream of syndicated content feel finite and dependable. The
-reader controls what they follow, what they have read, and what they choose to
+Reader controls what they follow, what they have read, and what they choose to
 keep. Sharing exposes only the collection the reader deliberately publishes;
 the rest of the library remains private.

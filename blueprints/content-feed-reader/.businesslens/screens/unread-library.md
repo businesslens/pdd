@@ -4,8 +4,14 @@ availability:
     experiences: [personal-library]
   - interface: reader-mobile
     experiences: [personal-library]
-capabilities: [reading-state, item-saving]
-capabilityScenarios: [mark-an-item-read, mark-a-source-read-in-bulk, save-an-accessible-item]
+capabilities: [content-reading, reading-state, item-saving]
+capabilityScenarios:
+  - read-an-unread-library-item
+  - mark-an-item-read
+  - mark-an-item-unread
+  - mark-a-source-read-in-bulk
+  - save-an-accessible-item
+  - remove-a-saved-item
 journeyScenarios: [work-through-the-unread-backlog, save-while-catching-up]
 entryPoints:
   - reader-web: /unread
@@ -33,6 +39,7 @@ Presents a finite backlog and the actions that make progress through it.
 - Mark an item read or unread
 - Mark one source's unread items read
 - Save an item
+- Remove an item's saved state
 
 ## Product states
 
@@ -47,4 +54,5 @@ saved content.
 
 ## Capability boundary
 
-Changes reading and saving state. It does not add sources or edit collections.
+Presents item content and changes reading or saving state. It does not add
+sources or edit collections.

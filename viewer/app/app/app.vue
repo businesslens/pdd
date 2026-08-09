@@ -1,12 +1,5 @@
 <script setup lang="ts">
-useBusinessLensThemeLabHead()
-
 const { pddVersion } = useRuntimeConfig().public
-const { visible: themeLabVisible, toggle: toggleThemeLab } = useBusinessLensThemeLab()
-const themeLabLabel = computed(() => (
-  themeLabVisible.value ? 'Hide theme lab' : 'Show theme lab'
-))
-const year = new Date().getFullYear()
 
 useHead({
   title: 'Local Product Model · BusinessLens',
@@ -21,25 +14,21 @@ useHead({
 
 <template>
   <UApp>
-    <div class="flex min-h-dvh flex-col">
+    <div class="flex h-dvh flex-col overflow-hidden">
       <NuxtLoadingIndicator />
-      <BusinessLensThemeLabBar :row-count="3">
-        <template #after>
-          <BusinessLensReportLabRow />
-        </template>
-      </BusinessLensThemeLabBar>
-      <UHeader :ui="{ root: 'top-(--businesslens-theme-lab-height)', right: 'gap-0.5' }">
+      <UHeader :ui="{ root: 'shrink-0', right: 'gap-0.5' }">
         <template #left>
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-2.5">
             <NuxtLink
               to="https://businesslens.io"
               external
               target="_blank"
               rel="noopener noreferrer"
               aria-label="BusinessLens home"
-              class="flex items-center"
+              class="flex items-center gap-2 font-semibold tracking-tight"
             >
-              <BusinessLensBrand compact-on-mobile />
+              <span class="grid size-7 place-items-center rounded-md bg-primary text-xs font-bold text-inverted">BL</span>
+              <span>BusinessLens</span>
             </NuxtLink>
             <UBadge
               color="primary"
@@ -53,17 +42,8 @@ useHead({
             </UBadge>
           </div>
         </template>
+
         <template #right>
-          <UTooltip :text="themeLabLabel">
-            <UButton
-              icon="i-lucide-sliders-horizontal"
-              color="neutral"
-              :variant="themeLabVisible ? 'soft' : 'ghost'"
-              :aria-label="themeLabLabel"
-              :aria-pressed="themeLabVisible"
-              @click="toggleThemeLab"
-            />
-          </UTooltip>
           <UButton
             to="https://github.com/businesslens/pdd"
             external
@@ -117,41 +97,9 @@ useHead({
           </div>
         </template>
       </UHeader>
-      <main class="businesslens-page-surface flex-1">
+      <main class="businesslens-page-surface min-h-0 flex-1">
         <NuxtPage />
       </main>
-      <footer class="border-t border-default">
-        <UContainer>
-          <div class="flex items-center justify-between gap-6 py-4">
-            <div class="flex flex-col items-start gap-2">
-              <NuxtLink
-                to="https://businesslens.io"
-                external
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="BusinessLens home"
-                class="flex items-center"
-              >
-                <BusinessLensBrand />
-              </NuxtLink>
-              <p class="text-sm leading-5 text-dimmed">
-                © {{ year }} BusinessLens · Local Product Model
-              </p>
-            </div>
-            <UButton
-              icon="i-simple-icons-github"
-              to="https://github.com/businesslens/pdd"
-              external
-              target="_blank"
-              rel="noopener noreferrer"
-              color="neutral"
-              variant="ghost"
-              size="sm"
-              aria-label="BusinessLens on GitHub"
-            />
-          </div>
-        </UContainer>
-      </footer>
     </div>
   </UApp>
 </template>

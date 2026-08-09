@@ -78,7 +78,7 @@ const errorMessage = computed(() => {
           :description="liveError"
         />
       </UContainer>
-      <BusinessLensReportLab :report="data" :logo-src="logoSrc" />
+      <BusinessLensReportViewer :report="data" :logo-src="logoSrc" />
     </template>
   </div>
 </template>

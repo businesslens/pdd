@@ -1,6 +1,6 @@
 ---
 kind: primary
-capability: collection-sharing
+capability: public-collection-reading
 actors: [visitor]
 availability:
   - interface: reader-web

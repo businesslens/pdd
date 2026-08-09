@@ -7,9 +7,9 @@ availability:
     experiences: [personal-library]
 ---
 
-# Collections
+# Collection editing
 
-Groups saved items into a named, ordered set that its owner can edit.
+Creates and edits an owned, named, ordered collection of saved items.
 
 ## Intent
 

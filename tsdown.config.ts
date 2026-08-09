@@ -7,7 +7,6 @@ export default defineConfig({
     cli: 'src/cli.ts',
     report: 'src/report.ts',
     'report-digest': 'src/report-digest.ts',
-    'report-view-model': 'src/report-view-model.ts',
     logo: 'src/logo.ts',
     businesslensThemeLabVariants: 'layers/nuxt/theme-lab/app/utils/businesslensThemeLabVariants.ts'
   },

@@ -30,15 +30,10 @@
       "types": "./dist/report-digest.d.ts",
       "default": "./dist/report-digest.js"
     },
-    "./report/view-model": {
-      "types": "./dist/report-view-model.d.ts",
-      "default": "./dist/report-view-model.js"
-    },
     "./logo": {
       "types": "./dist/logo.d.ts",
       "default": "./dist/logo.js"
     },
-    "./nuxt/report-lab": "./layers/nuxt/report-lab/nuxt.config.ts",
     "./nuxt/report-viewer": "./layers/nuxt/report-viewer/nuxt.config.ts",
     "./nuxt/theme": "./layers/nuxt/theme/nuxt.config.ts",
     "./nuxt/theme-lab": "./layers/nuxt/theme-lab/nuxt.config.ts",

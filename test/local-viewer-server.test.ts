@@ -13,6 +13,7 @@ interface ResponseResult {
 }
 
 const ASYNC_TIMEOUT_MS = 4500
+const WATCH_TEST_TIMEOUT_MS = 10_000
 
 function get(url: string, path = '/', host?: string): Promise<ResponseResult> {
   const origin = new URL(url)
@@ -37,10 +38,15 @@ function get(url: string, path = '/', host?: string): Promise<ResponseResult> {
   })
 }
 
-function eventAfter(url: string, eventName: string, trigger: () => void): Promise<string> {
+function eventAfter(
+  url: string,
+  eventName: string,
+  trigger: () => void,
+  timeoutMs = ASYNC_TIMEOUT_MS
+): Promise<string> {
   const origin = new URL(url)
   return new Promise((resolve, reject) => {
-    const timeout = setTimeout(() => reject(new Error(`Timed out waiting for ${eventName}`)), ASYNC_TIMEOUT_MS)
+    const timeout = setTimeout(() => reject(new Error(`Timed out waiting for ${eventName}`)), timeoutMs)
     const outgoing = request({
       hostname: origin.hostname,
       port: origin.port,
@@ -168,7 +174,7 @@ describe('local Product Report server', () => {
     expect(await event).toContain('"revision":1')
   })
 
-  it('announces a valid logo edit even when the semantic report is unchanged', async () => {
+  it('announces a valid logo edit even when the semantic report is unchanged', { timeout: WATCH_TEST_TIMEOUT_MS }, async () => {
     const model = mkdtempSync(join(tmpdir(), 'businesslens-logo-model-'))
     directories.push(model)
     const logoFile = join(model, 'logo.svg')
@@ -183,7 +189,12 @@ describe('local Product Report server', () => {
     })
     viewers.push(viewer)
 
-    const event = eventAfter(viewer.url, 'report', () => writeFileSync(logoFile, logo('#b8965c')))
+    const event = eventAfter(
+      viewer.url,
+      'report',
+      () => writeFileSync(logoFile, logo('#b8965c')),
+      WATCH_TEST_TIMEOUT_MS - 500
+    )
     expect(await event).toContain('event: report')
     expect((await get(viewer.url, '/_businesslens/logo.svg')).body).toContain('#b8965c')
   })

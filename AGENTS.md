@@ -21,15 +21,12 @@ group under `docs/`, and the two must not contradict each other.
 - `src/core/skill-installation.ts` — ownership-safe skill installation.
 - `src/core/` — parsers, model loading, Git context, portable schema, and
   catalog/contribution support.
-- `layers/nuxt/report-viewer/` — the host-neutral Nuxt Product Report renderer.
+- `layers/nuxt/report-viewer/` — the stable Nuxt Product Report Workbench, its
+  complete report projection, and its dependency-free topology engine.
 - `layers/nuxt/theme/` — the separately extendable BusinessLens-wide visual
   foundation used across Nuxt hosts, not only report pages.
 - `layers/nuxt/theme-lab/` — the optional shared experiment layer for
   backgrounds, brand variants, favicons, and their audition controls.
-- `layers/nuxt/report-lab/` — the optional experiment layer for whole-report
-  designs, the full report projection they share, and the dependency-free
-  topology engine. Designs live here until one wins and is promoted into
-  `report-viewer`; rejected ones are deleted.
 - `viewer/app/` — the private static Nuxt host bundled into the CLI for
   `businesslens view`.
 - `skills/businesslens-*/SKILL.md` — one independent skill per workflow:

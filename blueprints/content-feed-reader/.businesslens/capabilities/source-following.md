@@ -9,9 +9,8 @@ availability:
 
 # Source following
 
-Adds a readable feed to the Reader's library and stops future collection when
-the Reader unfollows it.
+Registers or removes a readable feed as a source the Reader chooses to follow.
 
 ## Intent
 
-Let Readers decide exactly which sources contribute to their library.
+Let Readers decide exactly which sources may contribute future items to their library.

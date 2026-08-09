@@ -7,7 +7,7 @@ const { version: pddVersion } = createRequire(import.meta.url)('../../package.js
 
 // `businesslens view` serves these paths from the CLI. `nuxt dev` has no CLI in
 // front of it, so dev-only handlers stand in with a catalog Blueprint — a model
-// rich enough to exercise every entity kind a design has to render. They are
+// rich enough to exercise every entity kind the Workbench has to render. They are
 // dev handlers, so nothing here reaches the generated viewer.
 const fixtureRoot = resolve('../../blueprints/content-feed-reader/.businesslens')
 
@@ -41,9 +41,7 @@ const devHandlers = [
 
 export default defineNuxtConfig({
   extends: [
-    // report-lab pulls in report-viewer and theme-lab; it is listed alone so
-    // the layer order stays the one the lab was developed against.
-    resolve('../../layers/nuxt/report-lab')
+    resolve('../../layers/nuxt/report-viewer')
   ],
   ssr: false,
   devtools: { enabled: false },
@@ -59,7 +57,6 @@ export default defineNuxtConfig({
   compatibilityDate: '2024-11-01',
   css: ['~/assets/local-viewer.css'],
   alias: {
-    'businesslens/report/view-model': resolve('../../src/report-view-model.ts'),
     'businesslens/report': resolve('../../src/report.ts')
   },
   nitro: { devHandlers },

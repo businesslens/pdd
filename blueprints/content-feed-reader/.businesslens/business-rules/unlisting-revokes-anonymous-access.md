@@ -1,9 +1,7 @@
 ---
 domains: [curation]
-capabilities: [collection-sharing]
-journeys: [share-a-collection]
-capabilityScenarios: [open-an-unlisted-collection]
-journeyScenarios: [unlist-a-published-collection]
+capabilities: [collection-publication, public-collection-reading]
+capabilityScenarios: [unlist-an-owned-collection, open-an-unlisted-collection]
 ---
 
 # Unlisting revokes anonymous access
