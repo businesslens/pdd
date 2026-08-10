@@ -1,5 +1,5 @@
 ---
-domain: curation
+domain: reading
 availability:
   - interface: reader-web
     experiences: [personal-library]

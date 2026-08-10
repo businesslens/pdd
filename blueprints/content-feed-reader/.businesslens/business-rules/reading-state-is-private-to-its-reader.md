@@ -1,5 +1,5 @@
 ---
-domains: [library]
+domains: [reading]
 capabilities: [reading-state]
 journeys: [catch-up-on-unread]
 capabilityScenarios: [mark-an-item-read, mark-an-item-unread, mark-a-source-read-in-bulk]

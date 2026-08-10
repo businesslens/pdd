@@ -1,6 +1,6 @@
 ---
 kind: validation
-capability: collections
+capability: collection-organization
 actors: [reader]
 availability:
   - interface: reader-web

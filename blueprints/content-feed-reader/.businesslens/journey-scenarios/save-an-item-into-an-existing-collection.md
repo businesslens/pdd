@@ -11,7 +11,7 @@ flow:
         experiences: [personal-library]
       - interface: reader-mobile
         experiences: [personal-library]
-  - capability: collections
+  - capability: collection-organization
     operation: Add the item to the chosen owned collection
     availability:
       - interface: reader-web

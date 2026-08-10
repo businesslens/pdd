@@ -13,4 +13,4 @@ collection links.
 
 Supports every Reader- and Visitor-facing capability. Private library behavior
 requires a Reader session; public collection reading does not. Feed collection
-occurs through the separate syndicated-feed Interface.
+occurs through the separate syndicated-feed-integration Interface.

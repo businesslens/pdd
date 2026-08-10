@@ -1,5 +1,5 @@
 ---
-domain: library
+domain: reading
 availability:
   - interface: reader-web
     experiences: [personal-library]

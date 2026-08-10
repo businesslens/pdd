@@ -4,6 +4,7 @@ availability:
     experiences: [public-reading]
 capabilities: [public-collection-reading]
 capabilityScenarios: [read-a-published-collection, open-an-unlisted-collection]
+journeyScenarios: [publish-and-read-a-collection]
 entryPoints:
   - reader-web: /collections/:collectionSlug
 ---

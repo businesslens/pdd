@@ -1,6 +1,6 @@
 ---
-domains: [curation]
-capabilities: [item-saving, collections]
+domains: [reading, collections]
+capabilities: [item-saving, collection-organization]
 journeys: [save-and-organize]
 capabilityScenarios: [add-an-item-to-an-owned-collection, remove-an-item-from-an-owned-collection]
 journeyScenarios: [save-an-item-into-a-new-collection, save-an-item-into-an-existing-collection]

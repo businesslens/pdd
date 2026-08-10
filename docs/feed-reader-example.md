@@ -39,7 +39,7 @@ limitations make three exclusions explicit:
 
 The external `feed-provider` system is modeled as an Actor because the Product
 makes observable collection and failure-preservation commitments at the
-supported `syndicated-feed` Interface. An internal API would still be an
+supported `syndicated-feed-integration` Interface. An internal API would still be an
 implementation detail: only the external feed contract earns an Interface.
 
 ## The complete model at a glance
@@ -50,12 +50,12 @@ implementation detail: only the external feed contract earns an Interface.
 | Actors | 3 — Reader, Visitor, Feed provider | Owner, anonymous recipient, and external system have different privileges |
 | Interfaces | 3 — Reader web, Reader mobile, Syndicated feed | Human interaction and external collection are independently supported contracts |
 | Experiences | 2 — Personal library, Public reading | Authenticated work spans web and mobile; public reading is web-only; the feed Interface is direct |
-| Screens | 4 — Source list, Unread library, Collection workspace, Public collection | Visual places expose behavior without inventing a Screen for background synchronization |
-| Domains | 2 — Library, Curation | Product-language groupings organize eight Capabilities |
-| Capabilities | 8 | Reading, state, synchronization, publication, and public consumption remain separate promises |
-| Capability Scenarios | 23 | Each Capability has direct observable acceptance coverage |
-| Journeys | 2 — Catch up on unread, Save and organize | Only goals that necessarily compose multiple Capabilities remain Journeys |
-| Journey Scenarios | 4 | Concrete achieved variations own Capability selection, order, and context |
+| Screens | 5 — Source list, Unread library, Saved items, Collection workspace, Public collection | Visual places include the missing route back to saved content without inventing a Screen for background synchronization |
+| Domains | 3 — Sources, Reading, Collections | Stable areas of Product responsibility group nine Capabilities on one consistent axis |
+| Capabilities | 9 | Source intake, private reading work, collection ownership, publication, and public consumption remain separate promises |
+| Capability Scenarios | 24 | Each Capability has direct observable acceptance coverage |
+| Journeys | 4 | Reader goals cover source intake, catch-up, organization, and cross-Actor sharing |
+| Journey Scenarios | 8 | Concrete variations own Capability selection, order, context, and cross-Interface handoffs; six reach the goal and two record why it was not reached |
 | Business Rules | 4 | Cross-cutting assertions are written once and connected to what they govern |
 
 ## Follow the Reader path
@@ -75,7 +75,8 @@ Reader
     ├── Item saving
     │   ├── Save an accessible item
     │   └── Remove a saved item
-    └── Unread library Screen
+    ├── Unread library Screen
+    └── Saved items Screen
 
 Catch up on unread Journey
 ├── Work through the unread backlog
@@ -88,12 +89,13 @@ This boundary matters: reading content is not the same behavior as changing
 private reading state, and saving is an optional branch rather than a fake
 second step added only to make a Journey valid.
 
-The curation slice makes the same distinction. `item-saving` keeps an item;
-`collections` creates and edits ordered membership; `collection-publication`
-controls public availability. Publishing and unlisting are local operations of
-one Capability, so there is no `share-a-collection` Journey. `save-and-organize`
-remains a Journey because both of its variations genuinely compose Item saving
-and Collection editing.
+The collection slice makes the same distinction. `item-saving` keeps an item;
+`collection-creation` establishes a named owned list;
+`collection-organization` changes its ordered membership; and
+`collection-publication` controls public availability. `save-and-organize`
+composes the private operations. `publish-and-share-a-collection` continues
+across the public boundary so the model shows the handoff from owner publication
+to Visitor consumption.
 
 ## Follow the Visitor path
 
@@ -113,17 +115,20 @@ Visitor
 Publication and consumption are deliberately different Capabilities. The owner
 publishes in a private context; the Visitor reads in a public context. The
 `unlisting-revokes-anonymous-access` Rule connects those sides without blending
-their Actors or availability.
+their Actors or availability. The `publish-and-read-a-collection` Journey
+Scenario makes the achieved cross-Actor path visible without collapsing those
+local contracts.
 
 ## Follow the feed path
 
-The `feed-provider` system uses the direct `syndicated-feed` Interface. It has
+The `feed-provider` system uses the direct `syndicated-feed-integration`
+Interface. It has
 no Experience because there is no meaningful context split and no Screen
 because synchronization is not a visual place.
 
 ```text
 Feed provider
-└── Syndicated feed
+└── Syndicated feed integration
     └── Feed synchronization
         ├── Collect new items from a followed source
         └── Preserve the library when a feed is unavailable
@@ -131,8 +136,9 @@ Feed provider
 
 `source-following` stays separate. A Reader controls the subscription through
 web or mobile; the Feed provider later participates in collection through the
-feed Interface. Unfollowing stops future collection but preserves existing
-library history.
+feed Interface. The `follow-and-receive-from-a-source` Journey connects those
+two surfaces while keeping the Reader as the goal owner. Unfollowing stops
+future collection but preserves existing library history.
 
 ## What is optional here
 
@@ -142,9 +148,15 @@ uses the optional entities because each earns its place:
 - Experiences separate authenticated private work from anonymous public
   reading. Direct feed availability shows how an Interface works without one.
 - Screens exist for meaningful visual places, not for every Capability.
-- Domains make eight Capabilities easier to scan.
+- Domains make nine Capabilities easier to scan.
 - Capability Scenarios make every Capability observable. Journeys remain only
   for coherent multi-Capability goals; another complete model may have none.
+- Journey Scenarios record how an attempt ended, not only that one exists. Two
+  variations here are `not-achieved`: a catch-up where synchronization brought
+  nothing, and a share where the owner unlisted the collection first. Because
+  `feed-synchronization` appears only on that failure path, a consumer derives
+  it as a failure-only Capability of `catch-up-on-unread` — visible in the
+  Product Report without being claimed as part of the achieved goal.
 - Business Rules state durable constraints once across related behavior.
 
 The Blueprint includes a lightweight screen-map Reference to explain visual

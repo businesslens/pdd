@@ -3,7 +3,7 @@ kind: edge
 capability: feed-synchronization
 actors: [feed-provider]
 availability:
-  - interface: syndicated-feed
+  - interface: syndicated-feed-integration
 ---
 
 # Preserve the library when a feed is unavailable

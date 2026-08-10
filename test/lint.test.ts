@@ -43,7 +43,7 @@ describe('lintModel', () => {
       capabilities: 3,
       capabilityScenarios: 4,
       journeys: 1,
-      journeyScenarios: 1,
+      journeyScenarios: 2,
       businessRules: 2
     })
   })

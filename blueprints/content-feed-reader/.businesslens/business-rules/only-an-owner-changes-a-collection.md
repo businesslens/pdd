@@ -1,7 +1,7 @@
 ---
-domains: [curation]
-capabilities: [collections, collection-publication]
-journeys: [save-and-organize]
+domains: [collections]
+capabilities: [collection-creation, collection-organization, collection-publication]
+journeys: [save-and-organize, publish-and-share-a-collection]
 capabilityScenarios:
   - create-an-owned-collection
   - rename-an-owned-collection
@@ -15,6 +15,7 @@ capabilityScenarios:
 journeyScenarios:
   - save-an-item-into-a-new-collection
   - save-an-item-into-an-existing-collection
+  - publish-and-read-a-collection
 ---
 
 # Only an owner changes a collection

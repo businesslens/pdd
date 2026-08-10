@@ -1,7 +1,7 @@
 ---
-domain: library
+domain: sources
 availability:
-  - interface: syndicated-feed
+  - interface: syndicated-feed-integration
 ---
 
 # Feed synchronization

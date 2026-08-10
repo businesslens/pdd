@@ -4,7 +4,7 @@ availability:
     experiences: [personal-library]
   - interface: reader-mobile
     experiences: [personal-library]
-capabilities: [collections, collection-publication]
+capabilities: [collection-creation, collection-organization, collection-publication]
 capabilityScenarios:
   - create-an-owned-collection
   - rename-an-owned-collection
@@ -18,6 +18,7 @@ capabilityScenarios:
 journeyScenarios:
   - save-an-item-into-a-new-collection
   - save-an-item-into-an-existing-collection
+  - publish-and-read-a-collection
 entryPoints:
   - reader-web: /collections
   - reader-mobile: content-reader://library/collections
@@ -36,7 +37,7 @@ public.
 
 ## Available actions
 
-- Create and edit an owned collection
+- Create and rename an owned collection
 - Add, remove, and reorder saved items
 - Publish or unlist the collection
 
@@ -52,5 +53,5 @@ The owner sees the public link and can revoke it immediately.
 
 ## Capability boundary
 
-Only the owner changes the collection. Collection membership and item saving
-remain independent decisions.
+Only the owner changes the collection. Creation, organization, publication,
+and item saving remain separate Product decisions.

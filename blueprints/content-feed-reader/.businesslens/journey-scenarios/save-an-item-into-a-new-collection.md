@@ -11,8 +11,15 @@ flow:
         experiences: [personal-library]
       - interface: reader-mobile
         experiences: [personal-library]
-  - capability: collections
-    operation: Create an owned collection and add the item
+  - capability: collection-creation
+    operation: Create and name an owned collection
+    availability:
+      - interface: reader-web
+        experiences: [personal-library]
+      - interface: reader-mobile
+        experiences: [personal-library]
+  - capability: collection-organization
+    operation: Add the saved item to the new collection
     availability:
       - interface: reader-web
         experiences: [personal-library]

@@ -59,12 +59,14 @@ describe('end to end on a real git repo', () => {
       capabilities: 3,
       capabilityScenarios: 4,
       journeys: 1,
-      journeyScenarios: 1,
+      journeyScenarios: 2,
       businessRules: 2
     })
+    // `capabilityIds` comes from the achieved variation; `order-management`
+    // appears only in the not-achieved one, so it is failure-only.
     expect(parsed.model.journeys[0]).toMatchObject({
       capabilityIds: ['catalog-browsing', 'checkout'],
-      failureOnlyCapabilityIds: []
+      failureOnlyCapabilityIds: ['order-management']
     })
     const screen = parsed.model.screens.find(item => item.id === 'product-record')
     expect(screen).toMatchObject({

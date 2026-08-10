@@ -1,6 +1,6 @@
 ---
 id: content-feed-reader
-summary: Follow feeds, catch up on unread items, and share curated reading lists across web and mobile.
+summary: Follow feeds, catch up and keep worthwhile items in a private web or mobile library, and publish read-only collections for the web.
 category: content
 tags: [content, reading, syndication]
 authors:
@@ -25,7 +25,7 @@ references:
 
 A focused reading product for people who follow more sources than they can keep
 up with. It synchronizes followed feeds into a private library, remembers reading
-progress, lets readers save and group worthwhile items, and publishes a
+progress, lets readers save and organize worthwhile items, and publishes a
 collection as a read-only web link.
 
 ## Intent

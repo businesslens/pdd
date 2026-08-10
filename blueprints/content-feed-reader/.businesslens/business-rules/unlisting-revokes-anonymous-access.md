@@ -1,5 +1,5 @@
 ---
-domains: [curation]
+domains: [collections]
 capabilities: [collection-publication, public-collection-reading]
 capabilityScenarios: [unlist-an-owned-collection, open-an-unlisted-collection]
 ---

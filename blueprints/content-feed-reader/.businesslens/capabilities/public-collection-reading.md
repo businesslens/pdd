@@ -1,5 +1,5 @@
 ---
-domain: curation
+domain: collections
 availability:
   - interface: reader-web
     experiences: [public-reading]

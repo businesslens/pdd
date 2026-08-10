@@ -3,7 +3,7 @@ kind: primary
 capability: feed-synchronization
 actors: [feed-provider]
 availability:
-  - interface: syndicated-feed
+  - interface: syndicated-feed-integration
 ---
 
 # Collect new items from a followed source

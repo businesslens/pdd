@@ -6,6 +6,7 @@ availability:
     experiences: [personal-library]
 capabilities: [source-following]
 capabilityScenarios: [follow-a-source-by-feed-address, follow-an-address-with-no-feed, unfollow-a-source]
+journeyScenarios: [receive-items-from-a-new-source]
 entryPoints:
   - reader-web: /sources
   - reader-mobile: content-reader://library/sources
