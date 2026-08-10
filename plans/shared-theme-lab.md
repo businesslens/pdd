@@ -6,18 +6,18 @@ BusinessLens has two different visual responsibilities and must keep them
 separate:
 
 - `businesslens/nuxt/theme` is the stable, production-safe visual foundation.
-  It owns fonts, semantic color tokens, typography, selection, scrollbars, and
-  other primitives that every BusinessLens Nuxt host can adopt without also
-  adopting experiments.
+  It owns fonts, semantic color tokens, typography, selection, scrollbars, the
+  approved page surfaces, the approved brand renderer, and the complete
+  logo/wordmark/browser-icon identity that every
+  BusinessLens Nuxt host can adopt without also adopting experiments.
 - `businesslens/nuxt/theme-lab` is an optional layer that extends `theme`. It
-  owns the currently undecided brand presentation: page backgrounds, logo
-  marks, lockups, generated favicon families, experiment state, and the shared
-  experiment controls.
+  owns the undecided background variants, their experiment state, and the
+  shared background control.
 
 Both the landing application and the local OSS report viewer opt into
-`theme-lab` for now. Once a background, mark, or lockup is selected as final,
-that stable choice can be promoted to `theme` and the corresponding experiment
-removed from the lab without changing either host's application shell.
+`theme-lab`. That shared host flow lets the same background concept be auditioned
+against both the marketing site and a dense Product Report. Consumers that do
+not opt in receive the approved stable presentation from `theme`.
 
 ## Ownership boundaries
 
@@ -28,26 +28,25 @@ removed from the lab without changing either host's application shell.
 - the BusinessLens font faces;
 - brass, terracotta, umber, and semantic Nuxt UI token mappings;
 - base typography and browser chrome styling;
-- no navigation, product copy, logo selection, favicon selection, or page
-  background selection.
+- the approved light and dark page surfaces;
+- the approved mark and wordmark artwork at canonical, non-variant paths;
+- the shared brand renderer and complete favicon/install-icon family;
+- the stable head composable that registers those icons;
+- no navigation, product copy, experimental selectors, or report-specific
+  presentation.
 
 ### Shared theme lab
 
 `layers/nuxt/theme-lab` owns:
 
-- the background variant registry and CSS implementations;
-- the mark and lockup registry;
-- the active mark and lockup SVG assets only;
-- favicon assets for the active mark variants only;
+- the background variant registry and alternative CSS implementations;
 - cookie-backed experiment state with SSR-safe defaults;
-- document attributes and metadata derived from the selected variants;
-- the shared BusinessLens brand renderer;
-- the background and brand experiment rows;
+- document attributes and browser theme color derived from the selected backgrounds;
+- the background experiment row;
 - the common sticky lab bar and its extension slots.
 
-The canonical initial selections remain Glow for light mode, Espresso for dark
-mode, Bare for the mark, and Stamp for the lockup. They are defaults within the
-lab, not yet stable-theme commitments.
+The lab's initial selections remain Glow for light mode and Espresso for dark
+mode. The approved identity is never overridden by a lab selection.
 
 ### Host applications
 
@@ -57,8 +56,9 @@ Hosts compose their own shells and decide which controls are visible.
   landing-only blog, CTA, and hero experiments. Those controls are injected
   into the shared lab bar through slots; they are not moved into the shared
   layer.
-- The OSS report viewer uses the same brand renderer, backgrounds, favicon
-  state, and shared two-row lab. Its navigation is intentionally narrower:
+- The OSS report viewer composes `report-viewer` and `theme-lab`, using the same
+  stable identity, experimental backgrounds, and shared one-row lab as the
+  landing application. Its navigation is intentionally narrower:
   BusinessLens logo and version, theme-lab toggle, repository, color mode, and
   View docs. The repository link mirrors the landing's rounded GitHub treatment
   but uses a stable GitHub label instead of fetching or freezing a star count in
@@ -83,35 +83,33 @@ The lab extends the stable theme, so a host must not also extend
 composables and components with `BusinessLens` names to avoid collisions with
 host code.
 
-State is persisted by stable cookie keys so the same browser selection can
-survive rebuilds and SSR hydration. The composables, not host layouts, stamp
-the selected variants onto the document. Hosts consume the public state and
-components; they do not duplicate registries or CSS.
+Background state is persisted by stable cookie keys so the same browser
+selection can survive rebuilds and SSR hydration. The composables, not host
+layouts, stamp the selected backgrounds onto the document. Hosts consume the
+public state and components; they do not duplicate registries or CSS.
 
 The shared bar supports host-specific rows through explicit `before` and
 `after` slots plus a declared row count. The declared count drives one shared
 CSS offset variable, which keeps sticky host navigation aligned without the
 lab needing to know its contents.
 
-## Migration
+## Composition and promotion
 
-1. Add and export `layers/nuxt/theme-lab`, including its variant registries,
-   assets, CSS, composables, brand component, and shared controls.
-2. Move active background, logo, lockup, and favicon ownership out of the
-   landing application and into the new layer. Do not copy rejected variants.
-3. Migrate the OSS local viewer to the lab and replace its generic scan brand
-   with the selected BusinessLens identity, package version, favicon, and
-   controlled production-like navigation.
-4. Migrate the landing application to the shared state and controls, retaining
-   only its application-specific experiment rows.
-5. Update package validation, linking fixtures, documentation, and visual
-   tests. Verify the layer in a packed consumer as well as both real hosts.
+1. Keep the report renderer on the stable theme so it remains usable without
+   experimental controls.
+2. Compose `report-viewer` and `theme-lab` in the local viewer host, matching the
+   landing application's design flow.
+3. Add shared experiments to the lab and exercise them in both hosts.
+4. When a background is approved, move its stable implementation to `theme`
+   and delete its alternatives and control from `theme-lab`.
+5. Keep host navigation, product copy, legal links, and report layout outside
+   both visual layers.
 
 ## Future shared variants
 
 A future shared experiment is added in one place:
 
-1. add its metadata and stable id to the relevant lab registry;
+1. add its metadata and stable id to the background registry;
 2. add its implementation and assets to `theme-lab`;
 3. expose selection through a lab composable and shared row;
 4. let every opted-in host receive it automatically.
@@ -126,9 +124,11 @@ needs the same decision surface.
 
 - Light and dark backgrounds render identically in both hosts for the same lab
   selection.
-- Mark, lockup, and favicon selections render identically in both hosts.
-- The landing application retains all five existing experiment rows.
-- The OSS viewer exposes only the shared background and brand rows.
+- The approved mark, wordmark, and favicon render identically in both hosts and
+  cannot be changed through the lab.
+- The landing application retains four experiment rows: Blog, CTA, background,
+  and the route-specific hero or Blueprint row.
+- The OSS viewer exposes only the shared background row.
 - Both navbars account for the lab height and remain independently composed.
 - Hiding the lab removes its layout offset but keeps the selected variants.
 - A consumer can adopt the stable theme without receiving any lab UI or

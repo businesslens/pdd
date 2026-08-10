@@ -10,6 +10,10 @@ The report is the sole source of Product identity and content. The separate
 shared `BusinessLensProductLogo` component falls back to a packaged neutral
 placeholder. Hosts own navigation and actions outside the report.
 
+The layer renders the report and nothing around it. Site chrome — the header,
+the footer, and any brand or legal links — belongs to the host, which already
+has the navigation, routing, and legal context the report does not.
+
 Extend the layer from a Nuxt application:
 
 ```ts

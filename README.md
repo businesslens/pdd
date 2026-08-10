@@ -164,11 +164,12 @@ The package also exposes separately composable Nuxt layers:
 
 - `businesslens/nuxt/report-viewer` renders a Product Report without owning its
   host navigation or page shell.
-- `businesslens/nuxt/theme` provides the stable BusinessLens palette, type, and
-  semantic UI foundation.
+- `businesslens/nuxt/theme` provides the stable BusinessLens palette, type,
+  semantic UI foundation, approved surfaces, logo/wordmark renderer, and
+  browser/install icon family.
 - `businesslens/nuxt/theme-lab` extends that stable theme with the shared,
-  opt-in background and brand experiments used by the landing site and local
-  report viewer. Its ownership and promotion rules are recorded in
+  opt-in background experiments used by the landing site and local report
+  viewer. Its ownership and promotion rules are recorded in
   [`plans/shared-theme-lab.md`](./plans/shared-theme-lab.md).
 
 ## Safety

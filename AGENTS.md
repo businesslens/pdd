@@ -24,9 +24,10 @@ group under `docs/`, and the two must not contradict each other.
 - `layers/nuxt/report-viewer/` — the stable Nuxt Product Report Workbench, its
   complete report projection, and its dependency-free topology engine.
 - `layers/nuxt/theme/` — the separately extendable BusinessLens-wide visual
-  foundation used across Nuxt hosts, not only report pages.
+  foundation and approved identity used across Nuxt hosts, not only report
+  pages.
 - `layers/nuxt/theme-lab/` — the optional shared experiment layer for
-  backgrounds, brand variants, favicons, and their audition controls.
+  backgrounds and their audition controls.
 - `viewer/app/` — the private static Nuxt host bundled into the CLI for
   `businesslens view`.
 - `skills/businesslens-*/SKILL.md` — one independent skill per workflow:

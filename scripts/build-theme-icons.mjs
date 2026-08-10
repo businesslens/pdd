@@ -1,23 +1,14 @@
-/** Build the favicon/install-icon family for every shared theme-lab mark. */
-import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+/** Build the favicon/install-icon family from the approved stable mark. */
+import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const LAYER = resolve(ROOT, 'layers/nuxt/theme-lab')
 const THEME = resolve(ROOT, 'layers/nuxt/theme')
 const { chromium } = createRequire(`${ROOT}/package.json`)('@playwright/test')
-const { default: markManifest } = await import(new URL(
-  '../layers/nuxt/theme-lab/app/utils/businesslensThemeLabMarks.mjs',
-  import.meta.url
-))
-const { defaultMark: DEFAULT_MARK, marks: MARK_VARIANTS } = markManifest
-
-const ARTWORK = resolve(LAYER, 'public/brand/logo/variants')
-const STABLE_ARTWORK = resolve(THEME, 'public/brand/logo/variants')
-const ICONS = resolve(LAYER, 'public/brand/icons')
-const MARKS = resolve(ICONS, 'marks')
+const ARTWORK = resolve(THEME, 'public/brand/logo')
+const ICONS = resolve(THEME, 'public/brand/icons')
 const PAPER = '#f2eee5'
 const PAGE = '#f4ecdb'
 const RADIUS = 0.165
@@ -29,9 +20,8 @@ const TAB_GAP = 0.05
 const round = (number, precision = 3) => Number(number.toFixed(precision))
 
 function readVariant(file) {
-  const artwork = existsSync(resolve(ARTWORK, `${file}.svg`)) ? ARTWORK : STABLE_ARTWORK
-  const light = readFileSync(resolve(artwork, `${file}.svg`), 'utf8')
-  const dark = readFileSync(resolve(artwork, `${file}-dark.svg`), 'utf8')
+  const light = readFileSync(resolve(ARTWORK, `${file}.svg`), 'utf8')
+  const dark = readFileSync(resolve(ARTWORK, `${file}-dark.svg`), 'utf8')
   const elements = light.match(ELEMENT) ?? []
   const darkElements = dark.match(ELEMENT) ?? []
   if (!elements.length || elements.length !== darkElements.length) {
@@ -153,7 +143,7 @@ ${elements.map(element => `  ${element}`).join('\n')}
 `
 }
 
-function manifest(id) {
+function manifest() {
   return `${JSON.stringify({
     name: 'BusinessLens',
     short_name: 'BusinessLens',
@@ -163,10 +153,10 @@ function manifest(id) {
     background_color: PAGE,
     theme_color: PAGE,
     icons: [
-      { src: `/brand/icons/marks/${id}/favicon.svg`, sizes: 'any', type: 'image/svg+xml' },
-      { src: `/brand/icons/marks/${id}/icon-192.png`, sizes: '192x192', type: 'image/png' },
-      { src: `/brand/icons/marks/${id}/icon-512.png`, sizes: '512x512', type: 'image/png' },
-      { src: `/brand/icons/marks/${id}/maskable-icon-512.png`, sizes: '512x512', type: 'image/png', purpose: 'maskable' }
+      { src: '/brand/icons/favicon.svg', sizes: 'any', type: 'image/svg+xml' },
+      { src: '/brand/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { src: '/brand/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
+      { src: '/brand/icons/maskable-icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' }
     ]
   }, null, 2)}\n`
 }
@@ -200,67 +190,40 @@ async function raster(markup, size) {
   return page.screenshot({ omitBackground: true })
 }
 
-const composed = new Map()
-for (const mark of MARK_VARIANTS) {
-  const variant = readVariant(mark.file)
-  const directory = resolve(MARKS, mark.id)
-  mkdirSync(directory, { recursive: true })
-  const tab = compose(variant, {
-    size: 64,
-    fit: variant.container ? 1 : 0.94,
-    plate: null,
-    gap: TAB_GAP * variant.box.height
-  })
-  const app = compose(variant, { size: 512, fit: variant.container ? 1 : 0.7, plate: 'round' })
-  const maskable = compose(variant, { size: 512, fit: variant.container ? 0.78 : 0.55, plate: 'square' })
-  composed.set(mark.id, { app, maskable })
-  writeFileSync(resolve(directory, 'favicon.svg'), tab)
-  writeFileSync(resolve(directory, 'site.webmanifest'), manifest(mark.id))
+mkdirSync(ICONS, { recursive: true })
+const variant = readVariant('mark')
+const tab = compose(variant, {
+  size: 64,
+  fit: variant.container ? 1 : 0.94,
+  plate: null,
+  gap: TAB_GAP * variant.box.height
+})
+const app = compose(variant, { size: 512, fit: variant.container ? 1 : 0.7, plate: 'round' })
+const maskable = compose(variant, { size: 512, fit: variant.container ? 0.78 : 0.55, plate: 'square' })
 
-  const images = []
-  for (const size of [16, 32, 48]) images.push({ size, data: await raster(tab, size) })
-  writeFileSync(resolve(directory, 'favicon.ico'), ico(images))
-  writeFileSync(resolve(directory, 'favicon-32.png'), images[1].data)
-  for (const [markup, size, name] of [
-    [app, 180, 'apple-touch-icon.png'],
-    [app, 192, 'icon-192.png'],
-    [app, 512, 'icon-512.png'],
-    [maskable, 512, 'maskable-icon-512.png']
-  ]) {
-    writeFileSync(resolve(directory, name), await raster(markup, size))
-  }
-  const columns = letters(variant.elements).length
-  console.log(
-    `${mark.id.padEnd(4)} ${mark.name.padEnd(9)} from ${mark.file.padEnd(8)}`
-    + ` tab ${columns > 1 ? `spreads ${columns} letters` : 'is one shape, unspread'}`
-  )
+writeFileSync(resolve(ICONS, 'favicon.svg'), tab)
+writeFileSync(resolve(ICONS, 'businesslens-app-icon.svg'), app)
+writeFileSync(resolve(ICONS, 'businesslens-maskable-icon.svg'), maskable)
+writeFileSync(resolve(ICONS, 'icon-1024.png'), await raster(app, 1024))
+
+const images = []
+for (const size of [16, 32, 48]) images.push({ size, data: await raster(tab, size) })
+writeFileSync(resolve(ICONS, 'favicon.ico'), ico(images))
+writeFileSync(resolve(ICONS, 'favicon-32.png'), images[1].data)
+for (const [markup, size, name] of [
+  [app, 180, 'apple-touch-icon.png'],
+  [app, 192, 'icon-192.png'],
+  [app, 512, 'icon-512.png'],
+  [maskable, 512, 'maskable-icon-512.png']
+]) {
+  writeFileSync(resolve(ICONS, name), await raster(markup, size))
 }
-
-const { app: defaultApp, maskable: defaultMaskable } = composed.get(DEFAULT_MARK)
-writeFileSync(resolve(ICONS, 'businesslens-app-icon.svg'), defaultApp)
-writeFileSync(resolve(ICONS, 'businesslens-maskable-icon.svg'), defaultMaskable)
-writeFileSync(resolve(ICONS, 'icon-1024.png'), await raster(defaultApp, 1024))
 await browser.close()
 
-for (const name of [
-  'favicon.svg',
-  'favicon.ico',
-  'favicon-32.png',
-  'apple-touch-icon.png',
-  'icon-192.png',
-  'icon-512.png',
-  'maskable-icon-512.png'
-]) {
-  copyFileSync(resolve(MARKS, DEFAULT_MARK, name), resolve(ICONS, name))
-}
-copyFileSync(resolve(MARKS, DEFAULT_MARK, 'favicon.ico'), resolve(LAYER, 'public/favicon.ico'))
-writeFileSync(resolve(LAYER, 'public/site.webmanifest'), manifest(DEFAULT_MARK))
+copyFileSync(resolve(ICONS, 'favicon.ico'), resolve(THEME, 'public/favicon.ico'))
+writeFileSync(resolve(THEME, 'public/site.webmanifest'), manifest())
 
-// The approved tab icon belongs beside the approved mark and lockup in the
-// stable theme. Theme-only hosts (including `businesslens view`) should carry
-// the same favicon as the landing site without extending the audition layer.
-const stableMarkIcons = resolve(THEME, 'public/brand/icons/marks', DEFAULT_MARK)
-mkdirSync(stableMarkIcons, { recursive: true })
-copyFileSync(resolve(MARKS, DEFAULT_MARK, 'favicon.svg'), resolve(stableMarkIcons, 'favicon.svg'))
-
-console.log(`\ndefault mark ${DEFAULT_MARK} copied to the fallback paths and stable theme`)
+const columns = letters(variant.elements).length
+console.log(
+  `approved mark icons generated; tab ${columns > 1 ? `spreads ${columns} letters` : 'is one shape, unspread'}`
+)

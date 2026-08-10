@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { compileReport } from '../src/commands/export.js'
@@ -84,6 +84,31 @@ describe('stable Product Report Workbench', () => {
     expect(workbench).toContain('groupKind')
     expect(workbench).toContain('groupOptions')
     expect(layer).toContain("extends: [join(currentDir, '../theme')]")
+  })
+
+  /*
+    Site chrome belongs to the host. A footer shipped from the layer reached
+    every host at once — the catalog got a report footer where its own belongs,
+    and it sat pinned inside a bounded surface no reader could scroll past.
+  */
+  it('renders the report and no site chrome around it', () => {
+    expect(existsSync(join(VIEWER, 'app/components/BlrReportFooter.vue'))).toBe(false)
+
+    for (const path of [
+      'app/components/BusinessLensReportViewer.vue',
+      'app/components/BlrWorkbench.vue'
+    ]) {
+      expect(source(path), path).not.toMatch(/<footer|<\/footer>/)
+      expect(source(path), path).not.toMatch(/\$slots\.footer|name="footer"/)
+    }
+  })
+
+  /*
+    Panes must chain at their end, or a host footer below the report is
+    unreachable by wheel however far the reader scrolls.
+  */
+  it('lets pane scrolling continue into the host page', () => {
+    expect(source('app/assets/report-workbench.css')).not.toContain('overscroll-behavior')
   })
 
   it('uses shared flow surfaces for contextual and Product topology', () => {

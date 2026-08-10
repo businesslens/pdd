@@ -34,7 +34,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `ProductReportV8` directly and owns the complete Workbench projection and
   topology engine. The lossy `businesslens/report/view-model` export and the
   whole-report `businesslens/nuxt/report-lab` audition layer were removed. The
-  local viewer now ships only the promoted Workbench with stable chrome.
+  local viewer now ships only the promoted Workbench design while continuing
+  to share the landing application's background audition flow through
+  `businesslens/nuxt/theme-lab`.
+- **Breaking.** Logo, lockup, and favicon selection are no longer theme-lab
+  experiments. The approved mark, wordmark, brand renderer, favicon, and
+  install-icon family now live at canonical paths in `businesslens/nuxt/theme`;
+  `businesslens/theme-lab/variants` exposes background choices only.
 - The Workbench now keeps entity identity collision-safe across collections,
   preserves focus across live recompiles, separates Capability and Journey
   Scenario readings, shows Screen-to-Journey derivation provenance, renders

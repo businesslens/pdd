@@ -1,9 +1,13 @@
 /* Stable Workbench structure and shared type roles. */
 
+/*
+  Panes scroll independently but still chain to the host page at their end.
+  Containing the scroll trapped the reader inside the report: a host footer sat
+  below a surface no wheel gesture could ever scroll past.
+*/
 .blr-pane {
   min-height: 0;
   overflow-y: auto;
-  overscroll-behavior: contain;
 }
 
 .blr-eyebrow {

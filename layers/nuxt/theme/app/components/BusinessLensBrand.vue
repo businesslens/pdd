@@ -2,11 +2,9 @@
 /**
  * The BusinessLens lockup, as every host renders it.
  *
- * This is the selected brand, not an audition: the mark and wordmark that won
- * live here beside the palette and type, so a host gets identical chrome from
- * the stable theme alone. `theme-lab` still carries the rejected variants and
- * the controls that swap them; a host that opts into the lab overrides this
- * component with its own audition-aware one.
+ * This is the selected brand, not an audition: the approved mark and wordmark
+ * live here beside the palette and type, so every host gets identical chrome
+ * from the stable theme alone.
  *
  * The asset for the active colour mode is the only one requested. Painting
  * light and dark twins and hiding one with CSS downloads both 111 KB
@@ -19,7 +17,7 @@ withDefaults(defineProps<{
   compactOnMobile: false
 })
 
-const BRAND_BASE = '/brand/logo/variants'
+const BRAND_BASE = '/brand/logo'
 
 /* Stamp geometry: the wordmark sets the scale and the mark rides slightly
    taller than the caps so the two optically align. */
@@ -30,8 +28,8 @@ const GAP_RATIO = 0.25
 const colorMode = useColorMode()
 const suffix = computed(() => colorMode.value === 'dark' ? '-dark' : '')
 
-const markSrc = computed(() => `${BRAND_BASE}/mark-10${suffix.value}.svg`)
-const wordmarkSrc = computed(() => `${BRAND_BASE}/wordmark-3${suffix.value}.svg`)
+const markSrc = computed(() => `${BRAND_BASE}/mark${suffix.value}.svg`)
+const wordmarkSrc = computed(() => `${BRAND_BASE}/wordmark${suffix.value}.svg`)
 
 const metrics = {
   gap: `${Math.round(WORDMARK_HEIGHT * GAP_RATIO)}px`,

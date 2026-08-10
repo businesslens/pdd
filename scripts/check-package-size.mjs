@@ -15,9 +15,8 @@ async function bytes(path) {
 
 const budgets = [
   { path: 'dist/viewer', label: 'bundled local viewer', maximum: 5 * 1024 * 1024 },
-  // Theme-lab intentionally packages the active SVG and favicon experiment
-  // families. The stable report-viewer owns only the promoted Workbench and
-  // its named topology engine.
+  // The stable theme packages the approved identity and icon family. The
+  // report-viewer also owns the promoted Workbench and named topology engine.
   { path: 'layers/nuxt', label: 'Nuxt Layer source', maximum: 1500 * 1024 }
 ]
 

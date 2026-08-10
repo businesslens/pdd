@@ -15,13 +15,10 @@ export default defineNuxtConfig({
   icon: {
     clientBundle: {
       icons: [
-        'lucide:github',
         'lucide:moon',
-        'lucide:shapes',
         'lucide:sliders-horizontal',
         'lucide:sun',
-        'lucide:swatch-book',
-        'lucide:type'
+        'lucide:swatch-book'
       ]
     }
   }

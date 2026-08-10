@@ -41,7 +41,12 @@ const devHandlers = [
 
 export default defineNuxtConfig({
   extends: [
-    resolve('../../layers/nuxt/report-viewer')
+    // The report layer supplies the stable Workbench and approved identity;
+    // the shared lab keeps this host on the same background audition flow as
+    // the landing application. Keep the composition here so report-viewer
+    // stays neutral for consumers that want only the approved theme.
+    resolve('../../layers/nuxt/report-viewer'),
+    resolve('../../layers/nuxt/theme-lab')
   ],
   ssr: false,
   devtools: { enabled: false },

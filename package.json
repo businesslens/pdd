@@ -61,7 +61,7 @@
     "typecheck:viewer": "npm run typecheck --workspace @businesslens/local-report-viewer",
     "test": "vitest run",
     "package:size": "node scripts/check-package-size.mjs",
-    "theme-lab:icons": "node scripts/build-theme-lab-icons.mjs",
+    "theme:icons": "node scripts/build-theme-icons.mjs",
     "blueprints:check": "node scripts/blueprints-check.mjs",
     "blueprints:publish": "node scripts/blueprints-publish.mjs",
     "check": "node scripts/check-repo.mjs",

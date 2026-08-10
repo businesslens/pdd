@@ -23,8 +23,9 @@ const REQUIRED = [
   'src/logo.ts', 'layers/nuxt/report-viewer/nuxt.config.ts',
   'layers/nuxt/report-viewer/app/components/BusinessLensReportViewer.vue',
   'layers/nuxt/theme/nuxt.config.ts', 'layers/nuxt/theme-lab/nuxt.config.ts',
+  'layers/nuxt/theme/app/components/BusinessLensBrand.vue',
+  'layers/nuxt/theme/app/composables/useBusinessLensThemeHead.ts',
   'layers/nuxt/theme-lab/app/components/BusinessLensThemeLabBar.vue',
-  'layers/nuxt/theme-lab/app/components/BusinessLensBrand.vue',
   'viewer/app/package.json',
   'viewer/app/app/pages/index.vue', 'src/core/local-viewer-server.ts',
   '.claude-plugin/plugin.json', '.claude-plugin/marketplace.json'
@@ -80,7 +81,7 @@ if (pkg.exports?.['./nuxt/report-viewer'] !== './layers/nuxt/report-viewer/nuxt.
   || pkg.exports?.['./theme-lab/variants']?.types !== './dist/businesslensThemeLabVariants.d.ts'
   || pkg.exports?.['./theme-lab/variants']?.default !== './dist/businesslensThemeLabVariants.js'
   || !pkg.exports?.['./logo']) {
-  errors.push('businesslens must export its logo contract and Nuxt report-viewer/theme/theme-lab Layers')
+  errors.push('businesslens must export its logo contract, background variants, and Nuxt report-viewer/theme/theme-lab Layers')
 }
 if (pkg.exports?.['./nuxt/report-lab'] || pkg.exports?.['./report/view-model']) {
   errors.push('retired report-lab and lossy report view-model exports must stay removed')
