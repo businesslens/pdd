@@ -56,11 +56,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   accepted.
 - The Content Feed Reader catalog Blueprint now models three distinct access
   boundaries: Reader work, Visitor consumption, and external feed collection.
-  It has three Actors, three Interfaces, two Experiences, two Domains, four
-  Screens, eight Capabilities, twenty-three Capability Scenarios, two Journeys,
-  four Journey Scenarios, and four Business Rules.
+  It has three Actors, three Interfaces, two Experiences, three Domains, five
+  Screens, nine Capabilities, twenty-four Capability Scenarios, four Journeys,
+  eight Journey Scenarios, and four Business Rules. Domains group Capabilities
+  on one axis — Sources, Reading, Collections — so no Capability needs its
+  Domain's definition widened to admit it.
   It remains source-free; a future implementation can attach screenshots as
   external References without changing Product meaning.
+- Both teaching models now demonstrate a Journey that is attempted and not
+  reached. The Blueprint carries two `not-achieved` Journey Scenarios and the
+  golden fixture one, so `result` is an axis with real values rather than a
+  constant, and `failureOnlyCapabilityIds` is exercised against authored
+  content instead of always deriving empty.
+- The Workbench treats Capability Scenarios and Journey Scenarios as separate
+  entity kinds rather than one kind carrying a type flag. Both appear in the
+  navigation rail with their own browse surface, filters, table columns, and
+  search group; a Journey Scenario table reports its terminal result beside
+  its kind. Actors and Capabilities gained the Scenario backlinks that makes
+  possible.
+- Restored group-by on every browse surface, so authored Domains can group
+  Capabilities and a Capability can group its Scenarios.
+
+### Fixed
+
+- The Workbench light and dark page surfaces are part of the shared theme
+  again. The warm base, top glow, and paper grain moved from the optional
+  theme-lab audition layer into `businesslens/nuxt/theme`, where the promoted
+  Workbench and the bundled local viewer inherit them without depending on a
+  lab layer.
+- Value paths no longer implies a Screen is reached from a flow stage that
+  cannot expose it. A Screen is authored against the whole Journey Scenario, so
+  it now attaches to the last stage whose Capability actually declares that
+  Screen and shares an availability context with it — a non-visual integration
+  stage no longer appears to land on a Reader Screen.
+- Value paths lays ordered stages downward with variations side by side. A
+  left-to-right chain was wider than the canvas for a short Journey, so it
+  scaled the whole graph down and left the height unused.
 
 ## [0.7.2] - 2026-08-05
 

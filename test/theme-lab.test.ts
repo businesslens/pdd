@@ -14,10 +14,18 @@ import {
   businessLensLogoSrc
 } from '../layers/nuxt/theme-lab/app/utils/businesslensThemeLabVariants.js'
 
-const layer = join(
-  fileURLToPath(new URL('..', import.meta.url)),
-  'layers/nuxt/theme-lab'
-)
+const root = fileURLToPath(new URL('..', import.meta.url))
+const layer = join(root, 'layers/nuxt/theme-lab')
+const theme = join(root, 'layers/nuxt/theme')
+
+/*
+  The lab extends the theme, so their `public/` directories merge at runtime.
+  The selected mark and lockup were promoted into the theme; the rejected
+  variants stay here. Either location satisfies the shipping contract.
+*/
+function shipped(path: string): boolean {
+  return existsSync(join(layer, 'public', path)) || existsSync(join(theme, 'public', path))
+}
 
 const iconFiles = [
   'favicon.svg',
@@ -44,8 +52,19 @@ describe('shared BusinessLens theme lab', () => {
 
   it('ships both color-mode drawings for every active mark and lockup', () => {
     for (const variant of [...BUSINESSLENS_MARK_VARIANTS, ...BUSINESSLENS_LOCKUP_VARIANTS]) {
-      expect(existsSync(join(layer, 'public', businessLensLogoSrc(variant)))).toBe(true)
-      expect(existsSync(join(layer, 'public', businessLensLogoSrc(variant, true)))).toBe(true)
+      expect(shipped(businessLensLogoSrc(variant)), variant.id).toBe(true)
+      expect(shipped(businessLensLogoSrc(variant, true)), `${variant.id} dark`).toBe(true)
+    }
+  })
+
+  /* The promoted pair must be in the theme, or a theme-only host has no brand. */
+  it('keeps the selected mark and lockup in the stable theme layer', () => {
+    const mark = BUSINESSLENS_MARK_VARIANTS.find(item => item.id === BUSINESSLENS_DEFAULT_MARK)!
+    const lockup = BUSINESSLENS_LOCKUP_VARIANTS.find(item => item.id === BUSINESSLENS_DEFAULT_LOCKUP)!
+
+    for (const variant of [mark, lockup]) {
+      expect(existsSync(join(theme, 'public', businessLensLogoSrc(variant))), variant.id).toBe(true)
+      expect(existsSync(join(theme, 'public', businessLensLogoSrc(variant, true))), variant.id).toBe(true)
     }
   })
 
