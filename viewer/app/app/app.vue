@@ -14,7 +14,7 @@ useHead({
     {
       rel: 'icon',
       type: 'image/svg+xml',
-      href: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231b1713'/%3E%3Cpath d='M17 14h13c8 0 13 4 13 10 0 4-2 7-6 9 5 1 9 5 9 10 0 7-6 11-15 11H17V14zm10 8v8h4c3 0 5-1 5-4s-2-4-5-4h-4zm0 16v8h5c4 0 6-1 6-4s-2-4-6-4h-5z' fill='%23f2eee5'/%3E%3C/svg%3E"
+      href: '/brand/icons/marks/m10/favicon.svg'
     }
   ]
 })

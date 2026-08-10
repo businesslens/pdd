@@ -66,6 +66,15 @@ describe('shared BusinessLens theme lab', () => {
       expect(existsSync(join(theme, 'public', businessLensLogoSrc(variant))), variant.id).toBe(true)
       expect(existsSync(join(theme, 'public', businessLensLogoSrc(variant, true))), variant.id).toBe(true)
     }
+
+    const stableFavicon = join('brand/icons/marks', BUSINESSLENS_DEFAULT_MARK, 'favicon.svg')
+    expect(readFileSync(join(theme, 'public', stableFavicon))).toEqual(
+      readFileSync(join(layer, 'public', stableFavicon))
+    )
+
+    const localViewer = readFileSync(join(root, 'viewer/app/app/app.vue'), 'utf8')
+    expect(localViewer).toContain(`href: '/${stableFavicon}'`)
+    expect(localViewer).not.toContain('data:image/svg+xml')
   })
 
   it('ships a complete favicon family for every active mark', () => {

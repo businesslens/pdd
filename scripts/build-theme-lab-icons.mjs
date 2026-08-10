@@ -1,11 +1,12 @@
 /** Build the favicon/install-icon family for every shared theme-lab mark. */
-import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const LAYER = resolve(ROOT, 'layers/nuxt/theme-lab')
+const THEME = resolve(ROOT, 'layers/nuxt/theme')
 const { chromium } = createRequire(`${ROOT}/package.json`)('@playwright/test')
 const { default: markManifest } = await import(new URL(
   '../layers/nuxt/theme-lab/app/utils/businesslensThemeLabMarks.mjs',
@@ -14,6 +15,7 @@ const { default: markManifest } = await import(new URL(
 const { defaultMark: DEFAULT_MARK, marks: MARK_VARIANTS } = markManifest
 
 const ARTWORK = resolve(LAYER, 'public/brand/logo/variants')
+const STABLE_ARTWORK = resolve(THEME, 'public/brand/logo/variants')
 const ICONS = resolve(LAYER, 'public/brand/icons')
 const MARKS = resolve(ICONS, 'marks')
 const PAPER = '#f2eee5'
@@ -27,8 +29,9 @@ const TAB_GAP = 0.05
 const round = (number, precision = 3) => Number(number.toFixed(precision))
 
 function readVariant(file) {
-  const light = readFileSync(resolve(ARTWORK, `${file}.svg`), 'utf8')
-  const dark = readFileSync(resolve(ARTWORK, `${file}-dark.svg`), 'utf8')
+  const artwork = existsSync(resolve(ARTWORK, `${file}.svg`)) ? ARTWORK : STABLE_ARTWORK
+  const light = readFileSync(resolve(artwork, `${file}.svg`), 'utf8')
+  const dark = readFileSync(resolve(artwork, `${file}-dark.svg`), 'utf8')
   const elements = light.match(ELEMENT) ?? []
   const darkElements = dark.match(ELEMENT) ?? []
   if (!elements.length || elements.length !== darkElements.length) {
@@ -253,4 +256,11 @@ for (const name of [
 copyFileSync(resolve(MARKS, DEFAULT_MARK, 'favicon.ico'), resolve(LAYER, 'public/favicon.ico'))
 writeFileSync(resolve(LAYER, 'public/site.webmanifest'), manifest(DEFAULT_MARK))
 
-console.log(`\ndefault mark ${DEFAULT_MARK} copied to the theme-lab fallback paths`)
+// The approved tab icon belongs beside the approved mark and lockup in the
+// stable theme. Theme-only hosts (including `businesslens view`) should carry
+// the same favicon as the landing site without extending the audition layer.
+const stableMarkIcons = resolve(THEME, 'public/brand/icons/marks', DEFAULT_MARK)
+mkdirSync(stableMarkIcons, { recursive: true })
+copyFileSync(resolve(MARKS, DEFAULT_MARK, 'favicon.svg'), resolve(stableMarkIcons, 'favicon.svg'))
+
+console.log(`\ndefault mark ${DEFAULT_MARK} copied to the fallback paths and stable theme`)
