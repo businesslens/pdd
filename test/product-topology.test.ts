@@ -10,7 +10,8 @@ import {
 
 interface TestNode {
   id: string
-  data?: { entityKey?: string, entityId?: string, kind?: string, dimmed?: boolean }
+  parentNode?: string
+  data?: { entityKey?: string, entityId?: string, kind?: string, dimmed?: boolean, colorSlot?: number | null }
 }
 
 interface TestEdge {
@@ -49,7 +50,6 @@ const buildProductTopologyGraph = graphModule.buildProductTopologyGraph as (
   viewId: string,
   options?: { journeyId?: string, highlightId?: string }
 ) => TestGraph
-const EVERYTHING_SHELF_ORDER = graphModule.EVERYTHING_SHELF_ORDER as string[]
 const filterProductTopologyGraph = filtersModule.filterProductTopologyGraph as (
   graph: TestGraph,
   options: { visibleKinds: string[], focusEntityIds?: string[] }
@@ -59,28 +59,55 @@ const DEFAULT_PRODUCT_TOPOLOGY_VIEW = viewsModule.DEFAULT_PRODUCT_TOPOLOGY_VIEW 
 
 const FIXTURE = join(__dirname, 'fixtures', 'fixture-shop')
 const workspace = projectReportWorkspace(compileReport(loadModel(FIXTURE), '2026-08-08'))
+const TEACHING_BLUEPRINT = join(__dirname, '..', 'blueprints', 'content-feed-reader')
+const teachingWorkspace = projectReportWorkspace(compileReport(loadModel(TEACHING_BLUEPRINT), '2026-08-08'))
 
 describe('named Product Topology views', () => {
-  it('registers seven fixed questions and opens on Value flow', () => {
-    expect(DEFAULT_PRODUCT_TOPOLOGY_VIEW).toBe('value-flow')
+  it('registers the fixed questions and opens on Product map', () => {
+    expect(DEFAULT_PRODUCT_TOPOLOGY_VIEW).toBe('product-map')
     expect(PRODUCT_TOPOLOGY_VIEWS.map(view => view.id)).toEqual([
-      'everything',
-      'value-flow',
-      'access-map',
+      'product-map',
+      'value-paths',
+      'delivery-surfaces',
       'sitemap',
-      'domain-anatomy',
       'rule-reach',
-      'journey-anatomy'
+      'everything'
     ])
     expect(PRODUCT_TOPOLOGY_VIEWS.every(view => view.question.endsWith('?'))).toBe(true)
   })
 
-  it('keeps every entity kind on one fixed Everything shelf', () => {
-    expect(EVERYTHING_SHELF_ORDER).toEqual([
-      'product', 'actor', 'interface', 'experience', 'screen',
-      'scenario', 'journey', 'capability', 'domain', 'rule'
-    ])
-    expect(new Set(EVERYTHING_SHELF_ORDER).size).toBe(EVERYTHING_SHELF_ORDER.length)
+  it('draws every restored view without dangling edges', () => {
+    for (const view of PRODUCT_TOPOLOGY_VIEWS) {
+      const graph = buildProductTopologyGraph(teachingWorkspace, view.id)
+      const ids = new Set(graph.nodes.map(node => node.id))
+
+      expect(graph.nodes.length, view.id).toBeGreaterThan(0)
+      expect(graph.edges.every(edge => ids.has(edge.source) && ids.has(edge.target)), view.id).toBe(true)
+    }
+  })
+
+  /* Derived reach belongs on the Rule card; an edge here is always authored. */
+  it('draws only authored attachments in Rule reach', () => {
+    const graph = buildProductTopologyGraph(teachingWorkspace, 'rule-reach')
+    const authored = new Set(teachingWorkspace.rules.flatMap((rule: any) => [
+      ...rule.domainIds.map((id: string) => `${rule.key}->domain:${id}`),
+      ...rule.capabilityIds.map((id: string) => `${rule.key}->capability:${id}`),
+      ...rule.journeyIds.map((id: string) => `${rule.key}->journey:${id}`),
+      ...rule.capabilityScenarioIds.map((id: string) => `${rule.key}->capability-scenario:${id}`),
+      ...rule.journeyScenarioIds.map((id: string) => `${rule.key}->journey-scenario:${id}`)
+    ]))
+
+    expect(graph.edges.length).toBeGreaterThan(0)
+    expect(graph.edges.every(edge => authored.has(`${edge.source}->${edge.target}`))).toBe(true)
+  })
+
+  it('gives each Scenario kind its own Everything shelf', () => {
+    const graph = buildProductTopologyGraph(teachingWorkspace, 'everything')
+    const shelves = graph.nodes.filter(node => node.id.startsWith('blr-shelf-')).map(node => node.id)
+
+    expect(shelves).toContain('blr-shelf-capability-scenario')
+    expect(shelves).toContain('blr-shelf-journey-scenario')
+    expect(shelves).not.toContain('blr-shelf-scenario')
   })
 
   it('orders shelves deterministically by their related neighbours', () => {
@@ -121,28 +148,26 @@ describe('named Product Topology views', () => {
         journeyId: workspace.journeys[0]?.id
       })
       expect(graph.nodes.length, `${view.name} nodes`).toBeGreaterThan(0)
-      if (view.id !== 'domain-anatomy') {
-        expect(graph.edges.length, `${view.name} edges`).toBeGreaterThan(0)
-      }
+      expect(graph.edges.length, `${view.name} edges`).toBeGreaterThan(0)
     }
   })
 
-  it('keeps identity views unique and Sitemap occurrences contextual', () => {
-    const valueFlow = buildProductTopologyGraph(workspace, 'value-flow')
-    const identityIds = valueFlow.nodes
+  it('keeps identity views unique and Value path stages contextual', () => {
+    const delivery = buildProductTopologyGraph(workspace, 'delivery-surfaces')
+    const identityIds = delivery.nodes
       .map(node => node.data?.entityKey)
       .filter((id): id is string => Boolean(id))
     expect(new Set(identityIds).size).toBe(identityIds.length)
 
-    const sitemap = buildProductTopologyGraph(workspace, 'sitemap')
-    const occurrenceNodes = sitemap.nodes.filter(node => node.id.includes('::'))
+    const valuePaths = buildProductTopologyGraph(workspace, 'value-paths')
+    const occurrenceNodes = valuePaths.nodes.filter(node => node.id.includes(':stage:'))
     expect(occurrenceNodes.length).toBeGreaterThan(0)
     expect(occurrenceNodes.some(node => node.id !== node.data?.entityKey)).toBe(true)
   })
 
-  it('draws only the selected Journey anatomy', () => {
+  it('draws only the selected Journey value path', () => {
     const journey = workspace.journeys.at(-1)!
-    const graph = buildProductTopologyGraph(workspace, 'journey-anatomy', { journeyId: journey.id })
+    const graph = buildProductTopologyGraph(workspace, 'value-paths', { journeyId: journey.id })
     const journeyIds = graph.nodes
       .filter(node => node.data?.kind === 'journey')
       .map(node => node.data?.entityId)
@@ -151,28 +176,28 @@ describe('named Product Topology views', () => {
     expect(graph.edges.some(edge => edge.label === 'then' || edge.label === 'starts')).toBe(true)
   })
 
-  it('connects Capability Scenarios to their owning Capability', () => {
-    const capability = workspace.capabilities.find((item: any) => item.scenarioIds.length)!
-    const scenario = workspace.capabilityScenarios.find((item: any) => item.capabilityId === capability.id)!
-    const graph = buildProductTopologyGraph(workspace, 'everything')
+  it('groups Capabilities in Domain lanes and applies authored Domain colours', () => {
+    const domain = workspace.domains.find((item: any) => item.colorSlot != null)!
+    const capability = workspace.capabilities.find((item: any) => item.domainId === domain.id)!
+    const graph = buildProductTopologyGraph(workspace, 'product-map')
+    const capabilityNode = graph.nodes.find(node => node.data?.entityKey === capability.key)!
 
-    expect(graph.edges.some(edge => edge.source === capability.key && edge.target === scenario.key)).toBe(true)
+    expect(capabilityNode.parentNode).toBe(domain.key)
+    expect(capabilityNode.data?.colorSlot).toBe(domain.colorSlot)
   })
 
-  it('keeps Everything edges latent until an entity is highlighted', () => {
-    const quiet = buildProductTopologyGraph(workspace, 'everything')
-    expect(quiet.edges.every(edge => Number((edge.style as { opacity?: number }).opacity) < 0.2)).toBe(true)
+  it('shows direct Interfaces delivering Capabilities without fake Experiences', () => {
+    const directInterface = teachingWorkspace.interfaces.find((item: any) => item.experienceIds.length === 0)!
+    const capability = teachingWorkspace.capabilities.find((item: any) => item.interfaceIds.includes(directInterface.id))!
+    const graph = buildProductTopologyGraph(teachingWorkspace, 'delivery-surfaces')
 
-    const actor = workspace.actors[0]!
-    const lit = buildProductTopologyGraph(workspace, 'everything', { highlightId: actor.key })
-    expect(lit.edges.some(edge => Number((edge.style as { opacity?: number }).opacity) === 1)).toBe(true)
-    expect(lit.nodes.some(node => node.data?.entityKey !== actor.key && 'dimmed' in (node.data ?? {}) && node.data?.dimmed)).toBe(true)
+    expect(graph.edges.some(edge => edge.source === directInterface.key && edge.target === capability.key)).toBe(true)
   })
 
   it('hides entity kinds locally and removes their incident relations', () => {
-    const base = buildProductTopologyGraph(workspace, 'value-flow')
+    const base = buildProductTopologyGraph(workspace, 'delivery-surfaces')
     const filtered = filterProductTopologyGraph(base, {
-      visibleKinds: ['journey', 'capability', 'screen']
+      visibleKinds: ['interface', 'experience', 'screen', 'capability']
     })
     const nodeIds = new Set(filtered.nodes.map(node => node.id))
 
@@ -181,14 +206,43 @@ describe('named Product Topology views', () => {
     expect(base.nodes.some(node => node.data?.kind === 'actor')).toBe(true)
   })
 
+  /*
+    A Screen is authored against the Scenario, not one stage. Anchoring on the
+    final stage claimed a non-visual integration Capability "lands on" a Reader
+    Screen it shares no availability with.
+  */
+  it('anchors a Value paths Screen on a stage that actually exposes it', () => {
+    const graph = buildProductTopologyGraph(teachingWorkspace, 'value-paths', {
+      journeyId: 'follow-and-receive-from-a-source'
+    })
+    const screen = teachingWorkspace.screens.find((item: any) => item.id === 'source-list')!
+    const landing = graph.edges.find(edge => edge.target === screen.key)!
+    const source = graph.nodes.find(node => node.id === landing.source)!
+
+    expect(landing.label).toBe('lands on')
+    expect(source.data?.entityId).toBe('source-following')
+    expect(source.data?.entityId).not.toBe('feed-synchronization')
+  })
+
+  it('runs Value paths stages downward so a short Journey is not a thin ribbon', () => {
+    const graph = buildProductTopologyGraph(teachingWorkspace, 'value-paths', {
+      journeyId: 'follow-and-receive-from-a-source'
+    })
+    const nodes = graph.nodes as Array<TestNode & { position: { x: number, y: number } }>
+    const spanX = Math.max(...nodes.map(node => node.position.x)) - Math.min(...nodes.map(node => node.position.x))
+    const spanY = Math.max(...nodes.map(node => node.position.y)) - Math.min(...nodes.map(node => node.position.y))
+
+    expect(spanY).toBeGreaterThan(spanX)
+  })
+
   it('focuses entities with one-hop context instead of unrelated branches', () => {
-    const base = buildProductTopologyGraph(workspace, 'value-flow')
-    const capability = workspace.capabilities.find((item: any) =>
+    const base = buildProductTopologyGraph(workspace, 'delivery-surfaces')
+    const entity = [...workspace.interfaces, ...workspace.experiences, ...workspace.screens].find((item: any) =>
       base.edges.some(edge => edge.source === item.key || edge.target === item.key))!
-    const expected = topologyNeighbourhood(capability.key, base.edges)
+    const expected = topologyNeighbourhood(entity.key, base.edges)
     const filtered = filterProductTopologyGraph(base, {
-      visibleKinds: ['actor', 'journey', 'capability', 'screen'],
-      focusEntityIds: [capability.key]
+      visibleKinds: ['actor', 'interface', 'experience', 'screen', 'capability'],
+      focusEntityIds: [entity.key]
     })
 
     expect(new Set(filtered.nodes.map(node => node.id))).toEqual(expected)

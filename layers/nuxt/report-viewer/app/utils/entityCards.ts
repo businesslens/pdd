@@ -12,7 +12,7 @@ import type {
   ScenarioView,
   ScreenView
 } from './reportWorkspace'
-import { resolveEntity } from './reportWorkspace'
+import { resolveEntity, resolveScenarios } from './reportWorkspace'
 
 export type EntityCardVariant = 'catalog' | 'index' | 'editorial'
 
@@ -108,10 +108,7 @@ function ruleReachCount(workspace: ReportWorkspace, rule: RuleView): number {
   ])
   const journeys = new Set([
     ...rule.journeyIds,
-    ...rule.scenarioIds
-      .map(id => resolveEntity(workspace, 'scenario', id))
-      .filter((entity): entity is ScenarioView => entity?.kind === 'scenario' && entity.scenarioType === 'journey')
-      .map(scenario => scenario.journeyId),
+    ...resolveScenarios(workspace, rule.journeyScenarioIds).map(scenario => scenario.journeyId),
     ...workspace.journeys
       .filter(journey => journey.capabilityIds.some(id => capabilities.has(id)))
       .map(journey => journey.id)
@@ -146,17 +143,24 @@ export function entityCardPresentation(
     }
     case 'interface': {
       const item = entity as InterfaceView
+      const metrics = item.experienceIds.length
+        ? [
+            { label: plural(item.actorIds.length, 'actor'), value: item.actorIds.length, kind: 'actor' as const, ids: item.actorIds },
+            { label: plural(item.experienceIds.length, 'experience'), value: item.experienceIds.length, kind: 'experience' as const, ids: item.experienceIds },
+            { label: plural(item.capabilityIds.length, 'capability', 'capabilities'), value: item.capabilityIds.length, kind: 'capability' as const, ids: item.capabilityIds }
+          ]
+        : [
+            { label: plural(item.actorIds.length, 'actor'), value: item.actorIds.length, kind: 'actor' as const, ids: item.actorIds },
+            { label: plural(item.capabilityIds.length, 'capability', 'capabilities'), value: item.capabilityIds.length, kind: 'capability' as const, ids: item.capabilityIds },
+            { label: plural(item.journeyIds.length, 'journey'), value: item.journeyIds.length, kind: 'journey' as const, ids: item.journeyIds }
+          ]
       return {
         badge: '',
-        metrics: [
-          { label: plural(item.actorIds.length, 'actor'), value: item.actorIds.length, kind: 'actor', ids: item.actorIds },
-          { label: plural(item.experienceIds.length, 'experience'), value: item.experienceIds.length, kind: 'experience', ids: item.experienceIds },
-          { label: 'entry points', value: item.entryPoints.length }
-        ],
-        hookLabel: item.experienceIds.length ? 'Contains' : 'Entry point',
+        metrics,
+        hookLabel: item.experienceIds.length ? 'Contains' : 'Delivers directly',
         hook: item.experienceIds.length
           ? titles(workspace, 'experience', item.experienceIds)
-          : item.entryPoints.slice(0, 2).map(point => point.path).join(' · ')
+          : titles(workspace, 'capability', item.capabilityIds)
       }
     }
     case 'experience': {
@@ -178,8 +182,8 @@ export function entityCardPresentation(
         badge: `${screen.availability.length} ${plural(screen.availability.length, 'context')}`,
         metrics: [
           { label: plural(screen.capabilityIds.length, 'capability', 'capabilities'), value: screen.capabilityIds.length, kind: 'capability', ids: screen.capabilityIds },
-          { label: 'cap. scenarios', value: screen.capabilityScenarioIds.length, kind: 'scenario', ids: screen.capabilityScenarioIds },
-          { label: 'journey scenarios', value: screen.journeyScenarioIds.length, kind: 'scenario', ids: screen.journeyScenarioIds }
+          { label: 'cap. scenarios', value: screen.capabilityScenarioIds.length, kind: 'capability-scenario', ids: screen.capabilityScenarioIds },
+          { label: 'journey scenarios', value: screen.journeyScenarioIds.length, kind: 'journey-scenario', ids: screen.journeyScenarioIds }
         ],
         hookLabel: 'Available in',
         hook: pairTitles(screen)
@@ -206,7 +210,7 @@ export function entityCardPresentation(
       return {
         badge: domain,
         metrics: [
-          { label: plural(capability.scenarioIds.length, 'scenario'), value: capability.scenarioIds.length, kind: 'scenario', ids: capability.scenarioIds },
+          { label: plural(capability.scenarioIds.length, 'scenario'), value: capability.scenarioIds.length, kind: 'capability-scenario', ids: capability.scenarioIds },
           { label: plural(capability.journeyIds.length, 'journey'), value: capability.journeyIds.length, kind: 'journey', ids: capability.journeyIds },
           { label: plural(capability.screenIds.length, 'screen'), value: capability.screenIds.length, kind: 'screen', ids: capability.screenIds }
         ],
@@ -222,26 +226,30 @@ export function entityCardPresentation(
         badge: '',
         metrics: [
           { label: plural(journey.actorIds.length, 'actor'), value: journey.actorIds.length, kind: 'actor', ids: journey.actorIds },
-          { label: plural(journey.scenarioIds.length, 'scenario'), value: journey.scenarioIds.length, kind: 'scenario', ids: journey.scenarioIds },
+          { label: plural(journey.scenarioIds.length, 'scenario'), value: journey.scenarioIds.length, kind: 'journey-scenario', ids: journey.scenarioIds },
           { label: plural(journey.stepCount, 'step'), value: journey.stepCount }
         ],
         hookLabel: journey.actorIds.length ? 'Performed by' : 'Scenarios',
         hook: journey.actorIds.length
           ? titles(workspace, 'actor', journey.actorIds)
-          : titles(workspace, 'scenario', journey.scenarioIds)
+          : titles(workspace, 'journey-scenario', journey.scenarioIds)
       }
     }
-    case 'scenario': {
+    case 'capability-scenario':
+    case 'journey-scenario': {
       const scenario = entity as ScenarioView
+      const isCapability = scenario.scenarioType === 'capability'
       return {
-        badge: `${scenario.scenarioType === 'capability' ? 'Capability' : 'Journey'} · ${scenario.kindName}`,
+        /* `result` is the Journey Scenario's terminal outcome and orthogonal to
+           its kind, so both belong on the badge when both exist. */
+        badge: isCapability ? scenario.kindName : `${scenario.kindName} · ${scenario.result}`,
         metrics: [
           { label: plural(scenario.steps.length, 'step'), value: scenario.steps.length },
           { label: 'decisions', value: scenario.decisionPoints.length },
-          { label: 'edge cases', value: scenario.edgeCases.length }
+          { label: isCapability ? 'edge cases' : 'stages', value: isCapability ? scenario.edgeCases.length : scenario.flow.length }
         ],
-        hookLabel: scenario.scenarioType === 'capability' ? 'For capability' : 'In journey',
-        hook: scenario.scenarioType === 'capability' ? scenario.capabilityTitle : scenario.journeyTitle
+        hookLabel: isCapability ? 'For capability' : 'In journey',
+        hook: isCapability ? scenario.capabilityTitle : scenario.journeyTitle
       }
     }
     case 'rule': {
@@ -258,7 +266,8 @@ export function entityCardPresentation(
           ['domain', rule.domainIds],
           ['capability', rule.capabilityIds],
           ['journey', rule.journeyIds],
-          ['scenario', rule.scenarioIds]
+          ['capability-scenario', rule.capabilityScenarioIds],
+          ['journey-scenario', rule.journeyScenarioIds]
         ])
       }
     }

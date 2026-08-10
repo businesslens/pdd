@@ -80,8 +80,9 @@ describe('stable Product Report Workbench', () => {
     expect(renderer).toContain('projectReportWorkspace')
     expect(renderer).toContain('<BlrWorkbench')
     expect(workbench).toContain('<BlrProductTopology')
-    expect(workbench).not.toContain('groupKind')
-    expect(workbench).not.toContain('groupOptions')
+    /* Grouping is how authored Domains earn their place in navigation. */
+    expect(workbench).toContain('groupKind')
+    expect(workbench).toContain('groupOptions')
     expect(layer).toContain("extends: [join(currentDir, '../theme')]")
   })
 

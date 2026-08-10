@@ -1,17 +1,17 @@
 <script setup lang="ts">
 import type { AnyEntityView, ReportWorkspace, ScenarioView } from '../utils/reportWorkspace'
-import { resolveEntity } from '../utils/reportWorkspace'
+import { resolveEntities } from '../utils/reportWorkspace'
 
 const props = defineProps<{ workspace: ReportWorkspace, entity: AnyEntityView }>()
 
 const emit = defineEmits<{ select: [entity: AnyEntityView] }>()
 
+/* A Capability owns Capability Scenarios; a Journey owns Journey Scenarios. */
 const scenarios = computed<ScenarioView[]>(() => {
   const entity = props.entity
   if (entity.kind !== 'capability' && entity.kind !== 'journey') return []
-  return entity.scenarioIds
-    .map(id => resolveEntity(props.workspace, 'scenario', id, entity.kind))
-    .filter((item): item is ScenarioView => item?.kind === 'scenario' && item.scenarioType === entity.kind)
+  const kind = entity.kind === 'capability' ? 'capability-scenario' : 'journey-scenario'
+  return resolveEntities(props.workspace, kind, entity.scenarioIds) as ScenarioView[]
 })
 
 </script>

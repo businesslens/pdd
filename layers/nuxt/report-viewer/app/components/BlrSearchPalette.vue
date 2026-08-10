@@ -4,8 +4,8 @@
  *
  * One palette for every entity kind, grouped in the fixed kind order so the
  * same result always appears in the same place. Selecting a result hands the
- * entity back to the Workbench. The two Scenario collections remain separate
- * search groups even though they share one rendered entity shape.
+ * entity back to the Workbench. The two Scenario collections are separate
+ * kinds, so they fall out as separate groups without a special case.
  */
 import type { CommandPaletteGroup, CommandPaletteItem } from '@nuxt/ui'
 import type { AnyEntityView, ReportWorkspace } from '../utils/reportWorkspace'
@@ -41,16 +41,13 @@ function items(entities: AnyEntityView[], icon: string): CommandPaletteItem[] {
 }
 
 const groups = computed<CommandPaletteGroup<CommandPaletteItem>[]>(() =>
-  REPORT_ENTITY_KINDS.flatMap((meta) => {
-    if (meta.kind !== 'scenario') {
-      const entities = entitiesOfKind(props.workspace, meta.kind)
-      return [{ id: meta.kind, label: meta.plural, items: items(entities, meta.icon) }]
-    }
-    return [
-      { id: 'capability-scenario', label: 'Capability Scenarios', items: items(props.workspace.capabilityScenarios, meta.icon) },
-      { id: 'journey-scenario', label: 'Journey Scenarios', items: items(props.workspace.journeyScenarios, meta.icon) }
-    ]
-  }).filter(group => group.items.length))
+  REPORT_ENTITY_KINDS
+    .map(meta => ({
+      id: meta.kind,
+      label: meta.plural,
+      items: items(entitiesOfKind(props.workspace, meta.kind), meta.icon)
+    }))
+    .filter(group => group.items.length))
 </script>
 
 <template>

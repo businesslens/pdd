@@ -37,16 +37,33 @@ export type ReportEntityKind =
   | 'domain'
   | 'capability'
   | 'journey'
-  | 'scenario'
+  | 'capability-scenario'
+  | 'journey-scenario'
   | 'rule'
 
+/**
+ * The two Scenario collections are separate kinds, not one kind with a flag.
+ * They answer different questions — local acceptance for one Capability versus
+ * one end-to-end variation of a Journey — so they get their own navigation,
+ * facets and columns rather than sharing a surface that fits neither.
+ */
+export type ReportScenarioKind = 'capability-scenario' | 'journey-scenario'
 export type ReportScenarioType = 'capability' | 'journey'
 export type ReportEntityKey = string
 
+export const SCENARIO_KINDS: ReportScenarioKind[] = ['capability-scenario', 'journey-scenario']
+
+export function isScenarioKind(kind: ReportEntityKind): kind is ReportScenarioKind {
+  return kind === 'capability-scenario' || kind === 'journey-scenario'
+}
+
+export function scenarioKindOf(type: ReportScenarioType): ReportScenarioKind {
+  return type === 'capability' ? 'capability-scenario' : 'journey-scenario'
+}
+
 /** Stable UI identity; raw ids are unique only within an entity collection. */
-export function entityKey(kind: ReportEntityKind, id: string, scenarioType?: ReportScenarioType): ReportEntityKey {
-  const namespace = kind === 'scenario' && scenarioType ? `${scenarioType}-scenario` : kind
-  return `${namespace}:${id}`
+export function entityKey(kind: ReportEntityKind, id: string): ReportEntityKey {
+  return `${kind}:${id}`
 }
 
 export interface EntityKindMeta {
@@ -68,7 +85,14 @@ export const REPORT_ENTITY_KINDS: EntityKindMeta[] = [
   { kind: 'domain', label: 'Domain', plural: 'Domains', icon: 'i-lucide-boxes', slot: 4 },
   { kind: 'capability', label: 'Capability', plural: 'Capabilities', icon: 'i-lucide-zap', slot: 5 },
   { kind: 'journey', label: 'Journey', plural: 'Journeys', icon: 'i-lucide-route', slot: 6 },
-  { kind: 'scenario', label: 'Scenario', plural: 'Scenarios', icon: 'i-lucide-list-checks', slot: 7 },
+  /*
+    Both Scenario kinds hold slot 7. Ten kinds is past the nine-slot categorical
+    order, and the two that belong to one family are the honest pair to merge:
+    the shared hue reads as "Scenario", and the icon, label and node sublabel
+    carry the distinction — colour is never the only encoding here.
+  */
+  { kind: 'capability-scenario', label: 'Capability Scenario', plural: 'Capability Scenarios', icon: 'i-lucide-list-checks', slot: 7 },
+  { kind: 'journey-scenario', label: 'Journey Scenario', plural: 'Journey Scenarios', icon: 'i-lucide-list-ordered', slot: 7 },
   { kind: 'rule', label: 'Business rule', plural: 'Business rules', icon: 'i-lucide-scale', slot: 8 }
 ]
 
@@ -111,6 +135,9 @@ export interface ActorView extends EntityBase {
   interfaceIds: string[]
   experienceIds: string[]
   journeyIds: string[]
+  /* Scenarios name their Actors, so an Actor with no Journey still has behaviour. */
+  capabilityScenarioIds: string[]
+  journeyScenarioIds: string[]
 }
 
 export interface InterfaceView extends EntityBase {
@@ -170,7 +197,10 @@ export interface CapabilityView extends EntityBase {
   kind: 'capability'
   domainId?: string
   availability: AvailabilityPair[]
+  /** Capability Scenarios — the only direct acceptance coverage for this ability. */
   scenarioIds: string[]
+  /** Journey Scenarios whose flow exercises this Capability at some stage. */
+  journeyScenarioIds: string[]
   journeyIds: string[]
   screenIds: string[]
   ruleIds: string[]
@@ -197,7 +227,7 @@ export interface JourneyView extends EntityBase {
 }
 
 export interface ScenarioView extends EntityBase {
-  kind: 'scenario'
+  kind: ReportScenarioKind
   scenarioType: ReportScenarioType
   capabilityId: string
   capabilityTitle: string
@@ -454,6 +484,9 @@ export function projectReportWorkspace(report: ProductReportV8): ReportWorkspace
   const journeysByActor = new Map<string, string[]>()
   const experiencesByActor = new Map<string, string[]>()
   const interfacesByActor = new Map<string, string[]>()
+  const capabilityScenariosByActor = new Map<string, string[]>()
+  const journeyScenariosByActor = new Map<string, string[]>()
+  const journeyScenariosByCapability = new Map<string, string[]>()
 
   const push = (table: Map<string, string[]>, key: string, value: string) => {
     table.set(key, [...(table.get(key) || []), value])
@@ -473,6 +506,15 @@ export function projectReportWorkspace(report: ProductReportV8): ReportWorkspace
     for (const capabilityId of screen.capabilityIds) push(screensByCapability, capabilityId, screen.id)
     for (const scenarioId of [...screen.capabilityScenarioIds, ...screen.journeyScenarioIds]) {
       push(screensByScenario, scenarioId, screen.id)
+    }
+  }
+  for (const scenario of model.capabilityScenarios) {
+    for (const actorId of scenario.actorIds) push(capabilityScenariosByActor, actorId, scenario.id)
+  }
+  for (const scenario of model.journeyScenarios) {
+    for (const actorId of scenario.actorIds) push(journeyScenariosByActor, actorId, scenario.id)
+    for (const capabilityId of new Set(scenario.flow.map(item => item.capabilityId))) {
+      push(journeyScenariosByCapability, capabilityId, scenario.id)
     }
   }
   for (const rule of model.businessRules) {
@@ -497,7 +539,9 @@ export function projectReportWorkspace(report: ProductReportV8): ReportWorkspace
     relationship: actor.relationship,
     interfaceIds: interfacesByActor.get(actor.id) || [],
     experienceIds: experiencesByActor.get(actor.id) || [],
-    journeyIds: journeysByActor.get(actor.id) || []
+    journeyIds: journeysByActor.get(actor.id) || [],
+    capabilityScenarioIds: capabilityScenariosByActor.get(actor.id) || [],
+    journeyScenarioIds: journeyScenariosByActor.get(actor.id) || []
   }))
 
   const interfaces: InterfaceView[] = model.interfaces.map((item: ReportInterface) => {
@@ -619,6 +663,7 @@ export function projectReportWorkspace(report: ProductReportV8): ReportWorkspace
       scenarioIds: model.capabilityScenarios
         .filter(scenario => scenario.capabilityId === capability.id)
         .map(scenario => scenario.id),
+      journeyScenarioIds: journeyScenariosByCapability.get(capability.id) || [],
       journeyIds: journeysByCapability.get(capability.id) || [],
       screenIds: screensByCapability.get(capability.id) || [],
       ruleIds: rulesByCapability.get(capability.id) || [],
@@ -667,9 +712,9 @@ export function projectReportWorkspace(report: ProductReportV8): ReportWorkspace
   const capabilityScenarios: ScenarioView[] = model.capabilityScenarios.map((scenario: ReportCapabilityScenario) => {
     const kind = kindBySlot.get(scenario.kindId)
     return {
-      key: entityKey('scenario', scenario.id, 'capability'),
+      key: entityKey('capability-scenario', scenario.id),
       id: scenario.id,
-      kind: 'scenario',
+      kind: 'capability-scenario',
       title: scenario.title,
       lead: scenario.trigger,
       intent: scenario.intent,
@@ -700,9 +745,9 @@ export function projectReportWorkspace(report: ProductReportV8): ReportWorkspace
   const journeyScenarios: ScenarioView[] = model.journeyScenarios.map((scenario: ReportJourneyScenario) => {
     const kind = kindBySlot.get(scenario.kindId)
     return {
-      key: entityKey('scenario', scenario.id, 'journey'),
+      key: entityKey('journey-scenario', scenario.id),
       id: scenario.id,
-      kind: 'scenario',
+      kind: 'journey-scenario',
       title: scenario.title,
       lead: scenario.trigger,
       intent: scenario.intent,
@@ -902,18 +947,27 @@ export function projectReportWorkspace(report: ProductReportV8): ReportWorkspace
   }
 }
 
-/** Resolve a list of ids into entity views, dropping anything unresolved. */
+/** Resolve one id within a kind's collection. */
 export function resolveEntity(
   workspace: ReportWorkspace,
   kind: ReportEntityKind,
-  id: string,
-  scenarioType?: ReportScenarioType
+  id: string
 ): AnyEntityView | undefined {
-  if (kind !== 'scenario' || scenarioType) {
-    return workspace.byKey.get(entityKey(kind, id, scenarioType))
+  return workspace.byKey.get(entityKey(kind, id))
+}
+
+/**
+ * Resolve a Scenario id when the caller holds a mixed list.
+ *
+ * Scenario ids are globally unique across both collections, so an id alone is
+ * enough — but only the projection knows which collection it landed in.
+ */
+export function resolveScenario(workspace: ReportWorkspace, id: string): ScenarioView | undefined {
+  for (const kind of SCENARIO_KINDS) {
+    const entity = workspace.byKey.get(entityKey(kind, id))
+    if (entity) return entity as ScenarioView
   }
-  const matches = (workspace.entitiesById.get(id) ?? []).filter(entity => entity.kind === 'scenario')
-  return matches.length === 1 ? matches[0] : undefined
+  return undefined
 }
 
 export function resolveEntityKey(workspace: ReportWorkspace, key: ReportEntityKey): AnyEntityView | undefined {
@@ -923,10 +977,16 @@ export function resolveEntityKey(workspace: ReportWorkspace, key: ReportEntityKe
 export function resolveEntities(
   workspace: ReportWorkspace,
   kind: ReportEntityKind,
-  ids: string[],
-  scenarioType?: ReportScenarioType
+  ids: string[]
 ): AnyEntityView[] {
   return ids
-    .map(id => resolveEntity(workspace, kind, id, scenarioType))
+    .map(id => resolveEntity(workspace, kind, id))
     .filter((entity): entity is AnyEntityView => Boolean(entity))
+}
+
+/** Resolve a mixed Scenario id list, dropping anything unresolved. */
+export function resolveScenarios(workspace: ReportWorkspace, ids: string[]): ScenarioView[] {
+  return ids
+    .map(id => resolveScenario(workspace, id))
+    .filter((entity): entity is ScenarioView => Boolean(entity))
 }

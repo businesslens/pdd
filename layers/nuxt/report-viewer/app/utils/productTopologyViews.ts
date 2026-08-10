@@ -1,19 +1,21 @@
 /**
- * The fixed Product Topology views.
+ * The fixed questions that make the Product Topology readable.
  *
- * A view owns its question, derivation and reading semantics. Filters may
- * narrow a view later, but readers never assemble meaning from arbitrary axes.
+ * Each view owns a question, its derivation, and its reading semantics. Views
+ * are added when a question has no answer, not when a new axis is technically
+ * possible — `access-map` folded into Delivery surfaces once that view carried
+ * direct integrations, and `value-flow` and `domain-anatomy` folded into
+ * Product map once Domains grouped Capabilities under the access rail.
  */
 import type { ReportEntityKind } from './reportWorkspace'
 
 export type ProductTopologyViewId =
-  | 'everything'
-  | 'value-flow'
-  | 'access-map'
+  | 'product-map'
+  | 'value-paths'
+  | 'delivery-surfaces'
   | 'sitemap'
-  | 'domain-anatomy'
   | 'rule-reach'
-  | 'journey-anatomy'
+  | 'everything'
 
 export type TopologySemantics = 'identity' | 'occurrence'
 
@@ -37,50 +39,57 @@ export interface ProductTopologyView {
 
 export const PRODUCT_TOPOLOGY_VIEWS: ProductTopologyView[] = [
   {
-    id: 'everything',
-    name: 'Everything',
-    question: 'What is the entire product, all at once?',
+    id: 'product-map',
+    name: 'Product map',
+    question: 'What can the product do, and how is that capability grouped?',
     semantics: 'identity',
-    note: 'Fixed shelves read access → behaviour → structure → governance. The resolved relation web stays quiet until a node is hovered or selected.',
-    flow: [],
-    separators: [],
-    kinds: ['product', 'actor', 'interface', 'experience', 'screen', 'scenario', 'journey', 'capability', 'domain', 'rule'],
-    latentEdges: true
-  },
-  {
-    id: 'value-flow',
-    name: 'Value flow',
-    question: 'Who uses the product to do what, and where does it land?',
-    semantics: 'identity',
+    note: 'Domain lanes use their authored colours. Access paths show which Interfaces offer each Capability.',
     flow: [
       { kind: 'actor', label: 'Actors' },
-      { kind: 'journey', label: 'Journeys' },
-      { kind: 'capability', label: 'Capabilities' },
-      { kind: 'screen', label: 'Screens' }
+      { kind: 'interface', label: 'Interfaces' },
+      { kind: 'domain', label: 'Domains' },
+      { kind: 'capability', label: 'Capabilities' }
     ],
-    separators: ['→', '→', '→'],
-    kinds: ['actor', 'journey', 'capability', 'screen']
+    separators: ['→', '→', '⊃'],
+    kinds: ['actor', 'interface', 'domain', 'capability']
   },
   {
-    id: 'access-map',
-    name: 'Access map',
-    question: 'How does an Actor reach the product?',
+    id: 'value-paths',
+    name: 'Value paths',
+    question: 'How does one Actor goal unfold from variation to outcome?',
+    semantics: 'occurrence',
+    note: 'Variations run side by side; their numbered stages read downward. A Capability repeats when different accepted variations use it, and a Screen attaches to the last stage that actually exposes it.',
+    flow: [
+      { kind: 'journey', label: 'Journey' },
+      { kind: 'journey-scenario', label: 'Variations' },
+      { kind: 'capability', label: 'Ordered stages' },
+      { kind: 'screen', label: 'Landings' }
+    ],
+    separators: ['↓', '↓', '↓'],
+    kinds: ['journey', 'journey-scenario', 'capability', 'screen']
+  },
+  {
+    id: 'delivery-surfaces',
+    name: 'Delivery surfaces',
+    question: 'Where does each human or system enter, and what does that surface deliver?',
     semantics: 'identity',
+    note: 'Graphical Interfaces continue through Experiences and Screens. Direct integrations terminate in the Capability they deliver.',
     flow: [
       { kind: 'actor', label: 'Actors' },
       { kind: 'interface', label: 'Interfaces' },
       { kind: 'experience', label: 'Experiences' },
-      { kind: 'screen', label: 'Screens' }
+      { kind: 'screen', label: 'Screens' },
+      { kind: 'capability', label: 'Direct capabilities' }
     ],
-    separators: ['→', '→', '→'],
-    kinds: ['actor', 'interface', 'experience', 'screen']
+    separators: ['→', '→', '→', '·'],
+    kinds: ['actor', 'interface', 'experience', 'screen', 'capability']
   },
   {
     id: 'sitemap',
     name: 'Sitemap',
     question: 'What does each Interface contain?',
     semantics: 'occurrence',
-    note: 'Shared Experiences and Screens repeat under every Interface context that offers them.',
+    note: 'Shared Experiences and Screens repeat under every Interface context that offers them, because repetition is part of the answer.',
     flow: [
       { kind: 'product', label: 'Product' },
       { kind: 'interface', label: 'Interfaces' },
@@ -91,51 +100,50 @@ export const PRODUCT_TOPOLOGY_VIEWS: ProductTopologyView[] = [
     kinds: ['product', 'interface', 'experience', 'screen']
   },
   {
-    id: 'domain-anatomy',
-    name: 'Domain anatomy',
-    question: 'What is the product made of?',
-    semantics: 'identity',
-    flow: [
-      { kind: 'domain', label: 'Domains' },
-      { kind: 'capability', label: 'Capabilities' }
-    ],
-    separators: ['⊃'],
-    kinds: ['domain', 'capability']
-  },
-  {
     id: 'rule-reach',
     name: 'Rule reach',
     question: 'Where is each invariant enforced?',
     semantics: 'identity',
+    note: 'Every edge is an authored attachment, never derived reach. Relations stay quiet until a node is hovered or selected; focus one Rule in Filters to read its reach alone.',
     flow: [
       { kind: 'rule', label: 'Rules' },
       { kind: 'domain', label: 'Domains' },
       { kind: 'capability', label: 'Capabilities' },
       { kind: 'journey', label: 'Journeys' },
-      { kind: 'scenario', label: 'Scenarios' }
+      { kind: 'capability-scenario', label: 'Cap. Scenarios' },
+      { kind: 'journey-scenario', label: 'Journey Scenarios' }
     ],
-    separators: ['→', '·', '·', '·'],
-    kinds: ['rule', 'domain', 'capability', 'journey', 'scenario'],
+    separators: ['→', '·', '·', '·', '·'],
+    kinds: ['rule', 'domain', 'capability', 'journey', 'capability-scenario', 'journey-scenario'],
     latentEdges: true
   },
   {
-    id: 'journey-anatomy',
-    name: 'Journey anatomy',
-    question: 'How does one goal unfold?',
+    id: 'everything',
+    name: 'Everything',
+    question: 'What is the entire product, all at once?',
     semantics: 'identity',
-    flow: [
-      { kind: 'journey', label: 'Journey' },
-      { kind: 'scenario', label: 'Scenarios' },
-      { kind: 'capability', label: 'Capabilities' },
-      { kind: 'screen', label: 'Screens' }
+    note: 'Fixed shelves read access → surface → behaviour → governance. The resolved relation web stays quiet until a node is hovered or selected; hide a shelf or focus an entity to thin it.',
+    flow: [],
+    separators: [],
+    kinds: [
+      'product',
+      'actor',
+      'interface',
+      'experience',
+      'screen',
+      'capability-scenario',
+      'journey-scenario',
+      'journey',
+      'capability',
+      'domain',
+      'rule'
     ],
-    separators: ['→', '→', '→'],
-    kinds: ['journey', 'scenario', 'capability', 'screen']
+    latentEdges: true
   }
 ]
 
-export const DEFAULT_PRODUCT_TOPOLOGY_VIEW: ProductTopologyViewId = 'value-flow'
+export const DEFAULT_PRODUCT_TOPOLOGY_VIEW: ProductTopologyViewId = 'product-map'
 
 export function findProductTopologyView(id: ProductTopologyViewId): ProductTopologyView {
-  return PRODUCT_TOPOLOGY_VIEWS.find(view => view.id === id) ?? PRODUCT_TOPOLOGY_VIEWS[1]!
+  return PRODUCT_TOPOLOGY_VIEWS.find(view => view.id === id) ?? PRODUCT_TOPOLOGY_VIEWS[0]!
 }

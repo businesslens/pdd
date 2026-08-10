@@ -1,9 +1,9 @@
 <script setup lang="ts">
 /**
- * The product-level topology workspace: seven named readings over one model.
+ * The product-level topology workspace: three question-led readings.
  * The host owns the inspector; this component owns view choice, graph-local
- * visibility and focus, hover, and the Journey selector required by Journey
- * anatomy. None of this state reaches the Workbench navigation rail.
+ * visibility and focus, hover, and the Journey selector required by Value
+ * paths. None of this state reaches the Workbench navigation rail.
  */
 import type { AnyEntityView, ReportEntityKind, ReportWorkspace } from '../utils/reportWorkspace'
 import { ENTITY_KIND_META, resolveEntityKey } from '../utils/reportWorkspace'
@@ -25,6 +25,10 @@ const emit = defineEmits<{
   select: [entity: AnyEntityView]
   clear: []
 }>()
+
+/* Whole-model readings fit tighter and cap lower; a small graph would otherwise
+   be padded into a stamp while a wide one overflows. */
+const DENSE_VIEWS = new Set<ProductTopologyViewId>(['product-map', 'everything', 'rule-reach', 'sitemap'])
 
 const viewId = ref<ProductTopologyViewId>(DEFAULT_PRODUCT_TOPOLOGY_VIEW)
 const hoveredId = ref<string | null>(null)
@@ -80,10 +84,12 @@ const emptyNote = computed(() => {
   if (entityNodeCount.value) return ''
   if (filtersActive.value && baseEntityNodeCount.value) return 'No entities match these topology filters.'
   switch (viewId.value) {
+    case 'product-map': return 'This model declares no access paths, Domains, or Capabilities to map.'
+    case 'value-paths': return 'This model declares no Journeys to unfold.'
+    case 'delivery-surfaces': return 'This model declares no Interfaces or delivery surfaces to map.'
     case 'sitemap': return 'This model declares no Interfaces, so there is no visible surface to map.'
-    case 'journey-anatomy': return 'This model declares no Journeys to unfold.'
-    case 'domain-anatomy': return 'This model declares no Domains or Capabilities.'
     case 'rule-reach': return 'This model declares no Business Rules with reach to draw.'
+    case 'everything': return 'This model has no entities to draw.'
     default: return 'This model has no entities in this view.'
   }
 })
@@ -254,8 +260,8 @@ function selectEntity(entityId: string) {
         />
       </div>
 
-      <div v-if="view.note || viewId === 'journey-anatomy'" class="flex min-h-9 flex-wrap items-center gap-2 border-t border-muted py-2">
-        <template v-if="viewId === 'journey-anatomy'">
+      <div v-if="view.note || viewId === 'value-paths'" class="flex min-h-9 flex-wrap items-center gap-2 border-t border-muted py-2">
+        <template v-if="viewId === 'value-paths'">
           <span class="blr-field">Journey</span>
           <USelect
             v-model="journeyId"
@@ -275,8 +281,8 @@ function selectEntity(entityId: string) {
       <BlrFlowCanvas
         :nodes="graph.nodes"
         :edges="graph.edges"
-        :fit-padding="viewId === 'everything' ? 0.08 : 0.14"
-        :max-zoom="viewId === 'everything' ? 0.9 : 1.25"
+        :fit-padding="DENSE_VIEWS.has(viewId) ? 0.08 : 0.14"
+        :max-zoom="DENSE_VIEWS.has(viewId) ? 1.05 : 1.25"
         @select="selectEntity"
         @focus="selectEntity"
         @hover="hoveredId = $event"

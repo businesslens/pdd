@@ -48,6 +48,7 @@ import {
   entitiesOfKind,
   facetKindsFor,
   filterEntities,
+  groupEntities,
   hasSelections,
   relatedIds
 } from '../utils/entityFacets'
@@ -65,14 +66,40 @@ const props = defineProps<{ workspace: ReportWorkspace, logoSrc?: string | null 
 /* follows every selection, and only a Journey opens an inner page.     */
 /* ------------------------------------------------------------------ */
 
-/** Scenarios are read inside their Journey, so the rail never lists them. */
-const RAIL_KINDS = REPORT_ENTITY_KINDS.filter(meta => meta.kind !== 'scenario')
+/*
+  Every kind is browsable, Scenarios included. Reading them only inside a parent
+  worked when a Scenario always had a Journey; most now belong to a Capability
+  and would otherwise be the largest collection in the model with no surface.
+*/
+const RAIL_KINDS = REPORT_ENTITY_KINDS
 
 type ViewMode = 'cards' | 'table'
 type WorkbenchSection = 'overview' | 'topology' | ReportEntityKind
 
+/**
+ * The open section, bindable by the host so it can live in the URL.
+ *
+ * `activeKind` stays internal: it is what the working view is *about*, which
+ * for the overview is the Product rather than the section name.
+ */
+const section = defineModel<string>('section', { default: 'overview' })
+
 const activeKind = ref<ReportEntityKind>('product')
 const activeSection = ref<WorkbenchSection>('overview')
+
+const KNOWN_SECTIONS = new Set<string>(['overview', 'topology', ...REPORT_ENTITY_KINDS.map(meta => meta.kind)])
+
+/* Two-way, but never fighting: each side only writes when the value differs. */
+watch(section, (value) => {
+  if (value === activeSection.value) return
+  const next = (KNOWN_SECTIONS.has(value) ? value : 'overview') as WorkbenchSection
+  activeSection.value = next
+  activeKind.value = next === 'overview' || next === 'topology' ? 'product' : next
+}, { immediate: true })
+
+watch(activeSection, (value) => {
+  if (section.value !== value) section.value = value
+})
 const activeId = ref<string | null>(null)
 const inspected = ref<AnyEntityView | null>(null)
 const inspectorTab = ref<'detail' | 'map'>('detail')
@@ -84,6 +111,7 @@ const entityCardVariant = ref<EntityCardVariant>(DEFAULT_ENTITY_CARD_VARIANT)
 /* Toolbar state is kept per kind: moving to another kind and back returns to
    the shape you left, which is the point of a persistent working view. */
 const viewModes = reactive<Partial<Record<ReportEntityKind, ViewMode>>>({})
+const groupKinds = reactive<Partial<Record<ReportEntityKind, ReportEntityKind>>>({})
 const facetState = reactive<Partial<Record<ReportEntityKind, FacetSelections>>>({})
 
 const activeMeta = computed(() => ENTITY_KIND_META[activeKind.value])
@@ -96,6 +124,8 @@ const kindCounts = computed<Record<string, number>>(() => ({
   domain: props.workspace.counts.domains,
   capability: props.workspace.counts.capabilities,
   journey: props.workspace.counts.journeys,
+  'capability-scenario': props.workspace.counts.capabilityScenarios,
+  'journey-scenario': props.workspace.counts.journeyScenarios,
   rule: props.workspace.counts.rules
 }))
 
@@ -103,6 +133,14 @@ const viewMode = computed<ViewMode>({
   get: () => viewModes[activeKind.value] ?? 'cards',
   set: (value) => {
     viewModes[activeKind.value] = value
+  }
+})
+
+const groupKind = computed<ReportEntityKind | undefined>({
+  get: () => groupKinds[activeKind.value],
+  set: (value) => {
+    if (value) groupKinds[activeKind.value] = value
+    else delete groupKinds[activeKind.value]
   }
 })
 
@@ -139,9 +177,21 @@ const kindEntities = computed<AnyEntityView[]>(() => entitiesOfKind(props.worksp
 /** What every surface shows: the cards, the table, the counts in the bar. */
 const visibleEntities = computed(() => filterEntities(kindEntities.value, facets.value))
 
+const groupOptions = computed(() => facetKinds.value
+  .map(kind => ({ label: ENTITY_KIND_META[kind].plural, value: kind })))
+
+const entityGroups = computed(() => {
+  const by = groupKind.value
+  /* The bucket is named after what is missing, so it reads as a model fact:
+     "No Domain", not the generic "Unassigned". */
+  return groupEntities(props.workspace, visibleEntities.value, by ?? null,
+    by ? `No ${ENTITY_KIND_META[by].label}` : '')
+})
+
 const entityCardLayoutClass = computed(() => {
   if (entityCardVariant.value === 'index') return 'space-y-2'
   if (entityCardVariant.value === 'editorial') return 'grid gap-4 xl:grid-cols-2'
+  if (groupKind.value) return 'grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4'
   return 'grid gap-3 sm:grid-cols-2 2xl:grid-cols-3'
 })
 
@@ -223,11 +273,14 @@ function openJourneyPage(journey: JourneyView) {
 
 /** ⌘K lands on the entity: its kind's surface, plus the inspector on it. */
 function onSearchSelect(entity: AnyEntityView) {
-  if (entity.kind === 'scenario') {
+  /* A Journey Scenario reads best on its Journey page, beside its siblings. */
+  if (entity.kind === 'journey-scenario') {
     const journey = resolveEntity(props.workspace, 'journey', entity.journeyId)
-    if (journey?.kind === 'journey') openJourneyPage(journey)
-    inspect(entity)
-    return
+    if (journey?.kind === 'journey') {
+      openJourneyPage(journey)
+      inspect(entity)
+      return
+    }
   }
   activeKind.value = entity.kind
   activeSection.value = entity.kind
@@ -370,7 +423,8 @@ const tableColumns = computed<TableColumn<AnyEntityView>[]>(() => {
         ...base,
         contextColumn(),
         relationColumn('capability'),
-        relationColumn('scenario'),
+        relationColumn('capability-scenario', 'Cap. Scenarios'),
+        relationColumn('journey-scenario', 'Journey Scenarios'),
         relationIdsColumn('scenarioJourneys', 'Journeys via scenarios', 'journey',
           entity => (entity as ScreenView).scenarioJourneyIds),
         relationIdsColumn('capabilityJourneys', 'Journeys via capabilities', 'journey',
@@ -394,7 +448,8 @@ const tableColumns = computed<TableColumn<AnyEntityView>[]>(() => {
           return id ? resolveEntity(props.workspace, 'domain', id)?.title ?? id : ''
         }),
         contextColumn(),
-        relationColumn('scenario', 'Capability Scenarios'),
+        relationColumn('capability-scenario', 'Capability Scenarios'),
+        relationColumn('journey-scenario', 'In Journey Scenarios'),
         relationColumn('journey'),
         relationColumn('screen'),
         relationColumn('rule')
@@ -406,9 +461,35 @@ const tableColumns = computed<TableColumn<AnyEntityView>[]>(() => {
         contextColumn(),
         relationColumn('capability'),
         relationColumn('screen'),
-        relationColumn('scenario'),
+        relationColumn('journey-scenario', 'Variations'),
         relationColumn('rule'),
         numberColumn('steps', 'Steps', entity => (entity as JourneyView).stepCount)
+      ]
+    case 'capability-scenario':
+      return [
+        ...base,
+        textColumn('scenarioKind', 'Kind', entity => (entity as ScenarioView).kindName),
+        relationColumn('capability'),
+        relationColumn('actor'),
+        contextColumn(),
+        numberColumn('steps', 'Steps', entity => (entity as ScenarioView).steps.length),
+        numberColumn('decisions', 'Decisions', entity => (entity as ScenarioView).decisionPoints.length),
+        relationColumn('screen'),
+        relationColumn('rule')
+      ]
+    case 'journey-scenario':
+      return [
+        ...base,
+        textColumn('scenarioKind', 'Kind', entity => (entity as ScenarioView).kindName),
+        /* `kind` classifies the variation; `result` records how it ended. Orthogonal, so both. */
+        textColumn('result', 'Result', entity => (entity as ScenarioView).result),
+        relationColumn('journey'),
+        relationColumn('actor'),
+        numberColumn('stages', 'Stages', entity => (entity as ScenarioView).flow.length),
+        numberColumn('steps', 'Steps', entity => (entity as ScenarioView).steps.length),
+        relationColumn('capability'),
+        relationColumn('screen'),
+        relationColumn('rule')
       ]
     case 'rule':
       return [
@@ -416,7 +497,8 @@ const tableColumns = computed<TableColumn<AnyEntityView>[]>(() => {
         relationColumn('domain'),
         relationColumn('capability'),
         relationColumn('journey'),
-        relationColumn('scenario'),
+        relationColumn('capability-scenario', 'Cap. Scenarios'),
+        relationColumn('journey-scenario', 'Journey Scenarios'),
         contextColumn()
       ]
     default:
@@ -428,7 +510,9 @@ const TABLE_NOTE: Partial<Record<ReportEntityKind, string>> = {
   screen: 'Scenario and Capability Journey columns keep the two derivation paths separate. Hover a count for the names behind it.',
   capability: 'Capability Scenarios are direct coverage. Journeys, Screens and Rules are derived from what declares this Capability.',
   journey: 'Screens and Rules include derived participation (via Scenarios and Capabilities); Steps is the authored step depth.',
-  rule: 'Counts are authored attachments; the card view adds the reach derived from them.'
+  rule: 'Counts are authored attachments; the card view adds the reach derived from them.',
+  'capability-scenario': 'Each is one observable acceptance case for exactly one Capability. Contexts are the exact Interface scopes it is accepted in.',
+  'journey-scenario': 'Kind classifies the variation; Result records whether the Journey goal was reached. Stages are the ordered Capability flow entries.'
 }
 
 /** Scenarios whose Journey is not in the model would otherwise be unreachable. */
@@ -583,6 +667,10 @@ const sections = reactive({ about: false, coverage: false, counts: false, refere
            that silently changes these kind rows into filters. -->
       <nav class="blr-pane hidden w-64 shrink-0 border-e border-default lg:block">
         <div class="p-2">
+          <!-- The host's own way back out, above its sections. -->
+          <div v-if="$slots.navigation" class="mb-1 border-b border-default px-1 pb-2">
+            <slot name="navigation" />
+          </div>
           <p class="blr-navgroup">Explore</p>
           <button
             type="button"
@@ -655,8 +743,30 @@ const sections = reactive({ about: false, coverage: false, counts: false, refere
             label="Clear"
             @click="clearFacets"
           />
-          <!-- Filters narrow a named subject; cards/table are lenses on it. -->
+          <!-- Filters narrow a named subject; grouping and the card/table
+               lenses change how that same subject is read. -->
           <div class="ms-auto flex shrink-0 items-center gap-2">
+            <template v-if="groupOptions.length">
+              <span class="blr-field">Group by</span>
+              <USelect
+                v-model="groupKind"
+                :items="groupOptions"
+                size="xs"
+                variant="outline"
+                class="min-w-32"
+                icon="i-lucide-rows-3"
+                placeholder="Nothing"
+              />
+              <UButton
+                v-if="groupKind"
+                icon="i-lucide-x"
+                color="neutral"
+                variant="ghost"
+                size="xs"
+                aria-label="Stop grouping"
+                @click="groupKind = undefined"
+              />
+            </template>
             <UTabs
               v-model="viewMode"
               :items="VIEW_MODE_TABS"
@@ -740,6 +850,11 @@ const sections = reactive({ about: false, coverage: false, counts: false, refere
                 </span>
               </div>
             </header>
+
+            <!-- The host's call to action sits with the identity it acts on. -->
+            <div v-if="$slots['primary-action']">
+              <slot name="primary-action" />
+            </div>
 
             <!-- Everything the Product page used to show, one disclosure each. -->
             <div class="divide-y divide-default border-y border-default">
@@ -903,6 +1018,11 @@ const sections = reactive({ about: false, coverage: false, counts: false, refere
                 </template>
               </UCollapsible>
             </div>
+
+            <!-- Where this report came from, which only the host can know. -->
+            <div v-if="$slots.provenance" class="text-sm text-muted">
+              <slot name="provenance" />
+            </div>
           </div>
 
           <!-- JOURNEY PAGE: the promise in full, its Scenarios below it -->
@@ -976,27 +1096,63 @@ const sections = reactive({ about: false, coverage: false, counts: false, refere
           </article>
 
           <!-- ENTITY SURFACE: one named subject, with card and table lenses. -->
-          <div v-else class="space-y-6">
-            <UTable
-              v-if="viewMode === 'table'"
-              :data="visibleEntities"
-              :columns="tableColumns"
-              class="rounded-xl border border-default bg-default"
-              :ui="{ tr: 'cursor-pointer' }"
-              :on-select="(_event: Event, row: any) => activate(row.original)"
-            />
+          <div v-else :class="groupKind ? 'space-y-3' : 'space-y-6'">
+            <UCollapsible
+              v-for="group in entityGroups"
+              :key="group.key || 'all'"
+              :default-open="true"
+              :disabled="!groupKind"
+              :class="groupKind && 'overflow-hidden rounded-xl border border-default bg-elevated/20'"
+              :ui="{ content: groupKind ? 'border-t border-muted p-2' : '' }"
+            >
+              <template v-if="groupKind" #default="{ open }">
+                <UButton
+                  color="neutral"
+                  variant="ghost"
+                  size="lg"
+                  block
+                  class="w-full justify-start rounded-none px-3 py-2 text-start"
+                >
+                  <BlrKind v-if="group.kind" :kind="group.kind" :labelled="false" size="xs" />
+                  <UIcon v-else name="i-lucide-minus" class="size-3.5 shrink-0 text-dimmed" />
+                  <span
+                    class="min-w-0 truncate text-sm font-semibold tracking-tight"
+                    :class="group.kind ? 'text-highlighted' : 'text-muted'"
+                  >
+                    {{ group.title }}
+                  </span>
+                  <span class="blr-meta ms-auto">{{ group.entities.length }}</span>
+                  <UIcon
+                    name="i-lucide-chevron-down"
+                    class="size-3.5 shrink-0 text-dimmed transition-transform"
+                    :class="open && 'rotate-180'"
+                  />
+                </UButton>
+              </template>
 
-            <div v-else :class="entityCardLayoutClass">
-              <BlrEntityCard
-                v-for="entity in visibleEntities"
-                :key="entity.key"
-                :workspace="workspace"
-                :entity="entity"
-                :variant="entityCardVariant"
-                :active="entity.key === activeId"
-                @open="openCard"
-              />
-            </div>
+              <template #content>
+                <UTable
+                  v-if="viewMode === 'table'"
+                  :data="group.entities"
+                  :columns="tableColumns"
+                  class="rounded-xl border border-default bg-default"
+                  :ui="{ tr: 'cursor-pointer' }"
+                  :on-select="(_event: Event, row: any) => activate(row.original)"
+                />
+
+                <div v-else :class="entityCardLayoutClass">
+                  <BlrEntityCard
+                    v-for="entity in group.entities"
+                    :key="entity.key"
+                    :workspace="workspace"
+                    :entity="entity"
+                    :variant="entityCardVariant"
+                    :active="entity.key === activeId"
+                    @open="openCard"
+                  />
+                </div>
+              </template>
+            </UCollapsible>
 
             <p v-if="viewMode === 'table' && TABLE_NOTE[activeKind]" class="text-sm text-muted">
               {{ TABLE_NOTE[activeKind] }}
@@ -1065,6 +1221,9 @@ const sections = reactive({ about: false, coverage: false, counts: false, refere
       </template>
       <template #body>
         <nav>
+          <div v-if="$slots.navigation" class="mb-1 border-b border-default pb-2">
+            <slot name="navigation" />
+          </div>
           <p class="blr-navgroup">Explore</p>
           <button type="button" class="blr-navitem" :data-current="activeSection === 'overview'" @click="setKind('product')">
             <UIcon name="i-lucide-package" class="size-4 text-primary" />

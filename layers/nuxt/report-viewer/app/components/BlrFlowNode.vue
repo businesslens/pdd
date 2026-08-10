@@ -32,6 +32,7 @@ const props = defineProps<NodeProps<FlowNodeData>>()
 
 const meta = computed(() => ENTITY_KIND_META[props.data.kind])
 const colorVar = computed(() => {
+  if (props.data.colorSlot != null) return `var(--blr-slot-${props.data.colorSlot})`
   if (props.data.scenarioType === 'capability') return `var(--blr-slot-${ENTITY_KIND_META.capability.slot})`
   if (props.data.scenarioType === 'journey') return `var(--blr-slot-${ENTITY_KIND_META.journey.slot})`
   return `var(--blr-slot-${meta.value.slot})`

@@ -91,13 +91,7 @@ const TABS: TabsItem[] = [
   { value: 'map', label: 'Neighbourhood', icon: 'i-lucide-waypoints' }
 ]
 
-const kindLabel = computed(() => {
-  if (!props.entity) return ''
-  if (props.entity.kind === 'scenario') {
-    return props.entity.scenarioType === 'capability' ? 'Capability Scenario' : 'Journey Scenario'
-  }
-  return ENTITY_KIND_META[props.entity.kind].label
-})
+const kindLabel = computed(() => props.entity ? ENTITY_KIND_META[props.entity.kind].label : '')
 </script>
 
 <template>

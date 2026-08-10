@@ -9,7 +9,6 @@
  */
 import { VueFlow, useVueFlow } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
-import { Controls } from '@vue-flow/controls'
 import type { BlrFlowEdge, BlrFlowNode, FlowGroupData, FlowLabelData, FlowNodeData } from '../utils/flowGraph'
 
 const props = withDefaults(defineProps<{
@@ -40,6 +39,8 @@ const emit = defineEmits<{
 const flowId = useId()
 const {
   fitView,
+  zoomIn,
+  zoomOut,
   onNodeClick,
   onNodeDoubleClick,
   onNodeMouseEnter,
@@ -48,7 +49,15 @@ const {
   onNodesInitialized
 } = useVueFlow(flowId)
 
-const fitParams = computed(() => ({ padding: props.fitPadding, maxZoom: props.maxZoom, duration: 240 }))
+const canvasWidth = ref(0)
+const compactCanvas = computed(() => canvasWidth.value > 0 && canvasWidth.value < 640)
+const minimumZoom = computed(() => compactCanvas.value ? 0.72 : 0.12)
+const fitParams = computed(() => ({
+  padding: props.fitPadding,
+  minZoom: minimumZoom.value,
+  maxZoom: props.maxZoom,
+  duration: 240
+}))
 
 onNodeClick(({ node }) => {
   const data = node.data as FlowNodeData | FlowGroupData
@@ -82,6 +91,7 @@ watch(shellEl, (el, _previous, onCleanup) => {
   const observer = new ResizeObserver(([entry]) => {
     if (!entry) return
     const { width, height } = entry.contentRect
+    canvasWidth.value = width
     if (Math.abs(width - lastWidth) < 1 && Math.abs(height - lastHeight) < 1) return
     lastWidth = width
     lastHeight = height
@@ -122,7 +132,7 @@ watch(layoutKey, async () => {
         class="blr-flow"
       :nodes="nodes"
       :edges="edges"
-        :min-zoom="0.12"
+        :min-zoom="minimumZoom"
         :max-zoom="2"
         :nodes-connectable="false"
         :nodes-draggable="false"
@@ -147,9 +157,14 @@ watch(layoutKey, async () => {
           :style="{ backgroundColor: 'transparent' }"
           pattern-color="var(--blr-flow-dot)"
         />
-        <Controls v-if="showControls" position="bottom-right" :show-interactive="false" :fit-view-params="fitParams" />
         <slot />
       </VueFlow>
+      <div v-if="showControls" class="blr-flow-controls" aria-label="Map controls">
+        <button type="button" aria-label="Zoom in" title="Zoom in" @click="zoomIn()">+</button>
+        <button type="button" aria-label="Zoom out" title="Zoom out" @click="zoomOut()">−</button>
+        <button type="button" aria-label="Fit map to view" title="Fit map to view" @click="fitView(fitParams)">□</button>
+      </div>
+      <span v-if="compactCanvas" class="blr-flow-mobile-hint">Drag to explore</span>
     </div>
     <template #fallback>
       <div class="blr-flow blr-flow--loading">
@@ -161,7 +176,6 @@ watch(layoutKey, async () => {
 
 <style>
 @import '@vue-flow/core/dist/style.css';
-@import '@vue-flow/controls/dist/style.css';
 
 /*
   Categorical slots for the flow surfaces, mirrored from reportPalette.ts —
@@ -170,6 +184,7 @@ watch(layoutKey, async () => {
   matching slotColor()'s modulo.
 */
 .blr-flow-shell {
+  position: relative;
   width: 100%;
   height: 100%;
   min-height: 0;
@@ -242,7 +257,12 @@ watch(layoutKey, async () => {
   transition: stroke 0.2s ease, stroke-width 0.2s ease, opacity 0.2s ease;
 }
 
-.blr-flow .vue-flow__controls {
+.blr-flow-controls {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  z-index: 30;
+  display: grid;
   overflow: hidden;
   border: 1px solid var(--ui-border);
   border-radius: 8px;
@@ -250,23 +270,43 @@ watch(layoutKey, async () => {
   box-shadow: 0 6px 20px color-mix(in srgb, var(--ui-text) 10%, transparent);
 }
 
-.blr-flow .vue-flow__controls-button {
+.blr-flow-controls button {
+  display: grid;
+  width: 1.75rem;
+  height: 1.75rem;
+  place-items: center;
   border: 0;
   border-bottom: 1px solid var(--ui-border);
   background: transparent;
   color: var(--ui-text-muted);
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  line-height: 1;
 }
 
-.blr-flow .vue-flow__controls-button:last-child {
+.blr-flow-controls button:last-child {
   border-bottom: 0;
 }
 
-.blr-flow .vue-flow__controls-button:hover {
+.blr-flow-controls button:hover {
   background: var(--ui-bg-elevated);
   color: var(--ui-text-highlighted);
 }
 
-.blr-flow .vue-flow__controls-button svg {
-  fill: currentColor;
+.blr-flow-mobile-hint {
+  position: absolute;
+  top: 0.75rem;
+  left: 50%;
+  z-index: 30;
+  transform: translateX(-50%);
+  border: 1px solid var(--ui-border);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ui-bg) 92%, transparent);
+  padding: 0.25rem 0.6rem;
+  color: var(--ui-text-muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  box-shadow: 0 3px 12px color-mix(in srgb, var(--ui-text) 8%, transparent);
+  pointer-events: none;
 }
 </style>

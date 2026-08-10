@@ -12,7 +12,7 @@ import { ENTITY_KIND_META } from '../utils/reportWorkspace'
 const props = defineProps<NodeProps<FlowGroupData>>()
 
 const meta = computed(() => ENTITY_KIND_META[props.data.kind])
-const colorVar = computed(() => `var(--blr-slot-${meta.value.slot})`)
+const colorVar = computed(() => `var(--blr-slot-${props.data.colorSlot ?? meta.value.slot})`)
 </script>
 
 <template>

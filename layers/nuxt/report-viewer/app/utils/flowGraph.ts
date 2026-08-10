@@ -33,6 +33,8 @@ export interface FlowNodeData {
   selected: boolean
   /** Optional count bubble, e.g. Scenarios in a Journey. */
   count: number | null
+  /** Authored Domain colour when semantic grouping should override kind colour. */
+  colorSlot?: number | null
 }
 
 /** Data carried by a container box (`type: 'blr-group'`). */
@@ -44,6 +46,8 @@ export interface FlowGroupData {
   sublabel: string
   dimmed: boolean
   selected: boolean
+  /** Authored Domain colour when the group represents a Domain. */
+  colorSlot?: number | null
   /** Shown when the container has nothing inside — a fact, not a fault. */
   emptyNote: string
 }
@@ -80,7 +84,13 @@ export interface FlowGraphShape {
 
 export function entityNode(
   entity: AnyEntityView,
-  options: { focus?: boolean, dimmed?: boolean, selected?: boolean, count?: number | null } = {}
+  options: {
+    focus?: boolean
+    dimmed?: boolean
+    selected?: boolean
+    count?: number | null
+    colorSlot?: number | null
+  } = {}
 ): BlrFlowNode {
   const focus = options.focus ?? false
   const width = focus ? FLOW_FOCUS_WIDTH : FLOW_NODE_WIDTH
@@ -103,14 +113,15 @@ export function entityNode(
       entityId: entity.id,
       kind: entity.kind,
       title: entity.title,
-      sublabel: entity.kind === 'scenario'
-        ? `${entity.scenarioType === 'capability' ? 'Capability' : 'Journey'} Scenario`
-        : ENTITY_KIND_META[entity.kind].label,
-      scenarioType: entity.kind === 'scenario' ? entity.scenarioType : null,
+      sublabel: ENTITY_KIND_META[entity.kind].label,
+      scenarioType: entity.kind === 'capability-scenario' || entity.kind === 'journey-scenario'
+        ? entity.scenarioType
+        : null,
       focus,
       dimmed: options.dimmed ?? false,
       selected: options.selected ?? false,
-      count: options.count ?? null
+      count: options.count ?? null,
+      colorSlot: options.colorSlot ?? null
     }
   }
 }
@@ -212,8 +223,8 @@ export function directRelations(workspace: ReportWorkspace, entity: AnyEntityVie
     }
     case 'screen': {
       for (const id of entity.capabilityIds) push(entity.key, entityKey('capability', id), 'exposes')
-      for (const id of entity.capabilityScenarioIds) push(entity.key, entityKey('scenario', id, 'capability'), 'serves')
-      for (const id of entity.journeyScenarioIds) push(entity.key, entityKey('scenario', id, 'journey'), 'serves')
+      for (const id of entity.capabilityScenarioIds) push(entity.key, entityKey('capability-scenario', id), 'serves')
+      for (const id of entity.journeyScenarioIds) push(entity.key, entityKey('journey-scenario', id), 'serves')
       for (const id of entity.scenarioJourneyIds) push(entityKey('journey', id), entity.key, 'passes through scenario')
       for (const id of entity.capabilityJourneyIds) push(entityKey('journey', id), entity.key, 'reaches via capability')
       availability(entity.availability, entity.key)
@@ -226,7 +237,7 @@ export function directRelations(workspace: ReportWorkspace, entity: AnyEntityVie
     }
     case 'capability': {
       if (entity.domainId) push(entity.key, entityKey('domain', entity.domainId), 'in')
-      for (const id of entity.scenarioIds) push(entity.key, entityKey('scenario', id, 'capability'), 'cases into')
+      for (const id of entity.scenarioIds) push(entity.key, entityKey('capability-scenario', id), 'cases into')
       for (const id of entity.journeyIds) push(entityKey('journey', id), entity.key, 'uses')
       for (const id of entity.screenIds) push(entityKey('screen', id), entity.key, 'exposes')
       for (const id of entity.ruleIds) push(entityKey('rule', id), entity.key, 'constrains')
@@ -236,13 +247,14 @@ export function directRelations(workspace: ReportWorkspace, entity: AnyEntityVie
     case 'journey': {
       for (const id of entity.actorIds) push(entityKey('actor', id), entity.key, 'performs')
       for (const id of entity.capabilityIds) push(entity.key, entityKey('capability', id), 'uses')
-      for (const id of entity.scenarioIds) push(entity.key, entityKey('scenario', id, 'journey'), 'cases into')
+      for (const id of entity.scenarioIds) push(entity.key, entityKey('journey-scenario', id), 'cases into')
       for (const id of entity.screenIds) push(entity.key, entityKey('screen', id), 'passes through')
       for (const id of entity.ruleIds) push(entityKey('rule', id), entity.key, 'constrains')
       availability(entity.availability, entity.key)
       break
     }
-    case 'scenario': {
+    case 'capability-scenario':
+    case 'journey-scenario': {
       if (entity.scenarioType === 'capability') {
         push(entityKey('capability', entity.capabilityId), entity.key, 'cases into')
       } else {
@@ -258,8 +270,8 @@ export function directRelations(workspace: ReportWorkspace, entity: AnyEntityVie
       for (const id of entity.domainIds) push(entity.key, entityKey('domain', id), 'constrains')
       for (const id of entity.capabilityIds) push(entity.key, entityKey('capability', id), 'constrains')
       for (const id of entity.journeyIds) push(entity.key, entityKey('journey', id), 'constrains')
-      for (const id of entity.capabilityScenarioIds) push(entity.key, entityKey('scenario', id, 'capability'), 'constrains')
-      for (const id of entity.journeyScenarioIds) push(entity.key, entityKey('scenario', id, 'journey'), 'constrains')
+      for (const id of entity.capabilityScenarioIds) push(entity.key, entityKey('capability-scenario', id), 'constrains')
+      for (const id of entity.journeyScenarioIds) push(entity.key, entityKey('journey-scenario', id), 'constrains')
       availability(entity.availability, entity.key, 'scoped to')
       break
     }
