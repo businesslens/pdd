@@ -11,6 +11,6 @@ collection links.
 
 ## Capability boundary
 
-Supports every Reader- and Visitor-facing capability. Private library behavior
-requires a Reader session; public collection reading does not. Feed collection
-occurs through the separate syndicated-feed-integration Interface.
+Supports every Reader- and Visitor-facing capability, including refreshing the
+feeds the Reader follows. Private library behavior requires a Reader session;
+public collection reading does not.

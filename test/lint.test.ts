@@ -36,7 +36,7 @@ describe('lintModel', () => {
     expect(result.ok).toBe(true)
     expect(result.counts).toEqual({
       actors: 2,
-      interfaces: 3,
+      interfaces: 4,
       experiences: 2,
       screens: 1,
       domains: 2,
@@ -180,22 +180,13 @@ An internal system that initiates store operations.
     )
   })
 
+  /*
+    The fixture ships `operator-cli` with direct availability. Scoping it into
+    an Experience here keeps both shapes covered: a non-visual Interface works
+    whether or not Experiences divide it.
+  */
   it('supports a non-visual CLI Interface alongside visual Interfaces', () => {
     const cwd = fixtureCopy()
-    writeFileSync(join(cwd, '.businesslens/interfaces/operator-cli.md'), `---
-actors: [store-admin]
-entryPoints:
-  - cli: fixture-shop orders
----
-
-# Operator CLI
-
-The supported command interface for store operators.
-
-## Capability boundary
-
-Supports order administration without customer shopping.
-`)
     const experience = join(cwd, '.businesslens/experiences/admin-console.md')
     writeFileSync(
       experience,
@@ -211,8 +202,8 @@ Supports order administration without customer shopping.
       writeFileSync(
         file,
         readFileSync(file, 'utf8').replace(
-          'availability:\n  - interface: admin-web\n    experiences: [admin-console]',
-          'availability:\n  - interface: admin-web\n    experiences: [admin-console]\n  - interface: operator-cli\n    experiences: [admin-console]'
+          '  - interface: operator-cli\n',
+          '  - interface: operator-cli\n    experiences: [admin-console]\n'
         )
       )
     }

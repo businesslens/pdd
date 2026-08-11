@@ -12,8 +12,8 @@ describe('Content Feed Reader teaching Blueprint', () => {
     expect(result.errors).toEqual([])
     expect(result.warnings).toEqual([])
     expect(result.counts).toEqual({
-      actors: 3,
-      interfaces: 3,
+      actors: 2,
+      interfaces: 2,
       experiences: 2,
       screens: 5,
       domains: 3,

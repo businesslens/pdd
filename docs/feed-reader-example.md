@@ -37,20 +37,22 @@ limitations make three exclusions explicit:
 - sharing is read-only, without comments, co-editing, or a social graph; and
 - the Product reads syndicated feeds but does not publish feeds.
 
-The external `feed-provider` system is modeled as an Actor because the Product
-makes observable collection and failure-preservation commitments at the
-supported `syndicated-feed-integration` Interface. An internal API would still be an
-implementation detail: only the external feed contract earns an Interface.
+Feed providers are deliberately **not** Actors here, and there is no feed
+Interface. The Product polls those feeds; they never call the Product, hold no
+goal inside it, and need no surface kept stable for them. An external system
+earns an Actor and an Interface only when it *initiates*. So the outbound
+dependency lives inside the Capability that makes the call, and the RSS contract
+it depends on is attached to that Capability as a context Reference.
 
 ## The complete model at a glance
 
 | Entity | In this Blueprint | What the examples make visible |
 | --- | --- | --- |
-| Product | 1 — Content Feed Reader | One coherent reading promise across three Interfaces |
-| Actors | 3 — Reader, Visitor, Feed provider | Owner, anonymous recipient, and external system have different privileges |
-| Interfaces | 3 — Reader web, Reader mobile, Syndicated feed | Human interaction and external collection are independently supported contracts |
-| Experiences | 2 — Personal library, Public reading | Authenticated work spans web and mobile; public reading is web-only; the feed Interface is direct |
-| Screens | 5 — Source list, Unread library, Saved items, Collection workspace, Public collection | Visual places include the missing route back to saved content without inventing a Screen for background synchronization |
+| Product | 1 — Content Feed Reader | One coherent reading promise across two Interfaces |
+| Actors | 2 — Reader, Visitor | Owner and anonymous recipient have different privileges; the feeds the Product polls are not Actors |
+| Interfaces | 2 — Reader web, Reader mobile | Two supported interaction forms; an outbound feed connection is not one of them |
+| Experiences | 2 — Personal library, Public reading | Authenticated work spans web and mobile; public reading is web-only |
+| Screens | 5 — Source list, Unread library, Saved items, Collection workspace, Public collection | Visual places where behavior is observed, including where a Reader asks for new items and sees a source fail |
 | Domains | 3 — Sources, Reading, Collections | Stable areas of Product responsibility group ten Capabilities on one consistent axis |
 | Capabilities | 10 | Source intake, private reading work, collection ownership, naming, publication, and public consumption remain separate promises |
 | Capability Scenarios | 24 | Each Capability has direct observable acceptance coverage |
@@ -121,24 +123,51 @@ local contracts.
 
 ## Follow the feed path
 
-The `feed-provider` system uses the direct `syndicated-feed-integration`
-Interface. It has
-no Experience because there is no meaningful context split and no Screen
-because synchronization is not a visual place.
+This is the part of the model most worth studying, because the obvious shape is
+the wrong one. A syndicated feed is external, it is essential to the Product,
+and it fails in ways the Reader must see — so it looks like it deserves an Actor
+and an Interface. It gets neither.
+
+**Direction decides.** Ask three questions of any external system:
+
+1. Does it initiate contact with the Product?
+2. Does it have a goal or privilege of its own inside the Product?
+3. Must the Product keep a surface stable and verifiable for it?
+
+A polled feed answers no three times. It never calls the Product, wants nothing
+from it, and needs nothing kept stable for it. Modeling it as an Actor produces
+an Interface whose own boundary has to admit that its Actor can do nothing
+through it, and Scenarios whose steps are entirely "the Product does X" while
+the Reader — the only party who observes the outcome — is barred from
+participating.
+
+So the outbound call lives inside the Capability that makes it:
 
 ```text
-Feed provider
-└── Syndicated feed integration
-    └── Feed synchronization
+Reader
+└── Personal library — web and mobile
+    └── Feed synchronization  ← names the feed as an outbound dependency
         ├── Collect new items from a followed source
-        └── Preserve the library when a feed is unavailable
+        ├── Preserve the library when a feed is unavailable
+        └── Source list Screen  ← where the Reader refreshes and sees a failure
 ```
 
-`source-following` stays separate. A Reader controls the subscription through
-web or mobile; the Feed provider later participates in collection through the
-feed Interface. The `follow-and-receive-from-a-source` Journey connects those
-two surfaces while keeping the Reader as the goal owner. Unfollowing stops
+`feed-synchronization` is scoped to the Interfaces where its result is observed,
+its Reader-visible failure behavior is an ordinary Capability Scenario, and the
+RSS specification is attached as a `kind: spec`, `role: context` Reference. The
+Reader triggers it by refreshing; the Product also reads feeds on a schedule it
+owns, which the Capability states in prose because a scheduler is not an Actor
+either.
+
+`source-following` stays separate from collection: choosing which feeds may
+contribute is a different durable ability from reading them. The
+`follow-and-receive-from-a-source` Journey composes the two. Unfollowing stops
 future collection but preserves existing library history.
+
+The rule is symmetric. If this Product ever accepted *pushed* feed updates, that
+inbound surface would be a genuine Interface and the provider a genuine Actor —
+same company, opposite modeling, because direction changed. See
+[Actors](./actors.md) and [Interfaces](./interfaces.md) for the general rule.
 
 ## What is optional here
 
@@ -146,17 +175,21 @@ Only Product, Actor, and Interface are foundational requirements. This example
 uses the optional entities because each earns its place:
 
 - Experiences separate authenticated private work from anonymous public
-  reading. Direct feed availability shows how an Interface works without one.
+  reading. Both Interfaces here are genuinely divided, so both use them; an
+  Interface that is already one coherent context names availability directly.
 - Screens exist for meaningful visual places, not for every Capability.
 - Domains make ten Capabilities easier to scan.
 - Capability Scenarios make every Capability observable. Journeys remain only
   for coherent multi-Capability goals; another complete model may have none.
 - Journey Scenarios record how an attempt ended, not only that one exists. Two
-  variations here are `not-achieved`: a catch-up where synchronization brought
-  nothing, and a share where the owner unlisted the collection first. Because
-  `feed-synchronization` appears only on that failure path, a consumer derives
-  it as a failure-only Capability of `catch-up-on-unread` — visible in the
-  Product Report without being claimed as part of the achieved goal.
+  variations here are `not-achieved`: a catch-up where a refresh brought nothing
+  new, and a share where the owner unlisted the collection first. Within
+  `catch-up-on-unread`, `feed-synchronization` appears only on that failure
+  path, so a consumer derives it as a failure-only Capability of that Journey —
+  visible in the Product Report without being claimed as part of the achieved
+  goal. The same Capability reaches its goal in
+  `follow-and-receive-from-a-source`, so failure-only is a per-Journey
+  projection rather than a verdict on the Capability.
 - Business Rules state durable constraints once across related behavior.
 
 The Blueprint includes a lightweight screen-map Reference to explain visual

@@ -186,9 +186,9 @@ describe('named Product Topology views', () => {
   })
 
   it('shows direct Interfaces delivering Capabilities without fake Experiences', () => {
-    const directInterface = teachingWorkspace.interfaces.find((item: any) => item.experienceIds.length === 0)!
-    const capability = teachingWorkspace.capabilities.find((item: any) => item.interfaceIds.includes(directInterface.id))!
-    const graph = buildProductTopologyGraph(teachingWorkspace, 'delivery-surfaces')
+    const directInterface = workspace.interfaces.find((item: any) => item.experienceIds.length === 0)!
+    const capability = workspace.capabilities.find((item: any) => item.interfaceIds.includes(directInterface.id))!
+    const graph = buildProductTopologyGraph(workspace, 'delivery-surfaces')
 
     expect(graph.edges.some(edge => edge.source === directInterface.key && edge.target === capability.key)).toBe(true)
   })
@@ -207,20 +207,21 @@ describe('named Product Topology views', () => {
 
   /*
     A Screen is authored against the Scenario, not one stage. Anchoring on the
-    final stage claimed a non-visual integration Capability "lands on" a Reader
-    Screen it shares no availability with.
+    final stage claimed a Capability "lands on" a Screen it shares no
+    availability with — here the public reading stage against the owner's
+    private workspace, which is scoped to the personal library.
   */
   it('anchors a Value paths Screen on a stage that actually exposes it', () => {
     const graph = buildProductTopologyGraph(teachingWorkspace, 'value-paths', {
-      journeyId: 'follow-and-receive-from-a-source'
+      journeyId: 'publish-and-share-a-collection'
     })
-    const screen = teachingWorkspace.screens.find((item: any) => item.id === 'source-list')!
+    const screen = teachingWorkspace.screens.find((item: any) => item.id === 'collection-workspace')!
     const landing = graph.edges.find(edge => edge.target === screen.key)!
     const source = graph.nodes.find(node => node.id === landing.source)!
 
     expect(landing.label).toBe('lands on')
-    expect(source.data?.entityId).toBe('source-following')
-    expect(source.data?.entityId).not.toBe('feed-synchronization')
+    expect(source.data?.entityId).toBe('collection-publication')
+    expect(source.data?.entityId).not.toBe('public-collection-reading')
   })
 
   it('runs Value paths stages downward so a short Journey is not a thin ribbon', () => {

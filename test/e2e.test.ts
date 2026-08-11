@@ -52,7 +52,7 @@ describe('end to end on a real git repo', () => {
     })
     expect(parsed.counts).toEqual({
       actors: 2,
-      interfaces: 3,
+      interfaces: 4,
       experiences: 2,
       screens: 1,
       domains: 2,

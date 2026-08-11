@@ -1,22 +1,25 @@
 ---
 kind: edge
 capability: feed-synchronization
-actors: [feed-provider]
+actors: [reader]
 availability:
-  - interface: syndicated-feed-integration
+  - interface: reader-web
+    experiences: [personal-library]
+  - interface: reader-mobile
+    experiences: [personal-library]
 ---
 
 # Preserve the library when a feed is unavailable
 
 ## Trigger
 
-The Product cannot read a followed feed during synchronization.
+The Reader refreshes their sources while one followed feed cannot be read.
 
 ## Steps
 
-1. The Product records that the synchronization attempt could not collect new items
+1. The Product reports that the source could not be reached
 2. Existing items, reading state, saved state, and collections remain unchanged
-3. The source remains followed for a later synchronization attempt
+3. The source remains followed for a later refresh
 
 ## Outcome
 

@@ -1,7 +1,7 @@
 ---
 kind: primary
 journey: follow-and-receive-from-a-source
-actors: [reader, feed-provider]
+actors: [reader]
 result: achieved
 flow:
   - id: follow-source
@@ -11,20 +11,22 @@ flow:
     capability: feed-synchronization
     operation: Collect available new items from the followed feed
 routes:
-  - id: web-to-feed
+  - id: web
     contexts:
       - stage: follow-source
         interface: reader-web
         experience: personal-library
       - stage: collect-items
-        interface: syndicated-feed-integration
-  - id: mobile-to-feed
+        interface: reader-web
+        experience: personal-library
+  - id: mobile
     contexts:
       - stage: follow-source
         interface: reader-mobile
         experience: personal-library
       - stage: collect-items
-        interface: syndicated-feed-integration
+        interface: reader-mobile
+        experience: personal-library
 ---
 
 # Receive items from a new source
@@ -36,9 +38,9 @@ The Reader chooses a valid feed that they want to follow.
 ## Steps
 
 1. The Reader submits the feed address and follows the validated source
-2. The Product requests available items through the feed integration
-3. The Feed provider returns new items for the followed source
-4. The Product adds those items to the Reader's private library
+2. The Reader refreshes their followed sources
+3. The Product reads the followed feed and collects its available new items
+4. The new items enter the Reader's private library
 
 ## Outcome
 

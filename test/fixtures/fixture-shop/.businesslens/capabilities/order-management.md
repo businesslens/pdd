@@ -3,6 +3,7 @@ domain: ordering
 availability:
   - interface: admin-web
     experiences: [admin-console]
+  - interface: operator-cli
 references:
   - kind: code
     role: implementation

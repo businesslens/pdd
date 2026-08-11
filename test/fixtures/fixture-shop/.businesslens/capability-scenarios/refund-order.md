@@ -5,6 +5,7 @@ actors: [store-admin]
 availability:
   - interface: admin-web
     experiences: [admin-console]
+  - interface: operator-cli
 references:
   - kind: code
     role: implementation

@@ -30,6 +30,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- An external system is an Actor only when it **initiates** interaction with
+  the Product, and only then is the surface it arrives through an Interface.
+  Interfaces are inbound by definition; an outbound connection the Product
+  opens to a third party — a polled feed, a payment processor, a mail provider,
+  a model API — is not an Interface and its far side is not an Actor. Model the
+  call inside the Capability that makes it, scope that Capability to the
+  Interfaces where an Actor observes the result, and make its
+  product-significant failure behavior a Capability Scenario. Direction, not
+  ownership, is the axis: the same third party calling the Product back through
+  a webhook is a genuine Actor with a genuine Interface. No entity type, folder
+  schema, parser, or linter behavior changes — `lint` cannot recover direction
+  from the files, so the rule lives in `spec/format.md`, the Product Model
+  docs, and the mapping rubric. See
+  `adr/0011-external-systems-are-actors-only-when-they-initiate.md`.
+- The Content Feed Reader Blueprint applies that rule. It drops the
+  `feed-provider` Actor and the `syndicated-feed-integration` Interface;
+  `feed-synchronization` now lives on the Reader-facing Interfaces where its
+  result is seen, carries the RSS specification as a context Reference, and is
+  triggered by a Reader-initiated refresh on the Source list Screen — a trigger
+  the model previously never stated. Its catch-up failure variation no longer
+  contradicts itself about whether the backlog was unchanged or caught up.
 - **Breaking.** `businesslens/nuxt/report-viewer` now accepts the canonical
   `ProductReportV8` directly and owns the complete Workbench projection and
   topology engine. The lossy `businesslens/report/view-model` export and the
