@@ -1,6 +1,6 @@
 ---
 domains: [collections]
-capabilities: [collection-creation, collection-organization, collection-publication]
+capabilities: [collection-creation, collection-naming, collection-organization, collection-publication]
 journeys: [save-and-organize, publish-and-share-a-collection]
 capabilityScenarios:
   - create-an-owned-collection

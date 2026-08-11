@@ -43,9 +43,9 @@ model is written into `./new-product`.
 `open` uses the same [portable projection](./cli-export.md#portable-export) as
 `export`. Product behavior, relationships, exact availability, Capability
 Scenarios, goal-focused Journeys, Journey Scenario flows, derived Journey
-Capability projections, supporting content, Product routes, commands, non-file
-deep links, and portable References are preserved. Repository-specific
-navigation is removed.
+Capability projections, structured supporting sections, Product routes,
+commands, non-file deep links, and portable References are preserved.
+Repository-specific navigation is removed.
 
 Coverage status, unmapped Product areas, and limitations are preserved. The
 expanded model records that implementation alignment must be verified in its

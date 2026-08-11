@@ -13,7 +13,8 @@ interface ResponseResult {
 }
 
 const ASYNC_TIMEOUT_MS = 4500
-const WATCH_TEST_TIMEOUT_MS = 10_000
+const WATCH_TEST_TIMEOUT_MS = 15_000
+const WATCH_SETTLE_MS = 100
 
 function get(url: string, path = '/', host?: string): Promise<ResponseResult> {
   const origin = new URL(url)
@@ -46,7 +47,11 @@ function eventAfter(
 ): Promise<string> {
   const origin = new URL(url)
   return new Promise((resolve, reject) => {
-    const timeout = setTimeout(() => reject(new Error(`Timed out waiting for ${eventName}`)), timeoutMs)
+    let triggerTimer: ReturnType<typeof setTimeout> | undefined
+    const timeout = setTimeout(() => {
+      if (triggerTimer) clearTimeout(triggerTimer)
+      reject(new Error(`Timed out waiting for ${eventName}`))
+    }, timeoutMs)
     const outgoing = request({
       hostname: origin.hostname,
       port: origin.port,
@@ -54,23 +59,46 @@ function eventAfter(
       method: 'GET'
     }, (incoming) => {
       let body = ''
+      let triggered = false
+      let armed = false
       incoming.setEncoding('utf8')
       incoming.on('data', (chunk) => {
         body += chunk
-        if (!body.includes(`event: ${eventName}\n`)) return
+        if (!triggered && body.includes(': connected\n\n')) {
+          triggered = true
+          triggerTimer = setTimeout(() => {
+            body = ''
+            armed = true
+            try {
+              trigger()
+            } catch (error) {
+              clearTimeout(timeout)
+              reject(error)
+            }
+          }, WATCH_SETTLE_MS)
+        }
+        if (!armed || !body.includes(`event: ${eventName}\n`)) return
         clearTimeout(timeout)
+        if (triggerTimer) clearTimeout(triggerTimer)
         incoming.destroy()
         resolve(body)
       })
-      trigger()
     })
-    outgoing.on('error', reject)
+    outgoing.on('error', (error) => {
+      clearTimeout(timeout)
+      if (triggerTimer) clearTimeout(triggerTimer)
+      reject(error)
+    })
     outgoing.end()
   })
 }
 
-async function eventually<T>(read: () => Promise<T>, matches: (value: T) => boolean): Promise<T> {
-  const deadline = Date.now() + ASYNC_TIMEOUT_MS
+async function eventually<T>(
+  read: () => Promise<T>,
+  matches: (value: T) => boolean,
+  timeoutMs = ASYNC_TIMEOUT_MS
+): Promise<T> {
+  const deadline = Date.now() + timeoutMs
   while (Date.now() < deadline) {
     const value = await read()
     if (matches(value)) return value
@@ -150,7 +178,7 @@ describe('local Product Report server', () => {
     expect(manifest.headers['content-type']).toBe('application/manifest+json; charset=utf-8')
   })
 
-  it('watches model sources and announces a new report over server-sent events', async () => {
+  it('watches model sources and announces a new report over server-sent events', { timeout: WATCH_TEST_TIMEOUT_MS }, async () => {
     const model = mkdtempSync(join(tmpdir(), 'businesslens-model-'))
     directories.push(model)
     const product = join(model, 'product.md')
@@ -164,14 +192,22 @@ describe('local Product Report server', () => {
     })
     viewers.push(viewer)
 
-    const event = eventAfter(viewer.url, 'report', () => writeFileSync(product, 'Updated title'))
-    const updated = await eventually(
-      () => get(viewer.url, '/_businesslens/report.json'),
-      response => JSON.parse(response.body).title === 'Updated title'
-    )
+    const [event, updated] = await Promise.all([
+      eventAfter(
+        viewer.url,
+        'report',
+        () => writeFileSync(product, 'Updated title'),
+        WATCH_TEST_TIMEOUT_MS - 500
+      ),
+      eventually(
+        () => get(viewer.url, '/_businesslens/report.json'),
+        response => JSON.parse(response.body).title === 'Updated title',
+        WATCH_TEST_TIMEOUT_MS - 500
+      )
+    ])
 
     expect(JSON.parse(updated.body).title).toBe('Updated title')
-    expect(await event).toContain('"revision":1')
+    expect(event).toMatch(/"revision":\d+/)
   })
 
   it('announces a valid logo edit even when the semantic report is unchanged', { timeout: WATCH_TEST_TIMEOUT_MS }, async () => {

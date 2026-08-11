@@ -11,7 +11,7 @@ const report: ProductReportV8 = {
   authors: [{ name: 'BusinessLens' }],
   license: 'MIT',
   intent: 'Catch missing files, invalid exports, and host-owned dependency mistakes before publication.',
-  supportingContent: '',
+  supportingSections: [],
   references: [],
   referenceProfile: 'portable',
   tags: ['smoke-test'],
@@ -39,7 +39,7 @@ const report: ProductReportV8 = {
       kind: 'person',
       relationship: 'external',
       intent: '',
-      supportingContent: '',
+      supportingSections: [],
       references: []
     }],
     interfaces: [{
@@ -50,7 +50,7 @@ const report: ProductReportV8 = {
       entryPoints: [],
       capabilityBoundary: 'Hosts the report.',
       intent: '',
-      supportingContent: '',
+      supportingSections: [],
       references: []
     }],
     experiences: [],

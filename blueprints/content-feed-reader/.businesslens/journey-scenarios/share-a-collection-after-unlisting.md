@@ -30,8 +30,7 @@ Visitor opens it.
 1. The Reader publishes the owned collection and shares its public address
 2. The Reader unlists the collection
 3. The Visitor opens the shared address
-4. The Product withholds the collection contents and shows a neutral
-   unavailable state
+4. The Product withholds the collection contents and shows a neutral unavailable state
 
 ## Outcome
 

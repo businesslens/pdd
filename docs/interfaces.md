@@ -51,7 +51,7 @@ Supports customer shopping. It does not expose store administration.
 
 | Field or section | Required | Constraint |
 | --- | --- | --- |
-| `actors` | yes | Name at least one existing Actor allowed to use some part of the Interface. |
+| `actors` | yes | Name at least one existing Actor allowed to use some part of the Interface; do not repeat an ID. |
 | `entryPoints` | no | List Product-facing roots such as `/`, `reader://home`, `product admin`, or `/v1`. |
 | `references` | no | Use the documented [Reference](./references.md) shape. |
 | H1 | yes | Name the Interface. |

@@ -15,3 +15,7 @@ A shopper wants to purchase a suitable product.
 ## Success criterion
 
 A confirmed order exists for the selected product.
+
+## Teaching note
+
+The goal composition deliberately crosses catalog and ordering behavior.

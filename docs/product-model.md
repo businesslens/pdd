@@ -56,12 +56,19 @@ Entity IDs come from lowercase kebab-case filename stems. Only `product.md`
 declares `id:`. Scenario IDs are globally unique across the Capability Scenario
 and Journey Scenario collections.
 
-The first H1 supplies an entity's title. Lead prose normally supplies its
-description. Journeys instead require `## Goal` and `## Success criterion`;
-both Scenario types begin with the required `## Trigger` section. Relations and
-navigation belong in frontmatter; Product meaning belongs in prose. The
-frontmatter schema is a strict allowlist, so `lint` reports unknown keys rather
-than silently ignoring them.
+The first and only H1 supplies an entity's title. Lead prose normally supplies its
+description. Journeys have no lead prose and instead require `## Goal` and
+`## Success criterion`; both Scenario types also have no lead prose and begin
+with the required `## Trigger` section. A recognized H2 may appear only once,
+and Journey-only sections cannot appear on Scenarios or vice versa. Other H2
+sections are preserved as structured supporting sections through export and
+expansion. Lead and H2-section bodies cannot contain another H1 or H2 heading.
+
+Relations and navigation belong in frontmatter; Product meaning belongs in
+prose. Product tags and every relation list contain unique values. Structured
+Steps, Edge cases, Screen information, and Screen actions use one complete list
+item per physical line. The frontmatter schema is a strict allowlist, so `lint`
+reports unknown keys rather than silently ignoring them.
 
 `## Intent` prose explains why a Product or entity exists and which outcome it
 protects. It is optional where documented. A Journey uses required `## Goal`
@@ -167,7 +174,8 @@ The mapped scope and why known gaps remain.
 `method` describes how the model was created or expanded. `sourceAreas` records
 inspected repository areas, `unmapped` names intentionally absent Product
 scope, `limitations` states what could not be established, and the lead prose
-is the rationale. Coverage has no entity counts or Reference-derived fields;
+is the rationale. Coverage accepts no H2 sections. Coverage has no entity
+counts or Reference-derived fields;
 entity totals belong to the Product Report Counts.
 
 Availability and Coverage do not claim implementation status. Every status may

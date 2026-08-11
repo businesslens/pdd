@@ -15,6 +15,24 @@ export interface MarkdownScreenState {
   description: string
 }
 
+export interface MarkdownSupportingSection {
+  heading: string
+  content: string
+}
+
+/** Whether a Markdown fragment contains an unfenced structural H1 or H2. */
+export function containsStructuralHeading(value: string): boolean {
+  let inFence = false
+  for (const line of value.split(/\r?\n/)) {
+    if (/^\s*(```|~~~)/.test(line)) {
+      inFence = !inFence
+    } else if (!inFence && /^#{1,2}\s/.test(line)) {
+      return true
+    }
+  }
+  return false
+}
+
 /**
  * Deterministic parser for the constrained entity-markdown shape:
  * one H1, a lead paragraph, then optional `##` sections.
@@ -79,13 +97,15 @@ export function bulletList(body: string): string[] {
     .filter((item): item is string => Boolean(item))
 }
 
-/** Preserve all unrecognized H2 sections as canonical Markdown. */
-export function supportingContent(doc: MarkdownDoc, recognizedHeadings: string[]): string {
+/** Preserve all unrecognized H2 sections as structured report content. */
+export function supportingSections(
+  doc: MarkdownDoc,
+  recognizedHeadings: string[]
+): MarkdownSupportingSection[] {
   const recognized = new Set(recognizedHeadings.map(heading => heading.toLowerCase()))
   return doc.sections
     .filter(candidate => !recognized.has(candidate.heading.toLowerCase()))
-    .map(candidate => `## ${candidate.heading}${candidate.body ? `\n\n${candidate.body}` : ''}`)
-    .join('\n\n')
+    .map(candidate => ({ heading: candidate.heading, content: candidate.body }))
 }
 
 /**

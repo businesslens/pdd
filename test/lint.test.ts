@@ -331,6 +331,69 @@ Supports order administration without customer shopping.
     expect(errors).toContain('unknown frontmatter key "entryPoints"')
   })
 
+  it('rejects authored content that structured export would otherwise drop or reinterpret', () => {
+    const cwd = fixtureCopy()
+    const journey = join(cwd, '.businesslens/journeys/browse-and-buy.md')
+    writeFileSync(journey, readFileSync(journey, 'utf8')
+      .replace('# Browse and buy\n\n## Goal', '# Browse and buy\n\nLegacy Journey summary.\n\n## Goal')
+      .replace('## Success criterion', '## Outcome\n\nWrong entity shape.\n\n## Success criterion'))
+
+    const scenario = join(cwd, '.businesslens/capability-scenarios/complete-checkout.md')
+    writeFileSync(scenario, readFileSync(scenario, 'utf8')
+      .replace('# Complete checkout\n\n## Trigger', '# Complete checkout\n\nLegacy Scenario summary.\n\n## Trigger')
+      .replace(
+        '1. The cart is validated against the catalog',
+        '1. The cart is validated against the catalog\n   and the continuation would be discarded'
+      )
+      .replace('## Outcome', '## Goal\n\nWrong entity shape.\n\n## Trigger\n\nDuplicate trigger.\n\n## Outcome')
+      .replace(
+        'The order is stored and a confirmation is shown.',
+        'The order is stored and a confirmation is shown.\n\n## Edge cases\n\nNot a bullet item.'
+      )
+      .replace(
+        'Payment recovery remains supporting context rather than another structured field.',
+        '# Nested structural title'
+      ))
+
+    const screen = join(cwd, '.businesslens/screens/product-record.md')
+    writeFileSync(screen, readFileSync(screen, 'utf8').replace(
+      '- Product name and description',
+      '- Product name and description\n  with a continuation that is not a second item'
+    ))
+    const coverage = join(cwd, '.businesslens/coverage.md')
+    writeFileSync(coverage, `${readFileSync(coverage, 'utf8')}\n## Notes\n\nThis section would be dropped.\n`)
+
+    const errors = run(cwd).errors.join('\n')
+    expect(errors.match(/carries no lead paragraph/g)).toHaveLength(2)
+    expect(errors).toContain('"## Outcome" is not allowed on this entity type')
+    expect(errors).toContain('duplicate "## Trigger" section')
+    expect(errors).toContain('"## Goal" is not allowed on this entity type')
+    expect(errors).toContain('"## Steps" must contain only single-line ordered-list items')
+    expect(errors).toContain('"## Edge cases" must contain only single-line bullet-list items')
+    expect(errors).toContain('"## Edge cases" needs at least one bullet item when present')
+    expect(errors).toContain('"## Recovery note" content must not contain an H1 or H2 heading')
+    expect(errors).toContain('"## Information presented" must contain only single-line bullet-list items')
+    expect(errors).toContain('coverage.md: "## Notes" sections are not supported')
+  })
+
+  it('rejects duplicate values in every set-valued frontmatter list', () => {
+    const cwd = fixtureCopy()
+    const product = join(cwd, '.businesslens/product.md')
+    writeFileSync(product, readFileSync(product, 'utf8')
+      .replace('tags: [commerce, fixture]', 'tags: [commerce, fixture, commerce]'))
+    const productInterface = join(cwd, '.businesslens/interfaces/customer-web.md')
+    writeFileSync(productInterface, readFileSync(productInterface, 'utf8')
+      .replace('actors: [shopper]', 'actors: [shopper, shopper]'))
+    const screen = join(cwd, '.businesslens/screens/product-record.md')
+    writeFileSync(screen, readFileSync(screen, 'utf8')
+      .replace('capabilities: [catalog-browsing]', 'capabilities: [catalog-browsing, catalog-browsing]'))
+
+    const errors = run(cwd).errors.join('\n')
+    expect(errors).toContain('product.md: "tags" contains duplicate "commerce"')
+    expect(errors).toContain('"actors" contains duplicate "shopper"')
+    expect(errors).toContain('"capabilities" contains duplicate "catalog-browsing"')
+  })
+
   it('validates Screen relationships and product content', () => {
     const cwd = fixtureCopy()
     writeFileSync(join(cwd, '.businesslens/screens/product-record.md'), `---

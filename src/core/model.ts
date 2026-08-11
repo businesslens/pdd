@@ -10,12 +10,13 @@ import {
   rejectUnknownKeys,
   splitFrontmatter,
   stringField,
-  stringListField
+  stringListField,
+  uniqueStringListField
 } from './frontmatter.js'
 import { stem } from './ids.js'
 import { readProductLogo } from './logo-file.js'
 import {
-  bulletList, decisionPoints, orderedList, parseMarkdown, screenStates, section
+  bulletList, containsStructuralHeading, decisionPoints, orderedList, parseMarkdown, screenStates, section
 } from './markdown.js'
 
 export interface EntityFile {
@@ -343,7 +344,7 @@ export function loadModel(cwd: string): PddModel {
       id: stringField(data, 'id', issues, 'product.md') || '',
       summary: stringField(data, 'summary', issues, 'product.md'),
       category: stringField(data, 'category', issues, 'product.md'),
-      tags: stringListField(data, 'tags', issues, 'product.md'),
+      tags: uniqueStringListField(data, 'tags', issues, 'product.md'),
       authors,
       license: stringField(data, 'license', issues, 'product.md'),
       limitations: stringListField(data, 'limitations', issues, 'product.md'),
@@ -361,14 +362,21 @@ export function loadModel(cwd: string): PddModel {
   if (existsSync(coverageFile)) {
     const source = readFileSync(coverageFile, 'utf8')
     const { data, body } = splitFrontmatter(source, issues, 'coverage.md')
+    const doc = parseMarkdown(body)
     rejectUnknownKeys(data, ['status', 'method', 'sourceAreas', 'unmapped', 'limitations'], issues, 'coverage.md')
+    if (containsStructuralHeading(doc.lead)) {
+      issues.push('coverage.md: rationale must not contain an H1 or H2 heading')
+    }
+    for (const item of doc.sections) {
+      issues.push(`coverage.md: "## ${item.heading}" sections are not supported; keep the rationale in the lead paragraph`)
+    }
     coverage = {
       status: stringField(data, 'status', issues, 'coverage.md') || 'draft',
       method: stringListField(data, 'method', issues, 'coverage.md'),
       sourceAreas: stringListField(data, 'sourceAreas', issues, 'coverage.md'),
       unmapped: stringListField(data, 'unmapped', issues, 'coverage.md'),
       limitations: stringListField(data, 'limitations', issues, 'coverage.md'),
-      rationale: parseMarkdown(body).lead
+      rationale: doc.lead
     }
   } else if (existsSync(root)) {
     issues.push('coverage.md is missing')
@@ -389,7 +397,7 @@ export function loadModel(cwd: string): PddModel {
     const { data, doc, references } = readEntity(file, ['actors', 'entryPoints'], issues)
     return {
       id: stem(name), file, doc, references,
-      actors: stringListField(data, 'actors', issues, file),
+      actors: uniqueStringListField(data, 'actors', issues, file),
       entryPoints: entryPointsField(data, issues, file),
       capabilityBoundary: section(doc, 'Capability boundary') || ''
     }
@@ -404,8 +412,8 @@ export function loadModel(cwd: string): PddModel {
     )
     return {
       id: stem(name), file, doc, references,
-      actors: stringListField(data, 'actors', issues, file),
-      interfaces: stringListField(data, 'interfaces', issues, file),
+      actors: uniqueStringListField(data, 'actors', issues, file),
+      interfaces: uniqueStringListField(data, 'interfaces', issues, file),
       access: stringField(data, 'access', issues, file) || '',
       entryPoints: entryPointsField(data, issues, file),
       capabilityBoundary: section(doc, 'Capability boundary') || ''
@@ -441,9 +449,9 @@ export function loadModel(cwd: string): PddModel {
     return {
       id: stem(name), file, doc, references,
       availability: availabilityField(data, issues, file),
-      capabilities: stringListField(data, 'capabilities', issues, file),
-      capabilityScenarios: stringListField(data, 'capabilityScenarios', issues, file),
-      journeyScenarios: stringListField(data, 'journeyScenarios', issues, file),
+      capabilities: uniqueStringListField(data, 'capabilities', issues, file),
+      capabilityScenarios: uniqueStringListField(data, 'capabilityScenarios', issues, file),
+      journeyScenarios: uniqueStringListField(data, 'journeyScenarios', issues, file),
       entryPoints: entryPointsField(data, issues, file),
       information: bulletList(section(doc, 'Information presented') || ''),
       actions: bulletList(section(doc, 'Available actions') || ''),
@@ -461,11 +469,11 @@ export function loadModel(cwd: string): PddModel {
     )
     return {
       id: stem(name), file, doc, references,
-      domains: stringListField(data, 'domains', issues, file),
-      capabilities: stringListField(data, 'capabilities', issues, file),
-      journeys: stringListField(data, 'journeys', issues, file),
-      capabilityScenarios: stringListField(data, 'capabilityScenarios', issues, file),
-      journeyScenarios: stringListField(data, 'journeyScenarios', issues, file),
+      domains: uniqueStringListField(data, 'domains', issues, file),
+      capabilities: uniqueStringListField(data, 'capabilities', issues, file),
+      journeys: uniqueStringListField(data, 'journeys', issues, file),
+      capabilityScenarios: uniqueStringListField(data, 'capabilityScenarios', issues, file),
+      journeyScenarios: uniqueStringListField(data, 'journeyScenarios', issues, file),
       availability: availabilityField(data, issues, file),
       rationale: section(doc, 'Rationale') || ''
     }
@@ -478,7 +486,7 @@ export function loadModel(cwd: string): PddModel {
       id: stem(name), file, doc, references,
       kind: stringField(data, 'kind', issues, file) || '',
       capability: stringField(data, 'capability', issues, file) || '',
-      actors: stringListField(data, 'actors', issues, file),
+      actors: uniqueStringListField(data, 'actors', issues, file),
       availability: availabilityField(data, issues, file),
       ...readScenarioSections(doc, issues, file)
     }
@@ -489,7 +497,7 @@ export function loadModel(cwd: string): PddModel {
     const { data, doc, references } = readEntity(file, ['actors'], issues)
     return {
       id: stem(name), file, doc, references,
-      actors: stringListField(data, 'actors', issues, file),
+      actors: uniqueStringListField(data, 'actors', issues, file),
       goal: section(doc, 'Goal') || '',
       successCriterion: section(doc, 'Success criterion') || ''
     }
@@ -502,7 +510,7 @@ export function loadModel(cwd: string): PddModel {
       id: stem(name), file, doc, references,
       kind: stringField(data, 'kind', issues, file) || '',
       journey: stringField(data, 'journey', issues, file) || '',
-      actors: stringListField(data, 'actors', issues, file),
+      actors: uniqueStringListField(data, 'actors', issues, file),
       result: stringField(data, 'result', issues, file) || '',
       flow: journeyFlowField(data, issues, file),
       ...readScenarioSections(doc, issues, file)

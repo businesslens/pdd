@@ -81,19 +81,23 @@ The Journey goal is achieved: a reviewable change proposal exists.
 | Filename | yes | Use a globally unique lowercase kebab-case Scenario ID. |
 | `kind` | yes | Name an entry in `taxonomies.yaml`. |
 | `journey` | yes | Name exactly one existing Journey. |
-| `actors` | yes | Name at least one existing Actor, including a Journey Actor. |
+| `actors` | yes | Name at least one unique existing Actor, including a Journey Actor. |
 | `result` | yes | Use `achieved` or `not-achieved`; it is orthogonal to `kind`. |
 | `flow` | yes | Give an ordered non-empty list of existing Capabilities, one-line operations, and exact supported interaction contexts. |
 | `references` | no | Use the documented [Reference](./references.md) shape. |
+| Lead paragraph | no | Start with a named H2; move starting-condition prose into `## Trigger`. |
 | `## Trigger` | yes | Begin with the Actor pursuing the Journey Goal. |
-| `## Steps` | yes | Provide a non-empty ordered list. |
+| `## Steps` | yes | Provide a non-empty ordered list with each item on one physical line. |
 | `## Decision points` | no | Give each H3 decision one Product question and at least two `condition → outcome` branches. |
-| `## Edge cases` | no | Provide a bullet list when present. |
+| `## Edge cases` | no | Provide a non-empty bullet list when present, with each item on one physical line. |
 | `## Outcome` | yes | State whether and why the Journey Goal was achieved or not achieved. |
 
 Business Rules own their Scenario relations; Journey Scenarios do not duplicate
 a `businessRules` list. Screens may name Journey Scenario IDs in which they
 participate.
+
+A Journey Scenario cannot use Journey-only `## Goal` or `## Success criterion`
+sections, and each recognized Scenario H2 may appear only once.
 
 ## Flow
 

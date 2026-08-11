@@ -9,9 +9,9 @@ availability:
 
 # Collection organization
 
-Renames an owned collection and manages the ordered membership of saved items.
+Manages the ordered membership of saved items in an owned collection.
 
 ## Intent
 
 Let a Reader shape saved items into a coherent reading list without conflating
-organization with saving, ownership, or publication.
+organization with saving, naming, ownership, or publication.

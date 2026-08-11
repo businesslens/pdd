@@ -25,7 +25,8 @@ import type {
   ReportJourneyScenario,
   ReportReference,
   ReportScreen,
-  ReportScreenState
+  ReportScreenState,
+  ReportSupportingSection
 } from 'businesslens/report'
 
 export type ReportEntityKind =
@@ -377,6 +378,12 @@ function unique(values: string[]): string[] {
   return [...new Set(values)]
 }
 
+function supportingMarkdown(sections: ReportSupportingSection[]): string {
+  return sections
+    .map(section => `## ${section.heading}${section.content ? `\n\n${section.content}` : ''}`)
+    .join('\n\n')
+}
+
 function uniquePairs(pairs: AvailabilityPair[]): AvailabilityPair[] {
   return [...new Map(pairs.map(pair => [pair.key, pair])).values()]
 }
@@ -533,7 +540,7 @@ export function projectReportWorkspace(report: ProductReportV8): ReportWorkspace
     title: actor.name,
     lead: actor.description,
     intent: actor.intent,
-    supportingContent: actor.supportingContent,
+    supportingContent: supportingMarkdown(actor.supportingSections),
     references: actor.references,
     actorKind: actor.kind,
     relationship: actor.relationship,
@@ -555,7 +562,7 @@ export function projectReportWorkspace(report: ProductReportV8): ReportWorkspace
       title: item.title,
       lead: item.description,
       intent: item.intent,
-      supportingContent: item.supportingContent,
+      supportingContent: supportingMarkdown(item.supportingSections),
       references: item.references,
       actorIds: item.actorIds,
       entryPoints: entryPoints(item.entryPoints, model.interfaces),
@@ -577,7 +584,7 @@ export function projectReportWorkspace(report: ProductReportV8): ReportWorkspace
       title: item.title,
       lead: item.description,
       intent: item.intent,
-      supportingContent: item.supportingContent,
+      supportingContent: supportingMarkdown(item.supportingSections),
       references: item.references,
       actorIds: item.actorIds,
       interfaceIds: item.interfaceIds,
@@ -605,7 +612,7 @@ export function projectReportWorkspace(report: ProductReportV8): ReportWorkspace
       title: screen.title,
       lead: screen.description,
       intent: screen.intent,
-      supportingContent: screen.supportingContent,
+      supportingContent: supportingMarkdown(screen.supportingSections),
       references: screen.references,
       availability,
       capabilityIds: screen.capabilityIds,
@@ -634,7 +641,7 @@ export function projectReportWorkspace(report: ProductReportV8): ReportWorkspace
       title: domain.name,
       lead: domain.description,
       intent: domain.intent,
-      supportingContent: domain.supportingContent,
+      supportingContent: supportingMarkdown(domain.supportingSections),
       references: domain.references,
       colorSlot: domain.colorSlot,
       capabilityIds,
@@ -656,7 +663,7 @@ export function projectReportWorkspace(report: ProductReportV8): ReportWorkspace
       title: capability.title,
       lead: capability.description,
       intent: capability.intent,
-      supportingContent: capability.supportingContent,
+      supportingContent: supportingMarkdown(capability.supportingSections),
       references: capability.references,
       domainId: capability.domainId,
       availability,
@@ -683,7 +690,7 @@ export function projectReportWorkspace(report: ProductReportV8): ReportWorkspace
       title: journey.title,
       lead: journey.goal,
       intent: journey.intent,
-      supportingContent: journey.supportingContent,
+      supportingContent: supportingMarkdown(journey.supportingSections),
       references: journey.references,
       actorIds: journey.actorIds,
       capabilityIds: journey.capabilityIds,
@@ -718,7 +725,7 @@ export function projectReportWorkspace(report: ProductReportV8): ReportWorkspace
       title: scenario.title,
       lead: scenario.trigger,
       intent: scenario.intent,
-      supportingContent: scenario.supportingContent,
+      supportingContent: supportingMarkdown(scenario.supportingSections),
       references: scenario.references,
       scenarioType: 'capability',
       capabilityId: scenario.capabilityId,
@@ -751,7 +758,7 @@ export function projectReportWorkspace(report: ProductReportV8): ReportWorkspace
       title: scenario.title,
       lead: scenario.trigger,
       intent: scenario.intent,
-      supportingContent: scenario.supportingContent,
+      supportingContent: supportingMarkdown(scenario.supportingSections),
       references: scenario.references,
       scenarioType: 'journey',
       capabilityId: '',
@@ -788,7 +795,7 @@ export function projectReportWorkspace(report: ProductReportV8): ReportWorkspace
     title: rule.title,
     lead: rule.statement,
     intent: rule.intent,
-    supportingContent: rule.supportingContent,
+    supportingContent: supportingMarkdown(rule.supportingSections),
     references: rule.references,
     statement: rule.statement,
     rationale: rule.rationale,
@@ -915,7 +922,7 @@ export function projectReportWorkspace(report: ProductReportV8): ReportWorkspace
       authors: report.authors,
       license: report.license,
       intent: report.intent,
-      supportingContent: report.supportingContent,
+      supportingContent: supportingMarkdown(report.supportingSections),
       references: report.references,
       referenceProfile: report.referenceProfile,
       limitations: report.limitations,

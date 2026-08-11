@@ -13,7 +13,11 @@ import {
 import { dirname, isAbsolute, join, resolve } from 'node:path'
 import { stringify } from 'yaml'
 import { writeModelReadme } from '../core/model-readme.js'
-import type { ProductReportV8, ReportAvailability } from '../core/portable.js'
+import type {
+  ProductReportV8,
+  ReportAvailability,
+  ReportSupportingSection
+} from '../core/portable.js'
 import { lintModel } from './lint.js'
 import { loadModel } from '../core/model.js'
 import { parseProductReport, projectPortableReport } from '../core/portable.js'
@@ -76,14 +80,16 @@ function body(
   lead: string,
   intent: string,
   sections: Array<{ heading: string, content: string }>,
-  supportingContent: string
+  supportingSections: ReportSupportingSection[]
 ): string {
   const blocks = [`# ${title}`, lead]
   if (intent) blocks.push(`## Intent\n\n${intent}`)
   for (const item of sections) {
     if (item.content) blocks.push(`## ${item.heading}\n\n${item.content}`)
   }
-  if (supportingContent) blocks.push(supportingContent)
+  for (const item of supportingSections) {
+    blocks.push(`## ${item.heading}${item.content ? `\n\n${item.content}` : ''}`)
+  }
   return `${blocks.filter(Boolean).join('\n\n')}\n`
 }
 
@@ -136,7 +142,7 @@ function writeReport(root: string, report: ProductReportV8): void {
       license: report.license,
       limitations: report.limitations,
       references: references(report.references)
-    })) + body(report.title, report.description, report.intent, [], report.supportingContent)
+    })) + body(report.title, report.description, report.intent, [], report.supportingSections)
   )
   write(
     join(root, 'coverage.md'),
@@ -154,7 +160,7 @@ function writeReport(root: string, report: ProductReportV8): void {
       limitations: report.coverage.limitations.includes(OPEN_COVERAGE_LIMITATION)
         ? [...report.coverage.limitations]
         : [...report.coverage.limitations, OPEN_COVERAGE_LIMITATION]
-    }) + body('Coverage', OPEN_COVERAGE_RATIONALE, '', [], '')
+    }) + body('Coverage', OPEN_COVERAGE_RATIONALE, '', [], [])
   )
 
   for (const actor of report.model.actors) {
@@ -165,7 +171,7 @@ function writeReport(root: string, report: ProductReportV8): void {
         relationship: actor.relationship,
         references: references(actor.references)
       }))
-      + body(actor.name, actor.description, actor.intent, [], actor.supportingContent)
+      + body(actor.name, actor.description, actor.intent, [], actor.supportingSections)
     )
   }
   for (const productInterface of report.model.interfaces) {
@@ -180,7 +186,7 @@ function writeReport(root: string, report: ProductReportV8): void {
         productInterface.description,
         productInterface.intent,
         [{ heading: 'Capability boundary', content: productInterface.capabilityBoundary }],
-        productInterface.supportingContent
+        productInterface.supportingSections
       )
     )
   }
@@ -190,7 +196,7 @@ function writeReport(root: string, report: ProductReportV8): void {
       frontmatter(compactRecord({
         colorSlot: domain.colorSlot,
         references: references(domain.references)
-      })) + body(domain.name, domain.description, domain.intent, [], domain.supportingContent)
+      })) + body(domain.name, domain.description, domain.intent, [], domain.supportingSections)
     )
   }
   for (const experience of report.model.experiences) {
@@ -207,7 +213,7 @@ function writeReport(root: string, report: ProductReportV8): void {
         experience.description,
         experience.intent,
         [{ heading: 'Capability boundary', content: experience.capabilityBoundary }],
-        experience.supportingContent
+        experience.supportingSections
       )
     )
   }
@@ -232,7 +238,7 @@ function writeReport(root: string, report: ProductReportV8): void {
           { heading: 'Product states', content: states },
           { heading: 'Capability boundary', content: screen.capabilityBoundary }
         ],
-        screen.supportingContent
+        screen.supportingSections
       )
     )
   }
@@ -243,7 +249,7 @@ function writeReport(root: string, report: ProductReportV8): void {
         domain: capability.domainId,
         availability: availability(capability.availability),
         references: references(capability.references)
-      })) + body(capability.title, capability.description, capability.intent, [], capability.supportingContent)
+      })) + body(capability.title, capability.description, capability.intent, [], capability.supportingSections)
     )
   }
   for (const rule of report.model.businessRules) {
@@ -262,7 +268,7 @@ function writeReport(root: string, report: ProductReportV8): void {
         rule.statement,
         rule.intent,
         [{ heading: 'Rationale', content: rule.rationale }],
-        rule.supportingContent
+        rule.supportingSections
       )
     )
   }
@@ -300,7 +306,7 @@ function writeReport(root: string, report: ProductReportV8): void {
         '',
         scenario.intent,
         scenarioSections(scenario),
-        scenario.supportingContent
+        scenario.supportingSections
       )
     )
   }
@@ -318,7 +324,7 @@ function writeReport(root: string, report: ProductReportV8): void {
           { heading: 'Goal', content: journey.goal },
           { heading: 'Success criterion', content: journey.successCriterion }
         ],
-        journey.supportingContent
+        journey.supportingSections
       )
     )
   }
@@ -341,7 +347,7 @@ function writeReport(root: string, report: ProductReportV8): void {
         '',
         scenario.intent,
         scenarioSections(scenario),
-        scenario.supportingContent
+        scenario.supportingSections
       )
     )
   }

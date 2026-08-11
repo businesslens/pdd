@@ -1,6 +1,6 @@
 ---
 kind: primary
-capability: collection-organization
+capability: collection-naming
 actors: [reader]
 availability:
   - interface: reader-web

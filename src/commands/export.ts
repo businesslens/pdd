@@ -3,7 +3,7 @@ import type { Availability } from '../core/frontmatter.js'
 import type { ProductReportV8 } from '../core/portable.js'
 import { writeGeneratedFile } from '../core/generated-files.js'
 import { lsFiles } from '../core/git.js'
-import { section, supportingContent } from '../core/markdown.js'
+import { section, supportingSections } from '../core/markdown.js'
 import { loadModel } from '../core/model.js'
 import { resolveModelRoot, type ModelRoot } from '../core/model-root.js'
 import {
@@ -24,7 +24,7 @@ const availability = (items: Availability[]) => [...items]
 function entityContent(entity: EntityFile, recognized: string[]) {
   return {
     intent: section(entity.doc, 'Intent') || '',
-    supportingContent: supportingContent(entity.doc, ['Intent', ...recognized]),
+    supportingSections: supportingSections(entity.doc, ['Intent', ...recognized]),
     references: entity.references.map(reference => ({
       kind: reference.kind,
       role: reference.role,
@@ -60,7 +60,7 @@ export function compileReport(
     authors: model.product.authors,
     license: model.product.license ?? null,
     intent: section(model.product.doc, 'Intent') || '',
-    supportingContent: supportingContent(model.product.doc, ['Intent']),
+    supportingSections: supportingSections(model.product.doc, ['Intent']),
     references: model.product.references.map(reference => ({
       kind: reference.kind,
       role: reference.role,

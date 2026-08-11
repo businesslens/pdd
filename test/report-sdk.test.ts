@@ -34,6 +34,7 @@ describe('report SDK entry point', () => {
       'ProductReportV8Schema',
       'ProductReportSchema',
       'ReportReferenceSchema',
+      'ReportSupportingSectionSchema',
       'ReportInterfaceSchema',
       'ReportAvailabilitySchema',
       'ReportCapabilitySchema',
@@ -123,6 +124,24 @@ describe('projectPortableReport', () => {
       limitations: [],
       rationale: 'The fixture map intentionally covers the whole toy codebase.'
     })
+    expect(report.supportingSections).toEqual([{
+      heading: 'Teaching note',
+      content: 'This supporting section exercises lossless Product Report expansion.'
+    }])
+    expect(report.model.capabilityScenarios.find(item => item.id === 'complete-checkout')?.supportingSections)
+      .toEqual([{
+        heading: 'Recovery note',
+        content: 'Payment recovery remains supporting context rather than another structured field.'
+      }])
+    expect(report.model.journeys[0]!.supportingSections).toEqual([{
+      heading: 'Teaching note',
+      content: 'The goal composition deliberately crosses catalog and ordering behavior.'
+    }])
+    expect(report.model.journeyScenarios.find(item => item.id === 'browse-and-complete-checkout')?.supportingSections)
+      .toEqual([{
+        heading: 'Handoff note',
+        content: 'The report must preserve this supporting context after the structured Outcome.'
+      }])
   })
 
   it('accepts direct Interface availability when no Experiences divide an Interface', () => {
@@ -188,7 +207,7 @@ describe('projectPortableReport', () => {
       outcome: 'The Journey goal is not achieved and the blocked attempt is ready for review.',
       edgeCases: [],
       intent: '',
-      supportingContent: '',
+      supportingSections: [],
       references: []
     })
     withFailure.counts.journeyScenarios += 1
@@ -274,6 +293,70 @@ describe('projectPortableReport', () => {
       { kind: 'visual', role: 'intent', target: 'https://example.com/same' }
     ]
     expect(sdk.validateProductReport(duplicate).join('\n')).toContain('duplicate reference target')
+  })
+
+  it('rejects duplicate IDs in set-valued report relations', () => {
+    const duplicate = structuredClone(report)
+    duplicate.model.interfaces[0]!.actorIds.push(duplicate.model.interfaces[0]!.actorIds[0]!)
+    duplicate.model.screens[0]!.capabilityIds.push(duplicate.model.screens[0]!.capabilityIds[0]!)
+    const issues = sdk.validateProductReport(duplicate).join('\n')
+    expect(issues).toContain('actorIds contains duplicate')
+    expect(issues).toContain('capabilityIds contains duplicate')
+  })
+
+  it('keeps supporting Markdown structural and rejects opaque or conflicting shapes', () => {
+    const conflicting = structuredClone(report)
+    conflicting.model.journeys[0]!.supportingSections = [{
+      heading: 'Goal',
+      content: 'This would collide with the structured Goal.'
+    }]
+    expect(sdk.ProductReportSchema.safeParse(conflicting).success).toBe(true)
+    expect(sdk.validateProductReport(conflicting).join('\n')).toContain(
+      'supporting section "Goal" conflicts with a structured section'
+    )
+
+    const nestedHeading = structuredClone(report)
+    nestedHeading.model.actors[0]!.supportingSections = [{
+      heading: 'Notes',
+      content: '## Injected structure'
+    }]
+    expect(sdk.ProductReportSchema.safeParse(nestedHeading).success).toBe(false)
+
+    const paddedHeading = structuredClone(report)
+    paddedHeading.model.journeys[0]!.supportingSections = [{
+      heading: ' Goal ',
+      content: 'Whitespace must not bypass a structured-heading collision.'
+    }]
+    expect(sdk.ProductReportSchema.safeParse(paddedHeading).success).toBe(false)
+
+    const nestedIntent = structuredClone(report)
+    nestedIntent.intent = '# Injected title'
+    expect(sdk.ProductReportSchema.safeParse(nestedIntent).success).toBe(false)
+
+    const nestedRationale = structuredClone(report)
+    nestedRationale.coverage.rationale = '## Injected coverage section'
+    nestedRationale.model.businessRules[0]!.rationale = '# Injected Rule title'
+    expect(sdk.ProductReportSchema.safeParse(nestedRationale).success).toBe(false)
+
+    const opaque = structuredClone(report) as Record<string, any>
+    opaque.supportingContent = '## Legacy opaque content'
+    expect(sdk.ProductReportSchema.safeParse(opaque).success).toBe(false)
+  })
+
+  it('reports a Journey with no achieved Scenario through semantic validation', () => {
+    const missing = structuredClone(report)
+    missing.model.journeyScenarios = []
+    missing.counts.journeyScenarios = 0
+    missing.model.journeys[0]!.capabilityIds = []
+    missing.model.journeys[0]!.failureOnlyCapabilityIds = []
+    missing.model.journeys[0]!.domainIds = []
+    for (const screen of missing.model.screens) screen.journeyScenarioIds = []
+    for (const rule of missing.model.businessRules) rule.journeyScenarioIds = []
+
+    expect(sdk.ProductReportSchema.safeParse(missing).success).toBe(true)
+    expect(sdk.validateProductReport(missing)).toContain(
+      'journey "browse-and-buy": needs at least one achieved Journey Scenario'
+    )
   })
 
   it('uses a strict reference record and rejects removed fields', () => {

@@ -53,6 +53,22 @@ export function stringListField(data: Record<string, unknown>, key: string, issu
   return value as string[]
 }
 
+/** Parse a set-valued string relation and reject duplicate authored IDs. */
+export function uniqueStringListField(
+  data: Record<string, unknown>,
+  key: string,
+  issues: string[],
+  label: string
+): string[] {
+  const values = stringListField(data, key, issues, label)
+  const seen = new Set<string>()
+  for (const value of values) {
+    if (seen.has(value)) issues.push(`${label}: "${key}" contains duplicate "${value}"`)
+    seen.add(value)
+  }
+  return values
+}
+
 export interface CompactEntryPoint {
   type: string
   path: string

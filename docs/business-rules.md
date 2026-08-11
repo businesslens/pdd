@@ -56,7 +56,7 @@ Confirmation is the durable customer-facing boundary of checkout.
 
 | Field or section | Required | Constraint |
 | --- | --- | --- |
-| `domains`, `capabilities`, `journeys`, `capabilityScenarios`, `journeyScenarios`, `availability` | one or more | Give the Rule scope through valid entity IDs or Interface availability scopes. |
+| `domains`, `capabilities`, `journeys`, `capabilityScenarios`, `journeyScenarios`, `availability` | one or more | Give the Rule scope through unique valid entity IDs or Interface availability scopes. |
 | `references` | no | Use the documented [Reference](./references.md) shape. |
 | H1 and lead paragraph | yes | Name the Rule and state its durable assertion. |
 | `## Intent` | no | Explain the outcome the Rule protects. |

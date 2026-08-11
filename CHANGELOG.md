@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   scenario, journey, and named-topology experience over one complete report
   projection. It renders every entity collection, availability scope, entry
   point, screen state, scenario step, decision point, edge case, reference,
-  supporting-content field, coverage statement, and derived backlink.
+  supporting section, coverage statement, and derived backlink.
 - A shared Vue Flow foundation in the report-viewer layer (`@vue-flow/core` with a
   `@dagrejs/dagre` layered layout, both optional peer dependencies): one
   entity box and one container box for nine visual categories (with both
@@ -55,6 +55,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   validates Scenario Actors against exact contexts, and constrains Screen
   Scenario relations. The version identifiers remain unchanged because neither
   unreleased contract needs a compatibility reader.
+- **Breaking.** Product Report v8 stores authored supporting H2 sections as
+  ordered `{ heading, content }` records instead of an opaque
+  `supportingContent` string. Schema 4 lint now rejects Journey and Scenario
+  lead prose, duplicate or conflicting structured sections, malformed
+  structured lists, and duplicate values in set-valued relation lists rather
+  than allowing authored content to disappear or inflate derived relations.
 - **Breaking.** Folder schema 4 and Product Report v8 make Experiences
   optional. Interfaces with no Experience contexts use direct availability;
   Interfaces with declared Experiences continue to require exact,
@@ -63,7 +69,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The Content Feed Reader catalog Blueprint now models three distinct access
   boundaries: Reader work, Visitor consumption, and external feed collection.
   It has three Actors, three Interfaces, two Experiences, three Domains, five
-  Screens, nine Capabilities, twenty-four Capability Scenarios, four Journeys,
+  Screens, ten Capabilities, twenty-four Capability Scenarios, four Journeys,
   eight Journey Scenarios, and four Business Rules. Domains group Capabilities
   on one axis — Sources, Reading, Collections — so no Capability needs its
   Domain's definition widened to admit it.

@@ -61,8 +61,8 @@ Supports operational administration. It does not grant customer privileges.
 
 | Field or section | Required | Constraint |
 | --- | --- | --- |
-| `actors` | yes | Name at least one existing Actor. Every Actor must be supported by every declared Interface. |
-| `interfaces` | yes | Name at least one existing Interface offering the Experience. |
+| `actors` | yes | Name at least one unique existing Actor. Every Actor must be supported by every declared Interface. |
+| `interfaces` | yes | Name at least one unique existing Interface offering the Experience. |
 | `access` | yes | Use `public`, `authenticated`, or `restricted`. |
 | `entryPoints` | no | Key Product entry points by an Interface declared in `interfaces`. |
 | `references` | no | Use the documented [Reference](./references.md) shape. |

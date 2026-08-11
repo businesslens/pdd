@@ -83,14 +83,14 @@ The Screen does not change product or inventory data.
 | Field or section | Required | Constraint |
 | --- | --- | --- |
 | `availability` | yes | Declare at least one valid Interface scope, naming Experiences when that Interface uses them. |
-| `capabilities` | yes | Name at least one existing Capability; each must support every Screen availability scope. |
-| `capabilityScenarios` | no | Name local Capability cases in which the Screen participates. |
-| `journeyScenarios` | no | Name end-to-end Journey variations in which the Screen participates. |
+| `capabilities` | yes | Name at least one unique existing Capability; each must support every Screen availability scope. |
+| `capabilityScenarios` | no | Name unique local Capability cases in which the Screen participates. |
+| `journeyScenarios` | no | Name unique end-to-end Journey variations in which the Screen participates. |
 | `entryPoints` | no | Key public routes or deep links by an Interface in Screen availability. |
 | `references` | no | Use the documented [Reference](./references.md) shape. |
 | H1 and lead paragraph | yes | Name the Screen and describe its Product purpose. |
-| `## Information presented` | yes | Include at least one meaningful bullet item. |
-| `## Available actions` | no | Include a bullet list when present. |
+| `## Information presented` | yes | Include at least one meaningful bullet item, with each item on one physical line. |
+| `## Available actions` | no | Include a bullet list when present, with each item on one physical line. |
 | `## Product states` | no | Give every H3 state a description. |
 | `## Capability boundary` | yes | State what the Screen supports and excludes. |
 

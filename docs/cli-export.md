@@ -36,6 +36,11 @@ not travel with the Product contract:
 report. See [Coverage](./product-model.md#coverage) and
 [References](./references.md) for those contracts.
 
+Product and entity records carry unrecognized authored H2 sections as ordered
+`supportingSections` records with separate `heading` and `content` fields. The
+report never flattens them into an opaque Markdown string, so `blueprint open`
+can restore the same section boundaries.
+
 ## Where it lands
 
 - [`contribute`](./cli-contribute.md) exports one and opens a pull request

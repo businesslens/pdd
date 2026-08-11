@@ -3,7 +3,7 @@ import { formatCodeTarget, parseCodeTarget } from '../src/core/coderefs.js'
 import { entryPointsField, referencesField, repositoryReferencePath, splitFrontmatter } from '../src/core/frontmatter.js'
 import { isId, slugify, stem } from '../src/core/ids.js'
 import {
-  bulletList, decisionPoints, orderedList, parseMarkdown, screenStates, section, supportingContent
+  bulletList, decisionPoints, orderedList, parseMarkdown, screenStates, section, supportingSections
 } from '../src/core/markdown.js'
 
 describe('ids', () => {
@@ -141,7 +141,9 @@ describe('markdown', () => {
       ]
     }])
     expect(issues).toEqual([])
-    expect(supportingContent(withDecision, ['Decision points'])).toBe('## Notes\n\nKeep this context.')
+    expect(supportingSections(withDecision, ['Decision points'])).toEqual([
+      { heading: 'Notes', content: 'Keep this context.' }
+    ])
   })
   it('parses embedded Screen product states', () => {
     const body = '### Available\n\nThe item can be selected.\n\n### Unavailable\n\nThe reason is shown.'

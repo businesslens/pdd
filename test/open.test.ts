@@ -112,7 +112,17 @@ describe('open report', () => {
     expect(readFileSync(
       join(target, '.businesslens/journey-scenarios/browse-and-complete-checkout.md'),
       'utf8'
+    )).toContain('## Handoff note')
+    expect(readFileSync(
+      join(target, '.businesslens/journey-scenarios/browse-and-complete-checkout.md'),
+      'utf8'
     )).toContain('operation: Find and select an available product')
+    expect(readFileSync(join(target, '.businesslens/journeys/browse-and-buy.md'), 'utf8'))
+      .toContain('## Teaching note')
+    expect(readFileSync(join(target, '.businesslens/capability-scenarios/complete-checkout.md'), 'utf8'))
+      .toContain('## Recovery note')
+    expect(readFileSync(join(target, '.businesslens/product.md'), 'utf8'))
+      .toContain('## Teaching note')
     expect(readFileSync(join(target, '.businesslens/screens/product-record.md'), 'utf8'))
       .toContain('## Product states')
   })

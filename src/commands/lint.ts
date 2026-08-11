@@ -3,7 +3,7 @@ import type { PddModel } from '../core/model.js'
 import { repositoryReferencePath } from '../core/frontmatter.js'
 import { lsFiles } from '../core/git.js'
 import { isId } from '../core/ids.js'
-import { section } from '../core/markdown.js'
+import { containsStructuralHeading, section, type MarkdownDoc } from '../core/markdown.js'
 import { loadModel } from '../core/model.js'
 import { resolveModelRoot } from '../core/model-root.js'
 
@@ -45,10 +45,52 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     if (!lead) errors.push(`${label}: missing lead paragraph (description)`)
   }
 
+  const validateSections = (
+    label: string,
+    doc: MarkdownDoc,
+    recognized: string[],
+    forbidden: string[] = []
+  ) => {
+    const recognizedSet = new Set(recognized.map(heading => heading.toLowerCase()))
+    const forbiddenSet = new Set(forbidden.map(heading => heading.toLowerCase()))
+    const seen = new Set<string>()
+    if (containsStructuralHeading(doc.lead)) {
+      errors.push(`${label}: lead paragraph must not contain an H1 or H2 heading`)
+    }
+    for (const item of doc.sections) {
+      const normalized = item.heading.toLowerCase()
+      if (recognizedSet.has(normalized)) {
+        if (seen.has(normalized)) errors.push(`${label}: duplicate "## ${item.heading}" section`)
+        seen.add(normalized)
+      }
+      if (forbiddenSet.has(normalized)) {
+        errors.push(`${label}: "## ${item.heading}" is not allowed on this entity type`)
+      }
+      if (containsStructuralHeading(item.body)) {
+        errors.push(`${label}: "## ${item.heading}" content must not contain an H1 or H2 heading`)
+      }
+    }
+  }
+
+  const validateListSection = (
+    label: string,
+    doc: MarkdownDoc,
+    heading: string,
+    kind: 'ordered' | 'bullet'
+  ) => {
+    const body = section(doc, heading)
+    if (body === undefined) return
+    const pattern = kind === 'ordered' ? /^\s*\d+[.)]\s+\S.*$/ : /^\s*[-*]\s+\S.*$/
+    if (body.split('\n').some(line => line.trim() && !pattern.test(line))) {
+      errors.push(`${label}: "## ${heading}" must contain only single-line ${kind}-list items`)
+    }
+  }
+
   if (model.product.id && !isId(model.product.id)) errors.push('product.md: id must be lowercase kebab-case')
   if (model.product.id.length > 64) errors.push('product.md: id must be at most 64 characters')
   if (!model.product.id) errors.push('product.md: missing id')
   requireTitle('product.md', model.product.doc.title, model.product.doc.lead)
+  validateSections('product.md', model.product.doc, ['Intent'])
   if (model.product.summary && (/\r|\n/.test(model.product.summary) || model.product.summary.length > 400)) {
     errors.push('product.md: summary must be a single line with at most 400 characters')
   }
@@ -162,6 +204,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
 
   for (const actor of model.actors) {
     requireTitle(actor.file, actor.doc.title, actor.doc.lead)
+    validateSections(actor.file, actor.doc, ['Intent'])
     if (!ACTOR_KINDS.has(actor.kind)) {
       errors.push(`${actor.file}: kind "${actor.kind}" must be person|system`)
     }
@@ -172,6 +215,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
 
   for (const productInterface of model.interfaces) {
     requireTitle(productInterface.file, productInterface.doc.title, productInterface.doc.lead)
+    validateSections(productInterface.file, productInterface.doc, ['Intent', 'Capability boundary'])
     if (!productInterface.actors.length) errors.push(`${productInterface.file}: needs at least one actor`)
     for (const actorId of productInterface.actors) {
       if (!actorIds.has(actorId)) errors.push(`${productInterface.file}: references missing actor "${actorId}"`)
@@ -183,6 +227,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
 
   for (const experience of model.experiences) {
     requireTitle(experience.file, experience.doc.title, experience.doc.lead)
+    validateSections(experience.file, experience.doc, ['Intent', 'Capability boundary'])
     if (!ACCESS_MODES.has(experience.access)) {
       errors.push(`${experience.file}: access "${experience.access}" must be public|authenticated|restricted`)
     }
@@ -209,11 +254,15 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     validateEntryPointInterfaces(experience.file, experience.entryPoints, new Set(experience.interfaces))
   }
 
-  for (const domain of model.domains) requireTitle(domain.file, domain.doc.title, domain.doc.lead)
+  for (const domain of model.domains) {
+    requireTitle(domain.file, domain.doc.title, domain.doc.lead)
+    validateSections(domain.file, domain.doc, ['Intent'])
+  }
 
   const capabilityPairs = new Map<string, Set<string>>()
   for (const capability of model.capabilities) {
     requireTitle(capability.file, capability.doc.title, capability.doc.lead)
+    validateSections(capability.file, capability.doc, ['Intent'])
     if (!capability.availability.length) errors.push(`${capability.file}: needs at least one availability scope`)
     if (capability.domain && !domainIds.has(capability.domain)) {
       errors.push(`${capability.file}: references missing domain "${capability.domain}"`)
@@ -255,19 +304,34 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
 
   const validateScenarioSections = (scenario: {
     file: string
-    doc: { title: string }
+    doc: { title: string, lead: string, sections: Array<{ heading: string, body: string }> }
     kind: string
     trigger: string
     steps: string[]
     outcome: string
+    edgeCases: string[]
   }) => {
     if (!scenario.doc.title) errors.push(`${scenario.file}: missing H1 title`)
+    if (scenario.doc.lead) {
+      errors.push(`${scenario.file}: carries no lead paragraph; move that content into "## Trigger" or another explicit section`)
+    }
+    validateSections(
+      scenario.file,
+      scenario.doc,
+      ['Intent', 'Trigger', 'Steps', 'Decision points', 'Outcome', 'Edge cases'],
+      ['Goal', 'Success criterion']
+    )
+    validateListSection(scenario.file, scenario.doc, 'Steps', 'ordered')
+    validateListSection(scenario.file, scenario.doc, 'Edge cases', 'bullet')
     if (!scenario.kind || !kindIds.has(scenario.kind)) {
       errors.push(`${scenario.file}: kind "${scenario.kind}" is not defined in taxonomies.yaml`)
     }
     if (!scenario.trigger) errors.push(`${scenario.file}: missing "## Trigger" section`)
     if (!scenario.steps.length) errors.push(`${scenario.file}: "## Steps" needs at least one ordered item`)
     if (!scenario.outcome) errors.push(`${scenario.file}: missing "## Outcome" section`)
+    if (section(scenario.doc, 'Edge cases') !== undefined && !scenario.edgeCases.length) {
+      errors.push(`${scenario.file}: "## Edge cases" needs at least one bullet item when present`)
+    }
   }
 
   const seenScenarioIds = new Map<string, string>()
@@ -312,6 +376,15 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
   const journeysById = new Map(model.journeys.map(journey => [journey.id, journey]))
   for (const journey of model.journeys) {
     if (!journey.doc.title) errors.push(`${journey.file}: missing H1 title`)
+    if (journey.doc.lead) {
+      errors.push(`${journey.file}: carries no lead paragraph; move that content into "## Goal"`)
+    }
+    validateSections(
+      journey.file,
+      journey.doc,
+      ['Intent', 'Goal', 'Success criterion'],
+      ['Trigger', 'Steps', 'Decision points', 'Outcome', 'Edge cases']
+    )
     if (!journey.actors.length) errors.push(`${journey.file}: needs at least one actor`)
     for (const actorId of journey.actors) {
       if (!actorIds.has(actorId)) errors.push(`${journey.file}: references missing actor "${actorId}"`)
@@ -367,6 +440,13 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
 
   for (const screen of model.screens) {
     requireTitle(screen.file, screen.doc.title, screen.doc.lead)
+    validateSections(
+      screen.file,
+      screen.doc,
+      ['Intent', 'Information presented', 'Available actions', 'Product states', 'Capability boundary']
+    )
+    validateListSection(screen.file, screen.doc, 'Information presented', 'bullet')
+    validateListSection(screen.file, screen.doc, 'Available actions', 'bullet')
     if (!screen.availability.length) errors.push(`${screen.file}: needs at least one availability scope`)
     const pairs = validateAvailability(screen.file, screen.availability)
     if (!screen.capabilities.length) errors.push(`${screen.file}: needs at least one capability`)
@@ -432,6 +512,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
 
   for (const rule of model.businessRules) {
     requireTitle(rule.file, rule.doc.title, rule.doc.lead)
+    validateSections(rule.file, rule.doc, ['Intent', 'Rationale'])
     if (
       !rule.domains.length
       && !rule.capabilities.length

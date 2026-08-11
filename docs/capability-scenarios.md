@@ -85,16 +85,19 @@ The repository is unchanged and the contributor receives a permission error.
 | Filename | yes | Use a globally unique lowercase kebab-case Scenario ID. |
 | `kind` | yes | Name an entry in `taxonomies.yaml`. |
 | `capability` | yes | Name exactly one existing Capability. |
-| `actors` | yes | Name at least one existing Actor involved in the case. |
+| `actors` | yes | Name at least one unique existing Actor involved in the case. |
 | `availability` | yes | Select at least one exact context already declared by the Capability. |
 | `references` | no | Use the documented [Reference](./references.md) shape. |
+| Lead paragraph | no | Start with a named H2; move starting-condition prose into `## Trigger`. |
 | `## Trigger` | yes | State the observable starting condition. |
-| `## Steps` | yes | Provide a non-empty ordered list. |
+| `## Steps` | yes | Provide a non-empty ordered list with each item on one physical line. |
 | `## Decision points` | no | Give each H3 decision one Product question and at least two `condition → outcome` branches. |
-| `## Edge cases` | no | Provide a bullet list when present. |
+| `## Edge cases` | no | Provide a non-empty bullet list when present, with each item on one physical line. |
 | `## Outcome` | yes | State one local observable result of the Capability. |
 
 A Capability Scenario cannot declare `journey`, `result`, or `flow`.
+It cannot use Journey-only `## Goal` or `## Success criterion` sections, and
+each recognized Scenario H2 may appear only once.
 Business Rules own their Scenario relations; Capability Scenarios do not
 duplicate a `businessRules` list. Screens may name Capability Scenario IDs in
 which they participate.

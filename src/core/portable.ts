@@ -1,5 +1,6 @@
 import * as z from 'zod'
 import { parseCodeTarget } from './coderefs.js'
+import { containsStructuralHeading } from './markdown.js'
 
 export const REPORT_SCHEMA_VERSION = '8.0.0'
 
@@ -9,20 +10,11 @@ const SingleLineTextSchema = z.string().min(1)
   .refine(value => value.trim().length > 0, 'Expected non-whitespace text')
   .refine(value => !/[\r\n]/.test(value), 'Expected a single line')
 
-function containsStructuralHeading(value: string): boolean {
-  let inFence = false
-  for (const line of value.split(/\r?\n/)) {
-    if (/^\s*(```|~~~)/.test(line)) {
-      inFence = !inFence
-    } else if (!inFence && /^#{1,2}\s/.test(line)) {
-      return true
-    }
-  }
-  return false
-}
-
 const RequiredMarkdownFragmentSchema = z.string().min(1)
   .refine(value => value.trim().length > 0, 'Expected non-whitespace text')
+  .refine(value => !containsStructuralHeading(value), 'Markdown fragment must not contain H1 or H2 headings')
+
+const MarkdownFragmentSchema = z.string()
   .refine(value => !containsStructuralHeading(value), 'Markdown fragment must not contain H1 or H2 headings')
 
 function validHttpUrl(value: string): boolean {
@@ -66,9 +58,14 @@ export const ReportReferenceSchema = z.strictObject({
   }
 })
 
+export const ReportSupportingSectionSchema = z.strictObject({
+  heading: SingleLineTextSchema.refine(value => value === value.trim(), 'Expected no surrounding whitespace'),
+  content: MarkdownFragmentSchema
+})
+
 const EntityContentSchema = {
-  intent: z.string(),
-  supportingContent: z.string(),
+  intent: MarkdownFragmentSchema,
+  supportingSections: z.array(ReportSupportingSectionSchema),
   references: z.array(ReportReferenceSchema)
 }
 
@@ -189,7 +186,7 @@ export const ReportJourneySchema = z.strictObject({
   goal: RequiredMarkdownFragmentSchema,
   successCriterion: RequiredMarkdownFragmentSchema,
   actorIds: z.array(IdSchema).min(1),
-  capabilityIds: z.array(IdSchema).min(2),
+  capabilityIds: z.array(IdSchema),
   failureOnlyCapabilityIds: z.array(IdSchema),
   domainIds: z.array(IdSchema),
   ...EntityContentSchema
@@ -241,7 +238,7 @@ export const ReportBusinessRuleSchema = z.strictObject({
   id: IdSchema,
   title: SingleLineTextSchema,
   statement: RequiredMarkdownFragmentSchema,
-  rationale: z.string(),
+  rationale: MarkdownFragmentSchema,
   domainIds: z.array(IdSchema),
   capabilityIds: z.array(IdSchema),
   journeyIds: z.array(IdSchema),
@@ -257,7 +254,7 @@ export const ReportCoverageSchema = z.strictObject({
   sourceAreas: z.array(z.string()),
   unmapped: z.array(z.string()),
   limitations: z.array(z.string()),
-  rationale: z.string()
+  rationale: MarkdownFragmentSchema
 })
 
 export const ProductReportV8Schema = z.strictObject({
@@ -269,8 +266,8 @@ export const ProductReportV8Schema = z.strictObject({
   category: IdSchema.max(60).nullable(),
   authors: z.array(ReportAuthorSchema),
   license: z.string().regex(/^[A-Za-z0-9][A-Za-z0-9.+-]*$/).max(80).nullable(),
-  intent: z.string(),
-  supportingContent: z.string(),
+  intent: MarkdownFragmentSchema,
+  supportingSections: z.array(ReportSupportingSectionSchema),
   references: z.array(ReportReferenceSchema),
   referenceProfile: z.enum(['workspace', 'portable']),
   tags: z.array(z.string().min(1).max(48)).max(24),
@@ -318,6 +315,7 @@ export type ReportJourneyFlowItem = z.infer<typeof ReportJourneyFlowItemSchema>
 export type ReportJourneyScenario = z.infer<typeof ReportJourneyScenarioSchema>
 export type ReportBusinessRule = z.infer<typeof ReportBusinessRuleSchema>
 export type ReportReference = z.infer<typeof ReportReferenceSchema>
+export type ReportSupportingSection = z.infer<typeof ReportSupportingSectionSchema>
 
 function duplicateIssues(label: string, ids: string[]): string[] {
   const seen = new Set<string>()
@@ -327,6 +325,33 @@ function duplicateIssues(label: string, ids: string[]): string[] {
     seen.add(id)
   }
   return [...duplicates].sort().map(id => `${label}: duplicate id "${id}"`)
+}
+
+function requireUniqueValues(
+  issues: string[],
+  label: string,
+  relation: string,
+  values: string[]
+): void {
+  const seen = new Set<string>()
+  for (const value of values) {
+    if (seen.has(value)) issues.push(`${label}: ${relation} contains duplicate "${value}"`)
+    seen.add(value)
+  }
+}
+
+function validateSupportingSections(
+  issues: string[],
+  label: string,
+  sections: ReportSupportingSection[],
+  reservedHeadings: string[]
+): void {
+  const reserved = new Set(reservedHeadings.map(heading => heading.toLowerCase()))
+  for (const item of sections) {
+    if (reserved.has(item.heading.trim().toLowerCase())) {
+      issues.push(`${label}: supporting section "${item.heading}" conflicts with a structured section`)
+    }
+  }
 }
 
 function missingRelation(
@@ -438,6 +463,9 @@ export function validateProductReport(report: ProductReportV8): string[] {
   const journeyScenarioIds = new Set(model.journeyScenarios.map(item => item.id))
   const kindIds = new Set(model.taxonomies.scenarioKinds.map(item => item.id))
 
+  requireUniqueValues(issues, 'product', 'tags', report.tags)
+  validateSupportingSections(issues, 'product', report.supportingSections, ['Intent'])
+
   const collections: Array<[string, string[]]> = [
     ['actors', model.actors.map(item => item.id)],
     ['interfaces', model.interfaces.map(item => item.id)],
@@ -458,10 +486,32 @@ export function validateProductReport(report: ProductReportV8): string[] {
     if (previous) issues.push(`journey scenario "${scenario.id}": id already used by ${previous}`)
   }
 
+  for (const actor of model.actors) {
+    validateSupportingSections(issues, `actor "${actor.id}"`, actor.supportingSections, ['Intent'])
+  }
+  for (const domain of model.domains) {
+    validateSupportingSections(issues, `domain "${domain.id}"`, domain.supportingSections, ['Intent'])
+  }
+
   for (const productInterface of model.interfaces) {
+    requireUniqueValues(issues, `interface "${productInterface.id}"`, 'actorIds', productInterface.actorIds)
+    validateSupportingSections(
+      issues,
+      `interface "${productInterface.id}"`,
+      productInterface.supportingSections,
+      ['Intent', 'Capability boundary']
+    )
     missingRelation(issues, `interface "${productInterface.id}"`, 'actor', productInterface.actorIds, actorIds)
   }
   for (const experience of model.experiences) {
+    requireUniqueValues(issues, `experience "${experience.id}"`, 'actorIds', experience.actorIds)
+    requireUniqueValues(issues, `experience "${experience.id}"`, 'interfaceIds', experience.interfaceIds)
+    validateSupportingSections(
+      issues,
+      `experience "${experience.id}"`,
+      experience.supportingSections,
+      ['Intent', 'Capability boundary']
+    )
     missingRelation(issues, `experience "${experience.id}"`, 'actor', experience.actorIds, actorIds)
     missingRelation(issues, `experience "${experience.id}"`, 'interface', experience.interfaceIds, interfaceIds)
     for (const interfaceId of experience.interfaceIds) {
@@ -480,6 +530,12 @@ export function validateProductReport(report: ProductReportV8): string[] {
     )
   }
   for (const capability of model.capabilities) {
+    validateSupportingSections(
+      issues,
+      `capability "${capability.id}"`,
+      capability.supportingSections,
+      ['Intent']
+    )
     if (capability.domainId && !domainIds.has(capability.domainId)) {
       issues.push(`capability "${capability.id}": references missing domain "${capability.domainId}"`)
     }
@@ -525,6 +581,13 @@ export function validateProductReport(report: ProductReportV8): string[] {
   const coveredCapabilities = new Set<string>()
   for (const scenario of model.capabilityScenarios) {
     const label = `capability scenario "${scenario.id}"`
+    requireUniqueValues(issues, label, 'actorIds', scenario.actorIds)
+    validateSupportingSections(
+      issues,
+      label,
+      scenario.supportingSections,
+      ['Intent', 'Trigger', 'Steps', 'Decision points', 'Outcome', 'Edge cases', 'Goal', 'Success criterion']
+    )
     if (!kindIds.has(scenario.kindId)) issues.push(`${label}: references missing scenario kind "${scenario.kindId}"`)
     if (!capabilityIds.has(scenario.capabilityId)) {
       issues.push(`${label}: references missing capability "${scenario.capabilityId}"`)
@@ -554,6 +617,13 @@ export function validateProductReport(report: ProductReportV8): string[] {
   const journeyScenarioFlow = new Map<string, Array<{ capabilityId: string, pairs: Set<string> }>>()
   for (const scenario of model.journeyScenarios) {
     const label = `journey scenario "${scenario.id}"`
+    requireUniqueValues(issues, label, 'actorIds', scenario.actorIds)
+    validateSupportingSections(
+      issues,
+      label,
+      scenario.supportingSections,
+      ['Intent', 'Trigger', 'Steps', 'Decision points', 'Outcome', 'Edge cases', 'Goal', 'Success criterion']
+    )
     const journey = journeysById.get(scenario.journeyId)
     if (!journey) issues.push(`${label}: references missing journey "${scenario.journeyId}"`)
     if (!kindIds.has(scenario.kindId)) issues.push(`${label}: references missing scenario kind "${scenario.kindId}"`)
@@ -586,6 +656,16 @@ export function validateProductReport(report: ProductReportV8): string[] {
 
   for (const journey of model.journeys) {
     const label = `journey "${journey.id}"`
+    requireUniqueValues(issues, label, 'actorIds', journey.actorIds)
+    requireUniqueValues(issues, label, 'capabilityIds', journey.capabilityIds)
+    requireUniqueValues(issues, label, 'failureOnlyCapabilityIds', journey.failureOnlyCapabilityIds)
+    requireUniqueValues(issues, label, 'domainIds', journey.domainIds)
+    validateSupportingSections(
+      issues,
+      label,
+      journey.supportingSections,
+      ['Intent', 'Goal', 'Success criterion', 'Trigger', 'Steps', 'Decision points', 'Outcome', 'Edge cases']
+    )
     missingRelation(issues, label, 'actor', journey.actorIds, actorIds)
     const scenarios = model.journeyScenarios.filter(scenario => scenario.journeyId === journey.id)
     const achieved = scenarios.filter(scenario => scenario.result === 'achieved')
@@ -608,6 +688,15 @@ export function validateProductReport(report: ProductReportV8): string[] {
 
   for (const screen of model.screens) {
     const label = `screen "${screen.id}"`
+    requireUniqueValues(issues, label, 'capabilityIds', screen.capabilityIds)
+    requireUniqueValues(issues, label, 'capabilityScenarioIds', screen.capabilityScenarioIds)
+    requireUniqueValues(issues, label, 'journeyScenarioIds', screen.journeyScenarioIds)
+    validateSupportingSections(
+      issues,
+      label,
+      screen.supportingSections,
+      ['Intent', 'Information presented', 'Available actions', 'Product states', 'Capability boundary']
+    )
     const pairs = availabilityPairs(issues, label, screen.availability, interfaceIds, experiencesById)
     missingRelation(issues, label, 'capability', screen.capabilityIds, capabilityIds)
     missingRelation(issues, label, 'Capability Scenario', screen.capabilityScenarioIds, capabilityScenarioIds)
@@ -647,6 +736,12 @@ export function validateProductReport(report: ProductReportV8): string[] {
 
   for (const rule of model.businessRules) {
     const label = `business rule "${rule.id}"`
+    requireUniqueValues(issues, label, 'domainIds', rule.domainIds)
+    requireUniqueValues(issues, label, 'capabilityIds', rule.capabilityIds)
+    requireUniqueValues(issues, label, 'journeyIds', rule.journeyIds)
+    requireUniqueValues(issues, label, 'capabilityScenarioIds', rule.capabilityScenarioIds)
+    requireUniqueValues(issues, label, 'journeyScenarioIds', rule.journeyScenarioIds)
+    validateSupportingSections(issues, label, rule.supportingSections, ['Intent', 'Rationale'])
     missingRelation(issues, label, 'domain', rule.domainIds, domainIds)
     missingRelation(issues, label, 'capability', rule.capabilityIds, capabilityIds)
     missingRelation(issues, label, 'journey', rule.journeyIds, journeyIds)

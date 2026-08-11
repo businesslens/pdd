@@ -77,14 +77,16 @@ A reviewable change proposal exists for the repository.
 
 | Field or section | Required | Constraint |
 | --- | --- | --- |
-| `actors` | yes | Name at least one existing Actor who pursues the Goal. |
+| `actors` | yes | Name at least one unique existing Actor who pursues the Goal. |
 | `references` | no | Use the documented [Reference](./references.md) shape. |
 | H1 | yes | Name the coherent Actor goal rather than one route or variation. |
+| Lead paragraph | no | Start with a named H2; move goal prose into `## Goal`. |
 | `## Goal` | yes | State the stable Actor intent. |
 | `## Success criterion` | yes | State how achievement is recognized without prescribing a route. |
 
-A Journey does not declare `availability`, `entryPoints`, Trigger, Steps, decisions, a
-concrete Outcome, authored Capability list, or authored Scenario list.
+A Journey does not declare `availability`, `entryPoints`, Trigger, Steps,
+decisions, a concrete Outcome, authored Capability list, or authored Scenario
+list. `## Goal` and `## Success criterion` may each appear only once.
 Capabilities, Domains, Interfaces, and Experiences are derived from concrete
 Journey Scenario flow entries. Product routes remain on Interfaces,
 Experiences, and Screens.

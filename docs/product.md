@@ -63,13 +63,17 @@ Let shoppers move from discovery to a confirmed order with confidence.
 | `id` | yes | Use lowercase kebab-case with at most 64 characters. The Product ID may differ from the repository name. |
 | `summary` | no | Supply a single-line short description up to 400 characters. Reports fall back to the lead description when omitted. |
 | `category` | no | Use a lowercase kebab-case Product classification. |
-| `tags` | no | List Product classification tags. |
+| `tags` | no | List unique Product classification tags. |
 | `authors` | no | List attribution records with a required `name` and optional HTTP(S) `url`. |
 | `license` | no | Use one SPDX license identifier such as `MIT`. |
 | `limitations` | no | State known Product boundaries. |
 | `references` | no | Use the documented [Reference](./references.md) shape. |
 | H1 and lead paragraph | yes | Name and describe the Product. |
 | `## Intent` | no | Explain the outcome the Product shape protects. |
+
+Unrecognized H2 sections are kept in order as structured supporting sections
+when the model is exported and expanded. A recognized H2 such as `## Intent`
+may appear only once.
 
 ## Visual identity
 

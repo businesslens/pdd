@@ -39,3 +39,7 @@ The shopper wants to find and purchase an available product.
 ## Outcome
 
 The Journey goal is achieved: a confirmed order exists for the selected product.
+
+## Handoff note
+
+The report must preserve this supporting context after the structured Outcome.

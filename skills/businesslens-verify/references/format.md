@@ -24,9 +24,13 @@
 
 IDs are lowercase kebab-case filename stems. Capability Scenario and Journey
 Scenario IDs share one global namespace. Only `product.md` declares `id:`. The
-first H1 is the title. Most entities use lead prose as their description;
-Journeys and both Scenario types instead use required named sections. Put
-relations and navigation in frontmatter and Product meaning in prose.
+first and only H1 is the title. Most entities use lead prose as their description;
+Journeys and both Scenario types instead use required named sections and must
+not contain lead prose. Put relations and navigation in frontmatter and Product
+meaning in prose. Product tags and every relation ID list contain unique
+values. Each recognized H2 appears at most once; unrecognized H2 sections are
+preserved as structured supporting content. Lead and section-body fragments do
+not contain another H1 or H2.
 
 ## Required shapes
 
@@ -55,11 +59,13 @@ relations and navigation in frontmatter and Product meaning in prose.
   optional `capabilityScenarios`, `journeyScenarios`, and Interface-keyed Product
   entry points; H1, lead, bullet `## Information presented`, optional bullet
   `## Available actions`, optional H3 `## Product states`, and
-  `## Capability boundary`. The whole collection is optional.
+  `## Capability boundary`. Each information or action item occupies one
+  physical line. The whole collection is optional.
 - Business Rule: one or more relations across `domains`, `capabilities`,
   `journeys`, `capabilityScenarios`, `journeyScenarios`, or `availability`; H1
   and lead assertion; optional `## Rationale`.
-- Journey: at least one `actor`, H1, `## Goal`, and `## Success criterion`. A
+- Journey: at least one unique `actor`, H1, no lead prose, `## Goal`, and
+  `## Success criterion`. A
   Journey is a stable goal, not a route or Capability wrapper. Every Journey
   needs at least one achieved Journey Scenario. It has no `entryPoints`; resolve
   presentation routes from the first flow item of achieved Scenarios and the
@@ -70,10 +76,14 @@ relations and navigation in frontmatter and Product meaning in prose.
   `availability` supported by that Capability. An achieved Scenario traverses
   at least two distinct Capabilities.
 - `coverage.md`: `status`, `method`, `sourceAreas`, `unmapped`, `limitations`,
-  H1, and rationale. Status is model breadth only: `draft|partial|complete`.
+  H1, and lead rationale with no H2 sections. Status is model breadth only:
+  `draft|partial|complete`.
 
 Both Scenario types have no lead prose and require `## Trigger`, ordered
-`## Steps`, and `## Outcome`. Optional `## Edge cases` is a bullet list.
+`## Steps`, and `## Outcome`. Optional `## Edge cases` is a non-empty bullet
+list. Every Steps or Edge cases item occupies one physical line. Journey-only
+Goal and Success criterion sections are invalid on Scenarios, Scenario-only
+sections are invalid on Journeys, and every recognized H2 appears at most once.
 Optional `## Decision points` uses an H3 title, a question, and at least two
 `condition → outcome` branches that converge on the Scenario's one result. A
 branch that changes the Capability sequence or terminal result is a separate

@@ -16,3 +16,7 @@ A tiny webshop where shoppers browse a catalog and buy products, and store admin
 ## Intent
 
 Exercise the complete BusinessLens report contract with a small deterministic product.
+
+## Teaching note
+
+This supporting section exercises lossless Product Report expansion.

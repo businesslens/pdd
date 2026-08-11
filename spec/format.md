@@ -59,16 +59,32 @@ still belongs to your SDD tool of choice and may be attached through
   `id:` names the Product Model (it may differ from the repo name) and is
   limited to 64 characters for portability across BusinessLens consumers.
 - **H1 = title/name.** The first `# Heading` in the body is the entity's
-  title (actors and domains call it `name`).
+  title (actors and domains call it `name`) and is the file's only H1. Lead and
+  section-body Markdown fragments cannot contain another H1 or H2; an H2 begins
+  a new section instead.
 - **Lead paragraph = description.** Prose between the H1 and the first `##`
   heading is the description for actors, domains, experiences, and the product.
   Journeys and both Scenario types instead use the required structured sections
-  specified below.
+  specified below and must not carry lead prose.
 - **Frontmatter = relations and navigation only.** Never prose.
 - **Intent and Goal = recognized prose sections.** `## Intent` explains why the
   product or entity exists and which outcome it protects. `## Goal` states the
   stable Actor intent of a Journey. Both are structured prose, not separate
   entities.
+- **Structured sections are unambiguous.** A recognized H2 may appear only once.
+  Journey-only sections (`## Goal`, `## Success criterion`) are invalid on both
+  Scenario types, and Scenario-only sections (`## Trigger`, `## Steps`,
+  `## Decision points`, `## Outcome`, `## Edge cases`) are invalid on Journeys.
+  Unrecognized H2 sections are supporting content and retain their heading and
+  body through report export and expansion.
+- **Structured list items are single-line.** Every item in `## Steps`,
+  `## Edge cases`, `## Information presented`, and `## Available actions` must
+  occupy one physical line. Prose and continuation lines are invalid because
+  they cannot be represented as report list items.
+- **Set-valued lists are unique.** Product `tags` and every frontmatter relation
+  list contain no duplicate value. Ordered content lists such as Steps and
+  Coverage prose are not relation sets and may repeat when the meaning calls
+  for it.
 - Scenario IDs are globally unique across `capability-scenarios/` and
   `journey-scenarios/`.
 
@@ -162,8 +178,8 @@ Kept in the repo as supporting context.
 ```
 
 `## Intent` is compiled into the report's product intent. Other unrecognized
-sections are preserved as supporting Markdown so a report can be expanded
-without silently losing authored context.
+sections are preserved as ordered `{ heading, content }` supporting sections so
+a report can be expanded without silently losing authored context.
 
 The Product frontmatter may also carry portable identity and attribution used
 by every report host. `summary` is a single-line short description (400
@@ -529,8 +545,9 @@ A shopper wants to purchase a suitable product.
 A confirmed order exists for the selected product.
 ```
 
-`actors` is a non-empty list of the Actors who pursue the goal, not every system
-that participates in its implementation.
+`actors` is a non-empty unique list of the Actors who pursue the goal, not every
+system that participates in its implementation. A Journey has no lead prose;
+its first content after the H1 is an H2 section.
 
 `## Goal` states the stable Actor intent. `## Success criterion` states how an
 achieved attempt is recognized without prescribing one route. `references` is
@@ -619,9 +636,10 @@ Business Rules own its Rule relations, so it does not duplicate Rule IDs.
 
 ### Scenario sections
 
-Both Scenario types require non-empty `## Trigger`, `## Steps`, and `## Outcome`
-sections. `## Steps` is an ordered list with at least one item. `## Edge cases`
-is an optional bullet list.
+Both Scenario types have no lead prose and require non-empty `## Trigger`,
+`## Steps`, and `## Outcome` sections. `## Steps` is an ordered list with at
+least one single-line item. `## Edge cases` is an optional non-empty bullet list
+whose items are also single-line.
 
 `## Decision points` is optional. Each decision uses an H3 title, a non-empty
 question paragraph, then at least two bullet branches. Each branch uses
@@ -761,6 +779,9 @@ Summary, not Coverage. Coverage has no reference counts and is never inferred
 from `references`. The linter checks authored entities and relationships; it
 does not compile, publish, or semantically verify the model.
 
+Coverage accepts one H1 and its lead rationale only. It has no H2 sections;
+put structured assessment data in the defined frontmatter fields.
+
 `status` describes **model breadth**, never implementation or verification:
 
 - `draft` — the model itself is still being authored or reviewed.
@@ -786,9 +807,28 @@ files are derived artifacts and must not be edited or committed.
 
 `build/report.json` is a Product Report with `schemaVersion: "8.0.0"`. It
 contains the product entities, relationships, intent, portable references,
-supporting content, identity, attribution, entity counts, and coverage needed
-to reconstruct the model. Its top-level `summary` is the short Product
-description; its top-level `counts` object contains entity totals.
+structured supporting sections, identity, attribution, entity counts, and
+coverage needed to reconstruct the model. Its top-level `summary` is the short
+Product description; its top-level `counts` object contains entity totals.
+
+Product and entity records store unrecognized authored H2 sections as an
+ordered `supportingSections` array:
+
+```json
+{
+  "supportingSections": [
+    { "heading": "Anything else", "content": "Kept as supporting context." }
+  ]
+}
+```
+
+The raw `supportingContent` string field is not part of Product Report v8.
+Supporting headings are trimmed, single-line, and cannot collide,
+case-insensitively, with structured headings for their entity type. Intent and
+supporting-section content are Markdown fragments and cannot contain H1 or H2
+headings. These
+constraints make expansion structural rather than dependent on reparsing an
+opaque Markdown string.
 
 Product Report v8 stores `capabilityScenarios` and `journeyScenarios` as
 separate entity collections and separate counts. It has no generic `scenarios`
@@ -806,13 +846,13 @@ catalog listing state, pricing, or entitlement data. A report that has been
 through `export` is a Blueprint.
 
 The report schema accepts only content that can expand into canonical entity
-Markdown: titles and list items are single-line, required descriptions and
-behavior sections are non-empty, Capability Scenario availability and Journey
-Scenario flow entries resolve to existing entities, every achieved Journey
-Scenario uses at least two distinct Capabilities, and Interface/Capability
-consistency holds. Product Report v8 is the only accepted report version.
-No report profile requires a reference. Present references remain subject to
-the same strict shape and target rules.
+Markdown: titles and list items are single-line, set-valued relation arrays are
+unique, required descriptions and behavior sections are non-empty, Capability
+Scenario availability and Journey Scenario flow entries resolve to existing
+entities, every achieved Journey Scenario uses at least two distinct
+Capabilities, and Interface/Capability consistency holds. Product Report v8 is
+the only accepted report version. No report profile requires a reference.
+Present references remain subject to the same strict shape and target rules.
 
 ### Portable projection
 
@@ -843,8 +883,9 @@ intent/context references are kept. A value with no path separator at all,
 such as a CLI entry point, is not a path and is kept.
 
 Author-written prose — `method`, `unmapped`, `limitations`, `rationale`,
-`intent`, and `supportingContent` — is never rewritten. It carries product
-meaning and belongs to the author, so keep repository internals out of it.
+`intent`, and each `supportingSections[].content` value — is never rewritten.
+It carries product meaning and belongs to the author, so keep repository
+internals out of it.
 
 The projection is idempotent and does not mutate its input. Because both the
 framework and the catalog apply this same exported function, contributors and

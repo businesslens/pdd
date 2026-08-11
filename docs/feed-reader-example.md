@@ -51,8 +51,8 @@ implementation detail: only the external feed contract earns an Interface.
 | Interfaces | 3 — Reader web, Reader mobile, Syndicated feed | Human interaction and external collection are independently supported contracts |
 | Experiences | 2 — Personal library, Public reading | Authenticated work spans web and mobile; public reading is web-only; the feed Interface is direct |
 | Screens | 5 — Source list, Unread library, Saved items, Collection workspace, Public collection | Visual places include the missing route back to saved content without inventing a Screen for background synchronization |
-| Domains | 3 — Sources, Reading, Collections | Stable areas of Product responsibility group nine Capabilities on one consistent axis |
-| Capabilities | 9 | Source intake, private reading work, collection ownership, publication, and public consumption remain separate promises |
+| Domains | 3 — Sources, Reading, Collections | Stable areas of Product responsibility group ten Capabilities on one consistent axis |
+| Capabilities | 10 | Source intake, private reading work, collection ownership, naming, publication, and public consumption remain separate promises |
 | Capability Scenarios | 24 | Each Capability has direct observable acceptance coverage |
 | Journeys | 4 | Reader goals cover source intake, catch-up, organization, and cross-Actor sharing |
 | Journey Scenarios | 8 | Concrete variations own Capability selection, order, context, and cross-Interface handoffs; six reach the goal and two record why it was not reached |
@@ -90,8 +90,8 @@ private reading state, and saving is an optional branch rather than a fake
 second step added only to make a Journey valid.
 
 The collection slice makes the same distinction. `item-saving` keeps an item;
-`collection-creation` establishes a named owned list;
-`collection-organization` changes its ordered membership; and
+`collection-creation` establishes a named owned list; `collection-naming`
+changes its name; `collection-organization` changes its ordered membership; and
 `collection-publication` controls public availability. `save-and-organize`
 composes the private operations. `publish-and-share-a-collection` continues
 across the public boundary so the model shows the handoff from owner publication
@@ -148,7 +148,7 @@ uses the optional entities because each earns its place:
 - Experiences separate authenticated private work from anonymous public
   reading. Direct feed availability shows how an Interface works without one.
 - Screens exist for meaningful visual places, not for every Capability.
-- Domains make nine Capabilities easier to scan.
+- Domains make ten Capabilities easier to scan.
 - Capability Scenarios make every Capability observable. Journeys remain only
   for coherent multi-Capability goals; another complete model may have none.
 - Journey Scenarios record how an attempt ended, not only that one exists. Two

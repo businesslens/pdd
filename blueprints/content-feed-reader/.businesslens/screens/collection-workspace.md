@@ -4,7 +4,7 @@ availability:
     experiences: [personal-library]
   - interface: reader-mobile
     experiences: [personal-library]
-capabilities: [collection-creation, collection-organization, collection-publication]
+capabilities: [collection-creation, collection-naming, collection-organization, collection-publication]
 capabilityScenarios:
   - create-an-owned-collection
   - rename-an-owned-collection
@@ -53,5 +53,5 @@ The owner sees the public link and can revoke it immediately.
 
 ## Capability boundary
 
-Only the owner changes the collection. Creation, organization, publication,
-and item saving remain separate Product decisions.
+Only the owner changes the collection. Creation, naming, organization,
+publication, and item saving remain separate Product decisions.

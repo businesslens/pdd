@@ -7,6 +7,7 @@
 
 export {
   REPORT_SCHEMA_VERSION,
+  ReportSupportingSectionSchema,
   ReportReferenceSchema,
   TaxonomyEntrySchema,
   ReportCountsSchema,
@@ -57,5 +58,6 @@ export type {
   ReportJourneyScenario,
   ReportBusinessRule,
   ReportDecisionPoint,
-  ReportReference
+  ReportReference,
+  ReportSupportingSection
 } from './core/portable.js'

@@ -40,3 +40,7 @@ How does the shopper authorize payment?
 ## Outcome
 
 The order is stored and a confirmation is shown.
+
+## Recovery note
+
+Payment recovery remains supporting context rather than another structured field.
