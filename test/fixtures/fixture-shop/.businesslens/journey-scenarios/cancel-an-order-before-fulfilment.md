@@ -4,25 +4,38 @@ journey: browse-and-buy
 actors: [shopper, store-admin]
 result: not-achieved
 flow:
-  - capability: catalog-browsing
+  - id: select-product
+    capability: catalog-browsing
     operation: Find and select an available product
-    availability:
-      - interface: customer-web
-        experiences: [storefront]
-      - interface: customer-mobile
-        experiences: [storefront]
-  - capability: checkout
+  - id: place-order
+    capability: checkout
     operation: Submit payment and place the order
-    availability:
-      - interface: customer-web
-        experiences: [storefront]
-      - interface: customer-mobile
-        experiences: [storefront]
-  - capability: order-management
+  - id: cancel-order
+    capability: order-management
     operation: Cancel the order during stock reconciliation
-    availability:
-      - interface: admin-web
-        experiences: [admin-console]
+routes:
+  - id: web-to-admin
+    contexts:
+      - stage: select-product
+        interface: customer-web
+        experience: storefront
+      - stage: place-order
+        interface: customer-web
+        experience: storefront
+      - stage: cancel-order
+        interface: admin-web
+        experience: admin-console
+  - id: mobile-to-admin
+    contexts:
+      - stage: select-product
+        interface: customer-mobile
+        experience: storefront
+      - stage: place-order
+        interface: customer-mobile
+        experience: storefront
+      - stage: cancel-order
+        interface: admin-web
+        experience: admin-console
 ---
 
 # Cancel an order before fulfilment

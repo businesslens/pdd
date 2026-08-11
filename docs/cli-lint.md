@@ -16,16 +16,20 @@ Lint is deterministic and read-only. It checks:
 
 - required files, including the orientation README and generated-path
   `.gitignore`, plus frontmatter allowlists, IDs, titles, and behavior sections;
-- Actor classifications; Interface and Experience relations; exact
+- Actor classifications; Interface and Experience relations, including full
+  Interface Actor coverage by Experience contexts; exact
   availability; Capability, Domain, Business Rule, Journey, both Scenario
   types, and taxonomy relationships;
 - Capability Scenario ownership, Actors, exact availability, and direct
   coverage for every Capability, warning for gaps in `draft` or `partial` and
   failing them in `complete`;
-- a Goal and Success criterion plus at least one achieved multi-Capability
-  Journey Scenario for every Journey;
-- Journey Scenario Actors, results, ordered flow operations, distinct Capability counts,
-  and exact Interface/Experience contexts;
+- a Goal and Success criterion plus achieved multi-Capability Scenario coverage
+  for every Journey Actor;
+- Journey Scenario Actors, results, ordered flow operations, complete correlated
+  routes, route entry Actors, distinct Capability counts, and exact
+  Interface/Experience contexts;
+- typed Business Rule targets, optional context narrowing, and redundant
+  parent/Scenario targets;
 - access modes, both Scenario step/decision shapes, and globally unique
   Scenario IDs across both collections;
 - strict Reference shape, kinds, roles, targets, and duplicate targets;

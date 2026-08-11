@@ -27,7 +27,8 @@
 - Capabilities are durable Product abilities, not UI labels, Journey titles,
   or sequence steps. Declare exact intended Interface scopes, narrowed by
   Experience where those contexts exist.
-- Business rules are reusable policies or invariants.
+- Business rules are reusable policies or invariants with typed behavioral or
+  exact-context targets. Derive Domain backlinks instead of targeting Domains.
 - Capability Scenarios express observable acceptance for one Capability and
   exact Actor contexts. Every Capability needs at least one; cover primary,
   permission, validation, conflict, and external-failure behavior where the
@@ -35,8 +36,9 @@
 - Journeys express stable user or operator goals whose achieved paths cross at
   least two distinct Capabilities. Do not create a Journey to house acceptance
   for one Capability.
-- Journey Scenarios express observable paths through a goal. Record each stage
-  as a Capability, one-line operation, and exact availability.
+- Journey Scenarios express observable paths through a goal. Record locally
+  identified Capability stages with one-line operations, then correlate one
+  exact context per stage in every supported route.
 - Use a decision point only when branches converge on the same result without
   changing the Capability sequence. Otherwise write separate Scenarios.
 - Record intent where the reason behind a boundary or behavior will guide

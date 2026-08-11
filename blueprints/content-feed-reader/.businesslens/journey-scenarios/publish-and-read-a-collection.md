@@ -4,18 +4,29 @@ journey: publish-and-share-a-collection
 actors: [reader, visitor]
 result: achieved
 flow:
-  - capability: collection-publication
+  - id: publish-collection
+    capability: collection-publication
     operation: Publish the owned collection to a stable web address
-    availability:
-      - interface: reader-web
-        experiences: [personal-library]
-      - interface: reader-mobile
-        experiences: [personal-library]
-  - capability: public-collection-reading
+  - id: read-collection
+    capability: public-collection-reading
     operation: Open and read the published collection
-    availability:
-      - interface: reader-web
-        experiences: [public-reading]
+routes:
+  - id: publish-on-web
+    contexts:
+      - stage: publish-collection
+        interface: reader-web
+        experience: personal-library
+      - stage: read-collection
+        interface: reader-web
+        experience: public-reading
+  - id: publish-on-mobile
+    contexts:
+      - stage: publish-collection
+        interface: reader-mobile
+        experience: personal-library
+      - stage: read-collection
+        interface: reader-web
+        experience: public-reading
 ---
 
 # Publish and read a collection

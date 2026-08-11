@@ -82,15 +82,30 @@ export interface CapabilityScenarioEntity extends ScenarioEntity {
 }
 
 export interface JourneyFlowItem {
+  id: string
   capability: string
   operation: string
-  availability: Availability[]
+}
+
+export interface ExactContext {
+  interface: string
+  experience?: string
+}
+
+export interface JourneyRouteContext extends ExactContext {
+  stage: string
+}
+
+export interface JourneyRoute {
+  id: string
+  contexts: JourneyRouteContext[]
 }
 
 export interface JourneyScenarioEntity extends ScenarioEntity {
   journey: string
   result: string
   flow: JourneyFlowItem[]
+  routes: JourneyRoute[]
 }
 
 export interface JourneyEntity extends EntityFile {
@@ -100,14 +115,27 @@ export interface JourneyEntity extends EntityFile {
 }
 
 export interface BusinessRuleEntity extends EntityFile {
-  domains: string[]
-  capabilities: string[]
-  journeys: string[]
-  capabilityScenarios: string[]
-  journeyScenarios: string[]
-  availability: Availability[]
+  appliesTo: BusinessRuleTarget[]
   rationale: string
 }
+
+export type BusinessRuleEntityTargetType =
+  | 'capability'
+  | 'capability-scenario'
+  | 'journey'
+  | 'journey-scenario'
+
+export interface BusinessRuleEntityTarget {
+  type: BusinessRuleEntityTargetType
+  id: string
+  contexts: ExactContext[]
+}
+
+export interface BusinessRuleContextTarget extends ExactContext {
+  type: 'context'
+}
+
+export type BusinessRuleTarget = BusinessRuleEntityTarget | BusinessRuleContextTarget
 
 export interface ScenarioKind {
   id: string
@@ -205,14 +233,117 @@ function journeyFlowField(
       continue
     }
     const item = raw as Record<string, unknown>
-    rejectUnknownKeys(item, ['capability', 'operation', 'availability'], issues, itemLabel)
+    rejectUnknownKeys(item, ['id', 'capability', 'operation'], issues, itemLabel)
     flow.push({
+      id: stringField(item, 'id', issues, itemLabel) || '',
       capability: stringField(item, 'capability', issues, itemLabel) || '',
-      operation: stringField(item, 'operation', issues, itemLabel) || '',
-      availability: availabilityField(item, issues, itemLabel)
+      operation: stringField(item, 'operation', issues, itemLabel) || ''
     })
   }
   return flow
+}
+
+function exactContextField(
+  raw: unknown,
+  issues: string[],
+  label: string,
+  allowedExtra: string[] = []
+): ExactContext | undefined {
+  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
+    issues.push(`${label}: context must be a mapping`)
+    return undefined
+  }
+  const item = raw as Record<string, unknown>
+  rejectUnknownKeys(item, ['interface', 'experience', ...allowedExtra], issues, label)
+  const interfaceId = stringField(item, 'interface', issues, label) || ''
+  const experience = stringField(item, 'experience', issues, label)
+  return { interface: interfaceId, ...(experience ? { experience } : {}) }
+}
+
+function journeyRoutesField(
+  data: Record<string, unknown>,
+  issues: string[],
+  label: string
+): JourneyRoute[] {
+  const value = data.routes
+  if (value === undefined || value === null) return []
+  if (!Array.isArray(value)) {
+    issues.push(`${label}: "routes" must be a list`)
+    return []
+  }
+  const routes: JourneyRoute[] = []
+  for (const [routeIndex, rawRoute] of value.entries()) {
+    const routeLabel = `${label}: route ${routeIndex + 1}`
+    if (typeof rawRoute !== 'object' || rawRoute === null || Array.isArray(rawRoute)) {
+      issues.push(`${routeLabel} must be a mapping`)
+      continue
+    }
+    const route = rawRoute as Record<string, unknown>
+    rejectUnknownKeys(route, ['id', 'contexts'], issues, routeLabel)
+    const rawContexts = route.contexts
+    const contexts: JourneyRouteContext[] = []
+    if (!Array.isArray(rawContexts)) {
+      issues.push(`${routeLabel}: "contexts" must be a list`)
+    } else {
+      for (const [contextIndex, rawContext] of rawContexts.entries()) {
+        const contextLabel = `${routeLabel}: context ${contextIndex + 1}`
+        const parsed = exactContextField(rawContext, issues, contextLabel, ['stage'])
+        if (!parsed || typeof rawContext !== 'object' || rawContext === null || Array.isArray(rawContext)) continue
+        const stage = stringField(rawContext as Record<string, unknown>, 'stage', issues, contextLabel) || ''
+        contexts.push({ stage, ...parsed })
+      }
+    }
+    routes.push({ id: stringField(route, 'id', issues, routeLabel) || '', contexts })
+  }
+  return routes
+}
+
+function businessRuleTargetsField(
+  data: Record<string, unknown>,
+  issues: string[],
+  label: string
+): BusinessRuleTarget[] {
+  const value = data.appliesTo
+  if (value === undefined || value === null) return []
+  if (!Array.isArray(value)) {
+    issues.push(`${label}: "appliesTo" must be a list`)
+    return []
+  }
+  const targets: BusinessRuleTarget[] = []
+  for (const [index, raw] of value.entries()) {
+    const targetLabel = `${label}: appliesTo item ${index + 1}`
+    if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
+      issues.push(`${targetLabel} must be a mapping`)
+      continue
+    }
+    const target = raw as Record<string, unknown>
+    const type = stringField(target, 'type', issues, targetLabel) || ''
+    if (type === 'context') {
+      rejectUnknownKeys(target, ['type', 'interface', 'experience'], issues, targetLabel)
+      const parsed = exactContextField(target, issues, targetLabel, ['type'])
+      if (parsed) targets.push({ type: 'context', ...parsed })
+      continue
+    }
+    rejectUnknownKeys(target, ['type', 'id', 'contexts'], issues, targetLabel)
+    const rawContexts = target.contexts
+    const contexts: ExactContext[] = []
+    if (rawContexts !== undefined && rawContexts !== null) {
+      if (!Array.isArray(rawContexts) || rawContexts.length === 0) {
+        issues.push(`${targetLabel}: "contexts" must be a non-empty list when present`)
+      } else {
+        for (const [contextIndex, rawContext] of rawContexts.entries()) {
+          const parsed = exactContextField(rawContext, issues, `${targetLabel}: context ${contextIndex + 1}`)
+          if (parsed) contexts.push(parsed)
+        }
+      }
+    }
+    targets.push({
+      type: type as BusinessRuleEntityTargetType,
+      id: stringField(target, 'id', issues, targetLabel) || '',
+      contexts
+    })
+  }
+  return targets
 }
 
 /** Load the strict schema 4 .businesslens/ folder, collecting parse issues. */
@@ -464,17 +595,12 @@ export function loadModel(cwd: string): PddModel {
     const file = join(root, 'business-rules', name)
     const { data, doc, references } = readEntity(
       file,
-      ['domains', 'capabilities', 'journeys', 'capabilityScenarios', 'journeyScenarios', 'availability'],
+      ['appliesTo'],
       issues
     )
     return {
       id: stem(name), file, doc, references,
-      domains: uniqueStringListField(data, 'domains', issues, file),
-      capabilities: uniqueStringListField(data, 'capabilities', issues, file),
-      journeys: uniqueStringListField(data, 'journeys', issues, file),
-      capabilityScenarios: uniqueStringListField(data, 'capabilityScenarios', issues, file),
-      journeyScenarios: uniqueStringListField(data, 'journeyScenarios', issues, file),
-      availability: availabilityField(data, issues, file),
+      appliesTo: businessRuleTargetsField(data, issues, file),
       rationale: section(doc, 'Rationale') || ''
     }
   })
@@ -505,7 +631,7 @@ export function loadModel(cwd: string): PddModel {
 
   const journeyScenarios: JourneyScenarioEntity[] = listMarkdown(join(root, 'journey-scenarios')).map((name) => {
     const file = join(root, 'journey-scenarios', name)
-    const { data, doc, references } = readEntity(file, ['kind', 'journey', 'actors', 'result', 'flow'], issues)
+    const { data, doc, references } = readEntity(file, ['kind', 'journey', 'actors', 'result', 'flow', 'routes'], issues)
     return {
       id: stem(name), file, doc, references,
       kind: stringField(data, 'kind', issues, file) || '',
@@ -513,6 +639,7 @@ export function loadModel(cwd: string): PddModel {
       actors: uniqueStringListField(data, 'actors', issues, file),
       result: stringField(data, 'result', issues, file) || '',
       flow: journeyFlowField(data, issues, file),
+      routes: journeyRoutesField(data, issues, file),
       ...readScenarioSections(doc, issues, file)
     }
   })

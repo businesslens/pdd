@@ -18,7 +18,7 @@ import type {
   ScenarioView,
   ScreenView
 } from '../utils/reportWorkspace'
-import { ENTITY_KIND_META, isScenarioKind, resolveEntity, resolveScenarios } from '../utils/reportWorkspace'
+import { ENTITY_KIND_META, isScenarioKind, resolveEntity } from '../utils/reportWorkspace'
 
 const props = defineProps<{
   workspace: ReportWorkspace
@@ -121,8 +121,7 @@ const facts = computed<Fact[]>(() => {
     case 'rule': return [
       {
         label: 'Explicit bindings',
-        value: asRule.value.domainIds.length + asRule.value.capabilityIds.length
-          + asRule.value.journeyIds.length + asRule.value.scenarioIds.length
+        value: asRule.value.appliesTo.length
       },
       { label: 'Scopes', value: asRule.value.availability.length },
       { label: 'References', value: asRule.value.references.length }
@@ -238,34 +237,23 @@ const relationGroups = computed<RelationGroup[]>(() => {
       break
     case 'rule':
       groups.push(group('Authored', [
-        row('Domains', 'domain', asRule.value.domainIds),
         row('Capabilities', 'capability', asRule.value.capabilityIds),
         row('Journeys', 'journey', asRule.value.journeyIds),
         row('Capability Scenarios', 'capability-scenario', asRule.value.capabilityScenarioIds),
         row('Journey Scenarios', 'journey-scenario', asRule.value.journeyScenarioIds)
       ]))
       {
-        const directCapabilities = new Set(asRule.value.capabilityIds)
-        const derivedCapabilities = props.workspace.capabilities
-          .filter(capability => capability.domainId
-            && asRule.value.domainIds.includes(capability.domainId)
-            && !directCapabilities.has(capability.id))
-          .map(capability => capability.id)
-        const reachedCapabilities = new Set([...asRule.value.capabilityIds, ...derivedCapabilities])
-        const scenarioJourneyIds = new Set(resolveScenarios(props.workspace, asRule.value.journeyScenarioIds)
-          .map(scenario => scenario.journeyId))
-        const derivedJourneys = props.workspace.journeys
-          .filter(journey => !asRule.value.journeyIds.includes(journey.id)
-            && (journey.capabilityIds.some(id => reachedCapabilities.has(id))
-              || scenarioJourneyIds.has(journey.id)))
-          .map(journey => journey.id)
+        const reachedCapabilities = new Set([...asRule.value.capabilityIds, ...asRule.value.derivedCapabilityIds])
+        const reachedJourneys = new Set([...asRule.value.journeyIds, ...asRule.value.derivedJourneyIds])
         const derivedScreens = props.workspace.screens
           .filter(screen => screen.capabilityIds.some(id => reachedCapabilities.has(id))
-            || screen.scenarioIds.some(id => asRule.value.scenarioIds.includes(id)))
+            || screen.scenarioIds.some(id => asRule.value.scenarioIds.includes(id))
+            || screen.journeyIds.some(id => reachedJourneys.has(id)))
           .map(screen => screen.id)
         groups.push(group('Derived', [
-          row('Capabilities via Domains', 'capability', derivedCapabilities),
-          row('Journeys reached', 'journey', derivedJourneys),
+          row('Domains through targets', 'domain', asRule.value.domainIds),
+          row('Parent Capabilities', 'capability', asRule.value.derivedCapabilityIds),
+          row('Parent Journeys', 'journey', asRule.value.derivedJourneyIds),
           row('Screens reached', 'screen', derivedScreens)
         ]))
       }
@@ -281,6 +269,10 @@ function selectId(kind: ReportEntityKind, id: string) {
 
 function relationTitle(kind: ReportEntityKind, id: string): string {
   return resolveEntity(props.workspace, kind, id)?.title ?? id
+}
+
+function routeStageTitle(stageId: string): string {
+  return asScenario.value.flow.find(item => item.id === stageId)?.operation ?? stageId
 }
 </script>
 
@@ -350,6 +342,19 @@ function relationTitle(kind: ReportEntityKind, id: string): string {
             <BlrAvail :pairs="item.availability" label="Contexts" />
           </li>
         </ol>
+      </div>
+
+      <div v-if="asScenario.routes.length" class="space-y-3">
+        <h3 class="blr-inspector-heading">Routes <span class="blr-meta ms-1">{{ asScenario.routes.length }}</span></h3>
+        <div v-for="route in asScenario.routes" :key="route.id" class="rounded-xl border border-default p-4">
+          <code class="rounded bg-muted px-2 py-1 font-mono text-xs text-muted">{{ route.id }}</code>
+          <ol class="mt-3 space-y-2">
+            <li v-for="(item, index) in route.contexts" :key="item.stageId" class="rounded-lg bg-elevated/35 px-3 py-2.5">
+              <p class="text-sm font-medium text-highlighted">{{ index + 1 }}. {{ routeStageTitle(item.stageId) }}</p>
+              <BlrAvail :pairs="[item.context]" label="Context" />
+            </li>
+          </ol>
+        </div>
       </div>
 
       <div class="space-y-3">

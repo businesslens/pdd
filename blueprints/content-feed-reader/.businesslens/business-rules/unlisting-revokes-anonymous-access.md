@@ -1,7 +1,9 @@
 ---
-domains: [collections]
-capabilities: [collection-publication, public-collection-reading]
-capabilityScenarios: [unlist-an-owned-collection, open-an-unlisted-collection]
+appliesTo:
+  - type: capability-scenario
+    id: unlist-an-owned-collection
+  - type: capability-scenario
+    id: open-an-unlisted-collection
 ---
 
 # Unlisting revokes anonymous access

@@ -1,9 +1,9 @@
 ---
-domains: [ordering]
-capabilities: [checkout]
-journeys: [browse-and-buy]
-capabilityScenarios: [complete-checkout]
-journeyScenarios: [browse-and-complete-checkout]
+appliesTo:
+  - type: capability
+    id: checkout
+  - type: journey
+    id: browse-and-buy
 references:
   - kind: code
     role: implementation

@@ -4,17 +4,27 @@ journey: follow-and-receive-from-a-source
 actors: [reader, feed-provider]
 result: achieved
 flow:
-  - capability: source-following
+  - id: follow-source
+    capability: source-following
     operation: Follow a valid source
-    availability:
-      - interface: reader-web
-        experiences: [personal-library]
-      - interface: reader-mobile
-        experiences: [personal-library]
-  - capability: feed-synchronization
+  - id: collect-items
+    capability: feed-synchronization
     operation: Collect available new items from the followed feed
-    availability:
-      - interface: syndicated-feed-integration
+routes:
+  - id: web-to-feed
+    contexts:
+      - stage: follow-source
+        interface: reader-web
+        experience: personal-library
+      - stage: collect-items
+        interface: syndicated-feed-integration
+  - id: mobile-to-feed
+    contexts:
+      - stage: follow-source
+        interface: reader-mobile
+        experience: personal-library
+      - stage: collect-items
+        interface: syndicated-feed-integration
 ---
 
 # Receive items from a new source

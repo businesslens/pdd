@@ -16,6 +16,7 @@ import { writeModelReadme } from '../core/model-readme.js'
 import type {
   ProductReportV8,
   ReportAvailability,
+  ReportExactContext,
   ReportSupportingSection
 } from '../core/portable.js'
 import { lintModel } from './lint.js'
@@ -66,6 +67,13 @@ function availability(value: ReportAvailability[]): Array<{ interface: string, e
     interface: item.interfaceId,
     ...(item.experienceIds.length ? { experiences: item.experienceIds } : {})
   }))
+}
+
+function exactContext(value: ReportExactContext): { interface: string, experience?: string } {
+  return {
+    interface: value.interfaceId,
+    ...(value.experienceId ? { experience: value.experienceId } : {})
+  }
 }
 
 function compactRecord(input: Record<string, unknown>): Record<string, unknown> {
@@ -256,12 +264,13 @@ function writeReport(root: string, report: ProductReportV8): void {
     write(
       join(root, 'business-rules', `${rule.id}.md`),
       frontmatter(compactRecord({
-        domains: rule.domainIds,
-        capabilities: rule.capabilityIds,
-        journeys: rule.journeyIds,
-        capabilityScenarios: rule.capabilityScenarioIds,
-        journeyScenarios: rule.journeyScenarioIds,
-        availability: availability(rule.availability),
+        appliesTo: rule.appliesTo.map(target => target.type === 'context'
+          ? { type: 'context', ...exactContext(target) }
+          : compactRecord({
+              type: target.type,
+              id: target.id,
+              contexts: target.contexts.map(exactContext)
+            })),
         references: references(rule.references)
       })) + body(
         rule.title,
@@ -337,9 +346,16 @@ function writeReport(root: string, report: ProductReportV8): void {
         actors: scenario.actorIds,
         result: scenario.result,
         flow: scenario.flow.map(item => ({
+          id: item.id,
           capability: item.capabilityId,
-          operation: item.operation,
-          availability: availability(item.availability)
+          operation: item.operation
+        })),
+        routes: scenario.routes.map(route => ({
+          id: route.id,
+          contexts: route.contexts.map(context => ({
+            stage: context.stageId,
+            ...exactContext(context)
+          }))
         })),
         references: references(scenario.references)
       })) + body(

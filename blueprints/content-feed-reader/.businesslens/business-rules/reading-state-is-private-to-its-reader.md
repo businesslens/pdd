@@ -1,14 +1,12 @@
 ---
-domains: [reading]
-capabilities: [reading-state]
-journeys: [catch-up-on-unread]
-capabilityScenarios: [mark-an-item-read, mark-an-item-unread, mark-a-source-read-in-bulk]
-journeyScenarios: [work-through-the-unread-backlog, save-while-catching-up]
-availability:
-  - interface: reader-web
-    experiences: [personal-library]
-  - interface: reader-mobile
-    experiences: [personal-library]
+appliesTo:
+  - type: capability
+    id: reading-state
+    contexts:
+      - interface: reader-web
+        experience: personal-library
+      - interface: reader-mobile
+        experience: personal-library
 ---
 
 # Reading state is private to its Reader

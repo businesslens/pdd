@@ -27,7 +27,7 @@ add optional entities only when they communicate a real Product distinction.
 | [Experience](./experiences.md) | Optional | A durable context of use when one Interface or several Interfaces contain meaningful audience, access, or capability boundaries |
 | [Screen](./screens.md) | Optional | A meaningful visual view; non-visual Products do not need one |
 | [Domain](./domains.md) | Optional | A Product-language grouping that makes a larger Capability set easier to navigate |
-| [Capability](./capabilities.md) | Optional collection; every authored Capability needs Capability Scenario coverage | A durable Product ability reused across views, behavior contracts, or goals |
+| [Capability](./capabilities.md) | At least one in a complete model; every exact context needs Capability Scenario coverage | A durable Product ability reused across views, behavior contracts, or goals |
 | [Capability Scenario](./capability-scenarios.md) | Required by every authored Capability | One concrete local acceptance case for exactly one Capability |
 | [Journey](./journeys.md) | Optional | One coherent Actor Goal and Success criterion whose achieved variations compose multiple Capabilities |
 | [Journey Scenario](./journey-scenarios.md) | Required by every authored Journey | One concrete end-to-end variation of exactly one Journey |
@@ -80,10 +80,11 @@ graph.
 Interface says the supported interaction form. Optional Experience says the
 coherent Actor context within that form. An **availability scope** is simply one
 supported interaction context: an Interface plus, when that Interface uses
-Experiences, one or more Experiences. Capabilities, Screens, and Business Rules
-declare those exact contexts. Capability Scenarios select contexts from their
-one Capability. Journey Scenario flow entries select ordered contexts from
-existing Capabilities. Journeys do not declare availability or Capabilities.
+Experiences, one or more Experiences. Capabilities and Screens declare those
+exact contexts. Capability Scenarios select contexts from their one Capability.
+Journey Scenario routes correlate one exact context for every ordered flow
+stage. Business Rule targets may select singular exact contexts. Journeys do
+not declare availability or Capabilities.
 
 When an Interface has Experiences, every availability record for it names the
 applicable Experiences:
@@ -104,20 +105,24 @@ availability:
 Do not invent a ceremonial Experience for an Interface with only one coherent
 context. Conversely, once any Experience uses an Interface, all availability
 for that Interface is Experience-scoped; direct and Experience-scoped records
-cannot be mixed. Availability is intended Product meaning. It is not inferred
+cannot be mixed. The Experiences using an Interface must collectively cover all
+of its Actors. Availability is intended Product meaning. It is not inferred
 from shared code, routes, packages, or protocols.
 
 ## Behavioral core
 
 Capabilities state what the Product can durably do. Capability Scenarios make
-each ability observable and verifiable. Every authored Capability must have at
-least one Capability Scenario; appearing in a Journey Scenario does not satisfy
-that local acceptance coverage.
+each ability observable and verifiable. In a complete model, every exact
+Capability context must be covered by at least one Capability Scenario;
+appearing in a Journey Scenario does not satisfy that local acceptance
+coverage. A complete model has at least one Capability.
 
 Journeys are optional high-level goals. A Journey authors only the Actors, Goal,
 and Success criterion. Journey Scenarios own concrete Capability selection,
-order, branches, repetition, and terminal results. Every Journey needs at least
-one achieved Journey Scenario using at least two distinct Capabilities. A
+order, branches, repetition, correlated context routes, and terminal results.
+Every Journey needs at least one achieved Journey Scenario using at least two
+distinct Capabilities, and every Journey Actor must appear in an achieved
+Scenario. A
 complete Product Model may have zero Journeys.
 
 The report derives a Journey's primary Capabilities and Domains from achieved
@@ -134,7 +139,7 @@ These are not alternative ways to describe the same contract:
 | Capability | The smallest durable behavior that remains independently meaningful | Product behavior and exact supported contexts | Unrelated operations grouped only by a vague umbrella verb |
 | Capability Scenario | One local variation of exactly one Capability | Trigger, context, Steps, and local Outcome | A Journey or multiple Capabilities |
 | Journey | One coherent Actor Goal whose achieved variations require multiple Capabilities | Actors, Goal, and Success criterion | Capability list, flow, branches, or one concrete variation |
-| Journey Scenario | One end-to-end variation of exactly one Journey | Trigger, ordered Capability flow with operations, Steps, goal result, and Outcome | Local acceptance coverage for its Capabilities |
+| Journey Scenario | One end-to-end variation of exactly one Journey | Trigger, ordered Capability flow, correlated exact-context routes, Steps, goal result, and Outcome | Local acceptance coverage for its Capabilities |
 
 A local case is always a Capability Scenario. A coherent multi-Capability goal
 is always a Journey. A complete variation of pursuing that goal is always a

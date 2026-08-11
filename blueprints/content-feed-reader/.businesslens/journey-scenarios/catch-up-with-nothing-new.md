@@ -4,17 +4,36 @@ journey: catch-up-on-unread
 actors: [reader, feed-provider]
 result: not-achieved
 flow:
-  - capability: feed-synchronization
+  - id: open-backlog
+    capability: reading-state
+    operation: Open the unread backlog
+  - id: check-feeds
+    capability: feed-synchronization
     operation: Attempt collection from the followed feeds
-    availability:
-      - interface: syndicated-feed-integration
-  - capability: reading-state
+  - id: show-unchanged-backlog
+    capability: reading-state
     operation: Present the unchanged unread backlog
-    availability:
-      - interface: reader-web
-        experiences: [personal-library]
-      - interface: reader-mobile
-        experiences: [personal-library]
+routes:
+  - id: web
+    contexts:
+      - stage: open-backlog
+        interface: reader-web
+        experience: personal-library
+      - stage: check-feeds
+        interface: syndicated-feed-integration
+      - stage: show-unchanged-backlog
+        interface: reader-web
+        experience: personal-library
+  - id: mobile
+    contexts:
+      - stage: open-backlog
+        interface: reader-mobile
+        experience: personal-library
+      - stage: check-feeds
+        interface: syndicated-feed-integration
+      - stage: show-unchanged-backlog
+        interface: reader-mobile
+        experience: personal-library
 ---
 
 # Catch up when nothing new arrived

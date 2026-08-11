@@ -56,12 +56,11 @@ Everything between a full cart and a fulfilled order.
 | `references` | no | Use the documented [Reference](./references.md) shape. |
 | H1 and lead paragraph | yes | Name and describe the Domain. |
 
-Every Domain ID named by a Capability or Business Rule must have a corresponding
-file.
+Every Domain ID named by a Capability must have a corresponding file. Business
+Rule Domain backlinks are derived through the behavior those Rules target.
 
 ## Referenced by
 
 | From | Key | Cardinality |
 | --- | --- | --- |
 | [Capabilities](./capabilities.md) | `domain:` | Zero or one |
-| [Business rules](./business-rules.md) | `domains:` | A list |

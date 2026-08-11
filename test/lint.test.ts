@@ -145,7 +145,9 @@ An internal system that initiates store operations.
     ]) {
       for (const name of readdirSync(join(cwd, `.businesslens/${collection}`))) {
         const file = join(cwd, `.businesslens/${collection}/${name}`)
-        writeFileSync(file, readFileSync(file, 'utf8').replace(/^[ \t]+experiences: .*\n/gm, ''))
+        writeFileSync(file, readFileSync(file, 'utf8')
+          .replace(/^[ \t]+experiences: .*\n/gm, '')
+          .replace(/^[ \t]+experience: .*\n/gm, ''))
       }
     }
 
@@ -228,6 +230,19 @@ Supports order administration without customer shopping.
     expect(errors).toContain('entry point references undeclared interface "missing-interface"')
   })
 
+  it('requires Experiences to cover every Actor of an Interface they divide', () => {
+    const cwd = fixtureCopy()
+    const productInterface = join(cwd, '.businesslens/interfaces/customer-web.md')
+    writeFileSync(
+      productInterface,
+      readFileSync(productInterface, 'utf8').replace('actors: [shopper]', 'actors: [shopper, store-admin]')
+    )
+
+    expect(run(cwd).errors.join('\n')).toContain(
+      'actor "store-admin" is not covered by any Experience declaring this interface'
+    )
+  })
+
   it('rejects duplicate availability and Capability placement gaps', () => {
     const cwd = fixtureCopy()
     const capability = join(cwd, '.businesslens/capabilities/checkout.md')
@@ -279,7 +294,7 @@ Supports order administration without customer shopping.
       scenario,
       readFileSync(scenario, 'utf8')
         .replace('    operation: Find and select an available product\n', '')
-        .replace('  - capability: checkout', '  - capability: catalog-browsing')
+        .replace('    capability: checkout', '    capability: catalog-browsing')
     )
     const errors = run(cwd).errors.join('\n')
     expect(errors).toContain('flow item 1: needs a non-empty operation')
@@ -304,16 +319,85 @@ Supports order administration without customer shopping.
   it('grades missing Capability Scenario coverage by model coverage status', () => {
     const cwd = fixtureCopy()
     unlinkSync(join(cwd, '.businesslens/capability-scenarios/refund-order.md'))
-    const rule = join(cwd, '.businesslens/business-rules/refund-existing-orders.md')
-    writeFileSync(rule, readFileSync(rule, 'utf8').replace('capabilityScenarios: [refund-order]\n', ''))
+    unlinkSync(join(cwd, '.businesslens/business-rules/refund-existing-orders.md'))
 
-    expect(run(cwd).errors.join('\n')).toContain('needs at least one Capability Scenario')
+    expect(run(cwd).errors.join('\n')).toContain('availability "admin-web/admin-console" needs Capability Scenario coverage')
 
     const coverage = join(cwd, '.businesslens/coverage.md')
     writeFileSync(coverage, readFileSync(coverage, 'utf8').replace('status: complete', 'status: partial'))
     const partial = run(cwd)
-    expect(partial.errors.some(error => error.includes('needs at least one Capability Scenario'))).toBe(false)
-    expect(partial.warnings.some(warning => warning.includes('needs at least one Capability Scenario'))).toBe(true)
+    expect(partial.errors.some(error => error.includes('needs Capability Scenario coverage'))).toBe(false)
+    expect(partial.warnings.some(warning => warning.includes('needs Capability Scenario coverage'))).toBe(true)
+  })
+
+  it('requires Capability Scenario coverage for every exact Capability context', () => {
+    const cwd = fixtureCopy()
+    for (const name of ['complete-checkout', 'decline-checkout-payment']) {
+      const file = join(cwd, `.businesslens/capability-scenarios/${name}.md`)
+      writeFileSync(
+        file,
+        readFileSync(file, 'utf8').replace(
+          '  - interface: customer-mobile\n    experiences: [storefront]\n',
+          ''
+        )
+      )
+    }
+
+    expect(run(cwd).errors.join('\n')).toContain(
+      'availability "customer-mobile/storefront" needs Capability Scenario coverage'
+    )
+  })
+
+  it('validates complete Journey routes and their goal-owner entry context', () => {
+    const cwd = fixtureCopy()
+    const file = join(cwd, '.businesslens/journey-scenarios/browse-and-complete-checkout.md')
+    writeFileSync(
+      file,
+      readFileSync(file, 'utf8')
+        .replace(
+          '      - stage: select-product\n        interface: customer-web\n        experience: storefront',
+          '      - stage: select-product\n        interface: admin-web\n        experience: admin-console'
+        )
+        .replace(
+          '      - stage: complete-checkout\n        interface: customer-mobile\n        experience: storefront\n',
+          ''
+        )
+    )
+
+    const errors = run(cwd).errors.join('\n')
+    expect(errors).toContain('context "admin-web/admin-console" is outside capability "catalog-browsing"')
+    expect(errors).toContain('first context "admin-web/admin-console" permits no Journey Actor participating in the Scenario')
+    expect(errors).toContain('missing context for flow stage "complete-checkout"')
+  })
+
+  it('rejects narrowed Rule contexts outside their target and redundant ancestor targets', () => {
+    const cwd = fixtureCopy()
+    const file = join(cwd, '.businesslens/business-rules/refund-existing-orders.md')
+    writeFileSync(file, readFileSync(file, 'utf8').replace(
+      'appliesTo:\n  - type: capability-scenario\n    id: refund-order',
+      `appliesTo:
+  - type: capability
+    id: order-management
+  - type: capability-scenario
+    id: refund-order
+    contexts:
+      - interface: customer-web
+        experience: storefront`
+    ))
+
+    const errors = run(cwd).errors.join('\n')
+    expect(errors).toContain('context "customer-web/storefront" is outside target "capability-scenario:refund-order"')
+    expect(errors).toContain('target "capability-scenario:refund-order" is redundant with capability target "order-management"')
+  })
+
+  it('requires every Journey Actor to participate in an achieved Scenario', () => {
+    const cwd = fixtureCopy()
+    const file = join(cwd, '.businesslens/journeys/browse-and-buy.md')
+    writeFileSync(file, readFileSync(file, 'utf8').replace('actors: [shopper]', 'actors: [shopper, store-admin]'))
+
+    expect(run(cwd).errors.join('\n')).toContain(
+      'actor "store-admin" needs an achieved Journey Scenario'
+    )
   })
 
   it('rejects removed Experience and Journey fields as unknown keys', () => {
@@ -445,16 +529,21 @@ journey: browse-and-buy
 actors: [shopper, store-admin]
 result: not-achieved
 flow:
-  - capability: order-management
+  - id: review-order
+    capability: order-management
     operation: Review an existing order
-    availability:
-      - interface: admin-web
-        experiences: [admin-console]
-  - capability: checkout
+  - id: attempt-checkout
+    capability: checkout
     operation: Attempt a new checkout
-    availability:
-      - interface: customer-web
-        experiences: [storefront]
+routes:
+  - id: admin-to-web
+    contexts:
+      - stage: review-order
+        interface: admin-web
+        experience: admin-console
+      - stage: attempt-checkout
+        interface: customer-web
+        experience: storefront
 ---
 
 # Review an order before checkout
@@ -513,8 +602,8 @@ An order exists.
 `)
     const scenario = join(cwd, '.businesslens/journey-scenarios/browse-and-complete-checkout.md')
     writeFileSync(scenario, readFileSync(scenario, 'utf8').replace(
-      'experiences: [storefront]',
-      'experiences: [missing-experience]'
+      'experience: storefront',
+      'experience: missing-experience'
     ))
     const errors = run(cwd).errors.join('\n')
     expect(errors).toContain('missing actor "ghost"')
@@ -562,16 +651,21 @@ journey: browse-and-buy
 actors: [shopper]
 result: achieved
 flow:
-  - capability: catalog-browsing
+  - id: select-product
+    capability: catalog-browsing
     operation: Select a product
-    availability:
-      - interface: customer-web
-        experiences: [storefront]
-  - capability: checkout
+  - id: complete-checkout
+    capability: checkout
     operation: Complete checkout
-    availability:
-      - interface: customer-web
-        experiences: [storefront]
+routes:
+  - id: web
+    contexts:
+      - stage: select-product
+        interface: customer-web
+        experience: storefront
+      - stage: complete-checkout
+        interface: customer-web
+        experience: storefront
 ---
 
 # Duplicate

@@ -1,21 +1,17 @@
 ---
-domains: [collections]
-capabilities: [collection-creation, collection-naming, collection-organization, collection-publication]
-journeys: [save-and-organize, publish-and-share-a-collection]
-capabilityScenarios:
-  - create-an-owned-collection
-  - rename-an-owned-collection
-  - add-an-item-to-an-owned-collection
-  - remove-an-item-from-an-owned-collection
-  - reorder-an-owned-collection
-  - reject-adding-to-another-owners-collection
-  - publish-an-owned-collection
-  - unlist-an-owned-collection
-  - reject-publishing-another-owners-collection
-journeyScenarios:
-  - save-an-item-into-a-new-collection
-  - save-an-item-into-an-existing-collection
-  - publish-and-read-a-collection
+appliesTo:
+  - type: capability
+    id: collection-creation
+  - type: capability
+    id: collection-naming
+  - type: capability
+    id: collection-organization
+  - type: capability
+    id: collection-publication
+  - type: journey
+    id: save-and-organize
+  - type: journey
+    id: publish-and-share-a-collection
 ---
 
 # Only an owner changes a collection

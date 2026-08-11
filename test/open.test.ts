@@ -104,7 +104,7 @@ describe('open report', () => {
     expect(readFileSync(join(target, '.businesslens/capabilities/checkout.md'), 'utf8'))
       .toContain('availability:')
     expect(readFileSync(join(target, '.businesslens/business-rules/payment-before-confirmation.md'), 'utf8'))
-      .toContain('capabilities:')
+      .toContain('appliesTo:')
     expect(readFileSync(
       join(target, '.businesslens/capability-scenarios/complete-checkout.md'),
       'utf8'
@@ -169,11 +169,8 @@ describe('open report', () => {
         }
       }
       for (const scenario of report.model.journeyScenarios) {
-        for (const item of scenario.flow) {
-          item.availability = item.availability.map(scope => ({
-            interfaceId: scope.interfaceId,
-            experienceIds: []
-          }))
+        for (const route of scenario.routes) {
+          for (const context of route.contexts) context.experienceId = null
         }
       }
       const file = join(fresh, 'direct-report.json')

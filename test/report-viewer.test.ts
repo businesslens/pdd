@@ -34,6 +34,12 @@ describe('stable Product Report Workbench', () => {
     expect(workspace.rules).toHaveLength(report.model.businessRules.length)
     expect(workspace.capabilityScenarios.every((item: any) => item.scenarioType === 'capability')).toBe(true)
     expect(workspace.journeyScenarios.every((item: any) => item.scenarioType === 'journey')).toBe(true)
+    const journeyScenario = workspace.journeyScenarios.find((item: any) => item.id === 'browse-and-complete-checkout')!
+    expect(journeyScenario.routes.map((route: any) => route.id)).toEqual(['web', 'mobile'])
+    expect(journeyScenario.flow[0].availability.map((pair: any) => pair.key)).toEqual([
+      'customer-web::storefront',
+      'customer-mobile::storefront'
+    ])
     expect(workspace.counts.scenarios).toBe(
       report.counts.capabilityScenarios + report.counts.journeyScenarios
     )
@@ -46,6 +52,10 @@ describe('stable Product Report Workbench', () => {
 
     expect(workspace.capabilities.some((item: any) => item.journeyIds.length || item.ruleIds.length)).toBe(true)
     expect(workspace.domains.some((item: any) => item.screenIds.length)).toBe(true)
+    const scenarioRule = workspace.rules.find((item: any) => item.id === 'refund-existing-orders')!
+    expect(scenarioRule.capabilityIds).toEqual([])
+    expect(scenarioRule.derivedCapabilityIds).toEqual(['order-management'])
+    expect(scenarioRule.domainIds).toEqual(['ordering'])
     expect(report).toEqual(before)
   })
 
@@ -79,6 +89,7 @@ describe('stable Product Report Workbench', () => {
     expect(renderer).toContain('ProductReportV8')
     expect(renderer).toContain('projectReportWorkspace')
     expect(renderer).toContain('<BlrWorkbench')
+    expect(source('app/components/BlrInspectorDetail.vue')).toContain('asScenario.routes')
     expect(workbench).toContain('<BlrProductTopology')
     /* Grouping is how authored Domains earn their place in navigation. */
     expect(workbench).toContain('groupKind')

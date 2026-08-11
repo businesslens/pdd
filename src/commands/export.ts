@@ -20,6 +20,10 @@ const sorted = (items: string[]): string[] => [...items].sort()
 const availability = (items: Availability[]) => [...items]
   .sort((a, b) => a.interface.localeCompare(b.interface))
   .map(item => ({ interfaceId: item.interface, experienceIds: sorted(item.experiences) }))
+const exactContext = (item: { interface: string, experience?: string }) => ({
+  interfaceId: item.interface,
+  experienceId: item.experience ?? null
+})
 
 function entityContent(entity: EntityFile, recognized: string[]) {
   return {
@@ -197,9 +201,16 @@ export function compileReport(
         actorIds: sorted(scenario.actors),
         result: scenario.result as 'achieved' | 'not-achieved',
         flow: scenario.flow.map(item => ({
+          id: item.id,
           capabilityId: item.capability,
-          operation: item.operation,
-          availability: availability(item.availability)
+          operation: item.operation
+        })),
+        routes: scenario.routes.map(route => ({
+          id: route.id,
+          contexts: route.contexts.map(context => ({
+            stageId: context.stage,
+            ...exactContext(context)
+          }))
         })),
         trigger: scenario.trigger,
         steps: scenario.steps,
@@ -213,12 +224,13 @@ export function compileReport(
         title: rule.doc.title,
         statement: rule.doc.lead,
         rationale: rule.rationale,
-        domainIds: sorted(rule.domains),
-        capabilityIds: sorted(rule.capabilities),
-        journeyIds: sorted(rule.journeys),
-        capabilityScenarioIds: sorted(rule.capabilityScenarios),
-        journeyScenarioIds: sorted(rule.journeyScenarios),
-        availability: availability(rule.availability),
+        appliesTo: rule.appliesTo.map(target => target.type === 'context'
+          ? { type: 'context' as const, ...exactContext(target) }
+          : {
+              type: target.type,
+              id: target.id,
+              contexts: target.contexts.map(exactContext)
+            }),
         ...entityContent(rule, ['Rationale'])
       }))
     },

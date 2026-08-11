@@ -5,9 +5,9 @@
 - Compare the model's observable contract, not matching vocabulary.
 - Trace each Capability Scenario from its exact Actor context through the
   Capability operation to its observable outcome.
-- Trace each Journey Scenario flow from its Product entry point through every
-  named Capability and operation to the terminal goal result. Verify each flow
-  item's exact availability independently.
+- Trace every Journey Scenario route from its Product entry point through each
+  named flow stage and operation to the terminal goal result. Verify every
+  route context independently and confirm the correlations are supported.
 - Confirm every Scenario Actor is supported by at least one exact context and
   every exact context supports at least one Scenario Actor.
 - Verify Interface scopes independently. Shared services do not prove web,

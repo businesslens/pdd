@@ -92,9 +92,9 @@ Journey Scenario flow entries. Product routes remain on Interfaces,
 Experiences, and Screens.
 
 To present a Journey entry route, a report consumer starts with the first flow
-item of each achieved Journey Scenario and resolves the matching Interface or
-Experience entry point. The route remains derived rather than becoming Journey
-frontmatter.
+stage of each achieved Journey Scenario route and resolves that route's exact
+Interface or Experience entry point. The entry remains derived rather than
+becoming Journey frontmatter.
 
 Consumers derive the primary Capability and Domain sets from achieved flows.
 Capabilities seen only in not-achieved flows are marked separately as
@@ -104,6 +104,7 @@ flow or proof that partial mapping is exhaustive.
 At least one Journey Scenario must name every Journey with `result: achieved`.
 That achieved Scenario must use at least two distinct Capabilities. This gives
 the Journey acceptance coverage without pushing flow into the Journey itself.
+Every Journey Actor must participate in at least one achieved Scenario.
 
 ## Relationship to code
 

@@ -50,10 +50,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Schema 4 and Product Report v8 now separate Capability Scenarios from
   Journey Scenarios. Capabilities own local acceptance coverage; optional,
   route-free Journeys own only Actors, Goal, and Success criterion; Journey
-  Scenarios own ordered Capability/operation/context flows and their terminal
-  result. Lint grades missing Capability Scenario coverage by model breadth,
-  validates Scenario Actors against exact contexts, and constrains Screen
-  Scenario relations. The version identifiers remain unchanged because neither
+  Scenarios own ordered, locally identified Capability/operation stages,
+  correlated exact-context routes, and their terminal result. Business Rules
+  use typed `appliesTo` targets with optional exact-context narrowing instead of
+  parallel relation arrays or authored Domain links. Lint requires complete
+  per-context Capability Scenario coverage, achieved coverage for every Journey
+  Actor, goal-owner route entry, and exhaustive Interface Actor coverage across
+  Experiences. The version identifiers remain unchanged because neither
   unreleased contract needs a compatibility reader.
 - **Breaking.** Product Report v8 stores authored supporting H2 sections as
   ordered `{ heading, content }` records instead of an opaque

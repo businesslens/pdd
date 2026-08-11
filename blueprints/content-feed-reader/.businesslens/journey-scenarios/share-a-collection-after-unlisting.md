@@ -4,18 +4,29 @@ journey: publish-and-share-a-collection
 actors: [reader, visitor]
 result: not-achieved
 flow:
-  - capability: collection-publication
+  - id: publish-then-unlist
+    capability: collection-publication
     operation: Publish the collection and then unlist it again
-    availability:
-      - interface: reader-web
-        experiences: [personal-library]
-      - interface: reader-mobile
-        experiences: [personal-library]
-  - capability: public-collection-reading
+  - id: attempt-public-read
+    capability: public-collection-reading
     operation: Open the public address after access was revoked
-    availability:
-      - interface: reader-web
-        experiences: [public-reading]
+routes:
+  - id: unlist-on-web
+    contexts:
+      - stage: publish-then-unlist
+        interface: reader-web
+        experience: personal-library
+      - stage: attempt-public-read
+        interface: reader-web
+        experience: public-reading
+  - id: unlist-on-mobile
+    contexts:
+      - stage: publish-then-unlist
+        interface: reader-mobile
+        experience: personal-library
+      - stage: attempt-public-read
+        interface: reader-web
+        experience: public-reading
 ---
 
 # Share a collection the owner already unlisted

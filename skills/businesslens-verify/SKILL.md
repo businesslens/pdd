@@ -62,7 +62,8 @@ the diff.
    run its application, builds, migrations, generators, package scripts, or
    tests. Read source and tests. Verify every declared availability scope
    independently from its Product entry point through any relevant Experience,
-   Capability Scenario, Journey flow, and observable Journey Scenario outcome.
+   Capability Scenario, each correlated Journey route stage, and observable
+   Journey Scenario outcome.
    For each Scenario, confirm that every Actor is supported in at least one
    exact context and every exact context supports at least one named Actor.
    Match Journey prose Steps to authored flow operations. Shared code does not

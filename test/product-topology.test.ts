@@ -90,7 +90,6 @@ describe('named Product Topology views', () => {
   it('draws only authored attachments in Rule reach', () => {
     const graph = buildProductTopologyGraph(teachingWorkspace, 'rule-reach')
     const authored = new Set(teachingWorkspace.rules.flatMap((rule: any) => [
-      ...rule.domainIds.map((id: string) => `${rule.key}->domain:${id}`),
       ...rule.capabilityIds.map((id: string) => `${rule.key}->capability:${id}`),
       ...rule.journeyIds.map((id: string) => `${rule.key}->journey:${id}`),
       ...rule.capabilityScenarioIds.map((id: string) => `${rule.key}->capability-scenario:${id}`),

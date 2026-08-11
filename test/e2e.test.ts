@@ -99,8 +99,8 @@ describe('end to end on a real git repo', () => {
     expect(references.some(reference => reference.kind === 'code')).toBe(false)
     expect(references.some(reference => reference.role === 'implementation')).toBe(false)
     expect(parsed.coverage.sourceAreas).toEqual([])
-    expect(parsed.model.businessRules.find(rule => rule.id === 'payment-before-confirmation')?.capabilityIds)
-      .toEqual(['checkout'])
+    expect(parsed.model.businessRules.find(rule => rule.id === 'payment-before-confirmation')?.appliesTo)
+      .toContainEqual({ type: 'capability', id: 'checkout', contexts: [] })
     expect(parsed.model.capabilityScenarios.find(scenario => scenario.id === 'complete-checkout')?.decisionPoints)
       .toHaveLength(1)
     expect(parsed.model.journeyScenarios[0]!.flow.map(item => item.operation)).toEqual([

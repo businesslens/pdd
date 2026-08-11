@@ -12,7 +12,7 @@ import type {
   ScenarioView,
   ScreenView
 } from './reportWorkspace'
-import { resolveEntity, resolveScenarios } from './reportWorkspace'
+import { resolveEntity } from './reportWorkspace'
 
 export type EntityCardVariant = 'catalog' | 'index' | 'editorial'
 
@@ -96,22 +96,17 @@ function pairTitles(entity: { availability: Array<{ interfaceTitle: string, expe
 }
 
 function ruleBindingCount(rule: RuleView): number {
-  return rule.domainIds.length + rule.capabilityIds.length + rule.journeyIds.length + rule.scenarioIds.length
+  return rule.appliesTo.length
 }
 
 function ruleReachCount(workspace: ReportWorkspace, rule: RuleView): number {
   const capabilities = new Set([
     ...rule.capabilityIds,
-    ...workspace.capabilities
-      .filter(capability => capability.domainId && rule.domainIds.includes(capability.domainId))
-      .map(capability => capability.id)
+    ...rule.derivedCapabilityIds
   ])
   const journeys = new Set([
     ...rule.journeyIds,
-    ...resolveScenarios(workspace, rule.journeyScenarioIds).map(scenario => scenario.journeyId),
-    ...workspace.journeys
-      .filter(journey => journey.capabilityIds.some(id => capabilities.has(id)))
-      .map(journey => journey.id)
+    ...rule.derivedJourneyIds
   ])
   const screens = new Set(workspace.screens
     .filter(screen => screen.capabilityIds.some(id => capabilities.has(id))
@@ -263,7 +258,6 @@ export function entityCardPresentation(
         ],
         hookLabel: 'Attached to',
         hook: relationTitles(workspace, [
-          ['domain', rule.domainIds],
           ['capability', rule.capabilityIds],
           ['journey', rule.journeyIds],
           ['capability-scenario', rule.capabilityScenarioIds],

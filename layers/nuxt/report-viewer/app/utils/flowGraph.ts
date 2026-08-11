@@ -232,7 +232,7 @@ export function directRelations(workspace: ReportWorkspace, entity: AnyEntityVie
     }
     case 'domain': {
       for (const id of entity.capabilityIds) push(entityKey('capability', id), entity.key, 'in')
-      for (const id of entity.ruleIds) push(entityKey('rule', id), entity.key, 'constrains')
+      for (const id of entity.ruleIds) push(entityKey('rule', id), entity.key, 'reaches through target')
       break
     }
     case 'capability': {
@@ -267,7 +267,6 @@ export function directRelations(workspace: ReportWorkspace, entity: AnyEntityVie
       break
     }
     case 'rule': {
-      for (const id of entity.domainIds) push(entity.key, entityKey('domain', id), 'constrains')
       for (const id of entity.capabilityIds) push(entity.key, entityKey('capability', id), 'constrains')
       for (const id of entity.journeyIds) push(entity.key, entityKey('journey', id), 'constrains')
       for (const id of entity.capabilityScenarioIds) push(entity.key, entityKey('capability-scenario', id), 'constrains')

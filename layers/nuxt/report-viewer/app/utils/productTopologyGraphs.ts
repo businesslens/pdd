@@ -388,14 +388,12 @@ export function buildRuleReach(
   workspace: ReportWorkspace,
   options: ProductTopologyGraphOptions = {}
 ): FlowGraphShape {
-  const domainIds = new Set(workspace.rules.flatMap(rule => rule.domainIds))
   const capabilityIds = new Set(workspace.rules.flatMap(rule => rule.capabilityIds))
   const journeyIds = new Set(workspace.rules.flatMap(rule => rule.journeyIds))
   const capabilityScenarioIds = new Set(workspace.rules.flatMap(rule => rule.capabilityScenarioIds))
   const journeyScenarioIds = new Set(workspace.rules.flatMap(rule => rule.journeyScenarioIds))
   const entities: AnyEntityView[] = [
     ...workspace.rules,
-    ...workspace.domains.filter(entity => domainIds.has(entity.id)),
     ...workspace.capabilities.filter(entity => capabilityIds.has(entity.id)),
     ...workspace.journeys.filter(entity => journeyIds.has(entity.id)),
     ...workspace.capabilityScenarios.filter(entity => capabilityScenarioIds.has(entity.id)),
@@ -409,7 +407,6 @@ export function buildRuleReach(
     edges.push(relationEdge({ source, target, label: 'constrains' }, { minlen }))
   }
   for (const rule of workspace.rules) {
-    rule.domainIds.forEach(target => add(rule.key, entityKey('domain', target), 1))
     rule.capabilityIds.forEach(target => add(rule.key, entityKey('capability', target), 2))
     rule.journeyIds.forEach(target => add(rule.key, entityKey('journey', target), 3))
     rule.capabilityScenarioIds.forEach(target => add(rule.key, entityKey('capability-scenario', target), 4))

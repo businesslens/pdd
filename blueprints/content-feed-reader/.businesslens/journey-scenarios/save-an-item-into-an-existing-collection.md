@@ -4,20 +4,29 @@ journey: save-and-organize
 actors: [reader]
 result: achieved
 flow:
-  - capability: item-saving
+  - id: save-item
+    capability: item-saving
     operation: Save the worthwhile item
-    availability:
-      - interface: reader-web
-        experiences: [personal-library]
-      - interface: reader-mobile
-        experiences: [personal-library]
-  - capability: collection-organization
+  - id: add-to-collection
+    capability: collection-organization
     operation: Add the item to the chosen owned collection
-    availability:
-      - interface: reader-web
-        experiences: [personal-library]
-      - interface: reader-mobile
-        experiences: [personal-library]
+routes:
+  - id: web
+    contexts:
+      - stage: save-item
+        interface: reader-web
+        experience: personal-library
+      - stage: add-to-collection
+        interface: reader-web
+        experience: personal-library
+  - id: mobile
+    contexts:
+      - stage: save-item
+        interface: reader-mobile
+        experience: personal-library
+      - stage: add-to-collection
+        interface: reader-mobile
+        experience: personal-library
 ---
 
 # Save an item into an existing collection

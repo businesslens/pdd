@@ -14,7 +14,7 @@ specific route through its Capabilities, and ends with the goal achieved or not
 achieved.
 
 A Journey Scenario owns its exact Capability selection, linear order,
-repetition, supported contexts, and terminal result. It verifies composition
+repetition, supported routes, and terminal result. It verifies composition
 and handoffs without replacing the local
 [Capability Scenarios](./capability-scenarios.md) required by each Capability.
 
@@ -44,15 +44,20 @@ journey: contribute-a-code-change
 actors: [repository-contributor]
 result: achieved
 flow:
-  - capability: publish-repository-changes
+  - id: publish-branch
+    capability: publish-repository-changes
     operation: Push the branch
-    availability:
-      - interface: git-transport
-  - capability: propose-code-change
+  - id: open-proposal
+    capability: propose-code-change
     operation: Open the branch for review
-    availability:
-      - interface: web-ui
-        experiences: [repository-collaboration]
+routes:
+  - id: git-to-web
+    contexts:
+      - stage: publish-branch
+        interface: git-transport
+      - stage: open-proposal
+        interface: web-ui
+        experience: repository-collaboration
 references:
   - kind: code
     role: implementation
@@ -83,7 +88,8 @@ The Journey goal is achieved: a reviewable change proposal exists.
 | `journey` | yes | Name exactly one existing Journey. |
 | `actors` | yes | Name at least one unique existing Actor, including a Journey Actor. |
 | `result` | yes | Use `achieved` or `not-achieved`; it is orthogonal to `kind`. |
-| `flow` | yes | Give an ordered non-empty list of existing Capabilities, one-line operations, and exact supported interaction contexts. |
+| `flow` | yes | Give an ordered non-empty list of locally unique stage IDs, existing Capabilities, and one-line operations. |
+| `routes` | yes | Give one or more locally unique routes, each with exactly one singular exact context for every flow stage. |
 | `references` | no | Use the documented [Reference](./references.md) shape. |
 | Lead paragraph | no | Start with a named H2; move starting-condition prose into `## Trigger`. |
 | `## Trigger` | yes | Begin with the Actor pursuing the Journey Goal. |
@@ -101,20 +107,25 @@ sections, and each recognized Scenario H2 may appear only once.
 
 ## Flow
 
-Each flow entry names exactly one existing Capability, a one-line operation,
-and the exact supported interaction contexts used there:
+Each flow entry names a locally unique stage, exactly one existing Capability,
+and a one-line operation. Routes then correlate one exact context per stage:
 
 ```yaml
 flow:
-  - capability: publish-repository-changes
+  - id: publish-branch
+    capability: publish-repository-changes
     operation: Push the branch
-    availability:
-      - interface: git-transport
-  - capability: propose-code-change
+  - id: open-proposal
+    capability: propose-code-change
     operation: Open the branch for review
-    availability:
-      - interface: web-ui
-        experiences: [repository-collaboration]
+routes:
+  - id: git-to-web
+    contexts:
+      - stage: publish-branch
+        interface: git-transport
+      - stage: open-proposal
+        interface: web-ui
+        experience: repository-collaboration
 ```
 
 The Journey Scenario is the authority for Capability order. Flow entries may
@@ -132,17 +143,27 @@ the default branch.” If the model instead has only a vague
 and delete behaviors, fix the Capability boundary rather than hiding those
 operations in Scenario prose.
 
-Contexts in one flow entry are equivalent routes for the same behavior and are
-verified independently. Split Journey Scenarios when an Interface route changes
-observable behavior or the Journey-level Outcome.
+Every route contains each flow stage exactly once. Its context uses `interface`
+and, when that Interface has Experiences, singular `experience`. Each context
+must be within the named stage Capability's availability. Route IDs and stage
+IDs are lowercase kebab-case and unique within the Scenario.
+
+Routes express correlated paths rather than a cartesian union. For example, a
+web stage can hand off to an operator CLI while a mobile stage hands off to the
+same CLI; each complete correlation is a separate route. Add another route when
+the Capability sequence, behavior, and Journey-level Outcome stay the same.
+Split Journey Scenarios when one of those meanings changes.
 
 The flow is linear. A Decision point may vary detail while preserving the same
 Capability sequence and Outcome. A branch that changes either belongs in a
 separate Journey Scenario.
 
-Every exact flow context must permit at least one Scenario Actor, and every
-Scenario Actor must be supported by at least one flow context. Cross-Interface
-flows do not require every Actor to use every entry.
+Every exact route context must permit at least one Scenario Actor, and every
+Scenario Actor must be supported by at least one route context. The first
+context of every route must permit a Journey Actor who participates in the
+Scenario, so the end-to-end variation begins with the goal owner rather than an
+internal or downstream participant. Cross-Interface flows do not require every
+Actor to use every stage.
 
 `kind` classifies the nature of the variation; `result` records whether the
 Journey Goal was achieved. `kind: edge` with `result: achieved` and

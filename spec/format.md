@@ -296,9 +296,15 @@ the Experience. H1, lead description, and `## Capability boundary` are required.
 There is no `exit` field. An Interface with one undivided usage context does not
 need a ceremonial Experience.
 
+Experiences form an exhaustive, potentially overlapping cover for every
+Interface that uses them. The union of Actors from Experiences declaring an
+Interface must equal that Interface's Actor list. No Interface Actor may become
+unreachable when direct availability is replaced by Experience-scoped
+availability.
+
 ### Availability
 
-Capabilities, Screens, and Business Rules use one exact availability shape.
+Capabilities, Screens, and Capability Scenarios use one availability shape.
 An Interface without Experiences is named directly; an Interface divided into
 Experiences names the exact contexts:
 
@@ -319,10 +325,22 @@ Experiences that declare it. An Interface cannot mix direct and
 Experience-scoped availability. Duplicate Interfaces or scopes are invalid.
 Availability states intended Product scope, never implementation status.
 
-Journeys do not declare availability. Journey Scenarios use an ordered `flow`
-because one path may deliberately move between Interfaces or Experiences.
-Capability Scenarios declare exact availability selected from their one
-Capability.
+Journeys do not declare availability. Capability Scenarios declare exact
+availability selected from their one Capability. Journey Scenarios correlate
+one exact context per flow stage through explicit routes because one route may
+deliberately move between Interfaces or Experiences. Business Rule targets use
+the same singular exact-context shape when they narrow one target or govern a
+context directly.
+
+An exact context names one Interface and, when that Interface uses Experiences,
+exactly one Experience:
+
+```yaml
+interface: customer-web
+experience: storefront
+```
+
+Omit `experience` only when the Interface has no Experiences.
 
 ### `domains/<id>.md`
 
@@ -388,14 +406,14 @@ multiple behaviors.
 
 ```markdown
 ---
-domains: [ordering]
-capabilities: [checkout]
-journeys: [browse-and-buy]
-capabilityScenarios: [reject-out-of-stock-checkout]
-journeyScenarios: [browse-and-complete-checkout]
-availability:
-  - interface: customer-web
-    experiences: [storefront]
+appliesTo:
+  - type: capability
+    id: checkout
+    contexts:
+      - interface: customer-web
+        experience: storefront
+  - type: journey
+    id: browse-and-buy
 references:
   - kind: code
     role: implementation
@@ -417,12 +435,20 @@ Inventory may change between browsing and final submission, so checkout must
 revalidate it.
 ```
 
-The lead paragraph is the rule statement. `domains`, `capabilities`, `journeys`,
-`capabilityScenarios`, and `journeyScenarios` are relation lists. `availability`
-optionally limits the rule to exact Interface scopes, optionally narrowed by
-Experience. A rule must relate to at least one Domain, Capability, Journey,
-either Scenario type, or availability scope. Business Rule owns these
-relations; consumers derive backlinks.
+The lead paragraph is the rule statement. `appliesTo` is a required non-empty
+list of typed targets. An entity target uses `type` = `capability`,
+`capability-scenario`, `journey`, or `journey-scenario`, requires `id`, and may
+use a non-empty `contexts` list to narrow that target. Without `contexts`, the
+Rule applies to all supported contexts of the target. A direct context target
+uses `type: context` plus `interface` and optional `experience` instead of `id`.
+
+Targets are additive: the Rule governs their union. A context on an entity
+target must be within that target's derived availability. Target values and
+exact contexts are unique. Do not target both a Capability and one of its
+Capability Scenarios, or both a Journey and one of its Journey Scenarios; the
+ancestor already governs the child. Domains remain navigation-only, so Rule
+Domain backlinks are derived through targeted behavior rather than authored.
+Business Rule owns these relations; consumers derive every backlink.
 
 ### `screens/<id>.md`
 
@@ -497,8 +523,8 @@ by non-empty prose. States remain embedded in the Screen report entity.
 A referenced Capability Scenario's Capability must appear in the Screen's
 `capabilities`, and the Scenario and Screen must share at least one exact
 availability context. A referenced Journey Scenario must have at least one flow
-entry whose Capability appears in the Screen's `capabilities` and whose exact
-context intersects the Screen's availability.
+stage whose Capability appears in the Screen's `capabilities` and a route
+context for that stage that intersects the Screen's availability.
 
 Only product-significant states belong here: a state changes what the user
 understands, can do, or achieves. Empty, unavailable, unauthorized,
@@ -555,8 +581,8 @@ optional. Consumers derive Domains and Interface/Experience contexts from
 Journey Scenario flow entries. A Journey has no `entryPoints`; concrete Product
 routes remain on Interfaces, Experiences, and Screens.
 
-A consumer that presents a Journey entry route starts with the first flow item
-of each achieved Journey Scenario, then resolves the matching Interface or
+A consumer that presents a Journey entry route starts with the first flow stage
+of each achieved Journey Scenario route, then resolves that exact Interface or
 Experience entry point. This is derived navigation, not authored Journey data.
 
 Consumers derive the Journey's primary Capability set from achieved Scenarios
@@ -567,8 +593,8 @@ mapping is exhaustive.
 A Journey has no `availability`, Trigger, Steps, decisions, concrete Outcome,
 authored Capability list, or authored Scenario list. At least one Journey
 Scenario must name it with `result: achieved` and exercise at least two distinct
-Capabilities. This is Journey acceptance coverage, not the source of its
-identity.
+Capabilities. Every Journey Actor must appear in at least one achieved Scenario.
+This is Journey acceptance coverage, not the source of its identity.
 
 A Journey is established behavior only when repository evidence supports a
 deliberate handoff, orchestration, shared state, navigation, command, or
@@ -663,20 +689,29 @@ actors: [shopper]
 journey: browse-and-buy
 result: achieved
 flow:
-  - capability: catalog-browsing
+  - id: discover
+    capability: catalog-browsing
     operation: Find and select an available product
-    availability:
-      - interface: customer-web
-        experiences: [storefront]
-      - interface: customer-mobile
-        experiences: [storefront]
-  - capability: checkout
+  - id: checkout
+    capability: checkout
     operation: Submit checkout and confirm the order
-    availability:
-      - interface: customer-web
-        experiences: [storefront]
-      - interface: customer-mobile
-        experiences: [storefront]
+routes:
+  - id: web
+    contexts:
+      - stage: discover
+        interface: customer-web
+        experience: storefront
+      - stage: checkout
+        interface: customer-web
+        experience: storefront
+  - id: mobile
+    contexts:
+      - stage: discover
+        interface: customer-mobile
+        experience: storefront
+      - stage: checkout
+        interface: customer-mobile
+        experience: storefront
 references:
   - kind: code
     role: implementation
@@ -717,27 +752,31 @@ Order is stored and a confirmation is shown.
 `kind` must exist in `taxonomies.yaml`. `journey` names exactly one existing
 Journey. `result` is `achieved` or `not-achieved`. `kind` classifies the nature
 of the variation while `result` records its terminal Journey-goal outcome; they
-are orthogonal. `actors` and `flow` are non-empty, and the Actors must include
-at least one Actor from the Journey.
+are orthogonal. `actors`, `flow`, and `routes` are non-empty, and the Actors
+must include at least one Actor from the Journey.
 
-Every exact flow context must permit at least one Scenario Actor, and every
-Scenario Actor must be supported by at least one flow context. This does not
-require every Actor to use every flow entry in a cross-Interface path.
+Each ordered flow entry has a locally unique lowercase kebab-case `id`, names
+exactly one existing Capability, and carries a required single-line `operation`.
+It does not declare availability.
 
-Each ordered flow entry names exactly one existing Capability, a required
-single-line `operation`, and a non-empty `availability` list using the shared
-exact availability shape. In
-this context, an availability scope is a supported interaction context: one
-Interface plus, when that Interface uses Experiences, one or more Experiences.
-Every context must be declared by that flow entry's Capability. Contexts within
-one flow entry are equivalent supported routes for the same behavioral stage
-and are verified independently.
+Each route has a locally unique lowercase kebab-case `id` and one context for
+every flow stage, referenced by `stage`. It cannot omit a stage, repeat one, or
+name an unknown stage. Every context must be declared by that stage's
+Capability. The route is the correlation authority: web and mobile lanes do not
+imply cross-device transitions, while an intentional cross-Interface handoff is
+written directly into one route.
 
-The Journey Scenario owns Capability selection and order. Capability
-flow entries may repeat or stop. An achieved Journey Scenario must use
-at least two distinct Capabilities. A not-achieved Journey Scenario may stop
-after one Capability, but its Outcome must state the Journey-level reason the
-goal was not achieved.
+Every route context must permit at least one Scenario Actor, and every Scenario
+Actor must be supported by at least one route context. The first context of
+every route must permit an Actor who is both a Scenario Actor and an Actor of
+the Journey. This does not require every Actor to use every stage in a
+cross-Interface route.
+
+The Journey Scenario owns Capability selection and order. Capability flow
+entries may repeat or stop, and all routes share that sequence and terminal
+Outcome. An achieved Journey Scenario must use at least two distinct
+Capabilities. A not-achieved Journey Scenario may stop after one Capability,
+but its Outcome must state the Journey-level reason the goal was not achieved.
 
 Flow entries reference Capabilities, never Capability Scenarios. Their
 `operation` fields are the structured stage labels and the Journey Scenario
@@ -751,10 +790,10 @@ The flow is linear. A Decision point may vary detail while preserving the same
 Capability sequence and terminal Outcome. A branch that changes either belongs
 in another Journey Scenario.
 
-Split Interface variants when the route changes observable behavior or outcome;
-do not duplicate a Journey Scenario merely because the same contract is
-supported through web and mobile. Business Rules own Scenario scope, so Journey
-Scenarios do not duplicate Rule IDs.
+Add equivalent routes when only the supported context changes. Split Journey
+Scenarios when the Capability sequence, observable behavior, or Journey-level
+Outcome changes. Business Rules own Scenario scope, so Journey Scenarios do not
+duplicate Rule IDs.
 
 ### `coverage.md`
 
@@ -787,6 +826,12 @@ put structured assessment data in the defined frontmatter fields.
 - `draft` — the model itself is still being authored or reviewed.
 - `partial` — the model is useful and has known unmapped areas.
 - `complete` — the intended product scope is modeled.
+
+A complete model has at least one Capability. Every exact Capability
+availability scope is selected by at least one Capability Scenario, and every
+Journey Actor appears in at least one achieved Journey Scenario. Draft and
+partial models warn for uncovered Capability scopes; public Blueprints require
+the same complete behavioral coverage regardless of Coverage status.
 
 All three statuses may be exported. A complete model may describe planned,
 implemented, or mixed behavior and may contain zero references. Proposing it as a
@@ -848,11 +893,12 @@ through `export` is a Blueprint.
 The report schema accepts only content that can expand into canonical entity
 Markdown: titles and list items are single-line, set-valued relation arrays are
 unique, required descriptions and behavior sections are non-empty, Capability
-Scenario availability and Journey Scenario flow entries resolve to existing
-entities, every achieved Journey Scenario uses at least two distinct
-Capabilities, and Interface/Capability consistency holds. Product Report v8 is
-the only accepted report version. No report profile requires a reference.
-Present references remain subject to the same strict shape and target rules.
+Scenario availability, Journey Scenario route contexts, and Business Rule
+targets resolve to existing entities, every achieved Journey Scenario uses at
+least two distinct Capabilities, and Interface/Capability consistency holds.
+Product Report v8 is the only accepted report version. No report profile
+requires a reference. Present references remain subject to the same strict
+shape and target rules.
 
 ### Portable projection
 

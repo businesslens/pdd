@@ -52,8 +52,8 @@ Read before authoring:
    Capability evidence-backed per-Capability acceptance. Create a Journey only
    for a stable goal whose achieved path crosses at least two Capabilities; do
    not wrap a single Capability in a Journey. Give every Journey an achieved
-   Journey Scenario whose ordered flow names the Capability, one-line operation,
-   and exact availability at every stage. Repository deployables, routes,
+   Journey Scenario whose ordered flow names locally identified Capability
+   stages and whose routes correlate one exact context per stage. Repository deployables, routes,
    commands, APIs, and integrations
    are evidence, not automatic Interfaces. Create an Interface only for a
    supported Product interaction contract, and do not infer cross-Interface

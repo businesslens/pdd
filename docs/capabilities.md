@@ -19,7 +19,7 @@ Screens, Capability Scenarios, and optional [Journeys](./journeys.md).
 Capabilities and their observable
 [Capability Scenarios](./capability-scenarios.md) form the behavioral core of
 the Product Model. A Capability does not need a Journey, but it does need at
-least one Capability Scenario that accepts it directly.
+least one Capability Scenario covering every exact availability context.
 
 ## When you create one
 
@@ -85,10 +85,12 @@ Capability flow entries. Journey Capability backlinks are derived from those
 entries rather than authored on the Journey.
 
 Capability Scenario coverage is the only direct acceptance coverage for a
-Capability. Use of the Capability by a Journey Scenario does not satisfy it.
-Missing coverage is an error for a `complete` model, a warning for `partial` or
-`draft`, and an error when publishing a public Blueprint. A single-Capability
-goal remains local Capability behavior and never requires a Journey wrapper.
+Capability. The union of its Capability Scenarios must cover every exact
+Interface/Experience pair the Capability declares; use by a Journey Scenario
+does not satisfy that requirement. A missing pair is an error for a `complete`
+model, a warning for `partial` or `draft`, and an error when publishing a public
+Blueprint. A single-Capability goal remains local Capability behavior and never
+requires a Journey wrapper.
 
 ## Availability
 
@@ -113,6 +115,6 @@ availability:
   - interface: operator-cli
 ```
 
-Capability Scenario availability and Journey Scenario flow entries select exact
-contexts from this availability. They do not alter or expand the Capability's
-scope, and every selected context is verified independently.
+Capability Scenario availability and Journey Scenario route contexts select
+exact contexts from this availability. They do not alter or expand the
+Capability's scope, and every selected context is verified independently.

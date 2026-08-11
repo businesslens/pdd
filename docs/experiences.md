@@ -72,7 +72,10 @@ Supports operational administration. It does not grant customer privileges.
 
 The entire `experiences/` directory is optional. If any Experience names an
 Interface, all availability for that Interface must name one or more of its
-Experiences. An Interface with no Experiences uses direct availability:
+Experiences. The union of Actors across those Experiences must cover every Actor
+declared by the Interface; Experiences may overlap, but they cannot leave an
+Interface Actor without a usable context. An Interface with no Experiences uses
+direct availability:
 
 ```yaml
 availability:

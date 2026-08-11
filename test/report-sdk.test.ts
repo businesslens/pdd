@@ -37,12 +37,16 @@ describe('report SDK entry point', () => {
       'ReportSupportingSectionSchema',
       'ReportInterfaceSchema',
       'ReportAvailabilitySchema',
+      'ReportExactContextSchema',
       'ReportCapabilitySchema',
       'ReportCapabilityScenarioSchema',
       'ReportScreenSchema',
       'ReportScreenStateSchema',
       'ReportJourneyScenarioSchema',
       'ReportJourneyFlowItemSchema',
+      'ReportJourneyRouteContextSchema',
+      'ReportJourneyRouteSchema',
+      'ReportBusinessRuleTargetSchema',
       'validateProductReport',
       'validateBlueprintReport',
       'parseProductReport',
@@ -164,11 +168,8 @@ describe('projectPortableReport', () => {
       }
     }
     for (const scenario of direct.model.journeyScenarios) {
-      for (const item of scenario.flow) {
-        item.availability = item.availability.map(scope => ({
-          interfaceId: scope.interfaceId,
-          experienceIds: []
-        }))
+      for (const route of scenario.routes) {
+        for (const context of route.contexts) context.experienceId = null
       }
     }
 
@@ -187,20 +188,23 @@ describe('projectPortableReport', () => {
       result: 'not-achieved',
       flow: [
         {
+          id: 'attempt-checkout',
           capabilityId: 'checkout',
-          operation: 'Attempt checkout',
-          availability: [
-            { interfaceId: 'customer-web', experienceIds: ['storefront'] }
-          ]
+          operation: 'Attempt checkout'
         },
         {
+          id: 'review-attempt',
           capabilityId: 'order-management',
-          operation: 'Review the blocked order attempt',
-          availability: [
-            { interfaceId: 'admin-web', experienceIds: ['admin-console'] }
-          ]
+          operation: 'Review the blocked order attempt'
         }
       ],
+      routes: [{
+        id: 'web-to-admin',
+        contexts: [
+          { stageId: 'attempt-checkout', interfaceId: 'customer-web', experienceId: 'storefront' },
+          { stageId: 'review-attempt', interfaceId: 'admin-web', experienceId: 'admin-console' }
+        ]
+      }],
       trigger: 'A shopper attempts checkout and needs operator help.',
       steps: ['The shopper attempts checkout', 'The operator reviews the blocked attempt'],
       decisionPoints: [],
@@ -351,7 +355,9 @@ describe('projectPortableReport', () => {
     missing.model.journeys[0]!.failureOnlyCapabilityIds = []
     missing.model.journeys[0]!.domainIds = []
     for (const screen of missing.model.screens) screen.journeyScenarioIds = []
-    for (const rule of missing.model.businessRules) rule.journeyScenarioIds = []
+    for (const rule of missing.model.businessRules) {
+      rule.appliesTo = rule.appliesTo.filter(target => target.type !== 'journey-scenario')
+    }
 
     expect(sdk.ProductReportSchema.safeParse(missing).success).toBe(true)
     expect(sdk.validateProductReport(missing)).toContain(
@@ -394,6 +400,47 @@ describe('projectPortableReport', () => {
       'at least one author is required for a public Blueprint',
       'license is required for a public Blueprint'
     ])
+  })
+
+  it('enforces route, Rule-target, Experience-cover, and complete-model relationships', () => {
+    const incompleteRoute = structuredClone(report)
+    const scenario = incompleteRoute.model.journeyScenarios.find(item => item.id === 'browse-and-complete-checkout')!
+    scenario.routes[0]!.contexts.pop()
+    expect(sdk.validateProductReport(incompleteRoute).join('\n')).toContain(
+      'missing context for flow stage "complete-checkout"'
+    )
+
+    const narrowedRule = structuredClone(report)
+    const target = narrowedRule.model.businessRules
+      .find(rule => rule.id === 'payment-before-confirmation')!
+      .appliesTo.find(item => item.type === 'capability')!
+    if (target.type !== 'context') {
+      target.contexts = [{ interfaceId: 'admin-web', experienceId: 'admin-console' }]
+    }
+    expect(sdk.validateProductReport(narrowedRule).join('\n')).toContain(
+      'context "admin-web/admin-console" is outside target "capability:checkout"'
+    )
+
+    const uncoveredActor = structuredClone(report)
+    uncoveredActor.model.interfaces.find(item => item.id === 'customer-web')!.actorIds.push('store-admin')
+    expect(sdk.validateProductReport(uncoveredActor).join('\n')).toContain(
+      'interface "customer-web": actor "store-admin" needs at least one Experience context'
+    )
+
+    const emptyComplete = structuredClone(report)
+    emptyComplete.model.capabilities = []
+    emptyComplete.counts.capabilities = 0
+    expect(sdk.validateProductReport(emptyComplete)).toContain('a complete model needs at least one capability')
+  })
+
+  it('requires public Blueprint Capability coverage in every exact context', () => {
+    const incomplete = structuredClone(report)
+    for (const scenario of incomplete.model.capabilityScenarios.filter(item => item.capabilityId === 'checkout')) {
+      scenario.availability = scenario.availability.filter(item => item.interfaceId !== 'customer-mobile')
+    }
+    expect(sdk.validateBlueprintReport(incomplete)).toContain(
+      'capability "checkout" availability "customer-mobile/storefront" needs Capability Scenario coverage for a public Blueprint'
+    )
   })
 
   it('keeps Coverage independent from References', () => {

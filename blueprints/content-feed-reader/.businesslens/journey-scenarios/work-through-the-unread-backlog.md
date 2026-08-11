@@ -4,20 +4,29 @@ journey: catch-up-on-unread
 actors: [reader]
 result: achieved
 flow:
-  - capability: content-reading
+  - id: read-item
+    capability: content-reading
     operation: Read an unread library item
-    availability:
-      - interface: reader-web
-        experiences: [personal-library]
-      - interface: reader-mobile
-        experiences: [personal-library]
-  - capability: reading-state
+  - id: mark-read
+    capability: reading-state
     operation: Mark the consumed item read and continue
-    availability:
-      - interface: reader-web
-        experiences: [personal-library]
-      - interface: reader-mobile
-        experiences: [personal-library]
+routes:
+  - id: web
+    contexts:
+      - stage: read-item
+        interface: reader-web
+        experience: personal-library
+      - stage: mark-read
+        interface: reader-web
+        experience: personal-library
+  - id: mobile
+    contexts:
+      - stage: read-item
+        interface: reader-mobile
+        experience: personal-library
+      - stage: mark-read
+        interface: reader-mobile
+        experience: personal-library
 ---
 
 # Work through the unread backlog

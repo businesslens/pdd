@@ -4,20 +4,29 @@ journey: browse-and-buy
 actors: [shopper]
 result: achieved
 flow:
-  - capability: catalog-browsing
+  - id: select-product
+    capability: catalog-browsing
     operation: Find and select an available product
-    availability:
-      - interface: customer-web
-        experiences: [storefront]
-      - interface: customer-mobile
-        experiences: [storefront]
-  - capability: checkout
+  - id: complete-checkout
+    capability: checkout
     operation: Submit payment and confirm the order
-    availability:
-      - interface: customer-web
-        experiences: [storefront]
-      - interface: customer-mobile
-        experiences: [storefront]
+routes:
+  - id: web
+    contexts:
+      - stage: select-product
+        interface: customer-web
+        experience: storefront
+      - stage: complete-checkout
+        interface: customer-web
+        experience: storefront
+  - id: mobile
+    contexts:
+      - stage: select-product
+        interface: customer-mobile
+        experience: storefront
+      - stage: complete-checkout
+        interface: customer-mobile
+        experience: storefront
 references:
   - kind: code
     role: implementation
