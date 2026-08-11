@@ -40,9 +40,13 @@ not contain another H1 or H2.
 - `taxonomies.yaml`: `scenarioKinds` entries with `id`, `name`, `description`,
   and optional `colorSlot`.
 - Actor: required `kind: person|system` and `relationship: external|internal`,
-  H1, and lead description.
+  H1, and lead description. An external system is an Actor only when it
+  initiates; a system the Product calls out to is a Capability dependency.
 - Interface: at least one `actors` relation; optional Product-facing
-  `entryPoints`; H1, lead description, and `## Capability boundary`.
+  `entryPoints`; H1, lead description, and `## Capability boundary`. Interfaces
+  are inbound. An outbound connection the Product opens is not an Interface:
+  model it in the calling Capability, scope availability to where the Actor
+  observes the result, and make its failure a Capability Scenario.
 - Experience: at least one `actors` and `interfaces`; `access`
   (`public|authenticated|restricted`); optional Interface-keyed `entryPoints`;
   H1, lead description, and `## Capability boundary`. The collection is

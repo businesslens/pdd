@@ -3,6 +3,14 @@
 Status: implemented. This document records the approved implementation plan;
 `spec/format.md` is the authoritative format contract.
 
+> **Amended by [ADR-0011](../adr/0011-external-systems-are-actors-only-when-they-initiate.md).**
+> This plan's external-Actor wording ("source") and Interface examples
+> ("supported integration") were read as licensing an Actor and an Interface for
+> an external system the Product merely calls. Direction of initiation now
+> decides: an external system is an Actor only when it initiates, and an
+> outbound dependency belongs inside the Capability that calls it. The text
+> below is kept as the historical record.
+
 ## Objective
 
 Make delivery commitments a first-class part of the BusinessLens Product Model

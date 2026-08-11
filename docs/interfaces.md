@@ -29,6 +29,24 @@ contract—for example, a partner automation API. An internal API used to
 implement the web application is an implementation detail. Apply the same test
 to command namespaces, integrations, and background system interactions.
 
+## Interfaces are inbound
+
+Something *arrives* at the Product through an Interface. An outbound connection
+your Product opens to a third party is not an Interface, however stable,
+versioned, or vendor-supported that integration is.
+
+Do not create an Interface for a feed your Product polls, a payment processor it
+charges, a mail provider it sends through, or a model API it queries. Those
+external systems are not [Actors](./actors.md) either—they have no goal in your
+Product and no surface you must keep stable for them. Model the call inside the
+[Capability](./capabilities.md) that makes it, give its availability the
+Interfaces where an Actor actually observes the result, and make the failure
+behavior a [Capability Scenario](./capability-scenarios.md).
+
+When that same third party calls *you* back—a webhook, callback, or push
+subscription—that inbound surface **is** an Interface and the third party is its
+Actor. Direction decides, not ownership.
+
 ## The file
 
 Interfaces live at `interfaces/<interface-id>.md`.

@@ -233,13 +233,24 @@ another component; an internal system is an Actor only when its responsibility,
 privilege, trigger, or outcome is product-significant. H1 = name and the lead
 paragraph = description.
 
+An external system is an Actor only when it **initiates** interaction with the
+Product. A system the Product calls out to is a dependency of the Capability
+that calls it: it has no goal inside the Product, no privilege to grant, and no
+surface the Product must keep stable for it. Direction decides, not ownership —
+the same third party can be a dependency in one direction and an Actor in the
+other when it also calls back. See [Outbound dependencies](#outbound-dependencies).
+
 ### `interfaces/<id>.md`
 
 An Interface is a supported interaction form through which Actors access the
 Product and for which product behavior can be independently required and
 verified. A customer web application, mobile application, operator CLI, partner
-API, and supported integration are Interfaces. Frameworks, internal adapters,
+API, and inbound webhook endpoint are Interfaces. Frameworks, internal adapters,
 and private component APIs are not.
+
+An Interface is **inbound**: something arrives at the Product through it. An
+outbound connection the Product opens to a third party is not an Interface,
+even when the integration is stable, versioned, and vendor-supported.
 
 ```markdown
 ---
@@ -261,6 +272,31 @@ Supports customer-facing behavior. It does not expose store operations.
 product-facing root addresses. H1, lead description, and `## Capability
 boundary` are required. There is no closed Interface-kind enum, access mode, or
 exit contract.
+
+### Outbound dependencies
+
+An external system the Product calls — a syndicated feed it polls, a payment
+processor it charges, a mail provider it sends through, a model API it queries —
+is not an Actor and gets no Interface.
+
+Model it where its result is observed:
+
+- the Capability that makes the call names the external system in its prose and
+  states what triggers the call;
+- its `availability` names the Interfaces where an Actor observes the outcome,
+  never a synthetic integration surface;
+- product-significant failure behavior — what the Actor sees when the external
+  system is unavailable, slow, or wrong — is a Capability Scenario;
+- the provider's published contract attaches as a `references` entry with
+  `kind: spec` or `kind: doc` and `role: context`.
+
+Direction decides. When the same third party also calls the Product — a webhook,
+callback, or push subscription — that inbound surface is an Interface and the
+third party is its Actor. A feed provider the Product polls is a dependency; a
+feed provider that pushes updates to the Product is an Actor.
+
+There is no external-system entity. An outbound dependency shared by several
+Capabilities is described by each Capability that depends on it.
 
 ### `experiences/<id>.md`
 

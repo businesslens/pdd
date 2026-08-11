@@ -13,8 +13,15 @@
 
 - Actors differ by Product goals, triggers, responsibilities, or privileges;
   classify each as person/system and internal/external.
+- An external system is an Actor only when it initiates. An outbound client the
+  target repository calls—a polled feed, payment processor, mail provider, model
+  API—is not an Actor and gets no Interface. Map it inside the Capability that
+  calls it, scope that Capability to the Interfaces where an Actor observes the
+  result, and cover its failure behavior with a Capability Scenario.
 - Interfaces are supported interaction contracts such as customer web, reader
   mobile, operator CLI, or partner API—not every deployable or internal API.
+  Interfaces are inbound; an inbound webhook or callback endpoint qualifies and
+  makes its caller an Actor.
 - Experiences are optional coherent Actor contexts with stable access and
   capability boundaries across one or more Interfaces. Omit them when an
   Interface is already one coherent context; do not equate them with a page,
