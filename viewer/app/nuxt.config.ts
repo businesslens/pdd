@@ -24,7 +24,8 @@ const devHandlers = [
     handler: defineEventHandler((event) => {
       setHeader(event, 'content-type', 'image/svg+xml')
       setHeader(event, 'cache-control', 'no-store')
-      return readFileSync(resolve(fixtureRoot, 'logo.svg'), 'utf8')
+      /* Schema 5: the Product expands to `product/` once it owns a logo. */
+      return readFileSync(resolve(fixtureRoot, 'product/logo.svg'), 'utf8')
     })
   },
   {

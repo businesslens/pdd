@@ -1,6 +1,12 @@
 # Report viewer: navigation, depth, and the cost of chrome
 
-Status: **proposed.** Nothing here is implemented. Written against `pdd` branch
+Status: **implemented.** D1–D13 are built; O1–O4 are resolved (O1 keep the
+peek, O2 option b, O3 confirmed by keeping the layer host-agnostic, O4 the tab
+writes the child kind to `section`). P1 and P2 are fixed.
+`plans/report-viewer-ux-phases.md` is the build record and lists the six places
+where the implementation deviated.
+
+Written against `pdd` branch
 `codex/report-lab-topology-views` at `96185fa` with the schema-5 working tree
 applied (263 changed paths, uncommitted).
 

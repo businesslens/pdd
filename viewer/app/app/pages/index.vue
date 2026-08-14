@@ -46,6 +46,46 @@ const errorMessage = computed(() => {
   const failure = error.value as { data?: { message?: string }, message?: string } | null
   return failure?.data?.message ?? failure?.message ?? 'The Product Model could not be compiled.'
 })
+
+/*
+  Where you are, in the address bar.
+
+  The viewer keeps the report's two navigation facts — the open section and the
+  open entity page — in the query string, which is what makes a link to a
+  Capability a link, back and forward mean what they say, and a refresh land
+  where it left instead of at the Overview.
+
+  Both directions are guarded on inequality, so the URL and the workbench never
+  push each other in a loop, and one reader gesture is one history entry even
+  when it changes both values.
+*/
+const route = useRoute()
+const router = useRouter()
+
+const section = ref('overview')
+const entity = ref<string | null>(null)
+
+const readQuery = () => ({
+  section: typeof route.query.s === 'string' && route.query.s ? route.query.s : 'overview',
+  entity: typeof route.query.e === 'string' && route.query.e ? route.query.e : null
+})
+
+watch(() => route.query, () => {
+  const next = readQuery()
+  if (next.section !== section.value) section.value = next.section
+  if (next.entity !== entity.value) entity.value = next.entity
+}, { immediate: true })
+
+watch([section, entity], () => {
+  const current = readQuery()
+  if (current.section === section.value && current.entity === entity.value) return
+  const query = { ...route.query }
+  if (section.value === 'overview') delete query.s
+  else query.s = section.value
+  if (entity.value) query.e = entity.value
+  else delete query.e
+  void router.push({ query })
+})
 </script>
 
 <template>
@@ -78,7 +118,12 @@ const errorMessage = computed(() => {
           :description="liveError"
         />
       </UContainer>
-      <BusinessLensReportViewer :report="data" :logo-src="logoSrc" />
+      <BusinessLensReportViewer
+        v-model:section="section"
+        v-model:entity="entity"
+        :report="data"
+        :logo-src="logoSrc"
+      />
     </template>
   </div>
 </template>

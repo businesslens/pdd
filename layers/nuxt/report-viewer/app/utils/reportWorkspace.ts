@@ -376,6 +376,8 @@ export interface ReportWorkspace {
   entitiesById: Map<string, AnyEntityView[]>
   /** Scenarios grouped by their parent Journey, in authored order. */
   scenariosByJourney: Map<string, ScenarioView[]>
+  /** Scenarios grouped by their parent Capability, in authored order. */
+  scenariosByCapability: Map<string, ScenarioView[]>
   /** Capabilities grouped by Domain; `''` collects the undomained ones. */
   capabilitiesByDomain: Map<string, CapabilityView[]>
 }
@@ -1032,6 +1034,17 @@ export function projectReportWorkspace(report: ProductReportV9): ReportWorkspace
     scenariosByJourney.set(scenario.journeyId, [...(scenariosByJourney.get(scenario.journeyId) || []), scenario])
   }
 
+  /* Both parents index their children the same way: the Workbench reads a
+     Capability's Scenarios exactly where it reads a Journey's. */
+  const scenariosByCapability = new Map<string, ScenarioView[]>()
+  for (const scenario of scenarios) {
+    if (!scenario.capabilityId) continue
+    scenariosByCapability.set(
+      scenario.capabilityId,
+      [...(scenariosByCapability.get(scenario.capabilityId) || []), scenario]
+    )
+  }
+
   const capabilitiesByDomain = new Map<string, CapabilityView[]>()
   for (const capability of capabilities) {
     const key = capability.domainId ?? ''
@@ -1083,7 +1096,40 @@ export function projectReportWorkspace(report: ProductReportV9): ReportWorkspace
     byKey: new Map(allEntities.map(entity => [entity.key, entity])),
     entitiesById,
     scenariosByJourney,
+    scenariosByCapability,
     capabilitiesByDomain
+  }
+}
+
+/**
+ * The same thing on another surface.
+ *
+ * Surface-tree ids carry their path, so two entities of one kind sharing the
+ * path *below* their Interface are counterparts:
+ * `reader-web::personal-library::unread-library` and
+ * `reader-mobile::personal-library::unread-library` are one goal on two
+ * surfaces, and the format says so on purpose. Matching the whole suffix rather
+ * than the last segment keeps `personal-library::saved-items` and
+ * `public-reading::saved-items` correctly distinct inside one Interface.
+ *
+ * The CLI computes this over authored files; the viewer computes it over the
+ * report, from the same ids, because the report carries no counterpart field
+ * and should not need one.
+ */
+export function counterpartsOf(workspace: ReportWorkspace, entity: AnyEntityView): AnyEntityView[] {
+  const suffix = entity.id.split('::').slice(1).join('::')
+  if (!suffix) return []
+  return entitiesOfKindInternal(workspace, entity.kind)
+    .filter(other => other.key !== entity.key
+      && other.id.split('::').slice(1).join('::') === suffix)
+}
+
+function entitiesOfKindInternal(workspace: ReportWorkspace, kind: ReportEntityKind): AnyEntityView[] {
+  switch (kind) {
+    case 'interface': return workspace.interfaces
+    case 'experience': return workspace.experiences
+    case 'screen': return workspace.screens
+    default: return []
   }
 }
 

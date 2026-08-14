@@ -211,8 +211,16 @@ the AGENTS.md rule "each entity is explained in exactly one place" — one page 
 *concept*, and the concept is Scenario. **Side effect: fixes the landing 404 in
 §L1.**
 
-**Workbench:** indent `capability-scenario` and `journey-scenario` as child rail
-items under Capabilities and Journeys rather than flattening all ten kinds. The
+**Workbench:** *superseded — see `plans/report-viewer-navigation-and-depth.md`
+D1.* The indentation shipped and was then reversed: the rail lists kinds, kinds
+do not nest, and with schema 5 declaring a full surface tree as well, indenting
+two rows was either incomplete or a three-level tree inside a ten-row rail. Both
+Scenario kinds are now a tab on their parent's collection, which is the
+resolution the docs clause above reached for documentation. The original text
+follows.
+
+~~indent `capability-scenario` and `journey-scenario` as child rail
+items under Capabilities and Journeys rather than flattening all ten kinds.~~ The
 comment at `BlrWorkbench.vue:69-73` defends flattening because Scenarios would
 otherwise be the largest collection with no browse surface — that objection is
 answered by indenting, not by flattening. They stay clickable and keep their

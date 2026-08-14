@@ -22,6 +22,13 @@ const props = defineProps<{
  */
 const section = defineModel<string>('section', { default: 'overview' })
 
+/**
+ * The entity whose page is open, by stable key, or `null` for the section's own
+ * surface. Bindable for the same reason: a host that keeps both in the URL gets
+ * deep links, a working back button, and a refresh that lands where it left.
+ */
+const entity = defineModel<string | null>('entity', { default: null })
+
 const workspace = computed(() => projectReportWorkspace(props.report))
 </script>
 
@@ -29,6 +36,7 @@ const workspace = computed(() => projectReportWorkspace(props.report))
   <article data-businesslens-report-viewer class="businesslens-report">
     <BlrWorkbench
       v-model:section="section"
+      v-model:entity="entity"
       :workspace="workspace"
       :logo-src="logoSrc"
     >

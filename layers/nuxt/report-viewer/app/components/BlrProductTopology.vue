@@ -19,6 +19,15 @@ import {
 const props = defineProps<{
   workspace: ReportWorkspace
   selectedId?: string | null
+  /**
+   * One entity's neighbourhood, requested from elsewhere in the report.
+   *
+   * This is a *filter*, not a seventh named view: "Everything, one hop around
+   * this entity" needs no new derivation, and the focus control below already
+   * means exactly that. Adding a view would have invented a question the model
+   * does not ask.
+   */
+  focus?: string | null
 }>()
 
 const emit = defineEmits<{
@@ -108,6 +117,14 @@ watch(journeyId, () => {
   const compatible = baseEntityIds.value
   focusIds.value = focusIds.value.filter(id => compatible.has(id))
 })
+
+/* A neighbourhood asked for from a page: the widest view, narrowed to one hop. */
+watch(() => props.focus, (key) => {
+  if (!key) return
+  viewId.value = 'everything'
+  hiddenKinds.value = []
+  focusIds.value = [key]
+}, { immediate: true })
 
 function setView(next: ProductTopologyViewId) {
   viewId.value = next

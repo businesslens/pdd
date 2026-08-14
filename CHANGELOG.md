@@ -23,8 +23,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `businesslens view` serves repository files from a read-only, extension-
   allowlisted mount, and the report viewer renders local `visual` references and
   co-located assets as thumbnails instead of inert text.
-- Scenario rail items are indented under the Capability or Journey that owns
-  them, so the navigation teaches the containment the format enforces.
+- **Every entity has a page**, at its own URL, with the authored body at full
+  width — steps, flow, routes, decision points, screen states and rule
+  statements were previously readable only inside a 672px drawer. Kinds with no
+  authored body of their own (Actor, Interface, Experience, Domain) get their
+  neighbourhood graph as the page body, because their reach is the reading.
+- **The inspector is a peek**: identity, one sentence, three discriminating
+  facts, and what the entity connects to. It does not scroll, it is one level
+  deep, and every relation on it opens that entity's page instead of
+  re-targeting the panel.
+- The open section and the open entity page live in the URL, so a report has
+  deep links, a working browser back button, and a refresh that lands where it
+  left. `BusinessLensReportViewer` exposes both as bindable models.
+- Each collection states the question it answers and the derivation behind its
+  reading order, in the vocabulary the named topology views already use.
+- Every collection opens grouped by the containment the format declares for it,
+  and says so when an entity relates to more than one group.
+- Counterpart Screens, Experiences and Interfaces cross-link from their pages:
+  the same thing on another Interface is named as such rather than appearing to
+  be a duplicate row.
+- One entity's neighbourhood is drawn on the topology canvas, at a width that
+  can render it, instead of inside the panel.
 
 
 - A new Learn from examples documentation group, beginning with a guided
@@ -48,6 +67,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **The report navigation rail lists kinds, flat.** Kinds do not nest —
+  instances do — so both Scenario kinds leave the rail and become a tab on the
+  Capability or Journey that owns them, which is the resolution the
+  documentation already reached for a mandatory single parent. Ten destinations
+  instead of twelve, and no indentation claiming a hierarchy the other eight
+  rows have too.
+- **Collection chrome scales with the collection.** The per-relation filter
+  dropdowns collapse into one control with a chip per *active* filter, and it is
+  not rendered at all below eight entities — seven dropdowns above four Journeys
+  was a wall, not an offer. The card-style switcher is gone; the dense row is
+  the only layout, and it carries the fact that distinguishes an entity from its
+  neighbours (a Screen's scope, a Scenario's parent) where the repeated kind
+  label used to be.
+- Entity tables render the name of a relation the format makes single-valued
+  rather than the count `1`, and drop any column constant across the rows on
+  screen.
 - **Folder schema 5 — a breaking change with no compatibility reader.** An
   entity is compact as `<id>.md` until it owns an asset or typed child
   collection, then expands to `<id>/<type>.md`. Both shapes derive the same id
@@ -167,6 +202,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The report panel no longer keeps its scroll offset when the entity changes.
+  Selecting a relation that sat low in one reading opened the next one below its
+  own title, id and lead.
+- The local viewer resolves the Blueprint logo at `product/logo.svg`, where
+  schema 5 puts it once the Product expands.
 - An unexpected entry in a collection is now an explicit finding. A file nested
   one level too deep, or saved with the wrong extension, previously vanished
   from the model with no finding at all.

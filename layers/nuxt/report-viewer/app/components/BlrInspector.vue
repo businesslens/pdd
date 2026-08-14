@@ -1,19 +1,19 @@
 <script setup lang="ts">
 /**
- * The shared entity inspector: a slideover over the working view.
+ * The panel the peek lives in.
  *
- * Every Workbench view opens the same panel for a selected entity, so inspection is
- * one behaviour learned once: the page dims behind it and a click outside
- * closes it, which is what a slideover is expected to do.
+ * It stays non-modal, and the dimming overlay takes no pointer events, so the
+ * gesture the working view depends on still works: clicking another entity in
+ * the list re-targets the panel rather than forcing a close and a second click.
  *
- * It stays non-modal, and the dimming overlay does not take pointer events, so
- * the key gesture the Workbench depends on still works: clicking another entity
- * in the working view re-targets the panel to it rather than forcing a close
- * and a second click.
+ * What it no longer carries is depth. There is no history stack and no back
+ * arrow, because there is nowhere to go back *to* — a relation opens that
+ * entity's page, which has a breadcrumb and a browser back button that already
+ * mean what they say. A panel that could be three entities deep with a bare
+ * arrow for a trail was the confusion, not the cure.
  */
-import type { TabsItem } from '@nuxt/ui'
 import type { AnyEntityView, ReportWorkspace } from '../utils/reportWorkspace'
-import { ENTITY_KIND_META, resolveEntityKey } from '../utils/reportWorkspace'
+import { ENTITY_KIND_META } from '../utils/reportWorkspace'
 
 const props = defineProps<{
   workspace: ReportWorkspace
@@ -22,15 +22,9 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   select: [entity: AnyEntityView]
+  open: [entity: AnyEntityView]
   close: []
 }>()
-
-defineSlots<{
-  'detail-after'?: (props: { entity: AnyEntityView }) => any
-}>()
-
-/** `detail` is complete authored content; `map` is the contextual topology. */
-const tab = defineModel<'detail' | 'map'>('tab', { default: 'detail' })
 
 /*
   A click on another entity in the working view is both "outside the panel" and
@@ -41,8 +35,6 @@ const tab = defineModel<'detail' | 'map'>('tab', { default: 'detail' })
   gesture needs a second click.
 */
 let closingId: string | null = null
-const history = ref<AnyEntityView[]>([])
-let movingBack = false
 
 const open = computed({
   get: () => props.entity !== null,
@@ -59,37 +51,9 @@ const open = computed({
   }
 })
 
-watch(() => props.entity, (entity, previous) => {
+watch(() => props.entity, () => {
   closingId = null
-  if (!entity) {
-    history.value = []
-    movingBack = false
-    return
-  }
-  if (previous && previous.key !== entity.key && !movingBack) {
-    history.value = [...history.value.slice(-19), previous]
-  }
-  movingBack = false
 })
-
-watch(() => props.workspace, (workspace) => {
-  history.value = history.value
-    .map(entity => resolveEntityKey(workspace, entity.key))
-    .filter((entity): entity is AnyEntityView => Boolean(entity))
-})
-
-function goBack() {
-  const target = history.value.at(-1)
-  if (!target) return
-  history.value = history.value.slice(0, -1)
-  movingBack = true
-  emit('select', target)
-}
-
-const TABS: TabsItem[] = [
-  { value: 'detail', label: 'Detail', icon: 'i-lucide-book-open' },
-  { value: 'map', label: 'Neighbourhood', icon: 'i-lucide-waypoints' }
-]
 
 const kindLabel = computed(() => props.entity ? ENTITY_KIND_META[props.entity.kind].label : '')
 </script>
@@ -110,64 +74,37 @@ const kindLabel = computed(() => props.entity ? ENTITY_KIND_META[props.entity.ki
     v-model:open="open"
     :modal="false"
     :ui="{
-      content: 'z-50 w-full max-w-full sm:max-w-2xl',
-      body: tab === 'map' ? 'p-0 sm:p-0' : 'px-5 py-6 sm:px-7 sm:py-7'
+      content: 'z-50 w-full max-w-full sm:max-w-md',
+      body: 'blr-peek-scroll px-5 py-5 sm:px-6 sm:py-6'
     }"
   >
     <template #header>
       <div v-if="entity" class="flex min-w-0 flex-1 items-center gap-2.5">
-        <UButton
-          v-if="history.length"
-          icon="i-lucide-arrow-left"
-          color="neutral"
-          variant="ghost"
-          size="sm"
-          aria-label="Go back to previous entity"
-          @click="goBack"
-        />
         <BlrKind :kind="entity.kind" :labelled="false" />
         <div class="min-w-0 flex-1">
           <p class="blr-field">{{ kindLabel }}</p>
           <p class="truncate text-base font-semibold leading-5 tracking-tight text-highlighted">{{ entity.title }}</p>
         </div>
-        <UTabs
-          v-model="tab"
-          :items="TABS"
-          :content="false"
-          color="neutral"
-          size="xs"
-          class="shrink-0"
-        />
         <UButton
           icon="i-lucide-x"
           color="neutral"
           variant="ghost"
           size="sm"
-          aria-label="Close inspector"
+          aria-label="Close"
           @click="emit('close')"
         />
       </div>
     </template>
 
     <template #body>
-      <template v-if="entity">
-        <template v-if="tab === 'detail'">
-          <BlrInspectorDetail
-            :workspace="workspace"
-            :entity="entity"
-            @select="emit('select', $event)"
-          />
-          <slot name="detail-after" :entity="entity" />
-        </template>
-        <BlrTopology
-          v-else
-          :workspace="workspace"
-          :focus-id="entity.key"
-          direction="TB"
-          class="h-full"
-          @inspect="emit('select', $event)"
-        />
-      </template>
+      <BlrEntityPeek
+        v-if="entity"
+        :workspace="workspace"
+        :entity="entity"
+        class="h-full"
+        @select="emit('select', $event)"
+        @open="emit('open', $event)"
+      />
     </template>
   </USlideover>
 </template>

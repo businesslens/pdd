@@ -21,6 +21,27 @@ open, valid changes appear automatically. If an edit introduces a lint error,
 the browser keeps the last valid report visible and recovers after the error is
 fixed.
 
+## Finding your way around
+
+The left rail lists the entity kinds. Scenarios are read on the Capability or
+Journey that owns them, as a second tab on that collection — the format gives
+them exactly one parent, so they are not a peer of Actors and Interfaces.
+
+Each collection opens grouped by the containment the model declares: Screens by
+Interface, Capabilities by Domain, Scenarios by their parent. The heading states
+the question that collection answers and the derivation behind that order.
+
+Selecting a row opens a **peek** — enough to tell you whether it is the entity
+you meant, without losing the list. From there, **the page** is the full
+reading: everything authored, at full width, at its own address. The section and
+the open page live in the URL, so you can send someone a link to one Capability,
+walk back out with the browser's back button, and reload without losing your
+place.
+
+`⌘K` searches every entity by name and lands on its page. **Topology** answers
+fixed cross-kind questions, and any entity's page can send its own
+neighbourhood to that canvas.
+
 ## Options
 
 | Option | Effect |

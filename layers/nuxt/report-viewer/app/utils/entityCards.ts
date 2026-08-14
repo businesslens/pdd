@@ -14,37 +14,14 @@ import type {
 } from './reportWorkspace'
 import { resolveEntity } from './reportWorkspace'
 
-export type EntityCardVariant = 'catalog' | 'index' | 'editorial'
+/*
+  One row shape, not three.
 
-export interface EntityCardVariantOption {
-  id: EntityCardVariant
-  name: string
-  icon: string
-  description: string
-}
-
-export const ENTITY_CARD_VARIANTS: EntityCardVariantOption[] = [
-  {
-    id: 'catalog',
-    name: 'Catalog',
-    icon: 'i-lucide-layout-grid',
-    description: 'Two-line recognition cards with three compact facts.'
-  },
-  {
-    id: 'index',
-    name: 'Index',
-    icon: 'i-lucide-layout-list',
-    description: 'Dense rows for scanning hundreds of entities.'
-  },
-  {
-    id: 'editorial',
-    name: 'Editorial',
-    icon: 'i-lucide-layout-template',
-    description: 'Roomier previews with one contextual relationship.'
-  }
-]
-
-export const DEFAULT_ENTITY_CARD_VARIANT: EntityCardVariant = 'catalog'
+  A card-style switcher put a design audition in the reading chrome: a row on
+  every surface, on every visit, asking the reader to choose a density before
+  they could read anything. Auditions belong in the theme lab. What survives is
+  the dense row, because scanning is what a collection surface is for.
+*/
 
 export interface EntityCardMetric {
   label: string
@@ -174,7 +151,10 @@ export function entityCardPresentation(
     case 'screen': {
       const screen = entity as ScreenView
       return {
-        badge: `${screen.availability.length} ${plural(screen.availability.length, 'context')}`,
+        /* No badge: "1 context" is true of almost every Screen and says nothing
+           about which one. The hook names the scope, which is what tells two
+           counterparts apart. */
+        badge: '',
         metrics: [
           { label: plural(screen.capabilityIds.length, 'capability', 'capabilities'), value: screen.capabilityIds.length, kind: 'capability', ids: screen.capabilityIds },
           { label: 'cap. scenarios', value: screen.capabilityScenarioIds.length, kind: 'capability-scenario', ids: screen.capabilityScenarioIds },

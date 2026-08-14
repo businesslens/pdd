@@ -1,25 +1,27 @@
 <script setup lang="ts">
 /**
- * Workbench — Tripane, made entity-first.
+ * Workbench — a rail, a working view, and a peek.
  *
- * The three zones are Tripane's, and for the same reason: navigation, working
- * view and inspector are always on screen, so reading one entity never costs
- * the place you were reading from.
+ * The rail lists kinds and nothing else, because kinds do not nest — instances
+ * do. Containment appears where instances are: as the default grouping of a
+ * collection, as a tab pairing a parent with its Scenarios, and on the entity
+ * page. `BlrRail` carries that argument in full.
  *
- * What differs is the working view. Every entity kind has a stable browse
- * surface — cards ⇄ table with relation-aware filters — while named Product
- * views own cross-kind questions. Depth is
- * reached three ways, each for a different question:
- * - the inspector, with parent-specific Scenario disclosures;
- * - a Journey → Scenarios centre page;
- * - ⌘K, for "I know its name, take me there".
+ * Depth has exactly two containers, and the difference between them is not
+ * taste but measurement. An entity's authored content ranges from 570px for an
+ * Actor to 2264px for a Journey Scenario, and no single container serves both:
  *
- * Breadth has one product-level destination: Topology. Its named views answer
- * fixed questions over several kinds without turning the kind rail into a
- * view builder or changing what navigation means.
+ * - the **peek** is a glance from a list — four fixed zones, no scrolling, one
+ *   level deep, and every relation on it navigates rather than re-targeting it;
+ * - the **page** is the reading — a URL, a breadcrumb, the authored body at
+ *   full width, and the browser's own back button.
  *
- * Capability Scenarios expand under Capabilities. Journey Scenarios also form
- * ordered flow lanes on the Journey page.
+ * ⌘K is the third way in, for "I know its name, take me there", and it lands on
+ * the page for the same reason: naming something means meaning it.
+ *
+ * Breadth has one destination: Topology, whose named views answer fixed
+ * cross-kind questions, and whose focus filter draws one entity's
+ * neighbourhood at a width that can actually render it.
  */
 import { h } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
@@ -52,42 +54,37 @@ import {
   hasSelections,
   relatedIds
 } from '../utils/entityFacets'
-import type { EntityCardVariant } from '../utils/entityCards'
-import { DEFAULT_ENTITY_CARD_VARIANT, ENTITY_CARD_VARIANTS } from '../utils/entityCards'
 import { firstSentence } from '../utils/reportMarkdown'
-import { buildJourneyAnatomy } from '../utils/productTopologyGraphs'
+import { BROWSE_SURFACES } from '../utils/browseSurfaces'
 
 const UButton = resolveComponent('UButton')
 
 const props = defineProps<{ workspace: ReportWorkspace, logoSrc?: string | null }>()
 
 /* ------------------------------------------------------------------ */
-/* Selection: activeKind/activeId drive the working view, the inspector */
-/* follows every selection, and only a Journey opens an inner page.     */
+/* Selection: `activeKind` is what the working view is about, `inspected` */
+/* is what the peek glances at, and `openEntity` is the page you are on.  */
 /* ------------------------------------------------------------------ */
 
 /*
-  Every kind is browsable, Scenarios included: reading them only inside a parent
-  would leave the largest collection in the model with no surface of its own.
+  Every kind stays browsable, Scenarios included — reading them only inside one
+  parent at a time would leave the largest collection in the model with no
+  surface of its own. What changed is where that surface is reached from.
 
-  They are indented rather than flattened, because a Scenario is the only entity
-  with a mandatory single parent — listing it as a peer of Actors and Interfaces
-  contradicts the shape of the format. Indenting keeps the full browse surface
-  and its facets while the rail teaches the containment.
+  A Scenario is the only entity with a mandatory single parent, so it is a tab
+  on that parent's surface rather than a row in the rail: the full browse list,
+  its facets, its table and its grouping, under the Capability or Journey that
+  owns it. `BlrRail` carries the reasoning for the rail half of this.
 */
-const RAIL_PARENT: Partial<Record<ReportEntityKind, ReportEntityKind>> = {
+const SCENARIO_OF: Partial<Record<ReportEntityKind, ReportEntityKind>> = {
+  capability: 'capability-scenario',
+  journey: 'journey-scenario'
+}
+
+const PARENT_OF: Partial<Record<ReportEntityKind, ReportEntityKind>> = {
   'capability-scenario': 'capability',
   'journey-scenario': 'journey'
 }
-
-const RAIL_KINDS = REPORT_ENTITY_KINDS
-  .filter(meta => !RAIL_PARENT[meta.kind])
-  .flatMap(meta => [
-    { meta, child: false },
-    ...REPORT_ENTITY_KINDS
-      .filter(child => RAIL_PARENT[child.kind] === meta.kind)
-      .map(child => ({ meta: child, child: true }))
-  ])
 
 type ViewMode = 'cards' | 'table'
 type WorkbenchSection = 'overview' | 'topology' | ReportEntityKind
@@ -99,6 +96,16 @@ type WorkbenchSection = 'overview' | 'topology' | ReportEntityKind
  * for the overview is the Product rather than the section name.
  */
 const section = defineModel<string>('section', { default: 'overview' })
+
+/**
+ * The entity whose page is open, or `null` for the section's own surface.
+ *
+ * Bindable for the same reason `section` is, and the reason pages exist at all:
+ * a page a reader can reach but not link to, return to, or refresh is a modal
+ * with extra steps. The peek is deliberately *not* here — it is a glance, and
+ * replaying every glance through browser history would make back useless.
+ */
+const openEntity = defineModel<string | null>('entity', { default: null })
 
 const activeKind = ref<ReportEntityKind>('product')
 const activeSection = ref<WorkbenchSection>('overview')
@@ -118,17 +125,43 @@ watch(activeSection, (value) => {
 })
 const activeId = ref<string | null>(null)
 const inspected = ref<AnyEntityView | null>(null)
-const inspectorTab = ref<'detail' | 'map'>('detail')
+/* One entity's neighbourhood, drawn on the topology canvas rather than in a
+   panel too narrow to render it legibly. */
+const topologyFocus = ref<string | null>(null)
 const searchOpen = ref(false)
 const mobileNavOpen = ref(false)
-const openJourneyId = ref<string | null>(null)
-const entityCardVariant = ref<EntityCardVariant>(DEFAULT_ENTITY_CARD_VARIANT)
+/* The internal name for the open page is the bindable model itself, so a page
+   opened by a click and a page opened by a URL are the same state. */
+const openJourneyId = openEntity
+const filterOpen = ref(false)
 
 /* Toolbar state is kept per kind: moving to another kind and back returns to
    the shape you left, which is the point of a persistent working view. */
 const viewModes = reactive<Partial<Record<ReportEntityKind, ViewMode>>>({})
-const groupKinds = reactive<Partial<Record<ReportEntityKind, ReportEntityKind>>>({})
+/* `null` is an explicit "no grouping"; absent means the default has not been
+   overridden. Without the distinction, turning grouping off would immediately
+   turn it back on. */
+const groupKinds = reactive<Partial<Record<ReportEntityKind, ReportEntityKind | null>>>({})
 const facetState = reactive<Partial<Record<ReportEntityKind, FacetSelections>>>({})
+
+/*
+  Each surface opens grouped by the containment the format declares for it —
+  the surface tree for Screens and Experiences, the behavior tree for Scenarios,
+  the subject axis for Capabilities and Rules. This is where the hierarchy a
+  tree rail was asked to show actually belongs: over instances, where the model
+  has it, and one click from being dismissed.
+
+  Roots (Actors, Interfaces, Domains, Journeys) are contained by nothing and
+  open flat.
+*/
+const DEFAULT_GROUPING: Partial<Record<ReportEntityKind, ReportEntityKind>> = {
+  experience: 'interface',
+  screen: 'interface',
+  capability: 'domain',
+  'capability-scenario': 'capability',
+  'journey-scenario': 'journey',
+  rule: 'domain'
+}
 
 const activeMeta = computed(() => ENTITY_KIND_META[activeKind.value])
 
@@ -153,10 +186,18 @@ const viewMode = computed<ViewMode>({
 })
 
 const groupKind = computed<ReportEntityKind | undefined>({
-  get: () => groupKinds[activeKind.value],
+  get: () => {
+    const chosen = groupKinds[activeKind.value]
+    if (chosen === null) return undefined
+    if (chosen) return chosen
+    /* A default only applies when the model actually holds that kind: grouping
+       Capabilities by a Domain collection that is empty would file all ten
+       under "No Domain". */
+    const fallback = DEFAULT_GROUPING[activeKind.value]
+    return fallback && entitiesOfKind(props.workspace, fallback).length ? fallback : undefined
+  },
   set: (value) => {
-    if (value) groupKinds[activeKind.value] = value
-    else delete groupKinds[activeKind.value]
+    groupKinds[activeKind.value] = value ?? null
   }
 })
 
@@ -183,6 +224,36 @@ function facetOptions(kind: ReportEntityKind) {
   return entitiesOfKind(props.workspace, kind).map(entity => ({ label: entity.title, value: entity.id }))
 }
 
+/*
+  Chrome scales with the collection.
+
+  Eight controls above four Journeys is not a filter offer, it is a wall. Below
+  this many entities the eye is faster than any facet, so the control is not
+  rendered at all rather than rendered disabled.
+*/
+const FILTER_THRESHOLD = 8
+
+const filtersOffered = computed(() => facetKinds.value.length > 0
+  && kindEntities.value.length >= FILTER_THRESHOLD)
+
+/** One chip per *active* facet, naming what it selected — never one per offer. */
+const facetChips = computed(() => facetKinds.value
+  .filter(kind => facetValues(kind).length)
+  .map((kind) => {
+    const ids = facetValues(kind)
+    const meta = ENTITY_KIND_META[kind]
+    const [first] = resolveEntities(props.workspace, kind, ids)
+    const rest = ids.length - 1
+    return {
+      kind,
+      icon: meta.icon,
+      label: ids.length === 1 ? meta.label : meta.plural,
+      value: `${first?.title ?? ids[0]}${rest > 0 ? ` +${rest}` : ''}`
+    }
+  }))
+
+const activeFacetCount = computed(() => facetChips.value.length)
+
 const VIEW_MODE_TABS = [
   { value: 'cards', label: 'Cards', icon: 'i-lucide-layout-grid' },
   { value: 'table', label: 'Table', icon: 'i-lucide-table' }
@@ -196,6 +267,30 @@ const visibleEntities = computed(() => filterEntities(kindEntities.value, facets
 const groupOptions = computed(() => facetKinds.value
   .map(kind => ({ label: ENTITY_KIND_META[kind].plural, value: kind })))
 
+/*
+  An entity relating to several group owners appears under each of them, because
+  the model says it belongs to all and dropping it from any but the first would
+  be a quiet edit. The visible consequence is group counts that sum past the
+  collection count, so the surface says why once rather than leaving a reader to
+  wonder whether it is double counting.
+*/
+const multiGroupCount = computed(() => {
+  if (!groupKind.value) return 0
+  const memberships = new Map<string, number>()
+  for (const group of entityGroups.value) {
+    for (const entity of group.entities) memberships.set(entity.key, (memberships.get(entity.key) ?? 0) + 1)
+  }
+  return [...memberships.values()].filter(count => count > 1).length
+})
+
+const multiGroupNote = computed(() => {
+  const count = multiGroupCount.value
+  if (!count || !groupKind.value) return ''
+  const subject = count === 1 ? activeMeta.value.label : activeMeta.value.plural
+  return `${count} ${subject} ${count === 1 ? 'relates' : 'relate'} to more than one `
+    + `${ENTITY_KIND_META[groupKind.value].label} and ${count === 1 ? 'appears' : 'appear'} under each.`
+})
+
 const entityGroups = computed(() => {
   const by = groupKind.value
   /* The bucket is named after what is missing, so it reads as a model fact:
@@ -204,75 +299,98 @@ const entityGroups = computed(() => {
     by ? `No ${ENTITY_KIND_META[by].label}` : '')
 })
 
-const entityCardLayoutClass = computed(() => {
-  if (entityCardVariant.value === 'index') return 'space-y-2'
-  if (entityCardVariant.value === 'editorial') return 'grid gap-4 xl:grid-cols-2'
-  if (groupKind.value) return 'grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4'
-  return 'grid gap-3 sm:grid-cols-2 2xl:grid-cols-3'
-})
+/*
+  Every kind has a page.
 
-const openJourney = computed<JourneyView | null>(() => {
-  if (!openJourneyId.value) return null
-  const entity = resolveEntityKey(props.workspace, openJourneyId.value)
-  return entity?.kind === 'journey' ? entity : null
-})
+  "Which kinds deserve one" is a judgement call that has to be re-made every
+  time a field is added, and the measurement that forced the split — 570px of
+  content for an Actor against 2264px for a Journey Scenario — is an argument
+  about the *peek*, not about pages. A thin page is a good page: for an Actor,
+  the reach is the reading.
+*/
+const openPage = computed<AnyEntityView | null>(() => openJourneyId.value
+  ? resolveEntityKey(props.workspace, openJourneyId.value) ?? null
+  : null)
 
-const openJourneyScenarios = computed<ScenarioView[]>(() =>
-  openJourney.value ? props.workspace.scenariosByJourney.get(openJourney.value.id) ?? [] : [])
-const openJourneyFlow = computed(() => openJourney.value
-  ? buildJourneyAnatomy(props.workspace, {
-      journeyId: openJourney.value.id,
-      selectedId: inspected.value?.key ?? null
-    })
-  : { nodes: [], edges: [] })
+/* A page brings its own section with it, so a link lands with the rail, the
+   breadcrumb and the surface behind it already agreeing. */
+watch([openEntity, () => props.workspace], () => {
+  const key = openEntity.value
+  if (!key) return
+  const entity = resolveEntityKey(props.workspace, key)
+  if (!entity) {
+    openEntity.value = null
+    return
+  }
+  activeKind.value = entity.kind
+  activeSection.value = entity.kind
+}, { immediate: true })
 
 /* Live recompiles replace the projection. Rehydrate selection by stable key so
-   focus, trails, filters, and the open Journey survive ordinary model edits. */
+   focus, filters, and the open page survive ordinary model edits. */
 watch(() => props.workspace, (workspace) => {
   if (inspected.value) inspected.value = workspace.byKey.get(inspected.value.key) ?? null
-  if (openJourneyId.value && !workspace.byKey.has(openJourneyId.value)) openJourneyId.value = null
+  if (openEntity.value && !workspace.byKey.has(openEntity.value)) openEntity.value = null
   if (activeId.value && !workspace.byKey.has(activeId.value)) activeId.value = null
+  if (topologyFocus.value && !workspace.byKey.has(topologyFocus.value)) topologyFocus.value = null
 })
 
 const topologyActive = computed(() => activeSection.value === 'topology')
-const showToolbar = computed(() => activeKind.value !== 'product' && !openJourney.value && !topologyActive.value)
+const showToolbar = computed(() => activeKind.value !== 'product' && !openPage.value && !topologyActive.value)
+const surface = computed(() => showToolbar.value ? BROWSE_SURFACES[activeKind.value] : undefined)
+
+/*
+  A parent and its Scenarios are two collections of one subject, so they are two
+  tabs of one surface. Every other kind renders no strip at all — a single tab
+  is chrome pretending to be a choice.
+*/
+const parentTabs = computed(() => {
+  const parent = PARENT_OF[activeKind.value] ?? activeKind.value
+  const child = SCENARIO_OF[parent]
+  if (!child || openPage.value || topologyActive.value) return []
+  return [parent, child].map(kind => ({
+    kind,
+    label: kind === child ? 'Scenarios' : ENTITY_KIND_META[kind].plural,
+    icon: ENTITY_KIND_META[kind].icon,
+    slot: ENTITY_KIND_META[kind].slot,
+    count: kindCounts.value[kind] ?? 0,
+    current: activeKind.value === kind
+  }))
+})
 
 function setKind(kind: ReportEntityKind) {
   mobileNavOpen.value = false
   activeKind.value = kind
   activeSection.value = kind === 'product' ? 'overview' : kind
   activeId.value = null
-  openJourneyId.value = null
+  openEntity.value = null
 }
 
 function openTopology() {
   mobileNavOpen.value = false
   activeSection.value = 'topology'
   activeId.value = null
-  openJourneyId.value = null
+  openEntity.value = null
+  topologyFocus.value = null
 }
 
-/** Activation moves the working view; a Journey activates into its own page. */
+/*
+  Two gestures, one rule each.
+
+  A row peeks: you are scanning a list and want to know whether this is the one
+  you meant, without losing the list. A peek then opens the page, and so does
+  any relation on it. Nothing in the working view opens a page behind your back.
+*/
 function activate(entity: AnyEntityView) {
   activeId.value = entity.key
-  if (entity.kind === 'journey') {
-    openJourneyId.value = entity.key
-    inspected.value = null
-    return
-  }
   inspect(entity)
 }
 
-/** Cards always open the complete inspector, including Journey cards. */
-function openCard(entity: AnyEntityView) {
-  activeId.value = entity.key
-  inspect(entity)
-}
+const openCard = activate
 
-/** Any selection anywhere re-targets the open inspector, never the centre. */
+/** Any selection anywhere re-targets the open peek, never the centre. */
 function inspect(entity: AnyEntityView) {
   inspected.value = entity
-  inspectorTab.value = 'detail'
 }
 
 function inspectKey(key: string) {
@@ -280,29 +398,27 @@ function inspectKey(key: string) {
   if (entity) inspect(entity)
 }
 
-function openJourneyPage(journey: JourneyView) {
-  activeKind.value = 'journey'
-  activeSection.value = 'journey'
-  activeId.value = journey.key
-  openJourneyId.value = journey.key
-}
-
-/** ⌘K lands on the entity: its kind's surface, plus the inspector on it. */
-function onSearchSelect(entity: AnyEntityView) {
-  /* A Journey Scenario reads best on its Journey page, beside its siblings. */
-  if (entity.kind === 'journey-scenario') {
-    const journey = resolveEntity(props.workspace, 'journey', entity.journeyId)
-    if (journey?.kind === 'journey') {
-      openJourneyPage(journey)
-      inspect(entity)
-      return
-    }
-  }
+/** The page: a place, with a URL, that the browser's back button can leave. */
+function openEntityPage(entity: AnyEntityView) {
+  mobileNavOpen.value = false
   activeKind.value = entity.kind
   activeSection.value = entity.kind
   activeId.value = entity.key
-  openJourneyId.value = entity.kind === 'journey' ? entity.key : null
-  inspect(entity)
+  openEntity.value = entity.key
+  inspected.value = null
+}
+
+/** One entity's neighbourhood, on the canvas that can actually draw it. */
+function focusTopology(entity: AnyEntityView) {
+  activeSection.value = 'topology'
+  openEntity.value = null
+  topologyFocus.value = entity.key
+  inspected.value = entity
+}
+
+/** ⌘K lands on the entity's page — you named it, so you meant it. */
+function onSearchSelect(entity: AnyEntityView) {
+  openEntityPage(entity)
 }
 
 /* ------------------------------------------------------------------ */
@@ -338,6 +454,32 @@ function titleColumn(kind: ReportEntityKind): TableColumn<AnyEntityView> {
       h('p', { class: 'truncate font-medium text-highlighted' }, row.original.title),
       h('p', { class: 'truncate text-xs text-muted' }, firstSentence(row.original.lead, 90))
     ])
+  }
+}
+
+/**
+ * A relation the format makes single-valued, rendered as the name it holds.
+ *
+ * A Capability Scenario has exactly one Capability, so a count column reads `1`
+ * on every row and the one fact worth sorting by — which Capability — is the
+ * one the table hides.
+ */
+function relationTitleColumn(
+  kind: ReportEntityKind,
+  label: string,
+  read: (entity: AnyEntityView) => string
+): TableColumn<AnyEntityView> {
+  return {
+    id: kind,
+    accessorFn: (entity: AnyEntityView) => resolveEntity(props.workspace, kind, read(entity))?.title ?? '',
+    header: sortableHeader(label),
+    cell: ({ row }) => {
+      const entity = resolveEntity(props.workspace, kind, read(row.original))
+      return h('span', { class: 'inline-flex items-center gap-1.5 text-sm text-default' }, [
+        h(resolveComponent('UIcon'), { name: ENTITY_KIND_META[kind].icon, class: 'size-3.5 shrink-0 text-dimmed' }),
+        h('span', { class: 'truncate' }, entity?.title ?? '—')
+      ])
+    }
   }
 }
 
@@ -429,7 +571,7 @@ const tableColumns = computed<TableColumn<AnyEntityView>[]>(() => {
         ...base,
         textColumn('access', 'Access', entity => (entity as ExperienceView).accessMode),
         relationColumn('actor'),
-        relationColumn('interface'),
+        relationTitleColumn('interface', 'Interface', entity => (entity as ExperienceView).interfaceIds[0] ?? ''),
         relationColumn('capability'),
         relationColumn('screen'),
         relationColumn('journey')
@@ -485,7 +627,7 @@ const tableColumns = computed<TableColumn<AnyEntityView>[]>(() => {
       return [
         ...base,
         textColumn('scenarioKind', 'Kind', entity => (entity as ScenarioView).kindName),
-        relationColumn('capability'),
+        relationTitleColumn('capability', 'Capability', entity => (entity as ScenarioView).capabilityId),
         relationColumn('actor'),
         contextColumn(),
         numberColumn('steps', 'Steps', entity => (entity as ScenarioView).steps.length),
@@ -499,7 +641,7 @@ const tableColumns = computed<TableColumn<AnyEntityView>[]>(() => {
         textColumn('scenarioKind', 'Kind', entity => (entity as ScenarioView).kindName),
         /* `kind` classifies the variation; `result` records how it ended. Orthogonal, so both. */
         textColumn('result', 'Result', entity => (entity as ScenarioView).result),
-        relationColumn('journey'),
+        relationTitleColumn('journey', 'Journey', entity => (entity as ScenarioView).journeyId),
         relationColumn('actor'),
         numberColumn('stages', 'Stages', entity => (entity as ScenarioView).flow.length),
         numberColumn('steps', 'Steps', entity => (entity as ScenarioView).steps.length),
@@ -522,71 +664,77 @@ const tableColumns = computed<TableColumn<AnyEntityView>[]>(() => {
   }
 })
 
-const TABLE_NOTE: Partial<Record<ReportEntityKind, string>> = {
-  screen: 'Scenario and Capability Journey columns keep the two derivation paths separate. Hover a count for the names behind it.',
-  capability: 'Capability Scenarios are direct coverage. Journeys, Screens and Rules are derived from what declares this Capability.',
-  journey: 'Screens and Rules include derived participation (via Scenarios and Capabilities); Steps is the authored step depth.',
-  rule: 'Counts are authored attachments; the card view adds the reach derived from them.',
-  'capability-scenario': 'Each is one observable acceptance case for exactly one Capability. Contexts are the exact Interface scopes it is accepted in.',
-  'journey-scenario': 'Kind classifies the variation; Result records whether the Journey goal was reached. Stages are the ordered Capability flow entries.'
+/**
+ * Drop the columns that say the same thing on every visible row.
+ *
+ * `0 decisions` twenty-four times is not data, it is twenty-four cells of
+ * furniture between the reader and the three columns that vary. Constancy is
+ * judged against the *filtered* set, so narrowing a surface can reveal a column
+ * and clearing the filter hides it again — the table describes what is on
+ * screen, not what the kind could theoretically hold.
+ */
+const visibleColumns = computed<TableColumn<AnyEntityView>[]>(() => {
+  const rows = visibleEntities.value
+  if (rows.length < 2) return tableColumns.value
+  return tableColumns.value.filter((column, index) => {
+    /* The title column identifies the row; it is never furniture. */
+    if (index === 0) return true
+    const read = (column as { accessorFn?: (row: AnyEntityView, index: number) => unknown }).accessorFn
+    if (!read) return true
+    const first = read(rows[0]!, 0)
+    return rows.some((row, position) => read(row, position) !== first)
+  })
+})
+
+/** Notes explaining a column the rule above removed would describe nothing. */
+const visibleColumnIds = computed(() => new Set(visibleColumns.value.map(column => column.id
+  ?? (column as { accessorKey?: string }).accessorKey)))
+
+/** Each note names the columns it explains, so a pruned table drops it too. */
+const TABLE_NOTE: Partial<Record<ReportEntityKind, { text: string, needs: string[] }>> = {
+  screen: {
+    text: 'Scenario and Capability Journey columns keep the two derivation paths separate. Hover a count for the names behind it.',
+    needs: ['scenarioJourneys', 'capabilityJourneys']
+  },
+  capability: {
+    text: 'Capability Scenarios are direct coverage. Journeys, Screens and Rules are derived from what declares this Capability.',
+    needs: ['capability-scenario', 'journey', 'screen', 'rule']
+  },
+  journey: {
+    text: 'Screens and Rules include derived participation (via Scenarios and Capabilities); Steps is the authored step depth.',
+    needs: ['screen', 'rule', 'steps']
+  },
+  rule: {
+    text: 'Counts are authored attachments; the row adds the reach derived from them.',
+    needs: ['capability', 'journey', 'capability-scenario', 'journey-scenario']
+  },
+  'capability-scenario': {
+    text: 'Each is one observable acceptance case for exactly one Capability. Contexts are the exact Interface scopes it is accepted in.',
+    needs: ['contexts']
+  },
+  'journey-scenario': {
+    text: 'Kind classifies the variation; Result records whether the Journey goal was reached. Stages are the ordered Capability flow entries.',
+    needs: ['stages', 'result']
+  }
 }
+
+const tableNote = computed(() => {
+  const note = TABLE_NOTE[activeKind.value]
+  if (!note) return ''
+  return note.needs.some(id => visibleColumnIds.value.has(id)) ? note.text : ''
+})
 
 /** Scenarios whose Journey is not in the model would otherwise be unreachable. */
 const orphanScenarios = computed(() => props.workspace.scenarios
   .filter(scenario => scenario.scenarioType === 'journey'
     && !resolveEntity(props.workspace, 'journey', scenario.journeyId)))
 
-/* ------------------------------------------------------------------ */
-/* Overview                                                            */
-/* ------------------------------------------------------------------ */
-
+/* The status bar badge and `BlrOverview` read coverage in the same tone. */
 const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
   complete: 'success',
   partial: 'warning',
   draft: 'neutral'
 }
-
-/** The one-line shape of the model, in the order the entities depend on. */
-const countFacts = computed(() => [
-  { label: 'Journeys', value: props.workspace.counts.journeys },
-  { label: 'Journey Scenarios', value: props.workspace.counts.journeyScenarios },
-  { label: 'Capability Scenarios', value: props.workspace.counts.capabilityScenarios },
-  { label: 'Steps', value: props.workspace.counts.steps },
-  { label: 'Capabilities', value: props.workspace.counts.capabilities },
-  { label: 'Domains', value: props.workspace.counts.domains },
-  { label: 'Screens', value: props.workspace.counts.screens },
-  { label: 'Interfaces', value: props.workspace.counts.interfaces },
-  { label: 'Experiences', value: props.workspace.counts.experiences },
-  { label: 'Rules', value: props.workspace.counts.rules },
-  { label: 'Actors', value: props.workspace.counts.actors }
-])
-
-const authoredCounts = computed<Array<[string, number]>>(() => [
-  ['Actors', props.workspace.counts.actors],
-  ['Interfaces', props.workspace.counts.interfaces],
-  ['Experiences', props.workspace.counts.experiences],
-  ['Screens', props.workspace.counts.screens],
-  ['Domains', props.workspace.counts.domains],
-  ['Capabilities', props.workspace.counts.capabilities],
-  ['Journeys', props.workspace.counts.journeys],
-  ['Capability Scenarios', props.workspace.counts.capabilityScenarios],
-  ['Journey Scenarios', props.workspace.counts.journeyScenarios],
-  ['Business rules', props.workspace.counts.rules]
-])
-
-const derivedCounts = computed<Array<[string, number]>>(() => [
-  ['Steps', props.workspace.counts.steps],
-  ['Decision points', props.workspace.counts.decisionPoints],
-  ['Branches', props.workspace.counts.branches],
-  ['Edge cases', props.workspace.counts.edgeCases],
-  ['Screen states', props.workspace.counts.screenStates],
-  ['Entry points', props.workspace.counts.entryPoints],
-  ['References', props.workspace.counts.references],
-  ['Availability scopes', props.workspace.counts.availabilityPairs]
-])
-
-/* Everything past the identity header is collapsed until it is asked for. */
-const sections = reactive({ about: false, coverage: false, counts: false, references: false })
 </script>
 
 <template>
@@ -615,18 +763,19 @@ const sections = reactive({ about: false, coverage: false, counts: false, refere
 
       <!-- Where you are: the working view names itself here, not above itself. -->
       <UIcon name="i-lucide-chevron-right" class="hidden size-3.5 shrink-0 text-dimmed sm:block" />
-      <template v-if="openJourney">
+      <!-- A page states the collection it came from, and that segment is a link. -->
+      <template v-if="openPage">
         <button
           type="button"
           class="blr-eyebrow hidden shrink-0 items-center gap-1.5 hover:underline hover:underline-offset-4 sm:inline-flex"
-          title="Back to the Journeys"
-          @click="openJourneyId = null"
+          :title="`Back to ${activeMeta.plural}`"
+          @click="openEntity = null"
         >
           <UIcon :name="activeMeta.icon" class="size-3.5" :style="{ color: `var(--blr-slot-${activeMeta.slot})` }" />
           {{ activeMeta.plural }}
         </button>
         <UIcon name="i-lucide-chevron-right" class="hidden size-3.5 shrink-0 text-dimmed sm:block" />
-        <span class="hidden min-w-0 truncate text-sm font-medium text-highlighted sm:inline">{{ openJourney.title }}</span>
+        <span class="hidden min-w-0 truncate text-sm font-medium text-highlighted sm:inline">{{ openPage.title }}</span>
       </template>
       <template v-else-if="topologyActive">
         <span class="blr-eyebrow hidden shrink-0 items-center gap-1.5 sm:inline-flex">
@@ -683,88 +832,138 @@ const sections = reactive({ about: false, coverage: false, counts: false, refere
            that silently changes these kind rows into filters. -->
       <nav class="blr-pane hidden w-64 shrink-0 border-e border-default lg:block">
         <div class="p-2">
-          <!-- The host's own way back out, above its sections. -->
-          <div v-if="$slots.navigation" class="mb-1 border-b border-default px-1 pb-2">
-            <slot name="navigation" />
-          </div>
-          <p class="blr-navgroup">Explore</p>
-          <button
-            type="button"
-            class="blr-navitem"
-            :data-current="activeSection === 'overview'"
-            :style="{ '--kind-color': 'var(--blr-slot-9)' }"
-            @click="setKind('product')"
+          <BlrRail
+            :workspace="workspace"
+            :active-section="activeSection"
+            :counts="kindCounts"
+            @kind="setKind"
+            @topology="openTopology"
           >
-            <UIcon name="i-lucide-package" class="size-4 shrink-0" style="color: var(--blr-slot-9)" />
-            <span class="flex-1 truncate text-start">Overview</span>
-          </button>
-          <button
-            type="button"
-            class="blr-navitem"
-            :data-current="topologyActive"
-            :style="{ '--kind-color': 'var(--blr-slot-9)' }"
-            @click="openTopology"
-          >
-            <UIcon name="i-lucide-waypoints" class="size-4 shrink-0" style="color: var(--blr-slot-9)" />
-            <span class="flex-1 truncate text-start">Topology</span>
-          </button>
-
-          <p class="blr-navgroup mt-3">Browse</p>
-          <button
-            v-for="item in RAIL_KINDS"
-            :key="item.meta.kind"
-            type="button"
-            class="blr-navitem"
-            :class="item.child && 'blr-navchild'"
-            :data-current="activeSection === item.meta.kind"
-            :style="{ '--kind-color': `var(--blr-slot-${item.meta.slot})` }"
-            @click="setKind(item.meta.kind)"
-          >
-            <UIcon :name="item.meta.icon" class="size-4 shrink-0" :style="{ color: `var(--blr-slot-${item.meta.slot})` }" />
-            <span class="flex-1 truncate text-start">{{ item.meta.plural }}</span>
-            <span class="blr-meta">{{ kindCounts[item.meta.kind] }}</span>
-          </button>
+            <!-- The host's own way back out, above its sections. -->
+            <template v-if="$slots.navigation" #navigation>
+              <slot name="navigation" />
+            </template>
+          </BlrRail>
         </div>
-
       </nav>
 
       <!-- CENTER: the working view for the active kind -->
       <section class="flex min-w-0 flex-1 flex-col">
         <!-- Toolbar: what is shown on the left, how it is shown on the right. -->
+        <!--
+          What this collection is for, in one line, with the derivation behind
+          the order it is read in. The named topology views have said this since
+          they shipped; a collection that only states its name and count answers
+          "what is this called", which nobody asked.
+        -->
+        <div
+          v-if="surface"
+          class="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1 border-b border-default px-4 py-2"
+        >
+          <p class="text-sm text-muted">{{ surface.question }}</p>
+          <div class="ms-auto flex flex-wrap items-center gap-1">
+            <template v-for="(step, index) in surface.flow" :key="step.kind">
+              <span v-if="index" class="px-0.5 text-xs text-dimmed">{{ surface.separators[index - 1] ?? '·' }}</span>
+              <span class="inline-flex items-center gap-1.5">
+                <BlrKind :kind="step.kind" :labelled="false" size="xs" />
+                <span class="font-mono text-[10px] uppercase tracking-[0.07em] text-muted">{{ step.label }}</span>
+              </span>
+            </template>
+          </div>
+        </div>
+
+        <!-- Parent and child, two tabs of one subject. -->
+        <div
+          v-if="parentTabs.length"
+          class="flex shrink-0 items-center gap-1 border-b border-default px-4 pt-2"
+        >
+          <button
+            v-for="tab in parentTabs"
+            :key="tab.kind"
+            type="button"
+            class="blr-tab"
+            :data-current="tab.current"
+            :style="{ '--kind-color': `var(--blr-slot-${tab.slot})` }"
+            @click="setKind(tab.kind)"
+          >
+            <UIcon :name="tab.icon" class="size-4 shrink-0" :style="{ color: `var(--blr-slot-${tab.slot})` }" />
+            {{ tab.label }}
+            <span class="blr-meta">{{ tab.count }}</span>
+          </button>
+        </div>
+
         <div
           v-if="showToolbar"
-          class="flex shrink-0 flex-wrap items-center gap-2 border-b border-default px-4 py-2"
+          class="flex shrink-0 items-center gap-2 border-b border-default px-4 py-2"
         >
-          <span v-if="facetKinds.length" class="blr-field">Filter</span>
-          <USelectMenu
-            v-for="kind in facetKinds"
-            :key="kind"
-            :model-value="facetValues(kind)"
-            :items="facetOptions(kind)"
-            value-key="value"
-            multiple
-            size="xs"
-            variant="outline"
-            class="min-w-36"
-            :icon="ENTITY_KIND_META[kind].icon"
-            :placeholder="ENTITY_KIND_META[kind].plural"
-            :search-input="{ placeholder: `Filter ${ENTITY_KIND_META[kind].plural.toLowerCase()}…` }"
-            @update:model-value="setFacet(kind, $event as string[])"
-          />
-          <UButton
-            v-if="filtersActive"
-            icon="i-lucide-filter-x"
-            color="neutral"
-            variant="ghost"
-            size="xs"
-            label="Clear"
-            @click="clearFacets"
-          />
-          <!-- Filters narrow a named subject; grouping and the card/table
-               lenses change how that same subject is read. -->
+          <!-- One control, opened on demand, holding the facets this kind has. -->
+          <UPopover v-if="filtersOffered" v-model:open="filterOpen">
+            <UButton
+              icon="i-lucide-list-filter"
+              color="neutral"
+              :variant="filtersActive ? 'soft' : 'outline'"
+              size="xs"
+              label="Filter"
+              trailing-icon="i-lucide-chevron-down"
+            >
+              <template v-if="activeFacetCount" #trailing>
+                <UBadge color="primary" variant="solid" size="sm">{{ activeFacetCount }}</UBadge>
+              </template>
+            </UButton>
+            <template #content>
+              <div class="w-80 space-y-3 p-3">
+                <div v-for="kind in facetKinds" :key="kind" class="space-y-1.5">
+                  <p class="blr-field flex items-center gap-1.5">
+                    <UIcon :name="ENTITY_KIND_META[kind].icon" class="size-3.5" :style="{ color: `var(--blr-slot-${ENTITY_KIND_META[kind].slot})` }" />
+                    {{ ENTITY_KIND_META[kind].plural }}
+                  </p>
+                  <USelectMenu
+                    :model-value="facetValues(kind)"
+                    :items="facetOptions(kind)"
+                    value-key="value"
+                    multiple
+                    size="xs"
+                    variant="outline"
+                    class="w-full"
+                    :placeholder="`Any ${ENTITY_KIND_META[kind].label.toLowerCase()}`"
+                    :search-input="{ placeholder: `Filter ${ENTITY_KIND_META[kind].plural.toLowerCase()}…` }"
+                    @update:model-value="setFacet(kind, $event as string[])"
+                  />
+                </div>
+              </div>
+            </template>
+          </UPopover>
+
+          <!-- A chip per active facet, never one per facet on offer. -->
+          <div v-if="facetChips.length" class="flex min-w-0 flex-wrap items-center gap-1.5">
+            <button
+              v-for="chip in facetChips"
+              :key="chip.kind"
+              type="button"
+              class="blr-chip"
+              :title="`Clear this ${chip.label.toLowerCase()} filter`"
+              @click="setFacet(chip.kind, [])"
+            >
+              <UIcon :name="chip.icon" class="size-3.5 shrink-0" :style="{ color: `var(--blr-slot-${ENTITY_KIND_META[chip.kind].slot})` }" />
+              <span class="text-dimmed">{{ chip.label }}</span>
+              <span class="truncate font-medium text-highlighted">{{ chip.value }}</span>
+              <UIcon name="i-lucide-x" class="size-3 shrink-0 text-dimmed" />
+            </button>
+            <UButton
+              v-if="facetChips.length > 1"
+              color="neutral"
+              variant="ghost"
+              size="xs"
+              label="Clear"
+              @click="clearFacets"
+            />
+          </div>
+
+          <!-- Filters narrow a named subject; grouping and the lens toggle
+               change how that same subject is read. -->
           <div class="ms-auto flex shrink-0 items-center gap-2">
             <template v-if="groupOptions.length">
-              <span class="blr-field">Group by</span>
+              <span class="blr-field hidden xl:inline">Group by</span>
               <USelect
                 v-model="groupKind"
                 :items="groupOptions"
@@ -773,6 +972,7 @@ const sections = reactive({ about: false, coverage: false, counts: false, refere
                 class="min-w-32"
                 icon="i-lucide-rows-3"
                 placeholder="Nothing"
+                :aria-label="`Group ${activeMeta.plural} by`"
               />
               <UButton
                 v-if="groupKind"
@@ -795,325 +995,48 @@ const sections = reactive({ about: false, coverage: false, counts: false, refere
           </div>
         </div>
 
-        <!-- The same card-density choice applies across every entity kind. -->
-        <div
-          v-if="(showToolbar || openJourney) && viewMode === 'cards'"
-          class="flex shrink-0 flex-wrap items-center gap-1.5 border-b border-default bg-elevated/30 px-4 py-2"
-        >
-          <span class="blr-field me-1">Card style</span>
-          <UButton
-            v-for="option in ENTITY_CARD_VARIANTS"
-            :key="option.id"
-            :icon="option.icon"
-            :label="option.name"
-            size="xs"
-            :color="option.id === entityCardVariant ? 'primary' : 'neutral'"
-            :variant="option.id === entityCardVariant ? 'soft' : 'outline'"
-            :aria-pressed="option.id === entityCardVariant"
-            class="rounded-full"
-            :title="option.description"
-            @click="entityCardVariant = option.id"
-          />
-          <span class="ms-1 text-xs text-muted">
-            {{ ENTITY_CARD_VARIANTS.find(option => option.id === entityCardVariant)?.description }}
-          </span>
-        </div>
-
         <!-- Product-level breadth: all named topology views share one canvas. -->
         <div v-if="topologyActive" class="min-h-0 flex-1">
           <BlrProductTopology
             :workspace="workspace"
             :selected-id="inspected?.key ?? null"
+            :focus="topologyFocus"
             @select="inspect"
             @clear="inspected = null"
           />
         </div>
 
         <div v-else class="blr-pane flex-1 p-5">
-          <!-- OVERVIEW: identity first, everything else on request -->
-          <div v-if="activeKind === 'product'" class="mx-auto max-w-3xl space-y-6">
-            <header class="space-y-4">
-              <div class="flex flex-wrap items-start gap-4">
-                <img v-if="logoSrc" :src="logoSrc" alt="" class="size-12 rounded-lg border border-default">
-                <div class="min-w-0 flex-1 space-y-1.5">
-                  <p class="blr-eyebrow">Product report · read as a workbench</p>
-                  <h1 class="text-2xl font-semibold tracking-[-0.03em] text-highlighted">{{ workspace.identity.title }}</h1>
-                  <p class="max-w-3xl text-sm leading-6 text-default">{{ workspace.identity.summary }}</p>
-                </div>
-              </div>
-              <div class="flex flex-wrap items-center gap-1.5">
-                <span class="blr-field me-1">Made for</span>
-                <UButton
-                  v-for="actor in workspace.actors"
-                  :key="actor.key"
-                  color="neutral"
-                  variant="outline"
-                  size="xs"
-                  class="rounded-full"
-                  @click="inspect(actor)"
-                >
-                  <BlrKind kind="actor" :labelled="false" size="xs" />
-                  {{ actor.title }}
-                </UButton>
-                <span v-if="!workspace.actors.length" class="text-sm text-muted italic">No Actors authored.</span>
-              </div>
-              <div class="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-                <span v-for="fact in countFacts" :key="fact.label" class="blr-field">
-                  <span class="font-mono text-highlighted tabular-nums">{{ fact.value }}</span>
-                  {{ fact.label }}
-                </span>
-                <span v-if="workspace.coverage.rationale" class="text-xs text-dimmed italic">
-                  {{ firstSentence(workspace.coverage.rationale) }}
-                </span>
-              </div>
-            </header>
-
-            <!-- The host's call to action sits with the identity it acts on. -->
-            <div v-if="$slots['primary-action']">
+          <!-- OVERVIEW: the Product, and what it promises -->
+          <BlrOverview
+            v-if="activeKind === 'product'"
+            :workspace="workspace"
+            :logo-src="logoSrc"
+            @select="inspect"
+            @select-key="inspectKey"
+          >
+            <template v-if="$slots['primary-action']" #primary-action>
               <slot name="primary-action" />
-            </div>
-
-            <!-- Everything the Product page used to show, one disclosure each. -->
-            <div class="divide-y divide-default border-y border-default">
-              <UCollapsible v-model:open="sections.about">
-                <button type="button" class="blr-disclosure">
-                  <span class="flex-1 text-start text-sm font-medium text-highlighted">About this Product</span>
-                  <span class="blr-meta">description · intent · authors</span>
-                  <UIcon :name="sections.about ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'" class="size-4 text-dimmed" />
-                </button>
-                <template #content>
-                  <div class="space-y-4 pb-5">
-                    <BlrProse :text="workspace.identity.description" />
-                    <section v-if="workspace.identity.intent" class="space-y-1.5">
-                      <h3 class="blr-field">Intent</h3>
-                      <BlrProse :text="workspace.identity.intent" />
-                    </section>
-                    <section v-if="workspace.identity.supportingContent" class="space-y-1.5">
-                      <h3 class="blr-field">Supporting context</h3>
-                      <BlrProse :text="workspace.identity.supportingContent" />
-                    </section>
-                    <div class="flex flex-wrap items-center gap-1.5">
-                      <UBadge v-if="workspace.identity.categoryLabel" color="primary" variant="subtle" size="sm">
-                        {{ workspace.identity.categoryLabel }}
-                      </UBadge>
-                      <UBadge v-for="tag in workspace.identity.tags" :key="tag" color="neutral" variant="outline" size="sm">
-                        {{ tag }}
-                      </UBadge>
-                      <span v-if="workspace.identity.license" class="blr-meta">license: {{ workspace.identity.license }}</span>
-                    </div>
-                    <section v-if="workspace.identity.authors.length" class="space-y-1.5">
-                      <h3 class="blr-field">Authors</h3>
-                      <ul class="flex flex-wrap gap-x-4 gap-y-1 text-sm">
-                        <li v-for="author in workspace.identity.authors" :key="author.name">
-                          <a
-                            v-if="author.url"
-                            :href="author.url"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            class="text-primary underline underline-offset-2"
-                          >{{ author.name }}</a>
-                          <span v-else class="text-default">{{ author.name }}</span>
-                        </li>
-                      </ul>
-                    </section>
-                    <section v-if="workspace.identity.limitations.length" class="space-y-1.5">
-                      <h3 class="blr-field">Known limitations</h3>
-                      <ul class="list-disc space-y-1 ps-5 text-sm text-muted marker:text-dimmed">
-                        <li v-for="(item, index) in workspace.identity.limitations" :key="index">{{ item }}</li>
-                      </ul>
-                    </section>
-                  </div>
-                </template>
-              </UCollapsible>
-
-              <UCollapsible v-model:open="sections.coverage">
-                <button type="button" class="blr-disclosure">
-                  <span class="flex-1 text-start text-sm font-medium text-highlighted">Coverage</span>
-                  <UBadge :color="COVERAGE_TONE[workspace.coverage.status] || 'neutral'" variant="subtle" size="sm">
-                    {{ workspace.coverage.status }}
-                  </UBadge>
-                  <UIcon :name="sections.coverage ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'" class="size-4 text-dimmed" />
-                </button>
-                <template #content>
-                  <div class="space-y-3 pb-5">
-                    <BlrProse :text="workspace.coverage.rationale" />
-                    <div class="grid gap-4 sm:grid-cols-2">
-                      <div v-if="workspace.coverage.method.length" class="space-y-1.5">
-                        <p class="blr-field">Method</p>
-                        <ul class="list-disc space-y-1 ps-5 text-sm text-muted marker:text-dimmed">
-                          <li v-for="(item, index) in workspace.coverage.method" :key="index">{{ item }}</li>
-                        </ul>
-                      </div>
-                      <div v-if="workspace.coverage.sourceAreas.length" class="space-y-1.5">
-                        <p class="blr-field">Source areas</p>
-                        <ul class="space-y-1">
-                          <li v-for="(item, index) in workspace.coverage.sourceAreas" :key="index" class="blr-meta">{{ item }}</li>
-                        </ul>
-                      </div>
-                      <div v-if="workspace.coverage.unmapped.length" class="space-y-1.5">
-                        <p class="blr-field">Unmapped</p>
-                        <ul class="list-disc space-y-1 ps-5 text-sm text-muted marker:text-dimmed">
-                          <li v-for="(item, index) in workspace.coverage.unmapped" :key="index">{{ item }}</li>
-                        </ul>
-                      </div>
-                      <div v-if="workspace.coverage.limitations.length" class="space-y-1.5">
-                        <p class="blr-field">Limitations</p>
-                        <ul class="list-disc space-y-1 ps-5 text-sm text-muted marker:text-dimmed">
-                          <li v-for="(item, index) in workspace.coverage.limitations" :key="index">{{ item }}</li>
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-                </template>
-              </UCollapsible>
-
-              <UCollapsible v-model:open="sections.counts">
-                <button type="button" class="blr-disclosure">
-                  <span class="flex-1 text-start text-sm font-medium text-highlighted">Model counts</span>
-                  <span class="blr-meta">authored · derived</span>
-                  <UIcon :name="sections.counts ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'" class="size-4 text-dimmed" />
-                </button>
-                <template #content>
-                  <div class="space-y-3 pb-5">
-                    <div class="grid grid-cols-3 gap-x-4 gap-y-3 sm:grid-cols-5">
-                      <div v-for="[label, value] in authoredCounts" :key="label">
-                        <p class="font-mono text-lg text-highlighted tabular-nums">{{ value }}</p>
-                        <p class="blr-field">{{ label }}</p>
-                      </div>
-                    </div>
-                    <p class="blr-field pt-1">Depth (derived from the model)</p>
-                    <div class="grid grid-cols-3 gap-x-4 gap-y-3 sm:grid-cols-5">
-                      <div v-for="[label, value] in derivedCounts" :key="label">
-                        <p class="font-mono text-lg text-highlighted tabular-nums">{{ value }}</p>
-                        <p class="blr-field">{{ label }}</p>
-                      </div>
-                    </div>
-                  </div>
-                </template>
-              </UCollapsible>
-
-              <UCollapsible v-model:open="sections.references">
-                <button type="button" class="blr-disclosure">
-                  <span class="flex-1 text-start text-sm font-medium text-highlighted">References</span>
-                  <span class="blr-meta">{{ workspace.references.length }}</span>
-                  <UIcon :name="sections.references ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'" class="size-4 text-dimmed" />
-                </button>
-                <template #content>
-                  <div class="space-y-3 pb-5">
-                    <BlrRefs :references="workspace.identity.references" variant="list" label="Product references" />
-                    <div v-if="workspace.references.length" class="space-y-1.5">
-                      <p class="blr-field">All references in the model</p>
-                      <ul class="space-y-1">
-                        <li
-                          v-for="(group, index) in workspace.references"
-                          :key="`${group.ownerId}-${index}`"
-                          class="flex min-w-0 items-center gap-2 text-sm"
-                        >
-                          <BlrKind :kind="group.ownerKind" :labelled="false" size="xs" />
-                          <button
-                            type="button"
-                            class="shrink-0 truncate text-default hover:text-primary"
-                            :disabled="group.ownerKind === 'product'"
-                            @click="group.ownerKey && inspectKey(group.ownerKey)"
-                          >
-                            {{ group.ownerTitle }}
-                          </button>
-                          <span class="blr-meta truncate">
-                            {{ group.reference.title || group.reference.target }}
-                          </span>
-                          <span class="blr-meta ms-auto shrink-0">
-                            {{ group.reference.kind }} · {{ group.reference.role }}
-                          </span>
-                        </li>
-                      </ul>
-                    </div>
-                    <p class="blr-meta">
-                      Generated by {{ workspace.identity.generator.name }} v{{ workspace.identity.generator.version }}
-                      · schema {{ workspace.identity.schemaVersion }} · {{ workspace.identity.generatedAt }}
-                    </p>
-                  </div>
-                </template>
-              </UCollapsible>
-            </div>
-
-            <!-- Where this report came from, which only the host can know. -->
-            <div v-if="$slots.provenance" class="text-sm text-muted">
+            </template>
+            <template v-if="$slots.provenance" #provenance>
               <slot name="provenance" />
-            </div>
-          </div>
+            </template>
+          </BlrOverview>
 
-          <!-- JOURNEY PAGE: the promise in full, its Scenarios below it -->
-          <article v-else-if="openJourney" class="space-y-5">
-            <header class="flex flex-wrap items-center gap-2.5">
-              <BlrKind kind="journey" />
-              <h2 class="text-xl font-semibold tracking-tight text-highlighted">{{ openJourney.title }}</h2>
-              <code class="blr-meta rounded bg-muted px-1.5 py-0.5">{{ openJourney.id }}</code>
-              <UButton
-                icon="i-lucide-panel-right-open"
-                color="neutral"
-                variant="outline"
-                size="xs"
-                label="Inspect"
-                class="ms-auto"
-                @click="inspect(openJourney)"
-              />
-            </header>
-            <BlrProse :text="openJourney.lead" />
-            <section v-if="openJourney.intent" class="space-y-1.5">
-              <h3 class="blr-field">Intent</h3>
-              <BlrProse :text="openJourney.intent" />
-            </section>
-            <BlrAvail :pairs="openJourney.availability" :entry-points="openJourney.entryPoints" />
-            <div class="space-y-1.5">
-              <BlrLinks :workspace="workspace" :ids="openJourney.actorIds" kind="actor" interactive @select="inspect" />
-              <BlrLinks :workspace="workspace" :ids="openJourney.capabilityIds" kind="capability" interactive @select="inspect" />
-              <BlrLinks :workspace="workspace" :ids="openJourney.domainIds" kind="domain" label="Domains (derived)" interactive @select="inspect" />
-              <BlrLinks :workspace="workspace" :ids="openJourney.screenIds" kind="screen" label="Screens (derived)" interactive @select="inspect" />
-              <BlrLinks :workspace="workspace" :ids="openJourney.ruleIds" kind="rule" label="Constrained by" interactive @select="inspect" />
-            </div>
-
-            <section v-if="openJourneyFlow.nodes.length" class="space-y-2 border-t border-default pt-5">
-              <header class="flex flex-wrap items-baseline gap-2">
-                <h3 class="text-base font-semibold tracking-tight text-highlighted">Scenario flows</h3>
-                <span class="text-xs text-muted">Each lane preserves the authored Capability order and operation.</span>
-              </header>
-              <div class="h-96 overflow-hidden rounded-xl border border-default bg-default">
-                <BlrFlowCanvas
-                  :nodes="openJourneyFlow.nodes"
-                  :edges="openJourneyFlow.edges"
-                  :max-zoom="1.1"
-                  @select="inspectKey"
-                />
-              </div>
-            </section>
-
-            <section class="space-y-3 border-t border-default pt-5">
-              <header class="flex flex-wrap items-baseline gap-2">
-                <h3 class="text-base font-semibold tracking-tight text-highlighted">Scenarios</h3>
-                <span class="blr-meta">{{ openJourneyScenarios.length }}</span>
-                <span class="text-xs text-muted">
-                  Each is one path through this promise: what triggers it, the steps, where it branches, how it ends.
-                </span>
-              </header>
-              <p v-if="!openJourneyScenarios.length" class="text-sm text-muted italic">
-                No Journey Scenarios name this Journey.
-              </p>
-              <div :class="entityCardLayoutClass">
-                <BlrEntityCard
-                  v-for="scenario in openJourneyScenarios"
-                  :key="scenario.key"
-                  :workspace="workspace"
-                  :entity="scenario"
-                  :variant="entityCardVariant"
-                  :active="scenario.key === inspected?.key"
-                  @open="openCard"
-                />
-              </div>
-            </section>
-          </article>
+          <!-- ENTITY PAGE: one entity in full, at its own URL. -->
+          <BlrEntityPage
+            v-else-if="openPage"
+            :workspace="workspace"
+            :entity="openPage"
+            :selected-key="inspected?.key ?? null"
+            @select="inspect"
+            @open="openEntityPage"
+            @focus="focusTopology"
+          />
 
           <!-- ENTITY SURFACE: one named subject, with card and table lenses. -->
           <div v-else :class="groupKind ? 'space-y-3' : 'space-y-6'">
+            <p v-if="multiGroupNote" class="text-xs text-dimmed">{{ multiGroupNote }}</p>
             <UCollapsible
               v-for="group in entityGroups"
               :key="group.key || 'all'"
@@ -1128,6 +1051,7 @@ const sections = reactive({ about: false, coverage: false, counts: false, refere
                   variant="ghost"
                   size="lg"
                   block
+                  data-group-header
                   class="w-full justify-start rounded-none px-3 py-2 text-start"
                 >
                   <BlrKind v-if="group.kind" :kind="group.kind" :labelled="false" size="xs" />
@@ -1151,36 +1075,48 @@ const sections = reactive({ about: false, coverage: false, counts: false, refere
                 <UTable
                   v-if="viewMode === 'table'"
                   :data="group.entities"
-                  :columns="tableColumns"
+                  :columns="visibleColumns"
                   class="rounded-xl border border-default bg-default"
                   :ui="{ tr: 'cursor-pointer' }"
                   :on-select="(_event: Event, row: any) => activate(row.original)"
                 />
 
-                <div v-else :class="entityCardLayoutClass">
+                <div v-else class="space-y-2">
                   <BlrEntityCard
                     v-for="entity in group.entities"
                     :key="entity.key"
                     :workspace="workspace"
                     :entity="entity"
-                    :variant="entityCardVariant"
                     :active="entity.key === activeId"
+                    :badge="!groupKind || groupKind !== group.kind"
                     @open="openCard"
                   />
                 </div>
               </template>
             </UCollapsible>
 
-            <p v-if="viewMode === 'table' && TABLE_NOTE[activeKind]" class="text-sm text-muted">
-              {{ TABLE_NOTE[activeKind] }}
+            <p v-if="viewMode === 'table' && tableNote" class="text-sm text-muted">
+              {{ tableNote }}
             </p>
 
-            <p v-if="!visibleEntities.length" class="text-sm text-muted italic">
-              <template v-if="filtersActive">Nothing matches the current filters.</template>
-              <template v-else>This model declares no {{ activeMeta.plural.toLowerCase() }}.</template>
-            </p>
+            <!-- A dead end names its own way out. -->
+            <div v-if="!visibleEntities.length" class="flex flex-wrap items-center gap-3">
+              <p class="text-sm text-muted italic">
+                <template v-if="filtersActive">Nothing matches the current filters.</template>
+                <template v-else>This model declares no {{ activeMeta.plural.toLowerCase() }}.</template>
+              </p>
+              <UButton
+                v-if="filtersActive"
+                icon="i-lucide-filter-x"
+                color="neutral"
+                variant="outline"
+                size="xs"
+                label="Clear filters"
+                @click="clearFacets"
+              />
+            </div>
 
-            <section v-if="activeKind === 'journey' && orphanScenarios.length" class="space-y-1 border-t border-default pt-4">
+            <section v-if="activeKind === 'journey-scenario' && orphanScenarios.length" class="space-y-1 border-t border-default pt-4">
               <p class="blr-field">Scenarios whose Journey is not in the model</p>
               <button
                 v-for="scenario in orphanScenarios"
@@ -1196,22 +1132,14 @@ const sections = reactive({ about: false, coverage: false, counts: false, refere
         </div>
       </section>
 
-      <!-- INSPECTOR: the shared slideover every selection re-targets -->
+      <!-- PEEK: the shared panel every selection re-targets, one level deep -->
       <BlrInspector
-        v-model:tab="inspectorTab"
         :workspace="workspace"
         :entity="inspected"
-        @select="inspect($event)"
+        @select="openEntityPage($event)"
+        @open="openEntityPage($event)"
         @close="inspected = null"
-      >
-        <template #detail-after="{ entity }">
-          <BlrWorkbenchScenarioDrilldown
-            :workspace="workspace"
-            :entity="entity"
-            @select="inspect($event)"
-          />
-        </template>
-      </BlrInspector>
+      />
     </div>
 
     <BlrSearchPalette
@@ -1237,35 +1165,19 @@ const sections = reactive({ about: false, coverage: false, counts: false, refere
         </div>
       </template>
       <template #body>
-        <nav>
-          <div v-if="$slots.navigation" class="mb-1 border-b border-default pb-2">
+        <!-- One rail, two placements: the narrow viewport gets the same rows,
+             not a second copy that drifts from them. -->
+        <BlrRail
+          :workspace="workspace"
+          :active-section="activeSection"
+          :counts="kindCounts"
+          @kind="setKind"
+          @topology="openTopology"
+        >
+          <template v-if="$slots.navigation" #navigation>
             <slot name="navigation" />
-          </div>
-          <p class="blr-navgroup">Explore</p>
-          <button type="button" class="blr-navitem" :data-current="activeSection === 'overview'" @click="setKind('product')">
-            <UIcon name="i-lucide-package" class="size-4 text-primary" />
-            <span class="flex-1 text-start">Overview</span>
-          </button>
-          <button type="button" class="blr-navitem" :data-current="topologyActive" @click="openTopology">
-            <UIcon name="i-lucide-waypoints" class="size-4 text-primary" />
-            <span class="flex-1 text-start">Topology</span>
-          </button>
-          <p class="blr-navgroup mt-3">Browse</p>
-          <button
-            v-for="item in RAIL_KINDS"
-            :key="item.meta.kind"
-            type="button"
-            class="blr-navitem"
-            :class="item.child && 'blr-navchild'"
-            :data-current="activeSection === item.meta.kind"
-            :style="{ '--kind-color': `var(--blr-slot-${item.meta.slot})` }"
-            @click="setKind(item.meta.kind)"
-          >
-            <UIcon :name="item.meta.icon" class="size-4 shrink-0" :style="{ color: `var(--blr-slot-${item.meta.slot})` }" />
-            <span class="flex-1 truncate text-start">{{ item.meta.plural }}</span>
-            <span class="blr-meta">{{ kindCounts[item.meta.kind] }}</span>
-          </button>
-        </nav>
+          </template>
+        </BlrRail>
       </template>
     </USlideover>
   </div>
@@ -1304,70 +1216,46 @@ const sections = reactive({ about: false, coverage: false, counts: false, refere
   --blr-slot-9: #3987e5;
 }
 
-/* Left rail: kind switcher rows */
-.blr-navgroup {
-  padding: 0.4rem 0.625rem 0.25rem;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: var(--ui-text-dimmed);
-}
-
-.blr-navitem {
-  display: flex;
+/* Parent ⇄ child tabs. The underline is the current one, not a filled pill:
+   these are two readings of one subject, not two states of one control. */
+.blr-tab {
+  display: inline-flex;
   align-items: center;
-  gap: 0.625rem;
-  width: 100%;
-  padding: 0.375rem 0.625rem;
-  border-radius: 0.375rem;
+  gap: 0.5rem;
+  padding: 0.375rem 0.625rem 0.5rem;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
   font-size: var(--text-sm);
   color: var(--ui-text-muted);
-  transition: background 0.12s ease, color 0.12s ease;
+  transition: color 0.12s ease, border-color 0.12s ease;
 }
 
-.blr-navitem:hover {
-  background: var(--ui-bg-elevated);
+.blr-tab:hover {
   color: var(--ui-text-highlighted);
 }
 
-.blr-navitem[data-current='true'] {
-  background: color-mix(in srgb, var(--kind-color) 10%, var(--ui-bg-elevated));
-  box-shadow: inset 2px 0 0 var(--kind-color);
+.blr-tab[data-current='true'] {
+  border-bottom-color: var(--kind-color);
   color: var(--ui-text-highlighted);
   font-weight: 600;
 }
 
-/*
-  A Scenario rail item sits under the parent that owns it. The rule is the
-  containment cue: indentation alone reads as decoration at this density.
-*/
-.blr-navchild {
-  width: calc(100% - 0.75rem);
-  margin-inline-start: 0.75rem;
-  border-inline-start: 1px solid var(--ui-border);
-  border-start-start-radius: 0;
-  border-end-start-radius: 0;
-  padding-inline-start: 0.625rem;
-}
-
-.blr-navchild[data-current='true'] {
-  border-inline-start-color: transparent;
-}
-
-/* Overview disclosures: a full-width row that reads as a heading. */
-.blr-disclosure {
-  display: flex;
+/* An active filter, stating what it selected and clearing itself on click. */
+.blr-chip {
+  display: inline-flex;
   align-items: center;
-  gap: 0.75rem;
-  width: 100%;
-  padding: 0.875rem 0;
-  text-align: start;
+  gap: 0.375rem;
+  max-width: 18rem;
+  padding: 0.1875rem 0.5rem;
+  border: 1px solid var(--ui-border);
+  border-radius: 9999px;
+  background: var(--ui-bg-elevated);
+  font-size: 12px;
+  line-height: 1.25rem;
 }
 
-.blr-disclosure:hover {
-  color: var(--ui-text-highlighted);
+.blr-chip:hover {
+  border-color: var(--ui-border-accented);
 }
 
 </style>

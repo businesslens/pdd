@@ -89,7 +89,7 @@ describe('stable Product Report Workbench', () => {
     expect(renderer).toContain('ProductReportV9')
     expect(renderer).toContain('projectReportWorkspace')
     expect(renderer).toContain('<BlrWorkbench')
-    expect(source('app/components/BlrInspectorDetail.vue')).toContain('asScenario.routes')
+    expect(source('app/components/BlrEntityBody.vue')).toContain('asScenario.routes')
     expect(workbench).toContain('<BlrProductTopology')
     /* Grouping is how authored Domains earn their place in navigation. */
     expect(workbench).toContain('groupKind')
@@ -135,15 +135,61 @@ describe('stable Product Report Workbench', () => {
     expect(canvas).toContain('#node-blr')
   })
 
-  it('keeps completeness in the inspector and Scenario drilldowns', () => {
+  /*
+    The peek is a glance and the page is the reading. One panel served both for
+    a while, and it could not: authored content runs from roughly 570px for an
+    Actor to 2264px for a Journey Scenario. These assertions keep the authored
+    body out of the panel, which is the only thing stopping it growing back.
+  */
+  it('keeps the peek a glance and the page the reading', () => {
     const workbench = source('app/components/BlrWorkbench.vue')
     const inspector = source('app/components/BlrInspector.vue')
-    const drilldown = source('app/components/BlrWorkbenchScenarioDrilldown.vue')
+    const peek = source('app/components/BlrEntityPeek.vue')
+    const page = source('app/components/BlrEntityPage.vue')
+    const body = source('app/components/BlrEntityBody.vue')
 
-    expect(workbench).toContain('<BlrWorkbenchScenarioDrilldown')
-    expect(inspector).toContain('<BlrInspectorDetail')
-    expect(drilldown).toContain("entity.kind === 'capability'")
-    expect(drilldown).toContain("entity.kind === 'journey'")
-    expect(drilldown).toContain('<BlrInspectorDetail')
+    expect(inspector).toContain('<BlrEntityPeek')
+    expect(workbench).toContain('<BlrEntityPage')
+    expect(page).toContain('<BlrEntityBody')
+
+    /* The authored body belongs to the page. */
+    for (const marker of ['asScenario.steps', 'asScreen.states', 'asRule.statement']) {
+      expect(body, marker).toContain(marker)
+      expect(peek, marker).not.toContain(marker)
+    }
+
+    /* Depth is one level: a relation navigates rather than re-targeting. */
+    expect(peek).toContain("emit('open', entity)")
+    expect(inspector).not.toMatch(/history\.value|const history = ref|function goBack/)
+  })
+
+  /*
+    The rail lists kinds, and kinds do not nest. Both Scenario kinds are reached
+    from the parent that owns them, which is where the documentation explains
+    them too.
+  */
+  it('keeps Scenarios off the navigation rail and on their parent', () => {
+    const rail = source('app/components/BlrRail.vue')
+    const workbench = source('app/components/BlrWorkbench.vue')
+
+    expect(rail).toContain("PARENTED: ReportEntityKind[] = ['capability-scenario', 'journey-scenario']")
+    expect(rail).not.toContain('blr-navchild')
+    expect(workbench).toContain('SCENARIO_OF')
+    expect(workbench).toContain('parentTabs')
+    expect(source('app/utils/reportWorkspace.ts')).toContain('scenariosByCapability')
+  })
+
+  /*
+    A page a reader can reach but not link to, return to, or refresh is a modal
+    with extra steps.
+  */
+  it('exposes the open section and the open page as bindable state', () => {
+    const renderer = source('app/components/BusinessLensReportViewer.vue')
+    const workbench = source('app/components/BlrWorkbench.vue')
+
+    expect(renderer).toContain("defineModel<string>('section'")
+    expect(renderer).toContain("defineModel<string | null>('entity'")
+    expect(renderer).toContain('v-model:entity="entity"')
+    expect(workbench).toContain("defineModel<string | null>('entity'")
   })
 })

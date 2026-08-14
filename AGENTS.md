@@ -123,8 +123,23 @@ contradict each other.
   rendered competes with the field answering the question the reader arrived
   with. The renderer's job is selection and ranking. Where it omits, it says
   where the full material is — the file path.
-- **State must survive a recompile.** `businesslens view` recompiles on save,
-  so focus, filter and trail have to outlive an edit to the model.
+- **State must survive a recompile, and a refresh.** `businesslens view`
+  recompiles on save, so focus and filter have to outlive an edit to the model.
+  The open section and the open entity page also live in the URL, so a reader
+  can link to what they are reading, walk back out of it, and reload into it.
+- **A peek is a glance; a page is the reading.** The panel answers "is this the
+  entity I meant" from a list: identity, one sentence, at most three
+  discriminating facts, and what it connects to. It does not scroll, and it is
+  one level deep — a relation on it opens that entity's page rather than
+  re-targeting the panel, because a panel three entities deep has no trail and
+  the list behind it no longer matches. Everything authored is on the page,
+  which has a URL, a breadcrumb, and the width its content was drawn for.
+- **The rail lists kinds; kinds do not nest.** Containment belongs where
+  instances are — the default grouping of a collection, a tab pairing a parent
+  with its children, and the entity page. A rail that indents some kinds and not
+  others advertises a hierarchy it cannot keep.
+- **Chrome scales with the collection.** No control costs a row above a
+  two-item list, and a filter offer is not rendered where scanning is faster.
 - **Named views, not a view builder.** Filters narrow a view that already means
   something; a builder asks the reader to invent the meaning first. The concrete
   failure is derivation ambiguity — "journeys × screens" is either *screens this
