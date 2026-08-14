@@ -3,7 +3,7 @@ import { createServer, type IncomingMessage, type Server, type ServerResponse } 
 import { lstatSync, readFileSync, watch, type FSWatcher } from 'node:fs'
 import { basename, extname, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import type { ProductReportV8 } from './portable.js'
+import type { ProductReportV9 } from './portable.js'
 import { MAX_PRODUCT_LOGO_BYTES, validateProductLogo } from '../logo.js'
 
 const LOOPBACK_HOST = '127.0.0.1'
@@ -11,7 +11,11 @@ const REPORT_PATH = '/_businesslens/report.json'
 const EVENTS_PATH = '/_businesslens/events'
 const HEALTH_PATH = '/_businesslens/health'
 const LOGO_PATH = '/_businesslens/logo.svg'
+const ASSET_PREFIX = '/_businesslens/file/'
 const VIEWER_ROOT = fileURLToPath(new URL('./viewer/', import.meta.url))
+
+/** 25 MB. A product asset is a mockup or a capture, never a build output. */
+const MAX_ASSET_BYTES = 25 * 1024 * 1024
 
 const CONTENT_TYPES: Record<string, string> = {
   '.css': 'text/css; charset=utf-8',
@@ -27,6 +31,28 @@ const CONTENT_TYPES: Record<string, string> = {
   '.woff2': 'font/woff2'
 }
 
+/**
+ * What the repository mount will serve.
+ *
+ * Reference targets are repository-relative, so the viewer has to reach outside
+ * its own bundle to render a mockup or a capture. The allowlist is the guard:
+ * inert product material only, never source, never an executable, never a
+ * format that scripts when opened. Everything else 404s whether or not it
+ * exists, so the mount cannot be used to enumerate a repository.
+ */
+const ASSET_CONTENT_TYPES: Record<string, string> = {
+  '.avif': 'image/avif',
+  '.gif': 'image/gif',
+  '.jpeg': 'image/jpeg',
+  '.jpg': 'image/jpeg',
+  '.md': 'text/markdown; charset=utf-8',
+  '.pdf': 'application/pdf',
+  '.png': 'image/png',
+  '.svg': 'image/svg+xml; charset=utf-8',
+  '.txt': 'text/plain; charset=utf-8',
+  '.webp': 'image/webp'
+}
+
 export interface LocalViewer {
   server: Server
   url: string
@@ -38,16 +64,24 @@ export interface LocalViewer {
 
 export interface LocalViewerOptions {
   port?: number
-  compile: () => ProductReportV8
-  initialReport?: ProductReportV8
+  compile: () => ProductReportV9
+  initialReport?: ProductReportV9
   watchRoot?: string
   debounceMs?: number
   viewerRoot?: string
   logoFile?: string
+  /**
+   * Repository root for the read-only asset mount.
+   *
+   * Reference targets resolve repository-relative, and product assets live
+   * beside the entity they describe, so the viewer serves from the repository
+   * rather than only from `.businesslens/`. Omit it and the mount is off.
+   */
+  assetRoot?: string
 }
 
 interface ReportSnapshot {
-  report?: ProductReportV8
+  report?: ProductReportV9
   error?: string
   revision: number
 }
@@ -66,7 +100,7 @@ interface ReportEvent {
  * report means one temporarily invalid file never blanks the whole viewer.
  */
 class LocalReportStore {
-  private report?: ProductReportV8
+  private report?: ProductReportV9
   private serialized?: string
   private error?: string
   private revision = 0
@@ -135,7 +169,7 @@ class LocalReportStore {
       || Boolean(this.options.watchRoot && normalized === basename(this.options.watchRoot))
   }
 
-  private accept(report: ProductReportV8, notify: boolean, forceNotify = false): void {
+  private accept(report: ProductReportV9, notify: boolean, forceNotify = false): void {
     const serialized = JSON.stringify(report)
     const recovered = this.error !== undefined
     const changed = serialized !== this.serialized
@@ -164,7 +198,7 @@ function securityHeaders(response: ServerResponse): void {
   response.setHeader('cache-control', 'no-store')
   response.setHeader(
     'content-security-policy',
-    "default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+    "default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; manifest-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
   )
   response.setHeader('cross-origin-resource-policy', 'same-origin')
   response.setHeader('permissions-policy', 'camera=(), microphone=(), geolocation=()')
@@ -234,6 +268,51 @@ function staticFile(viewerRoot: string, pathname: string): string | undefined {
   return candidate
 }
 
+/**
+ * Resolve one repository-relative asset request.
+ *
+ * Same traversal guard as the bundled viewer, plus an extension allowlist and a
+ * size cap. Symlinks are refused so the mount cannot be pointed outside the
+ * repository by something committed inside it.
+ */
+function assetFile(assetRoot: string, pathname: string): string | undefined {
+  let decoded: string
+  try {
+    decoded = decodeURIComponent(pathname.slice(ASSET_PREFIX.length))
+  } catch {
+    return undefined
+  }
+  if (!decoded || decoded.startsWith('/')) return undefined
+  const root = resolve(assetRoot)
+  const candidate = resolve(root, decoded)
+  if (!candidate.startsWith(`${root}${sep}`)) return undefined
+  if (!(extname(candidate).toLowerCase() in ASSET_CONTENT_TYPES)) return undefined
+  try {
+    const stat = lstatSync(candidate)
+    if (!stat.isFile() || stat.isSymbolicLink()) return undefined
+    if (stat.size > MAX_ASSET_BYTES) return undefined
+  } catch {
+    return undefined
+  }
+  return candidate
+}
+
+function repositoryAsset(response: ServerResponse, file: string, head: boolean): void {
+  const extension = extname(file).toLowerCase()
+  const body = readFileSync(file)
+  if (extension === '.svg') {
+    const issues = validateProductLogo(body)
+    if (issues.length) {
+      json(response, 422, { message: `This SVG is not inert: ${issues.join('; ')}` }, head)
+      return
+    }
+  }
+  response.statusCode = 200
+  response.setHeader('content-type', ASSET_CONTENT_TYPES[extension] ?? 'application/octet-stream')
+  response.setHeader('content-length', body.byteLength)
+  response.end(head ? undefined : body)
+}
+
 function requestHandler(
   options: LocalViewerOptions,
   store: LocalReportStore,
@@ -270,6 +349,12 @@ function requestHandler(
     }
     if (pathname === LOGO_PATH) {
       productLogo(response, options.logoFile, head)
+      return
+    }
+    if (pathname.startsWith(ASSET_PREFIX)) {
+      const asset = options.assetRoot && assetFile(options.assetRoot, pathname)
+      if (!asset) json(response, 404, { message: 'Not found.' }, head)
+      else repositoryAsset(response, asset, head)
       return
     }
     if (pathname === EVENTS_PATH) {

@@ -2,28 +2,69 @@
 
 ## Layout
 
+A representative model looks like this:
+
 ```text
 .businesslens/
 ├── README.md
 ├── config.yaml
-├── product.md
 ├── taxonomies.yaml
 ├── coverage.md
 ├── .gitignore
+├── product.md                    # or product/product.md beside logo.svg
 ├── actors/<id>.md
-├── interfaces/<id>.md
-├── experiences/<id>.md          # optional collection
-├── screens/<id>.md              # optional collection
-├── domains/<id>.md              # optional collection
-├── capabilities/<id>.md
-├── capability-scenarios/<id>.md
-├── journeys/<id>.md             # optional collection
-├── journey-scenarios/<id>.md    # required when Journeys exist
-└── business-rules/<id>.md
+├── interfaces/<id>/
+│   ├── interface.md
+│   ├── screens/<id>.md                       # when no Experience divides it
+│   └── experiences/<id>/
+│       ├── experience.md
+│       └── screens/<id>.md
+├── domains/<id>.md                          # optional collection
+├── capabilities/<id>/
+│   ├── capability.md
+│   └── scenarios/<id>.md
+├── journeys/<id>/                           # optional collection
+│   ├── journey.md
+│   └── scenarios/<id>.md
+└── business-rules/<id>.md                   # optional collection
 ```
 
-IDs are lowercase kebab-case filename stems. Capability Scenario and Journey
-Scenario IDs share one global namespace. Only `product.md` declares `id:`. The
+Use `<id>.md` while an entity has no assets or child entities. When it gains the
+first one, move it to `<id>/<type>.md` and keep owned assets beside that file.
+Put generated implementation captures under `implementation/`. The compact and
+expanded forms never coexist and derive the same id. Optional `assets:`
+frontmatter annotates existing files with `title` and, on Screens only, a
+Product-state `state`; it never creates or classifies an asset.
+
+Use these exact compact and expanded paths:
+
+| Entity | Compact | Expanded | Typed children |
+| --- | --- | --- | --- |
+| Product | `product.md` | `product/product.md` beside `logo.svg` | — |
+| Actor | `actors/<id>.md` | `actors/<id>/actor.md` | — |
+| Interface | `interfaces/<id>.md` | `interfaces/<id>/interface.md` | `screens/` or `experiences/`, never both |
+| Experience | `interfaces/<interface-id>/experiences/<id>.md` | `interfaces/<interface-id>/experiences/<id>/experience.md` | `screens/` |
+| Screen | `<scope>/screens/<id>.md` | `<scope>/screens/<id>/screen.md` | — |
+| Domain | `domains/<id>.md` | `domains/<id>/domain.md` | — |
+| Capability | `capabilities/<id>.md` | `capabilities/<id>/capability.md` | `scenarios/` |
+| Capability Scenario | `capabilities/<capability-id>/scenarios/<id>.md` | `capabilities/<capability-id>/scenarios/<id>/capability-scenario.md` | — |
+| Journey | `journeys/<id>.md` | `journeys/<id>/journey.md` | `scenarios/` |
+| Journey Scenario | `journeys/<journey-id>/scenarios/<id>.md` | `journeys/<journey-id>/scenarios/<id>/journey-scenario.md` | — |
+| Business Rule | `business-rules/<id>.md` | `business-rules/<id>/business-rule.md` | — |
+
+Here `<scope>` is either an Interface folder or an Experience folder.
+
+IDs are lowercase kebab-case segments. Behavior-tree and cross-cutting ids are the bare file or folder name. Surface-tree ids
+(Interface, Experience, Screen) carry their path joined by `::` —
+`reader-web::personal-library::unread-library` — because surface names repeat
+across Interfaces on purpose. Two entities of the same kind sharing a path
+suffix below their Interface are counterparts: the same thing on two surfaces.
+
+The path owns every parent relation. An Experience never writes `interfaces:`,
+a Capability Scenario never writes `capability:`, a Journey Scenario never
+writes `journey:`, and a Screen never writes `availability:`. Capability
+Scenario and Journey Scenario IDs share one global namespace. Only
+`product.md` declares `id:`. The
 first and only H1 is the title. Most entities use lead prose as their description;
 Journeys and both Scenario types instead use required named sections and must
 not contain lead prose. Put relations and navigation in frontmatter and Product
@@ -34,7 +75,7 @@ not contain another H1 or H2.
 
 ## Required shapes
 
-- `config.yaml`: exactly `schema: 4` and `sdd.paths`.
+- `config.yaml`: exactly `schema: 5` and `sdd.paths`.
 - `product.md`: `id`, optional `tags`, `limitations`, H1, lead description, and
   optional `## Intent`.
 - `taxonomies.yaml`: `scenarioKinds` entries with `id`, `name`, `description`,
@@ -47,7 +88,7 @@ not contain another H1 or H2.
   are inbound. An outbound connection the Product opens is not an Interface:
   model it in the calling Capability, scope availability to where the Actor
   observes the result, and make its failure a Capability Scenario.
-- Experience: at least one `actors` and `interfaces`; `access`
+- Experience: at least one `actors`; `access`
   (`public|authenticated|restricted`); optional Interface-keyed `entryPoints`;
   H1, lead description, and `## Capability boundary`. The collection is
   optional. For every Interface using Experiences, their Actor union covers all
@@ -56,11 +97,12 @@ not contain another H1 or H2.
   `domain`; H1 and lead description. Every Capability needs a Capability
   Scenario for every exact availability context: a gap is an error at complete
   coverage and a warning at draft or partial coverage.
-- Capability Scenario: taxonomy `kind`, one `capability`, at least one `actor`,
+- Capability Scenario: taxonomy `kind`, at least one `actor`,
   and non-empty exact `availability` supported by that Capability.
-- Domain: H1 and lead description; optional `colorSlot`. The collection is
-  optional and only organizes Capabilities.
-- Screen: at least one exact `availability` scope and `capabilities` relation;
+- Domain: H1, lead description, and `## Boundary`; optional `colorSlot`. A Domain
+  is a region of subject matter, classifying members of both trees. Only
+  Capability authors `domain:`; every other Domain relation is derived.
+- Screen: at least one `capabilities` relation (it has no `availability` — its logical path is the scope);
   optional `capabilityScenarios`, `journeyScenarios`, and Interface-keyed Product
   entry points; H1, lead, bullet `## Information presented`, optional bullet
   `## Available actions`, optional H3 `## Product states`, and
@@ -75,7 +117,7 @@ not contain another H1 or H2.
   needs achieved Journey Scenario coverage for every Journey Actor. It has no
   `entryPoints`; resolve presentation routes from the first flow stage context
   of achieved Scenario routes and the matching Interface or Experience.
-- Journey Scenario: taxonomy `kind`, one `journey`, at least one `actor`,
+- Journey Scenario: taxonomy `kind`, at least one `actor`,
   `result: achieved|not-achieved`, an ordered non-empty `flow`, and non-empty
   `routes`. Every flow item needs a locally unique `id`, `capability`, and
   one-line `operation`. Every route needs a locally unique `id` and exactly one
@@ -96,35 +138,30 @@ branch that changes the Capability sequence or terminal result is a separate
 Scenario. `kind` describes the nature of the variation; `result` describes the
 terminal Journey goal outcome, so the fields are orthogonal.
 
-Exact availability uses this shared shape:
+A scope is one id: an undivided Interface, or an Experience.
 
 ```yaml
-availability:
-  - interface: reader-web
-    experiences: [personal-workspace, account-management]
-  - interface: reader-mobile
-    experiences: [personal-workspace]
-  - interface: operator-cli
+availability: [reader-web::personal-library, reader-mobile::personal-library, operator-cli]
 ```
 
-Each Interface appears at most once. If any Experience declares an Interface,
-every availability record for it needs a non-empty, unique Experience list and
-every named Experience must declare that Interface. If no Experience declares
-an Interface, omit `experiences`; an explicit empty list is invalid.
-Availability is intended Product scope, not implementation status.
+An Experience belongs to exactly one Interface, so its id already names it. A
+scope either resolves in the tree or it does not. An Interface holds either
+`screens/` or `experiences/`, never both. Availability is intended Product
+scope, not implementation status.
 
-Journey route and Business Rule target contexts use the singular exact shape:
+Journey route and Business Rule target contexts name one scope id:
 
 ```yaml
-interface: reader-web
-experience: personal-workspace
+context: reader-web::personal-library
 ```
 
-Omit `experience` only when the Interface has no Experiences. An entity Rule
-target may omit `contexts` to cover all target contexts or provide a non-empty
-list to narrow it. Targets are additive. A Capability plus one of its Capability
-Scenarios, or a Journey plus one of its Journey Scenarios, is redundant and
-invalid. Domains are derived Rule backlinks, not authored targets.
+Use a bare Interface id for an undivided Interface scope and
+`interface-id::experience-id` for an Experience scope; there is no separate
+`experience` field. An entity Rule target may omit `contexts` to cover all
+target contexts or provide a non-empty list to narrow it. Targets are additive.
+A Capability plus one of its Capability Scenarios, or a Journey plus one of its
+Journey Scenarios, is redundant and invalid. Domains are derived Rule
+backlinks, not authored targets.
 
 For each Scenario, every exact context must support at least one of its Actors,
 and every named Actor must be supported in at least one exact context. A
@@ -158,9 +195,11 @@ intended product behavior.
 
 ## If you are an agent working in this repository
 
-- Read `product.md` first, then Actors and Interfaces, optional Experiences,
-  Screens, and Domains, followed by Capabilities, Business Rules, Journeys, and
-  both Scenario collections.
+- Read `product.md` or `product/product.md` first, then Actors and
+  Interfaces, optional Experiences, Screens, and Domains, followed by
+  Capabilities, Business Rules, Journeys, and both Scenario collections.
+- Expect leaf entities as `<id>.md`; `<id>/<type>.md` means that entity owns
+  child entities or assets.
 - Treat Capability Scenarios as local acceptance contracts, Journey Scenarios
   as end-to-end flow contracts, and Business Rules as invariants.
 - Do not infer a stack or architecture from the model.

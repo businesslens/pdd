@@ -29,7 +29,7 @@ behavior matters as Product scope.
 
 ## The file
 
-The Product lives at `product.md`:
+The Product lives at `product.md` while it has no logo:
 
 ```md [product.md]
 ---
@@ -77,4 +77,7 @@ may appear only once.
 
 ## Visual identity
 
-Optionally add `.businesslens/logo.svg` as the Product logo.
+Adding a logo expands the Product: move the manifest to
+`.businesslens/product/product.md` and add
+`.businesslens/product/logo.svg` beside it. Public Blueprints require this
+expanded form; a local Product Model without a logo stays compact.

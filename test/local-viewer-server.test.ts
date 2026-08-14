@@ -1,10 +1,10 @@
 import { request } from 'node:http'
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import { startLocalViewer, type LocalViewer } from '../src/core/local-viewer-server.js'
-import type { ProductReportV8 } from '../src/core/portable.js'
+import type { ProductReportV9 } from '../src/core/portable.js'
 
 interface ResponseResult {
   body: string
@@ -126,8 +126,8 @@ function staticViewer(): string {
   return directory
 }
 
-function report(): ProductReportV8 {
-  return { id: 'fixture-shop', title: 'Fixture Shop' } as ProductReportV8
+function report(): ProductReportV9 {
+  return { id: 'fixture-shop', title: 'Fixture Shop' } as ProductReportV9
 }
 
 const logo = (color = '#80552b') => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" fill="${color}"/></svg>`
@@ -271,6 +271,68 @@ describe('local Product Report server', () => {
     const response = await fetch(viewer.url, { method: 'POST' })
     expect(response.status).toBe(405)
     expect(response.headers.get('allow')).toBe('GET, HEAD')
+  })
+
+  it('serves repository assets from the mount, and refuses everything else', async () => {
+    const repository = mkdtempSync(join(tmpdir(), 'businesslens-repo-'))
+    directories.push(repository)
+    mkdirSync(join(repository, 'docs'), { recursive: true })
+    writeFileSync(join(repository, 'docs', 'mockup.png'), Buffer.from('89504e470d0a1a0a', 'hex'))
+    writeFileSync(join(repository, 'docs', 'notes.md'), '# Notes')
+    writeFileSync(join(repository, 'secrets.env'), 'TOKEN=nope')
+    writeFileSync(join(repository, 'app.ts'), 'export const x = 1')
+
+    const viewer = await startLocalViewer({
+      viewerRoot: staticViewer(),
+      compile: report,
+      assetRoot: repository
+    })
+    viewers.push(viewer)
+
+    const png = await get(viewer.url, '/_businesslens/file/docs/mockup.png')
+    expect(png.status).toBe(200)
+    expect(png.headers['content-type']).toBe('image/png')
+
+    const markdown = await get(viewer.url, '/_businesslens/file/docs/notes.md')
+    expect(markdown.status).toBe(200)
+    expect(markdown.body).toBe('# Notes')
+
+    // Not on the allowlist: refused whether or not it exists, so the mount
+    // cannot be used to probe for files.
+    expect((await get(viewer.url, '/_businesslens/file/secrets.env')).status).toBe(404)
+    expect((await get(viewer.url, '/_businesslens/file/app.ts')).status).toBe(404)
+    expect((await get(viewer.url, '/_businesslens/file/docs/absent.png')).status).toBe(404)
+
+    // Traversal, encoded traversal, and absolute paths stay inside the root.
+    expect((await get(viewer.url, '/_businesslens/file/../../etc/passwd')).status).toBe(404)
+    expect((await get(viewer.url, '/_businesslens/file/%2e%2e%2f%2e%2e%2fetc%2fpasswd')).status).toBe(404)
+    expect((await get(viewer.url, '/_businesslens/file//etc/passwd')).status).toBe(404)
+  })
+
+  it('rejects an SVG asset that is not inert', async () => {
+    const repository = mkdtempSync(join(tmpdir(), 'businesslens-repo-'))
+    directories.push(repository)
+    writeFileSync(join(repository, 'safe.svg'), logo())
+    writeFileSync(
+      join(repository, 'active.svg'),
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8"><script>alert(1)</script></svg>'
+    )
+
+    const viewer = await startLocalViewer({
+      viewerRoot: staticViewer(),
+      compile: report,
+      assetRoot: repository
+    })
+    viewers.push(viewer)
+
+    expect((await get(viewer.url, '/_businesslens/file/safe.svg')).status).toBe(200)
+    expect((await get(viewer.url, '/_businesslens/file/active.svg')).status).toBe(422)
+  })
+
+  it('serves no repository asset when no asset root is configured', async () => {
+    const viewer = await startLocalViewer({ viewerRoot: staticViewer(), compile: report })
+    viewers.push(viewer)
+    expect((await get(viewer.url, '/_businesslens/file/package.json')).status).toBe(404)
   })
 
   it('returns a safe compile error without stopping the viewer', async () => {

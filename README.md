@@ -16,19 +16,18 @@ resolution loop.
 ```text
 .businesslens/
 ├── README.md
-├── product.md
-├── actors/
-├── interfaces/
-├── experiences/
-├── screens/                  # optional product views
-├── domains/                  # optional organization
-├── capabilities/
-├── capability-scenarios/
-├── business-rules/
-├── journeys/                 # optional goals
-├── journey-scenarios/        # cross-Capability goal paths
+├── product.md                # or product/product.md beside logo.svg
+├── actors/<id>.md            # or <id>/actor.md with assets
+├── interfaces/<id>.md        # or <id>/interface.md with screens/ or experiences/
+├── domains/<id>.md           # or <id>/domain.md with assets; optional collection
+├── capabilities/<id>.md      # or <id>/capability.md with scenarios/ or assets
+├── journeys/<id>.md          # or <id>/journey.md with scenarios/ or assets; optional
+├── business-rules/<id>.md    # or <id>/business-rule.md with assets
 └── coverage.md
 ```
+
+Leaf entities stay compact as `<id>.md`. An entity expands to
+`<id>/<type>.md` only when it needs a namespace for assets or child entities.
 
 ## Getting started
 
@@ -102,12 +101,14 @@ Catalog contribution stays in the CLI; there is no contribution skill.
 - A complete model may contain zero References.
 - A Product may expose several Interfaces—such as web, mobile, CLI, and a
   supported API—without being classified as one of those delivery forms.
-- Experiences are optional coherent usage contexts across Interfaces. An
-  Interface without Experiences uses direct availability; an Interface with
-  Experiences uses exact Interface–Experience availability.
-- Domains are optional Capability groupings, and Journeys may cross them.
-- Screens are optional platform-neutral product views. Screenshots and other
-  visuals remain external References, not model assets or proof.
+- Experiences are optional coherent usage contexts, each belonging to exactly
+  one Interface. Availability is a list of scope ids: an undivided Interface, or
+  an Experience.
+- Domains are optional regions of subject matter. Only a Capability authors
+  `domain:`; every other Domain relation is derived.
+- Screens are optional platform-neutral product views, nested in the scope that
+  reaches them. Product assets sit beside the entity they describe; anything
+  under `implementation/` describes this realization and stays home.
 - `lint` checks format, required content, relationships, Reference grammar, and
   tracked code-reference paths. `verify` checks meaning against current code.
 
@@ -123,7 +124,9 @@ Use these sources in this order:
 2. Use [`spec/format.md`](./spec/format.md) as the normative contract for the
    authored `.businesslens/` files. It defines every entity, file shape,
    relation, and semantic boundary, and changes before parser or linter
-   behavior changes.
+   behavior changes. Its companion [`spec/report.md`](./spec/report.md) is the
+   contract for the serialized Product Report, its portable projection, and
+   expansion.
 3. Use the individual entity pages under [`docs/`](./docs/) for approachable
    explanations, examples, and the relevant `lint` findings. They restate the
    format contract and must not introduce a second definition.
@@ -156,7 +159,8 @@ derived report projections, not additional authored relationships.
   [References](./docs/references.md)
 - [Skills](./docs/skills.md) · [CLI](./docs/cli.md) ·
   [CI/CD](./docs/ci.md)
-- [Format contract](./spec/format.md)
+- [Format contract](./spec/format.md) ·
+  [Report contract](./spec/report.md)
 
 ## Nuxt layers
 
@@ -169,8 +173,9 @@ The package also exposes separately composable Nuxt layers:
   browser/install icon family.
 - `businesslens/nuxt/theme-lab` extends that stable theme with the shared,
   opt-in background experiments used by the landing site and local report
-  viewer. Its ownership and promotion rules are recorded in
-  [`plans/shared-theme-lab.md`](./plans/shared-theme-lab.md).
+  viewer. A consumer that does not opt in receives the approved stable
+  presentation from `theme`; a background graduates by moving into `theme`,
+  never by a consumer depending on `theme-lab` in production.
 
 ## Safety
 

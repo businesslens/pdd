@@ -1,8 +1,7 @@
-import type { Availability } from '../core/frontmatter.js'
 import type { ExactContext, PddModel } from '../core/model.js'
 import { repositoryReferencePath } from '../core/frontmatter.js'
 import { lsFiles } from '../core/git.js'
-import { isId } from '../core/ids.js'
+import { counterpartKey, interfaceOf, isId, isQualifiedId } from '../core/ids.js'
 import { containsStructuralHeading, section, type MarkdownDoc } from '../core/markdown.js'
 import { loadModel } from '../core/model.js'
 import { resolveModelRoot } from '../core/model-root.js'
@@ -20,13 +19,9 @@ const ACTOR_RELATIONSHIPS = new Set(['external', 'internal'])
 const COVERAGE_STATUSES = new Set(['complete', 'partial', 'draft'])
 const JOURNEY_RESULTS = new Set(['achieved', 'not-achieved'])
 
-function pairKey(interfaceId: string, experienceId: string): string {
-  return `${interfaceId}\0${experienceId}`
-}
-
-function availabilityLabel(key: string): string {
-  const [interfaceId, experienceId] = key.split('\0')
-  return experienceId ? `${interfaceId}/${experienceId}` : (interfaceId || '')
+/** A scope id is already its own key and its own label. */
+function availabilityLabel(scope: string): string {
+  return scope
 }
 
 function intersects(left: Set<string>, right: Set<string>): boolean {
@@ -134,9 +129,13 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     ['journeyScenarios', model.journeyScenarios],
     ['scenarioKinds', model.scenarioKinds]
   ]
+  // Surface-tree ids carry the path that distinguishes repeated names across
+  // Interfaces; behavior-tree ids stay bare and globally unique.
+  const QUALIFIED_COLLECTIONS = new Set(['interfaces', 'experiences', 'screens'])
   for (const [name, items] of collections) {
+    const valid = QUALIFIED_COLLECTIONS.has(name) ? isQualifiedId : isId
     for (const item of items) {
-      if (!isId(item.id)) errors.push(`${name}: id "${item.id}" must be lowercase kebab-case`)
+      if (!valid(item.id)) errors.push(`${name}: id "${item.id}" must be lowercase kebab-case`)
     }
   }
 
@@ -144,7 +143,12 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
   const interfaceIds = new Set(model.interfaces.map(item => item.id))
   const interfacesById = new Map(model.interfaces.map(item => [item.id, item]))
   const experiencesById = new Map(model.experiences.map(experience => [experience.id, experience]))
-  const experienceScopedInterfaces = new Set(model.experiences.flatMap(experience => experience.interfaces))
+  const experienceScopedInterfaces = new Set(model.experiences.map(experience => experience.interface))
+  /* Every scope a Capability, Screen or context may name: an undivided Interface, or an Experience. */
+  const scopeIds = new Set<string>([
+    ...model.interfaces.filter(item => !experienceScopedInterfaces.has(item.id)).map(item => item.id),
+    ...model.experiences.map(experience => experience.id)
+  ])
   const domainIds = new Set(model.domains.map(domain => domain.id))
   const capabilityIds = new Set(model.capabilities.map(capability => capability.id))
   const journeyIds = new Set(model.journeys.map(journey => journey.id))
@@ -152,64 +156,46 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
   const journeyScenarioIds = new Set(model.journeyScenarios.map(scenario => scenario.id))
   const kindIds = new Set(model.scenarioKinds.map(kind => kind.id))
 
-  const validateAvailability = (label: string, items: Availability[]): Set<string> => {
-    const pairs = new Set<string>()
-    const seenInterfaces = new Set<string>()
-    for (const item of items) {
-      if (!item.interface) errors.push(`${label}: availability needs a non-empty interface`)
-      if (seenInterfaces.has(item.interface)) {
-        errors.push(`${label}: duplicate availability interface "${item.interface}"`)
-      }
-      seenInterfaces.add(item.interface)
-      if (!interfaceIds.has(item.interface)) {
-        errors.push(`${label}: references missing interface "${item.interface}"`)
-      }
-      if (!item.experiences.length) {
-        if (experienceScopedInterfaces.has(item.interface)) {
-          errors.push(`${label}: availability for interface "${item.interface}" needs at least one experience because the interface uses Experience contexts`)
-        }
-        pairs.add(pairKey(item.interface, ''))
-      }
-      const seenExperiences = new Set<string>()
-      for (const experienceId of item.experiences) {
-        if (seenExperiences.has(experienceId)) {
-          errors.push(`${label}: duplicate availability experience "${experienceId}" for interface "${item.interface}"`)
-        }
-        seenExperiences.add(experienceId)
-        const experience = experiencesById.get(experienceId)
-        if (!experience) {
-          errors.push(`${label}: references missing experience "${experienceId}"`)
-        } else if (!experience.interfaces.includes(item.interface)) {
-          errors.push(`${label}: experience "${experienceId}" does not declare interface "${item.interface}"`)
-        }
-        const key = pairKey(item.interface, experienceId)
-        if (pairs.has(key)) errors.push(`${label}: duplicate availability scope "${item.interface}/${experienceId}"`)
-        pairs.add(key)
-      }
+  /*
+    A scope either resolves in the tree or it does not. That single check
+    replaces the nested availability record, the "needs an experience because
+    the interface uses Experience contexts" rule, its mirror image, and the
+    prohibition on mixing the two — all four were consequences of an Experience
+    being able to span Interfaces.
+  */
+  const resolveScope = (label: string, scope: string, what: string): boolean => {
+    if (!scope) {
+      errors.push(`${label}: ${what} needs a non-empty scope id`)
+      return false
     }
-    return pairs
+    if (!isQualifiedId(scope)) {
+      errors.push(`${label}: ${what} scope "${scope}" is not a valid scope id`)
+      return false
+    }
+    if (scopeIds.has(scope)) return true
+    const owner = interfaceOf(scope)
+    if (!interfaceIds.has(owner)) {
+      errors.push(`${label}: ${what} references missing interface "${owner}"`)
+    } else if (scope === owner) {
+      errors.push(`${label}: interface "${owner}" is divided into Experiences, so name one of them`)
+    } else {
+      errors.push(`${label}: ${what} references missing experience "${scope}"`)
+    }
+    return false
+  }
+
+  const validateAvailability = (label: string, items: string[]): Set<string> => {
+    const scopes = new Set<string>()
+    for (const scope of items) {
+      if (scopes.has(scope)) errors.push(`${label}: duplicate availability scope "${scope}"`)
+      if (resolveScope(label, scope, 'availability')) scopes.add(scope)
+    }
+    return scopes
   }
 
   const validateExactContext = (label: string, context: ExactContext): string => {
-    if (!context.interface) errors.push(`${label}: context needs a non-empty interface`)
-    const productInterface = interfacesById.get(context.interface)
-    if (!productInterface) errors.push(`${label}: references missing interface "${context.interface}"`)
-    const scoped = experienceScopedInterfaces.has(context.interface)
-    if (scoped && !context.experience) {
-      errors.push(`${label}: context for interface "${context.interface}" needs one experience because the interface uses Experience contexts`)
-    }
-    if (!scoped && context.experience) {
-      errors.push(`${label}: context for interface "${context.interface}" must omit experience because the interface has no Experience contexts`)
-    }
-    if (context.experience) {
-      const experience = experiencesById.get(context.experience)
-      if (!experience) {
-        errors.push(`${label}: references missing experience "${context.experience}"`)
-      } else if (!experience.interfaces.includes(context.interface)) {
-        errors.push(`${label}: experience "${context.experience}" does not declare interface "${context.interface}"`)
-      }
-    }
-    return pairKey(context.interface, context.experience || '')
+    resolveScope(label, context, 'context')
+    return context
   }
 
   const validateEntryPointInterfaces = (
@@ -254,33 +240,28 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
       errors.push(`${experience.file}: access "${experience.access}" must be public|authenticated|restricted`)
     }
     if (!experience.actors.length) errors.push(`${experience.file}: needs at least one actor`)
-    if (!experience.interfaces.length) errors.push(`${experience.file}: needs at least one interface`)
     for (const actorId of experience.actors) {
       if (!actorIds.has(actorId)) errors.push(`${experience.file}: references missing actor "${actorId}"`)
     }
-    for (const interfaceId of experience.interfaces) {
-      const productInterface = interfacesById.get(interfaceId)
-      if (!productInterface) {
-        errors.push(`${experience.file}: references missing interface "${interfaceId}"`)
-        continue
-      }
+    const owner = interfacesById.get(experience.interface)
+    if (owner) {
       for (const actorId of experience.actors) {
-        if (!productInterface.actors.includes(actorId)) {
-          errors.push(`${experience.file}: actor "${actorId}" is not supported by interface "${interfaceId}"`)
+        if (!owner.actors.includes(actorId)) {
+          errors.push(`${experience.file}: actor "${actorId}" is not supported by interface "${experience.interface}"`)
         }
       }
     }
     if (!experience.capabilityBoundary) {
       errors.push(`${experience.file}: missing "## Capability boundary" section`)
     }
-    validateEntryPointInterfaces(experience.file, experience.entryPoints, new Set(experience.interfaces))
+    validateEntryPointInterfaces(experience.file, experience.entryPoints, new Set([experience.interface]))
   }
 
   for (const productInterface of model.interfaces) {
     if (!experienceScopedInterfaces.has(productInterface.id)) continue
     const coveredActors = new Set(
       model.experiences
-        .filter(experience => experience.interfaces.includes(productInterface.id))
+        .filter(experience => experience.interface === productInterface.id)
         .flatMap(experience => experience.actors)
     )
     for (const actorId of productInterface.actors) {
@@ -306,13 +287,14 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     capabilityPairs.set(capability.id, validateAvailability(capability.file, capability.availability))
   }
 
-  const supportedActorsForPair = (pair: string): Set<string> | undefined => {
-    const [interfaceId, experienceId] = pair.split('\0')
-    if (experienceId) {
-      const experience = experiencesById.get(experienceId)
-      return experience ? new Set(experience.actors) : undefined
-    }
-    const productInterface = interfacesById.get(interfaceId || '')
+  /*
+    Who a scope permits. An Experience is authoritative for its own audience;
+    an undivided Interface is authoritative for its.
+  */
+  const supportedActorsForPair = (scope: string): Set<string> | undefined => {
+    const experience = experiencesById.get(scope)
+    if (experience) return new Set(experience.actors)
+    const productInterface = interfacesById.get(scope)
     return productInterface ? new Set(productInterface.actors) : undefined
   }
 
@@ -487,7 +469,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
         seenStages.add(context.stage)
         const stage = stagesById.get(context.stage)
         if (!stage) errors.push(`${contextLabel}: references missing flow stage "${context.stage}"`)
-        const pair = validateExactContext(contextLabel, context)
+        const pair = validateExactContext(contextLabel, context.context)
         routePairsByStage.set(context.stage, pair)
         allPairs.add(pair)
         if (stage) {
@@ -584,7 +566,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     validateEntryPointInterfaces(
       screen.file,
       screen.entryPoints,
-      new Set(screen.availability.map(item => item.interface))
+      new Set(screen.availability.map(scope => interfaceOf(scope)))
     )
     if (!screen.information.length) {
       errors.push(`${screen.file}: "## Information presented" needs at least one bullet item`)
@@ -602,6 +584,14 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
       if (stateNames.has(normalized)) errors.push(`${screen.file}: duplicate product state "${state.title}"`)
       stateNames.add(normalized)
     }
+    // A capture that names a state it does not depict is worse than one that
+    // names nothing, so the state has to resolve to an authored H3.
+    for (const reference of screen.references) {
+      if (reference.state === undefined) continue
+      if (!stateNames.has(reference.state.toLowerCase())) {
+        errors.push(`${screen.file}: reference state "${reference.state}" is not a product state of this Screen`)
+      }
+    }
   }
 
   for (const rule of model.businessRules) {
@@ -616,7 +606,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     for (const [index, target] of rule.appliesTo.entries()) {
       const label = `${rule.file}: appliesTo item ${index + 1}`
       if (target.type === 'context') {
-        const pair = validateExactContext(label, target)
+        const pair = validateExactContext(label, target.context)
         const key = `context\0${pair}`
         if (seenTargets.has(key)) errors.push(`${label}: duplicate context target "${availabilityLabel(pair)}"`)
         seenTargets.add(key)
@@ -696,7 +686,33 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     ...model.journeys,
     ...model.journeyScenarios
   ]
+  /*
+    Asset metadata is additive: it titles and scopes files that are already
+    there, and never sets their class. Class is the path — anything under
+    `implementation/` describes this realization — which is the only rule a
+    foreign tool writing a capture on CI can actually satisfy.
+  */
+  for (const entity of allEntities) {
+    const present = new Set(entity.assets)
+    const stateNames = new Set(
+      model.screens.find(screen => screen.file === entity.file)?.states.map(state => state.title.toLowerCase()) ?? []
+    )
+    const isScreen = model.screens.some(screen => screen.file === entity.file)
+    for (const asset of entity.assetMeta) {
+      if (!present.has(asset.file)) {
+        errors.push(`${entity.file}: asset "${asset.file}" is not a file in this entity's expanded folder`)
+      }
+      if (asset.state === undefined) continue
+      if (!isScreen) {
+        errors.push(`${entity.file}: asset "state" is only valid on a Screen`)
+      } else if (!stateNames.has(asset.state.toLowerCase())) {
+        errors.push(`${entity.file}: asset state "${asset.state}" is not a product state of this Screen`)
+      }
+    }
+  }
+
   const referenceHosts = [{ file: 'product.md', references: model.product.references }, ...allEntities]
+  const screenFiles = new Set(model.screens.map(screen => screen.file))
   for (const entity of referenceHosts) {
     const targets = new Set<string>()
     for (const reference of entity.references) {
@@ -704,6 +720,11 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
         errors.push(`${entity.file}: duplicate reference target "${reference.target}"`)
       }
       targets.add(reference.target)
+      // Product states are a Screen concept; nowhere else has an H3 set for a
+      // state to resolve against, so the key would mean nothing there.
+      if (reference.state !== undefined && !screenFiles.has(entity.file)) {
+        errors.push(`${entity.file}: reference "state" is only valid on a Screen`)
+      }
       const path = repositoryReferencePath(reference)
       if (!path || tracked.has(path)) continue
       if (reference.kind === 'code') {

@@ -10,7 +10,7 @@ import { reportDigest } from '../src/report-digest.js'
 import { compileReport } from '../src/commands/export.js'
 import { loadModel } from '../src/core/model.js'
 import { resolveModelRoot } from '../src/core/model-root.js'
-import type { ProductReportV8, ReportReference } from '../src/core/portable.js'
+import type { ProductReportV9, ReportReference } from '../src/core/portable.js'
 
 const packageJson = JSON.parse(
   await readFile(fileURLToPath(new URL('../package.json', import.meta.url)), 'utf8')
@@ -29,9 +29,9 @@ describe('report SDK entry point', () => {
   })
 
   it('exports the schema, semantic validator, portable projection, and digest', () => {
-    expect(sdk.REPORT_SCHEMA_VERSION).toBe('8.0.0')
+    expect(sdk.REPORT_SCHEMA_VERSION).toBe('9.0.0')
     for (const name of [
-      'ProductReportV8Schema',
+      'ProductReportV9Schema',
       'ProductReportSchema',
       'ReportReferenceSchema',
       'ReportSupportingSectionSchema',
@@ -92,9 +92,9 @@ describe('report SDK entry point', () => {
 describe('projectPortableReport', () => {
   const FIXTURE = join(fileURLToPath(new URL('.', import.meta.url)), 'fixtures', 'fixture-shop')
   let repo: string
-  let report: ProductReportV8
+  let report: ProductReportV9
 
-  const allReferences = (value: ProductReportV8): ReportReference[] => [
+  const allReferences = (value: ProductReportV9): ReportReference[] => [
     ...value.references,
     ...Object.values(value.model).flatMap(entry =>
       Array.isArray(entry) ? entry.flatMap(item => item.references ?? []) : [])
@@ -172,6 +172,10 @@ describe('projectPortableReport', () => {
         for (const context of route.contexts) context.experienceId = null
       }
     }
+    for (const screen of direct.model.screens) {
+      const parts = screen.id.split('::')
+      screen.id = [parts[0], parts.at(-1)].join('::')
+    }
 
     expect(sdk.validateProductReport(direct)).toEqual([])
     expect(() => sdk.parseProductReport(direct)).not.toThrow()
@@ -201,8 +205,8 @@ describe('projectPortableReport', () => {
       routes: [{
         id: 'web-to-admin',
         contexts: [
-          { stageId: 'attempt-checkout', interfaceId: 'customer-web', experienceId: 'storefront' },
-          { stageId: 'review-attempt', interfaceId: 'admin-web', experienceId: 'admin-console' }
+          { stageId: 'attempt-checkout', interfaceId: 'customer-web', experienceId: 'customer-web::storefront' },
+          { stageId: 'review-attempt', interfaceId: 'admin-web', experienceId: 'admin-web::admin-console' }
         ]
       }],
       trigger: 'A shopper attempts checkout and needs operator help.',
@@ -415,10 +419,10 @@ describe('projectPortableReport', () => {
       .find(rule => rule.id === 'payment-before-confirmation')!
       .appliesTo.find(item => item.type === 'capability')!
     if (target.type !== 'context') {
-      target.contexts = [{ interfaceId: 'admin-web', experienceId: 'admin-console' }]
+      target.contexts = [{ interfaceId: 'admin-web', experienceId: 'admin-web::admin-console' }]
     }
     expect(sdk.validateProductReport(narrowedRule).join('\n')).toContain(
-      'context "admin-web/admin-console" is outside target "capability:checkout"'
+      'context "admin-web::admin-console" is outside target "capability:checkout"'
     )
 
     const uncoveredActor = structuredClone(report)
@@ -438,8 +442,10 @@ describe('projectPortableReport', () => {
     for (const scenario of incomplete.model.capabilityScenarios.filter(item => item.capabilityId === 'checkout')) {
       scenario.availability = scenario.availability.filter(item => item.interfaceId !== 'customer-mobile')
     }
+    incomplete.model.screens = incomplete.model.screens
+      .filter(screen => !screen.id.startsWith('customer-mobile::'))
     expect(sdk.validateBlueprintReport(incomplete)).toContain(
-      'capability "checkout" availability "customer-mobile/storefront" needs Capability Scenario coverage for a public Blueprint'
+      'capability "checkout" availability "customer-mobile::storefront" needs Capability Scenario coverage for a public Blueprint'
     )
   })
 

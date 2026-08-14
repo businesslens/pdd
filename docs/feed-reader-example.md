@@ -3,7 +3,7 @@ title: Feed reader
 description: Learn the Product Model by following the catalog Content Feed Reader through Capability and Journey acceptance.
 section: open-source
 group: Learn from examples
-order: 20
+order: 18
 ---
 
 # Learn from the Content Feed Reader
@@ -28,7 +28,7 @@ without implying that an application has already been built or verified.
 
 ## Start with the boundary
 
-Read `.businesslens/product.md` first. Its Product promise includes collecting,
+Read `.businesslens/product/product.md` first. Its Product promise includes collecting,
 reading, saving, organizing, and deliberately publishing content. Its
 limitations make three exclusions explicit:
 
@@ -51,8 +51,8 @@ it depends on is attached to that Capability as a context Reference.
 | Product | 1 — Content Feed Reader | One coherent reading promise across two Interfaces |
 | Actors | 2 — Reader, Visitor | Owner and anonymous recipient have different privileges; the feeds the Product polls are not Actors |
 | Interfaces | 2 — Reader web, Reader mobile | Two supported interaction forms; an outbound feed connection is not one of them |
-| Experiences | 2 — Personal library, Public reading | Authenticated work spans web and mobile; public reading is web-only |
-| Screens | 5 — Source list, Unread library, Saved items, Collection workspace, Public collection | Visual places where behavior is observed, including where a Reader asks for new items and sees a source fail |
+| Experiences | 3 — Personal library on web and mobile, Public reading on web | Authenticated work spans web and mobile; public reading is web-only |
+| Screens | 8 — Source list, Unread library, and Saved items on web and mobile; Collection workspace and Public collection on web | Visual places where behavior is observed, including where a Reader asks for new items and sees a source fail |
 | Domains | 3 — Sources, Reading, Collections | Stable areas of Product responsibility group ten Capabilities on one consistent axis |
 | Capabilities | 10 | Source intake, private reading work, collection ownership, naming, publication, and public consumption remain separate promises |
 | Capability Scenarios | 24 | Each Capability has direct observable acceptance coverage |

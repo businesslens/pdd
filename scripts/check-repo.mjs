@@ -18,7 +18,7 @@ async function exists(path) {
 const REQUIRED = [
   'README.md', 'LICENSE', 'package.json', 'package-lock.json', 'tsconfig.json', 'src/cli.ts',
   'CHANGELOG.md', 'SECURITY.md', 'CONTRIBUTING.md',
-  'spec/format.md', 'docs/product-model.md', 'docs/product.md',
+  'spec/format.md', 'spec/report.md', 'docs/product-model.md', 'docs/product.md',
   'docs/cli.md', 'docs/cli-view.md', 'docs/ci.md', 'docs/integration.md',
   'src/logo.ts', 'layers/nuxt/report-viewer/nuxt.config.ts',
   'layers/nuxt/report-viewer/app/components/BusinessLensReportViewer.vue',

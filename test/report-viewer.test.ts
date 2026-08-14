@@ -36,9 +36,9 @@ describe('stable Product Report Workbench', () => {
     expect(workspace.journeyScenarios.every((item: any) => item.scenarioType === 'journey')).toBe(true)
     const journeyScenario = workspace.journeyScenarios.find((item: any) => item.id === 'browse-and-complete-checkout')!
     expect(journeyScenario.routes.map((route: any) => route.id)).toEqual(['web', 'mobile'])
-    expect(journeyScenario.flow[0].availability.map((pair: any) => pair.key)).toEqual([
-      'customer-web::storefront',
-      'customer-mobile::storefront'
+    expect([...journeyScenario.flow[0].availability.map((pair: any) => pair.key)].sort()).toEqual([
+      'customer-mobile::storefront',
+      'customer-web::storefront'
     ])
     expect(workspace.counts.scenarios).toBe(
       report.counts.capabilityScenarios + report.counts.journeyScenarios
@@ -86,7 +86,7 @@ describe('stable Product Report Workbench', () => {
     const workbench = source('app/components/BlrWorkbench.vue')
     const layer = source('nuxt.config.ts')
 
-    expect(renderer).toContain('ProductReportV8')
+    expect(renderer).toContain('ProductReportV9')
     expect(renderer).toContain('projectReportWorkspace')
     expect(renderer).toContain('<BlrWorkbench')
     expect(source('app/components/BlrInspectorDetail.vue')).toContain('asScenario.routes')

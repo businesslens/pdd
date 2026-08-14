@@ -56,6 +56,7 @@ export function relatedIds(entity: AnyEntityView, kind: ReportEntityKind): strin
       if (kind === 'actor') return entity.actorIds
       if (kind === 'interface') return entity.interfaceIds
       if (kind === 'capability') return entity.capabilityIds
+      if (kind === 'domain') return entity.domainIds
       if (kind === 'screen') return entity.screenIds
       if (kind === 'journey') return entity.journeyIds
       return []
@@ -63,6 +64,7 @@ export function relatedIds(entity: AnyEntityView, kind: ReportEntityKind): strin
       if (kind === 'interface') return entity.interfaceIds
       if (kind === 'experience') return entity.experienceIds
       if (kind === 'capability') return entity.capabilityIds
+      if (kind === 'domain') return entity.domainIds
       if (kind === 'journey') return entity.journeyIds
       if (kind === 'capability-scenario') return entity.capabilityScenarioIds
       if (kind === 'journey-scenario') return entity.journeyScenarioIds
@@ -71,6 +73,7 @@ export function relatedIds(entity: AnyEntityView, kind: ReportEntityKind): strin
       if (kind === 'capability') return entity.capabilityIds
       if (kind === 'journey') return entity.journeyIds
       if (kind === 'screen') return entity.screenIds
+      if (kind === 'experience') return entity.experienceIds
       if (kind === 'rule') return entity.ruleIds
       return []
     case 'capability':
@@ -126,9 +129,9 @@ export function facetKindsFor(kind: ReportEntityKind): ReportEntityKind[] {
   switch (kind) {
     case 'actor': return ['interface', 'experience', 'journey', 'capability-scenario', 'journey-scenario']
     case 'interface': return ['actor', 'experience', 'capability', 'screen', 'journey']
-    case 'experience': return ['actor', 'interface', 'capability', 'screen', 'journey']
-    case 'screen': return ['interface', 'experience', 'capability', 'journey', 'capability-scenario', 'journey-scenario']
-    case 'domain': return ['capability', 'journey', 'screen', 'rule']
+    case 'experience': return ['actor', 'interface', 'capability', 'domain', 'screen', 'journey']
+    case 'screen': return ['interface', 'experience', 'capability', 'domain', 'journey', 'capability-scenario', 'journey-scenario']
+    case 'domain': return ['capability', 'journey', 'screen', 'experience', 'rule']
     case 'capability': return ['domain', 'interface', 'experience', 'capability-scenario', 'journey-scenario', 'journey', 'screen', 'rule']
     case 'journey': return ['actor', 'interface', 'experience', 'capability', 'domain', 'screen', 'journey-scenario', 'rule']
     /* A Capability Scenario never names a Journey; offering the facet would be a permanently empty control. */

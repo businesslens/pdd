@@ -3,10 +3,8 @@ appliesTo:
   - type: capability
     id: reading-state
     contexts:
-      - interface: reader-web
-        experience: personal-library
-      - interface: reader-mobile
-        experience: personal-library
+      - context: reader-web::personal-library
+      - context: reader-mobile::personal-library
 ---
 
 # Reading state is private to its Reader

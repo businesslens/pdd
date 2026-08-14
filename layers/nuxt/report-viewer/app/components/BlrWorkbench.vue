@@ -67,11 +67,27 @@ const props = defineProps<{ workspace: ReportWorkspace, logoSrc?: string | null 
 /* ------------------------------------------------------------------ */
 
 /*
-  Every kind is browsable, Scenarios included. Reading them only inside a parent
-  worked when a Scenario always had a Journey; most now belong to a Capability
-  and would otherwise be the largest collection in the model with no surface.
+  Every kind is browsable, Scenarios included: reading them only inside a parent
+  would leave the largest collection in the model with no surface of its own.
+
+  They are indented rather than flattened, because a Scenario is the only entity
+  with a mandatory single parent — listing it as a peer of Actors and Interfaces
+  contradicts the shape of the format. Indenting keeps the full browse surface
+  and its facets while the rail teaches the containment.
 */
+const RAIL_PARENT: Partial<Record<ReportEntityKind, ReportEntityKind>> = {
+  'capability-scenario': 'capability',
+  'journey-scenario': 'journey'
+}
+
 const RAIL_KINDS = REPORT_ENTITY_KINDS
+  .filter(meta => !RAIL_PARENT[meta.kind])
+  .flatMap(meta => [
+    { meta, child: false },
+    ...REPORT_ENTITY_KINDS
+      .filter(child => RAIL_PARENT[child.kind] === meta.kind)
+      .map(child => ({ meta: child, child: true }))
+  ])
 
 type ViewMode = 'cards' | 'table'
 type WorkbenchSection = 'overview' | 'topology' | ReportEntityKind
@@ -695,17 +711,18 @@ const sections = reactive({ about: false, coverage: false, counts: false, refere
 
           <p class="blr-navgroup mt-3">Browse</p>
           <button
-            v-for="meta in RAIL_KINDS"
-            :key="meta.kind"
+            v-for="item in RAIL_KINDS"
+            :key="item.meta.kind"
             type="button"
             class="blr-navitem"
-            :data-current="activeSection === meta.kind"
-            :style="{ '--kind-color': `var(--blr-slot-${meta.slot})` }"
-            @click="setKind(meta.kind)"
+            :class="item.child && 'blr-navchild'"
+            :data-current="activeSection === item.meta.kind"
+            :style="{ '--kind-color': `var(--blr-slot-${item.meta.slot})` }"
+            @click="setKind(item.meta.kind)"
           >
-            <UIcon :name="meta.icon" class="size-4 shrink-0" :style="{ color: `var(--blr-slot-${meta.slot})` }" />
-            <span class="flex-1 truncate text-start">{{ meta.plural }}</span>
-            <span class="blr-meta">{{ kindCounts[meta.kind] }}</span>
+            <UIcon :name="item.meta.icon" class="size-4 shrink-0" :style="{ color: `var(--blr-slot-${item.meta.slot})` }" />
+            <span class="flex-1 truncate text-start">{{ item.meta.plural }}</span>
+            <span class="blr-meta">{{ kindCounts[item.meta.kind] }}</span>
           </button>
         </div>
 
@@ -1235,17 +1252,18 @@ const sections = reactive({ about: false, coverage: false, counts: false, refere
           </button>
           <p class="blr-navgroup mt-3">Browse</p>
           <button
-            v-for="meta in RAIL_KINDS"
-            :key="meta.kind"
+            v-for="item in RAIL_KINDS"
+            :key="item.meta.kind"
             type="button"
             class="blr-navitem"
-            :data-current="activeSection === meta.kind"
-            :style="{ '--kind-color': `var(--blr-slot-${meta.slot})` }"
-            @click="setKind(meta.kind)"
+            :class="item.child && 'blr-navchild'"
+            :data-current="activeSection === item.meta.kind"
+            :style="{ '--kind-color': `var(--blr-slot-${item.meta.slot})` }"
+            @click="setKind(item.meta.kind)"
           >
-            <UIcon :name="meta.icon" class="size-4 shrink-0" :style="{ color: `var(--blr-slot-${meta.slot})` }" />
-            <span class="flex-1 truncate text-start">{{ meta.plural }}</span>
-            <span class="blr-meta">{{ kindCounts[meta.kind] }}</span>
+            <UIcon :name="item.meta.icon" class="size-4 shrink-0" :style="{ color: `var(--blr-slot-${item.meta.slot})` }" />
+            <span class="flex-1 truncate text-start">{{ item.meta.plural }}</span>
+            <span class="blr-meta">{{ kindCounts[item.meta.kind] }}</span>
           </button>
         </nav>
       </template>
@@ -1319,6 +1337,23 @@ const sections = reactive({ about: false, coverage: false, counts: false, refere
   box-shadow: inset 2px 0 0 var(--kind-color);
   color: var(--ui-text-highlighted);
   font-weight: 600;
+}
+
+/*
+  A Scenario rail item sits under the parent that owns it. The rule is the
+  containment cue: indentation alone reads as decoration at this density.
+*/
+.blr-navchild {
+  width: calc(100% - 0.75rem);
+  margin-inline-start: 0.75rem;
+  border-inline-start: 1px solid var(--ui-border);
+  border-start-start-radius: 0;
+  border-end-start-radius: 0;
+  padding-inline-start: 0.625rem;
+}
+
+.blr-navchild[data-current='true'] {
+  border-inline-start-color: transparent;
 }
 
 /* Overview disclosures: a full-width row that reads as a heading. */

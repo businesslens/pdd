@@ -1,11 +1,14 @@
 import { readdirSync, readFileSync, existsSync } from 'node:fs'
-import { join } from 'node:path'
+import { basename, join } from 'node:path'
 import { parse } from 'yaml'
-import type { Availability, CompactEntryPoint, EntityReference } from './frontmatter.js'
+import type { CompactEntryPoint, EntityAsset, EntityReference, Scope } from './frontmatter.js'
 import type { MarkdownDoc } from './markdown.js'
 import {
+  assetsField,
   availabilityField,
   entryPointsField,
+  scopeField,
+  scopeListField,
   referencesField,
   rejectUnknownKeys,
   splitFrontmatter,
@@ -13,7 +16,7 @@ import {
   stringListField,
   uniqueStringListField
 } from './frontmatter.js'
-import { stem } from './ids.js'
+import { counterpartKey, interfaceOf, qualify } from './ids.js'
 import { readProductLogo } from './logo-file.js'
 import {
   bulletList, containsStructuralHeading, decisionPoints, orderedList, parseMarkdown, screenStates, section
@@ -22,8 +25,23 @@ import {
 export interface EntityFile {
   id: string
   file: string
+  /**
+   * The entity's expanded namespace, whether or not it currently exists.
+   * Assets sit beside `<type>.md`; children are typed subfolders.
+   */
+  directory: string
   doc: MarkdownDoc
   references: EntityReference[]
+  /**
+   * Files found beside `<type>.md`, path-relative to the entity folder.
+   *
+   * Anything under `implementation/` describes this realization of the Product
+   * and is workspace-profile only; everything else is authored intent and
+   * travels with a published Blueprint.
+   */
+  assets: string[]
+  /** Optional authored metadata over those files. Never sets class. */
+  assetMeta: EntityAsset[]
 }
 
 export interface ActorEntity extends EntityFile {
@@ -35,27 +53,35 @@ export interface InterfaceEntity extends EntityFile {
   actors: string[]
   entryPoints: CompactEntryPoint[]
   capabilityBoundary: string
+  /** Optional reading order over this Interface's own direct Screens. */
+  screens: string[]
 }
 
 export interface ExperienceEntity extends EntityFile {
   actors: string[]
-  interfaces: string[]
+  /** The one Interface that owns it, read from the path. Never authored. */
+  interface: string
   access: string
   entryPoints: CompactEntryPoint[]
   capabilityBoundary: string
+  /** Optional reading order over this Experience's own Screens. */
+  screens: string[]
 }
 
 export interface DomainEntity extends EntityFile {
   colorSlot?: number
+  boundary: string
 }
 
 export interface CapabilityEntity extends EntityFile {
   domain?: string
-  availability: Availability[]
+  availability: Scope[]
 }
 
 export interface ScreenEntity extends EntityFile {
-  availability: Availability[]
+  /** The scope that owns it, read from the path. Never authored. */
+  scope: Scope
+  availability: Scope[]
   capabilities: string[]
   capabilityScenarios: string[]
   journeyScenarios: string[]
@@ -77,8 +103,9 @@ interface ScenarioEntity extends EntityFile {
 }
 
 export interface CapabilityScenarioEntity extends ScenarioEntity {
+  /** The Capability that owns it, read from the path. Never authored. */
   capability: string
-  availability: Availability[]
+  availability: Scope[]
 }
 
 export interface JourneyFlowItem {
@@ -87,13 +114,12 @@ export interface JourneyFlowItem {
   operation: string
 }
 
-export interface ExactContext {
-  interface: string
-  experience?: string
-}
+/** One exact context is one scope id. */
+export type ExactContext = Scope
 
-export interface JourneyRouteContext extends ExactContext {
+export interface JourneyRouteContext {
   stage: string
+  context: Scope
 }
 
 export interface JourneyRoute {
@@ -102,6 +128,7 @@ export interface JourneyRoute {
 }
 
 export interface JourneyScenarioEntity extends ScenarioEntity {
+  /** The Journey that owns it, read from the path. Never authored. */
   journey: string
   result: string
   flow: JourneyFlowItem[]
@@ -131,8 +158,9 @@ export interface BusinessRuleEntityTarget {
   contexts: ExactContext[]
 }
 
-export interface BusinessRuleContextTarget extends ExactContext {
+export interface BusinessRuleContextTarget {
   type: 'context'
+  context: Scope
 }
 
 export type BusinessRuleTarget = BusinessRuleEntityTarget | BusinessRuleContextTarget
@@ -187,21 +215,153 @@ export interface PddModel {
 
 export const FOLDER = '.businesslens'
 
-function listMarkdown(directory: string): string[] {
-  if (!existsSync(directory)) return []
-  return readdirSync(directory).filter(name => name.endsWith('.md')).sort()
+/** One compact or expanded entity: its id segment, namespace, and Markdown file. */
+export interface EntityLocation {
+  id: string
+  /** `<collection>/<id>/`, including for a compact entity where it does not exist. */
+  directory: string
+  file: string
+  expanded: boolean
+}
+
+/**
+ * The compact files and expanded folders of one collection, in id order.
+ *
+ * `<id>.md` is canonical while an entity has no owned children or assets.
+ * `<id>/<type>.md` is required once it needs that namespace. The logical id is
+ * identical in both forms, and the two forms may never coexist.
+ *
+ * Anything unexpected is reported rather than skipped. A dropped entry used to
+ * vanish with no finding, so a misplaced file looked exactly like one that was
+ * never written.
+ */
+function listEntities(
+  parent: string,
+  type: string,
+  issues: string[],
+  collection: string,
+  childDirectories: string[] = []
+): EntityLocation[] {
+  if (!existsSync(parent)) return []
+  const found: EntityLocation[] = []
+  const compact = new Map<string, string>()
+  const expanded = new Map<string, string>()
+
+  for (const entry of readdirSync(parent, { withFileTypes: true })) {
+    if (entry.name === '.DS_Store') continue
+    if (entry.isFile()) {
+      if (!entry.name.endsWith('.md')) {
+        issues.push(`${collection}/${entry.name}: expected <id>.md or <id>/${type}.md`)
+        continue
+      }
+      compact.set(entry.name.slice(0, -3), join(parent, entry.name))
+      continue
+    }
+    if (entry.isDirectory()) {
+      expanded.set(entry.name, join(parent, entry.name))
+      continue
+    }
+    issues.push(`${collection}/${entry.name}: expected a regular entity file or directory`)
+  }
+
+  const ids = new Set([...compact.keys(), ...expanded.keys()])
+  for (const id of [...ids].sort((a, b) => a.localeCompare(b))) {
+    const compactFile = compact.get(id)
+    const directory = expanded.get(id) ?? join(parent, id)
+    const expandedFile = join(directory, `${type}.md`)
+    const hasExpandedFile = existsSync(expandedFile)
+
+    if (compactFile && expanded.has(id)) {
+      issues.push(
+        hasExpandedFile
+          ? `${collection}/${id}: both ${id}.md and ${id}/${type}.md exist; keep exactly one entity shape`
+          : `${collection}/${id}.md cannot also have ${collection}/${id}/; move it to ${collection}/${id}/${type}.md before adding children or assets`
+      )
+      found.push({ id, directory, file: compactFile, expanded: false })
+      continue
+    }
+
+    if (compactFile) {
+      found.push({ id, directory, file: compactFile, expanded: false })
+      continue
+    }
+
+    if (!hasExpandedFile) {
+      issues.push(`${collection}/${id}/ is missing ${type}.md`)
+      continue
+    }
+
+    let ownsContent = false
+    for (const child of readdirSync(directory, { withFileTypes: true })) {
+      if (child.name === '.DS_Store' || child.name === `${type}.md`) continue
+      if (child.isFile()) {
+        ownsContent = true
+        continue
+      }
+      if (child.isDirectory() && (child.name === 'implementation' || childDirectories.includes(child.name))) {
+        const contents = readdirSync(join(directory, child.name), { withFileTypes: true })
+          .filter(item => item.name !== '.DS_Store')
+        if (contents.length) ownsContent = true
+        continue
+      }
+      if (child.isDirectory()) {
+        issues.push(`${collection}/${id}/${child.name}/ is not a recognized child directory`)
+        continue
+      }
+      issues.push(`${collection}/${id}/${child.name}: assets must be regular files`)
+    }
+
+    if (!ownsContent) {
+      issues.push(
+        `${collection}/${id}/ has no assets or child entities; use ${collection}/${id}.md`
+      )
+    }
+    found.push({ id, directory, file: expandedFile, expanded: true })
+  }
+  return found
+}
+
+/** Every file beside `<type>.md`, plus everything under `implementation/`. */
+function listAssets(directory: string, ownFile: string): string[] {
+  const found: string[] = []
+  if (!existsSync(directory)) return found
+  for (const entry of readdirSync(directory, { withFileTypes: true })) {
+    if (entry.name === '.DS_Store' || entry.name === ownFile) continue
+    if (entry.isFile()) found.push(entry.name)
+    else if (entry.name === 'implementation') {
+      for (const child of readdirSync(join(directory, 'implementation'), { withFileTypes: true })) {
+        if (child.isFile() && child.name !== '.DS_Store') found.push(`implementation/${child.name}`)
+      }
+    }
+  }
+  return found.sort()
 }
 
 function readEntity(
-  file: string,
+  location: Pick<EntityLocation, 'file' | 'directory' | 'expanded'>,
   allowedKeys: string[],
   issues: string[]
-): { data: Record<string, unknown>, doc: MarkdownDoc, references: EntityReference[] } {
+): {
+  data: Record<string, unknown>
+  doc: MarkdownDoc
+  references: EntityReference[]
+  directory: string
+  assets: string[]
+  assetMeta: EntityAsset[]
+} {
+  const { file, directory, expanded } = location
   const source = readFileSync(file, 'utf8')
   const { data, body } = splitFrontmatter(source, issues, file)
-  rejectUnknownKeys(data, [...allowedKeys, 'references'], issues, file)
+  rejectUnknownKeys(data, [...allowedKeys, 'references', 'assets'], issues, file)
   const doc = parseMarkdown(body)
-  return { data, doc, references: referencesField(data, issues, file) }
+  return {
+    data,
+    doc,
+    references: referencesField(data, issues, file),
+    directory,
+    assets: expanded ? listAssets(directory, basename(file)) : [],
+    assetMeta: assetsField(data, issues, file)
+  }
 }
 
 function readScenarioSections(doc: MarkdownDoc, issues: string[], file: string) {
@@ -254,10 +414,8 @@ function exactContextField(
     return undefined
   }
   const item = raw as Record<string, unknown>
-  rejectUnknownKeys(item, ['interface', 'experience', ...allowedExtra], issues, label)
-  const interfaceId = stringField(item, 'interface', issues, label) || ''
-  const experience = stringField(item, 'experience', issues, label)
-  return { interface: interfaceId, ...(experience ? { experience } : {}) }
+  rejectUnknownKeys(item, ['context', ...allowedExtra], issues, label)
+  return scopeField(item, 'context', issues, label)
 }
 
 function journeyRoutesField(
@@ -290,7 +448,7 @@ function journeyRoutesField(
         const parsed = exactContextField(rawContext, issues, contextLabel, ['stage'])
         if (!parsed || typeof rawContext !== 'object' || rawContext === null || Array.isArray(rawContext)) continue
         const stage = stringField(rawContext as Record<string, unknown>, 'stage', issues, contextLabel) || ''
-        contexts.push({ stage, ...parsed })
+        contexts.push({ stage, context: parsed })
       }
     }
     routes.push({ id: stringField(route, 'id', issues, routeLabel) || '', contexts })
@@ -319,9 +477,9 @@ function businessRuleTargetsField(
     const target = raw as Record<string, unknown>
     const type = stringField(target, 'type', issues, targetLabel) || ''
     if (type === 'context') {
-      rejectUnknownKeys(target, ['type', 'interface', 'experience'], issues, targetLabel)
+      rejectUnknownKeys(target, ['type', 'context'], issues, targetLabel)
       const parsed = exactContextField(target, issues, targetLabel, ['type'])
-      if (parsed) targets.push({ type: 'context', ...parsed })
+      if (parsed) targets.push({ type: 'context', context: parsed })
       continue
     }
     rejectUnknownKeys(target, ['type', 'id', 'contexts'], issues, targetLabel)
@@ -346,7 +504,7 @@ function businessRuleTargetsField(
   return targets
 }
 
-/** Load the strict schema 4 .businesslens/ folder, collecting parse issues. */
+/** Load the strict schema 5 .businesslens/ folder, collecting parse issues. */
 export function loadModel(cwd: string): PddModel {
   const root = join(cwd, FOLDER)
   const issues: string[] = []
@@ -379,7 +537,7 @@ export function loadModel(cwd: string): PddModel {
     }
   }
 
-  let config = { schema: 4, sddPaths: [] as string[] }
+  let config = { schema: 5, sddPaths: [] as string[] }
   const configFile = join(root, 'config.yaml')
   if (existsSync(configFile)) {
     try {
@@ -403,11 +561,8 @@ export function loadModel(cwd: string): PddModel {
   } else if (existsSync(root)) {
     issues.push('config.yaml is missing')
   }
-  if (config.schema !== 4) {
-    issues.push(`config.yaml: schema ${config.schema} is not supported (expected 4)`)
-  }
-  if (existsSync(join(root, 'features'))) {
-    issues.push('features/: unsupported schema 2 collection; use capabilities/ with schema 4')
+  if (config.schema !== 5) {
+    issues.push(`config.yaml: schema ${config.schema} is not supported (expected 5)`)
   }
 
   let scenarioKinds: ScenarioKind[] = []
@@ -435,8 +590,36 @@ export function loadModel(cwd: string): PddModel {
   let product: PddModel['product'] = {
     id: '', tags: [], authors: [], limitations: [], doc: { title: '', lead: '', sections: [] }, references: []
   }
-  const productFile = join(root, 'product.md')
-  if (existsSync(productFile)) {
+  const compactProductFile = join(root, 'product.md')
+  const productDirectory = join(root, 'product')
+  const expandedProductFile = join(productDirectory, 'product.md')
+  const hasCompactProduct = existsSync(compactProductFile)
+  const hasProductDirectory = existsSync(productDirectory)
+  const hasExpandedProduct = existsSync(expandedProductFile)
+  const productLogoFile = join(productDirectory, 'logo.svg')
+
+  if (hasCompactProduct && hasProductDirectory) {
+    issues.push(
+      hasExpandedProduct
+        ? 'product: both product.md and product/product.md exist; keep exactly one entity shape'
+        : 'product.md cannot also have product/; move it to product/product.md before adding logo.svg'
+    )
+  }
+  if (hasProductDirectory && !hasExpandedProduct && !hasCompactProduct) {
+    issues.push('product/ is missing product.md')
+  }
+  if (hasExpandedProduct && !existsSync(productLogoFile)) {
+    issues.push('product/ has no logo asset; use product.md')
+  }
+  if (hasProductDirectory) {
+    for (const entry of readdirSync(productDirectory, { withFileTypes: true })) {
+      if (entry.name === '.DS_Store' || entry.name === 'product.md' || entry.name === 'logo.svg') continue
+      issues.push(`product/${entry.name}: the Product folder may contain only product.md and logo.svg`)
+    }
+  }
+
+  const productFile = hasCompactProduct ? compactProductFile : hasExpandedProduct ? expandedProductFile : undefined
+  if (productFile) {
     const source = readFileSync(productFile, 'utf8')
     const { data, body } = splitFrontmatter(source, issues, 'product.md')
     rejectUnknownKeys(
@@ -513,134 +696,242 @@ export function loadModel(cwd: string): PddModel {
     issues.push('coverage.md is missing')
   }
 
-  const actors: ActorEntity[] = listMarkdown(join(root, 'actors')).map((name) => {
-    const file = join(root, 'actors', name)
-    const { data, doc, references } = readEntity(file, ['kind', 'relationship'], issues)
-    return {
-      id: stem(name), file, doc, references,
-      kind: stringField(data, 'kind', issues, file) || '',
-      relationship: stringField(data, 'relationship', issues, file) || ''
-    }
-  })
+  const actors: ActorEntity[] = listEntities(join(root, 'actors'), 'actor', issues, 'actors')
+    .map((location) => {
+      const { id, file } = location
+      const { data, doc, references, directory, assets, assetMeta } = readEntity(location, ['kind', 'relationship'], issues)
+      return {
+        id, file, doc, references, directory, assets, assetMeta,
+        kind: stringField(data, 'kind', issues, file) || '',
+        relationship: stringField(data, 'relationship', issues, file) || ''
+      }
+    })
 
-  const interfaces: InterfaceEntity[] = listMarkdown(join(root, 'interfaces')).map((name) => {
-    const file = join(root, 'interfaces', name)
-    const { data, doc, references } = readEntity(file, ['actors', 'entryPoints'], issues)
-    return {
-      id: stem(name), file, doc, references,
-      actors: uniqueStringListField(data, 'actors', issues, file),
-      entryPoints: entryPointsField(data, issues, file),
-      capabilityBoundary: section(doc, 'Capability boundary') || ''
-    }
-  })
+  /*
+    The surface tree is walked, not listed. An Experience belongs to exactly one
+    Interface and a Screen to exactly one scope, so the path is the parent
+    relation and the id — one authority instead of two that can disagree, and
+    reparenting becomes a `git mv` that reads correctly in a pull request.
+  */
+  const interfaces: InterfaceEntity[] = []
+  const experiences: ExperienceEntity[] = []
+  const screens: ScreenEntity[] = []
 
-  const experiences: ExperienceEntity[] = listMarkdown(join(root, 'experiences')).map((name) => {
-    const file = join(root, 'experiences', name)
-    const { data, doc, references } = readEntity(
-      file,
-      ['actors', 'interfaces', 'access', 'entryPoints'],
+  const readScreens = (parent: string, scope: Scope, label: string) => {
+    for (const location of listEntities(join(parent, 'screens'), 'screen', issues, `${label}/screens`)) {
+      const { data, doc, references, directory, assets, assetMeta } = readEntity(
+        location,
+        ['capabilities', 'capabilityScenarios', 'journeyScenarios', 'entryPoints', 'availability'],
+        issues
+      )
+      screens.push({
+        id: qualify(scope, location.id),
+        file: location.file,
+        doc,
+        references,
+        directory,
+        assets,
+        assetMeta,
+        scope,
+        // A Screen reaches exactly the scope that owns it. The field stays as a
+        // single-element list so every consumer keeps one shape.
+        availability: [scope],
+        capabilities: uniqueStringListField(data, 'capabilities', issues, location.file),
+        capabilityScenarios: uniqueStringListField(data, 'capabilityScenarios', issues, location.file),
+        journeyScenarios: uniqueStringListField(data, 'journeyScenarios', issues, location.file),
+        entryPoints: entryPointsField(data, issues, location.file),
+        information: bulletList(section(doc, 'Information presented') || ''),
+        actions: bulletList(section(doc, 'Available actions') || ''),
+        states: screenStates(section(doc, 'Product states') || '', issues, location.file),
+        capabilityBoundary: section(doc, 'Capability boundary') || ''
+      })
+    }
+  }
+
+  for (const productInterface of listEntities(
+    join(root, 'interfaces'),
+    'interface',
+    issues,
+    'interfaces',
+    ['experiences', 'screens']
+  )) {
+    const { data, doc, references, directory, assets, assetMeta } = readEntity(
+      productInterface,
+      ['actors', 'entryPoints', 'screens'],
       issues
     )
-    return {
-      id: stem(name), file, doc, references,
-      actors: uniqueStringListField(data, 'actors', issues, file),
-      interfaces: uniqueStringListField(data, 'interfaces', issues, file),
-      access: stringField(data, 'access', issues, file) || '',
-      entryPoints: entryPointsField(data, issues, file),
-      capabilityBoundary: section(doc, 'Capability boundary') || ''
-    }
-  })
+    interfaces.push({
+      id: productInterface.id,
+      file: productInterface.file,
+      doc,
+      references,
+      directory,
+      assets,
+      assetMeta,
+      actors: uniqueStringListField(data, 'actors', issues, productInterface.file),
+      entryPoints: entryPointsField(data, issues, productInterface.file),
+      capabilityBoundary: section(doc, 'Capability boundary') || '',
+      screens: uniqueStringListField(data, 'screens', issues, productInterface.file)
+    })
 
-  const domains: DomainEntity[] = listMarkdown(join(root, 'domains')).map((name) => {
-    const file = join(root, 'domains', name)
-    const { data, doc, references } = readEntity(file, ['colorSlot'], issues)
-    return {
-      id: stem(name), file, doc, references,
-      colorSlot: typeof data.colorSlot === 'number' ? data.colorSlot : undefined
-    }
-  })
-
-  const capabilities: CapabilityEntity[] = listMarkdown(join(root, 'capabilities')).map((name) => {
-    const file = join(root, 'capabilities', name)
-    const { data, doc, references } = readEntity(file, ['domain', 'availability'], issues)
-    return {
-      id: stem(name), file, doc, references,
-      domain: stringField(data, 'domain', issues, file),
-      availability: availabilityField(data, issues, file)
-    }
-  })
-
-  const screens: ScreenEntity[] = listMarkdown(join(root, 'screens')).map((name) => {
-    const file = join(root, 'screens', name)
-    const { data, doc, references } = readEntity(
-      file,
-      ['availability', 'capabilities', 'capabilityScenarios', 'journeyScenarios', 'entryPoints'],
-      issues
+    const experienceLocations = listEntities(
+      join(productInterface.directory, 'experiences'),
+      'experience',
+      issues,
+      `interfaces/${productInterface.id}/experiences`,
+      ['screens']
     )
-    return {
-      id: stem(name), file, doc, references,
-      availability: availabilityField(data, issues, file),
-      capabilities: uniqueStringListField(data, 'capabilities', issues, file),
-      capabilityScenarios: uniqueStringListField(data, 'capabilityScenarios', issues, file),
-      journeyScenarios: uniqueStringListField(data, 'journeyScenarios', issues, file),
-      entryPoints: entryPointsField(data, issues, file),
-      information: bulletList(section(doc, 'Information presented') || ''),
-      actions: bulletList(section(doc, 'Available actions') || ''),
-      states: screenStates(section(doc, 'Product states') || '', issues, file),
-      capabilityBoundary: section(doc, 'Capability boundary') || ''
+    const hasDirectScreens = existsSync(join(productInterface.directory, 'screens'))
+    if (experienceLocations.length && hasDirectScreens) {
+      // Otherwise the scope id `reader-web` would be ambiguous between the whole
+      // Interface and the part of it with no Experience.
+      issues.push(
+        `interfaces/${productInterface.id}/: an Interface holds either screens/ or experiences/, never both`
+      )
     }
-  })
 
-  const businessRules: BusinessRuleEntity[] = listMarkdown(join(root, 'business-rules')).map((name) => {
-    const file = join(root, 'business-rules', name)
-    const { data, doc, references } = readEntity(
-      file,
-      ['appliesTo'],
-      issues
-    )
-    return {
-      id: stem(name), file, doc, references,
-      appliesTo: businessRuleTargetsField(data, issues, file),
-      rationale: section(doc, 'Rationale') || ''
+    for (const location of experienceLocations) {
+      const experienceId = qualify(productInterface.id, location.id)
+      const parsed = readEntity(location, ['actors', 'access', 'entryPoints', 'screens'], issues)
+      experiences.push({
+        id: experienceId,
+        file: location.file,
+        doc: parsed.doc,
+        references: parsed.references,
+        directory: parsed.directory,
+        assets: parsed.assets,
+        assetMeta: parsed.assetMeta,
+        actors: uniqueStringListField(parsed.data, 'actors', issues, location.file),
+        interface: productInterface.id,
+        access: stringField(parsed.data, 'access', issues, location.file) || '',
+        entryPoints: entryPointsField(parsed.data, issues, location.file),
+        capabilityBoundary: section(parsed.doc, 'Capability boundary') || '',
+        screens: uniqueStringListField(parsed.data, 'screens', issues, location.file)
+      })
+      readScreens(location.directory, experienceId, `interfaces/${productInterface.id}/experiences/${location.id}`)
     }
-  })
 
-  const capabilityScenarios: CapabilityScenarioEntity[] = listMarkdown(join(root, 'capability-scenarios')).map((name) => {
-    const file = join(root, 'capability-scenarios', name)
-    const { data, doc, references } = readEntity(file, ['kind', 'capability', 'actors', 'availability'], issues)
-    return {
-      id: stem(name), file, doc, references,
-      kind: stringField(data, 'kind', issues, file) || '',
-      capability: stringField(data, 'capability', issues, file) || '',
-      actors: uniqueStringListField(data, 'actors', issues, file),
-      availability: availabilityField(data, issues, file),
-      ...readScenarioSections(doc, issues, file)
+    if (!experienceLocations.length) {
+      readScreens(productInterface.directory, productInterface.id, `interfaces/${productInterface.id}`)
     }
-  })
+  }
 
-  const journeys: JourneyEntity[] = listMarkdown(join(root, 'journeys')).map((name) => {
-    const file = join(root, 'journeys', name)
-    const { data, doc, references } = readEntity(file, ['actors'], issues)
-    return {
-      id: stem(name), file, doc, references,
-      actors: uniqueStringListField(data, 'actors', issues, file),
+  const domains: DomainEntity[] = listEntities(join(root, 'domains'), 'domain', issues, 'domains')
+    .map((location) => {
+      const { id, file } = location
+      const { data, doc, references, directory, assets, assetMeta } = readEntity(location, ['colorSlot'], issues)
+      return {
+        id, file, doc, references, directory, assets, assetMeta,
+        colorSlot: typeof data.colorSlot === 'number' ? data.colorSlot : undefined,
+        boundary: section(doc, 'Boundary') || ''
+      }
+    })
+
+  const capabilities: CapabilityEntity[] = []
+  const capabilityScenarios: CapabilityScenarioEntity[] = []
+  for (const location of listEntities(
+    join(root, 'capabilities'),
+    'capability',
+    issues,
+    'capabilities',
+    ['scenarios']
+  )) {
+    const { data, doc, references, directory, assets, assetMeta } = readEntity(location, ['domain', 'availability'], issues)
+    capabilities.push({
+      id: location.id,
+      file: location.file,
+      doc,
+      references,
+      directory,
+      assets,
+      assetMeta,
+      domain: stringField(data, 'domain', issues, location.file),
+      availability: availabilityField(data, issues, location.file)
+    })
+    for (const scenario of listEntities(
+      join(location.directory, 'scenarios'),
+      'capability-scenario',
+      issues,
+      `capabilities/${location.id}/scenarios`
+    )) {
+      const parsed = readEntity(scenario, ['kind', 'actors', 'availability'], issues)
+      capabilityScenarios.push({
+        id: scenario.id,
+        file: scenario.file,
+        doc: parsed.doc,
+        references: parsed.references,
+        directory: parsed.directory,
+        assets: parsed.assets,
+        assetMeta: parsed.assetMeta,
+        kind: stringField(parsed.data, 'kind', issues, scenario.file) || '',
+        capability: location.id,
+        actors: uniqueStringListField(parsed.data, 'actors', issues, scenario.file),
+        availability: availabilityField(parsed.data, issues, scenario.file),
+        ...readScenarioSections(parsed.doc, issues, scenario.file)
+      })
+    }
+  }
+
+  const journeys: JourneyEntity[] = []
+  const journeyScenarios: JourneyScenarioEntity[] = []
+  for (const location of listEntities(
+    join(root, 'journeys'),
+    'journey',
+    issues,
+    'journeys',
+    ['scenarios']
+  )) {
+    const { data, doc, references, directory, assets, assetMeta } = readEntity(location, ['actors'], issues)
+    journeys.push({
+      id: location.id,
+      file: location.file,
+      doc,
+      references,
+      directory,
+      assets,
+      assetMeta,
+      actors: uniqueStringListField(data, 'actors', issues, location.file),
       goal: section(doc, 'Goal') || '',
       successCriterion: section(doc, 'Success criterion') || ''
+    })
+    for (const scenario of listEntities(
+      join(location.directory, 'scenarios'),
+      'journey-scenario',
+      issues,
+      `journeys/${location.id}/scenarios`
+    )) {
+      const parsed = readEntity(scenario, ['kind', 'actors', 'result', 'flow', 'routes'], issues)
+      journeyScenarios.push({
+        id: scenario.id,
+        file: scenario.file,
+        doc: parsed.doc,
+        references: parsed.references,
+        directory: parsed.directory,
+        assets: parsed.assets,
+        assetMeta: parsed.assetMeta,
+        kind: stringField(parsed.data, 'kind', issues, scenario.file) || '',
+        journey: location.id,
+        actors: uniqueStringListField(parsed.data, 'actors', issues, scenario.file),
+        result: stringField(parsed.data, 'result', issues, scenario.file) || '',
+        flow: journeyFlowField(parsed.data, issues, scenario.file),
+        routes: journeyRoutesField(parsed.data, issues, scenario.file),
+        ...readScenarioSections(parsed.doc, issues, scenario.file)
+      })
     }
-  })
+  }
 
-  const journeyScenarios: JourneyScenarioEntity[] = listMarkdown(join(root, 'journey-scenarios')).map((name) => {
-    const file = join(root, 'journey-scenarios', name)
-    const { data, doc, references } = readEntity(file, ['kind', 'journey', 'actors', 'result', 'flow', 'routes'], issues)
+  const businessRules: BusinessRuleEntity[] = listEntities(
+    join(root, 'business-rules'),
+    'business-rule',
+    issues,
+    'business-rules'
+  ).map((location) => {
+    const { id, file } = location
+    const { data, doc, references, directory, assets, assetMeta } = readEntity(location, ['appliesTo'], issues)
     return {
-      id: stem(name), file, doc, references,
-      kind: stringField(data, 'kind', issues, file) || '',
-      journey: stringField(data, 'journey', issues, file) || '',
-      actors: uniqueStringListField(data, 'actors', issues, file),
-      result: stringField(data, 'result', issues, file) || '',
-      flow: journeyFlowField(data, issues, file),
-      routes: journeyRoutesField(data, issues, file),
-      ...readScenarioSections(doc, issues, file)
+      id, file, doc, references, directory, assets, assetMeta,
+      appliesTo: businessRuleTargetsField(data, issues, file),
+      rationale: section(doc, 'Rationale') || ''
     }
   })
 

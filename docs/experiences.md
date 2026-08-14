@@ -38,12 +38,13 @@ full.
 
 ## The file
 
-Experiences live at `experiences/<experience-id>.md`.
+An Experience with no assets or Screens lives at
+`interfaces/<interface-id>/experiences/<experience-id>.md`. Otherwise it
+expands to `<experience-id>/experience.md`, with `screens/` inside its folder.
 
 ```md [experiences/administration.md]
 ---
 actors: [store-admin]
-interfaces: [admin-web, operator-cli]
 access: restricted
 entryPoints:
   - admin-web: /admin
@@ -70,16 +71,15 @@ Supports operational administration. It does not grant customer privileges.
 | Lead paragraph | yes | Describe the coherent usage context. |
 | `## Capability boundary` | yes | State what the Experience supports and excludes. |
 
-The entire `experiences/` directory is optional. If any Experience names an
-Interface, all availability for that Interface must name one or more of its
-Experiences. The union of Actors across those Experiences must cover every Actor
-declared by the Interface; Experiences may overlap, but they cannot leave an
-Interface Actor without a usable context. An Interface with no Experiences uses
-direct availability:
+The entire `experiences/` directory is optional. When an Interface contains
+Experiences, all availability for that Interface must name one or more of their
+qualified scope ids. The union of Actors across those Experiences must cover
+every Actor declared by the Interface; Experiences may overlap, but they cannot
+leave an Interface Actor without a usable context. An Interface with no
+Experiences uses direct availability:
 
 ```yaml
-availability:
-  - interface: release-cli
+availability: [release-cli]
 ```
 
 There is no `exit` field. A persistent context does not have one useful success

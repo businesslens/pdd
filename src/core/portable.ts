@@ -2,9 +2,16 @@ import * as z from 'zod'
 import { parseCodeTarget } from './coderefs.js'
 import { containsStructuralHeading } from './markdown.js'
 
-export const REPORT_SCHEMA_VERSION = '8.0.0'
+export const REPORT_SCHEMA_VERSION = '9.0.0'
 
 const IdSchema = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
+/**
+ * A surface-tree id, qualified by the path that distinguishes it.
+ *
+ * Interfaces, Experiences and Screens repeat names across Interfaces on
+ * purpose, so their ids carry the segments that tell them apart.
+ */
+const SurfaceIdSchema = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*(?:::[a-z0-9]+(?:-[a-z0-9]+)*)*$/)
 const ProductIdSchema = IdSchema.max(64)
 const SingleLineTextSchema = z.string().min(1)
   .refine(value => value.trim().length > 0, 'Expected non-whitespace text')
@@ -40,7 +47,9 @@ export const ReportReferenceSchema = z.strictObject({
   kind: z.enum(['code', 'spec', 'proposal', 'doc', 'adr', 'visual', 'research']),
   role: z.enum(['intent', 'implementation', 'context']),
   target: SingleLineTextSchema,
-  title: SingleLineTextSchema.optional()
+  title: SingleLineTextSchema.optional(),
+  /** Screens only: the `## Product states` H3 this artefact depicts. */
+  state: SingleLineTextSchema.optional()
 }).superRefine((reference, context) => {
   if (reference.kind === 'code') {
     const issues: string[] = []
@@ -107,13 +116,13 @@ export const ReportEntryPointSchema = z.strictObject({
 })
 
 export const ReportAvailabilitySchema = z.strictObject({
-  interfaceId: IdSchema,
-  experienceIds: z.array(IdSchema)
+  interfaceId: SurfaceIdSchema,
+  experienceIds: z.array(SurfaceIdSchema)
 })
 
 export const ReportExactContextSchema = z.strictObject({
-  interfaceId: IdSchema,
-  experienceId: IdSchema.nullable()
+  interfaceId: SurfaceIdSchema,
+  experienceId: SurfaceIdSchema.nullable()
 })
 
 export const ReportActorSchema = z.strictObject({
@@ -126,7 +135,7 @@ export const ReportActorSchema = z.strictObject({
 })
 
 export const ReportInterfaceSchema = z.strictObject({
-  id: IdSchema,
+  id: SurfaceIdSchema,
   title: SingleLineTextSchema,
   description: RequiredMarkdownFragmentSchema,
   actorIds: z.array(IdSchema).min(1),
@@ -136,11 +145,11 @@ export const ReportInterfaceSchema = z.strictObject({
 })
 
 export const ReportExperienceSchema = z.strictObject({
-  id: IdSchema,
+  id: SurfaceIdSchema,
   title: SingleLineTextSchema,
   description: RequiredMarkdownFragmentSchema,
   actorIds: z.array(IdSchema).min(1),
-  interfaceIds: z.array(IdSchema).min(1),
+  interfaceIds: z.array(SurfaceIdSchema).min(1),
   accessMode: z.enum(['public', 'authenticated', 'restricted']),
   entryPoints: z.array(ReportEntryPointSchema),
   capabilityBoundary: RequiredMarkdownFragmentSchema,
@@ -170,7 +179,7 @@ export const ReportScreenStateSchema = z.strictObject({
 })
 
 export const ReportScreenSchema = z.strictObject({
-  id: IdSchema,
+  id: SurfaceIdSchema,
   title: SingleLineTextSchema,
   description: RequiredMarkdownFragmentSchema,
   availability: z.array(ReportAvailabilitySchema).min(1),
@@ -284,7 +293,7 @@ export const ReportCoverageSchema = z.strictObject({
   rationale: MarkdownFragmentSchema
 })
 
-export const ProductReportV8Schema = z.strictObject({
+export const ProductReportV9Schema = z.strictObject({
   schemaVersion: z.literal(REPORT_SCHEMA_VERSION),
   id: ProductIdSchema,
   title: SingleLineTextSchema.max(160),
@@ -320,10 +329,10 @@ export const ProductReportV8Schema = z.strictObject({
   coverage: ReportCoverageSchema
 })
 
-export const ProductReportSchema = ProductReportV8Schema
+export const ProductReportSchema = ProductReportV9Schema
 
-export type ProductReportV8 = z.infer<typeof ProductReportV8Schema>
-export type ProductReport = ProductReportV8
+export type ProductReportV9 = z.infer<typeof ProductReportV9Schema>
+export type ProductReport = ProductReportV9
 export type ReportDecisionPoint = z.infer<typeof ReportDecisionPointSchema>
 export type ReportScreenState = z.infer<typeof ReportScreenStateSchema>
 export type ReportCoverage = z.infer<typeof ReportCoverageSchema>
@@ -401,9 +410,15 @@ function pairKey(interfaceId: string, experienceId: string): string {
   return `${interfaceId}\0${experienceId}`
 }
 
+/**
+ * A scope reads as its own id.
+ *
+ * An Experience id already names the Interface that owns it, so joining the two
+ * would repeat the Interface segment.
+ */
 function availabilityLabel(key: string): string {
   const [interfaceId, experienceId] = key.split('\0')
-  return experienceId ? `${interfaceId}/${experienceId}` : (interfaceId || '')
+  return experienceId || interfaceId || ''
 }
 
 function availabilityPairs(
@@ -510,7 +525,7 @@ function requireEntryPointInterfaces(
 }
 
 /** Cross-entity and computed-field validation, shared with every report consumer. */
-export function validateProductReport(report: ProductReportV8): string[] {
+export function validateProductReport(report: ProductReportV9): string[] {
   const issues: string[] = []
   const { model } = report
   const actorIds = new Set(model.actors.map(item => item.id))
@@ -1013,7 +1028,7 @@ function isRepositoryEntryPoint(value: string): boolean {
 }
 
 /** Project a report into the source-free profile delivered outside its repository. */
-export function projectPortableReport(report: ProductReportV8): ProductReportV8 {
+export function projectPortableReport(report: ProductReportV9): ProductReportV9 {
   const portableReferences = <T extends { kind: string, role: string, target: string }>(items: T[]): T[] =>
     items.filter(reference =>
       reference.kind !== 'code'
@@ -1055,15 +1070,15 @@ export function projectPortableReport(report: ProductReportV8): ProductReportV8 
   }
 }
 
-export function parseProductReport(input: unknown): ProductReportV8 {
-  const report = ProductReportV8Schema.parse(input)
+export function parseProductReport(input: unknown): ProductReportV9 {
+  const report = ProductReportV9Schema.parse(input)
   const issues = validateProductReport(report)
   if (issues.length) throw new Error(`Report validation failed:\n- ${issues.join('\n- ')}`)
   return report
 }
 
 /** Additional publication policy for a Product Report entering the public Blueprint catalog. */
-export function validateBlueprintReport(report: ProductReportV8): string[] {
+export function validateBlueprintReport(report: ProductReportV9): string[] {
   const issues: string[] = []
   if (!report.category) issues.push('category is required for a public Blueprint')
   if (!report.tags.length) issues.push('at least one tag is required for a public Blueprint')

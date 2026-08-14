@@ -41,7 +41,7 @@ external systems are not [Actors](./actors.md) either—they have no goal in you
 Product and no surface you must keep stable for them. Model the call inside the
 [Capability](./capabilities.md) that makes it, give its availability the
 Interfaces where an Actor actually observes the result, and make the failure
-behavior a [Capability Scenario](./capability-scenarios.md).
+behavior a [Capability Scenario](./capabilities.md#capability-scenarios).
 
 When that same third party calls *you* back—a webhook, callback, or push
 subscription—that inbound surface **is** an Interface and the third party is its
@@ -49,7 +49,10 @@ Actor. Direction decides, not ownership.
 
 ## The file
 
-Interfaces live at `interfaces/<interface-id>.md`.
+An Interface with no assets, Experiences, or Screens lives at
+`interfaces/<interface-id>.md`. Otherwise it expands to
+`interfaces/<interface-id>/interface.md`, with `experiences/` or `screens/`
+nested in that folder.
 
 ```md [interfaces/customer-web.md]
 ---
@@ -85,8 +88,10 @@ complete variations of a coherent multi-Capability goal.
 
 ## With Experiences
 
-[Experience](./experiences.md) is optional and many-to-many with Interface.
-When an Interface has meaningful Experience contexts, availability names the
-exact combinations. When it has none, availability names the Interface
+An [Experience](./experiences.md) is optional and belongs to exactly one
+Interface: the Interface folder that contains it. Matching Experience names on
+different Interfaces are counterparts, not one shared entity. When an
+Interface has meaningful Experience contexts, availability names their
+qualified scope ids. When it has none, availability names the Interface
 directly. The [availability rules](./product-model.md#availability) show both
 forms.

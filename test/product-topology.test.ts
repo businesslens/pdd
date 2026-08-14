@@ -215,7 +215,7 @@ describe('named Product Topology views', () => {
     const graph = buildProductTopologyGraph(teachingWorkspace, 'value-paths', {
       journeyId: 'publish-and-share-a-collection'
     })
-    const screen = teachingWorkspace.screens.find((item: any) => item.id === 'collection-workspace')!
+    const screen = teachingWorkspace.screens.find((item: any) => item.id === 'reader-web::personal-library::collection-workspace')!
     const landing = graph.edges.find(edge => edge.target === screen.key)!
     const source = graph.nodes.find(node => node.id === landing.source)!
 

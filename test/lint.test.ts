@@ -1,6 +1,6 @@
-import { cpSync, mkdtempSync, readFileSync, readdirSync, rmSync, unlinkSync, writeFileSync } from 'node:fs'
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, renameSync, rmSync, rmdirSync, unlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import { lintModel } from '../src/commands/lint.js'
 import { loadModel } from '../src/core/model.js'
@@ -29,7 +29,134 @@ function run(cwd: string, tracked = TRACKED) {
   return lintModel(loadModel(cwd), tracked)
 }
 
+/** Write a compact or expanded entity file, creating its parent path. */
+function writeEntity(file: string, content: string) {
+  mkdirSync(dirname(file), { recursive: true })
+  writeFileSync(file, content)
+}
+
+function expandEntity(compactFile: string, expandedFile: string) {
+  mkdirSync(dirname(expandedFile), { recursive: true })
+  renameSync(compactFile, expandedFile)
+}
+
+function compactEntity(expandedFile: string, compactFile: string) {
+  renameSync(expandedFile, compactFile)
+  rmdirSync(dirname(expandedFile))
+}
+
 describe('lintModel', () => {
+  it('accepts a reference state that names a Product state, and rejects one that does not', () => {
+    const cwd = fixtureCopy()
+    const screen = join(cwd, '.businesslens', 'interfaces', 'customer-web', 'experiences', 'storefront', 'screens', 'product-record.md')
+    const source = readFileSync(screen, 'utf8')
+
+    // product-record.md declares "### Available" and "### Unavailable".
+    const withState = source.replace(
+      '    title: Product record visual reference',
+      '    title: Product record visual reference\n    state: Available'
+    )
+    writeFileSync(screen, withState)
+    expect(run(cwd).errors).toEqual([])
+
+    writeFileSync(screen, withState.replace('state: Available', 'state: Nonexistent'))
+    const bad = run(cwd)
+    expect(bad.ok).toBe(false)
+    expect(bad.errors.some(e => e.includes('reference state "Nonexistent" is not a product state'))).toBe(true)
+  })
+
+  it('rejects a reference state on an entity that is not a Screen', () => {
+    const cwd = fixtureCopy()
+    const capability = join(cwd, '.businesslens', 'capabilities', 'catalog-browsing', 'capability.md')
+    const source = readFileSync(capability, 'utf8')
+    writeFileSync(capability, source.replace(
+      '    target: src/services/catalog.ts#CatalogService',
+      '    target: src/services/catalog.ts#CatalogService\n    state: Available'
+    ))
+    const result = run(cwd)
+    expect(result.ok).toBe(false)
+    expect(result.errors.some(e => e.includes('reference "state" is only valid on a Screen'))).toBe(true)
+  })
+
+  it('reports an unexpected collection entry instead of silently dropping it', () => {
+    const cwd = fixtureCopy()
+    const actors = join(cwd, '.businesslens', 'actors')
+
+    // A wrong extension, or an expanded folder that forgot its own file, used
+    // to vanish with no finding at all.
+    writeFileSync(join(actors, 'draft.txt'), '# Draft\n')
+    mkdirSync(join(actors, 'courier'), { recursive: true })
+
+    const result = run(cwd)
+    expect(result.ok).toBe(false)
+    expect(result.errors).toContain('actors/draft.txt: expected <id>.md or <id>/actor.md')
+    expect(result.errors).toContain('actors/courier/ is missing actor.md')
+  })
+
+  it('rejects duplicate compact and expanded shapes for one entity', () => {
+    const cwd = fixtureCopy()
+    writeEntity(
+      join(cwd, '.businesslens/actors/shopper/actor.md'),
+      readFileSync(join(cwd, '.businesslens/actors/shopper.md'), 'utf8')
+    )
+
+    expect(run(cwd).errors).toContain(
+      'actors/shopper: both shopper.md and shopper/actor.md exist; keep exactly one entity shape'
+    )
+  })
+
+  it('requires an expanded entity to own children or assets', () => {
+    const cwd = fixtureCopy()
+    expandEntity(
+      join(cwd, '.businesslens/actors/shopper.md'),
+      join(cwd, '.businesslens/actors/shopper/actor.md')
+    )
+
+    expect(run(cwd).errors).toContain(
+      'actors/shopper/ has no assets or child entities; use actors/shopper.md'
+    )
+  })
+
+  it('accepts compact Product and expands an entity for its first asset', () => {
+    const cwd = fixtureCopy()
+    unlinkSync(join(cwd, '.businesslens/product/logo.svg'))
+    renameSync(join(cwd, '.businesslens/product/product.md'), join(cwd, '.businesslens/product.md'))
+    rmdirSync(join(cwd, '.businesslens/product'))
+
+    const compactScreen = join(
+      cwd,
+      '.businesslens/interfaces/customer-web/experiences/storefront/screens/product-record.md'
+    )
+    const expandedScreen = join(
+      cwd,
+      '.businesslens/interfaces/customer-web/experiences/storefront/screens/product-record/screen.md'
+    )
+    expandEntity(compactScreen, expandedScreen)
+    writeFileSync(join(dirname(expandedScreen), 'mockup.svg'), '<svg viewBox="0 0 1 1"></svg>')
+    writeFileSync(
+      expandedScreen,
+      readFileSync(expandedScreen, 'utf8').replace(
+        '---\n\n# Product record',
+        'assets:\n  - file: mockup.svg\n    title: Approved product record\n---\n\n# Product record'
+      )
+    )
+
+    expect(run(cwd).errors).toEqual([])
+  })
+
+  it('rejects an expanded Product after its logo is removed', () => {
+    const cwd = fixtureCopy()
+    unlinkSync(join(cwd, '.businesslens/product/logo.svg'))
+
+    expect(run(cwd).errors).toContain('product/ has no logo asset; use product.md')
+  })
+
+  it('rejects an unrecognized child directory inside an entity folder', () => {
+    const cwd = fixtureCopy()
+    mkdirSync(join(cwd, '.businesslens', 'capabilities', 'checkout', 'notes'), { recursive: true })
+    expect(run(cwd).errors).toContain('capabilities/checkout/notes/ is not a recognized child directory')
+  })
+
   it('passes the golden fixture', () => {
     const result = run(fixtureCopy())
     expect(result.errors).toEqual([])
@@ -37,8 +164,8 @@ describe('lintModel', () => {
     expect(result.counts).toEqual({
       actors: 2,
       interfaces: 4,
-      experiences: 2,
-      screens: 1,
+      experiences: 3,
+      screens: 2,
       domains: 2,
       capabilities: 3,
       capabilityScenarios: 4,
@@ -51,19 +178,13 @@ describe('lintModel', () => {
   it('rejects historical folder schemas', () => {
     const cwd = fixtureCopy()
     writeFileSync(join(cwd, '.businesslens/config.yaml'), 'schema: 2\nsdd:\n  paths: []\n')
-    expect(run(cwd).errors).toContain('config.yaml: schema 2 is not supported (expected 4)')
+    expect(run(cwd).errors).toContain('config.yaml: schema 2 is not supported (expected 5)')
   })
 
   it('rejects unsupported future folder schemas explicitly', () => {
     const cwd = fixtureCopy()
     writeFileSync(join(cwd, '.businesslens/config.yaml'), 'schema: 99\nsdd:\n  paths: []\n')
-    expect(run(cwd).errors).toContain('config.yaml: schema 99 is not supported (expected 4)')
-  })
-
-  it('rejects the removed Feature collection explicitly', () => {
-    const cwd = fixtureCopy()
-    cpSync(join(cwd, '.businesslens/capabilities'), join(cwd, '.businesslens/features'), { recursive: true })
-    expect(run(cwd).errors).toContain('features/: unsupported schema 2 collection; use capabilities/ with schema 4')
+    expect(run(cwd).errors).toContain('config.yaml: schema 99 is not supported (expected 5)')
   })
 
   it('requires the committed orientation and generated-path ignores', () => {
@@ -94,7 +215,7 @@ A visitor who browses and buys.
 
   it('supports all person/system and internal/external Actor combinations', () => {
     const cwd = fixtureCopy()
-    writeFileSync(join(cwd, '.businesslens/actors/partner-system.md'), `---
+    writeEntity(join(cwd, '.businesslens/actors/partner-system.md'), `---
 kind: system
 relationship: external
 ---
@@ -103,7 +224,7 @@ relationship: external
 
 An external system that uses a supported integration.
 `)
-    writeFileSync(join(cwd, '.businesslens/actors/store-scheduler.md'), `---
+    writeEntity(join(cwd, '.businesslens/actors/store-scheduler.md'), `---
 kind: system
 relationship: internal
 ---
@@ -118,14 +239,21 @@ An internal system that initiates store operations.
   it('allows Products with no Domains and no Screens', () => {
     const cwd = fixtureCopy()
     rmSync(join(cwd, '.businesslens/domains'), { recursive: true })
-    rmSync(join(cwd, '.businesslens/screens'), { recursive: true })
-    for (const name of ['catalog-browsing', 'checkout', 'order-management']) {
-      const file = join(cwd, `.businesslens/capabilities/${name}.md`)
-      writeFileSync(file, readFileSync(file, 'utf8').replace(/^domain: .*\n/m, ''))
+    for (const relative of [
+      'interfaces/customer-web/experiences/storefront/screens',
+      'interfaces/customer-mobile/experiences/storefront/screens'
+    ]) {
+      rmSync(join(cwd, '.businesslens', relative), { recursive: true })
     }
-    for (const name of ['payment-before-confirmation', 'refund-existing-orders']) {
-      const file = join(cwd, `.businesslens/business-rules/${name}.md`)
-      writeFileSync(file, readFileSync(file, 'utf8').replace(/^domains: .*\n/m, ''))
+    for (const surface of ['customer-web', 'customer-mobile']) {
+      compactEntity(
+        join(cwd, `.businesslens/interfaces/${surface}/experiences/storefront/experience.md`),
+        join(cwd, `.businesslens/interfaces/${surface}/experiences/storefront.md`)
+      )
+    }
+    for (const name of ['catalog-browsing', 'checkout', 'order-management']) {
+      const file = join(cwd, `.businesslens/capabilities/${name}/capability.md`)
+      writeFileSync(file, readFileSync(file, 'utf8').replace(/^domain: .*\n/m, ''))
     }
     const result = run(cwd)
     expect(result.errors).toEqual([])
@@ -135,76 +263,101 @@ An internal system that initiates store operations.
 
   it('allows direct Interface availability when the Product has no Experiences', () => {
     const cwd = fixtureCopy()
-    rmSync(join(cwd, '.businesslens/experiences'), { recursive: true })
-    for (const collection of [
-      'capabilities',
-      'business-rules',
-      'screens',
-      'capability-scenarios',
-      'journey-scenarios'
-    ]) {
-      for (const name of readdirSync(join(cwd, `.businesslens/${collection}`))) {
-        const file = join(cwd, `.businesslens/${collection}/${name}`)
-        writeFileSync(file, readFileSync(file, 'utf8')
-          .replace(/^[ \t]+experiences: .*\n/gm, '')
-          .replace(/^[ \t]+experience: .*\n/gm, ''))
+    const bl = join(cwd, '.businesslens')
+
+    // Promote every Experience-scoped Screen up to its Interface and drop the
+    // Experiences, leaving each Interface undivided.
+    for (const interfaceId of ['customer-web', 'customer-mobile']) {
+      const from = join(bl, 'interfaces', interfaceId, 'experiences', 'storefront', 'screens')
+      cpSync(from, join(bl, 'interfaces', interfaceId, 'screens'), { recursive: true })
+    }
+    for (const interfaceId of ['customer-web', 'customer-mobile', 'admin-web']) {
+      rmSync(join(bl, 'interfaces', interfaceId, 'experiences'), { recursive: true, force: true })
+    }
+    compactEntity(
+      join(bl, 'interfaces/admin-web/interface.md'),
+      join(bl, 'interfaces/admin-web.md')
+    )
+    // Every scope id loses its Experience segment.
+    const scrub = (file: string) => writeFileSync(file, readFileSync(file, 'utf8')
+      .replace(/customer-web::storefront/g, 'customer-web')
+      .replace(/customer-mobile::storefront/g, 'customer-mobile')
+      .replace(/admin-web::admin-console/g, 'admin-web'))
+    const walk = (directory: string) => {
+      for (const entry of readdirSync(directory, { withFileTypes: true })) {
+        const full = join(directory, entry.name)
+        if (entry.isDirectory()) walk(full)
+        else if (entry.name.endsWith('.md')) scrub(full)
       }
     }
+    walk(bl)
 
     const result = run(cwd)
     expect(result.errors).toEqual([])
     expect(result.counts.experiences).toBe(0)
   })
 
-  it('requires Experience scope when an Interface declares Experiences', () => {
+  it('rejects a scope naming an Interface that Experiences divide', () => {
     const cwd = fixtureCopy()
-    const capability = join(cwd, '.businesslens/capabilities/checkout.md')
+    const capability = join(cwd, '.businesslens/capabilities/checkout/capability.md')
     writeFileSync(
       capability,
-      readFileSync(capability, 'utf8').replace('    experiences: [storefront]\n', '')
+      readFileSync(capability, 'utf8').replace('customer-web::storefront', 'customer-web')
     )
     expect(run(cwd).errors.join('\n')).toContain(
-      'availability for interface "customer-web" needs at least one experience because the interface uses Experience contexts'
+      'interface "customer-web" is divided into Experiences, so name one of them'
     )
   })
 
-  it('rejects an explicit empty Experience list instead of treating it as direct availability', () => {
+  it('rejects a scope that resolves to no Experience', () => {
     const cwd = fixtureCopy()
-    const capability = join(cwd, '.businesslens/capabilities/checkout.md')
+    const capability = join(cwd, '.businesslens/capabilities/checkout/capability.md')
     writeFileSync(
       capability,
-      readFileSync(capability, 'utf8').replace('experiences: [storefront]', 'experiences: []')
+      readFileSync(capability, 'utf8').replace('customer-web::storefront', 'customer-web::missing')
     )
     expect(run(cwd).errors.join('\n')).toContain(
-      'optional non-empty "experiences" string list'
+      'availability references missing experience "customer-web::missing"'
     )
   })
 
   /*
-    The fixture ships `operator-cli` with direct availability. Scoping it into
-    an Experience here keeps both shapes covered: a non-visual Interface works
-    whether or not Experiences divide it.
+    The fixture ships `operator-cli` undivided. Giving it its own Experience
+    keeps both shapes covered: a non-visual Interface works whether or not an
+    Experience divides it.
   */
   it('supports a non-visual CLI Interface alongside visual Interfaces', () => {
     const cwd = fixtureCopy()
-    const experience = join(cwd, '.businesslens/experiences/admin-console.md')
-    writeFileSync(
-      experience,
-      readFileSync(experience, 'utf8')
-        .replace('interfaces: [admin-web]', 'interfaces: [admin-web, operator-cli]')
-        .replace('  - admin-web: /admin', '  - admin-web: /admin\n  - operator-cli: fixture-shop orders')
+    expandEntity(
+      join(cwd, '.businesslens/interfaces/operator-cli.md'),
+      join(cwd, '.businesslens/interfaces/operator-cli/interface.md')
+    )
+    writeEntity(
+      join(cwd, '.businesslens/interfaces/operator-cli/experiences/order-desk.md'),
+      `---
+actors: [store-admin]
+access: restricted
+entryPoints:
+  - operator-cli: fixture-shop orders
+---
+
+# Order desk
+
+Where an operator works through orders from the command line.
+
+## Capability boundary
+
+Supports order operations. It does not expose a shopper's account.
+`
     )
     for (const relative of [
-      '.businesslens/capabilities/order-management.md',
-      '.businesslens/capability-scenarios/refund-order.md'
+      '.businesslens/capabilities/order-management/capability.md',
+      '.businesslens/capabilities/order-management/scenarios/refund-order.md'
     ]) {
       const file = join(cwd, relative)
       writeFileSync(
         file,
-        readFileSync(file, 'utf8').replace(
-          '  - interface: operator-cli\n',
-          '  - interface: operator-cli\n    experiences: [admin-console]\n'
-        )
+        readFileSync(file, 'utf8').replace('operator-cli', 'operator-cli::order-desk')
       )
     }
     expect(run(cwd).errors).toEqual([])
@@ -212,9 +365,9 @@ An internal system that initiates store operations.
 
   it('checks Interface audiences and Interface-keyed Experience entry points', () => {
     const cwd = fixtureCopy()
-    const productInterface = join(cwd, '.businesslens/interfaces/customer-web.md')
+    const productInterface = join(cwd, '.businesslens/interfaces/customer-web/interface.md')
     writeFileSync(productInterface, readFileSync(productInterface, 'utf8').replace('actors: [shopper]', 'actors: [store-admin]'))
-    const experience = join(cwd, '.businesslens/experiences/storefront.md')
+    const experience = join(cwd, '.businesslens/interfaces/customer-web/experiences/storefront/experience.md')
     writeFileSync(experience, readFileSync(experience, 'utf8').replace('  - customer-web: /', '  - missing-interface: /'))
     const errors = run(cwd).errors.join('\n')
     expect(errors).toContain('actor "shopper" is not supported by interface "customer-web"')
@@ -223,7 +376,7 @@ An internal system that initiates store operations.
 
   it('requires Experiences to cover every Actor of an Interface they divide', () => {
     const cwd = fixtureCopy()
-    const productInterface = join(cwd, '.businesslens/interfaces/customer-web.md')
+    const productInterface = join(cwd, '.businesslens/interfaces/customer-web/interface.md')
     writeFileSync(
       productInterface,
       readFileSync(productInterface, 'utf8').replace('actors: [shopper]', 'actors: [shopper, store-admin]')
@@ -236,51 +389,45 @@ An internal system that initiates store operations.
 
   it('rejects duplicate availability and Capability placement gaps', () => {
     const cwd = fixtureCopy()
-    const capability = join(cwd, '.businesslens/capabilities/checkout.md')
+    const capability = join(cwd, '.businesslens/capabilities/checkout/capability.md')
     writeFileSync(
       capability,
-      readFileSync(capability, 'utf8')
-        .replace('  - interface: customer-mobile\n    experiences: [storefront]\n', '')
-        .replace(
-          '  - interface: customer-web\n    experiences: [storefront]',
-          '  - interface: customer-web\n    experiences: [storefront, storefront]\n  - interface: customer-web\n    experiences: [storefront]'
-        )
+      readFileSync(capability, 'utf8').replace(
+        'availability: [customer-web::storefront, customer-mobile::storefront]',
+        'availability: [customer-web::storefront, customer-web::storefront]'
+      )
     )
     const errors = run(cwd).errors.join('\n')
-    expect(errors).toContain('duplicate availability interface "customer-web"')
-    expect(errors).toContain('duplicate availability experience "storefront" for interface "customer-web"')
-    expect(errors).toContain('availability "customer-mobile/storefront" is outside capability "checkout"')
+    expect(errors).toContain('duplicate availability scope "customer-web::storefront"')
+    expect(errors).toContain('availability "customer-mobile::storefront" is outside capability "checkout"')
   })
 
   it('requires Capability Scenario availability to be a Capability subset', () => {
     const cwd = fixtureCopy()
-    const scenario = join(cwd, '.businesslens/capability-scenarios/complete-checkout.md')
+    const scenario = join(cwd, '.businesslens/capabilities/checkout/scenarios/complete-checkout.md')
     writeFileSync(
       scenario,
-      readFileSync(scenario, 'utf8').replace(
-        '  - interface: customer-web\n    experiences: [storefront]',
-        '  - interface: admin-web\n    experiences: [admin-console]'
-      )
+      readFileSync(scenario, 'utf8').replace('customer-web::storefront', 'admin-web::admin-console')
     )
     expect(run(cwd).errors.join('\n'))
-      .toContain('availability "admin-web/admin-console" is outside capability "checkout"')
+      .toContain('availability "admin-web::admin-console" is outside capability "checkout"')
   })
 
   it('requires every Scenario Actor to participate in a selected exact context', () => {
     const cwd = fixtureCopy()
-    const scenario = join(cwd, '.businesslens/capability-scenarios/refund-order.md')
+    const scenario = join(cwd, '.businesslens/capabilities/order-management/scenarios/refund-order.md')
     writeFileSync(scenario, readFileSync(scenario, 'utf8').replace(
       'actors: [store-admin]',
       'actors: [shopper]'
     ))
     const errors = run(cwd).errors.join('\n')
-    expect(errors).toContain('context "admin-web/admin-console" permits none of the Scenario Actors')
+    expect(errors).toContain('context "admin-web::admin-console" permits none of the Scenario Actors')
     expect(errors).toContain('actor "shopper" is not supported by any selected context')
   })
 
   it('requires an operation and two distinct Capabilities on achieved Journey flows', () => {
     const cwd = fixtureCopy()
-    const scenario = join(cwd, '.businesslens/journey-scenarios/browse-and-complete-checkout.md')
+    const scenario = join(cwd, '.businesslens/journeys/browse-and-buy/scenarios/browse-and-complete-checkout.md')
     writeFileSync(
       scenario,
       readFileSync(scenario, 'utf8')
@@ -294,9 +441,9 @@ An internal system that initiates store operations.
 
   it('treats kind and Journey result as orthogonal fields', () => {
     const cwd = fixtureCopy()
-    const source = join(cwd, '.businesslens/journey-scenarios/browse-and-complete-checkout.md')
-    const scenario = join(cwd, '.businesslens/journey-scenarios/checkout-is-declined.md')
-    writeFileSync(
+    const source = join(cwd, '.businesslens/journeys/browse-and-buy/scenarios/browse-and-complete-checkout.md')
+    const scenario = join(cwd, '.businesslens/journeys/browse-and-buy/scenarios/checkout-is-declined.md')
+    writeEntity(
       scenario,
       readFileSync(source, 'utf8')
         .replace('kind: primary', 'kind: edge')
@@ -309,10 +456,15 @@ An internal system that initiates store operations.
 
   it('grades missing Capability Scenario coverage by model coverage status', () => {
     const cwd = fixtureCopy()
-    unlinkSync(join(cwd, '.businesslens/capability-scenarios/refund-order.md'))
+    unlinkSync(join(cwd, '.businesslens/capabilities/order-management/scenarios/refund-order.md'))
+    rmdirSync(join(cwd, '.businesslens/capabilities/order-management/scenarios'))
+    compactEntity(
+      join(cwd, '.businesslens/capabilities/order-management/capability.md'),
+      join(cwd, '.businesslens/capabilities/order-management.md')
+    )
     unlinkSync(join(cwd, '.businesslens/business-rules/refund-existing-orders.md'))
 
-    expect(run(cwd).errors.join('\n')).toContain('availability "admin-web/admin-console" needs Capability Scenario coverage')
+    expect(run(cwd).errors.join('\n')).toContain('availability "admin-web::admin-console" needs Capability Scenario coverage')
 
     const coverage = join(cwd, '.businesslens/coverage.md')
     writeFileSync(coverage, readFileSync(coverage, 'utf8').replace('status: complete', 'status: partial'))
@@ -324,40 +476,37 @@ An internal system that initiates store operations.
   it('requires Capability Scenario coverage for every exact Capability context', () => {
     const cwd = fixtureCopy()
     for (const name of ['complete-checkout', 'decline-checkout-payment']) {
-      const file = join(cwd, `.businesslens/capability-scenarios/${name}.md`)
+      const file = join(cwd, `.businesslens/capabilities/checkout/scenarios/${name}.md`)
       writeFileSync(
         file,
-        readFileSync(file, 'utf8').replace(
-          '  - interface: customer-mobile\n    experiences: [storefront]\n',
-          ''
-        )
+        readFileSync(file, 'utf8').replace(', customer-mobile::storefront', '')
       )
     }
 
     expect(run(cwd).errors.join('\n')).toContain(
-      'availability "customer-mobile/storefront" needs Capability Scenario coverage'
+      'availability "customer-mobile::storefront" needs Capability Scenario coverage'
     )
   })
 
   it('validates complete Journey routes and their goal-owner entry context', () => {
     const cwd = fixtureCopy()
-    const file = join(cwd, '.businesslens/journey-scenarios/browse-and-complete-checkout.md')
+    const file = join(cwd, '.businesslens/journeys/browse-and-buy/scenarios/browse-and-complete-checkout.md')
     writeFileSync(
       file,
       readFileSync(file, 'utf8')
         .replace(
-          '      - stage: select-product\n        interface: customer-web\n        experience: storefront',
-          '      - stage: select-product\n        interface: admin-web\n        experience: admin-console'
+          '      - stage: select-product\n        context: customer-web::storefront',
+          '      - stage: select-product\n        context: admin-web::admin-console'
         )
         .replace(
-          '      - stage: complete-checkout\n        interface: customer-mobile\n        experience: storefront\n',
+          '      - stage: complete-checkout\n        context: customer-mobile::storefront\n',
           ''
         )
     )
 
     const errors = run(cwd).errors.join('\n')
-    expect(errors).toContain('context "admin-web/admin-console" is outside capability "catalog-browsing"')
-    expect(errors).toContain('first context "admin-web/admin-console" permits no Journey Actor participating in the Scenario')
+    expect(errors).toContain('context "admin-web::admin-console" is outside capability "catalog-browsing"')
+    expect(errors).toContain('first context "admin-web::admin-console" permits no Journey Actor participating in the Scenario')
     expect(errors).toContain('missing context for flow stage "complete-checkout"')
   })
 
@@ -372,18 +521,17 @@ An internal system that initiates store operations.
   - type: capability-scenario
     id: refund-order
     contexts:
-      - interface: customer-web
-        experience: storefront`
+      - context: customer-web::storefront`
     ))
 
     const errors = run(cwd).errors.join('\n')
-    expect(errors).toContain('context "customer-web/storefront" is outside target "capability-scenario:refund-order"')
+    expect(errors).toContain('context "customer-web::storefront" is outside target "capability-scenario:refund-order"')
     expect(errors).toContain('target "capability-scenario:refund-order" is redundant with capability target "order-management"')
   })
 
   it('requires every Journey Actor to participate in an achieved Scenario', () => {
     const cwd = fixtureCopy()
-    const file = join(cwd, '.businesslens/journeys/browse-and-buy.md')
+    const file = join(cwd, '.businesslens/journeys/browse-and-buy/journey.md')
     writeFileSync(file, readFileSync(file, 'utf8').replace('actors: [shopper]', 'actors: [shopper, store-admin]'))
 
     expect(run(cwd).errors.join('\n')).toContain(
@@ -393,9 +541,9 @@ An internal system that initiates store operations.
 
   it('rejects removed Experience and Journey fields as unknown keys', () => {
     const cwd = fixtureCopy()
-    const experience = join(cwd, '.businesslens/experiences/storefront.md')
+    const experience = join(cwd, '.businesslens/interfaces/customer-web/experiences/storefront/experience.md')
     writeFileSync(experience, readFileSync(experience, 'utf8').replace('access: public', 'access: public\nexit: done'))
-    const journey = join(cwd, '.businesslens/journeys/browse-and-buy.md')
+    const journey = join(cwd, '.businesslens/journeys/browse-and-buy/journey.md')
     writeFileSync(journey, readFileSync(journey, 'utf8').replace(
       'actors:',
       'domain: ordering\nentryPoints:\n  - customer-web: /\nactors:'
@@ -408,12 +556,12 @@ An internal system that initiates store operations.
 
   it('rejects authored content that structured export would otherwise drop or reinterpret', () => {
     const cwd = fixtureCopy()
-    const journey = join(cwd, '.businesslens/journeys/browse-and-buy.md')
+    const journey = join(cwd, '.businesslens/journeys/browse-and-buy/journey.md')
     writeFileSync(journey, readFileSync(journey, 'utf8')
       .replace('# Browse and buy\n\n## Goal', '# Browse and buy\n\nLegacy Journey summary.\n\n## Goal')
       .replace('## Success criterion', '## Outcome\n\nWrong entity shape.\n\n## Success criterion'))
 
-    const scenario = join(cwd, '.businesslens/capability-scenarios/complete-checkout.md')
+    const scenario = join(cwd, '.businesslens/capabilities/checkout/scenarios/complete-checkout.md')
     writeFileSync(scenario, readFileSync(scenario, 'utf8')
       .replace('# Complete checkout\n\n## Trigger', '# Complete checkout\n\nLegacy Scenario summary.\n\n## Trigger')
       .replace(
@@ -430,7 +578,7 @@ An internal system that initiates store operations.
         '# Nested structural title'
       ))
 
-    const screen = join(cwd, '.businesslens/screens/product-record.md')
+    const screen = join(cwd, '.businesslens/interfaces/customer-web/experiences/storefront/screens/product-record.md')
     writeFileSync(screen, readFileSync(screen, 'utf8').replace(
       '- Product name and description',
       '- Product name and description\n  with a continuation that is not a second item'
@@ -453,13 +601,13 @@ An internal system that initiates store operations.
 
   it('rejects duplicate values in every set-valued frontmatter list', () => {
     const cwd = fixtureCopy()
-    const product = join(cwd, '.businesslens/product.md')
+    const product = join(cwd, '.businesslens/product/product.md')
     writeFileSync(product, readFileSync(product, 'utf8')
       .replace('tags: [commerce, fixture]', 'tags: [commerce, fixture, commerce]'))
-    const productInterface = join(cwd, '.businesslens/interfaces/customer-web.md')
+    const productInterface = join(cwd, '.businesslens/interfaces/customer-web/interface.md')
     writeFileSync(productInterface, readFileSync(productInterface, 'utf8')
       .replace('actors: [shopper]', 'actors: [shopper, shopper]'))
-    const screen = join(cwd, '.businesslens/screens/product-record.md')
+    const screen = join(cwd, '.businesslens/interfaces/customer-web/experiences/storefront/screens/product-record.md')
     writeFileSync(screen, readFileSync(screen, 'utf8')
       .replace('capabilities: [catalog-browsing]', 'capabilities: [catalog-browsing, catalog-browsing]'))
 
@@ -471,7 +619,7 @@ An internal system that initiates store operations.
 
   it('validates Screen relationships and product content', () => {
     const cwd = fixtureCopy()
-    writeFileSync(join(cwd, '.businesslens/screens/product-record.md'), `---
+    writeFileSync(join(cwd, '.businesslens/interfaces/customer-web/experiences/storefront/screens/product-record.md'), `---
 availability:
   - interface: missing-interface
     experiences: [missing-experience]
@@ -495,8 +643,6 @@ No bullet.
 ## Capability boundary
 `)
     const errors = run(cwd).errors.join('\n')
-    expect(errors).toContain('references missing experience "missing-experience"')
-    expect(errors).toContain('references missing interface "missing-interface"')
     expect(errors).toContain('needs at least one capability')
     expect(errors).toContain('references missing Capability Scenario "missing-capability-scenario"')
     expect(errors).toContain('references missing Journey Scenario "missing-journey-scenario"')
@@ -507,14 +653,14 @@ No bullet.
 
   it('requires Screen Scenario relations to match its Capabilities and exact contexts', () => {
     const cwd = fixtureCopy()
-    const screen = join(cwd, '.businesslens/screens/product-record.md')
+    const screen = join(cwd, '.businesslens/interfaces/customer-web/experiences/storefront/screens/product-record.md')
     writeFileSync(
       screen,
       readFileSync(screen, 'utf8')
         .replace('capabilityScenarios: [browse-catalog]', 'capabilityScenarios: [refund-order]')
         .replace('journeyScenarios: [browse-and-complete-checkout]', 'journeyScenarios: [admin-and-checkout]')
     )
-    writeFileSync(join(cwd, '.businesslens/journey-scenarios/admin-and-checkout.md'), `---
+    writeEntity(join(cwd, '.businesslens/journeys/browse-and-buy/scenarios/admin-and-checkout.md'), `---
 kind: edge
 journey: browse-and-buy
 actors: [shopper, store-admin]
@@ -563,21 +709,21 @@ The new checkout does not complete.
     const cwd = fixtureCopy()
     writeFileSync(
       join(cwd, '.businesslens/config.yaml'),
-      'schema: 4\nplatform:\n  url: https://attacker.example\nsdd:\n  paths: []\n'
+      'schema: 5\nplatform:\n  url: https://attacker.example\nsdd:\n  paths: []\n'
     )
     expect(run(cwd).errors).toContain('config.yaml: unknown key "platform"')
   })
 
   it('rejects product ids longer than 64 characters', () => {
     const cwd = fixtureCopy()
-    const product = join(cwd, '.businesslens/product.md')
+    const product = join(cwd, '.businesslens/product/product.md')
     writeFileSync(product, readFileSync(product, 'utf8').replace('id: fixture-shop', `id: ${'a'.repeat(65)}`))
     expect(run(cwd).errors).toContain('product.md: id must be at most 64 characters')
   })
 
   it('fails on dangling relations and missing required relationships', () => {
     const cwd = fixtureCopy()
-    writeFileSync(join(cwd, '.businesslens/journeys/browse-and-buy.md'), `---
+    writeFileSync(join(cwd, '.businesslens/journeys/browse-and-buy/journey.md'), `---
 actors: [ghost]
 ---
 
@@ -591,14 +737,14 @@ Buy something.
 
 An order exists.
 `)
-    const scenario = join(cwd, '.businesslens/journey-scenarios/browse-and-complete-checkout.md')
+    const scenario = join(cwd, '.businesslens/journeys/browse-and-buy/scenarios/browse-and-complete-checkout.md')
     writeFileSync(scenario, readFileSync(scenario, 'utf8').replace(
-      'experience: storefront',
-      'experience: missing-experience'
+      'context: customer-web::storefront',
+      'context: customer-web::missing-experience'
     ))
     const errors = run(cwd).errors.join('\n')
     expect(errors).toContain('missing actor "ghost"')
-    expect(errors).toContain('references missing experience "missing-experience"')
+    expect(errors).toContain('context references missing experience "customer-web::missing-experience"')
   })
 
   it('fails when a code reference points at an untracked file', () => {
@@ -621,8 +767,8 @@ limitations: []
 
 Model breadth.
 `)
-      const journeyFile = join(cwd, '.businesslens/journeys/browse-and-buy.md')
-      const scenarioFile = join(cwd, '.businesslens/capability-scenarios/refund-order.md')
+      const journeyFile = join(cwd, '.businesslens/journeys/browse-and-buy/journey.md')
+      const scenarioFile = join(cwd, '.businesslens/capabilities/order-management/scenarios/refund-order.md')
       const referenceBlock = /references:\n(?:  - kind: .*\n    role: .*\n    target: .*\n)+/
       writeFileSync(journeyFile, readFileSync(journeyFile, 'utf8').replace(referenceBlock, ''))
       writeFileSync(scenarioFile, readFileSync(scenarioFile, 'utf8').replace(referenceBlock, ''))
@@ -636,7 +782,7 @@ Model breadth.
 
   it('fails on duplicate ids across Scenario types', () => {
     const cwd = fixtureCopy()
-    writeFileSync(join(cwd, '.businesslens/journey-scenarios/browse-catalog.md'), `---
+    writeEntity(join(cwd, '.businesslens/journeys/browse-and-buy/scenarios/browse-catalog.md'), `---
 kind: primary
 journey: browse-and-buy
 actors: [shopper]
@@ -678,7 +824,7 @@ o.
 
   it('fails on a bad access mode', () => {
     const cwd = fixtureCopy()
-    writeFileSync(join(cwd, '.businesslens/experiences/storefront.md'), `---
+    writeFileSync(join(cwd, '.businesslens/interfaces/customer-web/experiences/storefront/experience.md'), `---
 actors: [shopper]
 interfaces: [customer-web]
 access: secret
@@ -693,7 +839,7 @@ Lead.
 
   it('fails when a Journey loses all achieved Journey Scenarios', () => {
     const cwd = fixtureCopy()
-    unlinkSync(join(cwd, '.businesslens/journey-scenarios/browse-and-complete-checkout.md'))
+    unlinkSync(join(cwd, '.businesslens/journeys/browse-and-buy/scenarios/browse-and-complete-checkout.md'))
     expect(run(cwd).errors.some(error => error.includes('at least one achieved Journey Scenario'))).toBe(true)
   })
 
@@ -778,7 +924,7 @@ Lead.
 
   it('allows references on Product but not Coverage', () => {
     const cwd = fixtureCopy()
-    const product = join(cwd, '.businesslens/product.md')
+    const product = join(cwd, '.businesslens/product/product.md')
     writeFileSync(product, readFileSync(product, 'utf8').replace(
       'limitations: []',
       'limitations: []\nreferences:\n  - kind: proposal\n    role: intent\n    target: https://example.com/product-direction'

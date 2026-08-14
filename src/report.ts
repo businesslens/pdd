@@ -33,7 +33,7 @@ export {
   ReportBusinessRuleTargetSchema,
   ReportBusinessRuleSchema,
   ReportCoverageSchema,
-  ProductReportV8Schema,
+  ProductReportV9Schema,
   ProductReportSchema,
   validateProductReport,
   validateBlueprintReport,
@@ -43,7 +43,7 @@ export {
 } from './core/portable.js'
 
 export type {
-  ProductReportV8,
+  ProductReportV9,
   ProductReport,
   ReportCoverage,
   ReportCounts,

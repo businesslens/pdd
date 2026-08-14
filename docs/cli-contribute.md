@@ -3,7 +3,7 @@ title: blueprint contribute
 description: Open a pull request proposing your Product Model as a catalog Blueprint.
 section: open-source
 group: CLI
-order: 37
+order: 35
 ---
 
 # `businesslens blueprint contribute`
@@ -39,7 +39,8 @@ A Blueprint should be small enough to build end to end and complete enough that
 a coding agent can produce a recognizable product from the pulled model alone.
 
 Before contributing, add a category, at least one tag, at least one author, and
-an SPDX license identifier to `product.md`, plus `.businesslens/logo.svg`.
+an SPDX license identifier to `product/product.md`, plus
+`.businesslens/product/logo.svg`.
 
 Check these before contributing:
 

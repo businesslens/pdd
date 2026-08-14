@@ -1,13 +1,14 @@
 import type { EntityFile, PddModel } from '../core/model.js'
-import type { Availability } from '../core/frontmatter.js'
-import type { ProductReportV8 } from '../core/portable.js'
+import type { ProductReportV9 } from '../core/portable.js'
+import { join, relative, sep } from 'node:path'
 import { writeGeneratedFile } from '../core/generated-files.js'
 import { lsFiles } from '../core/git.js'
 import { section, supportingSections } from '../core/markdown.js'
+import { interfaceOf } from '../core/ids.js'
 import { loadModel } from '../core/model.js'
 import { resolveModelRoot, type ModelRoot } from '../core/model-root.js'
 import {
-  ProductReportV8Schema,
+  ProductReportV9Schema,
   REPORT_SCHEMA_VERSION,
   projectPortableReport,
   validateProductReport
@@ -17,23 +18,63 @@ import { lintModel } from './lint.js'
 
 const byId = <T extends { id: string }>(items: T[]): T[] => [...items].sort((a, b) => a.id.localeCompare(b.id))
 const sorted = (items: string[]): string[] => [...items].sort()
-const availability = (items: Availability[]) => [...items]
-  .sort((a, b) => a.interface.localeCompare(b.interface))
-  .map(item => ({ interfaceId: item.interface, experienceIds: sorted(item.experiences) }))
-const exactContext = (item: { interface: string, experience?: string }) => ({
-  interfaceId: item.interface,
-  experienceId: item.experience ?? null
+/*
+  The authored model names one scope id; the report keeps the decomposition
+  because every consumer asks "which Interface" and "which Experience"
+  separately. An Experience id is qualified, so it stays globally unique on the
+  wire and entity lookup by id keeps working.
+*/
+const availability = (scopes: string[]) => {
+  const byInterface = new Map<string, string[]>()
+  for (const scope of [...scopes].sort()) {
+    const interfaceId = interfaceOf(scope)
+    const existing = byInterface.get(interfaceId) ?? []
+    if (scope !== interfaceId) existing.push(scope)
+    byInterface.set(interfaceId, existing)
+  }
+  return [...byInterface.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([interfaceId, experienceIds]) => ({ interfaceId, experienceIds: sorted(experienceIds) }))
+}
+const exactContext = (scope: string) => ({
+  interfaceId: interfaceOf(scope),
+  experienceId: scope === interfaceOf(scope) ? null : scope
 })
 
-function entityContent(entity: EntityFile, recognized: string[]) {
+const IMAGE_ASSET = /\.(png|jpe?g|gif|webp|avif|svg)$/i
+
+/**
+ * Co-located assets become workspace-profile references.
+ *
+ * Class is the path: anything under `implementation/` describes this
+ * realization and so carries `role: implementation`, which the portable
+ * projection already drops — along with every repository-relative target. That
+ * is why assets need no new wire field and why export carries no binaries yet.
+ */
+function assetReferences(entity: EntityFile, modelRoot: string) {
+  const meta = new Map(entity.assetMeta.map(item => [item.file, item]))
+  return entity.assets.map((file) => {
+    const declared = meta.get(file)
+    return {
+      kind: (IMAGE_ASSET.test(file) ? 'visual' : 'doc') as 'visual' | 'doc',
+      role: (file.startsWith('implementation/') ? 'implementation' : 'intent') as 'implementation' | 'intent',
+      target: relative(modelRoot, join(entity.directory, file)).split(sep).join('/'),
+      ...(declared?.title ? { title: declared.title } : {}),
+      ...(declared?.state ? { state: declared.state } : {})
+    }
+  })
+}
+
+function entityContent(entity: EntityFile, recognized: string[], modelRoot: string) {
   return {
     intent: section(entity.doc, 'Intent') || '',
     supportingSections: supportingSections(entity.doc, ['Intent', ...recognized]),
-    references: entity.references.map(reference => ({
+    references: [...assetReferences(entity, modelRoot), ...entity.references].map(reference => ({
       kind: reference.kind,
       role: reference.role,
       target: reference.target,
-      ...(reference.title ? { title: reference.title } : {})
+      ...(reference.title ? { title: reference.title } : {}),
+      ...(reference.state ? { state: reference.state } : {})
     }))
   }
 }
@@ -46,15 +87,21 @@ function entityContent(entity: EntityFile, recognized: string[]) {
  */
 export function compileReport(
   model: PddModel,
-  today: string
-): ProductReportV8 {
+  today: string,
+  /**
+   * Base for co-located asset targets. Reference targets resolve
+   * repository-relative — the same base `lint` lists tracked files from — so a
+   * nested model's assets stay addressable from the repository root.
+   */
+  assetBase = model.root
+): ProductReportV9 {
   const capabilityById = new Map(model.capabilities.map(capability => [capability.id, capability]))
   const journeyScenariosByJourney = new Map(model.journeys.map(journey => [
     journey.id,
     model.journeyScenarios.filter(scenario => scenario.journey === journey.id)
   ]))
 
-  const report: ProductReportV8 = {
+  const report: ProductReportV9 = {
     schemaVersion: REPORT_SCHEMA_VERSION,
     id: model.product.id,
     title: model.product.doc.title,
@@ -69,7 +116,8 @@ export function compileReport(
       kind: reference.kind,
       role: reference.role,
       target: reference.target,
-      ...(reference.title ? { title: reference.title } : {})
+      ...(reference.title ? { title: reference.title } : {}),
+      ...(reference.state ? { state: reference.state } : {})
     })),
     referenceProfile: 'workspace',
     tags: sorted(model.product.tags),
@@ -103,7 +151,7 @@ export function compileReport(
         description: actor.doc.lead,
         kind: actor.kind as 'person' | 'system',
         relationship: actor.relationship as 'external' | 'internal',
-        ...entityContent(actor, [])
+        ...entityContent(actor, [], assetBase)
       })),
       interfaces: byId(model.interfaces).map(productInterface => ({
         id: productInterface.id,
@@ -112,18 +160,18 @@ export function compileReport(
         actorIds: sorted(productInterface.actors),
         entryPoints: productInterface.entryPoints,
         capabilityBoundary: productInterface.capabilityBoundary,
-        ...entityContent(productInterface, ['Capability boundary'])
+        ...entityContent(productInterface, ['Capability boundary'], assetBase)
       })),
       experiences: byId(model.experiences).map(experience => ({
         id: experience.id,
         title: experience.doc.title,
         description: experience.doc.lead,
         actorIds: sorted(experience.actors),
-        interfaceIds: sorted(experience.interfaces),
+        interfaceIds: [experience.interface],
         accessMode: experience.access as 'public' | 'authenticated' | 'restricted',
         entryPoints: experience.entryPoints,
         capabilityBoundary: experience.capabilityBoundary,
-        ...entityContent(experience, ['Capability boundary'])
+        ...entityContent(experience, ['Capability boundary'], assetBase)
       })),
       screens: byId(model.screens).map(screen => ({
         id: screen.id,
@@ -138,14 +186,14 @@ export function compileReport(
         actions: screen.actions,
         states: screen.states,
         capabilityBoundary: screen.capabilityBoundary,
-        ...entityContent(screen, ['Information presented', 'Available actions', 'Product states', 'Capability boundary'])
+        ...entityContent(screen, ['Information presented', 'Available actions', 'Product states', 'Capability boundary'], assetBase)
       })),
       domains: byId(model.domains).map(domain => ({
         id: domain.id,
         name: domain.doc.title,
         description: domain.doc.lead,
         ...(domain.colorSlot !== undefined ? { colorSlot: domain.colorSlot } : {}),
-        ...entityContent(domain, [])
+        ...entityContent(domain, [], assetBase)
       })),
       capabilities: byId(model.capabilities).map(capability => ({
         id: capability.id,
@@ -153,7 +201,7 @@ export function compileReport(
         description: capability.doc.lead,
         ...(capability.domain ? { domainId: capability.domain } : {}),
         availability: availability(capability.availability),
-        ...entityContent(capability, [])
+        ...entityContent(capability, [], assetBase)
       })),
       capabilityScenarios: byId(model.capabilityScenarios).map(scenario => ({
         id: scenario.id,
@@ -167,7 +215,7 @@ export function compileReport(
         decisionPoints: scenario.decisionPoints,
         outcome: scenario.outcome,
         edgeCases: scenario.edgeCases,
-        ...entityContent(scenario, ['Trigger', 'Steps', 'Decision points', 'Outcome', 'Edge cases'])
+        ...entityContent(scenario, ['Trigger', 'Steps', 'Decision points', 'Outcome', 'Edge cases'], assetBase)
       })),
       journeys: byId(model.journeys).map((journey) => {
         const scenarios = journeyScenariosByJourney.get(journey.id) || []
@@ -190,7 +238,7 @@ export function compileReport(
           capabilityIds: sorted([...achievedCapabilityIds]),
           failureOnlyCapabilityIds: sorted(failureOnlyCapabilityIds),
           domainIds: sorted([...new Set(domainIds)]),
-          ...entityContent(journey, ['Goal', 'Success criterion'])
+          ...entityContent(journey, ['Goal', 'Success criterion'], assetBase)
         }
       }),
       journeyScenarios: byId(model.journeyScenarios).map(scenario => ({
@@ -209,7 +257,7 @@ export function compileReport(
           id: route.id,
           contexts: route.contexts.map(context => ({
             stageId: context.stage,
-            ...exactContext(context)
+            ...exactContext(context.context)
           }))
         })),
         trigger: scenario.trigger,
@@ -217,7 +265,7 @@ export function compileReport(
         decisionPoints: scenario.decisionPoints,
         outcome: scenario.outcome,
         edgeCases: scenario.edgeCases,
-        ...entityContent(scenario, ['Trigger', 'Steps', 'Decision points', 'Outcome', 'Edge cases'])
+        ...entityContent(scenario, ['Trigger', 'Steps', 'Decision points', 'Outcome', 'Edge cases'], assetBase)
       })),
       businessRules: byId(model.businessRules).map(rule => ({
         id: rule.id,
@@ -225,13 +273,13 @@ export function compileReport(
         statement: rule.doc.lead,
         rationale: rule.rationale,
         appliesTo: rule.appliesTo.map(target => target.type === 'context'
-          ? { type: 'context' as const, ...exactContext(target) }
+          ? { type: 'context' as const, ...exactContext(target.context) }
           : {
               type: target.type,
               id: target.id,
               contexts: target.contexts.map(exactContext)
             }),
-        ...entityContent(rule, ['Rationale'])
+        ...entityContent(rule, ['Rationale'], assetBase)
       }))
     },
     coverage: {
@@ -244,24 +292,24 @@ export function compileReport(
     }
   }
 
-  const parsed = ProductReportV8Schema.parse(report)
+  const parsed = ProductReportV9Schema.parse(report)
   const issues = validateProductReport(parsed)
   if (issues.length) throw new Error(`Report validation failed:\n- ${issues.join('\n- ')}`)
   return parsed
 }
 
 export interface BuildOutcome {
-  report: ProductReportV8
+  report: ProductReportV9
   outputFile: string
 }
 
 /** Compile the current workspace without writing generated artifacts. */
-export function compileWorkspaceReport(cwd: string): ProductReportV8 {
+export function compileWorkspaceReport(cwd: string): ProductReportV9 {
   return compileResolvedWorkspaceReport(resolveModelRoot(cwd))
 }
 
 /** Compile a model whose ownership boundary has already been resolved. */
-export function compileResolvedWorkspaceReport({ modelRoot, gitRoot }: ModelRoot): ProductReportV8 {
+export function compileResolvedWorkspaceReport({ modelRoot, gitRoot }: ModelRoot): ProductReportV9 {
   const model = loadModel(modelRoot)
   const tracked = gitRoot ? lsFiles(gitRoot) : []
   const result = lintModel(model, tracked)
@@ -269,7 +317,7 @@ export function compileResolvedWorkspaceReport({ modelRoot, gitRoot }: ModelRoot
     throw new Error(`Lint failed:\n${result.errors.map(error => `- ${error}`).join('\n')}`)
   }
   const today = new Date().toISOString().slice(0, 10)
-  return compileReport(model, today)
+  return compileReport(model, today, gitRoot ?? modelRoot)
 }
 
 export function buildProject(cwd: string): BuildOutcome {

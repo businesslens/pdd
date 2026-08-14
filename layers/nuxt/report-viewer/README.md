@@ -28,7 +28,7 @@ Render the canonical report directly:
 <BusinessLensReportViewer :report="report" :logo-src="logoSrc" />
 ```
 
-`report` must be a `ProductReportV8` from `businesslens/report`. There is no
+`report` must be a `ProductReportV9` from `businesslens/report`. There is no
 second, lossy public view-model contract.
 
 The Workbench needs a bounded viewport. By default it fills the browser height.

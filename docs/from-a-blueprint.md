@@ -27,7 +27,7 @@ Lint the imported structure:
 npx businesslens lint
 ```
 
-Read `product.md`, then its Actors and Interfaces, optional Experiences,
+Read `product.md` or `product/product.md`, then its Actors and Interfaces, optional Experiences,
 Screens, and Domains, followed by Capabilities, Capability Scenarios, Business
 Rules, optional Journeys, and Journey Scenarios. Confirm that every Capability
 has direct local acceptance coverage and that its Scenarios are genuine

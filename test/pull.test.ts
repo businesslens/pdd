@@ -32,7 +32,7 @@ function reportResponse(canonicalName = 'fixture-shop'): Response {
   return new Response(JSON.stringify(report), {
     status: 200,
     headers: {
-      'content-type': 'application/vnd.businesslens.report+json; version=7',
+      'content-type': 'application/vnd.businesslens.report+json; version=9',
       'x-businesslens-blueprint': canonicalName,
       'x-businesslens-report-digest': reportDigest(report)
     }
@@ -48,7 +48,7 @@ beforeAll(() => {
   cpSync(FIXTURE, source, { recursive: true })
   initialize(source)
   report = projectPortableReport(buildProject(source).report) as unknown as Record<string, unknown>
-  logo = readFileSync(join(source, '.businesslens', 'logo.svg'))
+  logo = readFileSync(join(source, '.businesslens', 'product', 'logo.svg'))
 })
 
 afterEach(() => {
@@ -83,10 +83,13 @@ describe('pull', () => {
     )
     // No credential is read, sent, or required.
     expect((requested?.init.headers as Record<string, string>).authorization).toBeUndefined()
-    expect((requested?.init.headers as Record<string, string>).accept).toContain('version=7')
-    expect(existsSync(join(target, '.businesslens/product.md'))).toBe(true)
-    expect(existsSync(join(target, '.businesslens/screens/product-record.md'))).toBe(true)
-    expect(readFileSync(join(target, '.businesslens/logo.svg'))).toEqual(logo)
+    expect((requested?.init.headers as Record<string, string>).accept).toContain('version=9')
+    expect(existsSync(join(target, '.businesslens/product/product.md'))).toBe(true)
+    expect(existsSync(join(
+      target,
+      '.businesslens/interfaces/customer-web/experiences/storefront/screens/product-record.md'
+    ))).toBe(true)
+    expect(readFileSync(join(target, '.businesslens/product/logo.svg'))).toEqual(logo)
   })
 
   it('does not require the optional GitHub logo', async () => {
@@ -96,7 +99,9 @@ describe('pull', () => {
       : reportResponse()) as unknown as typeof globalThis.fetch
 
     expect(await runPull(target, 'fixture-shop', { force: false }, { fetch, env: {} })).toBe(0)
-    expect(existsSync(join(target, '.businesslens/logo.svg'))).toBe(false)
+    expect(existsSync(join(target, '.businesslens/product/logo.svg'))).toBe(false)
+    expect(existsSync(join(target, '.businesslens/product.md'))).toBe(true)
+    expect(existsSync(join(target, '.businesslens/product'))).toBe(false)
   })
 
   it('identifies itself so catalog pulls are distinguishable from page views', async () => {

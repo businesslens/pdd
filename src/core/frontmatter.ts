@@ -1,5 +1,6 @@
 import { parse } from 'yaml'
 import { parseCodeTarget } from './coderefs.js'
+import { isQualifiedId } from './ids.js'
 
 export interface FrontmatterFile {
   data: Record<string, unknown>
@@ -74,10 +75,15 @@ export interface CompactEntryPoint {
   path: string
 }
 
-export interface Availability {
-  interface: string
-  experiences: string[]
-}
+/**
+ * A scope is one id: `reader-web`, or `reader-web::personal-library`.
+ *
+ * An Experience belongs to exactly one Interface, so its id already names the
+ * Interface and the nested `{interface, experiences[]}` record — plus the rule
+ * forbidding a mixture of the two shapes — collapses into a flat list of ids
+ * that either resolve in the tree or do not.
+ */
+export type Scope = string
 
 /** Parse `entryPoints: [- web: /path]` compact single-key maps. */
 export function entryPointsField(data: Record<string, unknown>, issues: string[], label: string): CompactEntryPoint[] {
@@ -105,38 +111,111 @@ export function entryPointsField(data: Record<string, unknown>, issues: string[]
 }
 
 /** Parse exact Interface availability, optionally scoped by Experience. */
-export function availabilityField(data: Record<string, unknown>, issues: string[], label: string): Availability[] {
-  const value = data.availability
+export function availabilityField(data: Record<string, unknown>, issues: string[], label: string): Scope[] {
+  return scopeListField(data, 'availability', issues, label)
+}
+
+/** A unique, non-empty list of scope ids. Resolution against the tree is lint's job. */
+export function scopeListField(
+  data: Record<string, unknown>,
+  key: string,
+  issues: string[],
+  label: string
+): Scope[] {
+  const value = data[key]
   if (value === undefined || value === null) return []
   if (!Array.isArray(value)) {
-    issues.push(`${label}: "availability" must be a list`)
+    issues.push(`${label}: "${key}" must be a list of scope ids`)
     return []
   }
-  const result: Availability[] = []
+  const result: Scope[] = []
+  const seen = new Set<string>()
+  for (const item of value) {
+    if (typeof item !== 'string' || !isQualifiedId(item)) {
+      issues.push(`${label}: "${key}" items must be scope ids like "customer-web" or "customer-web::storefront"`)
+      continue
+    }
+    if (seen.has(item)) {
+      issues.push(`${label}: duplicate ${key} scope "${item}"`)
+      continue
+    }
+    seen.add(item)
+    result.push(item)
+  }
+  return result
+}
+
+/** One exact context: a single scope id naming where this happens. */
+export function scopeField(
+  data: Record<string, unknown>,
+  key: string,
+  issues: string[],
+  label: string
+): Scope | undefined {
+  const value = data[key]
+  if (value === undefined || value === null) return undefined
+  if (typeof value !== 'string' || !isQualifiedId(value)) {
+    issues.push(`${label}: "${key}" must be a scope id like "customer-web" or "customer-web::storefront"`)
+    return undefined
+  }
+  return value
+}
+
+/**
+ * Optional metadata for a file sitting beside `<type>.md`.
+ *
+ * Class comes from the path — anything under `implementation/` describes this
+ * realization — so the list never sets it. Unlisted files are legal, which is
+ * what lets a foreign tool drop a capture in without editing frontmatter.
+ */
+export interface EntityAsset {
+  file: string
+  title?: string
+  /** Screens only: the `## Product states` H3 this asset depicts. */
+  state?: string
+}
+
+export function assetsField(data: Record<string, unknown>, issues: string[], label: string): EntityAsset[] {
+  const value = data.assets
+  if (value === undefined || value === null) return []
+  if (!Array.isArray(value)) {
+    issues.push(`${label}: "assets" must be a list`)
+    return []
+  }
+  const result: EntityAsset[] = []
+  const seen = new Set<string>()
   for (const item of value) {
     if (typeof item !== 'object' || item === null || Array.isArray(item)) {
-      issues.push(`${label}: each availability item needs "interface" and optional "experiences"`)
+      issues.push(`${label}: each asset needs a "file"`)
       continue
     }
     const record = item as Record<string, unknown>
-    const unknown = Object.keys(record).filter(key => key !== 'interface' && key !== 'experiences')
-    const experiences = record.experiences
-    if (
-      unknown.length
-      || typeof record.interface !== 'string'
-      || (
-        experiences !== undefined
-        && (
-          !Array.isArray(experiences)
-          || experiences.length === 0
-          || experiences.some(value => typeof value !== 'string')
-        )
-      )
-    ) {
-      issues.push(`${label}: each availability item needs only a string "interface" and an optional non-empty "experiences" string list`)
+    const unknown = Object.keys(record).filter(key => !['file', 'title', 'state'].includes(key))
+    if (unknown.length) {
+      issues.push(`${label}: asset has unknown key "${unknown[0]}"`)
       continue
     }
-    result.push({ interface: record.interface, experiences: (experiences as string[] | undefined) || [] })
+    const file = record.file
+    if (typeof file !== 'string' || !file.trim() || file.startsWith('/') || file.includes('..')) {
+      issues.push(`${label}: asset "file" must be a path inside the entity's expanded folder`)
+      continue
+    }
+    if (seen.has(file)) {
+      issues.push(`${label}: duplicate asset "${file}"`)
+      continue
+    }
+    seen.add(file)
+    for (const key of ['title', 'state'] as const) {
+      const raw = record[key]
+      if (raw !== undefined && (typeof raw !== 'string' || !raw.trim() || /[\r\n]/.test(raw))) {
+        issues.push(`${label}: asset "${key}" must be a non-empty single-line string when present`)
+      }
+    }
+    result.push({
+      file,
+      title: typeof record.title === 'string' ? record.title : undefined,
+      state: typeof record.state === 'string' ? record.state : undefined
+    })
   }
   return result
 }
@@ -146,6 +225,15 @@ export interface EntityReference {
   role: ReferenceRole
   target: string
   title?: string
+  /**
+   * The Product state this artefact depicts.
+   *
+   * Screens only, and validated against that Screen's `## Product states`. Six
+   * captures of one Screen are otherwise a flat list distinguishable only by
+   * free-text title; naming the state is what lets a reader — and the renderer —
+   * put each capture beside the state it shows.
+   */
+  state?: string
 }
 
 export type ReferenceKind = 'code' | 'spec' | 'proposal' | 'doc' | 'adr' | 'visual' | 'research'
@@ -215,7 +303,7 @@ export function referencesField(data: Record<string, unknown>, issues: string[],
       continue
     }
     const record = item as Record<string, unknown>
-    const unknown = Object.keys(record).filter(key => !['kind', 'role', 'target', 'title'].includes(key))
+    const unknown = Object.keys(record).filter(key => !['kind', 'role', 'target', 'title', 'state'].includes(key))
     if (unknown.length) {
       issues.push(`${label}: reference has unknown key "${unknown[0]}"`)
       continue
@@ -240,11 +328,19 @@ export function referencesField(data: Record<string, unknown>, issues: string[],
       issues.push(`${label}: reference "title" must be a non-empty single-line string when present`)
       continue
     }
+    if (
+      record.state !== undefined
+      && (typeof record.state !== 'string' || !record.state.trim() || /[\r\n]/.test(record.state))
+    ) {
+      issues.push(`${label}: reference "state" must be a non-empty single-line string when present`)
+      continue
+    }
     result.push({
       kind: record.kind as ReferenceKind,
       role: record.role as ReferenceRole,
       target: record.target,
-      title: typeof record.title === 'string' ? record.title : undefined
+      title: typeof record.title === 'string' ? record.title : undefined,
+      state: typeof record.state === 'string' ? record.state : undefined
     })
   }
   return result

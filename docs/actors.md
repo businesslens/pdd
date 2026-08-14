@@ -52,7 +52,8 @@ answer, because direction changed.
 
 ## The file
 
-Actors live at `actors/<actor-id>.md`.
+An Actor normally lives at `actors/<actor-id>.md`. If it gains an asset, expand
+it to `actors/<actor-id>/actor.md` and place the asset beside that file.
 
 ```md [actors/store-admin.md]
 ---
@@ -85,6 +86,6 @@ Every Actor ID named by another entity must have a corresponding file.
 | --- | --- | --- |
 | [Interfaces](./interfaces.md) | `actors:` | Who may use any part of the Interface |
 | [Experiences](./experiences.md) | `actors:` | Who participates in that coherent context |
-| [Capability Scenarios](./capability-scenarios.md) | `actors:` | Who participates in the local Capability case |
+| [Capability Scenarios](./capabilities.md#capability-scenarios) | `actors:` | Who participates in the local Capability case |
 | [Journeys](./journeys.md) | `actors:` | Who shares the stable intent and success criterion |
-| [Journey Scenarios](./journey-scenarios.md) | `actors:` | Who participates in the end-to-end Journey variation |
+| [Journey Scenarios](./journeys.md#journey-scenarios) | `actors:` | Who participates in the end-to-end Journey variation |

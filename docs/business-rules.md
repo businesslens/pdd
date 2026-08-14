@@ -3,7 +3,7 @@ title: Business rules
 description: Durable assertions that own their scope across Product entities or exact Interface availability.
 section: open-source
 group: Product Model
-order: 18
+order: 16
 ---
 
 # Business rules
@@ -31,7 +31,8 @@ itself rather than one behavior.
 
 ## The file
 
-Business Rules live at `business-rules/<rule-id>.md`.
+Business Rules normally live at `business-rules/<rule-id>.md`. A Rule with
+assets expands to `business-rules/<rule-id>/business-rule.md`.
 
 ```md [business-rules/payment-before-confirmation.md]
 ---
@@ -39,10 +40,8 @@ appliesTo:
   - type: capability
     id: checkout
     contexts:
-      - interface: customer-web
-        experience: shopping
-      - interface: customer-mobile
-        experience: shopping
+      - context: customer-web::shopping
+      - context: customer-mobile::shopping
   - type: journey
     id: browse-and-buy
 ---
@@ -70,14 +69,15 @@ Confirmation is the durable customer-facing boundary of checkout.
 
 An entity target without `contexts` applies to every context supported by that
 entity. When present, `contexts` is a non-empty list of singular exact contexts,
-each using `interface` plus one `experience` when that Interface has Experience
-contexts. Every narrowed context must be inside the target's supported
-contexts. A direct context target has no `id`:
+each using one `context` scope id. Use the bare Interface id for an undivided
+Interface or `interface-id::experience-id` for an Experience. Every narrowed
+context must be inside the target's supported contexts. A direct context target
+has no `id`:
 
 ```yaml
 appliesTo:
   - type: context
-    interface: operator-cli
+    context: operator-cli
 ```
 
 Targets are additive. Do not target a Capability and one of its Capability

@@ -14,8 +14,8 @@ describe('Content Feed Reader teaching Blueprint', () => {
     expect(result.counts).toEqual({
       actors: 2,
       interfaces: 2,
-      experiences: 2,
-      screens: 5,
+      experiences: 3,
+      screens: 8,
       domains: 3,
       capabilities: 10,
       capabilityScenarios: 24,

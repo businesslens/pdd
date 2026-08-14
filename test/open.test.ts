@@ -7,7 +7,7 @@ import { buildProject } from '../src/commands/export.js'
 import { runOpen } from '../src/commands/open.js'
 import { lsFiles } from '../src/core/git.js'
 import { loadModel } from '../src/core/model.js'
-import { projectPortableReport, type ProductReportV8 } from '../src/core/portable.js'
+import { projectPortableReport, type ProductReportV9 } from '../src/core/portable.js'
 import { lintModel } from '../src/commands/lint.js'
 
 const FIXTURE = join(__dirname, 'fixtures', 'fixture-shop')
@@ -25,7 +25,7 @@ function initialize(cwd: string): void {
   git(cwd, 'commit', '--allow-empty', '-m', 'fixture')
 }
 
-function withoutRepositoryEvidence(report: ProductReportV8): Record<string, any> {
+function withoutRepositoryEvidence(report: ProductReportV9): Record<string, any> {
   const portable = projectPortableReport(report)
   return {
     ...portable,
@@ -74,20 +74,22 @@ describe('open report', () => {
     ])
     expect(imported.experiences.flatMap(experience => experience.entryPoints))
       .toEqual(expect.arrayContaining([{ type: 'customer-web', path: '/' }]))
-    expect(imported.screens).toHaveLength(1)
-    expect(imported.screens[0]).toMatchObject({
-      id: 'product-record',
-      availability: [
-        { interface: 'customer-mobile', experiences: ['storefront'] },
-        { interface: 'customer-web', experiences: ['storefront'] }
-      ],
+    // The Screen exists once per surface: same purpose, two places, and the id
+    // carries which is which.
+    expect(imported.screens.map(screen => screen.id)).toEqual([
+      'customer-mobile::storefront::product-record',
+      'customer-web::storefront::product-record'
+    ])
+    expect(imported.screens[1]).toMatchObject({
+      id: 'customer-web::storefront::product-record',
+      availability: ['customer-web::storefront'],
       capabilities: ['catalog-browsing'],
       capabilityScenarios: ['browse-catalog'],
       journeyScenarios: ['browse-and-complete-checkout']
     })
-    expect(imported.screens[0]!.entryPoints.map(point => point.path)).toEqual([
-      '/products/:id',
-      'fixture-shop://products/:id'
+    expect(imported.screens.flatMap(screen => screen.entryPoints.map(point => point.path))).toEqual([
+      'fixture-shop://products/:id',
+      '/products/:id'
     ])
 
     const rebuilt = buildProject(target)
@@ -101,29 +103,29 @@ describe('open report', () => {
       && reference.role !== 'implementation'
       && /^https?:\/\//.test(reference.target)
     )).toBe(true)
-    expect(readFileSync(join(target, '.businesslens/capabilities/checkout.md'), 'utf8'))
+    expect(readFileSync(join(target, '.businesslens/capabilities/checkout/capability.md'), 'utf8'))
       .toContain('availability:')
     expect(readFileSync(join(target, '.businesslens/business-rules/payment-before-confirmation.md'), 'utf8'))
       .toContain('appliesTo:')
     expect(readFileSync(
-      join(target, '.businesslens/capability-scenarios/complete-checkout.md'),
+      join(target, '.businesslens/capabilities/checkout/scenarios/complete-checkout.md'),
       'utf8'
     )).toContain('## Decision points')
     expect(readFileSync(
-      join(target, '.businesslens/journey-scenarios/browse-and-complete-checkout.md'),
+      join(target, '.businesslens/journeys/browse-and-buy/scenarios/browse-and-complete-checkout.md'),
       'utf8'
     )).toContain('## Handoff note')
     expect(readFileSync(
-      join(target, '.businesslens/journey-scenarios/browse-and-complete-checkout.md'),
+      join(target, '.businesslens/journeys/browse-and-buy/scenarios/browse-and-complete-checkout.md'),
       'utf8'
     )).toContain('operation: Find and select an available product')
-    expect(readFileSync(join(target, '.businesslens/journeys/browse-and-buy.md'), 'utf8'))
+    expect(readFileSync(join(target, '.businesslens/journeys/browse-and-buy/journey.md'), 'utf8'))
       .toContain('## Teaching note')
-    expect(readFileSync(join(target, '.businesslens/capability-scenarios/complete-checkout.md'), 'utf8'))
+    expect(readFileSync(join(target, '.businesslens/capabilities/checkout/scenarios/complete-checkout.md'), 'utf8'))
       .toContain('## Recovery note')
     expect(readFileSync(join(target, '.businesslens/product.md'), 'utf8'))
       .toContain('## Teaching note')
-    expect(readFileSync(join(target, '.businesslens/screens/product-record.md'), 'utf8'))
+    expect(readFileSync(join(target, '.businesslens/interfaces/customer-web/experiences/storefront/screens/product-record.md'), 'utf8'))
       .toContain('## Product states')
   })
 
@@ -153,6 +155,11 @@ describe('open report', () => {
       const report = structuredClone(buildProject(source).report)
       report.model.experiences = []
       report.counts.experiences = 0
+      for (const screen of report.model.screens) {
+        // interface::experience::screen -> interface::screen
+        const parts = screen.id.split('::')
+        screen.id = [parts[0], parts.at(-1)].join('::')
+      }
       for (const collection of [
         report.model.capabilities,
         report.model.screens,
@@ -180,14 +187,11 @@ describe('open report', () => {
       const imported = loadModel(fresh)
       expect(imported.experiences).toEqual([])
       expect(imported.capabilities.flatMap(capability => capability.availability))
-        .toEqual(expect.arrayContaining([
-          { interface: 'customer-web', experiences: [] },
-          { interface: 'customer-mobile', experiences: [] }
-        ]))
-      expect(readFileSync(join(fresh, '.businesslens/capabilities/checkout.md'), 'utf8'))
-        .not.toContain('experiences:')
+        .toEqual(expect.arrayContaining(['customer-web', 'customer-mobile']))
+      expect(readFileSync(join(fresh, '.businesslens/capabilities/checkout/capability.md'), 'utf8'))
+        .not.toContain('::')
       expect(readFileSync(join(fresh, '.businesslens/config.yaml'), 'utf8'))
-        .toContain('schema: 4')
+        .toContain('schema: 5')
 
       const rebuilt = buildProject(fresh)
       expect(withoutRepositoryEvidence(rebuilt.report)).toEqual(withoutRepositoryEvidence(report))
@@ -215,7 +219,7 @@ describe('open report', () => {
   })
 
   it('writes nothing outside .businesslens/, including repository instructions', async () => {
-    // The invariant adr/0004-write-nothing-outside-businesslens.md buys:
+    // The invariant in AGENTS.md "Installer standards" buys:
     // BusinessLens owns one directory, so repository instructions are untouched.
     const fresh = mkdtempSync(join(tmpdir(), 'bl-open-outside-'))
     initialize(fresh)
@@ -272,7 +276,7 @@ describe('open report', () => {
     const actor = readFileSync(join(target, '.businesslens/actors/shopper.md'), 'utf8')
     expect(actor).toMatch(/^---\nkind: person\nrelationship: external\n---\n/)
 
-    expect(readFileSync(join(target, '.businesslens/capabilities/checkout.md'), 'utf8'))
+    expect(readFileSync(join(target, '.businesslens/capabilities/checkout/capability.md'), 'utf8'))
       .toMatch(/^---\ndomain: ordering\navailability:/)
   })
 

@@ -28,10 +28,27 @@ add optional entities only when they communicate a real Product distinction.
 | [Screen](./screens.md) | Optional | A meaningful visual view; non-visual Products do not need one |
 | [Domain](./domains.md) | Optional | A Product-language grouping that makes a larger Capability set easier to navigate |
 | [Capability](./capabilities.md) | At least one in a complete model; every exact context needs Capability Scenario coverage | A durable Product ability reused across views, behavior contracts, or goals |
-| [Capability Scenario](./capability-scenarios.md) | Required by every authored Capability | One concrete local acceptance case for exactly one Capability |
+| ↳ [Capability Scenario](./capabilities.md#capability-scenarios) | Required by every authored Capability | One concrete local acceptance case for exactly one Capability |
 | [Journey](./journeys.md) | Optional | One coherent Actor Goal and Success criterion whose achieved variations compose multiple Capabilities |
-| [Journey Scenario](./journey-scenarios.md) | Required by every authored Journey | One concrete end-to-end variation of exactly one Journey |
+| ↳ [Journey Scenario](./journeys.md#journey-scenarios) | Required by every authored Journey | One concrete end-to-end variation of exactly one Journey |
 | [Business Rule](./business-rules.md) | Optional | A durable assertion that must remain true |
+
+The two indented rows are Scenarios: the only entities with a mandatory single
+parent. A Scenario is never authored on its own, and the parent it belongs to
+decides which kind it is. There is no unowned Scenario and no way for one
+Scenario to serve both parents, so each kind is documented on its parent's page.
+
+That containment is the whole distinction. The two kinds have different fields,
+different required sections, and different collections, because they make
+different promises:
+
+> **Local result:** "The Git write is rejected." — Capability Scenario
+>
+> **Goal result:** "The code change cannot be proposed because its branch was
+> not published." — Journey Scenario
+
+A Capability Scenario stops at the local result of one ability. A Journey
+Scenario ends at the Actor-goal result.
 
 Do not add an Experience, Domain, Screen, or any other entity to make the model
 look complete. A small model can be both valid and honest. The
@@ -52,9 +69,13 @@ report while editing.
 
 ## Authoring conventions
 
-Entity IDs come from lowercase kebab-case filename stems. Only `product.md`
-declares `id:`. Scenario IDs are globally unique across the Capability Scenario
-and Journey Scenario collections.
+An entity without assets or children is the compact file `<id>.md`. When it
+gains its first asset or typed child collection, move it to
+`<id>/<type>.md`; the folder becomes that entity's namespace. The two forms
+never coexist and derive the same id. Behavior-tree ids are the bare file or
+folder name; surface-tree ids (Interface, Experience, Screen) carry their path
+joined by `::`, because surface names repeat across Interfaces on purpose. Only
+`product.md` declares `id:`. Scenario IDs are globally unique.
 
 The first and only H1 supplies an entity's title. Lead prose normally supplies its
 description. Journeys have no lead prose and instead require `## Goal` and
@@ -78,16 +99,14 @@ graph.
 ## Availability
 
 Interface says the supported interaction form. Optional Experience says the
-coherent Actor context within that form. An **availability scope** is simply one
-supported interaction context: an Interface plus, when that Interface uses
-Experiences, one or more Experiences. Capabilities and Screens declare those
-exact contexts. Capability Scenarios select contexts from their one Capability.
+coherent Actor context within that form. An **availability scope** is one id: an undivided
+Interface, or an Experience. Capabilities declare a list of them; a Screen
+declares none, because the folder that holds it is its scope. Capability Scenarios select contexts from their one Capability.
 Journey Scenario routes correlate one exact context for every ordered flow
 stage. Business Rule targets may select singular exact contexts. Journeys do
 not declare availability or Capabilities.
 
-When an Interface has Experiences, every availability record for it names the
-applicable Experiences:
+An Experience belongs to one Interface, so one scope id names both:
 
 | Experience | Customer web | Customer mobile | Operator CLI |
 | --- | --- | --- | --- |
@@ -98,16 +117,14 @@ applicable Experiences:
 When an Interface has no Experiences, name the Interface directly:
 
 ```yaml
-availability:
-  - interface: release-cli
+availability: [release-cli]
 ```
 
 Do not invent a ceremonial Experience for an Interface with only one coherent
-context. Conversely, once any Experience uses an Interface, all availability
-for that Interface is Experience-scoped; direct and Experience-scoped records
-cannot be mixed. The Experiences using an Interface must collectively cover all
-of its Actors. Availability is intended Product meaning. It is not inferred
-from shared code, routes, packages, or protocols.
+context. An Interface holds either Screens directly or Experiences, never both,
+so a scope id is never ambiguous. The Experiences inside an Interface must
+collectively cover all of its Actors. Availability is intended Product meaning.
+It is not inferred from shared code, routes, packages, or protocols.
 
 ## Behavioral core
 

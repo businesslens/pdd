@@ -9,3 +9,8 @@ references:
 # Ordering
 
 Everything between a full cart and a fulfilled order.
+
+## Boundary
+
+Owns cart contents, order state, and the transition between them. It does not
+own catalog information or fulfilment logistics.

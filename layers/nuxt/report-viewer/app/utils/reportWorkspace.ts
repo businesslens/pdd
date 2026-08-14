@@ -9,7 +9,7 @@
  * This is the stable view projection used by the shipped report viewer.
  */
 import type {
-  ProductReportV8,
+  ProductReportV9,
   ReportActor,
   ReportAvailability,
   ReportBusinessRule,
@@ -164,6 +164,8 @@ export interface ExperienceView extends EntityBase {
   capabilityIds: string[]
   screenIds: string[]
   journeyIds: string[]
+  /** Subject regions reached through the Capabilities available here. Never authored. */
+  domainIds: string[]
 }
 
 export interface ScreenView extends EntityBase {
@@ -185,10 +187,14 @@ export interface ScreenView extends EntityBase {
   journeyIds: string[]
   interfaceIds: string[]
   experienceIds: string[]
+  /** Subject regions reached through the Capabilities this Screen exposes. Never authored. */
+  domainIds: string[]
 }
 
 export interface DomainView extends EntityBase {
   kind: 'domain'
+  /** Experiences reached through this Domain's Capabilities. Never authored. */
+  experienceIds: string[]
   colorSlot?: number
   capabilityIds: string[]
   journeyIds: string[]
@@ -384,8 +390,15 @@ const titleOf = (items: Array<{ id: string, title?: string, name?: string }>, id
  * the same key silently matches nothing, which reads as "the model declares no
  * availability" rather than as a bug.
  */
+/**
+ * One scope, keyed by its own id.
+ *
+ * An Experience id already names the Interface that owns it, so the key is just
+ * that id; an undivided Interface keys by its own. Concatenating the two would
+ * repeat the Interface segment.
+ */
 export function availabilityKey(interfaceId: string, experienceId: string): string {
-  return `${interfaceId}::${experienceId}`
+  return experienceId || interfaceId
 }
 
 function unique(values: string[]): string[] {
@@ -451,7 +464,7 @@ function entryPoints(
  * once — a Business Rule lists its Capabilities, a Capability never lists its
  * Rules — so every backlink here is derived, never authored.
  */
-export function projectReportWorkspace(report: ProductReportV8): ReportWorkspace {
+export function projectReportWorkspace(report: ProductReportV9): ReportWorkspace {
   const model = report.model
   const pairsOf = (availability: ReportAvailability[]) =>
     expandPairs(availability, model.interfaces, model.experiences)
@@ -665,6 +678,15 @@ export function projectReportWorkspace(report: ProductReportV8): ReportWorkspace
     }
   })
 
+  /*
+    Domain is an axis, not a level: `domain` on a Capability is the only authored
+    Domain edge, and everything else is about the Domains of the Capabilities it
+    reaches. Deriving it keeps one authority — a second, authored copy could
+    disagree with the first and nothing would say which was right.
+  */
+  const domainsOfCapabilities = (capabilityIds: string[]): string[] =>
+    unique(capabilityIds.map(id => capabilityById.get(id)?.domainId).filter((id): id is string => Boolean(id)))
+
   const experiences: ExperienceView[] = model.experiences.map((item: ReportExperience) => {
     const declares = (availability: ReportAvailability[]) =>
       availability.some(entry => entry.experienceIds.includes(item.id))
@@ -684,7 +706,8 @@ export function projectReportWorkspace(report: ProductReportV8): ReportWorkspace
       capabilityBoundary: item.capabilityBoundary,
       capabilityIds: model.capabilities.filter(c => declares(c.availability)).map(c => c.id),
       screenIds: model.screens.filter(s => declares(s.availability)).map(s => s.id),
-      journeyIds: model.journeys.filter(j => journeyPairs(j.id).some(pair => pair.experienceId === item.id)).map(j => j.id)
+      journeyIds: model.journeys.filter(j => journeyPairs(j.id).some(pair => pair.experienceId === item.id)).map(j => j.id),
+      domainIds: domainsOfCapabilities(model.capabilities.filter(c => declares(c.availability)).map(c => c.id))
     }
   })
 
@@ -719,7 +742,8 @@ export function projectReportWorkspace(report: ProductReportV8): ReportWorkspace
       capabilityJourneyIds,
       journeyIds: unique([...scenarioJourneyIds, ...capabilityJourneyIds]),
       interfaceIds: unique(availability.map(pair => pair.interfaceId)),
-      experienceIds: unique(availability.map(pair => pair.experienceId).filter(Boolean))
+      experienceIds: unique(availability.map(pair => pair.experienceId).filter(Boolean)),
+      domainIds: domainsOfCapabilities(screen.capabilityIds)
     }
   })
 
@@ -738,6 +762,9 @@ export function projectReportWorkspace(report: ProductReportV8): ReportWorkspace
       capabilityIds,
       journeyIds: unique(capabilityIds.flatMap(id => journeysByCapability.get(id) || [])),
       screenIds: unique(capabilityIds.flatMap(id => screensByCapability.get(id) || [])),
+      experienceIds: unique(model.capabilities
+        .filter(c => c.domainId === domain.id)
+        .flatMap(c => c.availability.flatMap(entry => entry.experienceIds))),
       ruleIds: unique([
         ...(rulesByDomain.get(domain.id) || []),
         ...capabilityIds.flatMap(id => rulesByCapability.get(id) || [])

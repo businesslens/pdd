@@ -9,6 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Co-located assets.** Files beside `<type>.md` are product assets owned by
+  the entity; anything under the reserved `implementation/` directory
+  describes this realization and stays home. Class comes from the path, which is
+  the only rule a tool writing a capture on CI can satisfy. An optional
+  `assets:` list titles and scopes those files without ever setting their class,
+  and unlisted files stay legal.
+- An optional `state:` on a reference or asset, valid only on a Screen and
+  validated against its `## Product states`, so several captures of one view are
+  placed beside the state each depicts instead of arriving as a flat list.
+- An optional ordered `screens:` list on an Interface or Experience declaring
+  reading order over its own children. Reachability stays with the tree.
+- `businesslens view` serves repository files from a read-only, extension-
+  allowlisted mount, and the report viewer renders local `visual` references and
+  co-located assets as thumbnails instead of inert text.
+- Scenario rail items are indented under the Capability or Journey that owns
+  them, so the navigation teaches the containment the format enforces.
+
+
 - A new Learn from examples documentation group, beginning with a guided
   Content Feed Reader walkthrough that traces two complete Actor paths and
   explains why each optional entity earns its place.
@@ -30,6 +48,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Folder schema 5 — a breaking change with no compatibility reader.** An
+  entity is compact as `<id>.md` until it owns an asset or typed child
+  collection, then expands to `<id>/<type>.md`. Both shapes derive the same id
+  and cannot coexist. This keeps leaf-heavy collections readable while giving
+  every kind—Screens most of all—a co-located namespace when needed.
+  `product.md` similarly expands to `product/product.md` only when it owns
+  `logo.svg`.
+- **The surface tree nests.** An Experience belongs to exactly one Interface and
+  a Screen to exactly one scope, so the path is the parent relation. An
+  Experience no longer writes `interfaces:`, a Capability Scenario no longer
+  writes `capability:`, a Journey Scenario no longer writes `journey:`, and a
+  Screen no longer writes `availability:`. Reparenting is a `git mv` that reads
+  correctly in a pull request.
+- **`availability` collapses to a flat list of scope ids** such as
+  `customer-web::storefront`, and one exact context becomes a single
+  `context:` id. This removes the nested availability record, the `experiences`
+  sub-list, the rule requiring an Experience when the Interface uses them, and
+  the prohibition on mixing the two shapes — all four were consequences of an
+  Experience being able to span Interfaces.
+- **Surface-tree ids are qualified** by the path that distinguishes them.
+  Surface names repeat across Interfaces on purpose: two entities of the same
+  kind sharing a path suffix below their Interface are counterparts — the same
+  thing on two surfaces. Behavior-tree ids stay bare and globally unique.
+- **Domain is a subject axis, not a capability folder.** It now requires a
+  `## Boundary` section, and only Capability authors `domain:` — a Screen's,
+  Experience's or Journey's Domains are derived through their Capabilities
+  rather than restated where a second copy could disagree.
+- Product Report `schemaVersion` is `9.0.0`, and the catalog media type moves to
+  `version=9`. There is exactly one accepted report version, as before.
+- Scenario documentation moves onto its parent's page. A Scenario is not a
+  top-level entity — it has a mandatory single parent that decides its kind —
+  so Capability Scenarios are documented in `docs/capabilities.md`, Journey
+  Scenarios in `docs/journeys.md`, and the containment rule that separates them
+  in `docs/product-model.md`. The standalone `docs/scenarios.md` is removed.
+
 - An external system is an Actor only when it **initiates** interaction with
   the Product, and only then is the surface it arrives through an Interface.
   Interfaces are inbound by definition; an outbound connection the Product
@@ -42,8 +95,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   a webhook is a genuine Actor with a genuine Interface. No entity type, folder
   schema, parser, or linter behavior changes — `lint` cannot recover direction
   from the files, so the rule lives in `spec/format.md`, the Product Model
-  docs, and the mapping rubric. See
-  `adr/0011-external-systems-are-actors-only-when-they-initiate.md`.
+  docs, and the mapping rubric.
 - The Content Feed Reader Blueprint applies that rule. It drops the
   `feed-provider` Actor and the `syndicated-feed-integration` Interface;
   `feed-synchronization` now lives on the Reader-facing Interfaces where its
@@ -114,6 +166,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Capabilities and a Capability can group its Scenarios.
 
 ### Fixed
+
+- An unexpected entry in a collection is now an explicit finding. A file nested
+  one level too deep, or saved with the wrong extension, previously vanished
+  from the model with no finding at all.
+- The local viewer's Content-Security-Policy sets `manifest-src`, which was
+  blocking `site.webmanifest`.
+
 
 - The Workbench light and dark page surfaces are part of the shared theme
   again. The warm base, top glow, and paper grain moved from the optional
@@ -190,10 +249,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `report only` verification mode, an explicit missing-builder handoff, and an
   unchanged-gap stopping rule. Verification findings are re-derived rather than
   persisted in a receipt or ledger.
-- Accepted decisions covering [repository-owned files](./adr/0004-write-nothing-outside-businesslens.md),
-  [unified References](./adr/0008-unified-references-and-portable-reports.md),
-  [non-persisted verification](./adr/0006-verification-is-not-persisted.md),
-  and the [three-skill boundary](./adr/0007-three-skills-and-one-verification-loop.md).
+- Accepted decisions covering repository-owned files, unified References,
+  non-persisted verification, and the three-skill boundary.
 
 ### Changed
 

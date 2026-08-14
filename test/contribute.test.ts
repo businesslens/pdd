@@ -160,7 +160,7 @@ describe('contribute', { timeout: 30_000 }, () => {
     // The fixture deliberately carries code references — that is the leak being tested.
     cpSync(FIXTURE, model, { recursive: true })
     initialize(model)
-    expect(readFileSync(join(model, '.businesslens/journeys/browse-and-buy.md'), 'utf8'))
+    expect(readFileSync(join(model, '.businesslens/journeys/browse-and-buy/journey.md'), 'utf8'))
       .toContain('kind: code')
 
     fakeGh(bin, capture)
@@ -198,14 +198,14 @@ describe('contribute', { timeout: 30_000 }, () => {
     const files = recorded.prFiles ?? []
     expect(files.some(file => file === 'blueprints/fixture-shop/blueprint.yaml')).toBe(false)
     expect(files.some(file => file.startsWith('blueprints/fixture-shop/.businesslens/'))).toBe(true)
-    expect(files).toContain('blueprints/fixture-shop/.businesslens/logo.svg')
+    expect(files).toContain('blueprints/fixture-shop/.businesslens/product/logo.svg')
 
     // The point of the whole flow: the model in the pull request is regenerated
     // from a portable report, so no workspace reference survives into it.
     const contents = recorded.prContents ?? {}
     expect(contents['blueprints/fixture-shop/.businesslens/README.md'])
       .toContain('BusinessLens Product Model')
-    expect(contents['blueprints/fixture-shop/.businesslens/logo.svg']).toContain('<svg')
+    expect(contents['blueprints/fixture-shop/.businesslens/product/logo.svg']).toContain('<svg')
     const modelFiles = Object.entries(contents)
       .filter(([file]) => file.startsWith('blueprints/fixture-shop/.businesslens/'))
     expect(modelFiles.length).toBeGreaterThan(0)

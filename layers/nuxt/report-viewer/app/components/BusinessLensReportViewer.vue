@@ -7,11 +7,11 @@
  * navigation and a pull command. Those differences arrive as slots and a
  * bindable section, so the Workbench itself stays one implementation.
  */
-import type { ProductReportV8 } from 'businesslens/report'
+import type { ProductReportV9 } from 'businesslens/report'
 import { projectReportWorkspace } from '../utils/reportWorkspace'
 
 const props = defineProps<{
-  report: ProductReportV8
+  report: ProductReportV9
   /** Host-resolved `.businesslens/logo.svg`; rendered in the product header. */
   logoSrc?: string | null
 }>()

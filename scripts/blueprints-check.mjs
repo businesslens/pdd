@@ -81,13 +81,13 @@ for (const slug of entries) {
     errors.push(`${label}: .businesslens/ is missing`)
     continue
   }
-  const logoFile = join(dir, '.businesslens', 'logo.svg')
+  const logoFile = join(dir, '.businesslens', 'product', 'logo.svg')
   if (!existsSync(logoFile)) {
-    errors.push(`${label}: .businesslens/logo.svg is required`)
+    errors.push(`${label}: .businesslens/product/logo.svg is required`)
   } else {
     const stat = await lstat(logoFile)
     if (stat.isSymbolicLink() || !stat.isFile()) {
-      errors.push(`${label}: .businesslens/logo.svg must be a regular file, not a symbolic link`)
+      errors.push(`${label}: .businesslens/product/logo.svg must be a regular file, not a symbolic link`)
     } else {
       for (const issue of validateProductLogo(await readFile(logoFile))) {
         errors.push(`${label}: ${issue}`)

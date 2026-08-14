@@ -1,0 +1,51 @@
+---
+kind: edge
+actors: [reader]
+result: not-achieved
+flow:
+  - id: open-backlog
+    capability: reading-state
+    operation: Open a backlog with nothing left to read
+  - id: refresh-sources
+    capability: feed-synchronization
+    operation: Refresh the followed sources for new items
+  - id: show-caught-up
+    capability: reading-state
+    operation: Present the unchanged caught-up backlog
+routes:
+  - id: web
+    contexts:
+      - stage: open-backlog
+        context: reader-web::personal-library
+      - stage: refresh-sources
+        context: reader-web::personal-library
+      - stage: show-caught-up
+        context: reader-web::personal-library
+  - id: mobile
+    contexts:
+      - stage: open-backlog
+        context: reader-mobile::personal-library
+      - stage: refresh-sources
+        context: reader-mobile::personal-library
+      - stage: show-caught-up
+        context: reader-mobile::personal-library
+---
+
+# Catch up when nothing new arrived
+
+## Trigger
+
+The Reader opens the unread library expecting new items to work through.
+
+## Steps
+
+1. The Reader opens an unread library with nothing left to read
+2. The Reader refreshes their followed sources
+3. No feed returns an item the library does not already hold
+4. The unread library still presents the caught-up state
+
+## Outcome
+
+The Journey goal is not achieved: there is nothing new to work through, so the
+Reader makes no progress through the backlog. The followed sources and the
+Reader's durable history are unchanged.
