@@ -46,7 +46,9 @@ export default defineNuxtConfig({
     // the shared lab keeps this host on the same background audition flow as
     // the landing application. Keep the composition here so report-viewer
     // stays neutral for consumers that want only the approved theme.
-    resolve('../../layers/nuxt/report-viewer'),
+    // `workbench-lab` extends `report-viewer`, so the shipped Workbench arrives
+    // through it and the four alternative readings arrive beside it.
+    resolve('../../layers/nuxt/workbench-lab'),
     resolve('../../layers/nuxt/theme-lab')
   ],
   ssr: false,

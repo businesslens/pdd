@@ -76,11 +76,16 @@ describe('shared BusinessLens theme lab', () => {
   it('keeps the local viewer on the shared landing-page background flow', () => {
     const config = readFileSync(join(root, 'viewer/app/nuxt.config.ts'), 'utf8')
     const localViewer = readFileSync(join(root, 'viewer/app/app/app.vue'), 'utf8')
-    const reportLayer = config.indexOf("resolve('../../layers/nuxt/report-viewer')")
+    /* The report layer arrives through `workbench-lab`, which extends it and adds
+       the alternative readings. What matters here is unchanged: the report
+       layer comes first, and the theme lab comes after it. */
+    const reportLayer = config.indexOf("resolve('../../layers/nuxt/workbench-lab')")
     const themeLabLayer = config.indexOf("resolve('../../layers/nuxt/theme-lab')")
+    const labConfig = readFileSync(join(root, 'layers/nuxt/workbench-lab/nuxt.config.ts'), 'utf8')
 
     expect(reportLayer).toBeGreaterThan(-1)
     expect(themeLabLayer).toBeGreaterThan(reportLayer)
+    expect(labConfig).toContain("join(currentDir, '../report-viewer')")
     expect(localViewer).toContain('useBusinessLensThemeHead()')
     expect(localViewer).toContain('useBusinessLensThemeLabHead()')
     expect(localViewer).toContain('useBusinessLensThemeLab()')

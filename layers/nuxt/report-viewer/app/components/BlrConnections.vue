@@ -185,8 +185,26 @@ function overflow(item: RelationRow): number {
   return props.max ? Math.max(0, item.ids.length - props.max) : 0
 }
 
-function title(kind: ReportEntityKind, id: string): string {
-  return resolveEntity(props.workspace, kind, id)?.title ?? id
+/*
+  Two counterparts reaching the same entity produce two chips with one name.
+
+  "Source list, Source list" reads as a rendering bug rather than as the true
+  statement that this Capability is exposed on both surfaces. The Interface is
+  the segment that distinguishes them, and it is added only where the ambiguity
+  is actually present — every other chip stays short.
+*/
+function title(kind: ReportEntityKind, id: string, siblings: string[]): string {
+  const entity = resolveEntity(props.workspace, kind, id)
+  if (!entity) return id
+  const shared = siblings.filter((other) => {
+    if (other === id) return false
+    return resolveEntity(props.workspace, kind, other)?.title === entity.title
+  })
+  if (!shared.length) return entity.title
+  const [surface] = entity.id.split('::')
+  if (!surface || surface === entity.id) return entity.title
+  const owner = resolveEntity(props.workspace, 'interface', surface)?.title ?? surface
+  return `${entity.title} · ${owner.replace(/ application$/, '')}`
 }
 
 function pick(kind: ReportEntityKind, id: string) {
@@ -219,7 +237,7 @@ function pick(kind: ReportEntityKind, id: string) {
           @click="pick(item.kind, id)"
         >
           <BlrKind :kind="item.kind" :labelled="false" size="xs" />
-          <span class="truncate">{{ title(item.kind, id) }}</span>
+          <span class="truncate">{{ title(item.kind, id, item.ids) }}</span>
         </button>
         <span v-if="overflow(item)" class="self-center text-xs text-dimmed">+{{ overflow(item) }}</span>
       </div>

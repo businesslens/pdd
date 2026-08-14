@@ -118,7 +118,12 @@ watch([section, entity], () => {
           :description="liveError"
         />
       </UContainer>
-      <BusinessLensReportViewer
+      <!--
+        The lab renders the shipped viewer for the `workbench` reading and an
+        alternative shell for the other four. Auditions stay in the local
+        viewer; nothing here reaches the packaged layer.
+      -->
+      <BusinessLensReportLab
         v-model:section="section"
         v-model:entity="entity"
         :report="data"
