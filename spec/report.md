@@ -74,8 +74,9 @@ The report schema accepts only content that can expand into canonical entity
 Markdown: titles and list items are single-line, set-valued relation arrays are
 unique, required descriptions and behavior sections are non-empty, Capability
 Scenario availability, Journey Scenario route contexts, and Business Rule
-targets resolve to existing entities, every achieved Journey Scenario uses at
-least two distinct Capabilities, and Interface/Capability consistency holds.
+targets resolve to existing entities, no two routes of one Journey Scenario
+repeat the same correlation, every achieved Journey Scenario uses at least two
+distinct Capabilities, and Interface/Capability consistency holds.
 Product Report v9 is the only accepted report version — there is no
 compatibility reader for an earlier one. No report profile requires a
 reference. Present references remain subject to the same strict shape and

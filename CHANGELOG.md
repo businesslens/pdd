@@ -67,6 +67,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **A Journey Scenario's flow and routes render as one table**, stages down and
+  routes across, so a stage label is stated once instead of once per route and
+  the context — the only fact that differs between routes — lands on the axis. A
+  route arriving at a stage in a different context than it left the previous one
+  in is marked as a handoff, which is the deliberate composition a Journey is
+  created for and which nothing else in the model states. Steps render as prose
+  rather than a second numbered ladder beside the flow.
+- `spec/format.md` and the Journeys page now state what `## Steps` is for in a
+  Journey Scenario: the independent prose claim over the same behavior, carrying
+  the transition between stages, which concrete path each stage takes, and
+  Product-side behavior. Both registers previously required only a non-empty
+  ordered list, which permitted Steps that restate the flow operations and say
+  nothing more. They also now record why a flow entry names a Capability and
+  never a Capability Scenario — a Capability is durable while its Scenarios
+  split and merge, so composition names the stable entity.
 - **The report navigation rail lists kinds, flat.** Kinds do not nest —
   instances do — so both Scenario kinds leave the rail and become a tab on the
   Capability or Journey that owns them, which is the resolution the
@@ -202,6 +217,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Two routes of one Journey Scenario that assign the same context to every stage
+  are now a finding, in both `lint` and report validation. A route id names one
+  correlation, so a second id over the same assignment claims a lane the Product
+  does not have. The Content Feed Reader Blueprint carried two: a
+  `publish-on-mobile` and an `unlist-from-mobile` route that never left the web
+  Interface, and could not have — neither Capability declares a mobile context.
 - The report panel no longer keeps its scroll offset when the entity changes.
   Selecting a relation that sat low in one reading opened the next one below its
   own title, id and lead.

@@ -454,6 +454,9 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
       if (/\r|\n/.test(item.operation)) errors.push(`${label}: operation must be a single line`)
     }
     const routeIds = new Set<string>()
+    /* A route id names one correlation, so two ids for the same one claim a lane
+       the Product does not have — the signature is the whole assignment. */
+    const correlations = new Map<string, string>()
     for (const [routeIndex, route] of scenario.routes.entries()) {
       const routeLabel = `${scenario.file}: route ${routeIndex + 1}`
       if (!route.id) errors.push(`${routeLabel}: needs a non-empty id`)
@@ -483,6 +486,12 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
       }
       for (const stage of scenario.flow) {
         if (!seenStages.has(stage.id)) errors.push(`${routeLabel}: missing context for flow stage "${stage.id}"`)
+      }
+      if (scenario.flow.every(stage => routePairsByStage.has(stage.id))) {
+        const correlation = scenario.flow.map(stage => `${stage.id}\0${routePairsByStage.get(stage.id)}`).join('\n')
+        const twin = correlations.get(correlation)
+        if (twin === undefined) correlations.set(correlation, route.id)
+        else errors.push(`${routeLabel}: route "${route.id}" repeats every context of route "${twin}"`)
       }
       const firstStage = scenario.flow[0]
       const firstPair = firstStage ? routePairsByStage.get(firstStage.id) : undefined

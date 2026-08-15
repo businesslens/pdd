@@ -20,7 +20,7 @@ import type {
   ScenarioView,
   ScreenView
 } from '../utils/reportWorkspace'
-import { isScenarioKind } from '../utils/reportWorkspace'
+import { isScenarioKind, journeyFlowMatrix } from '../utils/reportWorkspace'
 
 const props = defineProps<{
   workspace: ReportWorkspace
@@ -46,9 +46,18 @@ const domainId = computed(() => props.entity.kind === 'capability'
   ? (props.entity as CapabilityView).domainId
   : '')
 
-function routeStageTitle(stageId: string): string {
-  return asScenario.value.flow.find(item => item.id === stageId)?.operation ?? stageId
-}
+/* Stages down, routes across — see journeyFlowMatrix for why they are one table. */
+const flowMatrix = computed(() => (isScenario.value ? journeyFlowMatrix(asScenario.value) : null))
+
+/** One route needs no column to tell it apart, so its id rides the heading. */
+const flowMeta = computed(() => {
+  const matrix = flowMatrix.value
+  if (!matrix) return ''
+  const stages = `${matrix.stages.length} ${matrix.stages.length === 1 ? 'stage' : 'stages'}`
+  return matrix.routeIds.length === 1
+    ? `${stages} · route ${matrix.routeIds[0]}`
+    : `${stages} · ${matrix.routeIds.length} routes`
+})
 
 /** True when this component would render nothing at all. */
 const empty = computed(() => !props.entity.intent
@@ -96,59 +105,62 @@ const empty = computed(() => !props.entity.intent
         <BlrProse :text="asScenario.trigger" size="base" class="max-w-3xl" />
       </section>
 
-      <section v-if="asScenario.flow.length" class="space-y-3">
-        <h2 class="blr-page-heading">Flow <span class="blr-meta ms-1">{{ asScenario.flow.length }}</span></h2>
-        <ol class="grid gap-2 lg:grid-cols-2">
-          <li
-            v-for="(item, index) in asScenario.flow"
-            :key="`${item.capabilityId}-${index}`"
-            class="rounded-lg border border-default px-4 py-3"
-          >
-            <p class="text-sm font-medium text-highlighted">{{ index + 1 }}. {{ item.operation }}</p>
-            <BlrLinks
-              :workspace="workspace"
-              :ids="[item.capabilityId]"
-              kind="capability"
-              label="Capability"
-              interactive
-              @select="emit('select', $event)"
-            />
-            <BlrAvail :pairs="item.availability" label="Contexts" />
-          </li>
-        </ol>
-      </section>
-
-      <section v-if="asScenario.routes.length" class="space-y-3">
-        <h2 class="blr-page-heading">Routes <span class="blr-meta ms-1">{{ asScenario.routes.length }}</span></h2>
-        <div class="grid gap-3 lg:grid-cols-2">
-          <div v-for="route in asScenario.routes" :key="route.id" class="rounded-xl border border-default p-4">
-            <code class="rounded bg-muted px-2 py-1 font-mono text-xs text-muted">{{ route.id }}</code>
-            <ol class="mt-3 space-y-2">
-              <li
-                v-for="(item, index) in route.contexts"
-                :key="item.stageId"
-                class="rounded-lg bg-elevated/35 px-3 py-2.5"
+      <!--
+        Flow and routes are one table: the stage is a row header stated once,
+        each route a column, the exact context the cell. Drawn apart they
+        repeated every stage label once per route and hid the one fact that
+        differs. A handoff — a route arriving in a new context — is marked,
+        because that transition is why the Journey exists.
+      -->
+      <section v-if="flowMatrix" class="space-y-3">
+        <h2 class="blr-page-heading">Flow <span class="blr-meta ms-1">{{ flowMeta }}</span></h2>
+        <div class="overflow-x-auto rounded-xl border border-default">
+          <table class="w-full border-collapse text-left">
+            <thead v-if="flowMatrix.routeIds.length > 1">
+              <tr class="border-b border-default bg-elevated/35">
+                <th scope="col" class="blr-field px-4 py-2.5 font-normal">Stage</th>
+                <th v-for="routeId in flowMatrix.routeIds" :key="routeId" scope="col" class="px-4 py-2.5">
+                  <code class="rounded bg-muted px-2 py-1 font-mono text-xs text-muted">{{ routeId }}</code>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="stage in flowMatrix.stages"
+                :key="stage.id"
+                class="border-b border-default align-top last:border-b-0"
               >
-                <p class="text-sm font-medium text-highlighted">{{ index + 1 }}. {{ routeStageTitle(item.stageId) }}</p>
-                <BlrAvail :pairs="[item.context]" label="Context" />
-              </li>
-            </ol>
-          </div>
+                <th scope="row" class="max-w-sm px-4 py-3 font-normal">
+                  <p class="text-sm font-medium text-highlighted">{{ stage.index + 1 }}. {{ stage.operation }}</p>
+                  <BlrLinks
+                    :workspace="workspace"
+                    :ids="[stage.capabilityId]"
+                    kind="capability"
+                    label="Capability"
+                    interactive
+                    @select="emit('select', $event)"
+                  />
+                </th>
+                <td v-for="cell in stage.cells" :key="cell.routeId" class="px-4 py-3">
+                  <p v-if="cell.handoff" class="blr-meta mb-1.5 flex items-center gap-1 text-primary">
+                    <UIcon name="i-lucide-corner-down-right" class="size-3" />handoff
+                  </p>
+                  <BlrAvail :pairs="cell.context ? [cell.context] : []" label="" />
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </section>
 
+      <!-- Steps are the prose claim, not a second copy of the flow — narrative, not a ladder. -->
       <section class="space-y-3">
-        <h2 class="blr-page-heading">Steps <span class="blr-meta ms-1">{{ asScenario.steps.length }}</span></h2>
-        <ol class="max-w-3xl space-y-2">
-          <li
-            v-for="(step, index) in asScenario.steps"
-            :key="index"
-            class="flex gap-3 rounded-lg border border-default px-4 py-3"
-          >
-            <span class="flex size-6 shrink-0 items-center justify-center rounded-full bg-muted font-mono text-xs font-medium text-muted">
-              {{ index + 1 }}
-            </span>
-            <span class="pt-0.5 text-sm leading-5 text-default">{{ step }}</span>
+        <h2 class="blr-page-heading">
+          Steps <span class="blr-meta ms-1">what happens, in words</span>
+        </h2>
+        <ol class="max-w-3xl list-decimal space-y-2 ps-5 marker:font-mono marker:text-xs marker:text-dimmed">
+          <li v-for="(step, index) in asScenario.steps" :key="index" class="ps-1 text-sm leading-6 text-default">
+            {{ step }}
           </li>
         </ol>
       </section>

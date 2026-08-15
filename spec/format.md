@@ -963,6 +963,10 @@ Capability. The route is the correlation authority: web and mobile lanes do not
 imply cross-device transitions, while an intentional cross-Interface handoff is
 written directly into one route.
 
+No two routes may assign the same context to every stage. A route id names one
+distinct correlation, so a repeated assignment states the same supported path
+twice under two names and claims a lane the Product does not have.
+
 Every route context must permit at least one Scenario Actor, and every Scenario
 Actor must be supported by at least one route context. The first context of
 every route must permit an Actor who is both a Scenario Actor and an Actor of
@@ -975,13 +979,22 @@ Outcome. An achieved Journey Scenario must use at least two distinct
 Capabilities. A not-achieved Journey Scenario may stop after one Capability,
 but its Outcome must state the Journey-level reason the goal was not achieved.
 
-Flow entries reference Capabilities, never Capability Scenarios. Their
-`operation` fields are the structured stage labels and the Journey Scenario
-Steps expand the flow in the same order; the number of prose Steps need not
-equal the number of flow entries. A local
-permission, validation, conflict, or failure contract remains a separate
-Capability Scenario when it is independently observable; the Journey Scenario
-states only its end-to-end consequence for the Goal.
+Flow entries reference Capabilities, never Capability Scenarios, because a
+Capability is durable while its Scenarios split and merge as local behavior is
+refined. Composition names the stable entity, so a local refinement never
+rewrites the Journey Scenarios that compose it. A local permission, validation,
+conflict, or failure contract remains a separate Capability Scenario when it is
+independently observable; the Journey Scenario states only its end-to-end
+consequence for the Goal.
+
+`operation` fields are the structured stage labels, and `## Steps` is the
+independent prose claim over the same behavior, expanding the flow in the same
+order. The number of prose Steps need not equal the number of flow entries, and
+Steps are not a prose copy of the `operation` labels. At Journey level they
+state what the flow cannot: the transition from one stage to the next, which
+concrete path the Scenario takes through each stage Capability, and Product-side
+behavior that is not an Actor invoking a Capability. A Steps list that only
+restates the operations in order states nothing the flow did not.
 
 The flow is linear. A Decision point may vary detail while preserving the same
 Capability sequence and terminal Outcome. A branch that changes either belongs

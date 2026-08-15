@@ -439,6 +439,28 @@ Supports order operations. It does not expose a shopper's account.
     expect(errors).toContain('an achieved Journey Scenario needs at least two distinct Capabilities')
   })
 
+  /*
+    Routes are correlated paths, so a second id over the same assignment claims
+    a lane the Product does not have — a `mobile` route that never leaves web.
+  */
+  it('rejects two routes that correlate the same context at every stage', () => {
+    const cwd = fixtureCopy()
+    const scenario = join(cwd, '.businesslens/journeys/browse-and-buy/scenarios/browse-and-complete-checkout.md')
+    writeFileSync(scenario, readFileSync(scenario, 'utf8').replaceAll('customer-mobile::storefront', 'customer-web::storefront'))
+    expect(run(cwd).errors.join('\n')).toContain('route "mobile" repeats every context of route "web"')
+  })
+
+  /* One differing stage is a real cross-Interface handoff, not a repeated lane. */
+  it('keeps two routes that differ at any single stage', () => {
+    const cwd = fixtureCopy()
+    const scenario = join(cwd, '.businesslens/journeys/browse-and-buy/scenarios/browse-and-complete-checkout.md')
+    writeFileSync(scenario, readFileSync(scenario, 'utf8').replace(
+      '      - stage: complete-checkout\n        context: customer-mobile::storefront',
+      '      - stage: complete-checkout\n        context: customer-web::storefront'
+    ))
+    expect(run(cwd).errors.join('\n')).not.toContain('repeats every context')
+  })
+
   it('treats kind and Journey result as orthogonal fields', () => {
     const cwd = fixtureCopy()
     const source = join(cwd, '.businesslens/journeys/browse-and-buy/scenarios/browse-and-complete-checkout.md')

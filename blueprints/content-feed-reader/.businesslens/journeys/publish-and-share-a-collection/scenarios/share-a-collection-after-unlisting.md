@@ -16,12 +16,6 @@ routes:
         context: reader-web::personal-library
       - stage: attempt-public-read
         context: reader-web::public-reading
-  - id: unlist-from-mobile
-    contexts:
-      - stage: publish-then-unlist
-        context: reader-web::personal-library
-      - stage: attempt-public-read
-        context: reader-web::public-reading
 ---
 
 # Share a collection the owner already unlisted

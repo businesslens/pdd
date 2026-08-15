@@ -736,6 +736,9 @@ export function validateProductReport(report: ProductReportV9): string[] {
       }
     }
     const routeIds = new Set<string>()
+    /* A route id names one correlation; two ids for the same one claim a lane
+       the Product does not have. Mirrors the same rule in lint. */
+    const correlations = new Map<string, string>()
     for (const [routeIndex, route] of scenario.routes.entries()) {
       const routeLabel = `${label}: route ${routeIndex + 1}`
       if (routeIds.has(route.id)) issues.push(`${routeLabel}: duplicate route id "${route.id}"`)
@@ -762,6 +765,12 @@ export function validateProductReport(report: ProductReportV9): string[] {
       }
       for (const stage of scenario.flow) {
         if (!seenStages.has(stage.id)) issues.push(`${routeLabel}: missing context for flow stage "${stage.id}"`)
+      }
+      if (scenario.flow.every(stage => routePairsByStage.has(stage.id))) {
+        const correlation = scenario.flow.map(stage => `${stage.id}\0${routePairsByStage.get(stage.id)}`).join('\n')
+        const twin = correlations.get(correlation)
+        if (twin === undefined) correlations.set(correlation, route.id)
+        else issues.push(`${routeLabel}: route "${route.id}" repeats every context of route "${twin}"`)
       }
       const firstStage = scenario.flow[0]
       const firstPair = firstStage ? routePairsByStage.get(firstStage.id) : undefined

@@ -16,12 +16,6 @@ routes:
         context: reader-web::personal-library
       - stage: read-collection
         context: reader-web::public-reading
-  - id: publish-on-mobile
-    contexts:
-      - stage: publish-collection
-        context: reader-web::personal-library
-      - stage: read-collection
-        context: reader-web::public-reading
 ---
 
 # Publish and read a collection

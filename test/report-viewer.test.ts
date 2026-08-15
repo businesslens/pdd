@@ -70,6 +70,53 @@ describe('stable Product Report Workbench', () => {
     expect(workspace.byKey.get(`interface:${sharedId}`)?.kind).toBe('interface')
   })
 
+  /*
+    Flow and routes are one table, so the stage label is stated once and the
+    context — the only fact that differs between routes — lands on the axis.
+  */
+  it('reads a Journey Scenario flow as one stages-by-routes table', async () => {
+    const { journeyFlowMatrix } = await import(workspaceModulePath)
+    const report = compileReport(loadModel(FIXTURE), '2026-08-08')
+    const workspace = projectReportWorkspace(report)
+    const scenario = workspace.journeyScenarios.find((item: any) => item.id === 'browse-and-complete-checkout')!
+
+    const matrix = journeyFlowMatrix(scenario)
+    expect(matrix.routeIds).toEqual(['web', 'mobile'])
+    expect(matrix.stages.map((stage: any) => stage.id)).toEqual(['select-product', 'complete-checkout'])
+    expect(matrix.stages[1].cells.map((cell: any) => cell.context.key)).toEqual([
+      'customer-web::storefront',
+      'customer-mobile::storefront'
+    ])
+    /* Parallel lanes are not a handoff — neither route changes context. */
+    expect(matrix.stages.every((stage: any) => stage.cells.every((cell: any) => !cell.handoff))).toBe(true)
+    /* A Capability Scenario has one stage and nothing to correlate. */
+    expect(journeyFlowMatrix(workspace.capabilityScenarios[0])).toBeNull()
+  })
+
+  /*
+    The handoff is the deliberate composition a Journey is created for, and the
+    only place the model states it is a route changing context between stages.
+  */
+  it('marks the stage a route hands off into, per route', async () => {
+    const { journeyFlowMatrix } = await import(workspaceModulePath)
+    const report = compileReport(loadModel(FIXTURE), '2026-08-08')
+    const scenario = report.model.journeyScenarios.find(
+      (item: any) => item.id === 'browse-and-complete-checkout'
+    )!
+    const handoffContext = scenario.routes
+      .find((route: any) => route.id === 'web')!
+      .contexts.find((context: any) => context.stageId === 'complete-checkout')!
+    handoffContext.experienceId = null
+
+    const workspace = projectReportWorkspace(report)
+    const matrix = journeyFlowMatrix(
+      workspace.journeyScenarios.find((item: any) => item.id === 'browse-and-complete-checkout')!
+    )
+
+    expect(matrix.stages[0].cells.map((cell: any) => cell.handoff)).toEqual([false, false])
+    expect(matrix.stages[1].cells.map((cell: any) => cell.handoff)).toEqual([true, false])
+  })
+
   it('derives Journey availability only from achieved flows', () => {
     const report = compileReport(loadModel(FIXTURE), '2026-08-08')
     const scenario = report.model.journeyScenarios[0]!
@@ -89,7 +136,7 @@ describe('stable Product Report Workbench', () => {
     expect(renderer).toContain('ProductReportV9')
     expect(renderer).toContain('projectReportWorkspace')
     expect(renderer).toContain('<BlrWorkbench')
-    expect(source('app/components/BlrEntityBody.vue')).toContain('asScenario.routes')
+    expect(source('app/components/BlrEntityBody.vue')).toContain('journeyFlowMatrix')
     expect(workbench).toContain('<BlrProductTopology')
     /* Grouping is how authored Domains earn their place in navigation. */
     expect(workbench).toContain('groupKind')

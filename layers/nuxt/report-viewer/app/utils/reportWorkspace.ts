@@ -1176,3 +1176,65 @@ export function resolveScenarios(workspace: ReportWorkspace, ids: string[]): Sce
     .map(id => resolveScenario(workspace, id))
     .filter((entity): entity is ScenarioView => Boolean(entity))
 }
+
+/** One route's context at one stage. */
+export interface JourneyFlowCell {
+  routeId: string
+  context: AvailabilityPair | null
+  /** This route arrives here in a different context than it left the last stage in. */
+  handoff: boolean
+}
+
+export interface JourneyFlowStage {
+  id: string
+  index: number
+  operation: string
+  capabilityId: string
+  /** One cell per route, in authored route order. */
+  cells: JourneyFlowCell[]
+}
+
+export interface JourneyFlowMatrix {
+  routeIds: string[]
+  stages: JourneyFlowStage[]
+}
+
+/**
+ * A Journey Scenario's flow and routes as the one table they are: stages down,
+ * routes across, the exact context in the cell.
+ *
+ * Rendered apart, the two repeat every stage label once per route and leave the
+ * only differing fact — the context — to be found by diffing cards. Together
+ * they also expose the handoff: within one route, a stage whose context differs
+ * from the previous stage's. That transition is the deliberate composition a
+ * Journey is created for, and nothing else in the model states it.
+ *
+ * Returns null for a Capability Scenario, which has no stages to correlate.
+ */
+export function journeyFlowMatrix(scenario: ScenarioView): JourneyFlowMatrix | null {
+  if (!scenario.flow.length) return null
+  const contextAt = (routeIndex: number, stageId: string): AvailabilityPair | null =>
+    scenario.routes[routeIndex]?.contexts.find(entry => entry.stageId === stageId)?.context ?? null
+
+  return {
+    routeIds: scenario.routes.map(route => route.id),
+    stages: scenario.flow.map((stage, index) => {
+      const previous = index > 0 ? scenario.flow[index - 1]! : null
+      return {
+        id: stage.id,
+        index,
+        operation: stage.operation,
+        capabilityId: stage.capabilityId,
+        cells: scenario.routes.map((route, routeIndex) => {
+          const context = contextAt(routeIndex, stage.id)
+          const before = previous ? contextAt(routeIndex, previous.id) : null
+          return {
+            routeId: route.id,
+            context,
+            handoff: Boolean(before && context && before.key !== context.key)
+          }
+        })
+      }
+    })
+  }
+}

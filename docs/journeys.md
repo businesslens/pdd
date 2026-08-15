@@ -206,7 +206,7 @@ The Journey goal is achieved: a reviewable change proposal exists.
 | `references` | no | Use the documented [Reference](./references.md) shape. |
 | Lead paragraph | no | Start with a named H2; move starting-condition prose into `## Trigger`. |
 | `## Trigger` | yes | Begin with the Actor pursuing the Journey Goal. |
-| `## Steps` | yes | Provide a non-empty ordered list with each item on one physical line. |
+| `## Steps` | yes | Provide a non-empty ordered list with each item on one physical line. Expand the flow rather than restating its operations. |
 | `## Decision points` | no | Give each H3 decision one Product question and at least two `condition → outcome` branches. |
 | `## Edge cases` | no | Provide a non-empty bullet list when present, with each item on one physical line. |
 | `## Outcome` | yes | State whether and why the Journey Goal was achieved or not achieved. |
@@ -245,9 +245,11 @@ repeat or stop. Every achieved Journey Scenario uses at least two
 distinct Capabilities. A not-achieved Scenario may stop after one Capability
 when that behavior prevents the Goal.
 
-Flow entries reference Capabilities, never Capability Scenarios. `operation`
-provides a structured stage label, while `## Steps` expands the flow in the same
-order. The number of prose Steps need not equal the number of flow entries.
+Flow entries reference Capabilities, never Capability Scenarios. A Capability is
+durable, while its Scenarios split and merge as local behavior is refined, so
+composition names the stable entity and a local refinement never rewrites the
+Journey Scenarios that compose it. It also keeps a concrete local case from
+becoming a reusable operation entity.
 
 For example, a flow entry may name `configure-repository` with operation "Set
 the default branch." If the model instead has only a vague
@@ -281,6 +283,32 @@ Actor to use every stage.
 `kind` classifies the nature of the variation; `result` records whether the
 Journey Goal was achieved. `kind: edge` with `result: achieved` and
 `kind: primary` with `result: not-achieved` are structurally valid.
+
+### Steps
+
+`## Steps` is not a prose copy of the flow. The flow is the structured claim
+about which Capabilities this Scenario composes and in what order; Steps are the
+independent prose claim over the same behavior. Because the two are authored
+separately they can disagree, and `businesslens-verify` matches one against the
+other, so a Steps list derived from the operations would make that check
+vacuous.
+
+At Journey level, Steps state three things the flow cannot:
+
+- **the transition between stages.** The flow says one stage follows another and
+  never how the Actor gets there. In the example above, "The contributor opens
+  the branch comparison in the repository workspace" is the handoff from Git
+  transport to the web workspace — the reason that Journey exists at all.
+- **which concrete path each stage takes.** A flow entry names a Capability, so
+  a `propose-code-change` stage does not say whether the proposal was opened for
+  review, refused by branch protection, or blocked for missing permission. The
+  Steps and the Outcome do.
+- **Product-side behavior.** A flow entry is an Actor invoking a Capability, so
+  what the Product performs on its own — validating, persisting, notifying — has
+  no flow entry to sit in.
+
+A Steps list that only restates the `operation` labels in order states nothing
+the flow did not.
 
 ### Journey Scenario decision points
 
