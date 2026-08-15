@@ -101,9 +101,9 @@ The Screen does not change product or inventory data.
 
 A referenced Capability Scenario must use a Capability named by the Screen and
 share at least one exact availability context with it. A referenced Journey
-Scenario must have a flow entry whose Capability is named by the Screen and
-at least one route context for that flow stage intersecting the Screen's
-availability.
+Scenario must have a Capability-bearing Step whose Capability is named by the
+Screen and at least one inline route context for that Step intersecting the
+Screen's availability.
 
 ## Web and mobile
 

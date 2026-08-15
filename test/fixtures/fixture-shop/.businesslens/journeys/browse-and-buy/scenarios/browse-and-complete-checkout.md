@@ -2,26 +2,18 @@
 kind: primary
 actors: [shopper]
 result: achieved
-flow:
-  - id: select-product
+steps:
+  - text: The shopper finds and selects an available product
     capability: catalog-browsing
-    operation: Find and select an available product
-  - id: complete-checkout
+    routes:
+      web: customer-web::storefront
+      mobile: customer-mobile::storefront
+  - text: The shopper submits checkout
     capability: checkout
-    operation: Submit payment and confirm the order
-routes:
-  - id: web
-    contexts:
-      - stage: select-product
-        context: customer-web::storefront
-      - stage: complete-checkout
-        context: customer-web::storefront
-  - id: mobile
-    contexts:
-      - stage: select-product
-        context: customer-mobile::storefront
-      - stage: complete-checkout
-        context: customer-mobile::storefront
+    routes:
+      web: customer-web::storefront
+      mobile: customer-mobile::storefront
+  - text: The Product confirms the paid order
 references:
   - kind: code
     role: implementation
@@ -33,12 +25,6 @@ references:
 ## Trigger
 
 The shopper wants to find and purchase an available product.
-
-## Steps
-
-1. The shopper finds and selects an available product
-2. The shopper submits checkout
-3. The Product confirms the paid order
 
 ## Outcome
 

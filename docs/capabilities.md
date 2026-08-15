@@ -78,9 +78,9 @@ Complete a purchase without confirming an unpaid order.
 Capability files do not list Actors, Capability Scenarios, Journey Scenarios,
 Journeys, Screens, or Business Rules. Other entities own those relations, and
 consumers derive backlinks. A Capability Scenario's `capability` field creates
-its direct acceptance relation, while a Journey Scenario names concrete
-Capability flow entries. Journey Capability backlinks are derived from those
-entries rather than authored on the Journey.
+its direct acceptance relation, while a Journey Scenario annotates concrete
+Steps with Capabilities. Journey Capability backlinks are derived from those
+Steps rather than authored on the Journey.
 
 Capability Scenario coverage is the only direct acceptance coverage for a
 Capability. The union of its Capability Scenarios must cover every exact
@@ -199,8 +199,8 @@ The repository is unchanged and the contributor receives a permission error.
 | `## Edge cases` | no | Provide a non-empty bullet list when present, with each item on one physical line. |
 | `## Outcome` | yes | State one local observable result of the Capability. |
 
-A Capability Scenario cannot declare `result` or `flow`, and neither Scenario
-type declares its parent — the folder it sits in is the parent.
+A Capability Scenario cannot declare `result` or frontmatter `steps`, and
+neither Scenario type declares its parent — the folder it sits in is the parent.
 It cannot use Journey-only `## Goal` or `## Success criterion` sections, and
 each recognized Scenario H2 may appear only once.
 Business Rules own their Scenario relations; Capability Scenarios do not

@@ -425,38 +425,61 @@ Supports order operations. It does not expose a shopper's account.
     expect(errors).toContain('actor "shopper" is not supported by any selected context')
   })
 
-  it('requires an operation and two distinct Capabilities on achieved Journey flows', () => {
+  it('requires step text and two distinct Capabilities on achieved Journey paths', () => {
     const cwd = fixtureCopy()
     const scenario = join(cwd, '.businesslens/journeys/browse-and-buy/scenarios/browse-and-complete-checkout.md')
     writeFileSync(
       scenario,
       readFileSync(scenario, 'utf8')
-        .replace('    operation: Find and select an available product\n', '')
+        .replace(
+          '  - text: The shopper finds and selects an available product\n    capability: catalog-browsing\n',
+          '  - capability: catalog-browsing\n'
+        )
         .replace('    capability: checkout', '    capability: catalog-browsing')
     )
     const errors = run(cwd).errors.join('\n')
-    expect(errors).toContain('flow item 1: needs a non-empty operation')
+    expect(errors).toContain('step 1: needs non-empty text')
     expect(errors).toContain('an achieved Journey Scenario needs at least two distinct Capabilities')
+  })
+
+  it('rejects the removed Journey flow, operation, top-level routes, and Markdown Steps', () => {
+    const cwd = fixtureCopy()
+    const scenario = join(cwd, '.businesslens/journeys/browse-and-buy/scenarios/browse-and-complete-checkout.md')
+    writeFileSync(
+      scenario,
+      readFileSync(scenario, 'utf8')
+        .replace(
+          'result: achieved',
+          'result: achieved\nflow:\n  - id: legacy-stage\n    capability: catalog-browsing\n    operation: Legacy duplicated sentence\nroutes:\n  - id: web\n    contexts: []'
+        )
+        .replace('## Outcome', '## Steps\n\n1. Legacy duplicated sentence\n\n## Outcome')
+    )
+
+    const errors = run(cwd).errors.join('\n')
+    expect(errors).toContain('"flow" is no longer supported; use the frontmatter "steps" list')
+    expect(errors).toContain('"operation" is no longer supported; put each sentence in "steps[].text"')
+    expect(errors).toContain('top-level "routes" is no longer supported')
+    expect(errors).toContain('"## Steps" is not allowed on this entity type')
   })
 
   /*
     Routes are correlated paths, so a second id over the same assignment claims
     a lane the Product does not have — a `mobile` route that never leaves web.
   */
-  it('rejects two routes that correlate the same context at every stage', () => {
+  it('rejects two routes that correlate the same context at every Capability-bearing step', () => {
     const cwd = fixtureCopy()
     const scenario = join(cwd, '.businesslens/journeys/browse-and-buy/scenarios/browse-and-complete-checkout.md')
     writeFileSync(scenario, readFileSync(scenario, 'utf8').replaceAll('customer-mobile::storefront', 'customer-web::storefront'))
     expect(run(cwd).errors.join('\n')).toContain('route "mobile" repeats every context of route "web"')
   })
 
-  /* One differing stage is a real cross-Interface handoff, not a repeated lane. */
-  it('keeps two routes that differ at any single stage', () => {
+  /* One differing step is a real cross-Interface handoff, not a repeated lane. */
+  it('keeps two routes that differ at any single Capability-bearing step', () => {
     const cwd = fixtureCopy()
     const scenario = join(cwd, '.businesslens/journeys/browse-and-buy/scenarios/browse-and-complete-checkout.md')
     writeFileSync(scenario, readFileSync(scenario, 'utf8').replace(
-      '      - stage: complete-checkout\n        context: customer-mobile::storefront',
-      '      - stage: complete-checkout\n        context: customer-web::storefront'
+      '  - text: The shopper submits checkout\n    capability: checkout\n    routes:\n      web: customer-web::storefront\n      mobile: customer-mobile::storefront',
+      '  - text: The shopper submits checkout\n    capability: checkout\n    routes:\n      web: customer-web::storefront\n      mobile: customer-web::storefront'
     ))
     expect(run(cwd).errors.join('\n')).not.toContain('repeats every context')
   })
@@ -510,26 +533,26 @@ Supports order operations. It does not expose a shopper's account.
     )
   })
 
-  it('validates complete Journey routes and their goal-owner entry context', () => {
+  it('validates complete Journey step routes and their goal-owner entry context', () => {
     const cwd = fixtureCopy()
     const file = join(cwd, '.businesslens/journeys/browse-and-buy/scenarios/browse-and-complete-checkout.md')
     writeFileSync(
       file,
       readFileSync(file, 'utf8')
         .replace(
-          '      - stage: select-product\n        context: customer-web::storefront',
-          '      - stage: select-product\n        context: admin-web::admin-console'
+          '      web: customer-web::storefront\n      mobile: customer-mobile::storefront',
+          '      web: admin-web::admin-console\n      mobile: customer-mobile::storefront'
         )
         .replace(
-          '      - stage: complete-checkout\n        context: customer-mobile::storefront\n',
-          ''
+          '  - text: The shopper submits checkout\n    capability: checkout\n    routes:\n      web: customer-web::storefront\n      mobile: customer-mobile::storefront',
+          '  - text: The shopper submits checkout\n    capability: checkout\n    routes:\n      web: customer-web::storefront'
         )
     )
 
     const errors = run(cwd).errors.join('\n')
     expect(errors).toContain('context "admin-web::admin-console" is outside capability "catalog-browsing"')
     expect(errors).toContain('first context "admin-web::admin-console" permits no Journey Actor participating in the Scenario')
-    expect(errors).toContain('missing context for flow stage "complete-checkout"')
+    expect(errors).toContain('step 2: route ids must match every other Capability-bearing step')
   })
 
   it('rejects narrowed Rule contexts outside their target and redundant ancestor targets', () => {
@@ -687,22 +710,15 @@ kind: edge
 journey: browse-and-buy
 actors: [shopper, store-admin]
 result: not-achieved
-flow:
-  - id: review-order
+steps:
+  - text: The operator reviews an existing order
     capability: order-management
-    operation: Review an existing order
-  - id: attempt-checkout
+    routes:
+      admin-to-web: admin-web::admin-console
+  - text: The shopper attempts checkout
     capability: checkout
-    operation: Attempt a new checkout
-routes:
-  - id: admin-to-web
-    contexts:
-      - stage: review-order
-        interface: admin-web
-        experience: admin-console
-      - stage: attempt-checkout
-        interface: customer-web
-        experience: storefront
+    routes:
+      admin-to-web: customer-web::storefront
 ---
 
 # Review an order before checkout
@@ -710,11 +726,6 @@ routes:
 ## Trigger
 
 An operator reviews an order while a shopper attempts a new checkout.
-
-## Steps
-
-1. The operator reviews an existing order
-2. The shopper attempts checkout
 
 ## Outcome
 
@@ -724,7 +735,7 @@ The new checkout does not complete.
     const errors = run(cwd).errors.join('\n')
     expect(errors).toContain('Capability Scenario "refund-order" uses capability "order-management" outside the Screen capability list')
     expect(errors).toContain('Capability Scenario "refund-order" shares no exact context with the Screen')
-    expect(errors).toContain('Journey Scenario "admin-and-checkout" has no flow item matching a Screen capability and exact context')
+    expect(errors).toContain('Journey Scenario "admin-and-checkout" has no Capability-bearing step matching a Screen capability and exact context')
   })
 
   it('rejects unknown config keys', () => {
@@ -761,8 +772,8 @@ An order exists.
 `)
     const scenario = join(cwd, '.businesslens/journeys/browse-and-buy/scenarios/browse-and-complete-checkout.md')
     writeFileSync(scenario, readFileSync(scenario, 'utf8').replace(
-      'context: customer-web::storefront',
-      'context: customer-web::missing-experience'
+      'web: customer-web::storefront',
+      'web: customer-web::missing-experience'
     ))
     const errors = run(cwd).errors.join('\n')
     expect(errors).toContain('missing actor "ghost"')
@@ -809,22 +820,15 @@ kind: primary
 journey: browse-and-buy
 actors: [shopper]
 result: achieved
-flow:
-  - id: select-product
+steps:
+  - text: Select a product
     capability: catalog-browsing
-    operation: Select a product
-  - id: complete-checkout
+    routes:
+      web: customer-web::storefront
+  - text: Complete checkout
     capability: checkout
-    operation: Complete checkout
-routes:
-  - id: web
-    contexts:
-      - stage: select-product
-        interface: customer-web
-        experience: storefront
-      - stage: complete-checkout
-        interface: customer-web
-        experience: storefront
+    routes:
+      web: customer-web::storefront
 ---
 
 # Duplicate
@@ -832,10 +836,6 @@ routes:
 ## Trigger
 
 t.
-
-## Steps
-
-1. s
 
 ## Outcome
 

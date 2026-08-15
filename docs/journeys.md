@@ -47,7 +47,7 @@ Capability Scenarios, not a Journey wrapper.
 > outside that Journey.
 >
 > **Journey vs Journey Scenario.** A Journey states the Goal and Success
-> criterion. A Journey Scenario states one concrete Capability flow and result.
+> criterion. A Journey Scenario states one concrete routed step sequence and result.
 > One achieved Scenario is enough for Journey coverage; the number of variations
 > does not define the Journey.
 
@@ -90,22 +90,22 @@ A Journey does not declare `availability`, `entryPoints`, Trigger, Steps,
 decisions, a concrete Outcome, authored Capability list, or authored Scenario
 list. `## Goal` and `## Success criterion` may each appear only once.
 Capabilities, Domains, Interfaces, and Experiences are derived from concrete
-Journey Scenario flow entries. Product routes remain on Interfaces,
+Journey Scenario Capability-bearing steps. Product routes remain on Interfaces,
 Experiences, and Screens.
 
-To present a Journey entry route, a report consumer starts with the first flow
-stage of each achieved Journey Scenario route and resolves that route's exact
-Interface or Experience entry point. The entry remains derived rather than
-becoming Journey frontmatter.
+To present a Journey entry route, a report consumer starts with the first
+Capability-bearing step of each achieved Journey Scenario route and resolves
+that exact Interface or Experience entry point. The entry remains derived
+rather than becoming Journey frontmatter.
 
-Consumers derive the primary Capability and Domain sets from achieved flows.
-Capabilities seen only in not-achieved flows are marked separately as
+Consumers derive the primary Capability and Domain sets from achieved paths.
+Capabilities seen only in not-achieved paths are marked separately as
 failure-only. These are modeled coverage projections, not a mandatory canonical
-flow or proof that partial mapping is exhaustive.
+path or proof that partial mapping is exhaustive.
 
 At least one Journey Scenario must name every Journey with `result: achieved`.
 That achieved Scenario must use at least two distinct Capabilities. This gives
-the Journey acceptance coverage without pushing flow into the Journey itself.
+the Journey acceptance coverage without pushing steps into the Journey itself.
 Every Journey Actor must participate in at least one achieved Scenario.
 
 ## Relationship to code
@@ -122,8 +122,8 @@ omit the Journey and keep the independently verifiable Capability Scenarios.
 ## Journey Scenarios
 
 **A Journey Scenario is one concrete end-to-end variation of exactly one
-Journey.** It begins with the Journey Actor's Goal, follows a specific route
-through its Capabilities, and ends with the goal achieved or not achieved.
+Journey.** It begins with the Journey Actor's Goal, follows one ordered list of
+steps through its Capabilities, and ends with the goal achieved or not achieved.
 
 A Scenario always belongs to exactly one parent, and the parent decides which
 kind it is. A Scenario owned by a Journey is a Journey Scenario; a Scenario
@@ -131,9 +131,9 @@ owned by a Capability is a
 [Capability Scenario](./capabilities.md#capability-scenarios). There is no
 unowned Scenario and no way for one Scenario to serve both parents.
 
-A Journey Scenario owns its exact Capability selection, linear order,
-repetition, supported routes, and terminal result. It verifies composition
-and handoffs without replacing the local
+A Journey Scenario owns its exact sentences, Capability selection, linear
+order, correlated routes, and terminal result in one `steps` list. It verifies
+composition and handoffs without replacing the local
 [Capability Scenarios](./capabilities.md#capability-scenarios) required by each
 Capability.
 
@@ -158,20 +158,16 @@ Journey Scenarios normally live at
 kind: primary
 actors: [repository-contributor]
 result: achieved
-flow:
-  - id: publish-branch
+steps:
+  - text: The contributor pushes the branch through Git transport
     capability: publish-repository-changes
-    operation: Push the branch
-  - id: open-proposal
+    routes:
+      git-to-web: git-transport
+  - text: The contributor opens the branch comparison in the repository workspace
+  - text: The contributor submits the pull request
     capability: propose-code-change
-    operation: Open the branch for review
-routes:
-  - id: git-to-web
-    contexts:
-      - stage: publish-branch
-        context: git-transport
-      - stage: open-proposal
-        context: web-ui::repository-collaboration
+    routes:
+      git-to-web: web-ui::repository-collaboration
 references:
   - kind: code
     role: implementation
@@ -184,12 +180,6 @@ references:
 
 A contributor has a local change ready to propose for review.
 
-## Steps
-
-1. The contributor pushes the branch through Git transport
-2. The contributor opens the branch comparison in the repository workspace
-3. The contributor submits the pull request
-
 ## Outcome
 
 The Journey goal is achieved: a reviewable change proposal exists.
@@ -201,12 +191,11 @@ The Journey goal is achieved: a reviewable change proposal exists.
 | `kind` | yes | Name an entry in `taxonomies.yaml`. |
 | `actors` | yes | Name at least one unique existing Actor, including a Journey Actor. |
 | `result` | yes | Use `achieved` or `not-achieved`; it is orthogonal to `kind`. |
-| `flow` | yes | Give an ordered non-empty list of locally unique stage IDs, existing Capabilities, and one-line operations. |
-| `routes` | yes | Give one or more locally unique routes, each with exactly one singular exact context for every flow stage. |
+| `steps` | yes | Give an ordered non-empty list of mappings with single-line `text`. A Capability-bearing step also names one existing `capability` and an inline `routes` mapping. |
 | `references` | no | Use the documented [Reference](./references.md) shape. |
 | Lead paragraph | no | Start with a named H2; move starting-condition prose into `## Trigger`. |
 | `## Trigger` | yes | Begin with the Actor pursuing the Journey Goal. |
-| `## Steps` | yes | Provide a non-empty ordered list with each item on one physical line. Expand the flow rather than restating its operations. |
+| `## Steps` | no | Journey Steps live only in frontmatter so their text, Capability, and route contexts cannot disagree. |
 | `## Decision points` | no | Give each H3 decision one Product question and at least two `condition → outcome` branches. |
 | `## Edge cases` | no | Provide a non-empty bullet list when present, with each item on one physical line. |
 | `## Outcome` | yes | State whether and why the Journey Goal was achieved or not achieved. |
@@ -215,100 +204,73 @@ Business Rules own their Scenario relations; Journey Scenarios do not duplicate
 a `businessRules` list. Screens may name Journey Scenario IDs in which they
 participate.
 
-A Journey Scenario cannot use Journey-only `## Goal` or `## Success criterion`
-sections, and each recognized Scenario H2 may appear only once.
+A Journey Scenario cannot use `## Steps` or Journey-only `## Goal` and
+`## Success criterion` sections. Each recognized Scenario H2 may appear only
+once.
 
-### Flow
+### Steps and routes
 
-Each flow entry names a locally unique stage, exactly one existing Capability,
-and a one-line operation. Routes then correlate one exact context per stage:
+The Steps are the path. Each entry has required single-line `text`. A step that
+exercises a Capability says so and places each route's exact context beside that
+relation:
 
 ```yaml
-flow:
-  - id: publish-branch
+steps:
+  - text: The contributor pushes the branch through Git transport
     capability: publish-repository-changes
-    operation: Push the branch
-  - id: open-proposal
+    routes:
+      git-to-web: git-transport
+  - text: The contributor opens the branch comparison in the repository workspace
+  - text: The contributor submits the pull request
     capability: propose-code-change
-    operation: Open the branch for review
-routes:
-  - id: git-to-web
-    contexts:
-      - stage: publish-branch
-        context: git-transport
-      - stage: open-proposal
-        context: web-ui::repository-collaboration
+    routes:
+      git-to-web: web-ui::repository-collaboration
 ```
 
-The Journey Scenario is the authority for Capability order. Flow entries may
-repeat or stop. Every achieved Journey Scenario uses at least two
+An unqualified step names no Capability and has no routes. It records a
+condition, Product-side action, or seam that matters to this end-to-end
+variation without manufacturing another Capability or Capability Scenario.
+The branch-comparison step above is the handoff between Git transport and the
+web workspace; its position makes that transition first-class.
+
+Capability-bearing steps reference Capabilities, never Capability Scenarios. A
+Capability is durable while its Scenarios split and merge as local behavior is
+refined. Composition therefore names the stable ability without turning a
+local acceptance case into a reusable operation entity.
+
+Every Capability-bearing step declares the same route-id set. Matching keys
+correlate the complete paths: `git-to-web` at one step and `git-to-web` at the
+next are consecutive contexts of one route. A context change is a handoff. The
+route value is one scope id: a bare Interface id when it is undivided, or
+`interface-id::experience-id` for an Experience. It must be within the named
+Capability's availability.
+
+Route ids are lowercase kebab-case mapping keys, so they cannot repeat within a
+step. No two route ids may carry the same context through every
+Capability-bearing step. Adding or removing a route updates every
+Capability-bearing step because all routes share this Scenario's sequence and
+Outcome.
+
+Steps may repeat or stop. Every achieved Journey Scenario uses at least two
 distinct Capabilities. A not-achieved Scenario may stop after one Capability
-when that behavior prevents the Goal.
+when that behavior prevents the Goal. Split Journey Scenarios when the
+Capability sequence, observable behavior, or Journey-level Outcome changes;
+add another route key when only the correlated contexts change.
 
-Flow entries reference Capabilities, never Capability Scenarios. A Capability is
-durable, while its Scenarios split and merge as local behavior is refined, so
-composition names the stable entity and a local refinement never rewrites the
-Journey Scenarios that compose it. It also keeps a concrete local case from
-becoming a reusable operation entity.
-
-For example, a flow entry may name `configure-repository` with operation "Set
-the default branch." If the model instead has only a vague
-`manage-repositories` Capability covering unrelated create, rename, archive,
-and delete behaviors, fix the Capability boundary rather than hiding those
-operations in Scenario prose.
-
-Every route contains each flow stage exactly once. Its `context` is one scope
-id: a bare Interface id when the Interface is undivided, or
-`interface-id::experience-id` for an Experience. Each context must be within the
-named stage Capability's availability. Route IDs and stage IDs are lowercase
-kebab-case and unique within the Scenario.
-
-Routes express correlated paths rather than a cartesian union. For example, a
-web stage can hand off to an operator CLI while a mobile stage hands off to the
-same CLI; each complete correlation is a separate route. Add another route when
-the Capability sequence, behavior, and Journey-level Outcome stay the same.
-Split Journey Scenarios when one of those meanings changes.
-
-The flow is linear. A Decision point may vary detail while preserving the same
+The path is linear. A Decision point may vary detail while preserving the same
 Capability sequence and Outcome. A branch that changes either belongs in a
 separate Journey Scenario.
 
 Every exact route context must permit at least one Scenario Actor, and every
 Scenario Actor must be supported by at least one route context. The first
-context of every route must permit a Journey Actor who participates in the
+Capability-bearing context of every route must permit a Journey Actor who participates in the
 Scenario, so the end-to-end variation begins with the goal owner rather than an
-internal or downstream participant. Cross-Interface flows do not require every
-Actor to use every stage.
+internal or downstream participant. Cross-Interface paths do not require every
+Actor to use every Capability-bearing step.
 
 `kind` classifies the nature of the variation; `result` records whether the
 Journey Goal was achieved. `kind: edge` with `result: achieved` and
 `kind: primary` with `result: not-achieved` are structurally valid.
-
-### Steps
-
-`## Steps` is not a prose copy of the flow. The flow is the structured claim
-about which Capabilities this Scenario composes and in what order; Steps are the
-independent prose claim over the same behavior. Because the two are authored
-separately they can disagree, and `businesslens-verify` matches one against the
-other, so a Steps list derived from the operations would make that check
-vacuous.
-
-At Journey level, Steps state three things the flow cannot:
-
-- **the transition between stages.** The flow says one stage follows another and
-  never how the Actor gets there. In the example above, "The contributor opens
-  the branch comparison in the repository workspace" is the handoff from Git
-  transport to the web workspace — the reason that Journey exists at all.
-- **which concrete path each stage takes.** A flow entry names a Capability, so
-  a `propose-code-change` stage does not say whether the proposal was opened for
-  review, refused by branch protection, or blocked for missing permission. The
-  Steps and the Outcome do.
-- **Product-side behavior.** A flow entry is an Actor invoking a Capability, so
-  what the Product performs on its own — validating, persisting, notifying — has
-  no flow entry to sit in.
-
-A Steps list that only restates the `operation` labels in order states nothing
-the flow did not.
 
 ### Journey Scenario decision points
 

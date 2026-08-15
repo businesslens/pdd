@@ -104,7 +104,7 @@ export function relatedIds(entity: AnyEntityView, kind: ReportEntityKind): strin
       return []
     case 'journey-scenario':
       if (kind === 'actor') return entity.actorIds
-      if (kind === 'capability') return [...new Set(entity.flow.map(item => item.capabilityId))]
+      if (kind === 'capability') return [...new Set(entity.steps.flatMap(item => item.capabilityId ? [item.capabilityId] : []))]
       if (kind === 'journey') return entity.journeyId ? [entity.journeyId] : []
       if (kind === 'screen') return entity.screenIds
       if (kind === 'rule') return entity.ruleIds

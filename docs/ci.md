@@ -15,7 +15,7 @@ order: 22
 
 This catches malformed files, missing required content, broken relationships,
 invalid grammar, Capability Scenario coverage gaps, invalid Journey evidence or
-Journey Scenario flow entries, and code-reference paths that are not tracked.
+Journey Scenario Steps, and code-reference paths that are not tracked.
 It is safe and deterministic, but it is not a semantic gate: it does not prove
 symbols, lines, runtime behavior, the truth of authored Product meaning, or
 model/code agreement.

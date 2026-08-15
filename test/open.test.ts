@@ -68,9 +68,10 @@ describe('open report', () => {
       goal: 'A shopper wants to purchase a suitable product.',
       successCriterion: 'A confirmed order exists for the selected product.'
     })
-    expect(imported.journeyScenarios[0]!.flow.map(item => item.operation)).toEqual([
-      'Find and select an available product',
-      'Submit payment and confirm the order'
+    expect(imported.journeyScenarios[0]!.steps.map(step => [step.text, step.capability])).toEqual([
+      ['The shopper finds and selects an available product', 'catalog-browsing'],
+      ['The shopper submits checkout', 'checkout'],
+      ['The Product confirms the paid order', undefined]
     ])
     expect(imported.experiences.flatMap(experience => experience.entryPoints))
       .toEqual(expect.arrayContaining([{ type: 'customer-web', path: '/' }]))
@@ -118,7 +119,11 @@ describe('open report', () => {
     expect(readFileSync(
       join(target, '.businesslens/journeys/browse-and-buy/scenarios/browse-and-complete-checkout.md'),
       'utf8'
-    )).toContain('operation: Find and select an available product')
+    )).toContain('steps:')
+    expect(readFileSync(
+      join(target, '.businesslens/journeys/browse-and-buy/scenarios/browse-and-complete-checkout.md'),
+      'utf8'
+    )).not.toContain('## Steps')
     expect(readFileSync(join(target, '.businesslens/journeys/browse-and-buy/journey.md'), 'utf8'))
       .toContain('## Teaching note')
     expect(readFileSync(join(target, '.businesslens/capabilities/checkout/scenarios/complete-checkout.md'), 'utf8'))
@@ -176,8 +181,8 @@ describe('open report', () => {
         }
       }
       for (const scenario of report.model.journeyScenarios) {
-        for (const route of scenario.routes) {
-          for (const context of route.contexts) context.experienceId = null
+        for (const step of scenario.steps) {
+          for (const route of step.routes) route.experienceId = null
         }
       }
       const file = join(fresh, 'direct-report.json')

@@ -702,7 +702,6 @@ const tableColumns = computed<TableColumn<AnyEntityView>[]>(() => {
         textColumn('result', 'Result', entity => (entity as ScenarioView).result),
         relationTitleColumn('journey', 'Journey', entity => (entity as ScenarioView).journeyId),
         relationColumn('actor'),
-        numberColumn('stages', 'Stages', entity => (entity as ScenarioView).flow.length),
         numberColumn('steps', 'Steps', entity => (entity as ScenarioView).steps.length),
         relationColumn('capability'),
         relationColumn('screen'),
@@ -772,8 +771,8 @@ const TABLE_NOTE: Partial<Record<ReportEntityKind, { text: string, needs: string
     needs: ['contexts']
   },
   'journey-scenario': {
-    text: 'Kind classifies the variation; Result records whether the Journey goal was reached. Stages are the ordered Capability flow entries.',
-    needs: ['stages', 'result']
+    text: 'Kind classifies the variation; Result records whether the Journey goal was reached. Capability-bearing Steps carry their route contexts inline.',
+    needs: ['steps', 'result']
   }
 }
 

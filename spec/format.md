@@ -212,7 +212,10 @@ the part of it with no Experience.
   heading is the description for actors, domains, experiences, and the product.
   Journeys and both Scenario types instead use the required structured sections
   specified below and must not carry lead prose.
-- **Frontmatter = relations and navigation only.** Never prose.
+- **Frontmatter = relations and navigation, with one relational-prose
+  exception.** A Journey Scenario's structured `steps` keep each single-line
+  path statement beside the Capability and exact route contexts it qualifies.
+  Other prose remains in the Markdown body.
 - **Intent and Goal = recognized prose sections.** `## Intent` explains why the
   product or entity exists and which outcome it protects. `## Goal` states the
   stable Actor intent of a Journey. Both are structured prose, not separate
@@ -221,6 +224,8 @@ the part of it with no Experience.
   Journey-only sections (`## Goal`, `## Success criterion`) are invalid on both
   Scenario types, and Scenario-only sections (`## Trigger`, `## Steps`,
   `## Decision points`, `## Outcome`, `## Edge cases`) are invalid on Journeys.
+  `## Steps` is additionally invalid on Journey Scenarios, whose one ordered
+  path is the frontmatter `steps` list.
   Unrecognized H2 sections are supporting content and retain their heading and
   body through report export and expansion.
 - **Structured list items are single-line.** Every item in `## Steps`,
@@ -228,9 +233,9 @@ the part of it with no Experience.
   occupy one physical line. Prose and continuation lines are invalid because
   they cannot be represented as report list items.
 - **Set-valued lists are unique.** Product `tags` and every frontmatter relation
-  list contain no duplicate value. Ordered content lists such as Steps and
-  Coverage prose are not relation sets and may repeat when the meaning calls
-  for it.
+  list contain no duplicate value. Ordered content lists such as Capability
+  Scenario Steps, Journey Scenario `steps`, and Coverage prose are not relation
+  sets and may repeat when the meaning calls for it.
 - Scenario IDs are globally unique across every `scenarios/` folder.
 
 ## References
@@ -519,9 +524,9 @@ Availability states intended Product scope, never implementation status.
 A **Screen does not declare availability** — it sits inside the scope that owns
 it, and the path is the answer. Journeys do not declare availability either.
 Capability Scenarios select from their one Capability's scopes. Journey
-Scenarios correlate one exact context per flow stage through explicit routes,
-because one route may deliberately move between surfaces. Business Rule targets
-use the same single-scope `context:` shape.
+Scenarios correlate one exact context per Capability-bearing step through
+inline route mappings, because one route may deliberately move between
+surfaces. Business Rule targets use the same single-scope `context:` shape.
 
 ### `domains/<id>.md` or `domains/<id>/domain.md`
 
@@ -727,9 +732,9 @@ by non-empty prose. States remain embedded in the Screen report entity.
 
 A referenced Capability Scenario's Capability must appear in the Screen's
 `capabilities`, and the Scenario and Screen must share at least one exact
-availability context. A referenced Journey Scenario must have at least one flow
-stage whose Capability appears in the Screen's `capabilities` and a route
-context for that stage that intersects the Screen's availability.
+availability context. A referenced Journey Scenario must have at least one
+Capability-bearing step whose Capability appears in the Screen's `capabilities`
+and whose route context intersects the Screen's availability.
 
 Only product-significant states belong here: a state changes what the user
 understands, can do, or achieves. Empty, unavailable, unauthorized,
@@ -785,12 +790,13 @@ its first content after the H1 is an H2 section.
 `## Goal` states the stable Actor intent. `## Success criterion` states how an
 achieved attempt is recognized without prescribing one route. `references` is
 optional. Consumers derive Domains and Interface/Experience contexts from
-Journey Scenario flow entries. A Journey has no `entryPoints`; concrete Product
+Journey Scenario Capability-bearing steps. A Journey has no `entryPoints`; concrete Product
 routes remain on Interfaces, Experiences, and Screens.
 
-A consumer that presents a Journey entry route starts with the first flow stage
-of each achieved Journey Scenario route, then resolves that exact Interface or
-Experience entry point. This is derived navigation, not authored Journey data.
+A consumer that presents a Journey entry route starts with the first
+Capability-bearing step of each achieved Journey Scenario route, then resolves
+that exact Interface or Experience entry point. This is derived navigation, not
+authored Journey data.
 
 Consumers derive the Journey's primary Capability set from achieved Scenarios
 and mark Capabilities observed only in not-achieved Scenarios as failure-only.
@@ -809,7 +815,7 @@ cross-Interface transition toward its Actor outcome. A wizard can establish a
 Journey but is not required. A merely plausible sequence of independent
 Product actions is not a Journey. The number of Journey Scenario variations
 does not define it; one achieved variation provides valid coverage. A goal with
-no achieved multi-Capability flow belongs to Capability behavior or remains
+no achieved multi-Capability path belongs to Capability behavior or remains
 unsupported Journey intent. Planned Journeys may record approved intent before
 implementation but must meet the same structural distinctions.
 
@@ -859,15 +865,18 @@ Scenario Actor must be supported by at least one selected context. For an
 Experience-scoped context, its `actors` list is authoritative; otherwise the
 Interface's `actors` list is authoritative.
 
-A Capability Scenario cannot declare `journey`, `result`, or `flow`.
+A Capability Scenario cannot declare `journey`, `result`, or frontmatter
+`steps`.
 Business Rules own its Rule relations, so it does not duplicate Rule IDs.
 
 ### Scenario sections
 
-Both Scenario types have no lead prose and require non-empty `## Trigger`,
-`## Steps`, and `## Outcome` sections. `## Steps` is an ordered list with at
-least one single-line item. `## Edge cases` is an optional non-empty bullet list
-whose items are also single-line.
+Both Scenario types have no lead prose and require non-empty `## Trigger` and
+`## Outcome` sections. A Capability Scenario additionally requires `## Steps`,
+an ordered list with at least one single-line item. A Journey Scenario instead
+requires structured frontmatter `steps` and cannot author a Markdown `## Steps`
+section. `## Edge cases` is an optional non-empty bullet list whose items are
+also single-line.
 
 `## Decision points` is optional. Each decision uses an H3 title, a non-empty
 question paragraph, then at least two bullet branches. Each branch uses
@@ -889,26 +898,19 @@ local Capability Scenarios.
 kind: primary
 actors: [shopper]
 result: achieved
-flow:
-  - id: discover
+steps:
+  - text: The shopper finds an available product in the catalog
     capability: catalog-browsing
-    operation: Find and select an available product
-  - id: checkout
+    routes:
+      web: customer-web::storefront
+      mobile: customer-mobile::storefront
+  - text: The shopper adds the product to the cart and submits checkout
     capability: checkout
-    operation: Submit checkout and confirm the order
-routes:
-  - id: web
-    contexts:
-      - stage: discover
-        context: customer-web::storefront
-      - stage: checkout
-        context: customer-web::storefront
-  - id: mobile
-    contexts:
-      - stage: discover
-        context: customer-mobile::storefront
-      - stage: checkout
-        context: customer-mobile::storefront
+    routes:
+      web: customer-web::storefront
+      mobile: customer-mobile::storefront
+  - text: The Product validates stock and charges payment
+  - text: The Product persists and confirms the order
 references:
   - kind: code
     role: implementation
@@ -920,13 +922,6 @@ references:
 ## Trigger
 
 The shopper wants to find and purchase an available product.
-
-## Steps
-
-1. The shopper finds an available product in the catalog
-2. The shopper adds the product to the cart and submits checkout
-3. The Product validates stock and charges payment
-4. The Product persists and confirms the order
 
 ## Decision points
 
@@ -946,64 +941,58 @@ Order is stored and a confirmation is shown.
 - Receipt delivery unavailable → order remains confirmed and the receipt is available in the account
 ```
 
-`kind` must exist in `taxonomies.yaml`. `journey` names exactly one existing
-Journey. `result` is `achieved` or `not-achieved`. `kind` classifies the nature
+`kind` must exist in `taxonomies.yaml`. The containing Journey directory names
+the Scenario's one parent; no `journey` field is authored. `result` is
+`achieved` or `not-achieved`. `kind` classifies the nature
 of the variation while `result` records its terminal Journey-goal outcome; they
-are orthogonal. `actors`, `flow`, and `routes` are non-empty, and the Actors
-must include at least one Actor from the Journey.
+are orthogonal. `actors` and `steps` are non-empty, and the Actors must include
+at least one Actor from the Journey.
 
-Each ordered flow entry has a locally unique lowercase kebab-case `id`, names
-exactly one existing Capability, and carries a required single-line `operation`.
-It does not declare availability.
+Each ordered step is a mapping with required single-line `text`. It may name
+exactly one existing `capability`. A Capability-bearing step also requires a
+non-empty `routes` mapping whose lowercase kebab-case keys are route ids and
+whose values are singular exact contexts declared by that Capability. A step
+without a Capability cannot declare routes. Such an unqualified step records a
+condition, Product-side behavior, or seam in the end-to-end variation without
+manufacturing another Capability or Capability Scenario.
 
-Each route has a locally unique lowercase kebab-case `id` and one context for
-every flow stage, referenced by `stage`. It cannot omit a stage, repeat one, or
-name an unknown stage. Every context must be declared by that stage's
-Capability. The route is the correlation authority: web and mobile lanes do not
-imply cross-device transitions, while an intentional cross-Interface handoff is
-written directly into one route.
+Every Capability-bearing step names exactly the same route-id set. Matching
+keys correlate contexts into complete routes: `web` on one step and `web` on
+the next are consecutive contexts of one supported path. A context change
+between them is a deliberate handoff. No top-level route block or stage id is
+needed because every context is co-located with the step it qualifies.
 
-No two routes may assign the same context to every stage. A route id names one
-distinct correlation, so a repeated assignment states the same supported path
-twice under two names and claims a lane the Product does not have.
+No two route ids may assign the same context to every Capability-bearing step.
+A route id names one distinct correlation, so a repeated assignment states the
+same supported path twice under two names and claims a lane the Product does
+not have.
 
-Every route context must permit at least one Scenario Actor, and every Scenario
-Actor must be supported by at least one route context. The first context of
-every route must permit an Actor who is both a Scenario Actor and an Actor of
-the Journey. This does not require every Actor to use every stage in a
-cross-Interface route.
+Every routed context must permit at least one Scenario Actor, and every
+Scenario Actor must be supported by at least one routed context. The first
+Capability-bearing context of every route must permit an Actor who is both a
+Scenario Actor and an Actor of the Journey. This does not require every Actor
+to use every Capability-bearing step in a cross-Interface route.
 
-The Journey Scenario owns Capability selection and order. Capability flow
-entries may repeat or stop, and all routes share that sequence and terminal
-Outcome. An achieved Journey Scenario must use at least two distinct
-Capabilities. A not-achieved Journey Scenario may stop after one Capability,
-but its Outcome must state the Journey-level reason the goal was not achieved.
+The Journey Scenario owns the complete ordered path. Capability-bearing steps
+may repeat or stop; unqualified steps make conditions, transitions, and
+Product-side behavior first-class without claiming another Capability. An
+achieved Journey Scenario must use at least two distinct Capabilities. A
+not-achieved Journey Scenario may stop after one Capability, but its Outcome
+must state the Journey-level reason the goal was not achieved.
 
-Flow entries reference Capabilities, never Capability Scenarios, because a
-Capability is durable while its Scenarios split and merge as local behavior is
-refined. Composition names the stable entity, so a local refinement never
-rewrites the Journey Scenarios that compose it. A local permission, validation,
-conflict, or failure contract remains a separate Capability Scenario when it is
-independently observable; the Journey Scenario states only its end-to-end
-consequence for the Goal.
+Steps reference Capabilities, never Capability Scenarios. A Capability is
+durable while its Scenarios split and merge as local behavior is refined, so a
+local refinement never rewrites every Journey path that uses the ability. A
+local permission, validation, conflict, or failure contract remains a separate
+Capability Scenario when it is independently observable; the Journey Scenario
+states its own end-to-end consequence for the Goal.
 
-`operation` fields are the structured stage labels, and `## Steps` is the
-independent prose claim over the same behavior, expanding the flow in the same
-order. The number of prose Steps need not equal the number of flow entries, and
-Steps are not a prose copy of the `operation` labels. At Journey level they
-state what the flow cannot: the transition from one stage to the next, which
-concrete path the Scenario takes through each stage Capability, and Product-side
-behavior that is not an Actor invoking a Capability. A Steps list that only
-restates the operations in order states nothing the flow did not.
-
-The flow is linear. A Decision point may vary detail while preserving the same
+The path is linear. A Decision point may vary detail while preserving the same
 Capability sequence and terminal Outcome. A branch that changes either belongs
-in another Journey Scenario.
-
-Add equivalent routes when only the supported context changes. Split Journey
-Scenarios when the Capability sequence, observable behavior, or Journey-level
-Outcome changes. Business Rules own Scenario scope, so Journey Scenarios do not
-duplicate Rule IDs.
+in another Journey Scenario. Add equivalent route keys when only the supported
+context changes. Split Journey Scenarios when the Capability sequence,
+observable behavior, or Journey-level Outcome changes. Business Rules own
+Scenario scope, so Journey Scenarios do not duplicate Rule IDs.
 
 ### `coverage.md`
 

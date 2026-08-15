@@ -40,10 +40,10 @@ describe('Content Feed Reader teaching Blueprint', () => {
     const catchUp = model.journeyScenarios.filter(scenario => scenario.journey === 'catch-up-on-unread')
     const achieved = new Set(catchUp
       .filter(scenario => scenario.result === 'achieved')
-      .flatMap(scenario => scenario.flow.map(item => item.capability)))
+      .flatMap(scenario => scenario.steps.flatMap(item => item.capability ? [item.capability] : [])))
     const failureOnly = new Set(catchUp
       .filter(scenario => scenario.result === 'not-achieved')
-      .flatMap(scenario => scenario.flow.map(item => item.capability))
+      .flatMap(scenario => scenario.steps.flatMap(item => item.capability ? [item.capability] : []))
       .filter(capability => !achieved.has(capability)))
 
     expect([...failureOnly]).toEqual(['feed-synchronization'])

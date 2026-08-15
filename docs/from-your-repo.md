@@ -32,8 +32,8 @@ or deliberately untrusted.
    Capability has honest Capability Scenario coverage. Check that Capability
    Scenarios are variations rather than hidden operations under vague umbrella
    Capabilities. Optional Journeys should author coherent Goals rather than
-   flows or administrative grab bags, while Journey Scenario flow entries trace
-   exact supported behavior across Interfaces. Also check unmapped areas,
+   administrative grab bags, while Capability-bearing Journey Scenario Steps
+   trace exact supported behavior across Interfaces. Also check unmapped areas,
    limitations, and optional
    implementation References.
 

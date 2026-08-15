@@ -151,7 +151,7 @@ describe('named Product Topology views', () => {
     }
   })
 
-  it('keeps identity views unique and Value path stages contextual', () => {
+  it('keeps identity views unique and Value path Steps contextual', () => {
     const delivery = buildProductTopologyGraph(workspace, 'delivery-surfaces')
     const identityIds = delivery.nodes
       .map(node => node.data?.entityKey)
@@ -159,7 +159,7 @@ describe('named Product Topology views', () => {
     expect(new Set(identityIds).size).toBe(identityIds.length)
 
     const valuePaths = buildProductTopologyGraph(workspace, 'value-paths')
-    const occurrenceNodes = valuePaths.nodes.filter(node => node.id.includes(':stage:'))
+    const occurrenceNodes = valuePaths.nodes.filter(node => node.id.includes(':step:'))
     expect(occurrenceNodes.length).toBeGreaterThan(0)
     expect(occurrenceNodes.some(node => node.id !== node.data?.entityKey)).toBe(true)
   })
@@ -171,7 +171,7 @@ describe('named Product Topology views', () => {
       .filter(node => node.data?.kind === 'journey')
       .map(node => node.data?.entityId)
     expect(journeyIds).toEqual([journey.id])
-    expect(graph.nodes.some(node => node.id.includes(':stage:'))).toBe(true)
+    expect(graph.nodes.some(node => node.id.includes(':step:'))).toBe(true)
     expect(graph.edges.some(edge => edge.label === 'then' || edge.label === 'starts')).toBe(true)
   })
 
@@ -206,12 +206,12 @@ describe('named Product Topology views', () => {
   })
 
   /*
-    A Screen is authored against the Scenario, not one stage. Anchoring on the
-    final stage claimed a Capability "lands on" a Screen it shares no
-    availability with — here the public reading stage against the owner's
+    A Screen is authored against the Scenario, not one Step. Anchoring on the
+    final Step claimed a Capability "lands on" a Screen it shares no
+    availability with — here the public reading Step against the owner's
     private workspace, which is scoped to the personal library.
   */
-  it('anchors a Value paths Screen on a stage that actually exposes it', () => {
+  it('anchors a Value paths Screen on a Step that actually exposes it', () => {
     const graph = buildProductTopologyGraph(teachingWorkspace, 'value-paths', {
       journeyId: 'publish-and-share-a-collection'
     })
@@ -224,7 +224,7 @@ describe('named Product Topology views', () => {
     expect(source.data?.entityId).not.toBe('public-collection-reading')
   })
 
-  it('runs Value paths stages downward so a short Journey is not a thin ribbon', () => {
+  it('runs Value path Steps downward so a short Journey is not a thin ribbon', () => {
     const graph = buildProductTopologyGraph(teachingWorkspace, 'value-paths', {
       journeyId: 'follow-and-receive-from-a-source'
     })

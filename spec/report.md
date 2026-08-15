@@ -52,9 +52,45 @@ reparsing an opaque Markdown string.
 Product Report v9 stores `capabilityScenarios` and `journeyScenarios` as
 separate entity collections and separate counts. It has no generic `scenarios`
 collection. A Journey record's `capabilityIds` and `domainIds` derive from
-achieved Scenario flows; `failureOnlyCapabilityIds` separately marks
-Capabilities observed only in not-achieved flows. These are modeled coverage
-projections rather than authored Journey meaning.
+achieved Scenario Capability-bearing steps; `failureOnlyCapabilityIds`
+separately marks Capabilities observed only in not-achieved paths. These are
+modeled coverage projections rather than authored Journey meaning.
+
+Product Report v9 replaces the former Journey flow/route/prose-Steps split in
+place. A Journey Scenario carries one ordered `steps` array:
+
+```json
+{
+  "steps": [
+    {
+      "text": "The shopper finds an available product",
+      "capabilityId": "catalog-browsing",
+      "routes": [
+        {
+          "routeId": "web",
+          "interfaceId": "customer-web",
+          "experienceId": "customer-web::storefront"
+        }
+      ]
+    },
+    {
+      "text": "The Product confirms the paid order",
+      "capabilityId": null,
+      "routes": []
+    }
+  ]
+}
+```
+
+Every step has single-line `text`. `capabilityId` is either an existing
+Capability id or `null`. A Capability-bearing step has one or more route
+assignments; an unqualified step has none. Each route assignment carries one
+route id and the existing singular exact-context shape. All Capability-bearing
+steps use the same route-id set and retain authored route order. Expansion
+writes these records as the canonical frontmatter `steps` list with route ids
+as mapping keys. Journey Scenarios have no report `flow`, top-level `routes`,
+or Markdown-derived prose Steps field. Capability Scenario report records keep
+their existing string `steps` list.
 
 Compilation produces a `workspace` reference profile. As written by
 `blueprint export`, a report carries the **portable** reference profile: it
@@ -73,10 +109,11 @@ other local References. Asset binaries are not part of Product Report v9.
 The report schema accepts only content that can expand into canonical entity
 Markdown: titles and list items are single-line, set-valued relation arrays are
 unique, required descriptions and behavior sections are non-empty, Capability
-Scenario availability, Journey Scenario route contexts, and Business Rule
-targets resolve to existing entities, no two routes of one Journey Scenario
-repeat the same correlation, every achieved Journey Scenario uses at least two
-distinct Capabilities, and Interface/Capability consistency holds.
+Scenario availability, Journey Scenario step Capabilities and route contexts,
+and Business Rule targets resolve to existing entities, all Capability-bearing
+steps use the same route-id set, no two Journey routes repeat the same
+correlation, every achieved Journey Scenario uses at least two distinct
+Capabilities, and Interface/Capability consistency holds.
 Product Report v9 is the only accepted report version — there is no
 compatibility reader for an earlier one. No report profile requires a
 reference. Present references remain subject to the same strict shape and

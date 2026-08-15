@@ -29,6 +29,10 @@ function intersects(left: Set<string>, right: Set<string>): boolean {
   return false
 }
 
+function sameSet(left: Set<string>, right: Set<string>): boolean {
+  return left.size === right.size && [...left].every(value => right.has(value))
+}
+
 /** Pure structural rule engine over a loaded model; trackedFiles injected for testability. */
 export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
   const errors = [...model.issues]
@@ -325,10 +329,9 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     doc: { title: string, lead: string, sections: Array<{ heading: string, body: string }> }
     kind: string
     trigger: string
-    steps: string[]
     outcome: string
     edgeCases: string[]
-  }) => {
+  }, markdownSteps?: string[]) => {
     if (!scenario.doc.title) errors.push(`${scenario.file}: missing H1 title`)
     if (scenario.doc.lead) {
       errors.push(`${scenario.file}: carries no lead paragraph; move that content into "## Trigger" or another explicit section`)
@@ -337,15 +340,17 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
       scenario.file,
       scenario.doc,
       ['Intent', 'Trigger', 'Steps', 'Decision points', 'Outcome', 'Edge cases'],
-      ['Goal', 'Success criterion']
+      markdownSteps === undefined ? ['Goal', 'Success criterion', 'Steps'] : ['Goal', 'Success criterion']
     )
-    validateListSection(scenario.file, scenario.doc, 'Steps', 'ordered')
+    if (markdownSteps !== undefined) validateListSection(scenario.file, scenario.doc, 'Steps', 'ordered')
     validateListSection(scenario.file, scenario.doc, 'Edge cases', 'bullet')
     if (!scenario.kind || !kindIds.has(scenario.kind)) {
       errors.push(`${scenario.file}: kind "${scenario.kind}" is not defined in taxonomies.yaml`)
     }
     if (!scenario.trigger) errors.push(`${scenario.file}: missing "## Trigger" section`)
-    if (!scenario.steps.length) errors.push(`${scenario.file}: "## Steps" needs at least one ordered item`)
+    if (markdownSteps !== undefined && !markdownSteps.length) {
+      errors.push(`${scenario.file}: "## Steps" needs at least one ordered item`)
+    }
     if (!scenario.outcome) errors.push(`${scenario.file}: missing "## Outcome" section`)
     if (section(scenario.doc, 'Edge cases') !== undefined && !scenario.edgeCases.length) {
       errors.push(`${scenario.file}: "## Edge cases" needs at least one bullet item when present`)
@@ -365,7 +370,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
   const capabilityScenarioPairs = new Map<string, Set<string>>()
   const coveredCapabilityPairs = new Map<string, Set<string>>()
   for (const scenario of model.capabilityScenarios) {
-    validateScenarioSections(scenario)
+    validateScenarioSections(scenario, scenario.steps)
     if (!scenario.capability) {
       errors.push(`${scenario.file}: needs one capability`)
     } else if (!capabilityIds.has(scenario.capability)) {
@@ -420,7 +425,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
   }
 
   const journeyScenariosById = new Map(model.journeyScenarios.map(scenario => [scenario.id, scenario]))
-  const journeyScenarioFlow = new Map<string, Array<{ capability: string, pairs: Set<string> }>>()
+  const journeyScenarioSteps = new Map<string, Array<{ capability: string, pairs: Set<string> }>>()
   for (const scenario of model.journeyScenarios) {
     validateScenarioSections(scenario)
     const journey = journeysById.get(scenario.journey)
@@ -431,81 +436,74 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     if (journey && !scenario.actors.some(actorId => journey.actors.includes(actorId))) {
       errors.push(`${scenario.file}: actors must include at least one actor from journey "${scenario.journey}"`)
     }
-    if (!scenario.flow.length) errors.push(`${scenario.file}: needs at least one flow item`)
-    if (!scenario.routes.length) errors.push(`${scenario.file}: needs at least one route`)
-    const stagesById = new Map<string, typeof scenario.flow[number]>()
-    const flowEntries: Array<{ capability: string, pairs: Set<string> }> = scenario.flow.map(item => ({
-      capability: item.capability,
-      pairs: new Set<string>()
-    }))
+    if (!scenario.steps.length) errors.push(`${scenario.file}: needs at least one step`)
     const allPairs = new Set<string>()
-    for (const [index, item] of scenario.flow.entries()) {
-      const label = `${scenario.file}: flow item ${index + 1}`
-      if (!item.id) errors.push(`${label}: needs a non-empty id`)
-      else if (!isId(item.id)) errors.push(`${label}: id "${item.id}" must be lowercase kebab-case`)
-      if (stagesById.has(item.id)) errors.push(`${label}: duplicate flow id "${item.id}"`)
-      stagesById.set(item.id, item)
-      if (!item.capability) {
-        errors.push(`${label}: needs one capability`)
-      } else if (!capabilityIds.has(item.capability)) {
-        errors.push(`${label}: references missing capability "${item.capability}"`)
+    const capabilitySteps: Array<{
+      step: typeof scenario.steps[number]
+      capability: string
+      pairs: Set<string>
+    }> = []
+    let expectedRouteIds: Set<string> | undefined
+    for (const [index, step] of scenario.steps.entries()) {
+      const label = `${scenario.file}: step ${index + 1}`
+      if (!step.text.trim()) errors.push(`${label}: needs non-empty text`)
+      if (/\r|\n/.test(step.text)) errors.push(`${label}: text must be a single line`)
+      if (!step.capability) {
+        if (step.routes.length) errors.push(`${label}: routes require a capability`)
+        continue
       }
-      if (!item.operation.trim()) errors.push(`${label}: needs a non-empty operation`)
-      if (/\r|\n/.test(item.operation)) errors.push(`${label}: operation must be a single line`)
-    }
-    const routeIds = new Set<string>()
-    /* A route id names one correlation, so two ids for the same one claim a lane
-       the Product does not have — the signature is the whole assignment. */
-    const correlations = new Map<string, string>()
-    for (const [routeIndex, route] of scenario.routes.entries()) {
-      const routeLabel = `${scenario.file}: route ${routeIndex + 1}`
-      if (!route.id) errors.push(`${routeLabel}: needs a non-empty id`)
-      else if (!isId(route.id)) errors.push(`${routeLabel}: id "${route.id}" must be lowercase kebab-case`)
-      if (routeIds.has(route.id)) errors.push(`${routeLabel}: duplicate route id "${route.id}"`)
-      routeIds.add(route.id)
-      const seenStages = new Set<string>()
-      const routePairsByStage = new Map<string, string>()
-      for (const [contextIndex, context] of route.contexts.entries()) {
-        const contextLabel = `${routeLabel}: context ${contextIndex + 1}`
-        if (!context.stage) errors.push(`${contextLabel}: needs a non-empty stage`)
-        if (seenStages.has(context.stage)) errors.push(`${contextLabel}: duplicate stage "${context.stage}"`)
-        seenStages.add(context.stage)
-        const stage = stagesById.get(context.stage)
-        if (!stage) errors.push(`${contextLabel}: references missing flow stage "${context.stage}"`)
-        const pair = validateExactContext(contextLabel, context.context)
-        routePairsByStage.set(context.stage, pair)
+      const entry = { step, capability: step.capability, pairs: new Set<string>() }
+      capabilitySteps.push(entry)
+      if (!capabilityIds.has(step.capability)) {
+        errors.push(`${label}: references missing capability "${step.capability}"`)
+      }
+      if (!step.routes.length) errors.push(`${label}: a Capability-bearing step needs at least one route`)
+      const routeIds = new Set<string>()
+      for (const route of step.routes) {
+        const routeLabel = `${label}: route "${route.id}"`
+        if (!route.id) errors.push(`${label}: route id must not be empty`)
+        else if (!isId(route.id)) errors.push(`${routeLabel}: id must be lowercase kebab-case`)
+        if (routeIds.has(route.id)) errors.push(`${routeLabel}: duplicate route id`)
+        routeIds.add(route.id)
+        const pair = validateExactContext(routeLabel, route.context)
         allPairs.add(pair)
-        if (stage) {
-          const supported = capabilityPairs.get(stage.capability) || new Set<string>()
-          if (!supported.has(pair)) {
-            errors.push(`${contextLabel}: context "${availabilityLabel(pair)}" is outside capability "${stage.capability}"`)
-          }
-          const flowIndex = scenario.flow.findIndex(item => item.id === context.stage)
-          if (flowIndex >= 0) flowEntries[flowIndex]!.pairs.add(pair)
+        entry.pairs.add(pair)
+        const supported = capabilityPairs.get(step.capability) || new Set<string>()
+        if (!supported.has(pair)) {
+          errors.push(`${routeLabel}: context "${availabilityLabel(pair)}" is outside capability "${step.capability}"`)
         }
       }
-      for (const stage of scenario.flow) {
-        if (!seenStages.has(stage.id)) errors.push(`${routeLabel}: missing context for flow stage "${stage.id}"`)
+      if (expectedRouteIds === undefined) expectedRouteIds = routeIds
+      else if (!sameSet(routeIds, expectedRouteIds)) {
+        errors.push(`${label}: route ids must match every other Capability-bearing step`)
       }
-      if (scenario.flow.every(stage => routePairsByStage.has(stage.id))) {
-        const correlation = scenario.flow.map(stage => `${stage.id}\0${routePairsByStage.get(stage.id)}`).join('\n')
+    }
+    if (!capabilitySteps.length) errors.push(`${scenario.file}: needs at least one Capability-bearing step`)
+
+    const routeOrder = capabilitySteps[0]?.step.routes.map(route => route.id) || []
+    /* A route id names one correlation, so two ids for the same one claim a lane
+       the Product does not have — the signature is every Capability step. */
+    const correlations = new Map<string, string>()
+    for (const routeId of routeOrder) {
+      const contexts = capabilitySteps.map(entry => entry.step.routes.find(route => route.id === routeId)?.context)
+      if (contexts.every((context): context is string => Boolean(context))) {
+        const correlation = contexts.join('\n')
         const twin = correlations.get(correlation)
-        if (twin === undefined) correlations.set(correlation, route.id)
-        else errors.push(`${routeLabel}: route "${route.id}" repeats every context of route "${twin}"`)
+        if (twin === undefined) correlations.set(correlation, routeId)
+        else errors.push(`${scenario.file}: route "${routeId}" repeats every context of route "${twin}"`)
       }
-      const firstStage = scenario.flow[0]
-      const firstPair = firstStage ? routePairsByStage.get(firstStage.id) : undefined
+      const firstPair = capabilitySteps[0]?.step.routes.find(route => route.id === routeId)?.context
       if (journey && firstPair) {
         const supported = supportedActorsForPair(firstPair) || new Set<string>()
         const canStart = scenario.actors.some(actorId => journey.actors.includes(actorId) && supported.has(actorId))
         if (!canStart) {
-          errors.push(`${routeLabel}: first context "${availabilityLabel(firstPair)}" permits no Journey Actor participating in the Scenario`)
+          errors.push(`${scenario.file}: route "${routeId}": first context "${availabilityLabel(firstPair)}" permits no Journey Actor participating in the Scenario`)
         }
       }
     }
-    journeyScenarioFlow.set(scenario.id, flowEntries)
+    journeyScenarioSteps.set(scenario.id, capabilitySteps)
     validateScenarioActors(scenario.file, scenario.actors, allPairs)
-    if (scenario.result === 'achieved' && new Set(scenario.flow.map(item => item.capability)).size < 2) {
+    if (scenario.result === 'achieved' && new Set(capabilitySteps.map(item => item.capability)).size < 2) {
       errors.push(`${scenario.file}: an achieved Journey Scenario needs at least two distinct Capabilities`)
     }
   }
@@ -565,11 +563,11 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
         errors.push(`${screen.file}: references missing Journey Scenario "${scenarioId}"`)
         continue
       }
-      const participates = (journeyScenarioFlow.get(scenarioId) || []).some(item =>
+      const participates = (journeyScenarioSteps.get(scenarioId) || []).some(item =>
         screen.capabilities.includes(item.capability) && intersects(pairs, item.pairs)
       )
       if (!participates) {
-        errors.push(`${screen.file}: Journey Scenario "${scenarioId}" has no flow item matching a Screen capability and exact context`)
+        errors.push(`${screen.file}: Journey Scenario "${scenarioId}" has no Capability-bearing step matching a Screen capability and exact context`)
       }
     }
     validateEntryPointInterfaces(
@@ -642,14 +640,14 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
         if (!journeyIds.has(target.id)) errors.push(`${label}: references missing journey "${target.id}"`)
         journeyTargets.add(target.id)
         for (const scenario of model.journeyScenarios.filter(item => item.journey === target.id && item.result === 'achieved')) {
-          for (const entry of journeyScenarioFlow.get(scenario.id) || []) {
+          for (const entry of journeyScenarioSteps.get(scenario.id) || []) {
             for (const pair of entry.pairs) supported.add(pair)
           }
         }
       } else {
         if (!journeyScenarioIds.has(target.id)) errors.push(`${label}: references missing Journey Scenario "${target.id}"`)
         journeyScenarioTargets.push(target.id)
-        for (const entry of journeyScenarioFlow.get(target.id) || []) {
+        for (const entry of journeyScenarioSteps.get(target.id) || []) {
           for (const pair of entry.pairs) supported.add(pair)
         }
       }

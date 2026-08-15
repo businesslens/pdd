@@ -115,21 +115,25 @@ not contain another H1 or H2.
   `## Success criterion`. A
   Journey is a stable goal, not a route or Capability wrapper. Every Journey
   needs achieved Journey Scenario coverage for every Journey Actor. It has no
-  `entryPoints`; resolve presentation routes from the first flow stage context
-  of achieved Scenario routes and the matching Interface or Experience.
+  `entryPoints`; resolve presentation routes from the first Capability-bearing
+  Step's inline route contexts and the matching Interface or Experience.
 - Journey Scenario: taxonomy `kind`, at least one `actor`,
-  `result: achieved|not-achieved`, an ordered non-empty `flow`, and non-empty
-  `routes`. Every flow item needs a locally unique `id`, `capability`, and
-  one-line `operation`. Every route needs a locally unique `id` and exactly one
-  singular exact context for every flow stage, supported by that stage's
-  Capability. An achieved Scenario traverses at least two distinct Capabilities.
+  `result: achieved|not-achieved`, and ordered non-empty structured `steps`.
+  Every Step needs one-line `text` and may name a `capability`. A
+  Capability-bearing Step also needs a non-empty `routes` mapping from locally
+  unique route IDs to singular exact contexts supported by that Capability;
+  a Step without a Capability cannot declare routes. Every Capability-bearing
+  Step uses the same route IDs. An achieved Scenario traverses at least two
+  distinct Capabilities.
 - `coverage.md`: `status`, `method`, `sourceAreas`, `unmapped`, `limitations`,
   H1, and lead rationale with no H2 sections. Status is model breadth only:
   `draft|partial|complete`. A complete model has at least one Capability.
 
-Both Scenario types have no lead prose and require `## Trigger`, ordered
-`## Steps`, and `## Outcome`. Optional `## Edge cases` is a non-empty bullet
-list. Every Steps or Edge cases item occupies one physical line. Journey-only
+Both Scenario types have no lead prose and require `## Trigger` and
+`## Outcome`. A Capability Scenario also requires ordered Markdown `## Steps`;
+a Journey Scenario authors its Steps in frontmatter and cannot declare that
+section. Optional `## Edge cases` is a non-empty bullet list. Every Markdown
+Steps or Edge cases item occupies one physical line. Journey-only
 Goal and Success criterion sections are invalid on Scenarios, Scenario-only
 sections are invalid on Journeys, and every recognized H2 appears at most once.
 Optional `## Decision points` uses an H3 title, a question, and at least two
@@ -166,11 +170,13 @@ backlinks, not authored targets.
 For each Scenario, every exact context must support at least one of its Actors,
 and every named Actor must be supported in at least one exact context. A
 Capability Scenario's availability is a subset of its Capability. Each Journey
-route context is checked independently against its stage Capability, and every
-route starts in a context supporting a participating Journey Actor. A Screen's
+route context is checked independently against its Step Capability, and every
+route starts at the first Capability-bearing Step in a context supporting a
+participating Journey Actor. A Screen's
 Capability Scenario must target one of the Screen's Capabilities and intersect
 the Screen's exact contexts. A Screen's Journey Scenario must have at least one
-flow stage whose Capability the Screen names with an intersecting route context.
+Capability-bearing Step whose Capability the Screen names with an intersecting
+inline route context.
 
 Every semantic entity may contain optional `references`. Each strict item needs
 `kind: code|spec|proposal|doc|adr|visual|research`,
@@ -209,7 +215,7 @@ intended product behavior.
 - Expect leaf entities as `<id>.md`; `<id>/<type>.md` means that entity owns
   child entities or assets.
 - Treat Capability Scenarios as local acceptance contracts, Journey Scenarios
-  as end-to-end flow contracts, and Business Rules as invariants.
+  as end-to-end Steps contracts, and Business Rules as invariants.
 - Do not infer a stack or architecture from the model.
 - References are optional navigation and context. Their role explains why an
   artifact is attached; it never proves alignment or replaces product prose.

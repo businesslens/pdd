@@ -220,7 +220,6 @@ const ReportScenarioContentShape = {
   kindId: IdSchema,
   actorIds: z.array(IdSchema).min(1),
   trigger: RequiredMarkdownFragmentSchema,
-  steps: z.array(SingleLineTextSchema).min(1),
   decisionPoints: z.array(ReportDecisionPointSchema),
   outcome: RequiredMarkdownFragmentSchema,
   edgeCases: z.array(SingleLineTextSchema),
@@ -231,31 +230,26 @@ export const ReportCapabilityScenarioSchema = z.strictObject({
   id: IdSchema,
   capabilityId: IdSchema,
   availability: z.array(ReportAvailabilitySchema).min(1),
+  steps: z.array(SingleLineTextSchema).min(1),
   ...ReportScenarioContentShape
 })
 
-export const ReportJourneyFlowItemSchema = z.strictObject({
-  id: IdSchema,
-  capabilityId: IdSchema,
-  operation: SingleLineTextSchema
-})
-
-export const ReportJourneyRouteContextSchema = z.strictObject({
-  stageId: IdSchema,
+export const ReportJourneyStepRouteSchema = z.strictObject({
+  routeId: IdSchema,
   ...ReportExactContextSchema.shape
 })
 
-export const ReportJourneyRouteSchema = z.strictObject({
-  id: IdSchema,
-  contexts: z.array(ReportJourneyRouteContextSchema).min(1)
+export const ReportJourneyStepSchema = z.strictObject({
+  text: SingleLineTextSchema,
+  capabilityId: IdSchema.nullable(),
+  routes: z.array(ReportJourneyStepRouteSchema)
 })
 
 export const ReportJourneyScenarioSchema = z.strictObject({
   id: IdSchema,
   journeyId: IdSchema,
   result: z.enum(['achieved', 'not-achieved']),
-  flow: z.array(ReportJourneyFlowItemSchema).min(1),
-  routes: z.array(ReportJourneyRouteSchema).min(1),
+  steps: z.array(ReportJourneyStepSchema).min(1),
   ...ReportScenarioContentShape
 })
 
@@ -347,10 +341,9 @@ export type ReportAvailability = z.infer<typeof ReportAvailabilitySchema>
 export type ReportScreen = z.infer<typeof ReportScreenSchema>
 export type ReportJourney = z.infer<typeof ReportJourneySchema>
 export type ReportCapabilityScenario = z.infer<typeof ReportCapabilityScenarioSchema>
-export type ReportJourneyFlowItem = z.infer<typeof ReportJourneyFlowItemSchema>
 export type ReportExactContext = z.infer<typeof ReportExactContextSchema>
-export type ReportJourneyRouteContext = z.infer<typeof ReportJourneyRouteContextSchema>
-export type ReportJourneyRoute = z.infer<typeof ReportJourneyRouteSchema>
+export type ReportJourneyStepRoute = z.infer<typeof ReportJourneyStepRouteSchema>
+export type ReportJourneyStep = z.infer<typeof ReportJourneyStepSchema>
 export type ReportJourneyScenario = z.infer<typeof ReportJourneyScenarioSchema>
 export type ReportBusinessRule = z.infer<typeof ReportBusinessRuleSchema>
 export type ReportBusinessRuleTarget = z.infer<typeof ReportBusinessRuleTargetSchema>
@@ -705,7 +698,7 @@ export function validateProductReport(report: ProductReportV9): string[] {
 
   const journeysById = new Map(model.journeys.map(item => [item.id, item]))
   const journeyScenariosById = new Map(model.journeyScenarios.map(item => [item.id, item]))
-  const journeyScenarioFlow = new Map<string, Array<{ capabilityId: string, pairs: Set<string> }>>()
+  const journeyScenarioSteps = new Map<string, Array<{ capabilityId: string, pairs: Set<string> }>>()
   for (const scenario of model.journeyScenarios) {
     const label = `journey scenario "${scenario.id}"`
     requireUniqueValues(issues, label, 'actorIds', scenario.actorIds)
@@ -722,69 +715,68 @@ export function validateProductReport(report: ProductReportV9): string[] {
       issues.push(`${label}: actors must include at least one actor from journey "${scenario.journeyId}"`)
     }
     const allPairs = new Set<string>()
-    const stagesById = new Map<string, typeof scenario.flow[number]>()
-    const flowEntries: Array<{ capabilityId: string, pairs: Set<string> }> = scenario.flow.map(item => ({
-      capabilityId: item.capabilityId,
-      pairs: new Set<string>()
-    }))
-    for (const [index, item] of scenario.flow.entries()) {
-      const flowLabel = `${label}: flow item ${index + 1}`
-      if (stagesById.has(item.id)) issues.push(`${flowLabel}: duplicate flow id "${item.id}"`)
-      stagesById.set(item.id, item)
-      if (!capabilityIds.has(item.capabilityId)) {
-        issues.push(`${flowLabel}: references missing capability "${item.capabilityId}"`)
+    const capabilitySteps: Array<{
+      step: typeof scenario.steps[number]
+      capabilityId: string
+      pairs: Set<string>
+    }> = []
+    let expectedRouteIds: Set<string> | undefined
+    for (const [index, step] of scenario.steps.entries()) {
+      const stepLabel = `${label}: step ${index + 1}`
+      requireUniqueValues(issues, stepLabel, 'routeIds', step.routes.map(route => route.routeId))
+      if (step.capabilityId === null) {
+        if (step.routes.length) issues.push(`${stepLabel}: routes require a capabilityId`)
+        continue
+      }
+      const entry = { step, capabilityId: step.capabilityId, pairs: new Set<string>() }
+      capabilitySteps.push(entry)
+      if (!capabilityIds.has(step.capabilityId)) {
+        issues.push(`${stepLabel}: references missing capability "${step.capabilityId}"`)
+      }
+      if (!step.routes.length) issues.push(`${stepLabel}: a Capability-bearing step needs at least one route`)
+      const routeIds = new Set(step.routes.map(route => route.routeId))
+      if (expectedRouteIds === undefined) expectedRouteIds = routeIds
+      else if (!sameIds([...routeIds], expectedRouteIds)) {
+        issues.push(`${stepLabel}: route ids must match every other Capability-bearing step`)
+      }
+      for (const route of step.routes) {
+        const routeLabel = `${stepLabel}: route "${route.routeId}"`
+        const pair = exactContextPair(issues, routeLabel, route, interfaceIds, experiencesById)
+        allPairs.add(pair)
+        entry.pairs.add(pair)
+        const supported = capabilityPairs.get(step.capabilityId) || new Set<string>()
+        if (!supported.has(pair)) {
+          issues.push(`${routeLabel}: context "${availabilityLabel(pair)}" is outside capability "${step.capabilityId}"`)
+        }
       }
     }
-    const routeIds = new Set<string>()
+    if (!capabilitySteps.length) issues.push(`${label}: needs at least one Capability-bearing step`)
+
     /* A route id names one correlation; two ids for the same one claim a lane
        the Product does not have. Mirrors the same rule in lint. */
     const correlations = new Map<string, string>()
-    for (const [routeIndex, route] of scenario.routes.entries()) {
-      const routeLabel = `${label}: route ${routeIndex + 1}`
-      if (routeIds.has(route.id)) issues.push(`${routeLabel}: duplicate route id "${route.id}"`)
-      routeIds.add(route.id)
-      const seenStages = new Set<string>()
-      const routePairsByStage = new Map<string, string>()
-      for (const [contextIndex, context] of route.contexts.entries()) {
-        const contextLabel = `${routeLabel}: context ${contextIndex + 1}`
-        if (seenStages.has(context.stageId)) issues.push(`${contextLabel}: duplicate stage "${context.stageId}"`)
-        seenStages.add(context.stageId)
-        const stage = stagesById.get(context.stageId)
-        if (!stage) issues.push(`${contextLabel}: references missing flow stage "${context.stageId}"`)
-        const pair = exactContextPair(issues, contextLabel, context, interfaceIds, experiencesById)
-        routePairsByStage.set(context.stageId, pair)
-        allPairs.add(pair)
-        if (stage) {
-          const supported = capabilityPairs.get(stage.capabilityId) || new Set<string>()
-          if (!supported.has(pair)) {
-            issues.push(`${contextLabel}: context "${availabilityLabel(pair)}" is outside capability "${stage.capabilityId}"`)
-          }
-          const flowIndex = scenario.flow.findIndex(item => item.id === context.stageId)
-          if (flowIndex >= 0) flowEntries[flowIndex]!.pairs.add(pair)
-        }
-      }
-      for (const stage of scenario.flow) {
-        if (!seenStages.has(stage.id)) issues.push(`${routeLabel}: missing context for flow stage "${stage.id}"`)
-      }
-      if (scenario.flow.every(stage => routePairsByStage.has(stage.id))) {
-        const correlation = scenario.flow.map(stage => `${stage.id}\0${routePairsByStage.get(stage.id)}`).join('\n')
+    const routeOrder = capabilitySteps[0]?.step.routes.map(route => route.routeId) || []
+    for (const routeId of routeOrder) {
+      const contexts = capabilitySteps.map(entry => entry.step.routes.find(route => route.routeId === routeId))
+      if (contexts.every((context): context is NonNullable<typeof context> => Boolean(context))) {
+        const correlation = contexts.map(context => pairKey(context.interfaceId, context.experienceId || '')).join('\n')
         const twin = correlations.get(correlation)
-        if (twin === undefined) correlations.set(correlation, route.id)
-        else issues.push(`${routeLabel}: route "${route.id}" repeats every context of route "${twin}"`)
+        if (twin === undefined) correlations.set(correlation, routeId)
+        else issues.push(`${label}: route "${routeId}" repeats every context of route "${twin}"`)
       }
-      const firstStage = scenario.flow[0]
-      const firstPair = firstStage ? routePairsByStage.get(firstStage.id) : undefined
+      const first = capabilitySteps[0]?.step.routes.find(route => route.routeId === routeId)
+      const firstPair = first ? pairKey(first.interfaceId, first.experienceId || '') : undefined
       if (journey && firstPair) {
         const supported = supportedActorsForPair(firstPair) || new Set<string>()
         const canStart = scenario.actorIds.some(actorId => journey.actorIds.includes(actorId) && supported.has(actorId))
         if (!canStart) {
-          issues.push(`${routeLabel}: first context "${availabilityLabel(firstPair)}" permits no Journey Actor participating in the Scenario`)
+          issues.push(`${label}: route "${routeId}": first context "${availabilityLabel(firstPair)}" permits no Journey Actor participating in the Scenario`)
         }
       }
     }
-    journeyScenarioFlow.set(scenario.id, flowEntries)
+    journeyScenarioSteps.set(scenario.id, capabilitySteps)
     validateScenarioActors(label, scenario.actorIds, allPairs)
-    if (scenario.result === 'achieved' && new Set(scenario.flow.map(item => item.capabilityId)).size < 2) {
+    if (scenario.result === 'achieved' && new Set(capabilitySteps.map(item => item.capabilityId)).size < 2) {
       issues.push(`${label}: an achieved Journey Scenario needs at least two distinct Capabilities`)
     }
   }
@@ -809,9 +801,10 @@ export function validateProductReport(report: ProductReportV9): string[] {
     for (const actorId of journey.actorIds) {
       if (!achievedActors.has(actorId)) issues.push(`${label}: actor "${actorId}" needs an achieved Journey Scenario`)
     }
-    const achievedCapabilities = new Set(achieved.flatMap(scenario => scenario.flow.map(item => item.capabilityId)))
+    const achievedCapabilities = new Set(achieved.flatMap(scenario => scenario.steps.flatMap(item => item.capabilityId ? [item.capabilityId] : [])))
     const failedCapabilities = new Set(
-      scenarios.filter(scenario => scenario.result === 'not-achieved').flatMap(scenario => scenario.flow.map(item => item.capabilityId))
+      scenarios.filter(scenario => scenario.result === 'not-achieved')
+        .flatMap(scenario => scenario.steps.flatMap(item => item.capabilityId ? [item.capabilityId] : []))
     )
     const failureOnly = new Set([...failedCapabilities].filter(capabilityId => !achievedCapabilities.has(capabilityId)))
     const domains = new Set(
@@ -820,9 +813,9 @@ export function validateProductReport(report: ProductReportV9): string[] {
     missingRelation(issues, label, 'capability', journey.capabilityIds, capabilityIds)
     missingRelation(issues, label, 'failure-only capability', journey.failureOnlyCapabilityIds, capabilityIds)
     missingRelation(issues, label, 'domain', journey.domainIds, domainIds)
-    if (!sameIds(journey.capabilityIds, achievedCapabilities)) issues.push(`${label}: capabilityIds must equal the achieved-flow Capability union`)
+    if (!sameIds(journey.capabilityIds, achievedCapabilities)) issues.push(`${label}: capabilityIds must equal the achieved-step Capability union`)
     if (!sameIds(journey.failureOnlyCapabilityIds, failureOnly)) issues.push(`${label}: failureOnlyCapabilityIds must equal the failure-only Capability set`)
-    if (!sameIds(journey.domainIds, domains)) issues.push(`${label}: domainIds must equal the Domains derived from achieved-flow Capabilities`)
+    if (!sameIds(journey.domainIds, domains)) issues.push(`${label}: domainIds must equal the Domains derived from achieved-step Capabilities`)
   }
 
   for (const screen of model.screens) {
@@ -860,10 +853,10 @@ export function validateProductReport(report: ProductReportV9): string[] {
     }
     for (const scenarioId of screen.journeyScenarioIds) {
       if (!journeyScenariosById.has(scenarioId)) continue
-      const participates = (journeyScenarioFlow.get(scenarioId) || []).some(item =>
+      const participates = (journeyScenarioSteps.get(scenarioId) || []).some(item =>
         screen.capabilityIds.includes(item.capabilityId) && intersects(pairs, item.pairs)
       )
-      if (!participates) issues.push(`${label}: Journey Scenario "${scenarioId}" has no flow item matching a Screen capability and exact context`)
+      if (!participates) issues.push(`${label}: Journey Scenario "${scenarioId}" has no Capability-bearing step matching a Screen capability and exact context`)
     }
     const stateTitles = new Set<string>()
     for (const state of screen.states) {
@@ -906,14 +899,14 @@ export function validateProductReport(report: ProductReportV9): string[] {
         if (!journeyIds.has(target.id)) issues.push(`${targetLabel}: references missing journey "${target.id}"`)
         journeyTargets.add(target.id)
         for (const scenario of model.journeyScenarios.filter(item => item.journeyId === target.id && item.result === 'achieved')) {
-          for (const entry of journeyScenarioFlow.get(scenario.id) || []) {
+          for (const entry of journeyScenarioSteps.get(scenario.id) || []) {
             for (const pair of entry.pairs) supported.add(pair)
           }
         }
       } else {
         if (!journeyScenarioIds.has(target.id)) issues.push(`${targetLabel}: references missing Journey Scenario "${target.id}"`)
         journeyScenarioTargets.push(target.id)
-        for (const entry of journeyScenarioFlow.get(target.id) || []) {
+        for (const entry of journeyScenarioSteps.get(target.id) || []) {
           for (const pair of entry.pairs) supported.add(pair)
         }
       }

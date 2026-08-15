@@ -19,7 +19,7 @@ before release, or for a named or full current-state audit.
 ```
 
 Verify lints structure, independently traces each declared availability scope,
-Capability Scenario, and Journey Scenario flow entry without executing target
+Capability Scenario, and Capability-bearing Journey Scenario Step without executing target
 code, and classifies aligned, model-right, code-right, neither-right, unmapped,
 and unverifiable cases. It groups root decisions and recommends an authority.
 
@@ -32,7 +32,7 @@ and unverifiable cases. It groups root decisions and recommends an authority.
   merge base or diff.
 - `verify <named scope>` inspects one Actor, Interface, Experience, Screen,
   Domain, Capability, Capability Scenario, Journey, Journey Scenario,
-  availability scope, flow entry, or path plus its necessary dependencies.
+  availability scope, Step, or path plus its necessary dependencies.
 
 Git is a scope tool, never an authority tool. A model committed on the default
 branch can still be the approved plan for code added later.

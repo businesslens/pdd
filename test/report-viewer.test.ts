@@ -35,8 +35,9 @@ describe('stable Product Report Workbench', () => {
     expect(workspace.capabilityScenarios.every((item: any) => item.scenarioType === 'capability')).toBe(true)
     expect(workspace.journeyScenarios.every((item: any) => item.scenarioType === 'journey')).toBe(true)
     const journeyScenario = workspace.journeyScenarios.find((item: any) => item.id === 'browse-and-complete-checkout')!
-    expect(journeyScenario.routes.map((route: any) => route.id)).toEqual(['web', 'mobile'])
-    expect([...journeyScenario.flow[0].availability.map((pair: any) => pair.key)].sort()).toEqual([
+    const firstCapabilityStep = journeyScenario.steps.find((step: any) => step.capabilityId)!
+    expect(firstCapabilityStep.routes.map((route: any) => route.routeId)).toEqual(['web', 'mobile'])
+    expect([...firstCapabilityStep.routes.map((route: any) => route.context.key)].sort()).toEqual([
       'customer-mobile::storefront',
       'customer-web::storefront'
     ])
@@ -70,51 +71,52 @@ describe('stable Product Report Workbench', () => {
     expect(workspace.byKey.get(`interface:${sharedId}`)?.kind).toBe('interface')
   })
 
-  /*
-    Flow and routes are one table, so the stage label is stated once and the
-    context — the only fact that differs between routes — lands on the axis.
-  */
-  it('reads a Journey Scenario flow as one stages-by-routes table', async () => {
-    const { journeyFlowMatrix } = await import(workspaceModulePath)
+  /* One authored sequence projects directly into the reading-and-routes table. */
+  it('reads a Journey Scenario as one steps-by-routes table', async () => {
+    const { journeyStepMatrix } = await import(workspaceModulePath)
     const report = compileReport(loadModel(FIXTURE), '2026-08-08')
     const workspace = projectReportWorkspace(report)
     const scenario = workspace.journeyScenarios.find((item: any) => item.id === 'browse-and-complete-checkout')!
 
-    const matrix = journeyFlowMatrix(scenario)
+    const matrix = journeyStepMatrix(scenario)
     expect(matrix.routeIds).toEqual(['web', 'mobile'])
-    expect(matrix.stages.map((stage: any) => stage.id)).toEqual(['select-product', 'complete-checkout'])
-    expect(matrix.stages[1].cells.map((cell: any) => cell.context.key)).toEqual([
+    expect(matrix.steps.map((step: any) => step.text)).toEqual([
+      'The shopper finds and selects an available product',
+      'The shopper submits checkout',
+      'The Product confirms the paid order'
+    ])
+    expect(matrix.steps[1].cells.map((cell: any) => cell.context.key)).toEqual([
       'customer-web::storefront',
       'customer-mobile::storefront'
     ])
     /* Parallel lanes are not a handoff — neither route changes context. */
-    expect(matrix.stages.every((stage: any) => stage.cells.every((cell: any) => !cell.handoff))).toBe(true)
-    /* A Capability Scenario has one stage and nothing to correlate. */
-    expect(journeyFlowMatrix(workspace.capabilityScenarios[0])).toBeNull()
+    expect(matrix.steps.every((step: any) => step.cells.every((cell: any) => !cell.handoff))).toBe(true)
+    /* A Capability Scenario keeps local Markdown Steps and has no route matrix. */
+    expect(journeyStepMatrix(workspace.capabilityScenarios[0])).toBeNull()
   })
 
   /*
     The handoff is the deliberate composition a Journey is created for, and the
-    only place the model states it is a route changing context between stages.
+    only place the model states it is a route changing context between Steps.
   */
-  it('marks the stage a route hands off into, per route', async () => {
-    const { journeyFlowMatrix } = await import(workspaceModulePath)
+  it('marks the Capability step a route hands off into, per route', async () => {
+    const { journeyStepMatrix } = await import(workspaceModulePath)
     const report = compileReport(loadModel(FIXTURE), '2026-08-08')
     const scenario = report.model.journeyScenarios.find(
       (item: any) => item.id === 'browse-and-complete-checkout'
     )!
-    const handoffContext = scenario.routes
-      .find((route: any) => route.id === 'web')!
-      .contexts.find((context: any) => context.stageId === 'complete-checkout')!
+    const handoffContext = scenario.steps
+      .find((step: any) => step.capabilityId === 'checkout')!
+      .routes.find((route: any) => route.routeId === 'web')!
     handoffContext.experienceId = null
 
     const workspace = projectReportWorkspace(report)
-    const matrix = journeyFlowMatrix(
+    const matrix = journeyStepMatrix(
       workspace.journeyScenarios.find((item: any) => item.id === 'browse-and-complete-checkout')!
     )
 
-    expect(matrix.stages[0].cells.map((cell: any) => cell.handoff)).toEqual([false, false])
-    expect(matrix.stages[1].cells.map((cell: any) => cell.handoff)).toEqual([true, false])
+    expect(matrix.steps[0].cells.map((cell: any) => cell.handoff)).toEqual([false, false])
+    expect(matrix.steps[1].cells.map((cell: any) => cell.handoff)).toEqual([true, false])
   })
 
   it('derives Journey availability only from achieved flows', () => {
@@ -136,7 +138,7 @@ describe('stable Product Report Workbench', () => {
     expect(renderer).toContain('ProductReportV9')
     expect(renderer).toContain('projectReportWorkspace')
     expect(renderer).toContain('<BlrWorkbench')
-    expect(source('app/components/BlrEntityBody.vue')).toContain('journeyFlowMatrix')
+    expect(source('app/components/BlrEntityBody.vue')).toContain('journeyStepMatrix')
     expect(workbench).toContain('<BlrProductTopology')
     /* Grouping is how authored Domains earn their place in navigation. */
     expect(workbench).toContain('groupKind')

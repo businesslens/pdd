@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * The authored body of one entity: everything the model states in prose, steps,
- * stages, branches and states.
+ * branches and states.
  *
  * This is page material. It used to render inside a 672px drawer, where a
  * Journey Scenario ran to two and a half screens of scrolling and every heading
@@ -20,7 +20,7 @@ import type {
   ScenarioView,
   ScreenView
 } from '../utils/reportWorkspace'
-import { isScenarioKind, journeyFlowMatrix } from '../utils/reportWorkspace'
+import { isScenarioKind, journeyStepMatrix } from '../utils/reportWorkspace'
 
 const props = defineProps<{
   workspace: ReportWorkspace
@@ -46,17 +46,17 @@ const domainId = computed(() => props.entity.kind === 'capability'
   ? (props.entity as CapabilityView).domainId
   : '')
 
-/* Stages down, routes across — see journeyFlowMatrix for why they are one table. */
-const flowMatrix = computed(() => (isScenario.value ? journeyFlowMatrix(asScenario.value) : null))
+/* One authored Journey sequence, with route contexts projected into columns. */
+const stepMatrix = computed(() => (isScenario.value ? journeyStepMatrix(asScenario.value) : null))
 
-/** One route needs no column to tell it apart, so its id rides the heading. */
-const flowMeta = computed(() => {
-  const matrix = flowMatrix.value
+/** One route needs no column heading to tell it apart, so its id rides the heading. */
+const stepMeta = computed(() => {
+  const matrix = stepMatrix.value
   if (!matrix) return ''
-  const stages = `${matrix.stages.length} ${matrix.stages.length === 1 ? 'stage' : 'stages'}`
+  const steps = `${matrix.steps.length} ${matrix.steps.length === 1 ? 'step' : 'steps'}`
   return matrix.routeIds.length === 1
-    ? `${stages} · route ${matrix.routeIds[0]}`
-    : `${stages} · ${matrix.routeIds.length} routes`
+    ? `${steps} · route ${matrix.routeIds[0]}`
+    : `${steps} · ${matrix.routeIds.length} routes`
 })
 
 /** True when this component would render nothing at all. */
@@ -105,43 +105,38 @@ const empty = computed(() => !props.entity.intent
         <BlrProse :text="asScenario.trigger" size="base" class="max-w-3xl" />
       </section>
 
-      <!--
-        Flow and routes are one table: the stage is a row header stated once,
-        each route a column, the exact context the cell. Drawn apart they
-        repeated every stage label once per route and hid the one fact that
-        differs. A handoff — a route arriving in a new context — is marked,
-        because that transition is why the Journey exists.
-      -->
-      <section v-if="flowMatrix" class="space-y-3">
-        <h2 class="blr-page-heading">Flow <span class="blr-meta ms-1">{{ flowMeta }}</span></h2>
+      <!-- One authored Journey sequence: prose, Capability and route stay in one row. -->
+      <section v-if="stepMatrix" class="space-y-3">
+        <h2 class="blr-page-heading">Steps <span class="blr-meta ms-1">{{ stepMeta }}</span></h2>
         <div class="overflow-x-auto rounded-xl border border-default">
           <table class="w-full border-collapse text-left">
-            <thead v-if="flowMatrix.routeIds.length > 1">
+            <thead v-if="stepMatrix.routeIds.length > 1">
               <tr class="border-b border-default bg-elevated/35">
-                <th scope="col" class="blr-field px-4 py-2.5 font-normal">Stage</th>
-                <th v-for="routeId in flowMatrix.routeIds" :key="routeId" scope="col" class="px-4 py-2.5">
+                <th scope="col" class="blr-field px-4 py-2.5 font-normal">Step</th>
+                <th v-for="routeId in stepMatrix.routeIds" :key="routeId" scope="col" class="px-4 py-2.5">
                   <code class="rounded bg-muted px-2 py-1 font-mono text-xs text-muted">{{ routeId }}</code>
                 </th>
               </tr>
             </thead>
             <tbody>
               <tr
-                v-for="stage in flowMatrix.stages"
-                :key="stage.id"
+                v-for="step in stepMatrix.steps"
+                :key="step.index"
                 class="border-b border-default align-top last:border-b-0"
               >
                 <th scope="row" class="max-w-sm px-4 py-3 font-normal">
-                  <p class="text-sm font-medium text-highlighted">{{ stage.index + 1 }}. {{ stage.operation }}</p>
+                  <p class="text-sm font-medium text-highlighted">{{ step.index + 1 }}. {{ step.text }}</p>
                   <BlrLinks
+                    v-if="step.capabilityId"
                     :workspace="workspace"
-                    :ids="[stage.capabilityId]"
+                    :ids="[step.capabilityId]"
                     kind="capability"
                     label="Capability"
                     interactive
                     @select="emit('select', $event)"
                   />
                 </th>
-                <td v-for="cell in stage.cells" :key="cell.routeId" class="px-4 py-3">
+                <td v-for="cell in step.cells" :key="cell.routeId" class="px-4 py-3">
                   <p v-if="cell.handoff" class="blr-meta mb-1.5 flex items-center gap-1 text-primary">
                     <UIcon name="i-lucide-corner-down-right" class="size-3" />handoff
                   </p>
@@ -153,14 +148,11 @@ const empty = computed(() => !props.entity.intent
         </div>
       </section>
 
-      <!-- Steps are the prose claim, not a second copy of the flow — narrative, not a ladder. -->
-      <section class="space-y-3">
-        <h2 class="blr-page-heading">
-          Steps <span class="blr-meta ms-1">what happens, in words</span>
-        </h2>
+      <section v-else class="space-y-3">
+        <h2 class="blr-page-heading">Steps</h2>
         <ol class="max-w-3xl list-decimal space-y-2 ps-5 marker:font-mono marker:text-xs marker:text-dimmed">
           <li v-for="(step, index) in asScenario.steps" :key="index" class="ps-1 text-sm leading-6 text-default">
-            {{ step }}
+            {{ step.text }}
           </li>
         </ol>
       </section>

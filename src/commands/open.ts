@@ -325,7 +325,9 @@ function writeReport(root: string, report: ProductReportV9, hasLogo: boolean): v
     ).join('\n\n')
     return [
       { heading: 'Trigger', content: scenario.trigger },
-      { heading: 'Steps', content: scenario.steps.map((step, index) => `${index + 1}. ${step}`).join('\n') },
+      ...('capabilityId' in scenario
+        ? [{ heading: 'Steps', content: scenario.steps.map((step, index) => `${index + 1}. ${step}`).join('\n') }]
+        : []),
       { heading: 'Decision points', content: decisions },
       { heading: 'Outcome', content: scenario.outcome },
       { heading: 'Edge cases', content: scenario.edgeCases.map(item => `- ${item}`).join('\n') }
@@ -385,17 +387,15 @@ function writeReport(root: string, report: ProductReportV9, hasLogo: boolean): v
         kind: scenario.kindId,
         actors: scenario.actorIds,
         result: scenario.result,
-        flow: scenario.flow.map(item => ({
-          id: item.id,
-          capability: item.capabilityId,
-          operation: item.operation
-        })),
-        routes: scenario.routes.map(route => ({
-          id: route.id,
-          contexts: route.contexts.map(context => ({
-            stage: context.stageId,
-            ...exactContext(context)
-          }))
+        steps: scenario.steps.map(step => compactRecord({
+          text: step.text,
+          capability: step.capabilityId ?? undefined,
+          routes: step.capabilityId
+            ? Object.fromEntries(step.routes.map(route => [
+                route.routeId,
+                route.experienceId ?? route.interfaceId
+              ]))
+            : undefined
         })),
         references: references(scenario.references)
       })) + body(

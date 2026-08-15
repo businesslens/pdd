@@ -259,7 +259,9 @@ export function directRelations(workspace: ReportWorkspace, entity: AnyEntityVie
         push(entityKey('capability', entity.capabilityId), entity.key, 'cases into')
       } else {
         push(entityKey('journey', entity.journeyId), entity.key, 'cases into')
-        for (const stage of entity.flow) push(entity.key, entityKey('capability', stage.capabilityId), 'uses')
+        for (const capabilityId of new Set(entity.steps.flatMap(step => step.capabilityId ? [step.capabilityId] : []))) {
+          push(entity.key, entityKey('capability', capabilityId), 'uses')
+        }
       }
       for (const id of entity.screenIds) push(entityKey('screen', id), entity.key, 'serves')
       for (const id of entity.ruleIds) push(entityKey('rule', id), entity.key, 'constrains')

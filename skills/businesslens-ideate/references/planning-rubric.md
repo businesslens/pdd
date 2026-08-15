@@ -36,9 +36,9 @@
 - Journeys express stable user or operator goals whose achieved paths cross at
   least two distinct Capabilities. Do not create a Journey to house acceptance
   for one Capability.
-- Journey Scenarios express observable paths through a goal. Record locally
-  identified Capability stages with one-line operations, then correlate one
-  exact context per stage in every supported route.
+- Journey Scenarios express observable paths through a goal. Write one ordered
+  Steps list, annotate the Steps that exercise locally identified Capabilities,
+  and carry one exact context per route inline on each such Step.
 - Use a decision point only when branches converge on the same result without
   changing the Capability sequence. Otherwise write separate Scenarios.
 - Record intent where the reason behind a boundary or behavior will guide
@@ -48,9 +48,10 @@
 
 ## Scenarios are the acceptance contract
 
-Write Trigger, ordered Steps, Decision points when a linear flow branches, and
-Outcome so a reviewer can compare source behavior without executing it. Keep a
-Journey Scenario's prose steps aligned with its authored flow operations.
+Write Trigger, ordered Steps, Decision points when a linear sequence branches,
+and Outcome so a reviewer can compare source behavior without executing it. A
+Journey Scenario authors this sequence once in structured frontmatter; Steps
+that express a seam or condition may omit Capability and route annotations.
 
 - Good: “Submitting an empty cart shows an error and keeps the cart.”
 - Too vague: “Cart validation works.”

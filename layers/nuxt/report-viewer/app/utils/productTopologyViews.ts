@@ -58,11 +58,11 @@ export const PRODUCT_TOPOLOGY_VIEWS: ProductTopologyView[] = [
     name: 'Value paths',
     question: 'How does one Actor goal unfold from variation to outcome?',
     semantics: 'occurrence',
-    note: 'Variations run side by side; their numbered stages read downward. A Capability repeats when different accepted variations use it, and a Screen attaches to the last stage that actually exposes it.',
+    note: 'Variations run side by side; their numbered Capability-bearing Steps read downward. A Capability repeats when different accepted variations use it, and a Screen attaches to the last Step that actually exposes it.',
     flow: [
       { kind: 'journey', label: 'Journey' },
       { kind: 'journey-scenario', label: 'Variations' },
-      { kind: 'capability', label: 'Ordered stages' },
+      { kind: 'capability', label: 'Capability Steps' },
       { kind: 'screen', label: 'Landings' }
     ],
     separators: ['↓', '↓', '↓'],

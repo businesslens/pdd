@@ -2,26 +2,18 @@
 kind: edge
 actors: [reader]
 result: achieved
-flow:
-  - id: save-item
+steps:
+  - text: The Reader saves the item
     capability: item-saving
-    operation: Save the worthwhile item
-  - id: add-to-collection
+    routes:
+      web: reader-web::personal-library
+      mobile: reader-mobile::personal-library
+  - text: The Reader selects an owned collection
+  - text: The saved item is added at the chosen position
     capability: collection-organization
-    operation: Add the item to the chosen owned collection
-routes:
-  - id: web
-    contexts:
-      - stage: save-item
-        context: reader-web::personal-library
-      - stage: add-to-collection
-        context: reader-web::personal-library
-  - id: mobile
-    contexts:
-      - stage: save-item
-        context: reader-mobile::personal-library
-      - stage: add-to-collection
-        context: reader-web::personal-library
+    routes:
+      web: reader-web::personal-library
+      mobile: reader-web::personal-library
 ---
 
 # Save an item into an existing collection
@@ -29,12 +21,6 @@ routes:
 ## Trigger
 
 The Reader finds a worthwhile item for an existing owned collection.
-
-## Steps
-
-1. The Reader saves the item
-2. The Reader selects an owned collection
-3. The saved item is added at the chosen position
 
 ## Outcome
 

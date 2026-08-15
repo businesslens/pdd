@@ -2,26 +2,18 @@
 kind: primary
 actors: [reader]
 result: achieved
-flow:
-  - id: read-item
+steps:
+  - text: Unread items are shown in newest-first order
+  - text: The Reader opens and reads an item
     capability: content-reading
-    operation: Read an unread library item
-  - id: mark-read
+    routes:
+      web: reader-web::personal-library
+      mobile: reader-mobile::personal-library
+  - text: The item is marked read
     capability: reading-state
-    operation: Mark the consumed item read and continue
-routes:
-  - id: web
-    contexts:
-      - stage: read-item
-        context: reader-web::personal-library
-      - stage: mark-read
-        context: reader-web::personal-library
-  - id: mobile
-    contexts:
-      - stage: read-item
-        context: reader-mobile::personal-library
-      - stage: mark-read
-        context: reader-mobile::personal-library
+    routes:
+      web: reader-web::personal-library
+      mobile: reader-mobile::personal-library
 ---
 
 # Work through the unread backlog
@@ -29,12 +21,6 @@ routes:
 ## Trigger
 
 The Reader opens a library containing unread items.
-
-## Steps
-
-1. Unread items are shown in newest-first order
-2. The Reader opens and reads an item
-3. The item is marked read
 
 ## Outcome
 

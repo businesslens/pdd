@@ -43,9 +43,9 @@
   external-failure behavior only where it differs.
 - Journeys represent stable user or operator goals, never a wrapper for one
   Capability. Omit Journeys when no established goal crosses Capabilities.
-- Journey Scenarios are observable paths through a goal. Record locally
-  identified Capability stages with one-line operations, then correlate one
-  exact context per stage in every supported route. An achieved path must
+- Journey Scenarios are observable paths through a goal. Write one ordered
+  Steps list, annotate the Steps that exercise locally identified Capabilities,
+  and carry one exact context per route inline on each such Step. An achieved path must
   traverse at least two distinct Capabilities.
 - Add a decision point only when branches converge on one result without
   changing the Capability sequence. Otherwise write separate Scenarios.

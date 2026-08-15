@@ -2,20 +2,17 @@
 kind: primary
 actors: [reader, visitor]
 result: achieved
-flow:
-  - id: publish-collection
+steps:
+  - text: The Reader publishes the owned collection
     capability: collection-publication
-    operation: Publish the owned collection to a stable web address
-  - id: read-collection
+    routes:
+      publish-on-web: reader-web::personal-library
+  - text: The Product exposes a stable public web address
+  - text: The Visitor opens that address without joining the private library
     capability: public-collection-reading
-    operation: Open and read the published collection
-routes:
-  - id: publish-on-web
-    contexts:
-      - stage: publish-collection
-        context: reader-web::personal-library
-      - stage: read-collection
-        context: reader-web::public-reading
+    routes:
+      publish-on-web: reader-web::public-reading
+  - text: The Product presents the collection's ordered items read-only
 ---
 
 # Publish and read a collection
@@ -23,13 +20,6 @@ routes:
 ## Trigger
 
 The Reader wants to share an owned collection with a Visitor.
-
-## Steps
-
-1. The Reader publishes the owned collection
-2. The Product exposes a stable public web address
-3. The Visitor opens that address without joining the private library
-4. The Product presents the collection's ordered items read-only
 
 ## Outcome
 

@@ -43,9 +43,8 @@ describe('report SDK entry point', () => {
       'ReportScreenSchema',
       'ReportScreenStateSchema',
       'ReportJourneyScenarioSchema',
-      'ReportJourneyFlowItemSchema',
-      'ReportJourneyRouteContextSchema',
-      'ReportJourneyRouteSchema',
+      'ReportJourneyStepRouteSchema',
+      'ReportJourneyStepSchema',
       'ReportBusinessRuleTargetSchema',
       'validateProductReport',
       'validateBlueprintReport',
@@ -168,8 +167,8 @@ describe('projectPortableReport', () => {
       }
     }
     for (const scenario of direct.model.journeyScenarios) {
-      for (const route of scenario.routes) {
-        for (const context of route.contexts) context.experienceId = null
+      for (const step of scenario.steps) {
+        for (const route of step.routes) route.experienceId = null
       }
     }
     for (const screen of direct.model.screens) {
@@ -190,27 +189,27 @@ describe('projectPortableReport', () => {
       kindId: 'edge',
       actorIds: ['shopper', 'store-admin'],
       result: 'not-achieved',
-      flow: [
+      steps: [
         {
-          id: 'attempt-checkout',
+          text: 'The shopper attempts checkout',
           capabilityId: 'checkout',
-          operation: 'Attempt checkout'
+          routes: [{
+            routeId: 'web-to-admin',
+            interfaceId: 'customer-web',
+            experienceId: 'customer-web::storefront'
+          }]
         },
         {
-          id: 'review-attempt',
+          text: 'The operator reviews the blocked attempt',
           capabilityId: 'order-management',
-          operation: 'Review the blocked order attempt'
+          routes: [{
+            routeId: 'web-to-admin',
+            interfaceId: 'admin-web',
+            experienceId: 'admin-web::admin-console'
+          }]
         }
       ],
-      routes: [{
-        id: 'web-to-admin',
-        contexts: [
-          { stageId: 'attempt-checkout', interfaceId: 'customer-web', experienceId: 'customer-web::storefront' },
-          { stageId: 'review-attempt', interfaceId: 'admin-web', experienceId: 'admin-web::admin-console' }
-        ]
-      }],
       trigger: 'A shopper attempts checkout and needs operator help.',
-      steps: ['The shopper attempts checkout', 'The operator reviews the blocked attempt'],
       decisionPoints: [],
       outcome: 'The Journey goal is not achieved and the blocked attempt is ready for review.',
       edgeCases: [],
@@ -379,6 +378,11 @@ describe('projectPortableReport', () => {
     const legacy = structuredClone(report) as Record<string, any>
     legacy.model.actors[0].codeRefs = []
     expect(sdk.ProductReportSchema.safeParse(legacy).success).toBe(false)
+
+    const legacyJourney = structuredClone(report) as Record<string, any>
+    legacyJourney.model.journeyScenarios[0].flow = []
+    legacyJourney.model.journeyScenarios[0].routes = []
+    expect(sdk.ProductReportSchema.safeParse(legacyJourney).success).toBe(false)
   })
 
   it('is non-mutating, idempotent, and produces a valid report', () => {
@@ -409,9 +413,9 @@ describe('projectPortableReport', () => {
   it('enforces route, Rule-target, Experience-cover, and complete-model relationships', () => {
     const incompleteRoute = structuredClone(report)
     const scenario = incompleteRoute.model.journeyScenarios.find(item => item.id === 'browse-and-complete-checkout')!
-    scenario.routes[0]!.contexts.pop()
+    scenario.steps.find(step => step.capabilityId === 'checkout')!.routes.pop()
     expect(sdk.validateProductReport(incompleteRoute).join('\n')).toContain(
-      'missing context for flow stage "complete-checkout"'
+      'route ids must match every other Capability-bearing step'
     )
 
     const narrowedRule = structuredClone(report)

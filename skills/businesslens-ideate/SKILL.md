@@ -56,9 +56,9 @@ Read before authoring:
    Interface availability when an Interface is already one coherent context.
    Distinguish durable Capabilities from complete Actor goals. Give every
    Capability per-Capability acceptance. Create a Journey only when an achieved
-   goal path crosses at least two distinct Capabilities; define its Scenario
-   flow with locally identified Capability stages and routes that correlate one
-   exact context per stage.
+   goal path crosses at least two distinct Capabilities; define its Scenario as
+   one ordered Steps list, annotating Capability-bearing Steps with one exact
+   context per inline route.
 8. In resolution mode, do not reopen broad ideation. Use the supplied finding,
    inspected files, and authority decision to draft the smallest exact model
    delta that makes the intended behavior unambiguous.

@@ -2,33 +2,23 @@
 kind: edge
 actors: [shopper, store-admin]
 result: not-achieved
-flow:
-  - id: select-product
+steps:
+  - text: The shopper finds and selects an available product
     capability: catalog-browsing
-    operation: Find and select an available product
-  - id: place-order
+    routes:
+      web-to-admin: customer-web::storefront
+      mobile-to-admin: customer-mobile::storefront
+  - text: The shopper submits checkout and the order is placed
     capability: checkout
-    operation: Submit payment and place the order
-  - id: cancel-order
+    routes:
+      web-to-admin: customer-web::storefront
+      mobile-to-admin: customer-mobile::storefront
+  - text: Reconciliation shows the product cannot be fulfilled
+  - text: The store admin cancels the order and the payment is released
     capability: order-management
-    operation: Cancel the order during stock reconciliation
-routes:
-  - id: web-to-admin
-    contexts:
-      - stage: select-product
-        context: customer-web::storefront
-      - stage: place-order
-        context: customer-web::storefront
-      - stage: cancel-order
-        context: admin-web::admin-console
-  - id: mobile-to-admin
-    contexts:
-      - stage: select-product
-        context: customer-mobile::storefront
-      - stage: place-order
-        context: customer-mobile::storefront
-      - stage: cancel-order
-        context: admin-web::admin-console
+    routes:
+      web-to-admin: admin-web::admin-console
+      mobile-to-admin: admin-web::admin-console
 ---
 
 # Cancel an order before fulfilment
@@ -37,13 +27,6 @@ routes:
 
 The shopper places an order for a product that stock reconciliation later finds
 unavailable.
-
-## Steps
-
-1. The shopper finds and selects an available product
-2. The shopper submits checkout and the order is placed
-3. Reconciliation shows the product cannot be fulfilled
-4. The store admin cancels the order and the payment is released
 
 ## Outcome
 

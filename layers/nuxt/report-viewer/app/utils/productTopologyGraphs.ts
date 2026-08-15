@@ -219,7 +219,7 @@ export function buildProductMap(
   return { nodes, edges }
 }
 
-/** One selected Journey, its accepted variations, ordered stages and landings. */
+/** One selected Journey, its accepted variations, Capability-bearing Steps and landings. */
 export function buildValuePaths(
   workspace: ReportWorkspace,
   options: ProductTopologyGraphOptions = {}
@@ -239,12 +239,13 @@ export function buildValuePaths(
     nodes.push(entityNode(scenario, { selected: options.selectedId === scenario.key }))
     edges.push(relationEdge({ source: journey.key, target: scenario.key, label: 'varies as' }))
     let previous = scenario.key
-    const stageAnchors: Array<{ nodeId: string, capabilityId: string, contextKeys: string[] }> = []
+    const stepAnchors: Array<{ nodeId: string, capabilityId: string, contextKeys: string[] }> = []
 
-    scenario.flow.forEach((stage, index) => {
-      const capability = workspace.capabilities.find(item => item.id === stage.capabilityId)
+    scenario.steps.forEach((step, index) => {
+      if (!step.capabilityId) return
+      const capability = workspace.capabilities.find(item => item.id === step.capabilityId)
       if (!capability) return
-      const occurrenceId = `${scenario.key}:stage:${index}:${capability.key}`
+      const occurrenceId = `${scenario.key}:step:${index}:${capability.key}`
       const node = entityNode(capability, {
         selected: options.selectedId === capability.key,
         colorSlot: capabilityColorSlot(workspace, capability.id)
@@ -255,33 +256,33 @@ export function buildValuePaths(
         id: occurrenceId,
         data: {
           ...data,
-          sublabel: `${index + 1}. ${stage.operation}`,
+          sublabel: `${index + 1}. ${step.text}`,
           count: null
         }
       })
       edges.push(relationEdge({ source: previous, target: occurrenceId, label: index ? 'then' : 'starts' }))
       previous = occurrenceId
-      stageAnchors.push({
+      stepAnchors.push({
         nodeId: occurrenceId,
-        capabilityId: stage.capabilityId,
-        contextKeys: stage.availability.map(pair => pair.key)
+        capabilityId: step.capabilityId,
+        contextKeys: step.routes.map(route => route.context.key)
       })
     })
 
     /*
-      A Screen is authored against the whole Scenario, not one stage. Hanging it
-      off the final stage reads as "this stage lands here", which is false as
-      soon as the path ends somewhere non-visual — a feed integration stage
+      A Screen is authored against the whole Scenario, not one Step. Hanging it
+      off the final Step reads as "this Step lands here", which is false as
+      soon as the path ends somewhere non-visual — a feed integration Step
       would appear to land on a Reader Screen it shares no context with. Anchor
-      on the last stage that actually exposes the Screen, and fall back to the
-      Scenario when no stage does.
+      on the last Capability-bearing Step that exposes the Screen, and fall back
+      to the Scenario when no Step does.
     */
     for (const screen of workspace.screens.filter(item => item.journeyScenarioIds.includes(scenario.id))) {
       screens.set(screen.key, screen)
       const contexts = new Set(screen.availability.map(pair => pair.key))
-      const anchor = [...stageAnchors].reverse().find(stage =>
-        screen.capabilityIds.includes(stage.capabilityId)
-        && stage.contextKeys.some(key => contexts.has(key)))
+      const anchor = [...stepAnchors].reverse().find(step =>
+        screen.capabilityIds.includes(step.capabilityId)
+        && step.contextKeys.some(key => contexts.has(key)))
       edges.push(relationEdge({
         source: anchor?.nodeId ?? scenario.key,
         target: screen.key,
@@ -294,7 +295,7 @@ export function buildValuePaths(
     selected: options.selectedId === screen.key
   })))
   /*
-    Ordered stages read downward, so variations sit side by side as columns.
+    Ordered Capability-bearing Steps read downward, so variations sit side by side as columns.
     A left-to-right chain made a short Journey a thin ribbon: the row was wider
     than the canvas, so it scaled down and left the height unused.
   */

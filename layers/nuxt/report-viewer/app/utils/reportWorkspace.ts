@@ -22,8 +22,6 @@ import type {
   ReportExperience,
   ReportInterface,
   ReportJourney,
-  ReportJourneyFlowItem,
-  ReportJourneyRoute,
   ReportJourneyScenario,
   ReportReference,
   ReportScreen,
@@ -208,7 +206,7 @@ export interface CapabilityView extends EntityBase {
   availability: AvailabilityPair[]
   /** Capability Scenarios — the only direct acceptance coverage for this ability. */
   scenarioIds: string[]
-  /** Journey Scenarios whose flow exercises this Capability at some stage. */
+  /** Journey Scenarios with a step that exercises this Capability. */
   journeyScenarioIds: string[]
   journeyIds: string[]
   screenIds: string[]
@@ -249,24 +247,18 @@ export interface ScenarioView extends EntityBase {
   /** Exact authored contexts; Journey Scenario entries are unioned for display. */
   availability: AvailabilityPair[]
   trigger: string
-  steps: string[]
+  steps: Array<{
+    text: string
+    capabilityId: string
+    routes: Array<{
+      routeId: string
+      context: AvailabilityPair
+    }>
+  }>
   decisionPoints: ReportDecisionPoint[]
   outcome: string
   edgeCases: string[]
   result: 'achieved' | 'not-achieved' | ''
-  flow: Array<{
-    id: string
-    capabilityId: string
-    operation: string
-    availability: AvailabilityPair[]
-  }>
-  routes: Array<{
-    id: string
-    contexts: Array<{
-      stageId: string
-      context: AvailabilityPair
-    }>
-  }>
   screenIds: string[]
   ruleIds: string[]
 }
@@ -478,12 +470,7 @@ export function projectReportWorkspace(report: ProductReportV9): ReportWorkspace
     key: availabilityKey(context.interfaceId, context.experienceId || '')
   })
   const journeyScenarioPairs = (scenario: ReportJourneyScenario): AvailabilityPair[] => uniquePairs(
-    scenario.routes.flatMap(route => route.contexts.map(pairOfExact))
-  )
-  const journeyStagePairs = (scenario: ReportJourneyScenario, stageId: string): AvailabilityPair[] => uniquePairs(
-    scenario.routes.flatMap(route => route.contexts
-      .filter(context => context.stageId === stageId)
-      .map(pairOfExact))
+    scenario.steps.flatMap(step => step.routes.map(pairOfExact))
   )
 
   const kindBySlot = new Map(model.taxonomies.scenarioKinds.map(kind => [kind.id, kind]))
@@ -498,9 +485,9 @@ export function projectReportWorkspace(report: ProductReportV9): ReportWorkspace
     const points = journeyScenariosOf(journeyId)
       .filter(scenario => scenario.result === 'achieved')
       .flatMap((scenario) => {
-        const first = scenario.flow[0]
+        const first = scenario.steps.find(step => step.capabilityId)
         if (!first) return []
-        return journeyStagePairs(scenario, first.id).flatMap((scope) => {
+        return first.routes.map(pairOfExact).flatMap((scope) => {
           const contextual = scope.experienceId
             ? model.experiences.find(item => item.id === scope.experienceId)
               ?.entryPoints.filter(point => point.type === scope.interfaceId) ?? []
@@ -570,7 +557,8 @@ export function projectReportWorkspace(report: ProductReportV9): ReportWorkspace
     const domainCapabilityIds = unique([
       ...backlinkCapabilityIds,
       ...journeyIds.flatMap(id => journeyById.get(id)?.capabilityIds || []),
-      ...journeyScenarioIds.flatMap(id => journeyScenarioById.get(id)?.flow.map(item => item.capabilityId) || [])
+      ...journeyScenarioIds.flatMap(id => journeyScenarioById.get(id)?.steps
+        .flatMap(item => item.capabilityId ? [item.capabilityId] : []) || [])
     ])
     const domainIds = unique(domainCapabilityIds
       .map(id => capabilityById.get(id)?.domainId)
@@ -625,7 +613,7 @@ export function projectReportWorkspace(report: ProductReportV9): ReportWorkspace
   }
   for (const scenario of model.journeyScenarios) {
     for (const actorId of scenario.actorIds) push(journeyScenariosByActor, actorId, scenario.id)
-    for (const capabilityId of new Set(scenario.flow.map(item => item.capabilityId))) {
+    for (const capabilityId of new Set(scenario.steps.flatMap(item => item.capabilityId ? [item.capabilityId] : []))) {
       push(journeyScenariosByCapability, capabilityId, scenario.id)
     }
   }
@@ -858,13 +846,11 @@ export function projectReportWorkspace(report: ProductReportV9): ReportWorkspace
       kindSlot: kind?.colorSlot ?? 1,
       availability: pairsOf(scenario.availability),
       trigger: scenario.trigger,
-      steps: scenario.steps,
+      steps: scenario.steps.map(text => ({ text, capabilityId: '', routes: [] })),
       decisionPoints: scenario.decisionPoints,
       outcome: scenario.outcome,
       edgeCases: scenario.edgeCases,
       result: '',
-      flow: [],
-      routes: [],
       screenIds: screensByScenario.get(scenario.id) || [],
       ruleIds: rulesByScenario.get(scenario.id) || []
     }
@@ -892,24 +878,18 @@ export function projectReportWorkspace(report: ProductReportV9): ReportWorkspace
       kindSlot: kind?.colorSlot ?? 1,
       availability: journeyScenarioPairs(scenario),
       trigger: scenario.trigger,
-      steps: scenario.steps,
+      steps: scenario.steps.map(step => ({
+        text: step.text,
+        capabilityId: step.capabilityId ?? '',
+        routes: step.routes.map(route => ({
+          routeId: route.routeId,
+          context: pairOfExact(route)
+        }))
+      })),
       decisionPoints: scenario.decisionPoints,
       outcome: scenario.outcome,
       edgeCases: scenario.edgeCases,
       result: scenario.result,
-      flow: scenario.flow.map((item: ReportJourneyFlowItem) => ({
-        id: item.id,
-        capabilityId: item.capabilityId,
-        operation: item.operation,
-        availability: journeyStagePairs(scenario, item.id)
-      })),
-      routes: scenario.routes.map((route: ReportJourneyRoute) => ({
-        id: route.id,
-        contexts: route.contexts.map(context => ({
-          stageId: context.stageId,
-          context: pairOfExact(context)
-        }))
-      })),
       screenIds: screensByScenario.get(scenario.id) || [],
       ruleIds: rulesByScenario.get(scenario.id) || []
     }
@@ -1177,64 +1157,58 @@ export function resolveScenarios(workspace: ReportWorkspace, ids: string[]): Sce
     .filter((entity): entity is ScenarioView => Boolean(entity))
 }
 
-/** One route's context at one stage. */
-export interface JourneyFlowCell {
+/** One route's context at one Journey step. */
+export interface JourneyStepCell {
   routeId: string
   context: AvailabilityPair | null
-  /** This route arrives here in a different context than it left the last stage in. */
+  /** This route arrives here in a different context than its last Capability step. */
   handoff: boolean
 }
 
-export interface JourneyFlowStage {
-  id: string
+export interface JourneyStepRow {
   index: number
-  operation: string
+  text: string
   capabilityId: string
   /** One cell per route, in authored route order. */
-  cells: JourneyFlowCell[]
+  cells: JourneyStepCell[]
 }
 
-export interface JourneyFlowMatrix {
+export interface JourneyStepMatrix {
   routeIds: string[]
-  stages: JourneyFlowStage[]
+  steps: JourneyStepRow[]
 }
 
 /**
- * A Journey Scenario's flow and routes as the one table they are: stages down,
- * routes across, the exact context in the cell.
+ * A Journey Scenario's one authored sequence: steps down, routes across, exact
+ * context in each Capability-bearing cell. Unqualified steps keep their place
+ * in the reading without pretending to exercise another Capability.
  *
- * Rendered apart, the two repeat every stage label once per route and leave the
- * only differing fact — the context — to be found by diffing cards. Together
- * they also expose the handoff: within one route, a stage whose context differs
- * from the previous stage's. That transition is the deliberate composition a
- * Journey is created for, and nothing else in the model states it.
- *
- * Returns null for a Capability Scenario, which has no stages to correlate.
+ * Returns null for a Capability Scenario, whose Steps remain local prose.
  */
-export function journeyFlowMatrix(scenario: ScenarioView): JourneyFlowMatrix | null {
-  if (!scenario.flow.length) return null
-  const contextAt = (routeIndex: number, stageId: string): AvailabilityPair | null =>
-    scenario.routes[routeIndex]?.contexts.find(entry => entry.stageId === stageId)?.context ?? null
-
-  return {
-    routeIds: scenario.routes.map(route => route.id),
-    stages: scenario.flow.map((stage, index) => {
-      const previous = index > 0 ? scenario.flow[index - 1]! : null
-      return {
-        id: stage.id,
-        index,
-        operation: stage.operation,
-        capabilityId: stage.capabilityId,
-        cells: scenario.routes.map((route, routeIndex) => {
-          const context = contextAt(routeIndex, stage.id)
-          const before = previous ? contextAt(routeIndex, previous.id) : null
-          return {
-            routeId: route.id,
-            context,
-            handoff: Boolean(before && context && before.key !== context.key)
-          }
-        })
-      }
-    })
-  }
+export function journeyStepMatrix(scenario: ScenarioView): JourneyStepMatrix | null {
+  if (scenario.scenarioType !== 'journey') return null
+  const firstCapabilityStep = scenario.steps.find(step => step.capabilityId)
+  if (!firstCapabilityStep) return null
+  const routeIds = firstCapabilityStep.routes.map(route => route.routeId)
+  let previousCapabilityStep: ScenarioView['steps'][number] | null = null
+  const steps = scenario.steps.map((step, index) => {
+    const previous = previousCapabilityStep
+    const row = {
+      index,
+      text: step.text,
+      capabilityId: step.capabilityId,
+      cells: routeIds.map((routeId) => {
+        const context = step.routes.find(route => route.routeId === routeId)?.context ?? null
+        const before = previous?.routes.find(route => route.routeId === routeId)?.context ?? null
+        return {
+          routeId,
+          context,
+          handoff: Boolean(step.capabilityId && before && context && before.key !== context.key)
+        }
+      })
+    }
+    if (step.capabilityId) previousCapabilityStep = step
+    return row
+  })
+  return { routeIds, steps }
 }

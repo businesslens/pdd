@@ -24,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   allowlisted mount, and the report viewer renders local `visual` references and
   co-located assets as thumbnails instead of inert text.
 - **Every entity has a page**, at its own URL, with the authored body at full
-  width — steps, flow, routes, decision points, screen states and rule
+  width — steps, inline routes, decision points, screen states and rule
   statements were previously readable only inside a 672px drawer. Kinds with no
   authored body of their own (Actor, Interface, Experience, Domain) get their
   neighbourhood graph as the page body, because their reach is the reading.
@@ -67,21 +67,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **A Journey Scenario's flow and routes render as one table**, stages down and
-  routes across, so a stage label is stated once instead of once per route and
-  the context — the only fact that differs between routes — lands on the axis. A
-  route arriving at a stage in a different context than it left the previous one
-  in is marked as a handoff, which is the deliberate composition a Journey is
-  created for and which nothing else in the model states. Steps render as prose
-  rather than a second numbered ladder beside the flow.
-- `spec/format.md` and the Journeys page now state what `## Steps` is for in a
-  Journey Scenario: the independent prose claim over the same behavior, carrying
-  the transition between stages, which concrete path each stage takes, and
-  Product-side behavior. Both registers previously required only a non-empty
-  ordered list, which permitted Steps that restate the flow operations and say
-  nothing more. They also now record why a flow entry names a Capability and
-  never a Capability Scenario — a Capability is durable while its Scenarios
-  split and merge, so composition names the stable entity.
+- **Journey Scenario Steps are the flow.** One ordered structured `steps` list
+  now carries each sentence plus optional Capability and inline route-context
+  annotations. The separate `flow`, `operation`, stage ids, top-level `routes`,
+  and Markdown `## Steps` are removed, eliminating two authored sequences that
+  could disagree. Conditions and seams remain first-class Steps without a
+  Capability. This deliberately breaks Product Report schema v9 in place; no
+  compatibility reader or v10 is added.
+- A Journey Step names a durable Capability, never a Capability Scenario, while
+  its text states the concrete observable action or condition. Capability
+  Scenarios may split and merge without leaving dangling Journey composition
+  references.
 - **The report navigation rail lists kinds, flat.** Kinds do not nest —
   instances do — so both Scenario kinds leave the rail and become a tab on the
   Capability or Journey that owns them, which is the resolution the
@@ -167,14 +163,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The Workbench now keeps entity identity collision-safe across collections,
   preserves focus across live recompiles, separates Capability and Journey
   Scenario readings, shows Screen-to-Journey derivation provenance, renders
-  ordered Journey flow lanes, and uses fixed named views instead of a generic
+  ordered Journey path lanes, and uses fixed named views instead of a generic
   cross-kind grouping builder. Mobile navigation is a dedicated drawer.
 
 - Schema 4 and Product Report v8 now separate Capability Scenarios from
   Journey Scenarios. Capabilities own local acceptance coverage; optional,
   route-free Journeys own only Actors, Goal, and Success criterion; Journey
-  Scenarios own ordered, locally identified Capability/operation stages,
-  correlated exact-context routes, and their terminal result. Business Rules
+  Scenarios own ordered Steps with locally identified Capability and correlated
+  exact-context route annotations, plus their terminal result. Business Rules
   use typed `appliesTo` targets with optional exact-context narrowing instead of
   parallel relation arrays or authored Domain links. Lint requires complete
   per-context Capability Scenario coverage, achieved coverage for every Journey
@@ -217,7 +213,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Two routes of one Journey Scenario that assign the same context to every stage
+- Two routes of one Journey Scenario that assign the same context to every
+  Capability-bearing Step
   are now a finding, in both `lint` and report validation. A route id names one
   correlation, so a second id over the same assignment claims a lane the Product
   does not have. The Content Feed Reader Blueprint carried two: a
@@ -240,12 +237,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   theme-lab audition layer into `businesslens/nuxt/theme`, where the promoted
   Workbench and the bundled local viewer inherit them without depending on a
   lab layer.
-- Value paths no longer implies a Screen is reached from a flow stage that
+- Value paths no longer implies a Screen is reached from a Step that
   cannot expose it. A Screen is authored against the whole Journey Scenario, so
-  it now attaches to the last stage whose Capability actually declares that
+  it now attaches to the last Capability-bearing Step whose Capability declares that
   Screen and shares an availability context with it — a non-visual integration
-  stage no longer appears to land on a Reader Screen.
-- Value paths lays ordered stages downward with variations side by side. A
+  Step no longer appears to land on a Reader Screen.
+- Value paths lays ordered Capability-bearing Steps downward with variations side by side. A
   left-to-right chain was wider than the canvas for a short Journey, so it
   scaled the whole graph down and left the height unused.
 

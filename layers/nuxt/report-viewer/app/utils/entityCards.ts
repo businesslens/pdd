@@ -221,7 +221,10 @@ export function entityCardPresentation(
         metrics: [
           { label: plural(scenario.steps.length, 'step'), value: scenario.steps.length },
           { label: 'decisions', value: scenario.decisionPoints.length },
-          { label: isCapability ? 'edge cases' : 'stages', value: isCapability ? scenario.edgeCases.length : scenario.flow.length }
+          {
+            label: isCapability ? 'edge cases' : 'Capability steps',
+            value: isCapability ? scenario.edgeCases.length : scenario.steps.filter(step => step.capabilityId).length
+          }
         ],
         hookLabel: isCapability ? 'For capability' : 'In journey',
         hook: isCapability ? scenario.capabilityTitle : scenario.journeyTitle

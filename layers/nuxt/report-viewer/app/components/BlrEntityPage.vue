@@ -64,7 +64,7 @@ const childLabel = computed(() => props.entity.kind === 'capability' ? 'Capabili
 */
 const counterparts = computed(() => counterpartsOf(props.workspace, props.entity))
 
-const journeyFlow = computed(() => props.entity.kind === 'journey'
+const journeyStepsGraph = computed(() => props.entity.kind === 'journey'
   ? buildJourneyAnatomy(props.workspace, {
       journeyId: props.entity.id,
       selectedId: props.selectedKey ?? null
@@ -129,16 +129,16 @@ const asJourney = computed(() => props.entity as JourneyView)
 
     <BlrEntityBody :workspace="workspace" :entity="entity" @select="emit('select', $event)" />
 
-    <!-- The Journey's Scenarios as authored lanes: order and operation kept. -->
-    <section v-if="journeyFlow.nodes.length" class="space-y-2 border-t border-default pt-6">
+    <!-- Parent-level comparison: each lane projects the one authored step sequence. -->
+    <section v-if="journeyStepsGraph.nodes.length" class="space-y-2 border-t border-default pt-6">
       <header class="flex flex-wrap items-baseline gap-2">
-        <h2 class="text-base font-semibold tracking-tight text-highlighted">Scenario flows</h2>
-        <span class="text-xs text-muted">Each lane preserves the authored Capability order and operation.</span>
+        <h2 class="text-base font-semibold tracking-tight text-highlighted">Scenario Steps</h2>
+        <span class="text-xs text-muted">Each lane projects the Capability-bearing steps in authored order.</span>
       </header>
       <div class="h-[28rem] overflow-hidden rounded-xl border border-default bg-default">
         <BlrFlowCanvas
-          :nodes="journeyFlow.nodes"
-          :edges="journeyFlow.edges"
+          :nodes="journeyStepsGraph.nodes"
+          :edges="journeyStepsGraph.edges"
           :max-zoom="1.1"
           @select="openKey"
         />
@@ -188,7 +188,7 @@ const asJourney = computed(() => props.entity as JourneyView)
         <span class="blr-meta">{{ children.length }}</span>
         <span class="text-xs text-muted">
           <template v-if="entity.kind === 'journey'">
-            Each is one path through this promise: what triggers it, the steps, where it branches, how it ends.
+            Each Scenario shows what triggers it, its Steps, where it branches, and how it ends.
           </template>
           <template v-else>
             Each is one observable acceptance case for this Capability.

@@ -2,20 +2,20 @@
 kind: edge
 actors: [reader, visitor]
 result: not-achieved
-flow:
-  - id: publish-then-unlist
+steps:
+  - text: The Reader publishes the owned collection and shares its public address
     capability: collection-publication
-    operation: Publish the collection and then unlist it again
-  - id: attempt-public-read
+    routes:
+      unlist-on-web: reader-web::personal-library
+  - text: The Reader unlists the collection
+    capability: collection-publication
+    routes:
+      unlist-on-web: reader-web::personal-library
+  - text: The Visitor opens the shared address
     capability: public-collection-reading
-    operation: Open the public address after access was revoked
-routes:
-  - id: unlist-on-web
-    contexts:
-      - stage: publish-then-unlist
-        context: reader-web::personal-library
-      - stage: attempt-public-read
-        context: reader-web::public-reading
+    routes:
+      unlist-on-web: reader-web::public-reading
+  - text: The Product withholds the collection contents and shows a neutral unavailable state
 ---
 
 # Share a collection the owner already unlisted
@@ -24,13 +24,6 @@ routes:
 
 The Reader shares a public address and then unlists the collection before the
 Visitor opens it.
-
-## Steps
-
-1. The Reader publishes the owned collection and shares its public address
-2. The Reader unlists the collection
-3. The Visitor opens the shared address
-4. The Product withholds the collection contents and shows a neutral unavailable state
 
 ## Outcome
 

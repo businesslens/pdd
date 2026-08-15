@@ -220,10 +220,12 @@ export function compileReport(
       journeys: byId(model.journeys).map((journey) => {
         const scenarios = journeyScenariosByJourney.get(journey.id) || []
         const achievedCapabilityIds = new Set(
-          scenarios.filter(scenario => scenario.result === 'achieved').flatMap(scenario => scenario.flow.map(item => item.capability))
+          scenarios.filter(scenario => scenario.result === 'achieved')
+            .flatMap(scenario => scenario.steps.flatMap(item => item.capability ? [item.capability] : []))
         )
         const failedCapabilityIds = new Set(
-          scenarios.filter(scenario => scenario.result === 'not-achieved').flatMap(scenario => scenario.flow.map(item => item.capability))
+          scenarios.filter(scenario => scenario.result === 'not-achieved')
+            .flatMap(scenario => scenario.steps.flatMap(item => item.capability ? [item.capability] : []))
         )
         const failureOnlyCapabilityIds = [...failedCapabilityIds].filter(id => !achievedCapabilityIds.has(id))
         const domainIds = [...achievedCapabilityIds]
@@ -248,24 +250,19 @@ export function compileReport(
         kindId: scenario.kind,
         actorIds: sorted(scenario.actors),
         result: scenario.result as 'achieved' | 'not-achieved',
-        flow: scenario.flow.map(item => ({
-          id: item.id,
-          capabilityId: item.capability,
-          operation: item.operation
-        })),
-        routes: scenario.routes.map(route => ({
-          id: route.id,
-          contexts: route.contexts.map(context => ({
-            stageId: context.stage,
-            ...exactContext(context.context)
+        steps: scenario.steps.map(step => ({
+          text: step.text,
+          capabilityId: step.capability ?? null,
+          routes: step.routes.map(route => ({
+            routeId: route.id,
+            ...exactContext(route.context)
           }))
         })),
         trigger: scenario.trigger,
-        steps: scenario.steps,
         decisionPoints: scenario.decisionPoints,
         outcome: scenario.outcome,
         edgeCases: scenario.edgeCases,
-        ...entityContent(scenario, ['Trigger', 'Steps', 'Decision points', 'Outcome', 'Edge cases'], assetBase)
+        ...entityContent(scenario, ['Trigger', 'Decision points', 'Outcome', 'Edge cases'], assetBase)
       })),
       businessRules: byId(model.businessRules).map(rule => ({
         id: rule.id,

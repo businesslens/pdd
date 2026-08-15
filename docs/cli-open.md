@@ -42,7 +42,7 @@ model is written into `./new-product`.
 
 `open` uses the same [portable projection](./cli-export.md#portable-export) as
 `export`. Product behavior, relationships, exact availability, Capability
-Scenarios, goal-focused Journeys, Journey Scenario flows, derived Journey
+Scenarios, goal-focused Journeys, annotated Journey Scenario Steps, derived Journey
 Capability projections, structured supporting sections, Product routes,
 commands, non-file deep links, and portable References are preserved.
 Repository-specific navigation is removed.

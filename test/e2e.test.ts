@@ -99,9 +99,10 @@ describe('end to end on a real git repo', () => {
       .toContainEqual({ type: 'capability', id: 'checkout', contexts: [] })
     expect(parsed.model.capabilityScenarios.find(scenario => scenario.id === 'complete-checkout')?.decisionPoints)
       .toHaveLength(1)
-    expect(parsed.model.journeyScenarios[0]!.flow.map(item => item.operation)).toEqual([
-      'Find and select an available product',
-      'Submit payment and confirm the order'
+    expect(parsed.model.journeyScenarios[0]!.steps.map(step => [step.text, step.capabilityId])).toEqual([
+      ['The shopper finds and selects an available product', 'catalog-browsing'],
+      ['The shopper submits checkout', 'checkout'],
+      ['The Product confirms the paid order', null]
     ])
     expect(JSON.stringify(parsed)).not.toContain('github.com/example/fixture-shop')
 

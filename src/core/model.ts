@@ -96,7 +96,6 @@ interface ScenarioEntity extends EntityFile {
   kind: string
   actors: string[]
   trigger: string
-  steps: string[]
   outcome: string
   edgeCases: string[]
   decisionPoints: ReturnType<typeof decisionPoints>
@@ -106,33 +105,28 @@ export interface CapabilityScenarioEntity extends ScenarioEntity {
   /** The Capability that owns it, read from the path. Never authored. */
   capability: string
   availability: Scope[]
-}
-
-export interface JourneyFlowItem {
-  id: string
-  capability: string
-  operation: string
+  steps: string[]
 }
 
 /** One exact context is one scope id. */
 export type ExactContext = Scope
 
-export interface JourneyRouteContext {
-  stage: string
+export interface JourneyStepRoute {
+  id: string
   context: Scope
 }
 
-export interface JourneyRoute {
-  id: string
-  contexts: JourneyRouteContext[]
+export interface JourneyStep {
+  text: string
+  capability?: string
+  routes: JourneyStepRoute[]
 }
 
 export interface JourneyScenarioEntity extends ScenarioEntity {
   /** The Journey that owns it, read from the path. Never authored. */
   journey: string
   result: string
-  flow: JourneyFlowItem[]
-  routes: JourneyRoute[]
+  steps: JourneyStep[]
 }
 
 export interface JourneyEntity extends EntityFile {
@@ -367,40 +361,50 @@ function readEntity(
 function readScenarioSections(doc: MarkdownDoc, issues: string[], file: string) {
   return {
     trigger: section(doc, 'Trigger') || '',
-    steps: orderedList(section(doc, 'Steps') || ''),
     outcome: section(doc, 'Outcome') || '',
     edgeCases: bulletList(section(doc, 'Edge cases') || ''),
     decisionPoints: decisionPoints(section(doc, 'Decision points') || '', issues, file)
   }
 }
 
-function journeyFlowField(
+function journeyStepsField(
   data: Record<string, unknown>,
   issues: string[],
   label: string
-): JourneyFlowItem[] {
-  const value = data.flow
+): JourneyStep[] {
+  const value = data.steps
   if (value === undefined || value === null) return []
   if (!Array.isArray(value)) {
-    issues.push(`${label}: "flow" must be a list`)
+    issues.push(`${label}: "steps" must be a list`)
     return []
   }
-  const flow: JourneyFlowItem[] = []
+  const steps: JourneyStep[] = []
   for (const [index, raw] of value.entries()) {
-    const itemLabel = `${label}: flow item ${index + 1}`
+    const itemLabel = `${label}: step ${index + 1}`
     if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
       issues.push(`${itemLabel} must be a mapping`)
       continue
     }
     const item = raw as Record<string, unknown>
-    rejectUnknownKeys(item, ['id', 'capability', 'operation'], issues, itemLabel)
-    flow.push({
-      id: stringField(item, 'id', issues, itemLabel) || '',
-      capability: stringField(item, 'capability', issues, itemLabel) || '',
-      operation: stringField(item, 'operation', issues, itemLabel) || ''
+    rejectUnknownKeys(item, ['text', 'capability', 'routes'], issues, itemLabel)
+    const routes: JourneyStepRoute[] = []
+    if (item.routes !== undefined && item.routes !== null) {
+      if (typeof item.routes !== 'object' || Array.isArray(item.routes)) {
+        issues.push(`${itemLabel}: "routes" must be a mapping from route id to exact context`)
+      } else {
+        for (const [id, rawContext] of Object.entries(item.routes as Record<string, unknown>)) {
+          const context = scopeField({ context: rawContext }, 'context', issues, `${itemLabel}: route "${id}"`)
+          if (context) routes.push({ id, context })
+        }
+      }
+    }
+    steps.push({
+      text: stringField(item, 'text', issues, itemLabel) || '',
+      capability: stringField(item, 'capability', issues, itemLabel),
+      routes
     })
   }
-  return flow
+  return steps
 }
 
 function exactContextField(
@@ -416,44 +420,6 @@ function exactContextField(
   const item = raw as Record<string, unknown>
   rejectUnknownKeys(item, ['context', ...allowedExtra], issues, label)
   return scopeField(item, 'context', issues, label)
-}
-
-function journeyRoutesField(
-  data: Record<string, unknown>,
-  issues: string[],
-  label: string
-): JourneyRoute[] {
-  const value = data.routes
-  if (value === undefined || value === null) return []
-  if (!Array.isArray(value)) {
-    issues.push(`${label}: "routes" must be a list`)
-    return []
-  }
-  const routes: JourneyRoute[] = []
-  for (const [routeIndex, rawRoute] of value.entries()) {
-    const routeLabel = `${label}: route ${routeIndex + 1}`
-    if (typeof rawRoute !== 'object' || rawRoute === null || Array.isArray(rawRoute)) {
-      issues.push(`${routeLabel} must be a mapping`)
-      continue
-    }
-    const route = rawRoute as Record<string, unknown>
-    rejectUnknownKeys(route, ['id', 'contexts'], issues, routeLabel)
-    const rawContexts = route.contexts
-    const contexts: JourneyRouteContext[] = []
-    if (!Array.isArray(rawContexts)) {
-      issues.push(`${routeLabel}: "contexts" must be a list`)
-    } else {
-      for (const [contextIndex, rawContext] of rawContexts.entries()) {
-        const contextLabel = `${routeLabel}: context ${contextIndex + 1}`
-        const parsed = exactContextField(rawContext, issues, contextLabel, ['stage'])
-        if (!parsed || typeof rawContext !== 'object' || rawContext === null || Array.isArray(rawContext)) continue
-        const stage = stringField(rawContext as Record<string, unknown>, 'stage', issues, contextLabel) || ''
-        contexts.push({ stage, context: parsed })
-      }
-    }
-    routes.push({ id: stringField(route, 'id', issues, routeLabel) || '', contexts })
-  }
-  return routes
 }
 
 function businessRuleTargetsField(
@@ -867,6 +833,7 @@ export function loadModel(cwd: string): PddModel {
         capability: location.id,
         actors: uniqueStringListField(parsed.data, 'actors', issues, scenario.file),
         availability: availabilityField(parsed.data, issues, scenario.file),
+        steps: orderedList(section(parsed.doc, 'Steps') || ''),
         ...readScenarioSections(parsed.doc, issues, scenario.file)
       })
     }
@@ -900,7 +867,18 @@ export function loadModel(cwd: string): PddModel {
       issues,
       `journeys/${location.id}/scenarios`
     )) {
-      const parsed = readEntity(scenario, ['kind', 'actors', 'result', 'flow', 'routes'], issues)
+      const parsed = readEntity(scenario, ['kind', 'actors', 'result', 'steps', 'flow', 'routes'], issues)
+      if (parsed.data.flow !== undefined) {
+        issues.push(`${scenario.file}: "flow" is no longer supported; use the frontmatter "steps" list`)
+        if (Array.isArray(parsed.data.flow) && parsed.data.flow.some(item =>
+          typeof item === 'object' && item !== null && !Array.isArray(item) && 'operation' in item
+        )) {
+          issues.push(`${scenario.file}: "operation" is no longer supported; put each sentence in "steps[].text"`)
+        }
+      }
+      if (parsed.data.routes !== undefined) {
+        issues.push(`${scenario.file}: top-level "routes" is no longer supported; put route contexts inside each Capability-bearing step`)
+      }
       journeyScenarios.push({
         id: scenario.id,
         file: scenario.file,
@@ -913,8 +891,7 @@ export function loadModel(cwd: string): PddModel {
         journey: location.id,
         actors: uniqueStringListField(parsed.data, 'actors', issues, scenario.file),
         result: stringField(parsed.data, 'result', issues, scenario.file) || '',
-        flow: journeyFlowField(parsed.data, issues, scenario.file),
-        routes: journeyRoutesField(parsed.data, issues, scenario.file),
+        steps: journeyStepsField(parsed.data, issues, scenario.file),
         ...readScenarioSections(parsed.doc, issues, scenario.file)
       })
     }

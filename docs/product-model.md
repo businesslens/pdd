@@ -102,8 +102,8 @@ Interface says the supported interaction form. Optional Experience says the
 coherent Actor context within that form. An **availability scope** is one id: an undivided
 Interface, or an Experience. Capabilities declare a list of them; a Screen
 declares none, because the folder that holds it is its scope. Capability Scenarios select contexts from their one Capability.
-Journey Scenario routes correlate one exact context for every ordered flow
-stage. Business Rule targets may select singular exact contexts. Journeys do
+Journey Scenario Steps carry one exact context per route whenever a Step names
+a Capability. Business Rule targets may select singular exact contexts. Journeys do
 not declare availability or Capabilities.
 
 An Experience belongs to one Interface, so one scope id names both:
@@ -143,9 +143,9 @@ Scenario. A
 complete Product Model may have zero Journeys.
 
 The report derives a Journey's primary Capabilities and Domains from achieved
-Journey Scenario flows. Capabilities found only in not-achieved flows are
+Journey Scenario Steps. Capabilities found only in not-achieved paths are
 marked separately as failure-only. These describe modeled coverage, not one
-mandatory flow or proof that partial mapping is exhaustive.
+mandatory path or proof that partial mapping is exhaustive.
 
 ## Which behavioral entity?
 
@@ -155,8 +155,8 @@ These are not alternative ways to describe the same contract:
 | --- | --- | --- | --- |
 | Capability | The smallest durable behavior that remains independently meaningful | Product behavior and exact supported contexts | Unrelated operations grouped only by a vague umbrella verb |
 | Capability Scenario | One local variation of exactly one Capability | Trigger, context, Steps, and local Outcome | A Journey or multiple Capabilities |
-| Journey | One coherent Actor Goal whose achieved variations require multiple Capabilities | Actors, Goal, and Success criterion | Capability list, flow, branches, or one concrete variation |
-| Journey Scenario | One end-to-end variation of exactly one Journey | Trigger, ordered Capability flow, correlated exact-context routes, Steps, goal result, and Outcome | Local acceptance coverage for its Capabilities |
+| Journey | One coherent Actor Goal whose achieved variations require multiple Capabilities | Actors, Goal, and Success criterion | Capability list, Steps, branches, or one concrete variation |
+| Journey Scenario | One end-to-end variation of exactly one Journey | Trigger, one ordered annotated Steps list, correlated exact-context routes, goal result, and Outcome | Local acceptance coverage for its Capabilities |
 
 A local case is always a Capability Scenario. A coherent multi-Capability goal
 is always a Journey. A complete variation of pursuing that goal is always a

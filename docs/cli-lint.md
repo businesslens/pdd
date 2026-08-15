@@ -25,8 +25,8 @@ Lint is deterministic and read-only. It checks:
   failing them in `complete`;
 - a Goal and Success criterion plus achieved multi-Capability Scenario coverage
   for every Journey Actor;
-- Journey Scenario Actors, results, ordered flow operations, complete correlated
-  routes, route entry Actors, distinct Capability counts, and exact
+- Journey Scenario Actors, results, ordered annotated Steps, complete correlated
+  inline routes, route entry Actors, distinct Capability counts, and exact
   Interface/Experience contexts;
 - typed Business Rule targets, optional context narrowing, and redundant
   parent/Scenario targets;
