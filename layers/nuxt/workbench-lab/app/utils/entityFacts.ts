@@ -1,25 +1,18 @@
 /**
- * What a peek knows about an entity, independent of how it draws it.
+ * The facts that give an entity its shape, in one place.
  *
- * The five peek variations differ in *visualization*, so they must not differ
- * in content — otherwise the audition compares two different summaries rather
- * than two ways of showing one. Everything they render comes from here.
+ * The page and the slideover render the same reading, so they must draw from
+ * the same description — a panel that quietly shows different facts is the
+ * thing that made the old peek hard to trust.
  */
 import type { AnyEntityView, ReportEntityKind, ReportWorkspace } from './model'
-import { ENTITY_KIND_META, relatedIds, resolveEntity } from './model'
+import { resolveEntity } from './model'
 
-export interface PeekFact {
+export interface EntityFact {
   label: string
   value: string
   /** A name rather than a number: it wants width, and it identifies. */
   wide?: boolean
-}
-
-export interface PeekRelation {
-  kind: ReportEntityKind
-  label: string
-  ids: string[]
-  derived: boolean
 }
 
 const scopeOf = (entity: AnyEntityView): string => {
@@ -31,7 +24,7 @@ const scopeOf = (entity: AnyEntityView): string => {
   return pairs.length > 1 ? `${name} +${pairs.length - 1}` : name
 }
 
-export function peekFacts(workspace: ReportWorkspace, entity: AnyEntityView): PeekFact[] {
+export function entityFacts(workspace: ReportWorkspace, entity: AnyEntityView): EntityFact[] {
   const one = (kind: ReportEntityKind, ids: string[]) =>
     resolveEntity(workspace, kind, ids[0] ?? '')?.title ?? ''
 
@@ -102,7 +95,7 @@ export function peekFacts(workspace: ReportWorkspace, entity: AnyEntityView): Pe
         result: string
         screenIds: string[]
       }
-      const parent: PeekFact = scenario.scenarioType === 'capability'
+      const parent: EntityFact = scenario.scenarioType === 'capability'
         ? { label: 'Capability', value: scenario.capabilityTitle, wide: true }
         : { label: 'Journey', value: scenario.journeyTitle, wide: true }
       return [
@@ -126,7 +119,7 @@ export function peekFacts(workspace: ReportWorkspace, entity: AnyEntityView): Pe
   }
 }
 
-export function peekBadge(workspace: ReportWorkspace, entity: AnyEntityView): string {
+export function entityBadge(workspace: ReportWorkspace, entity: AnyEntityView): string {
   switch (entity.kind) {
     case 'actor': {
       const actor = entity as { actorKind: string, relationship: string }
@@ -144,49 +137,4 @@ export function peekBadge(workspace: ReportWorkspace, entity: AnyEntityView): st
     }
     default: return ''
   }
-}
-
-/**
- * Relations collapsed to one row per kind.
- *
- * The shipped peek keeps every authored label, which is right on a page — the
- * two ways a Screen reaches a Journey are genuinely different derivations. In a
- * panel it produces five near-identical rows with sentence-long labels, so the
- * variations that need compactness fold by kind and say so.
- */
-export function peekRelationsByKind(entity: AnyEntityView): PeekRelation[] {
-  const KINDS: ReportEntityKind[] = [
-    'actor', 'interface', 'experience', 'screen', 'domain',
-    'capability', 'journey', 'capability-scenario', 'journey-scenario', 'rule'
-  ]
-  return KINDS
-    .map((kind) => {
-      const ids = [...new Set(relatedIds(entity, kind))]
-      return {
-        kind,
-        label: ENTITY_KIND_META[kind].plural,
-        ids,
-        derived: false
-      }
-    })
-    .filter(relation => relation.ids.length > 0)
-}
-
-/** The names behind a relation, disambiguating counterparts only when needed. */
-export function relationTitles(
-  workspace: ReportWorkspace,
-  kind: ReportEntityKind,
-  ids: string[]
-): Array<{ id: string, title: string }> {
-  return ids.map((id) => {
-    const entity = resolveEntity(workspace, kind, id)
-    if (!entity) return { id, title: id }
-    const clash = ids.some(other => other !== id
-      && resolveEntity(workspace, kind, other)?.title === entity.title)
-    if (!clash) return { id, title: entity.title }
-    const [surface] = entity.id.split('::')
-    if (!surface || surface === entity.id) return { id, title: entity.title }
-    const owner = resolveEntity(workspace, 'interface', surface)?.title ?? surface
-    return { id, title: `${entity.title} · ${owner.replace(/ application$/, '')}` }
-  })
 }

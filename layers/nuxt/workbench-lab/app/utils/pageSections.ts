@@ -1,33 +1,35 @@
 /**
- * What an entity page is made of, so five layouts can arrange the same parts.
+ * What a page is made of, now that the Overview absorbs most of it.
  *
- * The page complaint is that it is too occupied — everything a kind can hold,
- * stacked, in one order, with no way to tell what is below the fold. Every
- * answer to that is an arrangement: tabs, a split, a contents rail, an
- * accordion. They can only be compared if they are arranging *identical*
- * material, so the material is described once here and each layout decides
- * only where it goes and whether it starts open.
+ * The first audition put Detail, Connections and Also-on beside the Overview as
+ * peers. They are not peers: they *are* what an overview of an entity is — what
+ * it says, what it touches, and where else it exists. Splitting them made four
+ * thin tabs where one full one was wanted.
+ *
+ * What is left beside the Overview is only material with a shape of its own: a
+ * parent's Scenarios, a diagram, and the reference list.
  */
 import type { AnyEntityView, ReportEntityKind, ReportWorkspace } from './model'
 import { ENTITY_KIND_META, counterpartsOf, isScenarioKind } from './model'
 
-export type PageSectionId =
-  | 'overview'
+export type PageBlockId =
+  | 'lead'
+  | 'facts'
+  | 'access'
   | 'detail'
-  | 'flow'
-  | 'neighbourhood'
-  | 'children'
   | 'counterparts'
   | 'connections'
   | 'supporting'
   | 'references'
 
-export interface PageSection {
-  id: PageSectionId
+export type PageTabId = 'overview' | 'detail' | 'scenarios' | 'diagram' | 'references'
+
+export interface PageTab {
+  id: PageTabId
   label: string
-  /** Shown beside the label wherever a layout has room for it. */
   count?: number
   hint?: string
+  blocks: PageBlockId[]
 }
 
 /** Kinds whose reach is the reading, so the graph is their body. */
@@ -41,62 +43,85 @@ function hasAuthoredBody(entity: AnyEntityView): boolean {
   return entity.kind === 'capability'
 }
 
-export function sectionsFor(workspace: ReportWorkspace, entity: AnyEntityView): PageSection[] {
-  const sections: PageSection[] = [{ id: 'overview', label: 'Overview' }]
+export function childrenOf(workspace: ReportWorkspace, entity: AnyEntityView): AnyEntityView[] {
+  if (entity.kind === 'capability') return workspace.scenariosByCapability.get(entity.id) ?? []
+  if (entity.kind === 'journey') return workspace.scenariosByJourney.get(entity.id) ?? []
+  return []
+}
+
+/**
+ * The tabs a page offers.
+ *
+ * `detailApart` is the one axis option that changes the split rather than the
+ * arrangement, so it is a parameter here instead of a second section list —
+ * every layout then draws whatever it is handed.
+ */
+export function tabsFor(
+  workspace: ReportWorkspace,
+  entity: AnyEntityView,
+  options: { detailApart?: boolean } = {}
+): PageTab[] {
+  const overviewBlocks: PageBlockId[] = ['lead', 'facts', 'access']
+  const detailBlocks: PageBlockId[] = []
 
   if (hasAuthoredBody(entity)) {
-    sections.push({
+    if (options.detailApart) detailBlocks.push('detail')
+    else overviewBlocks.push('detail')
+  }
+
+  if (counterpartsOf(workspace, entity).length) overviewBlocks.push('counterparts')
+  overviewBlocks.push('connections')
+  if (entity.supportingContent) overviewBlocks.push('supporting')
+
+  const tabs: PageTab[] = [{
+    id: 'overview',
+    label: 'Overview',
+    blocks: overviewBlocks
+  }]
+
+  if (detailBlocks.length) {
+    tabs.push({
       id: 'detail',
       label: isScenarioKind(entity.kind) ? 'The scenario' : 'Detail',
       hint: isScenarioKind(entity.kind)
         ? 'Trigger, steps, decisions and outcome.'
-        : 'What the model authors about this entity.'
+        : 'What the model authors about this entity.',
+      blocks: detailBlocks
     })
   }
 
-  if (entity.kind === 'journey') {
-    sections.push({ id: 'flow', label: 'Scenario flows', hint: 'Each lane keeps the authored Capability order.' })
-  }
-
-  if (GRAPH_LED.includes(entity.kind)) {
-    sections.push({ id: 'neighbourhood', label: 'Neighbourhood', hint: 'What it reaches, and what reaches it.' })
-  }
-
+  const children = childrenOf(workspace, entity)
   if (entity.kind === 'capability' || entity.kind === 'journey') {
-    const children = entity.kind === 'capability'
-      ? workspace.scenariosByCapability.get(entity.id) ?? []
-      : workspace.scenariosByJourney.get(entity.id) ?? []
-    sections.push({
-      id: 'children',
-      label: entity.kind === 'capability' ? 'Capability Scenarios' : 'Journey Scenarios',
+    tabs.push({
+      id: 'scenarios',
+      label: entity.kind === 'capability' ? 'Scenarios' : 'Scenarios',
       count: children.length,
       hint: entity.kind === 'capability'
-        ? 'Each is one observable acceptance case.'
-        : 'Each is one path through this promise.'
+        ? 'Each is one observable acceptance case for this Capability.'
+        : 'Each is one path through this promise.',
+      blocks: []
     })
   }
 
-  const counterparts = counterpartsOf(workspace, entity)
-  if (counterparts.length) {
-    sections.push({
-      id: 'counterparts',
-      label: 'Also on',
-      count: counterparts.length,
-      hint: 'The same thing on another Interface.'
+  if (entity.kind === 'journey' || GRAPH_LED.includes(entity.kind)) {
+    tabs.push({
+      id: 'diagram',
+      label: entity.kind === 'journey' ? 'Flows' : 'Neighbourhood',
+      hint: entity.kind === 'journey'
+        ? 'Each lane keeps the authored Capability order.'
+        : 'What it reaches, and what reaches it.',
+      blocks: []
     })
   }
 
-  sections.push({ id: 'connections', label: 'Connections', hint: 'Everything it touches.' })
-
-  if (entity.supportingContent) sections.push({ id: 'supporting', label: 'Supporting context' })
   if (entity.references.length) {
-    sections.push({ id: 'references', label: 'References', count: entity.references.length })
+    tabs.push({ id: 'references', label: 'References', count: entity.references.length, blocks: ['references'] })
   }
 
-  return sections
+  return tabs
 }
 
-/** The parent of a Scenario, for the trail a child page carries. */
+/** The parent of a Scenario — the page a Scenario is read inside. */
 export function parentOf(workspace: ReportWorkspace, entity: AnyEntityView): AnyEntityView | null {
   if (!isScenarioKind(entity.kind)) return null
   const scenario = entity as { scenarioType: string, capabilityId: string, journeyId: string }
@@ -104,15 +129,6 @@ export function parentOf(workspace: ReportWorkspace, entity: AnyEntityView): Any
     ? `capability:${scenario.capabilityId}`
     : `journey:${scenario.journeyId}`
   return workspace.byKey.get(key) ?? null
-}
-
-/** A Scenario's siblings under the same parent, in authored order. */
-export function siblingsOf(workspace: ReportWorkspace, entity: AnyEntityView): AnyEntityView[] {
-  const parent = parentOf(workspace, entity)
-  if (!parent) return []
-  return parent.kind === 'capability'
-    ? workspace.scenariosByCapability.get(parent.id) ?? []
-    : workspace.scenariosByJourney.get(parent.id) ?? []
 }
 
 export const kindLabel = (kind: ReportEntityKind) => ENTITY_KIND_META[kind].label

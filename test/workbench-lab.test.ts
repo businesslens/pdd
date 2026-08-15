@@ -57,30 +57,64 @@ describe('Workbench audition layer', () => {
     expect(source('nuxt.config.ts')).toContain("join(currentDir, '../report-viewer')")
   })
 
-  it('keeps the shipped component as each axis default', () => {
-    const peek = source('app/components/BlrEntityPeek.vue')
+  /*
+    The page and the slideover render one component. A panel that quietly showed
+    different facts from the page is what made the old peek hard to trust, and
+    only a shared reading rules it out structurally.
+  */
+  it('reads an entity once, in two containers', () => {
     const page = source('app/components/BlrEntityPage.vue')
+    const panel = source('app/components/BlrInspector.vue')
 
-    /* Imported by path, so the default renders what ships rather than a copy. */
-    expect(peek).toContain("from '../../../report-viewer/app/components/BlrEntityPeek.vue'")
-    expect(peek).toContain("peek === 'zones'")
-    expect(page).toContain("from '../../../report-viewer/app/components/BlrEntityPage.vue'")
-    expect(page).toContain("page.value === 'scroll' && child.value === 'cards'")
+    expect(page).toContain('<BlrEntityReading')
+    expect(panel).toContain('<BlrEntityReading')
+    expect(panel).toContain('compact')
+    /* The panel always offers the other container. */
+    expect(panel).toContain('Open as page')
+    /* `none` forwards straight to the page rather than rendering an empty one. */
+    expect(panel).toContain("panel.value === 'none'")
+  })
+
+  /*
+    A Scenario has no page of its own. Reaching one lands on its parent with the
+    Scenario chosen, which is what removed the third level of navigation.
+  */
+  it('reads a Scenario inside its parent', () => {
+    const reading = source('app/components/BlrEntityReading.vue')
+
+    expect(reading).toContain('const parent = computed(() => parentOf(props.workspace, props.entity))')
+    expect(reading).toContain('const subject = computed(() => parent.value ?? props.entity)')
+    expect(reading).toContain("active.value = 'scenarios'")
+    expect(source('app/components/BlrScenarios.vue')).not.toContain('emit(\'open\'')
+  })
+
+  /*
+    Detail, Connections and Also-on are what an overview *is*. As peers they
+    made four thin tabs; the audition is over how far to take the merge, not
+    whether to.
+  */
+  it('keeps Detail, Connections and Also-on inside the Overview', () => {
+    const sections = source('app/utils/pageSections.ts')
+
+    expect(sections).toContain("overviewBlocks.push('connections')")
+    expect(sections).toContain("overviewBlocks.push('counterparts')")
+    expect(sections).toContain("if (options.detailApart) detailBlocks.push('detail')")
+    expect(sections).toContain("else overviewBlocks.push('detail')")
   })
 
   it('offers five options on each axis, each with a stated cost', () => {
     const variants = source('app/utils/labVariants.ts')
 
-    for (const axis of ['PEEK_AXIS', 'PAGE_AXIS', 'CHILD_AXIS']) {
+    for (const axis of ['PAGE_AXIS', 'PANEL_AXIS', 'SCENARIO_AXIS']) {
       expect(variants, axis).toContain(`export const ${axis}`)
     }
-    for (const id of ['zones', 'prose', 'spec', 'map', 'bars']) {
+    for (const id of ['two', 'three', 'vertical', 'disclosed', 'dense']) {
       expect(variants, id).toContain(`id: '${id}'`)
     }
-    for (const id of ['scroll', 'tabs', 'split', 'anchored', 'accordion']) {
+    for (const id of ['narrow', 'wide', 'sheet', 'sidetabs', 'none']) {
       expect(variants, id).toContain(`id: '${id}'`)
     }
-    for (const id of ['cards', 'stepper', 'inline', 'rail']) {
+    for (const id of ['inline', 'split', 'index', 'tabs', 'sequence']) {
       expect(variants, id).toContain(`id: '${id}'`)
     }
 
@@ -91,17 +125,26 @@ describe('Workbench audition layer', () => {
   })
 
   /*
+    There is already one place auditions live and one control that reveals it.
+    A second entry point in the header would be a second concept for one idea.
+  */
+  it('lives in the experiment bar, not a control of its own', () => {
+    const shell = readFileSync(join(root, 'viewer/app/app/app.vue'), 'utf8')
+
+    expect(shell).toContain('<BusinessLensWorkbenchLabRow />')
+    expect(shell).toContain('<BusinessLensThemeLabBar :row-count="2">')
+    expect(shell).not.toContain('BusinessLensWorkbenchLabMenu')
+  })
+
+  /*
     The variations differ in how they draw an entity, never in what they say
     about it — otherwise the comparison is between two summaries rather than two
     visualizations of one.
   */
   it('draws every option from one description of the entity', () => {
-    for (const file of ['BlrPeekProse.vue', 'BlrPeekSpec.vue', 'BlrPeekMap.vue', 'BlrPeekBars.vue']) {
-      expect(source(`app/components/${file}`), file).toContain("from '../utils/peekFacts'")
-    }
-    for (const file of ['BlrPageTabs.vue', 'BlrPageSplit.vue', 'BlrPageAnchored.vue', 'BlrPageAccordion.vue', 'BlrPageScroll.vue']) {
-      expect(source(`app/components/${file}`), file).toContain("from '../utils/pageSections'")
-    }
+    expect(source('app/components/BlrPageBlock.vue')).toContain("from '../utils/entityFacts'")
+    expect(source('app/components/BlrEntityReading.vue')).toContain("from '../utils/pageSections'")
+    expect(source('app/components/BlrScenarios.vue')).toContain("from '../utils/pageSections'")
   })
 })
 

@@ -1,4 +1,9 @@
-import { LAB_DEFAULTS, type ChildVariantId, type PageVariantId, type PeekVariantId } from '../utils/labVariants'
+import {
+  LAB_DEFAULTS,
+  type PageVariantId,
+  type PanelVariantId,
+  type ScenarioVariantId
+} from '../utils/labVariants'
 
 const cookieOptions = {
   sameSite: 'lax',
@@ -6,43 +11,46 @@ const cookieOptions = {
 } as const
 
 /**
- * Which option each axis is currently showing.
+ * Which option each axis is showing.
  *
- * One cookie per axis, so the three vary independently — the point of the
- * audition is to judge one part at a time, which a single combined setting
- * would make impossible. Cookie-backed for the same reason the background
- * audition is: the choice has to survive the recompile after every model edit.
+ * One cookie per axis, so the three vary independently — judging one part at a
+ * time is the whole point, and a single combined setting would make it
+ * impossible. Cookie-backed for the same reason the background audition is: the
+ * choice has to survive the recompile after every edit to the model.
  */
 export function useWorkbenchLab() {
-  const peek = useCookie<PeekVariantId>('bl-lab-peek', { default: () => LAB_DEFAULTS.peek, ...cookieOptions })
   const page = useCookie<PageVariantId>('bl-lab-page', { default: () => LAB_DEFAULTS.page, ...cookieOptions })
-  const child = useCookie<ChildVariantId>('bl-lab-child', { default: () => LAB_DEFAULTS.child, ...cookieOptions })
+  const panel = useCookie<PanelVariantId>('bl-lab-panel', { default: () => LAB_DEFAULTS.panel, ...cookieOptions })
+  const scenario = useCookie<ScenarioVariantId>('bl-lab-scenario', {
+    default: () => LAB_DEFAULTS.scenario,
+    ...cookieOptions
+  })
 
   const values = computed<Record<string, string>>(() => ({
-    peek: peek.value,
     page: page.value,
-    child: child.value
+    panel: panel.value,
+    scenario: scenario.value
   }))
 
   useHead({
     htmlAttrs: {
-      'data-lab-peek': computed(() => peek.value),
       'data-lab-page': computed(() => page.value),
-      'data-lab-child': computed(() => child.value)
+      'data-lab-panel': computed(() => panel.value),
+      'data-lab-scenario': computed(() => scenario.value)
     }
   })
 
   function select(axis: string, id: string) {
-    if (axis === 'peek') peek.value = id as PeekVariantId
     if (axis === 'page') page.value = id as PageVariantId
-    if (axis === 'child') child.value = id as ChildVariantId
+    if (axis === 'panel') panel.value = id as PanelVariantId
+    if (axis === 'scenario') scenario.value = id as ScenarioVariantId
   }
 
   function reset() {
-    peek.value = LAB_DEFAULTS.peek
     page.value = LAB_DEFAULTS.page
-    child.value = LAB_DEFAULTS.child
+    panel.value = LAB_DEFAULTS.panel
+    scenario.value = LAB_DEFAULTS.scenario
   }
 
-  return { peek, page, child, values, select, reset }
+  return { page, panel, scenario, values, select, reset }
 }

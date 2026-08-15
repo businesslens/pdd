@@ -26,15 +26,12 @@ export default defineNuxtConfig({
   icon: {
     clientBundle: {
       icons: [
-        'lucide:flask-conical',
         'lucide:panel-right',
         'lucide:layout',
         'lucide:list-tree',
-        'lucide:chevron-down',
-        'lucide:chevron-left',
         'lucide:chevron-right',
-        'lucide:chevron-up',
-        'lucide:check',
+        'lucide:arrow-right',
+        'lucide:waypoints',
         'lucide:x'
       ]
     }
