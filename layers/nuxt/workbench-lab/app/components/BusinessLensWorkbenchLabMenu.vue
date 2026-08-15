@@ -1,80 +1,85 @@
 <script setup lang="ts">
 /**
- * The audition, reachable without opening the theme lab.
+ * The audition control: three axes, five options each, varied one at a time.
  *
- * The background audition is a designer's tool, hidden until asked for. Which
- * *reading* of the model you are looking at is a different kind of choice —
- * it changes what the application is, so a comparison you cannot find is not a
- * comparison anyone will run.
+ * Each option states what it costs, because an audition where every option
+ * claims to be good at everything decides nothing. The axis states the
+ * complaint it exists to answer, so a choice can be judged against the problem
+ * rather than against taste.
  */
-import { WORKBENCH_VARIANTS } from '../utils/workbenchVariants'
+import { LAB_AXES, LAB_DEFAULTS } from '../utils/labVariants'
 
-const { active, select } = useBusinessLensWorkbenchVariant()
+const { values, select, reset } = useWorkbenchLab()
 const open = ref(false)
 
-function choose(id: typeof WORKBENCH_VARIANTS[number]['id']) {
-  select(id)
-  open.value = false
-}
+const changed = computed(() => LAB_AXES.some(axis =>
+  values.value[axis.id] !== LAB_DEFAULTS[axis.id as keyof typeof LAB_DEFAULTS]))
+
+const summary = computed(() => LAB_AXES
+  .map(axis => axis.options.find(option => option.id === values.value[axis.id])?.name ?? '')
+  .join(' · '))
 </script>
 
 <template>
   <UPopover v-model:open="open">
     <UButton
-      :icon="active.icon"
-      :label="active.name"
+      icon="i-lucide-flask-conical"
       color="neutral"
-      variant="ghost"
+      :variant="changed ? 'soft' : 'ghost'"
       size="sm"
+      label="Variations"
       trailing-icon="i-lucide-chevron-down"
-      :aria-label="`Reading: ${active.name}. Choose another reading of this model.`"
+      :aria-label="`Workbench variations: ${summary}`"
     />
     <template #content>
-      <div class="w-96 p-2">
-        <p class="px-2 pb-2 text-xs text-dimmed">
-          Five readings of the same model. Nothing about the model changes — only
-          what the primary axis is, and what a click means.
-        </p>
-        <button
-          v-for="variant in WORKBENCH_VARIANTS"
-          :key="variant.id"
-          type="button"
-          class="blr-reading"
-          :data-current="variant.id === active.id"
-          @click="choose(variant.id)"
-        >
-          <span class="flex items-center gap-2">
-            <UIcon :name="variant.icon" class="size-4 shrink-0" />
-            <span class="text-sm font-semibold text-highlighted">{{ variant.name }}</span>
-            <UIcon
-              v-if="variant.id === active.id"
-              name="i-lucide-check"
-              class="ms-auto size-4 shrink-0 text-primary"
-            />
-          </span>
-          <span class="mt-1 block ps-6 text-xs text-default">{{ variant.premise }}</span>
-          <span class="mt-0.5 block ps-6 text-xs text-muted">{{ variant.gesture }}</span>
-          <span class="mt-0.5 block ps-6 text-xs text-dimmed">Costs: {{ variant.cost }}</span>
-        </button>
+      <div class="w-[30rem] max-w-[92vw] p-3">
+        <div class="mb-3 flex items-baseline gap-2">
+          <p class="text-xs text-dimmed">
+            Three parts of the Workbench, five options each. Everything else stays as it ships.
+          </p>
+          <UButton
+            v-if="changed"
+            color="neutral"
+            variant="ghost"
+            size="xs"
+            label="Reset"
+            class="ms-auto shrink-0"
+            @click="reset()"
+          />
+        </div>
+
+        <section v-for="axis in LAB_AXES" :key="axis.id" class="mb-3 last:mb-0">
+          <header class="mb-1.5 flex items-baseline gap-2">
+            <UIcon :name="axis.icon" class="size-3.5 shrink-0 translate-y-0.5 text-dimmed" />
+            <span class="text-sm font-semibold text-highlighted">{{ axis.name }}</span>
+            <span class="min-w-0 flex-1 truncate text-xs text-dimmed">{{ axis.problem }}</span>
+          </header>
+          <div class="flex flex-wrap gap-1">
+            <UTooltip
+              v-for="option in axis.options"
+              :key="option.id"
+              :delay-duration="150"
+              :ui="{ content: 'h-auto max-w-xs items-start p-3' }"
+            >
+              <UButton
+                :label="option.name"
+                size="xs"
+                :color="values[axis.id] === option.id ? 'primary' : 'neutral'"
+                :variant="values[axis.id] === option.id ? 'soft' : 'outline'"
+                :aria-pressed="values[axis.id] === option.id"
+                class="rounded-full"
+                @click="select(axis.id, option.id)"
+              />
+              <template #content>
+                <span class="block space-y-1 text-start">
+                  <span class="block text-xs text-default">{{ option.premise }}</span>
+                  <span class="block text-xs text-dimmed">Costs: {{ option.cost }}</span>
+                </span>
+              </template>
+            </UTooltip>
+          </div>
+        </section>
       </div>
     </template>
   </UPopover>
 </template>
-
-<style scoped>
-.blr-reading {
-  display: block;
-  width: 100%;
-  padding: 0.5rem;
-  border-radius: 0.5rem;
-  text-align: start;
-}
-
-.blr-reading:hover {
-  background: var(--ui-bg-elevated);
-}
-
-.blr-reading[data-current='true'] {
-  background: color-mix(in srgb, var(--ui-color-primary-500) 8%, var(--ui-bg-elevated));
-}
-</style>

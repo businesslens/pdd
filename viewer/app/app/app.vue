@@ -32,11 +32,7 @@ useHead({
     -->
     <div class="flex min-h-dvh flex-col">
       <NuxtLoadingIndicator />
-      <BusinessLensThemeLabBar :row-count="2">
-        <template #before>
-          <BusinessLensWorkbenchLabRow />
-        </template>
-      </BusinessLensThemeLabBar>
+      <BusinessLensThemeLabBar />
       <UHeader
         sticky
         :ui="{ root: 'top-(--businesslens-theme-lab-height) shrink-0', right: 'gap-0.5' }"
@@ -67,7 +63,7 @@ useHead({
         </template>
 
         <template #right>
-          <!-- Which reading of the model this viewer is showing. -->
+          <!-- Which variation of each auditioned part this viewer is showing. -->
           <BusinessLensWorkbenchLabMenu />
           <UTooltip :text="themeLabLabel">
             <UButton

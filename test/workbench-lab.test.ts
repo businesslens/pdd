@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process'
-import { existsSync, readFileSync, readdirSync } from 'node:fs'
+import { readFileSync, readdirSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
@@ -15,8 +15,8 @@ function source(path: string): string {
 describe('Workbench audition layer', () => {
   /*
     An audition is only useful if it cannot ship. The theme lab is exported
-    because the landing application renders it; these alternative readings are
-    local comparison material, so the packaged layer must not carry them and no
+    because the landing application renders it; these variations are local
+    comparison material, so the packaged layer must not carry them and no
     consumer should be able to extend them by name.
   */
   it('never leaves the local viewer', () => {
@@ -31,11 +31,6 @@ describe('Workbench audition layer', () => {
        guards the directory, this guards the export. */
     expect(Object.keys(manifest.exports)).not.toContain('./nuxt/report-lab')
 
-    /* The shipped layer must not reach into the lab in any direction. */
-    for (const file of readdirSync(join(viewer, 'app/components'))) {
-      expect(readFileSync(join(viewer, 'app/components', file), 'utf8'), file).not.toContain('workbench-lab')
-    }
-
     /* `--ignore-scripts` matters: `prepack` rebuilds `dist/`, and a rebuild
        running inside one test file races every other test file reading it. */
     const packed = execFileSync('npm', ['pack', '--dry-run', '--json', '--ignore-scripts'], {
@@ -45,42 +40,82 @@ describe('Workbench audition layer', () => {
     expect(packed).not.toContain('layers/nuxt/workbench-lab')
   }, 60_000)
 
-  it('composes on the shipped layer instead of copying it', () => {
+  /*
+    The whole point of shadowing is that the Workbench does not know it is being
+    auditioned. If the shipped layer ever reaches back, the baseline stops being
+    the baseline.
+  */
+  it('changes nothing in the shipped layer', () => {
+    for (const file of readdirSync(join(viewer, 'app/components'))) {
+      expect(readFileSync(join(viewer, 'app/components', file), 'utf8'), file)
+        .not.toContain('workbench-lab')
+    }
+    for (const file of readdirSync(join(viewer, 'app/utils'))) {
+      expect(readFileSync(join(viewer, 'app/utils', file), 'utf8'), file)
+        .not.toContain('workbench-lab')
+    }
     expect(source('nuxt.config.ts')).toContain("join(currentDir, '../report-viewer')")
+  })
 
-    /* One reach across, written once, so a variation cannot quietly fork the
-       projection it is supposed to be auditioning navigation over. */
-    const model = source('app/utils/model.ts')
-    expect(model).toContain('../../../report-viewer/app/utils/reportWorkspace')
+  it('keeps the shipped component as each axis default', () => {
+    const peek = source('app/components/BlrEntityPeek.vue')
+    const page = source('app/components/BlrEntityPage.vue')
 
-    for (const file of readdirSync(join(lab, 'app/components'))) {
-      const text = readFileSync(join(lab, 'app/components', file), 'utf8')
-      if (file === 'BlrLabAtlas.vue') continue /* imports the topology view registry directly */
-      expect(text, file).not.toContain('../../../report-viewer/app/utils')
+    /* Imported by path, so the default renders what ships rather than a copy. */
+    expect(peek).toContain("from '../../../report-viewer/app/components/BlrEntityPeek.vue'")
+    expect(peek).toContain("peek === 'zones'")
+    expect(page).toContain("from '../../../report-viewer/app/components/BlrEntityPage.vue'")
+    expect(page).toContain("page.value === 'scroll' && child.value === 'cards'")
+  })
+
+  it('offers five options on each axis, each with a stated cost', () => {
+    const variants = source('app/utils/labVariants.ts')
+
+    for (const axis of ['PEEK_AXIS', 'PAGE_AXIS', 'CHILD_AXIS']) {
+      expect(variants, axis).toContain(`export const ${axis}`)
     }
-  })
-
-  it('renders the shipped Workbench for its own first reading', () => {
-    const entry = source('app/components/BusinessLensReportLab.vue')
-
-    /* Comparing against a copy of the Workbench would compare nothing. */
-    expect(entry).toContain('<BusinessLensReportViewer')
-    expect(entry).toContain("active.id === 'workbench'")
-  })
-
-  it('states what each reading assumes, and what it costs', () => {
-    const variants = source('app/utils/workbenchVariants.ts')
-
-    for (const id of ['workbench', 'atlas', 'storyline', 'ledger', 'columns']) {
+    for (const id of ['zones', 'prose', 'spec', 'map', 'bars']) {
       expect(variants, id).toContain(`id: '${id}'`)
-      expect(existsSync(join(lab, 'app/components')), id).toBe(true)
+    }
+    for (const id of ['scroll', 'tabs', 'split', 'anchored', 'accordion']) {
+      expect(variants, id).toContain(`id: '${id}'`)
+    }
+    for (const id of ['cards', 'stepper', 'inline', 'rail']) {
+      expect(variants, id).toContain(`id: '${id}'`)
     }
 
-    /* A comparison where every option claims to be good at everything is not a
-       comparison, so `cost` is required alongside `premise`. */
-    const premises = variants.match(/premise: '/g)?.length ?? 0
-    const costs = variants.match(/cost: '/g)?.length ?? 0
-    expect(premises).toBe(5)
-    expect(costs).toBe(5)
+    /* Fifteen options, each declaring what it gives up. An audition where every
+       option claims to be good at everything decides nothing. */
+    expect(variants.match(/premise: '/g)?.length).toBe(15)
+    expect(variants.match(/cost: '/g)?.length).toBe(15)
+  })
+
+  /*
+    The variations differ in how they draw an entity, never in what they say
+    about it — otherwise the comparison is between two summaries rather than two
+    visualizations of one.
+  */
+  it('draws every option from one description of the entity', () => {
+    for (const file of ['BlrPeekProse.vue', 'BlrPeekSpec.vue', 'BlrPeekMap.vue', 'BlrPeekBars.vue']) {
+      expect(source(`app/components/${file}`), file).toContain("from '../utils/peekFacts'")
+    }
+    for (const file of ['BlrPageTabs.vue', 'BlrPageSplit.vue', 'BlrPageAnchored.vue', 'BlrPageAccordion.vue', 'BlrPageScroll.vue']) {
+      expect(source(`app/components/${file}`), file).toContain("from '../utils/pageSections'")
+    }
+  })
+})
+
+describe('a Scenario page keeps its parent in the trail', () => {
+  /*
+    `Capability Scenarios › Create an owned collection` named a collection the
+    reader never chose and dropped the Capability they arrived from. A defect,
+    so it is fixed in the shipped layer rather than auditioned.
+  */
+  it('walks the containment rather than the collection', () => {
+    const workbench = readFileSync(join(viewer, 'app/components/BlrWorkbench.vue'), 'utf8')
+
+    expect(workbench).toContain('const pageTrail = computed<TrailStep[]>')
+    expect(workbench).toContain('const collectionKind = parent ? parent.kind : entity.kind')
+    expect(workbench).toContain('v-for="(step, index) in pageTrail"')
   })
 })

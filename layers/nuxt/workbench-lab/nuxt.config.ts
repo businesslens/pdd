@@ -7,9 +7,14 @@ const currentDir = dirname(fileURLToPath(import.meta.url))
  * The Workbench audition layer.
  *
  * Extended only by the local viewer, never by the shipped package: the same
- * rule the theme lab follows, for the same reason. A reader auditioning four
- * alternative readings of a Product Model should not be able to ship one by
- * accident, and a consumer extending `report-viewer` should not inherit them.
+ * rule the theme lab follows, for the same reason. An audition should not be
+ * shippable by accident, and a consumer extending `report-viewer` should get
+ * the Workbench as it ships and nothing else.
+ *
+ * The variations work by *shadowing* shipped components — Nuxt resolves a
+ * component name from the topmost layer that defines it, so `BlrEntityPeek`
+ * and `BlrEntityPage` here stand in front of the ones in `report-viewer`
+ * without a single line changing there.
  */
 export default defineNuxtConfig({
   $meta: {
@@ -21,21 +26,15 @@ export default defineNuxtConfig({
   icon: {
     clientBundle: {
       icons: [
-        'lucide:columns-3',
-        'lucide:git-commit-horizontal',
-        'lucide:map',
-        'lucide:panels-top-left',
-        'lucide:table-2',
-        'lucide:corner-down-right',
-        'lucide:crosshair',
-        'lucide:layers',
+        'lucide:flask-conical',
+        'lucide:panel-right',
+        'lucide:layout',
         'lucide:list-tree',
-        'lucide:maximize-2',
-        'lucide:target',
-        'lucide:check',
         'lucide:chevron-down',
-        'lucide:terminal',
-        'lucide:route',
+        'lucide:chevron-left',
+        'lucide:chevron-right',
+        'lucide:chevron-up',
+        'lucide:check',
         'lucide:x'
       ]
     }

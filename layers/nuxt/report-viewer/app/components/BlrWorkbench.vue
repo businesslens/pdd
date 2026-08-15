@@ -41,6 +41,7 @@ import type {
 import {
   ENTITY_KIND_META,
   REPORT_ENTITY_KINDS,
+  isScenarioKind,
   resolveEntities,
   resolveEntity,
   resolveEntityKey
@@ -311,6 +312,64 @@ const entityGroups = computed(() => {
 const openPage = computed<AnyEntityView | null>(() => openJourneyId.value
   ? resolveEntityKey(props.workspace, openJourneyId.value) ?? null
   : null)
+
+/**
+ * The trail above an open page.
+ *
+ * A Scenario has exactly one parent, and the collection it belongs to is that
+ * parent's — so `Capability Scenarios › Create an owned collection` names a
+ * collection the reader never chose and drops the Capability they came from.
+ * The trail walks the containment instead: collection, parent, entity.
+ */
+interface TrailStep {
+  key: string
+  label: string
+  title: string
+  icon?: string
+  slot?: number
+  /** True for a collection segment, which reads as an eyebrow rather than a name. */
+  collection?: boolean
+  go?: () => void
+}
+
+const pageTrail = computed<TrailStep[]>(() => {
+  const entity = openPage.value
+  if (!entity) return []
+
+  const parentKind = PARENT_OF[entity.kind]
+  const parent = parentKind && isScenarioKind(entity.kind)
+    ? resolveEntity(props.workspace, parentKind, (entity as ScenarioView).scenarioType === 'capability'
+        ? (entity as ScenarioView).capabilityId
+        : (entity as ScenarioView).journeyId)
+    : undefined
+
+  /* The collection is the parent's when there is one: you reached this Scenario
+     through Capabilities, not through a collection of every Scenario. */
+  const collectionKind = parent ? parent.kind : entity.kind
+  const collectionMeta = ENTITY_KIND_META[collectionKind]
+
+  const steps: TrailStep[] = [{
+    key: 'collection',
+    label: collectionMeta.plural,
+    title: `Back to ${collectionMeta.plural}`,
+    icon: collectionMeta.icon,
+    slot: collectionMeta.slot,
+    collection: true,
+    go: () => setKind(collectionKind)
+  }]
+
+  if (parent) {
+    steps.push({
+      key: parent.key,
+      label: parent.title,
+      title: `Back to ${parent.title}`,
+      go: () => openEntityPage(parent)
+    })
+  }
+
+  steps.push({ key: entity.key, label: entity.title, title: entity.title })
+  return steps
+})
 
 /* A page brings its own section with it, so a link lands with the rail, the
    breadcrumb and the surface behind it already agreeing. */
@@ -763,19 +822,37 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
 
       <!-- Where you are: the working view names itself here, not above itself. -->
       <UIcon name="i-lucide-chevron-right" class="hidden size-3.5 shrink-0 text-dimmed sm:block" />
-      <!-- A page states the collection it came from, and that segment is a link. -->
+      <!-- A page states the whole path it sits on, and every step but the last
+           is a link. A Scenario without its parent in the trail is the one
+           thing a breadcrumb exists to prevent. -->
       <template v-if="openPage">
-        <button
-          type="button"
-          class="blr-eyebrow hidden shrink-0 items-center gap-1.5 hover:underline hover:underline-offset-4 sm:inline-flex"
-          :title="`Back to ${activeMeta.plural}`"
-          @click="openEntity = null"
-        >
-          <UIcon :name="activeMeta.icon" class="size-3.5" :style="{ color: `var(--blr-slot-${activeMeta.slot})` }" />
-          {{ activeMeta.plural }}
-        </button>
-        <UIcon name="i-lucide-chevron-right" class="hidden size-3.5 shrink-0 text-dimmed sm:block" />
-        <span class="hidden min-w-0 truncate text-sm font-medium text-highlighted sm:inline">{{ openPage.title }}</span>
+        <template v-for="(step, index) in pageTrail" :key="step.key">
+          <UIcon
+            v-if="index"
+            name="i-lucide-chevron-right"
+            class="hidden size-3.5 shrink-0 text-dimmed sm:block"
+          />
+          <button
+            v-if="step.go"
+            type="button"
+            class="hidden shrink-0 items-center gap-1.5 hover:underline hover:underline-offset-4 sm:inline-flex"
+            :class="step.collection ? 'blr-eyebrow' : 'min-w-0 max-w-40 truncate text-sm text-muted'"
+            :title="step.title"
+            @click="step.go()"
+          >
+            <UIcon
+              v-if="step.icon"
+              :name="step.icon"
+              class="size-3.5 shrink-0"
+              :style="{ color: `var(--blr-slot-${step.slot})` }"
+            />
+            <span class="truncate">{{ step.label }}</span>
+          </button>
+          <span
+            v-else
+            class="hidden min-w-0 truncate text-sm font-medium text-highlighted sm:inline"
+          >{{ step.label }}</span>
+        </template>
       </template>
       <template v-else-if="topologyActive">
         <span class="blr-eyebrow hidden shrink-0 items-center gap-1.5 sm:inline-flex">

@@ -1,51 +1,94 @@
 # Workbench audition layer
 
-Five readings of one Product Model, switchable from the local viewer's header.
+Three parts of the Workbench, five options each, switchable from **Variations**
+in the local viewer's header. Everything else — the rail, the collections, the
+grouping, the routing — stays exactly as it ships.
+
 This layer never ships: `package.json` excludes it from `files`, there is no
-`./nuxt/workbench-lab` export, and `test/workbench-lab.test.ts` holds all three.
+export for it, and `test/workbench-lab.test.ts` holds both.
 
-The shipped Workbench was reached by argument. These four alternatives exist so
-it can be reached by comparison instead — each starts from a different premise
-about what a Product Model *is*, and each is complete enough to be used, because
-a sketch you cannot navigate proves nothing.
+## How it works
 
-| Reading | Premise | What a click means | What it costs |
-| --- | --- | --- | --- |
-| **Workbench** | Ten collections, each with a containment worth grouping by. | Peek from a list, then open the page. | Cross-kind questions need Topology; the rail is always a decision. |
-| **Atlas** | A territory. Position and adjacency carry meaning. | Select a box; it reads beside the map, which never moves. | Reading long bodies on a canvas; finding what you cannot see. |
-| **Storyline** | A set of promises unfolding in time. | Follow a Journey left to right; Scenarios are variant tracks. | Everything not on a Journey. |
-| **Ledger** | A dataset. Every entity is a row; kind is a column. | Type a query; expand a row in place. `j`/`k`, `Enter`, `/`. | Narrative and shape. |
-| **Columns** | Three trees, best walked one level at a time. | Drill left to right; the last column is the reading. | Multi-parent entities appear in several paths; horizontal space. |
+The variations **shadow** shipped components by name. Nuxt resolves a component
+from the topmost layer that defines it, and the local viewer extends this lab
+above `report-viewer`, so `BlrEntityPeek.vue` and `BlrEntityPage.vue` here stand
+in front of the shipped ones. **Not one line of `report-viewer` changed.**
 
-## What they share, and why
+When an axis is at its default, the dispatcher renders the *shipped* component
+by path — the baseline in the comparison is the thing that actually ships, not
+a copy of it that can drift.
 
-Every variation renders the same `projectReportWorkspace` output and the same
-entity primitives — `BlrLabReading` wraps `BlrEntityBody` and `BlrConnections`,
-which are the shipped components. Four different renderings of a Screen would
-make the comparison meaningless: what is being compared is **navigation**, not
-typography.
+## Axis 1 — Peek · *the slideover is hard to read*
 
-`app/utils/model.ts` is the single reach across into `report-viewer`. A
-variation that forked the projection would be auditioning something else.
+| Option | Premise | Costs |
+| --- | --- | --- |
+| **Zones** (default, shipped) | Identity, a sentence, three facts, connections as chips. | Many small objects of similar weight; long relation labels crowd the chips. |
+| **Prose** | The entity described in two sentences, with only the names as links. | Counts are harder to compare; a long sentence hides its own structure. |
+| **Spec sheet** | One aligned two-column table, every fact and relation on its own row. | Reads as data, not meaning; nothing is emphasised over anything else. |
+| **Map** | A small diagram: what reaches it on the left, what it reaches on the right. | Holds few names at panel width; the lead has to shrink. |
+| **Bars** | Relations as bars sized by count — the shape of an entity before its words. | Implies comparability across kinds that may not be comparable. |
 
-## Things worth watching for while comparing
+Only **Map** distinguishes inbound from outbound, which the model authors and a
+flat chip list throws away. Only **Bars** shows the entity's weight before its
+words.
 
-- **Counterparts.** Two Screens can share a title across Interfaces. Ledger
-  shows the qualified id, Storyline names the Interface, Columns puts them in
-  different paths, Atlas separates them in space, and the Workbench carries the
-  scope on the row. Each solves it differently; some more cheaply than others.
-- **What is unreached.** Only Storyline can show you a Capability that no
-  promise runs through, because only Storyline is organized by promise.
-- **Cross-kind questions.** Only Ledger takes "what in this model mentions
-  publishing" as a single gesture.
-- **Where your place goes.** Atlas never moves the map; Ledger never moves the
-  row; Columns never scrolls to go deeper; the Workbench navigates away and
-  comes back with the browser.
+Measured at 1600×1000 across Capability, Capability Scenario, Journey, Screen
+and Actor: **Zones, Map and Bars fit the panel on every kind.** Prose overflows
+by 160px and Spec by 328px on an Actor — both list every relation by name
+rather than capping, which is the trade they are making, so the overflow is part
+of what is being judged rather than a bug to tune away.
 
-## Adding one
+## Axis 2 — Page · *the drilldown is too occupied*
 
-Add an entry to `app/utils/workbenchVariants.ts` — `premise`, `gesture` and
-`cost` are all required, because an option that claims no weakness is not a
-comparison — then a `BlrLab<Name>.vue` beside the others, and a branch in
-`BusinessLensReportLab.vue`. Take `workspace`, `variant` and `logoSrc`, wrap the
-body in `BlrLabFrame`, and use `BlrLabReading` for the reading.
+Measured on the `Reading state` Capability page, 1600×1000, pane 891px:
+
+| Option | Content height | What it does |
+| --- | --- | --- |
+| **One scroll** (default, shipped) | 1214px | Every section stacked. Nothing hidden, nothing to learn. |
+| **Tabs** | 293px | Named destinations with counts. Empty tabs are not rendered. |
+| **Split** | 788px | Reading left; connections, counterparts, references dock right. |
+| **Anchored** | 1254px | One scroll plus a contents rail that tracks where you are. |
+| **Accordion** | 645px | Sections collapsed with counts; Overview and Detail start open. |
+
+`Tabs` and `Accordion` fit the pane without scrolling. `Anchored` is *longer*
+than the baseline — it adds orientation, not brevity, which is the question it
+exists to ask.
+
+## Axis 3 — Scenarios · *parent ⇄ child is hard to navigate*
+
+| Option | On the parent page | On a Scenario page |
+| --- | --- | --- |
+| **Cards** (default, shipped) | Child rows, each opening a page. | Parent link. |
+| **Stepper** | Numbered list. | Parent link, plus `‹ prev · 2 of 3 · next ›`. |
+| **Inline** | Children expand where listed — no page needed. | Parent link. |
+| **Split** | List left, chosen Scenario right, in place. | Parent link plus stepper. |
+| **Sibling rail** | Plain list. | A rail of every sibling that stays while you move. |
+
+### Fixed in the base, not auditioned
+
+A Scenario page's breadcrumb read `Capability Scenarios › Create an owned
+collection` — a collection the reader never chose, and no sign of the parent
+they came from. It now walks the containment:
+
+```
+Content Feed Reader › CAPABILITIES › Collection creation › Create an owned collection
+Content Feed Reader › JOURNEYS › Catch up on unread › Work through the unread backlog
+```
+
+That is a defect, not a preference, so it is in `report-viewer` and every
+variation inherits it.
+
+## What they share
+
+All fifteen options render the same projection and the same shipped primitives —
+`BlrEntityBody`, `BlrConnections`, `BlrEntityCard`, `BlrAvail`. The peek
+variations draw from one `peekFacts` module and the page layouts arrange one
+`sectionsFor` list, so a comparison is never between two different summaries of
+the same entity.
+
+## Adding an option
+
+Add it to the axis in `app/utils/labVariants.ts` — `premise` and `cost` are both
+required, because an option that claims no weakness decides nothing — then a
+component beside its siblings, and a branch in the dispatcher (`BlrEntityPeek`,
+`BlrEntityPage`, or `BlrChildren`).
