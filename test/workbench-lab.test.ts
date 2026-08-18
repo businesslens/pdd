@@ -102,6 +102,17 @@ describe('Workbench audition layer', () => {
     expect(sections).toContain("else overviewBlocks.push('detail')")
   })
 
+  it('keeps Journey Steps in Scenarios instead of adding a lossy Flows tab', () => {
+    const sections = source('app/utils/pageSections.ts')
+    const reading = source('app/components/BlrEntityReading.vue')
+
+    expect(sections).not.toContain("label: entity.kind === 'journey' ? 'Flows'")
+    expect(sections).not.toContain("entity.kind === 'journey' || GRAPH_LED.includes(entity.kind)")
+    expect(reading).not.toContain('buildJourneyAnatomy')
+    expect(reading).not.toContain('journeyFlow')
+    expect(reading).toContain('<BlrScenarios')
+  })
+
   it('offers five options on each axis, each with a stated cost', () => {
     const variants = source('app/utils/labVariants.ts')
 

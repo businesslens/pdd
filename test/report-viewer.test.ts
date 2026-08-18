@@ -200,6 +200,8 @@ describe('stable Product Report Workbench', () => {
     expect(inspector).toContain('<BlrEntityPeek')
     expect(workbench).toContain('<BlrEntityPage')
     expect(page).toContain('<BlrEntityBody')
+    expect(page).not.toContain('buildJourneyAnatomy')
+    expect(page).not.toContain('journeyStepsGraph')
 
     /* The authored body belongs to the page. */
     for (const marker of ['asScenario.steps', 'asScreen.states', 'asRule.statement']) {

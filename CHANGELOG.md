@@ -67,7 +67,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Journey Scenario Steps are the flow.** One ordered structured `steps` list
+- **A Journey Scenario has one Steps sequence.** One ordered structured `steps` list
   now carries each sentence plus optional Capability and inline route-context
   annotations. The separate `flow`, `operation`, stage ids, top-level `routes`,
   and Markdown `## Steps` are removed, eliminating two authored sequences that
@@ -78,6 +78,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   its text states the concrete observable action or condition. Capability
   Scenarios may split and merge without leaving dangling Journey composition
   references.
+- **Journey pages have one Scenario reading.** The peer `Flows` tab and the
+  duplicate Journey-local diagram are removed because they projected the same
+  authored Steps while silently dropping Steps without a Capability. The named
+  topology view is now **Journey composition**: it explicitly answers the
+  narrower Capability-composition question. Outside visible Domain groupings,
+  Capability nodes use the consistent Capability color rather than inheriting
+  a Domain color that could be mistaken for status.
 - **The report navigation rail lists kinds, flat.** Kinds do not nest —
   instances do — so both Scenario kinds leave the rail and become a tab on the
   Capability or Journey that owns them, which is the resolution the
@@ -237,12 +244,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   theme-lab audition layer into `businesslens/nuxt/theme`, where the promoted
   Workbench and the bundled local viewer inherit them without depending on a
   lab layer.
-- Value paths no longer implies a Screen is reached from a Step that
+- Journey composition no longer implies a Screen is reached from a Step that
   cannot expose it. A Screen is authored against the whole Journey Scenario, so
   it now attaches to the last Capability-bearing Step whose Capability declares that
   Screen and shares an availability context with it — a non-visual integration
   Step no longer appears to land on a Reader Screen.
-- Value paths lays ordered Capability-bearing Steps downward with variations side by side. A
+- Journey composition lays ordered Capability-bearing Steps downward with variations side by side. A
   left-to-right chain was wider than the canvas for a short Journey, so it
   scaled the whole graph down and left the height unused.
 

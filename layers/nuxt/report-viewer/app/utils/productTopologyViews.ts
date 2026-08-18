@@ -55,10 +55,10 @@ export const PRODUCT_TOPOLOGY_VIEWS: ProductTopologyView[] = [
   },
   {
     id: 'value-paths',
-    name: 'Value paths',
-    question: 'How does one Actor goal unfold from variation to outcome?',
+    name: 'Journey composition',
+    question: 'Which Capabilities does each Journey Scenario compose, and where does it land?',
     semantics: 'occurrence',
-    note: 'Variations run side by side; their numbered Capability-bearing Steps read downward. A Capability repeats when different accepted variations use it, and a Screen attaches to the last Step that actually exposes it.',
+    note: 'This is a Capability projection, not the complete Scenario. Variations run side by side and their Capability-bearing Steps read downward; read the Scenario for conditions, seams and Product-side Steps without a Capability.',
     flow: [
       { kind: 'journey', label: 'Journey' },
       { kind: 'journey-scenario', label: 'Variations' },

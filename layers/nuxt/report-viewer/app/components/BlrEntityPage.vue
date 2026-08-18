@@ -4,7 +4,7 @@
  *
  * Generalized from the Journey page, which was the only surface in the report
  * shaped the way a reading wants to be: the promise, where it is reachable, its
- * relations as links, the diagram, then its children. Every kind gets that now,
+ * relations as links, then its children. Every kind gets that now,
  * because "which kinds deserve a page" is a judgement call that has to be
  * re-made for every field anyone adds, and "all of them" never does.
  *
@@ -14,7 +14,6 @@
  */
 import type { AnyEntityView, JourneyView, ReportEntityKind, ReportWorkspace, ScenarioView } from '../utils/reportWorkspace'
 import { ENTITY_KIND_META, counterpartsOf, isScenarioKind, resolveEntityKey } from '../utils/reportWorkspace'
-import { buildJourneyAnatomy } from '../utils/productTopologyGraphs'
 
 const props = defineProps<{
   workspace: ReportWorkspace
@@ -63,18 +62,6 @@ const childLabel = computed(() => props.entity.kind === 'capability' ? 'Capabili
   reads as a list with duplicates in it.
 */
 const counterparts = computed(() => counterpartsOf(props.workspace, props.entity))
-
-const journeyStepsGraph = computed(() => props.entity.kind === 'journey'
-  ? buildJourneyAnatomy(props.workspace, {
-      journeyId: props.entity.id,
-      selectedId: props.selectedKey ?? null
-    })
-  : { nodes: [], edges: [] })
-
-function openKey(key: string) {
-  const entity = resolveEntityKey(props.workspace, key)
-  if (entity) emit('select', entity)
-}
 
 const parentOf = computed<AnyEntityView | null>(() => {
   const entity = props.entity
@@ -128,22 +115,6 @@ const asJourney = computed(() => props.entity as JourneyView)
     />
 
     <BlrEntityBody :workspace="workspace" :entity="entity" @select="emit('select', $event)" />
-
-    <!-- Parent-level comparison: each lane projects the one authored step sequence. -->
-    <section v-if="journeyStepsGraph.nodes.length" class="space-y-2 border-t border-default pt-6">
-      <header class="flex flex-wrap items-baseline gap-2">
-        <h2 class="text-base font-semibold tracking-tight text-highlighted">Scenario Steps</h2>
-        <span class="text-xs text-muted">Each lane projects the Capability-bearing steps in authored order.</span>
-      </header>
-      <div class="h-[28rem] overflow-hidden rounded-xl border border-default bg-default">
-        <BlrFlowCanvas
-          :nodes="journeyStepsGraph.nodes"
-          :edges="journeyStepsGraph.edges"
-          :max-zoom="1.1"
-          @select="openKey"
-        />
-      </div>
-    </section>
 
     <!-- Graph-led kinds: the reach is the reading. -->
     <section v-if="graphLed" class="space-y-2 border-t border-default pt-6">

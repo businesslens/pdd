@@ -175,6 +175,19 @@ describe('named Product Topology views', () => {
     expect(graph.edges.some(edge => edge.label === 'then' || edge.label === 'starts')).toBe(true)
   })
 
+  it('uses Capability kind colour when no Domain grouping is visible', () => {
+    const composition = buildProductTopologyGraph(teachingWorkspace, 'value-paths')
+    const compositionCapabilities = composition.nodes.filter(node =>
+      node.id.includes(':step:') && node.data?.kind === 'capability')
+    expect(compositionCapabilities.length).toBeGreaterThan(0)
+    expect(compositionCapabilities.every(node => node.data?.colorSlot === null)).toBe(true)
+
+    const delivery = buildProductTopologyGraph(workspace, 'delivery-surfaces')
+    const deliveredCapabilities = delivery.nodes.filter(node => node.data?.kind === 'capability')
+    expect(deliveredCapabilities.length).toBeGreaterThan(0)
+    expect(deliveredCapabilities.every(node => node.data?.colorSlot === null)).toBe(true)
+  })
+
   it('groups Capabilities in Domain lanes and applies authored Domain colours', () => {
     const domain = workspace.domains.find((item: any) => item.colorSlot != null)!
     const capability = workspace.capabilities.find((item: any) => item.domainId === domain.id)!

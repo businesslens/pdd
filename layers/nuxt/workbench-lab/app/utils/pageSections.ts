@@ -7,7 +7,9 @@
  * thin tabs where one full one was wanted.
  *
  * What is left beside the Overview is only material with a shape of its own: a
- * parent's Scenarios, a diagram, and the reference list.
+ * parent's Scenarios, a graph-led entity's neighbourhood, and the reference
+ * list. A Journey's Steps stay inside its Scenarios; a second diagram tab would
+ * be a lossy peer projection of the same authored sequence.
  */
 import type { AnyEntityView, ReportEntityKind, ReportWorkspace } from './model'
 import { ENTITY_KIND_META, counterpartsOf, isScenarioKind } from './model'
@@ -103,13 +105,11 @@ export function tabsFor(
     })
   }
 
-  if (entity.kind === 'journey' || GRAPH_LED.includes(entity.kind)) {
+  if (GRAPH_LED.includes(entity.kind)) {
     tabs.push({
       id: 'diagram',
-      label: entity.kind === 'journey' ? 'Flows' : 'Neighbourhood',
-      hint: entity.kind === 'journey'
-        ? 'Each lane keeps the authored Capability order.'
-        : 'What it reaches, and what reaches it.',
+      label: 'Neighbourhood',
+      hint: 'What it reaches, and what reaches it.',
       blocks: []
     })
   }

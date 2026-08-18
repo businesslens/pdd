@@ -12,9 +12,8 @@
  * else.
  */
 import type { AnyEntityView, ReportWorkspace } from '../utils/model'
-import { ENTITY_KIND_META, isScenarioKind } from '../utils/model'
+import { ENTITY_KIND_META } from '../utils/model'
 import { GRAPH_LED, parentOf, tabsFor, type PageTabId } from '../utils/pageSections'
-import { buildJourneyAnatomy } from '../../../report-viewer/app/utils/productTopologyGraphs'
 
 const props = withDefaults(defineProps<{
   workspace: ReportWorkspace
@@ -61,10 +60,6 @@ watch([tabs, requestedChild], () => {
 }, { immediate: true })
 
 const current = computed(() => tabs.value.find(tab => tab.id === active.value) ?? tabs.value[0])
-
-const journeyFlow = computed(() => subject.value.kind === 'journey'
-  ? buildJourneyAnatomy(props.workspace, { journeyId: subject.value.id, selectedId: requestedChild.value })
-  : { nodes: [], edges: [] })
 
 const graphLed = computed(() => GRAPH_LED.includes(subject.value.kind))
 
@@ -147,17 +142,10 @@ const blockLabel: Record<string, string> = {
           @select="emit('select', $event)"
         />
 
-        <!-- DIAGRAM — the flows of a Journey, or the reach of a graph-led kind. -->
+        <!-- DIAGRAM — the reach of a graph-led kind. Journey Steps live in Scenarios. -->
         <div v-else-if="current?.id === 'diagram'" class="overflow-hidden rounded-xl border border-default bg-default" :class="compact ? 'h-80' : 'h-[26rem]'">
-          <BlrFlowCanvas
-            v-if="subject.kind === 'journey'"
-            :nodes="journeyFlow.nodes"
-            :edges="journeyFlow.edges"
-            :max-zoom="1.1"
-            @select="(key: string) => { const found = workspace.byKey.get(key); if (found) emit('select', found) }"
-          />
           <BlrTopology
-            v-else-if="graphLed"
+            v-if="graphLed"
             :workspace="workspace"
             :focus-id="subject.key"
             direction="LR"

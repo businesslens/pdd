@@ -89,12 +89,6 @@ function latentGraph(shape: FlowGraphShape, highlightId: string | null | undefin
   return { nodes, edges }
 }
 
-function capabilityColorSlot(workspace: ReportWorkspace, capabilityId: string): number | null {
-  const capability = workspace.capabilities.find(item => item.id === capabilityId)
-  if (!capability?.domainId) return null
-  return workspace.domains.find(domain => domain.id === capability.domainId)?.colorSlot ?? null
-}
-
 const MAP_GROUP_PADDING = 14
 const MAP_GROUP_HEADER = 48
 const MAP_GROUP_GAP = 34
@@ -104,7 +98,7 @@ const MAP_ACCESS_GAP = 36
 /**
  * The product map answers what the product can do, grouped by authored Domain.
  * Actors and Interfaces form a compact access rail; Capabilities keep their
- * Domain colour so the grouping survives outside this one view.
+ * authored Domain colour inside the visible Domain container.
  */
 export function buildProductMap(
   workspace: ReportWorkspace,
@@ -247,8 +241,7 @@ export function buildValuePaths(
       if (!capability) return
       const occurrenceId = `${scenario.key}:step:${index}:${capability.key}`
       const node = entityNode(capability, {
-        selected: options.selectedId === capability.key,
-        colorSlot: capabilityColorSlot(workspace, capability.id)
+        selected: options.selectedId === capability.key
       })
       const data = node.data as FlowNodeData
       nodes.push({
@@ -301,9 +294,6 @@ export function buildValuePaths(
   */
   return layoutFlow({ nodes, edges }, { direction: 'TB', ranksep: 72, nodesep: 42 })
 }
-
-/** Contextual Journey panels share the same focused path derivation. */
-export const buildJourneyAnatomy = buildValuePaths
 
 /**
  * Delivery surfaces distinguishes graphical routes from direct integrations.
@@ -365,18 +355,7 @@ export function buildDeliverySurfaces(
     }
   }
 
-  const shape = graphFrom(entities, relations, options)
-  shape.nodes = shape.nodes.map((node) => {
-    if (node.data?.kind !== 'capability') return node
-    return {
-      ...node,
-      data: {
-        ...node.data,
-        colorSlot: capabilityColorSlot(workspace, node.data.entityId)
-      }
-    } as BlrFlowNode
-  })
-  return layoutFlow(shape, { ranksep: 112, nodesep: 32 })
+  return layoutFlow(graphFrom(entities, relations, options), { ranksep: 112, nodesep: 32 })
 }
 
 /**
