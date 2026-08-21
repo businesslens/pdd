@@ -12,8 +12,8 @@
  * Domain — are not thin versions of this page. Their reach *is* their content,
  * so the neighbourhood graph is their body rather than an extra.
  */
-import type { AnyEntityView, InterfaceView, JourneyView, ReportEntityKind, ReportWorkspace, ScenarioView } from '../utils/reportWorkspace'
-import { ENTITY_KIND_META, counterpartsOf, isScenarioKind, resolveEntityKey } from '../utils/reportWorkspace'
+import type { AnyEntityView, JourneyView, ReportEntityKind, ReportWorkspace, ScenarioView } from '../utils/reportWorkspace'
+import { ENTITY_KIND_META, counterpartsOf } from '../utils/reportWorkspace'
 
 const props = defineProps<{
   workspace: ReportWorkspace
@@ -27,9 +27,10 @@ const emit = defineEmits<{
   select: [entity: AnyEntityView]
   /** Go to another entity's page. */
   open: [entity: AnyEntityView]
-  /** Show this entity's neighbourhood on the topology canvas. */
-  focus: [entity: AnyEntityView]
 }>()
+
+const scenarioRoute = defineModel<string | null>('scenarioRoute', { default: null })
+const routeColumns = defineModel<string>('routeColumns', { default: 'auto' })
 
 const meta = computed(() => ENTITY_KIND_META[props.entity.kind])
 
@@ -63,55 +64,13 @@ const childLabel = computed(() => props.entity.kind === 'capability' ? 'Capabili
 */
 const counterparts = computed(() => counterpartsOf(props.workspace, props.entity))
 
-const parentOf = computed<AnyEntityView | null>(() => {
-  const entity = props.entity
-  if (!isScenarioKind(entity.kind)) return null
-  const scenario = entity as ScenarioView
-  const key = scenario.scenarioType === 'capability'
-    ? `capability:${scenario.capabilityId}`
-    : `journey:${scenario.journeyId}`
-  return resolveEntityKey(props.workspace, key) ?? null
-})
-
 const asJourney = computed(() => props.entity as JourneyView)
-const asInterface = computed(() => props.entity as InterfaceView)
 </script>
 
 <template>
   <article class="space-y-8">
-    <header class="space-y-3">
-      <div class="flex flex-wrap items-center gap-2.5">
-        <BlrKind :kind="entity.kind" />
-        <h1 class="text-2xl font-semibold tracking-[-0.02em] text-highlighted">{{ entity.title }}</h1>
-        <code class="blr-meta rounded bg-muted px-1.5 py-0.5">{{ entity.id }}</code>
-        <BlrInterfaceType
-          v-if="entity.kind === 'interface'"
-          :type="asInterface.interfaceType"
-          labelled
-        />
-        <UButton
-          icon="i-lucide-waypoints"
-          color="neutral"
-          variant="outline"
-          size="xs"
-          label="Neighbourhood"
-          class="ms-auto"
-          title="Show this entity on the topology canvas"
-          @click="emit('focus', entity)"
-        />
-      </div>
-      <!-- A child says which parent it belongs to, and links to it. -->
-      <button
-        v-if="parentOf"
-        type="button"
-        class="inline-flex items-center gap-1.5 text-sm text-muted hover:text-primary"
-        @click="emit('open', parentOf)"
-      >
-        <UIcon :name="ENTITY_KIND_META[parentOf.kind].icon" class="size-3.5" />
-        <span class="text-dimmed">{{ ENTITY_KIND_META[parentOf.kind].label }}</span>
-        <span class="font-medium underline decoration-(--ui-border-accented) underline-offset-3">{{ parentOf.title }}</span>
-      </button>
-      <BlrProse v-if="entity.lead" :text="entity.lead" size="base" class="max-w-3xl" />
+    <header v-if="entity.lead">
+      <BlrProse :text="entity.lead" size="base" class="max-w-3xl" />
     </header>
 
     <BlrAvail
@@ -120,7 +79,13 @@ const asInterface = computed(() => props.entity as InterfaceView)
       :entry-points="entryPoints"
     />
 
-    <BlrEntityBody :workspace="workspace" :entity="entity" @select="emit('select', $event)" />
+    <BlrEntityBody
+      v-model:scenario-route="scenarioRoute"
+      v-model:route-columns="routeColumns"
+      :workspace="workspace"
+      :entity="entity"
+      @select="emit('select', $event)"
+    />
 
     <!-- Graph-led kinds: the reach is the reading. -->
     <section v-if="graphLed" class="space-y-2 border-t border-default pt-6">

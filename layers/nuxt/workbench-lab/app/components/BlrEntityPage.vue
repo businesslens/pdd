@@ -23,10 +23,18 @@ const emit = defineEmits<{
   open: [entity: AnyEntityView]
   focus: [entity: AnyEntityView]
 }>()
+
+const scenarioRoute = defineModel<string | null>('scenarioRoute', { default: null })
+const routeColumns = defineModel<string>('routeColumns', { default: 'auto' })
 </script>
 
 <template>
+  <!-- Consume the Workbench page frame's top inset so top: 0 is the tabs'
+       initial position, not a destination reached after 20px of scrolling. -->
   <BlrEntityReading
+    v-model:scenario-route="scenarioRoute"
+    v-model:route-columns="routeColumns"
+    class="-mt-5"
     :workspace="workspace"
     :entity="entity"
     :selected-key="selectedKey"

@@ -13,19 +13,44 @@ import type { AnyEntityView, ReportWorkspace, ScenarioView } from '../utils/mode
 import { ENTITY_KIND_META } from '../utils/model'
 import { childrenOf } from '../utils/pageSections'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   workspace: ReportWorkspace
   entity: AnyEntityView
   /** A Scenario reached by URL or ⌘K: open on it rather than on the first. */
   selectedKey?: string | null
-}>()
+  /** Clears the page tabs above this sticky row without hard-coding a layout. */
+  stickyTop?: string
+}>(), { stickyTop: '2.5rem' })
 
 const emit = defineEmits<{ select: [entity: AnyEntityView] }>()
+
+const scenarioRoute = defineModel<string | null>('scenarioRoute', { default: null })
+const routeColumns = defineModel<string>('routeColumns', { default: 'auto' })
 
 const { scenario: variant } = useWorkbenchLab()
 
 const children = computed<ScenarioView[]>(() => childrenOf(props.workspace, props.entity) as ScenarioView[])
 const meta = computed(() => ENTITY_KIND_META[props.entity.kind])
+
+/* Split is the default reading, but below the width needed by its two panes it
+   becomes the inline option rather than squeezing the Scenario beside a list. */
+const scenarioShellEl = ref<HTMLElement | null>(null)
+const scenarioShellWidth = ref(0)
+
+watch(scenarioShellEl, (element, _previous, onCleanup) => {
+  if (!element || typeof ResizeObserver === 'undefined') return
+  const measure = () => { scenarioShellWidth.value = element.getBoundingClientRect().width }
+  const observer = new ResizeObserver(([entry]) => {
+    if (entry) scenarioShellWidth.value = entry.contentRect.width
+  })
+  measure()
+  observer.observe(element)
+  onCleanup(() => observer.disconnect())
+}, { immediate: true })
+
+const splitInline = computed(() => variant.value === 'split'
+  && scenarioShellWidth.value > 0
+  && scenarioShellWidth.value < 720)
 
 /* Inline is the one option where "nothing chosen" is a legitimate state: the
    list is the reading until you open something. */
@@ -57,7 +82,11 @@ const summary = (item: ScenarioView) => item.trigger || item.lead
   </p>
 
   <!-- INLINE — each expands where it is listed. -->
-  <div v-else-if="variant === 'inline'" class="divide-y divide-default overflow-hidden rounded-xl border border-default">
+  <div
+    v-else-if="variant === 'inline' || splitInline"
+    ref="scenarioShellEl"
+    class="divide-y divide-default overflow-hidden rounded-xl border border-default"
+  >
     <div v-for="item in children" :key="item.key">
       <button type="button" class="blr-scn-head" :aria-expanded="item.key === openKey" @click="toggle(item)">
         <UIcon
@@ -76,15 +105,25 @@ const summary = (item: ScenarioView) => item.trigger || item.lead
         <span class="blr-meta shrink-0">{{ item.steps.length }} steps</span>
       </button>
       <div v-if="item.key === openKey" class="border-t border-muted bg-elevated/20 px-5 py-5">
-        <BlrEntityBody :workspace="workspace" :entity="item" @select="emit('select', $event)" />
+        <BlrEntityBody
+          v-model:scenario-route="scenarioRoute"
+          v-model:route-columns="routeColumns"
+          :workspace="workspace"
+          :entity="item"
+          @select="emit('select', $event)"
+        />
       </div>
     </div>
   </div>
 
   <!-- SPLIT — the list never moves while you read. -->
-  <div v-else-if="variant === 'split'" class="overflow-hidden rounded-xl border border-default">
-    <div class="grid lg:grid-cols-[17rem_1fr]">
-      <div class="border-b border-default lg:border-b-0 lg:border-e">
+  <div
+    v-else-if="variant === 'split'"
+    ref="scenarioShellEl"
+    class="overflow-hidden rounded-xl border border-default"
+  >
+    <div class="grid grid-cols-[17rem_minmax(0,1fr)]">
+      <div class="border-e border-default">
         <button
           v-for="(item, index) in children"
           :key="item.key"
@@ -105,6 +144,8 @@ const summary = (item: ScenarioView) => item.trigger || item.lead
       <div class="min-w-0 p-5">
         <BlrEntityBody
           v-if="openScenario"
+          v-model:scenario-route="scenarioRoute"
+          v-model:route-columns="routeColumns"
           :workspace="workspace"
           :entity="openScenario"
           @select="emit('select', $event)"
@@ -136,13 +177,23 @@ const summary = (item: ScenarioView) => item.trigger || item.lead
           {{ openScenario.result }}
         </UBadge>
       </header>
-      <BlrEntityBody :workspace="workspace" :entity="openScenario" @select="emit('select', $event)" />
+      <BlrEntityBody
+        v-model:scenario-route="scenarioRoute"
+        v-model:route-columns="routeColumns"
+        :workspace="workspace"
+        :entity="openScenario"
+        @select="emit('select', $event)"
+      />
     </div>
   </div>
 
   <!-- TABS — the set is visible; one reads at a time. -->
   <div v-else-if="variant === 'tabs'" class="space-y-4">
-    <div class="flex flex-wrap items-center gap-1 border-b border-default">
+    <div
+      data-sticky-scenario-tabs
+      class="sticky z-10 flex flex-wrap items-center gap-1 border-b border-default bg-default/95 backdrop-blur"
+      :style="{ top: props.stickyTop }"
+    >
       <button
         v-for="(item, index) in children"
         :key="item.key"
@@ -158,6 +209,8 @@ const summary = (item: ScenarioView) => item.trigger || item.lead
     </div>
     <BlrEntityBody
       v-if="openScenario"
+      v-model:scenario-route="scenarioRoute"
+      v-model:route-columns="routeColumns"
       :workspace="workspace"
       :entity="openScenario"
       @select="emit('select', $event)"

@@ -25,6 +25,9 @@ const emit = defineEmits<{
   close: []
 }>()
 
+const scenarioRoute = defineModel<string | null>('scenarioRoute', { default: null })
+const routeColumns = defineModel<string>('routeColumns', { default: 'auto' })
+
 const { panel } = useWorkbenchLab()
 
 /*
@@ -118,13 +121,14 @@ const kindLabel = computed(() => subject.value ? ENTITY_KIND_META[subject.value.
     <template #body>
       <BlrEntityReading
         v-if="entity"
+        v-model:scenario-route="scenarioRoute"
+        v-model:route-columns="routeColumns"
         :workspace="workspace"
         :entity="entity"
         compact
         :side-tabs="panel === 'sidetabs'"
         @select="emit('select', $event)"
         @open="emit('open', $event)"
-        @focus="emit('open', $event)"
       />
     </template>
   </USlideover>

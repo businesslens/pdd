@@ -6,6 +6,7 @@ import { loadModel } from '../src/core/model.js'
 
 const VIEWER = join(__dirname, '..', 'layers', 'nuxt', 'report-viewer')
 const workspaceModulePath = '../layers/nuxt/report-viewer/app/utils/reportWorkspace.ts'
+const routeWindowModulePath = '../layers/nuxt/report-viewer/app/utils/scenarioRouteWindow.ts'
 const { projectReportWorkspace } = await import(workspaceModulePath)
 const FIXTURE = join(__dirname, 'fixtures', 'fixture-shop')
 
@@ -109,8 +110,8 @@ describe('stable Product Report Workbench', () => {
 
     expect(body).toContain('v-if="stepMatrix"')
     expect(body).toContain('scenarioStepMatrix')
-    expect(body).toContain('v-for="route in stepMatrix.routes"')
-    expect(body.match(/<BlrStepContext/g)).toHaveLength(1)
+    expect(body).toContain('v-for="route in visibleRoutes"')
+    expect(body.match(/<BlrStepContext/g)).toHaveLength(2)
     expect(body).toContain('No Product Place — same Step on every route')
     expect(body).toContain('{{ route.name }}')
     expect(body).not.toContain('{{ route.id }}')
@@ -130,13 +131,52 @@ describe('stable Product Report Workbench', () => {
     expect(context).toContain('ProductPlaceView')
     expect(context).not.toContain('scenarioStepScreens')
     expect(body).not.toContain('<ol class="max-w-3xl list-decimal')
-    expect(body).toContain('stepMatrix.routes.length * 310')
-    expect(body).toContain('sticky left-0')
+    expect(body).not.toContain('stepMatrix.routes.length * 310')
+    expect(body).not.toContain('sticky left-0')
+    expect(body).toContain('scenarioRouteColumnCount')
+    expect(body).toContain('visibleRouteWindow.start + 1')
+    expect(body).toContain('aria-label="Number of route columns"')
+    expect(body).toContain("icon: 'i-lucide-route'")
+    expect(body.match(/aria-label="Show previous route"/g)).toHaveLength(2)
+    expect(body.match(/aria-label="Show next route"/g)).toHaveLength(2)
+    expect(body).toContain('compact')
+    expect(body).not.toContain('Product Place ·')
     expect(context).toContain('whitespace-nowrap')
+    expect(context).toContain("compact ? 'max-w-24'")
+    expect(context).toContain('truncate')
+    expect(context.match(/<UTooltip/g)).toHaveLength(3)
+    expect(context).not.toContain(':title="place.')
     expect(links).toContain('inline-flex min-h-6 items-center')
     for (const icon of ['align-justify', 'circle-dot-dashed', 'user-round']) {
       expect(layer).toContain(`'lucide:${icon}'`)
     }
+  })
+
+  it('fits and pages an authored-order route window without empty columns', async () => {
+    const {
+      scenarioRouteCapacity,
+      scenarioRouteColumnCount,
+      scenarioRouteWindow
+    } = await import(routeWindowModulePath)
+    const routes = ['web', 'mobile', 'tablet', 'admin', 'kiosk']
+      .map(id => ({ id, name: id }))
+
+    expect(scenarioRouteCapacity(520, routes.length)).toBe(1)
+    expect(scenarioRouteCapacity(900, routes.length)).toBe(2)
+    expect(scenarioRouteCapacity(1200, routes.length)).toBe(3)
+    expect(scenarioRouteColumnCount(1200, routes.length, '2')).toBe(2)
+    expect(scenarioRouteColumnCount(900, routes.length, '4')).toBe(2)
+
+    expect(scenarioRouteWindow(routes, 'mobile', 2)).toMatchObject({
+      start: 1,
+      end: 3,
+      routes: [{ id: 'mobile' }, { id: 'tablet' }]
+    })
+    expect(scenarioRouteWindow(routes, 'kiosk', 2)).toMatchObject({
+      start: 3,
+      end: 5,
+      routes: [{ id: 'admin' }, { id: 'kiosk' }]
+    })
   })
 
   it('projects the exact authored Screen Place on each Step without inference', async () => {
@@ -221,12 +261,13 @@ describe('stable Product Report Workbench', () => {
     }
   })
 
-  /*
-    Panes must chain at their end, or a host footer below the report is
-    unreachable by wheel however far the reader scrolls.
-  */
-  it('lets pane scrolling continue into the host page', () => {
-    expect(source('app/assets/report-workbench.css')).not.toContain('overscroll-behavior')
+  it('keeps short viewports inside the Workbench scroll boundary', () => {
+    const structure = source('app/assets/report-structure.css')
+    const panes = source('app/assets/report-workbench.css')
+
+    expect(structure).toContain('min-height: 0')
+    expect(structure).not.toContain('min-height: 42rem')
+    expect(panes).toContain('overflow-y: auto')
   })
 
   it('uses shared flow surfaces for contextual and Product topology', () => {
@@ -240,6 +281,34 @@ describe('stable Product Report Workbench', () => {
     expect(topology).toContain('buildNeighbourhood')
     expect(canvas).toContain('@vue-flow/core')
     expect(canvas).toContain('#node-blr')
+  })
+
+  it('keeps the question-and-derivation bar exclusive to Topology', () => {
+    const workbench = source('app/components/BlrWorkbench.vue')
+    const topology = source('app/components/BlrProductTopology.vue')
+
+    expect(existsSync(join(VIEWER, 'app/utils/browseSurfaces.ts'))).toBe(false)
+    expect(workbench).not.toContain('surface.question')
+    expect(workbench).not.toContain('surface.flow')
+    expect(topology).toContain('{{ view.question }}')
+    expect(topology).toContain('v-for="(step, index) in kindSteps"')
+  })
+
+  it('scrolls collection controls with their list instead of pinning them as chrome', () => {
+    const workbench = source('app/components/BlrWorkbench.vue')
+    const docs = source('app/utils/entityDocs.ts')
+    const pane = workbench.indexOf('v-if="!topologyActive" class="blr-pane min-h-0 flex-1"')
+    const toolbar = workbench.indexOf('v-if="showToolbar"', pane)
+    const reading = workbench.indexOf('<div class="p-5">', toolbar)
+
+    expect(pane).toBeGreaterThan(-1)
+    expect(toolbar).toBeGreaterThan(pane)
+    expect(reading).toBeGreaterThan(toolbar)
+    expect(workbench.slice(toolbar, reading)).not.toContain('border-b border-default')
+    expect(workbench.slice(toolbar, reading)).toContain(':to="collectionDocs.url"')
+    expect(workbench.slice(toolbar, reading)).toContain('label="Docs"')
+    expect(docs).toContain("screen: 'screens'")
+    expect(docs).toContain("domain: 'domains'")
   })
 
   /*
@@ -272,6 +341,30 @@ describe('stable Product Report Workbench', () => {
     expect(inspector).not.toMatch(/history\.value|const history = ref|function goBack/)
   })
 
+  it('uses the Workbench trail as the only entity-page identity', () => {
+    const workbench = source('app/components/BlrWorkbench.vue')
+    const page = source('app/components/BlrEntityPage.vue')
+    const globalHeader = workbench.slice(
+      workbench.indexOf('<header'),
+      workbench.indexOf('<div class="flex min-h-0 flex-1">')
+    )
+
+    expect(workbench).toContain('v-for="(step, index) in pageTrail"')
+    expect(workbench).toContain('aria-label="Page breadcrumb"')
+    expect(workbench).toContain('data-mobile-location')
+    expect(workbench).toContain('data-mobile-section')
+    expect(workbench).toContain('class="flex min-w-0 flex-1 items-center gap-1 overflow-hidden sm:hidden"')
+    expect(workbench).not.toContain('class="inline-flex min-w-0 flex-1 items-center gap-1.5 hover:underline hover:underline-offset-4"')
+    expect(workbench).not.toContain(':title="step.title"')
+    expect(workbench).not.toContain('label="Neighbourhood"')
+    expect(globalHeader).not.toContain('label="Docs"')
+    expect(workbench).not.toContain('DOCS_SLUG')
+    expect(workbench).toContain('@focus="focusTopology"')
+    expect(page).not.toContain('<h1')
+    expect(page).not.toContain('<BlrKind :kind="entity.kind"')
+    expect(page).not.toContain('const parentOf = computed')
+  })
+
   /*
     The rail lists kinds, and kinds do not nest. Scenarios are read from the
     parent entity page without adding a second collection tab to the Capability
@@ -296,13 +389,26 @@ describe('stable Product Report Workbench', () => {
     A page a reader can reach but not link to, return to, or refresh is a modal
     with extra steps.
   */
-  it('exposes the open section and the open page as bindable state', () => {
+  it('exposes page and Scenario route state for host URL persistence', () => {
     const renderer = source('app/components/BusinessLensReportViewer.vue')
     const workbench = source('app/components/BlrWorkbench.vue')
 
     expect(renderer).toContain("defineModel<string>('section'")
     expect(renderer).toContain("defineModel<string | null>('entity'")
+    expect(renderer).toContain("defineModel<string | null>('scenarioRoute'")
+    expect(renderer).toContain("defineModel<string>('routeColumns'")
     expect(renderer).toContain('v-model:entity="entity"')
+    expect(renderer).toContain('v-model:scenario-route="scenarioRoute"')
     expect(workbench).toContain("defineModel<string | null>('entity'")
+  })
+
+  it('moves product identity into a desktop-equivalent mobile rail', () => {
+    const workbench = source('app/components/BlrWorkbench.vue')
+
+    expect(workbench).toContain("class=\"hidden size-6 shrink-0 rounded-md border border-muted bg-elevated object-contain p-0.5 lg:block\"")
+    expect(workbench).toContain(":ui=\"{ content: 'w-64 max-w-[85vw]', body: 'p-2' }\"")
+    expect(workbench).toContain('class="blr-workbench flex min-w-0 flex-1 items-center gap-3"')
+    expect(workbench).toContain('class="blr-workbench min-h-full"')
+    expect(workbench.match(/v-if="logoSrc"/g)).toHaveLength(2)
   })
 })

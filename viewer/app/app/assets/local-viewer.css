@@ -12,3 +12,10 @@ body {
 :root {
   --businesslens-report-chrome: 4rem;
 }
+
+/* The local host has a bounded flex viewport, so the report fills the space
+   below its chrome instead of calculating a second document-height surface. */
+.businesslens-report.businesslens-local-report {
+  height: 100%;
+  min-height: 0;
+}

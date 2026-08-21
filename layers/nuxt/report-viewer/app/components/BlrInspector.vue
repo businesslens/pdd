@@ -26,6 +26,11 @@ const emit = defineEmits<{
   close: []
 }>()
 
+/* Kept in the shared panel contract so an audition layer can render the same
+   full Scenario reading here without inventing separate route state. */
+defineModel<string | null>('scenarioRoute', { default: null })
+defineModel<string>('routeColumns', { default: 'auto' })
+
 /*
   A click on another entity in the working view is both "outside the panel" and
   "select this one", and the dismiss arrives around the same moment as the

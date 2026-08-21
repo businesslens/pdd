@@ -12,7 +12,7 @@
  * else.
  */
 import type { AnyEntityView, ReportWorkspace } from '../utils/model'
-import { ENTITY_KIND_META } from '../utils/model'
+import { docsForEntityKind } from '../utils/model'
 import { GRAPH_LED, parentOf, tabsFor, type PageTabId } from '../utils/pageSections'
 
 const props = withDefaults(defineProps<{
@@ -32,6 +32,9 @@ const emit = defineEmits<{
   focus: [entity: AnyEntityView]
 }>()
 
+const scenarioRoute = defineModel<string | null>('scenarioRoute', { default: null })
+const routeColumns = defineModel<string>('routeColumns', { default: 'auto' })
+
 const { page } = useWorkbenchLab()
 
 /*
@@ -43,8 +46,8 @@ const { page } = useWorkbenchLab()
 const parent = computed(() => parentOf(props.workspace, props.entity))
 const subject = computed(() => parent.value ?? props.entity)
 const requestedChild = computed(() => parent.value ? props.entity.key : props.selectedKey ?? null)
+const pageDocs = computed(() => docsForEntityKind(subject.value.kind))
 
-const meta = computed(() => ENTITY_KIND_META[subject.value.kind])
 const detailApart = computed(() => page.value === 'three')
 const tabs = computed(() => tabsFor(props.workspace, subject.value, { detailApart: detailApart.value }))
 
@@ -67,6 +70,10 @@ const graphLed = computed(() => GRAPH_LED.includes(subject.value.kind))
 const twoColumn = computed(() => page.value === 'dense' && !props.compact)
 const disclosed = computed(() => page.value === 'disclosed')
 const verticalTabs = computed(() => props.sideTabs || (page.value === 'vertical' && !props.compact))
+const scenarioTabsTop = computed(() => {
+  if (props.compact) return verticalTabs.value ? '0rem' : '2.5rem'
+  return verticalTabs.value ? '1.25rem' : '3.75rem'
+})
 
 const RIGHT_COLUMN = new Set(['connections', 'counterparts'])
 const leftBlocks = computed(() => current.value?.blocks.filter(id => !RIGHT_COLUMN.has(id)) ?? [])
@@ -92,30 +99,16 @@ const blockLabel: Record<string, string> = {
 
 <template>
   <div class="min-w-0">
-    <!-- A page draws its own identity; a panel already has one in its header. -->
-    <header v-if="!compact" class="mb-5 space-y-3">
-      <div class="flex flex-wrap items-center gap-2.5">
-        <BlrKind :kind="subject.kind" />
-        <h1 class="text-2xl font-semibold tracking-[-0.02em] text-highlighted">{{ subject.title }}</h1>
-        <code class="blr-meta rounded bg-muted px-1.5 py-0.5">{{ subject.id }}</code>
-        <UButton
-          icon="i-lucide-waypoints"
-          color="neutral"
-          variant="outline"
-          size="xs"
-          label="Neighbourhood"
-          class="ms-auto"
-          @click="emit('focus', subject)"
-        />
-      </div>
-    </header>
-
     <div :class="verticalTabs ? 'flex min-w-0 gap-6' : 'min-w-0'">
       <!-- The tab set, across the top or down the side. -->
       <nav
-        :class="verticalTabs
-          ? 'w-40 shrink-0 space-y-0.5 border-e border-default pe-2'
-          : 'mb-5 flex flex-wrap items-center gap-1 border-b border-default'"
+        data-sticky-page-tabs
+        :class="[
+          verticalTabs
+            ? 'sticky top-0 z-20 w-40 shrink-0 self-start space-y-0.5 border-e border-default bg-default/95 pe-2 backdrop-blur'
+            : 'sticky top-0 z-20 mb-5 flex flex-wrap items-center gap-1 border-b border-default bg-default/95 backdrop-blur',
+          !compact && 'pt-5'
+        ]"
       >
         <button
           v-for="tab in tabs"
@@ -128,17 +121,55 @@ const blockLabel: Record<string, string> = {
           <span class="min-w-0 truncate">{{ tab.label }}</span>
           <span v-if="tab.count !== undefined" class="blr-meta">{{ tab.count }}</span>
         </button>
+        <div
+          v-if="!compact"
+          class="flex items-center gap-1.5"
+          :class="verticalTabs ? 'mt-2 flex-col items-stretch' : 'ms-auto mb-1'"
+        >
+          <UTooltip :text="pageDocs.label">
+            <UButton
+              :to="pageDocs.url"
+              external
+              target="_blank"
+              rel="noopener noreferrer"
+              icon="i-lucide-book-open"
+              color="neutral"
+              variant="outline"
+              size="xs"
+              label="Docs"
+              :aria-label="pageDocs.label"
+              :class="verticalTabs ? 'w-full justify-start' : ''"
+            />
+          </UTooltip>
+          <UTooltip text="Show this entity on the topology canvas">
+            <UButton
+              icon="i-lucide-waypoints"
+              color="neutral"
+              variant="outline"
+              size="xs"
+              label="Neighbourhood"
+              :class="verticalTabs ? 'w-full justify-start' : ''"
+              @click="emit('focus', subject)"
+            />
+          </UTooltip>
+        </div>
       </nav>
 
-      <div class="min-w-0 flex-1 space-y-5">
+      <div
+        class="min-w-0 flex-1 space-y-5"
+        :class="verticalTabs && !compact ? 'pt-5' : ''"
+      >
         <p v-if="current?.hint && current.id !== 'overview'" class="text-xs text-muted">{{ current.hint }}</p>
 
         <!-- SCENARIOS — read inside the parent, five ways. -->
         <BlrScenarios
           v-if="current?.id === 'scenarios'"
+          v-model:scenario-route="scenarioRoute"
+          v-model:route-columns="routeColumns"
           :workspace="workspace"
           :entity="subject"
           :selected-key="requestedChild"
+          :sticky-top="scenarioTabsTop"
           @select="emit('select', $event)"
         />
 

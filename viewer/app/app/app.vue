@@ -8,8 +8,6 @@ const themeLabLabel = computed(() => (
   themeLabVisible.value ? 'Hide theme lab' : 'Show theme lab'
 ))
 
-const year = new Date().getFullYear()
-
 useHead({
   title: 'Local Product Model · BusinessLens',
   htmlAttrs: { lang: 'en' },
@@ -25,12 +23,10 @@ useHead({
 <template>
   <UApp>
     <!--
-      The document scrolls, so the footer is reached the way a footer normally
-      is: by scrolling past the report. The report sizes itself to the viewport
-      under the sticky lab and header, which leaves the footer just below the
-      fold.
+      The report owns the one vertical content scroll. Keeping the host bound
+      to the viewport leaves both chrome rows in place while the reading moves.
     -->
-    <div class="flex min-h-dvh flex-col">
+    <div class="flex h-dvh flex-col overflow-hidden">
       <NuxtLoadingIndicator />
       <BusinessLensThemeLabBar :row-count="2">
         <template #before>
@@ -131,7 +127,7 @@ useHead({
         </template>
       </UHeader>
       <main
-        class="businesslens-page-surface min-h-0 flex-1"
+        class="businesslens-page-surface min-h-0 flex-1 overflow-hidden"
         :style="{
           '--businesslens-report-chrome':
             'calc(var(--ui-header-height) + var(--businesslens-theme-lab-height))'
@@ -139,28 +135,6 @@ useHead({
       >
         <NuxtPage />
       </main>
-
-      <!-- Deliberately slim: one line of provenance and the way to the source.
-           The mark is already in the header, and repeating it here only pushes
-           the report further up the page. -->
-      <footer class="shrink-0 border-t border-default">
-        <div class="mx-auto flex w-full max-w-(--ui-container) items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
-          <p class="text-xs leading-5 text-dimmed">
-            © {{ year }} BusinessLens open-source product model report
-          </p>
-          <UButton
-            icon="i-simple-icons-github"
-            to="https://github.com/businesslens/pdd"
-            external
-            target="_blank"
-            rel="noopener noreferrer"
-            color="neutral"
-            variant="ghost"
-            size="sm"
-            aria-label="BusinessLens on GitHub"
-          />
-        </div>
-      </footer>
     </div>
   </UApp>
 </template>

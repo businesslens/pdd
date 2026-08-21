@@ -29,6 +29,12 @@ const section = defineModel<string>('section', { default: 'overview' })
  */
 const entity = defineModel<string | null>('entity', { default: null })
 
+/** First route in the visible Scenario route window. */
+const scenarioRoute = defineModel<string | null>('scenarioRoute', { default: null })
+
+/** `auto`, or the reader's preferred number of visible route columns. */
+const routeColumns = defineModel<string>('routeColumns', { default: 'auto' })
+
 const workspace = computed(() => projectReportWorkspace(props.report))
 </script>
 
@@ -37,6 +43,8 @@ const workspace = computed(() => projectReportWorkspace(props.report))
     <BlrWorkbench
       v-model:section="section"
       v-model:entity="entity"
+      v-model:scenario-route="scenarioRoute"
+      v-model:route-columns="routeColumns"
       :workspace="workspace"
       :logo-src="logoSrc"
     >

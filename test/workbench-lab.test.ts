@@ -65,14 +65,58 @@ describe('Workbench audition layer', () => {
   it('reads an entity once, in two containers', () => {
     const page = source('app/components/BlrEntityPage.vue')
     const panel = source('app/components/BlrInspector.vue')
+    const reading = source('app/components/BlrEntityReading.vue')
 
     expect(page).toContain('<BlrEntityReading')
     expect(panel).toContain('<BlrEntityReading')
     expect(panel).toContain('compact')
+    /* Page identity belongs to the shared Workbench trail, not a second local
+       heading inside the reading. */
+    expect(reading).not.toContain('<h1')
     /* The panel always offers the other container. */
     expect(panel).toContain('Open as page')
     /* `none` forwards straight to the page rather than rendering an empty one. */
     expect(panel).toContain("panel.value === 'none'")
+  })
+
+  it('keeps page and nested Scenario tabs pinned while their reading scrolls', () => {
+    const page = source('app/components/BlrEntityPage.vue')
+    const reading = source('app/components/BlrEntityReading.vue')
+    const scenarios = source('app/components/BlrScenarios.vue')
+
+    /* The Workbench page frame contributes `p-5`. The reading consumes that
+       inset, then makes the same 20px part of the sticky surface: the gap stays
+       visible without travelling before sticky positioning engages. */
+    expect(page).toContain('class="-mt-5"')
+    expect(reading).toContain('data-sticky-page-tabs')
+    expect(reading).toContain("'sticky top-0 z-20")
+    expect(reading).toContain("!compact && 'pt-5'")
+    expect(reading).toContain('v-if="!compact"')
+    expect(reading).toContain('label="Neighbourhood"')
+    expect(reading).toContain("emit('focus', subject)")
+    expect(reading).toContain(':sticky-top="scenarioTabsTop"')
+    expect(scenarios).toContain('data-sticky-scenario-tabs')
+    expect(scenarios).toContain('class="sticky z-10')
+    expect(scenarios).toContain(':style="{ top: props.stickyTop }"')
+  })
+
+  it('keeps contextual documentation beside Neighbourhood in the page tabs', () => {
+    const reading = source('app/components/BlrEntityReading.vue')
+    const docs = readFileSync(join(viewer, 'app/utils/entityDocs.ts'), 'utf8')
+
+    for (const mapping of [
+      "screen: 'screens'",
+      "domain: 'domains'",
+      "capability: 'capabilities'",
+      "journey: 'journeys'",
+      "rule: 'business-rules'",
+      "'capability-scenario': 'capabilities'",
+      "'journey-scenario': 'journeys'"
+    ]) expect(docs).toContain(mapping)
+    expect(reading).toContain('docsForEntityKind(subject.value.kind)')
+    expect(reading).toContain('label="Docs"')
+    expect(reading).toContain(':to="pageDocs.url"')
+    expect(reading).toContain('label="Neighbourhood"')
   })
 
   /*
@@ -81,11 +125,17 @@ describe('Workbench audition layer', () => {
   */
   it('reads a Scenario inside its parent', () => {
     const reading = source('app/components/BlrEntityReading.vue')
+    const scenarios = source('app/components/BlrScenarios.vue')
 
     expect(reading).toContain('const parent = computed(() => parentOf(props.workspace, props.entity))')
     expect(reading).toContain('const subject = computed(() => parent.value ?? props.entity)')
     expect(reading).toContain("active.value = 'scenarios'")
-    expect(source('app/components/BlrScenarios.vue')).not.toContain('emit(\'open\'')
+    expect(scenarios).not.toContain('emit(\'open\'')
+    /* The chosen split remains the wide reading and becomes the actual inline
+       option only when its own container no longer supports two panes. */
+    expect(scenarios).toContain("variant.value === 'split'")
+    expect(scenarios).toContain('scenarioShellWidth.value < 720')
+    expect(scenarios).toContain("variant === 'inline' || splitInline")
   })
 
   /*

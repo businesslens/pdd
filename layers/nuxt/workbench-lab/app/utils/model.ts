@@ -44,6 +44,7 @@ export {
 } from '../../../report-viewer/app/utils/entityFacets'
 
 export { entityCardPresentation } from '../../../report-viewer/app/utils/entityCards'
+export { docsForEntityKind } from '../../../report-viewer/app/utils/entityDocs'
 export { firstSentence } from '../../../report-viewer/app/utils/reportMarkdown'
 export { slotColor } from '../../../report-viewer/app/utils/reportPalette'
 export { buildProductTopologyGraph } from '../../../report-viewer/app/utils/productTopologyGraphs'

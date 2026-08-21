@@ -29,6 +29,7 @@ export default defineNuxtConfig({
         'lucide:panel-right',
         'lucide:layout',
         'lucide:list-tree',
+        'lucide:chevron-left',
         'lucide:chevron-right',
         'lucide:arrow-right',
         'lucide:waypoints',

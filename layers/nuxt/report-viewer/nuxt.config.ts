@@ -28,6 +28,7 @@ export default defineNuxtConfig({
         'lucide:book-open',
         'lucide:boxes',
         'lucide:braces',
+        'lucide:chevron-left',
         'lucide:chevron-down',
         'lucide:chevron-right',
         'lucide:chevron-up',

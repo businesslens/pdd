@@ -17,10 +17,18 @@ import type {
   JourneyView,
   ReportWorkspace,
   RuleView,
+  ScenarioStepCell,
+  ScenarioStepRow,
   ScenarioView,
   ScreenView
 } from '../utils/reportWorkspace'
 import { isScenarioKind, resolveEntity, scenarioStepMatrix } from '../utils/reportWorkspace'
+import {
+  SCENARIO_ROUTE_INLINE_WIDTH,
+  scenarioRouteCapacity,
+  scenarioRouteColumnCount,
+  scenarioRouteWindow
+} from '../utils/scenarioRouteWindow'
 
 const props = defineProps<{
   workspace: ReportWorkspace
@@ -28,6 +36,11 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{ select: [entity: AnyEntityView] }>()
+
+/* The host may bind these into its URL. With no host binding they remain local
+   component state, which keeps the report layer usable on its own. */
+const scenarioRoute = defineModel<string | null>('scenarioRoute', { default: null })
+const routeColumns = defineModel<string>('routeColumns', { default: 'auto' })
 
 const asScreen = computed(() => props.entity as ScreenView)
 const asJourney = computed(() => props.entity as JourneyView)
@@ -48,6 +61,97 @@ const domainId = computed(() => props.entity.kind === 'capability'
 
 /* One authored Scenario sequence, with named Product Place routes as columns. */
 const stepMatrix = computed(() => (isScenario.value ? scenarioStepMatrix(asScenario.value) : null))
+
+/* Route columns are a window over authored order. Measure the reading itself:
+   a rail and the Scenario split can leave little room inside a wide viewport. */
+const routeShellEl = ref<HTMLElement | null>(null)
+const routeShellWidth = ref(0)
+
+watch(routeShellEl, (element, _previous, onCleanup) => {
+  if (!element || typeof ResizeObserver === 'undefined') return
+  const measure = () => { routeShellWidth.value = element.getBoundingClientRect().width }
+  const observer = new ResizeObserver(([entry]) => {
+    if (entry) routeShellWidth.value = entry.contentRect.width
+  })
+  measure()
+  observer.observe(element)
+  onCleanup(() => observer.disconnect())
+}, { immediate: true })
+
+const routeCapacity = computed(() => scenarioRouteCapacity(
+  routeShellWidth.value,
+  stepMatrix.value?.routes.length ?? 0
+))
+
+const visibleRouteCount = computed(() => scenarioRouteColumnCount(
+  routeShellWidth.value,
+  stepMatrix.value?.routes.length ?? 0,
+  routeColumns.value
+))
+
+const routeInline = computed(() => routeShellWidth.value > 0
+  && routeShellWidth.value < SCENARIO_ROUTE_INLINE_WIDTH)
+
+const visibleRouteWindow = computed(() => scenarioRouteWindow(
+  stepMatrix.value?.routes ?? [],
+  scenarioRoute.value,
+  visibleRouteCount.value
+))
+
+const visibleRoutes = computed(() => visibleRouteWindow.value.routes)
+const visibleRouteIds = computed(() => new Set(visibleRoutes.value.map(route => route.id)))
+
+const visibleCells = (step: ScenarioStepRow): ScenarioStepCell[] =>
+  step.cells.filter(cell => visibleRouteIds.value.has(cell.routeId))
+
+const selectedCell = (step: ScenarioStepRow): ScenarioStepCell | undefined => visibleCells(step)[0]
+
+const routeItems = computed(() => (stepMatrix.value?.routes ?? []).map(route => ({
+  label: route.name,
+  value: route.id,
+  icon: 'i-lucide-route'
+})))
+
+const routeWindowItems = computed(() => {
+  const routes = stepMatrix.value?.routes ?? []
+  const count = visibleRouteCount.value
+  const lastStart = Math.max(0, routes.length - count)
+  return routes.slice(0, lastStart + 1).map((route, index) => ({
+    value: route.id,
+    label: routes.slice(index, index + count).map(item => item.name).join(' · '),
+    icon: 'i-lucide-route'
+  }))
+})
+
+const routeColumnItems = computed(() => [
+  { label: `Auto (${routeCapacity.value})`, value: 'auto' },
+  ...Array.from({ length: routeCapacity.value }, (_, index) => ({
+    label: `${index + 1} ${index ? 'routes' : 'route'}`,
+    value: String(index + 1)
+  }))
+])
+
+function setRouteWindow(startId: string) {
+  const normalized = scenarioRouteWindow(
+    stepMatrix.value?.routes ?? [],
+    startId,
+    visibleRouteCount.value
+  )
+  scenarioRoute.value = normalized.routes[0]?.id ?? null
+}
+
+function moveRouteWindow(delta: number) {
+  const routes = stepMatrix.value?.routes ?? []
+  const next = routes[visibleRouteWindow.value.start + delta]
+  if (next) setRouteWindow(next.id)
+}
+
+async function setRouteColumnPreference(value: string) {
+  routeColumns.value = value
+  await nextTick()
+  const first = visibleRouteWindow.value.routes[0]
+  if (first) scenarioRoute.value = first.id
+}
 
 /**
  * Both Scenario types use the same named-route model and the same table.
@@ -137,32 +241,126 @@ const empty = computed(() => !props.entity.intent
       </section>
 
       <!-- One authored Scenario sequence: meaning and exact Product Places stay together. -->
-      <section v-if="stepMatrix" class="space-y-3">
-        <h2 class="blr-page-heading">Steps <span class="blr-meta ms-1">{{ stepMeta }}</span></h2>
-        <div class="overflow-x-auto rounded-xl border border-default">
-          <table
-            class="w-full border-collapse text-left"
-            :style="{ minWidth: `${320 + stepMatrix.routes.length * 310}px` }"
-          >
+      <section v-if="stepMatrix" ref="routeShellEl" class="space-y-3">
+        <header class="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <h2 class="blr-page-heading">Steps <span class="blr-meta ms-1">{{ stepMeta }}</span></h2>
+
+          <!-- A narrow reading chooses one route. A wider reading pages an
+               authored-order window and lets the reader choose its width. -->
+          <div v-if="stepMatrix.routes.length > 1" class="ms-auto flex min-w-0 flex-wrap items-center gap-1.5">
+            <template v-if="routeInline">
+              <span class="blr-field me-1">Route</span>
+              <UButton
+                icon="i-lucide-chevron-left"
+                color="neutral"
+                variant="ghost"
+                size="xs"
+                :disabled="visibleRouteWindow.start === 0"
+                aria-label="Show previous route"
+                @click="moveRouteWindow(-1)"
+              />
+              <USelect
+                :model-value="visibleRoutes[0]?.id"
+                :items="routeItems"
+                value-key="value"
+                size="xs"
+                variant="outline"
+                icon="i-lucide-route"
+                class="min-w-44 max-w-full"
+                aria-label="Route to show"
+                @update:model-value="setRouteWindow(String($event))"
+              />
+              <UButton
+                icon="i-lucide-chevron-right"
+                color="neutral"
+                variant="ghost"
+                size="xs"
+                :disabled="visibleRouteWindow.end >= stepMatrix.routes.length"
+                aria-label="Show next route"
+                @click="moveRouteWindow(1)"
+              />
+              <span class="blr-meta whitespace-nowrap">
+                {{ visibleRouteWindow.start + 1 }} of {{ stepMatrix.routes.length }}
+              </span>
+            </template>
+
+            <template v-else>
+              <template v-if="routeWindowItems.length > 1">
+                <span class="blr-field me-1">Routes</span>
+                <UButton
+                  icon="i-lucide-chevron-left"
+                  color="neutral"
+                  variant="ghost"
+                  size="xs"
+                  :disabled="visibleRouteWindow.start === 0"
+                  aria-label="Show previous route"
+                  @click="moveRouteWindow(-1)"
+                />
+                <USelect
+                  :model-value="visibleRoutes[0]?.id"
+                  :items="routeWindowItems"
+                  value-key="value"
+                  size="xs"
+                  variant="outline"
+                  icon="i-lucide-route"
+                  class="w-48 max-w-full"
+                  aria-label="Visible route window"
+                  @update:model-value="setRouteWindow(String($event))"
+                />
+                <UButton
+                  icon="i-lucide-chevron-right"
+                  color="neutral"
+                  variant="ghost"
+                  size="xs"
+                  :disabled="visibleRouteWindow.end >= stepMatrix.routes.length"
+                  aria-label="Show next route"
+                  @click="moveRouteWindow(1)"
+                />
+                <span class="blr-meta whitespace-nowrap">
+                  {{ visibleRouteWindow.start + 1 }}–{{ visibleRouteWindow.end }} of {{ stepMatrix.routes.length }}
+                </span>
+              </template>
+              <span class="blr-field" :class="routeWindowItems.length > 1 && 'ms-2'">Show</span>
+              <USelect
+                :model-value="routeColumns === 'auto' ? 'auto' : String(visibleRouteCount)"
+                :items="routeColumnItems"
+                value-key="value"
+                size="xs"
+                variant="outline"
+                class="min-w-28"
+                aria-label="Number of route columns"
+                @update:model-value="setRouteColumnPreference(String($event))"
+              />
+            </template>
+          </div>
+        </header>
+
+        <!-- Wide reading: one fluid Step column and the chosen route window. -->
+        <div v-if="!routeInline" class="overflow-hidden rounded-xl border border-default">
+          <table class="w-full table-fixed border-collapse text-left">
+            <colgroup>
+              <col :style="{ width: visibleRoutes.length === 1 ? '42%' : '300px' }">
+              <col v-for="route in visibleRoutes" :key="route.id">
+            </colgroup>
             <thead>
               <tr class="border-b border-default bg-elevated/35">
                 <th
                   scope="col"
-                  class="blr-field sticky left-0 z-20 w-80 min-w-80 border-e border-default bg-elevated px-4 py-2.5 font-normal"
+                  class="blr-field border-e border-default px-4 py-2.5 font-normal"
                 >
                   Step
                 </th>
                 <th
-                  v-for="route in stepMatrix.routes"
+                  v-for="route in visibleRoutes"
                   :key="route.id"
                   scope="col"
-                  class="w-[310px] min-w-[310px] px-4 py-2.5"
+                  class="min-w-0 px-4 py-2.5"
                 >
-                  <div class="flex items-center gap-2 whitespace-nowrap">
+                  <div class="flex min-w-0 items-center gap-2">
                     <UTooltip text="Named route — one way this Scenario can run" :delay-duration="150">
-                      <UIcon name="i-lucide-route" class="size-3.5 text-dimmed" />
+                      <UIcon name="i-lucide-route" class="size-3.5 shrink-0 text-dimmed" />
                     </UTooltip>
-                    <span class="text-xs font-medium text-default">{{ route.name }}</span>
+                    <span class="truncate text-xs font-medium text-default" :title="route.name">{{ route.name }}</span>
                   </div>
                 </th>
               </tr>
@@ -175,7 +373,7 @@ const empty = computed(() => !props.entity.intent
               >
                 <th
                   scope="row"
-                  class="sticky left-0 z-10 w-80 min-w-80 border-e border-default bg-default px-4 py-3 font-normal"
+                  class="border-e border-default bg-default px-4 py-3 font-normal"
                 >
                   <p class="text-sm font-medium text-highlighted">{{ step.index + 1 }}. {{ step.text }}</p>
                   <UTooltip :text="stepKindDescription(step.stepKind)" :delay-duration="150">
@@ -206,7 +404,7 @@ const empty = computed(() => !props.entity.intent
                 </th>
                 <td
                   v-if="step.routeNeutral"
-                  :colspan="stepMatrix.routes.length"
+                  :colspan="visibleRoutes.length"
                   class="px-4 py-3 align-middle"
                 >
                   <UTooltip
@@ -219,7 +417,11 @@ const empty = computed(() => !props.entity.intent
                     </p>
                   </UTooltip>
                 </td>
-                <td v-for="cell in step.routeNeutral ? [] : step.cells" :key="cell.routeId" class="px-4 py-3">
+                <td
+                  v-for="cell in step.routeNeutral ? [] : visibleCells(step)"
+                  :key="cell.routeId"
+                  class="min-w-0 px-4 py-3"
+                >
                   <UTooltip
                     v-if="cell.placeChanged && cell.previousPlace"
                     text="This route continues at a different Product Place than its previous placed Step"
@@ -240,6 +442,71 @@ const empty = computed(() => !props.entity.intent
               </tr>
             </tbody>
           </table>
+        </div>
+
+        <!-- Narrow reading: preserve the ordered Steps and put the selected
+             route's Product Place beneath each one. -->
+        <div v-else class="divide-y divide-default overflow-hidden rounded-xl border border-default">
+          <article v-for="step in stepMatrix.steps" :key="step.index">
+            <div class="bg-default px-4 py-3">
+              <p class="text-sm font-medium text-highlighted">{{ step.index + 1 }}. {{ step.text }}</p>
+              <UTooltip :text="stepKindDescription(step.stepKind)" :delay-duration="150">
+                <span class="blr-meta mt-1 inline-flex items-center gap-1.5">
+                  <UIcon :name="stepKindIcon(step.stepKind)" class="size-3.5 shrink-0" />
+                  <template v-if="step.stepKind === 'actor' && stepActor(step.actorId)">
+                    <button
+                      type="button"
+                      class="text-default underline decoration-(--ui-border-accented) underline-offset-3 transition-colors hover:text-highlighted hover:decoration-(--ui-text-dimmed)"
+                      @click="selectStepActor(step.actorId)"
+                    >
+                      {{ stepActor(step.actorId)?.title }}
+                    </button>
+                    action
+                  </template>
+                  <template v-else>{{ stepKindLabel(step.stepKind) }}</template>
+                </span>
+              </UTooltip>
+              <BlrLinks
+                v-if="asScenario.scenarioType === 'journey' && step.capabilityId"
+                :workspace="workspace"
+                :ids="[step.capabilityId]"
+                kind="capability"
+                label="Capability"
+                interactive
+                @select="emit('select', $event)"
+              />
+            </div>
+
+            <div class="border-t border-muted bg-elevated/20 px-4 py-3">
+              <UTooltip
+                v-if="step.routeNeutral"
+                text="This Step is shared by every route and is not assigned to an Interface, Experience, or Screen"
+                :delay-duration="150"
+              >
+                <p class="blr-meta flex items-center gap-1.5">
+                  <UIcon name="i-lucide-align-justify" class="size-3.5" />
+                  No Product Place — same Step on every route
+                </p>
+              </UTooltip>
+
+              <template v-else-if="selectedCell(step)">
+                <p
+                  v-if="selectedCell(step)?.placeChanged && selectedCell(step)?.previousPlace"
+                  class="blr-meta mb-2 flex items-center gap-1 text-primary"
+                >
+                  <UIcon name="i-lucide-corner-down-right" class="size-3" />
+                  Moved from {{ placeLabel(selectedCell(step)!.previousPlace!) }}
+                </p>
+                <BlrStepContext
+                  v-if="selectedCell(step)?.place"
+                  :workspace="workspace"
+                  :place="selectedCell(step)!.place!"
+                  compact
+                  @select="emit('select', $event)"
+                />
+              </template>
+            </div>
+          </article>
         </div>
       </section>
 

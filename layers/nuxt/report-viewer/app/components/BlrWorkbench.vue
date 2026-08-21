@@ -55,8 +55,8 @@ import {
   hasSelections,
   relatedIds
 } from '../utils/entityFacets'
+import { docsForEntityKind } from '../utils/entityDocs'
 import { firstSentence } from '../utils/reportMarkdown'
-import { BROWSE_SURFACES } from '../utils/browseSurfaces'
 
 const UButton = resolveComponent('UButton')
 
@@ -97,6 +97,8 @@ const section = defineModel<string>('section', { default: 'overview' })
  * replaying every glance through browser history would make back useless.
  */
 const openEntity = defineModel<string | null>('entity', { default: null })
+const scenarioRoute = defineModel<string | null>('scenarioRoute', { default: null })
+const routeColumns = defineModel<string>('routeColumns', { default: 'auto' })
 
 const activeKind = ref<ReportEntityKind>('product')
 const activeSection = ref<WorkbenchSection>('overview')
@@ -386,7 +388,7 @@ watch(() => props.workspace, (workspace) => {
 
 const topologyActive = computed(() => activeSection.value === 'topology')
 const showToolbar = computed(() => activeKind.value !== 'product' && !openPage.value && !topologyActive.value)
-const surface = computed(() => showToolbar.value ? BROWSE_SURFACES[activeKind.value] : undefined)
+const collectionDocs = computed(() => docsForEntityKind(activeKind.value))
 
 function setKind(kind: ReportEntityKind) {
   mobileNavOpen.value = false
@@ -781,11 +783,11 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
         aria-label="Open report navigation"
         @click="mobileNavOpen = true"
       />
-      <img v-if="logoSrc" :src="logoSrc" alt="" class="size-6 shrink-0 rounded-md border border-muted bg-elevated object-contain p-0.5">
-      <UIcon v-else name="i-lucide-package" class="size-5 shrink-0 text-primary" />
+      <img v-if="logoSrc" :src="logoSrc" alt="" class="hidden size-6 shrink-0 rounded-md border border-muted bg-elevated object-contain p-0.5 lg:block">
+      <UIcon v-else name="i-lucide-package" class="hidden size-5 shrink-0 text-primary lg:block" />
       <button
         type="button"
-        class="min-w-0 max-w-48 truncate text-sm font-semibold tracking-tight text-highlighted hover:text-primary"
+        class="hidden min-w-0 max-w-48 truncate text-sm font-semibold tracking-tight text-highlighted hover:text-primary lg:block"
         title="Open the Overview"
         @click="setKind('product')"
       >
@@ -793,10 +795,67 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
       </button>
 
       <!-- Where you are: the working view names itself here, not above itself. -->
-      <UIcon name="i-lucide-chevron-right" class="hidden size-3.5 shrink-0 text-dimmed sm:block" />
+      <UIcon name="i-lucide-chevron-right" class="hidden size-3.5 shrink-0 text-dimmed lg:block" />
       <!-- A page states the whole path it sits on, and every step but the last
            is a link. A Scenario without its parent in the trail is the one
            thing a breadcrumb exists to prevent. -->
+      <nav
+        data-mobile-location
+        class="flex min-w-0 flex-1 items-center gap-1 overflow-hidden sm:hidden"
+        aria-label="Page breadcrumb"
+      >
+        <template v-if="openPage">
+          <template v-for="(step, index) in pageTrail" :key="`mobile-${step.key}`">
+            <UIcon
+              v-if="index"
+              name="i-lucide-chevron-right"
+              class="size-3.5 shrink-0 text-dimmed"
+            />
+            <UTooltip v-if="step.go" :text="step.label">
+              <button
+                type="button"
+                class="inline-flex min-w-0 max-w-32 items-center gap-1.5 hover:underline hover:underline-offset-4"
+                :class="step.collection ? 'blr-eyebrow' : 'text-sm text-muted'"
+                @click="step.go()"
+              >
+                <UIcon
+                  v-if="step.icon"
+                  :name="step.icon"
+                  class="size-3.5 shrink-0"
+                  :style="{ color: `var(--blr-slot-${step.slot})` }"
+                />
+                <span class="truncate">{{ step.label }}</span>
+              </button>
+            </UTooltip>
+            <UTooltip v-else :text="step.label">
+              <span class="min-w-0 flex-1 truncate text-sm font-medium text-highlighted">
+                {{ step.label }}
+              </span>
+            </UTooltip>
+          </template>
+        </template>
+        <span
+          v-else-if="topologyActive"
+          class="blr-eyebrow inline-flex min-w-0 items-center gap-1.5"
+          data-mobile-section
+        >
+          <UIcon name="i-lucide-waypoints" class="size-3.5 shrink-0" style="color: var(--blr-slot-9)" />
+          <span class="truncate">Topology</span>
+        </span>
+        <template v-else>
+          <span class="blr-eyebrow inline-flex min-w-0 items-center gap-1.5" data-mobile-section>
+            <UIcon
+              :name="activeMeta.icon"
+              class="size-3.5 shrink-0"
+              :style="{ color: `var(--blr-slot-${activeMeta.slot})` }"
+            />
+            <span class="truncate">{{ activeKind === 'product' ? 'Overview' : activeMeta.plural }}</span>
+          </span>
+          <span v-if="activeKind !== 'product'" class="blr-meta shrink-0">
+            {{ visibleEntities.length }}<template v-if="visibleEntities.length !== kindEntities.length"> / {{ kindEntities.length }}</template>
+          </span>
+        </template>
+      </nav>
       <template v-if="openPage">
         <template v-for="(step, index) in pageTrail" :key="step.key">
           <UIcon
@@ -804,26 +863,27 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
             name="i-lucide-chevron-right"
             class="hidden size-3.5 shrink-0 text-dimmed sm:block"
           />
-          <button
-            v-if="step.go"
-            type="button"
-            class="hidden shrink-0 items-center gap-1.5 hover:underline hover:underline-offset-4 sm:inline-flex"
-            :class="step.collection ? 'blr-eyebrow' : 'min-w-0 max-w-40 truncate text-sm text-muted'"
-            :title="step.title"
-            @click="step.go()"
-          >
-            <UIcon
-              v-if="step.icon"
-              :name="step.icon"
-              class="size-3.5 shrink-0"
-              :style="{ color: `var(--blr-slot-${step.slot})` }"
-            />
-            <span class="truncate">{{ step.label }}</span>
-          </button>
-          <span
-            v-else
-            class="hidden min-w-0 truncate text-sm font-medium text-highlighted sm:inline"
-          >{{ step.label }}</span>
+          <UTooltip v-if="step.go" :text="step.label">
+            <button
+              type="button"
+              class="hidden shrink-0 items-center gap-1.5 hover:underline hover:underline-offset-4 sm:inline-flex"
+              :class="step.collection ? 'blr-eyebrow' : 'min-w-0 max-w-40 truncate text-sm text-muted'"
+              @click="step.go()"
+            >
+              <UIcon
+                v-if="step.icon"
+                :name="step.icon"
+                class="size-3.5 shrink-0"
+                :style="{ color: `var(--blr-slot-${step.slot})` }"
+              />
+              <span class="truncate">{{ step.label }}</span>
+            </button>
+          </UTooltip>
+          <UTooltip v-else :text="step.label">
+            <span class="hidden min-w-0 truncate text-sm font-medium text-highlighted sm:inline">
+              {{ step.label }}
+            </span>
+          </UTooltip>
         </template>
       </template>
       <template v-else-if="topologyActive">
@@ -898,33 +958,14 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
 
       <!-- CENTER: the working view for the active kind -->
       <section class="flex min-w-0 flex-1 flex-col">
-        <!-- Toolbar: what is shown on the left, how it is shown on the right. -->
-        <!--
-          What this collection is for, in one line, with the derivation behind
-          the order it is read in. The named topology views have said this since
-          they shipped; a collection that only states its name and count answers
-          "what is this called", which nobody asked.
-        -->
-        <div
-          v-if="surface"
-          class="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1 border-b border-default px-4 py-2"
-        >
-          <p class="text-sm text-muted">{{ surface.question }}</p>
-          <div class="ms-auto flex flex-wrap items-center gap-1">
-            <template v-for="(step, index) in surface.flow" :key="step.kind">
-              <span v-if="index" class="px-0.5 text-xs text-dimmed">{{ surface.separators[index - 1] ?? '·' }}</span>
-              <span class="inline-flex items-center gap-1.5">
-                <BlrKind :kind="step.kind" :labelled="false" size="xs" />
-                <span class="font-mono text-[10px] uppercase tracking-[0.07em] text-muted">{{ step.label }}</span>
-              </span>
-            </template>
-          </div>
-        </div>
-
-        <div
-          v-if="showToolbar"
-          class="flex shrink-0 items-center gap-2 border-b border-default px-4 py-2"
-        >
+        <!-- Collection controls belong to the list reading, so they scroll
+             away with its cards or table. Topology remains a bounded canvas. -->
+        <div v-if="!topologyActive" class="blr-pane min-h-0 flex-1">
+          <!-- Toolbar: what is shown on the left, how it is shown on the right. -->
+          <div
+            v-if="showToolbar"
+            class="flex items-center gap-2 px-4 py-2"
+          >
           <!-- One control, opened on demand, holding the facets this kind has. -->
           <UPopover v-if="filtersOffered" v-model:open="filterOpen">
             <UButton
@@ -991,6 +1032,34 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
           <!-- Filters narrow a named subject; grouping and the lens toggle
                change how that same subject is read. -->
           <div class="ms-auto flex shrink-0 items-center gap-2">
+            <UTooltip :text="collectionDocs.label">
+              <UButton
+                :to="collectionDocs.url"
+                external
+                target="_blank"
+                rel="noopener noreferrer"
+                icon="i-lucide-book-open"
+                color="neutral"
+                variant="outline"
+                size="xs"
+                label="Docs"
+                class="hidden sm:inline-flex"
+                :aria-label="collectionDocs.label"
+              />
+            </UTooltip>
+            <UTooltip :text="collectionDocs.label" class="sm:hidden">
+              <UButton
+                :to="collectionDocs.url"
+                external
+                target="_blank"
+                rel="noopener noreferrer"
+                icon="i-lucide-book-open"
+                color="neutral"
+                variant="ghost"
+                size="xs"
+                :aria-label="collectionDocs.label"
+              />
+            </UTooltip>
             <template v-if="groupOptions.length">
               <span class="blr-field hidden xl:inline">Group by</span>
               <USelect
@@ -1022,20 +1091,9 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
               class="ms-1"
             />
           </div>
-        </div>
+          </div>
 
-        <!-- Product-level breadth: all named topology views share one canvas. -->
-        <div v-if="topologyActive" class="min-h-0 flex-1">
-          <BlrProductTopology
-            :workspace="workspace"
-            :selected-id="inspected?.key ?? null"
-            :focus="topologyFocus"
-            @select="inspect"
-            @clear="inspected = null"
-          />
-        </div>
-
-        <div v-else class="blr-pane flex-1 p-5">
+          <div class="p-5">
           <!-- OVERVIEW: the Product, and what it promises -->
           <BlrOverview
             v-if="activeKind === 'product'"
@@ -1055,6 +1113,8 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
           <!-- ENTITY PAGE: one entity in full, at its own URL. -->
           <BlrEntityPage
             v-else-if="openPage"
+            v-model:scenario-route="scenarioRoute"
+            v-model:route-columns="routeColumns"
             :workspace="workspace"
             :entity="openPage"
             :selected-key="inspected?.key ?? null"
@@ -1158,11 +1218,25 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
               </button>
             </section>
           </div>
+          </div>
+        </div>
+
+        <!-- Product-level breadth: all named topology views share one canvas. -->
+        <div v-else class="min-h-0 flex-1">
+          <BlrProductTopology
+            :workspace="workspace"
+            :selected-id="inspected?.key ?? null"
+            :focus="topologyFocus"
+            @select="inspect"
+            @clear="inspected = null"
+          />
         </div>
       </section>
 
       <!-- PEEK: the shared panel every selection re-targets, one level deep -->
       <BlrInspector
+        v-model:scenario-route="scenarioRoute"
+        v-model:route-columns="routeColumns"
         :workspace="workspace"
         :entity="inspected"
         @select="openEntityPage($event)"
@@ -1177,11 +1251,28 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
       @select="onSearchSelect"
     />
 
-    <USlideover v-model:open="mobileNavOpen" side="left" :ui="{ content: 'w-72 max-w-[85vw]' }">
+    <USlideover
+      v-model:open="mobileNavOpen"
+      side="left"
+      :ui="{ content: 'w-64 max-w-[85vw]', body: 'p-2' }"
+    >
       <template #header>
-        <div class="flex min-w-0 flex-1 items-center gap-2">
-          <UIcon name="i-lucide-package" class="size-4 text-primary" />
-          <span class="truncate text-sm font-semibold text-highlighted">{{ workspace.identity.title }}</span>
+        <div class="blr-workbench flex min-w-0 flex-1 items-center gap-3">
+          <img
+            v-if="logoSrc"
+            :src="logoSrc"
+            alt=""
+            class="size-6 shrink-0 rounded-md border border-muted bg-elevated object-contain p-0.5"
+          >
+          <UIcon v-else name="i-lucide-package" class="size-5 shrink-0 text-primary" />
+          <button
+            type="button"
+            class="min-w-0 max-w-48 truncate text-sm font-semibold tracking-tight text-highlighted hover:text-primary"
+            title="Open the Overview"
+            @click="setKind('product')"
+          >
+            {{ workspace.identity.title }}
+          </button>
           <UButton
             icon="i-lucide-x"
             color="neutral"
@@ -1196,17 +1287,19 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
       <template #body>
         <!-- One rail, two placements: the narrow viewport gets the same rows,
              not a second copy that drifts from them. -->
-        <BlrRail
-          :workspace="workspace"
-          :active-section="activeSection"
-          :counts="kindCounts"
-          @kind="setKind"
-          @topology="openTopology"
-        >
-          <template v-if="$slots.navigation" #navigation>
-            <slot name="navigation" />
-          </template>
-        </BlrRail>
+        <div class="blr-workbench min-h-full">
+          <BlrRail
+            :workspace="workspace"
+            :active-section="activeSection"
+            :counts="kindCounts"
+            @kind="setKind"
+            @topology="openTopology"
+          >
+            <template v-if="$slots.navigation" #navigation>
+              <slot name="navigation" />
+            </template>
+          </BlrRail>
+        </div>
       </template>
     </USlideover>
   </div>

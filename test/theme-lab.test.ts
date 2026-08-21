@@ -76,6 +76,8 @@ describe('shared BusinessLens theme lab', () => {
   it('keeps the local viewer on the shared landing-page background flow', () => {
     const config = readFileSync(join(root, 'viewer/app/nuxt.config.ts'), 'utf8')
     const localViewer = readFileSync(join(root, 'viewer/app/app/app.vue'), 'utf8')
+    const localPage = readFileSync(join(root, 'viewer/app/app/pages/index.vue'), 'utf8')
+    const localCss = readFileSync(join(root, 'viewer/app/app/assets/local-viewer.css'), 'utf8')
     /* The report layer arrives through `workbench-lab`, which extends it and adds
        the alternative readings. What matters here is unchanged: the report
        layer comes first, and the theme lab comes after it. */
@@ -92,6 +94,11 @@ describe('shared BusinessLens theme lab', () => {
     expect(localViewer).toContain('<BusinessLensThemeLabBar')
     expect(localViewer).toContain('top-(--businesslens-theme-lab-height)')
     expect(localViewer).toContain('var(--businesslens-theme-lab-height)')
+    expect(localViewer).toContain('class="flex h-dvh flex-col overflow-hidden"')
+    expect(localViewer).toContain('class="businesslens-page-surface min-h-0 flex-1 overflow-hidden"')
+    expect(localViewer).not.toContain('<footer')
+    expect(localPage).toContain('class="businesslens-local-report min-h-0 flex-1"')
+    expect(localCss).toContain('.businesslens-report.businesslens-local-report')
   })
 
   it('keeps stable dark tokens and the flat Espresso audition distinct', () => {
