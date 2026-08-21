@@ -1,12 +1,7 @@
 ---
-capabilities: [source-following, feed-synchronization]
-capabilityScenarios:
-  - follow-a-source-by-feed-address
-  - follow-an-address-with-no-feed
-  - unfollow-a-source
-  - collect-new-items-from-a-followed-source
-  - preserve-library-when-a-feed-is-unavailable
-journeyScenarios: [receive-items-from-a-new-source]
+capabilities:
+  - source-following
+  - feed-synchronization
 entryPoints:
   - reader-mobile: content-reader://library/sources
 ---

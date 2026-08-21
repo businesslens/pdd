@@ -12,7 +12,7 @@ import type {
   ScenarioView,
   ScreenView
 } from './reportWorkspace'
-import { resolveEntity } from './reportWorkspace'
+import { INTERFACE_TYPE_META, resolveEntity } from './reportWorkspace'
 
 /*
   One row shape, not three.
@@ -127,7 +127,7 @@ export function entityCardPresentation(
             { label: plural(item.journeyIds.length, 'journey'), value: item.journeyIds.length, kind: 'journey' as const, ids: item.journeyIds }
           ]
       return {
-        badge: '',
+        badge: INTERFACE_TYPE_META[item.interfaceType].label,
         metrics,
         hookLabel: item.experienceIds.length ? 'Contains' : 'Delivers directly',
         hook: item.experienceIds.length

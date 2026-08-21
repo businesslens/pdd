@@ -7,9 +7,9 @@ Send one self-contained packet to the harness-supplied builder:
   Capabilities, Capability Scenarios, Rules, Journeys, Journey Scenarios, and
   exact availability scopes.
 - **Observed gap:** current behavior and why it differs.
-- **Acceptance criteria:** observable trigger, steps, decisions, outcome, edge
-  cases, applicable invariants, and each Capability-bearing Journey Step with
-  its inline route contexts where relevant.
+- **Acceptance criteria:** observable trigger, typed steps, decisions, outcome,
+  edge cases, applicable invariants, and each Scenario route's exact Product
+  Places where relevant.
 - **File leads:** inspected paths and symbols as leads, never mandatory design.
 - **Constraints:** do not edit `.businesslens/`; preserve unrelated user work;
   follow repository instructions; surface uncertainty rather than changing

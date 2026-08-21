@@ -1,6 +1,7 @@
 ---
-capabilities: [content-reading, item-saving]
-capabilityScenarios: [read-a-saved-library-item, remove-a-saved-item]
+capabilities:
+  - content-reading
+  - item-saving
 entryPoints:
   - reader-web: /saved
 ---

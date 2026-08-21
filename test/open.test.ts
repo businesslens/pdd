@@ -68,6 +68,12 @@ describe('open report', () => {
       goal: 'A shopper wants to purchase a suitable product.',
       successCriterion: 'A confirmed order exists for the selected product.'
     })
+    expect(imported.interfaces.map(productInterface => [productInterface.id, productInterface.type]))
+      .toEqual(expect.arrayContaining([
+        ['customer-web', 'web'],
+        ['customer-mobile', 'mobile-app'],
+        ['operator-cli', 'cli']
+      ]))
     expect(imported.journeyScenarios[0]!.steps.map(step => [step.text, step.capability])).toEqual([
       ['The shopper finds and selects an available product', 'catalog-browsing'],
       ['The shopper submits checkout', 'checkout'],
@@ -84,9 +90,7 @@ describe('open report', () => {
     expect(imported.screens[1]).toMatchObject({
       id: 'customer-web::storefront::product-record',
       availability: ['customer-web::storefront'],
-      capabilities: ['catalog-browsing'],
-      capabilityScenarios: ['browse-catalog'],
-      journeyScenarios: ['browse-and-complete-checkout']
+      capabilities: ['catalog-browsing', 'checkout']
     })
     expect(imported.screens.flatMap(screen => screen.entryPoints.map(point => point.path))).toEqual([
       'fixture-shop://products/:id',
@@ -160,15 +164,9 @@ describe('open report', () => {
       const report = structuredClone(buildProject(source).report)
       report.model.experiences = []
       report.counts.experiences = 0
-      for (const screen of report.model.screens) {
-        // interface::experience::screen -> interface::screen
-        const parts = screen.id.split('::')
-        screen.id = [parts[0], parts.at(-1)].join('::')
-      }
       for (const collection of [
         report.model.capabilities,
         report.model.screens,
-        report.model.capabilityScenarios,
         report.model.businessRules
       ]) {
         for (const entity of collection) {
@@ -180,11 +178,20 @@ describe('open report', () => {
           }
         }
       }
-      for (const scenario of report.model.journeyScenarios) {
+      const directScreenIds = new Map<string, string>()
+      for (const screen of report.model.screens) {
+        // interface::experience::screen -> interface::screen
+        const parts = screen.id.split('::')
+        directScreenIds.set(screen.id, [parts[0], parts.at(-1)].join('::'))
+      }
+      for (const scenario of [...report.model.capabilityScenarios, ...report.model.journeyScenarios]) {
         for (const step of scenario.steps) {
-          for (const route of step.routes) route.experienceId = null
+          for (const place of step.places) {
+            place.placeId = directScreenIds.get(place.placeId) || place.placeId.split('::')[0]!
+          }
         }
       }
+      for (const screen of report.model.screens) screen.id = directScreenIds.get(screen.id)!
       const file = join(fresh, 'direct-report.json')
       writeFileSync(file, JSON.stringify(report))
 

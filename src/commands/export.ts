@@ -5,6 +5,7 @@ import { writeGeneratedFile } from '../core/generated-files.js'
 import { lsFiles } from '../core/git.js'
 import { section, supportingSections } from '../core/markdown.js'
 import { interfaceOf } from '../core/ids.js'
+import type { InterfaceType } from '../core/interface-types.js'
 import { loadModel } from '../core/model.js'
 import { resolveModelRoot, type ModelRoot } from '../core/model-root.js'
 import {
@@ -100,6 +101,28 @@ export function compileReport(
     journey.id,
     model.journeyScenarios.filter(scenario => scenario.journey === journey.id)
   ]))
+  const scenarioActorIds = (scenario: typeof model.capabilityScenarios[number] | typeof model.journeyScenarios[number]) =>
+    sorted([...new Set(scenario.steps.flatMap(step => step.actor ? [step.actor] : []))])
+  const scenarioRoutes = (scenario: typeof model.capabilityScenarios[number] | typeof model.journeyScenarios[number]) =>
+    scenario.routes.map(route => ({ id: route.id, name: route.name }))
+  const scenarioSteps = (
+    scenario: typeof model.capabilityScenarios[number] | typeof model.journeyScenarios[number],
+    parentCapability?: string
+  ) => scenario.steps.map(step => ({
+    text: step.text,
+    kind: step.kind as 'actor' | 'product' | 'condition',
+    actorId: step.actor ?? null,
+    capabilityId: parentCapability ?? step.capability ?? null,
+    places: scenario.routes.flatMap(route => {
+      const place = step.places.find(item => item.routeId === route.id)
+      return place ? [{ routeId: route.id, placeId: place.placeId }] : []
+    })
+  }))
+  const screenScenarioIds = (screenId: string, kind: 'capability' | 'journey') => sorted(
+    (kind === 'capability' ? model.capabilityScenarios : model.journeyScenarios)
+      .filter(scenario => scenario.steps.some(step => step.places.some(place => place.placeId === screenId)))
+      .map(scenario => scenario.id)
+  )
 
   const report: ProductReportV9 = {
     schemaVersion: REPORT_SCHEMA_VERSION,
@@ -157,6 +180,7 @@ export function compileReport(
         id: productInterface.id,
         title: productInterface.doc.title,
         description: productInterface.doc.lead,
+        type: productInterface.type as InterfaceType,
         actorIds: sorted(productInterface.actors),
         entryPoints: productInterface.entryPoints,
         capabilityBoundary: productInterface.capabilityBoundary,
@@ -179,8 +203,8 @@ export function compileReport(
         description: screen.doc.lead,
         availability: availability(screen.availability),
         capabilityIds: sorted(screen.capabilities),
-        capabilityScenarioIds: sorted(screen.capabilityScenarios),
-        journeyScenarioIds: sorted(screen.journeyScenarios),
+        capabilityScenarioIds: screenScenarioIds(screen.id, 'capability'),
+        journeyScenarioIds: screenScenarioIds(screen.id, 'journey'),
         entryPoints: screen.entryPoints,
         information: screen.information,
         actions: screen.actions,
@@ -208,10 +232,10 @@ export function compileReport(
         capabilityId: scenario.capability,
         title: scenario.doc.title,
         kindId: scenario.kind,
-        actorIds: sorted(scenario.actors),
-        availability: availability(scenario.availability),
+        actorIds: scenarioActorIds(scenario),
+        routes: scenarioRoutes(scenario),
         trigger: scenario.trigger,
-        steps: scenario.steps,
+        steps: scenarioSteps(scenario, scenario.capability),
         decisionPoints: scenario.decisionPoints,
         outcome: scenario.outcome,
         edgeCases: scenario.edgeCases,
@@ -248,16 +272,10 @@ export function compileReport(
         journeyId: scenario.journey,
         title: scenario.doc.title,
         kindId: scenario.kind,
-        actorIds: sorted(scenario.actors),
+        actorIds: scenarioActorIds(scenario),
         result: scenario.result as 'achieved' | 'not-achieved',
-        steps: scenario.steps.map(step => ({
-          text: step.text,
-          capabilityId: step.capability ?? null,
-          routes: step.routes.map(route => ({
-            routeId: route.id,
-            ...exactContext(route.context)
-          }))
-        })),
+        routes: scenarioRoutes(scenario),
+        steps: scenarioSteps(scenario),
         trigger: scenario.trigger,
         decisionPoints: scenario.decisionPoints,
         outcome: scenario.outcome,

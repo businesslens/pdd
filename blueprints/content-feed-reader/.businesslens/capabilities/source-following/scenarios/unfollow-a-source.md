@@ -1,7 +1,30 @@
 ---
 kind: primary
-actors: [reader]
-availability: [reader-web::personal-library, reader-mobile::personal-library]
+routes:
+  web: Web
+  mobile: Mobile
+steps:
+  - text: The Reader chooses to stop following an existing source.
+    kind: actor
+    actor: reader
+    places:
+      web: reader-web::personal-library::source-list
+      mobile: reader-mobile::personal-library::source-list
+  - text: The Product removes the source from the Reader's followed sources
+    kind: product
+    places:
+      web: reader-web::personal-library::source-list
+      mobile: reader-mobile::personal-library::source-list
+  - text: Future synchronization no longer collects items from that source
+    kind: condition
+    places:
+      web: reader-web::personal-library::source-list
+      mobile: reader-mobile::personal-library::source-list
+  - text: Existing library items and saved state are preserved
+    kind: condition
+    places:
+      web: reader-web::personal-library::source-list
+      mobile: reader-mobile::personal-library::source-list
 ---
 
 # Unfollow a source
@@ -9,12 +32,6 @@ availability: [reader-web::personal-library, reader-mobile::personal-library]
 ## Trigger
 
 The Reader chooses to stop following an existing source.
-
-## Steps
-
-1. The Product removes the source from the Reader's followed sources
-2. Future synchronization no longer collects items from that source
-3. Existing library items and saved state are preserved
 
 ## Outcome
 

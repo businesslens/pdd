@@ -1,7 +1,21 @@
 ---
 kind: primary
-actors: [reader]
-availability: [reader-web::personal-library]
+routes:
+  web: Web
+steps:
+  - text: The Reader provides a collection name
+    kind: actor
+    actor: reader
+    places:
+      web: reader-web::personal-library::collection-workspace
+  - text: The Product creates a private collection owned by that Reader
+    kind: product
+    places:
+      web: reader-web::personal-library::collection-workspace
+  - text: The empty collection is ready to edit
+    kind: condition
+    places:
+      web: reader-web::personal-library::collection-workspace
 ---
 
 # Create an owned collection
@@ -9,12 +23,6 @@ availability: [reader-web::personal-library]
 ## Trigger
 
 The Reader chooses to organize saved items in a new collection.
-
-## Steps
-
-1. The Reader provides a collection name
-2. The Product creates a private collection owned by that Reader
-3. The empty collection is ready to edit
 
 ## Outcome
 

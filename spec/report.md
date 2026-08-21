@@ -56,41 +56,65 @@ achieved Scenario Capability-bearing steps; `failureOnlyCapabilityIds`
 separately marks Capabilities observed only in not-achieved paths. These are
 modeled coverage projections rather than authored Journey meaning.
 
-Product Report v9 replaces the former Journey flow/route/prose-Steps split in
-place. A Journey Scenario carries one ordered `steps` array:
+Every Interface record carries one required `type`: `web`, `mobile-app`,
+`desktop-app`, `cli`, `api`, `webhook`, `messaging`, `voice`, or `device`.
+Report consumers use this authored value for presentation and comparison; they
+never infer Interface type from an id, title, entry point, or Scenario route.
+
+Product Report v9 replaces the former Scenario prose-Steps, Scenario-wide
+availability, and Journey flow split in place. Capability and Journey
+Scenarios use the same named-route and ordered-step shape:
 
 ```json
 {
+  "routes": [
+    { "id": "web-shopper", "name": "Web shopper" },
+    { "id": "mobile-shopper", "name": "Mobile shopper" }
+  ],
   "steps": [
     {
       "text": "The shopper finds an available product",
+      "kind": "actor",
+      "actorId": "shopper",
       "capabilityId": "catalog-browsing",
-      "routes": [
-        {
-          "routeId": "web",
-          "interfaceId": "customer-web",
-          "experienceId": "customer-web::storefront"
-        }
+      "places": [
+        { "routeId": "web-shopper", "placeId": "customer-web::storefront::product-record" },
+        { "routeId": "mobile-shopper", "placeId": "customer-mobile::storefront::product-record" }
       ]
     },
     {
       "text": "The Product confirms the paid order",
+      "kind": "product",
+      "actorId": null,
       "capabilityId": null,
-      "routes": []
+      "places": []
     }
   ]
 }
 ```
 
-Every step has single-line `text`. `capabilityId` is either an existing
-Capability id or `null`. A Capability-bearing step has one or more route
-assignments; an unqualified step has none. Each route assignment carries one
-route id and the existing singular exact-context shape. All Capability-bearing
-steps use the same route-id set and retain authored route order. Expansion
-writes these records as the canonical frontmatter `steps` list with route ids
-as mapping keys. Journey Scenarios have no report `flow`, top-level `routes`,
-or Markdown-derived prose Steps field. Capability Scenario report records keep
-their existing string `steps` list.
+Every route has a unique lowercase kebab-case `id` and a unique, non-empty
+human-readable `name`. Every step has single-line `text`, `kind` (`actor`,
+`product`, or `condition`), nullable `actorId`, nullable `capabilityId`, and an
+ordered `places` array. `actorId` is non-null exactly for `actor` Steps.
+Capability Scenario step `capabilityId` is always its parent Capability id;
+Journey Scenario step `capabilityId` is an existing Capability id or `null`.
+
+A placed Step carries one `{ routeId, placeId }` assignment for every declared
+route, in route order. A Step shared by every route with no Product Place has
+no assignments. `placeId`
+resolves to the most-specific Interface, Experience, or Screen where the Step
+occurs. The containing Interface and Experience are derived from that Product
+Place rather than duplicated on the wire. Every route is placed by at least one
+Step and no two routes repeat the same Product Place sequence.
+
+Expansion writes the shared report records as canonical frontmatter `routes`
+and `steps`, using route ids as mapping keys under each Step's `places`.
+Capability expansion omits its redundant step `capabilityId`; its containing
+directory already names the parent Capability. Scenarios have no authored or
+report `flow`, Scenario-wide `availability`, Scenario-wide `actors`, or
+Markdown-derived Steps field. Screen report backlinks to Scenarios are derived
+from Screen Product Places and are not authored when the report is expanded.
 
 Compilation produces a `workspace` reference profile. As written by
 `blueprint export`, a report carries the **portable** reference profile: it
@@ -108,12 +132,12 @@ other local References. Asset binaries are not part of Product Report v9.
 
 The report schema accepts only content that can expand into canonical entity
 Markdown: titles and list items are single-line, set-valued relation arrays are
-unique, required descriptions and behavior sections are non-empty, Capability
-Scenario availability, Journey Scenario step Capabilities and route contexts,
-and Business Rule targets resolve to existing entities, all Capability-bearing
-steps use the same route-id set, no two Journey routes repeat the same
-correlation, every achieved Journey Scenario uses at least two distinct
-Capabilities, and Interface/Capability consistency holds.
+unique, required descriptions and behavior sections are non-empty, Scenario
+Actors, Capabilities, route ids, and Product Places resolve to existing
+entities, every placed Step assigns every route, every Product Place is the
+most-specific available place, no two routes repeat the same Place sequence,
+every achieved Journey Scenario uses at least two distinct Capabilities, and
+Interface, Experience, Screen, Actor, and Capability consistency holds.
 Product Report v9 is the only accepted report version — there is no
 compatibility reader for an earlier one. No report profile requires a
 reference. Present references remain subject to the same strict shape and

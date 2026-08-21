@@ -1,7 +1,25 @@
 ---
 kind: primary
-actors: [reader]
-availability: [reader-web::personal-library]
+routes:
+  web: Web
+steps:
+  - text: The Product confirms ownership
+    kind: product
+    places:
+      web: reader-web::personal-library::collection-workspace
+  - text: The Product explains that the collection will become readable by link
+    kind: product
+    places:
+      web: reader-web::personal-library::collection-workspace
+  - text: The Reader confirms publication
+    kind: actor
+    actor: reader
+    places:
+      web: reader-web::personal-library::collection-workspace
+  - text: A stable public web address is created
+    kind: condition
+    places:
+      web: reader-web::personal-library::collection-workspace
 ---
 
 # Publish an owned collection
@@ -9,13 +27,6 @@ availability: [reader-web::personal-library]
 ## Trigger
 
 The Reader chooses to publish a private owned collection.
-
-## Steps
-
-1. The Product confirms ownership
-2. The Product explains that the collection will become readable by link
-3. The Reader confirms publication
-4. A stable public web address is created
 
 ## Outcome
 

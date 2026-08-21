@@ -1,4 +1,5 @@
 ---
+type: cli
 actors: [store-admin]
 entryPoints:
   - cli: fixture-shop admin

@@ -1,11 +1,24 @@
 ---
 kind: edge
-actors: [store-admin]
+routes:
+  web: Web
+  cli: CLI
+steps:
+  - text: The admin opens the order in the console
+    kind: actor
+    actor: store-admin
+    places:
+      web: admin-web::admin-console
+      cli: operator-cli
+  - text: The refund is issued through the order service
+    kind: product
+    places:
+      web: admin-web::admin-console
+      cli: operator-cli
 references:
   - kind: code
     role: implementation
     target: src/services/orders.ts#OrderService.refund
-availability: [admin-web::admin-console, operator-cli]
 ---
 
 # Refund an order
@@ -13,11 +26,6 @@ availability: [admin-web::admin-console, operator-cli]
 ## Trigger
 
 A store admin receives an eligible refund request for an existing order.
-
-## Steps
-
-1. The admin opens the order in the console
-2. The refund is issued through the order service
 
 ## Outcome
 

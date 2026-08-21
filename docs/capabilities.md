@@ -84,7 +84,7 @@ Steps rather than authored on the Journey.
 
 Capability Scenario coverage is the only direct acceptance coverage for a
 Capability. The union of its Capability Scenarios must cover every exact
-Interface/Experience pair the Capability declares; use by a Journey Scenario
+Interface/Experience pair the Capability declares through its Step Product Places; use by a Journey Scenario
 does not satisfy that requirement. A missing pair is an error for a `complete`
 model, a warning for `partial` or `draft`, and an error when publishing a public
 Blueprint. A single-Capability goal remains local Capability behavior and never
@@ -108,8 +108,8 @@ For an Interface with no Experiences, omit the `experiences` key:
 availability: [operator-cli]
 ```
 
-Capability Scenario availability and Journey Scenario route contexts select
-exact contexts from this availability. They do not alter or expand the
+Scenario Step Product Places select exact contexts from this availability.
+They do not alter or expand the
 Capability's scope, and every selected context is verified independently.
 
 ## Capability Scenarios
@@ -160,8 +160,26 @@ to `<id>/capability-scenario.md`.
 ```md [capabilities/publish-repository-changes/scenarios/reject-an-unauthorized-repository-write.md]
 ---
 kind: permission
-actors: [repository-contributor]
-availability: [git-transport]
+routes:
+  git-push: Git push
+steps:
+  - text: The contributor pushes a repository change
+    kind: actor
+    actor: repository-contributor
+    places:
+      git-push: git-transport
+  - text: The Product identifies the repository and contributor
+    kind: product
+    places:
+      git-push: git-transport
+  - text: The Product evaluates write permission
+    kind: product
+    places:
+      git-push: git-transport
+  - text: The Product rejects the write
+    kind: product
+    places:
+      git-push: git-transport
 references:
   - kind: code
     role: implementation
@@ -174,12 +192,6 @@ references:
 
 A contributor without write permission pushes a repository change.
 
-## Steps
-
-1. The Product identifies the repository and contributor
-2. The Product evaluates write permission
-3. The Product rejects the write
-
 ## Outcome
 
 The repository is unchanged and the contributor receives a permission error.
@@ -189,43 +201,48 @@ The repository is unchanged and the contributor receives a permission error.
 | --- | --- | --- |
 | Filename | yes | Use a globally unique lowercase kebab-case Scenario ID. |
 | `kind` | yes | Name an entry in `taxonomies.yaml`. |
-| `actors` | yes | Name at least one unique existing Actor involved in the case. |
-| `availability` | yes | Select at least one exact context already declared by the Capability. |
+| `routes` | yes | Map each unique lowercase kebab-case route ID to a unique human-readable name. |
+| `steps` | yes | Give a non-empty ordered list of typed Steps. Each Step has one-line `text`, `kind: actor|product|condition`, and optional route-specific `places`. |
+| `steps[].actor` | for Actor Steps | Name the responsible Actor when `kind: actor`; omit it for Product actions and unowned conditions. |
+| `steps[].places` | when placed | Map every declared route to its most-specific Product Place: Screen when one exists, otherwise the leaf Experience or Interface. Omit it only when the Step is shared by all routes and has no Product Place. |
 | `references` | no | Use the documented [Reference](./references.md) shape. |
 | Lead paragraph | no | Start with a named H2; move starting-condition prose into `## Trigger`. |
 | `## Trigger` | yes | State the observable starting condition. |
-| `## Steps` | yes | Provide a non-empty ordered list with each item on one physical line. |
+| `## Steps` | no | Structured Steps live only in frontmatter. |
 | `## Decision points` | no | Give each H3 decision one Product question and at least two `condition → outcome` branches. |
 | `## Edge cases` | no | Provide a non-empty bullet list when present, with each item on one physical line. |
 | `## Outcome` | yes | State one local observable result of the Capability. |
 
-A Capability Scenario cannot declare `result` or frontmatter `steps`, and
-neither Scenario type declares its parent — the folder it sits in is the parent.
+A Capability Scenario cannot declare `result`, `actors`, `availability`, or a
+Step `capability`; its parent Capability is implicit. Both Scenario types
+require frontmatter `steps`, and neither declares its parent—the folder it sits
+in is the parent.
 It cannot use Journey-only `## Goal` or `## Success criterion` sections, and
 each recognized Scenario H2 may appear only once.
 Business Rules own their Scenario relations; Capability Scenarios do not
-duplicate a `businessRules` list. Screens may name Capability Scenario IDs in
-which they participate.
+duplicate a `businessRules` list. Screen participation is derived from Step
+Places; Screens do not list Scenario IDs.
 
 Journey Scenarios reference the Capability, never this Capability Scenario.
 That prevents a concrete local case from becoming a reusable operation entity.
 
-### Supported interaction contexts
+### Routes, Steps, and Product Places
 
-`availability` is a list of scope ids selected from the ones its Capability
-already promises.
+A route is one named supported traversal through unchanged Scenario behavior.
+Use multiple routes when the Trigger, ordered Step text, Step kinds, responsible
+Actors, and Outcome are the same but the Product Places differ. If any behavior
+changes, create another Scenario.
 
-```yaml
-availability: [reader-web::personal-library, reader-mobile::personal-library]
-```
+Every placed Step maps every route. A Step without `places` is shared by all
+routes and has no Product Place. Every route must be placed at least once, and two routes
+cannot repeat the same Place sequence. Changing Place between consecutive
+placed Steps is an explicit Product Place transition, including movement between Screens in one
+Experience.
 
-Equivalent contexts may share one Capability Scenario, but verification checks
-each independently.
-
-Every exact context must permit at least one Scenario Actor, and every Scenario
-Actor must be supported by at least one selected context. Experience `actors`
-are authoritative for an Experience-scoped context; otherwise the Interface
-`actors` list is authoritative.
+A Product Place is exact and most-specific. If a scope owns Screens, name the
+Screen. Otherwise name its leaf Experience or undivided Interface. The exact
+Interface/Experience contexts, Actor set, Screen participation, and backlinks
+are all derived from these Step claims.
 
 ### Capability Scenario decision points
 

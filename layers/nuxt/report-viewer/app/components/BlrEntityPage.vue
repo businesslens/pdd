@@ -12,7 +12,7 @@
  * Domain — are not thin versions of this page. Their reach *is* their content,
  * so the neighbourhood graph is their body rather than an extra.
  */
-import type { AnyEntityView, JourneyView, ReportEntityKind, ReportWorkspace, ScenarioView } from '../utils/reportWorkspace'
+import type { AnyEntityView, InterfaceView, JourneyView, ReportEntityKind, ReportWorkspace, ScenarioView } from '../utils/reportWorkspace'
 import { ENTITY_KIND_META, counterpartsOf, isScenarioKind, resolveEntityKey } from '../utils/reportWorkspace'
 
 const props = defineProps<{
@@ -74,6 +74,7 @@ const parentOf = computed<AnyEntityView | null>(() => {
 })
 
 const asJourney = computed(() => props.entity as JourneyView)
+const asInterface = computed(() => props.entity as InterfaceView)
 </script>
 
 <template>
@@ -83,6 +84,11 @@ const asJourney = computed(() => props.entity as JourneyView)
         <BlrKind :kind="entity.kind" />
         <h1 class="text-2xl font-semibold tracking-[-0.02em] text-highlighted">{{ entity.title }}</h1>
         <code class="blr-meta rounded bg-muted px-1.5 py-0.5">{{ entity.id }}</code>
+        <BlrInterfaceType
+          v-if="entity.kind === 'interface'"
+          :type="asInterface.interfaceType"
+          labelled
+        />
         <UButton
           icon="i-lucide-waypoints"
           color="neutral"

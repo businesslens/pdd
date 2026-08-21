@@ -1,7 +1,6 @@
 ---
-capabilities: [public-collection-reading]
-capabilityScenarios: [read-a-published-collection, open-an-unlisted-collection]
-journeyScenarios: [publish-and-read-a-collection]
+capabilities:
+  - public-collection-reading
 entryPoints:
   - reader-web: /collections/:collectionSlug
 ---

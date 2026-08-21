@@ -26,6 +26,7 @@ export type {
 
 export {
   ENTITY_KIND_META,
+  INTERFACE_TYPE_META,
   REPORT_ENTITY_KINDS,
   counterpartsOf,
   isScenarioKind,

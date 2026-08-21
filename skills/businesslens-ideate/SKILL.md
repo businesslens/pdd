@@ -57,8 +57,8 @@ Read before authoring:
    Distinguish durable Capabilities from complete Actor goals. Give every
    Capability per-Capability acceptance. Create a Journey only when an achieved
    goal path crosses at least two distinct Capabilities; define its Scenario as
-   one ordered Steps list, annotating Capability-bearing Steps with one exact
-   context per inline route.
+   one ordered typed Steps list, annotating responsible Actors and Capabilities
+   while named routes select exact Product Places.
 8. In resolution mode, do not reopen broad ideation. Use the supplied finding,
    inspected files, and authority decision to draft the smallest exact model
    delta that makes the intended behavior unambiguous.

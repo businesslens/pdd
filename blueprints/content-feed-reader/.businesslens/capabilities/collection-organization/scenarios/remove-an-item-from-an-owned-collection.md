@@ -1,7 +1,25 @@
 ---
 kind: primary
-actors: [reader]
-availability: [reader-web::personal-library]
+routes:
+  web: Web
+steps:
+  - text: The Reader removes an item from an owned collection.
+    kind: actor
+    actor: reader
+    places:
+      web: reader-web::personal-library::collection-workspace
+  - text: The Product confirms collection ownership
+    kind: product
+    places:
+      web: reader-web::personal-library::collection-workspace
+  - text: The item is removed from that collection
+    kind: product
+    places:
+      web: reader-web::personal-library::collection-workspace
+  - text: The remaining item order and the item's saved state are preserved
+    kind: condition
+    places:
+      web: reader-web::personal-library::collection-workspace
 ---
 
 # Remove an item from an owned collection
@@ -9,12 +27,6 @@ availability: [reader-web::personal-library]
 ## Trigger
 
 The Reader removes an item from an owned collection.
-
-## Steps
-
-1. The Product confirms collection ownership
-2. The item is removed from that collection
-3. The remaining item order and the item's saved state are preserved
 
 ## Outcome
 

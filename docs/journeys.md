@@ -94,8 +94,8 @@ Journey Scenario Capability-bearing steps. Product routes remain on Interfaces,
 Experiences, and Screens.
 
 To present a Journey entry route, a report consumer starts with the first
-Capability-bearing step of each achieved Journey Scenario route and resolves
-that exact Interface or Experience entry point. The entry remains derived
+Actor-owned placed Step of each achieved Journey Scenario route and resolves
+that Product Place's Interface or Experience entry point. The entry remains derived
 rather than becoming Journey frontmatter.
 
 Consumers derive the primary Capability and Domain sets from achieved paths.
@@ -156,18 +156,27 @@ Journey Scenarios normally live at
 ```md [journeys/contribute-a-code-change/scenarios/publish-a-branch-and-open-a-pull-request.md]
 ---
 kind: primary
-actors: [repository-contributor]
 result: achieved
+routes:
+  git-to-web: Git to web review
 steps:
   - text: The contributor pushes the branch through Git transport
+    kind: actor
+    actor: repository-contributor
     capability: publish-repository-changes
-    routes:
+    places:
       git-to-web: git-transport
   - text: The contributor opens the branch comparison in the repository workspace
+    kind: actor
+    actor: repository-contributor
+    places:
+      git-to-web: web-ui::repository-collaboration::branch-comparison
   - text: The contributor submits the pull request
+    kind: actor
+    actor: repository-contributor
     capability: propose-code-change
-    routes:
-      git-to-web: web-ui::repository-collaboration
+    places:
+      git-to-web: web-ui::repository-collaboration::pull-request
 references:
   - kind: code
     role: implementation
@@ -189,20 +198,22 @@ The Journey goal is achieved: a reviewable change proposal exists.
 | --- | --- | --- |
 | Filename | yes | Use a globally unique lowercase kebab-case Scenario ID. |
 | `kind` | yes | Name an entry in `taxonomies.yaml`. |
-| `actors` | yes | Name at least one unique existing Actor, including a Journey Actor. |
 | `result` | yes | Use `achieved` or `not-achieved`; it is orthogonal to `kind`. |
-| `steps` | yes | Give an ordered non-empty list of mappings with single-line `text`. A Capability-bearing step also names one existing `capability` and an inline `routes` mapping. |
+| `routes` | yes | Map each unique lowercase kebab-case route ID to a unique human-readable name. |
+| `steps` | yes | Give a non-empty ordered list with one-line `text` and `kind: actor|product|condition`. A Step may name a Capability independently of its kind. |
+| `steps[].actor` | for Actor Steps | Name the responsible Actor when `kind: actor`; omit it for Product actions and unowned conditions. At least one Actor Step must name a Journey Actor. |
+| `steps[].places` | when placed | Map every declared route to the most-specific Product Place. Omit it only when the Step is shared by all routes and has no Product Place. |
 | `references` | no | Use the documented [Reference](./references.md) shape. |
 | Lead paragraph | no | Start with a named H2; move starting-condition prose into `## Trigger`. |
 | `## Trigger` | yes | Begin with the Actor pursuing the Journey Goal. |
-| `## Steps` | no | Journey Steps live only in frontmatter so their text, Capability, and route contexts cannot disagree. |
+| `## Steps` | no | Journey Steps live only in frontmatter so their text, kind, Actor, Capability, and Product Places cannot disagree. |
 | `## Decision points` | no | Give each H3 decision one Product question and at least two `condition → outcome` branches. |
 | `## Edge cases` | no | Provide a non-empty bullet list when present, with each item on one physical line. |
 | `## Outcome` | yes | State whether and why the Journey Goal was achieved or not achieved. |
 
 Business Rules own their Scenario relations; Journey Scenarios do not duplicate
-a `businessRules` list. Screens may name Journey Scenario IDs in which they
-participate.
+a `businessRules` list. Screen participation is derived from Step Places;
+Screens do not list Scenario IDs.
 
 A Journey Scenario cannot use `## Steps` or Journey-only `## Goal` and
 `## Success criterion` sections. Each recognized Scenario H2 may appear only
@@ -210,63 +221,76 @@ once.
 
 ### Steps and routes
 
-The Steps are the path. Each entry has required single-line `text`. A step that
-exercises a Capability says so and places each route's exact context beside that
-relation:
+The Steps are the path. Each entry has required single-line `text` and one
+semantic kind. An Actor Step names its responsible Actor. A Step that exercises
+a Capability says so independently. Route-specific Product Places stay beside
+the Step:
 
 ```yaml
+routes:
+  git-to-web: Git to web review
 steps:
   - text: The contributor pushes the branch through Git transport
+    kind: actor
+    actor: repository-contributor
     capability: publish-repository-changes
-    routes:
+    places:
       git-to-web: git-transport
   - text: The contributor opens the branch comparison in the repository workspace
+    kind: actor
+    actor: repository-contributor
+    places:
+      git-to-web: web-ui::repository-collaboration::branch-comparison
   - text: The contributor submits the pull request
+    kind: actor
+    actor: repository-contributor
     capability: propose-code-change
-    routes:
-      git-to-web: web-ui::repository-collaboration
+    places:
+      git-to-web: web-ui::repository-collaboration::pull-request
 ```
 
-An unqualified step names no Capability and has no routes. It records a
+An unqualified Step names no Capability. It may still name Places when an
+observable condition or Product action occurs somewhere, or omit `places` when
+it is shared by every route and has no Product Place. It records a
 condition, Product-side action, or seam that matters to this end-to-end
 variation without manufacturing another Capability or Capability Scenario.
-The branch-comparison step above is the handoff between Git transport and the
-web workspace; its position makes that transition first-class.
+The branch-comparison step above is the Product Place transition between Git
+transport and the web workspace; its position makes that transition first-class.
 
 Capability-bearing steps reference Capabilities, never Capability Scenarios. A
 Capability is durable while its Scenarios split and merge as local behavior is
 refined. Composition therefore names the stable ability without turning a
 local acceptance case into a reusable operation entity.
 
-Every Capability-bearing step declares the same route-id set. Matching keys
-correlate the complete paths: `git-to-web` at one step and `git-to-web` at the
-next are consecutive contexts of one route. A context change is a handoff. The
-route value is one scope id: a bare Interface id when it is undivided, or
-`interface-id::experience-id` for an Experience. It must be within the named
-Capability's availability.
+Every placed Step declares the same route-id set. Matching keys correlate the
+complete paths. A Step Product Place is the most-specific Interface,
+Experience, or Screen where it occurs: when a scope owns Screens, the Place
+must name one of them. A Place derives its containing exact context, which must
+be within the Step Capability's availability when the Step names a Capability;
+a Screen must also expose that Capability.
 
-Route ids are lowercase kebab-case mapping keys, so they cannot repeat within a
-step. No two route ids may carry the same context through every
-Capability-bearing step. Adding or removing a route updates every
-Capability-bearing step because all routes share this Scenario's sequence and
-Outcome.
+Route ids are lowercase kebab-case keys declared once under `routes`, each with
+a human name. Every route is placed at least once, and no two routes may repeat
+the same Product Place sequence. A Place change between consecutive placed
+Steps is a Product Place transition, including Screen-to-Screen movement within
+one Experience.
 
 Steps may repeat or stop. Every achieved Journey Scenario uses at least two
 distinct Capabilities. A not-achieved Scenario may stop after one Capability
-when that behavior prevents the Goal. Split Journey Scenarios when the
-Capability sequence, observable behavior, or Journey-level Outcome changes;
-add another route key when only the correlated contexts change.
+when that behavior prevents the Goal. Split Journey Scenarios when Step text,
+kind, responsible Actor, Capability sequence, observable behavior, or
+Journey-level Outcome changes; add another named route when only Product Places
+change.
 
 The path is linear. A Decision point may vary detail while preserving the same
 Capability sequence and Outcome. A branch that changes either belongs in a
 separate Journey Scenario.
 
-Every exact route context must permit at least one Scenario Actor, and every
-Scenario Actor must be supported by at least one route context. The first
-Capability-bearing context of every route must permit a Journey Actor who participates in the
-Scenario, so the end-to-end variation begins with the goal owner rather than an
-internal or downstream participant. Cross-Interface paths do not require every
-Actor to use every Capability-bearing step.
+The Scenario Actor set is derived from Actor Steps. Every Actor must be
+supported by at least one selected Product Place, and every selected exact
+context must support a Scenario Actor. The first Actor-owned placed Step of
+every route must belong to a Journey Actor, so the end-to-end variation begins
+with the goal owner rather than an internal or downstream participant.
 
 `kind` classifies the nature of the variation; `result` records whether the
 Journey Goal was achieved. `kind: edge` with `result: achieved` and

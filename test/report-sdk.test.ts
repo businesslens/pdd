@@ -36,6 +36,7 @@ describe('report SDK entry point', () => {
       'ReportReferenceSchema',
       'ReportSupportingSectionSchema',
       'ReportInterfaceSchema',
+      'INTERFACE_TYPES',
       'ReportAvailabilitySchema',
       'ReportExactContextSchema',
       'ReportCapabilitySchema',
@@ -43,8 +44,9 @@ describe('report SDK entry point', () => {
       'ReportScreenSchema',
       'ReportScreenStateSchema',
       'ReportJourneyScenarioSchema',
-      'ReportJourneyStepRouteSchema',
-      'ReportJourneyStepSchema',
+      'ReportScenarioRouteSchema',
+      'ReportScenarioStepPlaceSchema',
+      'ReportScenarioStepSchema',
       'ReportBusinessRuleTargetSchema',
       'validateProductReport',
       'validateBlueprintReport',
@@ -54,6 +56,9 @@ describe('report SDK entry point', () => {
     ]) {
       expect(sdk, `missing export ${name}`).toHaveProperty(name)
     }
+    expect(sdk.INTERFACE_TYPES).toEqual([
+      'web', 'mobile-app', 'desktop-app', 'cli', 'api', 'webhook', 'messaging', 'voice', 'device'
+    ])
   })
 
   it('never pulls the CLI or Node built-ins into the library graph', async () => {
@@ -154,7 +159,6 @@ describe('projectPortableReport', () => {
     for (const collection of [
       direct.model.capabilities,
       direct.model.screens,
-      direct.model.capabilityScenarios,
       direct.model.businessRules
     ]) {
       for (const entity of collection) {
@@ -166,14 +170,20 @@ describe('projectPortableReport', () => {
         }
       }
     }
-    for (const scenario of direct.model.journeyScenarios) {
+    const directScreenIds = new Map<string, string>()
+    for (const screen of direct.model.screens) {
+      const parts = screen.id.split('::')
+      directScreenIds.set(screen.id, [parts[0], parts.at(-1)].join('::'))
+    }
+    for (const scenario of [...direct.model.capabilityScenarios, ...direct.model.journeyScenarios]) {
       for (const step of scenario.steps) {
-        for (const route of step.routes) route.experienceId = null
+        for (const place of step.places) {
+          place.placeId = directScreenIds.get(place.placeId) || place.placeId.split('::')[0]!
+        }
       }
     }
     for (const screen of direct.model.screens) {
-      const parts = screen.id.split('::')
-      screen.id = [parts[0], parts.at(-1)].join('::')
+      screen.id = directScreenIds.get(screen.id)!
     }
 
     expect(sdk.validateProductReport(direct)).toEqual([])
@@ -189,23 +199,26 @@ describe('projectPortableReport', () => {
       kindId: 'edge',
       actorIds: ['shopper', 'store-admin'],
       result: 'not-achieved',
+      routes: [{ id: 'web-to-admin', name: 'Web to administration' }],
       steps: [
         {
           text: 'The shopper attempts checkout',
+          kind: 'actor',
+          actorId: 'shopper',
           capabilityId: 'checkout',
-          routes: [{
+          places: [{
             routeId: 'web-to-admin',
-            interfaceId: 'customer-web',
-            experienceId: 'customer-web::storefront'
+            placeId: 'customer-web::storefront::product-record'
           }]
         },
         {
-          text: 'The operator reviews the blocked attempt',
+          text: 'The store admin reviews the blocked attempt',
+          kind: 'actor',
+          actorId: 'store-admin',
           capabilityId: 'order-management',
-          routes: [{
+          places: [{
             routeId: 'web-to-admin',
-            interfaceId: 'admin-web',
-            experienceId: 'admin-web::admin-console'
+            placeId: 'admin-web::admin-console'
           }]
         }
       ],
@@ -217,6 +230,8 @@ describe('projectPortableReport', () => {
       supportingSections: [],
       references: []
     })
+    withFailure.model.screens.find(screen => screen.id === 'customer-web::storefront::product-record')!
+      .journeyScenarioIds.push('checkout-needs-operator-help')
     withFailure.counts.journeyScenarios += 1
     withFailure.model.journeys[0]!.failureOnlyCapabilityIds = ['order-management']
 
@@ -413,9 +428,9 @@ describe('projectPortableReport', () => {
   it('enforces route, Rule-target, Experience-cover, and complete-model relationships', () => {
     const incompleteRoute = structuredClone(report)
     const scenario = incompleteRoute.model.journeyScenarios.find(item => item.id === 'browse-and-complete-checkout')!
-    scenario.steps.find(step => step.capabilityId === 'checkout')!.routes.pop()
+    scenario.steps.find(step => step.capabilityId === 'checkout')!.places.pop()
     expect(sdk.validateProductReport(incompleteRoute).join('\n')).toContain(
-      'route ids must match every other Capability-bearing step'
+      'places must assign every declared route or be empty'
     )
 
     const narrowedRule = structuredClone(report)
@@ -444,7 +459,8 @@ describe('projectPortableReport', () => {
   it('requires public Blueprint Capability coverage in every exact context', () => {
     const incomplete = structuredClone(report)
     for (const scenario of incomplete.model.capabilityScenarios.filter(item => item.capabilityId === 'checkout')) {
-      scenario.availability = scenario.availability.filter(item => item.interfaceId !== 'customer-mobile')
+      scenario.routes = scenario.routes.filter(route => route.id !== 'mobile')
+      for (const step of scenario.steps) step.places = step.places.filter(place => place.routeId !== 'mobile')
     }
     incomplete.model.screens = incomplete.model.screens
       .filter(screen => !screen.id.startsWith('customer-mobile::'))

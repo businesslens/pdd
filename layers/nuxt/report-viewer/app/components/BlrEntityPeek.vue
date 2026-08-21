@@ -27,7 +27,7 @@ import type {
   ScenarioView,
   ScreenView
 } from '../utils/reportWorkspace'
-import { ENTITY_KIND_META, resolveEntity } from '../utils/reportWorkspace'
+import { ENTITY_KIND_META, INTERFACE_TYPE_META, resolveEntity } from '../utils/reportWorkspace'
 
 const props = defineProps<{
   workspace: ReportWorkspace
@@ -78,9 +78,9 @@ const facts = computed<Fact[]>(() => {
     case 'interface': {
       const item = entity as InterfaceView
       return [
+        { label: 'Type', value: INTERFACE_TYPE_META[item.interfaceType].label },
         { label: 'Experiences', value: String(item.experienceIds.length) },
         { label: 'Screens', value: String(item.screenIds.length) },
-        { label: 'Entry points', value: String(item.entryPoints.length) }
       ]
     }
     case 'experience': {

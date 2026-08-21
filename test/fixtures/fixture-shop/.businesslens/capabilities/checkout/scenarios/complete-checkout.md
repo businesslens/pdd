@@ -1,6 +1,30 @@
 ---
 kind: primary
-actors: [shopper]
+routes:
+  web: Web
+  mobile: Mobile
+steps:
+  - text: The shopper presses "Place order" with a non-empty cart.
+    kind: actor
+    actor: shopper
+    places:
+      web: customer-web::storefront::product-record
+      mobile: customer-mobile::storefront::product-record
+  - text: The cart is validated against the catalog
+    kind: product
+    places:
+      web: customer-web::storefront::product-record
+      mobile: customer-mobile::storefront::product-record
+  - text: The payment gateway charges the total
+    kind: product
+    places:
+      web: customer-web::storefront::product-record
+      mobile: customer-mobile::storefront::product-record
+  - text: The order is persisted
+    kind: product
+    places:
+      web: customer-web::storefront::product-record
+      mobile: customer-mobile::storefront::product-record
 references:
   - kind: code
     role: implementation
@@ -8,7 +32,6 @@ references:
   - kind: code
     role: implementation
     target: src/services/payments.ts#PaymentGateway.charge
-availability: [customer-web::storefront, customer-mobile::storefront]
 ---
 
 # Complete checkout
@@ -16,12 +39,6 @@ availability: [customer-web::storefront, customer-mobile::storefront]
 ## Trigger
 
 The shopper presses "Place order" with a non-empty cart.
-
-## Steps
-
-1. The cart is validated against the catalog
-2. The payment gateway charges the total
-3. The order is persisted
 
 ## Decision points
 

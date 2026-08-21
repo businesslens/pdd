@@ -46,6 +46,7 @@ const report: ProductReportV9 = {
       id: 'web',
       title: 'Web',
       description: 'The browser interface.',
+      type: 'web',
       actorIds: ['reader'],
       entryPoints: [],
       capabilityBoundary: 'Hosts the report.',

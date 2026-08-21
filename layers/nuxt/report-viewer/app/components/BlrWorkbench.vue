@@ -40,6 +40,7 @@ import type {
 } from '../utils/reportWorkspace'
 import {
   ENTITY_KIND_META,
+  INTERFACE_TYPE_META,
   REPORT_ENTITY_KINDS,
   isScenarioKind,
   resolveEntities,
@@ -618,6 +619,8 @@ const tableColumns = computed<TableColumn<AnyEntityView>[]>(() => {
     case 'interface':
       return [
         ...base,
+        textColumn('interfaceType', 'Type', entity =>
+          INTERFACE_TYPE_META[(entity as InterfaceView).interfaceType].label),
         relationColumn('actor'),
         relationColumn('experience'),
         relationColumn('capability'),

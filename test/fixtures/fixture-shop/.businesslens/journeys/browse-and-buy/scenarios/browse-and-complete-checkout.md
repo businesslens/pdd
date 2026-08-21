@@ -1,23 +1,30 @@
 ---
 kind: primary
-actors: [shopper]
 result: achieved
 steps:
   - text: The shopper finds and selects an available product
+    kind: actor
+    actor: shopper
     capability: catalog-browsing
-    routes:
-      web: customer-web::storefront
-      mobile: customer-mobile::storefront
+    places:
+      web: customer-web::storefront::product-record
+      mobile: customer-mobile::storefront::product-record
   - text: The shopper submits checkout
+    kind: actor
+    actor: shopper
     capability: checkout
-    routes:
-      web: customer-web::storefront
-      mobile: customer-mobile::storefront
+    places:
+      web: customer-web::storefront::product-record
+      mobile: customer-mobile::storefront::product-record
   - text: The Product confirms the paid order
+    kind: product
 references:
   - kind: code
     role: implementation
     target: src/services/orders.ts#OrderService.submit
+routes:
+  web: Web
+  mobile: Mobile
 ---
 
 # Browse and complete checkout

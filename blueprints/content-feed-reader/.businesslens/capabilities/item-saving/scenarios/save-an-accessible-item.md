@@ -1,7 +1,20 @@
 ---
 kind: primary
-actors: [reader]
-availability: [reader-web::personal-library, reader-mobile::personal-library]
+routes:
+  web: Web
+  mobile: Mobile
+steps:
+  - text: The Reader saves the item
+    kind: actor
+    actor: reader
+    places:
+      web: reader-web::personal-library::unread-library
+      mobile: reader-mobile::personal-library::unread-library
+  - text: The Product records the saved state independently of reading state
+    kind: product
+    places:
+      web: reader-web::personal-library::unread-library
+      mobile: reader-mobile::personal-library::unread-library
 ---
 
 # Save an accessible item
@@ -9,11 +22,6 @@ availability: [reader-web::personal-library, reader-mobile::personal-library]
 ## Trigger
 
 The Reader chooses to keep an item available in the private library.
-
-## Steps
-
-1. The Reader saves the item
-2. The Product records the saved state independently of reading state
 
 ## Outcome
 

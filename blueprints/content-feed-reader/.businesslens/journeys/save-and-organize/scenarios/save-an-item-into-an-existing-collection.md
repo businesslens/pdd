@@ -1,19 +1,30 @@
 ---
 kind: edge
-actors: [reader]
 result: achieved
 steps:
   - text: The Reader saves the item
+    kind: actor
+    actor: reader
     capability: item-saving
-    routes:
-      web: reader-web::personal-library
-      mobile: reader-mobile::personal-library
+    places:
+      web: reader-web::personal-library::unread-library
+      mobile-to-web: reader-mobile::personal-library::unread-library
   - text: The Reader selects an owned collection
-  - text: The saved item is added at the chosen position
+    kind: actor
+    actor: reader
     capability: collection-organization
-    routes:
-      web: reader-web::personal-library
-      mobile: reader-web::personal-library
+    places:
+      web: reader-web::personal-library::collection-workspace
+      mobile-to-web: reader-web::personal-library::collection-workspace
+  - text: The saved item is added at the chosen position
+    kind: product
+    capability: collection-organization
+    places:
+      web: reader-web::personal-library::collection-workspace
+      mobile-to-web: reader-web::personal-library::collection-workspace
+routes:
+  web: Web
+  mobile-to-web: Mobile to web
 ---
 
 # Save an item into an existing collection

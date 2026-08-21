@@ -62,11 +62,11 @@ the diff.
    run its application, builds, migrations, generators, package scripts, or
    tests. Read source and tests. Verify every declared availability scope
    independently from its Product entry point through any relevant Experience,
-   Capability Scenario, each Capability-bearing Journey Step and its correlated
-   route contexts, and the observable
+   Capability Scenario route, each Capability-bearing Journey Step and its
+   exact Product Places, and the observable
    Journey Scenario outcome.
-   For each Scenario, confirm that every Actor is supported in at least one
-   exact context and every exact context supports at least one named Actor.
+   For each Scenario, confirm that every Actor Step is supported at its Product
+   Places and every derived exact context supports a Scenario Actor.
    Compare the one authored Journey Steps claim directly with repository
    behavior. Shared code does not
    establish Interface parity. Distinguish a missing Interface commitment from

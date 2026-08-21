@@ -83,7 +83,9 @@ not contain another H1 or H2.
 - Actor: required `kind: person|system` and `relationship: external|internal`,
   H1, and lead description. An external system is an Actor only when it
   initiates; a system the Product calls out to is a Capability dependency.
-- Interface: at least one `actors` relation; optional Product-facing
+- Interface: required `type`
+  (`web|mobile-app|desktop-app|cli|api|webhook|messaging|voice|device`), at
+  least one `actors` relation; optional Product-facing
   `entryPoints`; H1, lead description, and `## Capability boundary`. Interfaces
   are inbound. An outbound connection the Product opens is not an Interface:
   model it in the calling Capability, scope availability to where the Actor
@@ -97,14 +99,14 @@ not contain another H1 or H2.
   `domain`; H1 and lead description. Every Capability needs a Capability
   Scenario for every exact availability context: a gap is an error at complete
   coverage and a warning at draft or partial coverage.
-- Capability Scenario: taxonomy `kind`, at least one `actor`,
-  and non-empty exact `availability` supported by that Capability.
+- Capability Scenario: taxonomy `kind`, named `routes`, and ordered typed
+  `steps`. Its parent Capability is implicit on every Step.
 - Domain: H1, lead description, and `## Boundary`; optional `colorSlot`. A Domain
   is a region of subject matter, classifying members of both trees. Only
   Capability authors `domain:`; every other Domain relation is derived.
 - Screen: at least one `capabilities` relation (it has no `availability` — its logical path is the scope);
-  optional `capabilityScenarios`, `journeyScenarios`, and Interface-keyed Product
-  entry points; H1, lead, bullet `## Information presented`, optional bullet
+  optional Interface-keyed Product entry points; H1, lead, bullet
+  `## Information presented`, optional bullet
   `## Available actions`, optional H3 `## Product states`, and
   `## Capability boundary`. Each information or action item occupies one
   physical line. The whole collection is optional.
@@ -115,25 +117,20 @@ not contain another H1 or H2.
   `## Success criterion`. A
   Journey is a stable goal, not a route or Capability wrapper. Every Journey
   needs achieved Journey Scenario coverage for every Journey Actor. It has no
-  `entryPoints`; resolve presentation routes from the first Capability-bearing
-  Step's inline route contexts and the matching Interface or Experience.
-- Journey Scenario: taxonomy `kind`, at least one `actor`,
-  `result: achieved|not-achieved`, and ordered non-empty structured `steps`.
-  Every Step needs one-line `text` and may name a `capability`. A
-  Capability-bearing Step also needs a non-empty `routes` mapping from locally
-  unique route IDs to singular exact contexts supported by that Capability;
-  a Step without a Capability cannot declare routes. Every Capability-bearing
-  Step uses the same route IDs. An achieved Scenario traverses at least two
-  distinct Capabilities.
+  `entryPoints`; resolve presentation routes from the first Actor-owned placed
+  Step's Product Place and its Interface or Experience.
+- Journey Scenario: taxonomy `kind`, `result: achieved|not-achieved`, named
+  `routes`, and ordered non-empty typed `steps`. A Step may name a Capability.
+  An achieved Scenario traverses at least two distinct Capabilities.
 - `coverage.md`: `status`, `method`, `sourceAreas`, `unmapped`, `limitations`,
   H1, and lead rationale with no H2 sections. Status is model breadth only:
   `draft|partial|complete`. A complete model has at least one Capability.
 
-Both Scenario types have no lead prose and require `## Trigger` and
-`## Outcome`. A Capability Scenario also requires ordered Markdown `## Steps`;
-a Journey Scenario authors its Steps in frontmatter and cannot declare that
-section. Optional `## Edge cases` is a non-empty bullet list. Every Markdown
-Steps or Edge cases item occupies one physical line. Journey-only
+Both Scenario types have no lead prose, author `routes` and `steps` in
+frontmatter, require `## Trigger` and `## Outcome`, and forbid Markdown
+`## Steps`. Each structured Step needs single-line `text` and
+`kind: actor|product|condition`; Actor Steps require `actor`, and other kinds
+forbid it. Optional `## Edge cases` is a non-empty single-line bullet list. Journey-only
 Goal and Success criterion sections are invalid on Scenarios, Scenario-only
 sections are invalid on Journeys, and every recognized H2 appears at most once.
 Optional `## Decision points` uses an H3 title, a question, and at least two
@@ -153,7 +150,7 @@ scope either resolves in the tree or it does not. An Interface holds either
 `screens/` or `experiences/`, never both. Availability is intended Product
 scope, not implementation status.
 
-Journey route and Business Rule target contexts name one scope id:
+Business Rule target contexts name one scope id:
 
 ```yaml
 context: reader-web::personal-library
@@ -167,16 +164,19 @@ A Capability plus one of its Capability Scenarios, or a Journey plus one of its
 Journey Scenarios, is redundant and invalid. Domains are derived Rule
 backlinks, not authored targets.
 
-For each Scenario, every exact context must support at least one of its Actors,
-and every named Actor must be supported in at least one exact context. A
-Capability Scenario's availability is a subset of its Capability. Each Journey
-route context is checked independently against its Step Capability, and every
-route starts at the first Capability-bearing Step in a context supporting a
-participating Journey Actor. A Screen's
-Capability Scenario must target one of the Screen's Capabilities and intersect
-the Screen's exact contexts. A Screen's Journey Scenario must have at least one
-Capability-bearing Step whose Capability the Screen names with an intersecting
-inline route context.
+Each Scenario route maps a stable kebab-case id to a human name. A placed Step
+maps every route id to its most-specific Product Place; a Step without
+`places` is shared by all routes and has no Product Place. When a scope owns Screens, the Place must name a Screen;
+otherwise it names the leaf Experience or Interface. Every route is placed at
+least once and no two routes repeat one Place sequence. A Place change between
+consecutive placed Steps is a Product Place transition.
+
+Scenario Actors, exact contexts, Screen participation, and backlinks derive
+from Steps and Places. Every Actor must be supported by at
+least one selected Place and every exact context must support a Scenario Actor.
+A Capability-bearing Place must be inside that Capability's availability, and
+a Screen Place must expose it. Every Journey route begins its Actor-owned
+placed Steps with a Journey Actor. Screens never author Scenario ids.
 
 Every semantic entity may contain optional `references`. Each strict item needs
 `kind: code|spec|proposal|doc|adr|visual|research`,

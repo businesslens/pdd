@@ -1,19 +1,25 @@
 ---
 kind: primary
-actors: [reader]
 result: achieved
 steps:
   - text: Unread items are shown in newest-first order
+    kind: product
   - text: The Reader opens and reads an item
+    kind: actor
+    actor: reader
     capability: content-reading
-    routes:
-      web: reader-web::personal-library
-      mobile: reader-mobile::personal-library
+    places:
+      web: reader-web::personal-library::unread-library
+      mobile: reader-mobile::personal-library::unread-library
   - text: The item is marked read
+    kind: product
     capability: reading-state
-    routes:
-      web: reader-web::personal-library
-      mobile: reader-mobile::personal-library
+    places:
+      web: reader-web::personal-library::unread-library
+      mobile: reader-mobile::personal-library::unread-library
+routes:
+  web: Web
+  mobile: Mobile
 ---
 
 # Work through the unread backlog

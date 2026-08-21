@@ -1,7 +1,25 @@
 ---
 kind: primary
-actors: [reader]
-availability: [reader-web::personal-library, reader-mobile::personal-library]
+routes:
+  web: Web
+  mobile: Mobile
+steps:
+  - text: The Reader marks the item read
+    kind: actor
+    actor: reader
+    places:
+      web: reader-web::personal-library::unread-library
+      mobile: reader-mobile::personal-library::unread-library
+  - text: The Product updates the item's private reading state
+    kind: product
+    places:
+      web: reader-web::personal-library::unread-library
+      mobile: reader-mobile::personal-library::unread-library
+  - text: The unread count decreases
+    kind: condition
+    places:
+      web: reader-web::personal-library::unread-library
+      mobile: reader-mobile::personal-library::unread-library
 ---
 
 # Mark an item read
@@ -9,12 +27,6 @@ availability: [reader-web::personal-library, reader-mobile::personal-library]
 ## Trigger
 
 The Reader finishes an unread library item.
-
-## Steps
-
-1. The Reader marks the item read
-2. The Product updates the item's private reading state
-3. The unread count decreases
 
 ## Outcome
 

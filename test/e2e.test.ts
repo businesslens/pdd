@@ -73,9 +73,9 @@ describe('end to end on a real git repo', () => {
       availability: [
         { interfaceId: 'customer-web', experienceIds: ['customer-web::storefront'] }
       ],
-      capabilityIds: ['catalog-browsing'],
-      capabilityScenarioIds: ['browse-catalog'],
-      journeyScenarioIds: ['browse-and-complete-checkout'],
+      capabilityIds: ['catalog-browsing', 'checkout'],
+      capabilityScenarioIds: ['browse-catalog', 'complete-checkout', 'decline-checkout-payment'],
+      journeyScenarioIds: ['browse-and-complete-checkout', 'cancel-an-order-before-fulfilment'],
       information: ['Product name and description', 'Price and availability']
     })
     expect(screen?.entryPoints.map(point => point.path)).toEqual(['/products/:id'])

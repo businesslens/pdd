@@ -208,6 +208,7 @@ function writeReport(root: string, report: ProductReportV9, hasLogo: boolean): v
     write(
       entityPath(join(root, 'interfaces'), productInterface.id, 'interface', hasChildren),
       frontmatter(compactRecord({
+        type: productInterface.type,
         actors: productInterface.actorIds,
         entryPoints: entryPoints(productInterface.entryPoints),
         references: references(productInterface.references)
@@ -262,8 +263,6 @@ function writeReport(root: string, report: ProductReportV9, hasLogo: boolean): v
       screenPath(root, screen.id),
       frontmatter(compactRecord({
         capabilities: screen.capabilityIds,
-        capabilityScenarios: screen.capabilityScenarioIds,
-        journeyScenarios: screen.journeyScenarioIds,
         entryPoints: entryPoints(screen.entryPoints),
         references: references(screen.references)
       })) + body(
@@ -325,9 +324,6 @@ function writeReport(root: string, report: ProductReportV9, hasLogo: boolean): v
     ).join('\n\n')
     return [
       { heading: 'Trigger', content: scenario.trigger },
-      ...('capabilityId' in scenario
-        ? [{ heading: 'Steps', content: scenario.steps.map((step, index) => `${index + 1}. ${step}`).join('\n') }]
-        : []),
       { heading: 'Decision points', content: decisions },
       { heading: 'Outcome', content: scenario.outcome },
       { heading: 'Edge cases', content: scenario.edgeCases.map(item => `- ${item}`).join('\n') }
@@ -344,8 +340,15 @@ function writeReport(root: string, report: ProductReportV9, hasLogo: boolean): v
       ),
       frontmatter(compactRecord({
         kind: scenario.kindId,
-        actors: scenario.actorIds,
-        availability: availability(scenario.availability),
+        routes: Object.fromEntries(scenario.routes.map(route => [route.id, route.name])),
+        steps: scenario.steps.map(step => compactRecord({
+          text: step.text,
+          kind: step.kind,
+          actor: step.actorId ?? undefined,
+          places: step.places.length
+            ? Object.fromEntries(step.places.map(place => [place.routeId, place.placeId]))
+            : undefined
+        })),
         references: references(scenario.references)
       })) + body(
         scenario.title,
@@ -385,16 +388,15 @@ function writeReport(root: string, report: ProductReportV9, hasLogo: boolean): v
       ),
       frontmatter(compactRecord({
         kind: scenario.kindId,
-        actors: scenario.actorIds,
         result: scenario.result,
+        routes: Object.fromEntries(scenario.routes.map(route => [route.id, route.name])),
         steps: scenario.steps.map(step => compactRecord({
           text: step.text,
+          kind: step.kind,
+          actor: step.actorId ?? undefined,
           capability: step.capabilityId ?? undefined,
-          routes: step.capabilityId
-            ? Object.fromEntries(step.routes.map(route => [
-                route.routeId,
-                route.experienceId ?? route.interfaceId
-              ]))
+          places: step.places.length
+            ? Object.fromEntries(step.places.map(place => [place.routeId, place.placeId]))
             : undefined
         })),
         references: references(scenario.references)

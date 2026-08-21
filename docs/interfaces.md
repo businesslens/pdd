@@ -56,6 +56,7 @@ nested in that folder.
 
 ```md [interfaces/customer-web.md]
 ---
+type: web
 actors: [shopper]
 entryPoints:
   - web: /
@@ -72,6 +73,7 @@ Supports customer shopping. It does not expose store administration.
 
 | Field or section | Required | Constraint |
 | --- | --- | --- |
+| `type` | yes | Use one supported interaction contract: `web`, `mobile-app`, `desktop-app`, `cli`, `api`, `webhook`, `messaging`, `voice`, or `device`. |
 | `actors` | yes | Name at least one existing Actor allowed to use some part of the Interface; do not repeat an ID. |
 | `entryPoints` | no | List Product-facing roots such as `/`, `reader://home`, `product admin`, or `/v1`. |
 | `references` | no | Use the documented [Reference](./references.md) shape. |
@@ -80,6 +82,13 @@ Supports customer shopping. It does not expose store administration.
 | `## Capability boundary` | yes | State what the Interface supports and excludes. |
 
 Every model needs at least one Interface.
+
+The type describes how Actors interact with the Product, not how the Interface
+is implemented. Use `web`, not `react`; use `mobile-app`, not `swift`. One
+Interface has exactly one type. If two interaction contracts can be supported
+and verified independently, model them as separate Interfaces. The Product
+Report uses this authored value for its Interface icons and labels; it never
+guesses from an Interface id or title.
 
 An Interface does not declare one access mode: the same web application can
 contain public and restricted Experiences. It also has no success exit;

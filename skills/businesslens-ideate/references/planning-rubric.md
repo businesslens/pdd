@@ -12,7 +12,9 @@
   classify each as person/system and internal/external.
 - Interfaces are supported interaction contracts. Decide web, mobile, CLI,
   partner API, and integration commitments independently; internal APIs and
-  frameworks are not Product Interfaces.
+  frameworks are not Product Interfaces. Give each Interface exactly one
+  authored interaction type; use the contract (`web`, `mobile-app`, `cli`,
+  `api`, and so on), not its implementation technology.
 - Experiences are optional coherent Actor contexts with stable audience,
   access, and capability boundaries across Interfaces. Omit them when an
   Interface is already one coherent context. A page or command group alone is
@@ -29,16 +31,16 @@
   Experience where those contexts exist.
 - Business rules are reusable policies or invariants with typed behavioral or
   exact-context targets. Derive Domain backlinks instead of targeting Domains.
-- Capability Scenarios express observable acceptance for one Capability and
-  exact Actor contexts. Every Capability needs at least one; cover primary,
+- Capability Scenarios express observable acceptance for one Capability with
+  typed Actor/Product/condition Steps and named Product Place routes. Every Capability needs at least one; cover primary,
   permission, validation, conflict, and external-failure behavior where the
   product distinguishes them.
 - Journeys express stable user or operator goals whose achieved paths cross at
   least two distinct Capabilities. Do not create a Journey to house acceptance
   for one Capability.
 - Journey Scenarios express observable paths through a goal. Write one ordered
-  Steps list, annotate the Steps that exercise locally identified Capabilities,
-  and carry one exact context per route inline on each such Step.
+  typed Steps list, annotate responsible Actors and Steps that exercise locally
+  identified Capabilities, and place every named route at its exact Product Place.
 - Use a decision point only when branches converge on the same result without
   changing the Capability sequence. Otherwise write separate Scenarios.
 - Record intent where the reason behind a boundary or behavior will guide
@@ -48,10 +50,10 @@
 
 ## Scenarios are the acceptance contract
 
-Write Trigger, ordered Steps, Decision points when a linear sequence branches,
-and Outcome so a reviewer can compare source behavior without executing it. A
-Journey Scenario authors this sequence once in structured frontmatter; Steps
-that express a seam or condition may omit Capability and route annotations.
+Write Trigger, ordered typed Steps, Decision points when a linear sequence branches,
+and Outcome so a reviewer can compare source behavior without executing it.
+Both Scenario types author this sequence once in structured frontmatter; Steps
+that apply to all routes may omit `places`, and Journey Steps may omit Capability.
 
 - Good: “Submitting an empty cart shows an error and keeps the cart.”
 - Too vague: “Cart validation works.”

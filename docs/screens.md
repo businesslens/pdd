@@ -50,8 +50,6 @@ expands to `<screen-id>/screen.md`. The whole Screen collection is optional.
 ```md [screens/product-record.md]
 ---
 capabilities: [catalog-browsing]
-capabilityScenarios: [browse-catalog]
-journeyScenarios: [browse-and-complete-checkout]
 entryPoints:
   - customer-web: /products/:id
   - customer-mobile: shop://products/:id
@@ -89,8 +87,6 @@ The Screen does not change product or inventory data.
 | Field or section | Required | Constraint |
 | --- | --- | --- |
 | `capabilities` | yes | Name at least one unique existing Capability; each must declare the scope that holds this Screen. |
-| `capabilityScenarios` | no | Name unique local Capability cases in which the Screen participates. |
-| `journeyScenarios` | no | Name unique end-to-end Journey variations in which the Screen participates. |
 | `entryPoints` | no | Key public routes or deep links by the Interface that holds this Screen. |
 | `references` | no | Use the documented [Reference](./references.md) shape. |
 | H1 and lead paragraph | yes | Name the Screen and describe its Product purpose. |
@@ -99,11 +95,10 @@ The Screen does not change product or inventory data.
 | `## Product states` | no | Give every H3 state a description. |
 | `## Capability boundary` | yes | State what the Screen supports and excludes. |
 
-A referenced Capability Scenario must use a Capability named by the Screen and
-share at least one exact availability context with it. A referenced Journey
-Scenario must have a Capability-bearing Step whose Capability is named by the
-Screen and at least one inline route context for that Step intersecting the
-Screen's availability.
+Screens do not list Scenarios. A Scenario participates in a Screen when one of
+its Steps names that Screen as a route's exact Product Place. When that Step
+names a Capability, the Screen must expose it. Consumers derive both Capability
+Scenario and Journey Scenario backlinks from those Step Places.
 
 ## Web and mobile
 

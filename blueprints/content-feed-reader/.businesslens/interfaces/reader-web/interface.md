@@ -1,4 +1,5 @@
 ---
+type: web
 actors: [reader, visitor]
 entryPoints:
   - web: /

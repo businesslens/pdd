@@ -67,13 +67,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **A Journey Scenario has one Steps sequence.** One ordered structured `steps` list
-  now carries each sentence plus optional Capability and inline route-context
-  annotations. The separate `flow`, `operation`, stage ids, top-level `routes`,
-  and Markdown `## Steps` are removed, eliminating two authored sequences that
-  could disagree. Conditions and seams remain first-class Steps without a
-  Capability. This deliberately breaks Product Report schema v9 in place; no
+- **Capability and Journey Scenarios share one route-and-Steps model.** Every
+  Scenario now owns named `routes` and one ordered, typed `steps` list. An Actor
+  Step names its responsible Actor, a Journey Step may name its Capability, and
+  a placed Step maps every route to its exact Interface, Experience, or Screen.
+  Route-neutral Steps remain first-class without a Place. The separate Journey
+  `flow`, `operation`, stage ids, per-Step route objects, Scenario-wide Actors
+  and availability, authored Screen Scenario backlinks, and Markdown `## Steps`
+  are removed. This deliberately breaks Product Report schema v9 in place; no
   compatibility reader or v10 is added.
+- Every Interface now declares one required interaction `type` (`web`,
+  `mobile-app`, `desktop-app`, `cli`, `api`, `webhook`, `messaging`, `voice`,
+  or `device`). Reports preserve it directly and use it to distinguish
+  Interface contexts visually instead of guessing from ids or route names.
 - A Journey Step names a durable Capability, never a Capability Scenario, while
   its text states the concrete observable action or condition. Capability
   Scenarios may split and merge without leaving dangling Journey composition
@@ -85,6 +91,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   narrower Capability-composition question. Outside visible Domain groupings,
   Capability nodes use the consistent Capability color rather than inheriting
   a Domain color that could be mistaken for status.
+- **Capability and Journey Scenarios share one Steps treatment.** Both render
+  the same Step-by-route matrix. Columns use the authored route name and stable
+  order; placed cells show the exact typed Interface → Experience → Screen
+  hierarchy. Step-kind labels explain Actor actions, Product actions, and
+  conditions; Capability labels appear only where they discriminate Journey
+  Steps. Steps without a Place and Product Place transitions are described in
+  plain language, without exposing internal route ids.
 - **The report navigation rail lists kinds, flat.** Kinds do not nest —
   instances do — so both Scenario kinds leave the rail and become a tab on the
   Capability or Journey that owns them, which is the resolution the

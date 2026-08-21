@@ -20,7 +20,7 @@ import type {
   ScenarioView,
   ScreenView
 } from '../utils/reportWorkspace'
-import { isScenarioKind, journeyStepMatrix } from '../utils/reportWorkspace'
+import { isScenarioKind, resolveEntity, scenarioStepMatrix } from '../utils/reportWorkspace'
 
 const props = defineProps<{
   workspace: ReportWorkspace
@@ -46,18 +46,49 @@ const domainId = computed(() => props.entity.kind === 'capability'
   ? (props.entity as CapabilityView).domainId
   : '')
 
-/* One authored Journey sequence, with route contexts projected into columns. */
-const stepMatrix = computed(() => (isScenario.value ? journeyStepMatrix(asScenario.value) : null))
+/* One authored Scenario sequence, with named Product Place routes as columns. */
+const stepMatrix = computed(() => (isScenario.value ? scenarioStepMatrix(asScenario.value) : null))
 
-/** One route needs no column heading to tell it apart, so its id rides the heading. */
+/**
+ * Both Scenario types use the same named-route model and the same table.
+ */
 const stepMeta = computed(() => {
   const matrix = stepMatrix.value
-  if (!matrix) return ''
-  const steps = `${matrix.steps.length} ${matrix.steps.length === 1 ? 'step' : 'steps'}`
-  return matrix.routeIds.length === 1
-    ? `${steps} · route ${matrix.routeIds[0]}`
-    : `${steps} · ${matrix.routeIds.length} routes`
+  const stepCount = asScenario.value.steps.length
+  const steps = `${stepCount} ${stepCount === 1 ? 'step' : 'steps'}`
+  if (!matrix) return steps
+  return `${steps} · ${matrix.routes.length} ${matrix.routes.length === 1 ? 'route' : 'routes'}`
 })
+
+const stepKindIcon = (kind: 'actor' | 'product' | 'condition') => ({
+  actor: 'i-lucide-user-round',
+  product: 'i-lucide-cpu',
+  condition: 'i-lucide-circle-dot-dashed'
+})[kind]
+
+const stepKindLabel = (kind: 'actor' | 'product' | 'condition') => ({
+  actor: 'Actor action',
+  product: 'Product action',
+  condition: 'Condition'
+})[kind]
+
+const stepKindDescription = (kind: 'actor' | 'product' | 'condition') => ({
+  actor: 'Performed by the named Actor',
+  product: 'Performed by the Product; no Actor is assigned',
+  condition: 'An observable fact or state; nobody performs it'
+})[kind]
+
+const stepActor = (actorId: string | undefined) => actorId
+  ? resolveEntity(props.workspace, 'actor', actorId)
+  : undefined
+
+const selectStepActor = (actorId: string | undefined) => {
+  const actor = stepActor(actorId)
+  if (actor) emit('select', actor)
+}
+
+const placeLabel = (place: { screenTitle: string, experienceTitle: string, interfaceTitle: string }) =>
+  place.screenTitle || place.experienceTitle || place.interfaceTitle
 
 /** True when this component would render nothing at all. */
 const empty = computed(() => !props.entity.intent
@@ -105,16 +136,34 @@ const empty = computed(() => !props.entity.intent
         <BlrProse :text="asScenario.trigger" size="base" class="max-w-3xl" />
       </section>
 
-      <!-- One authored Journey sequence: prose, Capability and route stay in one row. -->
+      <!-- One authored Scenario sequence: meaning and exact Product Places stay together. -->
       <section v-if="stepMatrix" class="space-y-3">
         <h2 class="blr-page-heading">Steps <span class="blr-meta ms-1">{{ stepMeta }}</span></h2>
         <div class="overflow-x-auto rounded-xl border border-default">
-          <table class="w-full border-collapse text-left">
-            <thead v-if="stepMatrix.routeIds.length > 1">
+          <table
+            class="w-full border-collapse text-left"
+            :style="{ minWidth: `${320 + stepMatrix.routes.length * 310}px` }"
+          >
+            <thead>
               <tr class="border-b border-default bg-elevated/35">
-                <th scope="col" class="blr-field px-4 py-2.5 font-normal">Step</th>
-                <th v-for="routeId in stepMatrix.routeIds" :key="routeId" scope="col" class="px-4 py-2.5">
-                  <code class="rounded bg-muted px-2 py-1 font-mono text-xs text-muted">{{ routeId }}</code>
+                <th
+                  scope="col"
+                  class="blr-field sticky left-0 z-20 w-80 min-w-80 border-e border-default bg-elevated px-4 py-2.5 font-normal"
+                >
+                  Step
+                </th>
+                <th
+                  v-for="route in stepMatrix.routes"
+                  :key="route.id"
+                  scope="col"
+                  class="w-[310px] min-w-[310px] px-4 py-2.5"
+                >
+                  <div class="flex items-center gap-2 whitespace-nowrap">
+                    <UTooltip text="Named route — one way this Scenario can run" :delay-duration="150">
+                      <UIcon name="i-lucide-route" class="size-3.5 text-dimmed" />
+                    </UTooltip>
+                    <span class="text-xs font-medium text-default">{{ route.name }}</span>
+                  </div>
                 </th>
               </tr>
             </thead>
@@ -124,10 +173,29 @@ const empty = computed(() => !props.entity.intent
                 :key="step.index"
                 class="border-b border-default align-top last:border-b-0"
               >
-                <th scope="row" class="max-w-sm px-4 py-3 font-normal">
+                <th
+                  scope="row"
+                  class="sticky left-0 z-10 w-80 min-w-80 border-e border-default bg-default px-4 py-3 font-normal"
+                >
                   <p class="text-sm font-medium text-highlighted">{{ step.index + 1 }}. {{ step.text }}</p>
+                  <UTooltip :text="stepKindDescription(step.stepKind)" :delay-duration="150">
+                    <span class="blr-meta mt-1 inline-flex items-center gap-1.5">
+                      <UIcon :name="stepKindIcon(step.stepKind)" class="size-3.5 shrink-0" />
+                      <template v-if="step.stepKind === 'actor' && stepActor(step.actorId)">
+                        <button
+                          type="button"
+                          class="text-default underline decoration-(--ui-border-accented) underline-offset-3 transition-colors hover:text-highlighted hover:decoration-(--ui-text-dimmed)"
+                          @click="selectStepActor(step.actorId)"
+                        >
+                          {{ stepActor(step.actorId)?.title }}
+                        </button>
+                        action
+                      </template>
+                      <template v-else>{{ stepKindLabel(step.stepKind) }}</template>
+                    </span>
+                  </UTooltip>
                   <BlrLinks
-                    v-if="step.capabilityId"
+                    v-if="asScenario.scenarioType === 'journey' && step.capabilityId"
                     :workspace="workspace"
                     :ids="[step.capabilityId]"
                     kind="capability"
@@ -136,25 +204,43 @@ const empty = computed(() => !props.entity.intent
                     @select="emit('select', $event)"
                   />
                 </th>
-                <td v-for="cell in step.cells" :key="cell.routeId" class="px-4 py-3">
-                  <p v-if="cell.handoff" class="blr-meta mb-1.5 flex items-center gap-1 text-primary">
-                    <UIcon name="i-lucide-corner-down-right" class="size-3" />handoff
-                  </p>
-                  <BlrAvail :pairs="cell.context ? [cell.context] : []" label="" />
+                <td
+                  v-if="step.routeNeutral"
+                  :colspan="stepMatrix.routes.length"
+                  class="px-4 py-3 align-middle"
+                >
+                  <UTooltip
+                    text="This Step is shared by every route and is not assigned to an Interface, Experience, or Screen"
+                    :delay-duration="150"
+                  >
+                    <p class="blr-meta flex items-center gap-1.5">
+                      <UIcon name="i-lucide-align-justify" class="size-3.5" />
+                      No Product Place — same Step on every route
+                    </p>
+                  </UTooltip>
+                </td>
+                <td v-for="cell in step.routeNeutral ? [] : step.cells" :key="cell.routeId" class="px-4 py-3">
+                  <UTooltip
+                    v-if="cell.placeChanged && cell.previousPlace"
+                    text="This route continues at a different Product Place than its previous placed Step"
+                    :delay-duration="150"
+                  >
+                    <p class="blr-meta mb-1.5 flex items-center gap-1 text-primary">
+                      <UIcon name="i-lucide-corner-down-right" class="size-3" />
+                      Moved from {{ placeLabel(cell.previousPlace) }}
+                    </p>
+                  </UTooltip>
+                  <BlrStepContext
+                    v-if="cell.place"
+                    :workspace="workspace"
+                    :place="cell.place"
+                    @select="emit('select', $event)"
+                  />
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-      </section>
-
-      <section v-else class="space-y-3">
-        <h2 class="blr-page-heading">Steps</h2>
-        <ol class="max-w-3xl list-decimal space-y-2 ps-5 marker:font-mono marker:text-xs marker:text-dimmed">
-          <li v-for="(step, index) in asScenario.steps" :key="index" class="ps-1 text-sm leading-6 text-default">
-            {{ step.text }}
-          </li>
-        </ol>
       </section>
 
       <section v-if="asScenario.decisionPoints.length" class="space-y-3">

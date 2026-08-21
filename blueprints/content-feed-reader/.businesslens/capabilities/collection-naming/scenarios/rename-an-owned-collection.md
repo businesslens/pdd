@@ -1,7 +1,21 @@
 ---
 kind: primary
-actors: [reader]
-availability: [reader-web::personal-library]
+routes:
+  web: Web
+steps:
+  - text: The Product confirms collection ownership
+    kind: product
+    places:
+      web: reader-web::personal-library::collection-workspace
+  - text: The Reader provides the replacement name
+    kind: actor
+    actor: reader
+    places:
+      web: reader-web::personal-library::collection-workspace
+  - text: The Product preserves the collection's items and order under the new name
+    kind: product
+    places:
+      web: reader-web::personal-library::collection-workspace
 ---
 
 # Rename an owned collection
@@ -9,12 +23,6 @@ availability: [reader-web::personal-library]
 ## Trigger
 
 The Reader changes the name of an owned collection.
-
-## Steps
-
-1. The Product confirms collection ownership
-2. The Reader provides the replacement name
-3. The Product preserves the collection's items and order under the new name
 
 ## Outcome
 

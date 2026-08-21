@@ -1,7 +1,30 @@
 ---
 kind: validation
-actors: [reader]
-availability: [reader-web::personal-library, reader-mobile::personal-library]
+routes:
+  web: Web
+  mobile: Mobile
+steps:
+  - text: The Reader submits an address that does not return a supported feed.
+    kind: actor
+    actor: reader
+    places:
+      web: reader-web::personal-library::source-list
+      mobile: reader-mobile::personal-library::source-list
+  - text: The Product inspects the submitted address
+    kind: product
+    places:
+      web: reader-web::personal-library::source-list
+      mobile: reader-mobile::personal-library::source-list
+  - text: No supported feed is found
+    kind: condition
+    places:
+      web: reader-web::personal-library::source-list
+      mobile: reader-mobile::personal-library::source-list
+  - text: The Product explains that the address cannot be followed
+    kind: product
+    places:
+      web: reader-web::personal-library::source-list
+      mobile: reader-mobile::personal-library::source-list
 ---
 
 # Reject an address with no readable feed
@@ -9,12 +32,6 @@ availability: [reader-web::personal-library, reader-mobile::personal-library]
 ## Trigger
 
 The Reader submits an address that does not return a supported feed.
-
-## Steps
-
-1. The Product inspects the submitted address
-2. No supported feed is found
-3. The Product explains that the address cannot be followed
 
 ## Outcome
 

@@ -6,7 +6,7 @@
  * thing that made the old peek hard to trust.
  */
 import type { AnyEntityView, ReportEntityKind, ReportWorkspace } from './model'
-import { resolveEntity } from './model'
+import { INTERFACE_TYPE_META, resolveEntity } from './model'
 
 export interface EntityFact {
   label: string
@@ -38,11 +38,15 @@ export function entityFacts(workspace: ReportWorkspace, entity: AnyEntityView): 
       ]
     }
     case 'interface': {
-      const item = entity as { experienceIds: string[], screenIds: string[], entryPoints: unknown[] }
+      const item = entity as {
+        interfaceType: keyof typeof INTERFACE_TYPE_META
+        experienceIds: string[]
+        screenIds: string[]
+      }
       return [
+        { label: 'Type', value: INTERFACE_TYPE_META[item.interfaceType].label },
         { label: 'Experiences', value: String(item.experienceIds.length) },
-        { label: 'Screens', value: String(item.screenIds.length) },
-        { label: 'Entry points', value: String(item.entryPoints.length) }
+        { label: 'Screens', value: String(item.screenIds.length) }
       ]
     }
     case 'experience': {

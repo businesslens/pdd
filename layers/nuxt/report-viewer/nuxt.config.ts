@@ -17,6 +17,9 @@ export default defineNuxtConfig({
   icon: {
     clientBundle: {
       icons: [
+        'lucide:align-justify',
+        'lucide:app-window',
+        'lucide:audio-lines',
         'lucide:arrow-down',
         'lucide:arrow-left',
         'lucide:arrow-right',
@@ -24,10 +27,13 @@ export default defineNuxtConfig({
         'lucide:arrow-up-down',
         'lucide:book-open',
         'lucide:boxes',
+        'lucide:braces',
         'lucide:chevron-down',
         'lucide:chevron-right',
         'lucide:chevron-up',
+        'lucide:circle-dot-dashed',
         'lucide:corner-down-right',
+        'lucide:cpu',
         'lucide:file-code',
         'lucide:file-diff',
         'lucide:file-text',
@@ -35,6 +41,7 @@ export default defineNuxtConfig({
         'lucide:focus',
         'lucide:gavel',
         'lucide:git-branch',
+        'lucide:globe',
         'lucide:image',
         'lucide:layout-grid',
         'lucide:layout-list',
@@ -46,6 +53,7 @@ export default defineNuxtConfig({
         'lucide:list-ordered',
         'lucide:minus',
         'lucide:microscope',
+        'lucide:messages-square',
         'lucide:menu',
         'lucide:monitor',
         'lucide:mouse-pointer-click',
@@ -58,9 +66,13 @@ export default defineNuxtConfig({
         'lucide:scale',
         'lucide:scan',
         'lucide:search',
+        'lucide:smartphone',
         'lucide:table',
+        'lucide:terminal',
+        'lucide:user-round',
         'lucide:users',
         'lucide:waypoints',
+        'lucide:webhook',
         'lucide:x',
         'lucide:zap'
       ]

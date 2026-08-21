@@ -21,7 +21,8 @@
 - Interfaces are supported interaction contracts such as customer web, reader
   mobile, operator CLI, or partner API—not every deployable or internal API.
   Interfaces are inbound; an inbound webhook or callback endpoint qualifies and
-  makes its caller an Actor.
+  makes its caller an Actor. Assign the authored interaction type that matches
+  the contract; never infer it from technology, naming, or implementation.
 - Experiences are optional coherent Actor contexts with stable access and
   capability boundaries across one or more Interfaces. Omit them when an
   Interface is already one coherent context; do not equate them with a page,
@@ -38,14 +39,15 @@
   the repository supports that claim.
 - Business rules are reusable policies or invariants with typed behavioral or
   exact-context targets. Derive Domain backlinks instead of targeting Domains.
-- Capability Scenarios state observable acceptance for one Capability in exact
-  Actor contexts. Cover primary, permission, validation, conflict, and
-  external-failure behavior only where it differs.
+- Capability Scenarios state observable acceptance for one Capability through
+  typed Steps and named routes of exact Product Places. Cover primary,
+  permission, validation, conflict, and external-failure behavior only where it differs.
 - Journeys represent stable user or operator goals, never a wrapper for one
   Capability. Omit Journeys when no established goal crosses Capabilities.
 - Journey Scenarios are observable paths through a goal. Write one ordered
-  Steps list, annotate the Steps that exercise locally identified Capabilities,
-  and carry one exact context per route inline on each such Step. An achieved path must
+  typed Steps list, annotate responsible Actors and the Steps that exercise
+  locally identified Capabilities, and place every named route at its exact
+  Product Place. An achieved path must
   traverse at least two distinct Capabilities.
 - Add a decision point only when branches converge on one result without
   changing the Capability sequence. Otherwise write separate Scenarios.

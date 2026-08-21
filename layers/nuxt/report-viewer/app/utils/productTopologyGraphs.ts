@@ -233,7 +233,7 @@ export function buildValuePaths(
     nodes.push(entityNode(scenario, { selected: options.selectedId === scenario.key }))
     edges.push(relationEdge({ source: journey.key, target: scenario.key, label: 'varies as' }))
     let previous = scenario.key
-    const stepAnchors: Array<{ nodeId: string, capabilityId: string, contextKeys: string[] }> = []
+    const stepAnchors: Array<{ nodeId: string, capabilityId: string, screenIds: string[] }> = []
 
     scenario.steps.forEach((step, index) => {
       if (!step.capabilityId) return
@@ -258,24 +258,17 @@ export function buildValuePaths(
       stepAnchors.push({
         nodeId: occurrenceId,
         capabilityId: step.capabilityId,
-        contextKeys: step.routes.map(route => route.context.key)
+        screenIds: step.places.flatMap(place => place.place.screenId ? [place.place.screenId] : [])
       })
     })
 
-    /*
-      A Screen is authored against the whole Scenario, not one Step. Hanging it
-      off the final Step reads as "this Step lands here", which is false as
-      soon as the path ends somewhere non-visual — a feed integration Step
-      would appear to land on a Reader Screen it shares no context with. Anchor
-      on the last Capability-bearing Step that exposes the Screen, and fall back
-      to the Scenario when no Step does.
-    */
+    /* A Screen Place belongs to one exact Step. Anchor the Screen on the last
+       Capability-bearing Step that names it, and fall back to the Scenario only
+       for an invalid or externally supplied report that lacks that placement. */
     for (const screen of workspace.screens.filter(item => item.journeyScenarioIds.includes(scenario.id))) {
       screens.set(screen.key, screen)
-      const contexts = new Set(screen.availability.map(pair => pair.key))
       const anchor = [...stepAnchors].reverse().find(step =>
-        screen.capabilityIds.includes(step.capabilityId)
-        && step.contextKeys.some(key => contexts.has(key)))
+        screen.capabilityIds.includes(step.capabilityId) && step.screenIds.includes(screen.id))
       edges.push(relationEdge({
         source: anchor?.nodeId ?? scenario.key,
         target: screen.key,

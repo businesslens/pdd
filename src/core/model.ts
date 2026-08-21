@@ -8,7 +8,6 @@ import {
   availabilityField,
   entryPointsField,
   scopeField,
-  scopeListField,
   referencesField,
   rejectUnknownKeys,
   splitFrontmatter,
@@ -19,7 +18,7 @@ import {
 import { counterpartKey, interfaceOf, qualify } from './ids.js'
 import { readProductLogo } from './logo-file.js'
 import {
-  bulletList, containsStructuralHeading, decisionPoints, orderedList, parseMarkdown, screenStates, section
+  bulletList, containsStructuralHeading, decisionPoints, parseMarkdown, screenStates, section
 } from './markdown.js'
 
 export interface EntityFile {
@@ -50,6 +49,7 @@ export interface ActorEntity extends EntityFile {
 }
 
 export interface InterfaceEntity extends EntityFile {
+  type: string
   actors: string[]
   entryPoints: CompactEntryPoint[]
   capabilityBoundary: string
@@ -83,8 +83,6 @@ export interface ScreenEntity extends EntityFile {
   scope: Scope
   availability: Scope[]
   capabilities: string[]
-  capabilityScenarios: string[]
-  journeyScenarios: string[]
   entryPoints: CompactEntryPoint[]
   information: string[]
   actions: string[]
@@ -94,7 +92,8 @@ export interface ScreenEntity extends EntityFile {
 
 interface ScenarioEntity extends EntityFile {
   kind: string
-  actors: string[]
+  routes: ScenarioRoute[]
+  steps: ScenarioStep[]
   trigger: string
   outcome: string
   edgeCases: string[]
@@ -104,29 +103,35 @@ interface ScenarioEntity extends EntityFile {
 export interface CapabilityScenarioEntity extends ScenarioEntity {
   /** The Capability that owns it, read from the path. Never authored. */
   capability: string
-  availability: Scope[]
-  steps: string[]
 }
 
 /** One exact context is one scope id. */
 export type ExactContext = Scope
 
-export interface JourneyStepRoute {
+export interface ScenarioRoute {
   id: string
-  context: Scope
+  name: string
 }
 
-export interface JourneyStep {
+export type ScenarioStepKind = 'actor' | 'product' | 'condition'
+
+export interface ScenarioStepPlace {
+  routeId: string
+  placeId: string
+}
+
+export interface ScenarioStep {
   text: string
+  kind: string
+  actor?: string
   capability?: string
-  routes: JourneyStepRoute[]
+  places: ScenarioStepPlace[]
 }
 
 export interface JourneyScenarioEntity extends ScenarioEntity {
   /** The Journey that owns it, read from the path. Never authored. */
   journey: string
   result: string
-  steps: JourneyStep[]
 }
 
 export interface JourneyEntity extends EntityFile {
@@ -367,18 +372,38 @@ function readScenarioSections(doc: MarkdownDoc, issues: string[], file: string) 
   }
 }
 
-function journeyStepsField(
+function scenarioRoutesField(
   data: Record<string, unknown>,
   issues: string[],
   label: string
-): JourneyStep[] {
+): ScenarioRoute[] {
+  const value = data.routes
+  if (value === undefined || value === null) return []
+  if (typeof value !== 'object' || Array.isArray(value)) {
+    issues.push(`${label}: "routes" must be a mapping from route id to route name`)
+    return []
+  }
+  const routes: ScenarioRoute[] = []
+  for (const [id, rawName] of Object.entries(value as Record<string, unknown>)) {
+    const name = stringField({ name: rawName }, 'name', issues, `${label}: route "${id}"`)
+    routes.push({ id, name: name || '' })
+  }
+  return routes
+}
+
+function scenarioStepsField(
+  data: Record<string, unknown>,
+  issues: string[],
+  label: string,
+  allowCapability: boolean
+): ScenarioStep[] {
   const value = data.steps
   if (value === undefined || value === null) return []
   if (!Array.isArray(value)) {
     issues.push(`${label}: "steps" must be a list`)
     return []
   }
-  const steps: JourneyStep[] = []
+  const steps: ScenarioStep[] = []
   for (const [index, raw] of value.entries()) {
     const itemLabel = `${label}: step ${index + 1}`
     if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
@@ -386,22 +411,24 @@ function journeyStepsField(
       continue
     }
     const item = raw as Record<string, unknown>
-    rejectUnknownKeys(item, ['text', 'capability', 'routes'], issues, itemLabel)
-    const routes: JourneyStepRoute[] = []
-    if (item.routes !== undefined && item.routes !== null) {
-      if (typeof item.routes !== 'object' || Array.isArray(item.routes)) {
-        issues.push(`${itemLabel}: "routes" must be a mapping from route id to exact context`)
+    rejectUnknownKeys(item, ['text', 'kind', 'actor', 'places', ...(allowCapability ? ['capability'] : [])], issues, itemLabel)
+    const places: ScenarioStepPlace[] = []
+    if (item.places !== undefined && item.places !== null) {
+      if (typeof item.places !== 'object' || Array.isArray(item.places)) {
+        issues.push(`${itemLabel}: "places" must be a mapping from route id to Product Place id`)
       } else {
-        for (const [id, rawContext] of Object.entries(item.routes as Record<string, unknown>)) {
-          const context = scopeField({ context: rawContext }, 'context', issues, `${itemLabel}: route "${id}"`)
-          if (context) routes.push({ id, context })
+        for (const [routeId, rawPlace] of Object.entries(item.places as Record<string, unknown>)) {
+          const placeId = stringField({ place: rawPlace }, 'place', issues, `${itemLabel}: route "${routeId}"`)
+          if (placeId) places.push({ routeId, placeId })
         }
       }
     }
     steps.push({
       text: stringField(item, 'text', issues, itemLabel) || '',
-      capability: stringField(item, 'capability', issues, itemLabel),
-      routes
+      kind: stringField(item, 'kind', issues, itemLabel) || '',
+      actor: stringField(item, 'actor', issues, itemLabel),
+      capability: allowCapability ? stringField(item, 'capability', issues, itemLabel) : undefined,
+      places
     })
   }
   return steps
@@ -687,7 +714,7 @@ export function loadModel(cwd: string): PddModel {
     for (const location of listEntities(join(parent, 'screens'), 'screen', issues, `${label}/screens`)) {
       const { data, doc, references, directory, assets, assetMeta } = readEntity(
         location,
-        ['capabilities', 'capabilityScenarios', 'journeyScenarios', 'entryPoints', 'availability'],
+        ['capabilities', 'entryPoints'],
         issues
       )
       screens.push({
@@ -703,8 +730,6 @@ export function loadModel(cwd: string): PddModel {
         // single-element list so every consumer keeps one shape.
         availability: [scope],
         capabilities: uniqueStringListField(data, 'capabilities', issues, location.file),
-        capabilityScenarios: uniqueStringListField(data, 'capabilityScenarios', issues, location.file),
-        journeyScenarios: uniqueStringListField(data, 'journeyScenarios', issues, location.file),
         entryPoints: entryPointsField(data, issues, location.file),
         information: bulletList(section(doc, 'Information presented') || ''),
         actions: bulletList(section(doc, 'Available actions') || ''),
@@ -723,7 +748,7 @@ export function loadModel(cwd: string): PddModel {
   )) {
     const { data, doc, references, directory, assets, assetMeta } = readEntity(
       productInterface,
-      ['actors', 'entryPoints', 'screens'],
+      ['type', 'actors', 'entryPoints', 'screens'],
       issues
     )
     interfaces.push({
@@ -734,6 +759,7 @@ export function loadModel(cwd: string): PddModel {
       directory,
       assets,
       assetMeta,
+      type: stringField(data, 'type', issues, productInterface.file) || '',
       actors: uniqueStringListField(data, 'actors', issues, productInterface.file),
       entryPoints: entryPointsField(data, issues, productInterface.file),
       capabilityBoundary: section(doc, 'Capability boundary') || '',
@@ -820,7 +846,7 @@ export function loadModel(cwd: string): PddModel {
       issues,
       `capabilities/${location.id}/scenarios`
     )) {
-      const parsed = readEntity(scenario, ['kind', 'actors', 'availability'], issues)
+      const parsed = readEntity(scenario, ['kind', 'routes', 'steps'], issues)
       capabilityScenarios.push({
         id: scenario.id,
         file: scenario.file,
@@ -831,9 +857,8 @@ export function loadModel(cwd: string): PddModel {
         assetMeta: parsed.assetMeta,
         kind: stringField(parsed.data, 'kind', issues, scenario.file) || '',
         capability: location.id,
-        actors: uniqueStringListField(parsed.data, 'actors', issues, scenario.file),
-        availability: availabilityField(parsed.data, issues, scenario.file),
-        steps: orderedList(section(parsed.doc, 'Steps') || ''),
+        routes: scenarioRoutesField(parsed.data, issues, scenario.file),
+        steps: scenarioStepsField(parsed.data, issues, scenario.file, false),
         ...readScenarioSections(parsed.doc, issues, scenario.file)
       })
     }
@@ -867,18 +892,7 @@ export function loadModel(cwd: string): PddModel {
       issues,
       `journeys/${location.id}/scenarios`
     )) {
-      const parsed = readEntity(scenario, ['kind', 'actors', 'result', 'steps', 'flow', 'routes'], issues)
-      if (parsed.data.flow !== undefined) {
-        issues.push(`${scenario.file}: "flow" is no longer supported; use the frontmatter "steps" list`)
-        if (Array.isArray(parsed.data.flow) && parsed.data.flow.some(item =>
-          typeof item === 'object' && item !== null && !Array.isArray(item) && 'operation' in item
-        )) {
-          issues.push(`${scenario.file}: "operation" is no longer supported; put each sentence in "steps[].text"`)
-        }
-      }
-      if (parsed.data.routes !== undefined) {
-        issues.push(`${scenario.file}: top-level "routes" is no longer supported; put route contexts inside each Capability-bearing step`)
-      }
+      const parsed = readEntity(scenario, ['kind', 'result', 'routes', 'steps'], issues)
       journeyScenarios.push({
         id: scenario.id,
         file: scenario.file,
@@ -889,9 +903,9 @@ export function loadModel(cwd: string): PddModel {
         assetMeta: parsed.assetMeta,
         kind: stringField(parsed.data, 'kind', issues, scenario.file) || '',
         journey: location.id,
-        actors: uniqueStringListField(parsed.data, 'actors', issues, scenario.file),
         result: stringField(parsed.data, 'result', issues, scenario.file) || '',
-        steps: journeyStepsField(parsed.data, issues, scenario.file),
+        routes: scenarioRoutesField(parsed.data, issues, scenario.file),
+        steps: scenarioStepsField(parsed.data, issues, scenario.file, true),
         ...readScenarioSections(parsed.doc, issues, scenario.file)
       })
     }

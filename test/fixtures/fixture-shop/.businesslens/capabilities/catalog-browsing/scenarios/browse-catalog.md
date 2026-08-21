@@ -1,6 +1,20 @@
 ---
 kind: primary
-actors: [shopper]
+routes:
+  web: Web
+  mobile: Mobile
+steps:
+  - text: The catalog is listed
+    kind: product
+    places:
+      web: customer-web::storefront::product-record
+      mobile: customer-mobile::storefront::product-record
+  - text: The shopper opens a product page
+    kind: actor
+    actor: shopper
+    places:
+      web: customer-web::storefront::product-record
+      mobile: customer-mobile::storefront::product-record
 references:
   - kind: code
     role: implementation
@@ -8,7 +22,6 @@ references:
   - kind: code
     role: implementation
     target: src/routes/storefront.ts:1-3
-availability: [customer-web::storefront, customer-mobile::storefront]
 ---
 
 # Browse the catalog
@@ -16,11 +29,6 @@ availability: [customer-web::storefront, customer-mobile::storefront]
 ## Trigger
 
 The shopper opens the storefront.
-
-## Steps
-
-1. The catalog is listed
-2. The shopper opens a product page
 
 ## Outcome
 

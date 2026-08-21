@@ -1,20 +1,28 @@
 ---
 kind: primary
-actors: [reader]
 result: achieved
 steps:
   - text: The Reader submits the feed address and follows the validated source
+    kind: actor
+    actor: reader
     capability: source-following
-    routes:
-      web: reader-web::personal-library
-      mobile: reader-mobile::personal-library
+    places:
+      web: reader-web::personal-library::source-list
+      mobile: reader-mobile::personal-library::source-list
   - text: The Reader refreshes their followed sources
+    kind: actor
+    actor: reader
     capability: feed-synchronization
-    routes:
-      web: reader-web::personal-library
-      mobile: reader-mobile::personal-library
+    places:
+      web: reader-web::personal-library::source-list
+      mobile: reader-mobile::personal-library::source-list
   - text: The Product reads the followed feed and collects its available new items
+    kind: product
   - text: The new items enter the Reader's private library
+    kind: condition
+routes:
+  web: Web
+  mobile: Mobile
 ---
 
 # Receive items from a new source

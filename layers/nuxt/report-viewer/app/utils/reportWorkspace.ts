@@ -102,6 +102,18 @@ export const ENTITY_KIND_META: Record<ReportEntityKind, EntityKindMeta> = {
   ...Object.fromEntries(REPORT_ENTITY_KINDS.map(meta => [meta.kind, meta]))
 } as Record<ReportEntityKind, EntityKindMeta>
 
+export const INTERFACE_TYPE_META: Record<ReportInterface['type'], { label: string, icon: string }> = {
+  web: { label: 'Web', icon: 'i-lucide-globe' },
+  'mobile-app': { label: 'Mobile app', icon: 'i-lucide-smartphone' },
+  'desktop-app': { label: 'Desktop app', icon: 'i-lucide-app-window' },
+  cli: { label: 'CLI', icon: 'i-lucide-terminal' },
+  api: { label: 'API', icon: 'i-lucide-braces' },
+  webhook: { label: 'Webhook', icon: 'i-lucide-webhook' },
+  messaging: { label: 'Messaging', icon: 'i-lucide-messages-square' },
+  voice: { label: 'Voice', icon: 'i-lucide-audio-lines' },
+  device: { label: 'Device', icon: 'i-lucide-cpu' }
+}
+
 /** One resolved Interface scope; an empty Experience id means direct availability. */
 export interface AvailabilityPair {
   interfaceId: string
@@ -143,6 +155,7 @@ export interface ActorView extends EntityBase {
 
 export interface InterfaceView extends EntityBase {
   kind: 'interface'
+  interfaceType: ReportInterface['type']
   actorIds: string[]
   entryPoints: EntryPointView[]
   capabilityBoundary: string
@@ -247,12 +260,15 @@ export interface ScenarioView extends EntityBase {
   /** Exact authored contexts; Journey Scenario entries are unioned for display. */
   availability: AvailabilityPair[]
   trigger: string
+  routes: Array<{ id: string, name: string }>
   steps: Array<{
     text: string
+    stepKind: 'actor' | 'product' | 'condition'
+    actorId: string
     capabilityId: string
-    routes: Array<{
+    places: Array<{
       routeId: string
-      context: AvailabilityPair
+      place: ProductPlaceView
     }>
   }>
   decisionPoints: ReportDecisionPoint[]
@@ -261,6 +277,19 @@ export interface ScenarioView extends EntityBase {
   result: 'achieved' | 'not-achieved' | ''
   screenIds: string[]
   ruleIds: string[]
+}
+
+export interface ProductPlaceView {
+  id: string
+  kind: 'interface' | 'experience' | 'screen'
+  interfaceId: string
+  interfaceTitle: string
+  interfaceType: ReportInterface['type']
+  experienceId: string
+  experienceTitle: string
+  screenId: string
+  screenTitle: string
+  context: AvailabilityPair
 }
 
 export interface RuleView extends EntityBase {
@@ -460,6 +489,11 @@ function entryPoints(
  */
 export function projectReportWorkspace(report: ProductReportV9): ReportWorkspace {
   const model = report.model
+  const interfaceOf = (interfaceId: string): ReportInterface => {
+    const productInterface = model.interfaces.find(item => item.id === interfaceId)
+    if (!productInterface) throw new Error(`Unknown Interface "${interfaceId}" in Product Place`)
+    return productInterface
+  }
   const pairsOf = (availability: ReportAvailability[]) =>
     expandPairs(availability, model.interfaces, model.experiences)
   const pairOfExact = (context: { interfaceId: string, experienceId: string | null }): AvailabilityPair => ({
@@ -469,8 +503,59 @@ export function projectReportWorkspace(report: ProductReportV9): ReportWorkspace
     experienceTitle: context.experienceId ? titleOf(model.experiences, context.experienceId) : '',
     key: availabilityKey(context.interfaceId, context.experienceId || '')
   })
-  const journeyScenarioPairs = (scenario: ReportJourneyScenario): AvailabilityPair[] => uniquePairs(
-    scenario.steps.flatMap(step => step.routes.map(pairOfExact))
+  const placeOf = (placeId: string): ProductPlaceView => {
+    const screen = model.screens.find(item => item.id === placeId)
+    if (screen) {
+      const context = pairsOf(screen.availability)[0]!
+      const productInterface = interfaceOf(context.interfaceId)
+      return {
+        id: placeId,
+        kind: 'screen',
+        interfaceId: context.interfaceId,
+        interfaceTitle: context.interfaceTitle,
+        interfaceType: productInterface.type,
+        experienceId: context.experienceId,
+        experienceTitle: context.experienceTitle,
+        screenId: screen.id,
+        screenTitle: screen.title,
+        context
+      }
+    }
+    const experience = model.experiences.find(item => item.id === placeId)
+    if (experience) {
+      const interfaceId = experience.interfaceIds[0] || ''
+      const productInterface = interfaceOf(interfaceId)
+      const context = pairOfExact({ interfaceId, experienceId: experience.id })
+      return {
+        id: placeId,
+        kind: 'experience',
+        interfaceId,
+        interfaceTitle: context.interfaceTitle,
+        interfaceType: productInterface.type,
+        experienceId: experience.id,
+        experienceTitle: experience.title,
+        screenId: '',
+        screenTitle: '',
+        context
+      }
+    }
+    const productInterface = interfaceOf(placeId)
+    const context = pairOfExact({ interfaceId: placeId, experienceId: null })
+    return {
+      id: placeId,
+      kind: 'interface',
+      interfaceId: placeId,
+      interfaceTitle: productInterface.title,
+      interfaceType: productInterface.type,
+      experienceId: '',
+      experienceTitle: '',
+      screenId: '',
+      screenTitle: '',
+      context
+    }
+  }
+  const scenarioPairs = (scenario: ReportCapabilityScenario | ReportJourneyScenario): AvailabilityPair[] => uniquePairs(
+    scenario.steps.flatMap(step => step.places.map(place => placeOf(place.placeId).context))
   )
 
   const kindBySlot = new Map(model.taxonomies.scenarioKinds.map(kind => [kind.id, kind]))
@@ -479,15 +564,15 @@ export function projectReportWorkspace(report: ProductReportV9): ReportWorkspace
     model.journeyScenarios.filter(scenario => scenario.journeyId === journeyId)
   const journeyPairs = (journeyId: string) => uniquePairs(
     journeyScenariosOf(journeyId).filter(scenario => scenario.result === 'achieved').flatMap(scenario =>
-      journeyScenarioPairs(scenario))
+      scenarioPairs(scenario))
   )
   const journeyEntryPoints = (journeyId: string): EntryPointView[] => {
     const points = journeyScenariosOf(journeyId)
       .filter(scenario => scenario.result === 'achieved')
       .flatMap((scenario) => {
-        const first = scenario.steps.find(step => step.capabilityId)
+        const first = scenario.steps.find(step => step.kind === 'actor' && step.places.length)
         if (!first) return []
-        return first.routes.map(pairOfExact).flatMap((scope) => {
+        return first.places.map(place => placeOf(place.placeId).context).flatMap((scope) => {
           const contextual = scope.experienceId
             ? model.experiences.find(item => item.id === scope.experienceId)
               ?.entryPoints.filter(point => point.type === scope.interfaceId) ?? []
@@ -572,11 +657,11 @@ export function projectReportWorkspace(report: ProductReportV9): ReportWorkspace
       }
       if (target.type === 'capability-scenario') {
         const scenario = capabilityScenarioById.get(target.id)
-        return scenario ? pairsOf(scenario.availability) : []
+        return scenario ? scenarioPairs(scenario) : []
       }
       if (target.type === 'journey') return journeyPairs(target.id)
       const scenario = journeyScenarioById.get(target.id)
-      return scenario ? journeyScenarioPairs(scenario) : []
+      return scenario ? scenarioPairs(scenario) : []
     }))
     return [rule.id, {
       capabilityIds,
@@ -654,6 +739,7 @@ export function projectReportWorkspace(report: ProductReportV9): ReportWorkspace
       id: item.id,
       kind: 'interface',
       title: item.title,
+      interfaceType: item.type,
       lead: item.description,
       intent: item.intent,
       supportingContent: supportingMarkdown(item.supportingSections),
@@ -824,6 +910,18 @@ export function projectReportWorkspace(report: ProductReportV9): ReportWorkspace
     }
   })
 
+  const scenarioSteps = (scenario: ReportCapabilityScenario | ReportJourneyScenario): ScenarioView['steps'] =>
+    scenario.steps.map(step => ({
+      text: step.text,
+      stepKind: step.kind,
+      actorId: step.actorId ?? '',
+      capabilityId: step.capabilityId ?? '',
+      places: step.places.map(place => ({
+        routeId: place.routeId,
+        place: placeOf(place.placeId)
+      }))
+    }))
+
   const capabilityScenarios: ScenarioView[] = model.capabilityScenarios.map((scenario: ReportCapabilityScenario) => {
     const kind = kindBySlot.get(scenario.kindId)
     return {
@@ -844,9 +942,10 @@ export function projectReportWorkspace(report: ProductReportV9): ReportWorkspace
       kindId: scenario.kindId,
       kindName: kind?.name ?? humanize(scenario.kindId),
       kindSlot: kind?.colorSlot ?? 1,
-      availability: pairsOf(scenario.availability),
+      availability: scenarioPairs(scenario),
       trigger: scenario.trigger,
-      steps: scenario.steps.map(text => ({ text, capabilityId: '', routes: [] })),
+      routes: scenario.routes,
+      steps: scenarioSteps(scenario),
       decisionPoints: scenario.decisionPoints,
       outcome: scenario.outcome,
       edgeCases: scenario.edgeCases,
@@ -876,16 +975,10 @@ export function projectReportWorkspace(report: ProductReportV9): ReportWorkspace
       kindId: scenario.kindId,
       kindName: kind?.name ?? humanize(scenario.kindId),
       kindSlot: kind?.colorSlot ?? 1,
-      availability: journeyScenarioPairs(scenario),
+      availability: scenarioPairs(scenario),
       trigger: scenario.trigger,
-      steps: scenario.steps.map(step => ({
-        text: step.text,
-        capabilityId: step.capabilityId ?? '',
-        routes: step.routes.map(route => ({
-          routeId: route.routeId,
-          context: pairOfExact(route)
-        }))
-      })),
+      routes: scenario.routes,
+      steps: scenarioSteps(scenario),
       decisionPoints: scenario.decisionPoints,
       outcome: scenario.outcome,
       edgeCases: scenario.edgeCases,
@@ -1157,58 +1250,61 @@ export function resolveScenarios(workspace: ReportWorkspace, ids: string[]): Sce
     .filter((entity): entity is ScenarioView => Boolean(entity))
 }
 
-/** One route's context at one Journey step. */
-export interface JourneyStepCell {
+/** One route's exact Product Place at one Scenario step. */
+export interface ScenarioStepCell {
   routeId: string
-  context: AvailabilityPair | null
-  /** This route arrives here in a different context than its last Capability step. */
-  handoff: boolean
+  place: ProductPlaceView | null
+  previousPlace: ProductPlaceView | null
+  /** This route arrives here at a different Product Place than its last placed Step. */
+  placeChanged: boolean
 }
 
-export interface JourneyStepRow {
+export interface ScenarioStepRow {
   index: number
   text: string
+  stepKind: 'actor' | 'product' | 'condition'
+  actorId: string
   capabilityId: string
+  routeNeutral: boolean
   /** One cell per route, in authored route order. */
-  cells: JourneyStepCell[]
+  cells: ScenarioStepCell[]
 }
 
-export interface JourneyStepMatrix {
-  routeIds: string[]
-  steps: JourneyStepRow[]
+export interface ScenarioStepMatrix {
+  routes: Array<{ id: string, name: string }>
+  steps: ScenarioStepRow[]
 }
 
 /**
- * A Journey Scenario's one authored sequence: steps down, routes across, exact
- * context in each Capability-bearing cell. Unqualified steps keep their place
- * in the reading without pretending to exercise another Capability.
- *
- * Returns null for a Capability Scenario, whose Steps remain local prose.
+ * Either Scenario type's one authored sequence: Steps down, named routes
+ * across, and the exact Product Place in every placed cell. Route-neutral Steps
+ * keep their place in the reading and span the route columns.
  */
-export function journeyStepMatrix(scenario: ScenarioView): JourneyStepMatrix | null {
-  if (scenario.scenarioType !== 'journey') return null
-  const firstCapabilityStep = scenario.steps.find(step => step.capabilityId)
-  if (!firstCapabilityStep) return null
-  const routeIds = firstCapabilityStep.routes.map(route => route.routeId)
-  let previousCapabilityStep: ScenarioView['steps'][number] | null = null
+export function scenarioStepMatrix(scenario: ScenarioView): ScenarioStepMatrix {
+  const routeIds = scenario.routes.map(route => route.id)
+  const previousPlaces = new Map<string, ProductPlaceView>()
   const steps = scenario.steps.map((step, index) => {
-    const previous = previousCapabilityStep
-    const row = {
+    const cells = routeIds.map((routeId) => {
+      const place = step.places.find(item => item.routeId === routeId)?.place ?? null
+      const before = previousPlaces.get(routeId)
+      const cell = {
+        routeId,
+        place,
+        previousPlace: before ?? null,
+        placeChanged: Boolean(before && place && before.id !== place.id)
+      }
+      if (place) previousPlaces.set(routeId, place)
+      return cell
+    })
+    return {
       index,
       text: step.text,
+      stepKind: step.stepKind,
+      actorId: step.actorId,
       capabilityId: step.capabilityId,
-      cells: routeIds.map((routeId) => {
-        const context = step.routes.find(route => route.routeId === routeId)?.context ?? null
-        const before = previous?.routes.find(route => route.routeId === routeId)?.context ?? null
-        return {
-          routeId,
-          context,
-          handoff: Boolean(step.capabilityId && before && context && before.key !== context.key)
-        }
-      })
+      routeNeutral: step.places.length === 0,
+      cells
     }
-    if (step.capabilityId) previousCapabilityStep = step
-    return row
   })
-  return { routeIds, steps }
+  return { routes: scenario.routes, steps }
 }

@@ -156,6 +156,7 @@ describe('Workbench audition layer', () => {
     expect(source('app/components/BlrPageBlock.vue')).toContain("from '../utils/entityFacts'")
     expect(source('app/components/BlrEntityReading.vue')).toContain("from '../utils/pageSections'")
     expect(source('app/components/BlrScenarios.vue')).toContain("from '../utils/pageSections'")
+    expect(source('app/utils/entityFacts.ts')).toContain("{ label: 'Type', value: INTERFACE_TYPE_META")
   })
 })
 

@@ -1,7 +1,7 @@
 ---
-capabilities: [catalog-browsing]
-capabilityScenarios: [browse-catalog]
-journeyScenarios: [browse-and-complete-checkout]
+capabilities:
+  - catalog-browsing
+  - checkout
 entryPoints:
   - customer-web: /products/:id
 references:

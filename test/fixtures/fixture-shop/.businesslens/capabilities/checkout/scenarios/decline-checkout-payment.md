@@ -1,11 +1,34 @@
 ---
 kind: edge
-actors: [shopper]
+routes:
+  web: Web
+  mobile: Mobile
+steps:
+  - text: The shopper submits checkout and the payment gateway declines the charge.
+    kind: actor
+    actor: shopper
+    places:
+      web: customer-web::storefront::product-record
+      mobile: customer-mobile::storefront::product-record
+  - text: The cart is validated against the catalog
+    kind: product
+    places:
+      web: customer-web::storefront::product-record
+      mobile: customer-mobile::storefront::product-record
+  - text: The payment gateway declines the charge
+    kind: product
+    places:
+      web: customer-web::storefront::product-record
+      mobile: customer-mobile::storefront::product-record
+  - text: The Product preserves the cart and explains that payment failed
+    kind: product
+    places:
+      web: customer-web::storefront::product-record
+      mobile: customer-mobile::storefront::product-record
 references:
   - kind: code
     role: implementation
     target: src/services/payments.ts#PaymentGateway.charge
-availability: [customer-web::storefront, customer-mobile::storefront]
 ---
 
 # Decline checkout payment
@@ -13,12 +36,6 @@ availability: [customer-web::storefront, customer-mobile::storefront]
 ## Trigger
 
 The shopper submits checkout and the payment gateway declines the charge.
-
-## Steps
-
-1. The cart is validated against the catalog
-2. The payment gateway declines the charge
-3. The Product preserves the cart and explains that payment failed
 
 ## Outcome
 

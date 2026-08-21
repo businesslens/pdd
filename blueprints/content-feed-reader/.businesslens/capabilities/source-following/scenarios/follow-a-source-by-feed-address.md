@@ -1,7 +1,25 @@
 ---
 kind: primary
-actors: [reader]
-availability: [reader-web::personal-library, reader-mobile::personal-library]
+routes:
+  web: Web
+  mobile: Mobile
+steps:
+  - text: The Reader submits the address of a readable syndicated feed.
+    kind: actor
+    actor: reader
+    places:
+      web: reader-web::personal-library::source-list
+      mobile: reader-mobile::personal-library::source-list
+  - text: The Product validates that the address returns a supported feed
+    kind: product
+    places:
+      web: reader-web::personal-library::source-list
+      mobile: reader-mobile::personal-library::source-list
+  - text: The source is added to the Reader's followed sources
+    kind: product
+    places:
+      web: reader-web::personal-library::source-list
+      mobile: reader-mobile::personal-library::source-list
 ---
 
 # Follow a source by feed address
@@ -9,11 +27,6 @@ availability: [reader-web::personal-library, reader-mobile::personal-library]
 ## Trigger
 
 The Reader submits the address of a readable syndicated feed.
-
-## Steps
-
-1. The Product validates that the address returns a supported feed
-2. The source is added to the Reader's followed sources
 
 ## Outcome
 

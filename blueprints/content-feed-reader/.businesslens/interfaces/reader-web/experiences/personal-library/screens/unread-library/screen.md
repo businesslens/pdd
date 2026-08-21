@@ -1,13 +1,8 @@
 ---
-capabilities: [content-reading, reading-state, item-saving]
-capabilityScenarios:
-  - read-an-unread-library-item
-  - mark-an-item-read
-  - mark-an-item-unread
-  - mark-a-source-read-in-bulk
-  - save-an-accessible-item
-  - remove-a-saved-item
-journeyScenarios: [work-through-the-unread-backlog, save-while-catching-up]
+capabilities:
+  - content-reading
+  - reading-state
+  - item-saving
 entryPoints:
   - reader-web: /unread
 assets:

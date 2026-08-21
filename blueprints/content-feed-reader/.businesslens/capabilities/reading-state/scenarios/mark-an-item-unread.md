@@ -1,7 +1,25 @@
 ---
 kind: edge
-actors: [reader]
-availability: [reader-web::personal-library, reader-mobile::personal-library]
+routes:
+  web: Web
+  mobile: Mobile
+steps:
+  - text: The Reader marks the item unread
+    kind: actor
+    actor: reader
+    places:
+      web: reader-web::personal-library::unread-library
+      mobile: reader-mobile::personal-library::unread-library
+  - text: The Product updates the item's private reading state
+    kind: product
+    places:
+      web: reader-web::personal-library::unread-library
+      mobile: reader-mobile::personal-library::unread-library
+  - text: The unread count increases
+    kind: condition
+    places:
+      web: reader-web::personal-library::unread-library
+      mobile: reader-mobile::personal-library::unread-library
 ---
 
 # Mark an item unread
@@ -9,12 +27,6 @@ availability: [reader-web::personal-library, reader-mobile::personal-library]
 ## Trigger
 
 The Reader wants a read library item to return to the unread backlog.
-
-## Steps
-
-1. The Reader marks the item unread
-2. The Product updates the item's private reading state
-3. The unread count increases
 
 ## Outcome
 

@@ -1,7 +1,21 @@
 ---
 kind: edge
-actors: [reader]
-availability: [reader-web::personal-library]
+routes:
+  web: Web
+steps:
+  - text: The Product confirms ownership
+    kind: product
+    places:
+      web: reader-web::personal-library::collection-workspace
+  - text: The Product explains that the public link will stop working
+    kind: product
+    places:
+      web: reader-web::personal-library::collection-workspace
+  - text: The Reader confirms unlisting
+    kind: actor
+    actor: reader
+    places:
+      web: reader-web::personal-library::collection-workspace
 ---
 
 # Unlist an owned collection
@@ -9,12 +23,6 @@ availability: [reader-web::personal-library]
 ## Trigger
 
 The Reader revokes public access to an owned published collection.
-
-## Steps
-
-1. The Product confirms ownership
-2. The Product explains that the public link will stop working
-3. The Reader confirms unlisting
 
 ## Outcome
 

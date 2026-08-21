@@ -1,19 +1,9 @@
 ---
-capabilities: [collection-creation, collection-naming, collection-organization, collection-publication]
-capabilityScenarios:
-  - create-an-owned-collection
-  - rename-an-owned-collection
-  - add-an-item-to-an-owned-collection
-  - remove-an-item-from-an-owned-collection
-  - reorder-an-owned-collection
-  - reject-adding-to-another-owners-collection
-  - publish-an-owned-collection
-  - unlist-an-owned-collection
-  - reject-publishing-another-owners-collection
-journeyScenarios:
-  - save-an-item-into-a-new-collection
-  - save-an-item-into-an-existing-collection
-  - publish-and-read-a-collection
+capabilities:
+  - collection-creation
+  - collection-naming
+  - collection-organization
+  - collection-publication
 entryPoints:
   - reader-web: /collections
 ---

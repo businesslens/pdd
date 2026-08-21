@@ -1,7 +1,26 @@
 ---
 kind: edge
-actors: [reader]
-availability: [reader-web::personal-library, reader-mobile::personal-library]
+routes:
+  web: Web
+  mobile: Mobile
+steps:
+  - text: The Reader selects the source in the unread library
+    kind: actor
+    actor: reader
+    places:
+      web: reader-web::personal-library::unread-library
+      mobile: reader-mobile::personal-library::unread-library
+  - text: The Product shows how many items will be marked read
+    kind: product
+    places:
+      web: reader-web::personal-library::unread-library
+      mobile: reader-mobile::personal-library::unread-library
+  - text: The Reader confirms the bulk action
+    kind: actor
+    actor: reader
+    places:
+      web: reader-web::personal-library::unread-library
+      mobile: reader-mobile::personal-library::unread-library
 ---
 
 # Mark one source read in bulk
@@ -9,12 +28,6 @@ availability: [reader-web::personal-library, reader-mobile::personal-library]
 ## Trigger
 
 The Reader decides not to inspect the remaining unread items from one source.
-
-## Steps
-
-1. The Reader selects the source in the unread library
-2. The Product shows how many items will be marked read
-3. The Reader confirms the bulk action
 
 ## Outcome
 

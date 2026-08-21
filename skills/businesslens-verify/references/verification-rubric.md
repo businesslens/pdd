@@ -3,13 +3,13 @@
 ## Trace behavior
 
 - Compare the model's observable contract, not matching vocabulary.
-- Trace each Capability Scenario from its exact Actor context through the
-  Capability operation to its observable outcome.
-- Trace every Journey Scenario route from its Product entry point through each
-  Capability-bearing Step to the terminal goal result. Verify every inline
-  route context independently and confirm the correlations are supported.
-- Confirm every Scenario Actor is supported by at least one exact context and
-  every exact context supports at least one Scenario Actor.
+- Trace each Capability Scenario route through every typed Step and exact
+  Product Place to its observable outcome.
+- Trace every Journey Scenario route from its first Actor-owned Product Place
+  through each Capability-bearing Step to the terminal goal result. Verify
+  every Product Place independently and confirm the correlations are supported.
+- Confirm every Actor Step is supported at its Product Places and every derived
+  exact context supports at least one Scenario Actor.
 - Verify Interface scopes independently. Shared services do not prove web,
   mobile, CLI, or supported API parity.
 - Distinguish a missing Interface implementation from a missing shared

@@ -1,4 +1,5 @@
 ---
+type: web
 actors: [store-admin]
 entryPoints:
   - web: /admin

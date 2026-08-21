@@ -1,6 +1,7 @@
 ---
-capabilities: [content-reading, item-saving]
-capabilityScenarios: [read-a-saved-library-item, remove-a-saved-item]
+capabilities:
+  - content-reading
+  - item-saving
 entryPoints:
   - reader-mobile: content-reader://library/saved
 ---
@@ -20,7 +21,7 @@ return to their content.
 
 - Open and read a saved item
 - Remove an item's saved state
-- Continue to collection organization
+- Continue to collection organization on the web
 
 ## Product states
 

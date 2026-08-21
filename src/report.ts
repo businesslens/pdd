@@ -1,9 +1,17 @@
 /**
- * `businesslens/report` — strict Product Report v8 contract as a library.
+ * `businesslens/report` — strict Product Report v9 contract as a library.
  *
  * This entry point depends only on `zod` and stays free of Node built-ins so
  * browser consumers can validate, project, and digest reports consistently.
  */
+
+export {
+  INTERFACE_TYPES,
+} from './core/interface-types.js'
+
+export type {
+  InterfaceType,
+} from './core/interface-types.js'
 
 export {
   REPORT_SCHEMA_VERSION,
@@ -25,9 +33,10 @@ export {
   ReportScreenSchema,
   ReportJourneySchema,
   ReportDecisionPointSchema,
+  ReportScenarioRouteSchema,
+  ReportScenarioStepPlaceSchema,
+  ReportScenarioStepSchema,
   ReportCapabilityScenarioSchema,
-  ReportJourneyStepRouteSchema,
-  ReportJourneyStepSchema,
   ReportJourneyScenarioSchema,
   ReportBusinessRuleTargetSchema,
   ReportBusinessRuleSchema,
@@ -58,8 +67,9 @@ export type {
   ReportScreenState,
   ReportJourney,
   ReportCapabilityScenario,
-  ReportJourneyStepRoute,
-  ReportJourneyStep,
+  ReportScenarioRoute,
+  ReportScenarioStepPlace,
+  ReportScenarioStep,
   ReportJourneyScenario,
   ReportBusinessRule,
   ReportBusinessRuleTarget,

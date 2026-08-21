@@ -1,4 +1,5 @@
 ---
+type: web
 actors: [shopper]
 entryPoints:
   - web: /

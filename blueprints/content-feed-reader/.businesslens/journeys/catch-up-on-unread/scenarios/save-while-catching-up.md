@@ -1,24 +1,33 @@
 ---
 kind: edge
-actors: [reader]
 result: achieved
 steps:
   - text: The Reader reads the item
+    kind: actor
+    actor: reader
     capability: content-reading
-    routes:
-      web: reader-web::personal-library
-      mobile: reader-mobile::personal-library
+    places:
+      web: reader-web::personal-library::unread-library
+      mobile: reader-mobile::personal-library::unread-library
   - text: The Reader saves it
+    kind: actor
+    actor: reader
     capability: item-saving
-    routes:
-      web: reader-web::personal-library
-      mobile: reader-mobile::personal-library
+    places:
+      web: reader-web::personal-library::unread-library
+      mobile: reader-mobile::personal-library::unread-library
   - text: The Reader marks it read
+    kind: actor
+    actor: reader
     capability: reading-state
-    routes:
-      web: reader-web::personal-library
-      mobile: reader-mobile::personal-library
+    places:
+      web: reader-web::personal-library::unread-library
+      mobile: reader-mobile::personal-library::unread-library
   - text: The Product removes it from the unread backlog without removing the saved copy
+    kind: product
+routes:
+  web: Web
+  mobile: Mobile
 ---
 
 # Save an item while catching up

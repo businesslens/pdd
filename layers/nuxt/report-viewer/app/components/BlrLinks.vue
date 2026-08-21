@@ -45,7 +45,7 @@ const overflow = computed(() => entities.value.length - shown.value.length)
         :key="entity.key"
         :type="interactive ? 'button' : undefined"
         class="text-default"
-        :class="interactive && 'rounded-sm underline decoration-(--ui-border-accented) underline-offset-3 transition-colors hover:text-highlighted hover:decoration-(--ui-text-dimmed)'"
+        :class="interactive && 'inline-flex min-h-6 items-center rounded-sm underline decoration-(--ui-border-accented) underline-offset-3 transition-colors hover:text-highlighted hover:decoration-(--ui-text-dimmed)'"
         @click="interactive && emit('select', entity)"
       >
         {{ entity.title }}

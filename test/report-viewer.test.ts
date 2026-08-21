@@ -26,6 +26,8 @@ describe('stable Product Report Workbench', () => {
     })
     expect(workspace.actors).toHaveLength(report.model.actors.length)
     expect(workspace.interfaces).toHaveLength(report.model.interfaces.length)
+    expect(workspace.interfaces.find((item: any) => item.id === 'customer-mobile')?.interfaceType)
+      .toBe('mobile-app')
     expect(workspace.experiences).toHaveLength(report.model.experiences.length)
     expect(workspace.screens).toHaveLength(report.model.screens.length)
     expect(workspace.domains).toHaveLength(report.model.domains.length)
@@ -36,8 +38,13 @@ describe('stable Product Report Workbench', () => {
     expect(workspace.journeyScenarios.every((item: any) => item.scenarioType === 'journey')).toBe(true)
     const journeyScenario = workspace.journeyScenarios.find((item: any) => item.id === 'browse-and-complete-checkout')!
     const firstCapabilityStep = journeyScenario.steps.find((step: any) => step.capabilityId)!
-    expect(firstCapabilityStep.routes.map((route: any) => route.routeId)).toEqual(['web', 'mobile'])
-    expect([...firstCapabilityStep.routes.map((route: any) => route.context.key)].sort()).toEqual([
+    expect(firstCapabilityStep.places.map((place: any) => place.routeId)).toEqual(['web', 'mobile'])
+    expect([...firstCapabilityStep.places.map((place: any) => place.place.context.key)].sort()).toEqual([
+      'customer-mobile::storefront',
+      'customer-web::storefront'
+    ])
+    expect(workspace.capabilityScenarios.find((item: any) => item.id === 'browse-catalog')!.availability
+      .map((pair: any) => pair.key).sort()).toEqual([
       'customer-mobile::storefront',
       'customer-web::storefront'
     ])
@@ -73,50 +80,101 @@ describe('stable Product Report Workbench', () => {
 
   /* One authored sequence projects directly into the reading-and-routes table. */
   it('reads a Journey Scenario as one steps-by-routes table', async () => {
-    const { journeyStepMatrix } = await import(workspaceModulePath)
+    const { scenarioStepMatrix } = await import(workspaceModulePath)
     const report = compileReport(loadModel(FIXTURE), '2026-08-08')
     const workspace = projectReportWorkspace(report)
     const scenario = workspace.journeyScenarios.find((item: any) => item.id === 'browse-and-complete-checkout')!
 
-    const matrix = journeyStepMatrix(scenario)
-    expect(matrix.routeIds).toEqual(['web', 'mobile'])
+    const matrix = scenarioStepMatrix(scenario)
+    expect(matrix.routes.map((route: any) => route.id)).toEqual(['web', 'mobile'])
     expect(matrix.steps.map((step: any) => step.text)).toEqual([
       'The shopper finds and selects an available product',
       'The shopper submits checkout',
       'The Product confirms the paid order'
     ])
-    expect(matrix.steps[1].cells.map((cell: any) => cell.context.key)).toEqual([
+    expect(matrix.steps[1].cells.map((cell: any) => cell.place.context.key)).toEqual([
       'customer-web::storefront',
       'customer-mobile::storefront'
     ])
-    /* Parallel lanes are not a handoff — neither route changes context. */
-    expect(matrix.steps.every((step: any) => step.cells.every((cell: any) => !cell.handoff))).toBe(true)
-    /* A Capability Scenario keeps local Markdown Steps and has no route matrix. */
-    expect(journeyStepMatrix(workspace.capabilityScenarios[0])).toBeNull()
+    /* Parallel lanes are not transitions — neither route changes Product Place. */
+    expect(matrix.steps.every((step: any) => step.cells.every((cell: any) => !cell.placeChanged))).toBe(true)
+    expect(scenarioStepMatrix(workspace.capabilityScenarios[0]).routes).toHaveLength(2)
   })
 
-  /*
-    The handoff is the deliberate composition a Journey is created for, and the
-    only place the model states it is a route changing context between Steps.
-  */
-  it('marks the Capability step a route hands off into, per route', async () => {
-    const { journeyStepMatrix } = await import(workspaceModulePath)
+  it('gives both Scenario types one Steps table while keeping their scope semantics distinct', () => {
+    const body = source('app/components/BlrEntityBody.vue')
+    const context = source('app/components/BlrStepContext.vue')
+    const links = source('app/components/BlrLinks.vue')
+    const layer = source('nuxt.config.ts')
+
+    expect(body).toContain('v-if="stepMatrix"')
+    expect(body).toContain('scenarioStepMatrix')
+    expect(body).toContain('v-for="route in stepMatrix.routes"')
+    expect(body.match(/<BlrStepContext/g)).toHaveLength(1)
+    expect(body).toContain('No Product Place — same Step on every route')
+    expect(body).toContain('{{ route.name }}')
+    expect(body).not.toContain('{{ route.id }}')
+    expect(body).not.toContain('{{ column.id }}')
+    for (const kind of ['experience', 'screen']) {
+      expect(context).toContain(`<BlrKind kind="${kind}"`)
+    }
+    expect(context).toContain('<BlrInterfaceType')
+    expect(source('app/components/BlrInterfaceType.vue')).toContain(":role=\"labelled ? undefined : 'img'\"")
+    expect(body).toContain("asScenario.scenarioType === 'journey' && step.capabilityId")
+    expect(body).toContain("step.stepKind === 'actor' && stepActor(step.actorId)")
+    expect(body).toContain('{{ stepActor(step.actorId)?.title }}')
+    expect(body).not.toContain('label="Performed by"')
+    expect(body).toContain('Product action')
+    expect(body).toContain('Condition')
+    expect(body).toContain('Moved from')
+    expect(context).toContain('ProductPlaceView')
+    expect(context).not.toContain('scenarioStepScreens')
+    expect(body).not.toContain('<ol class="max-w-3xl list-decimal')
+    expect(body).toContain('stepMatrix.routes.length * 310')
+    expect(body).toContain('sticky left-0')
+    expect(context).toContain('whitespace-nowrap')
+    expect(links).toContain('inline-flex min-h-6 items-center')
+    for (const icon of ['align-justify', 'circle-dot-dashed', 'user-round']) {
+      expect(layer).toContain(`'lucide:${icon}'`)
+    }
+  })
+
+  it('projects the exact authored Screen Place on each Step without inference', async () => {
+    const report = compileReport(loadModel(FIXTURE), '2026-08-08')
+    const workspace = projectReportWorkspace(report)
+    const journeyScenario = workspace.journeyScenarios.find(
+      (item: any) => item.id === 'browse-and-complete-checkout'
+    )!
+    const browsingStep = journeyScenario.steps.find((step: any) => step.capabilityId === 'catalog-browsing')!
+    const checkoutStep = journeyScenario.steps.find((step: any) => step.capabilityId === 'checkout')!
+
+    expect(browsingStep.places.map((place: any) => place.place.screenTitle)).toEqual(['Product record', 'Product record'])
+    expect(checkoutStep.places.map((place: any) => place.place.screenTitle)).toEqual(['Product record', 'Product record'])
+
+    const capabilityScenario = workspace.capabilityScenarios.find((item: any) => item.id === 'browse-catalog')!
+    expect(capabilityScenario.steps[0].places.map((place: any) => place.place.screenTitle))
+      .toEqual(['Product record', 'Product record'])
+  })
+
+  it('marks a Product Place transition and preserves its previous Place, per route', async () => {
+    const { scenarioStepMatrix } = await import(workspaceModulePath)
     const report = compileReport(loadModel(FIXTURE), '2026-08-08')
     const scenario = report.model.journeyScenarios.find(
       (item: any) => item.id === 'browse-and-complete-checkout'
     )!
-    const handoffContext = scenario.steps
+    const transitionedPlace = scenario.steps
       .find((step: any) => step.capabilityId === 'checkout')!
-      .routes.find((route: any) => route.routeId === 'web')!
-    handoffContext.experienceId = null
+      .places.find((place: any) => place.routeId === 'web')!
+    transitionedPlace.placeId = 'customer-web::storefront'
 
     const workspace = projectReportWorkspace(report)
-    const matrix = journeyStepMatrix(
+    const matrix = scenarioStepMatrix(
       workspace.journeyScenarios.find((item: any) => item.id === 'browse-and-complete-checkout')!
     )
 
-    expect(matrix.steps[0].cells.map((cell: any) => cell.handoff)).toEqual([false, false])
-    expect(matrix.steps[1].cells.map((cell: any) => cell.handoff)).toEqual([true, false])
+    expect(matrix.steps[0].cells.map((cell: any) => cell.placeChanged)).toEqual([false, false])
+    expect(matrix.steps[1].cells.map((cell: any) => cell.placeChanged)).toEqual([true, false])
+    expect(matrix.steps[1].cells[0].previousPlace.id).toBe('customer-web::storefront::product-record')
   })
 
   it('derives Journey availability only from achieved flows', () => {
@@ -138,7 +196,7 @@ describe('stable Product Report Workbench', () => {
     expect(renderer).toContain('ProductReportV9')
     expect(renderer).toContain('projectReportWorkspace')
     expect(renderer).toContain('<BlrWorkbench')
-    expect(source('app/components/BlrEntityBody.vue')).toContain('journeyStepMatrix')
+    expect(source('app/components/BlrEntityBody.vue')).toContain('scenarioStepMatrix')
     expect(workbench).toContain('<BlrProductTopology')
     /* Grouping is how authored Domains earn their place in navigation. */
     expect(workbench).toContain('groupKind')
@@ -204,7 +262,7 @@ describe('stable Product Report Workbench', () => {
     expect(page).not.toContain('journeyStepsGraph')
 
     /* The authored body belongs to the page. */
-    for (const marker of ['asScenario.steps', 'asScreen.states', 'asRule.statement']) {
+    for (const marker of ['stepMatrix.steps', 'asScreen.states', 'asRule.statement']) {
       expect(body, marker).toContain(marker)
       expect(peek, marker).not.toContain(marker)
     }

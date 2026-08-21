@@ -1,7 +1,21 @@
 ---
 kind: primary
-actors: [visitor]
-availability: [reader-web::public-reading]
+routes:
+  web: Web
+steps:
+  - text: The Product loads the collection name, owner display name, and ordered items
+    kind: product
+    places:
+      web: reader-web::public-reading::public-collection
+  - text: The Visitor opens and reads an item
+    kind: actor
+    actor: visitor
+    places:
+      web: reader-web::public-reading::public-collection
+  - text: No private reading state is created
+    kind: condition
+    places:
+      web: reader-web::public-reading::public-collection
 ---
 
 # Read a published collection
@@ -9,12 +23,6 @@ availability: [reader-web::public-reading]
 ## Trigger
 
 A Visitor opens the public address of a published collection.
-
-## Steps
-
-1. The Product loads the collection name, owner display name, and ordered items
-2. The Visitor opens and reads an item
-3. No private reading state is created
 
 ## Outcome
 
