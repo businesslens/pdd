@@ -273,18 +273,22 @@ describe('stable Product Report Workbench', () => {
   })
 
   /*
-    The rail lists kinds, and kinds do not nest. Both Scenario kinds are reached
-    from the parent that owns them, which is where the documentation explains
-    them too.
+    The rail lists kinds, and kinds do not nest. Scenarios are read from the
+    parent entity page without adding a second collection tab to the Capability
+    or Journey main screen.
   */
-  it('keeps Scenarios off the navigation rail and on their parent', () => {
+  it('keeps Scenarios off collection navigation and on their parent page', () => {
     const rail = source('app/components/BlrRail.vue')
     const workbench = source('app/components/BlrWorkbench.vue')
+    const page = source('app/components/BlrEntityPage.vue')
 
     expect(rail).toContain("PARENTED: ReportEntityKind[] = ['capability-scenario', 'journey-scenario']")
     expect(rail).not.toContain('blr-navchild')
-    expect(workbench).toContain('SCENARIO_OF')
-    expect(workbench).toContain('parentTabs')
+    expect(workbench).not.toContain('SCENARIO_OF')
+    expect(workbench).not.toContain('parentTabs')
+    expect(workbench).not.toContain('class="blr-tab"')
+    expect(page).toContain('scenariosByCapability')
+    expect(page).toContain('scenariosByJourney')
     expect(source('app/utils/reportWorkspace.ts')).toContain('scenariosByCapability')
   })
 

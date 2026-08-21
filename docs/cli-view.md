@@ -23,13 +23,14 @@ fixed.
 
 ## Finding your way around
 
-The left rail lists the entity kinds. Scenarios are read on the Capability or
-Journey that owns them, as a second tab on that collection — the format gives
-them exactly one parent, so they are not a peer of Actors and Interfaces.
+The left rail lists the entity kinds. The Capabilities and Journeys collections
+open directly, without a second collection tab. Scenarios are read on the page
+for the Capability or Journey that owns them — the format gives them exactly
+one parent, so they are not a peer of Actors and Interfaces.
 
 Each collection opens grouped by the containment the model declares: Screens by
-Interface, Capabilities by Domain, Scenarios by their parent. The heading states
-the question that collection answers and the derivation behind that order.
+Interface and Capabilities by Domain. The heading states the question that
+collection answers and the derivation behind that order.
 
 Selecting a row opens a **peek** — enough to tell you whether it is the entity
 you meant, without losing the list. From there, **the page** is the full

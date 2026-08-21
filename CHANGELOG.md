@@ -99,11 +99,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Steps. Steps without a Place and Product Place transitions are described in
   plain language, without exposing internal route ids.
 - **The report navigation rail lists kinds, flat.** Kinds do not nest —
-  instances do — so both Scenario kinds leave the rail and become a tab on the
-  Capability or Journey that owns them, which is the resolution the
-  documentation already reached for a mandatory single parent. Ten destinations
-  instead of twelve, and no indentation claiming a hierarchy the other eight
-  rows have too.
+  instances do — so both Scenario kinds leave the rail and are read on the page
+  for the Capability or Journey that owns them. The Capability and Journey main
+  screens open their collections directly, without a redundant parent/Scenario
+  tab strip. Ten destinations instead of twelve, and no indentation claiming a
+  hierarchy the other eight rows have too.
 - **Collection chrome scales with the collection.** The per-relation filter
   dropdowns collapse into one control with a chip per *active* filter, and it is
   not rendered at all below eight entities — seven dropdowns above four Journeys

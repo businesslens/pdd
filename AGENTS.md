@@ -135,9 +135,10 @@ contradict each other.
   the list behind it no longer matches. Everything authored is on the page,
   which has a URL, a breadcrumb, and the width its content was drawn for.
 - **The rail lists kinds; kinds do not nest.** Containment belongs where
-  instances are — the default grouping of a collection, a tab pairing a parent
-  with its children, and the entity page. A rail that indents some kinds and not
-  others advertises a hierarchy it cannot keep.
+  instances are — the default grouping of a collection and the entity page. A
+  mandatory child kind does not add a peer collection tab to its parent's main
+  screen. A rail that indents some kinds and not others advertises a hierarchy
+  it cannot keep.
 - **Chrome scales with the collection.** No control costs a row above a
   two-item list, and a filter offer is not rendered where scanning is faster.
 - **Named views, not a view builder.** Filters narrow a view that already means

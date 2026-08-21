@@ -4,8 +4,7 @@
  *
  * The rail lists kinds and nothing else, because kinds do not nest — instances
  * do. Containment appears where instances are: as the default grouping of a
- * collection, as a tab pairing a parent with its Scenarios, and on the entity
- * page. `BlrRail` carries that argument in full.
+ * collection and on the entity page. `BlrRail` carries that argument in full.
  *
  * Depth has exactly two containers, and the difference between them is not
  * taste but measurement. An entity's authored content ranges from 570px for an
@@ -69,20 +68,10 @@ const props = defineProps<{ workspace: ReportWorkspace, logoSrc?: string | null 
 /* ------------------------------------------------------------------ */
 
 /*
-  Every kind stays browsable, Scenarios included — reading them only inside one
-  parent at a time would leave the largest collection in the model with no
-  surface of its own. What changed is where that surface is reached from.
-
-  A Scenario is the only entity with a mandatory single parent, so it is a tab
-  on that parent's surface rather than a row in the rail: the full browse list,
-  its facets, its table and its grouping, under the Capability or Journey that
-  owns it. `BlrRail` carries the reasoning for the rail half of this.
+  A Scenario is the only entity with a mandatory single parent, so it is read
+  from that Capability or Journey's page rather than exposed as another
+  collection in the rail or as a peer tab on the parent's main screen.
 */
-const SCENARIO_OF: Partial<Record<ReportEntityKind, ReportEntityKind>> = {
-  capability: 'capability-scenario',
-  journey: 'journey-scenario'
-}
-
 const PARENT_OF: Partial<Record<ReportEntityKind, ReportEntityKind>> = {
   'capability-scenario': 'capability',
   'journey-scenario': 'journey'
@@ -398,25 +387,6 @@ watch(() => props.workspace, (workspace) => {
 const topologyActive = computed(() => activeSection.value === 'topology')
 const showToolbar = computed(() => activeKind.value !== 'product' && !openPage.value && !topologyActive.value)
 const surface = computed(() => showToolbar.value ? BROWSE_SURFACES[activeKind.value] : undefined)
-
-/*
-  A parent and its Scenarios are two collections of one subject, so they are two
-  tabs of one surface. Every other kind renders no strip at all — a single tab
-  is chrome pretending to be a choice.
-*/
-const parentTabs = computed(() => {
-  const parent = PARENT_OF[activeKind.value] ?? activeKind.value
-  const child = SCENARIO_OF[parent]
-  if (!child || openPage.value || topologyActive.value) return []
-  return [parent, child].map(kind => ({
-    kind,
-    label: kind === child ? 'Scenarios' : ENTITY_KIND_META[kind].plural,
-    icon: ENTITY_KIND_META[kind].icon,
-    slot: ENTITY_KIND_META[kind].slot,
-    count: kindCounts.value[kind] ?? 0,
-    current: activeKind.value === kind
-  }))
-})
 
 function setKind(kind: ReportEntityKind) {
   mobileNavOpen.value = false
@@ -951,26 +921,6 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
           </div>
         </div>
 
-        <!-- Parent and child, two tabs of one subject. -->
-        <div
-          v-if="parentTabs.length"
-          class="flex shrink-0 items-center gap-1 border-b border-default px-4 pt-2"
-        >
-          <button
-            v-for="tab in parentTabs"
-            :key="tab.kind"
-            type="button"
-            class="blr-tab"
-            :data-current="tab.current"
-            :style="{ '--kind-color': `var(--blr-slot-${tab.slot})` }"
-            @click="setKind(tab.kind)"
-          >
-            <UIcon :name="tab.icon" class="size-4 shrink-0" :style="{ color: `var(--blr-slot-${tab.slot})` }" />
-            {{ tab.label }}
-            <span class="blr-meta">{{ tab.count }}</span>
-          </button>
-        </div>
-
         <div
           v-if="showToolbar"
           class="flex shrink-0 items-center gap-2 border-b border-default px-4 py-2"
@@ -1293,30 +1243,6 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
   --blr-slot-7: #e66767;
   --blr-slot-8: #ab9d81;
   --blr-slot-9: #3987e5;
-}
-
-/* Parent ⇄ child tabs. The underline is the current one, not a filled pill:
-   these are two readings of one subject, not two states of one control. */
-.blr-tab {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.375rem 0.625rem 0.5rem;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
-  font-size: var(--text-sm);
-  color: var(--ui-text-muted);
-  transition: color 0.12s ease, border-color 0.12s ease;
-}
-
-.blr-tab:hover {
-  color: var(--ui-text-highlighted);
-}
-
-.blr-tab[data-current='true'] {
-  border-bottom-color: var(--kind-color);
-  color: var(--ui-text-highlighted);
-  font-weight: 600;
 }
 
 /* An active filter, stating what it selected and clearing itself on click. */

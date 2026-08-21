@@ -8,11 +8,11 @@
  * (Interface ⊃ Experience ⊃ Screen), so indenting two rows is either incomplete
  * or becomes a three-level tree inside a ten-row rail.
  *
- * Containment is shown where instances are: as a tab on the parent's surface,
- * as the default grouping of a collection, and on the entity page. Both
- * Scenario kinds are therefore reached from their parent rather than listed
- * here, which is the same resolution the documentation reached — a mandatory
- * single parent is explained on its parent's page, never on one of its own.
+ * Containment is shown where instances are: as the default grouping of a
+ * collection and on the entity page. Both Scenario kinds are therefore read
+ * from their parent rather than listed here, which is the same resolution the
+ * documentation reached — a mandatory single parent is explained on its
+ * parent's page, never on one of its own.
  *
  * There is no ranking group. Splitting the list into "product" and "structure"
  * puts an Experience below a Capability, and the model says no such thing.
@@ -36,7 +36,7 @@ const PARENTED: ReportEntityKind[] = ['capability-scenario', 'journey-scenario']
 
 const RAIL_KINDS = REPORT_ENTITY_KINDS.filter(meta => !PARENTED.includes(meta.kind))
 
-/** A parent row stays current while its Scenarios tab is open. */
+/** A parent row stays current while one of its Scenario pages is open. */
 const SECTION_PARENT: Record<string, ReportEntityKind> = {
   'capability-scenario': 'capability',
   'journey-scenario': 'journey'
