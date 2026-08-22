@@ -49,6 +49,10 @@ watch(() => props.focusId, (next) => {
 const focusEntity = computed(() => resolveEntityKey(props.workspace, focus.value) ?? null)
 const selectedEntity = computed(() => (selectedId.value && resolveEntityKey(props.workspace, selectedId.value)) || null)
 
+function interfaceType(entity: AnyEntityView | null) {
+  return entity?.kind === 'interface' ? entity.interfaceType : undefined
+}
+
 /** Kinds actually present around the focus — the filter never lists ghosts. */
 const presentKinds = computed<ReportEntityKind[]>(() => {
   const kinds = new Set<ReportEntityKind>()
@@ -135,7 +139,11 @@ function toggleKind(kind: ReportEntityKind) {
         @click="goBack"
       />
       <span v-if="focusEntity" class="inline-flex min-w-0 items-center gap-1.5">
-        <BlrKind :kind="focusEntity.kind" :labelled="false" />
+        <BlrKind
+          :kind="focusEntity.kind"
+          :interface-type="interfaceType(focusEntity)"
+          :labelled="false"
+        />
         <span class="truncate text-xs font-medium text-highlighted">{{ focusEntity.title }}</span>
         <span class="blr-field">Neighbourhood</span>
       </span>
@@ -173,7 +181,11 @@ function toggleKind(kind: ReportEntityKind) {
       class="flex min-h-11 flex-wrap items-center gap-x-3 gap-y-1 border-t border-default px-3 py-2"
     >
       <template v-if="selectedEntity">
-        <BlrKind :kind="selectedEntity.kind" :labelled="false" />
+        <BlrKind
+          :kind="selectedEntity.kind"
+          :interface-type="interfaceType(selectedEntity)"
+          :labelled="false"
+        />
         <span class="text-xs font-medium text-highlighted">{{ selectedEntity.title }}</span>
         <span class="min-w-0 flex-1 truncate text-xs text-dimmed">
           {{ firstSentence(selectedEntity.lead) }}

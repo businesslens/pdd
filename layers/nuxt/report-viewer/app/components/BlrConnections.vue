@@ -211,6 +211,12 @@ function pick(kind: ReportEntityKind, id: string) {
   const entity = resolveEntity(props.workspace, kind, id)
   if (entity) emit('select', entity)
 }
+
+function interfaceType(kind: ReportEntityKind, id: string) {
+  if (kind !== 'interface') return undefined
+  const entity = resolveEntity(props.workspace, 'interface', id)
+  return entity?.kind === 'interface' ? entity.interfaceType : undefined
+}
 </script>
 
 <template>
@@ -236,7 +242,12 @@ function pick(kind: ReportEntityKind, id: string) {
           :class="item.derived && 'blr-connection--derived'"
           @click="pick(item.kind, id)"
         >
-          <BlrKind :kind="item.kind" :labelled="false" size="xs" />
+          <BlrKind
+            :kind="item.kind"
+            :interface-type="interfaceType(item.kind, id)"
+            :labelled="false"
+            size="xs"
+          />
           <span class="truncate">{{ title(item.kind, id, item.ids) }}</span>
         </button>
         <span v-if="overflow(item)" class="self-center text-xs text-dimmed">+{{ overflow(item) }}</span>

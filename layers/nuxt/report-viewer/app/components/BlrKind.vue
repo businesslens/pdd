@@ -6,6 +6,7 @@
  * a bare colour swatch — the label is part of the mark.
  */
 import type { ReportEntityKind } from '../utils/reportWorkspace'
+import type { ReportInterface } from 'businesslens/report'
 import { ENTITY_KIND_META } from '../utils/reportWorkspace'
 import { slotColor } from '../utils/reportPalette'
 
@@ -13,11 +14,14 @@ const props = withDefaults(defineProps<{
   kind: ReportEntityKind
   count?: number | null
   size?: 'xs' | 'sm'
+  /** A concrete Interface can retain its kind and disclose its authored type. */
+  interfaceType?: ReportInterface['type'] | null
   /** Suppress the text label only where a nearby label already names the kind. */
   labelled?: boolean
 }>(), {
   count: null,
   size: 'sm',
+  interfaceType: null,
   labelled: true
 })
 
@@ -29,6 +33,7 @@ onMounted(() => {
 
 const meta = computed(() => ENTITY_KIND_META[props.kind])
 const color = computed(() => slotColor(meta.value.slot, mounted.value && colorMode.value === 'dark'))
+const iconClass = computed(() => props.size === 'xs' ? 'size-4' : 'size-5')
 </script>
 
 <template>
@@ -36,7 +41,12 @@ const color = computed(() => slotColor(meta.value.slot, mounted.value && colorMo
     class="inline-flex items-center gap-1.5 text-xs whitespace-nowrap"
     :title="meta.label"
   >
-    <UIcon :name="meta.icon" class="size-3.5 shrink-0" :style="{ color }" />
+    <BlrInterfaceType
+      v-if="kind === 'interface' && interfaceType"
+      :type="interfaceType"
+      :size="size"
+    />
+    <UIcon v-else :name="meta.icon" :class="[iconClass, 'shrink-0']" :style="{ color }" />
     <span v-if="labelled" class="text-toned">{{ count === null ? meta.label : meta.plural }}</span>
     <span v-if="count !== null" class="font-mono text-toned tabular-nums">{{ count }}</span>
   </span>

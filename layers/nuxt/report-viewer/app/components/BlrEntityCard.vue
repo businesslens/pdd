@@ -25,6 +25,7 @@ const props = withDefaults(defineProps<{
 const emit = defineEmits<{ open: [entity: AnyEntityView] }>()
 const presentation = computed(() => entityCardPresentation(props.workspace, props.entity))
 const kindLabel = computed(() => ENTITY_KIND_META[props.entity.kind].label)
+const interfaceType = computed(() => props.entity.kind === 'interface' ? props.entity.interfaceType : undefined)
 const colorMode = useColorMode()
 const mounted = ref(false)
 
@@ -40,6 +41,12 @@ function metricColor(metric: EntityCardMetric): string | undefined {
 function metricTitle(metric: EntityCardMetric, id: string): string {
   return metric.kind ? resolveEntity(props.workspace, metric.kind, id)?.title ?? id : id
 }
+
+function metricInterfaceType(metric: EntityCardMetric, id: string) {
+  if (metric.kind !== 'interface') return undefined
+  const entity = resolveEntity(props.workspace, 'interface', id)
+  return entity?.kind === 'interface' ? entity.interfaceType : undefined
+}
 </script>
 
 <template>
@@ -51,7 +58,12 @@ function metricTitle(metric: EntityCardMetric, id: string): string {
     @click="emit('open', entity)"
   >
     <span class="flex min-w-0 flex-1 items-start gap-3">
-      <BlrKind :kind="entity.kind" :labelled="false" class="mt-0.5" />
+      <BlrKind
+        :kind="entity.kind"
+        :interface-type="interfaceType"
+        :labelled="false"
+        class="mt-0.5"
+      />
       <span class="min-w-0 flex-1">
         <span class="flex min-w-0 items-center gap-2">
           <span class="truncate text-[15px] font-semibold tracking-tight text-highlighted">{{ entity.title }}</span>
@@ -107,8 +119,13 @@ function metricTitle(metric: EntityCardMetric, id: string): string {
                 :ui="{ base: 'max-w-80 gap-1.5 px-2.5 py-1.5 font-normal', label: 'truncate' }"
               >
                 <template #leading>
+                  <BlrInterfaceType
+                    v-if="metric.kind === 'interface' && metricInterfaceType(metric, id)"
+                    :type="metricInterfaceType(metric, id)!"
+                    size="xs"
+                  />
                   <UIcon
-                    v-if="metric.kind"
+                    v-else-if="metric.kind"
                     :name="ENTITY_KIND_META[metric.kind].icon"
                     class="size-3.5 shrink-0"
                     :style="{ color: metricColor(metric) }"

@@ -152,6 +152,36 @@ describe('stable Product Report Workbench', () => {
     }
   })
 
+  it('keeps the Interface plug and submarks a concrete Interface with its authored type', () => {
+    const mark = source('app/components/BlrInterfaceType.vue')
+    const kind = source('app/components/BlrKind.vue')
+    const card = source('app/components/BlrEntityCard.vue')
+    const connections = source('app/components/BlrConnections.vue')
+    const workbench = source('app/components/BlrWorkbench.vue')
+    const flow = source('app/utils/flowGraph.ts')
+    const flowNode = source('app/components/BlrFlowNode.vue')
+    const flowGroup = source('app/components/BlrFlowGroup.vue')
+
+    expect(mark).toContain('name="i-lucide-plug"')
+    expect(mark).toContain(':name="meta.icon"')
+    expect(mark).toContain('blr-interface-mark__type')
+    expect(kind).toContain("kind === 'interface' && interfaceType")
+    expect(kind).toContain("props.size === 'xs' ? 'size-4' : 'size-5'")
+    expect(mark).toContain('width: 1.375rem')
+    expect(mark).toContain(".blr-interface-mark[data-size='xs']")
+    expect(card).toContain(':interface-type="interfaceType"')
+    expect(connections).toContain(':interface-type="interfaceType(item.kind, id)"')
+    expect(workbench).toContain('resolvedInterfaceType(group.kind, group.key)')
+    expect(workbench).toContain('BlrInterfaceTypeComponent')
+    expect(flow).toContain("interfaceType: entity.kind === 'interface' ? entity.interfaceType : null")
+    expect(flowNode).toContain("data.kind === 'interface' && data.interfaceType")
+    expect(flowGroup).toContain("data.kind === 'interface' && data.interfaceType")
+
+    /* A collection or relation heading means the Interface kind, not one
+       concrete Interface, so its generic plug remains deliberately generic. */
+    expect(source('app/components/BlrRail.vue')).toContain(':name="meta.icon"')
+  })
+
   it('fits and pages an authored-order route window without empty columns', async () => {
     const {
       scenarioRouteCapacity,

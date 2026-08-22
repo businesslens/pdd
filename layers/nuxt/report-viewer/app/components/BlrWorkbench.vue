@@ -59,6 +59,7 @@ import { docsForEntityKind } from '../utils/entityDocs'
 import { firstSentence } from '../utils/reportMarkdown'
 
 const UButton = resolveComponent('UButton')
+const BlrInterfaceTypeComponent = resolveComponent('BlrInterfaceType')
 
 const props = defineProps<{ workspace: ReportWorkspace, logoSrc?: string | null }>()
 
@@ -240,6 +241,7 @@ const facetChips = computed(() => facetKinds.value
     return {
       kind,
       icon: meta.icon,
+      interfaceType: ids.length === 1 && first?.kind === 'interface' ? first.interfaceType : undefined,
       label: ids.length === 1 ? meta.label : meta.plural,
       value: `${first?.title ?? ids[0]}${rest > 0 ? ` +${rest}` : ''}`
     }
@@ -478,14 +480,28 @@ function sortableHeader(label: string) {
 const countCell = (count: number, hint: string) =>
   h('span', { class: 'blr-meta', title: hint || undefined }, String(count))
 
+function resolvedInterfaceType(kind: ReportEntityKind | null, id: string) {
+  if (kind !== 'interface' || !id) return undefined
+  const entity = resolveEntity(props.workspace, 'interface', id)
+  return entity?.kind === 'interface' ? entity.interfaceType : undefined
+}
+
 function titleColumn(kind: ReportEntityKind): TableColumn<AnyEntityView> {
   return {
     accessorKey: 'title',
     header: sortableHeader(ENTITY_KIND_META[kind].label),
-    cell: ({ row }) => h('div', { class: 'min-w-0 max-w-72' }, [
-      h('p', { class: 'truncate font-medium text-highlighted' }, row.original.title),
-      h('p', { class: 'truncate text-xs text-muted' }, firstSentence(row.original.lead, 90))
-    ])
+    cell: ({ row }) => {
+      const marker = row.original.kind === 'interface'
+        ? h(BlrInterfaceTypeComponent, { type: row.original.interfaceType })
+        : null
+      return h('div', { class: 'flex min-w-0 max-w-72 items-start gap-2' }, [
+        marker,
+        h('span', { class: 'min-w-0' }, [
+          h('span', { class: 'block truncate font-medium text-highlighted' }, row.original.title),
+          h('span', { class: 'block truncate text-xs text-muted' }, firstSentence(row.original.lead, 90))
+        ])
+      ])
+    }
   }
 }
 
@@ -507,8 +523,11 @@ function relationTitleColumn(
     header: sortableHeader(label),
     cell: ({ row }) => {
       const entity = resolveEntity(props.workspace, kind, read(row.original))
+      const marker = entity?.kind === 'interface'
+        ? h(BlrInterfaceTypeComponent, { type: entity.interfaceType, size: 'xs' })
+        : h(resolveComponent('UIcon'), { name: ENTITY_KIND_META[kind].icon, class: 'size-3.5 shrink-0 text-dimmed' })
       return h('span', { class: 'inline-flex items-center gap-1.5 text-sm text-default' }, [
-        h(resolveComponent('UIcon'), { name: ENTITY_KIND_META[kind].icon, class: 'size-3.5 shrink-0 text-dimmed' }),
+        marker,
         h('span', { class: 'truncate' }, entity?.title ?? '—')
       ])
     }
@@ -1014,7 +1033,12 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
               :title="`Clear this ${chip.label.toLowerCase()} filter`"
               @click="setFacet(chip.kind, [])"
             >
-              <UIcon :name="chip.icon" class="size-3.5 shrink-0" :style="{ color: `var(--blr-slot-${ENTITY_KIND_META[chip.kind].slot})` }" />
+              <BlrInterfaceType
+                v-if="chip.interfaceType"
+                :type="chip.interfaceType"
+                size="xs"
+              />
+              <UIcon v-else :name="chip.icon" class="size-3.5 shrink-0" :style="{ color: `var(--blr-slot-${ENTITY_KIND_META[chip.kind].slot})` }" />
               <span class="text-dimmed">{{ chip.label }}</span>
               <span class="truncate font-medium text-highlighted">{{ chip.value }}</span>
               <UIcon name="i-lucide-x" class="size-3 shrink-0 text-dimmed" />
@@ -1143,7 +1167,13 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
                   data-group-header
                   class="w-full justify-start rounded-none px-3 py-2 text-start"
                 >
-                  <BlrKind v-if="group.kind" :kind="group.kind" :labelled="false" size="xs" />
+                  <BlrKind
+                    v-if="group.kind"
+                    :kind="group.kind"
+                    :interface-type="resolvedInterfaceType(group.kind, group.key)"
+                    :labelled="false"
+                    size="sm"
+                  />
                   <UIcon v-else name="i-lucide-minus" class="size-3.5 shrink-0 text-dimmed" />
                   <span
                     class="min-w-0 truncate text-sm font-semibold tracking-tight"

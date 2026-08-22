@@ -52,7 +52,11 @@ const colorVar = computed(() => {
       :style="{ '--node-color': colorVar }"
     >
       <span class="blr-flow-node__icon">
-        <UIcon :name="meta.icon" />
+        <BlrInterfaceType
+          v-if="data.kind === 'interface' && data.interfaceType"
+          :type="data.interfaceType"
+        />
+        <UIcon v-else :name="meta.icon" />
       </span>
       <span class="blr-flow-node__text">
         <span class="blr-flow-node__title">{{ data.title }}</span>

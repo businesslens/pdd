@@ -72,6 +72,7 @@ const width = computed(() => WIDTHS[panel.value] ?? WIDTHS.wide)
 const parent = computed(() => props.entity ? parentOf(props.workspace, props.entity) : null)
 const subject = computed(() => parent.value ?? props.entity)
 const kindLabel = computed(() => subject.value ? ENTITY_KIND_META[subject.value.kind].label : '')
+const interfaceType = computed(() => subject.value?.kind === 'interface' ? subject.value.interfaceType : undefined)
 </script>
 
 <template>
@@ -91,7 +92,7 @@ const kindLabel = computed(() => subject.value ? ENTITY_KIND_META[subject.value.
   >
     <template #header>
       <div v-if="subject" class="flex min-w-0 flex-1 items-center gap-2.5">
-        <BlrKind :kind="subject.kind" :labelled="false" />
+        <BlrKind :kind="subject.kind" :interface-type="interfaceType" :labelled="false" />
         <div class="min-w-0 flex-1">
           <p class="blr-field">{{ kindLabel }}</p>
           <p class="truncate text-base font-semibold leading-5 tracking-tight text-highlighted">

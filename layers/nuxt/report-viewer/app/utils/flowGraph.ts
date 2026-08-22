@@ -15,7 +15,7 @@
 import { Graph, layout } from '@dagrejs/dagre'
 import { MarkerType, Position } from '@vue-flow/core'
 import type { Edge, Node } from '@vue-flow/core'
-import type { AnyEntityView, ReportEntityKind, ReportScenarioType, ReportWorkspace } from './reportWorkspace'
+import type { AnyEntityView, InterfaceView, ReportEntityKind, ReportScenarioType, ReportWorkspace } from './reportWorkspace'
 import { ENTITY_KIND_META, entityKey, resolveEntity, resolveEntityKey } from './reportWorkspace'
 
 /** Data carried by every entity box (`type: 'blr'`). */
@@ -23,6 +23,8 @@ export interface FlowNodeData {
   entityKey: string
   entityId: string
   kind: ReportEntityKind
+  /** Present only for a concrete Interface; generic kind nodes keep the plug. */
+  interfaceType?: InterfaceView['interfaceType'] | null
   scenarioType: ReportScenarioType | null
   title: string
   /** Small line under the title; defaults to the kind label. */
@@ -42,6 +44,7 @@ export interface FlowGroupData {
   entityKey: string
   entityId: string
   kind: ReportEntityKind
+  interfaceType?: InterfaceView['interfaceType'] | null
   title: string
   sublabel: string
   dimmed: boolean
@@ -112,6 +115,7 @@ export function entityNode(
       entityKey: entity.key,
       entityId: entity.id,
       kind: entity.kind,
+      interfaceType: entity.kind === 'interface' ? entity.interfaceType : null,
       title: entity.title,
       sublabel: ENTITY_KIND_META[entity.kind].label,
       scenarioType: entity.kind === 'capability-scenario' || entity.kind === 'journey-scenario'
@@ -493,6 +497,7 @@ export function buildScreenMap(workspace: ReportWorkspace, options: ScreenMapOpt
         entityKey: productInterface.key,
         entityId: productInterface.id,
         kind: 'interface',
+        interfaceType: productInterface.interfaceType,
         title: productInterface.title,
         sublabel: 'Interface',
         dimmed: false,

@@ -23,7 +23,11 @@ const colorVar = computed(() => `var(--blr-slot-${props.data.colorSlot ?? meta.v
   >
     <div class="blr-flow-group__header">
       <span class="blr-flow-group__icon">
-        <UIcon :name="meta.icon" />
+        <BlrInterfaceType
+          v-if="data.kind === 'interface' && data.interfaceType"
+          :type="data.interfaceType"
+        />
+        <UIcon v-else :name="meta.icon" />
       </span>
       <span class="blr-flow-group__text">
         <span class="blr-flow-group__title">{{ data.title }}</span>
