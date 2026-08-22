@@ -70,10 +70,6 @@ const graphLed = computed(() => GRAPH_LED.includes(subject.value.kind))
 const twoColumn = computed(() => page.value === 'dense' && !props.compact)
 const disclosed = computed(() => page.value === 'disclosed')
 const verticalTabs = computed(() => props.sideTabs || (page.value === 'vertical' && !props.compact))
-const scenarioTabsTop = computed(() => {
-  if (props.compact) return verticalTabs.value ? '0rem' : '2.5rem'
-  return verticalTabs.value ? '1.25rem' : '3.75rem'
-})
 
 const RIGHT_COLUMN = new Set(['connections', 'counterparts'])
 const leftBlocks = computed(() => current.value?.blocks.filter(id => !RIGHT_COLUMN.has(id)) ?? [])
@@ -161,7 +157,7 @@ const blockLabel: Record<string, string> = {
       >
         <p v-if="current?.hint && current.id !== 'overview'" class="text-xs text-muted">{{ current.hint }}</p>
 
-        <!-- SCENARIOS — read inside the parent, five ways. -->
+        <!-- SCENARIOS — split where two panes fit, inline where they do not. -->
         <BlrScenarios
           v-if="current?.id === 'scenarios'"
           v-model:scenario-route="scenarioRoute"
@@ -169,7 +165,6 @@ const blockLabel: Record<string, string> = {
           :workspace="workspace"
           :entity="subject"
           :selected-key="requestedChild"
-          :sticky-top="scenarioTabsTop"
           @select="emit('select', $event)"
         />
 

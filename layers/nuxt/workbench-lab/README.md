@@ -1,6 +1,6 @@
 # Workbench audition layer
 
-Three decisions left open, five options each. Switch them in the **experiment
+Two decisions remain open, five options each. Switch them in the **experiment
 bar** — the sliders button in the header opens it, the same one the background
 audition uses.
 
@@ -20,7 +20,9 @@ both.
   entity twice. Every panel carries `Open as page`.
 - **A Scenario has no page.** It is read inside its parent, because you read a
   Capability's Scenarios to compare them and a page put each one alone. Reaching
-  one by URL or ⌘K opens the parent with that Scenario chosen.
+  one by URL or ⌘K opens the parent with that Scenario chosen. The sibling
+  list and chosen Scenario are split where their container supports two panes;
+  below 720px, each Scenario expands inline instead.
 
 ## How it works
 
@@ -53,16 +55,6 @@ peek hard to trust.
 | **Side tabs** | 640px, tabs on the left edge | Two navigation columns on screen at once, counting the rail. |
 | **No slideover** | — a row opens the page | Every glance costs the list you were scanning, and a trip back. |
 
-## Axis 3 — Scenarios · *inside the parent, but where?*
-
-| Option | What it does | Costs |
-| --- | --- | --- |
-| **Inline** | Each expands where it is listed, one at a time. | The list is pushed down as you read, so the next one moves. |
-| **Split** (default) | List left, chosen Scenario right. The list never moves. | Reads in a narrower column than the page it sits on. |
-| **Index** | A compact strip above, the reading at full width below. | Long lists push the reading below the fold. |
-| **Tabs** | Each Scenario is a tab. | Ten Capability Scenarios make ten tabs, and tab strips do not scale. |
-| **Sequence** | All of them in order. Nothing to click, comparison is free. | The longest by far, with the parent's own reading above all of it. |
-
 ## Fixed in the base, not auditioned
 
 Entity markers use one central scale: 20px in ordinary contexts and 18px in
@@ -83,4 +75,4 @@ Content Feed Reader › JOURNEYS     › Catch up on unread  › Work through th
 Add it to the axis in `app/utils/labVariants.ts` — `premise` and `cost` are both
 required, because an option that claims no weakness decides nothing — then
 handle it where its axis is read: `BlrEntityReading` for the page, `BlrInspector`
-for the slideover, or `BlrScenarios` for the Scenarios.
+for the slideover.

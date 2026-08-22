@@ -47,7 +47,7 @@ export default defineNuxtConfig({
     // the landing application. Keep the composition here so report-viewer
     // stays neutral for consumers that want only the approved theme.
     // `workbench-lab` extends `report-viewer`, so the shipped Workbench arrives
-    // through it and the four alternative readings arrive beside it.
+    // through it and the remaining page and slideover readings arrive beside it.
     resolve('../../layers/nuxt/workbench-lab'),
     resolve('../../layers/nuxt/theme-lab')
   ],

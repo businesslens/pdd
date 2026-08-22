@@ -1,5 +1,5 @@
 /**
- * Three decisions left open, five options each.
+ * Two decisions remain open, five options each.
  *
  * The Workbench structure is settled and the first round of auditions decided
  * three things:
@@ -8,8 +8,9 @@
  *   Overview rather than beside it — they are what an overview is for;
  * - the slideover shows **the same thing the page shows**, so a reader picks a
  *   container rather than learning two readings of one entity;
- * - a Scenario is read **inside its parent**, inline or split. A Scenario page
- *   was a level of navigation nobody asked for.
+ * - a Scenario is read **inside its parent**, split where two panes fit and
+ *   inline where they do not. A Scenario page was a level of navigation nobody
+ *   asked for.
  *
  * What is left is how far to take each. Every option states what it costs,
  * because an audition where each option claims to be good at everything decides
@@ -34,7 +35,6 @@ export interface LabAxis<Id extends string = string> {
 
 export type PageVariantId = 'two' | 'three' | 'vertical' | 'disclosed' | 'dense'
 export type PanelVariantId = 'narrow' | 'wide' | 'sheet' | 'sidetabs' | 'none'
-export type ScenarioVariantId = 'inline' | 'split' | 'index' | 'tabs' | 'sequence'
 
 export const PAGE_AXIS: LabAxis<PageVariantId> = {
   id: 'page',
@@ -114,49 +114,9 @@ export const PANEL_AXIS: LabAxis<PanelVariantId> = {
   ]
 }
 
-export const SCENARIO_AXIS: LabAxis<ScenarioVariantId> = {
-  id: 'scenario',
-  name: 'Scenarios',
-  question: 'Read inside the parent — expanded, or beside a list?',
-  icon: 'i-lucide-list-tree',
-  options: [
-    {
-      id: 'inline',
-      name: 'Inline',
-      premise: 'Each Scenario expands where it is listed. One open at a time.',
-      cost: 'The list is pushed down as you read, so the next Scenario moves.'
-    },
-    {
-      id: 'split',
-      name: 'Split',
-      premise: 'A list on the left, the chosen Scenario on the right. The list never moves.',
-      cost: 'The Scenario reads in a narrower column than the page it sits on.'
-    },
-    {
-      id: 'index',
-      name: 'Index',
-      premise: 'A compact index above, the chosen Scenario at full width below it.',
-      cost: 'Long Scenario lists push the reading below the fold.'
-    },
-    {
-      id: 'tabs',
-      name: 'Tabs',
-      premise: 'Each Scenario is a tab. The set is visible; only one reads at a time.',
-      cost: 'Ten Capability Scenarios make ten tabs, and tab strips do not scale.'
-    },
-    {
-      id: 'sequence',
-      name: 'Sequence',
-      premise: 'Every Scenario rendered in order. Nothing to click, comparison is free.',
-      cost: 'The longest option by far, and the parent’s own reading is above all of it.'
-    }
-  ]
-}
-
-export const LAB_AXES = [PAGE_AXIS, PANEL_AXIS, SCENARIO_AXIS]
+export const LAB_AXES = [PAGE_AXIS, PANEL_AXIS]
 
 export const LAB_DEFAULTS = {
   page: 'two' as PageVariantId,
-  panel: 'wide' as PanelVariantId,
-  scenario: 'split' as ScenarioVariantId
+  panel: 'wide' as PanelVariantId
 }

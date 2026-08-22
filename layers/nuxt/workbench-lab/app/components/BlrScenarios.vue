@@ -6,34 +6,29 @@
  * material that only ever makes sense beside its siblings — you read a
  * Capability's Scenarios to compare them, and a page put each one alone.
  *
- * All five options keep the reading in the parent. What varies is where the
- * chosen Scenario appears and what happens to the list while you read it.
+ * The chosen reading is split while its container supports two panes, then
+ * becomes inline rather than squeezing the Scenario beside its sibling list.
  */
 import type { AnyEntityView, ReportWorkspace, ScenarioView } from '../utils/model'
 import { ENTITY_KIND_META } from '../utils/model'
 import { childrenOf } from '../utils/pageSections'
 
-const props = withDefaults(defineProps<{
+const props = defineProps<{
   workspace: ReportWorkspace
   entity: AnyEntityView
   /** A Scenario reached by URL or ⌘K: open on it rather than on the first. */
   selectedKey?: string | null
-  /** Clears the page tabs above this sticky row without hard-coding a layout. */
-  stickyTop?: string
-}>(), { stickyTop: '2.5rem' })
+}>()
 
 const emit = defineEmits<{ select: [entity: AnyEntityView] }>()
 
 const scenarioRoute = defineModel<string | null>('scenarioRoute', { default: null })
 const routeColumns = defineModel<string>('routeColumns', { default: 'auto' })
 
-const { scenario: variant } = useWorkbenchLab()
-
 const children = computed<ScenarioView[]>(() => childrenOf(props.workspace, props.entity) as ScenarioView[])
 const meta = computed(() => ENTITY_KIND_META[props.entity.kind])
 
-/* Split is the default reading, but below the width needed by its two panes it
-   becomes the inline option rather than squeezing the Scenario beside a list. */
+/* Below the width needed by two panes, render the list as inline disclosures. */
 const scenarioShellEl = ref<HTMLElement | null>(null)
 const scenarioShellWidth = ref(0)
 
@@ -48,22 +43,18 @@ watch(scenarioShellEl, (element, _previous, onCleanup) => {
   onCleanup(() => observer.disconnect())
 }, { immediate: true })
 
-const splitInline = computed(() => variant.value === 'split'
-  && scenarioShellWidth.value > 0
-  && scenarioShellWidth.value < 720)
+const inline = computed(() => scenarioShellWidth.value > 0 && scenarioShellWidth.value < 720)
 
-/* Inline is the one option where "nothing chosen" is a legitimate state: the
-   list is the reading until you open something. */
 const openKey = ref<string | null>(null)
 
 function initial(): string | null {
   const requested = props.selectedKey
     && children.value.find(item => item.key === props.selectedKey)?.key
   if (requested) return requested
-  return variant.value === 'inline' ? null : children.value[0]?.key ?? null
+  return children.value[0]?.key ?? null
 }
 
-watch([children, variant, () => props.selectedKey], () => {
+watch([children, () => props.selectedKey], () => {
   openKey.value = initial()
 }, { immediate: true })
 
@@ -81,9 +72,9 @@ const summary = (item: ScenarioView) => item.trigger || item.lead
     No Scenarios name this {{ meta.label }}.
   </p>
 
-  <!-- INLINE — each expands where it is listed. -->
+  <!-- INLINE — below 720px, each expands where it is listed. -->
   <div
-    v-else-if="variant === 'inline' || splitInline"
+    v-else-if="inline"
     ref="scenarioShellEl"
     class="divide-y divide-default overflow-hidden rounded-xl border border-default"
   >
@@ -118,7 +109,7 @@ const summary = (item: ScenarioView) => item.trigger || item.lead
 
   <!-- SPLIT — the list never moves while you read. -->
   <div
-    v-else-if="variant === 'split'"
+    v-else
     ref="scenarioShellEl"
     class="overflow-hidden rounded-xl border border-default"
   >
@@ -152,83 +143,6 @@ const summary = (item: ScenarioView) => item.trigger || item.lead
         />
       </div>
     </div>
-  </div>
-
-  <!-- INDEX — a compact strip above, the reading at full width below. -->
-  <div v-else-if="variant === 'index'" class="space-y-4">
-    <div class="flex flex-wrap gap-1.5">
-      <button
-        v-for="(item, index) in children"
-        :key="item.key"
-        type="button"
-        class="blr-scn-chip"
-        :data-current="item.key === openKey"
-        @click="openKey = item.key"
-      >
-        <span class="blr-scn-index">{{ index + 1 }}</span>
-        <span class="truncate">{{ item.title }}</span>
-      </button>
-    </div>
-    <div v-if="openScenario" class="space-y-3 border-t border-default pt-4">
-      <header class="flex flex-wrap items-center gap-2">
-        <h3 class="text-base font-semibold tracking-tight text-highlighted">{{ openScenario.title }}</h3>
-        <UBadge color="neutral" variant="subtle" size="sm">{{ openScenario.kindName }}</UBadge>
-        <UBadge v-if="openScenario.result" color="neutral" variant="outline" size="sm">
-          {{ openScenario.result }}
-        </UBadge>
-      </header>
-      <BlrEntityBody
-        v-model:scenario-route="scenarioRoute"
-        v-model:route-columns="routeColumns"
-        :workspace="workspace"
-        :entity="openScenario"
-        @select="emit('select', $event)"
-      />
-    </div>
-  </div>
-
-  <!-- TABS — the set is visible; one reads at a time. -->
-  <div v-else-if="variant === 'tabs'" class="space-y-4">
-    <div
-      data-sticky-scenario-tabs
-      class="sticky z-10 flex flex-wrap items-center gap-1 border-b border-default bg-default/95 backdrop-blur"
-      :style="{ top: props.stickyTop }"
-    >
-      <button
-        v-for="(item, index) in children"
-        :key="item.key"
-        type="button"
-        class="blr-scn-tab"
-        :data-current="item.key === openKey"
-        :title="item.title"
-        @click="openKey = item.key"
-      >
-        <span class="blr-scn-index">{{ index + 1 }}</span>
-        <span class="max-w-40 truncate">{{ item.title }}</span>
-      </button>
-    </div>
-    <BlrEntityBody
-      v-if="openScenario"
-      v-model:scenario-route="scenarioRoute"
-      v-model:route-columns="routeColumns"
-      :workspace="workspace"
-      :entity="openScenario"
-      @select="emit('select', $event)"
-    />
-  </div>
-
-  <!-- SEQUENCE — all of them, in order, nothing to click. -->
-  <div v-else class="space-y-8">
-    <section v-for="(item, index) in children" :key="item.key" class="space-y-3">
-      <header class="flex flex-wrap items-center gap-2 border-b border-default pb-2">
-        <span class="blr-scn-index">{{ index + 1 }}</span>
-        <h3 class="text-base font-semibold tracking-tight text-highlighted">{{ item.title }}</h3>
-        <UBadge color="neutral" variant="subtle" size="sm">{{ item.kindName }}</UBadge>
-        <UBadge v-if="item.result" color="neutral" variant="outline" size="sm">{{ item.result }}</UBadge>
-        <span class="blr-meta ms-auto">{{ item.steps.length }} steps</span>
-      </header>
-      <BlrEntityBody :workspace="workspace" :entity="item" @select="emit('select', $event)" />
-    </section>
   </div>
 </template>
 
@@ -265,50 +179,5 @@ const summary = (item: ScenarioView) => item.trigger || item.lead
   font-family: var(--font-mono);
   font-size: 10px;
   color: var(--ui-text-muted);
-}
-
-.blr-scn-chip {
-  display: inline-flex;
-  max-width: 18rem;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.1875rem 0.5rem 0.1875rem 0.1875rem;
-  border: 1px solid var(--ui-border);
-  border-radius: 9999px;
-  font-size: 12px;
-  color: var(--ui-text-muted);
-}
-
-.blr-scn-chip:hover {
-  border-color: var(--ui-border-accented);
-  color: var(--ui-text-highlighted);
-}
-
-.blr-scn-chip[data-current='true'] {
-  border-color: transparent;
-  background: color-mix(in srgb, var(--blr-slot-7) 12%, var(--ui-bg-elevated));
-  color: var(--ui-text-highlighted);
-  font-weight: 600;
-}
-
-.blr-scn-tab {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.4375rem 0.625rem;
-  margin-bottom: -1px;
-  border-bottom: 2px solid transparent;
-  font-size: 13px;
-  color: var(--ui-text-muted);
-}
-
-.blr-scn-tab:hover {
-  color: var(--ui-text-highlighted);
-}
-
-.blr-scn-tab[data-current='true'] {
-  border-bottom-color: var(--blr-slot-7);
-  color: var(--ui-text-highlighted);
-  font-weight: 600;
 }
 </style>

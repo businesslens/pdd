@@ -1,8 +1,7 @@
 import {
   LAB_DEFAULTS,
   type PageVariantId,
-  type PanelVariantId,
-  type ScenarioVariantId
+  type PanelVariantId
 } from '../utils/labVariants'
 
 const cookieOptions = {
@@ -13,7 +12,7 @@ const cookieOptions = {
 /**
  * Which option each axis is showing.
  *
- * One cookie per axis, so the three vary independently — judging one part at a
+ * One cookie per axis, so the two vary independently — judging one part at a
  * time is the whole point, and a single combined setting would make it
  * impossible. Cookie-backed for the same reason the background audition is: the
  * choice has to survive the recompile after every edit to the model.
@@ -21,36 +20,28 @@ const cookieOptions = {
 export function useWorkbenchLab() {
   const page = useCookie<PageVariantId>('bl-lab-page', { default: () => LAB_DEFAULTS.page, ...cookieOptions })
   const panel = useCookie<PanelVariantId>('bl-lab-panel', { default: () => LAB_DEFAULTS.panel, ...cookieOptions })
-  const scenario = useCookie<ScenarioVariantId>('bl-lab-scenario', {
-    default: () => LAB_DEFAULTS.scenario,
-    ...cookieOptions
-  })
 
   const values = computed<Record<string, string>>(() => ({
     page: page.value,
-    panel: panel.value,
-    scenario: scenario.value
+    panel: panel.value
   }))
 
   useHead({
     htmlAttrs: {
       'data-lab-page': computed(() => page.value),
-      'data-lab-panel': computed(() => panel.value),
-      'data-lab-scenario': computed(() => scenario.value)
+      'data-lab-panel': computed(() => panel.value)
     }
   })
 
   function select(axis: string, id: string) {
     if (axis === 'page') page.value = id as PageVariantId
     if (axis === 'panel') panel.value = id as PanelVariantId
-    if (axis === 'scenario') scenario.value = id as ScenarioVariantId
   }
 
   function reset() {
     page.value = LAB_DEFAULTS.page
     panel.value = LAB_DEFAULTS.panel
-    scenario.value = LAB_DEFAULTS.scenario
   }
 
-  return { page, panel, scenario, values, select, reset }
+  return { page, panel, values, select, reset }
 }

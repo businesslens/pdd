@@ -79,10 +79,9 @@ describe('Workbench audition layer', () => {
     expect(panel).toContain("panel.value === 'none'")
   })
 
-  it('keeps page and nested Scenario tabs pinned while their reading scrolls', () => {
+  it('keeps page tabs pinned while their reading scrolls', () => {
     const page = source('app/components/BlrEntityPage.vue')
     const reading = source('app/components/BlrEntityReading.vue')
-    const scenarios = source('app/components/BlrScenarios.vue')
 
     /* The Workbench page frame contributes `p-5`. The reading consumes that
        inset, then makes the same 20px part of the sticky surface: the gap stays
@@ -94,10 +93,7 @@ describe('Workbench audition layer', () => {
     expect(reading).toContain('v-if="!compact"')
     expect(reading).toContain('label="Neighbourhood"')
     expect(reading).toContain("emit('focus', subject)")
-    expect(reading).toContain(':sticky-top="scenarioTabsTop"')
-    expect(scenarios).toContain('data-sticky-scenario-tabs')
-    expect(scenarios).toContain('class="sticky z-10')
-    expect(scenarios).toContain(':style="{ top: props.stickyTop }"')
+    expect(reading).not.toContain('scenarioTabsTop')
   })
 
   it('keeps contextual documentation beside Neighbourhood in the page tabs', () => {
@@ -131,11 +127,12 @@ describe('Workbench audition layer', () => {
     expect(reading).toContain('const subject = computed(() => parent.value ?? props.entity)')
     expect(reading).toContain("active.value = 'scenarios'")
     expect(scenarios).not.toContain('emit(\'open\'')
-    /* The chosen split remains the wide reading and becomes the actual inline
-       option only when its own container no longer supports two panes. */
-    expect(scenarios).toContain("variant.value === 'split'")
+    /* The chosen split reading becomes inline only when its own container no
+       longer supports two panes. It is settled behavior, not a lab variant. */
     expect(scenarios).toContain('scenarioShellWidth.value < 720')
-    expect(scenarios).toContain("variant === 'inline' || splitInline")
+    expect(scenarios).toContain('v-else-if="inline"')
+    expect(scenarios).not.toContain('useWorkbenchLab')
+    expect(scenarios).not.toContain("variant ===")
   })
 
   /*
@@ -163,26 +160,27 @@ describe('Workbench audition layer', () => {
     expect(reading).toContain('<BlrScenarios')
   })
 
-  it('offers five options on each axis, each with a stated cost', () => {
+  it('offers five options on each remaining axis, each with a stated cost', () => {
     const variants = source('app/utils/labVariants.ts')
+    const labState = source('app/composables/useWorkbenchLab.ts')
 
-    for (const axis of ['PAGE_AXIS', 'PANEL_AXIS', 'SCENARIO_AXIS']) {
+    for (const axis of ['PAGE_AXIS', 'PANEL_AXIS']) {
       expect(variants, axis).toContain(`export const ${axis}`)
     }
+    expect(variants).not.toContain('SCENARIO_AXIS')
     for (const id of ['two', 'three', 'vertical', 'disclosed', 'dense']) {
       expect(variants, id).toContain(`id: '${id}'`)
     }
     for (const id of ['narrow', 'wide', 'sheet', 'sidetabs', 'none']) {
       expect(variants, id).toContain(`id: '${id}'`)
     }
-    for (const id of ['inline', 'split', 'index', 'tabs', 'sequence']) {
-      expect(variants, id).toContain(`id: '${id}'`)
-    }
 
-    /* Fifteen options, each declaring what it gives up. An audition where every
+    /* Ten options, each declaring what it gives up. An audition where every
        option claims to be good at everything decides nothing. */
-    expect(variants.match(/premise: '/g)?.length).toBe(15)
-    expect(variants.match(/cost: '/g)?.length).toBe(15)
+    expect(variants.match(/premise: '/g)?.length).toBe(10)
+    expect(variants.match(/cost: '/g)?.length).toBe(10)
+    expect(labState).not.toContain('bl-lab-scenario')
+    expect(labState).not.toContain('data-lab-scenario')
   })
 
   /*
