@@ -141,6 +141,7 @@ describe('stable Product Report Workbench', () => {
     expect(body.match(/aria-label="Show next route"/g)).toHaveLength(2)
     expect(body).toContain('compact')
     expect(body).not.toContain('Product Place ·')
+    expect(context).toContain('<BlrInterfaceType :type="place.interfaceType" size="xs" />')
     expect(context).toContain('whitespace-nowrap')
     expect(context).toContain("compact ? 'max-w-24'")
     expect(context).toContain('truncate')
@@ -155,6 +156,7 @@ describe('stable Product Report Workbench', () => {
   it('keeps the Interface plug and submarks a concrete Interface with its authored type', () => {
     const mark = source('app/components/BlrInterfaceType.vue')
     const kind = source('app/components/BlrKind.vue')
+    const structure = source('app/assets/report-workbench.css')
     const card = source('app/components/BlrEntityCard.vue')
     const connections = source('app/components/BlrConnections.vue')
     const workbench = source('app/components/BlrWorkbench.vue')
@@ -166,9 +168,31 @@ describe('stable Product Report Workbench', () => {
     expect(mark).toContain(':name="meta.icon"')
     expect(mark).toContain('blr-interface-mark__type')
     expect(kind).toContain("kind === 'interface' && interfaceType")
-    expect(kind).toContain("props.size === 'xs' ? 'size-4' : 'size-5'")
-    expect(mark).toContain('width: 1.375rem')
+    expect(kind).toContain('var(--blr-entity-mark-regular)')
+    expect(kind).toContain('var(--blr-entity-mark-dense)')
+    expect(mark).toContain('var(--blr-interface-mark-regular)')
+    expect(mark).toContain('var(--blr-interface-badge-glyph-dense)')
     expect(mark).toContain(".blr-interface-mark[data-size='xs']")
+    for (const variable of [
+      '--blr-entity-mark-regular',
+      '--blr-entity-mark-dense',
+      '--blr-interface-mark-regular',
+      '--blr-interface-kind-regular',
+      '--blr-interface-badge-regular',
+      '--blr-interface-badge-glyph-regular',
+      '--blr-interface-mark-dense',
+      '--blr-interface-kind-dense',
+      '--blr-interface-badge-dense',
+      '--blr-interface-badge-glyph-dense',
+      '--blr-interface-badge-offset-regular',
+      '--blr-interface-badge-offset-dense'
+    ]) {
+      expect(structure, variable).toContain(`${variable}:`)
+    }
+    expect(structure).toContain('--blr-entity-mark-regular: 1.25rem')
+    expect(structure).toContain('--blr-entity-mark-dense: 1.125rem')
+    expect(structure).toContain('--blr-interface-kind-regular: 1.125rem')
+    expect(structure).toContain('--blr-interface-kind-dense: 1rem')
     expect(card).toContain(':interface-type="interfaceType"')
     expect(connections).toContain(':interface-type="interfaceType(item.kind, id)"')
     expect(workbench).toContain('resolvedInterfaceType(group.kind, group.key)')
@@ -176,6 +200,11 @@ describe('stable Product Report Workbench', () => {
     expect(flow).toContain("interfaceType: entity.kind === 'interface' ? entity.interfaceType : null")
     expect(flowNode).toContain("data.kind === 'interface' && data.interfaceType")
     expect(flowGroup).toContain("data.kind === 'interface' && data.interfaceType")
+    expect(flowNode).toContain('class="blr-flow-node__kind"')
+    expect(flowNode).toContain('var(--blr-entity-mark-regular)')
+    expect(flowGroup).toContain('class="blr-flow-group__kind"')
+    expect(flowGroup).toContain('var(--blr-entity-mark-regular)')
+    expect(source('app/components/BlrFlowLabel.vue')).toContain('var(--blr-entity-mark-dense)')
 
     /* A collection or relation heading means the Interface kind, not one
        concrete Interface, so its generic plug remains deliberately generic. */

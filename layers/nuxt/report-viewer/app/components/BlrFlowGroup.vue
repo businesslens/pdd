@@ -27,7 +27,7 @@ const colorVar = computed(() => `var(--blr-slot-${props.data.colorSlot ?? meta.v
           v-if="data.kind === 'interface' && data.interfaceType"
           :type="data.interfaceType"
         />
-        <UIcon v-else :name="meta.icon" />
+        <UIcon v-else :name="meta.icon" class="blr-flow-group__kind" />
       </span>
       <span class="blr-flow-group__text">
         <span class="blr-flow-group__title">{{ data.title }}</span>
@@ -77,13 +77,18 @@ const colorVar = computed(() => `var(--blr-slot-${props.data.colorSlot ?? meta.v
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 1.6rem;
-  height: 1.6rem;
+  width: calc(var(--blr-entity-mark-regular) + 0.375rem);
+  height: calc(var(--blr-entity-mark-regular) + 0.375rem);
   flex-shrink: 0;
   border-radius: 7px;
   background: color-mix(in srgb, var(--group-color) 18%, transparent);
   color: var(--group-color);
-  font-size: 0.95rem;
+}
+
+.blr-flow-group__kind {
+  width: var(--blr-entity-mark-regular);
+  height: var(--blr-entity-mark-regular);
+  flex: 0 0 var(--blr-entity-mark-regular);
 }
 
 .blr-flow-group__text {

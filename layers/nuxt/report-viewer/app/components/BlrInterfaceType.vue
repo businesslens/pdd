@@ -42,25 +42,25 @@ const interfaceColor = computed(() => slotColor(1, mounted.value && colorMode.va
 .blr-interface-mark {
   position: relative;
   display: inline-flex;
-  width: 1.375rem;
-  height: 1.375rem;
-  flex: 0 0 1.375rem;
+  width: var(--blr-interface-mark-regular);
+  height: var(--blr-interface-mark-regular);
+  flex: 0 0 var(--blr-interface-mark-regular);
   align-items: flex-start;
   justify-content: flex-start;
 }
 
 .blr-interface-mark__kind {
-  width: 1.125rem;
-  height: 1.125rem;
+  width: var(--blr-interface-kind-regular);
+  height: var(--blr-interface-kind-regular);
 }
 
 .blr-interface-mark__type {
   position: absolute;
-  inset-inline-end: -0.0625rem;
-  inset-block-end: -0.0625rem;
+  inset-inline-end: var(--blr-interface-badge-offset-regular);
+  inset-block-end: var(--blr-interface-badge-offset-regular);
   display: inline-flex;
-  width: 0.8125rem;
-  height: 0.8125rem;
+  width: var(--blr-interface-badge-regular);
+  height: var(--blr-interface-badge-regular);
   align-items: center;
   justify-content: center;
   border-radius: 9999px;
@@ -70,29 +70,31 @@ const interfaceColor = computed(() => slotColor(1, mounted.value && colorMode.va
 }
 
 .blr-interface-mark__type :deep(svg) {
-  width: 0.5625rem;
-  height: 0.5625rem;
+  width: var(--blr-interface-badge-glyph-regular);
+  height: var(--blr-interface-badge-glyph-regular);
   stroke-width: 2.25;
 }
 
 .blr-interface-mark[data-size='xs'] {
-  width: 1.125rem;
-  height: 1.125rem;
-  flex-basis: 1.125rem;
+  width: var(--blr-interface-mark-dense);
+  height: var(--blr-interface-mark-dense);
+  flex-basis: var(--blr-interface-mark-dense);
 }
 
 .blr-interface-mark[data-size='xs'] .blr-interface-mark__kind {
-  width: 0.875rem;
-  height: 0.875rem;
+  width: var(--blr-interface-kind-dense);
+  height: var(--blr-interface-kind-dense);
 }
 
 .blr-interface-mark[data-size='xs'] .blr-interface-mark__type {
-  width: 0.6875rem;
-  height: 0.6875rem;
+  inset-inline-end: var(--blr-interface-badge-offset-dense);
+  inset-block-end: var(--blr-interface-badge-offset-dense);
+  width: var(--blr-interface-badge-dense);
+  height: var(--blr-interface-badge-dense);
 }
 
 .blr-interface-mark[data-size='xs'] .blr-interface-mark__type :deep(svg) {
-  width: 0.4375rem;
-  height: 0.4375rem;
+  width: var(--blr-interface-badge-glyph-dense);
+  height: var(--blr-interface-badge-glyph-dense);
 }
 </style>

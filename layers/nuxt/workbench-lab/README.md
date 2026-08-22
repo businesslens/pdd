@@ -24,10 +24,10 @@ both.
 
 ## How it works
 
-The variations **shadow** shipped components by name — Nuxt resolves a component
-from the topmost layer that defines it, and the local viewer extends this lab
-above `report-viewer`. `BlrEntityPage.vue` and `BlrInspector.vue` here stand in
-front of the shipped ones. **Not one line of `report-viewer` changed.**
+The page, slideover and Scenario variations **shadow** shipped components by
+name — Nuxt resolves a component from the topmost layer that defines it, and the
+local viewer extends this lab above `report-viewer`. `BlrEntityPage.vue` and
+`BlrInspector.vue` here stand in front of the shipped ones.
 
 Both dispatchers render one component, `BlrEntityReading`. That is the point: a
 page and a panel that disagree about an entity is the thing that made the old
@@ -65,6 +65,10 @@ peek hard to trust.
 
 ## Fixed in the base, not auditioned
 
+Entity markers use one central scale: 20px in ordinary contexts and 18px in
+dense tables, chips and labels. Composite Interface dimensions derive from the
+same regular and dense variables.
+
 A Scenario page's breadcrumb read `Capability Scenarios › Create an owned
 collection` — a collection the reader never chose, with no sign of the parent.
 It now walks the containment, and every option inherits it:
@@ -79,4 +83,4 @@ Content Feed Reader › JOURNEYS     › Catch up on unread  › Work through th
 Add it to the axis in `app/utils/labVariants.ts` — `premise` and `cost` are both
 required, because an option that claims no weakness decides nothing — then
 handle it where its axis is read: `BlrEntityReading` for the page, `BlrInspector`
-for the slideover, `BlrScenarios` for the Scenarios.
+for the slideover, or `BlrScenarios` for the Scenarios.

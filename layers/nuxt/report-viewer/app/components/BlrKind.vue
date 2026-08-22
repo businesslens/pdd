@@ -33,12 +33,12 @@ onMounted(() => {
 
 const meta = computed(() => ENTITY_KIND_META[props.kind])
 const color = computed(() => slotColor(meta.value.slot, mounted.value && colorMode.value === 'dark'))
-const iconClass = computed(() => props.size === 'xs' ? 'size-4' : 'size-5')
 </script>
 
 <template>
   <span
-    class="inline-flex items-center gap-1.5 text-xs whitespace-nowrap"
+    class="blr-kind inline-flex items-center gap-1.5 text-xs whitespace-nowrap"
+    :data-size="size"
     :title="meta.label"
   >
     <BlrInterfaceType
@@ -46,8 +46,22 @@ const iconClass = computed(() => props.size === 'xs' ? 'size-4' : 'size-5')
       :type="interfaceType"
       :size="size"
     />
-    <UIcon v-else :name="meta.icon" :class="[iconClass, 'shrink-0']" :style="{ color }" />
+    <UIcon v-else :name="meta.icon" class="blr-kind__icon shrink-0" :style="{ color }" />
     <span v-if="labelled" class="text-toned">{{ count === null ? meta.label : meta.plural }}</span>
     <span v-if="count !== null" class="font-mono text-toned tabular-nums">{{ count }}</span>
   </span>
 </template>
+
+<style scoped>
+.blr-kind__icon {
+  width: var(--blr-entity-mark-regular);
+  height: var(--blr-entity-mark-regular);
+  flex: 0 0 var(--blr-entity-mark-regular);
+}
+
+.blr-kind[data-size='xs'] > .blr-kind__icon {
+  width: var(--blr-entity-mark-dense);
+  height: var(--blr-entity-mark-dense);
+  flex-basis: var(--blr-entity-mark-dense);
+}
+</style>

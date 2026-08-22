@@ -31,7 +31,7 @@ function select(kind: 'interface' | 'experience' | 'screen', id: string) {
     size="sm"
     class="max-w-full justify-start overflow-hidden whitespace-nowrap"
   >
-    <BlrInterfaceType :type="place.interfaceType" />
+    <BlrInterfaceType :type="place.interfaceType" size="xs" />
     <UTooltip :text="place.interfaceTitle" :delay-duration="150">
       <button
         type="button"

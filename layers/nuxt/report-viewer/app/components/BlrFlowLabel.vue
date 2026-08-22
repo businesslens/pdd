@@ -11,7 +11,7 @@ const colorVar = computed(() => `var(--blr-slot-${meta.value.slot})`)
 
 <template>
   <div class="blr-flow-label" :style="{ '--label-color': colorVar }">
-    <UIcon :name="meta.icon" class="size-3.5 shrink-0" />
+    <UIcon :name="meta.icon" class="blr-flow-label__kind shrink-0" />
     <span class="min-w-0 flex-1 truncate">{{ data.label }}</span>
     <span class="blr-flow-label__count">{{ data.count }}</span>
   </div>
@@ -37,5 +37,11 @@ const colorVar = computed(() => `var(--blr-slot-${meta.value.slot})`)
 .blr-flow-label__count {
   color: var(--ui-text-dimmed);
   font-variant-numeric: tabular-nums;
+}
+
+.blr-flow-label__kind {
+  width: var(--blr-entity-mark-dense);
+  height: var(--blr-entity-mark-dense);
+  flex: 0 0 var(--blr-entity-mark-dense);
 }
 </style>

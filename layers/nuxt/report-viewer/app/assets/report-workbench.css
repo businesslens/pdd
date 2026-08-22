@@ -1,6 +1,27 @@
 /* Stable Workbench structure and shared type roles. */
 
 /*
+  One scale owns entity identity everywhere in the Workbench. Concrete
+  Interfaces need a slightly larger frame because their authored type sits on
+  top of the kind icon; keeping every dimension here lets the whole mark change
+  proportionally instead of fixing one component at a time.
+*/
+:root {
+  --blr-entity-mark-regular: 1.25rem;
+  --blr-entity-mark-dense: 1.125rem;
+  --blr-interface-mark-regular: 1.375rem;
+  --blr-interface-kind-regular: 1.125rem;
+  --blr-interface-badge-regular: 0.8125rem;
+  --blr-interface-badge-glyph-regular: 0.5625rem;
+  --blr-interface-mark-dense: 1.25rem;
+  --blr-interface-kind-dense: 1rem;
+  --blr-interface-badge-dense: 0.75rem;
+  --blr-interface-badge-glyph-dense: 0.5rem;
+  --blr-interface-badge-offset-regular: -0.0625rem;
+  --blr-interface-badge-offset-dense: -0.0625rem;
+}
+
+/*
   Panes scroll independently but still chain to the host page at their end.
   Containing the scroll trapped the reader inside the report: a host footer sat
   below a surface no wheel gesture could ever scroll past.

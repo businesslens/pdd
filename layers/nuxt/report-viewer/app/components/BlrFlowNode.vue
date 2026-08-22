@@ -56,7 +56,7 @@ const colorVar = computed(() => {
           v-if="data.kind === 'interface' && data.interfaceType"
           :type="data.interfaceType"
         />
-        <UIcon v-else :name="meta.icon" />
+        <UIcon v-else :name="meta.icon" class="blr-flow-node__kind" />
       </span>
       <span class="blr-flow-node__text">
         <span class="blr-flow-node__title">{{ data.title }}</span>
@@ -125,19 +125,23 @@ const colorVar = computed(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 1.75rem;
-  height: 1.75rem;
+  width: calc(var(--blr-entity-mark-regular) + 0.5rem);
+  height: calc(var(--blr-entity-mark-regular) + 0.5rem);
   flex-shrink: 0;
   border-radius: 8px;
   background: color-mix(in srgb, var(--node-color) 18%, transparent);
   color: var(--node-color);
-  font-size: 1rem;
+}
+
+.blr-flow-node__kind {
+  width: var(--blr-entity-mark-regular);
+  height: var(--blr-entity-mark-regular);
+  flex: 0 0 var(--blr-entity-mark-regular);
 }
 
 .blr-flow-node.is-focus .blr-flow-node__icon {
-  width: 2rem;
-  height: 2rem;
-  font-size: 1.15rem;
+  width: calc(var(--blr-entity-mark-regular) + 0.75rem);
+  height: calc(var(--blr-entity-mark-regular) + 0.75rem);
 }
 
 .blr-flow-node__text {
