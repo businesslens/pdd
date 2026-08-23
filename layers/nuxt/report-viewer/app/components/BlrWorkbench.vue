@@ -59,6 +59,7 @@ import { docsForEntityKind } from '../utils/entityDocs'
 import { firstSentence } from '../utils/reportMarkdown'
 
 const UButton = resolveComponent('UButton')
+const BlrActorTypeComponent = resolveComponent('BlrActorType')
 const BlrInterfaceTypeComponent = resolveComponent('BlrInterfaceType')
 
 const props = defineProps<{ workspace: ReportWorkspace, logoSrc?: string | null }>()
@@ -241,6 +242,8 @@ const facetChips = computed(() => facetKinds.value
     return {
       kind,
       icon: meta.icon,
+      actorKind: ids.length === 1 && first?.kind === 'actor' ? first.actorKind : undefined,
+      actorRelationship: ids.length === 1 && first?.kind === 'actor' ? first.relationship : undefined,
       interfaceType: ids.length === 1 && first?.kind === 'interface' ? first.interfaceType : undefined,
       label: ids.length === 1 ? meta.label : meta.plural,
       value: `${first?.title ?? ids[0]}${rest > 0 ? ` +${rest}` : ''}`
@@ -486,6 +489,12 @@ function resolvedInterfaceType(kind: ReportEntityKind | null, id: string) {
   return entity?.kind === 'interface' ? entity.interfaceType : undefined
 }
 
+function resolvedActor(kind: ReportEntityKind | null, id: string) {
+  if (kind !== 'actor' || !id) return undefined
+  const entity = resolveEntity(props.workspace, 'actor', id)
+  return entity?.kind === 'actor' ? entity : undefined
+}
+
 function titleColumn(kind: ReportEntityKind): TableColumn<AnyEntityView> {
   return {
     accessorKey: 'title',
@@ -493,7 +502,13 @@ function titleColumn(kind: ReportEntityKind): TableColumn<AnyEntityView> {
     cell: ({ row }) => {
       const marker = row.original.kind === 'interface'
         ? h(BlrInterfaceTypeComponent, { type: row.original.interfaceType })
-        : null
+        : row.original.kind === 'actor'
+          ? h(BlrActorTypeComponent, {
+              actorKind: row.original.actorKind,
+              relationship: row.original.relationship,
+              size: 'xs'
+            })
+          : null
       return h('div', { class: 'flex min-w-0 max-w-72 items-start gap-2' }, [
         marker,
         h('span', { class: 'min-w-0' }, [
@@ -1033,12 +1048,14 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
               :title="`Clear this ${chip.label.toLowerCase()} filter`"
               @click="setFacet(chip.kind, [])"
             >
-              <BlrInterfaceType
-                v-if="chip.interfaceType"
-                :type="chip.interfaceType"
+              <BlrKind
+                :kind="chip.kind"
+                :interface-type="chip.interfaceType"
+                :actor-kind="chip.actorKind"
+                :actor-relationship="chip.actorRelationship"
+                :labelled="false"
                 size="xs"
               />
-              <UIcon v-else :name="chip.icon" class="size-3.5 shrink-0" :style="{ color: `var(--blr-slot-${ENTITY_KIND_META[chip.kind].slot})` }" />
               <span class="text-dimmed">{{ chip.label }}</span>
               <span class="truncate font-medium text-highlighted">{{ chip.value }}</span>
               <UIcon name="i-lucide-x" class="size-3 shrink-0 text-dimmed" />
@@ -1171,6 +1188,8 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
                     v-if="group.kind"
                     :kind="group.kind"
                     :interface-type="resolvedInterfaceType(group.kind, group.key)"
+                    :actor-kind="resolvedActor(group.kind, group.key)?.actorKind"
+                    :actor-relationship="resolvedActor(group.kind, group.key)?.relationship"
                     :labelled="false"
                     size="sm"
                   />

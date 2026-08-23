@@ -5,8 +5,8 @@
  * Nine kinds is past what hue alone can separate, so this component never emits
  * a bare colour swatch — the label is part of the mark.
  */
+import type { ReportActor, ReportInterface } from 'businesslens/report'
 import type { ReportEntityKind } from '../utils/reportWorkspace'
-import type { ReportInterface } from 'businesslens/report'
 import { ENTITY_KIND_META } from '../utils/reportWorkspace'
 import { slotColor } from '../utils/reportPalette'
 
@@ -16,12 +16,17 @@ const props = withDefaults(defineProps<{
   size?: 'xs' | 'sm'
   /** A concrete Interface can retain its kind and disclose its authored type. */
   interfaceType?: ReportInterface['type'] | null
+  /** A concrete Actor discloses both independent authored classifications. */
+  actorKind?: ReportActor['kind'] | null
+  actorRelationship?: ReportActor['relationship'] | null
   /** Suppress the text label only where a nearby label already names the kind. */
   labelled?: boolean
 }>(), {
   count: null,
   size: 'sm',
   interfaceType: null,
+  actorKind: null,
+  actorRelationship: null,
   labelled: true
 })
 
@@ -41,8 +46,14 @@ const color = computed(() => slotColor(meta.value.slot, mounted.value && colorMo
     :data-size="size"
     :title="meta.label"
   >
+    <BlrActorType
+      v-if="kind === 'actor' && actorKind && actorRelationship"
+      :actor-kind="actorKind"
+      :relationship="actorRelationship"
+      :size="size"
+    />
     <BlrInterfaceType
-      v-if="kind === 'interface' && interfaceType"
+      v-else-if="kind === 'interface' && interfaceType"
       :type="interfaceType"
       :size="size"
     />

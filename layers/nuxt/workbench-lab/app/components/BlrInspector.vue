@@ -73,6 +73,8 @@ const parent = computed(() => props.entity ? parentOf(props.workspace, props.ent
 const subject = computed(() => parent.value ?? props.entity)
 const kindLabel = computed(() => subject.value ? ENTITY_KIND_META[subject.value.kind].label : '')
 const interfaceType = computed(() => subject.value?.kind === 'interface' ? subject.value.interfaceType : undefined)
+const actorKind = computed(() => subject.value?.kind === 'actor' ? subject.value.actorKind : undefined)
+const actorRelationship = computed(() => subject.value?.kind === 'actor' ? subject.value.relationship : undefined)
 </script>
 
 <template>
@@ -92,7 +94,13 @@ const interfaceType = computed(() => subject.value?.kind === 'interface' ? subje
   >
     <template #header>
       <div v-if="subject" class="flex min-w-0 flex-1 items-center gap-2.5">
-        <BlrKind :kind="subject.kind" :interface-type="interfaceType" :labelled="false" />
+        <BlrKind
+          :kind="subject.kind"
+          :interface-type="interfaceType"
+          :actor-kind="actorKind"
+          :actor-relationship="actorRelationship"
+          :labelled="false"
+        />
         <div class="min-w-0 flex-1">
           <p class="blr-field">{{ kindLabel }}</p>
           <p class="truncate text-base font-semibold leading-5 tracking-tight text-highlighted">

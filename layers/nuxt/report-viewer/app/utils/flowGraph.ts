@@ -15,7 +15,7 @@
 import { Graph, layout } from '@dagrejs/dagre'
 import { MarkerType, Position } from '@vue-flow/core'
 import type { Edge, Node } from '@vue-flow/core'
-import type { AnyEntityView, InterfaceView, ReportEntityKind, ReportScenarioType, ReportWorkspace } from './reportWorkspace'
+import type { ActorView, AnyEntityView, InterfaceView, ReportEntityKind, ReportScenarioType, ReportWorkspace } from './reportWorkspace'
 import { ENTITY_KIND_META, entityKey, resolveEntity, resolveEntityKey } from './reportWorkspace'
 
 /** Data carried by every entity box (`type: 'blr'`). */
@@ -23,6 +23,9 @@ export interface FlowNodeData {
   entityKey: string
   entityId: string
   kind: ReportEntityKind
+  /** Present only for a concrete Actor; the node draws kind, the sublabel writes relationship. */
+  actorKind?: ActorView['actorKind'] | null
+  actorRelationship?: ActorView['relationship'] | null
   /** Present only for a concrete Interface; generic kind nodes keep the plug. */
   interfaceType?: InterfaceView['interfaceType'] | null
   scenarioType: ReportScenarioType | null
@@ -115,9 +118,17 @@ export function entityNode(
       entityKey: entity.key,
       entityId: entity.id,
       kind: entity.kind,
+      actorKind: entity.kind === 'actor' ? entity.actorKind : null,
+      actorRelationship: entity.kind === 'actor' ? entity.relationship : null,
       interfaceType: entity.kind === 'interface' ? entity.interfaceType : null,
       title: entity.title,
-      sublabel: ENTITY_KIND_META[entity.kind].label,
+      /* An Actor's second authored axis is the Product boundary, which is what
+         a topology is read for. The mark cannot carry it, so the sublabel does
+         — the same slot, and the same spelling, an Experience gives its access
+         mode. */
+      sublabel: entity.kind === 'actor'
+        ? `${ENTITY_KIND_META.actor.label} · ${entity.relationship}`
+        : ENTITY_KIND_META[entity.kind].label,
       scenarioType: entity.kind === 'capability-scenario' || entity.kind === 'journey-scenario'
         ? entity.scenarioType
         : null,

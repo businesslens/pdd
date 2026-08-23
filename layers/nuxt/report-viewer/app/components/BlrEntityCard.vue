@@ -26,6 +26,8 @@ const emit = defineEmits<{ open: [entity: AnyEntityView] }>()
 const presentation = computed(() => entityCardPresentation(props.workspace, props.entity))
 const kindLabel = computed(() => ENTITY_KIND_META[props.entity.kind].label)
 const interfaceType = computed(() => props.entity.kind === 'interface' ? props.entity.interfaceType : undefined)
+const actorKind = computed(() => props.entity.kind === 'actor' ? props.entity.actorKind : undefined)
+const actorRelationship = computed(() => props.entity.kind === 'actor' ? props.entity.relationship : undefined)
 const colorMode = useColorMode()
 const mounted = ref(false)
 
@@ -47,6 +49,12 @@ function metricInterfaceType(metric: EntityCardMetric, id: string) {
   const entity = resolveEntity(props.workspace, 'interface', id)
   return entity?.kind === 'interface' ? entity.interfaceType : undefined
 }
+
+function metricActor(metric: EntityCardMetric, id: string) {
+  if (metric.kind !== 'actor') return undefined
+  const entity = resolveEntity(props.workspace, 'actor', id)
+  return entity?.kind === 'actor' ? entity : undefined
+}
 </script>
 
 <template>
@@ -61,6 +69,8 @@ function metricInterfaceType(metric: EntityCardMetric, id: string) {
       <BlrKind
         :kind="entity.kind"
         :interface-type="interfaceType"
+        :actor-kind="actorKind"
+        :actor-relationship="actorRelationship"
         :labelled="false"
         class="mt-0.5"
       />
@@ -122,6 +132,12 @@ function metricInterfaceType(metric: EntityCardMetric, id: string) {
                   <BlrInterfaceType
                     v-if="metric.kind === 'interface' && metricInterfaceType(metric, id)"
                     :type="metricInterfaceType(metric, id)!"
+                    size="xs"
+                  />
+                  <BlrActorType
+                    v-else-if="metricActor(metric, id)"
+                    :actor-kind="metricActor(metric, id)!.actorKind"
+                    :relationship="metricActor(metric, id)!.relationship"
                     size="xs"
                   />
                   <UIcon

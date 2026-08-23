@@ -217,6 +217,12 @@ function interfaceType(kind: ReportEntityKind, id: string) {
   const entity = resolveEntity(props.workspace, 'interface', id)
   return entity?.kind === 'interface' ? entity.interfaceType : undefined
 }
+
+function actorClassification(kind: ReportEntityKind, id: string) {
+  if (kind !== 'actor') return null
+  const entity = resolveEntity(props.workspace, 'actor', id)
+  return entity?.kind === 'actor' ? entity : null
+}
 </script>
 
 <template>
@@ -245,6 +251,8 @@ function interfaceType(kind: ReportEntityKind, id: string) {
           <BlrKind
             :kind="item.kind"
             :interface-type="interfaceType(item.kind, id)"
+            :actor-kind="actorClassification(item.kind, id)?.actorKind"
+            :actor-relationship="actorClassification(item.kind, id)?.relationship"
             :labelled="false"
             size="xs"
           />

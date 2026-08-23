@@ -53,6 +53,14 @@ function interfaceType(entity: AnyEntityView | null) {
   return entity?.kind === 'interface' ? entity.interfaceType : undefined
 }
 
+function actorKind(entity: AnyEntityView | null) {
+  return entity?.kind === 'actor' ? entity.actorKind : undefined
+}
+
+function actorRelationship(entity: AnyEntityView | null) {
+  return entity?.kind === 'actor' ? entity.relationship : undefined
+}
+
 /** Kinds actually present around the focus — the filter never lists ghosts. */
 const presentKinds = computed<ReportEntityKind[]>(() => {
   const kinds = new Set<ReportEntityKind>()
@@ -142,6 +150,8 @@ function toggleKind(kind: ReportEntityKind) {
         <BlrKind
           :kind="focusEntity.kind"
           :interface-type="interfaceType(focusEntity)"
+          :actor-kind="actorKind(focusEntity)"
+          :actor-relationship="actorRelationship(focusEntity)"
           :labelled="false"
         />
         <span class="truncate text-xs font-medium text-highlighted">{{ focusEntity.title }}</span>
@@ -184,6 +194,8 @@ function toggleKind(kind: ReportEntityKind) {
         <BlrKind
           :kind="selectedEntity.kind"
           :interface-type="interfaceType(selectedEntity)"
+          :actor-kind="actorKind(selectedEntity)"
+          :actor-relationship="actorRelationship(selectedEntity)"
           :labelled="false"
         />
         <span class="text-xs font-medium text-highlighted">{{ selectedEntity.title }}</span>

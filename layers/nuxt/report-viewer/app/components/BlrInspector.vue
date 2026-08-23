@@ -62,6 +62,8 @@ watch(() => props.entity, () => {
 
 const kindLabel = computed(() => props.entity ? ENTITY_KIND_META[props.entity.kind].label : '')
 const interfaceType = computed(() => props.entity?.kind === 'interface' ? props.entity.interfaceType : undefined)
+const actorKind = computed(() => props.entity?.kind === 'actor' ? props.entity.actorKind : undefined)
+const actorRelationship = computed(() => props.entity?.kind === 'actor' ? props.entity.relationship : undefined)
 </script>
 
 <template>
@@ -86,7 +88,13 @@ const interfaceType = computed(() => props.entity?.kind === 'interface' ? props.
   >
     <template #header>
       <div v-if="entity" class="flex min-w-0 flex-1 items-center gap-2.5">
-        <BlrKind :kind="entity.kind" :interface-type="interfaceType" :labelled="false" />
+        <BlrKind
+          :kind="entity.kind"
+          :interface-type="interfaceType"
+          :actor-kind="actorKind"
+          :actor-relationship="actorRelationship"
+          :labelled="false"
+        />
         <div class="min-w-0 flex-1">
           <p class="blr-field">{{ kindLabel }}</p>
           <p class="truncate text-base font-semibold leading-5 tracking-tight text-highlighted">{{ entity.title }}</p>

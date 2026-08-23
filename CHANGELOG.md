@@ -28,6 +28,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   statements were previously readable only inside a 672px drawer. Kinds with no
   authored body of their own (Actor, Interface, Experience, Domain) get their
   neighbourhood graph as the page body, because their reach is the reading.
+- **A concrete Actor's marker draws what it is.** The Actor mark carries the
+  authored `kind` as its silhouette — a person or a system, at the size every
+  other kind's mark uses — and the Product-boundary `relationship` is written as
+  a word where each surface has room for it: the collection row's title badge,
+  the graph node's sublabel, the peek's fact list. A Scenario Step names its
+  Actor with that mark in a chip that opens the Actor, rather than as prose.
 - **The inspector is a peek**: identity, one sentence, three discriminating
   facts, and what the entity connects to. It does not scroll, it is one level
   deep, and every relation on it opens that entity's page instead of

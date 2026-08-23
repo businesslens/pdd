@@ -12,7 +12,7 @@ import type {
   ScenarioView,
   ScreenView
 } from './reportWorkspace'
-import { INTERFACE_TYPE_META, resolveEntity } from './reportWorkspace'
+import { resolveEntity } from './reportWorkspace'
 
 /*
   One row shape, not three.
@@ -101,7 +101,11 @@ export function entityCardPresentation(
       const actor = entity as ActorView
       const accessIds = [...actor.interfaceIds, ...actor.experienceIds]
       return {
-        badge: `${actor.actorKind} · ${actor.relationship}`,
+        /* Actor carries two independent authored axes and one glyph can only
+           draw one. The silhouette takes `kind`; the Product boundary takes the
+           title badge, where it sits on the reading line instead of stacking
+           under the mark and setting the width of the gutter it sat in. */
+        badge: actor.relationship,
         metrics: [
           { label: plural(actor.interfaceIds.length, 'interface'), value: actor.interfaceIds.length, kind: 'interface', ids: actor.interfaceIds },
           { label: plural(actor.experienceIds.length, 'experience'), value: actor.experienceIds.length, kind: 'experience', ids: actor.experienceIds },
@@ -127,7 +131,9 @@ export function entityCardPresentation(
             { label: plural(item.journeyIds.length, 'journey'), value: item.journeyIds.length, kind: 'journey' as const, ids: item.journeyIds }
           ]
       return {
-        badge: INTERFACE_TYPE_META[item.interfaceType].label,
+        /* The concrete Interface marker already carries its authored type as a
+           sub-icon. Repeating it as a title badge adds no second fact. */
+        badge: '',
         metrics,
         hookLabel: item.experienceIds.length ? 'Contains' : 'Delivers directly',
         hook: item.experienceIds.length

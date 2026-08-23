@@ -10,6 +10,7 @@
  * real heading hierarchy the eye can skim.
  */
 import type {
+  ActorView,
   AnyEntityView,
   CapabilityView,
   ExperienceView,
@@ -182,9 +183,11 @@ const stepKindDescription = (kind: 'actor' | 'product' | 'condition') => ({
   condition: 'An observable fact or state; nobody performs it'
 })[kind]
 
-const stepActor = (actorId: string | undefined) => actorId
-  ? resolveEntity(props.workspace, 'actor', actorId)
-  : undefined
+const stepActor = (actorId: string | undefined): ActorView | undefined => {
+  if (!actorId) return undefined
+  const entity = resolveEntity(props.workspace, 'actor', actorId)
+  return entity?.kind === 'actor' ? entity : undefined
+}
 
 const selectStepActor = (actorId: string | undefined) => {
   const actor = stepActor(actorId)
@@ -376,22 +379,39 @@ const empty = computed(() => !props.entity.intent
                   class="border-e border-default bg-default px-4 py-3 font-normal"
                 >
                   <p class="text-sm font-medium text-highlighted">{{ step.index + 1 }}. {{ step.text }}</p>
-                  <UTooltip :text="stepKindDescription(step.stepKind)" :delay-duration="150">
-                    <span class="blr-meta mt-1 inline-flex items-center gap-1.5">
-                      <UIcon :name="stepKindIcon(step.stepKind)" class="size-3.5 shrink-0" />
-                      <template v-if="step.stepKind === 'actor' && stepActor(step.actorId)">
-                        <button
-                          type="button"
-                          class="text-default underline decoration-(--ui-border-accented) underline-offset-3 transition-colors hover:text-highlighted hover:decoration-(--ui-text-dimmed)"
-                          @click="selectStepActor(step.actorId)"
-                        >
-                          {{ stepActor(step.actorId)?.title }}
-                        </button>
-                        action
-                      </template>
-                      <template v-else>{{ stepKindLabel(step.stepKind) }}</template>
-                    </span>
-                  </UTooltip>
+                  <!--
+                    A named Actor is a reference to an entity, so it is drawn as one: the
+                    Actor's own mark inside a chip that opens it. A dimmed generic glyph
+                    beside plain text read as narration, at the weight of the Condition
+                    rows around it. The boundary axis is not repeated here — the question a
+                    Step answers is who performs it, and the chip carries it in its tooltip.
+                  -->
+                  <span class="blr-meta mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1">
+                    <template v-if="step.stepKind === 'actor' && stepActor(step.actorId)">
+                      <button
+                        type="button"
+                        class="inline-flex max-w-full items-center gap-1.5 rounded-full border border-default bg-elevated/60 py-0.5 pe-2 ps-1 font-sans text-xs font-medium text-highlighted transition hover:border-accented hover:bg-elevated focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                        :aria-label="`Open Actor ${stepActor(step.actorId)!.title}`"
+                        @click="selectStepActor(step.actorId)"
+                      >
+                        <BlrActorType
+                          :actor-kind="stepActor(step.actorId)!.actorKind"
+                          :relationship="stepActor(step.actorId)!.relationship"
+                          size="xs"
+                        />
+                        <span class="min-w-0 truncate">{{ stepActor(step.actorId)!.title }}</span>
+                      </button>
+                      <UTooltip :text="stepKindDescription('actor')" :delay-duration="150">
+                        <span>action</span>
+                      </UTooltip>
+                    </template>
+                    <UTooltip v-else :text="stepKindDescription(step.stepKind)" :delay-duration="150">
+                      <span class="inline-flex items-center gap-1.5">
+                        <UIcon :name="stepKindIcon(step.stepKind)" class="size-3.5 shrink-0" />
+                        {{ stepKindLabel(step.stepKind) }}
+                      </span>
+                    </UTooltip>
+                  </span>
                   <BlrLinks
                     v-if="asScenario.scenarioType === 'journey' && step.capabilityId"
                     :workspace="workspace"
@@ -450,22 +470,39 @@ const empty = computed(() => !props.entity.intent
           <article v-for="step in stepMatrix.steps" :key="step.index">
             <div class="bg-default px-4 py-3">
               <p class="text-sm font-medium text-highlighted">{{ step.index + 1 }}. {{ step.text }}</p>
-              <UTooltip :text="stepKindDescription(step.stepKind)" :delay-duration="150">
-                <span class="blr-meta mt-1 inline-flex items-center gap-1.5">
-                  <UIcon :name="stepKindIcon(step.stepKind)" class="size-3.5 shrink-0" />
-                  <template v-if="step.stepKind === 'actor' && stepActor(step.actorId)">
-                    <button
-                      type="button"
-                      class="text-default underline decoration-(--ui-border-accented) underline-offset-3 transition-colors hover:text-highlighted hover:decoration-(--ui-text-dimmed)"
-                      @click="selectStepActor(step.actorId)"
-                    >
-                      {{ stepActor(step.actorId)?.title }}
-                    </button>
-                    action
-                  </template>
-                  <template v-else>{{ stepKindLabel(step.stepKind) }}</template>
-                </span>
-              </UTooltip>
+              <!--
+                A named Actor is a reference to an entity, so it is drawn as one: the
+                Actor's own mark inside a chip that opens it. A dimmed generic glyph
+                beside plain text read as narration, at the weight of the Condition
+                rows around it. The boundary axis is not repeated here — the question a
+                Step answers is who performs it, and the chip carries it in its tooltip.
+              -->
+              <span class="blr-meta mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1">
+                <template v-if="step.stepKind === 'actor' && stepActor(step.actorId)">
+                  <button
+                    type="button"
+                    class="inline-flex max-w-full items-center gap-1.5 rounded-full border border-default bg-elevated/60 py-0.5 pe-2 ps-1 font-sans text-xs font-medium text-highlighted transition hover:border-accented hover:bg-elevated focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                    :aria-label="`Open Actor ${stepActor(step.actorId)!.title}`"
+                    @click="selectStepActor(step.actorId)"
+                  >
+                    <BlrActorType
+                      :actor-kind="stepActor(step.actorId)!.actorKind"
+                      :relationship="stepActor(step.actorId)!.relationship"
+                      size="xs"
+                    />
+                    <span class="min-w-0 truncate">{{ stepActor(step.actorId)!.title }}</span>
+                  </button>
+                  <UTooltip :text="stepKindDescription('actor')" :delay-duration="150">
+                    <span>action</span>
+                  </UTooltip>
+                </template>
+                <UTooltip v-else :text="stepKindDescription(step.stepKind)" :delay-duration="150">
+                  <span class="inline-flex items-center gap-1.5">
+                    <UIcon :name="stepKindIcon(step.stepKind)" class="size-3.5 shrink-0" />
+                    {{ stepKindLabel(step.stepKind) }}
+                  </span>
+                </UTooltip>
+              </span>
               <BlrLinks
                 v-if="asScenario.scenarioType === 'journey' && step.capabilityId"
                 :workspace="workspace"

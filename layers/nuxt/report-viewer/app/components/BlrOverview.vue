@@ -9,6 +9,7 @@
  * it.
  */
 import type { AnyEntityView, ReportWorkspace } from '../utils/reportWorkspace'
+import { resolveEntityKey } from '../utils/reportWorkspace'
 import { firstSentence } from '../utils/reportMarkdown'
 
 const props = defineProps<{
@@ -84,6 +85,12 @@ const overviewEntities = computed<AnyEntityView[]>(() => props.workspace.journey
 const overviewHeading = computed(() => props.workspace.journeys.length
   ? { title: 'Journeys', note: 'What the Product promises, and who it promises it to.' }
   : { title: 'Capabilities', note: 'What the Product can do. This model declares no Journeys.' })
+
+function referenceActor(ownerKey?: string) {
+  if (!ownerKey) return undefined
+  const entity = resolveEntityKey(props.workspace, ownerKey)
+  return entity?.kind === 'actor' ? entity : undefined
+}
 </script>
 
 <template>
@@ -108,7 +115,13 @@ const overviewHeading = computed(() => props.workspace.journeys.length
         class="rounded-full"
         @click="emit('select', actor)"
       >
-        <BlrKind kind="actor" :labelled="false" size="xs" />
+        <BlrKind
+          kind="actor"
+          :actor-kind="actor.actorKind"
+          :actor-relationship="actor.relationship"
+          :labelled="false"
+          size="xs"
+        />
         {{ actor.title }}
       </UButton>
       <span v-if="!workspace.actors.length" class="text-sm text-muted italic">No Actors authored.</span>
@@ -289,7 +302,13 @@ const overviewHeading = computed(() => props.workspace.journeys.length
                 :key="`${group.ownerId}-${index}`"
                 class="flex min-w-0 items-center gap-2 text-sm"
               >
-                <BlrKind :kind="group.ownerKind" :labelled="false" size="xs" />
+                <BlrKind
+                  :kind="group.ownerKind"
+                  :actor-kind="referenceActor(group.ownerKey)?.actorKind"
+                  :actor-relationship="referenceActor(group.ownerKey)?.relationship"
+                  :labelled="false"
+                  size="xs"
+                />
                 <button
                   type="button"
                   class="shrink-0 truncate text-default hover:text-primary"

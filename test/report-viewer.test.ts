@@ -123,7 +123,7 @@ describe('stable Product Report Workbench', () => {
     expect(source('app/components/BlrInterfaceType.vue')).toContain(":role=\"labelled ? undefined : 'img'\"")
     expect(body).toContain("asScenario.scenarioType === 'journey' && step.capabilityId")
     expect(body).toContain("step.stepKind === 'actor' && stepActor(step.actorId)")
-    expect(body).toContain('{{ stepActor(step.actorId)?.title }}')
+    expect(body).toContain('{{ stepActor(step.actorId)!.title }}')
     expect(body).not.toContain('label="Performed by"')
     expect(body).toContain('Product action')
     expect(body).toContain('Condition')
@@ -153,16 +153,19 @@ describe('stable Product Report Workbench', () => {
     }
   })
 
-  it('keeps the Interface plug and submarks a concrete Interface with its authored type', () => {
+  it('keeps kind icons and submarks concrete Interfaces and Actors with authored classifications', () => {
     const mark = source('app/components/BlrInterfaceType.vue')
+    const actorMark = source('app/components/BlrActorType.vue')
     const kind = source('app/components/BlrKind.vue')
     const structure = source('app/assets/report-workbench.css')
+    const cardPresentation = source('app/utils/entityCards.ts')
     const card = source('app/components/BlrEntityCard.vue')
     const connections = source('app/components/BlrConnections.vue')
     const workbench = source('app/components/BlrWorkbench.vue')
     const flow = source('app/utils/flowGraph.ts')
     const flowNode = source('app/components/BlrFlowNode.vue')
     const flowGroup = source('app/components/BlrFlowGroup.vue')
+    const entityBody = source('app/components/BlrEntityBody.vue')
 
     expect(mark).toContain('name="i-lucide-plug"')
     expect(mark).toContain(':name="meta.icon"')
@@ -173,6 +176,17 @@ describe('stable Product Report Workbench', () => {
     expect(mark).toContain('var(--blr-interface-mark-regular)')
     expect(mark).toContain('var(--blr-interface-badge-glyph-dense)')
     expect(mark).toContain(".blr-interface-mark[data-size='xs']")
+    /* One glyph, on the shared entity scale. Actor carries two independent
+       authored axes and a mark can only draw one, so `kind` is the silhouette
+       and `relationship` is written where the surface has room for a word. */
+    expect(actorMark).toContain(':name="kindMeta.icon"')
+    expect(actorMark).not.toContain('i-lucide-users')
+    expect(actorMark).not.toContain('blr-actor-relationship')
+    expect(actorMark).not.toContain('showRelationship')
+    expect(actorMark).toContain('var(--blr-entity-mark-regular)')
+    expect(actorMark).toContain('var(--blr-entity-mark-dense)')
+    expect(kind).toContain("kind === 'actor' && actorKind && actorRelationship")
+    expect(kind).not.toContain('show-relationship')
     for (const variable of [
       '--blr-entity-mark-regular',
       '--blr-entity-mark-dense',
@@ -189,22 +203,45 @@ describe('stable Product Report Workbench', () => {
     ]) {
       expect(structure, variable).toContain(`${variable}:`)
     }
+    /* An Actor no longer needs a scale of its own: nothing sits on top of its
+       glyph, so it uses the same box every other kind's mark does. */
+    expect(structure).not.toContain('--blr-actor-')
     expect(structure).toContain('--blr-entity-mark-regular: 1.25rem')
     expect(structure).toContain('--blr-entity-mark-dense: 1.125rem')
     expect(structure).toContain('--blr-interface-kind-regular: 1.125rem')
     expect(structure).toContain('--blr-interface-kind-dense: 1rem')
     expect(card).toContain(':interface-type="interfaceType"')
+    expect(card).toContain(':actor-kind="actorKind"')
+    expect(card).toContain(':actor-relationship="actorRelationship"')
     expect(connections).toContain(':interface-type="interfaceType(item.kind, id)"')
+    expect(connections).toContain(':actor-kind="actorClassification(item.kind, id)?.actorKind"')
     expect(workbench).toContain('resolvedInterfaceType(group.kind, group.key)')
+    expect(workbench).toContain('resolvedActor(group.kind, group.key)?.actorKind')
     expect(workbench).toContain('BlrInterfaceTypeComponent')
+    expect(workbench).toContain('BlrActorTypeComponent')
     expect(flow).toContain("interfaceType: entity.kind === 'interface' ? entity.interfaceType : null")
+    expect(flow).toContain("actorKind: entity.kind === 'actor' ? entity.actorKind : null")
     expect(flowNode).toContain("data.kind === 'interface' && data.interfaceType")
+    expect(flowNode).toContain("data.kind === 'actor' && data.actorKind && data.actorRelationship")
+    expect(flowNode).not.toContain('show-relationship')
+    /* Topology is read for the Product boundary, so the node's sublabel writes
+       it — the slot and the spelling an Experience gives its access mode. */
+    expect(flow).toContain("`${ENTITY_KIND_META.actor.label} · ${entity.relationship}`")
     expect(flowGroup).toContain("data.kind === 'interface' && data.interfaceType")
     expect(flowNode).toContain('class="blr-flow-node__kind"')
     expect(flowNode).toContain('var(--blr-entity-mark-regular)')
     expect(flowGroup).toContain('class="blr-flow-group__kind"')
     expect(flowGroup).toContain('var(--blr-entity-mark-regular)')
     expect(source('app/components/BlrFlowLabel.vue')).toContain('var(--blr-entity-mark-dense)')
+    expect(cardPresentation).not.toContain('INTERFACE_TYPE_META')
+    expect(cardPresentation).toContain('Repeating it as a title badge adds no second fact')
+    expect(cardPresentation).not.toContain('`${actor.actorKind} · ${actor.relationship}`')
+    expect(cardPresentation).toContain('badge: actor.relationship')
+
+    /* A Step names an Actor, so it renders one: the Actor's own mark in a chip
+       that opens it, not a dimmed generic glyph beside plain text. */
+    expect(entityBody).toContain('<BlrActorType')
+    expect(entityBody).toContain(':actor-kind="stepActor(step.actorId)!.actorKind"')
 
     /* A collection or relation heading means the Interface kind, not one
        concrete Interface, so its generic plug remains deliberately generic. */

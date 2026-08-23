@@ -1,9 +1,11 @@
 /* Stable Workbench structure and shared type roles. */
 
 /*
-  One scale owns entity identity everywhere in the Workbench. Concrete
-  Interfaces need a slightly larger frame because their authored type sits on
-  top of the kind icon; keeping every dimension here lets the whole mark change
+  One scale owns entity identity everywhere in the Workbench. A concrete
+  Interface needs a slightly larger frame because its authored type sits on top
+  of the kind icon. An Actor does not: its second authored axis is written as a
+  word beside the title rather than stacked onto the mark, so it sits on the
+  shared scale. Keeping every dimension here lets the whole mark change
   proportionally instead of fixing one component at a time.
 */
 :root {

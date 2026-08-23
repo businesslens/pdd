@@ -114,6 +114,16 @@ export const INTERFACE_TYPE_META: Record<ReportInterface['type'], { label: strin
   device: { label: 'Device', icon: 'i-lucide-cpu' }
 }
 
+export const ACTOR_KIND_META: Record<ReportActor['kind'], { label: string, icon: string }> = {
+  person: { label: 'Person', icon: 'i-lucide-user-round' },
+  system: { label: 'System', icon: 'i-lucide-cpu' }
+}
+
+export const ACTOR_RELATIONSHIP_META: Record<ReportActor['relationship'], { label: string }> = {
+  external: { label: 'External' },
+  internal: { label: 'Internal' }
+}
+
 /** One resolved Interface scope; an empty Experience id means direct availability. */
 export interface AvailabilityPair {
   interfaceId: string
