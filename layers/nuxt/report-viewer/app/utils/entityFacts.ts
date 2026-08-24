@@ -1,12 +1,26 @@
 /**
- * The facts that give an entity its shape, in one place.
+ * The small set of facts that helps identify an entity before its full reading.
  *
- * The page and the slideover render the same reading, so they must draw from
- * the same description — a panel that quietly shows different facts is the
- * thing that made the old peek hard to trust.
+ * Context is deliberately absent. It has its own section because repeating a
+ * place in both this strip and the Context section makes the summary compete
+ * with the complete value. Pages and peeks share this definition so they cannot
+ * quietly describe the same entity differently.
  */
-import type { AnyEntityView, ReportEntityKind, ReportWorkspace } from './model'
-import { INTERFACE_TYPE_META, resolveEntity } from './model'
+import type {
+  ActorView,
+  AnyEntityView,
+  CapabilityView,
+  DomainView,
+  ExperienceView,
+  InterfaceView,
+  JourneyView,
+  ReportEntityKind,
+  ReportWorkspace,
+  RuleView,
+  ScenarioView,
+  ScreenView
+} from './reportWorkspace'
+import { INTERFACE_TYPE_META, resolveEntity } from './reportWorkspace'
 
 export interface EntityFact {
   label: string
@@ -15,22 +29,13 @@ export interface EntityFact {
   wide?: boolean
 }
 
-const contextOf = (entity: AnyEntityView): string => {
-  if (!('contexts' in entity)) return ''
-  const contexts = entity.contexts as Array<{ interfaceTitle: string, experienceTitle: string }>
-  const [first] = contexts
-  if (!first) return ''
-  const name = first.experienceTitle ? `${first.interfaceTitle} › ${first.experienceTitle}` : first.interfaceTitle
-  return contexts.length > 1 ? `${name} +${contexts.length - 1}` : name
-}
-
 export function entityFacts(workspace: ReportWorkspace, entity: AnyEntityView): EntityFact[] {
   const one = (kind: ReportEntityKind, ids: string[]) =>
     resolveEntity(workspace, kind, ids[0] ?? '')?.title ?? ''
 
   switch (entity.kind) {
     case 'actor': {
-      const actor = entity as { actorKind: string, relationship: string, journeyIds: string[] }
+      const actor = entity as ActorView
       return [
         { label: 'Kind', value: actor.actorKind },
         { label: 'Relationship', value: actor.relationship },
@@ -38,11 +43,7 @@ export function entityFacts(workspace: ReportWorkspace, entity: AnyEntityView): 
       ]
     }
     case 'interface': {
-      const item = entity as {
-        interfaceType: keyof typeof INTERFACE_TYPE_META
-        experienceIds: string[]
-        screenIds: string[]
-      }
+      const item = entity as InterfaceView
       return [
         { label: 'Type', value: INTERFACE_TYPE_META[item.interfaceType].label },
         { label: 'Experiences', value: String(item.experienceIds.length) },
@@ -50,7 +51,7 @@ export function entityFacts(workspace: ReportWorkspace, entity: AnyEntityView): 
       ]
     }
     case 'experience': {
-      const item = entity as { interfaceIds: string[], accessMode: string, screenIds: string[] }
+      const item = entity as ExperienceView
       return [
         { label: 'Interface', value: one('interface', item.interfaceIds), wide: true },
         { label: 'Access', value: item.accessMode },
@@ -58,15 +59,14 @@ export function entityFacts(workspace: ReportWorkspace, entity: AnyEntityView): 
       ]
     }
     case 'screen': {
-      const screen = entity as { states: unknown[], actions: unknown[] }
+      const screen = entity as ScreenView
       return [
-        { label: 'Context', value: contextOf(entity), wide: true },
         { label: 'States', value: String(screen.states.length) },
         { label: 'Actions', value: String(screen.actions.length) }
       ]
     }
     case 'domain': {
-      const domain = entity as { capabilityIds: string[], journeyIds: string[], ruleIds: string[] }
+      const domain = entity as DomainView
       return [
         { label: 'Capabilities', value: String(domain.capabilityIds.length) },
         { label: 'Journeys reached', value: String(domain.journeyIds.length) },
@@ -74,15 +74,14 @@ export function entityFacts(workspace: ReportWorkspace, entity: AnyEntityView): 
       ]
     }
     case 'capability': {
-      const capability = entity as { scenarioIds: string[], journeyIds: string[] }
+      const capability = entity as CapabilityView
       return [
-        { label: 'Context', value: contextOf(entity), wide: true },
         { label: 'Scenarios', value: String(capability.scenarioIds.length) },
         { label: 'Journeys', value: String(capability.journeyIds.length) }
       ]
     }
     case 'journey': {
-      const journey = entity as { actorIds: string[], scenarioIds: string[], stepCount: number }
+      const journey = entity as JourneyView
       return [
         { label: 'Actor', value: one('actor', journey.actorIds), wide: true },
         { label: 'Scenarios', value: String(journey.scenarioIds.length) },
@@ -91,14 +90,7 @@ export function entityFacts(workspace: ReportWorkspace, entity: AnyEntityView): 
     }
     case 'capability-scenario':
     case 'journey-scenario': {
-      const scenario = entity as {
-        scenarioType: string
-        capabilityTitle: string
-        journeyTitle: string
-        steps: unknown[]
-        result: string
-        screenIds: string[]
-      }
+      const scenario = entity as ScenarioView
       const parent: EntityFact = scenario.scenarioType === 'capability'
         ? { label: 'Capability', value: scenario.capabilityTitle, wide: true }
         : { label: 'Journey', value: scenario.journeyTitle, wide: true }
@@ -111,10 +103,9 @@ export function entityFacts(workspace: ReportWorkspace, entity: AnyEntityView): 
       ]
     }
     case 'rule': {
-      const rule = entity as { appliesTo: unknown[], contexts: unknown[], references: unknown[] }
+      const rule = entity as RuleView
       return [
         { label: 'Bindings', value: String(rule.appliesTo.length) },
-        { label: 'Contexts', value: String(rule.contexts.length) },
         { label: 'References', value: String(rule.references.length) }
       ]
     }
@@ -125,18 +116,12 @@ export function entityFacts(workspace: ReportWorkspace, entity: AnyEntityView): 
 
 export function entityBadge(workspace: ReportWorkspace, entity: AnyEntityView): string {
   switch (entity.kind) {
-    case 'actor': {
-      const actor = entity as { actorKind: string, relationship: string }
-      return `${actor.actorKind} · ${actor.relationship}`
-    }
-    case 'experience': return (entity as { accessMode: string }).accessMode
-    case 'capability-scenario': return (entity as { kindName: string }).kindName
-    case 'journey-scenario': {
-      const scenario = entity as { kindName: string, result: string }
-      return `${scenario.kindName} · ${scenario.result}`
-    }
+    case 'actor': return `${(entity as ActorView).actorKind} · ${(entity as ActorView).relationship}`
+    case 'experience': return (entity as ExperienceView).accessMode
+    case 'capability-scenario': return (entity as ScenarioView).kindName
+    case 'journey-scenario': return `${(entity as ScenarioView).kindName} · ${(entity as ScenarioView).result}`
     case 'capability': {
-      const id = (entity as { domainId: string }).domainId
+      const id = (entity as CapabilityView).domainId
       return id ? resolveEntity(workspace, 'domain', id)?.title ?? id : ''
     }
     default: return ''

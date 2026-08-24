@@ -11,6 +11,12 @@ Depth has two containers and the line between them is a measurement, not a
 preference: authored content runs from roughly 570px for an Actor to 2264px for
 a Journey Scenario, so the peek stays a fixed glance and the page carries the
 reading. A relation in a peek opens a page; it never re-targets the peek.
+Authored Capability Context has one dedicated reading in both containers; it is
+not repeated as an entity fact. Derived Journey and Scenario Contexts stay with
+their concrete routes, Screen placement stays in identity, contextual Rule
+selectors stay with applicability, and a Journey shows only its typed starting
+places. Raw entry-point routes remain in the report data but are omitted from
+the human Workbench.
 
 The report is the sole source of Product identity and content. The separate
 `logoSrc` prop resolves the Product's optional `.businesslens/logo.svg`; the

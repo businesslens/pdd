@@ -23,6 +23,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   hierarchy directly. The under-defined “surface” alias, including
   `surface-parent`, surface-tree IDs, and the Workbench's Delivery surfaces
   view, has been replaced by concrete entity names and `screen-parent`.
+- Workbench entity readings now present authored Capability Context once instead
+  of repeating it in the fact strip and under “Available in.” Derived Journey
+  and Scenario Contexts stay with their concrete routes, Screen placement stays
+  in identity, and Rule Context selectors stay with applicability. Every
+  rendered Context place uses the same typed, navigable Interface → Experience
+  → Screen path as Scenario route cells. Journey starting places retain the
+  exact first route Context and appear as “Starts at”; raw entry-point routes
+  remain report data and are not rendered in the human Workbench.
 
 ## [0.8.0] - 2026-08-24
 

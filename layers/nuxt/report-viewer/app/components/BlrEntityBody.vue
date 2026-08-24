@@ -16,7 +16,9 @@ import type {
   ExperienceView,
   InterfaceView,
   JourneyView,
+  ContextView,
   ReportWorkspace,
+  ReportEntityKind,
   RuleView,
   ScenarioStepCell,
   ScenarioStepRow,
@@ -197,6 +199,39 @@ const selectStepActor = (actorId: string | undefined) => {
 const contextLabel = (context: { screenTitle: string, experienceTitle: string, interfaceTitle: string }) =>
   context.screenTitle || context.experienceTitle || context.interfaceTitle
 
+type RuleTargetKind = Extract<ReportEntityKind, 'capability' | 'capability-scenario' | 'journey' | 'journey-scenario'>
+
+interface RuleBinding {
+  key: string
+  targetKind: RuleTargetKind | null
+  targetId: string
+  contexts: ContextView[]
+}
+
+const ruleBindings = computed<RuleBinding[]>(() => {
+  if (props.entity.kind !== 'rule') return []
+  const contextByPlace = new Map(props.workspace.contexts.map(context => [context.placeId, context]))
+  return asRule.value.appliesTo.map((target, index) => {
+    if (target.type === 'context') {
+      const context = contextByPlace.get(target.context.placeId)
+      return {
+        key: `context:${target.context.placeId}:${index}`,
+        targetKind: null,
+        targetId: '',
+        contexts: context ? [context] : []
+      }
+    }
+    return {
+      key: `${target.type}:${target.id}:${index}`,
+      targetKind: target.type,
+      targetId: target.id,
+      contexts: target.contexts
+        .map(context => contextByPlace.get(context.placeId))
+        .filter((context): context is ContextView => Boolean(context))
+    }
+  })
+})
+
 /** True when this component would render nothing at all. */
 const empty = computed(() => !props.entity.intent
   && !capabilityBoundary.value
@@ -216,6 +251,42 @@ const empty = computed(() => !props.entity.intent
       <div v-if="asRule.rationale" class="space-y-2">
         <h3 class="text-sm font-semibold text-highlighted">Rationale</h3>
         <BlrProse :text="asRule.rationale" />
+      </div>
+
+      <div class="space-y-2 pt-2">
+        <h3 class="text-sm font-semibold text-highlighted">Applies to</h3>
+        <div class="space-y-2">
+          <article
+            v-for="binding in ruleBindings"
+            :key="binding.key"
+            class="space-y-2 rounded-lg border border-default bg-elevated/25 px-3.5 py-3"
+          >
+            <BlrLinks
+              v-if="binding.targetKind"
+              :workspace="workspace"
+              :ids="[binding.targetId]"
+              :kind="binding.targetKind"
+              interactive
+              @select="emit('select', $event)"
+            />
+            <p v-if="binding.targetKind && !binding.contexts.length" class="blr-meta">
+              Every supported Context
+            </p>
+            <div v-else-if="binding.contexts.length" class="space-y-1.5">
+              <p v-if="binding.targetKind" class="blr-field">Only in</p>
+              <p v-else class="blr-field">Context</p>
+              <div class="flex flex-wrap gap-1.5">
+                <BlrContextPlace
+                  v-for="context in binding.contexts"
+                  :key="context.key"
+                  :workspace="workspace"
+                  :context="context"
+                  @select="emit('select', $event)"
+                />
+              </div>
+            </div>
+          </article>
+        </div>
       </div>
     </section>
 

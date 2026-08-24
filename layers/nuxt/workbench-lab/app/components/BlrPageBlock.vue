@@ -8,9 +8,8 @@
  * being comparable.
  */
 import type { AnyEntityView, ReportWorkspace } from '../utils/model'
-import { ENTITY_KIND_META, counterpartsOf } from '../utils/model'
+import { ENTITY_KIND_META, counterpartsOf, entityFacts } from '../utils/model'
 import type { PageBlockId } from '../utils/pageSections'
-import { entityFacts } from '../utils/entityFacts'
 
 const props = defineProps<{
   workspace: ReportWorkspace
@@ -26,8 +25,8 @@ const emit = defineEmits<{
 }>()
 
 const meta = computed(() => ENTITY_KIND_META[props.entity.kind])
-const contexts = computed(() => 'contexts' in props.entity ? props.entity.contexts : [])
-const entryPoints = computed(() => 'entryPoints' in props.entity ? props.entity.entryPoints : [])
+const contexts = computed(() => props.entity.kind === 'capability' ? props.entity.contexts : [])
+const entryPoints = computed(() => props.entity.kind === 'journey' ? props.entity.entryPoints : [])
 const counterparts = computed(() => counterpartsOf(props.workspace, props.entity))
 const facts = computed(() => entityFacts(props.workspace, props.entity).filter(fact => fact.value))
 </script>
@@ -42,10 +41,12 @@ const facts = computed(() => entityFacts(props.workspace, props.entity).filter(f
     </div>
   </dl>
 
-  <BlrAvail
-    v-else-if="id === 'access' && (contexts.length || entryPoints.length)"
+  <BlrContexts
+    v-else-if="id === 'contexts' && (contexts.length || entryPoints.length)"
+    :workspace="workspace"
     :contexts="contexts"
     :entry-points="entryPoints"
+    @select="emit('select', $event)"
   />
 
   <BlrEntityBody

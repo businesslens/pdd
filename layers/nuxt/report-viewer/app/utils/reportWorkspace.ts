@@ -141,6 +141,9 @@ export interface EntryPointView {
   interfaceId: string
   interfaceTitle: string
   path: string
+  /** The exact place whose route this is, retained for the shared typed path. */
+  context: ResolvedContextView
+  key: string
 }
 
 interface EntityBase {
@@ -479,12 +482,15 @@ function expandContexts(
 
 function entryPoints(
   points: Array<{ type: string, path: string }>,
-  interfaces: ReportInterface[]
+  interfaces: ReportInterface[],
+  context: ResolvedContextView
 ): EntryPointView[] {
   return points.map(point => ({
     interfaceId: point.type,
     interfaceTitle: titleOf(interfaces, point.type),
-    path: point.path
+    path: point.path,
+    context,
+    key: `${context.id}\0${point.type}\0${point.path}`
   }))
 }
 
@@ -575,19 +581,21 @@ export function projectReportWorkspace(report: ProductReportV10): ReportWorkspac
       .flatMap((scenario) => {
         const first = scenario.steps.find(step => step.kind === 'actor' && step.contexts.length)
         if (!first) return []
-        return first.contexts.map(context => placeOf(context.placeId).boundary).flatMap((resolvedContext) => {
-          const contextual = resolvedContext.experienceId
-            ? model.experiences.find(item => item.id === resolvedContext.experienceId)
-              ?.entryPoints.filter(point => point.type === resolvedContext.interfaceId) ?? []
+        return first.contexts.flatMap((context) => {
+          const place = placeOf(context.placeId)
+          const contextual = place.experienceId
+            ? model.experiences.find(item => item.id === place.experienceId)
+              ?.entryPoints.filter(point => point.type === place.interfaceId) ?? []
             : []
-          if (contextual.length) return contextual
-          return model.interfaces
-            .find(item => item.id === resolvedContext.interfaceId)
-            ?.entryPoints.filter(point => point.type === resolvedContext.interfaceId) ?? []
+          const available = contextual.length
+            ? contextual
+            : model.interfaces
+                .find(item => item.id === place.interfaceId)
+                ?.entryPoints.filter(point => point.type === place.interfaceId) ?? []
+          return entryPoints(available, model.interfaces, place)
         })
       })
-    const uniquePoints = [...new Map(points.map(point => [`${point.type}\0${point.path}`, point])).values()]
-    return entryPoints(uniquePoints, model.interfaces)
+    return [...new Map(points.map(point => [point.key, point])).values()]
   }
 
   // Forward relation tables, collected before any view is built so a backlink
@@ -749,7 +757,7 @@ export function projectReportWorkspace(report: ProductReportV10): ReportWorkspac
       supportingContent: supportingMarkdown(item.supportingSections),
       references: item.references,
       actorIds: item.actorIds,
-      entryPoints: entryPoints(item.entryPoints, model.interfaces),
+      entryPoints: entryPoints(item.entryPoints, model.interfaces, placeOf(item.id)),
       capabilityBoundary: item.capabilityBoundary,
       experienceIds,
       capabilityIds: model.capabilities.filter(c => declares(c.availability)).map(c => c.id),
@@ -783,7 +791,7 @@ export function projectReportWorkspace(report: ProductReportV10): ReportWorkspac
       actorIds: item.actorIds,
       interfaceIds: item.interfaceIds,
       accessMode: item.accessMode,
-      entryPoints: entryPoints(item.entryPoints, model.interfaces),
+      entryPoints: entryPoints(item.entryPoints, model.interfaces, placeOf(item.id)),
       capabilityBoundary: item.capabilityBoundary,
       capabilityIds: model.capabilities.filter(c => declares(c.availability)).map(c => c.id),
       screenIds: model.screens.filter(containsScreen).map(s => s.id),
@@ -814,7 +822,7 @@ export function projectReportWorkspace(report: ProductReportV10): ReportWorkspac
       capabilityScenarioIds: screen.capabilityScenarioIds,
       journeyScenarioIds: screen.journeyScenarioIds,
       scenarioIds: [...screen.capabilityScenarioIds, ...screen.journeyScenarioIds],
-      entryPoints: entryPoints(screen.entryPoints, model.interfaces),
+      entryPoints: entryPoints(screen.entryPoints, model.interfaces, placeOf(screen.id)),
       information: screen.information,
       actions: screen.actions,
       states: screen.states,

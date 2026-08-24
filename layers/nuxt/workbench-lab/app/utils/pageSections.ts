@@ -17,7 +17,7 @@ import { ENTITY_KIND_META, counterpartsOf, isScenarioKind } from './model'
 export type PageBlockId =
   | 'lead'
   | 'facts'
-  | 'access'
+  | 'contexts'
   | 'detail'
   | 'counterparts'
   | 'connections'
@@ -63,8 +63,15 @@ export function tabsFor(
   entity: AnyEntityView,
   options: { detailApart?: boolean } = {}
 ): PageTab[] {
-  const overviewBlocks: PageBlockId[] = ['lead', 'facts', 'access']
+  const overviewBlocks: PageBlockId[] = ['lead', 'facts']
   const detailBlocks: PageBlockId[] = []
+
+  /* Only authored Capability Contexts belong in an Overview. A Journey keeps
+     only its derived starting places; raw entry-point routes are not a useful
+     human reading and the place-bearing entity kinds already identify place. */
+  const hasOverviewContexts = entity.kind === 'capability' && entity.contexts.length > 0
+  const hasEntryPoints = entity.kind === 'journey' && entity.entryPoints.length > 0
+  if (hasOverviewContexts || hasEntryPoints) overviewBlocks.push('contexts')
 
   if (hasAuthoredBody(entity)) {
     if (options.detailApart) detailBlocks.push('detail')

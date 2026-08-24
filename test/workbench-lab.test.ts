@@ -149,6 +149,17 @@ describe('Workbench audition layer', () => {
     expect(sections).toContain("else overviewBlocks.push('detail')")
   })
 
+  it('shows only authored Capability Context in the Overview', () => {
+    const sections = source('app/utils/pageSections.ts')
+    const block = source('app/components/BlrPageBlock.vue')
+
+    expect(sections).toContain("entity.kind === 'capability' && entity.contexts.length > 0")
+    expect(sections).toContain("entity.kind === 'journey' && entity.entryPoints.length > 0")
+    expect(sections).toContain("if (hasOverviewContexts || hasEntryPoints) overviewBlocks.push('contexts')")
+    expect(block).toContain("props.entity.kind === 'capability' ? props.entity.contexts : []")
+    expect(block).toContain("props.entity.kind === 'journey' ? props.entity.entryPoints : []")
+  })
+
   it('keeps Journey Steps in Scenarios instead of adding a lossy Flows tab', () => {
     const sections = source('app/utils/pageSections.ts')
     const reading = source('app/components/BlrEntityReading.vue')
@@ -201,10 +212,17 @@ describe('Workbench audition layer', () => {
     visualizations of one.
   */
   it('draws every option from one description of the entity', () => {
-    expect(source('app/components/BlrPageBlock.vue')).toContain("from '../utils/entityFacts'")
+    const sharedFacts = readFileSync(join(viewer, 'app/utils/entityFacts.ts'), 'utf8')
+    const stablePeek = readFileSync(join(viewer, 'app/components/BlrEntityPeek.vue'), 'utf8')
+
+    expect(source('app/components/BlrPageBlock.vue')).toContain('counterpartsOf, entityFacts')
     expect(source('app/components/BlrEntityReading.vue')).toContain("from '../utils/pageSections'")
     expect(source('app/components/BlrScenarios.vue')).toContain("from '../utils/pageSections'")
-    expect(source('app/utils/entityFacts.ts')).toContain("{ label: 'Type', value: INTERFACE_TYPE_META")
+    expect(source('app/utils/model.ts')).toContain("from '../../../report-viewer/app/utils/entityFacts'")
+    expect(stablePeek).toContain("from '../utils/entityFacts'")
+    expect(sharedFacts).toContain("{ label: 'Type', value: INTERFACE_TYPE_META")
+    expect(sharedFacts).not.toContain("label: 'Context'")
+    expect(sharedFacts).not.toContain("label: 'Contexts'")
   })
 })
 

@@ -44,6 +44,8 @@ export {
 } from '../../../report-viewer/app/utils/entityFacets'
 
 export { entityCardPresentation } from '../../../report-viewer/app/utils/entityCards'
+export type { EntityFact } from '../../../report-viewer/app/utils/entityFacts'
+export { entityBadge, entityFacts } from '../../../report-viewer/app/utils/entityFacts'
 export { docsForEntityKind } from '../../../report-viewer/app/utils/entityDocs'
 export { firstSentence } from '../../../report-viewer/app/utils/reportMarkdown'
 export { slotColor } from '../../../report-viewer/app/utils/reportPalette'

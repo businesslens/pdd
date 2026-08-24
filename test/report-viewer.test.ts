@@ -6,8 +6,10 @@ import { loadModel } from '../src/core/model.js'
 
 const VIEWER = join(__dirname, '..', 'layers', 'nuxt', 'report-viewer')
 const workspaceModulePath = '../layers/nuxt/report-viewer/app/utils/reportWorkspace.ts'
+const entityFactsModulePath = '../layers/nuxt/report-viewer/app/utils/entityFacts.ts'
 const routeWindowModulePath = '../layers/nuxt/report-viewer/app/utils/scenarioRouteWindow.ts'
 const { projectReportWorkspace } = await import(workspaceModulePath)
+const { entityFacts } = await import(entityFactsModulePath)
 const FIXTURE = join(__dirname, 'fixtures', 'fixture-shop')
 
 function source(path: string): string {
@@ -49,6 +51,13 @@ describe('stable Product Report Workbench', () => {
       'customer-mobile::storefront',
       'customer-web::storefront'
     ])
+    const journey = workspace.journeys.find((item: any) => item.id === 'browse-and-buy')!
+    expect(journey.entryPoints.map((point: any) => [point.path, point.context.id]).sort()).toEqual([
+      ['/', 'customer-web::storefront::product-record'],
+      ['fixture-shop://storefront', 'customer-mobile::storefront::product-record']
+    ])
+    const productScreen = workspace.screens.find((item: any) => item.id === 'customer-web::storefront::product-record')!
+    expect(productScreen.entryPoints[0].context.id).toBe(productScreen.id)
     expect(workspace.counts.scenarios).toBe(
       report.counts.capabilityScenarios + report.counts.journeyScenarios
     )
@@ -105,6 +114,7 @@ describe('stable Product Report Workbench', () => {
   it('gives both Scenario types one Steps table while keeping their Context semantics distinct', () => {
     const body = source('app/components/BlrEntityBody.vue')
     const context = source('app/components/BlrStepContext.vue')
+    const contextPlace = source('app/components/BlrContextPlace.vue')
     const links = source('app/components/BlrLinks.vue')
     const layer = source('nuxt.config.ts')
 
@@ -116,10 +126,11 @@ describe('stable Product Report Workbench', () => {
     expect(body).toContain('{{ route.name }}')
     expect(body).not.toContain('{{ route.id }}')
     expect(body).not.toContain('{{ column.id }}')
+    expect(context).toContain('<BlrContextPlace')
     for (const kind of ['experience', 'screen']) {
-      expect(context).toContain(`<BlrKind kind="${kind}"`)
+      expect(contextPlace).toContain(`<BlrKind kind="${kind}"`)
     }
-    expect(context).toContain('<BlrInterfaceType')
+    expect(contextPlace).toContain('<BlrInterfaceType')
     expect(source('app/components/BlrInterfaceType.vue')).toContain(":role=\"labelled ? undefined : 'img'\"")
     expect(body).toContain("asScenario.scenarioType === 'journey' && step.capabilityId")
     expect(body).toContain("step.stepKind === 'actor' && stepActor(step.actorId)")
@@ -141,12 +152,12 @@ describe('stable Product Report Workbench', () => {
     expect(body.match(/aria-label="Show next route"/g)).toHaveLength(2)
     expect(body).toContain('compact')
     expect(body).not.toContain('Context ·')
-    expect(context).toContain('<BlrInterfaceType :type="context.interfaceType" size="xs" />')
-    expect(context).toContain('whitespace-nowrap')
-    expect(context).toContain("compact ? 'max-w-24'")
-    expect(context).toContain('truncate')
-    expect(context.match(/<UTooltip/g)).toHaveLength(3)
-    expect(context).not.toContain(':title="place.')
+    expect(contextPlace).toContain(':type="productInterface.interfaceType"')
+    expect(contextPlace).toContain('whitespace-nowrap')
+    expect(contextPlace).toContain("compact ? 'max-w-24'")
+    expect(contextPlace).toContain('truncate')
+    expect(contextPlace.match(/<UTooltip/g)).toHaveLength(3)
+    expect(contextPlace).not.toContain(':title="place.')
     expect(links).toContain('inline-flex min-h-6 items-center')
     for (const icon of ['align-justify', 'circle-dot-dashed', 'user-round']) {
       expect(layer).toContain(`'lucide:${icon}'`)
@@ -435,6 +446,51 @@ describe('stable Product Report Workbench', () => {
     /* Depth is one level: a relation navigates rather than re-targeting. */
     expect(peek).toContain("emit('open', entity)")
     expect(inspector).not.toMatch(/history\.value|const history = ref|function goBack/)
+  })
+
+  it('keeps Context where it answers an Overview question', () => {
+    const report = compileReport(loadModel(FIXTURE), '2026-08-08')
+    const workspace = projectReportWorkspace(report)
+    const contexts = source('app/components/BlrContexts.vue')
+    const contextPlace = source('app/components/BlrContextPlace.vue')
+    const page = source('app/components/BlrEntityPage.vue')
+    const peek = source('app/components/BlrEntityPeek.vue')
+    const body = source('app/components/BlrEntityBody.vue')
+
+    for (const entity of [
+      workspace.screens[0]!,
+      workspace.capabilities[0]!,
+      workspace.journeys[0]!,
+      workspace.rules[0]!
+    ]) {
+      expect(entityFacts(workspace, entity).map((fact: { label: string }) => fact.label)).not.toContain('Context')
+      expect(entityFacts(workspace, entity).map((fact: { label: string }) => fact.label)).not.toContain('Contexts')
+    }
+
+    expect(page).toContain('<BlrContexts')
+    expect(peek).toContain('<BlrContexts')
+    expect(page).toContain("props.entity.kind === 'capability' ? props.entity.contexts : []")
+    expect(peek).toContain("props.entity.kind === 'capability' ? props.entity.contexts : []")
+    expect(contexts).toContain('<BlrContextPlace')
+    expect(source('app/components/BlrStepContext.vue')).toContain('<BlrContextPlace')
+    expect(contextPlace).toContain('<BlrInterfaceType')
+    expect(contextPlace).toContain('<BlrKind kind="experience"')
+    expect(contextPlace).toContain('<BlrKind kind="screen"')
+    expect(contexts).toContain("props.contexts.length === 1 ? 'Context' : 'Contexts'")
+    expect(contexts).not.toContain('CONTEXT_NOTE')
+    expect(contexts).not.toContain('Derived from achieved Scenarios')
+    expect(contexts).toContain('Starts at')
+    expect(contexts).toContain(':context="point.context"')
+    expect(contexts).not.toContain('point.path')
+    expect(contexts).not.toContain('{{ point.interfaceTitle }}')
+    expect(page).toContain("props.entity.kind === 'journey' ? props.entity.entryPoints : []")
+
+    /* Scenario Context belongs to its route cells; a Rule selector belongs to
+       the authored applicability binding rather than a generic roll-up. */
+    expect(body).toContain('<BlrStepContext')
+    expect(body).toContain('Every supported Context')
+    expect(body).toContain('<BlrContextPlace')
+    expect(body).toContain('Only in')
   })
 
   it('uses the Workbench trail as the only entity-page identity', () => {

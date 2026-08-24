@@ -14,20 +14,9 @@
  * depth confusing: three entities deep there was no trail, and the list behind
  * had nothing to do with what was on screen.
  */
-import type {
-  ActorView,
-  AnyEntityView,
-  CapabilityView,
-  DomainView,
-  ExperienceView,
-  InterfaceView,
-  JourneyView,
-  ReportWorkspace,
-  RuleView,
-  ScenarioView,
-  ScreenView
-} from '../utils/reportWorkspace'
-import { ENTITY_KIND_META, INTERFACE_TYPE_META, resolveEntity } from '../utils/reportWorkspace'
+import type { AnyEntityView, ReportWorkspace } from '../utils/reportWorkspace'
+import { ENTITY_KIND_META } from '../utils/reportWorkspace'
+import { entityBadge, entityFacts, type EntityFact } from '../utils/entityFacts'
 
 const props = defineProps<{
   workspace: ReportWorkspace
@@ -39,139 +28,19 @@ const emit = defineEmits<{
   open: [entity: AnyEntityView]
 }>()
 
-interface Fact {
-  label: string
-  value: string
-  /** A name, not a number: it gets a row of its own rather than a third of one. */
-  wide?: boolean
-}
-
 const meta = computed(() => ENTITY_KIND_META[props.entity.kind])
-
-const contextOf = (entity: { contexts: Array<{ interfaceTitle: string, experienceTitle: string, screenTitle?: string }> }) => {
-  const [first] = entity.contexts
-  if (!first) return '—'
-  const rest = entity.contexts.length - 1
-  const name = [first.interfaceTitle, first.experienceTitle, first.screenTitle].filter(Boolean).join(' › ')
-  return rest > 0 ? `${name} +${rest}` : name
-}
+const contexts = computed(() => props.entity.kind === 'capability' ? props.entity.contexts : [])
 
 /*
   Three facts, and they must *discriminate*.
 
   Not what the header already says (a Scenario panel titled "Capability
   Scenario" does not need a Type row), not what the badge already says, and not
-  a count a reader can get from the connections below. For a Screen that means
-  its context, which is the only thing telling two counterparts apart.
+  a count a reader can get from the connections below. A qualified Screen id
+  already distinguishes counterparts, so its parent path is not repeated here.
 */
-const facts = computed<Fact[]>(() => {
-  const entity = props.entity
-  switch (entity.kind) {
-    case 'actor': {
-      const actor = entity as ActorView
-      return [
-        { label: 'Kind', value: actor.actorKind },
-        { label: 'Relationship', value: actor.relationship },
-        { label: 'Journeys', value: String(actor.journeyIds.length) }
-      ]
-    }
-    case 'interface': {
-      const item = entity as InterfaceView
-      return [
-        { label: 'Type', value: INTERFACE_TYPE_META[item.interfaceType].label },
-        { label: 'Experiences', value: String(item.experienceIds.length) },
-        { label: 'Screens', value: String(item.screenIds.length) },
-      ]
-    }
-    case 'experience': {
-      const item = entity as ExperienceView
-      return [
-        {
-          label: 'Interface',
-          value: resolveEntity(props.workspace, 'interface', item.interfaceIds[0] ?? '')?.title ?? '—',
-          wide: true
-        },
-        { label: 'Access', value: item.accessMode },
-        { label: 'Screens', value: String(item.screenIds.length) }
-      ]
-    }
-    case 'screen': {
-      const screen = entity as ScreenView
-      return [
-        { label: 'Context', value: contextOf(screen), wide: true },
-        { label: 'States', value: String(screen.states.length) },
-        { label: 'Actions', value: String(screen.actions.length) }
-      ]
-    }
-    case 'domain': {
-      const domain = entity as DomainView
-      return [
-        { label: 'Capabilities', value: String(domain.capabilityIds.length) },
-        { label: 'Journeys reached', value: String(domain.journeyIds.length) },
-        { label: 'Rules', value: String(domain.ruleIds.length) }
-      ]
-    }
-    case 'capability': {
-      const capability = entity as CapabilityView
-      return [
-        { label: 'Context', value: contextOf(capability), wide: true },
-        { label: 'Scenarios', value: String(capability.scenarioIds.length) },
-        { label: 'Journeys', value: String(capability.journeyIds.length) }
-      ]
-    }
-    case 'journey': {
-      const journey = entity as JourneyView
-      return [
-        {
-          label: 'Actor',
-          value: resolveEntity(props.workspace, 'actor', journey.actorIds[0] ?? '')?.title ?? '—',
-          wide: true
-        },
-        { label: 'Scenarios', value: String(journey.scenarioIds.length) },
-        { label: 'Steps', value: String(journey.stepCount) }
-      ]
-    }
-    case 'capability-scenario':
-    case 'journey-scenario': {
-      const scenario = entity as ScenarioView
-      const parent: Fact = scenario.scenarioType === 'capability'
-        ? { label: 'Capability', value: scenario.capabilityTitle, wide: true }
-        : { label: 'Journey', value: scenario.journeyTitle, wide: true }
-      return [
-        parent,
-        { label: 'Steps', value: String(scenario.steps.length) },
-        scenario.result
-          ? { label: 'Result', value: scenario.result }
-          : { label: 'Screens', value: String(scenario.screenIds.length) }
-      ]
-    }
-    case 'rule': {
-      const rule = entity as RuleView
-      return [
-        { label: 'Bindings', value: String(rule.appliesTo.length) },
-        { label: 'Contexts', value: String(rule.contexts.length) },
-        { label: 'References', value: String(rule.references.length) }
-      ]
-    }
-    default:
-      return []
-  }
-})
-
-const badge = computed(() => {
-  const entity = props.entity
-  switch (entity.kind) {
-    case 'actor': return `${(entity as ActorView).actorKind} · ${(entity as ActorView).relationship}`
-    case 'experience': return (entity as ExperienceView).accessMode
-    case 'capability-scenario': return (entity as ScenarioView).kindName
-    case 'journey-scenario': return `${(entity as ScenarioView).kindName} · ${(entity as ScenarioView).result}`
-    case 'capability': {
-      const id = (entity as CapabilityView).domainId
-      return id ? resolveEntity(props.workspace, 'domain', id)?.title ?? id : ''
-    }
-    default: return ''
-  }
-})
+const facts = computed<EntityFact[]>(() => entityFacts(props.workspace, props.entity))
+const badge = computed(() => entityBadge(props.workspace, props.entity))
 
 /* The badge and the facts must not say the same thing twice. */
 const shownFacts = computed(() => facts.value.filter(fact => fact.value && fact.value !== badge.value))
@@ -201,19 +70,29 @@ const gridColumns = computed(() => GRID_COLUMNS[Math.min(gridFacts.value.length,
       class="shrink-0 text-default"
     />
 
-    <!-- 3. Three discriminating facts. A name gets a row; counts share one. -->
-    <dl v-if="shownFacts.length" class="shrink-0 overflow-hidden rounded-xl border border-default bg-default">
-      <div v-for="fact in wideFacts" :key="fact.label" class="min-w-0 border-b border-default bg-elevated/35 px-3.5 py-3">
-        <dt class="text-xs font-medium text-muted">{{ fact.label }}</dt>
-        <dd class="text-sm font-medium text-highlighted" :title="fact.value">{{ fact.value }}</dd>
-      </div>
-      <div v-if="gridFacts.length" class="grid gap-px bg-default" :class="gridColumns">
-        <div v-for="fact in gridFacts" :key="fact.label" class="min-w-0 bg-elevated/35 px-3.5 py-3">
+    <!-- 3. Discriminating facts and one non-repeated Context reading. -->
+    <div v-if="shownFacts.length || contexts.length" class="shrink-0 space-y-3">
+      <dl v-if="shownFacts.length" class="overflow-hidden rounded-xl border border-default bg-default">
+        <div v-for="fact in wideFacts" :key="fact.label" class="min-w-0 border-b border-default bg-elevated/35 px-3.5 py-3">
           <dt class="text-xs font-medium text-muted">{{ fact.label }}</dt>
-          <dd class="mt-1 truncate text-sm font-medium text-highlighted" :title="fact.value">{{ fact.value }}</dd>
+          <dd class="text-sm font-medium text-highlighted" :title="fact.value">{{ fact.value }}</dd>
         </div>
-      </div>
-    </dl>
+        <div v-if="gridFacts.length" class="grid gap-px bg-default" :class="gridColumns">
+          <div v-for="fact in gridFacts" :key="fact.label" class="min-w-0 bg-elevated/35 px-3.5 py-3">
+            <dt class="text-xs font-medium text-muted">{{ fact.label }}</dt>
+            <dd class="mt-1 truncate text-sm font-medium text-highlighted" :title="fact.value">{{ fact.value }}</dd>
+          </div>
+        </div>
+      </dl>
+
+      <BlrContexts
+        v-if="contexts.length"
+        :workspace="workspace"
+        :contexts="contexts"
+        compact
+        @select="emit('select', $event)"
+      />
+    </div>
 
     <!--
       4. What it touches. Capped at four rows and four chips, because the page

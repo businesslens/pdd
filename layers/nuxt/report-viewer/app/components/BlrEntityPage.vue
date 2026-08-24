@@ -38,8 +38,11 @@ const meta = computed(() => ENTITY_KIND_META[props.entity.kind])
 const GRAPH_LED: ReportEntityKind[] = ['actor', 'interface', 'experience', 'domain']
 const graphLed = computed(() => GRAPH_LED.includes(props.entity.kind))
 
-const contexts = computed(() => 'contexts' in props.entity ? props.entity.contexts : [])
-const entryPoints = computed(() => 'entryPoints' in props.entity ? props.entity.entryPoints : [])
+/* Context belongs in the Overview only when it is authored entity meaning.
+   Capability availability is such a contract; Journey and Scenario Contexts
+   are route projections and Screens already carry their place in identity. */
+const contexts = computed(() => props.entity.kind === 'capability' ? props.entity.contexts : [])
+const entryPoints = computed(() => props.entity.kind === 'journey' ? props.entity.entryPoints : [])
 
 /** A parent's Scenarios, read where the parent is read. */
 const children = computed<ScenarioView[]>(() => {
@@ -73,10 +76,12 @@ const asJourney = computed(() => props.entity as JourneyView)
       <BlrProse :text="entity.lead" size="base" class="max-w-3xl" />
     </header>
 
-    <BlrAvail
+    <BlrContexts
       v-if="contexts.length || entryPoints.length"
+      :workspace="workspace"
       :contexts="contexts"
       :entry-points="entryPoints"
+      @select="emit('select', $event)"
     />
 
     <BlrEntityBody
