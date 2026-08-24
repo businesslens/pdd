@@ -45,7 +45,7 @@ function validRepositoryTarget(value: string): boolean {
 }
 
 export const ReportReferenceSchema = z.strictObject({
-  kind: z.enum(['code', 'spec', 'proposal', 'doc', 'adr', 'visual', 'research']),
+  kind: z.enum(['code', 'prd', 'spec', 'proposal', 'doc', 'adr', 'visual', 'research']),
   role: z.enum(['intent', 'implementation', 'context']),
   target: SingleLineTextSchema,
   title: SingleLineTextSchema.optional(),

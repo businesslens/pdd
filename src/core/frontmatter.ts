@@ -236,10 +236,10 @@ export interface EntityReference {
   state?: string
 }
 
-export type ReferenceKind = 'code' | 'spec' | 'proposal' | 'doc' | 'adr' | 'visual' | 'research'
+export type ReferenceKind = 'code' | 'prd' | 'spec' | 'proposal' | 'doc' | 'adr' | 'visual' | 'research'
 export type ReferenceRole = 'intent' | 'implementation' | 'context'
 
-export const REFERENCE_KINDS = new Set<ReferenceKind>(['code', 'spec', 'proposal', 'doc', 'adr', 'visual', 'research'])
+export const REFERENCE_KINDS = new Set<ReferenceKind>(['code', 'prd', 'spec', 'proposal', 'doc', 'adr', 'visual', 'research'])
 export const REFERENCE_ROLES = new Set<ReferenceRole>(['intent', 'implementation', 'context'])
 
 /** The tracked repository path named by a reference, if it is repository-local. */
@@ -313,7 +313,7 @@ export function referencesField(data: Record<string, unknown>, issues: string[],
       continue
     }
     if (!REFERENCE_KINDS.has(record.kind as ReferenceKind)) {
-      issues.push(`${label}: reference kind "${record.kind}" must be one of code|spec|proposal|doc|adr|visual|research`)
+      issues.push(`${label}: reference kind "${record.kind}" must be one of code|prd|spec|proposal|doc|adr|visual|research`)
       continue
     }
     if (!REFERENCE_ROLES.has(record.role as ReferenceRole)) {

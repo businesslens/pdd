@@ -18,6 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - An optional `state:` on a reference or asset, valid only on a Screen and
   validated against its `## Product states`, so several captures of one view are
   placed beside the state each depicts instead of arriving as a flat list.
+- A `prd` Reference kind for attaching a product requirements document as
+  `intent` or `context` without making that external document the Product Model
+  authority.
 - An optional ordered `screens:` list on an Interface or Experience declaring
   reading order over its own children. Reachability stays with the tree.
 - `businesslens view` serves repository files from a read-only, extension-

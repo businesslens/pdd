@@ -140,8 +140,9 @@ every achieved Journey Scenario uses at least two distinct Capabilities, and
 Interface, Experience, Screen, Actor, and Capability consistency holds.
 Product Report v9 is the only accepted report version — there is no
 compatibility reader for an earlier one. No report profile requires a
-reference. Present references remain subject to the same strict shape and
-target rules defined in [`format.md`](./format.md).
+reference. Present references use `kind: code|prd|spec|proposal|doc|adr|visual|research`
+and `role: intent|implementation|context`, and remain subject to the same strict
+shape and target rules defined in [`format.md`](./format.md).
 
 ## Portable projection
 

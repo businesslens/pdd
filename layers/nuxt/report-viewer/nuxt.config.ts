@@ -33,6 +33,7 @@ export default defineNuxtConfig({
         'lucide:chevron-right',
         'lucide:chevron-up',
         'lucide:circle-dot-dashed',
+        'lucide:clipboard-list',
         'lucide:corner-down-right',
         'lucide:cpu',
         'lucide:file-code',

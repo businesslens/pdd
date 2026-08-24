@@ -179,7 +179,7 @@ a Screen Place must expose it. Every Journey route begins its Actor-owned
 placed Steps with a Journey Actor. Screens never author Scenario ids.
 
 Every semantic entity may contain optional `references`. Each strict item needs
-`kind: code|spec|proposal|doc|adr|visual|research`,
+`kind: code|prd|spec|proposal|doc|adr|visual|research`,
 `role: intent|implementation|context`, `target`, and optional `title`. Code
 targets use `path[#symbol][:start[-end]]` and their path must be tracked. Other
 targets use HTTP(S) or a repository-relative path. Duplicate targets on one

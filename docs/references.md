@@ -21,6 +21,10 @@ taxonomies do not.
 
 ```yaml
 references:
+  - kind: prd
+    role: intent
+    target: docs/prds/checkout.md
+    title: Checkout PRD
   - kind: visual
     role: intent
     target: https://example.com/designs/checkout
@@ -68,6 +72,7 @@ This avoids a mirrored asset tree while keeping external material external.
 | Kind | Artifact |
 | --- | --- |
 | `code` | A tracked source file, optional symbol, or line range |
+| `prd` | A product requirements document |
 | `spec` | A product or technical specification |
 | `proposal` | A proposed direction or change |
 | `doc` | General documentation |
@@ -82,6 +87,11 @@ This avoids a mirrored asset tree while keeping external material external.
 | `intent` | Helped express or curate intended Product meaning | yes |
 | `implementation` | Points at a realized Product artifact | **no** |
 | `context` | Supplies useful background without defining intent or implementation | yes |
+
+A PRD uses `kind: prd`. Give it `role: intent` when it helped define the
+approved Product meaning on that entity, or `role: context` when it supplies
+supporting history. The Product Model remains self-contained: the PRD explains
+the decision around an entity but never replaces its authored meaning.
 
 `intent` and `context` describe the Product, so they travel with a published
 Blueprint. `implementation` describes this repository's realization of it and

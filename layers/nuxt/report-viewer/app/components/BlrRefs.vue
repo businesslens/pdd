@@ -14,6 +14,7 @@ withDefaults(defineProps<{
 
 const KIND_ICON: Record<string, string> = {
   code: 'i-lucide-file-code',
+  prd: 'i-lucide-clipboard-list',
   spec: 'i-lucide-file-text',
   proposal: 'i-lucide-file-diff',
   doc: 'i-lucide-book-open',

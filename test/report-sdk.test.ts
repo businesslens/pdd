@@ -245,6 +245,7 @@ describe('projectPortableReport', () => {
       { kind: 'code', role: 'intent', target: 'src/routes/storefront.ts' },
       { kind: 'doc', role: 'context', target: 'docs/local.md' },
       { kind: 'doc', role: 'context', target: 'https://example.com/handbook', title: 'Handbook' },
+      { kind: 'prd', role: 'intent', target: 'https://example.com/checkout-prd', title: 'Checkout PRD' },
       { kind: 'visual', role: 'implementation', target: 'https://example.com/current.png' },
       { kind: 'proposal', role: 'intent', target: 'https://example.com/proposal' }
     ]
@@ -253,6 +254,7 @@ describe('projectPortableReport', () => {
     expect(portable.referenceProfile).toBe('portable')
     expect(portable.model.actors[0]!.references).toEqual([
       { kind: 'doc', role: 'context', target: 'https://example.com/handbook', title: 'Handbook' },
+      { kind: 'prd', role: 'intent', target: 'https://example.com/checkout-prd', title: 'Checkout PRD' },
       { kind: 'proposal', role: 'intent', target: 'https://example.com/proposal' }
     ])
     expect(allReferences(portable).every(reference =>

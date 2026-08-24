@@ -248,6 +248,10 @@ Scenario, Journey Scenario, and Business Rule. It is not accepted in
 
 ```yaml
 references:
+  - kind: prd
+    role: intent
+    target: docs/prds/checkout.md
+    title: Checkout PRD
   - kind: visual
     role: intent
     target: https://design.example.com/checkout
@@ -260,7 +264,7 @@ references:
 Every item requires exactly `kind`, `role`, and `target`; `title` is optional.
 Unknown keys are invalid.
 
-- `kind` is `code`, `spec`, `proposal`, `doc`, `adr`, `visual`, or `research`.
+- `kind` is `code`, `prd`, `spec`, `proposal`, `doc`, `adr`, `visual`, or `research`.
   It identifies the artifact, not what the model concludes from it.
 - `role` is `intent`, `implementation`, or `context`. It explains why the
   artifact is attached to this entity. It is not a verification result or a
