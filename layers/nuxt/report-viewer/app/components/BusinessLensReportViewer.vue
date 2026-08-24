@@ -12,7 +12,7 @@ import { projectReportWorkspace } from '../utils/reportWorkspace'
 
 const props = defineProps<{
   report: ProductReportV9
-  /** Host-resolved `.businesslens/logo.svg`; rendered in the product header. */
+  /** Host-resolved `.businesslens/product/logo.svg`; rendered in the product header. */
   logoSrc?: string | null
 }>()
 

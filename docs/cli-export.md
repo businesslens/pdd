@@ -8,7 +8,7 @@ order: 32
 
 # `businesslens blueprint export`
 
-Compile schema 4 `.businesslens/` into a portable Product Report v8:
+Compile folder schema 5 `.businesslens/` into a portable Product Report v9:
 
 ```bash
 npx businesslens blueprint export

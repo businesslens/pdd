@@ -8,8 +8,8 @@ order: 33
 
 # `businesslens blueprint open`
 
-Parse and validate a Product Report v8, apply the portable projection, then
-expand it into a canonical schema 4 `.businesslens/` directory:
+Parse and validate a Product Report v9, apply the portable projection, then
+expand it into a canonical folder schema 5 `.businesslens/` directory:
 
 ```bash
 npx businesslens blueprint open ./report.json

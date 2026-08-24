@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-08-24
+
 ### Added
 
 - **Co-located assets.** Files beside `<type>.md` are product assets owned by
@@ -53,8 +55,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   be a duplicate row.
 - One entity's neighbourhood is drawn on the topology canvas, at a width that
   can render it, instead of inside the panel.
-
-
 - A new Learn from examples documentation group, beginning with a guided
   Content Feed Reader walkthrough that traces two complete Actor paths and
   explains why each optional entity earns its place.
@@ -83,8 +83,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Route-neutral Steps remain first-class without a Place. The separate Journey
   `flow`, `operation`, stage ids, per-Step route objects, Scenario-wide Actors
   and availability, authored Screen Scenario backlinks, and Markdown `## Steps`
-  are removed. This deliberately breaks Product Report schema v9 in place; no
-  compatibility reader or v10 is added.
+  are removed. Folder schema 3 and Product Report v7 are no longer accepted;
+  this release has no compatibility reader.
 - Every Interface now declares one required interaction `type` (`web`,
   `mobile-app`, `desktop-app`, `cli`, `api`, `webhook`, `messaging`, `voice`,
   or `device`). Reports preserve it directly and use it to distinguish
@@ -157,7 +157,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   so Capability Scenarios are documented in `docs/capabilities.md`, Journey
   Scenarios in `docs/journeys.md`, and the containment rule that separates them
   in `docs/product-model.md`. The standalone `docs/scenarios.md` is removed.
-
 - An external system is an Actor only when it **initiates** interaction with
   the Product, and only then is the surface it arrives through an Interface.
   Interfaces are inbound by definition; an outbound connection the Product
@@ -179,7 +178,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the model previously never stated. Its catch-up failure variation no longer
   contradicts itself about whether the backlog was unchanged or caught up.
 - **Breaking.** `businesslens/nuxt/report-viewer` now accepts the canonical
-  `ProductReportV8` directly and owns the complete Workbench projection and
+  `ProductReportV9` directly and owns the complete Workbench projection and
   topology engine. The lossy `businesslens/report/view-model` export and the
   whole-report `businesslens/nuxt/report-lab` audition layer were removed. The
   local viewer now ships only the promoted Workbench design while continuing
@@ -194,60 +193,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Scenario readings, shows Screen-to-Journey derivation provenance, renders
   ordered Journey path lanes, and uses fixed named views instead of a generic
   cross-kind grouping builder. Mobile navigation is a dedicated drawer.
-
-- Schema 4 and Product Report v8 now separate Capability Scenarios from
-  Journey Scenarios. Capabilities own local acceptance coverage; optional,
-  route-free Journeys own only Actors, Goal, and Success criterion; Journey
-  Scenarios own ordered Steps with locally identified Capability and correlated
-  exact-context route annotations, plus their terminal result. Business Rules
-  use typed `appliesTo` targets with optional exact-context narrowing instead of
-  parallel relation arrays or authored Domain links. Lint requires complete
-  per-context Capability Scenario coverage, achieved coverage for every Journey
-  Actor, goal-owner route entry, and exhaustive Interface Actor coverage across
-  Experiences. The version identifiers remain unchanged because neither
-  unreleased contract needs a compatibility reader.
-- **Breaking.** Product Report v8 stores authored supporting H2 sections as
-  ordered `{ heading, content }` records instead of an opaque
-  `supportingContent` string. Schema 4 lint now rejects Journey and Scenario
-  lead prose, duplicate or conflicting structured sections, malformed
-  structured lists, and duplicate values in set-valued relation lists rather
-  than allowing authored content to disappear or inflate derived relations.
-- **Breaking.** Folder schema 4 and Product Report v8 make Experiences
-  optional. Interfaces with no Experience contexts use direct availability;
-  Interfaces with declared Experiences continue to require exact,
-  non-empty Experience scopes. Schema 3 and Product Report v7 are no longer
-  accepted.
-- The Content Feed Reader catalog Blueprint now models three distinct access
-  boundaries: Reader work, Visitor consumption, and external feed collection.
-  It has three Actors, three Interfaces, two Experiences, three Domains, five
-  Screens, ten Capabilities, twenty-four Capability Scenarios, four Journeys,
-  eight Journey Scenarios, and four Business Rules. Domains group Capabilities
-  on one axis — Sources, Reading, Collections — so no Capability needs its
-  Domain's definition widened to admit it.
-  It remains source-free; a future implementation can attach screenshots as
-  external References without changing Product meaning.
+- Product Report v9 stores authored supporting H2 sections as ordered
+  `{ heading, content }` records instead of an opaque Markdown string. Lint
+  rejects Journey and Scenario lead prose, duplicate or conflicting structured
+  sections, malformed structured lists, and duplicate values in set-valued
+  relations rather than allowing authored content to disappear or inflate
+  derived relationships.
+- The Content Feed Reader catalog Blueprint now models two actor-facing access
+  boundaries: Reader work and Visitor consumption. Feed collection is an
+  outbound Capability dependency rather than a synthetic Actor or Interface.
+  The model has two Actors, two Interfaces, three Experiences, three Domains,
+  eight Screens, ten Capabilities, twenty-four Capability Scenarios, four
+  Journeys, eight Journey Scenarios, and four Business Rules. Domains group
+  Capabilities on one axis — Sources, Reading, Collections — so no Capability
+  needs its Domain's definition widened to admit it.
 - Both teaching models now demonstrate a Journey that is attempted and not
   reached. The Blueprint carries two `not-achieved` Journey Scenarios and the
   golden fixture one, so `result` is an axis with real values rather than a
   constant, and `failureOnlyCapabilityIds` is exercised against authored
   content instead of always deriving empty.
 - The Workbench treats Capability Scenarios and Journey Scenarios as separate
-  entity kinds rather than one kind carrying a type flag. Both appear in the
-  navigation rail with their own browse surface, filters, table columns, and
-  search group; a Journey Scenario table reports its terminal result beside
-  its kind. Actors and Capabilities gained the Scenario backlinks that makes
-  possible.
-- Restored group-by on every browse surface, so authored Domains can group
-  Capabilities and a Capability can group its Scenarios.
+  entity kinds rather than one kind carrying a type flag. They remain contained
+  by their Capability or Journey while preserving their own search results,
+  pages, terminal results, and derived backlinks.
 
 ### Fixed
 
-- Two routes of one Journey Scenario that assign the same context to every
-  Capability-bearing Step
-  are now a finding, in both `lint` and report validation. A route id names one
-  correlation, so a second id over the same assignment claims a lane the Product
-  does not have. The Content Feed Reader Blueprint carried two: a
-  `publish-on-mobile` and an `unlist-from-mobile` route that never left the web
+- Two routes of one Scenario that repeat the same Product Place sequence are
+  now a finding in both `lint` and report validation. A route id names one
+  traversal, so a second id over the same sequence claims a lane the Product
+  does not have. The Content Feed Reader Blueprint carried two:
+  `publish-on-mobile` and `unlist-from-mobile`, which never left the web
   Interface, and could not have — neither Capability declares a mobile context.
 - The report panel no longer keeps its scroll offset when the entity changes.
   Selecting a relation that sat low in one reading opened the next one below its
@@ -259,8 +235,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   from the model with no finding at all.
 - The local viewer's Content-Security-Policy sets `manifest-src`, which was
   blocking `site.webmanifest`.
-
-
 - The Workbench light and dark page surfaces are part of the shared theme
   again. The warm base, top glow, and paper grain moved from the optional
   theme-lab audition layer into `businesslens/nuxt/theme`, where the promoted
@@ -537,7 +511,8 @@ Initial public launch of the repository.
   `docs/format.md`.
 - Claude plugin manifest and marketplace entry.
 
-[Unreleased]: https://github.com/businesslens/pdd/compare/v0.7.2...HEAD
+[Unreleased]: https://github.com/businesslens/pdd/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/businesslens/pdd/compare/v0.7.2...v0.8.0
 [0.7.2]: https://github.com/businesslens/pdd/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/businesslens/pdd/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/businesslens/pdd/compare/v0.6.0...v0.7.0

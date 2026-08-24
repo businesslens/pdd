@@ -20,7 +20,7 @@ Use this door when no established implementation exists.
    writes nothing. Once you choose—or if you already know the outcome—it drafts
    Actors and Interfaces, optional Experiences, Screens, and Domains,
    Capabilities, local Capability Scenarios, Business Rules, optional
-   evidence-backed Journeys, end-to-end Journey Scenarios, and limitations.
+   multi-Capability Journeys, end-to-end Journey Scenarios, and limitations.
 3. Approve the exact Product Model delta. Only then does ideate write
    `.businesslens/`, including its canonical README. Lint checks structure:
 
