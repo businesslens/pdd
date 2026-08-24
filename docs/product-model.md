@@ -27,28 +27,9 @@ add optional entities only when they communicate a real Product distinction.
 | [Experience](./experiences.md) | Optional | A durable context of use when one Interface or several Interfaces contain meaningful audience, access, or capability boundaries |
 | [Screen](./screens.md) | Optional | A meaningful visual view; non-visual Products do not need one |
 | [Domain](./domains.md) | Optional | A Product-language grouping that makes a larger Capability set easier to navigate |
-| [Capability](./capabilities.md) | At least one in a complete model; every exact context needs Capability Scenario coverage | A durable Product ability reused across views, behavior contracts, or goals |
-| ↳ [Capability Scenario](./capabilities.md#capability-scenarios) | Required by every authored Capability | One concrete local acceptance case for exactly one Capability |
-| [Journey](./journeys.md) | Optional | One coherent Actor Goal and Success criterion whose achieved variations compose multiple Capabilities |
-| ↳ [Journey Scenario](./journeys.md#journey-scenarios) | Required by every authored Journey | One concrete end-to-end variation of exactly one Journey |
+| [Capability](./capabilities.md) | At least one in a complete model | A durable Product ability reused across views, behavior contracts, or goals |
+| [Journey](./journeys.md) | Optional | One coherent Actor Goal that deliberately composes multiple Capabilities |
 | [Business Rule](./business-rules.md) | Optional | A durable assertion that must remain true |
-
-The two indented rows are Scenarios: the only entities with a mandatory single
-parent. A Scenario is never authored on its own, and the parent it belongs to
-decides which kind it is. There is no unowned Scenario and no way for one
-Scenario to serve both parents, so each kind is documented on its parent's page.
-
-That containment is the whole distinction. The two kinds have different fields,
-different required sections, and different collections, because they make
-different promises:
-
-> **Local result:** "The Git write is rejected." — Capability Scenario
->
-> **Goal result:** "The code change cannot be proposed because its branch was
-> not published." — Journey Scenario
-
-A Capability Scenario stops at the local result of one ability. A Journey
-Scenario ends at the Actor-goal result.
 
 Do not add an Experience, Domain, Screen, or any other entity to make the model
 look complete. A small model can be both valid and honest. The
