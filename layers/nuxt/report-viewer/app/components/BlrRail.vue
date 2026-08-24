@@ -4,7 +4,7 @@
  *
  * It lists *kinds*, and kinds do not nest — instances do. An earlier revision
  * indented the two Scenario kinds under the parent that owns them, which read
- * as a tree that gave up: schema 5 declares a complete surface tree as well
+ * as a tree that gave up: schema 6 declares a complete Interface → Experience → Screen hierarchy as well
  * (Interface ⊃ Experience ⊃ Screen), so indenting two rows is either incomplete
  * or becomes a three-level tree inside a ten-row rail.
  *

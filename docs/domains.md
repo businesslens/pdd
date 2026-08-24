@@ -86,7 +86,7 @@ Three questions group Capabilities, and each has its own answer:
 | Where can you reach it? | [availability](./capabilities.md) |
 | What does it participate in over time? | [Journey](./journeys.md) |
 
-Anything else — team ownership, compliance scope, delivery maturity — has no
+Anything else — team ownership, compliance concerns, delivery maturity — has no
 home in the Product Model and should stay in the system that already tracks it.
 The model describes the Product, not the organization building it.
 

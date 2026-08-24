@@ -9,9 +9,9 @@
  * This is the stable view projection used by the shipped report viewer.
  */
 import type {
-  ProductReportV9,
+  ProductReportV10,
   ReportActor,
-  ReportAvailability,
+  ReportContext,
   ReportBusinessRule,
   ReportBusinessRuleTarget,
   ReportCapability,
@@ -124,12 +124,16 @@ export const ACTOR_RELATIONSHIP_META: Record<ReportActor['relationship'], { labe
   internal: { label: 'Internal' }
 }
 
-/** One resolved Interface scope; an empty Experience id means direct availability. */
-export interface AvailabilityPair {
+/** One resolved Context place; an empty Experience id means an Interface place. */
+export interface ContextView {
+  placeId: string
+  placeKind: 'interface' | 'experience' | 'screen'
   interfaceId: string
   experienceId: string
+  screenId: string
   interfaceTitle: string
   experienceTitle: string
+  screenTitle: string
   key: string
 }
 
@@ -191,7 +195,7 @@ export interface ExperienceView extends EntityBase {
 
 export interface ScreenView extends EntityBase {
   kind: 'screen'
-  availability: AvailabilityPair[]
+  contexts: ContextView[]
   capabilityIds: string[]
   capabilityScenarioIds: string[]
   journeyScenarioIds: string[]
@@ -226,7 +230,7 @@ export interface DomainView extends EntityBase {
 export interface CapabilityView extends EntityBase {
   kind: 'capability'
   domainId?: string
-  availability: AvailabilityPair[]
+  contexts: ContextView[]
   /** Capability Scenarios — the only direct acceptance coverage for this ability. */
   scenarioIds: string[]
   /** Journey Scenarios with a step that exercises this Capability. */
@@ -244,7 +248,7 @@ export interface JourneyView extends EntityBase {
   capabilityIds: string[]
   failureOnlyCapabilityIds: string[]
   successCriterion: string
-  availability: AvailabilityPair[]
+  contexts: ContextView[]
   entryPoints: EntryPointView[]
   scenarioIds: string[]
   domainIds: string[]
@@ -267,8 +271,8 @@ export interface ScenarioView extends EntityBase {
   kindId: string
   kindName: string
   kindSlot: number
-  /** Exact authored contexts; Journey Scenario entries are unioned for display. */
-  availability: AvailabilityPair[]
+  /** Authored Step Contexts; Journey Scenario entries are unioned for display. */
+  contexts: ContextView[]
   trigger: string
   routes: Array<{ id: string, name: string }>
   steps: Array<{
@@ -276,9 +280,9 @@ export interface ScenarioView extends EntityBase {
     stepKind: 'actor' | 'product' | 'condition'
     actorId: string
     capabilityId: string
-    places: Array<{
+    contexts: Array<{
       routeId: string
-      place: ProductPlaceView
+      context: ResolvedContextView
     }>
   }>
   decisionPoints: ReportDecisionPoint[]
@@ -289,7 +293,7 @@ export interface ScenarioView extends EntityBase {
   ruleIds: string[]
 }
 
-export interface ProductPlaceView {
+export interface ResolvedContextView {
   id: string
   kind: 'interface' | 'experience' | 'screen'
   interfaceId: string
@@ -299,7 +303,7 @@ export interface ProductPlaceView {
   experienceTitle: string
   screenId: string
   screenTitle: string
-  context: AvailabilityPair
+  boundary: ContextView
 }
 
 export interface RuleView extends EntityBase {
@@ -315,7 +319,7 @@ export interface RuleView extends EntityBase {
   scenarioIds: string[]
   derivedCapabilityIds: string[]
   derivedJourneyIds: string[]
-  availability: AvailabilityPair[]
+  contexts: ContextView[]
   appliesTo: ReportBusinessRuleTarget[]
 }
 
@@ -370,7 +374,7 @@ export interface WorkspaceCounts {
   screenStates: number
   entryPoints: number
   references: number
-  availabilityPairs: number
+  availabilityContexts: number
 }
 
 export interface ReferenceGroup {
@@ -397,8 +401,8 @@ export interface ReportWorkspace {
   journeyScenarios: ScenarioView[]
   scenarios: ScenarioView[]
   rules: RuleView[]
-  /** Every direct or Experience-scoped Interface availability declared anywhere in the model. */
-  pairs: AvailabilityPair[]
+  /** Every distinct Context declared or derived in the model. */
+  contexts: ContextView[]
   /** All references in the model, each tagged with the entity that owns it. */
   references: ReferenceGroup[]
   /** Collision-safe lookup used by navigation, selection, and graphs. */
@@ -417,20 +421,13 @@ const titleOf = (items: Array<{ id: string, title?: string, name?: string }>, id
   items.find(item => item.id === id)?.title ?? items.find(item => item.id === id)?.name ?? id
 
 /**
- * The comparison key for one Interface availability scope.
- *
- * Exported so a view never rebuilds the string itself: a second spelling of
- * the same key silently matches nothing, which reads as "the model declares no
- * availability" rather than as a bug.
- */
-/**
- * One scope, keyed by its own id.
+ * One context, keyed by its own id.
  *
  * An Experience id already names the Interface that owns it, so the key is just
  * that id; an undivided Interface keys by its own. Concatenating the two would
  * repeat the Interface segment.
  */
-export function availabilityKey(interfaceId: string, experienceId: string): string {
+export function contextKey(interfaceId: string, experienceId: string): string {
   return experienceId || interfaceId
 }
 
@@ -444,8 +441,8 @@ function supportingMarkdown(sections: ReportSupportingSection[]): string {
     .join('\n\n')
 }
 
-function uniquePairs(pairs: AvailabilityPair[]): AvailabilityPair[] {
-  return [...new Map(pairs.map(pair => [pair.key, pair])).values()]
+function uniqueContexts(contexts: ContextView[]): ContextView[] {
+  return [...new Map(contexts.map(context => [context.key, context])).values()]
 }
 
 /** Render a kebab-case identifier as a sentence-cased label. */
@@ -454,28 +451,29 @@ export function humanize(value: string): string {
   return `${label.charAt(0).toUpperCase()}${label.slice(1)}`
 }
 
-function expandPairs(
-  availability: ReportAvailability[],
+function expandContexts(
+  contexts: ReportContext[],
   interfaces: ReportInterface[],
-  experiences: ReportExperience[]
-): AvailabilityPair[] {
-  return availability.flatMap((item) => {
-    if (!item.experienceIds.length) {
-      return [{
-        interfaceId: item.interfaceId,
-        experienceId: '',
-        interfaceTitle: titleOf(interfaces, item.interfaceId),
-        experienceTitle: '',
-        key: availabilityKey(item.interfaceId, '')
-      }]
-    }
-    return item.experienceIds.map(experienceId => ({
-      interfaceId: item.interfaceId,
+  experiences: ReportExperience[],
+  screens: ReportScreen[]
+): ContextView[] {
+  return contexts.map((context) => {
+    const screen = screens.find(item => item.id === context.placeId)
+    const containerId = screen ? context.placeId.split('::').slice(0, -1).join('::') : context.placeId
+    const experience = experiences.find(item => item.id === containerId)
+    const interfaceId = experience?.interfaceIds[0] || containerId
+    const experienceId = experience?.id || ''
+    return {
+      placeId: context.placeId,
+      placeKind: screen ? 'screen' : experience ? 'experience' : 'interface',
+      interfaceId,
       experienceId,
-      interfaceTitle: titleOf(interfaces, item.interfaceId),
-      experienceTitle: titleOf(experiences, experienceId),
-      key: availabilityKey(item.interfaceId, experienceId)
-    }))
+      screenId: screen?.id || '',
+      interfaceTitle: titleOf(interfaces, interfaceId),
+      experienceTitle: experience?.title || '',
+      screenTitle: screen?.title || '',
+      key: context.placeId
+    }
   })
 }
 
@@ -497,26 +495,21 @@ function entryPoints(
  * once — a Business Rule lists its Capabilities, a Capability never lists its
  * Rules — so every backlink here is derived, never authored.
  */
-export function projectReportWorkspace(report: ProductReportV9): ReportWorkspace {
+export function projectReportWorkspace(report: ProductReportV10): ReportWorkspace {
   const model = report.model
   const interfaceOf = (interfaceId: string): ReportInterface => {
     const productInterface = model.interfaces.find(item => item.id === interfaceId)
-    if (!productInterface) throw new Error(`Unknown Interface "${interfaceId}" in Product Place`)
+    if (!productInterface) throw new Error(`Unknown Interface "${interfaceId}" in Context place`)
     return productInterface
   }
-  const pairsOf = (availability: ReportAvailability[]) =>
-    expandPairs(availability, model.interfaces, model.experiences)
-  const pairOfExact = (context: { interfaceId: string, experienceId: string | null }): AvailabilityPair => ({
-    interfaceId: context.interfaceId,
-    experienceId: context.experienceId || '',
-    interfaceTitle: titleOf(model.interfaces, context.interfaceId),
-    experienceTitle: context.experienceId ? titleOf(model.experiences, context.experienceId) : '',
-    key: availabilityKey(context.interfaceId, context.experienceId || '')
-  })
-  const placeOf = (placeId: string): ProductPlaceView => {
+  const contextsOf = (contexts: ReportContext[]) =>
+    expandContexts(contexts, model.interfaces, model.experiences, model.screens)
+  const resolveContext = (context: ReportContext): ContextView => contextsOf([context])[0]!
+  const placeOf = (placeId: string): ResolvedContextView => {
     const screen = model.screens.find(item => item.id === placeId)
     if (screen) {
-      const context = pairsOf(screen.availability)[0]!
+      const containerId = screen.id.split('::').slice(0, -1).join('::')
+      const context = resolveContext({ placeId: containerId })
       const productInterface = interfaceOf(context.interfaceId)
       return {
         id: placeId,
@@ -528,14 +521,14 @@ export function projectReportWorkspace(report: ProductReportV9): ReportWorkspace
         experienceTitle: context.experienceTitle,
         screenId: screen.id,
         screenTitle: screen.title,
-        context
+        boundary: context
       }
     }
     const experience = model.experiences.find(item => item.id === placeId)
     if (experience) {
       const interfaceId = experience.interfaceIds[0] || ''
       const productInterface = interfaceOf(interfaceId)
-      const context = pairOfExact({ interfaceId, experienceId: experience.id })
+      const context = resolveContext({ placeId: experience.id })
       return {
         id: placeId,
         kind: 'experience',
@@ -546,11 +539,11 @@ export function projectReportWorkspace(report: ProductReportV9): ReportWorkspace
         experienceTitle: experience.title,
         screenId: '',
         screenTitle: '',
-        context
+        boundary: context
       }
     }
     const productInterface = interfaceOf(placeId)
-    const context = pairOfExact({ interfaceId: placeId, experienceId: null })
+    const context = resolveContext({ placeId })
     return {
       id: placeId,
       kind: 'interface',
@@ -561,36 +554,36 @@ export function projectReportWorkspace(report: ProductReportV9): ReportWorkspace
       experienceTitle: '',
       screenId: '',
       screenTitle: '',
-      context
+      boundary: context
     }
   }
-  const scenarioPairs = (scenario: ReportCapabilityScenario | ReportJourneyScenario): AvailabilityPair[] => uniquePairs(
-    scenario.steps.flatMap(step => step.places.map(place => placeOf(place.placeId).context))
+  const scenarioContexts = (scenario: ReportCapabilityScenario | ReportJourneyScenario): ContextView[] => uniqueContexts(
+    scenario.steps.flatMap(step => step.contexts.map(context => placeOf(context.placeId).boundary))
   )
 
   const kindBySlot = new Map(model.taxonomies.scenarioKinds.map(kind => [kind.id, kind]))
   const allReportScenarios = [...model.capabilityScenarios, ...model.journeyScenarios]
   const journeyScenariosOf = (journeyId: string) =>
     model.journeyScenarios.filter(scenario => scenario.journeyId === journeyId)
-  const journeyPairs = (journeyId: string) => uniquePairs(
+  const journeyContexts = (journeyId: string) => uniqueContexts(
     journeyScenariosOf(journeyId).filter(scenario => scenario.result === 'achieved').flatMap(scenario =>
-      scenarioPairs(scenario))
+      scenarioContexts(scenario))
   )
   const journeyEntryPoints = (journeyId: string): EntryPointView[] => {
     const points = journeyScenariosOf(journeyId)
       .filter(scenario => scenario.result === 'achieved')
       .flatMap((scenario) => {
-        const first = scenario.steps.find(step => step.kind === 'actor' && step.places.length)
+        const first = scenario.steps.find(step => step.kind === 'actor' && step.contexts.length)
         if (!first) return []
-        return first.places.map(place => placeOf(place.placeId).context).flatMap((scope) => {
-          const contextual = scope.experienceId
-            ? model.experiences.find(item => item.id === scope.experienceId)
-              ?.entryPoints.filter(point => point.type === scope.interfaceId) ?? []
+        return first.contexts.map(context => placeOf(context.placeId).boundary).flatMap((resolvedContext) => {
+          const contextual = resolvedContext.experienceId
+            ? model.experiences.find(item => item.id === resolvedContext.experienceId)
+              ?.entryPoints.filter(point => point.type === resolvedContext.interfaceId) ?? []
             : []
           if (contextual.length) return contextual
           return model.interfaces
-            .find(item => item.id === scope.interfaceId)
-            ?.entryPoints.filter(point => point.type === scope.interfaceId) ?? []
+            .find(item => item.id === resolvedContext.interfaceId)
+            ?.entryPoints.filter(point => point.type === resolvedContext.interfaceId) ?? []
         })
       })
     const uniquePoints = [...new Map(points.map(point => [`${point.type}\0${point.path}`, point])).values()]
@@ -658,20 +651,20 @@ export function projectReportWorkspace(report: ProductReportV9): ReportWorkspace
     const domainIds = unique(domainCapabilityIds
       .map(id => capabilityById.get(id)?.domainId)
       .filter((id): id is string => Boolean(id)))
-    const availability = uniquePairs(rule.appliesTo.flatMap((target) => {
-      if (target.type === 'context') return [pairOfExact(target)]
-      if (target.contexts.length) return target.contexts.map(pairOfExact)
+    const contexts = uniqueContexts(rule.appliesTo.flatMap((target) => {
+      if (target.type === 'context') return [resolveContext(target.context)]
+      if (target.contexts.length) return target.contexts.map(resolveContext)
       if (target.type === 'capability') {
         const capability = capabilityById.get(target.id)
-        return capability ? pairsOf(capability.availability) : []
+        return capability ? contextsOf(capability.availability) : []
       }
       if (target.type === 'capability-scenario') {
         const scenario = capabilityScenarioById.get(target.id)
-        return scenario ? scenarioPairs(scenario) : []
+        return scenario ? scenarioContexts(scenario) : []
       }
-      if (target.type === 'journey') return journeyPairs(target.id)
+      if (target.type === 'journey') return journeyContexts(target.id)
       const scenario = journeyScenarioById.get(target.id)
-      return scenario ? scenarioPairs(scenario) : []
+      return scenario ? scenarioContexts(scenario) : []
     }))
     return [rule.id, {
       capabilityIds,
@@ -683,7 +676,7 @@ export function projectReportWorkspace(report: ProductReportV9): ReportWorkspace
       derivedCapabilityIds,
       derivedJourneyIds,
       domainIds,
-      availability
+      contexts
     }]
   }))
 
@@ -742,8 +735,9 @@ export function projectReportWorkspace(report: ProductReportV9): ReportWorkspace
 
   const interfaces: InterfaceView[] = model.interfaces.map((item: ReportInterface) => {
     const experienceIds = experiencesByInterface.get(item.id) || []
-    const declares = (availability: ReportAvailability[]) =>
-      availability.some(entry => entry.interfaceId === item.id)
+    const declares = (contexts: ReportContext[]) =>
+      contexts.some(context => context.placeId === item.id || context.placeId.startsWith(`${item.id}::`))
+    const containsScreen = (screen: ReportScreen) => screen.id.startsWith(`${item.id}::`)
     return {
       key: entityKey('interface', item.id),
       id: item.id,
@@ -759,8 +753,8 @@ export function projectReportWorkspace(report: ProductReportV9): ReportWorkspace
       capabilityBoundary: item.capabilityBoundary,
       experienceIds,
       capabilityIds: model.capabilities.filter(c => declares(c.availability)).map(c => c.id),
-      screenIds: model.screens.filter(s => declares(s.availability)).map(s => s.id),
-      journeyIds: model.journeys.filter(j => journeyPairs(j.id).some(pair => pair.interfaceId === item.id)).map(j => j.id)
+      screenIds: model.screens.filter(containsScreen).map(s => s.id),
+      journeyIds: model.journeys.filter(j => journeyContexts(j.id).some(context => context.interfaceId === item.id)).map(j => j.id)
     }
   })
 
@@ -774,8 +768,9 @@ export function projectReportWorkspace(report: ProductReportV9): ReportWorkspace
     unique(capabilityIds.map(id => capabilityById.get(id)?.domainId).filter((id): id is string => Boolean(id)))
 
   const experiences: ExperienceView[] = model.experiences.map((item: ReportExperience) => {
-    const declares = (availability: ReportAvailability[]) =>
-      availability.some(entry => entry.experienceIds.includes(item.id))
+    const declares = (contexts: ReportContext[]) =>
+      contexts.some(context => context.placeId === item.id)
+    const containsScreen = (screen: ReportScreen) => screen.id.startsWith(`${item.id}::`)
     return {
       key: entityKey('experience', item.id),
       id: item.id,
@@ -791,14 +786,14 @@ export function projectReportWorkspace(report: ProductReportV9): ReportWorkspace
       entryPoints: entryPoints(item.entryPoints, model.interfaces),
       capabilityBoundary: item.capabilityBoundary,
       capabilityIds: model.capabilities.filter(c => declares(c.availability)).map(c => c.id),
-      screenIds: model.screens.filter(s => declares(s.availability)).map(s => s.id),
-      journeyIds: model.journeys.filter(j => journeyPairs(j.id).some(pair => pair.experienceId === item.id)).map(j => j.id),
+      screenIds: model.screens.filter(containsScreen).map(s => s.id),
+      journeyIds: model.journeys.filter(j => journeyContexts(j.id).some(context => context.experienceId === item.id)).map(j => j.id),
       domainIds: domainsOfCapabilities(model.capabilities.filter(c => declares(c.availability)).map(c => c.id))
     }
   })
 
   const screens: ScreenView[] = model.screens.map((screen: ReportScreen) => {
-    const availability = pairsOf(screen.availability)
+    const contexts = contextsOf([{ placeId: screen.id.split('::').slice(0, -1).join('::') }])
     const scenarioJourneyIds = unique(model.journeyScenarios
       .filter(scenario => screen.journeyScenarioIds.includes(scenario.id))
       .map(scenario => scenario.journeyId))
@@ -814,7 +809,7 @@ export function projectReportWorkspace(report: ProductReportV9): ReportWorkspace
       intent: screen.intent,
       supportingContent: supportingMarkdown(screen.supportingSections),
       references: screen.references,
-      availability,
+      contexts,
       capabilityIds: screen.capabilityIds,
       capabilityScenarioIds: screen.capabilityScenarioIds,
       journeyScenarioIds: screen.journeyScenarioIds,
@@ -827,8 +822,8 @@ export function projectReportWorkspace(report: ProductReportV9): ReportWorkspace
       scenarioJourneyIds,
       capabilityJourneyIds,
       journeyIds: unique([...scenarioJourneyIds, ...capabilityJourneyIds]),
-      interfaceIds: unique(availability.map(pair => pair.interfaceId)),
-      experienceIds: unique(availability.map(pair => pair.experienceId).filter(Boolean)),
+      interfaceIds: unique(contexts.map(context => context.interfaceId)),
+      experienceIds: unique(contexts.map(context => context.experienceId).filter(Boolean)),
       domainIds: domainsOfCapabilities(screen.capabilityIds)
     }
   })
@@ -850,7 +845,8 @@ export function projectReportWorkspace(report: ProductReportV9): ReportWorkspace
       screenIds: unique(capabilityIds.flatMap(id => screensByCapability.get(id) || [])),
       experienceIds: unique(model.capabilities
         .filter(c => c.domainId === domain.id)
-        .flatMap(c => c.availability.flatMap(entry => entry.experienceIds))),
+        .flatMap(c => c.availability.map(context => context.placeId))
+        .filter(placeId => model.experiences.some(experience => experience.id === placeId))),
       ruleIds: unique([
         ...(rulesByDomain.get(domain.id) || []),
         ...capabilityIds.flatMap(id => rulesByCapability.get(id) || [])
@@ -859,7 +855,7 @@ export function projectReportWorkspace(report: ProductReportV9): ReportWorkspace
   })
 
   const capabilities: CapabilityView[] = model.capabilities.map((capability: ReportCapability) => {
-    const availability = pairsOf(capability.availability)
+    const contexts = contextsOf(capability.availability)
     return {
       key: entityKey('capability', capability.id),
       id: capability.id,
@@ -870,7 +866,7 @@ export function projectReportWorkspace(report: ProductReportV9): ReportWorkspace
       supportingContent: supportingMarkdown(capability.supportingSections),
       references: capability.references,
       domainId: capability.domainId,
-      availability,
+      contexts,
       scenarioIds: model.capabilityScenarios
         .filter(scenario => scenario.capabilityId === capability.id)
         .map(scenario => scenario.id),
@@ -878,13 +874,13 @@ export function projectReportWorkspace(report: ProductReportV9): ReportWorkspace
       journeyIds: journeysByCapability.get(capability.id) || [],
       screenIds: screensByCapability.get(capability.id) || [],
       ruleIds: rulesByCapability.get(capability.id) || [],
-      interfaceIds: unique(availability.map(pair => pair.interfaceId)),
-      experienceIds: unique(availability.map(pair => pair.experienceId).filter(Boolean))
+      interfaceIds: unique(contexts.map(context => context.interfaceId)),
+      experienceIds: unique(contexts.map(context => context.experienceId).filter(Boolean))
     }
   })
 
   const journeys: JourneyView[] = model.journeys.map((journey: ReportJourney) => {
-    const availability = journeyPairs(journey.id)
+    const contexts = journeyContexts(journey.id)
     const journeyScenarios = journeyScenariosOf(journey.id)
     const scenarioIds = journeyScenarios.map(scenario => scenario.id)
     return {
@@ -900,7 +896,7 @@ export function projectReportWorkspace(report: ProductReportV9): ReportWorkspace
       capabilityIds: journey.capabilityIds,
       failureOnlyCapabilityIds: journey.failureOnlyCapabilityIds,
       successCriterion: journey.successCriterion,
-      availability,
+      contexts,
       entryPoints: journeyEntryPoints(journey.id),
       scenarioIds,
       domainIds: unique(journey.capabilityIds
@@ -914,8 +910,8 @@ export function projectReportWorkspace(report: ProductReportV9): ReportWorkspace
         ...(rulesByJourney.get(journey.id) || []),
         ...scenarioIds.flatMap(id => rulesByScenario.get(id) || [])
       ]),
-      interfaceIds: unique(availability.map(pair => pair.interfaceId)),
-      experienceIds: unique(availability.map(pair => pair.experienceId).filter(Boolean)),
+      interfaceIds: unique(contexts.map(context => context.interfaceId)),
+      experienceIds: unique(contexts.map(context => context.experienceId).filter(Boolean)),
       stepCount: journeyScenarios.reduce((total, scenario) => total + scenario.steps.length, 0)
     }
   })
@@ -926,9 +922,9 @@ export function projectReportWorkspace(report: ProductReportV9): ReportWorkspace
       stepKind: step.kind,
       actorId: step.actorId ?? '',
       capabilityId: step.capabilityId ?? '',
-      places: step.places.map(place => ({
-        routeId: place.routeId,
-        place: placeOf(place.placeId)
+      contexts: step.contexts.map(context => ({
+        routeId: context.routeId,
+        context: placeOf(context.placeId)
       }))
     }))
 
@@ -952,7 +948,7 @@ export function projectReportWorkspace(report: ProductReportV9): ReportWorkspace
       kindId: scenario.kindId,
       kindName: kind?.name ?? humanize(scenario.kindId),
       kindSlot: kind?.colorSlot ?? 1,
-      availability: scenarioPairs(scenario),
+      contexts: scenarioContexts(scenario),
       trigger: scenario.trigger,
       routes: scenario.routes,
       steps: scenarioSteps(scenario),
@@ -985,7 +981,7 @@ export function projectReportWorkspace(report: ProductReportV9): ReportWorkspace
       kindId: scenario.kindId,
       kindName: kind?.name ?? humanize(scenario.kindId),
       kindSlot: kind?.colorSlot ?? 1,
-      availability: scenarioPairs(scenario),
+      contexts: scenarioContexts(scenario),
       trigger: scenario.trigger,
       routes: scenario.routes,
       steps: scenarioSteps(scenario),
@@ -1021,7 +1017,7 @@ export function projectReportWorkspace(report: ProductReportV9): ReportWorkspace
       scenarioIds: [...relations.capabilityScenarioIds, ...relations.journeyScenarioIds],
       derivedCapabilityIds: relations.derivedCapabilityIds,
       derivedJourneyIds: relations.derivedJourneyIds,
-      availability: relations.availability,
+      contexts: relations.contexts,
       appliesTo: rule.appliesTo
     }
   })
@@ -1055,22 +1051,26 @@ export function projectReportWorkspace(report: ProductReportV9): ReportWorkspace
     })))
   ]
 
-  const pairSeen = new Map<string, AvailabilityPair>()
+  const contextSeen = new Map<string, ContextView>()
   for (const entity of allEntities) {
-    const availability = (entity as { availability?: AvailabilityPair[] }).availability || []
-    for (const pair of availability) if (!pairSeen.has(pair.key)) pairSeen.set(pair.key, pair)
+    const contexts = (entity as { contexts?: ContextView[] }).contexts || []
+    for (const context of contexts) if (!contextSeen.has(context.key)) contextSeen.set(context.key, context)
   }
   // Every Experience declares its Interfaces even when nothing is mapped to the
-  // pair yet, so the matrix axis is complete rather than sampled from usage.
+  // Context yet, so the matrix axis is complete rather than sampled from usage.
   for (const experience of model.experiences) {
     for (const interfaceId of experience.interfaceIds) {
-      const key = availabilityKey(interfaceId, experience.id)
-      if (!pairSeen.has(key)) {
-        pairSeen.set(key, {
+      const key = contextKey(interfaceId, experience.id)
+      if (!contextSeen.has(key)) {
+        contextSeen.set(key, {
+          placeId: experience.id,
+          placeKind: 'experience',
           interfaceId,
           experienceId: experience.id,
+          screenId: '',
           interfaceTitle: titleOf(model.interfaces, interfaceId),
           experienceTitle: experience.title,
+          screenTitle: '',
           key
         })
       }
@@ -1100,7 +1100,7 @@ export function projectReportWorkspace(report: ProductReportV9): ReportWorkspace
     entryPoints: [...model.interfaces, ...model.experiences, ...model.screens]
       .reduce((total, item) => total + item.entryPoints.length, 0),
     references: references.length,
-    availabilityPairs: pairSeen.size
+    availabilityContexts: contextSeen.size
   }
 
   const scenarioKinds = model.taxonomies.scenarioKinds.map(kind => ({
@@ -1173,7 +1173,7 @@ export function projectReportWorkspace(report: ProductReportV9): ReportWorkspace
     journeyScenarios,
     scenarios,
     rules,
-    pairs: [...pairSeen.values()].sort((left, right) =>
+    contexts: [...contextSeen.values()].sort((left, right) =>
       left.interfaceId.localeCompare(right.interfaceId) || left.experienceId.localeCompare(right.experienceId)),
     references,
     byKey: new Map(allEntities.map(entity => [entity.key, entity])),
@@ -1185,13 +1185,13 @@ export function projectReportWorkspace(report: ProductReportV9): ReportWorkspace
 }
 
 /**
- * The same thing on another surface.
+ * The same thing on another Interface.
  *
- * Surface-tree ids carry their path, so two entities of one kind sharing the
+ * Qualified ids carry their path, so two entities of one kind sharing the
  * path *below* their Interface are counterparts:
  * `reader-web::personal-library::unread-library` and
  * `reader-mobile::personal-library::unread-library` are one goal on two
- * surfaces, and the format says so on purpose. Matching the whole suffix rather
+ * Interfaces, and the format says so on purpose. Matching the whole suffix rather
  * than the last segment keeps `personal-library::saved-items` and
  * `public-reading::saved-items` correctly distinct inside one Interface.
  *
@@ -1260,13 +1260,13 @@ export function resolveScenarios(workspace: ReportWorkspace, ids: string[]): Sce
     .filter((entity): entity is ScenarioView => Boolean(entity))
 }
 
-/** One route's exact Product Place at one Scenario step. */
+/** One route's Context at one Scenario step. */
 export interface ScenarioStepCell {
   routeId: string
-  place: ProductPlaceView | null
-  previousPlace: ProductPlaceView | null
-  /** This route arrives here at a different Product Place than its last placed Step. */
-  placeChanged: boolean
+  context: ResolvedContextView | null
+  previousContext: ResolvedContextView | null
+  /** This route arrives here at a different Context than its previous contextualized Step. */
+  contextChanged: boolean
 }
 
 export interface ScenarioStepRow {
@@ -1287,23 +1287,23 @@ export interface ScenarioStepMatrix {
 
 /**
  * Either Scenario type's one authored sequence: Steps down, named routes
- * across, and the exact Product Place in every placed cell. Route-neutral Steps
+ * across, and the Context in every placed cell. Route-neutral Steps
  * keep their place in the reading and span the route columns.
  */
 export function scenarioStepMatrix(scenario: ScenarioView): ScenarioStepMatrix {
   const routeIds = scenario.routes.map(route => route.id)
-  const previousPlaces = new Map<string, ProductPlaceView>()
+  const previousContexts = new Map<string, ResolvedContextView>()
   const steps = scenario.steps.map((step, index) => {
     const cells = routeIds.map((routeId) => {
-      const place = step.places.find(item => item.routeId === routeId)?.place ?? null
-      const before = previousPlaces.get(routeId)
+      const context = step.contexts.find(item => item.routeId === routeId)?.context ?? null
+      const before = previousContexts.get(routeId)
       const cell = {
         routeId,
-        place,
-        previousPlace: before ?? null,
-        placeChanged: Boolean(before && place && before.id !== place.id)
+        context,
+        previousContext: before ?? null,
+        contextChanged: Boolean(before && context && before.id !== context.id)
       }
-      if (place) previousPlaces.set(routeId, place)
+      if (context) previousContexts.set(routeId, context)
       return cell
     })
     return {
@@ -1312,7 +1312,7 @@ export function scenarioStepMatrix(scenario: ScenarioView): ScenarioStepMatrix {
       stepKind: step.stepKind,
       actorId: step.actorId,
       capabilityId: step.capabilityId,
-      routeNeutral: step.places.length === 0,
+      routeNeutral: step.contexts.length === 0,
       cells
     }
   })

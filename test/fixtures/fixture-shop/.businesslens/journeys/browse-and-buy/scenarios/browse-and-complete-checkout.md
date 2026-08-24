@@ -6,16 +6,20 @@ steps:
     kind: actor
     actor: shopper
     capability: catalog-browsing
-    places:
-      web: customer-web::storefront::product-record
-      mobile: customer-mobile::storefront::product-record
+    contexts:
+      web:
+        place: customer-web::storefront::product-record
+      mobile:
+        place: customer-mobile::storefront::product-record
   - text: The shopper submits checkout
     kind: actor
     actor: shopper
     capability: checkout
-    places:
-      web: customer-web::storefront::product-record
-      mobile: customer-mobile::storefront::product-record
+    contexts:
+      web:
+        place: customer-web::storefront::product-record
+      mobile:
+        place: customer-mobile::storefront::product-record
   - text: The Product confirms the paid order
     kind: product
 references:

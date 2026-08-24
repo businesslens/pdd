@@ -6,24 +6,30 @@ steps:
     kind: actor
     actor: reader
     capability: reading-state
-    places:
-      web: reader-web::personal-library::unread-library
-      mobile: reader-mobile::personal-library::unread-library
+    contexts:
+      web:
+        place: reader-web::personal-library::unread-library
+      mobile:
+        place: reader-mobile::personal-library::unread-library
   - text: The Reader refreshes their followed sources
     kind: actor
     actor: reader
     capability: feed-synchronization
-    places:
-      web: reader-web::personal-library::source-list
-      mobile: reader-mobile::personal-library::source-list
+    contexts:
+      web:
+        place: reader-web::personal-library::source-list
+      mobile:
+        place: reader-mobile::personal-library::source-list
   - text: No feed returns an item the library does not already hold
     kind: condition
   - text: The unread library still presents the caught-up state
     kind: condition
     capability: reading-state
-    places:
-      web: reader-web::personal-library::unread-library
-      mobile: reader-mobile::personal-library::unread-library
+    contexts:
+      web:
+        place: reader-web::personal-library::unread-library
+      mobile:
+        place: reader-mobile::personal-library::unread-library
 routes:
   web: Web
   mobile: Mobile

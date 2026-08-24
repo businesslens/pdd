@@ -1,6 +1,6 @@
 # BusinessLens Product Report Workbench
 
-The stable Product Report v9 renderer used by `businesslens view` and exported
+The stable Product Report v10 renderer used by `businesslens view` and exported
 from the `businesslens` package. It projects the complete portable report into
 an entity-first Workbench: a flat rail of entity kinds, a collection surface per
 kind that states its question and opens grouped by the containment the format
@@ -35,7 +35,7 @@ Render the canonical report directly:
 <BusinessLensReportViewer :report="report" :logo-src="logoSrc" />
 ```
 
-`report` must be a `ProductReportV9` from `businesslens/report`. There is no
+`report` must be a `ProductReportV10` from `businesslens/report`. There is no
 second, lossy public view-model contract.
 
 Two navigation facts are bindable, so a host can keep them in its own router

@@ -14,7 +14,7 @@ useHead({
   meta: [
     { charset: 'utf-8' },
     { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-    { name: 'description', content: 'Explore a local BusinessLens Product Model and its capabilities, value paths, delivery surfaces, scenarios, and rules.' },
+    { name: 'description', content: 'Explore a local BusinessLens Product Model and its capabilities, value paths, delivery by Interface, scenarios, and rules.' },
     { name: 'robots', content: 'noindex, nofollow' }
   ]
 })

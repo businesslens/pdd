@@ -6,16 +6,20 @@ steps:
     kind: actor
     actor: reader
     capability: source-following
-    places:
-      web: reader-web::personal-library::source-list
-      mobile: reader-mobile::personal-library::source-list
+    contexts:
+      web:
+        place: reader-web::personal-library::source-list
+      mobile:
+        place: reader-mobile::personal-library::source-list
   - text: The Reader refreshes their followed sources
     kind: actor
     actor: reader
     capability: feed-synchronization
-    places:
-      web: reader-web::personal-library::source-list
-      mobile: reader-mobile::personal-library::source-list
+    contexts:
+      web:
+        place: reader-web::personal-library::source-list
+      mobile:
+        place: reader-mobile::personal-library::source-list
   - text: The Product reads the followed feed and collects its available new items
     kind: product
   - text: The new items enter the Reader's private library

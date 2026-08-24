@@ -199,9 +199,9 @@ export function buildProductMap(
           y: MAP_GROUP_HEADER + index * (FLOW_NODE_HEIGHT + MAP_ROW_GAP)
         }
       })
-      for (const pair of capability.availability) {
+      for (const context of capability.contexts) {
         edges.push(relationEdge({
-          source: entityKey('interface', pair.interfaceId),
+          source: entityKey('interface', context.interfaceId),
           target: capability.key,
           label: ''
         }))
@@ -258,11 +258,11 @@ export function buildValuePaths(
       stepAnchors.push({
         nodeId: occurrenceId,
         capabilityId: step.capabilityId,
-        screenIds: step.places.flatMap(place => place.place.screenId ? [place.place.screenId] : [])
+        screenIds: step.contexts.flatMap(context => context.context.screenId ? [context.context.screenId] : [])
       })
     })
 
-    /* A Screen Place belongs to one exact Step. Anchor the Screen on the last
+    /* A Screen Context belongs to one Step. Anchor the Screen on the last
        Capability-bearing Step that names it, and fall back to the Scenario only
        for an invalid or externally supplied report that lacks that placement. */
     for (const screen of workspace.screens.filter(item => item.journeyScenarioIds.includes(scenario.id))) {
@@ -289,11 +289,11 @@ export function buildValuePaths(
 }
 
 /**
- * Delivery surfaces distinguishes graphical routes from direct integrations.
+ * Delivery by Interface distinguishes graphical routes from direct integrations.
  * UI Interfaces continue through Experience and Screen; a non-visual direct
  * Interface terminates in the Capability it delivers.
  */
-export function buildDeliverySurfaces(
+export function buildDeliveryByInterface(
   workspace: ReportWorkspace,
   options: ProductTopologyGraphOptions = {}
 ): FlowGraphShape {
@@ -301,8 +301,8 @@ export function buildDeliverySurfaces(
     .filter(productInterface => productInterface.experienceIds.length === 0)
     .map(productInterface => productInterface.id))
   const directCapabilityIds = new Set(workspace.capabilities
-    .filter(capability => capability.availability.some(pair =>
-      directInterfaceIds.has(pair.interfaceId) && !pair.experienceId))
+    .filter(capability => capability.contexts.some(context =>
+      directInterfaceIds.has(context.interfaceId) && !context.experienceId))
     .map(capability => capability.id))
   const entities: AnyEntityView[] = [
     ...workspace.actors,
@@ -328,20 +328,20 @@ export function buildDeliverySurfaces(
     }))
   }
   for (const screen of workspace.screens) {
-    for (const pair of screen.availability) {
+    for (const context of screen.contexts) {
       relations.push({
-        source: pair.experienceId
-          ? entityKey('experience', pair.experienceId)
-          : entityKey('interface', pair.interfaceId),
+        source: context.experienceId
+          ? entityKey('experience', context.experienceId)
+          : entityKey('interface', context.interfaceId),
         target: screen.key,
-        label: pair.experienceId ? 'contains' : 'offers directly'
+        label: context.experienceId ? 'contains' : 'offers directly'
       })
     }
   }
   for (const capability of workspace.capabilities.filter(item => directCapabilityIds.has(item.id))) {
-    for (const pair of capability.availability.filter(item => directInterfaceIds.has(item.interfaceId))) {
+    for (const context of capability.contexts.filter(item => directInterfaceIds.has(item.interfaceId))) {
       relations.push({
-        source: entityKey('interface', pair.interfaceId),
+        source: entityKey('interface', context.interfaceId),
         target: capability.key,
         label: 'delivers directly'
       })
@@ -390,7 +390,7 @@ export function buildRuleReach(
 
 /**
  * Shelves for the whole-model reading, in the order the report is understood:
- * who reaches it, what surface they meet, what it accepts, what it can do, and
+ * who reaches it, which Interface they meet, what it accepts, what it can do, and
  * what governs all of it.
  */
 export const EVERYTHING_SHELF_ORDER: ReportEntityKind[] = [
@@ -522,7 +522,7 @@ export function buildProductTopologyGraph(
   switch (viewId) {
     case 'product-map': return buildProductMap(workspace, options)
     case 'value-paths': return buildValuePaths(workspace, options)
-    case 'delivery-surfaces': return buildDeliverySurfaces(workspace, options)
+    case 'delivery-by-interface': return buildDeliveryByInterface(workspace, options)
     case 'sitemap': return buildSitemapTree(workspace, { selectedId: options.selectedId })
     case 'rule-reach': return buildRuleReach(workspace, options)
     case 'everything': return buildEverything(workspace, options)

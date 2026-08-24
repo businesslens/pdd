@@ -15,13 +15,13 @@ export interface EntityFact {
   wide?: boolean
 }
 
-const scopeOf = (entity: AnyEntityView): string => {
-  if (!('availability' in entity)) return ''
-  const pairs = entity.availability as Array<{ interfaceTitle: string, experienceTitle: string }>
-  const [first] = pairs
+const contextOf = (entity: AnyEntityView): string => {
+  if (!('contexts' in entity)) return ''
+  const contexts = entity.contexts as Array<{ interfaceTitle: string, experienceTitle: string }>
+  const [first] = contexts
   if (!first) return ''
   const name = first.experienceTitle ? `${first.interfaceTitle} › ${first.experienceTitle}` : first.interfaceTitle
-  return pairs.length > 1 ? `${name} +${pairs.length - 1}` : name
+  return contexts.length > 1 ? `${name} +${contexts.length - 1}` : name
 }
 
 export function entityFacts(workspace: ReportWorkspace, entity: AnyEntityView): EntityFact[] {
@@ -60,7 +60,7 @@ export function entityFacts(workspace: ReportWorkspace, entity: AnyEntityView): 
     case 'screen': {
       const screen = entity as { states: unknown[], actions: unknown[] }
       return [
-        { label: 'Scope', value: scopeOf(entity), wide: true },
+        { label: 'Context', value: contextOf(entity), wide: true },
         { label: 'States', value: String(screen.states.length) },
         { label: 'Actions', value: String(screen.actions.length) }
       ]
@@ -76,7 +76,7 @@ export function entityFacts(workspace: ReportWorkspace, entity: AnyEntityView): 
     case 'capability': {
       const capability = entity as { scenarioIds: string[], journeyIds: string[] }
       return [
-        { label: 'Scope', value: scopeOf(entity), wide: true },
+        { label: 'Context', value: contextOf(entity), wide: true },
         { label: 'Scenarios', value: String(capability.scenarioIds.length) },
         { label: 'Journeys', value: String(capability.journeyIds.length) }
       ]
@@ -111,10 +111,10 @@ export function entityFacts(workspace: ReportWorkspace, entity: AnyEntityView): 
       ]
     }
     case 'rule': {
-      const rule = entity as { appliesTo: unknown[], availability: unknown[], references: unknown[] }
+      const rule = entity as { appliesTo: unknown[], contexts: unknown[], references: unknown[] }
       return [
         { label: 'Bindings', value: String(rule.appliesTo.length) },
-        { label: 'Scopes', value: String(rule.availability.length) },
+        { label: 'Contexts', value: String(rule.contexts.length) },
         { label: 'References', value: String(rule.references.length) }
       ]
     }

@@ -6,23 +6,29 @@ steps:
     kind: actor
     actor: reader
     capability: content-reading
-    places:
-      web: reader-web::personal-library::unread-library
-      mobile: reader-mobile::personal-library::unread-library
+    contexts:
+      web:
+        place: reader-web::personal-library::unread-library
+      mobile:
+        place: reader-mobile::personal-library::unread-library
   - text: The Reader saves it
     kind: actor
     actor: reader
     capability: item-saving
-    places:
-      web: reader-web::personal-library::unread-library
-      mobile: reader-mobile::personal-library::unread-library
+    contexts:
+      web:
+        place: reader-web::personal-library::unread-library
+      mobile:
+        place: reader-mobile::personal-library::unread-library
   - text: The Reader marks it read
     kind: actor
     actor: reader
     capability: reading-state
-    places:
-      web: reader-web::personal-library::unread-library
-      mobile: reader-mobile::personal-library::unread-library
+    contexts:
+      web:
+        place: reader-web::personal-library::unread-library
+      mobile:
+        place: reader-mobile::personal-library::unread-library
   - text: The Product removes it from the unread backlog without removing the saved copy
     kind: product
 routes:

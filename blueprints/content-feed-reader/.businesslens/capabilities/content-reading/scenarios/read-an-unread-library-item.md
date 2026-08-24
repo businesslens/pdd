@@ -6,20 +6,26 @@ routes:
 steps:
   - text: The Product presents the readable item with its source and publication context
     kind: product
-    places:
-      web: reader-web::personal-library::unread-library
-      mobile: reader-mobile::personal-library::unread-library
+    contexts:
+      web:
+        place: reader-web::personal-library::unread-library
+      mobile:
+        place: reader-mobile::personal-library::unread-library
   - text: The Reader consumes the item
     kind: actor
     actor: reader
-    places:
-      web: reader-web::personal-library::unread-library
-      mobile: reader-mobile::personal-library::unread-library
+    contexts:
+      web:
+        place: reader-web::personal-library::unread-library
+      mobile:
+        place: reader-mobile::personal-library::unread-library
   - text: The item remains available for an explicit reading-state or saving decision
     kind: condition
-    places:
-      web: reader-web::personal-library::unread-library
-      mobile: reader-mobile::personal-library::unread-library
+    contexts:
+      web:
+        place: reader-web::personal-library::unread-library
+      mobile:
+        place: reader-mobile::personal-library::unread-library
 ---
 
 # Read an unread library item

@@ -10,7 +10,7 @@ import { reportDigest } from '../src/report-digest.js'
 import { compileReport } from '../src/commands/export.js'
 import { loadModel } from '../src/core/model.js'
 import { resolveModelRoot } from '../src/core/model-root.js'
-import type { ProductReportV9, ReportReference } from '../src/core/portable.js'
+import type { ProductReportV10, ReportReference } from '../src/core/portable.js'
 
 const packageJson = JSON.parse(
   await readFile(fileURLToPath(new URL('../package.json', import.meta.url)), 'utf8')
@@ -29,23 +29,22 @@ describe('report SDK entry point', () => {
   })
 
   it('exports the schema, semantic validator, portable projection, and digest', () => {
-    expect(sdk.REPORT_SCHEMA_VERSION).toBe('9.0.0')
+    expect(sdk.REPORT_SCHEMA_VERSION).toBe('10.0.0')
     for (const name of [
-      'ProductReportV9Schema',
+      'ProductReportV10Schema',
       'ProductReportSchema',
       'ReportReferenceSchema',
       'ReportSupportingSectionSchema',
       'ReportInterfaceSchema',
       'INTERFACE_TYPES',
-      'ReportAvailabilitySchema',
-      'ReportExactContextSchema',
+      'ReportContextSchema',
       'ReportCapabilitySchema',
       'ReportCapabilityScenarioSchema',
       'ReportScreenSchema',
       'ReportScreenStateSchema',
       'ReportJourneyScenarioSchema',
       'ReportScenarioRouteSchema',
-      'ReportScenarioStepPlaceSchema',
+      'ReportScenarioStepContextSchema',
       'ReportScenarioStepSchema',
       'ReportBusinessRuleTargetSchema',
       'validateProductReport',
@@ -96,9 +95,9 @@ describe('report SDK entry point', () => {
 describe('projectPortableReport', () => {
   const FIXTURE = join(fileURLToPath(new URL('.', import.meta.url)), 'fixtures', 'fixture-shop')
   let repo: string
-  let report: ProductReportV9
+  let report: ProductReportV10
 
-  const allReferences = (value: ProductReportV9): ReportReference[] => [
+  const allReferences = (value: ProductReportV10): ReportReference[] => [
     ...value.references,
     ...Object.values(value.model).flatMap(entry =>
       Array.isArray(entry) ? entry.flatMap(item => item.references ?? []) : [])
@@ -158,14 +157,12 @@ describe('projectPortableReport', () => {
     direct.counts.experiences = 0
     for (const collection of [
       direct.model.capabilities,
-      direct.model.screens,
       direct.model.businessRules
     ]) {
       for (const entity of collection) {
         if ('availability' in entity) {
-          entity.availability = entity.availability.map(item => ({
-            interfaceId: item.interfaceId,
-            experienceIds: []
+          entity.availability = entity.availability.map(context => ({
+            placeId: context.placeId.split('::')[0]!
           }))
         }
       }
@@ -177,8 +174,8 @@ describe('projectPortableReport', () => {
     }
     for (const scenario of [...direct.model.capabilityScenarios, ...direct.model.journeyScenarios]) {
       for (const step of scenario.steps) {
-        for (const place of step.places) {
-          place.placeId = directScreenIds.get(place.placeId) || place.placeId.split('::')[0]!
+        for (const context of step.contexts) {
+          context.placeId = directScreenIds.get(context.placeId) || context.placeId.split('::')[0]!
         }
       }
     }
@@ -206,7 +203,7 @@ describe('projectPortableReport', () => {
           kind: 'actor',
           actorId: 'shopper',
           capabilityId: 'checkout',
-          places: [{
+          contexts: [{
             routeId: 'web-to-admin',
             placeId: 'customer-web::storefront::product-record'
           }]
@@ -216,7 +213,7 @@ describe('projectPortableReport', () => {
           kind: 'actor',
           actorId: 'store-admin',
           capabilityId: 'order-management',
-          places: [{
+          contexts: [{
             routeId: 'web-to-admin',
             placeId: 'admin-web::admin-console'
           }]
@@ -430,9 +427,9 @@ describe('projectPortableReport', () => {
   it('enforces route, Rule-target, Experience-cover, and complete-model relationships', () => {
     const incompleteRoute = structuredClone(report)
     const scenario = incompleteRoute.model.journeyScenarios.find(item => item.id === 'browse-and-complete-checkout')!
-    scenario.steps.find(step => step.capabilityId === 'checkout')!.places.pop()
+    scenario.steps.find(step => step.capabilityId === 'checkout')!.contexts.pop()
     expect(sdk.validateProductReport(incompleteRoute).join('\n')).toContain(
-      'places must assign every declared route or be empty'
+      'contexts must assign every declared route or be empty'
     )
 
     const narrowedRule = structuredClone(report)
@@ -440,10 +437,10 @@ describe('projectPortableReport', () => {
       .find(rule => rule.id === 'payment-before-confirmation')!
       .appliesTo.find(item => item.type === 'capability')!
     if (target.type !== 'context') {
-      target.contexts = [{ interfaceId: 'admin-web', experienceId: 'admin-web::admin-console' }]
+      target.contexts = [{ placeId: 'admin-web::admin-console' }]
     }
     expect(sdk.validateProductReport(narrowedRule).join('\n')).toContain(
-      'context "admin-web::admin-console" is outside target "capability:checkout"'
+      'Context place "admin-web::admin-console" is outside target "capability:checkout"'
     )
 
     const uncoveredActor = structuredClone(report)
@@ -458,16 +455,16 @@ describe('projectPortableReport', () => {
     expect(sdk.validateProductReport(emptyComplete)).toContain('a complete model needs at least one capability')
   })
 
-  it('requires public Blueprint Capability coverage in every exact context', () => {
+  it('requires public Blueprint Capability coverage in every availability Context', () => {
     const incomplete = structuredClone(report)
     for (const scenario of incomplete.model.capabilityScenarios.filter(item => item.capabilityId === 'checkout')) {
       scenario.routes = scenario.routes.filter(route => route.id !== 'mobile')
-      for (const step of scenario.steps) step.places = step.places.filter(place => place.routeId !== 'mobile')
+      for (const step of scenario.steps) step.contexts = step.contexts.filter(context => context.routeId !== 'mobile')
     }
     incomplete.model.screens = incomplete.model.screens
       .filter(screen => !screen.id.startsWith('customer-mobile::'))
     expect(sdk.validateBlueprintReport(incomplete)).toContain(
-      'capability "checkout" availability "customer-mobile::storefront" needs Capability Scenario coverage for a public Blueprint'
+      'capability "checkout" availability Context place "customer-mobile::storefront" needs Capability Scenario coverage for a public Blueprint'
     )
   })
 
@@ -484,7 +481,7 @@ describe('projectPortableReport', () => {
   })
 
   it('rejects historical Product Reports without normalization', () => {
-    for (const schemaVersion of ['4.0.0', '5.0.0', '6.0.0', '7.0.0']) {
+    for (const schemaVersion of ['4.0.0', '5.0.0', '6.0.0', '7.0.0', '8.0.0', '9.0.0']) {
       const legacy = structuredClone(report) as Record<string, any>
       legacy.schemaVersion = schemaVersion
       expect(sdk.ProductReportSchema.safeParse(legacy).success).toBe(false)

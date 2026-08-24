@@ -9,25 +9,37 @@ steps:
   - text: The Reader removes the item's saved state
     kind: actor
     actor: reader
-    places:
-      web-saved-items: reader-web::personal-library::saved-items
-      web-unread-library: reader-web::personal-library::unread-library
-      mobile-saved-items: reader-mobile::personal-library::saved-items
-      mobile-unread-library: reader-mobile::personal-library::unread-library
+    contexts:
+      web-saved-items:
+        place: reader-web::personal-library::saved-items
+      web-unread-library:
+        place: reader-web::personal-library::unread-library
+      mobile-saved-items:
+        place: reader-mobile::personal-library::saved-items
+      mobile-unread-library:
+        place: reader-mobile::personal-library::unread-library
   - text: The Product preserves the item's reading state
     kind: product
-    places:
-      web-saved-items: reader-web::personal-library::saved-items
-      web-unread-library: reader-web::personal-library::unread-library
-      mobile-saved-items: reader-mobile::personal-library::saved-items
-      mobile-unread-library: reader-mobile::personal-library::unread-library
+    contexts:
+      web-saved-items:
+        place: reader-web::personal-library::saved-items
+      web-unread-library:
+        place: reader-web::personal-library::unread-library
+      mobile-saved-items:
+        place: reader-mobile::personal-library::saved-items
+      mobile-unread-library:
+        place: reader-mobile::personal-library::unread-library
   - text: Collection membership is left for the Reader to change separately
     kind: condition
-    places:
-      web-saved-items: reader-web::personal-library::saved-items
-      web-unread-library: reader-web::personal-library::unread-library
-      mobile-saved-items: reader-mobile::personal-library::saved-items
-      mobile-unread-library: reader-mobile::personal-library::unread-library
+    contexts:
+      web-saved-items:
+        place: reader-web::personal-library::saved-items
+      web-unread-library:
+        place: reader-web::personal-library::unread-library
+      mobile-saved-items:
+        place: reader-mobile::personal-library::saved-items
+      mobile-unread-library:
+        place: reader-mobile::personal-library::unread-library
 ---
 
 # Remove a saved item

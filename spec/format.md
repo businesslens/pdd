@@ -64,7 +64,7 @@ collection differ:
 | Actor | `actors/<id>.md` | `actors/<id>/actor.md` | — |
 | Interface | `interfaces/<id>.md` | `interfaces/<id>/interface.md` | `screens/` or `experiences/`, never both |
 | Experience | `interfaces/<interface-id>/experiences/<id>.md` | `interfaces/<interface-id>/experiences/<id>/experience.md` | `screens/` |
-| Screen | `<scope>/screens/<id>.md` | `<scope>/screens/<id>/screen.md` | — |
+| Screen | `<screen-parent>/screens/<id>.md` | `<screen-parent>/screens/<id>/screen.md` | — |
 | Domain | `domains/<id>.md` | `domains/<id>/domain.md` | — |
 | Capability | `capabilities/<id>.md` | `capabilities/<id>/capability.md` | `scenarios/` |
 | Capability Scenario | `capabilities/<capability-id>/scenarios/<id>.md` | `capabilities/<capability-id>/scenarios/<id>/capability-scenario.md` | — |
@@ -72,8 +72,8 @@ collection differ:
 | Journey Scenario | `journeys/<journey-id>/scenarios/<id>.md` | `journeys/<journey-id>/scenarios/<id>/journey-scenario.md` | — |
 | Business Rule | `business-rules/<id>.md` | `business-rules/<id>/business-rule.md` | — |
 
-Here `<scope>` is either an Interface folder or an Experience folder. A
-representative model can therefore look like this:
+Here `<screen-parent>` is the Interface or Experience folder that contains the
+Screen. A representative model can therefore look like this:
 
 ```
 .businesslens/
@@ -86,7 +86,7 @@ representative model can therefore look like this:
 │   └── logo.svg             # optional locally; required for a public Blueprint
 ├── actors/<actor-id>.md
 │
-│   ── surface tree: where the Product is ──
+│   ── Interface → Experience → Screen: where Actors meet the Product ──
 ├── interfaces/<interface-id>/
 │   ├── interface.md
 │   ├── screens/<screen-id>.md                    # compact Screen
@@ -116,33 +116,40 @@ representative model can therefore look like this:
 └── cache/                   # generated artifacts — never committed
 ```
 
-The model has **two hierarchies and one axis**. `availability` is the join
-between the two trees; Domain classifies members of both; Actors and Business
+The model has **two hierarchies and one axis**. The Interface → Experience →
+Screen hierarchy says where Actors meet the Product; the Capability → Scenario
+and Journey → Scenario hierarchy says what the Product does. `availability` is
+the join between them; Domain classifies members of both; Actors and Business
 Rules attach across everything.
 
-## Scopes
+## Contexts and places
 
-A **scope** is one id naming where something is reachable: an undivided
-Interface, or an Experience.
-
-```yaml
-availability: [customer-web::storefront, customer-mobile::storefront]
-```
-
-An Experience belongs to exactly one Interface, so its id already names that
-Interface. A scope either resolves in the tree or it does not — there is no
-nested record, no `experiences` sub-list, and no rule about when an Experience
-is required, because the folder answers all three.
-
-One **exact context** is one scope id:
+A **Context** states where behavior is available, occurs, or is constrained. It
+is a strict object whose required `place` names one Interface, Experience, or
+Screen:
 
 ```yaml
-context: customer-web::storefront
+- place: customer-web::storefront
 ```
 
-An Interface holds either `screens/` or `experiences/`, never both. Otherwise
-the scope id `customer-web` would be ambiguous between the whole Interface and
-the part of it with no Experience.
+The use of the Context determines how specific its place must be. A Capability
+availability Context names an undivided Interface or an Experience. A Scenario
+Context is a concrete occurrence and names the most-specific available place:
+a Screen when one exists, otherwise the leaf Experience or Interface. A
+Business Rule Context is a selector and may name any of the three; an Interface
+or Experience selector includes its descendant places.
+
+Filesystem paths supply containment. For example,
+`customer-web::storefront::checkout` is contained by
+`customer-web::storefront`, so a Step there is inside that Capability
+availability Context. Authors never repeat the containing Interface or
+Experience in another field.
+
+An Interface holds either `screens/` or `experiences/`, never both. A
+Capability that is available through an Interface divided into Experiences
+names the intended Experiences explicitly; an undivided Interface names itself.
+Contexts are closed to unknown keys. Additional dimensions may be added by a
+future format revision, but Context is not an arbitrary metadata bag.
 
 ## Universal conventions
 
@@ -156,11 +163,11 @@ the part of it with no Experience.
   otherwise it is needless structure and must be compacted. A compact entity
   has no asset or child namespace.
 
-- **ID = the logical path from the collection root.** Behavior-tree ids (Capability,
-  Journey, both Scenario types) and cross-cutting ids (Actor, Domain, Business
+- **ID = the logical path from the collection root.** Behavior-hierarchy ids
+  (Capability, Journey, both Scenario types) and cross-cutting ids (Actor, Domain, Business
   Rule) are the bare file or folder name and are globally unique within their
-  collection. Surface-tree ids (Interface, Experience, Screen) carry the path
-  that distinguishes them, joined by `::`:
+  collection. Qualified ids for Interfaces, Experiences, and Screens carry the
+  path that distinguishes them, joined by `::`:
 
   ```
   reader-web
@@ -174,10 +181,10 @@ the part of it with no Experience.
   from the repo name) and is limited to 64 characters. Compacting or expanding
   an entity never changes this logical path or id.
 
-  Surface names repeat across Interfaces on purpose: `personal-library` on web
-  and on mobile pursue the same goal and are different entities. Two entities of
+  Experience and Screen names repeat across Interfaces on purpose:
+  `personal-library` on web and on mobile pursue the same goal and are different entities. Two entities of
   the same kind sharing a path suffix below their Interface are **counterparts**
-  — the same thing on two surfaces. Nothing has to declare that; the path
+  — the same thing on two Interfaces. Nothing has to declare that; the path
   already says it.
 
 - **The path owns every parent relation.** An Experience never writes
@@ -215,7 +222,7 @@ the part of it with no Experience.
 - **Frontmatter = relations and navigation, with one relational-prose
   exception.** Both Scenario types keep their structured `steps` in
   frontmatter so each single-line statement stays beside its kind, responsible
-  Actor, Capability qualification, and route-specific Product Places. Other
+  Actor, Capability qualification, and route-specific Contexts. Other
   prose remains in the Markdown body.
 - **Intent and Goal = recognized prose sections.** `## Intent` explains why the
   product or entity exists and which outcome it protects. `## Goal` states the
@@ -306,12 +313,12 @@ but the artifact remains evidence to assess rather than proof to trust.
 ### `config.yaml`
 
 ```yaml
-schema: 5                          # folder-format version
+schema: 6                          # folder-format version
 sdd:
   paths: [openspec/]               # detected/declared SDD roots; empty if none
 ```
 
-`config.yaml` has no other keys. Schema 5 is the only supported folder format.
+`config.yaml` has no other keys. Schema 6 is the only supported folder format.
 
 ### `product.md` or `product/product.md`
 
@@ -404,8 +411,8 @@ paragraph = description.
 An external system is an Actor only when it **initiates** interaction with the
 Product. A system the Product calls out to is a dependency of the Capability
 that calls it: it has no goal inside the Product, no privilege to grant, and no
-surface the Product must keep stable for it. Direction decides, not ownership —
-the same third party can be a dependency in one direction and an Actor in the
+inbound interaction contract the Product must keep stable for it. Direction
+decides, not ownership — the same third party can be a dependency in one direction and an Actor in the
 other when it also calls back. See [Outbound dependencies](#outbound-dependencies).
 
 ### `interfaces/<id>.md` or `interfaces/<id>/interface.md`
@@ -457,15 +464,15 @@ Model it where its result is observed:
 - the Capability that makes the call names the external system in its prose and
   states what triggers the call;
 - its `availability` names the Interfaces where an Actor observes the outcome,
-  never a synthetic integration surface;
+  never a synthetic Interface;
 - product-significant failure behavior — what the Actor sees when the external
   system is unavailable, slow, or wrong — is a Capability Scenario;
 - the provider's published contract attaches as a `references` entry with
   `kind: spec` or `kind: doc` and `role: context`.
 
 Direction decides. When the same third party also calls the Product — a webhook,
-callback, or push subscription — that inbound surface is an Interface and the
-third party is its Actor. A feed provider the Product polls is a dependency; a
+callback, or push subscription — that inbound interaction is through an Interface
+and the third party is its Actor. A feed provider the Product polls is a dependency; a
 feed provider that pushes updates to the Product is an Actor.
 
 There is no external-system entity. An outbound dependency shared by several
@@ -476,7 +483,7 @@ Capabilities is described by each Capability that depends on it.
 An Experience is a coherent context of Product use with a stable audience,
 access boundary, and capability boundary. **It belongs to exactly one
 Interface** — the one whose folder holds it. Experiences are optional: create
-them only when named contexts distinguish meaningful Product scope inside an
+them only when named contexts distinguish meaningful Product behavior inside an
 Interface.
 
 The same context on two Interfaces is two Experiences, not one shared entity.
@@ -522,19 +529,22 @@ that holds Screens directly.
 
 ### Availability
 
-Capabilities declare `availability`: a unique, non-empty list of scope ids.
+Capabilities declare `availability`: a unique, non-empty list of Contexts.
 
 ```yaml
-availability: [operator-cli, customer-web::storefront, customer-mobile::storefront]
+availability:
+  - place: operator-cli
+  - place: customer-web::storefront
+  - place: customer-mobile::storefront
 ```
 
-Availability states intended Product scope, never implementation status.
+Availability states intended Product meaning, never implementation status.
 
-A **Screen does not declare availability** — it sits inside the scope that owns
-it, and the path is the answer. Scenarios and Journeys do not declare
-availability either. A Scenario Step names its most-specific Product Place per
-route; the containing Interface or Experience is the derived exact context.
-Business Rule targets continue to use the single-scope `context:` shape.
+A **Screen does not declare availability** — its path is its placement.
+Scenarios and Journeys do not declare availability either. A Scenario Step
+names one concrete Context per route, and the Context's `place` is its resolved
+Interface, Experience, or Screen. Business Rules use the same Context object as
+a selector.
 
 ### `domains/<id>.md` or `domains/<id>/domain.md`
 
@@ -562,8 +572,9 @@ description. `## Boundary` states what the region covers and what it explicitly
 does not; it is what makes a Domain checkable rather than a label. The entire
 Domain collection is optional.
 
-**Domain is an axis, not a level.** It classifies members of both the surface
-tree and the behavior tree, so it neither contains nor is contained by anything.
+**Domain is an axis, not a level.** It classifies members of both the Interface →
+Experience → Screen hierarchy and the behavior hierarchy, so it neither contains
+nor is contained by anything.
 `domain` on a Capability is the only *authored* Domain edge in the model; every
 other Domain relation is derived. A Screen, Experience or Journey is about the
 Domains its Capabilities are about, and computing that is more reliable than
@@ -582,7 +593,8 @@ of the model; Journey composition is optional.
 ```markdown
 ---
 domain: ordering                 # optional
-availability: [customer-web::storefront]
+availability:
+  - place: customer-web::storefront
 references:
   - kind: code
     role: implementation
@@ -599,10 +611,11 @@ Let a shopper complete a purchase without losing cart state on a recoverable
 failure.
 ```
 
-`availability` is required and needs at least one Interface scope. `domain` is
+`availability` is required and needs at least one valid Context. Its place is
+an undivided Interface or one Experience of a divided Interface. `domain` is
 optional and, when present, names exactly one Domain. Actors are expressed by
 Capability Scenario, Journey, Journey Scenario, Actor-bound Interface, and
-optional Experience relations. Business Rules own their scope, so Capability
+optional Experience relations. Business Rules own their applicability, so Capability
 files do not duplicate Rule IDs. Capability Scenario files own the acceptance
 relation, so Capability files do not duplicate Scenario IDs. A Capability
 Scenario is the only direct acceptance coverage for a Capability; Journey
@@ -633,7 +646,7 @@ appliesTo:
   - type: capability
     id: checkout
     contexts:
-      - context: customer-web::storefront
+      - place: customer-web::storefront
   - type: journey
     id: browse-and-buy
 references:
@@ -661,12 +674,20 @@ The lead paragraph is the rule statement. `appliesTo` is a required non-empty
 list of typed targets. An entity target uses `type` = `capability`,
 `capability-scenario`, `journey`, or `journey-scenario`, requires `id`, and may
 use a non-empty `contexts` list to narrow that target. Without `contexts`, the
-Rule applies to all supported contexts of the target. A direct context target
-uses `type: context` plus one `context` scope id instead of `id`.
+Rule applies to all supported Contexts of the target. A direct Context target
+uses `type: context` plus one nested `context` object instead of `id`:
 
-Targets are additive: the Rule governs their union. A context on an entity
-target must be within that target's derived availability. Target values and
-exact contexts are unique. Do not target both a Capability and one of its
+```yaml
+- type: context
+  context:
+    place: operator-cli
+```
+
+Targets are additive: the Rule governs their union. A Context selector on an
+entity target must match at least one Context supported by that target. A
+selector naming an Interface or Experience matches descendant places; a Screen
+selector matches that Screen. Duplicate selectors and a parent selector paired
+with its redundant descendant are invalid. Do not target both a Capability and one of its
 Capability Scenarios, or both a Journey and one of its Journey Scenarios; the
 ancestor already governs the child. Domains remain navigation-only, so Rule
 Domain backlinks are derived through targeted behavior rather than authored.
@@ -726,10 +747,11 @@ The screen does not change product or inventory data.
 ```
 
 `capabilities` needs at least one item. A Screen has no `availability` field:
-it reaches exactly the scope whose folder holds it, and every referenced
-Capability must declare that scope. `entryPoints` is optional; entry-point keys
-must name an Interface in the Screen's availability. Scenario participation is
-derived from Scenario Step Places that name the Screen; a Screen never authors
+its path names its containing Interface or Experience, and every referenced
+Capability must declare an availability Context containing the Screen.
+`entryPoints` is optional; entry-point keys must name the Interface containing
+the Screen. Scenario participation is derived from Scenario Step Contexts whose
+place names the Screen; a Screen never authors
 Capability or Journey Scenario ids. The H1, lead description,
 `## Information presented` bullet list, and `## Capability boundary` prose are
 required. `## Available actions` is optional but, when present, must contain a
@@ -745,8 +767,8 @@ generated captures live under its `implementation/` directory. External or
 separately maintained visuals attach as `kind: visual` References, whose role
 distinguishes curated intent from implementation or supporting context.
 
-A Screen lives in one scope. The same view on another surface is another Screen
-with the same name — counterparts, distinguished by their path. They may
+A Screen has one structural parent. The same view on another Interface is
+another Screen with the same name — counterparts, distinguished by their path. They may
 share purpose, information and actions, and stating each one separately is what
 makes a divergence between them visible instead of silent.
 
@@ -835,19 +857,25 @@ steps:
   - text: The shopper submits a cart containing an unavailable product
     kind: actor
     actor: shopper
-    places:
-      web-shopper: customer-web::storefront::product-record
-      mobile-shopper: customer-mobile::storefront::product-record
+    contexts:
+      web-shopper:
+        place: customer-web::storefront::product-record
+      mobile-shopper:
+        place: customer-mobile::storefront::product-record
   - text: The Product validates current stock
     kind: product
-    places:
-      web-shopper: customer-web::storefront::product-record
-      mobile-shopper: customer-mobile::storefront::product-record
+    contexts:
+      web-shopper:
+        place: customer-web::storefront::product-record
+      mobile-shopper:
+        place: customer-mobile::storefront::product-record
   - text: The Product rejects checkout before charging payment
     kind: product
-    places:
-      web-shopper: customer-web::storefront::product-record
-      mobile-shopper: customer-mobile::storefront::product-record
+    contexts:
+      web-shopper:
+        place: customer-web::storefront::product-record
+      mobile-shopper:
+        place: customer-mobile::storefront::product-record
 references:
   - kind: code
     role: implementation
@@ -869,7 +897,7 @@ identified.
 `kind` must exist in `taxonomies.yaml`. The containing Capability directory
 names the Scenario's one parent; no `capability` field is authored. `routes`
 and `steps` are non-empty. Capability Scenario availability, Actors, Screens,
-Experiences, and Interfaces are derived from its Steps and Places.
+Experiences, and Interfaces are derived from its Step Contexts.
 
 A Capability Scenario cannot declare `journey`, `result`, `actors`, or
 `availability`. Business Rules own its Rule relations, so it does not duplicate
@@ -882,7 +910,7 @@ Both Scenario types have no lead prose and require non-empty `## Trigger` and
 and cannot author a Markdown `## Steps` section. `## Edge cases` is an optional
 non-empty bullet list whose items are also single-line.
 
-Each Scenario route is one named supported traversal of Product Places through
+Each Scenario route is one named supported traversal of Contexts through
 an unchanged Scenario. `routes` maps a lowercase kebab-case route id to a
 unique, non-empty, human-readable name. A route changes only where the same
 Steps occur. If Trigger, ordered Step text, Step kind, responsible Actor,
@@ -896,17 +924,17 @@ behavior uses `product`; a fact, state, prerequisite, or seam nobody performs
 uses `condition`. Each Scenario needs at least one `actor` Step. Its Actor set
 is derived from those Steps rather than authored on the Scenario.
 
-A Step may author `places`, mapping every declared route id to exactly one
-Product Place. A Product Place is the most-specific Interface, Experience, or
-Screen where that Step occurs. When a scope owns Screens the Place must name a
-Screen; otherwise its leaf Experience or Interface is the Place. A Step either
-maps every route or omits `places` completely when it is shared by all routes
-and has no Product Place. Every route must be placed by at least one Step. A
-Place's containing Interface or Experience is its derived exact context.
+A Step may author `contexts`, mapping every declared route id to exactly one
+strict Context object. Its `place` is the most-specific Interface, Experience,
+or Screen where that Step occurs. When an Interface or Experience owns Screens,
+the place must name a Screen; otherwise it names the leaf Experience or
+Interface. A Step either maps every route or omits `contexts` completely when
+it is shared by all routes and has no specific Context. Every route must have a
+Context on at least one Step.
 
-Two routes cannot repeat the same Place sequence. A Place change between
-consecutive placed Steps is a Product Place transition, including
-Screen-to-Screen movement inside one Experience. Step Places own Scenario
+Two routes cannot repeat the same place sequence. A place change between
+consecutive contextualized Steps is an explicit transition, including
+Screen-to-Screen movement inside one Experience. Step Contexts own Scenario
 participation; Screens do not duplicate Scenario ids.
 
 `## Decision points` is optional. Each decision uses an H3 title, a non-empty
@@ -921,7 +949,7 @@ becoming standalone entities.
 
 A Journey Scenario is one concrete end-to-end variation of exactly one Journey.
 It begins with the Journey Actor's Goal and ends with that goal achieved or not
-achieved. It verifies Capability composition and Product Place transitions
+achieved. It verifies Capability composition and Context transitions
 rather than replacing local Capability Scenarios.
 
 ```markdown
@@ -936,16 +964,20 @@ steps:
     kind: actor
     actor: shopper
     capability: catalog-browsing
-    places:
-      web-shopper: customer-web::storefront::product-record
-      mobile-shopper: customer-mobile::storefront::product-record
+    contexts:
+      web-shopper:
+        place: customer-web::storefront::product-record
+      mobile-shopper:
+        place: customer-mobile::storefront::product-record
   - text: The shopper adds the product to the cart and submits checkout
     kind: actor
     actor: shopper
     capability: checkout
-    places:
-      web-shopper: customer-web::storefront::product-record
-      mobile-shopper: customer-mobile::storefront::product-record
+    contexts:
+      web-shopper:
+        place: customer-web::storefront::product-record
+      mobile-shopper:
+        place: customer-mobile::storefront::product-record
   - text: The Product validates stock and charges payment
     kind: product
   - text: The Product persists and confirms the order
@@ -986,12 +1018,12 @@ the Scenario's one parent; no `journey` field is authored. `result` is
 of the variation while `result` records its terminal Journey-goal outcome; they
 are orthogonal. `routes` and `steps` are non-empty. At least one `actor` Step
 must name an Actor from the Journey. Each route's first Actor-owned placed Step
-must name a Journey Actor supported by that Place.
+must name a Journey Actor supported by that Context.
 
 A Journey Step may name exactly one existing `capability`, independently of its
-Step kind. A capability-bearing Place must derive an exact context declared by
-that Capability; a Screen Place must additionally expose it. A Journey Step
-without a Capability can still name Places when an observable condition or
+Step kind. A capability-bearing Context must be contained by an availability
+Context declared by that Capability; a Screen place must additionally expose
+it. A Journey Step without a Capability can still name Contexts when an observable condition or
 Product behavior occurs somewhere without claiming another Capability.
 
 The Journey Scenario owns the complete ordered path. Capability-bearing steps
@@ -1010,11 +1042,11 @@ states its own end-to-end consequence for the Goal.
 
 The path is linear. A Decision point may vary detail while preserving the same
 Steps and terminal Outcome. A branch that changes either belongs in another
-Journey Scenario. Add a named route when only Product Places change. Split
+Journey Scenario. Add a named route when only Context places change. Split
 Journey Scenarios when the Step sequence, Actor responsibility, Capability
 sequence, observable behavior, or Journey-level Outcome changes. Journey
 Scenarios cannot declare `actors` or `availability`. Business Rules own Scenario
-scope, so Journey Scenarios do not duplicate Rule IDs.
+applicability, so Journey Scenarios do not duplicate Rule IDs.
 
 ### `coverage.md`
 
@@ -1046,12 +1078,12 @@ put structured assessment data in the defined frontmatter fields.
 
 - `draft` — the model itself is still being authored or reviewed.
 - `partial` — the model is useful and has known unmapped areas.
-- `complete` — the intended product scope is modeled.
+- `complete` — the intended product breadth is modeled.
 
-A complete model has at least one Capability. Every exact Capability
-availability scope is selected by at least one Capability Scenario, and every
+A complete model has at least one Capability. Every Capability availability
+Context is selected by at least one Capability Scenario, and every
 Journey Actor appears in at least one achieved Journey Scenario. Draft and
-partial models warn for uncovered Capability scopes; public Blueprints require
+partial models warn for uncovered Capability Contexts; public Blueprints require
 the same complete behavioral coverage regardless of Coverage status.
 
 All three statuses may be exported. A complete model may describe planned,

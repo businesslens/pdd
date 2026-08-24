@@ -64,7 +64,7 @@ const derivedCounts = computed<Array<[string, number]>>(() => [
   ['Screen states', props.workspace.counts.screenStates],
   ['Entry points', props.workspace.counts.entryPoints],
   ['References', props.workspace.counts.references],
-  ['Availability scopes', props.workspace.counts.availabilityPairs]
+  ['Availability contexts', props.workspace.counts.availabilityContexts]
 ])
 
 /* Everything past the identity header is collapsed until it is asked for. */

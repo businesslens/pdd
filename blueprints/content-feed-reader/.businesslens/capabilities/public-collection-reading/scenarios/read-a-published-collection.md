@@ -5,17 +5,20 @@ routes:
 steps:
   - text: The Product loads the collection name, owner display name, and ordered items
     kind: product
-    places:
-      web: reader-web::public-reading::public-collection
+    contexts:
+      web:
+        place: reader-web::public-reading::public-collection
   - text: The Visitor opens and reads an item
     kind: actor
     actor: visitor
-    places:
-      web: reader-web::public-reading::public-collection
+    contexts:
+      web:
+        place: reader-web::public-reading::public-collection
   - text: No private reading state is created
     kind: condition
-    places:
-      web: reader-web::public-reading::public-collection
+    contexts:
+      web:
+        place: reader-web::public-reading::public-collection
 ---
 
 # Read a published collection

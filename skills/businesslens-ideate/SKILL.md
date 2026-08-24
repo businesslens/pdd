@@ -47,7 +47,7 @@ Read before authoring:
    - thorough: blank slate, vague, or cross-cutting; cover why, Actors,
      Interfaces, optional Experiences, Product Screens and Domains,
      Capabilities, Capability Scenarios, Rules, optional Journeys and Journey
-     Scenarios, exact availability, decisions, removals, and definition of done.
+     Scenarios, availability Contexts, decisions, removals, and definition of done.
 
    Propose concrete wording so the user corrects drafts rather than dictating
    schema. Make supported web/mobile/CLI/API/integration Interfaces an explicit
@@ -58,7 +58,7 @@ Read before authoring:
    Capability per-Capability acceptance. Create a Journey only when an achieved
    goal path crosses at least two distinct Capabilities; define its Scenario as
    one ordered typed Steps list, annotating responsible Actors and Capabilities
-   while named routes select exact Product Places.
+   while named routes select most-specific Context places.
 8. In resolution mode, do not reopen broad ideation. Use the supplied finding,
    inspected files, and authority decision to draft the smallest exact model
    delta that makes the intended behavior unambiguous.
@@ -96,9 +96,9 @@ Read before authoring:
   by a verification handoff.
 - Keep model prose at product altitude; do not invent stacks, endpoints,
   schemas, or filenames.
-- Treat availability as intended Product scope. State exact Interface scopes,
-  narrowed by Experience only where those contexts exist, and never use them
-  as implementation status.
+- Treat availability as intended Product meaning. Author Contexts whose places
+  are an undivided Interface or an Experience, and never use them as
+  implementation status.
 - Model a Screen only when a stable user-visible product view clarifies intended
   information, actions, meaningful states, or boundaries. Do not design
   components, layouts, themes, responsive variants, or screenshot workflows.

@@ -1,6 +1,6 @@
 ---
 title: Capabilities
-description: Durable Product abilities with exact Interface availability, and the local Capability Scenarios that make each ability observable.
+description: Durable Product abilities with explicit availability Contexts, and the local Capability Scenarios that make each ability observable.
 section: open-source
 group: Product Model
 order: 14
@@ -19,12 +19,12 @@ Screens, Capability Scenarios, and optional [Journeys](./journeys.md).
 Capabilities and their observable
 [Capability Scenarios](#capability-scenarios) form the behavioral core of
 the Product Model. A Capability does not need a Journey, but it does need at
-least one Capability Scenario covering every exact availability context.
+least one Capability Scenario covering every availability Context.
 
 ## When you create one
 
 Create a Capability when an ability is reusable across goals or independently
-important to Product scope, availability, Screens, Business Rules, or
+important to Product boundaries, availability, Screens, Business Rules, or
 verification. Do not create one for an implementation function, endpoint, UI
 label, or sequence step that has no durable Product meaning.
 
@@ -39,7 +39,7 @@ really create, configure, archive, and delete behaviors with distinct
 contracts. Split those into Capabilities and, when navigation benefits, group
 them under a Repository administration [Domain](./domains.md).
 
-Every Capability declares its exact Interface availability, naming
+Every Capability declares explicit availability Contexts, naming
 [Experiences](./experiences.md) only where the Interface uses them. An optional
 [Domain](./domains.md) can organize it, but Domains are not required.
 
@@ -52,7 +52,9 @@ to `capabilities/<capability-id>/capability.md`.
 ```md [capabilities/checkout.md]
 ---
 domain: ordering
-availability: [customer-web::shopping, customer-mobile::shopping]
+availability:
+  - place: customer-web::shopping
+  - place: customer-mobile::shopping
 references:
   - kind: code
     role: implementation
@@ -70,47 +72,51 @@ Complete a purchase without confirming an unpaid order.
 
 | Field or section | Required | Constraint |
 | --- | --- | --- |
-| `availability` | yes | Declare at least one valid scope id. Use a bare Interface id when it is undivided, or `interface-id::experience-id` when it contains Experiences. |
+| `availability` | yes | Declare at least one strict Context with one `place`. The place is a bare undivided Interface id or an `interface-id::experience-id`. |
 | `domain` | no | Name one existing Domain when the grouping is useful. |
 | `references` | no | Use the documented [Reference](./references.md) shape. |
 | H1 and lead paragraph | yes | Name the Capability and describe the durable Product ability. |
 
 Capability files do not list Actors, Capability Scenarios, Journey Scenarios,
 Journeys, Screens, or Business Rules. Other entities own those relations, and
-consumers derive backlinks. A Capability Scenario's `capability` field creates
-its direct acceptance relation, while a Journey Scenario annotates concrete
+consumers derive backlinks. A Capability Scenario's containing Capability
+folder creates its direct acceptance relation, while a Journey Scenario annotates concrete
 Steps with Capabilities. Journey Capability backlinks are derived from those
 Steps rather than authored on the Journey.
 
 Capability Scenario coverage is the only direct acceptance coverage for a
-Capability. The union of its Capability Scenarios must cover every exact
-Interface/Experience pair the Capability declares through its Step Product Places; use by a Journey Scenario
-does not satisfy that requirement. A missing pair is an error for a `complete`
+Capability. The union of its Capability Scenarios must cover every availability
+Context the Capability declares through its Step Contexts; use by a Journey Scenario
+does not satisfy that requirement. A missing Context is an error for a `complete`
 model, a warning for `partial` or `draft`, and an error when publishing a public
 Blueprint. A single-Capability goal remains local Capability behavior and never
 requires a Journey wrapper.
 
 ## Availability
 
-Each record creates only the pairs it names:
+Each item is the same strict Context shape used elsewhere:
 
 ```yaml
-availability: [reader-web::public-discovery, reader-web::personal-workspace, reader-mobile::personal-workspace]
+availability:
+  - place: reader-web::public-discovery
+  - place: reader-web::personal-workspace
+  - place: reader-mobile::personal-workspace
 ```
 
 This does not promise `public-discovery` on `reader-mobile`. Availability is
-intended Product scope, not implementation status; `businesslens-verify`
+intended Product meaning, not implementation status; `businesslens-verify`
 checks whether the implementation satisfies it.
 
-For an Interface with no Experiences, omit the `experiences` key:
+For an Interface with no Experiences, use the Interface as the Context place:
 
 ```yaml
-availability: [operator-cli]
+availability:
+  - place: operator-cli
 ```
 
-Scenario Step Product Places select exact contexts from this availability.
-They do not alter or expand the
-Capability's scope, and every selected context is verified independently.
+Scenario Step Contexts select most-specific places within this availability. They do
+not alter or expand the Capability's availability, and every selected Context
+is verified independently.
 
 ## Capability Scenarios
 
@@ -166,20 +172,24 @@ steps:
   - text: The contributor pushes a repository change
     kind: actor
     actor: repository-contributor
-    places:
-      git-push: git-transport
+    contexts:
+      git-push:
+        place: git-transport
   - text: The Product identifies the repository and contributor
     kind: product
-    places:
-      git-push: git-transport
+    contexts:
+      git-push:
+        place: git-transport
   - text: The Product evaluates write permission
     kind: product
-    places:
-      git-push: git-transport
+    contexts:
+      git-push:
+        place: git-transport
   - text: The Product rejects the write
     kind: product
-    places:
-      git-push: git-transport
+    contexts:
+      git-push:
+        place: git-transport
 references:
   - kind: code
     role: implementation
@@ -202,9 +212,9 @@ The repository is unchanged and the contributor receives a permission error.
 | Filename | yes | Use a globally unique lowercase kebab-case Scenario ID. |
 | `kind` | yes | Name an entry in `taxonomies.yaml`. |
 | `routes` | yes | Map each unique lowercase kebab-case route ID to a unique human-readable name. |
-| `steps` | yes | Give a non-empty ordered list of typed Steps. Each Step has one-line `text`, `kind: actor|product|condition`, and optional route-specific `places`. |
+| `steps` | yes | Give a non-empty ordered list of typed Steps. Each Step has one-line `text`, `kind: actor|product|condition`, and optional route-specific `contexts`. |
 | `steps[].actor` | for Actor Steps | Name the responsible Actor when `kind: actor`; omit it for Product actions and unowned conditions. |
-| `steps[].places` | when placed | Map every declared route to its most-specific Product Place: Screen when one exists, otherwise the leaf Experience or Interface. Omit it only when the Step is shared by all routes and has no Product Place. |
+| `steps[].contexts` | when contextualized | Map every declared route to a strict Context whose `place` is the most-specific occurrence: a Screen when one exists, otherwise the leaf Experience or Interface. Omit it only when the Step is shared by all routes and has no Context. |
 | `references` | no | Use the documented [Reference](./references.md) shape. |
 | Lead paragraph | no | Start with a named H2; move starting-condition prose into `## Trigger`. |
 | `## Trigger` | yes | State the observable starting condition. |
@@ -221,28 +231,28 @@ It cannot use Journey-only `## Goal` or `## Success criterion` sections, and
 each recognized Scenario H2 may appear only once.
 Business Rules own their Scenario relations; Capability Scenarios do not
 duplicate a `businessRules` list. Screen participation is derived from Step
-Places; Screens do not list Scenario IDs.
+Contexts; Screens do not list Scenario IDs.
 
 Journey Scenarios reference the Capability, never this Capability Scenario.
 That prevents a concrete local case from becoming a reusable operation entity.
 
-### Routes, Steps, and Product Places
+### Routes, Steps, and Context places
 
 A route is one named supported traversal through unchanged Scenario behavior.
 Use multiple routes when the Trigger, ordered Step text, Step kinds, responsible
-Actors, and Outcome are the same but the Product Places differ. If any behavior
+Actors, and Outcome are the same but the Context places differ. If any behavior
 changes, create another Scenario.
 
-Every placed Step maps every route. A Step without `places` is shared by all
-routes and has no Product Place. Every route must be placed at least once, and two routes
-cannot repeat the same Place sequence. Changing Place between consecutive
-placed Steps is an explicit Product Place transition, including movement between Screens in one
+Every contextualized Step maps every route. A Step without `contexts` is shared by all
+routes and has no Context. Every route must have a Context at least once, and two routes
+cannot repeat the same Context-place sequence. Changing `place` between consecutive
+contextualized Steps is an explicit Context transition, including movement between Screens in one
 Experience.
 
-A Product Place is exact and most-specific. If a scope owns Screens, name the
-Screen. Otherwise name its leaf Experience or undivided Interface. The exact
-Interface/Experience contexts, Actor set, Screen participation, and backlinks
-are all derived from these Step claims.
+A Step Context is concrete and most-specific. If its availability boundary owns
+Screens, its `place` names the Screen. Otherwise it names the leaf Experience
+or undivided Interface. Actor support, Screen participation, and backlinks are
+all derived from these Context claims.
 
 ### Capability Scenario decision points
 

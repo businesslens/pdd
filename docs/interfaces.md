@@ -38,14 +38,15 @@ versioned, or vendor-supported that integration is.
 Do not create an Interface for a feed your Product polls, a payment processor it
 charges, a mail provider it sends through, or a model API it queries. Those
 external systems are not [Actors](./actors.md) either—they have no goal in your
-Product and no surface you must keep stable for them. Model the call inside the
+Product and no inbound interaction contract you must keep stable for them.
+Model the call inside the
 [Capability](./capabilities.md) that makes it, give its availability the
 Interfaces where an Actor actually observes the result, and make the failure
 behavior a [Capability Scenario](./capabilities.md#capability-scenarios).
 
 When that same third party calls *you* back—a webhook, callback, or push
-subscription—that inbound surface **is** an Interface and the third party is its
-Actor. Direction decides, not ownership.
+subscription—that inbound interaction happens through an **Interface**, and
+the third party is its Actor. Direction decides, not ownership.
 
 ## The file
 
@@ -100,7 +101,7 @@ complete variations of a coherent multi-Capability goal.
 An [Experience](./experiences.md) is optional and belongs to exactly one
 Interface: the Interface folder that contains it. Matching Experience names on
 different Interfaces are counterparts, not one shared entity. When an
-Interface has meaningful Experience contexts, availability names their
-qualified scope ids. When it has none, availability names the Interface
-directly. The [availability rules](./product-model.md#availability) show both
-forms.
+Interface has meaningful Experience contexts, Capability availability Contexts
+use their qualified Experience places. When it has none, a Context uses the
+Interface place directly. The [availability rules](./product-model.md#availability)
+show both forms.

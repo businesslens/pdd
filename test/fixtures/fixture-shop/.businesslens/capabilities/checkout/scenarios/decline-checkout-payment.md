@@ -7,24 +7,32 @@ steps:
   - text: The shopper submits checkout and the payment gateway declines the charge.
     kind: actor
     actor: shopper
-    places:
-      web: customer-web::storefront::product-record
-      mobile: customer-mobile::storefront::product-record
+    contexts:
+      web:
+        place: customer-web::storefront::product-record
+      mobile:
+        place: customer-mobile::storefront::product-record
   - text: The cart is validated against the catalog
     kind: product
-    places:
-      web: customer-web::storefront::product-record
-      mobile: customer-mobile::storefront::product-record
+    contexts:
+      web:
+        place: customer-web::storefront::product-record
+      mobile:
+        place: customer-mobile::storefront::product-record
   - text: The payment gateway declines the charge
     kind: product
-    places:
-      web: customer-web::storefront::product-record
-      mobile: customer-mobile::storefront::product-record
+    contexts:
+      web:
+        place: customer-web::storefront::product-record
+      mobile:
+        place: customer-mobile::storefront::product-record
   - text: The Product preserves the cart and explains that payment failed
     kind: product
-    places:
-      web: customer-web::storefront::product-record
-      mobile: customer-mobile::storefront::product-record
+    contexts:
+      web:
+        place: customer-web::storefront::product-record
+      mobile:
+        place: customer-mobile::storefront::product-record
 references:
   - kind: code
     role: implementation

@@ -7,14 +7,18 @@ steps:
   - text: The Reader saves the item
     kind: actor
     actor: reader
-    places:
-      web: reader-web::personal-library::unread-library
-      mobile: reader-mobile::personal-library::unread-library
+    contexts:
+      web:
+        place: reader-web::personal-library::unread-library
+      mobile:
+        place: reader-mobile::personal-library::unread-library
   - text: The Product records the saved state independently of reading state
     kind: product
-    places:
-      web: reader-web::personal-library::unread-library
-      mobile: reader-mobile::personal-library::unread-library
+    contexts:
+      web:
+        place: reader-web::personal-library::unread-library
+      mobile:
+        place: reader-mobile::personal-library::unread-library
 ---
 
 # Save an accessible item

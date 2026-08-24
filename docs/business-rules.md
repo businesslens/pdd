@@ -1,6 +1,6 @@
 ---
 title: Business rules
-description: Durable assertions that own their scope across Product entities or exact Interface availability.
+description: Durable assertions that apply to Product entities or Contexts naming Interfaces, Experiences, or Screens.
 section: open-source
 group: Product Model
 order: 16
@@ -12,9 +12,9 @@ order: 16
 confirmed only after payment succeeds; a subscription never grants write
 access.
 
-The Rule is the single owner of its scope. Its `appliesTo` list targets
-Capabilities, Journeys, Capability Scenarios, Journey Scenarios, or exact
-Interface contexts. Other entities do not copy Rule IDs, so one
+The Rule is the single owner of where it applies. Its `appliesTo` list targets
+Capabilities, Journeys, Capability Scenarios, Journey Scenarios, or direct
+Contexts. Other entities do not copy Rule IDs, so one
 constraint remains reusable and reviewable instead of drifting across several
 files.
 
@@ -25,7 +25,7 @@ stated once for review. Write something that must remain true, not a sequential
 step.
 
 A Rule must have at least one target. Target a behavioral entity when the Rule
-governs that behavior. Add exact `contexts` to narrow an entity target, or use a
+governs that behavior. Add `contexts` to narrow an entity target, or use a
 direct `context` target when the constraint belongs to the interaction context
 itself rather than one behavior.
 
@@ -40,8 +40,8 @@ appliesTo:
   - type: capability
     id: checkout
     contexts:
-      - context: customer-web::shopping
-      - context: customer-mobile::shopping
+      - place: customer-web::shopping
+      - place: customer-mobile::shopping
   - type: journey
     id: browse-and-buy
 ---
@@ -67,17 +67,23 @@ Confirmation is the durable customer-facing boundary of checkout.
 | `## Intent` | no | Explain the outcome the Rule protects. |
 | `## Rationale` | no | Explain why the constraint exists. |
 
-An entity target without `contexts` applies to every context supported by that
-entity. When present, `contexts` is a non-empty list of singular exact contexts,
-each using one `context` scope id. Use the bare Interface id for an undivided
-Interface or `interface-id::experience-id` for an Experience. Every narrowed
-context must be inside the target's supported contexts. A direct context target
-has no `id`:
+An entity target without `contexts` applies everywhere that entity is
+supported. When present, `contexts` is a non-empty list of strict Context
+objects. A Rule Context may name any Interface, Experience, or Screen place.
+An ancestor place includes supported descendants: an Interface Context can
+deliberately select occurrences in its Experiences and Screens. Every selected
+Context must overlap the target's supported places. Duplicate selectors and
+ancestor/descendant selectors in the same list are rejected because one makes
+the other redundant.
+
+A direct Context target has no `id` and nests the same Context shape under
+`context`:
 
 ```yaml
 appliesTo:
   - type: context
-    context: operator-cli
+    context:
+      place: operator-cli
 ```
 
 Targets are additive. Do not target a Capability and one of its Capability

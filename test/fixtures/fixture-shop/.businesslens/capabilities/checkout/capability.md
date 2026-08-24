@@ -4,7 +4,7 @@ references:
   - kind: code
     role: implementation
     target: src/services/orders.ts#OrderService.submit
-availability: [customer-web::storefront, customer-mobile::storefront]
+availability: [{ place: customer-web::storefront }, { place: customer-mobile::storefront }]
 ---
 
 # Checkout

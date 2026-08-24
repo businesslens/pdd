@@ -48,11 +48,11 @@ interface Fact {
 
 const meta = computed(() => ENTITY_KIND_META[props.entity.kind])
 
-const scopeOf = (entity: { availability: Array<{ interfaceTitle: string, experienceTitle: string }> }) => {
-  const [first] = entity.availability
+const contextOf = (entity: { contexts: Array<{ interfaceTitle: string, experienceTitle: string, screenTitle?: string }> }) => {
+  const [first] = entity.contexts
   if (!first) return '—'
-  const rest = entity.availability.length - 1
-  const name = first.experienceTitle ? `${first.interfaceTitle} › ${first.experienceTitle}` : first.interfaceTitle
+  const rest = entity.contexts.length - 1
+  const name = [first.interfaceTitle, first.experienceTitle, first.screenTitle].filter(Boolean).join(' › ')
   return rest > 0 ? `${name} +${rest}` : name
 }
 
@@ -62,7 +62,7 @@ const scopeOf = (entity: { availability: Array<{ interfaceTitle: string, experie
   Not what the header already says (a Scenario panel titled "Capability
   Scenario" does not need a Type row), not what the badge already says, and not
   a count a reader can get from the connections below. For a Screen that means
-  its scope, which is the only thing telling two counterparts apart.
+  its context, which is the only thing telling two counterparts apart.
 */
 const facts = computed<Fact[]>(() => {
   const entity = props.entity
@@ -98,7 +98,7 @@ const facts = computed<Fact[]>(() => {
     case 'screen': {
       const screen = entity as ScreenView
       return [
-        { label: 'Scope', value: scopeOf(screen), wide: true },
+        { label: 'Context', value: contextOf(screen), wide: true },
         { label: 'States', value: String(screen.states.length) },
         { label: 'Actions', value: String(screen.actions.length) }
       ]
@@ -114,7 +114,7 @@ const facts = computed<Fact[]>(() => {
     case 'capability': {
       const capability = entity as CapabilityView
       return [
-        { label: 'Scope', value: scopeOf(capability), wide: true },
+        { label: 'Context', value: contextOf(capability), wide: true },
         { label: 'Scenarios', value: String(capability.scenarioIds.length) },
         { label: 'Journeys', value: String(capability.journeyIds.length) }
       ]
@@ -149,7 +149,7 @@ const facts = computed<Fact[]>(() => {
       const rule = entity as RuleView
       return [
         { label: 'Bindings', value: String(rule.appliesTo.length) },
-        { label: 'Scopes', value: String(rule.availability.length) },
+        { label: 'Contexts', value: String(rule.contexts.length) },
         { label: 'References', value: String(rule.references.length) }
       ]
     }

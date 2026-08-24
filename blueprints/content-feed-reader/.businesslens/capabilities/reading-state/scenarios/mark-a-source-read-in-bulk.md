@@ -7,20 +7,26 @@ steps:
   - text: The Reader selects the source in the unread library
     kind: actor
     actor: reader
-    places:
-      web: reader-web::personal-library::unread-library
-      mobile: reader-mobile::personal-library::unread-library
+    contexts:
+      web:
+        place: reader-web::personal-library::unread-library
+      mobile:
+        place: reader-mobile::personal-library::unread-library
   - text: The Product shows how many items will be marked read
     kind: product
-    places:
-      web: reader-web::personal-library::unread-library
-      mobile: reader-mobile::personal-library::unread-library
+    contexts:
+      web:
+        place: reader-web::personal-library::unread-library
+      mobile:
+        place: reader-mobile::personal-library::unread-library
   - text: The Reader confirms the bulk action
     kind: actor
     actor: reader
-    places:
-      web: reader-web::personal-library::unread-library
-      mobile: reader-mobile::personal-library::unread-library
+    contexts:
+      web:
+        place: reader-web::personal-library::unread-library
+      mobile:
+        place: reader-mobile::personal-library::unread-library
 ---
 
 # Mark one source read in bulk

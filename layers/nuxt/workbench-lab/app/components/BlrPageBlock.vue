@@ -26,7 +26,7 @@ const emit = defineEmits<{
 }>()
 
 const meta = computed(() => ENTITY_KIND_META[props.entity.kind])
-const availability = computed(() => 'availability' in props.entity ? props.entity.availability : [])
+const contexts = computed(() => 'contexts' in props.entity ? props.entity.contexts : [])
 const entryPoints = computed(() => 'entryPoints' in props.entity ? props.entity.entryPoints : [])
 const counterparts = computed(() => counterpartsOf(props.workspace, props.entity))
 const facts = computed(() => entityFacts(props.workspace, props.entity).filter(fact => fact.value))
@@ -43,8 +43,8 @@ const facts = computed(() => entityFacts(props.workspace, props.entity).filter(f
   </dl>
 
   <BlrAvail
-    v-else-if="id === 'access' && (availability.length || entryPoints.length)"
-    :pairs="availability"
+    v-else-if="id === 'access' && (contexts.length || entryPoints.length)"
+    :contexts="contexts"
     :entry-points="entryPoints"
   />
 

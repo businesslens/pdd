@@ -39,13 +39,13 @@ describe('stable Product Report Workbench', () => {
     expect(workspace.journeyScenarios.every((item: any) => item.scenarioType === 'journey')).toBe(true)
     const journeyScenario = workspace.journeyScenarios.find((item: any) => item.id === 'browse-and-complete-checkout')!
     const firstCapabilityStep = journeyScenario.steps.find((step: any) => step.capabilityId)!
-    expect(firstCapabilityStep.places.map((place: any) => place.routeId)).toEqual(['web', 'mobile'])
-    expect([...firstCapabilityStep.places.map((place: any) => place.place.context.key)].sort()).toEqual([
+    expect(firstCapabilityStep.contexts.map((context: any) => context.routeId)).toEqual(['web', 'mobile'])
+    expect([...firstCapabilityStep.contexts.map((context: any) => context.context.boundary.key)].sort()).toEqual([
       'customer-mobile::storefront',
       'customer-web::storefront'
     ])
-    expect(workspace.capabilityScenarios.find((item: any) => item.id === 'browse-catalog')!.availability
-      .map((pair: any) => pair.key).sort()).toEqual([
+    expect(workspace.capabilityScenarios.find((item: any) => item.id === 'browse-catalog')!.contexts
+      .map((context: any) => context.key).sort()).toEqual([
       'customer-mobile::storefront',
       'customer-web::storefront'
     ])
@@ -93,16 +93,16 @@ describe('stable Product Report Workbench', () => {
       'The shopper submits checkout',
       'The Product confirms the paid order'
     ])
-    expect(matrix.steps[1].cells.map((cell: any) => cell.place.context.key)).toEqual([
+    expect(matrix.steps[1].cells.map((cell: any) => cell.context.boundary.key)).toEqual([
       'customer-web::storefront',
       'customer-mobile::storefront'
     ])
-    /* Parallel lanes are not transitions — neither route changes Product Place. */
-    expect(matrix.steps.every((step: any) => step.cells.every((cell: any) => !cell.placeChanged))).toBe(true)
+    /* Parallel lanes are not transitions — neither route changes Context place. */
+    expect(matrix.steps.every((step: any) => step.cells.every((cell: any) => !cell.contextChanged))).toBe(true)
     expect(scenarioStepMatrix(workspace.capabilityScenarios[0]).routes).toHaveLength(2)
   })
 
-  it('gives both Scenario types one Steps table while keeping their scope semantics distinct', () => {
+  it('gives both Scenario types one Steps table while keeping their Context semantics distinct', () => {
     const body = source('app/components/BlrEntityBody.vue')
     const context = source('app/components/BlrStepContext.vue')
     const links = source('app/components/BlrLinks.vue')
@@ -112,7 +112,7 @@ describe('stable Product Report Workbench', () => {
     expect(body).toContain('scenarioStepMatrix')
     expect(body).toContain('v-for="route in visibleRoutes"')
     expect(body.match(/<BlrStepContext/g)).toHaveLength(2)
-    expect(body).toContain('No Product Place — same Step on every route')
+    expect(body).toContain('No Context — same Step on every route')
     expect(body).toContain('{{ route.name }}')
     expect(body).not.toContain('{{ route.id }}')
     expect(body).not.toContain('{{ column.id }}')
@@ -128,7 +128,7 @@ describe('stable Product Report Workbench', () => {
     expect(body).toContain('Product action')
     expect(body).toContain('Condition')
     expect(body).toContain('Moved from')
-    expect(context).toContain('ProductPlaceView')
+    expect(context).toContain('ResolvedContextView')
     expect(context).not.toContain('scenarioStepScreens')
     expect(body).not.toContain('<ol class="max-w-3xl list-decimal')
     expect(body).not.toContain('stepMatrix.routes.length * 310')
@@ -140,8 +140,8 @@ describe('stable Product Report Workbench', () => {
     expect(body.match(/aria-label="Show previous route"/g)).toHaveLength(2)
     expect(body.match(/aria-label="Show next route"/g)).toHaveLength(2)
     expect(body).toContain('compact')
-    expect(body).not.toContain('Product Place ·')
-    expect(context).toContain('<BlrInterfaceType :type="place.interfaceType" size="xs" />')
+    expect(body).not.toContain('Context ·')
+    expect(context).toContain('<BlrInterfaceType :type="context.interfaceType" size="xs" />')
     expect(context).toContain('whitespace-nowrap')
     expect(context).toContain("compact ? 'max-w-24'")
     expect(context).toContain('truncate')
@@ -275,7 +275,7 @@ describe('stable Product Report Workbench', () => {
     })
   })
 
-  it('projects the exact authored Screen Place on each Step without inference', async () => {
+  it('projects the authored Screen Context on each Step without inference', async () => {
     const report = compileReport(loadModel(FIXTURE), '2026-08-08')
     const workspace = projectReportWorkspace(report)
     const journeyScenario = workspace.journeyScenarios.find(
@@ -284,15 +284,15 @@ describe('stable Product Report Workbench', () => {
     const browsingStep = journeyScenario.steps.find((step: any) => step.capabilityId === 'catalog-browsing')!
     const checkoutStep = journeyScenario.steps.find((step: any) => step.capabilityId === 'checkout')!
 
-    expect(browsingStep.places.map((place: any) => place.place.screenTitle)).toEqual(['Product record', 'Product record'])
-    expect(checkoutStep.places.map((place: any) => place.place.screenTitle)).toEqual(['Product record', 'Product record'])
+    expect(browsingStep.contexts.map((context: any) => context.context.screenTitle)).toEqual(['Product record', 'Product record'])
+    expect(checkoutStep.contexts.map((context: any) => context.context.screenTitle)).toEqual(['Product record', 'Product record'])
 
     const capabilityScenario = workspace.capabilityScenarios.find((item: any) => item.id === 'browse-catalog')!
-    expect(capabilityScenario.steps[0].places.map((place: any) => place.place.screenTitle))
+    expect(capabilityScenario.steps[0].contexts.map((context: any) => context.context.screenTitle))
       .toEqual(['Product record', 'Product record'])
   })
 
-  it('marks a Product Place transition and preserves its previous Place, per route', async () => {
+  it('marks a Context place transition and preserves its previous Context, per route', async () => {
     const { scenarioStepMatrix } = await import(workspaceModulePath)
     const report = compileReport(loadModel(FIXTURE), '2026-08-08')
     const scenario = report.model.journeyScenarios.find(
@@ -300,7 +300,7 @@ describe('stable Product Report Workbench', () => {
     )!
     const transitionedPlace = scenario.steps
       .find((step: any) => step.capabilityId === 'checkout')!
-      .places.find((place: any) => place.routeId === 'web')!
+      .contexts.find((context: any) => context.routeId === 'web')!
     transitionedPlace.placeId = 'customer-web::storefront'
 
     const workspace = projectReportWorkspace(report)
@@ -308,19 +308,19 @@ describe('stable Product Report Workbench', () => {
       workspace.journeyScenarios.find((item: any) => item.id === 'browse-and-complete-checkout')!
     )
 
-    expect(matrix.steps[0].cells.map((cell: any) => cell.placeChanged)).toEqual([false, false])
-    expect(matrix.steps[1].cells.map((cell: any) => cell.placeChanged)).toEqual([true, false])
-    expect(matrix.steps[1].cells[0].previousPlace.id).toBe('customer-web::storefront::product-record')
+    expect(matrix.steps[0].cells.map((cell: any) => cell.contextChanged)).toEqual([false, false])
+    expect(matrix.steps[1].cells.map((cell: any) => cell.contextChanged)).toEqual([true, false])
+    expect(matrix.steps[1].cells[0].previousContext.id).toBe('customer-web::storefront::product-record')
   })
 
-  it('derives Journey availability only from achieved flows', () => {
+  it('derives Journey Contexts only from achieved flows', () => {
     const report = compileReport(loadModel(FIXTURE), '2026-08-08')
     const scenario = report.model.journeyScenarios[0]!
     report.model.journeyScenarios[0] = { ...scenario, result: 'not-achieved' }
 
     const workspace = projectReportWorkspace(report)
     const journey = workspace.journeys.find((item: any) => item.id === scenario.journeyId)!
-    expect(journey.availability).toEqual([])
+    expect(journey.contexts).toEqual([])
     expect(journey.entryPoints).toEqual([])
   })
 
@@ -329,7 +329,7 @@ describe('stable Product Report Workbench', () => {
     const workbench = source('app/components/BlrWorkbench.vue')
     const layer = source('nuxt.config.ts')
 
-    expect(renderer).toContain('ProductReportV9')
+    expect(renderer).toContain('ProductReportV10')
     expect(renderer).toContain('projectReportWorkspace')
     expect(renderer).toContain('<BlrWorkbench')
     expect(source('app/components/BlrEntityBody.vue')).toContain('scenarioStepMatrix')

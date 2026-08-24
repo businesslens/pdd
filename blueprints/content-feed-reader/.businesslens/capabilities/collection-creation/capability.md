@@ -1,6 +1,6 @@
 ---
 domain: collections
-availability: [reader-web::personal-library]
+availability: [{ place: reader-web::personal-library }]
 ---
 
 # Collection creation

@@ -39,7 +39,8 @@ limitations make three exclusions explicit:
 
 Feed providers are deliberately **not** Actors here, and there is no feed
 Interface. The Product polls those feeds; they never call the Product, hold no
-goal inside it, and need no surface kept stable for them. An external system
+goal inside it, and need no inbound interaction contract kept stable for them.
+An external system
 earns an Actor and an Interface only when it *initiates*. So the outbound
 dependency lives inside the Capability that makes the call, and the RSS contract
 it depends on is attached to that Capability as a context Reference.
@@ -132,7 +133,7 @@ and an Interface. It gets neither.
 
 1. Does it initiate contact with the Product?
 2. Does it have a goal or privilege of its own inside the Product?
-3. Must the Product keep a surface stable and verifiable for it?
+3. Must the Product keep an inbound interaction contract stable and verifiable for it?
 
 A polled feed answers no three times. It never calls the Product, wants nothing
 from it, and needs nothing kept stable for it. Modeling it as an Actor produces
@@ -152,7 +153,7 @@ Reader
         └── Source list Screen  ← where the Reader refreshes and sees a failure
 ```
 
-`feed-synchronization` is scoped to the Interfaces where its result is observed,
+`feed-synchronization` is available in the Interfaces where its result is observed,
 its Reader-visible failure behavior is an ordinary Capability Scenario, and the
 RSS specification is attached as a `kind: spec`, `role: context` Reference. The
 Reader triggers it by refreshing; the Product also reads feeds on a schedule it
@@ -165,7 +166,8 @@ contribute is a different durable ability from reading them. The
 future collection but preserves existing library history.
 
 The rule is symmetric. If this Product ever accepted *pushed* feed updates, that
-inbound surface would be a genuine Interface and the provider a genuine Actor —
+inbound interaction would use a genuine Interface and the provider would be a
+genuine Actor —
 same company, opposite modeling, because direction changed. See
 [Actors](./actors.md) and [Interfaces](./interfaces.md) for the general rule.
 

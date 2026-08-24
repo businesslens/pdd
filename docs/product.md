@@ -25,7 +25,7 @@ Website, mobile application, CLI, and supported API are usually
 [Interfaces](./interfaces.md) of one Product, not separate Products. An
 internal API supporting another Interface normally stays outside the model; a
 partner API becomes an Interface when independent Actors use it and its
-behavior matters as Product scope.
+behavior matters as a Product boundary.
 
 ## The file
 

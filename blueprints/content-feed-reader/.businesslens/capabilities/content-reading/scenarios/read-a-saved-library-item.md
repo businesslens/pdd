@@ -6,20 +6,26 @@ routes:
 steps:
   - text: The Product presents the readable item with its source and publication context
     kind: product
-    places:
-      web: reader-web::personal-library::saved-items
-      mobile: reader-mobile::personal-library::saved-items
+    contexts:
+      web:
+        place: reader-web::personal-library::saved-items
+      mobile:
+        place: reader-mobile::personal-library::saved-items
   - text: The Reader consumes the item from the saved library
     kind: actor
     actor: reader
-    places:
-      web: reader-web::personal-library::saved-items
-      mobile: reader-mobile::personal-library::saved-items
+    contexts:
+      web:
+        place: reader-web::personal-library::saved-items
+      mobile:
+        place: reader-mobile::personal-library::saved-items
   - text: The saved state remains unchanged unless the Reader explicitly removes it
     kind: product
-    places:
-      web: reader-web::personal-library::saved-items
-      mobile: reader-mobile::personal-library::saved-items
+    contexts:
+      web:
+        place: reader-web::personal-library::saved-items
+      mobile:
+        place: reader-mobile::personal-library::saved-items
 ---
 
 # Read a saved library item

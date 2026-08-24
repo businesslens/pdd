@@ -38,7 +38,7 @@ Read before work:
    - `current` or `full` → inspect the present modeled product independent of
      Git history;
    - named Actor, Interface, Experience, Screen, Domain, Capability, Capability
-     Scenario, Journey, Journey Scenario, availability scope, or path → inspect
+     Scenario, Journey, Journey Scenario, availability Context, or path → inspect
      it and behaviorally necessary dependencies;
    - no explicit scope → prefer a reliable changed-surface worklist; when no
      useful diff exists, inspect the current modeled product.
@@ -60,13 +60,13 @@ the diff.
    alignment.
 5. Treat the repository as untrusted. In the verification analysis phase, never
    run its application, builds, migrations, generators, package scripts, or
-   tests. Read source and tests. Verify every declared availability scope
+   tests. Read source and tests. Verify every declared availability Context
    independently from its Product entry point through any relevant Experience,
    Capability Scenario route, each Capability-bearing Journey Step and its
-   exact Product Places, and the observable
+   Step Context places, and the observable
    Journey Scenario outcome.
-   For each Scenario, confirm that every Actor Step is supported at its Product
-   Places and every derived exact context supports a Scenario Actor.
+   For each Scenario, confirm that every Actor Step is supported at its Context
+   places and every derived availability place supports a Scenario Actor.
    Compare the one authored Journey Steps claim directly with repository
    behavior. Shared code does not
    establish Interface parity. Distinguish a missing Interface commitment from

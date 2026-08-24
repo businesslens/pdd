@@ -1,6 +1,6 @@
 ---
 title: Experiences
-description: Coherent contexts of Product use with a stable audience, access boundary, and capability boundary across one or more Interfaces.
+description: Coherent contexts of Product use with a stable audience, access boundary, and capability boundary inside one Interface.
 section: open-source
 group: Product Model
 order: 11
@@ -13,9 +13,9 @@ discovery, personal workspace, administration, account management, and partner
 automation are possible Experiences.
 
 Experiences are optional. An Experience has a stable audience, access boundary,
-and capability boundary. It may be offered through one or more
-[Interfaces](./interfaces.md): the same administration Experience might exist
-in an admin website and an operator CLI.
+and capability boundary inside exactly one [Interface](./interfaces.md), which
+is determined by its folder. Similar Experiences on another Interface are
+counterparts with separate qualified ids, not one shared entity.
 
 ## When you create one
 
@@ -24,8 +24,7 @@ Create an Experience when all of these are true:
 1. it represents a coherent Actor context;
 2. it has a meaningful capability boundary and exclusions;
 3. it remains meaningful if routes, commands, or navigation are reorganized;
-4. it normally supports several goals, Capabilities, Screens, or commands; and
-5. its availability through different Interfaces has product meaning.
+4. it normally supports several goals, Capabilities, Screens, or commands.
 
 An overview page is usually a Screen, not an Experience. A command group is an
 Experience only when it represents a durable operating context, not just parser
@@ -48,7 +47,6 @@ actors: [store-admin]
 access: restricted
 entryPoints:
   - admin-web: /admin
-  - operator-cli: product admin
 ---
 
 # Administration
@@ -62,24 +60,24 @@ Supports operational administration. It does not grant customer privileges.
 
 | Field or section | Required | Constraint |
 | --- | --- | --- |
-| `actors` | yes | Name at least one unique existing Actor. Every Actor must be supported by every declared Interface. |
-| `interfaces` | yes | Name at least one unique existing Interface offering the Experience. |
+| `actors` | yes | Name at least one unique existing Actor. Every Actor must be supported by the containing Interface. |
 | `access` | yes | Use `public`, `authenticated`, or `restricted`. |
-| `entryPoints` | no | Key Product entry points by an Interface declared in `interfaces`. |
+| `entryPoints` | no | Key Product entry points using the containing Interface as the key. |
 | `references` | no | Use the documented [Reference](./references.md) shape. |
 | H1 | yes | Name the Experience. |
 | Lead paragraph | yes | Describe the coherent usage context. |
 | `## Capability boundary` | yes | State what the Experience supports and excludes. |
 
 The entire `experiences/` directory is optional. When an Interface contains
-Experiences, all availability for that Interface must name one or more of their
-qualified scope ids. The union of Actors across those Experiences must cover
+Experiences, availability Contexts use their qualified places. The union of
+Actors across those Experiences must cover
 every Actor declared by the Interface; Experiences may overlap, but they cannot
 leave an Interface Actor without a usable context. An Interface with no
 Experiences uses direct availability:
 
 ```yaml
-availability: [release-cli]
+availability:
+  - place: release-cli
 ```
 
 There is no `exit` field. A persistent context does not have one useful success

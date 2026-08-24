@@ -97,17 +97,18 @@ Catalog contribution stays in the CLI; there is no contribution skill.
   proof or verification receipts.
 - `coverage.status` describes model breadth: `draft` while the model itself is
   under review, `partial` with known unmapped areas, and `complete` when the
-  intended product scope is modeled.
+  intended product breadth is modeled.
 - A complete model may contain zero References.
 - A Product may expose several Interfaces—such as web, mobile, CLI, and a
   supported API—without being classified as one of those delivery forms.
 - Experiences are optional coherent usage contexts, each belonging to exactly
-  one Interface. Availability is a list of scope ids: an undivided Interface, or
-  an Experience.
+  one Interface. Availability is a list of strict Context objects whose
+  `place` is an undivided Interface or an Experience.
 - Domains are optional regions of subject matter. Only a Capability authors
   `domain:`; every other Domain relation is derived.
-- Screens are optional platform-neutral product views, nested in the scope that
-  reaches them. Product assets sit beside the entity they describe; anything
+- Screens are optional platform-neutral product views, nested in the Interface
+  or Experience that contains them. Their path supplies their place. Product
+  assets sit beside the entity they describe; anything
   under `implementation/` describes this realization and stays home.
 - `lint` checks format, required content, relationships, Reference grammar, and
   tracked code-reference paths. `verify` checks meaning against current code.

@@ -1,7 +1,7 @@
 export const ID_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 
 /**
- * Separator for a qualified surface-tree id.
+ * Separator for a qualified Interface, Experience, or Screen id.
  *
  * `::` rather than `/`: report routes address entities by id, and a slash would
  * force URL encoding at every boundary. It also matches the `parent::child`
@@ -18,7 +18,8 @@ export function isId(value: string): boolean {
 }
 
 /**
- * A surface-tree id: one or more segments joined by `::`.
+ * A qualified Interface, Experience, or Screen id: one or more path segments
+ * joined by `::`.
  *
  * Interfaces, Experiences and Screens repeat names across Interfaces on
  * purpose — `personal-library` on web and on mobile are different entities that
@@ -36,9 +37,22 @@ export function segments(id: string): string[] {
   return id.split(ID_SEPARATOR)
 }
 
-/** The Interface segment of any surface-tree id. */
+/** The Interface segment of any qualified place id. */
 export function interfaceOf(id: string): string {
   return segments(id)[0] ?? ''
+}
+
+/** Whether `candidate` is `ancestor` or one of its descendants in the place hierarchy. */
+export function containsPlace(ancestor: string, candidate: string): boolean {
+  const parent = segments(ancestor)
+  const child = segments(candidate)
+  return parent.length <= child.length && parent.every((segment, index) => child[index] === segment)
+}
+
+/** The structural parent id of a qualified place, when it has one. */
+export function parentPlace(id: string): string | undefined {
+  const parts = segments(id)
+  return parts.length > 1 ? parts.slice(0, -1).join(ID_SEPARATOR) : undefined
 }
 
 /**
@@ -47,7 +61,7 @@ export function interfaceOf(id: string): string {
  * `reader-web::personal-library::unread-library` and
  * `reader-mobile::personal-library::unread-library` share the suffix
  * `personal-library::unread-library`, so they are the same thing on two
- * surfaces. Matching on the suffix rather than the last segment is what keeps
+ * Interfaces. Matching on the suffix rather than the last segment is what keeps
  * `personal-library::foo` and `checkout::foo` correctly distinct inside one
  * Interface.
  */

@@ -1,6 +1,6 @@
 ---
 title: Screens
-description: Optional meaningful visual Product views placed in exact Interface availability scopes without embedding screenshots or layouts.
+description: Optional meaningful visual Product views whose filesystem path determines their Context without duplicating availability.
 section: open-source
 group: Product Model
 order: 12
@@ -86,7 +86,7 @@ The Screen does not change product or inventory data.
 
 | Field or section | Required | Constraint |
 | --- | --- | --- |
-| `capabilities` | yes | Name at least one unique existing Capability; each must declare the scope that holds this Screen. |
+| `capabilities` | yes | Name at least one unique existing Capability; each must declare an availability Context for the Interface or Experience containing this Screen. |
 | `entryPoints` | no | Key public routes or deep links by the Interface that holds this Screen. |
 | `references` | no | Use the documented [Reference](./references.md) shape. |
 | H1 and lead paragraph | yes | Name the Screen and describe its Product purpose. |
@@ -95,10 +95,12 @@ The Screen does not change product or inventory data.
 | `## Product states` | no | Give every H3 state a description. |
 | `## Capability boundary` | yes | State what the Screen supports and excludes. |
 
-Screens do not list Scenarios. A Scenario participates in a Screen when one of
-its Steps names that Screen as a route's exact Product Place. When that Step
-names a Capability, the Screen must expose it. Consumers derive both Capability
-Scenario and Journey Scenario backlinks from those Step Places.
+Screens do not declare availability and do not list Scenarios. Their folder
+path is already authoritative for their containing Interface or Experience. A
+Scenario participates in a Screen when one of its Step Contexts names that
+Screen as its most-specific `place`. When that Step names a Capability, the Screen must
+expose it. Consumers derive both Capability Scenario and Journey Scenario
+backlinks from those Step Contexts.
 
 ## Web and mobile
 

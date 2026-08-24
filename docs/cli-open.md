@@ -8,8 +8,8 @@ order: 33
 
 # `businesslens blueprint open`
 
-Parse and validate a Product Report v9, apply the portable projection, then
-expand it into a canonical folder schema 5 `.businesslens/` directory:
+Parse and validate a Product Report v10, apply the portable projection, then
+expand it into a canonical folder schema 6 `.businesslens/` directory:
 
 ```bash
 npx businesslens blueprint open ./report.json
@@ -41,7 +41,7 @@ model is written into `./new-product`.
 ## Imported navigation
 
 `open` uses the same [portable projection](./cli-export.md#portable-export) as
-`export`. Product behavior, relationships, exact availability, Capability
+`export`. Product behavior, relationships, availability Contexts, Capability
 Scenarios, goal-focused Journeys, annotated Journey Scenario Steps, derived Journey
 Capability projections, structured supporting sections, Product routes,
 commands, non-file deep links, and portable References are preserved.

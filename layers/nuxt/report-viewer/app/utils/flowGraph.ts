@@ -196,19 +196,19 @@ export function relationEdge(
  *
  * The verb set is deliberately small and fixed: Actors perform Journeys and
  * enter contexts; Journeys use Capabilities and case into Scenarios; Screens
- * expose Capabilities and serve Scenarios; Rules constrain; everything with
- * availability is available in its contexts.
+ * expose Capabilities and serve Scenarios; Rules constrain; every entity with
+ * Contexts connects to those places.
  */
 export function directRelations(workspace: ReportWorkspace, entity: AnyEntityView): FlowRelation[] {
   const relations: FlowRelation[] = []
   const push = (source: string, target: string, label: string) => {
     if (workspace.byKey.has(source) && workspace.byKey.has(target)) relations.push({ source, target, label })
   }
-  const availability = (ids: Array<{ interfaceId: string, experienceId: string }>, sourceKey: string, label = 'available in') => {
-    for (const pair of ids) {
-      const target = pair.experienceId
-        ? entityKey('experience', pair.experienceId)
-        : entityKey('interface', pair.interfaceId)
+  const contexts = (items: Array<{ interfaceId: string, experienceId: string }>, sourceKey: string, label = 'available in') => {
+    for (const context of items) {
+      const target = context.experienceId
+        ? entityKey('experience', context.experienceId)
+        : entityKey('interface', context.interfaceId)
       push(sourceKey, target, label)
     }
   }
@@ -242,7 +242,7 @@ export function directRelations(workspace: ReportWorkspace, entity: AnyEntityVie
       for (const id of entity.journeyScenarioIds) push(entity.key, entityKey('journey-scenario', id), 'serves')
       for (const id of entity.scenarioJourneyIds) push(entityKey('journey', id), entity.key, 'passes through scenario')
       for (const id of entity.capabilityJourneyIds) push(entityKey('journey', id), entity.key, 'reaches via capability')
-      availability(entity.availability, entity.key)
+      contexts(entity.contexts, entity.key)
       break
     }
     case 'domain': {
@@ -256,7 +256,7 @@ export function directRelations(workspace: ReportWorkspace, entity: AnyEntityVie
       for (const id of entity.journeyIds) push(entityKey('journey', id), entity.key, 'uses')
       for (const id of entity.screenIds) push(entityKey('screen', id), entity.key, 'exposes')
       for (const id of entity.ruleIds) push(entityKey('rule', id), entity.key, 'constrains')
-      availability(entity.availability, entity.key)
+      contexts(entity.contexts, entity.key)
       break
     }
     case 'journey': {
@@ -265,7 +265,7 @@ export function directRelations(workspace: ReportWorkspace, entity: AnyEntityVie
       for (const id of entity.scenarioIds) push(entity.key, entityKey('journey-scenario', id), 'cases into')
       for (const id of entity.screenIds) push(entity.key, entityKey('screen', id), 'passes through')
       for (const id of entity.ruleIds) push(entityKey('rule', id), entity.key, 'constrains')
-      availability(entity.availability, entity.key)
+      contexts(entity.contexts, entity.key)
       break
     }
     case 'capability-scenario':
@@ -280,7 +280,7 @@ export function directRelations(workspace: ReportWorkspace, entity: AnyEntityVie
       }
       for (const id of entity.screenIds) push(entityKey('screen', id), entity.key, 'serves')
       for (const id of entity.ruleIds) push(entityKey('rule', id), entity.key, 'constrains')
-      availability(entity.availability, entity.key)
+      contexts(entity.contexts, entity.key)
       break
     }
     case 'rule': {
@@ -288,7 +288,7 @@ export function directRelations(workspace: ReportWorkspace, entity: AnyEntityVie
       for (const id of entity.journeyIds) push(entity.key, entityKey('journey', id), 'constrains')
       for (const id of entity.capabilityScenarioIds) push(entity.key, entityKey('capability-scenario', id), 'constrains')
       for (const id of entity.journeyScenarioIds) push(entity.key, entityKey('journey-scenario', id), 'constrains')
-      availability(entity.availability, entity.key, 'scoped to')
+      contexts(entity.contexts, entity.key, 'applies in')
       break
     }
   }
@@ -469,7 +469,7 @@ export function buildScreenMap(workspace: ReportWorkspace, options: ScreenMapOpt
     const experiences = workspace.experiences.filter(item => item.interfaceIds.includes(productInterface.id))
     const experienceScreenIds = new Set(experiences.flatMap(item => item.screenIds))
     const directScreenIds = workspace.screens
-      .filter(screen => screen.availability.some(pair => pair.interfaceId === productInterface.id && !pair.experienceId))
+      .filter(screen => screen.contexts.some(context => context.interfaceId === productInterface.id && !context.experienceId))
       .map(screen => screen.id)
       .filter(id => !experienceScreenIds.has(id))
 
@@ -513,7 +513,7 @@ export function buildScreenMap(workspace: ReportWorkspace, options: ScreenMapOpt
         sublabel: 'Interface',
         dimmed: false,
         selected: options.selectedId === productInterface.key,
-        emptyNote: hasContent ? '' : 'No Screens — this Interface is not a graphical surface.'
+        emptyNote: hasContent ? '' : 'No Screens — this Interface has no graphical hierarchy.'
       }
     })
 
@@ -625,7 +625,7 @@ function sitemapBranches(workspace: ReportWorkspace, emphasize: ReadonlySet<stri
     const experiences = workspace.experiences.filter(item => item.interfaceIds.includes(productInterface.id))
     const experienceScreenIds = new Set(experiences.flatMap(item => item.screenIds))
     const directScreenIds = workspace.screens
-      .filter(screen => screen.availability.some(pair => pair.interfaceId === productInterface.id && !pair.experienceId))
+      .filter(screen => screen.contexts.some(context => context.interfaceId === productInterface.id && !context.experienceId))
       .map(screen => screen.id)
       .filter(id => !experienceScreenIds.has(id))
 

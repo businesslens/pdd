@@ -6,15 +6,19 @@ routes:
 steps:
   - text: The catalog is listed
     kind: product
-    places:
-      web: customer-web::storefront::product-record
-      mobile: customer-mobile::storefront::product-record
+    contexts:
+      web:
+        place: customer-web::storefront::product-record
+      mobile:
+        place: customer-mobile::storefront::product-record
   - text: The shopper opens a product page
     kind: actor
     actor: shopper
-    places:
-      web: customer-web::storefront::product-record
-      mobile: customer-mobile::storefront::product-record
+    contexts:
+      web:
+        place: customer-web::storefront::product-record
+      mobile:
+        place: customer-mobile::storefront::product-record
 references:
   - kind: code
     role: implementation

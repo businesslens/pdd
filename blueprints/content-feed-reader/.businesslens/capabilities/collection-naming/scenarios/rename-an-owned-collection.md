@@ -5,17 +5,20 @@ routes:
 steps:
   - text: The Product confirms collection ownership
     kind: product
-    places:
-      web: reader-web::personal-library::collection-workspace
+    contexts:
+      web:
+        place: reader-web::personal-library::collection-workspace
   - text: The Reader provides the replacement name
     kind: actor
     actor: reader
-    places:
-      web: reader-web::personal-library::collection-workspace
+    contexts:
+      web:
+        place: reader-web::personal-library::collection-workspace
   - text: The Product preserves the collection's items and order under the new name
     kind: product
-    places:
-      web: reader-web::personal-library::collection-workspace
+    contexts:
+      web:
+        place: reader-web::personal-library::collection-workspace
 ---
 
 # Rename an owned collection

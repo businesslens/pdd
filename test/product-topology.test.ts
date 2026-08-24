@@ -68,7 +68,7 @@ describe('named Product Topology views', () => {
     expect(PRODUCT_TOPOLOGY_VIEWS.map(view => view.id)).toEqual([
       'product-map',
       'value-paths',
-      'delivery-surfaces',
+      'delivery-by-interface',
       'sitemap',
       'rule-reach',
       'everything'
@@ -152,7 +152,7 @@ describe('named Product Topology views', () => {
   })
 
   it('keeps identity views unique and Value path Steps contextual', () => {
-    const delivery = buildProductTopologyGraph(workspace, 'delivery-surfaces')
+    const delivery = buildProductTopologyGraph(workspace, 'delivery-by-interface')
     const identityIds = delivery.nodes
       .map(node => node.data?.entityKey)
       .filter((id): id is string => Boolean(id))
@@ -182,7 +182,7 @@ describe('named Product Topology views', () => {
     expect(compositionCapabilities.length).toBeGreaterThan(0)
     expect(compositionCapabilities.every(node => node.data?.colorSlot === null)).toBe(true)
 
-    const delivery = buildProductTopologyGraph(workspace, 'delivery-surfaces')
+    const delivery = buildProductTopologyGraph(workspace, 'delivery-by-interface')
     const deliveredCapabilities = delivery.nodes.filter(node => node.data?.kind === 'capability')
     expect(deliveredCapabilities.length).toBeGreaterThan(0)
     expect(deliveredCapabilities.every(node => node.data?.colorSlot === null)).toBe(true)
@@ -201,13 +201,13 @@ describe('named Product Topology views', () => {
   it('shows direct Interfaces delivering Capabilities without fake Experiences', () => {
     const directInterface = workspace.interfaces.find((item: any) => item.experienceIds.length === 0)!
     const capability = workspace.capabilities.find((item: any) => item.interfaceIds.includes(directInterface.id))!
-    const graph = buildProductTopologyGraph(workspace, 'delivery-surfaces')
+    const graph = buildProductTopologyGraph(workspace, 'delivery-by-interface')
 
     expect(graph.edges.some(edge => edge.source === directInterface.key && edge.target === capability.key)).toBe(true)
   })
 
   it('hides entity kinds locally and removes their incident relations', () => {
-    const base = buildProductTopologyGraph(workspace, 'delivery-surfaces')
+    const base = buildProductTopologyGraph(workspace, 'delivery-by-interface')
     const filtered = filterProductTopologyGraph(base, {
       visibleKinds: ['interface', 'experience', 'screen', 'capability']
     })
@@ -222,7 +222,7 @@ describe('named Product Topology views', () => {
     A Screen is authored against the Scenario, not one Step. Anchoring on the
     final Step claimed a Capability "lands on" a Screen it shares no
     availability with — here the public reading Step against the owner's
-    private workspace, which is scoped to the personal library.
+    private workspace, which is limited to the personal library.
   */
   it('anchors a Value paths Screen on a Step that actually exposes it', () => {
     const graph = buildProductTopologyGraph(teachingWorkspace, 'value-paths', {
@@ -249,7 +249,7 @@ describe('named Product Topology views', () => {
   })
 
   it('focuses entities with one-hop context instead of unrelated branches', () => {
-    const base = buildProductTopologyGraph(workspace, 'delivery-surfaces')
+    const base = buildProductTopologyGraph(workspace, 'delivery-by-interface')
     const entity = [...workspace.interfaces, ...workspace.experiences, ...workspace.screens].find((item: any) =>
       base.edges.some(edge => edge.source === item.key || edge.target === item.key))!
     const expected = topologyNeighbourhood(entity.key, base.edges)

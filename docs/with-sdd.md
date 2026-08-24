@@ -9,7 +9,7 @@ order: 21
 # Use BusinessLens with spec-driven development tools
 
 BusinessLens owns Product meaning: Actors and Interfaces, optional Experiences,
-Screens, and Domains, plus Capabilities, exact availability, Business Rules,
+Screens, and Domains, plus Capabilities, availability Contexts, Business Rules,
 local Capability Scenarios, optional coherent Journeys, and end-to-end Journey
 Scenarios.
 OpenSpec, spec-kit, and similar frameworks own technical design and task

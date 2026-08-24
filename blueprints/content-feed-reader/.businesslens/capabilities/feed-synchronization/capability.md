@@ -5,7 +5,7 @@ references:
     role: context
     target: https://www.rssboard.org/rss-specification
     title: RSS 2.0 specification
-availability: [reader-web::personal-library, reader-mobile::personal-library]
+availability: [{ place: reader-web::personal-library }, { place: reader-mobile::personal-library }]
 ---
 
 # Feed synchronization

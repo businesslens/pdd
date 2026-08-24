@@ -4,7 +4,7 @@ references:
   - kind: code
     role: implementation
     target: src/services/orders.ts#OrderService
-availability: [admin-web::admin-console, operator-cli]
+availability: [{ place: admin-web::admin-console }, { place: operator-cli }]
 ---
 
 # Order management

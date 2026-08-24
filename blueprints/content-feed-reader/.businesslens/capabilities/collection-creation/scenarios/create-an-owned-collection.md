@@ -6,16 +6,19 @@ steps:
   - text: The Reader provides a collection name
     kind: actor
     actor: reader
-    places:
-      web: reader-web::personal-library::collection-workspace
+    contexts:
+      web:
+        place: reader-web::personal-library::collection-workspace
   - text: The Product creates a private collection owned by that Reader
     kind: product
-    places:
-      web: reader-web::personal-library::collection-workspace
+    contexts:
+      web:
+        place: reader-web::personal-library::collection-workspace
   - text: The empty collection is ready to edit
     kind: condition
-    places:
-      web: reader-web::personal-library::collection-workspace
+    contexts:
+      web:
+        place: reader-web::personal-library::collection-workspace
 ---
 
 # Create an owned collection

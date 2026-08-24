@@ -34,7 +34,7 @@ export function entitiesOfKind(workspace: ReportWorkspace, kind: ReportEntityKin
  *
  * Availability is expanded to its Interface and Experience ids so "reachable
  * in this Experience" faceting works for the kinds that record access as
- * availability scopes rather than as plain id lists.
+ * resolved Contexts rather than as plain id lists.
  */
 export function relatedIds(entity: AnyEntityView, kind: ReportEntityKind): string[] {
   switch (entity.kind) {

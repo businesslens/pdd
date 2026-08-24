@@ -6,20 +6,23 @@ steps:
     kind: actor
     actor: reader
     capability: collection-publication
-    places:
-      unlist-on-web: reader-web::personal-library::collection-workspace
+    contexts:
+      unlist-on-web:
+        place: reader-web::personal-library::collection-workspace
   - text: The Reader unlists the collection
     kind: actor
     actor: reader
     capability: collection-publication
-    places:
-      unlist-on-web: reader-web::personal-library::collection-workspace
+    contexts:
+      unlist-on-web:
+        place: reader-web::personal-library::collection-workspace
   - text: The Visitor opens the shared address
     kind: actor
     actor: visitor
     capability: public-collection-reading
-    places:
-      unlist-on-web: reader-web::public-reading::public-collection
+    contexts:
+      unlist-on-web:
+        place: reader-web::public-reading::public-collection
   - text: The Product withholds the collection contents and shows a neutral unavailable state
     kind: product
 routes:

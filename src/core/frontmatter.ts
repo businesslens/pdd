@@ -75,15 +75,10 @@ export interface CompactEntryPoint {
   path: string
 }
 
-/**
- * A scope is one id: `reader-web`, or `reader-web::personal-library`.
- *
- * An Experience belongs to exactly one Interface, so its id already names the
- * Interface and the nested `{interface, experiences[]}` record — plus the rule
- * forbidding a mixture of the two shapes — collapses into a flat list of ids
- * that either resolve in the tree or do not.
- */
-export type Scope = string
+/** One strict Product Context. Usage determines how specific its place must be. */
+export interface Context {
+  place: string
+}
 
 /** Parse `entryPoints: [- web: /path]` compact single-key maps. */
 export function entryPointsField(data: Record<string, unknown>, issues: string[], label: string): CompactEntryPoint[] {
@@ -110,55 +105,69 @@ export function entryPointsField(data: Record<string, unknown>, issues: string[]
   return result
 }
 
-/** Parse exact Interface availability, optionally scoped by Experience. */
-export function availabilityField(data: Record<string, unknown>, issues: string[], label: string): Scope[] {
-  return scopeListField(data, 'availability', issues, label)
+/** Parse the Context selectors declaring where a Capability is available. */
+export function availabilityField(data: Record<string, unknown>, issues: string[], label: string): Context[] {
+  return contextListField(data, 'availability', issues, label)
 }
 
-/** A unique, non-empty list of scope ids. Resolution against the tree is lint's job. */
-export function scopeListField(
+/** Parse one strict Context object. Resolution against known places is lint's job. */
+export function contextValue(
+  value: unknown,
+  issues: string[],
+  label: string
+): Context | undefined {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    issues.push(`${label}: context must be a mapping with "place"`)
+    return undefined
+  }
+  const item = value as Record<string, unknown>
+  rejectUnknownKeys(item, ['place'], issues, label)
+  const place = item.place
+  if (typeof place !== 'string' || !isQualifiedId(place)) {
+    issues.push(`${label}: "place" must be a qualified Interface, Experience, or Screen id like "customer-web::storefront"`)
+    return undefined
+  }
+  return { place }
+}
+
+/** A unique list of Context objects. */
+export function contextListField(
   data: Record<string, unknown>,
   key: string,
   issues: string[],
   label: string
-): Scope[] {
+): Context[] {
   const value = data[key]
   if (value === undefined || value === null) return []
   if (!Array.isArray(value)) {
-    issues.push(`${label}: "${key}" must be a list of scope ids`)
+    issues.push(`${label}: "${key}" must be a list of Context objects`)
     return []
   }
-  const result: Scope[] = []
+  const result: Context[] = []
   const seen = new Set<string>()
-  for (const item of value) {
-    if (typeof item !== 'string' || !isQualifiedId(item)) {
-      issues.push(`${label}: "${key}" items must be scope ids like "customer-web" or "customer-web::storefront"`)
+  for (const [index, item] of value.entries()) {
+    const context = contextValue(item, issues, `${label}: ${key} context ${index + 1}`)
+    if (!context) continue
+    if (seen.has(context.place)) {
+      issues.push(`${label}: duplicate ${key} Context place "${context.place}"`)
       continue
     }
-    if (seen.has(item)) {
-      issues.push(`${label}: duplicate ${key} scope "${item}"`)
-      continue
-    }
-    seen.add(item)
-    result.push(item)
+    seen.add(context.place)
+    result.push(context)
   }
   return result
 }
 
-/** One exact context: a single scope id naming where this happens. */
-export function scopeField(
+/** One named Context field. */
+export function contextField(
   data: Record<string, unknown>,
   key: string,
   issues: string[],
   label: string
-): Scope | undefined {
+): Context | undefined {
   const value = data[key]
   if (value === undefined || value === null) return undefined
-  if (typeof value !== 'string' || !isQualifiedId(value)) {
-    issues.push(`${label}: "${key}" must be a scope id like "customer-web" or "customer-web::storefront"`)
-    return undefined
-  }
-  return value
+  return contextValue(value, issues, `${label}: "${key}"`)
 }
 
 /**

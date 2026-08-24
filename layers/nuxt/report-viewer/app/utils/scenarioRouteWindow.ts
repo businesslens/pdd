@@ -4,7 +4,7 @@ export type ScenarioRouteColumnPreference = 'auto' | `${number}`
 export const SCENARIO_ROUTE_INLINE_WIDTH = 640
 
 /* The table keeps one readable Step column and gives every route enough room
-   for a Product Place path. Capacity follows the component, not the viewport:
+   for a Context path. Capacity follows the component, not the viewport:
    the rail and the Scenario split can make a desktop viewport a narrow read. */
 const STEP_COLUMN_WIDTH = 300
 const ROUTE_COLUMN_WIDTH = 260

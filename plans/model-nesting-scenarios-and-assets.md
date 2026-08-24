@@ -63,7 +63,7 @@ them.
   Interface ⊃ Experience? ⊃ Screen          Capability ⊃ Capability Scenario
                                              Journey  ⊃ Journey Scenario
 
-        surface: where the product is          behavior: what the product does
+        place: where the product is            behavior: what the product does
 
   Actors (who) · Business Rules (constraints)          cross-cutting, flat
 ```
@@ -90,7 +90,7 @@ layout at `spec/format.md:44-66` each present a different shape.
 │
 ├── actors/<id>.md
 │
-│   ── surface tree ──
+│   ── Interface → Experience → Screen hierarchy ──
 ├── interfaces/<id>/
 │   ├── interface.md
 │   ├── screens/<id>.md                             when no Experience is justified
@@ -213,7 +213,7 @@ the AGENTS.md rule "each entity is explained in exactly one place" — one page 
 
 **Workbench:** *superseded — see `plans/report-viewer-navigation-and-depth.md`
 D1.* The indentation shipped and was then reversed: the rail lists kinds, kinds
-do not nest, and with schema 5 declaring a full surface tree as well, indenting
+do not nest, and with schema 5 declaring the full Interface → Experience → Screen hierarchy as well, indenting
 two rows was either incomplete or a three-level tree inside a ten-row rail. Both
 Scenario kinds are now a tab on their parent's collection, which is the
 resolution the docs clause above reached for documentation. The original text
@@ -390,12 +390,12 @@ list and becomes the one view that answers *"show me everything about
 Collections"* across both trees — Capabilities, Scenarios, Screens, Journeys,
 Rules.
 
-## D7. Ids are path-derived; surface-tree ids are qualified
+## D7. Ids are path-derived; Interface, Experience, and Screen ids are qualified
 
 Extend `spec/format.md:76` from "ID = filename stem" to **"ID = the path from the
 collection root."**
 
-Surface-tree entities legitimately repeat names across Interfaces, so their ids
+Experiences and Screens legitimately repeat names across Interfaces, so their ids
 carry the path:
 
 ```
@@ -411,7 +411,7 @@ globally unique — those collections have no repetition pressure, Business Rule
 uniqueness would break both for no gain.
 
 Cost to accept: Business Rule `appliesTo` and Screen back-references get longer.
-That is the honest price of surfaces being distinct, and it is greppable, which
+That is the honest price of Interfaces being distinct, and it is greppable, which
 bare ids stop being once names repeat.
 
 Separator: **see O1.**
@@ -436,7 +436,7 @@ Today the only order is `.sort()` on filenames (`src/core/model.ts:192`). The
 need is real: the landing screenshot manifest carries an explicit per-screen
 `order:` (`docs/design/ui/screenshots/manifest.yml`, values 1, 5, 6, 10 …)
 because the model did not provide one, and the catalog card artwork takes
-`MAX_SCREENS = 4` per surface in model order with no way to say which four
+`MAX_SCREENS = 4` per Interface in model order with no way to say which four
 matter (landing `server/catalog/artwork.ts:24`).
 
 Rejected: an `order:` integer on the Screen (one number cannot be right in every
@@ -451,7 +451,7 @@ after alphabetically. Never an error to omit.
 
 This narrows `spec/format.md:597` ("Screens do not author a sitemap") rather than
 reversing it: still no transition graph, but a declared reading order per
-surface. It also makes the landing card artwork deterministic, which it
+parent. It also makes the landing card artwork deterministic, which it
 currently is not.
 
 ## D10. Retained rules that decisions above did not weaken
@@ -698,7 +698,7 @@ from writing a section the format has not anticipated.
 
 ## O1. Id separator — resolved as `::`
 
-`::` was chosen over `/` for the qualified surface-tree ids in D7.
+`::` was chosen over `/` for the qualified Interface, Experience, and Screen ids in D7.
 
 - `::` — avoids URL encoding in report routes, which address entities by id, and
   matches the `parent::child` node-key convention already used in the viewer.
@@ -706,7 +706,7 @@ from writing a section the format has not anticipated.
 
 It avoids URL encoding in report routes, which address entities by id, and it
 matches the `parent::child` node-key convention already used in the viewer. It
-is encoded in `src/core/ids.ts`, the report's `SurfaceIdSchema`, every lint
+is encoded in `src/core/ids.ts`, the report's `QualifiedIdSchema`, every lint
 message, and both models.
 
 **Not done: L2, the landing entity grid.** `app/utils/homeContent.ts` still
@@ -789,14 +789,14 @@ a shelf.
 The `sitemap` view is already `Product → Interfaces → Experiences → Screens`
 with `semantics: 'occurrence'` (`:88-101`). Under D2 the occurrence semantics
 become unnecessary: nothing repeats, because nothing is shared. Counterparts
-(D11) become the interesting cross-surface overlay instead.
+(D11) become the interesting cross-Interface overlay instead.
 
 ## P5. Landing → model mapping
 
 | Landing artifact | Model entity | Fit |
 | --- | --- | --- |
 | the site + the `pull` catalog API | 2 Interfaces | good — the CLI *initiates*, so the API is inbound and the puller is its Actor (`spec/format.md` Outbound dependencies) |
-| `docs/design/experiences/*.md` | Experiences with `access:` | strong — the catalog artwork already treats Experience as the surface |
+| `docs/design/experiences/*.md` | Experiences with `access:` | strong — the catalog artwork already treats Experience as the context of use |
 | the "Who does what" tables | Actors | good |
 | `docs/design/ui/*-screens.md` | Screens | good |
 | `CAT-02`'s `?tab=` variants | `## Product states` | good — tabs change what the user understands |
@@ -868,7 +868,7 @@ Fix: derive per-Experience Journey reach from `routes[].contexts[].experienceId`
 ## Blast radius of the schema-5 change
 
 - `src/core/model.ts:190` — `listMarkdown` gains directory levels and must walk
-  the surface tree; see also P3.
+  the Interface → Experience → Screen hierarchy; see also P3.
 - `src/core/model.ts` — every entity loads from compact `<id>.md` or expanded
   `<id>/<type>.md`, never both.
 - `src/core/portable.ts` — scope ids replace the nested availability shape.

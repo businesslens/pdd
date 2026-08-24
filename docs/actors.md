@@ -39,7 +39,7 @@ An external system is an Actor only when it **initiates**. Ask three questions:
 
 1. Does it start the interaction with your Product?
 2. Does it have a goal or privilege of its own inside your Product?
-3. Must you keep a surface stable and verifiable for it?
+3. Must you keep an inbound interaction contract stable and verifiable for it?
 
 All three yes — a partner system calling your API, a processor posting a
 webhook — and it is an Actor with an [Interface](./interfaces.md). Any no and it

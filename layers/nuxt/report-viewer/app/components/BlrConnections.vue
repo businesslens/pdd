@@ -189,7 +189,7 @@ function overflow(item: RelationRow): number {
   Two counterparts reaching the same entity produce two chips with one name.
 
   "Source list, Source list" reads as a rendering bug rather than as the true
-  statement that this Capability is exposed on both surfaces. The Interface is
+  statement that this Capability is exposed through both Interfaces. The Interface is
   the segment that distinguishes them, and it is added only where the ambiguity
   is actually present — every other chip stays short.
 */
@@ -201,9 +201,9 @@ function title(kind: ReportEntityKind, id: string, siblings: string[]): string {
     return resolveEntity(props.workspace, kind, other)?.title === entity.title
   })
   if (!shared.length) return entity.title
-  const [surface] = entity.id.split('::')
-  if (!surface || surface === entity.id) return entity.title
-  const owner = resolveEntity(props.workspace, 'interface', surface)?.title ?? surface
+  const [interfaceId] = entity.id.split('::')
+  if (!interfaceId || interfaceId === entity.id) return entity.title
+  const owner = resolveEntity(props.workspace, 'interface', interfaceId)?.title ?? interfaceId
   return `${entity.title} · ${owner.replace(/ application$/, '')}`
 }
 

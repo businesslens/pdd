@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Context is now the single location concept.** Folder schema 6 replaces
+  scalar availability boundaries and Scenario Places with one strict
+  `{ place: ... }` Context shape across Capability availability, Scenario
+  Steps, and Business Rule selectors. A Context place resolves to an Interface,
+  Experience, or Screen; Screens derive their place from
+  their path and declare no availability of their own.
+- Product Report v10 mirrors the same model with `{ placeId: ... }` Contexts,
+  removes the former availability/Place wire records, and is the only accepted
+  report version. The CLI, report SDK, Workbench, bundled skills, fixtures, and
+  Content Feed Reader Blueprint now consume schema 6 and report v10 directly.
+- Product Model terminology now names the Interface → Experience → Screen
+  hierarchy directly. The under-defined “surface” alias, including
+  `surface-parent`, surface-tree IDs, and the Workbench's Delivery surfaces
+  view, has been replaced by concrete entity names and `screen-parent`.
+
 ## [0.8.0] - 2026-08-24
 
 ### Added
@@ -130,7 +147,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   every kind—Screens most of all—a co-located namespace when needed.
   `product.md` similarly expands to `product/product.md` only when it owns
   `logo.svg`.
-- **The surface tree nests.** An Experience belongs to exactly one Interface and
+- **The Interface → Experience → Screen hierarchy nests.** An Experience
+  belongs to exactly one Interface and
   a Screen to exactly one scope, so the path is the parent relation. An
   Experience no longer writes `interfaces:`, a Capability Scenario no longer
   writes `capability:`, a Journey Scenario no longer writes `journey:`, and a
@@ -142,10 +160,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   sub-list, the rule requiring an Experience when the Interface uses them, and
   the prohibition on mixing the two shapes — all four were consequences of an
   Experience being able to span Interfaces.
-- **Surface-tree ids are qualified** by the path that distinguishes them.
-  Surface names repeat across Interfaces on purpose: two entities of the same
+- **Interface, Experience, and Screen ids are qualified** by the path that
+  distinguishes them. Experience and Screen names repeat across Interfaces on purpose: two entities of the same
   kind sharing a path suffix below their Interface are counterparts — the same
-  thing on two surfaces. Behavior-tree ids stay bare and globally unique.
+  thing on two Interfaces. Behavior-tree ids stay bare and globally unique.
 - **Domain is a subject axis, not a capability folder.** It now requires a
   `## Boundary` section, and only Capability authors `domain:` — a Screen's,
   Experience's or Journey's Domains are derived through their Capabilities
@@ -158,7 +176,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Scenarios in `docs/journeys.md`, and the containment rule that separates them
   in `docs/product-model.md`. The standalone `docs/scenarios.md` is removed.
 - An external system is an Actor only when it **initiates** interaction with
-  the Product, and only then is the surface it arrives through an Interface.
+  the Product, and only then does it arrive through an Interface.
   Interfaces are inbound by definition; an outbound connection the Product
   opens to a third party — a polled feed, a payment processor, a mail provider,
   a model API — is not an Interface and its far side is not an Actor. Model the

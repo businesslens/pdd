@@ -1,7 +1,8 @@
-import type { ExactContext, PddModel } from '../core/model.js'
+import type { Context } from '../core/frontmatter.js'
 import { repositoryReferencePath } from '../core/frontmatter.js'
+import type { PddModel } from '../core/model.js'
 import { lsFiles } from '../core/git.js'
-import { counterpartKey, interfaceOf, isId, isQualifiedId } from '../core/ids.js'
+import { containsPlace, counterpartKey, interfaceOf, isId, isQualifiedId } from '../core/ids.js'
 import { INTERFACE_TYPES } from '../core/interface-types.js'
 import { containsStructuralHeading, section, type MarkdownDoc } from '../core/markdown.js'
 import { loadModel } from '../core/model.js'
@@ -20,11 +21,6 @@ const ACTOR_RELATIONSHIPS = new Set(['external', 'internal'])
 const COVERAGE_STATUSES = new Set(['complete', 'partial', 'draft'])
 const JOURNEY_RESULTS = new Set(['achieved', 'not-achieved'])
 const INTERFACE_TYPE_SET = new Set<string>(INTERFACE_TYPES)
-
-/** A scope id is already its own key and its own label. */
-function availabilityLabel(scope: string): string {
-  return scope
-}
 
 function sameSet(left: Set<string>, right: Set<string>): boolean {
   return left.size === right.size && [...left].every(value => right.has(value))
@@ -130,8 +126,8 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     ['journeyScenarios', model.journeyScenarios],
     ['scenarioKinds', model.scenarioKinds]
   ]
-  // Surface-tree ids carry the path that distinguishes repeated names across
-  // Interfaces; behavior-tree ids stay bare and globally unique.
+  // Interface, Experience, and Screen ids carry the path that distinguishes
+  // repeated names across Interfaces; behavior ids stay bare and globally unique.
   const QUALIFIED_COLLECTIONS = new Set(['interfaces', 'experiences', 'screens'])
   for (const [name, items] of collections) {
     const valid = QUALIFIED_COLLECTIONS.has(name) ? isQualifiedId : isId
@@ -145,10 +141,15 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
   const interfacesById = new Map(model.interfaces.map(item => [item.id, item]))
   const experiencesById = new Map(model.experiences.map(experience => [experience.id, experience]))
   const experienceScopedInterfaces = new Set(model.experiences.map(experience => experience.interface))
-  /* Every scope a Capability, Screen or context may name: an undivided Interface, or an Experience. */
-  const scopeIds = new Set<string>([
+  /* Capability availability names a boundary: an undivided Interface or an Experience. */
+  const availabilityPlaceIds = new Set<string>([
     ...model.interfaces.filter(item => !experienceScopedInterfaces.has(item.id)).map(item => item.id),
     ...model.experiences.map(experience => experience.id)
+  ])
+  const placeIds = new Set<string>([
+    ...model.interfaces.map(item => item.id),
+    ...model.experiences.map(item => item.id),
+    ...model.screens.map(item => item.id)
   ])
   const domainIds = new Set(model.domains.map(domain => domain.id))
   const capabilityIds = new Set(model.capabilities.map(capability => capability.id))
@@ -157,46 +158,55 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
   const journeyScenarioIds = new Set(model.journeyScenarios.map(scenario => scenario.id))
   const kindIds = new Set(model.scenarioKinds.map(kind => kind.id))
 
-  /*
-    A scope either resolves in the tree or it does not. That single check
-    replaces the nested availability record, the "needs an experience because
-    the interface uses Experience contexts" rule, its mirror image, and the
-    prohibition on mixing the two — all four were consequences of an Experience
-    being able to span Interfaces.
-  */
-  const resolveScope = (label: string, scope: string, what: string): boolean => {
-    if (!scope) {
-      errors.push(`${label}: ${what} needs a non-empty scope id`)
+  const validateContextPlace = (label: string, context: Context): string => {
+    const place = context.place
+    if (!place) {
+      errors.push(`${label}: Context needs a non-empty place id`)
+      return place
+    }
+    if (!isQualifiedId(place)) {
+      errors.push(`${label}: Context place "${place}" is not a valid Interface, Experience, or Screen id`)
+      return place
+    }
+    if (!placeIds.has(place)) {
+      errors.push(`${label}: Context references missing place "${place}"`)
+    }
+    return place
+  }
+
+  const resolveAvailabilityPlace = (label: string, place: string): boolean => {
+    if (!place) {
+      errors.push(`${label}: availability Context needs a non-empty place id`)
       return false
     }
-    if (!isQualifiedId(scope)) {
-      errors.push(`${label}: ${what} scope "${scope}" is not a valid scope id`)
+    if (!isQualifiedId(place)) {
+      errors.push(`${label}: availability Context place "${place}" is not a valid Interface, Experience, or Screen id`)
       return false
     }
-    if (scopeIds.has(scope)) return true
-    const owner = interfaceOf(scope)
+    if (availabilityPlaceIds.has(place)) return true
+    if (model.screens.some(screen => screen.id === place)) {
+      errors.push(`${label}: availability Context place "${place}" must name its containing Interface or Experience, not a Screen`)
+      return false
+    }
+    const owner = interfaceOf(place)
     if (!interfaceIds.has(owner)) {
-      errors.push(`${label}: ${what} references missing interface "${owner}"`)
-    } else if (scope === owner) {
+      errors.push(`${label}: availability Context references missing interface "${owner}"`)
+    } else if (place === owner) {
       errors.push(`${label}: interface "${owner}" is divided into Experiences, so name one of them`)
     } else {
-      errors.push(`${label}: ${what} references missing experience "${scope}"`)
+      errors.push(`${label}: availability Context references missing experience "${place}"`)
     }
     return false
   }
 
-  const validateAvailability = (label: string, items: string[]): Set<string> => {
-    const scopes = new Set<string>()
-    for (const scope of items) {
-      if (scopes.has(scope)) errors.push(`${label}: duplicate availability scope "${scope}"`)
-      if (resolveScope(label, scope, 'availability')) scopes.add(scope)
+  const validateAvailability = (label: string, contexts: Context[]): Set<string> => {
+    const places = new Set<string>()
+    for (const context of contexts) {
+      const place = context.place
+      if (places.has(place)) errors.push(`${label}: duplicate availability Context place "${place}"`)
+      if (resolveAvailabilityPlace(label, place)) places.add(place)
     }
-    return scopes
-  }
-
-  const validateExactContext = (label: string, context: ExactContext): string => {
-    resolveScope(label, context, 'context')
-    return context
+    return places
   }
 
   const validateEntryPointInterfaces = (
@@ -280,64 +290,61 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     validateSections(domain.file, domain.doc, ['Intent'])
   }
 
-  const capabilityPairs = new Map<string, Set<string>>()
+  const capabilityAvailability = new Map<string, Set<string>>()
   for (const capability of model.capabilities) {
     requireTitle(capability.file, capability.doc.title, capability.doc.lead)
     validateSections(capability.file, capability.doc, ['Intent'])
-    if (!capability.availability.length) errors.push(`${capability.file}: needs at least one availability scope`)
+    if (!capability.availability.length) errors.push(`${capability.file}: needs at least one availability Context`)
     if (capability.domain && !domainIds.has(capability.domain)) {
       errors.push(`${capability.file}: references missing domain "${capability.domain}"`)
     }
-    capabilityPairs.set(capability.id, validateAvailability(capability.file, capability.availability))
+    capabilityAvailability.set(capability.id, validateAvailability(capability.file, capability.availability))
   }
 
-  /*
-    Who a scope permits. An Experience is authoritative for its own audience;
-    an undivided Interface is authoritative for its.
-  */
-  const supportedActorsForPair = (scope: string): Set<string> | undefined => {
-    const experience = experiencesById.get(scope)
+  /* An Experience is authoritative for its audience; an undivided Interface is authoritative for its. */
+  const supportedActorsForContainer = (place: string): Set<string> | undefined => {
+    const experience = experiencesById.get(place)
     if (experience) return new Set(experience.actors)
-    const productInterface = interfacesById.get(scope)
+    const productInterface = interfacesById.get(place)
     return productInterface ? new Set(productInterface.actors) : undefined
   }
 
   const screensById = new Map(model.screens.map(screen => [screen.id, screen]))
-  const screensByScope = new Map<string, typeof model.screens>()
+  const screensByContainer = new Map<string, typeof model.screens>()
   for (const screen of model.screens) {
-    const siblings = screensByScope.get(screen.scope) || []
+    const siblings = screensByContainer.get(screen.containerId) || []
     siblings.push(screen)
-    screensByScope.set(screen.scope, siblings)
+    screensByContainer.set(screen.containerId, siblings)
   }
 
-  const resolveProductPlace = (label: string, placeId: string) => {
+  const resolveScenarioContext = (label: string, placeId: string) => {
     if (!placeId) {
-      errors.push(`${label}: needs a non-empty Product Place id`)
+      errors.push(`${label}: Context needs a non-empty place id`)
       return undefined
     }
     if (!isQualifiedId(placeId)) {
-      errors.push(`${label}: Product Place "${placeId}" is not a valid surface-tree id`)
+      errors.push(`${label}: Context place "${placeId}" is not a valid Interface, Experience, or Screen id`)
       return undefined
     }
     const screen = screensById.get(placeId)
-    if (screen) return { context: screen.scope, screen }
+    if (screen) return { place: placeId, containerId: screen.containerId, screen }
     const experience = experiencesById.get(placeId)
     if (experience) {
-      if ((screensByScope.get(placeId) || []).length) {
-        errors.push(`${label}: Experience "${placeId}" owns Screens, so the Product Place must name one of its Screens`)
+      if ((screensByContainer.get(placeId) || []).length) {
+        errors.push(`${label}: Experience "${placeId}" owns Screens, so the Context must name one of its Screens`)
       }
-      return { context: placeId, screen: undefined }
+      return { place: placeId, containerId: placeId, screen: undefined }
     }
     const productInterface = interfacesById.get(placeId)
     if (productInterface) {
       if (experienceScopedInterfaces.has(placeId)) {
-        errors.push(`${label}: Interface "${placeId}" is divided into Experiences, so the Product Place must name one of them or one of their Screens`)
-      } else if ((screensByScope.get(placeId) || []).length) {
-        errors.push(`${label}: Interface "${placeId}" owns Screens, so the Product Place must name one of its Screens`)
+        errors.push(`${label}: Interface "${placeId}" is divided into Experiences, so the Context must name one of them or one of their Screens`)
+      } else if ((screensByContainer.get(placeId) || []).length) {
+        errors.push(`${label}: Interface "${placeId}" owns Screens, so the Context must name one of its Screens`)
       }
-      return { context: placeId, screen: undefined }
+      return { place: placeId, containerId: placeId, screen: undefined }
     }
-    errors.push(`${label}: references missing Product Place "${placeId}"`)
+    errors.push(`${label}: Context references missing place "${placeId}"`)
     return undefined
   }
 
@@ -350,7 +357,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     if (!scenario.routes.length) errors.push(`${scenario.file}: needs at least one route`)
     const routeIds = new Set<string>()
     const routeNames = new Set<string>()
-    const routePlaces = new Map<string, string[]>(scenario.routes.map(route => [route.id, []]))
+    const routeContextPlaces = new Map<string, string[]>(scenario.routes.map(route => [route.id, []]))
     for (const route of scenario.routes) {
       const label = `${scenario.file}: route "${route.id}"`
       if (!route.id) errors.push(`${scenario.file}: route id must not be empty`)
@@ -365,9 +372,10 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     }
 
     if (!scenario.steps.length) errors.push(`${scenario.file}: needs at least one step`)
-    const allPairs = new Set<string>()
+    const allContextPlaces = new Set<string>()
+    const allContainers = new Set<string>()
     const scenarioActors = new Set<string>()
-    const capabilitySteps: Array<{ capability: string, pairs: Set<string> }> = []
+    const capabilitySteps: Array<{ capability: string, contextPlaces: Set<string>, containers: Set<string> }> = []
     for (const [index, step] of scenario.steps.entries()) {
       const label = `${scenario.file}: step ${index + 1}`
       if (!step.text.trim()) errors.push(`${label}: needs non-empty text`)
@@ -387,88 +395,90 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
 
       const capabilityId = implicitCapability || step.capability
       if (capabilityId) {
-        capabilitySteps.push({ capability: capabilityId, pairs: new Set<string>() })
+        capabilitySteps.push({ capability: capabilityId, contextPlaces: new Set<string>(), containers: new Set<string>() })
         if (!capabilityIds.has(capabilityId)) {
           errors.push(`${label}: references missing capability "${capabilityId}"`)
         }
       }
 
-      if (!step.places.length) continue
-      const placedRouteIds = new Set<string>()
-      for (const place of step.places) {
-        const placeLabel = `${label}: route "${place.routeId}"`
-        if (!routeIds.has(place.routeId)) {
-          errors.push(`${placeLabel}: references undeclared route`)
+      if (!step.contexts.length) continue
+      const contextualizedRouteIds = new Set<string>()
+      for (const context of step.contexts) {
+        const contextLabel = `${label}: route "${context.routeId}"`
+        if (!routeIds.has(context.routeId)) {
+          errors.push(`${contextLabel}: references undeclared route`)
         }
-        if (placedRouteIds.has(place.routeId)) errors.push(`${placeLabel}: duplicate Product Place`)
-        placedRouteIds.add(place.routeId)
-        routePlaces.get(place.routeId)?.push(place.placeId)
-        const resolved = resolveProductPlace(placeLabel, place.placeId)
+        if (contextualizedRouteIds.has(context.routeId)) errors.push(`${contextLabel}: duplicate Context`)
+        contextualizedRouteIds.add(context.routeId)
+        routeContextPlaces.get(context.routeId)?.push(context.place)
+        const resolved = resolveScenarioContext(contextLabel, context.place)
         if (!resolved) continue
-        allPairs.add(resolved.context)
+        allContextPlaces.add(resolved.place)
+        allContainers.add(resolved.containerId)
         const currentCapabilityStep = capabilityId ? capabilitySteps.at(-1) : undefined
-        currentCapabilityStep?.pairs.add(resolved.context)
+        currentCapabilityStep?.contextPlaces.add(resolved.place)
+        currentCapabilityStep?.containers.add(resolved.containerId)
         if (capabilityId) {
-          const supported = capabilityPairs.get(capabilityId) || new Set<string>()
-          if (!supported.has(resolved.context)) {
-            errors.push(`${placeLabel}: context "${availabilityLabel(resolved.context)}" is outside capability "${capabilityId}"`)
+          const supported = capabilityAvailability.get(capabilityId) || new Set<string>()
+          if (!supported.has(resolved.containerId)) {
+            errors.push(`${contextLabel}: Context place "${resolved.place}" is outside capability "${capabilityId}"`)
           }
           if (resolved.screen && !resolved.screen.capabilities.includes(capabilityId)) {
-            errors.push(`${placeLabel}: Screen "${resolved.screen.id}" does not expose capability "${capabilityId}"`)
+            errors.push(`${contextLabel}: Screen "${resolved.screen.id}" does not expose capability "${capabilityId}"`)
           }
         }
         if (step.kind === 'actor' && step.actor) {
-          const supported = supportedActorsForPair(resolved.context) || new Set<string>()
+          const supported = supportedActorsForContainer(resolved.containerId) || new Set<string>()
           if (!supported.has(step.actor)) {
-            errors.push(`${placeLabel}: Product Place does not support actor "${step.actor}"`)
+            errors.push(`${contextLabel}: Context place does not support actor "${step.actor}"`)
           }
         }
       }
-      if (!sameSet(placedRouteIds, routeIds)) {
-        errors.push(`${label}: places must assign every declared route or be omitted`)
+      if (!sameSet(contextualizedRouteIds, routeIds)) {
+        errors.push(`${label}: contexts must assign every declared route or be omitted`)
       }
     }
 
     if (!scenarioActors.size) errors.push(`${scenario.file}: needs at least one actor Step`)
     for (const route of scenario.routes) {
-      const sequence = routePlaces.get(route.id) || []
-      if (!sequence.length) errors.push(`${scenario.file}: route "${route.id}" must be placed by at least one Step`)
+      const sequence = routeContextPlaces.get(route.id) || []
+      if (!sequence.length) errors.push(`${scenario.file}: route "${route.id}" must have a Context on at least one Step`)
     }
     const seenSequences = new Map<string, string>()
     for (const route of scenario.routes) {
-      const sequence = (routePlaces.get(route.id) || []).join('\n')
+      const sequence = (routeContextPlaces.get(route.id) || []).join('\n')
       if (!sequence) continue
       const twin = seenSequences.get(sequence)
-      if (twin) errors.push(`${scenario.file}: route "${route.id}" repeats every Product Place of route "${twin}"`)
+      if (twin) errors.push(`${scenario.file}: route "${route.id}" repeats every Context place of route "${twin}"`)
       else seenSequences.set(sequence, route.id)
     }
 
     const supportedSomewhere = new Set<string>()
-    for (const context of allPairs) {
-      const supported = supportedActorsForPair(context) || new Set<string>()
+    for (const container of allContainers) {
+      const supported = supportedActorsForContainer(container) || new Set<string>()
       const participating = [...scenarioActors].filter(actorId => supported.has(actorId))
       if (!participating.length) {
-        errors.push(`${scenario.file}: context "${availabilityLabel(context)}" permits none of the Scenario Actors`)
+        errors.push(`${scenario.file}: Context place "${container}" permits none of the Scenario Actors`)
       }
       for (const actorId of participating) supportedSomewhere.add(actorId)
     }
     for (const actorId of scenarioActors) {
       if (actorIds.has(actorId) && !supportedSomewhere.has(actorId)) {
-        errors.push(`${scenario.file}: actor "${actorId}" is not supported by any selected Product Place`)
+        errors.push(`${scenario.file}: actor "${actorId}" is not supported by any selected Context place`)
       }
     }
 
     if (journeyActors) {
       for (const route of scenario.routes) {
         const firstActorStep = scenario.steps.find(step =>
-          step.kind === 'actor' && step.places.some(place => place.routeId === route.id)
+          step.kind === 'actor' && step.contexts.some(context => context.routeId === route.id)
         )
         if (!firstActorStep?.actor || !journeyActors.has(firstActorStep.actor)) {
-          errors.push(`${scenario.file}: route "${route.id}" must begin its Actor-owned placed Steps with a Journey Actor`)
+          errors.push(`${scenario.file}: route "${route.id}" must begin its contextualized Actor Steps with a Journey Actor`)
         }
       }
     }
-    return { allPairs, scenarioActors, capabilitySteps }
+    return { allContextPlaces, allContainers, scenarioActors, capabilitySteps }
   }
 
   const validateScenarioSections = (scenario: {
@@ -510,8 +520,8 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
   }
 
   const capabilityScenariosById = new Map(model.capabilityScenarios.map(scenario => [scenario.id, scenario]))
-  const capabilityScenarioPairs = new Map<string, Set<string>>()
-  const coveredCapabilityPairs = new Map<string, Set<string>>()
+  const capabilityScenarioContextPlaces = new Map<string, Set<string>>()
+  const coveredCapabilityPlaces = new Map<string, Set<string>>()
   for (const scenario of model.capabilityScenarios) {
     validateScenarioSections(scenario)
     if (!scenario.capability) {
@@ -519,24 +529,24 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     } else if (!capabilityIds.has(scenario.capability)) {
       errors.push(`${scenario.file}: references missing capability "${scenario.capability}"`)
     }
-    const { allPairs: pairs } = validateScenarioShape(scenario, scenario.capability)
-    capabilityScenarioPairs.set(scenario.id, pairs)
-    const coveredPairs = coveredCapabilityPairs.get(scenario.capability) || new Set<string>()
-    for (const pair of pairs) coveredPairs.add(pair)
-    coveredCapabilityPairs.set(scenario.capability, coveredPairs)
-    const supported = capabilityPairs.get(scenario.capability) || new Set<string>()
-    for (const pair of pairs) {
-      if (!supported.has(pair)) {
-        errors.push(`${scenario.file}: availability "${availabilityLabel(pair)}" is outside capability "${scenario.capability}"`)
+    const { allContextPlaces, allContainers } = validateScenarioShape(scenario, scenario.capability)
+    capabilityScenarioContextPlaces.set(scenario.id, allContextPlaces)
+    const coveredPlaces = coveredCapabilityPlaces.get(scenario.capability) || new Set<string>()
+    for (const place of allContainers) coveredPlaces.add(place)
+    coveredCapabilityPlaces.set(scenario.capability, coveredPlaces)
+    const supported = capabilityAvailability.get(scenario.capability) || new Set<string>()
+    for (const place of allContainers) {
+      if (!supported.has(place)) {
+        errors.push(`${scenario.file}: Context place "${place}" is outside capability "${scenario.capability}"`)
       }
     }
   }
   for (const capability of model.capabilities) {
-    const covered = coveredCapabilityPairs.get(capability.id) || new Set<string>()
-    const required = capabilityPairs.get(capability.id) || new Set<string>()
-    for (const pair of required) {
-      if (covered.has(pair)) continue
-      const finding = `${capability.file}: availability "${availabilityLabel(pair)}" needs Capability Scenario coverage`
+    const covered = coveredCapabilityPlaces.get(capability.id) || new Set<string>()
+    const required = capabilityAvailability.get(capability.id) || new Set<string>()
+    for (const place of required) {
+      if (covered.has(place)) continue
+      const finding = `${capability.file}: availability Context place "${place}" needs Capability Scenario coverage`
       if (model.coverage.status === 'complete') errors.push(finding)
       else warnings.push(finding)
     }
@@ -566,7 +576,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
   }
 
   const journeyScenariosById = new Map(model.journeyScenarios.map(scenario => [scenario.id, scenario]))
-  const journeyScenarioSteps = new Map<string, Array<{ capability: string, pairs: Set<string> }>>()
+  const journeyScenarioSteps = new Map<string, Array<{ capability: string, contextPlaces: Set<string>, containers: Set<string> }>>()
   const journeyScenarioActors = new Map<string, Set<string>>()
   for (const scenario of model.journeyScenarios) {
     validateScenarioSections(scenario)
@@ -610,25 +620,24 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     )
     validateListSection(screen.file, screen.doc, 'Information presented', 'bullet')
     validateListSection(screen.file, screen.doc, 'Available actions', 'bullet')
-    if (!screen.availability.length) errors.push(`${screen.file}: needs at least one availability scope`)
-    const pairs = validateAvailability(screen.file, screen.availability)
+    if (!availabilityPlaceIds.has(screen.containerId)) {
+      errors.push(`${screen.file}: containing place "${screen.containerId}" must be an undivided Interface or an Experience`)
+    }
     if (!screen.capabilities.length) errors.push(`${screen.file}: needs at least one capability`)
     for (const capabilityId of screen.capabilities) {
       if (!capabilityIds.has(capabilityId)) {
         errors.push(`${screen.file}: references missing capability "${capabilityId}"`)
         continue
       }
-      const supported = capabilityPairs.get(capabilityId) || new Set<string>()
-      for (const pair of pairs) {
-        if (!supported.has(pair)) {
-          errors.push(`${screen.file}: capability "${capabilityId}" is not available in "${availabilityLabel(pair)}"`)
-        }
+      const supported = capabilityAvailability.get(capabilityId) || new Set<string>()
+      if (!supported.has(screen.containerId)) {
+        errors.push(`${screen.file}: capability "${capabilityId}" is not available in containing place "${screen.containerId}"`)
       }
     }
     validateEntryPointInterfaces(
       screen.file,
       screen.entryPoints,
-      new Set(screen.availability.map(scope => interfaceOf(scope)))
+      new Set([interfaceOf(screen.containerId)])
     )
     if (!screen.information.length) {
       errors.push(`${screen.file}: "## Information presented" needs at least one bullet item`)
@@ -665,13 +674,21 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     const journeyTargets = new Set<string>()
     const capabilityScenarioTargets: string[] = []
     const journeyScenarioTargets: string[] = []
+    const directContextPlaces: string[] = []
     for (const [index, target] of rule.appliesTo.entries()) {
       const label = `${rule.file}: appliesTo item ${index + 1}`
       if (target.type === 'context') {
-        const pair = validateExactContext(label, target.context)
-        const key = `context\0${pair}`
-        if (seenTargets.has(key)) errors.push(`${label}: duplicate context target "${availabilityLabel(pair)}"`)
+        const place = validateContextPlace(label, target.context)
+        const key = `context\0${place}`
+        if (seenTargets.has(key)) errors.push(`${label}: duplicate Context target place "${place}"`)
+        const overlapping = directContextPlaces.find(existing =>
+          existing !== place && (containsPlace(existing, place) || containsPlace(place, existing))
+        )
+        if (overlapping) {
+          errors.push(`${label}: Context target place "${place}" is redundant with "${overlapping}"`)
+        }
         seenTargets.add(key)
+        directContextPlaces.push(place)
         continue
       }
       if (!['capability', 'capability-scenario', 'journey', 'journey-scenario'].includes(target.type)) {
@@ -686,34 +703,43 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
       if (target.type === 'capability') {
         if (!capabilityIds.has(target.id)) errors.push(`${label}: references missing capability "${target.id}"`)
         capabilityTargets.add(target.id)
-        supported = capabilityPairs.get(target.id) || supported
+        supported = new Set(capabilityAvailability.get(target.id) || [])
+        for (const screen of model.screens) {
+          if (supported.has(screen.containerId) && screen.capabilities.includes(target.id)) supported.add(screen.id)
+        }
       } else if (target.type === 'capability-scenario') {
         if (!capabilityScenarioIds.has(target.id)) errors.push(`${label}: references missing Capability Scenario "${target.id}"`)
         capabilityScenarioTargets.push(target.id)
-        supported = capabilityScenarioPairs.get(target.id) || supported
+        supported = capabilityScenarioContextPlaces.get(target.id) || supported
       } else if (target.type === 'journey') {
         if (!journeyIds.has(target.id)) errors.push(`${label}: references missing journey "${target.id}"`)
         journeyTargets.add(target.id)
         for (const scenario of model.journeyScenarios.filter(item => item.journey === target.id && item.result === 'achieved')) {
           for (const entry of journeyScenarioSteps.get(scenario.id) || []) {
-            for (const pair of entry.pairs) supported.add(pair)
+            for (const place of entry.contextPlaces) supported.add(place)
           }
         }
       } else {
         if (!journeyScenarioIds.has(target.id)) errors.push(`${label}: references missing Journey Scenario "${target.id}"`)
         journeyScenarioTargets.push(target.id)
         for (const entry of journeyScenarioSteps.get(target.id) || []) {
-          for (const pair of entry.pairs) supported.add(pair)
+          for (const place of entry.contextPlaces) supported.add(place)
         }
       }
-      const seenContexts = new Set<string>()
+      const seenContextPlaces: string[] = []
       for (const [contextIndex, context] of target.contexts.entries()) {
-        const contextLabel = `${label}: context ${contextIndex + 1}`
-        const pair = validateExactContext(contextLabel, context)
-        if (seenContexts.has(pair)) errors.push(`${contextLabel}: duplicate context "${availabilityLabel(pair)}"`)
-        seenContexts.add(pair)
-        if (!supported.has(pair)) {
-          errors.push(`${contextLabel}: context "${availabilityLabel(pair)}" is outside target "${target.type}:${target.id}"`)
+        const contextLabel = `${label}: Context ${contextIndex + 1}`
+        const place = validateContextPlace(contextLabel, context)
+        if (seenContextPlaces.includes(place)) errors.push(`${contextLabel}: duplicate Context place "${place}"`)
+        const overlapping = seenContextPlaces.find(existing =>
+          existing !== place && (containsPlace(existing, place) || containsPlace(place, existing))
+        )
+        if (overlapping) {
+          errors.push(`${contextLabel}: Context place "${place}" is redundant with "${overlapping}"`)
+        }
+        seenContextPlaces.push(place)
+        if (!supported.has(place) && ![...supported].some(candidate => containsPlace(place, candidate))) {
+          errors.push(`${contextLabel}: Context place "${place}" is outside target "${target.type}:${target.id}"`)
         }
       }
     }
@@ -749,7 +775,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     ...model.journeyScenarios
   ]
   /*
-    Asset metadata is additive: it titles and scopes files that are already
+    Asset metadata is additive: it titles and describes files that are already
     there, and never sets their class. Class is the path — anything under
     `implementation/` describes this realization — which is the only rule a
     foreign tool writing a capture on CI can actually satisfy.

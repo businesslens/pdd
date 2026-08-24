@@ -10,7 +10,7 @@
 export type {
   ActorView,
   AnyEntityView,
-  AvailabilityPair,
+  ContextView,
   CapabilityView,
   DomainView,
   EntryPointView,

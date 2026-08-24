@@ -1,13 +1,14 @@
 import { readdirSync, readFileSync, existsSync } from 'node:fs'
 import { basename, join } from 'node:path'
 import { parse } from 'yaml'
-import type { CompactEntryPoint, EntityAsset, EntityReference, Scope } from './frontmatter.js'
+import type { CompactEntryPoint, Context, EntityAsset, EntityReference } from './frontmatter.js'
 import type { MarkdownDoc } from './markdown.js'
 import {
   assetsField,
   availabilityField,
+  contextField,
+  contextValue,
   entryPointsField,
-  scopeField,
   referencesField,
   rejectUnknownKeys,
   splitFrontmatter,
@@ -75,13 +76,12 @@ export interface DomainEntity extends EntityFile {
 
 export interface CapabilityEntity extends EntityFile {
   domain?: string
-  availability: Scope[]
+  availability: Context[]
 }
 
 export interface ScreenEntity extends EntityFile {
-  /** The scope that owns it, read from the path. Never authored. */
-  scope: Scope
-  availability: Scope[]
+  /** The Interface or Experience that owns it, read from the path. Never authored. */
+  containerId: string
   capabilities: string[]
   entryPoints: CompactEntryPoint[]
   information: string[]
@@ -105,9 +105,6 @@ export interface CapabilityScenarioEntity extends ScenarioEntity {
   capability: string
 }
 
-/** One exact context is one scope id. */
-export type ExactContext = Scope
-
 export interface ScenarioRoute {
   id: string
   name: string
@@ -115,9 +112,8 @@ export interface ScenarioRoute {
 
 export type ScenarioStepKind = 'actor' | 'product' | 'condition'
 
-export interface ScenarioStepPlace {
+export interface ScenarioStepContext extends Context {
   routeId: string
-  placeId: string
 }
 
 export interface ScenarioStep {
@@ -125,7 +121,7 @@ export interface ScenarioStep {
   kind: string
   actor?: string
   capability?: string
-  places: ScenarioStepPlace[]
+  contexts: ScenarioStepContext[]
 }
 
 export interface JourneyScenarioEntity extends ScenarioEntity {
@@ -154,12 +150,12 @@ export type BusinessRuleEntityTargetType =
 export interface BusinessRuleEntityTarget {
   type: BusinessRuleEntityTargetType
   id: string
-  contexts: ExactContext[]
+  contexts: Context[]
 }
 
 export interface BusinessRuleContextTarget {
   type: 'context'
-  context: Scope
+  context: Context
 }
 
 export type BusinessRuleTarget = BusinessRuleEntityTarget | BusinessRuleContextTarget
@@ -411,15 +407,15 @@ function scenarioStepsField(
       continue
     }
     const item = raw as Record<string, unknown>
-    rejectUnknownKeys(item, ['text', 'kind', 'actor', 'places', ...(allowCapability ? ['capability'] : [])], issues, itemLabel)
-    const places: ScenarioStepPlace[] = []
-    if (item.places !== undefined && item.places !== null) {
-      if (typeof item.places !== 'object' || Array.isArray(item.places)) {
-        issues.push(`${itemLabel}: "places" must be a mapping from route id to Product Place id`)
+    rejectUnknownKeys(item, ['text', 'kind', 'actor', 'contexts', ...(allowCapability ? ['capability'] : [])], issues, itemLabel)
+    const contexts: ScenarioStepContext[] = []
+    if (item.contexts !== undefined && item.contexts !== null) {
+      if (typeof item.contexts !== 'object' || Array.isArray(item.contexts)) {
+        issues.push(`${itemLabel}: "contexts" must map route ids to Context objects`)
       } else {
-        for (const [routeId, rawPlace] of Object.entries(item.places as Record<string, unknown>)) {
-          const placeId = stringField({ place: rawPlace }, 'place', issues, `${itemLabel}: route "${routeId}"`)
-          if (placeId) places.push({ routeId, placeId })
+        for (const [routeId, rawContext] of Object.entries(item.contexts as Record<string, unknown>)) {
+          const context = contextValue(rawContext, issues, `${itemLabel}: route "${routeId}"`)
+          if (context) contexts.push({ routeId, ...context })
         }
       }
     }
@@ -428,25 +424,25 @@ function scenarioStepsField(
       kind: stringField(item, 'kind', issues, itemLabel) || '',
       actor: stringField(item, 'actor', issues, itemLabel),
       capability: allowCapability ? stringField(item, 'capability', issues, itemLabel) : undefined,
-      places
+      contexts
     })
   }
   return steps
 }
 
-function exactContextField(
+function parsedContextField(
   raw: unknown,
   issues: string[],
   label: string,
   allowedExtra: string[] = []
-): ExactContext | undefined {
+): Context | undefined {
   if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
-    issues.push(`${label}: context must be a mapping`)
+    issues.push(`${label}: context target must be a mapping`)
     return undefined
   }
   const item = raw as Record<string, unknown>
   rejectUnknownKeys(item, ['context', ...allowedExtra], issues, label)
-  return scopeField(item, 'context', issues, label)
+  return contextField(item, 'context', issues, label)
 }
 
 function businessRuleTargetsField(
@@ -471,19 +467,19 @@ function businessRuleTargetsField(
     const type = stringField(target, 'type', issues, targetLabel) || ''
     if (type === 'context') {
       rejectUnknownKeys(target, ['type', 'context'], issues, targetLabel)
-      const parsed = exactContextField(target, issues, targetLabel, ['type'])
+      const parsed = parsedContextField(target, issues, targetLabel, ['type'])
       if (parsed) targets.push({ type: 'context', context: parsed })
       continue
     }
     rejectUnknownKeys(target, ['type', 'id', 'contexts'], issues, targetLabel)
     const rawContexts = target.contexts
-    const contexts: ExactContext[] = []
+    const contexts: Context[] = []
     if (rawContexts !== undefined && rawContexts !== null) {
       if (!Array.isArray(rawContexts) || rawContexts.length === 0) {
         issues.push(`${targetLabel}: "contexts" must be a non-empty list when present`)
       } else {
         for (const [contextIndex, rawContext] of rawContexts.entries()) {
-          const parsed = exactContextField(rawContext, issues, `${targetLabel}: context ${contextIndex + 1}`)
+          const parsed = contextValue(rawContext, issues, `${targetLabel}: context ${contextIndex + 1}`)
           if (parsed) contexts.push(parsed)
         }
       }
@@ -497,7 +493,7 @@ function businessRuleTargetsField(
   return targets
 }
 
-/** Load the strict schema 5 .businesslens/ folder, collecting parse issues. */
+/** Load the strict schema 6 .businesslens/ folder, collecting parse issues. */
 export function loadModel(cwd: string): PddModel {
   const root = join(cwd, FOLDER)
   const issues: string[] = []
@@ -530,7 +526,7 @@ export function loadModel(cwd: string): PddModel {
     }
   }
 
-  let config = { schema: 5, sddPaths: [] as string[] }
+  let config = { schema: 6, sddPaths: [] as string[] }
   const configFile = join(root, 'config.yaml')
   if (existsSync(configFile)) {
     try {
@@ -554,8 +550,8 @@ export function loadModel(cwd: string): PddModel {
   } else if (existsSync(root)) {
     issues.push('config.yaml is missing')
   }
-  if (config.schema !== 5) {
-    issues.push(`config.yaml: schema ${config.schema} is not supported (expected 5)`)
+  if (config.schema !== 6) {
+    issues.push(`config.yaml: schema ${config.schema} is not supported (expected 6)`)
   }
 
   let scenarioKinds: ScenarioKind[] = []
@@ -701,8 +697,8 @@ export function loadModel(cwd: string): PddModel {
     })
 
   /*
-    The surface tree is walked, not listed. An Experience belongs to exactly one
-    Interface and a Screen to exactly one scope, so the path is the parent
+    The Interface → Experience → Screen hierarchy is walked, not listed. An
+    Experience belongs to exactly one Interface and a Screen to exactly one parent, so the path is the parent
     relation and the id — one authority instead of two that can disagree, and
     reparenting becomes a `git mv` that reads correctly in a pull request.
   */
@@ -710,7 +706,7 @@ export function loadModel(cwd: string): PddModel {
   const experiences: ExperienceEntity[] = []
   const screens: ScreenEntity[] = []
 
-  const readScreens = (parent: string, scope: Scope, label: string) => {
+  const readScreens = (parent: string, containerId: string, label: string) => {
     for (const location of listEntities(join(parent, 'screens'), 'screen', issues, `${label}/screens`)) {
       const { data, doc, references, directory, assets, assetMeta } = readEntity(
         location,
@@ -718,17 +714,14 @@ export function loadModel(cwd: string): PddModel {
         issues
       )
       screens.push({
-        id: qualify(scope, location.id),
+        id: qualify(containerId, location.id),
         file: location.file,
         doc,
         references,
         directory,
         assets,
         assetMeta,
-        scope,
-        // A Screen reaches exactly the scope that owns it. The field stays as a
-        // single-element list so every consumer keeps one shape.
-        availability: [scope],
+        containerId,
         capabilities: uniqueStringListField(data, 'capabilities', issues, location.file),
         entryPoints: entryPointsField(data, issues, location.file),
         information: bulletList(section(doc, 'Information presented') || ''),
@@ -775,8 +768,8 @@ export function loadModel(cwd: string): PddModel {
     )
     const hasDirectScreens = existsSync(join(productInterface.directory, 'screens'))
     if (experienceLocations.length && hasDirectScreens) {
-      // Otherwise the scope id `reader-web` would be ambiguous between the whole
-      // Interface and the part of it with no Experience.
+      // An Interface has one structural child shape, so a Screen always has one
+      // unambiguous Interface or Experience container.
       issues.push(
         `interfaces/${productInterface.id}/: an Interface holds either screens/ or experiences/, never both`
       )

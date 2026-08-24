@@ -68,7 +68,7 @@ and in role. Every symptom follows from that.
 > between the two trees; Domain classifies members of both; Actors and Business
 > Rules attach across everything.
 
-- **Surface tree** — Interface → Experience → Screen. Ids carry the path:
+- **Interface → Experience → Screen hierarchy** — ids carry the path:
   `reader-web::personal-library::unread-library` (`spec/format.md:165-172`).
 - **Behavior tree** — Capability → Capability Scenario, Journey → Journey
   Scenario.
@@ -81,7 +81,7 @@ writes `availability:`, a Capability Scenario never writes `capability:`.
 `spec/format.md:177-181` names a concept the viewer has no idea exists:
 
 > Two entities of the same kind sharing a path suffix below their Interface are
-> **counterparts** — the same thing on two surfaces.
+> **counterparts** — the same thing on two Interfaces.
 
 `src/core/ids.ts:45-57` already computes `counterpartKey`. The report viewer
 does not use it, and the Screens surface is the worse for it (see below).
@@ -143,7 +143,7 @@ the working tree: `RAIL_PARENT`/`RAIL_KINDS` at `BlrWorkbench.vue:78-90`, the
 
 **Why it was wrong.** The rail lists *kinds*. Kinds do not nest — instances do.
 Indenting 2 of 10 rows advertises a hierarchy the other rows also have: with
-schema 5 the format declares a **complete** surface tree as well
+schema 5 the format declares the **complete Interface → Experience → Screen hierarchy** as well
 (Interface → Experience → Screen). So the indentation is either incomplete
 (2 rows nested, 3 more that equally deserve it) or it becomes a three-level
 tree inside a ten-row rail. Neither reads. The user-facing complaint —
@@ -286,8 +286,8 @@ defaults to undefined for every kind (`BlrWorkbench.vue:130`, `:155-161`).
 
 | Surface | Default grouping | From |
 | --- | --- | --- |
-| Screens | Interface | surface tree |
-| Experiences | Interface | surface tree |
+| Screens | Interface | path hierarchy |
+| Experiences | Interface | path hierarchy |
 | Capabilities | Domain | subject axis |
 | Capability Scenarios | Capability | behavior tree |
 | Journey Scenarios | Journey | behavior tree |

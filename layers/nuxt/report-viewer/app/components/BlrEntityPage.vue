@@ -2,7 +2,7 @@
 /**
  * One entity, in full, at a URL.
  *
- * Generalized from the Journey page, which was the only surface in the report
+ * Generalized from the Journey page, which was the only entity page in the report
  * shaped the way a reading wants to be: the promise, where it is reachable, its
  * relations as links, then its children. Every kind gets that now,
  * because "which kinds deserve a page" is a judgement call that has to be
@@ -38,7 +38,7 @@ const meta = computed(() => ENTITY_KIND_META[props.entity.kind])
 const GRAPH_LED: ReportEntityKind[] = ['actor', 'interface', 'experience', 'domain']
 const graphLed = computed(() => GRAPH_LED.includes(props.entity.kind))
 
-const availability = computed(() => 'availability' in props.entity ? props.entity.availability : [])
+const contexts = computed(() => 'contexts' in props.entity ? props.entity.contexts : [])
 const entryPoints = computed(() => 'entryPoints' in props.entity ? props.entity.entryPoints : [])
 
 /** A parent's Scenarios, read where the parent is read. */
@@ -55,11 +55,11 @@ const children = computed<ScenarioView[]>(() => {
 const childLabel = computed(() => props.entity.kind === 'capability' ? 'Capability Scenarios' : 'Journey Scenarios')
 
 /*
-  The same thing on another surface.
+  The same thing on another Interface.
 
   Two Screens sharing a path suffix below their Interface are counterparts, and
   the format says so deliberately — `personal-library::saved-items` on web and
-  on mobile pursue one goal on two surfaces. Without this the Screens collection
+  on mobile pursue one goal through separate Interfaces. Without this the Screens collection
   reads as a list with duplicates in it.
 */
 const counterparts = computed(() => counterpartsOf(props.workspace, props.entity))
@@ -74,8 +74,8 @@ const asJourney = computed(() => props.entity as JourneyView)
     </header>
 
     <BlrAvail
-      v-if="availability.length || entryPoints.length"
-      :pairs="availability"
+      v-if="contexts.length || entryPoints.length"
+      :contexts="contexts"
       :entry-points="entryPoints"
     />
 
@@ -110,7 +110,7 @@ const asJourney = computed(() => props.entity as JourneyView)
       <header class="flex flex-wrap items-baseline gap-2">
         <h2 class="text-base font-semibold tracking-tight text-highlighted">Also on</h2>
         <span class="text-xs text-muted">
-          The same {{ meta.label.toLowerCase() }} on another Interface — one goal, two surfaces.
+          The same {{ meta.label.toLowerCase() }} on another Interface — one goal, separate Interfaces.
         </span>
       </header>
       <div class="space-y-2">

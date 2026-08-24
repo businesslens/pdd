@@ -6,20 +6,24 @@ steps:
   - text: The Reader moves an item to a different position in an owned collection.
     kind: actor
     actor: reader
-    places:
-      web: reader-web::personal-library::collection-workspace
+    contexts:
+      web:
+        place: reader-web::personal-library::collection-workspace
   - text: The Product confirms collection ownership
     kind: product
-    places:
-      web: reader-web::personal-library::collection-workspace
+    contexts:
+      web:
+        place: reader-web::personal-library::collection-workspace
   - text: The item is moved to the chosen position
     kind: product
-    places:
-      web: reader-web::personal-library::collection-workspace
+    contexts:
+      web:
+        place: reader-web::personal-library::collection-workspace
   - text: Every other item keeps its relative order
     kind: condition
-    places:
-      web: reader-web::personal-library::collection-workspace
+    contexts:
+      web:
+        place: reader-web::personal-library::collection-workspace
 ---
 
 # Reorder an owned collection

@@ -14,9 +14,9 @@ the model, an area you deliberately no longer trust, or coverage expansion.
 It inventories tracked files without writing or dumping the whole file list,
 then statically traces behavior from entry points through effects and outcomes.
 It treats deployables, routes, commands, APIs, and integrations as evidence—not
-automatic Interfaces—and drafts only supported Product contracts with exact
-Interface availability, narrowed by Experience where meaningful contexts
-exist. Every Capability receives direct Capability Scenario coverage. Map does
+automatic Interfaces—and drafts only supported Product contracts with explicit
+availability Contexts, naming Experiences where meaningful contexts exist.
+Every Capability receives direct Capability Scenario coverage. Map does
 not use Scenarios as hidden operations beneath vague umbrella Capabilities;
 independently meaningful behavior is split and may be organized by a Domain.
 Map creates an optional Journey only when repository evidence establishes one

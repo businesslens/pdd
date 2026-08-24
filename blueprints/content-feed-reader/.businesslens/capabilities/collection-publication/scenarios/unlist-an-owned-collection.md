@@ -5,17 +5,20 @@ routes:
 steps:
   - text: The Product confirms ownership
     kind: product
-    places:
-      web: reader-web::personal-library::collection-workspace
+    contexts:
+      web:
+        place: reader-web::personal-library::collection-workspace
   - text: The Product explains that the public link will stop working
     kind: product
-    places:
-      web: reader-web::personal-library::collection-workspace
+    contexts:
+      web:
+        place: reader-web::personal-library::collection-workspace
   - text: The Reader confirms unlisting
     kind: actor
     actor: reader
-    places:
-      web: reader-web::personal-library::collection-workspace
+    contexts:
+      web:
+        place: reader-web::personal-library::collection-workspace
 ---
 
 # Unlist an owned collection

@@ -288,7 +288,7 @@ current in-memory `section` model.
 (`RAIL_PARENT`/`RAIL_KINDS`, `BlrWorkbench.vue:78-90`; `.blr-navchild`,
 `:1346-1357`). The indentation is uncommitted and is reversed by D1: the rail
 lists *kinds*, and kinds do not nest — instances do. With schema 5 the format
-declares a full surface tree as well, so indenting two rows is either incomplete
+declares the full Interface → Experience → Screen hierarchy as well, so indenting two rows is either incomplete
 or becomes a three-level tree inside a ten-row rail.
 
 **Target.** One flat, ungrouped list, in the authored order of
@@ -386,8 +386,8 @@ list view in the app and nobody sees it.
 
 | Surface | Grouped by | From |
 | --- | --- | --- |
-| Screens | Interface | surface tree |
-| Experiences | Interface | surface tree |
+| Screens | Interface | path hierarchy |
+| Experiences | Interface | path hierarchy |
 | Capabilities | Domain | subject axis |
 | Capability Scenarios | Capability | behavior tree |
 | Journey Scenarios | Journey | behavior tree |
@@ -584,7 +584,7 @@ unchanged.
 **Today.** The Screens surface shows "Saved items", "Source list" and "Unread
 library" twice each with nothing to tell them apart. They are not duplicates:
 `spec/format.md:177-181` names them **counterparts** — the same thing on two
-surfaces, on purpose — and `src/core/ids.ts:45-57` already computes the key. The
+Interfaces, on purpose — and `src/core/ids.ts:45-57` already computes the key. The
 viewer does not know the concept exists.
 
 **Target.** Three touches, one per place:

@@ -7,7 +7,7 @@ import { buildProject } from '../src/commands/export.js'
 import { runOpen } from '../src/commands/open.js'
 import { lsFiles } from '../src/core/git.js'
 import { loadModel } from '../src/core/model.js'
-import { projectPortableReport, type ProductReportV9 } from '../src/core/portable.js'
+import { projectPortableReport, type ProductReportV10 } from '../src/core/portable.js'
 import { lintModel } from '../src/commands/lint.js'
 
 const FIXTURE = join(__dirname, 'fixtures', 'fixture-shop')
@@ -25,7 +25,7 @@ function initialize(cwd: string): void {
   git(cwd, 'commit', '--allow-empty', '-m', 'fixture')
 }
 
-function withoutRepositoryEvidence(report: ProductReportV9): Record<string, any> {
+function withoutRepositoryEvidence(report: ProductReportV10): Record<string, any> {
   const portable = projectPortableReport(report)
   return {
     ...portable,
@@ -81,7 +81,7 @@ describe('open report', () => {
     ])
     expect(imported.experiences.flatMap(experience => experience.entryPoints))
       .toEqual(expect.arrayContaining([{ type: 'customer-web', path: '/' }]))
-    // The Screen exists once per surface: same purpose, two places, and the id
+    // The Screen exists once per Interface: same purpose, two places, and the id
     // carries which is which.
     expect(imported.screens.map(screen => screen.id)).toEqual([
       'customer-mobile::storefront::product-record',
@@ -89,7 +89,7 @@ describe('open report', () => {
     ])
     expect(imported.screens[1]).toMatchObject({
       id: 'customer-web::storefront::product-record',
-      availability: ['customer-web::storefront'],
+      containerId: 'customer-web::storefront',
       capabilities: ['catalog-browsing', 'checkout']
     })
     expect(imported.screens.flatMap(screen => screen.entryPoints.map(point => point.path))).toEqual([
@@ -166,14 +166,12 @@ describe('open report', () => {
       report.counts.experiences = 0
       for (const collection of [
         report.model.capabilities,
-        report.model.screens,
         report.model.businessRules
       ]) {
         for (const entity of collection) {
           if ('availability' in entity) {
-            entity.availability = entity.availability.map(scope => ({
-              interfaceId: scope.interfaceId,
-              experienceIds: []
+            entity.availability = entity.availability.map(context => ({
+              placeId: context.placeId.split('::')[0]!
             }))
           }
         }
@@ -186,8 +184,8 @@ describe('open report', () => {
       }
       for (const scenario of [...report.model.capabilityScenarios, ...report.model.journeyScenarios]) {
         for (const step of scenario.steps) {
-          for (const place of step.places) {
-            place.placeId = directScreenIds.get(place.placeId) || place.placeId.split('::')[0]!
+          for (const context of step.contexts) {
+            context.placeId = directScreenIds.get(context.placeId) || context.placeId.split('::')[0]!
           }
         }
       }
@@ -199,11 +197,11 @@ describe('open report', () => {
       const imported = loadModel(fresh)
       expect(imported.experiences).toEqual([])
       expect(imported.capabilities.flatMap(capability => capability.availability))
-        .toEqual(expect.arrayContaining(['customer-web', 'customer-mobile']))
+        .toEqual(expect.arrayContaining([{ place: 'customer-web' }, { place: 'customer-mobile' }]))
       expect(readFileSync(join(fresh, '.businesslens/capabilities/checkout/capability.md'), 'utf8'))
         .not.toContain('::')
       expect(readFileSync(join(fresh, '.businesslens/config.yaml'), 'utf8'))
-        .toContain('schema: 5')
+        .toContain('schema: 6')
 
       const rebuilt = buildProject(fresh)
       expect(withoutRepositoryEvidence(rebuilt.report)).toEqual(withoutRepositoryEvidence(report))
@@ -337,12 +335,12 @@ describe('open report', () => {
   })
 
   it('rejects historical Product Reports instead of migrating them', async () => {
-    const legacyTarget = mkdtempSync(join(tmpdir(), 'bl-open-v6-'))
+    const legacyTarget = mkdtempSync(join(tmpdir(), 'bl-open-v9-'))
     initialize(legacyTarget)
     try {
       const report = structuredClone(buildProject(source).report) as Record<string, any>
-      report.schemaVersion = '6.0.0'
-      const file = join(legacyTarget, 'v6.json')
+      report.schemaVersion = '9.0.0'
+      const file = join(legacyTarget, 'v9.json')
       writeFileSync(file, JSON.stringify(report))
       vi.spyOn(console, 'error').mockImplementation(() => undefined)
 

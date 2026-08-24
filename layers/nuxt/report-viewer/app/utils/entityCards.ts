@@ -63,10 +63,9 @@ function relationTitles(
   return `${shown.join(' · ')}${remaining > 0 ? ` +${remaining}` : ''}`
 }
 
-function pairTitles(entity: { availability: Array<{ interfaceTitle: string, experienceTitle: string }> }, max = 2): string {
-  const names = entity.availability.map(pair => pair.experienceTitle
-    ? `${pair.interfaceTitle} › ${pair.experienceTitle}`
-    : pair.interfaceTitle)
+function contextTitles(entity: { contexts: Array<{ interfaceTitle: string, experienceTitle: string, screenTitle?: string }> }, max = 2): string {
+  const names = entity.contexts.map(context =>
+    [context.interfaceTitle, context.experienceTitle, context.screenTitle].filter(Boolean).join(' › '))
   const shown = names.slice(0, max)
   const remaining = names.length - shown.length
   return `${shown.join(' · ')}${remaining > 0 ? ` +${remaining}` : ''}`
@@ -158,7 +157,7 @@ export function entityCardPresentation(
       const screen = entity as ScreenView
       return {
         /* No badge: "1 context" is true of almost every Screen and says nothing
-           about which one. The hook names the scope, which is what tells two
+           about which one. The hook names the context, which is what tells two
            counterparts apart. */
         badge: '',
         metrics: [
@@ -167,7 +166,7 @@ export function entityCardPresentation(
           { label: 'journey scenarios', value: screen.journeyScenarioIds.length, kind: 'journey-scenario', ids: screen.journeyScenarioIds }
         ],
         hookLabel: 'Available in',
-        hook: pairTitles(screen)
+        hook: contextTitles(screen)
       }
     }
     case 'domain': {
@@ -198,7 +197,7 @@ export function entityCardPresentation(
         hookLabel: capability.journeyIds.length ? 'Used by' : 'Available in',
         hook: capability.journeyIds.length
           ? titles(workspace, 'journey', capability.journeyIds)
-          : pairTitles(capability)
+          : contextTitles(capability)
       }
     }
     case 'journey': {
@@ -243,7 +242,7 @@ export function entityCardPresentation(
         metrics: [
           { label: 'bindings', value: ruleBindingCount(rule) },
           { label: 'affected', value: ruleReachCount(workspace, rule) },
-          { label: plural(rule.availability.length, 'scope'), value: rule.availability.length }
+          { label: plural(rule.contexts.length, 'context'), value: rule.contexts.length }
         ],
         hookLabel: 'Attached to',
         hook: relationTitles(workspace, [

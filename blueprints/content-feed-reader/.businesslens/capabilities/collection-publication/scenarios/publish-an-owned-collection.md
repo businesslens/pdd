@@ -5,21 +5,25 @@ routes:
 steps:
   - text: The Product confirms ownership
     kind: product
-    places:
-      web: reader-web::personal-library::collection-workspace
+    contexts:
+      web:
+        place: reader-web::personal-library::collection-workspace
   - text: The Product explains that the collection will become readable by link
     kind: product
-    places:
-      web: reader-web::personal-library::collection-workspace
+    contexts:
+      web:
+        place: reader-web::personal-library::collection-workspace
   - text: The Reader confirms publication
     kind: actor
     actor: reader
-    places:
-      web: reader-web::personal-library::collection-workspace
+    contexts:
+      web:
+        place: reader-web::personal-library::collection-workspace
   - text: A stable public web address is created
     kind: condition
-    places:
-      web: reader-web::personal-library::collection-workspace
+    contexts:
+      web:
+        place: reader-web::personal-library::collection-workspace
 ---
 
 # Publish an owned collection

@@ -28,12 +28,12 @@ or deliberately untrusted.
 
 3. Review the `.businesslens/` diff. Check that supported Interfaces are Product
    contracts rather than discovered technologies, optional Experiences exist
-   only for meaningful contexts, Capability availability is exact, and every
+   only for meaningful contexts, Capability availability is explicit, and every
    Capability has honest Capability Scenario coverage. Check that Capability
    Scenarios are variations rather than hidden operations under vague umbrella
    Capabilities. Optional Journeys should author coherent Goals rather than
    administrative grab bags, while Capability-bearing Journey Scenario Steps
-   trace exact supported behavior across Interfaces. Also check unmapped areas,
+   trace supported behavior through explicit Contexts across Interfaces. Also check unmapped areas,
    limitations, and optional
    implementation References.
 

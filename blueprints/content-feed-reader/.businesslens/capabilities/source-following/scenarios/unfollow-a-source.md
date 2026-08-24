@@ -7,24 +7,32 @@ steps:
   - text: The Reader chooses to stop following an existing source.
     kind: actor
     actor: reader
-    places:
-      web: reader-web::personal-library::source-list
-      mobile: reader-mobile::personal-library::source-list
+    contexts:
+      web:
+        place: reader-web::personal-library::source-list
+      mobile:
+        place: reader-mobile::personal-library::source-list
   - text: The Product removes the source from the Reader's followed sources
     kind: product
-    places:
-      web: reader-web::personal-library::source-list
-      mobile: reader-mobile::personal-library::source-list
+    contexts:
+      web:
+        place: reader-web::personal-library::source-list
+      mobile:
+        place: reader-mobile::personal-library::source-list
   - text: Future synchronization no longer collects items from that source
     kind: condition
-    places:
-      web: reader-web::personal-library::source-list
-      mobile: reader-mobile::personal-library::source-list
+    contexts:
+      web:
+        place: reader-web::personal-library::source-list
+      mobile:
+        place: reader-mobile::personal-library::source-list
   - text: Existing library items and saved state are preserved
     kind: condition
-    places:
-      web: reader-web::personal-library::source-list
-      mobile: reader-mobile::personal-library::source-list
+    contexts:
+      web:
+        place: reader-web::personal-library::source-list
+      mobile:
+        place: reader-mobile::personal-library::source-list
 ---
 
 # Unfollow a source

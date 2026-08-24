@@ -4,7 +4,7 @@
  *
  * The surface is already named after the kind, so the row never repeats it in
  * words — the coloured icon carries it. The slot that word occupied now holds
- * the fact that tells this entity from its neighbours: a Screen's scope, a
+ * the fact that tells this entity from its neighbours: a Screen's context, a
  * Scenario's parent, an Experience's Interface. Without it a collection of
  * counterparts reads as a list of duplicates.
  */

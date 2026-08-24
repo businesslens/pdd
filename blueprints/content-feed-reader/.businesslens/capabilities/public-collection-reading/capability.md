@@ -1,6 +1,6 @@
 ---
 domain: collections
-availability: [reader-web::public-reading]
+availability: [{ place: reader-web::public-reading }]
 ---
 
 # Public collection reading

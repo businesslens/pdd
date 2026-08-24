@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import type { AvailabilityPair, EntryPointView } from '../utils/reportWorkspace'
+import type { ContextView, EntryPointView } from '../utils/reportWorkspace'
 
 withDefaults(defineProps<{
-  pairs: AvailabilityPair[]
+  contexts: ContextView[]
   entryPoints?: EntryPointView[]
   label?: string
-  /** Shown when the list is empty because the entity inherits its parent's scope. */
+  /** Shown when the list is empty because the entity inherits its parent's context. */
   inheritedNote?: string
 }>(), {
   entryPoints: () => [],
@@ -15,22 +15,26 @@ withDefaults(defineProps<{
 </script>
 
 <template>
-  <div v-if="pairs.length || inheritedNote || entryPoints.length" class="space-y-2">
+  <div v-if="contexts.length || inheritedNote || entryPoints.length" class="space-y-2">
     <p v-if="label" class="blr-field">
       {{ label }}
     </p>
-    <div v-if="pairs.length" class="flex flex-wrap gap-1.5">
+    <div v-if="contexts.length" class="flex flex-wrap gap-1.5">
       <UBadge
-        v-for="pair in pairs"
-        :key="pair.key"
+        v-for="context in contexts"
+        :key="context.key"
         color="neutral"
         variant="outline"
         size="sm"
       >
-        <span class="text-default">{{ pair.interfaceTitle }}</span>
-        <template v-if="pair.experienceTitle">
+        <span class="text-default">{{ context.interfaceTitle }}</span>
+        <template v-if="context.experienceTitle">
           <UIcon name="i-lucide-chevron-right" class="size-3 text-dimmed" />
-          <span class="text-muted">{{ pair.experienceTitle }}</span>
+          <span class="text-muted">{{ context.experienceTitle }}</span>
+        </template>
+        <template v-if="context.screenTitle">
+          <UIcon name="i-lucide-chevron-right" class="size-3 text-dimmed" />
+          <span class="text-muted">{{ context.screenTitle }}</span>
         </template>
       </UBadge>
     </div>

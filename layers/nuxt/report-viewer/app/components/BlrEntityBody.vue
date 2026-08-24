@@ -60,7 +60,7 @@ const domainId = computed(() => props.entity.kind === 'capability'
   ? (props.entity as CapabilityView).domainId
   : '')
 
-/* One authored Scenario sequence, with named Product Place routes as columns. */
+/* One authored Scenario sequence, with named Context routes as columns. */
 const stepMatrix = computed(() => (isScenario.value ? scenarioStepMatrix(asScenario.value) : null))
 
 /* Route columns are a window over authored order. Measure the reading itself:
@@ -194,8 +194,8 @@ const selectStepActor = (actorId: string | undefined) => {
   if (actor) emit('select', actor)
 }
 
-const placeLabel = (place: { screenTitle: string, experienceTitle: string, interfaceTitle: string }) =>
-  place.screenTitle || place.experienceTitle || place.interfaceTitle
+const contextLabel = (context: { screenTitle: string, experienceTitle: string, interfaceTitle: string }) =>
+  context.screenTitle || context.experienceTitle || context.interfaceTitle
 
 /** True when this component would render nothing at all. */
 const empty = computed(() => !props.entity.intent
@@ -243,7 +243,7 @@ const empty = computed(() => !props.entity.intent
         <BlrProse :text="asScenario.trigger" size="base" class="max-w-3xl" />
       </section>
 
-      <!-- One authored Scenario sequence: meaning and exact Product Places stay together. -->
+      <!-- One authored Scenario sequence: meaning and Contexts stay together. -->
       <section v-if="stepMatrix" ref="routeShellEl" class="space-y-3">
         <header class="flex flex-wrap items-center gap-x-4 gap-y-2">
           <h2 class="blr-page-heading">Steps <span class="blr-meta ms-1">{{ stepMeta }}</span></h2>
@@ -348,7 +348,7 @@ const empty = computed(() => !props.entity.intent
             <thead>
               <tr class="border-b border-default bg-elevated/35">
                 <th
-                  scope="col"
+                  context="col"
                   class="blr-field border-e border-default px-4 py-2.5 font-normal"
                 >
                   Step
@@ -356,7 +356,7 @@ const empty = computed(() => !props.entity.intent
                 <th
                   v-for="route in visibleRoutes"
                   :key="route.id"
-                  scope="col"
+                  context="col"
                   class="min-w-0 px-4 py-2.5"
                 >
                   <div class="flex min-w-0 items-center gap-2">
@@ -375,7 +375,7 @@ const empty = computed(() => !props.entity.intent
                 class="border-b border-default align-top last:border-b-0"
               >
                 <th
-                  scope="row"
+                  context="row"
                   class="border-e border-default bg-default px-4 py-3 font-normal"
                 >
                   <p class="text-sm font-medium text-highlighted">{{ step.index + 1 }}. {{ step.text }}</p>
@@ -433,7 +433,7 @@ const empty = computed(() => !props.entity.intent
                   >
                     <p class="blr-meta flex items-center gap-1.5">
                       <UIcon name="i-lucide-align-justify" class="size-3.5" />
-                      No Product Place — same Step on every route
+                      No Context — same Step on every route
                     </p>
                   </UTooltip>
                 </td>
@@ -443,19 +443,19 @@ const empty = computed(() => !props.entity.intent
                   class="min-w-0 px-4 py-3"
                 >
                   <UTooltip
-                    v-if="cell.placeChanged && cell.previousPlace"
-                    text="This route continues at a different Product Place than its previous placed Step"
+                    v-if="cell.contextChanged && cell.previousContext"
+                    text="This route continues in a different Context than its previous contextualized Step"
                     :delay-duration="150"
                   >
                     <p class="blr-meta mb-1.5 flex items-center gap-1 text-primary">
                       <UIcon name="i-lucide-corner-down-right" class="size-3" />
-                      Moved from {{ placeLabel(cell.previousPlace) }}
+                      Moved from {{ contextLabel(cell.previousContext) }}
                     </p>
                   </UTooltip>
                   <BlrStepContext
-                    v-if="cell.place"
+                    v-if="cell.context"
                     :workspace="workspace"
-                    :place="cell.place"
+                    :context="cell.context"
                     @select="emit('select', $event)"
                   />
                 </td>
@@ -465,7 +465,7 @@ const empty = computed(() => !props.entity.intent
         </div>
 
         <!-- Narrow reading: preserve the ordered Steps and put the selected
-             route's Product Place beneath each one. -->
+             route's Context beneath each one. -->
         <div v-else class="divide-y divide-default overflow-hidden rounded-xl border border-default">
           <article v-for="step in stepMatrix.steps" :key="step.index">
             <div class="bg-default px-4 py-3">
@@ -522,22 +522,22 @@ const empty = computed(() => !props.entity.intent
               >
                 <p class="blr-meta flex items-center gap-1.5">
                   <UIcon name="i-lucide-align-justify" class="size-3.5" />
-                  No Product Place — same Step on every route
+                  No Context — same Step on every route
                 </p>
               </UTooltip>
 
               <template v-else-if="selectedCell(step)">
                 <p
-                  v-if="selectedCell(step)?.placeChanged && selectedCell(step)?.previousPlace"
+                  v-if="selectedCell(step)?.contextChanged && selectedCell(step)?.previousContext"
                   class="blr-meta mb-2 flex items-center gap-1 text-primary"
                 >
                   <UIcon name="i-lucide-corner-down-right" class="size-3" />
-                  Moved from {{ placeLabel(selectedCell(step)!.previousPlace!) }}
+                  Moved from {{ contextLabel(selectedCell(step)!.previousContext!) }}
                 </p>
                 <BlrStepContext
-                  v-if="selectedCell(step)?.place"
+                  v-if="selectedCell(step)?.context"
                   :workspace="workspace"
-                  :place="selectedCell(step)!.place!"
+                  :context="selectedCell(step)!.context!"
                   compact
                   @select="emit('select', $event)"
                 />

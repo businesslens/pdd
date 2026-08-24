@@ -27,7 +27,7 @@ import type { TableColumn } from '@nuxt/ui'
 import type {
   ActorView,
   AnyEntityView,
-  AvailabilityPair,
+  ContextView,
   CapabilityView,
   ExperienceView,
   InterfaceView,
@@ -140,8 +140,8 @@ const groupKinds = reactive<Partial<Record<ReportEntityKind, ReportEntityKind | 
 const facetState = reactive<Partial<Record<ReportEntityKind, FacetSelections>>>({})
 
 /*
-  Each surface opens grouped by the containment the format declares for it —
-  the surface tree for Screens and Experiences, the behavior tree for Scenarios,
+  Each collection opens grouped by the containment the format declares for it —
+  the Interface → Experience → Screen hierarchy for Screens and Experiences, the behavior hierarchy for Scenarios,
   the subject axis for Capabilities and Rules. This is where the hierarchy a
   tree rail was asked to show actually belongs: over instances, where the model
   has it, and one click from being dismissed.
@@ -594,19 +594,19 @@ function numberColumn(id: string, label: string, read: (entity: AnyEntityView) =
   }
 }
 
-function pairLabel(pair: AvailabilityPair): string {
-  return pair.experienceTitle ? `${pair.interfaceTitle} › ${pair.experienceTitle}` : `${pair.interfaceTitle} (direct)`
+function contextLabel(context: ContextView): string {
+  return [context.interfaceTitle, context.experienceTitle, context.screenTitle].filter(Boolean).join(' › ')
 }
 
-/** Availability is a scope list rather than an id list, so it gets its own. */
+/** Context is a structured place rather than an id list, so it gets its own. */
 function contextColumn(): TableColumn<AnyEntityView> {
-  const read = (entity: AnyEntityView): AvailabilityPair[] =>
-    'availability' in entity ? (entity as { availability: AvailabilityPair[] }).availability : []
+  const read = (entity: AnyEntityView): ContextView[] =>
+    'contexts' in entity ? (entity as { contexts: ContextView[] }).contexts : []
   return {
     id: 'contexts',
     accessorFn: (entity: AnyEntityView) => read(entity).length,
     header: sortableHeader('Contexts'),
-    cell: ({ row }) => countCell(read(row.original).length, read(row.original).map(pairLabel).join(', '))
+    cell: ({ row }) => countCell(read(row.original).length, read(row.original).map(contextLabel).join(', '))
   }
 }
 
@@ -776,7 +776,7 @@ const TABLE_NOTE: Partial<Record<ReportEntityKind, { text: string, needs: string
     needs: ['capability', 'journey', 'capability-scenario', 'journey-scenario']
   },
   'capability-scenario': {
-    text: 'Each is one observable acceptance case for exactly one Capability. Contexts are the exact Interface scopes it is accepted in.',
+    text: 'Each is one observable acceptance case for exactly one Capability. Contexts show where that case is accepted.',
     needs: ['contexts']
   },
   'journey-scenario': {

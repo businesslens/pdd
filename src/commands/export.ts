@@ -1,15 +1,14 @@
 import type { EntityFile, PddModel } from '../core/model.js'
-import type { ProductReportV9 } from '../core/portable.js'
+import type { ProductReportV10 } from '../core/portable.js'
 import { join, relative, sep } from 'node:path'
 import { writeGeneratedFile } from '../core/generated-files.js'
 import { lsFiles } from '../core/git.js'
 import { section, supportingSections } from '../core/markdown.js'
-import { interfaceOf } from '../core/ids.js'
 import type { InterfaceType } from '../core/interface-types.js'
 import { loadModel } from '../core/model.js'
 import { resolveModelRoot, type ModelRoot } from '../core/model-root.js'
 import {
-  ProductReportV9Schema,
+  ProductReportV10Schema,
   REPORT_SCHEMA_VERSION,
   projectPortableReport,
   validateProductReport
@@ -19,28 +18,8 @@ import { lintModel } from './lint.js'
 
 const byId = <T extends { id: string }>(items: T[]): T[] => [...items].sort((a, b) => a.id.localeCompare(b.id))
 const sorted = (items: string[]): string[] => [...items].sort()
-/*
-  The authored model names one scope id; the report keeps the decomposition
-  because every consumer asks "which Interface" and "which Experience"
-  separately. An Experience id is qualified, so it stays globally unique on the
-  wire and entity lookup by id keeps working.
-*/
-const availability = (scopes: string[]) => {
-  const byInterface = new Map<string, string[]>()
-  for (const scope of [...scopes].sort()) {
-    const interfaceId = interfaceOf(scope)
-    const existing = byInterface.get(interfaceId) ?? []
-    if (scope !== interfaceId) existing.push(scope)
-    byInterface.set(interfaceId, existing)
-  }
-  return [...byInterface.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([interfaceId, experienceIds]) => ({ interfaceId, experienceIds: sorted(experienceIds) }))
-}
-const exactContext = (scope: string) => ({
-  interfaceId: interfaceOf(scope),
-  experienceId: scope === interfaceOf(scope) ? null : scope
-})
+const contexts = (items: Array<{ place: string }>) =>
+  [...items].sort((left, right) => left.place.localeCompare(right.place)).map(item => ({ placeId: item.place }))
 
 const IMAGE_ASSET = /\.(png|jpe?g|gif|webp|avif|svg)$/i
 
@@ -95,7 +74,7 @@ export function compileReport(
    * nested model's assets stay addressable from the repository root.
    */
   assetBase = model.root
-): ProductReportV9 {
+): ProductReportV10 {
   const capabilityById = new Map(model.capabilities.map(capability => [capability.id, capability]))
   const journeyScenariosByJourney = new Map(model.journeys.map(journey => [
     journey.id,
@@ -113,18 +92,18 @@ export function compileReport(
     kind: step.kind as 'actor' | 'product' | 'condition',
     actorId: step.actor ?? null,
     capabilityId: parentCapability ?? step.capability ?? null,
-    places: scenario.routes.flatMap(route => {
-      const place = step.places.find(item => item.routeId === route.id)
-      return place ? [{ routeId: route.id, placeId: place.placeId }] : []
+    contexts: scenario.routes.flatMap(route => {
+      const context = step.contexts.find(item => item.routeId === route.id)
+      return context ? [{ routeId: route.id, placeId: context.place }] : []
     })
   }))
   const screenScenarioIds = (screenId: string, kind: 'capability' | 'journey') => sorted(
     (kind === 'capability' ? model.capabilityScenarios : model.journeyScenarios)
-      .filter(scenario => scenario.steps.some(step => step.places.some(place => place.placeId === screenId)))
+      .filter(scenario => scenario.steps.some(step => step.contexts.some(context => context.place === screenId)))
       .map(scenario => scenario.id)
   )
 
-  const report: ProductReportV9 = {
+  const report: ProductReportV10 = {
     schemaVersion: REPORT_SCHEMA_VERSION,
     id: model.product.id,
     title: model.product.doc.title,
@@ -201,7 +180,6 @@ export function compileReport(
         id: screen.id,
         title: screen.doc.title,
         description: screen.doc.lead,
-        availability: availability(screen.availability),
         capabilityIds: sorted(screen.capabilities),
         capabilityScenarioIds: screenScenarioIds(screen.id, 'capability'),
         journeyScenarioIds: screenScenarioIds(screen.id, 'journey'),
@@ -224,7 +202,7 @@ export function compileReport(
         title: capability.doc.title,
         description: capability.doc.lead,
         ...(capability.domain ? { domainId: capability.domain } : {}),
-        availability: availability(capability.availability),
+        availability: contexts(capability.availability),
         ...entityContent(capability, [], assetBase)
       })),
       capabilityScenarios: byId(model.capabilityScenarios).map(scenario => ({
@@ -288,11 +266,11 @@ export function compileReport(
         statement: rule.doc.lead,
         rationale: rule.rationale,
         appliesTo: rule.appliesTo.map(target => target.type === 'context'
-          ? { type: 'context' as const, ...exactContext(target.context) }
+          ? { type: 'context' as const, context: { placeId: target.context.place } }
           : {
               type: target.type,
               id: target.id,
-              contexts: target.contexts.map(exactContext)
+              contexts: target.contexts.map(context => ({ placeId: context.place }))
             }),
         ...entityContent(rule, ['Rationale'], assetBase)
       }))
@@ -307,24 +285,24 @@ export function compileReport(
     }
   }
 
-  const parsed = ProductReportV9Schema.parse(report)
+  const parsed = ProductReportV10Schema.parse(report)
   const issues = validateProductReport(parsed)
   if (issues.length) throw new Error(`Report validation failed:\n- ${issues.join('\n- ')}`)
   return parsed
 }
 
 export interface BuildOutcome {
-  report: ProductReportV9
+  report: ProductReportV10
   outputFile: string
 }
 
 /** Compile the current workspace without writing generated artifacts. */
-export function compileWorkspaceReport(cwd: string): ProductReportV9 {
+export function compileWorkspaceReport(cwd: string): ProductReportV10 {
   return compileResolvedWorkspaceReport(resolveModelRoot(cwd))
 }
 
 /** Compile a model whose ownership boundary has already been resolved. */
-export function compileResolvedWorkspaceReport({ modelRoot, gitRoot }: ModelRoot): ProductReportV9 {
+export function compileResolvedWorkspaceReport({ modelRoot, gitRoot }: ModelRoot): ProductReportV10 {
   const model = loadModel(modelRoot)
   const tracked = gitRoot ? lsFiles(gitRoot) : []
   const result = lintModel(model, tracked)

@@ -10,6 +10,6 @@ limitations:
 
 # Coverage
 
-The complete intended scope of the teaching Product is modeled. A future
+The complete intended breadth of the teaching Product is modeled. A future
 reference application may implement this Blueprint without changing its status
 or authority.

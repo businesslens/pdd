@@ -69,7 +69,7 @@ export const PAGE_AXIS: LabAxis<PageVariantId> = {
     {
       id: 'dense',
       name: 'Two column',
-      premise: 'Overview in two columns: the reading left, relations and scopes right.',
+      premise: 'Overview in two columns: the reading left, relations and contexts right.',
       cost: 'Needs width; below 1280px it stacks and reads like the two-tab option.'
     }
   ]

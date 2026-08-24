@@ -95,8 +95,8 @@ const emptyNote = computed(() => {
   switch (viewId.value) {
     case 'product-map': return 'This model declares no access paths, Domains, or Capabilities to map.'
     case 'value-paths': return 'This model declares no Journeys to unfold.'
-    case 'delivery-surfaces': return 'This model declares no Interfaces or delivery surfaces to map.'
-    case 'sitemap': return 'This model declares no Interfaces, so there is no visible surface to map.'
+    case 'delivery-by-interface': return 'This model declares no Interfaces to map.'
+    case 'sitemap': return 'This model declares no Interfaces to map.'
     case 'rule-reach': return 'This model declares no Business Rules with reach to draw.'
     case 'everything': return 'This model has no entities to draw.'
     default: return 'This model has no entities in this view.'

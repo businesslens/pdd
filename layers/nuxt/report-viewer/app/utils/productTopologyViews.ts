@@ -3,7 +3,7 @@
  *
  * Each view owns a question, its derivation, and its reading semantics. Views
  * are added when a question has no answer, not when a new axis is technically
- * possible — `access-map` folded into Delivery surfaces once that view carried
+ * possible — `access-map` folded into Delivery by Interface once that view carried
  * direct integrations, and `value-flow` and `domain-anatomy` folded into
  * Product map once Domains grouped Capabilities under the access rail.
  */
@@ -12,7 +12,7 @@ import type { ReportEntityKind } from './reportWorkspace'
 export type ProductTopologyViewId =
   | 'product-map'
   | 'value-paths'
-  | 'delivery-surfaces'
+  | 'delivery-by-interface'
   | 'sitemap'
   | 'rule-reach'
   | 'everything'
@@ -69,9 +69,9 @@ export const PRODUCT_TOPOLOGY_VIEWS: ProductTopologyView[] = [
     kinds: ['journey', 'journey-scenario', 'capability', 'screen']
   },
   {
-    id: 'delivery-surfaces',
-    name: 'Delivery surfaces',
-    question: 'Where does each human or system enter, and what does that surface deliver?',
+    id: 'delivery-by-interface',
+    name: 'Delivery by Interface',
+    question: 'Where does each human or system enter, and what does each Interface deliver?',
     semantics: 'identity',
     note: 'Graphical Interfaces continue through Experiences and Screens. Direct integrations terminate in the Capability they deliver.',
     flow: [
@@ -122,7 +122,7 @@ export const PRODUCT_TOPOLOGY_VIEWS: ProductTopologyView[] = [
     name: 'Everything',
     question: 'What is the entire product, all at once?',
     semantics: 'identity',
-    note: 'Fixed shelves read access → surface → behaviour → governance. The resolved relation web stays quiet until a node is hovered or selected; hide a shelf or focus an entity to thin it.',
+    note: 'Fixed shelves read access → Interface → behaviour → governance. The resolved relation web stays quiet until a node is hovered or selected; hide a shelf or focus an entity to thin it.',
     flow: [],
     separators: [],
     kinds: [

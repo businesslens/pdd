@@ -13,7 +13,7 @@ Use ideate for a blank-slate product or a desired behavior change.
 - **Explore:** propose ranked, genuinely different product directions and write
   nothing.
 - **Converge:** draft Actors and Interfaces, optional Experiences, Screens, and
-  Domains, plus Capabilities, exact availability, Capability Scenarios,
+  Domains, plus Capabilities, availability Contexts, Capability Scenarios,
   Business Rules, optional coherent Journeys, Journey Scenarios, and removals;
   get approval; then write.
 - **Granularity:** keep Capability Scenarios as variations of one durable

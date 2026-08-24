@@ -44,10 +44,10 @@ modes.
 
 A green lint result never claims model/code agreement.
 
-## Context and scope
+## Coverage and evidence
 
 [Coverage](./product-model.md#coverage) describes how much intended Product
-scope is modeled. [References](./references.md) attach optional external
+breadth is modeled. [References](./references.md) attach optional external
 material. Neither claims implementation alignment.
 
 Choose your starting door: [from your repo](./from-your-repo.md),

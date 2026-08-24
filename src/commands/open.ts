@@ -14,9 +14,8 @@ import { dirname, isAbsolute, join, resolve } from 'node:path'
 import { stringify } from 'yaml'
 import { writeModelReadme } from '../core/model-readme.js'
 import type {
-  ProductReportV9,
-  ReportAvailability,
-  ReportExactContext,
+  ProductReportV10,
+  ReportContext,
   ReportSupportingSection
 } from '../core/portable.js'
 import { lintModel } from './lint.js'
@@ -49,7 +48,7 @@ function frontmatter(data: Record<string, unknown>): string {
   return `---\n${stringify(data, { lineWidth: 0 }).trimEnd()}\n---\n\n`
 }
 
-function references(value: ProductReportV9['references']): Array<Record<string, string>> {
+function references(value: ProductReportV10['references']): Array<Record<string, string>> {
   return value.map(reference => ({
     kind: reference.kind,
     role: reference.role,
@@ -62,16 +61,15 @@ function entryPoints(value: Array<{ type: string, path: string }>): Array<Record
   return value.map(point => ({ [point.type]: point.path }))
 }
 
-/** Report availability decomposes an Interface and its Experiences; the folder wants scope ids. */
-function availability(value: ReportAvailability[]): string[] {
-  return value.flatMap(item => item.experienceIds.length ? item.experienceIds : [item.interfaceId])
+function contexts(value: ReportContext[]): Array<{ place: string }> {
+  return value.map(item => ({ place: item.placeId }))
 }
 
-function exactContext(value: ReportExactContext): { context: string } {
-  return { context: value.experienceId ?? value.interfaceId }
+function context(value: ReportContext): { place: string } {
+  return { place: value.placeId }
 }
 
-/** The path segments of a surface-tree id: "reader-web::personal-library" -> both. */
+/** The path segments of a qualified id: "reader-web::personal-library" -> both. */
 function idSegments(id: string): string[] {
   return id.split('::')
 }
@@ -152,8 +150,8 @@ function prepareTarget(cwd: string, force: boolean): string {
   return root
 }
 
-function writeReport(root: string, report: ProductReportV9, hasLogo: boolean): void {
-  write(join(root, 'config.yaml'), stringify({ schema: 5, sdd: { paths: [] } }, { lineWidth: 0 }))
+function writeReport(root: string, report: ProductReportV10, hasLogo: boolean): void {
+  write(join(root, 'config.yaml'), stringify({ schema: 6, sdd: { paths: [] } }, { lineWidth: 0 }))
   write(join(root, '.gitignore'), 'build/\ncache/\n')
   write(
     join(root, 'taxonomies.yaml'),
@@ -285,7 +283,7 @@ function writeReport(root: string, report: ProductReportV9, hasLogo: boolean): v
       entityPath(join(root, 'capabilities'), capability.id, 'capability', hasScenarios),
       frontmatter(compactRecord({
         domain: capability.domainId,
-        availability: availability(capability.availability),
+        availability: contexts(capability.availability),
         references: references(capability.references)
       })) + body(capability.title, capability.description, capability.intent, [], capability.supportingSections)
     )
@@ -295,11 +293,11 @@ function writeReport(root: string, report: ProductReportV9, hasLogo: boolean): v
       entityPath(join(root, 'business-rules'), rule.id, 'business-rule', false),
       frontmatter(compactRecord({
         appliesTo: rule.appliesTo.map(target => target.type === 'context'
-          ? { type: 'context', ...exactContext(target) }
+          ? { type: 'context', context: context(target.context) }
           : compactRecord({
               type: target.type,
               id: target.id,
-              contexts: target.contexts.map(exactContext)
+              contexts: target.contexts.map(context)
             })),
         references: references(rule.references)
       })) + body(
@@ -314,8 +312,8 @@ function writeReport(root: string, report: ProductReportV9, hasLogo: boolean): v
 
   const scenarioSections = (
     scenario:
-      | ProductReportV9['model']['capabilityScenarios'][number]
-      | ProductReportV9['model']['journeyScenarios'][number]
+      | ProductReportV10['model']['capabilityScenarios'][number]
+      | ProductReportV10['model']['journeyScenarios'][number]
   ) => {
     const decisions = scenario.decisionPoints.map(decision =>
       `### ${decision.title}\n\n${decision.question}\n\n${
@@ -345,8 +343,8 @@ function writeReport(root: string, report: ProductReportV9, hasLogo: boolean): v
           text: step.text,
           kind: step.kind,
           actor: step.actorId ?? undefined,
-          places: step.places.length
-            ? Object.fromEntries(step.places.map(place => [place.routeId, place.placeId]))
+          contexts: step.contexts.length
+            ? Object.fromEntries(step.contexts.map(context => [context.routeId, { place: context.placeId }]))
             : undefined
         })),
         references: references(scenario.references)
@@ -395,8 +393,8 @@ function writeReport(root: string, report: ProductReportV9, hasLogo: boolean): v
           kind: step.kind,
           actor: step.actorId ?? undefined,
           capability: step.capabilityId ?? undefined,
-          places: step.places.length
-            ? Object.fromEntries(step.places.map(place => [place.routeId, place.placeId]))
+          contexts: step.contexts.length
+            ? Object.fromEntries(step.contexts.map(context => [context.routeId, { place: context.placeId }]))
             : undefined
         })),
         references: references(scenario.references)
@@ -412,7 +410,7 @@ function writeReport(root: string, report: ProductReportV9, hasLogo: boolean): v
 }
 
 export interface ExpandedProductReport {
-  report: ProductReportV9
+  report: ProductReportV10
   root: string
 }
 
