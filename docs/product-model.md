@@ -51,7 +51,9 @@ report while editing.
 An entity without assets or children is the compact file `<id>.md`. When it
 gains its first asset or typed child collection, move it to
 `<id>/<type>.md`; the folder becomes that entity's namespace. The two forms
-never coexist and derive the same id. Behavior-hierarchy ids are the bare file
+never coexist and derive the same id — `lint` reports both shapes at once, or a
+folder missing its `<type>.md`, as errors. A folder you have expanded but not
+filled yet is only a warning, so you can create it and add the child next. Behavior-hierarchy ids are the bare file
 or folder name; qualified Interface, Experience, and Screen ids carry their path
 joined by `::`, because Experience and Screen names may repeat across Interfaces.
 Only `product.md` declares `id:`. Scenario IDs are globally unique.

@@ -206,9 +206,22 @@ export interface PddModel {
   journeys: JourneyEntity[]
   journeyScenarios: JourneyScenarioEntity[]
   issues: string[]
+  notices: string[]
 }
 
 export const FOLDER = '.businesslens'
+
+/**
+ * The two channels a model load reports into.
+ *
+ * `issues` are states no correct model passes through and fail `lint`.
+ * `notices` are advisory: the model is loadable and the finding describes a
+ * shape an author is expected to reach in more than one step.
+ */
+export interface LoadFindings {
+  issues: string[]
+  notices: string[]
+}
 
 /** One compact or expanded entity: its id segment, namespace, and Markdown file. */
 export interface EntityLocation {
@@ -233,7 +246,7 @@ export interface EntityLocation {
 function listEntities(
   parent: string,
   type: string,
-  issues: string[],
+  findings: LoadFindings,
   collection: string,
   childDirectories: string[] = []
 ): EntityLocation[] {
@@ -246,7 +259,7 @@ function listEntities(
     if (entry.name === '.DS_Store') continue
     if (entry.isFile()) {
       if (!entry.name.endsWith('.md')) {
-        issues.push(`${collection}/${entry.name}: expected <id>.md or <id>/${type}.md`)
+        findings.issues.push(`${collection}/${entry.name}: expected <id>.md or <id>/${type}.md`)
         continue
       }
       compact.set(entry.name.slice(0, -3), join(parent, entry.name))
@@ -256,7 +269,7 @@ function listEntities(
       expanded.set(entry.name, join(parent, entry.name))
       continue
     }
-    issues.push(`${collection}/${entry.name}: expected a regular entity file or directory`)
+    findings.issues.push(`${collection}/${entry.name}: expected a regular entity file or directory`)
   }
 
   const ids = new Set([...compact.keys(), ...expanded.keys()])
@@ -267,7 +280,7 @@ function listEntities(
     const hasExpandedFile = existsSync(expandedFile)
 
     if (compactFile && expanded.has(id)) {
-      issues.push(
+      findings.issues.push(
         hasExpandedFile
           ? `${collection}/${id}: both ${id}.md and ${id}/${type}.md exist; keep exactly one entity shape`
           : `${collection}/${id}.md cannot also have ${collection}/${id}/; move it to ${collection}/${id}/${type}.md before adding children or assets`
@@ -282,7 +295,7 @@ function listEntities(
     }
 
     if (!hasExpandedFile) {
-      issues.push(`${collection}/${id}/ is missing ${type}.md`)
+      findings.issues.push(`${collection}/${id}/ is missing ${type}.md`)
       continue
     }
 
@@ -300,14 +313,17 @@ function listEntities(
         continue
       }
       if (child.isDirectory()) {
-        issues.push(`${collection}/${id}/${child.name}/ is not a recognized child directory`)
+        findings.issues.push(`${collection}/${id}/${child.name}/ is not a recognized child directory`)
         continue
       }
-      issues.push(`${collection}/${id}/${child.name}: assets must be regular files`)
+      findings.issues.push(`${collection}/${id}/${child.name}: assets must be regular files`)
     }
 
     if (!ownsContent) {
-      issues.push(
+      // Advisory, not an error: an author reaches the expanded shape in two
+      // steps. Report expansion derives shape from owned children, so the round
+      // trip normalizes this folder back to the compact form the rule requires.
+      findings.notices.push(
         `${collection}/${id}/ has no assets or child entities; use ${collection}/${id}.md`
       )
     }
@@ -497,6 +513,8 @@ function businessRuleTargetsField(
 export function loadModel(cwd: string): PddModel {
   const root = join(cwd, FOLDER)
   const issues: string[] = []
+  const notices: string[] = []
+  const findings: LoadFindings = { issues, notices }
   if (!existsSync(root)) {
     issues.push(`${FOLDER}/ does not exist — use \`businesslens-map\` for established code or \`businesslens-ideate\` for a new product`)
   } else {
@@ -685,7 +703,7 @@ export function loadModel(cwd: string): PddModel {
     issues.push('coverage.md is missing')
   }
 
-  const actors: ActorEntity[] = listEntities(join(root, 'actors'), 'actor', issues, 'actors')
+  const actors: ActorEntity[] = listEntities(join(root, 'actors'), 'actor', findings, 'actors')
     .map((location) => {
       const { id, file } = location
       const { data, doc, references, directory, assets, assetMeta } = readEntity(location, ['kind', 'relationship'], issues)
@@ -707,7 +725,7 @@ export function loadModel(cwd: string): PddModel {
   const screens: ScreenEntity[] = []
 
   const readScreens = (parent: string, containerId: string, label: string) => {
-    for (const location of listEntities(join(parent, 'screens'), 'screen', issues, `${label}/screens`)) {
+    for (const location of listEntities(join(parent, 'screens'), 'screen', findings, `${label}/screens`)) {
       const { data, doc, references, directory, assets, assetMeta } = readEntity(
         location,
         ['capabilities', 'entryPoints'],
@@ -735,7 +753,7 @@ export function loadModel(cwd: string): PddModel {
   for (const productInterface of listEntities(
     join(root, 'interfaces'),
     'interface',
-    issues,
+    findings,
     'interfaces',
     ['experiences', 'screens']
   )) {
@@ -762,7 +780,7 @@ export function loadModel(cwd: string): PddModel {
     const experienceLocations = listEntities(
       join(productInterface.directory, 'experiences'),
       'experience',
-      issues,
+      findings,
       `interfaces/${productInterface.id}/experiences`,
       ['screens']
     )
@@ -801,7 +819,7 @@ export function loadModel(cwd: string): PddModel {
     }
   }
 
-  const domains: DomainEntity[] = listEntities(join(root, 'domains'), 'domain', issues, 'domains')
+  const domains: DomainEntity[] = listEntities(join(root, 'domains'), 'domain', findings, 'domains')
     .map((location) => {
       const { id, file } = location
       const { data, doc, references, directory, assets, assetMeta } = readEntity(location, ['colorSlot'], issues)
@@ -817,7 +835,7 @@ export function loadModel(cwd: string): PddModel {
   for (const location of listEntities(
     join(root, 'capabilities'),
     'capability',
-    issues,
+    findings,
     'capabilities',
     ['scenarios']
   )) {
@@ -836,7 +854,7 @@ export function loadModel(cwd: string): PddModel {
     for (const scenario of listEntities(
       join(location.directory, 'scenarios'),
       'capability-scenario',
-      issues,
+      findings,
       `capabilities/${location.id}/scenarios`
     )) {
       const parsed = readEntity(scenario, ['kind', 'routes', 'steps'], issues)
@@ -862,7 +880,7 @@ export function loadModel(cwd: string): PddModel {
   for (const location of listEntities(
     join(root, 'journeys'),
     'journey',
-    issues,
+    findings,
     'journeys',
     ['scenarios']
   )) {
@@ -882,7 +900,7 @@ export function loadModel(cwd: string): PddModel {
     for (const scenario of listEntities(
       join(location.directory, 'scenarios'),
       'journey-scenario',
-      issues,
+      findings,
       `journeys/${location.id}/scenarios`
     )) {
       const parsed = readEntity(scenario, ['kind', 'result', 'routes', 'steps'], issues)
@@ -907,7 +925,7 @@ export function loadModel(cwd: string): PddModel {
   const businessRules: BusinessRuleEntity[] = listEntities(
     join(root, 'business-rules'),
     'business-rule',
-    issues,
+    findings,
     'business-rules'
   ).map((location) => {
     const { id, file } = location
@@ -935,6 +953,7 @@ export function loadModel(cwd: string): PddModel {
     businessRules,
     journeys,
     journeyScenarios,
-    issues
+    issues,
+    notices
   }
 }

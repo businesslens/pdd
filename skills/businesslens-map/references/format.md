@@ -79,8 +79,12 @@ not contain another H1 or H2.
 ## Required shapes
 
 - `config.yaml`: exactly `schema: 6` and `sdd.paths`.
-- `product.md`: `id`, optional `tags`, `limitations`, H1, lead description, and
-  optional `## Intent`.
+- `product.md`: `id`, optional `summary`, `category`, `tags`, `authors`,
+  `license`, `limitations`, H1, lead description, and optional `## Intent`.
+  `summary` is one line of at most 400 characters, `category` is lowercase
+  kebab-case, `authors` are `{ name, url? }` records, and `license` is an SPDX
+  identifier. Report hosts read those four as portable Product identity and
+  attribution, so a model intended for a Blueprint authors them.
 - `taxonomies.yaml`: `scenarioKinds` entries with `id`, `name`, `description`,
   and optional `colorSlot`.
 - Actor: required `kind: person|system` and `relationship: external|internal`,
@@ -144,6 +148,50 @@ Optional `## Decision points` uses an H3 title, a question, and at least two
 branch that changes the Capability sequence or terminal result is a separate
 Scenario. `kind` describes the nature of the variation; `result` describes the
 terminal Journey goal outcome, so the fields are orthogonal.
+
+A Capability Scenario in full. One route still declares `routes`; Steps carry
+`text` and `kind`, an `actor` Step names its Actor, and each Step maps every
+declared route id to one Context place:
+
+```markdown
+---
+kind: primary
+routes:
+  web: Web
+steps:
+  - text: The Reader provides a collection name
+    kind: actor
+    actor: reader
+    contexts:
+      web:
+        place: reader-web::personal-library::collection-workspace
+  - text: The Product creates a private collection owned by that Reader
+    kind: product
+    contexts:
+      web:
+        place: reader-web::personal-library::collection-workspace
+  - text: The empty collection is ready to edit
+    kind: condition
+    contexts:
+      web:
+        place: reader-web::personal-library::collection-workspace
+---
+
+# Create an owned collection
+
+## Trigger
+
+The Reader chooses to organize saved items in a new collection.
+
+## Outcome
+
+The Reader has a new private owned collection with the chosen name.
+```
+
+`kind` names an id declared in `taxonomies.yaml`. The containing
+`capabilities/<capability-id>/scenarios/` directory is the only parent
+authority, so no `capability:` field is written. A Journey Scenario has the same
+shape plus a required `result`.
 
 Context is the single model concept for where behavior applies. In schema 6 it
 is a strict object containing one `place` field. A Capability's availability

@@ -49,7 +49,6 @@
     "docs",
     "layers",
     "!layers/nuxt/report-viewer-lab",
-    "plans/shared-theme-lab.md",
     "skills"
   ],
   "scripts": {

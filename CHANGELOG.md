@@ -140,13 +140,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Entity tables render the name of a relation the format makes single-valued
   rather than the count `1`, and drop any column constant across the rows on
   screen.
+- The bundled skills carry a worked Capability Scenario. The reference every
+  skill reads described `routes`, typed `steps`, and per-route Contexts in
+  prose but showed no Scenario file, leaving the model's most structured
+  artifact to be inferred. The example is single-route, because that is the
+  case where the `routes` requirement is least guessable.
+- The bundled skills name the Product's portable identity keys — `summary`,
+  `category`, `authors`, and `license`. Report hosts read all four, and a model
+  authored without them reaches a Blueprint incomplete.
+- `npm run check` asserts that every entity kind, frontmatter key, and required
+  section named in `spec/format.md` also appears in the canonical skill
+  reference. The reference may be terser than the contract; it may not omit a
+  name, because an agent cannot author a key it was never told about. It found
+  the three missing Product keys above on its first run.
+- A README for the `businesslens/nuxt/theme` layer, which shipped as a public
+  export with no documentation of its palette roles, type scale,
+  `<BusinessLensBrand>` lockup, or icon-family composable.
 - **Folder schema 5 — a breaking change with no compatibility reader.** An
   entity is compact as `<id>.md` until it owns an asset or typed child
   collection, then expands to `<id>/<type>.md`. Both shapes derive the same id
   and cannot coexist. This keeps leaf-heavy collections readable while giving
   every kind—Screens most of all—a co-located namespace when needed.
   `product.md` similarly expands to `product/product.md` only when it owns
-  `logo.svg`.
+  `logo.svg`. Two coexisting shapes, and an expanded folder missing its
+  `<type>.md`, are `lint` errors — neither is a state a correct model passes
+  through. An expanded folder that owns nothing *yet* is a warning instead: the
+  rule still holds, and expansion normalizes the folder back to the compact
+  form, but an author reaches the expanded shape in two steps and the
+  intermediate step is not a defect.
 - **The Interface → Experience → Screen hierarchy nests.** An Experience
   belongs to exactly one Interface and
   a Screen to exactly one scope, so the path is the parent relation. An
@@ -230,6 +251,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `package.json` no longer lists `plans/shared-theme-lab.md` among its packaged
+  files. The file was deleted while the entry stayed, and npm drops a missing
+  `files` entry silently, so the packed tarball simply carried no `plans/` at
+  all and nothing reported it.
+- The docs group allowlist no longer permits `Learn from examples`, which no
+  page has used since the feed-reader walkthrough was removed. An allowed group
+  with nothing behind it is a sidebar section the navigation cannot build.
 - Two routes of one Scenario that repeat the same Context place sequence are
   now a finding in both `lint` and report validation. A route id names one
   traversal, so a second id over the same sequence claims a lane the Product

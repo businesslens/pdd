@@ -29,7 +29,7 @@ function sameSet(left: Set<string>, right: Set<string>): boolean {
 /** Pure structural rule engine over a loaded model; trackedFiles injected for testability. */
 export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
   const errors = [...model.issues]
-  const warnings: string[] = []
+  const warnings: string[] = [...model.notices]
   const tracked = new Set(trackedFiles)
 
   const requireTitle = (label: string, title: string, lead: string) => {

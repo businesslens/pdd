@@ -163,6 +163,14 @@ future format revision, but Context is not an arbitrary metadata bag.
   otherwise it is needless structure and must be compacted. A compact entity
   has no asset or child namespace.
 
+  Coexisting shapes, and an expanded folder missing its `<type>.md`, are `lint`
+  errors: both are states no correct model passes through. An expanded folder
+  that owns nothing yet is a `lint` warning instead. The rule still holds — a
+  Product Report cannot carry that state, because expansion derives each
+  entity's shape from the children it actually owns, so the round trip
+  normalizes the folder back to the compact form. But an author reaches the
+  expanded shape in two steps, and the intermediate step is not a defect.
+
 - **ID = the logical path from the collection root.** Behavior-hierarchy ids
   (Capability, Journey, both Scenario types) and cross-cutting ids (Actor, Domain, Business
   Rule) are the bare file or folder name and are globally unique within their

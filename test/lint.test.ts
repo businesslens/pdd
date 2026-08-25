@@ -105,16 +105,25 @@ describe('lintModel', () => {
     )
   })
 
-  it('requires an expanded entity to own children or assets', () => {
+  it('warns rather than fails on an expanded entity that owns nothing yet', () => {
     const cwd = fixtureCopy()
     expandEntity(
       join(cwd, '.businesslens/actors/shopper.md'),
       join(cwd, '.businesslens/actors/shopper/actor.md')
     )
+    const result = run(cwd)
 
-    expect(run(cwd).errors).toContain(
+    // An author reaches the expanded shape in two steps, and the model is
+    // loadable throughout. The rule still holds — expansion normalizes the
+    // folder back to the compact form — so it is reported, but it does not
+    // fail a model that is otherwise correct.
+    expect(result.warnings).toContain(
       'actors/shopper/ has no assets or child entities; use actors/shopper.md'
     )
+    expect(result.errors).not.toContain(
+      'actors/shopper/ has no assets or child entities; use actors/shopper.md'
+    )
+    expect(result.ok).toBe(true)
   })
 
   it('accepts compact Product and expands an entity for its first asset', () => {

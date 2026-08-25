@@ -184,6 +184,42 @@ if (!canonicalFormatContract) {
   }
 }
 
+// `spec/format.md` is the contract; the skill reference is the copy agents
+// actually read while authoring. It may be terser, but it may not omit a name
+// the contract requires — an agent cannot author a key it was never told about.
+// This is a presence check over names, never a check of what the prose claims.
+//
+// `## Anything else` is excluded because the spec uses it to demonstrate that
+// an *unrecognized* H2 survives export; it is not a recognized section.
+const UNRECOGNIZED_SPEC_SECTIONS = new Set(['Anything else'])
+const specSource = await readFile(resolve(root, 'spec/format.md'), 'utf8')
+const entityTable = specSource.match(/\| Entity \| Compact \|[\s\S]*?\n\n/)?.[0]
+if (!entityTable) {
+  errors.push('spec/format.md does not expose the entity layout table')
+} else {
+  const specNames = new Map()
+  for (const row of entityTable.matchAll(/^\| ([^|]+) \|/gm)) {
+    const kind = row[1].trim()
+    if (kind !== 'Entity' && !kind.startsWith('---')) specNames.set(kind, 'entity kind')
+  }
+  for (const [, example] of specSource.matchAll(/```markdown\n([\s\S]*?)```/g)) {
+    for (const heading of example.matchAll(/^## (.+)$/gm)) {
+      const section = heading[1].trim()
+      if (!UNRECOGNIZED_SPEC_SECTIONS.has(section)) specNames.set(`## ${section}`, 'section')
+    }
+    const frontmatter = example.match(/^---\n([\s\S]*?)\n---/)
+    if (!frontmatter) continue
+    for (const key of frontmatter[1].matchAll(/^([a-zA-Z][a-zA-Z0-9]*):/gm)) {
+      specNames.set(key[1], 'frontmatter key')
+    }
+  }
+  for (const [name, sort] of specNames) {
+    if (!canonicalFormatSource.includes(name)) {
+      errors.push(`${canonicalFormatReference} never names the ${sort} "${name}" required by spec/format.md`)
+    }
+  }
+}
+
 const canonicalRunner = 'skills/businesslens-map/scripts/run-businesslens.mjs'
 const canonicalRunnerSource = await readFile(resolve(root, canonicalRunner), 'utf8')
 for (const skill of expectedSkills) {
@@ -219,7 +255,6 @@ const DOC_SECTIONS = new Set(['open-source', 'platform'])
 const DOC_GROUPS = new Set([
   'Get started',
   'Product Model',
-  'Learn from examples',
   'Integrations',
   'Skills',
   'CLI'
