@@ -103,7 +103,11 @@ jobs:
           tar -tzf "${{ steps.pack.outputs.tarball }}" | grep '^package/layers/nuxt/theme/nuxt.config.ts$' >/dev/null
           tar -tzf "${{ steps.pack.outputs.tarball }}" | grep '^package/layers/nuxt/theme-lab/nuxt.config.ts$' >/dev/null
           tar -tzf "${{ steps.pack.outputs.tarball }}" | grep '^package/layers/nuxt/theme-lab/public/brand/logo/variants/mark-10.svg$' >/dev/null
-          tar -tzf "${{ steps.pack.outputs.tarball }}" | grep '^package/dist/report-view-model.js$' >/dev/null
+          if tar -tzf "${{ steps.pack.outputs.tarball }}" \
+            | grep '^package/dist/report-view-model.js$' >/dev/null; then
+            echo 'Retired report view-model export must not be packaged.' >&2
+            exit 1
+          fi
           tar -tzf "${{ steps.pack.outputs.tarball }}" | grep '^package/dist/logo.js$' >/dev/null
 
           nuxt_smoke="$smoke_root/nuxt-layer-consumer"
