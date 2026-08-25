@@ -251,10 +251,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- The release artifact smoke test now rejects the retired lossy Report View
-  Model export instead of requiring it. The export was deliberately removed
-  when the complete Product Report became the sole renderer input, but the
-  stale positive assertion stopped the first `v0.8.0` publish before npm.
+- The release artifact smoke test follows the promoted stable boundaries: it
+  requires the approved icon under `theme`, not an old `theme-lab` audition
+  path, and rejects the retired lossy Report View Model export instead of
+  requiring it. The stale assertions stopped the first `v0.8.0` publish
+  attempts before npm.
 - `package.json` no longer lists `plans/shared-theme-lab.md` among its packaged
   files. The file was deleted while the entry stayed, and npm drops a missing
   `files` entry silently, so the packed tarball simply carried no `plans/` at
