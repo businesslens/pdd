@@ -21,6 +21,7 @@ const REQUIRED = [
   'spec/format.md', 'spec/report.md', 'docs/product-model.md', 'docs/product.md',
   'docs/cli.md', 'docs/cli-view.md', 'docs/ci.md', 'docs/integration.md',
   'src/logo.ts', 'layers/nuxt/report-viewer/nuxt.config.ts',
+  'layers/nuxt/report-viewer-lab/nuxt.config.ts',
   'layers/nuxt/report-viewer/app/components/BusinessLensReportViewer.vue',
   'layers/nuxt/theme/nuxt.config.ts', 'layers/nuxt/theme-lab/nuxt.config.ts',
   'layers/nuxt/theme/app/components/BusinessLensBrand.vue',
@@ -86,7 +87,13 @@ if (pkg.exports?.['./nuxt/report-viewer'] !== './layers/nuxt/report-viewer/nuxt.
 if (pkg.exports?.['./nuxt/report-lab'] || pkg.exports?.['./report/view-model']) {
   errors.push('retired report-lab and lossy report view-model exports must stay removed')
 }
-for (const retired of ['layers/nuxt/report-lab', 'src/report-view-model.ts']) {
+if (pkg.exports?.['./nuxt/report-viewer-lab']) {
+  errors.push('the private report-viewer-lab must not have a package export')
+}
+if (!pkg.files?.includes('!layers/nuxt/report-viewer-lab')) {
+  errors.push('package.json files must exclude the private report-viewer-lab')
+}
+for (const retired of ['layers/nuxt/report-lab', 'layers/nuxt/workbench-lab', 'src/report-view-model.ts']) {
   if (await exists(retired)) errors.push(`retired report artifact must stay removed: ${retired}`)
 }
 for (const peer of [

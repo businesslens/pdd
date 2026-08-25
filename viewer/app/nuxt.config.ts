@@ -7,7 +7,7 @@ const { version: pddVersion } = createRequire(import.meta.url)('../../package.js
 
 // `businesslens view` serves these paths from the CLI. `nuxt dev` has no CLI in
 // front of it, so dev-only handlers stand in with a catalog Blueprint — a model
-// rich enough to exercise every entity kind the Workbench has to render. They are
+// rich enough to exercise every entity kind the Product Report has to render. They are
 // dev handlers, so nothing here reaches the generated viewer.
 const fixtureRoot = resolve('../../blueprints/content-feed-reader/.businesslens')
 
@@ -42,13 +42,13 @@ const devHandlers = [
 
 export default defineNuxtConfig({
   extends: [
-    // The report layer supplies the stable Workbench and approved identity;
+    // The report layer supplies the stable Product Report and approved identity;
     // the shared lab keeps this host on the same background audition flow as
     // the landing application. Keep the composition here so report-viewer
     // stays neutral for consumers that want only the approved theme.
-    // `workbench-lab` extends `report-viewer`, so the shipped Workbench arrives
-    // through it and the remaining page and slideover readings arrive beside it.
-    resolve('../../layers/nuxt/workbench-lab'),
+    // `report-viewer-lab` extends `report-viewer` and remains the private hook
+    // for future report auditions. It currently adds no experiment behavior.
+    resolve('../../layers/nuxt/report-viewer-lab'),
     resolve('../../layers/nuxt/theme-lab')
   ],
   ssr: false,

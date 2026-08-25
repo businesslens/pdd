@@ -6,7 +6,7 @@ const report: ProductReportV10 = {
   id: 'packed-layer-smoke',
   title: 'Packed Layer Smoke Test',
   summary: 'Builds the public Nuxt layer from the packed businesslens artifact.',
-  description: 'The canonical report, complete Workbench, and stable theme resolve together.',
+  description: 'The canonical Product Report and stable theme resolve together.',
   category: 'developer-tool',
   authors: [{ name: 'BusinessLens' }],
   license: 'MIT',

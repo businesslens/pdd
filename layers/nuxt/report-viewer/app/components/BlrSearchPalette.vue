@@ -4,7 +4,7 @@
  *
  * One palette for every entity kind, grouped in the fixed kind order so the
  * same result always appears in the same place. Selecting a result hands the
- * entity back to the Workbench. The two Scenario collections are separate
+ * entity back to the Product Report. The two Scenario collections are separate
  * kinds, so they fall out as separate groups without a special case.
  */
 import type { CommandPaletteGroup, CommandPaletteItem } from '@nuxt/ui'

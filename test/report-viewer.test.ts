@@ -16,7 +16,7 @@ function source(path: string): string {
   return readFileSync(join(VIEWER, path), 'utf8')
 }
 
-describe('stable Product Report Workbench', () => {
+describe('stable Product Report', () => {
   it('projects every report entity and keeps scenario types distinct', () => {
     const report = compileReport(loadModel(FIXTURE), '2026-08-08')
     const workspace = projectReportWorkspace(report)
@@ -168,11 +168,11 @@ describe('stable Product Report Workbench', () => {
     const mark = source('app/components/BlrInterfaceType.vue')
     const actorMark = source('app/components/BlrActorType.vue')
     const kind = source('app/components/BlrKind.vue')
-    const structure = source('app/assets/report-workbench.css')
+    const structure = source('app/assets/report-viewer.css')
     const cardPresentation = source('app/utils/entityCards.ts')
     const card = source('app/components/BlrEntityCard.vue')
     const connections = source('app/components/BlrConnections.vue')
-    const workbench = source('app/components/BlrWorkbench.vue')
+    const reportShell = source('app/components/BlrReportShell.vue')
     const flow = source('app/utils/flowGraph.ts')
     const flowNode = source('app/components/BlrFlowNode.vue')
     const flowGroup = source('app/components/BlrFlowGroup.vue')
@@ -226,10 +226,10 @@ describe('stable Product Report Workbench', () => {
     expect(card).toContain(':actor-relationship="actorRelationship"')
     expect(connections).toContain(':interface-type="interfaceType(item.kind, id)"')
     expect(connections).toContain(':actor-kind="actorClassification(item.kind, id)?.actorKind"')
-    expect(workbench).toContain('resolvedInterfaceType(group.kind, group.key)')
-    expect(workbench).toContain('resolvedActor(group.kind, group.key)?.actorKind')
-    expect(workbench).toContain('BlrInterfaceTypeComponent')
-    expect(workbench).toContain('BlrActorTypeComponent')
+    expect(reportShell).toContain('resolvedInterfaceType(group.kind, group.key)')
+    expect(reportShell).toContain('resolvedActor(group.kind, group.key)?.actorKind')
+    expect(reportShell).toContain('BlrInterfaceTypeComponent')
+    expect(reportShell).toContain('BlrActorTypeComponent')
     expect(flow).toContain("interfaceType: entity.kind === 'interface' ? entity.interfaceType : null")
     expect(flow).toContain("actorKind: entity.kind === 'actor' ? entity.actorKind : null")
     expect(flowNode).toContain("data.kind === 'interface' && data.interfaceType")
@@ -335,19 +335,19 @@ describe('stable Product Report Workbench', () => {
     expect(journey.entryPoints).toEqual([])
   })
 
-  it('ships Workbench as the only report renderer', () => {
+  it('ships Product Report as the only report renderer', () => {
     const renderer = source('app/components/BusinessLensReportViewer.vue')
-    const workbench = source('app/components/BlrWorkbench.vue')
+    const reportShell = source('app/components/BlrReportShell.vue')
     const layer = source('nuxt.config.ts')
 
     expect(renderer).toContain('ProductReportV10')
     expect(renderer).toContain('projectReportWorkspace')
-    expect(renderer).toContain('<BlrWorkbench')
+    expect(renderer).toContain('<BlrReportShell')
     expect(source('app/components/BlrEntityBody.vue')).toContain('scenarioStepMatrix')
-    expect(workbench).toContain('<BlrProductTopology')
+    expect(reportShell).toContain('<BlrProductTopology')
     /* Grouping is how authored Domains earn their place in navigation. */
-    expect(workbench).toContain('groupKind')
-    expect(workbench).toContain('groupOptions')
+    expect(reportShell).toContain('groupKind')
+    expect(reportShell).toContain('groupOptions')
     expect(layer).toContain("extends: [join(currentDir, '../theme')]")
   })
 
@@ -361,91 +361,80 @@ describe('stable Product Report Workbench', () => {
 
     for (const path of [
       'app/components/BusinessLensReportViewer.vue',
-      'app/components/BlrWorkbench.vue'
+      'app/components/BlrReportShell.vue'
     ]) {
       expect(source(path), path).not.toMatch(/<footer|<\/footer>/)
       expect(source(path), path).not.toMatch(/\$slots\.footer|name="footer"/)
     }
   })
 
-  it('keeps short viewports inside the Workbench scroll boundary', () => {
+  it('keeps short viewports inside the Product Report scroll boundary', () => {
     const structure = source('app/assets/report-structure.css')
-    const panes = source('app/assets/report-workbench.css')
+    const panes = source('app/assets/report-viewer.css')
 
     expect(structure).toContain('min-height: 0')
     expect(structure).not.toContain('min-height: 42rem')
     expect(panes).toContain('overflow-y: auto')
   })
 
-  it('uses shared flow surfaces for contextual and Product topology', () => {
+  it('uses the shared flow canvas for Product topology', () => {
     const flow = source('app/utils/flowGraph.ts')
-    const topology = source('app/components/BlrTopology.vue')
     const canvas = source('app/components/BlrFlowCanvas.vue')
+    const topology = source('app/components/BlrProductTopology.vue')
 
     expect(flow).toContain('export function directRelations')
-    expect(flow).toContain('export function buildNeighbourhood')
     expect(flow).toContain('export function buildScreenMap')
-    expect(topology).toContain('buildNeighbourhood')
+    expect(existsSync(join(VIEWER, 'app/components/BlrTopology.vue'))).toBe(false)
+    expect(topology).toContain('buildProductTopologyGraph')
     expect(canvas).toContain('@vue-flow/core')
     expect(canvas).toContain('#node-blr')
   })
 
   it('keeps the question-and-derivation bar exclusive to Topology', () => {
-    const workbench = source('app/components/BlrWorkbench.vue')
+    const reportShell = source('app/components/BlrReportShell.vue')
     const topology = source('app/components/BlrProductTopology.vue')
 
     expect(existsSync(join(VIEWER, 'app/utils/browseSurfaces.ts'))).toBe(false)
-    expect(workbench).not.toContain('surface.question')
-    expect(workbench).not.toContain('surface.flow')
+    expect(reportShell).not.toContain('surface.question')
+    expect(reportShell).not.toContain('surface.flow')
     expect(topology).toContain('{{ view.question }}')
     expect(topology).toContain('v-for="(step, index) in kindSteps"')
   })
 
   it('scrolls collection controls with their list instead of pinning them as chrome', () => {
-    const workbench = source('app/components/BlrWorkbench.vue')
+    const reportShell = source('app/components/BlrReportShell.vue')
     const docs = source('app/utils/entityDocs.ts')
-    const pane = workbench.indexOf('v-if="!topologyActive" class="blr-pane min-h-0 flex-1"')
-    const toolbar = workbench.indexOf('v-if="showToolbar"', pane)
-    const reading = workbench.indexOf('<div class="p-5">', toolbar)
+    const pane = reportShell.indexOf('v-if="!topologyActive" class="blr-pane min-h-0 flex-1"')
+    const toolbar = reportShell.indexOf('v-if="showToolbar"', pane)
+    const reading = reportShell.indexOf('<div class="p-5">', toolbar)
 
     expect(pane).toBeGreaterThan(-1)
     expect(toolbar).toBeGreaterThan(pane)
     expect(reading).toBeGreaterThan(toolbar)
-    expect(workbench.slice(toolbar, reading)).not.toContain('border-b border-default')
-    expect(workbench.slice(toolbar, reading)).toContain(':to="collectionDocs.url"')
-    expect(workbench.slice(toolbar, reading)).toContain('label="Docs"')
+    expect(reportShell.slice(toolbar, reading)).not.toContain('border-b border-default')
+    expect(reportShell.slice(toolbar, reading)).toContain(':to="collectionDocs.url"')
+    expect(reportShell.slice(toolbar, reading)).toContain('label="Docs"')
     expect(docs).toContain("screen: 'screens'")
     expect(docs).toContain("domain: 'domains'")
   })
 
-  /*
-    The peek is a glance and the page is the reading. One panel served both for
-    a while, and it could not: authored content runs from roughly 570px for an
-    Actor to 2264px for a Journey Scenario. These assertions keep the authored
-    body out of the panel, which is the only thing stopping it growing back.
-  */
-  it('keeps the peek a glance and the page the reading', () => {
-    const workbench = source('app/components/BlrWorkbench.vue')
-    const inspector = source('app/components/BlrInspector.vue')
-    const peek = source('app/components/BlrEntityPeek.vue')
+  it('opens entities directly into the one page reading', () => {
+    const reportShell = source('app/components/BlrReportShell.vue')
     const page = source('app/components/BlrEntityPage.vue')
     const body = source('app/components/BlrEntityBody.vue')
 
-    expect(inspector).toContain('<BlrEntityPeek')
-    expect(workbench).toContain('<BlrEntityPage')
-    expect(page).toContain('<BlrEntityBody')
-    expect(page).not.toContain('buildJourneyAnatomy')
-    expect(page).not.toContain('journeyStepsGraph')
-
-    /* The authored body belongs to the page. */
+    expect(existsSync(join(VIEWER, 'app/components/BlrInspector.vue'))).toBe(false)
+    expect(existsSync(join(VIEWER, 'app/components/BlrEntityPeek.vue'))).toBe(false)
+    expect(reportShell).not.toContain('<BlrInspector')
+    expect(reportShell).toContain('<BlrEntityPage')
+    expect(reportShell).toContain(':on-select="(_event: Event, row: any) => openEntityPage(row.original)"')
+    expect(reportShell).toContain('@open="openEntityPage"')
+    expect(reportShell).toContain('@select="openEntityPage"')
+    expect(page).toContain('<BlrPageBlock')
+    expect(source('app/components/BlrPageBlock.vue')).toContain('<BlrEntityBody')
     for (const marker of ['stepMatrix.steps', 'asScreen.states', 'asRule.statement']) {
       expect(body, marker).toContain(marker)
-      expect(peek, marker).not.toContain(marker)
     }
-
-    /* Depth is one level: a relation navigates rather than re-targeting. */
-    expect(peek).toContain("emit('open', entity)")
-    expect(inspector).not.toMatch(/history\.value|const history = ref|function goBack/)
   })
 
   it('keeps Context where it answers an Overview question', () => {
@@ -454,7 +443,8 @@ describe('stable Product Report Workbench', () => {
     const contexts = source('app/components/BlrContexts.vue')
     const contextPlace = source('app/components/BlrContextPlace.vue')
     const page = source('app/components/BlrEntityPage.vue')
-    const peek = source('app/components/BlrEntityPeek.vue')
+    const block = source('app/components/BlrPageBlock.vue')
+    const sections = source('app/utils/pageSections.ts')
     const body = source('app/components/BlrEntityBody.vue')
 
     for (const entity of [
@@ -467,10 +457,10 @@ describe('stable Product Report Workbench', () => {
       expect(entityFacts(workspace, entity).map((fact: { label: string }) => fact.label)).not.toContain('Contexts')
     }
 
-    expect(page).toContain('<BlrContexts')
-    expect(peek).toContain('<BlrContexts')
-    expect(page).toContain("props.entity.kind === 'capability' ? props.entity.contexts : []")
-    expect(peek).toContain("props.entity.kind === 'capability' ? props.entity.contexts : []")
+    expect(page).toContain('<BlrPageBlock')
+    expect(block).toContain('<BlrContexts')
+    expect(block).toContain("props.entity.kind === 'capability' ? props.entity.contexts : []")
+    expect(sections).toContain("overviewBlocks.push('contexts')")
     expect(contexts).toContain('<BlrContextPlace')
     expect(source('app/components/BlrStepContext.vue')).toContain('<BlrContextPlace')
     expect(contextPlace).toContain('<BlrInterfaceType')
@@ -483,7 +473,7 @@ describe('stable Product Report Workbench', () => {
     expect(contexts).toContain(':context="point.context"')
     expect(contexts).not.toContain('point.path')
     expect(contexts).not.toContain('{{ point.interfaceTitle }}')
-    expect(page).toContain("props.entity.kind === 'journey' ? props.entity.entryPoints : []")
+    expect(block).toContain("props.entity.kind === 'journey' ? props.entity.entryPoints : []")
 
     /* Scenario Context belongs to its route cells; a Rule selector belongs to
        the authored applicability binding rather than a generic roll-up. */
@@ -493,28 +483,29 @@ describe('stable Product Report Workbench', () => {
     expect(body).toContain('Only in')
   })
 
-  it('uses the Workbench trail as the only entity-page identity', () => {
-    const workbench = source('app/components/BlrWorkbench.vue')
+  it('uses the Product Report trail as the only entity-page identity', () => {
+    const reportShell = source('app/components/BlrReportShell.vue')
     const page = source('app/components/BlrEntityPage.vue')
-    const globalHeader = workbench.slice(
-      workbench.indexOf('<header'),
-      workbench.indexOf('<div class="flex min-h-0 flex-1">')
+    const globalHeader = reportShell.slice(
+      reportShell.indexOf('<header'),
+      reportShell.indexOf('<div class="flex min-h-0 flex-1">')
     )
 
-    expect(workbench).toContain('v-for="(step, index) in pageTrail"')
-    expect(workbench).toContain('aria-label="Page breadcrumb"')
-    expect(workbench).toContain('data-mobile-location')
-    expect(workbench).toContain('data-mobile-section')
-    expect(workbench).toContain('class="flex min-w-0 flex-1 items-center gap-1 overflow-hidden sm:hidden"')
-    expect(workbench).not.toContain('class="inline-flex min-w-0 flex-1 items-center gap-1.5 hover:underline hover:underline-offset-4"')
-    expect(workbench).not.toContain(':title="step.title"')
-    expect(workbench).not.toContain('label="Neighbourhood"')
+    expect(reportShell).toContain('v-for="(step, index) in pageTrail"')
+    expect(reportShell).toContain('aria-label="Page breadcrumb"')
+    expect(reportShell).toContain('data-mobile-location')
+    expect(reportShell).toContain('data-mobile-section')
+    expect(reportShell).toContain('class="flex min-w-0 flex-1 items-center gap-1 overflow-hidden sm:hidden"')
+    expect(reportShell).not.toContain('class="inline-flex min-w-0 flex-1 items-center gap-1.5 hover:underline hover:underline-offset-4"')
+    expect(reportShell).not.toContain(':title="step.title"')
+    expect(reportShell).not.toContain('label="Neighbourhood"')
     expect(globalHeader).not.toContain('label="Docs"')
-    expect(workbench).not.toContain('DOCS_SLUG')
-    expect(workbench).toContain('@focus="focusTopology"')
+    expect(reportShell).not.toContain('DOCS_SLUG')
+    expect(reportShell).toContain('@focus="focusTopology"')
+    expect(page).toContain('label="Neighbourhood"')
     expect(page).not.toContain('<h1')
     expect(page).not.toContain('<BlrKind :kind="entity.kind"')
-    expect(page).not.toContain('const parentOf = computed')
+    expect(page).toContain('parentOf(props.workspace, props.entity)')
   })
 
   /*
@@ -524,17 +515,34 @@ describe('stable Product Report Workbench', () => {
   */
   it('keeps Scenarios off collection navigation and on their parent page', () => {
     const rail = source('app/components/BlrRail.vue')
-    const workbench = source('app/components/BlrWorkbench.vue')
+    const reportShell = source('app/components/BlrReportShell.vue')
     const page = source('app/components/BlrEntityPage.vue')
+    const sections = source('app/utils/pageSections.ts')
+    const scenarios = source('app/components/BlrScenarios.vue')
 
     expect(rail).toContain("PARENTED: ReportEntityKind[] = ['capability-scenario', 'journey-scenario']")
     expect(rail).not.toContain('blr-navchild')
-    expect(workbench).not.toContain('SCENARIO_OF')
-    expect(workbench).not.toContain('parentTabs')
-    expect(workbench).not.toContain('class="blr-tab"')
-    expect(page).toContain('scenariosByCapability')
-    expect(page).toContain('scenariosByJourney')
+    expect(reportShell).not.toContain('SCENARIO_OF')
+    expect(reportShell).not.toContain('parentTabs')
+    expect(reportShell).not.toContain('class="blr-tab"')
+    expect(page).toContain('<BlrScenarios')
+    expect(sections).toContain('scenariosByCapability')
+    expect(sections).toContain('scenariosByJourney')
+    expect(scenarios).toContain('selectedKey')
     expect(source('app/utils/reportWorkspace.ts')).toContain('scenariosByCapability')
+  })
+
+  it('uses Overview and only an optional Scenarios tab', () => {
+    const page = source('app/components/BlrEntityPage.vue')
+    const sections = source('app/utils/pageSections.ts')
+
+    expect(sections).toContain("export type PageTabId = 'overview' | 'scenarios'")
+    expect(sections).toContain("if (entity.references.length) overviewBlocks.push('references')")
+    expect(sections).not.toContain("id: 'diagram'")
+    expect(sections).not.toContain("id: 'references'")
+    expect(page).toContain('data-sticky-page-tabs')
+    expect(page).toContain('label="Neighbourhood"')
+    expect(page).toContain("emit('focus', subject)")
   })
 
   /*
@@ -543,7 +551,7 @@ describe('stable Product Report Workbench', () => {
   */
   it('exposes page and Scenario route state for host URL persistence', () => {
     const renderer = source('app/components/BusinessLensReportViewer.vue')
-    const workbench = source('app/components/BlrWorkbench.vue')
+    const reportShell = source('app/components/BlrReportShell.vue')
 
     expect(renderer).toContain("defineModel<string>('section'")
     expect(renderer).toContain("defineModel<string | null>('entity'")
@@ -551,16 +559,16 @@ describe('stable Product Report Workbench', () => {
     expect(renderer).toContain("defineModel<string>('routeColumns'")
     expect(renderer).toContain('v-model:entity="entity"')
     expect(renderer).toContain('v-model:scenario-route="scenarioRoute"')
-    expect(workbench).toContain("defineModel<string | null>('entity'")
+    expect(reportShell).toContain("defineModel<string | null>('entity'")
   })
 
   it('moves product identity into a desktop-equivalent mobile rail', () => {
-    const workbench = source('app/components/BlrWorkbench.vue')
+    const reportShell = source('app/components/BlrReportShell.vue')
 
-    expect(workbench).toContain("class=\"hidden size-6 shrink-0 rounded-md border border-muted bg-elevated object-contain p-0.5 lg:block\"")
-    expect(workbench).toContain(":ui=\"{ content: 'w-64 max-w-[85vw]', body: 'p-2' }\"")
-    expect(workbench).toContain('class="blr-workbench flex min-w-0 flex-1 items-center gap-3"')
-    expect(workbench).toContain('class="blr-workbench min-h-full"')
-    expect(workbench.match(/v-if="logoSrc"/g)).toHaveLength(2)
+    expect(reportShell).toContain("class=\"hidden size-6 shrink-0 rounded-md border border-muted bg-elevated object-contain p-0.5 lg:block\"")
+    expect(reportShell).toContain(":ui=\"{ content: 'w-64 max-w-[85vw]', body: 'p-2' }\"")
+    expect(reportShell).toContain('class="blr-report-shell flex min-w-0 flex-1 items-center gap-3"')
+    expect(reportShell).toContain('class="blr-report-shell min-h-full"')
+    expect(reportShell.match(/v-if="logoSrc"/g)).toHaveLength(2)
   })
 })

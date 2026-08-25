@@ -310,6 +310,11 @@ but the artifact remains evidence to assess rather than proof to trust.
 
 ## Entity files
 
+> **Illustrative examples.** The entity snippets below are non-normative
+> fragments from one fictional Acme Shop model. Their names and product story
+> are not required; they exist only to make the required Markdown, frontmatter,
+> and cross-entity identifiers concrete.
+
 ### `config.yaml`
 
 ```yaml

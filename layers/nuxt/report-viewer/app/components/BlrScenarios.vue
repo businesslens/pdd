@@ -9,8 +9,8 @@
  * The chosen reading is split while its container supports two panes, then
  * becomes inline rather than squeezing the Scenario beside its sibling list.
  */
-import type { AnyEntityView, ReportWorkspace, ScenarioView } from '../utils/model'
-import { ENTITY_KIND_META } from '../utils/model'
+import type { AnyEntityView, ReportWorkspace, ScenarioView } from '../utils/reportWorkspace'
+import { ENTITY_KIND_META } from '../utils/reportWorkspace'
 import { childrenOf } from '../utils/pageSections'
 
 const props = defineProps<{
@@ -20,7 +20,7 @@ const props = defineProps<{
   selectedKey?: string | null
 }>()
 
-const emit = defineEmits<{ select: [entity: AnyEntityView] }>()
+const emit = defineEmits<{ open: [entity: AnyEntityView] }>()
 
 const scenarioRoute = defineModel<string | null>('scenarioRoute', { default: null })
 const routeColumns = defineModel<string>('routeColumns', { default: 'auto' })
@@ -101,7 +101,7 @@ const summary = (item: ScenarioView) => item.trigger || item.lead
           v-model:route-columns="routeColumns"
           :workspace="workspace"
           :entity="item"
-          @select="emit('select', $event)"
+          @select="emit('open', $event)"
         />
       </div>
     </div>
@@ -139,7 +139,7 @@ const summary = (item: ScenarioView) => item.trigger || item.lead
           v-model:route-columns="routeColumns"
           :workspace="workspace"
           :entity="openScenario"
-          @select="emit('select', $event)"
+          @select="emit('open', $event)"
         />
       </div>
     </div>

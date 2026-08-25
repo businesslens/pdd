@@ -1,12 +1,12 @@
 /**
- * Categorical colour for the Workbench: one fixed slot order, two selected modes.
+ * Categorical colour for the Product Report: one fixed slot order, two selected modes.
  *
  * The slots are the validated categorical order, re-stepped for nothing — they
  * are used as published. Both modes were re-validated against the BusinessLens
  * surfaces rather than the reference ones (`#f4ecdb` light, `#1b1713` dark):
  * every gate passes, with a light-mode contrast warning on the orange, aqua,
  * yellow and magenta slots. That warning obligates relief, so **colour is never
- * the only encoding in this Workbench**: every coloured mark ships beside a label, and
+ * the only encoding in this Product Report**: every coloured mark ships beside a label, and
  * graph nodes additionally carry a per-kind silhouette and icon.
  *
  * Nine entity kinds is past the eight-slot categorical order and past what any

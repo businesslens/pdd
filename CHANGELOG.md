@@ -7,32 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
-
-- **Context is now the single location concept.** Folder schema 6 replaces
-  scalar availability boundaries and Scenario Places with one strict
-  `{ place: ... }` Context shape across Capability availability, Scenario
-  Steps, and Business Rule selectors. A Context place resolves to an Interface,
-  Experience, or Screen; Screens derive their place from
-  their path and declare no availability of their own.
-- Product Report v10 mirrors the same model with `{ placeId: ... }` Contexts,
-  removes the former availability/Place wire records, and is the only accepted
-  report version. The CLI, report SDK, Workbench, bundled skills, fixtures, and
-  Content Feed Reader Blueprint now consume schema 6 and report v10 directly.
-- Product Model terminology now names the Interface → Experience → Screen
-  hierarchy directly. The under-defined “surface” alias, including
-  `surface-parent`, surface-tree IDs, and the Workbench's Delivery surfaces
-  view, has been replaced by concrete entity names and `screen-parent`.
-- Workbench entity readings now present authored Capability Context once instead
-  of repeating it in the fact strip and under “Available in.” Derived Journey
-  and Scenario Contexts stay with their concrete routes, Screen placement stays
-  in identity, and Rule Context selectors stay with applicability. Every
-  rendered Context place uses the same typed, navigable Interface → Experience
-  → Screen path as Scenario route cells. Journey starting places retain the
-  exact first route Context and appear as “Starts at”; raw entry-point routes
-  remain report data and are not rendered in the human Workbench.
-
-## [0.8.0] - 2026-08-24
+## [0.8.0] - 2026-08-25
 
 ### Added
 
@@ -54,20 +29,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   allowlisted mount, and the report viewer renders local `visual` references and
   co-located assets as thumbnails instead of inert text.
 - **Every entity has a page**, at its own URL, with the authored body at full
-  width — steps, inline routes, decision points, screen states and rule
-  statements were previously readable only inside a 672px drawer. Kinds with no
-  authored body of their own (Actor, Interface, Experience, Domain) get their
-  neighbourhood graph as the page body, because their reach is the reading.
+  width — steps, inline routes, decision points, screen states, rule statements,
+  connections, and references are no longer confined to a drawer. Every page
+  has Overview; Capability and Journey pages alone add Scenarios.
 - **A concrete Actor's marker draws what it is.** The Actor mark carries the
   authored `kind` as its silhouette — a person or a system, at the size every
   other kind's mark uses — and the Product-boundary `relationship` is written as
-  a word where each surface has room for it: the collection row's title badge,
-  the graph node's sublabel, the peek's fact list. A Scenario Step names its
-  Actor with that mark in a chip that opens the Actor, rather than as prose.
-- **The inspector is a peek**: identity, one sentence, three discriminating
-  facts, and what the entity connects to. It does not scroll, it is one level
-  deep, and every relation on it opens that entity's page instead of
-  re-targeting the panel.
+  a word where each reading has room for it. A Scenario Step names its Actor
+  with that mark in a chip that opens the Actor, rather than as prose.
 - The open section and the open entity page live in the URL, so a report has
   deep links, a working browser back button, and a refresh that lands where it
   left. `BusinessLensReportViewer` exposes both as bindable models.
@@ -78,34 +47,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Counterpart Screens, Experiences and Interfaces cross-link from their pages:
   the same thing on another Interface is named as such rather than appearing to
   be a duplicate row.
-- One entity's neighbourhood is drawn on the topology canvas, at a width that
-  can render it, instead of inside the panel.
-- A new Learn from examples documentation group, beginning with a guided
-  Content Feed Reader walkthrough that traces two complete Actor paths and
-  explains why each optional entity earns its place.
-- The stable Product Report Workbench: an entity-first browse, inspect, search,
+- One entity's neighbourhood is drawn on the named Topology canvas, at a width
+  that can render it, when the reader chooses the page's Neighbourhood action.
+- The stable BusinessLens Product Report: an entity-first browse, search,
   scenario, journey, and named-topology experience over one complete report
-  projection. It renders every entity collection, availability scope, entry
-  point, screen state, scenario step, decision point, edge case, reference,
-  supporting section, coverage statement, and derived backlink.
+  projection. It renders every authored entity on its page while ranking
+  collection and Overview readings for repeated human use.
 - A shared Vue Flow foundation in the report-viewer layer (`@vue-flow/core` with a
   `@dagrejs/dagre` layered layout, both optional peer dependencies): one
   entity box and one container box for nine visual categories (with both
   Scenario types distinguished in content), a fixed relation-verb
   vocabulary, a measured Interface → Experience → Screen containment map, a
   sitemap of the same hierarchy drawn either as a top-down tree or radially
-  from the Product core, and
-  `BlrTopology` — the contextual neighbourhood graph with intentional
-  expansion, kind filtering that fades rather than removes, re-rooting with a
-  back trail, and a plain-words explanation of the selected entity.
+  from the Product core, plus focused entity filtering on the named Topology
+  surface.
 
 ### Changed
 
+- **Context is now the single location concept.** Folder schema 6 replaces
+  scalar availability boundaries and Scenario Places with one strict
+  `{ place: ... }` Context shape across Capability availability, Scenario
+  Steps, and Business Rule selectors. A Context place resolves to an Interface,
+  Experience, or Screen; Screens derive their place from their path and declare
+  no availability of their own.
+- Product Report v10 mirrors the same model with `{ placeId: ... }` Contexts,
+  removes the former availability and Place wire records, and is the only
+  accepted report version. The CLI, report SDK, Product Report, bundled skills,
+  fixtures, and Content Feed Reader Blueprint consume schema 6 and report v10
+  directly.
+- Product Model terminology now names the Interface → Experience → Screen
+  hierarchy directly. The under-defined “surface” alias, including
+  `surface-parent`, surface-tree IDs, and the former Delivery surfaces view, has
+  been replaced by concrete entity names and `screen-parent`.
+- Product Report entity readings present authored Capability Context once
+  instead of repeating it in the fact strip and under “Available in.” Derived
+  Journey and Scenario Contexts stay with their concrete routes, Screen
+  placement stays in identity, and Rule Context selectors stay with
+  applicability. Journey starting places retain the exact first route Context
+  and appear as “Starts at”; raw entry-point routes remain report data rather
+  than human-facing report content.
+- Collection rows, relations, search results, and topology entities open their
+  URL-backed pages directly. References stay in Overview, Neighbourhood opens
+  Topology, and the inspector and slideover are removed. The private report
+  experiment layer remains under the final `report-viewer-lab` name with no
+  active report experiments; the background audition remains independent in
+  `theme-lab`.
 - **Capability and Journey Scenarios share one route-and-Steps model.** Every
   Scenario now owns named `routes` and one ordered, typed `steps` list. An Actor
   Step names its responsible Actor, a Journey Step may name its Capability, and
-  a placed Step maps every route to its exact Interface, Experience, or Screen.
-  Route-neutral Steps remain first-class without a Place. The separate Journey
+  a contextualized Step maps every route to its exact Interface, Experience, or
+  Screen. Route-neutral Steps remain first-class without a Context. The
+  separate Journey
   `flow`, `operation`, stage ids, per-Step route objects, Scenario-wide Actors
   and availability, authored Screen Scenario backlinks, and Markdown `## Steps`
   are removed. Folder schema 3 and Product Report v7 are no longer accepted;
@@ -130,7 +122,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   order; placed cells show the exact typed Interface → Experience → Screen
   hierarchy. Step-kind labels explain Actor actions, Product actions, and
   conditions; Capability labels appear only where they discriminate Journey
-  Steps. Steps without a Place and Product Place transitions are described in
+  Steps. Steps without a Context and Context transitions are described in
   plain language, without exposing internal route ids.
 - **The report navigation rail lists kinds, flat.** Kinds do not nest —
   instances do — so both Scenario kinds leave the rail and are read on the page
@@ -162,12 +154,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   writes `capability:`, a Journey Scenario no longer writes `journey:`, and a
   Screen no longer writes `availability:`. Reparenting is a `git mv` that reads
   correctly in a pull request.
-- **`availability` collapses to a flat list of scope ids** such as
-  `customer-web::storefront`, and one exact context becomes a single
-  `context:` id. This removes the nested availability record, the `experiences`
-  sub-list, the rule requiring an Experience when the Interface uses them, and
-  the prohibition on mixing the two shapes — all four were consequences of an
-  Experience being able to span Interfaces.
 - **Interface, Experience, and Screen ids are qualified** by the path that
   distinguishes them. Experience and Screen names repeat across Interfaces on purpose: two entities of the same
   kind sharing a path suffix below their Interface are counterparts — the same
@@ -176,8 +162,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `## Boundary` section, and only Capability authors `domain:` — a Screen's,
   Experience's or Journey's Domains are derived through their Capabilities
   rather than restated where a second copy could disagree.
-- Product Report `schemaVersion` is `9.0.0`, and the catalog media type moves to
-  `version=9`. There is exactly one accepted report version, as before.
+- Product Report `schemaVersion` is `10.0.0`, and the catalog media type moves
+  to `version=10`. There is exactly one accepted report version, as before.
 - Scenario documentation moves onto its parent's page. A Scenario is not a
   top-level entity — it has a mandatory single parent that decides its kind —
   so Capability Scenarios are documented in `docs/capabilities.md`, Journey
@@ -203,23 +189,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   triggered by a Reader-initiated refresh on the Source list Screen — a trigger
   the model previously never stated. Its catch-up failure variation no longer
   contradicts itself about whether the backlog was unchanged or caught up.
-- **Breaking.** `businesslens/nuxt/report-viewer` now accepts the canonical
-  `ProductReportV9` directly and owns the complete Workbench projection and
-  topology engine. The lossy `businesslens/report/view-model` export and the
-  whole-report `businesslens/nuxt/report-lab` audition layer were removed. The
-  local viewer now ships only the promoted Workbench design while continuing
-  to share the landing application's background audition flow through
-  `businesslens/nuxt/theme-lab`.
+- **Breaking.** `businesslens/nuxt/report-viewer` accepts the canonical
+  `ProductReportV10` directly and owns the complete Product Report projection
+  and topology engine. The lossy `businesslens/report/view-model` export and
+  the former whole-report audition layer are removed. The private,
+  unpublished `report-viewer-lab` remains as an empty boundary for future
+  experiments, while `theme-lab` continues to own background auditions.
 - **Breaking.** Logo, lockup, and favicon selection are no longer theme-lab
   experiments. The approved mark, wordmark, brand renderer, favicon, and
   install-icon family now live at canonical paths in `businesslens/nuxt/theme`;
   `businesslens/theme-lab/variants` exposes background choices only.
-- The Workbench now keeps entity identity collision-safe across collections,
+- The Product Report keeps entity identity collision-safe across collections,
   preserves focus across live recompiles, separates Capability and Journey
   Scenario readings, shows Screen-to-Journey derivation provenance, renders
   ordered Journey path lanes, and uses fixed named views instead of a generic
   cross-kind grouping builder. Mobile navigation is a dedicated drawer.
-- Product Report v9 stores authored supporting H2 sections as ordered
+- Product Report v10 stores authored supporting H2 sections as ordered
   `{ heading, content }` records instead of an opaque Markdown string. Lint
   rejects Journey and Scenario lead prose, duplicate or conflicting structured
   sections, malformed structured lists, and duplicate values in set-valued
@@ -238,22 +223,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   golden fixture one, so `result` is an axis with real values rather than a
   constant, and `failureOnlyCapabilityIds` is exercised against authored
   content instead of always deriving empty.
-- The Workbench treats Capability Scenarios and Journey Scenarios as separate
-  entity kinds rather than one kind carrying a type flag. They remain contained
-  by their Capability or Journey while preserving their own search results,
-  pages, terminal results, and derived backlinks.
+- The Product Report treats Capability Scenarios and Journey Scenarios as
+  separate entity kinds rather than one kind carrying a type flag. They remain
+  contained by their Capability or Journey while preserving their own search
+  results, pages, terminal results, and derived backlinks.
 
 ### Fixed
 
-- Two routes of one Scenario that repeat the same Product Place sequence are
+- Two routes of one Scenario that repeat the same Context place sequence are
   now a finding in both `lint` and report validation. A route id names one
   traversal, so a second id over the same sequence claims a lane the Product
   does not have. The Content Feed Reader Blueprint carried two:
   `publish-on-mobile` and `unlist-from-mobile`, which never left the web
   Interface, and could not have — neither Capability declares a mobile context.
-- The report panel no longer keeps its scroll offset when the entity changes.
-  Selecting a relation that sat low in one reading opened the next one below its
-  own title, id and lead.
+- Entity pages no longer inherit the scroll offset of the collection or entity
+  that opened them, so each reading begins at its own title, identity, and lead.
 - The local viewer resolves the Blueprint logo at `product/logo.svg`, where
   schema 5 puts it once the Product expands.
 - An unexpected entry in a collection is now an explicit finding. A file nested
@@ -261,10 +245,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   from the model with no finding at all.
 - The local viewer's Content-Security-Policy sets `manifest-src`, which was
   blocking `site.webmanifest`.
-- The Workbench light and dark page surfaces are part of the shared theme
+- The Product Report light and dark page surfaces are part of the shared theme
   again. The warm base, top glow, and paper grain moved from the optional
   theme-lab audition layer into `businesslens/nuxt/theme`, where the promoted
-  Workbench and the bundled local viewer inherit them without depending on a
+  Product Report and the bundled local viewer inherit them without depending on a
   lab layer.
 - Journey composition no longer implies a Screen is reached from a Step that
   cannot expose it. A Screen is authored against the whole Journey Scenario, so

@@ -32,9 +32,7 @@ add optional entities only when they communicate a real Product distinction.
 | [Business Rule](./business-rules.md) | Optional | A durable assertion that must remain true |
 
 Do not add an Experience, Domain, Screen, or any other entity to make the model
-look complete. A small model can be both valid and honest. The
-[Content Feed Reader walkthrough](./feed-reader-example.md) shows a complete
-example with several real relationships of every kind.
+look complete. A small model can be both valid and honest.
 
 Screens are deliberately visual. A CLI or supported API does not need parallel
 Command or Endpoint entities: syntax belongs in CLI help, and endpoints and

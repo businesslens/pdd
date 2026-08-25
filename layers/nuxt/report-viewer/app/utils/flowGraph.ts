@@ -1,5 +1,5 @@
 /**
- * The shared Vue Flow foundation for the stable Product Report Workbench.
+ * The shared Vue Flow foundation for the stable Product Report.
  *
  * One node vocabulary, one relation vocabulary, one layout: every view draws
  * its graphs from here so the boxes read the same everywhere. Relation verbs
@@ -16,7 +16,7 @@ import { Graph, layout } from '@dagrejs/dagre'
 import { MarkerType, Position } from '@vue-flow/core'
 import type { Edge, Node } from '@vue-flow/core'
 import type { ActorView, AnyEntityView, InterfaceView, ReportEntityKind, ReportScenarioType, ReportWorkspace } from './reportWorkspace'
-import { ENTITY_KIND_META, entityKey, resolveEntity, resolveEntityKey } from './reportWorkspace'
+import { ENTITY_KIND_META, entityKey, resolveEntity } from './reportWorkspace'
 
 /** Data carried by every entity box (`type: 'blr'`). */
 export interface FlowNodeData {
@@ -293,75 +293,6 @@ export function directRelations(workspace: ReportWorkspace, entity: AnyEntityVie
     }
   }
   return relations
-}
-
-/** The ids one hop away from an entity, deduplicated, in kind order. */
-export function neighbourIds(workspace: ReportWorkspace, entityId: string): string[] {
-  const entity = resolveEntityKey(workspace, entityId)
-  if (!entity) return []
-  const ids = new Set<string>()
-  for (const relation of directRelations(workspace, entity)) {
-    const other = relation.source === entityId ? relation.target : relation.source
-    if (other !== entityId) ids.add(other)
-  }
-  return [...ids]
-}
-
-export interface NeighbourhoodOptions {
-  /** Kinds allowed into the graph besides the roots; omit for all. */
-  kinds?: ReadonlySet<ReportEntityKind>
-  /** Currently selected entity, drawn with a ring. */
-  selectedId?: string | null
-  /** When set, everything else is faded rather than removed. */
-  emphasizeIds?: ReadonlySet<string> | null
-}
-
-/**
- * The contextual neighbourhood: the roots, everything one
- * hop from a root, and every canonical relation among the included entities —
- * so a Journey's Screens also show which of its Capabilities they expose.
- */
-export function buildNeighbourhood(
-  workspace: ReportWorkspace,
-  rootIds: string[],
-  options: NeighbourhoodOptions = {}
-): FlowGraphShape {
-  const roots = rootIds.filter(id => workspace.byKey.has(id))
-  const included = new Set<string>(roots)
-  for (const rootId of roots) {
-    for (const id of neighbourIds(workspace, rootId)) {
-      const kind = resolveEntityKey(workspace, id)!.kind
-      if (!options.kinds || options.kinds.has(kind)) included.add(id)
-    }
-  }
-
-  const nodes: BlrFlowNode[] = [...included].map((id) => {
-    const entity = resolveEntityKey(workspace, id)!
-    const emphasized = options.emphasizeIds ? options.emphasizeIds.has(id) : true
-    return entityNode(entity, {
-      focus: roots.includes(id),
-      selected: options.selectedId === id,
-      dimmed: !emphasized,
-      count: entity.kind === 'journey' ? entity.scenarioIds.length : null
-    })
-  })
-
-  const edgeById = new Map<string, BlrFlowEdge>()
-  for (const id of included) {
-    for (const relation of directRelations(workspace, resolveEntityKey(workspace, id)!)) {
-      if (!included.has(relation.source) || !included.has(relation.target)) continue
-      const emphasized = options.emphasizeIds
-        ? options.emphasizeIds.has(relation.source) && options.emphasizeIds.has(relation.target)
-        : false
-      const edge = relationEdge(relation, {
-        emphasized,
-        dimmed: options.emphasizeIds ? !emphasized : false
-      })
-      edgeById.set(edge.id, edge)
-    }
-  }
-
-  return { nodes, edges: [...edgeById.values()] }
 }
 
 export interface LayoutOptions {

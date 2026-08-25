@@ -10,7 +10,7 @@ export default defineNuxtConfig({
   extends: [join(currentDir, '../theme')],
   css: [
     join(currentDir, './app/assets/report-structure.css'),
-    join(currentDir, './app/assets/report-workbench.css')
+    join(currentDir, './app/assets/report-viewer.css')
   ],
   // The bundled local viewer is a generated SPA with no icon endpoint at
   // runtime. Explicitly include icons referenced by inherited components.

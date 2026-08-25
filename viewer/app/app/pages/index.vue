@@ -55,7 +55,7 @@ const errorMessage = computed(() => {
   forward mean what they say, and a refresh return to the same route comparison
   instead of resetting the reading.
 
-  Both directions are guarded on inequality, so the URL and the workbench never
+  Both directions are guarded on inequality, so the URL and the report never
   push each other in a loop, and one reader gesture is one history entry even
   when it changes both values.
 */

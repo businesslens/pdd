@@ -1,5 +1,5 @@
 /**
- * The complete Product Report, projected once for the Workbench.
+ * The complete Product Report, projected once for the renderer.
  *
  * A report that claims to describe a product must show the whole model, so
  * this projection keeps every authored field and
@@ -1125,7 +1125,7 @@ export function projectReportWorkspace(report: ProductReportV10): ReportWorkspac
     scenariosByJourney.set(scenario.journeyId, [...(scenariosByJourney.get(scenario.journeyId) || []), scenario])
   }
 
-  /* Both parents index their children the same way: the Workbench reads a
+  /* Both parents index their children the same way: the Product Report reads a
      Capability's Scenarios exactly where it reads a Journey's. */
   const scenariosByCapability = new Map<string, ScenarioView[]>()
   for (const scenario of scenarios) {

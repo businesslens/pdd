@@ -30,8 +30,10 @@ contradict each other.
 - `src/core/skill-installation.ts` — ownership-safe skill installation.
 - `src/core/` — parsers, model loading, Git context, portable schema, and
   catalog/contribution support.
-- `layers/nuxt/report-viewer/` — the stable Nuxt Product Report Workbench, its
+- `layers/nuxt/report-viewer/` — the stable Nuxt Product Report, its
   complete report projection, and its dependency-free topology engine.
+- `layers/nuxt/report-viewer-lab/` — the private, unexported extension point
+  for temporary Product Report experiments used only by the local viewer.
 - `layers/nuxt/theme/` — the separately extendable BusinessLens-wide visual
   foundation and approved identity used across Nuxt hosts, not only report
   pages.
@@ -55,9 +57,8 @@ contradict each other.
   characters so it never truncates; the body H1 carries the full page
   title.
 - This repository authors the documentation with groups Get started, Product
-  Model (one page per top-level entity), Learn from examples (guided catalog
-  Blueprints), Integrations (one page per thing you integrate with), Skills (one
-  page per skill), and CLI (one page per command).
+  Model (one page per top-level entity), Integrations (one page per thing you
+  integrate with), Skills (one page per skill), and CLI (one page per command).
 - Each entity is explained in exactly one place. An entity page carries its
   narrative, when to create one, its file shape, and the `lint` findings
   that constrain it — do not reintroduce a separate glossary, a separate
@@ -127,13 +128,13 @@ contradict each other.
   recompiles on save, so focus and filter have to outlive an edit to the model.
   The open section and the open entity page also live in the URL, so a reader
   can link to what they are reading, walk back out of it, and reload into it.
-- **A peek is a glance; a page is the reading.** The panel answers "is this the
-  entity I meant" from a list: identity, one sentence, at most three
-  discriminating facts, and what it connects to. It does not scroll, and it is
-  one level deep — a relation on it opens that entity's page rather than
-  re-targeting the panel, because a panel three entities deep has no trail and
-  the list behind it no longer matches. Everything authored is on the page,
-  which has a URL, a breadcrumb, and the width its content was drawn for.
+- **The page is the reading.** A collection row, relation, search result, or
+  topology entity opens the entity page directly. It has a URL, a breadcrumb,
+  the width its content was drawn for, and the browser's own back button.
+- **Overview and Scenarios are the page structure.** Overview carries the
+  entity's authored meaning, facts, Contexts, relations, supporting material,
+  and References. Capability and Journey pages add Scenarios as their only
+  second tab. Neighbourhood is an action into Topology, never another page tab.
 - **The rail lists kinds; kinds do not nest.** Containment belongs where
   instances are — the default grouping of a collection and the entity page. A
   mandatory child kind does not add a peer collection tab to its parent's main

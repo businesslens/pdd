@@ -78,12 +78,11 @@ describe('shared BusinessLens theme lab', () => {
     const localViewer = readFileSync(join(root, 'viewer/app/app/app.vue'), 'utf8')
     const localPage = readFileSync(join(root, 'viewer/app/app/pages/index.vue'), 'utf8')
     const localCss = readFileSync(join(root, 'viewer/app/app/assets/local-viewer.css'), 'utf8')
-    /* The report layer arrives through `workbench-lab`, which extends it and adds
-       the alternative readings. What matters here is unchanged: the report
-       layer comes first, and the theme lab comes after it. */
-    const reportLayer = config.indexOf("resolve('../../layers/nuxt/workbench-lab')")
+    /* The private viewer lab extends the stable report layer without adding a
+       current experiment. The background lab remains the second layer. */
+    const reportLayer = config.indexOf("resolve('../../layers/nuxt/report-viewer-lab')")
     const themeLabLayer = config.indexOf("resolve('../../layers/nuxt/theme-lab')")
-    const labConfig = readFileSync(join(root, 'layers/nuxt/workbench-lab/nuxt.config.ts'), 'utf8')
+    const labConfig = readFileSync(join(root, 'layers/nuxt/report-viewer-lab/nuxt.config.ts'), 'utf8')
 
     expect(reportLayer).toBeGreaterThan(-1)
     expect(themeLabLayer).toBeGreaterThan(reportLayer)
@@ -91,7 +90,7 @@ describe('shared BusinessLens theme lab', () => {
     expect(localViewer).toContain('useBusinessLensThemeHead()')
     expect(localViewer).toContain('useBusinessLensThemeLabHead()')
     expect(localViewer).toContain('useBusinessLensThemeLab()')
-    expect(localViewer).toContain('<BusinessLensThemeLabBar')
+    expect(localViewer).toContain('<BusinessLensThemeLabBar />')
     expect(localViewer).toContain('top-(--businesslens-theme-lab-height)')
     expect(localViewer).toContain('var(--businesslens-theme-lab-height)')
     expect(localViewer).toContain('class="flex h-dvh flex-col overflow-hidden"')

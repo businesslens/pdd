@@ -28,11 +28,7 @@ useHead({
     -->
     <div class="flex h-dvh flex-col overflow-hidden">
       <NuxtLoadingIndicator />
-      <BusinessLensThemeLabBar :row-count="2">
-        <template #before>
-          <BusinessLensWorkbenchLabRow />
-        </template>
-      </BusinessLensThemeLabBar>
+      <BusinessLensThemeLabBar />
       <UHeader
         sticky
         :ui="{ root: 'top-(--businesslens-theme-lab-height) shrink-0', right: 'gap-0.5' }"

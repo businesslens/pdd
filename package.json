@@ -48,7 +48,7 @@
     "dist",
     "docs",
     "layers",
-    "!layers/nuxt/workbench-lab",
+    "!layers/nuxt/report-viewer-lab",
     "plans/shared-theme-lab.md",
     "skills"
   ],

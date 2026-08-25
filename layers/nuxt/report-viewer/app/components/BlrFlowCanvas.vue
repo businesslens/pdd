@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * The one Vue Flow surface every Workbench topology view draws on.
+ * The one Vue Flow surface every Product Report topology view draws on.
  *
  * Owning the canvas in one place keeps the graphs comparable across views:
  * the same dotted background, the same controls, the same fit behaviour, the

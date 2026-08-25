@@ -1,9 +1,9 @@
 <script setup lang="ts">
 /**
- * The product-level topology workspace: three question-led readings.
- * The host owns the inspector; this component owns view choice, graph-local
+ * The product-level topology surface: question-led readings.
+ * The host owns entity navigation; this component owns view choice, graph-local
  * visibility and focus, hover, and the Journey selector required by Value
- * paths. None of this state reaches the Workbench navigation rail.
+ * paths. None of this state reaches the Product Report navigation rail.
  */
 import type { AnyEntityView, ReportEntityKind, ReportWorkspace } from '../utils/reportWorkspace'
 import { ENTITY_KIND_META, resolveEntityKey } from '../utils/reportWorkspace'
@@ -18,7 +18,6 @@ import {
 
 const props = defineProps<{
   workspace: ReportWorkspace
-  selectedId?: string | null
   /**
    * One entity's neighbourhood, requested from elsewhere in the report.
    *
@@ -32,7 +31,6 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   select: [entity: AnyEntityView]
-  clear: []
 }>()
 
 /* Whole-model readings fit tighter and cap lower; a small graph would otherwise
@@ -57,8 +55,7 @@ const journeyItems = computed(() => props.workspace.journeys.map(journey => ({
 })))
 
 const baseGraph = computed(() => buildProductTopologyGraph(props.workspace, viewId.value, {
-  selectedId: props.selectedId,
-  highlightId: hoveredId.value || props.selectedId,
+  highlightId: hoveredId.value,
   journeyId: journeyId.value
 }))
 const graph = computed(() => filterProductTopologyGraph(baseGraph.value, {
@@ -108,9 +105,6 @@ watch(viewId, () => {
   hiddenKinds.value = []
   const compatible = baseEntityIds.value
   focusIds.value = focusIds.value.filter(id => compatible.has(id))
-  if (props.selectedId && !graph.value.nodes.some(node => node.data?.entityKey === props.selectedId)) {
-    emit('clear')
-  }
 })
 
 watch(journeyId, () => {
@@ -303,7 +297,6 @@ function selectEntity(entityId: string) {
         @select="selectEntity"
         @focus="selectEntity"
         @hover="hoveredId = $event"
-        @clear="emit('clear')"
       />
       <span class="pointer-events-none absolute bottom-3 left-3 rounded-md border border-default bg-default/90 px-2 py-1 font-mono text-[10px] text-dimmed shadow-sm backdrop-blur">
         {{ entityNodeCount }} boxes · {{ graph.edges.length }} relations

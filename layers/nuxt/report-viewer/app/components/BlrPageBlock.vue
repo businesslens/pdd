@@ -2,13 +2,12 @@
 /**
  * One block of a page, rendered by id.
  *
- * A switchboard, so the layouts contain arrangement and nothing else. If a
- * layout had to know how to draw a Screen's Product states, changing that
- * drawing would mean changing it five times and the options would slowly stop
- * being comparable.
+ * The page owns arrangement; this switchboard keeps each authored or derived
+ * reading in one implementation.
  */
-import type { AnyEntityView, ReportWorkspace } from '../utils/model'
-import { ENTITY_KIND_META, counterpartsOf, entityFacts } from '../utils/model'
+import type { AnyEntityView, ReportWorkspace } from '../utils/reportWorkspace'
+import { ENTITY_KIND_META, counterpartsOf } from '../utils/reportWorkspace'
+import { entityFacts } from '../utils/entityFacts'
 import type { PageBlockId } from '../utils/pageSections'
 
 const props = defineProps<{
@@ -20,7 +19,6 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  select: [entity: AnyEntityView]
   open: [entity: AnyEntityView]
 }>()
 
@@ -46,14 +44,14 @@ const facts = computed(() => entityFacts(props.workspace, props.entity).filter(f
     :workspace="workspace"
     :contexts="contexts"
     :entry-points="entryPoints"
-    @select="emit('select', $event)"
+    @select="emit('open', $event)"
   />
 
   <BlrEntityBody
     v-else-if="id === 'detail'"
     :workspace="workspace"
     :entity="entity"
-    @select="emit('select', $event)"
+    @select="emit('open', $event)"
   />
 
   <div v-else-if="id === 'counterparts' && counterparts.length" class="space-y-2">

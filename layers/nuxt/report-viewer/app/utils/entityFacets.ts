@@ -3,7 +3,7 @@
  *
  * Every entity view already carries its relations as id arrays — authored in
  * one direction, back-filled in the other by `projectReportWorkspace`. This
- * module is the one place that reads them generically, so the Workbench can
+ * module is the one place that reads them generically, so the Product Report can
  * offer consistent filters without a per-kind branch for each relation.
  *
  * Nothing here derives new relations: a facet is only ever an id array the

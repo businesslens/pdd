@@ -155,9 +155,7 @@ derived report projections, not additional authored relationships.
 - Start [from your repo](./docs/from-your-repo.md),
   [from a Blueprint](./docs/from-a-blueprint.md), or
   [from an idea](./docs/from-an-idea.md)
-- [Product Model](./docs/product-model.md) ·
-  [Feed reader example](./docs/feed-reader-example.md) ·
-  [References](./docs/references.md)
+- [Product Model](./docs/product-model.md) · [References](./docs/references.md)
 - [Skills](./docs/skills.md) · [CLI](./docs/cli.md) ·
   [CI/CD](./docs/ci.md)
 - [Format contract](./spec/format.md) ·

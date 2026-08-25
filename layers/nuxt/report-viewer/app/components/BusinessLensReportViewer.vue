@@ -5,7 +5,7 @@
  * Hosts differ in what surrounds a report, not in how a report reads: the
  * local CLI viewer wraps it in dev chrome, the catalog wraps it in site
  * navigation and a pull command. Those differences arrive as slots and a
- * bindable section, so the Workbench itself stays one implementation.
+ * bindable section, so the Product Report stays one implementation.
  */
 import type { ProductReportV10 } from 'businesslens/report'
 import { projectReportWorkspace } from '../utils/reportWorkspace'
@@ -40,7 +40,7 @@ const workspace = computed(() => projectReportWorkspace(props.report))
 
 <template>
   <article data-businesslens-report-viewer class="businesslens-report">
-    <BlrWorkbench
+    <BlrReportShell
       v-model:section="section"
       v-model:entity="entity"
       v-model:scenario-route="scenarioRoute"
@@ -57,6 +57,6 @@ const workspace = computed(() => projectReportWorkspace(props.report))
       <template v-if="$slots.provenance" #provenance>
         <slot name="provenance" />
       </template>
-    </BlrWorkbench>
+    </BlrReportShell>
   </article>
 </template>

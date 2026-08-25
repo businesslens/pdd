@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * The entity box every Workbench graph is built from.
+ * The entity box every Product Report graph is built from.
  *
  * One box, nine kinds: colour, icon and the kind label do the identifying, the
  * geometry does the state — focused boxes are larger with a standing glow,

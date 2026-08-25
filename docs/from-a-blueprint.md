@@ -13,9 +13,9 @@ order: 4
 catalog slug:
 
 ```bash
-mkdir my-reader && cd my-reader
+mkdir my-product && cd my-product
 git init
-npx businesslens blueprint pull content-feed-reader
+npx businesslens blueprint pull your-blueprint-slug
 ```
 
 The command writes only `.businesslens/`, including its orientation README, and
@@ -33,9 +33,7 @@ Rules, optional Journeys, and Journey Scenarios. Confirm that every Capability
 has direct local acceptance coverage and that its Scenarios are genuine
 variations rather than hidden operations. Confirm that every Journey defines a
 deliberate Goal and every Journey Scenario traces a supported multi-Capability
-route. The
-[Content Feed Reader walkthrough](./feed-reader-example.md) demonstrates this
-review. If the contract fits, send the model to your normal plan/build flow. If
+route. If the contract fits, send the model to your normal plan/build flow. If
 you want adjacent behavior, run `businesslens-ideate`, approve the model delta,
 then build.
 

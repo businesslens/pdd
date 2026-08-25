@@ -6,13 +6,12 @@
  * it says, what it touches, and where else it exists. Splitting them made four
  * thin tabs where one full one was wanted.
  *
- * What is left beside the Overview is only material with a shape of its own: a
- * parent's Scenarios, a graph-led entity's neighbourhood, and the reference
- * list. A Journey's Steps stay inside its Scenarios; a second diagram tab would
- * be a lossy peer projection of the same authored sequence.
+ * Scenarios are the only material with a shape of their own. References remain
+ * part of the Overview, and Neighbourhood is an action into the named Topology
+ * surface rather than a third page reading.
  */
-import type { AnyEntityView, ReportEntityKind, ReportWorkspace } from './model'
-import { ENTITY_KIND_META, counterpartsOf, isScenarioKind } from './model'
+import type { AnyEntityView, ReportWorkspace } from './reportWorkspace'
+import { counterpartsOf, isScenarioKind } from './reportWorkspace'
 
 export type PageBlockId =
   | 'lead'
@@ -24,7 +23,7 @@ export type PageBlockId =
   | 'supporting'
   | 'references'
 
-export type PageTabId = 'overview' | 'detail' | 'scenarios' | 'diagram' | 'references'
+export type PageTabId = 'overview' | 'scenarios'
 
 export interface PageTab {
   id: PageTabId
@@ -33,9 +32,6 @@ export interface PageTab {
   hint?: string
   blocks: PageBlockId[]
 }
-
-/** Kinds whose reach is the reading, so the graph is their body. */
-export const GRAPH_LED: ReportEntityKind[] = ['actor', 'interface', 'experience', 'domain']
 
 function hasAuthoredBody(entity: AnyEntityView): boolean {
   if (isScenarioKind(entity.kind)) return true
@@ -51,20 +47,9 @@ export function childrenOf(workspace: ReportWorkspace, entity: AnyEntityView): A
   return []
 }
 
-/**
- * The tabs a page offers.
- *
- * `detailApart` is the one axis option that changes the split rather than the
- * arrangement, so it is a parameter here instead of a second section list —
- * every layout then draws whatever it is handed.
- */
-export function tabsFor(
-  workspace: ReportWorkspace,
-  entity: AnyEntityView,
-  options: { detailApart?: boolean } = {}
-): PageTab[] {
+/** The final page has Overview and, only for a behavioral parent, Scenarios. */
+export function tabsFor(workspace: ReportWorkspace, entity: AnyEntityView): PageTab[] {
   const overviewBlocks: PageBlockId[] = ['lead', 'facts']
-  const detailBlocks: PageBlockId[] = []
 
   /* Only authored Capability Contexts belong in an Overview. A Journey keeps
      only its derived starting places; raw entry-point routes are not a useful
@@ -73,14 +58,12 @@ export function tabsFor(
   const hasEntryPoints = entity.kind === 'journey' && entity.entryPoints.length > 0
   if (hasOverviewContexts || hasEntryPoints) overviewBlocks.push('contexts')
 
-  if (hasAuthoredBody(entity)) {
-    if (options.detailApart) detailBlocks.push('detail')
-    else overviewBlocks.push('detail')
-  }
+  if (hasAuthoredBody(entity)) overviewBlocks.push('detail')
 
   if (counterpartsOf(workspace, entity).length) overviewBlocks.push('counterparts')
   overviewBlocks.push('connections')
   if (entity.supportingContent) overviewBlocks.push('supporting')
+  if (entity.references.length) overviewBlocks.push('references')
 
   const tabs: PageTab[] = [{
     id: 'overview',
@@ -88,41 +71,17 @@ export function tabsFor(
     blocks: overviewBlocks
   }]
 
-  if (detailBlocks.length) {
-    tabs.push({
-      id: 'detail',
-      label: isScenarioKind(entity.kind) ? 'The scenario' : 'Detail',
-      hint: isScenarioKind(entity.kind)
-        ? 'Trigger, steps, decisions and outcome.'
-        : 'What the model authors about this entity.',
-      blocks: detailBlocks
-    })
-  }
-
   const children = childrenOf(workspace, entity)
   if (entity.kind === 'capability' || entity.kind === 'journey') {
     tabs.push({
       id: 'scenarios',
-      label: entity.kind === 'capability' ? 'Scenarios' : 'Scenarios',
+      label: 'Scenarios',
       count: children.length,
       hint: entity.kind === 'capability'
         ? 'Each is one observable acceptance case for this Capability.'
         : 'Each is one path through this promise.',
       blocks: []
     })
-  }
-
-  if (GRAPH_LED.includes(entity.kind)) {
-    tabs.push({
-      id: 'diagram',
-      label: 'Neighbourhood',
-      hint: 'What it reaches, and what reaches it.',
-      blocks: []
-    })
-  }
-
-  if (entity.references.length) {
-    tabs.push({ id: 'references', label: 'References', count: entity.references.length, blocks: ['references'] })
   }
 
   return tabs
@@ -137,5 +96,3 @@ export function parentOf(workspace: ReportWorkspace, entity: AnyEntityView): Any
     : `journey:${scenario.journeyId}`
   return workspace.byKey.get(key) ?? null
 }
-
-export const kindLabel = (kind: ReportEntityKind) => ENTITY_KIND_META[kind].label

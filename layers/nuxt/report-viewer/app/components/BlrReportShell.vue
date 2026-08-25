@@ -1,19 +1,14 @@
 <script setup lang="ts">
 /**
- * Workbench — a rail, a working view, and a peek.
+ * Product Report shell — a rail, collection views, entity pages, and Topology.
  *
  * The rail lists kinds and nothing else, because kinds do not nest — instances
  * do. Containment appears where instances are: as the default grouping of a
  * collection and on the entity page. `BlrRail` carries that argument in full.
  *
- * Depth has exactly two containers, and the difference between them is not
- * taste but measurement. An entity's authored content ranges from 570px for an
- * Actor to 2264px for a Journey Scenario, and no single container serves both:
- *
- * - the **peek** is a glance from a list — four fixed zones, no scrolling, one
- *   level deep, and every relation on it navigates rather than re-targeting it;
- * - the **page** is the reading — a URL, a breadcrumb, the authored body at
- *   full width, and the browser's own back button.
+ * A collection row opens the entity page directly. The page is the one reading:
+ * a URL, a breadcrumb, the authored body at full width, and the browser's own
+ * back button.
  *
  * ⌘K is the third way in, for "I know its name, take me there", and it lands on
  * the page for the same reason: naming something means meaning it.
@@ -65,8 +60,8 @@ const BlrInterfaceTypeComponent = resolveComponent('BlrInterfaceType')
 const props = defineProps<{ workspace: ReportWorkspace, logoSrc?: string | null }>()
 
 /* ------------------------------------------------------------------ */
-/* Selection: `activeKind` is what the working view is about, `inspected` */
-/* is what the peek glances at, and `openEntity` is the page you are on.  */
+/* Selection: `activeKind` is what the collection view is about, and */
+/* `openEntity` is the page you are on.                               */
 /* ------------------------------------------------------------------ */
 
 /*
@@ -80,7 +75,7 @@ const PARENT_OF: Partial<Record<ReportEntityKind, ReportEntityKind>> = {
 }
 
 type ViewMode = 'cards' | 'table'
-type WorkbenchSection = 'overview' | 'topology' | ReportEntityKind
+type ReportSection = 'overview' | 'topology' | ReportEntityKind
 
 /**
  * The open section, bindable by the host so it can live in the URL.
@@ -95,22 +90,21 @@ const section = defineModel<string>('section', { default: 'overview' })
  *
  * Bindable for the same reason `section` is, and the reason pages exist at all:
  * a page a reader can reach but not link to, return to, or refresh is a modal
- * with extra steps. The peek is deliberately *not* here — it is a glance, and
- * replaying every glance through browser history would make back useless.
+ * with extra steps.
  */
 const openEntity = defineModel<string | null>('entity', { default: null })
 const scenarioRoute = defineModel<string | null>('scenarioRoute', { default: null })
 const routeColumns = defineModel<string>('routeColumns', { default: 'auto' })
 
 const activeKind = ref<ReportEntityKind>('product')
-const activeSection = ref<WorkbenchSection>('overview')
+const activeSection = ref<ReportSection>('overview')
 
 const KNOWN_SECTIONS = new Set<string>(['overview', 'topology', ...REPORT_ENTITY_KINDS.map(meta => meta.kind)])
 
 /* Two-way, but never fighting: each side only writes when the value differs. */
 watch(section, (value) => {
   if (value === activeSection.value) return
-  const next = (KNOWN_SECTIONS.has(value) ? value : 'overview') as WorkbenchSection
+  const next = (KNOWN_SECTIONS.has(value) ? value : 'overview') as ReportSection
   activeSection.value = next
   activeKind.value = next === 'overview' || next === 'topology' ? 'product' : next
 }, { immediate: true })
@@ -118,16 +112,14 @@ watch(section, (value) => {
 watch(activeSection, (value) => {
   if (section.value !== value) section.value = value
 })
-const activeId = ref<string | null>(null)
-const inspected = ref<AnyEntityView | null>(null)
 /* One entity's neighbourhood, drawn on the topology canvas rather than in a
-   panel too narrow to render it legibly. */
+   page that cannot give the graph the full report width. */
 const topologyFocus = ref<string | null>(null)
 const searchOpen = ref(false)
 const mobileNavOpen = ref(false)
 /* The internal name for the open page is the bindable model itself, so a page
    opened by a click and a page opened by a URL are the same state. */
-const openJourneyId = openEntity
+const openPageKey = openEntity
 const filterOpen = ref(false)
 
 /* Toolbar state is kept per kind: moving to another kind and back returns to
@@ -306,8 +298,8 @@ const entityGroups = computed(() => {
   about the *peek*, not about pages. A thin page is a good page: for an Actor,
   the reach is the reading.
 */
-const openPage = computed<AnyEntityView | null>(() => openJourneyId.value
-  ? resolveEntityKey(props.workspace, openJourneyId.value) ?? null
+const openPage = computed<AnyEntityView | null>(() => openPageKey.value
+  ? resolveEntityKey(props.workspace, openPageKey.value) ?? null
   : null)
 
 /**
@@ -378,16 +370,15 @@ watch([openEntity, () => props.workspace], () => {
     openEntity.value = null
     return
   }
-  activeKind.value = entity.kind
-  activeSection.value = entity.kind
+  const sectionKind = PARENT_OF[entity.kind] ?? entity.kind
+  activeKind.value = sectionKind
+  activeSection.value = sectionKind
 }, { immediate: true })
 
 /* Live recompiles replace the projection. Rehydrate selection by stable key so
    focus, filters, and the open page survive ordinary model edits. */
 watch(() => props.workspace, (workspace) => {
-  if (inspected.value) inspected.value = workspace.byKey.get(inspected.value.key) ?? null
   if (openEntity.value && !workspace.byKey.has(openEntity.value)) openEntity.value = null
-  if (activeId.value && !workspace.byKey.has(activeId.value)) activeId.value = null
   if (topologyFocus.value && !workspace.byKey.has(topologyFocus.value)) topologyFocus.value = null
 })
 
@@ -399,50 +390,30 @@ function setKind(kind: ReportEntityKind) {
   mobileNavOpen.value = false
   activeKind.value = kind
   activeSection.value = kind === 'product' ? 'overview' : kind
-  activeId.value = null
   openEntity.value = null
 }
 
 function openTopology() {
   mobileNavOpen.value = false
   activeSection.value = 'topology'
-  activeId.value = null
   openEntity.value = null
   topologyFocus.value = null
 }
 
-/*
-  Two gestures, one rule each.
-
-  A row peeks: you are scanning a list and want to know whether this is the one
-  you meant, without losing the list. A peek then opens the page, and so does
-  any relation on it. Nothing in the working view opens a page behind your back.
-*/
-function activate(entity: AnyEntityView) {
-  activeId.value = entity.key
-  inspect(entity)
-}
-
-const openCard = activate
-
-/** Any selection anywhere re-targets the open peek, never the centre. */
-function inspect(entity: AnyEntityView) {
-  inspected.value = entity
-}
-
-function inspectKey(key: string) {
+/** Resolve a key from an overview projection and open its page. */
+function openEntityKey(key: string) {
   const entity = resolveEntityKey(props.workspace, key)
-  if (entity) inspect(entity)
+  if (entity) openEntityPage(entity)
 }
 
 /** The page: a place, with a URL, that the browser's back button can leave. */
 function openEntityPage(entity: AnyEntityView) {
   mobileNavOpen.value = false
-  activeKind.value = entity.kind
-  activeSection.value = entity.kind
-  activeId.value = entity.key
+  const parentKind = PARENT_OF[entity.kind]
+  const sectionKind = parentKind ?? entity.kind
+  activeKind.value = sectionKind
+  activeSection.value = sectionKind
   openEntity.value = entity.key
-  inspected.value = null
 }
 
 /** One entity's neighbourhood, on the canvas that can actually draw it. */
@@ -450,7 +421,6 @@ function focusTopology(entity: AnyEntityView) {
   activeSection.value = 'topology'
   openEntity.value = null
   topologyFocus.value = entity.key
-  inspected.value = entity
 }
 
 /** ⌘K lands on the entity's page — you named it, so you meant it. */
@@ -805,7 +775,7 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
 </script>
 
 <template>
-  <div class="blr-workbench flex h-full min-h-0 flex-col text-sm">
+  <div class="blr-report-shell flex h-full min-h-0 flex-col text-sm">
     <!-- Status bar: the product, its coverage, and the way to anything. -->
     <header class="flex shrink-0 items-center gap-3 border-b border-default px-4 py-2.5">
       <UButton
@@ -1140,8 +1110,8 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
             v-if="activeKind === 'product'"
             :workspace="workspace"
             :logo-src="logoSrc"
-            @select="inspect"
-            @select-key="inspectKey"
+            @select="openEntityPage"
+            @select-key="openEntityKey"
           >
             <template v-if="$slots['primary-action']" #primary-action>
               <slot name="primary-action" />
@@ -1158,8 +1128,6 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
             v-model:route-columns="routeColumns"
             :workspace="workspace"
             :entity="openPage"
-            :selected-key="inspected?.key ?? null"
-            @select="inspect"
             @open="openEntityPage"
             @focus="focusTopology"
           />
@@ -1216,7 +1184,7 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
                   :columns="visibleColumns"
                   class="rounded-xl border border-default bg-default"
                   :ui="{ tr: 'cursor-pointer' }"
-                  :on-select="(_event: Event, row: any) => activate(row.original)"
+                  :on-select="(_event: Event, row: any) => openEntityPage(row.original)"
                 />
 
                 <div v-else class="space-y-2">
@@ -1225,9 +1193,8 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
                     :key="entity.key"
                     :workspace="workspace"
                     :entity="entity"
-                    :active="entity.key === activeId"
                     :badge="!groupKind || groupKind !== group.kind"
-                    @open="openCard"
+                    @open="openEntityPage"
                   />
                 </div>
               </template>
@@ -1261,7 +1228,7 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
                 :key="scenario.id"
                 type="button"
                 class="block text-start text-sm text-muted hover:text-primary"
-                @click="inspect(scenario)"
+                @click="openEntityPage(scenario)"
               >
                 {{ scenario.title }} — declares journey “{{ scenario.journeyId }}”.
               </button>
@@ -1274,24 +1241,12 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
         <div v-else class="min-h-0 flex-1">
           <BlrProductTopology
             :workspace="workspace"
-            :selected-id="inspected?.key ?? null"
             :focus="topologyFocus"
-            @select="inspect"
-            @clear="inspected = null"
+            @select="openEntityPage"
           />
         </div>
       </section>
 
-      <!-- PEEK: the shared panel every selection re-targets, one level deep -->
-      <BlrInspector
-        v-model:scenario-route="scenarioRoute"
-        v-model:route-columns="routeColumns"
-        :workspace="workspace"
-        :entity="inspected"
-        @select="openEntityPage($event)"
-        @open="openEntityPage($event)"
-        @close="inspected = null"
-      />
     </div>
 
     <BlrSearchPalette
@@ -1306,7 +1261,7 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
       :ui="{ content: 'w-64 max-w-[85vw]', body: 'p-2' }"
     >
       <template #header>
-        <div class="blr-workbench flex min-w-0 flex-1 items-center gap-3">
+        <div class="blr-report-shell flex min-w-0 flex-1 items-center gap-3">
           <img
             v-if="logoSrc"
             :src="logoSrc"
@@ -1336,7 +1291,7 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
       <template #body>
         <!-- One rail, two placements: the narrow viewport gets the same rows,
              not a second copy that drifts from them. -->
-        <div class="blr-workbench min-h-full">
+        <div class="blr-report-shell min-h-full">
           <BlrRail
             :workspace="workspace"
             :active-section="activeSection"
@@ -1360,7 +1315,7 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
   identically inside and outside the graphs. Hexes appear only here, as the
   definition of the vars the markup consumes.
 */
-.blr-workbench {
+.blr-report-shell {
   --blr-slot-0: #2a78d6;
   --blr-slot-1: #eb6834;
   --blr-slot-2: #1baf7a;
@@ -1374,7 +1329,7 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
   font-variant-numeric: tabular-nums;
 }
 
-:global(.dark) .blr-workbench {
+:global(.dark) .blr-report-shell {
   --blr-slot-0: #3987e5;
   --blr-slot-1: #d95926;
   --blr-slot-2: #199e70;

@@ -1,7 +1,7 @@
-/* Stable Workbench structure and shared type roles. */
+/* Stable Product Report structure and shared type roles. */
 
 /*
-  One scale owns entity identity everywhere in the Workbench. A concrete
+  One scale owns entity identity everywhere in the Product Report. A concrete
   Interface needs a slightly larger frame because its authored type sits on top
   of the kind icon. An Actor does not: its second authored axis is written as a
   word beside the title rather than stacked onto the mark, so it sits on the

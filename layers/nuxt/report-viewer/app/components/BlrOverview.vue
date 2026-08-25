@@ -99,7 +99,7 @@ function referenceActor(ownerKey?: string) {
     <div class="flex flex-wrap items-start gap-4">
       <img v-if="logoSrc" :src="logoSrc" alt="" class="size-12 rounded-lg border border-default">
       <div class="min-w-0 flex-1 space-y-1.5">
-        <p class="blr-eyebrow">Product report · read as a workbench</p>
+        <p class="blr-eyebrow">Product Report</p>
         <h1 class="text-2xl font-semibold tracking-[-0.03em] text-highlighted">{{ workspace.identity.title }}</h1>
         <p class="max-w-3xl text-sm leading-6 text-default">{{ workspace.identity.summary }}</p>
       </div>
