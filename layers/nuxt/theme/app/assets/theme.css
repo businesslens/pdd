@@ -45,19 +45,57 @@
 
 :root {
   --businesslens-font-heading: "Archivo Variable", "Inter Variable", sans-serif;
+  --businesslens-page-glows:
+    radial-gradient(
+      circle at 18% 18%,
+      color-mix(in srgb, var(--color-brass-500) 8%, transparent),
+      transparent 30rem
+    ),
+    radial-gradient(
+      circle at 82% 32%,
+      color-mix(in srgb, var(--color-terracotta-500) 8%, transparent),
+      transparent 34rem
+    );
+  --ui-bg: #f4ecdb;
+  --ui-bg-muted: #f8f2e5;
+  --ui-bg-elevated: #fcf8ef;
+  --ui-bg-accented: #e9ddc4;
+  --ui-border: #dbcfb4;
+  --ui-border-muted: #e5dac2;
+  --ui-border-accented: #c9b898;
+  --ui-text-dimmed: #695c48;
+  --ui-text-muted: #695c48;
   --ui-primary: var(--ui-color-primary-700);
   --ui-secondary: var(--ui-color-secondary-700);
   --ui-success: var(--ui-color-success-800);
-  --ui-text-dimmed: var(--ui-color-neutral-500);
   color-scheme: light;
   scrollbar-color: var(--ui-border-accented) var(--ui-bg);
 }
 
 .dark {
+  --businesslens-page-glows:
+    radial-gradient(
+      circle at 18% 18%,
+      color-mix(in srgb, var(--color-brass-400) 7%, transparent),
+      transparent 30rem
+    ),
+    radial-gradient(
+      circle at 82% 32%,
+      color-mix(in srgb, var(--color-terracotta-400) 6%, transparent),
+      transparent 34rem
+    );
+  --ui-bg: #1b1713;
+  --ui-bg-muted: #342b23;
+  --ui-bg-elevated: #342b23;
+  --ui-bg-accented: #4c4133;
+  --ui-border: var(--ui-color-neutral-800);
+  --ui-border-muted: var(--ui-color-neutral-700);
+  --ui-border-accented: var(--ui-color-neutral-700);
+  --ui-text-dimmed: #b8ab90;
+  --ui-text-muted: #b8ab90;
   --ui-primary: var(--ui-color-primary-400);
   --ui-secondary: var(--ui-color-secondary-400);
   --ui-success: var(--ui-color-success-400);
-  --ui-text-dimmed: var(--ui-color-neutral-400);
   color-scheme: dark;
 }
 
@@ -84,6 +122,26 @@
   * {
     scrollbar-width: thin;
   }
+
+  body {
+    background-color: var(--ui-bg);
+  }
+
+  :root:not(.dark) body {
+    background-image:
+      radial-gradient(ellipse 100% 62% at 50% 0%, #fefcf7 0%, rgba(254, 252, 247, 0) 72%),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23g)' opacity='0.22'/%3E%3C/svg%3E");
+    background-attachment: fixed;
+  }
+
+  :root.dark body {
+    background-image: radial-gradient(ellipse 92% 55% at 50% 0%, #2a2019 0%, rgba(42, 32, 25, 0) 70%);
+    background-attachment: fixed;
+  }
+}
+
+.businesslens-page-surface {
+  background-image: var(--businesslens-page-glows);
 }
 
 @supports not (scrollbar-color: auto) {

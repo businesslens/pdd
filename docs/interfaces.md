@@ -29,12 +29,35 @@ contract—for example, a partner automation API. An internal API used to
 implement the web application is an implementation detail. Apply the same test
 to command namespaces, integrations, and background system interactions.
 
+## Interfaces are inbound
+
+Something *arrives* at the Product through an Interface. An outbound connection
+your Product opens to a third party is not an Interface, however stable,
+versioned, or vendor-supported that integration is.
+
+Do not create an Interface for a feed your Product polls, a payment processor it
+charges, a mail provider it sends through, or a model API it queries. Those
+external systems are not [Actors](./actors.md) either—they have no goal in your
+Product and no inbound interaction contract you must keep stable for them.
+Model the call inside the
+[Capability](./capabilities.md) that makes it, give its availability the
+Interfaces where an Actor actually observes the result, and make the failure
+behavior a [Capability Scenario](./capabilities.md#capability-scenarios).
+
+When that same third party calls *you* back—a webhook, callback, or push
+subscription—that inbound interaction happens through an **Interface**, and
+the third party is its Actor. Direction decides, not ownership.
+
 ## The file
 
-Interfaces live at `interfaces/<interface-id>.md`.
+An Interface with no assets, Experiences, or Screens lives at
+`interfaces/<interface-id>.md`. Otherwise it expands to
+`interfaces/<interface-id>/interface.md`, with `experiences/` or `screens/`
+nested in that folder.
 
 ```md [interfaces/customer-web.md]
 ---
+type: web
 actors: [shopper]
 entryPoints:
   - web: /
@@ -51,7 +74,8 @@ Supports customer shopping. It does not expose store administration.
 
 | Field or section | Required | Constraint |
 | --- | --- | --- |
-| `actors` | yes | Name at least one existing Actor allowed to use some part of the Interface. |
+| `type` | yes | Use one supported interaction contract: `web`, `mobile-app`, `desktop-app`, `cli`, `api`, `webhook`, `messaging`, `voice`, or `device`. |
+| `actors` | yes | Name at least one existing Actor allowed to use some part of the Interface; do not repeat an ID. |
 | `entryPoints` | no | List Product-facing roots such as `/`, `reader://home`, `product admin`, or `/v1`. |
 | `references` | no | Use the documented [Reference](./references.md) shape. |
 | H1 | yes | Name the Interface. |
@@ -60,12 +84,24 @@ Supports customer shopping. It does not expose store administration.
 
 Every model needs at least one Interface.
 
+The type describes how Actors interact with the Product, not how the Interface
+is implemented. Use `web`, not `react`; use `mobile-app`, not `swift`. One
+Interface has exactly one type. If two interaction contracts can be supported
+and verified independently, model them as separate Interfaces. The Product
+Report uses this authored value for its Interface icons and labels; it never
+guesses from an Interface id or title.
+
 An Interface does not declare one access mode: the same web application can
 contain public and restricted Experiences. It also has no success exit;
-Journeys and Scenarios own outcomes.
+Capability Scenarios own local observable outcomes. Journey Scenarios own
+complete variations of a coherent multi-Capability goal.
 
 ## With Experiences
 
-Interface and [Experience](./experiences.md) are many-to-many. The
-[Experience matrix](./product-model.md#experience-matrix) shows how exact
-`availability` pairs express supported combinations.
+An [Experience](./experiences.md) is optional and belongs to exactly one
+Interface: the Interface folder that contains it. Matching Experience names on
+different Interfaces are counterparts, not one shared entity. When an
+Interface has meaningful Experience contexts, Capability availability Contexts
+use their qualified Experience places. When it has none, a Context uses the
+Interface place directly. The [availability rules](./product-model.md#availability)
+show both forms.

@@ -153,7 +153,7 @@ export async function runContribute(cwd: string, options: ContributeOptions): Pr
     }
     const logo = readProductLogo(modelRoot)
     if (!logo) {
-      throw new Error('A public Blueprint requires .businesslens/logo.svg.')
+      throw new Error('A public Blueprint requires .businesslens/product/logo.svg.')
     }
 
     // A Blueprint has no catalog-specific identity. Its Product ID is the

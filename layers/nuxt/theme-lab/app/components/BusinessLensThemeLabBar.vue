@@ -1,8 +1,9 @@
 <script setup lang="ts">
 const props = withDefaults(defineProps<{
-  rowCount?: 2 | 5
+  /** Rows the host actually renders, including anything in the slots. */
+  rowCount?: 1 | 2 | 3 | 4 | 5
 }>(), {
-  rowCount: 2
+  rowCount: 1
 })
 
 const slots = useSlots()
@@ -25,8 +26,6 @@ useHead({
     <slot name="before" />
     <BusinessLensThemeLabDivider v-if="slots.before" />
     <BusinessLensThemeLabBackgroundRow />
-    <BusinessLensThemeLabDivider />
-    <BusinessLensThemeLabLogoRow />
     <BusinessLensThemeLabDivider v-if="slots.after" />
     <slot name="after" />
   </div>

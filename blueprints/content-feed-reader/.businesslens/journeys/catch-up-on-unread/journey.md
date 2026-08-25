@@ -1,18 +1,13 @@
 ---
-actors:
-  - reader
-capabilities:
-  - item-saving
-  - reading-state
-  - source-refresh
-availability:
-  - interface: reader-web
-    experiences: [reading-app]
-  - interface: reader-mobile
-    experiences: [reading-app]
+actors: [reader]
 ---
 
 # Catch up on unread
 
-The daily loop: see what arrived, read it, and leave the backlog smaller than it
-was.
+## Goal
+
+A Reader wants to make meaningful progress through new library items.
+
+## Success criterion
+
+The unread backlog is smaller and any worthwhile item the Reader chose to keep remains saved.

@@ -10,7 +10,7 @@ import { reportDigest } from '../src/report-digest.js'
 import { compileReport } from '../src/commands/export.js'
 import { loadModel } from '../src/core/model.js'
 import { resolveModelRoot } from '../src/core/model-root.js'
-import type { ProductReportV7, ReportReference } from '../src/core/portable.js'
+import type { ProductReportV10, ReportReference } from '../src/core/portable.js'
 
 const packageJson = JSON.parse(
   await readFile(fileURLToPath(new URL('../package.json', import.meta.url)), 'utf8')
@@ -29,16 +29,24 @@ describe('report SDK entry point', () => {
   })
 
   it('exports the schema, semantic validator, portable projection, and digest', () => {
-    expect(sdk.REPORT_SCHEMA_VERSION).toBe('7.0.0')
+    expect(sdk.REPORT_SCHEMA_VERSION).toBe('10.0.0')
     for (const name of [
-      'ProductReportV7Schema',
+      'ProductReportV10Schema',
       'ProductReportSchema',
       'ReportReferenceSchema',
+      'ReportSupportingSectionSchema',
       'ReportInterfaceSchema',
-      'ReportAvailabilitySchema',
+      'INTERFACE_TYPES',
+      'ReportContextSchema',
       'ReportCapabilitySchema',
+      'ReportCapabilityScenarioSchema',
       'ReportScreenSchema',
       'ReportScreenStateSchema',
+      'ReportJourneyScenarioSchema',
+      'ReportScenarioRouteSchema',
+      'ReportScenarioStepContextSchema',
+      'ReportScenarioStepSchema',
+      'ReportBusinessRuleTargetSchema',
       'validateProductReport',
       'validateBlueprintReport',
       'parseProductReport',
@@ -47,6 +55,9 @@ describe('report SDK entry point', () => {
     ]) {
       expect(sdk, `missing export ${name}`).toHaveProperty(name)
     }
+    expect(sdk.INTERFACE_TYPES).toEqual([
+      'web', 'mobile-app', 'desktop-app', 'cli', 'api', 'webhook', 'messaging', 'voice', 'device'
+    ])
   })
 
   it('never pulls the CLI or Node built-ins into the library graph', async () => {
@@ -84,9 +95,9 @@ describe('report SDK entry point', () => {
 describe('projectPortableReport', () => {
   const FIXTURE = join(fileURLToPath(new URL('.', import.meta.url)), 'fixtures', 'fixture-shop')
   let repo: string
-  let report: ProductReportV7
+  let report: ProductReportV10
 
-  const allReferences = (value: ProductReportV7): ReportReference[] => [
+  const allReferences = (value: ProductReportV10): ReportReference[] => [
     ...value.references,
     ...Object.values(value.model).flatMap(entry =>
       Array.isArray(entry) ? entry.flatMap(item => item.references ?? []) : [])
@@ -120,6 +131,109 @@ describe('projectPortableReport', () => {
       limitations: [],
       rationale: 'The fixture map intentionally covers the whole toy codebase.'
     })
+    expect(report.supportingSections).toEqual([{
+      heading: 'Teaching note',
+      content: 'This supporting section exercises lossless Product Report expansion.'
+    }])
+    expect(report.model.capabilityScenarios.find(item => item.id === 'complete-checkout')?.supportingSections)
+      .toEqual([{
+        heading: 'Recovery note',
+        content: 'Payment recovery remains supporting context rather than another structured field.'
+      }])
+    expect(report.model.journeys[0]!.supportingSections).toEqual([{
+      heading: 'Teaching note',
+      content: 'The goal composition deliberately crosses catalog and ordering behavior.'
+    }])
+    expect(report.model.journeyScenarios.find(item => item.id === 'browse-and-complete-checkout')?.supportingSections)
+      .toEqual([{
+        heading: 'Handoff note',
+        content: 'The report must preserve this supporting context after the structured Outcome.'
+      }])
+  })
+
+  it('accepts direct Interface availability when no Experiences divide an Interface', () => {
+    const direct = structuredClone(report)
+    direct.model.experiences = []
+    direct.counts.experiences = 0
+    for (const collection of [
+      direct.model.capabilities,
+      direct.model.businessRules
+    ]) {
+      for (const entity of collection) {
+        if ('availability' in entity) {
+          entity.availability = entity.availability.map(context => ({
+            placeId: context.placeId.split('::')[0]!
+          }))
+        }
+      }
+    }
+    const directScreenIds = new Map<string, string>()
+    for (const screen of direct.model.screens) {
+      const parts = screen.id.split('::')
+      directScreenIds.set(screen.id, [parts[0], parts.at(-1)].join('::'))
+    }
+    for (const scenario of [...direct.model.capabilityScenarios, ...direct.model.journeyScenarios]) {
+      for (const step of scenario.steps) {
+        for (const context of step.contexts) {
+          context.placeId = directScreenIds.get(context.placeId) || context.placeId.split('::')[0]!
+        }
+      }
+    }
+    for (const screen of direct.model.screens) {
+      screen.id = directScreenIds.get(screen.id)!
+    }
+
+    expect(sdk.validateProductReport(direct)).toEqual([])
+    expect(() => sdk.parseProductReport(direct)).not.toThrow()
+  })
+
+  it('keeps failure-only Capabilities out of the Journey primary set', () => {
+    const withFailure = structuredClone(report)
+    withFailure.model.journeyScenarios.push({
+      id: 'checkout-needs-operator-help',
+      journeyId: 'browse-and-buy',
+      title: 'Checkout needs operator help',
+      kindId: 'edge',
+      actorIds: ['shopper', 'store-admin'],
+      result: 'not-achieved',
+      routes: [{ id: 'web-to-admin', name: 'Web to administration' }],
+      steps: [
+        {
+          text: 'The shopper attempts checkout',
+          kind: 'actor',
+          actorId: 'shopper',
+          capabilityId: 'checkout',
+          contexts: [{
+            routeId: 'web-to-admin',
+            placeId: 'customer-web::storefront::product-record'
+          }]
+        },
+        {
+          text: 'The store admin reviews the blocked attempt',
+          kind: 'actor',
+          actorId: 'store-admin',
+          capabilityId: 'order-management',
+          contexts: [{
+            routeId: 'web-to-admin',
+            placeId: 'admin-web::admin-console'
+          }]
+        }
+      ],
+      trigger: 'A shopper attempts checkout and needs operator help.',
+      decisionPoints: [],
+      outcome: 'The Journey goal is not achieved and the blocked attempt is ready for review.',
+      edgeCases: [],
+      intent: '',
+      supportingSections: [],
+      references: []
+    })
+    withFailure.model.screens.find(screen => screen.id === 'customer-web::storefront::product-record')!
+      .journeyScenarioIds.push('checkout-needs-operator-help')
+    withFailure.counts.journeyScenarios += 1
+    withFailure.model.journeys[0]!.failureOnlyCapabilityIds = ['order-management']
+
+    expect(withFailure.model.journeys[0]!.capabilityIds).toEqual(['catalog-browsing', 'checkout'])
+    expect(sdk.validateProductReport(withFailure)).toEqual([])
   })
 
   it('keeps only HTTP(S) intent and context references', () => {
@@ -128,6 +242,7 @@ describe('projectPortableReport', () => {
       { kind: 'code', role: 'intent', target: 'src/routes/storefront.ts' },
       { kind: 'doc', role: 'context', target: 'docs/local.md' },
       { kind: 'doc', role: 'context', target: 'https://example.com/handbook', title: 'Handbook' },
+      { kind: 'prd', role: 'intent', target: 'https://example.com/checkout-prd', title: 'Checkout PRD' },
       { kind: 'visual', role: 'implementation', target: 'https://example.com/current.png' },
       { kind: 'proposal', role: 'intent', target: 'https://example.com/proposal' }
     ]
@@ -136,6 +251,7 @@ describe('projectPortableReport', () => {
     expect(portable.referenceProfile).toBe('portable')
     expect(portable.model.actors[0]!.references).toEqual([
       { kind: 'doc', role: 'context', target: 'https://example.com/handbook', title: 'Handbook' },
+      { kind: 'prd', role: 'intent', target: 'https://example.com/checkout-prd', title: 'Checkout PRD' },
       { kind: 'proposal', role: 'intent', target: 'https://example.com/proposal' }
     ])
     expect(allReferences(portable).every(reference =>
@@ -146,9 +262,9 @@ describe('projectPortableReport', () => {
     expect(JSON.stringify(portable)).not.toContain('src/services/payments.ts')
   })
 
-  it('drops repository entry points and Coverage source areas', () => {
+  it('drops repository Screen entry points and Coverage source areas', () => {
     const enriched = structuredClone(report)
-    enriched.model.journeys[0]!.entryPoints = [
+    enriched.model.screens[0]!.entryPoints = [
       { type: 'relative', path: 'src/routes/storefront.ts' },
       { type: 'windows', path: String.raw`src\routes\storefront.ts` },
       { type: 'absolute', path: '/Users/owner/project/src/routes/storefront.ts' },
@@ -160,7 +276,7 @@ describe('projectPortableReport', () => {
     ]
 
     const portable = sdk.projectPortableReport(enriched)
-    expect(portable.model.journeys[0]!.entryPoints).toEqual([
+    expect(portable.model.screens[0]!.entryPoints).toEqual([
       { type: 'route', path: '/checkout' },
       { type: 'url', path: 'https://example.com/checkout' },
       { type: 'mobile', path: 'fixture-shop://checkout' },
@@ -200,6 +316,72 @@ describe('projectPortableReport', () => {
     expect(sdk.validateProductReport(duplicate).join('\n')).toContain('duplicate reference target')
   })
 
+  it('rejects duplicate IDs in set-valued report relations', () => {
+    const duplicate = structuredClone(report)
+    duplicate.model.interfaces[0]!.actorIds.push(duplicate.model.interfaces[0]!.actorIds[0]!)
+    duplicate.model.screens[0]!.capabilityIds.push(duplicate.model.screens[0]!.capabilityIds[0]!)
+    const issues = sdk.validateProductReport(duplicate).join('\n')
+    expect(issues).toContain('actorIds contains duplicate')
+    expect(issues).toContain('capabilityIds contains duplicate')
+  })
+
+  it('keeps supporting Markdown structural and rejects opaque or conflicting shapes', () => {
+    const conflicting = structuredClone(report)
+    conflicting.model.journeys[0]!.supportingSections = [{
+      heading: 'Goal',
+      content: 'This would collide with the structured Goal.'
+    }]
+    expect(sdk.ProductReportSchema.safeParse(conflicting).success).toBe(true)
+    expect(sdk.validateProductReport(conflicting).join('\n')).toContain(
+      'supporting section "Goal" conflicts with a structured section'
+    )
+
+    const nestedHeading = structuredClone(report)
+    nestedHeading.model.actors[0]!.supportingSections = [{
+      heading: 'Notes',
+      content: '## Injected structure'
+    }]
+    expect(sdk.ProductReportSchema.safeParse(nestedHeading).success).toBe(false)
+
+    const paddedHeading = structuredClone(report)
+    paddedHeading.model.journeys[0]!.supportingSections = [{
+      heading: ' Goal ',
+      content: 'Whitespace must not bypass a structured-heading collision.'
+    }]
+    expect(sdk.ProductReportSchema.safeParse(paddedHeading).success).toBe(false)
+
+    const nestedIntent = structuredClone(report)
+    nestedIntent.intent = '# Injected title'
+    expect(sdk.ProductReportSchema.safeParse(nestedIntent).success).toBe(false)
+
+    const nestedRationale = structuredClone(report)
+    nestedRationale.coverage.rationale = '## Injected coverage section'
+    nestedRationale.model.businessRules[0]!.rationale = '# Injected Rule title'
+    expect(sdk.ProductReportSchema.safeParse(nestedRationale).success).toBe(false)
+
+    const opaque = structuredClone(report) as Record<string, any>
+    opaque.supportingContent = '## Legacy opaque content'
+    expect(sdk.ProductReportSchema.safeParse(opaque).success).toBe(false)
+  })
+
+  it('reports a Journey with no achieved Scenario through semantic validation', () => {
+    const missing = structuredClone(report)
+    missing.model.journeyScenarios = []
+    missing.counts.journeyScenarios = 0
+    missing.model.journeys[0]!.capabilityIds = []
+    missing.model.journeys[0]!.failureOnlyCapabilityIds = []
+    missing.model.journeys[0]!.domainIds = []
+    for (const screen of missing.model.screens) screen.journeyScenarioIds = []
+    for (const rule of missing.model.businessRules) {
+      rule.appliesTo = rule.appliesTo.filter(target => target.type !== 'journey-scenario')
+    }
+
+    expect(sdk.ProductReportSchema.safeParse(missing).success).toBe(true)
+    expect(sdk.validateProductReport(missing)).toContain(
+      'journey "browse-and-buy": needs at least one achieved Journey Scenario'
+    )
+  })
+
   it('uses a strict reference record and rejects removed fields', () => {
     const unknown = structuredClone(report) as Record<string, any>
     unknown.model.actors[0].references = [{
@@ -210,6 +392,11 @@ describe('projectPortableReport', () => {
     const legacy = structuredClone(report) as Record<string, any>
     legacy.model.actors[0].codeRefs = []
     expect(sdk.ProductReportSchema.safeParse(legacy).success).toBe(false)
+
+    const legacyJourney = structuredClone(report) as Record<string, any>
+    legacyJourney.model.journeyScenarios[0].flow = []
+    legacyJourney.model.journeyScenarios[0].routes = []
+    expect(sdk.ProductReportSchema.safeParse(legacyJourney).success).toBe(false)
   })
 
   it('is non-mutating, idempotent, and produces a valid report', () => {
@@ -237,6 +424,50 @@ describe('projectPortableReport', () => {
     ])
   })
 
+  it('enforces route, Rule-target, Experience-cover, and complete-model relationships', () => {
+    const incompleteRoute = structuredClone(report)
+    const scenario = incompleteRoute.model.journeyScenarios.find(item => item.id === 'browse-and-complete-checkout')!
+    scenario.steps.find(step => step.capabilityId === 'checkout')!.contexts.pop()
+    expect(sdk.validateProductReport(incompleteRoute).join('\n')).toContain(
+      'contexts must assign every declared route or be empty'
+    )
+
+    const narrowedRule = structuredClone(report)
+    const target = narrowedRule.model.businessRules
+      .find(rule => rule.id === 'payment-before-confirmation')!
+      .appliesTo.find(item => item.type === 'capability')!
+    if (target.type !== 'context') {
+      target.contexts = [{ placeId: 'admin-web::admin-console' }]
+    }
+    expect(sdk.validateProductReport(narrowedRule).join('\n')).toContain(
+      'Context place "admin-web::admin-console" is outside target "capability:checkout"'
+    )
+
+    const uncoveredActor = structuredClone(report)
+    uncoveredActor.model.interfaces.find(item => item.id === 'customer-web')!.actorIds.push('store-admin')
+    expect(sdk.validateProductReport(uncoveredActor).join('\n')).toContain(
+      'interface "customer-web": actor "store-admin" needs at least one Experience context'
+    )
+
+    const emptyComplete = structuredClone(report)
+    emptyComplete.model.capabilities = []
+    emptyComplete.counts.capabilities = 0
+    expect(sdk.validateProductReport(emptyComplete)).toContain('a complete model needs at least one capability')
+  })
+
+  it('requires public Blueprint Capability coverage in every availability Context', () => {
+    const incomplete = structuredClone(report)
+    for (const scenario of incomplete.model.capabilityScenarios.filter(item => item.capabilityId === 'checkout')) {
+      scenario.routes = scenario.routes.filter(route => route.id !== 'mobile')
+      for (const step of scenario.steps) step.contexts = step.contexts.filter(context => context.routeId !== 'mobile')
+    }
+    incomplete.model.screens = incomplete.model.screens
+      .filter(screen => !screen.id.startsWith('customer-mobile::'))
+    expect(sdk.validateBlueprintReport(incomplete)).toContain(
+      'capability "checkout" availability Context place "customer-mobile::storefront" needs Capability Scenario coverage for a public Blueprint'
+    )
+  })
+
   it('keeps Coverage independent from References', () => {
     const withoutReferences = structuredClone(report)
     withoutReferences.references = []
@@ -250,7 +481,7 @@ describe('projectPortableReport', () => {
   })
 
   it('rejects historical Product Reports without normalization', () => {
-    for (const schemaVersion of ['4.0.0', '5.0.0', '6.0.0']) {
+    for (const schemaVersion of ['4.0.0', '5.0.0', '6.0.0', '7.0.0', '8.0.0', '9.0.0']) {
       const legacy = structuredClone(report) as Record<string, any>
       legacy.schemaVersion = schemaVersion
       expect(sdk.ProductReportSchema.safeParse(legacy).success).toBe(false)

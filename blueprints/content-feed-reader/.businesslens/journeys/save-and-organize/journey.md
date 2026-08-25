@@ -1,19 +1,13 @@
 ---
-actors:
-  - collection-owner
-  - reader
-capabilities:
-  - collections
-  - item-saving
-  - item-tagging
-availability:
-  - interface: reader-web
-    experiences: [reading-app]
-  - interface: reader-mobile
-    experiences: [reading-app]
+actors: [reader]
 ---
 
 # Save and organize
 
-A reader keeps what is worth keeping, files it, and gathers it into something
-coherent.
+## Goal
+
+A Reader wants to keep a worthwhile item in an owned collection.
+
+## Success criterion
+
+The item is saved and belongs to the intended owned collection.

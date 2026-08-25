@@ -13,7 +13,7 @@ export interface ProductLogoFile {
 
 /** Read an optional Product logo without following links or accepting special files. */
 export function readProductLogo(modelRoot: string): ProductLogoFile | undefined {
-  const file = join(modelRoot, '.businesslens', PRODUCT_LOGO_FILENAME)
+  const file = join(modelRoot, '.businesslens', 'product', PRODUCT_LOGO_FILENAME)
   if (!existsSync(file)) return undefined
 
   const stat = lstatSync(file)

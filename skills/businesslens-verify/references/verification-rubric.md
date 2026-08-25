@@ -3,10 +3,14 @@
 ## Trace behavior
 
 - Compare the model's observable contract, not matching vocabulary.
-- Trace each declared Interface–Experience availability pair from its Product
-  entry point → relevant Experience and Capabilities → Journey path →
-  persistence or external effect → named outcome.
-- Verify Interface pairs independently. Shared services do not prove web,
+- Trace each Capability Scenario route through every typed Step and
+  most-specific Context place to its observable outcome.
+- Trace every Journey Scenario route from its first Actor-owned Context place
+  through each Capability-bearing Step to the terminal goal result. Verify
+  every Context place independently and confirm the correlations are supported.
+- Confirm every Actor Step is supported at its Context places and every derived
+  availability place supports at least one Scenario Actor.
+- Verify Interface Contexts independently. Shared services do not prove web,
   mobile, CLI, or supported API parity.
 - Distinguish a missing Interface implementation from a missing shared
   Capability. Undeclared internal APIs remain implementation details.
@@ -40,10 +44,10 @@ Group questions by root decision. Do not ask a menu of symptoms.
 ## Internal intent resolution
 
 Use when code-right or neither-right is chosen. Draft the smallest exact Product
-Model delta. Cover affected Interfaces, Experiences, Capabilities, exact
-availability, Rules, Journeys, Scenarios, relationships, and removals. Get
-approval before writing. Skip broad brainstorming because the verification
-finding already supplies the problem.
+Model delta. Cover affected Interfaces, optional Experiences, Capabilities,
+  availability Contexts, Rules, Capability Scenarios, Journeys, Journey Scenarios,
+  relationships, and removals. Get approval before writing. Skip broad
+  brainstorming because the verification finding already supplies the problem.
 
 ## Internal scoped mapping
 

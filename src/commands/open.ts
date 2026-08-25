@@ -13,7 +13,11 @@ import {
 import { dirname, isAbsolute, join, resolve } from 'node:path'
 import { stringify } from 'yaml'
 import { writeModelReadme } from '../core/model-readme.js'
-import type { ProductReportV7, ReportAvailability } from '../core/portable.js'
+import type {
+  ProductReportV10,
+  ReportContext,
+  ReportSupportingSection
+} from '../core/portable.js'
 import { lintModel } from './lint.js'
 import { loadModel } from '../core/model.js'
 import { parseProductReport, projectPortableReport } from '../core/portable.js'
@@ -44,7 +48,7 @@ function frontmatter(data: Record<string, unknown>): string {
   return `---\n${stringify(data, { lineWidth: 0 }).trimEnd()}\n---\n\n`
 }
 
-function references(value: ProductReportV7['references']): Array<Record<string, string>> {
+function references(value: ProductReportV10['references']): Array<Record<string, string>> {
   return value.map(reference => ({
     kind: reference.kind,
     role: reference.role,
@@ -57,8 +61,37 @@ function entryPoints(value: Array<{ type: string, path: string }>): Array<Record
   return value.map(point => ({ [point.type]: point.path }))
 }
 
-function availability(value: ReportAvailability[]): Array<{ interface: string, experiences: string[] }> {
-  return value.map(item => ({ interface: item.interfaceId, experiences: item.experienceIds }))
+function contexts(value: ReportContext[]): Array<{ place: string }> {
+  return value.map(item => ({ place: item.placeId }))
+}
+
+function context(value: ReportContext): { place: string } {
+  return { place: value.placeId }
+}
+
+/** The path segments of a qualified id: "reader-web::personal-library" -> both. */
+function idSegments(id: string): string[] {
+  return id.split('::')
+}
+
+/**
+ * Where a Screen expands to.
+ *
+ * `interface::screen` sits directly on its Interface; `interface::experience::screen`
+ * sits under the Experience. The id carries the whole placement, so nothing else
+ * has to be consulted.
+ */
+function screenPath(root: string, id: string): string {
+  const parts = idSegments(id)
+  if (parts.length === 3) {
+    return join(root, 'interfaces', parts[0]!, 'experiences', parts[1]!, 'screens', `${parts[2]!}.md`)
+  }
+  return join(root, 'interfaces', parts[0]!, 'screens', `${parts[1]!}.md`)
+}
+
+/** Compact until an entity needs a namespace for children or assets. */
+function entityPath(parent: string, id: string, type: string, expanded: boolean): string {
+  return expanded ? join(parent, id, `${type}.md`) : join(parent, `${id}.md`)
 }
 
 function compactRecord(input: Record<string, unknown>): Record<string, unknown> {
@@ -73,14 +106,16 @@ function body(
   lead: string,
   intent: string,
   sections: Array<{ heading: string, content: string }>,
-  supportingContent: string
+  supportingSections: ReportSupportingSection[]
 ): string {
   const blocks = [`# ${title}`, lead]
   if (intent) blocks.push(`## Intent\n\n${intent}`)
   for (const item of sections) {
     if (item.content) blocks.push(`## ${item.heading}\n\n${item.content}`)
   }
-  if (supportingContent) blocks.push(supportingContent)
+  for (const item of supportingSections) {
+    blocks.push(`## ${item.heading}${item.content ? `\n\n${item.content}` : ''}`)
+  }
   return `${blocks.filter(Boolean).join('\n\n')}\n`
 }
 
@@ -115,15 +150,15 @@ function prepareTarget(cwd: string, force: boolean): string {
   return root
 }
 
-function writeReport(root: string, report: ProductReportV7): void {
-  write(join(root, 'config.yaml'), stringify({ schema: 3, sdd: { paths: [] } }, { lineWidth: 0 }))
+function writeReport(root: string, report: ProductReportV10, hasLogo: boolean): void {
+  write(join(root, 'config.yaml'), stringify({ schema: 6, sdd: { paths: [] } }, { lineWidth: 0 }))
   write(join(root, '.gitignore'), 'build/\ncache/\n')
   write(
     join(root, 'taxonomies.yaml'),
     stringify({ scenarioKinds: report.model.taxonomies.scenarioKinds }, { lineWidth: 0 })
   )
   write(
-    join(root, 'product.md'),
+    hasLogo ? join(root, 'product', 'product.md') : join(root, 'product.md'),
     frontmatter(compactRecord({
       id: report.id,
       summary: report.summary,
@@ -133,7 +168,7 @@ function writeReport(root: string, report: ProductReportV7): void {
       license: report.license,
       limitations: report.limitations,
       references: references(report.references)
-    })) + body(report.title, report.description, report.intent, [], report.supportingContent)
+    })) + body(report.title, report.description, report.intent, [], report.supportingSections)
   )
   write(
     join(root, 'coverage.md'),
@@ -151,24 +186,27 @@ function writeReport(root: string, report: ProductReportV7): void {
       limitations: report.coverage.limitations.includes(OPEN_COVERAGE_LIMITATION)
         ? [...report.coverage.limitations]
         : [...report.coverage.limitations, OPEN_COVERAGE_LIMITATION]
-    }) + body('Coverage', OPEN_COVERAGE_RATIONALE, '', [], '')
+    }) + body('Coverage', OPEN_COVERAGE_RATIONALE, '', [], [])
   )
 
   for (const actor of report.model.actors) {
     write(
-      join(root, 'actors', `${actor.id}.md`),
+      entityPath(join(root, 'actors'), actor.id, 'actor', false),
       frontmatter(compactRecord({
         kind: actor.kind,
         relationship: actor.relationship,
         references: references(actor.references)
       }))
-      + body(actor.name, actor.description, actor.intent, [], actor.supportingContent)
+      + body(actor.name, actor.description, actor.intent, [], actor.supportingSections)
     )
   }
   for (const productInterface of report.model.interfaces) {
+    const hasChildren = report.model.experiences.some(experience => idSegments(experience.id)[0] === productInterface.id)
+      || report.model.screens.some(screen => idSegments(screen.id)[0] === productInterface.id)
     write(
-      join(root, 'interfaces', `${productInterface.id}.md`),
+      entityPath(join(root, 'interfaces'), productInterface.id, 'interface', hasChildren),
       frontmatter(compactRecord({
+        type: productInterface.type,
         actors: productInterface.actorIds,
         entryPoints: entryPoints(productInterface.entryPoints),
         references: references(productInterface.references)
@@ -177,25 +215,34 @@ function writeReport(root: string, report: ProductReportV7): void {
         productInterface.description,
         productInterface.intent,
         [{ heading: 'Capability boundary', content: productInterface.capabilityBoundary }],
-        productInterface.supportingContent
+        productInterface.supportingSections
       )
     )
   }
   for (const domain of report.model.domains) {
     write(
-      join(root, 'domains', `${domain.id}.md`),
+      entityPath(join(root, 'domains'), domain.id, 'domain', false),
       frontmatter(compactRecord({
         colorSlot: domain.colorSlot,
         references: references(domain.references)
-      })) + body(domain.name, domain.description, domain.intent, [], domain.supportingContent)
+      })) + body(domain.name, domain.description, domain.intent, [], domain.supportingSections)
     )
   }
   for (const experience of report.model.experiences) {
+    const [interfaceId, experienceId] = idSegments(experience.id)
+    const hasScreens = report.model.screens.some(screen => {
+      const parts = idSegments(screen.id)
+      return parts.length === 3 && parts[0] === interfaceId && parts[1] === experienceId
+    })
     write(
-      join(root, 'experiences', `${experience.id}.md`),
+      entityPath(
+        join(root, 'interfaces', interfaceId!, 'experiences'),
+        experienceId!,
+        'experience',
+        hasScreens
+      ),
       frontmatter(compactRecord({
         actors: experience.actorIds,
-        interfaces: experience.interfaceIds,
         access: experience.accessMode,
         entryPoints: entryPoints(experience.entryPoints),
         references: references(experience.references)
@@ -204,18 +251,16 @@ function writeReport(root: string, report: ProductReportV7): void {
         experience.description,
         experience.intent,
         [{ heading: 'Capability boundary', content: experience.capabilityBoundary }],
-        experience.supportingContent
+        experience.supportingSections
       )
     )
   }
   for (const screen of report.model.screens) {
     const states = screen.states.map(state => `### ${state.title}\n\n${state.description}`).join('\n\n')
     write(
-      join(root, 'screens', `${screen.id}.md`),
+      screenPath(root, screen.id),
       frontmatter(compactRecord({
-        availability: availability(screen.availability),
         capabilities: screen.capabilityIds,
-        scenarios: screen.scenarioIds,
         entryPoints: entryPoints(screen.entryPoints),
         references: references(screen.references)
       })) + body(
@@ -228,90 +273,144 @@ function writeReport(root: string, report: ProductReportV7): void {
           { heading: 'Product states', content: states },
           { heading: 'Capability boundary', content: screen.capabilityBoundary }
         ],
-        screen.supportingContent
+        screen.supportingSections
       )
     )
   }
   for (const capability of report.model.capabilities) {
+    const hasScenarios = report.model.capabilityScenarios.some(scenario => scenario.capabilityId === capability.id)
     write(
-      join(root, 'capabilities', `${capability.id}.md`),
+      entityPath(join(root, 'capabilities'), capability.id, 'capability', hasScenarios),
       frontmatter(compactRecord({
         domain: capability.domainId,
-        availability: availability(capability.availability),
+        availability: contexts(capability.availability),
         references: references(capability.references)
-      })) + body(capability.title, capability.description, capability.intent, [], capability.supportingContent)
+      })) + body(capability.title, capability.description, capability.intent, [], capability.supportingSections)
     )
   }
   for (const rule of report.model.businessRules) {
     write(
-      join(root, 'business-rules', `${rule.id}.md`),
+      entityPath(join(root, 'business-rules'), rule.id, 'business-rule', false),
       frontmatter(compactRecord({
-        domains: rule.domainIds,
-        capabilities: rule.capabilityIds,
-        journeys: rule.journeyIds,
-        scenarios: rule.scenarioIds,
-        availability: availability(rule.availability),
+        appliesTo: rule.appliesTo.map(target => target.type === 'context'
+          ? { type: 'context', context: context(target.context) }
+          : compactRecord({
+              type: target.type,
+              id: target.id,
+              contexts: target.contexts.map(context)
+            })),
         references: references(rule.references)
       })) + body(
         rule.title,
         rule.statement,
         rule.intent,
         [{ heading: 'Rationale', content: rule.rationale }],
-        rule.supportingContent
+        rule.supportingSections
       )
     )
   }
 
-  const scenariosByJourney = new Map<string, ProductReportV7['model']['scenarios']>()
-  for (const scenario of report.model.scenarios) {
-    const current = scenariosByJourney.get(scenario.journeyId) || []
-    current.push(scenario)
-    scenariosByJourney.set(scenario.journeyId, current)
+  const scenarioSections = (
+    scenario:
+      | ProductReportV10['model']['capabilityScenarios'][number]
+      | ProductReportV10['model']['journeyScenarios'][number]
+  ) => {
+    const decisions = scenario.decisionPoints.map(decision =>
+      `### ${decision.title}\n\n${decision.question}\n\n${
+        decision.branches.map(branch => `- ${branch.condition} → ${branch.outcome}`).join('\n')
+      }`
+    ).join('\n\n')
+    return [
+      { heading: 'Trigger', content: scenario.trigger },
+      { heading: 'Decision points', content: decisions },
+      { heading: 'Outcome', content: scenario.outcome },
+      { heading: 'Edge cases', content: scenario.edgeCases.map(item => `- ${item}`).join('\n') }
+    ]
+  }
+
+  for (const scenario of report.model.capabilityScenarios) {
+    write(
+      entityPath(
+        join(root, 'capabilities', scenario.capabilityId, 'scenarios'),
+        scenario.id,
+        'capability-scenario',
+        false
+      ),
+      frontmatter(compactRecord({
+        kind: scenario.kindId,
+        routes: Object.fromEntries(scenario.routes.map(route => [route.id, route.name])),
+        steps: scenario.steps.map(step => compactRecord({
+          text: step.text,
+          kind: step.kind,
+          actor: step.actorId ?? undefined,
+          contexts: step.contexts.length
+            ? Object.fromEntries(step.contexts.map(context => [context.routeId, { place: context.placeId }]))
+            : undefined
+        })),
+        references: references(scenario.references)
+      })) + body(
+        scenario.title,
+        '',
+        scenario.intent,
+        scenarioSections(scenario),
+        scenario.supportingSections
+      )
+    )
   }
   for (const journey of report.model.journeys) {
-    const journeyRoot = join(root, 'journeys', journey.id)
+    const hasScenarios = report.model.journeyScenarios.some(scenario => scenario.journeyId === journey.id)
     write(
-      join(journeyRoot, 'journey.md'),
+      entityPath(join(root, 'journeys'), journey.id, 'journey', hasScenarios),
       frontmatter(compactRecord({
         actors: journey.actorIds,
-        capabilities: journey.capabilityIds,
-        availability: availability(journey.availability),
-        entryPoints: entryPoints(journey.entryPoints),
         references: references(journey.references)
-      })) + body(journey.title, journey.summary, journey.intent, [], journey.supportingContent)
-    )
-    for (const scenario of scenariosByJourney.get(journey.id) || []) {
-      const decisions = scenario.decisionPoints.map(decision =>
-        `### ${decision.title}\n\n${decision.question}\n\n${
-          decision.branches.map(branch => `- ${branch.condition} → ${branch.outcome}`).join('\n')
-        }`
-      ).join('\n\n')
-      write(
-        join(journeyRoot, 'scenarios', `${scenario.id}.md`),
-        frontmatter(compactRecord({
-          kind: scenario.kindId,
-          availability: availability(scenario.availability),
-          references: references(scenario.references)
-        })) + body(
-          scenario.title,
-          '',
-          scenario.intent,
-          [
-            { heading: 'Trigger', content: scenario.trigger },
-            { heading: 'Steps', content: scenario.steps.map((step, index) => `${index + 1}. ${step}`).join('\n') },
-            { heading: 'Decision points', content: decisions },
-            { heading: 'Outcome', content: scenario.outcome },
-            { heading: 'Edge cases', content: scenario.edgeCases.map(item => `- ${item}`).join('\n') }
-          ],
-          scenario.supportingContent
-        )
+      })) + body(
+        journey.title,
+        '',
+        journey.intent,
+        [
+          { heading: 'Goal', content: journey.goal },
+          { heading: 'Success criterion', content: journey.successCriterion }
+        ],
+        journey.supportingSections
       )
-    }
+    )
+  }
+  for (const scenario of report.model.journeyScenarios) {
+    write(
+      entityPath(
+        join(root, 'journeys', scenario.journeyId, 'scenarios'),
+        scenario.id,
+        'journey-scenario',
+        false
+      ),
+      frontmatter(compactRecord({
+        kind: scenario.kindId,
+        result: scenario.result,
+        routes: Object.fromEntries(scenario.routes.map(route => [route.id, route.name])),
+        steps: scenario.steps.map(step => compactRecord({
+          text: step.text,
+          kind: step.kind,
+          actor: step.actorId ?? undefined,
+          capability: step.capabilityId ?? undefined,
+          contexts: step.contexts.length
+            ? Object.fromEntries(step.contexts.map(context => [context.routeId, { place: context.placeId }]))
+            : undefined
+        })),
+        references: references(scenario.references)
+      })) + body(
+        scenario.title,
+        '',
+        scenario.intent,
+        scenarioSections(scenario),
+        scenario.supportingSections
+      )
+    )
   }
 }
 
 export interface ExpandedProductReport {
-  report: ProductReportV7
+  report: ProductReportV10
   root: string
 }
 
@@ -334,11 +433,11 @@ export function expandProductReport(
     mkdirSync(targetParent, { recursive: true })
     staging = mkdtempSync(join(targetParent, '.businesslens-open-'))
     const stagedRoot = join(staging, '.businesslens')
-    writeReport(stagedRoot, report)
+    writeReport(stagedRoot, report, Boolean(options.logo))
     if (options.logo) {
       const issues = validateProductLogo(options.logo)
       if (issues.length) throw new Error(`The Product logo is invalid: ${issues.join('; ')}`)
-      writeBytes(join(stagedRoot, 'logo.svg'), options.logo)
+      writeBytes(join(stagedRoot, 'product', 'logo.svg'), options.logo)
     }
     // Expansion is the one canonical report-to-model primitive used by open,
     // pull, and contribution. Keeping orientation here makes their model trees

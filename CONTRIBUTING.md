@@ -25,7 +25,8 @@ development launcher; without it they retain their release-pinned npm runner.
 
 1. Format changes start in `spec/format.md`, then flow into `src/core/` and
    `src/commands/lint.ts` with a failing-case test per new structural rule, and into
-   the matching entity page under `docs/`.
+   the matching entity page under `docs/`. Changes to the serialized report
+   start in `spec/report.md` instead.
 2. Keep `src/core/portable.ts` byte-compatible with the platform's portable
    schema; coordinate schema-version bumps across both repositories.
 3. Update the golden fixture (`test/fixtures/fixture-shop/`) and its expected

@@ -20,7 +20,12 @@ export async function runView(cwd: string, options: ViewOptions): Promise<number
       initialReport,
       compile: () => compileResolvedWorkspaceReport(resolved),
       watchRoot: join(resolved.modelRoot, '.businesslens'),
-      logoFile: join(resolved.modelRoot, '.businesslens', 'logo.svg')
+      logoFile: join(resolved.modelRoot, '.businesslens', 'product', 'logo.svg'),
+      // Reference targets resolve against the repository, not the model root —
+      // the same base `lint` lists tracked files from — and implementation
+      // captures legitimately live outside `.businesslens/`. A model outside a
+      // repository has no repository-relative targets, so it gets no mount.
+      assetRoot: resolved.gitRoot
     })
     console.log(`Viewing the local Product Model at ${viewer.url}`)
     console.log('Press Ctrl+C to stop.')

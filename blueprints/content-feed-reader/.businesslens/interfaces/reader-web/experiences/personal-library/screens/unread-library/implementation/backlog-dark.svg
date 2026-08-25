@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 300" width="480" height="300">
+  <title>Unread library — captured, unread items available, dark</title>
+  <rect x="0" y="0" width="480" height="300" rx="8" fill="#0b0d10" />
+  <rect x="12" y="12" width="120" height="276" rx="6" fill="#14181d" />
+  <rect x="144" y="12" width="324" height="276" rx="6" fill="#14181d" />
+  <g fill="#1d232a">
+    <rect x="156" y="26" width="300" height="48" rx="5" />
+    <rect x="156" y="84" width="300" height="48" rx="5" />
+    <rect x="156" y="142" width="300" height="48" rx="5" />
+  </g>
+  <g fill="#313a44">
+    <rect x="168" y="40" width="200" height="7" rx="3.5" />
+    <rect x="168" y="98" width="228" height="7" rx="3.5" />
+    <rect x="168" y="156" width="176" height="7" rx="3.5" />
+  </g>
+</svg>

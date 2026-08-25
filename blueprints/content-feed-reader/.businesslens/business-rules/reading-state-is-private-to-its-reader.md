@@ -1,27 +1,17 @@
 ---
-domains:
-  - accounts
-  - library
-  - sharing
-capabilities:
-  - collection-sharing
-  - reading-state
+appliesTo:
+  - type: capability
+    id: reading-state
+    contexts:
+      - place: reader-web::personal-library
+      - place: reader-mobile::personal-library
 ---
 
-# Reading state belongs to one reader
+# Reading state is private to its Reader
 
-What has been read, when, and how far is visible only to the reader it belongs
-to, and is never exposed by sharing a collection or by any other reader's
-actions.
-
-## Intent
-
-Sharing curation must never leak consumption. A reader publishing a collection is
-offering a set of items, not a record of their own reading habits.
+Only the Reader who owns a library can see or change its read and unread state.
 
 ## Rationale
 
-Reading state is the most personal thing in the library and the easiest to leak
-accidentally, because collections are built out of the same items reading state
-attaches to. Keeping the two strictly separate means a published collection can
-be rendered for a stranger without filtering anything out.
+Reading progress is personal working state, not information exposed through
+shared collections.

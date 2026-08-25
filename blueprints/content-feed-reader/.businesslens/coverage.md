@@ -1,14 +1,15 @@
 ---
-status: draft
+status: complete
 method:
-  - Opened from a portable Product Report; source-repository navigation was intentionally removed.
+  - Product design authored as a source-free teaching Blueprint.
 sourceAreas: []
 unmapped: []
 limitations:
-  - Every Journey and Scenario is a Product specification, not a claim about a built implementation.
-  - Implementation alignment must be verified in this repository.
+  - The model specifies intended Product behavior and makes no implementation claim.
 ---
 
 # Coverage
 
-Product behavior, relationships, and model breadth were imported from a Product Report. Source-repository references were removed because they do not navigate this repository.
+The complete intended breadth of the teaching Product is modeled. A future
+reference application may implement this Blueprint without changing its status
+or authority.

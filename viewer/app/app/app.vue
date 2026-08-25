@@ -1,4 +1,5 @@
 <script setup lang="ts">
+useBusinessLensThemeHead()
 useBusinessLensThemeLabHead()
 
 const { pddVersion } = useRuntimeConfig().public
@@ -6,7 +7,6 @@ const { visible: themeLabVisible, toggle: toggleThemeLab } = useBusinessLensThem
 const themeLabLabel = computed(() => (
   themeLabVisible.value ? 'Hide theme lab' : 'Show theme lab'
 ))
-const year = new Date().getFullYear()
 
 useHead({
   title: 'Local Product Model · BusinessLens',
@@ -14,6 +14,7 @@ useHead({
   meta: [
     { charset: 'utf-8' },
     { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+    { name: 'description', content: 'Explore a local BusinessLens Product Model and its capabilities, value paths, delivery by Interface, scenarios, and rules.' },
     { name: 'robots', content: 'noindex, nofollow' }
   ]
 })
@@ -21,18 +22,25 @@ useHead({
 
 <template>
   <UApp>
-    <div class="flex min-h-dvh flex-col">
+    <!--
+      The report owns the one vertical content scroll. Keeping the host bound
+      to the viewport leaves both chrome rows in place while the reading moves.
+    -->
+    <div class="flex h-dvh flex-col overflow-hidden">
       <NuxtLoadingIndicator />
       <BusinessLensThemeLabBar />
-      <UHeader :ui="{ root: 'top-(--businesslens-theme-lab-height)', right: 'gap-0.5' }">
+      <UHeader
+        sticky
+        :ui="{ root: 'top-(--businesslens-theme-lab-height) shrink-0', right: 'gap-0.5' }"
+      >
         <template #left>
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-2.5">
             <NuxtLink
               to="https://businesslens.io"
               external
               target="_blank"
               rel="noopener noreferrer"
-              aria-label="BusinessLens home"
+              aria-label="BusinessLens"
               class="flex items-center"
             >
               <BusinessLensBrand compact-on-mobile />
@@ -49,6 +57,7 @@ useHead({
             </UBadge>
           </div>
         </template>
+
         <template #right>
           <UTooltip :text="themeLabLabel">
             <UButton
@@ -113,41 +122,15 @@ useHead({
           </div>
         </template>
       </UHeader>
-      <main class="businesslens-page-surface flex-1">
+      <main
+        class="businesslens-page-surface min-h-0 flex-1 overflow-hidden"
+        :style="{
+          '--businesslens-report-chrome':
+            'calc(var(--ui-header-height) + var(--businesslens-theme-lab-height))'
+        }"
+      >
         <NuxtPage />
       </main>
-      <footer class="border-t border-default">
-        <UContainer>
-          <div class="flex items-center justify-between gap-6 py-4">
-            <div class="flex flex-col items-start gap-2">
-              <NuxtLink
-                to="https://businesslens.io"
-                external
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="BusinessLens home"
-                class="flex items-center"
-              >
-                <BusinessLensBrand />
-              </NuxtLink>
-              <p class="text-sm leading-5 text-dimmed">
-                © {{ year }} BusinessLens · Local Product Model
-              </p>
-            </div>
-            <UButton
-              icon="i-simple-icons-github"
-              to="https://github.com/businesslens/pdd"
-              external
-              target="_blank"
-              rel="noopener noreferrer"
-              color="neutral"
-              variant="ghost"
-              size="sm"
-              aria-label="BusinessLens on GitHub"
-            />
-          </div>
-        </UContainer>
-      </footer>
     </div>
   </UApp>
 </template>

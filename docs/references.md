@@ -3,7 +3,7 @@ title: References
 description: Attach intent, implementation, or context artifacts to any Product Model entity without moving external material into the model.
 section: open-source
 group: Product Model
-order: 18
+order: 17
 ---
 
 # References
@@ -15,11 +15,16 @@ context. The referenced artifact is not part of the model and never replaces
 the entity's Product prose.
 
 Every semantic entity supports the same optional field: Product, Actor,
-Interface, Experience, Screen, Domain, Capability, Journey, Scenario, and
-Business Rule. Configuration, Coverage, and taxonomies do not.
+Interface, Experience, Screen, Domain, Capability, Journey, Capability
+Scenario, Journey Scenario, and Business Rule. Configuration, Coverage, and
+taxonomies do not.
 
 ```yaml
 references:
+  - kind: prd
+    role: intent
+    target: docs/prds/checkout.md
+    title: Checkout PRD
   - kind: visual
     role: intent
     target: https://example.com/designs/checkout
@@ -29,6 +34,37 @@ references:
     target: src/checkout/handler.ts#CheckoutHandler.submit
 ```
 
+## Asset or Reference
+
+Use an asset when the model owns the file. Expand the entity from `<id>.md` to
+`<id>/<type>.md`, then place authored assets beside `<type>.md`. Put generated
+captures describing this repository's realization under the reserved
+`implementation/` subdirectory:
+
+```text
+screens/unread-library/
+├── screen.md
+├── mockup.svg
+└── implementation/
+    └── backlog-dark.png
+```
+
+An asset needs no frontmatter entry. Add optional `assets:` metadata only when
+it needs a title or, on a Screen, a Product state:
+
+```yaml
+assets:
+  - file: mockup.svg
+    title: Approved unread backlog
+  - file: implementation/backlog-dark.png
+    title: Implemented backlog, dark
+    state: Backlog
+```
+
+Use a Reference when another system or repository owns the material: source
+code, a Figma file, an ADR, research, a vendor contract, or a hosted design.
+This avoids a mirrored asset tree while keeping external material external.
+
 ## Kind and role
 
 `kind` says what the artifact is:
@@ -36,6 +72,7 @@ references:
 | Kind | Artifact |
 | --- | --- |
 | `code` | A tracked source file, optional symbol, or line range |
+| `prd` | A product requirements document |
 | `spec` | A product or technical specification |
 | `proposal` | A proposed direction or change |
 | `doc` | General documentation |
@@ -45,11 +82,45 @@ references:
 
 `role` says why it is attached to this entity:
 
-| Role | Meaning |
-| --- | --- |
-| `intent` | Helped express or curate intended Product meaning |
-| `implementation` | Points at a realized Product artifact |
-| `context` | Supplies useful background without defining intent or implementation |
+| Role | Meaning | Travels with a published Blueprint |
+| --- | --- | --- |
+| `intent` | Helped express or curate intended Product meaning | yes |
+| `implementation` | Points at a realized Product artifact | **no** |
+| `context` | Supplies useful background without defining intent or implementation | yes |
+
+A PRD uses `kind: prd`. Give it `role: intent` when it helped define the
+approved Product meaning on that entity, or `role: context` when it supplies
+supporting history. The Product Model remains self-contained: the PRD explains
+the decision around an entity but never replaces its authored meaning.
+
+`intent` and `context` describe the Product, so they travel with a published
+Blueprint. `implementation` describes this repository's realization of it and
+stays home — the portable projection removes every `implementation` reference,
+along with every `kind: code` reference and every repository-relative target,
+whatever its role. That is not a limitation to work around; it is what makes the
+role meaningful.
+
+## Naming the state a capture shows
+
+A [Screen](./screens.md) often collects several captures of the same view — one
+per Product state, sometimes doubled for light and dark. An optional `state` on
+either asset metadata or a Reference names which one:
+
+```yaml
+references:
+  - kind: visual
+    role: implementation
+    target: docs/design/screenshots/overview-dark.png
+    title: Overview tab, dark
+    state: Journeys
+```
+
+`state` is valid only on a Screen and must match one of its `## Product states`
+H3 titles. Themes are not Product states, so a light and a dark capture of the
+same state are two attachments sharing one `state` value.
+
+Without it, six captures of one Screen arrive as a flat list distinguishable
+only by free-text title. With it, each one is placed beside the state it shows.
 
 The distinction answers the screenshot question directly. A design screenshot
 used to define a Screen is `visual` + `intent`; a screenshot captured from the
@@ -86,8 +157,10 @@ artifact is evidence to assess rather than proof to trust.
 ## Report profiles
 
 A compiled workspace Product Report retains all References and declares
-`referenceProfile: workspace`. A portable Product Report keeps only HTTP(S)
-References whose role is `intent` or `context`.
+`referenceProfile: workspace`. Co-located assets appear there as
+repository-relative References; the report does not embed their bytes. A
+portable Product Report keeps only HTTP(S) References whose role is `intent` or
+`context`, so local asset pointers do not enter a Blueprint yet.
 
 [`blueprint export`](./cli-export.md#portable-export) defines the complete
 portable projection. `open`, `pull`, and `contribute` apply the same projection.
@@ -97,11 +170,15 @@ portable projection. `open`, `pull`, and `contribute` apply the same projection.
 | Finding | Meaning |
 | --- | --- |
 | missing `kind`, `role`, or `target` | Every Reference needs all three fields. |
-| unknown Reference key | Use only `kind`, `role`, `target`, and optional `title`. |
+| unknown Reference key | Use only `kind`, `role`, `target`, and optional `title` and `state`. |
 | invalid kind or role | Choose one of the documented values. |
 | invalid code target | Use the compact grammar and a repository-relative path. |
 | `code reference path "…" is not a tracked file` | Fix or remove stale navigation. |
 | duplicate Reference target | Keep only one attachment to that target on the entity. |
 | missing local target warning | Fix the target or remove it; warnings do not fail lint. |
+| `reference state "…" is not a product state of this Screen` | Name an authored `## Product states` H3, or drop the key. |
+| `reference "state" is only valid on a Screen` | No other entity has a state set for it to resolve against. |
+| asset metadata names a missing file | Expand the entity and add the file, or remove the stale metadata. |
+| asset state does not name a Product state | Name an authored Screen H3 or remove `state`. |
 
 There is no missing-Reference finding. A complete model may contain none.

@@ -1,28 +1,29 @@
 import * as z from 'zod'
 import { parseCodeTarget } from './coderefs.js'
+import { containsPlace, interfaceOf, parentPlace } from './ids.js'
+import { containsStructuralHeading } from './markdown.js'
+import { INTERFACE_TYPES } from './interface-types.js'
 
-export const REPORT_SCHEMA_VERSION = '7.0.0'
+export const REPORT_SCHEMA_VERSION = '10.0.0'
 
 const IdSchema = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
+/**
+ * A qualified Interface, Experience, or Screen id.
+ *
+ * Interfaces, Experiences and Screens repeat names across Interfaces on
+ * purpose, so their ids carry the segments that tell them apart.
+ */
+const QualifiedIdSchema = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*(?:::[a-z0-9]+(?:-[a-z0-9]+)*)*$/)
 const ProductIdSchema = IdSchema.max(64)
 const SingleLineTextSchema = z.string().min(1)
   .refine(value => value.trim().length > 0, 'Expected non-whitespace text')
   .refine(value => !/[\r\n]/.test(value), 'Expected a single line')
 
-function containsStructuralHeading(value: string): boolean {
-  let inFence = false
-  for (const line of value.split(/\r?\n/)) {
-    if (/^\s*(```|~~~)/.test(line)) {
-      inFence = !inFence
-    } else if (!inFence && /^#{1,2}\s/.test(line)) {
-      return true
-    }
-  }
-  return false
-}
-
 const RequiredMarkdownFragmentSchema = z.string().min(1)
   .refine(value => value.trim().length > 0, 'Expected non-whitespace text')
+  .refine(value => !containsStructuralHeading(value), 'Markdown fragment must not contain H1 or H2 headings')
+
+const MarkdownFragmentSchema = z.string()
   .refine(value => !containsStructuralHeading(value), 'Markdown fragment must not contain H1 or H2 headings')
 
 function validHttpUrl(value: string): boolean {
@@ -45,10 +46,12 @@ function validRepositoryTarget(value: string): boolean {
 }
 
 export const ReportReferenceSchema = z.strictObject({
-  kind: z.enum(['code', 'spec', 'proposal', 'doc', 'adr', 'visual', 'research']),
+  kind: z.enum(['code', 'prd', 'spec', 'proposal', 'doc', 'adr', 'visual', 'research']),
   role: z.enum(['intent', 'implementation', 'context']),
   target: SingleLineTextSchema,
-  title: SingleLineTextSchema.optional()
+  title: SingleLineTextSchema.optional(),
+  /** Screens only: the `## Product states` H3 this artefact depicts. */
+  state: SingleLineTextSchema.optional()
 }).superRefine((reference, context) => {
   if (reference.kind === 'code') {
     const issues: string[] = []
@@ -66,9 +69,14 @@ export const ReportReferenceSchema = z.strictObject({
   }
 })
 
+export const ReportSupportingSectionSchema = z.strictObject({
+  heading: SingleLineTextSchema.refine(value => value === value.trim(), 'Expected no surrounding whitespace'),
+  content: MarkdownFragmentSchema
+})
+
 const EntityContentSchema = {
-  intent: z.string(),
-  supportingContent: z.string(),
+  intent: MarkdownFragmentSchema,
+  supportingSections: z.array(ReportSupportingSectionSchema),
   references: z.array(ReportReferenceSchema)
 }
 
@@ -86,8 +94,9 @@ const ReportEntityCountShape = {
   screens: z.number().int().min(0),
   domains: z.number().int().min(0),
   capabilities: z.number().int().min(0),
+  capabilityScenarios: z.number().int().min(0),
   journeys: z.number().int().min(0),
-  scenarios: z.number().int().min(0),
+  journeyScenarios: z.number().int().min(0),
   businessRules: z.number().int().min(0)
 }
 
@@ -108,9 +117,8 @@ export const ReportEntryPointSchema = z.strictObject({
   path: SingleLineTextSchema
 })
 
-export const ReportAvailabilitySchema = z.strictObject({
-  interfaceId: IdSchema,
-  experienceIds: z.array(IdSchema).min(1)
+export const ReportContextSchema = z.strictObject({
+  placeId: QualifiedIdSchema
 })
 
 export const ReportActorSchema = z.strictObject({
@@ -123,9 +131,10 @@ export const ReportActorSchema = z.strictObject({
 })
 
 export const ReportInterfaceSchema = z.strictObject({
-  id: IdSchema,
+  id: QualifiedIdSchema,
   title: SingleLineTextSchema,
   description: RequiredMarkdownFragmentSchema,
+  type: z.enum(INTERFACE_TYPES),
   actorIds: z.array(IdSchema).min(1),
   entryPoints: z.array(ReportEntryPointSchema),
   capabilityBoundary: RequiredMarkdownFragmentSchema,
@@ -133,11 +142,11 @@ export const ReportInterfaceSchema = z.strictObject({
 })
 
 export const ReportExperienceSchema = z.strictObject({
-  id: IdSchema,
+  id: QualifiedIdSchema,
   title: SingleLineTextSchema,
   description: RequiredMarkdownFragmentSchema,
   actorIds: z.array(IdSchema).min(1),
-  interfaceIds: z.array(IdSchema).min(1),
+  interfaceIds: z.array(QualifiedIdSchema).min(1),
   accessMode: z.enum(['public', 'authenticated', 'restricted']),
   entryPoints: z.array(ReportEntryPointSchema),
   capabilityBoundary: RequiredMarkdownFragmentSchema,
@@ -157,7 +166,7 @@ export const ReportCapabilitySchema = z.strictObject({
   title: SingleLineTextSchema,
   description: RequiredMarkdownFragmentSchema,
   domainId: IdSchema.optional(),
-  availability: z.array(ReportAvailabilitySchema).min(1),
+  availability: z.array(ReportContextSchema).min(1),
   ...EntityContentSchema
 })
 
@@ -167,12 +176,12 @@ export const ReportScreenStateSchema = z.strictObject({
 })
 
 export const ReportScreenSchema = z.strictObject({
-  id: IdSchema,
+  id: QualifiedIdSchema,
   title: SingleLineTextSchema,
   description: RequiredMarkdownFragmentSchema,
-  availability: z.array(ReportAvailabilitySchema).min(1),
   capabilityIds: z.array(IdSchema).min(1),
-  scenarioIds: z.array(IdSchema),
+  capabilityScenarioIds: z.array(IdSchema),
+  journeyScenarioIds: z.array(IdSchema),
   entryPoints: z.array(ReportEntryPointSchema),
   information: z.array(SingleLineTextSchema).min(1),
   actions: z.array(SingleLineTextSchema),
@@ -184,11 +193,12 @@ export const ReportScreenSchema = z.strictObject({
 export const ReportJourneySchema = z.strictObject({
   id: IdSchema,
   title: SingleLineTextSchema,
-  summary: RequiredMarkdownFragmentSchema,
+  goal: RequiredMarkdownFragmentSchema,
+  successCriterion: RequiredMarkdownFragmentSchema,
   actorIds: z.array(IdSchema).min(1),
-  capabilityIds: z.array(IdSchema).min(1),
-  availability: z.array(ReportAvailabilitySchema).min(1),
-  entryPoints: z.array(ReportEntryPointSchema),
+  capabilityIds: z.array(IdSchema),
+  failureOnlyCapabilityIds: z.array(IdSchema),
+  domainIds: z.array(IdSchema),
   ...EntityContentSchema
 })
 
@@ -201,30 +211,72 @@ export const ReportDecisionPointSchema = z.strictObject({
   })).min(2)
 })
 
-export const ReportScenarioSchema = z.strictObject({
+export const ReportScenarioRouteSchema = z.strictObject({
   id: IdSchema,
-  journeyId: IdSchema,
+  name: SingleLineTextSchema
+})
+
+export const ReportScenarioStepContextSchema = z.strictObject({
+  routeId: IdSchema,
+  placeId: QualifiedIdSchema
+})
+
+export const ReportScenarioStepSchema = z.strictObject({
+  text: SingleLineTextSchema,
+  kind: z.enum(['actor', 'product', 'condition']),
+  actorId: IdSchema.nullable(),
+  capabilityId: IdSchema.nullable(),
+  contexts: z.array(ReportScenarioStepContextSchema)
+})
+
+const ReportScenarioContentShape = {
   title: SingleLineTextSchema,
   kindId: IdSchema,
-  availability: z.array(ReportAvailabilitySchema),
+  actorIds: z.array(IdSchema).min(1),
+  routes: z.array(ReportScenarioRouteSchema).min(1),
+  steps: z.array(ReportScenarioStepSchema).min(1),
   trigger: RequiredMarkdownFragmentSchema,
-  steps: z.array(SingleLineTextSchema).min(1),
   decisionPoints: z.array(ReportDecisionPointSchema),
   outcome: RequiredMarkdownFragmentSchema,
   edgeCases: z.array(SingleLineTextSchema),
   ...EntityContentSchema
+}
+
+export const ReportCapabilityScenarioSchema = z.strictObject({
+  id: IdSchema,
+  capabilityId: IdSchema,
+  ...ReportScenarioContentShape
 })
+
+export const ReportJourneyScenarioSchema = z.strictObject({
+  id: IdSchema,
+  journeyId: IdSchema,
+  result: z.enum(['achieved', 'not-achieved']),
+  ...ReportScenarioContentShape
+})
+
+const ReportBusinessRuleEntityTargetSchema = z.strictObject({
+  type: z.enum(['capability', 'capability-scenario', 'journey', 'journey-scenario']),
+  id: IdSchema,
+  contexts: z.array(ReportContextSchema)
+})
+
+const ReportBusinessRuleContextTargetSchema = z.strictObject({
+  type: z.literal('context'),
+  context: ReportContextSchema
+})
+
+export const ReportBusinessRuleTargetSchema = z.discriminatedUnion('type', [
+  ReportBusinessRuleEntityTargetSchema,
+  ReportBusinessRuleContextTargetSchema
+])
 
 export const ReportBusinessRuleSchema = z.strictObject({
   id: IdSchema,
   title: SingleLineTextSchema,
   statement: RequiredMarkdownFragmentSchema,
-  rationale: z.string(),
-  domainIds: z.array(IdSchema),
-  capabilityIds: z.array(IdSchema),
-  journeyIds: z.array(IdSchema),
-  scenarioIds: z.array(IdSchema),
-  availability: z.array(ReportAvailabilitySchema),
+  rationale: MarkdownFragmentSchema,
+  appliesTo: z.array(ReportBusinessRuleTargetSchema).min(1),
   ...EntityContentSchema
 })
 
@@ -234,10 +286,10 @@ export const ReportCoverageSchema = z.strictObject({
   sourceAreas: z.array(z.string()),
   unmapped: z.array(z.string()),
   limitations: z.array(z.string()),
-  rationale: z.string()
+  rationale: MarkdownFragmentSchema
 })
 
-export const ProductReportV7Schema = z.strictObject({
+export const ProductReportV10Schema = z.strictObject({
   schemaVersion: z.literal(REPORT_SCHEMA_VERSION),
   id: ProductIdSchema,
   title: SingleLineTextSchema.max(160),
@@ -246,8 +298,8 @@ export const ProductReportV7Schema = z.strictObject({
   category: IdSchema.max(60).nullable(),
   authors: z.array(ReportAuthorSchema),
   license: z.string().regex(/^[A-Za-z0-9][A-Za-z0-9.+-]*$/).max(80).nullable(),
-  intent: z.string(),
-  supportingContent: z.string(),
+  intent: MarkdownFragmentSchema,
+  supportingSections: z.array(ReportSupportingSectionSchema),
   references: z.array(ReportReferenceSchema),
   referenceProfile: z.enum(['workspace', 'portable']),
   tags: z.array(z.string().min(1).max(48)).max(24),
@@ -261,21 +313,22 @@ export const ProductReportV7Schema = z.strictObject({
     }),
     actors: z.array(ReportActorSchema),
     interfaces: z.array(ReportInterfaceSchema).min(1),
-    experiences: z.array(ReportExperienceSchema).min(1),
+    experiences: z.array(ReportExperienceSchema),
     screens: z.array(ReportScreenSchema),
     domains: z.array(ReportDomainSchema),
     capabilities: z.array(ReportCapabilitySchema),
+    capabilityScenarios: z.array(ReportCapabilityScenarioSchema),
     journeys: z.array(ReportJourneySchema),
-    scenarios: z.array(ReportScenarioSchema),
+    journeyScenarios: z.array(ReportJourneyScenarioSchema),
     businessRules: z.array(ReportBusinessRuleSchema)
   }),
   coverage: ReportCoverageSchema
 })
 
-export const ProductReportSchema = ProductReportV7Schema
+export const ProductReportSchema = ProductReportV10Schema
 
-export type ProductReportV7 = z.infer<typeof ProductReportV7Schema>
-export type ProductReport = ProductReportV7
+export type ProductReportV10 = z.infer<typeof ProductReportV10Schema>
+export type ProductReport = ProductReportV10
 export type ReportDecisionPoint = z.infer<typeof ReportDecisionPointSchema>
 export type ReportScreenState = z.infer<typeof ReportScreenStateSchema>
 export type ReportCoverage = z.infer<typeof ReportCoverageSchema>
@@ -286,12 +339,18 @@ export type ReportInterface = z.infer<typeof ReportInterfaceSchema>
 export type ReportExperience = z.infer<typeof ReportExperienceSchema>
 export type ReportDomain = z.infer<typeof ReportDomainSchema>
 export type ReportCapability = z.infer<typeof ReportCapabilitySchema>
-export type ReportAvailability = z.infer<typeof ReportAvailabilitySchema>
+export type ReportContext = z.infer<typeof ReportContextSchema>
 export type ReportScreen = z.infer<typeof ReportScreenSchema>
 export type ReportJourney = z.infer<typeof ReportJourneySchema>
-export type ReportScenario = z.infer<typeof ReportScenarioSchema>
+export type ReportCapabilityScenario = z.infer<typeof ReportCapabilityScenarioSchema>
+export type ReportScenarioRoute = z.infer<typeof ReportScenarioRouteSchema>
+export type ReportScenarioStepContext = z.infer<typeof ReportScenarioStepContextSchema>
+export type ReportScenarioStep = z.infer<typeof ReportScenarioStepSchema>
+export type ReportJourneyScenario = z.infer<typeof ReportJourneyScenarioSchema>
 export type ReportBusinessRule = z.infer<typeof ReportBusinessRuleSchema>
+export type ReportBusinessRuleTarget = z.infer<typeof ReportBusinessRuleTargetSchema>
 export type ReportReference = z.infer<typeof ReportReferenceSchema>
+export type ReportSupportingSection = z.infer<typeof ReportSupportingSectionSchema>
 
 function duplicateIssues(label: string, ids: string[]): string[] {
   const seen = new Set<string>()
@@ -301,6 +360,33 @@ function duplicateIssues(label: string, ids: string[]): string[] {
     seen.add(id)
   }
   return [...duplicates].sort().map(id => `${label}: duplicate id "${id}"`)
+}
+
+function requireUniqueValues(
+  issues: string[],
+  label: string,
+  relation: string,
+  values: string[]
+): void {
+  const seen = new Set<string>()
+  for (const value of values) {
+    if (seen.has(value)) issues.push(`${label}: ${relation} contains duplicate "${value}"`)
+    seen.add(value)
+  }
+}
+
+function validateSupportingSections(
+  issues: string[],
+  label: string,
+  sections: ReportSupportingSection[],
+  reservedHeadings: string[]
+): void {
+  const reserved = new Set(reservedHeadings.map(heading => heading.toLowerCase()))
+  for (const item of sections) {
+    if (reserved.has(item.heading.trim().toLowerCase())) {
+      issues.push(`${label}: supporting section "${item.heading}" conflicts with a structured section`)
+    }
+  }
 }
 
 function missingRelation(
@@ -315,49 +401,37 @@ function missingRelation(
   }
 }
 
-function pairKey(interfaceId: string, experienceId: string): string {
-  return `${interfaceId}\0${experienceId}`
-}
-
-function availabilityPairs(
+function validateContextPlace(
   issues: string[],
   label: string,
-  availability: ReportAvailability[],
-  interfaceIds: Set<string>,
-  experiencesById: Map<string, ReportExperience>
-): Set<string> {
-  const pairs = new Set<string>()
-  const seenInterfaces = new Set<string>()
-  for (const item of availability) {
-    if (seenInterfaces.has(item.interfaceId)) {
-      issues.push(`${label}: duplicate availability interface "${item.interfaceId}"`)
-    }
-    seenInterfaces.add(item.interfaceId)
-    if (!interfaceIds.has(item.interfaceId)) {
-      issues.push(`${label}: references missing interface "${item.interfaceId}"`)
-    }
-    const seenExperiences = new Set<string>()
-    for (const experienceId of item.experienceIds) {
-      if (seenExperiences.has(experienceId)) {
-        issues.push(`${label}: duplicate availability experience "${experienceId}" for interface "${item.interfaceId}"`)
-      }
-      seenExperiences.add(experienceId)
-      const experience = experiencesById.get(experienceId)
-      if (!experience) {
-        issues.push(`${label}: references missing experience "${experienceId}"`)
-      } else if (!experience.interfaceIds.includes(item.interfaceId)) {
-        issues.push(`${label}: experience "${experienceId}" does not declare interface "${item.interfaceId}"`)
-      }
-      const key = pairKey(item.interfaceId, experienceId)
-      if (pairs.has(key)) issues.push(`${label}: duplicate availability pair "${item.interfaceId}/${experienceId}"`)
-      pairs.add(key)
-    }
-  }
-  return pairs
+  context: ReportContext,
+  placeIds: Set<string>
+): string {
+  if (!placeIds.has(context.placeId)) issues.push(`${label}: Context references missing place "${context.placeId}"`)
+  return context.placeId
 }
 
-function interfaceIdsFromAvailability(availability: ReportAvailability[]): Set<string> {
-  return new Set(availability.map(item => item.interfaceId))
+function validateAvailabilityPlaces(
+  issues: string[],
+  label: string,
+  availability: ReportContext[],
+  availabilityPlaceIds: Set<string>,
+  placeIds: Set<string>
+): Set<string> {
+  const places = new Set<string>()
+  for (const context of availability) {
+    const place = validateContextPlace(issues, label, context, placeIds)
+    if (places.has(place)) issues.push(`${label}: duplicate availability Context place "${place}"`)
+    if (placeIds.has(place) && !availabilityPlaceIds.has(place)) {
+      issues.push(`${label}: availability Context place "${place}" must name an undivided Interface or an Experience`)
+    }
+    if (availabilityPlaceIds.has(place)) places.add(place)
+  }
+  return places
+}
+
+function sameIds(actual: string[], expected: Iterable<string>): boolean {
+  return JSON.stringify([...actual].sort()) === JSON.stringify([...expected].sort())
 }
 
 function requireEntryPointInterfaces(
@@ -374,20 +448,33 @@ function requireEntryPointInterfaces(
 }
 
 /** Cross-entity and computed-field validation, shared with every report consumer. */
-export function validateProductReport(report: ProductReportV7): string[] {
+export function validateProductReport(report: ProductReportV10): string[] {
   const issues: string[] = []
   const { model } = report
   const actorIds = new Set(model.actors.map(item => item.id))
   const interfaceIds = new Set(model.interfaces.map(item => item.id))
   const interfacesById = new Map(model.interfaces.map(item => [item.id, item]))
-  const experienceIds = new Set(model.experiences.map(item => item.id))
   const experiencesById = new Map(model.experiences.map(item => [item.id, item]))
   const domainIds = new Set(model.domains.map(item => item.id))
   const capabilityIds = new Set(model.capabilities.map(item => item.id))
-  const capabilityPairs = new Map<string, Set<string>>()
+  const capabilityAvailability = new Map<string, Set<string>>()
   const journeyIds = new Set(model.journeys.map(item => item.id))
-  const scenarioIds = new Set(model.scenarios.map(item => item.id))
+  const capabilityScenarioIds = new Set(model.capabilityScenarios.map(item => item.id))
+  const journeyScenarioIds = new Set(model.journeyScenarios.map(item => item.id))
   const kindIds = new Set(model.taxonomies.scenarioKinds.map(item => item.id))
+  const experienceScopedInterfaces = new Set(model.experiences.flatMap(experience => experience.interfaceIds))
+  const availabilityPlaceIds = new Set<string>([
+    ...model.interfaces.filter(item => !experienceScopedInterfaces.has(item.id)).map(item => item.id),
+    ...model.experiences.map(item => item.id)
+  ])
+  const placeIds = new Set<string>([
+    ...model.interfaces.map(item => item.id),
+    ...model.experiences.map(item => item.id),
+    ...model.screens.map(item => item.id)
+  ])
+
+  requireUniqueValues(issues, 'product', 'tags', report.tags)
+  validateSupportingSections(issues, 'product', report.supportingSections, ['Intent'])
 
   const collections: Array<[string, string[]]> = [
     ['actors', model.actors.map(item => item.id)],
@@ -396,17 +483,45 @@ export function validateProductReport(report: ProductReportV7): string[] {
     ['screens', model.screens.map(item => item.id)],
     ['domains', model.domains.map(item => item.id)],
     ['capabilities', model.capabilities.map(item => item.id)],
+    ['capabilityScenarios', model.capabilityScenarios.map(item => item.id)],
     ['journeys', model.journeys.map(item => item.id)],
-    ['scenarios', model.scenarios.map(item => item.id)],
+    ['journeyScenarios', model.journeyScenarios.map(item => item.id)],
     ['businessRules', model.businessRules.map(item => item.id)],
     ['scenarioKinds', model.taxonomies.scenarioKinds.map(item => item.id)]
   ]
   for (const [label, ids] of collections) issues.push(...duplicateIssues(label, ids))
+  const capabilityScenarioFiles = new Map(model.capabilityScenarios.map(item => [item.id, `capability scenario "${item.id}"`]))
+  for (const scenario of model.journeyScenarios) {
+    const previous = capabilityScenarioFiles.get(scenario.id)
+    if (previous) issues.push(`journey scenario "${scenario.id}": id already used by ${previous}`)
+  }
+
+  for (const actor of model.actors) {
+    validateSupportingSections(issues, `actor "${actor.id}"`, actor.supportingSections, ['Intent'])
+  }
+  for (const domain of model.domains) {
+    validateSupportingSections(issues, `domain "${domain.id}"`, domain.supportingSections, ['Intent'])
+  }
 
   for (const productInterface of model.interfaces) {
+    requireUniqueValues(issues, `interface "${productInterface.id}"`, 'actorIds', productInterface.actorIds)
+    validateSupportingSections(
+      issues,
+      `interface "${productInterface.id}"`,
+      productInterface.supportingSections,
+      ['Intent', 'Capability boundary']
+    )
     missingRelation(issues, `interface "${productInterface.id}"`, 'actor', productInterface.actorIds, actorIds)
   }
   for (const experience of model.experiences) {
+    requireUniqueValues(issues, `experience "${experience.id}"`, 'actorIds', experience.actorIds)
+    requireUniqueValues(issues, `experience "${experience.id}"`, 'interfaceIds', experience.interfaceIds)
+    validateSupportingSections(
+      issues,
+      `experience "${experience.id}"`,
+      experience.supportingSections,
+      ['Intent', 'Capability boundary']
+    )
     missingRelation(issues, `experience "${experience.id}"`, 'actor', experience.actorIds, actorIds)
     missingRelation(issues, `experience "${experience.id}"`, 'interface', experience.interfaceIds, interfaceIds)
     for (const interfaceId of experience.interfaceIds) {
@@ -424,131 +539,430 @@ export function validateProductReport(report: ProductReportV7): string[] {
       new Set(experience.interfaceIds)
     )
   }
+  for (const productInterface of model.interfaces) {
+    const experiences = model.experiences.filter(experience => experience.interfaceIds.includes(productInterface.id))
+    if (!experiences.length) continue
+    const coveredActors = new Set(experiences.flatMap(experience => experience.actorIds))
+    for (const actorId of productInterface.actorIds) {
+      if (!coveredActors.has(actorId)) {
+        issues.push(`interface "${productInterface.id}": actor "${actorId}" needs at least one Experience context`)
+      }
+    }
+  }
   for (const capability of model.capabilities) {
+    validateSupportingSections(
+      issues,
+      `capability "${capability.id}"`,
+      capability.supportingSections,
+      ['Intent']
+    )
     if (capability.domainId && !domainIds.has(capability.domainId)) {
       issues.push(`capability "${capability.id}": references missing domain "${capability.domainId}"`)
     }
-    capabilityPairs.set(
+    capabilityAvailability.set(
       capability.id,
-      availabilityPairs(
+      validateAvailabilityPlaces(
         issues,
         `capability "${capability.id}"`,
         capability.availability,
-        interfaceIds,
-        experiencesById
+        availabilityPlaceIds,
+        placeIds
       )
     )
   }
+  const supportedActorsForContainer = (place: string): Set<string> | undefined => {
+    const experience = experiencesById.get(place)
+    if (experience) return new Set(experience.actorIds)
+    const productInterface = interfacesById.get(place)
+    return productInterface ? new Set(productInterface.actorIds) : undefined
+  }
+
+  const screensById = new Map(model.screens.map(screen => [screen.id, screen]))
+  const screensByContainer = new Map<string, ReportScreen[]>()
+  const containerForScreen = (screen: ReportScreen): string => parentPlace(screen.id) || ''
   for (const screen of model.screens) {
-    const pairs = availabilityPairs(
-      issues,
-      `screen "${screen.id}"`,
-      screen.availability,
-      interfaceIds,
-      experiencesById
-    )
-    missingRelation(issues, `screen "${screen.id}"`, 'capability', screen.capabilityIds, capabilityIds)
-    missingRelation(issues, `screen "${screen.id}"`, 'scenario', screen.scenarioIds, scenarioIds)
-    requireEntryPointInterfaces(
-      issues,
-      `screen "${screen.id}"`,
-      screen.entryPoints,
-      interfaceIdsFromAvailability(screen.availability)
-    )
-    for (const capabilityId of screen.capabilityIds) {
-      const supported = capabilityPairs.get(capabilityId)
-      if (!supported) continue
-      for (const pair of pairs) {
-        if (!supported.has(pair)) {
-          const [interfaceId, experienceId] = pair.split('\0')
-          issues.push(`screen "${screen.id}": capability "${capabilityId}" is not available in "${interfaceId}/${experienceId}"`)
+    const container = containerForScreen(screen)
+    const siblings = screensByContainer.get(container) || []
+    siblings.push(screen)
+    screensByContainer.set(container, siblings)
+  }
+
+  const resolveScenarioContext = (label: string, placeId: string) => {
+    const screen = screensById.get(placeId)
+    if (screen) return { place: placeId, containerId: containerForScreen(screen), screen }
+    const experience = experiencesById.get(placeId)
+    if (experience) {
+      if ((screensByContainer.get(placeId) || []).length) {
+        issues.push(`${label}: Experience "${placeId}" owns Screens, so the Context must name one of its Screens`)
+      }
+      return { place: placeId, containerId: placeId, screen: undefined }
+    }
+    if (interfacesById.has(placeId)) {
+      if (experienceScopedInterfaces.has(placeId)) {
+        issues.push(`${label}: Interface "${placeId}" is divided into Experiences, so the Context must name one of them or one of their Screens`)
+      } else if ((screensByContainer.get(placeId) || []).length) {
+        issues.push(`${label}: Interface "${placeId}" owns Screens, so the Context must name one of its Screens`)
+      }
+      return { place: placeId, containerId: placeId, screen: undefined }
+    }
+    issues.push(`${label}: Context references missing place "${placeId}"`)
+    return undefined
+  }
+
+  type ReportScenarioForValidation = ReportCapabilityScenario | ReportJourneyScenario
+  const validateScenarioShape = (
+    scenario: ReportScenarioForValidation,
+    label: string,
+    parentCapabilityId?: string,
+    journeyActors?: Set<string>
+  ) => {
+    requireUniqueValues(issues, label, 'actorIds', scenario.actorIds)
+    requireUniqueValues(issues, label, 'route ids', scenario.routes.map(route => route.id))
+    const routeNames = new Set<string>()
+    const routeIds = new Set(scenario.routes.map(route => route.id))
+    const routeContextPlaces = new Map<string, string[]>(scenario.routes.map(route => [route.id, []]))
+    for (const route of scenario.routes) {
+      const normalized = route.name.trim().toLocaleLowerCase()
+      if (routeNames.has(normalized)) issues.push(`${label}: duplicate route name "${route.name}"`)
+      routeNames.add(normalized)
+    }
+
+    const derivedActors = new Set<string>()
+    const allContextPlaces = new Set<string>()
+    const allContainers = new Set<string>()
+    const capabilitySteps: Array<{ capabilityId: string, contextPlaces: Set<string>, containers: Set<string> }> = []
+    const screenIds = new Set<string>()
+    for (const [index, step] of scenario.steps.entries()) {
+      const stepLabel = `${label}: step ${index + 1}`
+      if (step.kind === 'actor') {
+        if (!step.actorId) issues.push(`${stepLabel}: an actor Step needs one actorId`)
+        else {
+          derivedActors.add(step.actorId)
+          if (!actorIds.has(step.actorId)) issues.push(`${stepLabel}: references missing actor "${step.actorId}"`)
+        }
+      } else if (step.actorId !== null) {
+        issues.push(`${stepLabel}: actorId is only valid when kind is "actor"`)
+      }
+      if (parentCapabilityId && step.capabilityId !== parentCapabilityId) {
+        issues.push(`${stepLabel}: capabilityId must equal parent capability "${parentCapabilityId}"`)
+      }
+      if (step.capabilityId) {
+        capabilitySteps.push({ capabilityId: step.capabilityId, contextPlaces: new Set<string>(), containers: new Set<string>() })
+        if (!capabilityIds.has(step.capabilityId)) {
+          issues.push(`${stepLabel}: references missing capability "${step.capabilityId}"`)
         }
       }
+
+      requireUniqueValues(issues, stepLabel, 'routeIds', step.contexts.map(context => context.routeId))
+      if (!step.contexts.length) continue
+      const contextualizedRouteIds = new Set(step.contexts.map(context => context.routeId))
+      if (!sameIds([...contextualizedRouteIds], routeIds)) {
+        issues.push(`${stepLabel}: contexts must assign every declared route or be empty`)
+      }
+      for (const context of step.contexts) {
+        const contextLabel = `${stepLabel}: route "${context.routeId}"`
+        if (!routeIds.has(context.routeId)) issues.push(`${contextLabel}: references undeclared route`)
+        routeContextPlaces.get(context.routeId)?.push(context.placeId)
+        const resolved = resolveScenarioContext(contextLabel, context.placeId)
+        if (!resolved) continue
+        allContextPlaces.add(resolved.place)
+        allContainers.add(resolved.containerId)
+        if (resolved.screen) screenIds.add(resolved.screen.id)
+        const capabilityStep = step.capabilityId ? capabilitySteps.at(-1) : undefined
+        capabilityStep?.contextPlaces.add(resolved.place)
+        capabilityStep?.containers.add(resolved.containerId)
+        if (step.capabilityId) {
+          const supported = capabilityAvailability.get(step.capabilityId) || new Set<string>()
+          if (!supported.has(resolved.containerId)) {
+            issues.push(`${contextLabel}: Context place "${resolved.place}" is outside capability "${step.capabilityId}"`)
+          }
+          if (resolved.screen && !resolved.screen.capabilityIds.includes(step.capabilityId)) {
+            issues.push(`${contextLabel}: Screen "${resolved.screen.id}" does not expose capability "${step.capabilityId}"`)
+          }
+        }
+        if (step.kind === 'actor' && step.actorId) {
+          const supported = supportedActorsForContainer(resolved.containerId) || new Set<string>()
+          if (!supported.has(step.actorId)) {
+            issues.push(`${contextLabel}: Context place does not support actor "${step.actorId}"`)
+          }
+        }
+      }
+    }
+    if (!sameIds(scenario.actorIds, derivedActors)) {
+      issues.push(`${label}: actorIds must equal the Actor Step union`)
+    }
+    missingRelation(issues, label, 'actor', scenario.actorIds, actorIds)
+    for (const route of scenario.routes) {
+      if (!(routeContextPlaces.get(route.id) || []).length) issues.push(`${label}: route "${route.id}" must have a Context on at least one Step`)
+    }
+    const sequences = new Map<string, string>()
+    for (const route of scenario.routes) {
+      const sequence = (routeContextPlaces.get(route.id) || []).join('\n')
+      if (!sequence) continue
+      const twin = sequences.get(sequence)
+      if (twin) issues.push(`${label}: route "${route.id}" repeats every Context place of route "${twin}"`)
+      else sequences.set(sequence, route.id)
+    }
+    const supportedSomewhere = new Set<string>()
+    for (const container of allContainers) {
+      const supported = supportedActorsForContainer(container) || new Set<string>()
+      const participating = scenario.actorIds.filter(actorId => supported.has(actorId))
+      if (!participating.length) issues.push(`${label}: Context place "${container}" permits none of the Scenario Actors`)
+      for (const actorId of participating) supportedSomewhere.add(actorId)
+    }
+    for (const actorId of scenario.actorIds) {
+      if (actorIds.has(actorId) && !supportedSomewhere.has(actorId)) {
+        issues.push(`${label}: actor "${actorId}" is not supported by any selected Context place`)
+      }
+    }
+    if (journeyActors) {
+      for (const route of scenario.routes) {
+        const firstActorStep = scenario.steps.find(step =>
+          step.kind === 'actor' && step.contexts.some(context => context.routeId === route.id)
+        )
+        if (!firstActorStep?.actorId || !journeyActors.has(firstActorStep.actorId)) {
+          issues.push(`${label}: route "${route.id}" must begin its contextualized Actor Steps with a Journey Actor`)
+        }
+      }
+    }
+    return { allContextPlaces, allContainers, capabilitySteps, screenIds }
+  }
+
+  const capabilityScenariosById = new Map(model.capabilityScenarios.map(item => [item.id, item]))
+  const capabilityScenarioContextPlaces = new Map<string, Set<string>>()
+  const coveredCapabilityPlaces = new Map<string, Set<string>>()
+  const capabilityScenarioScreens = new Map<string, Set<string>>()
+  for (const scenario of model.capabilityScenarios) {
+    const label = `capability scenario "${scenario.id}"`
+    validateSupportingSections(
+      issues,
+      label,
+      scenario.supportingSections,
+      ['Intent', 'Trigger', 'Steps', 'Decision points', 'Outcome', 'Edge cases', 'Goal', 'Success criterion']
+    )
+    if (!kindIds.has(scenario.kindId)) issues.push(`${label}: references missing scenario kind "${scenario.kindId}"`)
+    if (!capabilityIds.has(scenario.capabilityId)) {
+      issues.push(`${label}: references missing capability "${scenario.capabilityId}"`)
+    }
+    const { allContextPlaces, allContainers, screenIds } = validateScenarioShape(scenario, label, scenario.capabilityId)
+    capabilityScenarioScreens.set(scenario.id, screenIds)
+    capabilityScenarioContextPlaces.set(scenario.id, allContextPlaces)
+    const covered = coveredCapabilityPlaces.get(scenario.capabilityId) || new Set<string>()
+    for (const place of allContainers) covered.add(place)
+    coveredCapabilityPlaces.set(scenario.capabilityId, covered)
+    const supported = capabilityAvailability.get(scenario.capabilityId) || new Set<string>()
+    for (const place of allContainers) {
+      if (!supported.has(place)) {
+        issues.push(`${label}: Context place "${place}" is outside capability "${scenario.capabilityId}"`)
+      }
+    }
+  }
+  if (report.coverage.status === 'complete') {
+    for (const capability of model.capabilities) {
+      const covered = coveredCapabilityPlaces.get(capability.id) || new Set<string>()
+      for (const place of capabilityAvailability.get(capability.id) || []) {
+        if (!covered.has(place)) {
+          issues.push(`capability "${capability.id}": availability Context place "${place}" needs Capability Scenario coverage`)
+        }
+      }
+    }
+  }
+
+  const journeysById = new Map(model.journeys.map(item => [item.id, item]))
+  const journeyScenariosById = new Map(model.journeyScenarios.map(item => [item.id, item]))
+  const journeyScenarioSteps = new Map<string, Array<{ capabilityId: string, contextPlaces: Set<string>, containers: Set<string> }>>()
+  const journeyScenarioScreens = new Map<string, Set<string>>()
+  for (const scenario of model.journeyScenarios) {
+    const label = `journey scenario "${scenario.id}"`
+    validateSupportingSections(
+      issues,
+      label,
+      scenario.supportingSections,
+      ['Intent', 'Trigger', 'Steps', 'Decision points', 'Outcome', 'Edge cases', 'Goal', 'Success criterion']
+    )
+    const journey = journeysById.get(scenario.journeyId)
+    if (!journey) issues.push(`${label}: references missing journey "${scenario.journeyId}"`)
+    if (!kindIds.has(scenario.kindId)) issues.push(`${label}: references missing scenario kind "${scenario.kindId}"`)
+    const journeyActorSet = new Set(journey?.actorIds || [])
+    const { capabilitySteps, screenIds } = validateScenarioShape(scenario, label, undefined, journeyActorSet)
+    journeyScenarioScreens.set(scenario.id, screenIds)
+    if (journey && !scenario.actorIds.some(actorId => journeyActorSet.has(actorId))) {
+      issues.push(`${label}: actorIds must include at least one actor from journey "${scenario.journeyId}"`)
+    }
+    if (!capabilitySteps.length) issues.push(`${label}: needs at least one Capability-bearing step`)
+    journeyScenarioSteps.set(scenario.id, capabilitySteps)
+    if (scenario.result === 'achieved' && new Set(capabilitySteps.map(item => item.capabilityId)).size < 2) {
+      issues.push(`${label}: an achieved Journey Scenario needs at least two distinct Capabilities`)
+    }
+  }
+
+  for (const journey of model.journeys) {
+    const label = `journey "${journey.id}"`
+    requireUniqueValues(issues, label, 'actorIds', journey.actorIds)
+    requireUniqueValues(issues, label, 'capabilityIds', journey.capabilityIds)
+    requireUniqueValues(issues, label, 'failureOnlyCapabilityIds', journey.failureOnlyCapabilityIds)
+    requireUniqueValues(issues, label, 'domainIds', journey.domainIds)
+    validateSupportingSections(
+      issues,
+      label,
+      journey.supportingSections,
+      ['Intent', 'Goal', 'Success criterion', 'Trigger', 'Steps', 'Decision points', 'Outcome', 'Edge cases']
+    )
+    missingRelation(issues, label, 'actor', journey.actorIds, actorIds)
+    const scenarios = model.journeyScenarios.filter(scenario => scenario.journeyId === journey.id)
+    const achieved = scenarios.filter(scenario => scenario.result === 'achieved')
+    if (!achieved.length) issues.push(`${label}: needs at least one achieved Journey Scenario`)
+    const achievedActors = new Set(achieved.flatMap(scenario => scenario.actorIds))
+    for (const actorId of journey.actorIds) {
+      if (!achievedActors.has(actorId)) issues.push(`${label}: actor "${actorId}" needs an achieved Journey Scenario`)
+    }
+    const achievedCapabilities = new Set(achieved.flatMap(scenario => scenario.steps.flatMap(item => item.capabilityId ? [item.capabilityId] : [])))
+    const failedCapabilities = new Set(
+      scenarios.filter(scenario => scenario.result === 'not-achieved')
+        .flatMap(scenario => scenario.steps.flatMap(item => item.capabilityId ? [item.capabilityId] : []))
+    )
+    const failureOnly = new Set([...failedCapabilities].filter(capabilityId => !achievedCapabilities.has(capabilityId)))
+    const domains = new Set(
+      [...achievedCapabilities].map(capabilityId => model.capabilities.find(item => item.id === capabilityId)?.domainId).filter(Boolean) as string[]
+    )
+    missingRelation(issues, label, 'capability', journey.capabilityIds, capabilityIds)
+    missingRelation(issues, label, 'failure-only capability', journey.failureOnlyCapabilityIds, capabilityIds)
+    missingRelation(issues, label, 'domain', journey.domainIds, domainIds)
+    if (!sameIds(journey.capabilityIds, achievedCapabilities)) issues.push(`${label}: capabilityIds must equal the achieved-step Capability union`)
+    if (!sameIds(journey.failureOnlyCapabilityIds, failureOnly)) issues.push(`${label}: failureOnlyCapabilityIds must equal the failure-only Capability set`)
+    if (!sameIds(journey.domainIds, domains)) issues.push(`${label}: domainIds must equal the Domains derived from achieved-step Capabilities`)
+  }
+
+  for (const screen of model.screens) {
+    const label = `screen "${screen.id}"`
+    requireUniqueValues(issues, label, 'capabilityIds', screen.capabilityIds)
+    requireUniqueValues(issues, label, 'capabilityScenarioIds', screen.capabilityScenarioIds)
+    requireUniqueValues(issues, label, 'journeyScenarioIds', screen.journeyScenarioIds)
+    validateSupportingSections(
+      issues,
+      label,
+      screen.supportingSections,
+      ['Intent', 'Information presented', 'Available actions', 'Product states', 'Capability boundary']
+    )
+    const containerId = containerForScreen(screen)
+    if (!availabilityPlaceIds.has(containerId)) {
+      issues.push(`${label}: containing place "${containerId}" must be an undivided Interface or an Experience`)
+    }
+    missingRelation(issues, label, 'capability', screen.capabilityIds, capabilityIds)
+    missingRelation(issues, label, 'Capability Scenario', screen.capabilityScenarioIds, capabilityScenarioIds)
+    missingRelation(issues, label, 'Journey Scenario', screen.journeyScenarioIds, journeyScenarioIds)
+    requireEntryPointInterfaces(issues, label, screen.entryPoints, new Set([interfaceOf(containerId)]))
+    for (const capabilityId of screen.capabilityIds) {
+      const supported = capabilityAvailability.get(capabilityId)
+      if (!supported) continue
+      if (!supported.has(containerId)) {
+        issues.push(`${label}: capability "${capabilityId}" is not available in containing place "${containerId}"`)
+      }
+    }
+    const expectedCapabilityScenarios = model.capabilityScenarios
+      .filter(scenario => capabilityScenarioScreens.get(scenario.id)?.has(screen.id))
+      .map(scenario => scenario.id)
+    const expectedJourneyScenarios = model.journeyScenarios
+      .filter(scenario => journeyScenarioScreens.get(scenario.id)?.has(screen.id))
+      .map(scenario => scenario.id)
+    if (!sameIds(screen.capabilityScenarioIds, expectedCapabilityScenarios)) {
+      issues.push(`${label}: capabilityScenarioIds must equal the Scenario Step Screen backlinks`)
+    }
+    if (!sameIds(screen.journeyScenarioIds, expectedJourneyScenarios)) {
+      issues.push(`${label}: journeyScenarioIds must equal the Scenario Step Screen backlinks`)
     }
     const stateTitles = new Set<string>()
     for (const state of screen.states) {
       const normalized = state.title.toLowerCase()
-      if (stateTitles.has(normalized)) issues.push(`screen "${screen.id}": duplicate product state "${state.title}"`)
+      if (stateTitles.has(normalized)) issues.push(`${label}: duplicate product state "${state.title}"`)
       stateTitles.add(normalized)
     }
   }
-  const journeyPairs = new Map<string, Set<string>>()
-  for (const journey of model.journeys) {
-    missingRelation(issues, `journey "${journey.id}"`, 'actor', journey.actorIds, actorIds)
-    missingRelation(issues, `journey "${journey.id}"`, 'capability', journey.capabilityIds, capabilityIds)
-    const pairs = availabilityPairs(
-      issues,
-      `journey "${journey.id}"`,
-      journey.availability,
-      interfaceIds,
-      experiencesById
-    )
-    journeyPairs.set(journey.id, pairs)
-    requireEntryPointInterfaces(
-      issues,
-      `journey "${journey.id}"`,
-      journey.entryPoints,
-      interfaceIdsFromAvailability(journey.availability)
-    )
-    for (const capabilityId of journey.capabilityIds) {
-      const supported = capabilityPairs.get(capabilityId)
-      if (!supported) continue
-      for (const pair of pairs) {
-        if (!supported.has(pair)) {
-          const [interfaceId, experienceId] = pair.split('\0')
-          issues.push(`journey "${journey.id}": capability "${capabilityId}" is not available in "${interfaceId}/${experienceId}"`)
-        }
-      }
-    }
-    if (!model.scenarios.some(scenario => scenario.journeyId === journey.id)) {
-      issues.push(`journey "${journey.id}": needs at least one scenario`)
-    }
-  }
-  for (const scenario of model.scenarios) {
-    if (!journeyIds.has(scenario.journeyId)) {
-      issues.push(`scenario "${scenario.id}": references missing journey "${scenario.journeyId}"`)
-    }
-    if (!kindIds.has(scenario.kindId)) {
-      issues.push(`scenario "${scenario.id}": references missing scenario kind "${scenario.kindId}"`)
-    }
-    if (scenario.availability.length) {
-      const pairs = availabilityPairs(
-        issues,
-        `scenario "${scenario.id}"`,
-        scenario.availability,
-        interfaceIds,
-        experiencesById
-      )
-      const parentPairs = journeyPairs.get(scenario.journeyId) || new Set<string>()
-      for (const pair of pairs) {
-        if (!parentPairs.has(pair)) {
-          const [interfaceId, experienceId] = pair.split('\0')
-          issues.push(`scenario "${scenario.id}": availability "${interfaceId}/${experienceId}" is outside journey "${scenario.journeyId}"`)
-        }
-      }
-    }
-  }
+
   for (const rule of model.businessRules) {
-    missingRelation(issues, `business rule "${rule.id}"`, 'domain', rule.domainIds, domainIds)
-    missingRelation(issues, `business rule "${rule.id}"`, 'capability', rule.capabilityIds, capabilityIds)
-    missingRelation(issues, `business rule "${rule.id}"`, 'journey', rule.journeyIds, journeyIds)
-    missingRelation(issues, `business rule "${rule.id}"`, 'scenario', rule.scenarioIds, scenarioIds)
-    availabilityPairs(
-      issues,
-      `business rule "${rule.id}"`,
-      rule.availability,
-      interfaceIds,
-      experiencesById
-    )
-    if (
-      !rule.domainIds.length
-      && !rule.capabilityIds.length
-      && !rule.journeyIds.length
-      && !rule.scenarioIds.length
-      && !rule.availability.length
-    ) {
-      issues.push(`business rule "${rule.id}": must relate to a domain, capability, journey, scenario, or availability pair`)
+    const label = `business rule "${rule.id}"`
+    validateSupportingSections(issues, label, rule.supportingSections, ['Intent', 'Rationale'])
+    const seenTargets = new Set<string>()
+    const capabilityTargets = new Set<string>()
+    const journeyTargets = new Set<string>()
+    const capabilityScenarioTargets: string[] = []
+    const journeyScenarioTargets: string[] = []
+    const directContextPlaces: string[] = []
+    for (const [index, target] of rule.appliesTo.entries()) {
+      const targetLabel = `${label}: appliesTo item ${index + 1}`
+      if (target.type === 'context') {
+        const place = validateContextPlace(issues, targetLabel, target.context, placeIds)
+        const key = `context\0${place}`
+        if (seenTargets.has(key)) issues.push(`${targetLabel}: duplicate Context target place "${place}"`)
+        const overlapping = directContextPlaces.find(existing =>
+          existing !== place && (containsPlace(existing, place) || containsPlace(place, existing))
+        )
+        if (overlapping) issues.push(`${targetLabel}: Context target place "${place}" is redundant with "${overlapping}"`)
+        seenTargets.add(key)
+        directContextPlaces.push(place)
+        continue
+      }
+      const key = `${target.type}\0${target.id}`
+      if (seenTargets.has(key)) issues.push(`${targetLabel}: duplicate target "${target.type}:${target.id}"`)
+      seenTargets.add(key)
+      let supported = new Set<string>()
+      if (target.type === 'capability') {
+        if (!capabilityIds.has(target.id)) issues.push(`${targetLabel}: references missing capability "${target.id}"`)
+        capabilityTargets.add(target.id)
+        supported = new Set(capabilityAvailability.get(target.id) || [])
+        for (const screen of model.screens) {
+          if (supported.has(containerForScreen(screen)) && screen.capabilityIds.includes(target.id)) supported.add(screen.id)
+        }
+      } else if (target.type === 'capability-scenario') {
+        if (!capabilityScenarioIds.has(target.id)) issues.push(`${targetLabel}: references missing Capability Scenario "${target.id}"`)
+        capabilityScenarioTargets.push(target.id)
+        supported = capabilityScenarioContextPlaces.get(target.id) || supported
+      } else if (target.type === 'journey') {
+        if (!journeyIds.has(target.id)) issues.push(`${targetLabel}: references missing journey "${target.id}"`)
+        journeyTargets.add(target.id)
+        for (const scenario of model.journeyScenarios.filter(item => item.journeyId === target.id && item.result === 'achieved')) {
+          for (const entry of journeyScenarioSteps.get(scenario.id) || []) {
+            for (const place of entry.contextPlaces) supported.add(place)
+          }
+        }
+      } else {
+        if (!journeyScenarioIds.has(target.id)) issues.push(`${targetLabel}: references missing Journey Scenario "${target.id}"`)
+        journeyScenarioTargets.push(target.id)
+        for (const entry of journeyScenarioSteps.get(target.id) || []) {
+          for (const place of entry.contextPlaces) supported.add(place)
+        }
+      }
+      const seenContextPlaces: string[] = []
+      for (const [contextIndex, context] of target.contexts.entries()) {
+        const contextLabel = `${targetLabel}: Context ${contextIndex + 1}`
+        const place = validateContextPlace(issues, contextLabel, context, placeIds)
+        if (seenContextPlaces.includes(place)) issues.push(`${contextLabel}: duplicate Context place "${place}"`)
+        const overlapping = seenContextPlaces.find(existing =>
+          existing !== place && (containsPlace(existing, place) || containsPlace(place, existing))
+        )
+        if (overlapping) issues.push(`${contextLabel}: Context place "${place}" is redundant with "${overlapping}"`)
+        seenContextPlaces.push(place)
+        if (!supported.has(place) && ![...supported].some(candidate => containsPlace(place, candidate))) {
+          issues.push(`${contextLabel}: Context place "${place}" is outside target "${target.type}:${target.id}"`)
+        }
+      }
     }
+    for (const scenarioId of capabilityScenarioTargets) {
+      const capabilityId = capabilityScenariosById.get(scenarioId)?.capabilityId
+      if (capabilityId && capabilityTargets.has(capabilityId)) {
+        issues.push(`${label}: target "capability-scenario:${scenarioId}" is redundant with capability target "${capabilityId}"`)
+      }
+    }
+    for (const scenarioId of journeyScenarioTargets) {
+      const journeyId = journeyScenariosById.get(scenarioId)?.journeyId
+      if (journeyId && journeyTargets.has(journeyId)) {
+        issues.push(`${label}: target "journey-scenario:${scenarioId}" is redundant with journey target "${journeyId}"`)
+      }
+    }
+  }
+
+  if (report.coverage.status === 'complete' && model.capabilities.length === 0) {
+    issues.push('a complete model needs at least one capability')
   }
 
   const expectedCounts = {
@@ -558,8 +972,9 @@ export function validateProductReport(report: ProductReportV7): string[] {
     screens: model.screens.length,
     domains: model.domains.length,
     capabilities: model.capabilities.length,
+    capabilityScenarios: model.capabilityScenarios.length,
     journeys: model.journeys.length,
-    scenarios: model.scenarios.length,
+    journeyScenarios: model.journeyScenarios.length,
     businessRules: model.businessRules.length
   }
   const referenceHosts = [
@@ -570,8 +985,9 @@ export function validateProductReport(report: ProductReportV7): string[] {
     ...model.screens,
     ...model.domains,
     ...model.capabilities,
+    ...model.capabilityScenarios,
     ...model.journeys,
-    ...model.scenarios,
+    ...model.journeyScenarios,
     ...model.businessRules
   ]
   for (const host of referenceHosts) {
@@ -588,7 +1004,7 @@ export function validateProductReport(report: ProductReportV7): string[] {
     if (report.coverage.sourceAreas.length) {
       issues.push('referenceProfile is portable but coverage.sourceAreas names repository areas')
     }
-    const entryPointHosts = [...model.interfaces, ...model.experiences, ...model.screens, ...model.journeys]
+    const entryPointHosts = [...model.interfaces, ...model.experiences, ...model.screens]
     for (const host of entryPointHosts) {
       for (const point of host.entryPoints) {
         if (isRepositoryEntryPoint(point.path)) {
@@ -640,7 +1056,7 @@ function isRepositoryEntryPoint(value: string): boolean {
 }
 
 /** Project a report into the source-free profile delivered outside its repository. */
-export function projectPortableReport(report: ProductReportV7): ProductReportV7 {
+export function projectPortableReport(report: ProductReportV10): ProductReportV10 {
   const portableReferences = <T extends { kind: string, role: string, target: string }>(items: T[]): T[] =>
     items.filter(reference =>
       reference.kind !== 'code'
@@ -673,28 +1089,46 @@ export function projectPortableReport(report: ProductReportV7): ProductReportV7 
       screens: stripWithEntryPoints(report.model.screens),
       domains: strip(report.model.domains),
       capabilities: strip(report.model.capabilities),
-      journeys: stripWithEntryPoints(report.model.journeys),
-      scenarios: strip(report.model.scenarios),
+      capabilityScenarios: strip(report.model.capabilityScenarios),
+      journeys: strip(report.model.journeys),
+      journeyScenarios: strip(report.model.journeyScenarios),
       businessRules: strip(report.model.businessRules)
     },
     coverage: { ...report.coverage, sourceAreas: [] }
   }
 }
 
-export function parseProductReport(input: unknown): ProductReportV7 {
-  const report = ProductReportV7Schema.parse(input)
+export function parseProductReport(input: unknown): ProductReportV10 {
+  const report = ProductReportV10Schema.parse(input)
   const issues = validateProductReport(report)
   if (issues.length) throw new Error(`Report validation failed:\n- ${issues.join('\n- ')}`)
   return report
 }
 
 /** Additional publication policy for a Product Report entering the public Blueprint catalog. */
-export function validateBlueprintReport(report: ProductReportV7): string[] {
+export function validateBlueprintReport(report: ProductReportV10): string[] {
   const issues: string[] = []
   if (!report.category) issues.push('category is required for a public Blueprint')
   if (!report.tags.length) issues.push('at least one tag is required for a public Blueprint')
   if (!report.authors.length) issues.push('at least one author is required for a public Blueprint')
   if (!report.license) issues.push('license is required for a public Blueprint')
+  if (!report.model.capabilities.length) issues.push('a public Blueprint needs at least one capability')
+  const covered = new Map<string, Set<string>>()
+  const screenIds = new Set(report.model.screens.map(item => item.id))
+  const availabilityPlace = (placeId: string): string => screenIds.has(placeId) ? parentPlace(placeId) || '' : placeId
+  for (const scenario of report.model.capabilityScenarios) {
+    const places = covered.get(scenario.capabilityId) || new Set<string>()
+    for (const context of scenario.steps.flatMap(step => step.contexts)) places.add(availabilityPlace(context.placeId))
+    covered.set(scenario.capabilityId, places)
+  }
+  for (const capability of report.model.capabilities) {
+    const coveredPlaces = covered.get(capability.id) || new Set<string>()
+    for (const context of capability.availability) {
+      if (!coveredPlaces.has(context.placeId)) {
+        issues.push(`capability "${capability.id}" availability Context place "${context.placeId}" needs Capability Scenario coverage for a public Blueprint`)
+      }
+    }
+  }
   return issues
 }
 

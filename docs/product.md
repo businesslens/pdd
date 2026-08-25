@@ -25,11 +25,11 @@ Website, mobile application, CLI, and supported API are usually
 [Interfaces](./interfaces.md) of one Product, not separate Products. An
 internal API supporting another Interface normally stays outside the model; a
 partner API becomes an Interface when independent Actors use it and its
-behavior matters as Product scope.
+behavior matters as a Product boundary.
 
 ## The file
 
-The Product lives at `product.md`:
+The Product lives at `product.md` while it has no logo:
 
 ```md [product.md]
 ---
@@ -63,7 +63,7 @@ Let shoppers move from discovery to a confirmed order with confidence.
 | `id` | yes | Use lowercase kebab-case with at most 64 characters. The Product ID may differ from the repository name. |
 | `summary` | no | Supply a single-line short description up to 400 characters. Reports fall back to the lead description when omitted. |
 | `category` | no | Use a lowercase kebab-case Product classification. |
-| `tags` | no | List Product classification tags. |
+| `tags` | no | List unique Product classification tags. |
 | `authors` | no | List attribution records with a required `name` and optional HTTP(S) `url`. |
 | `license` | no | Use one SPDX license identifier such as `MIT`. |
 | `limitations` | no | State known Product boundaries. |
@@ -71,6 +71,13 @@ Let shoppers move from discovery to a confirmed order with confidence.
 | H1 and lead paragraph | yes | Name and describe the Product. |
 | `## Intent` | no | Explain the outcome the Product shape protects. |
 
+Unrecognized H2 sections are kept in order as structured supporting sections
+when the model is exported and expanded. A recognized H2 such as `## Intent`
+may appear only once.
+
 ## Visual identity
 
-Optionally add `.businesslens/logo.svg` as the Product logo.
+Adding a logo expands the Product: move the manifest to
+`.businesslens/product/product.md` and add
+`.businesslens/product/logo.svg` beside it. Public Blueprints require this
+expanded form; a local Product Model without a logo stays compact.

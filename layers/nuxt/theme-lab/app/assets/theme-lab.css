@@ -1,9 +1,8 @@
 /*
   Shared BusinessLens presentation variants, still under evaluation.
 
-  The stable palette and type come from businesslens/nuxt/theme —
-  this optional lab only chooses what opted-in hosts are made of. The light and
-  dark treatments are
+  The stable palette, type, and identity come from businesslens/nuxt/theme.
+  This optional lab chooses only the page background. The light and dark treatments are
   selected independently via `<html data-bg-light="…" data-bg-dark="…">`,
   both set from cookies during SSR so switching never flashes the previous
   background.
@@ -26,12 +25,6 @@
 :root {
   --businesslens-theme-lab-row-height: 2.75rem;
   --businesslens-theme-lab-height: 0px;
-  --businesslens-theme-lab-gradient: linear-gradient(
-    135deg,
-    var(--color-brass-700),
-    var(--color-brass-600) 50%,
-    var(--color-brass-400)
-  );
   --businesslens-page-glows:
     radial-gradient(
       circle at 18% 18%,
@@ -45,8 +38,20 @@
     );
 }
 
+:root[data-businesslens-theme-lab="shown"][data-businesslens-theme-lab-rows="1"] {
+  --businesslens-theme-lab-height: calc(var(--businesslens-theme-lab-row-height) + 1px);
+}
+
 :root[data-businesslens-theme-lab="shown"][data-businesslens-theme-lab-rows="2"] {
   --businesslens-theme-lab-height: calc(var(--businesslens-theme-lab-row-height) * 2 + 2px);
+}
+
+:root[data-businesslens-theme-lab="shown"][data-businesslens-theme-lab-rows="3"] {
+  --businesslens-theme-lab-height: calc(var(--businesslens-theme-lab-row-height) * 3 + 3px);
+}
+
+:root[data-businesslens-theme-lab="shown"][data-businesslens-theme-lab-rows="4"] {
+  --businesslens-theme-lab-height: calc(var(--businesslens-theme-lab-row-height) * 4 + 4px);
 }
 
 :root[data-businesslens-theme-lab="shown"][data-businesslens-theme-lab-rows="5"] {
@@ -55,12 +60,6 @@
 
 .businesslens-page-surface {
   background: var(--businesslens-page-glows);
-}
-
-.businesslens-theme-lab-gradient-text {
-  background: var(--businesslens-theme-lab-gradient);
-  background-clip: text;
-  color: transparent;
 }
 
 /* ================================================================== *
@@ -131,6 +130,12 @@
   --ui-bg-muted: #38312a;
   --ui-bg-elevated: #38312a;
   --ui-bg-accented: #514839;
+}
+
+/* The stable theme has an approved dark glow. Espresso is intentionally the
+  flat audition candidate, so it must clear that inherited image explicitly. */
+:root[data-bg-dark="d1"].dark body {
+  background-image: none;
 }
 
 /* ---- D2 · Wash — vertical gradient, lifted at the top ---- */

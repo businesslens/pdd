@@ -1,6 +1,6 @@
 ---
 title: Model overview
-description: The .businesslens/ folder models one coherent Product across Actors, Interfaces, Experiences, Capabilities, goals, and constraints.
+description: The .businesslens/ folder models one coherent Product with required foundations and optional contexts, views, groupings, goals, and constraints.
 section: open-source
 group: Product Model
 order: 7
@@ -13,18 +13,31 @@ coherent Product promise: who it serves, through which supported interaction
 forms, in which usage contexts, what it can do, which goals matter, and what
 must remain true.
 
-| Entity | Answers | Lives in |
+## What belongs in a model
+
+The entities describe Product meaning rather than mirroring source files,
+frameworks, commands, or endpoints. Start with the required foundation, then
+add optional entities only when they communicate a real Product distinction.
+
+| Entity | Model requirement | What it adds |
 | --- | --- | --- |
-| [Product](./product.md) | Which coherent value promise this model describes | `product.md` |
-| [Actor](./actors.md) | Who acts, and on which side of the Product boundary | `actors/<id>.md` |
-| [Interface](./interfaces.md) | Through which supported interaction form | `interfaces/<id>.md` |
-| [Experience](./experiences.md) | In which coherent context | `experiences/<id>.md` |
-| [Screen](./screens.md) | What users see and can do in a meaningful visual view | `screens/<id>.md` |
-| [Domain](./domains.md) | Which optional organizing area | `domains/<id>.md` |
-| [Capability](./capabilities.md) | Which durable Product ability | `capabilities/<id>.md` |
-| [Journey](./journeys.md) | Which complete Actor goal | `journeys/<id>/journey.md` |
-| [Scenario](./scenarios.md) | Which observable acceptance path | `journeys/<id>/scenarios/<id>.md` |
-| [Business Rule](./business-rules.md) | What must remain true | `business-rules/<id>.md` |
+| [Product](./product.md) | Exactly one | The coherent value promise and its boundary |
+| [Actor](./actors.md) | At least one, because every Interface names an Actor | A Product-significant goal, privilege, trigger, or outcome |
+| [Interface](./interfaces.md) | At least one | An independently supported interaction contract |
+| [Experience](./experiences.md) | Optional | A durable context of use inside one Interface when audience, access, or capability boundaries differ |
+| [Screen](./screens.md) | Optional | A meaningful visual view; non-visual Products do not need one |
+| [Domain](./domains.md) | Optional | A Product-language grouping that makes a larger Capability set easier to navigate |
+| [Capability](./capabilities.md) | At least one in a complete model | A durable Product ability reused across views, behavior contracts, or goals |
+| [Journey](./journeys.md) | Optional | One coherent Actor Goal that deliberately composes multiple Capabilities |
+| [Business Rule](./business-rules.md) | Optional | A durable assertion that must remain true |
+
+Do not add an Experience, Domain, Screen, or any other entity to make the model
+look complete. A small model can be both valid and honest.
+
+Screens are deliberately visual. A CLI or supported API does not need parallel
+Command or Endpoint entities: syntax belongs in CLI help, and endpoints and
+payloads belong in an API contract such as OpenAPI. Attach those artifacts as
+[References](./references.md) when they help explain intent or implementation.
 
 `taxonomies.yaml` defines Scenario kinds. `config.yaml` records folder schema
 and SDD roots. `coverage.md` describes model breadth.
@@ -35,36 +48,129 @@ report while editing.
 
 ## Authoring conventions
 
-Entity IDs come from lowercase kebab-case filename stems; Journey IDs come from
-their directories. Only `product.md` declares `id:`. Scenario IDs are unique
-across the whole model, not merely within a Journey.
+An entity without assets or children is the compact file `<id>.md`. When it
+gains its first asset or typed child collection, move it to
+`<id>/<type>.md`; the folder becomes that entity's namespace. The two forms
+never coexist and derive the same id — `lint` reports both shapes at once, or a
+folder missing its `<type>.md`, as errors. A folder you have expanded but not
+filled yet is only a warning, so you can create it and add the child next. Behavior-hierarchy ids are the bare file
+or folder name; qualified Interface, Experience, and Screen ids carry their path
+joined by `::`, because Experience and Screen names may repeat across Interfaces.
+Only `product.md` declares `id:`. Scenario IDs are globally unique.
 
-The first H1 supplies an entity's title. Lead prose supplies its description,
-or a Journey's summary. Scenarios are the exception: they begin with the
-required `## Trigger` section and have no lead paragraph. Relations and
-navigation belong in frontmatter; Product meaning belongs in prose. The
-frontmatter schema is a strict allowlist, so `lint` reports unknown keys rather
-than silently ignoring them.
+The first and only H1 supplies an entity's title. Lead prose normally supplies its
+description. Journeys have no lead prose and instead require `## Goal` and
+`## Success criterion`; both Scenario types also have no lead prose and begin
+with the required `## Trigger` section. A recognized H2 may appear only once,
+and Journey-only sections cannot appear on Scenarios or vice versa. Other H2
+sections are preserved as structured supporting sections through export and
+expansion. Lead and H2-section bodies cannot contain another H1 or H2 heading.
 
-Optional `## Intent` prose explains why a Product or entity exists and which
-outcome it protects. It adds meaning without becoming another entity or
-relationship graph.
+Relations and navigation belong in frontmatter; Product meaning belongs in
+prose. Product tags and every relation list contain unique values. Structured
+Steps, Edge cases, Screen information, and Screen actions use one complete list
+item per physical line. The frontmatter schema is a strict allowlist, so `lint`
+reports unknown keys rather than silently ignoring them.
 
-## Experience matrix
+`## Intent` prose explains why a Product or entity exists and which outcome it
+protects. It is optional where documented. A Journey uses required `## Goal`
+prose for its Actor intent. Neither becomes another entity or relationship
+graph.
 
-Interface and Experience are orthogonal and many-to-many. Interface says the
-interaction form; Experience says the coherent Actor context. Capabilities,
-Journeys, Screens, Scenarios, and Business Rules can declare exact
-`availability` pairs:
+## Availability
 
-| Experience | Customer web | Customer mobile | Operator CLI |
+**Context is the one model concept for saying where Product meaning applies.**
+Its current strict shape contains one place:
+
+```yaml
+place: customer-web::shopping
+```
+
+There is no separate Product `Scope` or `Place` entity. `place` is a property
+of Context, and its value names an Interface, Experience, or Screen by
+qualified id:
+`Interface`, `Interface::Experience`, or
+`Interface::Experience::Screen` (with Screens directly under an undivided
+Interface using `Interface::Screen`). A future folder schema may add another
+Context property when the model needs one; schema 6 accepts only `place`, so
+misspelled or speculative keys are reported instead of ignored.
+
+Different fields use the same Context shape at the precision their meaning
+requires:
+
+- Capability `availability` lists Contexts whose places are undivided
+  Interfaces or Experiences. These are the durable availability boundaries.
+- Scenario `steps[].contexts` maps every route to a Context. Its place is the
+  most-specific occurrence: a Screen when the boundary contains Screens,
+  otherwise the leaf Experience or Interface.
+- Business Rule Context selectors may name an Interface, Experience, or
+  Screen. An ancestor place includes its descendants, so an Interface selector
+  can deliberately cover Contexts beneath that Interface.
+- A Screen declares no Context field. Its path already determines its place and
+  containing availability boundary.
+
+For example:
+
+```yaml
+availability:
+  - place: customer-web::shopping
+  - place: customer-mobile::shopping
+```
+
+When an Interface has no Experiences, use an Interface place directly:
+
+```yaml
+availability:
+  - place: release-cli
+```
+
+Do not invent a ceremonial Experience for an Interface with only one coherent
+context. An Interface holds either Screens directly or Experiences, never
+both. The Experiences inside an Interface must collectively cover all of its
+Actors. Availability is intended Product meaning; it is not inferred from
+shared code, routes, packages, or protocols.
+
+## Behavioral core
+
+Capabilities state what the Product can durably do. Capability Scenarios make
+each ability observable and verifiable. In a complete model, every Capability
+availability Context must be covered by at least one Capability Scenario;
+appearing in a Journey Scenario does not satisfy that local acceptance
+coverage. A complete model has at least one Capability.
+
+Journeys are optional high-level goals. A Journey authors only the Actors, Goal,
+and Success criterion. Journey Scenarios own concrete Capability selection,
+order, branches, repetition, correlated context routes, and terminal results.
+Every Journey needs at least one achieved Journey Scenario using at least two
+distinct Capabilities, and every Journey Actor must appear in an achieved
+Scenario. A
+complete Product Model may have zero Journeys.
+
+The report derives a Journey's primary Capabilities and Domains from achieved
+Journey Scenario Steps. Capabilities found only in not-achieved paths are
+marked separately as failure-only. These describe modeled coverage, not one
+mandatory path or proof that partial mapping is exhaustive.
+
+## Which behavioral entity?
+
+These are not alternative ways to describe the same contract:
+
+| Entity | Identity | It must contain | It must never contain |
 | --- | --- | --- | --- |
-| Public discovery | yes | yes | no |
-| Personal workspace | yes | yes | no |
-| Administration | yes | no | yes |
+| Capability | The smallest durable behavior that remains independently meaningful | Product behavior and supported Contexts | Unrelated operations grouped only by a vague umbrella verb |
+| Capability Scenario | One local variation of exactly one Capability | Trigger, context, Steps, and local Outcome | A Journey or multiple Capabilities |
+| Journey | One coherent Actor Goal whose achieved variations require multiple Capabilities | Actors, Goal, and Success criterion | Capability list, Steps, branches, or one concrete variation |
+| Journey Scenario | One end-to-end variation of exactly one Journey | Trigger, one ordered annotated Steps list, correlated Context routes, goal result, and Outcome | Local acceptance coverage for its Capabilities |
 
-This matrix is intended Product meaning. It is not inferred from shared code,
-routes, packages, or protocols.
+A local case is always a Capability Scenario. A coherent multi-Capability goal
+is always a Journey. A complete variation of pursuing that goal is always a
+Journey Scenario. A file cannot switch between these meanings by adding an
+optional relation.
+
+Capability Scenarios must remain variations rather than hidden operations. If
+`manage-repositories` produces create, configure, archive, and delete cases
+with independent Product meaning, split those into Capabilities and use a
+Domain as the optional umbrella.
 
 ## Coverage
 
@@ -82,19 +188,20 @@ limitations: ["Runtime-only billing policy was not established"]
 
 # Coverage
 
-The mapped scope and why known gaps remain.
+The mapped breadth and why known gaps remain.
 ```
 
 | Status | Meaning |
 | --- | --- |
 | `draft` | The model itself is still being authored or reviewed |
 | `partial` | Useful model with known unmapped areas |
-| `complete` | Intended Product scope is modeled |
+| `complete` | Intended Product breadth is modeled |
 
 `method` describes how the model was created or expanded. `sourceAreas` records
 inspected repository areas, `unmapped` names intentionally absent Product
-scope, `limitations` states what could not be established, and the lead prose
-is the rationale. Coverage has no entity counts or Reference-derived fields;
+breadth, `limitations` states what could not be established, and the lead prose
+is the rationale. Coverage accepts no H2 sections. Coverage has no entity
+counts or Reference-derived fields;
 entity totals belong to the Product Report Counts.
 
 Availability and Coverage do not claim implementation status. Every status may

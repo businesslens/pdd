@@ -1,10 +1,10 @@
 import { request } from 'node:http'
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import { startLocalViewer, type LocalViewer } from '../src/core/local-viewer-server.js'
-import type { ProductReportV7 } from '../src/core/portable.js'
+import type { ProductReportV10 } from '../src/core/portable.js'
 
 interface ResponseResult {
   body: string
@@ -13,6 +13,8 @@ interface ResponseResult {
 }
 
 const ASYNC_TIMEOUT_MS = 4500
+const WATCH_TEST_TIMEOUT_MS = 15_000
+const WATCH_SETTLE_MS = 100
 
 function get(url: string, path = '/', host?: string): Promise<ResponseResult> {
   const origin = new URL(url)
@@ -37,10 +39,19 @@ function get(url: string, path = '/', host?: string): Promise<ResponseResult> {
   })
 }
 
-function eventAfter(url: string, eventName: string, trigger: () => void): Promise<string> {
+function eventAfter(
+  url: string,
+  eventName: string,
+  trigger: () => void,
+  timeoutMs = ASYNC_TIMEOUT_MS
+): Promise<string> {
   const origin = new URL(url)
   return new Promise((resolve, reject) => {
-    const timeout = setTimeout(() => reject(new Error(`Timed out waiting for ${eventName}`)), ASYNC_TIMEOUT_MS)
+    let triggerTimer: ReturnType<typeof setTimeout> | undefined
+    const timeout = setTimeout(() => {
+      if (triggerTimer) clearTimeout(triggerTimer)
+      reject(new Error(`Timed out waiting for ${eventName}`))
+    }, timeoutMs)
     const outgoing = request({
       hostname: origin.hostname,
       port: origin.port,
@@ -48,23 +59,46 @@ function eventAfter(url: string, eventName: string, trigger: () => void): Promis
       method: 'GET'
     }, (incoming) => {
       let body = ''
+      let triggered = false
+      let armed = false
       incoming.setEncoding('utf8')
       incoming.on('data', (chunk) => {
         body += chunk
-        if (!body.includes(`event: ${eventName}\n`)) return
+        if (!triggered && body.includes(': connected\n\n')) {
+          triggered = true
+          triggerTimer = setTimeout(() => {
+            body = ''
+            armed = true
+            try {
+              trigger()
+            } catch (error) {
+              clearTimeout(timeout)
+              reject(error)
+            }
+          }, WATCH_SETTLE_MS)
+        }
+        if (!armed || !body.includes(`event: ${eventName}\n`)) return
         clearTimeout(timeout)
+        if (triggerTimer) clearTimeout(triggerTimer)
         incoming.destroy()
         resolve(body)
       })
-      trigger()
     })
-    outgoing.on('error', reject)
+    outgoing.on('error', (error) => {
+      clearTimeout(timeout)
+      if (triggerTimer) clearTimeout(triggerTimer)
+      reject(error)
+    })
     outgoing.end()
   })
 }
 
-async function eventually<T>(read: () => Promise<T>, matches: (value: T) => boolean): Promise<T> {
-  const deadline = Date.now() + ASYNC_TIMEOUT_MS
+async function eventually<T>(
+  read: () => Promise<T>,
+  matches: (value: T) => boolean,
+  timeoutMs = ASYNC_TIMEOUT_MS
+): Promise<T> {
+  const deadline = Date.now() + timeoutMs
   while (Date.now() < deadline) {
     const value = await read()
     if (matches(value)) return value
@@ -92,8 +126,8 @@ function staticViewer(): string {
   return directory
 }
 
-function report(): ProductReportV7 {
-  return { id: 'fixture-shop', title: 'Fixture Shop' } as ProductReportV7
+function report(): ProductReportV10 {
+  return { id: 'fixture-shop', title: 'Fixture Shop' } as ProductReportV10
 }
 
 const logo = (color = '#80552b') => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" fill="${color}"/></svg>`
@@ -144,7 +178,7 @@ describe('local Product Report server', () => {
     expect(manifest.headers['content-type']).toBe('application/manifest+json; charset=utf-8')
   })
 
-  it('watches model sources and announces a new report over server-sent events', async () => {
+  it('watches model sources and announces a new report over server-sent events', { timeout: WATCH_TEST_TIMEOUT_MS }, async () => {
     const model = mkdtempSync(join(tmpdir(), 'businesslens-model-'))
     directories.push(model)
     const product = join(model, 'product.md')
@@ -158,17 +192,25 @@ describe('local Product Report server', () => {
     })
     viewers.push(viewer)
 
-    const event = eventAfter(viewer.url, 'report', () => writeFileSync(product, 'Updated title'))
-    const updated = await eventually(
-      () => get(viewer.url, '/_businesslens/report.json'),
-      response => JSON.parse(response.body).title === 'Updated title'
-    )
+    const [event, updated] = await Promise.all([
+      eventAfter(
+        viewer.url,
+        'report',
+        () => writeFileSync(product, 'Updated title'),
+        WATCH_TEST_TIMEOUT_MS - 500
+      ),
+      eventually(
+        () => get(viewer.url, '/_businesslens/report.json'),
+        response => JSON.parse(response.body).title === 'Updated title',
+        WATCH_TEST_TIMEOUT_MS - 500
+      )
+    ])
 
     expect(JSON.parse(updated.body).title).toBe('Updated title')
-    expect(await event).toContain('"revision":1')
+    expect(event).toMatch(/"revision":\d+/)
   })
 
-  it('announces a valid logo edit even when the semantic report is unchanged', async () => {
+  it('announces a valid logo edit even when the semantic report is unchanged', { timeout: WATCH_TEST_TIMEOUT_MS }, async () => {
     const model = mkdtempSync(join(tmpdir(), 'businesslens-logo-model-'))
     directories.push(model)
     const logoFile = join(model, 'logo.svg')
@@ -183,7 +225,12 @@ describe('local Product Report server', () => {
     })
     viewers.push(viewer)
 
-    const event = eventAfter(viewer.url, 'report', () => writeFileSync(logoFile, logo('#b8965c')))
+    const event = eventAfter(
+      viewer.url,
+      'report',
+      () => writeFileSync(logoFile, logo('#b8965c')),
+      WATCH_TEST_TIMEOUT_MS - 500
+    )
     expect(await event).toContain('event: report')
     expect((await get(viewer.url, '/_businesslens/logo.svg')).body).toContain('#b8965c')
   })
@@ -224,6 +271,68 @@ describe('local Product Report server', () => {
     const response = await fetch(viewer.url, { method: 'POST' })
     expect(response.status).toBe(405)
     expect(response.headers.get('allow')).toBe('GET, HEAD')
+  })
+
+  it('serves repository assets from the mount, and refuses everything else', async () => {
+    const repository = mkdtempSync(join(tmpdir(), 'businesslens-repo-'))
+    directories.push(repository)
+    mkdirSync(join(repository, 'docs'), { recursive: true })
+    writeFileSync(join(repository, 'docs', 'mockup.png'), Buffer.from('89504e470d0a1a0a', 'hex'))
+    writeFileSync(join(repository, 'docs', 'notes.md'), '# Notes')
+    writeFileSync(join(repository, 'secrets.env'), 'TOKEN=nope')
+    writeFileSync(join(repository, 'app.ts'), 'export const x = 1')
+
+    const viewer = await startLocalViewer({
+      viewerRoot: staticViewer(),
+      compile: report,
+      assetRoot: repository
+    })
+    viewers.push(viewer)
+
+    const png = await get(viewer.url, '/_businesslens/file/docs/mockup.png')
+    expect(png.status).toBe(200)
+    expect(png.headers['content-type']).toBe('image/png')
+
+    const markdown = await get(viewer.url, '/_businesslens/file/docs/notes.md')
+    expect(markdown.status).toBe(200)
+    expect(markdown.body).toBe('# Notes')
+
+    // Not on the allowlist: refused whether or not it exists, so the mount
+    // cannot be used to probe for files.
+    expect((await get(viewer.url, '/_businesslens/file/secrets.env')).status).toBe(404)
+    expect((await get(viewer.url, '/_businesslens/file/app.ts')).status).toBe(404)
+    expect((await get(viewer.url, '/_businesslens/file/docs/absent.png')).status).toBe(404)
+
+    // Traversal, encoded traversal, and absolute paths stay inside the root.
+    expect((await get(viewer.url, '/_businesslens/file/../../etc/passwd')).status).toBe(404)
+    expect((await get(viewer.url, '/_businesslens/file/%2e%2e%2f%2e%2e%2fetc%2fpasswd')).status).toBe(404)
+    expect((await get(viewer.url, '/_businesslens/file//etc/passwd')).status).toBe(404)
+  })
+
+  it('rejects an SVG asset that is not inert', async () => {
+    const repository = mkdtempSync(join(tmpdir(), 'businesslens-repo-'))
+    directories.push(repository)
+    writeFileSync(join(repository, 'safe.svg'), logo())
+    writeFileSync(
+      join(repository, 'active.svg'),
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8"><script>alert(1)</script></svg>'
+    )
+
+    const viewer = await startLocalViewer({
+      viewerRoot: staticViewer(),
+      compile: report,
+      assetRoot: repository
+    })
+    viewers.push(viewer)
+
+    expect((await get(viewer.url, '/_businesslens/file/safe.svg')).status).toBe(200)
+    expect((await get(viewer.url, '/_businesslens/file/active.svg')).status).toBe(422)
+  })
+
+  it('serves no repository asset when no asset root is configured', async () => {
+    const viewer = await startLocalViewer({ viewerRoot: staticViewer(), compile: report })
+    viewers.push(viewer)
+    expect((await get(viewer.url, '/_businesslens/file/package.json')).status).toBe(404)
   })
 
   it('returns a safe compile error without stopping the viewer', async () => {

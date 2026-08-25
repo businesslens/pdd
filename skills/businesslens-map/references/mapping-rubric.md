@@ -13,10 +13,20 @@
 
 - Actors differ by Product goals, triggers, responsibilities, or privileges;
   classify each as person/system and internal/external.
+- An external system is an Actor only when it initiates. An outbound client the
+  target repository calls—a polled feed, payment processor, mail provider, model
+  API—is not an Actor and gets no Interface. Map it inside the Capability that
+  calls it, give that Capability availability Contexts for the Interfaces where
+  an Actor observes the result, and cover its failure behavior with a
+  Capability Scenario.
 - Interfaces are supported interaction contracts such as customer web, reader
   mobile, operator CLI, or partner API—not every deployable or internal API.
-- Experiences are coherent Actor contexts with stable access and capability
-  boundaries across one or more Interfaces. Do not equate them with a page,
+  Interfaces are inbound; an inbound webhook or callback endpoint qualifies and
+  makes its caller an Actor. Assign the authored interaction type that matches
+  the contract; never infer it from technology, naming, or implementation.
+- Experiences are optional coherent Actor contexts with stable access and
+  capability boundaries across one or more Interfaces. Omit them when an
+  Interface is already one coherent context; do not equate them with a page,
   command group, route tree, API, or CLI.
 - Screens are optional stable user-visible views. Model their information,
   actions, product-significant states, and capability boundary—not components,
@@ -26,22 +36,30 @@
   materially differ.
 - Domains optionally group recognizable Product areas; zero is valid.
 - Capabilities are durable Product abilities, not UI labels, Journey titles, or
-  sequence steps. Map exact Interface–Experience availability only when the
-  repository supports that claim.
-- Business rules are reusable policies or invariants.
-- Journeys represent stable user or operator goals.
-- Scenarios are observable paths through a journey. Cover primary, permission,
-  validation, conflict, and external-failure paths only where behavior differs.
-- Add a decision point only when one condition creates at least two materially
-  different product outcomes.
+  sequence steps. Map availability Contexts to an undivided Interface or an
+  Experience only when the repository supports that claim.
+- Business rules are reusable policies or invariants with typed behavioral or
+  direct Context targets. Derive Domain backlinks instead of targeting Domains.
+- Capability Scenarios state observable acceptance for one Capability through
+  typed Steps and named routes of most-specific Context places. Cover primary,
+  permission, validation, conflict, and external-failure behavior only where it differs.
+- Journeys represent stable user or operator goals, never a wrapper for one
+  Capability. Omit Journeys when no established goal crosses Capabilities.
+- Journey Scenarios are observable paths through a goal. Write one ordered
+  typed Steps list, annotate responsible Actors and the Steps that exercise
+  locally identified Capabilities, and place every named route at its
+  most-specific Context place. An achieved path must
+  traverse at least two distinct Capabilities.
+- Add a decision point only when branches converge on one result without
+  changing the Capability sequence. Otherwise write separate Scenarios.
 - Treat shared backend code as no evidence of web/mobile/API/CLI parity. Verify
-  each declared availability pair independently.
+  each declared availability Context independently.
 
 ## Judge coverage
 
 - `draft`: the model itself is still being authored or reviewed.
 - `partial`: the model is useful and known product areas remain unmapped.
-- `complete`: the intended product scope is modeled.
+- `complete`: the intended product breadth is modeled.
 
 Coverage never states whether behavior is implemented or verified. List
 uninspected or ambiguous areas explicitly. A small, honest partial model is

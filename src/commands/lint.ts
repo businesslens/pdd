@@ -1,9 +1,10 @@
-import type { Availability } from '../core/frontmatter.js'
-import type { PddModel } from '../core/model.js'
+import type { Context } from '../core/frontmatter.js'
 import { repositoryReferencePath } from '../core/frontmatter.js'
+import type { PddModel } from '../core/model.js'
 import { lsFiles } from '../core/git.js'
-import { isId } from '../core/ids.js'
-import { section } from '../core/markdown.js'
+import { containsPlace, counterpartKey, interfaceOf, isId, isQualifiedId } from '../core/ids.js'
+import { INTERFACE_TYPES } from '../core/interface-types.js'
+import { containsStructuralHeading, section, type MarkdownDoc } from '../core/markdown.js'
 import { loadModel } from '../core/model.js'
 import { resolveModelRoot } from '../core/model-root.js'
 
@@ -18,15 +19,17 @@ const ACCESS_MODES = new Set(['public', 'authenticated', 'restricted'])
 const ACTOR_KINDS = new Set(['person', 'system'])
 const ACTOR_RELATIONSHIPS = new Set(['external', 'internal'])
 const COVERAGE_STATUSES = new Set(['complete', 'partial', 'draft'])
+const JOURNEY_RESULTS = new Set(['achieved', 'not-achieved'])
+const INTERFACE_TYPE_SET = new Set<string>(INTERFACE_TYPES)
 
-function pairKey(interfaceId: string, experienceId: string): string {
-  return `${interfaceId}\0${experienceId}`
+function sameSet(left: Set<string>, right: Set<string>): boolean {
+  return left.size === right.size && [...left].every(value => right.has(value))
 }
 
 /** Pure structural rule engine over a loaded model; trackedFiles injected for testability. */
 export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
   const errors = [...model.issues]
-  const warnings: string[] = []
+  const warnings: string[] = [...model.notices]
   const tracked = new Set(trackedFiles)
 
   const requireTitle = (label: string, title: string, lead: string) => {
@@ -34,10 +37,52 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     if (!lead) errors.push(`${label}: missing lead paragraph (description)`)
   }
 
+  const validateSections = (
+    label: string,
+    doc: MarkdownDoc,
+    recognized: string[],
+    forbidden: string[] = []
+  ) => {
+    const recognizedSet = new Set(recognized.map(heading => heading.toLowerCase()))
+    const forbiddenSet = new Set(forbidden.map(heading => heading.toLowerCase()))
+    const seen = new Set<string>()
+    if (containsStructuralHeading(doc.lead)) {
+      errors.push(`${label}: lead paragraph must not contain an H1 or H2 heading`)
+    }
+    for (const item of doc.sections) {
+      const normalized = item.heading.toLowerCase()
+      if (recognizedSet.has(normalized)) {
+        if (seen.has(normalized)) errors.push(`${label}: duplicate "## ${item.heading}" section`)
+        seen.add(normalized)
+      }
+      if (forbiddenSet.has(normalized)) {
+        errors.push(`${label}: "## ${item.heading}" is not allowed on this entity type`)
+      }
+      if (containsStructuralHeading(item.body)) {
+        errors.push(`${label}: "## ${item.heading}" content must not contain an H1 or H2 heading`)
+      }
+    }
+  }
+
+  const validateListSection = (
+    label: string,
+    doc: MarkdownDoc,
+    heading: string,
+    kind: 'ordered' | 'bullet'
+  ) => {
+    const body = section(doc, heading)
+    if (body === undefined) return
+    const pattern = kind === 'ordered' ? /^\s*\d+[.)]\s+\S.*$/ : /^\s*[-*]\s+\S.*$/
+    if (body.split('\n').some(line => line.trim() && !pattern.test(line))) {
+      errors.push(`${label}: "## ${heading}" must contain only single-line ${kind}-list items`)
+    }
+  }
+
   if (model.product.id && !isId(model.product.id)) errors.push('product.md: id must be lowercase kebab-case')
   if (model.product.id.length > 64) errors.push('product.md: id must be at most 64 characters')
   if (!model.product.id) errors.push('product.md: missing id')
   requireTitle('product.md', model.product.doc.title, model.product.doc.lead)
+  validateSections('product.md', model.product.doc, ['Intent'])
   if (model.product.summary && (/\r|\n/.test(model.product.summary) || model.product.summary.length > 400)) {
     errors.push('product.md: summary must be a single line with at most 400 characters')
   }
@@ -75,60 +120,93 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     ['screens', model.screens],
     ['domains', model.domains],
     ['capabilities', model.capabilities],
+    ['capabilityScenarios', model.capabilityScenarios],
     ['businessRules', model.businessRules],
     ['journeys', model.journeys],
+    ['journeyScenarios', model.journeyScenarios],
     ['scenarioKinds', model.scenarioKinds]
   ]
+  // Interface, Experience, and Screen ids carry the path that distinguishes
+  // repeated names across Interfaces; behavior ids stay bare and globally unique.
+  const QUALIFIED_COLLECTIONS = new Set(['interfaces', 'experiences', 'screens'])
   for (const [name, items] of collections) {
+    const valid = QUALIFIED_COLLECTIONS.has(name) ? isQualifiedId : isId
     for (const item of items) {
-      if (!isId(item.id)) errors.push(`${name}: id "${item.id}" must be lowercase kebab-case`)
+      if (!valid(item.id)) errors.push(`${name}: id "${item.id}" must be lowercase kebab-case`)
     }
   }
 
   const actorIds = new Set(model.actors.map(actor => actor.id))
   const interfaceIds = new Set(model.interfaces.map(item => item.id))
   const interfacesById = new Map(model.interfaces.map(item => [item.id, item]))
-  const experienceIds = new Set(model.experiences.map(experience => experience.id))
   const experiencesById = new Map(model.experiences.map(experience => [experience.id, experience]))
+  const experienceScopedInterfaces = new Set(model.experiences.map(experience => experience.interface))
+  /* Capability availability names a boundary: an undivided Interface or an Experience. */
+  const availabilityPlaceIds = new Set<string>([
+    ...model.interfaces.filter(item => !experienceScopedInterfaces.has(item.id)).map(item => item.id),
+    ...model.experiences.map(experience => experience.id)
+  ])
+  const placeIds = new Set<string>([
+    ...model.interfaces.map(item => item.id),
+    ...model.experiences.map(item => item.id),
+    ...model.screens.map(item => item.id)
+  ])
   const domainIds = new Set(model.domains.map(domain => domain.id))
   const capabilityIds = new Set(model.capabilities.map(capability => capability.id))
   const journeyIds = new Set(model.journeys.map(journey => journey.id))
-  const scenarioIds = new Set(model.journeys.flatMap(journey => journey.scenarios).map(scenario => scenario.id))
+  const capabilityScenarioIds = new Set(model.capabilityScenarios.map(scenario => scenario.id))
+  const journeyScenarioIds = new Set(model.journeyScenarios.map(scenario => scenario.id))
   const kindIds = new Set(model.scenarioKinds.map(kind => kind.id))
 
-  const validateAvailability = (label: string, items: Availability[]): Set<string> => {
-    const pairs = new Set<string>()
-    const seenInterfaces = new Set<string>()
-    for (const item of items) {
-      if (!item.interface) errors.push(`${label}: availability needs a non-empty interface`)
-      if (seenInterfaces.has(item.interface)) {
-        errors.push(`${label}: duplicate availability interface "${item.interface}"`)
-      }
-      seenInterfaces.add(item.interface)
-      if (!interfaceIds.has(item.interface)) {
-        errors.push(`${label}: references missing interface "${item.interface}"`)
-      }
-      if (!item.experiences.length) {
-        errors.push(`${label}: availability for interface "${item.interface}" needs at least one experience`)
-      }
-      const seenExperiences = new Set<string>()
-      for (const experienceId of item.experiences) {
-        if (seenExperiences.has(experienceId)) {
-          errors.push(`${label}: duplicate availability experience "${experienceId}" for interface "${item.interface}"`)
-        }
-        seenExperiences.add(experienceId)
-        const experience = experiencesById.get(experienceId)
-        if (!experience) {
-          errors.push(`${label}: references missing experience "${experienceId}"`)
-        } else if (!experience.interfaces.includes(item.interface)) {
-          errors.push(`${label}: experience "${experienceId}" does not declare interface "${item.interface}"`)
-        }
-        const key = pairKey(item.interface, experienceId)
-        if (pairs.has(key)) errors.push(`${label}: duplicate availability pair "${item.interface}/${experienceId}"`)
-        pairs.add(key)
-      }
+  const validateContextPlace = (label: string, context: Context): string => {
+    const place = context.place
+    if (!place) {
+      errors.push(`${label}: Context needs a non-empty place id`)
+      return place
     }
-    return pairs
+    if (!isQualifiedId(place)) {
+      errors.push(`${label}: Context place "${place}" is not a valid Interface, Experience, or Screen id`)
+      return place
+    }
+    if (!placeIds.has(place)) {
+      errors.push(`${label}: Context references missing place "${place}"`)
+    }
+    return place
+  }
+
+  const resolveAvailabilityPlace = (label: string, place: string): boolean => {
+    if (!place) {
+      errors.push(`${label}: availability Context needs a non-empty place id`)
+      return false
+    }
+    if (!isQualifiedId(place)) {
+      errors.push(`${label}: availability Context place "${place}" is not a valid Interface, Experience, or Screen id`)
+      return false
+    }
+    if (availabilityPlaceIds.has(place)) return true
+    if (model.screens.some(screen => screen.id === place)) {
+      errors.push(`${label}: availability Context place "${place}" must name its containing Interface or Experience, not a Screen`)
+      return false
+    }
+    const owner = interfaceOf(place)
+    if (!interfaceIds.has(owner)) {
+      errors.push(`${label}: availability Context references missing interface "${owner}"`)
+    } else if (place === owner) {
+      errors.push(`${label}: interface "${owner}" is divided into Experiences, so name one of them`)
+    } else {
+      errors.push(`${label}: availability Context references missing experience "${place}"`)
+    }
+    return false
+  }
+
+  const validateAvailability = (label: string, contexts: Context[]): Set<string> => {
+    const places = new Set<string>()
+    for (const context of contexts) {
+      const place = context.place
+      if (places.has(place)) errors.push(`${label}: duplicate availability Context place "${place}"`)
+      if (resolveAvailabilityPlace(label, place)) places.add(place)
+    }
+    return places
   }
 
   const validateEntryPointInterfaces = (
@@ -145,6 +223,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
 
   for (const actor of model.actors) {
     requireTitle(actor.file, actor.doc.title, actor.doc.lead)
+    validateSections(actor.file, actor.doc, ['Intent'])
     if (!ACTOR_KINDS.has(actor.kind)) {
       errors.push(`${actor.file}: kind "${actor.kind}" must be person|system`)
     }
@@ -155,6 +234,10 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
 
   for (const productInterface of model.interfaces) {
     requireTitle(productInterface.file, productInterface.doc.title, productInterface.doc.lead)
+    validateSections(productInterface.file, productInterface.doc, ['Intent', 'Capability boundary'])
+    if (!INTERFACE_TYPE_SET.has(productInterface.type)) {
+      errors.push(`${productInterface.file}: type "${productInterface.type}" must be ${INTERFACE_TYPES.join('|')}`)
+    }
     if (!productInterface.actors.length) errors.push(`${productInterface.file}: needs at least one actor`)
     for (const actorId of productInterface.actors) {
       if (!actorIds.has(actorId)) errors.push(`${productInterface.file}: references missing actor "${actorId}"`)
@@ -166,69 +249,395 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
 
   for (const experience of model.experiences) {
     requireTitle(experience.file, experience.doc.title, experience.doc.lead)
+    validateSections(experience.file, experience.doc, ['Intent', 'Capability boundary'])
     if (!ACCESS_MODES.has(experience.access)) {
       errors.push(`${experience.file}: access "${experience.access}" must be public|authenticated|restricted`)
     }
     if (!experience.actors.length) errors.push(`${experience.file}: needs at least one actor`)
-    if (!experience.interfaces.length) errors.push(`${experience.file}: needs at least one interface`)
     for (const actorId of experience.actors) {
       if (!actorIds.has(actorId)) errors.push(`${experience.file}: references missing actor "${actorId}"`)
     }
-    for (const interfaceId of experience.interfaces) {
-      const productInterface = interfacesById.get(interfaceId)
-      if (!productInterface) {
-        errors.push(`${experience.file}: references missing interface "${interfaceId}"`)
-        continue
-      }
+    const owner = interfacesById.get(experience.interface)
+    if (owner) {
       for (const actorId of experience.actors) {
-        if (!productInterface.actors.includes(actorId)) {
-          errors.push(`${experience.file}: actor "${actorId}" is not supported by interface "${interfaceId}"`)
+        if (!owner.actors.includes(actorId)) {
+          errors.push(`${experience.file}: actor "${actorId}" is not supported by interface "${experience.interface}"`)
         }
       }
     }
     if (!experience.capabilityBoundary) {
       errors.push(`${experience.file}: missing "## Capability boundary" section`)
     }
-    validateEntryPointInterfaces(experience.file, experience.entryPoints, new Set(experience.interfaces))
+    validateEntryPointInterfaces(experience.file, experience.entryPoints, new Set([experience.interface]))
   }
 
-  for (const domain of model.domains) requireTitle(domain.file, domain.doc.title, domain.doc.lead)
+  for (const productInterface of model.interfaces) {
+    if (!experienceScopedInterfaces.has(productInterface.id)) continue
+    const coveredActors = new Set(
+      model.experiences
+        .filter(experience => experience.interface === productInterface.id)
+        .flatMap(experience => experience.actors)
+    )
+    for (const actorId of productInterface.actors) {
+      if (!coveredActors.has(actorId)) {
+        errors.push(`${productInterface.file}: actor "${actorId}" is not covered by any Experience declaring this interface`)
+      }
+    }
+  }
 
-  const capabilityPairs = new Map<string, Set<string>>()
+  for (const domain of model.domains) {
+    requireTitle(domain.file, domain.doc.title, domain.doc.lead)
+    validateSections(domain.file, domain.doc, ['Intent'])
+  }
+
+  const capabilityAvailability = new Map<string, Set<string>>()
   for (const capability of model.capabilities) {
     requireTitle(capability.file, capability.doc.title, capability.doc.lead)
-    if (!capability.availability.length) errors.push(`${capability.file}: needs at least one availability pair`)
+    validateSections(capability.file, capability.doc, ['Intent'])
+    if (!capability.availability.length) errors.push(`${capability.file}: needs at least one availability Context`)
     if (capability.domain && !domainIds.has(capability.domain)) {
       errors.push(`${capability.file}: references missing domain "${capability.domain}"`)
     }
-    capabilityPairs.set(capability.id, validateAvailability(capability.file, capability.availability))
+    capabilityAvailability.set(capability.id, validateAvailability(capability.file, capability.availability))
+  }
+
+  /* An Experience is authoritative for its audience; an undivided Interface is authoritative for its. */
+  const supportedActorsForContainer = (place: string): Set<string> | undefined => {
+    const experience = experiencesById.get(place)
+    if (experience) return new Set(experience.actors)
+    const productInterface = interfacesById.get(place)
+    return productInterface ? new Set(productInterface.actors) : undefined
+  }
+
+  const screensById = new Map(model.screens.map(screen => [screen.id, screen]))
+  const screensByContainer = new Map<string, typeof model.screens>()
+  for (const screen of model.screens) {
+    const siblings = screensByContainer.get(screen.containerId) || []
+    siblings.push(screen)
+    screensByContainer.set(screen.containerId, siblings)
+  }
+
+  const resolveScenarioContext = (label: string, placeId: string) => {
+    if (!placeId) {
+      errors.push(`${label}: Context needs a non-empty place id`)
+      return undefined
+    }
+    if (!isQualifiedId(placeId)) {
+      errors.push(`${label}: Context place "${placeId}" is not a valid Interface, Experience, or Screen id`)
+      return undefined
+    }
+    const screen = screensById.get(placeId)
+    if (screen) return { place: placeId, containerId: screen.containerId, screen }
+    const experience = experiencesById.get(placeId)
+    if (experience) {
+      if ((screensByContainer.get(placeId) || []).length) {
+        errors.push(`${label}: Experience "${placeId}" owns Screens, so the Context must name one of its Screens`)
+      }
+      return { place: placeId, containerId: placeId, screen: undefined }
+    }
+    const productInterface = interfacesById.get(placeId)
+    if (productInterface) {
+      if (experienceScopedInterfaces.has(placeId)) {
+        errors.push(`${label}: Interface "${placeId}" is divided into Experiences, so the Context must name one of them or one of their Screens`)
+      } else if ((screensByContainer.get(placeId) || []).length) {
+        errors.push(`${label}: Interface "${placeId}" owns Screens, so the Context must name one of its Screens`)
+      }
+      return { place: placeId, containerId: placeId, screen: undefined }
+    }
+    errors.push(`${label}: Context references missing place "${placeId}"`)
+    return undefined
+  }
+
+  type ScenarioForValidation = typeof model.capabilityScenarios[number] | typeof model.journeyScenarios[number]
+  const validateScenarioShape = (
+    scenario: ScenarioForValidation,
+    implicitCapability?: string,
+    journeyActors?: Set<string>
+  ) => {
+    if (!scenario.routes.length) errors.push(`${scenario.file}: needs at least one route`)
+    const routeIds = new Set<string>()
+    const routeNames = new Set<string>()
+    const routeContextPlaces = new Map<string, string[]>(scenario.routes.map(route => [route.id, []]))
+    for (const route of scenario.routes) {
+      const label = `${scenario.file}: route "${route.id}"`
+      if (!route.id) errors.push(`${scenario.file}: route id must not be empty`)
+      else if (!isId(route.id)) errors.push(`${label}: id must be lowercase kebab-case`)
+      if (routeIds.has(route.id)) errors.push(`${label}: duplicate route id`)
+      routeIds.add(route.id)
+      const name = route.name.trim()
+      if (!name) errors.push(`${label}: needs a non-empty name`)
+      const normalizedName = name.toLocaleLowerCase()
+      if (routeNames.has(normalizedName)) errors.push(`${label}: duplicate route name "${route.name}"`)
+      routeNames.add(normalizedName)
+    }
+
+    if (!scenario.steps.length) errors.push(`${scenario.file}: needs at least one step`)
+    const allContextPlaces = new Set<string>()
+    const allContainers = new Set<string>()
+    const scenarioActors = new Set<string>()
+    const capabilitySteps: Array<{ capability: string, contextPlaces: Set<string>, containers: Set<string> }> = []
+    for (const [index, step] of scenario.steps.entries()) {
+      const label = `${scenario.file}: step ${index + 1}`
+      if (!step.text.trim()) errors.push(`${label}: needs non-empty text`)
+      if (/\r|\n/.test(step.text)) errors.push(`${label}: text must be a single line`)
+      if (!['actor', 'product', 'condition'].includes(step.kind)) {
+        errors.push(`${label}: kind "${step.kind}" must be actor|product|condition`)
+      }
+      if (step.kind === 'actor') {
+        if (!step.actor) errors.push(`${label}: an actor Step needs one actor`)
+        else {
+          scenarioActors.add(step.actor)
+          if (!actorIds.has(step.actor)) errors.push(`${label}: references missing actor "${step.actor}"`)
+        }
+      } else if (step.actor) {
+        errors.push(`${label}: actor is only valid when kind is "actor"`)
+      }
+
+      const capabilityId = implicitCapability || step.capability
+      if (capabilityId) {
+        capabilitySteps.push({ capability: capabilityId, contextPlaces: new Set<string>(), containers: new Set<string>() })
+        if (!capabilityIds.has(capabilityId)) {
+          errors.push(`${label}: references missing capability "${capabilityId}"`)
+        }
+      }
+
+      if (!step.contexts.length) continue
+      const contextualizedRouteIds = new Set<string>()
+      for (const context of step.contexts) {
+        const contextLabel = `${label}: route "${context.routeId}"`
+        if (!routeIds.has(context.routeId)) {
+          errors.push(`${contextLabel}: references undeclared route`)
+        }
+        if (contextualizedRouteIds.has(context.routeId)) errors.push(`${contextLabel}: duplicate Context`)
+        contextualizedRouteIds.add(context.routeId)
+        routeContextPlaces.get(context.routeId)?.push(context.place)
+        const resolved = resolveScenarioContext(contextLabel, context.place)
+        if (!resolved) continue
+        allContextPlaces.add(resolved.place)
+        allContainers.add(resolved.containerId)
+        const currentCapabilityStep = capabilityId ? capabilitySteps.at(-1) : undefined
+        currentCapabilityStep?.contextPlaces.add(resolved.place)
+        currentCapabilityStep?.containers.add(resolved.containerId)
+        if (capabilityId) {
+          const supported = capabilityAvailability.get(capabilityId) || new Set<string>()
+          if (!supported.has(resolved.containerId)) {
+            errors.push(`${contextLabel}: Context place "${resolved.place}" is outside capability "${capabilityId}"`)
+          }
+          if (resolved.screen && !resolved.screen.capabilities.includes(capabilityId)) {
+            errors.push(`${contextLabel}: Screen "${resolved.screen.id}" does not expose capability "${capabilityId}"`)
+          }
+        }
+        if (step.kind === 'actor' && step.actor) {
+          const supported = supportedActorsForContainer(resolved.containerId) || new Set<string>()
+          if (!supported.has(step.actor)) {
+            errors.push(`${contextLabel}: Context place does not support actor "${step.actor}"`)
+          }
+        }
+      }
+      if (!sameSet(contextualizedRouteIds, routeIds)) {
+        errors.push(`${label}: contexts must assign every declared route or be omitted`)
+      }
+    }
+
+    if (!scenarioActors.size) errors.push(`${scenario.file}: needs at least one actor Step`)
+    for (const route of scenario.routes) {
+      const sequence = routeContextPlaces.get(route.id) || []
+      if (!sequence.length) errors.push(`${scenario.file}: route "${route.id}" must have a Context on at least one Step`)
+    }
+    const seenSequences = new Map<string, string>()
+    for (const route of scenario.routes) {
+      const sequence = (routeContextPlaces.get(route.id) || []).join('\n')
+      if (!sequence) continue
+      const twin = seenSequences.get(sequence)
+      if (twin) errors.push(`${scenario.file}: route "${route.id}" repeats every Context place of route "${twin}"`)
+      else seenSequences.set(sequence, route.id)
+    }
+
+    const supportedSomewhere = new Set<string>()
+    for (const container of allContainers) {
+      const supported = supportedActorsForContainer(container) || new Set<string>()
+      const participating = [...scenarioActors].filter(actorId => supported.has(actorId))
+      if (!participating.length) {
+        errors.push(`${scenario.file}: Context place "${container}" permits none of the Scenario Actors`)
+      }
+      for (const actorId of participating) supportedSomewhere.add(actorId)
+    }
+    for (const actorId of scenarioActors) {
+      if (actorIds.has(actorId) && !supportedSomewhere.has(actorId)) {
+        errors.push(`${scenario.file}: actor "${actorId}" is not supported by any selected Context place`)
+      }
+    }
+
+    if (journeyActors) {
+      for (const route of scenario.routes) {
+        const firstActorStep = scenario.steps.find(step =>
+          step.kind === 'actor' && step.contexts.some(context => context.routeId === route.id)
+        )
+        if (!firstActorStep?.actor || !journeyActors.has(firstActorStep.actor)) {
+          errors.push(`${scenario.file}: route "${route.id}" must begin its contextualized Actor Steps with a Journey Actor`)
+        }
+      }
+    }
+    return { allContextPlaces, allContainers, scenarioActors, capabilitySteps }
+  }
+
+  const validateScenarioSections = (scenario: {
+    file: string
+    doc: { title: string, lead: string, sections: Array<{ heading: string, body: string }> }
+    kind: string
+    trigger: string
+    outcome: string
+    edgeCases: string[]
+  }) => {
+    if (!scenario.doc.title) errors.push(`${scenario.file}: missing H1 title`)
+    if (scenario.doc.lead) {
+      errors.push(`${scenario.file}: carries no lead paragraph; move that content into "## Trigger" or another explicit section`)
+    }
+    validateSections(
+      scenario.file,
+      scenario.doc,
+      ['Intent', 'Trigger', 'Steps', 'Decision points', 'Outcome', 'Edge cases'],
+      ['Goal', 'Success criterion', 'Steps']
+    )
+    validateListSection(scenario.file, scenario.doc, 'Edge cases', 'bullet')
+    if (!scenario.kind || !kindIds.has(scenario.kind)) {
+      errors.push(`${scenario.file}: kind "${scenario.kind}" is not defined in taxonomies.yaml`)
+    }
+    if (!scenario.trigger) errors.push(`${scenario.file}: missing "## Trigger" section`)
+    if (!scenario.outcome) errors.push(`${scenario.file}: missing "## Outcome" section`)
+    if (section(scenario.doc, 'Edge cases') !== undefined && !scenario.edgeCases.length) {
+      errors.push(`${scenario.file}: "## Edge cases" needs at least one bullet item when present`)
+    }
+  }
+
+  const seenScenarioIds = new Map<string, string>()
+  for (const scenario of [...model.capabilityScenarios, ...model.journeyScenarios]) {
+    const previous = seenScenarioIds.get(scenario.id)
+    if (previous) {
+      errors.push(`${scenario.file}: scenario id "${scenario.id}" already used in ${previous} (ids are global)`)
+    }
+    seenScenarioIds.set(scenario.id, scenario.file)
+  }
+
+  const capabilityScenariosById = new Map(model.capabilityScenarios.map(scenario => [scenario.id, scenario]))
+  const capabilityScenarioContextPlaces = new Map<string, Set<string>>()
+  const coveredCapabilityPlaces = new Map<string, Set<string>>()
+  for (const scenario of model.capabilityScenarios) {
+    validateScenarioSections(scenario)
+    if (!scenario.capability) {
+      errors.push(`${scenario.file}: needs one capability`)
+    } else if (!capabilityIds.has(scenario.capability)) {
+      errors.push(`${scenario.file}: references missing capability "${scenario.capability}"`)
+    }
+    const { allContextPlaces, allContainers } = validateScenarioShape(scenario, scenario.capability)
+    capabilityScenarioContextPlaces.set(scenario.id, allContextPlaces)
+    const coveredPlaces = coveredCapabilityPlaces.get(scenario.capability) || new Set<string>()
+    for (const place of allContainers) coveredPlaces.add(place)
+    coveredCapabilityPlaces.set(scenario.capability, coveredPlaces)
+    const supported = capabilityAvailability.get(scenario.capability) || new Set<string>()
+    for (const place of allContainers) {
+      if (!supported.has(place)) {
+        errors.push(`${scenario.file}: Context place "${place}" is outside capability "${scenario.capability}"`)
+      }
+    }
+  }
+  for (const capability of model.capabilities) {
+    const covered = coveredCapabilityPlaces.get(capability.id) || new Set<string>()
+    const required = capabilityAvailability.get(capability.id) || new Set<string>()
+    for (const place of required) {
+      if (covered.has(place)) continue
+      const finding = `${capability.file}: availability Context place "${place}" needs Capability Scenario coverage`
+      if (model.coverage.status === 'complete') errors.push(finding)
+      else warnings.push(finding)
+    }
+  }
+
+  const journeysById = new Map(model.journeys.map(journey => [journey.id, journey]))
+  for (const journey of model.journeys) {
+    if (!journey.doc.title) errors.push(`${journey.file}: missing H1 title`)
+    if (journey.doc.lead) {
+      errors.push(`${journey.file}: carries no lead paragraph; move that content into "## Goal"`)
+    }
+    validateSections(
+      journey.file,
+      journey.doc,
+      ['Intent', 'Goal', 'Success criterion'],
+      ['Trigger', 'Steps', 'Decision points', 'Outcome', 'Edge cases']
+    )
+    if (!journey.actors.length) errors.push(`${journey.file}: needs at least one actor`)
+    for (const actorId of journey.actors) {
+      if (!actorIds.has(actorId)) errors.push(`${journey.file}: references missing actor "${actorId}"`)
+    }
+    if (!journey.goal) errors.push(`${journey.file}: missing "## Goal" section`)
+    if (!journey.successCriterion) errors.push(`${journey.file}: missing "## Success criterion" section`)
+    if (!model.journeyScenarios.some(scenario => scenario.journey === journey.id && scenario.result === 'achieved')) {
+      errors.push(`${journey.file}: needs at least one achieved Journey Scenario`)
+    }
+  }
+
+  const journeyScenariosById = new Map(model.journeyScenarios.map(scenario => [scenario.id, scenario]))
+  const journeyScenarioSteps = new Map<string, Array<{ capability: string, contextPlaces: Set<string>, containers: Set<string> }>>()
+  const journeyScenarioActors = new Map<string, Set<string>>()
+  for (const scenario of model.journeyScenarios) {
+    validateScenarioSections(scenario)
+    const journey = journeysById.get(scenario.journey)
+    if (!journey) errors.push(`${scenario.file}: references missing journey "${scenario.journey}"`)
+    if (!JOURNEY_RESULTS.has(scenario.result)) {
+      errors.push(`${scenario.file}: result "${scenario.result}" must be achieved|not-achieved`)
+    }
+    const journeyActorSet = new Set(journey?.actors || [])
+    const { scenarioActors, capabilitySteps } = validateScenarioShape(scenario, undefined, journeyActorSet)
+    if (journey && ![...scenarioActors].some(actorId => journeyActorSet.has(actorId))) {
+      errors.push(`${scenario.file}: actor Steps must include at least one actor from journey "${scenario.journey}"`)
+    }
+    if (!capabilitySteps.length) errors.push(`${scenario.file}: needs at least one Capability-bearing step`)
+    journeyScenarioSteps.set(scenario.id, capabilitySteps)
+    journeyScenarioActors.set(scenario.id, scenarioActors)
+    if (scenario.result === 'achieved' && new Set(capabilitySteps.map(item => item.capability)).size < 2) {
+      errors.push(`${scenario.file}: an achieved Journey Scenario needs at least two distinct Capabilities`)
+    }
+  }
+
+  for (const journey of model.journeys) {
+    const achievedActorIds = new Set(
+      model.journeyScenarios
+        .filter(scenario => scenario.journey === journey.id && scenario.result === 'achieved')
+        .flatMap(scenario => [...(journeyScenarioActors.get(scenario.id) || [])])
+    )
+    for (const actorId of journey.actors) {
+      if (!achievedActorIds.has(actorId)) {
+        errors.push(`${journey.file}: actor "${actorId}" needs an achieved Journey Scenario`)
+      }
+    }
   }
 
   for (const screen of model.screens) {
     requireTitle(screen.file, screen.doc.title, screen.doc.lead)
-    if (!screen.availability.length) errors.push(`${screen.file}: needs at least one availability pair`)
-    const pairs = validateAvailability(screen.file, screen.availability)
+    validateSections(
+      screen.file,
+      screen.doc,
+      ['Intent', 'Information presented', 'Available actions', 'Product states', 'Capability boundary']
+    )
+    validateListSection(screen.file, screen.doc, 'Information presented', 'bullet')
+    validateListSection(screen.file, screen.doc, 'Available actions', 'bullet')
+    if (!availabilityPlaceIds.has(screen.containerId)) {
+      errors.push(`${screen.file}: containing place "${screen.containerId}" must be an undivided Interface or an Experience`)
+    }
     if (!screen.capabilities.length) errors.push(`${screen.file}: needs at least one capability`)
     for (const capabilityId of screen.capabilities) {
       if (!capabilityIds.has(capabilityId)) {
         errors.push(`${screen.file}: references missing capability "${capabilityId}"`)
         continue
       }
-      const supported = capabilityPairs.get(capabilityId) || new Set<string>()
-      for (const pair of pairs) {
-        if (!supported.has(pair)) {
-          const [interfaceId, experienceId] = pair.split('\0')
-          errors.push(`${screen.file}: capability "${capabilityId}" is not available in "${interfaceId}/${experienceId}"`)
-        }
+      const supported = capabilityAvailability.get(capabilityId) || new Set<string>()
+      if (!supported.has(screen.containerId)) {
+        errors.push(`${screen.file}: capability "${capabilityId}" is not available in containing place "${screen.containerId}"`)
       }
-    }
-    for (const scenarioId of screen.scenarios) {
-      if (!scenarioIds.has(scenarioId)) errors.push(`${screen.file}: references missing scenario "${scenarioId}"`)
     }
     validateEntryPointInterfaces(
       screen.file,
       screen.entryPoints,
-      new Set(screen.availability.map(item => item.interface))
+      new Set([interfaceOf(screen.containerId)])
     )
     if (!screen.information.length) {
       errors.push(`${screen.file}: "## Information presented" needs at least one bullet item`)
@@ -246,90 +655,112 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
       if (stateNames.has(normalized)) errors.push(`${screen.file}: duplicate product state "${state.title}"`)
       stateNames.add(normalized)
     }
-  }
-
-  const seenScenarioIds = new Map<string, string>()
-  for (const journey of model.journeys) {
-    requireTitle(journey.file, journey.doc.title, journey.doc.lead)
-    if (!journey.actors.length) errors.push(`${journey.file}: needs at least one actor`)
-    for (const actorId of journey.actors) {
-      if (!actorIds.has(actorId)) errors.push(`${journey.file}: references missing actor "${actorId}"`)
-    }
-    if (!journey.capabilities.length) errors.push(`${journey.file}: needs at least one capability`)
-    if (!journey.availability.length) errors.push(`${journey.file}: needs at least one availability pair`)
-    const pairs = validateAvailability(journey.file, journey.availability)
-    validateEntryPointInterfaces(
-      journey.file,
-      journey.entryPoints,
-      new Set(journey.availability.map(item => item.interface))
-    )
-    for (const capabilityId of journey.capabilities) {
-      if (!capabilityIds.has(capabilityId)) {
-        errors.push(`${journey.file}: references missing capability "${capabilityId}"`)
-        continue
-      }
-      const supported = capabilityPairs.get(capabilityId) || new Set<string>()
-      for (const pair of pairs) {
-        if (!supported.has(pair)) {
-          const [interfaceId, experienceId] = pair.split('\0')
-          errors.push(`${journey.file}: capability "${capabilityId}" is not available in "${interfaceId}/${experienceId}"`)
-        }
-      }
-    }
-    if (!journey.scenarios.length) errors.push(`${journey.file}: needs at least one scenario`)
-
-    for (const scenario of journey.scenarios) {
-      if (!isId(scenario.id)) errors.push(`${scenario.file}: id must be lowercase kebab-case`)
-      const previous = seenScenarioIds.get(scenario.id)
-      if (previous) errors.push(`${scenario.file}: scenario id "${scenario.id}" already used in ${previous} (ids are global)`)
-      seenScenarioIds.set(scenario.id, journey.id)
-      if (!scenario.doc.title) errors.push(`${scenario.file}: missing H1 title`)
-      if (!scenario.kind || !kindIds.has(scenario.kind)) {
-        errors.push(`${scenario.file}: kind "${scenario.kind}" is not defined in taxonomies.yaml`)
-      }
-      if (!scenario.trigger) errors.push(`${scenario.file}: missing "## Trigger" section`)
-      if (!scenario.steps.length) errors.push(`${scenario.file}: "## Steps" needs at least one ordered item`)
-      if (!scenario.outcome) errors.push(`${scenario.file}: missing "## Outcome" section`)
-      if (scenario.availability.length) {
-        const scenarioPairs = validateAvailability(scenario.file, scenario.availability)
-        for (const pair of scenarioPairs) {
-          if (!pairs.has(pair)) {
-            const [interfaceId, experienceId] = pair.split('\0')
-            errors.push(`${scenario.file}: availability "${interfaceId}/${experienceId}" is outside journey "${journey.id}"`)
-          }
-        }
+    // A capture that names a state it does not depict is worse than one that
+    // names nothing, so the state has to resolve to an authored H3.
+    for (const reference of screen.references) {
+      if (reference.state === undefined) continue
+      if (!stateNames.has(reference.state.toLowerCase())) {
+        errors.push(`${screen.file}: reference state "${reference.state}" is not a product state of this Screen`)
       }
     }
   }
 
   for (const rule of model.businessRules) {
     requireTitle(rule.file, rule.doc.title, rule.doc.lead)
-    if (
-      !rule.domains.length
-      && !rule.capabilities.length
-      && !rule.journeys.length
-      && !rule.scenarios.length
-      && !rule.availability.length
-    ) {
-      errors.push(`${rule.file}: must relate to a domain, capability, journey, scenario, or availability pair`)
+    validateSections(rule.file, rule.doc, ['Intent', 'Rationale'])
+    if (!rule.appliesTo.length) errors.push(`${rule.file}: needs at least one appliesTo target`)
+    const seenTargets = new Set<string>()
+    const capabilityTargets = new Set<string>()
+    const journeyTargets = new Set<string>()
+    const capabilityScenarioTargets: string[] = []
+    const journeyScenarioTargets: string[] = []
+    const directContextPlaces: string[] = []
+    for (const [index, target] of rule.appliesTo.entries()) {
+      const label = `${rule.file}: appliesTo item ${index + 1}`
+      if (target.type === 'context') {
+        const place = validateContextPlace(label, target.context)
+        const key = `context\0${place}`
+        if (seenTargets.has(key)) errors.push(`${label}: duplicate Context target place "${place}"`)
+        const overlapping = directContextPlaces.find(existing =>
+          existing !== place && (containsPlace(existing, place) || containsPlace(place, existing))
+        )
+        if (overlapping) {
+          errors.push(`${label}: Context target place "${place}" is redundant with "${overlapping}"`)
+        }
+        seenTargets.add(key)
+        directContextPlaces.push(place)
+        continue
+      }
+      if (!['capability', 'capability-scenario', 'journey', 'journey-scenario'].includes(target.type)) {
+        errors.push(`${label}: type "${target.type}" must be capability|capability-scenario|journey|journey-scenario|context`)
+        continue
+      }
+      if (!target.id) errors.push(`${label}: needs a non-empty id`)
+      const key = `${target.type}\0${target.id}`
+      if (seenTargets.has(key)) errors.push(`${label}: duplicate target "${target.type}:${target.id}"`)
+      seenTargets.add(key)
+      let supported = new Set<string>()
+      if (target.type === 'capability') {
+        if (!capabilityIds.has(target.id)) errors.push(`${label}: references missing capability "${target.id}"`)
+        capabilityTargets.add(target.id)
+        supported = new Set(capabilityAvailability.get(target.id) || [])
+        for (const screen of model.screens) {
+          if (supported.has(screen.containerId) && screen.capabilities.includes(target.id)) supported.add(screen.id)
+        }
+      } else if (target.type === 'capability-scenario') {
+        if (!capabilityScenarioIds.has(target.id)) errors.push(`${label}: references missing Capability Scenario "${target.id}"`)
+        capabilityScenarioTargets.push(target.id)
+        supported = capabilityScenarioContextPlaces.get(target.id) || supported
+      } else if (target.type === 'journey') {
+        if (!journeyIds.has(target.id)) errors.push(`${label}: references missing journey "${target.id}"`)
+        journeyTargets.add(target.id)
+        for (const scenario of model.journeyScenarios.filter(item => item.journey === target.id && item.result === 'achieved')) {
+          for (const entry of journeyScenarioSteps.get(scenario.id) || []) {
+            for (const place of entry.contextPlaces) supported.add(place)
+          }
+        }
+      } else {
+        if (!journeyScenarioIds.has(target.id)) errors.push(`${label}: references missing Journey Scenario "${target.id}"`)
+        journeyScenarioTargets.push(target.id)
+        for (const entry of journeyScenarioSteps.get(target.id) || []) {
+          for (const place of entry.contextPlaces) supported.add(place)
+        }
+      }
+      const seenContextPlaces: string[] = []
+      for (const [contextIndex, context] of target.contexts.entries()) {
+        const contextLabel = `${label}: Context ${contextIndex + 1}`
+        const place = validateContextPlace(contextLabel, context)
+        if (seenContextPlaces.includes(place)) errors.push(`${contextLabel}: duplicate Context place "${place}"`)
+        const overlapping = seenContextPlaces.find(existing =>
+          existing !== place && (containsPlace(existing, place) || containsPlace(place, existing))
+        )
+        if (overlapping) {
+          errors.push(`${contextLabel}: Context place "${place}" is redundant with "${overlapping}"`)
+        }
+        seenContextPlaces.push(place)
+        if (!supported.has(place) && ![...supported].some(candidate => containsPlace(place, candidate))) {
+          errors.push(`${contextLabel}: Context place "${place}" is outside target "${target.type}:${target.id}"`)
+        }
+      }
     }
-    for (const domainId of rule.domains) {
-      if (!domainIds.has(domainId)) errors.push(`${rule.file}: references missing domain "${domainId}"`)
+    for (const scenarioId of capabilityScenarioTargets) {
+      const capabilityId = capabilityScenariosById.get(scenarioId)?.capability
+      if (capabilityId && capabilityTargets.has(capabilityId)) {
+        errors.push(`${rule.file}: target "capability-scenario:${scenarioId}" is redundant with capability target "${capabilityId}"`)
+      }
     }
-    for (const capabilityId of rule.capabilities) {
-      if (!capabilityIds.has(capabilityId)) errors.push(`${rule.file}: references missing capability "${capabilityId}"`)
+    for (const scenarioId of journeyScenarioTargets) {
+      const journeyId = journeyScenariosById.get(scenarioId)?.journey
+      if (journeyId && journeyTargets.has(journeyId)) {
+        errors.push(`${rule.file}: target "journey-scenario:${scenarioId}" is redundant with journey target "${journeyId}"`)
+      }
     }
-    for (const journeyId of rule.journeys) {
-      if (!journeyIds.has(journeyId)) errors.push(`${rule.file}: references missing journey "${journeyId}"`)
-    }
-    for (const scenarioId of rule.scenarios) {
-      if (!scenarioIds.has(scenarioId)) errors.push(`${rule.file}: references missing scenario "${scenarioId}"`)
-    }
-    validateAvailability(rule.file, rule.availability)
   }
 
   if (model.interfaces.length === 0) errors.push('interfaces/: the model needs at least one interface')
-  if (model.experiences.length === 0) errors.push('experiences/: the model needs at least one experience')
+  if (model.coverage.status === 'complete' && model.capabilities.length === 0) {
+    errors.push('capabilities/: a complete model needs at least one capability')
+  }
 
   const allEntities = [
     ...model.actors,
@@ -338,11 +769,38 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     ...model.screens,
     ...model.domains,
     ...model.capabilities,
+    ...model.capabilityScenarios,
     ...model.businessRules,
     ...model.journeys,
-    ...model.journeys.flatMap(journey => journey.scenarios)
+    ...model.journeyScenarios
   ]
+  /*
+    Asset metadata is additive: it titles and describes files that are already
+    there, and never sets their class. Class is the path — anything under
+    `implementation/` describes this realization — which is the only rule a
+    foreign tool writing a capture on CI can actually satisfy.
+  */
+  for (const entity of allEntities) {
+    const present = new Set(entity.assets)
+    const stateNames = new Set(
+      model.screens.find(screen => screen.file === entity.file)?.states.map(state => state.title.toLowerCase()) ?? []
+    )
+    const isScreen = model.screens.some(screen => screen.file === entity.file)
+    for (const asset of entity.assetMeta) {
+      if (!present.has(asset.file)) {
+        errors.push(`${entity.file}: asset "${asset.file}" is not a file in this entity's expanded folder`)
+      }
+      if (asset.state === undefined) continue
+      if (!isScreen) {
+        errors.push(`${entity.file}: asset "state" is only valid on a Screen`)
+      } else if (!stateNames.has(asset.state.toLowerCase())) {
+        errors.push(`${entity.file}: asset state "${asset.state}" is not a product state of this Screen`)
+      }
+    }
+  }
+
   const referenceHosts = [{ file: 'product.md', references: model.product.references }, ...allEntities]
+  const screenFiles = new Set(model.screens.map(screen => screen.file))
   for (const entity of referenceHosts) {
     const targets = new Set<string>()
     for (const reference of entity.references) {
@@ -350,6 +808,11 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
         errors.push(`${entity.file}: duplicate reference target "${reference.target}"`)
       }
       targets.add(reference.target)
+      // Product states are a Screen concept; nowhere else has an H3 set for a
+      // state to resolve against, so the key would mean nothing there.
+      if (reference.state !== undefined && !screenFiles.has(entity.file)) {
+        errors.push(`${entity.file}: reference "state" is only valid on a Screen`)
+      }
       const path = repositoryReferencePath(reference)
       if (!path || tracked.has(path)) continue
       if (reference.kind === 'code') {
@@ -360,7 +823,6 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     }
   }
 
-  const scenarios = model.journeys.flatMap(journey => journey.scenarios)
   return {
     ok: errors.length === 0,
     errors,
@@ -372,8 +834,9 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
       screens: model.screens.length,
       domains: model.domains.length,
       capabilities: model.capabilities.length,
+      capabilityScenarios: model.capabilityScenarios.length,
       journeys: model.journeys.length,
-      scenarios: scenarios.length,
+      journeyScenarios: model.journeyScenarios.length,
       businessRules: model.businessRules.length
     }
   }

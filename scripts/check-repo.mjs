@@ -18,13 +18,15 @@ async function exists(path) {
 const REQUIRED = [
   'README.md', 'LICENSE', 'package.json', 'package-lock.json', 'tsconfig.json', 'src/cli.ts',
   'CHANGELOG.md', 'SECURITY.md', 'CONTRIBUTING.md',
-  'spec/format.md', 'docs/product-model.md', 'docs/product.md',
+  'spec/format.md', 'spec/report.md', 'docs/product-model.md', 'docs/product.md',
   'docs/cli.md', 'docs/cli-view.md', 'docs/ci.md', 'docs/integration.md',
-  'src/report-view-model.ts', 'src/logo.ts', 'layers/nuxt/report-viewer/nuxt.config.ts',
+  'src/logo.ts', 'layers/nuxt/report-viewer/nuxt.config.ts',
+  'layers/nuxt/report-viewer-lab/nuxt.config.ts',
   'layers/nuxt/report-viewer/app/components/BusinessLensReportViewer.vue',
   'layers/nuxt/theme/nuxt.config.ts', 'layers/nuxt/theme-lab/nuxt.config.ts',
+  'layers/nuxt/theme/app/components/BusinessLensBrand.vue',
+  'layers/nuxt/theme/app/composables/useBusinessLensThemeHead.ts',
   'layers/nuxt/theme-lab/app/components/BusinessLensThemeLabBar.vue',
-  'layers/nuxt/theme-lab/app/components/BusinessLensBrand.vue',
   'viewer/app/package.json',
   'viewer/app/app/pages/index.vue', 'src/core/local-viewer-server.ts',
   '.claude-plugin/plugin.json', '.claude-plugin/marketplace.json'
@@ -79,9 +81,20 @@ if (pkg.exports?.['./nuxt/report-viewer'] !== './layers/nuxt/report-viewer/nuxt.
   || pkg.exports?.['./nuxt/theme-lab'] !== './layers/nuxt/theme-lab/nuxt.config.ts'
   || pkg.exports?.['./theme-lab/variants']?.types !== './dist/businesslensThemeLabVariants.d.ts'
   || pkg.exports?.['./theme-lab/variants']?.default !== './dist/businesslensThemeLabVariants.js'
-  || !pkg.exports?.['./report/view-model']
   || !pkg.exports?.['./logo']) {
-  errors.push('businesslens must export its logo contract, report view model, and Nuxt report-viewer/theme/theme-lab Layers')
+  errors.push('businesslens must export its logo contract, background variants, and Nuxt report-viewer/theme/theme-lab Layers')
+}
+if (pkg.exports?.['./nuxt/report-lab'] || pkg.exports?.['./report/view-model']) {
+  errors.push('retired report-lab and lossy report view-model exports must stay removed')
+}
+if (pkg.exports?.['./nuxt/report-viewer-lab']) {
+  errors.push('the private report-viewer-lab must not have a package export')
+}
+if (!pkg.files?.includes('!layers/nuxt/report-viewer-lab')) {
+  errors.push('package.json files must exclude the private report-viewer-lab')
+}
+for (const retired of ['layers/nuxt/report-lab', 'layers/nuxt/workbench-lab', 'src/report-view-model.ts']) {
+  if (await exists(retired)) errors.push(`retired report artifact must stay removed: ${retired}`)
 }
 for (const peer of [
   '@fontsource-variable/archivo',
@@ -171,6 +184,42 @@ if (!canonicalFormatContract) {
   }
 }
 
+// `spec/format.md` is the contract; the skill reference is the copy agents
+// actually read while authoring. It may be terser, but it may not omit a name
+// the contract requires — an agent cannot author a key it was never told about.
+// This is a presence check over names, never a check of what the prose claims.
+//
+// `## Anything else` is excluded because the spec uses it to demonstrate that
+// an *unrecognized* H2 survives export; it is not a recognized section.
+const UNRECOGNIZED_SPEC_SECTIONS = new Set(['Anything else'])
+const specSource = await readFile(resolve(root, 'spec/format.md'), 'utf8')
+const entityTable = specSource.match(/\| Entity \| Compact \|[\s\S]*?\n\n/)?.[0]
+if (!entityTable) {
+  errors.push('spec/format.md does not expose the entity layout table')
+} else {
+  const specNames = new Map()
+  for (const row of entityTable.matchAll(/^\| ([^|]+) \|/gm)) {
+    const kind = row[1].trim()
+    if (kind !== 'Entity' && !kind.startsWith('---')) specNames.set(kind, 'entity kind')
+  }
+  for (const [, example] of specSource.matchAll(/```markdown\n([\s\S]*?)```/g)) {
+    for (const heading of example.matchAll(/^## (.+)$/gm)) {
+      const section = heading[1].trim()
+      if (!UNRECOGNIZED_SPEC_SECTIONS.has(section)) specNames.set(`## ${section}`, 'section')
+    }
+    const frontmatter = example.match(/^---\n([\s\S]*?)\n---/)
+    if (!frontmatter) continue
+    for (const key of frontmatter[1].matchAll(/^([a-zA-Z][a-zA-Z0-9]*):/gm)) {
+      specNames.set(key[1], 'frontmatter key')
+    }
+  }
+  for (const [name, sort] of specNames) {
+    if (!canonicalFormatSource.includes(name)) {
+      errors.push(`${canonicalFormatReference} never names the ${sort} "${name}" required by spec/format.md`)
+    }
+  }
+}
+
 const canonicalRunner = 'skills/businesslens-map/scripts/run-businesslens.mjs'
 const canonicalRunnerSource = await readFile(resolve(root, canonicalRunner), 'utf8')
 for (const skill of expectedSkills) {
@@ -203,7 +252,13 @@ if (!modelReadmeMatch) {
 // Docs frontmatter contract, consumed by the landing repository's nav:
 // section = top-level tab, group = sidebar cluster, order = global within section.
 const DOC_SECTIONS = new Set(['open-source', 'platform'])
-const DOC_GROUPS = new Set(['Get started', 'Product Model', 'Integrations', 'Skills', 'CLI'])
+const DOC_GROUPS = new Set([
+  'Get started',
+  'Product Model',
+  'Integrations',
+  'Skills',
+  'CLI'
+])
 const docFiles = (await readdir(resolve(root, 'docs'))).filter(name => name.endsWith('.md')).sort()
 const docOrders = new Map()
 for (const name of docFiles) {

@@ -1,4 +1,6 @@
 /* Host-neutral structure for the shared Product Report renderer. */
 .businesslens-report {
-  min-height: 100%;
+  height: calc(100dvh - var(--businesslens-report-chrome, 0px));
+  min-height: 0;
+  overflow: hidden;
 }

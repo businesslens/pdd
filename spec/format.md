@@ -7,6 +7,10 @@
 > The user-facing explanation of the same entities lives in the Product model
 > group under `docs/` — one page per entity, each carrying its file shape and
 > the `lint` findings that constrain it. Keep the two consistent.
+>
+> This document defines the **authored folder**. The wire contract that
+> serializes it — the Product Report, its portable projection, and expansion —
+> is [`report.md`](./report.md).
 
 This document is the contract for the BusinessLens PDD folder: the git-tracked
 product model that lives inside a repository. Everything the public CLI lints is
@@ -21,28 +25,131 @@ authoritative. The technical *how* of a change (specs, designs, task lists)
 still belongs to your SDD tool of choice and may be attached through
 `references`.
 
+## Terms
+
+| Term | Meaning |
+| --- | --- |
+| **Product Model** | `.businesslens/` — the git-tracked folder this document defines. May cite the repository's code. |
+| **Product Report** | the portable serialization of a Product Model. One format, two profiles. |
+| — *workspace* | `referenceProfile: workspace`. Repository-relative references and entry points intact, as optional navigation. For a full product instance inside the boundary that owns the code. |
+| — *portable* | `referenceProfile: portable`. No `kind: code`, no repository-relative targets or entry points. Required whenever a report crosses an ownership boundary. |
+| **Blueprint** | a Product Report curated into the public catalog under a slug. Always the portable profile, because that is what the catalog accepts. |
+
+**Redaction is a property a report has, never a category it belongs to.** A
+report carrying repository navigation is still a Product Report; it is simply
+not a Blueprint. Nothing about where a file is stored may be decided by whether
+it would survive publication — the profile filters at serialization time, and
+that is the only place the distinction lives.
+
 ## Folder layout
+
+An entity uses the smallest shape that can hold it:
+
+- **compact** — `<id>.md` when the entity has no assets or child entities;
+- **expanded** — `<id>/<type>.md` when it owns assets or a typed child
+  collection.
+
+The two shapes represent the same entity and derive the same id. Adding the
+first asset or child promotes the Markdown file with `git mv`; removing the last
+one compacts it again. Both shapes must never exist for the same id. This keeps
+leaf-heavy collections readable without giving up co-location or path-owned
+parent relations.
+
+Every entity follows that rule; only its type filename and permitted child
+collection differ:
+
+| Entity | Compact | Expanded | Typed children |
+| --- | --- | --- | --- |
+| Product | `product.md` | `product/product.md` beside `logo.svg` | — |
+| Actor | `actors/<id>.md` | `actors/<id>/actor.md` | — |
+| Interface | `interfaces/<id>.md` | `interfaces/<id>/interface.md` | `screens/` or `experiences/`, never both |
+| Experience | `interfaces/<interface-id>/experiences/<id>.md` | `interfaces/<interface-id>/experiences/<id>/experience.md` | `screens/` |
+| Screen | `<screen-parent>/screens/<id>.md` | `<screen-parent>/screens/<id>/screen.md` | — |
+| Domain | `domains/<id>.md` | `domains/<id>/domain.md` | — |
+| Capability | `capabilities/<id>.md` | `capabilities/<id>/capability.md` | `scenarios/` |
+| Capability Scenario | `capabilities/<capability-id>/scenarios/<id>.md` | `capabilities/<capability-id>/scenarios/<id>/capability-scenario.md` | — |
+| Journey | `journeys/<id>.md` | `journeys/<id>/journey.md` | `scenarios/` |
+| Journey Scenario | `journeys/<journey-id>/scenarios/<id>.md` | `journeys/<journey-id>/scenarios/<id>/journey-scenario.md` | — |
+| Business Rule | `business-rules/<id>.md` | `business-rules/<id>/business-rule.md` | — |
+
+Here `<screen-parent>` is the Interface or Experience folder that contains the
+Screen. A representative model can therefore look like this:
 
 ```
 .businesslens/
 ├── config.yaml              # tool config (committed)
-├── product.md               # product manifest (committed)
 ├── taxonomies.yaml          # scenario kinds (committed)
 ├── coverage.md              # coverage assessment (committed)
+├── product.md               # compact Product when it has no logo
+├── product/                 # expanded Product alternative
+│   ├── product.md
+│   └── logo.svg             # optional locally; required for a public Blueprint
 ├── actors/<actor-id>.md
-├── interfaces/<interface-id>.md
-├── experiences/<experience-id>.md
-├── screens/<screen-id>.md
-├── domains/<domain-id>.md   # optional grouping
-├── capabilities/<capability-id>.md
-├── business-rules/<rule-id>.md
-├── journeys/<journey-id>/journey.md
-├── journeys/<journey-id>/scenarios/<scenario-id>.md
+│
+│   ── Interface → Experience → Screen: where Actors meet the Product ──
+├── interfaces/<interface-id>/
+│   ├── interface.md
+│   ├── screens/<screen-id>.md                    # compact Screen
+│   └── experiences/<experience-id>/
+│       ├── experience.md
+│       └── screens/
+│           ├── <screen-id>.md                    # compact Screen
+│           └── <illustrated-screen-id>/          # expanded Screen
+│               ├── screen.md
+│               └── mockup.svg
+│
+│   ── subject axis: what it is about ──
+├── domains/<domain-id>.md                       # optional
+│
+│   ── behavior tree: what the Product does ──
+├── capabilities/<capability-id>/
+│   ├── capability.md
+│   └── scenarios/<scenario-id>.md
+├── journeys/<journey-id>/                       # optional
+│   ├── journey.md
+│   └── scenarios/<scenario-id>.md
+│
+├── business-rules/<rule-id>.md                  # optional
 ├── README.md                # canonical agent orientation
 ├── .gitignore               # generated paths only
 ├── build/                   # generated Product Report — never committed
 └── cache/                   # generated artifacts — never committed
 ```
+
+The model has **two hierarchies and one axis**. The Interface → Experience →
+Screen hierarchy says where Actors meet the Product; the Capability → Scenario
+and Journey → Scenario hierarchy says what the Product does. `availability` is
+the join between them; Domain classifies members of both; Actors and Business
+Rules attach across everything.
+
+## Contexts and places
+
+A **Context** states where behavior is available, occurs, or is constrained. It
+is a strict object whose required `place` names one Interface, Experience, or
+Screen:
+
+```yaml
+- place: customer-web::storefront
+```
+
+The use of the Context determines how specific its place must be. A Capability
+availability Context names an undivided Interface or an Experience. A Scenario
+Context is a concrete occurrence and names the most-specific available place:
+a Screen when one exists, otherwise the leaf Experience or Interface. A
+Business Rule Context is a selector and may name any of the three; an Interface
+or Experience selector includes its descendant places.
+
+Filesystem paths supply containment. For example,
+`customer-web::storefront::checkout` is contained by
+`customer-web::storefront`, so a Step there is inside that Capability
+availability Context. Authors never repeat the containing Interface or
+Experience in another field.
+
+An Interface holds either `screens/` or `experiences/`, never both. A
+Capability that is available through an Interface divided into Experiences
+names the intended Experiences explicitly; an undivided Interface names itself.
+Contexts are closed to unknown keys. Additional dimensions may be added by a
+future format revision, but Context is not an arbitrary metadata bag.
 
 ## Universal conventions
 
@@ -51,34 +158,115 @@ still belongs to your SDD tool of choice and may be attached through
   and `cache/`; those generated directories are never part of the committed
   model.
 
-- **ID = filename stem.** An entity's id is its filename without `.md`
-  (journeys: the directory name). IDs are lowercase kebab-case:
-  `^[a-z0-9]+(?:-[a-z0-9]+)*$`. Never write `id:` in frontmatter — the
-  filesystem is the id authority. The one exception is `product.md`, whose
-  `id:` names the Product Model (it may differ from the repo name) and is
-  limited to 64 characters for portability across BusinessLens consumers.
+- **Compact and expanded are exclusive.** `<id>.md` and `<id>/<type>.md` may
+  not coexist. An expanded entity must own at least one asset or child entity;
+  otherwise it is needless structure and must be compacted. A compact entity
+  has no asset or child namespace.
+
+  Coexisting shapes, and an expanded folder missing its `<type>.md`, are `lint`
+  errors: both are states no correct model passes through. An expanded folder
+  that owns nothing yet is a `lint` warning instead. The rule still holds — a
+  Product Report cannot carry that state, because expansion derives each
+  entity's shape from the children it actually owns, so the round trip
+  normalizes the folder back to the compact form. But an author reaches the
+  expanded shape in two steps, and the intermediate step is not a defect.
+
+- **ID = the logical path from the collection root.** Behavior-hierarchy ids
+  (Capability, Journey, both Scenario types) and cross-cutting ids (Actor, Domain, Business
+  Rule) are the bare file or folder name and are globally unique within their
+  collection. Qualified ids for Interfaces, Experiences, and Screens carry the
+  path that distinguishes them, joined by `::`:
+
+  ```
+  reader-web
+  reader-web::personal-library
+  reader-web::personal-library::unread-library
+  ```
+
+  Each segment is lowercase kebab-case, `^[a-z0-9]+(?:-[a-z0-9]+)*$`. Never
+  write `id:` in frontmatter — the filesystem is the id authority. The one
+  exception is `product.md`, whose `id:` names the Product Model (it may differ
+  from the repo name) and is limited to 64 characters. Compacting or expanding
+  an entity never changes this logical path or id.
+
+  Experience and Screen names repeat across Interfaces on purpose:
+  `personal-library` on web and on mobile pursue the same goal and are different entities. Two entities of
+  the same kind sharing a path suffix below their Interface are **counterparts**
+  — the same thing on two Interfaces. Nothing has to declare that; the path
+  already says it.
+
+- **The path owns every parent relation.** An Experience never writes
+  `interfaces:`, a Capability Scenario never writes `capability:`, a Journey
+  Scenario never writes `journey:`, and a Screen never writes `availability:`.
+  One authority instead of two that can disagree, and reparenting becomes a
+  `git mv` that reads correctly in a pull request.
+- **Assets expand an entity.** Authored assets sit beside `<type>.md` in the
+  expanded entity folder. Files under its reserved `implementation/`
+  subdirectory describe this repository's realization instead. Typed child
+  directories (`experiences/`, `screens/`, and `scenarios/`) are structural,
+  not assets; any other nested directory is invalid. Plain asset files need no
+  declaration. Optional `assets:` frontmatter annotates files already present:
+
+  ```yaml
+  assets:
+    - file: mockup.svg
+      title: Approved empty state
+      state: Empty                 # Screens only; resolves to an H3 Product state
+  ```
+
+  `file` is relative to the expanded entity folder and cannot escape it.
+  Metadata entries are unique and must name an existing asset. `title` is
+  optional. `state` is valid only on a Screen and must name one of that Screen's
+  `## Product states`. Unlisted assets remain valid so external tools can write
+  captures without editing BusinessLens frontmatter.
 - **H1 = title/name.** The first `# Heading` in the body is the entity's
-  title (actors and domains call it `name`).
-- **Lead paragraph = description/summary.** Prose between the H1 and the first
-  `##` heading is the description for actors, domains, experiences, and the
-  product, or the summary for journeys. Later sections provide supporting
-  context except where a structured section is required below.
-- **Frontmatter = relations and navigation only.** Never prose.
-- **Intent = a recognized prose section.** `## Intent` explains why the
-  product or entity exists and which outcome it protects. Intent is structured
-  prose, not a separate entity.
-- Scenario ids must be unique across the whole model, not just within their
-  journey.
+  title (actors and domains call it `name`) and is the file's only H1. Lead and
+  section-body Markdown fragments cannot contain another H1 or H2; an H2 begins
+  a new section instead.
+- **Lead paragraph = description.** Prose between the H1 and the first `##`
+  heading is the description for actors, domains, experiences, and the product.
+  Journeys and both Scenario types instead use the required structured sections
+  specified below and must not carry lead prose.
+- **Frontmatter = relations and navigation, with one relational-prose
+  exception.** Both Scenario types keep their structured `steps` in
+  frontmatter so each single-line statement stays beside its kind, responsible
+  Actor, Capability qualification, and route-specific Contexts. Other
+  prose remains in the Markdown body.
+- **Intent and Goal = recognized prose sections.** `## Intent` explains why the
+  product or entity exists and which outcome it protects. `## Goal` states the
+  stable Actor intent of a Journey. Both are structured prose, not separate
+  entities.
+- **Structured sections are unambiguous.** A recognized H2 may appear only once.
+  Journey-only sections (`## Goal`, `## Success criterion`) are invalid on both
+  Scenario types, and Scenario-only sections (`## Trigger`, `## Steps`,
+  `## Decision points`, `## Outcome`, `## Edge cases`) are invalid on Journeys.
+  `## Steps` is invalid on both Scenario types, whose one ordered path is the
+  frontmatter `steps` list.
+  Unrecognized H2 sections are supporting content and retain their heading and
+  body through report export and expansion.
+- **Structured list items are single-line.** Every item in `## Edge cases`,
+  `## Information presented`, and `## Available actions` must
+  occupy one physical line. Prose and continuation lines are invalid because
+  they cannot be represented as report list items.
+- **Set-valued lists are unique.** Product `tags` and every frontmatter relation
+  list contain no duplicate value. Ordered content lists such as Scenario
+  `steps` and Coverage prose are not relation
+  sets and may repeat when the meaning calls for it.
+- Scenario IDs are globally unique across every `scenarios/` folder.
 
 ## References
 
 `references` is an optional extension on every semantic entity: Product,
-Actor, Interface, Experience, Screen, Domain, Capability, Journey, Scenario,
-and Business Rule. It is not accepted in `config.yaml`, `coverage.md`, or
-`taxonomies.yaml`.
+Actor, Interface, Experience, Screen, Domain, Capability, Journey, Capability
+Scenario, Journey Scenario, and Business Rule. It is not accepted in
+`config.yaml`, `coverage.md`, or `taxonomies.yaml`.
 
 ```yaml
 references:
+  - kind: prd
+    role: intent
+    target: docs/prds/checkout.md
+    title: Checkout PRD
   - kind: visual
     role: intent
     target: https://design.example.com/checkout
@@ -91,7 +279,7 @@ references:
 Every item requires exactly `kind`, `role`, and `target`; `title` is optional.
 Unknown keys are invalid.
 
-- `kind` is `code`, `spec`, `proposal`, `doc`, `adr`, `visual`, or `research`.
+- `kind` is `code`, `prd`, `spec`, `proposal`, `doc`, `adr`, `visual`, or `research`.
   It identifies the artifact, not what the model concludes from it.
 - `role` is `intent`, `implementation`, or `context`. It explains why the
   artifact is attached to this entity. It is not a verification result or a
@@ -99,6 +287,9 @@ Unknown keys are invalid.
 - `target` is the artifact address. Duplicate targets on one entity are
   invalid, even when their kinds or roles differ.
 - `title` is an optional non-empty display label.
+- `state` is optional and **valid only on a Screen**. It names one of that
+  Screen's `## Product states` H3 titles, case-insensitively, and says which
+  state the artefact depicts. Nowhere else has a state set to resolve against.
 
 For `kind: code`, `target` uses the compact
 `path[#symbol][:start[-end]]` grammar. The line suffix is the last `:` whose
@@ -113,6 +304,12 @@ file set and warns when the path is missing. HTTP(S) targets are syntax-checked
 but never fetched. Absolute filesystem paths, `file:` URLs, other URL schemes,
 and backslash paths are invalid.
 
+One Screen commonly collects several captures of the same view — one per
+Product state, sometimes doubled for light and dark. Without `state` they arrive
+as a flat list distinguishable only by free-text title; with it, each capture is
+placed beside the state it shows. Themes are deliberately not Product states, so
+a light and a dark capture of one state are two references sharing one `state`.
+
 References connect the self-contained Product Model to material maintained
 outside it. A model may contain no references at any Coverage status.
 The deterministic CLI does not copy, download, generate, execute, or assess
@@ -121,17 +318,22 @@ but the artifact remains evidence to assess rather than proof to trust.
 
 ## Entity files
 
+> **Illustrative examples.** The entity snippets below are non-normative
+> fragments from one fictional Acme Shop model. Their names and product story
+> are not required; they exist only to make the required Markdown, frontmatter,
+> and cross-entity identifiers concrete.
+
 ### `config.yaml`
 
 ```yaml
-schema: 3                          # folder-format version
+schema: 6                          # folder-format version
 sdd:
   paths: [openspec/]               # detected/declared SDD roots; empty if none
 ```
 
-`config.yaml` has no other keys. Schema 3 is the only supported folder format.
+`config.yaml` has no other keys. Schema 6 is the only supported folder format.
 
-### `product.md`
+### `product.md` or `product/product.md`
 
 ```markdown
 ---
@@ -160,8 +362,8 @@ Kept in the repo as supporting context.
 ```
 
 `## Intent` is compiled into the report's product intent. Other unrecognized
-sections are preserved as supporting Markdown so a report can be expanded
-without silently losing authored context.
+sections are preserved as ordered `{ heading, content }` supporting sections so
+a report can be expanded without silently losing authored context.
 
 The Product frontmatter may also carry portable identity and attribution used
 by every report host. `summary` is a single-line short description (400
@@ -170,7 +372,11 @@ characters maximum), `category` is a lowercase kebab-case classification,
 license identifier. The H1 remains the Product title and the lead prose remains
 its full description.
 
-The Product may have one visual identity asset at `.businesslens/logo.svg`.
+The compact form is `.businesslens/product.md`. Adding a Product logo expands
+it to `.businesslens/product/product.md`, with the identity asset at
+`.businesslens/product/logo.svg`.
+
+The Product may have one visual identity asset, `logo.svg`.
 It is a self-contained, UTF-8 SVG with a `viewBox`, at most 256 KiB, and cannot
 contain active content, event handlers, embedded documents, imports, or network
 references. It is rendered only as an image and is not embedded in the Product
@@ -188,7 +394,7 @@ author, a license, and `logo.svg`. There is no separate Blueprint manifest.
 scenarioKinds:
   - id: primary
     name: Primary
-    description: Expected path through a user goal.
+    description: Expected observable behavior path.
     colorSlot: 1
   - id: edge
     name: Edge case
@@ -196,7 +402,7 @@ scenarioKinds:
     colorSlot: 6
 ```
 
-### `actors/<id>.md`
+### `actors/<id>.md` or `actors/<id>/actor.md`
 
 ```markdown
 ---
@@ -215,16 +421,28 @@ another component; an internal system is an Actor only when its responsibility,
 privilege, trigger, or outcome is product-significant. H1 = name and the lead
 paragraph = description.
 
-### `interfaces/<id>.md`
+An external system is an Actor only when it **initiates** interaction with the
+Product. A system the Product calls out to is a dependency of the Capability
+that calls it: it has no goal inside the Product, no privilege to grant, and no
+inbound interaction contract the Product must keep stable for it. Direction
+decides, not ownership — the same third party can be a dependency in one direction and an Actor in the
+other when it also calls back. See [Outbound dependencies](#outbound-dependencies).
+
+### `interfaces/<id>.md` or `interfaces/<id>/interface.md`
 
 An Interface is a supported interaction form through which Actors access the
 Product and for which product behavior can be independently required and
 verified. A customer web application, mobile application, operator CLI, partner
-API, and supported integration are Interfaces. Frameworks, internal adapters,
+API, and inbound webhook endpoint are Interfaces. Frameworks, internal adapters,
 and private component APIs are not.
+
+An Interface is **inbound**: something arrives at the Product through it. An
+outbound connection the Product opens to a third party is not an Interface,
+even when the integration is stable, versioned, and vendor-supported.
 
 ```markdown
 ---
+type: web
 actors: [shopper, guest]
 entryPoints:
   - web: /
@@ -239,25 +457,60 @@ The browser interface through which shoppers use the store.
 Supports customer-facing behavior. It does not expose store operations.
 ```
 
-`actors` contains at least one Actor ID. `entryPoints` is optional and contains
-product-facing root addresses. H1, lead description, and `## Capability
-boundary` are required. There is no closed Interface-kind enum, access mode, or
-exit contract.
+`type` is required and is one of `web`, `mobile-app`, `desktop-app`, `cli`,
+`api`, `webhook`, `messaging`, `voice`, or `device`. It states the supported
+interaction contract, never its implementation technology: `web` is valid;
+`react` is not. An Interface has exactly one type; independently supported
+types are separate Interfaces. `actors` contains at least one Actor ID.
+`entryPoints` is optional and contains product-facing root addresses. H1, lead
+description, and `## Capability boundary` are required. An Interface has no
+access mode or exit contract.
 
-### `experiences/<id>.md`
+### Outbound dependencies
+
+An external system the Product calls — a syndicated feed it polls, a payment
+processor it charges, a mail provider it sends through, a model API it queries —
+is not an Actor and gets no Interface.
+
+Model it where its result is observed:
+
+- the Capability that makes the call names the external system in its prose and
+  states what triggers the call;
+- its `availability` names the Interfaces where an Actor observes the outcome,
+  never a synthetic Interface;
+- product-significant failure behavior — what the Actor sees when the external
+  system is unavailable, slow, or wrong — is a Capability Scenario;
+- the provider's published contract attaches as a `references` entry with
+  `kind: spec` or `kind: doc` and `role: context`.
+
+Direction decides. When the same third party also calls the Product — a webhook,
+callback, or push subscription — that inbound interaction is through an Interface
+and the third party is its Actor. A feed provider the Product polls is a dependency; a
+feed provider that pushes updates to the Product is an Actor.
+
+There is no external-system entity. An outbound dependency shared by several
+Capabilities is described by each Capability that depends on it.
+
+### `interfaces/<interface-id>/experiences/<id>.md` or `<id>/experience.md`
 
 An Experience is a coherent context of Product use with a stable audience,
-access boundary, and capability boundary. It may be offered through one or more
-Interfaces.
+access boundary, and capability boundary. **It belongs to exactly one
+Interface** — the one whose folder holds it. Experiences are optional: create
+them only when named contexts distinguish meaningful Product behavior inside an
+Interface.
+
+The same context on two Interfaces is two Experiences, not one shared entity.
+They differ in screens, reach and affordances even when they pursue the same
+goal, and one file cannot describe both without hiding where they diverge.
+Give them the same file or folder name and they are counterparts by
+construction.
 
 ```markdown
 ---
 actors: [store-admin]
-interfaces: [admin-web, operator-cli]
 access: restricted              # public | authenticated | restricted
 entryPoints:
   - admin-web: /admin
-  - operator-cli: shop admin
 ---
 
 # Administration
@@ -269,49 +522,92 @@ Where authorized operators manage the store and its orders.
 Supports store operations. It does not expose a shopper's private account.
 ```
 
-`actors` and `interfaces` are non-empty ID lists. Every Experience Actor must
-be supported by each referenced Interface. `access` is required. Optional
-`entryPoints` use Interface IDs as keys and may name only Interfaces declared by
-the Experience. H1, lead description, and `## Capability boundary` are required.
-There is no `exit` field.
+`actors` is a non-empty ID list and every Experience Actor must be supported by
+the owning Interface. `access` is required. Optional `entryPoints` key the
+owning Interface only. H1, lead description, and `## Capability boundary` are
+required. There is no `exit` field and no `interfaces` field — the path names
+the Interface. An Interface with one undivided usage context does not need a
+ceremonial Experience.
+
+Experiences form an exhaustive, potentially overlapping cover of the Interface
+that holds them. The union of their Actors must equal that Interface's Actor
+list, so no Interface Actor becomes unreachable when Screens move under
+Experiences.
+
+An optional ordered `screens:` list names this Experience's own Screen ids
+and declares **reading order only** — reachability stays with the tree. Entries
+must resolve to children and be unique; unlisted children sort after,
+alphabetically. The same field is available on `interface.md` for an Interface
+that holds Screens directly.
 
 ### Availability
 
-Capabilities, Journeys, Screens, Scenarios, and Business Rules use one exact
-Interface–Experience relation shape:
+Capabilities declare `availability`: a unique, non-empty list of Contexts.
 
 ```yaml
 availability:
-  - interface: customer-web
-    experiences: [storefront, account-management]
-  - interface: customer-mobile
-    experiences: [storefront]
+  - place: operator-cli
+  - place: customer-web::storefront
+  - place: customer-mobile::storefront
 ```
 
-Each record creates only the listed Interface–Experience pairs. `interface`
-must name one Interface, `experiences` must be a non-empty unique list, and
-every Experience must declare that Interface. Duplicate Interfaces or pairs are
-invalid. Availability states intended Product scope, never implementation
-status.
+Availability states intended Product meaning, never implementation status.
 
-### `domains/<id>.md`
+A **Screen does not declare availability** — its path is its placement.
+Scenarios and Journeys do not declare availability either. A Scenario Step
+names one concrete Context per route, and the Context's `place` is its resolved
+Interface, Experience, or Screen. Business Rules use the same Context object as
+a selector.
 
-Optional `colorSlot: 3` and `references` frontmatter. H1 = name, lead paragraph =
-description. The entire Domain collection is optional. A Domain groups related
-Capabilities for product navigation; it is not code architecture or Journey
-ownership.
+### `domains/<id>.md` or `domains/<id>/domain.md`
 
-### `capabilities/<id>.md`
+A Domain is a coherent region of the Product's subject matter — its own
+vocabulary and its own invariants. It is not code architecture, not Journey
+ownership, and not a folder for Capabilities that had nowhere else to go.
+
+```markdown
+---
+colorSlot: 3
+---
+
+# Ordering
+
+Everything between a full cart and a fulfilled order.
+
+## Boundary
+
+Owns cart contents, order state, and the transition between them. It does not
+own catalog information, payment instruments, or fulfilment logistics.
+```
+
+Optional `colorSlot` and `references` frontmatter. H1 = name, lead paragraph =
+description. `## Boundary` states what the region covers and what it explicitly
+does not; it is what makes a Domain checkable rather than a label. The entire
+Domain collection is optional.
+
+**Domain is an axis, not a level.** It classifies members of both the Interface →
+Experience → Screen hierarchy and the behavior hierarchy, so it neither contains
+nor is contained by anything.
+`domain` on a Capability is the only *authored* Domain edge in the model; every
+other Domain relation is derived. A Screen, Experience or Journey is about the
+Domains its Capabilities are about, and computing that is more reliable than
+asking an author to restate it — a second authority can disagree with the first.
+
+`domain` is optional and single. A Capability about two subject regions means
+either a `## Boundary` is wrong or the Capability should split.
+
+### `capabilities/<id>.md` or `capabilities/<id>/capability.md`
 
 A Capability is a stable ability of the Product. It has no necessary beginning
 or end and may support several Journeys, Experiences, Screens, and Interfaces.
+Capabilities and their observable Capability Scenarios are the behavioral core
+of the model; Journey composition is optional.
 
 ```markdown
 ---
 domain: ordering                 # optional
 availability:
-  - interface: customer-web
-    experiences: [storefront]
+  - place: customer-web::storefront
 references:
   - kind: code
     role: implementation
@@ -328,25 +624,44 @@ Let a shopper complete a purchase without losing cart state on a recoverable
 failure.
 ```
 
-`availability` is required and needs at least one pair. `domain` is optional
-and, when present, names exactly one Domain. Actors are expressed by Journeys
-and Actor-bound Experiences. Business Rules own their scope, so Capability
-files do not duplicate Rule IDs.
+`availability` is required and needs at least one valid Context. Its place is
+an undivided Interface or one Experience of a divided Interface. `domain` is
+optional and, when present, names exactly one Domain. Actors are expressed by
+Capability Scenario, Journey, Journey Scenario, Actor-bound Interface, and
+optional Experience relations. Business Rules own their applicability, so Capability
+files do not duplicate Rule IDs. Capability Scenario files own the acceptance
+relation, so Capability files do not duplicate Scenario IDs. A Capability
+Scenario is the only direct acceptance coverage for a Capability; Journey
+Scenario use does not satisfy that coverage rule. Missing coverage is an error
+when `coverage.md` is `complete`, a warning when it is `partial` or `draft`, and
+always a publication error for a public Blueprint.
 
-### `business-rules/<id>.md`
+A Capability is the smallest durable behavior that remains independently
+meaningful, not necessarily the smallest UI action or code operation. Capability
+Scenarios vary the conditions, route, or observable result of that one behavior;
+they must not act as hidden sub-capabilities. When supposed Scenarios instead
+describe independently meaningful verbs with different purposes, outcomes,
+permissions, availability, or Business Rules, split them into Capabilities. For
+example, `manage-repositories` is too broad when its cases are actually create,
+configure, archive, and delete behaviors with distinct contracts. Splitting it
+does not create a need for a Domain: those four Capabilities were already about
+the Repositories subject region before the split, and a Domain that exists only
+to re-gather them is a folder, not a region.
+
+### `business-rules/<id>.md` or `business-rules/<id>/business-rule.md`
 
 A Business Rule is a durable constraint or policy that may apply across
 multiple behaviors.
 
 ```markdown
 ---
-domains: [ordering]
-capabilities: [checkout]
-journeys: [browse-and-buy]
-scenarios: [complete-checkout]
-availability:
-  - interface: customer-web
-    experiences: [storefront]
+appliesTo:
+  - type: capability
+    id: checkout
+    contexts:
+      - place: customer-web::storefront
+  - type: journey
+    id: browse-and-buy
 references:
   - kind: code
     role: implementation
@@ -368,13 +683,30 @@ Inventory may change between browsing and final submission, so checkout must
 revalidate it.
 ```
 
-The lead paragraph is the rule statement. `domains`, `capabilities`,
-`journeys`, and `scenarios` are relation lists. `availability` optionally limits
-the rule to exact Interface–Experience pairs. A rule must relate to at least one
-Domain, Capability, Journey, Scenario, or availability pair. Business Rule owns
-these relations; consumers derive backlinks.
+The lead paragraph is the rule statement. `appliesTo` is a required non-empty
+list of typed targets. An entity target uses `type` = `capability`,
+`capability-scenario`, `journey`, or `journey-scenario`, requires `id`, and may
+use a non-empty `contexts` list to narrow that target. Without `contexts`, the
+Rule applies to all supported Contexts of the target. A direct Context target
+uses `type: context` plus one nested `context` object instead of `id`:
 
-### `screens/<id>.md`
+```yaml
+- type: context
+  context:
+    place: operator-cli
+```
+
+Targets are additive: the Rule governs their union. A Context selector on an
+entity target must match at least one Context supported by that target. A
+selector naming an Interface or Experience matches descendant places; a Screen
+selector matches that Screen. Duplicate selectors and a parent selector paired
+with its redundant descendant are invalid. Do not target both a Capability and one of its
+Capability Scenarios, or both a Journey and one of its Journey Scenarios; the
+ancestor already governs the child. Domains remain navigation-only, so Rule
+Domain backlinks are derived through targeted behavior rather than authored.
+Business Rule owns these relations; consumers derive every backlink.
+
+### `.../screens/<id>.md` or `.../screens/<id>/screen.md`
 
 A Screen is a meaningful user-visible view where product information or
 capabilities are exposed. It is platform-neutral: it need not be a web page,
@@ -383,13 +715,7 @@ The whole `screens/` collection is optional so non-visual products remain valid.
 
 ```markdown
 ---
-availability:
-  - interface: customer-web
-    experiences: [storefront]
-  - interface: customer-mobile
-    experiences: [storefront]
 capabilities: [catalog-browsing]
-scenarios: [browse-catalog]
 entryPoints:
   - customer-web: /products/:id
   - customer-mobile: acme-shop://products/:id
@@ -433,10 +759,13 @@ The reason it cannot be purchased is explained.
 The screen does not change product or inventory data.
 ```
 
-`availability` and `capabilities` each need at least one item. Every Screen pair
-must also be declared by every referenced Capability. `scenarios` and
-`entryPoints` are optional; entry-point keys must name an Interface in the
-Screen's availability. The H1, lead description,
+`capabilities` needs at least one item. A Screen has no `availability` field:
+its path names its containing Interface or Experience, and every referenced
+Capability must declare an availability Context containing the Screen.
+`entryPoints` is optional; entry-point keys must name the Interface containing
+the Screen. Scenario participation is derived from Scenario Step Contexts whose
+place names the Screen; a Screen never authors
+Capability or Journey Scenario ids. The H1, lead description,
 `## Information presented` bullet list, and `## Capability boundary` prose are
 required. `## Available actions` is optional but, when present, must contain a
 bullet list. `## Product states` is optional; each state is an H3 name followed
@@ -446,72 +775,237 @@ Only product-significant states belong here: a state changes what the user
 understands, can do, or achieves. Empty, unavailable, unauthorized,
 validation-failure, and completed states commonly qualify. Themes, viewport
 variants, hover states, skeletons, component variants, and screenshot baselines
-do not. Visual artifacts stay external and may be attached with
-`kind: visual`; their role distinguishes curated intent from implementation or
-supporting context.
+do not. Model-owned visuals expand the Screen and sit beside `screen.md`;
+generated captures live under its `implementation/` directory. External or
+separately maintained visuals attach as `kind: visual` References, whose role
+distinguishes curated intent from implementation or supporting context.
 
-One Screen may relate to multiple Interfaces and Experiences when its product
-semantics are shared. Separate Screens are warranted only when purpose,
-information, actions, meaningful states, or capability boundaries differ.
+A Screen has one structural parent. The same view on another Interface is
+another Screen with the same name — counterparts, distinguished by their path. They may
+share purpose, information and actions, and stating each one separately is what
+makes a divergence between them visible instead of silent.
 
 Screens do not author a sitemap or transition graph. A screen inventory is a
-generated projection grouped by Interface and Experience; goal-oriented
-movement belongs in Journeys and Scenarios. XML sitemaps remain implementation
-artifacts, and UX sitemaps may be external `doc` or `visual` references.
+generated projection grouped by Interface and Experience; observable movement
+belongs in Capability Scenarios and Journey Scenarios. XML sitemaps remain
+implementation artifacts, and UX sitemaps may be external `doc` or `visual`
+references.
 
-### `journeys/<id>/journey.md`
+### `journeys/<id>.md` or `journeys/<id>/journey.md`
+
+A Journey is an optional, evidence-backed coherent Actor goal that requires
+deliberate composition of multiple Capabilities. It owns only its high-level
+Goal and Success criterion. Concrete Capability selection, order, branches,
+repetition, and failure belong to Journey Scenarios.
 
 ```markdown
 ---
 actors: [shopper]
-capabilities: [checkout]
-availability:
-  - interface: customer-web
-    experiences: [storefront]
-entryPoints:
-  - customer-web: /checkout
 references:
-  - kind: code
-    role: implementation
-    target: src/services/orders.ts#OrderService
+  - kind: doc
+    role: context
+    target: docs/shopping.md
 ---
 
 # Browse and buy
 
-A shopper finds a product and completes checkout.
+## Goal
+
+A shopper wants to purchase a suitable product.
+
+## Success criterion
+
+A confirmed order exists for the selected product.
 ```
 
-Every Journey needs at least one Actor, Capability, availability pair, and
-Scenario. Every referenced Capability must declare every Journey availability
-pair. A Journey has no Domain; consumers derive its Domains from its
-Capabilities. `entryPoints` and `references` are optional, and entry-point keys
-must name an Interface in the Journey's availability.
+`actors` is a non-empty unique list of the Actors who pursue the goal, not every
+system that participates in its implementation. A Journey has no lead prose;
+its first content after the H1 is an H2 section.
 
-### `journeys/<jid>/scenarios/<id>.md`
+`## Goal` states the stable Actor intent. `## Success criterion` states how an
+achieved attempt is recognized without prescribing one route. `references` is
+optional. Consumers derive Domains and Interface/Experience contexts from
+Journey Scenario Capability-bearing steps. A Journey has no `entryPoints`; concrete Product
+routes remain on Interfaces, Experiences, and Screens.
+
+A consumer that presents a Journey entry route starts with the first
+Capability-bearing step of each achieved Journey Scenario route, then resolves
+that exact Interface or Experience entry point. This is derived navigation, not
+authored Journey data.
+
+Consumers derive the Journey's primary Capability set from achieved Scenarios
+and mark Capabilities observed only in not-achieved Scenarios as failure-only.
+These are coverage projections, not authored Journey meaning or proof that
+mapping is exhaustive.
+
+A Journey has no `availability`, Trigger, Steps, decisions, concrete Outcome,
+authored Capability list, or authored Scenario list. At least one Journey
+Scenario must name it with `result: achieved` and exercise at least two distinct
+Capabilities. Every Journey Actor must appear in at least one achieved Scenario.
+This is Journey acceptance coverage, not the source of its identity.
+
+A Journey is established behavior only when repository evidence supports a
+deliberate transition, orchestration, shared state, navigation, command, or
+cross-Interface transition toward its Actor outcome. A wizard can establish a
+Journey but is not required. A merely plausible sequence of independent
+Product actions is not a Journey. The number of Journey Scenario variations
+does not define it; one achieved variation provides valid coverage. A goal with
+no achieved multi-Capability path belongs to Capability behavior or remains
+unsupported Journey intent. Planned Journeys may record approved intent before
+implementation but must meet the same structural distinctions.
+
+### `capabilities/<capability-id>/scenarios/<id>.md` or `<id>/capability-scenario.md`
+
+A Capability Scenario is one concrete observable acceptance case for exactly
+one Capability. It describes local ability behavior rather than an end-to-end
+Journey goal.
 
 ```markdown
 ---
-kind: primary
-availability:
-  - interface: customer-web
-    experiences: [storefront]
+kind: validation
+routes:
+  web-shopper: Web shopper
+  mobile-shopper: Mobile shopper
+steps:
+  - text: The shopper submits a cart containing an unavailable product
+    kind: actor
+    actor: shopper
+    contexts:
+      web-shopper:
+        place: customer-web::storefront::product-record
+      mobile-shopper:
+        place: customer-mobile::storefront::product-record
+  - text: The Product validates current stock
+    kind: product
+    contexts:
+      web-shopper:
+        place: customer-web::storefront::product-record
+      mobile-shopper:
+        place: customer-mobile::storefront::product-record
+  - text: The Product rejects checkout before charging payment
+    kind: product
+    contexts:
+      web-shopper:
+        place: customer-web::storefront::product-record
+      mobile-shopper:
+        place: customer-mobile::storefront::product-record
 references:
   - kind: code
     role: implementation
     target: src/services/orders.ts#OrderService.submit
 ---
 
-# Guest completes checkout
+# Reject checkout with unavailable stock
 
 ## Trigger
 
-Guest presses "Place order" with a non-empty cart.
+A shopper submits a cart containing an unavailable product.
 
-## Steps
+## Outcome
 
-1. System validates cart stock
-2. Payment intent is created
-3. Order is persisted
+No order is created, the cart is retained, and the unavailable item is
+identified.
+```
+
+`kind` must exist in `taxonomies.yaml`. The containing Capability directory
+names the Scenario's one parent; no `capability` field is authored. `routes`
+and `steps` are non-empty. Capability Scenario availability, Actors, Screens,
+Experiences, and Interfaces are derived from its Step Contexts.
+
+A Capability Scenario cannot declare `journey`, `result`, `actors`, or
+`availability`. Business Rules own its Rule relations, so it does not duplicate
+Rule IDs.
+
+### Scenario sections
+
+Both Scenario types have no lead prose and require non-empty `## Trigger` and
+`## Outcome` sections. Both require structured frontmatter `routes` and `steps`
+and cannot author a Markdown `## Steps` section. `## Edge cases` is an optional
+non-empty bullet list whose items are also single-line.
+
+Each Scenario route is one named supported traversal of Contexts through
+an unchanged Scenario. `routes` maps a lowercase kebab-case route id to a
+unique, non-empty, human-readable name. A route changes only where the same
+Steps occur. If Trigger, ordered Step text, Step kind, responsible Actor,
+Capability sequence, Decision behavior, Outcome, or Journey result changes,
+author another Scenario instead.
+
+Every Step is a mapping with required single-line `text` and `kind`. `kind` is
+`actor`, `product`, or `condition`. An `actor` Step requires exactly one
+existing `actor`; `product` and `condition` Steps forbid `actor`. Product-side
+behavior uses `product`; a fact, state, prerequisite, or seam nobody performs
+uses `condition`. Each Scenario needs at least one `actor` Step. Its Actor set
+is derived from those Steps rather than authored on the Scenario.
+
+A Step may author `contexts`, mapping every declared route id to exactly one
+strict Context object. Its `place` is the most-specific Interface, Experience,
+or Screen where that Step occurs. When an Interface or Experience owns Screens,
+the place must name a Screen; otherwise it names the leaf Experience or
+Interface. A Step either maps every route or omits `contexts` completely when
+it is shared by all routes and has no specific Context. Every route must have a
+Context on at least one Step.
+
+Two routes cannot repeat the same place sequence. A place change between
+consecutive contextualized Steps is an explicit transition, including
+Screen-to-Screen movement inside one Experience. Step Contexts own Scenario
+participation; Screens do not duplicate Scenario ids.
+
+`## Decision points` is optional. Each decision uses an H3 title, a non-empty
+question paragraph, then at least two bullet branches. Each branch uses
+`condition → outcome` with the Unicode arrow or `condition -> outcome` with
+ASCII characters. Its branches stay within and converge on that Scenario's one
+observable outcome. A branch with a materially different outcome belongs in a
+separate Scenario of the same type. Decision points remain embedded rather than
+becoming standalone entities.
+
+### `journeys/<journey-id>/scenarios/<id>.md` or `<id>/journey-scenario.md`
+
+A Journey Scenario is one concrete end-to-end variation of exactly one Journey.
+It begins with the Journey Actor's Goal and ends with that goal achieved or not
+achieved. It verifies Capability composition and Context transitions
+rather than replacing local Capability Scenarios.
+
+```markdown
+---
+kind: primary
+result: achieved
+routes:
+  web-shopper: Web shopper
+  mobile-shopper: Mobile shopper
+steps:
+  - text: The shopper finds an available product in the catalog
+    kind: actor
+    actor: shopper
+    capability: catalog-browsing
+    contexts:
+      web-shopper:
+        place: customer-web::storefront::product-record
+      mobile-shopper:
+        place: customer-mobile::storefront::product-record
+  - text: The shopper adds the product to the cart and submits checkout
+    kind: actor
+    actor: shopper
+    capability: checkout
+    contexts:
+      web-shopper:
+        place: customer-web::storefront::product-record
+      mobile-shopper:
+        place: customer-mobile::storefront::product-record
+  - text: The Product validates stock and charges payment
+    kind: product
+  - text: The Product persists and confirms the order
+    kind: product
+references:
+  - kind: code
+    role: implementation
+    target: src/services/orders.ts#OrderService.submit
+---
+
+# Browse and complete checkout
+
+## Trigger
+
+The shopper wants to find and purchase an available product.
 
 ## Decision points
 
@@ -531,20 +1025,41 @@ Order is stored and a confirmation is shown.
 - Receipt delivery unavailable → order remains confirmed and the receipt is available in the account
 ```
 
-`kind` must exist in `taxonomies.yaml`. `availability` is optional and, when
-present, must be a subset of the parent Journey's pairs; omission means the
-Scenario applies to every Journey pair. Business Rules own Scenario scope, so
-Scenarios do not duplicate Rule IDs. `## Trigger` and `## Outcome` are
-paragraphs, `## Steps` is an ordered list (≥1 item), and `## Edge cases` is an
-optional bullet list.
+`kind` must exist in `taxonomies.yaml`. The containing Journey directory names
+the Scenario's one parent; no `journey` field is authored. `result` is
+`achieved` or `not-achieved`. `kind` classifies the nature
+of the variation while `result` records its terminal Journey-goal outcome; they
+are orthogonal. `routes` and `steps` are non-empty. At least one `actor` Step
+must name an Actor from the Journey. Each route's first Actor-owned placed Step
+must name a Journey Actor supported by that Context.
 
-`## Decision points` is optional. Each decision uses an H3 title, a non-empty
-question paragraph, then at least two bullet branches. Each branch uses
-`condition → outcome` with the Unicode arrow or `condition -> outcome` with
-ASCII characters. Its branches stay within and converge on the Scenario's one
-observable outcome. A branch with a materially different outcome belongs in a
-separate Scenario. Decision points are embedded in the Scenario report entity,
-not promoted to standalone files. `journeyId` is derived from the path.
+A Journey Step may name exactly one existing `capability`, independently of its
+Step kind. A capability-bearing Context must be contained by an availability
+Context declared by that Capability; a Screen place must additionally expose
+it. A Journey Step without a Capability can still name Contexts when an observable condition or
+Product behavior occurs somewhere without claiming another Capability.
+
+The Journey Scenario owns the complete ordered path. Capability-bearing steps
+may repeat or stop; unqualified steps make conditions, transitions, and
+Product-side behavior first-class without claiming another Capability. An
+achieved Journey Scenario must use at least two distinct Capabilities. A
+not-achieved Journey Scenario may stop after one Capability, but its Outcome
+must state the Journey-level reason the goal was not achieved.
+
+Steps reference Capabilities, never Capability Scenarios. A Capability is
+durable while its Scenarios split and merge as local behavior is refined, so a
+local refinement never rewrites every Journey path that uses the ability. A
+local permission, validation, conflict, or failure contract remains a separate
+Capability Scenario when it is independently observable; the Journey Scenario
+states its own end-to-end consequence for the Goal.
+
+The path is linear. A Decision point may vary detail while preserving the same
+Steps and terminal Outcome. A branch that changes either belongs in another
+Journey Scenario. Add a named route when only Context places change. Split
+Journey Scenarios when the Step sequence, Actor responsibility, Capability
+sequence, observable behavior, or Journey-level Outcome changes. Journey
+Scenarios cannot declare `actors` or `availability`. Business Rules own Scenario
+applicability, so Journey Scenarios do not duplicate Rule IDs.
 
 ### `coverage.md`
 
@@ -569,114 +1084,29 @@ Summary, not Coverage. Coverage has no reference counts and is never inferred
 from `references`. The linter checks authored entities and relationships; it
 does not compile, publish, or semantically verify the model.
 
+Coverage accepts one H1 and its lead rationale only. It has no H2 sections;
+put structured assessment data in the defined frontmatter fields.
+
 `status` describes **model breadth**, never implementation or verification:
 
 - `draft` — the model itself is still being authored or reviewed.
 - `partial` — the model is useful and has known unmapped areas.
-- `complete` — the intended product scope is modeled.
+- `complete` — the intended product breadth is modeled.
+
+A complete model has at least one Capability. Every Capability availability
+Context is selected by at least one Capability Scenario, and every
+Journey Actor appears in at least one achieved Journey Scenario. Draft and
+partial models warn for uncovered Capability Contexts; public Blueprints require
+the same complete behavioral coverage regardless of Coverage status.
 
 All three statuses may be exported. A complete model may describe planned,
 implemented, or mixed behavior and may contain zero references. Proposing it as a
 catalog Blueprint is a separate, explicit action; public listing remains an
 administrator decision.
 
-## Generated files
+## Serialization
 
-- `cache/build.json` — metadata for the most recent portable build.
-- `build/report.json` — portable Product Report v7 generated by
-  `blueprint export`.
-
-The map inventory is emitted to stdout and writes no cache file. All of
-`build/` and `cache/` are gitignored by model-creation workflows. Generated
-files are derived artifacts and must not be edited or committed.
-
-## Portable report and expansion
-
-`build/report.json` is a Product Report with `schemaVersion: "7.0.0"`. It
-contains the product entities, relationships, intent, portable references,
-supporting content, identity, attribution, entity counts, and coverage needed
-to reconstruct the model. Its top-level `summary` is the short Product
-description; its top-level `counts` object contains entity totals.
-
-Compilation produces a `workspace` reference profile. As written by
-`blueprint export`, a report carries the **portable** reference profile: it
-removes every `kind: code` reference, every `role: implementation` reference,
-every repository-relative reference, every repository-relative entry point,
-and `coverage.sourceAreas`. It also contains no repository URL, branch, commit,
-catalog listing state, pricing, or entitlement data. A report that has been
-through `export` is a Blueprint.
-
-The report schema accepts only content that can expand into canonical entity
-Markdown: titles and list items are single-line, required descriptions and
-behavior sections are non-empty, availability pairs and other
-relationships resolve to existing entities, and Interface/Capability
-consistency holds. Product Report v7 is the only accepted report version.
-No report profile requires a reference. Present references remain subject to
-the same strict shape and target rules.
-
-### Portable projection
-
-Several report fields name the origin repository rather than the product. That
-navigation is useful inside its repository but must not be published. Every
-report proposed or served as a public catalog Blueprint is first passed through
-one shared projection:
-
-```ts
-import { projectPortableReport } from 'businesslens/report'
-
-serve(projectPortableReport(report))
-```
-
-| Field | Delivered report |
-| --- | --- |
-| `references` | only HTTP(S) intent/context references kept |
-| `entryPoints` | repository paths and `file:` URLs dropped; routes, HTTP(S) URLs, non-file mobile deep links, and commands kept |
-| `coverage.sourceAreas` | emptied |
-| `referenceProfile` | set to `portable` |
-
-Relative POSIX paths, Windows paths, UNC paths, local `file:` URLs, and
-recognizable absolute filesystem paths are repository-origin metadata. A rooted
-entry point such as `/checkout` is a product route and is kept. An absolute URI
-with a non-file scheme such as `acme-shop://products/42` is a product deep link
-and is also kept. Repository-relative references are dropped. HTTP(S)
-intent/context references are kept. A value with no path separator at all,
-such as a CLI entry point, is not a path and is kept.
-
-Author-written prose — `method`, `unmapped`, `limitations`, `rationale`,
-`intent`, and `supportingContent` — is never rewritten. It carries product
-meaning and belongs to the author, so keep repository internals out of it.
-
-The projection is idempotent and does not mutate its input. Because both the
-framework and the catalog apply this same exported function, contributors and
-the server cannot disagree about what a delivered report exposes.
-`validateProductReport` rejects a report that declares `referenceProfile:
-portable` while still carrying a code reference, implementation reference,
-repository-relative reference, or Coverage source area.
-
-`blueprint export` writes the portable report. Contribution applies
-the same idempotent projection before opening a public pull request. `open` and
-`pull` project imported content to the portable profile before expansion, so
-source navigation is never transplanted into the receiving repository.
-
-The inverse command is:
-
-```bash
-npx businesslens blueprint open ./report.json
-```
-
-`open` validates the report and expands it into canonical Markdown/YAML under
-`.businesslens/`. `npx businesslens blueprint pull <blueprint-slug>` anonymously
-retrieves the current public Blueprint for that catalog slug and invokes the
-same expansion path without saving a user-facing report download.
-
-Both commands refuse a non-empty target by default. The semantic round-trip
-guarantee is:
-
-```text
-report A → blueprint open → .businesslens/ → blueprint export → report B
-```
-
-After normalizing `generatedAt` and generator version, A and B describe the
-same product. Original whitespace, comments, YAML key order, and formatting are
-not preserved. Local linked SDD files are referenced but never created or
-overwritten by `open`.
+`build/` and `cache/` hold generated artifacts, and the Product Report that
+`blueprint export` writes into them is defined by [`report.md`](./report.md) —
+including the portable projection, the validation the report schema applies on
+top of the rules above, and the `open`/`pull` expansion round trip.

@@ -1,7 +1,7 @@
 scenarioKinds:
   - id: primary
     name: Primary
-    description: Expected path through a user goal.
+    description: Expected observable behavior path.
     colorSlot: 1
   - id: edge
     name: Edge case

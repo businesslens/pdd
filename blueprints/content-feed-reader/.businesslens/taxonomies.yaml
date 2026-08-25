@@ -1,25 +1,13 @@
 scenarioKinds:
-  - id: conflict
-    name: Conflict
-    description: Two valid intentions collide and the product must resolve them predictably.
-    colorSlot: 4
-  - id: edge
-    name: Edge case
-    description: An uncommon but expected path worth stating explicitly.
-    colorSlot: 6
-  - id: external-failure
-    name: External failure
-    description: An outside system is unavailable, slow, or malformed.
-    colorSlot: 5
-  - id: permission
-    name: Permission
-    description: An actor attempts something their relationship to the entity does not allow.
-    colorSlot: 2
   - id: primary
     name: Primary
-    description: The expected path through a user goal.
+    description: The expected observable behavior path.
     colorSlot: 1
+  - id: edge
+    name: Edge case
+    description: An uncommon but expected path with a distinct observable outcome.
+    colorSlot: 6
   - id: validation
     name: Validation
-    description: Input the product refuses, with the reader's work preserved.
+    description: Input the Product refuses while preserving the Actor's work.
     colorSlot: 3

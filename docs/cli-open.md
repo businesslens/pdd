@@ -3,13 +3,13 @@ title: blueprint open
 description: Expand a local Product Report into a canonical Product Model.
 section: open-source
 group: CLI
-order: 33
+order: 32
 ---
 
 # `businesslens blueprint open`
 
-Parse and validate a Product Report v7, apply the portable projection, then
-expand it into a canonical schema 3 `.businesslens/` directory:
+Parse and validate a Product Report v10, apply the portable projection, then
+expand it into a canonical folder schema 6 `.businesslens/` directory:
 
 ```bash
 npx businesslens blueprint open ./report.json
@@ -41,9 +41,11 @@ model is written into `./new-product`.
 ## Imported navigation
 
 `open` uses the same [portable projection](./cli-export.md#portable-export) as
-`export`. Product behavior, relationships, exact availability, supporting
-content, Product routes, commands, non-file deep links, and portable References
-are preserved. Repository-specific navigation is removed.
+`export`. Product behavior, relationships, availability Contexts, Capability
+Scenarios, goal-focused Journeys, annotated Journey Scenario Steps, derived Journey
+Capability projections, structured supporting sections, Product routes,
+commands, non-file deep links, and portable References are preserved.
+Repository-specific navigation is removed.
 
 Coverage status, unmapped Product areas, and limitations are preserved. The
 expanded model records that implementation alignment must be verified in its

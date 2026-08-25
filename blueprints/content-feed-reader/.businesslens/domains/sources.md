@@ -1,9 +1,13 @@
 ---
-colorSlot: 2
+colorSlot: 1
 ---
 
 # Sources
 
-The feeds a reader follows and the product's relationship with them: adding one,
-fetching from it on a schedule, recording whether it is healthy, and keeping the
-library intact when it is not.
+The supported source lifecycle: which feeds a Reader follows and how their new
+items enter the private library without erasing durable history.
+
+## Boundary
+
+Owns which feeds a Reader follows and how their items enter the library. It does
+not own reading state, saved items, or collection membership.

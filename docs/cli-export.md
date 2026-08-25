@@ -3,12 +3,12 @@ title: blueprint export
 description: Compile a Product Model into a portable Product Report that can move safely between repositories.
 section: open-source
 group: CLI
-order: 32
+order: 31
 ---
 
 # `businesslens blueprint export`
 
-Compile schema 3 `.businesslens/` into a portable Product Report v7:
+Compile folder schema 6 `.businesslens/` into a portable Product Report v10:
 
 ```bash
 npx businesslens blueprint export
@@ -35,6 +35,11 @@ not travel with the Product contract:
 `export` lints before it compiles. A model with lint errors does not produce a
 report. See [Coverage](./product-model.md#coverage) and
 [References](./references.md) for those contracts.
+
+Product and entity records carry unrecognized authored H2 sections as ordered
+`supportingSections` records with separate `heading` and `content` fields. The
+report never flattens them into an opaque Markdown string, so `blueprint open`
+can restore the same section boundaries.
 
 ## Where it lands
 

@@ -46,15 +46,24 @@ Read before authoring:
 5. Trace observable behavior end to end. Treat tests and docs as leads; confirm
    claims in implementation. Do not infer permissions, guarantees, or live
    operational state from names.
-6. Draft Actors, Interfaces, Experiences, optional Product Screens and Domains,
-   Capabilities, Business Rules, Journeys, Scenarios, exact availability, and
-   coverage. Repository deployables, routes, commands, APIs, and integrations
+6. Draft Actors, Interfaces, optional Experiences, Product Screens and Domains,
+   Capabilities, Capability Scenarios, Business Rules, optional Journeys and
+   their Journey Scenarios, availability Contexts, and coverage. Give every
+   mapped Capability evidence-backed per-Capability acceptance. Create a Journey only
+   for a stable goal whose achieved path crosses at least two Capabilities; do
+   not wrap a single Capability in a Journey. Give every Journey an achieved
+   Journey Scenario whose ordered typed Steps annotate responsible Actors and
+   locally identified Capabilities, with named routes placed through
+   most-specific Contexts. Repository deployables, routes,
+   commands, APIs, and integrations
    are evidence, not automatic Interfaces. Create an Interface only for a
    supported Product interaction contract, and do not infer cross-Interface
    parity from shared implementation. Apply the Experience creation test: a
    coherent Actor context, stable access and capability boundary, meaning beyond
-   current navigation, and independently meaningful Interface availability. A Screen
-   is warranted only for a stable user-visible product view; do not turn every
+   current navigation, and independently meaningful availability. If
+   an Interface has no meaningful contexts, omit Experiences for it and use
+   direct Interface availability. A Screen is warranted only for a stable
+   user-visible product view; do not turn every
    route, component, viewport, or visual variant into one. Preserve valid
    existing meaning in a scoped expansion. Add optional `references` only when
    they help: implementation References for established artifacts and context
@@ -68,7 +77,7 @@ Read before authoring:
    and `.gitignore`. Set coverage by model breadth:
    - `draft` while the model itself still needs author review;
    - `partial` when useful but known areas remain unmapped;
-   - `complete` only when the intended product scope is modeled.
+   - `complete` only when the intended product breadth is modeled.
 9. Run the bundled linter outside the untrusted target:
 
    ```bash

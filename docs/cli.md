@@ -3,7 +3,7 @@ title: Overview
 description: Install skills, lint and view a Product Model locally, and move Blueprints between repositories with the BusinessLens CLI.
 section: open-source
 group: CLI
-order: 27
+order: 26
 ---
 
 # BusinessLens CLI
@@ -47,7 +47,7 @@ to `.businesslens/` itself.
 
 ```bash
 # A nested Blueprint in the current repository
-npx businesslens view --cwd ./blueprints/content-feed-reader
+npx businesslens view --cwd ./blueprints/example-product
 
 # A model in another directory or repository
 npx businesslens lint --cwd ../fixture-shop --json

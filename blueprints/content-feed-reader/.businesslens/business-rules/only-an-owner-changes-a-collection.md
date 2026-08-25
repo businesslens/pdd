@@ -1,24 +1,24 @@
 ---
-domains:
-  - curation
-  - sharing
-capabilities:
-  - collection-sharing
-  - collections
+appliesTo:
+  - type: capability
+    id: collection-creation
+  - type: capability
+    id: collection-naming
+  - type: capability
+    id: collection-organization
+  - type: capability
+    id: collection-publication
+  - type: journey
+    id: save-and-organize
+  - type: journey
+    id: publish-and-share-a-collection
 ---
 
-# Only the owner changes a collection
+# Only an owner changes a collection
 
-A collection's contents, name, description, and visibility change only through
-the reader who created it.
-
-## Intent
-
-A subscriber is watching someone's curation. If anyone else could change it, the
-thing they subscribed to would not be that person's judgment any more.
+Only the Reader who created a collection can change its contents, order, name,
+or publication state.
 
 ## Rationale
 
-Everyone else — subscribers, visitors, and readers who merely hold the link — has
-read access and nothing more. Stating it as one rule keeps the same boundary from
-having to be rediscovered separately on every surface a collection appears on.
+A public link grants read access, never collaboration or ownership.

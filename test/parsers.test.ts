@@ -3,7 +3,7 @@ import { formatCodeTarget, parseCodeTarget } from '../src/core/coderefs.js'
 import { entryPointsField, referencesField, repositoryReferencePath, splitFrontmatter } from '../src/core/frontmatter.js'
 import { isId, slugify, stem } from '../src/core/ids.js'
 import {
-  bulletList, decisionPoints, orderedList, parseMarkdown, screenStates, section, supportingContent
+  bulletList, decisionPoints, orderedList, parseMarkdown, screenStates, section, supportingSections
 } from '../src/core/markdown.js'
 
 describe('ids', () => {
@@ -76,13 +76,15 @@ describe('frontmatter', () => {
   it('accepts typed references and validates targets', () => {
     const issues: string[] = []
     const references = referencesField({ references: [
+      { kind: 'prd', role: 'intent', target: 'docs/prds/checkout.md', title: 'Checkout PRD' },
       { kind: 'visual', role: 'intent', target: 'docs/ui/screen.png#empty', title: 'Empty state' },
       { kind: 'research', role: 'context', target: 'https://example.com/research' },
       { kind: 'code', role: 'implementation', target: 'src/screen.ts#render' }
     ] }, issues, 't')
-    expect(references).toHaveLength(3)
-    expect(repositoryReferencePath(references[0]!)).toBe('docs/ui/screen.png')
-    expect(repositoryReferencePath(references[2]!)).toBe('src/screen.ts')
+    expect(references).toHaveLength(4)
+    expect(repositoryReferencePath(references[0]!)).toBe('docs/prds/checkout.md')
+    expect(repositoryReferencePath(references[1]!)).toBe('docs/ui/screen.png')
+    expect(repositoryReferencePath(references[3]!)).toBe('src/screen.ts')
     expect(issues).toEqual([])
 
     const unsafe: string[] = []
@@ -141,7 +143,9 @@ describe('markdown', () => {
       ]
     }])
     expect(issues).toEqual([])
-    expect(supportingContent(withDecision, ['Decision points'])).toBe('## Notes\n\nKeep this context.')
+    expect(supportingSections(withDecision, ['Decision points'])).toEqual([
+      { heading: 'Notes', content: 'Keep this context.' }
+    ])
   })
   it('parses embedded Screen product states', () => {
     const body = '### Available\n\nThe item can be selected.\n\n### Unavailable\n\nThe reason is shown.'

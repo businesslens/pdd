@@ -147,11 +147,11 @@ async function request(method, path, body) {
 const payloads = []
 for (const slug of slugs) {
   const dir = join(blueprintsDir, slug)
-  const logoFile = join(dir, '.businesslens', 'logo.svg')
-  if (!existsSync(logoFile)) fail(`blueprints/${slug}: .businesslens/logo.svg is required`)
+  const logoFile = join(dir, '.businesslens', 'product', 'logo.svg')
+  if (!existsSync(logoFile)) fail(`blueprints/${slug}: .businesslens/product/logo.svg is required`)
   const logoStat = await lstat(logoFile)
   if (logoStat.isSymbolicLink() || !logoStat.isFile()) {
-    fail(`blueprints/${slug}: .businesslens/logo.svg must be a regular file`)
+    fail(`blueprints/${slug}: .businesslens/product/logo.svg must be a regular file`)
   }
   const logoIssues = validateProductLogo(await readFile(logoFile))
   if (logoIssues.length) fail(`blueprints/${slug}: ${logoIssues.join('; ')}`)

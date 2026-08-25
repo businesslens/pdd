@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" width="640" height="400">
+  <title>Unread library — intended layout</title>
+  <desc>Source rail on the left, unread item list on the right, with per-item read and save actions.</desc>
+  <rect x="0" y="0" width="640" height="400" rx="10" fill="#0f1216" />
+  <rect x="16" y="16" width="160" height="368" rx="8" fill="#171b21" />
+  <rect x="30" y="34" width="96" height="10" rx="5" fill="#3d4650" />
+  <rect x="30" y="64" width="120" height="8" rx="4" fill="#2a313a" />
+  <rect x="30" y="86" width="104" height="8" rx="4" fill="#2a313a" />
+  <rect x="30" y="108" width="116" height="8" rx="4" fill="#2a313a" />
+  <rect x="30" y="130" width="92" height="8" rx="4" fill="#2a313a" />
+  <rect x="192" y="16" width="432" height="368" rx="8" fill="#171b21" />
+  <rect x="208" y="34" width="140" height="10" rx="5" fill="#3d4650" />
+  <g fill="#20262e">
+    <rect x="208" y="64" width="400" height="66" rx="6" />
+    <rect x="208" y="142" width="400" height="66" rx="6" />
+    <rect x="208" y="220" width="400" height="66" rx="6" />
+    <rect x="208" y="298" width="400" height="66" rx="6" />
+  </g>
+  <g fill="#39424d">
+    <rect x="222" y="78" width="260" height="9" rx="4.5" />
+    <rect x="222" y="98" width="180" height="7" rx="3.5" />
+    <rect x="222" y="156" width="300" height="9" rx="4.5" />
+    <rect x="222" y="176" width="164" height="7" rx="3.5" />
+    <rect x="222" y="234" width="238" height="9" rx="4.5" />
+    <rect x="222" y="254" width="196" height="7" rx="3.5" />
+    <rect x="222" y="312" width="286" height="9" rx="4.5" />
+    <rect x="222" y="332" width="150" height="7" rx="3.5" />
+  </g>
+  <g fill="#4b93f7">
+    <circle cx="586" cy="88" r="7" />
+    <circle cx="586" cy="166" r="7" />
+  </g>
+  <g fill="#2a313a">
+    <circle cx="586" cy="244" r="7" />
+    <circle cx="586" cy="322" r="7" />
+  </g>
+</svg>

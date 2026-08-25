@@ -1,8 +1,7 @@
 ---
-domains: [ordering]
-capabilities: [order-management]
-journeys: [manage-orders]
-scenarios: [refund-order]
+appliesTo:
+  - type: capability-scenario
+    id: refund-order
 references:
   - kind: code
     role: implementation

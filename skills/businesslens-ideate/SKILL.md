@@ -45,21 +45,26 @@ Read before authoring:
    - quick: a small, specific change; ask at most three batched decision
      questions;
    - thorough: blank slate, vague, or cross-cutting; cover why, Actors,
-     Interfaces, Experiences, optional Product Screens and Domains,
-     Capabilities, Rules, Journeys, exact availability, Scenario paths,
-     decisions, removals, and definition of done.
+     Interfaces, optional Experiences, Product Screens and Domains,
+     Capabilities, Capability Scenarios, Rules, optional Journeys and Journey
+     Scenarios, availability Contexts, decisions, removals, and definition of done.
 
    Propose concrete wording so the user corrects drafts rather than dictating
    schema. Make supported web/mobile/CLI/API/integration Interfaces an explicit
    Product decision; do not treat technologies or internal APIs as Interfaces.
-   Apply the Experience creation test and distinguish durable Capabilities from
-   complete Actor goals.
+   Apply the Experience creation test. Omit Experiences and use direct
+   Interface availability when an Interface is already one coherent context.
+   Distinguish durable Capabilities from complete Actor goals. Give every
+   Capability per-Capability acceptance. Create a Journey only when an achieved
+   goal path crosses at least two distinct Capabilities; define its Scenario as
+   one ordered typed Steps list, annotating responsible Actors and Capabilities
+   while named routes select most-specific Context places.
 8. In resolution mode, do not reopen broad ideation. Use the supplied finding,
    inspected files, and authority decision to draft the smallest exact model
    delta that makes the intended behavior unambiguous.
 9. Present the complete model delta before writing: every entity added,
-   changed, or removed; acceptance scenarios; relationship repairs; limitations;
-   and implementation work implied. Get explicit approval.
+   changed, or removed; Capability and Journey acceptance Scenarios;
+   relationship repairs; limitations; and implementation work implied. Get explicit approval.
 10. After approval, write only inside `.businesslens/`:
     - blank slate: create the complete layout, canonical README, `.gitignore`,
       taxonomies, product, coverage, and all approved entities;
@@ -91,8 +96,9 @@ Read before authoring:
   by a verification handoff.
 - Keep model prose at product altitude; do not invent stacks, endpoints,
   schemas, or filenames.
-- Treat availability as intended Product scope. State exact
-  Interface–Experience pairs and never use them as implementation status.
+- Treat availability as intended Product meaning. Author Contexts whose places
+  are an undivided Interface or an Experience, and never use them as
+  implementation status.
 - Model a Screen only when a stable user-visible product view clarifies intended
   information, actions, meaningful states, or boundaries. Do not design
   components, layouts, themes, responsive variants, or screenshot workflows.

@@ -1,20 +1,36 @@
-# BusinessLens Nuxt Layers
+# BusinessLens Product Report
 
-The OSS Product Report v7 renderer and BusinessLens-wide Nuxt theme used by
-`businesslens view` and the public BusinessLens site. Both are exported from
-the single `businesslens` npm package.
+The stable Product Report v10 renderer used by `businesslens view` and exported
+from the `businesslens` package. It projects the complete portable report into
+an entity-first experience: a flat rail of entity kinds, a collection surface
+per kind, a page for every entity, search, and named topology views.
 
-The supplied report is the sole source of Product identity, title, summary,
-description, category, tags, authors, license, statistics, and body content.
-The separate `logoSrc` prop resolves the Product's `.businesslens/logo.svg`:
-the localhost host serves it from disk and catalog hosts resolve it from source
-provenance. The shared `BusinessLensProductLogo` component renders a packaged,
-neutral placeholder when no source was supplied or the source cannot load.
-Hosts may add navigation, actions, or provenance around the
-component, but the renderer intentionally offers no Product-presentation
-override that could make a catalog view disagree with the report it delivers.
+A collection row, relation, search result, or topology entity opens the entity
+page directly. The page is the one reading container: it has a URL, a
+breadcrumb, the authored body at full width, and browser back navigation.
+Overview contains identity facts, authored detail, Contexts, relations,
+supporting material, and References. Capability and Journey pages add Scenarios
+as their only second tab; a Scenario URL opens that parent page with the
+Scenario selected. Neighbourhood opens the named Topology surface.
 
-Extend the report layer from a Nuxt application:
+Authored Capability Context has one dedicated Overview reading instead of being
+repeated as an entity fact. Derived Journey and Scenario Contexts stay with
+their concrete routes, Screen placement stays in identity, contextual Rule
+selectors stay with applicability, and a Journey shows only its typed starting
+places. Raw entry-point routes remain report data but are omitted from the
+human Product Report.
+
+The report is the sole source of Product identity and content. The separate
+`logoSrc` prop resolves the Product's optional
+`.businesslens/product/logo.svg`; the shared `BusinessLensProductLogo`
+component falls back to a packaged neutral placeholder. Hosts own navigation
+and actions outside the report.
+
+The layer renders the report and nothing around it. Site chrome — the header,
+the footer, and any brand or legal links — belongs to the host, which already
+has the navigation, routing, and legal context the report does not.
+
+Extend the layer from a Nuxt application:
 
 ```ts
 export default defineNuxtConfig({
@@ -22,40 +38,43 @@ export default defineNuxtConfig({
 })
 ```
 
-Add the sibling BusinessLens theme Layer when the host wants the shared palette,
-typography, semantic Nuxt UI mapping, and global interaction foundation:
+Render the canonical report directly:
 
-```ts
-export default defineNuxtConfig({
-  extends: [
-    'businesslens/nuxt/report-viewer',
-    'businesslens/nuxt/theme'
-  ]
-})
+```vue
+<BusinessLensReportViewer :report="report" :logo-src="logoSrc" />
 ```
 
-The consuming Nuxt project has final authority over configuration and CSS. The
-report-viewer Layer uses semantic Nuxt UI roles and declares no concrete palette.
-It can therefore be consumed without the BusinessLens theme, or styled by a
-different design system. The core registers `@nuxt/ui`; a host that omits the
-optional theme must provide its own Tailwind/Nuxt UI stylesheet and semantic
-color mapping.
+`report` must be a `ProductReportV10` from `businesslens/report`. There is
+no second, lossy public view-model contract.
 
-Because the Layers are optional subpaths of a CLI package, their Nuxt, Vue,
-Nuxt UI, Tailwind, and Fontsource requirements are optional peer dependencies.
-The consuming Nuxt project must install the peers used by the Layers it extends.
+Two navigation facts are bindable, so a host can keep them in its own router
+and give the report deep links, a working back button, and a refresh that lands
+where it left:
 
-The theme is not scoped to the report renderer. It is the stable visual
-foundation for the complete BusinessLens Nuxt host: palette, typography,
-semantic Nuxt UI mapping, selection, scrollbar, and base interaction behavior.
-Host CSS still loads later and can override semantic tokens, palette ramps,
-page backgrounds, or component `ui` slots without changing this package.
-Marketing layout, site chrome, catalog actions, and decorative treatments
-remain in the host application.
-
-The pure report projection used by the renderer is available separately from
-Nuxt:
-
-```ts
-import { projectReportView } from 'businesslens/report/view-model'
+```vue
+<BusinessLensReportViewer
+  v-model:section="section"
+  v-model:entity="entity"
+  :report="report"
+/>
 ```
+
+`section` is `overview`, `topology`, or an entity kind such as
+`capability`. `entity` is the stable key of the open entity page
+(`screen:reader-web::…`), or `null` for the section's collection. A Scenario
+key keeps the parent collection as the section while selecting that Scenario
+inside its parent page.
+
+The Product Report needs a bounded viewport. By default it fills the browser
+height. A host with persistent chrome can set `--businesslens-report-chrome`
+to the chrome height. The bundled local viewer sets it to `4rem` for its
+header.
+
+The report viewer extends the stable BusinessLens theme because the Product
+Report is the canonical BusinessLens report experience. The theme remains a
+separately exported layer for other BusinessLens Nuxt surfaces. Hosts retain
+final authority over configuration and CSS.
+
+Nuxt, Vue, Nuxt UI, Tailwind, Vue Flow, Dagre, icons, and fonts remain optional
+peer dependencies of the CLI package; Nuxt consumers install the UI peers they
+use.

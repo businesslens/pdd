@@ -1,13 +1,13 @@
 import { execFileSync } from 'node:child_process'
-import { cpSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, unlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { buildProject } from '../src/commands/export.js'
 import { loadModel } from '../src/core/model.js'
 import { lintModel } from '../src/commands/lint.js'
 import { lsFiles } from '../src/core/git.js'
-import { ProductReportV7Schema } from '../src/core/portable.js'
+import { ProductReportV10Schema } from '../src/core/portable.js'
 
 const FIXTURE = join(__dirname, 'fixtures', 'fixture-shop')
 
@@ -41,10 +41,10 @@ describe('end to end on a real git repo', () => {
   it('builds a schema-valid source-free report deterministically', () => {
     const first = buildProject(repo)
     const output = JSON.parse(readFileSync(first.outputFile, 'utf8'))
-    const parsed = ProductReportV7Schema.parse(output)
+    const parsed = ProductReportV10Schema.parse(output)
     expect(parsed.id).toBe('fixture-shop')
     expect(parsed).toMatchObject({
-      schemaVersion: '7.0.0',
+      schemaVersion: '10.0.0',
       summary: 'Browse a product catalog, buy products, and manage the resulting orders.',
       category: 'commerce',
       authors: [{ name: 'BusinessLens' }],
@@ -52,33 +52,34 @@ describe('end to end on a real git repo', () => {
     })
     expect(parsed.counts).toEqual({
       actors: 2,
-      interfaces: 3,
-      experiences: 2,
-      screens: 1,
+      interfaces: 4,
+      experiences: 3,
+      screens: 2,
       domains: 2,
       capabilities: 3,
-      journeys: 2,
-      scenarios: 3,
+      capabilityScenarios: 4,
+      journeys: 1,
+      journeyScenarios: 2,
       businessRules: 2
     })
-    expect(parsed.model.journeys[0]!.availability).toEqual([
-      { interfaceId: 'customer-mobile', experienceIds: ['storefront'] },
-      { interfaceId: 'customer-web', experienceIds: ['storefront'] }
-    ])
-    const screen = parsed.model.screens.find(item => item.id === 'product-record')
+    // `capabilityIds` comes from the achieved variation; `order-management`
+    // appears only in the not-achieved one, so it is failure-only.
+    expect(parsed.model.journeys[0]).toMatchObject({
+      capabilityIds: ['catalog-browsing', 'checkout'],
+      failureOnlyCapabilityIds: ['order-management']
+    })
+    const screen = parsed.model.screens.find(item => item.id === 'customer-web::storefront::product-record')
     expect(screen).toMatchObject({
-      availability: [
-        { interfaceId: 'customer-mobile', experienceIds: ['storefront'] },
-        { interfaceId: 'customer-web', experienceIds: ['storefront'] }
-      ],
-      capabilityIds: ['catalog-browsing'],
-      scenarioIds: ['browse-catalog'],
+      capabilityIds: ['catalog-browsing', 'checkout'],
+      capabilityScenarioIds: ['browse-catalog', 'complete-checkout', 'decline-checkout-payment'],
+      journeyScenarioIds: ['browse-and-complete-checkout', 'cancel-an-order-before-fulfilment'],
       information: ['Product name and description', 'Price and availability']
     })
-    expect(screen?.entryPoints.map(point => point.path)).toEqual([
-      '/products/:id',
-      'fixture-shop://products/:id'
+    expect(parsed.model.capabilities.find(item => item.id === 'checkout')?.availability).toEqual([
+      { placeId: 'customer-mobile::storefront' },
+      { placeId: 'customer-web::storefront' }
     ])
+    expect(screen?.entryPoints.map(point => point.path)).toEqual(['/products/:id'])
     expect(screen?.references).toEqual([{
       kind: 'visual',
       role: 'intent',
@@ -95,10 +96,15 @@ describe('end to end on a real git repo', () => {
     expect(references.some(reference => reference.kind === 'code')).toBe(false)
     expect(references.some(reference => reference.role === 'implementation')).toBe(false)
     expect(parsed.coverage.sourceAreas).toEqual([])
-    expect(parsed.model.businessRules.find(rule => rule.id === 'payment-before-confirmation')?.capabilityIds)
-      .toEqual(['checkout'])
-    expect(parsed.model.scenarios.find(scenario => scenario.id === 'complete-checkout')?.decisionPoints)
+    expect(parsed.model.businessRules.find(rule => rule.id === 'payment-before-confirmation')?.appliesTo)
+      .toContainEqual({ type: 'capability', id: 'checkout', contexts: [] })
+    expect(parsed.model.capabilityScenarios.find(scenario => scenario.id === 'complete-checkout')?.decisionPoints)
       .toHaveLength(1)
+    expect(parsed.model.journeyScenarios[0]!.steps.map(step => [step.text, step.capabilityId])).toEqual([
+      ['The shopper finds and selects an available product', 'catalog-browsing'],
+      ['The shopper submits checkout', 'checkout'],
+      ['The Product confirms the paid order', null]
+    ])
     expect(JSON.stringify(parsed)).not.toContain('github.com/example/fixture-shop')
 
     const second = buildProject(repo)
@@ -133,6 +139,7 @@ describe('end to end on a real git repo', () => {
 
   it('build validates untracked authored product-model files without requiring publish provenance', () => {
     const untracked = join(repo, '.businesslens/actors/uncommitted.md')
+    mkdirSync(dirname(untracked), { recursive: true })
     writeFileSync(untracked, `---
 kind: person
 relationship: external
@@ -143,7 +150,7 @@ relationship: external
 A model entity that does not exist at HEAD.
 `)
     expect(buildProject(repo).report.model.actors.some(actor => actor.id === 'uncommitted')).toBe(true)
-    rmSync(untracked)
+    unlinkSync(untracked)
   })
 
   it('refuses to overwrite a generated-output symlink', () => {

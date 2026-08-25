@@ -3,7 +3,7 @@ title: CI/CD
 description: Gate Product Model structure in CI without pretending a deterministic linter can prove semantic agreement.
 section: open-source
 group: Integrations
-order: 22
+order: 21
 ---
 
 # Lint the Product Model in CI
@@ -14,9 +14,11 @@ order: 22
 ```
 
 This catches malformed files, missing required content, broken relationships,
-invalid grammar, and code-reference paths that are not tracked. It is safe and
-deterministic, but it is not a semantic gate: it does not prove symbols, lines,
-runtime behavior, completeness, or model/code agreement.
+invalid grammar, Capability Scenario coverage gaps, invalid Journey evidence or
+Journey Scenario Steps, and code-reference paths that are not tracked.
+It is safe and deterministic, but it is not a semantic gate: it does not prove
+symbols, lines, runtime behavior, the truth of authored Product meaning, or
+model/code agreement.
 
 Run `businesslens-verify` before merge or release when semantic alignment is
 required. The first version intentionally does not persist verification receipts
