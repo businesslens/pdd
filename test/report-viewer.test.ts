@@ -80,15 +80,15 @@ describe('stable Product Report', () => {
   it('renders an Object as its lifecycle, distinct from a Screen\'s own states', () => {
     const workspace = projectReportWorkspace(compileReport(loadModel(FIXTURE), '2026-08-08'))
 
-    const order = workspace.objects.find((item: any) => item.id === 'order')
-    expect(order.kind).toBe('object')
+    const order = workspace.entities.find((item: any) => item.id === 'order')
+    expect(order.kind).toBe('entity')
     expect(order.states.map((state: any) => state.name)).toEqual(['Pending', 'Confirmed', 'Refunded'])
     expect(order.transitions).toEqual([
       { from: 'Pending', to: 'Confirmed' },
       { from: 'Confirmed', to: 'Refunded' }
     ])
     expect(order.domainId).toBe('ordering')
-    expect(workspace.counts.objects).toBe(1)
+    expect(workspace.counts.entities).toBe(1)
 
     // Reachable everywhere a kind is: rail, search, collection, and page.
     expect(workspace.byKey.get(order.key)).toBe(order)

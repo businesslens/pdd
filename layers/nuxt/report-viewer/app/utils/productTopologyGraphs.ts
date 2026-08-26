@@ -421,7 +421,7 @@ export function buildEverything(
     ...workspace.journeys,
     ...workspace.capabilities,
     ...workspace.domains,
-    ...workspace.objects,
+    ...workspace.entities,
     ...workspace.rules
   ]
   const productNode: BlrFlowNode = {

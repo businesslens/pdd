@@ -132,7 +132,7 @@ export function compileReport(
       experiences: model.experiences.length,
       screens: model.screens.length,
       domains: model.domains.length,
-      objects: model.objects.length,
+      entities: model.entities.length,
       capabilities: model.capabilities.length,
       capabilityScenarios: model.capabilityScenarios.length,
       journeys: model.journeys.length,
@@ -199,14 +199,14 @@ export function compileReport(
         ...(domain.colorSlot !== undefined ? { colorSlot: domain.colorSlot } : {}),
         ...elementContent(domain, [], assetBase)
       })),
-      objects: byId(model.objects).map(object => ({
-        id: object.id,
-        title: object.doc.title,
-        description: object.doc.lead,
-        ...(object.domain ? { domainId: object.domain } : {}),
-        states: object.states.map(state => ({ name: state.title, content: state.description })),
-        transitions: object.transitions.map(transition => ({ from: transition.from, to: transition.to })),
-        ...elementContent(object, ['States', 'Transitions'], assetBase)
+      entities: byId(model.entities).map(entity => ({
+        id: entity.id,
+        title: entity.doc.title,
+        description: entity.doc.lead,
+        ...(entity.domain ? { domainId: entity.domain } : {}),
+        states: entity.states.map(state => ({ name: state.title, content: state.description })),
+        transitions: entity.transitions.map(transition => ({ from: transition.from, to: transition.to })),
+        ...elementContent(entity, ['States', 'Transitions'], assetBase)
       })),
       capabilities: byId(model.capabilities).map(capability => ({
         id: capability.id,

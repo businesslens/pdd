@@ -176,7 +176,7 @@ describe('lintModel', () => {
       experiences: 2,
       screens: 2,
       domains: 1,
-      objects: 1,
+      entities: 1,
       capabilities: 3,
       capabilityScenarios: 4,
       journeys: 1,
@@ -249,7 +249,7 @@ An internal system that initiates store operations.
   it('allows Products with no Domains and no Screens', () => {
     const cwd = fixtureCopy()
     rmSync(join(cwd, '.businesslens/domains'), { recursive: true })
-    rmSync(join(cwd, '.businesslens/objects'), { recursive: true })
+    rmSync(join(cwd, '.businesslens/entities'), { recursive: true })
     for (const relative of [
       'interfaces/customer-web/experiences/storefront/screens',
       'interfaces/customer-mobile/experiences/storefront/screens'

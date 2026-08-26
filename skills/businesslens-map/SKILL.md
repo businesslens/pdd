@@ -47,11 +47,11 @@ Read before authoring:
    claims in implementation. Do not infer permissions, guarantees, or live
    operational state from names.
 6. Draft Actors, Interfaces, optional Experiences, Product Screens, Domains and
-   Objects, Capabilities, Capability Scenarios, Business Rules, optional
+   Entities, Capabilities, Capability Scenarios, Business Rules, optional
    Journeys and their Journey Scenarios, availability Contexts, and coverage.
    Name behavioral elements verb-object (`browse-catalog`, never
    `catalog-browsing`) and cross-cutting elements with the bare noun. Create an
-   Object exactly when a thing has two or more named states referenced by two or
+   Entity exactly when a thing has two or more named states referenced by two or
    more Capabilities. Model unattended behavior — a schedule the Product owns, an
    expiry, a retry — as a Scenario whose first Step is a `condition` carrying
    `unattended: true`, availability naming where an Actor observes the outcome. Give every
@@ -82,7 +82,7 @@ Read before authoring:
    **Always end the delta with a `Judgment calls` section**, naming every choice
    that could defensibly have gone the other way, the alternative, and why you
    chose as you did. Capability granularity, whether something warranted an
-   Interface, an Experience, an Object or a Journey, and whether a constraint is
+   Interface, an Experience, an Entity or a Journey, and whether a constraint is
    a Business Rule all belong there. A reviewer can see what the model says but
    not what it omits, so an unstated judgment call is one nobody can challenge —
    which makes the approval a formality rather than a check.

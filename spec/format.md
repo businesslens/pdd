@@ -71,7 +71,7 @@ collection differ:
 | Journey | `journeys/<id>.md` | `journeys/<id>/journey.md` | `scenarios/` |
 | Journey Scenario | `journeys/<journey-id>/scenarios/<id>.md` | `journeys/<journey-id>/scenarios/<id>/journey-scenario.md` | — |
 | Business Rule | `business-rules/<id>.md` | `business-rules/<id>/business-rule.md` | — |
-| Object | `objects/<id>.md` | `objects/<id>/object.md` | — |
+| Entity | `entities/<id>.md` | `entities/<id>/entity.md` | — |
 
 Here `<screen-parent>` is the Interface or Experience folder that contains the
 Screen. A representative model can therefore look like this:
@@ -101,7 +101,7 @@ Screen. A representative model can therefore look like this:
 │
 │   ── subject axis: what it is about ──
 ├── domains/<domain-id>.md                       # optional
-├── objects/<object-id>.md                       # optional
+├── entities/<entity-id>.md                       # optional
 │
 │   ── behavior tree: what the Product does ──
 ├── capabilities/<capability-id>/
@@ -121,7 +121,7 @@ Screen. A representative model can therefore look like this:
 The model has **two hierarchies and two axes**. The Interface → Experience →
 Screen hierarchy says where Actors meet the Product; the Capability → Scenario
 and Journey → Scenario hierarchy says what the Product does. `availability` is
-the join between them. Domain classifies members of both by subject. Object
+the join between them. Domain classifies members of both by subject. Entity
 names what the Product keeps and whose state Actors can observe, and is the
 thing Capabilities act on. Actors and Business Rules attach across everything.
 
@@ -208,11 +208,11 @@ future format revision, but Context is not an arbitrary metadata bag.
   Each segment is lowercase kebab-case, `^[a-z0-9]+(?:-[a-z0-9]+)*$`. Never
   write `id:` in frontmatter — the filesystem is the id authority.
 
-  **Behavioral ids are verb-object; cross-cutting ids are the bare noun.** A
+  **Behavioral ids are verb-entity; cross-cutting ids are the bare noun.** A
   Capability, Capability Scenario, Journey, and Journey Scenario name something
   the Product or an Actor *does*, so their ids begin with a verb:
   `browse-catalog`, not `catalog-browsing`; `manage-orders`, not
-  `order-management`. An Actor, Domain, Object, Interface, Experience, and
+  `order-management`. An Actor, Domain, Entity, Interface, Experience, and
   Screen name something that *is*, so their ids are noun phrases: `shopper`,
   `ordering`, `listing`, `customer-web`.
 
@@ -227,13 +227,13 @@ future format revision, but Context is not an arbitrary metadata bag.
   `lint-product-model`. The concepts matched and the nouns did not, so two
   further rules bind ids to vocabulary the model already declares.
 
-  **A behavioral id's object half names something the model declares.** When the
-  object half is the suffix of an Object, Domain, Interface, Experience, or
+  **A behavioral id's entity half names something the model declares.** When the
+  entity half is the suffix of an Entity, Domain, Interface, Experience, or
   Screen id in the same model, use the declared name — `install-agent-skills`,
   not `install-skills`. `lint` warns otherwise. It only fires where the author
   has declared the fuller term, so it never invents vocabulary.
 
-  **A cross-cutting id never opens with a verb.** Object, Domain, and Business
+  **A cross-cutting id never opens with a verb.** Entity, Domain, and Business
   Rule ids name what something *is* or what must remain true, so they read as
   nouns and assertions rather than commands: `refunds-apply-only-to-existing-orders`,
   not `refund-existing-orders`. A single-segment id such as `order` is a noun by
@@ -670,9 +670,9 @@ asking an author to restate it — a second authority can disagree with the firs
 `domain` is optional and single. A Capability about two subject regions means
 either a `## Boundary` is wrong or the Capability should split.
 
-### `objects/<id>.md` or `objects/<id>/object.md`
+### `entities/<id>.md` or `entities/<id>/entity.md`
 
-An Object is a thing the Product keeps whose state an Actor can observe and act
+An Entity is a thing the Product keeps whose state an Actor can observe and act
 on — an order, a listing, a subscription. It names the Product's nouns, where
 Capabilities name its verbs.
 
@@ -705,7 +705,7 @@ Withdrawn permanently; existing stays are unaffected.
 - Published → Archived
 ```
 
-**An Object exists exactly when a thing has two or more named states referenced
+**An Entity exists exactly when a thing has two or more named states referenced
 by two or more Capabilities.** This is computable, and `lint` decides it: a
 thing whose state only one Capability touches is that Capability's business, and
 a thing with one state has no lifecycle to record. An author never applies a
@@ -714,16 +714,16 @@ prose test to the question.
 `## States` is required and contains at least two H3 state names, each followed
 by non-empty prose. `## Transitions` is required and is a bullet list of
 `from → to` pairs using the Unicode arrow or `->` with ASCII characters. Every
-name on either side must be one of this Object's states. A state no transition
+name on either side must be one of this Entity's states. A state no transition
 reaches, other than the first listed, is a `lint` warning; a terminal state is
 valid and needs no outgoing transition. `domain` is optional and single. H1 =
 name and the lead paragraph = description.
 
-An Object never declares Capabilities, Screens, availability, or Actors.
-Capabilities name the Objects they act on through their own prose, and every
-other Object relation is derived. Object states are the authority for a
+An Entity never declares Capabilities, Screens, availability, or Actors.
+Capabilities name the Entitys they act on through their own prose, and every
+other Entity relation is derived. Entity states are the authority for a
 lifecycle; a Screen's `## Product states` describes what that **view** shows and
-must not restate an Object's lifecycle.
+must not restate an Entity's lifecycle.
 
 ### `capabilities/<id>.md` or `capabilities/<id>/capability.md`
 
@@ -826,7 +826,7 @@ list of typed targets. An element target uses `type` = `capability`,
 `capability-scenario`, `journey`, or `journey-scenario`, requires `id`, and may
 use a non-empty `contexts` list to narrow that target. Without `contexts`, the
 Rule applies to all supported Contexts of the target. A direct Context target
-uses `type: context` plus one nested `context` object instead of `id`:
+uses `type: context` plus one nested `context` entity instead of `id`:
 
 ```yaml
 - type: context

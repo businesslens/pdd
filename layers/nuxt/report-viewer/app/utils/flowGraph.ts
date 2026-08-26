@@ -245,8 +245,8 @@ export function directRelations(workspace: ReportWorkspace, element: AnyElementV
       contexts(element.contexts, element.key)
       break
     }
-    case 'object': {
-      // The Domain is the one relation an Object actually has.
+    case 'entity': {
+      // The Domain is the one relation an Entity actually has.
       if (element.domainId) push(element.key, elementKey('domain', element.domainId), 'in')
       break
     }

@@ -17,7 +17,7 @@ describe('Content Feed Reader teaching Blueprint', () => {
       experiences: 3,
       screens: 8,
       domains: 3,
-      objects: 2,
+      entities: 2,
       capabilities: 10,
       capabilityScenarios: 25,
       journeys: 4,

@@ -164,7 +164,7 @@ const kindCounts = computed<Record<ReportElementKind, number>>(() => ({
   experience: props.workspace.counts.experiences,
   screen: props.workspace.counts.screens,
   domain: props.workspace.counts.domains,
-  object: props.workspace.counts.objects,
+  entity: props.workspace.counts.entities,
   capability: props.workspace.counts.capabilities,
   journey: props.workspace.counts.journeys,
   'capability-scenario': props.workspace.counts.capabilityScenarios,
@@ -635,7 +635,7 @@ const tableColumns = computed<TableColumn<AnyElementView>[]>(() => {
         numberColumn('states', 'States', element => (element as ScreenView).states.length),
         numberColumn('actions', 'Actions', element => (element as ScreenView).actions.length)
       ]
-    case 'object':
+    case 'entity':
       return [...base, relationColumn('domain')]
     case 'domain':
       return [

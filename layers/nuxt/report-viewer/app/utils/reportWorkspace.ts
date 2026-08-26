@@ -19,7 +19,7 @@ import type {
   ReportCoverage,
   ReportDecisionPoint,
   ReportDomain,
-  ReportObject,
+  ReportEntity,
   ReportExperience,
   ReportInterface,
   ReportJourney,
@@ -37,7 +37,7 @@ export type ReportElementKind =
   | 'experience'
   | 'screen'
   | 'domain'
-  | 'object'
+  | 'entity'
   | 'capability'
   | 'journey'
   | 'capability-scenario'
@@ -87,11 +87,11 @@ export const REPORT_ENTITY_KINDS: ElementKindMeta[] = [
   { kind: 'screen', label: 'Screen', plural: 'Screens', icon: 'i-lucide-monitor', slot: 3 },
   { kind: 'domain', label: 'Domain', plural: 'Domains', icon: 'i-lucide-boxes', slot: 4 },
   /*
-    Object shares Domain's slot. Both are axes rather than levels — they classify
+    Entity shares Domain's slot. Both are axes rather than levels — they classify
     the behavior hierarchy instead of sitting inside it — so one hue reads as
     "the thing this is about", and the icon and label carry which axis it is.
   */
-  { kind: 'object', label: 'Object', plural: 'Objects', icon: 'i-lucide-box', slot: 4 },
+  { kind: 'entity', label: 'Entity', plural: 'Entities', icon: 'i-lucide-box', slot: 4 },
   { kind: 'capability', label: 'Capability', plural: 'Capabilities', icon: 'i-lucide-zap', slot: 5 },
   { kind: 'journey', label: 'Journey', plural: 'Journeys', icon: 'i-lucide-route', slot: 6 },
   /*
@@ -244,8 +244,8 @@ export interface DomainView extends ElementBase {
  * authored lifecycle; a Screen's productStates are that view's own states, and
  * the two are never merged.
  */
-export interface ObjectView extends ElementBase {
-  kind: 'object'
+export interface EntityView extends ElementBase {
+  kind: 'entity'
   domainId?: string
   states: Array<{ name: string, content: string }>
   transitions: Array<{ from: string, to: string }>
@@ -353,7 +353,7 @@ export type AnyElementView =
   | ExperienceView
   | ScreenView
   | DomainView
-  | ObjectView
+  | EntityView
   | CapabilityView
   | JourneyView
   | ScenarioView
@@ -385,7 +385,7 @@ export interface WorkspaceCounts {
   experiences: number
   screens: number
   domains: number
-  objects: number
+  entities: number
   capabilities: number
   journeys: number
   capabilityScenarios: number
@@ -421,7 +421,7 @@ export interface ReportWorkspace {
   experiences: ExperienceView[]
   screens: ScreenView[]
   domains: DomainView[]
-  objects: ObjectView[]
+  entities: EntityView[]
   capabilities: CapabilityView[]
   journeys: JourneyView[]
   capabilityScenarios: ScenarioView[]
@@ -860,25 +860,25 @@ export function projectReportWorkspace(report: ProductReportV11): ReportWorkspac
     }
   })
 
-  const objects: ObjectView[] = model.objects.map((object: ReportObject) => ({
-    key: elementKey('object', object.id),
-    id: object.id,
-    kind: 'object' as const,
-    title: object.title,
-    lead: object.description,
-    intent: object.intent,
-    supportingContent: supportingMarkdown(object.supportingSections),
-    references: object.references,
-    domainId: object.domainId,
-    states: object.states.map(state => ({ name: state.name, content: state.content })),
+  const entities: EntityView[] = model.entities.map((entity: ReportEntity) => ({
+    key: elementKey('entity', entity.id),
+    id: entity.id,
+    kind: 'entity' as const,
+    title: entity.title,
+    lead: entity.description,
+    intent: entity.intent,
+    supportingContent: supportingMarkdown(entity.supportingSections),
+    references: entity.references,
+    domainId: entity.domainId,
+    states: entity.states.map(state => ({ name: state.name, content: state.content })),
     /*
-     * States and transitions, and the Domain. No Capability relation: an Object
-     * declares none, and the format says a Capability names the Objects it acts
+     * States and transitions, and the Domain. No Capability relation: an Entity
+     * declares none, and the format says a Capability names the Entities it acts
      * on *in prose*, so there is no structured edge to derive. Deriving one
      * through the shared Domain looked like a relation and was not — it read
-     * empty for a product-wide Object and over-claimed for a scoped one.
+     * empty for a product-wide Entity and over-claimed for a scoped one.
      */
-    transitions: object.transitions.map(transition => ({ from: transition.from, to: transition.to }))
+    transitions: entity.transitions.map(transition => ({ from: transition.from, to: transition.to }))
   }))
 
   const domains: DomainView[] = model.domains.map((domain: ReportDomain) => {
@@ -1081,7 +1081,7 @@ export function projectReportWorkspace(report: ProductReportV11): ReportWorkspac
     ...experiences,
     ...screens,
     ...domains,
-    ...objects,
+    ...entities,
     ...capabilities,
     ...journeys,
     ...scenarios,
@@ -1137,7 +1137,7 @@ export function projectReportWorkspace(report: ProductReportV11): ReportWorkspac
     experiences: model.experiences.length,
     screens: model.screens.length,
     domains: model.domains.length,
-    objects: model.objects.length,
+    entities: model.entities.length,
     capabilities: model.capabilities.length,
     journeys: model.journeys.length,
     capabilityScenarios: model.capabilityScenarios.length,
@@ -1222,7 +1222,7 @@ export function projectReportWorkspace(report: ProductReportV11): ReportWorkspac
     experiences,
     screens,
     domains,
-    objects,
+    entities,
     capabilities,
     journeys,
     capabilityScenarios,

@@ -11,7 +11,7 @@ const DOCS_SLUG: Record<ReportElementKind, string> = {
   experience: 'experiences',
   screen: 'screens',
   domain: 'domains',
-  object: 'objects',
+  entity: 'entities',
   capability: 'capabilities',
   journey: 'journeys',
   'capability-scenario': 'capabilities',

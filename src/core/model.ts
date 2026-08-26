@@ -79,7 +79,7 @@ export interface CapabilityElement extends ElementFile {
   availability: Context[]
 }
 
-export interface ObjectStateTransition {
+export interface EntityStateTransition {
   from: string
   to: string
 }
@@ -87,14 +87,14 @@ export interface ObjectStateTransition {
 /**
  * A thing the Product keeps whose state an Actor can observe and act on.
  *
- * Objects name the Product's nouns where Capabilities name its verbs. One
+ * Entities name the Product's nouns where Capabilities name its verbs. One
  * exists exactly when a thing has two or more named states referenced by two or
  * more Capabilities — a computable test, so an author never judges it.
  */
-export interface ObjectElement extends ElementFile {
+export interface EntityElement extends ElementFile {
   domain?: string
   states: ReturnType<typeof screenStates>
-  transitions: ObjectStateTransition[]
+  transitions: EntityStateTransition[]
 }
 
 export interface ScreenElement extends ElementFile {
@@ -225,7 +225,7 @@ export interface PddModel {
   experiences: ExperienceElement[]
   screens: ScreenElement[]
   domains: DomainElement[]
-  objects: ObjectElement[]
+  entities: EntityElement[]
   capabilities: CapabilityElement[]
   capabilityScenarios: CapabilityScenarioElement[]
   businessRules: BusinessRuleElement[]
@@ -859,19 +859,19 @@ export function loadModel(cwd: string): PddModel {
       }
     })
 
-  const objects: ObjectElement[] = listElements(join(root, 'objects'), 'object', findings, 'objects')
+  const entities: EntityElement[] = listElements(join(root, 'entities'), 'entity', findings, 'entities')
     .map((location) => {
       const { id, file } = location
       const { data, doc, references, directory, assets, assetMeta } = readElement(location, ['domain'], issues)
-      const states = screenStates(section(doc, 'States') || '', issues, file, 'States', 'object state')
+      const states = screenStates(section(doc, 'States') || '', issues, file, 'States', 'entity state')
       if (states.length < 2) {
-        issues.push(`${file}: an Object needs "## States" with at least two H3 states`)
+        issues.push(`${file}: an Entity needs "## States" with at least two H3 states`)
       }
       const stateNames = new Set(states.map(state => state.title))
-      const transitions: ObjectStateTransition[] = []
+      const transitions: EntityStateTransition[] = []
       const transitionBody = section(doc, 'Transitions')
       if (transitionBody === undefined) {
-        issues.push(`${file}: an Object needs a "## Transitions" section`)
+        issues.push(`${file}: an Entity needs a "## Transitions" section`)
       } else {
         for (const item of bulletList(transitionBody)) {
           const parts = item.split(/\s*(?:\u2192|->)\s*/)
@@ -1019,7 +1019,7 @@ export function loadModel(cwd: string): PddModel {
     experiences,
     screens,
     domains,
-    objects,
+    entities,
     capabilities,
     capabilityScenarios,
     businessRules,

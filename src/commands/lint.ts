@@ -438,7 +438,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
    * refer to a Screen or Experience in prose.
    */
   const nounVocabulary = new Set<string>()
-  for (const element of [...model.objects, ...model.domains, ...model.interfaces, ...model.experiences, ...model.screens]) {
+  for (const element of [...model.entities, ...model.domains, ...model.interfaces, ...model.experiences, ...model.screens]) {
     nounVocabulary.add(element.id)
     const leaf = element.id.split('::').pop()
     if (leaf) nounVocabulary.add(leaf)
@@ -479,7 +479,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
    * a subject, not as a command.
    */
   const nounIdKinds: Array<{ file: string, id: string, kind: string }> = [
-    ...model.objects.map(item => ({ file: item.file, id: item.id, kind: 'Object' })),
+    ...model.entities.map(item => ({ file: item.file, id: item.id, kind: 'Entity' })),
     ...model.domains.map(item => ({ file: item.file, id: item.id, kind: 'Domain' })),
     ...model.businessRules.map(item => ({ file: item.file, id: item.id, kind: 'Business Rule' }))
   ]
@@ -496,11 +496,11 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     }
   }
 
-  for (const object of model.objects) {
-    requireTitle(object.file, object.doc.title, object.doc.lead)
-    validateSections(object.file, object.doc, ['Intent', 'States', 'Transitions'])
-    if (object.domain && !domainIds.has(object.domain)) {
-      errors.push(`${object.file}: names missing domain "${object.domain}"`)
+  for (const entity of model.entities) {
+    requireTitle(entity.file, entity.doc.title, entity.doc.lead)
+    validateSections(entity.file, entity.doc, ['Intent', 'States', 'Transitions'])
+    if (entity.domain && !domainIds.has(entity.domain)) {
+      errors.push(`${entity.file}: names missing domain "${entity.domain}"`)
     }
   }
 
@@ -1089,7 +1089,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
       experiences: model.experiences.length,
       screens: model.screens.length,
       domains: model.domains.length,
-      objects: model.objects.length,
+      entities: model.entities.length,
       capabilities: model.capabilities.length,
       capabilityScenarios: model.capabilityScenarios.length,
       journeys: model.journeys.length,

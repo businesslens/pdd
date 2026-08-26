@@ -20,7 +20,7 @@ export function elementsOfKind(workspace: ReportWorkspace, kind: ReportElementKi
     case 'experience': return workspace.experiences
     case 'screen': return workspace.screens
     case 'domain': return workspace.domains
-    case 'object': return workspace.objects
+    case 'entity': return workspace.entities
     case 'capability': return workspace.capabilities
     case 'journey': return workspace.journeys
     case 'capability-scenario': return workspace.capabilityScenarios
@@ -70,7 +70,7 @@ export function relatedIds(element: AnyElementView, kind: ReportElementKind): st
       if (kind === 'capability-scenario') return element.capabilityScenarioIds
       if (kind === 'journey-scenario') return element.journeyScenarioIds
       return []
-    case 'object':
+    case 'entity':
       if (kind === 'domain') return element.domainId ? [element.domainId] : []
       return []
     case 'domain':
@@ -136,7 +136,7 @@ export function facetKindsFor(kind: ReportElementKind): ReportElementKind[] {
     case 'experience': return ['actor', 'interface', 'capability', 'domain', 'screen', 'journey']
     case 'screen': return ['interface', 'experience', 'capability', 'domain', 'journey', 'capability-scenario', 'journey-scenario']
     case 'domain': return ['capability', 'journey', 'screen', 'experience', 'rule']
-    case 'object': return ['domain']
+    case 'entity': return ['domain']
     case 'capability': return ['domain', 'interface', 'experience', 'capability-scenario', 'journey-scenario', 'journey', 'screen', 'rule']
     case 'journey': return ['actor', 'interface', 'experience', 'capability', 'domain', 'screen', 'journey-scenario', 'rule']
     /* A Capability Scenario never names a Journey; offering the facet would be a permanently empty control. */

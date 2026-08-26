@@ -23,7 +23,7 @@ import type {
   ScenarioStepCell,
   ScenarioStepRow,
   ScenarioView,
-  ObjectView,
+  EntityView,
   ScreenView
 } from '../utils/reportWorkspace'
 import { isScenarioKind, resolveElement, scenarioStepMatrix } from '../utils/reportWorkspace'
@@ -48,7 +48,7 @@ const scenarioRoute = defineModel<string | null>('scenarioRoute', { default: nul
 const routeColumns = defineModel<string>('routeColumns', { default: 'auto' })
 
 const asScreen = computed(() => props.element as ScreenView)
-const asObject = computed(() => props.element as ObjectView)
+const asEntity = computed(() => props.element as EntityView)
 const asJourney = computed(() => props.element as JourneyView)
 const asScenario = computed(() => props.element as ScenarioView)
 const asRule = computed(() => props.element as RuleView)
@@ -63,20 +63,20 @@ const capabilityBoundary = computed(() => {
 
 const domainId = computed(() => {
   if (props.element.kind === 'capability') return (props.element as CapabilityView).domainId
-  if (props.element.kind === 'object') return asObject.value.domainId
+  if (props.element.kind === 'entity') return asEntity.value.domainId
   return ''
 })
 
 /*
- * An Object's lifecycle read forward from each state. A flat transition list
+ * An Entity's lifecycle read forward from each state. A flat transition list
  * makes the reader join `from` to `to` themselves; grouping the outbound moves
  * under the state they leave puts the whole answer beside the state's prose,
  * and shows a terminal state as terminal rather than as an absence.
  */
-const objectLifecycle = computed(() => asObject.value.states.map(state => ({
+const entityLifecycle = computed(() => asEntity.value.states.map(state => ({
   name: state.name,
   content: state.content,
-  goesTo: asObject.value.transitions.filter(transition => transition.from === state.name).map(transition => transition.to)
+  goesTo: asEntity.value.transitions.filter(transition => transition.from === state.name).map(transition => transition.to)
 })))
 
 /* One authored Scenario sequence, with named Context routes as columns. */
@@ -715,12 +715,12 @@ const empty = computed(() => !hasAuthoredBody(props.element))
     </template>
 
     <!-- OBJECT: the lifecycle, read forward from each state. -->
-    <template v-if="element.kind === 'object'">
-      <section v-if="objectLifecycle.length" class="space-y-2">
+    <template v-if="element.kind === 'entity'">
+      <section v-if="entityLifecycle.length" class="space-y-2">
         <h2 class="blr-page-heading">Lifecycle</h2>
         <ol class="space-y-3">
           <li
-            v-for="state in objectLifecycle"
+            v-for="state in entityLifecycle"
             :key="state.name"
             class="rounded-xl border border-default bg-elevated/30 p-4"
           >

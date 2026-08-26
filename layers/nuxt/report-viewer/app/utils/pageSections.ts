@@ -36,12 +36,12 @@ export interface PageTab {
 /*
  * Whether BlrElementBody would render anything. Exported because the component
  * asks the same question about itself, and keeping two copies of this list is
- * what let an Object reach its page with no body at all: the kind was added to
+ * what let an Entity reach its page with no body at all: the kind was added to
  * one enumeration and not the other, so the block was never composed.
  */
 export function hasAuthoredBody(element: AnyElementView): boolean {
   if (isScenarioKind(element.kind)) return true
-  if (element.kind === 'screen' || element.kind === 'object' || element.kind === 'rule' || element.kind === 'journey') return true
+  if (element.kind === 'screen' || element.kind === 'entity' || element.kind === 'rule' || element.kind === 'journey') return true
   if (element.intent) return true
   if ('capabilityBoundary' in element && (element as { capabilityBoundary: string }).capabilityBoundary) return true
   return element.kind === 'capability'

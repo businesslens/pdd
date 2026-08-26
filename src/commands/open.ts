@@ -233,16 +233,16 @@ function writeReport(root: string, report: ProductReportV11, hasLogo: boolean): 
       })) + body(domain.name, domain.description, domain.intent, [], domain.supportingSections)
     )
   }
-  for (const object of report.model.objects) {
+  for (const entity of report.model.entities) {
     write(
-      elementPath(join(root, 'objects'), object.id, 'object', false),
+      elementPath(join(root, 'entities'), entity.id, 'entity', false),
       frontmatter(compactRecord({
-        domain: object.domainId,
-        references: references(object.references)
-      })) + body(object.title, object.description, object.intent, [], [
-        { heading: 'States', content: object.states.map(state => `### ${state.name}\n\n${state.content}`).join('\n\n') },
-        { heading: 'Transitions', content: object.transitions.map(transition => `- ${transition.from} \u2192 ${transition.to}`).join('\n') },
-        ...object.supportingSections
+        domain: entity.domainId,
+        references: references(entity.references)
+      })) + body(entity.title, entity.description, entity.intent, [], [
+        { heading: 'States', content: entity.states.map(state => `### ${state.name}\n\n${state.content}`).join('\n\n') },
+        { heading: 'Transitions', content: entity.transitions.map(transition => `- ${transition.from} \u2192 ${transition.to}`).join('\n') },
+        ...entity.supportingSections
       ])
     )
   }

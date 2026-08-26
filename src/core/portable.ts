@@ -93,7 +93,7 @@ const ReportElementCountShape = {
   experiences: z.number().int().min(0),
   screens: z.number().int().min(0),
   domains: z.number().int().min(0),
-  objects: z.number().int().min(0),
+  entities: z.number().int().min(0),
   capabilities: z.number().int().min(0),
   capabilityScenarios: z.number().int().min(0),
   journeys: z.number().int().min(0),
@@ -162,28 +162,28 @@ export const ReportDomainSchema = z.strictObject({
   ...ElementContentSchema
 })
 
-export const ReportObjectStateSchema = z.strictObject({
+export const ReportEntityStateSchema = z.strictObject({
   name: SingleLineTextSchema,
   content: RequiredMarkdownFragmentSchema
 })
 
-export const ReportObjectTransitionSchema = z.strictObject({
+export const ReportEntityTransitionSchema = z.strictObject({
   from: SingleLineTextSchema,
   to: SingleLineTextSchema
 })
 
 /**
- * A thing the Product keeps whose state an Actor can observe. Object states are
+ * A thing the Product keeps whose state an Actor can observe. Entity states are
  * an authored lifecycle; a Screen's `productStates` remain that view's own
  * states, and the two are never merged.
  */
-export const ReportObjectSchema = z.strictObject({
+export const ReportEntitySchema = z.strictObject({
   id: IdSchema,
   title: SingleLineTextSchema,
   description: RequiredMarkdownFragmentSchema,
   domainId: IdSchema.optional(),
-  states: z.array(ReportObjectStateSchema).min(2),
-  transitions: z.array(ReportObjectTransitionSchema).min(1),
+  states: z.array(ReportEntityStateSchema).min(2),
+  transitions: z.array(ReportEntityTransitionSchema).min(1),
   ...ElementContentSchema
 })
 
@@ -346,7 +346,7 @@ export const ProductReportV11Schema = z.strictObject({
     experiences: z.array(ReportExperienceSchema),
     screens: z.array(ReportScreenSchema),
     domains: z.array(ReportDomainSchema),
-    objects: z.array(ReportObjectSchema),
+    entities: z.array(ReportEntitySchema),
     capabilities: z.array(ReportCapabilitySchema),
     capabilityScenarios: z.array(ReportCapabilityScenarioSchema),
     journeys: z.array(ReportJourneySchema),
@@ -369,9 +369,9 @@ export type ReportActor = z.infer<typeof ReportActorSchema>
 export type ReportInterface = z.infer<typeof ReportInterfaceSchema>
 export type ReportExperience = z.infer<typeof ReportExperienceSchema>
 export type ReportDomain = z.infer<typeof ReportDomainSchema>
-export type ReportObject = z.infer<typeof ReportObjectSchema>
-export type ReportObjectState = z.infer<typeof ReportObjectStateSchema>
-export type ReportObjectTransition = z.infer<typeof ReportObjectTransitionSchema>
+export type ReportEntity = z.infer<typeof ReportEntitySchema>
+export type ReportEntityState = z.infer<typeof ReportEntityStateSchema>
+export type ReportEntityTransition = z.infer<typeof ReportEntityTransitionSchema>
 export type ReportCapability = z.infer<typeof ReportCapabilitySchema>
 export type ReportContext = z.infer<typeof ReportContextSchema>
 export type ReportScreen = z.infer<typeof ReportScreenSchema>
@@ -1010,7 +1010,7 @@ export function validateProductReport(report: ProductReportV11): string[] {
     experiences: model.experiences.length,
     screens: model.screens.length,
     domains: model.domains.length,
-    objects: model.objects.length,
+    entities: model.entities.length,
     capabilities: model.capabilities.length,
     capabilityScenarios: model.capabilityScenarios.length,
     journeys: model.journeys.length,
@@ -1128,7 +1128,7 @@ export function projectPortableReport(report: ProductReportV11): ProductReportV1
       experiences: stripWithEntryPoints(report.model.experiences),
       screens: stripWithEntryPoints(report.model.screens),
       domains: strip(report.model.domains),
-      objects: strip(report.model.objects),
+      entities: strip(report.model.entities),
       capabilities: strip(report.model.capabilities),
       capabilityScenarios: strip(report.model.capabilityScenarios),
       journeys: strip(report.model.journeys),

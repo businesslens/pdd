@@ -51,7 +51,7 @@ Use these exact compact and expanded paths:
 | Journey | `journeys/<id>.md` | `journeys/<id>/journey.md` | `scenarios/` |
 | Journey Scenario | `journeys/<journey-id>/scenarios/<id>.md` | `journeys/<journey-id>/scenarios/<id>/journey-scenario.md` | — |
 | Business Rule | `business-rules/<id>.md` | `business-rules/<id>/business-rule.md` | — |
-| Object | `objects/<id>.md` | `objects/<id>/object.md` | — |
+| Entity | `entities/<id>.md` | `entities/<id>/entity.md` | — |
 
 Here `<screen-parent>` is the Interface or Experience folder that contains the
 Screen.
@@ -117,13 +117,13 @@ not contain another H1 or H2.
   Capability authors `domain:`; every other Domain relation is derived. Its
   `## Boundary` must state something the Domain does **not** own, and a Domain
   naming fewer than two Capabilities is a warning.
-- Naming: a behavioral id's object half names something the model declares —
+- Naming: a behavioral id's entity half names something the model declares —
   `install-agent-skills`, not `install-skills`, when `agent-skills` is an
-  Interface. Object, Domain and Business Rule ids never open with a verb; they
+  Interface. Entity, Domain and Business Rule ids never open with a verb; they
   name what a thing is or what must remain true.
-- Object: H1, lead description, `## States` with at least two H3 states, and
+- Entity: H1, lead description, `## States` with at least two H3 states, and
   `## Transitions` listing `from \u2192 to` pairs between them; optional
-  `domain`. An Object names a thing the Product keeps whose state an Actor
+  `domain`. An Entity names a thing the Product keeps whose state an Actor
   observes. Create one exactly when a thing has two or more named states
   referenced by two or more Capabilities — never as a data model, and never to
   restate a Screen's own `## Product states`.
@@ -220,7 +220,7 @@ Context place either names a declared Interface, Experience, or Screen or it
 does not. An Interface holds either `screens/` or `experiences/`, never both. Availability is intended
 Product meaning, not implementation status.
 
-Business Rule Contexts use the same object shape:
+Business Rule Contexts use the same entity shape:
 
 ```yaml
 context: { place: reader-web::personal-library }

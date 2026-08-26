@@ -3,7 +3,7 @@ import type {
   AnyElementView,
   CapabilityView,
   DomainView,
-  ObjectView,
+  EntityView,
   ExperienceView,
   InterfaceView,
   JourneyView,
@@ -183,21 +183,21 @@ export function elementCardPresentation(
         hook: titles(workspace, 'capability', domain.capabilityIds)
       }
     }
-    case 'object': {
-      const object = element as ObjectView
-      // An Object's reading is its lifecycle: how many states it can be in and
+    case 'entity': {
+      const entity = element as EntityView
+      // An Entity's reading is its lifecycle: how many states it can be in and
       // how many ways it moves between them. Its Capabilities are derived
       // through the Domain they share, so they rank below both.
       return {
-        badge: object.domainId
-          ? resolveElement(workspace, 'domain', object.domainId)?.title ?? object.domainId
+        badge: entity.domainId
+          ? resolveElement(workspace, 'domain', entity.domainId)?.title ?? entity.domainId
           : '',
         metrics: [
-          { label: plural(object.states.length, 'state'), value: object.states.length },
-          { label: plural(object.transitions.length, 'transition'), value: object.transitions.length }
+          { label: plural(entity.states.length, 'state'), value: entity.states.length },
+          { label: plural(entity.transitions.length, 'transition'), value: entity.transitions.length }
         ],
         hookLabel: 'States',
-        hook: object.states.map(state => state.name).join(' → ')
+        hook: entity.states.map(state => state.name).join(' → ')
       }
     }
     case 'capability': {

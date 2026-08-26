@@ -30,11 +30,11 @@ of both.
             └────────────────── what the Product does ───────────────────┘
 
    Domain  ── classifies members of both by subject matter
-   Object  ── what the Product keeps; Capabilities act on it
+   Entity  ── what the Product keeps; Capabilities act on it
    Actor   ── who reaches it        Business Rule ── what must stay true
 ```
 
-Domain and Object are axes, not levels: they classify and are classified, and
+Domain and Entity are axes, not levels: they classify and are classified, and
 they contain nothing. Actors and Business Rules attach across everything.
 
 ## What belongs in a model
@@ -51,7 +51,7 @@ add optional elements only when they communicate a real Product distinction.
 | [Experience](./experiences.md) | Optional | A durable context of use inside one Interface when audience, access, or capability boundaries differ |
 | [Screen](./screens.md) | Optional | A meaningful visual view; non-visual Products do not need one |
 | [Domain](./domains.md) | Optional | A Product-language grouping that makes a larger Capability set easier to navigate |
-| [Object](./objects.md) | Optional | A thing the Product keeps whose state an Actor observes, and the lifecycle it moves through |
+| [Entity](./entities.md) | Optional | A thing the Product keeps whose state an Actor observes, and the lifecycle it moves through |
 | [Capability](./capabilities.md) | At least one in a complete model | A durable Product ability reused across views, behavior contracts, or goals |
 | [Journey](./journeys.md) | Optional | One coherent Actor Goal that deliberately composes multiple Capabilities |
 | [Business Rule](./business-rules.md) | Optional | A durable assertion that must remain true |
@@ -202,21 +202,21 @@ one. Where a rule can be computed, an author never has to argue it.
 | Interface, or Experience of one? | An Interface holds Experiences exactly when it serves more than one `access` value, or two Actor sets whose Capability coverage is disjoint. Otherwise it is one coherent context and takes direct availability. |
 | Interface, or nothing? | Interfaces are **inbound**. Something the Product calls out to is a dependency of the Capability that calls it, and gets no element. |
 | Actor, or dependency? | Direction decides. An external system is an Actor only when it **initiates**. The same third party can be a dependency one way and an Actor the other. |
-| Screen, or Object state? | A Screen's `## Product states` are that **view's** states. A thing's own lifecycle belongs to an [Object](./objects.md). |
-| Object, or nothing? | An Object exists exactly when a thing has two or more named states referenced by two or more Capabilities. |
+| Screen, or Entity state? | A Screen's `## Product states` are that **view's** states. A thing's own lifecycle belongs to an [Entity](./entities.md). |
+| Entity, or nothing? | An Entity exists exactly when a thing has two or more named states referenced by two or more Capabilities. |
 | Business Rule, or Scenario condition? | A Rule governs **two or more** behaviors, or a Context independent of any behavior. Anything true of exactly one Capability is a `condition` Step or its Outcome. |
 | Domain, or no grouping? | A Domain states a `## Boundary` naming what it does **not** own, and holds at least two Capabilities. Otherwise it is a folder. |
 
 ### Naming
 
-Behavioral ids are **verb-object**; cross-cutting ids are the **bare noun**.
+Behavioral ids are **verb-entity**; cross-cutting ids are the **bare noun**.
 `browse-catalog`, not `catalog-browsing`; `manage-orders`, not
 `order-management`; but `shopper`, `ordering`, `order`, `customer-web`.
 
 Two further rules bind ids to vocabulary the model already declares. A
-behavioral id's **object half names something the model declares** —
+behavioral id's **entity half names something the model declares** —
 `install-agent-skills`, not `install-skills`, when `agent-skills` is an
-Interface. And an Object, Domain, or Business Rule id **never opens with a
+Interface. And an Entity, Domain, or Business Rule id **never opens with a
 verb**: `refunds-apply-only-to-existing-orders`, not `refund-existing-orders`.
 
 This is a rule rather than a style because ids are the model's whole identity

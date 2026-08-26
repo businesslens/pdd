@@ -11,12 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Object, a tenth entity kind.** An Object names a thing the Product keeps
+- **Entity, a tenth entity kind.** An Entity names a thing the Product keeps
   whose state an Actor observes — an order, a listing — and records its states
   and legal transitions. Capabilities name a product's verbs; nothing named its
   nouns, so a thing's lifecycle had nowhere to live but whichever Screen
   happened to show it. Its existence rule is computable rather than judged: an
-  Object exists exactly when a thing has two or more named states referenced by
+  Entity exists exactly when a thing has two or more named states referenced by
   two or more Capabilities.
 - **Unattended Scenarios.** A Scenario's first Step may be a `condition`
   carrying `unattended: true`, and such a Scenario needs no Actor Step. A
@@ -31,15 +31,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - An Interface may hold `screens/` beside `experiences/`, for a Screen genuinely
   shared across its Experiences. Previously a search or settings view common to
   several Experiences had to be duplicated into each one.
-- **The Product Report renders Objects.** An Object has a rail entry with its
+- **The Product Report renders Entities.** An Entity has a rail entry with its
   count and icon, a collection, a page, search results, connections, and a place
   on the Everything topology canvas. Its page reads the lifecycle forward from each state — the
   states it can move to sit beside the state's own prose, and a terminal state
   says so rather than simply having no outbound row. A Screen's `Product states`
-  stay the view's own and are never merged with an Object's lifecycle.
+  stay the view's own and are never merged with an Entity's lifecycle.
 - `docs/product-model.md` draws the two hierarchies and two axes it had only
   described, and states every structural boundary as the rule that decides it.
-  A new Objects page joins the Product Model group.
+  A new Entities page joins the Product Model group.
 
 ### Changed
 
@@ -56,7 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Interface. `lint` warns only where the author already declared the fuller
   term. Two independent mappings agreed on 95% of the Capabilities they found
   while sharing 29% of the ids; the concepts matched and the nouns did not.
-- **An Object, Domain, or Business Rule id never opens with a verb.** They name
+- **An Entity, Domain, or Business Rule id never opens with a verb.** They name
   what a thing is, or what must remain true, so they read as nouns and
   assertions rather than commands. A single-segment id such as `order` is a noun
   by construction and is exempt.

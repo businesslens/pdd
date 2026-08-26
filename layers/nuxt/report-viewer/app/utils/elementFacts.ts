@@ -65,11 +65,11 @@ export function elementFacts(workspace: ReportWorkspace, element: AnyElementView
         { label: 'Actions', value: String(screen.actions.length) }
       ]
     }
-    case 'object': {
-      const object = element as ObjectView
+    case 'entity': {
+      const entity = element as EntityView
       return [
-        { label: 'States', value: String(object.states.length) },
-        { label: 'Transitions', value: String(object.transitions.length) }
+        { label: 'States', value: String(entity.states.length) },
+        { label: 'Transitions', value: String(entity.transitions.length) }
       ]
     }
     case 'domain': {
