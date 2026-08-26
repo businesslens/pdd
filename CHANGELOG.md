@@ -11,6 +11,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Entity — a thing the Product keeps or reasons about.** Capabilities name the
+  Product's verbs; Entities name its nouns. The test is identity, not storage: a
+  draft the Product never persists still qualifies, a row no Actor can name does
+  not. The unit is the naming test — a shopper says "this order", never "this
+  order line". It carries `## Information kept` and/or `## States` with
+  `## Transitions`, at least one of the two. What the Product keeps, never how it
+  is stored: no types, no cardinality, no keys, no relations between Entities.
+- **Three edges, each with one owner.** A Capability declares the `entities` it
+  acts on — covering changes to information, which a transition cannot express. A
+  transition reads `from → to by <capability>`, cross-checked against that
+  declaration. A Screen declares the `entities` it presents. An Entity nothing
+  references is an error.
+- An **Actor** may carry `## Information kept` for what the Product keeps about
+  them, so a Reader's reading position has a home without modelling the Reader
+  twice. An Actor is who acts; an Entity is what is acted upon.
+- The Product Model's own description gains **what it keeps**.
+
+### Changed
+
+- **A kind of file in a Product Model is an `Element`, not an entity.** That use
+  was the loose one and gave the word up, so the kind that genuinely means a
+  thing with identity could have it.
+- **A thing's states leave the views that showed them.** Screen
+  `## Product states` becomes `## View states` and holds only the view's own;
+  `## Information presented` narrows to what that view shows. The Blueprint was
+  writing Private/Published/Unlisted on two Screens and on the Collection.
+- The Blueprint gains `item`, its most-mentioned noun and previously absent; the
+  fixture gains `catalog-product` and `cart`, the latter appearing 15 times in
+  prose and nowhere in the model.
+
+
 - **Entity, a tenth entity kind.** An Entity names a thing the Product keeps
   whose state an Actor observes — an order, a listing — and records its states
   and legal transitions. Capabilities name a product's verbs; nothing named its

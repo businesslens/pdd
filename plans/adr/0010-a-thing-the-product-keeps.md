@@ -1,8 +1,8 @@
 # 0010 — A thing the Product keeps is its own entity
 
-Status: **Accepted** — 2026-08-26
-Note: the entity's **name** is under active review (Object against Entity). This
-ADR records its *meaning*, which the name does not change.
+Status: **Accepted** — 2026-08-26. Amended the same day: the kind is named
+**Entity**, and the test is **identity rather than persistence**. See
+[ADR-0012](./0012-entity-and-element.md).
 
 ## Context
 
@@ -20,16 +20,18 @@ optimising determinism over truth.
 
 ## Decision
 
-**A thing the Product keeps is an entity in its own right.** Capabilities are the
-Product's verbs; these are its nouns.
+**A thing the Product keeps or reasons about is an Entity in its own right.**
+Capabilities are the Product's verbs; Entities are its nouns. The test is
+**identity, not persistence**: a draft recommendation the Product never stores is
+still an Entity when an Actor points at it and the Product tells it apart.
 
 **The unit is the naming test**: a thing an Actor would point at and call *"this
 one"*. A shopper says *"this order"*, never *"this order line"*. A reader says
 *"this item"* and *"this collection"*, but "library" is simply all of them.
 Containers and parts are not separate things.
 
-**It carries** an optional description of what is kept, and an optional set of
-states with the transitions between them. **At least one** must be present.
+**It carries** an optional `## Information kept`, and an optional `## States`
+with the transitions between them. **At least one** must be present.
 Transitions are required exactly when states are. A thing may have information
 and no lifecycle; requiring both is what produced the earlier arbitrary
 threshold.

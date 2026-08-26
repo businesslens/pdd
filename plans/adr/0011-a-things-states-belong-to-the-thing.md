@@ -1,6 +1,7 @@
 # 0011 — A thing's states belong to the thing, not to the views that show it
 
-Status: **Accepted** — 2026-08-26
+Status: **Accepted** — 2026-08-26. The kind is named **Entity**; see
+[ADR-0012](./0012-entity-and-element.md).
 
 ## Context
 

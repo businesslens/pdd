@@ -135,6 +135,13 @@ acceptance coverage for a Capability. Missing coverage is an error for a
 `complete` model, a warning for `partial` or `draft`, and an error for a public
 Blueprint, whether or not the Product has any [Journeys](./journeys.md).
 
+## What a Capability acts on
+
+`entities` lists the [Entities](./entities.md) this Capability acts on. It covers
+changes a transition can never express — renaming a thing alters its
+information, not its state — and it is what a transition's `by` is checked
+against.
+
 ### Behavior nobody triggers
 
 A schedule the Product owns, an expiry, a retry — real Product behavior with no

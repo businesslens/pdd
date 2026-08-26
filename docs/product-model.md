@@ -10,8 +10,8 @@ order: 7
 
 The Product Model is a Git-tracked directory of Markdown describing one
 coherent Product promise: who it serves, through which supported interaction
-forms, in which usage contexts, what it can do, which goals matter, and what
-must remain true.
+forms, in which usage contexts, what it can do, **what it keeps**, which goals
+matter, and what must remain true.
 
 ## The shape of a model
 
@@ -51,7 +51,7 @@ add optional elements only when they communicate a real Product distinction.
 | [Experience](./experiences.md) | Optional | A durable context of use inside one Interface when audience, access, or capability boundaries differ |
 | [Screen](./screens.md) | Optional | A meaningful visual view; non-visual Products do not need one |
 | [Domain](./domains.md) | Optional | A Product-language grouping that makes a larger Capability set easier to navigate |
-| [Entity](./entities.md) | Optional | A thing the Product keeps whose state an Actor observes, and the lifecycle it moves through |
+| [Entity](./entities.md) | Optional | A thing the Product keeps or reasons about — what it holds about it, and the states it moves through |
 | [Capability](./capabilities.md) | At least one in a complete model | A durable Product ability reused across views, behavior contracts, or goals |
 | [Journey](./journeys.md) | Optional | One coherent Actor Goal that deliberately composes multiple Capabilities |
 | [Business Rule](./business-rules.md) | Optional | A durable assertion that must remain true |
@@ -202,8 +202,8 @@ one. Where a rule can be computed, an author never has to argue it.
 | Interface, or Experience of one? | An Interface holds Experiences exactly when it serves more than one `access` value, or two Actor sets whose Capability coverage is disjoint. Otherwise it is one coherent context and takes direct availability. |
 | Interface, or nothing? | Interfaces are **inbound**. Something the Product calls out to is a dependency of the Capability that calls it, and gets no element. |
 | Actor, or dependency? | Direction decides. An external system is an Actor only when it **initiates**. The same third party can be a dependency one way and an Actor the other. |
-| Screen, or Entity state? | A Screen's `## View states` are that **view's** states. A thing's own lifecycle belongs to an [Entity](./entities.md). |
-| Entity, or nothing? | An Entity exists exactly when a thing has two or more named states referenced by two or more Capabilities. |
+| Screen, or Entity state? | A Screen's `## View states` are that **view's** states. A thing's own lifecycle, and what the Product keeps about it, belong to an [Entity](./entities.md). |
+| Entity, or nothing? | The naming test: a thing an Actor would call *"this one"*. Containers and parts are not Entities, and an Entity nothing references is an error. |
 | Business Rule, or Scenario condition? | A Rule governs **two or more** behaviors, or a Context independent of any behavior. Anything true of exactly one Capability is a `condition` Step or its Outcome. |
 | Domain, or no grouping? | A Domain states a `## Boundary` naming what it does **not** own, and holds at least two Capabilities. Otherwise it is a folder. |
 

@@ -33,6 +33,16 @@ outcome belongs in the Product contract.
 > **Actor vs persona.** A persona describes who someone is. An Actor exists
 > because the Product must behave differently for them.
 
+## What the Product keeps about an Actor
+
+An Actor may carry `## Information kept`, a bullet list of single-line facts the
+Product holds about them — a Reader's reading position, a Shopper's saved
+addresses. It follows the same rule as an [Entity](./entities.md)'s: what the
+Product keeps, never how it is stored.
+
+This is why an Actor is never also an Entity. An Actor is *who acts*; an Entity
+is *what is acted upon*. The same participant is never modelled twice.
+
 ## An AI agent is an Actor
 
 An AI agent harness that loads a skill and acts inside the repository is an

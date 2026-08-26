@@ -1,6 +1,6 @@
 ---
 title: Entities
-description: An Entity names a thing the Product keeps whose state an Actor can observe and act on, and records the states and transitions that make up its lifecycle.
+description: An Entity names a thing the Product keeps or reasons about — what it holds about that thing, the states it moves through, and the Capabilities that move it.
 section: open-source
 group: Product Model
 order: 14
@@ -8,33 +8,36 @@ order: 14
 
 # Entities
 
-An Entity is a thing the Product keeps whose state an Actor can observe and act
-on — an order, a listing, a subscription. Capabilities name what the Product
-*does*; Entities name what it *keeps*.
+An Entity is a thing the Product keeps or reasons about, which an Actor can
+point at and the Product can tell apart from another one — an order, a listing,
+a saved item.
 
-An Entity records a lifecycle, not a data model. It has no fields, no types, and
-no storage. What it carries is the set of states a thing can be in and the
-transitions between them, because those are the parts an Actor can see and a
-Capability can change.
+Capabilities name the Product's **verbs**. Entities name its **nouns**.
+
+## The test is identity, not storage
+
+A draft recommendation the Product never persists is still an Entity when a
+reader points at it and the Product distinguishes it from another. A database
+row no Actor can name is not.
+
+This is why the section is called *Information kept* rather than *stored*.
+"Kept" means held, in the sense of *keep a record* — not written to a table.
 
 ## When you create one
 
-Create an Entity when a thing has **two or more named states referenced by two
-or more Capabilities**. That test is computable, and `lint` applies it — so this
-is not a judgment call you have to make and defend.
+Apply the naming test: **a thing an Actor would call "this one"**.
 
-The two halves both matter. A thing with one state has no lifecycle worth
-recording. A thing whose state only one Capability touches is that Capability's
-own business, and belongs in its Scenarios.
+A shopper says *"this order"*, never *"this order line"* — that is "The items
+ordered" inside Order. A reader says *"this item"* and *"this collection"*, but
+"library" is simply all of them. Containers and parts are not Entities.
 
-Do not create an Entity for every noun in the product. A cart that is only ever
-empty or non-empty is not an Entity; an order that moves from pending to
-confirmed to refunded, touched by checkout and by order management, is.
+Do not create one for every noun in the product. A word that appears in your
+prose and matches no Entity is a signal worth checking, but the answer is
+sometimes that it was never a thing.
 
 ## The file
 
-An Entity with no assets lives at `entities/<id>.md`, and gains a folder only
-when it owns one.
+An Entity with no assets lives at `entities/<id>.md`.
 
 ```markdown
 ---
@@ -43,65 +46,80 @@ domain: ordering
 
 # Order
 
-A shopper's confirmed intent to buy, from submission through fulfilment or
-refund.
+A shopper's confirmed intent to buy.
+
+## Information kept
+
+- The items ordered and their quantities
+- The total charged
+- When it was placed
 
 ## States
 
 ### Pending
 
-Submitted and awaiting payment settlement. No stock has been committed yet.
+Submitted and awaiting payment settlement.
 
 ### Confirmed
 
-Paid and accepted. Stock is committed and the order is queued for fulfilment.
-
-### Refunded
-
-Reversed after confirmation. The shopper has been repaid and no fulfilment
-follows.
+Paid and accepted; stock is committed.
 
 ## Transitions
 
-- Pending → Confirmed
-- Confirmed → Refunded
+- Pending → Confirmed by place-order
 ```
 
-`## States` is required and needs at least two H3 state names, each with prose.
-`## Transitions` is required and lists `from → to` pairs — the Unicode arrow or
-`->` both work — and every name on either side must be one of that Entity's own
-states. A terminal state is valid and needs no outgoing transition; a state no
-transition ever reaches is a warning, because nothing can put the thing there.
+**At least one of `## Information kept` and `## States` must be present.** A
+thing may be worth naming for what is kept about it, for how it changes, or for
+both — but not for neither.
 
-`domain` is optional and single. The H1 is the name and the lead paragraph is
-the description.
+`## Transitions` is required exactly when `## States` is present, and each
+reads `from → to by <capability-id>`. The named Capability must list this Entity
+in its `entities`, so the two declarations can never quietly disagree.
 
-## What an Entity never declares
+## What it is not
 
-An Entity declares no Capabilities, Screens, availability, or Actors. The
-Capabilities that act on it name it in their own prose, and every other Entity
-relation is derived. One authority, not two that can disagree.
+**Not a data model.** No types, no cardinality, no keys, and **no structured
+relations between Entities** — "The items ordered" is prose, never `hasMany`.
+The moment you write a type, you have left product meaning.
 
-## Entities and Screen states
+**Not the implementation.** A cache is out of the model; the data it holds is in
+when the Product promises it. The mechanism is never product meaning; what the
+Product undertakes to know is.
 
-A Screen's `## Product states` and an Entity's `## States` answer different
-questions, and keeping them apart is the point of having Entities at all.
+**Not a view's states.** "Empty list" belongs to a [Screen](./screens.md).
+"Archived" belongs to the thing.
 
-An Entity's states belong to **the thing**: an order is pending, confirmed, or
-refunded no matter which view you are looking at. A Screen's Product states
-belong to **that view**: the orders list is populated or empty, the record is
-loading or unauthorized.
+## How it relates to everything else
 
-Before Entities existed, a thing's lifecycle had nowhere to go but the Screen
-that happened to show it — so a listing visible on six Screens either repeated
-its lifecycle six times or recorded it arbitrarily on one. Put a lifecycle on
-the Entity and let each Screen describe only what that view does.
+An Entity declares almost nothing about the rest of the model. The things that
+use it declare the relationship, and every backlink is derived.
+
+| | |
+| --- | --- |
+| **Capability** | declares the Entities it acts on, in `entities` |
+| **Transition** | names the Capability that causes that one move |
+| **Screen** | declares the Entities it presents, in `entities` |
+| **Domain** | optional and single, authored on the Entity itself |
+| **Actor** | never — an Actor is *who acts*, an Entity is *what is acted upon* |
+| **Business Rule** | never directly; a constraint on a thing is a constraint on what may be done to it |
+
+An [Actor](./actors.md) carries its own `## Information kept` for what the
+Product keeps about *them*, which is why a Reader needs no Entity of their own.
+
+## No orphans
+
+An Entity must be referenced by a Capability that changes it or a Screen that
+presents it. An Entity nothing points at is a `lint` error: it is either
+vocabulary nobody uses, or a relationship somebody forgot to declare.
 
 ## Findings `lint` reports
 
-- An Entity without `## States`, or with fewer than two H3 states, is an error.
-- An Entity without `## Transitions`, or with none listed, is an error.
+- An Entity with neither `## Information kept` nor `## States` is an error.
+- `## States` without `## Transitions`, or the reverse, is an error.
+- A transition that does not read `from → to by <capability>` is an error.
 - A transition naming a state the Entity does not define is an error.
-- A transition that does not read `from → to` is an error.
-- A state that no transition reaches, other than the first, is a warning.
+- A transition naming a Capability that does not list this Entity is an error.
+- An Entity no Capability changes and no Screen presents is an error.
+- A state no transition reaches, other than the first, is a warning.
 - An Entity naming a Domain that does not exist is an error.

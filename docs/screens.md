@@ -102,6 +102,20 @@ Screen as its most-specific `place`. When that Step names a Capability, the Scre
 expose it. Consumers derive both Capability Scenario and Journey Scenario
 backlinks from those Step Contexts.
 
+## View states are the view's, never the thing's
+
+`## View states` describes what **this view** looks like when the difference
+changes what an Actor understands or can do — empty, populated, unauthorized,
+caught-up.
+
+A thing's own states belong to an [Entity](./entities.md). A Screen that shows a
+thing declares it in `entities` and names its own view state for the difference,
+because one state of a thing renders differently on different Screens.
+
+`## Information presented` follows the same split: what *this view* shows —
+counts, feedback, derived values, combinations — never a restatement of what the
+Entity keeps. Declare the Entity and let the reader follow the link.
+
 ## Screens shared across Experiences
 
 An Interface usually holds either `screens/` or `experiences/`. It may hold
