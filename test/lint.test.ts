@@ -562,7 +562,7 @@ Supports order operations. It does not expose a shopper's account.
       join(cwd, '.businesslens/capabilities/manage-orders/capability.md'),
       join(cwd, '.businesslens/capabilities/manage-orders.md')
     )
-    unlinkSync(join(cwd, '.businesslens/business-rules/refund-existing-orders.md'))
+    unlinkSync(join(cwd, '.businesslens/business-rules/refunds-apply-only-to-existing-orders.md'))
 
     expect(run(cwd).errors.join('\n')).toContain('availability Context place "admin-web" needs Capability Scenario coverage')
 
@@ -614,7 +614,7 @@ Supports order operations. It does not expose a shopper's account.
 
   it('rejects narrowed Rule contexts outside their target and redundant ancestor targets', () => {
     const cwd = fixtureCopy()
-    const file = join(cwd, '.businesslens/business-rules/refund-existing-orders.md')
+    const file = join(cwd, '.businesslens/business-rules/refunds-apply-only-to-existing-orders.md')
     writeFileSync(file, readFileSync(file, 'utf8').replace(
       'appliesTo:\n  - type: capability-scenario\n    id: refund-order\n  - type: journey\n    id: browse-and-buy',
       `appliesTo:
@@ -633,7 +633,7 @@ Supports order operations. It does not expose a shopper's account.
 
   it('lets a Rule Context select descendants and rejects redundant nested selectors', () => {
     const cwd = fixtureCopy()
-    const file = join(cwd, '.businesslens/business-rules/refund-existing-orders.md')
+    const file = join(cwd, '.businesslens/business-rules/refunds-apply-only-to-existing-orders.md')
     const source = readFileSync(file, 'utf8').replace(
       'appliesTo:\n  - type: capability-scenario\n    id: refund-order',
       'appliesTo:\n  - type: capability\n    id: browse-catalog\n    contexts:\n      - place: customer-web'

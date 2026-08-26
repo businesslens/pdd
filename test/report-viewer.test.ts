@@ -70,7 +70,7 @@ describe('stable Product Report', () => {
 
     expect(workspace.capabilities.some((item: any) => item.journeyIds.length || item.ruleIds.length)).toBe(true)
     expect(workspace.domains.some((item: any) => item.screenIds.length)).toBe(true)
-    const scenarioRule = workspace.rules.find((item: any) => item.id === 'refund-existing-orders')!
+    const scenarioRule = workspace.rules.find((item: any) => item.id === 'refunds-apply-only-to-existing-orders')!
     expect(scenarioRule.capabilityIds).toEqual([])
     expect(scenarioRule.derivedCapabilityIds).toEqual(['manage-orders'])
     expect(scenarioRule.domainIds).toEqual(['ordering'])

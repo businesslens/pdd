@@ -219,7 +219,26 @@ future format revision, but Context is not an arbitrary metadata bag.
   This is a rule, not a style. Ids are the format's whole identity mechanism, so
   two models of one product that name the same behavior differently cannot be
   diffed, merged, or compared — which is what a catalog of Blueprints requires.
-  `lint` warns on a behavioral id whose first segment is not a verb. The one
+  `lint` warns on a behavioral id whose first segment is not a verb.
+
+  Two independent mappings of one repository agreed on 95% of the Capabilities
+  they found and shared 29% of the ids: one wrote `install-skills` where the
+  other wrote `install-agent-skills`, one `lint-model` where the other wrote
+  `lint-product-model`. The concepts matched and the nouns did not, so two
+  further rules bind ids to vocabulary the model already declares.
+
+  **A behavioral id's object half names something the model declares.** When the
+  object half is the suffix of an Object, Domain, Interface, Experience, or
+  Screen id in the same model, use the declared name — `install-agent-skills`,
+  not `install-skills`. `lint` warns otherwise. It only fires where the author
+  has declared the fuller term, so it never invents vocabulary.
+
+  **A cross-cutting id never opens with a verb.** Object, Domain, and Business
+  Rule ids name what something *is* or what must remain true, so they read as
+  nouns and assertions rather than commands: `refunds-apply-only-to-existing-orders`,
+  not `refund-existing-orders`. A single-segment id such as `order` is a noun by
+  construction and is never flagged.
+ The one
   exception is `product.md`, whose `id:` names the Product Model (it may differ
   from the repo name) and is limited to 64 characters. Compacting or expanding
   an entity never changes this logical path or id.

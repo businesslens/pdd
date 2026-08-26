@@ -117,6 +117,10 @@ not contain another H1 or H2.
   Capability authors `domain:`; every other Domain relation is derived. Its
   `## Boundary` must state something the Domain does **not** own, and a Domain
   naming fewer than two Capabilities is a warning.
+- Naming: a behavioral id's object half names something the model declares —
+  `install-agent-skills`, not `install-skills`, when `agent-skills` is an
+  Interface. Object, Domain and Business Rule ids never open with a verb; they
+  name what a thing is or what must remain true.
 - Object: H1, lead description, `## States` with at least two H3 states, and
   `## Transitions` listing `from \u2192 to` pairs between them; optional
   `domain`. An Object names a thing the Product keeps whose state an Actor

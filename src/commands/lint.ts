@@ -432,6 +432,70 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     }
   }
 
+  /*
+   * The model's own noun vocabulary: everything an id can legitimately be about.
+   * A qualified id also contributes its last segment, since that is how authors
+   * refer to a Screen or Experience in prose.
+   */
+  const nounVocabulary = new Set<string>()
+  for (const entity of [...model.objects, ...model.domains, ...model.interfaces, ...model.experiences, ...model.screens]) {
+    nounVocabulary.add(entity.id)
+    const leaf = entity.id.split('::').pop()
+    if (leaf) nounVocabulary.add(leaf)
+  }
+
+  /*
+   * Behavioral ids draw their object half from that vocabulary. Two independent
+   * mappings of one repository agreed on 95% of the Capabilities they found and
+   * shared 29% of the ids, because one wrote `install-skills` where the other
+   * wrote `install-agent-skills` and one `lint-model` where the other wrote
+   * `lint-product-model`. The concepts matched; the nouns did not. Anchoring the
+   * object half to a noun the model already declares removes that whole class of
+   * divergence, and only fires when the author has declared the fuller term.
+   */
+  for (const entity of behavioural) {
+    const segments = entity.id.split('-')
+    if (segments.length < 2) continue
+    const object = segments.slice(1).join('-')
+    if (nounVocabulary.has(object)) continue
+    // Suffix only. A declared term that merely *starts* with the object half is
+    // usually a different thing — `blueprint-portability` is a Domain, and
+    // `contribute-blueprint` is correctly about a blueprint, not about the Domain.
+    const fuller = [...nounVocabulary]
+      .filter(term => term.endsWith(`-${object}`))
+      // Prefer the plain leaf: an id is written unqualified, so suggesting
+      // `local-report-web::product-topology` would not be usable as one.
+      .sort((left, right) => left.length - right.length)[0]
+    if (fuller) {
+      warnings.push(
+        `${entity.file}: ${entity.kind} id "${entity.id}" names "${object}" where this model declares "${fuller}"; use the declared name`
+      )
+    }
+  }
+
+  /*
+   * Cross-cutting ids name something that *is*, so they never open with a verb.
+   * A Business Rule states what must remain true and reads as an assertion about
+   * a subject, not as a command.
+   */
+  const nounIdKinds: Array<{ file: string, id: string, kind: string }> = [
+    ...model.objects.map(item => ({ file: item.file, id: item.id, kind: 'Object' })),
+    ...model.domains.map(item => ({ file: item.file, id: item.id, kind: 'Domain' })),
+    ...model.businessRules.map(item => ({ file: item.file, id: item.id, kind: 'Business Rule' }))
+  ]
+  for (const entity of nounIdKinds) {
+    const segments = entity.id.split('-')
+    // A single-segment id cannot be verb-object; `order` is a noun here even
+    // though the same word is a verb elsewhere.
+    if (segments.length < 2) continue
+    const first = segments[0] || ''
+    if (PRODUCT_VERBS.has(first)) {
+      warnings.push(
+        `${entity.file}: ${entity.kind} id "${entity.id}" opens with a verb; cross-cutting ids name what a thing is, not what is done`
+      )
+    }
+  }
+
   for (const object of model.objects) {
     requireTitle(object.file, object.doc.title, object.doc.lead)
     validateSections(object.file, object.doc, ['Intent', 'States', 'Transitions'])

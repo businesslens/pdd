@@ -213,6 +213,12 @@ Behavioral ids are **verb-object**; cross-cutting ids are the **bare noun**.
 `browse-catalog`, not `catalog-browsing`; `manage-orders`, not
 `order-management`; but `shopper`, `ordering`, `order`, `customer-web`.
 
+Two further rules bind ids to vocabulary the model already declares. A
+behavioral id's **object half names something the model declares** —
+`install-agent-skills`, not `install-skills`, when `agent-skills` is an
+Interface. And an Object, Domain, or Business Rule id **never opens with a
+verb**: `refunds-apply-only-to-existing-orders`, not `refund-existing-orders`.
+
 This is a rule rather than a style because ids are the model's whole identity
 mechanism. Two models of one product that name the same behavior differently
 cannot be diffed, merged, or compared — which is exactly what reviewing a change
