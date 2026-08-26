@@ -92,7 +92,8 @@ not contain another H1 or H2.
   H1, and lead description. An external system is an Actor only when it
   initiates; a system the Product calls out to is a Capability dependency.
 - Interface: required `type`
-  (`web|mobile-app|desktop-app|cli|api|webhook|messaging|voice|device`), at
+  (`web|mobile-app|desktop-app|cli|api|webhook|messaging|voice|device|agent`),
+  at
   least one `actors` relation; optional Product-facing
   `entryPoints`; H1, lead description, and `## Capability boundary`. Interfaces
   are inbound. An outbound connection the Product opens is not an Interface:
