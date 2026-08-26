@@ -27,6 +27,9 @@ export {
   ReportInterfaceSchema,
   ReportExperienceSchema,
   ReportDomainSchema,
+  ReportObjectSchema,
+  ReportObjectStateSchema,
+  ReportObjectTransitionSchema,
   ReportCapabilitySchema,
   ReportScreenStateSchema,
   ReportScreenSchema,
@@ -40,7 +43,7 @@ export {
   ReportBusinessRuleTargetSchema,
   ReportBusinessRuleSchema,
   ReportCoverageSchema,
-  ProductReportV10Schema,
+  ProductReportV11Schema,
   ProductReportSchema,
   validateProductReport,
   validateBlueprintReport,
@@ -50,7 +53,7 @@ export {
 } from './core/portable.js'
 
 export type {
-  ProductReportV10,
+  ProductReportV11,
   ProductReport,
   ReportCoverage,
   ReportCounts,
@@ -59,6 +62,9 @@ export type {
   ReportInterface,
   ReportExperience,
   ReportDomain,
+  ReportObject,
+  ReportObjectState,
+  ReportObjectTransition,
   ReportCapability,
   ReportContext,
   ReportScreen,

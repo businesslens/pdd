@@ -96,6 +96,14 @@ const rows = computed<RelationRow[]>(() => {
       )
       break
     }
+    case 'object': {
+      const object = entity as ObjectView
+      all.push(
+        row('Domain', 'domain', object.domainId ? [object.domainId] : [], true),
+        row('Capabilities', 'capability', object.capabilityIds, true)
+      )
+      break
+    }
     case 'domain': {
       const domain = entity as DomainView
       all.push(

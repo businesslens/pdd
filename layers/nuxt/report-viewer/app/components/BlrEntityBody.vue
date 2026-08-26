@@ -23,6 +23,7 @@ import type {
   ScenarioStepCell,
   ScenarioStepRow,
   ScenarioView,
+  ObjectView,
   ScreenView
 } from '../utils/reportWorkspace'
 import { isScenarioKind, resolveEntity, scenarioStepMatrix } from '../utils/reportWorkspace'
@@ -46,6 +47,7 @@ const scenarioRoute = defineModel<string | null>('scenarioRoute', { default: nul
 const routeColumns = defineModel<string>('routeColumns', { default: 'auto' })
 
 const asScreen = computed(() => props.entity as ScreenView)
+const asObject = computed(() => props.entity as ObjectView)
 const asJourney = computed(() => props.entity as JourneyView)
 const asScenario = computed(() => props.entity as ScenarioView)
 const asRule = computed(() => props.entity as RuleView)
@@ -58,9 +60,23 @@ const capabilityBoundary = computed(() => {
   return ''
 })
 
-const domainId = computed(() => props.entity.kind === 'capability'
-  ? (props.entity as CapabilityView).domainId
-  : '')
+const domainId = computed(() => {
+  if (props.entity.kind === 'capability') return (props.entity as CapabilityView).domainId
+  if (props.entity.kind === 'object') return asObject.value.domainId
+  return ''
+})
+
+/*
+ * An Object's lifecycle read forward from each state. A flat transition list
+ * makes the reader join `from` to `to` themselves; grouping the outbound moves
+ * under the state they leave puts the whole answer beside the state's prose,
+ * and shows a terminal state as terminal rather than as an absence.
+ */
+const objectLifecycle = computed(() => asObject.value.states.map(state => ({
+  name: state.name,
+  content: state.content,
+  goesTo: asObject.value.transitions.filter(transition => transition.from === state.name).map(transition => transition.to)
+})))
 
 /* One authored Scenario sequence, with named Context routes as columns. */
 const stepMatrix = computed(() => (isScenario.value ? scenarioStepMatrix(asScenario.value) : null))
@@ -698,6 +714,32 @@ const empty = computed(() => !props.entity.intent
             <BlrProse :text="state.description" class="mt-1.5" />
           </div>
         </div>
+      </section>
+    </template>
+
+    <!-- OBJECT: the lifecycle, read forward from each state. -->
+    <template v-if="entity.kind === 'object'">
+      <section v-if="objectLifecycle.length" class="space-y-2">
+        <h2 class="blr-page-heading">
+          Lifecycle <span class="blr-meta ms-1">{{ asObject.states.length }} states · {{ asObject.transitions.length }} transitions</span>
+        </h2>
+        <ol class="space-y-3">
+          <li
+            v-for="state in objectLifecycle"
+            :key="state.name"
+            class="rounded-xl border border-default bg-elevated/30 p-4"
+          >
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+              <p class="text-sm font-semibold text-highlighted">{{ state.name }}</p>
+              <p v-if="state.goesTo.length" class="blr-meta">
+                <UIcon name="i-lucide-arrow-right" class="size-3 align-[-1px]" />
+                {{ state.goesTo.join(' · ') }}
+              </p>
+              <p v-else class="blr-meta">terminal</p>
+            </div>
+            <BlrProse :text="state.content" class="mt-1.5" />
+          </li>
+        </ol>
       </section>
     </template>
 

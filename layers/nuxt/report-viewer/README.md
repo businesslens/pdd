@@ -44,7 +44,7 @@ Render the canonical report directly:
 <BusinessLensReportViewer :report="report" :logo-src="logoSrc" />
 ```
 
-`report` must be a `ProductReportV10` from `businesslens/report`. There is
+`report` must be a `ProductReportV11` from `businesslens/report`. There is
 no second, lossy public view-model contract.
 
 Two navigation facts are bindable, so a host can keep them in its own router

@@ -10,7 +10,7 @@ import { reportDigest } from '../src/report-digest.js'
 import { compileReport } from '../src/commands/export.js'
 import { loadModel } from '../src/core/model.js'
 import { resolveModelRoot } from '../src/core/model-root.js'
-import type { ProductReportV10, ReportReference } from '../src/core/portable.js'
+import type { ProductReportV11, ReportReference } from '../src/core/portable.js'
 
 const packageJson = JSON.parse(
   await readFile(fileURLToPath(new URL('../package.json', import.meta.url)), 'utf8')
@@ -31,7 +31,7 @@ describe('report SDK entry point', () => {
   it('exports the schema, semantic validator, portable projection, and digest', () => {
     expect(sdk.REPORT_SCHEMA_VERSION).toBe('11.0.0')
     for (const name of [
-      'ProductReportV10Schema',
+      'ProductReportV11Schema',
       'ProductReportSchema',
       'ReportReferenceSchema',
       'ReportSupportingSectionSchema',
@@ -95,9 +95,9 @@ describe('report SDK entry point', () => {
 describe('projectPortableReport', () => {
   const FIXTURE = join(fileURLToPath(new URL('.', import.meta.url)), 'fixtures', 'fixture-shop')
   let repo: string
-  let report: ProductReportV10
+  let report: ProductReportV11
 
-  const allReferences = (value: ProductReportV10): ReportReference[] => [
+  const allReferences = (value: ProductReportV11): ReportReference[] => [
     ...value.references,
     ...Object.values(value.model).flatMap(entry =>
       Array.isArray(entry) ? entry.flatMap(item => item.references ?? []) : [])

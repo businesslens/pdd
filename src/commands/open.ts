@@ -14,7 +14,7 @@ import { dirname, isAbsolute, join, resolve } from 'node:path'
 import { stringify } from 'yaml'
 import { writeModelReadme } from '../core/model-readme.js'
 import type {
-  ProductReportV10,
+  ProductReportV11,
   ReportContext,
   ReportSupportingSection
 } from '../core/portable.js'
@@ -48,7 +48,7 @@ function frontmatter(data: Record<string, unknown>): string {
   return `---\n${stringify(data, { lineWidth: 0 }).trimEnd()}\n---\n\n`
 }
 
-function references(value: ProductReportV10['references']): Array<Record<string, string>> {
+function references(value: ProductReportV11['references']): Array<Record<string, string>> {
   return value.map(reference => ({
     kind: reference.kind,
     role: reference.role,
@@ -150,7 +150,7 @@ function prepareTarget(cwd: string, force: boolean): string {
   return root
 }
 
-function writeReport(root: string, report: ProductReportV10, hasLogo: boolean): void {
+function writeReport(root: string, report: ProductReportV11, hasLogo: boolean): void {
   write(join(root, 'config.yaml'), stringify({ schema: FOLDER_SCHEMA, sdd: { paths: [] } }, { lineWidth: 0 }))
   write(join(root, '.gitignore'), 'build/\ncache/\n')
   write(
@@ -330,8 +330,8 @@ function writeReport(root: string, report: ProductReportV10, hasLogo: boolean): 
 
   const scenarioSections = (
     scenario:
-      | ProductReportV10['model']['capabilityScenarios'][number]
-      | ProductReportV10['model']['journeyScenarios'][number]
+      | ProductReportV11['model']['capabilityScenarios'][number]
+      | ProductReportV11['model']['journeyScenarios'][number]
   ) => {
     const decisions = scenario.decisionPoints.map(decision =>
       `### ${decision.title}\n\n${decision.question}\n\n${
@@ -430,7 +430,7 @@ function writeReport(root: string, report: ProductReportV10, hasLogo: boolean): 
 }
 
 export interface ExpandedProductReport {
-  report: ProductReportV10
+  report: ProductReportV11
   root: string
 }
 

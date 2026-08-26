@@ -63,6 +63,33 @@ describe('stable Product Report', () => {
     )
   })
 
+  it('renders an Object as its lifecycle, distinct from a Screen\'s own states', () => {
+    const workspace = projectReportWorkspace(compileReport(loadModel(FIXTURE), '2026-08-08'))
+
+    const order = workspace.objects.find((item: any) => item.id === 'order')
+    expect(order.kind).toBe('object')
+    expect(order.states.map((state: any) => state.name)).toEqual(['Pending', 'Confirmed', 'Refunded'])
+    expect(order.transitions).toEqual([
+      { from: 'Pending', to: 'Confirmed' },
+      { from: 'Confirmed', to: 'Refunded' }
+    ])
+    expect(order.domainId).toBe('ordering')
+    expect(workspace.counts.objects).toBe(1)
+
+    // Reachable everywhere a kind is: rail, search, collection, and page.
+    expect(workspace.byKey.get(order.key)).toBe(order)
+    expect(entityFacts(workspace, order).map((fact: any) => fact.label))
+      .toEqual(['States', 'Transitions', 'Capabilities'])
+
+    // An Object's Capabilities are derived through its Domain — it declares none.
+    expect(order.capabilityIds).toContain('place-order')
+    expect(order.capabilityIds).toContain('manage-orders')
+
+    // A Screen's own states stay the view's, never the Object's lifecycle.
+    const screen = workspace.screens.find((item: any) => item.states.length)
+    expect(screen.states.map((state: any) => state.title)).not.toContain('Pending')
+  })
+
   it('derives backlinks without mutating the canonical report', () => {
     const report = compileReport(loadModel(FIXTURE), '2026-08-08')
     const before = structuredClone(report)
@@ -340,7 +367,7 @@ describe('stable Product Report', () => {
     const reportShell = source('app/components/BlrReportShell.vue')
     const layer = source('nuxt.config.ts')
 
-    expect(renderer).toContain('ProductReportV10')
+    expect(renderer).toContain('ProductReportV11')
     expect(renderer).toContain('projectReportWorkspace')
     expect(renderer).toContain('<BlrReportShell')
     expect(source('app/components/BlrEntityBody.vue')).toContain('scenarioStepMatrix')

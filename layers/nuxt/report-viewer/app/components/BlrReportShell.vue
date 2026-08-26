@@ -628,6 +628,12 @@ const tableColumns = computed<TableColumn<AnyEntityView>[]>(() => {
         numberColumn('states', 'States', entity => (entity as ScreenView).states.length),
         numberColumn('actions', 'Actions', entity => (entity as ScreenView).actions.length)
       ]
+    case 'object':
+      return [
+        ...base,
+        relationColumn('domain'),
+        relationColumn('capability')
+      ]
     case 'domain':
       return [
         ...base,

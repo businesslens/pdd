@@ -29,6 +29,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - An Interface may hold `screens/` beside `experiences/`, for a Screen genuinely
   shared across its Experiences. Previously a search or settings view common to
   several Experiences had to be duplicated into each one.
+- **The Product Report renders Objects.** An Object has a rail entry, a
+  collection, a page, search results, connections, and a place on the Everything
+  topology canvas. Its page reads the lifecycle forward from each state — the
+  states it can move to sit beside the state's own prose, and a terminal state
+  says so rather than simply having no outbound row. A Screen's `Product states`
+  stay the view's own and are never merged with an Object's lifecycle.
 - `docs/product-model.md` draws the two hierarchies and two axes it had only
   described, and states every structural boundary as the rule that decides it.
   A new Objects page joins the Product Model group.
@@ -52,6 +58,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   what a thing is, or what must remain true, so they read as nouns and
   assertions rather than commands. A single-segment id such as `order` is a noun
   by construction and is exempt.
+- The report SDK type is `ProductReportV11`, matching the schema version it
+  describes. `ReportObject` and its state and transition types are exported
+  alongside it.
 - **Folder schema 7 and Product Report v11 are the only accepted formats.**
   There is no compatibility reader.
 - **Behavioral ids are verb-object; cross-cutting ids are the bare noun.**

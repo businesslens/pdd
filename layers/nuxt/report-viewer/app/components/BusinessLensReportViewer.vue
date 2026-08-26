@@ -7,11 +7,11 @@
  * navigation and a pull command. Those differences arrive as slots and a
  * bindable section, so the Product Report stays one implementation.
  */
-import type { ProductReportV10 } from 'businesslens/report'
+import type { ProductReportV11 } from 'businesslens/report'
 import { projectReportWorkspace } from '../utils/reportWorkspace'
 
 const props = defineProps<{
-  report: ProductReportV10
+  report: ProductReportV11
   /** Host-resolved `.businesslens/product/logo.svg`; rendered in the product header. */
   logoSrc?: string | null
 }>()

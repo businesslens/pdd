@@ -245,6 +245,12 @@ export function directRelations(workspace: ReportWorkspace, entity: AnyEntityVie
       contexts(entity.contexts, entity.key)
       break
     }
+    case 'object': {
+      // Derived through the Domain they share — an Object declares nothing.
+      if (entity.domainId) push(entity.key, entityKey('domain', entity.domainId), 'in')
+      for (const id of entity.capabilityIds) push(entityKey('capability', id), entity.key, 'acts on')
+      break
+    }
     case 'domain': {
       for (const id of entity.capabilityIds) push(entityKey('capability', id), entity.key, 'in')
       for (const id of entity.ruleIds) push(entityKey('rule', id), entity.key, 'reaches through target')

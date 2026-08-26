@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import { startLocalViewer, type LocalViewer } from '../src/core/local-viewer-server.js'
-import type { ProductReportV10 } from '../src/core/portable.js'
+import type { ProductReportV11 } from '../src/core/portable.js'
 
 interface ResponseResult {
   body: string
@@ -126,8 +126,8 @@ function staticViewer(): string {
   return directory
 }
 
-function report(): ProductReportV10 {
-  return { id: 'fixture-shop', title: 'Fixture Shop' } as ProductReportV10
+function report(): ProductReportV11 {
+  return { id: 'fixture-shop', title: 'Fixture Shop' } as ProductReportV11
 }
 
 const logo = (color = '#80552b') => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" fill="${color}"/></svg>`

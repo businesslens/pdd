@@ -3,6 +3,7 @@ import type {
   AnyEntityView,
   CapabilityView,
   DomainView,
+  ObjectView,
   ExperienceView,
   InterfaceView,
   JourneyView,
@@ -180,6 +181,24 @@ export function entityCardPresentation(
         ],
         hookLabel: 'Includes',
         hook: titles(workspace, 'capability', domain.capabilityIds)
+      }
+    }
+    case 'object': {
+      const object = entity as ObjectView
+      // An Object's reading is its lifecycle: how many states it can be in and
+      // how many ways it moves between them. Its Capabilities are derived
+      // through the Domain they share, so they rank below both.
+      return {
+        badge: object.domainId
+          ? resolveEntity(workspace, 'domain', object.domainId)?.title ?? object.domainId
+          : '',
+        metrics: [
+          { label: plural(object.states.length, 'state'), value: object.states.length },
+          { label: plural(object.transitions.length, 'transition'), value: object.transitions.length },
+          { label: plural(object.capabilityIds.length, 'capability', 'capabilities'), value: object.capabilityIds.length, kind: 'capability', ids: object.capabilityIds }
+        ],
+        hookLabel: 'States',
+        hook: object.states.map(state => state.name).join(' → ')
       }
     }
     case 'capability': {

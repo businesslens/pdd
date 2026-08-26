@@ -9,7 +9,7 @@
  * This is the stable view projection used by the shipped report viewer.
  */
 import type {
-  ProductReportV10,
+  ProductReportV11,
   ReportActor,
   ReportContext,
   ReportBusinessRule,
@@ -19,6 +19,7 @@ import type {
   ReportCoverage,
   ReportDecisionPoint,
   ReportDomain,
+  ReportObject,
   ReportExperience,
   ReportInterface,
   ReportJourney,
@@ -36,6 +37,7 @@ export type ReportEntityKind =
   | 'experience'
   | 'screen'
   | 'domain'
+  | 'object'
   | 'capability'
   | 'journey'
   | 'capability-scenario'
@@ -84,6 +86,12 @@ export const REPORT_ENTITY_KINDS: EntityKindMeta[] = [
   { kind: 'experience', label: 'Experience', plural: 'Experiences', icon: 'i-lucide-layout-panel-left', slot: 2 },
   { kind: 'screen', label: 'Screen', plural: 'Screens', icon: 'i-lucide-monitor', slot: 3 },
   { kind: 'domain', label: 'Domain', plural: 'Domains', icon: 'i-lucide-boxes', slot: 4 },
+  /*
+    Object shares Domain's slot. Both are axes rather than levels — they classify
+    the behavior hierarchy instead of sitting inside it — so one hue reads as
+    "the thing this is about", and the icon and label carry which axis it is.
+  */
+  { kind: 'object', label: 'Object', plural: 'Objects', icon: 'i-lucide-box', slot: 4 },
   { kind: 'capability', label: 'Capability', plural: 'Capabilities', icon: 'i-lucide-zap', slot: 5 },
   { kind: 'journey', label: 'Journey', plural: 'Journeys', icon: 'i-lucide-route', slot: 6 },
   /*
@@ -231,6 +239,20 @@ export interface DomainView extends EntityBase {
   ruleIds: string[]
 }
 
+/**
+ * A thing the Product keeps whose state an Actor observes. Its states are an
+ * authored lifecycle; a Screen's productStates are that view's own states, and
+ * the two are never merged.
+ */
+export interface ObjectView extends EntityBase {
+  kind: 'object'
+  domainId?: string
+  states: Array<{ name: string, content: string }>
+  transitions: Array<{ from: string, to: string }>
+  /** Capabilities whose availability reaches this Object's Domain. Never authored. */
+  capabilityIds: string[]
+}
+
 export interface CapabilityView extends EntityBase {
   kind: 'capability'
   domainId?: string
@@ -333,6 +355,7 @@ export type AnyEntityView =
   | ExperienceView
   | ScreenView
   | DomainView
+  | ObjectView
   | CapabilityView
   | JourneyView
   | ScenarioView
@@ -364,6 +387,7 @@ export interface WorkspaceCounts {
   experiences: number
   screens: number
   domains: number
+  objects: number
   capabilities: number
   journeys: number
   capabilityScenarios: number
@@ -399,6 +423,7 @@ export interface ReportWorkspace {
   experiences: ExperienceView[]
   screens: ScreenView[]
   domains: DomainView[]
+  objects: ObjectView[]
   capabilities: CapabilityView[]
   journeys: JourneyView[]
   capabilityScenarios: ScenarioView[]
@@ -502,7 +527,7 @@ function entryPoints(
  * once — a Business Rule lists its Capabilities, a Capability never lists its
  * Rules — so every backlink here is derived, never authored.
  */
-export function projectReportWorkspace(report: ProductReportV10): ReportWorkspace {
+export function projectReportWorkspace(report: ProductReportV11): ReportWorkspace {
   const model = report.model
   const interfaceOf = (interfaceId: string): ReportInterface => {
     const productInterface = model.interfaces.find(item => item.id === interfaceId)
@@ -837,6 +862,25 @@ export function projectReportWorkspace(report: ProductReportV10): ReportWorkspac
     }
   })
 
+  const objects: ObjectView[] = model.objects.map((object: ReportObject) => ({
+    key: entityKey('object', object.id),
+    id: object.id,
+    kind: 'object' as const,
+    title: object.title,
+    lead: object.description,
+    intent: object.intent,
+    supportingContent: supportingMarkdown(object.supportingSections),
+    references: object.references,
+    domainId: object.domainId,
+    states: object.states.map(state => ({ name: state.name, content: state.content })),
+    transitions: object.transitions.map(transition => ({ from: transition.from, to: transition.to })),
+    // Derived, never authored: an Object declares no Capabilities, so the only
+    // honest relation the report can carry is through the Domain they share.
+    capabilityIds: object.domainId
+      ? model.capabilities.filter(capability => capability.domainId === object.domainId).map(capability => capability.id)
+      : []
+  }))
+
   const domains: DomainView[] = model.domains.map((domain: ReportDomain) => {
     const capabilityIds = model.capabilities.filter(c => c.domainId === domain.id).map(c => c.id)
     return {
@@ -1037,6 +1081,7 @@ export function projectReportWorkspace(report: ProductReportV10): ReportWorkspac
     ...experiences,
     ...screens,
     ...domains,
+    ...objects,
     ...capabilities,
     ...journeys,
     ...scenarios,
@@ -1092,6 +1137,7 @@ export function projectReportWorkspace(report: ProductReportV10): ReportWorkspac
     experiences: model.experiences.length,
     screens: model.screens.length,
     domains: model.domains.length,
+    objects: model.objects.length,
     capabilities: model.capabilities.length,
     journeys: model.journeys.length,
     capabilityScenarios: model.capabilityScenarios.length,
@@ -1176,6 +1222,7 @@ export function projectReportWorkspace(report: ProductReportV10): ReportWorkspac
     experiences,
     screens,
     domains,
+    objects,
     capabilities,
     journeys,
     capabilityScenarios,

@@ -319,7 +319,7 @@ export const ReportCoverageSchema = z.strictObject({
   rationale: MarkdownFragmentSchema
 })
 
-export const ProductReportV10Schema = z.strictObject({
+export const ProductReportV11Schema = z.strictObject({
   schemaVersion: z.literal(REPORT_SCHEMA_VERSION),
   id: ProductIdSchema,
   title: SingleLineTextSchema.max(160),
@@ -356,10 +356,10 @@ export const ProductReportV10Schema = z.strictObject({
   coverage: ReportCoverageSchema
 })
 
-export const ProductReportSchema = ProductReportV10Schema
+export const ProductReportSchema = ProductReportV11Schema
 
-export type ProductReportV10 = z.infer<typeof ProductReportV10Schema>
-export type ProductReport = ProductReportV10
+export type ProductReportV11 = z.infer<typeof ProductReportV11Schema>
+export type ProductReport = ProductReportV11
 export type ReportDecisionPoint = z.infer<typeof ReportDecisionPointSchema>
 export type ReportScreenState = z.infer<typeof ReportScreenStateSchema>
 export type ReportCoverage = z.infer<typeof ReportCoverageSchema>
@@ -369,6 +369,9 @@ export type ReportActor = z.infer<typeof ReportActorSchema>
 export type ReportInterface = z.infer<typeof ReportInterfaceSchema>
 export type ReportExperience = z.infer<typeof ReportExperienceSchema>
 export type ReportDomain = z.infer<typeof ReportDomainSchema>
+export type ReportObject = z.infer<typeof ReportObjectSchema>
+export type ReportObjectState = z.infer<typeof ReportObjectStateSchema>
+export type ReportObjectTransition = z.infer<typeof ReportObjectTransitionSchema>
 export type ReportCapability = z.infer<typeof ReportCapabilitySchema>
 export type ReportContext = z.infer<typeof ReportContextSchema>
 export type ReportScreen = z.infer<typeof ReportScreenSchema>
@@ -479,7 +482,7 @@ function requireEntryPointInterfaces(
 }
 
 /** Cross-entity and computed-field validation, shared with every report consumer. */
-export function validateProductReport(report: ProductReportV10): string[] {
+export function validateProductReport(report: ProductReportV11): string[] {
   const issues: string[] = []
   const { model } = report
   const actorIds = new Set(model.actors.map(item => item.id))
@@ -1093,7 +1096,7 @@ function isRepositoryEntryPoint(value: string): boolean {
 }
 
 /** Project a report into the source-free profile delivered outside its repository. */
-export function projectPortableReport(report: ProductReportV10): ProductReportV10 {
+export function projectPortableReport(report: ProductReportV11): ProductReportV11 {
   const portableReferences = <T extends { kind: string, role: string, target: string }>(items: T[]): T[] =>
     items.filter(reference =>
       reference.kind !== 'code'
@@ -1136,15 +1139,15 @@ export function projectPortableReport(report: ProductReportV10): ProductReportV1
   }
 }
 
-export function parseProductReport(input: unknown): ProductReportV10 {
-  const report = ProductReportV10Schema.parse(input)
+export function parseProductReport(input: unknown): ProductReportV11 {
+  const report = ProductReportV11Schema.parse(input)
   const issues = validateProductReport(report)
   if (issues.length) throw new Error(`Report validation failed:\n- ${issues.join('\n- ')}`)
   return report
 }
 
 /** Additional publication policy for a Product Report entering the public Blueprint catalog. */
-export function validateBlueprintReport(report: ProductReportV10): string[] {
+export function validateBlueprintReport(report: ProductReportV11): string[] {
   const issues: string[] = []
   if (!report.category) issues.push('category is required for a public Blueprint')
   if (!report.tags.length) issues.push('at least one tag is required for a public Blueprint')
