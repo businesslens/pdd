@@ -1,4 +1,7 @@
 ---
+entities:
+  - collection
+  - item
 capabilities:
   - create-collection
   - rename-collection
@@ -25,7 +28,7 @@ public.
 - Add, remove, and reorder saved items
 - Publish or unlist the collection
 
-## Product states
+## View states
 
 ### Private
 

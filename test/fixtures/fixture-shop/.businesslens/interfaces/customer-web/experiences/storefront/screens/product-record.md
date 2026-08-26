@@ -2,6 +2,9 @@
 capabilities:
   - browse-catalog
   - place-order
+entities:
+  - catalog-product
+  - cart
 entryPoints:
   - customer-web: /products/:id
 references:
@@ -32,15 +35,16 @@ Help a shopper decide whether to add the product to the cart.
 - Add the product to the cart
 - Return to the catalog
 
-## Product states
+## View states
 
-### Available
+### Ready to buy
 
-The product can be added to the cart.
+The price and stock are shown with an active control for adding to the cart.
 
-### Unavailable
+### Purchase blocked
 
-The reason it cannot be purchased is explained.
+The control is inert and the reason the product cannot be bought is explained
+in its place.
 
 ## Capability boundary
 

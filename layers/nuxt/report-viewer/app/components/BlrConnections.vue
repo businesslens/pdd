@@ -98,7 +98,11 @@ const rows = computed<RelationRow[]>(() => {
     }
     case 'entity': {
       const entity = element as EntityView
-      all.push(row('Domain', 'domain', entity.domainId ? [entity.domainId] : [], false))
+      all.push(
+        row('Domain', 'domain', entity.domainId ? [entity.domainId] : [], false),
+        row('Changed by', 'capability', entity.changedByIds, true),
+        row('Presented on', 'screen', entity.presentedOnIds, true)
+      )
       break
     }
     case 'domain': {

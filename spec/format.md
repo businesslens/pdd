@@ -271,7 +271,7 @@ future format revision, but Context is not an arbitrary metadata bag.
   `file` is relative to the expanded element folder and cannot escape it.
   Metadata entries are unique and must name an existing asset. `title` is
   optional. `state` is valid only on a Screen and must name one of that Screen's
-  `## Product states`. Unlisted assets remain valid so external tools can write
+  `## View states`. Unlisted assets remain valid so external tools can write
   captures without editing BusinessLens frontmatter.
 - **H1 = title/name.** The first `# Heading` in the body is the element's
   title (actors and domains call it `name`) and is the file's only H1. Lead and
@@ -342,7 +342,7 @@ Unknown keys are invalid.
   invalid, even when their kinds or roles differ.
 - `title` is an optional non-empty display label.
 - `state` is optional and **valid only on a Screen**. It names one of that
-  Screen's `## Product states` H3 titles, case-insensitively, and says which
+  Screen's `## View states` H3 titles, case-insensitively, and says which
   state the artefact depicts. Nowhere else has a state set to resolve against.
 
 For `kind: code`, `target` uses the compact
@@ -361,7 +361,7 @@ and backslash paths are invalid.
 One Screen commonly collects several captures of the same view — one per
 Product state, sometimes doubled for light and dark. Without `state` they arrive
 as a flat list distinguishable only by free-text title; with it, each capture is
-placed beside the state it shows. Themes are deliberately not Product states, so
+placed beside the state it shows. Themes are deliberately not View states, so
 a light and a dark capture of one state are two references sharing one `state`.
 
 References connect the self-contained Product Model to material maintained
@@ -468,6 +468,13 @@ relationship: external      # external | internal
 
 An external person who browses the catalog and buys products.
 ```
+
+An Actor may carry `## Information kept`, a bullet list of single-line facts the
+Product keeps about this Actor — a Reader's reading position, a Shopper's saved
+addresses. It follows the same rule as an Entity's: what the Product keeps, never
+how it is stored. An Actor is *who acts* and an Entity is *what is acted upon*,
+so the two never model the same participant; this section is why a Reader needs
+no Entity of their own.
 
 Both classifications are required. `relationship` is relative to the Product
 boundary. An implementation component is not an Actor merely because it calls
@@ -672,58 +679,86 @@ either a `## Boundary` is wrong or the Capability should split.
 
 ### `entities/<id>.md` or `entities/<id>/entity.md`
 
-An Entity is a thing the Product keeps whose state an Actor can observe and act
-on — an order, a listing, a subscription. It names the Product's nouns, where
-Capabilities name its verbs.
+An Entity is a thing the Product keeps or reasons about, which an Actor can
+point at and the Product can tell apart from another one — an order, a listing,
+a saved item. Capabilities name the Product's verbs; Entities name its nouns.
+
+**The test is identity, not storage.** A draft recommendation the Product never
+persists is still an Entity when a reader points at it and the Product
+distinguishes it from another. A database row no Actor can name is not.
+
+**The unit is the naming test**: a thing an Actor would call *"this one"*. A
+shopper says *"this order"*, never *"this order line"* — that is "The items
+ordered" inside Order. A reader says *"this item"* and *"this collection"*, but
+"library" is simply all of them. Containers and parts are not Entities.
 
 ```markdown
 ---
 domain: ordering                 # optional
 ---
 
-# Listing
+# Order
 
-A place a host offers, from first draft to withdrawal from the market.
+A shopper's confirmed intent to buy.
+
+## Information kept
+
+- The items ordered and their quantities
+- The total charged
+- When it was placed
 
 ## States
 
-### Draft
+### Pending
 
-Visible only to its owner and not findable by guests.
+Submitted and awaiting payment settlement.
 
-### Published
+### Confirmed
 
-Findable and bookable.
+Paid and accepted; stock is committed.
 
-### Archived
+### Refunded
 
-Withdrawn permanently; existing stays are unaffected.
+Reversed after confirmation.
 
 ## Transitions
 
-- Draft → Published
-- Published → Archived
+- Pending → Confirmed by place-order
+- Confirmed → Refunded by refund-order
 ```
 
-**An Entity exists exactly when a thing has two or more named states referenced
-by two or more Capabilities.** This is computable, and `lint` decides it: a
-thing whose state only one Capability touches is that Capability's business, and
-a thing with one state has no lifecycle to record. An author never applies a
-prose test to the question.
+**At least one of `## Information kept` and `## States` must be present.** A
+thing may have information and no lifecycle worth naming, and a thing's
+lifecycle may matter with almost nothing kept about it. Requiring both is what
+produced the earlier arbitrary two-state threshold.
 
-`## States` is required and contains at least two H3 state names, each followed
-by non-empty prose. `## Transitions` is required and is a bullet list of
-`from → to` pairs using the Unicode arrow or `->` with ASCII characters. Every
-name on either side must be one of this Entity's states. A state no transition
-reaches, other than the first listed, is a `lint` warning; a terminal state is
-valid and needs no outgoing transition. `domain` is optional and single. H1 =
-name and the lead paragraph = description.
+`## Information kept` is a bullet list of single-line facts the Product keeps
+about the thing. It is **what the Product keeps, never how it is stored**: "When
+it was placed", not `created_at TIMESTAMP`. No types, no cardinality, no keys,
+and **no structured relations between Entities** — "The items ordered" is prose,
+never `hasMany`. A cache is out of the model; the data it holds is in when the
+Product promises it. The word *kept* means held, not persisted.
 
-An Entity never declares Capabilities, Screens, availability, or Actors.
-Capabilities name the Entitys they act on through their own prose, and every
-other Entity relation is derived. Entity states are the authority for a
-lifecycle; a Screen's `## Product states` describes what that **view** shows and
-must not restate an Entity's lifecycle.
+`## States` contains H3 state names, each followed by non-empty prose.
+`## Transitions` is required exactly when `## States` is present, and is a
+bullet list of `from → to by <capability-id>` using the Unicode arrow or `->`
+with ASCII characters. Every state name on either side must be one of this
+Entity's states, and the named Capability must exist and must list this Entity
+in its `entities`. A state no transition reaches, other than the first listed,
+is a `lint` warning; a terminal state is valid and needs no outgoing transition.
+
+`domain` is optional and single. H1 = name and the lead paragraph = description.
+Assets may carry `state`, naming one of this Entity's own states.
+
+**No orphans.** An Entity must be referenced by a Capability that changes it or
+a Screen that presents it. An Entity nothing points at is a `lint` error: it is
+either unused vocabulary or a relation somebody forgot to declare.
+
+An Entity never declares Capabilities, Screens, availability, or Actors. The
+Capability declares what it acts on and the Screen declares what it presents;
+every other Entity relation is derived. Entity states are the authority for a
+lifecycle, and a Screen's `## View states` describes what that **view** looks
+like — the two are never merged.
 
 ### `capabilities/<id>.md` or `capabilities/<id>/capability.md`
 
@@ -735,6 +770,7 @@ of the model; Journey composition is optional.
 ```markdown
 ---
 domain: ordering                 # optional
+entities: [order]                # optional
 availability:
   - place: customer-web::storefront
 references:
@@ -753,7 +789,11 @@ Let a shopper complete a purchase without losing cart state on a recoverable
 failure.
 ```
 
-`availability` is required and needs at least one valid Context. Its place is
+`entities` is optional and lists the Entities this Capability acts on, by id.
+It covers changes a transition can never express — renaming a thing alters its
+information, not its state — and it is the authority a transition's `by` is
+checked against. `availability` is required and needs at least one valid
+Context. Its place is
 an undivided Interface or one Experience of a divided Interface. `domain` is
 optional and, when present, names exactly one Domain. Actors are expressed by
 Capability Scenario, Journey, Journey Scenario, Actor-bound Interface, and
@@ -854,6 +894,7 @@ The whole `screens/` collection is optional so non-visual products remain valid.
 ```markdown
 ---
 capabilities: [catalog-browsing]
+entities: [catalog-product]
 entryPoints:
   - customer-web: /products/:id
   - customer-mobile: acme-shop://products/:id
@@ -882,7 +923,7 @@ Help a shopper decide whether to add the product to the cart.
 - Add the product to the cart
 - Return to the catalog
 
-## Product states
+## View states
 
 ### Available
 
@@ -906,7 +947,7 @@ place names the Screen; a Screen never authors
 Capability or Journey Scenario ids. The H1, lead description,
 `## Information presented` bullet list, and `## Capability boundary` prose are
 required. `## Available actions` is optional but, when present, must contain a
-bullet list. `## Product states` is optional; each state is an H3 name followed
+bullet list. `## View states` is optional; each state is an H3 name followed
 by non-empty prose. States remain embedded in the Screen report element.
 
 Only product-significant states belong here: a state changes what the user

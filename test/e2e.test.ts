@@ -56,7 +56,7 @@ describe('end to end on a real git repo', () => {
       experiences: 2,
       screens: 2,
       domains: 1,
-      entities: 1,
+      entities: 3,
       capabilities: 3,
       capabilityScenarios: 4,
       journeys: 1,

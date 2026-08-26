@@ -1,4 +1,6 @@
 ---
+entities:
+  - collection
 domain: collections
 availability: [{ place: reader-web::personal-library }]
 ---

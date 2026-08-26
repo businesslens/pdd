@@ -1,4 +1,6 @@
 ---
+entities:
+  - item
 capabilities:
   - read-content
   - track-reading-state
@@ -31,7 +33,7 @@ Presents a finite backlog and the actions that make progress through it.
 - Save an item
 - Remove an item's saved state
 
-## Product states
+## View states
 
 ### Unread items available
 

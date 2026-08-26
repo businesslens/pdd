@@ -7,6 +7,13 @@ domain: ordering
 A shopper's confirmed intent to buy, from submission through fulfilment or
 refund.
 
+## Information kept
+
+- The items ordered and their quantities
+- The total charged
+- When it was placed
+- Which shopper placed it
+
 ## States
 
 ### Pending
@@ -24,5 +31,5 @@ follows.
 
 ## Transitions
 
-- Pending → Confirmed
-- Confirmed → Refunded
+- Pending → Confirmed by place-order
+- Confirmed → Refunded by manage-orders

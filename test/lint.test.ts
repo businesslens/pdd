@@ -46,23 +46,23 @@ function compactElement(expandedFile: string, compactFile: string) {
 }
 
 describe('lintModel', () => {
-  it('accepts a reference state that names a Product state, and rejects one that does not', () => {
+  it('accepts a reference state that names a View state, and rejects one that does not', () => {
     const cwd = fixtureCopy()
     const screen = join(cwd, '.businesslens', 'interfaces', 'customer-web', 'experiences', 'storefront', 'screens', 'product-record.md')
     const source = readFileSync(screen, 'utf8')
 
-    // product-record.md declares "### Available" and "### Unavailable".
+    // product-record.md declares "### Ready to buy" and "### Purchase blocked".
     const withState = source.replace(
       '    title: Product record visual reference',
-      '    title: Product record visual reference\n    state: Available'
+      '    title: Product record visual reference\n    state: Ready to buy'
     )
     writeFileSync(screen, withState)
     expect(run(cwd).errors).toEqual([])
 
-    writeFileSync(screen, withState.replace('state: Available', 'state: Nonexistent'))
+    writeFileSync(screen, withState.replace('state: Ready to buy', 'state: Nonexistent'))
     const bad = run(cwd)
     expect(bad.ok).toBe(false)
-    expect(bad.errors.some(e => e.includes('reference state "Nonexistent" is not a product state'))).toBe(true)
+    expect(bad.errors.some(e => e.includes('reference state "Nonexistent" is not a view state'))).toBe(true)
   })
 
   it('rejects a reference state on an element that is not a Screen', () => {
@@ -176,7 +176,7 @@ describe('lintModel', () => {
       experiences: 2,
       screens: 2,
       domains: 1,
-      entities: 1,
+      entities: 3,
       capabilities: 3,
       capabilityScenarios: 4,
       journeys: 1,
@@ -250,6 +250,17 @@ An internal system that initiates store operations.
     const cwd = fixtureCopy()
     rmSync(join(cwd, '.businesslens/domains'), { recursive: true })
     rmSync(join(cwd, '.businesslens/entities'), { recursive: true })
+    // Removing every Entity also removes what declared them.
+    for (const relative of readdirSync(join(cwd, '.businesslens/capabilities'), { recursive: true })) {
+      const file = join(cwd, '.businesslens/capabilities', String(relative))
+      if (!String(relative).endsWith('.md')) continue
+      writeFileSync(file, readFileSync(file, 'utf8').replace(/^entities:\n(?:  - .*\n)+/m, ''))
+    }
+    for (const relative of readdirSync(join(cwd, '.businesslens/interfaces'), { recursive: true })) {
+      const file = join(cwd, '.businesslens/interfaces', String(relative))
+      if (!String(relative).endsWith('.md')) continue
+      writeFileSync(file, readFileSync(file, 'utf8').replace(/^entities:\n(?:  - .*\n)+/m, ''))
+    }
     for (const relative of [
       'interfaces/customer-web/experiences/storefront/screens',
       'interfaces/customer-mobile/experiences/storefront/screens'
@@ -754,7 +765,7 @@ Lead.
 
 No bullet.
 
-## Product states
+## View states
 
 ### Empty
 
@@ -766,7 +777,7 @@ No bullet.
     expect(errors).toContain('unknown frontmatter key "capabilityScenarios"')
     expect(errors).toContain('unknown frontmatter key "journeyScenarios"')
     expect(errors).toContain('"## Information presented" needs at least one bullet item')
-    expect(errors).toContain('product state "Empty" needs a description')
+    expect(errors).toContain('view state "Empty" needs a description')
     expect(errors).toContain('missing "## Capability boundary" section')
   })
 

@@ -161,13 +161,13 @@ export function decisionPoints(
   })
 }
 
-/** Parse Screen product states: one H3 name followed by non-empty prose. */
+/** Parse Screen view states: one H3 name followed by non-empty prose. */
 export function screenStates(
   body: string,
   issues: string[],
   label: string,
-  heading = 'Product states',
-  noun = 'product state'
+  heading = 'View states',
+  noun = 'view state'
 ): MarkdownScreenState[] {
   if (!body.trim()) return []
   const lines = body.split('\n')

@@ -1,4 +1,7 @@
 ---
+entities:
+  - source
+  - item
 domain: sources
 references:
   - kind: spec

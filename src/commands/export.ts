@@ -153,9 +153,10 @@ export function compileReport(
         id: actor.id,
         name: actor.doc.title,
         description: actor.doc.lead,
+        informationKept: actor.informationKept,
         kind: actor.kind as 'person' | 'system',
         relationship: actor.relationship as 'external' | 'internal',
-        ...elementContent(actor, [], assetBase)
+        ...elementContent(actor, ['Information kept'], assetBase)
       })),
       interfaces: byId(model.interfaces).map(productInterface => ({
         id: productInterface.id,
@@ -183,6 +184,7 @@ export function compileReport(
         title: screen.doc.title,
         description: screen.doc.lead,
         capabilityIds: sorted(screen.capabilities),
+        entityIds: sorted(screen.entities),
         capabilityScenarioIds: screenScenarioIds(screen.id, 'capability'),
         journeyScenarioIds: screenScenarioIds(screen.id, 'journey'),
         entryPoints: screen.entryPoints,
@@ -190,7 +192,7 @@ export function compileReport(
         actions: screen.actions,
         states: screen.states,
         capabilityBoundary: screen.capabilityBoundary,
-        ...elementContent(screen, ['Information presented', 'Available actions', 'Product states', 'Capability boundary'], assetBase)
+        ...elementContent(screen, ['Information presented', 'Available actions', 'View states', 'Capability boundary'], assetBase)
       })),
       domains: byId(model.domains).map(domain => ({
         id: domain.id,
@@ -204,15 +206,19 @@ export function compileReport(
         title: entity.doc.title,
         description: entity.doc.lead,
         ...(entity.domain ? { domainId: entity.domain } : {}),
+        informationKept: entity.informationKept,
         states: entity.states.map(state => ({ name: state.title, content: state.description })),
-        transitions: entity.transitions.map(transition => ({ from: transition.from, to: transition.to })),
-        ...elementContent(entity, ['States', 'Transitions'], assetBase)
+        transitions: entity.transitions.map(transition => ({
+          from: transition.from, to: transition.to, capabilityId: transition.capability
+        })),
+        ...elementContent(entity, ['Information kept', 'States', 'Transitions'], assetBase)
       })),
       capabilities: byId(model.capabilities).map(capability => ({
         id: capability.id,
         title: capability.doc.title,
         description: capability.doc.lead,
         ...(capability.domain ? { domainId: capability.domain } : {}),
+        entityIds: sorted(capability.entities),
         availability: contexts(capability.availability),
         ...elementContent(capability, [], assetBase)
       })),

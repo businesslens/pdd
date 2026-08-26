@@ -52,7 +52,7 @@ reparsing an opaque Markdown string.
 Product Report v11 adds an `entities` collection and its count. Each Entity
 record carries `id`, `title`, `description`, an ordered `states` array of
 `{ name, content }`, a `transitions` array of `{ from, to }`, and an optional
-`domainId`. Entity states are authored lifecycle; a Screen's `productStates`
+`domainId`. Entity states are authored lifecycle; a Screen's `viewStates`
 remain that view's own states and the two are never merged.
 
 Product Report v11 stores `capabilityScenarios` and `journeyScenarios` as

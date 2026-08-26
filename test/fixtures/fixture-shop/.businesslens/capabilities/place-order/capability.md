@@ -1,4 +1,8 @@
 ---
+entities:
+  - cart
+  - catalog-product
+  - order
 domain: ordering
 references:
   - kind: code

@@ -202,7 +202,7 @@ one. Where a rule can be computed, an author never has to argue it.
 | Interface, or Experience of one? | An Interface holds Experiences exactly when it serves more than one `access` value, or two Actor sets whose Capability coverage is disjoint. Otherwise it is one coherent context and takes direct availability. |
 | Interface, or nothing? | Interfaces are **inbound**. Something the Product calls out to is a dependency of the Capability that calls it, and gets no element. |
 | Actor, or dependency? | Direction decides. An external system is an Actor only when it **initiates**. The same third party can be a dependency one way and an Actor the other. |
-| Screen, or Entity state? | A Screen's `## Product states` are that **view's** states. A thing's own lifecycle belongs to an [Entity](./entities.md). |
+| Screen, or Entity state? | A Screen's `## View states` are that **view's** states. A thing's own lifecycle belongs to an [Entity](./entities.md). |
 | Entity, or nothing? | An Entity exists exactly when a thing has two or more named states referenced by two or more Capabilities. |
 | Business Rule, or Scenario condition? | A Rule governs **two or more** behaviors, or a Context independent of any behavior. Anything true of exactly one Capability is a `condition` Step or its Outcome. |
 | Domain, or no grouping? | A Domain states a `## Boundary` naming what it does **not** own, and holds at least two Capabilities. Otherwise it is a folder. |

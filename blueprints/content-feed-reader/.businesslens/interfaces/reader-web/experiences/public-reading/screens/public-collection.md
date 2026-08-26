@@ -1,4 +1,7 @@
 ---
+entities:
+  - collection
+  - item
 capabilities:
   - read-public-collection
 entryPoints:
@@ -20,7 +23,7 @@ Presents one published collection to anyone holding its web address.
 - Read an item in the collection
 - Leave the collection
 
-## Product states
+## View states
 
 ### Published
 

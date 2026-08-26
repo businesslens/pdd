@@ -1,4 +1,6 @@
 ---
+entities:
+  - source
 capabilities:
   - follow-source
   - synchronize-feeds
@@ -28,7 +30,7 @@ ask for their new items now.
 - Refresh the followed sources
 - Unfollow an existing source
 
-## Product states
+## View states
 
 ### Sources followed
 

@@ -1,4 +1,6 @@
 ---
+entities:
+  - product-model
 domain: model-authoring
 availability: [{ place: agent-skills }]
 references:

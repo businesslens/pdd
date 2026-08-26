@@ -1,4 +1,6 @@
 ---
+entities:
+  - product-model
 capabilities: [view-product-model]
 entryPoints:
   - local-report-web: /?s=capability
@@ -26,7 +28,7 @@ reached through that parent.
 - Narrow the collection by a facet of the kind
 - Search the whole model by name
 
-## Product states
+## View states
 
 ### Populated collection
 

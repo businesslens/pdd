@@ -45,6 +45,8 @@ export interface ElementFile {
 }
 
 export interface ActorElement extends ElementFile {
+  /** What the Product keeps about this Actor. Same rule as an Entity's. */
+  informationKept: string[]
   kind: string
   relationship: string
 }
@@ -76,12 +78,16 @@ export interface DomainElement extends ElementFile {
 
 export interface CapabilityElement extends ElementFile {
   domain?: string
+  /** The Entities this Capability acts on. */
+  entities: string[]
   availability: Context[]
 }
 
 export interface EntityStateTransition {
   from: string
   to: string
+  /** The Capability that causes this move. Checked against its `entities`. */
+  capability: string
 }
 
 /**
@@ -93,11 +99,15 @@ export interface EntityStateTransition {
  */
 export interface EntityElement extends ElementFile {
   domain?: string
+  /** Single-line facts the Product keeps about the thing. Never how it is stored. */
+  informationKept: string[]
   states: ReturnType<typeof screenStates>
   transitions: EntityStateTransition[]
 }
 
 export interface ScreenElement extends ElementFile {
+  /** The Entities this view presents. */
+  entities: string[]
   /** The Interface or Experience that owns it, read from the path. Never authored. */
   containerId: string
   capabilities: string[]
@@ -743,6 +753,7 @@ export function loadModel(cwd: string): PddModel {
       const { data, doc, references, directory, assets, assetMeta } = readElement(location, ['kind', 'relationship'], issues)
       return {
         id, file, doc, references, directory, assets, assetMeta,
+        informationKept: bulletList(section(doc, 'Information kept') || ''),
         kind: stringField(data, 'kind', issues, file) || '',
         relationship: stringField(data, 'relationship', issues, file) || ''
       }
@@ -762,10 +773,11 @@ export function loadModel(cwd: string): PddModel {
     for (const location of listElements(join(parent, 'screens'), 'screen', findings, `${label}/screens`)) {
       const { data, doc, references, directory, assets, assetMeta } = readElement(
         location,
-        ['capabilities', 'entryPoints'],
+        ['capabilities', 'entities', 'entryPoints'],
         issues
       )
       screens.push({
+        entities: uniqueStringListField(data, 'entities', issues, location.file),
         id: qualify(containerId, location.id),
         file: location.file,
         doc,
@@ -778,7 +790,7 @@ export function loadModel(cwd: string): PddModel {
         entryPoints: entryPointsField(data, issues, location.file),
         information: bulletList(section(doc, 'Information presented') || ''),
         actions: bulletList(section(doc, 'Available actions') || ''),
-        states: screenStates(section(doc, 'Product states') || '', issues, location.file),
+        states: screenStates(section(doc, 'View states') || '', issues, location.file),
         capabilityBoundary: section(doc, 'Capability boundary') || ''
       })
     }
@@ -863,29 +875,41 @@ export function loadModel(cwd: string): PddModel {
     .map((location) => {
       const { id, file } = location
       const { data, doc, references, directory, assets, assetMeta } = readElement(location, ['domain'], issues)
+      const informationKept = bulletList(section(doc, 'Information kept') || '')
       const states = screenStates(section(doc, 'States') || '', issues, file, 'States', 'entity state')
-      if (states.length < 2) {
-        issues.push(`${file}: an Entity needs "## States" with at least two H3 states`)
+      const hasStates = section(doc, 'States') !== undefined
+
+      // Identity, not storage: a thing may be worth naming for what the Product
+      // keeps about it, for how it changes, or for both — but not for neither.
+      if (!informationKept.length && !hasStates) {
+        issues.push(`${file}: an Entity needs "## Information kept" or "## States"`)
       }
+
       const stateNames = new Set(states.map(state => state.title))
       const transitions: EntityStateTransition[] = []
       const transitionBody = section(doc, 'Transitions')
-      if (transitionBody === undefined) {
-        issues.push(`${file}: an Entity needs a "## Transitions" section`)
-      } else {
+      if (hasStates && transitionBody === undefined) {
+        issues.push(`${file}: an Entity with "## States" needs "## Transitions"`)
+      }
+      if (!hasStates && transitionBody !== undefined) {
+        issues.push(`${file}: "## Transitions" needs "## States" to move between`)
+      }
+      if (transitionBody !== undefined) {
         for (const item of bulletList(transitionBody)) {
-          const parts = item.split(/\s*(?:\u2192|->)\s*/)
-          if (parts.length !== 2 || !parts[0]?.trim() || !parts[1]?.trim()) {
-            issues.push(`${file}: transition "${item}" must read "from \u2192 to"`)
+          const match = item.match(/^(.*?)\s*(?:\u2192|->)\s*(.*?)\s+by\s+(\S+)\s*$/)
+          if (!match) {
+            issues.push(`${file}: transition "${item}" must read "from \u2192 to by <capability>"`)
             continue
           }
-          const [from, to] = [parts[0].trim(), parts[1].trim()]
+          const from = match[1]!.trim()
+          const to = match[2]!.trim()
+          const capability = match[3]!.trim()
           for (const name of [from, to]) {
             if (!stateNames.has(name)) issues.push(`${file}: transition names unknown state "${name}"`)
           }
-          transitions.push({ from, to })
+          transitions.push({ from, to, capability })
         }
-        if (!transitions.length) issues.push(`${file}: "## Transitions" needs at least one transition`)
+        if (hasStates && !transitions.length) issues.push(`${file}: "## Transitions" needs at least one transition`)
       }
       const reachable = new Set(transitions.map(transition => transition.to))
       for (const state of states.slice(1)) {
@@ -896,6 +920,7 @@ export function loadModel(cwd: string): PddModel {
       return {
         id, file, doc, references, directory, assets, assetMeta,
         domain: stringField(data, 'domain', issues, file),
+        informationKept,
         states,
         transitions
       }
@@ -910,8 +935,9 @@ export function loadModel(cwd: string): PddModel {
     'capabilities',
     ['scenarios']
   )) {
-    const { data, doc, references, directory, assets, assetMeta } = readElement(location, ['domain', 'availability'], issues)
+    const { data, doc, references, directory, assets, assetMeta } = readElement(location, ['domain', 'entities', 'availability'], issues)
     capabilities.push({
+      entities: uniqueStringListField(data, 'entities', issues, location.file),
       id: location.id,
       file: location.file,
       doc,

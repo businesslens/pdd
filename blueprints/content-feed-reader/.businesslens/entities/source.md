@@ -7,6 +7,12 @@ domain: sources
 A syndicated feed the Reader follows, and the Product's standing record of
 whether it can still be read.
 
+## Information kept
+
+- The name the Reader knows it by
+- Its feed address
+- When it was last read successfully
+
 ## States
 
 ### Reachable
@@ -21,5 +27,5 @@ from it stay in the library, and the Product keeps trying on its own schedule.
 
 ## Transitions
 
-- Reachable → Unreachable
-- Unreachable → Reachable
+- Reachable → Unreachable by synchronize-feeds
+- Unreachable → Reachable by synchronize-feeds

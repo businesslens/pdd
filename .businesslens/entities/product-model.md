@@ -5,6 +5,13 @@ its product is intended to do. Its declared coverage is the state a reader
 observes — how much of the intended product breadth this model claims to hold —
 and it is the first thing every BusinessLens workflow establishes before acting.
 
+## Information kept
+
+- Which Product it describes, and that Product's identity and attribution
+- Every Element it holds, and the relationships between them
+- How much of the intended Product breadth it claims to cover
+- The inspection that produced it, and what it leaves unmapped
+
 ## States
 
 ### Absent
@@ -31,10 +38,10 @@ Context, and a public Blueprint demands the same.
 
 ## Transitions
 
-- Absent → Draft
-- Absent → Partial
-- Absent → Complete
-- Draft → Partial
-- Draft → Complete
-- Partial → Complete
-- Complete → Partial
+- Absent → Draft by map-established-behavior
+- Absent → Partial by map-established-behavior
+- Absent → Complete by decide-intended-behavior
+- Draft → Partial by map-established-behavior
+- Draft → Complete by map-established-behavior
+- Partial → Complete by map-established-behavior
+- Complete → Partial by decide-intended-behavior

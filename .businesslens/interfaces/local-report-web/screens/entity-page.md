@@ -1,4 +1,6 @@
 ---
+entities:
+  - product-model
 capabilities: [view-product-model]
 entryPoints:
   - local-report-web: /?s=capability&e=capability:lint-product-model
@@ -27,7 +29,7 @@ button.
 - Return to the collection through the breadcrumb
 - Search the whole model by name
 
-## Product states
+## View states
 
 ### Overview open
 

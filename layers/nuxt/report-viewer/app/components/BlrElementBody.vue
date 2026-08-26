@@ -68,15 +68,20 @@ const domainId = computed(() => {
 })
 
 /*
- * An Entity's lifecycle read forward from each state. A flat transition list
- * makes the reader join `from` to `to` themselves; grouping the outbound moves
- * under the state they leave puts the whole answer beside the state's prose,
- * and shows a terminal state as terminal rather than as an absence.
+ * States and transitions are read separately, because they answer different
+ * questions: what the thing can be, and how it moves. Folding the moves into
+ * the state cards made the two indistinguishable — a reader could not tell a
+ * state name from a destination, nor count the transitions at all.
  */
-const entityLifecycle = computed(() => asEntity.value.states.map(state => ({
-  name: state.name,
-  content: state.content,
-  goesTo: asEntity.value.transitions.filter(transition => transition.from === state.name).map(transition => transition.to)
+const entityStates = computed(() => asEntity.value.states)
+function openCapability(id: string) {
+  const capability = resolveElement(props.workspace, 'capability', id)
+  if (capability) emit('select', capability)
+}
+
+const entityTransitions = computed(() => asEntity.value.transitions.map(transition => ({
+  ...transition,
+  capabilityTitle: resolveElement(props.workspace, 'capability', transition.capabilityId)?.title ?? transition.capabilityId
 })))
 
 /* One authored Scenario sequence, with named Context routes as columns. */
@@ -714,27 +719,58 @@ const empty = computed(() => !hasAuthoredBody(props.element))
       </section>
     </template>
 
-    <!-- OBJECT: the lifecycle, read forward from each state. -->
+    <!-- ENTITY: what the Product keeps, what it can be, and how it moves. -->
     <template v-if="element.kind === 'entity'">
-      <section v-if="entityLifecycle.length" class="space-y-2">
-        <h2 class="blr-page-heading">Lifecycle</h2>
-        <ol class="space-y-3">
+      <section v-if="asEntity.informationKept.length" class="space-y-2">
+        <h2 class="blr-page-heading">
+          Information kept <span class="blr-meta ms-1">{{ asEntity.informationKept.length }}</span>
+        </h2>
+        <ul class="grid gap-2 sm:grid-cols-2">
           <li
-            v-for="state in entityLifecycle"
+            v-for="fact in asEntity.informationKept"
+            :key="fact"
+            class="flex gap-2 rounded-lg border border-default bg-elevated/30 px-3 py-2 text-sm"
+          >
+            <UIcon name="i-lucide-circle-small" class="mt-1 size-4 shrink-0 text-muted" />{{ fact }}
+          </li>
+        </ul>
+      </section>
+
+      <section v-if="entityStates.length" class="space-y-2">
+        <h2 class="blr-page-heading">
+          States <span class="blr-meta ms-1">{{ entityStates.length }}</span>
+        </h2>
+        <div class="grid gap-3 sm:grid-cols-2">
+          <div
+            v-for="state in entityStates"
             :key="state.name"
             class="rounded-xl border border-default bg-elevated/30 p-4"
           >
-            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-              <p class="text-sm font-semibold text-highlighted">{{ state.name }}</p>
-              <p v-if="state.goesTo.length" class="blr-meta">
-                <UIcon name="i-lucide-arrow-right" class="size-3 align-[-1px]" />
-                {{ state.goesTo.join(' · ') }}
-              </p>
-              <p v-else class="blr-meta">terminal</p>
-            </div>
+            <p class="text-sm font-semibold text-highlighted">{{ state.name }}</p>
             <BlrProse :text="state.content" class="mt-1.5" />
+          </div>
+        </div>
+      </section>
+
+      <section v-if="entityTransitions.length" class="space-y-2">
+        <h2 class="blr-page-heading">
+          Transitions <span class="blr-meta ms-1">{{ entityTransitions.length }}</span>
+        </h2>
+        <ul class="space-y-1.5">
+          <li
+            v-for="transition in entityTransitions"
+            :key="`${transition.from}-${transition.to}-${transition.capabilityId}`"
+            class="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border border-default bg-elevated/30 px-3 py-2 text-sm"
+          >
+            <span class="font-medium text-highlighted">{{ transition.from }}</span>
+            <UIcon name="i-lucide-arrow-right" class="size-3.5 shrink-0 text-muted" />
+            <span class="font-medium text-highlighted">{{ transition.to }}</span>
+            <span class="blr-meta ms-auto">by</span>
+            <button type="button" class="blr-chip" @click="openCapability(transition.capabilityId)">
+              <UIcon name="i-lucide-zap" class="size-3.5" />{{ transition.capabilityTitle }}
+            </button>
           </li>
-        </ol>
+        </ul>
       </section>
     </template>
 

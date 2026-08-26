@@ -180,7 +180,7 @@ export function contextField(
 export interface ElementAsset {
   file: string
   title?: string
-  /** Screens only: the `## Product states` H3 this asset depicts. */
+  /** Screens only: the `## View states` H3 this asset depicts. */
   state?: string
 }
 
@@ -237,7 +237,7 @@ export interface ElementReference {
   /**
    * The Product state this artefact depicts.
    *
-   * Screens only, and validated against that Screen's `## Product states`. Six
+   * Screens only, and validated against that Screen's `## View states`. Six
    * captures of one Screen are otherwise a flat list distinguishable only by
    * free-text title; naming the state is what lets a reader — and the renderer —
    * put each capture beside the state it shows.

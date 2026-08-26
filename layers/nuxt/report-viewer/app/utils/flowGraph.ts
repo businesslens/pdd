@@ -246,8 +246,9 @@ export function directRelations(workspace: ReportWorkspace, element: AnyElementV
       break
     }
     case 'entity': {
-      // The Domain is the one relation an Entity actually has.
       if (element.domainId) push(element.key, elementKey('domain', element.domainId), 'in')
+      for (const id of element.changedByIds) push(elementKey('capability', id), element.key, 'changes')
+      for (const id of element.presentedOnIds) push(elementKey('screen', id), element.key, 'presents')
       break
     }
     case 'domain': {

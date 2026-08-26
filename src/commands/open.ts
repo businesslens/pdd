@@ -202,7 +202,12 @@ function writeReport(root: string, report: ProductReportV11, hasLogo: boolean): 
         relationship: actor.relationship,
         references: references(actor.references)
       }))
-      + body(actor.name, actor.description, actor.intent, [], actor.supportingSections)
+      + body(actor.name, actor.description, actor.intent, [], [
+        ...(actor.informationKept.length
+          ? [{ heading: 'Information kept', content: actor.informationKept.map(item => `- ${item}`).join('\n') }]
+          : []),
+        ...actor.supportingSections
+      ])
     )
   }
   for (const productInterface of report.model.interfaces) {
@@ -240,8 +245,15 @@ function writeReport(root: string, report: ProductReportV11, hasLogo: boolean): 
         domain: entity.domainId,
         references: references(entity.references)
       })) + body(entity.title, entity.description, entity.intent, [], [
-        { heading: 'States', content: entity.states.map(state => `### ${state.name}\n\n${state.content}`).join('\n\n') },
-        { heading: 'Transitions', content: entity.transitions.map(transition => `- ${transition.from} \u2192 ${transition.to}`).join('\n') },
+        ...(entity.informationKept.length
+          ? [{ heading: 'Information kept', content: entity.informationKept.map(item => `- ${item}`).join('\n') }]
+          : []),
+        ...(entity.states.length
+          ? [{ heading: 'States', content: entity.states.map(state => `### ${state.name}\n\n${state.content}`).join('\n\n') }]
+          : []),
+        ...(entity.transitions.length
+          ? [{ heading: 'Transitions', content: entity.transitions.map(transition => `- ${transition.from} \u2192 ${transition.to} by ${transition.capabilityId}`).join('\n') }]
+          : []),
         ...entity.supportingSections
       ])
     )
@@ -279,6 +291,7 @@ function writeReport(root: string, report: ProductReportV11, hasLogo: boolean): 
       screenPath(root, screen.id),
       frontmatter(compactRecord({
         capabilities: screen.capabilityIds,
+        entities: screen.entityIds.length ? screen.entityIds : undefined,
         entryPoints: entryPoints(screen.entryPoints),
         references: references(screen.references)
       })) + body(
@@ -288,7 +301,7 @@ function writeReport(root: string, report: ProductReportV11, hasLogo: boolean): 
         [
           { heading: 'Information presented', content: screen.information.map(item => `- ${item}`).join('\n') },
           { heading: 'Available actions', content: screen.actions.map(item => `- ${item}`).join('\n') },
-          { heading: 'Product states', content: states },
+          { heading: 'View states', content: states },
           { heading: 'Capability boundary', content: screen.capabilityBoundary }
         ],
         screen.supportingSections
@@ -301,6 +314,7 @@ function writeReport(root: string, report: ProductReportV11, hasLogo: boolean): 
       elementPath(join(root, 'capabilities'), capability.id, 'capability', hasScenarios),
       frontmatter(compactRecord({
         domain: capability.domainId,
+        entities: capability.entityIds.length ? capability.entityIds : undefined,
         availability: contexts(capability.availability),
         references: references(capability.references)
       })) + body(capability.title, capability.description, capability.intent, [], capability.supportingSections)

@@ -1,4 +1,6 @@
 ---
+entities:
+  - product-model
 capabilities: [explore-product-topology]
 entryPoints:
   - local-report-web: /?s=topology
@@ -25,7 +27,7 @@ rather than assembled by the reader.
 - Focus one entity and read only its neighbourhood
 - Open an entity's page from the canvas
 
-## Product states
+## View states
 
 ### Whole view
 

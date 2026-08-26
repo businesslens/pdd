@@ -72,6 +72,8 @@ export function relatedIds(element: AnyElementView, kind: ReportElementKind): st
       return []
     case 'entity':
       if (kind === 'domain') return element.domainId ? [element.domainId] : []
+      if (kind === 'capability') return element.changedByIds
+      if (kind === 'screen') return element.presentedOnIds
       return []
     case 'domain':
       if (kind === 'capability') return element.capabilityIds
@@ -136,7 +138,7 @@ export function facetKindsFor(kind: ReportElementKind): ReportElementKind[] {
     case 'experience': return ['actor', 'interface', 'capability', 'domain', 'screen', 'journey']
     case 'screen': return ['interface', 'experience', 'capability', 'domain', 'journey', 'capability-scenario', 'journey-scenario']
     case 'domain': return ['capability', 'journey', 'screen', 'experience', 'rule']
-    case 'entity': return ['domain']
+    case 'entity': return ['domain', 'capability', 'screen']
     case 'capability': return ['domain', 'interface', 'experience', 'capability-scenario', 'journey-scenario', 'journey', 'screen', 'rule']
     case 'journey': return ['actor', 'interface', 'experience', 'capability', 'domain', 'screen', 'journey-scenario', 'rule']
     /* A Capability Scenario never names a Journey; offering the facet would be a permanently empty control. */

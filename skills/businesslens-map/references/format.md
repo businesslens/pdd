@@ -88,7 +88,7 @@ not contain another H1 or H2.
   attribution, so a model intended for a Blueprint authors them.
 - `taxonomies.yaml`: `scenarioKinds` entries with `id`, `name`, `description`,
   and optional `colorSlot`.
-- Actor: required `kind: person|system` and `relationship: external|internal`,
+- Actor: optional `## Information kept` for what the Product keeps about them; required `kind: person|system` and `relationship: external|internal`,
   H1, and lead description. An external system is an Actor only when it
   initiates; a system the Product calls out to is a Capability dependency.
 - Interface: required `type`
@@ -105,7 +105,7 @@ not contain another H1 or H2.
   H1, lead description, and `## Capability boundary`. The collection is
   optional. For every Interface using Experiences, their Actor union covers all
   Interface Actors.
-- Capability: at least one `availability` Context; optional singular
+- Capability: optional `entities` naming what it acts on; at least one `availability` Context; optional singular
   `domain`; H1 and lead description. Every Capability needs a Capability
   Scenario for every availability Context: a gap is an error at complete
   coverage and a warning at draft or partial coverage.
@@ -121,17 +121,20 @@ not contain another H1 or H2.
   `install-agent-skills`, not `install-skills`, when `agent-skills` is an
   Interface. Entity, Domain and Business Rule ids never open with a verb; they
   name what a thing is or what must remain true.
-- Entity: H1, lead description, `## States` with at least two H3 states, and
-  `## Transitions` listing `from \u2192 to` pairs between them; optional
-  `domain`. An Entity names a thing the Product keeps whose state an Actor
-  observes. Create one exactly when a thing has two or more named states
-  referenced by two or more Capabilities — never as a data model, and never to
-  restate a Screen's own `## Product states`.
-- Screen: at least one `capabilities` relation (it has no `availability` — its
+- Entity: H1, lead description, and at least one of `## Information kept` (a
+  single-line bullet list of what the Product keeps about the thing) and
+  `## States` (H3 names with prose). `## Transitions` is required exactly when
+  `## States` is present and reads `from \u2192 to by <capability-id>`; the named
+  Capability must list this Entity. Optional `domain`. An Entity is a thing an
+  Actor points at and the Product tells apart — identity, not storage. Never a
+  data model: no types, no cardinality, no keys, no relations between Entities.
+  It must be referenced by a Capability that changes it or a Screen that
+  presents it.
+- Screen: at least one `capabilities` relation, optional `entities` naming what it presents, (it has no `availability` — its
   path is its place);
   optional Interface-keyed Product entry points; H1, lead, bullet
   `## Information presented`, optional bullet
-  `## Available actions`, optional H3 `## Product states`, and
+  `## Available actions`, optional H3 `## View states`, and
   `## Capability boundary`. Each information or action item occupies one
   physical line. The whole collection is optional.
 - Business Rule: a non-empty `appliesTo` list of typed `capability`,

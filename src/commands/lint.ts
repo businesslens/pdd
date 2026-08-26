@@ -496,11 +496,56 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     }
   }
 
+  /*
+   * An Entity declares nothing about who uses it. Its edges are declared by the
+   * Capability that changes it and the Screen that presents it, and checked here.
+   */
+  const entityIds = new Set(model.entities.map(item => item.id))
+  const changedBy = new Map<string, string[]>()
+  for (const capability of model.capabilities) {
+    for (const id of capability.entities) {
+      if (!entityIds.has(id)) errors.push(`${capability.file}: names missing entity "${id}"`)
+      changedBy.set(id, [...(changedBy.get(id) || []), capability.id])
+    }
+  }
+  const presentedOn = new Map<string, string[]>()
+  for (const screen of model.screens) {
+    for (const id of screen.entities) {
+      if (!entityIds.has(id)) errors.push(`${screen.file}: names missing entity "${id}"`)
+      presentedOn.set(id, [...(presentedOn.get(id) || []), screen.id])
+    }
+  }
+
   for (const entity of model.entities) {
     requireTitle(entity.file, entity.doc.title, entity.doc.lead)
-    validateSections(entity.file, entity.doc, ['Intent', 'States', 'Transitions'])
+    validateSections(entity.file, entity.doc, ['Intent', 'Information kept', 'States', 'Transitions'])
     if (entity.domain && !domainIds.has(entity.domain)) {
       errors.push(`${entity.file}: names missing domain "${entity.domain}"`)
+    }
+
+    /*
+     * A transition's cause must be a Capability that admits acting on this
+     * Entity. Without the cross-check the two declarations could disagree
+     * silently, which is the failure the Screen/Capability check already
+     * prevents elsewhere.
+     */
+    for (const transition of entity.transitions) {
+      if (!capabilityIds.has(transition.capability)) {
+        errors.push(`${entity.file}: transition "${transition.from} \u2192 ${transition.to}" names missing capability "${transition.capability}"`)
+        continue
+      }
+      const capability = model.capabilities.find(item => item.id === transition.capability)
+      if (capability && !capability.entities.includes(entity.id)) {
+        errors.push(
+          `${entity.file}: transition "${transition.from} \u2192 ${transition.to}" names capability "${transition.capability}", which does not list this Entity`
+        )
+      }
+    }
+
+    // No orphans. Vocabulary nothing points at is either unused or a relation
+    // somebody forgot to declare, and both are worth an error.
+    if (!(changedBy.get(entity.id) || []).length && !(presentedOn.get(entity.id) || []).length) {
+      errors.push(`${entity.file}: no Capability changes it and no Screen presents it`)
     }
   }
 
@@ -852,7 +897,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     validateSections(
       screen.file,
       screen.doc,
-      ['Intent', 'Information presented', 'Available actions', 'Product states', 'Capability boundary']
+      ['Intent', 'Information presented', 'Available actions', 'View states', 'Capability boundary']
     )
     validateListSection(screen.file, screen.doc, 'Information presented', 'bullet')
     validateListSection(screen.file, screen.doc, 'Available actions', 'bullet')
@@ -882,13 +927,13 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     if (section(screen.doc, 'Available actions') !== undefined && !screen.actions.length) {
       errors.push(`${screen.file}: "## Available actions" needs at least one bullet item when present`)
     }
-    if (section(screen.doc, 'Product states') !== undefined && !screen.states.length) {
+    if (section(screen.doc, 'View states') !== undefined && !screen.states.length) {
       errors.push(`${screen.file}: "## Product states" needs at least one H3 state when present`)
     }
     const stateNames = new Set<string>()
     for (const state of screen.states) {
       const normalized = state.title.toLowerCase()
-      if (stateNames.has(normalized)) errors.push(`${screen.file}: duplicate product state "${state.title}"`)
+      if (stateNames.has(normalized)) errors.push(`${screen.file}: duplicate view state "${state.title}"`)
       stateNames.add(normalized)
     }
     // A capture that names a state it does not depict is worse than one that
@@ -896,7 +941,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     for (const reference of screen.references) {
       if (reference.state === undefined) continue
       if (!stateNames.has(reference.state.toLowerCase())) {
-        errors.push(`${screen.file}: reference state "${reference.state}" is not a product state of this Screen`)
+        errors.push(`${screen.file}: reference state "${reference.state}" is not a view state of this Screen`)
       }
     }
   }
@@ -1050,7 +1095,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
       if (!isScreen) {
         errors.push(`${element.file}: asset "state" is only valid on a Screen`)
       } else if (!stateNames.has(asset.state.toLowerCase())) {
-        errors.push(`${element.file}: asset state "${asset.state}" is not a product state of this Screen`)
+        errors.push(`${element.file}: asset state "${asset.state}" is not a view state of this Screen`)
       }
     }
   }

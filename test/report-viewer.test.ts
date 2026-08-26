@@ -77,37 +77,39 @@ describe('stable Product Report', () => {
     }
   })
 
-  it('renders an Object as its lifecycle, distinct from a Screen\'s own states', () => {
+  it('renders an Entity as what it keeps, what it can be, and how it moves', () => {
     const workspace = projectReportWorkspace(compileReport(loadModel(FIXTURE), '2026-08-08'))
 
     const order = workspace.entities.find((item: any) => item.id === 'order')
     expect(order.kind).toBe('entity')
+    expect(order.informationKept).toContain('When it was placed')
     expect(order.states.map((state: any) => state.name)).toEqual(['Pending', 'Confirmed', 'Refunded'])
-    expect(order.transitions).toEqual([
-      { from: 'Pending', to: 'Confirmed' },
-      { from: 'Confirmed', to: 'Refunded' }
-    ])
-    expect(order.domainId).toBe('ordering')
-    expect(workspace.counts.entities).toBe(1)
 
-    // Reachable everywhere a kind is: rail, search, collection, and page.
+    // Every transition names the Capability that causes it — the edge that
+    // stopped an Entity being something nothing in the model pointed at.
+    expect(order.transitions).toEqual([
+      { from: 'Pending', to: 'Confirmed', capabilityId: 'place-order' },
+      { from: 'Confirmed', to: 'Refunded', capabilityId: 'manage-orders' }
+    ])
+
+    // Both relations are derived from the declarations, never authored here.
+    expect(order.changedByIds).toEqual(['manage-orders', 'place-order'])
+    expect(order.presentedOnIds).toEqual([])
+
+    // A thing may be worth naming for what is kept about it alone.
+    const cart = workspace.entities.find((item: any) => item.id === 'cart')
+    expect(cart.states).toEqual([])
+    expect(cart.informationKept.length).toBeGreaterThan(0)
+    expect(cart.presentedOnIds.length).toBeGreaterThan(0)
+
     expect(workspace.byKey.get(order.key)).toBe(order)
     expect(elementFacts(workspace, order).map((fact: any) => fact.label))
-      .toEqual(['States', 'Transitions'])
-
-    // No Capability relation: an Object declares none and the format has no
-    // structured edge for one, so the viewer invents nothing.
-    expect('capabilityIds' in order).toBe(false)
-
-    // The body block must actually be composed onto the page. An Object has no
-    // `## Intent`, and two separate predicates each decided "does this kind have
-    // a body" — one was updated and the other was not, so the lifecycle rendered
-    // nowhere while the counts still showed.
+      .toEqual(['Kept', 'States', 'Transitions', 'Changed by'])
     expect(hasAuthoredBody(order)).toBe(true)
     const overview = tabsFor(workspace, order).find((tab: any) => tab.id === 'overview')!
     expect(overview.blocks).toContain('detail')
 
-    // A Screen's own states stay the view's, never the Object's lifecycle.
+    // A Screen's own states stay the view's, never the thing's lifecycle.
     const screen = workspace.screens.find((item: any) => item.states.length)
     expect(screen.states.map((state: any) => state.title)).not.toContain('Pending')
   })

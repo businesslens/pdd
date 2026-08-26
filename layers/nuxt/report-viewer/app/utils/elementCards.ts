@@ -185,19 +185,21 @@ export function elementCardPresentation(
     }
     case 'entity': {
       const entity = element as EntityView
-      // An Entity's reading is its lifecycle: how many states it can be in and
-      // how many ways it moves between them. Its Capabilities are derived
-      // through the Domain they share, so they rank below both.
+      // A thing is read by what it can be, when it has a lifecycle, and by what
+      // the Product keeps about it when it does not.
       return {
         badge: entity.domainId
           ? resolveElement(workspace, 'domain', entity.domainId)?.title ?? entity.domainId
           : '',
         metrics: [
+          { label: plural(entity.informationKept.length, 'fact'), value: entity.informationKept.length },
           { label: plural(entity.states.length, 'state'), value: entity.states.length },
-          { label: plural(entity.transitions.length, 'transition'), value: entity.transitions.length }
+          { label: plural(entity.changedByIds.length, 'capability', 'capabilities'), value: entity.changedByIds.length, kind: 'capability', ids: entity.changedByIds }
         ],
-        hookLabel: 'States',
-        hook: entity.states.map(state => state.name).join(' → ')
+        hookLabel: entity.states.length ? 'States' : 'Keeps',
+        hook: entity.states.length
+          ? entity.states.map(state => state.name).join(' → ')
+          : entity.informationKept.join(' · ')
       }
     }
     case 'capability': {

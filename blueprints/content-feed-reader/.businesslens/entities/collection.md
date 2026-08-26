@@ -7,6 +7,12 @@ domain: collections
 An ordered group of saved items an owner curates and may share beyond their own
 library.
 
+## Information kept
+
+- The name its owner gave it
+- The saved items it holds, in the order the owner arranged them
+- Its public address once it has been published
+
 ## States
 
 ### Private
@@ -26,6 +32,6 @@ collection.
 
 ## Transitions
 
-- Private → Published
-- Published → Unlisted
-- Unlisted → Published
+- Private → Published by publish-collection
+- Published → Unlisted by publish-collection
+- Unlisted → Published by publish-collection

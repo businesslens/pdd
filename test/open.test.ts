@@ -135,7 +135,7 @@ describe('open report', () => {
     expect(readFileSync(join(target, '.businesslens/product.md'), 'utf8'))
       .toContain('## Teaching note')
     expect(readFileSync(join(target, '.businesslens/interfaces/customer-web/experiences/storefront/screens/product-record.md'), 'utf8'))
-      .toContain('## Product states')
+      .toContain('## View states')
   })
 
   it('preserves known unmapped product areas as model-breadth context', async () => {
@@ -287,7 +287,7 @@ describe('open report', () => {
     expect(actor).toMatch(/^---\nkind: person\nrelationship: external\n---\n/)
 
     expect(readFileSync(join(target, '.businesslens/capabilities/place-order/capability.md'), 'utf8'))
-      .toMatch(/^---\ndomain: ordering\navailability:/)
+      .toMatch(/^---\ndomain: ordering\nentities:\n(?:  - .*\n)+availability:/)
   })
 
   it('refuses to overwrite a non-empty product model without force', async () => {

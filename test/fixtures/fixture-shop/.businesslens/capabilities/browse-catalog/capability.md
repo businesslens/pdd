@@ -1,4 +1,6 @@
 ---
+entities:
+  - catalog-product
 references:
   - kind: code
     role: implementation

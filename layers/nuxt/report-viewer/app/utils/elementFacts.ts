@@ -68,8 +68,10 @@ export function elementFacts(workspace: ReportWorkspace, element: AnyElementView
     case 'entity': {
       const entity = element as EntityView
       return [
+        { label: 'Kept', value: String(entity.informationKept.length) },
         { label: 'States', value: String(entity.states.length) },
-        { label: 'Transitions', value: String(entity.transitions.length) }
+        { label: 'Transitions', value: String(entity.transitions.length) },
+        { label: 'Changed by', value: String(entity.changedByIds.length) }
       ]
     }
     case 'domain': {

@@ -247,8 +247,15 @@ export interface DomainView extends ElementBase {
 export interface EntityView extends ElementBase {
   kind: 'entity'
   domainId?: string
+  /** What the Product keeps about the thing. Never how it is stored. */
+  informationKept: string[]
   states: Array<{ name: string, content: string }>
-  transitions: Array<{ from: string, to: string }>
+  /** Each move, and the Capability that causes it. */
+  transitions: Array<{ from: string, to: string, capabilityId: string }>
+  /** Capabilities that declare acting on this Entity. Derived. */
+  changedByIds: string[]
+  /** Screens that declare presenting it. Derived. */
+  presentedOnIds: string[]
 }
 
 export interface CapabilityView extends ElementBase {
@@ -870,6 +877,9 @@ export function projectReportWorkspace(report: ProductReportV11): ReportWorkspac
     supportingContent: supportingMarkdown(entity.supportingSections),
     references: entity.references,
     domainId: entity.domainId,
+    informationKept: entity.informationKept,
+    changedByIds: model.capabilities.filter(c => c.entityIds.includes(entity.id)).map(c => c.id),
+    presentedOnIds: model.screens.filter(sc => sc.entityIds.includes(entity.id)).map(sc => sc.id),
     states: entity.states.map(state => ({ name: state.name, content: state.content })),
     /*
      * States and transitions, and the Domain. No Capability relation: an Entity
@@ -878,7 +888,9 @@ export function projectReportWorkspace(report: ProductReportV11): ReportWorkspac
      * through the shared Domain looked like a relation and was not — it read
      * empty for a product-wide Entity and over-claimed for a scoped one.
      */
-    transitions: entity.transitions.map(transition => ({ from: transition.from, to: transition.to }))
+    transitions: entity.transitions.map(transition => ({
+      from: transition.from, to: transition.to, capabilityId: transition.capabilityId
+    }))
   }))
 
   const domains: DomainView[] = model.domains.map((domain: ReportDomain) => {

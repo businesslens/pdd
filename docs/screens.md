@@ -73,7 +73,7 @@ Shows the information a shopper needs to evaluate one product.
 - Add the product to the cart
 - Return to the catalog
 
-## Product states
+## View states
 
 ### Available
 
@@ -92,7 +92,7 @@ The Screen does not change product or inventory data.
 | H1 and lead paragraph | yes | Name the Screen and describe its Product purpose. |
 | `## Information presented` | yes | Include at least one meaningful bullet item, with each item on one physical line. |
 | `## Available actions` | no | Include a bullet list when present, with each item on one physical line. |
-| `## Product states` | no | Give every H3 state a description. |
+| `## View states` | no | Give every H3 state a description. |
 | `## Capability boundary` | yes | State what the Screen supports and excludes. |
 
 Screens do not declare availability and do not list Scenarios. Their folder

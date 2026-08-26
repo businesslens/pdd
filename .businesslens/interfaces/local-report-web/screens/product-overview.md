@@ -1,4 +1,6 @@
 ---
+entities:
+  - product-model
 capabilities: [view-product-model]
 entryPoints:
   - local-report-web: /

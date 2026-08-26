@@ -50,7 +50,7 @@ export const ReportReferenceSchema = z.strictObject({
   role: z.enum(['intent', 'implementation', 'context']),
   target: SingleLineTextSchema,
   title: SingleLineTextSchema.optional(),
-  /** Screens only: the `## Product states` H3 this artefact depicts. */
+  /** Screens only: the `## View states` H3 this artefact depicts. */
   state: SingleLineTextSchema.optional()
 }).superRefine((reference, context) => {
   if (reference.kind === 'code') {
@@ -128,6 +128,8 @@ export const ReportActorSchema = z.strictObject({
   description: RequiredMarkdownFragmentSchema,
   kind: z.enum(['person', 'system']),
   relationship: z.enum(['external', 'internal']),
+  /** What the Product keeps about this Actor. Same rule as an Entity's. */
+  informationKept: z.array(SingleLineTextSchema),
   ...ElementContentSchema
 })
 
@@ -169,12 +171,14 @@ export const ReportEntityStateSchema = z.strictObject({
 
 export const ReportEntityTransitionSchema = z.strictObject({
   from: SingleLineTextSchema,
-  to: SingleLineTextSchema
+  to: SingleLineTextSchema,
+  /** The Capability that causes the move. Always declares this Entity. */
+  capabilityId: IdSchema
 })
 
 /**
  * A thing the Product keeps whose state an Actor can observe. Entity states are
- * an authored lifecycle; a Screen's `productStates` remain that view's own
+ * an authored lifecycle; a Screen's `states` remain that view's own
  * states, and the two are never merged.
  */
 export const ReportEntitySchema = z.strictObject({
@@ -182,8 +186,10 @@ export const ReportEntitySchema = z.strictObject({
   title: SingleLineTextSchema,
   description: RequiredMarkdownFragmentSchema,
   domainId: IdSchema.optional(),
-  states: z.array(ReportEntityStateSchema).min(2),
-  transitions: z.array(ReportEntityTransitionSchema).min(1),
+  /** What the Product keeps about the thing. Never how it is stored. */
+  informationKept: z.array(SingleLineTextSchema),
+  states: z.array(ReportEntityStateSchema),
+  transitions: z.array(ReportEntityTransitionSchema),
   ...ElementContentSchema
 })
 
@@ -192,6 +198,8 @@ export const ReportCapabilitySchema = z.strictObject({
   title: SingleLineTextSchema,
   description: RequiredMarkdownFragmentSchema,
   domainId: IdSchema.optional(),
+  /** The Entities this Capability acts on. */
+  entityIds: z.array(IdSchema),
   availability: z.array(ReportContextSchema).min(1),
   ...ElementContentSchema
 })
@@ -206,6 +214,8 @@ export const ReportScreenSchema = z.strictObject({
   title: SingleLineTextSchema,
   description: RequiredMarkdownFragmentSchema,
   capabilityIds: z.array(IdSchema).min(1),
+  /** The Entities this view presents. */
+  entityIds: z.array(IdSchema),
   capabilityScenarioIds: z.array(IdSchema),
   journeyScenarioIds: z.array(IdSchema),
   entryPoints: z.array(ReportEntryPointSchema),
@@ -531,7 +541,7 @@ export function validateProductReport(report: ProductReportV11): string[] {
   }
 
   for (const actor of model.actors) {
-    validateSupportingSections(issues, `actor "${actor.id}"`, actor.supportingSections, ['Intent'])
+    validateSupportingSections(issues, `actor "${actor.id}"`, actor.supportingSections, ['Intent', 'Information kept'])
   }
   for (const domain of model.domains) {
     validateSupportingSections(issues, `domain "${domain.id}"`, domain.supportingSections, ['Intent'])
@@ -881,7 +891,7 @@ export function validateProductReport(report: ProductReportV11): string[] {
       issues,
       label,
       screen.supportingSections,
-      ['Intent', 'Information presented', 'Available actions', 'Product states', 'Capability boundary']
+      ['Intent', 'Information presented', 'Available actions', 'View states', 'Capability boundary']
     )
     const containerId = containerForScreen(screen)
     if (!availabilityPlaceIds.has(containerId)) {
@@ -913,7 +923,7 @@ export function validateProductReport(report: ProductReportV11): string[] {
     const stateTitles = new Set<string>()
     for (const state of screen.states) {
       const normalized = state.title.toLowerCase()
-      if (stateTitles.has(normalized)) issues.push(`${label}: duplicate product state "${state.title}"`)
+      if (stateTitles.has(normalized)) issues.push(`${label}: duplicate view state "${state.title}"`)
       stateTitles.add(normalized)
     }
   }
