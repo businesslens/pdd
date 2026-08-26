@@ -1,6 +1,6 @@
 {
   "name": "businesslens",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "description": "Product-Driven Development for coding agents: a git-tracked Product Model in .businesslens/, verified against implementation.",
   "type": "module",
   "license": "MIT",
@@ -136,8 +136,8 @@
     }
   },
   "devDependencies": {
-    "@types/node": "^22.10.0",
     "@playwright/test": "1.61.1",
+    "@types/node": "^22.10.0",
     "tsdown": "^0.12.0",
     "typescript": "^5.7.0",
     "vitest": "^3.0.0"
