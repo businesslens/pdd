@@ -13,6 +13,11 @@
 
 - Actors differ by Product goals, triggers, responsibilities, or privileges;
   classify each as person/system and internal/external.
+- An AI agent harness that loads a skill and acts in the repository is an Actor:
+  id `ai-agent`, kind system, relationship external. It initiates, it reads and
+  writes on the person's behalf, and it chooses what to inspect and propose. Do
+  not name it after one use of it, and do not promote a fixed-command CI runner
+  by analogy.
 - An external system is an Actor only when it initiates. An outbound client the
   target repository calls—a polled feed, payment processor, mail provider, model
   API—is not an Actor and gets no Interface. Map it inside the Capability that

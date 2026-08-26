@@ -35,6 +35,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **An AI agent harness is an Actor**, with the id `ai-agent`. Three independent
+  mappings of one repository split on whether the agent that loads a skill is a
+  participant or the runtime an `agent` Interface is delivered through. It is a
+  participant: it initiates, it reads and writes on the person's behalf, and it
+  chooses what to inspect, propose, and when to stop — latitude a browser
+  delivering a `web` Interface does not have. Named `ai-agent` rather than after
+  one use of it, since the same participant appears in products unrelated to
+  code. This promotes nothing else by analogy.
+- **A behavioral id's object half names something the model declares.**
+  `install-agent-skills`, not `install-skills`, when `agent-skills` is an
+  Interface. `lint` warns only where the author already declared the fuller
+  term. Two independent mappings agreed on 95% of the Capabilities they found
+  while sharing 29% of the ids; the concepts matched and the nouns did not.
+- **An Object, Domain, or Business Rule id never opens with a verb.** They name
+  what a thing is, or what must remain true, so they read as nouns and
+  assertions rather than commands. A single-segment id such as `order` is a noun
+  by construction and is exempt.
 - **Folder schema 7 and Product Report v11 are the only accepted formats.**
   There is no compatibility reader.
 - **Behavioral ids are verb-object; cross-cutting ids are the bare noun.**

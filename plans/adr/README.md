@@ -17,3 +17,4 @@ do not carry docs frontmatter.
 | [0005](./0005-reviewability-is-a-first-class-axis.md) | Reviewability is a first-class quality axis | Accepted |
 | [0006](./0006-determinism-is-verified-by-independent-double-authoring.md) | Determinism is verified by independent double-authoring | Accepted |
 | [0007](./0007-blueprints-are-provenance-neutral.md) | Blueprints are provenance-neutral by design | Accepted |
+| [0008](./0008-an-ai-agent-harness-is-an-actor.md) | An AI agent harness is an Actor, named `ai-agent` | Accepted |

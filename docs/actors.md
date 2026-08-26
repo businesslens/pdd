@@ -33,6 +33,25 @@ outcome belongs in the Product contract.
 > **Actor vs persona.** A persona describes who someone is. An Actor exists
 > because the Product must behave differently for them.
 
+## An AI agent is an Actor
+
+An AI agent harness that loads a skill and acts inside the repository is an
+Actor. Give it the id `ai-agent`, `kind: system`, `relationship: external`.
+
+It qualifies because its responsibility is product-significant in its own right.
+It initiates, it is the only participant that reads and writes on the person's
+behalf, and what it does is not fully determined by whoever invoked it — it
+chooses what to inspect, what to propose, and when to stop. That latitude is the
+test. A browser delivering a `web` Interface makes no such choices and is not an
+Actor; an agent does, and is.
+
+Name it `ai-agent`, not `coding-agent`. The same participant appears in a
+support product or a research product, and the narrower name would be wrong in
+both.
+
+A Scenario Step may name it wherever the agent rather than the person performs
+the step — inspecting, proposing, resolving.
+
 ## External systems: direction decides
 
 An external system is an Actor only when it **initiates**. Ask three questions:

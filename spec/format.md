@@ -475,6 +475,18 @@ another component; an internal system is an Actor only when its responsibility,
 privilege, trigger, or outcome is product-significant. H1 = name and the lead
 paragraph = description.
 
+**An AI agent harness is an Actor**, with the id `ai-agent`, `kind: system` and
+`relationship: external`. It initiates, it holds a privilege nobody else has —
+it reads and writes on the Actor's behalf — and what it does is not fully
+determined by the person who invoked it: it chooses what to inspect, what to
+propose, and when to stop. A browser makes no such choices, which is why a
+harness is not merely the runtime an `agent` Interface is delivered through.
+Name it `ai-agent` rather than after one use of it, since the same participant
+appears in products that have nothing to do with code.
+
+This promotes nothing else by analogy. A CI runner executing a fixed command has
+no latitude of its own, and the direction rule below still answers it.
+
 An external system is an Actor only when it **initiates** interaction with the
 Product. A system the Product calls out to is a dependency of the Capability
 that calls it: it has no goal inside the Product, no privilege to grant, and no
