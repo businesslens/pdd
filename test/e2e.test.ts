@@ -148,7 +148,7 @@ relationship: external
 
 # Uncommitted actor
 
-A model entity that does not exist at HEAD.
+A model element that does not exist at HEAD.
 `)
     expect(buildProject(repo).report.model.actors.some(actor => actor.id === 'uncommitted')).toBe(true)
     unlinkSync(untracked)

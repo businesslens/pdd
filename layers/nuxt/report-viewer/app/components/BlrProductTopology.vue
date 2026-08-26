@@ -1,12 +1,12 @@
 <script setup lang="ts">
 /**
  * The product-level topology surface: question-led readings.
- * The host owns entity navigation; this component owns view choice, graph-local
+ * The host owns element navigation; this component owns view choice, graph-local
  * visibility and focus, hover, and the Journey selector required by Value
  * paths. None of this state reaches the Product Report navigation rail.
  */
-import type { AnyEntityView, ReportEntityKind, ReportWorkspace } from '../utils/reportWorkspace'
-import { ENTITY_KIND_META, resolveEntityKey } from '../utils/reportWorkspace'
+import type { AnyElementView, ReportElementKind, ReportWorkspace } from '../utils/reportWorkspace'
+import { ENTITY_KIND_META, resolveElementKey } from '../utils/reportWorkspace'
 import { buildProductTopologyGraph } from '../utils/productTopologyGraphs'
 import { filterProductTopologyGraph } from '../utils/productTopologyFilters'
 import type { ProductTopologyViewId } from '../utils/productTopologyViews'
@@ -19,10 +19,10 @@ import {
 const props = defineProps<{
   workspace: ReportWorkspace
   /**
-   * One entity's neighbourhood, requested from elsewhere in the report.
+   * One element's neighbourhood, requested from elsewhere in the report.
    *
    * This is a *filter*, not a seventh named view: "Everything, one hop around
-   * this entity" needs no new derivation, and the focus control below already
+   * this element" needs no new derivation, and the focus control below already
    * means exactly that. Adding a view would have invented a question the model
    * does not ask.
    */
@@ -30,7 +30,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  select: [entity: AnyEntityView]
+  select: [element: AnyElementView]
 }>()
 
 /* Whole-model readings fit tighter and cap lower; a small graph would otherwise
@@ -40,7 +40,7 @@ const DENSE_VIEWS = new Set<ProductTopologyViewId>(['product-map', 'everything',
 const viewId = ref<ProductTopologyViewId>(DEFAULT_PRODUCT_TOPOLOGY_VIEW)
 const hoveredId = ref<string | null>(null)
 const journeyId = ref(props.workspace.journeys[0]?.id ?? '')
-const hiddenKinds = ref<ReportEntityKind[]>([])
+const hiddenKinds = ref<ReportElementKind[]>([])
 const focusIds = ref<string[]>([])
 const filtersOpen = ref(false)
 
@@ -60,55 +60,55 @@ const baseGraph = computed(() => buildProductTopologyGraph(props.workspace, view
 }))
 const graph = computed(() => filterProductTopologyGraph(baseGraph.value, {
   visibleKinds: visibleKinds.value,
-  focusEntityIds: focusIds.value
+  focusElementIds: focusIds.value
 }))
 
-const baseEntityIds = computed(() => new Set(baseGraph.value.nodes
-  .map(node => node.data?.entityKey)
+const baseElementIds = computed(() => new Set(baseGraph.value.nodes
+  .map(node => node.data?.elementKey)
   .filter((id): id is string => Boolean(id))))
 const focusItems = computed(() => view.value.kinds.flatMap((kind) => {
   if (kind === 'product' || hiddenKinds.value.includes(kind)) return []
-  const entities = [...props.workspace.byKey.values()]
-    .filter(entity => entity.kind === kind && baseEntityIds.value.has(entity.key))
-  if (!entities.length) return []
+  const elements = [...props.workspace.byKey.values()]
+    .filter(element => element.kind === kind && baseElementIds.value.has(element.key))
+  if (!elements.length) return []
   return [
     { type: 'label' as const, label: ENTITY_KIND_META[kind].plural, value: `blr-kind-${kind}` },
-    ...entities.map(entity => ({
-      label: entity.title,
-      value: entity.key,
+    ...elements.map(element => ({
+      label: element.title,
+      value: element.key,
       icon: ENTITY_KIND_META[kind].icon,
-      description: entity.id
+      description: element.id
     }))
   ]
 }))
 const activeFilterCount = computed(() => hiddenKinds.value.length + focusIds.value.length)
 const filtersActive = computed(() => activeFilterCount.value > 0)
 
-const entityNodeCount = computed(() => graph.value.nodes.filter(node => node.type !== 'blr-label').length)
-const baseEntityNodeCount = computed(() => baseGraph.value.nodes.filter(node => node.type !== 'blr-label').length)
+const elementNodeCount = computed(() => graph.value.nodes.filter(node => node.type !== 'blr-label').length)
+const baseElementNodeCount = computed(() => baseGraph.value.nodes.filter(node => node.type !== 'blr-label').length)
 const emptyNote = computed(() => {
-  if (entityNodeCount.value) return ''
-  if (filtersActive.value && baseEntityNodeCount.value) return 'No entities match these topology filters.'
+  if (elementNodeCount.value) return ''
+  if (filtersActive.value && baseElementNodeCount.value) return 'No elements match these topology filters.'
   switch (viewId.value) {
     case 'product-map': return 'This model declares no access paths, Domains, or Capabilities to map.'
     case 'value-paths': return 'This model declares no Journeys to unfold.'
     case 'delivery-by-interface': return 'This model declares no Interfaces to map.'
     case 'sitemap': return 'This model declares no Interfaces to map.'
     case 'rule-reach': return 'This model declares no Business Rules with reach to draw.'
-    case 'everything': return 'This model has no entities to draw.'
-    default: return 'This model has no entities in this view.'
+    case 'everything': return 'This model has no elements to draw.'
+    default: return 'This model has no elements in this view.'
   }
 })
 
 watch(viewId, () => {
   hoveredId.value = null
   hiddenKinds.value = []
-  const compatible = baseEntityIds.value
+  const compatible = baseElementIds.value
   focusIds.value = focusIds.value.filter(id => compatible.has(id))
 })
 
 watch(journeyId, () => {
-  const compatible = baseEntityIds.value
+  const compatible = baseElementIds.value
   focusIds.value = focusIds.value.filter(id => compatible.has(id))
 })
 
@@ -128,11 +128,11 @@ function separatorAt(index: number): string {
   return view.value.flow.length ? (view.value.separators[index - 1] ?? '·') : '·'
 }
 
-function kindVisible(kind: ReportEntityKind): boolean {
+function kindVisible(kind: ReportElementKind): boolean {
   return !hiddenKinds.value.includes(kind)
 }
 
-function toggleKind(kind: ReportEntityKind) {
+function toggleKind(kind: ReportElementKind) {
   if (hiddenKinds.value.includes(kind)) {
     hiddenKinds.value = hiddenKinds.value.filter(item => item !== kind)
     return
@@ -140,8 +140,8 @@ function toggleKind(kind: ReportEntityKind) {
   if (visibleKinds.value.length === 1) return
   hiddenKinds.value = [...hiddenKinds.value, kind]
   focusIds.value = focusIds.value.filter((id) => {
-    const entity = resolveEntityKey(props.workspace, id)
-    return entity?.kind !== kind
+    const element = resolveElementKey(props.workspace, id)
+    return element?.kind !== kind
   })
 }
 
@@ -157,9 +157,9 @@ function resetFilters() {
   focusIds.value = []
 }
 
-function selectEntity(entityId: string) {
-  const entity = resolveEntityKey(props.workspace, entityId)
-  if (entity) emit('select', entity)
+function selectElement(elementId: string) {
+  const element = resolveElementKey(props.workspace, elementId)
+  if (element) emit('select', element)
 }
 </script>
 
@@ -185,7 +185,7 @@ function selectEntity(entityId: string) {
 
       <div class="flex min-h-9 flex-wrap items-center gap-x-3 gap-y-1 border-t border-muted py-2">
         <p class="text-sm text-muted">{{ view.question }}</p>
-        <div class="flex flex-wrap items-center gap-1" :aria-label="`Entity visibility for ${view.name}`">
+        <div class="flex flex-wrap items-center gap-1" :aria-label="`Element visibility for ${view.name}`">
           <template v-for="(step, index) in kindSteps" :key="`${view.id}:${step.kind}`">
             <span v-if="index" class="px-0.5 text-xs text-dimmed">{{ separatorAt(index) }}</span>
             <button
@@ -196,7 +196,7 @@ function selectEntity(entityId: string) {
               :disabled="visibleKinds.length === 1 && kindVisible(step.kind)"
               :aria-label="`${kindVisible(step.kind) ? 'Hide' : 'Show'} ${step.label} in ${view.name}`"
               :title="visibleKinds.length === 1 && kindVisible(step.kind)
-                ? 'At least one entity type must remain visible.'
+                ? 'At least one element type must remain visible.'
                 : `${kindVisible(step.kind) ? 'Hide' : 'Show'} ${step.label} in this graph`"
               @click="toggleKind(step.kind)"
             >
@@ -212,8 +212,8 @@ function selectEntity(entityId: string) {
             size="sm"
             class="capitalize"
             :title="view.semantics === 'identity'
-              ? 'One node per entity, even when it appears in several contexts.'
-              : 'An entity repeats once per context; repetition is part of the answer.'"
+              ? 'One node per element, even when it appears in several contexts.'
+              : 'An element repeats once per context; repetition is part of the answer.'"
           >
             {{ view.semantics }}
           </UBadge>
@@ -239,7 +239,7 @@ function selectEntity(entityId: string) {
       </div>
 
       <div v-if="filtersOpen" class="flex min-h-11 flex-wrap items-center gap-x-3 gap-y-2 border-t border-muted py-2">
-        <span class="blr-field">Focus entities</span>
+        <span class="blr-field">Focus elements</span>
         <USelectMenu
           :model-value="focusIds"
           :items="focusItems"
@@ -249,12 +249,12 @@ function selectEntity(entityId: string) {
           variant="outline"
           icon="i-lucide-focus"
           class="min-w-72 max-w-full"
-          placeholder="Choose entities"
-          :search-input="{ placeholder: 'Search entities in this view…' }"
+          placeholder="Choose elements"
+          :search-input="{ placeholder: 'Search elements in this view…' }"
           @update:model-value="setFocus($event as string[])"
         >
           <template #default>
-            <span class="truncate">{{ focusIds.length ? `${focusIds.length} focused` : 'Choose entities' }}</span>
+            <span class="truncate">{{ focusIds.length ? `${focusIds.length} focused` : 'Choose elements' }}</span>
           </template>
         </USelectMenu>
         <p class="min-w-52 flex-1 text-xs text-dimmed">
@@ -294,12 +294,12 @@ function selectEntity(entityId: string) {
         :edges="graph.edges"
         :fit-padding="DENSE_VIEWS.has(viewId) ? 0.08 : 0.14"
         :max-zoom="DENSE_VIEWS.has(viewId) ? 1.05 : 1.25"
-        @select="selectEntity"
-        @focus="selectEntity"
+        @select="selectElement"
+        @focus="selectElement"
         @hover="hoveredId = $event"
       />
       <span class="pointer-events-none absolute bottom-3 left-3 rounded-md border border-default bg-default/90 px-2 py-1 font-mono text-[10px] text-dimmed shadow-sm backdrop-blur">
-        {{ entityNodeCount }} boxes · {{ graph.edges.length }} relations
+        {{ elementNodeCount }} boxes · {{ graph.edges.length }} relations
       </span>
     </div>
     <div v-else class="grid min-h-0 flex-1 place-items-center p-8">

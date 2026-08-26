@@ -101,7 +101,7 @@ the diff.
 
    - Run the internal intent-resolution protocol: draft the smallest exact model
      delta from the finding; do not brainstorm unrelated directions.
-   - Present the entity-by-entity delta and get explicit approval.
+   - Present the element-by-element delta and get explicit approval.
    - Write only the approved model meaning, then return directly to step 4.
 
    **Neither-right**

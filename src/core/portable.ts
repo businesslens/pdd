@@ -74,7 +74,7 @@ export const ReportSupportingSectionSchema = z.strictObject({
   content: MarkdownFragmentSchema
 })
 
-const EntityContentSchema = {
+const ElementContentSchema = {
   intent: MarkdownFragmentSchema,
   supportingSections: z.array(ReportSupportingSectionSchema),
   references: z.array(ReportReferenceSchema)
@@ -87,7 +87,7 @@ export const TaxonomyEntrySchema = z.strictObject({
   colorSlot: z.number().int().optional()
 })
 
-const ReportEntityCountShape = {
+const ReportElementCountShape = {
   actors: z.number().int().min(0),
   interfaces: z.number().int().min(0),
   experiences: z.number().int().min(0),
@@ -101,7 +101,7 @@ const ReportEntityCountShape = {
   businessRules: z.number().int().min(0)
 }
 
-export const ReportCountsSchema = z.strictObject(ReportEntityCountShape)
+export const ReportCountsSchema = z.strictObject(ReportElementCountShape)
 
 export const ReportAuthorSchema = z.strictObject({
   name: SingleLineTextSchema.max(120),
@@ -128,7 +128,7 @@ export const ReportActorSchema = z.strictObject({
   description: RequiredMarkdownFragmentSchema,
   kind: z.enum(['person', 'system']),
   relationship: z.enum(['external', 'internal']),
-  ...EntityContentSchema
+  ...ElementContentSchema
 })
 
 export const ReportInterfaceSchema = z.strictObject({
@@ -139,7 +139,7 @@ export const ReportInterfaceSchema = z.strictObject({
   actorIds: z.array(IdSchema).min(1),
   entryPoints: z.array(ReportEntryPointSchema),
   capabilityBoundary: RequiredMarkdownFragmentSchema,
-  ...EntityContentSchema
+  ...ElementContentSchema
 })
 
 export const ReportExperienceSchema = z.strictObject({
@@ -151,7 +151,7 @@ export const ReportExperienceSchema = z.strictObject({
   accessMode: z.enum(['public', 'authenticated', 'restricted']),
   entryPoints: z.array(ReportEntryPointSchema),
   capabilityBoundary: RequiredMarkdownFragmentSchema,
-  ...EntityContentSchema
+  ...ElementContentSchema
 })
 
 export const ReportDomainSchema = z.strictObject({
@@ -159,7 +159,7 @@ export const ReportDomainSchema = z.strictObject({
   name: SingleLineTextSchema,
   description: RequiredMarkdownFragmentSchema,
   colorSlot: z.number().int().optional(),
-  ...EntityContentSchema
+  ...ElementContentSchema
 })
 
 export const ReportObjectStateSchema = z.strictObject({
@@ -184,7 +184,7 @@ export const ReportObjectSchema = z.strictObject({
   domainId: IdSchema.optional(),
   states: z.array(ReportObjectStateSchema).min(2),
   transitions: z.array(ReportObjectTransitionSchema).min(1),
-  ...EntityContentSchema
+  ...ElementContentSchema
 })
 
 export const ReportCapabilitySchema = z.strictObject({
@@ -193,7 +193,7 @@ export const ReportCapabilitySchema = z.strictObject({
   description: RequiredMarkdownFragmentSchema,
   domainId: IdSchema.optional(),
   availability: z.array(ReportContextSchema).min(1),
-  ...EntityContentSchema
+  ...ElementContentSchema
 })
 
 export const ReportScreenStateSchema = z.strictObject({
@@ -213,7 +213,7 @@ export const ReportScreenSchema = z.strictObject({
   actions: z.array(SingleLineTextSchema),
   states: z.array(ReportScreenStateSchema),
   capabilityBoundary: RequiredMarkdownFragmentSchema,
-  ...EntityContentSchema
+  ...ElementContentSchema
 })
 
 export const ReportJourneySchema = z.strictObject({
@@ -225,7 +225,7 @@ export const ReportJourneySchema = z.strictObject({
   capabilityIds: z.array(IdSchema),
   failureOnlyCapabilityIds: z.array(IdSchema),
   domainIds: z.array(IdSchema),
-  ...EntityContentSchema
+  ...ElementContentSchema
 })
 
 export const ReportDecisionPointSchema = z.strictObject({
@@ -269,7 +269,7 @@ const ReportScenarioContentShape = {
   decisionPoints: z.array(ReportDecisionPointSchema),
   outcome: RequiredMarkdownFragmentSchema,
   edgeCases: z.array(SingleLineTextSchema),
-  ...EntityContentSchema
+  ...ElementContentSchema
 }
 
 export const ReportCapabilityScenarioSchema = z.strictObject({
@@ -285,7 +285,7 @@ export const ReportJourneyScenarioSchema = z.strictObject({
   ...ReportScenarioContentShape
 })
 
-const ReportBusinessRuleEntityTargetSchema = z.strictObject({
+const ReportBusinessRuleElementTargetSchema = z.strictObject({
   type: z.enum(['capability', 'capability-scenario', 'journey', 'journey-scenario']),
   id: IdSchema,
   contexts: z.array(ReportContextSchema)
@@ -297,7 +297,7 @@ const ReportBusinessRuleContextTargetSchema = z.strictObject({
 })
 
 export const ReportBusinessRuleTargetSchema = z.discriminatedUnion('type', [
-  ReportBusinessRuleEntityTargetSchema,
+  ReportBusinessRuleElementTargetSchema,
   ReportBusinessRuleContextTargetSchema
 ])
 
@@ -307,7 +307,7 @@ export const ReportBusinessRuleSchema = z.strictObject({
   statement: RequiredMarkdownFragmentSchema,
   rationale: MarkdownFragmentSchema,
   appliesTo: z.array(ReportBusinessRuleTargetSchema).min(1),
-  ...EntityContentSchema
+  ...ElementContentSchema
 })
 
 export const ReportCoverageSchema = z.strictObject({
@@ -481,7 +481,7 @@ function requireEntryPointInterfaces(
   }
 }
 
-/** Cross-entity and computed-field validation, shared with every report consumer. */
+/** Cross-element and computed-field validation, shared with every report consumer. */
 export function validateProductReport(report: ProductReportV11): string[] {
   const issues: string[] = []
   const { model } = report

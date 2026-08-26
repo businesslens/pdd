@@ -42,7 +42,7 @@ function readReportSource(source: string): unknown {
   return JSON.parse(readFileSync(file, 'utf8'))
 }
 
-/** Entities with no frontmatter fields get no frontmatter block, not `{}`. */
+/** Elements with no frontmatter fields get no frontmatter block, not `{}`. */
 function frontmatter(data: Record<string, unknown>): string {
   if (!Object.keys(data).length) return ''
   return `---\n${stringify(data, { lineWidth: 0 }).trimEnd()}\n---\n\n`
@@ -89,8 +89,8 @@ function screenPath(root: string, id: string): string {
   return join(root, 'interfaces', parts[0]!, 'screens', `${parts[1]!}.md`)
 }
 
-/** Compact until an entity needs a namespace for children or assets. */
-function entityPath(parent: string, id: string, type: string, expanded: boolean): string {
+/** Compact until an element needs a namespace for children or assets. */
+function elementPath(parent: string, id: string, type: string, expanded: boolean): string {
   return expanded ? join(parent, id, `${type}.md`) : join(parent, `${id}.md`)
 }
 
@@ -196,7 +196,7 @@ function writeReport(root: string, report: ProductReportV11, hasLogo: boolean): 
 
   for (const actor of report.model.actors) {
     write(
-      entityPath(join(root, 'actors'), actor.id, 'actor', false),
+      elementPath(join(root, 'actors'), actor.id, 'actor', false),
       frontmatter(compactRecord({
         kind: actor.kind,
         relationship: actor.relationship,
@@ -209,7 +209,7 @@ function writeReport(root: string, report: ProductReportV11, hasLogo: boolean): 
     const hasChildren = report.model.experiences.some(experience => idSegments(experience.id)[0] === productInterface.id)
       || report.model.screens.some(screen => idSegments(screen.id)[0] === productInterface.id)
     write(
-      entityPath(join(root, 'interfaces'), productInterface.id, 'interface', hasChildren),
+      elementPath(join(root, 'interfaces'), productInterface.id, 'interface', hasChildren),
       frontmatter(compactRecord({
         type: productInterface.type,
         actors: productInterface.actorIds,
@@ -226,7 +226,7 @@ function writeReport(root: string, report: ProductReportV11, hasLogo: boolean): 
   }
   for (const domain of report.model.domains) {
     write(
-      entityPath(join(root, 'domains'), domain.id, 'domain', false),
+      elementPath(join(root, 'domains'), domain.id, 'domain', false),
       frontmatter(compactRecord({
         colorSlot: domain.colorSlot,
         references: references(domain.references)
@@ -235,7 +235,7 @@ function writeReport(root: string, report: ProductReportV11, hasLogo: boolean): 
   }
   for (const object of report.model.objects) {
     write(
-      entityPath(join(root, 'objects'), object.id, 'object', false),
+      elementPath(join(root, 'objects'), object.id, 'object', false),
       frontmatter(compactRecord({
         domain: object.domainId,
         references: references(object.references)
@@ -253,7 +253,7 @@ function writeReport(root: string, report: ProductReportV11, hasLogo: boolean): 
       return parts.length === 3 && parts[0] === interfaceId && parts[1] === experienceId
     })
     write(
-      entityPath(
+      elementPath(
         join(root, 'interfaces', interfaceId!, 'experiences'),
         experienceId!,
         'experience',
@@ -298,7 +298,7 @@ function writeReport(root: string, report: ProductReportV11, hasLogo: boolean): 
   for (const capability of report.model.capabilities) {
     const hasScenarios = report.model.capabilityScenarios.some(scenario => scenario.capabilityId === capability.id)
     write(
-      entityPath(join(root, 'capabilities'), capability.id, 'capability', hasScenarios),
+      elementPath(join(root, 'capabilities'), capability.id, 'capability', hasScenarios),
       frontmatter(compactRecord({
         domain: capability.domainId,
         availability: contexts(capability.availability),
@@ -308,7 +308,7 @@ function writeReport(root: string, report: ProductReportV11, hasLogo: boolean): 
   }
   for (const rule of report.model.businessRules) {
     write(
-      entityPath(join(root, 'business-rules'), rule.id, 'business-rule', false),
+      elementPath(join(root, 'business-rules'), rule.id, 'business-rule', false),
       frontmatter(compactRecord({
         appliesTo: rule.appliesTo.map(target => target.type === 'context'
           ? { type: 'context', context: context(target.context) }
@@ -348,7 +348,7 @@ function writeReport(root: string, report: ProductReportV11, hasLogo: boolean): 
 
   for (const scenario of report.model.capabilityScenarios) {
     write(
-      entityPath(
+      elementPath(
         join(root, 'capabilities', scenario.capabilityId, 'scenarios'),
         scenario.id,
         'capability-scenario',
@@ -379,7 +379,7 @@ function writeReport(root: string, report: ProductReportV11, hasLogo: boolean): 
   for (const journey of report.model.journeys) {
     const hasScenarios = report.model.journeyScenarios.some(scenario => scenario.journeyId === journey.id)
     write(
-      entityPath(join(root, 'journeys'), journey.id, 'journey', hasScenarios),
+      elementPath(join(root, 'journeys'), journey.id, 'journey', hasScenarios),
       frontmatter(compactRecord({
         actors: journey.actorIds,
         references: references(journey.references)
@@ -397,7 +397,7 @@ function writeReport(root: string, report: ProductReportV11, hasLogo: boolean): 
   }
   for (const scenario of report.model.journeyScenarios) {
     write(
-      entityPath(
+      elementPath(
         join(root, 'journeys', scenario.journeyId, 'scenarios'),
         scenario.id,
         'journey-scenario',

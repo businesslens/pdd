@@ -29,18 +29,18 @@ function run(cwd: string, tracked = TRACKED) {
   return lintModel(loadModel(cwd), tracked)
 }
 
-/** Write a compact or expanded entity file, creating its parent path. */
-function writeEntity(file: string, content: string) {
+/** Write a compact or expanded element file, creating its parent path. */
+function writeElement(file: string, content: string) {
   mkdirSync(dirname(file), { recursive: true })
   writeFileSync(file, content)
 }
 
-function expandEntity(compactFile: string, expandedFile: string) {
+function expandElement(compactFile: string, expandedFile: string) {
   mkdirSync(dirname(expandedFile), { recursive: true })
   renameSync(compactFile, expandedFile)
 }
 
-function compactEntity(expandedFile: string, compactFile: string) {
+function compactElement(expandedFile: string, compactFile: string) {
   renameSync(expandedFile, compactFile)
   rmdirSync(dirname(expandedFile))
 }
@@ -65,7 +65,7 @@ describe('lintModel', () => {
     expect(bad.errors.some(e => e.includes('reference state "Nonexistent" is not a product state'))).toBe(true)
   })
 
-  it('rejects a reference state on an entity that is not a Screen', () => {
+  it('rejects a reference state on an element that is not a Screen', () => {
     const cwd = fixtureCopy()
     const capability = join(cwd, '.businesslens', 'capabilities', 'browse-catalog', 'capability.md')
     const source = readFileSync(capability, 'utf8')
@@ -93,21 +93,21 @@ describe('lintModel', () => {
     expect(result.errors).toContain('actors/courier/ is missing actor.md')
   })
 
-  it('rejects duplicate compact and expanded shapes for one entity', () => {
+  it('rejects duplicate compact and expanded shapes for one element', () => {
     const cwd = fixtureCopy()
-    writeEntity(
+    writeElement(
       join(cwd, '.businesslens/actors/shopper/actor.md'),
       readFileSync(join(cwd, '.businesslens/actors/shopper.md'), 'utf8')
     )
 
     expect(run(cwd).errors).toContain(
-      'actors/shopper: both shopper.md and shopper/actor.md exist; keep exactly one entity shape'
+      'actors/shopper: both shopper.md and shopper/actor.md exist; keep exactly one element shape'
     )
   })
 
-  it('warns rather than fails on an expanded entity that owns nothing yet', () => {
+  it('warns rather than fails on an expanded element that owns nothing yet', () => {
     const cwd = fixtureCopy()
-    expandEntity(
+    expandElement(
       join(cwd, '.businesslens/actors/shopper.md'),
       join(cwd, '.businesslens/actors/shopper/actor.md')
     )
@@ -118,15 +118,15 @@ describe('lintModel', () => {
     // folder back to the compact form — so it is reported, but it does not
     // fail a model that is otherwise correct.
     expect(result.warnings).toContain(
-      'actors/shopper/ has no assets or child entities; use actors/shopper.md'
+      'actors/shopper/ has no assets or child elements; use actors/shopper.md'
     )
     expect(result.errors).not.toContain(
-      'actors/shopper/ has no assets or child entities; use actors/shopper.md'
+      'actors/shopper/ has no assets or child elements; use actors/shopper.md'
     )
     expect(result.ok).toBe(true)
   })
 
-  it('accepts compact Product and expands an entity for its first asset', () => {
+  it('accepts compact Product and expands an element for its first asset', () => {
     const cwd = fixtureCopy()
     unlinkSync(join(cwd, '.businesslens/product/logo.svg'))
     renameSync(join(cwd, '.businesslens/product/product.md'), join(cwd, '.businesslens/product.md'))
@@ -140,7 +140,7 @@ describe('lintModel', () => {
       cwd,
       '.businesslens/interfaces/customer-web/experiences/storefront/screens/product-record/screen.md'
     )
-    expandEntity(compactScreen, expandedScreen)
+    expandElement(compactScreen, expandedScreen)
     writeFileSync(join(dirname(expandedScreen), 'mockup.svg'), '<svg viewBox="0 0 1 1"></svg>')
     writeFileSync(
       expandedScreen,
@@ -160,7 +160,7 @@ describe('lintModel', () => {
     expect(run(cwd).errors).toContain('product/ has no logo asset; use product.md')
   })
 
-  it('rejects an unrecognized child directory inside an entity folder', () => {
+  it('rejects an unrecognized child directory inside an element folder', () => {
     const cwd = fixtureCopy()
     mkdirSync(join(cwd, '.businesslens', 'capabilities', 'place-order', 'notes'), { recursive: true })
     expect(run(cwd).errors).toContain('capabilities/place-order/notes/ is not a recognized child directory')
@@ -225,7 +225,7 @@ A visitor who browses and buys.
 
   it('supports all person/system and internal/external Actor combinations', () => {
     const cwd = fixtureCopy()
-    writeEntity(join(cwd, '.businesslens/actors/partner-system.md'), `---
+    writeElement(join(cwd, '.businesslens/actors/partner-system.md'), `---
 kind: system
 relationship: external
 ---
@@ -234,7 +234,7 @@ relationship: external
 
 An external system that uses a supported integration.
 `)
-    writeEntity(join(cwd, '.businesslens/actors/store-scheduler.md'), `---
+    writeElement(join(cwd, '.businesslens/actors/store-scheduler.md'), `---
 kind: system
 relationship: internal
 ---
@@ -257,7 +257,7 @@ An internal system that initiates store operations.
       rmSync(join(cwd, '.businesslens', relative), { recursive: true })
     }
     for (const interfaceId of ['customer-web', 'customer-mobile']) {
-      compactEntity(
+      compactElement(
         join(cwd, `.businesslens/interfaces/${interfaceId}/experiences/storefront/experience.md`),
         join(cwd, `.businesslens/interfaces/${interfaceId}/experiences/storefront.md`)
       )
@@ -365,11 +365,11 @@ An internal system that initiates store operations.
   */
   it('supports a non-visual CLI Interface alongside visual Interfaces', () => {
     const cwd = fixtureCopy()
-    expandEntity(
+    expandElement(
       join(cwd, '.businesslens/interfaces/operator-cli.md'),
       join(cwd, '.businesslens/interfaces/operator-cli/interface.md')
     )
-    writeEntity(
+    writeElement(
       join(cwd, '.businesslens/interfaces/operator-cli/experiences/order-desk.md'),
       `---
 actors: [store-admin]
@@ -511,7 +511,7 @@ Supports order operations. It does not expose a shopper's account.
     expect(errors).toContain('unknown frontmatter key "actors"')
     expect(errors).toContain('unknown frontmatter key "operation"')
     expect(errors).toContain('unknown frontmatter key "routes"')
-    expect(errors).toContain('"## Steps" is not allowed on this entity type')
+    expect(errors).toContain('"## Steps" is not allowed on this element type')
   })
 
   /*
@@ -543,7 +543,7 @@ Supports order operations. It does not expose a shopper's account.
     const cwd = fixtureCopy()
     const source = join(cwd, '.businesslens/journeys/browse-and-buy/scenarios/browse-and-complete-checkout.md')
     const scenario = join(cwd, '.businesslens/journeys/browse-and-buy/scenarios/checkout-is-declined.md')
-    writeEntity(
+    writeElement(
       scenario,
       readFileSync(source, 'utf8')
         .replace('kind: primary', 'kind: edge')
@@ -558,7 +558,7 @@ Supports order operations. It does not expose a shopper's account.
     const cwd = fixtureCopy()
     unlinkSync(join(cwd, '.businesslens/capabilities/manage-orders/scenarios/refund-order.md'))
     rmdirSync(join(cwd, '.businesslens/capabilities/manage-orders/scenarios'))
-    compactEntity(
+    compactElement(
       join(cwd, '.businesslens/capabilities/manage-orders/capability.md'),
       join(cwd, '.businesslens/capabilities/manage-orders.md')
     )
@@ -682,12 +682,12 @@ Supports order operations. It does not expose a shopper's account.
     const journey = join(cwd, '.businesslens/journeys/browse-and-buy/journey.md')
     writeFileSync(journey, readFileSync(journey, 'utf8')
       .replace('# Browse and buy\n\n## Goal', '# Browse and buy\n\nLegacy Journey summary.\n\n## Goal')
-      .replace('## Success criterion', '## Outcome\n\nWrong entity shape.\n\n## Success criterion'))
+      .replace('## Success criterion', '## Outcome\n\nWrong element shape.\n\n## Success criterion'))
 
     const scenario = join(cwd, '.businesslens/capabilities/place-order/scenarios/complete-checkout.md')
     writeFileSync(scenario, readFileSync(scenario, 'utf8')
       .replace('# Complete checkout\n\n## Trigger', '# Complete checkout\n\nLegacy Scenario summary.\n\n## Trigger')
-      .replace('## Outcome', '## Goal\n\nWrong entity shape.\n\n## Trigger\n\nDuplicate trigger.\n\n## Outcome')
+      .replace('## Outcome', '## Goal\n\nWrong element shape.\n\n## Trigger\n\nDuplicate trigger.\n\n## Outcome')
       .replace(
         'The order is stored and a confirmation is shown.',
         'The order is stored and a confirmation is shown.\n\n## Edge cases\n\nNot a bullet item.'
@@ -707,9 +707,9 @@ Supports order operations. It does not expose a shopper's account.
 
     const errors = run(cwd).errors.join('\n')
     expect(errors.match(/carries no lead paragraph/g)).toHaveLength(2)
-    expect(errors).toContain('"## Outcome" is not allowed on this entity type')
+    expect(errors).toContain('"## Outcome" is not allowed on this element type')
     expect(errors).toContain('duplicate "## Trigger" section')
-    expect(errors).toContain('"## Goal" is not allowed on this entity type')
+    expect(errors).toContain('"## Goal" is not allowed on this element type')
     expect(errors).toContain('"## Edge cases" must contain only single-line bullet-list items')
     expect(errors).toContain('"## Edge cases" needs at least one bullet item when present')
     expect(errors).toContain('"## Recovery note" content must not contain an H1 or H2 heading')
@@ -859,7 +859,7 @@ Model breadth.
 
   it('fails on duplicate ids across Scenario types', () => {
     const cwd = fixtureCopy()
-    writeEntity(join(cwd, '.businesslens/journeys/browse-and-buy/scenarios/browse-catalog.md'), `---
+    writeElement(join(cwd, '.businesslens/journeys/browse-and-buy/scenarios/browse-catalog.md'), `---
 kind: primary
 result: achieved
 routes:
@@ -973,7 +973,7 @@ Lead.
     expect(run(cwd).errors.join('\n')).toContain('must use HTTP(S) or a repository-relative path')
   })
 
-  it('rejects duplicate reference targets on one entity', () => {
+  it('rejects duplicate reference targets on one element', () => {
     const cwd = fixtureCopy()
     writeFileSync(join(cwd, '.businesslens/actors/shopper.md'), `---
 kind: person

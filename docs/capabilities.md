@@ -78,7 +78,7 @@ Complete a purchase without confirming an unpaid order.
 | H1 and lead paragraph | yes | Name the Capability and describe the durable Product ability. |
 
 Capability files do not list Actors, Capability Scenarios, Journey Scenarios,
-Journeys, Screens, or Business Rules. Other entities own those relations, and
+Journeys, Screens, or Business Rules. Other elements own those relations, and
 consumers derive backlinks. A Capability Scenario's containing Capability
 folder creates its direct acceptance relation, while a Journey Scenario annotates concrete
 Steps with Capabilities. Journey Capability backlinks are derived from those
@@ -252,7 +252,7 @@ duplicate a `businessRules` list. Screen participation is derived from Step
 Contexts; Screens do not list Scenario IDs.
 
 Journey Scenarios reference the Capability, never this Capability Scenario.
-That prevents a concrete local case from becoming a reusable operation entity.
+That prevents a concrete local case from becoming a reusable operation element.
 
 ### Routes, Steps, and Context places
 

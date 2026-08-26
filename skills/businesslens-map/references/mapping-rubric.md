@@ -9,7 +9,7 @@
 - Use documentation as a lead. Confirm current claims in implementation.
 - Never execute target code and never claim deployed or live state from source.
 
-## Choose stable entities
+## Choose stable elements
 
 - Actors differ by Product goals, triggers, responsibilities, or privileges;
   classify each as person/system and internal/external.

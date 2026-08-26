@@ -74,7 +74,7 @@ export interface LocalViewerOptions {
    * Repository root for the read-only asset mount.
    *
    * Reference targets resolve repository-relative, and product assets live
-   * beside the entity they describe, so the viewer serves from the repository
+   * beside the element they describe, so the viewer serves from the repository
    * rather than only from `.businesslens/`. Omit it and the mount is off.
    */
   assetRoot?: string

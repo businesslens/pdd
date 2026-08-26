@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * The navigation rail: which collection, never which entity.
+ * The navigation rail: which collection, never which element.
  *
  * It lists *kinds*, and kinds do not nest — instances do. An earlier revision
  * indented the two Scenario kinds under the parent that owns them, which read
@@ -9,7 +9,7 @@
  * or becomes a three-level tree inside a ten-row rail.
  *
  * Containment is shown where instances are: as the default grouping of a
- * collection and on the entity page. Both Scenario kinds are therefore read
+ * collection and on the element page. Both Scenario kinds are therefore read
  * from their parent rather than listed here, which is the same resolution the
  * documentation reached — a mandatory single parent is explained on its
  * parent's page, never on one of its own.
@@ -17,32 +17,32 @@
  * There is no ranking group. Splitting the list into "product" and "structure"
  * puts an Experience below a Capability, and the model says no such thing.
  */
-import type { ReportEntityKind, ReportWorkspace } from '../utils/reportWorkspace'
+import type { ReportElementKind, ReportWorkspace } from '../utils/reportWorkspace'
 import { ENTITY_KIND_META, REPORT_ENTITY_KINDS } from '../utils/reportWorkspace'
 
 defineProps<{
   workspace: ReportWorkspace
   activeSection: string
-  counts: Record<ReportEntityKind, number>
+  counts: Record<ReportElementKind, number>
 }>()
 
 const emit = defineEmits<{
-  kind: [kind: ReportEntityKind]
+  kind: [kind: ReportElementKind]
   topology: []
 }>()
 
 /** A kind with a mandatory single parent is reached from that parent. */
-const PARENTED: ReportEntityKind[] = ['capability-scenario', 'journey-scenario']
+const PARENTED: ReportElementKind[] = ['capability-scenario', 'journey-scenario']
 
 const RAIL_KINDS = REPORT_ENTITY_KINDS.filter(meta => !PARENTED.includes(meta.kind))
 
 /** A parent row stays current while one of its Scenario pages is open. */
-const SECTION_PARENT: Record<string, ReportEntityKind> = {
+const SECTION_PARENT: Record<string, ReportElementKind> = {
   'capability-scenario': 'capability',
   'journey-scenario': 'journey'
 }
 
-function isCurrent(kind: ReportEntityKind, section: string): boolean {
+function isCurrent(kind: ReportElementKind, section: string): boolean {
   return section === kind || SECTION_PARENT[section] === kind
 }
 

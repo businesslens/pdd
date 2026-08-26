@@ -62,12 +62,12 @@ Read before authoring:
 8. In resolution mode, do not reopen broad ideation. Use the supplied finding,
    inspected files, and authority decision to draft the smallest exact model
    delta that makes the intended behavior unambiguous.
-9. Present the complete model delta before writing: every entity added,
+9. Present the complete model delta before writing: every element added,
    changed, or removed; Capability and Journey acceptance Scenarios;
    relationship repairs; limitations; and implementation work implied. Get explicit approval.
 10. After approval, write only inside `.businesslens/`:
     - blank slate: create the complete layout, canonical README, `.gitignore`,
-      taxonomies, product, coverage, and all approved entities;
+      taxonomies, product, coverage, and all approved elements;
     - existing product: edit the living model to the intended state and repair
       relationships;
     - resolution: apply only the approved narrow delta.

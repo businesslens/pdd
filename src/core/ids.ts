@@ -3,7 +3,7 @@ export const ID_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 /**
  * Separator for a qualified Interface, Experience, or Screen id.
  *
- * `::` rather than `/`: report routes address entities by id, and a slash would
+ * `::` rather than `/`: report routes address elements by id, and a slash would
  * force URL encoding at every boundary. It also matches the `parent::child`
  * node-key convention the viewer already uses.
  */
@@ -22,7 +22,7 @@ export function isId(value: string): boolean {
  * joined by `::`.
  *
  * Interfaces, Experiences and Screens repeat names across Interfaces on
- * purpose — `personal-library` on web and on mobile are different entities that
+ * purpose — `personal-library` on web and on mobile are different elements that
  * pursue the same goal — so their ids carry the path that distinguishes them.
  */
 export function isQualifiedId(value: string): boolean {
@@ -56,7 +56,7 @@ export function parentPlace(id: string): string | undefined {
 }
 
 /**
- * The path below the Interface — what makes two entities counterparts.
+ * The path below the Interface — what makes two elements counterparts.
  *
  * `reader-web::personal-library::unread-library` and
  * `reader-mobile::personal-library::unread-library` share the suffix

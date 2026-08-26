@@ -128,7 +128,7 @@ export function validateProductLogo(input: string | Uint8Array): string[] {
   const issue = (message: string) => issues.add(`logo.svg ${message}`)
   const parser = new SaxesParser({ xmlns: true })
 
-  parser.on('doctype', () => issue('must not contain document type or entity declarations'))
+  parser.on('doctype', () => issue('must not contain document type or element declarations'))
   parser.on('processinginstruction', () => issue('must not contain processing instructions'))
   parser.on('cdata', () => issue('must not contain CDATA sections'))
   parser.on('error', () => issue('must be well-formed XML'))

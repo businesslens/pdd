@@ -56,7 +56,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
         seen.add(normalized)
       }
       if (forbiddenSet.has(normalized)) {
-        errors.push(`${label}: "## ${item.heading}" is not allowed on this entity type`)
+        errors.push(`${label}: "## ${item.heading}" is not allowed on this element type`)
       }
       if (containsStructuralHeading(item.body)) {
         errors.push(`${label}: "## ${item.heading}" content must not contain an H1 or H2 heading`)
@@ -246,7 +246,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
       errors.push(`${productInterface.file}: missing "## Capability boundary" section`)
     }
     /*
-     * F11 — one entry-point key vocabulary per entity. On an Interface the key
+     * F11 — one entry-point key vocabulary per element. On an Interface the key
      * is that Interface's own `type`; on an Experience or Screen it is the
      * containing Interface's id. Previously the Interface case was unchecked,
      * so two authors used three different vocabularies and both linted clean.
@@ -421,13 +421,13 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     ...model.capabilities.map(item => ({ file: item.file, id: item.id, kind: 'Capability' })),
     ...model.journeys.map(item => ({ file: item.file, id: item.id, kind: 'Journey' }))
   ]
-  for (const entity of behavioural) {
-    const segments = entity.id.split('-')
+  for (const element of behavioural) {
+    const segments = element.id.split('-')
     const last = segments[segments.length - 1] || ''
     const carriesVerb = segments.some(segment => PRODUCT_VERBS.has(segment))
     if (NOMINALISED.test(last) && !carriesVerb) {
       warnings.push(
-        `${entity.file}: ${entity.kind} id "${entity.id}" reads as a noun phrase; behavioral ids are verb-object`
+        `${element.file}: ${element.kind} id "${element.id}" reads as a noun phrase; behavioral ids are verb-object`
       )
     }
   }
@@ -438,9 +438,9 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
    * refer to a Screen or Experience in prose.
    */
   const nounVocabulary = new Set<string>()
-  for (const entity of [...model.objects, ...model.domains, ...model.interfaces, ...model.experiences, ...model.screens]) {
-    nounVocabulary.add(entity.id)
-    const leaf = entity.id.split('::').pop()
+  for (const element of [...model.objects, ...model.domains, ...model.interfaces, ...model.experiences, ...model.screens]) {
+    nounVocabulary.add(element.id)
+    const leaf = element.id.split('::').pop()
     if (leaf) nounVocabulary.add(leaf)
   }
 
@@ -453,8 +453,8 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
    * object half to a noun the model already declares removes that whole class of
    * divergence, and only fires when the author has declared the fuller term.
    */
-  for (const entity of behavioural) {
-    const segments = entity.id.split('-')
+  for (const element of behavioural) {
+    const segments = element.id.split('-')
     if (segments.length < 2) continue
     const object = segments.slice(1).join('-')
     if (nounVocabulary.has(object)) continue
@@ -468,7 +468,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
       .sort((left, right) => left.length - right.length)[0]
     if (fuller) {
       warnings.push(
-        `${entity.file}: ${entity.kind} id "${entity.id}" names "${object}" where this model declares "${fuller}"; use the declared name`
+        `${element.file}: ${element.kind} id "${element.id}" names "${object}" where this model declares "${fuller}"; use the declared name`
       )
     }
   }
@@ -483,15 +483,15 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     ...model.domains.map(item => ({ file: item.file, id: item.id, kind: 'Domain' })),
     ...model.businessRules.map(item => ({ file: item.file, id: item.id, kind: 'Business Rule' }))
   ]
-  for (const entity of nounIdKinds) {
-    const segments = entity.id.split('-')
+  for (const element of nounIdKinds) {
+    const segments = element.id.split('-')
     // A single-segment id cannot be verb-object; `order` is a noun here even
     // though the same word is a verb elsewhere.
     if (segments.length < 2) continue
     const first = segments[0] || ''
     if (PRODUCT_VERBS.has(first)) {
       warnings.push(
-        `${entity.file}: ${entity.kind} id "${entity.id}" opens with a verb; cross-cutting ids name what a thing is, not what is done`
+        `${element.file}: ${element.kind} id "${element.id}" opens with a verb; cross-cutting ids name what a thing is, not what is done`
       )
     }
   }
@@ -913,14 +913,14 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
      * `type: context` target is always fine, since a constraint on an
      * interaction context belongs to no behavior.
      */
-    const entityTargets = rule.appliesTo.filter(target => target.type !== 'context')
-    const narrowed = entityTargets.some(
+    const elementTargets = rule.appliesTo.filter(target => target.type !== 'context')
+    const narrowed = elementTargets.some(
       target => 'contexts' in target && Array.isArray(target.contexts) && target.contexts.length > 0
     )
     const hasContextTarget = rule.appliesTo.some(target => target.type === 'context')
-    if (entityTargets.length === 1 && !narrowed && !hasContextTarget) {
-      const only = entityTargets[0]
-      const owner = only && 'id' in only ? only.id : 'that entity'
+    if (elementTargets.length === 1 && !narrowed && !hasContextTarget) {
+      const only = elementTargets[0]
+      const owner = only && 'id' in only ? only.id : 'that element'
       warnings.push(
         `${rule.file}: governs only "${owner}"; a constraint true of one behavior belongs to it as a condition Step or Outcome, not a Business Rule`
       )
@@ -1018,7 +1018,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     errors.push('capabilities/: a complete model needs at least one capability')
   }
 
-  const allEntities = [
+  const allElements = [
     ...model.actors,
     ...model.interfaces,
     ...model.experiences,
@@ -1036,45 +1036,45 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     `implementation/` describes this realization — which is the only rule a
     foreign tool writing a capture on CI can actually satisfy.
   */
-  for (const entity of allEntities) {
-    const present = new Set(entity.assets)
+  for (const element of allElements) {
+    const present = new Set(element.assets)
     const stateNames = new Set(
-      model.screens.find(screen => screen.file === entity.file)?.states.map(state => state.title.toLowerCase()) ?? []
+      model.screens.find(screen => screen.file === element.file)?.states.map(state => state.title.toLowerCase()) ?? []
     )
-    const isScreen = model.screens.some(screen => screen.file === entity.file)
-    for (const asset of entity.assetMeta) {
+    const isScreen = model.screens.some(screen => screen.file === element.file)
+    for (const asset of element.assetMeta) {
       if (!present.has(asset.file)) {
-        errors.push(`${entity.file}: asset "${asset.file}" is not a file in this entity's expanded folder`)
+        errors.push(`${element.file}: asset "${asset.file}" is not a file in this element's expanded folder`)
       }
       if (asset.state === undefined) continue
       if (!isScreen) {
-        errors.push(`${entity.file}: asset "state" is only valid on a Screen`)
+        errors.push(`${element.file}: asset "state" is only valid on a Screen`)
       } else if (!stateNames.has(asset.state.toLowerCase())) {
-        errors.push(`${entity.file}: asset state "${asset.state}" is not a product state of this Screen`)
+        errors.push(`${element.file}: asset state "${asset.state}" is not a product state of this Screen`)
       }
     }
   }
 
-  const referenceHosts = [{ file: 'product.md', references: model.product.references }, ...allEntities]
+  const referenceHosts = [{ file: 'product.md', references: model.product.references }, ...allElements]
   const screenFiles = new Set(model.screens.map(screen => screen.file))
-  for (const entity of referenceHosts) {
+  for (const element of referenceHosts) {
     const targets = new Set<string>()
-    for (const reference of entity.references) {
+    for (const reference of element.references) {
       if (targets.has(reference.target)) {
-        errors.push(`${entity.file}: duplicate reference target "${reference.target}"`)
+        errors.push(`${element.file}: duplicate reference target "${reference.target}"`)
       }
       targets.add(reference.target)
       // Product states are a Screen concept; nowhere else has an H3 set for a
       // state to resolve against, so the key would mean nothing there.
-      if (reference.state !== undefined && !screenFiles.has(entity.file)) {
-        errors.push(`${entity.file}: reference "state" is only valid on a Screen`)
+      if (reference.state !== undefined && !screenFiles.has(element.file)) {
+        errors.push(`${element.file}: reference "state" is only valid on a Screen`)
       }
       const path = repositoryReferencePath(reference)
       if (!path || tracked.has(path)) continue
       if (reference.kind === 'code') {
-        errors.push(`${entity.file}: code reference path "${path}" is not a tracked file`)
+        errors.push(`${element.file}: code reference path "${path}" is not a tracked file`)
       } else {
-        warnings.push(`${entity.file}: reference target "${reference.target}" does not exist in the repository`)
+        warnings.push(`${element.file}: reference target "${reference.target}" does not exist in the repository`)
       }
     }
   }

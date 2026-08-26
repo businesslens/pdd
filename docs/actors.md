@@ -97,7 +97,7 @@ An employee who manages orders on behalf of the store.
 | `references` | no | Use the documented [Reference](./references.md) shape. |
 | H1 and lead paragraph | yes | Name and describe the Actor. |
 
-Every Actor ID named by another entity must have a corresponding file.
+Every Actor ID named by another element must have a corresponding file.
 
 ## Referenced by
 

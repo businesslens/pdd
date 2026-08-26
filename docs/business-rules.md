@@ -1,6 +1,6 @@
 ---
 title: Business rules
-description: Durable assertions that apply to Product entities or Contexts naming Interfaces, Experiences, or Screens.
+description: Durable assertions that apply to Product elements or Contexts naming Interfaces, Experiences, or Screens.
 section: open-source
 group: Product Model
 order: 17
@@ -14,7 +14,7 @@ access.
 
 The Rule is the single owner of where it applies. Its `appliesTo` list targets
 Capabilities, Journeys, Capability Scenarios, Journey Scenarios, or direct
-Contexts. Other entities do not copy Rule IDs, so one
+Contexts. Other elements do not copy Rule IDs, so one
 constraint remains reusable and reviewable instead of drifting across several
 files.
 
@@ -23,13 +23,13 @@ files.
 **A Rule governs two or more behaviors, or a Context independent of any single
 behavior.** Anything true of exactly one Capability is that Capability's own
 business — a `condition` Step, or its Scenario's Outcome — and `lint` warns when
-a Rule's targets resolve to a single behavioral entity with no `contexts`
+a Rule's targets resolve to a single behavioral element with no `contexts`
 narrowing them.
 
 Write something that must remain true, not a sequential step.
 
-A Rule must have at least one target. Target a behavioral entity when the Rule
-governs that behavior. Add `contexts` to narrow an entity target, or use a
+A Rule must have at least one target. Target a behavioral element when the Rule
+governs that behavior. Add `contexts` to narrow an element target, or use a
 direct `context` target when the constraint belongs to the interaction context
 itself rather than one behavior.
 
@@ -65,13 +65,13 @@ Confirmation is the durable customer-facing boundary of checkout.
 
 | Field or section | Required | Constraint |
 | --- | --- | --- |
-| `appliesTo` | yes | Give at least one unique entity or direct context target. Entity types are `capability`, `capability-scenario`, `journey`, and `journey-scenario`; the direct type is `context`. |
+| `appliesTo` | yes | Give at least one unique element or direct context target. Element types are `capability`, `capability-scenario`, `journey`, and `journey-scenario`; the direct type is `context`. |
 | `references` | no | Use the documented [Reference](./references.md) shape. |
 | H1 and lead paragraph | yes | Name the Rule and state its durable assertion. |
 | `## Intent` | no | Explain the outcome the Rule protects. |
 | `## Rationale` | no | Explain why the constraint exists. |
 
-An entity target without `contexts` applies everywhere that entity is
+An element target without `contexts` applies everywhere that element is
 supported. When present, `contexts` is a non-empty list of strict Context
 objects. A Rule Context may name any Interface, Experience, or Screen place.
 An ancestor place includes supported descendants: an Interface Context can

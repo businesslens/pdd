@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { AnyEntityView, ContextView, EntryPointView, ReportWorkspace } from '../utils/reportWorkspace'
+import type { AnyElementView, ContextView, EntryPointView, ReportWorkspace } from '../utils/reportWorkspace'
 
 const props = withDefaults(defineProps<{
   workspace: ReportWorkspace
@@ -12,7 +12,7 @@ const props = withDefaults(defineProps<{
   compact: false
 })
 
-const emit = defineEmits<{ select: [entity: AnyEntityView] }>()
+const emit = defineEmits<{ select: [element: AnyElementView] }>()
 
 const visibleContexts = computed(() => props.compact ? props.contexts.slice(0, 2) : props.contexts)
 const remainingContexts = computed(() => props.contexts.length - visibleContexts.value.length)

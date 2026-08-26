@@ -56,7 +56,7 @@ const inventory = {
     documentation: matches(files, /(^|\/)(docs?|documentation)\//i),
     entryPoints: matches(files, /(routes?|router|controllers?|handlers?|commands?|cmd|api|graphql|http|ssh|web)\b/i),
     processes: matches(files, /(queues?|workers?|jobs?|tasks?|schedulers?|cron|webhooks?|indexers?|services?|daemons?)\b/i),
-    persistence: matches(files, /(models?|entities|schemas?|migrations?|database|storage|repositories)\b/i),
+    persistence: matches(files, /(models?|elements|schemas?|migrations?|database|storage|repositories)\b/i),
     observability: matches(files, /(metrics?|telemetry|tracing|logging|audit|monitoring|prometheus|opentelemetry)\b/i),
     configuration: matches(files, /(^|\/)(config|configs|configuration|settings|\.env|docker|helm|charts?)\b/i),
     tests: matches(files, /(^|\/)(tests?|specs?|e2e|fixtures?)\//i)

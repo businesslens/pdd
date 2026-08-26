@@ -7,7 +7,7 @@
  * direct integrations, and `value-flow` and `domain-anatomy` folded into
  * Product map once Domains grouped Capabilities under the access rail.
  */
-import type { ReportEntityKind } from './reportWorkspace'
+import type { ReportElementKind } from './reportWorkspace'
 
 export type ProductTopologyViewId =
   | 'product-map'
@@ -20,7 +20,7 @@ export type ProductTopologyViewId =
 export type TopologySemantics = 'identity' | 'occurrence'
 
 export interface TopologyFlowStep {
-  kind: ReportEntityKind
+  kind: ReportElementKind
   label: string
 }
 
@@ -32,7 +32,7 @@ export interface ProductTopologyView {
   note?: string
   flow: TopologyFlowStep[]
   separators: string[]
-  kinds: ReportEntityKind[]
+  kinds: ReportElementKind[]
   /** Draw every relation quietly until a node lights its neighbourhood. */
   latentEdges?: true
 }
@@ -122,7 +122,7 @@ export const PRODUCT_TOPOLOGY_VIEWS: ProductTopologyView[] = [
     name: 'Everything',
     question: 'What is the entire product, all at once?',
     semantics: 'identity',
-    note: 'Fixed shelves read access → Interface → behaviour → governance. The resolved relation web stays quiet until a node is hovered or selected; hide a shelf or focus an entity to thin it.',
+    note: 'Fixed shelves read access → Interface → behaviour → governance. The resolved relation web stays quiet until a node is hovered or selected; hide a shelf or focus an element to thin it.',
     flow: [],
     separators: [],
     kinds: [

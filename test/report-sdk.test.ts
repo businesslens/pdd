@@ -159,9 +159,9 @@ describe('projectPortableReport', () => {
       direct.model.capabilities,
       direct.model.businessRules
     ]) {
-      for (const entity of collection) {
-        if ('availability' in entity) {
-          entity.availability = entity.availability.map(context => ({
+      for (const element of collection) {
+        if ('availability' in element) {
+          element.availability = element.availability.map(context => ({
             placeId: context.placeId.split('::')[0]!
           }))
         }
@@ -309,7 +309,7 @@ describe('projectPortableReport', () => {
     )
   })
 
-  it('rejects duplicate targets on one entity', () => {
+  it('rejects duplicate targets on one element', () => {
     const duplicate = structuredClone(report)
     duplicate.model.actors[0]!.references = [
       { kind: 'doc', role: 'context', target: 'https://example.com/same' },

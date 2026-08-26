@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync, existsSync } from 'node:fs'
 import { basename, join } from 'node:path'
 import { parse } from 'yaml'
-import type { CompactEntryPoint, Context, EntityAsset, EntityReference } from './frontmatter.js'
+import type { CompactEntryPoint, Context, ElementAsset, ElementReference } from './frontmatter.js'
 import type { MarkdownDoc } from './markdown.js'
 import {
   assetsField,
@@ -22,18 +22,18 @@ import {
   bulletList, containsStructuralHeading, decisionPoints, parseMarkdown, screenStates, section
 } from './markdown.js'
 
-export interface EntityFile {
+export interface ElementFile {
   id: string
   file: string
   /**
-   * The entity's expanded namespace, whether or not it currently exists.
+   * The element's expanded namespace, whether or not it currently exists.
    * Assets sit beside `<type>.md`; children are typed subfolders.
    */
   directory: string
   doc: MarkdownDoc
-  references: EntityReference[]
+  references: ElementReference[]
   /**
-   * Files found beside `<type>.md`, path-relative to the entity folder.
+   * Files found beside `<type>.md`, path-relative to the element folder.
    *
    * Anything under `implementation/` describes this realization of the Product
    * and is workspace-profile only; everything else is authored intent and
@@ -41,15 +41,15 @@ export interface EntityFile {
    */
   assets: string[]
   /** Optional authored metadata over those files. Never sets class. */
-  assetMeta: EntityAsset[]
+  assetMeta: ElementAsset[]
 }
 
-export interface ActorEntity extends EntityFile {
+export interface ActorElement extends ElementFile {
   kind: string
   relationship: string
 }
 
-export interface InterfaceEntity extends EntityFile {
+export interface InterfaceElement extends ElementFile {
   type: string
   actors: string[]
   entryPoints: CompactEntryPoint[]
@@ -58,7 +58,7 @@ export interface InterfaceEntity extends EntityFile {
   screens: string[]
 }
 
-export interface ExperienceEntity extends EntityFile {
+export interface ExperienceElement extends ElementFile {
   actors: string[]
   /** The one Interface that owns it, read from the path. Never authored. */
   interface: string
@@ -69,12 +69,12 @@ export interface ExperienceEntity extends EntityFile {
   screens: string[]
 }
 
-export interface DomainEntity extends EntityFile {
+export interface DomainElement extends ElementFile {
   colorSlot?: number
   boundary: string
 }
 
-export interface CapabilityEntity extends EntityFile {
+export interface CapabilityElement extends ElementFile {
   domain?: string
   availability: Context[]
 }
@@ -91,13 +91,13 @@ export interface ObjectStateTransition {
  * exists exactly when a thing has two or more named states referenced by two or
  * more Capabilities — a computable test, so an author never judges it.
  */
-export interface ObjectEntity extends EntityFile {
+export interface ObjectElement extends ElementFile {
   domain?: string
   states: ReturnType<typeof screenStates>
   transitions: ObjectStateTransition[]
 }
 
-export interface ScreenEntity extends EntityFile {
+export interface ScreenElement extends ElementFile {
   /** The Interface or Experience that owns it, read from the path. Never authored. */
   containerId: string
   capabilities: string[]
@@ -108,7 +108,7 @@ export interface ScreenEntity extends EntityFile {
   capabilityBoundary: string
 }
 
-interface ScenarioEntity extends EntityFile {
+interface ScenarioElement extends ElementFile {
   kind: string
   routes: ScenarioRoute[]
   steps: ScenarioStep[]
@@ -118,7 +118,7 @@ interface ScenarioEntity extends EntityFile {
   decisionPoints: ReturnType<typeof decisionPoints>
 }
 
-export interface CapabilityScenarioEntity extends ScenarioEntity {
+export interface CapabilityScenarioElement extends ScenarioElement {
   /** The Capability that owns it, read from the path. Never authored. */
   capability: string
 }
@@ -149,31 +149,31 @@ export interface ScenarioStep {
   contexts: ScenarioStepContext[]
 }
 
-export interface JourneyScenarioEntity extends ScenarioEntity {
+export interface JourneyScenarioElement extends ScenarioElement {
   /** The Journey that owns it, read from the path. Never authored. */
   journey: string
   result: string
 }
 
-export interface JourneyEntity extends EntityFile {
+export interface JourneyElement extends ElementFile {
   actors: string[]
   goal: string
   successCriterion: string
 }
 
-export interface BusinessRuleEntity extends EntityFile {
+export interface BusinessRuleElement extends ElementFile {
   appliesTo: BusinessRuleTarget[]
   rationale: string
 }
 
-export type BusinessRuleEntityTargetType =
+export type BusinessRuleElementTargetType =
   | 'capability'
   | 'capability-scenario'
   | 'journey'
   | 'journey-scenario'
 
-export interface BusinessRuleEntityTarget {
-  type: BusinessRuleEntityTargetType
+export interface BusinessRuleElementTarget {
+  type: BusinessRuleElementTargetType
   id: string
   contexts: Context[]
 }
@@ -183,7 +183,7 @@ export interface BusinessRuleContextTarget {
   context: Context
 }
 
-export type BusinessRuleTarget = BusinessRuleEntityTarget | BusinessRuleContextTarget
+export type BusinessRuleTarget = BusinessRuleElementTarget | BusinessRuleContextTarget
 
 export interface ScenarioKind {
   id: string
@@ -209,7 +209,7 @@ export interface PddModel {
     license?: string
     limitations: string[]
     doc: MarkdownDoc
-    references: EntityReference[]
+    references: ElementReference[]
   }
   scenarioKinds: ScenarioKind[]
   coverage: {
@@ -220,17 +220,17 @@ export interface PddModel {
     limitations: string[]
     rationale: string
   }
-  actors: ActorEntity[]
-  interfaces: InterfaceEntity[]
-  experiences: ExperienceEntity[]
-  screens: ScreenEntity[]
-  domains: DomainEntity[]
-  objects: ObjectEntity[]
-  capabilities: CapabilityEntity[]
-  capabilityScenarios: CapabilityScenarioEntity[]
-  businessRules: BusinessRuleEntity[]
-  journeys: JourneyEntity[]
-  journeyScenarios: JourneyScenarioEntity[]
+  actors: ActorElement[]
+  interfaces: InterfaceElement[]
+  experiences: ExperienceElement[]
+  screens: ScreenElement[]
+  domains: DomainElement[]
+  objects: ObjectElement[]
+  capabilities: CapabilityElement[]
+  capabilityScenarios: CapabilityScenarioElement[]
+  businessRules: BusinessRuleElement[]
+  journeys: JourneyElement[]
+  journeyScenarios: JourneyScenarioElement[]
   issues: string[]
   notices: string[]
 }
@@ -252,10 +252,10 @@ export interface LoadFindings {
   notices: string[]
 }
 
-/** One compact or expanded entity: its id segment, namespace, and Markdown file. */
-export interface EntityLocation {
+/** One compact or expanded element: its id segment, namespace, and Markdown file. */
+export interface ElementLocation {
   id: string
-  /** `<collection>/<id>/`, including for a compact entity where it does not exist. */
+  /** `<collection>/<id>/`, including for a compact element where it does not exist. */
   directory: string
   file: string
   expanded: boolean
@@ -264,7 +264,7 @@ export interface EntityLocation {
 /**
  * The compact files and expanded folders of one collection, in id order.
  *
- * `<id>.md` is canonical while an entity has no owned children or assets.
+ * `<id>.md` is canonical while an element has no owned children or assets.
  * `<id>/<type>.md` is required once it needs that namespace. The logical id is
  * identical in both forms, and the two forms may never coexist.
  *
@@ -272,15 +272,15 @@ export interface EntityLocation {
  * vanish with no finding, so a misplaced file looked exactly like one that was
  * never written.
  */
-function listEntities(
+function listElements(
   parent: string,
   type: string,
   findings: LoadFindings,
   collection: string,
   childDirectories: string[] = []
-): EntityLocation[] {
+): ElementLocation[] {
   if (!existsSync(parent)) return []
-  const found: EntityLocation[] = []
+  const found: ElementLocation[] = []
   const compact = new Map<string, string>()
   const expanded = new Map<string, string>()
 
@@ -298,7 +298,7 @@ function listEntities(
       expanded.set(entry.name, join(parent, entry.name))
       continue
     }
-    findings.issues.push(`${collection}/${entry.name}: expected a regular entity file or directory`)
+    findings.issues.push(`${collection}/${entry.name}: expected a regular element file or directory`)
   }
 
   const ids = new Set([...compact.keys(), ...expanded.keys()])
@@ -311,7 +311,7 @@ function listEntities(
     if (compactFile && expanded.has(id)) {
       findings.issues.push(
         hasExpandedFile
-          ? `${collection}/${id}: both ${id}.md and ${id}/${type}.md exist; keep exactly one entity shape`
+          ? `${collection}/${id}: both ${id}.md and ${id}/${type}.md exist; keep exactly one element shape`
           : `${collection}/${id}.md cannot also have ${collection}/${id}/; move it to ${collection}/${id}/${type}.md before adding children or assets`
       )
       found.push({ id, directory, file: compactFile, expanded: false })
@@ -353,7 +353,7 @@ function listEntities(
       // steps. Report expansion derives shape from owned children, so the round
       // trip normalizes this folder back to the compact form the rule requires.
       findings.notices.push(
-        `${collection}/${id}/ has no assets or child entities; use ${collection}/${id}.md`
+        `${collection}/${id}/ has no assets or child elements; use ${collection}/${id}.md`
       )
     }
     found.push({ id, directory, file: expandedFile, expanded: true })
@@ -377,17 +377,17 @@ function listAssets(directory: string, ownFile: string): string[] {
   return found.sort()
 }
 
-function readEntity(
-  location: Pick<EntityLocation, 'file' | 'directory' | 'expanded'>,
+function readElement(
+  location: Pick<ElementLocation, 'file' | 'directory' | 'expanded'>,
   allowedKeys: string[],
   issues: string[]
 ): {
   data: Record<string, unknown>
   doc: MarkdownDoc
-  references: EntityReference[]
+  references: ElementReference[]
   directory: string
   assets: string[]
-  assetMeta: EntityAsset[]
+  assetMeta: ElementAsset[]
 } {
   const { file, directory, expanded } = location
   const source = readFileSync(file, 'utf8')
@@ -535,7 +535,7 @@ function businessRuleTargetsField(
       }
     }
     targets.push({
-      type: type as BusinessRuleEntityTargetType,
+      type: type as BusinessRuleElementTargetType,
       id: stringField(target, 'id', issues, targetLabel) || '',
       contexts
     })
@@ -642,7 +642,7 @@ export function loadModel(cwd: string): PddModel {
   if (hasCompactProduct && hasProductDirectory) {
     issues.push(
       hasExpandedProduct
-        ? 'product: both product.md and product/product.md exist; keep exactly one entity shape'
+        ? 'product: both product.md and product/product.md exist; keep exactly one element shape'
         : 'product.md cannot also have product/; move it to product/product.md before adding logo.svg'
     )
   }
@@ -737,10 +737,10 @@ export function loadModel(cwd: string): PddModel {
     issues.push('coverage.md is missing')
   }
 
-  const actors: ActorEntity[] = listEntities(join(root, 'actors'), 'actor', findings, 'actors')
+  const actors: ActorElement[] = listElements(join(root, 'actors'), 'actor', findings, 'actors')
     .map((location) => {
       const { id, file } = location
-      const { data, doc, references, directory, assets, assetMeta } = readEntity(location, ['kind', 'relationship'], issues)
+      const { data, doc, references, directory, assets, assetMeta } = readElement(location, ['kind', 'relationship'], issues)
       return {
         id, file, doc, references, directory, assets, assetMeta,
         kind: stringField(data, 'kind', issues, file) || '',
@@ -754,13 +754,13 @@ export function loadModel(cwd: string): PddModel {
     relation and the id — one authority instead of two that can disagree, and
     reparenting becomes a `git mv` that reads correctly in a pull request.
   */
-  const interfaces: InterfaceEntity[] = []
-  const experiences: ExperienceEntity[] = []
-  const screens: ScreenEntity[] = []
+  const interfaces: InterfaceElement[] = []
+  const experiences: ExperienceElement[] = []
+  const screens: ScreenElement[] = []
 
   const readScreens = (parent: string, containerId: string, label: string) => {
-    for (const location of listEntities(join(parent, 'screens'), 'screen', findings, `${label}/screens`)) {
-      const { data, doc, references, directory, assets, assetMeta } = readEntity(
+    for (const location of listElements(join(parent, 'screens'), 'screen', findings, `${label}/screens`)) {
+      const { data, doc, references, directory, assets, assetMeta } = readElement(
         location,
         ['capabilities', 'entryPoints'],
         issues
@@ -784,14 +784,14 @@ export function loadModel(cwd: string): PddModel {
     }
   }
 
-  for (const productInterface of listEntities(
+  for (const productInterface of listElements(
     join(root, 'interfaces'),
     'interface',
     findings,
     'interfaces',
     ['experiences', 'screens']
   )) {
-    const { data, doc, references, directory, assets, assetMeta } = readEntity(
+    const { data, doc, references, directory, assets, assetMeta } = readElement(
       productInterface,
       ['type', 'actors', 'entryPoints', 'screens'],
       issues
@@ -811,7 +811,7 @@ export function loadModel(cwd: string): PddModel {
       screens: uniqueStringListField(data, 'screens', issues, productInterface.file)
     })
 
-    const experienceLocations = listEntities(
+    const experienceLocations = listElements(
       join(productInterface.directory, 'experiences'),
       'experience',
       findings,
@@ -821,7 +821,7 @@ export function loadModel(cwd: string): PddModel {
 
     for (const location of experienceLocations) {
       const experienceId = qualify(productInterface.id, location.id)
-      const parsed = readEntity(location, ['actors', 'access', 'entryPoints', 'screens'], issues)
+      const parsed = readElement(location, ['actors', 'access', 'entryPoints', 'screens'], issues)
       experiences.push({
         id: experienceId,
         file: location.file,
@@ -848,10 +848,10 @@ export function loadModel(cwd: string): PddModel {
     }
   }
 
-  const domains: DomainEntity[] = listEntities(join(root, 'domains'), 'domain', findings, 'domains')
+  const domains: DomainElement[] = listElements(join(root, 'domains'), 'domain', findings, 'domains')
     .map((location) => {
       const { id, file } = location
-      const { data, doc, references, directory, assets, assetMeta } = readEntity(location, ['colorSlot'], issues)
+      const { data, doc, references, directory, assets, assetMeta } = readElement(location, ['colorSlot'], issues)
       return {
         id, file, doc, references, directory, assets, assetMeta,
         colorSlot: typeof data.colorSlot === 'number' ? data.colorSlot : undefined,
@@ -859,10 +859,10 @@ export function loadModel(cwd: string): PddModel {
       }
     })
 
-  const objects: ObjectEntity[] = listEntities(join(root, 'objects'), 'object', findings, 'objects')
+  const objects: ObjectElement[] = listElements(join(root, 'objects'), 'object', findings, 'objects')
     .map((location) => {
       const { id, file } = location
-      const { data, doc, references, directory, assets, assetMeta } = readEntity(location, ['domain'], issues)
+      const { data, doc, references, directory, assets, assetMeta } = readElement(location, ['domain'], issues)
       const states = screenStates(section(doc, 'States') || '', issues, file, 'States', 'object state')
       if (states.length < 2) {
         issues.push(`${file}: an Object needs "## States" with at least two H3 states`)
@@ -901,16 +901,16 @@ export function loadModel(cwd: string): PddModel {
       }
     })
 
-  const capabilities: CapabilityEntity[] = []
-  const capabilityScenarios: CapabilityScenarioEntity[] = []
-  for (const location of listEntities(
+  const capabilities: CapabilityElement[] = []
+  const capabilityScenarios: CapabilityScenarioElement[] = []
+  for (const location of listElements(
     join(root, 'capabilities'),
     'capability',
     findings,
     'capabilities',
     ['scenarios']
   )) {
-    const { data, doc, references, directory, assets, assetMeta } = readEntity(location, ['domain', 'availability'], issues)
+    const { data, doc, references, directory, assets, assetMeta } = readElement(location, ['domain', 'availability'], issues)
     capabilities.push({
       id: location.id,
       file: location.file,
@@ -922,13 +922,13 @@ export function loadModel(cwd: string): PddModel {
       domain: stringField(data, 'domain', issues, location.file),
       availability: availabilityField(data, issues, location.file)
     })
-    for (const scenario of listEntities(
+    for (const scenario of listElements(
       join(location.directory, 'scenarios'),
       'capability-scenario',
       findings,
       `capabilities/${location.id}/scenarios`
     )) {
-      const parsed = readEntity(scenario, ['kind', 'routes', 'steps'], issues)
+      const parsed = readElement(scenario, ['kind', 'routes', 'steps'], issues)
       capabilityScenarios.push({
         id: scenario.id,
         file: scenario.file,
@@ -946,16 +946,16 @@ export function loadModel(cwd: string): PddModel {
     }
   }
 
-  const journeys: JourneyEntity[] = []
-  const journeyScenarios: JourneyScenarioEntity[] = []
-  for (const location of listEntities(
+  const journeys: JourneyElement[] = []
+  const journeyScenarios: JourneyScenarioElement[] = []
+  for (const location of listElements(
     join(root, 'journeys'),
     'journey',
     findings,
     'journeys',
     ['scenarios']
   )) {
-    const { data, doc, references, directory, assets, assetMeta } = readEntity(location, ['actors'], issues)
+    const { data, doc, references, directory, assets, assetMeta } = readElement(location, ['actors'], issues)
     journeys.push({
       id: location.id,
       file: location.file,
@@ -968,13 +968,13 @@ export function loadModel(cwd: string): PddModel {
       goal: section(doc, 'Goal') || '',
       successCriterion: section(doc, 'Success criterion') || ''
     })
-    for (const scenario of listEntities(
+    for (const scenario of listElements(
       join(location.directory, 'scenarios'),
       'journey-scenario',
       findings,
       `journeys/${location.id}/scenarios`
     )) {
-      const parsed = readEntity(scenario, ['kind', 'result', 'routes', 'steps'], issues)
+      const parsed = readElement(scenario, ['kind', 'result', 'routes', 'steps'], issues)
       journeyScenarios.push({
         id: scenario.id,
         file: scenario.file,
@@ -993,14 +993,14 @@ export function loadModel(cwd: string): PddModel {
     }
   }
 
-  const businessRules: BusinessRuleEntity[] = listEntities(
+  const businessRules: BusinessRuleElement[] = listElements(
     join(root, 'business-rules'),
     'business-rule',
     findings,
     'business-rules'
   ).map((location) => {
     const { id, file } = location
-    const { data, doc, references, directory, assets, assetMeta } = readEntity(location, ['appliesTo'], issues)
+    const { data, doc, references, directory, assets, assetMeta } = readElement(location, ['appliesTo'], issues)
     return {
       id, file, doc, references, directory, assets, assetMeta,
       appliesTo: businessRuleTargetsField(data, issues, file),

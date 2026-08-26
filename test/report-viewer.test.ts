@@ -6,11 +6,11 @@ import { loadModel } from '../src/core/model.js'
 
 const VIEWER = join(__dirname, '..', 'layers', 'nuxt', 'report-viewer')
 const workspaceModulePath = '../layers/nuxt/report-viewer/app/utils/reportWorkspace.ts'
-const entityFactsModulePath = '../layers/nuxt/report-viewer/app/utils/entityFacts.ts'
+const elementFactsModulePath = '../layers/nuxt/report-viewer/app/utils/elementFacts.ts'
 const routeWindowModulePath = '../layers/nuxt/report-viewer/app/utils/scenarioRouteWindow.ts'
 const pageSectionsModulePath = '../layers/nuxt/report-viewer/app/utils/pageSections.ts'
 const { projectReportWorkspace } = await import(workspaceModulePath)
-const { entityFacts } = await import(entityFactsModulePath)
+const { elementFacts } = await import(elementFactsModulePath)
 const { REPORT_ENTITY_KINDS } = await import(workspaceModulePath)
 const { hasAuthoredBody, tabsFor } = await import(pageSectionsModulePath)
 const FIXTURE = join(__dirname, 'fixtures', 'fixture-shop')
@@ -20,7 +20,7 @@ function source(path: string): string {
 }
 
 describe('stable Product Report', () => {
-  it('projects every report entity and keeps scenario types distinct', () => {
+  it('projects every report element and keeps scenario types distinct', () => {
     const report = compileReport(loadModel(FIXTURE), '2026-08-08')
     const workspace = projectReportWorkspace(report)
 
@@ -66,9 +66,9 @@ describe('stable Product Report', () => {
     )
   })
 
-  it('gives every entity kind a rail count', () => {
+  it('gives every element kind a rail count', () => {
     // A rail row with a blank count is a kind someone forgot in a hand-kept map.
-    // The map is keyed by ReportEntityKind so the build catches it now; this
+    // The map is keyed by ReportElementKind so the build catches it now; this
     // pins the behaviour rather than the type.
     const shell = source('app/components/BlrReportShell.vue')
     for (const meta of REPORT_ENTITY_KINDS) {
@@ -92,7 +92,7 @@ describe('stable Product Report', () => {
 
     // Reachable everywhere a kind is: rail, search, collection, and page.
     expect(workspace.byKey.get(order.key)).toBe(order)
-    expect(entityFacts(workspace, order).map((fact: any) => fact.label))
+    expect(elementFacts(workspace, order).map((fact: any) => fact.label))
       .toEqual(['States', 'Transitions'])
 
     // No Capability relation: an Object declares none and the format has no
@@ -126,13 +126,13 @@ describe('stable Product Report', () => {
     expect(report).toEqual(before)
   })
 
-  it('keeps same-id entities distinct across collections', () => {
+  it('keeps same-id elements distinct across collections', () => {
     const report = compileReport(loadModel(FIXTURE), '2026-08-08')
     const sharedId = report.model.interfaces[0]!.id
     report.model.actors[0] = { ...report.model.actors[0]!, id: sharedId }
 
     const workspace = projectReportWorkspace(report)
-    expect(workspace.entitiesById.get(sharedId)).toHaveLength(2)
+    expect(workspace.elementsById.get(sharedId)).toHaveLength(2)
     expect(workspace.byKey.get(`actor:${sharedId}`)?.kind).toBe('actor')
     expect(workspace.byKey.get(`interface:${sharedId}`)?.kind).toBe('interface')
   })
@@ -161,7 +161,7 @@ describe('stable Product Report', () => {
   })
 
   it('gives both Scenario types one Steps table while keeping their Context semantics distinct', () => {
-    const body = source('app/components/BlrEntityBody.vue')
+    const body = source('app/components/BlrElementBody.vue')
     const context = source('app/components/BlrStepContext.vue')
     const contextPlace = source('app/components/BlrContextPlace.vue')
     const links = source('app/components/BlrLinks.vue')
@@ -218,38 +218,38 @@ describe('stable Product Report', () => {
     const actorMark = source('app/components/BlrActorType.vue')
     const kind = source('app/components/BlrKind.vue')
     const structure = source('app/assets/report-viewer.css')
-    const cardPresentation = source('app/utils/entityCards.ts')
-    const card = source('app/components/BlrEntityCard.vue')
+    const cardPresentation = source('app/utils/elementCards.ts')
+    const card = source('app/components/BlrElementCard.vue')
     const connections = source('app/components/BlrConnections.vue')
     const reportShell = source('app/components/BlrReportShell.vue')
     const flow = source('app/utils/flowGraph.ts')
     const flowNode = source('app/components/BlrFlowNode.vue')
     const flowGroup = source('app/components/BlrFlowGroup.vue')
-    const entityBody = source('app/components/BlrEntityBody.vue')
+    const elementBody = source('app/components/BlrElementBody.vue')
 
     expect(mark).toContain('name="i-lucide-plug"')
     expect(mark).toContain(':name="meta.icon"')
     expect(mark).toContain('blr-interface-mark__type')
     expect(kind).toContain("kind === 'interface' && interfaceType")
-    expect(kind).toContain('var(--blr-entity-mark-regular)')
-    expect(kind).toContain('var(--blr-entity-mark-dense)')
+    expect(kind).toContain('var(--blr-element-mark-regular)')
+    expect(kind).toContain('var(--blr-element-mark-dense)')
     expect(mark).toContain('var(--blr-interface-mark-regular)')
     expect(mark).toContain('var(--blr-interface-badge-glyph-dense)')
     expect(mark).toContain(".blr-interface-mark[data-size='xs']")
-    /* One glyph, on the shared entity scale. Actor carries two independent
+    /* One glyph, on the shared element scale. Actor carries two independent
        authored axes and a mark can only draw one, so `kind` is the silhouette
        and `relationship` is written where the surface has room for a word. */
     expect(actorMark).toContain(':name="kindMeta.icon"')
     expect(actorMark).not.toContain('i-lucide-users')
     expect(actorMark).not.toContain('blr-actor-relationship')
     expect(actorMark).not.toContain('showRelationship')
-    expect(actorMark).toContain('var(--blr-entity-mark-regular)')
-    expect(actorMark).toContain('var(--blr-entity-mark-dense)')
+    expect(actorMark).toContain('var(--blr-element-mark-regular)')
+    expect(actorMark).toContain('var(--blr-element-mark-dense)')
     expect(kind).toContain("kind === 'actor' && actorKind && actorRelationship")
     expect(kind).not.toContain('show-relationship')
     for (const variable of [
-      '--blr-entity-mark-regular',
-      '--blr-entity-mark-dense',
+      '--blr-element-mark-regular',
+      '--blr-element-mark-dense',
       '--blr-interface-mark-regular',
       '--blr-interface-kind-regular',
       '--blr-interface-badge-regular',
@@ -266,8 +266,8 @@ describe('stable Product Report', () => {
     /* An Actor no longer needs a scale of its own: nothing sits on top of its
        glyph, so it uses the same box every other kind's mark does. */
     expect(structure).not.toContain('--blr-actor-')
-    expect(structure).toContain('--blr-entity-mark-regular: 1.25rem')
-    expect(structure).toContain('--blr-entity-mark-dense: 1.125rem')
+    expect(structure).toContain('--blr-element-mark-regular: 1.25rem')
+    expect(structure).toContain('--blr-element-mark-dense: 1.125rem')
     expect(structure).toContain('--blr-interface-kind-regular: 1.125rem')
     expect(structure).toContain('--blr-interface-kind-dense: 1rem')
     expect(card).toContain(':interface-type="interfaceType"')
@@ -279,20 +279,20 @@ describe('stable Product Report', () => {
     expect(reportShell).toContain('resolvedActor(group.kind, group.key)?.actorKind')
     expect(reportShell).toContain('BlrInterfaceTypeComponent')
     expect(reportShell).toContain('BlrActorTypeComponent')
-    expect(flow).toContain("interfaceType: entity.kind === 'interface' ? entity.interfaceType : null")
-    expect(flow).toContain("actorKind: entity.kind === 'actor' ? entity.actorKind : null")
+    expect(flow).toContain("interfaceType: element.kind === 'interface' ? element.interfaceType : null")
+    expect(flow).toContain("actorKind: element.kind === 'actor' ? element.actorKind : null")
     expect(flowNode).toContain("data.kind === 'interface' && data.interfaceType")
     expect(flowNode).toContain("data.kind === 'actor' && data.actorKind && data.actorRelationship")
     expect(flowNode).not.toContain('show-relationship')
     /* Topology is read for the Product boundary, so the node's sublabel writes
        it — the slot and the spelling an Experience gives its access mode. */
-    expect(flow).toContain("`${ENTITY_KIND_META.actor.label} · ${entity.relationship}`")
+    expect(flow).toContain("`${ENTITY_KIND_META.actor.label} · ${element.relationship}`")
     expect(flowGroup).toContain("data.kind === 'interface' && data.interfaceType")
     expect(flowNode).toContain('class="blr-flow-node__kind"')
-    expect(flowNode).toContain('var(--blr-entity-mark-regular)')
+    expect(flowNode).toContain('var(--blr-element-mark-regular)')
     expect(flowGroup).toContain('class="blr-flow-group__kind"')
-    expect(flowGroup).toContain('var(--blr-entity-mark-regular)')
-    expect(source('app/components/BlrFlowLabel.vue')).toContain('var(--blr-entity-mark-dense)')
+    expect(flowGroup).toContain('var(--blr-element-mark-regular)')
+    expect(source('app/components/BlrFlowLabel.vue')).toContain('var(--blr-element-mark-dense)')
     expect(cardPresentation).not.toContain('INTERFACE_TYPE_META')
     expect(cardPresentation).toContain('Repeating it as a title badge adds no second fact')
     expect(cardPresentation).not.toContain('`${actor.actorKind} · ${actor.relationship}`')
@@ -300,8 +300,8 @@ describe('stable Product Report', () => {
 
     /* A Step names an Actor, so it renders one: the Actor's own mark in a chip
        that opens it, not a dimmed generic glyph beside plain text. */
-    expect(entityBody).toContain('<BlrActorType')
-    expect(entityBody).toContain(':actor-kind="stepActor(step.actorId)!.actorKind"')
+    expect(elementBody).toContain('<BlrActorType')
+    expect(elementBody).toContain(':actor-kind="stepActor(step.actorId)!.actorKind"')
 
     /* A collection or relation heading means the Interface kind, not one
        concrete Interface, so its generic plug remains deliberately generic. */
@@ -392,7 +392,7 @@ describe('stable Product Report', () => {
     expect(renderer).toContain('ProductReportV11')
     expect(renderer).toContain('projectReportWorkspace')
     expect(renderer).toContain('<BlrReportShell')
-    expect(source('app/components/BlrEntityBody.vue')).toContain('scenarioStepMatrix')
+    expect(source('app/components/BlrElementBody.vue')).toContain('scenarioStepMatrix')
     expect(reportShell).toContain('<BlrProductTopology')
     /* Grouping is how authored Domains earn their place in navigation. */
     expect(reportShell).toContain('groupKind')
@@ -452,7 +452,7 @@ describe('stable Product Report', () => {
 
   it('scrolls collection controls with their list instead of pinning them as chrome', () => {
     const reportShell = source('app/components/BlrReportShell.vue')
-    const docs = source('app/utils/entityDocs.ts')
+    const docs = source('app/utils/elementDocs.ts')
     const pane = reportShell.indexOf('v-if="!topologyActive" class="blr-pane min-h-0 flex-1"')
     const toolbar = reportShell.indexOf('v-if="showToolbar"', pane)
     const reading = reportShell.indexOf('<div class="p-5">', toolbar)
@@ -467,20 +467,20 @@ describe('stable Product Report', () => {
     expect(docs).toContain("domain: 'domains'")
   })
 
-  it('opens entities directly into the one page reading', () => {
+  it('opens elements directly into the one page reading', () => {
     const reportShell = source('app/components/BlrReportShell.vue')
-    const page = source('app/components/BlrEntityPage.vue')
-    const body = source('app/components/BlrEntityBody.vue')
+    const page = source('app/components/BlrElementPage.vue')
+    const body = source('app/components/BlrElementBody.vue')
 
     expect(existsSync(join(VIEWER, 'app/components/BlrInspector.vue'))).toBe(false)
-    expect(existsSync(join(VIEWER, 'app/components/BlrEntityPeek.vue'))).toBe(false)
+    expect(existsSync(join(VIEWER, 'app/components/BlrElementPeek.vue'))).toBe(false)
     expect(reportShell).not.toContain('<BlrInspector')
-    expect(reportShell).toContain('<BlrEntityPage')
-    expect(reportShell).toContain(':on-select="(_event: Event, row: any) => openEntityPage(row.original)"')
-    expect(reportShell).toContain('@open="openEntityPage"')
-    expect(reportShell).toContain('@select="openEntityPage"')
+    expect(reportShell).toContain('<BlrElementPage')
+    expect(reportShell).toContain(':on-select="(_event: Event, row: any) => openElementPage(row.original)"')
+    expect(reportShell).toContain('@open="openElementPage"')
+    expect(reportShell).toContain('@select="openElementPage"')
     expect(page).toContain('<BlrPageBlock')
-    expect(source('app/components/BlrPageBlock.vue')).toContain('<BlrEntityBody')
+    expect(source('app/components/BlrPageBlock.vue')).toContain('<BlrElementBody')
     for (const marker of ['stepMatrix.steps', 'asScreen.states', 'asRule.statement']) {
       expect(body, marker).toContain(marker)
     }
@@ -491,24 +491,24 @@ describe('stable Product Report', () => {
     const workspace = projectReportWorkspace(report)
     const contexts = source('app/components/BlrContexts.vue')
     const contextPlace = source('app/components/BlrContextPlace.vue')
-    const page = source('app/components/BlrEntityPage.vue')
+    const page = source('app/components/BlrElementPage.vue')
     const block = source('app/components/BlrPageBlock.vue')
     const sections = source('app/utils/pageSections.ts')
-    const body = source('app/components/BlrEntityBody.vue')
+    const body = source('app/components/BlrElementBody.vue')
 
-    for (const entity of [
+    for (const element of [
       workspace.screens[0]!,
       workspace.capabilities[0]!,
       workspace.journeys[0]!,
       workspace.rules[0]!
     ]) {
-      expect(entityFacts(workspace, entity).map((fact: { label: string }) => fact.label)).not.toContain('Context')
-      expect(entityFacts(workspace, entity).map((fact: { label: string }) => fact.label)).not.toContain('Contexts')
+      expect(elementFacts(workspace, element).map((fact: { label: string }) => fact.label)).not.toContain('Context')
+      expect(elementFacts(workspace, element).map((fact: { label: string }) => fact.label)).not.toContain('Contexts')
     }
 
     expect(page).toContain('<BlrPageBlock')
     expect(block).toContain('<BlrContexts')
-    expect(block).toContain("props.entity.kind === 'capability' ? props.entity.contexts : []")
+    expect(block).toContain("props.element.kind === 'capability' ? props.element.contexts : []")
     expect(sections).toContain("overviewBlocks.push('contexts')")
     expect(contexts).toContain('<BlrContextPlace')
     expect(source('app/components/BlrStepContext.vue')).toContain('<BlrContextPlace')
@@ -522,7 +522,7 @@ describe('stable Product Report', () => {
     expect(contexts).toContain(':context="point.context"')
     expect(contexts).not.toContain('point.path')
     expect(contexts).not.toContain('{{ point.interfaceTitle }}')
-    expect(block).toContain("props.entity.kind === 'journey' ? props.entity.entryPoints : []")
+    expect(block).toContain("props.element.kind === 'journey' ? props.element.entryPoints : []")
 
     /* Scenario Context belongs to its route cells; a Rule selector belongs to
        the authored applicability binding rather than a generic roll-up. */
@@ -532,9 +532,9 @@ describe('stable Product Report', () => {
     expect(body).toContain('Only in')
   })
 
-  it('uses the Product Report trail as the only entity-page identity', () => {
+  it('uses the Product Report trail as the only element-page identity', () => {
     const reportShell = source('app/components/BlrReportShell.vue')
-    const page = source('app/components/BlrEntityPage.vue')
+    const page = source('app/components/BlrElementPage.vue')
     const globalHeader = reportShell.slice(
       reportShell.indexOf('<header'),
       reportShell.indexOf('<div class="flex min-h-0 flex-1">')
@@ -553,23 +553,23 @@ describe('stable Product Report', () => {
     expect(reportShell).toContain('@focus="focusTopology"')
     expect(page).toContain('label="Neighbourhood"')
     expect(page).not.toContain('<h1')
-    expect(page).not.toContain('<BlrKind :kind="entity.kind"')
-    expect(page).toContain('parentOf(props.workspace, props.entity)')
+    expect(page).not.toContain('<BlrKind :kind="element.kind"')
+    expect(page).toContain('parentOf(props.workspace, props.element)')
   })
 
   /*
     The rail lists kinds, and kinds do not nest. Scenarios are read from the
-    parent entity page without adding a second collection tab to the Capability
+    parent element page without adding a second collection tab to the Capability
     or Journey main screen.
   */
   it('keeps Scenarios off collection navigation and on their parent page', () => {
     const rail = source('app/components/BlrRail.vue')
     const reportShell = source('app/components/BlrReportShell.vue')
-    const page = source('app/components/BlrEntityPage.vue')
+    const page = source('app/components/BlrElementPage.vue')
     const sections = source('app/utils/pageSections.ts')
     const scenarios = source('app/components/BlrScenarios.vue')
 
-    expect(rail).toContain("PARENTED: ReportEntityKind[] = ['capability-scenario', 'journey-scenario']")
+    expect(rail).toContain("PARENTED: ReportElementKind[] = ['capability-scenario', 'journey-scenario']")
     expect(rail).not.toContain('blr-navchild')
     expect(reportShell).not.toContain('SCENARIO_OF')
     expect(reportShell).not.toContain('parentTabs')
@@ -582,11 +582,11 @@ describe('stable Product Report', () => {
   })
 
   it('uses Overview and only an optional Scenarios tab', () => {
-    const page = source('app/components/BlrEntityPage.vue')
+    const page = source('app/components/BlrElementPage.vue')
     const sections = source('app/utils/pageSections.ts')
 
     expect(sections).toContain("export type PageTabId = 'overview' | 'scenarios'")
-    expect(sections).toContain("if (entity.references.length) overviewBlocks.push('references')")
+    expect(sections).toContain("if (element.references.length) overviewBlocks.push('references')")
     expect(sections).not.toContain("id: 'diagram'")
     expect(sections).not.toContain("id: 'references'")
     expect(page).toContain('data-sticky-page-tabs')
@@ -603,12 +603,12 @@ describe('stable Product Report', () => {
     const reportShell = source('app/components/BlrReportShell.vue')
 
     expect(renderer).toContain("defineModel<string>('section'")
-    expect(renderer).toContain("defineModel<string | null>('entity'")
+    expect(renderer).toContain("defineModel<string | null>('element'")
     expect(renderer).toContain("defineModel<string | null>('scenarioRoute'")
     expect(renderer).toContain("defineModel<string>('routeColumns'")
-    expect(renderer).toContain('v-model:entity="entity"')
+    expect(renderer).toContain('v-model:element="element"')
     expect(renderer).toContain('v-model:scenario-route="scenarioRoute"')
-    expect(reportShell).toContain("defineModel<string | null>('entity'")
+    expect(reportShell).toContain("defineModel<string | null>('element'")
   })
 
   it('moves product identity into a desktop-equivalent mobile rail', () => {

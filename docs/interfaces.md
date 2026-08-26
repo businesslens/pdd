@@ -105,7 +105,7 @@ complete variations of a coherent multi-Capability goal.
 
 An [Experience](./experiences.md) is optional and belongs to exactly one
 Interface: the Interface folder that contains it. Matching Experience names on
-different Interfaces are counterparts, not one shared entity. When an
+different Interfaces are counterparts, not one shared element. When an
 Interface has meaningful Experience contexts, Capability availability Contexts
 use their qualified Experience places. When it has none, a Context uses the
 Interface place directly. The [availability rules](./product-model.md#availability)

@@ -177,21 +177,21 @@ export function contextField(
  * realization — so the list never sets it. Unlisted files are legal, which is
  * what lets a foreign tool drop a capture in without editing frontmatter.
  */
-export interface EntityAsset {
+export interface ElementAsset {
   file: string
   title?: string
   /** Screens only: the `## Product states` H3 this asset depicts. */
   state?: string
 }
 
-export function assetsField(data: Record<string, unknown>, issues: string[], label: string): EntityAsset[] {
+export function assetsField(data: Record<string, unknown>, issues: string[], label: string): ElementAsset[] {
   const value = data.assets
   if (value === undefined || value === null) return []
   if (!Array.isArray(value)) {
     issues.push(`${label}: "assets" must be a list`)
     return []
   }
-  const result: EntityAsset[] = []
+  const result: ElementAsset[] = []
   const seen = new Set<string>()
   for (const item of value) {
     if (typeof item !== 'object' || item === null || Array.isArray(item)) {
@@ -206,7 +206,7 @@ export function assetsField(data: Record<string, unknown>, issues: string[], lab
     }
     const file = record.file
     if (typeof file !== 'string' || !file.trim() || file.startsWith('/') || file.includes('..')) {
-      issues.push(`${label}: asset "file" must be a path inside the entity's expanded folder`)
+      issues.push(`${label}: asset "file" must be a path inside the element's expanded folder`)
       continue
     }
     if (seen.has(file)) {
@@ -229,7 +229,7 @@ export function assetsField(data: Record<string, unknown>, issues: string[], lab
   return result
 }
 
-export interface EntityReference {
+export interface ElementReference {
   kind: ReferenceKind
   role: ReferenceRole
   target: string
@@ -252,7 +252,7 @@ export const REFERENCE_KINDS = new Set<ReferenceKind>(['code', 'prd', 'spec', 'p
 export const REFERENCE_ROLES = new Set<ReferenceRole>(['intent', 'implementation', 'context'])
 
 /** The tracked repository path named by a reference, if it is repository-local. */
-export function repositoryReferencePath(reference: EntityReference): string | undefined {
+export function repositoryReferencePath(reference: ElementReference): string | undefined {
   if (reference.kind === 'code') return parseCodeTarget(reference.target, [], 'reference')?.path
   if (/^https?:\/\//i.test(reference.target)) return undefined
   return reference.target.split(/[?#]/, 1)[0]?.replace(/^\.\//, '') || undefined
@@ -298,14 +298,14 @@ function validateReferenceTarget(target: string, kind: ReferenceKind, issues: st
   return true
 }
 
-export function referencesField(data: Record<string, unknown>, issues: string[], label: string): EntityReference[] {
+export function referencesField(data: Record<string, unknown>, issues: string[], label: string): ElementReference[] {
   const value = data.references
   if (value === undefined || value === null) return []
   if (!Array.isArray(value)) {
     issues.push(`${label}: "references" must be a list`)
     return []
   }
-  const result: EntityReference[] = []
+  const result: ElementReference[] = []
   for (const item of value) {
     if (typeof item !== 'object' || item === null || Array.isArray(item)) {
       issues.push(`${label}: each reference needs "kind", "role", and "target"`)

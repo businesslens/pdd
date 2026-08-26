@@ -1,19 +1,19 @@
 import type {
   ActorView,
-  AnyEntityView,
+  AnyElementView,
   CapabilityView,
   DomainView,
   ObjectView,
   ExperienceView,
   InterfaceView,
   JourneyView,
-  ReportEntityKind,
+  ReportElementKind,
   ReportWorkspace,
   RuleView,
   ScenarioView,
   ScreenView
 } from './reportWorkspace'
-import { resolveEntity } from './reportWorkspace'
+import { resolveElement } from './reportWorkspace'
 
 /*
   One row shape, not three.
@@ -24,16 +24,16 @@ import { resolveEntity } from './reportWorkspace'
   the dense row, because scanning is what a collection surface is for.
 */
 
-export interface EntityCardMetric {
+export interface ElementCardMetric {
   label: string
   value: number
-  kind?: ReportEntityKind
+  kind?: ReportElementKind
   ids?: string[]
 }
 
-export interface EntityCardPresentation {
+export interface ElementCardPresentation {
   badge: string
-  metrics: EntityCardMetric[]
+  metrics: ElementCardMetric[]
   hookLabel: string
   hook: string
 }
@@ -42,9 +42,9 @@ function plural(count: number, singular: string, pluralLabel = `${singular}s`): 
   return count === 1 ? singular : pluralLabel
 }
 
-function titles(workspace: ReportWorkspace, kind: ReportEntityKind, ids: string[], max = 2): string {
+function titles(workspace: ReportWorkspace, kind: ReportElementKind, ids: string[], max = 2): string {
   const names = ids
-    .map(id => resolveEntity(workspace, kind, id)?.title)
+    .map(id => resolveElement(workspace, kind, id)?.title)
     .filter((title): title is string => Boolean(title))
   const shown = names.slice(0, max)
   const remaining = names.length - shown.length
@@ -53,19 +53,19 @@ function titles(workspace: ReportWorkspace, kind: ReportEntityKind, ids: string[
 
 function relationTitles(
   workspace: ReportWorkspace,
-  relations: Array<[ReportEntityKind, string[]]>,
+  relations: Array<[ReportElementKind, string[]]>,
   max = 2
 ): string {
   const names = relations.flatMap(([kind, ids]) => ids
-    .map(id => resolveEntity(workspace, kind, id)?.title)
+    .map(id => resolveElement(workspace, kind, id)?.title)
     .filter((title): title is string => Boolean(title)))
   const shown = names.slice(0, max)
   const remaining = names.length - shown.length
   return `${shown.join(' · ')}${remaining > 0 ? ` +${remaining}` : ''}`
 }
 
-function contextTitles(entity: { contexts: Array<{ interfaceTitle: string, experienceTitle: string, screenTitle?: string }> }, max = 2): string {
-  const names = entity.contexts.map(context =>
+function contextTitles(element: { contexts: Array<{ interfaceTitle: string, experienceTitle: string, screenTitle?: string }> }, max = 2): string {
+  const names = element.contexts.map(context =>
     [context.interfaceTitle, context.experienceTitle, context.screenTitle].filter(Boolean).join(' › '))
   const shown = names.slice(0, max)
   const remaining = names.length - shown.length
@@ -92,13 +92,13 @@ function ruleReachCount(workspace: ReportWorkspace, rule: RuleView): number {
   return capabilities.size + journeys.size + screens.size
 }
 
-export function entityCardPresentation(
+export function elementCardPresentation(
   workspace: ReportWorkspace,
-  entity: AnyEntityView
-): EntityCardPresentation {
-  switch (entity.kind) {
+  element: AnyElementView
+): ElementCardPresentation {
+  switch (element.kind) {
     case 'actor': {
-      const actor = entity as ActorView
+      const actor = element as ActorView
       const accessIds = [...actor.interfaceIds, ...actor.experienceIds]
       return {
         /* Actor carries two independent authored axes and one glyph can only
@@ -118,7 +118,7 @@ export function entityCardPresentation(
       }
     }
     case 'interface': {
-      const item = entity as InterfaceView
+      const item = element as InterfaceView
       const metrics = item.experienceIds.length
         ? [
             { label: plural(item.actorIds.length, 'actor'), value: item.actorIds.length, kind: 'actor' as const, ids: item.actorIds },
@@ -142,7 +142,7 @@ export function entityCardPresentation(
       }
     }
     case 'experience': {
-      const item = entity as ExperienceView
+      const item = element as ExperienceView
       return {
         badge: item.accessMode,
         metrics: [
@@ -155,7 +155,7 @@ export function entityCardPresentation(
       }
     }
     case 'screen': {
-      const screen = entity as ScreenView
+      const screen = element as ScreenView
       return {
         /* No badge: "1 context" is true of almost every Screen and says nothing
            about which one. The hook names the context, which is what tells two
@@ -171,7 +171,7 @@ export function entityCardPresentation(
       }
     }
     case 'domain': {
-      const domain = entity as DomainView
+      const domain = element as DomainView
       return {
         badge: '',
         metrics: [
@@ -184,13 +184,13 @@ export function entityCardPresentation(
       }
     }
     case 'object': {
-      const object = entity as ObjectView
+      const object = element as ObjectView
       // An Object's reading is its lifecycle: how many states it can be in and
       // how many ways it moves between them. Its Capabilities are derived
       // through the Domain they share, so they rank below both.
       return {
         badge: object.domainId
-          ? resolveEntity(workspace, 'domain', object.domainId)?.title ?? object.domainId
+          ? resolveElement(workspace, 'domain', object.domainId)?.title ?? object.domainId
           : '',
         metrics: [
           { label: plural(object.states.length, 'state'), value: object.states.length },
@@ -201,9 +201,9 @@ export function entityCardPresentation(
       }
     }
     case 'capability': {
-      const capability = entity as CapabilityView
+      const capability = element as CapabilityView
       const domain = capability.domainId
-        ? resolveEntity(workspace, 'domain', capability.domainId)?.title ?? capability.domainId
+        ? resolveElement(workspace, 'domain', capability.domainId)?.title ?? capability.domainId
         : ''
       return {
         badge: domain,
@@ -219,7 +219,7 @@ export function entityCardPresentation(
       }
     }
     case 'journey': {
-      const journey = entity as JourneyView
+      const journey = element as JourneyView
       return {
         badge: '',
         metrics: [
@@ -235,7 +235,7 @@ export function entityCardPresentation(
     }
     case 'capability-scenario':
     case 'journey-scenario': {
-      const scenario = entity as ScenarioView
+      const scenario = element as ScenarioView
       const isCapability = scenario.scenarioType === 'capability'
       return {
         /* `result` is the Journey Scenario's terminal outcome and orthogonal to
@@ -254,7 +254,7 @@ export function entityCardPresentation(
       }
     }
     case 'rule': {
-      const rule = entity as RuleView
+      const rule = element as RuleView
       return {
         badge: '',
         metrics: [

@@ -1,17 +1,17 @@
 <script setup lang="ts">
 /**
- * Entity-kind marker: colour, silhouette-free but always icon + label.
+ * Element-kind marker: colour, silhouette-free but always icon + label.
  *
  * Nine kinds is past what hue alone can separate, so this component never emits
  * a bare colour swatch — the label is part of the mark.
  */
 import type { ReportActor, ReportInterface } from 'businesslens/report'
-import type { ReportEntityKind } from '../utils/reportWorkspace'
+import type { ReportElementKind } from '../utils/reportWorkspace'
 import { ENTITY_KIND_META } from '../utils/reportWorkspace'
 import { slotColor } from '../utils/reportPalette'
 
 const props = withDefaults(defineProps<{
-  kind: ReportEntityKind
+  kind: ReportElementKind
   count?: number | null
   size?: 'xs' | 'sm'
   /** A concrete Interface can retain its kind and disclose its authored type. */
@@ -65,14 +65,14 @@ const color = computed(() => slotColor(meta.value.slot, mounted.value && colorMo
 
 <style scoped>
 .blr-kind__icon {
-  width: var(--blr-entity-mark-regular);
-  height: var(--blr-entity-mark-regular);
-  flex: 0 0 var(--blr-entity-mark-regular);
+  width: var(--blr-element-mark-regular);
+  height: var(--blr-element-mark-regular);
+  flex: 0 0 var(--blr-element-mark-regular);
 }
 
 .blr-kind[data-size='xs'] > .blr-kind__icon {
-  width: var(--blr-entity-mark-dense);
-  height: var(--blr-entity-mark-dense);
-  flex-basis: var(--blr-entity-mark-dense);
+  width: var(--blr-element-mark-dense);
+  height: var(--blr-element-mark-dense);
+  flex-basis: var(--blr-element-mark-dense);
 }
 </style>

@@ -30,7 +30,7 @@ import type {
   ReportSupportingSection
 } from 'businesslens/report'
 
-export type ReportEntityKind =
+export type ReportElementKind =
   | 'product'
   | 'actor'
   | 'interface'
@@ -52,11 +52,11 @@ export type ReportEntityKind =
  */
 export type ReportScenarioKind = 'capability-scenario' | 'journey-scenario'
 export type ReportScenarioType = 'capability' | 'journey'
-export type ReportEntityKey = string
+export type ReportElementKey = string
 
 export const SCENARIO_KINDS: ReportScenarioKind[] = ['capability-scenario', 'journey-scenario']
 
-export function isScenarioKind(kind: ReportEntityKind): kind is ReportScenarioKind {
+export function isScenarioKind(kind: ReportElementKind): kind is ReportScenarioKind {
   return kind === 'capability-scenario' || kind === 'journey-scenario'
 }
 
@@ -64,13 +64,13 @@ export function scenarioKindOf(type: ReportScenarioType): ReportScenarioKind {
   return type === 'capability' ? 'capability-scenario' : 'journey-scenario'
 }
 
-/** Stable UI identity; raw ids are unique only within an entity collection. */
-export function entityKey(kind: ReportEntityKind, id: string): ReportEntityKey {
+/** Stable UI identity; raw ids are unique only within an element collection. */
+export function elementKey(kind: ReportElementKind, id: string): ReportElementKey {
   return `${kind}:${id}`
 }
 
-export interface EntityKindMeta {
-  kind: ReportEntityKind
+export interface ElementKindMeta {
+  kind: ReportElementKind
   /** Singular label used in prose and inspectors. */
   label: string
   /** Plural label used for section headings and counts. */
@@ -80,7 +80,7 @@ export interface EntityKindMeta {
   slot: number
 }
 
-export const REPORT_ENTITY_KINDS: EntityKindMeta[] = [
+export const REPORT_ENTITY_KINDS: ElementKindMeta[] = [
   { kind: 'actor', label: 'Actor', plural: 'Actors', icon: 'i-lucide-users', slot: 0 },
   { kind: 'interface', label: 'Interface', plural: 'Interfaces', icon: 'i-lucide-plug', slot: 1 },
   { kind: 'experience', label: 'Experience', plural: 'Experiences', icon: 'i-lucide-layout-panel-left', slot: 2 },
@@ -105,10 +105,10 @@ export const REPORT_ENTITY_KINDS: EntityKindMeta[] = [
   { kind: 'rule', label: 'Business rule', plural: 'Business rules', icon: 'i-lucide-scale', slot: 8 }
 ]
 
-export const ENTITY_KIND_META: Record<ReportEntityKind, EntityKindMeta> = {
+export const ENTITY_KIND_META: Record<ReportElementKind, ElementKindMeta> = {
   product: { kind: 'product', label: 'Product', plural: 'Product', icon: 'i-lucide-package', slot: 9 },
   ...Object.fromEntries(REPORT_ENTITY_KINDS.map(meta => [meta.kind, meta]))
-} as Record<ReportEntityKind, EntityKindMeta>
+} as Record<ReportElementKind, ElementKindMeta>
 
 export const INTERFACE_TYPE_META: Record<ReportInterface['type'], { label: string, icon: string }> = {
   web: { label: 'Web', icon: 'i-lucide-globe' },
@@ -155,10 +155,10 @@ export interface EntryPointView {
   key: string
 }
 
-interface EntityBase {
-  key: ReportEntityKey
+interface ElementBase {
+  key: ReportElementKey
   id: string
-  kind: ReportEntityKind
+  kind: ReportElementKind
   title: string
   /** Lead prose: description, summary, or rule statement depending on kind. */
   lead: string
@@ -167,7 +167,7 @@ interface EntityBase {
   references: ReportReference[]
 }
 
-export interface ActorView extends EntityBase {
+export interface ActorView extends ElementBase {
   kind: 'actor'
   actorKind: 'person' | 'system'
   relationship: 'external' | 'internal'
@@ -179,7 +179,7 @@ export interface ActorView extends EntityBase {
   journeyScenarioIds: string[]
 }
 
-export interface InterfaceView extends EntityBase {
+export interface InterfaceView extends ElementBase {
   kind: 'interface'
   interfaceType: ReportInterface['type']
   actorIds: string[]
@@ -191,7 +191,7 @@ export interface InterfaceView extends EntityBase {
   journeyIds: string[]
 }
 
-export interface ExperienceView extends EntityBase {
+export interface ExperienceView extends ElementBase {
   kind: 'experience'
   actorIds: string[]
   interfaceIds: string[]
@@ -205,7 +205,7 @@ export interface ExperienceView extends EntityBase {
   domainIds: string[]
 }
 
-export interface ScreenView extends EntityBase {
+export interface ScreenView extends ElementBase {
   kind: 'screen'
   contexts: ContextView[]
   capabilityIds: string[]
@@ -228,7 +228,7 @@ export interface ScreenView extends EntityBase {
   domainIds: string[]
 }
 
-export interface DomainView extends EntityBase {
+export interface DomainView extends ElementBase {
   kind: 'domain'
   /** Experiences reached through this Domain's Capabilities. Never authored. */
   experienceIds: string[]
@@ -244,14 +244,14 @@ export interface DomainView extends EntityBase {
  * authored lifecycle; a Screen's productStates are that view's own states, and
  * the two are never merged.
  */
-export interface ObjectView extends EntityBase {
+export interface ObjectView extends ElementBase {
   kind: 'object'
   domainId?: string
   states: Array<{ name: string, content: string }>
   transitions: Array<{ from: string, to: string }>
 }
 
-export interface CapabilityView extends EntityBase {
+export interface CapabilityView extends ElementBase {
   kind: 'capability'
   domainId?: string
   contexts: ContextView[]
@@ -266,7 +266,7 @@ export interface CapabilityView extends EntityBase {
   experienceIds: string[]
 }
 
-export interface JourneyView extends EntityBase {
+export interface JourneyView extends ElementBase {
   kind: 'journey'
   actorIds: string[]
   capabilityIds: string[]
@@ -284,7 +284,7 @@ export interface JourneyView extends EntityBase {
   stepCount: number
 }
 
-export interface ScenarioView extends EntityBase {
+export interface ScenarioView extends ElementBase {
   kind: ReportScenarioKind
   scenarioType: ReportScenarioType
   capabilityId: string
@@ -330,7 +330,7 @@ export interface ResolvedContextView {
   boundary: ContextView
 }
 
-export interface RuleView extends EntityBase {
+export interface RuleView extends ElementBase {
   kind: 'rule'
   statement: string
   rationale: string
@@ -347,7 +347,7 @@ export interface RuleView extends EntityBase {
   appliesTo: ReportBusinessRuleTarget[]
 }
 
-export type AnyEntityView =
+export type AnyElementView =
   | ActorView
   | InterfaceView
   | ExperienceView
@@ -405,10 +405,10 @@ export interface WorkspaceCounts {
 
 export interface ReferenceGroup {
   reference: ReportReference
-  ownerKey: ReportEntityKey | ''
+  ownerKey: ReportElementKey | ''
   ownerId: string
   ownerTitle: string
-  ownerKind: ReportEntityKind
+  ownerKind: ReportElementKind
 }
 
 export interface ReportWorkspace {
@@ -430,12 +430,12 @@ export interface ReportWorkspace {
   rules: RuleView[]
   /** Every distinct Context declared or derived in the model. */
   contexts: ContextView[]
-  /** All references in the model, each tagged with the entity that owns it. */
+  /** All references in the model, each tagged with the element that owns it. */
   references: ReferenceGroup[]
   /** Collision-safe lookup used by navigation, selection, and graphs. */
-  byKey: Map<ReportEntityKey, AnyEntityView>
+  byKey: Map<ReportElementKey, AnyElementView>
   /** Raw-id index retained for diagnostics and explicitly typed resolution. */
-  entitiesById: Map<string, AnyEntityView[]>
+  elementsById: Map<string, AnyElementView[]>
   /** Scenarios grouped by their parent Journey, in authored order. */
   scenariosByJourney: Map<string, ScenarioView[]>
   /** Scenarios grouped by their parent Capability, in authored order. */
@@ -748,7 +748,7 @@ export function projectReportWorkspace(report: ProductReportV11): ReportWorkspac
   }
 
   const actors: ActorView[] = model.actors.map((actor: ReportActor) => ({
-    key: entityKey('actor', actor.id),
+    key: elementKey('actor', actor.id),
     id: actor.id,
     kind: 'actor',
     title: actor.name,
@@ -771,7 +771,7 @@ export function projectReportWorkspace(report: ProductReportV11): ReportWorkspac
       contexts.some(context => context.placeId === item.id || context.placeId.startsWith(`${item.id}::`))
     const containsScreen = (screen: ReportScreen) => screen.id.startsWith(`${item.id}::`)
     return {
-      key: entityKey('interface', item.id),
+      key: elementKey('interface', item.id),
       id: item.id,
       kind: 'interface',
       title: item.title,
@@ -804,7 +804,7 @@ export function projectReportWorkspace(report: ProductReportV11): ReportWorkspac
       contexts.some(context => context.placeId === item.id)
     const containsScreen = (screen: ReportScreen) => screen.id.startsWith(`${item.id}::`)
     return {
-      key: entityKey('experience', item.id),
+      key: elementKey('experience', item.id),
       id: item.id,
       kind: 'experience',
       title: item.title,
@@ -833,7 +833,7 @@ export function projectReportWorkspace(report: ProductReportV11): ReportWorkspac
       .filter(journey => journey.capabilityIds.some(id => screen.capabilityIds.includes(id)))
       .map(journey => journey.id))
     return {
-      key: entityKey('screen', screen.id),
+      key: elementKey('screen', screen.id),
       id: screen.id,
       kind: 'screen',
       title: screen.title,
@@ -861,7 +861,7 @@ export function projectReportWorkspace(report: ProductReportV11): ReportWorkspac
   })
 
   const objects: ObjectView[] = model.objects.map((object: ReportObject) => ({
-    key: entityKey('object', object.id),
+    key: elementKey('object', object.id),
     id: object.id,
     kind: 'object' as const,
     title: object.title,
@@ -884,7 +884,7 @@ export function projectReportWorkspace(report: ProductReportV11): ReportWorkspac
   const domains: DomainView[] = model.domains.map((domain: ReportDomain) => {
     const capabilityIds = model.capabilities.filter(c => c.domainId === domain.id).map(c => c.id)
     return {
-      key: entityKey('domain', domain.id),
+      key: elementKey('domain', domain.id),
       id: domain.id,
       kind: 'domain',
       title: domain.name,
@@ -910,7 +910,7 @@ export function projectReportWorkspace(report: ProductReportV11): ReportWorkspac
   const capabilities: CapabilityView[] = model.capabilities.map((capability: ReportCapability) => {
     const contexts = contextsOf(capability.availability)
     return {
-      key: entityKey('capability', capability.id),
+      key: elementKey('capability', capability.id),
       id: capability.id,
       kind: 'capability',
       title: capability.title,
@@ -937,7 +937,7 @@ export function projectReportWorkspace(report: ProductReportV11): ReportWorkspac
     const journeyScenarios = journeyScenariosOf(journey.id)
     const scenarioIds = journeyScenarios.map(scenario => scenario.id)
     return {
-      key: entityKey('journey', journey.id),
+      key: elementKey('journey', journey.id),
       id: journey.id,
       kind: 'journey',
       title: journey.title,
@@ -984,7 +984,7 @@ export function projectReportWorkspace(report: ProductReportV11): ReportWorkspac
   const capabilityScenarios: ScenarioView[] = model.capabilityScenarios.map((scenario: ReportCapabilityScenario) => {
     const kind = kindBySlot.get(scenario.kindId)
     return {
-      key: entityKey('capability-scenario', scenario.id),
+      key: elementKey('capability-scenario', scenario.id),
       id: scenario.id,
       kind: 'capability-scenario',
       title: scenario.title,
@@ -1017,7 +1017,7 @@ export function projectReportWorkspace(report: ProductReportV11): ReportWorkspac
   const journeyScenarios: ScenarioView[] = model.journeyScenarios.map((scenario: ReportJourneyScenario) => {
     const kind = kindBySlot.get(scenario.kindId)
     return {
-      key: entityKey('journey-scenario', scenario.id),
+      key: elementKey('journey-scenario', scenario.id),
       id: scenario.id,
       kind: 'journey-scenario',
       title: scenario.title,
@@ -1052,7 +1052,7 @@ export function projectReportWorkspace(report: ProductReportV11): ReportWorkspac
   const rules: RuleView[] = model.businessRules.map((rule: ReportBusinessRule) => {
     const relations = ruleRelationsById.get(rule.id)!
     return {
-      key: entityKey('rule', rule.id),
+      key: elementKey('rule', rule.id),
       id: rule.id,
       kind: 'rule',
       title: rule.title,
@@ -1075,7 +1075,7 @@ export function projectReportWorkspace(report: ProductReportV11): ReportWorkspac
     }
   })
 
-  const allEntities: AnyEntityView[] = [
+  const allElements: AnyElementView[] = [
     ...actors,
     ...interfaces,
     ...experiences,
@@ -1096,18 +1096,18 @@ export function projectReportWorkspace(report: ProductReportV11): ReportWorkspac
       ownerTitle: report.title,
       ownerKind: 'product' as const
     })),
-    ...allEntities.flatMap(entity => entity.references.map(reference => ({
+    ...allElements.flatMap(element => element.references.map(reference => ({
       reference,
-      ownerKey: entity.key,
-      ownerId: entity.id,
-      ownerTitle: entity.title,
-      ownerKind: entity.kind
+      ownerKey: element.key,
+      ownerId: element.id,
+      ownerTitle: element.title,
+      ownerKind: element.kind
     })))
   ]
 
   const contextSeen = new Map<string, ContextView>()
-  for (const entity of allEntities) {
-    const contexts = (entity as { contexts?: ContextView[] }).contexts || []
+  for (const element of allElements) {
+    const contexts = (element as { contexts?: ContextView[] }).contexts || []
     for (const context of contexts) if (!contextSeen.has(context.key)) contextSeen.set(context.key, context)
   }
   // Every Experience declares its Interfaces even when nothing is mapped to the
@@ -1189,9 +1189,9 @@ export function projectReportWorkspace(report: ProductReportV11): ReportWorkspac
     capabilitiesByDomain.set(key, [...(capabilitiesByDomain.get(key) || []), capability])
   }
 
-  const entitiesById = new Map<string, AnyEntityView[]>()
-  for (const entity of allEntities) {
-    entitiesById.set(entity.id, [...(entitiesById.get(entity.id) ?? []), entity])
+  const elementsById = new Map<string, AnyElementView[]>()
+  for (const element of allElements) {
+    elementsById.set(element.id, [...(elementsById.get(element.id) ?? []), element])
   }
 
   return {
@@ -1232,8 +1232,8 @@ export function projectReportWorkspace(report: ProductReportV11): ReportWorkspac
     contexts: [...contextSeen.values()].sort((left, right) =>
       left.interfaceId.localeCompare(right.interfaceId) || left.experienceId.localeCompare(right.experienceId)),
     references,
-    byKey: new Map(allEntities.map(entity => [entity.key, entity])),
-    entitiesById,
+    byKey: new Map(allElements.map(element => [element.key, element])),
+    elementsById,
     scenariosByJourney,
     scenariosByCapability,
     capabilitiesByDomain
@@ -1243,7 +1243,7 @@ export function projectReportWorkspace(report: ProductReportV11): ReportWorkspac
 /**
  * The same thing on another Interface.
  *
- * Qualified ids carry their path, so two entities of one kind sharing the
+ * Qualified ids carry their path, so two elements of one kind sharing the
  * path *below* their Interface are counterparts:
  * `reader-web::personal-library::unread-library` and
  * `reader-mobile::personal-library::unread-library` are one goal on two
@@ -1255,15 +1255,15 @@ export function projectReportWorkspace(report: ProductReportV11): ReportWorkspac
  * report, from the same ids, because the report carries no counterpart field
  * and should not need one.
  */
-export function counterpartsOf(workspace: ReportWorkspace, entity: AnyEntityView): AnyEntityView[] {
-  const suffix = entity.id.split('::').slice(1).join('::')
+export function counterpartsOf(workspace: ReportWorkspace, element: AnyElementView): AnyElementView[] {
+  const suffix = element.id.split('::').slice(1).join('::')
   if (!suffix) return []
-  return entitiesOfKindInternal(workspace, entity.kind)
-    .filter(other => other.key !== entity.key
+  return elementsOfKindInternal(workspace, element.kind)
+    .filter(other => other.key !== element.key
       && other.id.split('::').slice(1).join('::') === suffix)
 }
 
-function entitiesOfKindInternal(workspace: ReportWorkspace, kind: ReportEntityKind): AnyEntityView[] {
+function elementsOfKindInternal(workspace: ReportWorkspace, kind: ReportElementKind): AnyElementView[] {
   switch (kind) {
     case 'interface': return workspace.interfaces
     case 'experience': return workspace.experiences
@@ -1273,12 +1273,12 @@ function entitiesOfKindInternal(workspace: ReportWorkspace, kind: ReportEntityKi
 }
 
 /** Resolve one id within a kind's collection. */
-export function resolveEntity(
+export function resolveElement(
   workspace: ReportWorkspace,
-  kind: ReportEntityKind,
+  kind: ReportElementKind,
   id: string
-): AnyEntityView | undefined {
-  return workspace.byKey.get(entityKey(kind, id))
+): AnyElementView | undefined {
+  return workspace.byKey.get(elementKey(kind, id))
 }
 
 /**
@@ -1289,31 +1289,31 @@ export function resolveEntity(
  */
 export function resolveScenario(workspace: ReportWorkspace, id: string): ScenarioView | undefined {
   for (const kind of SCENARIO_KINDS) {
-    const entity = workspace.byKey.get(entityKey(kind, id))
-    if (entity) return entity as ScenarioView
+    const element = workspace.byKey.get(elementKey(kind, id))
+    if (element) return element as ScenarioView
   }
   return undefined
 }
 
-export function resolveEntityKey(workspace: ReportWorkspace, key: ReportEntityKey): AnyEntityView | undefined {
+export function resolveElementKey(workspace: ReportWorkspace, key: ReportElementKey): AnyElementView | undefined {
   return workspace.byKey.get(key)
 }
 
-export function resolveEntities(
+export function resolveElements(
   workspace: ReportWorkspace,
-  kind: ReportEntityKind,
+  kind: ReportElementKind,
   ids: string[]
-): AnyEntityView[] {
+): AnyElementView[] {
   return ids
-    .map(id => resolveEntity(workspace, kind, id))
-    .filter((entity): entity is AnyEntityView => Boolean(entity))
+    .map(id => resolveElement(workspace, kind, id))
+    .filter((element): element is AnyElementView => Boolean(element))
 }
 
 /** Resolve a mixed Scenario id list, dropping anything unresolved. */
 export function resolveScenarios(workspace: ReportWorkspace, ids: string[]): ScenarioView[] {
   return ids
     .map(id => resolveScenario(workspace, id))
-    .filter((entity): entity is ScenarioView => Boolean(entity))
+    .filter((element): element is ScenarioView => Boolean(element))
 }
 
 /** One route's Context at one Scenario step. */

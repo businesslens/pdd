@@ -49,8 +49,8 @@ Read before authoring:
 6. Draft Actors, Interfaces, optional Experiences, Product Screens, Domains and
    Objects, Capabilities, Capability Scenarios, Business Rules, optional
    Journeys and their Journey Scenarios, availability Contexts, and coverage.
-   Name behavioral entities verb-object (`browse-catalog`, never
-   `catalog-browsing`) and cross-cutting entities with the bare noun. Create an
+   Name behavioral elements verb-object (`browse-catalog`, never
+   `catalog-browsing`) and cross-cutting elements with the bare noun. Create an
    Object exactly when a thing has two or more named states referenced by two or
    more Capabilities. Model unattended behavior — a schedule the Product owns, an
    expiry, a retry — as a Scenario whose first Step is a `condition` carrying
@@ -75,7 +75,7 @@ Read before authoring:
    they help: implementation References for established artifacts and context
    References for supporting material. Never call them proof.
 7. Present the proposed model delta before writing. Include added, changed, and
-   removed entities; mapped and unmapped areas; limitations; and any material
+   removed elements; mapped and unmapped areas; limitations; and any material
    uncertainty. Get explicit approval for product meaning. Do not silently
    replace a mature model.
 
@@ -101,14 +101,14 @@ Read before authoring:
 
    Fix every error and assess every warning. A green lint result proves
    structure only, not semantic alignment.
-10. Report the approved files written, entity counts, inspected areas, unmapped
+10. Report the approved files written, element counts, inspected areas, unmapped
     areas, limitations, useful References added, and lint result. Recommend
     `businesslens-verify` for a semantic current-state audit.
 
 ## Guardrails
 
 - Describe established behavior, never desired behavior.
-- Write no placeholder entities and claim no certainty beyond inspected source.
+- Write no placeholder elements and claim no certainty beyond inspected source.
 - Never write outside `.businesslens/`; leave target `AGENTS.md`, `CLAUDE.md`,
   and root README byte-identical.
 - Never stage, commit, submit, or contribute the model.

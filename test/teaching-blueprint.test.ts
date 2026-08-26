@@ -6,7 +6,7 @@ import { loadModel } from '../src/core/model.js'
 const BLUEPRINT = join(__dirname, '..', 'blueprints', 'content-feed-reader')
 
 describe('Content Feed Reader teaching Blueprint', () => {
-  it('stays valid and demonstrates every entity more than once', () => {
+  it('stays valid and demonstrates every element more than once', () => {
     const result = lintModel(loadModel(BLUEPRINT), [])
 
     expect(result.errors).toEqual([])
