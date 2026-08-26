@@ -119,6 +119,57 @@ prose fields. ADR-0007 splits them:
   pulling a Blueprint needs, and they must survive expansion intact.
 
 
+## Validation: three double-authoring rounds
+
+Per [ADR-0006](./adr/0006-determinism-is-verified-by-independent-double-authoring.md),
+the fixes were validated by re-running the test, not by re-reading the wording.
+Round 1 was the review's evidence. Round 2 measured schema 7. Round 3 measured
+the naming and Actor rules that round 2's own residue pointed at.
+
+| Kind | R1 (schema 6) | R2 (schema 7) | R3 (+ naming, ai-agent) |
+| --- | --- | --- | --- |
+| **Capabilities** | **0 of 25** | 6 of 21 | **11 of 15 — 73%** |
+| Business Rules | 0 of 15 | 0 of 16 | 2 of 13 |
+| Objects | — | 0 of 2 | 1 of 2 |
+| Journeys | 0 of 9 | 1 of 6 | 1 of 4 |
+| Actors | 1 of 4 | 1 of 2 | 1 of 3 |
+| Interfaces | 2 of 4 | 2 of 4 | 2 of 4 |
+
+Round 1 used the reviewer as one author; rounds 2 and 3 used two fresh agents,
+neither carrying the reviewer's context. That change removes the reviewer as a
+confound and makes rounds 2 and 3 the harsher measurement.
+
+### What the residue is now made of
+
+The four unmatched Capabilities in round 3 contain **no naming disagreement and
+no disagreement about what the product does**. Both are granularity:
+
+- one author split viewing into `serve-product-report` + `read-product-report`;
+  the other kept one `view-product-model`;
+- one author split `resolve-alignment-gaps` out of `verify-model-alignment`; the
+  other kept resolution as Scenarios of one Capability.
+
+Both readings are defensible under "the smallest durable behavior that remains
+independently meaningful", which is the last genuinely judged boundary in the
+behavioral hierarchy. Nothing in this release addressed it, and nothing here
+claims to.
+
+### What each rule actually bought
+
+- **`ai-agent` (ADR-0008)** — exact match, both authors, first round it existed.
+  The Actor question that three previous authors had split on is closed.
+- **The vocabulary rule** — projected 69% on capabilities, delivered 73%. The
+  whole `install-skills` / `install-agent-skills` class of near-miss is gone.
+- **Verb-first on cross-cutting ids** — moved Business Rules off zero for the
+  first time, to 2 of 13. The rest remain the same facts differently phrased,
+  which is the accepted cost: nothing in the format references a Rule by id, so
+  a divergent Rule id costs only cross-model diffability.
+- **Unconstrained nouns still diverge.** The human Actor came out
+  `product-author` against `developer`, and the viewer Interface
+  `product-report` against `local-report-web`. Neither has anything to anchor to,
+  which is the same failure mode the vocabulary rule fixed one level down.
+
+
 ## Findings
 
 ### F1 — Two lint-clean models of one product share zero behavioral ids
