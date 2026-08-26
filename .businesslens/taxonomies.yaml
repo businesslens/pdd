@@ -1,0 +1,21 @@
+scenarioKinds:
+  - id: primary
+    name: Primary
+    description: The expected observable behavior path.
+    colorSlot: 1
+  - id: validation
+    name: Validation
+    description: Input or a starting situation the Product refuses, explaining what would make it acceptable.
+    colorSlot: 3
+  - id: conflict
+    name: Conflict
+    description: Something the Product does not own is already in the way, so it stops rather than replacing it.
+    colorSlot: 4
+  - id: edge
+    name: Edge case
+    description: An uncommon but expected path with a distinct observable outcome.
+    colorSlot: 6
+  - id: external-failure
+    name: External failure
+    description: A system the Product depends on is unavailable or answers untrustworthily.
+    colorSlot: 8
