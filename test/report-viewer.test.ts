@@ -8,10 +8,11 @@ const VIEWER = join(__dirname, '..', 'layers', 'nuxt', 'report-viewer')
 const workspaceModulePath = '../layers/nuxt/report-viewer/app/utils/reportWorkspace.ts'
 const entityFactsModulePath = '../layers/nuxt/report-viewer/app/utils/entityFacts.ts'
 const routeWindowModulePath = '../layers/nuxt/report-viewer/app/utils/scenarioRouteWindow.ts'
+const pageSectionsModulePath = '../layers/nuxt/report-viewer/app/utils/pageSections.ts'
 const { projectReportWorkspace } = await import(workspaceModulePath)
 const { entityFacts } = await import(entityFactsModulePath)
 const { REPORT_ENTITY_KINDS } = await import(workspaceModulePath)
-const { hasAuthoredBody, tabsFor } = await import('../layers/nuxt/report-viewer/app/utils/pageSections.ts')
+const { hasAuthoredBody, tabsFor } = await import(pageSectionsModulePath)
 const FIXTURE = join(__dirname, 'fixtures', 'fixture-shop')
 
 function source(path: string): string {
@@ -103,7 +104,7 @@ describe('stable Product Report', () => {
     // a body" — one was updated and the other was not, so the lifecycle rendered
     // nowhere while the counts still showed.
     expect(hasAuthoredBody(order)).toBe(true)
-    const overview = tabsFor(workspace, order).find((tab: any) => tab.id === 'overview')
+    const overview = tabsFor(workspace, order).find((tab: any) => tab.id === 'overview')!
     expect(overview.blocks).toContain('detail')
 
     // A Screen's own states stay the view's, never the Object's lifecycle.
