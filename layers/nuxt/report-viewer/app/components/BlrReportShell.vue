@@ -152,12 +152,19 @@ const DEFAULT_GROUPING: Partial<Record<ReportEntityKind, ReportEntityKind>> = {
 
 const activeMeta = computed(() => ENTITY_KIND_META[activeKind.value])
 
-const kindCounts = computed<Record<string, number>>(() => ({
+/*
+ * Keyed by ReportEntityKind, not string: a hand-maintained map typed loosely is
+ * exactly where a newly added kind goes missing, and the rail then renders a row
+ * with a blank count instead of failing the build.
+ */
+const kindCounts = computed<Record<ReportEntityKind, number>>(() => ({
+  product: 1,
   actor: props.workspace.counts.actors,
   interface: props.workspace.counts.interfaces,
   experience: props.workspace.counts.experiences,
   screen: props.workspace.counts.screens,
   domain: props.workspace.counts.domains,
+  object: props.workspace.counts.objects,
   capability: props.workspace.counts.capabilities,
   journey: props.workspace.counts.journeys,
   'capability-scenario': props.workspace.counts.capabilityScenarios,
@@ -629,11 +636,7 @@ const tableColumns = computed<TableColumn<AnyEntityView>[]>(() => {
         numberColumn('actions', 'Actions', entity => (entity as ScreenView).actions.length)
       ]
     case 'object':
-      return [
-        ...base,
-        relationColumn('domain'),
-        relationColumn('capability')
-      ]
+      return [...base, relationColumn('domain')]
     case 'domain':
       return [
         ...base,

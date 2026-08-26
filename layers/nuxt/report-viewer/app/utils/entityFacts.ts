@@ -69,8 +69,7 @@ export function entityFacts(workspace: ReportWorkspace, entity: AnyEntityView): 
       const object = entity as ObjectView
       return [
         { label: 'States', value: String(object.states.length) },
-        { label: 'Transitions', value: String(object.transitions.length) },
-        { label: 'Capabilities', value: String(object.capabilityIds.length) }
+        { label: 'Transitions', value: String(object.transitions.length) }
       ]
     }
     case 'domain': {

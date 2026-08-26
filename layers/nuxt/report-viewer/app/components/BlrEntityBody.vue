@@ -27,6 +27,7 @@ import type {
   ScreenView
 } from '../utils/reportWorkspace'
 import { isScenarioKind, resolveEntity, scenarioStepMatrix } from '../utils/reportWorkspace'
+import { hasAuthoredBody } from '../utils/pageSections'
 import {
   SCENARIO_ROUTE_INLINE_WIDTH,
   scenarioRouteCapacity,
@@ -248,13 +249,9 @@ const ruleBindings = computed<RuleBinding[]>(() => {
   })
 })
 
-/** True when this component would render nothing at all. */
-const empty = computed(() => !props.entity.intent
-  && !capabilityBoundary.value
-  && !isScenario.value
-  && props.entity.kind !== 'screen'
-  && props.entity.kind !== 'rule'
-  && props.entity.kind !== 'journey')
+/** True when this component would render nothing at all. One predicate, shared
+    with the page composer, so the two can never disagree about a kind again. */
+const empty = computed(() => !hasAuthoredBody(props.entity))
 </script>
 
 <template>
@@ -720,9 +717,7 @@ const empty = computed(() => !props.entity.intent
     <!-- OBJECT: the lifecycle, read forward from each state. -->
     <template v-if="entity.kind === 'object'">
       <section v-if="objectLifecycle.length" class="space-y-2">
-        <h2 class="blr-page-heading">
-          Lifecycle <span class="blr-meta ms-1">{{ asObject.states.length }} states · {{ asObject.transitions.length }} transitions</span>
-        </h2>
+        <h2 class="blr-page-heading">Lifecycle</h2>
         <ol class="space-y-3">
           <li
             v-for="state in objectLifecycle"

@@ -23,7 +23,7 @@ import { ENTITY_KIND_META, REPORT_ENTITY_KINDS } from '../utils/reportWorkspace'
 defineProps<{
   workspace: ReportWorkspace
   activeSection: string
-  counts: Record<string, number>
+  counts: Record<ReportEntityKind, number>
 }>()
 
 const emit = defineEmits<{

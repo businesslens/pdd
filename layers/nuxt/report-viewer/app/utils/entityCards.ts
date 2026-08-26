@@ -194,8 +194,7 @@ export function entityCardPresentation(
           : '',
         metrics: [
           { label: plural(object.states.length, 'state'), value: object.states.length },
-          { label: plural(object.transitions.length, 'transition'), value: object.transitions.length },
-          { label: plural(object.capabilityIds.length, 'capability', 'capabilities'), value: object.capabilityIds.length, kind: 'capability', ids: object.capabilityIds }
+          { label: plural(object.transitions.length, 'transition'), value: object.transitions.length }
         ],
         hookLabel: 'States',
         hook: object.states.map(state => state.name).join(' → ')

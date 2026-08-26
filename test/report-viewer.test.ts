@@ -10,6 +10,8 @@ const entityFactsModulePath = '../layers/nuxt/report-viewer/app/utils/entityFact
 const routeWindowModulePath = '../layers/nuxt/report-viewer/app/utils/scenarioRouteWindow.ts'
 const { projectReportWorkspace } = await import(workspaceModulePath)
 const { entityFacts } = await import(entityFactsModulePath)
+const { REPORT_ENTITY_KINDS } = await import(workspaceModulePath)
+const { hasAuthoredBody, tabsFor } = await import('../layers/nuxt/report-viewer/app/utils/pageSections.ts')
 const FIXTURE = join(__dirname, 'fixtures', 'fixture-shop')
 
 function source(path: string): string {
@@ -63,6 +65,17 @@ describe('stable Product Report', () => {
     )
   })
 
+  it('gives every entity kind a rail count', () => {
+    // A rail row with a blank count is a kind someone forgot in a hand-kept map.
+    // The map is keyed by ReportEntityKind so the build catches it now; this
+    // pins the behaviour rather than the type.
+    const shell = source('app/components/BlrReportShell.vue')
+    for (const meta of REPORT_ENTITY_KINDS) {
+      const key = meta.kind.includes('-') ? `'${meta.kind}':` : `${meta.kind}:`
+      expect(shell).toContain(key)
+    }
+  })
+
   it('renders an Object as its lifecycle, distinct from a Screen\'s own states', () => {
     const workspace = projectReportWorkspace(compileReport(loadModel(FIXTURE), '2026-08-08'))
 
@@ -79,11 +92,19 @@ describe('stable Product Report', () => {
     // Reachable everywhere a kind is: rail, search, collection, and page.
     expect(workspace.byKey.get(order.key)).toBe(order)
     expect(entityFacts(workspace, order).map((fact: any) => fact.label))
-      .toEqual(['States', 'Transitions', 'Capabilities'])
+      .toEqual(['States', 'Transitions'])
 
-    // An Object's Capabilities are derived through its Domain — it declares none.
-    expect(order.capabilityIds).toContain('place-order')
-    expect(order.capabilityIds).toContain('manage-orders')
+    // No Capability relation: an Object declares none and the format has no
+    // structured edge for one, so the viewer invents nothing.
+    expect('capabilityIds' in order).toBe(false)
+
+    // The body block must actually be composed onto the page. An Object has no
+    // `## Intent`, and two separate predicates each decided "does this kind have
+    // a body" — one was updated and the other was not, so the lifecycle rendered
+    // nowhere while the counts still showed.
+    expect(hasAuthoredBody(order)).toBe(true)
+    const overview = tabsFor(workspace, order).find((tab: any) => tab.id === 'overview')
+    expect(overview.blocks).toContain('detail')
 
     // A Screen's own states stay the view's, never the Object's lifecycle.
     const screen = workspace.screens.find((item: any) => item.states.length)

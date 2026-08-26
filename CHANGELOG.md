@@ -31,9 +31,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - An Interface may hold `screens/` beside `experiences/`, for a Screen genuinely
   shared across its Experiences. Previously a search or settings view common to
   several Experiences had to be duplicated into each one.
-- **The Product Report renders Objects.** An Object has a rail entry, a
-  collection, a page, search results, connections, and a place on the Everything
-  topology canvas. Its page reads the lifecycle forward from each state — the
+- **The Product Report renders Objects.** An Object has a rail entry with its
+  count and icon, a collection, a page, search results, connections, and a place
+  on the Everything topology canvas. Its page reads the lifecycle forward from each state — the
   states it can move to sit beside the state's own prose, and a terminal state
   says so rather than simply having no outbound row. A Screen's `Product states`
   stay the view's own and are never merged with an Object's lifecycle.

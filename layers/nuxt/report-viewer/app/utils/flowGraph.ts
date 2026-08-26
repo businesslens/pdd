@@ -246,9 +246,8 @@ export function directRelations(workspace: ReportWorkspace, entity: AnyEntityVie
       break
     }
     case 'object': {
-      // Derived through the Domain they share — an Object declares nothing.
+      // The Domain is the one relation an Object actually has.
       if (entity.domainId) push(entity.key, entityKey('domain', entity.domainId), 'in')
-      for (const id of entity.capabilityIds) push(entityKey('capability', id), entity.key, 'acts on')
       break
     }
     case 'domain': {

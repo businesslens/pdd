@@ -71,7 +71,6 @@ export function relatedIds(entity: AnyEntityView, kind: ReportEntityKind): strin
       if (kind === 'journey-scenario') return entity.journeyScenarioIds
       return []
     case 'object':
-      if (kind === 'capability') return entity.capabilityIds
       if (kind === 'domain') return entity.domainId ? [entity.domainId] : []
       return []
     case 'domain':
@@ -137,7 +136,7 @@ export function facetKindsFor(kind: ReportEntityKind): ReportEntityKind[] {
     case 'experience': return ['actor', 'interface', 'capability', 'domain', 'screen', 'journey']
     case 'screen': return ['interface', 'experience', 'capability', 'domain', 'journey', 'capability-scenario', 'journey-scenario']
     case 'domain': return ['capability', 'journey', 'screen', 'experience', 'rule']
-    case 'object': return ['domain', 'capability']
+    case 'object': return ['domain']
     case 'capability': return ['domain', 'interface', 'experience', 'capability-scenario', 'journey-scenario', 'journey', 'screen', 'rule']
     case 'journey': return ['actor', 'interface', 'experience', 'capability', 'domain', 'screen', 'journey-scenario', 'rule']
     /* A Capability Scenario never names a Journey; offering the facet would be a permanently empty control. */

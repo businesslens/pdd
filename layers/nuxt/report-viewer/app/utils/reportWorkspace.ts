@@ -249,8 +249,6 @@ export interface ObjectView extends EntityBase {
   domainId?: string
   states: Array<{ name: string, content: string }>
   transitions: Array<{ from: string, to: string }>
-  /** Capabilities whose availability reaches this Object's Domain. Never authored. */
-  capabilityIds: string[]
 }
 
 export interface CapabilityView extends EntityBase {
@@ -873,12 +871,14 @@ export function projectReportWorkspace(report: ProductReportV11): ReportWorkspac
     references: object.references,
     domainId: object.domainId,
     states: object.states.map(state => ({ name: state.name, content: state.content })),
-    transitions: object.transitions.map(transition => ({ from: transition.from, to: transition.to })),
-    // Derived, never authored: an Object declares no Capabilities, so the only
-    // honest relation the report can carry is through the Domain they share.
-    capabilityIds: object.domainId
-      ? model.capabilities.filter(capability => capability.domainId === object.domainId).map(capability => capability.id)
-      : []
+    /*
+     * States and transitions, and the Domain. No Capability relation: an Object
+     * declares none, and the format says a Capability names the Objects it acts
+     * on *in prose*, so there is no structured edge to derive. Deriving one
+     * through the shared Domain looked like a relation and was not — it read
+     * empty for a product-wide Object and over-claimed for a scoped one.
+     */
+    transitions: object.transitions.map(transition => ({ from: transition.from, to: transition.to }))
   }))
 
   const domains: DomainView[] = model.domains.map((domain: ReportDomain) => {
