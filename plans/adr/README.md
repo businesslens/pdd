@@ -18,3 +18,6 @@ do not carry docs frontmatter.
 | [0006](./0006-determinism-is-verified-by-independent-double-authoring.md) | Determinism is verified by independent double-authoring | Accepted |
 | [0007](./0007-blueprints-are-provenance-neutral.md) | Blueprints are provenance-neutral by design | Accepted |
 | [0008](./0008-an-ai-agent-harness-is-an-actor.md) | An AI agent harness is an Actor, named `ai-agent` | Accepted |
+| [0009](./0009-what-the-product-keeps-is-in-scope.md) | What the Product keeps is in scope | Accepted |
+| [0010](./0010-a-thing-the-product-keeps.md) | A thing the Product keeps is its own entity | Accepted |
+| [0011](./0011-a-things-states-belong-to-the-thing.md) | A thing's states belong to the thing, not the views that show it | Accepted |
