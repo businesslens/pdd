@@ -1,9 +1,9 @@
 ---
 capabilities:
-  - collection-creation
-  - collection-naming
-  - collection-organization
-  - collection-publication
+  - create-collection
+  - rename-collection
+  - organize-collection
+  - publish-collection
 entryPoints:
   - reader-web: /collections
 ---

@@ -2,7 +2,7 @@
 type: mobile-app
 actors: [reader]
 entryPoints:
-  - mobile: content-reader://library
+  - mobile-app: content-reader://library
 ---
 
 # Reader mobile application

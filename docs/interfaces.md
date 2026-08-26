@@ -29,6 +29,11 @@ contract—for example, a partner automation API. An internal API used to
 implement the web application is an implementation detail. Apply the same test
 to command namespaces, integrations, and background system interactions.
 
+`agent` is the surface an AI coding harness reaches through installed skills or
+tools. It is a contract with its own Actors, boundary, and independently
+verifiable behavior — not the harness's own interface, and not a way to describe
+a library.
+
 ## Interfaces are inbound
 
 Something *arrives* at the Product through an Interface. An outbound connection

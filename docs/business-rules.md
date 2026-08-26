@@ -3,7 +3,7 @@ title: Business rules
 description: Durable assertions that apply to Product entities or Contexts naming Interfaces, Experiences, or Screens.
 section: open-source
 group: Product Model
-order: 16
+order: 17
 ---
 
 # Business rules
@@ -20,9 +20,13 @@ files.
 
 ## When you create one
 
-Create a Rule when a constraint applies across behavior or deserves to be
-stated once for review. Write something that must remain true, not a sequential
-step.
+**A Rule governs two or more behaviors, or a Context independent of any single
+behavior.** Anything true of exactly one Capability is that Capability's own
+business — a `condition` Step, or its Scenario's Outcome — and `lint` warns when
+a Rule's targets resolve to a single behavioral entity with no `contexts`
+narrowing them.
+
+Write something that must remain true, not a sequential step.
 
 A Rule must have at least one target. Target a behavioral entity when the Rule
 governs that behavior. Add `contexts` to narrow an entity target, or use a

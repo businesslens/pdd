@@ -8,7 +8,8 @@ export const INTERFACE_TYPES = [
   'webhook',
   'messaging',
   'voice',
-  'device'
+  'device',
+  'agent'
 ] as const
 
 export type InterfaceType = typeof INTERFACE_TYPES[number]

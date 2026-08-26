@@ -1,5 +1,4 @@
 ---
-domain: catalog
 references:
   - kind: code
     role: implementation

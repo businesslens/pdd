@@ -75,8 +75,8 @@ describe('open report', () => {
         ['operator-cli', 'cli']
       ]))
     expect(imported.journeyScenarios[0]!.steps.map(step => [step.text, step.capability])).toEqual([
-      ['The shopper finds and selects an available product', 'catalog-browsing'],
-      ['The shopper submits checkout', 'checkout'],
+      ['The shopper finds and selects an available product', 'browse-catalog'],
+      ['The shopper submits checkout', 'place-order'],
       ['The Product confirms the paid order', undefined]
     ])
     expect(imported.experiences.flatMap(experience => experience.entryPoints))
@@ -90,7 +90,7 @@ describe('open report', () => {
     expect(imported.screens[1]).toMatchObject({
       id: 'customer-web::storefront::product-record',
       containerId: 'customer-web::storefront',
-      capabilities: ['catalog-browsing', 'checkout']
+      capabilities: ['browse-catalog', 'place-order']
     })
     expect(imported.screens.flatMap(screen => screen.entryPoints.map(point => point.path))).toEqual([
       'fixture-shop://products/:id',
@@ -108,12 +108,12 @@ describe('open report', () => {
       && reference.role !== 'implementation'
       && /^https?:\/\//.test(reference.target)
     )).toBe(true)
-    expect(readFileSync(join(target, '.businesslens/capabilities/checkout/capability.md'), 'utf8'))
+    expect(readFileSync(join(target, '.businesslens/capabilities/place-order/capability.md'), 'utf8'))
       .toContain('availability:')
     expect(readFileSync(join(target, '.businesslens/business-rules/payment-before-confirmation.md'), 'utf8'))
       .toContain('appliesTo:')
     expect(readFileSync(
-      join(target, '.businesslens/capabilities/checkout/scenarios/complete-checkout.md'),
+      join(target, '.businesslens/capabilities/place-order/scenarios/complete-checkout.md'),
       'utf8'
     )).toContain('## Decision points')
     expect(readFileSync(
@@ -130,7 +130,7 @@ describe('open report', () => {
     )).not.toContain('## Steps')
     expect(readFileSync(join(target, '.businesslens/journeys/browse-and-buy/journey.md'), 'utf8'))
       .toContain('## Teaching note')
-    expect(readFileSync(join(target, '.businesslens/capabilities/checkout/scenarios/complete-checkout.md'), 'utf8'))
+    expect(readFileSync(join(target, '.businesslens/capabilities/place-order/scenarios/complete-checkout.md'), 'utf8'))
       .toContain('## Recovery note')
     expect(readFileSync(join(target, '.businesslens/product.md'), 'utf8'))
       .toContain('## Teaching note')
@@ -198,10 +198,10 @@ describe('open report', () => {
       expect(imported.experiences).toEqual([])
       expect(imported.capabilities.flatMap(capability => capability.availability))
         .toEqual(expect.arrayContaining([{ place: 'customer-web' }, { place: 'customer-mobile' }]))
-      expect(readFileSync(join(fresh, '.businesslens/capabilities/checkout/capability.md'), 'utf8'))
+      expect(readFileSync(join(fresh, '.businesslens/capabilities/place-order/capability.md'), 'utf8'))
         .not.toContain('::')
       expect(readFileSync(join(fresh, '.businesslens/config.yaml'), 'utf8'))
-        .toContain('schema: 6')
+        .toContain('schema: 7')
 
       const rebuilt = buildProject(fresh)
       expect(withoutRepositoryEvidence(rebuilt.report)).toEqual(withoutRepositoryEvidence(report))
@@ -286,7 +286,7 @@ describe('open report', () => {
     const actor = readFileSync(join(target, '.businesslens/actors/shopper.md'), 'utf8')
     expect(actor).toMatch(/^---\nkind: person\nrelationship: external\n---\n/)
 
-    expect(readFileSync(join(target, '.businesslens/capabilities/checkout/capability.md'), 'utf8'))
+    expect(readFileSync(join(target, '.businesslens/capabilities/place-order/capability.md'), 'utf8'))
       .toMatch(/^---\ndomain: ordering\navailability:/)
   })
 

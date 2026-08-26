@@ -5,7 +5,7 @@ steps:
   - text: The shopper finds and selects an available product
     kind: actor
     actor: shopper
-    capability: catalog-browsing
+    capability: browse-catalog
     contexts:
       web-to-admin:
         place: customer-web::storefront::product-record
@@ -14,7 +14,7 @@ steps:
   - text: The shopper submits checkout and the order is placed
     kind: actor
     actor: shopper
-    capability: checkout
+    capability: place-order
     contexts:
       web-to-admin:
         place: customer-web::storefront::product-record
@@ -25,12 +25,12 @@ steps:
   - text: The store admin cancels the order and the payment is released
     kind: actor
     actor: store-admin
-    capability: order-management
+    capability: manage-orders
     contexts:
       web-to-admin:
-        place: admin-web::admin-console
+        place: admin-web
       mobile-to-admin:
-        place: admin-web::admin-console
+        place: admin-web
 routes:
   web-to-admin: Web To Admin
   mobile-to-admin: Mobile To Admin

@@ -1,7 +1,7 @@
 ---
 capabilities:
-  - catalog-browsing
-  - checkout
+  - browse-catalog
+  - place-order
 entryPoints:
   - customer-web: /products/:id
 references:

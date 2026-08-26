@@ -245,6 +245,19 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     if (!productInterface.capabilityBoundary) {
       errors.push(`${productInterface.file}: missing "## Capability boundary" section`)
     }
+    /*
+     * F11 — one entry-point key vocabulary per entity. On an Interface the key
+     * is that Interface's own `type`; on an Experience or Screen it is the
+     * containing Interface's id. Previously the Interface case was unchecked,
+     * so two authors used three different vocabularies and both linted clean.
+     */
+    for (const entryPoint of productInterface.entryPoints) {
+      if (entryPoint.type !== productInterface.type) {
+        errors.push(
+          `${productInterface.file}: entry point key "${entryPoint.type}" must be this Interface's type "${productInterface.type}"`
+        )
+      }
+    }
   }
 
   for (const experience of model.experiences) {
@@ -285,9 +298,146 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     }
   }
 
+  const capabilitiesPerDomain = new Map<string, number>()
+  for (const capability of model.capabilities) {
+    if (!capability.domain) continue
+    capabilitiesPerDomain.set(capability.domain, (capabilitiesPerDomain.get(capability.domain) || 0) + 1)
+  }
   for (const domain of model.domains) {
     requireTitle(domain.file, domain.doc.title, domain.doc.lead)
-    validateSections(domain.file, domain.doc, ['Intent'])
+    validateSections(domain.file, domain.doc, ['Intent', 'Boundary'])
+    // A Boundary that only asserts inclusion is a label, not a region. Stating
+    // what a Domain does *not* own is what makes it checkable.
+    if (!domain.boundary.trim()) {
+      errors.push(`${domain.file}: a Domain needs a "## Boundary" section`)
+    } else if (!/\b(does not|doesn't|not own|never|excludes?|rather than|outside)\b/i.test(domain.boundary)) {
+      errors.push(
+        `${domain.file}: "## Boundary" must state what the Domain does not own, not only what it covers`
+      )
+    }
+    const held = capabilitiesPerDomain.get(domain.id) || 0
+    if (held < 2) {
+      warnings.push(
+        `${domain.file}: names ${held} Capabilit${held === 1 ? 'y' : 'ies'}; a Domain holding fewer than two is a folder, not a region`
+      )
+    }
+  }
+
+  /*
+   * F2 — whether an Interface is divided into Experiences is DERIVED, never
+   * judged. An Interface must hold Experiences when it serves more than one
+   * `access` value, or two or more Actor sets whose Capability coverage is
+   * disjoint; it must not when neither holds. Every input is already authored,
+   * so the linter decides the question and an author never applies a prose test
+   * to it. Without this, one product had two lint-clean encodings whose ids
+   * shared nothing.
+   */
+  const experiencesByInterface = new Map<string, typeof model.experiences>()
+  for (const experience of model.experiences) {
+    const list = experiencesByInterface.get(experience.interface) || []
+    list.push(experience)
+    experiencesByInterface.set(experience.interface, list)
+  }
+  for (const productInterface of model.interfaces) {
+    const owned = experiencesByInterface.get(productInterface.id) || []
+
+    // Actor sets that reach this Interface, grouped by the Capabilities available there.
+    const actorSets: Array<Set<string>> = []
+    for (const capability of model.capabilities) {
+      const here = capability.availability.some(
+        context => context.place === productInterface.id || context.place.startsWith(`${productInterface.id}::`)
+      )
+      if (!here) continue
+      const reached = new Set(
+        productInterface.actors.filter(actorId =>
+          model.capabilityScenarios.some(
+            scenario =>
+              scenario.capability === capability.id &&
+              // A Scenario's Actor set is derived from its Steps, never authored.
+              scenario.steps.some(step => step.kind === 'actor' && step.actor === actorId)
+          )
+        )
+      )
+      if (reached.size) actorSets.push(reached)
+    }
+    const disjointAudiences = actorSets.some(left =>
+      actorSets.some(right => left !== right && ![...left].some(actorId => right.has(actorId)))
+    )
+    const accessModes = new Set(owned.map(experience => experience.access).filter(Boolean))
+    const mustDivide = accessModes.size > 1 || disjointAudiences
+
+    /*
+     * Counterpart symmetry is an exception, and a principled one. When the same
+     * Experience name exists under another Interface, the two are counterparts by
+     * construction — the same context on two platforms. Forcing one to flatten
+     * because it happens to carry a single Experience would destroy that
+     * relationship and make two views of one context look unrelated.
+     */
+    const hasCounterpart = owned.some(experience => {
+      const localId = experience.id.split('::').pop()
+      return model.experiences.some(
+        other => other.interface !== productInterface.id && other.id.split('::').pop() === localId
+      )
+    })
+    if (owned.length && !mustDivide && !hasCounterpart) {
+      warnings.push(
+        `${productInterface.file}: holds Experiences but serves one audience through one access mode, and none is a counterpart; use direct Interface availability`
+      )
+    }
+    if (!owned.length && disjointAudiences) {
+      warnings.push(
+        `${productInterface.file}: serves Actor sets with disjoint Capability coverage; these are Experiences, not one context`
+      )
+    }
+  }
+
+  /*
+   * F1 — behavioral ids are verb-object; cross-cutting ids are the bare noun.
+   * Ids are the format's whole identity mechanism, so two models of one product
+   * that name the same behavior differently cannot be diffed or compared. The
+   * check is deliberately a warning: it recognises the nominalisations that
+   * signal a noun phrase rather than trying to conjugate English.
+   */
+  const NOMINALISED = /(?:ing|tion|sion|ment|ance|ence|ity|ness)$/
+  // A small vocabulary of product verbs. An id that already contains one reads
+  // as verb-object however it ends — `publish-and-share-a-collection` is fine —
+  // so only a nominalised id with no verb in it is flagged.
+  const PRODUCT_VERBS = new Set([
+    'add', 'answer', 'apply', 'approve', 'archive', 'assign', 'block', 'book', 'browse', 'build',
+    'cancel', 'change', 'check', 'choose', 'close', 'collect', 'compare', 'complete', 'compose',
+    'configure', 'confirm', 'connect', 'contribute', 'create', 'decide', 'decline', 'delete',
+    'deliver', 'discover', 'edit', 'enter', 'expire', 'explore', 'export', 'find', 'follow',
+    'gate', 'generate', 'grant', 'handle', 'import', 'install', 'invite', 'issue', 'join',
+    'keep', 'leave', 'link', 'lint', 'list', 'manage', 'map', 'mark', 'merge', 'move', 'name',
+    'open', 'order', 'organize', 'pause', 'pay', 'place', 'plan', 'preserve', 'publish', 'pull',
+    'read', 'receive', 'refresh', 'refund', 'reject', 'remove', 'rename', 'reorder', 'reply',
+    'report', 'request', 'reset', 'resolve', 'restore', 'resume', 'retry', 'return', 'review',
+    'revoke', 'run', 'save', 'schedule', 'search', 'select', 'send', 'serve', 'set', 'settle',
+    'share', 'ship', 'show', 'sign', 'start', 'stop', 'submit', 'subscribe', 'switch',
+    'synchronize', 'track', 'transfer', 'unfollow', 'unlist', 'update', 'upload', 'verify',
+    'view', 'withdraw', 'write'
+  ])
+  const behavioural: Array<{ file: string, id: string, kind: string }> = [
+    ...model.capabilities.map(item => ({ file: item.file, id: item.id, kind: 'Capability' })),
+    ...model.journeys.map(item => ({ file: item.file, id: item.id, kind: 'Journey' }))
+  ]
+  for (const entity of behavioural) {
+    const segments = entity.id.split('-')
+    const last = segments[segments.length - 1] || ''
+    const carriesVerb = segments.some(segment => PRODUCT_VERBS.has(segment))
+    if (NOMINALISED.test(last) && !carriesVerb) {
+      warnings.push(
+        `${entity.file}: ${entity.kind} id "${entity.id}" reads as a noun phrase; behavioral ids are verb-object`
+      )
+    }
+  }
+
+  for (const object of model.objects) {
+    requireTitle(object.file, object.doc.title, object.doc.lead)
+    validateSections(object.file, object.doc, ['Intent', 'States', 'Transitions'])
+    if (object.domain && !domainIds.has(object.domain)) {
+      errors.push(`${object.file}: names missing domain "${object.domain}"`)
+    }
   }
 
   const capabilityAvailability = new Map<string, Set<string>>()
@@ -439,7 +589,23 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
       }
     }
 
-    if (!scenarioActors.size) errors.push(`${scenario.file}: needs at least one actor Step`)
+    /*
+     * F5 — a Scenario needs an actor Step OR an unattended trigger. Unattended
+     * behavior (a schedule the Product owns, an expiry, a retry) is real Product
+     * behavior with nobody to name, and requiring an Actor left it uncovered.
+     */
+    const unattendedTrigger = scenario.steps[0]?.unattended === true
+    if (unattendedTrigger && scenario.steps[0]?.kind !== 'condition') {
+      errors.push(`${scenario.file}: an unattended trigger must be a condition Step`)
+    }
+    for (const [index, step] of scenario.steps.entries()) {
+      if (index > 0 && step.unattended) {
+        errors.push(`${scenario.file}: step ${index + 1}: "unattended" is valid only on the first Step`)
+      }
+    }
+    if (!scenarioActors.size && !unattendedTrigger) {
+      errors.push(`${scenario.file}: needs at least one actor Step, or an unattended first condition Step`)
+    }
     for (const route of scenario.routes) {
       const sequence = routeContextPlaces.get(route.id) || []
       if (!sequence.length) errors.push(`${scenario.file}: route "${route.id}" must have a Context on at least one Step`)
@@ -453,14 +619,20 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
       else seenSequences.set(sequence, route.id)
     }
 
+    // An unattended Scenario has no Actor by construction, so "does this place
+    // permit the Scenario's Actors" has no answer for it. Its Contexts say where
+    // an Actor OBSERVES the outcome, which the Screen/Capability checks already
+    // cover.
     const supportedSomewhere = new Set<string>()
-    for (const container of allContainers) {
-      const supported = supportedActorsForContainer(container) || new Set<string>()
-      const participating = [...scenarioActors].filter(actorId => supported.has(actorId))
-      if (!participating.length) {
-        errors.push(`${scenario.file}: Context place "${container}" permits none of the Scenario Actors`)
+    if (!unattendedTrigger) {
+      for (const container of allContainers) {
+        const supported = supportedActorsForContainer(container) || new Set<string>()
+        const participating = [...scenarioActors].filter(actorId => supported.has(actorId))
+        if (!participating.length) {
+          errors.push(`${scenario.file}: Context place "${container}" permits none of the Scenario Actors`)
+        }
+        for (const actorId of participating) supportedSomewhere.add(actorId)
       }
-      for (const actorId of participating) supportedSomewhere.add(actorId)
     }
     for (const actorId of scenarioActors) {
       if (actorIds.has(actorId) && !supportedSomewhere.has(actorId)) {
@@ -669,6 +841,26 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     requireTitle(rule.file, rule.doc.title, rule.doc.lead)
     validateSections(rule.file, rule.doc, ['Intent', 'Rationale'])
     if (!rule.appliesTo.length) errors.push(`${rule.file}: needs at least one appliesTo target`)
+
+    /*
+     * F4 — a Rule governs two or more behaviors, or a Context independent of
+     * any single behavior. Anything true of exactly one Capability is that
+     * Capability's business: a `condition` Step or its Scenario Outcome. A
+     * `type: context` target is always fine, since a constraint on an
+     * interaction context belongs to no behavior.
+     */
+    const entityTargets = rule.appliesTo.filter(target => target.type !== 'context')
+    const narrowed = entityTargets.some(
+      target => 'contexts' in target && Array.isArray(target.contexts) && target.contexts.length > 0
+    )
+    const hasContextTarget = rule.appliesTo.some(target => target.type === 'context')
+    if (entityTargets.length === 1 && !narrowed && !hasContextTarget) {
+      const only = entityTargets[0]
+      const owner = only && 'id' in only ? only.id : 'that entity'
+      warnings.push(
+        `${rule.file}: governs only "${owner}"; a constraint true of one behavior belongs to it as a condition Step or Outcome, not a Business Rule`
+      )
+    }
     const seenTargets = new Set<string>()
     const capabilityTargets = new Set<string>()
     const journeyTargets = new Set<string>()
@@ -833,6 +1025,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
       experiences: model.experiences.length,
       screens: model.screens.length,
       domains: model.domains.length,
+      objects: model.objects.length,
       capabilities: model.capabilities.length,
       capabilityScenarios: model.capabilityScenarios.length,
       journeys: model.journeys.length,

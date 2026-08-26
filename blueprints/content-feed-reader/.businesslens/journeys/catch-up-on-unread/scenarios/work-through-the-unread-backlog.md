@@ -7,7 +7,7 @@ steps:
   - text: The Reader opens and reads an item
     kind: actor
     actor: reader
-    capability: content-reading
+    capability: read-content
     contexts:
       web:
         place: reader-web::personal-library::unread-library
@@ -15,7 +15,7 @@ steps:
         place: reader-mobile::personal-library::unread-library
   - text: The item is marked read
     kind: product
-    capability: reading-state
+    capability: track-reading-state
     contexts:
       web:
         place: reader-web::personal-library::unread-library

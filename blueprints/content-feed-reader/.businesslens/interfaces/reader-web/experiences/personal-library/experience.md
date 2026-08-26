@@ -13,7 +13,7 @@ and publishes selected collections on the web.
 
 ## Capability boundary
 
-Every item, reading-state change, saved item, and collection belongs to the
+Every item, track-reading-state change, saved item, and collection belongs to the
 signed-in Reader. This context never exposes another Reader's library.
 
 ## Counterpart note

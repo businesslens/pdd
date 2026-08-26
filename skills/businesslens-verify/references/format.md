@@ -42,7 +42,7 @@ Use these exact compact and expanded paths:
 | --- | --- | --- | --- |
 | Product | `product.md` | `product/product.md` beside `logo.svg` | — |
 | Actor | `actors/<id>.md` | `actors/<id>/actor.md` | — |
-| Interface | `interfaces/<id>.md` | `interfaces/<id>/interface.md` | `screens/` or `experiences/`, never both |
+| Interface | `interfaces/<id>.md` | `interfaces/<id>/interface.md` | `screens/`, `experiences/`, or both |
 | Experience | `interfaces/<interface-id>/experiences/<id>.md` | `interfaces/<interface-id>/experiences/<id>/experience.md` | `screens/` |
 | Screen | `<screen-parent>/screens/<id>.md` | `<screen-parent>/screens/<id>/screen.md` | — |
 | Domain | `domains/<id>.md` | `domains/<id>/domain.md` | — |
@@ -51,6 +51,7 @@ Use these exact compact and expanded paths:
 | Journey | `journeys/<id>.md` | `journeys/<id>/journey.md` | `scenarios/` |
 | Journey Scenario | `journeys/<journey-id>/scenarios/<id>.md` | `journeys/<journey-id>/scenarios/<id>/journey-scenario.md` | — |
 | Business Rule | `business-rules/<id>.md` | `business-rules/<id>/business-rule.md` | — |
+| Object | `objects/<id>.md` | `objects/<id>/object.md` | — |
 
 Here `<screen-parent>` is the Interface or Experience folder that contains the
 Screen.
@@ -78,7 +79,7 @@ not contain another H1 or H2.
 
 ## Required shapes
 
-- `config.yaml`: exactly `schema: 6` and `sdd.paths`.
+- `config.yaml`: exactly `schema: 7` and `sdd.paths`.
 - `product.md`: `id`, optional `summary`, `category`, `tags`, `authors`,
   `license`, `limitations`, H1, lead description, and optional `## Intent`.
   `summary` is one line of at most 400 characters, `category` is lowercase
@@ -112,7 +113,15 @@ not contain another H1 or H2.
 - Domain: H1, lead description, and `## Boundary`; optional `colorSlot`. A Domain
   is a region of subject matter, classifying members of the Interface →
   Experience → Screen and behavior hierarchies. Only
-  Capability authors `domain:`; every other Domain relation is derived.
+  Capability authors `domain:`; every other Domain relation is derived. Its
+  `## Boundary` must state something the Domain does **not** own, and a Domain
+  naming fewer than two Capabilities is a warning.
+- Object: H1, lead description, `## States` with at least two H3 states, and
+  `## Transitions` listing `from \u2192 to` pairs between them; optional
+  `domain`. An Object names a thing the Product keeps whose state an Actor
+  observes. Create one exactly when a thing has two or more named states
+  referenced by two or more Capabilities — never as a data model, and never to
+  restate a Screen's own `## Product states`.
 - Screen: at least one `capabilities` relation (it has no `availability` — its
   path is its place);
   optional Interface-keyed Product entry points; H1, lead, bullet

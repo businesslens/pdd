@@ -55,7 +55,7 @@ The shopper presses "Place order" with a non-empty cart.
 How does the shopper authorize payment?
 
 - saved method → charge the shopper's saved payment method
-- new method → validate and charge the payment method provided at checkout
+- new method → validate and charge the payment method provided at place-order
 
 ## Outcome
 

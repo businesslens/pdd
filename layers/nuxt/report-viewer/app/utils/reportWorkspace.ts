@@ -111,7 +111,8 @@ export const INTERFACE_TYPE_META: Record<ReportInterface['type'], { label: strin
   webhook: { label: 'Webhook', icon: 'i-lucide-webhook' },
   messaging: { label: 'Messaging', icon: 'i-lucide-messages-square' },
   voice: { label: 'Voice', icon: 'i-lucide-audio-lines' },
-  device: { label: 'Device', icon: 'i-lucide-cpu' }
+  device: { label: 'Device', icon: 'i-lucide-cpu' },
+  agent: { label: 'Agent', icon: 'i-lucide-bot' }
 }
 
 export const ACTOR_KIND_META: Record<ReportActor['kind'], { label: string, icon: string }> = {

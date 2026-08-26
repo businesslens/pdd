@@ -44,7 +44,7 @@ describe('end to end on a real git repo', () => {
     const parsed = ProductReportV10Schema.parse(output)
     expect(parsed.id).toBe('fixture-shop')
     expect(parsed).toMatchObject({
-      schemaVersion: '10.0.0',
+      schemaVersion: '11.0.0',
       summary: 'Browse a product catalog, buy products, and manage the resulting orders.',
       category: 'commerce',
       authors: [{ name: 'BusinessLens' }],
@@ -53,29 +53,30 @@ describe('end to end on a real git repo', () => {
     expect(parsed.counts).toEqual({
       actors: 2,
       interfaces: 4,
-      experiences: 3,
+      experiences: 2,
       screens: 2,
-      domains: 2,
+      domains: 1,
+      objects: 1,
       capabilities: 3,
       capabilityScenarios: 4,
       journeys: 1,
       journeyScenarios: 2,
       businessRules: 2
     })
-    // `capabilityIds` comes from the achieved variation; `order-management`
+    // `capabilityIds` comes from the achieved variation; `manage-orders`
     // appears only in the not-achieved one, so it is failure-only.
     expect(parsed.model.journeys[0]).toMatchObject({
-      capabilityIds: ['catalog-browsing', 'checkout'],
-      failureOnlyCapabilityIds: ['order-management']
+      capabilityIds: ['browse-catalog', 'place-order'],
+      failureOnlyCapabilityIds: ['manage-orders']
     })
     const screen = parsed.model.screens.find(item => item.id === 'customer-web::storefront::product-record')
     expect(screen).toMatchObject({
-      capabilityIds: ['catalog-browsing', 'checkout'],
+      capabilityIds: ['browse-catalog', 'place-order'],
       capabilityScenarioIds: ['browse-catalog', 'complete-checkout', 'decline-checkout-payment'],
       journeyScenarioIds: ['browse-and-complete-checkout', 'cancel-an-order-before-fulfilment'],
       information: ['Product name and description', 'Price and availability']
     })
-    expect(parsed.model.capabilities.find(item => item.id === 'checkout')?.availability).toEqual([
+    expect(parsed.model.capabilities.find(item => item.id === 'place-order')?.availability).toEqual([
       { placeId: 'customer-mobile::storefront' },
       { placeId: 'customer-web::storefront' }
     ])
@@ -97,12 +98,12 @@ describe('end to end on a real git repo', () => {
     expect(references.some(reference => reference.role === 'implementation')).toBe(false)
     expect(parsed.coverage.sourceAreas).toEqual([])
     expect(parsed.model.businessRules.find(rule => rule.id === 'payment-before-confirmation')?.appliesTo)
-      .toContainEqual({ type: 'capability', id: 'checkout', contexts: [] })
+      .toContainEqual({ type: 'capability', id: 'place-order', contexts: [] })
     expect(parsed.model.capabilityScenarios.find(scenario => scenario.id === 'complete-checkout')?.decisionPoints)
       .toHaveLength(1)
     expect(parsed.model.journeyScenarios[0]!.steps.map(step => [step.text, step.capabilityId])).toEqual([
-      ['The shopper finds and selects an available product', 'catalog-browsing'],
-      ['The shopper submits checkout', 'checkout'],
+      ['The shopper finds and selects an available product', 'browse-catalog'],
+      ['The shopper submits checkout', 'place-order'],
       ['The Product confirms the paid order', null]
     ])
     expect(JSON.stringify(parsed)).not.toContain('github.com/example/fixture-shop')

@@ -62,7 +62,7 @@ collection differ:
 | --- | --- | --- | --- |
 | Product | `product.md` | `product/product.md` beside `logo.svg` | — |
 | Actor | `actors/<id>.md` | `actors/<id>/actor.md` | — |
-| Interface | `interfaces/<id>.md` | `interfaces/<id>/interface.md` | `screens/` or `experiences/`, never both |
+| Interface | `interfaces/<id>.md` | `interfaces/<id>/interface.md` | `screens/`, `experiences/`, or both |
 | Experience | `interfaces/<interface-id>/experiences/<id>.md` | `interfaces/<interface-id>/experiences/<id>/experience.md` | `screens/` |
 | Screen | `<screen-parent>/screens/<id>.md` | `<screen-parent>/screens/<id>/screen.md` | — |
 | Domain | `domains/<id>.md` | `domains/<id>/domain.md` | — |
@@ -71,6 +71,7 @@ collection differ:
 | Journey | `journeys/<id>.md` | `journeys/<id>/journey.md` | `scenarios/` |
 | Journey Scenario | `journeys/<journey-id>/scenarios/<id>.md` | `journeys/<journey-id>/scenarios/<id>/journey-scenario.md` | — |
 | Business Rule | `business-rules/<id>.md` | `business-rules/<id>/business-rule.md` | — |
+| Object | `objects/<id>.md` | `objects/<id>/object.md` | — |
 
 Here `<screen-parent>` is the Interface or Experience folder that contains the
 Screen. A representative model can therefore look like this:
@@ -100,6 +101,7 @@ Screen. A representative model can therefore look like this:
 │
 │   ── subject axis: what it is about ──
 ├── domains/<domain-id>.md                       # optional
+├── objects/<object-id>.md                       # optional
 │
 │   ── behavior tree: what the Product does ──
 ├── capabilities/<capability-id>/
@@ -116,11 +118,12 @@ Screen. A representative model can therefore look like this:
 └── cache/                   # generated artifacts — never committed
 ```
 
-The model has **two hierarchies and one axis**. The Interface → Experience →
+The model has **two hierarchies and two axes**. The Interface → Experience →
 Screen hierarchy says where Actors meet the Product; the Capability → Scenario
 and Journey → Scenario hierarchy says what the Product does. `availability` is
-the join between them; Domain classifies members of both; Actors and Business
-Rules attach across everything.
+the join between them. Domain classifies members of both by subject. Object
+names what the Product keeps and whose state Actors can observe, and is the
+thing Capabilities act on. Actors and Business Rules attach across everything.
 
 ## Contexts and places
 
@@ -145,9 +148,28 @@ Filesystem paths supply containment. For example,
 availability Context. Authors never repeat the containing Interface or
 Experience in another field.
 
-An Interface holds either `screens/` or `experiences/`, never both. A
-Capability that is available through an Interface divided into Experiences
+A Capability that is available through an Interface divided into Experiences
 names the intended Experiences explicitly; an undivided Interface names itself.
+
+**Whether an Interface is divided is derived, never judged.** An Interface must
+hold Experiences when either of the following is true of it, and must not when
+neither is:
+
+- it serves more than one `access` value; or
+- it serves two or more Actor sets whose Capability coverage is disjoint — no
+  Capability available there lists Actors from both sets.
+
+Both inputs are already authored: `actors` on the Interface, `access` on the
+Experience, and `availability` on each Capability. `lint` therefore decides the
+question, and an author never applies a prose test to it. An Interface serving
+one audience through one access mode is one coherent context and takes direct
+Interface availability.
+
+An Interface holds `experiences/`, or `screens/`, or **both** — the last when a
+Screen is genuinely shared across its Experiences rather than belonging to one.
+A Screen beside `experiences/` is reachable from every Experience of that
+Interface, and two Screens with the same name below different Experiences of one
+Interface are counterparts exactly as they are across Interfaces.
 Contexts are closed to unknown keys. Additional dimensions may be added by a
 future format revision, but Context is not an arbitrary metadata bag.
 
@@ -184,7 +206,20 @@ future format revision, but Context is not an arbitrary metadata bag.
   ```
 
   Each segment is lowercase kebab-case, `^[a-z0-9]+(?:-[a-z0-9]+)*$`. Never
-  write `id:` in frontmatter — the filesystem is the id authority. The one
+  write `id:` in frontmatter — the filesystem is the id authority.
+
+  **Behavioral ids are verb-object; cross-cutting ids are the bare noun.** A
+  Capability, Capability Scenario, Journey, and Journey Scenario name something
+  the Product or an Actor *does*, so their ids begin with a verb:
+  `browse-catalog`, not `catalog-browsing`; `manage-orders`, not
+  `order-management`. An Actor, Domain, Object, Interface, Experience, and
+  Screen name something that *is*, so their ids are noun phrases: `shopper`,
+  `ordering`, `listing`, `customer-web`.
+
+  This is a rule, not a style. Ids are the format's whole identity mechanism, so
+  two models of one product that name the same behavior differently cannot be
+  diffed, merged, or compared — which is what a catalog of Blueprints requires.
+  `lint` warns on a behavioral id whose first segment is not a verb. The one
   exception is `product.md`, whose `id:` names the Product Model (it may differ
   from the repo name) and is limited to 64 characters. Compacting or expanding
   an entity never changes this logical path or id.
@@ -326,12 +361,12 @@ but the artifact remains evidence to assess rather than proof to trust.
 ### `config.yaml`
 
 ```yaml
-schema: 6                          # folder-format version
+schema: 7                          # folder-format version
 sdd:
   paths: [openspec/]               # detected/declared SDD roots; empty if none
 ```
 
-`config.yaml` has no other keys. Schema 6 is the only supported folder format.
+`config.yaml` has no other keys. Schema 7 is the only supported folder format.
 
 ### `product.md` or `product/product.md`
 
@@ -458,11 +493,16 @@ Supports customer-facing behavior. It does not expose store operations.
 ```
 
 `type` is required and is one of `web`, `mobile-app`, `desktop-app`, `cli`,
-`api`, `webhook`, `messaging`, `voice`, or `device`. It states the supported
-interaction contract, never its implementation technology: `web` is valid;
-`react` is not. An Interface has exactly one type; independently supported
+`api`, `webhook`, `messaging`, `voice`, `device`, or `agent`. It states the
+supported interaction contract, never its implementation technology: `web` is
+valid; `react` is not. `agent` is the surface an AI coding harness reaches
+through installed skills or tools — a contract with its own Actors, boundary,
+and independently verifiable behavior, not the harness's own interface. An Interface has exactly one type; independently supported
 types are separate Interfaces. `actors` contains at least one Actor ID.
-`entryPoints` is optional and contains product-facing root addresses. H1, lead
+`entryPoints` is optional and contains product-facing root addresses. **On an
+Interface every entry-point key must equal that Interface's own `type`**; on an
+Experience or a Screen it must name the containing Interface's id. One field,
+one rule per entity, both checked by `lint`. H1, lead
 description, and `## Capability boundary` are required. An Interface has no
 access mode or exit contract.
 
@@ -581,9 +621,12 @@ own catalog information, payment instruments, or fulfilment logistics.
 ```
 
 Optional `colorSlot` and `references` frontmatter. H1 = name, lead paragraph =
-description. `## Boundary` states what the region covers and what it explicitly
-does not; it is what makes a Domain checkable rather than a label. The entire
-Domain collection is optional.
+description. `## Boundary` is required and must state both what the region
+covers **and** something it explicitly does not own; a Boundary that only
+asserts inclusion is a label, not a region, and is a `lint` error. A Domain
+naming fewer than two Capabilities is a `lint` warning — one Capability is not a
+region, and a Domain that exists to re-gather Capabilities you have just split
+is a folder. The entire Domain collection is optional.
 
 **Domain is an axis, not a level.** It classifies members of both the Interface →
 Experience → Screen hierarchy and the behavior hierarchy, so it neither contains
@@ -595,6 +638,61 @@ asking an author to restate it — a second authority can disagree with the firs
 
 `domain` is optional and single. A Capability about two subject regions means
 either a `## Boundary` is wrong or the Capability should split.
+
+### `objects/<id>.md` or `objects/<id>/object.md`
+
+An Object is a thing the Product keeps whose state an Actor can observe and act
+on — an order, a listing, a subscription. It names the Product's nouns, where
+Capabilities name its verbs.
+
+```markdown
+---
+domain: ordering                 # optional
+---
+
+# Listing
+
+A place a host offers, from first draft to withdrawal from the market.
+
+## States
+
+### Draft
+
+Visible only to its owner and not findable by guests.
+
+### Published
+
+Findable and bookable.
+
+### Archived
+
+Withdrawn permanently; existing stays are unaffected.
+
+## Transitions
+
+- Draft → Published
+- Published → Archived
+```
+
+**An Object exists exactly when a thing has two or more named states referenced
+by two or more Capabilities.** This is computable, and `lint` decides it: a
+thing whose state only one Capability touches is that Capability's business, and
+a thing with one state has no lifecycle to record. An author never applies a
+prose test to the question.
+
+`## States` is required and contains at least two H3 state names, each followed
+by non-empty prose. `## Transitions` is required and is a bullet list of
+`from → to` pairs using the Unicode arrow or `->` with ASCII characters. Every
+name on either side must be one of this Object's states. A state no transition
+reaches, other than the first listed, is a `lint` warning; a terminal state is
+valid and needs no outgoing transition. `domain` is optional and single. H1 =
+name and the lead paragraph = description.
+
+An Object never declares Capabilities, Screens, availability, or Actors.
+Capabilities name the Objects they act on through their own prose, and every
+other Object relation is derived. Object states are the authority for a
+lifecycle; a Screen's `## Product states` describes what that **view** shows and
+must not restate an Object's lifecycle.
 
 ### `capabilities/<id>.md` or `capabilities/<id>/capability.md`
 
@@ -682,6 +780,15 @@ Never accept an order the product cannot fulfill.
 Inventory may change between browsing and final submission, so checkout must
 revalidate it.
 ```
+
+**A Business Rule governs two or more behaviors, or a Context independent of
+any single behavior.** Anything true of exactly one Capability is that
+Capability's business — a `condition` Step or its Scenario Outcome — not a Rule.
+The boundary is checkable and `lint` enforces it: a Rule whose `appliesTo`
+resolves to exactly one behavioral entity, with no `contexts` narrowing it, is a
+`lint` warning naming the Capability that should own it instead. A Rule with a
+`type: context` target is always valid, because a constraint on an interaction
+context belongs to no behavior.
 
 The lead paragraph is the rule statement. `appliesTo` is a required non-empty
 list of typed targets. An entity target uses `type` = `capability`,
@@ -934,8 +1041,23 @@ Every Step is a mapping with required single-line `text` and `kind`. `kind` is
 `actor`, `product`, or `condition`. An `actor` Step requires exactly one
 existing `actor`; `product` and `condition` Steps forbid `actor`. Product-side
 behavior uses `product`; a fact, state, prerequisite, or seam nobody performs
-uses `condition`. Each Scenario needs at least one `actor` Step. Its Actor set
-is derived from those Steps rather than authored on the Scenario.
+uses `condition`.
+
+A Scenario needs at least one `actor` Step **or** an unattended trigger: a first
+Step of `kind: condition` carrying `unattended: true`. Unattended behavior — a
+schedule the Product owns, an expiry, a retry — is real Product behavior with no
+Actor to name, and requiring an Actor Step forced it to be modelled as somebody
+else's request or left uncovered entirely. An unattended Scenario derives an
+empty Actor set. `unattended` is valid only on the first Step and only when its
+`kind` is `condition`.
+
+Availability for a Capability whose behavior is unattended names the Contexts
+where an Actor **observes the outcome**, never a synthetic Interface. A
+Capability with only unattended Scenarios is valid; it still requires at least
+one availability Context, because behavior nobody can ever observe is not
+Product behavior.
+
+Its Actor set is derived from those Steps rather than authored on the Scenario.
 
 A Step may author `contexts`, mapping every declared route id to exactly one
 strict Context object. Its `place` is the most-specific Interface, Experience,

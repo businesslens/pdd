@@ -67,7 +67,7 @@ describe('lintModel', () => {
 
   it('rejects a reference state on an entity that is not a Screen', () => {
     const cwd = fixtureCopy()
-    const capability = join(cwd, '.businesslens', 'capabilities', 'catalog-browsing', 'capability.md')
+    const capability = join(cwd, '.businesslens', 'capabilities', 'browse-catalog', 'capability.md')
     const source = readFileSync(capability, 'utf8')
     writeFileSync(capability, source.replace(
       '    target: src/services/catalog.ts#CatalogService',
@@ -162,8 +162,8 @@ describe('lintModel', () => {
 
   it('rejects an unrecognized child directory inside an entity folder', () => {
     const cwd = fixtureCopy()
-    mkdirSync(join(cwd, '.businesslens', 'capabilities', 'checkout', 'notes'), { recursive: true })
-    expect(run(cwd).errors).toContain('capabilities/checkout/notes/ is not a recognized child directory')
+    mkdirSync(join(cwd, '.businesslens', 'capabilities', 'place-order', 'notes'), { recursive: true })
+    expect(run(cwd).errors).toContain('capabilities/place-order/notes/ is not a recognized child directory')
   })
 
   it('passes the golden fixture', () => {
@@ -173,9 +173,10 @@ describe('lintModel', () => {
     expect(result.counts).toEqual({
       actors: 2,
       interfaces: 4,
-      experiences: 3,
+      experiences: 2,
       screens: 2,
-      domains: 2,
+      domains: 1,
+      objects: 1,
       capabilities: 3,
       capabilityScenarios: 4,
       journeys: 1,
@@ -187,13 +188,13 @@ describe('lintModel', () => {
   it('rejects historical folder schemas', () => {
     const cwd = fixtureCopy()
     writeFileSync(join(cwd, '.businesslens/config.yaml'), 'schema: 5\nsdd:\n  paths: []\n')
-    expect(run(cwd).errors).toContain('config.yaml: schema 5 is not supported (expected 6)')
+    expect(run(cwd).errors).toContain('config.yaml: schema 5 is not supported (expected 7)')
   })
 
   it('rejects unsupported future folder schemas explicitly', () => {
     const cwd = fixtureCopy()
     writeFileSync(join(cwd, '.businesslens/config.yaml'), 'schema: 99\nsdd:\n  paths: []\n')
-    expect(run(cwd).errors).toContain('config.yaml: schema 99 is not supported (expected 6)')
+    expect(run(cwd).errors).toContain('config.yaml: schema 99 is not supported (expected 7)')
   })
 
   it('requires the committed orientation and generated-path ignores', () => {
@@ -248,6 +249,7 @@ An internal system that initiates store operations.
   it('allows Products with no Domains and no Screens', () => {
     const cwd = fixtureCopy()
     rmSync(join(cwd, '.businesslens/domains'), { recursive: true })
+    rmSync(join(cwd, '.businesslens/objects'), { recursive: true })
     for (const relative of [
       'interfaces/customer-web/experiences/storefront/screens',
       'interfaces/customer-mobile/experiences/storefront/screens'
@@ -260,7 +262,7 @@ An internal system that initiates store operations.
         join(cwd, `.businesslens/interfaces/${interfaceId}/experiences/storefront.md`)
       )
     }
-    for (const name of ['catalog-browsing', 'checkout', 'order-management']) {
+    for (const name of ['browse-catalog', 'place-order', 'manage-orders']) {
       const file = join(cwd, `.businesslens/capabilities/${name}/capability.md`)
       writeFileSync(file, readFileSync(file, 'utf8').replace(/^domain: .*\n/m, ''))
     }
@@ -295,15 +297,11 @@ An internal system that initiates store operations.
     for (const interfaceId of ['customer-web', 'customer-mobile', 'admin-web']) {
       rmSync(join(bl, 'interfaces', interfaceId, 'experiences'), { recursive: true, force: true })
     }
-    compactEntity(
-      join(bl, 'interfaces/admin-web/interface.md'),
-      join(bl, 'interfaces/admin-web.md')
-    )
     // Every availability Context loses its Experience segment.
     const scrub = (file: string) => writeFileSync(file, readFileSync(file, 'utf8')
       .replace(/customer-web::storefront/g, 'customer-web')
       .replace(/customer-mobile::storefront/g, 'customer-mobile')
-      .replace(/admin-web::admin-console/g, 'admin-web'))
+      .replace(/admin-web/g, 'admin-web'))
     const walk = (directory: string) => {
       for (const entry of readdirSync(directory, { withFileTypes: true })) {
         const full = join(directory, entry.name)
@@ -320,7 +318,7 @@ An internal system that initiates store operations.
 
   it('rejects an availability Context naming an Interface that Experiences divide', () => {
     const cwd = fixtureCopy()
-    const capability = join(cwd, '.businesslens/capabilities/checkout/capability.md')
+    const capability = join(cwd, '.businesslens/capabilities/place-order/capability.md')
     writeFileSync(
       capability,
       readFileSync(capability, 'utf8').replace('customer-web::storefront', 'customer-web')
@@ -332,7 +330,7 @@ An internal system that initiates store operations.
 
   it('rejects a Context place that resolves to no Experience', () => {
     const cwd = fixtureCopy()
-    const capability = join(cwd, '.businesslens/capabilities/checkout/capability.md')
+    const capability = join(cwd, '.businesslens/capabilities/place-order/capability.md')
     writeFileSync(
       capability,
       readFileSync(capability, 'utf8').replace('customer-web::storefront', 'customer-web::missing')
@@ -344,7 +342,7 @@ An internal system that initiates store operations.
 
   it('requires every authored Context to use the strict place object', () => {
     const cwd = fixtureCopy()
-    const capability = join(cwd, '.businesslens/capabilities/checkout/capability.md')
+    const capability = join(cwd, '.businesslens/capabilities/place-order/capability.md')
     writeFileSync(
       capability,
       readFileSync(capability, 'utf8')
@@ -390,8 +388,8 @@ Supports order operations. It does not expose a shopper's account.
 `
     )
     for (const relative of [
-      '.businesslens/capabilities/order-management/capability.md',
-      '.businesslens/capabilities/order-management/scenarios/refund-order.md'
+      '.businesslens/capabilities/manage-orders/capability.md',
+      '.businesslens/capabilities/manage-orders/scenarios/refund-order.md'
     ]) {
       const file = join(cwd, relative)
       writeFileSync(
@@ -444,7 +442,7 @@ Supports order operations. It does not expose a shopper's account.
 
   it('rejects duplicate availability and Capability placement gaps', () => {
     const cwd = fixtureCopy()
-    const capability = join(cwd, '.businesslens/capabilities/checkout/capability.md')
+    const capability = join(cwd, '.businesslens/capabilities/place-order/capability.md')
     writeFileSync(
       capability,
       readFileSync(capability, 'utf8').replace(
@@ -454,29 +452,29 @@ Supports order operations. It does not expose a shopper's account.
     )
     const errors = run(cwd).errors.join('\n')
     expect(errors).toContain('duplicate availability Context place "customer-web::storefront"')
-    expect(errors).toContain('Context place "customer-mobile::storefront" is outside capability "checkout"')
+    expect(errors).toContain('Context place "customer-mobile::storefront" is outside capability "place-order"')
   })
 
   it('requires Capability Scenario Context places to be inside the Capability availability', () => {
     const cwd = fixtureCopy()
-    const scenario = join(cwd, '.businesslens/capabilities/checkout/scenarios/complete-checkout.md')
+    const scenario = join(cwd, '.businesslens/capabilities/place-order/scenarios/complete-checkout.md')
     writeFileSync(
       scenario,
-      readFileSync(scenario, 'utf8').replace('customer-web::storefront::product-record', 'admin-web::admin-console')
+      readFileSync(scenario, 'utf8').replace('customer-web::storefront::product-record', 'admin-web')
     )
     expect(run(cwd).errors.join('\n'))
-      .toContain('Context place "admin-web::admin-console" is outside capability "checkout"')
+      .toContain('Context place "admin-web" is outside capability "place-order"')
   })
 
   it('requires every Scenario Actor to participate in a selected Context', () => {
     const cwd = fixtureCopy()
-    const scenario = join(cwd, '.businesslens/capabilities/order-management/scenarios/refund-order.md')
+    const scenario = join(cwd, '.businesslens/capabilities/manage-orders/scenarios/refund-order.md')
     writeFileSync(scenario, readFileSync(scenario, 'utf8').replace(
       'actor: store-admin',
       'actor: shopper'
     ))
     const errors = run(cwd).errors.join('\n')
-    expect(errors).toContain('Context place "admin-web::admin-console" permits none of the Scenario Actors')
+    expect(errors).toContain('Context place "admin-web" permits none of the Scenario Actors')
     expect(errors).toContain('actor "shopper" is not supported by any selected Context place')
   })
 
@@ -487,7 +485,7 @@ Supports order operations. It does not expose a shopper's account.
       scenario,
       readFileSync(scenario, 'utf8')
         .replace('  - text: The shopper finds and selects an available product', '  - text: ""')
-        .replace('    capability: checkout', '    capability: catalog-browsing')
+        .replace('    capability: place-order', '    capability: browse-catalog')
     )
     const errors = run(cwd).errors.join('\n')
     expect(errors).toContain('step 1: needs non-empty text')
@@ -502,7 +500,7 @@ Supports order operations. It does not expose a shopper's account.
       readFileSync(scenario, 'utf8')
         .replace(
           'result: achieved',
-          'result: achieved\nactors: [shopper]\nflow:\n  - id: legacy-stage\n    capability: catalog-browsing\n    operation: Legacy duplicated sentence'
+          'result: achieved\nactors: [shopper]\nflow:\n  - id: legacy-stage\n    capability: browse-catalog\n    operation: Legacy duplicated sentence'
         )
         .replace('    contexts:', '    operation: Legacy duplicated sentence\n    routes:')
         .replace('## Outcome', '## Steps\n\n1. Legacy duplicated sentence\n\n## Outcome')
@@ -558,15 +556,15 @@ Supports order operations. It does not expose a shopper's account.
 
   it('grades missing Capability Scenario coverage by model coverage status', () => {
     const cwd = fixtureCopy()
-    unlinkSync(join(cwd, '.businesslens/capabilities/order-management/scenarios/refund-order.md'))
-    rmdirSync(join(cwd, '.businesslens/capabilities/order-management/scenarios'))
+    unlinkSync(join(cwd, '.businesslens/capabilities/manage-orders/scenarios/refund-order.md'))
+    rmdirSync(join(cwd, '.businesslens/capabilities/manage-orders/scenarios'))
     compactEntity(
-      join(cwd, '.businesslens/capabilities/order-management/capability.md'),
-      join(cwd, '.businesslens/capabilities/order-management.md')
+      join(cwd, '.businesslens/capabilities/manage-orders/capability.md'),
+      join(cwd, '.businesslens/capabilities/manage-orders.md')
     )
     unlinkSync(join(cwd, '.businesslens/business-rules/refund-existing-orders.md'))
 
-    expect(run(cwd).errors.join('\n')).toContain('availability Context place "admin-web::admin-console" needs Capability Scenario coverage')
+    expect(run(cwd).errors.join('\n')).toContain('availability Context place "admin-web" needs Capability Scenario coverage')
 
     const coverage = join(cwd, '.businesslens/coverage.md')
     writeFileSync(coverage, readFileSync(coverage, 'utf8').replace('status: complete', 'status: partial'))
@@ -578,7 +576,7 @@ Supports order operations. It does not expose a shopper's account.
   it('requires Capability Scenario coverage for every availability Context', () => {
     const cwd = fixtureCopy()
     for (const name of ['complete-checkout', 'decline-checkout-payment']) {
-      const file = join(cwd, `.businesslens/capabilities/checkout/scenarios/${name}.md`)
+      const file = join(cwd, `.businesslens/capabilities/place-order/scenarios/${name}.md`)
       writeFileSync(
         file,
         readFileSync(file, 'utf8')
@@ -600,7 +598,7 @@ Supports order operations. It does not expose a shopper's account.
       readFileSync(file, 'utf8')
         .replace(
           '        place: customer-web::storefront::product-record',
-          '        place: admin-web::admin-console'
+          '        place: admin-web'
         )
         .replace(
           '      mobile:\n        place: customer-mobile::storefront::product-record',
@@ -609,7 +607,7 @@ Supports order operations. It does not expose a shopper's account.
     )
 
     const errors = run(cwd).errors.join('\n')
-    expect(errors).toContain('Context place "admin-web::admin-console" is outside capability "catalog-browsing"')
+    expect(errors).toContain('Context place "admin-web" is outside capability "browse-catalog"')
     expect(errors).toContain('Context place does not support actor "shopper"')
     expect(errors).toContain('step 1: contexts must assign every declared route or be omitted')
   })
@@ -618,10 +616,10 @@ Supports order operations. It does not expose a shopper's account.
     const cwd = fixtureCopy()
     const file = join(cwd, '.businesslens/business-rules/refund-existing-orders.md')
     writeFileSync(file, readFileSync(file, 'utf8').replace(
-      'appliesTo:\n  - type: capability-scenario\n    id: refund-order',
+      'appliesTo:\n  - type: capability-scenario\n    id: refund-order\n  - type: journey\n    id: browse-and-buy',
       `appliesTo:
   - type: capability
-    id: order-management
+    id: manage-orders
   - type: capability-scenario
     id: refund-order
     contexts:
@@ -630,25 +628,27 @@ Supports order operations. It does not expose a shopper's account.
 
     const errors = run(cwd).errors.join('\n')
     expect(errors).toContain('Context place "customer-web::storefront" is outside target "capability-scenario:refund-order"')
-    expect(errors).toContain('target "capability-scenario:refund-order" is redundant with capability target "order-management"')
+    expect(errors).toContain('target "capability-scenario:refund-order" is redundant with capability target "manage-orders"')
   })
 
   it('lets a Rule Context select descendants and rejects redundant nested selectors', () => {
     const cwd = fixtureCopy()
     const file = join(cwd, '.businesslens/business-rules/refund-existing-orders.md')
     const source = readFileSync(file, 'utf8').replace(
-      '    id: refund-order',
-      '    id: refund-order\n    contexts:\n      - place: admin-web'
+      'appliesTo:\n  - type: capability-scenario\n    id: refund-order',
+      'appliesTo:\n  - type: capability\n    id: browse-catalog\n    contexts:\n      - place: customer-web'
     )
     writeFileSync(file, source)
     expect(run(cwd).errors).toEqual([])
 
+    // An Interface selector already covers its Experiences, so naming both is
+    // redundant rather than narrower.
     writeFileSync(file, source.replace(
-      '      - place: admin-web',
-      '      - place: admin-web\n      - place: admin-web::admin-console'
+      '      - place: customer-web',
+      '      - place: customer-web\n      - place: customer-web::storefront'
     ))
     expect(run(cwd).errors.join('\n')).toContain(
-      'Context place "admin-web::admin-console" is redundant with "admin-web"'
+      'Context place "customer-web::storefront" is redundant with "customer-web"'
     )
   })
 
@@ -684,7 +684,7 @@ Supports order operations. It does not expose a shopper's account.
       .replace('# Browse and buy\n\n## Goal', '# Browse and buy\n\nLegacy Journey summary.\n\n## Goal')
       .replace('## Success criterion', '## Outcome\n\nWrong entity shape.\n\n## Success criterion'))
 
-    const scenario = join(cwd, '.businesslens/capabilities/checkout/scenarios/complete-checkout.md')
+    const scenario = join(cwd, '.businesslens/capabilities/place-order/scenarios/complete-checkout.md')
     writeFileSync(scenario, readFileSync(scenario, 'utf8')
       .replace('# Complete checkout\n\n## Trigger', '# Complete checkout\n\nLegacy Scenario summary.\n\n## Trigger')
       .replace('## Outcome', '## Goal\n\nWrong entity shape.\n\n## Trigger\n\nDuplicate trigger.\n\n## Outcome')
@@ -727,12 +727,12 @@ Supports order operations. It does not expose a shopper's account.
       .replace('actors: [shopper]', 'actors: [shopper, shopper]'))
     const screen = join(cwd, '.businesslens/interfaces/customer-web/experiences/storefront/screens/product-record.md')
     writeFileSync(screen, readFileSync(screen, 'utf8')
-      .replace('  - catalog-browsing\n', '  - catalog-browsing\n  - catalog-browsing\n'))
+      .replace('  - browse-catalog\n', '  - browse-catalog\n  - browse-catalog\n'))
 
     const errors = run(cwd).errors.join('\n')
     expect(errors).toContain('product.md: "tags" contains duplicate "commerce"')
     expect(errors).toContain('"actors" contains duplicate "shopper"')
-    expect(errors).toContain('"capabilities" contains duplicate "catalog-browsing"')
+    expect(errors).toContain('"capabilities" contains duplicate "browse-catalog"')
   })
 
   it('validates Screen relationships and product content', () => {
@@ -775,18 +775,18 @@ No bullet.
     const screen = join(cwd, '.businesslens/interfaces/customer-web/experiences/storefront/screens/product-record.md')
     writeFileSync(
       screen,
-      readFileSync(screen, 'utf8').replace('  - checkout\n', '')
+      readFileSync(screen, 'utf8').replace('  - place-order\n', '')
     )
 
     const errors = run(cwd).errors.join('\n')
-    expect(errors).toContain('Screen "customer-web::storefront::product-record" does not expose capability "checkout"')
+    expect(errors).toContain('Screen "customer-web::storefront::product-record" does not expose capability "place-order"')
   })
 
   it('rejects unknown config keys', () => {
     const cwd = fixtureCopy()
     writeFileSync(
       join(cwd, '.businesslens/config.yaml'),
-      'schema: 6\nplatform:\n  url: https://attacker.example\nsdd:\n  paths: []\n'
+      'schema: 7\nplatform:\n  url: https://attacker.example\nsdd:\n  paths: []\n'
     )
     expect(run(cwd).errors).toContain('config.yaml: unknown key "platform"')
   })
@@ -845,7 +845,7 @@ limitations: []
 Model breadth.
 `)
       const journeyFile = join(cwd, '.businesslens/journeys/browse-and-buy/journey.md')
-      const scenarioFile = join(cwd, '.businesslens/capabilities/order-management/scenarios/refund-order.md')
+      const scenarioFile = join(cwd, '.businesslens/capabilities/manage-orders/scenarios/refund-order.md')
       const referenceBlock = /references:\n(?:  - kind: .*\n    role: .*\n    target: .*\n)+/
       writeFileSync(journeyFile, readFileSync(journeyFile, 'utf8').replace(referenceBlock, ''))
       writeFileSync(scenarioFile, readFileSync(scenarioFile, 'utf8').replace(referenceBlock, ''))
@@ -868,14 +868,14 @@ steps:
   - text: Select a product
     kind: actor
     actor: shopper
-    capability: catalog-browsing
+    capability: browse-catalog
     contexts:
       web:
         place: customer-web::storefront::product-record
   - text: Complete checkout
     kind: actor
     actor: shopper
-    capability: checkout
+    capability: place-order
     contexts:
       web:
         place: customer-web::storefront::product-record

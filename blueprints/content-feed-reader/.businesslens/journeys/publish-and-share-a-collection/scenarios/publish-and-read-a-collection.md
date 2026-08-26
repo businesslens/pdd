@@ -5,7 +5,7 @@ steps:
   - text: The Reader publishes the owned collection
     kind: actor
     actor: reader
-    capability: collection-publication
+    capability: publish-collection
     contexts:
       publish-on-web:
         place: reader-web::personal-library::collection-workspace
@@ -14,7 +14,7 @@ steps:
   - text: The Visitor opens that address without joining the private library
     kind: actor
     actor: visitor
-    capability: public-collection-reading
+    capability: read-public-collection
     contexts:
       publish-on-web:
         place: reader-web::public-reading::public-collection

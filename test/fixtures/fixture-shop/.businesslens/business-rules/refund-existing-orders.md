@@ -2,6 +2,8 @@
 appliesTo:
   - type: capability-scenario
     id: refund-order
+  - type: journey
+    id: browse-and-buy
 references:
   - kind: code
     role: implementation

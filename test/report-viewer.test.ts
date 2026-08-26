@@ -72,7 +72,7 @@ describe('stable Product Report', () => {
     expect(workspace.domains.some((item: any) => item.screenIds.length)).toBe(true)
     const scenarioRule = workspace.rules.find((item: any) => item.id === 'refund-existing-orders')!
     expect(scenarioRule.capabilityIds).toEqual([])
-    expect(scenarioRule.derivedCapabilityIds).toEqual(['order-management'])
+    expect(scenarioRule.derivedCapabilityIds).toEqual(['manage-orders'])
     expect(scenarioRule.domainIds).toEqual(['ordering'])
     expect(report).toEqual(before)
   })
@@ -292,8 +292,8 @@ describe('stable Product Report', () => {
     const journeyScenario = workspace.journeyScenarios.find(
       (item: any) => item.id === 'browse-and-complete-checkout'
     )!
-    const browsingStep = journeyScenario.steps.find((step: any) => step.capabilityId === 'catalog-browsing')!
-    const checkoutStep = journeyScenario.steps.find((step: any) => step.capabilityId === 'checkout')!
+    const browsingStep = journeyScenario.steps.find((step: any) => step.capabilityId === 'browse-catalog')!
+    const checkoutStep = journeyScenario.steps.find((step: any) => step.capabilityId === 'place-order')!
 
     expect(browsingStep.contexts.map((context: any) => context.context.screenTitle)).toEqual(['Product record', 'Product record'])
     expect(checkoutStep.contexts.map((context: any) => context.context.screenTitle)).toEqual(['Product record', 'Product record'])
@@ -310,7 +310,7 @@ describe('stable Product Report', () => {
       (item: any) => item.id === 'browse-and-complete-checkout'
     )!
     const transitionedPlace = scenario.steps
-      .find((step: any) => step.capabilityId === 'checkout')!
+      .find((step: any) => step.capabilityId === 'place-order')!
       .contexts.find((context: any) => context.routeId === 'web')!
     transitionedPlace.placeId = 'customer-web::storefront'
 

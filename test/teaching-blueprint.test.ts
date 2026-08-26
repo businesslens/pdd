@@ -17,8 +17,9 @@ describe('Content Feed Reader teaching Blueprint', () => {
       experiences: 3,
       screens: 8,
       domains: 3,
+      objects: 2,
       capabilities: 10,
-      capabilityScenarios: 24,
+      capabilityScenarios: 25,
       journeys: 4,
       journeyScenarios: 8,
       businessRules: 4
@@ -46,6 +47,6 @@ describe('Content Feed Reader teaching Blueprint', () => {
       .flatMap(scenario => scenario.steps.flatMap(item => item.capability ? [item.capability] : []))
       .filter(capability => !achieved.has(capability)))
 
-    expect([...failureOnly]).toEqual(['feed-synchronization'])
+    expect([...failureOnly]).toEqual(['synchronize-feeds'])
   })
 })

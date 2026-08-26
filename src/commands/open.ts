@@ -19,7 +19,7 @@ import type {
   ReportSupportingSection
 } from '../core/portable.js'
 import { lintModel } from './lint.js'
-import { loadModel } from '../core/model.js'
+import { FOLDER_SCHEMA, loadModel } from '../core/model.js'
 import { parseProductReport, projectPortableReport } from '../core/portable.js'
 import { UsageError } from '../core/usage-error.js'
 import { validateProductLogo } from '../logo.js'
@@ -151,7 +151,7 @@ function prepareTarget(cwd: string, force: boolean): string {
 }
 
 function writeReport(root: string, report: ProductReportV10, hasLogo: boolean): void {
-  write(join(root, 'config.yaml'), stringify({ schema: 6, sdd: { paths: [] } }, { lineWidth: 0 }))
+  write(join(root, 'config.yaml'), stringify({ schema: FOLDER_SCHEMA, sdd: { paths: [] } }, { lineWidth: 0 }))
   write(join(root, '.gitignore'), 'build/\ncache/\n')
   write(
     join(root, 'taxonomies.yaml'),
@@ -178,6 +178,11 @@ function writeReport(root: string, report: ProductReportV10, hasLogo: boolean): 
       sourceAreas: [],
       // Unmapped product areas explain model breadth and survive the
       // source-free projection. Source paths live in sourceAreas, not here.
+      // The author's own account of what is unmapped, what the limitations are,
+      // and why — never rewritten. It describes the MODEL'S completeness rather
+      // than its origin, and it is exactly what a reader receiving a Blueprint
+      // needs. Only `method`, which is a claim about how the model was derived,
+      // is replaced: a Blueprint carries no claim about its own origin.
       unmapped: report.coverage.unmapped,
       // Deduplicated so expansion is idempotent. A Blueprint's committed model is
       // itself an expanded report, so re-expanding it must reproduce the same
@@ -186,7 +191,7 @@ function writeReport(root: string, report: ProductReportV10, hasLogo: boolean): 
       limitations: report.coverage.limitations.includes(OPEN_COVERAGE_LIMITATION)
         ? [...report.coverage.limitations]
         : [...report.coverage.limitations, OPEN_COVERAGE_LIMITATION]
-    }) + body('Coverage', OPEN_COVERAGE_RATIONALE, '', [], [])
+    }) + body('Coverage', report.coverage.rationale.trim() || OPEN_COVERAGE_RATIONALE, '', [], [])
   )
 
   for (const actor of report.model.actors) {
@@ -226,6 +231,19 @@ function writeReport(root: string, report: ProductReportV10, hasLogo: boolean): 
         colorSlot: domain.colorSlot,
         references: references(domain.references)
       })) + body(domain.name, domain.description, domain.intent, [], domain.supportingSections)
+    )
+  }
+  for (const object of report.model.objects) {
+    write(
+      entityPath(join(root, 'objects'), object.id, 'object', false),
+      frontmatter(compactRecord({
+        domain: object.domainId,
+        references: references(object.references)
+      })) + body(object.title, object.description, object.intent, [], [
+        { heading: 'States', content: object.states.map(state => `### ${state.name}\n\n${state.content}`).join('\n\n') },
+        { heading: 'Transitions', content: object.transitions.map(transition => `- ${transition.from} \u2192 ${transition.to}`).join('\n') },
+        ...object.supportingSections
+      ])
     )
   }
   for (const experience of report.model.experiences) {
@@ -343,6 +361,7 @@ function writeReport(root: string, report: ProductReportV10, hasLogo: boolean): 
           text: step.text,
           kind: step.kind,
           actor: step.actorId ?? undefined,
+          unattended: step.unattended ? true : undefined,
           contexts: step.contexts.length
             ? Object.fromEntries(step.contexts.map(context => [context.routeId, { place: context.placeId }]))
             : undefined
@@ -392,6 +411,7 @@ function writeReport(root: string, report: ProductReportV10, hasLogo: boolean): 
           text: step.text,
           kind: step.kind,
           actor: step.actorId ?? undefined,
+          unattended: step.unattended ? true : undefined,
           capability: step.capabilityId ?? undefined,
           contexts: step.contexts.length
             ? Object.fromEntries(step.contexts.map(context => [context.routeId, { place: context.placeId }]))

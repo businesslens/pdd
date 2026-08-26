@@ -19,7 +19,7 @@ steps:
         place: reader-web::personal-library::unread-library
       mobile:
         place: reader-mobile::personal-library::unread-library
-  - text: The item remains available for an explicit reading-state or saving decision
+  - text: The item remains available for an explicit track-reading-state or saving decision
     kind: condition
     contexts:
       web:

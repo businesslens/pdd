@@ -5,7 +5,7 @@ steps:
   - text: The Reader reads the item
     kind: actor
     actor: reader
-    capability: content-reading
+    capability: read-content
     contexts:
       web:
         place: reader-web::personal-library::unread-library
@@ -14,7 +14,7 @@ steps:
   - text: The Reader saves it
     kind: actor
     actor: reader
-    capability: item-saving
+    capability: save-item
     contexts:
       web:
         place: reader-web::personal-library::unread-library
@@ -23,7 +23,7 @@ steps:
   - text: The Reader marks it read
     kind: actor
     actor: reader
-    capability: reading-state
+    capability: track-reading-state
     contexts:
       web:
         place: reader-web::personal-library::unread-library

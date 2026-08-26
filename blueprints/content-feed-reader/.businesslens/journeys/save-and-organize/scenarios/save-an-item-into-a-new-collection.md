@@ -5,7 +5,7 @@ steps:
   - text: The Reader saves the item
     kind: actor
     actor: reader
-    capability: item-saving
+    capability: save-item
     contexts:
       web:
         place: reader-web::personal-library::unread-library
@@ -14,7 +14,7 @@ steps:
   - text: The Reader creates and names a collection
     kind: actor
     actor: reader
-    capability: collection-creation
+    capability: create-collection
     contexts:
       web:
         place: reader-web::personal-library::collection-workspace
@@ -22,7 +22,7 @@ steps:
         place: reader-web::personal-library::collection-workspace
   - text: The saved item is added to the collection
     kind: product
-    capability: collection-organization
+    capability: organize-collection
     contexts:
       web:
         place: reader-web::personal-library::collection-workspace

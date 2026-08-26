@@ -2,7 +2,7 @@
 type: mobile-app
 actors: [shopper]
 entryPoints:
-  - ios: fixture-shop://storefront
+  - mobile-app: fixture-shop://storefront
 ---
 
 # Customer mobile application

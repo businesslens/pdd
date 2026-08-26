@@ -29,7 +29,7 @@ describe('report SDK entry point', () => {
   })
 
   it('exports the schema, semantic validator, portable projection, and digest', () => {
-    expect(sdk.REPORT_SCHEMA_VERSION).toBe('10.0.0')
+    expect(sdk.REPORT_SCHEMA_VERSION).toBe('11.0.0')
     for (const name of [
       'ProductReportV10Schema',
       'ProductReportSchema',
@@ -56,7 +56,7 @@ describe('report SDK entry point', () => {
       expect(sdk, `missing export ${name}`).toHaveProperty(name)
     }
     expect(sdk.INTERFACE_TYPES).toEqual([
-      'web', 'mobile-app', 'desktop-app', 'cli', 'api', 'webhook', 'messaging', 'voice', 'device'
+      'web', 'mobile-app', 'desktop-app', 'cli', 'api', 'webhook', 'messaging', 'voice', 'device', 'agent'
     ])
   })
 
@@ -202,7 +202,8 @@ describe('projectPortableReport', () => {
           text: 'The shopper attempts checkout',
           kind: 'actor',
           actorId: 'shopper',
-          capabilityId: 'checkout',
+          capabilityId: 'place-order',
+          unattended: false,
           contexts: [{
             routeId: 'web-to-admin',
             placeId: 'customer-web::storefront::product-record'
@@ -212,10 +213,11 @@ describe('projectPortableReport', () => {
           text: 'The store admin reviews the blocked attempt',
           kind: 'actor',
           actorId: 'store-admin',
-          capabilityId: 'order-management',
+          capabilityId: 'manage-orders',
+          unattended: false,
           contexts: [{
             routeId: 'web-to-admin',
-            placeId: 'admin-web::admin-console'
+            placeId: 'admin-web'
           }]
         }
       ],
@@ -230,9 +232,9 @@ describe('projectPortableReport', () => {
     withFailure.model.screens.find(screen => screen.id === 'customer-web::storefront::product-record')!
       .journeyScenarioIds.push('checkout-needs-operator-help')
     withFailure.counts.journeyScenarios += 1
-    withFailure.model.journeys[0]!.failureOnlyCapabilityIds = ['order-management']
+    withFailure.model.journeys[0]!.failureOnlyCapabilityIds = ['manage-orders']
 
-    expect(withFailure.model.journeys[0]!.capabilityIds).toEqual(['catalog-browsing', 'checkout'])
+    expect(withFailure.model.journeys[0]!.capabilityIds).toEqual(['browse-catalog', 'place-order'])
     expect(sdk.validateProductReport(withFailure)).toEqual([])
   })
 
@@ -427,7 +429,7 @@ describe('projectPortableReport', () => {
   it('enforces route, Rule-target, Experience-cover, and complete-model relationships', () => {
     const incompleteRoute = structuredClone(report)
     const scenario = incompleteRoute.model.journeyScenarios.find(item => item.id === 'browse-and-complete-checkout')!
-    scenario.steps.find(step => step.capabilityId === 'checkout')!.contexts.pop()
+    scenario.steps.find(step => step.capabilityId === 'place-order')!.contexts.pop()
     expect(sdk.validateProductReport(incompleteRoute).join('\n')).toContain(
       'contexts must assign every declared route or be empty'
     )
@@ -437,10 +439,10 @@ describe('projectPortableReport', () => {
       .find(rule => rule.id === 'payment-before-confirmation')!
       .appliesTo.find(item => item.type === 'capability')!
     if (target.type !== 'context') {
-      target.contexts = [{ placeId: 'admin-web::admin-console' }]
+      target.contexts = [{ placeId: 'admin-web' }]
     }
     expect(sdk.validateProductReport(narrowedRule).join('\n')).toContain(
-      'Context place "admin-web::admin-console" is outside target "capability:checkout"'
+      'Context place "admin-web" is outside target "capability:place-order"'
     )
 
     const uncoveredActor = structuredClone(report)
@@ -457,14 +459,14 @@ describe('projectPortableReport', () => {
 
   it('requires public Blueprint Capability coverage in every availability Context', () => {
     const incomplete = structuredClone(report)
-    for (const scenario of incomplete.model.capabilityScenarios.filter(item => item.capabilityId === 'checkout')) {
+    for (const scenario of incomplete.model.capabilityScenarios.filter(item => item.capabilityId === 'place-order')) {
       scenario.routes = scenario.routes.filter(route => route.id !== 'mobile')
       for (const step of scenario.steps) step.contexts = step.contexts.filter(context => context.routeId !== 'mobile')
     }
     incomplete.model.screens = incomplete.model.screens
       .filter(screen => !screen.id.startsWith('customer-mobile::'))
     expect(sdk.validateBlueprintReport(incomplete)).toContain(
-      'capability "checkout" availability Context place "customer-mobile::storefront" needs Capability Scenario coverage for a public Blueprint'
+      'capability "place-order" availability Context place "customer-mobile::storefront" needs Capability Scenario coverage for a public Blueprint'
     )
   })
 

@@ -102,6 +102,18 @@ Screen as its most-specific `place`. When that Step names a Capability, the Scre
 expose it. Consumers derive both Capability Scenario and Journey Scenario
 backlinks from those Step Contexts.
 
+## Screens shared across Experiences
+
+An Interface usually holds either `screens/` or `experiences/`. It may hold
+**both** when a Screen is genuinely common to its Experiences rather than
+belonging to one — a search results page, a settings page. A Screen beside
+`experiences/` is reachable from every Experience of that Interface, and two
+Screens with the same name below different Experiences of one Interface are
+counterparts exactly as they are across Interfaces.
+
+Reach for this only for a view that really is shared. A Screen that belongs to
+one Experience belongs inside it.
+
 ## Web and mobile
 
 The same view on web and on mobile is two Screen folders with the same name —

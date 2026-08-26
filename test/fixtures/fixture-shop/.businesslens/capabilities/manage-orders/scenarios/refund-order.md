@@ -9,14 +9,14 @@ steps:
     actor: store-admin
     contexts:
       web:
-        place: admin-web::admin-console
+        place: admin-web
       cli:
         place: operator-cli
   - text: The refund is issued through the order service
     kind: product
     contexts:
       web:
-        place: admin-web::admin-console
+        place: admin-web
       cli:
         place: operator-cli
 references:

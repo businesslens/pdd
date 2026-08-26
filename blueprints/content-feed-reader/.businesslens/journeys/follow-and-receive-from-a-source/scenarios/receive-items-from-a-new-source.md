@@ -5,7 +5,7 @@ steps:
   - text: The Reader submits the feed address and follows the validated source
     kind: actor
     actor: reader
-    capability: source-following
+    capability: follow-source
     contexts:
       web:
         place: reader-web::personal-library::source-list
@@ -14,7 +14,7 @@ steps:
   - text: The Reader refreshes their followed sources
     kind: actor
     actor: reader
-    capability: feed-synchronization
+    capability: synchronize-feeds
     contexts:
       web:
         place: reader-web::personal-library::source-list

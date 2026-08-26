@@ -1,8 +1,9 @@
 ---
 capabilities:
-  - content-reading
-  - reading-state
-  - item-saving
+  - read-content
+  - track-reading-state
+  - save-item
+  - synchronize-feeds
 entryPoints:
   - reader-web: /unread
 assets:

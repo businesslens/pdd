@@ -1,13 +1,13 @@
 ---
 appliesTo:
   - type: capability
-    id: collection-creation
+    id: create-collection
   - type: capability
-    id: collection-naming
+    id: rename-collection
   - type: capability
-    id: collection-organization
+    id: organize-collection
   - type: capability
-    id: collection-publication
+    id: publish-collection
   - type: journey
     id: save-and-organize
   - type: journey

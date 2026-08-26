@@ -233,8 +233,8 @@ describe('named Product Topology views', () => {
     const source = graph.nodes.find(node => node.id === landing.source)!
 
     expect(landing.label).toBe('lands on')
-    expect(source.data?.entityId).toBe('collection-publication')
-    expect(source.data?.entityId).not.toBe('public-collection-reading')
+    expect(source.data?.entityId).toBe('publish-collection')
+    expect(source.data?.entityId).not.toBe('read-public-collection')
   })
 
   it('runs Value path Steps downward so a short Journey is not a thin ribbon', () => {

@@ -79,6 +79,24 @@ export interface CapabilityEntity extends EntityFile {
   availability: Context[]
 }
 
+export interface ObjectStateTransition {
+  from: string
+  to: string
+}
+
+/**
+ * A thing the Product keeps whose state an Actor can observe and act on.
+ *
+ * Objects name the Product's nouns where Capabilities name its verbs. One
+ * exists exactly when a thing has two or more named states referenced by two or
+ * more Capabilities — a computable test, so an author never judges it.
+ */
+export interface ObjectEntity extends EntityFile {
+  domain?: string
+  states: ReturnType<typeof screenStates>
+  transitions: ObjectStateTransition[]
+}
+
 export interface ScreenEntity extends EntityFile {
   /** The Interface or Experience that owns it, read from the path. Never authored. */
   containerId: string
@@ -117,6 +135,13 @@ export interface ScenarioStepContext extends Context {
 }
 
 export interface ScenarioStep {
+  /**
+   * Marks a Scenario nobody triggers — a schedule the Product owns, an expiry,
+   * a retry. Valid only on the first Step and only when `kind` is `condition`.
+   * Without it, unattended behavior had to be modelled as somebody else's
+   * request or left with no acceptance coverage at all.
+   */
+  unattended?: boolean
   text: string
   kind: string
   actor?: string
@@ -200,6 +225,7 @@ export interface PddModel {
   experiences: ExperienceEntity[]
   screens: ScreenEntity[]
   domains: DomainEntity[]
+  objects: ObjectEntity[]
   capabilities: CapabilityEntity[]
   capabilityScenarios: CapabilityScenarioEntity[]
   businessRules: BusinessRuleEntity[]
@@ -210,6 +236,9 @@ export interface PddModel {
 }
 
 export const FOLDER = '.businesslens'
+
+/** The one folder-format version this release reads and writes. */
+export const FOLDER_SCHEMA = 7
 
 /**
  * The two channels a model load reports into.
@@ -423,7 +452,7 @@ function scenarioStepsField(
       continue
     }
     const item = raw as Record<string, unknown>
-    rejectUnknownKeys(item, ['text', 'kind', 'actor', 'contexts', ...(allowCapability ? ['capability'] : [])], issues, itemLabel)
+    rejectUnknownKeys(item, ['text', 'kind', 'actor', 'contexts', 'unattended', ...(allowCapability ? ['capability'] : [])], issues, itemLabel)
     const contexts: ScenarioStepContext[] = []
     if (item.contexts !== undefined && item.contexts !== null) {
       if (typeof item.contexts !== 'object' || Array.isArray(item.contexts)) {
@@ -435,11 +464,16 @@ function scenarioStepsField(
         }
       }
     }
+    const unattended = item.unattended
+    if (unattended !== undefined && typeof unattended !== 'boolean') {
+      issues.push(`${itemLabel}: "unattended" must be true or false`)
+    }
     steps.push({
       text: stringField(item, 'text', issues, itemLabel) || '',
       kind: stringField(item, 'kind', issues, itemLabel) || '',
       actor: stringField(item, 'actor', issues, itemLabel),
       capability: allowCapability ? stringField(item, 'capability', issues, itemLabel) : undefined,
+      unattended: unattended === true ? true : undefined,
       contexts
     })
   }
@@ -544,7 +578,7 @@ export function loadModel(cwd: string): PddModel {
     }
   }
 
-  let config = { schema: 6, sddPaths: [] as string[] }
+  let config = { schema: FOLDER_SCHEMA, sddPaths: [] as string[] }
   const configFile = join(root, 'config.yaml')
   if (existsSync(configFile)) {
     try {
@@ -568,8 +602,8 @@ export function loadModel(cwd: string): PddModel {
   } else if (existsSync(root)) {
     issues.push('config.yaml is missing')
   }
-  if (config.schema !== 6) {
-    issues.push(`config.yaml: schema ${config.schema} is not supported (expected 6)`)
+  if (config.schema !== FOLDER_SCHEMA) {
+    issues.push(`config.yaml: schema ${config.schema} is not supported (expected ${FOLDER_SCHEMA})`)
   }
 
   let scenarioKinds: ScenarioKind[] = []
@@ -784,14 +818,6 @@ export function loadModel(cwd: string): PddModel {
       `interfaces/${productInterface.id}/experiences`,
       ['screens']
     )
-    const hasDirectScreens = existsSync(join(productInterface.directory, 'screens'))
-    if (experienceLocations.length && hasDirectScreens) {
-      // An Interface has one structural child shape, so a Screen always has one
-      // unambiguous Interface or Experience container.
-      issues.push(
-        `interfaces/${productInterface.id}/: an Interface holds either screens/ or experiences/, never both`
-      )
-    }
 
     for (const location of experienceLocations) {
       const experienceId = qualify(productInterface.id, location.id)
@@ -814,7 +840,10 @@ export function loadModel(cwd: string): PddModel {
       readScreens(location.directory, experienceId, `interfaces/${productInterface.id}/experiences/${location.id}`)
     }
 
-    if (!experienceLocations.length) {
+    // Screens beside experiences/ are shared across every Experience of this
+    // Interface. A view common to several Experiences would otherwise have to be
+    // duplicated into each of them.
+    if (existsSync(join(productInterface.directory, 'screens'))) {
       readScreens(productInterface.directory, productInterface.id, `interfaces/${productInterface.id}`)
     }
   }
@@ -827,6 +856,48 @@ export function loadModel(cwd: string): PddModel {
         id, file, doc, references, directory, assets, assetMeta,
         colorSlot: typeof data.colorSlot === 'number' ? data.colorSlot : undefined,
         boundary: section(doc, 'Boundary') || ''
+      }
+    })
+
+  const objects: ObjectEntity[] = listEntities(join(root, 'objects'), 'object', findings, 'objects')
+    .map((location) => {
+      const { id, file } = location
+      const { data, doc, references, directory, assets, assetMeta } = readEntity(location, ['domain'], issues)
+      const states = screenStates(section(doc, 'States') || '', issues, file, 'States', 'object state')
+      if (states.length < 2) {
+        issues.push(`${file}: an Object needs "## States" with at least two H3 states`)
+      }
+      const stateNames = new Set(states.map(state => state.title))
+      const transitions: ObjectStateTransition[] = []
+      const transitionBody = section(doc, 'Transitions')
+      if (transitionBody === undefined) {
+        issues.push(`${file}: an Object needs a "## Transitions" section`)
+      } else {
+        for (const item of bulletList(transitionBody)) {
+          const parts = item.split(/\s*(?:\u2192|->)\s*/)
+          if (parts.length !== 2 || !parts[0]?.trim() || !parts[1]?.trim()) {
+            issues.push(`${file}: transition "${item}" must read "from \u2192 to"`)
+            continue
+          }
+          const [from, to] = [parts[0].trim(), parts[1].trim()]
+          for (const name of [from, to]) {
+            if (!stateNames.has(name)) issues.push(`${file}: transition names unknown state "${name}"`)
+          }
+          transitions.push({ from, to })
+        }
+        if (!transitions.length) issues.push(`${file}: "## Transitions" needs at least one transition`)
+      }
+      const reachable = new Set(transitions.map(transition => transition.to))
+      for (const state of states.slice(1)) {
+        if (!reachable.has(state.title)) {
+          notices.push(`${file}: no transition reaches state "${state.title}"`)
+        }
+      }
+      return {
+        id, file, doc, references, directory, assets, assetMeta,
+        domain: stringField(data, 'domain', issues, file),
+        states,
+        transitions
       }
     })
 
@@ -948,6 +1019,7 @@ export function loadModel(cwd: string): PddModel {
     experiences,
     screens,
     domains,
+    objects,
     capabilities,
     capabilityScenarios,
     businessRules,

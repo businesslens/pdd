@@ -1,0 +1,19 @@
+# Architecture decision records
+
+One decision per file, numbered, append-only. A superseded ADR keeps its file
+and gains a `Superseded by` line rather than being edited into agreement with a
+later decision.
+
+These record decisions about **how the Product Model itself is judged and
+changed** — they constrain future format work. They are not docs-site pages and
+do not carry docs frontmatter.
+
+| # | Decision | Status |
+| --- | --- | --- |
+| [0001](./0001-shipped-agent-is-the-standard-of-judgment.md) | The shipped agent, not the spec, is the standard a format rule must meet | Accepted |
+| [0002](./0002-determinism-outranks-expressiveness.md) | Determinism outranks expressiveness | Accepted |
+| [0003](./0003-descriptive-and-generative-are-equal.md) | Descriptive and generative use are judged equally | Accepted |
+| [0004](./0004-the-pull-request-diff-is-the-binding-human-surface.md) | The pull-request diff is the binding human surface | Accepted |
+| [0005](./0005-reviewability-is-a-first-class-axis.md) | Reviewability is a first-class quality axis | Accepted |
+| [0006](./0006-determinism-is-verified-by-independent-double-authoring.md) | Determinism is verified by independent double-authoring | Accepted |
+| [0007](./0007-blueprints-are-provenance-neutral.md) | Blueprints are provenance-neutral by design | Accepted |

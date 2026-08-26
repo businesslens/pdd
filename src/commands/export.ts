@@ -92,6 +92,7 @@ export function compileReport(
     kind: step.kind as 'actor' | 'product' | 'condition',
     actorId: step.actor ?? null,
     capabilityId: parentCapability ?? step.capability ?? null,
+    unattended: step.unattended === true,
     contexts: scenario.routes.flatMap(route => {
       const context = step.contexts.find(item => item.routeId === route.id)
       return context ? [{ routeId: route.id, placeId: context.place }] : []
@@ -131,6 +132,7 @@ export function compileReport(
       experiences: model.experiences.length,
       screens: model.screens.length,
       domains: model.domains.length,
+      objects: model.objects.length,
       capabilities: model.capabilities.length,
       capabilityScenarios: model.capabilityScenarios.length,
       journeys: model.journeys.length,
@@ -196,6 +198,15 @@ export function compileReport(
         description: domain.doc.lead,
         ...(domain.colorSlot !== undefined ? { colorSlot: domain.colorSlot } : {}),
         ...entityContent(domain, [], assetBase)
+      })),
+      objects: byId(model.objects).map(object => ({
+        id: object.id,
+        title: object.doc.title,
+        description: object.doc.lead,
+        ...(object.domain ? { domainId: object.domain } : {}),
+        states: object.states.map(state => ({ name: state.title, content: state.description })),
+        transitions: object.transitions.map(transition => ({ from: transition.from, to: transition.to })),
+        ...entityContent(object, ['States', 'Transitions'], assetBase)
       })),
       capabilities: byId(model.capabilities).map(capability => ({
         id: capability.id,

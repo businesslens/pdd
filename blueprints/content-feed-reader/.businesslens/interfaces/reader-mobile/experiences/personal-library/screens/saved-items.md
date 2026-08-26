@@ -1,7 +1,7 @@
 ---
 capabilities:
-  - content-reading
-  - item-saving
+  - read-content
+  - save-item
 entryPoints:
   - reader-mobile: content-reader://library/saved
 ---

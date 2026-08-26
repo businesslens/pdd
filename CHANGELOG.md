@@ -7,6 +7,68 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Object, a tenth entity kind.** An Object names a thing the Product keeps
+  whose state an Actor observes — an order, a listing — and records its states
+  and legal transitions. Capabilities name a product's verbs; nothing named its
+  nouns, so a thing's lifecycle had nowhere to live but whichever Screen
+  happened to show it. Its existence rule is computable rather than judged: an
+  Object exists exactly when a thing has two or more named states referenced by
+  two or more Capabilities.
+- **Unattended Scenarios.** A Scenario's first Step may be a `condition`
+  carrying `unattended: true`, and such a Scenario needs no Actor Step. A
+  schedule the Product owns, an expiry, or a retry is real Product behavior with
+  nobody to name, and requiring an Actor forced it to be written as somebody
+  else's request or left uncovered. The Content Feed Reader Blueprint stated a
+  recurring collection schedule in prose and had no Scenario for it; it does now.
+- `agent` joins the Interface interaction types: the surface an AI coding
+  harness reaches through installed skills or tools. Two independent authors
+  modelling one such surface picked two different existing values, because none
+  of the nine fitted.
+- An Interface may hold `screens/` beside `experiences/`, for a Screen genuinely
+  shared across its Experiences. Previously a search or settings view common to
+  several Experiences had to be duplicated into each one.
+- `docs/product-model.md` draws the two hierarchies and two axes it had only
+  described, and states every structural boundary as the rule that decides it.
+  A new Objects page joins the Product Model group.
+
+### Changed
+
+- **Folder schema 7 and Product Report v11 are the only accepted formats.**
+  There is no compatibility reader.
+- **Behavioral ids are verb-object; cross-cutting ids are the bare noun.**
+  `browse-catalog`, not `catalog-browsing`. Ids are the model's whole identity
+  mechanism, and two models of one product that name the same behavior
+  differently cannot be diffed, merged, or compared. The golden fixture and the
+  Content Feed Reader Blueprint are renamed accordingly.
+- **Whether an Interface holds Experiences is derived, never judged.** It holds
+  them exactly when it serves more than one `access` value or two Actor sets
+  with disjoint Capability coverage; `lint` computes this from fields already
+  authored. A counterpart Experience under another Interface is exempt, so
+  platform pairs keep their symmetry. One product previously had two lint-clean
+  encodings — two Interfaces, or one Interface with two Experiences — whose ids
+  shared nothing.
+- **A Business Rule governs two or more behaviors, or a Context independent of
+  any behavior.** Anything true of exactly one Capability is a `condition` Step
+  or its Outcome, and `lint` warns otherwise. The boundary was previously
+  unstated, and two independent authors classified the same two facts in exactly
+  opposite directions.
+- A Domain must state a `## Boundary` naming something it does not own, and
+  warns when it holds fewer than two Capabilities.
+- On an Interface, every `entryPoints` key must equal that Interface's own
+  `type`. The key was unvalidated there while being enforced on Experiences and
+  Screens, so one field carried three vocabularies and all of them linted clean.
+- **`blueprint open` no longer overwrites the author's coverage prose.**
+  `unmapped`, `limitations`, and `rationale` describe the model's own
+  completeness and survive expansion intact; only `method`, which is a claim
+  about how a model was derived, is replaced. A Blueprint carries no claim about
+  its own origin.
+- `businesslens-map` must end every proposed delta with a `Judgment calls`
+  section naming each choice that could have gone the other way. A reviewer can
+  see what a model says but not what it omits, which is where two independent
+  maps of one repository actually diverged.
+
 ## [0.8.0] - 2026-08-25
 
 ### Added

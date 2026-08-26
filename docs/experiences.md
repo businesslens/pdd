@@ -19,7 +19,20 @@ counterparts with separate qualified ids, not one shared entity.
 
 ## When you create one
 
-Create an Experience when all of these are true:
+**This is decided by rule, not by judgment.** An Interface holds Experiences
+exactly when one of the following is true of it, and holds none when neither is:
+
+- it serves more than one `access` value; or
+- it serves two or more Actor sets whose Capability coverage is disjoint — no
+  Capability available there lists Actors from both sets.
+
+`lint` computes both from `actors`, `access`, and each Capability's
+`availability`, so you never have to argue the question. There is one exception:
+an Interface may keep a single Experience when another Interface has an
+Experience of the same name, because the two are counterparts and flattening one
+would make two views of one context look unrelated.
+
+The conditions below explain what the rule is protecting:
 
 1. it represents a coherent Actor context;
 2. it has a meaningful capability boundary and exclusions;

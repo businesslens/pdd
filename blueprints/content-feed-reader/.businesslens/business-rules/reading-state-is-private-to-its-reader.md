@@ -1,7 +1,7 @@
 ---
 appliesTo:
   - type: capability
-    id: reading-state
+    id: track-reading-state
     contexts:
       - place: reader-web::personal-library
       - place: reader-mobile::personal-library

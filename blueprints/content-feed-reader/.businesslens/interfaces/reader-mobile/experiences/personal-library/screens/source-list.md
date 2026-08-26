@@ -1,7 +1,7 @@
 ---
 capabilities:
-  - source-following
-  - feed-synchronization
+  - follow-source
+  - synchronize-feeds
 entryPoints:
   - reader-mobile: content-reader://library/sources
 ---

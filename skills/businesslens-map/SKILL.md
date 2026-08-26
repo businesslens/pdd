@@ -46,9 +46,15 @@ Read before authoring:
 5. Trace observable behavior end to end. Treat tests and docs as leads; confirm
    claims in implementation. Do not infer permissions, guarantees, or live
    operational state from names.
-6. Draft Actors, Interfaces, optional Experiences, Product Screens and Domains,
-   Capabilities, Capability Scenarios, Business Rules, optional Journeys and
-   their Journey Scenarios, availability Contexts, and coverage. Give every
+6. Draft Actors, Interfaces, optional Experiences, Product Screens, Domains and
+   Objects, Capabilities, Capability Scenarios, Business Rules, optional
+   Journeys and their Journey Scenarios, availability Contexts, and coverage.
+   Name behavioral entities verb-object (`browse-catalog`, never
+   `catalog-browsing`) and cross-cutting entities with the bare noun. Create an
+   Object exactly when a thing has two or more named states referenced by two or
+   more Capabilities. Model unattended behavior — a schedule the Product owns, an
+   expiry, a retry — as a Scenario whose first Step is a `condition` carrying
+   `unattended: true`, availability naming where an Actor observes the outcome. Give every
    mapped Capability evidence-backed per-Capability acceptance. Create a Journey only
    for a stable goal whose achieved path crosses at least two Capabilities; do
    not wrap a single Capability in a Journey. Give every Journey an achieved
@@ -72,6 +78,14 @@ Read before authoring:
    removed entities; mapped and unmapped areas; limitations; and any material
    uncertainty. Get explicit approval for product meaning. Do not silently
    replace a mature model.
+
+   **Always end the delta with a `Judgment calls` section**, naming every choice
+   that could defensibly have gone the other way, the alternative, and why you
+   chose as you did. Capability granularity, whether something warranted an
+   Interface, an Experience, an Object or a Journey, and whether a constraint is
+   a Business Rule all belong there. A reviewer can see what the model says but
+   not what it omits, so an unstated judgment call is one nobody can challenge —
+   which makes the approval a formality rather than a check.
 8. Write only inside `.businesslens/` after approval. Create the complete
    authored layout when absent, including the canonical `.businesslens/README.md`
    and `.gitignore`. Set coverage by model breadth:

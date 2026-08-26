@@ -3,7 +3,7 @@ title: Journeys
 description: Optional coherent Actor goals that deliberately compose multiple durable Product Capabilities, and the Journey Scenarios that route them end to end.
 section: open-source
 group: Product Model
-order: 15
+order: 16
 ---
 
 # Journeys

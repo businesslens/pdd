@@ -4,7 +4,7 @@ import { containsPlace, interfaceOf, parentPlace } from './ids.js'
 import { containsStructuralHeading } from './markdown.js'
 import { INTERFACE_TYPES } from './interface-types.js'
 
-export const REPORT_SCHEMA_VERSION = '10.0.0'
+export const REPORT_SCHEMA_VERSION = '11.0.0'
 
 const IdSchema = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
 /**
@@ -93,6 +93,7 @@ const ReportEntityCountShape = {
   experiences: z.number().int().min(0),
   screens: z.number().int().min(0),
   domains: z.number().int().min(0),
+  objects: z.number().int().min(0),
   capabilities: z.number().int().min(0),
   capabilityScenarios: z.number().int().min(0),
   journeys: z.number().int().min(0),
@@ -161,6 +162,31 @@ export const ReportDomainSchema = z.strictObject({
   ...EntityContentSchema
 })
 
+export const ReportObjectStateSchema = z.strictObject({
+  name: SingleLineTextSchema,
+  content: RequiredMarkdownFragmentSchema
+})
+
+export const ReportObjectTransitionSchema = z.strictObject({
+  from: SingleLineTextSchema,
+  to: SingleLineTextSchema
+})
+
+/**
+ * A thing the Product keeps whose state an Actor can observe. Object states are
+ * an authored lifecycle; a Screen's `productStates` remain that view's own
+ * states, and the two are never merged.
+ */
+export const ReportObjectSchema = z.strictObject({
+  id: IdSchema,
+  title: SingleLineTextSchema,
+  description: RequiredMarkdownFragmentSchema,
+  domainId: IdSchema.optional(),
+  states: z.array(ReportObjectStateSchema).min(2),
+  transitions: z.array(ReportObjectTransitionSchema).min(1),
+  ...EntityContentSchema
+})
+
 export const ReportCapabilitySchema = z.strictObject({
   id: IdSchema,
   title: SingleLineTextSchema,
@@ -226,13 +252,17 @@ export const ReportScenarioStepSchema = z.strictObject({
   kind: z.enum(['actor', 'product', 'condition']),
   actorId: IdSchema.nullable(),
   capabilityId: IdSchema.nullable(),
+  /** True only on a first condition Step that nobody triggers. */
+  unattended: z.boolean(),
   contexts: z.array(ReportScenarioStepContextSchema)
 })
 
 const ReportScenarioContentShape = {
   title: SingleLineTextSchema,
   kindId: IdSchema,
-  actorIds: z.array(IdSchema).min(1),
+  // Empty exactly when the Scenario is unattended: nobody triggers it, so it
+  // derives no Actor. Every other Scenario still names at least one.
+  actorIds: z.array(IdSchema),
   routes: z.array(ReportScenarioRouteSchema).min(1),
   steps: z.array(ReportScenarioStepSchema).min(1),
   trigger: RequiredMarkdownFragmentSchema,
@@ -316,6 +346,7 @@ export const ProductReportV10Schema = z.strictObject({
     experiences: z.array(ReportExperienceSchema),
     screens: z.array(ReportScreenSchema),
     domains: z.array(ReportDomainSchema),
+    objects: z.array(ReportObjectSchema),
     capabilities: z.array(ReportCapabilitySchema),
     capabilityScenarios: z.array(ReportCapabilityScenarioSchema),
     journeys: z.array(ReportJourneySchema),
@@ -703,12 +734,17 @@ export function validateProductReport(report: ProductReportV10): string[] {
       if (twin) issues.push(`${label}: route "${route.id}" repeats every Context place of route "${twin}"`)
       else sequences.set(sequence, route.id)
     }
+    // An unattended Scenario derives no Actor, so this question has no answer
+    // for it. Its Contexts say where an Actor observes the outcome.
+    const isUnattended = scenario.steps[0]?.unattended === true
     const supportedSomewhere = new Set<string>()
-    for (const container of allContainers) {
-      const supported = supportedActorsForContainer(container) || new Set<string>()
-      const participating = scenario.actorIds.filter(actorId => supported.has(actorId))
-      if (!participating.length) issues.push(`${label}: Context place "${container}" permits none of the Scenario Actors`)
-      for (const actorId of participating) supportedSomewhere.add(actorId)
+    if (!isUnattended) {
+      for (const container of allContainers) {
+        const supported = supportedActorsForContainer(container) || new Set<string>()
+        const participating = scenario.actorIds.filter(actorId => supported.has(actorId))
+        if (!participating.length) issues.push(`${label}: Context place "${container}" permits none of the Scenario Actors`)
+        for (const actorId of participating) supportedSomewhere.add(actorId)
+      }
     }
     for (const actorId of scenario.actorIds) {
       if (actorIds.has(actorId) && !supportedSomewhere.has(actorId)) {
@@ -971,6 +1007,7 @@ export function validateProductReport(report: ProductReportV10): string[] {
     experiences: model.experiences.length,
     screens: model.screens.length,
     domains: model.domains.length,
+    objects: model.objects.length,
     capabilities: model.capabilities.length,
     capabilityScenarios: model.capabilityScenarios.length,
     journeys: model.journeys.length,
@@ -1088,6 +1125,7 @@ export function projectPortableReport(report: ProductReportV10): ProductReportV1
       experiences: stripWithEntryPoints(report.model.experiences),
       screens: stripWithEntryPoints(report.model.screens),
       domains: strip(report.model.domains),
+      objects: strip(report.model.objects),
       capabilities: strip(report.model.capabilities),
       capabilityScenarios: strip(report.model.capabilityScenarios),
       journeys: strip(report.model.journeys),

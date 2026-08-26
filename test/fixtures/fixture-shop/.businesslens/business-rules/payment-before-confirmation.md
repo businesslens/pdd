@@ -1,7 +1,7 @@
 ---
 appliesTo:
   - type: capability
-    id: checkout
+    id: place-order
   - type: journey
     id: browse-and-buy
 references:

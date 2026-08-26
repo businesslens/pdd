@@ -3,7 +3,7 @@ title: Capabilities
 description: Durable Product abilities with explicit availability Contexts, and the local Capability Scenarios that make each ability observable.
 section: open-source
 group: Product Model
-order: 14
+order: 15
 ---
 
 # Capabilities
@@ -134,6 +134,24 @@ Capability Scenarios are part of the behavioral core and are the only direct
 acceptance coverage for a Capability. Missing coverage is an error for a
 `complete` model, a warning for `partial` or `draft`, and an error for a public
 Blueprint, whether or not the Product has any [Journeys](./journeys.md).
+
+### Behavior nobody triggers
+
+A schedule the Product owns, an expiry, a retry — real Product behavior with no
+Actor to name. Write it as a Scenario whose **first Step is a `condition`
+carrying `unattended: true`**, and give the Capability availability where an
+Actor *observes the outcome*, never a synthetic Interface.
+
+```yaml
+steps:
+  - text: The Product's own collection schedule comes due for a followed source
+    kind: condition
+    unattended: true
+```
+
+An unattended Scenario derives no Actors, and is the only Scenario that may have
+none. Without it, unattended behavior had to be written as somebody else's
+request, or left with no acceptance coverage at all.
 
 ### When you create a Capability Scenario
 

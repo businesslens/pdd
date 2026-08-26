@@ -21,6 +21,11 @@ can be computed, and nothing can contradict it.
 
 ## When you create one
 
+A Domain must state a `## Boundary` naming something it does **not** own, and
+must hold at least two Capabilities. A Boundary that only asserts inclusion is a
+label rather than a region, and a Domain holding one Capability is a folder.
+`lint` checks both.
+
 Create a Domain when a region of the Product has a boundary you can state — what
 it covers and what it explicitly does not. Zero Domains is valid, and a small
 Product often needs none.

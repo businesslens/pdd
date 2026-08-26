@@ -1,7 +1,7 @@
 ---
 capabilities:
-  - catalog-browsing
-  - checkout
+  - browse-catalog
+  - place-order
 entryPoints:
   - customer-mobile: fixture-shop://products/:id
 references:

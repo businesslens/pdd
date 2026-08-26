@@ -5,21 +5,21 @@ steps:
   - text: The Reader publishes the owned collection and shares its public address
     kind: actor
     actor: reader
-    capability: collection-publication
+    capability: publish-collection
     contexts:
       unlist-on-web:
         place: reader-web::personal-library::collection-workspace
   - text: The Reader unlists the collection
     kind: actor
     actor: reader
-    capability: collection-publication
+    capability: publish-collection
     contexts:
       unlist-on-web:
         place: reader-web::personal-library::collection-workspace
   - text: The Visitor opens the shared address
     kind: actor
     actor: visitor
-    capability: public-collection-reading
+    capability: read-public-collection
     contexts:
       unlist-on-web:
         place: reader-web::public-reading::public-collection

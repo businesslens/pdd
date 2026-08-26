@@ -5,7 +5,7 @@ steps:
   - text: The shopper finds and selects an available product
     kind: actor
     actor: shopper
-    capability: catalog-browsing
+    capability: browse-catalog
     contexts:
       web:
         place: customer-web::storefront::product-record
@@ -14,7 +14,7 @@ steps:
   - text: The shopper submits checkout
     kind: actor
     actor: shopper
-    capability: checkout
+    capability: place-order
     contexts:
       web:
         place: customer-web::storefront::product-record

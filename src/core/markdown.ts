@@ -165,7 +165,9 @@ export function decisionPoints(
 export function screenStates(
   body: string,
   issues: string[],
-  label: string
+  label: string,
+  heading = 'Product states',
+  noun = 'product state'
 ): MarkdownScreenState[] {
   if (!body.trim()) return []
   const lines = body.split('\n')
@@ -180,7 +182,7 @@ export function screenStates(
       continue
     }
     if (!current) {
-      if (line.trim()) issues.push(`${label}: "## Product states" content must begin with an H3 title`)
+      if (line.trim()) issues.push(`${label}: "## ${heading}" content must begin with an H3 title`)
       continue
     }
     current.lines.push(line)
@@ -189,8 +191,8 @@ export function screenStates(
 
   return chunks.map((chunk) => {
     const description = chunk.lines.join('\n').trim()
-    if (!chunk.title) issues.push(`${label}: product state needs a title`)
-    if (!description) issues.push(`${label}: product state "${chunk.title}" needs a description`)
+    if (!chunk.title) issues.push(`${label}: ${noun} needs a title`)
+    if (!description) issues.push(`${label}: ${noun} "${chunk.title}" needs a description`)
     return { title: chunk.title, description }
   })
 }

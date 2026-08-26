@@ -1,6 +1,6 @@
 ---
 capabilities:
-  - public-collection-reading
+  - read-public-collection
 entryPoints:
   - reader-web: /collections/:collectionSlug
 ---
