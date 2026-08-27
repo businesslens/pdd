@@ -26,10 +26,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - An **Actor** may carry `## Information kept` for what the Product keeps about
   them, so a Reader's reading position has a home without modelling the Reader
   twice. An Actor is who acts; an Entity is what is acted upon.
+- **Entities relate to each other.** `relations: [{ entity, verb, cardinality }]`
+  declares an edge in the product's own words — `holds many item` — with the
+  inverse derived so the two sides cannot disagree. Relationships between things
+  a user can point at are product meaning; the guard is the format's existing
+  test, *is it observable to an Actor*. Cardinality is in because it is
+  load-bearing: `collection-membership-does-not-control-saving` only makes sense
+  because an Item can be saved and belong to many Collections.
+- **A Scenario Step may name the `entity` it acts on and the `state` it leaves
+  it in.** The Scenario's Entity set is derived from its Steps, exactly as its
+  Actor set is, and `lint` closes the loop: the state must be one the Entity
+  has, and some transition must reach it by that same Capability.
+- **A new Topology view, "What it keeps"** — the only one whose subject is the
+  Product's nouns. Capabilities that change something, the things themselves,
+  and the edges between them.
+- A Capability page shows what it changes, a Screen what it presents, and a
+  Scenario what it moves. The authored direction was declared in the model and
+  dropped by the viewer.
 - The Product Model's own description gains **what it keeps**.
 
 ### Changed
 
+- **Relational structure lives in frontmatter.** `transitions` moves out of a
+  Markdown section and joins `relations` there, because both name other elements
+  by id — which is the rule every other field already follows. The prose form
+  also had a silent mis-parse: `- Available → Sold by owner` read as
+  `to: "Sold", by: "owner"` and linted clean.
 - **A kind of file in a Product Model is an `Element`, not an entity.** That use
   was the loose one and gave the word up, so the kind that genuinely means a
   thing with identity could have it.

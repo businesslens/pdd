@@ -1,4 +1,8 @@
 ---
+relations:
+  - entity: catalog-product
+    verb: holds
+    cardinality: many
 domain: ordering
 ---
 
@@ -9,5 +13,5 @@ recoverable failure never costs the selection.
 
 ## Information kept
 
-- The products chosen and their quantities
+- The quantity chosen of each product
 - When it was last changed

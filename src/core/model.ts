@@ -87,7 +87,18 @@ export interface EntityStateTransition {
   from: string
   to: string
   /** The Capability that causes this move. Checked against its `entities`. */
-  capability: string
+  by: string
+}
+
+/**
+ * An edge to another Entity. Declared on one side only; the inverse is derived.
+ * `verb` is the product's own word for the relationship, `cardinality` says how
+ * many of the target this one relates to.
+ */
+export interface EntityRelation {
+  entity: string
+  verb: string
+  cardinality: 'one' | 'many'
 }
 
 /**
@@ -101,6 +112,7 @@ export interface EntityElement extends ElementFile {
   domain?: string
   /** Single-line facts the Product keeps about the thing. Never how it is stored. */
   informationKept: string[]
+  relations: EntityRelation[]
   states: ReturnType<typeof screenStates>
   transitions: EntityStateTransition[]
 }
@@ -145,6 +157,10 @@ export interface ScenarioStepContext extends Context {
 }
 
 export interface ScenarioStep {
+  /** The Entity this Step acts on, when it acts on one. */
+  entity?: string
+  /** The state that Entity is left in. Requires `entity`. */
+  state?: string
   /**
    * Marks a Scenario nobody triggers — a schedule the Product owns, an expiry,
    * a retry. Valid only on the first Step and only when `kind` is `condition`.
@@ -462,7 +478,7 @@ function scenarioStepsField(
       continue
     }
     const item = raw as Record<string, unknown>
-    rejectUnknownKeys(item, ['text', 'kind', 'actor', 'contexts', 'unattended', ...(allowCapability ? ['capability'] : [])], issues, itemLabel)
+    rejectUnknownKeys(item, ['text', 'kind', 'actor', 'entity', 'state', 'contexts', 'unattended', ...(allowCapability ? ['capability'] : [])], issues, itemLabel)
     const contexts: ScenarioStepContext[] = []
     if (item.contexts !== undefined && item.contexts !== null) {
       if (typeof item.contexts !== 'object' || Array.isArray(item.contexts)) {
@@ -482,6 +498,8 @@ function scenarioStepsField(
       text: stringField(item, 'text', issues, itemLabel) || '',
       kind: stringField(item, 'kind', issues, itemLabel) || '',
       actor: stringField(item, 'actor', issues, itemLabel),
+      entity: stringField(item, 'entity', issues, itemLabel),
+      state: stringField(item, 'state', issues, itemLabel),
       capability: allowCapability ? stringField(item, 'capability', issues, itemLabel) : undefined,
       unattended: unattended === true ? true : undefined,
       contexts
@@ -874,7 +892,8 @@ export function loadModel(cwd: string): PddModel {
   const entities: EntityElement[] = listElements(join(root, 'entities'), 'entity', findings, 'entities')
     .map((location) => {
       const { id, file } = location
-      const { data, doc, references, directory, assets, assetMeta } = readElement(location, ['domain'], issues)
+      const { data, doc, references, directory, assets, assetMeta } =
+        readElement(location, ['domain', 'relations', 'transitions'], issues)
       const informationKept = bulletList(section(doc, 'Information kept') || '')
       const states = screenStates(section(doc, 'States') || '', issues, file, 'States', 'entity state')
       const hasStates = section(doc, 'States') !== undefined
@@ -885,32 +904,66 @@ export function loadModel(cwd: string): PddModel {
         issues.push(`${file}: an Entity needs "## Information kept" or "## States"`)
       }
 
+      const relations: EntityRelation[] = []
+      const rawRelations = data.relations
+      if (rawRelations !== undefined && rawRelations !== null) {
+        if (!Array.isArray(rawRelations)) {
+          issues.push(`${file}: "relations" must be a list`)
+        } else {
+          for (const [index, raw] of rawRelations.entries()) {
+            const label = `${file}: relation ${index + 1}`
+            if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
+              issues.push(`${label} must be a mapping`)
+              continue
+            }
+            const item = raw as Record<string, unknown>
+            rejectUnknownKeys(item, ['entity', 'verb', 'cardinality'], issues, label)
+            const entity = stringField(item, 'entity', issues, label) || ''
+            const verb = stringField(item, 'verb', issues, label) || ''
+            const cardinality = stringField(item, 'cardinality', issues, label) || ''
+            if (!entity) issues.push(`${label}: needs an "entity"`)
+            if (!verb) issues.push(`${label}: needs a "verb"`)
+            if (cardinality !== 'one' && cardinality !== 'many') {
+              issues.push(`${label}: "cardinality" must be one or many`)
+              continue
+            }
+            relations.push({ entity, verb, cardinality })
+          }
+        }
+      }
+
       const stateNames = new Set(states.map(state => state.title))
       const transitions: EntityStateTransition[] = []
-      const transitionBody = section(doc, 'Transitions')
-      if (hasStates && transitionBody === undefined) {
-        issues.push(`${file}: an Entity with "## States" needs "## Transitions"`)
+      const rawTransitions = data.transitions
+      if (hasStates && (rawTransitions === undefined || rawTransitions === null)) {
+        issues.push(`${file}: an Entity with "## States" needs "transitions"`)
       }
-      if (!hasStates && transitionBody !== undefined) {
-        issues.push(`${file}: "## Transitions" needs "## States" to move between`)
+      if (!hasStates && rawTransitions !== undefined && rawTransitions !== null) {
+        issues.push(`${file}: "transitions" needs "## States" to move between`)
       }
-      if (transitionBody !== undefined) {
-        for (const item of bulletList(transitionBody)) {
-          const match = item.match(/^(.*?)\s*(?:\u2192|->)\s*(.*?)\s+by\s+(\S+)\s*$/)
-          if (!match) {
-            issues.push(`${file}: transition "${item}" must read "from \u2192 to by <capability>"`)
+      if (Array.isArray(rawTransitions)) {
+        for (const [index, raw] of rawTransitions.entries()) {
+          const label = `${file}: transition ${index + 1}`
+          if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
+            issues.push(`${label} must be a mapping`)
             continue
           }
-          const from = match[1]!.trim()
-          const to = match[2]!.trim()
-          const capability = match[3]!.trim()
+          const item = raw as Record<string, unknown>
+          rejectUnknownKeys(item, ['from', 'to', 'by'], issues, label)
+          const from = stringField(item, 'from', issues, label) || ''
+          const to = stringField(item, 'to', issues, label) || ''
+          const by = stringField(item, 'by', issues, label) || ''
           for (const name of [from, to]) {
-            if (!stateNames.has(name)) issues.push(`${file}: transition names unknown state "${name}"`)
+            if (name && !stateNames.has(name)) issues.push(`${label}: names unknown state "${name}"`)
           }
-          transitions.push({ from, to, capability })
+          if (!by) issues.push(`${label}: needs "by", the Capability that causes it`)
+          transitions.push({ from, to, by })
         }
-        if (hasStates && !transitions.length) issues.push(`${file}: "## Transitions" needs at least one transition`)
+        if (hasStates && !transitions.length) issues.push(`${file}: "transitions" needs at least one transition`)
+      } else if (rawTransitions !== undefined && rawTransitions !== null) {
+        issues.push(`${file}: "transitions" must be a list`)
       }
+
       const reachable = new Set(transitions.map(transition => transition.to))
       for (const state of states.slice(1)) {
         if (!reachable.has(state.title)) {
@@ -921,6 +974,7 @@ export function loadModel(cwd: string): PddModel {
         id, file, doc, references, directory, assets, assetMeta,
         domain: stringField(data, 'domain', issues, file),
         informationKept,
+        relations,
         states,
         transitions
       }

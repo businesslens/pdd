@@ -1,4 +1,15 @@
 ---
+relations:
+  - entity: source
+    verb: comes from
+    cardinality: one
+transitions:
+  - from: Unread
+    to: Read
+    by: track-reading-state
+  - from: Read
+    to: Unread
+    by: track-reading-state
 domain: reading
 ---
 
@@ -9,7 +20,7 @@ they saved directly.
 
 ## Information kept
 
-- Its title and the source it came from
+- Its title
 - When it was published
 - Whether the Reader has read it
 - When the Reader saved it, if they did
@@ -23,8 +34,3 @@ Waiting in the Reader's backlog, counted against what is left to read.
 ### Read
 
 Marked as read, and no longer counted against the backlog.
-
-## Transitions
-
-- Unread → Read by track-reading-state
-- Read → Unread by track-reading-state

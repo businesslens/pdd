@@ -15,6 +15,7 @@ export type ProductTopologyViewId =
   | 'delivery-by-interface'
   | 'sitemap'
   | 'rule-reach'
+  | 'what-it-keeps'
   | 'everything'
 
 export type TopologySemantics = 'identity' | 'occurrence'
@@ -116,6 +117,19 @@ export const PRODUCT_TOPOLOGY_VIEWS: ProductTopologyView[] = [
     separators: ['→', '·', '·', '·', '·'],
     kinds: ['rule', 'domain', 'capability', 'journey', 'capability-scenario', 'journey-scenario'],
     latentEdges: true
+  },
+  {
+    id: 'what-it-keeps',
+    name: 'What it keeps',
+    question: 'What does the Product keep, how do those things relate, and what changes them?',
+    semantics: 'identity',
+    note: 'Edges between Entities are authored on one side and drawn once. A Capability edge means it acts on that thing.',
+    flow: [
+      { kind: 'capability', label: 'Capabilities' },
+      { kind: 'entity', label: 'Entities' }
+    ],
+    separators: ['\u2192'],
+    kinds: ['capability', 'entity', 'domain']
   },
   {
     id: 'everything',

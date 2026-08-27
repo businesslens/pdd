@@ -1,4 +1,15 @@
 ---
+relations:
+  - entity: catalog-product
+    verb: was placed for
+    cardinality: many
+transitions:
+  - from: Pending
+    to: Confirmed
+    by: place-order
+  - from: Confirmed
+    to: Refunded
+    by: manage-orders
 domain: ordering
 ---
 
@@ -9,7 +20,7 @@ refund.
 
 ## Information kept
 
-- The items ordered and their quantities
+- The quantity ordered of each product
 - The total charged
 - When it was placed
 - Which shopper placed it
@@ -28,8 +39,3 @@ Paid and accepted. Stock is committed and the order is queued for fulfilment.
 
 Reversed after confirmation. The shopper has been repaid and no fulfilment
 follows.
-
-## Transitions
-
-- Pending → Confirmed by place-order
-- Confirmed → Refunded by manage-orders

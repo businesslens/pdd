@@ -72,8 +72,8 @@ This avoids a mirrored asset tree while keeping external material external.
 | Kind | Artifact |
 | --- | --- |
 | `code` | A tracked source file, optional symbol, or line range |
-| `prd` | A product requirements document |
-| `spec` | A product or technical specification |
+| `prd` | A product requirements document — see [how it differs from the model](./product-model.md#is-this-replacing-my-prd) |
+| `spec` | A product or technical specification, including a database schema — see [is this an ERD](./entities.md#is-this-an-erd) |
 | `proposal` | A proposed direction or change |
 | `doc` | General documentation |
 | `adr` | An architecture decision record |

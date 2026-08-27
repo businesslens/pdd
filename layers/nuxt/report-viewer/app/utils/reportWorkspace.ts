@@ -206,6 +206,8 @@ export interface ExperienceView extends ElementBase {
 }
 
 export interface ScreenView extends ElementBase {
+  /** The Entities this view presents, as authored. */
+  entityIds: string[]
   kind: 'screen'
   contexts: ContextView[]
   capabilityIds: string[]
@@ -252,6 +254,10 @@ export interface EntityView extends ElementBase {
   states: Array<{ name: string, content: string }>
   /** Each move, and the Capability that causes it. */
   transitions: Array<{ from: string, to: string, capabilityId: string }>
+  /** Edges this Entity declares. */
+  relations: Array<{ entityId: string, verb: string, cardinality: 'one' | 'many' }>
+  /** Edges other Entities declare at this one. Derived, never authored. */
+  inboundRelations: Array<{ entityId: string, verb: string, cardinality: 'one' | 'many' }>
   /** Capabilities that declare acting on this Entity. Derived. */
   changedByIds: string[]
   /** Screens that declare presenting it. Derived. */
@@ -261,6 +267,8 @@ export interface EntityView extends ElementBase {
 export interface CapabilityView extends ElementBase {
   kind: 'capability'
   domainId?: string
+  /** The Entities this Capability acts on, as authored. */
+  entityIds: string[]
   contexts: ContextView[]
   /** Capability Scenarios — the only direct acceptance coverage for this ability. */
   scenarioIds: string[]
@@ -292,6 +300,8 @@ export interface JourneyView extends ElementBase {
 }
 
 export interface ScenarioView extends ElementBase {
+  /** Derived from the Steps, exactly as the Actor set is. */
+  entityIds: string[]
   kind: ReportScenarioKind
   scenarioType: ReportScenarioType
   capabilityId: string
@@ -841,6 +851,7 @@ export function projectReportWorkspace(report: ProductReportV11): ReportWorkspac
       .map(journey => journey.id))
     return {
       key: elementKey('screen', screen.id),
+      entityIds: screen.entityIds,
       id: screen.id,
       kind: 'screen',
       title: screen.title,
@@ -878,6 +889,13 @@ export function projectReportWorkspace(report: ProductReportV11): ReportWorkspac
     references: entity.references,
     domainId: entity.domainId,
     informationKept: entity.informationKept,
+    relations: entity.relations.map(r => ({ entityId: r.entityId, verb: r.verb, cardinality: r.cardinality })),
+    // The inverse is derived so the two sides can never disagree.
+    inboundRelations: model.entities
+      .filter(other => other.id !== entity.id)
+      .flatMap(other => other.relations
+        .filter(r => r.entityId === entity.id)
+        .map(r => ({ entityId: other.id, verb: r.verb, cardinality: r.cardinality }))),
     changedByIds: model.capabilities.filter(c => c.entityIds.includes(entity.id)).map(c => c.id),
     presentedOnIds: model.screens.filter(sc => sc.entityIds.includes(entity.id)).map(sc => sc.id),
     states: entity.states.map(state => ({ name: state.name, content: state.content })),
@@ -924,6 +942,7 @@ export function projectReportWorkspace(report: ProductReportV11): ReportWorkspac
     return {
       key: elementKey('capability', capability.id),
       id: capability.id,
+      entityIds: capability.entityIds,
       kind: 'capability',
       title: capability.title,
       lead: capability.description,
@@ -999,6 +1018,7 @@ export function projectReportWorkspace(report: ProductReportV11): ReportWorkspac
       key: elementKey('capability-scenario', scenario.id),
       id: scenario.id,
       kind: 'capability-scenario',
+      entityIds: unique(scenario.steps.map(step => step.entityId).filter((id): id is string => Boolean(id))),
       title: scenario.title,
       lead: scenario.trigger,
       intent: scenario.intent,
@@ -1032,6 +1052,7 @@ export function projectReportWorkspace(report: ProductReportV11): ReportWorkspac
       key: elementKey('journey-scenario', scenario.id),
       id: scenario.id,
       kind: 'journey-scenario',
+      entityIds: unique(scenario.steps.map(step => step.entityId).filter((id): id is string => Boolean(id))),
       title: scenario.title,
       lead: scenario.trigger,
       intent: scenario.intent,

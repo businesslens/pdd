@@ -92,6 +92,8 @@ export function compileReport(
     kind: step.kind as 'actor' | 'product' | 'condition',
     actorId: step.actor ?? null,
     capabilityId: parentCapability ?? step.capability ?? null,
+    entityId: step.entity ?? null,
+    entityState: step.state ?? null,
     unattended: step.unattended === true,
     contexts: scenario.routes.flatMap(route => {
       const context = step.contexts.find(item => item.routeId === route.id)
@@ -207,9 +209,12 @@ export function compileReport(
         description: entity.doc.lead,
         ...(entity.domain ? { domainId: entity.domain } : {}),
         informationKept: entity.informationKept,
+        relations: entity.relations.map(relation => ({
+          entityId: relation.entity, verb: relation.verb, cardinality: relation.cardinality
+        })),
         states: entity.states.map(state => ({ name: state.title, content: state.description })),
         transitions: entity.transitions.map(transition => ({
-          from: transition.from, to: transition.to, capabilityId: transition.capability
+          from: transition.from, to: transition.to, capabilityId: transition.by
         })),
         ...elementContent(entity, ['Information kept', 'States', 'Transitions'], assetBase)
       })),

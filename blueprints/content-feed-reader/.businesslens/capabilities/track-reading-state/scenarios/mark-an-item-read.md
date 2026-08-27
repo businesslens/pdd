@@ -14,6 +14,8 @@ steps:
         place: reader-mobile::personal-library::unread-library
   - text: The Product updates the item's private reading state
     kind: product
+    entity: item
+    state: Read
     contexts:
       web:
         place: reader-web::personal-library::unread-library

@@ -71,6 +71,7 @@ describe('named Product Topology views', () => {
       'delivery-by-interface',
       'sitemap',
       'rule-reach',
+      'what-it-keeps',
       'everything'
     ])
     expect(PRODUCT_TOPOLOGY_VIEWS.every(view => view.question.endsWith('?'))).toBe(true)

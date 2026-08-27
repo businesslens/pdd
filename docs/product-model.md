@@ -71,6 +71,36 @@ and SDD roots. `coverage.md` describes model breadth.
 Use [`businesslens view`](./cli-view.md) to browse the current model as a local
 report while editing.
 
+## Is this replacing my PRD?
+
+No — they have different jobs, and only one section overlaps.
+
+**A PRD is an argument for a change. A Product Model is a description of the
+product.**
+
+| | PRD | Product Model |
+| --- | --- | --- |
+| Tense | future — *"we will build"* | present — *"the product does"* |
+| Lifespan | written once, read during a decision, then history | true continuously, or it is wrong |
+| Scope | one initiative | the whole product, including what did not change |
+| Form | narrative, repeats context to persuade | normalized — the Actor is defined once |
+| Checkable | no, it is an argument | yes — `businesslens-verify` compares it to code |
+
+The model deliberately holds **no time** (milestones, phasing, v1 against v2),
+**no priority**, **no metrics**, **no justification** (market, competition,
+cost), **no alternatives considered**, and **no risk**. All of that is real
+product work, and none of it is *what the product does*.
+
+What overlaps is the PRD's **requirements** section — and
+[`businesslens-ideate`](./skill-businesslens-ideate.md) produces it directly, as
+an approved model delta. The healthy division: **the PRD says why, for whom, how
+we will know, and when. The model says what.**
+
+Attach the PRD as a `prd` [Reference](./references.md) with `role: intent`. There
+is deliberately no role that would let a reference become the specification.
+
+For the same question about an ERD, see [Entities](./entities.md#is-this-an-erd).
+
 ## Authoring conventions
 
 An element without assets or children is the compact file `<id>.md`. When it

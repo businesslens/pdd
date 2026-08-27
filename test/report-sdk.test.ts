@@ -203,6 +203,8 @@ describe('projectPortableReport', () => {
           kind: 'actor',
           actorId: 'shopper',
           capabilityId: 'place-order',
+          entityId: null,
+          entityState: null,
           unattended: false,
           contexts: [{
             routeId: 'web-to-admin',
@@ -214,6 +216,8 @@ describe('projectPortableReport', () => {
           kind: 'actor',
           actorId: 'store-admin',
           capabilityId: 'manage-orders',
+          entityId: null,
+          entityState: null,
           unattended: false,
           contexts: [{
             routeId: 'web-to-admin',

@@ -123,13 +123,16 @@ not contain another H1 or H2.
   name what a thing is or what must remain true.
 - Entity: H1, lead description, and at least one of `## Information kept` (a
   single-line bullet list of what the Product keeps about the thing) and
-  `## States` (H3 names with prose). `## Transitions` is required exactly when
-  `## States` is present and reads `from \u2192 to by <capability-id>`; the named
-  Capability must list this Entity. Optional `domain`. An Entity is a thing an
-  Actor points at and the Product tells apart — identity, not storage. Never a
-  data model: no types, no cardinality, no keys, no relations between Entities.
-  It must be referenced by a Capability that changes it or a Screen that
-  presents it.
+  `## States` (H3 names with prose). Optional `domain`. Optional `relations`,
+  each `{ entity, verb, cardinality }` with cardinality `one` or `many`,
+  declared on one side only — the inverse is derived, and a relation targets an
+  Entity, never an Actor. `transitions` is required exactly when `## States` is
+  present, each `{ from, to, by }` where `by` names the Capability that causes
+  the move and must list this Entity. An Entity is a thing an Actor points at
+  and the Product tells apart — identity, not storage. Never a data model: no
+  types, no keys, no foreign keys. It must be referenced by a Capability that
+  changes it or a Screen that presents it; a relation from another Entity does
+  not count.
 - Screen: at least one `capabilities` relation, optional `entities` naming what it presents, (it has no `availability` — its
   path is its place);
   optional Interface-keyed Product entry points; H1, lead, bullet

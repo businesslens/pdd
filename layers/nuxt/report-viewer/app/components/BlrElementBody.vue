@@ -74,6 +74,27 @@ const domainId = computed(() => {
  * state name from a destination, nor count the transitions at all.
  */
 const entityStates = computed(() => asEntity.value.states)
+
+/*
+ * Declared edges and derived inverses read as one list, because to a reader they
+ * are the same fact seen from two sides. The derived ones are marked so nobody
+ * looks for them in the file.
+ */
+const entityRelations = computed(() => [
+  ...asEntity.value.relations.map(relation => ({
+    ...relation, derived: false,
+    title: resolveElement(props.workspace, 'entity', relation.entityId)?.title ?? relation.entityId
+  })),
+  ...asEntity.value.inboundRelations.map(relation => ({
+    ...relation, derived: true,
+    title: resolveElement(props.workspace, 'entity', relation.entityId)?.title ?? relation.entityId
+  }))
+])
+
+function openEntity(id: string) {
+  const entity = resolveElement(props.workspace, 'entity', id)
+  if (entity) emit('select', entity)
+}
 function openCapability(id: string) {
   const capability = resolveElement(props.workspace, 'capability', id)
   if (capability) emit('select', capability)
@@ -732,6 +753,26 @@ const empty = computed(() => !hasAuthoredBody(props.element))
             class="flex gap-2 rounded-lg border border-default bg-elevated/30 px-3 py-2 text-sm"
           >
             <UIcon name="i-lucide-circle-small" class="mt-1 size-4 shrink-0 text-muted" />{{ fact }}
+          </li>
+        </ul>
+      </section>
+
+      <section v-if="entityRelations.length" class="space-y-2">
+        <h2 class="blr-page-heading">
+          Relationships <span class="blr-meta ms-1">{{ entityRelations.length }}</span>
+        </h2>
+        <ul class="space-y-1.5">
+          <li
+            v-for="relation in entityRelations"
+            :key="`${relation.derived ? 'in' : 'out'}-${relation.entityId}-${relation.verb}`"
+            class="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border border-default bg-elevated/30 px-3 py-2 text-sm"
+          >
+            <span class="font-medium text-highlighted">{{ relation.verb }}</span>
+            <span class="blr-meta">{{ relation.cardinality }}</span>
+            <button type="button" class="blr-chip" @click="openEntity(relation.entityId)">
+              <UIcon name="i-lucide-box" class="size-3.5" />{{ relation.title }}
+            </button>
+            <span v-if="relation.derived" class="blr-meta ms-auto">derived</span>
           </li>
         </ul>
       </section>

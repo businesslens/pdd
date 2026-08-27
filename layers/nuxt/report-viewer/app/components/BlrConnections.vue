@@ -88,6 +88,7 @@ const rows = computed<RelationRow[]>(() => {
     case 'screen': {
       const screen = element as ScreenView
       all.push(
+        row('Presents', 'entity', screen.entityIds, false),
         row('Capabilities', 'capability', screen.capabilityIds, false),
         row('Capability Scenarios', 'capability-scenario', screen.capabilityScenarioIds, false),
         row('Journey Scenarios', 'journey-scenario', screen.journeyScenarioIds, false),
@@ -99,6 +100,10 @@ const rows = computed<RelationRow[]>(() => {
     case 'entity': {
       const entity = element as EntityView
       all.push(
+        ...entity.relations.map(relation =>
+          row(`${relation.verb} ${relation.cardinality === 'many' ? 'many' : 'one'}`, 'entity', [relation.entityId], false)),
+        ...entity.inboundRelations.map(relation =>
+          row(`${relation.verb} by`, 'entity', [relation.entityId], true)),
         row('Domain', 'domain', entity.domainId ? [entity.domainId] : [], false),
         row('Changed by', 'capability', entity.changedByIds, true),
         row('Presented on', 'screen', entity.presentedOnIds, true)
@@ -118,6 +123,7 @@ const rows = computed<RelationRow[]>(() => {
     case 'capability': {
       const capability = element as CapabilityView
       all.push(
+        row('Changes', 'entity', capability.entityIds, false),
         row('Domain', 'domain', capability.domainId ? [capability.domainId] : [], false),
         row('Capability Scenarios', 'capability-scenario', capability.scenarioIds, true),
         row('Exercised by Journey Scenarios', 'journey-scenario', capability.journeyScenarioIds, true),
@@ -145,6 +151,8 @@ const rows = computed<RelationRow[]>(() => {
       const scenario = element as ScenarioView
       all.push(
         row('Actors', 'actor', scenario.actorIds, false),
+        // Derived from the Steps, exactly as the Actor set is.
+        row('Changes', 'entity', scenario.entityIds, true),
         scenario.scenarioType === 'capability'
           ? row('Capability', 'capability', [scenario.capabilityId], false)
           : row('Journey', 'journey', [scenario.journeyId], false),

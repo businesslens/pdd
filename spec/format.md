@@ -695,6 +695,14 @@ ordered" inside Order. A reader says *"this item"* and *"this collection"*, but
 ```markdown
 ---
 domain: ordering                 # optional
+relations:
+  - entity: catalog-product
+    verb: was placed for
+    cardinality: many
+transitions:
+  - from: Pending
+    to: Confirmed
+    by: place-order
 ---
 
 # Order
@@ -721,10 +729,6 @@ Paid and accepted; stock is committed.
 
 Reversed after confirmation.
 
-## Transitions
-
-- Pending → Confirmed by place-order
-- Confirmed → Refunded by refund-order
 ```
 
 **At least one of `## Information kept` and `## States` must be present.** A
@@ -739,12 +743,23 @@ and **no structured relations between Entities** — "The items ordered" is pros
 never `hasMany`. A cache is out of the model; the data it holds is in when the
 Product promises it. The word *kept* means held, not persisted.
 
+`relations` is optional and declares edges to other Entities. Each is
+`{ entity, verb, cardinality }`: `verb` is the product's own word for the
+relationship, and `cardinality` is `one` or `many`, written explicitly so that
+*one* is a choice somebody made. **A relation is declared on one side only** —
+the inverse is derived, so the two sides cannot disagree. A relation targets an
+Entity, never an Actor: an Actor is who acts, and ownership is a fact the
+Product keeps. A relation never satisfies the no-orphans rule below, because a
+cluster of Entities referencing each other while no behaviour touches any of
+them is still vocabulary nobody uses.
+
 `## States` contains H3 state names, each followed by non-empty prose.
-`## Transitions` is required exactly when `## States` is present, and is a
-bullet list of `from → to by <capability-id>` using the Unicode arrow or `->`
-with ASCII characters. Every state name on either side must be one of this
-Entity's states, and the named Capability must exist and must list this Entity
-in its `entities`. A state no transition reaches, other than the first listed,
+`transitions` is required exactly when `## States` is present. Each is
+`{ from, to, by }`: both state names must be this Entity's own, and `by` names
+the Capability that causes the move — which must exist and must list this Entity
+in its `entities`. Relations and transitions are frontmatter rather than
+sections because they name other elements by id, and ids are parsed rather than
+read out of English. A state no transition reaches, other than the first listed,
 is a `lint` warning; a terminal state is valid and needs no outgoing transition.
 
 `domain` is optional and single. H1 = name and the lead paragraph = description.
@@ -1130,6 +1145,13 @@ one availability Context, because behavior nobody can ever observe is not
 Product behavior.
 
 Its Actor set is derived from those Steps rather than authored on the Scenario.
+
+A Step may name the `entity` it acts on, and the `state` it leaves that Entity
+in. The Entity must be one the Step's Capability declares, the state must be one
+that Entity has, and **some transition must reach that state by that
+Capability** — so a Scenario claiming an Order becomes Confirmed is checked
+against the Order's own lifecycle. A Scenario's Entity set is derived from its
+Steps, exactly as its Actor set is.
 
 A Step may author `contexts`, mapping every declared route id to exactly one
 strict Context object. Its `place` is the most-specific Interface, Experience,

@@ -261,6 +261,11 @@ An internal system that initiates store operations.
       if (!String(relative).endsWith('.md')) continue
       writeFileSync(file, readFileSync(file, 'utf8').replace(/^entities:\n(?:  - .*\n)+/m, ''))
     }
+    for (const relative of readdirSync(join(cwd, '.businesslens/capabilities'), { recursive: true })) {
+      const file = join(cwd, '.businesslens/capabilities', String(relative))
+      if (!String(relative).endsWith('.md')) continue
+      writeFileSync(file, readFileSync(file, 'utf8').replace(/^ *entity: .*\n( *state: .*\n)?/gm, ''))
+    }
     for (const relative of [
       'interfaces/customer-web/experiences/storefront/screens',
       'interfaces/customer-mobile/experiences/storefront/screens'

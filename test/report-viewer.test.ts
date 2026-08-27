@@ -85,6 +85,18 @@ describe('stable Product Report', () => {
     expect(order.informationKept).toContain('When it was placed')
     expect(order.states.map((state: any) => state.name)).toEqual(['Pending', 'Confirmed', 'Refunded'])
 
+    // A relation is declared on one side; the inverse is derived.
+    expect(order.relations).toEqual([{ entityId: 'catalog-product', verb: 'was placed for', cardinality: 'many' }])
+    const product = workspace.entities.find((item: any) => item.id === 'catalog-product')
+    expect(product.inboundRelations).toContainEqual({ entityId: 'order', verb: 'was placed for', cardinality: 'many' })
+    expect(product.relations).toEqual([])
+
+    // A Scenario's Entity set is derived from its Steps, as its Actor set is.
+    const complete = workspace.capabilityScenarios.find((s: any) => s.id === 'complete-checkout')
+    expect(complete.entityIds).toEqual(['order'])
+    expect(workspace.capabilities.find((c: any) => c.id === 'place-order').entityIds)
+      .toEqual(['cart', 'catalog-product', 'order'])
+
     // Every transition names the Capability that causes it — the edge that
     // stopped an Entity being something nothing in the model pointed at.
     expect(order.transitions).toEqual([

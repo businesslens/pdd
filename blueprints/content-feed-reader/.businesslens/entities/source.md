@@ -1,4 +1,15 @@
 ---
+relations:
+  - entity: item
+    verb: publishes
+    cardinality: many
+transitions:
+  - from: Reachable
+    to: Unreachable
+    by: synchronize-feeds
+  - from: Unreachable
+    to: Reachable
+    by: synchronize-feeds
 domain: sources
 ---
 
@@ -24,8 +35,3 @@ the Reader's backlog from it.
 
 The feed could not be read on the most recent attempt. Items already collected
 from it stay in the library, and the Product keeps trying on its own schedule.
-
-## Transitions
-
-- Reachable → Unreachable by synchronize-feeds
-- Unreachable → Reachable by synchronize-feeds

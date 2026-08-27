@@ -177,6 +177,16 @@ export const ReportEntityTransitionSchema = z.strictObject({
 })
 
 /**
+ * An edge to another Entity, declared on one side. The inverse is derived by
+ * consumers rather than authored, so the two sides cannot disagree.
+ */
+export const ReportEntityRelationSchema = z.strictObject({
+  entityId: IdSchema,
+  verb: SingleLineTextSchema,
+  cardinality: z.enum(['one', 'many'])
+})
+
+/**
  * A thing the Product keeps whose state an Actor can observe. Entity states are
  * an authored lifecycle; a Screen's `states` remain that view's own
  * states, and the two are never merged.
@@ -188,6 +198,7 @@ export const ReportEntitySchema = z.strictObject({
   domainId: IdSchema.optional(),
   /** What the Product keeps about the thing. Never how it is stored. */
   informationKept: z.array(SingleLineTextSchema),
+  relations: z.array(ReportEntityRelationSchema),
   states: z.array(ReportEntityStateSchema),
   transitions: z.array(ReportEntityTransitionSchema),
   ...ElementContentSchema
@@ -262,6 +273,9 @@ export const ReportScenarioStepSchema = z.strictObject({
   kind: z.enum(['actor', 'product', 'condition']),
   actorId: IdSchema.nullable(),
   capabilityId: IdSchema.nullable(),
+  /** The Entity this Step acts on, and the state it leaves it in. */
+  entityId: IdSchema.nullable(),
+  entityState: SingleLineTextSchema.nullable(),
   /** True only on a first condition Step that nobody triggers. */
   unattended: z.boolean(),
   contexts: z.array(ReportScenarioStepContextSchema)
@@ -382,6 +396,7 @@ export type ReportDomain = z.infer<typeof ReportDomainSchema>
 export type ReportEntity = z.infer<typeof ReportEntitySchema>
 export type ReportEntityState = z.infer<typeof ReportEntityStateSchema>
 export type ReportEntityTransition = z.infer<typeof ReportEntityTransitionSchema>
+export type ReportEntityRelation = z.infer<typeof ReportEntityRelationSchema>
 export type ReportCapability = z.infer<typeof ReportCapabilitySchema>
 export type ReportContext = z.infer<typeof ReportContextSchema>
 export type ReportScreen = z.infer<typeof ReportScreenSchema>

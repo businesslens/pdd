@@ -1,3 +1,28 @@
+---
+transitions:
+  - from: Absent
+    to: Draft
+    by: map-established-behavior
+  - from: Absent
+    to: Partial
+    by: map-established-behavior
+  - from: Absent
+    to: Complete
+    by: decide-intended-behavior
+  - from: Draft
+    to: Partial
+    by: map-established-behavior
+  - from: Draft
+    to: Complete
+    by: map-established-behavior
+  - from: Partial
+    to: Complete
+    by: map-established-behavior
+  - from: Complete
+    to: Partial
+    by: decide-intended-behavior
+---
+
 # Product model
 
 The `.businesslens/` directory a repository keeps: the durable statement of what
@@ -35,13 +60,3 @@ areas explicitly rather than implying they do not exist.
 The intended product breadth is modeled. Structural checking now demands at
 least one Capability and direct Scenario coverage for every availability
 Context, and a public Blueprint demands the same.
-
-## Transitions
-
-- Absent → Draft by map-established-behavior
-- Absent → Partial by map-established-behavior
-- Absent → Complete by decide-intended-behavior
-- Draft → Partial by map-established-behavior
-- Draft → Complete by map-established-behavior
-- Partial → Complete by map-established-behavior
-- Complete → Partial by decide-intended-behavior

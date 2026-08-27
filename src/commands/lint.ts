@@ -530,16 +530,36 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
      * prevents elsewhere.
      */
     for (const transition of entity.transitions) {
-      if (!capabilityIds.has(transition.capability)) {
-        errors.push(`${entity.file}: transition "${transition.from} \u2192 ${transition.to}" names missing capability "${transition.capability}"`)
+      if (!capabilityIds.has(transition.by)) {
+        errors.push(`${entity.file}: transition "${transition.from} \u2192 ${transition.to}" names missing capability "${transition.by}"`)
         continue
       }
-      const capability = model.capabilities.find(item => item.id === transition.capability)
+      const capability = model.capabilities.find(item => item.id === transition.by)
       if (capability && !capability.entities.includes(entity.id)) {
         errors.push(
-          `${entity.file}: transition "${transition.from} \u2192 ${transition.to}" names capability "${transition.capability}", which does not list this Entity`
+          `${entity.file}: transition "${transition.from} \u2192 ${transition.to}" names capability "${transition.by}", which does not list this Entity`
         )
       }
+    }
+
+    /*
+     * Relations are declared on one side; the inverse is derived. A relation to
+     * another Entity is an edge in the product's own vocabulary — it never
+     * satisfies the no-orphans rule below, because a cluster of Entities
+     * referencing each other while no behaviour touches any of them is still
+     * vocabulary nobody uses.
+     */
+    const relationTargets = new Set<string>()
+    for (const relation of entity.relations) {
+      if (!entityIds.has(relation.entity)) {
+        errors.push(`${entity.file}: relation names missing entity "${relation.entity}"`)
+      }
+      if (relation.entity === entity.id) {
+        errors.push(`${entity.file}: relation points at itself`)
+      }
+      const key = `${relation.entity}\0${relation.verb}`
+      if (relationTargets.has(key)) errors.push(`${entity.file}: duplicate relation "${relation.verb} ${relation.entity}"`)
+      relationTargets.add(key)
     }
 
     // No orphans. Vocabulary nothing points at is either unused or a relation
@@ -634,6 +654,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     const allContextPlaces = new Set<string>()
     const allContainers = new Set<string>()
     const scenarioActors = new Set<string>()
+    const scenarioEntities = new Set<string>()
     const capabilitySteps: Array<{ capability: string, contextPlaces: Set<string>, containers: Set<string> }> = []
     for (const [index, step] of scenario.steps.entries()) {
       const label = `${scenario.file}: step ${index + 1}`
@@ -648,7 +669,45 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
           scenarioActors.add(step.actor)
           if (!actorIds.has(step.actor)) errors.push(`${label}: references missing actor "${step.actor}"`)
         }
-      } else if (step.actor) {
+      }
+
+      /*
+       * A Step that names an Entity closes the loop the model could not check
+       * before: the Entity must be one the Capability declares, and a claimed
+       * state must be one the Entity has AND one that some transition reaches
+       * by that same Capability. A Scenario asserting an Order becomes
+       * Confirmed is therefore checked against the Order's own lifecycle.
+       */
+      if (step.entity) {
+        scenarioEntities.add(step.entity)
+        const entity = model.entities.find(item => item.id === step.entity)
+        if (!entity) {
+          errors.push(`${label}: references missing entity "${step.entity}"`)
+        } else {
+          const owner = 'capability' in scenario
+            ? (scenario as { capability: string }).capability
+            : step.capability
+          if (owner) {
+            const capability = model.capabilities.find(item => item.id === owner)
+            if (capability && !capability.entities.includes(step.entity)) {
+              errors.push(`${label}: capability "${owner}" does not declare entity "${step.entity}"`)
+            }
+          }
+          if (step.state) {
+            if (!entity.states.some(state => state.title === step.state)) {
+              errors.push(`${label}: "${step.state}" is not a state of entity "${step.entity}"`)
+            } else if (owner && !entity.transitions.some(t => t.to === step.state && t.by === owner)) {
+              errors.push(
+                `${label}: no transition of "${step.entity}" reaches "${step.state}" by capability "${owner}"`
+              )
+            }
+          }
+        }
+      } else if (step.state) {
+        errors.push(`${label}: state needs an entity to belong to`)
+      }
+
+      if (step.kind !== 'actor' && step.actor) {
         errors.push(`${label}: actor is only valid when kind is "actor"`)
       }
 

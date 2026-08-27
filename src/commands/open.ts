@@ -243,6 +243,16 @@ function writeReport(root: string, report: ProductReportV11, hasLogo: boolean): 
       elementPath(join(root, 'entities'), entity.id, 'entity', false),
       frontmatter(compactRecord({
         domain: entity.domainId,
+        relations: entity.relations.length
+          ? entity.relations.map(relation => ({
+            entity: relation.entityId, verb: relation.verb, cardinality: relation.cardinality
+          }))
+          : undefined,
+        transitions: entity.transitions.length
+          ? entity.transitions.map(transition => ({
+            from: transition.from, to: transition.to, by: transition.capabilityId
+          }))
+          : undefined,
         references: references(entity.references)
       })) + body(entity.title, entity.description, entity.intent, [], [
         ...(entity.informationKept.length
@@ -250,9 +260,6 @@ function writeReport(root: string, report: ProductReportV11, hasLogo: boolean): 
           : []),
         ...(entity.states.length
           ? [{ heading: 'States', content: entity.states.map(state => `### ${state.name}\n\n${state.content}`).join('\n\n') }]
-          : []),
-        ...(entity.transitions.length
-          ? [{ heading: 'Transitions', content: entity.transitions.map(transition => `- ${transition.from} \u2192 ${transition.to} by ${transition.capabilityId}`).join('\n') }]
           : []),
         ...entity.supportingSections
       ])
@@ -375,6 +382,8 @@ function writeReport(root: string, report: ProductReportV11, hasLogo: boolean): 
           text: step.text,
           kind: step.kind,
           actor: step.actorId ?? undefined,
+          entity: step.entityId ?? undefined,
+          state: step.entityState ?? undefined,
           unattended: step.unattended ? true : undefined,
           contexts: step.contexts.length
             ? Object.fromEntries(step.contexts.map(context => [context.routeId, { place: context.placeId }]))
@@ -425,6 +434,8 @@ function writeReport(root: string, report: ProductReportV11, hasLogo: boolean): 
           text: step.text,
           kind: step.kind,
           actor: step.actorId ?? undefined,
+          entity: step.entityId ?? undefined,
+          state: step.entityState ?? undefined,
           unattended: step.unattended ? true : undefined,
           capability: step.capabilityId ?? undefined,
           contexts: step.contexts.length
