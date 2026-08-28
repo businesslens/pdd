@@ -113,6 +113,14 @@ Read before authoring:
      family of candidates that could be one Entity or several, quoted with both
      counts; a goal that could be a Journey or a merely plausible sequence; a
      constraint that could be a Business Rule or one Capability's prose.
+   - **Coverage** — the acceptance surface, once the Capability set is settled.
+     How many Scenarios each Capability needs, and where the line falls between
+     a Scenario and an `## Edge cases` bullet for a refusal or a failure path.
+     Ask it: Scenarios are usually the largest single group in the model, and
+     nothing in the format decides where that line falls. Ask about availability
+     in the same round wherever you would offer a Capability on two Interfaces
+     because one implementation serves both — that is the parity inference the
+     rubric refuses, and it is a question, not a default.
    - **Naming** — the Product's own word for each thing now settled. This is
      where models stop being comparable: three independent mappings of one
      repository agreed on about 93% of the Capabilities they found and shared

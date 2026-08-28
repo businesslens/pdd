@@ -217,6 +217,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   mattered was a decision the source cannot settle. `Judgment calls` had been
   surfacing these *after* the model was written, as a list to review, which
   makes approval a formality.
+
+  A fourth round covers the acceptance surface: how many Scenarios each
+  Capability needs, and where the line falls between a Scenario and an
+  `## Edge cases` bullet. A guided run negotiated every element count except
+  that one, chose 19 of its 71 elements alone, and invented the rule it used to
+  decide them — then reported it against itself when asked what the rounds had
+  missed. Availability joins the same round wherever a Capability would be
+  offered on two Interfaces because one implementation serves both, which is the
+  parity inference the rubric already refused and the same run made anyway.
 - **How many Entities is a step, not a judgement.** Write the
   `## Information kept` list first: one Entity if a single list is true of every
   candidate, several the moment it needs *"depending on the kind"*. Being

@@ -48,6 +48,10 @@
 - Capability Scenarios state observable acceptance for one Capability through
   typed Steps and named routes of most-specific Context places. Cover primary,
   permission, validation, conflict, and external-failure behavior only where it differs.
+  Where the line falls between a Scenario and an `## Edge cases` bullet is the
+  author's call and belongs in the Coverage round — Scenarios are usually the
+  largest single group in the model, and deciding the whole set alone is the
+  quietest way to author most of it unreviewed.
 - Journeys represent stable user or operator goals, never a wrapper for one
   Capability. Omit Journeys when no established goal crosses Capabilities.
 - Journey Scenarios are observable paths through a goal. Write one ordered
