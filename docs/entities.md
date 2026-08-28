@@ -122,6 +122,13 @@ deletes the difference and leaves nothing behind saying it was ever there — th
 next reader cannot tell there was a question at all. If you have nobody to ask,
 split and say so.
 
+**When one list is contained in another**, the procedure above stops helping:
+you can always produce a shared list by discarding whatever differs, so the
+intersection proves nothing. Ask instead whether anything ever names the smaller
+one on its own. Reached only through the larger thing? Information kept inside
+it — *the items ordered*, inside Order. Stored, addressed, sent or changed
+independently? Its own Entity, however much the information overlaps.
+
 ## Is this an ERD?
 
 Partly, and deliberately only partly. Standard practice splits an ERD into three

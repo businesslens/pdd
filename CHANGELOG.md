@@ -243,6 +243,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the argument that most often wins when it should not. When the call is still
   close, split — a merge stays available to anyone later, while a collapse
   deletes the difference and leaves nothing saying the question existed.
+- **A subset is not an answer.** Where one candidate's kept information is
+  contained in another's, an intersection always exists, so "a single list is
+  true of both" is trivially satisfiable and decides nothing. Ask instead
+  whether anything names the smaller one on its own: reached only through the
+  larger thing makes it information kept inside it, while stored, addressed,
+  sent or changed independently makes it an Entity however much the information
+  overlaps. Two honest applications of the procedure had reached opposite
+  answers on the same pair.
 - **Three more things are not Entities**, each of which passes the naming test
   and is still not product meaning. A **representation** of an Entity — a
   serialization, export or rendering — is that thing in another shape; if you

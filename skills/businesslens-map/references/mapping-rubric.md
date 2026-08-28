@@ -99,6 +99,13 @@ nothing in the model saying they existed, so the next reader cannot tell there
 was a question. Put both shapes and their counts to the author when you can; with
 no author to ask, split and record it as a judgment call rather than choosing.
 
+One shape defeats the list test: a candidate whose kept information is a
+**subset** of another's. An intersection always exists, so "a single list is true
+of both" is trivially satisfiable and proves nothing. Ask whether anything names
+the smaller one on its own — reached only through the larger thing makes it
+information kept inside it, while stored, addressed, sent or changed
+independently makes it an Entity however much the information overlaps.
+
 Three candidates pass the naming test and are still not Entities, because the
 Product handles them rather than keeps them. A **representation** of an Entity —
 a serialization, export or rendering — is that thing in another shape; if you

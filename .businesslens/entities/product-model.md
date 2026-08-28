@@ -37,15 +37,6 @@ relations:
     verb: holds
     cardinality: one-to-many
 transitions:
-  - from: Absent
-    to: Draft
-    by: map-established-behavior
-  - from: Absent
-    to: Partial
-    by: map-established-behavior
-  - from: Absent
-    to: Complete
-    by: decide-intended-behavior
   - from: Draft
     to: Partial
     by: map-established-behavior
@@ -55,30 +46,12 @@ transitions:
   - from: Partial
     to: Complete
     by: map-established-behavior
-  - from: Complete
-    to: Partial
-    by: decide-intended-behavior
-  - from: Absent
-    to: Draft
-    by: open-blueprint
-  - from: Absent
-    to: Partial
-    by: open-blueprint
-  - from: Absent
-    to: Complete
-    by: open-blueprint
-  - from: Absent
-    to: Draft
-    by: pull-blueprint
-  - from: Absent
-    to: Partial
-    by: pull-blueprint
-  - from: Absent
-    to: Complete
-    by: pull-blueprint
   - from: Partial
     to: Complete
     by: verify-model-alignment
+  - from: Complete
+    to: Partial
+    by: decide-intended-behavior
 references:
   - kind: spec
     role: intent
@@ -102,6 +75,8 @@ The `.businesslens/` directory a repository keeps: the durable statement of what
 its product is intended to do. Its declared coverage is the state a reader
 observes — how much of the intended product breadth this model claims to hold —
 and it is the first thing every BusinessLens workflow establishes before acting.
+Whether one exists at all is not a state it is in: a repository with no
+`.businesslens/` has no Product Model to have one.
 
 ## Information kept
 
@@ -110,12 +85,6 @@ and it is the first thing every BusinessLens workflow establishes before acting.
 - The inspection that produced it, and what it leaves unmapped
 
 ## States
-
-### Absent
-
-The repository has no `.businesslens/` directory here or at its root. Structural
-checking and local reading refuse; mapping, deciding, and expanding a Blueprint
-are the ways in.
 
 ### Draft
 

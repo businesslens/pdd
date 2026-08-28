@@ -730,6 +730,15 @@ collapse deletes the difference and leaves nothing in the model saying it was
 ever there, so a reader cannot tell there was a question. An author with nobody
 to ask splits, and records the choice.
 
+**When one list is contained in another, the intersection is not the answer.** A
+shared list can always be produced by discarding whatever differs, so the
+procedure above says nothing useful about a candidate whose kept information is
+a subset of another's. Ask a different question: does anything ever name the
+smaller one on its own? A thing the Product only reaches through the larger one
+is information kept inside it — the items ordered, inside Order. A thing the
+Product stores, addresses, sends or changes independently is its own Entity,
+however much its information overlaps.
+
 ```markdown
 ---
 domain: ordering                 # optional

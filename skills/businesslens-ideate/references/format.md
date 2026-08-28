@@ -141,7 +141,9 @@ not contain another H1 or H2.
   are no instances, only members of a fixed list, that is a vocabulary. For a family of candidates sharing a
   word, write `## Information kept` before deciding how many Entities there are:
   one if a single list is true of all of them, several the moment it needs
-  "depending on the kind". Stored and rendered alike is not the test. When close,
+  "depending on the kind". Where one list is a subset of another the
+  intersection proves nothing: ask whether anything names the smaller one on its
+  own. Stored and rendered alike is not the test. When close,
   split — a merge stays available, a collapse leaves nothing saying the question
   existed. It must be referenced by a Capability that
   changes it or a Screen that presents it; a relation from another Entity does
