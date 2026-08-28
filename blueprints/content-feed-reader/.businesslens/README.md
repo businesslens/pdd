@@ -9,10 +9,10 @@ intended product behavior.
 - Read `product.md` or `product/product.md` first, then Actors and
   Interfaces, optional Experiences, Screens, and Domains, followed by
   Capabilities, Business Rules, Journeys, and both Scenario collections.
-- Expect leaf entities as `<id>.md`; `<id>/<type>.md` means that entity owns
-  child entities or assets.
+- Expect leaf elements as `<id>.md`; `<id>/<type>.md` means that element owns
+  child elements or assets.
 - Treat Capability Scenarios as local acceptance contracts, Journey Scenarios
-  as end-to-end flow contracts, and Business Rules as invariants.
+  as end-to-end Steps contracts, and Business Rules as invariants.
 - Do not infer a stack or architecture from the model.
 - References are optional navigation and context. Their role explains why an
   artifact is attached; it never proves alignment or replaces product prose.

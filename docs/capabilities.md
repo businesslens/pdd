@@ -135,12 +135,19 @@ acceptance coverage for a Capability. Missing coverage is an error for a
 `complete` model, a warning for `partial` or `draft`, and an error for a public
 Blueprint, whether or not the Product has any [Journeys](./journeys.md).
 
-## What a Capability acts on
+## What a Capability changes
 
-`entities` lists the [Entities](./entities.md) this Capability acts on. It covers
-changes a transition can never express — renaming a thing alters its
+`entities` lists the [Entities](./entities.md) this Capability **changes**. It
+covers changes a transition can never express — renaming a thing alters its
 information, not its state — and it is what a transition's `by` is checked
 against.
+
+**Changes, never reads.** A Capability that only presents or inspects a thing
+declares nothing here; the [Screen](./screens.md) that shows it carries
+`entities` instead, and a Capability with no Screen says what it reads in its own
+prose. The narrower word is what makes the list worth reading — a structural
+check that inspects every kind in the model would otherwise claim to change all
+of them, and *"what can alter this thing"* would have no answer left.
 
 ### Behavior nobody triggers
 

@@ -15,7 +15,7 @@ context. The referenced artifact is not part of the model and never replaces
 the element's Product prose.
 
 Every semantic element supports the same optional field: Product, Actor,
-Interface, Experience, Screen, Domain, Capability, Journey, Capability
+Interface, Experience, Screen, Domain, Entity, Capability, Journey, Capability
 Scenario, Journey Scenario, and Business Rule. Configuration, Coverage, and
 taxonomies do not.
 

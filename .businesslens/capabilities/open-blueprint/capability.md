@@ -1,6 +1,18 @@
 ---
 entities:
   - product-model
+  - product
+  - actor
+  - interface
+  - experience
+  - screen
+  - domain
+  - entity
+  - capability
+  - capability-scenario
+  - journey
+  - journey-scenario
+  - business-rule
 domain: blueprint-portability
 availability: [{ place: businesslens-cli }]
 references:

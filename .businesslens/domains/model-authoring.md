@@ -1,5 +1,9 @@
 ---
 colorSlot: 1
+references:
+  - kind: doc
+    role: context
+    target: docs/skills.md
 ---
 
 # Model authoring

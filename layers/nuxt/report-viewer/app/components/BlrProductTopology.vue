@@ -95,6 +95,7 @@ const emptyNote = computed(() => {
     case 'delivery-by-interface': return 'This model declares no Interfaces to map.'
     case 'sitemap': return 'This model declares no Interfaces to map.'
     case 'rule-reach': return 'This model declares no Business Rules with reach to draw.'
+    case 'what-it-keeps': return 'This model declares no Entities.'
     case 'everything': return 'This model has no elements to draw.'
     default: return 'This model has no elements in this view.'
   }

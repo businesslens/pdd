@@ -16,6 +16,10 @@ entities:
 capabilities: [view-product-model]
 entryPoints:
   - local-report-web: /?s=capability&e=capability:lint-product-model
+references:
+  - kind: code
+    role: implementation
+    target: layers/nuxt/report-viewer/app/components/BlrElementPage.vue
 ---
 
 # Element page

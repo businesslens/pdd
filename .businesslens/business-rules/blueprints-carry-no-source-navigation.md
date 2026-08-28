@@ -8,6 +8,14 @@ appliesTo:
     id: pull-blueprint
   - type: capability
     id: contribute-blueprint
+references:
+  - kind: spec
+    role: intent
+    target: spec/report.md
+    title: The Product Report wire contract
+  - kind: code
+    role: implementation
+    target: src/core/portable.ts#projectPortableReport
 ---
 
 # Blueprints carry no source navigation

@@ -45,7 +45,7 @@ Read before authoring:
    - quick: a small, specific change; ask at most three batched decision
      questions;
    - thorough: blank slate, vague, or cross-cutting; cover why, Actors,
-     Interfaces, optional Experiences, Product Screens and Domains,
+     Interfaces, optional Experiences, Product Screens, Domains and Entities,
      Capabilities, Capability Scenarios, Rules, optional Journeys and Journey
      Scenarios, availability Contexts, decisions, removals, and definition of done.
 
@@ -55,7 +55,14 @@ Read before authoring:
    Apply the Experience creation test. Omit Experiences and use direct
    Interface availability when an Interface is already one coherent context.
    Distinguish durable Capabilities from complete Actor goals. Give every
-   Capability per-Capability acceptance. Create a Journey only when an achieved
+   Capability per-Capability acceptance. Decide the nouns as deliberately as the
+   verbs: create an Entity for a thing an Actor would call *"this one"* and the
+   Product can tell apart from another, one Entity per thing the Product treats
+   differently, and name on each Capability the Entities it acts on and on each
+   Screen the Entities it presents — those two declarations are the only edges an
+   Entity has, and an Entity nothing declares is unused vocabulary. Where a
+   family of things could be one Entity or several, ask with both shapes named
+   rather than choosing the smaller model. Create a Journey only when an achieved
    goal path crosses at least two distinct Capabilities; define its Scenario as
    one ordered typed Steps list, annotating responsible Actors and Capabilities
    while named routes select most-specific Context places.
@@ -72,8 +79,12 @@ Read before authoring:
       relationships;
     - resolution: apply only the approved narrow delta.
 
-    Preserve References only where they remain useful and keep their role
-    honest. Add no invented local targets. Coverage describes model breadth,
+    Attach to each element the artifacts that state its intended behavior — the
+    PRD, spec, proposal or design the decision came from, with `role: intent` —
+    and preserve existing References only where they remain useful. Keep every
+    role honest and add no invented local targets: an intended-behavior model
+    has no implementation to point at yet, and a `role: implementation` target
+    that does not exist is a claim, not a link. Coverage describes model breadth,
     not whether the plan is built; use `draft` only while the model itself
     remains under review.
 11. Run the bundled linter outside the untrusted target:

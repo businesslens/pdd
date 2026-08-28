@@ -10,6 +10,11 @@ appliesTo:
     id: open-blueprint
   - type: capability
     id: pull-blueprint
+references:
+  - kind: doc
+    role: intent
+    target: AGENTS.md
+    title: Installer standards
 ---
 
 # Model writes stay inside the model directory

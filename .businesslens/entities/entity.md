@@ -4,6 +4,17 @@ relations:
   - entity: entity
     verb: relates to
     cardinality: many
+references:
+  - kind: spec
+    role: intent
+    target: spec/format.md
+    title: The .businesslens/ folder contract
+  - kind: doc
+    role: context
+    target: docs/entities.md
+  - kind: code
+    role: implementation
+    target: src/core/portable.ts#ReportEntitySchema
 ---
 
 # Entity

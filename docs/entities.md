@@ -104,7 +104,7 @@ levels:
 
 And it carries two things no ERD has: a **lifecycle** — states, transitions, and
 the Capability causing each — and **edges into behaviour**, because a Capability
-declares what it acts on, a Screen what it presents, and a Scenario Step what it
+declares what it changes, a Screen what it presents, and a Scenario Step what it
 changes.
 
 **An ERD answers "how is the data shaped". This answers "what does the Product
@@ -132,8 +132,8 @@ Product undertakes to know is.
 **Not a view's states.** "Empty list" belongs to a [Screen](./screens.md).
 "Archived" belongs to the thing.
 
-**The author's test**: if you cannot point at it, and no Capability acts on it,
-it is a table, not an Entity.
+**The author's test**: if you cannot point at it, and no Capability changes it
+and no Screen shows it, it is a table, not an Entity.
 
 ## How it relates to everything else
 
@@ -142,10 +142,10 @@ use it declare the relationship, and every backlink is derived.
 
 | | |
 | --- | --- |
-| **Capability** | declares the Entities it acts on, in `entities` |
+| **Capability** | declares the Entities it **changes**, in `entities`; a Capability that only reads one declares nothing |
 | **Transition** | names the Capability that causes that one move |
 | **Another Entity** | related by a declared edge with a verb and a cardinality; the inverse is derived |
-| **Scenario Step** | may name the Entity it acts on and the state it leaves it in |
+| **Scenario Step** | may name the Entity it changes and the state it leaves it in |
 | **Screen** | declares the Entities it presents, in `entities` |
 | **Domain** | optional and single, authored on the Entity itself |
 | **Actor** | never — an Actor is *who acts*, an Entity is *what is acted upon* |
@@ -165,8 +165,12 @@ vocabulary nobody uses, or a relationship somebody forgot to declare.
 ## Findings `lint` reports
 
 - An Entity with neither `## Information kept` nor `## States` is an error.
-- `## States` without `## Transitions`, or the reverse, is an error.
-- A transition that does not read `from → to by <capability>` is an error.
+- `## States` without a `transitions` list, or `transitions` without
+  `## States`, is an error.
+- A `## Transitions` or `## Relations` prose section is an error: the
+  frontmatter list is the one authority, and a section beside it is a second one
+  that can disagree.
+- A transition that is not a `{ from, to, by }` mapping is an error.
 - A transition naming a state the Entity does not define is an error.
 - A transition naming a Capability that does not list this Entity is an error.
 - An Entity no Capability changes and no Screen presents is an error.

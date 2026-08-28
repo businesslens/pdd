@@ -4,6 +4,10 @@ entities:
 capabilities: [view-product-model]
 entryPoints:
   - local-report-web: /
+references:
+  - kind: code
+    role: implementation
+    target: layers/nuxt/report-viewer/app/components/BlrOverview.vue
 ---
 
 # Product overview

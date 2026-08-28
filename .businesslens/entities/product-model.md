@@ -58,6 +58,39 @@ transitions:
   - from: Complete
     to: Partial
     by: decide-intended-behavior
+  - from: Absent
+    to: Draft
+    by: open-blueprint
+  - from: Absent
+    to: Partial
+    by: open-blueprint
+  - from: Absent
+    to: Complete
+    by: open-blueprint
+  - from: Absent
+    to: Draft
+    by: pull-blueprint
+  - from: Absent
+    to: Partial
+    by: pull-blueprint
+  - from: Absent
+    to: Complete
+    by: pull-blueprint
+references:
+  - kind: spec
+    role: intent
+    target: spec/format.md
+    title: The .businesslens/ folder contract
+  - kind: spec
+    role: intent
+    target: spec/report.md
+    title: The Product Report wire contract
+  - kind: doc
+    role: context
+    target: docs/product-model.md
+  - kind: code
+    role: implementation
+    target: src/core/model.ts#loadModel
 ---
 
 # Product model

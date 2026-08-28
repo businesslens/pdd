@@ -1,5 +1,9 @@
 ---
 actors: [developer, ai-agent]
+references:
+  - kind: doc
+    role: context
+    target: docs/from-your-repo.md
 ---
 
 # Establish a Product Model

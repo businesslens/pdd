@@ -1,5 +1,9 @@
 ---
 actors: [developer]
+references:
+  - kind: doc
+    role: context
+    target: docs/from-a-blueprint.md
 ---
 
 # Move a model to another repository

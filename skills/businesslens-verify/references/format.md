@@ -105,7 +105,7 @@ not contain another H1 or H2.
   H1, lead description, and `## Capability boundary`. The collection is
   optional. For every Interface using Experiences, their Actor union covers all
   Interface Actors.
-- Capability: optional `entities` naming what it acts on; at least one `availability` Context; optional singular
+- Capability: optional `entities` naming what it **changes** (never what it merely reads); at least one `availability` Context; optional singular
   `domain`; H1 and lead description. Every Capability needs a Capability
   Scenario for every availability Context: a gap is an error at complete
   coverage and a warning at draft or partial coverage.
@@ -128,9 +128,11 @@ not contain another H1 or H2.
   declared on one side only — the inverse is derived, and a relation targets an
   Entity, never an Actor. `transitions` is required exactly when `## States` is
   present, each `{ from, to, by }` where `by` names the Capability that causes
-  the move and must list this Entity. An Entity is a thing an Actor points at
-  and the Product tells apart — identity, not storage. Never a data model: no
-  types, no keys, no foreign keys. It must be referenced by a Capability that
+  the move and must list this Entity. `## Relations` and `## Transitions` are
+  invalid sections — the frontmatter list is the one authority — and `state` is
+  never valid on an Entity's assets or References. An Entity is a thing an Actor
+  points at and the Product tells apart — identity, not storage. Never a data
+  model: no types, no keys, no foreign keys. It must be referenced by a Capability that
   changes it or a Screen that presents it; a relation from another Entity does
   not count.
 - Screen: at least one `capabilities` relation, optional `entities` naming what it presents, (it has no `availability` — its
@@ -213,7 +215,7 @@ The Reader has a new private owned collection with the chosen name.
 authority, so no `capability:` field is written. A Journey Scenario has the same
 shape plus a required `result`.
 
-Context is the single model concept for where behavior applies. In schema 6 it
+Context is the single model concept for where behavior applies. In schema 7 it
 is a strict object containing one `place` field. A Capability's availability
 Contexts name an undivided Interface or an Experience:
 

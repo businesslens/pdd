@@ -123,7 +123,7 @@ Screen hierarchy says where Actors meet the Product; the Capability → Scenario
 and Journey → Scenario hierarchy says what the Product does. `availability` is
 the join between them. Domain classifies members of both by subject. Entity
 names what the Product keeps and whose state Actors can observe, and is the
-thing Capabilities act on. Actors and Business Rules attach across everything.
+thing Capabilities change. Actors and Business Rules attach across everything.
 
 ## Contexts and places
 
@@ -311,8 +311,8 @@ future format revision, but Context is not an arbitrary metadata bag.
 ## References
 
 `references` is an optional extension on every semantic element: Product,
-Actor, Interface, Experience, Screen, Domain, Capability, Journey, Capability
-Scenario, Journey Scenario, and Business Rule. It is not accepted in
+Actor, Interface, Experience, Screen, Domain, Entity, Capability, Journey,
+Capability Scenario, Journey Scenario, and Business Rule. It is not accepted in
 `config.yaml`, `coverage.md`, or `taxonomies.yaml`.
 
 ```yaml
@@ -760,18 +760,26 @@ them is still vocabulary nobody uses.
 the Capability that causes the move — which must exist and must list this Entity
 in its `entities`. Relations and transitions are frontmatter rather than
 sections because they name other elements by id, and ids are parsed rather than
-read out of English. A state no transition reaches, other than the first listed,
+read out of English. `## Relations` and `## Transitions` are therefore invalid
+sections on an Entity, exactly as `## Steps` is invalid on a Scenario: the
+frontmatter list is the one authority and a section beside it is a second one
+that can disagree. A state no transition reaches, other than the first listed,
 is a `lint` warning; a terminal state is valid and needs no outgoing transition.
 
 `domain` is optional and single. H1 = name and the lead paragraph = description.
-Assets may carry `state`, naming one of this Entity's own states.
+
+Neither an asset nor a `references` entry may carry `state` here; `state` stays
+valid only on a Screen. A Screen's View states are what a view *looks like*, and
+a capture depicts one of them. An Entity's states are lifecycle, and no artifact
+depicts "Confirmed" — it depicts the screen that shows a confirmed thing, which
+is where the annotation already belongs.
 
 **No orphans.** An Entity must be referenced by a Capability that changes it or
 a Screen that presents it. An Entity nothing points at is a `lint` error: it is
 either unused vocabulary or a relation somebody forgot to declare.
 
 An Entity never declares Capabilities, Screens, availability, or Actors. The
-Capability declares what it acts on and the Screen declares what it presents;
+Capability declares what it changes and the Screen declares what it presents;
 every other Entity relation is derived. Entity states are the authority for a
 lifecycle, and a Screen's `## View states` describes what that **view** looks
 like — the two are never merged.
@@ -805,10 +813,18 @@ Let a shopper complete a purchase without losing cart state on a recoverable
 failure.
 ```
 
-`entities` is optional and lists the Entities this Capability acts on, by id.
-It covers changes a transition can never express — renaming a thing alters its
-information, not its state — and it is the authority a transition's `by` is
-checked against. `availability` is required and needs at least one valid
+`entities` is optional and lists the Entities this Capability **changes**, by
+id. It covers changes a transition can never express — renaming a thing alters
+its information, not its state — and it is the authority a transition's `by` is
+checked against.
+
+**Changes, never reads.** A Capability that only presents or inspects a thing
+declares nothing here; the Screen that shows it carries `entities` instead, and
+a Capability with no Screen says what it reads in its own prose. The narrower
+word is what makes the list worth reading: a structural check that inspects every
+kind in the model would otherwise claim to change all of them, and "what can
+alter this thing" — the question the list exists to answer — would have no answer
+left. `availability` is required and needs at least one valid
 Context. Its place is
 an undivided Interface or one Experience of a divided Interface. `domain` is
 optional and, when present, names exactly one Domain. Actors are expressed by

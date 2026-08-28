@@ -4,6 +4,17 @@ relations:
   - entity: screen
     verb: holds
     cardinality: many
+references:
+  - kind: spec
+    role: intent
+    target: spec/format.md
+    title: The .businesslens/ folder contract
+  - kind: doc
+    role: context
+    target: docs/experiences.md
+  - kind: code
+    role: implementation
+    target: src/core/portable.ts#ReportExperienceSchema
 ---
 
 # Experience

@@ -1027,6 +1027,66 @@ Lead.
     expect(run(cwd).errors.join('\n')).toContain('coverage.md: unknown frontmatter key "references"')
   })
 
+  /*
+   * Entity was added as a kind without joining the generic "for every element"
+   * lists, so its ids, References and assets went unchecked for a release. These
+   * cover the checks an Entity now shares with every other element.
+   */
+  it('checks an Entity like every other element: ids, References and assets', () => {
+    const cwd = fixtureCopy()
+    const order = join(cwd, '.businesslens/entities/order.md')
+    const source = readFileSync(order, 'utf8')
+
+    const withRefs = (block: string) => {
+      writeFileSync(order, source.replace('domain: ordering', `domain: ordering\n${block}`))
+      return run(cwd)
+    }
+
+    expect(withRefs(`references:
+  - kind: doc
+    role: context
+    target: docs/nowhere.md`).warnings.join('\n'))
+      .toContain('reference target "docs/nowhere.md" does not exist in the repository')
+
+    expect(withRefs(`references:
+  - kind: code
+    role: implementation
+    target: src/models/order.ts
+  - kind: doc
+    role: context
+    target: src/models/order.ts`).errors.join('\n'))
+      .toContain('duplicate reference target "src/models/order.ts"')
+
+    expect(withRefs(`references:
+  - kind: code
+    role: implementation
+    target: src/models/order.ts
+    state: Pending`).errors.join('\n'))
+      .toContain('reference "state" is only valid on a Screen')
+
+    // The tracked code target is real, so a clean list is accepted.
+    writeFileSync(order, source.replace('domain: ordering', `domain: ordering
+references:
+  - kind: code
+    role: implementation
+    target: src/models/order.ts`))
+    expect(run(cwd).errors).toEqual([])
+
+    writeFileSync(order, source)
+    renameSync(order, join(cwd, '.businesslens/entities/Order.md'))
+    expect(run(cwd).errors.join('\n')).toContain('id "Order" must be lowercase kebab-case')
+  })
+
+  it('refuses a prose section that restates frontmatter on an Entity', () => {
+    const cwd = fixtureCopy()
+    const order = join(cwd, '.businesslens/entities/order.md')
+    for (const heading of ['Transitions', 'Relations']) {
+      writeFileSync(order, `${readFileSync(order, 'utf8')}\n## ${heading}\n\nSomething restated in prose.\n`)
+      expect(run(cwd).errors.join('\n')).toContain(`"## ${heading}" is not allowed on this element type`)
+      writeFileSync(order, readFileSync(order, 'utf8').replace(`\n## ${heading}\n\nSomething restated in prose.\n`, ''))
+    }
+  })
+
   it('rejects unknown frontmatter keys', () => {
     const cwd = fixtureCopy()
     writeFileSync(join(cwd, '.businesslens/domains/catalog.md'), `---

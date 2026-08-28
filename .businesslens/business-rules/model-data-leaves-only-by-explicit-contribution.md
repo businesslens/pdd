@@ -4,6 +4,10 @@ appliesTo:
     context: { place: businesslens-cli }
   - type: context
     context: { place: agent-skills }
+references:
+  - kind: code
+    role: implementation
+    target: src/commands/contribute.ts
 ---
 
 # Model data leaves only by explicit contribution

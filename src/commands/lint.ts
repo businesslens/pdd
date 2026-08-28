@@ -5,7 +5,7 @@ import { lsFiles } from '../core/git.js'
 import { containsPlace, counterpartKey, interfaceOf, isId, isQualifiedId } from '../core/ids.js'
 import { INTERFACE_TYPES } from '../core/interface-types.js'
 import { containsStructuralHeading, section, type MarkdownDoc } from '../core/markdown.js'
-import { loadModel } from '../core/model.js'
+import { allElements, elementCollections, loadModel } from '../core/model.js'
 import { resolveModelRoot } from '../core/model-root.js'
 
 export interface LintResult {
@@ -114,16 +114,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
   }
 
   const collections: Array<[string, Array<{ id: string }>]> = [
-    ['actors', model.actors],
-    ['interfaces', model.interfaces],
-    ['experiences', model.experiences],
-    ['screens', model.screens],
-    ['domains', model.domains],
-    ['capabilities', model.capabilities],
-    ['capabilityScenarios', model.capabilityScenarios],
-    ['businessRules', model.businessRules],
-    ['journeys', model.journeys],
-    ['journeyScenarios', model.journeyScenarios],
+    ...Object.entries(elementCollections(model)),
     ['scenarioKinds', model.scenarioKinds]
   ]
   // Interface, Experience, and Screen ids carry the path that distinguishes
@@ -518,7 +509,17 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
 
   for (const entity of model.entities) {
     requireTitle(entity.file, entity.doc.title, entity.doc.lead)
-    validateSections(entity.file, entity.doc, ['Intent', 'Information kept', 'States', 'Transitions'])
+    /*
+     * `## Transitions` and `## Relations` are refused for the reason `## Steps`
+     * is refused on a Scenario: the frontmatter list is the one authority, and a
+     * prose section beside it is a second one that can disagree.
+     */
+    validateSections(
+      entity.file,
+      entity.doc,
+      ['Intent', 'Information kept', 'States'],
+      ['Transitions', 'Relations']
+    )
     if (entity.domain && !domainIds.has(entity.domain)) {
       errors.push(`${entity.file}: names missing domain "${entity.domain}"`)
     }
@@ -1121,25 +1122,14 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     errors.push('capabilities/: a complete model needs at least one capability')
   }
 
-  const allElements = [
-    ...model.actors,
-    ...model.interfaces,
-    ...model.experiences,
-    ...model.screens,
-    ...model.domains,
-    ...model.capabilities,
-    ...model.capabilityScenarios,
-    ...model.businessRules,
-    ...model.journeys,
-    ...model.journeyScenarios
-  ]
+  const elements = allElements(model)
   /*
     Asset metadata is additive: it titles and describes files that are already
     there, and never sets their class. Class is the path — anything under
     `implementation/` describes this realization — which is the only rule a
     foreign tool writing a capture on CI can actually satisfy.
   */
-  for (const element of allElements) {
+  for (const element of elements) {
     const present = new Set(element.assets)
     const stateNames = new Set(
       model.screens.find(screen => screen.file === element.file)?.states.map(state => state.title.toLowerCase()) ?? []
@@ -1158,7 +1148,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     }
   }
 
-  const referenceHosts = [{ file: 'product.md', references: model.product.references }, ...allElements]
+  const referenceHosts = [{ file: 'product.md', references: model.product.references }, ...elements]
   const screenFiles = new Set(model.screens.map(screen => screen.file))
   for (const element of referenceHosts) {
     const targets = new Set<string>()

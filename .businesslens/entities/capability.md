@@ -7,6 +7,17 @@ relations:
   - entity: entity
     verb: acts on
     cardinality: many
+references:
+  - kind: spec
+    role: intent
+    target: spec/format.md
+    title: The .businesslens/ folder contract
+  - kind: doc
+    role: context
+    target: docs/capabilities.md
+  - kind: code
+    role: implementation
+    target: src/core/portable.ts#ReportCapabilitySchema
 ---
 
 # Capability
@@ -18,5 +29,5 @@ independently meaningful. It has no beginning or end.
 
 - Why it exists and which outcome it protects
 - Where it is available, as Contexts
-- The Entities it acts on
+- The Entities it changes
 - Its subject Domain, when it has one

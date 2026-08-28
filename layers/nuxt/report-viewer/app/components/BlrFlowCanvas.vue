@@ -150,6 +150,9 @@ watch(layoutKey, async () => {
         <template #node-blr-label="nodeProps">
           <BlrFlowLabel v-bind="(nodeProps as any)" />
         </template>
+        <template #edge-blr-self="edgeProps">
+          <BlrFlowSelfEdge v-bind="(edgeProps as any)" />
+        </template>
         <Background
           :gap="30"
           :size="2"

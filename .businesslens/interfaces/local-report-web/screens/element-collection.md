@@ -16,6 +16,10 @@ entities:
 capabilities: [view-product-model]
 entryPoints:
   - local-report-web: /?s=capability
+references:
+  - kind: code
+    role: implementation
+    target: layers/nuxt/report-viewer/app/components/BlrReportShell.vue
 ---
 
 # Element collection

@@ -1,6 +1,10 @@
 ---
 kind: person
 relationship: external
+references:
+  - kind: doc
+    role: context
+    target: docs/the-loop.md
 ---
 
 # Developer

@@ -8,6 +8,10 @@ appliesTo:
     id: open-blueprint
   - type: capability
     id: pull-blueprint
+references:
+  - kind: code
+    role: implementation
+    target: src/core/skill-installation.ts
 ---
 
 # Unowned files are never replaced without force

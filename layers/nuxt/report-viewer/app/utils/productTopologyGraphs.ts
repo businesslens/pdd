@@ -358,41 +358,45 @@ export function buildDeliveryByInterface(
  * and end-to-end variation for different reasons.
  */
 /**
- * What the Product keeps, and what moves it.
+ * What the Product keeps, and how those things relate — the Product's own ERD.
  *
- * The only view whose subject is the Product's nouns. Entity-to-Entity edges are
- * authored on one side and drawn once, so a Collection that holds Items appears
- * as one edge rather than two facing each other. A Capability appears only when
- * it acts on something, which keeps the canvas about the things rather than
- * becoming a second Product map.
+ * The only view whose subject is the Product's nouns, and its only edges are the
+ * authored Entity relations. Each is declared on one side and drawn once, so a
+ * Collection that holds Items is one edge rather than two facing each other, and
+ * the label carries the cardinality because *holds many* and *holds one* are
+ * different products.
+ *
+ * Capabilities are deliberately absent. Drawing them added one edge per
+ * (Capability, Entity) pair — thirteen identical `changes` edges against three
+ * relations in the reference model — and buried the reading this view exists
+ * for. What changes a thing is on the thing's own page, and the Everything view
+ * focused on one Entity draws that neighbourhood in full.
  */
 export function buildWhatItKeeps(
   workspace: ReportWorkspace,
   options: ProductTopologyGraphOptions = {}
 ): FlowGraphShape {
-  const changing = new Set(workspace.capabilities.filter(c => c.entityIds.length).map(c => c.id))
-  const elements: AnyElementView[] = [
-    ...workspace.entities,
-    ...workspace.capabilities.filter(element => changing.has(element.id))
-  ]
-  const shape = graphFrom(elements, [], options)
-  const present = new Set(shape.nodes.map(node => node.id))
+  /* Domain is an axis, not a container: it tints the box instead of framing it,
+     because an ERD's shape is its relation web and a frame would fight it. */
+  const domainColor = new Map(workspace.domains.map(domain => [domain.id, domain.colorSlot ?? null]))
+  const nodes: BlrFlowNode[] = workspace.entities.map(entity => elementNode(entity, {
+    selected: options.selectedId === entity.key,
+    colorSlot: entity.domainId ? domainColor.get(entity.domainId) ?? null : null
+  }))
+  const present = new Set(nodes.map(node => node.id))
   const edges: BlrFlowEdge[] = []
-  const add = (source: string, target: string, label: string, minlen: number) => {
-    if (!present.has(source) || !present.has(target)) return
-    edges.push(relationEdge({ source, target, label }, { minlen }))
-  }
-  for (const capability of workspace.capabilities) {
-    for (const id of capability.entityIds) {
-      add(capability.key, elementKey('entity', id), 'changes', 1)
-    }
-  }
   for (const entity of workspace.entities) {
     for (const relation of entity.relations) {
-      add(entity.key, elementKey('entity', relation.entityId), relation.verb, 1)
+      const target = elementKey('entity', relation.entityId)
+      if (!present.has(target)) continue
+      edges.push(relationEdge({
+        source: entity.key,
+        target,
+        label: `${relation.verb} ${relation.cardinality}`
+      }))
     }
   }
-  return layoutFlow({ nodes: shape.nodes, edges: [...shape.edges, ...edges] }, { ranksep: 110, nodesep: 24 })
+  return layoutFlow({ nodes, edges }, { ranksep: 120, nodesep: 28 })
 }
 
 export function buildRuleReach(
@@ -441,6 +445,7 @@ export const EVERYTHING_SHELF_ORDER: ReportElementKind[] = [
   'journey-scenario',
   'journey',
   'capability',
+  'entity',
   'domain',
   'rule'
 ]

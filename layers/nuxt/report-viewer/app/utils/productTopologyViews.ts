@@ -121,15 +121,12 @@ export const PRODUCT_TOPOLOGY_VIEWS: ProductTopologyView[] = [
   {
     id: 'what-it-keeps',
     name: 'What it keeps',
-    question: 'What does the Product keep, how do those things relate, and what changes them?',
+    question: 'What does the Product keep, and how do those things relate?',
     semantics: 'identity',
-    note: 'Edges between Entities are authored on one side and drawn once. A Capability edge means it acts on that thing.',
-    flow: [
-      { kind: 'capability', label: 'Capabilities' },
-      { kind: 'entity', label: 'Entities' }
-    ],
-    separators: ['\u2192'],
-    kinds: ['capability', 'entity', 'domain']
+    note: 'Each relation is authored on one side and drawn once, reading source \u2192 target. Colour is the Domain. What changes a thing is on its page.',
+    flow: [{ kind: 'entity', label: 'Entities' }],
+    separators: [],
+    kinds: ['entity']
   },
   {
     id: 'everything',
@@ -149,6 +146,7 @@ export const PRODUCT_TOPOLOGY_VIEWS: ProductTopologyView[] = [
       'journey-scenario',
       'journey',
       'capability',
+      'entity',
       'domain',
       'rule'
     ],

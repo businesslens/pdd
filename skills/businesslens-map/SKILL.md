@@ -51,8 +51,14 @@ Read before authoring:
    Journeys and their Journey Scenarios, availability Contexts, and coverage.
    Name behavioral elements verb-object (`browse-catalog`, never
    `catalog-browsing`) and cross-cutting elements with the bare noun. Create an
-   Entity exactly when a thing has two or more named states referenced by two or
-   more Capabilities. Model unattended behavior — a schedule the Product owns, an
+   Entity for a thing an Actor would point at and call *"this one"* and the
+   Product can tell apart from another — identity, not storage, and not a state
+   count. **One Entity per thing the Product actually treats differently:** when
+   two candidates share a family name but the Product keeps different
+   information about each, or a Capability acts on one and not the other, they
+   are separate Entities, and one Entity standing for the whole family silently
+   deletes the difference. Where you would collapse several into one, ask
+   instead — name both shapes with their counts and let the author choose. Model unattended behavior — a schedule the Product owns, an
    expiry, a retry — as a Scenario whose first Step is a `condition` carrying
    `unattended: true`, availability naming where an Actor observes the outcome. Give every
    mapped Capability evidence-backed per-Capability acceptance. Create a Journey only
@@ -71,9 +77,16 @@ Read before authoring:
    direct Interface availability. A Screen is warranted only for a stable
    user-visible product view; do not turn every
    route, component, viewport, or visual variant into one. Preserve valid
-   existing meaning in a scoped expansion. Add optional `references` only when
-   they help: implementation References for established artifacts and context
-   References for supporting material. Never call them proof.
+   existing meaning in a scoped expansion. **Attach what you actually read.**
+   `references` is optional in the format, and leaving it empty is the most
+   common way a mapped model becomes unreviewable: attach to each element the
+   artifacts that established its meaning — the implementation you traced
+   (`kind: code`, `role: implementation`), the spec, PRD or proposal stating
+   intended behavior (`role: intent`), and the document you took supporting
+   context from (`role: context`). A Reference says where a claim came from; it
+   never says the claim is verified and never replaces the element's own prose.
+   An element you can attach nothing to is a claim resting on inspection alone —
+   say so in the delta rather than leaving it unexplained.
 7. Present the proposed model delta before writing. Include added, changed, and
    removed elements; mapped and unmapped areas; limitations; and any material
    uncertainty. Get explicit approval for product meaning. Do not silently
@@ -81,9 +94,15 @@ Read before authoring:
 
    **Always end the delta with a `Judgment calls` section**, naming every choice
    that could defensibly have gone the other way, the alternative, and why you
-   chose as you did. Capability granularity, whether something warranted an
+   chose as you did. Capability granularity, Entity granularity — one Entity per
+   thing, or one standing for several — whether something warranted an
    Interface, an Experience, an Entity or a Journey, and whether a constraint is
-   a Business Rule all belong there. A reviewer can see what the model says but
+   a Business Rule all belong there.
+
+   **Ask rather than decide whenever the choice would drop a distinction.**
+   Folding several things the Product treats differently into one element is not
+   a granularity preference; the information is gone and no reader can recover
+   it from the model. Put both shapes to the author, with counts, and wait. A reviewer can see what the model says but
    not what it omits, so an unstated judgment call is one nobody can challenge —
    which makes the approval a formality rather than a check.
 8. Write only inside `.businesslens/` after approval. Create the complete

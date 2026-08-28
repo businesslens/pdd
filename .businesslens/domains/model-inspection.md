@@ -1,5 +1,9 @@
 ---
 colorSlot: 3
+references:
+  - kind: doc
+    role: context
+    target: docs/cli-lint.md
 ---
 
 # Model inspection

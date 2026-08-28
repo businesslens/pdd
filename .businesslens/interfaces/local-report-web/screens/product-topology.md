@@ -4,6 +4,10 @@ entities:
 capabilities: [explore-product-topology]
 entryPoints:
   - local-report-web: /?s=topology
+references:
+  - kind: code
+    role: implementation
+    target: layers/nuxt/report-viewer/app/components/BlrProductTopology.vue
 ---
 
 # Product topology

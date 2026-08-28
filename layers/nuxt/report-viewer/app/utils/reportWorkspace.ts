@@ -900,11 +900,12 @@ export function projectReportWorkspace(report: ProductReportV11): ReportWorkspac
     presentedOnIds: model.screens.filter(sc => sc.entityIds.includes(entity.id)).map(sc => sc.id),
     states: entity.states.map(state => ({ name: state.name, content: state.content })),
     /*
-     * States and transitions, and the Domain. No Capability relation: an Entity
-     * declares none, and the format says a Capability names the Entities it acts
-     * on *in prose*, so there is no structured edge to derive. Deriving one
-     * through the shared Domain looked like a relation and was not — it read
-     * empty for a product-wide Entity and over-claimed for a scoped one.
+     * Every Entity edge is derived, never authored here: the Capability declares
+     * what it acts on and the Screen declares what it presents, so an Entity has
+     * one authored outbound list — `relations` — and everything else is read off
+     * the other side. Deriving a Capability edge through a shared Domain instead
+     * looked like a relation and was not: empty for a product-wide Entity, and
+     * over-claiming for a scoped one.
      */
     transitions: entity.transitions.map(transition => ({
       from: transition.from, to: transition.to, capabilityId: transition.capabilityId

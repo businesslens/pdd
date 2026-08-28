@@ -1,5 +1,16 @@
 ---
 domain: model-authoring
+references:
+  - kind: spec
+    role: intent
+    target: spec/format.md
+    title: The .businesslens/ folder contract
+  - kind: doc
+    role: context
+    target: docs/product.md
+  - kind: code
+    role: implementation
+    target: src/core/portable.ts#ProductReportV11Schema
 ---
 
 # Product

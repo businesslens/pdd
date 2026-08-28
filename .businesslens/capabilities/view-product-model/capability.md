@@ -1,6 +1,4 @@
 ---
-entities:
-  - product-model
 domain: model-inspection
 availability: [{ place: businesslens-cli }, { place: local-report-web }]
 references:

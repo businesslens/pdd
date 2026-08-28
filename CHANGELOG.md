@@ -16,13 +16,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   draft the Product never persists still qualifies, a row no Actor can name does
   not. The unit is the naming test — a shopper says "this order", never "this
   order line". It carries `## Information kept` and/or `## States` with
-  `## Transitions`, at least one of the two. What the Product keeps, never how it
-  is stored: no types, no cardinality, no keys, no relations between Entities.
+  frontmatter `transitions`, at least one of the two. What the Product keeps,
+  never how it is stored: no types, no keys, no join entities.
 - **Three edges, each with one owner.** A Capability declares the `entities` it
-  acts on — covering changes to information, which a transition cannot express. A
-  transition reads `from → to by <capability>`, cross-checked against that
-  declaration. A Screen declares the `entities` it presents. An Entity nothing
-  references is an error.
+  **changes** — covering changes to information, which a transition cannot
+  express — and declares nothing for a thing it merely reads, so *what can alter
+  this* keeps an answer. A transition is `{ from, to, by }`, cross-checked
+  against that declaration. A Screen declares the `entities` it presents. An
+  Entity nothing references is an error.
+- **Every Entity edge is resolved on the wire, not only in the folder.** A report
+  cannot carry a relation to a thing that does not exist, a transition to a state
+  the Entity lacks or by a Capability that does not list it, an `entityIds`
+  member naming nothing, or a Step claiming a state its lifecycle never reaches.
+  A report expands straight into an authored folder, so an edge the folder
+  rejects must not survive the wire.
+- Ids, References and assets are checked on an Entity exactly as on every other
+  element, and both "for every element" lists are now derived from the model and
+  from the schema rather than written by hand — a new element kind fails the
+  build until every check has it.
+- `## Relations` and `## Transitions` are invalid sections on an Entity, for the
+  reason `## Steps` is invalid on a Scenario: the frontmatter list is the one
+  authority and a prose section beside it is a second one that can disagree.
+  `state` stays Screen-only — a capture depicts a view, and no artifact depicts
+  "Confirmed".
 - An **Actor** may carry `## Information kept` for what the Product keeps about
   them, so a Reader's reading position has a home without modelling the Reader
   twice. An Actor is who acts; an Entity is what is acted upon.
@@ -37,40 +53,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   it in.** The Scenario's Entity set is derived from its Steps, exactly as its
   Actor set is, and `lint` closes the loop: the state must be one the Entity
   has, and some transition must reach it by that same Capability.
-- **A new Topology view, "What it keeps"** — the only one whose subject is the
-  Product's nouns. Capabilities that change something, the things themselves,
-  and the edges between them.
+- **A new Topology view, "What it keeps"** — the Product's own ERD, and the only
+  view whose subject is its nouns. Entities and the authored relations between
+  them, each labelled with its verb and cardinality, each drawn once because the
+  inverse is derived. A relation an Entity declares at itself is drawn as a loop
+  rather than the stub a step router collapses it to. Capabilities are
+  deliberately absent: one edge per (Capability, Entity) pair buried the reading
+  the view exists for, and what changes a thing is on the thing's own page.
+  Entities also take their place on the Everything canvas, and their relations
+  join its resolved relation web.
 - A Capability page shows what it changes, a Screen what it presents, and a
   Scenario what it moves. The authored direction was declared in the model and
   dropped by the viewer.
 - The Product Model's own description gains **what it keeps**.
-
-### Changed
-
-- **Relational structure lives in frontmatter.** `transitions` moves out of a
-  Markdown section and joins `relations` there, because both name other elements
-  by id — which is the rule every other field already follows. The prose form
-  also had a silent mis-parse: `- Available → Sold by owner` read as
-  `to: "Sold", by: "owner"` and linted clean.
-- **A kind of file in a Product Model is an `Element`, not an entity.** That use
-  was the loose one and gave the word up, so the kind that genuinely means a
-  thing with identity could have it.
-- **A thing's states leave the views that showed them.** Screen
-  `## Product states` becomes `## View states` and holds only the view's own;
-  `## Information presented` narrows to what that view shows. The Blueprint was
-  writing Private/Published/Unlisted on two Screens and on the Collection.
-- The Blueprint gains `item`, its most-mentioned noun and previously absent; the
-  fixture gains `catalog-product` and `cart`, the latter appearing 15 times in
-  prose and nowhere in the model.
-
-
-- **Entity, a tenth entity kind.** An Entity names a thing the Product keeps
-  whose state an Actor observes — an order, a listing — and records its states
-  and legal transitions. Capabilities name a product's verbs; nothing named its
-  nouns, so a thing's lifecycle had nowhere to live but whichever Screen
-  happened to show it. Its existence rule is computable rather than judged: an
-  Entity exists exactly when a thing has two or more named states referenced by
-  two or more Capabilities.
 - **Unattended Scenarios.** A Scenario's first Step may be a `condition`
   carrying `unattended: true`, and such a Scenario needs no Actor Step. A
   schedule the Product owns, an expiry, or a retry is real Product behavior with
@@ -96,6 +91,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Relational structure lives in frontmatter.** `transitions` moves out of a
+  Markdown section and joins `relations` there, because both name other elements
+  by id — which is the rule every other field already follows. The prose form
+  also had a silent mis-parse: `- Available → Sold by owner` read as
+  `to: "Sold", by: "owner"` and linted clean.
+- **A kind of file in a Product Model is an `Element`, not an entity.** That use
+  was the loose one and gave the word up, so the kind that genuinely means a
+  thing with identity could have it.
+- **A thing's states leave the views that showed them.** Screen
+  `## Product states` becomes `## View states` and holds only the view's own;
+  `## Information presented` narrows to what that view shows. The Blueprint was
+  writing Private/Published/Unlisted on two Screens and on the Collection.
+- The Blueprint gains `item`, its most-mentioned noun and previously absent; the
+  fixture gains `catalog-product` and `cart`, the latter appearing 15 times in
+  prose and nowhere in the model.
 - **An AI agent harness is an Actor**, with the id `ai-agent`. Three independent
   mappings of one repository split on whether the agent that loads a skill is a
   participant or the runtime an `agent` Interface is delivered through. It is a
@@ -104,7 +114,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   delivering a `web` Interface does not have. Named `ai-agent` rather than after
   one use of it, since the same participant appears in products unrelated to
   code. This promotes nothing else by analogy.
-- **A behavioral id's object half names something the model declares.**
+- **A behavioral id's entity half names something the model declares.**
   `install-agent-skills`, not `install-skills`, when `agent-skills` is an
   Interface. `lint` warns only where the author already declared the fuller
   term. Two independent mappings agreed on 95% of the Capabilities they found
@@ -149,6 +159,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   section naming each choice that could have gone the other way. A reviewer can
   see what a model says but not what it omits, which is where two independent
   maps of one repository actually diverged.
+- **Attach what you read.** `businesslens-map` no longer treats References as
+  optional polish: it attaches to each element the artifacts that established its
+  meaning — the code it traced, the spec or PRD stating intent, the document it
+  took context from — and `businesslens-ideate` attaches the `role: intent`
+  artifact a decision came from. Permission with no trigger is why a whole
+  release shipped with References on Capabilities and Interfaces and nowhere
+  else.
+- **`businesslens-map` asks rather than collapsing a distinction.** Its Entity
+  rule is the identity and naming test rather than the retired state count, one
+  Entity per thing the Product treats differently, and Entity granularity joins
+  the required `Judgment calls` list. Folding several things into one element is
+  not a smaller model; the information is gone and no reader can recover it.
+- **`businesslens-verify` verifies the nouns.** Information kept, each named
+  state, each transition's cause, each relation and its cardinality, and every
+  `entities` list on a Capability and a Screen. `businesslens-ideate` covers
+  Entities at all, which it did not.
+
+### Fixed
+
+- `docs/cli-open.md`, `docs/cli-export.md`, `docs/product-model.md`,
+  `spec/report.md` and the three bundled skill format references still described
+  folder schema 6 and Product Report v10 — one of them asserting that v10 was the
+  only accepted report version, which the schema had not agreed with since v11.
 
 ## [0.8.0] - 2026-08-25
 

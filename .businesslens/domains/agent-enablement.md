@@ -1,5 +1,9 @@
 ---
 colorSlot: 2
+references:
+  - kind: doc
+    role: context
+    target: docs/installation.md
 ---
 
 # Agent enablement

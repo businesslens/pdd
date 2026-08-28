@@ -261,6 +261,41 @@ export interface PddModel {
   notices: string[]
 }
 
+/**
+ * Every semantic element collection on the model, keyed by its own name.
+ *
+ * The key union is derived from `PddModel` rather than written out, so adding an
+ * element kind to the model leaves this record incomplete and fails the build.
+ * That is not defensive typing for its own sake: Entity was added as a kind
+ * without it, and four separate "for every element" checks — id shape, duplicate
+ * ids, asset metadata, and reference targets — silently skipped Entities,
+ * because each was a hand-written list nothing forced anyone to revisit.
+ */
+export type ElementCollectionName = {
+  [K in keyof PddModel]-?: PddModel[K] extends ElementFile[] ? K : never
+}[keyof PddModel]
+
+export function elementCollections(model: PddModel): Record<ElementCollectionName, ElementFile[]> {
+  return {
+    actors: model.actors,
+    interfaces: model.interfaces,
+    experiences: model.experiences,
+    screens: model.screens,
+    domains: model.domains,
+    entities: model.entities,
+    capabilities: model.capabilities,
+    capabilityScenarios: model.capabilityScenarios,
+    businessRules: model.businessRules,
+    journeys: model.journeys,
+    journeyScenarios: model.journeyScenarios
+  }
+}
+
+/** Every semantic element in the model, in collection order. */
+export function allElements(model: PddModel): ElementFile[] {
+  return Object.values(elementCollections(model)).flat()
+}
+
 export const FOLDER = '.businesslens'
 
 /** The one folder-format version this release reads and writes. */

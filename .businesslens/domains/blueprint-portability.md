@@ -1,5 +1,10 @@
 ---
 colorSlot: 7
+references:
+  - kind: spec
+    role: intent
+    target: spec/report.md
+    title: The Product Report wire contract
 ---
 
 # Blueprint portability

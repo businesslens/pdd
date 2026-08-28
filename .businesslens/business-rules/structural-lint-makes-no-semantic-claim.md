@@ -4,6 +4,14 @@ appliesTo:
     id: lint-product-model
   - type: capability
     id: verify-model-alignment
+references:
+  - kind: spec
+    role: intent
+    target: spec/format.md
+    title: The .businesslens/ folder contract
+  - kind: doc
+    role: context
+    target: docs/cli-lint.md
 ---
 
 # Structural lint makes no semantic claim

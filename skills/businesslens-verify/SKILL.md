@@ -67,6 +67,15 @@ the diff.
    Journey Scenario outcome.
    For each Scenario, confirm that every Actor Step is supported at its Context
    places and every derived availability place supports a Scenario Actor.
+
+   Verify the nouns as well as the behavior. For each Entity, confirm the
+   Product really does keep what `## Information kept` claims, that each named
+   state is a state the Product distinguishes rather than an implementation
+   flag, that each transition's `by` Capability is what actually causes the
+   move, and that each declared relation and its cardinality hold. Confirm every
+   `entities` list on a Capability and on a Screen: an Entity a Capability does
+   not touch, or one a Screen does not show, is a `code-right` finding like any
+   other overstatement.
    Compare the one authored Journey Steps claim directly with repository
    behavior. Shared code does not
    establish Interface parity. Distinguish a missing Interface commitment from

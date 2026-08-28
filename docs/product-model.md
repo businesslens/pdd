@@ -147,7 +147,7 @@ qualified id:
 `Interface`, `Interface::Experience`, or
 `Interface::Experience::Screen` (with Screens directly under an undivided
 Interface using `Interface::Screen`). A future folder schema may add another
-Context property when the model needs one; schema 6 accepts only `place`, so
+Context property when the model needs one; schema 7 accepts only `place`, so
 misspelled or speculative keys are reported instead of ignored.
 
 Different fields use the same Context shape at the precision their meaning

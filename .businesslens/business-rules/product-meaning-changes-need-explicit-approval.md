@@ -6,6 +6,11 @@ appliesTo:
     id: decide-intended-behavior
   - type: capability
     id: verify-model-alignment
+references:
+  - kind: doc
+    role: intent
+    target: skills/businesslens-map/SKILL.md
+    title: Present the proposed model delta before writing
 ---
 
 # Product meaning changes need explicit approval

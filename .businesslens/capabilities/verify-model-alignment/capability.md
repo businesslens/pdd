@@ -1,11 +1,18 @@
 ---
 entities:
   - product-model
+  - product
+  - actor
+  - interface
+  - experience
+  - screen
+  - domain
+  - entity
   - capability
   - capability-scenario
+  - journey
   - journey-scenario
   - business-rule
-  - entity
 domain: model-authoring
 availability: [{ place: agent-skills }]
 references:

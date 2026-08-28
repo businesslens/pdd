@@ -156,7 +156,9 @@ export function relationEdge(
     id: `${relation.source}->${relation.target}:${relation.label}`,
     source: relation.source,
     target: relation.target,
-    type: 'smoothstep',
+    /* A relation an element declares at itself needs a loop; the step router
+       collapses it to a stub that reads as a broken line. */
+    type: relation.source === relation.target ? 'blr-self' : 'smoothstep',
     label: relation.label,
     selectable: false,
     focusable: false,
@@ -249,6 +251,11 @@ export function directRelations(workspace: ReportWorkspace, element: AnyElementV
       if (element.domainId) push(element.key, elementKey('domain', element.domainId), 'in')
       for (const id of element.changedByIds) push(elementKey('capability', id), element.key, 'changes')
       for (const id of element.presentedOnIds) push(elementKey('screen', id), element.key, 'presents')
+      /* Only the authored side: the inverse is derived, so pushing both would
+         draw one relationship as two edges facing each other. */
+      for (const relation of element.relations) {
+        push(element.key, elementKey('entity', relation.entityId), `${relation.verb} ${relation.cardinality}`)
+      }
       break
     }
     case 'domain': {

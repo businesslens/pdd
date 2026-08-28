@@ -1,5 +1,16 @@
 ---
 domain: model-authoring
+references:
+  - kind: spec
+    role: intent
+    target: spec/format.md
+    title: The .businesslens/ folder contract
+  - kind: doc
+    role: context
+    target: docs/business-rules.md
+  - kind: code
+    role: implementation
+    target: src/core/portable.ts#ReportBusinessRuleSchema
 ---
 
 # Business Rule

@@ -486,6 +486,87 @@ describe('projectPortableReport', () => {
     expect(withoutReferences.coverage).toEqual(report.coverage)
   })
 
+  /*
+   * The report is expanded straight into an authored folder, so an Entity edge
+   * the folder rules reject must not survive the wire — it would produce a
+   * `.businesslens/` that fails `lint` the moment it lands. None of these were
+   * checked when the Entity collection shipped.
+   */
+  it('resolves every Entity edge the folder rules resolve', () => {
+    const moving = (value: ProductReportV11) => value.model.entities.find(item => item.transitions.length)!
+
+    const cases: Array<[string, (value: ProductReportV11) => void]> = [
+      ['relation references missing entity "ghost"', (value) => {
+        value.model.entities[0]!.relations.push({ entityId: 'ghost', verb: 'holds', cardinality: 'many' })
+      }],
+      ['"Nowhere" is not a state of this Entity', (value) => {
+        moving(value).transitions[0]!.to = 'Nowhere'
+      }],
+      ['does not list this Entity', (value) => {
+        const entity = moving(value)
+        const other = value.model.capabilities.find(item => !item.entityIds.includes(entity.id))!
+        entity.transitions[0]!.capabilityId = other.id
+      }],
+      ['references missing entity "ghost"', (value) => {
+        value.model.capabilities[0]!.entityIds = ['ghost']
+      }],
+      ['references missing entity "ghost"', (value) => {
+        value.model.screens[0]!.entityIds = ['ghost']
+      }],
+      ['no Capability changes it and no Screen presents it', (value) => {
+        const entity = value.model.entities[0]!
+        for (const capability of value.model.capabilities) {
+          capability.entityIds = capability.entityIds.filter(entityId => entityId !== entity.id)
+        }
+        for (const screen of value.model.screens) {
+          screen.entityIds = screen.entityIds.filter(entityId => entityId !== entity.id)
+        }
+        entity.transitions = []
+        entity.states = []
+        for (const scenario of [...value.model.capabilityScenarios, ...value.model.journeyScenarios]) {
+          for (const step of scenario.steps) {
+            if (step.entityId === entity.id) { step.entityId = null; step.entityState = null }
+          }
+        }
+      }],
+      ['needs information kept or states', (value) => {
+        const entity = value.model.entities[0]!
+        entity.informationKept = []
+        entity.states = []
+        entity.transitions = []
+      }]
+    ]
+
+    for (const [expected, mutate] of cases) {
+      const tampered = structuredClone(report)
+      mutate(tampered)
+      expect(sdk.validateProductReport(tampered).join('\n')).toContain(expected)
+    }
+  })
+
+  it('checks what a Scenario step claims against the Entity it names', () => {
+    const stepOf = (value: ProductReportV11) => {
+      for (const scenario of [...value.model.capabilityScenarios, ...value.model.journeyScenarios]) {
+        const step = scenario.steps.find(item => item.entityId && item.entityState)
+        if (step) return step
+      }
+      throw new Error('the fixture needs one step that names an Entity and a state')
+    }
+
+    const missing = structuredClone(report)
+    stepOf(missing).entityId = 'ghost'
+    expect(sdk.validateProductReport(missing).join('\n')).toContain('references missing entity "ghost"')
+
+    const unknownState = structuredClone(report)
+    stepOf(unknownState).entityState = 'Nowhere'
+    expect(sdk.validateProductReport(unknownState).join('\n')).toContain('is not a state of entity')
+
+    const stateless = structuredClone(report)
+    const orphanState = stepOf(stateless)
+    orphanState.entityId = null
+    expect(sdk.validateProductReport(stateless).join('\n')).toContain('entityState needs an entityId to belong to')
+  })
+
   it('rejects historical Product Reports without normalization', () => {
     for (const schemaVersion of ['4.0.0', '5.0.0', '6.0.0', '7.0.0', '8.0.0', '9.0.0']) {
       const legacy = structuredClone(report) as Record<string, any>

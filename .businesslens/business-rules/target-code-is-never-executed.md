@@ -6,6 +6,14 @@ appliesTo:
     id: decide-intended-behavior
   - type: capability
     id: verify-model-alignment
+references:
+  - kind: doc
+    role: intent
+    target: AGENTS.md
+    title: Skill-writing standards
+  - kind: doc
+    role: context
+    target: skills/businesslens-verify/SKILL.md
 ---
 
 # Target code is never executed

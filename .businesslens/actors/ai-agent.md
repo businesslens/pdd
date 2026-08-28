@@ -1,6 +1,14 @@
 ---
 kind: system
 relationship: external
+references:
+  - kind: spec
+    role: intent
+    target: spec/format.md
+    title: Why an agent harness is an Actor
+  - kind: doc
+    role: context
+    target: docs/skills.md
 ---
 
 # AI agent

@@ -411,6 +411,41 @@ export type ReportBusinessRuleTarget = z.infer<typeof ReportBusinessRuleTargetSc
 export type ReportReference = z.infer<typeof ReportReferenceSchema>
 export type ReportSupportingSection = z.infer<typeof ReportSupportingSectionSchema>
 
+export type ReportModel = ProductReportV11['model']
+
+/** One element in the report, reduced to what every "for every element" check needs. */
+type ReportElement = { id: string, references: ReportReference[] }
+
+/**
+ * Every element collection in a report, keyed by its own name.
+ *
+ * The key union is read off the schema rather than written out, so a new
+ * collection in `ProductReportV11Schema` leaves this record incomplete and fails
+ * the build. `taxonomies` is an object, not an array of elements, so it drops
+ * out on its own. See the same reasoning in `elementCollections` — Entity was
+ * added to the report and its ids and References went unchecked for a release
+ * because the lists that would have covered it were written by hand.
+ */
+export type ReportCollectionName = {
+  [K in keyof ReportModel]-?: ReportModel[K] extends ReportElement[] ? K : never
+}[keyof ReportModel]
+
+export function reportElementCollections(model: ReportModel): Record<ReportCollectionName, ReportElement[]> {
+  return {
+    actors: model.actors,
+    interfaces: model.interfaces,
+    experiences: model.experiences,
+    screens: model.screens,
+    domains: model.domains,
+    entities: model.entities,
+    capabilities: model.capabilities,
+    capabilityScenarios: model.capabilityScenarios,
+    journeys: model.journeys,
+    journeyScenarios: model.journeyScenarios,
+    businessRules: model.businessRules
+  }
+}
+
 function duplicateIssues(label: string, ids: string[]): string[] {
   const seen = new Set<string>()
   const duplicates = new Set<string>()
@@ -516,6 +551,9 @@ export function validateProductReport(report: ProductReportV11): string[] {
   const experiencesById = new Map(model.experiences.map(item => [item.id, item]))
   const domainIds = new Set(model.domains.map(item => item.id))
   const capabilityIds = new Set(model.capabilities.map(item => item.id))
+  const entityIds = new Set(model.entities.map(item => item.id))
+  const entitiesById = new Map(model.entities.map(item => [item.id, item]))
+  const capabilitiesById = new Map(model.capabilities.map(item => [item.id, item]))
   const capabilityAvailability = new Map<string, Set<string>>()
   const journeyIds = new Set(model.journeys.map(item => item.id))
   const capabilityScenarioIds = new Set(model.capabilityScenarios.map(item => item.id))
@@ -536,16 +574,8 @@ export function validateProductReport(report: ProductReportV11): string[] {
   validateSupportingSections(issues, 'product', report.supportingSections, ['Intent'])
 
   const collections: Array<[string, string[]]> = [
-    ['actors', model.actors.map(item => item.id)],
-    ['interfaces', model.interfaces.map(item => item.id)],
-    ['experiences', model.experiences.map(item => item.id)],
-    ['screens', model.screens.map(item => item.id)],
-    ['domains', model.domains.map(item => item.id)],
-    ['capabilities', model.capabilities.map(item => item.id)],
-    ['capabilityScenarios', model.capabilityScenarios.map(item => item.id)],
-    ['journeys', model.journeys.map(item => item.id)],
-    ['journeyScenarios', model.journeyScenarios.map(item => item.id)],
-    ['businessRules', model.businessRules.map(item => item.id)],
+    ...Object.entries(reportElementCollections(model))
+      .map(([label, items]) => [label, items.map(item => item.id)] as [string, string[]]),
     ['scenarioKinds', model.taxonomies.scenarioKinds.map(item => item.id)]
   ]
   for (const [label, ids] of collections) issues.push(...duplicateIssues(label, ids))
@@ -618,6 +648,8 @@ export function validateProductReport(report: ProductReportV11): string[] {
     if (capability.domainId && !domainIds.has(capability.domainId)) {
       issues.push(`capability "${capability.id}": references missing domain "${capability.domainId}"`)
     }
+    requireUniqueValues(issues, `capability "${capability.id}"`, 'entityIds', capability.entityIds)
+    missingRelation(issues, `capability "${capability.id}"`, 'entity', capability.entityIds, entityIds)
     capabilityAvailability.set(
       capability.id,
       validateAvailabilityPlaces(
@@ -710,6 +742,39 @@ export function validateProductReport(report: ProductReportV11): string[] {
         if (!capabilityIds.has(step.capabilityId)) {
           issues.push(`${stepLabel}: references missing capability "${step.capabilityId}"`)
         }
+      }
+
+      /*
+       * What a Step claims about a thing is checked against that thing's own
+       * lifecycle: the Entity must be one the Step's Capability acts on, and a
+       * claimed state must be one some transition actually reaches by that
+       * Capability. A Scenario cannot leave an Order Confirmed by a Capability
+       * the Order's own states say never confirms it.
+       */
+      const stepCapabilityId = step.capabilityId ?? parentCapabilityId
+      if (step.entityId) {
+        const entity = entitiesById.get(step.entityId)
+        if (!entity) {
+          issues.push(`${stepLabel}: references missing entity "${step.entityId}"`)
+        } else {
+          const owner = stepCapabilityId ? capabilitiesById.get(stepCapabilityId) : undefined
+          if (owner && !owner.entityIds.includes(step.entityId)) {
+            issues.push(`${stepLabel}: capability "${owner.id}" does not list entity "${step.entityId}"`)
+          }
+          if (step.entityState !== null) {
+            if (!entity.states.some(state => state.name === step.entityState)) {
+              issues.push(`${stepLabel}: "${step.entityState}" is not a state of entity "${step.entityId}"`)
+            } else if (stepCapabilityId && !entity.transitions.some(
+              transition => transition.to === step.entityState && transition.capabilityId === stepCapabilityId
+            )) {
+              issues.push(
+                `${stepLabel}: no transition of "${step.entityId}" reaches "${step.entityState}" by capability "${stepCapabilityId}"`
+              )
+            }
+          }
+        }
+      } else if (step.entityState !== null) {
+        issues.push(`${stepLabel}: entityState needs an entityId to belong to`)
       }
 
       requireUniqueValues(issues, stepLabel, 'routeIds', step.contexts.map(context => context.routeId))
@@ -902,6 +967,8 @@ export function validateProductReport(report: ProductReportV11): string[] {
     requireUniqueValues(issues, label, 'capabilityIds', screen.capabilityIds)
     requireUniqueValues(issues, label, 'capabilityScenarioIds', screen.capabilityScenarioIds)
     requireUniqueValues(issues, label, 'journeyScenarioIds', screen.journeyScenarioIds)
+    requireUniqueValues(issues, label, 'entityIds', screen.entityIds)
+    missingRelation(issues, label, 'entity', screen.entityIds, entityIds)
     validateSupportingSections(
       issues,
       label,
@@ -940,6 +1007,69 @@ export function validateProductReport(report: ProductReportV11): string[] {
       const normalized = state.title.toLowerCase()
       if (stateTitles.has(normalized)) issues.push(`${label}: duplicate view state "${state.title}"`)
       stateTitles.add(normalized)
+    }
+  }
+
+  /*
+   * Entity semantics, resolved exactly as Actor and Interface relations are.
+   * A report is expanded straight into an authored folder, so an edge the
+   * folder rules reject must not survive the wire — it would produce a
+   * `.businesslens/` that fails `lint` the moment it lands.
+   */
+  const entityChangedBy = new Map<string, string[]>()
+  for (const capability of model.capabilities) {
+    for (const id of capability.entityIds) {
+      entityChangedBy.set(id, [...(entityChangedBy.get(id) || []), capability.id])
+    }
+  }
+  const entityPresentedOn = new Set(model.screens.flatMap(screen => screen.entityIds))
+  for (const entity of model.entities) {
+    const label = `entity "${entity.id}"`
+    validateSupportingSections(issues, label, entity.supportingSections, ['Intent', 'Information kept', 'States'])
+    if (!entity.informationKept.length && !entity.states.length) {
+      issues.push(`${label}: needs information kept or states`)
+    }
+    if (entity.domainId && !domainIds.has(entity.domainId)) {
+      issues.push(`${label}: references missing domain "${entity.domainId}"`)
+    }
+
+    const stateNames = new Set<string>()
+    for (const state of entity.states) {
+      if (stateNames.has(state.name)) issues.push(`${label}: duplicate state "${state.name}"`)
+      stateNames.add(state.name)
+    }
+    if (!entity.states.length && entity.transitions.length) {
+      issues.push(`${label}: transitions need states`)
+    }
+    if (entity.states.length && !entity.transitions.length) {
+      issues.push(`${label}: states need transitions`)
+    }
+    for (const transition of entity.transitions) {
+      const move = `${label}: transition "${transition.from} \u2192 ${transition.to}"`
+      if (!stateNames.has(transition.from)) issues.push(`${move}: "${transition.from}" is not a state of this Entity`)
+      if (!stateNames.has(transition.to)) issues.push(`${move}: "${transition.to}" is not a state of this Entity`)
+      const capability = capabilitiesById.get(transition.capabilityId)
+      if (!capability) issues.push(`${move}: references missing capability "${transition.capabilityId}"`)
+      else if (!capability.entityIds.includes(entity.id)) {
+        issues.push(`${move}: capability "${transition.capabilityId}" does not list this Entity`)
+      }
+    }
+
+    // Declared on one side; only a repeated verb at the same target is wrong.
+    const relationKeys = new Set<string>()
+    for (const relation of entity.relations) {
+      if (!entityIds.has(relation.entityId)) {
+        issues.push(`${label}: relation references missing entity "${relation.entityId}"`)
+      }
+      const key = `${relation.entityId}\u0000${relation.verb}`
+      if (relationKeys.has(key)) issues.push(`${label}: duplicate relation "${relation.verb} ${relation.entityId}"`)
+      relationKeys.add(key)
+    }
+
+    // A relation between Entities never satisfies this: vocabulary that only
+    // points at itself is still vocabulary no behaviour uses.
+    if (!(entityChangedBy.get(entity.id) || []).length && !entityPresentedOn.has(entity.id)) {
+      issues.push(`${label}: no Capability changes it and no Screen presents it`)
     }
   }
 
@@ -1042,18 +1172,9 @@ export function validateProductReport(report: ProductReportV11): string[] {
     journeyScenarios: model.journeyScenarios.length,
     businessRules: model.businessRules.length
   }
-  const referenceHosts = [
+  const referenceHosts: Array<{ id: string, references: ReportReference[] }> = [
     { id: 'product', references: report.references },
-    ...model.actors,
-    ...model.interfaces,
-    ...model.experiences,
-    ...model.screens,
-    ...model.domains,
-    ...model.capabilities,
-    ...model.capabilityScenarios,
-    ...model.journeys,
-    ...model.journeyScenarios,
-    ...model.businessRules
+    ...Object.values(reportElementCollections(model)).flat()
   ]
   for (const host of referenceHosts) {
     const targets = new Set<string>()

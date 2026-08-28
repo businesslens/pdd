@@ -70,12 +70,35 @@ Coverage never states whether behavior is implemented or verified. List
 uninspected or ambiguous areas explicitly. A small, honest partial model is
 better than a broad model built from guesses.
 
+## Decide Entity granularity deliberately
+
+An Entity is a thing an Actor points at and the Product tells apart from another
+one — identity, not storage. The unit is the naming test: a shopper says *"this
+order"*, never *"this order line"*, so the lines are information kept inside
+Order. Containers and parts are not Entities.
+
+The failure that costs the most is the opposite one: collapsing a family of
+things into a single Entity because they share a word. Ask what the Product
+keeps about each candidate and which Capabilities act on it. If the answers
+differ, they are separate Entities, and a single Entity covering the family
+throws away exactly the differences a reader came for. That is not a smaller
+model, it is a model missing information, and unlike a split it cannot be
+recovered from what was written. Where the call is genuinely close, put both
+shapes and their counts to the author instead of picking.
+
+An Entity has only two authored edges — the `entities` list on a Capability that
+acts on it and on a Screen that presents it — so an Entity nothing declares is
+unused vocabulary and fails `lint`.
+
 ## Use References honestly
 
-References are optional. Use `role: implementation` for established artifacts
-and `role: context` for background. For code targets, prefer `path#symbol` over
-line ranges and use only tracked files. A Reference is not proof, and none is
-required for any Coverage status.
+Attach the artifacts that established each element's meaning: `role:
+implementation` for the code you traced, `role: intent` for the spec, PRD or
+proposal that states the behavior, `role: context` for background you read. For
+code targets, prefer `path#symbol` over line ranges and use only tracked files.
+A Reference records where a claim came from, never that it is verified, and none
+is required for any Coverage status — but an element with nothing attached
+should be one you can justify from inspection alone.
 
 Visual or research References may guide inspection. Keep their role honest,
 never treat their existence as proof, and never run screenshot capture

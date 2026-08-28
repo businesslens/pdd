@@ -42,7 +42,7 @@ ordered `supportingSections` array:
 }
 ```
 
-The raw `supportingContent` string field is not part of Product Report v10.
+The raw `supportingContent` string field is not part of Product Report v11.
 Supporting headings are trimmed, single-line, and cannot collide,
 case-insensitively, with structured headings for their element type. Intent and
 supporting-section content are Markdown fragments and cannot contain H1 or H2
@@ -50,10 +50,28 @@ headings. These constraints make expansion structural rather than dependent on
 reparsing an opaque Markdown string.
 
 Product Report v11 adds an `entities` collection and its count. Each Entity
-record carries `id`, `title`, `description`, an ordered `states` array of
-`{ name, content }`, a `transitions` array of `{ from, to }`, and an optional
-`domainId`. Entity states are authored lifecycle; a Screen's `viewStates`
-remain that view's own states and the two are never merged.
+record carries `id`, `title`, `description`, an `informationKept` array of
+single-line facts, a `relations` array of `{ entityId, verb, cardinality }`
+where `cardinality` is `one` or `many`, an ordered `states` array of
+`{ name, content }`, a `transitions` array of `{ from, to, capabilityId }`, and
+an optional `domainId`. Entity states are authored lifecycle; a Screen's
+`viewStates` remain that view's own states and the two are never merged.
+
+The edges an Entity takes part in are authored elsewhere and resolved here: a
+Capability record carries `entityIds` for the Entities it acts on, a Screen
+record carries `entityIds` for the ones it presents, and a Scenario step carries
+a nullable `entityId` with a nullable `entityState`. Validation resolves every
+one of them, exactly as it resolves Actor and Interface relations: a
+`relations` target, a transition's `capabilityId`, a Capability or Screen
+`entityIds` member, and a step's `entityId` must all name an Entity in the same
+report; a transition's `from` and `to` must be that Entity's own state names and
+its `capabilityId` must be a Capability listing that Entity; a step's
+`entityState` must be a state of the named Entity that some transition reaches
+by the step's Capability; and an Entity no Capability changes and no Screen
+presents is invalid. A relation between two Entities never satisfies that last
+rule. The report is expanded straight into an authored folder, so a report that
+carries an edge the folder rules reject would produce a `.businesslens/` that
+fails `lint` on arrival.
 
 Product Report v11 stores `capabilityScenarios` and `journeyScenarios` as
 separate element collections and separate counts. It has no generic `scenarios`
@@ -68,8 +86,8 @@ Every Interface record carries one required `type`: `web`, `mobile-app`,
 Report consumers use this authored value for presentation and comparison; they
 never infer Interface type from an id, title, entry point, or Scenario route.
 
-Product Report v10 stores the Context-only schema introduced by folder schema
-6. Capability and Journey Scenarios use the same named-route and ordered-step
+Product Report v11 stores the Context-only schema the folder format uses.
+Capability and Journey Scenarios use the same named-route and ordered-step
 shape:
 
 ```json
@@ -142,7 +160,7 @@ A co-located Product Model asset compiles into a repository-relative workspace
 Reference; the report never embeds its bytes. Files under an element's
 `implementation/` directory additionally compile with `role: implementation`.
 The portable projection therefore removes both forms under the same rules as
-other local References. Asset binaries are not part of Product Report v10.
+other local References. Asset binaries are not part of Product Report v11.
 
 The report schema accepts only content that can expand into canonical element
 Markdown: titles and list items are single-line, set-valued relation arrays are
@@ -152,7 +170,7 @@ elements, every contextualized Step assigns every route, every Scenario Context
 uses the most-specific available place, no two routes repeat the same place sequence,
 every achieved Journey Scenario uses at least two distinct Capabilities, and
 Interface, Experience, Screen, Actor, and Capability consistency holds.
-Product Report v10 is the only accepted report version — there is no
+Product Report v11 is the only accepted report version — there is no
 compatibility reader for an earlier one. No report profile requires a
 reference. Present references use `kind: code|prd|spec|proposal|doc|adr|visual|research`
 and `role: intent|implementation|context`, and remain subject to the same strict
