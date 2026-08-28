@@ -21,6 +21,7 @@ do not carry docs frontmatter.
 | [0009](./0009-what-the-product-keeps-is-in-scope.md) | What the Product keeps is in scope | Accepted |
 | [0010](./0010-a-thing-the-product-keeps.md) | A thing the Product keeps is its own entity | Accepted |
 | [0011](./0011-a-things-states-belong-to-the-thing.md) | A thing's states belong to the thing, not the views that show it | Accepted |
-| [0012](./0012-entity-and-element.md) | The kind is an Entity; a kind is an Element | Accepted |
+| [0012](./0012-entity-and-element.md) | The kind is an Entity; a kind is an Element | Superseded in part by [0015](./0015-resource-and-resource-type.md) |
 | [0013](./0013-relationships-are-product-meaning.md) | Relationships between Entities are product meaning | Accepted |
 | [0014](./0014-relations-and-transitions-live-in-frontmatter.md) | Relational structure lives in frontmatter | Accepted |
+| [0015](./0015-resource-and-resource-type.md) | A resource, and its resource type | Accepted |

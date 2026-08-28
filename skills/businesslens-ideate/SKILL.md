@@ -49,6 +49,21 @@ Read before authoring:
      Capabilities, Capability Scenarios, Rules, optional Journeys and Journey
      Scenarios, availability Contexts, decisions, removals, and definition of done.
 
+   In thorough mode, work the decisions in rounds and wait after each — every
+   question whose prerequisites are settled, then stop; answers reshape what is
+   still open. **Boundary** first (what the Product is, who it is for, which
+   surfaces are supported Interfaces), because everything hangs off it; then
+   **Granularity** (one Capability or several; a family that could be one Entity
+   or several, quoted with both counts; a Journey or a plausible sequence; a
+   Business Rule or one Capability's prose); then **Coverage** (how many
+   Scenarios each Capability needs, and where the line falls between a Scenario
+   and an `## Edge cases` bullet); then **Naming** (the Product's own word for
+   each thing now settled — which is where models of one product stop being
+   comparable, and the one thing a user answers in seconds).
+
+   Quick mode keeps its three batched questions: a small specific change does
+   not have a frontier.
+
    Propose concrete wording so the user corrects drafts rather than dictating
    schema. Make supported web/mobile/CLI/API/integration Interfaces an explicit
    Product decision; do not treat technologies or internal APIs as Interfaces.

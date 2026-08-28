@@ -106,25 +106,39 @@ the diff.
    - Ask for authorization to change implementation when not already explicit.
    - Delegate to the injected external builder, then return directly to step 4.
 
+   Three of the branches below re-author product meaning, and authoring faces
+   calls no inspection settles — one Capability or several, one Entity or a
+   family, what a thing is called. Put those to the author **before drafting**,
+   in rounds, and wait: Boundary, then Granularity quoting both counts, then
+   Coverage, then Naming. Only what inspection cannot answer; finding facts
+   stays your job. With no author reachable, split rather than collapse, omit
+   rather than assert, and carry each unanswered question into the delta as an
+   open question rather than a settled decision. This does not touch the
+   authority question in step 6, which is already asked the right way.
+
    **Code-right**
 
-   - Run the internal intent-resolution protocol: draft the smallest exact model
-     delta from the finding; do not brainstorm unrelated directions.
+   - Run the internal intent-resolution protocol: settle the undetermined calls
+     in rounds, then draft the smallest exact model delta from the finding; do
+     not brainstorm unrelated directions.
    - Present the element-by-element delta and get explicit approval.
    - Write only the approved model meaning, then return directly to step 4.
 
    **Neither-right**
 
-   - Run intent resolution first. Recommend a product outcome, negotiate only
-     material decisions, present the exact model delta, and get approval.
+   - Run intent resolution first, rounds included. Recommend a product outcome,
+     negotiate only material decisions, present the exact model delta, and get
+     approval.
    - Write the approved model, prepare the resulting build packet, obtain code
      authorization, delegate to the injected builder, then return to step 4.
 
    **Unmapped**
 
-   - Run the internal scoped-map protocol. Inspect established behavior, draft
-     only the missing model area and necessary relationships, state coverage and
-     uncertainty, and get approval before writing.
+   - Run the internal scoped-map protocol. Inspect established behavior, settle
+     the undetermined calls in rounds, then draft only the missing model area
+     and necessary relationships, state coverage and uncertainty, and get
+     approval before writing. This branch is mapping, so it faces every call
+     mapping faces.
    - Write the approved delta, then return to step 4.
 
    **Unverifiable**

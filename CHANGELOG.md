@@ -198,6 +198,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Entity per thing the Product treats differently, and Entity granularity joins
   the required `Judgment calls` list. Folding several things into one element is
   not a smaller model; the information is gone and no reader can recover it.
+- **The rounds reach `businesslens-ideate` and `businesslens-verify` too.**
+  Ideate invents the same model from scratch, and verify re-authors parts of it
+  in three of its five resolution branches — its scoped-map branch *is* mapping.
+  Both were still draft-then-approve, which is where approval becomes a
+  formality. Ideate works all four rounds in thorough mode and keeps its three
+  batched questions for a quick change, which has no frontier. Verify's
+  authoring branches settle the undetermined calls before drafting; its
+  authority question in step 6 is untouched, because that one already asks the
+  right thing the right way. Each skill carries its own copy, as a self-contained
+  skill must.
 - **`businesslens-verify` verifies the nouns.** Information kept, each named
   state, each transition's cause, each relation and its cardinality, and every
   `entities` list on a Capability and a Screen. `businesslens-ideate` covers
