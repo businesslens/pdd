@@ -124,9 +124,11 @@ not contain another H1 or H2.
 - Entity: H1, lead description, and at least one of `## Information kept` (a
   single-line bullet list of what the Product keeps about the thing) and
   `## States` (H3 names with prose). Optional `domain`. Optional `relations`,
-  each `{ entity, verb, cardinality }` with cardinality `one` or `many`,
-  declared on one side only — the inverse is derived, and a relation targets an
-  Entity, never an Actor. `transitions` is required exactly when `## States` is
+  each `{ entity, verb, cardinality }` where cardinality states both ends source
+  to target — `one-to-one`, `one-to-many`, `many-to-many`; `many-to-one` is
+  refused and declared from the other Entity instead. Declared on one side only —
+  the inverse is derived, two Entities relating back at each other is a warning,
+  and a relation targets an Entity, never an Actor. `transitions` is required exactly when `## States` is
   present, each `{ from, to, by }` where `by` names the Capability that causes
   the move and must list this Entity. `## Relations` and `## Transitions` are
   invalid sections — the frontmatter list is the one authority — and `state` is

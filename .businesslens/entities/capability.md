@@ -3,10 +3,10 @@ domain: model-authoring
 relations:
   - entity: capability-scenario
     verb: holds
-    cardinality: many
+    cardinality: one-to-many
   - entity: entity
     verb: acts on
-    cardinality: many
+    cardinality: many-to-many
 references:
   - kind: spec
     role: intent

@@ -77,6 +77,25 @@ describe('stable Product Report', () => {
     }
   })
 
+  /*
+   * The inverse of a relation is the *other* end of it. Copying the authored
+   * end onto both sides printed "publishes many Source" on the page of a thing
+   * that has exactly one, and a symmetric `many-to-many` fixture hid it.
+   */
+  it('derives the inverse of a relation from its other end, not from the same one', () => {
+    const report = compileReport(loadModel(FIXTURE), '2026-08-08')
+    report.model.entities.find(entity => entity.id === 'order')!.relations = [
+      { entityId: 'catalog-product', verb: 'was placed for', cardinality: 'one-to-many' }
+    ]
+    const workspace = projectReportWorkspace(report)
+
+    const order = workspace.entities.find((item: any) => item.id === 'order')
+    const product = workspace.entities.find((item: any) => item.id === 'catalog-product')
+    expect(order.relations[0].cardinality).toBe('many')
+    const fromOrder = product.inboundRelations.find((item: any) => item.entityId === 'order')
+    expect(fromOrder.cardinality).toBe('one')
+  })
+
   it('renders an Entity as what it keeps, what it can be, and how it moves', () => {
     const workspace = projectReportWorkspace(compileReport(loadModel(FIXTURE), '2026-08-08'))
 
@@ -86,9 +105,13 @@ describe('stable Product Report', () => {
     expect(order.states.map((state: any) => state.name)).toEqual(['Pending', 'Confirmed', 'Refunded'])
 
     // A relation is declared on one side; the inverse is derived.
-    expect(order.relations).toEqual([{ entityId: 'catalog-product', verb: 'was placed for', cardinality: 'many' }])
+    expect(order.relations).toEqual([
+      { entityId: 'catalog-product', verb: 'was placed for', cardinality: 'many', ends: 'many-to-many' }
+    ])
     const product = workspace.entities.find((item: any) => item.id === 'catalog-product')
-    expect(product.inboundRelations).toContainEqual({ entityId: 'order', verb: 'was placed for', cardinality: 'many' })
+    expect(product.inboundRelations).toContainEqual({
+      entityId: 'order', verb: 'was placed for', cardinality: 'many', ends: 'many-to-many'
+    })
     expect(product.relations).toEqual([])
 
     // A Scenario's Entity set is derived from its Steps, as its Actor set is.

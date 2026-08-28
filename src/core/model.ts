@@ -91,22 +91,32 @@ export interface EntityStateTransition {
 }
 
 /**
+ * Both ends of a relation, reading source to target.
+ *
+ * One end is not a relationship: "a Source publishes many Items" leaves
+ * unanswered whether an Item may come from two feeds, and that is a product
+ * decision rather than a storage detail. `many-to-one` is deliberately absent —
+ * declare that relationship from the other Entity, where it reads
+ * `one-to-many`, so one `1:N` has exactly one encoding.
+ */
+export type EntityCardinality = 'one-to-one' | 'one-to-many' | 'many-to-many'
+
+/**
  * An edge to another Entity. Declared on one side only; the inverse is derived.
- * `verb` is the product's own word for the relationship, `cardinality` says how
- * many of the target this one relates to.
+ * `verb` is the product's own word for the relationship.
  */
 export interface EntityRelation {
   entity: string
   verb: string
-  cardinality: 'one' | 'many'
+  cardinality: EntityCardinality
 }
 
 /**
  * A thing the Product keeps whose state an Actor can observe and act on.
  *
- * Entities name the Product's nouns where Capabilities name its verbs. One
- * exists exactly when a thing has two or more named states referenced by two or
- * more Capabilities — a computable test, so an author never judges it.
+ * Entities name the Product's nouns where Capabilities name its verbs. The test
+ * is identity, not storage: a thing an Actor would point at and call "this one",
+ * which the Product can tell apart from another.
  */
 export interface EntityElement extends ElementFile {
   domain?: string
@@ -295,6 +305,8 @@ export function elementCollections(model: PddModel): Record<ElementCollectionNam
 export function allElements(model: PddModel): ElementFile[] {
   return Object.values(elementCollections(model)).flat()
 }
+
+const ENTITY_CARDINALITIES = new Set<string>(['one-to-one', 'one-to-many', 'many-to-many'])
 
 export const FOLDER = '.businesslens'
 
@@ -958,11 +970,16 @@ export function loadModel(cwd: string): PddModel {
             const cardinality = stringField(item, 'cardinality', issues, label) || ''
             if (!entity) issues.push(`${label}: needs an "entity"`)
             if (!verb) issues.push(`${label}: needs a "verb"`)
-            if (cardinality !== 'one' && cardinality !== 'many') {
-              issues.push(`${label}: "cardinality" must be one or many`)
+            if (cardinality === 'many-to-one') {
+              // One 1:N, one encoding: the side that has one of the other declares it.
+              issues.push(`${label}: "cardinality" is many-to-one; declare this relation on "${entity}", where it reads one-to-many`)
               continue
             }
-            relations.push({ entity, verb, cardinality })
+            if (!ENTITY_CARDINALITIES.has(cardinality)) {
+              issues.push(`${label}: "cardinality" must be one-to-one, one-to-many, or many-to-many`)
+              continue
+            }
+            relations.push({ entity, verb, cardinality: cardinality as EntityCardinality })
           }
         }
       }

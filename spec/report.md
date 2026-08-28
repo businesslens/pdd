@@ -52,7 +52,8 @@ reparsing an opaque Markdown string.
 Product Report v11 adds an `entities` collection and its count. Each Entity
 record carries `id`, `title`, `description`, an `informationKept` array of
 single-line facts, a `relations` array of `{ entityId, verb, cardinality }`
-where `cardinality` is `one` or `many`, an ordered `states` array of
+where `cardinality` is `one-to-one`, `one-to-many`, or `many-to-many` and reads
+source to target, an ordered `states` array of
 `{ name, content }`, a `transitions` array of `{ from, to, capabilityId }`, and
 an optional `domainId`. Entity states are authored lifecycle; a Screen's
 `viewStates` remain that view's own states and the two are never merged.
@@ -64,7 +65,8 @@ a nullable `entityId` with a nullable `entityState`. Validation resolves every
 one of them, exactly as it resolves Actor and Interface relations: a
 `relations` target, a transition's `capabilityId`, a Capability or Screen
 `entityIds` member, and a step's `entityId` must all name an Entity in the same
-report; a transition's `from` and `to` must be that Entity's own state names and
+report; a relation never reads `many-to-one`, and two Entities never declare
+relations at each other; a transition's `from` and `to` must be that Entity's own state names and
 its `capabilityId` must be a Capability listing that Entity; a step's
 `entityState` must be a state of the named Entity that some transition reaches
 by the step's Capability; and an Entity no Capability changes and no Screen

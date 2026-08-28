@@ -2,40 +2,40 @@
 relations:
   - entity: product
     verb: holds
-    cardinality: one
+    cardinality: one-to-one
   - entity: actor
     verb: holds
-    cardinality: many
+    cardinality: one-to-many
   - entity: interface
     verb: holds
-    cardinality: many
+    cardinality: one-to-many
   - entity: experience
     verb: holds
-    cardinality: many
+    cardinality: one-to-many
   - entity: screen
     verb: holds
-    cardinality: many
+    cardinality: one-to-many
   - entity: domain
     verb: holds
-    cardinality: many
+    cardinality: one-to-many
   - entity: entity
     verb: holds
-    cardinality: many
+    cardinality: one-to-many
   - entity: capability
     verb: holds
-    cardinality: many
+    cardinality: one-to-many
   - entity: capability-scenario
     verb: holds
-    cardinality: many
+    cardinality: one-to-many
   - entity: journey
     verb: holds
-    cardinality: many
+    cardinality: one-to-many
   - entity: journey-scenario
     verb: holds
-    cardinality: many
+    cardinality: one-to-many
   - entity: business-rule
     verb: holds
-    cardinality: many
+    cardinality: one-to-many
 transitions:
   - from: Absent
     to: Draft

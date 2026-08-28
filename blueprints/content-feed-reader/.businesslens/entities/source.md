@@ -2,7 +2,7 @@
 relations:
   - entity: item
     verb: publishes
-    cardinality: many
+    cardinality: one-to-many
 transitions:
   - from: Reachable
     to: Unreachable

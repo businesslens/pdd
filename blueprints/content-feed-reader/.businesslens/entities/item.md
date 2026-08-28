@@ -1,8 +1,4 @@
 ---
-relations:
-  - entity: source
-    verb: comes from
-    cardinality: one
 transitions:
   - from: Unread
     to: Read

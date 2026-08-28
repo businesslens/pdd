@@ -1087,6 +1087,44 @@ references:
     }
   })
 
+  /*
+   * `cardinality: many` said only the target end, so an author who needed the
+   * other one wrote the relationship twice facing itself — which is what the
+   * Content Feed Reader Blueprint did.
+   */
+  it('takes both relation ends, and refuses the direction that would duplicate an encoding', () => {
+    const cwd = fixtureCopy()
+    const order = join(cwd, '.businesslens/entities/order.md')
+    const source = readFileSync(order, 'utf8')
+
+    const withCardinality = (value: string) => {
+      writeFileSync(order, source.replace('cardinality: many-to-many', `cardinality: ${value}`))
+      return run(cwd)
+    }
+
+    expect(withCardinality('many').errors.join('\n'))
+      .toContain('"cardinality" must be one-to-one, one-to-many, or many-to-many')
+    expect(withCardinality('many-to-one').errors.join('\n'))
+      .toContain('declare this relation on "catalog-product", where it reads one-to-many')
+    for (const value of ['one-to-one', 'one-to-many', 'many-to-many']) {
+      expect(withCardinality(value).errors).toEqual([])
+    }
+  })
+
+  it('warns when two Entities declare relations at each other', () => {
+    const cwd = fixtureCopy()
+    const product = join(cwd, '.businesslens/entities/catalog-product.md')
+    writeFileSync(product, readFileSync(product, 'utf8').replace('---\n', `---
+relations:
+  - entity: order
+    verb: was ordered in
+    cardinality: many-to-many
+`))
+    const result = run(cwd)
+    expect(result.errors).toEqual([])
+    expect(result.warnings.join('\n')).toContain('faces "was ordered in order"')
+  })
+
   it('rejects unknown frontmatter keys', () => {
     const cwd = fixtureCopy()
     writeFileSync(join(cwd, '.businesslens/domains/catalog.md'), `---

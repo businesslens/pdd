@@ -2,7 +2,7 @@
 relations:
   - entity: catalog-product
     verb: was placed for
-    cardinality: many
+    cardinality: many-to-many
 transitions:
   - from: Pending
     to: Confirmed

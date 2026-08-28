@@ -698,7 +698,7 @@ domain: ordering                 # optional
 relations:
   - entity: catalog-product
     verb: was placed for
-    cardinality: many
+    cardinality: many-to-many
 transitions:
   - from: Pending
     to: Confirmed
@@ -745,14 +745,42 @@ Product promises it. The word *kept* means held, not persisted.
 
 `relations` is optional and declares edges to other Entities. Each is
 `{ entity, verb, cardinality }`: `verb` is the product's own word for the
-relationship, and `cardinality` is `one` or `many`, written explicitly so that
-*one* is a choice somebody made. **A relation is declared on one side only** —
-the inverse is derived, so the two sides cannot disagree. A relation targets an
-Entity, never an Actor: an Actor is who acts, and ownership is a fact the
-Product keeps. It may target this same Entity — an Element relates to other
-Elements, a Task blocks another Task — and only a duplicate edge is invalid. A relation never satisfies the no-orphans rule below, because a
-cluster of Entities referencing each other while no behaviour touches any of
-them is still vocabulary nobody uses.
+relationship, and `cardinality` states **both ends**, reading source to target.
+
+```yaml
+relations:
+  - entity: item
+    verb: publishes
+    cardinality: one-to-many       # one Source publishes many Items,
+                                   # and an Item comes from exactly one Source
+```
+
+**Both ends, because one end is not a relationship.** `many` alone says a Source
+publishes many Items and leaves unanswered whether an Item may come from two
+feeds — which is a product decision, not a storage detail. *Can I save this
+article into two collections* has an answer, and a single end cannot hold it. An
+author who needs the second end without a place to put it writes the same
+relationship twice, facing itself, which is exactly what the one-sided rule below
+exists to prevent.
+
+`cardinality` is `one-to-one`, `one-to-many`, or `many-to-many`.
+**`many-to-one` does not exist**: declare that relationship from the other
+Entity, where it reads `one-to-many`. Two authors cannot then encode one
+`1:N` from opposite sides, and the vocabulary shrinks instead of growing.
+
+**A relation is declared on one side only** — the inverse is derived, so the two
+sides cannot disagree. Two Entities that declare relations *at each other* are a
+`lint` warning naming both files: with both ends stated that is the same
+relationship written twice, and the two can now contradict each other outright.
+It stays a warning because two genuinely different relationships between one pair
+are legal.
+
+A relation targets an Entity, never an Actor: an Actor is who acts, and ownership
+is a fact the Product keeps. It may target this same Entity — an Element relates
+to other Elements, a Task blocks another Task — and only a duplicate edge is
+invalid. A relation never satisfies the no-orphans rule below, because a cluster
+of Entities referencing each other while no behaviour touches any of them is
+still vocabulary nobody uses.
 
 `## States` contains H3 state names, each followed by non-empty prose.
 `transitions` is required exactly when `## States` is present. Each is

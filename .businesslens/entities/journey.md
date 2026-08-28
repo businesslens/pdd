@@ -3,7 +3,7 @@ domain: model-authoring
 relations:
   - entity: journey-scenario
     verb: holds
-    cardinality: many
+    cardinality: one-to-many
 references:
   - kind: spec
     role: intent

@@ -2,7 +2,7 @@
 relations:
   - entity: item
     verb: holds
-    cardinality: many
+    cardinality: many-to-many
 transitions:
   - from: Private
     to: Published

@@ -1,5 +1,6 @@
 /** Graph builders for the question-led Product Topology views. */
 import { Position } from '@vue-flow/core'
+import type { ReportEntityRelation } from 'businesslens/report'
 import type { AnyElementView, ReportElementKind, ReportWorkspace } from './reportWorkspace'
 import { ENTITY_KIND_META, elementKey } from './reportWorkspace'
 import type { BlrFlowEdge, BlrFlowNode, FlowGraphShape, FlowNodeData, FlowRelation } from './flowGraph'
@@ -14,6 +15,13 @@ import {
 } from './flowGraph'
 import { barycenterOrder, layoutStrata, topologyNeighbourhood } from './productTopologyLayout'
 import type { ProductTopologyViewId } from './productTopologyViews'
+
+/** ERD notation, source end to target end, for a canvas with no room for prose. */
+const RELATION_NOTATION: Record<ReportEntityRelation['cardinality'], string> = {
+  'one-to-one': '1:1',
+  'one-to-many': '1:N',
+  'many-to-many': 'M:N'
+}
 
 export interface ProductTopologyGraphOptions {
   selectedId?: string | null
@@ -363,8 +371,9 @@ export function buildDeliveryByInterface(
  * The only view whose subject is the Product's nouns, and its only edges are the
  * authored Entity relations. Each is declared on one side and drawn once, so a
  * Collection that holds Items is one edge rather than two facing each other, and
- * the label carries the cardinality because *holds many* and *holds one* are
- * different products.
+ * the label carries both ends in the notation an ERD reader already has —
+ * `holds 1:N` — because *one Source publishes many Items* and *many Sources
+ * publish many Items* are different products, and one end cannot say which.
  *
  * Capabilities are deliberately absent. Drawing them added one edge per
  * (Capability, Entity) pair — thirteen identical `changes` edges against three
@@ -392,7 +401,7 @@ export function buildWhatItKeeps(
       edges.push(relationEdge({
         source: entity.key,
         target,
-        label: `${relation.verb} ${relation.cardinality}`
+        label: `${relation.verb} ${RELATION_NOTATION[relation.ends]}`
       }))
     }
   }

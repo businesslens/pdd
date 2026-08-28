@@ -179,11 +179,15 @@ export const ReportEntityTransitionSchema = z.strictObject({
 /**
  * An edge to another Entity, declared on one side. The inverse is derived by
  * consumers rather than authored, so the two sides cannot disagree.
+ *
+ * `cardinality` states both ends, reading source to target. `many-to-one` is
+ * deliberately absent: that relationship is declared from the other Entity,
+ * where it reads `one-to-many`, so one `1:N` has exactly one encoding.
  */
 export const ReportEntityRelationSchema = z.strictObject({
   entityId: IdSchema,
   verb: SingleLineTextSchema,
-  cardinality: z.enum(['one', 'many'])
+  cardinality: z.enum(['one-to-one', 'one-to-many', 'many-to-many'])
 })
 
 /**
@@ -1064,6 +1068,14 @@ export function validateProductReport(report: ProductReportV11): string[] {
       const key = `${relation.entityId}\u0000${relation.verb}`
       if (relationKeys.has(key)) issues.push(`${label}: duplicate relation "${relation.verb} ${relation.entityId}"`)
       relationKeys.add(key)
+
+      /* A relation states both ends, so an Entity relating back is the same
+         relationship written twice and the two can contradict each other. */
+      if (relation.entityId === entity.id) continue
+      const facing = entitiesById.get(relation.entityId)
+      if (facing?.relations.some(back => back.entityId === entity.id)) {
+        issues.push(`${label}: relation "${relation.verb} ${relation.entityId}" faces a relation declared back at it; a relation is declared on one side only`)
+      }
     }
 
     // A relation between Entities never satisfies this: vocabulary that only

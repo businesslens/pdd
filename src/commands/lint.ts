@@ -560,6 +560,21 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
       const key = `${relation.entity}\0${relation.verb}`
       if (relationTargets.has(key)) errors.push(`${entity.file}: duplicate relation "${relation.verb} ${relation.entity}"`)
       relationTargets.add(key)
+
+      /*
+       * Now that a relation states both ends, an Entity relating back is the
+       * same relationship written twice, and the two encodings can contradict
+       * each other outright. A warning rather than an error, because two
+       * genuinely different relationships between one pair remain legal.
+       */
+      if (relation.entity === entity.id) continue
+      const facing = model.entities.find(other => other.id === relation.entity)
+      for (const back of facing?.relations ?? []) {
+        if (back.entity !== entity.id) continue
+        warnings.push(
+          `${entity.file}: "${relation.verb} ${relation.entity}" faces "${back.verb} ${back.entity}" in ${facing!.file}; a relation is declared on one side only and now states both ends`
+        )
+      }
     }
 
     // No orphans. Vocabulary nothing points at is either unused or a relation

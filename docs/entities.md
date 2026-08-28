@@ -45,7 +45,7 @@ domain: ordering
 relations:
   - entity: catalog-product
     verb: was placed for
-    cardinality: many
+    cardinality: many-to-many
 transitions:
   - from: Pending
     to: Confirmed
@@ -84,9 +84,21 @@ that Capability must list this Entity, so the two declarations can never quietly
 disagree.
 
 `relations` declares edges to other Entities: `{ entity, verb, cardinality }`,
-where `verb` is your product's own word and `cardinality` is `one` or `many`.
+where `verb` is your product's own word and `cardinality` states **both ends**,
+reading source to target — `one-to-one`, `one-to-many`, or `many-to-many`.
+
+Both ends, because one end is not a relationship. *A Source publishes many
+Items* leaves unanswered whether an Item may come from two feeds, and *can I
+save this article into two collections* is a product decision your reader will
+ask about. Write `many-to-one` and `lint` sends you to the other Entity, where
+the same relationship reads `one-to-many` — so one `1:N` has one encoding and
+two authors cannot write it from opposite sides.
+
 **Declared on one side only** — the inverse is derived and shown on the other, so
-they cannot drift apart. A relation targets an Entity, never an Actor.
+they cannot drift apart. Two Entities that declare relations *at each other* are
+a warning: that is the same relationship written twice, and now that each
+declaration carries both ends the two can contradict each other. A relation
+targets an Entity, never an Actor.
 
 Both live in frontmatter rather than a section because they name other elements
 by id, and ids are parsed rather than read out of English.
@@ -144,7 +156,7 @@ use it declare the relationship, and every backlink is derived.
 | --- | --- |
 | **Capability** | declares the Entities it **changes**, in `entities`; a Capability that only reads one declares nothing |
 | **Transition** | names the Capability that causes that one move |
-| **Another Entity** | related by a declared edge with a verb and a cardinality; the inverse is derived |
+| **Another Entity** | related by a declared edge with a verb and both cardinality ends; the inverse is derived |
 | **Scenario Step** | may name the Entity it changes and the state it leaves it in |
 | **Screen** | declares the Entities it presents, in `entities` |
 | **Domain** | optional and single, authored on the Entity itself |

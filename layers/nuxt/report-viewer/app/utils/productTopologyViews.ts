@@ -123,7 +123,7 @@ export const PRODUCT_TOPOLOGY_VIEWS: ProductTopologyView[] = [
     name: 'What it keeps',
     question: 'What does the Product keep, and how do those things relate?',
     semantics: 'identity',
-    note: 'Each relation is authored on one side and drawn once, reading source \u2192 target. Colour is the Domain. What changes a thing is on its page.',
+    note: 'Each relation is authored on one side and drawn once. The label reads source end to target end \u2014 1:N means one of the left, many of the right. Colour is the Domain; what changes a thing is on its page.',
     flow: [{ kind: 'entity', label: 'Entities' }],
     separators: [],
     kinds: ['entity']

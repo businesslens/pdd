@@ -3,10 +3,10 @@ domain: model-authoring
 relations:
   - entity: experience
     verb: holds
-    cardinality: many
+    cardinality: one-to-many
   - entity: screen
     verb: holds
-    cardinality: many
+    cardinality: one-to-many
 references:
   - kind: spec
     role: intent

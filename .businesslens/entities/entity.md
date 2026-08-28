@@ -3,7 +3,7 @@ domain: model-authoring
 relations:
   - entity: entity
     verb: relates to
-    cardinality: many
+    cardinality: many-to-many
 references:
   - kind: spec
     role: intent
@@ -26,4 +26,4 @@ Product's nouns, where Capabilities are its verbs.
 
 - What the Product keeps about the thing
 - The states it can be in, and the transitions between them with their causes
-- The other Entities it relates to, with a verb and a cardinality
+- The other Entities it relates to, with a verb and both cardinality ends

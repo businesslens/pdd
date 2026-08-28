@@ -497,7 +497,7 @@ describe('projectPortableReport', () => {
 
     const cases: Array<[string, (value: ProductReportV11) => void]> = [
       ['relation references missing entity "ghost"', (value) => {
-        value.model.entities[0]!.relations.push({ entityId: 'ghost', verb: 'holds', cardinality: 'many' })
+        value.model.entities[0]!.relations.push({ entityId: 'ghost', verb: 'holds', cardinality: 'many-to-many' })
       }],
       ['"Nowhere" is not a state of this Entity', (value) => {
         moving(value).transitions[0]!.to = 'Nowhere'
@@ -565,6 +565,21 @@ describe('projectPortableReport', () => {
     const orphanState = stepOf(stateless)
     orphanState.entityId = null
     expect(sdk.validateProductReport(stateless).join('\n')).toContain('entityState needs an entityId to belong to')
+  })
+
+  it('keeps a relation to one encoding and one side on the wire', () => {
+    const facing = structuredClone(report)
+    const [first, second] = facing.model.entities
+    first!.relations = [{ entityId: second!.id, verb: 'holds', cardinality: 'one-to-many' }]
+    second!.relations = [{ entityId: first!.id, verb: 'belongs to', cardinality: 'many-to-many' }]
+    expect(sdk.validateProductReport(facing).join('\n'))
+      .toContain('faces a relation declared back at it')
+
+    const backwards = structuredClone(report) as unknown as {
+      model: { entities: Array<{ relations: Array<{ cardinality: string }> }> }
+    }
+    backwards.model.entities[0]!.relations = [{ cardinality: 'many-to-one' } as never]
+    expect(sdk.ProductReportSchema.safeParse(backwards).success).toBe(false)
   })
 
   it('rejects historical Product Reports without normalization', () => {

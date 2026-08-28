@@ -43,20 +43,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   them, so a Reader's reading position has a home without modelling the Reader
   twice. An Actor is who acts; an Entity is what is acted upon.
 - **Entities relate to each other.** `relations: [{ entity, verb, cardinality }]`
-  declares an edge in the product's own words — `holds many item` — with the
-  inverse derived so the two sides cannot disagree. Relationships between things
-  a user can point at are product meaning; the guard is the format's existing
-  test, *is it observable to an Actor*. Cardinality is in because it is
-  load-bearing: `collection-membership-does-not-control-saving` only makes sense
-  because an Item can be saved and belong to many Collections.
+  declares an edge in the product's own words — `holds many-to-many item` — with
+  the inverse derived so the two sides cannot disagree. Relationships between
+  things a user can point at are product meaning; the guard is the format's
+  existing test, *is it observable to an Actor*.
+- **A relation states both ends.** `one-to-one`, `one-to-many`, `many-to-many`,
+  read source to target. One end is not a relationship: *a Source publishes many
+  Items* leaves unanswered whether an Item may come from two feeds, and *can I
+  save this article into two collections* is a product decision a reader will
+  ask about — `collection-membership-does-not-control-saving` only means anything
+  because the answer is yes. An author who needed the second end and had nowhere
+  to put it wrote the relationship twice facing itself, which the Content Feed
+  Reader Blueprint did.
+
+  **`many-to-one` does not exist.** That relationship is declared from the other
+  Entity, where it reads `one-to-many`, so one `1:N` has exactly one encoding and
+  two independent authors cannot write it from opposite sides. Two Entities that
+  declare relations at each other are a `lint` warning naming both files.
+
+  The Entity page reads each row's *far* end, so an Item published by one Source
+  says so — it previously copied the authored end onto the inverse and printed
+  "publishes many Source" on the page of a thing that has exactly one. The
+  Topology label carries both ends in the notation an ERD reader already has:
+  `publishes 1:N`, `holds M:N`.
 - **A Scenario Step may name the `entity` it acts on and the `state` it leaves
   it in.** The Scenario's Entity set is derived from its Steps, exactly as its
   Actor set is, and `lint` closes the loop: the state must be one the Entity
   has, and some transition must reach it by that same Capability.
 - **A new Topology view, "What it keeps"** — the Product's own ERD, and the only
   view whose subject is its nouns. Entities and the authored relations between
-  them, each labelled with its verb and cardinality, each drawn once because the
-  inverse is derived. A relation an Entity declares at itself is drawn as a loop
+  them, each labelled with its verb and both cardinality ends, each drawn once
+  because the inverse is derived. A relation an Entity declares at itself is drawn as a loop
   rather than the stub a step router collapses it to. Capabilities are
   deliberately absent: one edge per (Capability, Entity) pair buried the reading
   the view exists for, and what changes a thing is on the thing's own page.

@@ -2,7 +2,7 @@
 relations:
   - entity: catalog-product
     verb: holds
-    cardinality: many
+    cardinality: many-to-many
 domain: ordering
 ---
 

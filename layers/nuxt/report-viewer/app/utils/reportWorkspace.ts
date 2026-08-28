@@ -20,6 +20,7 @@ import type {
   ReportDecisionPoint,
   ReportDomain,
   ReportEntity,
+  ReportEntityRelation,
   ReportExperience,
   ReportInterface,
   ReportJourney,
@@ -29,6 +30,22 @@ import type {
   ReportScreenState,
   ReportSupportingSection
 } from 'businesslens/report'
+
+/**
+ * Split an authored `cardinality` into its two ends.
+ *
+ * A relation is authored once and read from both sides. The side that declares
+ * it reads the `target` end — how many of the other Entity it reaches — and the
+ * side it points at reads `source`. Copying one end onto both is how an Item
+ * came to claim many Sources on a page whose whole point was that it has one.
+ */
+export function relationEnds(cardinality: ReportEntityRelation['cardinality']): {
+  source: 'one' | 'many'
+  target: 'one' | 'many'
+} {
+  const [source, , target] = cardinality.split('-') as ['one' | 'many', string, 'one' | 'many']
+  return { source, target }
+}
 
 export type ReportElementKind =
   | 'product'
@@ -246,6 +263,22 @@ export interface DomainView extends ElementBase {
  * authored lifecycle; a Screen's productStates are that view's own states, and
  * the two are never merged.
  */
+/** An authored relation, resolved for the side being read. */
+export interface EntityRelationView {
+  entityId: string
+  verb: string
+  /** How many of `entityId` the Entity being read relates to. */
+  cardinality: 'one' | 'many'
+  /**
+   * Both ends exactly as authored, source to target of the *declaring* side.
+   *
+   * A row reads one end and needs `cardinality`; a diagram draws the edge once
+   * and needs both. Only the declaring side's rows carry a meaningful `ends`,
+   * which is why an inbound row reads `cardinality` and never this.
+   */
+  ends: ReportEntityRelation['cardinality']
+}
+
 export interface EntityView extends ElementBase {
   kind: 'entity'
   domainId?: string
@@ -254,10 +287,17 @@ export interface EntityView extends ElementBase {
   states: Array<{ name: string, content: string }>
   /** Each move, and the Capability that causes it. */
   transitions: Array<{ from: string, to: string, capabilityId: string }>
-  /** Edges this Entity declares. */
-  relations: Array<{ entityId: string, verb: string, cardinality: 'one' | 'many' }>
-  /** Edges other Entities declare at this one. Derived, never authored. */
-  inboundRelations: Array<{ entityId: string, verb: string, cardinality: 'one' | 'many' }>
+  /** Edges this Entity declares, each carrying how many of the target it reaches. */
+  relations: EntityRelationView[]
+  /**
+   * Edges other Entities declare at this one, flipped.
+   *
+   * `cardinality` here is the *source* end of the authored relation — how many
+   * of the other Entity this one relates to. A Source publishing many Items
+   * means an Item has one Source, and copying the authored end instead printed
+   * the opposite on the Item's page.
+   */
+  inboundRelations: EntityRelationView[]
   /** Capabilities that declare acting on this Entity. Derived. */
   changedByIds: string[]
   /** Screens that declare presenting it. Derived. */
@@ -889,13 +929,23 @@ export function projectReportWorkspace(report: ProductReportV11): ReportWorkspac
     references: entity.references,
     domainId: entity.domainId,
     informationKept: entity.informationKept,
-    relations: entity.relations.map(r => ({ entityId: r.entityId, verb: r.verb, cardinality: r.cardinality })),
+    relations: entity.relations.map(r => ({
+      entityId: r.entityId,
+      verb: r.verb,
+      cardinality: relationEnds(r.cardinality).target,
+      ends: r.cardinality
+    })),
     // The inverse is derived so the two sides can never disagree.
     inboundRelations: model.entities
       .filter(other => other.id !== entity.id)
       .flatMap(other => other.relations
         .filter(r => r.entityId === entity.id)
-        .map(r => ({ entityId: other.id, verb: r.verb, cardinality: r.cardinality }))),
+        .map(r => ({
+          entityId: other.id,
+          verb: r.verb,
+          cardinality: relationEnds(r.cardinality).source,
+          ends: r.cardinality
+        }))),
     changedByIds: model.capabilities.filter(c => c.entityIds.includes(entity.id)).map(c => c.id),
     presentedOnIds: model.screens.filter(sc => sc.entityIds.includes(entity.id)).map(sc => sc.id),
     states: entity.states.map(state => ({ name: state.name, content: state.content })),
