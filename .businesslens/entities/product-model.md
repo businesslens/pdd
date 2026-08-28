@@ -76,6 +76,9 @@ transitions:
   - from: Absent
     to: Complete
     by: pull-blueprint
+  - from: Partial
+    to: Complete
+    by: verify-model-alignment
 references:
   - kind: spec
     role: intent

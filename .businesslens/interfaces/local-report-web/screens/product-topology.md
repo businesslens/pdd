@@ -1,6 +1,18 @@
 ---
 entities:
   - product-model
+  - product
+  - actor
+  - interface
+  - experience
+  - screen
+  - domain
+  - entity
+  - capability
+  - capability-scenario
+  - journey
+  - journey-scenario
+  - business-rule
 capabilities: [explore-product-topology]
 entryPoints:
   - local-report-web: /?s=topology

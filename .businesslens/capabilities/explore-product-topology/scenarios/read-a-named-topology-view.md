@@ -27,8 +27,8 @@ steps:
 ## Trigger
 
 The Developer has a question that spans element kinds — what the product can do,
-where each Actor enters, what an Interface contains, or where an invariant
-reaches.
+where each Actor enters, what an Interface contains, what it keeps and how those
+things relate, or where an invariant reaches.
 
 ## Outcome
 
