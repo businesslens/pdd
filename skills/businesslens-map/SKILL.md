@@ -53,12 +53,16 @@ Read before authoring:
    `catalog-browsing`) and cross-cutting elements with the bare noun. Create an
    Entity for a thing an Actor would point at and call *"this one"* and the
    Product can tell apart from another — identity, not storage, and not a state
-   count. **One Entity per thing the Product actually treats differently:** when
-   two candidates share a family name but the Product keeps different
-   information about each, or a Capability acts on one and not the other, they
-   are separate Entities, and one Entity standing for the whole family silently
-   deletes the difference. Where you would collapse several into one, ask
-   instead — name both shapes with their counts and let the author choose. Model unattended behavior — a schedule the Product owns, an
+   count. **For a family of candidates that share a word, write the
+   `## Information kept` list before deciding how many Entities there are:** one
+   Entity if a single list is true of all of them, several the moment it needs
+   *"depending on the kind"* or carries facts that hold for some and not others.
+   Being stored, parsed and rendered alike is not the test — that is how the
+   Product handles them, not what it keeps about them. When the call is still
+   close, **split**: a merge stays available to anyone later, while a collapse
+   deletes the difference and leaves nothing saying it was ever a question. Put
+   both shapes and their counts to the author when you can; when there is no
+   author to ask, split and record it as a judgment call rather than choosing. Model unattended behavior — a schedule the Product owns, an
    expiry, a retry — as a Scenario whose first Step is a `condition` carrying
    `unattended: true`, availability naming where an Actor observes the outcome. Give every
    mapped Capability evidence-backed per-Capability acceptance. Create a Journey only

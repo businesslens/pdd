@@ -78,13 +78,22 @@ order"*, never *"this order line"*, so the lines are information kept inside
 Order. Containers and parts are not Entities.
 
 The failure that costs the most is the opposite one: collapsing a family of
-things into a single Entity because they share a word. Ask what the Product
-keeps about each candidate and which Capabilities act on it. If the answers
-differ, they are separate Entities, and a single Entity covering the family
-throws away exactly the differences a reader came for. That is not a smaller
-model, it is a model missing information, and unlike a split it cannot be
-recovered from what was written. Where the call is genuinely close, put both
-shapes and their counts to the author instead of picking.
+things into a single Entity because they share a word. Do not weigh this one —
+**write the `## Information kept` list first and read the answer off it.** One
+Entity if a single list is true of every candidate. Several the moment the list
+needs *"depending on the kind"*, or carries a fact that holds for some members
+and not others; the shared word is then a category and its members are the
+Entities.
+
+Being stored, parsed and rendered the same way is not the test, and it is the
+argument that most often wins when it should not. That is how the Product
+*handles* the candidates; the question is what it *keeps* about them.
+
+When the call is still close, **split**. A merge stays available to anyone later.
+A collapse throws away exactly the differences a reader came for and leaves
+nothing in the model saying they existed, so the next reader cannot tell there
+was a question. Put both shapes and their counts to the author when you can; with
+no author to ask, split and record it as a judgment call rather than choosing.
 
 An Entity has only two authored edges — the `entities` list on a Capability that
 acts on it and on a Screen that presents it — so an Entity nothing declares is

@@ -103,6 +103,25 @@ targets an Entity, never an Actor.
 Both live in frontmatter rather than a section because they name other elements
 by id, and ids are parsed rather than read out of English.
 
+## One Entity, or several?
+
+The hardest call is a family of things that share a word — document types, event
+kinds, payment methods. **Write `## Information kept` before you decide**, and
+the answer falls out of whether you can finish the list.
+
+One Entity, if a single list is true of every member. Several, the moment the
+list needs *"depending on the kind"* or carries facts that hold for some members
+and not others. That shared word is then a category, and its members are the
+Entities.
+
+Being stored, parsed and rendered the same way does not make them one thing.
+That is how the Product *handles* them; this asks what it *keeps*.
+
+**When it is close, split.** Anyone can merge two Entities later. A collapse
+deletes the difference and leaves nothing behind saying it was ever there — the
+next reader cannot tell there was a question at all. If you have nobody to ask,
+split and say so.
+
 ## Is this an ERD?
 
 Partly, and deliberately only partly. Standard practice splits an ERD into three

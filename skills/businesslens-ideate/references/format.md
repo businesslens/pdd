@@ -134,7 +134,12 @@ not contain another H1 or H2.
   invalid sections — the frontmatter list is the one authority — and `state` is
   never valid on an Entity's assets or References. An Entity is a thing an Actor
   points at and the Product tells apart — identity, not storage. Never a data
-  model: no types, no keys, no foreign keys. It must be referenced by a Capability that
+  model: no types, no keys, no foreign keys. For a family of candidates sharing a
+  word, write `## Information kept` before deciding how many Entities there are:
+  one if a single list is true of all of them, several the moment it needs
+  "depending on the kind". Stored and rendered alike is not the test. When close,
+  split — a merge stays available, a collapse leaves nothing saying the question
+  existed. It must be referenced by a Capability that
   changes it or a Screen that presents it; a relation from another Entity does
   not count.
 - Screen: at least one `capabilities` relation, optional `entities` naming what it presents, (it has no `availability` — its

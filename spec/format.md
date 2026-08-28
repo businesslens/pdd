@@ -692,6 +692,21 @@ shopper says *"this order"*, never *"this order line"* — that is "The items
 ordered" inside Order. A reader says *"this item"* and *"this collection"*, but
 "library" is simply all of them. Containers and parts are not Entities.
 
+**How many: write `## Information kept` before you decide.** Candidates that
+share a family name — document types, event kinds, payment methods — are one
+Entity when a single list of kept facts is true of all of them, and several when
+it is not. Write the list first. If it needs *"depending on the kind"*, or
+carries facts that hold for some members and not others, the shared name is a
+category and its members are the Entities.
+
+Being stored, parsed and rendered the same way does not make them one. That is
+how the Product *handles* them; this asks what it *keeps* about them.
+
+**When the call is close, split.** Anyone can merge two Entities later. A
+collapse deletes the difference and leaves nothing in the model saying it was
+ever there, so a reader cannot tell there was a question. An author with nobody
+to ask splits, and records the choice.
+
 ```markdown
 ---
 domain: ordering                 # optional
