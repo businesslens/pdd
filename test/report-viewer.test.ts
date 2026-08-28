@@ -11,13 +11,35 @@ const routeWindowModulePath = '../layers/nuxt/report-viewer/app/utils/scenarioRo
 const pageSectionsModulePath = '../layers/nuxt/report-viewer/app/utils/pageSections.ts'
 const { projectReportWorkspace } = await import(workspaceModulePath)
 const { elementFacts } = await import(elementFactsModulePath)
-const { REPORT_ENTITY_KINDS } = await import(workspaceModulePath)
+const { REPORT_ENTITY_KINDS, ENTITY_KIND_META, INTERFACE_TYPE_META } = await import(workspaceModulePath)
 const { hasAuthoredBody, tabsFor } = await import(pageSectionsModulePath)
 const FIXTURE = join(__dirname, 'fixtures', 'fixture-shop')
 
 function source(path: string): string {
   return readFileSync(join(VIEWER, path), 'utf8')
 }
+
+/*
+ * Icon names the model chooses at runtime cannot be discovered by the bundler,
+ * so `clientBundle.icons` lists them by hand — and a kind whose icon is missing
+ * renders a blank square rather than failing. Entity shipped that way, and so
+ * did the `agent` Interface type.
+ */
+describe('bundled icons', () => {
+  const bundled = new Set(
+    [...source('nuxt.config.ts').matchAll(/'([a-z0-9-]+:[a-z0-9-]+)'/g)].map(match => match[1])
+  )
+  const asBundleName = (icon: string) => icon.replace(/^i-([a-z0-9-]+?)-/, '$1:')
+
+  it('bundles the icon of every element kind and every Interface type', () => {
+    const icons = (record: unknown) =>
+      Object.values(record as Record<string, { icon: string }>).map(meta => meta.icon)
+    const required = [...icons(ENTITY_KIND_META), ...icons(INTERFACE_TYPE_META)].map(asBundleName)
+
+    expect(required.length).toBeGreaterThan(0)
+    expect(required.filter(icon => !bundled.has(icon))).toEqual([])
+  })
+})
 
 describe('stable Product Report', () => {
   it('projects every report element and keeps scenario types distinct', () => {

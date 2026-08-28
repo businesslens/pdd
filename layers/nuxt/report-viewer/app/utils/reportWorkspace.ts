@@ -97,35 +97,69 @@ export interface ElementKindMeta {
   slot: number
 }
 
-export const REPORT_ENTITY_KINDS: ElementKindMeta[] = [
-  { kind: 'actor', label: 'Actor', plural: 'Actors', icon: 'i-lucide-users', slot: 0 },
-  { kind: 'interface', label: 'Interface', plural: 'Interfaces', icon: 'i-lucide-plug', slot: 1 },
-  { kind: 'experience', label: 'Experience', plural: 'Experiences', icon: 'i-lucide-layout-panel-left', slot: 2 },
-  { kind: 'screen', label: 'Screen', plural: 'Screens', icon: 'i-lucide-monitor', slot: 3 },
-  { kind: 'domain', label: 'Domain', plural: 'Domains', icon: 'i-lucide-boxes', slot: 4 },
+/**
+ * Every kind, once, in rail order.
+ *
+ * The type annotation is doing real work here. This was two lists — an array of the rail
+ * kinds and a record spread from it, closed with `as Record<ReportElementKind,
+ * ElementKindMeta>` — and that cast asserted completeness instead of proving it.
+ * A kind added to `ReportElementKind` and forgotten here compiled, then rendered
+ * `undefined.icon` and `undefined.plural` at runtime, which is exactly how
+ * Entity reached its own page with no icon and its rail row with no count.
+ *
+ * Insertion order is the rail order, and `Object.values` preserves it for
+ * string keys — so the ordered list below is derived rather than restated.
+ * Product sits last because it is the report itself, not a rail collection.
+ */
+export const ENTITY_KIND_META: Record<ReportElementKind, ElementKindMeta> = {
+  actor: { kind: 'actor', label: 'Actor', plural: 'Actors', icon: 'i-lucide-users', slot: 0 },
+  interface: { kind: 'interface', label: 'Interface', plural: 'Interfaces', icon: 'i-lucide-plug', slot: 1 },
+  experience: { kind: 'experience', label: 'Experience', plural: 'Experiences', icon: 'i-lucide-layout-panel-left', slot: 2 },
+  screen: { kind: 'screen', label: 'Screen', plural: 'Screens', icon: 'i-lucide-monitor', slot: 3 },
+  domain: { kind: 'domain', label: 'Domain', plural: 'Domains', icon: 'i-lucide-boxes', slot: 4 },
   /*
     Entity shares Domain's slot. Both are axes rather than levels — they classify
     the behavior hierarchy instead of sitting inside it — so one hue reads as
     "the thing this is about", and the icon and label carry which axis it is.
   */
-  { kind: 'entity', label: 'Entity', plural: 'Entities', icon: 'i-lucide-box', slot: 4 },
-  { kind: 'capability', label: 'Capability', plural: 'Capabilities', icon: 'i-lucide-zap', slot: 5 },
-  { kind: 'journey', label: 'Journey', plural: 'Journeys', icon: 'i-lucide-route', slot: 6 },
+  entity: { kind: 'entity', label: 'Entity', plural: 'Entities', icon: 'i-lucide-box', slot: 4 },
+  capability: { kind: 'capability', label: 'Capability', plural: 'Capabilities', icon: 'i-lucide-zap', slot: 5 },
+  journey: { kind: 'journey', label: 'Journey', plural: 'Journeys', icon: 'i-lucide-route', slot: 6 },
   /*
     Both Scenario kinds hold slot 7. Ten kinds is past the nine-slot categorical
     order, and the two that belong to one family are the honest pair to merge:
     the shared hue reads as "Scenario", and the icon, label and node sublabel
     carry the distinction — colour is never the only encoding here.
   */
-  { kind: 'capability-scenario', label: 'Capability Scenario', plural: 'Capability Scenarios', icon: 'i-lucide-list-checks', slot: 7 },
-  { kind: 'journey-scenario', label: 'Journey Scenario', plural: 'Journey Scenarios', icon: 'i-lucide-list-ordered', slot: 7 },
-  { kind: 'rule', label: 'Business rule', plural: 'Business rules', icon: 'i-lucide-scale', slot: 8 }
-]
+  'capability-scenario': { kind: 'capability-scenario', label: 'Capability Scenario', plural: 'Capability Scenarios', icon: 'i-lucide-list-checks', slot: 7 },
+  'journey-scenario': { kind: 'journey-scenario', label: 'Journey Scenario', plural: 'Journey Scenarios', icon: 'i-lucide-list-ordered', slot: 7 },
+  rule: { kind: 'rule', label: 'Business rule', plural: 'Business rules', icon: 'i-lucide-scale', slot: 8 },
+  product: { kind: 'product', label: 'Product', plural: 'Product', icon: 'i-lucide-package', slot: 9 }
+}
 
-export const ENTITY_KIND_META: Record<ReportElementKind, ElementKindMeta> = {
-  product: { kind: 'product', label: 'Product', plural: 'Product', icon: 'i-lucide-package', slot: 9 },
-  ...Object.fromEntries(REPORT_ENTITY_KINDS.map(meta => [meta.kind, meta]))
-} as Record<ReportElementKind, ElementKindMeta>
+/**
+ * A kind ordering that has to name every kind, checked when it is written.
+ *
+ * `EVERYTHING_SHELF_ORDER` was a plain `ReportElementKind[]`, so adding Entity
+ * to the model left it out of the one view whose question is "the entire
+ * product, all at once" — and the kind filter, seeing no shelf for it, removed
+ * all thirteen. An ordering is the one place a missing kind is invisible: the
+ * list still looks complete, because nothing about it says what complete is.
+ *
+ * A missing kind turns the parameter into a shape no array satisfies, and the
+ * compiler names the absentee in the failure.
+ */
+export function everyKind<const T extends readonly ReportElementKind[]>(
+  kinds: Exclude<ReportElementKind, T[number]> extends never
+    ? T
+    : { orderingIsMissingElementKind: Exclude<ReportElementKind, T[number]> }
+): T {
+  return kinds as T
+}
+
+/** The rail collections, in rail order. Product is the report, not a collection. */
+export const REPORT_ENTITY_KINDS: ElementKindMeta[] =
+  Object.values(ENTITY_KIND_META).filter(meta => meta.kind !== 'product')
 
 export const INTERFACE_TYPE_META: Record<ReportInterface['type'], { label: string, icon: string }> = {
   web: { label: 'Web', icon: 'i-lucide-globe' },

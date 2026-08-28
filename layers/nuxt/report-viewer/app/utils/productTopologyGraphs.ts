@@ -2,7 +2,7 @@
 import { Position } from '@vue-flow/core'
 import type { ReportEntityRelation } from 'businesslens/report'
 import type { AnyElementView, ReportElementKind, ReportWorkspace } from './reportWorkspace'
-import { ENTITY_KIND_META, elementKey } from './reportWorkspace'
+import { ENTITY_KIND_META, elementKey, everyKind } from './reportWorkspace'
 import type { BlrFlowEdge, BlrFlowNode, FlowGraphShape, FlowNodeData, FlowRelation } from './flowGraph'
 import {
   FLOW_NODE_HEIGHT,
@@ -444,7 +444,7 @@ export function buildRuleReach(
  * who reaches it, which Interface they meet, what it accepts, what it can do, and
  * what governs all of it.
  */
-export const EVERYTHING_SHELF_ORDER: ReportElementKind[] = [
+export const EVERYTHING_SHELF_ORDER = everyKind([
   'product',
   'actor',
   'interface',
@@ -457,7 +457,7 @@ export const EVERYTHING_SHELF_ORDER: ReportElementKind[] = [
   'entity',
   'domain',
   'rule'
-]
+])
 
 export function buildEverything(
   workspace: ReportWorkspace,
