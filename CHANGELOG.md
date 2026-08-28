@@ -202,6 +202,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   state, each transition's cause, each relation and its cardinality, and every
   `entities` list on a Capability and a Screen. `businesslens-ideate` covers
   Entities at all, which it did not.
+- **`businesslens-map` settles the undetermined calls with the author, in
+  rounds, before writing anything.** Boundary first, because everything hangs
+  off which surfaces are Interfaces and who the Actors are; then Granularity,
+  quoting both counts wherever a family could be one Entity or several; then
+  Naming. Each question carries its options, what each one costs, and a
+  recommendation, so the author corrects a draft rather than filling a blank.
+  Finding facts stays the agent's job — it asks only what it cannot look up.
+  With no author reachable it does not quietly choose: the defaults apply and
+  every unanswered question lands in `Judgment calls` as an open question.
+
+  Three independent mappings of one repository agreed on about 93% of the
+  Capabilities they found and shared 69% of the ids. Every divergence that
+  mattered was a decision the source cannot settle. `Judgment calls` had been
+  surfacing these *after* the model was written, as a list to review, which
+  makes approval a formality.
+- **How many Entities is a step, not a judgement.** Write the
+  `## Information kept` list first: one Entity if a single list is true of every
+  candidate, several the moment it needs *"depending on the kind"*. Being
+  stored, parsed and rendered alike is named as not the test, because that is
+  the argument that most often wins when it should not. When the call is still
+  close, split — a merge stays available to anyone later, while a collapse
+  deletes the difference and leaves nothing saying the question existed.
+- **Three more things are not Entities**, each of which passes the naming test
+  and is still not product meaning. A **representation** of an Entity — a
+  serialization, export or rendering — is that thing in another shape; if you
+  can regenerate it, it belongs in that Entity's information. A **receipt** the
+  Product keeps so its own work is safe is for the Product, not an Actor. The
+  Product's own **surfaces, shipped content and closed vocabularies** are what
+  it *is*: where there are no instances, only members of a fixed list, that is a
+  vocabulary. The discriminator is stated outright, because it traps a tool
+  whose subject is models — does the Product keep information about instances of
+  this, or is this the Product itself?
 
 ### Fixed
 
