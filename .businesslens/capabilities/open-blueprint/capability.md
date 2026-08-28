@@ -1,7 +1,6 @@
 ---
 entities:
   - product-model
-  - element
 domain: blueprint-portability
 availability: [{ place: businesslens-cli }]
 references:

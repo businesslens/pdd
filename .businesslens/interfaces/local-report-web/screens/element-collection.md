@@ -1,7 +1,18 @@
 ---
 entities:
   - product-model
-  - element
+  - product
+  - actor
+  - interface
+  - experience
+  - screen
+  - domain
+  - entity
+  - capability
+  - capability-scenario
+  - journey
+  - journey-scenario
+  - business-rule
 capabilities: [view-product-model]
 entryPoints:
   - local-report-web: /?s=capability

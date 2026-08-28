@@ -1,7 +1,11 @@
 ---
 entities:
   - product-model
-  - element
+  - capability
+  - capability-scenario
+  - journey-scenario
+  - business-rule
+  - entity
 domain: model-authoring
 availability: [{ place: agent-skills }]
 references:

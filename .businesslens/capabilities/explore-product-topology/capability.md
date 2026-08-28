@@ -1,7 +1,6 @@
 ---
 entities:
   - product-model
-  - element
 domain: model-inspection
 availability: [{ place: local-report-web }]
 references:
