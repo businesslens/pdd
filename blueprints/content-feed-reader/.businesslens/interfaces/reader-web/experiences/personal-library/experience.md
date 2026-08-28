@@ -20,5 +20,5 @@ signed-in Reader. This context never exposes another Reader's library.
 
 `reader-mobile::personal-library` pursues the same goal on the mobile
 Interface. They share a folder name, which is what makes them counterparts, and
-they are separate entities because their reach differs: publishing a collection
+they are separate elements because their reach differs: publishing a collection
 is a web commitment.

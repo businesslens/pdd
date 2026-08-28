@@ -14,7 +14,7 @@ steps:
     contexts:
       local:
         place: local-report-web::product-topology
-  - text: The Developer opens an entity from the canvas
+  - text: The Developer opens an element from the canvas
     kind: actor
     actor: developer
     contexts:
@@ -26,14 +26,14 @@ steps:
 
 ## Trigger
 
-The Developer has a question that spans entity kinds — what the product can do,
+The Developer has a question that spans element kinds — what the product can do,
 where each Actor enters, what an Interface contains, or where an invariant
 reaches.
 
 ## Outcome
 
 The Developer has an answer to a question the Product named, drawn from
-relations the model already authors, and can leave the canvas for any entity's
+relations the model already authors, and can leave the canvas for any element's
 page.
 
 ## Edge cases

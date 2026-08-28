@@ -208,7 +208,7 @@ future format revision, but Context is not an arbitrary metadata bag.
   Each segment is lowercase kebab-case, `^[a-z0-9]+(?:-[a-z0-9]+)*$`. Never
   write `id:` in frontmatter — the filesystem is the id authority.
 
-  **Behavioral ids are verb-entity; cross-cutting ids are the bare noun.** A
+  **Behavioral ids are verb-noun; cross-cutting ids are the bare noun.** A
   Capability, Capability Scenario, Journey, and Journey Scenario name something
   the Product or an Actor *does*, so their ids begin with a verb:
   `browse-catalog`, not `catalog-browsing`; `manage-orders`, not
@@ -227,8 +227,8 @@ future format revision, but Context is not an arbitrary metadata bag.
   `lint-product-model`. The concepts matched and the nouns did not, so two
   further rules bind ids to vocabulary the model already declares.
 
-  **A behavioral id's entity half names something the model declares.** When the
-  entity half is the suffix of an Entity, Domain, Interface, Experience, or
+  **A behavioral id's noun half names something the model declares.** When the
+  noun half is the suffix of an Entity, Domain, Interface, Experience, or
   Screen id in the same model, use the declared name — `install-agent-skills`,
   not `install-skills`. `lint` warns otherwise. It only fires where the author
   has declared the fuller term, so it never invents vocabulary.
@@ -926,7 +926,7 @@ list of typed targets. An element target uses `type` = `capability`,
 `capability-scenario`, `journey`, or `journey-scenario`, requires `id`, and may
 use a non-empty `contexts` list to narrow that target. Without `contexts`, the
 Rule applies to all supported Contexts of the target. A direct Context target
-uses `type: context` plus one nested `context` entity instead of `id`:
+uses `type: context` plus one nested `context` object instead of `id`:
 
 ```yaml
 - type: context
@@ -1191,7 +1191,7 @@ Product behavior.
 
 Its Actor set is derived from those Steps rather than authored on the Scenario.
 
-A Step may name the `entity` it acts on, and the `state` it leaves that Entity
+A Step may name the `entity` it changes, and the `state` it leaves that Entity
 in. The Entity must be one the Step's Capability declares, the state must be one
 that Entity has, and **some transition must reach that state by that
 Capability** — so a Scenario claiming an Order becomes Confirmed is checked

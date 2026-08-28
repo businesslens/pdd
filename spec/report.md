@@ -29,7 +29,7 @@ files are derived artifacts and must not be edited or committed.
 contains the product elements, relationships, intent, portable references,
 structured supporting sections, identity, attribution, element counts, and
 coverage needed to reconstruct the model. Its top-level `summary` is the short
-Product description; its top-level `counts` entity contains element totals.
+Product description; its top-level `counts` object contains element totals.
 
 Product and element records store unrecognized authored H2 sections as an
 ordered `supportingSections` array:

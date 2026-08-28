@@ -117,7 +117,7 @@ not contain another H1 or H2.
   Capability authors `domain:`; every other Domain relation is derived. Its
   `## Boundary` must state something the Domain does **not** own, and a Domain
   naming fewer than two Capabilities is a warning.
-- Naming: a behavioral id's entity half names something the model declares —
+- Naming: a behavioral id's noun half names something the model declares —
   `install-agent-skills`, not `install-skills`, when `agent-skills` is an
   Interface. Entity, Domain and Business Rule ids never open with a verb; they
   name what a thing is or what must remain true.
@@ -230,7 +230,7 @@ Context place either names a declared Interface, Experience, or Screen or it
 does not. An Interface holds either `screens/` or `experiences/`, never both. Availability is intended
 Product meaning, not implementation status.
 
-Business Rule Contexts use the same entity shape:
+Business Rule Contexts use the same object shape:
 
 ```yaml
 context: { place: reader-web::personal-library }

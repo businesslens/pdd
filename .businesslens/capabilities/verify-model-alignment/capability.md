@@ -25,7 +25,7 @@ references:
 # Verify model alignment
 
 Compares what the model says against what the repository currently does, for a
-requested scope — a branch, a named entity, or the whole current product — and
+requested scope — a branch, a named element, or the whole current product — and
 then owns the resolution. Each finding is classified by which side should
 change, findings that share one decision are grouped, and the Developer is asked
 the root question once. Approved model changes are written, implementation

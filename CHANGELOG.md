@@ -115,7 +115,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `to: "Sold", by: "owner"` and linted clean.
 - **A kind of file in a Product Model is an `Element`, not an entity.** That use
   was the loose one and gave the word up, so the kind that genuinely means a
-  thing with identity could have it.
+  thing with identity could have it. The rename now reaches BusinessLens's own
+  model and the Content Feed Reader Blueprint, which had kept the old sense in
+  prose throughout — a Screen declaring `entities: [product-model, …]` in
+  frontmatter while calling an Element an entity two lines below it was the
+  exact collision the rename existed to remove.
+- **One vocabulary for the id-naming rule.** It had three spellings:
+  `spec/format.md` and the docs said *verb-entity*, `businesslens-map` and the
+  `lint` message itself said *verb-object*, and both of those nouns had been
+  retired as kind names. It is **verb-noun** everywhere, including the finding a
+  reader actually sees. "Entity" no longer stands in for a plain JSON object in
+  the two contracts either.
 - **A thing's states leave the views that showed them.** Screen
   `## Product states` becomes `## View states` and holds only the view's own;
   `## Information presented` narrows to what that view shows. The Blueprint was
@@ -131,7 +141,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   delivering a `web` Interface does not have. Named `ai-agent` rather than after
   one use of it, since the same participant appears in products unrelated to
   code. This promotes nothing else by analogy.
-- **A behavioral id's entity half names something the model declares.**
+- **A behavioral id's noun half names something the model declares.**
   `install-agent-skills`, not `install-skills`, when `agent-skills` is an
   Interface. `lint` warns only where the author already declared the fuller
   term. Two independent mappings agreed on 95% of the Capabilities they found
@@ -145,7 +155,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   alongside it.
 - **Folder schema 7 and Product Report v11 are the only accepted formats.**
   There is no compatibility reader.
-- **Behavioral ids are verb-object; cross-cutting ids are the bare noun.**
+- **Behavioral ids are verb-noun; cross-cutting ids are the bare noun.**
   `browse-catalog`, not `catalog-browsing`. Ids are the model's whole identity
   mechanism, and two models of one product that name the same behavior
   differently cannot be diffed, merged, or compared. The golden fixture and the

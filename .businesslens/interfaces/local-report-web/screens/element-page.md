@@ -24,24 +24,24 @@ references:
 
 # Element page
 
-One entity, at the width its content was drawn for. This is the reading: it has
+One element, at the width its content was drawn for. This is the reading: it has
 its own address, a breadcrumb back to its collection, and the browser's own back
 button.
 
 ## Information presented
 
-- The entity's title, kind, and the identifying facts of that kind
+- The element's title, kind, and the identifying facts of that kind
 - Its authored description, Intent, and any supporting sections
-- Its Contexts, where the entity kind carries them
-- Its relations to other entities, each openable
+- Its Contexts, where the element kind carries them
+- Its relations to other elements, each openable
 - Its References, with the role explaining why each is attached
 - For a Capability or a Journey, its Scenarios with their Steps, routes, and Context places
 
 ## Available actions
 
-- Open any related entity's page
+- Open any related element's page
 - Read a Scenario, and compare its named routes side by side
-- Open this entity's neighbourhood in the Product Topology
+- Open this element's neighbourhood in the Product Topology
 - Return to the collection through the breadcrumb
 - Search the whole model by name
 
@@ -49,7 +49,7 @@ button.
 
 ### Overview open
 
-The entity's authored meaning, facts, relations, supporting material, and
+The element's authored meaning, facts, relations, supporting material, and
 References.
 
 ### Scenarios open
@@ -59,6 +59,6 @@ Scenario and route stay in the address bar.
 
 ## Capability boundary
 
-One entity's authored meaning and its relations. It never edits the entity, and
+One element's authored meaning and its relations. It never edits the element, and
 it does not draw the graph — a neighbourhood is an action into the Topology, not
 a second reading here.

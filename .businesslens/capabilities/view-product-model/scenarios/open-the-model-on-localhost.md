@@ -20,13 +20,13 @@ steps:
     contexts:
       local:
         place: local-report-web::product-overview
-  - text: The Developer moves to a kind's collection and opens the entity they came for
+  - text: The Developer moves to a kind's collection and opens the element they came for
     kind: actor
     actor: developer
     contexts:
       local:
         place: local-report-web::element-collection
-  - text: The Product opens that entity's page at its own address, with a breadcrumb back to the collection
+  - text: The Product opens that element's page at its own address, with a breadcrumb back to the collection
     kind: product
     contexts:
       local:
@@ -42,10 +42,10 @@ it is stored in.
 
 ## Outcome
 
-The model is readable on the Developer's own machine, the open entity is in the
+The model is readable on the Developer's own machine, the open element is in the
 address bar, and nothing has been written or transmitted.
 
 ## Edge cases
 
 - Asking for a specific port, or for the address to be printed without opening a browser, changes only how the report is reached.
-- Searching by name lands on the entity's page directly, for the same reason a collection row does.
+- Searching by name lands on the element's page directly, for the same reason a collection row does.

@@ -239,12 +239,12 @@ one. Where a rule can be computed, an author never has to argue it.
 
 ### Naming
 
-Behavioral ids are **verb-entity**; cross-cutting ids are the **bare noun**.
+Behavioral ids are **verb-noun**; cross-cutting ids are the **bare noun**.
 `browse-catalog`, not `catalog-browsing`; `manage-orders`, not
 `order-management`; but `shopper`, `ordering`, `order`, `customer-web`.
 
 Two further rules bind ids to vocabulary the model already declares. A
-behavioral id's **entity half names something the model declares** —
+behavioral id's **noun half names something the model declares** —
 `install-agent-skills`, not `install-skills`, when `agent-skills` is an
 Interface. And an Entity, Domain, or Business Rule id **never opens with a
 verb**: `refunds-apply-only-to-existing-orders`, not `refund-existing-orders`.

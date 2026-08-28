@@ -383,7 +383,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
   }
 
   /*
-   * F1 — behavioral ids are verb-object; cross-cutting ids are the bare noun.
+   * F1 — behavioral ids are verb-noun; cross-cutting ids are the bare noun.
    * Ids are the format's whole identity mechanism, so two models of one product
    * that name the same behavior differently cannot be diffed or compared. The
    * check is deliberately a warning: it recognises the nominalisations that
@@ -391,7 +391,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
    */
   const NOMINALISED = /(?:ing|tion|sion|ment|ance|ence|ity|ness)$/
   // A small vocabulary of product verbs. An id that already contains one reads
-  // as verb-object however it ends — `publish-and-share-a-collection` is fine —
+  // as verb-noun however it ends — `publish-and-share-a-collection` is fine —
   // so only a nominalised id with no verb in it is flagged.
   const PRODUCT_VERBS = new Set([
     'add', 'answer', 'apply', 'approve', 'archive', 'assign', 'block', 'book', 'browse', 'build',
@@ -418,7 +418,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     const carriesVerb = segments.some(segment => PRODUCT_VERBS.has(segment))
     if (NOMINALISED.test(last) && !carriesVerb) {
       warnings.push(
-        `${element.file}: ${element.kind} id "${element.id}" reads as a noun phrase; behavioral ids are verb-object`
+        `${element.file}: ${element.kind} id "${element.id}" reads as a noun phrase; a behavioral id starts with a verb`
       )
     }
   }
@@ -436,12 +436,12 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
   }
 
   /*
-   * Behavioral ids draw their object half from that vocabulary. Two independent
+   * Behavioral ids draw their noun half from that vocabulary. Two independent
    * mappings of one repository agreed on 95% of the Capabilities they found and
    * shared 29% of the ids, because one wrote `install-skills` where the other
    * wrote `install-agent-skills` and one `lint-model` where the other wrote
    * `lint-product-model`. The concepts matched; the nouns did not. Anchoring the
-   * object half to a noun the model already declares removes that whole class of
+   * noun half to a term the model already declares removes that whole class of
    * divergence, and only fires when the author has declared the fuller term.
    */
   for (const element of behavioural) {
@@ -449,7 +449,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     if (segments.length < 2) continue
     const object = segments.slice(1).join('-')
     if (nounVocabulary.has(object)) continue
-    // Suffix only. A declared term that merely *starts* with the object half is
+    // Suffix only. A declared term that merely *starts* with the noun half is
     // usually a different thing — `blueprint-portability` is a Domain, and
     // `contribute-blueprint` is correctly about a blueprint, not about the Domain.
     const fuller = [...nounVocabulary]
@@ -476,7 +476,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
   ]
   for (const element of nounIdKinds) {
     const segments = element.id.split('-')
-    // A single-segment id cannot be verb-object; `order` is a noun here even
+    // A single-segment id cannot be verb-noun; `order` is a noun here even
     // though the same word is a verb elsewhere.
     if (segments.length < 2) continue
     const first = segments[0] || ''

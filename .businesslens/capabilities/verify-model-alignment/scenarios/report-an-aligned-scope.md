@@ -3,7 +3,7 @@ kind: primary
 routes:
   harness: Harness
 steps:
-  - text: The Developer asks for a scope to be verified, naming a branch, an entity, or the current product
+  - text: The Developer asks for a scope to be verified, naming a branch, an element, or the current product
     kind: actor
     actor: developer
     contexts:

@@ -49,7 +49,7 @@ Read before authoring:
 6. Draft Actors, Interfaces, optional Experiences, Product Screens, Domains and
    Entities, Capabilities, Capability Scenarios, Business Rules, optional
    Journeys and their Journey Scenarios, availability Contexts, and coverage.
-   Name behavioral elements verb-object (`browse-catalog`, never
+   Name behavioral elements verb-noun (`browse-catalog`, never
    `catalog-browsing`) and cross-cutting elements with the bare noun. Create an
    Entity for a thing an Actor would point at and call *"this one"* and the
    Product can tell apart from another — identity, not storage, and not a state
