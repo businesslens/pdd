@@ -692,6 +692,29 @@ shopper says *"this order"*, never *"this order line"* — that is "The items
 ordered" inside Order. A reader says *"this item"* and *"this collection"*, but
 "library" is simply all of them. Containers and parts are not Entities.
 
+Three more things are not Entities, and each is something the Product genuinely
+handles, which is why the naming test alone lets them through.
+
+**Not a representation of another Entity.** A serialization, export or rendering
+is that thing in another shape, not a second thing beside it. If you can
+regenerate it from an Entity, it belongs in that Entity's information and in the
+Capability that produces it.
+
+**Not a receipt the Product keeps for itself.** A marker file, a lock, an index
+the Product needs in order to work safely — ask who the record is *for*. An
+Actor never points at these; the Product does.
+
+**Not the Product itself.** Its surfaces, its shipped content, and its closed
+vocabularies are what the Product *is*, not what it keeps. A Product keeps
+information about *instances* of an Entity; where there are no instances, only
+members of a fixed list, that is a vocabulary.
+
+The third is the one that traps a modelling tool, and the discriminator is
+worth stating: **does the Product keep information about instances of this, or
+is this the Product itself?** A tool whose subject is Actors keeps `actors/`
+full of them, so Actor is an Entity for it. The same tool ships its own skills
+rather than keeping records about them, so a skill is not.
+
 **How many: write `## Information kept` before you decide.** Candidates that
 share a family name — document types, event kinds, payment methods — are one
 Entity when a single list of kept facts is true of all of them, and several when

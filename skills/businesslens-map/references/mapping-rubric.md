@@ -95,6 +95,16 @@ nothing in the model saying they existed, so the next reader cannot tell there
 was a question. Put both shapes and their counts to the author when you can; with
 no author to ask, split and record it as a judgment call rather than choosing.
 
+Three candidates pass the naming test and are still not Entities, because the
+Product handles them rather than keeps them. A **representation** of an Entity —
+a serialization, export or rendering — is that thing in another shape; if you
+can regenerate it, it is a projection. A **receipt** the Product keeps for
+itself — a marker, a lock, an index that makes its own work safe — is for the
+Product, not an Actor. And the Product's own **surfaces, shipped content and
+closed vocabularies** are what it *is*: where there are no instances, only
+members of a fixed list, that is a vocabulary. Discriminator: does the Product
+keep information about instances of this, or is this the Product itself?
+
 An Entity has only two authored edges — the `entities` list on a Capability that
 acts on it and on a Screen that presents it — so an Entity nothing declares is
 unused vocabulary and fails `lint`.

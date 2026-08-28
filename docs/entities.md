@@ -163,6 +163,26 @@ Product undertakes to know is.
 **Not a view's states.** "Empty list" belongs to a [Screen](./screens.md).
 "Archived" belongs to the thing.
 
+**Not a representation of another Entity.** A serialization, export or rendering
+is that thing in another shape. If you can regenerate it from an Entity, it
+belongs in that Entity's information and in the Capability that produces it —
+not beside it as a peer.
+
+**Not a receipt the Product keeps for itself.** A marker file, a lock, an index
+the Product needs in order to work safely. Ask who the record is *for*: an Actor
+never points at these, the Product does.
+
+**Not the Product itself.** Its surfaces, its shipped content and its closed
+vocabularies are what it *is*, not what it keeps. A Product keeps information
+about *instances*; where there are no instances, only members of a fixed list,
+that is a vocabulary.
+
+That last one traps a tool whose subject is models. Why is *Actor* an Entity for
+BusinessLens but *agent skill* is not? Because it keeps information about
+Actors — `actors/` is full of them — and it ships its skills rather than keeping
+records about them. **Does the Product keep information about instances of this,
+or is this the Product itself?**
+
 **The author's test**: if you cannot point at it, and no Capability changes it
 and no Screen shows it, it is a table, not an Entity.
 

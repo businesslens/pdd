@@ -134,7 +134,11 @@ not contain another H1 or H2.
   invalid sections — the frontmatter list is the one authority — and `state` is
   never valid on an Entity's assets or References. An Entity is a thing an Actor
   points at and the Product tells apart — identity, not storage. Never a data
-  model: no types, no keys, no foreign keys. For a family of candidates sharing a
+  model: no types, no keys, no foreign keys. Also never a representation of
+  another Entity (a serialization or export is that thing in another shape), a
+  receipt the Product keeps to work safely (ask who the record is for), or the
+  Product's own surfaces, shipped content and closed vocabularies — where there
+  are no instances, only members of a fixed list, that is a vocabulary. For a family of candidates sharing a
   word, write `## Information kept` before deciding how many Entities there are:
   one if a single list is true of all of them, several the moment it needs
   "depending on the kind". Stored and rendered alike is not the test. When close,
