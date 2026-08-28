@@ -91,7 +91,42 @@ Read before authoring:
    never says the claim is verified and never replaces the element's own prose.
    An element you can attach nothing to is a claim resting on inspection alone —
    say so in the delta rather than leaving it unexplained.
-7. Present the proposed model delta before writing. Include added, changed, and
+7. **Put what the repository cannot settle to the author, in rounds, before
+   writing anything.** Inspection establishes what the code does. It cannot
+   establish what the Product *means*, and two defensible readings routinely
+   give materially different models — a different element count, a different id
+   for one thing, information present in one and gone in the other. Those calls
+   belong to the author, and they are cheapest before a file exists.
+
+   Ask only what inspection cannot answer. **Finding facts is your job, never
+   the author's** — never ask what you could look up.
+
+   Work in rounds. Ask every question whose prerequisites are already settled,
+   then stop and wait; answers reshape what is still open, so recompute before
+   the next round. A question that depends on another still open belongs to a
+   later round.
+
+   - **Boundary** — which surfaces are supported Interfaces rather than
+     implementation, who the Actors are, what is in scope at all. Everything
+     else hangs off these, so they go first.
+   - **Granularity** — an ability that could be one Capability or several; a
+     family of candidates that could be one Entity or several, quoted with both
+     counts; a goal that could be a Journey or a merely plausible sequence; a
+     constraint that could be a Business Rule or one Capability's prose.
+   - **Naming** — the Product's own word for each thing now settled. This is
+     where models stop being comparable: three independent mappings of one
+     repository agreed on about 93% of the Capabilities they found and shared
+     69% of the ids. An author answers it in seconds and no amount of inspection
+     will.
+
+   Number each question, give the options with what each one costs, and state
+   your recommendation — the author is correcting a draft, not filling a blank.
+
+   **With no author reachable**, do not quietly choose. Apply the recorded
+   defaults — split rather than collapse, omit rather than assert — and carry
+   every unanswered question into `Judgment calls` as an open question rather
+   than a settled decision.
+8. Present the proposed model delta before writing. Include added, changed, and
    removed elements; mapped and unmapped areas; limitations; and any material
    uncertainty. Get explicit approval for product meaning. Do not silently
    replace a mature model.
@@ -102,20 +137,16 @@ Read before authoring:
    thing, or one standing for several — whether something warranted an
    Interface, an Experience, an Entity or a Journey, and whether a constraint is
    a Business Rule all belong there.
-
-   **Ask rather than decide whenever the choice would drop a distinction.**
-   Folding several things the Product treats differently into one element is not
-   a granularity preference; the information is gone and no reader can recover
-   it from the model. Put both shapes to the author, with counts, and wait. A reviewer can see what the model says but
+ A reviewer can see what the model says but
    not what it omits, so an unstated judgment call is one nobody can challenge —
    which makes the approval a formality rather than a check.
-8. Write only inside `.businesslens/` after approval. Create the complete
+9. Write only inside `.businesslens/` after approval. Create the complete
    authored layout when absent, including the canonical `.businesslens/README.md`
    and `.gitignore`. Set coverage by model breadth:
    - `draft` while the model itself still needs author review;
    - `partial` when useful but known areas remain unmapped;
    - `complete` only when the intended product breadth is modeled.
-9. Run the bundled linter outside the untrusted target:
+10. Run the bundled linter outside the untrusted target:
 
    ```bash
    node <businesslens-map-skill-dir>/scripts/run-businesslens.mjs \
@@ -124,7 +155,7 @@ Read before authoring:
 
    Fix every error and assess every warning. A green lint result proves
    structure only, not semantic alignment.
-10. Report the approved files written, element counts, inspected areas, unmapped
+11. Report the approved files written, element counts, inspected areas, unmapped
     areas, limitations, useful References added, and lint result. Recommend
     `businesslens-verify` for a semantic current-state audit.
 
