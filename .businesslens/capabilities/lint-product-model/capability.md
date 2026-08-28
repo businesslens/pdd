@@ -1,6 +1,7 @@
 ---
 entities:
   - product-model
+  - element
 domain: model-inspection
 availability: [{ place: businesslens-cli }]
 references:

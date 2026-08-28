@@ -1,6 +1,7 @@
 ---
 entities:
   - product-model
+  - element
 domain: model-authoring
 availability: [{ place: agent-skills }]
 references:

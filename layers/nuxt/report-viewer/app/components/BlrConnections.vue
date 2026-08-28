@@ -102,8 +102,10 @@ const rows = computed<RelationRow[]>(() => {
       all.push(
         ...entity.relations.map(relation =>
           row(`${relation.verb} ${relation.cardinality === 'many' ? 'many' : 'one'}`, 'entity', [relation.entityId], false)),
+        // The inverse is the other Entity's verb pointing back, so the arrow
+        // carries the direction — "holds by" would read as this Entity holding.
         ...entity.inboundRelations.map(relation =>
-          row(`${relation.verb} by`, 'entity', [relation.entityId], true)),
+          row(`\u2190 ${relation.verb}`, 'entity', [relation.entityId], true)),
         row('Domain', 'domain', entity.domainId ? [entity.domainId] : [], false),
         row('Changed by', 'capability', entity.changedByIds, true),
         row('Presented on', 'screen', entity.presentedOnIds, true)

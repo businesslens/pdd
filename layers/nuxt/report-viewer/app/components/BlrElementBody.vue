@@ -767,6 +767,11 @@ const empty = computed(() => !hasAuthoredBody(props.element))
             :key="`${relation.derived ? 'in' : 'out'}-${relation.entityId}-${relation.verb}`"
             class="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border border-default bg-elevated/30 px-3 py-2 text-sm"
           >
+            <UIcon
+              v-if="relation.derived"
+              name="i-lucide-arrow-left"
+              class="size-3.5 shrink-0 text-muted"
+            />
             <span class="font-medium text-highlighted">{{ relation.verb }}</span>
             <span class="blr-meta">{{ relation.cardinality }}</span>
             <button type="button" class="blr-chip" @click="openEntity(relation.entityId)">

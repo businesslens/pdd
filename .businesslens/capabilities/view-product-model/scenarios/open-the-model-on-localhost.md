@@ -25,12 +25,12 @@ steps:
     actor: developer
     contexts:
       local:
-        place: local-report-web::entity-collection
+        place: local-report-web::element-collection
   - text: The Product opens that entity's page at its own address, with a breadcrumb back to the collection
     kind: product
     contexts:
       local:
-        place: local-report-web::entity-page
+        place: local-report-web::element-page
 ---
 
 # Open the model on localhost

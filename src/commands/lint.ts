@@ -549,13 +549,12 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
      * referencing each other while no behaviour touches any of them is still
      * vocabulary nobody uses.
      */
+    // A relation may target this same Entity: an Element relates to other
+    // Elements, a Task blocks another Task. Only a duplicate edge is wrong.
     const relationTargets = new Set<string>()
     for (const relation of entity.relations) {
       if (!entityIds.has(relation.entity)) {
         errors.push(`${entity.file}: relation names missing entity "${relation.entity}"`)
-      }
-      if (relation.entity === entity.id) {
-        errors.push(`${entity.file}: relation points at itself`)
       }
       const key = `${relation.entity}\0${relation.verb}`
       if (relationTargets.has(key)) errors.push(`${entity.file}: duplicate relation "${relation.verb} ${relation.entity}"`)

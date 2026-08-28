@@ -1,12 +1,13 @@
 ---
 entities:
   - product-model
+  - element
 capabilities: [view-product-model]
 entryPoints:
   - local-report-web: /?s=capability
 ---
 
-# Entity collection
+# Element collection
 
 Every entity of one kind, ranked and grouped so the reader can find the one they
 came for. Scenarios are read from the Capability or Journey that owns them

@@ -1,12 +1,13 @@
 ---
 entities:
   - product-model
+  - element
 capabilities: [view-product-model]
 entryPoints:
   - local-report-web: /?s=capability&e=capability:lint-product-model
 ---
 
-# Entity page
+# Element page
 
 One entity, at the width its content was drawn for. This is the reading: it has
 its own address, a breadcrumb back to its collection, and the browser's own back

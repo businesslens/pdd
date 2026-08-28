@@ -1,6 +1,7 @@
 ---
 entities:
   - product-model
+  - element
 capabilities: [explore-product-topology]
 entryPoints:
   - local-report-web: /?s=topology

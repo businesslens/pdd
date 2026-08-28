@@ -8,22 +8,22 @@ steps:
     actor: developer
     contexts:
       local:
-        place: local-report-web::entity-page
+        place: local-report-web::element-page
   - text: A save leaves the model temporarily unable to pass its structural check
     kind: condition
     contexts:
       local:
-        place: local-report-web::entity-page
+        place: local-report-web::element-page
   - text: The Product keeps the last valid report on screen and says that the latest edit is not valid yet
     kind: product
     contexts:
       local:
-        place: local-report-web::entity-page
+        place: local-report-web::element-page
   - text: The Product recompiles once the edit is fixed and returns the reader to what they were reading
     kind: product
     contexts:
       local:
-        place: local-report-web::entity-page
+        place: local-report-web::element-page
 ---
 
 # Keep the last valid report while an edit is invalid

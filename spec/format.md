@@ -749,7 +749,8 @@ relationship, and `cardinality` is `one` or `many`, written explicitly so that
 *one* is a choice somebody made. **A relation is declared on one side only** —
 the inverse is derived, so the two sides cannot disagree. A relation targets an
 Entity, never an Actor: an Actor is who acts, and ownership is a fact the
-Product keeps. A relation never satisfies the no-orphans rule below, because a
+Product keeps. It may target this same Entity — an Element relates to other
+Elements, a Task blocks another Task — and only a duplicate edge is invalid. A relation never satisfies the no-orphans rule below, because a
 cluster of Entities referencing each other while no behaviour touches any of
 them is still vocabulary nobody uses.
 

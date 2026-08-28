@@ -1,4 +1,8 @@
 ---
+relations:
+  - entity: element
+    verb: holds
+    cardinality: many
 transitions:
   - from: Absent
     to: Draft
@@ -33,7 +37,6 @@ and it is the first thing every BusinessLens workflow establishes before acting.
 ## Information kept
 
 - Which Product it describes, and that Product's identity and attribution
-- Every Element it holds, and the relationships between them
 - How much of the intended Product breadth it claims to cover
 - The inspection that produced it, and what it leaves unmapped
 
