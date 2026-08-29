@@ -582,6 +582,23 @@ describe('projectPortableReport', () => {
     expect(sdk.ProductReportSchema.safeParse(backwards).success).toBe(false)
   })
 
+  it('checks an Interface entry-point key on the wire, which it never did', () => {
+    const other = report.model.interfaces[1]!.id
+
+    const own = structuredClone(report)
+    own.model.interfaces[0]!.entryPoints.push({ type: own.model.interfaces[0]!.id, path: '/x' })
+    expect(sdk.validateProductReport(own).join('\n')).toContain('entry point key')
+
+    const unknown = structuredClone(report)
+    unknown.model.interfaces[0]!.entryPoints.push({ type: 'nonsense', path: '/x' })
+    expect(sdk.validateProductReport(unknown).join('\n')).toContain('entry point key')
+
+    // A surface reached from another surface is exactly what the key is for.
+    const reachedFrom = structuredClone(report)
+    reachedFrom.model.interfaces[0]!.entryPoints.push({ type: other, path: 'shop report' })
+    expect(sdk.validateProductReport(reachedFrom).filter(issue => /entry point/.test(issue))).toEqual([])
+  })
+
   it('rejects historical Product Reports without normalization', () => {
     for (const schemaVersion of ['4.0.0', '5.0.0', '6.0.0', '7.0.0', '8.0.0', '9.0.0']) {
       const legacy = structuredClone(report) as Record<string, any>

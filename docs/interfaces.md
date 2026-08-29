@@ -81,7 +81,7 @@ Supports customer shopping. It does not expose store administration.
 | --- | --- | --- |
 | `type` | yes | Use one supported interaction contract: `web`, `mobile-app`, `desktop-app`, `cli`, `api`, `webhook`, `messaging`, `voice`, or `device`. |
 | `actors` | yes | Name at least one existing Actor allowed to use some part of the Interface; do not repeat an ID. |
-| `entryPoints` | no | List Product-facing roots such as `/`, `reader://home`, `product admin`, or `/v1`. |
+| `entryPoints` | no | List Product-facing roots such as `/`, `reader://home`, `product admin`, or `/v1`. Key each one with this Interface's own `type`, or with **another Interface's id** when that is where a reader arrives from — a local web report opened by a command says so here rather than in prose. |
 | `references` | no | Use the documented [Reference](./references.md) shape. |
 | H1 | yes | Name the Interface. |
 | Lead paragraph | yes | Describe the supported interaction form. |

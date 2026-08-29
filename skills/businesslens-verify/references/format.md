@@ -95,7 +95,9 @@ not contain another H1 or H2.
   (`web|mobile-app|desktop-app|cli|api|webhook|messaging|voice|device|agent`),
   at
   least one `actors` relation; optional Product-facing
-  `entryPoints`; H1, lead description, and `## Capability boundary`. Interfaces
+  `entryPoints`, each keyed by this Interface's own type or by another
+  Interface's id when a reader arrives from that surface; H1, lead description,
+  and `## Capability boundary`. Interfaces
   are inbound. An outbound connection the Product opens is not an Interface:
   model it in the calling Capability, give that Capability an availability
   Context for where the Actor observes the result, and make its failure a

@@ -238,14 +238,20 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     }
     /*
      * F11 — one entry-point key vocabulary per resource. On an Interface the key
-     * is that Interface's own `type`; on an Experience or Screen it is the
-     * containing Interface's id. Previously the Interface case was unchecked,
-     * so two authors used three different vocabularies and both linted clean.
+     * is that Interface's own `type`, or another Interface's id when a reader
+     * arrives from that surface — a web report opened by a command has nowhere
+     * else to record where it is reached from. On an Experience or Screen it is
+     * the containing Interface's id. Its own id is refused: `type` says that.
      */
     for (const entryPoint of productInterface.entryPoints) {
-      if (entryPoint.type !== productInterface.type) {
+      if (entryPoint.type === productInterface.type) continue
+      if (entryPoint.type === productInterface.id) {
         errors.push(
-          `${productInterface.file}: entry point key "${entryPoint.type}" must be this Interface's type "${productInterface.type}"`
+          `${productInterface.file}: entry point key "${entryPoint.type}" is this Interface's own id; use its type "${productInterface.type}"`
+        )
+      } else if (!interfaceIds.has(entryPoint.type)) {
+        errors.push(
+          `${productInterface.file}: entry point key "${entryPoint.type}" must be this Interface's type "${productInterface.type}" or another Interface's id`
         )
       }
     }

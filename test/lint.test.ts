@@ -1125,6 +1125,27 @@ relations:
     expect(result.warnings.join('\n')).toContain('faces "was ordered in order"')
   })
 
+  /*
+   * A surface reached from another surface had nowhere to say so: an Interface
+   * key had to equal its own type, so a web report opened by a command could
+   * only record that in prose.
+   */
+  it('keys an Interface entry point by its own type or by another Interface', () => {
+    const cwd = fixtureCopy()
+    const file = join(cwd, '.businesslens/interfaces/customer-web/interface.md')
+    const source = readFileSync(file, 'utf8')
+    const withKey = (key: string) => {
+      writeFileSync(file, source.replace('entryPoints:\n', `entryPoints:\n  - ${key}: somewhere\n`))
+      return run(cwd)
+    }
+
+    expect(withKey('operator-cli').errors).toEqual([])
+    expect(withKey('customer-web').errors.join('\n'))
+      .toContain('is this Interface\'s own id; use its type "web"')
+    expect(withKey('nonsense').errors.join('\n'))
+      .toContain('must be this Interface\'s type "web" or another Interface\'s id')
+  })
+
   it('rejects unknown frontmatter keys', () => {
     const cwd = fixtureCopy()
     writeFileSync(join(cwd, '.businesslens/domains/catalog.md'), `---

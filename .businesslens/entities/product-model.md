@@ -24,22 +24,6 @@ relations:
   - entity: business-rule
     verb: holds
     cardinality: one-to-many
-transitions:
-  - from: Draft
-    to: Partial
-    by: map-established-behavior
-  - from: Draft
-    to: Complete
-    by: map-established-behavior
-  - from: Partial
-    to: Complete
-    by: map-established-behavior
-  - from: Partial
-    to: Complete
-    by: verify-model-alignment
-  - from: Complete
-    to: Partial
-    by: decide-intended-behavior
 references:
   - kind: spec
     role: intent
@@ -72,20 +56,3 @@ Whether one exists at all is not a state it is in: a repository with no
 - How much of the intended Product breadth it claims to cover
 - The inspection that produced it, and what it leaves unmapped
 
-## States
-
-### Draft
-
-The model exists, and its own author is still reviewing it. Gaps in Capability
-Scenario coverage are reported as warnings rather than failures.
-
-### Partial
-
-The model is useful and known product areas are still unmapped. It names those
-areas explicitly rather than implying they do not exist.
-
-### Complete
-
-The intended product breadth is modeled. Structural checking now demands at
-least one Capability and direct Scenario coverage for every availability
-Context, and a public Blueprint demands the same.

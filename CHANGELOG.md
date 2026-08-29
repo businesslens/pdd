@@ -250,6 +250,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the argument that most often wins when it should not. When the call is still
   close, split — a merge stays available to anyone later, while a collapse
   deletes the difference and leaves nothing saying the question existed.
+- **An Interface entry point may be keyed by another Interface's id.** The key
+  had to equal that Interface's own `type`, so a surface reached *from* another
+  surface had nowhere to say so — the local Product Report is opened by
+  `businesslens view`, and a `cli:` key could not sit on a `web` Interface. A
+  mapping run decided that placement in a round, hit the constraint at write
+  time, and fell back to prose. Where you reach a surface from is a fact about
+  the surface reached. Its own id stays refused, because `type` already says it.
+  The rule also reaches the wire, which had never checked an Interface key at
+  all.
+- **`product-model` loses a lifecycle that forbade nothing.** Every other
+  shipped lifecycle rules something out — an Order cannot be un-refunded, a
+  Collection cannot go Published to Private. Its four transitions of six
+  possible pairs ruled out nothing: a model genuinely can return to Draft, so
+  the two omissions were unwritten rather than impossible. `coverage.status` is
+  a field the linter switches on, which is not the same as a lifecycle, and the
+  breadth claim already lives in `## Information kept`. Three independent
+  mapping runs declined to author these states; they were right.
 - **A subset is not an answer.** Where one candidate's kept information is
   contained in another's, an intersection always exists, so "a single list is
   true of both" is trivially satisfiable and decides nothing. Ask instead

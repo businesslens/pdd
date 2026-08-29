@@ -569,9 +569,14 @@ valid; `react` is not. `agent` is the surface an AI coding harness reaches
 through installed skills or tools — a contract with its own Actors, boundary,
 and independently verifiable behavior, not the harness's own interface. An Interface has exactly one type; independently supported
 types are separate Interfaces. `actors` contains at least one Actor ID.
-`entryPoints` is optional and contains product-facing root addresses. **On an
-Interface every entry-point key must equal that Interface's own `type`**; on an
-Experience or a Screen it must name the containing Interface's id. One field,
+`entryPoints` is optional and contains product-facing root addresses. On an
+Interface a key is one of two things: **that Interface's own `type`**, for an
+address in its own vocabulary, or **the id of another Interface**, for a surface
+a reader arrives from. A local web report opened by an operator command declares
+`operator-cli: shop report` beside its own `web: /` — where you reach it from is
+a fact about the surface reached, and it has nowhere else to live. Its own id is
+not a key: that is what `type` already says. On an Experience or a Screen the key
+names the containing Interface's id, unchanged. One field,
 one rule per resource type, both checked by `lint`. H1, lead
 description, and `## Capability boundary` are required. An Interface has no
 access mode or exit contract.

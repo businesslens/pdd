@@ -598,6 +598,15 @@ export function validateProductReport(report: ProductReportV11): string[] {
 
   for (const productInterface of model.interfaces) {
     requireUniqueValues(issues, `interface "${productInterface.id}"`, 'actorIds', productInterface.actorIds)
+    /* The folder has always checked this and the wire never did. A key is the
+       Interface's own type, or another Interface's id for a surface a reader
+       arrives from; its own id is refused because `type` already says it. */
+    for (const point of productInterface.entryPoints) {
+      if (point.type === productInterface.type) continue
+      if (point.type === productInterface.id || !interfaceIds.has(point.type)) {
+        issues.push(`interface "${productInterface.id}": entry point key "${point.type}" must be its type "${productInterface.type}" or another Interface's id`)
+      }
+    }
     validateSupportingSections(
       issues,
       `interface "${productInterface.id}"`,

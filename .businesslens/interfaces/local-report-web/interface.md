@@ -3,6 +3,7 @@ type: web
 actors: [developer]
 entryPoints:
   - web: /
+  - businesslens-cli: businesslens view
 references:
   - kind: doc
     role: context
