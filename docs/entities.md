@@ -124,10 +124,14 @@ split and say so.
 
 **When one list is contained in another**, the procedure above stops helping:
 you can always produce a shared list by discarding whatever differs, so the
-intersection proves nothing. Ask instead whether anything ever names the smaller
-one on its own. Reached only through the larger thing? Information kept inside
-it — *the items ordered*, inside Order. Stored, addressed, sent or changed
-independently? Its own Entity, however much the information overlaps.
+intersection proves nothing. Ask instead: **does the smaller one have an address
+of its own?**
+
+Being kept inside the larger thing is not the test — that is storage, which is
+never the test. Ask what can name it: a file, a route, a scope a command
+accepts, an id another element cites. *The items ordered* has none of those and
+belongs inside Order. Anything with one of them is its own Entity, however much
+the information overlaps and however firmly the larger thing contains it.
 
 ## Is this an ERD?
 
@@ -184,7 +188,12 @@ vocabularies are what it *is*, not what it keeps. A Product keeps information
 about *instances*; where there are no instances, only members of a fixed list,
 that is a vocabulary.
 
-That last one traps a tool whose subject is models. Why is *Actor* an Entity for
+Apply that last one to the thing you would name, never to the classification
+above it. A closed list of kinds is a vocabulary; the things those kinds
+classify are not. "Payment method" may be a fixed list of four while every
+payment is its own thing.
+
+It traps a tool whose subject is models. Why is *Actor* an Entity for
 BusinessLens but *agent skill* is not? Because it keeps information about
 Actors — `actors/` is full of them — and it ships its skills rather than keeping
 records about them. **Does the Product keep information about instances of this,

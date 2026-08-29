@@ -709,6 +709,11 @@ vocabularies are what the Product *is*, not what it keeps. A Product keeps
 information about *instances* of an Entity; where there are no instances, only
 members of a fixed list, that is a vocabulary.
 
+Apply this to the thing you would name, never to the classification above it. A
+closed list of kinds is a vocabulary; the things those kinds classify are not,
+and a Product holding a folder full of them is holding instances. "Payment
+method" may be a fixed list of four while every payment is its own thing.
+
 The third is the one that traps a modelling tool, and the discriminator is
 worth stating: **does the Product keep information about instances of this, or
 is this the Product itself?** A tool whose subject is Actors keeps `actors/`
@@ -733,11 +738,15 @@ to ask splits, and records the choice.
 **When one list is contained in another, the intersection is not the answer.** A
 shared list can always be produced by discarding whatever differs, so the
 procedure above says nothing useful about a candidate whose kept information is
-a subset of another's. Ask a different question: does anything ever name the
-smaller one on its own? A thing the Product only reaches through the larger one
-is information kept inside it — the items ordered, inside Order. A thing the
-Product stores, addresses, sends or changes independently is its own Entity,
-however much its information overlaps.
+a subset of another's. Ask a different question: **does the smaller one have an
+address of its own?**
+
+Being kept inside the larger thing is not the test. That is storage, and storage
+is never the test here. Ask what can name it on its own — a file, a route, a
+scope a command accepts, an id another element cites. "The items ordered" has
+none of those and lives inside Order. Something with any of them is its own
+Entity, however much its information overlaps and however firmly the larger
+thing contains it.
 
 ```markdown
 ---

@@ -134,6 +134,12 @@ Read before authoring:
    defaults — split rather than collapse, omit rather than assert — and carry
    every unanswered question into `Judgment calls` as an open question rather
    than a settled decision.
+
+   Those defaults key on the call being close, so a rule that appears to settle
+   one takes it out of their reach. **Size restores it**: where the two answers
+   differ by more than a couple of elements, the call is open however settled it
+   feels, and the model records it as open. A rule confident enough to decide a
+   third of the model on its own is being trusted further than any rule earns.
 8. Present the proposed model delta before writing. Include added, changed, and
    removed elements; mapped and unmapped areas; limitations; and any material
    uncertainty. Get explicit approval for product meaning. Do not silently
