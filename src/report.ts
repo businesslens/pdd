@@ -1,5 +1,5 @@
 /**
- * `businesslens/report` — strict Product Report v10 contract as a library.
+ * `businesslens/report` — strict Product Report v11 contract as a library.
  *
  * This entry point depends only on `zod` and stays free of Node built-ins so
  * browser consumers can validate, project, and digest reports consistently.
