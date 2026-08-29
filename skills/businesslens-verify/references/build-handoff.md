@@ -3,7 +3,7 @@
 Send one self-contained packet to the harness-supplied builder:
 
 - **Expected behavior:** the exact approved model contract.
-- **Affected model elements:** IDs of relevant Interfaces, Experiences,
+- **Affected model resources:** IDs of relevant Interfaces, Experiences,
   Capabilities, Capability Scenarios, Rules, Journeys, Journey Scenarios, and
   declared availability Contexts.
 - **Observed gap:** current behavior and why it differs.

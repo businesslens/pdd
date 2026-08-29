@@ -12,7 +12,7 @@ references:
 
 Draws the model's cross-kind structure as one of a fixed set of named views.
 Each view states the question it answers and how it derives its answer, and the
-reader can hide a kind, narrow the view, or focus a single element's
+reader can hide a kind, narrow the view, or focus a single resource's
 neighbourhood.
 
 ## Intent

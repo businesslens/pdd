@@ -19,8 +19,9 @@ references:
 
 # Journey
 
-One coherent Actor goal that requires deliberately composing several
-Capabilities. It owns the goal, never the route.
+What an author writes when a goal is plainly real and no single Capability
+delivers it. The hardest type to justify, and the one most often authored
+because it feels owed rather than because it was needed.
 
 ## Information kept
 

@@ -29,7 +29,7 @@ A representative model looks like this:
 └── business-rules/<id>.md                   # optional collection
 ```
 
-Use `<id>.md` while an element has no assets or child elements. When it gains the
+Use `<id>.md` while a resource has no assets or child resources. When it gains the
 first one, move it to `<id>/<type>.md` and keep owned assets beside that file.
 Put generated implementation captures under `implementation/`. The compact and
 expanded forms never coexist and derive the same id. Optional `assets:`
@@ -38,7 +38,7 @@ Product-state `state`; it never creates or classifies an asset.
 
 Use these exact compact and expanded paths:
 
-| Element | Compact | Expanded | Typed children |
+| Resource type | Compact | Expanded | Typed children |
 | --- | --- | --- | --- |
 | Product | `product.md` | `product/product.md` beside `logo.svg` | — |
 | Actor | `actors/<id>.md` | `actors/<id>/actor.md` | — |
@@ -60,7 +60,7 @@ IDs are lowercase kebab-case segments. Behavior-hierarchy and cross-cutting ids
 are the bare file or folder name. Qualified ids for Interfaces, Experiences,
 and Screens carry their path joined by `::` —
 `reader-web::personal-library::unread-library` — because Experience and Screen
-names repeat across Interfaces on purpose. Two elements of the same kind sharing
+names repeat across Interfaces on purpose. Two resources of the same kind sharing
 a path suffix below their Interface are counterparts: the same thing on two
 Interfaces.
 
@@ -69,7 +69,7 @@ a Capability Scenario never writes `capability:`, a Journey Scenario never
 writes `journey:`, and a Screen never writes `availability:`. Capability
 Scenario and Journey Scenario IDs share one global namespace. Only
 `product.md` declares `id:`. The
-first and only H1 is the title. Most elements use lead prose as their description;
+first and only H1 is the title. Most resources use lead prose as their description;
 Journeys and both Scenario types instead use required named sections and must
 not contain lead prose. Put relations and navigation in frontmatter and Product
 meaning in prose. Product tags and every relation ID list contain unique
@@ -251,7 +251,7 @@ context: { place: reader-web::personal-library }
 
 Use a bare Interface id for an undivided Interface and
 `interface-id::experience-id` for an Experience; there is no separate
-`experience` field. An element Rule target may omit `contexts` to cover all
+`experience` field. A resource Rule target may omit `contexts` to cover all
 target contexts or provide a non-empty list to narrow it. Targets are additive.
 A Capability plus one of its Capability Scenarios, or a Journey plus one of its
 Journey Scenarios, is redundant and invalid. Domains are derived Rule
@@ -273,12 +273,12 @@ Capability's availability, and a Screen place must expose it. Every Journey
 route begins its Actor-owned
 placed Steps with a Journey Actor. Screens never author Scenario ids.
 
-Every semantic element may contain optional `references`. Each strict item needs
+Every semantic resource may contain optional `references`. Each strict item needs
 `kind: code|prd|spec|proposal|doc|adr|visual|research`,
 `role: intent|implementation|context`, `target`, and optional `title`. Code
 targets use `path[#symbol][:start[-end]]` and their path must be tracked. Other
 targets use HTTP(S) or a repository-relative path. Duplicate targets on one
-element are invalid. References are attachments, never proof or lifecycle state.
+resource are invalid. References are attachments, never proof or lifecycle state.
 Coverage, config, and taxonomies do not accept them.
 
 `.gitignore` contains `build/` and `cache/`.
@@ -286,7 +286,7 @@ Coverage, config, and taxonomies do not accept them.
 ## Verification edit boundaries
 
 Missing References are valid at every Coverage status. Product meaning may
-change only in `product.md`, taxonomies, coverage prose, and element
+change only in `product.md`, taxonomies, coverage prose, and resource
 prose/relationships after approval. A post-alignment navigation refresh may
 change only implementation References.
 
@@ -307,8 +307,8 @@ intended product behavior.
 - Read `product.md` or `product/product.md` first, then Actors and
   Interfaces, optional Experiences, Screens, and Domains, followed by
   Capabilities, Business Rules, Journeys, and both Scenario collections.
-- Expect leaf elements as `<id>.md`; `<id>/<type>.md` means that element owns
-  child elements or assets.
+- Expect leaf resources as `<id>.md`; `<id>/<type>.md` means that resource owns
+  child resources or assets.
 - Treat Capability Scenarios as local acceptance contracts, Journey Scenarios
   as end-to-end Steps contracts, and Business Rules as invariants.
 - Do not infer a stack or architecture from the model.

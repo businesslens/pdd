@@ -1,33 +1,33 @@
 <script setup lang="ts">
 /**
- * One element reading, at one URL.
+ * One resource reading, at one URL.
  *
- * Overview holds the element's authored meaning, facts, Contexts, relations,
+ * Overview holds the resource's authored meaning, facts, Contexts, relations,
  * supporting material, and References. A Capability or Journey adds exactly
  * one peer tab for its Scenarios. A Scenario URL keeps the Scenario key in the
  * address while reading it inside its mandatory parent.
  */
-import type { AnyElementView, ReportWorkspace } from '../utils/reportWorkspace'
-import { docsForElementKind } from '../utils/elementDocs'
+import type { AnyResourceView, ReportWorkspace } from '../utils/reportWorkspace'
+import { docsForResourceKind } from '../utils/resourceDocs'
 import { parentOf, tabsFor, type PageTabId } from '../utils/pageSections'
 
 const props = defineProps<{
   workspace: ReportWorkspace
-  element: AnyElementView
+  resource: AnyResourceView
 }>()
 
 const emit = defineEmits<{
-  open: [element: AnyElementView]
-  focus: [element: AnyElementView]
+  open: [resource: AnyResourceView]
+  focus: [resource: AnyResourceView]
 }>()
 
 const scenarioRoute = defineModel<string | null>('scenarioRoute', { default: null })
 const routeColumns = defineModel<string>('routeColumns', { default: 'auto' })
 
-const parent = computed(() => parentOf(props.workspace, props.element))
-const subject = computed(() => parent.value ?? props.element)
-const requestedChild = computed(() => parent.value ? props.element.key : null)
-const pageDocs = computed(() => docsForElementKind(subject.value.kind))
+const parent = computed(() => parentOf(props.workspace, props.resource))
+const subject = computed(() => parent.value ?? props.resource)
+const requestedChild = computed(() => parent.value ? props.resource.key : null)
+const pageDocs = computed(() => docsForResourceKind(subject.value.kind))
 const tabs = computed(() => tabsFor(props.workspace, subject.value))
 const active = ref<PageTabId>('overview')
 
@@ -75,7 +75,7 @@ const current = computed(() => tabs.value.find(tab => tab.id === active.value) ?
             :aria-label="pageDocs.label"
           />
         </UTooltip>
-        <UTooltip text="Show this element on the topology canvas">
+        <UTooltip text="Show this resource on the topology canvas">
           <UButton
             icon="i-lucide-waypoints"
             color="neutral"
@@ -96,7 +96,7 @@ const current = computed(() => tabs.value.find(tab => tab.id === active.value) ?
         v-model:scenario-route="scenarioRoute"
         v-model:route-columns="routeColumns"
         :workspace="workspace"
-        :element="subject"
+        :resource="subject"
         :selected-key="requestedChild"
         @open="emit('open', $event)"
       />
@@ -106,7 +106,7 @@ const current = computed(() => tabs.value.find(tab => tab.id === active.value) ?
           v-for="id in current?.blocks ?? []"
           :key="id"
           :workspace="workspace"
-          :element="subject"
+          :resource="subject"
           :id="id"
           heading
           @open="emit('open', $event)"

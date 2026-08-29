@@ -26,8 +26,8 @@ resolution loop.
 └── coverage.md
 ```
 
-Leaf entities stay compact as `<id>.md`. An entity expands to
-`<id>/<type>.md` only when it needs a namespace for assets or child entities.
+Leaf resources stay compact as `<id>.md`. A resource expands to
+`<id>/<type>.md` only when it needs a namespace for assets or child resources.
 
 ## Getting started
 
@@ -93,7 +93,7 @@ Catalog contribution stays in the CLI; there is no contribution skill.
 ## Product Model semantics
 
 - `references` optionally attach intent, implementation, or context artifacts
-  to any semantic entity. They are navigation and supporting material, not
+  to any semantic resource. They are navigation and supporting material, not
   proof or verification receipts.
 - `coverage.status` describes model breadth: `draft` while the model itself is
   under review, `partial` with known unmapped areas, and `complete` when the
@@ -108,7 +108,7 @@ Catalog contribution stays in the CLI; there is no contribution skill.
   `domain:`; every other Domain relation is derived.
 - Screens are optional platform-neutral product views, nested in the Interface
   or Experience that contains them. Their path supplies their place. Product
-  assets sit beside the entity they describe; anything
+  assets sit beside the resource they describe; anything
   under `implementation/` describes this realization and stays home.
 - `lint` checks format, required content, relationships, Reference grammar, and
   tracked code-reference paths. `verify` checks meaning against current code.
@@ -123,12 +123,12 @@ Use these sources in this order:
 1. Read the [Product Model overview](./docs/product-model.md) for the mental
    model and relationship overview.
 2. Use [`spec/format.md`](./spec/format.md) as the normative contract for the
-   authored `.businesslens/` files. It defines every entity, file shape,
+   authored `.businesslens/` files. It defines every resource type, file shape,
    relation, and semantic boundary, and changes before parser or linter
    behavior changes. Its companion [`spec/report.md`](./spec/report.md) is the
    contract for the serialized Product Report, its portable projection, and
    expansion.
-3. Use the individual entity pages under [`docs/`](./docs/) for approachable
+3. Use the individual resource type pages under [`docs/`](./docs/) for approachable
    explanations, examples, and the relevant `lint` findings. They restate the
    format contract and must not introduce a second definition.
 4. Follow [`src/core/model.ts`](./src/core/model.ts),

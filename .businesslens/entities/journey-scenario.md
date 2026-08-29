@@ -15,8 +15,8 @@ references:
 
 # Journey Scenario
 
-One concrete end-to-end variation of exactly one Journey, ending with its goal
-achieved or not achieved.
+One way that goal actually plays out — including the ways it does not. An author
+who only writes the happy path has described an intention, not a product.
 
 ## Information kept
 

@@ -14,7 +14,7 @@ steps:
     contexts:
       terminal:
         place: businesslens-cli
-  - text: The Product returns whether the model passed, every error, every warning, and a count of each element kind
+  - text: The Product returns whether the model passed, every error, every warning, and a count of each resource type
     kind: product
     contexts:
       terminal:
@@ -35,5 +35,5 @@ be established before it can proceed.
 
 ## Outcome
 
-The agent holds the structural findings and the element counts as data. It has
+The agent holds the structural findings and the resource counts as data. It has
 gained no authority to decide whether the model or the code is correct.

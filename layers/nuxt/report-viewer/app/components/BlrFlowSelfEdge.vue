@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * A relation an element declares at itself.
+ * A relation a resource declares at itself.
  *
  * An Entity may relate to its own kind — an Entity relates to other Entities, a
  * Task blocks another Task — and the format allows it deliberately. Vue Flow's

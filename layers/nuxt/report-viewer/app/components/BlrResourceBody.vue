@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * The authored body of one element: everything the model states in prose, steps,
+ * The authored body of one resource: everything the model states in prose, steps,
  * branches and states.
  *
  * This is page material. It used to render inside a 672px drawer, where a
@@ -11,14 +11,14 @@
  */
 import type {
   ActorView,
-  AnyElementView,
+  AnyResourceView,
   CapabilityView,
   ExperienceView,
   InterfaceView,
   JourneyView,
   ContextView,
   ReportWorkspace,
-  ReportElementKind,
+  ReportResourceKind,
   RuleView,
   ScenarioStepCell,
   ScenarioStepRow,
@@ -26,7 +26,7 @@ import type {
   EntityView,
   ScreenView
 } from '../utils/reportWorkspace'
-import { isScenarioKind, resolveElement, scenarioStepMatrix } from '../utils/reportWorkspace'
+import { isScenarioKind, resolveResource, scenarioStepMatrix } from '../utils/reportWorkspace'
 import { hasAuthoredBody } from '../utils/pageSections'
 import {
   SCENARIO_ROUTE_INLINE_WIDTH,
@@ -37,33 +37,33 @@ import {
 
 const props = defineProps<{
   workspace: ReportWorkspace
-  element: AnyElementView
+  resource: AnyResourceView
 }>()
 
-const emit = defineEmits<{ select: [element: AnyElementView] }>()
+const emit = defineEmits<{ select: [resource: AnyResourceView] }>()
 
 /* The host may bind these into its URL. With no host binding they remain local
    component state, which keeps the report layer usable on its own. */
 const scenarioRoute = defineModel<string | null>('scenarioRoute', { default: null })
 const routeColumns = defineModel<string>('routeColumns', { default: 'auto' })
 
-const asScreen = computed(() => props.element as ScreenView)
-const asEntity = computed(() => props.element as EntityView)
-const asJourney = computed(() => props.element as JourneyView)
-const asScenario = computed(() => props.element as ScenarioView)
-const asRule = computed(() => props.element as RuleView)
-const isScenario = computed(() => isScenarioKind(props.element.kind))
+const asScreen = computed(() => props.resource as ScreenView)
+const asEntity = computed(() => props.resource as EntityView)
+const asJourney = computed(() => props.resource as JourneyView)
+const asScenario = computed(() => props.resource as ScenarioView)
+const asRule = computed(() => props.resource as RuleView)
+const isScenario = computed(() => isScenarioKind(props.resource.kind))
 
 const capabilityBoundary = computed(() => {
-  if (props.element.kind === 'interface') return (props.element as InterfaceView).capabilityBoundary
-  if (props.element.kind === 'experience') return (props.element as ExperienceView).capabilityBoundary
-  if (props.element.kind === 'screen') return asScreen.value.capabilityBoundary
+  if (props.resource.kind === 'interface') return (props.resource as InterfaceView).capabilityBoundary
+  if (props.resource.kind === 'experience') return (props.resource as ExperienceView).capabilityBoundary
+  if (props.resource.kind === 'screen') return asScreen.value.capabilityBoundary
   return ''
 })
 
 const domainId = computed(() => {
-  if (props.element.kind === 'capability') return (props.element as CapabilityView).domainId
-  if (props.element.kind === 'entity') return asEntity.value.domainId
+  if (props.resource.kind === 'capability') return (props.resource as CapabilityView).domainId
+  if (props.resource.kind === 'entity') return asEntity.value.domainId
   return ''
 })
 
@@ -83,26 +83,26 @@ const entityStates = computed(() => asEntity.value.states)
 const entityRelations = computed(() => [
   ...asEntity.value.relations.map(relation => ({
     ...relation, derived: false,
-    title: resolveElement(props.workspace, 'entity', relation.entityId)?.title ?? relation.entityId
+    title: resolveResource(props.workspace, 'entity', relation.entityId)?.title ?? relation.entityId
   })),
   ...asEntity.value.inboundRelations.map(relation => ({
     ...relation, derived: true,
-    title: resolveElement(props.workspace, 'entity', relation.entityId)?.title ?? relation.entityId
+    title: resolveResource(props.workspace, 'entity', relation.entityId)?.title ?? relation.entityId
   }))
 ])
 
 function openEntity(id: string) {
-  const entity = resolveElement(props.workspace, 'entity', id)
+  const entity = resolveResource(props.workspace, 'entity', id)
   if (entity) emit('select', entity)
 }
 function openCapability(id: string) {
-  const capability = resolveElement(props.workspace, 'capability', id)
+  const capability = resolveResource(props.workspace, 'capability', id)
   if (capability) emit('select', capability)
 }
 
 const entityTransitions = computed(() => asEntity.value.transitions.map(transition => ({
   ...transition,
-  capabilityTitle: resolveElement(props.workspace, 'capability', transition.capabilityId)?.title ?? transition.capabilityId
+  capabilityTitle: resolveResource(props.workspace, 'capability', transition.capabilityId)?.title ?? transition.capabilityId
 })))
 
 /* One authored Scenario sequence, with named Context routes as columns. */
@@ -113,14 +113,14 @@ const stepMatrix = computed(() => (isScenario.value ? scenarioStepMatrix(asScena
 const routeShellEl = ref<HTMLElement | null>(null)
 const routeShellWidth = ref(0)
 
-watch(routeShellEl, (element, _previous, onCleanup) => {
-  if (!element || typeof ResizeObserver === 'undefined') return
-  const measure = () => { routeShellWidth.value = element.getBoundingClientRect().width }
+watch(routeShellEl, (resource, _previous, onCleanup) => {
+  if (!resource || typeof ResizeObserver === 'undefined') return
+  const measure = () => { routeShellWidth.value = resource.getBoundingClientRect().width }
   const observer = new ResizeObserver(([entry]) => {
     if (entry) routeShellWidth.value = entry.contentRect.width
   })
   measure()
-  observer.observe(element)
+  observer.observe(resource)
   onCleanup(() => observer.disconnect())
 }, { immediate: true })
 
@@ -230,8 +230,8 @@ const stepKindDescription = (kind: 'actor' | 'product' | 'condition') => ({
 
 const stepActor = (actorId: string | undefined): ActorView | undefined => {
   if (!actorId) return undefined
-  const element = resolveElement(props.workspace, 'actor', actorId)
-  return element?.kind === 'actor' ? element : undefined
+  const resource = resolveResource(props.workspace, 'actor', actorId)
+  return resource?.kind === 'actor' ? resource : undefined
 }
 
 const selectStepActor = (actorId: string | undefined) => {
@@ -242,7 +242,7 @@ const selectStepActor = (actorId: string | undefined) => {
 const contextLabel = (context: { screenTitle: string, experienceTitle: string, interfaceTitle: string }) =>
   context.screenTitle || context.experienceTitle || context.interfaceTitle
 
-type RuleTargetKind = Extract<ReportElementKind, 'capability' | 'capability-scenario' | 'journey' | 'journey-scenario'>
+type RuleTargetKind = Extract<ReportResourceKind, 'capability' | 'capability-scenario' | 'journey' | 'journey-scenario'>
 
 interface RuleBinding {
   key: string
@@ -252,7 +252,7 @@ interface RuleBinding {
 }
 
 const ruleBindings = computed<RuleBinding[]>(() => {
-  if (props.element.kind !== 'rule') return []
+  if (props.resource.kind !== 'rule') return []
   const contextByPlace = new Map(props.workspace.contexts.map(context => [context.placeId, context]))
   return asRule.value.appliesTo.map((target, index) => {
     if (target.type === 'context') {
@@ -277,12 +277,12 @@ const ruleBindings = computed<RuleBinding[]>(() => {
 
 /** True when this component would render nothing at all. One predicate, shared
     with the page composer, so the two can never disagree about a kind again. */
-const empty = computed(() => !hasAuthoredBody(props.element))
+const empty = computed(() => !hasAuthoredBody(props.resource))
 </script>
 
 <template>
   <div v-if="!empty" class="space-y-10">
-    <section v-if="element.kind === 'rule'" class="space-y-3">
+    <section v-if="resource.kind === 'rule'" class="space-y-3">
       <h2 class="blr-page-heading">Rule statement</h2>
       <div class="rounded-xl border-s-3 border-primary bg-elevated/45 p-5">
         <BlrProse :text="asRule.statement" size="base" />
@@ -329,12 +329,12 @@ const empty = computed(() => !hasAuthoredBody(props.element))
       </div>
     </section>
 
-    <section v-if="element.intent" class="space-y-2">
+    <section v-if="resource.intent" class="space-y-2">
       <h2 class="blr-page-heading">Intent</h2>
-      <BlrProse :text="element.intent" class="max-w-3xl" />
+      <BlrProse :text="resource.intent" class="max-w-3xl" />
     </section>
 
-    <section v-if="element.kind === 'journey'" class="space-y-2">
+    <section v-if="resource.kind === 'journey'" class="space-y-2">
       <h2 class="blr-page-heading">Success criterion</h2>
       <BlrProse :text="asJourney.successCriterion" class="max-w-3xl" />
     </section>
@@ -490,7 +490,7 @@ const empty = computed(() => !hasAuthoredBody(props.element))
                 >
                   <p class="text-sm font-medium text-highlighted">{{ step.index + 1 }}. {{ step.text }}</p>
                   <!--
-                    A named Actor is a reference to an element, so it is drawn as one: the
+                    A named Actor is a reference to a resource, so it is drawn as one: the
                     Actor's own mark inside a chip that opens it. A dimmed generic glyph
                     beside plain text read as narration, at the weight of the Condition
                     rows around it. The boundary axis is not repeated here — the question a
@@ -581,7 +581,7 @@ const empty = computed(() => !hasAuthoredBody(props.element))
             <div class="bg-default px-4 py-3">
               <p class="text-sm font-medium text-highlighted">{{ step.index + 1 }}. {{ step.text }}</p>
               <!--
-                A named Actor is a reference to an element, so it is drawn as one: the
+                A named Actor is a reference to a resource, so it is drawn as one: the
                 Actor's own mark inside a chip that opens it. A dimmed generic glyph
                 beside plain text read as narration, at the weight of the Condition
                 rows around it. The boundary axis is not repeated here — the question a
@@ -700,7 +700,7 @@ const empty = computed(() => !hasAuthoredBody(props.element))
     </template>
 
     <!-- SCREEN: what it shows, what can be done, what states it has. -->
-    <template v-if="element.kind === 'screen'">
+    <template v-if="resource.kind === 'screen'">
       <section v-if="asScreen.information.length" class="space-y-2">
         <h2 class="blr-page-heading">
           Information presented <span class="blr-meta ms-1">{{ asScreen.information.length }}</span>
@@ -741,7 +741,7 @@ const empty = computed(() => !hasAuthoredBody(props.element))
     </template>
 
     <!-- ENTITY: what the Product keeps, what it can be, and how it moves. -->
-    <template v-if="element.kind === 'entity'">
+    <template v-if="resource.kind === 'entity'">
       <section v-if="asEntity.informationKept.length" class="space-y-2">
         <h2 class="blr-page-heading">
           Information kept <span class="blr-meta ms-1">{{ asEntity.informationKept.length }}</span>

@@ -63,13 +63,13 @@ const route = useRoute()
 const router = useRouter()
 
 const section = ref('overview')
-const element = ref<string | null>(null)
+const resource = ref<string | null>(null)
 const scenarioRoute = ref<string | null>(null)
 const routeColumns = ref('auto')
 
 const readQuery = () => ({
   section: typeof route.query.s === 'string' && route.query.s ? route.query.s : 'overview',
-  element: typeof route.query.e === 'string' && route.query.e ? route.query.e : null,
+  resource: typeof route.query.e === 'string' && route.query.e ? route.query.e : null,
   scenarioRoute: typeof route.query.r === 'string' && route.query.r ? route.query.r : null,
   routeColumns: typeof route.query.rc === 'string' && route.query.rc ? route.query.rc : 'auto'
 })
@@ -77,21 +77,21 @@ const readQuery = () => ({
 watch(() => route.query, () => {
   const next = readQuery()
   if (next.section !== section.value) section.value = next.section
-  if (next.element !== element.value) element.value = next.element
+  if (next.resource !== resource.value) resource.value = next.resource
   if (next.scenarioRoute !== scenarioRoute.value) scenarioRoute.value = next.scenarioRoute
   if (next.routeColumns !== routeColumns.value) routeColumns.value = next.routeColumns
 }, { immediate: true })
 
-watch([section, element, scenarioRoute, routeColumns], () => {
+watch([section, resource, scenarioRoute, routeColumns], () => {
   const current = readQuery()
   if (current.section === section.value
-    && current.element === element.value
+    && current.resource === resource.value
     && current.scenarioRoute === scenarioRoute.value
     && current.routeColumns === routeColumns.value) return
   const query = { ...route.query }
   if (section.value === 'overview') delete query.s
   else query.s = section.value
-  if (element.value) query.e = element.value
+  if (resource.value) query.e = resource.value
   else delete query.e
   if (scenarioRoute.value) query.r = scenarioRoute.value
   else delete query.r
@@ -133,7 +133,7 @@ watch([section, element, scenarioRoute, routeColumns], () => {
       </UContainer>
       <BusinessLensReportViewer
         v-model:section="section"
-        v-model:element="element"
+        v-model:resource="resource"
         v-model:scenario-route="scenarioRoute"
         v-model:route-columns="routeColumns"
         :report="data"

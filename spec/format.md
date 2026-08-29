@@ -4,9 +4,9 @@
 > contract the parser, the linter, and the catalog server must agree on, and
 > it changes *before* their behavior does.
 >
-> The user-facing explanation of the same elements lives in the Product model
-> group under `docs/` — one page per element, each carrying its file shape and
-> the `lint` findings that constrain it. Keep the two consistent.
+> The user-facing explanation of the same resource types lives in the Product
+> model group under `docs/` — one page per resource type, each carrying its file
+> shape and the `lint` findings that constrain it. Keep the two consistent.
 >
 > This document defines the **authored folder**. The wire contract that
 > serializes it — the Product Report, its portable projection, and expansion —
@@ -30,6 +30,8 @@ still belongs to your SDD tool of choice and may be attached through
 | Term | Meaning |
 | --- | --- |
 | **Product Model** | `.businesslens/` — the git-tracked folder this document defines. May cite the repository's code. |
+| **Resource** | one authored file in a Product Model — `capabilities/lint-product-model/capability.md` is one. |
+| **Resource type** | what a resource is one of. This document defines twelve: Product, Actor, Interface, Experience, Screen, Domain, Entity, Capability, Capability Scenario, Journey, Journey Scenario, and Business Rule. |
 | **Product Report** | the portable serialization of a Product Model. One format, two profiles. |
 | — *workspace* | `referenceProfile: workspace`. Repository-relative references and entry points intact, as optional navigation. For a full product instance inside the boundary that owns the code. |
 | — *portable* | `referenceProfile: portable`. No `kind: code`, no repository-relative targets or entry points. Required whenever a report crosses an ownership boundary. |
@@ -41,24 +43,53 @@ not a Blueprint. Nothing about where a file is stored may be decided by whether
 it would survive publication — the profile filters at serialization time, and
 that is the only place the distinction lives.
 
+**A resource never states its own type in frontmatter; its path does.**
+`capabilities/checkout.md` is a Capability because of where it sits, and
+`capabilities/checkout/capability.md` says it a second time in the type
+filename — both are the path. No file carries a `kind: capability` header, and a
+model is read from its folders.
+
+That leaves `kind` free to mean something narrower, and it does: five unrelated
+closed sets, each local to where it appears, none of them naming a resource
+type.
+
+| `kind` on | Values |
+| --- | --- |
+| a `references` item | `code`, `prd`, `spec`, `proposal`, `doc`, `adr`, `visual`, `research` |
+| an Actor | `person`, `system` |
+| a Capability Scenario | one `scenarioKinds` id from `taxonomies.yaml` |
+| a Journey Scenario | one `scenarioKinds` id from `taxonomies.yaml` |
+| a Scenario Step | `actor`, `product`, `condition` |
+
+Each is required wherever it appears, but only Actors and the two Scenario types
+require one at the top level of a file. **Every other resource type has no
+`kind` at all** — Product, Interface, Experience, Screen, Domain, Entity,
+Capability, Journey, and Business Rule never carry one. An Interface's `type` is a different
+field with a different job.
+
+This document therefore never writes *kind* to mean a resource type, and neither
+should `docs/`. The code does — `ReportResourceKind` is the discriminator a
+report consumer switches on — and that is the only register where the word
+carries that meaning.
+
 ## Folder layout
 
-An element uses the smallest shape that can hold it:
+A resource uses the smallest shape that can hold it:
 
-- **compact** — `<id>.md` when the element has no assets or child elements;
+- **compact** — `<id>.md` when the resource has no assets or child resources;
 - **expanded** — `<id>/<type>.md` when it owns assets or a typed child
   collection.
 
-The two shapes represent the same element and derive the same id. Adding the
+The two shapes represent the same resource and derive the same id. Adding the
 first asset or child promotes the Markdown file with `git mv`; removing the last
 one compacts it again. Both shapes must never exist for the same id. This keeps
 leaf-heavy collections readable without giving up co-location or path-owned
 parent relations.
 
-Every element follows that rule; only its type filename and permitted child
+Every resource follows that rule; only its type filename and permitted child
 collection differ:
 
-| Element | Compact | Expanded | Typed children |
+| Resource type | Compact | Expanded | Typed children |
 | --- | --- | --- | --- |
 | Product | `product.md` | `product/product.md` beside `logo.svg` | — |
 | Actor | `actors/<id>.md` | `actors/<id>/actor.md` | — |
@@ -66,12 +97,12 @@ collection differ:
 | Experience | `interfaces/<interface-id>/experiences/<id>.md` | `interfaces/<interface-id>/experiences/<id>/experience.md` | `screens/` |
 | Screen | `<screen-parent>/screens/<id>.md` | `<screen-parent>/screens/<id>/screen.md` | — |
 | Domain | `domains/<id>.md` | `domains/<id>/domain.md` | — |
+| Entity | `entities/<id>.md` | `entities/<id>/entity.md` | — |
 | Capability | `capabilities/<id>.md` | `capabilities/<id>/capability.md` | `scenarios/` |
 | Capability Scenario | `capabilities/<capability-id>/scenarios/<id>.md` | `capabilities/<capability-id>/scenarios/<id>/capability-scenario.md` | — |
 | Journey | `journeys/<id>.md` | `journeys/<id>/journey.md` | `scenarios/` |
 | Journey Scenario | `journeys/<journey-id>/scenarios/<id>.md` | `journeys/<journey-id>/scenarios/<id>/journey-scenario.md` | — |
 | Business Rule | `business-rules/<id>.md` | `business-rules/<id>/business-rule.md` | — |
-| Entity | `entities/<id>.md` | `entities/<id>/entity.md` | — |
 
 Here `<screen-parent>` is the Interface or Experience folder that contains the
 Screen. A representative model can therefore look like this:
@@ -181,15 +212,15 @@ future format revision, but Context is not an arbitrary metadata bag.
   model.
 
 - **Compact and expanded are exclusive.** `<id>.md` and `<id>/<type>.md` may
-  not coexist. An expanded element must own at least one asset or child element;
-  otherwise it is needless structure and must be compacted. A compact element
-  has no asset or child namespace.
+  not coexist. An expanded resource must own at least one asset or child
+  resource; otherwise it is needless structure and must be compacted. A compact
+  resource has no asset or child namespace.
 
   Coexisting shapes, and an expanded folder missing its `<type>.md`, are `lint`
   errors: both are states no correct model passes through. An expanded folder
   that owns nothing yet is a `lint` warning instead. The rule still holds — a
   Product Report cannot carry that state, because expansion derives each
-  element's shape from the children it actually owns, so the round trip
+  resource's shape from the children it actually owns, so the round trip
   normalizes the folder back to the compact form. But an author reaches the
   expanded shape in two steps, and the intermediate step is not a defect.
 
@@ -241,11 +272,12 @@ future format revision, but Context is not an arbitrary metadata bag.
  The one
   exception is `product.md`, whose `id:` names the Product Model (it may differ
   from the repo name) and is limited to 64 characters. Compacting or expanding
-  an element never changes this logical path or id.
+  a resource never changes this logical path or id.
 
   Experience and Screen names repeat across Interfaces on purpose:
-  `personal-library` on web and on mobile pursue the same goal and are different elements. Two elements of
-  the same kind sharing a path suffix below their Interface are **counterparts**
+  `personal-library` on web and on mobile pursue the same goal and are different
+  resources. Two resources of the same type sharing a path suffix below their
+  Interface are **counterparts**
   — the same thing on two Interfaces. Nothing has to declare that; the path
   already says it.
 
@@ -254,8 +286,8 @@ future format revision, but Context is not an arbitrary metadata bag.
   Scenario never writes `journey:`, and a Screen never writes `availability:`.
   One authority instead of two that can disagree, and reparenting becomes a
   `git mv` that reads correctly in a pull request.
-- **Assets expand an element.** Authored assets sit beside `<type>.md` in the
-  expanded element folder. Files under its reserved `implementation/`
+- **Assets expand a resource.** Authored assets sit beside `<type>.md` in the
+  expanded resource folder. Files under its reserved `implementation/`
   subdirectory describe this repository's realization instead. Typed child
   directories (`experiences/`, `screens/`, and `scenarios/`) are structural,
   not assets; any other nested directory is invalid. Plain asset files need no
@@ -268,12 +300,12 @@ future format revision, but Context is not an arbitrary metadata bag.
       state: Empty                 # Screens only; resolves to an H3 Product state
   ```
 
-  `file` is relative to the expanded element folder and cannot escape it.
+  `file` is relative to the expanded resource folder and cannot escape it.
   Metadata entries are unique and must name an existing asset. `title` is
   optional. `state` is valid only on a Screen and must name one of that Screen's
   `## View states`. Unlisted assets remain valid so external tools can write
   captures without editing BusinessLens frontmatter.
-- **H1 = title/name.** The first `# Heading` in the body is the element's
+- **H1 = title/name.** The first `# Heading` in the body is the resource's
   title (actors and domains call it `name`) and is the file's only H1. Lead and
   section-body Markdown fragments cannot contain another H1 or H2; an H2 begins
   a new section instead.
@@ -287,9 +319,9 @@ future format revision, but Context is not an arbitrary metadata bag.
   Actor, Capability qualification, and route-specific Contexts. Other
   prose remains in the Markdown body.
 - **Intent and Goal = recognized prose sections.** `## Intent` explains why the
-  product or element exists and which outcome it protects. `## Goal` states the
+  product or resource exists and which outcome it protects. `## Goal` states the
   stable Actor intent of a Journey. Both are structured prose, not separate
-  elements.
+  resources.
 - **Structured sections are unambiguous.** A recognized H2 may appear only once.
   Journey-only sections (`## Goal`, `## Success criterion`) are invalid on both
   Scenario types, and Scenario-only sections (`## Trigger`, `## Steps`,
@@ -310,7 +342,7 @@ future format revision, but Context is not an arbitrary metadata bag.
 
 ## References
 
-`references` is an optional extension on every semantic element: Product,
+`references` is an optional extension on every semantic resource: Product,
 Actor, Interface, Experience, Screen, Domain, Entity, Capability, Journey,
 Capability Scenario, Journey Scenario, and Business Rule. It is not accepted in
 `config.yaml`, `coverage.md`, or `taxonomies.yaml`.
@@ -336,9 +368,9 @@ Unknown keys are invalid.
 - `kind` is `code`, `prd`, `spec`, `proposal`, `doc`, `adr`, `visual`, or `research`.
   It identifies the artifact, not what the model concludes from it.
 - `role` is `intent`, `implementation`, or `context`. It explains why the
-  artifact is attached to this element. It is not a verification result or a
+  artifact is attached to this resource. It is not a verification result or a
   freshness claim.
-- `target` is the artifact address. Duplicate targets on one element are
+- `target` is the artifact address. Duplicate targets on one resource are
   invalid, even when their kinds or roles differ.
 - `title` is an optional non-empty display label.
 - `state` is optional and **valid only on a Screen**. It names one of that
@@ -350,7 +382,7 @@ For `kind: code`, `target` uses the compact
 remainder matches `^\d+(-\d+)?$`; the symbol is everything after the first `#`
 of what remains. The path must be repository-relative and tracked according to
 `git ls-files`. Code references may use any role, including `intent`, but they
-remain navigation rather than proof and never replace the element's prose.
+remain navigation rather than proof and never replace the resource's prose.
 
 All other kinds accept either an HTTP(S) URL or a repository-relative path.
 `lint` ignores a local target's query and fragment when checking the tracked
@@ -370,12 +402,12 @@ The deterministic CLI does not copy, download, generate, execute, or assess
 referenced content. BusinessLens skills may follow curated References as leads,
 but the artifact remains evidence to assess rather than proof to trust.
 
-## Element files
+## Resource files
 
-> **Illustrative examples.** The element snippets below are non-normative
+> **Illustrative examples.** The resource snippets below are non-normative
 > fragments from one fictional Acme Shop model. Their names and product story
 > are not required; they exist only to make the required Markdown, frontmatter,
-> and cross-element identifiers concrete.
+> and cross-resource identifiers concrete.
 
 ### `config.yaml`
 
@@ -540,7 +572,7 @@ types are separate Interfaces. `actors` contains at least one Actor ID.
 `entryPoints` is optional and contains product-facing root addresses. **On an
 Interface every entry-point key must equal that Interface's own `type`**; on an
 Experience or a Screen it must name the containing Interface's id. One field,
-one rule per element, both checked by `lint`. H1, lead
+one rule per resource type, both checked by `lint`. H1, lead
 description, and `## Capability boundary` are required. An Interface has no
 access mode or exit contract.
 
@@ -566,7 +598,7 @@ callback, or push subscription — that inbound interaction is through an Interf
 and the third party is its Actor. A feed provider the Product polls is a dependency; a
 feed provider that pushes updates to the Product is an Actor.
 
-There is no external-system element. An outbound dependency shared by several
+There is no external-system resource type. An outbound dependency shared by several
 Capabilities is described by each Capability that depends on it.
 
 ### `interfaces/<interface-id>/experiences/<id>.md` or `<id>/experience.md`
@@ -577,7 +609,7 @@ Interface** — the one whose folder holds it. Experiences are optional: create
 them only when named contexts distinguish meaningful Product behavior inside an
 Interface.
 
-The same context on two Interfaces is two Experiences, not one shared element.
+The same context on two Interfaces is two Experiences, not one shared resource.
 They differ in screens, reach and affordances even when they pursue the same
 goal, and one file cannot describe both without hiding where they diverge.
 Give them the same file or folder name and they are counterparts by
@@ -743,7 +775,7 @@ address of its own?**
 
 Being kept inside the larger thing is not the test. That is storage, and storage
 is never the test here. Ask what can name it on its own — a file, a route, a
-scope a command accepts, an id another element cites. "The items ordered" has
+scope a command accepts, an id another resource cites. "The items ordered" has
 none of those and lives inside Order. Something with any of them is its own
 Entity, however much its information overlaps and however firmly the larger
 thing contains it.
@@ -832,8 +864,8 @@ It stays a warning because two genuinely different relationships between one pai
 are legal.
 
 A relation targets an Entity, never an Actor: an Actor is who acts, and ownership
-is a fact the Product keeps. It may target this same Entity — an Element relates
-to other Elements, a Task blocks another Task — and only a duplicate edge is
+is a fact the Product keeps. It may target this same Entity — a Comment replies
+to another Comment, a Task blocks another Task — and only a duplicate edge is
 invalid. A relation never satisfies the no-orphans rule below, because a cluster
 of Entities referencing each other while no behaviour touches any of them is
 still vocabulary nobody uses.
@@ -843,7 +875,7 @@ still vocabulary nobody uses.
 `{ from, to, by }`: both state names must be this Entity's own, and `by` names
 the Capability that causes the move — which must exist and must list this Entity
 in its `entities`. Relations and transitions are frontmatter rather than
-sections because they name other elements by id, and ids are parsed rather than
+sections because they name other resources by id, and ids are parsed rather than
 read out of English. `## Relations` and `## Transitions` are therefore invalid
 sections on an Entity, exactly as `## Steps` is invalid on a Scenario: the
 frontmatter list is the one authority and a section beside it is a second one
@@ -972,13 +1004,13 @@ revalidate it.
 any single behavior.** Anything true of exactly one Capability is that
 Capability's business — a `condition` Step or its Scenario Outcome — not a Rule.
 The boundary is checkable and `lint` enforces it: a Rule whose `appliesTo`
-resolves to exactly one behavioral element, with no `contexts` narrowing it, is a
+resolves to exactly one behavioral resource, with no `contexts` narrowing it, is a
 `lint` warning naming the Capability that should own it instead. A Rule with a
 `type: context` target is always valid, because a constraint on an interaction
 context belongs to no behavior.
 
 The lead paragraph is the rule statement. `appliesTo` is a required non-empty
-list of typed targets. An element target uses `type` = `capability`,
+list of typed targets. A resource target uses `type` = `capability`,
 `capability-scenario`, `journey`, or `journey-scenario`, requires `id`, and may
 use a non-empty `contexts` list to narrow that target. Without `contexts`, the
 Rule applies to all supported Contexts of the target. A direct Context target
@@ -991,7 +1023,7 @@ uses `type: context` plus one nested `context` object instead of `id`:
 ```
 
 Targets are additive: the Rule governs their union. A Context selector on an
-element target must match at least one Context supported by that target. A
+resource target must match at least one Context supported by that target. A
 selector naming an Interface or Experience matches descendant places; a Screen
 selector matches that Screen. Duplicate selectors and a parent selector paired
 with its redundant descendant are invalid. Do not target both a Capability and one of its
@@ -1064,7 +1096,7 @@ Capability or Journey Scenario ids. The H1, lead description,
 `## Information presented` bullet list, and `## Capability boundary` prose are
 required. `## Available actions` is optional but, when present, must contain a
 bullet list. `## View states` is optional; each state is an H3 name followed
-by non-empty prose. States remain embedded in the Screen report element.
+by non-empty prose. States remain embedded in the Screen report resource.
 
 Only product-significant states belong here: a state changes what the user
 understands, can do, or achieves. Empty, unavailable, unauthorized,
@@ -1273,7 +1305,7 @@ question paragraph, then at least two bullet branches. Each branch uses
 ASCII characters. Its branches stay within and converge on that Scenario's one
 observable outcome. A branch with a materially different outcome belongs in a
 separate Scenario of the same type. Decision points remain embedded rather than
-becoming standalone elements.
+becoming standalone resources.
 
 ### `journeys/<journey-id>/scenarios/<id>.md` or `<id>/journey-scenario.md`
 
@@ -1396,9 +1428,9 @@ Free prose rationale retained with the coverage assessment.
 
 The coverage frontmatter (`status`, `method`, `sourceAreas`, `unmapped`,
 `limitations`) and the prose rationale are authored from the inspection that
-created or expanded the model. Element totals in a Product Report belong to its
+created or expanded the model. Resource totals in a Product Report belong to its
 Summary, not Coverage. Coverage has no reference counts and is never inferred
-from `references`. The linter checks authored elements and relationships; it
+from `references`. The linter checks authored resources and relationships; it
 does not compile, publish, or semantically verify the model.
 
 Coverage accepts one H1 and its lead rationale only. It has no H2 sections;

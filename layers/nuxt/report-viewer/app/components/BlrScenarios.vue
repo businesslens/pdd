@@ -9,37 +9,37 @@
  * The chosen reading is split while its container supports two panes, then
  * becomes inline rather than squeezing the Scenario beside its sibling list.
  */
-import type { AnyElementView, ReportWorkspace, ScenarioView } from '../utils/reportWorkspace'
+import type { AnyResourceView, ReportWorkspace, ScenarioView } from '../utils/reportWorkspace'
 import { ENTITY_KIND_META } from '../utils/reportWorkspace'
 import { childrenOf } from '../utils/pageSections'
 
 const props = defineProps<{
   workspace: ReportWorkspace
-  element: AnyElementView
+  resource: AnyResourceView
   /** A Scenario reached by URL or ⌘K: open on it rather than on the first. */
   selectedKey?: string | null
 }>()
 
-const emit = defineEmits<{ open: [element: AnyElementView] }>()
+const emit = defineEmits<{ open: [resource: AnyResourceView] }>()
 
 const scenarioRoute = defineModel<string | null>('scenarioRoute', { default: null })
 const routeColumns = defineModel<string>('routeColumns', { default: 'auto' })
 
-const children = computed<ScenarioView[]>(() => childrenOf(props.workspace, props.element) as ScenarioView[])
-const meta = computed(() => ENTITY_KIND_META[props.element.kind])
+const children = computed<ScenarioView[]>(() => childrenOf(props.workspace, props.resource) as ScenarioView[])
+const meta = computed(() => ENTITY_KIND_META[props.resource.kind])
 
 /* Below the width needed by two panes, render the list as inline disclosures. */
 const scenarioShellEl = ref<HTMLElement | null>(null)
 const scenarioShellWidth = ref(0)
 
-watch(scenarioShellEl, (element, _previous, onCleanup) => {
-  if (!element || typeof ResizeObserver === 'undefined') return
-  const measure = () => { scenarioShellWidth.value = element.getBoundingClientRect().width }
+watch(scenarioShellEl, (resource, _previous, onCleanup) => {
+  if (!resource || typeof ResizeObserver === 'undefined') return
+  const measure = () => { scenarioShellWidth.value = resource.getBoundingClientRect().width }
   const observer = new ResizeObserver(([entry]) => {
     if (entry) scenarioShellWidth.value = entry.contentRect.width
   })
   measure()
-  observer.observe(element)
+  observer.observe(resource)
   onCleanup(() => observer.disconnect())
 }, { immediate: true })
 
@@ -96,11 +96,11 @@ const summary = (item: ScenarioView) => item.trigger || item.lead
         <span class="blr-meta shrink-0">{{ item.steps.length }} steps</span>
       </button>
       <div v-if="item.key === openKey" class="border-t border-muted bg-elevated/20 px-5 py-5">
-        <BlrElementBody
+        <BlrResourceBody
           v-model:scenario-route="scenarioRoute"
           v-model:route-columns="routeColumns"
           :workspace="workspace"
-          :element="item"
+          :resource="item"
           @select="emit('open', $event)"
         />
       </div>
@@ -133,12 +133,12 @@ const summary = (item: ScenarioView) => item.trigger || item.lead
         </button>
       </div>
       <div class="min-w-0 p-5">
-        <BlrElementBody
+        <BlrResourceBody
           v-if="openScenario"
           v-model:scenario-route="scenarioRoute"
           v-model:route-columns="routeColumns"
           :workspace="workspace"
-          :element="openScenario"
+          :resource="openScenario"
           @select="emit('open', $event)"
         />
       </div>

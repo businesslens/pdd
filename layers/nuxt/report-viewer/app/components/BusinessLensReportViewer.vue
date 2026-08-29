@@ -17,17 +17,17 @@ const props = defineProps<{
 }>()
 
 /**
- * The open section: `overview`, `topology`, or an element kind such as
+ * The open section: `overview`, `topology`, or a resource kind such as
  * `capability`. Bindable so a host can keep it in the URL.
  */
 const section = defineModel<string>('section', { default: 'overview' })
 
 /**
- * The element whose page is open, by stable key, or `null` for the section's own
+ * The resource whose page is open, by stable key, or `null` for the section's own
  * surface. Bindable for the same reason: a host that keeps both in the URL gets
  * deep links, a working back button, and a refresh that lands where it left.
  */
-const element = defineModel<string | null>('element', { default: null })
+const resource = defineModel<string | null>('resource', { default: null })
 
 /** First route in the visible Scenario route window. */
 const scenarioRoute = defineModel<string | null>('scenarioRoute', { default: null })
@@ -42,7 +42,7 @@ const workspace = computed(() => projectReportWorkspace(props.report))
   <article data-businesslens-report-viewer class="businesslens-report">
     <BlrReportShell
       v-model:section="section"
-      v-model:element="element"
+      v-model:resource="resource"
       v-model:scenario-route="scenarioRoute"
       v-model:route-columns="routeColumns"
       :workspace="workspace"

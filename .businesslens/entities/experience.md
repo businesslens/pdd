@@ -19,8 +19,9 @@ references:
 
 # Experience
 
-A coherent context of use inside exactly one Interface, with its own audience and
-access boundary. Whether an Interface has any is derived, never judged.
+What an author adds once one Interface has stopped being one thing — a second
+audience, a different way in, a set of Capabilities the first audience never
+sees.
 
 ## Information kept
 

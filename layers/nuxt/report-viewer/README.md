@@ -2,10 +2,10 @@
 
 The stable Product Report v10 renderer used by `businesslens view` and exported
 from the `businesslens` package. It projects the complete portable report into
-an element-first experience: a flat rail of element kinds, a collection surface
-per kind, a page for every element, search, and named topology views.
+a resource-first experience: a flat rail of resource types, a collection surface
+per type, a page for every resource, search, and named topology views.
 
-A collection row, relation, search result, or topology element opens the element
+A collection row, relation, search result, or topology resource opens the resource
 page directly. The page is the one reading container: it has a URL, a
 breadcrumb, the authored body at full width, and browser back navigation.
 Overview contains identity facts, authored detail, Contexts, relations,
@@ -14,7 +14,7 @@ as their only second tab; a Scenario URL opens that parent page with the
 Scenario selected. Neighbourhood opens the named Topology surface.
 
 Authored Capability Context has one dedicated Overview reading instead of being
-repeated as an element fact. Derived Journey and Scenario Contexts stay with
+repeated as a resource fact. Derived Journey and Scenario Contexts stay with
 their concrete routes, Screen placement stays in identity, contextual Rule
 selectors stay with applicability, and a Journey shows only its typed starting
 places. Raw entry-point routes remain report data but are omitted from the
@@ -54,13 +54,13 @@ where it left:
 ```vue
 <BusinessLensReportViewer
   v-model:section="section"
-  v-model:element="element"
+  v-model:resource="resource"
   :report="report"
 />
 ```
 
-`section` is `overview`, `topology`, or an element kind such as
-`capability`. `element` is the stable key of the open element page
+`section` is `overview`, `topology`, or a resource type such as
+`capability`. `resource` is the stable key of the open resource page
 (`screen:reader-web::…`), or `null` for the section's collection. A Scenario
 key keeps the parent collection as the section while selecting that Scenario
 inside its parent page.

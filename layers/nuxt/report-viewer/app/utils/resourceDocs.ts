@@ -1,10 +1,10 @@
-import type { ReportElementKind } from './reportWorkspace'
+import type { ReportResourceKind } from './reportWorkspace'
 import { ENTITY_KIND_META } from './reportWorkspace'
 
-/* Documentation explains an element kind, never one report instance. Scenario
+/* Documentation explains a resource kind, never one report instance. Scenario
    containment follows the authored docs: Capability Scenarios live with
    Capabilities, and Journey Scenarios with Journeys. */
-const DOCS_SLUG: Record<ReportElementKind, string> = {
+const DOCS_SLUG: Record<ReportResourceKind, string> = {
   product: 'product',
   actor: 'actors',
   interface: 'interfaces',
@@ -19,12 +19,12 @@ const DOCS_SLUG: Record<ReportElementKind, string> = {
   rule: 'business-rules'
 }
 
-const DOCUMENTED_AS: Partial<Record<ReportElementKind, ReportElementKind>> = {
+const DOCUMENTED_AS: Partial<Record<ReportResourceKind, ReportResourceKind>> = {
   'capability-scenario': 'capability',
   'journey-scenario': 'journey'
 }
 
-export function docsForElementKind(kind: ReportElementKind) {
+export function docsForResourceKind(kind: ReportResourceKind) {
   const documentedKind = DOCUMENTED_AS[kind] ?? kind
   return {
     url: `https://businesslens.io/docs/${DOCS_SLUG[kind]}`,

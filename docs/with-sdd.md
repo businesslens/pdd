@@ -17,12 +17,12 @@ decomposition.
 
 ```text
 businesslens-ideate       → approved product delta
-OpenSpec / spec-kit       → technical proposal citing affected element IDs
+OpenSpec / spec-kit       → technical proposal citing affected resource IDs
 builder                   → implementation
 businesslens-verify       → semantic resolution and final structural lint
 ```
 
-Model elements may attach technical documents without copying them:
+Model resources may attach technical documents without copying them:
 
 ```yaml
 references:

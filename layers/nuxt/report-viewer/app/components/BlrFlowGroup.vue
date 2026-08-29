@@ -77,8 +77,8 @@ const colorVar = computed(() => `var(--blr-slot-${props.data.colorSlot ?? meta.v
   display: flex;
   align-items: center;
   justify-content: center;
-  width: calc(var(--blr-element-mark-regular) + 0.375rem);
-  height: calc(var(--blr-element-mark-regular) + 0.375rem);
+  width: calc(var(--blr-resource-mark-regular) + 0.375rem);
+  height: calc(var(--blr-resource-mark-regular) + 0.375rem);
   flex-shrink: 0;
   border-radius: 7px;
   background: color-mix(in srgb, var(--group-color) 18%, transparent);
@@ -86,9 +86,9 @@ const colorVar = computed(() => `var(--blr-slot-${props.data.colorSlot ?? meta.v
 }
 
 .blr-flow-group__kind {
-  width: var(--blr-element-mark-regular);
-  height: var(--blr-element-mark-regular);
-  flex: 0 0 var(--blr-element-mark-regular);
+  width: var(--blr-resource-mark-regular);
+  height: var(--blr-resource-mark-regular);
+  flex: 0 0 var(--blr-resource-mark-regular);
 }
 
 .blr-flow-group__text {

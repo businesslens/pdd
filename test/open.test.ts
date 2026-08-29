@@ -168,9 +168,9 @@ describe('open report', () => {
         report.model.capabilities,
         report.model.businessRules
       ]) {
-        for (const element of collection) {
-          if ('availability' in element) {
-            element.availability = element.availability.map(context => ({
+        for (const resource of collection) {
+          if ('availability' in resource) {
+            resource.availability = resource.availability.map(context => ({
               placeId: context.placeId.split('::')[0]!
             }))
           }
@@ -298,7 +298,7 @@ describe('open report', () => {
     vi.restoreAllMocks()
   })
 
-  it('rejects report fields that cannot be written as canonical element Markdown', async () => {
+  it('rejects report fields that cannot be written as canonical resource Markdown', async () => {
     const rejectedTarget = mkdtempSync(join(tmpdir(), 'bl-open-invalid-markdown-'))
     const original = buildProject(source)
     const report = structuredClone(original.report)

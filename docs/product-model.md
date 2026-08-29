@@ -39,11 +39,11 @@ they contain nothing. Actors and Business Rules attach across everything.
 
 ## What belongs in a model
 
-The elements describe Product meaning rather than mirroring source files,
+The resources describe Product meaning rather than mirroring source files,
 frameworks, commands, or endpoints. Start with the required foundation, then
-add optional elements only when they communicate a real Product distinction.
+add optional resources only when they communicate a real Product distinction.
 
-| Element | Model requirement | What it adds |
+| Resource type | Model requirement | What it adds |
 | --- | --- | --- |
 | [Product](./product.md) | Exactly one | The coherent value promise and its boundary |
 | [Actor](./actors.md) | At least one, because every Interface names an Actor | A Product-significant goal, privilege, trigger, or outcome |
@@ -56,11 +56,11 @@ add optional elements only when they communicate a real Product distinction.
 | [Journey](./journeys.md) | Optional | One coherent Actor Goal that deliberately composes multiple Capabilities |
 | [Business Rule](./business-rules.md) | Optional | A durable assertion that must remain true |
 
-Do not add an Experience, Domain, Screen, or any other element to make the model
+Do not add an Experience, Domain, Screen, or any other resource type to make the model
 look complete. A small model can be both valid and honest.
 
 Screens are deliberately visual. A CLI or supported API does not need parallel
-Command or Endpoint elements: syntax belongs in CLI help, and endpoints and
+Command or Endpoint resource types: syntax belongs in CLI help, and endpoints and
 payloads belong in an API contract such as OpenAPI. Attach those artifacts as
 [References](./references.md) when they help explain intent or implementation.
 
@@ -103,9 +103,9 @@ For the same question about an ERD, see [Entities](./entities.md#is-this-an-erd)
 
 ## Authoring conventions
 
-An element without assets or children is the compact file `<id>.md`. When it
+A resource without assets or children is the compact file `<id>.md`. When it
 gains its first asset or typed child collection, move it to
-`<id>/<type>.md`; the folder becomes that element's namespace. The two forms
+`<id>/<type>.md`; the folder becomes that resource's namespace. The two forms
 never coexist and derive the same id — `lint` reports both shapes at once, or a
 folder missing its `<type>.md`, as errors. A folder you have expanded but not
 filled yet is only a warning, so you can create it and add the child next. Behavior-hierarchy ids are the bare file
@@ -113,7 +113,7 @@ or folder name; qualified Interface, Experience, and Screen ids carry their path
 joined by `::`, because Experience and Screen names may repeat across Interfaces.
 Only `product.md` declares `id:`. Scenario IDs are globally unique.
 
-The first and only H1 supplies an element's title. Lead prose normally supplies its
+The first and only H1 supplies a resource's title. Lead prose normally supplies its
 description. Journeys have no lead prose and instead require `## Goal` and
 `## Success criterion`; both Scenario types also have no lead prose and begin
 with the required `## Trigger` section. A recognized H2 may appear only once,
@@ -127,9 +127,9 @@ Steps, Edge cases, Screen information, and Screen actions use one complete list
 item per physical line. The frontmatter schema is a strict allowlist, so `lint`
 reports unknown keys rather than silently ignoring them.
 
-`## Intent` prose explains why a Product or element exists and which outcome it
+`## Intent` prose explains why a resource exists and which outcome it
 protects. It is optional where documented. A Journey uses required `## Goal`
-prose for its Actor intent. Neither becomes another element or relationship
+prose for its Actor intent. Neither becomes another resource type or relationship
 graph.
 
 ## Availability
@@ -141,7 +141,7 @@ Its current strict shape contains one place:
 place: customer-web::shopping
 ```
 
-There is no separate Product `Scope` or `Place` element. `place` is a property
+There is no separate Product `Scope` or `Place` resource. `place` is a property
 of Context, and its value names an Interface, Experience, or Screen by
 qualified id:
 `Interface`, `Interface::Experience`, or
@@ -206,11 +206,11 @@ Journey Scenario Steps. Capabilities found only in not-achieved paths are
 marked separately as failure-only. These describe modeled coverage, not one
 mandatory path or proof that partial mapping is exhaustive.
 
-## Which behavioral element?
+## Which behavioral resource type?
 
 These are not alternative ways to describe the same contract:
 
-| Element | Identity | It must contain | It must never contain |
+| Resource type | Identity | It must contain | It must never contain |
 | --- | --- | --- | --- |
 | Capability | The smallest durable behavior that remains independently meaningful | Product behavior and supported Contexts | Unrelated operations grouped only by a vague umbrella verb |
 | Capability Scenario | One local variation of exactly one Capability | Trigger, context, Steps, and local Outcome | A Journey or multiple Capabilities |
@@ -222,7 +222,7 @@ is always a Journey. A complete variation of pursuing that goal is always a
 Journey Scenario. A file cannot switch between these meanings by adding an
 optional relation.
 
-### Which structural element?
+### Which structural resource type?
 
 The boundaries below are decided by rule, not by taste, and `lint` applies each
 one. Where a rule can be computed, an author never has to argue it.
@@ -230,7 +230,7 @@ one. Where a rule can be computed, an author never has to argue it.
 | Question | Rule that decides it |
 | --- | --- |
 | Interface, or Experience of one? | An Interface holds Experiences exactly when it serves more than one `access` value, or two Actor sets whose Capability coverage is disjoint. Otherwise it is one coherent context and takes direct availability. |
-| Interface, or nothing? | Interfaces are **inbound**. Something the Product calls out to is a dependency of the Capability that calls it, and gets no element. |
+| Interface, or nothing? | Interfaces are **inbound**. Something the Product calls out to is a dependency of the Capability that calls it, and gets no resource type. |
 | Actor, or dependency? | Direction decides. An external system is an Actor only when it **initiates**. The same third party can be a dependency one way and an Actor the other. |
 | Screen, or Entity state? | A Screen's `## View states` are that **view's** states. A thing's own lifecycle, and what the Product keeps about it, belong to an [Entity](./entities.md). |
 | Entity, or nothing? | The naming test: a thing an Actor would call *"this one"*. Containers and parts are not Entities, and an Entity nothing references is an error. |
@@ -287,15 +287,15 @@ The mapped breadth and why known gaps remain.
 `method` describes how the model was created or expanded. `sourceAreas` records
 inspected repository areas, `unmapped` names intentionally absent Product
 breadth, `limitations` states what could not be established, and the lead prose
-is the rationale. Coverage accepts no H2 sections. Coverage has no element
+is the rationale. Coverage accepts no H2 sections. Coverage has no resource type
 counts or Reference-derived fields;
-element totals belong to the Product Report Counts.
+resource totals belong to the Product Report Counts.
 
 Availability and Coverage do not claim implementation status. Every status may
 describe planned, implemented, or mixed behavior, and a complete model may have
 no References. `businesslens-verify` checks semantic alignment.
 
-Element files, config, taxonomy, coverage, and orientation are committed.
+Resource files, config, taxonomy, coverage, and orientation are committed.
 The model's `.gitignore` ignores `build/` and `cache/`, which are generated and
 never committed. See [References](./references.md) for optional external
 artifacts.

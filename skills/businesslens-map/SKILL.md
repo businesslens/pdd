@@ -49,8 +49,8 @@ Read before authoring:
 6. Draft Actors, Interfaces, optional Experiences, Product Screens, Domains and
    Entities, Capabilities, Capability Scenarios, Business Rules, optional
    Journeys and their Journey Scenarios, availability Contexts, and coverage.
-   Name behavioral elements verb-noun (`browse-catalog`, never
-   `catalog-browsing`) and cross-cutting elements with the bare noun. Create an
+   Name behavioral resources verb-noun (`browse-catalog`, never
+   `catalog-browsing`) and cross-cutting resources with the bare noun. Create an
    Entity for a thing an Actor would point at and call *"this one"* and the
    Product can tell apart from another — identity, not storage, and not a state
    count. **For a family of candidates that share a word, write the
@@ -83,18 +83,18 @@ Read before authoring:
    route, component, viewport, or visual variant into one. Preserve valid
    existing meaning in a scoped expansion. **Attach what you actually read.**
    `references` is optional in the format, and leaving it empty is the most
-   common way a mapped model becomes unreviewable: attach to each element the
+   common way a mapped model becomes unreviewable: attach to each resource the
    artifacts that established its meaning — the implementation you traced
    (`kind: code`, `role: implementation`), the spec, PRD or proposal stating
    intended behavior (`role: intent`), and the document you took supporting
    context from (`role: context`). A Reference says where a claim came from; it
-   never says the claim is verified and never replaces the element's own prose.
-   An element you can attach nothing to is a claim resting on inspection alone —
+   never says the claim is verified and never replaces the resource's own prose.
+   A resource you can attach nothing to is a claim resting on inspection alone —
    say so in the delta rather than leaving it unexplained.
 7. **Put what the repository cannot settle to the author, in rounds, before
    writing anything.** Inspection establishes what the code does. It cannot
    establish what the Product *means*, and two defensible readings routinely
-   give materially different models — a different element count, a different id
+   give materially different models — a different resource count, a different id
    for one thing, information present in one and gone in the other. Those calls
    belong to the author, and they are cheapest before a file exists.
 
@@ -137,11 +137,11 @@ Read before authoring:
 
    Those defaults key on the call being close, so a rule that appears to settle
    one takes it out of their reach. **Size restores it**: where the two answers
-   differ by more than a couple of elements, the call is open however settled it
+   differ by more than a couple of resources, the call is open however settled it
    feels, and the model records it as open. A rule confident enough to decide a
    third of the model on its own is being trusted further than any rule earns.
 8. Present the proposed model delta before writing. Include added, changed, and
-   removed elements; mapped and unmapped areas; limitations; and any material
+   removed resources; mapped and unmapped areas; limitations; and any material
    uncertainty. Get explicit approval for product meaning. Do not silently
    replace a mature model.
 
@@ -169,14 +169,14 @@ Read before authoring:
 
    Fix every error and assess every warning. A green lint result proves
    structure only, not semantic alignment.
-11. Report the approved files written, element counts, inspected areas, unmapped
+11. Report the approved files written, resource counts, inspected areas, unmapped
     areas, limitations, useful References added, and lint result. Recommend
     `businesslens-verify` for a semantic current-state audit.
 
 ## Guardrails
 
 - Describe established behavior, never desired behavior.
-- Write no placeholder elements and claim no certainty beyond inspected source.
+- Write no placeholder resources and claim no certainty beyond inspected source.
 - Never write outside `.businesslens/`; leave target `AGENTS.md`, `CLAUDE.md`,
   and root README byte-identical.
 - Never stage, commit, submit, or contribute the model.

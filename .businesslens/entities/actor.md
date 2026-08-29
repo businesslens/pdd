@@ -15,8 +15,9 @@ references:
 
 # Actor
 
-Someone or something with a Product-significant goal, trigger, responsibility or
-privilege. Who the Product is for, and who reaches it.
+Where authoring a model starts, because no Interface can be written until one
+of these exists. It answers the question a reader brings first: who is this
+for.
 
 ## Information kept
 

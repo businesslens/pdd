@@ -1,15 +1,15 @@
 /** Graph builders for the question-led Product Topology views. */
 import { Position } from '@vue-flow/core'
 import type { ReportEntityRelation } from 'businesslens/report'
-import type { AnyElementView, ReportElementKind, ReportWorkspace } from './reportWorkspace'
-import { ENTITY_KIND_META, elementKey, everyKind } from './reportWorkspace'
+import type { AnyResourceView, ReportResourceKind, ReportWorkspace } from './reportWorkspace'
+import { ENTITY_KIND_META, resourceKey, everyKind } from './reportWorkspace'
 import type { BlrFlowEdge, BlrFlowNode, FlowGraphShape, FlowNodeData, FlowRelation } from './flowGraph'
 import {
   FLOW_NODE_HEIGHT,
   FLOW_NODE_WIDTH,
   buildSitemapTree,
   directRelations,
-  elementNode,
+  resourceNode,
   layoutFlow,
   relationEdge
 } from './flowGraph'
@@ -29,20 +29,20 @@ export interface ProductTopologyGraphOptions {
   journeyId?: string | null
 }
 
-function uniqueElements(elements: AnyElementView[]): AnyElementView[] {
-  return [...new Map(elements.map(element => [element.key, element])).values()]
+function uniqueResources(resources: AnyResourceView[]): AnyResourceView[] {
+  return [...new Map(resources.map(resource => [resource.key, resource])).values()]
 }
 
 function graphFrom(
-  elements: AnyElementView[],
+  resources: AnyResourceView[],
   relations: FlowRelation[],
   options: ProductTopologyGraphOptions = {}
 ): FlowGraphShape {
-  const unique = uniqueElements(elements)
-  const present = new Set(unique.map(element => element.key))
-  const nodes = unique.map(element => elementNode(element, {
-    selected: options.selectedId === element.key,
-    count: element.kind === 'journey' ? element.scenarioIds.length : null
+  const unique = uniqueResources(resources)
+  const present = new Set(unique.map(resource => resource.key))
+  const nodes = unique.map(resource => resourceNode(resource, {
+    selected: options.selectedId === resource.key,
+    count: resource.kind === 'journey' ? resource.scenarioIds.length : null
   }))
   const edges = new Map<string, BlrFlowEdge>()
   for (const relation of relations) {
@@ -62,7 +62,7 @@ function graphFrom(
  */
 function latentGraph(shape: FlowGraphShape, highlightId: string | null | undefined): FlowGraphShape {
   const matching = new Set(shape.nodes
-    .filter(node => node.data?.elementKey === highlightId)
+    .filter(node => node.data?.resourceKey === highlightId)
     .map(node => node.id))
   const highlighted = Boolean(highlightId && matching.size)
   const hood = new Set<string>()
@@ -119,7 +119,7 @@ export function buildProductMap(
 
   workspace.actors.forEach((actor, index) => {
     nodes.push({
-      ...elementNode(actor, { selected: options.selectedId === actor.key }),
+      ...resourceNode(actor, { selected: options.selectedId === actor.key }),
       position: { x: 0, y: index * (FLOW_NODE_HEIGHT + 18) }
     })
   })
@@ -127,12 +127,12 @@ export function buildProductMap(
   const interfaceX = FLOW_NODE_WIDTH + MAP_ACCESS_GAP
   workspace.interfaces.forEach((productInterface, index) => {
     nodes.push({
-      ...elementNode(productInterface, { selected: options.selectedId === productInterface.key }),
+      ...resourceNode(productInterface, { selected: options.selectedId === productInterface.key }),
       position: { x: interfaceX, y: index * (FLOW_NODE_HEIGHT + 18) }
     })
     for (const actorId of productInterface.actorIds) {
       edges.push(relationEdge({
-        source: elementKey('actor', actorId),
+        source: resourceKey('actor', actorId),
         target: productInterface.key,
         label: 'enters'
       }))
@@ -145,8 +145,8 @@ export function buildProductMap(
         || left.title.localeCompare(right.title))
       .map(domain => ({
         nodeId: domain.key,
-        elementKey: domain.key,
-        elementId: domain.id,
+        resourceKey: domain.key,
+        resourceId: domain.id,
         title: domain.title,
         colorSlot: domain.colorSlot ?? null,
         capabilities: workspace.capabilitiesByDomain.get(domain.id) ?? []
@@ -154,8 +154,8 @@ export function buildProductMap(
     ...(workspace.capabilitiesByDomain.get('')?.length
       ? [{
           nodeId: 'blr-domain-none',
-          elementKey: '',
-          elementId: '',
+          resourceKey: '',
+          resourceId: '',
           title: 'No Domain',
           colorSlot: null,
           capabilities: workspace.capabilitiesByDomain.get('') ?? []
@@ -182,21 +182,21 @@ export function buildProductMap(
       focusable: false,
       style: { width: `${width}px`, height: `${height}px` },
       data: {
-        elementKey: bucket.elementKey,
-        elementId: bucket.elementId,
+        resourceKey: bucket.resourceKey,
+        resourceId: bucket.resourceId,
         kind: 'domain',
         title: bucket.title,
         sublabel: `${bucket.capabilities.length} ${bucket.capabilities.length === 1 ? 'Capability' : 'Capabilities'}`,
         colorSlot: bucket.colorSlot,
         dimmed: false,
-        selected: options.selectedId === bucket.elementKey,
+        selected: options.selectedId === bucket.resourceKey,
         emptyNote: bucket.capabilities.length ? '' : 'No Capabilities are assigned to this Domain.'
       }
     })
 
     bucket.capabilities.forEach((capability, index) => {
       nodes.push({
-        ...elementNode(capability, {
+        ...resourceNode(capability, {
           selected: options.selectedId === capability.key,
           colorSlot: bucket.colorSlot
         }),
@@ -209,7 +209,7 @@ export function buildProductMap(
       })
       for (const context of capability.contexts) {
         edges.push(relationEdge({
-          source: elementKey('interface', context.interfaceId),
+          source: resourceKey('interface', context.interfaceId),
           target: capability.key,
           label: ''
         }))
@@ -229,16 +229,16 @@ export function buildValuePaths(
   const journey = workspace.journeys.find(item => item.id === options.journeyId) ?? workspace.journeys[0]
   if (!journey) return { nodes: [], edges: [] }
   const scenarios = workspace.scenariosByJourney.get(journey.id) ?? []
-  const nodes: BlrFlowNode[] = [elementNode(journey, {
+  const nodes: BlrFlowNode[] = [resourceNode(journey, {
     focus: true,
     selected: options.selectedId === journey.key,
     count: scenarios.length
   })]
   const edges: BlrFlowEdge[] = []
-  const screens = new Map<string, AnyElementView>()
+  const screens = new Map<string, AnyResourceView>()
 
   for (const scenario of scenarios) {
-    nodes.push(elementNode(scenario, { selected: options.selectedId === scenario.key }))
+    nodes.push(resourceNode(scenario, { selected: options.selectedId === scenario.key }))
     edges.push(relationEdge({ source: journey.key, target: scenario.key, label: 'varies as' }))
     let previous = scenario.key
     const stepAnchors: Array<{ nodeId: string, capabilityId: string, screenIds: string[] }> = []
@@ -248,7 +248,7 @@ export function buildValuePaths(
       const capability = workspace.capabilities.find(item => item.id === step.capabilityId)
       if (!capability) return
       const occurrenceId = `${scenario.key}:step:${index}:${capability.key}`
-      const node = elementNode(capability, {
+      const node = resourceNode(capability, {
         selected: options.selectedId === capability.key
       })
       const data = node.data as FlowNodeData
@@ -285,7 +285,7 @@ export function buildValuePaths(
     }
   }
 
-  nodes.push(...[...screens.values()].map(screen => elementNode(screen, {
+  nodes.push(...[...screens.values()].map(screen => resourceNode(screen, {
     selected: options.selectedId === screen.key
   })))
   /*
@@ -312,7 +312,7 @@ export function buildDeliveryByInterface(
     .filter(capability => capability.contexts.some(context =>
       directInterfaceIds.has(context.interfaceId) && !context.experienceId))
     .map(capability => capability.id))
-  const elements: AnyElementView[] = [
+  const resources: AnyResourceView[] = [
     ...workspace.actors,
     ...workspace.interfaces,
     ...workspace.experiences,
@@ -323,14 +323,14 @@ export function buildDeliveryByInterface(
 
   for (const productInterface of workspace.interfaces) {
     productInterface.actorIds.forEach(actorId => relations.push({
-      source: elementKey('actor', actorId),
+      source: resourceKey('actor', actorId),
       target: productInterface.key,
       label: 'enters'
     }))
   }
   for (const experience of workspace.experiences) {
     experience.interfaceIds.forEach(interfaceId => relations.push({
-      source: elementKey('interface', interfaceId),
+      source: resourceKey('interface', interfaceId),
       target: experience.key,
       label: 'opens'
     }))
@@ -339,8 +339,8 @@ export function buildDeliveryByInterface(
     for (const context of screen.contexts) {
       relations.push({
         source: context.experienceId
-          ? elementKey('experience', context.experienceId)
-          : elementKey('interface', context.interfaceId),
+          ? resourceKey('experience', context.experienceId)
+          : resourceKey('interface', context.interfaceId),
         target: screen.key,
         label: context.experienceId ? 'contains' : 'offers directly'
       })
@@ -349,19 +349,19 @@ export function buildDeliveryByInterface(
   for (const capability of workspace.capabilities.filter(item => directCapabilityIds.has(item.id))) {
     for (const context of capability.contexts.filter(item => directInterfaceIds.has(item.interfaceId))) {
       relations.push({
-        source: elementKey('interface', context.interfaceId),
+        source: resourceKey('interface', context.interfaceId),
         target: capability.key,
         label: 'delivers directly'
       })
     }
   }
 
-  return layoutFlow(graphFrom(elements, relations, options), { ranksep: 112, nodesep: 32 })
+  return layoutFlow(graphFrom(resources, relations, options), { ranksep: 112, nodesep: 32 })
 }
 
 /**
  * Rule reach draws only authored attachments — never derived reach — so an
- * edge here always means "this Rule names that element". The two Scenario
+ * edge here always means "this Rule names that resource". The two Scenario
  * collections keep separate ranks because a Rule constrains local acceptance
  * and end-to-end variation for different reasons.
  */
@@ -388,7 +388,7 @@ export function buildWhatItKeeps(
   /* Domain is an axis, not a container: it tints the box instead of framing it,
      because an ERD's shape is its relation web and a frame would fight it. */
   const domainColor = new Map(workspace.domains.map(domain => [domain.id, domain.colorSlot ?? null]))
-  const nodes: BlrFlowNode[] = workspace.entities.map(entity => elementNode(entity, {
+  const nodes: BlrFlowNode[] = workspace.entities.map(entity => resourceNode(entity, {
     selected: options.selectedId === entity.key,
     colorSlot: entity.domainId ? domainColor.get(entity.domainId) ?? null : null
   }))
@@ -396,7 +396,7 @@ export function buildWhatItKeeps(
   const edges: BlrFlowEdge[] = []
   for (const entity of workspace.entities) {
     for (const relation of entity.relations) {
-      const target = elementKey('entity', relation.entityId)
+      const target = resourceKey('entity', relation.entityId)
       if (!present.has(target)) continue
       edges.push(relationEdge({
         source: entity.key,
@@ -416,14 +416,14 @@ export function buildRuleReach(
   const journeyIds = new Set(workspace.rules.flatMap(rule => rule.journeyIds))
   const capabilityScenarioIds = new Set(workspace.rules.flatMap(rule => rule.capabilityScenarioIds))
   const journeyScenarioIds = new Set(workspace.rules.flatMap(rule => rule.journeyScenarioIds))
-  const elements: AnyElementView[] = [
+  const resources: AnyResourceView[] = [
     ...workspace.rules,
-    ...workspace.capabilities.filter(element => capabilityIds.has(element.id)),
-    ...workspace.journeys.filter(element => journeyIds.has(element.id)),
-    ...workspace.capabilityScenarios.filter(element => capabilityScenarioIds.has(element.id)),
-    ...workspace.journeyScenarios.filter(element => journeyScenarioIds.has(element.id))
+    ...workspace.capabilities.filter(resource => capabilityIds.has(resource.id)),
+    ...workspace.journeys.filter(resource => journeyIds.has(resource.id)),
+    ...workspace.capabilityScenarios.filter(resource => capabilityScenarioIds.has(resource.id)),
+    ...workspace.journeyScenarios.filter(resource => journeyScenarioIds.has(resource.id))
   ]
-  const shape = graphFrom(elements, [], options)
+  const shape = graphFrom(resources, [], options)
   const present = new Set(shape.nodes.map(node => node.id))
   const edges: BlrFlowEdge[] = []
   const add = (source: string, target: string, minlen: number) => {
@@ -431,10 +431,10 @@ export function buildRuleReach(
     edges.push(relationEdge({ source, target, label: 'constrains' }, { minlen }))
   }
   for (const rule of workspace.rules) {
-    rule.capabilityIds.forEach(target => add(rule.key, elementKey('capability', target), 2))
-    rule.journeyIds.forEach(target => add(rule.key, elementKey('journey', target), 3))
-    rule.capabilityScenarioIds.forEach(target => add(rule.key, elementKey('capability-scenario', target), 4))
-    rule.journeyScenarioIds.forEach(target => add(rule.key, elementKey('journey-scenario', target), 4))
+    rule.capabilityIds.forEach(target => add(rule.key, resourceKey('capability', target), 2))
+    rule.journeyIds.forEach(target => add(rule.key, resourceKey('journey', target), 3))
+    rule.capabilityScenarioIds.forEach(target => add(rule.key, resourceKey('capability-scenario', target), 4))
+    rule.journeyScenarioIds.forEach(target => add(rule.key, resourceKey('journey-scenario', target), 4))
   }
   return latentGraph(layoutFlow({ nodes: shape.nodes, edges }, { ranksep: 98, nodesep: 22 }), options.highlightId)
 }
@@ -463,7 +463,7 @@ export function buildEverything(
   workspace: ReportWorkspace,
   options: ProductTopologyGraphOptions = {}
 ): FlowGraphShape {
-  const elements: AnyElementView[] = [
+  const resources: AnyResourceView[] = [
     ...workspace.actors,
     ...workspace.interfaces,
     ...workspace.experiences,
@@ -490,8 +490,8 @@ export function buildEverything(
     targetPosition: Position.Top,
     style: { width: `${FLOW_NODE_WIDTH}px`, height: `${FLOW_NODE_HEIGHT}px` },
     data: {
-      elementKey: '',
-      elementId: '',
+      resourceKey: '',
+      resourceId: '',
       kind: 'product',
       scenarioType: null,
       title: workspace.identity.title,
@@ -502,8 +502,8 @@ export function buildEverything(
       count: workspace.counts.interfaces
     }
   }
-  const nodes: BlrFlowNode[] = [productNode, ...elements.map(element => ({
-    ...elementNode(element, { selected: options.selectedId === element.key }),
+  const nodes: BlrFlowNode[] = [productNode, ...resources.map(resource => ({
+    ...resourceNode(resource, { selected: options.selectedId === resource.key }),
     sourcePosition: Position.Bottom,
     targetPosition: Position.Top
   }))]
@@ -515,7 +515,7 @@ export function buildEverything(
       target: target.key,
       label: 'offers'
     })),
-    ...elements.flatMap(element => directRelations(workspace, element))
+    ...resources.flatMap(resource => directRelations(workspace, resource))
   ]
   for (const relation of relations) {
     if (!present.has(relation.source) || !present.has(relation.target)) continue
@@ -524,7 +524,7 @@ export function buildEverything(
   }
   const edges = [...edgeMap.values()]
 
-  const byKind = new Map<ReportElementKind, string[]>()
+  const byKind = new Map<ReportResourceKind, string[]>()
   for (const node of nodes) {
     const kind = node.data!.kind
     byKind.set(kind, [...(byKind.get(kind) ?? []), node.id])
@@ -556,8 +556,8 @@ export function buildEverything(
       focusable: false,
       style: { width: '168px', height: '30px' },
       data: {
-        elementKey: '',
-        elementId: '',
+        resourceKey: '',
+        resourceId: '',
         kind,
         label: count === 1 ? ENTITY_KIND_META[kind].label : ENTITY_KIND_META[kind].plural,
         count

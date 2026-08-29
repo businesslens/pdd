@@ -15,8 +15,8 @@ references:
 
 # Product
 
-The one coherent value promise a Product Model describes. Exactly one per model,
-and the thing every other Element is ultimately about.
+The one file a model cannot omit, and the one a reader opens first. Everything
+else in the directory is an answer to something it claims.
 
 ## Information kept
 

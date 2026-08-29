@@ -6,7 +6,7 @@
 - Prefer the smallest product-complete change over a speculative epic.
 - In a verification handoff, solve the exact gap; do not broaden the product.
 
-## Elements
+## Resources
 
 - Actors differ by Product goals, triggers, responsibilities, or privileges;
   classify each as person/system and internal/external.

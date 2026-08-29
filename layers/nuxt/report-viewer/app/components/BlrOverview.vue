@@ -8,8 +8,8 @@
  * body now; the metadata stays, one disclosure each, for the visits that want
  * it.
  */
-import type { AnyElementView, ReportWorkspace } from '../utils/reportWorkspace'
-import { resolveElementKey } from '../utils/reportWorkspace'
+import type { AnyResourceView, ReportWorkspace } from '../utils/reportWorkspace'
+import { resolveResourceKey } from '../utils/reportWorkspace'
 import { firstSentence } from '../utils/reportMarkdown'
 
 const props = defineProps<{
@@ -18,7 +18,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  select: [element: AnyElementView]
+  select: [resource: AnyResourceView]
   selectKey: [key: string]
 }>()
 
@@ -28,7 +28,7 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
   draft: 'neutral'
 }
 
-/** The one-line shape of the model, in the order the elements depend on. */
+/** The one-line shape of the model, in the order the resources depend on. */
 const countFacts = computed(() => [
   { label: 'Journeys', value: props.workspace.counts.journeys },
   { label: 'Journey Scenarios', value: props.workspace.counts.journeyScenarios },
@@ -80,7 +80,7 @@ const sections = reactive({ about: false, coverage: false, counts: false, refere
   Capabilities — showing an empty section instead would report the absence of a
   section rather than the shape of the model.
 */
-const overviewElements = computed<AnyElementView[]>(() => props.workspace.journeys.length
+const overviewResources = computed<AnyResourceView[]>(() => props.workspace.journeys.length
   ? props.workspace.journeys
   : props.workspace.capabilities)
 
@@ -90,8 +90,8 @@ const overviewHeading = computed(() => props.workspace.journeys.length
 
 function referenceActor(ownerKey?: string) {
   if (!ownerKey) return undefined
-  const element = resolveElementKey(props.workspace, ownerKey)
-  return element?.kind === 'actor' ? element : undefined
+  const resource = resolveResourceKey(props.workspace, ownerKey)
+  return resource?.kind === 'actor' ? resource : undefined
 }
 </script>
 
@@ -151,18 +151,18 @@ function referenceActor(ownerKey?: string) {
     with `Model counts` given a heading of its own while the Journeys
     — the whole reason the model exists — sat one rail click away.
   -->
-  <section v-if="overviewElements.length" class="space-y-3">
+  <section v-if="overviewResources.length" class="space-y-3">
     <header class="flex flex-wrap items-baseline gap-2">
       <h2 class="text-base font-semibold tracking-tight text-highlighted">{{ overviewHeading.title }}</h2>
-      <span class="blr-meta">{{ overviewElements.length }}</span>
+      <span class="blr-meta">{{ overviewResources.length }}</span>
       <span class="text-xs text-muted">{{ overviewHeading.note }}</span>
     </header>
     <div class="space-y-2">
-      <BlrElementCard
-        v-for="element in overviewElements"
-        :key="element.key"
+      <BlrResourceCard
+        v-for="resource in overviewResources"
+        :key="resource.key"
         :workspace="workspace"
-        :element="element"
+        :resource="resource"
         @open="emit('select', $event)"
       />
     </div>

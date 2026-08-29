@@ -9,7 +9,7 @@ steps:
     contexts:
       harness:
         place: agent-skills
-  - text: The AI agent proposes concrete wording for every element added, changed, or removed, with the acceptance each Capability and Journey would carry
+  - text: The AI agent proposes concrete wording for every resource added, changed, or removed, with the acceptance each Capability and Journey would carry
     kind: actor
     actor: ai-agent
     contexts:

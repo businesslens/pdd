@@ -8,20 +8,20 @@ steps:
     contexts:
       local:
         place: local-report-web::product-topology
-  - text: The Developer focuses one element, or hides a kind they are not asking about
+  - text: The Developer focuses one resource, or hides a kind they are not asking about
     kind: actor
     actor: developer
     contexts:
       local:
         place: local-report-web::product-topology
-  - text: The Product redraws only that element's neighbourhood, at the report's full width
+  - text: The Product redraws only that resource's neighbourhood, at the report's full width
     kind: product
     contexts:
       local:
         place: local-report-web::product-topology
 ---
 
-# Focus one element's neighbourhood
+# Focus one resource's neighbourhood
 
 ## Trigger
 
@@ -29,5 +29,5 @@ A named view is too dense to answer the reader's narrower question.
 
 ## Outcome
 
-The reader sees one element and what reaches it, without leaving the view or
+The reader sees one resource and what reaches it, without leaving the view or
 losing the question the view was answering.

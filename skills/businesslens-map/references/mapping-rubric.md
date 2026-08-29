@@ -9,7 +9,7 @@
 - Use documentation as a lead. Confirm current claims in implementation.
 - Never execute target code and never claim deployed or live state from source.
 
-## Choose stable elements
+## Choose stable resources
 
 - Actors differ by Product goals, triggers, responsibilities, or privileges;
   classify each as person/system and internal/external.
@@ -103,7 +103,7 @@ One shape defeats the list test: a candidate whose kept information is a
 **subset** of another's. An intersection always exists, so "a single list is true
 of both" is trivially satisfiable and proves nothing. Ask instead whether the
 smaller one has an address of its own — a file, a route, a scope a command
-accepts, an id another element cites. Being kept inside the larger thing is not
+accepts, an id another resource cites. Being kept inside the larger thing is not
 the test; that is storage, which is never the test. And read the
 closed-vocabulary exclusion against the thing you would name rather than the
 classification above it: a fixed list of kinds is a vocabulary, the things those
@@ -125,12 +125,12 @@ unused vocabulary and fails `lint`.
 
 ## Use References honestly
 
-Attach the artifacts that established each element's meaning: `role:
+Attach the artifacts that established each resource's meaning: `role:
 implementation` for the code you traced, `role: intent` for the spec, PRD or
 proposal that states the behavior, `role: context` for background you read. For
 code targets, prefer `path#symbol` over line ranges and use only tracked files.
 A Reference records where a claim came from, never that it is verified, and none
-is required for any Coverage status — but an element with nothing attached
+is required for any Coverage status — but a resource with nothing attached
 should be one you can justify from inspection alone.
 
 Visual or research References may guide inspection. Keep their role honest,

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * What one element touches.
+ * What one resource touches.
  *
  * The rows are grouped by the kind on the other end, because that is the
  * question a reader arrives with — "what Screens does this reach" — and not by
@@ -15,47 +15,47 @@
  */
 import type {
   ActorView,
-  AnyElementView,
+  AnyResourceView,
   CapabilityView,
   DomainView,
   ExperienceView,
   InterfaceView,
   JourneyView,
-  ReportElementKind,
+  ReportResourceKind,
   ReportWorkspace,
   RuleView,
   ScenarioView,
   ScreenView
 } from '../utils/reportWorkspace'
-import { ENTITY_KIND_META, resolveElement } from '../utils/reportWorkspace'
+import { ENTITY_KIND_META, resolveResource } from '../utils/reportWorkspace'
 
 const props = withDefaults(defineProps<{
   workspace: ReportWorkspace
-  element: AnyElementView
+  resource: AnyResourceView
   /** Cap the chips per row; the overflow becomes a count. 0 shows everything. */
   max?: number
   /** Cap the rows themselves, so a peek stays one screen whatever it is on. */
   maxRows?: number
 }>(), { max: 0, maxRows: 0 })
 
-const emit = defineEmits<{ select: [element: AnyElementView] }>()
+const emit = defineEmits<{ select: [resource: AnyResourceView] }>()
 
 interface RelationRow {
   label: string
-  kind: ReportElementKind
+  kind: ReportResourceKind
   ids: string[]
   derived: boolean
 }
 
-const row = (label: string, kind: ReportElementKind, ids: string[], derived: boolean): RelationRow =>
+const row = (label: string, kind: ReportResourceKind, ids: string[], derived: boolean): RelationRow =>
   ({ label, kind, ids, derived })
 
 const rows = computed<RelationRow[]>(() => {
-  const element = props.element
+  const resource = props.resource
   const all: RelationRow[] = []
-  switch (element.kind) {
+  switch (resource.kind) {
     case 'actor': {
-      const actor = element as ActorView
+      const actor = resource as ActorView
       all.push(
         row('Interfaces entered', 'interface', actor.interfaceIds, true),
         row('Experiences entered', 'experience', actor.experienceIds, true),
@@ -64,7 +64,7 @@ const rows = computed<RelationRow[]>(() => {
       break
     }
     case 'interface': {
-      const item = element as InterfaceView
+      const item = resource as InterfaceView
       all.push(
         row('Actors', 'actor', item.actorIds, false),
         row('Experiences within', 'experience', item.experienceIds, true),
@@ -75,7 +75,7 @@ const rows = computed<RelationRow[]>(() => {
       break
     }
     case 'experience': {
-      const item = element as ExperienceView
+      const item = resource as ExperienceView
       all.push(
         row('Actors', 'actor', item.actorIds, false),
         row('Interfaces', 'interface', item.interfaceIds, false),
@@ -86,7 +86,7 @@ const rows = computed<RelationRow[]>(() => {
       break
     }
     case 'screen': {
-      const screen = element as ScreenView
+      const screen = resource as ScreenView
       all.push(
         row('Presents', 'entity', screen.entityIds, false),
         row('Capabilities', 'capability', screen.capabilityIds, false),
@@ -98,7 +98,7 @@ const rows = computed<RelationRow[]>(() => {
       break
     }
     case 'entity': {
-      const entity = element as EntityView
+      const entity = resource as EntityView
       all.push(
         ...entity.relations.map(relation =>
           row(`${relation.verb} ${relation.cardinality === 'many' ? 'many' : 'one'}`, 'entity', [relation.entityId], false)),
@@ -113,7 +113,7 @@ const rows = computed<RelationRow[]>(() => {
       break
     }
     case 'domain': {
-      const domain = element as DomainView
+      const domain = resource as DomainView
       all.push(
         row('Capabilities', 'capability', domain.capabilityIds, true),
         row('Journeys reached', 'journey', domain.journeyIds, true),
@@ -123,7 +123,7 @@ const rows = computed<RelationRow[]>(() => {
       break
     }
     case 'capability': {
-      const capability = element as CapabilityView
+      const capability = resource as CapabilityView
       all.push(
         row('Changes', 'entity', capability.entityIds, false),
         row('Domain', 'domain', capability.domainId ? [capability.domainId] : [], false),
@@ -136,7 +136,7 @@ const rows = computed<RelationRow[]>(() => {
       break
     }
     case 'journey': {
-      const journey = element as JourneyView
+      const journey = resource as JourneyView
       all.push(
         row('Actors', 'actor', journey.actorIds, false),
         row('Primary Capabilities', 'capability', journey.capabilityIds, true),
@@ -150,7 +150,7 @@ const rows = computed<RelationRow[]>(() => {
     }
     case 'capability-scenario':
     case 'journey-scenario': {
-      const scenario = element as ScenarioView
+      const scenario = resource as ScenarioView
       all.push(
         row('Actors', 'actor', scenario.actorIds, false),
         // Derived from the Steps, exactly as the Actor set is.
@@ -164,7 +164,7 @@ const rows = computed<RelationRow[]>(() => {
       break
     }
     case 'rule': {
-      const rule = element as RuleView
+      const rule = resource as RuleView
       const reachedCapabilities = new Set([...rule.capabilityIds, ...rule.derivedCapabilityIds])
       const reachedJourneys = new Set([...rule.journeyIds, ...rule.derivedJourneyIds])
       const derivedScreens = props.workspace.screens
@@ -205,42 +205,42 @@ function overflow(item: RelationRow): number {
 }
 
 /*
-  Two counterparts reaching the same element produce two chips with one name.
+  Two counterparts reaching the same resource produce two chips with one name.
 
   "Source list, Source list" reads as a rendering bug rather than as the true
   statement that this Capability is exposed through both Interfaces. The Interface is
   the segment that distinguishes them, and it is added only where the ambiguity
   is actually present — every other chip stays short.
 */
-function title(kind: ReportElementKind, id: string, siblings: string[]): string {
-  const element = resolveElement(props.workspace, kind, id)
-  if (!element) return id
+function title(kind: ReportResourceKind, id: string, siblings: string[]): string {
+  const resource = resolveResource(props.workspace, kind, id)
+  if (!resource) return id
   const shared = siblings.filter((other) => {
     if (other === id) return false
-    return resolveElement(props.workspace, kind, other)?.title === element.title
+    return resolveResource(props.workspace, kind, other)?.title === resource.title
   })
-  if (!shared.length) return element.title
-  const [interfaceId] = element.id.split('::')
-  if (!interfaceId || interfaceId === element.id) return element.title
-  const owner = resolveElement(props.workspace, 'interface', interfaceId)?.title ?? interfaceId
-  return `${element.title} · ${owner.replace(/ application$/, '')}`
+  if (!shared.length) return resource.title
+  const [interfaceId] = resource.id.split('::')
+  if (!interfaceId || interfaceId === resource.id) return resource.title
+  const owner = resolveResource(props.workspace, 'interface', interfaceId)?.title ?? interfaceId
+  return `${resource.title} · ${owner.replace(/ application$/, '')}`
 }
 
-function pick(kind: ReportElementKind, id: string) {
-  const element = resolveElement(props.workspace, kind, id)
-  if (element) emit('select', element)
+function pick(kind: ReportResourceKind, id: string) {
+  const resource = resolveResource(props.workspace, kind, id)
+  if (resource) emit('select', resource)
 }
 
-function interfaceType(kind: ReportElementKind, id: string) {
+function interfaceType(kind: ReportResourceKind, id: string) {
   if (kind !== 'interface') return undefined
-  const element = resolveElement(props.workspace, 'interface', id)
-  return element?.kind === 'interface' ? element.interfaceType : undefined
+  const resource = resolveResource(props.workspace, 'interface', id)
+  return resource?.kind === 'interface' ? resource.interfaceType : undefined
 }
 
-function actorClassification(kind: ReportElementKind, id: string) {
+function actorClassification(kind: ReportResourceKind, id: string) {
   if (kind !== 'actor') return null
-  const element = resolveElement(props.workspace, 'actor', id)
-  return element?.kind === 'actor' ? element : null
+  const resource = resolveResource(props.workspace, 'actor', id)
+  return resource?.kind === 'actor' ? resource : null
 }
 </script>
 

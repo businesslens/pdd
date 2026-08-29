@@ -48,15 +48,15 @@ const actorColor = computed(() => slotColor(0, mounted.value && colorMode.value 
 
 <style scoped>
 /*
-  The shared element scale, not an Actor-specific one: nothing sits on top of
+  The shared resource scale, not an Actor-specific one: nothing sits on top of
   this glyph, so an Actor's mark occupies exactly the box every other kind's
   does and a collection gutter stays a single column of aligned icons.
 */
 .blr-actor-mark {
   display: inline-flex;
-  width: var(--blr-element-mark-regular);
-  height: var(--blr-element-mark-regular);
-  flex: 0 0 var(--blr-element-mark-regular);
+  width: var(--blr-resource-mark-regular);
+  height: var(--blr-resource-mark-regular);
+  flex: 0 0 var(--blr-resource-mark-regular);
   align-items: center;
   justify-content: center;
 }
@@ -67,8 +67,8 @@ const actorColor = computed(() => slotColor(0, mounted.value && colorMode.value 
 }
 
 .blr-actor-mark[data-size='xs'] {
-  width: var(--blr-element-mark-dense);
-  height: var(--blr-element-mark-dense);
-  flex-basis: var(--blr-element-mark-dense);
+  width: var(--blr-resource-mark-dense);
+  height: var(--blr-resource-mark-dense);
+  flex-basis: var(--blr-resource-mark-dense);
 }
 </style>

@@ -32,7 +32,7 @@ rather than assembled by the reader.
 
 - The selected view's name, its question, and the note explaining its derivation
 - The ordered flow of kinds the view reads through
-- Every element the view includes, labelled and shaped by kind
+- Every resource the view includes, labelled and shaped by kind
 - The relations the view draws, quiet until a node is hovered or selected in the views that say so
 - Which kinds are currently hidden or filtered
 
@@ -40,18 +40,18 @@ rather than assembled by the reader.
 
 - Switch to another named view
 - Hide a kind or narrow the view by a filter
-- Focus one element and read only its neighbourhood
-- Open an element's page from the canvas
+- Focus one resource and read only its neighbourhood
+- Open a resource's page from the canvas
 
 ## View states
 
 ### Whole view
 
-Every element the named view includes, at the report's full width.
+Every resource the named view includes, at the report's full width.
 
 ### Focused neighbourhood
 
-One element and the relations reaching it, so a dense view stays readable.
+One resource and the relations reaching it, so a dense view stays readable.
 
 ## Capability boundary
 

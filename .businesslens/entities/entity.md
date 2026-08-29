@@ -19,8 +19,9 @@ references:
 
 # Entity
 
-A thing the Product keeps or reasons about, which an Actor can point at. The
-Product's nouns, where Capabilities are its verbs.
+What an author names when the same noun keeps surfacing in their own prose and
+nothing in the model owns it yet. Finding one usually means rereading Screens
+that had been carrying it a field at a time.
 
 ## Information kept
 

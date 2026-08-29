@@ -1,33 +1,33 @@
 <script setup lang="ts">
 /**
- * One element, one row.
+ * One resource, one row.
  *
  * The surface is already named after the kind, so the row never repeats it in
  * words — the coloured icon carries it. The slot that word occupied now holds
- * the fact that tells this element from its neighbours: a Screen's context, a
+ * the fact that tells this resource from its neighbours: a Screen's context, a
  * Scenario's parent, an Experience's Interface. Without it a collection of
  * counterparts reads as a list of duplicates.
  */
-import type { AnyElementView, ReportWorkspace } from '../utils/reportWorkspace'
-import { ENTITY_KIND_META, resolveElement } from '../utils/reportWorkspace'
-import type { ElementCardMetric } from '../utils/elementCards'
-import { elementCardPresentation } from '../utils/elementCards'
+import type { AnyResourceView, ReportWorkspace } from '../utils/reportWorkspace'
+import { ENTITY_KIND_META, resolveResource } from '../utils/reportWorkspace'
+import type { ResourceCardMetric } from '../utils/resourceCards'
+import { resourceCardPresentation } from '../utils/resourceCards'
 import { slotColor } from '../utils/reportPalette'
 
 const props = withDefaults(defineProps<{
   workspace: ReportWorkspace
-  element: AnyElementView
+  resource: AnyResourceView
   active?: boolean
   /** False inside a group whose header already states what the badge would. */
   badge?: boolean
 }>(), { badge: true })
 
-const emit = defineEmits<{ open: [element: AnyElementView] }>()
-const presentation = computed(() => elementCardPresentation(props.workspace, props.element))
-const kindLabel = computed(() => ENTITY_KIND_META[props.element.kind].label)
-const interfaceType = computed(() => props.element.kind === 'interface' ? props.element.interfaceType : undefined)
-const actorKind = computed(() => props.element.kind === 'actor' ? props.element.actorKind : undefined)
-const actorRelationship = computed(() => props.element.kind === 'actor' ? props.element.relationship : undefined)
+const emit = defineEmits<{ open: [resource: AnyResourceView] }>()
+const presentation = computed(() => resourceCardPresentation(props.workspace, props.resource))
+const kindLabel = computed(() => ENTITY_KIND_META[props.resource.kind].label)
+const interfaceType = computed(() => props.resource.kind === 'interface' ? props.resource.interfaceType : undefined)
+const actorKind = computed(() => props.resource.kind === 'actor' ? props.resource.actorKind : undefined)
+const actorRelationship = computed(() => props.resource.kind === 'actor' ? props.resource.relationship : undefined)
 const colorMode = useColorMode()
 const mounted = ref(false)
 
@@ -35,39 +35,39 @@ onMounted(() => {
   mounted.value = true
 })
 
-function metricColor(metric: ElementCardMetric): string | undefined {
+function metricColor(metric: ResourceCardMetric): string | undefined {
   if (!metric.kind) return undefined
   return slotColor(ENTITY_KIND_META[metric.kind].slot, mounted.value && colorMode.value === 'dark')
 }
 
-function metricTitle(metric: ElementCardMetric, id: string): string {
-  return metric.kind ? resolveElement(props.workspace, metric.kind, id)?.title ?? id : id
+function metricTitle(metric: ResourceCardMetric, id: string): string {
+  return metric.kind ? resolveResource(props.workspace, metric.kind, id)?.title ?? id : id
 }
 
-function metricInterfaceType(metric: ElementCardMetric, id: string) {
+function metricInterfaceType(metric: ResourceCardMetric, id: string) {
   if (metric.kind !== 'interface') return undefined
-  const element = resolveElement(props.workspace, 'interface', id)
-  return element?.kind === 'interface' ? element.interfaceType : undefined
+  const resource = resolveResource(props.workspace, 'interface', id)
+  return resource?.kind === 'interface' ? resource.interfaceType : undefined
 }
 
-function metricActor(metric: ElementCardMetric, id: string) {
+function metricActor(metric: ResourceCardMetric, id: string) {
   if (metric.kind !== 'actor') return undefined
-  const element = resolveElement(props.workspace, 'actor', id)
-  return element?.kind === 'actor' ? element : undefined
+  const resource = resolveResource(props.workspace, 'actor', id)
+  return resource?.kind === 'actor' ? resource : undefined
 }
 </script>
 
 <template>
   <button
     type="button"
-    class="blr-element-row group relative flex w-full items-center gap-4 overflow-hidden rounded-[0.625rem] border bg-default px-4 py-3 text-start transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+    class="blr-resource-row group relative flex w-full items-center gap-4 overflow-hidden rounded-[0.625rem] border bg-default px-4 py-3 text-start transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
     :class="active ? 'border-primary bg-primary/5' : 'border-default hover:border-accented hover:bg-elevated/40'"
-    :aria-label="`Open ${kindLabel} ${element.title}`"
-    @click="emit('open', element)"
+    :aria-label="`Open ${kindLabel} ${resource.title}`"
+    @click="emit('open', resource)"
   >
     <span class="flex min-w-0 flex-1 items-start gap-3">
       <BlrKind
-        :kind="element.kind"
+        :kind="resource.kind"
         :interface-type="interfaceType"
         :actor-kind="actorKind"
         :actor-relationship="actorRelationship"
@@ -76,7 +76,7 @@ function metricActor(metric: ElementCardMetric, id: string) {
       />
       <span class="min-w-0 flex-1">
         <span class="flex min-w-0 items-center gap-2">
-          <span class="truncate text-[15px] font-semibold tracking-tight text-highlighted">{{ element.title }}</span>
+          <span class="truncate text-[15px] font-semibold tracking-tight text-highlighted">{{ resource.title }}</span>
           <UBadge
             v-if="badge && presentation.badge"
             color="neutral"
@@ -87,7 +87,7 @@ function metricActor(metric: ElementCardMetric, id: string) {
             {{ presentation.badge }}
           </UBadge>
         </span>
-        <span v-if="element.lead" class="mt-0.5 block truncate text-sm leading-5 text-default">{{ element.lead }}</span>
+        <span v-if="resource.lead" class="mt-0.5 block truncate text-sm leading-5 text-default">{{ resource.lead }}</span>
         <!-- The discriminating fact. Absent rather than empty when there is none. -->
         <span v-if="presentation.hook" class="mt-1 flex min-w-0 items-baseline gap-1.5">
           <span class="shrink-0 text-xs text-dimmed">{{ presentation.hookLabel }}</span>

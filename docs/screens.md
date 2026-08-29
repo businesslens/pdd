@@ -150,7 +150,7 @@ External or separately maintained artifacts such as Figma files attach through
 [References](./references.md). `lint` checks asset metadata and paths, but does
 not interpret whether a visual matches the Product.
 
-A CLI or API does not need substitute Command or Endpoint elements. Keep
+A CLI or API does not need substitute Command or Endpoint resource types. Keep
 command syntax in CLI help and endpoint schemas in the API contract; model the
 durable Capabilities, both observable Scenario types, optional Journeys, and
 Rules they expose.

@@ -111,7 +111,7 @@ Every Journey Actor must participate in at least one achieved Scenario.
 ## Relationship to code
 
 A Journey does not need one matching class, controller, route, test, or wizard.
-Like other Product elements, it is a Product-level projection over code. During
+Like other Product resources, it is a Product-level projection over code. During
 mapping, however, its Goal, Capability handoffs, and achieved path must remain
 traceable through supported behavior rather than invented from plausible
 actions.
@@ -266,7 +266,7 @@ transport and the web workspace; its position makes that transition first-class.
 Capability-bearing steps reference Capabilities, never Capability Scenarios. A
 Capability is durable while its Scenarios split and merge as local behavior is
 refined. Composition therefore names the stable ability without turning a
-local acceptance case into a reusable operation element.
+local acceptance case into a reusable operation resource.
 
 Every contextualized Step declares the same route-id set. Matching keys
 correlate the complete paths. The Context `place` is the most-specific

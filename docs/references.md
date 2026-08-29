@@ -1,6 +1,6 @@
 ---
 title: References
-description: Attach intent, implementation, or context artifacts to any Product Model element without moving external material into the model.
+description: Attach intent, implementation, or context artifacts to any Product Model resource without moving external material into the model.
 section: open-source
 group: Product Model
 order: 18
@@ -12,9 +12,9 @@ References connect a self-contained Product Model to material maintained
 outside it. They can point to a design used while curating intent, code that
 currently implements behavior, a technical proposal, research, or related
 context. The referenced artifact is not part of the model and never replaces
-the element's Product prose.
+the resource's Product prose.
 
-Every semantic element supports the same optional field: Product, Actor,
+Every semantic resource supports the same optional field: Product, Actor,
 Interface, Experience, Screen, Domain, Entity, Capability, Journey, Capability
 Scenario, Journey Scenario, and Business Rule. Configuration, Coverage, and
 taxonomies do not.
@@ -36,7 +36,7 @@ references:
 
 ## Asset or Reference
 
-Use an asset when the model owns the file. Expand the element from `<id>.md` to
+Use an asset when the model owns the file. Expand the resource from `<id>.md` to
 `<id>/<type>.md`, then place authored assets beside `<type>.md`. Put generated
 captures describing this repository's realization under the reserved
 `implementation/` subdirectory:
@@ -80,7 +80,7 @@ This avoids a mirrored asset tree while keeping external material external.
 | `visual` | A screenshot, mockup, prototype, design, or diagram |
 | `research` | Product or user research |
 
-`role` says why it is attached to this element:
+`role` says why it is attached to this resource:
 
 | Role | Meaning | Travels with a published Blueprint |
 | --- | --- | --- |
@@ -89,9 +89,9 @@ This avoids a mirrored asset tree while keeping external material external.
 | `context` | Supplies useful background without defining intent or implementation | yes |
 
 A PRD uses `kind: prd`. Give it `role: intent` when it helped define the
-approved Product meaning on that element, or `role: context` when it supplies
+approved Product meaning on that resource, or `role: context` when it supplies
 supporting history. The Product Model remains self-contained: the PRD explains
-the decision around an element but never replaces its authored meaning.
+the decision around a resource but never replaces its authored meaning.
 
 `intent` and `context` describe the Product, so they travel with a published
 Blueprint. `implementation` describes this repository's realization of it and
@@ -147,7 +147,7 @@ existence and not behavioral alignment.
 Every other kind accepts an HTTP(S) URL or repository-relative path. HTTP(S)
 targets are syntax-checked but never fetched. A missing local target warns
 without failing lint. Absolute paths, `file:` URLs, unsupported schemes, and
-backslash paths are invalid. Duplicate targets on one element are invalid.
+backslash paths are invalid. Duplicate targets on one resource are invalid.
 
 The deterministic CLI does not fetch or inspect referenced content, and a
 Reference never certifies alignment. BusinessLens skills may follow curated
@@ -174,11 +174,11 @@ portable projection. `open`, `pull`, and `contribute` apply the same projection.
 | invalid kind or role | Choose one of the documented values. |
 | invalid code target | Use the compact grammar and a repository-relative path. |
 | `code reference path "…" is not a tracked file` | Fix or remove stale navigation. |
-| duplicate Reference target | Keep only one attachment to that target on the element. |
+| duplicate Reference target | Keep only one attachment to that target on the resource. |
 | missing local target warning | Fix the target or remove it; warnings do not fail lint. |
 | `reference state "…" is not a product state of this Screen` | Name an authored `## Product states` H3, or drop the key. |
-| `reference "state" is only valid on a Screen` | No other element has a state set for it to resolve against. |
-| asset metadata names a missing file | Expand the element and add the file, or remove the stale metadata. |
+| `reference "state" is only valid on a Screen` | No other resource type has a state set for it to resolve against. |
+| asset metadata names a missing file | Expand the resource and add the file, or remove the stale metadata. |
 | asset state does not name a Product state | Name an authored Screen H3 or remove `state`. |
 
 There is no missing-Reference finding. A complete model may contain none.

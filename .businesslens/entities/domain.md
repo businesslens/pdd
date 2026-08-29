@@ -15,8 +15,9 @@ references:
 
 # Domain
 
-A coherent region of the Product's subject matter, with its own vocabulary and
-invariants. An axis that classifies, never a level that contains.
+What makes a Capability list navigable again once it has outgrown a single
+screen. Authors add these late, and a model that never needs one is not a poorer
+model.
 
 ## Information kept
 

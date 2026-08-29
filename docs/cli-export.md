@@ -36,10 +36,11 @@ not travel with the Product contract:
 report. See [Coverage](./product-model.md#coverage) and
 [References](./references.md) for those contracts.
 
-Product and element records carry unrecognized authored H2 sections as ordered
-`supportingSections` records with separate `heading` and `content` fields. The
-report never flattens them into an opaque Markdown string, so `blueprint open`
-can restore the same section boundaries.
+Unrecognized authored H2 sections survive as ordered `supportingSections`
+records with separate `heading` and `content` fields — on the Product, whose
+record is the report root, and on every other resource record. The report never
+flattens them into an opaque Markdown string, so `blueprint open` can restore
+the same section boundaries.
 
 ## Where it lands
 

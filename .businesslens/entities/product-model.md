@@ -9,12 +9,6 @@ relations:
   - entity: interface
     verb: holds
     cardinality: one-to-many
-  - entity: experience
-    verb: holds
-    cardinality: one-to-many
-  - entity: screen
-    verb: holds
-    cardinality: one-to-many
   - entity: domain
     verb: holds
     cardinality: one-to-many
@@ -24,13 +18,7 @@ relations:
   - entity: capability
     verb: holds
     cardinality: one-to-many
-  - entity: capability-scenario
-    verb: holds
-    cardinality: one-to-many
   - entity: journey
-    verb: holds
-    cardinality: one-to-many
-  - entity: journey-scenario
     verb: holds
     cardinality: one-to-many
   - entity: business-rule

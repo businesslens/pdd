@@ -74,7 +74,7 @@ export const ReportSupportingSectionSchema = z.strictObject({
   content: MarkdownFragmentSchema
 })
 
-const ElementContentSchema = {
+const ResourceContentSchema = {
   intent: MarkdownFragmentSchema,
   supportingSections: z.array(ReportSupportingSectionSchema),
   references: z.array(ReportReferenceSchema)
@@ -87,7 +87,7 @@ export const TaxonomyEntrySchema = z.strictObject({
   colorSlot: z.number().int().optional()
 })
 
-const ReportElementCountShape = {
+const ReportResourceCountShape = {
   actors: z.number().int().min(0),
   interfaces: z.number().int().min(0),
   experiences: z.number().int().min(0),
@@ -101,7 +101,7 @@ const ReportElementCountShape = {
   businessRules: z.number().int().min(0)
 }
 
-export const ReportCountsSchema = z.strictObject(ReportElementCountShape)
+export const ReportCountsSchema = z.strictObject(ReportResourceCountShape)
 
 export const ReportAuthorSchema = z.strictObject({
   name: SingleLineTextSchema.max(120),
@@ -130,7 +130,7 @@ export const ReportActorSchema = z.strictObject({
   relationship: z.enum(['external', 'internal']),
   /** What the Product keeps about this Actor. Same rule as an Entity's. */
   informationKept: z.array(SingleLineTextSchema),
-  ...ElementContentSchema
+  ...ResourceContentSchema
 })
 
 export const ReportInterfaceSchema = z.strictObject({
@@ -141,7 +141,7 @@ export const ReportInterfaceSchema = z.strictObject({
   actorIds: z.array(IdSchema).min(1),
   entryPoints: z.array(ReportEntryPointSchema),
   capabilityBoundary: RequiredMarkdownFragmentSchema,
-  ...ElementContentSchema
+  ...ResourceContentSchema
 })
 
 export const ReportExperienceSchema = z.strictObject({
@@ -153,7 +153,7 @@ export const ReportExperienceSchema = z.strictObject({
   accessMode: z.enum(['public', 'authenticated', 'restricted']),
   entryPoints: z.array(ReportEntryPointSchema),
   capabilityBoundary: RequiredMarkdownFragmentSchema,
-  ...ElementContentSchema
+  ...ResourceContentSchema
 })
 
 export const ReportDomainSchema = z.strictObject({
@@ -161,7 +161,7 @@ export const ReportDomainSchema = z.strictObject({
   name: SingleLineTextSchema,
   description: RequiredMarkdownFragmentSchema,
   colorSlot: z.number().int().optional(),
-  ...ElementContentSchema
+  ...ResourceContentSchema
 })
 
 export const ReportEntityStateSchema = z.strictObject({
@@ -205,7 +205,7 @@ export const ReportEntitySchema = z.strictObject({
   relations: z.array(ReportEntityRelationSchema),
   states: z.array(ReportEntityStateSchema),
   transitions: z.array(ReportEntityTransitionSchema),
-  ...ElementContentSchema
+  ...ResourceContentSchema
 })
 
 export const ReportCapabilitySchema = z.strictObject({
@@ -216,7 +216,7 @@ export const ReportCapabilitySchema = z.strictObject({
   /** The Entities this Capability acts on. */
   entityIds: z.array(IdSchema),
   availability: z.array(ReportContextSchema).min(1),
-  ...ElementContentSchema
+  ...ResourceContentSchema
 })
 
 export const ReportScreenStateSchema = z.strictObject({
@@ -238,7 +238,7 @@ export const ReportScreenSchema = z.strictObject({
   actions: z.array(SingleLineTextSchema),
   states: z.array(ReportScreenStateSchema),
   capabilityBoundary: RequiredMarkdownFragmentSchema,
-  ...ElementContentSchema
+  ...ResourceContentSchema
 })
 
 export const ReportJourneySchema = z.strictObject({
@@ -250,7 +250,7 @@ export const ReportJourneySchema = z.strictObject({
   capabilityIds: z.array(IdSchema),
   failureOnlyCapabilityIds: z.array(IdSchema),
   domainIds: z.array(IdSchema),
-  ...ElementContentSchema
+  ...ResourceContentSchema
 })
 
 export const ReportDecisionPointSchema = z.strictObject({
@@ -297,7 +297,7 @@ const ReportScenarioContentShape = {
   decisionPoints: z.array(ReportDecisionPointSchema),
   outcome: RequiredMarkdownFragmentSchema,
   edgeCases: z.array(SingleLineTextSchema),
-  ...ElementContentSchema
+  ...ResourceContentSchema
 }
 
 export const ReportCapabilityScenarioSchema = z.strictObject({
@@ -313,7 +313,7 @@ export const ReportJourneyScenarioSchema = z.strictObject({
   ...ReportScenarioContentShape
 })
 
-const ReportBusinessRuleElementTargetSchema = z.strictObject({
+const ReportBusinessRuleResourceTargetSchema = z.strictObject({
   type: z.enum(['capability', 'capability-scenario', 'journey', 'journey-scenario']),
   id: IdSchema,
   contexts: z.array(ReportContextSchema)
@@ -325,7 +325,7 @@ const ReportBusinessRuleContextTargetSchema = z.strictObject({
 })
 
 export const ReportBusinessRuleTargetSchema = z.discriminatedUnion('type', [
-  ReportBusinessRuleElementTargetSchema,
+  ReportBusinessRuleResourceTargetSchema,
   ReportBusinessRuleContextTargetSchema
 ])
 
@@ -335,7 +335,7 @@ export const ReportBusinessRuleSchema = z.strictObject({
   statement: RequiredMarkdownFragmentSchema,
   rationale: MarkdownFragmentSchema,
   appliesTo: z.array(ReportBusinessRuleTargetSchema).min(1),
-  ...ElementContentSchema
+  ...ResourceContentSchema
 })
 
 export const ReportCoverageSchema = z.strictObject({
@@ -417,24 +417,24 @@ export type ReportSupportingSection = z.infer<typeof ReportSupportingSectionSche
 
 export type ReportModel = ProductReportV11['model']
 
-/** One element in the report, reduced to what every "for every element" check needs. */
-type ReportElement = { id: string, references: ReportReference[] }
+/** One resource in the report, reduced to what every "for every resource" check needs. */
+type ReportResource = { id: string, references: ReportReference[] }
 
 /**
- * Every element collection in a report, keyed by its own name.
+ * Every resource collection in a report, keyed by its own name.
  *
  * The key union is read off the schema rather than written out, so a new
  * collection in `ProductReportV11Schema` leaves this record incomplete and fails
- * the build. `taxonomies` is an object, not an array of elements, so it drops
- * out on its own. See the same reasoning in `elementCollections` — Entity was
+ * the build. `taxonomies` is an object, not an array of resources, so it drops
+ * out on its own. See the same reasoning in `resourceCollections` — Entity was
  * added to the report and its ids and References went unchecked for a release
  * because the lists that would have covered it were written by hand.
  */
 export type ReportCollectionName = {
-  [K in keyof ReportModel]-?: ReportModel[K] extends ReportElement[] ? K : never
+  [K in keyof ReportModel]-?: ReportModel[K] extends ReportResource[] ? K : never
 }[keyof ReportModel]
 
-export function reportElementCollections(model: ReportModel): Record<ReportCollectionName, ReportElement[]> {
+export function reportResourceCollections(model: ReportModel): Record<ReportCollectionName, ReportResource[]> {
   return {
     actors: model.actors,
     interfaces: model.interfaces,
@@ -545,7 +545,7 @@ function requireEntryPointInterfaces(
   }
 }
 
-/** Cross-element and computed-field validation, shared with every report consumer. */
+/** Cross-resource and computed-field validation, shared with every report consumer. */
 export function validateProductReport(report: ProductReportV11): string[] {
   const issues: string[] = []
   const { model } = report
@@ -578,7 +578,7 @@ export function validateProductReport(report: ProductReportV11): string[] {
   validateSupportingSections(issues, 'product', report.supportingSections, ['Intent'])
 
   const collections: Array<[string, string[]]> = [
-    ...Object.entries(reportElementCollections(model))
+    ...Object.entries(reportResourceCollections(model))
       .map(([label, items]) => [label, items.map(item => item.id)] as [string, string[]]),
     ['scenarioKinds', model.taxonomies.scenarioKinds.map(item => item.id)]
   ]
@@ -1186,7 +1186,7 @@ export function validateProductReport(report: ProductReportV11): string[] {
   }
   const referenceHosts: Array<{ id: string, references: ReportReference[] }> = [
     { id: 'product', references: report.references },
-    ...Object.values(reportElementCollections(model)).flat()
+    ...Object.values(reportResourceCollections(model)).flat()
   ]
   for (const host of referenceHosts) {
     const targets = new Set<string>()

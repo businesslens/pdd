@@ -11,7 +11,7 @@ import {
 interface TestNode {
   id: string
   parentNode?: string
-  data?: { elementKey?: string, elementId?: string, kind?: string, dimmed?: boolean, colorSlot?: number | null }
+  data?: { resourceKey?: string, resourceId?: string, kind?: string, dimmed?: boolean, colorSlot?: number | null }
 }
 
 interface TestEdge {
@@ -52,7 +52,7 @@ const buildProductTopologyGraph = graphModule.buildProductTopologyGraph as (
 ) => TestGraph
 const filterProductTopologyGraph = filtersModule.filterProductTopologyGraph as (
   graph: TestGraph,
-  options: { visibleKinds: string[], focusElementIds?: string[] }
+  options: { visibleKinds: string[], focusResourceIds?: string[] }
 ) => TestGraph
 const PRODUCT_TOPOLOGY_VIEWS = viewsModule.PRODUCT_TOPOLOGY_VIEWS as TestTopologyView[]
 const DEFAULT_PRODUCT_TOPOLOGY_VIEW = viewsModule.DEFAULT_PRODUCT_TOPOLOGY_VIEW as string
@@ -155,14 +155,14 @@ describe('named Product Topology views', () => {
   it('keeps identity views unique and Value path Steps contextual', () => {
     const delivery = buildProductTopologyGraph(workspace, 'delivery-by-interface')
     const identityIds = delivery.nodes
-      .map(node => node.data?.elementKey)
+      .map(node => node.data?.resourceKey)
       .filter((id): id is string => Boolean(id))
     expect(new Set(identityIds).size).toBe(identityIds.length)
 
     const valuePaths = buildProductTopologyGraph(workspace, 'value-paths')
     const occurrenceNodes = valuePaths.nodes.filter(node => node.id.includes(':step:'))
     expect(occurrenceNodes.length).toBeGreaterThan(0)
-    expect(occurrenceNodes.some(node => node.id !== node.data?.elementKey)).toBe(true)
+    expect(occurrenceNodes.some(node => node.id !== node.data?.resourceKey)).toBe(true)
   })
 
   it('draws only the selected Journey value path', () => {
@@ -170,7 +170,7 @@ describe('named Product Topology views', () => {
     const graph = buildProductTopologyGraph(workspace, 'value-paths', { journeyId: journey.id })
     const journeyIds = graph.nodes
       .filter(node => node.data?.kind === 'journey')
-      .map(node => node.data?.elementId)
+      .map(node => node.data?.resourceId)
     expect(journeyIds).toEqual([journey.id])
     expect(graph.nodes.some(node => node.id.includes(':step:'))).toBe(true)
     expect(graph.edges.some(edge => edge.label === 'then' || edge.label === 'starts')).toBe(true)
@@ -193,7 +193,7 @@ describe('named Product Topology views', () => {
     const domain = workspace.domains.find((item: any) => item.colorSlot != null)!
     const capability = workspace.capabilities.find((item: any) => item.domainId === domain.id)!
     const graph = buildProductTopologyGraph(workspace, 'product-map')
-    const capabilityNode = graph.nodes.find(node => node.data?.elementKey === capability.key)!
+    const capabilityNode = graph.nodes.find(node => node.data?.resourceKey === capability.key)!
 
     expect(capabilityNode.parentNode).toBe(domain.key)
     expect(capabilityNode.data?.colorSlot).toBe(domain.colorSlot)
@@ -207,7 +207,7 @@ describe('named Product Topology views', () => {
     expect(graph.edges.some(edge => edge.source === directInterface.key && edge.target === capability.key)).toBe(true)
   })
 
-  it('hides element kinds locally and removes their incident relations', () => {
+  it('hides resource kinds locally and removes their incident relations', () => {
     const base = buildProductTopologyGraph(workspace, 'delivery-by-interface')
     const filtered = filterProductTopologyGraph(base, {
       visibleKinds: ['interface', 'experience', 'screen', 'capability']
@@ -234,8 +234,8 @@ describe('named Product Topology views', () => {
     const source = graph.nodes.find(node => node.id === landing.source)!
 
     expect(landing.label).toBe('lands on')
-    expect(source.data?.elementId).toBe('publish-collection')
-    expect(source.data?.elementId).not.toBe('read-public-collection')
+    expect(source.data?.resourceId).toBe('publish-collection')
+    expect(source.data?.resourceId).not.toBe('read-public-collection')
   })
 
   it('runs Value path Steps downward so a short Journey is not a thin ribbon', () => {
@@ -249,14 +249,14 @@ describe('named Product Topology views', () => {
     expect(spanY).toBeGreaterThan(spanX)
   })
 
-  it('focuses elements with one-hop context instead of unrelated branches', () => {
+  it('focuses resources with one-hop context instead of unrelated branches', () => {
     const base = buildProductTopologyGraph(workspace, 'delivery-by-interface')
-    const element = [...workspace.interfaces, ...workspace.experiences, ...workspace.screens].find((item: any) =>
+    const resource = [...workspace.interfaces, ...workspace.experiences, ...workspace.screens].find((item: any) =>
       base.edges.some(edge => edge.source === item.key || edge.target === item.key))!
-    const expected = topologyNeighbourhood(element.key, base.edges)
+    const expected = topologyNeighbourhood(resource.key, base.edges)
     const filtered = filterProductTopologyGraph(base, {
       visibleKinds: ['actor', 'interface', 'experience', 'screen', 'capability'],
-      focusElementIds: [element.key]
+      focusResourceIds: [resource.key]
     })
 
     expect(new Set(filtered.nodes.map(node => node.id))).toEqual(expected)

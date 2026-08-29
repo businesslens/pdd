@@ -22,8 +22,9 @@ references:
 
 # Capability
 
-A durable ability of the Product — the smallest behaviour that stays
-independently meaningful. It has no beginning or end.
+What an author writes most of, and argues about most. Where one ends and the
+next begins is the judgement `lint` cannot make for them, and the one that most
+changes how a model reads.
 
 ## Information kept
 

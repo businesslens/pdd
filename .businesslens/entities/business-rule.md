@@ -15,8 +15,9 @@ references:
 
 # Business Rule
 
-A durable constraint that governs two or more behaviours, or a Context
-independent of any single one. What must remain true.
+What an author reaches for once the same constraint has appeared in Scenario
+after Scenario. Writing it in one place, and citing it from none of them, is the
+whole point of having it.
 
 ## Information kept
 

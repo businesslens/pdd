@@ -31,8 +31,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   A report expands straight into an authored folder, so an edge the folder
   rejects must not survive the wire.
 - Ids, References and assets are checked on an Entity exactly as on every other
-  element, and both "for every element" lists are now derived from the model and
-  from the schema rather than written by hand — a new element kind fails the
+  resource, and both "for every resource" lists are now derived from the model and
+  from the schema rather than written by hand — a new resource type fails the
   build until every check has it.
 - `## Relations` and `## Transitions` are invalid sections on an Entity, for the
   reason `## Steps` is invalid on a Scenario: the frontmatter list is the one
@@ -109,17 +109,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Relational structure lives in frontmatter.** `transitions` moves out of a
-  Markdown section and joins `relations` there, because both name other elements
+  Markdown section and joins `relations` there, because both name other resources
   by id — which is the rule every other field already follows. The prose form
   also had a silent mis-parse: `- Available → Sold by owner` read as
   `to: "Sold", by: "owner"` and linted clean.
-- **A kind of file in a Product Model is an `Element`, not an entity.** That use
-  was the loose one and gave the word up, so the kind that genuinely means a
-  thing with identity could have it. The rename now reaches BusinessLens's own
-  model and the Content Feed Reader Blueprint, which had kept the old sense in
-  prose throughout — a Screen declaring `entities: [product-model, …]` in
-  frontmatter while calling an Element an entity two lines below it was the
-  exact collision the rename existed to remove.
+- **One authored file in a Product Model is a `Resource`; what it is one of is a
+  `resource type`.** *Entity* had been the loose word for both and gave the use
+  up, so the type that genuinely means a thing with identity could take it. The
+  base word is now shared and the type level is marked by a modifier, because
+  naming two levels with one unmarked word is what made the old vocabulary
+  unreadable — `docs/` headed a table of types with the same noun the spec used
+  for one file. `kind` stays a field name — on a `references` item, an Actor,
+  both Scenario types and a Scenario Step, five unrelated closed enums — and
+  never means a resource type: a resource states its type through its path,
+  never through a header. The rename reaches
+  BusinessLens's own model and the Content Feed Reader Blueprint, which had kept
+  the old sense in prose throughout — a Screen declaring
+  `entities: [product-model, …]` in frontmatter while calling a resource an
+  entity two lines below it was the exact collision it existed to remove.
 - **One vocabulary for the id-naming rule.** It had three spellings:
   `spec/format.md` and the docs said *verb-entity*, `businesslens-map` and the
   `lint` message itself said *verb-object*, and both of those nouns had been
@@ -187,7 +194,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   see what a model says but not what it omits, which is where two independent
   maps of one repository actually diverged.
 - **Attach what you read.** `businesslens-map` no longer treats References as
-  optional polish: it attaches to each element the artifacts that established its
+  optional polish: it attaches to each resource the artifacts that established its
   meaning — the code it traced, the spec or PRD stating intent, the document it
   took context from — and `businesslens-ideate` attaches the `role: intent`
   artifact a decision came from. Permission with no trigger is why a whole
@@ -196,7 +203,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`businesslens-map` asks rather than collapsing a distinction.** Its Entity
   rule is the identity and naming test rather than the retired state count, one
   Entity per thing the Product treats differently, and Entity granularity joins
-  the required `Judgment calls` list. Folding several things into one element is
+  the required `Judgment calls` list. Folding several things into one resource is
   not a smaller model; the information is gone and no reader can recover it.
 - **The rounds reach `businesslens-ideate` and `businesslens-verify` too.**
   Ideate invents the same model from scratch, and verify re-authors parts of it
@@ -230,8 +237,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
   A fourth round covers the acceptance surface: how many Scenarios each
   Capability needs, and where the line falls between a Scenario and an
-  `## Edge cases` bullet. A guided run negotiated every element count except
-  that one, chose 19 of its 71 elements alone, and invented the rule it used to
+  `## Edge cases` bullet. A guided run negotiated every resource count except
+  that one, chose 19 of its 71 resources alone, and invented the rule it used to
   decide them — then reported it against itself when asked what the rounds had
   missed. Availability joins the same round wherever a Capability would be
   offered on two Interfaces because one implementation serves both, which is the

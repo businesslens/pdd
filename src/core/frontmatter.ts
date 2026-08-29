@@ -177,21 +177,21 @@ export function contextField(
  * realization — so the list never sets it. Unlisted files are legal, which is
  * what lets a foreign tool drop a capture in without editing frontmatter.
  */
-export interface ElementAsset {
+export interface ResourceAsset {
   file: string
   title?: string
   /** Screens only: the `## View states` H3 this asset depicts. */
   state?: string
 }
 
-export function assetsField(data: Record<string, unknown>, issues: string[], label: string): ElementAsset[] {
+export function assetsField(data: Record<string, unknown>, issues: string[], label: string): ResourceAsset[] {
   const value = data.assets
   if (value === undefined || value === null) return []
   if (!Array.isArray(value)) {
     issues.push(`${label}: "assets" must be a list`)
     return []
   }
-  const result: ElementAsset[] = []
+  const result: ResourceAsset[] = []
   const seen = new Set<string>()
   for (const item of value) {
     if (typeof item !== 'object' || item === null || Array.isArray(item)) {
@@ -206,7 +206,7 @@ export function assetsField(data: Record<string, unknown>, issues: string[], lab
     }
     const file = record.file
     if (typeof file !== 'string' || !file.trim() || file.startsWith('/') || file.includes('..')) {
-      issues.push(`${label}: asset "file" must be a path inside the element's expanded folder`)
+      issues.push(`${label}: asset "file" must be a path inside the resource's expanded folder`)
       continue
     }
     if (seen.has(file)) {
@@ -229,7 +229,7 @@ export function assetsField(data: Record<string, unknown>, issues: string[], lab
   return result
 }
 
-export interface ElementReference {
+export interface ResourceReference {
   kind: ReferenceKind
   role: ReferenceRole
   target: string
@@ -252,7 +252,7 @@ export const REFERENCE_KINDS = new Set<ReferenceKind>(['code', 'prd', 'spec', 'p
 export const REFERENCE_ROLES = new Set<ReferenceRole>(['intent', 'implementation', 'context'])
 
 /** The tracked repository path named by a reference, if it is repository-local. */
-export function repositoryReferencePath(reference: ElementReference): string | undefined {
+export function repositoryReferencePath(reference: ResourceReference): string | undefined {
   if (reference.kind === 'code') return parseCodeTarget(reference.target, [], 'reference')?.path
   if (/^https?:\/\//i.test(reference.target)) return undefined
   return reference.target.split(/[?#]/, 1)[0]?.replace(/^\.\//, '') || undefined
@@ -298,14 +298,14 @@ function validateReferenceTarget(target: string, kind: ReferenceKind, issues: st
   return true
 }
 
-export function referencesField(data: Record<string, unknown>, issues: string[], label: string): ElementReference[] {
+export function referencesField(data: Record<string, unknown>, issues: string[], label: string): ResourceReference[] {
   const value = data.references
   if (value === undefined || value === null) return []
   if (!Array.isArray(value)) {
     issues.push(`${label}: "references" must be a list`)
     return []
   }
-  const result: ElementReference[] = []
+  const result: ResourceReference[] = []
   for (const item of value) {
     if (typeof item !== 'object' || item === null || Array.isArray(item)) {
       issues.push(`${label}: each reference needs "kind", "role", and "target"`)

@@ -23,7 +23,7 @@ describe('private Product Report viewer lab', () => {
     const readme = readFileSync(join(lab, 'README.md'), 'utf8')
 
     expect(readme).toContain('There are no active report experiments.')
-    expect(existsSync(join(lab, 'app/components/BlrElementPage.vue'))).toBe(false)
+    expect(existsSync(join(lab, 'app/components/BlrResourcePage.vue'))).toBe(false)
     expect(existsSync(join(lab, 'app/components/BlrInspector.vue'))).toBe(false)
     expect(existsSync(join(lab, 'app/utils/labVariants.ts'))).toBe(false)
   })

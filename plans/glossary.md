@@ -7,10 +7,10 @@ during the model review are defined here because nowhere else owns them.
 Where a term is contested — where the review found two readings in the wild —
 that is stated, because the ambiguity is the point.
 
-## Model entities
+## Resource types
 
-Owned by `docs/` (one page per entity) and `spec/format.md`. Listed here only to
-fix the vocabulary this repository's planning documents use.
+Owned by `docs/` (one page per resource type) and `spec/format.md`. Listed here
+only to fix the vocabulary this repository's planning documents use.
 
 | Term | Meaning | Contested? |
 | --- | --- | --- |
@@ -20,6 +20,7 @@ fix the vocabulary this repository's planning documents use.
 | **Experience** | An optional coherent context of use inside exactly one Interface. | Yes — the Interface/Experience boundary admits two lint-clean encodings (F2) |
 | **Screen** | An optional stable user-visible view. Owns `## Product states`. | Yes — states of the *view*, with no home for a product object's lifecycle (F9) |
 | **Domain** | An optional axis classifying subject matter. Classifies; never contains. | Yes — two authors produced 3 and 5 with one id in common (F13) |
+| **Entity** | A thing the Product keeps or reasons about, which an Actor can point at and the Product can tell apart. The test is identity, not storage. | No — added after the review ([ADR-0010](./adr/0010-a-thing-the-product-keeps.md)) |
 | **Capability** | The smallest durable Product ability that remains independently meaningful. | Yes — granularity diverged 4× on identical behavior (F1) |
 | **Capability Scenario** | One concrete observable acceptance case for exactly one Capability. | Yes — its boundary with Business Rule inverted between authors (F4) |
 | **Journey** | An optional coherent Actor Goal requiring deliberate composition of multiple Capabilities. | Yes — least determined kind; 3 of ~6 appeared in only one model (F1) |
@@ -44,21 +45,22 @@ single-line `text` and a `kind` of `actor`, `product`, or `condition`. Each
 Scenario requires at least one `actor` Step — which is why unattended behavior
 has no Scenario (F5).
 
-**Counterpart** — two entities of the same kind sharing a path suffix below
+**Counterpart** — two resources of the same type sharing a path suffix below
 their Interface: the same thing on two **Interfaces**. Nothing declares it; the
 path does. Does not cover the same thing on two Experiences of one Interface.
 
-**Compact / expanded** — an entity is `<id>.md` until it owns an asset or a
+**Compact / expanded** — a resource is `<id>.md` until it owns an asset or a
 typed child, then `<id>/<type>.md`. The two never coexist and derive the same
 id. Expansion derives the shape from content, so the round trip normalizes.
 
 **Availability** — a Capability's required list of Contexts. Names an undivided
 Interface or an Experience, never a Screen.
 
-**Two hierarchies and one axis** — the model's organizing claim. Interface →
+**Two hierarchies and two axes** — the model's organizing claim. Interface →
 Experience → Screen says *where Actors meet the Product*; Capability → Scenario
 and Journey → Scenario say *what the Product does*; Domain classifies members of
-both. `docs/product-model.md` states this in prose and carries no diagram (F12).
+both, and Entity names what the Product keeps. `docs/product-model.md` states
+this in prose and now carries a diagram.
 
 ## Serialization vocabulary
 
@@ -115,12 +117,13 @@ test whether a boundary admits both. Used where double-authoring cannot reach a
 joint the test product does not exercise.
 
 **Placement test** — a list of real product things, committed before authoring,
-each of which must land in exactly one entity kind. An item landing in two kinds
-is a determinism defect and a legibility defect at once; an item landing in none
+each of which must land in exactly one resource type. An item landing in two
+types is a determinism defect and a legibility defect at once; an item landing in none
 is an expressiveness defect.
 
-**One-page test** — whether the nine kinds, their containment, and their
-relations can be stated completely on one page such that a reader who has seen
+**One-page test** — whether the twelve resource types, their containment, and
+their relations can be stated completely on one page such that a reader who has
+seen
 only that page places new things correctly.
 
 **Convergence** — whether a product modeled in the generative direction and the

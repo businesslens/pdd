@@ -9,7 +9,7 @@
  * the only encoding in this Product Report**: every coloured mark ships beside a label, and
  * graph nodes additionally carry a per-kind silhouette and icon.
  *
- * Nine element kinds is past the eight-slot categorical order and past what any
+ * Nine resource kinds is past the eight-slot categorical order and past what any
  * palette can separate by hue alone. The ninth kind takes a neutral slot and the
  * shape/label encoding does the identifying work.
  */

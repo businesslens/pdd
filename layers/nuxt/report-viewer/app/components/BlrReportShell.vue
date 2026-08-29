@@ -1,12 +1,12 @@
 <script setup lang="ts">
 /**
- * Product Report shell — a rail, collection views, element pages, and Topology.
+ * Product Report shell — a rail, collection views, resource pages, and Topology.
  *
  * The rail lists kinds and nothing else, because kinds do not nest — instances
  * do. Containment appears where instances are: as the default grouping of a
- * collection and on the element page. `BlrRail` carries that argument in full.
+ * collection and on the resource page. `BlrRail` carries that argument in full.
  *
- * A collection row opens the element page directly. The page is the one reading:
+ * A collection row opens the resource page directly. The page is the one reading:
  * a URL, a breadcrumb, the authored body at full width, and the browser's own
  * back button.
  *
@@ -14,20 +14,20 @@
  * the page for the same reason: naming something means meaning it.
  *
  * Breadth has one destination: Topology, whose named views answer fixed
- * cross-kind questions, and whose focus filter draws one element's
+ * cross-kind questions, and whose focus filter draws one resource's
  * neighbourhood at a width that can actually render it.
  */
 import { h } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import type {
   ActorView,
-  AnyElementView,
+  AnyResourceView,
   ContextView,
   CapabilityView,
   ExperienceView,
   InterfaceView,
   JourneyView,
-  ReportElementKind,
+  ReportResourceKind,
   ReportWorkspace,
   ScenarioView,
   ScreenView
@@ -37,20 +37,20 @@ import {
   INTERFACE_TYPE_META,
   REPORT_ENTITY_KINDS,
   isScenarioKind,
-  resolveElements,
-  resolveElement,
-  resolveElementKey
+  resolveResources,
+  resolveResource,
+  resolveResourceKey
 } from '../utils/reportWorkspace'
-import type { FacetSelections } from '../utils/elementFacets'
+import type { FacetSelections } from '../utils/resourceFacets'
 import {
-  elementsOfKind,
+  resourcesOfKind,
   facetKindsFor,
-  filterElements,
-  groupElements,
+  filterResources,
+  groupResources,
   hasSelections,
   relatedIds
-} from '../utils/elementFacets'
-import { docsForElementKind } from '../utils/elementDocs'
+} from '../utils/resourceFacets'
+import { docsForResourceKind } from '../utils/resourceDocs'
 import { firstSentence } from '../utils/reportMarkdown'
 
 const UButton = resolveComponent('UButton')
@@ -61,21 +61,21 @@ const props = defineProps<{ workspace: ReportWorkspace, logoSrc?: string | null 
 
 /* ------------------------------------------------------------------ */
 /* Selection: `activeKind` is what the collection view is about, and */
-/* `openElement` is the page you are on.                               */
+/* `openResource` is the page you are on.                               */
 /* ------------------------------------------------------------------ */
 
 /*
-  A Scenario is the only element with a mandatory single parent, so it is read
+  A Scenario is the only resource with a mandatory single parent, so it is read
   from that Capability or Journey's page rather than exposed as another
   collection in the rail or as a peer tab on the parent's main screen.
 */
-const PARENT_OF: Partial<Record<ReportElementKind, ReportElementKind>> = {
+const PARENT_OF: Partial<Record<ReportResourceKind, ReportResourceKind>> = {
   'capability-scenario': 'capability',
   'journey-scenario': 'journey'
 }
 
 type ViewMode = 'cards' | 'table'
-type ReportSection = 'overview' | 'topology' | ReportElementKind
+type ReportSection = 'overview' | 'topology' | ReportResourceKind
 
 /**
  * The open section, bindable by the host so it can live in the URL.
@@ -86,17 +86,17 @@ type ReportSection = 'overview' | 'topology' | ReportElementKind
 const section = defineModel<string>('section', { default: 'overview' })
 
 /**
- * The element whose page is open, or `null` for the section's own surface.
+ * The resource whose page is open, or `null` for the section's own surface.
  *
  * Bindable for the same reason `section` is, and the reason pages exist at all:
  * a page a reader can reach but not link to, return to, or refresh is a modal
  * with extra steps.
  */
-const openElement = defineModel<string | null>('element', { default: null })
+const openResource = defineModel<string | null>('resource', { default: null })
 const scenarioRoute = defineModel<string | null>('scenarioRoute', { default: null })
 const routeColumns = defineModel<string>('routeColumns', { default: 'auto' })
 
-const activeKind = ref<ReportElementKind>('product')
+const activeKind = ref<ReportResourceKind>('product')
 const activeSection = ref<ReportSection>('overview')
 
 const KNOWN_SECTIONS = new Set<string>(['overview', 'topology', ...REPORT_ENTITY_KINDS.map(meta => meta.kind)])
@@ -112,24 +112,24 @@ watch(section, (value) => {
 watch(activeSection, (value) => {
   if (section.value !== value) section.value = value
 })
-/* One element's neighbourhood, drawn on the topology canvas rather than in a
+/* One resource's neighbourhood, drawn on the topology canvas rather than in a
    page that cannot give the graph the full report width. */
 const topologyFocus = ref<string | null>(null)
 const searchOpen = ref(false)
 const mobileNavOpen = ref(false)
 /* The internal name for the open page is the bindable model itself, so a page
    opened by a click and a page opened by a URL are the same state. */
-const openPageKey = openElement
+const openPageKey = openResource
 const filterOpen = ref(false)
 
 /* Toolbar state is kept per kind: moving to another kind and back returns to
    the shape you left, which is the point of a persistent working view. */
-const viewModes = reactive<Partial<Record<ReportElementKind, ViewMode>>>({})
+const viewModes = reactive<Partial<Record<ReportResourceKind, ViewMode>>>({})
 /* `null` is an explicit "no grouping"; absent means the default has not been
    overridden. Without the distinction, turning grouping off would immediately
    turn it back on. */
-const groupKinds = reactive<Partial<Record<ReportElementKind, ReportElementKind | null>>>({})
-const facetState = reactive<Partial<Record<ReportElementKind, FacetSelections>>>({})
+const groupKinds = reactive<Partial<Record<ReportResourceKind, ReportResourceKind | null>>>({})
+const facetState = reactive<Partial<Record<ReportResourceKind, FacetSelections>>>({})
 
 /*
   Each collection opens grouped by the containment the format declares for it —
@@ -141,7 +141,7 @@ const facetState = reactive<Partial<Record<ReportElementKind, FacetSelections>>>
   Roots (Actors, Interfaces, Domains, Journeys) are contained by nothing and
   open flat.
 */
-const DEFAULT_GROUPING: Partial<Record<ReportElementKind, ReportElementKind>> = {
+const DEFAULT_GROUPING: Partial<Record<ReportResourceKind, ReportResourceKind>> = {
   experience: 'interface',
   screen: 'interface',
   capability: 'domain',
@@ -153,11 +153,11 @@ const DEFAULT_GROUPING: Partial<Record<ReportElementKind, ReportElementKind>> = 
 const activeMeta = computed(() => ENTITY_KIND_META[activeKind.value])
 
 /*
- * Keyed by ReportElementKind, not string: a hand-maintained map typed loosely is
+ * Keyed by ReportResourceKind, not string: a hand-maintained map typed loosely is
  * exactly where a newly added kind goes missing, and the rail then renders a row
  * with a blank count instead of failing the build.
  */
-const kindCounts = computed<Record<ReportElementKind, number>>(() => ({
+const kindCounts = computed<Record<ReportResourceKind, number>>(() => ({
   product: 1,
   actor: props.workspace.counts.actors,
   interface: props.workspace.counts.interfaces,
@@ -179,7 +179,7 @@ const viewMode = computed<ViewMode>({
   }
 })
 
-const groupKind = computed<ReportElementKind | undefined>({
+const groupKind = computed<ReportResourceKind | undefined>({
   get: () => {
     const chosen = groupKinds[activeKind.value]
     if (chosen === null) return undefined
@@ -188,7 +188,7 @@ const groupKind = computed<ReportElementKind | undefined>({
        Capabilities by a Domain collection that is empty would file all ten
        under "No Domain". */
     const fallback = DEFAULT_GROUPING[activeKind.value]
-    return fallback && elementsOfKind(props.workspace, fallback).length ? fallback : undefined
+    return fallback && resourcesOfKind(props.workspace, fallback).length ? fallback : undefined
   },
   set: (value) => {
     groupKinds[activeKind.value] = value ?? null
@@ -198,11 +198,11 @@ const groupKind = computed<ReportElementKind | undefined>({
 const facets = computed<FacetSelections>(() => facetState[activeKind.value] ?? {})
 const filtersActive = computed(() => hasSelections(facets.value))
 
-function facetValues(kind: ReportElementKind): string[] {
+function facetValues(kind: ReportResourceKind): string[] {
   return facets.value[kind] ?? []
 }
 
-function setFacet(kind: ReportElementKind, ids: string[]) {
+function setFacet(kind: ReportResourceKind, ids: string[]) {
   facetState[activeKind.value] = { ...facets.value, [kind]: ids }
 }
 
@@ -212,23 +212,23 @@ function clearFacets() {
 
 /** Only kinds this kind actually relates to, and only if the model has any. */
 const facetKinds = computed(() => facetKindsFor(activeKind.value)
-  .filter(kind => elementsOfKind(props.workspace, kind).length))
+  .filter(kind => resourcesOfKind(props.workspace, kind).length))
 
-function facetOptions(kind: ReportElementKind) {
-  return elementsOfKind(props.workspace, kind).map(element => ({ label: element.title, value: element.id }))
+function facetOptions(kind: ReportResourceKind) {
+  return resourcesOfKind(props.workspace, kind).map(resource => ({ label: resource.title, value: resource.id }))
 }
 
 /*
   Chrome scales with the collection.
 
   Eight controls above four Journeys is not a filter offer, it is a wall. Below
-  this many elements the eye is faster than any facet, so the control is not
+  this many resources the eye is faster than any facet, so the control is not
   rendered at all rather than rendered disabled.
 */
 const FILTER_THRESHOLD = 8
 
 const filtersOffered = computed(() => facetKinds.value.length > 0
-  && kindElements.value.length >= FILTER_THRESHOLD)
+  && kindResources.value.length >= FILTER_THRESHOLD)
 
 /** One chip per *active* facet, naming what it selected — never one per offer. */
 const facetChips = computed(() => facetKinds.value
@@ -236,7 +236,7 @@ const facetChips = computed(() => facetKinds.value
   .map((kind) => {
     const ids = facetValues(kind)
     const meta = ENTITY_KIND_META[kind]
-    const [first] = resolveElements(props.workspace, kind, ids)
+    const [first] = resolveResources(props.workspace, kind, ids)
     const rest = ids.length - 1
     return {
       kind,
@@ -256,16 +256,16 @@ const VIEW_MODE_TABS = [
   { value: 'table', label: 'Table', icon: 'i-lucide-table' }
 ]
 
-const kindElements = computed<AnyElementView[]>(() => elementsOfKind(props.workspace, activeKind.value))
+const kindResources = computed<AnyResourceView[]>(() => resourcesOfKind(props.workspace, activeKind.value))
 
 /** What every surface shows: the cards, the table, the counts in the bar. */
-const visibleElements = computed(() => filterElements(kindElements.value, facets.value))
+const visibleResources = computed(() => filterResources(kindResources.value, facets.value))
 
 const groupOptions = computed(() => facetKinds.value
   .map(kind => ({ label: ENTITY_KIND_META[kind].plural, value: kind })))
 
 /*
-  An element relating to several group owners appears under each of them, because
+  A resource relating to several group owners appears under each of them, because
   the model says it belongs to all and dropping it from any but the first would
   be a quiet edit. The visible consequence is group counts that sum past the
   collection count, so the surface says why once rather than leaving a reader to
@@ -274,8 +274,8 @@ const groupOptions = computed(() => facetKinds.value
 const multiGroupCount = computed(() => {
   if (!groupKind.value) return 0
   const memberships = new Map<string, number>()
-  for (const group of elementGroups.value) {
-    for (const element of group.elements) memberships.set(element.key, (memberships.get(element.key) ?? 0) + 1)
+  for (const group of resourceGroups.value) {
+    for (const resource of group.resources) memberships.set(resource.key, (memberships.get(resource.key) ?? 0) + 1)
   }
   return [...memberships.values()].filter(count => count > 1).length
 })
@@ -288,11 +288,11 @@ const multiGroupNote = computed(() => {
     + `${ENTITY_KIND_META[groupKind.value].label} and ${count === 1 ? 'appears' : 'appear'} under each.`
 })
 
-const elementGroups = computed(() => {
+const resourceGroups = computed(() => {
   const by = groupKind.value
   /* The bucket is named after what is missing, so it reads as a model fact:
      "No Domain", not the generic "Unassigned". */
-  return groupElements(props.workspace, visibleElements.value, by ?? null,
+  return groupResources(props.workspace, visibleResources.value, by ?? null,
     by ? `No ${ENTITY_KIND_META[by].label}` : '')
 })
 
@@ -305,8 +305,8 @@ const elementGroups = computed(() => {
   about the *peek*, not about pages. A thin page is a good page: for an Actor,
   the reach is the reading.
 */
-const openPage = computed<AnyElementView | null>(() => openPageKey.value
-  ? resolveElementKey(props.workspace, openPageKey.value) ?? null
+const openPage = computed<AnyResourceView | null>(() => openPageKey.value
+  ? resolveResourceKey(props.workspace, openPageKey.value) ?? null
   : null)
 
 /**
@@ -315,7 +315,7 @@ const openPage = computed<AnyElementView | null>(() => openPageKey.value
  * A Scenario has exactly one parent, and the collection it belongs to is that
  * parent's — so `Capability Scenarios › Create an owned collection` names a
  * collection the reader never chose and drops the Capability they came from.
- * The trail walks the containment instead: collection, parent, element.
+ * The trail walks the containment instead: collection, parent, resource.
  */
 interface TrailStep {
   key: string
@@ -329,19 +329,19 @@ interface TrailStep {
 }
 
 const pageTrail = computed<TrailStep[]>(() => {
-  const element = openPage.value
-  if (!element) return []
+  const resource = openPage.value
+  if (!resource) return []
 
-  const parentKind = PARENT_OF[element.kind]
-  const parent = parentKind && isScenarioKind(element.kind)
-    ? resolveElement(props.workspace, parentKind, (element as ScenarioView).scenarioType === 'capability'
-        ? (element as ScenarioView).capabilityId
-        : (element as ScenarioView).journeyId)
+  const parentKind = PARENT_OF[resource.kind]
+  const parent = parentKind && isScenarioKind(resource.kind)
+    ? resolveResource(props.workspace, parentKind, (resource as ScenarioView).scenarioType === 'capability'
+        ? (resource as ScenarioView).capabilityId
+        : (resource as ScenarioView).journeyId)
     : undefined
 
   /* The collection is the parent's when there is one: you reached this Scenario
      through Capabilities, not through a collection of every Scenario. */
-  const collectionKind = parent ? parent.kind : element.kind
+  const collectionKind = parent ? parent.kind : resource.kind
   const collectionMeta = ENTITY_KIND_META[collectionKind]
 
   const steps: TrailStep[] = [{
@@ -359,25 +359,25 @@ const pageTrail = computed<TrailStep[]>(() => {
       key: parent.key,
       label: parent.title,
       title: `Back to ${parent.title}`,
-      go: () => openElementPage(parent)
+      go: () => openResourcePage(parent)
     })
   }
 
-  steps.push({ key: element.key, label: element.title, title: element.title })
+  steps.push({ key: resource.key, label: resource.title, title: resource.title })
   return steps
 })
 
 /* A page brings its own section with it, so a link lands with the rail, the
    breadcrumb and the surface behind it already agreeing. */
-watch([openElement, () => props.workspace], () => {
-  const key = openElement.value
+watch([openResource, () => props.workspace], () => {
+  const key = openResource.value
   if (!key) return
-  const element = resolveElementKey(props.workspace, key)
-  if (!element) {
-    openElement.value = null
+  const resource = resolveResourceKey(props.workspace, key)
+  if (!resource) {
+    openResource.value = null
     return
   }
-  const sectionKind = PARENT_OF[element.kind] ?? element.kind
+  const sectionKind = PARENT_OF[resource.kind] ?? resource.kind
   activeKind.value = sectionKind
   activeSection.value = sectionKind
 }, { immediate: true })
@@ -385,62 +385,62 @@ watch([openElement, () => props.workspace], () => {
 /* Live recompiles replace the projection. Rehydrate selection by stable key so
    focus, filters, and the open page survive ordinary model edits. */
 watch(() => props.workspace, (workspace) => {
-  if (openElement.value && !workspace.byKey.has(openElement.value)) openElement.value = null
+  if (openResource.value && !workspace.byKey.has(openResource.value)) openResource.value = null
   if (topologyFocus.value && !workspace.byKey.has(topologyFocus.value)) topologyFocus.value = null
 })
 
 const topologyActive = computed(() => activeSection.value === 'topology')
 const showToolbar = computed(() => activeKind.value !== 'product' && !openPage.value && !topologyActive.value)
-const collectionDocs = computed(() => docsForElementKind(activeKind.value))
+const collectionDocs = computed(() => docsForResourceKind(activeKind.value))
 
-function setKind(kind: ReportElementKind) {
+function setKind(kind: ReportResourceKind) {
   mobileNavOpen.value = false
   activeKind.value = kind
   activeSection.value = kind === 'product' ? 'overview' : kind
-  openElement.value = null
+  openResource.value = null
 }
 
 function openTopology() {
   mobileNavOpen.value = false
   activeSection.value = 'topology'
-  openElement.value = null
+  openResource.value = null
   topologyFocus.value = null
 }
 
 /** Resolve a key from an overview projection and open its page. */
-function openElementKey(key: string) {
-  const element = resolveElementKey(props.workspace, key)
-  if (element) openElementPage(element)
+function openResourceKey(key: string) {
+  const resource = resolveResourceKey(props.workspace, key)
+  if (resource) openResourcePage(resource)
 }
 
 /** The page: a place, with a URL, that the browser's back button can leave. */
-function openElementPage(element: AnyElementView) {
+function openResourcePage(resource: AnyResourceView) {
   mobileNavOpen.value = false
-  const parentKind = PARENT_OF[element.kind]
-  const sectionKind = parentKind ?? element.kind
+  const parentKind = PARENT_OF[resource.kind]
+  const sectionKind = parentKind ?? resource.kind
   activeKind.value = sectionKind
   activeSection.value = sectionKind
-  openElement.value = element.key
+  openResource.value = resource.key
 }
 
-/** One element's neighbourhood, on the canvas that can actually draw it. */
-function focusTopology(element: AnyElementView) {
+/** One resource's neighbourhood, on the canvas that can actually draw it. */
+function focusTopology(resource: AnyResourceView) {
   activeSection.value = 'topology'
-  openElement.value = null
-  topologyFocus.value = element.key
+  openResource.value = null
+  topologyFocus.value = resource.key
 }
 
-/** ⌘K lands on the element's page — you named it, so you meant it. */
-function onSearchSelect(element: AnyElementView) {
-  openElementPage(element)
+/** ⌘K lands on the resource's page — you named it, so you meant it. */
+function onSearchSelect(resource: AnyResourceView) {
+  openResourcePage(resource)
 }
 
 /* ------------------------------------------------------------------ */
 /* Tables: one column set per kind, built from the same three helpers   */
 /* ------------------------------------------------------------------ */
 
-const titlesOf = (kind: ReportElementKind, ids: string[]) =>
-  resolveElements(props.workspace, kind, ids).map(element => element.title).join(', ')
+const titlesOf = (kind: ReportResourceKind, ids: string[]) =>
+  resolveResources(props.workspace, kind, ids).map(resource => resource.title).join(', ')
 
 function sortableHeader(label: string) {
   return ({ column }: { column: { getIsSorted: () => false | 'asc' | 'desc', toggleSorting: (desc: boolean) => void } }) => {
@@ -460,19 +460,19 @@ function sortableHeader(label: string) {
 const countCell = (count: number, hint: string) =>
   h('span', { class: 'blr-meta', title: hint || undefined }, String(count))
 
-function resolvedInterfaceType(kind: ReportElementKind | null, id: string) {
+function resolvedInterfaceType(kind: ReportResourceKind | null, id: string) {
   if (kind !== 'interface' || !id) return undefined
-  const element = resolveElement(props.workspace, 'interface', id)
-  return element?.kind === 'interface' ? element.interfaceType : undefined
+  const resource = resolveResource(props.workspace, 'interface', id)
+  return resource?.kind === 'interface' ? resource.interfaceType : undefined
 }
 
-function resolvedActor(kind: ReportElementKind | null, id: string) {
+function resolvedActor(kind: ReportResourceKind | null, id: string) {
   if (kind !== 'actor' || !id) return undefined
-  const element = resolveElement(props.workspace, 'actor', id)
-  return element?.kind === 'actor' ? element : undefined
+  const resource = resolveResource(props.workspace, 'actor', id)
+  return resource?.kind === 'actor' ? resource : undefined
 }
 
-function titleColumn(kind: ReportElementKind): TableColumn<AnyElementView> {
+function titleColumn(kind: ReportResourceKind): TableColumn<AnyResourceView> {
   return {
     accessorKey: 'title',
     header: sortableHeader(ENTITY_KIND_META[kind].label),
@@ -505,32 +505,32 @@ function titleColumn(kind: ReportElementKind): TableColumn<AnyElementView> {
  * one the table hides.
  */
 function relationTitleColumn(
-  kind: ReportElementKind,
+  kind: ReportResourceKind,
   label: string,
-  read: (element: AnyElementView) => string
-): TableColumn<AnyElementView> {
+  read: (resource: AnyResourceView) => string
+): TableColumn<AnyResourceView> {
   return {
     id: kind,
-    accessorFn: (element: AnyElementView) => resolveElement(props.workspace, kind, read(element))?.title ?? '',
+    accessorFn: (resource: AnyResourceView) => resolveResource(props.workspace, kind, read(resource))?.title ?? '',
     header: sortableHeader(label),
     cell: ({ row }) => {
-      const element = resolveElement(props.workspace, kind, read(row.original))
-      const marker = element?.kind === 'interface'
-        ? h(BlrInterfaceTypeComponent, { type: element.interfaceType, size: 'xs' })
+      const resource = resolveResource(props.workspace, kind, read(row.original))
+      const marker = resource?.kind === 'interface'
+        ? h(BlrInterfaceTypeComponent, { type: resource.interfaceType, size: 'xs' })
         : h(resolveComponent('UIcon'), { name: ENTITY_KIND_META[kind].icon, class: 'size-3.5 shrink-0 text-dimmed' })
       return h('span', { class: 'inline-flex items-center gap-1.5 text-sm text-default' }, [
         marker,
-        h('span', { class: 'truncate' }, element?.title ?? '—')
+        h('span', { class: 'truncate' }, resource?.title ?? '—')
       ])
     }
   }
 }
 
 /** A derived relation count, with the names behind it on hover. */
-function relationColumn(kind: ReportElementKind, label?: string): TableColumn<AnyElementView> {
+function relationColumn(kind: ReportResourceKind, label?: string): TableColumn<AnyResourceView> {
   return {
     id: kind,
-    accessorFn: (element: AnyElementView) => relatedIds(element, kind).length,
+    accessorFn: (resource: AnyResourceView) => relatedIds(resource, kind).length,
     header: sortableHeader(label ?? ENTITY_KIND_META[kind].plural),
     cell: ({ row }) => countCell(
       relatedIds(row.original, kind).length,
@@ -542,30 +542,30 @@ function relationColumn(kind: ReportElementKind, label?: string): TableColumn<An
 function relationIdsColumn(
   id: string,
   label: string,
-  kind: ReportElementKind,
-  read: (element: AnyElementView) => string[]
-): TableColumn<AnyElementView> {
+  kind: ReportResourceKind,
+  read: (resource: AnyResourceView) => string[]
+): TableColumn<AnyResourceView> {
   return {
     id,
-    accessorFn: (element: AnyElementView) => read(element).length,
+    accessorFn: (resource: AnyResourceView) => read(resource).length,
     header: sortableHeader(label),
     cell: ({ row }) => countCell(read(row.original).length, titlesOf(kind, read(row.original)))
   }
 }
 
-function textColumn(id: string, label: string, read: (element: AnyElementView) => string): TableColumn<AnyElementView> {
+function textColumn(id: string, label: string, read: (resource: AnyResourceView) => string): TableColumn<AnyResourceView> {
   return {
     id,
-    accessorFn: (element: AnyElementView) => read(element),
+    accessorFn: (resource: AnyResourceView) => read(resource),
     header: sortableHeader(label),
     cell: ({ row }) => h('span', { class: 'text-sm text-default' }, read(row.original) || '—')
   }
 }
 
-function numberColumn(id: string, label: string, read: (element: AnyElementView) => number): TableColumn<AnyElementView> {
+function numberColumn(id: string, label: string, read: (resource: AnyResourceView) => number): TableColumn<AnyResourceView> {
   return {
     id,
-    accessorFn: (element: AnyElementView) => read(element),
+    accessorFn: (resource: AnyResourceView) => read(resource),
     header: sortableHeader(label),
     cell: ({ row }) => countCell(read(row.original), '')
   }
@@ -576,25 +576,25 @@ function contextLabel(context: ContextView): string {
 }
 
 /** Context is a structured place rather than an id list, so it gets its own. */
-function contextColumn(): TableColumn<AnyElementView> {
-  const read = (element: AnyElementView): ContextView[] =>
-    'contexts' in element ? (element as { contexts: ContextView[] }).contexts : []
+function contextColumn(): TableColumn<AnyResourceView> {
+  const read = (resource: AnyResourceView): ContextView[] =>
+    'contexts' in resource ? (resource as { contexts: ContextView[] }).contexts : []
   return {
     id: 'contexts',
-    accessorFn: (element: AnyElementView) => read(element).length,
+    accessorFn: (resource: AnyResourceView) => read(resource).length,
     header: sortableHeader('Contexts'),
     cell: ({ row }) => countCell(read(row.original).length, read(row.original).map(contextLabel).join(', '))
   }
 }
 
-const tableColumns = computed<TableColumn<AnyElementView>[]>(() => {
+const tableColumns = computed<TableColumn<AnyResourceView>[]>(() => {
   const base = [titleColumn(activeKind.value)]
   switch (activeKind.value) {
     case 'actor':
       return [
         ...base,
-        textColumn('actorKind', 'Kind', element => (element as ActorView).actorKind),
-        textColumn('relationship', 'Relationship', element => (element as ActorView).relationship),
+        textColumn('actorKind', 'Kind', resource => (resource as ActorView).actorKind),
+        textColumn('relationship', 'Relationship', resource => (resource as ActorView).relationship),
         relationColumn('interface'),
         relationColumn('experience'),
         relationColumn('journey')
@@ -602,21 +602,21 @@ const tableColumns = computed<TableColumn<AnyElementView>[]>(() => {
     case 'interface':
       return [
         ...base,
-        textColumn('interfaceType', 'Type', element =>
-          INTERFACE_TYPE_META[(element as InterfaceView).interfaceType].label),
+        textColumn('interfaceType', 'Type', resource =>
+          INTERFACE_TYPE_META[(resource as InterfaceView).interfaceType].label),
         relationColumn('actor'),
         relationColumn('experience'),
         relationColumn('capability'),
         relationColumn('screen'),
         relationColumn('journey'),
-        numberColumn('entryPoints', 'Entry points', element => (element as InterfaceView).entryPoints.length)
+        numberColumn('entryPoints', 'Entry points', resource => (resource as InterfaceView).entryPoints.length)
       ]
     case 'experience':
       return [
         ...base,
-        textColumn('access', 'Access', element => (element as ExperienceView).accessMode),
+        textColumn('access', 'Access', resource => (resource as ExperienceView).accessMode),
         relationColumn('actor'),
-        relationTitleColumn('interface', 'Interface', element => (element as ExperienceView).interfaceIds[0] ?? ''),
+        relationTitleColumn('interface', 'Interface', resource => (resource as ExperienceView).interfaceIds[0] ?? ''),
         relationColumn('capability'),
         relationColumn('screen'),
         relationColumn('journey')
@@ -629,11 +629,11 @@ const tableColumns = computed<TableColumn<AnyElementView>[]>(() => {
         relationColumn('capability-scenario', 'Cap. Scenarios'),
         relationColumn('journey-scenario', 'Journey Scenarios'),
         relationIdsColumn('scenarioJourneys', 'Journeys via scenarios', 'journey',
-          element => (element as ScreenView).scenarioJourneyIds),
+          resource => (resource as ScreenView).scenarioJourneyIds),
         relationIdsColumn('capabilityJourneys', 'Journeys via capabilities', 'journey',
-          element => (element as ScreenView).capabilityJourneyIds),
-        numberColumn('states', 'States', element => (element as ScreenView).states.length),
-        numberColumn('actions', 'Actions', element => (element as ScreenView).actions.length)
+          resource => (resource as ScreenView).capabilityJourneyIds),
+        numberColumn('states', 'States', resource => (resource as ScreenView).states.length),
+        numberColumn('actions', 'Actions', resource => (resource as ScreenView).actions.length)
       ]
     case 'entity':
       return [...base, relationColumn('domain'), relationColumn('entity'), relationColumn('capability'), relationColumn('screen')]
@@ -648,9 +648,9 @@ const tableColumns = computed<TableColumn<AnyElementView>[]>(() => {
     case 'capability':
       return [
         ...base,
-        textColumn('domain', 'Domain', (element) => {
-          const id = (element as CapabilityView).domainId
-          return id ? resolveElement(props.workspace, 'domain', id)?.title ?? id : ''
+        textColumn('domain', 'Domain', (resource) => {
+          const id = (resource as CapabilityView).domainId
+          return id ? resolveResource(props.workspace, 'domain', id)?.title ?? id : ''
         }),
         contextColumn(),
         relationColumn('capability-scenario', 'Capability Scenarios'),
@@ -668,29 +668,29 @@ const tableColumns = computed<TableColumn<AnyElementView>[]>(() => {
         relationColumn('screen'),
         relationColumn('journey-scenario', 'Variations'),
         relationColumn('rule'),
-        numberColumn('steps', 'Steps', element => (element as JourneyView).stepCount)
+        numberColumn('steps', 'Steps', resource => (resource as JourneyView).stepCount)
       ]
     case 'capability-scenario':
       return [
         ...base,
-        textColumn('scenarioKind', 'Kind', element => (element as ScenarioView).kindName),
-        relationTitleColumn('capability', 'Capability', element => (element as ScenarioView).capabilityId),
+        textColumn('scenarioKind', 'Kind', resource => (resource as ScenarioView).kindName),
+        relationTitleColumn('capability', 'Capability', resource => (resource as ScenarioView).capabilityId),
         relationColumn('actor'),
         contextColumn(),
-        numberColumn('steps', 'Steps', element => (element as ScenarioView).steps.length),
-        numberColumn('decisions', 'Decisions', element => (element as ScenarioView).decisionPoints.length),
+        numberColumn('steps', 'Steps', resource => (resource as ScenarioView).steps.length),
+        numberColumn('decisions', 'Decisions', resource => (resource as ScenarioView).decisionPoints.length),
         relationColumn('screen'),
         relationColumn('rule')
       ]
     case 'journey-scenario':
       return [
         ...base,
-        textColumn('scenarioKind', 'Kind', element => (element as ScenarioView).kindName),
+        textColumn('scenarioKind', 'Kind', resource => (resource as ScenarioView).kindName),
         /* `kind` classifies the variation; `result` records how it ended. Orthogonal, so both. */
-        textColumn('result', 'Result', element => (element as ScenarioView).result),
-        relationTitleColumn('journey', 'Journey', element => (element as ScenarioView).journeyId),
+        textColumn('result', 'Result', resource => (resource as ScenarioView).result),
+        relationTitleColumn('journey', 'Journey', resource => (resource as ScenarioView).journeyId),
         relationColumn('actor'),
-        numberColumn('steps', 'Steps', element => (element as ScenarioView).steps.length),
+        numberColumn('steps', 'Steps', resource => (resource as ScenarioView).steps.length),
         relationColumn('capability'),
         relationColumn('screen'),
         relationColumn('rule')
@@ -719,13 +719,13 @@ const tableColumns = computed<TableColumn<AnyElementView>[]>(() => {
  * and clearing the filter hides it again — the table describes what is on
  * screen, not what the kind could theoretically hold.
  */
-const visibleColumns = computed<TableColumn<AnyElementView>[]>(() => {
-  const rows = visibleElements.value
+const visibleColumns = computed<TableColumn<AnyResourceView>[]>(() => {
+  const rows = visibleResources.value
   if (rows.length < 2) return tableColumns.value
   return tableColumns.value.filter((column, index) => {
     /* The title column identifies the row; it is never furniture. */
     if (index === 0) return true
-    const read = (column as { accessorFn?: (row: AnyElementView, index: number) => unknown }).accessorFn
+    const read = (column as { accessorFn?: (row: AnyResourceView, index: number) => unknown }).accessorFn
     if (!read) return true
     const first = read(rows[0]!, 0)
     return rows.some((row, position) => read(row, position) !== first)
@@ -737,7 +737,7 @@ const visibleColumnIds = computed(() => new Set(visibleColumns.value.map(column 
   ?? (column as { accessorKey?: string }).accessorKey)))
 
 /** Each note names the columns it explains, so a pruned table drops it too. */
-const TABLE_NOTE: Partial<Record<ReportElementKind, { text: string, needs: string[] }>> = {
+const TABLE_NOTE: Partial<Record<ReportResourceKind, { text: string, needs: string[] }>> = {
   screen: {
     text: 'Scenario and Capability Journey columns keep the two derivation paths separate. Hover a count for the names behind it.',
     needs: ['scenarioJourneys', 'capabilityJourneys']
@@ -773,7 +773,7 @@ const tableNote = computed(() => {
 /** Scenarios whose Journey is not in the model would otherwise be unreachable. */
 const orphanScenarios = computed(() => props.workspace.scenarios
   .filter(scenario => scenario.scenarioType === 'journey'
-    && !resolveElement(props.workspace, 'journey', scenario.journeyId)))
+    && !resolveResource(props.workspace, 'journey', scenario.journeyId)))
 
 /* The status bar badge and `BlrOverview` read coverage in the same tone. */
 const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
@@ -865,7 +865,7 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
             <span class="truncate">{{ activeKind === 'product' ? 'Overview' : activeMeta.plural }}</span>
           </span>
           <span v-if="activeKind !== 'product'" class="blr-meta shrink-0">
-            {{ visibleElements.length }}<template v-if="visibleElements.length !== kindElements.length"> / {{ kindElements.length }}</template>
+            {{ visibleResources.length }}<template v-if="visibleResources.length !== kindResources.length"> / {{ kindResources.length }}</template>
           </span>
         </template>
       </nav>
@@ -911,7 +911,7 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
           {{ activeKind === 'product' ? 'Overview' : activeMeta.plural }}
         </span>
         <span v-if="activeKind !== 'product'" class="blr-meta hidden shrink-0 sm:inline">
-          {{ visibleElements.length }}<template v-if="visibleElements.length !== kindElements.length"> / {{ kindElements.length }}</template>
+          {{ visibleResources.length }}<template v-if="visibleResources.length !== kindResources.length"> / {{ kindResources.length }}</template>
         </span>
       </template>
 
@@ -1119,8 +1119,8 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
             v-if="activeKind === 'product'"
             :workspace="workspace"
             :logo-src="logoSrc"
-            @select="openElementPage"
-            @select-key="openElementKey"
+            @select="openResourcePage"
+            @select-key="openResourceKey"
           >
             <template v-if="$slots['primary-action']" #primary-action>
               <slot name="primary-action" />
@@ -1130,14 +1130,14 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
             </template>
           </BlrOverview>
 
-          <!-- ENTITY PAGE: one element in full, at its own URL. -->
-          <BlrElementPage
+          <!-- ENTITY PAGE: one resource in full, at its own URL. -->
+          <BlrResourcePage
             v-else-if="openPage"
             v-model:scenario-route="scenarioRoute"
             v-model:route-columns="routeColumns"
             :workspace="workspace"
-            :element="openPage"
-            @open="openElementPage"
+            :resource="openPage"
+            @open="openResourcePage"
             @focus="focusTopology"
           />
 
@@ -1145,7 +1145,7 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
           <div v-else :class="groupKind ? 'space-y-3' : 'space-y-6'">
             <p v-if="multiGroupNote" class="text-xs text-dimmed">{{ multiGroupNote }}</p>
             <UCollapsible
-              v-for="group in elementGroups"
+              v-for="group in resourceGroups"
               :key="group.key || 'all'"
               :default-open="true"
               :disabled="!groupKind"
@@ -1177,7 +1177,7 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
                   >
                     {{ group.title }}
                   </span>
-                  <span class="blr-meta ms-auto">{{ group.elements.length }}</span>
+                  <span class="blr-meta ms-auto">{{ group.resources.length }}</span>
                   <UIcon
                     name="i-lucide-chevron-down"
                     class="size-3.5 shrink-0 text-dimmed transition-transform"
@@ -1189,21 +1189,21 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
               <template #content>
                 <UTable
                   v-if="viewMode === 'table'"
-                  :data="group.elements"
+                  :data="group.resources"
                   :columns="visibleColumns"
                   class="rounded-xl border border-default bg-default"
                   :ui="{ tr: 'cursor-pointer' }"
-                  :on-select="(_event: Event, row: any) => openElementPage(row.original)"
+                  :on-select="(_event: Event, row: any) => openResourcePage(row.original)"
                 />
 
                 <div v-else class="space-y-2">
-                  <BlrElementCard
-                    v-for="element in group.elements"
-                    :key="element.key"
+                  <BlrResourceCard
+                    v-for="resource in group.resources"
+                    :key="resource.key"
                     :workspace="workspace"
-                    :element="element"
+                    :resource="resource"
                     :badge="!groupKind || groupKind !== group.kind"
-                    @open="openElementPage"
+                    @open="openResourcePage"
                   />
                 </div>
               </template>
@@ -1214,7 +1214,7 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
             </p>
 
             <!-- A dead end names its own way out. -->
-            <div v-if="!visibleElements.length" class="flex flex-wrap items-center gap-3">
+            <div v-if="!visibleResources.length" class="flex flex-wrap items-center gap-3">
               <p class="text-sm text-muted italic">
                 <template v-if="filtersActive">Nothing matches the current filters.</template>
                 <template v-else>This model declares no {{ activeMeta.plural.toLowerCase() }}.</template>
@@ -1237,7 +1237,7 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
                 :key="scenario.id"
                 type="button"
                 class="block text-start text-sm text-muted hover:text-primary"
-                @click="openElementPage(scenario)"
+                @click="openResourcePage(scenario)"
               >
                 {{ scenario.title }} — declares journey “{{ scenario.journeyId }}”.
               </button>
@@ -1251,7 +1251,7 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
           <BlrProductTopology
             :workspace="workspace"
             :focus="topologyFocus"
-            @select="openElementPage"
+            @select="openResourcePage"
           />
         </div>
       </section>

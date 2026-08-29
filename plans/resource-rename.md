@@ -2,7 +2,8 @@
 
 The decision and its argument are [ADR-0015](./adr/0015-resource-and-resource-type.md).
 This file is the change inventory: what moves, in what order, and what must not
-move. Not started at time of writing.
+move. **Completed 2026-08-29**; see *Outcome* at the end for what the plan got
+wrong.
 
 ## The vocabulary
 
@@ -108,14 +109,15 @@ it is model content, not vocabulary.
 ## Order
 
 1. ADR-0015 and this plan. **Done.**
-2. `spec/format.md` and `spec/report.md`, with defects 1 and 2.
-3. `src/` and `layers/`, `viewer/`, file renames and lab shadowing in one commit.
-4. `test/`, then `npm run verify`.
-5. `docs/`, `skills/`, `README.md`, `AGENTS.md` with defect 3.
-6. `.businesslens/` — ids, then the gloss rewrite (defect 5) and
-   `product-model.md` (defect 6).
-7. `plans/glossary.md` (defect 4) and the 0.9.0 CHANGELOG entry.
-8. Landing repo — see below.
+2. `spec/format.md` and `spec/report.md`, with defects 1 and 2. **Done.**
+3. `src/`, `layers/`, `viewer/`, file renames. **Done.**
+4. `test/`, then `npm run verify`. **Done** — 267 tests, both typechecks, build,
+   package size, repo and Blueprint checks all green.
+5. `docs/`, `skills/`, `README.md`, `AGENTS.md` with defect 3. **Done.**
+6. `.businesslens/` — ids, the gloss rewrite (defect 5), `product-model.md`
+   (defect 6). **Done.**
+7. `plans/glossary.md` (defect 4) and the 0.9.0 CHANGELOG entry. **Done.**
+8. Landing repository. **Done**, with one blocker recorded below.
 
 ## Landing repository
 
@@ -139,3 +141,79 @@ hero/SEO rewrite and ERD FAQ stay on the branch.
   and `0012-public-terminology-lives-with-entities.md`, and their bodies.
 - `docs/design/*` — "the nine entities"; `content/blog/pdd-and-spec-driven-development.md:89,108`.
 - `tests/e2e/landing.desktop.spec.ts:511` asserts a FAQ label verbatim.
+
+## Outcome
+
+115 files in `pdd`, 37 in the landing repository. `npm run verify` is green;
+landing `eslint` is clean and its integration suite matches its pre-change
+baseline exactly.
+
+### Where the plan was wrong
+
+- **Defect 1 was not already fixed.** An earlier check reported it clean because
+  the sentence had been reflowed and the phrase now spanned a line break. It was
+  live, and a straight swap would have reproduced it verbatim as *"a Resource
+  relates to other Resources"*. The example is now *a Comment replies to another
+  Comment*.
+- **`product-model.md` keeps eight of its twelve edges.** The plan said drop all
+  twelve. Only four were wrong — Experience, Screen, and the two Scenario types,
+  which the format seats under Interface, Experience, Capability and Journey, and
+  which already existed on those four parents. The eight top-level edges are
+  genuinely owned by the Product Model and stayed. 134 lines → 91.
+- **The landing ADRs were not renamed.** The plan called for renaming two ADR
+  filenames and editing their bodies. That repository already uses the supersede
+  convention — `0007` carries a status line pointing at `0011` — so `0009` gained
+  a status line and a new `0014` records the count and the vocabulary, matching
+  the discipline `pdd` uses for its own ADRs.
+- **The lab-shadowing hazard was moot.** `report-viewer-lab` contains no
+  components, only a README and a `nuxt.config.ts`.
+- **A blanket sweep damages `src/logo.ts`.** It validates SVG, where *element* is
+  the correct word; the first pass rewrote it and was reverted.
+  `scripts/build-theme-icons.mjs` is excluded for the same reason, as is
+  `docs/design/architecture/catalog-domain-model.md` in the landing repository,
+  whose "entity" is a database row.
+- **Case-preserving substitution breaks articles.** *an element* becomes *an
+  resource* in 33 files; both that and the over-correction that followed it are
+  fixed, but a future sweep of this shape needs the article pass built in.
+
+### The v11 skew, since fixed
+
+Landing `typecheck`, `build` and `test:e2e` were failing on
+`shared/contracts/blueprints.ts:2`, which imported `ProductReportV10Schema` from
+a linked `businesslens` that exports `ProductReportV11Schema`. It was pre-existing
+— verified identical with the vocabulary work stashed — and it was also the cause
+of all ten "unrelated" integration failures, not a separate problem.
+
+Fixed in both repositories:
+
+- **landing** — the schema import and `BlueprintReportSchema`; the media type
+  constant, `version=10` → `version=11`, which is what the report route actually
+  serves; and the v10 prose in `projection.ts`, `artwork.ts`,
+  `blueprintProjection.test.ts`, `catalog-domain-model.md`,
+  `check-performance-budget.mjs` and `going-live.md`.
+- **pdd** — `src/report.ts`'s docstring still said v10, and
+  `src/commands/pull.ts` still sent `accept: …; version=10`, so the CLI
+  negotiated a version the catalog no longer serves. `test/pull.test.ts` follows.
+- **the catalog fixture** — `tests/fixtures/catalog/report.json` was a
+  hand-authored v10 report with no source model, so it could not be regenerated
+  and was upgraded field by field against `ProductReportV11Schema` itself:
+  `schemaVersion`, `counts.entities`, an empty `model.entities`, `entityIds` on
+  every Capability and Screen, `entityId`/`entityState`/`unattended` on every
+  Step, and `informationKept` on every Actor. It now both parses and passes
+  `validateProductReport` with no issues.
+
+Landing is green: 200 integration tests, 125 e2e across four projects, `eslint`
+and `typecheck` clean.
+
+### Two consequences the ninth card had
+
+- **It needs an empty band, not no band.** `landing.desktop.spec.ts` holds every
+  card in a section to one height, and a card that omitted its band measured 24px
+  short. `HomeCard` now renders a dashed `aspect-video` box when a resource type
+  has no plate, so the card reserves exactly the space its drawing will take.
+- **The Screens note had to lose four characters.** Three columns are wider than
+  four, and at that width every note fits on one line except *"A meaningful view,
+  not a route or a component"*, whose final word wrapped and lifted its whole row.
+  It now reads *"…not a route or module"*. This is visible marketing copy and is
+  worth a second opinion; the alternative was accepting two card heights and
+  weakening the test that catches note-wrap regressions.

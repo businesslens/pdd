@@ -2,19 +2,19 @@
 /**
  * ⌘K over the whole model.
  *
- * One palette for every element kind, grouped in the fixed kind order so the
+ * One palette for every resource kind, grouped in the fixed kind order so the
  * same result always appears in the same place. Selecting a result hands the
- * element back to the Product Report. The two Scenario collections are separate
+ * resource back to the Product Report. The two Scenario collections are separate
  * kinds, so they fall out as separate groups without a special case.
  */
 import type { CommandPaletteGroup, CommandPaletteItem } from '@nuxt/ui'
-import type { AnyElementView, ReportWorkspace } from '../utils/reportWorkspace'
+import type { AnyResourceView, ReportWorkspace } from '../utils/reportWorkspace'
 import { REPORT_ENTITY_KINDS } from '../utils/reportWorkspace'
-import { elementsOfKind } from '../utils/elementFacets'
+import { resourcesOfKind } from '../utils/resourceFacets'
 import { firstSentence } from '../utils/reportMarkdown'
 
 const props = defineProps<{ workspace: ReportWorkspace }>()
-const emit = defineEmits<{ select: [element: AnyElementView] }>()
+const emit = defineEmits<{ select: [resource: AnyResourceView] }>()
 
 const open = defineModel<boolean>('open', { default: false })
 
@@ -25,18 +25,18 @@ defineShortcuts({
   }
 })
 
-function choose(element: AnyElementView) {
-  emit('select', element)
+function choose(resource: AnyResourceView) {
+  emit('select', resource)
   open.value = false
 }
 
-function items(elements: AnyElementView[], icon: string): CommandPaletteItem[] {
-  return elements.map(element => ({
-    label: element.title,
-    description: firstSentence(element.lead, 90),
-    suffix: element.id,
+function items(resources: AnyResourceView[], icon: string): CommandPaletteItem[] {
+  return resources.map(resource => ({
+    label: resource.title,
+    description: firstSentence(resource.lead, 90),
+    suffix: resource.id,
     icon,
-    onSelect: () => choose(element)
+    onSelect: () => choose(resource)
   }))
 }
 
@@ -45,7 +45,7 @@ const groups = computed<CommandPaletteGroup<CommandPaletteItem>[]>(() =>
     .map(meta => ({
       id: meta.kind,
       label: meta.plural,
-      items: items(elementsOfKind(props.workspace, meta.kind), meta.icon)
+      items: items(resourcesOfKind(props.workspace, meta.kind), meta.icon)
     }))
     .filter(group => group.items.length))
 </script>
@@ -55,7 +55,7 @@ const groups = computed<CommandPaletteGroup<CommandPaletteItem>[]>(() =>
     <template #content>
       <UCommandPalette
         :groups="groups"
-        placeholder="Search every element in this model…"
+        placeholder="Search every resource in this model…"
         :fuse="{ fuseOptions: { keys: ['label', 'description', 'suffix'] } }"
         close
         class="h-96"

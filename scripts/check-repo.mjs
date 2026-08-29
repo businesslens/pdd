@@ -193,14 +193,14 @@ if (!canonicalFormatContract) {
 // an *unrecognized* H2 survives export; it is not a recognized section.
 const UNRECOGNIZED_SPEC_SECTIONS = new Set(['Anything else'])
 const specSource = await readFile(resolve(root, 'spec/format.md'), 'utf8')
-const elementTable = specSource.match(/\| Element \| Compact \|[\s\S]*?\n\n/)?.[0]
-if (!elementTable) {
-  errors.push('spec/format.md does not expose the element layout table')
+const resourceTable = specSource.match(/\| Resource type \| Compact \|[\s\S]*?\n\n/)?.[0]
+if (!resourceTable) {
+  errors.push('spec/format.md does not expose the resource type layout table')
 } else {
   const specNames = new Map()
-  for (const row of elementTable.matchAll(/^\| ([^|]+) \|/gm)) {
+  for (const row of resourceTable.matchAll(/^\| ([^|]+) \|/gm)) {
     const kind = row[1].trim()
-    if (kind !== 'Element' && !kind.startsWith('---')) specNames.set(kind, 'element kind')
+    if (kind !== 'Resource type' && !kind.startsWith('---')) specNames.set(kind, 'resource type')
   }
   for (const [, example] of specSource.matchAll(/```markdown\n([\s\S]*?)```/g)) {
     for (const heading of example.matchAll(/^## (.+)$/gm)) {

@@ -15,7 +15,7 @@ automation are possible Experiences.
 Experiences are optional. An Experience has a stable audience, access boundary,
 and capability boundary inside exactly one [Interface](./interfaces.md), which
 is determined by its folder. Similar Experiences on another Interface are
-counterparts with separate qualified ids, not one shared element.
+counterparts with separate qualified ids, not one shared resource.
 
 ## When you create one
 

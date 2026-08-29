@@ -4,7 +4,7 @@
  *
  * Owning the canvas in one place keeps the graphs comparable across views:
  * the same dotted background, the same controls, the same fit behaviour, the
- * same element boxes. Views pass placed nodes and edges (see flowGraph.ts)
+ * same resource boxes. Views pass placed nodes and edges (see flowGraph.ts)
  * and listen for selection; nothing here decides what a graph contains.
  */
 import { VueFlow, useVueFlow } from '@vue-flow/core'
@@ -26,14 +26,14 @@ const props = withDefaults(defineProps<{
 })
 
 const emit = defineEmits<{
-  /** A box was clicked; the key is the collision-safe element identity. */
-  select: [elementKey: string]
+  /** A box was clicked; the key is the collision-safe resource identity. */
+  select: [resourceKey: string]
   /** A box was double-clicked — views treat this as "make this the focus". */
-  focus: [elementKey: string]
+  focus: [resourceKey: string]
   /** The empty canvas was clicked. */
   clear: []
-  /** An element box was entered or left; synthetic chrome emits null. */
-  hover: [elementKey: string | null]
+  /** A resource box was entered or left; synthetic chrome emits null. */
+  hover: [resourceKey: string | null]
 }>()
 
 const flowId = useId()
@@ -61,15 +61,15 @@ const fitParams = computed(() => ({
 
 onNodeClick(({ node }) => {
   const data = node.data as FlowNodeData | FlowGroupData
-  if (data?.elementKey) emit('select', data.elementKey)
+  if (data?.resourceKey) emit('select', data.resourceKey)
 })
 onNodeDoubleClick(({ node }) => {
   const data = node.data as FlowNodeData | FlowGroupData
-  if (data?.elementKey) emit('focus', data.elementKey)
+  if (data?.resourceKey) emit('focus', data.resourceKey)
 })
 onNodeMouseEnter(({ node }) => {
   const data = node.data as FlowNodeData | FlowGroupData | FlowLabelData
-  emit('hover', data?.elementKey || null)
+  emit('hover', data?.resourceKey || null)
 })
 onNodeMouseLeave(() => emit('hover', null))
 onPaneClick(() => emit('clear'))

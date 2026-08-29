@@ -20,17 +20,17 @@ modeled" before the reader goes looking for anything in particular.
 - The Product's name, logo, summary, and description
 - Its category, tags, authors, and licence
 - The authored Intent and any supporting sections the Product carries
-- How many elements of each kind the model holds
+- How many resources of each kind the model holds
 - Coverage status, method, unmapped areas, and limitations
 - The Product's own References
 
 ## Available actions
 
-- Move to any element kind's collection
+- Move to any resource type's collection
 - Search the whole model by name
 - Open the Product Topology
 
 ## Capability boundary
 
-Product identity and model breadth. It does not present any single element's
+Product identity and model breadth. It does not present any single resource's
 detail, and it makes no claim about whether the implementation matches.

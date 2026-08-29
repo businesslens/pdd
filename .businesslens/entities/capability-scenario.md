@@ -15,8 +15,8 @@ references:
 
 # Capability Scenario
 
-One concrete observable acceptance case for exactly one Capability. The only
-direct acceptance coverage a Capability has.
+How an author shows a Capability actually works, in a case another person could
+check. A Capability with none is a claim nobody has to honour.
 
 ## Information kept
 

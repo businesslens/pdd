@@ -16,7 +16,7 @@ references:
 # Product meaning changes need explicit approval
 
 No workflow writes product meaning until the Developer has seen the exact delta —
-every element added, changed, or removed, the limitations, and the material
+every resource added, changed, or removed, the limitations, and the material
 uncertainty — and approved it. A proposal is never presented as a decision, and
 a mature model is never silently replaced.
 

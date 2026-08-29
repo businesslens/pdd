@@ -1,19 +1,19 @@
 import type {
   ActorView,
-  AnyElementView,
+  AnyResourceView,
   CapabilityView,
   DomainView,
   EntityView,
   ExperienceView,
   InterfaceView,
   JourneyView,
-  ReportElementKind,
+  ReportResourceKind,
   ReportWorkspace,
   RuleView,
   ScenarioView,
   ScreenView
 } from './reportWorkspace'
-import { resolveElement } from './reportWorkspace'
+import { resolveResource } from './reportWorkspace'
 
 /*
   One row shape, not three.
@@ -24,16 +24,16 @@ import { resolveElement } from './reportWorkspace'
   the dense row, because scanning is what a collection surface is for.
 */
 
-export interface ElementCardMetric {
+export interface ResourceCardMetric {
   label: string
   value: number
-  kind?: ReportElementKind
+  kind?: ReportResourceKind
   ids?: string[]
 }
 
-export interface ElementCardPresentation {
+export interface ResourceCardPresentation {
   badge: string
-  metrics: ElementCardMetric[]
+  metrics: ResourceCardMetric[]
   hookLabel: string
   hook: string
 }
@@ -42,9 +42,9 @@ function plural(count: number, singular: string, pluralLabel = `${singular}s`): 
   return count === 1 ? singular : pluralLabel
 }
 
-function titles(workspace: ReportWorkspace, kind: ReportElementKind, ids: string[], max = 2): string {
+function titles(workspace: ReportWorkspace, kind: ReportResourceKind, ids: string[], max = 2): string {
   const names = ids
-    .map(id => resolveElement(workspace, kind, id)?.title)
+    .map(id => resolveResource(workspace, kind, id)?.title)
     .filter((title): title is string => Boolean(title))
   const shown = names.slice(0, max)
   const remaining = names.length - shown.length
@@ -53,19 +53,19 @@ function titles(workspace: ReportWorkspace, kind: ReportElementKind, ids: string
 
 function relationTitles(
   workspace: ReportWorkspace,
-  relations: Array<[ReportElementKind, string[]]>,
+  relations: Array<[ReportResourceKind, string[]]>,
   max = 2
 ): string {
   const names = relations.flatMap(([kind, ids]) => ids
-    .map(id => resolveElement(workspace, kind, id)?.title)
+    .map(id => resolveResource(workspace, kind, id)?.title)
     .filter((title): title is string => Boolean(title)))
   const shown = names.slice(0, max)
   const remaining = names.length - shown.length
   return `${shown.join(' · ')}${remaining > 0 ? ` +${remaining}` : ''}`
 }
 
-function contextTitles(element: { contexts: Array<{ interfaceTitle: string, experienceTitle: string, screenTitle?: string }> }, max = 2): string {
-  const names = element.contexts.map(context =>
+function contextTitles(resource: { contexts: Array<{ interfaceTitle: string, experienceTitle: string, screenTitle?: string }> }, max = 2): string {
+  const names = resource.contexts.map(context =>
     [context.interfaceTitle, context.experienceTitle, context.screenTitle].filter(Boolean).join(' › '))
   const shown = names.slice(0, max)
   const remaining = names.length - shown.length
@@ -92,13 +92,13 @@ function ruleReachCount(workspace: ReportWorkspace, rule: RuleView): number {
   return capabilities.size + journeys.size + screens.size
 }
 
-export function elementCardPresentation(
+export function resourceCardPresentation(
   workspace: ReportWorkspace,
-  element: AnyElementView
-): ElementCardPresentation {
-  switch (element.kind) {
+  resource: AnyResourceView
+): ResourceCardPresentation {
+  switch (resource.kind) {
     case 'actor': {
-      const actor = element as ActorView
+      const actor = resource as ActorView
       const accessIds = [...actor.interfaceIds, ...actor.experienceIds]
       return {
         /* Actor carries two independent authored axes and one glyph can only
@@ -118,7 +118,7 @@ export function elementCardPresentation(
       }
     }
     case 'interface': {
-      const item = element as InterfaceView
+      const item = resource as InterfaceView
       const metrics = item.experienceIds.length
         ? [
             { label: plural(item.actorIds.length, 'actor'), value: item.actorIds.length, kind: 'actor' as const, ids: item.actorIds },
@@ -142,7 +142,7 @@ export function elementCardPresentation(
       }
     }
     case 'experience': {
-      const item = element as ExperienceView
+      const item = resource as ExperienceView
       return {
         badge: item.accessMode,
         metrics: [
@@ -155,7 +155,7 @@ export function elementCardPresentation(
       }
     }
     case 'screen': {
-      const screen = element as ScreenView
+      const screen = resource as ScreenView
       return {
         /* No badge: "1 context" is true of almost every Screen and says nothing
            about which one. The hook names the context, which is what tells two
@@ -171,7 +171,7 @@ export function elementCardPresentation(
       }
     }
     case 'domain': {
-      const domain = element as DomainView
+      const domain = resource as DomainView
       return {
         badge: '',
         metrics: [
@@ -184,12 +184,12 @@ export function elementCardPresentation(
       }
     }
     case 'entity': {
-      const entity = element as EntityView
+      const entity = resource as EntityView
       // A thing is read by what it can be, when it has a lifecycle, and by what
       // the Product keeps about it when it does not.
       return {
         badge: entity.domainId
-          ? resolveElement(workspace, 'domain', entity.domainId)?.title ?? entity.domainId
+          ? resolveResource(workspace, 'domain', entity.domainId)?.title ?? entity.domainId
           : '',
         metrics: [
           { label: plural(entity.informationKept.length, 'fact'), value: entity.informationKept.length },
@@ -203,9 +203,9 @@ export function elementCardPresentation(
       }
     }
     case 'capability': {
-      const capability = element as CapabilityView
+      const capability = resource as CapabilityView
       const domain = capability.domainId
-        ? resolveElement(workspace, 'domain', capability.domainId)?.title ?? capability.domainId
+        ? resolveResource(workspace, 'domain', capability.domainId)?.title ?? capability.domainId
         : ''
       return {
         badge: domain,
@@ -221,7 +221,7 @@ export function elementCardPresentation(
       }
     }
     case 'journey': {
-      const journey = element as JourneyView
+      const journey = resource as JourneyView
       return {
         badge: '',
         metrics: [
@@ -237,7 +237,7 @@ export function elementCardPresentation(
     }
     case 'capability-scenario':
     case 'journey-scenario': {
-      const scenario = element as ScenarioView
+      const scenario = resource as ScenarioView
       const isCapability = scenario.scenarioType === 'capability'
       return {
         /* `result` is the Journey Scenario's terminal outcome and orthogonal to
@@ -256,7 +256,7 @@ export function elementCardPresentation(
       }
     }
     case 'rule': {
-      const rule = element as RuleView
+      const rule = resource as RuleView
       return {
         badge: '',
         metrics: [

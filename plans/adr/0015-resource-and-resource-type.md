@@ -50,10 +50,13 @@ The vocabulary is defined in `spec/format.md`'s Terms table and nowhere else.
 
 **Three candidates were considered and are unavailable:**
 
-- **`Kind`** — `kind:` is already an authored field carrying five closed enums,
-  on References, Actors, Scenario Steps, Business Rules, and Scenarios; 327
-  occurrences across this model and the fixture. Unlike Kubernetes, a
-  BusinessLens file never states its own type as a field — the path states it.
+- **`Kind`** — `kind:` is already an authored field carrying five unrelated
+  closed enums: on a `references` item, an Actor, a Capability Scenario, a
+  Journey Scenario, and a Scenario Step; 327 occurrences across this model and
+  the fixture. (A Business Rule has none — an earlier draft of this ADR said it
+  did, mistaking the Scenario kinds `validation` and `conflict` for Rule kinds.)
+  Unlike Kubernetes, a BusinessLens file never states its own type as a field —
+  the path states it.
   `kind` therefore remains a **code** word, as `ReportResourceKind`, and is never
   prose for the type level.
 - **`Object`** — 28 `Object.*` calls in `src/` and the viewer, and it shipped in

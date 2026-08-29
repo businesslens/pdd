@@ -34,7 +34,7 @@ export function containsStructuralHeading(value: string): boolean {
 }
 
 /**
- * Deterministic parser for the constrained element-markdown shape:
+ * Deterministic parser for the constrained resource-markdown shape:
  * one H1, a lead paragraph, then optional `##` sections.
  * Lines inside ``` fences are content, never structure.
  */

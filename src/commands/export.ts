@@ -1,4 +1,4 @@
-import type { ElementFile, PddModel } from '../core/model.js'
+import type { ResourceFile, PddModel } from '../core/model.js'
 import type { ProductReportV11 } from '../core/portable.js'
 import { join, relative, sep } from 'node:path'
 import { writeGeneratedFile } from '../core/generated-files.js'
@@ -31,25 +31,25 @@ const IMAGE_ASSET = /\.(png|jpe?g|gif|webp|avif|svg)$/i
  * projection already drops — along with every repository-relative target. That
  * is why assets need no new wire field and why export carries no binaries yet.
  */
-function assetReferences(element: ElementFile, modelRoot: string) {
-  const meta = new Map(element.assetMeta.map(item => [item.file, item]))
-  return element.assets.map((file) => {
+function assetReferences(resource: ResourceFile, modelRoot: string) {
+  const meta = new Map(resource.assetMeta.map(item => [item.file, item]))
+  return resource.assets.map((file) => {
     const declared = meta.get(file)
     return {
       kind: (IMAGE_ASSET.test(file) ? 'visual' : 'doc') as 'visual' | 'doc',
       role: (file.startsWith('implementation/') ? 'implementation' : 'intent') as 'implementation' | 'intent',
-      target: relative(modelRoot, join(element.directory, file)).split(sep).join('/'),
+      target: relative(modelRoot, join(resource.directory, file)).split(sep).join('/'),
       ...(declared?.title ? { title: declared.title } : {}),
       ...(declared?.state ? { state: declared.state } : {})
     }
   })
 }
 
-function elementContent(element: ElementFile, recognized: string[], modelRoot: string) {
+function resourceContent(resource: ResourceFile, recognized: string[], modelRoot: string) {
   return {
-    intent: section(element.doc, 'Intent') || '',
-    supportingSections: supportingSections(element.doc, ['Intent', ...recognized]),
-    references: [...assetReferences(element, modelRoot), ...element.references].map(reference => ({
+    intent: section(resource.doc, 'Intent') || '',
+    supportingSections: supportingSections(resource.doc, ['Intent', ...recognized]),
+    references: [...assetReferences(resource, modelRoot), ...resource.references].map(reference => ({
       kind: reference.kind,
       role: reference.role,
       target: reference.target,
@@ -158,7 +158,7 @@ export function compileReport(
         informationKept: actor.informationKept,
         kind: actor.kind as 'person' | 'system',
         relationship: actor.relationship as 'external' | 'internal',
-        ...elementContent(actor, ['Information kept'], assetBase)
+        ...resourceContent(actor, ['Information kept'], assetBase)
       })),
       interfaces: byId(model.interfaces).map(productInterface => ({
         id: productInterface.id,
@@ -168,7 +168,7 @@ export function compileReport(
         actorIds: sorted(productInterface.actors),
         entryPoints: productInterface.entryPoints,
         capabilityBoundary: productInterface.capabilityBoundary,
-        ...elementContent(productInterface, ['Capability boundary'], assetBase)
+        ...resourceContent(productInterface, ['Capability boundary'], assetBase)
       })),
       experiences: byId(model.experiences).map(experience => ({
         id: experience.id,
@@ -179,7 +179,7 @@ export function compileReport(
         accessMode: experience.access as 'public' | 'authenticated' | 'restricted',
         entryPoints: experience.entryPoints,
         capabilityBoundary: experience.capabilityBoundary,
-        ...elementContent(experience, ['Capability boundary'], assetBase)
+        ...resourceContent(experience, ['Capability boundary'], assetBase)
       })),
       screens: byId(model.screens).map(screen => ({
         id: screen.id,
@@ -194,14 +194,14 @@ export function compileReport(
         actions: screen.actions,
         states: screen.states,
         capabilityBoundary: screen.capabilityBoundary,
-        ...elementContent(screen, ['Information presented', 'Available actions', 'View states', 'Capability boundary'], assetBase)
+        ...resourceContent(screen, ['Information presented', 'Available actions', 'View states', 'Capability boundary'], assetBase)
       })),
       domains: byId(model.domains).map(domain => ({
         id: domain.id,
         name: domain.doc.title,
         description: domain.doc.lead,
         ...(domain.colorSlot !== undefined ? { colorSlot: domain.colorSlot } : {}),
-        ...elementContent(domain, [], assetBase)
+        ...resourceContent(domain, [], assetBase)
       })),
       entities: byId(model.entities).map(entity => ({
         id: entity.id,
@@ -216,7 +216,7 @@ export function compileReport(
         transitions: entity.transitions.map(transition => ({
           from: transition.from, to: transition.to, capabilityId: transition.by
         })),
-        ...elementContent(entity, ['Information kept', 'States', 'Transitions'], assetBase)
+        ...resourceContent(entity, ['Information kept', 'States', 'Transitions'], assetBase)
       })),
       capabilities: byId(model.capabilities).map(capability => ({
         id: capability.id,
@@ -225,7 +225,7 @@ export function compileReport(
         ...(capability.domain ? { domainId: capability.domain } : {}),
         entityIds: sorted(capability.entities),
         availability: contexts(capability.availability),
-        ...elementContent(capability, [], assetBase)
+        ...resourceContent(capability, [], assetBase)
       })),
       capabilityScenarios: byId(model.capabilityScenarios).map(scenario => ({
         id: scenario.id,
@@ -239,7 +239,7 @@ export function compileReport(
         decisionPoints: scenario.decisionPoints,
         outcome: scenario.outcome,
         edgeCases: scenario.edgeCases,
-        ...elementContent(scenario, ['Trigger', 'Steps', 'Decision points', 'Outcome', 'Edge cases'], assetBase)
+        ...resourceContent(scenario, ['Trigger', 'Steps', 'Decision points', 'Outcome', 'Edge cases'], assetBase)
       })),
       journeys: byId(model.journeys).map((journey) => {
         const scenarios = journeyScenariosByJourney.get(journey.id) || []
@@ -264,7 +264,7 @@ export function compileReport(
           capabilityIds: sorted([...achievedCapabilityIds]),
           failureOnlyCapabilityIds: sorted(failureOnlyCapabilityIds),
           domainIds: sorted([...new Set(domainIds)]),
-          ...elementContent(journey, ['Goal', 'Success criterion'], assetBase)
+          ...resourceContent(journey, ['Goal', 'Success criterion'], assetBase)
         }
       }),
       journeyScenarios: byId(model.journeyScenarios).map(scenario => ({
@@ -280,7 +280,7 @@ export function compileReport(
         decisionPoints: scenario.decisionPoints,
         outcome: scenario.outcome,
         edgeCases: scenario.edgeCases,
-        ...elementContent(scenario, ['Trigger', 'Decision points', 'Outcome', 'Edge cases'], assetBase)
+        ...resourceContent(scenario, ['Trigger', 'Decision points', 'Outcome', 'Edge cases'], assetBase)
       })),
       businessRules: byId(model.businessRules).map(rule => ({
         id: rule.id,
@@ -294,7 +294,7 @@ export function compileReport(
               id: target.id,
               contexts: target.contexts.map(context => ({ placeId: context.place }))
             }),
-        ...elementContent(rule, ['Rationale'], assetBase)
+        ...resourceContent(rule, ['Rationale'], assetBase)
       }))
     },
     coverage: {

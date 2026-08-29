@@ -22,8 +22,9 @@ references:
 
 # Interface
 
-A supported inbound interaction contract — a web application, a CLI, a partner
-API, an agent skill surface. Where Actors reach the Product.
+Where an author says how the Product is actually reached. Everything an Actor
+touches hangs below one of these, which is why getting the list wrong is
+expensive to correct later.
 
 ## Information kept
 

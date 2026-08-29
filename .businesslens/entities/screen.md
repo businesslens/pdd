@@ -15,8 +15,9 @@ references:
 
 # Screen
 
-A meaningful user-visible view. Platform-neutral: not a route, not a component,
-not a viewport.
+What an author writes when a view is worth naming on its own — and the type they
+most often over-author, one file per route, until someone reads the model back
+to them.
 
 ## Information kept
 

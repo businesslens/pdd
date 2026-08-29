@@ -26,13 +26,14 @@ files are derived artifacts and must not be edited or committed.
 ## Report contents
 
 `build/report.json` is a Product Report with `schemaVersion: "11.0.0"`. It
-contains the product elements, relationships, intent, portable references,
-structured supporting sections, identity, attribution, element counts, and
+contains the product resources, relationships, intent, portable references,
+structured supporting sections, identity, attribution, resource counts, and
 coverage needed to reconstruct the model. Its top-level `summary` is the short
-Product description; its top-level `counts` object contains element totals.
+Product description; its top-level `counts` object contains resource totals.
 
-Product and element records store unrecognized authored H2 sections as an
-ordered `supportingSections` array:
+The Product record — which is the report root — and every other resource record
+store unrecognized authored H2 sections as an ordered `supportingSections`
+array:
 
 ```json
 {
@@ -44,7 +45,7 @@ ordered `supportingSections` array:
 
 The raw `supportingContent` string field is not part of Product Report v11.
 Supporting headings are trimmed, single-line, and cannot collide,
-case-insensitively, with structured headings for their element type. Intent and
+case-insensitively, with structured headings for their resource type. Intent and
 supporting-section content are Markdown fragments and cannot contain H1 or H2
 headings. These constraints make expansion structural rather than dependent on
 reparsing an opaque Markdown string.
@@ -76,7 +77,7 @@ carries an edge the folder rules reject would produce a `.businesslens/` that
 fails `lint` on arrival.
 
 Product Report v11 stores `capabilityScenarios` and `journeyScenarios` as
-separate element collections and separate counts. It has no generic `scenarios`
+separate resource collections and separate counts. It has no generic `scenarios`
 collection. A Journey record's `capabilityIds` and `domainIds` derive from
 achieved Scenario Capability-bearing steps; `failureOnlyCapabilityIds`
 separately marks Capabilities observed only in not-achieved paths. These are
@@ -145,7 +146,7 @@ from Step Contexts whose place names the Screen and are not authored when the
 report is expanded.
 
 One report Context is `{ "placeId": "..." }`. Capability `availability` is a
-non-empty array of these records. Business Rule element targets use the same
+non-empty array of these records. Business Rule resource targets use the same
 records in `contexts`; a direct Context target stores one nested `context`
 record. Screen records carry no `availability` field because their qualified id
 and path already determine their Interface and optional Experience.
@@ -159,16 +160,16 @@ catalog listing state, pricing, or entitlement data. A report that has been
 through `export` is a Blueprint.
 
 A co-located Product Model asset compiles into a repository-relative workspace
-Reference; the report never embeds its bytes. Files under an element's
+Reference; the report never embeds its bytes. Files under a resource's
 `implementation/` directory additionally compile with `role: implementation`.
 The portable projection therefore removes both forms under the same rules as
 other local References. Asset binaries are not part of Product Report v11.
 
-The report schema accepts only content that can expand into canonical element
+The report schema accepts only content that can expand into canonical resource
 Markdown: titles and list items are single-line, set-valued relation arrays are
 unique, required descriptions and behavior sections are non-empty, Scenario
 Actors, Capabilities, route ids, and Context places resolve to existing
-elements, every contextualized Step assigns every route, every Scenario Context
+resources, every contextualized Step assigns every route, every Scenario Context
 uses the most-specific available place, no two routes repeat the same place sequence,
 every achieved Journey Scenario uses at least two distinct Capabilities, and
 Interface, Experience, Screen, Actor, and Capability consistency holds.
@@ -239,8 +240,8 @@ npx businesslens blueprint open ./report.json
 ```
 
 `open` validates the report and expands it into canonical Markdown/YAML under
-`.businesslens/`. Leaf elements are written compactly as `<id>.md`; an element
-is written as `<id>/<type>.md` only when report content gives it child elements.
+`.businesslens/`. Leaf resources are written compactly as `<id>.md`; a resource
+is written as `<id>/<type>.md` only when report content gives it child resources.
 A Product pulled with a separate `logo.svg` similarly expands from `product.md`
 to `product/product.md`. `npx businesslens blueprint pull <blueprint-slug>` anonymously
 retrieves the current public Blueprint for that catalog slug and invokes the

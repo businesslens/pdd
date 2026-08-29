@@ -14,9 +14,9 @@ Two engineering contracts, each changed *before* the behavior it governs:
   and expansion. Change it before changing `export`, `open`, `pull`,
   `contribute`, or anything the catalog server agrees with.
 
-Neither is a docs-site page. The user-facing explanation of the same entities
-lives in the Product Model group under `docs/`, and the two registers must not
-contradict each other.
+Neither is a docs-site page. The user-facing explanation of the same resource
+types lives in the Product Model group under `docs/`, and the two registers must
+not contradict each other.
 
 ## Layout
 
@@ -57,18 +57,21 @@ contradict each other.
   characters so it never truncates; the body H1 carries the full page
   title.
 - This repository authors the documentation with groups Get started, Product
-  Model (one page per top-level entity), Integrations (one page per thing you
-  integrate with), Skills (one page per skill), and CLI (one page per command).
-- Each entity is explained in exactly one place. An entity page carries its
+  Model (one page per top-level resource type), Integrations (one page per
+  thing you integrate with), Skills (one page per skill), and CLI (one page per
+  command).
+- Each resource type is explained in exactly one place. Its page carries its
   narrative, when to create one, its file shape, and the `lint` findings
   that constrain it — do not reintroduce a separate glossary, a separate
   format page, or a separate error catalog.
-- An entity with a mandatory single parent is documented on its parent's page,
-  never on one of its own. Scenarios are the only such entity: Capability
-  Scenarios live in `docs/capabilities.md`, Journey Scenarios in
+- A resource type is documented on its parent's page when **its type name names
+  that parent** — never on one of its own. Scenarios are the only such types:
+  Capability Scenarios live in `docs/capabilities.md`, Journey Scenarios in
   `docs/journeys.md`. A page they shared would have to state the containment
   rule before either could be read, and a reader arrives already knowing which
-  parent they are authoring.
+  parent they are authoring. The test is the name, not the containment: an
+  Experience also sits inside exactly one Interface, and keeps its own page,
+  because nothing calls it an Interface Experience.
 
 ## Skill-writing standards
 
@@ -126,20 +129,21 @@ contradict each other.
   where the full material is — the file path.
 - **State must survive a recompile, and a refresh.** `businesslens view`
   recompiles on save, so focus and filter have to outlive an edit to the model.
-  The open section and the open entity page also live in the URL, so a reader
+  The open section and the open resource page also live in the URL, so a reader
   can link to what they are reading, walk back out of it, and reload into it.
 - **The page is the reading.** A collection row, relation, search result, or
-  topology entity opens the entity page directly. It has a URL, a breadcrumb,
-  the width its content was drawn for, and the browser's own back button.
+  topology resource opens the resource page directly. It has a URL, a
+  breadcrumb, the width its content was drawn for, and the browser's own back
+  button.
 - **Overview and Scenarios are the page structure.** Overview carries the
-  entity's authored meaning, facts, Contexts, relations, supporting material,
+  resource's authored meaning, facts, Contexts, relations, supporting material,
   and References. Capability and Journey pages add Scenarios as their only
   second tab. Neighbourhood is an action into Topology, never another page tab.
-- **The rail lists kinds; kinds do not nest.** Containment belongs where
-  instances are — the default grouping of a collection and the entity page. A
-  mandatory child kind does not add a peer collection tab to its parent's main
-  screen. A rail that indents some kinds and not others advertises a hierarchy
-  it cannot keep.
+- **The rail lists resource types; they do not nest.** Containment belongs
+  where instances are — the default grouping of a collection and the resource
+  page. A mandatory child type does not add a peer collection tab to its
+  parent's main screen. A rail that indents some types and not others
+  advertises a hierarchy it cannot keep.
 - **Chrome scales with the collection.** No control costs a row above a
   two-item list, and a filter offer is not rendered where scanning is faster.
 - **Named views, not a view builder.** Filters narrow a view that already means

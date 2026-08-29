@@ -100,7 +100,7 @@ a warning: that is the same relationship written twice, and now that each
 declaration carries both ends the two can contradict each other. A relation
 targets an Entity, never an Actor.
 
-Both live in frontmatter rather than a section because they name other elements
+Both live in frontmatter rather than a section because they name other resources
 by id, and ids are parsed rather than read out of English.
 
 ## One Entity, or several?
@@ -129,7 +129,7 @@ of its own?**
 
 Being kept inside the larger thing is not the test — that is storage, which is
 never the test. Ask what can name it: a file, a route, a scope a command
-accepts, an id another element cites. *The items ordered* has none of those and
+accepts, an id another resource cites. *The items ordered* has none of those and
 belongs inside Order. Anything with one of them is its own Entity, however much
 the information overlaps and however firmly the larger thing contains it.
 
