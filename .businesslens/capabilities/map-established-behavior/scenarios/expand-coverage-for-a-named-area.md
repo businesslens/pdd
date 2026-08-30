@@ -28,7 +28,7 @@ steps:
     contexts:
       harness:
         place: agent-skills
-  - text: The Product writes the approved delta and preserves the valid meaning the rest of the model already carried
+  - text: The AI agent writes the approved delta and preserves the valid meaning the rest of the model already carried
     kind: actor
     actor: ai-agent
     changes:

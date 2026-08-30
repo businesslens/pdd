@@ -14,7 +14,7 @@ steps:
     contexts:
       harness:
         place: agent-skills
-  - text: The Product marks that scope blocked rather than guessing, and reports the rest of the run normally
+  - text: The AI agent marks that scope blocked rather than guessing, and reports the rest of the run normally
     kind: actor
     actor: ai-agent
     contexts:

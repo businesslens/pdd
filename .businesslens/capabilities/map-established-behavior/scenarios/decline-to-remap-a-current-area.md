@@ -15,7 +15,7 @@ steps:
     contexts:
       harness:
         place: agent-skills
-  - text: The Product stops without writing and names verification as the workflow that answers it
+  - text: The AI agent stops without writing and names verification as the workflow that answers it
     kind: actor
     actor: ai-agent
     contexts:

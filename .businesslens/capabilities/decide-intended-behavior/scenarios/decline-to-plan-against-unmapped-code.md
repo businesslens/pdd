@@ -16,7 +16,7 @@ steps:
     contexts:
       harness:
         place: agent-skills
-  - text: The Product stops without writing and names mapping as the workflow that must come first
+  - text: The AI agent stops without writing and names mapping as the workflow that must come first
     kind: actor
     actor: ai-agent
     contexts:

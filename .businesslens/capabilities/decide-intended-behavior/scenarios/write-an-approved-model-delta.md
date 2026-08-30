@@ -21,7 +21,7 @@ steps:
     contexts:
       harness:
         place: agent-skills
-  - text: The Product writes only that delta, repairs the relationships it affects, and reports the structural check
+  - text: The AI agent writes only that delta, repairs the relationships it affects, and reports the structural check
     kind: actor
     actor: ai-agent
     changes:

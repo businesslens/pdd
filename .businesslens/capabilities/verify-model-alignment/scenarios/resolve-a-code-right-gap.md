@@ -22,7 +22,7 @@ steps:
     contexts:
       harness:
         place: agent-skills
-  - text: The Product writes only the approved meaning and inspects the scope again from the beginning
+  - text: The AI agent writes only the approved meaning and inspects the scope again from the beginning
     kind: actor
     actor: ai-agent
     changes:

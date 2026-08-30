@@ -27,7 +27,7 @@ steps:
     contexts:
       harness:
         place: agent-skills
-  - text: The Product writes the complete model layout, sets coverage from the breadth it actually modeled, and reports the structural check
+  - text: The AI agent writes the complete model layout, sets coverage from the breadth it actually modeled, and reports the structural check
     kind: actor
     actor: ai-agent
     changes:

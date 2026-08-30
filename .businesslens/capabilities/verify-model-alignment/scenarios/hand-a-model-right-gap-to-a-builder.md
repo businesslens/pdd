@@ -22,7 +22,7 @@ steps:
     contexts:
       harness:
         place: agent-skills
-  - text: The Product hands the packet to the builder the harness supplies and inspects the scope again once it returns
+  - text: The AI agent hands the packet to the builder the harness supplies and inspects the scope again once it returns
     kind: actor
     actor: ai-agent
     contexts:
