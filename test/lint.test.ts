@@ -660,7 +660,7 @@ Supports order operations. It does not expose a shopper's account.
     )
 
     expect(run(cwd).errors.join('\n')).toContain(
-      'declares entity "catalog-product", which no Step of its Scenarios changes'
+      'declares an entity no Step of its Scenarios changes: "catalog-product"'
     )
   })
 

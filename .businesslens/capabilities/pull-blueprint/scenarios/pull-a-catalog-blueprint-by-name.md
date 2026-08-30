@@ -28,6 +28,18 @@ steps:
     kind: product
     changes:
       - entity: product-model
+      - entity: product
+      - entity: actor
+      - entity: interface
+      - entity: experience
+      - entity: screen
+      - entity: domain
+      - entity: entity
+      - entity: capability
+      - entity: capability-scenario
+      - entity: journey
+      - entity: journey-scenario
+      - entity: business-rule
     contexts:
       terminal:
         place: businesslens-cli

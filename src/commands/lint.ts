@@ -669,12 +669,18 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     }
   }
   for (const capability of model.capabilities) {
-    for (const id of capability.entities) {
-      if (changedBySomeStep.has(`${capability.id}\u0000${id}`)) continue
-      const finding = `${capability.file}: declares entity "${id}", which no Step of its Scenarios changes`
-      if (model.coverage.status === 'complete') errors.push(finding)
-      else warnings.push(finding)
-    }
+    const unnamed = capability.entities.filter(id => !changedBySomeStep.has(`${capability.id}\u0000${id}`))
+    if (!unnamed.length) continue
+    /*
+     * One line per Capability, naming every id. Twelve identical lines are not
+     * twelve findings — they are one modelling decision reported twelve times,
+     * and a Capability that declares a dozen things would drown the run in
+     * output nobody can act on line by line.
+     */
+    const count = unnamed.length === 1 ? 'an entity' : `${unnamed.length} entities`
+    const finding = `${capability.file}: declares ${count} no Step of its Scenarios changes: ${unnamed.map(id => `"${id}"`).join(', ')}`
+    if (model.coverage.status === 'complete') errors.push(finding)
+    else warnings.push(finding)
   }
 
   const capabilityAvailability = new Map<string, Set<string>>()

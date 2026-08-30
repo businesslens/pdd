@@ -228,6 +228,17 @@ const stepKindDescription = (kind: 'actor' | 'product' | 'condition') => ({
   condition: 'An observable fact or state; nobody performs it'
 })[kind]
 
+/*
+ * A Step that changes thirteen things must not fill its row with thirteen
+ * chips. The overflow names the rest rather than hiding them — where this
+ * reading omits, it says where the omitted material is.
+ */
+const STEP_MENTION_LIMIT = 4
+const shownMentions = (step: ScenarioStepRow) => step.mentions.slice(0, STEP_MENTION_LIMIT)
+const restMentions = (step: ScenarioStepRow) => step.mentions
+  .slice(STEP_MENTION_LIMIT)
+  .map(mention => resolveResource(props.workspace, 'entity', mention.entityId)?.title ?? mention.entityId)
+
 const stepActor = (actorId: string | undefined): ActorView | undefined => {
   if (!actorId) return undefined
   const resource = resolveResource(props.workspace, 'actor', actorId)
@@ -550,12 +561,21 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
                       </span>
                     </UTooltip>
                     <BlrStepEntity
-                      v-for="mention in step.mentions"
+                      v-for="mention in shownMentions(step)"
                       :key="`${mention.effect}-${mention.entityId}`"
                       :workspace="workspace"
                       :mention="mention"
                       @select="emit('select', $event)"
                     />
+                    <UTooltip
+                      v-if="restMentions(step).length"
+                      :text="restMentions(step).join(', ')"
+                      :delay-duration="150"
+                    >
+                      <span class="blr-meta rounded-full border border-dashed border-muted px-2 py-0.5">
+                        +{{ restMentions(step).length }}
+                      </span>
+                    </UTooltip>
                   </span>
                   <BlrLinks
                     v-if="asScenario.scenarioType === 'journey' && step.capabilityId"
@@ -648,12 +668,21 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
                   </span>
                 </UTooltip>
                 <BlrStepEntity
-                  v-for="mention in step.mentions"
+                  v-for="mention in shownMentions(step)"
                   :key="`${mention.effect}-${mention.entityId}`"
                   :workspace="workspace"
                   :mention="mention"
                   @select="emit('select', $event)"
                 />
+                <UTooltip
+                  v-if="restMentions(step).length"
+                  :text="restMentions(step).join(', ')"
+                  :delay-duration="150"
+                >
+                  <span class="blr-meta rounded-full border border-dashed border-muted px-2 py-0.5">
+                    +{{ restMentions(step).length }}
+                  </span>
+                </UTooltip>
               </span>
               <BlrLinks
                 v-if="asScenario.scenarioType === 'journey' && step.capabilityId"
