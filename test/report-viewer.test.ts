@@ -248,10 +248,10 @@ describe('stable Product Report', () => {
     const workspace = projectReportWorkspace(compileReport(loadModel(FIXTURE), '2026-08-08'))
 
     const complete = workspace.capabilityScenarios.find((item: any) => item.id === 'complete-checkout')!
-    // The Cart it also changes is left in no named state, so it says nothing
-    // here that the subject band above the Trigger has not already said.
+    // Everything it changed, whether or not the thing carries a state: the
+    // reader arrives here asking what the Scenario produced.
     expect(complete.outcomeStates.map((item: any) => [item.entityId, item.state]))
-      .toEqual([['order', 'Confirmed']])
+      .toEqual([['order', 'Confirmed'], ['cart', '']])
 
     // A Scenario that changes nothing summarises nothing.
     const browse = workspace.capabilityScenarios.find((item: any) => item.id === 'browse-catalog')!

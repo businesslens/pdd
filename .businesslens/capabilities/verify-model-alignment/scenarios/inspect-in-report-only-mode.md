@@ -16,7 +16,8 @@ steps:
       harness:
         place: agent-skills
   - text: The Product reports the findings and the decisions they imply, and changes nothing
-    kind: product
+    kind: actor
+    actor: ai-agent
     contexts:
       harness:
         place: agent-skills

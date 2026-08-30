@@ -16,7 +16,8 @@ steps:
       harness:
         place: agent-skills
   - text: The Product writes nothing and stops at the shortlist
-    kind: product
+    kind: actor
+    actor: ai-agent
     contexts:
       harness:
         place: agent-skills

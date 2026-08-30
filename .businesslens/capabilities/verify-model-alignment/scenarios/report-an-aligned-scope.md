@@ -16,7 +16,8 @@ steps:
       harness:
         place: agent-skills
   - text: The Product reports the scope it inspected, the contracts that hold, and the final structural check
-    kind: product
+    kind: actor
+    actor: ai-agent
     contexts:
       harness:
         place: agent-skills

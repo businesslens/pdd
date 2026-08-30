@@ -5,6 +5,8 @@ routes:
 steps:
   - text: A Product Model already exists and an area of it is absent or deliberately no longer trusted
     kind: condition
+    reads:
+      - product-model
     contexts:
       harness:
         place: agent-skills
@@ -27,21 +29,10 @@ steps:
       harness:
         place: agent-skills
   - text: The Product writes the approved delta and preserves the valid meaning the rest of the model already carried
-    kind: product
+    kind: actor
+    actor: ai-agent
     changes:
       - entity: product-model
-      - entity: product
-      - entity: actor
-      - entity: interface
-      - entity: experience
-      - entity: screen
-      - entity: domain
-      - entity: entity
-      - entity: capability
-      - entity: capability-scenario
-      - entity: journey
-      - entity: journey-scenario
-      - entity: business-rule
     contexts:
       harness:
         place: agent-skills

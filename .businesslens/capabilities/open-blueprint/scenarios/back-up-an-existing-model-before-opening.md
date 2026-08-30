@@ -5,6 +5,8 @@ routes:
 steps:
   - text: The target directory already holds a Product Model
     kind: condition
+    reads:
+      - product-model
     contexts:
       terminal:
         place: businesslens-cli

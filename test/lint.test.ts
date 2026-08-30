@@ -650,8 +650,13 @@ Supports order operations. It does not expose a shopper's account.
    * when a Step names an Entity; nothing ran when a Capability named one and no
    * Step ever did, so a Capability could declare what it changes while its whole
    * acceptance surface stayed silent about it.
+   *
+   * It asks whether the surface says anything, never whether it accounts for
+   * each declared Entity: `entities` is what a Capability *can* change and a
+   * Step's `changes` is what one concrete case *does*, so the two differ by
+   * design.
    */
-  it('requires a declared Entity to be changed by some Step of its Scenarios', () => {
+  it('requires a Capability that declares Entities to change one somewhere', () => {
     const cwd = fixtureCopy()
     const capability = join(cwd, '.businesslens/capabilities/browse-catalog/capability.md')
     writeFileSync(
@@ -660,11 +665,28 @@ Supports order operations. It does not expose a shopper's account.
     )
 
     expect(run(cwd).errors.join('\n')).toContain(
-      'declares an entity no Step of its Scenarios changes: "catalog-product"'
+      'declares the Entities it changes, and no Step of its Scenarios changes any of them'
     )
   })
 
-  it('grades an unnamed Entity declaration by model coverage status', () => {
+  /*
+   * The rule that would force a false claim if it asked for more. A Capability
+   * that writes any part of a model can touch every resource type while no
+   * single acceptance case touches all of them.
+   */
+  it('accepts a Capability whose Scenarios change some of what it declares', () => {
+    const cwd = fixtureCopy()
+    const capability = join(cwd, '.businesslens/capabilities/manage-orders/capability.md')
+    writeFileSync(
+      capability,
+      readFileSync(capability, 'utf8').replace('entities:\n  - order\n', 'entities:\n  - order\n  - cart\n')
+    )
+
+    // Its Steps change the Order and never the Cart, and that is not a finding.
+    expect(run(cwd).errors.join('\n')).not.toContain('no Step of its Scenarios changes any of them')
+  })
+
+  it('grades a silent acceptance surface by model coverage status', () => {
     const cwd = fixtureCopy()
     const capability = join(cwd, '.businesslens/capabilities/browse-catalog/capability.md')
     writeFileSync(

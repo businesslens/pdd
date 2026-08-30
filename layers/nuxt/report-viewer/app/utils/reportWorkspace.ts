@@ -1211,12 +1211,11 @@ export function projectReportWorkspace(report: ProductReportV12): ReportWorkspac
       for (const change of step.changes) last.set(change.entityId, change)
     }
     /*
-     * Only what was left somewhere nameable. A plain change with no state says
-     * "this was touched", which the subject band above the Trigger already
-     * says — and a Scenario that writes thirteen things would repeat all
-     * thirteen here, competing with the one line that answers what it achieved.
+     * Everything it changed, not only what carries a state. A reader arrives at
+     * the Outcome asking what the Scenario produced, and an empty line there is
+     * a worse answer than one that repeats the subject band.
      */
-    return [...last.values()].filter(change => change.state || change.effect !== 'changes')
+    return [...last.values()]
   }
 
   const scenarioSteps = (

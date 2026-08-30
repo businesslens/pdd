@@ -15,7 +15,8 @@ steps:
       harness:
         place: agent-skills
   - text: The Product marks that scope blocked rather than guessing, and reports the rest of the run normally
-    kind: product
+    kind: actor
+    actor: ai-agent
     contexts:
       harness:
         place: agent-skills

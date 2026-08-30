@@ -5,6 +5,8 @@ routes:
 steps:
   - text: Inspection finds behavior that is intended and working, while the model still describes something else
     kind: condition
+    reads:
+      - product-model
     contexts:
       harness:
         place: agent-skills
@@ -21,21 +23,10 @@ steps:
       harness:
         place: agent-skills
   - text: The Product writes only the approved meaning and inspects the scope again from the beginning
-    kind: product
+    kind: actor
+    actor: ai-agent
     changes:
       - entity: product-model
-      - entity: product
-      - entity: actor
-      - entity: interface
-      - entity: experience
-      - entity: screen
-      - entity: domain
-      - entity: entity
-      - entity: capability
-      - entity: capability-scenario
-      - entity: journey
-      - entity: journey-scenario
-      - entity: business-rule
     contexts:
       harness:
         place: agent-skills

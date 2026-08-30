@@ -650,35 +650,34 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
    * The other end of "capability X does not declare entity Y".
    *
    * That check runs when a Step names an Entity. Nothing ran when a Capability
-   * named one and no Step ever did — so a Capability could declare what it
-   * changes and its whole acceptance surface stay silent about it, which is
-   * how one Capability came to declare two Entities across four Scenarios that
-   * mentioned neither. It is the transition rule one level out: a declaration
-   * is a claim, and the Capability's Scenarios are where it is shown.
+   * named one and its whole acceptance surface stayed silent — which is how a
+   * Capability came to declare two Entities across four Scenarios that
+   * mentioned neither, and how three read-only Capabilities came to declare
+   * things they only present.
+   *
+   * It asks whether the surface says anything at all, never whether it accounts
+   * for each declared Entity one by one. `entities` is what a Capability *can*
+   * change; a Step's `changes` is what one concrete acceptance case *does*
+   * change, and those are supposed to differ. Demanding they match forces
+   * either one artificial case that touches everything or a Scenario per
+   * combination, and the first is what it actually produced: Steps reading
+   * "writes only that delta" were made to name all thirteen resource types.
    *
    * Severity follows `coverage.status`, as every other coverage claim does.
    */
-  const changedBySomeStep = new Set<string>()
+  const capabilitiesNamedBySteps = new Set<string>()
   for (const scenario of [...model.capabilityScenarios, ...model.journeyScenarios]) {
     for (const step of scenario.steps) {
       const owner = 'capability' in scenario
         ? (scenario as { capability: string }).capability
         : step.capability
-      if (!owner) continue
-      for (const change of step.changes) changedBySomeStep.add(`${owner}\u0000${change.entity}`)
+      if (owner && step.changes.length) capabilitiesNamedBySteps.add(owner)
     }
   }
   for (const capability of model.capabilities) {
-    const unnamed = capability.entities.filter(id => !changedBySomeStep.has(`${capability.id}\u0000${id}`))
-    if (!unnamed.length) continue
-    /*
-     * One line per Capability, naming every id. Twelve identical lines are not
-     * twelve findings — they are one modelling decision reported twelve times,
-     * and a Capability that declares a dozen things would drown the run in
-     * output nobody can act on line by line.
-     */
-    const count = unnamed.length === 1 ? 'an entity' : `${unnamed.length} entities`
-    const finding = `${capability.file}: declares ${count} no Step of its Scenarios changes: ${unnamed.map(id => `"${id}"`).join(', ')}`
+    if (!capability.entities.length) continue
+    if (capabilitiesNamedBySteps.has(capability.id)) continue
+    const finding = `${capability.file}: declares the Entities it changes, and no Step of its Scenarios changes any of them`
     if (model.coverage.status === 'complete') errors.push(finding)
     else warnings.push(finding)
   }

@@ -22,21 +22,10 @@ steps:
       harness:
         place: agent-skills
   - text: The Product writes only that delta, repairs the relationships it affects, and reports the structural check
-    kind: product
+    kind: actor
+    actor: ai-agent
     changes:
       - entity: product-model
-      - entity: product
-      - entity: actor
-      - entity: interface
-      - entity: experience
-      - entity: screen
-      - entity: domain
-      - entity: entity
-      - entity: capability
-      - entity: capability-scenario
-      - entity: journey
-      - entity: journey-scenario
-      - entity: business-rule
     contexts:
       harness:
         place: agent-skills

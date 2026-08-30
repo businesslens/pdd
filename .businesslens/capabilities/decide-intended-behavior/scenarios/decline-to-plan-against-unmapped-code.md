@@ -5,6 +5,8 @@ routes:
 steps:
   - text: The repository has established implementation and no Product Model
     kind: condition
+    reads:
+      - product-model
     contexts:
       harness:
         place: agent-skills
@@ -15,7 +17,8 @@ steps:
       harness:
         place: agent-skills
   - text: The Product stops without writing and names mapping as the workflow that must come first
-    kind: product
+    kind: actor
+    actor: ai-agent
     contexts:
       harness:
         place: agent-skills

@@ -956,7 +956,25 @@ a Capability with no Screen says what it reads in its own prose. The narrower
 word is what makes the list worth reading: a structural check that inspects every
 kind in the model would otherwise claim to change all of them, and "what can
 alter this thing" — the question the list exists to answer — would have no answer
-left. `availability` is required and needs at least one valid
+left.
+
+**A declaration is a claim, and its Scenarios are where it is shown.** A
+Capability that declares `entities` and whose Scenarios contain no Step that
+changes any of them is a `lint` finding, graded by `coverage.status` — an error
+for a `complete` model, a warning otherwise. It is the same claim the
+undemonstrated-transition rule makes, one level out.
+
+The check asks whether the acceptance surface says anything at all, never
+whether it accounts for each declared Entity separately. `entities` is what a
+Capability **can** change; a Step's `changes` is what one concrete acceptance
+case **does** change, and those are supposed to differ. A Capability that writes
+any part of a model can touch every resource type while no single case touches
+all of them, and demanding a Step per declared Entity would force either one
+artificial case that touches everything or a Scenario per combination. A Step
+that only sometimes changes a thing is a different acceptance case, not an
+optional entry in this one.
+
+`availability` is required and needs at least one valid
 Context. Its place is
 an undivided Interface or one Experience of a divided Interface. `domain` is
 optional and, when present, names exactly one Domain. Actors are expressed by

@@ -386,6 +386,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and `read-public-collection` declared things they only present, which
   **changes, never reads** already forbade and nothing had ever caught. They now
   declare nothing and their Steps read instead.
+
+  The check asks whether the acceptance surface says anything at all, never
+  whether it accounts for each declared Entity separately. `entities` is what a
+  Capability *can* change and a Step's `changes` is what one concrete case
+  *does* change, so the two are supposed to differ: a Capability that writes any
+  part of a model can touch every resource type while no single case touches all
+  of them. Asking for a Step per declared Entity forces either one artificial
+  case that touches everything or a Scenario per combination — and it briefly
+  produced the first, with Steps reading "writes only that delta" made to name
+  all thirteen resource types.
+- **BusinessLens's own model names the Actor that performs its skill Steps.**
+  `map-established-behavior`, `decide-intended-behavior` and
+  `verify-model-alignment` are available on the `agent-skills` Interface, where
+  no BusinessLens process runs at all: the skill is text the AI agent reads and
+  follows. Eleven Steps reading "The Product writes the approved delta" named an
+  executor that does not exist there, and now name the `ai-agent` Actor that
+  does. The Capabilities on `businesslens-cli` keep `kind: product`, because
+  `businesslens blueprint open` genuinely is a running process.
 - **The Scenario reading answers "what is this about" before the prose does.** A
   subject band above the Trigger names what the Scenario changes and what it
   reads, in separate rows so a read is never promoted into the first answer. An

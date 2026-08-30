@@ -5,6 +5,8 @@ routes:
 steps:
   - text: Inspection finds approved model meaning the current code does not support
     kind: condition
+    reads:
+      - product-model
     contexts:
       harness:
         place: agent-skills
@@ -21,7 +23,8 @@ steps:
       harness:
         place: agent-skills
   - text: The Product hands the packet to the builder the harness supplies and inspects the scope again once it returns
-    kind: product
+    kind: actor
+    actor: ai-agent
     contexts:
       harness:
         place: agent-skills
