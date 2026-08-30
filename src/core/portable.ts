@@ -4,7 +4,7 @@ import { containsPlace, interfaceOf, parentPlace } from './ids.js'
 import { containsStructuralHeading } from './markdown.js'
 import { INTERFACE_TYPES } from './interface-types.js'
 
-export const REPORT_SCHEMA_VERSION = '11.0.0'
+export const REPORT_SCHEMA_VERSION = '12.0.0'
 
 const IdSchema = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
 /**
@@ -272,14 +272,27 @@ export const ReportScenarioStepContextSchema = z.strictObject({
   placeId: QualifiedIdSchema
 })
 
+/**
+ * What one Step does to one Entity.
+ *
+ * `effect` is resolved rather than optional: the folder may omit the default,
+ * the wire never does, so nothing downstream has to know which value that was.
+ */
+export const ReportScenarioStepChangeSchema = z.strictObject({
+  entityId: IdSchema,
+  effect: z.enum(['creates', 'changes', 'removes']),
+  state: SingleLineTextSchema.nullable()
+})
+
 export const ReportScenarioStepSchema = z.strictObject({
   text: SingleLineTextSchema,
   kind: z.enum(['actor', 'product', 'condition']),
   actorId: IdSchema.nullable(),
   capabilityId: IdSchema.nullable(),
-  /** The Entity this Step acts on, and the state it leaves it in. */
-  entityId: IdSchema.nullable(),
-  entityState: SingleLineTextSchema.nullable(),
+  /** What this Step does to the Product's Entities. One act may move several. */
+  changes: z.array(ReportScenarioStepChangeSchema),
+  /** Entities the Step picks, inspects, or displays without changing. */
+  readEntityIds: z.array(IdSchema),
   /** True only on a first condition Step that nobody triggers. */
   unattended: z.boolean(),
   contexts: z.array(ReportScenarioStepContextSchema)
@@ -347,7 +360,7 @@ export const ReportCoverageSchema = z.strictObject({
   rationale: MarkdownFragmentSchema
 })
 
-export const ProductReportV11Schema = z.strictObject({
+export const ProductReportV12Schema = z.strictObject({
   schemaVersion: z.literal(REPORT_SCHEMA_VERSION),
   id: ProductIdSchema,
   title: SingleLineTextSchema.max(160),
@@ -384,10 +397,10 @@ export const ProductReportV11Schema = z.strictObject({
   coverage: ReportCoverageSchema
 })
 
-export const ProductReportSchema = ProductReportV11Schema
+export const ProductReportSchema = ProductReportV12Schema
 
-export type ProductReportV11 = z.infer<typeof ProductReportV11Schema>
-export type ProductReport = ProductReportV11
+export type ProductReportV12 = z.infer<typeof ProductReportV12Schema>
+export type ProductReport = ProductReportV12
 export type ReportDecisionPoint = z.infer<typeof ReportDecisionPointSchema>
 export type ReportScreenState = z.infer<typeof ReportScreenStateSchema>
 export type ReportCoverage = z.infer<typeof ReportCoverageSchema>
@@ -415,7 +428,7 @@ export type ReportBusinessRuleTarget = z.infer<typeof ReportBusinessRuleTargetSc
 export type ReportReference = z.infer<typeof ReportReferenceSchema>
 export type ReportSupportingSection = z.infer<typeof ReportSupportingSectionSchema>
 
-export type ReportModel = ProductReportV11['model']
+export type ReportModel = ProductReportV12['model']
 
 /** One resource in the report, reduced to what every "for every resource" check needs. */
 type ReportResource = { id: string, references: ReportReference[] }
@@ -424,7 +437,7 @@ type ReportResource = { id: string, references: ReportReference[] }
  * Every resource collection in a report, keyed by its own name.
  *
  * The key union is read off the schema rather than written out, so a new
- * collection in `ProductReportV11Schema` leaves this record incomplete and fails
+ * collection in `ProductReportV12Schema` leaves this record incomplete and fails
  * the build. `taxonomies` is an object, not an array of resources, so it drops
  * out on its own. See the same reasoning in `resourceCollections` — Entity was
  * added to the report and its ids and References went unchecked for a release
@@ -546,7 +559,7 @@ function requireEntryPointInterfaces(
 }
 
 /** Cross-resource and computed-field validation, shared with every report consumer. */
-export function validateProductReport(report: ProductReportV11): string[] {
+export function validateProductReport(report: ProductReportV12): string[] {
   const issues: string[] = []
   const { model } = report
   const actorIds = new Set(model.actors.map(item => item.id))
@@ -765,29 +778,48 @@ export function validateProductReport(report: ProductReportV11): string[] {
        * the Order's own states say never confirms it.
        */
       const stepCapabilityId = step.capabilityId ?? parentCapabilityId
-      if (step.entityId) {
-        const entity = entitiesById.get(step.entityId)
-        if (!entity) {
-          issues.push(`${stepLabel}: references missing entity "${step.entityId}"`)
-        } else {
-          const owner = stepCapabilityId ? capabilitiesById.get(stepCapabilityId) : undefined
-          if (owner && !owner.entityIds.includes(step.entityId)) {
-            issues.push(`${stepLabel}: capability "${owner.id}" does not list entity "${step.entityId}"`)
-          }
-          if (step.entityState !== null) {
-            if (!entity.states.some(state => state.name === step.entityState)) {
-              issues.push(`${stepLabel}: "${step.entityState}" is not a state of entity "${step.entityId}"`)
-            } else if (stepCapabilityId && !entity.transitions.some(
-              transition => transition.to === step.entityState && transition.capabilityId === stepCapabilityId
-            )) {
-              issues.push(
-                `${stepLabel}: no transition of "${step.entityId}" reaches "${step.entityState}" by capability "${stepCapabilityId}"`
-              )
-            }
-          }
+      /* One Step states one thing about one Entity; a second entry for it is a
+         second authority that can disagree with the first. */
+      requireUniqueValues(issues, stepLabel, 'changes', step.changes.map(change => change.entityId))
+      requireUniqueValues(issues, stepLabel, 'readEntityIds', step.readEntityIds)
+      for (const id of step.readEntityIds) {
+        if (!entitiesById.has(id)) issues.push(`${stepLabel}: references missing entity "${id}"`)
+        /* Reading and changing a thing in one act are two claims that cannot
+           both be the whole truth about that Step. */
+        if (step.changes.some(change => change.entityId === id)) {
+          issues.push(`${stepLabel}: "${id}" is both read and changed by this Step`)
         }
-      } else if (step.entityState !== null) {
-        issues.push(`${stepLabel}: entityState needs an entityId to belong to`)
+      }
+      for (const change of step.changes) {
+        const entity = entitiesById.get(change.entityId)
+        if (!entity) {
+          issues.push(`${stepLabel}: references missing entity "${change.entityId}"`)
+          continue
+        }
+        const owner = stepCapabilityId ? capabilitiesById.get(stepCapabilityId) : undefined
+        if (owner && !owner.entityIds.includes(change.entityId)) {
+          issues.push(`${stepLabel}: capability "${owner.id}" does not list entity "${change.entityId}"`)
+        }
+        /* Ending a thing and leaving it in a state are different claims, and
+           the second cannot follow the first. */
+        if (change.effect === 'removes' && change.state !== null) {
+          issues.push(`${stepLabel}: a "removes" change cannot also leave "${change.entityId}" in a state`)
+          continue
+        }
+        if (change.state === null) continue
+        if (!entity.states.some(state => state.name === change.state)) {
+          issues.push(`${stepLabel}: "${change.state}" is not a state of entity "${change.entityId}"`)
+          continue
+        }
+        /* A creation has no `from`, so no transition can ever describe one. */
+        if (change.effect === 'creates') continue
+        if (stepCapabilityId && !entity.transitions.some(
+          transition => transition.to === change.state && transition.capabilityId === stepCapabilityId
+        )) {
+          issues.push(
+            `${stepLabel}: no transition of "${change.entityId}" reaches "${change.state}" by capability "${stepCapabilityId}"`
+          )
+        }
       }
 
       requireUniqueValues(issues, stepLabel, 'routeIds', step.contexts.map(context => context.routeId))
@@ -1263,7 +1295,7 @@ function isRepositoryEntryPoint(value: string): boolean {
 }
 
 /** Project a report into the source-free profile delivered outside its repository. */
-export function projectPortableReport(report: ProductReportV11): ProductReportV11 {
+export function projectPortableReport(report: ProductReportV12): ProductReportV12 {
   const portableReferences = <T extends { kind: string, role: string, target: string }>(items: T[]): T[] =>
     items.filter(reference =>
       reference.kind !== 'code'
@@ -1306,15 +1338,15 @@ export function projectPortableReport(report: ProductReportV11): ProductReportV1
   }
 }
 
-export function parseProductReport(input: unknown): ProductReportV11 {
-  const report = ProductReportV11Schema.parse(input)
+export function parseProductReport(input: unknown): ProductReportV12 {
+  const report = ProductReportV12Schema.parse(input)
   const issues = validateProductReport(report)
   if (issues.length) throw new Error(`Report validation failed:\n- ${issues.join('\n- ')}`)
   return report
 }
 
 /** Additional publication policy for a Product Report entering the public Blueprint catalog. */
-export function validateBlueprintReport(report: ProductReportV11): string[] {
+export function validateBlueprintReport(report: ProductReportV12): string[] {
   const issues: string[] = []
   if (!report.category) issues.push('category is required for a public Blueprint')
   if (!report.tags.length) issues.push('at least one tag is required for a public Blueprint')

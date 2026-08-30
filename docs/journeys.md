@@ -205,6 +205,11 @@ The Journey goal is achieved: a reviewable change proposal exists.
 | `routes` | yes | Map each unique lowercase kebab-case route ID to a unique human-readable name. |
 | `steps` | yes | Give a non-empty ordered list with one-line `text` and `kind: actor|product|condition`. A Step may name a Capability independently of its kind. |
 | `steps[].actor` | for Actor Steps | Name the responsible Actor when `kind: actor`; omit it for Product actions and unowned conditions. At least one Actor Step must name a Journey Actor. |
+| `steps[].changes` | no | List what this Step does to the Product's Entities. One entry per Entity, never two for the same one; one observable act may move several. |
+| `steps[].changes[].entity` | yes | Name the Entity. It must be one the Step's own `capability` declares in `entities`. |
+| `steps[].changes[].effect` | no | Use `creates`, `changes`, or `removes`. Defaults to `changes`. |
+| `steps[].changes[].state` | no | Name the state this Step leaves that Entity in. It must be one of that Entity's states; under `changes` some `transition` must reach it by the Step's Capability, under `creates` none is required, and `removes` refuses it. |
+| `steps[].reads` | no | List the Entity ids this Step picks, inspects, or displays without changing. A bare list: no effect, no state, never a change, and never enough on its own to keep an Entity from being an orphan. An Entity is named in `changes` or `reads`, never both. |
 | `steps[].contexts` | when contextualized | Map every declared route to a strict Context whose `place` is the most-specific occurrence. Omit it only when the Step is shared by all routes and has no Context. |
 | `references` | no | Use the documented [Reference](./references.md) shape. |
 | Lead paragraph | no | Start with a named H2; move starting-condition prose into `## Trigger`. |

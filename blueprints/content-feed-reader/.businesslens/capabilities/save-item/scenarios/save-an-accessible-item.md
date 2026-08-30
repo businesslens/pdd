@@ -14,6 +14,8 @@ steps:
         place: reader-mobile::personal-library::unread-library
   - text: The Product records the saved state independently of reading state
     kind: product
+    changes:
+      - entity: item
     contexts:
       web:
         place: reader-web::personal-library::unread-library

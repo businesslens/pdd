@@ -15,6 +15,9 @@ steps:
         place: reader-web::personal-library::collection-workspace
   - text: The Reader confirms unlisting
     kind: actor
+    changes:
+      - entity: collection
+        state: Unlisted
     actor: reader
     contexts:
       web:

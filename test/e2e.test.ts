@@ -7,7 +7,7 @@ import { buildProject } from '../src/commands/export.js'
 import { loadModel } from '../src/core/model.js'
 import { lintModel } from '../src/commands/lint.js'
 import { lsFiles } from '../src/core/git.js'
-import { ProductReportV11Schema } from '../src/core/portable.js'
+import { ProductReportV12Schema } from '../src/core/portable.js'
 
 const FIXTURE = join(__dirname, 'fixtures', 'fixture-shop')
 
@@ -41,10 +41,10 @@ describe('end to end on a real git repo', () => {
   it('builds a schema-valid source-free report deterministically', () => {
     const first = buildProject(repo)
     const output = JSON.parse(readFileSync(first.outputFile, 'utf8'))
-    const parsed = ProductReportV11Schema.parse(output)
+    const parsed = ProductReportV12Schema.parse(output)
     expect(parsed.id).toBe('fixture-shop')
     expect(parsed).toMatchObject({
-      schemaVersion: '11.0.0',
+      schemaVersion: '12.0.0',
       summary: 'Browse a product catalog, buy products, and manage the resulting orders.',
       category: 'commerce',
       authors: [{ name: 'BusinessLens' }],
@@ -58,7 +58,7 @@ describe('end to end on a real git repo', () => {
       domains: 1,
       entities: 3,
       capabilities: 3,
-      capabilityScenarios: 4,
+      capabilityScenarios: 5,
       journeys: 1,
       journeyScenarios: 2,
       businessRules: 2
@@ -72,7 +72,7 @@ describe('end to end on a real git repo', () => {
     const screen = parsed.model.screens.find(item => item.id === 'customer-web::storefront::product-record')
     expect(screen).toMatchObject({
       capabilityIds: ['browse-catalog', 'place-order'],
-      capabilityScenarioIds: ['browse-catalog', 'complete-checkout', 'decline-checkout-payment'],
+      capabilityScenarioIds: ['browse-catalog', 'complete-checkout', 'decline-checkout-payment', 'sell-the-last-available-unit'],
       journeyScenarioIds: ['browse-and-complete-checkout', 'cancel-an-order-before-fulfilment'],
       information: ['Product name and description', 'Price and availability']
     })

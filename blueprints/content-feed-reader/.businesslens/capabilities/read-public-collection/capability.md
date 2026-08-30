@@ -1,7 +1,4 @@
 ---
-entities:
-  - collection
-  - item
 domain: collections
 availability: [{ place: reader-web::public-reading }]
 ---

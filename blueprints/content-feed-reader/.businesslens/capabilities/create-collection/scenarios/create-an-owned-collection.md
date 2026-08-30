@@ -11,6 +11,10 @@ steps:
         place: reader-web::personal-library::collection-workspace
   - text: The Product creates a private collection owned by that Reader
     kind: product
+    changes:
+      - entity: collection
+        effect: creates
+        state: Private
     contexts:
       web:
         place: reader-web::personal-library::collection-workspace

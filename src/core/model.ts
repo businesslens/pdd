@@ -166,11 +166,43 @@ export interface ScenarioStepContext extends Context {
   routeId: string
 }
 
-export interface ScenarioStep {
-  /** The Entity this Step acts on, when it acts on one. */
-  entity?: string
-  /** The state that Entity is left in. Requires `entity`. */
+/**
+ * What a Step does to one Entity.
+ *
+ * `changes` is the default and the ordinary case. `creates` and `removes` are
+ * the boundaries of a thing's existence, which an Actor observes and which no
+ * transition can express — a fourth value meaning "updated" would appear on
+ * almost every entry and separate nothing.
+ */
+export type ScenarioStepEffect = 'creates' | 'changes' | 'removes'
+
+export const SCENARIO_STEP_EFFECTS: ScenarioStepEffect[] = ['creates', 'changes', 'removes']
+
+export interface ScenarioStepChange {
+  entity: string
+  /** Absent in the folder when it is the default `changes`. */
+  effect?: ScenarioStepEffect
+  /** The state this Step leaves that Entity in. */
   state?: string
+}
+
+export interface ScenarioStep {
+  /**
+   * What this Step does to the Product's Entities.
+   *
+   * A list because one observable act can move two things at once, and
+   * splitting it to fit a singular field would turn an acceptance case into an
+   * implementation trace.
+   */
+  changes: ScenarioStepChange[]
+  /**
+   * Entities this Step picks, inspects, or displays without changing.
+   *
+   * A bare id list on purpose. `changes` carries an effect and a state and is
+   * what "what can alter this thing" is derived from; a read places no claim on
+   * that, so it gets no structure and never satisfies the no-orphans rule.
+   */
+  reads: string[]
   /**
    * Marks a Scenario nobody triggers — a schedule the Product owns, an expiry,
    * a retry. Valid only on the first Step and only when `kind` is `condition`.
@@ -525,7 +557,26 @@ function scenarioStepsField(
       continue
     }
     const item = raw as Record<string, unknown>
-    rejectUnknownKeys(item, ['text', 'kind', 'actor', 'entity', 'state', 'contexts', 'unattended', ...(allowCapability ? ['capability'] : [])], issues, itemLabel)
+    /*
+     * `entity` and `state` shipped as singular Step keys and are now entries of
+     * `changes`. They would otherwise fall through as unknown keys, which says
+     * what is wrong and not what to write instead.
+     */
+    for (const retired of ['entity', 'state']) {
+      if (item[retired] !== undefined) {
+        issues.push(`${itemLabel}: "${retired}" is now an entry of "changes"`)
+      }
+    }
+    rejectUnknownKeys(item, ['text', 'kind', 'actor', 'changes', 'reads', 'contexts', 'unattended', ...(allowCapability ? ['capability'] : [])], issues, itemLabel)
+    const changes = stepChanges(item.changes, issues, itemLabel)
+    const reads = uniqueStringListField(item, 'reads', issues, itemLabel)
+    /* One Step says one thing about one Entity. Reading and changing it in the
+       same act are two claims that cannot both be the whole truth. */
+    for (const id of reads) {
+      if (changes.some(change => change.entity === id)) {
+        issues.push(`${itemLabel}: "${id}" is both read and changed by this Step`)
+      }
+    }
     const contexts: ScenarioStepContext[] = []
     if (item.contexts !== undefined && item.contexts !== null) {
       if (typeof item.contexts !== 'object' || Array.isArray(item.contexts)) {
@@ -545,14 +596,70 @@ function scenarioStepsField(
       text: stringField(item, 'text', issues, itemLabel) || '',
       kind: stringField(item, 'kind', issues, itemLabel) || '',
       actor: stringField(item, 'actor', issues, itemLabel),
-      entity: stringField(item, 'entity', issues, itemLabel),
-      state: stringField(item, 'state', issues, itemLabel),
+      changes,
+      reads,
       capability: allowCapability ? stringField(item, 'capability', issues, itemLabel) : undefined,
       unattended: unattended === true ? true : undefined,
       contexts
     })
   }
   return steps
+}
+
+/**
+ * One Step's `changes` list, parsed but not resolved.
+ *
+ * Shape only: whether the ids exist, whether the Capability declares them, and
+ * whether a state is reachable are model-wide questions `lint` answers once the
+ * whole model is loaded.
+ */
+function stepChanges(raw: unknown, issues: string[], label: string): ScenarioStepChange[] {
+  if (raw === undefined || raw === null) return []
+  if (!Array.isArray(raw)) {
+    issues.push(`${label}: "changes" must be a list`)
+    return []
+  }
+  const changes: ScenarioStepChange[] = []
+  const seen = new Set<string>()
+  for (const [index, entry] of raw.entries()) {
+    const entryLabel = `${label}: change ${index + 1}`
+    if (typeof entry !== 'object' || entry === null || Array.isArray(entry)) {
+      issues.push(`${entryLabel} must be a mapping`)
+      continue
+    }
+    const item = entry as Record<string, unknown>
+    rejectUnknownKeys(item, ['entity', 'effect', 'state'], issues, entryLabel)
+    const entity = stringField(item, 'entity', issues, entryLabel) || ''
+    if (!entity) {
+      issues.push(`${entryLabel}: needs an "entity"`)
+      continue
+    }
+    /* One Step states one thing about one Entity; two entries for it are two
+       authorities that can disagree, exactly as a facing relation is. */
+    if (seen.has(entity)) {
+      issues.push(`${entryLabel}: "${entity}" is already changed by this Step`)
+      continue
+    }
+    seen.add(entity)
+    const effect = stringField(item, 'effect', issues, entryLabel)
+    if (effect !== undefined && !SCENARIO_STEP_EFFECTS.includes(effect as ScenarioStepEffect)) {
+      issues.push(`${entryLabel}: effect "${effect}" must be ${SCENARIO_STEP_EFFECTS.join('|')}`)
+      continue
+    }
+    const state = stringField(item, 'state', issues, entryLabel)
+    /* Ending a thing and leaving it in a state are different claims, and the
+       second cannot follow the first. */
+    if (effect === 'removes' && state !== undefined) {
+      issues.push(`${entryLabel}: a "removes" change cannot also leave "${entity}" in a state`)
+      continue
+    }
+    changes.push({
+      entity,
+      effect: effect as ScenarioStepEffect | undefined,
+      state
+    })
+  }
+  return changes
 }
 
 function parsedContextField(
@@ -1016,12 +1123,9 @@ export function loadModel(cwd: string): PddModel {
         issues.push(`${file}: "transitions" must be a list`)
       }
 
-      const reachable = new Set(transitions.map(transition => transition.to))
-      for (const state of states.slice(1)) {
-        if (!reachable.has(state.title)) {
-          notices.push(`${file}: no transition reaches state "${state.title}"`)
-        }
-      }
+      /* Whether a state is reachable is a model-wide question — a Step may
+         create straight into one — so `lint` asks it once the whole model is
+         loaded rather than this parser asking it one Entity file at a time. */
       return {
         id, file, doc, references, directory, assets, assetMeta,
         domain: stringField(data, 'domain', issues, file),

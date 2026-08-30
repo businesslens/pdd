@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import type { ProductReportV11 } from 'businesslens/report'
+import type { ProductReportV12 } from 'businesslens/report'
 
-const report: ProductReportV11 = {
+const report: ProductReportV12 = {
   schemaVersion: '10.0.0',
   id: 'packed-layer-smoke',
   title: 'Packed Layer Smoke Test',

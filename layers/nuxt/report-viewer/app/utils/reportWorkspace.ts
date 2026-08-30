@@ -9,7 +9,7 @@
  * This is the stable view projection used by the shipped report viewer.
  */
 import type {
-  ProductReportV11,
+  ProductReportV12,
   ReportActor,
   ReportContext,
   ReportBusinessRule,
@@ -285,6 +285,8 @@ export interface DomainView extends ResourceBase {
   kind: 'domain'
   /** Experiences reached through this Domain's Capabilities. Never authored. */
   experienceIds: string[]
+  /** Entities in this subject region. Authored on the Entity, read back here. */
+  entityIds: string[]
   colorSlot?: number
   capabilityIds: string[]
   journeyIds: string[]
@@ -313,12 +315,31 @@ export interface EntityRelationView {
   ends: ReportEntityRelation['cardinality']
 }
 
+/**
+ * One state the thing can be in, and the Scenarios that leave it there.
+ *
+ * The back-link is derived, never authored: a Step names the Entity and the
+ * state, and the report has already checked that some transition reaches that
+ * state by the Step's own Capability. Without it a lifecycle said what a thing
+ * can be and never what actually puts it there — the transition named only the
+ * causing Capability, and the acceptance case demonstrating the move was a page
+ * away with nothing pointing at it.
+ */
+export interface EntityStateView {
+  name: string
+  content: string
+  /** Capability Scenarios whose Steps leave the Entity in this state. */
+  capabilityScenarioIds: string[]
+  /** Journey Scenarios whose Steps leave the Entity in this state. */
+  journeyScenarioIds: string[]
+}
+
 export interface EntityView extends ResourceBase {
   kind: 'entity'
   domainId?: string
   /** What the Product keeps about the thing. Never how it is stored. */
   informationKept: string[]
-  states: Array<{ name: string, content: string }>
+  states: EntityStateView[]
   /** Each move, and the Capability that causes it. */
   transitions: Array<{ from: string, to: string, capabilityId: string }>
   /** Edges this Entity declares, each carrying how many of the target it reaches. */
@@ -365,6 +386,8 @@ export interface JourneyView extends ResourceBase {
   entryPoints: EntryPointView[]
   scenarioIds: string[]
   domainIds: string[]
+  /** Entities its Scenarios' Steps change. Derived, exactly as domainIds are. */
+  entityIds: string[]
   screenIds: string[]
   ruleIds: string[]
   interfaceIds: string[]
@@ -373,9 +396,55 @@ export interface JourneyView extends ResourceBase {
   stepCount: number
 }
 
+/**
+ * What one Step does to one Entity, resolved for reading.
+ *
+ * `fromStates` is derived, never authored. A Step names the state it *leaves*
+ * an Entity in; the Entity's own transitions say which states reach that one by
+ * this Step's Capability. Rendering `Unread → Read` from the authored `Read`
+ * alone is why the tail cannot disagree with the lifecycle — and why nothing
+ * has to be written on the Step before it.
+ */
+export interface ScenarioStepChangeView {
+  entityId: string
+  effect: 'creates' | 'changes' | 'removes'
+  /** Empty when the Step names no state. */
+  state: string
+  /**
+   * Where the move starts, when the lifecycle says so unambiguously.
+   *
+   * Empty for a creation, which has no `from` at all, and for a state several
+   * transitions of one Capability reach — there the reading stays honest and
+   * shows the destination alone rather than picking one tail.
+   */
+  fromStates: string[]
+}
+
+/**
+ * Everything one Step names about one Entity, in the shape the reading wants.
+ *
+ * `reads` joins the three authored effects here and nowhere else: the model
+ * keeps changes and reads apart on purpose, because only a change answers "what
+ * can alter this thing". A reader looking at a Step wants both, told apart by
+ * weight rather than by absence, so the *rendering* type carries the union and
+ * every derivation keeps using `changes` alone.
+ */
+export interface ScenarioStepMentionView extends Omit<ScenarioStepChangeView, 'effect'> {
+  effect: ScenarioStepChangeView['effect'] | 'reads'
+}
+
 export interface ScenarioView extends ResourceBase {
-  /** Derived from the Steps, exactly as the Actor set is. */
+  /** Entities the Steps change. Derived, exactly as the Actor set is. */
   entityIds: string[]
+  /** Entities the Steps only read. Derived, and never merged into entityIds. */
+  readEntityIds: string[]
+  /**
+   * Where each changed Entity is left when the Scenario ends.
+   *
+   * The last change naming it, in Step order — which is what "what did this
+   * accomplish" means, and what the Outcome prose says in words.
+   */
+  outcomeStates: ScenarioStepMentionView[]
   kind: ReportScenarioKind
   scenarioType: ReportScenarioType
   capabilityId: string
@@ -395,6 +464,17 @@ export interface ScenarioView extends ResourceBase {
     stepKind: 'actor' | 'product' | 'condition'
     actorId: string
     capabilityId: string
+    /**
+     * What this Step does to the Product's Entities, in authored order.
+     *
+     * A list because one observable act can move two things at once. The
+     * Scenario's `entityIds` is this set deduped across Steps, which answers
+     * *what* a Scenario touches but never *where*; the reading is the sequence,
+     * so the changes belong on the Step that causes them.
+     */
+    changes: ScenarioStepChangeView[]
+    /** Entities this Step picks, inspects, or displays without changing. */
+    reads: string[]
     contexts: Array<{
       routeId: string
       context: ResolvedContextView
@@ -616,7 +696,7 @@ function entryPoints(
  * once — a Business Rule lists its Capabilities, a Capability never lists its
  * Rules — so every backlink here is derived, never authored.
  */
-export function projectReportWorkspace(report: ProductReportV11): ReportWorkspace {
+export function projectReportWorkspace(report: ProductReportV12): ReportWorkspace {
   const model = report.model
   const interfaceOf = (interfaceId: string): ReportInterface => {
     const productInterface = model.interfaces.find(item => item.id === interfaceId)
@@ -952,6 +1032,33 @@ export function projectReportWorkspace(report: ProductReportV11): ReportWorkspac
     }
   })
 
+  /*
+   * Which Scenarios leave which Entity in which state.
+   *
+   * Keyed on the pair rather than the state name alone, because two Entities
+   * may both have a "Draft" and merging them would put one thing's acceptance
+   * cases on another thing's lifecycle.
+   */
+  const byEntityState = (scenarios: Array<ReportCapabilityScenario | ReportJourneyScenario>) => {
+    const index = new Map<string, string[]>()
+    for (const scenario of scenarios) {
+      for (const step of scenario.steps) {
+        for (const change of step.changes) {
+          /* A creation leaves the thing in that state as surely as a move does,
+             so it belongs in the reading; only `removes` names no state. */
+          if (!change.state) continue
+          const key = `${change.entityId}\u0000${change.state}`
+          const found = index.get(key)
+          if (!found) index.set(key, [scenario.id])
+          else if (!found.includes(scenario.id)) found.push(scenario.id)
+        }
+      }
+    }
+    return index
+  }
+  const capabilityScenariosByState = byEntityState(model.capabilityScenarios)
+  const journeyScenariosByState = byEntityState(model.journeyScenarios)
+
   const entities: EntityView[] = model.entities.map((entity: ReportEntity) => ({
     key: resourceKey('entity', entity.id),
     id: entity.id,
@@ -982,7 +1089,12 @@ export function projectReportWorkspace(report: ProductReportV11): ReportWorkspac
         }))),
     changedByIds: model.capabilities.filter(c => c.entityIds.includes(entity.id)).map(c => c.id),
     presentedOnIds: model.screens.filter(sc => sc.entityIds.includes(entity.id)).map(sc => sc.id),
-    states: entity.states.map(state => ({ name: state.name, content: state.content })),
+    states: entity.states.map(state => ({
+      name: state.name,
+      content: state.content,
+      capabilityScenarioIds: capabilityScenariosByState.get(`${entity.id}\u0000${state.name}`) ?? [],
+      journeyScenarioIds: journeyScenariosByState.get(`${entity.id}\u0000${state.name}`) ?? []
+    })),
     /*
      * Every Entity edge is derived, never authored here: the Capability declares
      * what it acts on and the Screen declares what it presents, so an Entity has
@@ -1009,6 +1121,7 @@ export function projectReportWorkspace(report: ProductReportV11): ReportWorkspac
       references: domain.references,
       colorSlot: domain.colorSlot,
       capabilityIds,
+      entityIds: model.entities.filter(entity => entity.domainId === domain.id).map(entity => entity.id),
       journeyIds: unique(capabilityIds.flatMap(id => journeysByCapability.get(id) || [])),
       screenIds: unique(capabilityIds.flatMap(id => screensByCapability.get(id) || [])),
       experienceIds: unique(model.capabilities
@@ -1071,6 +1184,11 @@ export function projectReportWorkspace(report: ProductReportV11): ReportWorkspac
       domainIds: unique(journey.capabilityIds
         .map(id => capabilityById.get(id)?.domainId)
         .filter((id): id is string => Boolean(id))),
+      /* Its Scenarios' Steps, not its Capabilities' declarations: a Journey
+         moves what it is actually shown moving, and a Capability it uses may
+         change things no path through this Journey ever reaches. */
+      entityIds: unique(journeyScenarios.flatMap(scenario => scenario.steps
+        .flatMap(step => step.changes.map(change => change.entityId)))),
       screenIds: unique([
         ...scenarioIds.flatMap(id => screensByScenario.get(id) || []),
         ...journey.capabilityIds.flatMap(id => screensByCapability.get(id) || [])
@@ -1085,12 +1203,42 @@ export function projectReportWorkspace(report: ProductReportV11): ReportWorkspac
     }
   })
 
-  const scenarioSteps = (scenario: ReportCapabilityScenario | ReportJourneyScenario): ScenarioView['steps'] =>
+  const entityById = new Map(model.entities.map(entity => [entity.id, entity]))
+
+  const outcomeStates = (steps: ScenarioView['steps']): ScenarioStepMentionView[] => {
+    const last = new Map<string, ScenarioStepMentionView>()
+    for (const step of steps) {
+      for (const change of step.changes) last.set(change.entityId, change)
+    }
+    return [...last.values()]
+  }
+
+  const scenarioSteps = (
+    scenario: ReportCapabilityScenario | ReportJourneyScenario,
+    parentCapabilityId = ''
+  ): ScenarioView['steps'] =>
     scenario.steps.map(step => ({
       text: step.text,
       stepKind: step.kind,
       actorId: step.actorId ?? '',
       capabilityId: step.capabilityId ?? '',
+      changes: step.changes.map((change) => {
+        const owner = step.capabilityId ?? parentCapabilityId
+        /* A creation has no `from`; every other move has as many as the
+           lifecycle declares, and only one of them can be drawn as an arrow. */
+        const fromStates = change.state && change.effect !== 'creates' && owner
+          ? (entityById.get(change.entityId)?.transitions ?? [])
+              .filter(transition => transition.to === change.state && transition.capabilityId === owner)
+              .map(transition => transition.from)
+          : []
+        return {
+          entityId: change.entityId,
+          effect: change.effect,
+          state: change.state ?? '',
+          fromStates: unique(fromStates)
+        }
+      }),
+      reads: step.readEntityIds,
       contexts: step.contexts.map(context => ({
         routeId: context.routeId,
         context: placeOf(context.placeId)
@@ -1103,7 +1251,8 @@ export function projectReportWorkspace(report: ProductReportV11): ReportWorkspac
       key: resourceKey('capability-scenario', scenario.id),
       id: scenario.id,
       kind: 'capability-scenario',
-      entityIds: unique(scenario.steps.map(step => step.entityId).filter((id): id is string => Boolean(id))),
+      entityIds: unique(scenario.steps.flatMap(step => step.changes.map(change => change.entityId))),
+      readEntityIds: unique(scenario.steps.flatMap(step => step.readEntityIds)),
       title: scenario.title,
       lead: scenario.trigger,
       intent: scenario.intent,
@@ -1121,7 +1270,8 @@ export function projectReportWorkspace(report: ProductReportV11): ReportWorkspac
       contexts: scenarioContexts(scenario),
       trigger: scenario.trigger,
       routes: scenario.routes,
-      steps: scenarioSteps(scenario),
+      steps: scenarioSteps(scenario, scenario.capabilityId),
+      outcomeStates: outcomeStates(scenarioSteps(scenario, scenario.capabilityId)),
       decisionPoints: scenario.decisionPoints,
       outcome: scenario.outcome,
       edgeCases: scenario.edgeCases,
@@ -1137,7 +1287,8 @@ export function projectReportWorkspace(report: ProductReportV11): ReportWorkspac
       key: resourceKey('journey-scenario', scenario.id),
       id: scenario.id,
       kind: 'journey-scenario',
-      entityIds: unique(scenario.steps.map(step => step.entityId).filter((id): id is string => Boolean(id))),
+      entityIds: unique(scenario.steps.flatMap(step => step.changes.map(change => change.entityId))),
+      readEntityIds: unique(scenario.steps.flatMap(step => step.readEntityIds)),
       title: scenario.title,
       lead: scenario.trigger,
       intent: scenario.intent,
@@ -1156,6 +1307,7 @@ export function projectReportWorkspace(report: ProductReportV11): ReportWorkspac
       trigger: scenario.trigger,
       routes: scenario.routes,
       steps: scenarioSteps(scenario),
+      outcomeStates: outcomeStates(scenarioSteps(scenario)),
       decisionPoints: scenario.decisionPoints,
       outcome: scenario.outcome,
       edgeCases: scenario.edgeCases,
@@ -1449,6 +1601,8 @@ export interface ScenarioStepRow {
   stepKind: 'actor' | 'product' | 'condition'
   actorId: string
   capabilityId: string
+  /** Everything this Step names — changes first, then reads. */
+  mentions: ScenarioStepMentionView[]
   routeNeutral: boolean
   /** One cell per route, in authored route order. */
   cells: ScenarioStepCell[]
@@ -1486,6 +1640,15 @@ export function scenarioStepMatrix(scenario: ScenarioView): ScenarioStepMatrix {
       stepKind: step.stepKind,
       actorId: step.actorId,
       capabilityId: step.capabilityId,
+      mentions: [
+        ...step.changes,
+        ...step.reads.map(entityId => ({
+          entityId,
+          effect: 'reads' as const,
+          state: '',
+          fromStates: []
+        }))
+      ],
       routeNeutral: step.contexts.length === 0,
       cells
     }

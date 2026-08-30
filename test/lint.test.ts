@@ -178,7 +178,7 @@ describe('lintModel', () => {
       domains: 1,
       entities: 3,
       capabilities: 3,
-      capabilityScenarios: 4,
+      capabilityScenarios: 5,
       journeys: 1,
       journeyScenarios: 2,
       businessRules: 2
@@ -264,7 +264,9 @@ An internal system that initiates store operations.
     for (const relative of readdirSync(join(cwd, '.businesslens/capabilities'), { recursive: true })) {
       const file = join(cwd, '.businesslens/capabilities', String(relative))
       if (!String(relative).endsWith('.md')) continue
-      writeFileSync(file, readFileSync(file, 'utf8').replace(/^ *entity: .*\n( *state: .*\n)?/gm, ''))
+      writeFileSync(file, readFileSync(file, 'utf8')
+        .replace(/^ *changes:\n(?: +- entity: .*\n(?: +(?:effect|state): .*\n)*)+/gm, '')
+        .replace(/^ *reads:\n(?: +- .*\n)+/gm, ''))
     }
     for (const relative of [
       'interfaces/customer-web/experiences/storefront/screens',
@@ -589,9 +591,130 @@ Supports order operations. It does not expose a shopper's account.
     expect(partial.warnings.some(warning => warning.includes('needs Capability Scenario coverage'))).toBe(true)
   })
 
+  /*
+   * The one rule that asks for `entity`/`state` on a Step. Every other check
+   * validates the pair once it is there, which is how three shipped models came
+   * to declare lifecycles their Scenarios never demonstrated.
+   */
+  it('requires every transition to have a Scenario Step that reaches its state', () => {
+    const cwd = fixtureCopy()
+    const scenario = join(cwd, '.businesslens/capabilities/manage-orders/scenarios/refund-order.md')
+    writeFileSync(
+      scenario,
+      readFileSync(scenario, 'utf8')
+        .replace('    changes:\n      - entity: order\n        state: Refunded\n', '')
+    )
+
+    expect(run(cwd).errors.join('\n')).toContain(
+      'no Step of a "manage-orders" Scenario leaves it in "Refunded"'
+    )
+  })
+
+  it('grades an undemonstrated transition by model coverage status', () => {
+    const cwd = fixtureCopy()
+    const scenario = join(cwd, '.businesslens/capabilities/manage-orders/scenarios/refund-order.md')
+    writeFileSync(
+      scenario,
+      readFileSync(scenario, 'utf8')
+        .replace('    changes:\n      - entity: order\n        state: Refunded\n', '')
+    )
+    const coverage = join(cwd, '.businesslens/coverage.md')
+    writeFileSync(coverage, readFileSync(coverage, 'utf8').replace('status: complete', 'status: partial'))
+
+    const partial = run(cwd)
+    expect(partial.errors.some(error => error.includes('has no acceptance case'))).toBe(false)
+    expect(partial.warnings.some(warning => warning.includes('has no acceptance case'))).toBe(true)
+  })
+
+  /*
+   * A Step names the state it leaves the Entity in and never the one it came
+   * from, so two transitions into one state share a demonstration. Demanding a
+   * witness per edge would demand a `from` the format never gives a Step.
+   */
+  it('lets one Step demonstrate every transition into the same state', () => {
+    const cwd = fixtureCopy()
+    const entity = join(cwd, '.businesslens/entities/order.md')
+    writeFileSync(
+      entity,
+      readFileSync(entity, 'utf8').replace(
+        '  - from: Confirmed\n    to: Refunded\n    by: manage-orders\n',
+        '  - from: Confirmed\n    to: Refunded\n    by: manage-orders\n  - from: Pending\n    to: Refunded\n    by: manage-orders\n'
+      )
+    )
+
+    expect(run(cwd).errors).toEqual([])
+  })
+
+  /*
+   * The other end of "capability X does not declare entity Y". That check runs
+   * when a Step names an Entity; nothing ran when a Capability named one and no
+   * Step ever did, so a Capability could declare what it changes while its whole
+   * acceptance surface stayed silent about it.
+   */
+  it('requires a declared Entity to be changed by some Step of its Scenarios', () => {
+    const cwd = fixtureCopy()
+    const capability = join(cwd, '.businesslens/capabilities/browse-catalog/capability.md')
+    writeFileSync(
+      capability,
+      readFileSync(capability, 'utf8').replace('---\n', '---\nentities:\n  - catalog-product\n')
+    )
+
+    expect(run(cwd).errors.join('\n')).toContain(
+      'declares entity "catalog-product", which no Step of its Scenarios changes'
+    )
+  })
+
+  it('grades an unnamed Entity declaration by model coverage status', () => {
+    const cwd = fixtureCopy()
+    const capability = join(cwd, '.businesslens/capabilities/browse-catalog/capability.md')
+    writeFileSync(
+      capability,
+      readFileSync(capability, 'utf8').replace('---\n', '---\nentities:\n  - catalog-product\n')
+    )
+    const coverage = join(cwd, '.businesslens/coverage.md')
+    writeFileSync(coverage, readFileSync(coverage, 'utf8').replace('status: complete', 'status: partial'))
+
+    const partial = run(cwd)
+    expect(partial.errors.some(error => error.includes('no Step of its Scenarios changes'))).toBe(false)
+    expect(partial.warnings.some(warning => warning.includes('no Step of its Scenarios changes'))).toBe(true)
+  })
+
+  /*
+   * A read is a bare mention. It resolves like any other reference, and reading
+   * and changing one thing in one act are two claims that cannot both be the
+   * whole truth about that Step.
+   */
+  it('takes a Step read as a mention, never as a change', () => {
+    const cwd = fixtureCopy()
+    const scenario = join(cwd, '.businesslens/capabilities/browse-catalog/scenarios/browse-catalog.md')
+    const source = readFileSync(scenario, 'utf8')
+
+    writeFileSync(scenario, source.replace('      - catalog-product\n', '      - ghost\n'))
+    expect(run(cwd).errors.join('\n')).toContain('reads missing entity "ghost"')
+
+    /* Reading it is not declaring that this Capability changes it, so the
+       Capability stays out of `entities` and the read alone must not put it back. */
+    writeFileSync(scenario, source)
+    expect(run(cwd).errors).toEqual([])
+  })
+
+  it('refuses a Step that both reads and changes one Entity', () => {
+    const cwd = fixtureCopy()
+    const scenario = join(cwd, '.businesslens/capabilities/manage-orders/scenarios/refund-order.md')
+    writeFileSync(
+      join(cwd, '.businesslens/capabilities/manage-orders/scenarios/refund-order.md'),
+      readFileSync(scenario, 'utf8').replace(
+        '    changes:\n      - entity: order\n        state: Refunded\n',
+        '    changes:\n      - entity: order\n        state: Refunded\n    reads:\n      - order\n'
+      )
+    )
+
+    expect(run(cwd).errors.join('\n')).toContain('"order" is both read and changed by this Step')
+  })
+
   it('requires Capability Scenario coverage for every availability Context', () => {
     const cwd = fixtureCopy()
-    for (const name of ['complete-checkout', 'decline-checkout-payment']) {
+    for (const name of ['complete-checkout', 'decline-checkout-payment', 'sell-the-last-available-unit']) {
       const file = join(cwd, `.businesslens/capabilities/place-order/scenarios/${name}.md`)
       writeFileSync(
         file,

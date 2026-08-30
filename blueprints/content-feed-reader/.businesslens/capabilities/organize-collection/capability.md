@@ -1,7 +1,6 @@
 ---
 entities:
   - collection
-  - item
 domain: collections
 availability: [{ place: reader-web::personal-library }]
 ---

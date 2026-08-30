@@ -21,6 +21,10 @@ steps:
         place: reader-mobile::personal-library::source-list
   - text: The source is added to the Reader's followed sources
     kind: product
+    changes:
+      - entity: source
+        effect: creates
+        state: Reachable
     contexts:
       web:
         place: reader-web::personal-library::source-list

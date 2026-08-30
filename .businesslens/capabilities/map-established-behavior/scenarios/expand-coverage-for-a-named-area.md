@@ -28,6 +28,8 @@ steps:
         place: agent-skills
   - text: The Product writes the approved delta and preserves the valid meaning the rest of the model already carried
     kind: product
+    changes:
+      - entity: product-model
     contexts:
       harness:
         place: agent-skills

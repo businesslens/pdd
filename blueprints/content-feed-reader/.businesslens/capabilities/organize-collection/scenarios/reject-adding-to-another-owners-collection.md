@@ -11,6 +11,8 @@ steps:
         place: reader-web::personal-library::collection-workspace
   - text: The Product checks collection ownership
     kind: product
+    reads:
+      - collection
     contexts:
       web:
         place: reader-web::personal-library::collection-workspace

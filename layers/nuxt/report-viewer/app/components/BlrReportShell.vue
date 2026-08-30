@@ -625,6 +625,7 @@ const tableColumns = computed<TableColumn<AnyResourceView>[]>(() => {
       return [
         ...base,
         contextColumn(),
+        relationColumn('entity', 'Presents'),
         relationColumn('capability'),
         relationColumn('capability-scenario', 'Cap. Scenarios'),
         relationColumn('journey-scenario', 'Journey Scenarios'),
@@ -641,6 +642,7 @@ const tableColumns = computed<TableColumn<AnyResourceView>[]>(() => {
       return [
         ...base,
         relationColumn('capability'),
+        relationColumn('entity'),
         relationColumn('journey'),
         relationColumn('screen'),
         relationColumn('rule')
@@ -652,6 +654,7 @@ const tableColumns = computed<TableColumn<AnyResourceView>[]>(() => {
           const id = (resource as CapabilityView).domainId
           return id ? resolveResource(props.workspace, 'domain', id)?.title ?? id : ''
         }),
+        relationColumn('entity', 'Changes'),
         contextColumn(),
         relationColumn('capability-scenario', 'Capability Scenarios'),
         relationColumn('journey-scenario', 'In Journey Scenarios'),
@@ -665,6 +668,7 @@ const tableColumns = computed<TableColumn<AnyResourceView>[]>(() => {
         relationColumn('actor'),
         contextColumn(),
         relationColumn('capability'),
+        relationColumn('entity', 'Changes'),
         relationColumn('screen'),
         relationColumn('journey-scenario', 'Variations'),
         relationColumn('rule'),
@@ -677,6 +681,7 @@ const tableColumns = computed<TableColumn<AnyResourceView>[]>(() => {
         relationTitleColumn('capability', 'Capability', resource => (resource as ScenarioView).capabilityId),
         relationColumn('actor'),
         contextColumn(),
+        relationColumn('entity', 'Changes'),
         numberColumn('steps', 'Steps', resource => (resource as ScenarioView).steps.length),
         numberColumn('decisions', 'Decisions', resource => (resource as ScenarioView).decisionPoints.length),
         relationColumn('screen'),
@@ -690,6 +695,7 @@ const tableColumns = computed<TableColumn<AnyResourceView>[]>(() => {
         textColumn('result', 'Result', resource => (resource as ScenarioView).result),
         relationTitleColumn('journey', 'Journey', resource => (resource as ScenarioView).journeyId),
         relationColumn('actor'),
+        relationColumn('entity', 'Changes'),
         numberColumn('steps', 'Steps', resource => (resource as ScenarioView).steps.length),
         relationColumn('capability'),
         relationColumn('screen'),

@@ -14,6 +14,9 @@ steps:
         place: operator-cli
   - text: The refund is issued through the order service
     kind: product
+    changes:
+      - entity: order
+        state: Refunded
     contexts:
       web:
         place: admin-web

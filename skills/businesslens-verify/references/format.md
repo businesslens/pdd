@@ -179,7 +179,23 @@ Both Scenario types have no lead prose, author `routes` and `steps` in
 frontmatter, require `## Trigger` and `## Outcome`, and forbid Markdown
 `## Steps`. Each structured Step needs single-line `text` and
 `kind: actor|product|condition`; Actor Steps require `actor`, and other kinds
-forbid it. Optional `## Edge cases` is a non-empty single-line bullet list. Journey-only
+forbid it. A Step may also declare `changes`, a list of what it does to
+the Product's Entities — one entry `{ entity, effect, state }` per Entity and
+never two for the same one, because one observable act can move several and
+splitting it into a Step each would turn an acceptance case into an
+implementation trace. `entity` must be one the Step's Capability declares.
+`effect` is `creates|changes|removes` and defaults to `changes`. `state` must be
+a state that Entity has; under `changes` some transition must reach it by that
+Capability, under `creates` none is required because a creation has no `from`,
+and `removes` refuses a state outright. Author the changes on the Step that
+performs them, not on the condition that observes them — a transition no Step is
+ever shown making is a finding against the Entity. A Step may also declare `reads`, a bare list
+of Entity ids it picks, inspects, or displays without changing. The two keys are
+deliberately unlike: `changes` is structured and policed and is what "what can
+alter this thing" is derived from, while `reads` carries no effect, no state,
+never counts as a change, and never keeps an Entity from being an orphan. Name
+an Entity in one or the other, never both. A Capability that only presents a
+thing still declares nothing in its own `entities`. Optional `## Edge cases` is a non-empty single-line bullet list. Journey-only
 Goal and Success criterion sections are invalid on Scenarios, Scenario-only
 sections are invalid on Journeys, and every recognized H2 appears at most once.
 Optional `## Decision points` uses an H3 title, a question, and at least two

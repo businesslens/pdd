@@ -5,6 +5,8 @@ routes:
 steps:
   - text: The Product confirms collection ownership
     kind: product
+    reads:
+      - collection
     contexts:
       web:
         place: reader-web::personal-library::collection-workspace
@@ -16,6 +18,8 @@ steps:
         place: reader-web::personal-library::collection-workspace
   - text: The Product preserves the collection's items and order under the new name
     kind: product
+    changes:
+      - entity: collection
     contexts:
       web:
         place: reader-web::personal-library::collection-workspace

@@ -29,7 +29,8 @@ steps:
         place: agent-skills
   - text: The Product writes the complete model layout, sets coverage from the breadth it actually modeled, and reports the structural check
     kind: product
-    entity: product-model
+    changes:
+      - entity: product-model
     contexts:
       harness:
         place: agent-skills

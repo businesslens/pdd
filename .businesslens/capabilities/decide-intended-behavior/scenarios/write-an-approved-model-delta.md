@@ -23,6 +23,8 @@ steps:
         place: agent-skills
   - text: The Product writes only that delta, repairs the relationships it affects, and reports the structural check
     kind: product
+    changes:
+      - entity: product-model
     contexts:
       harness:
         place: agent-skills

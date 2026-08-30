@@ -11,6 +11,8 @@ steps:
         place: reader-web::public-reading::public-collection
   - text: The Product determines that the collection is no longer public
     kind: product
+    reads:
+      - collection
     contexts:
       web:
         place: reader-web::public-reading::public-collection

@@ -14,7 +14,7 @@ import { dirname, isAbsolute, join, resolve } from 'node:path'
 import { stringify } from 'yaml'
 import { writeModelReadme } from '../core/model-readme.js'
 import type {
-  ProductReportV11,
+  ProductReportV12,
   ReportContext,
   ReportSupportingSection
 } from '../core/portable.js'
@@ -48,7 +48,7 @@ function frontmatter(data: Record<string, unknown>): string {
   return `---\n${stringify(data, { lineWidth: 0 }).trimEnd()}\n---\n\n`
 }
 
-function references(value: ProductReportV11['references']): Array<Record<string, string>> {
+function references(value: ProductReportV12['references']): Array<Record<string, string>> {
   return value.map(reference => ({
     kind: reference.kind,
     role: reference.role,
@@ -150,7 +150,7 @@ function prepareTarget(cwd: string, force: boolean): string {
   return root
 }
 
-function writeReport(root: string, report: ProductReportV11, hasLogo: boolean): void {
+function writeReport(root: string, report: ProductReportV12, hasLogo: boolean): void {
   write(join(root, 'config.yaml'), stringify({ schema: FOLDER_SCHEMA, sdd: { paths: [] } }, { lineWidth: 0 }))
   write(join(root, '.gitignore'), 'build/\ncache/\n')
   write(
@@ -351,8 +351,8 @@ function writeReport(root: string, report: ProductReportV11, hasLogo: boolean): 
 
   const scenarioSections = (
     scenario:
-      | ProductReportV11['model']['capabilityScenarios'][number]
-      | ProductReportV11['model']['journeyScenarios'][number]
+      | ProductReportV12['model']['capabilityScenarios'][number]
+      | ProductReportV12['model']['journeyScenarios'][number]
   ) => {
     const decisions = scenario.decisionPoints.map(decision =>
       `### ${decision.title}\n\n${decision.question}\n\n${
@@ -382,8 +382,16 @@ function writeReport(root: string, report: ProductReportV11, hasLogo: boolean): 
           text: step.text,
           kind: step.kind,
           actor: step.actorId ?? undefined,
-          entity: step.entityId ?? undefined,
-          state: step.entityState ?? undefined,
+          changes: step.changes.length
+            ? step.changes.map(change => ({
+                entity: change.entityId,
+                /* The folder omits the default; writing it back would make a
+                   round trip differ from what an author would have written. */
+                effect: change.effect === 'changes' ? undefined : change.effect,
+                state: change.state ?? undefined
+              }))
+            : undefined,
+          reads: step.readEntityIds.length ? step.readEntityIds : undefined,
           unattended: step.unattended ? true : undefined,
           contexts: step.contexts.length
             ? Object.fromEntries(step.contexts.map(context => [context.routeId, { place: context.placeId }]))
@@ -434,8 +442,16 @@ function writeReport(root: string, report: ProductReportV11, hasLogo: boolean): 
           text: step.text,
           kind: step.kind,
           actor: step.actorId ?? undefined,
-          entity: step.entityId ?? undefined,
-          state: step.entityState ?? undefined,
+          changes: step.changes.length
+            ? step.changes.map(change => ({
+                entity: change.entityId,
+                /* The folder omits the default; writing it back would make a
+                   round trip differ from what an author would have written. */
+                effect: change.effect === 'changes' ? undefined : change.effect,
+                state: change.state ?? undefined
+              }))
+            : undefined,
+          reads: step.readEntityIds.length ? step.readEntityIds : undefined,
           unattended: step.unattended ? true : undefined,
           capability: step.capabilityId ?? undefined,
           contexts: step.contexts.length
@@ -455,7 +471,7 @@ function writeReport(root: string, report: ProductReportV11, hasLogo: boolean): 
 }
 
 export interface ExpandedProductReport {
-  report: ProductReportV11
+  report: ProductReportV12
   root: string
 }
 

@@ -6,6 +6,8 @@ routes:
 steps:
   - text: The Product presents the readable item with its source and publication context
     kind: product
+    reads:
+      - item
     contexts:
       web:
         place: reader-web::personal-library::unread-library

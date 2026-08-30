@@ -6,6 +6,8 @@ routes:
 steps:
   - text: The catalog is listed
     kind: product
+    reads:
+      - catalog-product
     contexts:
       web:
         place: customer-web::storefront::product-record

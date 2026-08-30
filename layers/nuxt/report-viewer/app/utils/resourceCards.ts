@@ -209,9 +209,13 @@ export function resourceCardPresentation(
         : ''
       return {
         badge: domain,
+        /* A Capability is a verb over nouns, and which nouns never appeared on
+           the card at all. Its Journeys take the displaced slot because the
+           hook already names them whenever there are any, and reads `0
+           journeys` in exactly the case where the hook names Contexts instead. */
         metrics: [
           { label: plural(capability.scenarioIds.length, 'scenario'), value: capability.scenarioIds.length, kind: 'capability-scenario', ids: capability.scenarioIds },
-          { label: plural(capability.journeyIds.length, 'journey'), value: capability.journeyIds.length, kind: 'journey', ids: capability.journeyIds },
+          { label: plural(capability.entityIds.length, 'entity', 'entities'), value: capability.entityIds.length, kind: 'entity', ids: capability.entityIds },
           { label: plural(capability.screenIds.length, 'screen'), value: capability.screenIds.length, kind: 'screen', ids: capability.screenIds }
         ],
         hookLabel: capability.journeyIds.length ? 'Used by' : 'Available in',

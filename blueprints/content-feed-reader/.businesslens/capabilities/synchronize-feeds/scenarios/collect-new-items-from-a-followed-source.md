@@ -14,6 +14,9 @@ steps:
         place: reader-mobile::personal-library::source-list
   - text: The Product reads each followed feed
     kind: product
+    changes:
+      - entity: source
+        state: Reachable
     contexts:
       web:
         place: reader-web::personal-library::source-list
@@ -21,6 +24,10 @@ steps:
         place: reader-mobile::personal-library::source-list
   - text: Items the Reader's library does not already hold are collected
     kind: product
+    changes:
+      - entity: item
+        effect: creates
+        state: Unread
     contexts:
       web:
         place: reader-web::personal-library::source-list

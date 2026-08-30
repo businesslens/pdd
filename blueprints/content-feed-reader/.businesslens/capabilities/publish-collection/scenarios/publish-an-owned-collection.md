@@ -15,6 +15,9 @@ steps:
         place: reader-web::personal-library::collection-workspace
   - text: The Reader confirms publication
     kind: actor
+    changes:
+      - entity: collection
+        state: Published
     actor: reader
     contexts:
       web:

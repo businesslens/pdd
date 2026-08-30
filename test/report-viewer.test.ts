@@ -7,6 +7,7 @@ import { loadModel } from '../src/core/model.js'
 const VIEWER = join(__dirname, '..', 'layers', 'nuxt', 'report-viewer')
 const workspaceModulePath = '../layers/nuxt/report-viewer/app/utils/reportWorkspace.ts'
 const resourceFactsModulePath = '../layers/nuxt/report-viewer/app/utils/resourceFacts.ts'
+const resourceFacetsModulePath = '../layers/nuxt/report-viewer/app/utils/resourceFacets.ts'
 const routeWindowModulePath = '../layers/nuxt/report-viewer/app/utils/scenarioRouteWindow.ts'
 const pageSectionsModulePath = '../layers/nuxt/report-viewer/app/utils/pageSections.ts'
 const { projectReportWorkspace } = await import(workspaceModulePath)
@@ -138,7 +139,8 @@ describe('stable Product Report', () => {
 
     // A Scenario's Entity set is derived from its Steps, as its Actor set is.
     const complete = workspace.capabilityScenarios.find((s: any) => s.id === 'complete-checkout')
-    expect(complete.entityIds).toEqual(['order'])
+    // One Step, two Entities: the order it confirms and the cart it consumes.
+    expect(complete.entityIds).toEqual(['order', 'cart'])
     expect(workspace.capabilities.find((c: any) => c.id === 'place-order').entityIds)
       .toEqual(['cart', 'catalog-product', 'order'])
 
@@ -169,6 +171,168 @@ describe('stable Product Report', () => {
     // A Screen's own states stay the view's, never the thing's lifecycle.
     const screen = workspace.screens.find((item: any) => item.states.length)
     expect(screen.states.map((state: any) => state.title)).not.toContain('Pending')
+  })
+
+  /*
+   * The wire contract carries a `changes` list on every Step, and the
+   * projection used to drop it — so the reading, which is the sequence, could
+   * never say which Step moved the thing. All that survived was the Scenario's
+   * deduped `entityIds`, which answers what it touches and not where.
+   */
+  it('carries what a Step changes into the reading, not only into the Scenario set', async () => {
+    const { scenarioStepMatrix } = await import(workspaceModulePath)
+    const workspace = projectReportWorkspace(compileReport(loadModel(FIXTURE), '2026-08-08'))
+    const scenario = workspace.capabilityScenarios.find((item: any) => item.id === 'complete-checkout')!
+
+    // One observable act, two Entities — and only one of them has a lifecycle.
+    const persisted = scenario.steps.at(-1)!
+    expect(persisted.changes.map((change: any) => [change.entityId, change.effect, change.state]))
+      .toEqual([['order', 'changes', 'Confirmed'], ['cart', 'changes', '']])
+
+    // A Step that changes nothing reads as an empty list, never as undefined.
+    expect(scenario.steps[0].changes).toEqual([])
+
+    // The matrix is what the page renders, so the list has to survive it.
+    const row = scenarioStepMatrix(scenario).steps.at(-1)!
+    expect(row.mentions[0]).toMatchObject({ entityId: 'order', state: 'Confirmed' })
+  })
+
+  /*
+   * The arrow's tail is derived. A Step names the state it leaves the Entity
+   * in; the lifecycle says which states reach it by that Capability. Authoring
+   * the tail as well would be a second copy of a fact the transitions own.
+   */
+  it('derives where a move starts, and stays quiet when several states could', () => {
+    const workspace = projectReportWorkspace(compileReport(loadModel(FIXTURE), '2026-08-08'))
+
+    const refund = workspace.capabilityScenarios.find((item: any) => item.id === 'refund-order')!
+    const refunded = refund.steps.flatMap((step: any) => step.changes).find((c: any) => c.state === 'Refunded')!
+    expect(refunded.fromStates).toEqual(['Confirmed'])
+
+    // A creation has no `from` at all, so nothing is derived for one.
+    const sold = workspace.capabilityScenarios.find((item: any) => item.id === 'sell-the-last-available-unit')!
+    const unavailable = sold.steps.flatMap((step: any) => step.changes).find((c: any) => c.state === 'Unavailable')!
+    expect(unavailable.fromStates).toEqual(['Available'])
+  })
+
+  /*
+   * A read is a mention and never a claim about what can alter a thing. It has
+   * to reach the reading — otherwise a Step whose text names two Entities says
+   * nothing at all — while staying out of every derivation `changes` feeds.
+   */
+  it('carries a Step read into the reading and out of every change derivation', async () => {
+    const { scenarioStepMatrix } = await import(workspaceModulePath)
+    const workspace = projectReportWorkspace(compileReport(loadModel(FIXTURE), '2026-08-08'))
+    const browse = workspace.capabilityScenarios.find((item: any) => item.id === 'browse-catalog')!
+
+    expect(browse.readEntityIds).toEqual(['catalog-product'])
+    expect(browse.entityIds).toEqual([])
+
+    // The row the page renders carries changes and reads together, told apart.
+    const row = scenarioStepMatrix(browse).steps[0]!
+    expect(row.mentions).toEqual([
+      { entityId: 'catalog-product', effect: 'reads', state: '', fromStates: [] }
+    ])
+
+    // "What can alter this thing" keeps its answer: browsing is not in it.
+    const product = workspace.entities.find((item: any) => item.id === 'catalog-product')!
+    expect(product.changedByIds).not.toContain('browse-catalog')
+  })
+
+  /*
+   * The Outcome prose says where things end up in words. The summary says it
+   * without the reader parsing the sentence, and is the last change naming each
+   * Entity in Step order rather than anything authored a second time.
+   */
+  it('summarises where the Scenario leaves each Entity it changed', () => {
+    const workspace = projectReportWorkspace(compileReport(loadModel(FIXTURE), '2026-08-08'))
+
+    const complete = workspace.capabilityScenarios.find((item: any) => item.id === 'complete-checkout')!
+    expect(complete.outcomeStates.map((item: any) => [item.entityId, item.state]))
+      .toEqual([['order', 'Confirmed'], ['cart', '']])
+
+    // A Scenario that changes nothing summarises nothing.
+    const browse = workspace.capabilityScenarios.find((item: any) => item.id === 'browse-catalog')!
+    expect(browse.outcomeStates).toEqual([])
+  })
+
+  /*
+   * A lifecycle said what a thing can be, and the transitions named only the
+   * Capability that moves it. Neither answered what actually puts it in a
+   * state, which is the question a reader arrives at one with.
+   */
+  it('names the Scenarios that leave an Entity in each of its states', () => {
+    const report = compileReport(loadModel(FIXTURE), '2026-08-08')
+    const cancel = report.model.journeyScenarios.find((item: any) => item.id === 'cancel-an-order-before-fulfilment')!
+    const cancelStep = cancel.steps.at(-1)!
+    cancel.steps[cancel.steps.length - 1] = {
+      ...cancelStep,
+      changes: [{ entityId: 'order', effect: 'changes' as const, state: 'Refunded' }]
+    }
+    const workspace = projectReportWorkspace(report)
+
+    const order = workspace.entities.find((item: any) => item.id === 'order')!
+    const stateOf = (name: string) => order.states.find((state: any) => state.name === name)!
+
+    expect(stateOf('Confirmed').capabilityScenarioIds).toEqual(['complete-checkout'])
+    expect(stateOf('Confirmed').journeyScenarioIds).toEqual([])
+    expect(stateOf('Refunded').journeyScenarioIds).toEqual(['cancel-an-order-before-fulfilment'])
+
+    // A state nothing lands in says so by holding nothing, not by guessing.
+    expect(stateOf('Pending').capabilityScenarioIds).toEqual([])
+    expect(stateOf('Pending').journeyScenarioIds).toEqual([])
+
+    // Keyed on the pair: a state name is only unique within its own Entity.
+    const cart = workspace.entities.find((item: any) => item.id === 'cart')!
+    expect(cart.states).toEqual([])
+  })
+
+  /*
+   * An Entity edge authored on one side was readable from that side only: a
+   * Screen declares what it presents and a Capability what it changes, yet only
+   * the Entity could be narrowed by either. A facet offered in one direction
+   * and missing in the other is a filter the reader cannot find.
+   */
+  it('reads every Entity relation from both of its ends', async () => {
+    const { relatedIds, facetKindsFor } = await import(resourceFacetsModulePath)
+    const workspace = projectReportWorkspace(compileReport(loadModel(FIXTURE), '2026-08-08'))
+
+    const screen = workspace.screens.find((item: any) => item.entityIds.length)!
+    expect(relatedIds(screen, 'entity')).toEqual(screen.entityIds)
+    const presented = workspace.entities.find((item: any) => item.id === screen.entityIds[0])!
+    expect(relatedIds(presented, 'screen')).toContain(screen.id)
+
+    // A Domain classifies Entities, though the Entity is the side that says so.
+    const ordering = workspace.domains.find((item: any) => item.id === 'ordering')!
+    expect(ordering.entityIds).toEqual(['cart', 'order'])
+    expect(relatedIds(ordering, 'entity')).toEqual(['cart', 'order'])
+
+    for (const kind of ['screen', 'domain', 'journey', 'capability', 'capability-scenario', 'journey-scenario']) {
+      expect(facetKindsFor(kind)).toContain('entity')
+    }
+  })
+
+  /*
+   * What a Journey moves is what its Scenarios are shown moving. Reading it off
+   * its Capabilities' declarations instead would claim every Entity they can
+   * touch, including ones no path through this Journey ever reaches.
+   */
+  it('derives what a Journey changes from its Scenarios, not from its Capabilities', () => {
+    const report = compileReport(loadModel(FIXTURE), '2026-08-08')
+    const scenario = report.model.journeyScenarios.find((item: any) => item.id === 'browse-and-complete-checkout')!
+    const placed = scenario.steps.findIndex((step: any) => step.capabilityId === 'place-order')
+    scenario.steps[placed] = {
+      ...scenario.steps[placed]!,
+      changes: [{ entityId: 'order', effect: 'changes' as const, state: 'Confirmed' }]
+    }
+    const workspace = projectReportWorkspace(report)
+
+    const journey = workspace.journeys.find((item: any) => item.id === 'browse-and-buy')!
+    expect(journey.entityIds).toEqual(['order'])
+
+    // `place-order` declares three; only the one a Step names is claimed here.
+    expect(workspace.capabilities.find((item: any) => item.id === 'place-order')!.entityIds)
+      .toEqual(['cart', 'catalog-product', 'order'])
   })
 
   it('derives backlinks without mutating the canonical report', () => {
@@ -448,7 +612,7 @@ describe('stable Product Report', () => {
     const reportShell = source('app/components/BlrReportShell.vue')
     const layer = source('nuxt.config.ts')
 
-    expect(renderer).toContain('ProductReportV11')
+    expect(renderer).toContain('ProductReportV12')
     expect(renderer).toContain('projectReportWorkspace')
     expect(renderer).toContain('<BlrReportShell')
     expect(source('app/components/BlrResourceBody.vue')).toContain('scenarioStepMatrix')

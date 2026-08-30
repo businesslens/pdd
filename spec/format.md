@@ -899,6 +899,17 @@ is where the annotation already belongs.
 a Screen that presents it. An Entity nothing points at is a `lint` error: it is
 either unused vocabulary or a relation somebody forgot to declare.
 
+**No undemonstrated transitions.** A transition is a claim, and the Scenarios of
+the Capability that causes it are its acceptance surface. Some Step of some
+Scenario of `by` must name this Entity and leave it in the transition's `to`
+state; otherwise the lifecycle asserts a move nothing in the model is ever shown
+making. Only the destination is matched, because a Step names the state it
+*leaves* an Entity in and never the one it came from, so two transitions into
+one state share a demonstration. The finding is graded by `coverage.status` —
+an error for a `complete` model, a warning otherwise — exactly as an availability
+Context without Capability Scenario coverage is: breadth is the coverage claim's
+to make, and a draft is still being written.
+
 An Entity never declares Capabilities, Screens, availability, or Actors. The
 Capability declares what it changes and the Screen declares what it presents;
 every other Entity relation is derived. Entity states are the authority for a
@@ -1284,12 +1295,50 @@ Product behavior.
 
 Its Actor set is derived from those Steps rather than authored on the Scenario.
 
-A Step may name the `entity` it changes, and the `state` it leaves that Entity
-in. The Entity must be one the Step's Capability declares, the state must be one
-that Entity has, and **some transition must reach that state by that
+A Step may declare `changes`, a list of what the Step does to the Product's
+Entities. Each entry is `{ entity, effect, state }`. `entity` is required and
+must be one the Step's Capability declares. `effect` is optional, defaults to
+`changes`, and is otherwise `creates` or `removes`. `state` is optional and
+names the state the Step leaves that Entity in.
+
+**A Step changes as many Entities as it changes.** One observable act can move
+two things at once — a transfer debits one account, and crediting the other is
+not a second Step an Actor could watch happen on its own. Splitting one act into
+two Steps to fit a singular field would turn an acceptance case into an
+implementation trace, which is what prose `## Steps` was removed for. An Entity
+appears at most once in one Step's list.
+
+`effect` exists because not every change is a move. `creates` and `removes` are
+the boundaries of a thing's existence and an Actor observes both, yet no
+transition can express either. `changes` is the default because it is the
+ordinary case and because a fourth value meaning "updated" would appear on
+almost every entry and separate nothing.
+
+`state` is checked against the Entity's own lifecycle: it must be a state that
+Entity has. Under `changes`, **some transition must reach that state by that
 Capability** — so a Scenario claiming an Order becomes Confirmed is checked
-against the Order's own lifecycle. A Scenario's Entity set is derived from its
-Steps, exactly as its Actor set is.
+against the Order's own lifecycle. Under `creates` no transition is required,
+because a creation has no `from` and no transition can ever describe one; the
+created state counts as reached for the unreachable-state warning. `removes`
+refuses `state`, because a Step cannot leave a thing in a state after ending it.
+
+A Step may also declare `reads`, a plain list of Entity ids it picks, inspects,
+or displays without changing. The two keys are deliberately unlike each other.
+`changes` is structured and policed — it carries an effect and a state, it is
+checked against the Capability's declaration and the Entity's lifecycle, and it
+is what "what can alter this thing" is derived from. `reads` is a bare mention:
+no effect, no state, never counted as a change, and never enough on its own to
+keep an Entity from being an orphan. The asymmetry is the point. A Step names an
+Entity in one list or the other and never in both.
+
+`reads` exists because the alternative was a Step whose text says "the Reader
+chooses a saved item and an owned collection" while the model says nothing at
+all, leaving a reader to parse English to learn what the Step is about. It does
+not weaken the Capability's **changes, never reads** rule: a Capability that
+only presents a thing still declares nothing, and a Step reading a thing places
+no claim on what can alter it.
+
+A Scenario's Entity set is derived from its Steps, exactly as its Actor set is.
 
 A Step may author `contexts`, mapping every declared route id to exactly one
 strict Context object. Its `place` is the most-specific Interface, Experience,

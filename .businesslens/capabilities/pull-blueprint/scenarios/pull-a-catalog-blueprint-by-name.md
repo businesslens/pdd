@@ -26,6 +26,8 @@ steps:
         place: businesslens-cli
   - text: The Product expands the Blueprint into a Product Model and names what it pulled
     kind: product
+    changes:
+      - entity: product-model
     contexts:
       terminal:
         place: businesslens-cli

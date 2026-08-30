@@ -21,7 +21,8 @@ steps:
         place: businesslens-cli
   - text: The Product moves the model into place with its orientation README and names what it opened
     kind: product
-    entity: product-model
+    changes:
+      - entity: product-model
     contexts:
       terminal:
         place: businesslens-cli

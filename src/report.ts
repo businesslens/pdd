@@ -38,13 +38,14 @@ export {
   ReportDecisionPointSchema,
   ReportScenarioRouteSchema,
   ReportScenarioStepContextSchema,
+  ReportScenarioStepChangeSchema,
   ReportScenarioStepSchema,
   ReportCapabilityScenarioSchema,
   ReportJourneyScenarioSchema,
   ReportBusinessRuleTargetSchema,
   ReportBusinessRuleSchema,
   ReportCoverageSchema,
-  ProductReportV11Schema,
+  ProductReportV12Schema,
   ProductReportSchema,
   validateProductReport,
   validateBlueprintReport,
@@ -54,7 +55,7 @@ export {
 } from './core/portable.js'
 
 export type {
-  ProductReportV11,
+  ProductReportV12,
   ProductReport,
   ReportCoverage,
   ReportCounts,

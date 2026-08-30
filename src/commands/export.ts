@@ -1,5 +1,5 @@
 import type { ResourceFile, PddModel } from '../core/model.js'
-import type { ProductReportV11 } from '../core/portable.js'
+import type { ProductReportV12 } from '../core/portable.js'
 import { join, relative, sep } from 'node:path'
 import { writeGeneratedFile } from '../core/generated-files.js'
 import { lsFiles } from '../core/git.js'
@@ -8,7 +8,7 @@ import type { InterfaceType } from '../core/interface-types.js'
 import { loadModel } from '../core/model.js'
 import { resolveModelRoot, type ModelRoot } from '../core/model-root.js'
 import {
-  ProductReportV11Schema,
+  ProductReportV12Schema,
   REPORT_SCHEMA_VERSION,
   projectPortableReport,
   validateProductReport
@@ -74,7 +74,7 @@ export function compileReport(
    * nested model's assets stay addressable from the repository root.
    */
   assetBase = model.root
-): ProductReportV11 {
+): ProductReportV12 {
   const capabilityById = new Map(model.capabilities.map(capability => [capability.id, capability]))
   const journeyScenariosByJourney = new Map(model.journeys.map(journey => [
     journey.id,
@@ -92,8 +92,14 @@ export function compileReport(
     kind: step.kind as 'actor' | 'product' | 'condition',
     actorId: step.actor ?? null,
     capabilityId: parentCapability ?? step.capability ?? null,
-    entityId: step.entity ?? null,
-    entityState: step.state ?? null,
+    /* The default is resolved here, so a reader of the wire never has to know
+       which value the folder is allowed to omit. */
+    changes: step.changes.map(change => ({
+      entityId: change.entity,
+      effect: change.effect ?? 'changes' as const,
+      state: change.state ?? null
+    })),
+    readEntityIds: sorted(step.reads),
     unattended: step.unattended === true,
     contexts: scenario.routes.flatMap(route => {
       const context = step.contexts.find(item => item.routeId === route.id)
@@ -106,7 +112,7 @@ export function compileReport(
       .map(scenario => scenario.id)
   )
 
-  const report: ProductReportV11 = {
+  const report: ProductReportV12 = {
     schemaVersion: REPORT_SCHEMA_VERSION,
     id: model.product.id,
     title: model.product.doc.title,
@@ -307,24 +313,24 @@ export function compileReport(
     }
   }
 
-  const parsed = ProductReportV11Schema.parse(report)
+  const parsed = ProductReportV12Schema.parse(report)
   const issues = validateProductReport(parsed)
   if (issues.length) throw new Error(`Report validation failed:\n- ${issues.join('\n- ')}`)
   return parsed
 }
 
 export interface BuildOutcome {
-  report: ProductReportV11
+  report: ProductReportV12
   outputFile: string
 }
 
 /** Compile the current workspace without writing generated artifacts. */
-export function compileWorkspaceReport(cwd: string): ProductReportV11 {
+export function compileWorkspaceReport(cwd: string): ProductReportV12 {
   return compileResolvedWorkspaceReport(resolveModelRoot(cwd))
 }
 
 /** Compile a model whose ownership boundary has already been resolved. */
-export function compileResolvedWorkspaceReport({ modelRoot, gitRoot }: ModelRoot): ProductReportV11 {
+export function compileResolvedWorkspaceReport({ modelRoot, gitRoot }: ModelRoot): ProductReportV12 {
   const model = loadModel(modelRoot)
   const tracked = gitRoot ? lsFiles(gitRoot) : []
   const result = lintModel(model, tracked)

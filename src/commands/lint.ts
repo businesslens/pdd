@@ -550,6 +550,62 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     }
 
     /*
+     * A state nothing arrives at is either unwritten lifecycle or a state the
+     * Product cannot actually be in. The first listed state is exempt as the
+     * one a thing starts in, and a Step that creates straight into a state
+     * reaches it as surely as a transition does — which is why this is asked
+     * here, with the Scenarios in hand, and not in the Entity parser.
+     */
+    const createdStates = new Set([...model.capabilityScenarios, ...model.journeyScenarios]
+      .flatMap(scenario => scenario.steps)
+      .flatMap(step => step.changes)
+      .filter(change => change.entity === entity.id && change.effect === 'creates' && change.state)
+      .map(change => change.state as string))
+    const reached = new Set([...entity.transitions.map(transition => transition.to), ...createdStates])
+    for (const state of entity.states.slice(1)) {
+      if (!reached.has(state.title)) {
+        warnings.push(`${entity.file}: no transition reaches state "${state.title}"`)
+      }
+    }
+
+    /*
+     * A transition is a claim, and the Scenarios of the Capability that causes
+     * it are its acceptance surface. A lifecycle move no Step is ever shown
+     * making is a claim with nothing behind it — the same hole as an Entity
+     * nothing points at, one level further in. It is also the only rule that
+     * asks for `entity`/`state` on a Step at all: every other check validates
+     * the pair once it is there, which is why models carried lifecycles their
+     * Scenarios never demonstrated and nothing said so.
+     *
+     * Only the destination is matched. A Step names the state it *leaves* the
+     * Entity in and never the one it came from, so two transitions differing
+     * only in `from` share one demonstration. That is all the format can say,
+     * and demanding a per-edge witness would demand a field that does not exist.
+     *
+     * Severity follows `coverage.status`, exactly as an availability Context
+     * without Scenario coverage does: breadth is the coverage claim's to make,
+     * and a draft is still being written.
+     */
+    for (const transition of entity.transitions) {
+      if (!capabilityIds.has(transition.by)) continue
+      const demonstrated = [...model.capabilityScenarios, ...model.journeyScenarios].some(scenario =>
+        scenario.steps.some((step) => {
+          const owner = 'capability' in scenario
+            ? (scenario as { capability: string }).capability
+            : step.capability
+          if (owner !== transition.by) return false
+          /* A creation is not a move, so it never witnesses one. */
+          return step.changes.some(change => change.entity === entity.id
+            && change.state === transition.to
+            && change.effect !== 'creates')
+        }))
+      if (demonstrated) continue
+      const finding = `${entity.file}: no Step of a "${transition.by}" Scenario leaves it in "${transition.to}", so the transition "${transition.from} \u2192 ${transition.to}" has no acceptance case`
+      if (model.coverage.status === 'complete') errors.push(finding)
+      else warnings.push(finding)
+    }
+
+    /*
      * Relations are declared on one side; the inverse is derived. A relation to
      * another Entity is an edge in the product's own vocabulary — it never
      * satisfies the no-orphans rule below, because a cluster of Entities
@@ -587,6 +643,37 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     // somebody forgot to declare, and both are worth an error.
     if (!(changedBy.get(entity.id) || []).length && !(presentedOn.get(entity.id) || []).length) {
       errors.push(`${entity.file}: no Capability changes it and no Screen presents it`)
+    }
+  }
+
+  /*
+   * The other end of "capability X does not declare entity Y".
+   *
+   * That check runs when a Step names an Entity. Nothing ran when a Capability
+   * named one and no Step ever did — so a Capability could declare what it
+   * changes and its whole acceptance surface stay silent about it, which is
+   * how one Capability came to declare two Entities across four Scenarios that
+   * mentioned neither. It is the transition rule one level out: a declaration
+   * is a claim, and the Capability's Scenarios are where it is shown.
+   *
+   * Severity follows `coverage.status`, as every other coverage claim does.
+   */
+  const changedBySomeStep = new Set<string>()
+  for (const scenario of [...model.capabilityScenarios, ...model.journeyScenarios]) {
+    for (const step of scenario.steps) {
+      const owner = 'capability' in scenario
+        ? (scenario as { capability: string }).capability
+        : step.capability
+      if (!owner) continue
+      for (const change of step.changes) changedBySomeStep.add(`${owner}\u0000${change.entity}`)
+    }
+  }
+  for (const capability of model.capabilities) {
+    for (const id of capability.entities) {
+      if (changedBySomeStep.has(`${capability.id}\u0000${id}`)) continue
+      const finding = `${capability.file}: declares entity "${id}", which no Step of its Scenarios changes`
+      if (model.coverage.status === 'complete') errors.push(finding)
+      else warnings.push(finding)
     }
   }
 
@@ -699,33 +786,41 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
        * by that same Capability. A Scenario asserting an Order becomes
        * Confirmed is therefore checked against the Order's own lifecycle.
        */
-      if (step.entity) {
-        scenarioEntities.add(step.entity)
-        const entity = model.entities.find(item => item.id === step.entity)
+      for (const id of step.reads) {
+        if (!entityIds.has(id)) errors.push(`${label}: reads missing entity "${id}"`)
+      }
+      for (const change of step.changes) {
+        scenarioEntities.add(change.entity)
+        const entity = model.entities.find(item => item.id === change.entity)
         if (!entity) {
-          errors.push(`${label}: references missing entity "${step.entity}"`)
-        } else {
-          const owner = 'capability' in scenario
-            ? (scenario as { capability: string }).capability
-            : step.capability
-          if (owner) {
-            const capability = model.capabilities.find(item => item.id === owner)
-            if (capability && !capability.entities.includes(step.entity)) {
-              errors.push(`${label}: capability "${owner}" does not declare entity "${step.entity}"`)
-            }
-          }
-          if (step.state) {
-            if (!entity.states.some(state => state.title === step.state)) {
-              errors.push(`${label}: "${step.state}" is not a state of entity "${step.entity}"`)
-            } else if (owner && !entity.transitions.some(t => t.to === step.state && t.by === owner)) {
-              errors.push(
-                `${label}: no transition of "${step.entity}" reaches "${step.state}" by capability "${owner}"`
-              )
-            }
+          errors.push(`${label}: references missing entity "${change.entity}"`)
+          continue
+        }
+        const owner = 'capability' in scenario
+          ? (scenario as { capability: string }).capability
+          : step.capability
+        if (owner) {
+          const capability = model.capabilities.find(item => item.id === owner)
+          if (capability && !capability.entities.includes(change.entity)) {
+            errors.push(`${label}: capability "${owner}" does not declare entity "${change.entity}"`)
           }
         }
-      } else if (step.state) {
-        errors.push(`${label}: state needs an entity to belong to`)
+        if (!change.state) continue
+        if (!entity.states.some(state => state.title === change.state)) {
+          errors.push(`${label}: "${change.state}" is not a state of entity "${change.entity}"`)
+          continue
+        }
+        /*
+         * A creation has no `from`, so no transition can ever describe one and
+         * requiring a witness would make `creates` unauthorable. Every other
+         * effect is a move, and a move is exactly what a transition declares.
+         */
+        if (change.effect === 'creates') continue
+        if (owner && !entity.transitions.some(t => t.to === change.state && t.by === owner)) {
+          errors.push(
+            `${label}: no transition of "${change.entity}" reaches "${change.state}" by capability "${owner}"`
+          )
+        }
       }
 
       if (step.kind !== 'actor' && step.actor) {

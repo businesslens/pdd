@@ -28,8 +28,10 @@ steps:
         place: customer-mobile::storefront::product-record
   - text: The order is persisted
     kind: product
-    entity: order
-    state: Confirmed
+    changes:
+      - entity: order
+        state: Confirmed
+      - entity: cart
     contexts:
       web:
         place: customer-web::storefront::product-record

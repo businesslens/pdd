@@ -5,6 +5,9 @@ routes:
 steps:
   - text: The Product loads the collection name, owner display name, and ordered items
     kind: product
+    reads:
+      - collection
+      - item
     contexts:
       web:
         place: reader-web::public-reading::public-collection

@@ -14,6 +14,9 @@ steps:
         place: reader-mobile::personal-library::source-list
   - text: The Product reports that the source could not be reached
     kind: product
+    changes:
+      - entity: source
+        state: Unreachable
     contexts:
       web:
         place: reader-web::personal-library::source-list

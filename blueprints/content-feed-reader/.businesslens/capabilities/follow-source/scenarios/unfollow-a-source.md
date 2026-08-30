@@ -14,6 +14,9 @@ steps:
         place: reader-mobile::personal-library::source-list
   - text: The Product removes the source from the Reader's followed sources
     kind: product
+    changes:
+      - entity: source
+        effect: removes
     contexts:
       web:
         place: reader-web::personal-library::source-list

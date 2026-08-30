@@ -116,6 +116,7 @@ const rows = computed<RelationRow[]>(() => {
       const domain = resource as DomainView
       all.push(
         row('Capabilities', 'capability', domain.capabilityIds, true),
+        row('Entities', 'entity', domain.entityIds, true),
         row('Journeys reached', 'journey', domain.journeyIds, true),
         row('Screens reached', 'screen', domain.screenIds, true),
         row('Rules', 'rule', domain.ruleIds, true)
@@ -142,6 +143,7 @@ const rows = computed<RelationRow[]>(() => {
         row('Primary Capabilities', 'capability', journey.capabilityIds, true),
         row('Failure-only Capabilities', 'capability', journey.failureOnlyCapabilityIds, true),
         row('Domains', 'domain', journey.domainIds, true),
+        row('Changes', 'entity', journey.entityIds, true),
         row('Scenarios', 'journey-scenario', journey.scenarioIds, true),
         row('Screens', 'screen', journey.screenIds, true),
         row('Constrained by Rules', 'rule', journey.ruleIds, true)

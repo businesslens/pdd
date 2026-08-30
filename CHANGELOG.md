@@ -285,6 +285,118 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   vocabulary. The discriminator is stated outright, because it traps a tool
   whose subject is models — does the Product keep information about instances of
   this, or is this the Product itself?
+- **The Product Report reads an Entity where the Entity is, not only where its
+  own page is.** A Step's `entity` and `state` reached the wire and were checked
+  against that Entity's lifecycle, then dropped by the viewer's projection — so
+  the Scenario reading, which *is* the sequence, could never say which Step moved
+  the thing. All that survived was the Scenario's deduped Entity set, one row in
+  Connections. The Step now carries the pair into the reading and draws it beside
+  who performs the Step, as a chip that opens the Entity.
+- **An Entity's state says what leaves it there.** The lifecycle said what a
+  thing can be and the transitions named the Capability that moves it. Neither
+  answered what actually puts it in a state, which is the question a reader
+  arrives at one with. Each state now names the Scenarios whose Steps land in it,
+  derived from the link the report already proves.
+- **Every Entity edge is readable from both of its ends.** A Screen declares what
+  it presents, a Capability what it changes, and a Journey Scenario's Steps what
+  they move — yet only the Entity could be filtered, grouped or counted by any of
+  them, so "Entities on this Screen" worked and "Screens presenting this Entity"
+  did not. Screens, Capabilities, Journeys, Domains and both Scenario collections
+  gain the Entity facet and column. A Journey derives what it changes from its
+  Scenarios' Steps rather than its Capabilities' declarations, because a
+  Capability it uses may change things no path through this Journey reaches; a
+  Domain reads back the Entities that name it. A Screen's page names what it
+  presents before listing what it shows about it, since `## Information
+  presented` is this view's and never a restatement of what the Entity keeps.
+- **A transition now needs an acceptance case.** `steps[].entity` and
+  `steps[].state` reached `spec/format.md` and both validators and neither
+  authoring contract: the three skill format references and the docs pages a
+  Scenario is actually written from never named either key, and no rule ever
+  asked for the pair — so every check policed it once present and nothing
+  noticed it was absent. Across BusinessLens's own model and the teaching
+  Blueprint, three Steps out of 264 named an Entity and one named a state.
+  `lint` now reads a transition as a claim whose acceptance surface is the
+  causing Capability's Scenarios: if no Step is ever shown leaving the Entity in
+  that state, the lifecycle asserts a move nothing demonstrates. Only the
+  destination is matched, because a Step names the state it *leaves* an Entity
+  in and never the one it came from, so two transitions into one state share a
+  demonstration. Severity follows `coverage.status`, exactly as an availability
+  Context without Scenario coverage does.
+- **Both authoring contracts name the pair.** The skill format references say
+  when to author `entity` and `state` and which Step carries them — the one that
+  performs the change, never the condition that observes it — and
+  `docs/capabilities.md` and `docs/journeys.md` carry both as fields of the
+  Scenario they belong to.
+- **The shipped models say what they move.** The teaching Blueprint demonstrates
+  all seven of its transitions where it demonstrated one; the golden fixture
+  gains `Sell the last available unit`, the acceptance case its Catalog product
+  lifecycle never had; and BusinessLens's own model names the Product Model on
+  all seven Steps that write it rather than two. Its Entities have no states, so
+  it carries `entity` without `state` throughout — which is the whole of what
+  that model can truthfully say.
+- **A Step changes as many Entities as it changes** (Product Report v12). The
+  Step's singular `entity`/`state` are now entries of a `changes` list. One
+  observable act can move two things at once — a transfer debits one account,
+  and crediting the other is not a second Step an Actor could watch happen on
+  its own — and splitting an act to fit a singular field turns an acceptance
+  case into an implementation trace, which is what prose `## Steps` was removed
+  for. The singular was never a stated rule either: nothing said "at most one",
+  so an author with two had no signal and would silently drop one. An Entity
+  still appears at most once per Step, because two entries for it are two
+  authorities that can disagree.
+- **Not every change is a move.** Each entry carries an `effect` of `creates`,
+  `changes`, or `removes`. Beginning and ceasing to exist are things an Actor
+  observes and no transition can express — a Reader creates a collection, a
+  Reader stops following a source — while `entity` alone flattened both into
+  "touched it". `changes` is the default and the ordinary case; a fourth value
+  meaning "updated" would have appeared on almost every entry and separated
+  nothing. `state` follows the effect: under `changes` a transition must reach
+  it, under `creates` none is required because a creation has no `from`, and
+  `removes` refuses a state outright. A state a Step creates into now counts as
+  reached, so that warning moved from the Entity parser — which sees one file —
+  to `lint`, which sees the Scenarios.
+- **The reading shows where a move starts, without anything authoring it.** A
+  Step names the state it *leaves* an Entity in; the lifecycle says which states
+  reach that one by that Capability. Where exactly one does, the Product Report
+  draws `Unread → Read` from the authored `Read` alone. Where several do it
+  shows the destination and names the alternatives in the tooltip rather than
+  picking a tail. Authoring the origin instead would have made `state` mean the
+  state left behind on one Step and the state arrived from on another, which is
+  the two-authorities failure `## Relations` and `## Transitions` are refused
+  for.
+- **A Step says what it reads, not only what it changes.** A Step reading "the
+  Reader chooses a saved item and an owned collection" said nothing at all in
+  the model, leaving anyone who wanted to know what it was about to parse the
+  English. `reads` is a bare list of Entity ids beside `changes`, and the two
+  are deliberately unlike each other: `changes` carries an effect and a state,
+  is checked against the Capability's declaration and the Entity's lifecycle,
+  and is what *what can alter this thing* is derived from; `reads` carries none
+  of that, never counts as a change, and never keeps an Entity from being an
+  orphan. The asymmetry is the point, and it is what lets the Capability's
+  **changes, never reads** rule stand unweakened. An Entity is named in one list
+  or the other and never in both.
+- **A declaration is a claim, and its Capability's Scenarios are where it is
+  shown.** `lint` checked that a Step's Entity was one its Capability declares
+  and never the reverse, so a Capability could declare what it changes while its
+  whole acceptance surface stayed silent — which is how one Capability came to
+  declare two Entities across four Scenarios that mentioned neither. The rule is
+  the transition rule one level out, graded by `coverage.status` the same way.
+  It found six holes in the teaching Blueprint and one in the golden fixture,
+  and half of them were the opposite defect: `read-content`, `browse-catalog`
+  and `read-public-collection` declared things they only present, which
+  **changes, never reads** already forbade and nothing had ever caught. They now
+  declare nothing and their Steps read instead.
+- **The Scenario reading answers "what is this about" before the prose does.** A
+  subject band above the Trigger names what the Scenario changes and what it
+  reads, in separate rows so a read is never promoted into the first answer. An
+  end-state summary under the Outcome names where each changed Entity is left —
+  the last change naming it in Step order, derived rather than authored a second
+  time. Read chips sit at a lower weight than changes throughout, because
+  absence of a read means nothing and must not look like it does.
+- `ProductReportV11Schema` and `ProductReportV11` are now
+  `ProductReportV12Schema` and `ProductReportV12`, and
+  `ReportScenarioStepChangeSchema` joins the report SDK exports. v11 reports are
+  refused rather than migrated, as every earlier version is.
 
 ### Fixed
 

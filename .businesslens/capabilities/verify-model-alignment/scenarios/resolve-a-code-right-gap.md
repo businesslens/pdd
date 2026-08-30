@@ -22,6 +22,8 @@ steps:
         place: agent-skills
   - text: The Product writes only the approved meaning and inspects the scope again from the beginning
     kind: product
+    changes:
+      - entity: product-model
     contexts:
       harness:
         place: agent-skills

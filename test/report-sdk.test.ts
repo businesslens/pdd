@@ -10,7 +10,7 @@ import { reportDigest } from '../src/report-digest.js'
 import { compileReport } from '../src/commands/export.js'
 import { loadModel } from '../src/core/model.js'
 import { resolveModelRoot } from '../src/core/model-root.js'
-import type { ProductReportV11, ReportReference } from '../src/core/portable.js'
+import type { ProductReportV12, ReportReference } from '../src/core/portable.js'
 
 const packageJson = JSON.parse(
   await readFile(fileURLToPath(new URL('../package.json', import.meta.url)), 'utf8')
@@ -29,9 +29,10 @@ describe('report SDK entry point', () => {
   })
 
   it('exports the schema, semantic validator, portable projection, and digest', () => {
-    expect(sdk.REPORT_SCHEMA_VERSION).toBe('11.0.0')
+    expect(sdk.REPORT_SCHEMA_VERSION).toBe('12.0.0')
     for (const name of [
-      'ProductReportV11Schema',
+      'ProductReportV12Schema',
+      'ReportScenarioStepChangeSchema',
       'ProductReportSchema',
       'ReportReferenceSchema',
       'ReportSupportingSectionSchema',
@@ -95,9 +96,9 @@ describe('report SDK entry point', () => {
 describe('projectPortableReport', () => {
   const FIXTURE = join(fileURLToPath(new URL('.', import.meta.url)), 'fixtures', 'fixture-shop')
   let repo: string
-  let report: ProductReportV11
+  let report: ProductReportV12
 
-  const allReferences = (value: ProductReportV11): ReportReference[] => [
+  const allReferences = (value: ProductReportV12): ReportReference[] => [
     ...value.references,
     ...Object.values(value.model).flatMap(entry =>
       Array.isArray(entry) ? entry.flatMap(item => item.references ?? []) : [])
@@ -203,8 +204,8 @@ describe('projectPortableReport', () => {
           kind: 'actor',
           actorId: 'shopper',
           capabilityId: 'place-order',
-          entityId: null,
-          entityState: null,
+          changes: [],
+          readEntityIds: [],
           unattended: false,
           contexts: [{
             routeId: 'web-to-admin',
@@ -216,8 +217,8 @@ describe('projectPortableReport', () => {
           kind: 'actor',
           actorId: 'store-admin',
           capabilityId: 'manage-orders',
-          entityId: null,
-          entityState: null,
+          changes: [],
+          readEntityIds: [],
           unattended: false,
           contexts: [{
             routeId: 'web-to-admin',
@@ -493,9 +494,9 @@ describe('projectPortableReport', () => {
    * checked when the Entity collection shipped.
    */
   it('resolves every Entity edge the folder rules resolve', () => {
-    const moving = (value: ProductReportV11) => value.model.entities.find(item => item.transitions.length)!
+    const moving = (value: ProductReportV12) => value.model.entities.find(item => item.transitions.length)!
 
-    const cases: Array<[string, (value: ProductReportV11) => void]> = [
+    const cases: Array<[string, (value: ProductReportV12) => void]> = [
       ['relation references missing entity "ghost"', (value) => {
         value.model.entities[0]!.relations.push({ entityId: 'ghost', verb: 'holds', cardinality: 'many-to-many' })
       }],
@@ -525,7 +526,7 @@ describe('projectPortableReport', () => {
         entity.states = []
         for (const scenario of [...value.model.capabilityScenarios, ...value.model.journeyScenarios]) {
           for (const step of scenario.steps) {
-            if (step.entityId === entity.id) { step.entityId = null; step.entityState = null }
+            step.changes = step.changes.filter(change => change.entityId !== entity.id)
           }
         }
       }],
@@ -545,26 +546,41 @@ describe('projectPortableReport', () => {
   })
 
   it('checks what a Scenario step claims against the Entity it names', () => {
-    const stepOf = (value: ProductReportV11) => {
+    const changeOf = (value: ProductReportV12) => {
       for (const scenario of [...value.model.capabilityScenarios, ...value.model.journeyScenarios]) {
-        const step = scenario.steps.find(item => item.entityId && item.entityState)
-        if (step) return step
+        for (const step of scenario.steps) {
+          const change = step.changes.find(item => item.state)
+          if (change) return { step, change }
+        }
       }
-      throw new Error('the fixture needs one step that names an Entity and a state')
+      throw new Error('the fixture needs one step change that names an Entity and a state')
     }
 
     const missing = structuredClone(report)
-    stepOf(missing).entityId = 'ghost'
+    changeOf(missing).change.entityId = 'ghost'
     expect(sdk.validateProductReport(missing).join('\n')).toContain('references missing entity "ghost"')
 
     const unknownState = structuredClone(report)
-    stepOf(unknownState).entityState = 'Nowhere'
+    changeOf(unknownState).change.state = 'Nowhere'
     expect(sdk.validateProductReport(unknownState).join('\n')).toContain('is not a state of entity')
 
-    const stateless = structuredClone(report)
-    const orphanState = stepOf(stateless)
-    orphanState.entityId = null
-    expect(sdk.validateProductReport(stateless).join('\n')).toContain('entityState needs an entityId to belong to')
+    /* Ending a thing and leaving it in a state are different claims, and the
+       second cannot follow the first. */
+    const removed = structuredClone(report)
+    changeOf(removed).change.effect = 'removes'
+    expect(sdk.validateProductReport(removed).join('\n')).toContain('cannot also leave')
+
+    /* A creation has no `from`, so no transition can ever witness one. */
+    const created = structuredClone(report)
+    const { change: createdChange } = changeOf(created)
+    createdChange.effect = 'creates'
+    expect(sdk.validateProductReport(created).join('\n')).not.toContain('no transition of')
+
+    /* One Step states one thing about one Entity. */
+    const twice = structuredClone(report)
+    const { step, change } = changeOf(twice)
+    step.changes.push({ ...change })
+    expect(sdk.validateProductReport(twice).join('\n')).toContain('changes')
   })
 
   it('keeps a relation to one encoding and one side on the wire', () => {

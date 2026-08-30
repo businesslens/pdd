@@ -21,6 +21,8 @@ steps:
         place: businesslens-cli
   - text: The Product puts the expanded Blueprint in its place
     kind: product
+    changes:
+      - entity: product-model
     contexts:
       terminal:
         place: businesslens-cli

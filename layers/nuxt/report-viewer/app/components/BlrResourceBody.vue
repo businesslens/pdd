@@ -348,6 +348,34 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
 
     <!-- SCENARIO: the ordered reading, in the order it happens. -->
     <template v-if="isScenario">
+      <!--
+        What the reading is about, before the prose that says it in words.
+        Changes and reads stay separate rows: one answers what can alter a
+        thing and the other never does, and a single merged row would quietly
+        promote every read into the first answer.
+      -->
+      <section
+        v-if="asScenario.entityIds.length || asScenario.readEntityIds.length"
+        class="flex flex-wrap items-baseline gap-x-6 gap-y-1.5"
+      >
+        <BlrLinks
+          :workspace="workspace"
+          :ids="asScenario.entityIds"
+          kind="entity"
+          label="Changes"
+          interactive
+          @select="emit('select', $event)"
+        />
+        <BlrLinks
+          :workspace="workspace"
+          :ids="asScenario.readEntityIds"
+          kind="entity"
+          label="Reads"
+          interactive
+          @select="emit('select', $event)"
+        />
+      </section>
+
       <section class="space-y-2">
         <h2 class="blr-page-heading">Trigger</h2>
         <BlrProse :text="asScenario.trigger" size="base" class="max-w-3xl" />
@@ -521,6 +549,13 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
                         {{ stepKindLabel(step.stepKind) }}
                       </span>
                     </UTooltip>
+                    <BlrStepEntity
+                      v-for="mention in step.mentions"
+                      :key="`${mention.effect}-${mention.entityId}`"
+                      :workspace="workspace"
+                      :mention="mention"
+                      @select="emit('select', $event)"
+                    />
                   </span>
                   <BlrLinks
                     v-if="asScenario.scenarioType === 'journey' && step.capabilityId"
@@ -612,6 +647,13 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
                     {{ stepKindLabel(step.stepKind) }}
                   </span>
                 </UTooltip>
+                <BlrStepEntity
+                  v-for="mention in step.mentions"
+                  :key="`${mention.effect}-${mention.entityId}`"
+                  :workspace="workspace"
+                  :mention="mention"
+                  @select="emit('select', $event)"
+                />
               </span>
               <BlrLinks
                 v-if="asScenario.scenarioType === 'journey' && step.capabilityId"
@@ -687,6 +729,22 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
       <section class="space-y-2">
         <h2 class="blr-page-heading">Outcome</h2>
         <BlrProse :text="asScenario.outcome" class="max-w-3xl" />
+        <!--
+          Where the Scenario leaves each thing it changed — the last change
+          naming it, in Step order. The prose says this in words; the reader who
+          only wants the answer should not have to parse the sentence for it.
+        -->
+        <div v-if="asScenario.outcomeStates.length" class="flex flex-wrap items-center gap-x-2 gap-y-1.5 pt-1">
+          <span class="blr-field">Ends with</span>
+          <BlrStepEntity
+            v-for="ending in asScenario.outcomeStates"
+            :key="ending.entityId"
+            :workspace="workspace"
+            :mention="ending"
+            outcome
+            @select="emit('select', $event)"
+          />
+        </div>
       </section>
 
       <section v-if="asScenario.edgeCases.length" class="space-y-2">
@@ -699,8 +757,23 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
       </section>
     </template>
 
-    <!-- SCREEN: what it shows, what can be done, what states it has. -->
+    <!-- SCREEN: what it is about, what it shows, what can be done, what states it has. -->
     <template v-if="resource.kind === 'screen'">
+      <!--
+        `## Information presented` is what *this view* shows and never a
+        restatement of what the Entity keeps, so the Entity has to be named
+        before that list can be read as the narrower thing it is.
+      -->
+      <section v-if="asScreen.entityIds.length" class="space-y-2">
+        <h2 class="blr-page-heading">Presents</h2>
+        <BlrLinks
+          :workspace="workspace"
+          :ids="asScreen.entityIds"
+          kind="entity"
+          interactive
+          @select="emit('select', $event)"
+        />
+      </section>
       <section v-if="asScreen.information.length" class="space-y-2">
         <h2 class="blr-page-heading">
           Information presented <span class="blr-meta ms-1">{{ asScreen.information.length }}</span>
@@ -794,6 +867,31 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
           >
             <p class="text-sm font-semibold text-highlighted">{{ state.name }}</p>
             <BlrProse :text="state.content" class="mt-1.5" />
+            <!--
+              The lifecycle says what a thing can be and the Transitions say
+              which Capability moves it. Neither says what actually puts it
+              here, which is the question a reader arrives at a state with.
+            -->
+            <div
+              v-if="state.capabilityScenarioIds.length || state.journeyScenarioIds.length"
+              class="mt-2.5 space-y-1.5"
+            >
+              <p class="blr-field">Left here by</p>
+              <BlrLinks
+                :workspace="workspace"
+                :ids="state.capabilityScenarioIds"
+                kind="capability-scenario"
+                interactive
+                @select="emit('select', $event)"
+              />
+              <BlrLinks
+                :workspace="workspace"
+                :ids="state.journeyScenarioIds"
+                kind="journey-scenario"
+                interactive
+                @select="emit('select', $event)"
+              />
+            </div>
           </div>
         </div>
       </section>
