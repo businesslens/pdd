@@ -1,21 +1,23 @@
 # The Entity at the centre: what the model says about the things a Product keeps
 
 Status: **designed, not started.** Settled across thirteen grilling rounds
-against `main` at `2f366fe`, folder schema 7, Product Report v11.
+against `main` at `2f366fe`, then three more against `a657638` — folder
+schema 7, Product Report v12.
 
 Ships in one release with
-[Actor is not a resource type](./actor-is-an-entity.md), which is designed and
-owns the permission model. Read that one first: it decides that there is a
-single resource type, so every "Entity" below includes what used to be an Actor.
+[Actor is not a resource type](./actor-is-an-entity.md) and
+[Business Rules](./business-rules.md), which owns the permission model. Read
+the Actor plan first: it decides that there is a single resource type, so every
+"Entity" below includes what used to be an Actor.
 
 ## The whole design in three sentences
 
-> **The Entity says what a thing is and what it can be.**
+> **The Entity says what a thing is and what facts it has.**
 > **Steps say what happens to it.**
-> **Business Rules say who may.**
+> **Business Rules say what must remain true — including who may.**
 
-Nothing is stated twice, nothing is inferred from a neighbour, and the word
-*may* appears in exactly one place in the format.
+Nothing is stated twice, nothing is inferred from a neighbour, and a permission
+claim appears in exactly one place in the format.
 
 ## The measurement
 
@@ -83,7 +85,18 @@ State keys are explicit and never inferred from an adjacent Step:
 its own label. Entries without one are a single unnamed instance. An
 `(entity, as)` pair appears at most once per Step — so one observable act
 touching two collections is one Step, which the old one-per-Entity rule
-forbade only because the model had no instance identity.
+forbade only because the model had no instance identity. **Once an Entity is
+aliased anywhere in a Scenario, every mention of it in that Scenario is
+aliased**: a bare `collection` beside a `collection (source)` is an error, not
+a third instance.
+
+**There is no wildcard `from`.** *Archive from any state* is one Scenario per
+origin state. That is a refusal, stated here and in the docs, taken because a
+`from` the author did not write is the inference this design removes.
+
+**A Journey Step with a `creates`, `changes` or `removes` effect requires
+`capability`.** The Journey format allows unqualified Steps, and a change that
+no Capability owns has nothing to label its arc with. `reads` needs none.
 
 The report projection had already voted for the merged list:
 `ScenarioStepMentionView` models a read as a fourth effect and
@@ -123,12 +136,16 @@ an Order **and** creates a Shipment* is one act on two things, which only a Step
 can say. Steps are not merely an acceptable home for the lifecycle; they are the
 only home whose shape fits it.
 
-**`## Information kept` facts gain names.** A fact is `- **Name** — prose`, cited
-by that exact name. This is not a new idiom: `## States` already works this way,
-where an H3 titled `Pending` is cited as `from: Pending`. Only a Business Rule
-may cite a fact; Steps and Screens cannot. A fact is **addressable, never
-typed** — addressable is what field-level permission needs, typed is a data
-model, and *"the moment you write a type, you have left product meaning"*.
+**`## Information kept` facts gain names.** A fact is `- **Name** — prose`: the
+name bold, an em dash with a space on each side and nothing else as the
+separator, prose required after it, and the name unique within the Entity. It
+is cited by that exact name. This is not a new idiom: `## States` already works
+this way, where an H3 titled `Pending` is cited as `from: Pending`. Only a
+Business Rule may cite a fact; Steps and Screens cannot. A fact is
+**addressable, never typed** — addressable is what field-level permission and a
+derivation need, typed is a data model, and *"the moment you write a type, you
+have left product meaning"*. All 66 facts across the three shipped models are
+unnamed today and are rewritten.
 
 ### What every other resource says
 
@@ -145,22 +162,33 @@ model, and *"the moment you write a type, you have left product meaning"*.
   *the Actor this Step is attributable to*; `kind` says whether they performed
   it or the Product did it for them. A Product Step with no actor is the Product
   acting on its own. This replaces a separate `authority` field that made every
-  author choose between two Actor-shaped keys.
+  author choose between two Actor-shaped keys. An attributed actor **joins the
+  Scenario's derived Actor set**, so it feeds Journeys and the Interface support
+  check exactly as an actor Step's does, and a Journey Step's attributed actor
+  must be a Journey Actor. It is **forbidden in an unattended Scenario**, whose
+  Actor set is empty by definition and whose permission is the `unattended`
+  grant, not a person.
 
 ## The permission model
 
-Owned by [Actor is not a resource type](./actor-is-an-entity.md#the-permission-model)
-and summarised here only where it touches Steps.
+Owned by [Business Rules](./business-rules.md) and summarised here only where
+it touches Steps.
 
-Business Rules are the **only** constraint layer and are open by default: an
-operation no Rule mentions is unconditional. `appliesTo` gains an Entity target,
-and `permits` is a list of grants — grants are OR, keys within a grant are AND.
+An operation is an Entity effect on a Step, and a Rule with `permits` selects
+operations by Entity target. An operation no Rule with `permits` selects is
+open; `permits: []` closes one outright; grants are OR, keys within a grant
+are AND, and Rules selecting the same operation are AND.
 
-Two couplings run back into this plan:
+Three couplings run back into this plan:
 
 - **A Step's `actor` is who *did*; a grant's `actors` is who *may*.** A Step
-  satisfying no grant is a hard error, ungraded. Where a Rule restricts an
-  operation, the Step performing it **must** name an actor.
+  whose actor has no structurally possible grant is a hard error, ungraded.
+  Where a Rule governs an operation, the Step performing it **must** name an
+  actor — which is why `actor` became valid on Product Steps.
+- **A target selects a Step by the Step's own keys** — `effect`, `from`, `to` —
+  and **a grant's `when.state` is checked against the Step's `from`** where
+  the Step has one. A Step with no `from`, a read or an information change,
+  leaves that condition to `verify`.
 - **`unattended` is a grant**, checked against the Scenario's existing
   `unattended: true` marker rather than any new Step key.
 
@@ -168,23 +196,26 @@ Two couplings run back into this plan:
 
 **Deleted** — each checks a field that no longer exists:
 
-| Site | Finding |
+| Where | Finding, by its message |
 | --- | --- |
-| `lint.ts:503` | Capability names missing entity |
-| `lint.ts:545` | transition names a Capability that does not list this Entity |
-| `lint.ts:589` | undemonstrated transition |
-| `lint.ts:678` | Capability declares Entities but no Step changes any |
-| `lint.ts:809` | Capability "X" does not declare Entity "Y" |
-| `lint.ts:824` | no transition reaches this state by this Capability |
-| — | `transitions` required exactly when `## States` is present |
+| `src/commands/lint.ts` | a Capability *names missing entity* |
+| `src/commands/lint.ts` | a transition *names capability "X", which does not list this Entity* |
+| `src/commands/lint.ts` | a transition *has no acceptance case* |
+| `src/commands/lint.ts` | a Capability *declares the Entities it changes, and no Step of its Scenarios changes any of them* |
+| `src/commands/lint.ts` | *capability "X" does not declare entity "Y"* |
+| `src/commands/lint.ts` | *no transition of "X" reaches "Y" by capability "Z"* |
+| `src/core/model.ts` | *an Entity with "## States" needs "transitions"*, and its inverse |
 
 **Changed:**
 
-- **No orphans** (`lint.ts:644`) — stands, with `changedBy` derived from Steps.
-- **Missing-entity reference** (`lint.ts:795`, `lint.ts:801`) — collapse into one
-  check over the merged list.
-- **Actor placement** (`lint.ts:828`) — inverts, from *`actor` is only valid on
-  an Actor Step* to *an Actor Step requires one; others may carry one*.
+- **No orphans** — stands, with `changedBy` derived from Steps, and widened to
+  admit acting as [the Actor plan](./actor-is-an-entity.md#what-disappears)
+  says.
+- **Missing-entity reference** — the separate *reads missing entity* and
+  *references missing entity* checks collapse into one over the merged list.
+- **Actor placement** — inverts, from *`actor` is only valid when kind is
+  "actor"* to *an Actor Step requires one; others may carry one; an unattended
+  Scenario carries none*.
 
 **Added — completeness:**
 
@@ -194,10 +225,12 @@ Two couplings run back into this plan:
   Graded by `coverage.status`. Not the undefined-vocabulary check abandoned in
   [`plans/entity.md`](./entity.md) for noise — that matched all prose words and
   surfaced `confirms(10) publication(9)`. Matching only known Entity **titles**
-  flags 6 of 151 Steps in the self-model. One measured hazard: an Entity whose
-  title collides with the model's own vocabulary — BusinessLens models `Product`
-  as an Entity and every Product Step opens with "The Product", producing 63 of
-  its 69 raw hits.
+  flagged 6 of 151 Steps in the self-model before the Actor merge. Two
+  exemptions, both measured: the Step's own `actor` — once Developer and AI
+  agent are Entity titles, every *"The Developer …"* Step would otherwise match
+  — and the phrase *"The Product"*, which every Product Step opens with by
+  convention and which BusinessLens also models as an Entity, producing 63 of
+  its 69 raw hits. Re-measure after the models are rewritten.
 
 **Added — integrity:**
 
@@ -208,22 +241,28 @@ Two couplings run back into this plan:
   an `(entity, as)` pair in a state, this Step's `from` must equal it. The
   message names the way out: *"if these are different collections, give them
   aliases."* Guessing becomes a prompt to be explicit.
+- **Alias consistency** — an Entity aliased anywhere in a Scenario is aliased
+  everywhere in it.
+- **A Journey Step with a non-read effect and no `capability`.**
 
-**Added — composition warnings**, replacing the deleted undemonstrated-transition
-finding. All four are derived by composing every Scenario:
+**Added — composition findings**, replacing the deleted undemonstrated-transition
+finding. All four are derived by composing every Scenario. **The first listed
+state stays implicitly reachable**, as it is today: it is the state a thing
+starts in, and a Catalog product no Capability creates is a real Entity whose
+instances simply pre-exist the model.
 
-- **Unreached state** — declared, and no Step ever leaves anything in it.
-- **Unproduced origin** — a Step declares `from: Confirmed` and nothing produces
-  Confirmed.
-- **No creation** — an Entity with states that no Step ever creates.
-- **No termination** — nothing ever removes it. A note, not a fault.
+- **Unreached state** — a warning: declared, other than the first, and no Step
+  ever leaves anything in it.
+- **Unproduced origin** — a warning: a Step declares `from: Confirmed`, nothing
+  produces Confirmed, and it is not the first state.
+- **No creation** — a note the report shows on the Entity page, not a `lint`
+  finding: an Entity with states that no Step ever creates.
+- **No termination** — likewise a note: nothing ever removes it.
 
-**Added — rules:**
+The golden fixture lints with zero warnings today and must still.
 
-- A Step whose `actor` is outside `permits.actors`; a restricted operation on a
-  Step with no `actor` in an attended Scenario; an unattended Scenario performing
-  an operation whose Rule sets `unattended: false`; a Screen no permitted Actor
-  reaches; a Rule target that does not resolve.
+**Rules** — every finding that reads a grant against a Step or a Screen — are
+listed once, in [the Rule plan](./business-rules.md#what-lint-reports).
 
 ## What is presented
 
@@ -235,7 +274,12 @@ finding. All four are derived by composing every Scenario:
   so an arc reads *Pending → Confirmed · `settle-payment` · also creates
   Shipment*. That last one is the only place the model makes a combined
   cross-entity lifecycle visible, and it costs no new authoring. Unreached
-  states are drawn as unreached nodes.
+  states are drawn as unreached nodes. A prohibition — a Rule closing an
+  operation with `permits: []` — is a note on the state node, *nothing leaves
+  Fulfilled · Rule: fulfilled orders are final*, never a phantom arc, because
+  arcs come from Steps and a forbidden operation has none. A fact governed by
+  Rules carries a marker on its line in *Information kept*, *Total charged ·
+  1 Rule*, and nothing more.
 
   This reverses the decision in `BlrResourceBody.vue` — *"folding the moves into
   the state cards made the two indistinguishable"* — which solved the wrong
@@ -271,7 +315,11 @@ finding. All four are derived by composing every Scenario:
 
 - **`businesslens-map` gains a sweep** after Steps are drafted: re-read every
   Step's text against the Entity list and complete the `entities` key. A sentence
-  inside a paragraph is what produced 9%.
+  inside a paragraph is what produced 9%. A second sweep, for permissions, is
+  [the Rule plan's](./business-rules.md#what-the-skills-do).
+- **`businesslens-ideate` gets the Entity sweep verbatim.** It writes Steps too,
+  and every Step now requires `entities`. Skills are self-contained and cannot
+  share text, so the sweep is duplicated, not referenced.
 - **`businesslens-verify` verifies the Step's claims** — that the code really
   does create, change, remove or read that Entity and move it between those
   states — **the Rules' `permits`**, and, now that `entities: []` is an explicit
@@ -289,18 +337,23 @@ finding. All four are derived by composing every Scenario:
 ## Release
 
 Breaking, one release together with
-[Actor is not a resource type](./actor-is-an-entity.md): **folder schema 7 → 8**,
-**Product Report v11 → v12**, all three shipped models rewritten.
+[Actor is not a resource type](./actor-is-an-entity.md) and
+[Business Rules](./business-rules.md): **folder schema 7 → 8**,
+**Product Report v12 → v13**, all three shipped models rewritten.
 `spec/format.md` and `spec/report.md` change **before** the parser, linter and
 projection; `docs/entities.md`, `docs/capabilities.md`, `docs/journeys.md`,
-`docs/screens.md` and `docs/business-rules.md` follow. `docs/actors.md` is
-deleted by the other plan, folded into `docs/entities.md`.
+`docs/screens.md`, `docs/interfaces.md` and `docs/business-rules.md` follow.
+`docs/actors.md` is deleted by the Actor plan, folded into `docs/entities.md`.
+
+The fixture-shop rewrite is also the test surface, and the Blueprint the
+teaching surface. What each carries, shape by shape, and what the landing site
+changes, is [The three models and the landing site](./models-and-landing.md).
 
 **ADR-0018 — Steps are the single source of truth; the Entity describes, Rules
 constrain.** Records what is superseded, not only what is added: ADR-0011 keeps
 its half (a thing's states belong to the thing); ADR-0014 keeps relations in
-frontmatter and loses transitions entirely. ADR-0016 and ADR-0017 belong to the
-other plan.
+frontmatter and loses transitions entirely. ADR-0016 belongs to the Actor plan
+and ADR-0017 to the Rule plan.
 
 ## Design record: what was tried and rejected
 
@@ -328,6 +381,14 @@ coverage.
 **Dropping the chaining check.** Proposed once the two-collections example showed
 it firing falsely. Withdrawn in favour of instance aliases, which make the check
 correct rather than removing it.
+
+**A bare mention after an alias.** Letting `collection` beside
+`collection (source)` mean a third, unnamed instance. Rejected: it is exactly
+the silent reading aliases exist to remove, and the error costs one word.
+
+**A wildcard `from`.** Proposed for *archive from any state*. Rejected: the
+origin an author did not write is an inference, and the composition findings
+would have nothing to check the arc against.
 
 **The accepted cost.** Two authors with different Scenario sets derive different
 lifecycles over the same states, and `plans/model-review.md` measured that

@@ -31,7 +31,8 @@ still belongs to your SDD tool of choice and may be attached through
 | --- | --- |
 | **Product Model** | `.businesslens/` — the git-tracked folder this document defines. May cite the repository's code. |
 | **Resource** | one authored file in a Product Model — `capabilities/lint-product-model/capability.md` is one. |
-| **Resource type** | what a resource is one of. This document defines twelve: Product, Actor, Interface, Experience, Screen, Domain, Entity, Capability, Capability Scenario, Journey, Journey Scenario, and Business Rule. |
+| **Resource type** | what a resource is one of. This document defines eleven: Product, Interface, Experience, Screen, Domain, Entity, Capability, Capability Scenario, Journey, Journey Scenario, and Business Rule. |
+| **Actor** | the role an Entity plays where it acts — a Step's `actor`, an Interface's, Experience's or Journey's `actors`, a Business Rule grant's `actors`. Not a resource type: an Entity that `acts` is an Actor in that position. |
 | **Product Report** | the portable serialization of a Product Model. One format, two profiles. |
 | — *workspace* | `referenceProfile: workspace`. Repository-relative references and entry points intact, as optional navigation. For a full product instance inside the boundary that owns the code. |
 | — *portable* | `referenceProfile: portable`. No `kind: code`, no repository-relative targets or entry points. Required whenever a report crosses an ownership boundary. |
@@ -56,16 +57,16 @@ type.
 | `kind` on | Values |
 | --- | --- |
 | a `references` item | `code`, `prd`, `spec`, `proposal`, `doc`, `adr`, `visual`, `research` |
-| an Actor | `person`, `system` |
+| an Entity that `acts` | `person`, `system` |
 | a Capability Scenario | one `scenarioKinds` id from `taxonomies.yaml` |
 | a Journey Scenario | one `scenarioKinds` id from `taxonomies.yaml` |
 | a Scenario Step | `actor`, `product`, `condition` |
 
-Each is required wherever it appears, but only Actors and the two Scenario types
-require one at the top level of a file. **Every other resource type has no
-`kind` at all** — Product, Interface, Experience, Screen, Domain, Entity,
-Capability, Journey, and Business Rule never carry one. An Interface's `type` is a different
-field with a different job.
+Each is required wherever it appears. At the top level of a file only the two
+Scenario types require one, and an Entity carries one exactly when it `acts`.
+**Every other resource type has no `kind` at all** — Product, Interface,
+Experience, Screen, Domain, Capability, Journey, and Business Rule never carry
+one. An Interface's `type` is a different field with a different job.
 
 This document therefore never writes *kind* to mean a resource type, and neither
 should `docs/`. The code does — `ReportResourceKind` is the discriminator a
@@ -92,7 +93,6 @@ collection differ:
 | Resource type | Compact | Expanded | Typed children |
 | --- | --- | --- | --- |
 | Product | `product.md` | `product/product.md` beside `logo.svg` | — |
-| Actor | `actors/<id>.md` | `actors/<id>/actor.md` | — |
 | Interface | `interfaces/<id>.md` | `interfaces/<id>/interface.md` | `screens/`, `experiences/`, or both |
 | Experience | `interfaces/<interface-id>/experiences/<id>.md` | `interfaces/<interface-id>/experiences/<id>/experience.md` | `screens/` |
 | Screen | `<screen-parent>/screens/<id>.md` | `<screen-parent>/screens/<id>/screen.md` | — |
@@ -116,7 +116,6 @@ Screen. A representative model can therefore look like this:
 ├── product/                 # expanded Product alternative
 │   ├── product.md
 │   └── logo.svg             # optional locally; required for a public Blueprint
-├── actors/<actor-id>.md
 │
 │   ── Interface → Experience → Screen: where Actors meet the Product ──
 ├── interfaces/<interface-id>/
@@ -132,7 +131,7 @@ Screen. A representative model can therefore look like this:
 │
 │   ── subject axis: what it is about ──
 ├── domains/<domain-id>.md                       # optional
-├── entities/<entity-id>.md                       # optional
+├── entities/<entity-id>.md                       # the Entities that act are named by every Interface
 │
 │   ── behavior tree: what the Product does ──
 ├── capabilities/<capability-id>/
@@ -153,8 +152,9 @@ The model has **two hierarchies and two axes**. The Interface → Experience →
 Screen hierarchy says where Actors meet the Product; the Capability → Scenario
 and Journey → Scenario hierarchy says what the Product does. `availability` is
 the join between them. Domain classifies members of both by subject. Entity
-names what the Product keeps and whose state Actors can observe, and is the
-thing Capabilities change. Actors and Business Rules attach across everything.
+names what the Product keeps or reasons about — the people and systems that act
+on it included — and Steps say what happens to each. Business Rules attach
+across everything, and are the only place a permission claim appears.
 
 ## Contexts and places
 
@@ -225,9 +225,9 @@ future format revision, but Context is not an arbitrary metadata bag.
   expanded shape in two steps, and the intermediate step is not a defect.
 
 - **ID = the logical path from the collection root.** Behavior-hierarchy ids
-  (Capability, Journey, both Scenario types) and cross-cutting ids (Actor, Domain, Business
-  Rule) are the bare file or folder name and are globally unique within their
-  collection. Qualified ids for Interfaces, Experiences, and Screens carry the
+  (Capability, Journey, both Scenario types) and cross-cutting ids (Entity,
+  Domain, Business Rule) are the bare file or folder name and are globally
+  unique within their collection. Qualified ids for Interfaces, Experiences, and Screens carry the
   path that distinguishes them, joined by `::`:
 
   ```
@@ -243,9 +243,9 @@ future format revision, but Context is not an arbitrary metadata bag.
   Capability, Capability Scenario, Journey, and Journey Scenario name something
   the Product or an Actor *does*, so their ids begin with a verb:
   `browse-catalog`, not `catalog-browsing`; `manage-orders`, not
-  `order-management`. An Actor, Domain, Entity, Interface, Experience, and
-  Screen name something that *is*, so their ids are noun phrases: `shopper`,
-  `ordering`, `listing`, `customer-web`.
+  `order-management`. A Domain, Entity, Interface, Experience, and Screen name
+  something that *is*, so their ids are noun phrases: `shopper`, `ordering`,
+  `listing`, `customer-web`.
 
   This is a rule, not a style. Ids are the format's whole identity mechanism, so
   two models of one product that name the same behavior differently cannot be
@@ -306,18 +306,18 @@ future format revision, but Context is not an arbitrary metadata bag.
   `## View states`. Unlisted assets remain valid so external tools can write
   captures without editing BusinessLens frontmatter.
 - **H1 = title/name.** The first `# Heading` in the body is the resource's
-  title (actors and domains call it `name`) and is the file's only H1. Lead and
+  title (domains call it `name`) and is the file's only H1. Lead and
   section-body Markdown fragments cannot contain another H1 or H2; an H2 begins
   a new section instead.
 - **Lead paragraph = description.** Prose between the H1 and the first `##`
-  heading is the description for actors, domains, experiences, and the product.
+  heading is the description for entities, domains, experiences, and the product.
   Journeys and both Scenario types instead use the required structured sections
   specified below and must not carry lead prose.
 - **Frontmatter = relations and navigation, with one relational-prose
   exception.** Both Scenario types keep their structured `steps` in
   frontmatter so each single-line statement stays beside its kind, responsible
-  Actor, Capability qualification, and route-specific Contexts. Other
-  prose remains in the Markdown body.
+  Actor, Capability qualification, the Entities it touches, and route-specific
+  Contexts. Other prose remains in the Markdown body.
 - **Intent and Goal = recognized prose sections.** `## Intent` explains why the
   product or resource exists and which outcome it protects. `## Goal` states the
   stable Actor intent of a Journey. Both are structured prose, not separate
@@ -343,8 +343,8 @@ future format revision, but Context is not an arbitrary metadata bag.
 ## References
 
 `references` is an optional extension on every semantic resource: Product,
-Actor, Interface, Experience, Screen, Domain, Entity, Capability, Journey,
-Capability Scenario, Journey Scenario, and Business Rule. It is not accepted in
+Interface, Experience, Screen, Domain, Entity, Capability, Journey, Capability
+Scenario, Journey Scenario, and Business Rule. It is not accepted in
 `config.yaml`, `coverage.md`, or `taxonomies.yaml`.
 
 ```yaml
@@ -412,12 +412,12 @@ but the artifact remains evidence to assess rather than proof to trust.
 ### `config.yaml`
 
 ```yaml
-schema: 7                          # folder-format version
+schema: 8                          # folder-format version
 sdd:
   paths: [openspec/]               # detected/declared SDD roots; empty if none
 ```
 
-`config.yaml` has no other keys. Schema 7 is the only supported folder format.
+`config.yaml` has no other keys. Schema 8 is the only supported folder format.
 
 ### `product.md` or `product/product.md`
 
@@ -488,51 +488,6 @@ scenarioKinds:
     colorSlot: 6
 ```
 
-### `actors/<id>.md` or `actors/<id>/actor.md`
-
-```markdown
----
-kind: person                 # person | system
-relationship: external      # external | internal
----
-
-# Shopper
-
-An external person who browses the catalog and buys products.
-```
-
-An Actor may carry `## Information kept`, a bullet list of single-line facts the
-Product keeps about this Actor — a Reader's reading position, a Shopper's saved
-addresses. It follows the same rule as an Entity's: what the Product keeps, never
-how it is stored. An Actor is *who acts* and an Entity is *what is acted upon*,
-so the two never model the same participant; this section is why a Reader needs
-no Entity of their own.
-
-Both classifications are required. `relationship` is relative to the Product
-boundary. An implementation component is not an Actor merely because it calls
-another component; an internal system is an Actor only when its responsibility,
-privilege, trigger, or outcome is product-significant. H1 = name and the lead
-paragraph = description.
-
-**An AI agent harness is an Actor**, with the id `ai-agent`, `kind: system` and
-`relationship: external`. It initiates, it holds a privilege nobody else has —
-it reads and writes on the Actor's behalf — and what it does is not fully
-determined by the person who invoked it: it chooses what to inspect, what to
-propose, and when to stop. A browser makes no such choices, which is why a
-harness is not merely the runtime an `agent` Interface is delivered through.
-Name it `ai-agent` rather than after one use of it, since the same participant
-appears in products that have nothing to do with code.
-
-This promotes nothing else by analogy. A CI runner executing a fixed command has
-no latitude of its own, and the direction rule below still answers it.
-
-An external system is an Actor only when it **initiates** interaction with the
-Product. A system the Product calls out to is a dependency of the Capability
-that calls it: it has no goal inside the Product, no privilege to grant, and no
-inbound interaction contract the Product must keep stable for it. Direction
-decides, not ownership — the same third party can be a dependency in one direction and an Actor in the
-other when it also calls back. See [Outbound dependencies](#outbound-dependencies).
-
 ### `interfaces/<id>.md` or `interfaces/<id>/interface.md`
 
 An Interface is a supported interaction form through which Actors access the
@@ -568,8 +523,11 @@ supported interaction contract, never its implementation technology: `web` is
 valid; `react` is not. `agent` is the surface an AI coding harness reaches
 through installed skills or tools — a contract with its own Actors, boundary,
 and independently verifiable behavior, not the harness's own interface. An Interface has exactly one type; independently supported
-types are separate Interfaces. `actors` contains at least one Actor ID.
-`entryPoints` is optional and contains product-facing root addresses. On an
+types are separate Interfaces. `actors` names at least one Entity that `acts`:
+**who uses** the Interface. The list is descriptive — a permission claim lives
+only in a Business Rule — and `lint` holds every Step to it as consistency
+between the Steps and the surface they happen on. `entryPoints` is optional and
+contains product-facing root addresses. On an
 Interface a key is one of two things: **that Interface's own `type`**, for an
 address in its own vocabulary, or **the id of another Interface**, for a surface
 a reader arrives from. A local web report opened by an operator command declares
@@ -585,7 +543,8 @@ access mode or exit contract.
 
 An external system the Product calls — a syndicated feed it polls, a payment
 processor it charges, a mail provider it sends through, a model API it queries —
-is not an Actor and gets no Interface.
+does not act and gets no Interface. It may still be an Entity, when the Product
+keeps or reasons about instances of it.
 
 Model it where its result is observed:
 
@@ -600,8 +559,8 @@ Model it where its result is observed:
 
 Direction decides. When the same third party also calls the Product — a webhook,
 callback, or push subscription — that inbound interaction is through an Interface
-and the third party is its Actor. A feed provider the Product polls is a dependency; a
-feed provider that pushes updates to the Product is an Actor.
+and the third party is an Entity that `acts`. A feed provider the Product polls
+is a dependency; a feed provider that pushes updates to the Product acts.
 
 There is no external-system resource type. An outbound dependency shared by several
 Capabilities is described by each Capability that depends on it.
@@ -637,8 +596,8 @@ Where authorized operators manage the store and its orders.
 Supports store operations. It does not expose a shopper's private account.
 ```
 
-`actors` is a non-empty ID list and every Experience Actor must be supported by
-the owning Interface. `access` is required. Optional `entryPoints` key the
+`actors` is a non-empty list of Entities that `acts` — who uses the Experience —
+and every one must be supported by the owning Interface. `access` is required. Optional `entryPoints` key the
 owning Interface only. H1, lead description, and `## Capability boundary` are
 required. There is no `exit` field and no `interfaces` field — the path names
 the Interface. An Interface with one undivided usage context does not need a
@@ -718,7 +677,8 @@ either a `## Boundary` is wrong or the Capability should split.
 
 An Entity is a thing the Product keeps or reasons about, which an Actor can
 point at and the Product can tell apart from another one — an order, a listing,
-a saved item. Capabilities name the Product's verbs; Entities name its nouns.
+a saved item, and the Reader who saved it. Capabilities name the Product's
+verbs; Entities name its nouns, the people and systems that act on it included.
 
 **The test is identity, not storage.** A draft recommendation the Product never
 persists is still an Entity when a reader points at it and the Product
@@ -753,9 +713,9 @@ method" may be a fixed list of four while every payment is its own thing.
 
 The third is the one that traps a modelling tool, and the discriminator is
 worth stating: **does the Product keep information about instances of this, or
-is this the Product itself?** A tool whose subject is Actors keeps `actors/`
-full of them, so Actor is an Entity for it. The same tool ships its own skills
-rather than keeping records about them, so a skill is not.
+is this the Product itself?** A tool whose subject is product models keeps
+`capabilities/` full of them, so Capability is an Entity for it. The same tool
+ships its own skills rather than keeping records about them, so a skill is not.
 
 **How many: write `## Information kept` before you decide.** Candidates that
 share a family name — document types, event kinds, payment methods — are one
@@ -792,10 +752,6 @@ relations:
   - entity: catalog-product
     verb: was placed for
     cardinality: many-to-many
-transitions:
-  - from: Pending
-    to: Confirmed
-    by: place-order
 ---
 
 # Order
@@ -804,9 +760,9 @@ A shopper's confirmed intent to buy.
 
 ## Information kept
 
-- The items ordered and their quantities
-- The total charged
-- When it was placed
+- **Items ordered** — the items and their quantities
+- **Total charged** — the amount taken from the shopper
+- **When placed** — when the shopper submitted it
 
 ## States
 
@@ -821,22 +777,118 @@ Paid and accepted; stock is committed.
 ### Refunded
 
 Reversed after confirmation.
-
 ```
 
-**At least one of `## Information kept` and `## States` must be present.** A
-thing may have information and no lifecycle worth naming, and a thing's
-lifecycle may matter with almost nothing kept about it. Requiring both is what
-produced the earlier arbitrary two-state threshold.
+```markdown
+---
+kind: person
+acts: external
+relations:
+  - entity: order
+    verb: owns
+    cardinality: one-to-many
+---
 
-`## Information kept` is a bullet list of single-line facts the Product keeps
-about the thing. It is **what the Product keeps, never how it is stored**: "When
-it was placed", not `created_at TIMESTAMP`. No types, no cardinality, no keys,
-and **no structured relations between Entities** — "The items ordered" is prose,
-never `hasMany`. A cache is out of the model; the data it holds is in when the
-Product promises it. The word *kept* means held, not persisted.
+# Shopper
 
-`relations` is optional and declares edges to other Entities. Each is
+A person who browses the catalog and buys products.
+
+## Information kept
+
+- **Delivery address** — where their orders are sent
+```
+
+```markdown
+---
+kind: system
+acts: external
+---
+
+# Payment gateway
+
+The processor that posts settlement results back to the Product.
+```
+
+**At least one of `## Information kept`, `## States`, and `acts` must be
+present.** A thing may have information and no lifecycle worth naming, a
+lifecycle with almost nothing kept about it, or — a payment gateway — nothing
+kept at all and a reason to exist because it acts. Requiring both of the first
+two is what produced an earlier arbitrary two-state threshold.
+
+**An Entity that acts.** `acts` is optional and, when present, is `external` or
+`internal`, relative to the Product boundary: whether the thing acts
+independently outside the Product owner's boundary, or on the Product owner's
+behalf. A staff operator is usually internal even when working remotely; a
+partner system is usually external even when connected over a private network.
+`kind` is `person` or `system`, is **required when `acts` is set**, and is
+invalid otherwise: an Order says nothing, because *it's a thing* is the
+default, and an Entity that acts always says which of the two it is.
+
+Two independent questions decide, neither ranking the other. *Does the Product
+keep or reason about instances of it?* — everything modelled does; that is why
+everything is an Entity. *Does it initiate, with a goal or privilege of its own,
+and must the Product keep a stable inbound contract for it?* — then it `acts`.
+
+| | keeps / reasons about | initiates under a contract | |
+| --- | --- | --- | --- |
+| Reader | yes | yes | Entity + `acts` |
+| Store admin | yes | yes | Entity + `acts` |
+| Payment gateway | reasons about | yes — posts webhooks | Entity + `acts` |
+| AI agent harness | reasons about | yes | Entity + `acts` |
+| Order | yes | no | Entity |
+| Employee (payroll) | yes | no — never signs in | Entity |
+| Feed source the Product polls | yes | no | Entity |
+| An internal service with its own credentials | no | no — the Product keeps no contract with its own component | not modelled |
+| The Product's own scheduler | no | no — that is `unattended` | not modelled |
+
+The third clause is what bounds *privilege*. **A privilege that exists only in
+code is authorization, not product meaning**, so *service X may cancel orders,
+service Y may not* is deliberately unsayable. If two roles have the same goals
+and permissions, they are one Entity. A thing that starts acting gains one
+field; there is no file move, no id change, and no migration.
+
+An external system acts only when it **initiates**. A system the Product calls
+out to is a dependency of the Capability that calls it: it has no goal inside
+the Product, no privilege to grant, and no inbound interaction contract the
+Product must keep stable for it. Direction decides, not ownership — the same
+third party can be a dependency in one direction and act in the other when it
+also calls back. See [Outbound dependencies](#outbound-dependencies).
+
+**An AI agent harness acts**, with the id `ai-agent`, `kind: system` and
+`acts: external`. It initiates, it holds a privilege nobody else has — it reads
+and writes on the person's behalf — and what it does is not fully determined by
+the person who invoked it: it chooses what to inspect, what to propose, and when
+to stop. A browser makes no such choices, which is why a harness is not merely
+the runtime an `agent` Interface is delivered through. Name it `ai-agent`
+rather than after one use of it, since the same participant appears in products
+that have nothing to do with code. This promotes nothing else by analogy: a CI
+runner executing a fixed command has no latitude of its own.
+
+**The word Actor names a role, not a type.** An Entity that acts is *an Actor*
+in the position where it acts — a Step's `actor`, an Interface's, Experience's
+or Journey's `actors`, a Business Rule grant's `actors`. Every such reference
+must name an Entity that `acts`, and `lint` errors otherwise.
+
+**`## Information kept`** is a bullet list of **named** single-line facts the
+Product keeps about the thing. Each is `- **Name** — prose`: the name in bold,
+an em dash with a space on each side and nothing else as the separator, and
+non-empty prose after it. Names are unique within the Entity and are cited by
+exact match — a Business Rule's `facts` target and its `when` condition are the
+only places that cite one; Steps and Screens never do. The idiom is the one
+`## States` already uses, where an H3 titled `Pending` is cited as
+`from: Pending`.
+
+It is **what the Product keeps, never how it is stored**: *When placed*, not
+`created_at TIMESTAMP`. No types, no cardinality, no keys, and **no structured
+relations between Entities** — *Items ordered* is prose, never `hasMany`. A fact
+is addressable, never typed: addressable is what a field-level Rule and a
+derivation need; typed is a data model. A cache is out of the model; the data it
+holds is in when the Product promises it. The word *kept* means held, not
+persisted, and computed information is still a fact.
+
+`relations` is optional and declares edges to other Entities — an Entity that
+acts included, which is how ownership is said: the Shopper above `owns` Orders,
+and a Business Rule walks that edge back to find who may. Each is
 `{ entity, verb, cardinality }`: `verb` is the product's own word for the
 relationship, and `cardinality` states **both ends**, reading source to target.
 
@@ -868,24 +920,37 @@ relationship written twice, and the two can now contradict each other outright.
 It stays a warning because two genuinely different relationships between one pair
 are legal.
 
-A relation targets an Entity, never an Actor: an Actor is who acts, and ownership
-is a fact the Product keeps. It may target this same Entity — a Comment replies
-to another Comment, a Task blocks another Task — and only a duplicate edge is
-invalid. A relation never satisfies the no-orphans rule below, because a cluster
-of Entities referencing each other while no behaviour touches any of them is
-still vocabulary nobody uses.
+A relation may target this same Entity — a Comment replies to another Comment, a
+Task blocks another Task — and only a duplicate edge is invalid. A relation
+never satisfies the no-orphans rule below, because a cluster of Entities
+referencing each other while no behaviour touches any of them is still
+vocabulary nobody uses.
 
-`## States` contains H3 state names, each followed by non-empty prose.
-`transitions` is required exactly when `## States` is present. Each is
-`{ from, to, by }`: both state names must be this Entity's own, and `by` names
-the Capability that causes the move — which must exist and must list this Entity
-in its `entities`. Relations and transitions are frontmatter rather than
-sections because they name other resources by id, and ids are parsed rather than
-read out of English. `## Relations` and `## Transitions` are therefore invalid
-sections on an Entity, exactly as `## Steps` is invalid on a Scenario: the
-frontmatter list is the one authority and a section beside it is a second one
-that can disagree. A state no transition reaches, other than the first listed,
-is a `lint` warning; a terminal state is valid and needs no outgoing transition.
+**`## States`** contains H3 state names, each followed by non-empty prose. The
+first listed state is the one a thing starts in. **The Entity declares its
+states and nothing about the moves between them.** The lifecycle is composed
+from Scenario Steps: a Step's `entities` entry says which Entity it creates,
+changes or removes, and from and to which state, and the report draws the
+machine from every Scenario in the model. There is no `transitions` key — one
+that is still authored is a `lint` error naming the Step keys that replaced it —
+and `## Transitions` and `## Relations` are invalid sections, exactly as
+`## Steps` is invalid on a Scenario: the frontmatter and the Steps are the one
+authority, and a section beside them is a second one that can disagree.
+
+A per-Entity list could never express a combined lifecycle — *settling a payment
+confirms an Order and creates a Shipment* is one act on two things, which only a
+Step can say — and it stated a second time what a Step already states.
+
+`lint` composes every Scenario and reports what the composition is missing:
+
+- **Unreached state** — a warning: a state other than the first that no Step
+  ever leaves anything in.
+- **Unproduced origin** — a warning: a Step declares `from: Confirmed`, nothing
+  produces Confirmed, and it is not the first state.
+- **No creation** and **no termination** — notes the report shows on the Entity
+  page, never `lint` findings: an Entity with states that no Step creates, or
+  that nothing ever removes. A Catalog product no Capability creates is a real
+  Entity whose instances pre-exist the model.
 
 `domain` is optional and single. H1 = name and the lead paragraph = description.
 
@@ -895,26 +960,19 @@ a capture depicts one of them. An Entity's states are lifecycle, and no artifact
 depicts "Confirmed" — it depicts the screen that shows a confirmed thing, which
 is where the annotation already belongs.
 
-**No orphans.** An Entity must be referenced by a Capability that changes it or
-a Screen that presents it. An Entity nothing points at is a `lint` error: it is
-either unused vocabulary or a relation somebody forgot to declare.
+**No orphans.** An Entity must be changed by a Step, presented by a Screen,
+named as an actor — on a Step, an Interface, an Experience, a Journey, or a
+Business Rule grant — or read by a Business Rule, as a condition's `entity` or
+a `configuredBy`, which is how a settings Entity earns its place. A Step's read
+never counts, and neither does a relation. An Entity nothing points at is a
+`lint` error: it is either unused vocabulary or a relation somebody forgot to
+declare.
 
-**No undemonstrated transitions.** A transition is a claim, and the Scenarios of
-the Capability that causes it are its acceptance surface. Some Step of some
-Scenario of `by` must name this Entity and leave it in the transition's `to`
-state; otherwise the lifecycle asserts a move nothing in the model is ever shown
-making. Only the destination is matched, because a Step names the state it
-*leaves* an Entity in and never the one it came from, so two transitions into
-one state share a demonstration. The finding is graded by `coverage.status` —
-an error for a `complete` model, a warning otherwise — exactly as an availability
-Context without Capability Scenario coverage is: breadth is the coverage claim's
-to make, and a draft is still being written.
-
-An Entity never declares Capabilities, Screens, availability, or Actors. The
-Capability declares what it changes and the Screen declares what it presents;
-every other Entity relation is derived. Entity states are the authority for a
-lifecycle, and a Screen's `## View states` describes what that **view** looks
-like — the two are never merged.
+An Entity never declares Capabilities, Screens, availability, or who may act on
+it. Steps say what changes it, a Screen says what presents it, a Business Rule
+says who may; every other Entity relation is derived. Entity states are the
+authority for a lifecycle, and a Screen's `## View states` describes what that
+**view** looks like — the two are never merged.
 
 ### `capabilities/<id>.md` or `capabilities/<id>/capability.md`
 
@@ -926,7 +984,6 @@ of the model; Journey composition is optional.
 ```markdown
 ---
 domain: ordering                 # optional
-entities: [order]                # optional
 availability:
   - place: customer-web::storefront
 references:
@@ -945,34 +1002,13 @@ Let a shopper complete a purchase without losing cart state on a recoverable
 failure.
 ```
 
-`entities` is optional and lists the Entities this Capability **changes**, by
-id. It covers changes a transition can never express — renaming a thing alters
-its information, not its state — and it is the authority a transition's `by` is
-checked against.
-
-**Changes, never reads.** A Capability that only presents or inspects a thing
-declares nothing here; the Screen that shows it carries `entities` instead, and
-a Capability with no Screen says what it reads in its own prose. The narrower
-word is what makes the list worth reading: a structural check that inspects every
-kind in the model would otherwise claim to change all of them, and "what can
-alter this thing" — the question the list exists to answer — would have no answer
-left.
-
-**A declaration is a claim, and its Scenarios are where it is shown.** A
-Capability that declares `entities` and whose Scenarios contain no Step that
-changes any of them is a `lint` finding, graded by `coverage.status` — an error
-for a `complete` model, a warning otherwise. It is the same claim the
-undemonstrated-transition rule makes, one level out.
-
-The check asks whether the acceptance surface says anything at all, never
-whether it accounts for each declared Entity separately. `entities` is what a
-Capability **can** change; a Step's `changes` is what one concrete acceptance
-case **does** change, and those are supposed to differ. A Capability that writes
-any part of a model can touch every resource type while no single case touches
-all of them, and demanding a Step per declared Entity would force either one
-artificial case that touches everything or a Scenario per combination. A Step
-that only sometimes changes a thing is a different acceptance case, not an
-optional entry in this one.
+**A Capability declares nothing about Entities.** What it changes is what the
+Steps of its Scenarios say it changes, and a report derives the aggregate —
+*Order · creates → Pending · changes → Confirmed · 3 Scenarios*. A file still
+carrying `entities` is refused with a message naming the replacement, the
+`entities` list on each Step. A Capability that only presents or inspects a
+thing has Steps that `reads` it, and the Screen that shows it carries
+`entities`.
 
 `availability` is required and needs at least one valid
 Context. Its place is
@@ -1001,8 +1037,10 @@ to re-gather them is a folder, not a region.
 
 ### `business-rules/<id>.md` or `business-rules/<id>/business-rule.md`
 
-A Business Rule is a durable constraint or policy that may apply across
-multiple behaviors.
+A Business Rule states a durable constraint, derivation, or authorization policy
+that must hold across the Product. Permission is a kind of Business Rule; not
+every Business Rule is a permission. **Permission claims appear only in Business
+Rules.**
 
 ```markdown
 ---
@@ -1034,21 +1072,52 @@ Inventory may change between browsing and final submission, so checkout must
 revalidate it.
 ```
 
-**A Business Rule governs two or more behaviors, or a Context independent of
-any single behavior.** Anything true of exactly one Capability is that
-Capability's business — a `condition` Step or its Scenario Outcome — not a Rule.
-The boundary is checkable and `lint` enforces it: a Rule whose `appliesTo`
-resolves to exactly one behavioral resource, with no `contexts` narrowing it, is a
-`lint` warning naming the Capability that should own it instead. A Rule with a
-`type: context` target is always valid, because a constraint on an interaction
-context belongs to no behavior.
+```markdown
+---
+appliesTo:
+  - type: entity
+    id: order
+    effect: changes
+    to: Refunded
+permits:
+  - actors: [store-admin]
+    when:
+      - { fact: Total charged, at-most: 100 }
+  - configuredBy: store-settings
+    when:
+      - { fact: Total charged, over: { configuredBy: store-settings } }
+---
 
-The lead paragraph is the rule statement. `appliesTo` is a required non-empty
-list of typed targets. A resource target uses `type` = `capability`,
-`capability-scenario`, `journey`, or `journey-scenario`, requires `id`, and may
-use a non-empty `contexts` list to narrow that target. Without `contexts`, the
-Rule applies to all supported Contexts of the target. A direct Context target
-uses `type: context` plus one nested `context` object instead of `id`:
+# Refunds need an operator
+
+A refund is issued by a store operator, and above the store's approval threshold
+only by whoever the store configures.
+```
+
+```markdown
+---
+appliesTo:
+  - type: entity
+    id: order
+    facts: [Total charged]
+---
+
+# Total charged
+
+Total charged always equals Subtotal plus Tax minus Discount.
+```
+
+The lead paragraph is the rule statement; `## Intent` and `## Rationale` are
+optional prose. `appliesTo` is a required non-empty list of typed targets, and
+targets are additive: the Rule governs their union. Business Rule owns these
+relations; consumers derive every backlink.
+
+**Behavioural and Context targets.** A behavioural target uses `type` =
+`capability`, `capability-scenario`, `journey`, or `journey-scenario`, requires
+`id`, and may use a non-empty `contexts` list to narrow that target. Without
+`contexts`, the Rule applies to all supported Contexts of the target. A direct
+Context target uses `type: context` plus one nested `context` object instead of
+`id`:
 
 ```yaml
 - type: context
@@ -1056,15 +1125,253 @@ uses `type: context` plus one nested `context` object instead of `id`:
     place: operator-cli
 ```
 
-Targets are additive: the Rule governs their union. A Context selector on an
-resource target must match at least one Context supported by that target. A
-selector naming an Interface or Experience matches descendant places; a Screen
-selector matches that Screen. Duplicate selectors and a parent selector paired
-with its redundant descendant are invalid. Do not target both a Capability and one of its
-Capability Scenarios, or both a Journey and one of its Journey Scenarios; the
-ancestor already governs the child. Domains remain navigation-only, so Rule
-Domain backlinks are derived through targeted behavior rather than authored.
-Business Rule owns these relations; consumers derive every backlink.
+A Context selector on a behavioural target must match at least one Context
+supported by that target. A selector naming an Interface or Experience matches
+descendant places; a Screen selector matches that Screen. Duplicate selectors
+and a parent selector paired with its redundant descendant are invalid. Do not
+target both a Capability and one of its Capability Scenarios, or both a Journey
+and one of its Journey Scenarios; the ancestor already governs the child.
+Domains remain navigation-only, so Rule Domain backlinks are derived through
+targeted behaviour rather than authored.
+
+**A Business Rule governs two or more behaviours, a Context independent of any
+single behaviour, or a thing.** Anything true of exactly one Capability is that
+Capability's business — a `condition` Step or its Scenario Outcome — not a
+Rule. The boundary is checkable and `lint` enforces it: a Rule whose
+`appliesTo` resolves to exactly one behavioural resource, with no `contexts`
+narrowing it, is a `lint` warning naming the Capability that should own it
+instead. A Rule with a `type: context` target is always valid, because a
+constraint on an interaction context belongs to no behaviour. **A Rule with an
+Entity target is always valid**: a durable invariant or permission on a thing is
+a Rule even when it selects a single operation, because the two homes the
+warning suggests do not exist for a permission.
+
+**Entity targets.** An Entity target uses `type: entity`, requires `id`, and may
+carry `effect`, `from`, `to`, `facts`, and `contexts`:
+
+```yaml
+appliesTo:
+  - type: entity
+    id: order
+    effect: changes            # optional — creates | changes | removes | reads
+    from: Confirmed            # optional — the state the operation leaves
+    to: Refunded               # optional — the state it lands in
+    facts: [Margin]            # optional — the facts it governs
+    contexts: [{ place: admin-web::order-console::order-detail }]   # optional
+```
+
+**A target selects; a grant conditions.** `effect`, `from` and `to` select
+Steps by the keys their `entities` entry already carries: `from` is valid with
+`changes` and `removes`, `to` with `creates` and `changes`, and neither with
+`reads`. Every state named is one the Entity declares. Whether the instance is
+in some state *when the operation happens* is a condition and lives in a grant's
+`when`. `facts` names facts of this Entity by their exact name; a fact-scoped
+Rule governs information — a derivation, or field-level visibility — not an
+operation. `contexts` scopes the Rule to places; an Entity has no availability,
+so the selector must name a Screen that presents the Entity, or an ancestor of
+one.
+
+**The minimal selector is canonical.** A `from` that every Step landing in `to`
+already leaves from is a `lint` warning, as is a `when` state condition every
+selected Step already satisfies. Refunds only ever leave Confirmed, so
+`{ changes, to: Refunded }` is the Rule and `{ changes, from: Confirmed, to:
+Refunded }` is flagged. The minimal form is also the safe one: a refund added
+later from Pending is governed by the first and silently open under the second.
+
+**`permits`** is optional and has three states:
+
+| `permits` | Says |
+| --- | --- |
+| omitted | this Rule makes no authorization claim |
+| `[]` | the selected operation is forbidden to everyone |
+| a list of grants | the operation is permitted through any one of them |
+
+Silence is not a claim. A lifecycle composed from Steps can be incomplete, so a
+Step that never appears cannot be read as *nobody may*. `permits: []` is the one
+way to say it, and it is checkable: a Step performing that operation is a
+`lint` error naming the Rule, and `verify` confirms the code refuses it.
+
+```yaml
+# a Refunded order is never cancelled — and nothing else is claimed
+appliesTo: [{ type: entity, id: order, effect: changes, from: Refunded, to: Cancelled }]
+permits: []
+```
+
+**A Rule with `permits` targets Entities only.** An operation is an Entity
+effect on a Step. *Who may perform this Capability* with no Entity in sight is
+what Interface `actors` already records as *who uses it*, and checking it over
+Steps would duplicate the Entity checks. A Rule carrying `permits` with a
+behavioural or Context target is an error.
+
+**The algebra.**
+
+- Targets within one Rule select the union of governed operations.
+- Grants within one Rule are **OR**.
+- Keys within one grant are **AND**.
+- Rules that select the same operation are **AND** — every matching Rule
+  constrains it.
+- An operation no Rule with `permits` selects is open.
+
+```yaml
+# the owner, or an admin
+permits:
+  - { actors: [store-admin] }
+  - { related: [{ verb: owns, entity: shopper }] }
+
+# an admin who is also the owner
+permits:
+  - { actors: [store-admin], related: [{ verb: owns, entity: shopper }] }
+
+# the owner under 100; at 100 and above, an admin
+permits:
+  - { related: [{ verb: owns, entity: shopper }], when: [{ fact: Total charged, under: 100 }] }
+  - { actors: [store-admin],                      when: [{ fact: Total charged, at-least: 100 }] }
+```
+
+AND across Rules is what lets a broad Rule and a narrow one compose: *owner or
+admin may change an Order* plus *admin may refund* yields admin-only refunds
+without either Rule knowing about the other. Its cost is the split-grant trap:
+*the owner may read a Collection* and *a Visitor may read a Published
+Collection* written as two Rules AND to owner-only. Grants meant as alternatives
+sit in one Rule, and `lint` warns when two permission Rules carry identical
+target selectors.
+
+**Every grant names a who.** A grant needs at least one of `actors`, `related`,
+`self`, `unattended`, `configuredBy`. An empty grant, or a grant with only
+`when`, is an error: *anyone* already has an encoding — list every Entity that
+acts — and a second one would be silent.
+
+| Grant key | Says | Value |
+| --- | --- | --- |
+| `actors` | these may | ids of Entities that `acts` |
+| `related` | whoever stands in this relation to the instance may | a path of `{ verb, entity }` segments |
+| `self` | the instance itself may | `true` |
+| `when` | only while these conditions hold | a list of conditions, AND-ed |
+| `unattended` | the Product's own schedule may | `true` — nothing else |
+| `configuredBy` | gated, by data the Product does not own | the id of the Entity holding the configuration |
+
+**`related`** is a path from the Rule's one Entity target, walking declared
+relations and their derived inverses. Each segment names the verb and the
+Entity it arrives at, so a hop is never ambiguous — a Workspace *contains*
+Documents and a Folder *contains* Documents, and both keep the product's own
+word for it:
+
+```yaml
+# document  ←—contains—  workspace  —has member→  user
+appliesTo: [{ type: entity, id: document, effect: changes }]
+permits:   [{ related: [{ verb: contains, entity: workspace }, { verb: has member, entity: user }] }]
+```
+
+`lint` checks that the Rule has exactly one Entity target to start from, that
+each segment matches exactly one relation, declared or inverse, from the Entity
+the path is currently at, and that the last segment lands on an Entity that
+`acts`. A hop through a self-relation — a Comment that replies to a Comment — is
+refused: naming the Entity does not give it a direction. `related: []` is an
+error. **`lint` never touches an instance.**
+
+**`self: true`** is the zero-hop path: the instance itself may. *Shoppers keep
+their own address* targets the Shopper's *Delivery address* fact and permits
+`self`; `actors: [shopper]` would have said any Shopper. It requires the
+targeted Entity to `acts`.
+
+**`when`** is a list of conditions, AND-ed, so a one-condition grant and a
+three-condition grant have one shape. Each condition names a `fact` with exactly
+one operator, or a `state`:
+
+```yaml
+when:
+  - { fact: Total charged, over: 100 }                                  # hard-coded
+  - { fact: Total charged, over: { configuredBy: approval-policy } }    # customer-set
+  - { entity: workspace-settings, fact: Approval required, is: true }   # feature flag
+  - { state: Published }                                                # the instance's state
+```
+
+| Operator | Meaning |
+| --- | --- |
+| `over` | > |
+| `under` | < |
+| `at-least` | ≥ |
+| `at-most` | ≤ |
+| `is` | = |
+| `is-not` | ≠ |
+| `present` | the fact has a value |
+| `absent` | it does not |
+
+**The operator implies the comparison; the fact declares no type.** `at-least`
+and `at-most` exist because the off-by-one argument holds only for integers and
+facts are untyped: `over: 99.99` is the wrong rule for money and for time.
+`lint` checks the fact and any named Entity resolve, and nothing more — whether
+*Total charged* holds a number is `verify`'s job against code. A threshold is a
+scalar or `{ configuredBy: <entity-id> }`.
+
+`fact` defaults to a fact of the targeted Entity and may name another through
+`entity`, which is how thresholds and feature flags work: the value is a fact of
+a settings Entity and the Rule reads it. `state` says *the instance is in state
+X when the operation happens*: it must be a state of the targeted Entity, it is
+valid on every target but `creates`, and it cannot be combined with `entity`.
+It exists because two kinds of Step carry no state for a target to select by — a
+`reads` Step, and an information change, which is `changes` with neither `from`
+nor `to`. *Anyone may read a Published collection* and *the shopper edits
+delivery details only while Pending* are both `when` state conditions. A
+defaulted `fact` or a `state` needs exactly one Entity target to resolve against.
+
+**A modelled product's own RBAC** is product behaviour, not this layer. A fixed,
+shipped set of roles is a closed vocabulary: Entities that act, and
+`permits.actors` works directly. User-defined roles created at runtime are
+instances: an Entity `Role` with its own lifecycle, `assign-role` a Capability,
+and this layer constrains who may create one — never one Entity per customer
+role. ABAC policies on attributes are likewise an Entity `Policy` and the
+Capabilities that define and evaluate it.
+
+**What `lint` checks.** `lint` checks structural eligibility. It cannot prove
+runtime ownership, a fact's value, or customer configuration, and never claims a
+runtime grant is satisfied. A Step's actor has a **possible grant** in a Rule
+when, for some grant of that Rule: `actors` lists it; or `related` ends on its
+type; or `self` is set and it is the targeted Entity; or `unattended` is set
+and the Scenario is unattended; or `configuredBy` is set — and every `state`
+condition in that grant equals the Step's `from` when the Step has one.
+
+Structure — errors unless marked:
+
+- `permits` on a Rule with a behavioural or Context target.
+- A grant with none of `actors`, `related`, `self`, `unattended`,
+  `configuredBy`; `unattended` or `self` other than `true`; `related: []`.
+- `permits.actors`, a `related` endpoint, or a `self` target naming an Entity
+  that does not `acts`; `configuredBy` naming a missing Entity.
+- `related`, a defaulted `fact`, or a `state` condition on a Rule with other
+  than exactly one Entity target.
+- A `related` segment matching no relation, declared or inverse, from the
+  current Entity; matching more than one; or passing through a self-relation.
+- A grant whose `actors` excludes the type its `related` path ends on — it can
+  never be satisfied.
+- `when` not a list; a condition with no operator or two; an operator outside
+  the eight; a `fact` that does not resolve on the targeted Entity or on
+  `entity`; a `state` that is not a state of the targeted Entity, on a
+  `creates` target, or combined with `entity`.
+- An Entity target whose `id`, `from`, `to`, `facts` entry, or `contexts` place
+  does not resolve; `from` on a `creates` or `reads` target; `to` on a
+  `removes` or `reads` target; a `contexts` place that presents the Entity
+  nowhere.
+- **Warning:** two permission Rules with identical target selectors.
+- **Warning:** a target `from`, or a grant `state` condition, that every Step
+  the target selects already satisfies.
+
+Rules against Steps and Screens — errors, ungraded by `coverage.status`:
+
+- A Step performing an operation a Rule closes with `permits: []`, naming the
+  Rule.
+- A Step performing a governed operation whose actor has no possible grant in
+  some Rule selecting it.
+- A governed operation on a Step with no `actor` in an attended Scenario.
+- An unattended Scenario performing a governed operation that no `unattended`
+  grant permits.
+- A Screen presenting an Entity whose `reads` are governed, where no Actor using
+  the Screen's container has a possible grant.
+
+Fact-scoped Rules are checked by Screen reach only, since a Step cannot cite a
+fact; the rest is `verify`'s. A derivation is prose plus `facts`; there is no
+machine-readable arithmetic, because one would need defined behaviour for types,
+units, money, rounding, collections, missing values and time.
 
 ### `.../screens/<id>.md` or `.../screens/<id>/screen.md`
 
@@ -1128,7 +1435,10 @@ the Screen. Scenario participation is derived from Scenario Step Contexts whose
 place names the Screen; a Screen never authors
 Capability or Journey Scenario ids. The H1, lead description,
 `## Information presented` bullet list, and `## Capability boundary` prose are
-required. `## Available actions` is optional but, when present, must contain a
+required. `## Information presented` is prose about what *this view* shows; it
+never cites an Entity fact by name — a Screen names the Entities it presents in
+`entities`, and only a Business Rule cites a fact. A Screen has no acceptance
+surface, so its `entities` list is authored, where a Capability's is derived. `## Available actions` is optional but, when present, must contain a
 bullet list. `## View states` is optional; each state is an H3 name followed
 by non-empty prose. States remain embedded in the Screen report resource.
 
@@ -1179,8 +1489,10 @@ A shopper wants to purchase a suitable product.
 A confirmed order exists for the selected product.
 ```
 
-`actors` is a non-empty unique list of the Actors who pursue the goal, not every
-system that participates in its implementation. A Journey has no lead prose;
+`actors` is a non-empty unique list of the Entities that `acts` and pursue the
+goal, not every system that participates in its implementation. A Step in any
+of its Scenarios that names an actor, performing or attributed, names one of
+them. A Journey has no lead prose;
 its first content after the H1 is an H2 section.
 
 `## Goal` states the stable Actor intent. `## Success criterion` states how an
@@ -1231,6 +1543,9 @@ steps:
   - text: The shopper submits a cart containing an unavailable product
     kind: actor
     actor: shopper
+    entities:
+      - { entity: cart, effect: reads }
+      - { entity: catalog-product, effect: reads }
     contexts:
       web-shopper:
         place: customer-web::storefront::product-record
@@ -1238,6 +1553,8 @@ steps:
         place: customer-mobile::storefront::product-record
   - text: The Product validates current stock
     kind: product
+    entities:
+      - { entity: catalog-product, effect: reads }
     contexts:
       web-shopper:
         place: customer-web::storefront::product-record
@@ -1245,6 +1562,8 @@ steps:
         place: customer-mobile::storefront::product-record
   - text: The Product rejects checkout before charging payment
     kind: product
+    actor: shopper
+    entities: []
     contexts:
       web-shopper:
         place: customer-web::storefront::product-record
@@ -1291,19 +1610,31 @@ Steps occur. If Trigger, ordered Step text, Step kind, responsible Actor,
 Capability sequence, Decision behavior, Outcome, or Journey result changes,
 author another Scenario instead.
 
-Every Step is a mapping with required single-line `text` and `kind`. `kind` is
-`actor`, `product`, or `condition`. An `actor` Step requires exactly one
-existing `actor`; `product` and `condition` Steps forbid `actor`. Product-side
-behavior uses `product`; a fact, state, prerequisite, or seam nobody performs
-uses `condition`.
+Every Step is a mapping with required single-line `text`, `kind`, and
+`entities`. `kind` is `actor`, `product`, or `condition`. Product-side behavior
+uses `product`; a fact, state, prerequisite, or seam nobody performs uses
+`condition`.
+
+An `actor` Step requires exactly one `actor`, the id of an Entity that `acts`,
+who performs it. A `product` or `condition` Step **may** carry `actor`, meaning
+*the Actor this Step is attributable to* — the Product did it for them, or the
+condition holds for them; `kind` says which. A Product Step with no `actor` is
+the Product acting on its own. Every `actor` a Step names, of any kind, joins
+the Scenario's derived Actor set and must be supported by the place the Step
+occurs in. A Business Rule reads it as *who did*, against a grant's *who may*:
+a Step performing an operation a Rule with `permits` selects must have an actor
+with a possible grant, and a Step performing one a Rule closes with
+`permits: []` is an error. The Business Rule section below defines a possible
+grant.
 
 A Scenario needs at least one `actor` Step **or** an unattended trigger: a first
 Step of `kind: condition` carrying `unattended: true`. Unattended behavior — a
 schedule the Product owns, an expiry, a retry — is real Product behavior with no
 Actor to name, and requiring an Actor Step forced it to be modelled as somebody
 else's request or left uncovered entirely. An unattended Scenario derives an
-empty Actor set. `unattended` is valid only on the first Step and only when its
-`kind` is `condition`.
+empty Actor set, and no Step of it carries `actor`: its permission is a Rule's
+`unattended` grant, not a person. `unattended` is valid only on the first Step
+and only when its `kind` is `condition`.
 
 Availability for a Capability whose behavior is unattended names the Contexts
 where an Actor **observes the outcome**, never a synthetic Interface. A
@@ -1313,50 +1644,77 @@ Product behavior.
 
 Its Actor set is derived from those Steps rather than authored on the Scenario.
 
-A Step may declare `changes`, a list of what the Step does to the Product's
-Entities. Each entry is `{ entity, effect, state }`. `entity` is required and
-must be one the Step's Capability declares. `effect` is optional, defaults to
-`changes`, and is otherwise `creates` or `removes`. `state` is optional and
-names the state the Step leaves that Entity in.
+**`entities` is required on every Step**, and a Step that touches nothing
+writes `entities: []`. Silence is impossible; an omission is a claim that can
+be reviewed, linted, and contradicted by code. Each entry is
+`{ entity, as, effect, from, to }`:
+
+```yaml
+- text: The Reader moves the item from one collection to another
+  kind: actor
+  actor: reader
+  entities:
+    - { entity: collection, as: source, effect: changes }
+    - { entity: collection, as: target, effect: changes }
+    - { entity: item,                   effect: reads   }
+
+- text: The Product refunds the order
+  kind: product
+  actor: store-admin
+  entities:
+    - { entity: order,  effect: changes, from: Confirmed, to: Refunded }
+    - { entity: refund, effect: creates, to: Requested }
+```
+
+`effect` is `creates`, `changes`, `removes`, or `reads`, defaulting to
+`changes`. State keys are explicit and never inferred from an adjacent Step:
+
+| effect | keys | required |
+| --- | --- | --- |
+| `creates` | `to` | when the Entity declares states |
+| `changes` | `from` + `to`, or neither | both or neither — never one |
+| `removes` | `from` | when the Entity declares states |
+| `reads` | — | never carries state |
+
+`changes` with neither key is an information change — the rename case. Every
+`from` and `to` names a state the Entity declares. **There is no wildcard
+`from`**: *archive from any state* is one Scenario per origin state, because an
+origin the author did not write is an inference.
 
 **A Step changes as many Entities as it changes.** One observable act can move
 two things at once — a transfer debits one account, and crediting the other is
 not a second Step an Actor could watch happen on its own. Splitting one act into
 two Steps to fit a singular field would turn an acceptance case into an
-implementation trace, which is what prose `## Steps` was removed for. An Entity
-appears at most once in one Step's list.
+implementation trace. An `(entity, as)` pair appears at most once in one Step's
+list.
 
-`effect` exists because not every change is a move. `creates` and `removes` are
-the boundaries of a thing's existence and an Actor observes both, yet no
-transition can express either. `changes` is the default because it is the
-ordinary case and because a fourth value meaning "updated" would appear on
-almost every entry and separate nothing.
+**`as` is a scenario-local instance alias**, optional, lowercase kebab-case, its
+id its own label. Entries without one are a single unnamed instance. Once an
+Entity is aliased anywhere in a Scenario, every mention of it in that Scenario
+is aliased: a bare `collection` beside a `collection (source)` is an error, not
+a third instance.
 
-`state` is checked against the Entity's own lifecycle: it must be a state that
-Entity has. Under `changes`, **some transition must reach that state by that
-Capability** — so a Scenario claiming an Order becomes Confirmed is checked
-against the Order's own lifecycle. Under `creates` no transition is required,
-because a creation has no `from` and no transition can ever describe one; the
-created state counts as reached for the unreachable-state warning. `removes`
-refuses `state`, because a Step cannot leave a thing in a state after ending it.
+**Steps chain, per instance.** Where a prior Step in the same Scenario left an
+`(entity, as)` pair in a state, this Step's `from` for that pair must equal it.
+The message names the way out: *if these are different collections, give them
+aliases.* Guessing becomes a prompt to be explicit.
 
-A Step may also declare `reads`, a plain list of Entity ids it picks, inspects,
-or displays without changing. The two keys are deliberately unlike each other.
-`changes` is structured and policed — it carries an effect and a state, it is
-checked against the Capability's declaration and the Entity's lifecycle, and it
-is what "what can alter this thing" is derived from. `reads` is a bare mention:
-no effect, no state, never counted as a change, and never enough on its own to
-keep an Entity from being an orphan. The asymmetry is the point. A Step names an
-Entity in one list or the other and never in both.
+**A read is a bare mention.** `reads` carries no state, is never counted as a
+change, and never saves an Entity from being an orphan. It exists because the
+alternative was a Step whose text says *the Reader chooses a saved item and an
+owned collection* while the model says nothing at all, leaving a reader to parse
+English to learn what the Step is about.
 
-`reads` exists because the alternative was a Step whose text says "the Reader
-chooses a saved item and an owned collection" while the model says nothing at
-all, leaving a reader to parse English to learn what the Step is about. It does
-not weaken the Capability's **changes, never reads** rule: a Capability that
-only presents a thing still declares nothing, and a Step reading a thing places
-no claim on what can alter it.
+A Scenario's Entity set is derived from its Steps, exactly as its Actor set is,
+and a Capability's Entities are derived from its Scenarios' Steps: a Capability
+declares nothing about Entities itself.
 
-A Scenario's Entity set is derived from its Steps, exactly as its Actor set is.
+**A Step whose `text` names a known Entity title and declares it nowhere** is a
+`lint` finding graded by `coverage.status` — an error for a `complete` model, a
+warning otherwise. The Step's own `actor` is exempt, and so is the phrase *"the
+Product"*, which every Product Step opens with by convention. A title inside a
+longer title the Step declares is covered by it: with `product-model` declared,
+*Product Model* in the text says nothing about an Entity titled *Product*.
 
 A Step may author `contexts`, mapping every declared route id to exactly one
 strict Context object. Its `place` is the most-specific Interface, Experience,
@@ -1398,6 +1756,8 @@ steps:
     kind: actor
     actor: shopper
     capability: catalog-browsing
+    entities:
+      - { entity: catalog-product, effect: reads }
     contexts:
       web-shopper:
         place: customer-web::storefront::product-record
@@ -1407,6 +1767,8 @@ steps:
     kind: actor
     actor: shopper
     capability: checkout
+    entities:
+      - { entity: cart, effect: changes }
     contexts:
       web-shopper:
         place: customer-web::storefront::product-record
@@ -1414,8 +1776,15 @@ steps:
         place: customer-mobile::storefront::product-record
   - text: The Product validates stock and charges payment
     kind: product
+    entities:
+      - { entity: catalog-product, effect: reads }
   - text: The Product persists and confirms the order
     kind: product
+    actor: shopper
+    capability: checkout
+    entities:
+      - { entity: order, effect: creates, to: Confirmed }
+      - { entity: cart, effect: removes }
 references:
   - kind: code
     role: implementation
@@ -1450,12 +1819,17 @@ Order is stored and a confirmation is shown.
 the Scenario's one parent; no `journey` field is authored. `result` is
 `achieved` or `not-achieved`. `kind` classifies the nature
 of the variation while `result` records its terminal Journey-goal outcome; they
-are orthogonal. `routes` and `steps` are non-empty. At least one `actor` Step
-must name an Actor from the Journey. Each route's first Actor-owned placed Step
-must name a Journey Actor supported by that Context.
+are orthogonal. `routes` and `steps` are non-empty. At least one Step must name
+an Actor from the Journey, performing or attributed. Each route's first
+Actor-owned placed Step must name a Journey Actor supported by that Context.
+Other Steps may name other Actors — a store admin cancelling inside a shopper's
+Journey — because `actors` on a Journey says who pursues the goal, not every
+participant.
 
 A Journey Step may name exactly one existing `capability`, independently of its
-Step kind. A capability-bearing Context must be contained by an availability
+Step kind. **A Journey Step whose `entities` carries a `creates`, `changes` or
+`removes` effect must name one**: a change no Capability owns has nothing to
+label its arc with. A Step that only `reads` needs none. A capability-bearing Context must be contained by an availability
 Context declared by that Capability; a Screen place must additionally expose
 it. A Journey Step without a Capability can still name Contexts when an observable condition or
 Product behavior occurs somewhere without claiming another Capability.

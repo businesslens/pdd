@@ -1,17 +1,20 @@
 # Actor is not a resource type, and permission is a Business Rule
 
 Status: **designed, not started.** Settled across four grilling rounds against
-`main` at `2f366fe`, folder schema 7, Product Report v11.
+`main` at `2f366fe`, then three more against `a657638` — folder schema 7,
+Product Report v12.
 
-Prerequisite for [The Entity at the centre](./entity-at-the-center.md). Both
-ship in one release; the permission model spans them and is owned here.
+Prerequisite for [The Entity at the centre](./entity-at-the-center.md) and
+[Business Rules](./business-rules.md). All three ship in one release. The
+permission model was owned here and has moved to the Rule plan; this plan keeps
+what an Entity that acts is, and what a reference to one must satisfy.
 
 ## The two sentences
 
 > **There is one resource type: the Entity. "Actor" is the word for the subset
 > that acts.**
 >
-> **Business Rules are the only place the word *may* appears.**
+> **Permission claims appear only in Business Rules.**
 
 ## What is wrong today
 
@@ -67,10 +70,12 @@ kind: person
 # entities/order.md — neither
 ```
 
-- **`kind`** is optional on every Entity, from the closed list `person | system`,
-  said only where true. An Order says nothing, because *it's a thing* is the
-  default. This is what lets a payroll Employee finally state what it is —
-  something only Actors could do before.
+- **`kind`** is from the closed list `person | system`, said only where true.
+  An Order says nothing, because *it's a thing* is the default. It is
+  **required when `acts` is set** — an Actor was always a person or a system,
+  and a payment gateway with only `acts: external` would have lost the
+  classification the facet groups by — and optional otherwise, which is what
+  lets a payroll Employee finally state what it is.
 - **`acts`** carries the boundary as its value: `external` or `internal`. It
   replaces `relationship`, whose name collided with `relations` — one meant
   *which side of the Product boundary*, the other *associations between things*,
@@ -120,8 +125,14 @@ Every system Actor surviving this test is external. `kind: system` with
 **The word survives where it names a role**, in `steps[].actor`,
 `interfaces.actors`, `experiences.actors`, `journeys.actors`, `permits.actors`
 and the facet. An Actor is what an Entity *is being* in that position; what was
-wrong was treating it as a kind of file. `by` was the alternative and it collides
-with `appliesTo.by`.
+wrong was treating it as a kind of file. `by` was the alternative; `actor` is
+already the key on every Step, and `by` would have been a rename for no gain.
+
+**Interface and Experience `actors` are reworded** from *allowed to use* to
+*who uses it*. The list is descriptive: a permission claim appears only in a
+Rule. The existing `lint` check that a Step's actor is among its place's actors
+stays, as consistency between the Steps and the surface they happen on, and the
+Screen-reach check in the Rule plan reads the same list.
 
 **A hue frees up.** With `actor` gone there are eleven kinds for ten slots
 instead of twelve, so **Entity takes slot 0 outright and Domain keeps slot 4** —
@@ -129,190 +140,70 @@ the demotion of Domain planned in the Entity work is no longer needed.
 
 **The no-orphans rule has to admit acting.** Today an Entity must be changed by a
 Capability or presented by a Screen. A payment gateway does neither. The rule
-becomes *changed, presented, **or** named as an actor*.
+becomes *changed, presented, **or** named as an actor* — where *named as an
+actor* means a Step's `actor`, an Interface's, Experience's or Journey's
+`actors`, a grant's `actors`, or the end of a grant's `related` path. Every one
+of those references must name an Entity that `acts`. A Rule reading an Entity —
+a condition's `entity`, a `configuredBy` — also counts, so a settings Entity
+that only Rules read is not an orphan.
 
 ## The permission model
 
-Business Rules are the only constraint layer, and they are open by default: an
-operation no Rule mentions is unconditional.
+Owned by [Business Rules](./business-rules.md). What this plan contributes to
+it:
 
-### `appliesTo` gains an Entity target
-
-```yaml
-appliesTo:
-  - type: entity
-    id: order
-    effect: removes          # optional narrowing
-    facts: [Margin]          # optional — a named fact, for field-level rules
-    contexts: [{ place: web::workspace::order-detail }]   # optional — place scope
-```
-
-Optional narrowing mirrors how `contexts` already narrows a behavioral target.
-No new target type. **Entity targets are exempt from the single-target warning**,
-whose two suggested alternative homes — a `condition` Step, a Scenario Outcome —
-do not exist for a permission.
-
-### `permits` is a list of grants
-
-**Grants are OR. Keys within a grant are AND.** Nothing is implicit, and both
-operators are available without either being named:
-
-```yaml
-# the owner, or an admin
-permits:
-  - { actors: [store-admin] }
-  - { related: [owns] }
-
-# an admin who is also the owner
-permits:
-  - { actors: [store-admin], related: [owns] }
-
-# the owner under £100; above that, an admin
-permits:
-  - { related: [owns],       when: { fact: Total charged, under: 100 } }
-  - { actors: [store-admin], when: { fact: Total charged, over: 100  } }
-```
-
-A Rule needs at least one grant. `permits: []` is an error — *nobody may* is
-already expressed by the lifecycle simply not having that operation, and
-*cancel only before fulfilment* likewise, by the machine having no `removes`
-from Fulfilled.
-
-| Grant key | Says |
-| --- | --- |
-| `actors` | these Actors may |
-| `related` | whoever stands in this relation to the instance may |
-| `when` | only when this condition holds |
-| `unattended` | the Product's own schedule may |
-| `configuredBy` | gated, but by data the Product does not own |
-
-### `related` is a path
-
-A list of declared verbs from the targeted Entity to an acting one. One hop
-covers ownership; two cover the membership shape that most B2B products have.
-
-```
-collection  ←—owns—  reader (acts)
-```
-```yaml
-appliesTo: [{ type: entity, id: collection, effect: changes, to: Published }]
-permits:   [{ related: [owns] }]
-```
-
-```
-document  ←—contains—  workspace  —has member→  user (acts)
-```
-```yaml
-appliesTo: [{ type: entity, id: document, effect: changes }]
-permits:   [{ related: [contains, has member] }]
-```
-
-Direction needs no notation: a verb is declared once per entity pair, so from
-`document` the verb `contains` has exactly one relation it can mean. `lint`
-checks each verb exists, each hop connects to the next, and the last hop lands
-on an Entity that acts. **It never touches an instance.**
-
-### `when` is a condition, and facts stay untyped
-
-```yaml
-when: { fact: Total charged, over: 100 }                               # hard-coded
-when: { fact: Total charged, over: { configuredBy: approval-policy } } # customer-set
-when: { entity: workspace-settings, fact: Approval required, is: true } # feature flag
-```
-
-**The operator implies the comparison; the fact declares no type.** `lint` checks
-the fact and any named Entity resolve, and nothing more — checking that
-`Total charged` holds a number is `verify`'s job against code, and requiring the
-Entity to declare it is the type system that
-*"the moment you write a type, you have left product meaning"* forbids.
-
-`when` defaults to a fact of the targeted Entity and may name another, which is
-how configuration and feature flags work: the threshold or flag is a fact of a
-settings Entity and the Rule reads it.
-
-**Six operators**: `over`, `under`, `is`, `is-not`, `present`, `absent`.
-Deliberately not `at-least`/`at-most` — they are `over`/`under` with an
-off-by-one argument, and offering both guarantees two authors write one rule two
-ways, which is the determinism axis ADR-0002 ranks first.
-
-### What the common permission shapes look like
-
-| Shape | Expressed |
-| --- | --- |
-| Role | `- { actors: [store-admin] }` |
-| Ownership | `- { related: [owns] }` |
-| Workspace membership | `- { related: [contains, has member] }` |
-| Owner or admin | two grants |
-| Admin *and* owner | one grant, two keys |
-| Value threshold | `when: { fact: …, over: 100 }` |
-| Configurable threshold / feature flag | `when: { entity: settings, fact: …, is: true }` |
-| Gate the Product doesn't own | `- { configuredBy: role }` |
-| Field-level visibility | `appliesTo: [{ …, facts: [Margin] }]` |
-| Place-scoped | `appliesTo: [{ …, contexts: [...] }]` |
-| Unattended behaviour | `- { unattended: true }` |
-| Screens | at least one Actor reaching the Screen must be permitted |
-| *Never deletable* / *only before fulfilment* | not permissions — the lifecycle has no such operation |
-
-### How a modelled product's own RBAC lands
-
-A product's permission feature is product behaviour, not this layer. **Role**
-becomes an Entity with its own lifecycle, `assign-role` a Capability, and this
-layer constrains who may create a Role.
-
-| The product has | It is | Where it lands |
-| --- | --- | --- |
-| A fixed, shipped set of roles | a closed vocabulary | Entities that act — `permits.actors` works directly |
-| User-defined roles created at runtime | instances | Entity `Role` — never one Entity per customer role |
-| ABAC policies on attributes | instances | Entity `Policy`, and the Capabilities that define and evaluate it |
+- **An Entity that acts is what a grant names.** `permits.actors`, the end of a
+  `related` path and a `self` target all require `acts`, and `lint` says so.
+- **Ownership is a relation, declared on the Entity that acts.** The Reader
+  above declares `owns` towards Collection; a grant walks it back. This reverses
+  ADR-0013's *a relation targets an Entity only* — an Entity that acts is an
+  Entity, and the sentence that forbade it was the split this plan removes.
+- **Nothing is on the Entity.** Not who may, not which Capability may. The
+  rejected alternative is in
+  [the Entity plan's design record](./entity-at-the-center.md#design-record-what-was-tried-and-rejected).
 
 ## What `lint` reports
 
 **Added — structure:**
 
 - An Entity with none of `## Information kept`, `## States` or `acts`.
-- `kind` outside `person | system`; `acts` outside `external | internal`.
-- An `actor` reference — on a Step, Interface, Experience or Journey — naming an
-  Entity that does not `acts`.
+- `kind` outside `person | system`; `acts` outside `external | internal`;
+  `acts` without `kind`.
+- An `actor` reference — a Step's `actor`, an Interface's, Experience's or
+  Journey's `actors`, a grant's `actors`, `self` or `related` endpoint — naming
+  an Entity that does not `acts`.
 - An Entity neither changed, presented, nor named as an actor (the widened
   orphan rule).
 
-**Added — rules:**
-
-- A Rule with no grants.
-- A `related` path whose verb does not exist, whose hops do not connect, or whose
-  last hop lands on an Entity that does not act.
-- A `when` naming a fact or Entity that does not resolve; an operator outside the six.
-- A Rule target that does not resolve, including a named fact.
-- A Step whose `actor` satisfies no grant; a restricted operation on a Step with
-  no `actor` in an attended Scenario; an unattended Scenario performing an
-  operation no grant permits it; a Screen no permitted Actor reaches.
+**Rules** are in [the Rule plan](./business-rules.md#what-lint-reports).
 
 **Removed:** everything checking `actors/` as its own collection.
 
 ## What `verify` does
 
-Confirms each Rule's grants are actually enforced in code. An enforcement it
-cannot locate is reported as **not established**, never as `code-right`. A grant
-with `configuredBy` is verified only as far as *the gate exists* — who passes it
-is customer configuration and is not in the repository. A `when` operator is
-where `verify` checks the comparison holds against a real value, since `lint`
-deliberately does not.
+Nothing of its own. What `verify` establishes for each kind of grant is
+[the Rule plan's table](./business-rules.md#what-verify-does).
 
 ## Release
 
-Breaking, in one release with the Entity work: **folder schema 7 → 8**,
-**Product Report v11 → v12**, all three shipped models rewritten with `actors/`
-merged into `entities/`. Roughly 271 `Actor` occurrences across 29 TypeScript and
-Vue files and 160 references across the models. `spec/format.md` and
-`spec/report.md` change before the parser, linter and projection.
+Breaking, in one release with the Entity and Rule work: **folder schema 7 → 8**,
+**Product Report v12 → v13**, all three shipped models rewritten with `actors/`
+merged into `entities/`. Roughly 200 `Actor` occurrences across 25 TypeScript
+and Vue files and 160 references across the models. `spec/format.md` and
+`spec/report.md` change before the parser, linter and projection. The self-model
+loses `entities/actor.md`, which modelled the resource type this plan deletes,
+and `docs/entities.md` loses the *why is Actor an Entity for BusinessLens*
+example that leaned on it. What each model and the landing site does with this
+is [The three models and the landing site](./models-and-landing.md).
 
 **ADR-0016 — there is one resource type; Actor is the subset that acts.**
 Supersedes the `docs/actors.md` claim that *"the same participant is never
-modelled twice"*, which was the rule that forced the unused workaround.
+modelled twice"*, which was the rule that forced the unused workaround;
+ADR-0013's consequence that *a relation targets an Entity only* and ownership
+stays a fact; and ADR-0008's `relationship: external` wording, which becomes
+`acts: external` with the decision itself untouched.
 
-**ADR-0017 — permission is a Business Rule.** Records why the constraint layer is
-not on the Entity, and the rejected alternative in
-[the Entity plan's design record](./entity-at-the-center.md#design-record-what-was-tried-and-rejected).
+**ADR-0017** belongs to [the Rule plan](./business-rules.md#release).
 
 ## Decisions taken, with their reasons
 
@@ -323,14 +214,19 @@ collection makes it a field. The objection that a payment gateway would be an
 Entity with nothing kept about it was against a definition the format does not
 have — `docs/entities.md` says *"keeps **or reasons about**"*.
 
-**Not typed facts.** Chosen over prose conditions, but the operator carries the
-comparison instead of the fact declaring a type. Thresholds stay checkable
-without the Entity becoming a schema.
+**Not `kind` optional under `acts`.** The first draft made `kind` optional
+everywhere. An Entity that acts without saying whether it is a person or a
+system is a regression from the Actor it replaces, and the facet would have
+nothing to group it by.
 
-**Not implicit AND/OR.** An earlier design had `actors` and `related` OR-ing
-while `when` AND-ed, with the rule stated in prose. It was unknowable from the
-file. The grants list makes it structural and gives both operators, which the
-implicit version could not.
+**Not `by`.** Considered as the Step key in place of `actor`. The collision it
+was said to have — with `appliesTo.by` — did not exist; the only `by` was on
+`transitions`, which the Entity plan deletes. The reason to keep `actor` is
+that every Step already carries it.
+
+**The permission decisions** — typed facts, implicit AND/OR, verb-only paths,
+`permits: []` as an error — are recorded in
+[the Rule plan's design record](./business-rules.md#design-record-what-was-tried-and-rejected).
 
 **Not internal-service privilege.** Briefly accepted, then reversed: a privilege
 existing only in code is implementation, and the *stable inbound contract* clause

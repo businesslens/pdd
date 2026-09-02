@@ -2,6 +2,8 @@
 
 Status: **Accepted** — 2026-08-27
 
+Superseded in part by [0018](./0018-steps-are-the-single-source-of-truth.md): relations stay in frontmatter; `transitions` is deleted and the lifecycle is composed from Steps.
+
 ## Context
 
 `spec/format.md` states the rule:

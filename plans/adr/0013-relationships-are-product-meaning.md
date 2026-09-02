@@ -2,6 +2,8 @@
 
 Status: **Accepted** — 2026-08-27
 
+Superseded in part by [0016](./0016-one-resource-type-actor-is-the-subset-that-acts.md): a relation may target an Entity that acts, and ownership is a relation.
+
 ## Context
 
 [ADR-0010](./0010-a-thing-the-product-keeps.md) forbade structured relations

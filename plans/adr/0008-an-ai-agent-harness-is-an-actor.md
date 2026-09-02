@@ -2,6 +2,8 @@
 
 Status: **Accepted** — 2026-08-26
 
+Superseded in part by [0016](./0016-one-resource-type-actor-is-the-subset-that-acts.md): `relationship` becomes `acts`, and Actor is a role an Entity plays rather than a resource type. The decision that the harness acts stands.
+
 ## Context
 
 Three independent mappings of this repository split on one question: is the AI
