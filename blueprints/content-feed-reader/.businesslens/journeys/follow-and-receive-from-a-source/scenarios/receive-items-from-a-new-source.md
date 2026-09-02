@@ -6,6 +6,8 @@ steps:
     kind: actor
     actor: reader
     capability: follow-source
+    entities:
+      - { entity: source, effect: creates, to: Reachable }
     contexts:
       web:
         place: reader-web::personal-library::source-list
@@ -15,6 +17,8 @@ steps:
     kind: actor
     actor: reader
     capability: synchronize-feeds
+    entities:
+      - { entity: source, effect: reads }
     contexts:
       web:
         place: reader-web::personal-library::source-list
@@ -22,8 +26,16 @@ steps:
         place: reader-mobile::personal-library::source-list
   - text: The Product reads the followed feed and collects its available new items
     kind: product
+    actor: reader
+    capability: synchronize-feeds
+    entities:
+      - { entity: source, effect: reads }
+      - { entity: item, effect: creates, to: Unread }
   - text: The new items enter the Reader's private library
     kind: condition
+    actor: reader
+    entities:
+      - { entity: item, effect: reads }
 routes:
   web: Web
   mobile: Mobile

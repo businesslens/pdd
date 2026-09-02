@@ -5,29 +5,34 @@ routes:
 steps:
   - text: The Reader moves an item to a different position in an owned collection.
     kind: actor
-    reads:
-      - item
-      - collection
     actor: reader
+    entities:
+      - { entity: item, effect: reads }
+      - { entity: collection, effect: reads }
     contexts:
       web:
         place: reader-web::personal-library::collection-workspace
   - text: The Product confirms collection ownership
     kind: product
-    reads:
-      - collection
+    actor: reader
+    entities:
+      - { entity: collection, effect: reads }
     contexts:
       web:
         place: reader-web::personal-library::collection-workspace
   - text: The item is moved to the chosen position
     kind: product
-    changes:
-      - entity: collection
+    actor: reader
+    entities:
+      - { entity: collection }
+      - { entity: item, effect: reads }
     contexts:
       web:
         place: reader-web::personal-library::collection-workspace
   - text: Every other item keeps its relative order
     kind: condition
+    entities:
+      - { entity: item, effect: reads }
     contexts:
       web:
         place: reader-web::personal-library::collection-workspace

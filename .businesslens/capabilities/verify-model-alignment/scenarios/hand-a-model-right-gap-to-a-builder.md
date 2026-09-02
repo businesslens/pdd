@@ -5,26 +5,29 @@ routes:
 steps:
   - text: Inspection finds approved model meaning the current code does not support
     kind: condition
-    reads:
-      - product-model
+    entities:
+      - { entity: product-model, effect: reads }
     contexts:
       harness:
         place: agent-skills
   - text: The AI agent keeps the model unchanged and prepares the acceptance packet describing what must become true
     kind: actor
     actor: ai-agent
+    entities: []
     contexts:
       harness:
         place: agent-skills
   - text: The Developer authorizes the implementation change
     kind: actor
     actor: developer
+    entities: []
     contexts:
       harness:
         place: agent-skills
   - text: The AI agent hands the packet to the builder the harness supplies and inspects the scope again once it returns
     kind: actor
     actor: ai-agent
+    entities: []
     contexts:
       harness:
         place: agent-skills

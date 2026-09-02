@@ -6,16 +6,19 @@ steps:
   - text: The Developer asks to update the BusinessLens skills
     kind: actor
     actor: developer
+    entities: []
     contexts:
       terminal:
         place: businesslens-cli
   - text: No installation in the searched harnesses and scopes carries a valid BusinessLens marker
     kind: condition
+    entities: []
     contexts:
       terminal:
         place: businesslens-cli
   - text: The Product reports that it found nothing it owns and points to installation instead
     kind: product
+    entities: []
     contexts:
       terminal:
         place: businesslens-cli

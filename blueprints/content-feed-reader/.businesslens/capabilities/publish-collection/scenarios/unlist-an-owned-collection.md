@@ -5,20 +5,23 @@ routes:
 steps:
   - text: The Product confirms ownership
     kind: product
+    actor: reader
+    entities:
+      - { entity: collection, effect: reads }
     contexts:
       web:
         place: reader-web::personal-library::collection-workspace
   - text: The Product explains that the public link will stop working
     kind: product
+    entities: []
     contexts:
       web:
         place: reader-web::personal-library::collection-workspace
   - text: The Reader confirms unlisting
     kind: actor
-    changes:
-      - entity: collection
-        state: Unlisted
     actor: reader
+    entities:
+      - { entity: collection, from: Published, to: Unlisted }
     contexts:
       web:
         place: reader-web::personal-library::collection-workspace

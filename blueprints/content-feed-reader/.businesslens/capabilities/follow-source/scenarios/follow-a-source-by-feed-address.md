@@ -7,6 +7,7 @@ steps:
   - text: The Reader submits the address of a readable syndicated feed.
     kind: actor
     actor: reader
+    entities: []
     contexts:
       web:
         place: reader-web::personal-library::source-list
@@ -14,6 +15,7 @@ steps:
         place: reader-mobile::personal-library::source-list
   - text: The Product validates that the address returns a supported feed
     kind: product
+    entities: []
     contexts:
       web:
         place: reader-web::personal-library::source-list
@@ -21,10 +23,9 @@ steps:
         place: reader-mobile::personal-library::source-list
   - text: The source is added to the Reader's followed sources
     kind: product
-    changes:
-      - entity: source
-        effect: creates
-        state: Reachable
+    actor: reader
+    entities:
+      - { entity: source, effect: creates, to: Reachable }
     contexts:
       web:
         place: reader-web::personal-library::source-list

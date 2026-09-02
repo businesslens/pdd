@@ -6,27 +6,36 @@ steps:
   - text: The Developer asks to contribute the current Product Model
     kind: actor
     actor: developer
+    entities:
+      - { entity: product-model, effect: reads }
     contexts:
       terminal:
         place: businesslens-cli
   - text: The Product checks the model, exports it portably, regenerates a canonical model from that report, and shows the name it would be proposed under
     kind: product
+    entities:
+      - { entity: product-model, effect: reads }
+      - { entity: blueprint, effect: creates, to: Exported }
     contexts:
       terminal:
         place: businesslens-cli
   - text: The Developer confirms that a public pull request may be opened
     kind: actor
     actor: developer
+    entities: []
     contexts:
       terminal:
         place: businesslens-cli
-  - text: The Product prepares the contribution outside the Developer's repository, pushes only its own branch, and opens the pull request
+  - text: The Product prepares the contribution outside the repository it was asked from, pushes only its own branch, and opens the pull request
     kind: product
+    entities:
+      - { entity: blueprint, effect: changes, from: Exported, to: Proposed }
     contexts:
       terminal:
         place: businesslens-cli
-  - text: The Product prints the pull request address, and where a fork was needed, says to leave it in place until the Blueprint is merged
+  - text: The Product prints the pull request address, and where a fork was needed, says to leave it in place until the merge
     kind: product
+    entities: []
     contexts:
       terminal:
         place: businesslens-cli

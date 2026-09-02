@@ -1,5 +1,9 @@
 ---
 domain: model-authoring
+relations:
+  - entity: entity
+    verb: acts on
+    cardinality: many-to-many
 references:
   - kind: spec
     role: intent
@@ -20,7 +24,7 @@ check. A Capability with none is a claim nobody has to honour.
 
 ## Information kept
 
-- Its trigger and its observable outcome
-- One ordered list of typed Steps, each able to name its Actor and the Entity it changes
-- The named routes those Steps traverse, and the Context each Step occurs in
-- Its taxonomy kind, its decision points and its edge cases
+- **Trigger and outcome** — what starts it and what is observable at the end
+- **Steps** — one ordered list of typed Steps, each naming its Actor and what it does to the Product's things: creates, changes, removes, or reads, with the state a thing leaves and lands in
+- **Routes and Contexts** — the named routes those Steps traverse, and the Context each Step occurs in
+- **Classification** — its taxonomy kind, its decision points, and its edge cases

@@ -5,17 +5,20 @@ routes:
 steps:
   - text: The drawn view holds more relations than can be read at once
     kind: condition
+    entities: []
     contexts:
       local:
         place: local-report-web::product-topology
   - text: The Developer focuses one resource, or hides a kind they are not asking about
     kind: actor
     actor: developer
+    entities: []
     contexts:
       local:
         place: local-report-web::product-topology
   - text: The Product redraws only that resource's neighbourhood, at the report's full width
     kind: product
+    entities: []
     contexts:
       local:
         place: local-report-web::product-topology

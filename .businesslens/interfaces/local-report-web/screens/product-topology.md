@@ -2,7 +2,6 @@
 entities:
   - product-model
   - product
-  - actor
   - interface
   - experience
   - screen
@@ -32,8 +31,9 @@ rather than assembled by the reader.
 
 - The selected view's name, its question, and the note explaining its derivation
 - The ordered flow of kinds the view reads through
-- Every resource the view includes, labelled and shaped by kind
+- Every resource the view includes, labelled and shaped by kind, with the things that act marked as Actors
 - The relations the view draws, quiet until a node is hovered or selected in the views that say so
+- For the view that asks what changes what, each Capability's arcs to the things its Steps create, change, or remove
 - Which kinds are currently hidden or filtered
 
 ## Available actions

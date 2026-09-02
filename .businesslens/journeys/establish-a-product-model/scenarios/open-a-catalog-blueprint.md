@@ -8,12 +8,18 @@ steps:
     kind: actor
     actor: developer
     capability: pull-blueprint
+    entities:
+      - { entity: blueprint, effect: reads }
     contexts:
       catalog:
         place: businesslens-cli
   - text: The Product expands it into a canonical Product Model with its orientation README
     kind: product
+    actor: developer
     capability: pull-blueprint
+    entities:
+      - { entity: blueprint, effect: reads }
+      - { entity: product-model, effect: creates }
     contexts:
       catalog:
         place: businesslens-cli
@@ -21,6 +27,8 @@ steps:
     kind: actor
     actor: developer
     capability: lint-product-model
+    entities:
+      - { entity: product-model, effect: reads }
     contexts:
       catalog:
         place: businesslens-cli

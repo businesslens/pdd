@@ -3,9 +3,6 @@ relations:
   - entity: product
     verb: holds
     cardinality: one-to-one
-  - entity: actor
-    verb: holds
-    cardinality: one-to-many
   - entity: interface
     verb: holds
     cardinality: one-to-many
@@ -23,6 +20,9 @@ relations:
     cardinality: one-to-many
   - entity: business-rule
     verb: holds
+    cardinality: one-to-many
+  - entity: blueprint
+    verb: is compiled into
     cardinality: one-to-many
 references:
   - kind: spec
@@ -44,15 +44,15 @@ references:
 # Product model
 
 The `.businesslens/` directory a repository keeps: the durable statement of what
-its product is intended to do. Its declared coverage is the state a reader
-observes — how much of the intended product breadth this model claims to hold —
-and it is the first thing every BusinessLens workflow establishes before acting.
-Whether one exists at all is not a state it is in: a repository with no
-`.businesslens/` has no Product Model to have one.
+its product is intended to do. It is the first thing every BusinessLens workflow
+establishes before acting, and the one thing in this Product that only the
+Developer may write. Whether one exists at all is not a state it is in: a
+repository with no `.businesslens/` has no Product Model to have one. Its
+declared coverage is a claim it carries, authored with it and moved with it,
+not a state anything here moves it through.
 
 ## Information kept
 
-- Which Product it describes, and that Product's identity and attribution
-- How much of the intended Product breadth it claims to cover
-- The inspection that produced it, and what it leaves unmapped
-
+- **Product** — which Product it describes, with that Product's identity and attribution
+- **Coverage** — how much of the intended breadth it claims to hold: draft, partial, or complete
+- **Inspection** — the method that produced it, the source areas it read, what it leaves unmapped, and its limitations

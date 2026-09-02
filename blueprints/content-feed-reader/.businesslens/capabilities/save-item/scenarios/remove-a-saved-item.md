@@ -9,6 +9,8 @@ steps:
   - text: The Reader removes the item's saved state
     kind: actor
     actor: reader
+    entities:
+      - { entity: item }
     contexts:
       web-saved-items:
         place: reader-web::personal-library::saved-items
@@ -20,6 +22,8 @@ steps:
         place: reader-mobile::personal-library::unread-library
   - text: The Product preserves the item's reading state
     kind: product
+    entities:
+      - { entity: item, effect: reads }
     contexts:
       web-saved-items:
         place: reader-web::personal-library::saved-items
@@ -31,6 +35,9 @@ steps:
         place: reader-mobile::personal-library::unread-library
   - text: Collection membership is left for the Reader to change separately
     kind: condition
+    actor: reader
+    entities:
+      - { entity: collection, effect: reads }
     contexts:
       web-saved-items:
         place: reader-web::personal-library::saved-items

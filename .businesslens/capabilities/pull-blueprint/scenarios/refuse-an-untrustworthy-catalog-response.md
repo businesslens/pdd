@@ -3,19 +3,22 @@ kind: external-failure
 routes:
   terminal: Terminal
 steps:
-  - text: The Developer asks for a Blueprint by name
+  - text: The Developer asks for a catalog entry by name
     kind: actor
     actor: developer
+    entities: []
     contexts:
       terminal:
         place: businesslens-cli
-  - text: The catalog answers with a redirect, an oversized body, a missing or malformed digest, a body that does not match its digest, or a different Blueprint than the one asked for
+  - text: The catalog answers with a redirect, an oversized body, a missing or malformed digest, a body that does not match its digest, or a different entry than the one asked for
     kind: condition
+    entities: []
     contexts:
       terminal:
         place: businesslens-cli
-  - text: The Product refuses the response, says which check failed, and writes no Product Model files
+  - text: The Product refuses the response, says which check failed, and writes nothing
     kind: product
+    entities: []
     contexts:
       terminal:
         place: businesslens-cli

@@ -6,16 +6,22 @@ steps:
   - text: The Developer asks for the current Product Model to be exported
     kind: actor
     actor: developer
+    entities:
+      - { entity: product-model, effect: reads }
     contexts:
       terminal:
         place: businesslens-cli
-  - text: The Product checks the model's structure, compiles it into a Product Report, and removes source-specific navigation from it
+  - text: The Product checks the model's structure, compiles it into one portable report, and removes source-specific navigation from it
     kind: product
+    entities:
+      - { entity: product-model, effect: reads }
     contexts:
       terminal:
         place: businesslens-cli
   - text: The Product writes the report to the model's generated build location and names the file
     kind: product
+    entities:
+      - { entity: blueprint, effect: creates, to: Exported }
     contexts:
       terminal:
         place: businesslens-cli

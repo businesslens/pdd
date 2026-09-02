@@ -4,15 +4,23 @@ routes:
   web: Web
   mobile: Mobile
 steps:
-  - text: The Product's own collection schedule comes due for a followed source
+  - text: The Product's own polling schedule comes due for a followed source
     kind: condition
     unattended: true
-  - text: The Product reads the followed feed without the Reader asking
+    entities:
+      - { entity: source, effect: reads }
+  - text: The Product reads the followed feed on its own
     kind: product
-  - text: Items the Reader's library does not already hold are collected
+    entities:
+      - { entity: source, effect: reads }
+  - text: Items the library does not already hold are collected
     kind: product
-  - text: The newly collected items are waiting in the unread backlog when the Reader next opens it
+    entities:
+      - { entity: item, effect: creates, to: Unread }
+  - text: The newly collected items are waiting in the unread backlog at the next visit
     kind: product
+    entities:
+      - { entity: item, effect: reads }
     contexts:
       web:
         place: reader-web::personal-library::unread-library

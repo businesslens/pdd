@@ -6,21 +6,27 @@ steps:
   - text: The Developer asks to update the BusinessLens skills
     kind: actor
     actor: developer
+    entities: []
     contexts:
       terminal:
         place: businesslens-cli
-  - text: The Product finds every installation carrying a valid BusinessLens marker, in the repository and in the Developer's own configuration
+  - text: The Product finds every installation carrying a valid BusinessLens marker, in the repository and in the personal configuration
     kind: product
+    entities:
+      - { entity: skill-installation, effect: reads }
     contexts:
       terminal:
         place: businesslens-cli
   - text: The Product replaces the skills in each one and refreshes its marker while keeping the original installation date
     kind: product
+    entities:
+      - { entity: skill-installation, effect: changes }
     contexts:
       terminal:
         place: businesslens-cli
   - text: The Product names every installation it updated
     kind: product
+    entities: []
     contexts:
       terminal:
         place: businesslens-cli

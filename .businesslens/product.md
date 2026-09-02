@@ -30,11 +30,12 @@ references:
 # BusinessLens
 
 Product-Driven Development for coding agents. BusinessLens keeps what a product
-is intended to do — who it serves, what they accomplish, and which rules must
-remain true — in a plain-Markdown `.businesslens/` model that lives in the
-repository and is reviewed in pull requests. A command-line tool installs the
-agent skills that author and check that model, reads it back as a private local
-report, and moves it between repositories as a portable Blueprint.
+is intended to do — who it serves, what they accomplish, what it keeps, what
+changes those things, and which rules must remain true, including who may act —
+in a plain-Markdown `.businesslens/` model that lives in the repository and is
+reviewed in pull requests. A command-line tool installs the agent skills that
+author and check that model, reads it back as a private local report, and moves
+it between repositories as a portable Blueprint.
 
 ## Intent
 

@@ -6,16 +6,22 @@ steps:
   - text: The Developer asks to contribute the current Product Model
     kind: actor
     actor: developer
+    entities:
+      - { entity: product-model, effect: reads }
     contexts:
       terminal:
         place: businesslens-cli
-  - text: The Product finds the model lacks something a public Blueprint needs — a category, a tag, an author, a licence, a Capability, a logo, or Scenario coverage for a declared availability Context
+  - text: The Product finds the model lacks something the catalog requires — a category, a tag, an author, a licence, a Capability, a logo, or Scenario coverage for a declared availability Context
     kind: condition
+    entities:
+      - { entity: product-model, effect: reads }
+      - { entity: capability, effect: reads }
     contexts:
       terminal:
         place: businesslens-cli
   - text: The Product lists everything that is missing and opens nothing
     kind: product
+    entities: []
     contexts:
       terminal:
         place: businesslens-cli

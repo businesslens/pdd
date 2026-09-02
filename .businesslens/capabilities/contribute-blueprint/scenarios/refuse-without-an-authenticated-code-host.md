@@ -6,16 +6,20 @@ steps:
   - text: The Developer asks to contribute the current Product Model
     kind: actor
     actor: developer
+    entities:
+      - { entity: product-model, effect: reads }
     contexts:
       terminal:
         place: businesslens-cli
   - text: The GitHub CLI is not installed, or is installed but not signed in
     kind: condition
+    entities: []
     contexts:
       terminal:
         place: businesslens-cli
   - text: The Product stops before doing any work, says which of the two it is, and gives the one command that fixes it
     kind: product
+    entities: []
     contexts:
       terminal:
         place: businesslens-cli

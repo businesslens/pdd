@@ -1,6 +1,7 @@
 ---
 entities:
   - product-model
+  - product
 capabilities: [view-product-model]
 entryPoints:
   - local-report-web: /
@@ -20,7 +21,7 @@ modeled" before the reader goes looking for anything in particular.
 - The Product's name, logo, summary, and description
 - Its category, tags, authors, and licence
 - The authored Intent and any supporting sections the Product carries
-- How many resources of each kind the model holds
+- How many resources of each kind the model holds, and how many of its things act
 - Coverage status, method, unmapped areas, and limitations
 - The Product's own References
 

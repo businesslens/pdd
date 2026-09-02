@@ -8,13 +8,16 @@ steps:
     kind: actor
     actor: developer
     capability: install-agent-skills
+    entities:
+      - { entity: skill-installation, effect: creates }
     contexts:
       greenfield:
         place: businesslens-cli
-  - text: The Developer asks their agent to decide what the product should do
+  - text: The Developer asks their agent to decide what it should do
     kind: actor
     actor: developer
     capability: decide-intended-behavior
+    entities: []
     contexts:
       greenfield:
         place: agent-skills
@@ -22,6 +25,7 @@ steps:
     kind: actor
     actor: ai-agent
     capability: decide-intended-behavior
+    entities: []
     contexts:
       greenfield:
         place: agent-skills
@@ -29,6 +33,8 @@ steps:
     kind: actor
     actor: developer
     capability: decide-intended-behavior
+    entities:
+      - { entity: product-model, effect: creates }
     contexts:
       greenfield:
         place: agent-skills
@@ -36,6 +42,8 @@ steps:
     kind: actor
     actor: developer
     capability: lint-product-model
+    entities:
+      - { entity: product-model, effect: reads }
     contexts:
       greenfield:
         place: businesslens-cli

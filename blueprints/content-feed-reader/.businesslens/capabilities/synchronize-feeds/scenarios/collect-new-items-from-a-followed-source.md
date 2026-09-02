@@ -7,6 +7,8 @@ steps:
   - text: The Reader refreshes their followed sources.
     kind: actor
     actor: reader
+    entities:
+      - { entity: source, effect: reads }
     contexts:
       web:
         place: reader-web::personal-library::source-list
@@ -14,9 +16,8 @@ steps:
         place: reader-mobile::personal-library::source-list
   - text: The Product reads each followed feed
     kind: product
-    changes:
-      - entity: source
-        state: Reachable
+    entities:
+      - { entity: source, effect: reads }
     contexts:
       web:
         place: reader-web::personal-library::source-list
@@ -24,10 +25,9 @@ steps:
         place: reader-mobile::personal-library::source-list
   - text: Items the Reader's library does not already hold are collected
     kind: product
-    changes:
-      - entity: item
-        effect: creates
-        state: Unread
+    actor: reader
+    entities:
+      - { entity: item, effect: creates, to: Unread }
     contexts:
       web:
         place: reader-web::personal-library::source-list
@@ -35,6 +35,9 @@ steps:
         place: reader-mobile::personal-library::source-list
   - text: The newly collected items enter the Reader's unread backlog
     kind: product
+    actor: reader
+    entities:
+      - { entity: item, effect: reads }
     contexts:
       web:
         place: reader-web::personal-library::source-list

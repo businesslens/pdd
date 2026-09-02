@@ -1,14 +1,18 @@
 ---
 appliesTo:
-  - type: capability-scenario
-    id: unlist-an-owned-collection
-  - type: capability-scenario
-    id: open-an-unlisted-collection
+  - type: entity
+    id: collection
+    effect: reads
+permits:
+  - related: [{ verb: owns, entity: reader }]
+  - actors: [reader, visitor]
+    when: [{ state: Published }]
 ---
 
 # Unlisting revokes anonymous access
 
-Once an owner unlists a collection, its public address serves no collection
+A collection is read by its owner always, and by anyone else only while it is
+published. Once an owner unlists it, its public address serves no collection
 contents.
 
 ## Rationale

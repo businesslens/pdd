@@ -28,7 +28,7 @@ expensive to correct later.
 
 ## Information kept
 
-- Its one interaction type, from a closed vocabulary
-- The Actors it admits
-- The product-facing addresses it answers on
-- What it supports, and what it explicitly does not
+- **Type** — its one interaction type, from a closed vocabulary
+- **Actors** — the acting Entities it admits
+- **Entry points** — the product-facing addresses it answers on
+- **Boundary** — what it supports, and what it explicitly does not

@@ -5,28 +5,38 @@ routes:
 steps:
   - text: Inspection finds behavior that is intended and working, while the model still describes something else
     kind: condition
-    reads:
-      - product-model
+    entities:
+      - { entity: product-model, effect: reads }
     contexts:
       harness:
         place: agent-skills
   - text: The AI agent presents the exact model claim, the observed behavior, the files it read, and what else the change would affect
     kind: actor
     actor: ai-agent
+    entities: []
     contexts:
       harness:
         place: agent-skills
   - text: The Developer decides that the current behavior is right and approves the model delta
     kind: actor
     actor: developer
+    entities: []
     contexts:
       harness:
         place: agent-skills
-  - text: The AI agent writes only the approved meaning and inspects the scope again from the beginning
+  - text: The Product writes only the approved meaning
+    kind: product
+    actor: developer
+    entities:
+      - { entity: product-model, effect: changes }
+    contexts:
+      harness:
+        place: agent-skills
+  - text: The AI agent inspects the scope again from the beginning
     kind: actor
     actor: ai-agent
-    changes:
-      - entity: product-model
+    entities:
+      - { entity: product-model, effect: reads }
     contexts:
       harness:
         place: agent-skills

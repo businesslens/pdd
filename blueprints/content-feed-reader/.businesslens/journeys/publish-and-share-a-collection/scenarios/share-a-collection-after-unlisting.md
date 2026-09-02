@@ -6,6 +6,8 @@ steps:
     kind: actor
     actor: reader
     capability: publish-collection
+    entities:
+      - { entity: collection, from: Private, to: Published }
     contexts:
       unlist-on-web:
         place: reader-web::personal-library::collection-workspace
@@ -13,6 +15,8 @@ steps:
     kind: actor
     actor: reader
     capability: publish-collection
+    entities:
+      - { entity: collection, from: Published, to: Unlisted }
     contexts:
       unlist-on-web:
         place: reader-web::personal-library::collection-workspace
@@ -20,11 +24,15 @@ steps:
     kind: actor
     actor: visitor
     capability: read-public-collection
+    entities: []
     contexts:
       unlist-on-web:
         place: reader-web::public-reading::public-collection
   - text: The Product withholds the collection contents and shows a neutral unavailable state
     kind: product
+    actor: visitor
+    entities:
+      - { entity: collection, effect: reads }
 routes:
   unlist-on-web: Unlist On Web
 ---

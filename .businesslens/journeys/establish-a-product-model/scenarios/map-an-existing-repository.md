@@ -8,6 +8,8 @@ steps:
     kind: actor
     actor: developer
     capability: install-agent-skills
+    entities:
+      - { entity: skill-installation, effect: creates }
     contexts:
       adoption:
         place: businesslens-cli
@@ -15,6 +17,7 @@ steps:
     kind: actor
     actor: developer
     capability: map-established-behavior
+    entities: []
     contexts:
       adoption:
         place: agent-skills
@@ -22,13 +25,16 @@ steps:
     kind: actor
     actor: ai-agent
     capability: map-established-behavior
+    entities: []
     contexts:
       adoption:
         place: agent-skills
-  - text: The Developer approves the proposed product meaning
+  - text: The Developer approves the proposed meaning, and the Product writes it
     kind: actor
     actor: developer
     capability: map-established-behavior
+    entities:
+      - { entity: product-model, effect: creates }
     contexts:
       adoption:
         place: agent-skills
@@ -36,6 +42,8 @@ steps:
     kind: actor
     actor: developer
     capability: lint-product-model
+    entities:
+      - { entity: product-model, effect: reads }
     contexts:
       adoption:
         place: businesslens-cli

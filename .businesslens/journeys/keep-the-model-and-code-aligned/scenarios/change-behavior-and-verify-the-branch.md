@@ -8,6 +8,7 @@ steps:
     kind: actor
     actor: developer
     capability: decide-intended-behavior
+    entities: []
     contexts:
       branch:
         place: agent-skills
@@ -15,6 +16,9 @@ steps:
     kind: actor
     actor: ai-agent
     capability: decide-intended-behavior
+    entities:
+      - { entity: product-model, effect: reads }
+      - { entity: capability, effect: reads }
     contexts:
       branch:
         place: agent-skills
@@ -22,11 +26,14 @@ steps:
     kind: actor
     actor: developer
     capability: decide-intended-behavior
+    entities:
+      - { entity: product-model, effect: changes }
     contexts:
       branch:
         place: agent-skills
-  - text: The change is implemented through the Developer's own plan, specification, or build flow, outside BusinessLens
+  - text: The change is implemented through the plan, specification, or build flow the harness already provides, outside BusinessLens
     kind: condition
+    entities: []
     contexts:
       branch:
         place: agent-skills
@@ -34,6 +41,7 @@ steps:
     kind: actor
     actor: developer
     capability: verify-model-alignment
+    entities: []
     contexts:
       branch:
         place: agent-skills
@@ -41,6 +49,8 @@ steps:
     kind: actor
     actor: ai-agent
     capability: verify-model-alignment
+    entities:
+      - { entity: product-model, effect: reads }
     contexts:
       branch:
         place: agent-skills

@@ -5,20 +5,24 @@ routes:
 steps:
   - text: The Product loads the collection name, owner display name, and ordered items
     kind: product
-    reads:
-      - collection
-      - item
+    actor: visitor
+    entities:
+      - { entity: collection, effect: reads }
+      - { entity: item, effect: reads }
     contexts:
       web:
         place: reader-web::public-reading::public-collection
   - text: The Visitor opens and reads an item
     kind: actor
     actor: visitor
+    entities:
+      - { entity: item, effect: reads }
     contexts:
       web:
         place: reader-web::public-reading::public-collection
   - text: No private reading state is created
     kind: condition
+    entities: []
     contexts:
       web:
         place: reader-web::public-reading::public-collection

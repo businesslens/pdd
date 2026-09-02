@@ -1,6 +1,4 @@
 ---
-entities:
-  - source
 domain: sources
 availability: [{ place: reader-web::personal-library }, { place: reader-mobile::personal-library }]
 ---

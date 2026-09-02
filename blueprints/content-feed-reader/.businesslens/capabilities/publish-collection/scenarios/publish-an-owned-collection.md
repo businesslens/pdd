@@ -5,25 +5,31 @@ routes:
 steps:
   - text: The Product confirms ownership
     kind: product
+    actor: reader
+    entities:
+      - { entity: collection, effect: reads }
     contexts:
       web:
         place: reader-web::personal-library::collection-workspace
   - text: The Product explains that the collection will become readable by link
     kind: product
+    actor: reader
+    entities:
+      - { entity: collection, effect: reads }
     contexts:
       web:
         place: reader-web::personal-library::collection-workspace
   - text: The Reader confirms publication
     kind: actor
-    changes:
-      - entity: collection
-        state: Published
     actor: reader
+    entities:
+      - { entity: collection, from: Private, to: Published }
     contexts:
       web:
         place: reader-web::personal-library::collection-workspace
   - text: A stable public web address is created
     kind: condition
+    entities: []
     contexts:
       web:
         place: reader-web::personal-library::collection-workspace

@@ -16,8 +16,9 @@ references:
 
 Serves the current Product Model as a private, read-only report on the
 Developer's own machine and keeps it current while they edit. The reader browses
-resources by kind, opens any resource's page, searches by name, and keeps their
-place across a save and a reload.
+resources by kind, opens any resource's page, reads a thing's lifecycle as the
+Steps compose it, searches by name, and keeps their place across a save and a
+reload.
 
 ## Intent
 

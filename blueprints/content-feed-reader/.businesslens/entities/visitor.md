@@ -1,6 +1,6 @@
 ---
 kind: person
-relationship: external
+acts: external
 ---
 
 # Visitor

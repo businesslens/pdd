@@ -3,16 +3,6 @@ relations:
   - entity: item
     verb: holds
     cardinality: many-to-many
-transitions:
-  - from: Private
-    to: Published
-    by: publish-collection
-  - from: Published
-    to: Unlisted
-    by: publish-collection
-  - from: Unlisted
-    to: Published
-    by: publish-collection
 domain: collections
 ---
 
@@ -23,9 +13,9 @@ library.
 
 ## Information kept
 
-- The name its owner gave it
-- The order the owner arranged its items in
-- Its public address once it has been published
+- **Name** — the name its owner gave it
+- **Item order** — the order the owner arranged its items in
+- **Public address** — where it is served once it has been published
 
 ## States
 
@@ -40,6 +30,5 @@ public work.
 
 ### Unlisted
 
-Readable only by someone who already holds its address. Publishing it again
-restores discovery; unlisting revokes anonymous discovery without deleting the
-collection.
+Withdrawn from its public address, which serves nothing until the owner
+publishes it again. The collection itself is untouched.

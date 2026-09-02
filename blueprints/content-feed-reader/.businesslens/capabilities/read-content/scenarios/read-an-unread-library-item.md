@@ -6,8 +6,9 @@ routes:
 steps:
   - text: The Product presents the readable item with its source and publication context
     kind: product
-    reads:
-      - item
+    entities:
+      - { entity: item, effect: reads }
+      - { entity: source, effect: reads }
     contexts:
       web:
         place: reader-web::personal-library::unread-library
@@ -16,6 +17,8 @@ steps:
   - text: The Reader consumes the item
     kind: actor
     actor: reader
+    entities:
+      - { entity: item, effect: reads }
     contexts:
       web:
         place: reader-web::personal-library::unread-library
@@ -23,6 +26,8 @@ steps:
         place: reader-mobile::personal-library::unread-library
   - text: The item remains available for an explicit track-reading-state or saving decision
     kind: condition
+    entities:
+      - { entity: item, effect: reads }
     contexts:
       web:
         place: reader-web::personal-library::unread-library

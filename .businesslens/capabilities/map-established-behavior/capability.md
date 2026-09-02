@@ -1,18 +1,4 @@
 ---
-entities:
-  - product-model
-  - product
-  - actor
-  - interface
-  - experience
-  - screen
-  - domain
-  - entity
-  - capability
-  - capability-scenario
-  - journey
-  - journey-scenario
-  - business-rule
 domain: model-authoring
 availability: [{ place: agent-skills }]
 references:
@@ -27,8 +13,9 @@ references:
 Builds a Product Model from what a repository already does. The agent reads the
 repository's instructions, documentation, entry points, handlers, persistence,
 integrations, configuration, and tests, traces observable behavior end to end,
-and proposes the Actors, Interfaces, Capabilities, Scenarios, rules, and
-coverage that the evidence supports.
+and proposes the Interfaces, the things the product keeps and the ones that act
+on it, the Capabilities and Scenarios with what each Step does to those things,
+the Rules including who may act, and the coverage that the evidence supports.
 
 ## Intent
 

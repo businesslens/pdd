@@ -5,20 +5,22 @@ routes:
 steps:
   - text: The repository has established implementation and no Product Model
     kind: condition
-    reads:
-      - product-model
+    entities:
+      - { entity: product-model, effect: reads }
     contexts:
       harness:
         place: agent-skills
   - text: The Developer asks to plan a change
     kind: actor
     actor: developer
+    entities: []
     contexts:
       harness:
         place: agent-skills
   - text: The AI agent stops without writing and names mapping as the workflow that must come first
     kind: actor
     actor: ai-agent
+    entities: []
     contexts:
       harness:
         place: agent-skills

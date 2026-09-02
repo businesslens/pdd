@@ -3,34 +3,39 @@ kind: primary
 routes:
   harness: Harness
 steps:
-  - text: The Developer names the behavior the product should have
+  - text: The Developer names the behavior that should become true
     kind: actor
     actor: developer
+    entities: []
     contexts:
       harness:
         place: agent-skills
-  - text: The AI agent proposes concrete wording for every resource added, changed, or removed, with the acceptance each Capability and Journey would carry
+  - text: The AI agent proposes concrete wording for every resource added, changed, or removed, with the acceptance contract each part would carry
     kind: actor
     actor: ai-agent
+    entities:
+      - { entity: product-model, effect: reads }
     contexts:
       harness:
         place: agent-skills
   - text: The Developer approves the exact delta
     kind: actor
     actor: developer
+    entities: []
     contexts:
       harness:
         place: agent-skills
-  - text: The AI agent writes only that delta, repairs the relationships it affects, and reports the structural check
-    kind: actor
-    actor: ai-agent
-    changes:
-      - entity: product-model
+  - text: The Product writes only that delta, repairs the relationships it affects, and reports the structural check
+    kind: product
+    actor: developer
+    entities:
+      - { entity: product-model, effect: changes }
     contexts:
       harness:
         place: agent-skills
-  - text: The acceptance contract is handed back for the Developer's own build flow, and nothing is implemented here
+  - text: The acceptance contract is handed back for the build flow the harness already provides, and nothing is implemented here
     kind: condition
+    entities: []
     contexts:
       harness:
         place: agent-skills
@@ -53,3 +58,4 @@ nothing about whether the change is built.
 
 - A small, specific change is settled with at most a handful of batched questions rather than a full pass over the model.
 - A delta handed over by verification is applied as given; the decision behind it is not reopened.
+- A new thing the product will keep, a new state, or a new Step is settled with what touches it and who may, so the delta never leaves a thing nothing changes or an operation nobody is allowed to perform.

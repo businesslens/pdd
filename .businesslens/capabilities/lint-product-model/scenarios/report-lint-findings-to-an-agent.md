@@ -5,22 +5,27 @@ routes:
 steps:
   - text: A BusinessLens skill needs to know whether the model is structurally sound before it continues
     kind: condition
+    entities: []
     contexts:
       terminal:
         place: businesslens-cli
   - text: The AI agent asks for the check in machine-readable form, from outside the repository it is inspecting
     kind: actor
     actor: ai-agent
+    entities:
+      - { entity: product-model, effect: reads }
     contexts:
       terminal:
         place: businesslens-cli
   - text: The Product returns whether the model passed, every error, every warning, and a count of each resource type
     kind: product
+    entities: []
     contexts:
       terminal:
         place: businesslens-cli
   - text: The findings carry no judgement about which side of a disagreement is right
     kind: condition
+    entities: []
     contexts:
       terminal:
         place: businesslens-cli

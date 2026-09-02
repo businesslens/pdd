@@ -2,7 +2,6 @@
 entities:
   - product-model
   - product
-  - actor
   - interface
   - experience
   - screen
@@ -35,7 +34,9 @@ button.
 - Its Contexts, where the resource type carries them
 - Its relations to other resources, each openable
 - Its References, with the role explaining why each is attached
-- For a Capability or a Journey, its Scenarios with their Steps, routes, and Context places
+- For a Capability or a Journey, its Scenarios with their Steps, routes, Context places, and what each Step does to the Product's things
+- For an Entity, its named facts with the Rules that govern them, and its lifecycle composed from every Step that creates, moves, or removes it, with the Capability on each arc and the Rules that restrict or forbid it
+- For a Business Rule, who may perform each operation it governs, as sentences
 
 ## Available actions
 

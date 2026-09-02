@@ -7,6 +7,8 @@ steps:
   - text: The Reader saves the item
     kind: actor
     actor: reader
+    entities:
+      - { entity: item, effect: reads }
     contexts:
       web:
         place: reader-web::personal-library::unread-library
@@ -14,8 +16,9 @@ steps:
         place: reader-mobile::personal-library::unread-library
   - text: The Product records the saved state independently of reading state
     kind: product
-    changes:
-      - entity: item
+    actor: reader
+    entities:
+      - { entity: item }
     contexts:
       web:
         place: reader-web::personal-library::unread-library

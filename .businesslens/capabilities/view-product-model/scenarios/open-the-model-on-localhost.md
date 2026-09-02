@@ -6,28 +6,37 @@ steps:
   - text: The Developer asks to view the current Product Model
     kind: actor
     actor: developer
+    entities:
+      - { entity: product-model, effect: reads }
     contexts:
       local:
         place: businesslens-cli
-  - text: The Product checks the model's structure, serves it on the Developer's own machine, prints the address, and opens a browser
+  - text: The Product checks the model's structure, serves it on the local machine, prints the address, and opens a browser
     kind: product
+    entities:
+      - { entity: product-model, effect: reads }
     contexts:
       local:
         place: businesslens-cli
   - text: The Developer reads what the Product is and how much of it is modeled
     kind: actor
     actor: developer
+    entities:
+      - { entity: product, effect: reads }
+      - { entity: product-model, effect: reads }
     contexts:
       local:
         place: local-report-web::product-overview
   - text: The Developer moves to a kind's collection and opens the resource they came for
     kind: actor
     actor: developer
+    entities: []
     contexts:
       local:
         place: local-report-web::resource-collection
   - text: The Product opens that resource's page at its own address, with a breadcrumb back to the collection
     kind: product
+    entities: []
     contexts:
       local:
         place: local-report-web::resource-page

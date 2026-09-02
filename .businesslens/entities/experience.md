@@ -25,7 +25,7 @@ sees.
 
 ## Information kept
 
-- Which Interface contains it, from its path
-- The Actors it serves and the access it requires
-- Its own entry points
-- What it supports, and what it explicitly does not
+- **Container** — which Interface contains it, from its path
+- **Audience** — the acting Entities it serves and the access it requires
+- **Entry points** — its own addresses
+- **Boundary** — what it supports, and what it explicitly does not

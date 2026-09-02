@@ -5,19 +5,22 @@ routes:
 steps:
   - text: The target directory already holds a Product Model
     kind: condition
-    reads:
-      - product-model
+    entities:
+      - { entity: product-model, effect: reads }
     contexts:
       terminal:
         place: businesslens-cli
   - text: The Developer asks for a Blueprint to be opened there
     kind: actor
     actor: developer
+    entities:
+      - { entity: blueprint, effect: reads }
     contexts:
       terminal:
         place: businesslens-cli
   - text: The Product stops and explains that it will either need an empty target or an explicit instruction to back up what is there
     kind: product
+    entities: []
     contexts:
       terminal:
         place: businesslens-cli

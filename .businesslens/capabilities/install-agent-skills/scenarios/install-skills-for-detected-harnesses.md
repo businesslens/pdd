@@ -6,27 +6,33 @@ steps:
   - text: The Developer asks to install the BusinessLens skills
     kind: actor
     actor: developer
+    entities: []
     contexts:
       terminal:
         place: businesslens-cli
   - text: The Product reports which supported harnesses it found, and offers the two recommended ones when it found none
     kind: product
+    entities: []
     contexts:
       terminal:
         place: businesslens-cli
   - text: The Developer confirms the harnesses and chooses whether this is for the repository or for themselves
     kind: actor
     actor: developer
+    entities: []
     contexts:
       terminal:
         place: businesslens-cli
   - text: The Product installs the three skills into each chosen harness and marks the installation as its own
     kind: product
+    entities:
+      - { entity: skill-installation, effect: creates }
     contexts:
       terminal:
         place: businesslens-cli
   - text: The Product names where it installed, which skills it installed, and any retired BusinessLens skills it removed
     kind: product
+    entities: []
     contexts:
       terminal:
         place: businesslens-cli

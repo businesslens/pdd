@@ -25,6 +25,6 @@ because it feels owed rather than because it was needed.
 
 ## Information kept
 
-- The stable Actor intent it pursues
-- How an achieved attempt is recognized
-- Which Actors pursue it
+- **Goal** — the stable intent it pursues
+- **Success criterion** — how an achieved attempt is recognized
+- **Actors** — which acting Entities pursue it

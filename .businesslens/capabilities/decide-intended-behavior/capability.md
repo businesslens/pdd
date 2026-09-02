@@ -1,18 +1,4 @@
 ---
-entities:
-  - product-model
-  - product
-  - actor
-  - interface
-  - experience
-  - screen
-  - domain
-  - entity
-  - capability
-  - capability-scenario
-  - journey
-  - journey-scenario
-  - business-rule
 domain: model-authoring
 availability: [{ place: agent-skills }]
 references:
@@ -28,7 +14,8 @@ Converges from an intention to an approved change in what the product is meant
 to do. An open question is explored first — genuinely different product shapes,
 each with who it serves, the one job it does, and what it deliberately excludes —
 and nothing is written until the Developer chooses a direction and approves the
-exact delta.
+exact delta, down to what each new Step does to the things the product keeps
+and who the Rules let do it.
 
 ## Intent
 

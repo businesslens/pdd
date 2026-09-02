@@ -2,7 +2,6 @@
 entities:
   - product-model
   - product
-  - actor
   - interface
   - experience
   - screen
@@ -27,7 +26,8 @@ references:
 Every resource of one kind, ranked and grouped so the reader can find the one they
 came for. Scenarios are read from the Capability or Journey that owns them
 rather than listed here, because a kind with a mandatory single parent is
-reached through that parent.
+reached through that parent. The things that act lead the Entity collection,
+because a reader arrives asking who this is for.
 
 ## Information presented
 

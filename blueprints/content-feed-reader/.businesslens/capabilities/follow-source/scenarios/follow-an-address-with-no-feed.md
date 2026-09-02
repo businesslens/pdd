@@ -7,6 +7,7 @@ steps:
   - text: The Reader submits an address that does not return a supported feed.
     kind: actor
     actor: reader
+    entities: []
     contexts:
       web:
         place: reader-web::personal-library::source-list
@@ -14,6 +15,7 @@ steps:
         place: reader-mobile::personal-library::source-list
   - text: The Product inspects the submitted address
     kind: product
+    entities: []
     contexts:
       web:
         place: reader-web::personal-library::source-list
@@ -21,6 +23,7 @@ steps:
         place: reader-mobile::personal-library::source-list
   - text: No supported feed is found
     kind: condition
+    entities: []
     contexts:
       web:
         place: reader-web::personal-library::source-list
@@ -28,6 +31,7 @@ steps:
         place: reader-mobile::personal-library::source-list
   - text: The Product explains that the address cannot be followed
     kind: product
+    entities: []
     contexts:
       web:
         place: reader-web::personal-library::source-list

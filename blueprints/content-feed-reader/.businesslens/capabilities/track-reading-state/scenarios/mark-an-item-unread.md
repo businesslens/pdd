@@ -7,6 +7,8 @@ steps:
   - text: The Reader marks the item unread
     kind: actor
     actor: reader
+    entities:
+      - { entity: item, effect: reads }
     contexts:
       web:
         place: reader-web::personal-library::unread-library
@@ -14,9 +16,9 @@ steps:
         place: reader-mobile::personal-library::unread-library
   - text: The Product updates the item's private reading state
     kind: product
-    changes:
-      - entity: item
-        state: Unread
+    actor: reader
+    entities:
+      - { entity: item, from: Read, to: Unread }
     contexts:
       web:
         place: reader-web::personal-library::unread-library
@@ -24,6 +26,7 @@ steps:
         place: reader-mobile::personal-library::unread-library
   - text: The unread count increases
     kind: condition
+    entities: []
     contexts:
       web:
         place: reader-web::personal-library::unread-library

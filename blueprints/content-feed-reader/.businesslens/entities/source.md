@@ -3,13 +3,6 @@ relations:
   - entity: item
     verb: publishes
     cardinality: one-to-many
-transitions:
-  - from: Reachable
-    to: Unreachable
-    by: synchronize-feeds
-  - from: Unreachable
-    to: Reachable
-    by: synchronize-feeds
 domain: sources
 ---
 
@@ -20,9 +13,9 @@ whether it can still be read.
 
 ## Information kept
 
-- The name the Reader knows it by
-- Its feed address
-- When it was last read successfully
+- **Name** — the name the Reader knows it by
+- **Feed address** — where its feed is fetched from
+- **Last read** — when it was last read successfully
 
 ## States
 

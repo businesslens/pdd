@@ -8,6 +8,7 @@ steps:
     kind: actor
     actor: developer
     capability: verify-model-alignment
+    entities: []
     contexts:
       branch:
         place: agent-skills
@@ -15,16 +16,20 @@ steps:
     kind: actor
     actor: ai-agent
     capability: verify-model-alignment
+    entities:
+      - { entity: product-model, effect: reads }
     contexts:
       branch:
         place: agent-skills
   - text: The harness supplies no builder that may change implementation
     kind: condition
+    entities: []
     contexts:
       branch:
         place: agent-skills
   - text: The Product stops holding the complete packet and reports the scope as blocked
     kind: product
+    entities: []
     contexts:
       branch:
         place: agent-skills

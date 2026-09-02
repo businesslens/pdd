@@ -3,26 +3,33 @@ kind: primary
 routes:
   harness: Harness
 steps:
-  - text: The Developer asks for a scope to be verified, naming a branch, a resource, or the current product
+  - text: The Developer asks for a scope to be verified, naming a branch, a resource, or everything
     kind: actor
     actor: developer
+    entities: []
     contexts:
       harness:
         place: agent-skills
-  - text: The AI agent runs the structural check, then reads source and tests to confirm every availability Context, Scenario route, and Journey Step in scope
+  - text: The AI agent runs the structural check, then reads source and tests to confirm every availability Context, Scenario route, Step effect, and Journey Step in scope
     kind: actor
     actor: ai-agent
+    entities:
+      - { entity: product-model, effect: reads }
+      - { entity: capability, effect: reads }
+      - { entity: journey, effect: reads }
     contexts:
       harness:
         place: agent-skills
   - text: The AI agent reports the scope it inspected, the contracts that hold, and the final structural check
     kind: actor
     actor: ai-agent
+    entities: []
     contexts:
       harness:
         place: agent-skills
-  - text: The report says the inspected scope is aligned, and claims nothing about the parts of the product it did not inspect
+  - text: The report says the inspected scope is aligned, and claims nothing about the parts it did not inspect
     kind: condition
+    entities: []
     contexts:
       harness:
         place: agent-skills

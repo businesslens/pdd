@@ -5,21 +5,25 @@ routes:
 steps:
   - text: The Product confirms collection ownership
     kind: product
-    reads:
-      - collection
+    actor: reader
+    entities:
+      - { entity: collection, effect: reads }
     contexts:
       web:
         place: reader-web::personal-library::collection-workspace
   - text: The Reader provides the replacement name
     kind: actor
     actor: reader
+    entities: []
     contexts:
       web:
         place: reader-web::personal-library::collection-workspace
   - text: The Product preserves the collection's items and order under the new name
     kind: product
-    changes:
-      - entity: collection
+    actor: reader
+    entities:
+      - { entity: collection }
+      - { entity: item, effect: reads }
     contexts:
       web:
         place: reader-web::personal-library::collection-workspace

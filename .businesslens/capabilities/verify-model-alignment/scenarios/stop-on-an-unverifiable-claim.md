@@ -5,18 +5,21 @@ routes:
 steps:
   - text: A claim in scope depends on runtime behavior or an external system that reading source cannot settle
     kind: condition
+    entities: []
     contexts:
       harness:
         place: agent-skills
   - text: The AI agent states precisely which evidence is missing and what would resolve it
     kind: actor
     actor: ai-agent
+    entities: []
     contexts:
       harness:
         place: agent-skills
   - text: The AI agent marks that scope blocked rather than guessing, and reports the rest of the run normally
     kind: actor
     actor: ai-agent
+    entities: []
     contexts:
       harness:
         place: agent-skills

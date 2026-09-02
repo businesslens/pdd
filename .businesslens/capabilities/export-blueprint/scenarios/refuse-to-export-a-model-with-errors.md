@@ -6,16 +6,21 @@ steps:
   - text: The Developer asks for the current Product Model to be exported
     kind: actor
     actor: developer
+    entities:
+      - { entity: product-model, effect: reads }
     contexts:
       terminal:
         place: businesslens-cli
   - text: The model does not pass its structural check
     kind: condition
+    entities:
+      - { entity: product-model, effect: reads }
     contexts:
       terminal:
         place: businesslens-cli
   - text: The Product lists the structural errors and produces no report
     kind: product
+    entities: []
     contexts:
       terminal:
         place: businesslens-cli

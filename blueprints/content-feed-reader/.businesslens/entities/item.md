@@ -1,11 +1,4 @@
 ---
-transitions:
-  - from: Unread
-    to: Read
-    by: track-reading-state
-  - from: Read
-    to: Unread
-    by: track-reading-state
 domain: reading
 ---
 
@@ -16,10 +9,9 @@ they saved directly.
 
 ## Information kept
 
-- Its title
-- When it was published
-- Whether the Reader has read it
-- When the Reader saved it, if they did
+- **Title** — what the item is called
+- **Published at** — when its source published it
+- **Saved at** — when the Reader saved it, if they did
 
 ## States
 

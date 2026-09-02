@@ -1,15 +1,16 @@
 ---
 appliesTo:
-  - type: capability
-    id: track-reading-state
-    contexts:
-      - place: reader-web::personal-library
-      - place: reader-mobile::personal-library
+  - type: entity
+    id: item
+    effect: changes
+permits:
+  - related: [{ verb: keeps, entity: reader }]
 ---
 
 # Reading state is private to its Reader
 
-Only the Reader who owns a library can see or change its read and unread state.
+Only the Reader whose library holds an item changes whether it is read, unread,
+or saved.
 
 ## Rationale
 

@@ -21,7 +21,7 @@ to them.
 
 ## Information kept
 
-- The Capabilities it exposes and the Entities it presents
-- What information the view shows, and what can be done from it
-- The states the view itself can be in
-- Its addresses, and what it deliberately does not expose
+- **Exposure** — the Capabilities it exposes and the Entities it presents
+- **Content** — what information the view shows, and what can be done from it
+- **View states** — the states the view itself can be in
+- **Addresses** — where it answers, and what it deliberately does not expose

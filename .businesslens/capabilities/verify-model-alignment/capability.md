@@ -1,18 +1,4 @@
 ---
-entities:
-  - product-model
-  - product
-  - actor
-  - interface
-  - experience
-  - screen
-  - domain
-  - entity
-  - capability
-  - capability-scenario
-  - journey
-  - journey-scenario
-  - business-rule
 domain: model-authoring
 availability: [{ place: agent-skills }]
 references:
@@ -26,11 +12,12 @@ references:
 
 Compares what the model says against what the repository currently does, for a
 requested scope — a branch, a named resource, or the whole current product — and
-then owns the resolution. Each finding is classified by which side should
-change, findings that share one decision are grouped, and the Developer is asked
-the root question once. Approved model changes are written, implementation
-changes are handed to whatever builder the harness supplies, and every change is
-followed by a fresh inspection.
+then owns the resolution. Every contract is checked, including what a Step says
+it does to a thing and who a Rule says may do it. Each finding is classified by
+which side should change, findings that share one decision are grouped, and the
+Developer is asked the root question once. Approved model changes are written,
+implementation changes are handed to whatever builder the harness supplies, and
+every change is followed by a fresh inspection.
 
 ## Intent
 

@@ -4,9 +4,6 @@ relations:
   - entity: capability-scenario
     verb: holds
     cardinality: one-to-many
-  - entity: entity
-    verb: acts on
-    cardinality: many-to-many
 references:
   - kind: spec
     role: intent
@@ -24,11 +21,11 @@ references:
 
 What an author writes most of, and argues about most. Where one ends and the
 next begins is the judgement `lint` cannot make for them, and the one that most
-changes how a model reads.
+changes how a model reads. It declares nothing about the things it changes;
+what it changes is what its Steps say.
 
 ## Information kept
 
-- Why it exists and which outcome it protects
-- Where it is available, as Contexts
-- The Entities it changes
-- Its subject Domain, when it has one
+- **Purpose** — why it exists and which outcome it protects
+- **Availability** — where it is available, as Contexts
+- **Domain** — its subject Domain, when it has one

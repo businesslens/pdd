@@ -17,10 +17,11 @@ references:
 # Structural lint makes no semantic claim
 
 A clean structural result means the model is well formed. It never means the
-model is true, that the code agrees with it, or that anything was verified.
-Nothing downstream — a pipeline, a report, or a later run — may treat it as
-evidence of alignment, and a verification run says which scope it inspected
-rather than that the product is proven.
+model is true, that the code agrees with it, that a grant the model states is
+enforced, or that anything was verified. Nothing downstream — a pipeline, a
+report, or a later run — may treat it as evidence of alignment, and a
+verification run says which scope it inspected rather than that the product is
+proven.
 
 ## Rationale
 

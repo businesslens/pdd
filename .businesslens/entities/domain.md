@@ -21,6 +21,6 @@ model.
 
 ## Information kept
 
-- Its name and the region it covers
-- What it explicitly does not own, which is what makes it checkable
-- Its colour slot in a rendered report
+- **Region** — its name and the area of the product it covers
+- **Boundary** — what it explicitly does not own, which is what makes it checkable
+- **Colour** — its colour slot in a rendered report

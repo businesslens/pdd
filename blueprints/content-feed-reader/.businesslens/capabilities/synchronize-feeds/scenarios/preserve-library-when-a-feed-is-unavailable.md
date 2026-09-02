@@ -7,6 +7,8 @@ steps:
   - text: The Reader refreshes their sources while one followed feed cannot be read.
     kind: actor
     actor: reader
+    entities:
+      - { entity: source, effect: reads }
     contexts:
       web:
         place: reader-web::personal-library::source-list
@@ -14,9 +16,8 @@ steps:
         place: reader-mobile::personal-library::source-list
   - text: The Product reports that the source could not be reached
     kind: product
-    changes:
-      - entity: source
-        state: Unreachable
+    entities:
+      - { entity: source, from: Reachable, to: Unreachable }
     contexts:
       web:
         place: reader-web::personal-library::source-list
@@ -24,6 +25,10 @@ steps:
         place: reader-mobile::personal-library::source-list
   - text: Existing items, reading state, saved state, and collections remain unchanged
     kind: condition
+    actor: reader
+    entities:
+      - { entity: collection, effect: reads }
+      - { entity: item, effect: reads }
     contexts:
       web:
         place: reader-web::personal-library::source-list
@@ -31,6 +36,8 @@ steps:
         place: reader-mobile::personal-library::source-list
   - text: The source remains followed for a later refresh
     kind: condition
+    entities:
+      - { entity: source, effect: reads }
     contexts:
       web:
         place: reader-web::personal-library::source-list

@@ -5,38 +5,33 @@ routes:
 steps:
   - text: The target directory already holds a Product Model
     kind: condition
-    reads:
-      - product-model
+    entities:
+      - { entity: product-model, effect: reads, as: previous }
     contexts:
       terminal:
         place: businesslens-cli
   - text: The Developer asks for the Blueprint to be opened there anyway, accepting the replacement
     kind: actor
     actor: developer
+    entities:
+      - { entity: blueprint, effect: reads }
     contexts:
       terminal:
         place: businesslens-cli
   - text: The Product moves the existing model to a timestamped sibling copy, keeps it, and reports where it went
     kind: product
+    actor: developer
+    entities:
+      - { entity: product-model, effect: removes, as: previous }
     contexts:
       terminal:
         place: businesslens-cli
   - text: The Product puts the expanded Blueprint in its place
     kind: product
-    changes:
-      - entity: product-model
-      - entity: product
-      - entity: actor
-      - entity: interface
-      - entity: experience
-      - entity: screen
-      - entity: domain
-      - entity: entity
-      - entity: capability
-      - entity: capability-scenario
-      - entity: journey
-      - entity: journey-scenario
-      - entity: business-rule
+    actor: developer
+    entities:
+      - { entity: blueprint, effect: reads }
+      - { entity: product-model, effect: creates, as: incoming }
     contexts:
       terminal:
         place: businesslens-cli

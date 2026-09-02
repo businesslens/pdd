@@ -3,43 +3,38 @@ kind: primary
 routes:
   terminal: Terminal
 steps:
-  - text: The Developer names the Blueprint they want and the directory that should receive it
+  - text: The Developer names the catalog entry they want and the directory that should receive it
     kind: actor
     actor: developer
+    entities: []
     contexts:
       terminal:
         place: businesslens-cli
   - text: The Product resolves which catalog to read and refuses any origin that is not a bare, secure one
     kind: product
+    entities: []
     contexts:
       terminal:
         place: businesslens-cli
   - text: The Product fetches the report anonymously, confirms it is the named Blueprint, and confirms the body matches the digest the catalog declared
     kind: product
+    entities:
+      - { entity: blueprint, effect: reads }
     contexts:
       terminal:
         place: businesslens-cli
   - text: The Product fetches the Product's logo from the same catalog, continuing without one if it is missing or invalid
     kind: product
+    entities: []
     contexts:
       terminal:
         place: businesslens-cli
   - text: The Product expands the Blueprint into a Product Model and names what it pulled
     kind: product
-    changes:
-      - entity: product-model
-      - entity: product
-      - entity: actor
-      - entity: interface
-      - entity: experience
-      - entity: screen
-      - entity: domain
-      - entity: entity
-      - entity: capability
-      - entity: capability-scenario
-      - entity: journey
-      - entity: journey-scenario
-      - entity: business-rule
+    actor: developer
+    entities:
+      - { entity: blueprint, effect: reads }
+      - { entity: product-model, effect: creates }
     contexts:
       terminal:
         place: businesslens-cli

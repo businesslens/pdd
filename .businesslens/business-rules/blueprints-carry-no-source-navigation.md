@@ -1,13 +1,7 @@
 ---
 appliesTo:
-  - type: capability
-    id: export-blueprint
-  - type: capability
-    id: open-blueprint
-  - type: capability
-    id: pull-blueprint
-  - type: capability
-    id: contribute-blueprint
+  - type: entity
+    id: blueprint
 references:
   - kind: spec
     role: intent
@@ -24,7 +18,7 @@ A Blueprint carries product meaning and nothing that only navigated the
 repository it came from: no code references, no implementation-role references,
 no repository-relative targets, no repository entry points, and no source areas.
 It also carries no claim about how it was derived, because a Blueprint's origin
-is not part of its contract.
+is not part of its contract. This holds wherever a Blueprint is written or read.
 
 ## Rationale
 

@@ -10,7 +10,7 @@ references:
     target: docs/product.md
   - kind: code
     role: implementation
-    target: src/core/portable.ts#ProductReportV11Schema
+    target: src/core/portable.ts#ProductReportV13Schema
 ---
 
 # Product
@@ -20,6 +20,6 @@ else in the directory is an answer to something it claims.
 
 ## Information kept
 
-- Its name, its one-paragraph description, and why it should exist
-- The portable identity a catalog needs: summary, category, tags, authors, licence
-- What it does not attempt, recorded as limitations
+- **Identity** — its name, its one-paragraph description, and why it should exist
+- **Catalog identity** — the portable facts a catalog needs: summary, category, tags, authors, licence
+- **Limitations** — what it does not attempt, recorded so a reader does not have to infer it

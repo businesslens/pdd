@@ -1,17 +1,10 @@
 ---
 appliesTo:
-  - type: capability
-    id: create-collection
-  - type: capability
-    id: rename-collection
-  - type: capability
-    id: organize-collection
-  - type: capability
-    id: publish-collection
-  - type: journey
-    id: save-and-organize
-  - type: journey
-    id: publish-and-share-a-collection
+  - type: entity
+    id: collection
+    effect: changes
+permits:
+  - related: [{ verb: owns, entity: reader }]
 ---
 
 # Only an owner changes a collection
