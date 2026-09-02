@@ -4,9 +4,12 @@ routes:
   web: Web
   mobile: Mobile
 steps:
-  - text: The shopper places an order for the last remaining unit of a product.
+  - text: The shopper buys the last remaining unit of a product.
     kind: actor
     actor: shopper
+    entities:
+      - { entity: cart, effect: reads }
+      - { entity: catalog-product, effect: reads }
     contexts:
       web:
         place: customer-web::storefront::product-record
@@ -14,9 +17,11 @@ steps:
         place: customer-mobile::storefront::product-record
   - text: The order commits the last unit and no stock remains
     kind: product
-    changes:
-      - entity: catalog-product
-        state: Unavailable
+    actor: shopper
+    entities:
+      - { entity: order, effect: creates, to: Pending }
+      - { entity: catalog-product, effect: changes, from: Available, to: Unavailable }
+      - { entity: cart, effect: removes }
     contexts:
       web:
         place: customer-web::storefront::product-record
@@ -24,6 +29,8 @@ steps:
         place: customer-mobile::storefront::product-record
   - text: The product stays browsable and explains that it cannot be bought
     kind: condition
+    entities:
+      - { entity: catalog-product, effect: reads }
     contexts:
       web:
         place: customer-web::storefront::product-record
@@ -35,7 +42,7 @@ steps:
 
 ## Trigger
 
-The shopper places an order for a product with one unit of stock remaining.
+The shopper buys a product with one unit of stock remaining.
 
 ## Outcome
 

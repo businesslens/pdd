@@ -16,7 +16,7 @@ import {
   stringListField,
   uniqueStringListField
 } from './frontmatter.js'
-import { counterpartKey, interfaceOf, qualify } from './ids.js'
+import { counterpartKey, interfaceOf, isId, qualify } from './ids.js'
 import { readProductLogo } from './logo-file.js'
 import {
   bulletList, containsStructuralHeading, decisionPoints, parseMarkdown, screenStates, section
@@ -42,13 +42,6 @@ export interface ResourceFile {
   assets: string[]
   /** Optional authored metadata over those files. Never sets class. */
   assetMeta: ResourceAsset[]
-}
-
-export interface ActorResource extends ResourceFile {
-  /** What the Product keeps about this Actor. Same rule as an Entity's. */
-  informationKept: string[]
-  kind: string
-  relationship: string
 }
 
 export interface InterfaceResource extends ResourceFile {
@@ -78,17 +71,24 @@ export interface DomainResource extends ResourceFile {
 
 export interface CapabilityResource extends ResourceFile {
   domain?: string
-  /** The Entities this Capability acts on. */
-  entities: string[]
   availability: Context[]
 }
 
-export interface EntityStateTransition {
-  from: string
-  to: string
-  /** The Capability that causes this move. Checked against its `entities`. */
-  by: string
+/**
+ * A named fact the Product keeps about a thing: `- **Name** — prose`.
+ *
+ * The name is what a Business Rule cites — a `facts` target or a `when`
+ * condition — by exact match, the idiom `## States` already uses for an H3.
+ * Nothing else cites one, and the fact stays untyped: addressable is what a
+ * field-level Rule and a derivation need; typed is a data model.
+ */
+export interface EntityFact {
+  name: string
+  description: string
 }
+
+export const ENTITY_KINDS = ['person', 'system'] as const
+export const ENTITY_ACTS = ['external', 'internal'] as const
 
 /**
  * Both ends of a relation, reading source to target.
@@ -112,19 +112,32 @@ export interface EntityRelation {
 }
 
 /**
- * A thing the Product keeps whose state an Actor can observe and act on.
+ * A thing the Product keeps or reasons about — the people and systems that act
+ * on it included.
  *
  * Entities name the Product's nouns where Capabilities name its verbs. The test
  * is identity, not storage: a thing an Actor would point at and call "this one",
- * which the Product can tell apart from another.
+ * which the Product can tell apart from another. There is one resource type for
+ * things; "Actor" is the word for the subset that `acts`, and it names the role
+ * such an Entity plays on a Step, an Interface, a Journey, or a grant.
+ *
+ * The Entity declares its states and nothing about the moves between them: the
+ * lifecycle is composed from Scenario Steps.
  */
 export interface EntityResource extends ResourceFile {
   domain?: string
-  /** Single-line facts the Product keeps about the thing. Never how it is stored. */
-  informationKept: string[]
+  /** Named single-line facts the Product keeps about the thing. Never how it is stored. */
+  informationKept: EntityFact[]
+  /** `person` or `system`. Present exactly when `acts` is. */
+  kind?: string
+  /**
+   * `external` or `internal`, relative to the Product boundary. Present when
+   * the thing initiates, with a goal or privilege of its own, under an inbound
+   * contract the Product must keep stable; absent for a thing that does not.
+   */
+  acts?: string
   relations: EntityRelation[]
   states: ReturnType<typeof screenStates>
-  transitions: EntityStateTransition[]
 }
 
 export interface ScreenResource extends ResourceFile {
@@ -170,39 +183,47 @@ export interface ScenarioStepContext extends Context {
  * What a Step does to one Entity.
  *
  * `changes` is the default and the ordinary case. `creates` and `removes` are
- * the boundaries of a thing's existence, which an Actor observes and which no
- * transition can express — a fourth value meaning "updated" would appear on
- * almost every entry and separate nothing.
+ * the boundaries of a thing's existence, which an Actor observes. `reads` is a
+ * bare mention: it never counts as a change and never keeps an Entity from
+ * being an orphan, and it exists because the alternative was a Step whose text
+ * names a thing while the model says nothing.
  */
-export type ScenarioStepEffect = 'creates' | 'changes' | 'removes'
+export type ScenarioStepEffect = 'creates' | 'changes' | 'removes' | 'reads'
 
-export const SCENARIO_STEP_EFFECTS: ScenarioStepEffect[] = ['creates', 'changes', 'removes']
+export const SCENARIO_STEP_EFFECTS: ScenarioStepEffect[] = ['creates', 'changes', 'removes', 'reads']
 
-export interface ScenarioStepChange {
+/**
+ * One entry of a Step's `entities` list.
+ *
+ * State keys follow the effect and are never inferred from a neighbouring Step:
+ * `creates` takes `to`, `removes` takes `from`, `changes` takes both or neither
+ * (neither is an information change — a rename), `reads` takes none.
+ */
+export interface ScenarioStepEntity {
   entity: string
+  /**
+   * Scenario-local instance alias, for two instances of one Entity in one
+   * Scenario. Once an Entity is aliased anywhere in a Scenario, every mention
+   * of it there is aliased.
+   */
+  as?: string
   /** Absent in the folder when it is the default `changes`. */
   effect?: ScenarioStepEffect
-  /** The state this Step leaves that Entity in. */
-  state?: string
+  from?: string
+  to?: string
 }
 
 export interface ScenarioStep {
   /**
-   * What this Step does to the Product's Entities.
+   * What this Step does to the Product's Entities. Required on every Step, and
+   * `[]` when it touches nothing: silence is impossible, and an omission is a
+   * claim that can be reviewed, linted, and contradicted by code.
    *
    * A list because one observable act can move two things at once, and
    * splitting it to fit a singular field would turn an acceptance case into an
    * implementation trace.
    */
-  changes: ScenarioStepChange[]
-  /**
-   * Entities this Step picks, inspects, or displays without changing.
-   *
-   * A bare id list on purpose. `changes` carries an effect and a state and is
-   * what "what can alter this thing" is derived from; a read places no claim on
-   * that, so it gets no structure and never satisfies the no-orphans rule.
-   */
-  reads: string[]
+  entities: ScenarioStepEntity[]
   /**
    * Marks a Scenario nobody triggers — a schedule the Product owns, an expiry,
    * a retry. Valid only on the first Step and only when `kind` is `condition`.
@@ -231,7 +252,65 @@ export interface JourneyResource extends ResourceFile {
 
 export interface BusinessRuleResource extends ResourceFile {
   appliesTo: BusinessRuleTarget[]
+  /**
+   * Absent: the Rule makes no authorization claim. `[]`: the selected operation
+   * is forbidden to everyone. Otherwise the grants, any one of which permits it.
+   */
+  permits?: BusinessRuleGrant[]
   rationale: string
+}
+
+/**
+ * A target selects; a grant conditions. `effect`, `from` and `to` select Steps
+ * by the keys their `entities` entry already carries; `facts` names the facts
+ * the Rule governs; `contexts` scopes it to places that present the Entity.
+ */
+export interface BusinessRuleEntityTarget {
+  type: 'entity'
+  id: string
+  effect?: ScenarioStepEffect
+  from?: string
+  to?: string
+  facts: string[]
+  contexts: Context[]
+}
+
+export const GRANT_OPERATORS = ['over', 'under', 'at-least', 'at-most', 'is', 'is-not', 'present', 'absent'] as const
+export type GrantOperator = typeof GRANT_OPERATORS[number]
+
+/** A threshold is a scalar, or the id of the Entity the customer sets it on. */
+export type GrantValue = string | number | boolean | { configuredBy: string }
+
+/**
+ * One `when` condition. Either a fact with exactly one operator — on the
+ * targeted Entity, or on `entity` — or the instance's own `state`.
+ */
+export interface GrantCondition {
+  entity?: string
+  fact?: string
+  state?: string
+  operator?: GrantOperator
+  value?: GrantValue
+}
+
+/** One hop of a `related` path: the verb walked and the Entity it arrives at. */
+export interface RelatedSegment {
+  verb: string
+  entity: string
+}
+
+/**
+ * One grant. Keys within it are AND; grants within a Rule are OR. Every grant
+ * names a who — at least one of `actors`, `related`, `self`, `unattended`,
+ * `configuredBy` — and `when` narrows it.
+ */
+export interface BusinessRuleGrant {
+  actors: string[]
+  related: RelatedSegment[]
+  self?: true
+  when: GrantCondition[]
+  unattended?: true
+  configuredBy?: string
 }
 
 export type BusinessRuleResourceTargetType =
@@ -251,7 +330,7 @@ export interface BusinessRuleContextTarget {
   context: Context
 }
 
-export type BusinessRuleTarget = BusinessRuleResourceTarget | BusinessRuleContextTarget
+export type BusinessRuleTarget = BusinessRuleResourceTarget | BusinessRuleContextTarget | BusinessRuleEntityTarget
 
 export interface ScenarioKind {
   id: string
@@ -288,7 +367,6 @@ export interface PddModel {
     limitations: string[]
     rationale: string
   }
-  actors: ActorResource[]
   interfaces: InterfaceResource[]
   experiences: ExperienceResource[]
   screens: ScreenResource[]
@@ -319,7 +397,6 @@ export type ResourceCollectionName = {
 
 export function resourceCollections(model: PddModel): Record<ResourceCollectionName, ResourceFile[]> {
   return {
-    actors: model.actors,
     interfaces: model.interfaces,
     experiences: model.experiences,
     screens: model.screens,
@@ -343,7 +420,7 @@ const ENTITY_CARDINALITIES = new Set<string>(['one-to-one', 'one-to-many', 'many
 export const FOLDER = '.businesslens'
 
 /** The one folder-format version this release reads and writes. */
-export const FOLDER_SCHEMA = 7
+export const FOLDER_SCHEMA = 8
 
 /**
  * The two channels a model load reports into.
@@ -558,25 +635,29 @@ function scenarioStepsField(
     }
     const item = raw as Record<string, unknown>
     /*
-     * `entity` and `state` shipped as singular Step keys and are now entries of
-     * `changes`. They would otherwise fall through as unknown keys, which says
-     * what is wrong and not what to write instead.
+     * `entity`, `state`, `changes` and `reads` were earlier spellings of what a
+     * Step does to a thing and are now entries of `entities`. They would
+     * otherwise fall through as unknown keys, which says what is wrong and not
+     * what to write instead.
      */
-    for (const retired of ['entity', 'state']) {
+    const RETIRED_STEP_KEYS = ['entity', 'state', 'changes', 'reads']
+    for (const retired of RETIRED_STEP_KEYS) {
       if (item[retired] !== undefined) {
-        issues.push(`${itemLabel}: "${retired}" is now an entry of "changes"`)
+        issues.push(`${itemLabel}: "${retired}" is now an entry of "entities"`)
       }
     }
-    rejectUnknownKeys(item, ['text', 'kind', 'actor', 'changes', 'reads', 'contexts', 'unattended', ...(allowCapability ? ['capability'] : [])], issues, itemLabel)
-    const changes = stepChanges(item.changes, issues, itemLabel)
-    const reads = uniqueStringListField(item, 'reads', issues, itemLabel)
-    /* One Step says one thing about one Entity. Reading and changing it in the
-       same act are two claims that cannot both be the whole truth. */
-    for (const id of reads) {
-      if (changes.some(change => change.entity === id)) {
-        issues.push(`${itemLabel}: "${id}" is both read and changed by this Step`)
-      }
+    rejectUnknownKeys(
+      item,
+      ['text', 'kind', 'actor', 'entities', 'contexts', 'unattended', ...RETIRED_STEP_KEYS, ...(allowCapability ? ['capability'] : [])],
+      issues,
+      itemLabel
+    )
+    /* Required, and `[]` is a claim: silence is what made 91% of Steps say
+       nothing about the things they touched. */
+    if (item.entities === undefined || item.entities === null) {
+      issues.push(`${itemLabel}: needs "entities" — what this Step does to the Product's things, or [] when it touches nothing`)
     }
+    const entities = stepEntities(item.entities, issues, itemLabel)
     const contexts: ScenarioStepContext[] = []
     if (item.contexts !== undefined && item.contexts !== null) {
       if (typeof item.contexts !== 'object' || Array.isArray(item.contexts)) {
@@ -596,8 +677,7 @@ function scenarioStepsField(
       text: stringField(item, 'text', issues, itemLabel) || '',
       kind: stringField(item, 'kind', issues, itemLabel) || '',
       actor: stringField(item, 'actor', issues, itemLabel),
-      changes,
-      reads,
+      entities,
       capability: allowCapability ? stringField(item, 'capability', issues, itemLabel) : undefined,
       unattended: unattended === true ? true : undefined,
       contexts
@@ -607,59 +687,75 @@ function scenarioStepsField(
 }
 
 /**
- * One Step's `changes` list, parsed but not resolved.
+ * One Step's `entities` list, parsed but not resolved.
  *
- * Shape only: whether the ids exist, whether the Capability declares them, and
- * whether a state is reachable are model-wide questions `lint` answers once the
+ * Shape only: whether the ids exist, whether a state is one the Entity has,
+ * and whether the Steps chain are model-wide questions `lint` answers once the
  * whole model is loaded.
  */
-function stepChanges(raw: unknown, issues: string[], label: string): ScenarioStepChange[] {
+function stepEntities(raw: unknown, issues: string[], label: string): ScenarioStepEntity[] {
   if (raw === undefined || raw === null) return []
   if (!Array.isArray(raw)) {
-    issues.push(`${label}: "changes" must be a list`)
+    issues.push(`${label}: "entities" must be a list`)
     return []
   }
-  const changes: ScenarioStepChange[] = []
+  const entries: ScenarioStepEntity[] = []
   const seen = new Set<string>()
   for (const [index, entry] of raw.entries()) {
-    const entryLabel = `${label}: change ${index + 1}`
+    const entryLabel = `${label}: entity ${index + 1}`
     if (typeof entry !== 'object' || entry === null || Array.isArray(entry)) {
       issues.push(`${entryLabel} must be a mapping`)
       continue
     }
     const item = entry as Record<string, unknown>
-    rejectUnknownKeys(item, ['entity', 'effect', 'state'], issues, entryLabel)
+    rejectUnknownKeys(item, ['entity', 'as', 'effect', 'from', 'to'], issues, entryLabel)
     const entity = stringField(item, 'entity', issues, entryLabel) || ''
     if (!entity) {
       issues.push(`${entryLabel}: needs an "entity"`)
       continue
     }
-    /* One Step states one thing about one Entity; two entries for it are two
+    const alias = stringField(item, 'as', issues, entryLabel)
+    if (alias !== undefined && !isId(alias)) {
+      issues.push(`${entryLabel}: "as" must be a lowercase kebab-case alias`)
+    }
+    /* One Step states one thing about one instance; two entries for it are two
        authorities that can disagree, exactly as a facing relation is. */
-    if (seen.has(entity)) {
-      issues.push(`${entryLabel}: "${entity}" is already changed by this Step`)
+    const key = `${entity}\0${alias ?? ''}`
+    if (seen.has(key)) {
+      issues.push(`${entryLabel}: "${entity}${alias ? ` (${alias})` : ''}" already appears in this Step`)
       continue
     }
-    seen.add(entity)
+    seen.add(key)
     const effect = stringField(item, 'effect', issues, entryLabel)
     if (effect !== undefined && !SCENARIO_STEP_EFFECTS.includes(effect as ScenarioStepEffect)) {
       issues.push(`${entryLabel}: effect "${effect}" must be ${SCENARIO_STEP_EFFECTS.join('|')}`)
       continue
     }
-    const state = stringField(item, 'state', issues, entryLabel)
-    /* Ending a thing and leaving it in a state are different claims, and the
-       second cannot follow the first. */
-    if (effect === 'removes' && state !== undefined) {
-      issues.push(`${entryLabel}: a "removes" change cannot also leave "${entity}" in a state`)
+    const resolved = (effect ?? 'changes') as ScenarioStepEffect
+    const from = stringField(item, 'from', issues, entryLabel)
+    const to = stringField(item, 'to', issues, entryLabel)
+    /* State keys follow the effect. A creation starts nowhere, a removal leaves
+       nothing in a state, a read says nothing about state, and a change either
+       moves — both keys — or alters information — neither. */
+    if (resolved === 'reads' && (from !== undefined || to !== undefined)) {
+      issues.push(`${entryLabel}: a "reads" entry carries no "from" or "to"`)
       continue
     }
-    changes.push({
-      entity,
-      effect: effect as ScenarioStepEffect | undefined,
-      state
-    })
+    if (resolved === 'creates' && from !== undefined) {
+      issues.push(`${entryLabel}: a "creates" entry has no "from"; a creation starts nowhere`)
+      continue
+    }
+    if (resolved === 'removes' && to !== undefined) {
+      issues.push(`${entryLabel}: a "removes" entry has no "to"; nothing is left in a state after it ends`)
+      continue
+    }
+    if (resolved === 'changes' && (from === undefined) !== (to === undefined)) {
+      issues.push(`${entryLabel}: a "changes" entry carries both "from" and "to", or neither`)
+      continue
+    }
+    entries.push({ entity, as: alias, effect: effect as ScenarioStepEffect | undefined, from, to })
   }
-  return changes
+  return entries
 }
 
 function parsedContextField(
@@ -703,29 +799,238 @@ function businessRuleTargetsField(
       if (parsed) targets.push({ type: 'context', context: parsed })
       continue
     }
-    rejectUnknownKeys(target, ['type', 'id', 'contexts'], issues, targetLabel)
-    const rawContexts = target.contexts
-    const contexts: Context[] = []
-    if (rawContexts !== undefined && rawContexts !== null) {
-      if (!Array.isArray(rawContexts) || rawContexts.length === 0) {
-        issues.push(`${targetLabel}: "contexts" must be a non-empty list when present`)
-      } else {
-        for (const [contextIndex, rawContext] of rawContexts.entries()) {
-          const parsed = contextValue(rawContext, issues, `${targetLabel}: context ${contextIndex + 1}`)
-          if (parsed) contexts.push(parsed)
-        }
+    if (type === 'entity') {
+      rejectUnknownKeys(target, ['type', 'id', 'effect', 'from', 'to', 'facts', 'contexts'], issues, targetLabel)
+      const effect = stringField(target, 'effect', issues, targetLabel)
+      if (effect !== undefined && !SCENARIO_STEP_EFFECTS.includes(effect as ScenarioStepEffect)) {
+        issues.push(`${targetLabel}: effect "${effect}" must be ${SCENARIO_STEP_EFFECTS.join('|')}`)
       }
+      const from = stringField(target, 'from', issues, targetLabel)
+      const to = stringField(target, 'to', issues, targetLabel)
+      /* A target selects Steps by the keys their entry carries, so it takes only
+         the state keys that effect can have. */
+      if (from !== undefined && (effect === 'creates' || effect === 'reads')) {
+        issues.push(`${targetLabel}: "from" selects nothing on a "${effect}" target; a ${effect === 'creates' ? 'creation starts nowhere' : 'read carries no state'}`)
+      }
+      if (to !== undefined && (effect === 'removes' || effect === 'reads')) {
+        issues.push(`${targetLabel}: "to" selects nothing on a "${effect}" target`)
+      }
+      targets.push({
+        type: 'entity',
+        id: stringField(target, 'id', issues, targetLabel) || '',
+        effect: effect as ScenarioStepEffect | undefined,
+        from,
+        to,
+        facts: uniqueStringListField(target, 'facts', issues, targetLabel),
+        contexts: targetContextsField(target, issues, targetLabel)
+      })
+      continue
     }
+    rejectUnknownKeys(target, ['type', 'id', 'contexts'], issues, targetLabel)
     targets.push({
       type: type as BusinessRuleResourceTargetType,
       id: stringField(target, 'id', issues, targetLabel) || '',
-      contexts
+      contexts: targetContextsField(target, issues, targetLabel)
     })
   }
   return targets
 }
 
-/** Load the strict schema 6 .businesslens/ folder, collecting parse issues. */
+function targetContextsField(target: Record<string, unknown>, issues: string[], label: string): Context[] {
+  const rawContexts = target.contexts
+  const contexts: Context[] = []
+  if (rawContexts === undefined || rawContexts === null) return contexts
+  if (!Array.isArray(rawContexts) || rawContexts.length === 0) {
+    issues.push(`${label}: "contexts" must be a non-empty list when present`)
+    return contexts
+  }
+  for (const [contextIndex, rawContext] of rawContexts.entries()) {
+    const parsed = contextValue(rawContext, issues, `${label}: context ${contextIndex + 1}`)
+    if (parsed) contexts.push(parsed)
+  }
+  return contexts
+}
+
+/** A `self` or `unattended` key: present and `true`, or absent. Nothing else. */
+function literalTrue(data: Record<string, unknown>, key: string, issues: string[], label: string): true | undefined {
+  const value = data[key]
+  if (value === undefined || value === null) return undefined
+  if (value !== true) {
+    issues.push(`${label}: "${key}" is either true or absent`)
+    return undefined
+  }
+  return true
+}
+
+function relatedPathField(raw: unknown, issues: string[], label: string): RelatedSegment[] {
+  if (raw === undefined || raw === null) return []
+  if (!Array.isArray(raw)) {
+    issues.push(`${label}: "related" must be a list of { verb, entity } segments`)
+    return []
+  }
+  /* The zero-hop path has one spelling, and it is not an empty list. */
+  if (!raw.length) {
+    issues.push(`${label}: "related" is empty; the instance itself is "self: true"`)
+    return []
+  }
+  const segments: RelatedSegment[] = []
+  for (const [index, entry] of raw.entries()) {
+    const segmentLabel = `${label}: related segment ${index + 1}`
+    if (typeof entry !== 'object' || entry === null || Array.isArray(entry)) {
+      issues.push(`${segmentLabel} must be a { verb, entity } mapping`)
+      continue
+    }
+    const item = entry as Record<string, unknown>
+    rejectUnknownKeys(item, ['verb', 'entity'], issues, segmentLabel)
+    const verb = stringField(item, 'verb', issues, segmentLabel) || ''
+    const entity = stringField(item, 'entity', issues, segmentLabel) || ''
+    if (!verb) issues.push(`${segmentLabel}: needs a "verb"`)
+    if (!entity) issues.push(`${segmentLabel}: needs an "entity"`)
+    if (verb && entity) segments.push({ verb, entity })
+  }
+  return segments
+}
+
+function grantConditionsField(raw: unknown, issues: string[], label: string): GrantCondition[] {
+  if (raw === undefined || raw === null) return []
+  if (!Array.isArray(raw)) {
+    issues.push(`${label}: "when" must be a list of conditions`)
+    return []
+  }
+  const conditions: GrantCondition[] = []
+  for (const [index, entry] of raw.entries()) {
+    const conditionLabel = `${label}: condition ${index + 1}`
+    if (typeof entry !== 'object' || entry === null || Array.isArray(entry)) {
+      issues.push(`${conditionLabel} must be a mapping`)
+      continue
+    }
+    const item = entry as Record<string, unknown>
+    rejectUnknownKeys(item, ['entity', 'fact', 'state', ...GRANT_OPERATORS], issues, conditionLabel)
+    const entity = stringField(item, 'entity', issues, conditionLabel)
+    const fact = stringField(item, 'fact', issues, conditionLabel)
+    const state = stringField(item, 'state', issues, conditionLabel)
+    const operators = GRANT_OPERATORS.filter(operator => item[operator] !== undefined)
+    if (state !== undefined) {
+      /* Another Entity's instance has no path from this one, so a state
+         condition is always about the targeted thing and carries nothing else. */
+      if (entity !== undefined || fact !== undefined || operators.length) {
+        issues.push(`${conditionLabel}: a "state" condition carries nothing else`)
+        continue
+      }
+      conditions.push({ state })
+      continue
+    }
+    if (fact === undefined) {
+      issues.push(`${conditionLabel}: needs a "fact" with one operator, or a "state"`)
+      continue
+    }
+    if (operators.length !== 1) {
+      issues.push(`${conditionLabel}: needs exactly one operator of ${GRANT_OPERATORS.join('|')}`)
+      continue
+    }
+    const operator = operators[0]!
+    const rawValue = item[operator]
+    let value: GrantValue | undefined
+    if (operator === 'present' || operator === 'absent') {
+      if (rawValue !== true) {
+        issues.push(`${conditionLabel}: "${operator}" takes true`)
+        continue
+      }
+      value = true
+    } else if (typeof rawValue === 'string' || typeof rawValue === 'number' || typeof rawValue === 'boolean') {
+      value = rawValue
+    } else if (typeof rawValue === 'object' && rawValue !== null && !Array.isArray(rawValue)) {
+      const holder = rawValue as Record<string, unknown>
+      rejectUnknownKeys(holder, ['configuredBy'], issues, `${conditionLabel}: "${operator}"`)
+      const configuredBy = stringField(holder, 'configuredBy', issues, `${conditionLabel}: "${operator}"`)
+      if (!configuredBy) {
+        issues.push(`${conditionLabel}: "${operator}" needs a scalar or { configuredBy: <entity-id> }`)
+        continue
+      }
+      value = { configuredBy }
+    } else {
+      issues.push(`${conditionLabel}: "${operator}" needs a scalar or { configuredBy: <entity-id> }`)
+      continue
+    }
+    conditions.push({ entity, fact, operator, value })
+  }
+  return conditions
+}
+
+/**
+ * A Rule's `permits`: absent, `[]`, or grants. Shape only — whether an actor
+ * acts, a path resolves, or a fact exists are model-wide questions for `lint`.
+ */
+function businessRulePermitsField(
+  data: Record<string, unknown>,
+  issues: string[],
+  label: string
+): BusinessRuleGrant[] | undefined {
+  const value = data.permits
+  if (value === undefined || value === null) return undefined
+  if (!Array.isArray(value)) {
+    issues.push(`${label}: "permits" must be a list of grants, or [] to forbid the operation to everyone`)
+    return undefined
+  }
+  const grants: BusinessRuleGrant[] = []
+  for (const [index, raw] of value.entries()) {
+    const grantLabel = `${label}: grant ${index + 1}`
+    if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
+      issues.push(`${grantLabel} must be a mapping`)
+      continue
+    }
+    const item = raw as Record<string, unknown>
+    rejectUnknownKeys(item, ['actors', 'related', 'self', 'when', 'unattended', 'configuredBy'], issues, grantLabel)
+    const grant: BusinessRuleGrant = {
+      actors: uniqueStringListField(item, 'actors', issues, grantLabel),
+      related: relatedPathField(item.related, issues, grantLabel),
+      self: literalTrue(item, 'self', issues, grantLabel),
+      when: grantConditionsField(item.when, issues, grantLabel),
+      unattended: literalTrue(item, 'unattended', issues, grantLabel),
+      configuredBy: stringField(item, 'configuredBy', issues, grantLabel)
+    }
+    /* "Anyone" already has an encoding — list every Entity that acts — and a
+       grant with no who is indistinguishable from a forgotten one. */
+    if (!grant.actors.length && !grant.related.length && !grant.self && !grant.unattended && !grant.configuredBy) {
+      issues.push(`${grantLabel}: names nobody; a grant needs at least one of actors, related, self, unattended, configuredBy`)
+    }
+    grants.push(grant)
+  }
+  return grants
+}
+
+const FACT_PATTERN = /^\*\*(.+?)\*\*\s+—\s+(\S.*)$/
+
+/**
+ * `## Information kept`, one named fact per bullet.
+ *
+ * The name is what a Rule cites, so it is parsed rather than read out of
+ * English, and the separator is one thing — an em dash — so that two authors
+ * cannot spell one fact two ways.
+ */
+function entityFacts(body: string | undefined, issues: string[], file: string): EntityFact[] {
+  const facts: EntityFact[] = []
+  if (body === undefined) return facts
+  const seen = new Set<string>()
+  for (const line of bulletList(body)) {
+    const match = FACT_PATTERN.exec(line)
+    if (!match) {
+      issues.push(`${file}: fact "${line}" must read "**Name** — prose"`)
+      continue
+    }
+    const name = match[1]!.trim()
+    if (seen.has(name)) {
+      issues.push(`${file}: duplicate fact "${name}"`)
+      continue
+    }
+    seen.add(name)
+    facts.push({ name, description: match[2]!.trim() })
+  }
+  return facts
+}
+
+
+/** Load the strict schema 8 .businesslens/ folder, collecting parse issues. */
 export function loadModel(cwd: string): PddModel {
   const root = join(cwd, FOLDER)
   const issues: string[] = []
@@ -919,17 +1224,11 @@ export function loadModel(cwd: string): PddModel {
     issues.push('coverage.md is missing')
   }
 
-  const actors: ActorResource[] = listResources(join(root, 'actors'), 'actor', findings, 'actors')
-    .map((location) => {
-      const { id, file } = location
-      const { data, doc, references, directory, assets, assetMeta } = readResource(location, ['kind', 'relationship'], issues)
-      return {
-        id, file, doc, references, directory, assets, assetMeta,
-        informationKept: bulletList(section(doc, 'Information kept') || ''),
-        kind: stringField(data, 'kind', issues, file) || '',
-        relationship: stringField(data, 'relationship', issues, file) || ''
-      }
-    })
+  /* There is no `actors/`. A folder that still has one is reported as the
+     misplaced collection it is, with the move named. */
+  if (existsSync(join(root, 'actors'))) {
+    issues.push('actors/: there is no Actor resource type; move each file to entities/ and say how it acts with "kind" and "acts"')
+  }
 
   /*
     The Interface → Experience → Screen hierarchy is walked, not listed. An
@@ -1047,15 +1346,38 @@ export function loadModel(cwd: string): PddModel {
     .map((location) => {
       const { id, file } = location
       const { data, doc, references, directory, assets, assetMeta } =
-        readResource(location, ['domain', 'relations', 'transitions'], issues)
-      const informationKept = bulletList(section(doc, 'Information kept') || '')
+        readResource(location, ['domain', 'kind', 'acts', 'relations', 'transitions'], issues)
+      /* The lifecycle is composed from Steps. A list that restated it was the
+         second authority the format removed, and the message names the first. */
+      if (data.transitions !== undefined) {
+        issues.push(`${file}: "transitions" is gone; a Step's "entities" entry says which state it moves the thing from and to`)
+      }
+      const informationKept = entityFacts(section(doc, 'Information kept'), issues, file)
       const states = screenStates(section(doc, 'States') || '', issues, file, 'States', 'entity state')
       const hasStates = section(doc, 'States') !== undefined
 
+      const kind = stringField(data, 'kind', issues, file)
+      const acts = stringField(data, 'acts', issues, file)
+      if (acts !== undefined && !(ENTITY_ACTS as readonly string[]).includes(acts)) {
+        issues.push(`${file}: acts "${acts}" must be external|internal`)
+      }
+      if (kind !== undefined && !(ENTITY_KINDS as readonly string[]).includes(kind)) {
+        issues.push(`${file}: kind "${kind}" must be person|system`)
+      }
+      /* An Actor was always a person or a system; an Entity that acts without
+         saying which would be a regression from the Actor it replaces. A thing
+         that does not act says nothing, because "it's a thing" is the default. */
+      if (acts !== undefined && kind === undefined) {
+        issues.push(`${file}: an Entity that acts needs "kind": person|system`)
+      }
+      if (acts === undefined && kind !== undefined) {
+        issues.push(`${file}: "kind" is only valid together with "acts"`)
+      }
+
       // Identity, not storage: a thing may be worth naming for what the Product
-      // keeps about it, for how it changes, or for both — but not for neither.
-      if (!informationKept.length && !hasStates) {
-        issues.push(`${file}: an Entity needs "## Information kept" or "## States"`)
+      // keeps about it, for how it changes, or because it acts — but not for none.
+      if (!informationKept.length && !hasStates && acts === undefined) {
+        issues.push(`${file}: an Entity needs "## Information kept", "## States", or "acts"`)
       }
 
       const relations: EntityRelation[] = []
@@ -1091,38 +1413,6 @@ export function loadModel(cwd: string): PddModel {
         }
       }
 
-      const stateNames = new Set(states.map(state => state.title))
-      const transitions: EntityStateTransition[] = []
-      const rawTransitions = data.transitions
-      if (hasStates && (rawTransitions === undefined || rawTransitions === null)) {
-        issues.push(`${file}: an Entity with "## States" needs "transitions"`)
-      }
-      if (!hasStates && rawTransitions !== undefined && rawTransitions !== null) {
-        issues.push(`${file}: "transitions" needs "## States" to move between`)
-      }
-      if (Array.isArray(rawTransitions)) {
-        for (const [index, raw] of rawTransitions.entries()) {
-          const label = `${file}: transition ${index + 1}`
-          if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
-            issues.push(`${label} must be a mapping`)
-            continue
-          }
-          const item = raw as Record<string, unknown>
-          rejectUnknownKeys(item, ['from', 'to', 'by'], issues, label)
-          const from = stringField(item, 'from', issues, label) || ''
-          const to = stringField(item, 'to', issues, label) || ''
-          const by = stringField(item, 'by', issues, label) || ''
-          for (const name of [from, to]) {
-            if (name && !stateNames.has(name)) issues.push(`${label}: names unknown state "${name}"`)
-          }
-          if (!by) issues.push(`${label}: needs "by", the Capability that causes it`)
-          transitions.push({ from, to, by })
-        }
-        if (hasStates && !transitions.length) issues.push(`${file}: "transitions" needs at least one transition`)
-      } else if (rawTransitions !== undefined && rawTransitions !== null) {
-        issues.push(`${file}: "transitions" must be a list`)
-      }
-
       /* Whether a state is reachable is a model-wide question — a Step may
          create straight into one — so `lint` asks it once the whole model is
          loaded rather than this parser asking it one Entity file at a time. */
@@ -1130,9 +1420,10 @@ export function loadModel(cwd: string): PddModel {
         id, file, doc, references, directory, assets, assetMeta,
         domain: stringField(data, 'domain', issues, file),
         informationKept,
+        kind,
+        acts,
         relations,
-        states,
-        transitions
+        states
       }
     })
 
@@ -1146,8 +1437,12 @@ export function loadModel(cwd: string): PddModel {
     ['scenarios']
   )) {
     const { data, doc, references, directory, assets, assetMeta } = readResource(location, ['domain', 'entities', 'availability'], issues)
+    /* What a Capability changes is what its Steps say it changes. A list here
+       restated that from the other side, and the message names the replacement. */
+    if (data.entities !== undefined) {
+      issues.push(`${location.file}: "entities" is gone from a Capability; each Step's "entities" says what it changes`)
+    }
     capabilities.push({
-      entities: uniqueStringListField(data, 'entities', issues, location.file),
       id: location.id,
       file: location.file,
       doc,
@@ -1236,10 +1531,11 @@ export function loadModel(cwd: string): PddModel {
     'business-rules'
   ).map((location) => {
     const { id, file } = location
-    const { data, doc, references, directory, assets, assetMeta } = readResource(location, ['appliesTo'], issues)
+    const { data, doc, references, directory, assets, assetMeta } = readResource(location, ['appliesTo', 'permits'], issues)
     return {
       id, file, doc, references, directory, assets, assetMeta,
       appliesTo: businessRuleTargetsField(data, issues, file),
+      permits: businessRulePermitsField(data, issues, file),
       rationale: section(doc, 'Rationale') || ''
     }
   })
@@ -1250,7 +1546,6 @@ export function loadModel(cwd: string): PddModel {
     product,
     scenarioKinds,
     coverage,
-    actors,
     interfaces,
     experiences,
     screens,

@@ -4,7 +4,7 @@ import { containsPlace, interfaceOf, parentPlace } from './ids.js'
 import { containsStructuralHeading } from './markdown.js'
 import { INTERFACE_TYPES } from './interface-types.js'
 
-export const REPORT_SCHEMA_VERSION = '12.0.0'
+export const REPORT_SCHEMA_VERSION = '13.0.0'
 
 const IdSchema = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
 /**
@@ -88,7 +88,6 @@ export const TaxonomyEntrySchema = z.strictObject({
 })
 
 const ReportResourceCountShape = {
-  actors: z.number().int().min(0),
   interfaces: z.number().int().min(0),
   experiences: z.number().int().min(0),
   screens: z.number().int().min(0),
@@ -120,17 +119,6 @@ export const ReportEntryPointSchema = z.strictObject({
 
 export const ReportContextSchema = z.strictObject({
   placeId: QualifiedIdSchema
-})
-
-export const ReportActorSchema = z.strictObject({
-  id: IdSchema,
-  name: SingleLineTextSchema,
-  description: RequiredMarkdownFragmentSchema,
-  kind: z.enum(['person', 'system']),
-  relationship: z.enum(['external', 'internal']),
-  /** What the Product keeps about this Actor. Same rule as an Entity's. */
-  informationKept: z.array(SingleLineTextSchema),
-  ...ResourceContentSchema
 })
 
 export const ReportInterfaceSchema = z.strictObject({
@@ -169,11 +157,13 @@ export const ReportEntityStateSchema = z.strictObject({
   content: RequiredMarkdownFragmentSchema
 })
 
-export const ReportEntityTransitionSchema = z.strictObject({
-  from: SingleLineTextSchema,
-  to: SingleLineTextSchema,
-  /** The Capability that causes the move. Always declares this Entity. */
-  capabilityId: IdSchema
+/**
+ * A named fact the Product keeps about a thing. The name is what a Business
+ * Rule cites, by exact match; the fact itself stays untyped.
+ */
+export const ReportEntityFactSchema = z.strictObject({
+  name: SingleLineTextSchema,
+  description: SingleLineTextSchema
 })
 
 /**
@@ -191,20 +181,27 @@ export const ReportEntityRelationSchema = z.strictObject({
 })
 
 /**
- * A thing the Product keeps whose state an Actor can observe. Entity states are
- * an authored lifecycle; a Screen's `states` remain that view's own
- * states, and the two are never merged.
+ * A thing the Product keeps or reasons about — the people and systems that act
+ * on it included. There is no `actors` collection: an Actor is an Entity whose
+ * `acts` is non-null, and every actor reference in the report names one.
+ *
+ * Entity states are an authored lifecycle whose moves are composed from
+ * Scenario steps; a Screen's `states` remain that view's own states, and the
+ * two are never merged.
  */
 export const ReportEntitySchema = z.strictObject({
   id: IdSchema,
   title: SingleLineTextSchema,
   description: RequiredMarkdownFragmentSchema,
   domainId: IdSchema.optional(),
-  /** What the Product keeps about the thing. Never how it is stored. */
-  informationKept: z.array(SingleLineTextSchema),
+  /** Non-null exactly when `acts` is. */
+  kind: z.enum(['person', 'system']).nullable(),
+  /** Which side of the Product boundary it acts from; null for a thing that does not act. */
+  acts: z.enum(['external', 'internal']).nullable(),
+  /** What the Product keeps about the thing, by name. Never how it is stored. */
+  informationKept: z.array(ReportEntityFactSchema),
   relations: z.array(ReportEntityRelationSchema),
   states: z.array(ReportEntityStateSchema),
-  transitions: z.array(ReportEntityTransitionSchema),
   ...ResourceContentSchema
 })
 
@@ -213,8 +210,6 @@ export const ReportCapabilitySchema = z.strictObject({
   title: SingleLineTextSchema,
   description: RequiredMarkdownFragmentSchema,
   domainId: IdSchema.optional(),
-  /** The Entities this Capability acts on. */
-  entityIds: z.array(IdSchema),
   availability: z.array(ReportContextSchema).min(1),
   ...ResourceContentSchema
 })
@@ -272,27 +267,31 @@ export const ReportScenarioStepContextSchema = z.strictObject({
   placeId: QualifiedIdSchema
 })
 
+export const STEP_EFFECTS = ['creates', 'changes', 'removes', 'reads'] as const
+
 /**
  * What one Step does to one Entity.
  *
  * `effect` is resolved rather than optional: the folder may omit the default,
  * the wire never does, so nothing downstream has to know which value that was.
+ * `as` is a scenario-local instance alias; `from` and `to` follow the effect.
  */
-export const ReportScenarioStepChangeSchema = z.strictObject({
+export const ReportScenarioStepEntitySchema = z.strictObject({
   entityId: IdSchema,
-  effect: z.enum(['creates', 'changes', 'removes']),
-  state: SingleLineTextSchema.nullable()
+  as: IdSchema.nullable(),
+  effect: z.enum(STEP_EFFECTS),
+  from: SingleLineTextSchema.nullable(),
+  to: SingleLineTextSchema.nullable()
 })
 
 export const ReportScenarioStepSchema = z.strictObject({
   text: SingleLineTextSchema,
   kind: z.enum(['actor', 'product', 'condition']),
+  /** Who performs an actor Step, or who a Product or condition Step is attributable to. */
   actorId: IdSchema.nullable(),
   capabilityId: IdSchema.nullable(),
-  /** What this Step does to the Product's Entities. One act may move several. */
-  changes: z.array(ReportScenarioStepChangeSchema),
-  /** Entities the Step picks, inspects, or displays without changing. */
-  readEntityIds: z.array(IdSchema),
+  /** What this Step does to the Product's Entities. Empty when it touches nothing. */
+  entities: z.array(ReportScenarioStepEntitySchema),
   /** True only on a first condition Step that nobody triggers. */
   unattended: z.boolean(),
   contexts: z.array(ReportScenarioStepContextSchema)
@@ -337,10 +336,55 @@ const ReportBusinessRuleContextTargetSchema = z.strictObject({
   context: ReportContextSchema
 })
 
+/**
+ * A target selects; a grant conditions. `effect`, `from` and `to` select steps
+ * by the keys their `entities` record carries; `facts` names the facts the
+ * Rule governs; `contexts` scopes it to places that present the Entity.
+ */
+const ReportBusinessRuleEntityTargetSchema = z.strictObject({
+  type: z.literal('entity'),
+  entityId: IdSchema,
+  effect: z.enum(STEP_EFFECTS).nullable(),
+  from: SingleLineTextSchema.nullable(),
+  to: SingleLineTextSchema.nullable(),
+  facts: z.array(SingleLineTextSchema),
+  contexts: z.array(ReportContextSchema)
+})
+
 export const ReportBusinessRuleTargetSchema = z.discriminatedUnion('type', [
   ReportBusinessRuleResourceTargetSchema,
-  ReportBusinessRuleContextTargetSchema
+  ReportBusinessRuleContextTargetSchema,
+  ReportBusinessRuleEntityTargetSchema
 ])
+
+export const GRANT_OPERATORS = ['over', 'under', 'at-least', 'at-most', 'is', 'is-not', 'present', 'absent'] as const
+
+/** One `when` condition: a fact with one operator, or the instance's own state. */
+export const ReportGrantConditionSchema = z.strictObject({
+  entityId: IdSchema.nullable(),
+  fact: SingleLineTextSchema.nullable(),
+  state: SingleLineTextSchema.nullable(),
+  operator: z.enum(GRANT_OPERATORS).nullable(),
+  value: z.union([
+    z.string(),
+    z.number(),
+    z.boolean(),
+    z.strictObject({ configuredByEntityId: IdSchema })
+  ]).nullable()
+})
+
+/**
+ * One grant. Keys within it are AND; grants within a Rule are OR; Rules that
+ * select one operation are AND. Every grant names a who.
+ */
+export const ReportGrantSchema = z.strictObject({
+  actorIds: z.array(IdSchema),
+  related: z.array(z.strictObject({ verb: SingleLineTextSchema, entityId: IdSchema })),
+  self: z.boolean(),
+  when: z.array(ReportGrantConditionSchema),
+  unattended: z.boolean(),
+  configuredByEntityId: IdSchema.nullable()
+})
 
 export const ReportBusinessRuleSchema = z.strictObject({
   id: IdSchema,
@@ -348,6 +392,8 @@ export const ReportBusinessRuleSchema = z.strictObject({
   statement: RequiredMarkdownFragmentSchema,
   rationale: MarkdownFragmentSchema,
   appliesTo: z.array(ReportBusinessRuleTargetSchema).min(1),
+  /** Null: no authorization claim. Empty: forbidden to everyone. Otherwise the grants. */
+  permits: z.array(ReportGrantSchema).nullable(),
   ...ResourceContentSchema
 })
 
@@ -360,7 +406,7 @@ export const ReportCoverageSchema = z.strictObject({
   rationale: MarkdownFragmentSchema
 })
 
-export const ProductReportV12Schema = z.strictObject({
+export const ProductReportV13Schema = z.strictObject({
   schemaVersion: z.literal(REPORT_SCHEMA_VERSION),
   id: ProductIdSchema,
   title: SingleLineTextSchema.max(160),
@@ -382,7 +428,6 @@ export const ProductReportV12Schema = z.strictObject({
     taxonomies: z.strictObject({
       scenarioKinds: z.array(TaxonomyEntrySchema)
     }),
-    actors: z.array(ReportActorSchema),
     interfaces: z.array(ReportInterfaceSchema).min(1),
     experiences: z.array(ReportExperienceSchema),
     screens: z.array(ReportScreenSchema),
@@ -397,22 +442,21 @@ export const ProductReportV12Schema = z.strictObject({
   coverage: ReportCoverageSchema
 })
 
-export const ProductReportSchema = ProductReportV12Schema
+export const ProductReportSchema = ProductReportV13Schema
 
-export type ProductReportV12 = z.infer<typeof ProductReportV12Schema>
-export type ProductReport = ProductReportV12
+export type ProductReportV13 = z.infer<typeof ProductReportV13Schema>
+export type ProductReport = ProductReportV13
 export type ReportDecisionPoint = z.infer<typeof ReportDecisionPointSchema>
 export type ReportScreenState = z.infer<typeof ReportScreenStateSchema>
 export type ReportCoverage = z.infer<typeof ReportCoverageSchema>
 export type ReportCounts = z.infer<typeof ReportCountsSchema>
 export type ReportAuthor = z.infer<typeof ReportAuthorSchema>
-export type ReportActor = z.infer<typeof ReportActorSchema>
 export type ReportInterface = z.infer<typeof ReportInterfaceSchema>
 export type ReportExperience = z.infer<typeof ReportExperienceSchema>
 export type ReportDomain = z.infer<typeof ReportDomainSchema>
 export type ReportEntity = z.infer<typeof ReportEntitySchema>
 export type ReportEntityState = z.infer<typeof ReportEntityStateSchema>
-export type ReportEntityTransition = z.infer<typeof ReportEntityTransitionSchema>
+export type ReportEntityFact = z.infer<typeof ReportEntityFactSchema>
 export type ReportEntityRelation = z.infer<typeof ReportEntityRelationSchema>
 export type ReportCapability = z.infer<typeof ReportCapabilitySchema>
 export type ReportContext = z.infer<typeof ReportContextSchema>
@@ -422,13 +466,16 @@ export type ReportCapabilityScenario = z.infer<typeof ReportCapabilityScenarioSc
 export type ReportScenarioRoute = z.infer<typeof ReportScenarioRouteSchema>
 export type ReportScenarioStepContext = z.infer<typeof ReportScenarioStepContextSchema>
 export type ReportScenarioStep = z.infer<typeof ReportScenarioStepSchema>
+export type ReportScenarioStepEntity = z.infer<typeof ReportScenarioStepEntitySchema>
+export type ReportGrant = z.infer<typeof ReportGrantSchema>
+export type ReportGrantCondition = z.infer<typeof ReportGrantConditionSchema>
 export type ReportJourneyScenario = z.infer<typeof ReportJourneyScenarioSchema>
 export type ReportBusinessRule = z.infer<typeof ReportBusinessRuleSchema>
 export type ReportBusinessRuleTarget = z.infer<typeof ReportBusinessRuleTargetSchema>
 export type ReportReference = z.infer<typeof ReportReferenceSchema>
 export type ReportSupportingSection = z.infer<typeof ReportSupportingSectionSchema>
 
-export type ReportModel = ProductReportV12['model']
+export type ReportModel = ProductReportV13['model']
 
 /** One resource in the report, reduced to what every "for every resource" check needs. */
 type ReportResource = { id: string, references: ReportReference[] }
@@ -437,7 +484,7 @@ type ReportResource = { id: string, references: ReportReference[] }
  * Every resource collection in a report, keyed by its own name.
  *
  * The key union is read off the schema rather than written out, so a new
- * collection in `ProductReportV12Schema` leaves this record incomplete and fails
+ * collection in `ProductReportV13Schema` leaves this record incomplete and fails
  * the build. `taxonomies` is an object, not an array of resources, so it drops
  * out on its own. See the same reasoning in `resourceCollections` — Entity was
  * added to the report and its ids and References went unchecked for a release
@@ -449,7 +496,6 @@ export type ReportCollectionName = {
 
 export function reportResourceCollections(model: ReportModel): Record<ReportCollectionName, ReportResource[]> {
   return {
-    actors: model.actors,
     interfaces: model.interfaces,
     experiences: model.experiences,
     screens: model.screens,
@@ -559,10 +605,18 @@ function requireEntryPointInterfaces(
 }
 
 /** Cross-resource and computed-field validation, shared with every report consumer. */
-export function validateProductReport(report: ProductReportV12): string[] {
+export function validateProductReport(report: ProductReportV13): string[] {
   const issues: string[] = []
   const { model } = report
-  const actorIds = new Set(model.actors.map(item => item.id))
+  /* An Actor is an Entity that acts. Every actor reference resolves here. */
+  const actorIds = new Set(model.entities.filter(item => item.acts !== null).map(item => item.id))
+  const requireActing = (label: string, ids: string[]) => {
+    for (const id of ids) {
+      if (actorIds.has(id)) continue
+      if (model.entities.some(item => item.id === id)) issues.push(`${label}: "${id}" does not act`)
+      else issues.push(`${label}: references missing entity "${id}"`)
+    }
+  }
   const interfaceIds = new Set(model.interfaces.map(item => item.id))
   const interfacesById = new Map(model.interfaces.map(item => [item.id, item]))
   const experiencesById = new Map(model.experiences.map(item => [item.id, item]))
@@ -602,9 +656,6 @@ export function validateProductReport(report: ProductReportV12): string[] {
     if (previous) issues.push(`journey scenario "${scenario.id}": id already used by ${previous}`)
   }
 
-  for (const actor of model.actors) {
-    validateSupportingSections(issues, `actor "${actor.id}"`, actor.supportingSections, ['Intent', 'Information kept'])
-  }
   for (const domain of model.domains) {
     validateSupportingSections(issues, `domain "${domain.id}"`, domain.supportingSections, ['Intent'])
   }
@@ -626,7 +677,7 @@ export function validateProductReport(report: ProductReportV12): string[] {
       productInterface.supportingSections,
       ['Intent', 'Capability boundary']
     )
-    missingRelation(issues, `interface "${productInterface.id}"`, 'actor', productInterface.actorIds, actorIds)
+    requireActing(`interface "${productInterface.id}"`, productInterface.actorIds)
   }
   for (const experience of model.experiences) {
     requireUniqueValues(issues, `experience "${experience.id}"`, 'actorIds', experience.actorIds)
@@ -637,7 +688,7 @@ export function validateProductReport(report: ProductReportV12): string[] {
       experience.supportingSections,
       ['Intent', 'Capability boundary']
     )
-    missingRelation(issues, `experience "${experience.id}"`, 'actor', experience.actorIds, actorIds)
+    requireActing(`experience "${experience.id}"`, experience.actorIds)
     missingRelation(issues, `experience "${experience.id}"`, 'interface', experience.interfaceIds, interfaceIds)
     for (const interfaceId of experience.interfaceIds) {
       const supportedActors = new Set(interfacesById.get(interfaceId)?.actorIds || [])
@@ -674,8 +725,6 @@ export function validateProductReport(report: ProductReportV12): string[] {
     if (capability.domainId && !domainIds.has(capability.domainId)) {
       issues.push(`capability "${capability.id}": references missing domain "${capability.domainId}"`)
     }
-    requireUniqueValues(issues, `capability "${capability.id}"`, 'entityIds', capability.entityIds)
-    missingRelation(issues, `capability "${capability.id}"`, 'entity', capability.entityIds, entityIds)
     capabilityAvailability.set(
       capability.id,
       validateAvailabilityPlaces(
@@ -749,16 +798,17 @@ export function validateProductReport(report: ProductReportV12): string[] {
     const allContainers = new Set<string>()
     const capabilitySteps: Array<{ capabilityId: string, contextPlaces: Set<string>, containers: Set<string> }> = []
     const screenIds = new Set<string>()
+    const unattendedScenario = scenario.steps[0]?.unattended === true
     for (const [index, step] of scenario.steps.entries()) {
       const stepLabel = `${label}: step ${index + 1}`
-      if (step.kind === 'actor') {
-        if (!step.actorId) issues.push(`${stepLabel}: an actor Step needs one actorId`)
-        else {
-          derivedActors.add(step.actorId)
-          if (!actorIds.has(step.actorId)) issues.push(`${stepLabel}: references missing actor "${step.actorId}"`)
-        }
-      } else if (step.actorId !== null) {
-        issues.push(`${stepLabel}: actorId is only valid when kind is "actor"`)
+      /* An actor Step names who performs it; a Product or condition Step may
+         name who it is attributable to. Either joins the Actor set. An
+         unattended Scenario names nobody. */
+      if (step.kind === 'actor' && !step.actorId) issues.push(`${stepLabel}: an actor Step needs one actorId`)
+      if (step.actorId) {
+        derivedActors.add(step.actorId)
+        requireActing(stepLabel, [step.actorId])
+        if (unattendedScenario) issues.push(`${stepLabel}: an unattended Scenario names no actor`)
       }
       if (parentCapabilityId && step.capabilityId !== parentCapabilityId) {
         issues.push(`${stepLabel}: capabilityId must equal parent capability "${parentCapabilityId}"`)
@@ -772,53 +822,49 @@ export function validateProductReport(report: ProductReportV12): string[] {
 
       /*
        * What a Step claims about a thing is checked against that thing's own
-       * lifecycle: the Entity must be one the Step's Capability acts on, and a
-       * claimed state must be one some transition actually reaches by that
-       * Capability. A Scenario cannot leave an Order Confirmed by a Capability
-       * the Order's own states say never confirms it.
+       * states: every state named is one the Entity has, a creation says where
+       * it starts and a removal where it ends when the Entity has states at
+       * all, and one Step states one thing about one instance.
        */
-      const stepCapabilityId = step.capabilityId ?? parentCapabilityId
-      /* One Step states one thing about one Entity; a second entry for it is a
-         second authority that can disagree with the first. */
-      requireUniqueValues(issues, stepLabel, 'changes', step.changes.map(change => change.entityId))
-      requireUniqueValues(issues, stepLabel, 'readEntityIds', step.readEntityIds)
-      for (const id of step.readEntityIds) {
-        if (!entitiesById.has(id)) issues.push(`${stepLabel}: references missing entity "${id}"`)
-        /* Reading and changing a thing in one act are two claims that cannot
-           both be the whole truth about that Step. */
-        if (step.changes.some(change => change.entityId === id)) {
-          issues.push(`${stepLabel}: "${id}" is both read and changed by this Step`)
-        }
+      requireUniqueValues(issues, stepLabel, 'entities', step.entities.map(entry => `${entry.entityId}\u0000${entry.as ?? ''}`))
+      if (!parentCapabilityId && !step.capabilityId && step.entities.some(entry => entry.effect !== 'reads')) {
+        issues.push(`${stepLabel}: a Journey Step that creates, changes or removes an Entity needs a capabilityId`)
       }
-      for (const change of step.changes) {
-        const entity = entitiesById.get(change.entityId)
+      for (const entry of step.entities) {
+        const entity = entitiesById.get(entry.entityId)
         if (!entity) {
-          issues.push(`${stepLabel}: references missing entity "${change.entityId}"`)
+          issues.push(`${stepLabel}: references missing entity "${entry.entityId}"`)
           continue
         }
-        const owner = stepCapabilityId ? capabilitiesById.get(stepCapabilityId) : undefined
-        if (owner && !owner.entityIds.includes(change.entityId)) {
-          issues.push(`${stepLabel}: capability "${owner.id}" does not list entity "${change.entityId}"`)
-        }
-        /* Ending a thing and leaving it in a state are different claims, and
-           the second cannot follow the first. */
-        if (change.effect === 'removes' && change.state !== null) {
-          issues.push(`${stepLabel}: a "removes" change cannot also leave "${change.entityId}" in a state`)
+        if (entry.effect === 'reads' && (entry.from !== null || entry.to !== null)) {
+          issues.push(`${stepLabel}: a "reads" entry carries no state`)
           continue
         }
-        if (change.state === null) continue
-        if (!entity.states.some(state => state.name === change.state)) {
-          issues.push(`${stepLabel}: "${change.state}" is not a state of entity "${change.entityId}"`)
+        if (entry.effect === 'creates' && entry.from !== null) {
+          issues.push(`${stepLabel}: a "creates" entry has no "from"`)
           continue
         }
-        /* A creation has no `from`, so no transition can ever describe one. */
-        if (change.effect === 'creates') continue
-        if (stepCapabilityId && !entity.transitions.some(
-          transition => transition.to === change.state && transition.capabilityId === stepCapabilityId
-        )) {
-          issues.push(
-            `${stepLabel}: no transition of "${change.entityId}" reaches "${change.state}" by capability "${stepCapabilityId}"`
-          )
+        if (entry.effect === 'removes' && entry.to !== null) {
+          issues.push(`${stepLabel}: a "removes" entry has no "to"`)
+          continue
+        }
+        if (entry.effect === 'changes' && (entry.from === null) !== (entry.to === null)) {
+          issues.push(`${stepLabel}: a "changes" entry carries both "from" and "to", or neither`)
+          continue
+        }
+        const hasStates = entity.states.length > 0
+        for (const value of [entry.from, entry.to]) {
+          if (value === null) continue
+          if (!hasStates) issues.push(`${stepLabel}: "${value}" names a state, and entity "${entry.entityId}" declares none`)
+          else if (!entity.states.some(state => state.name === value)) {
+            issues.push(`${stepLabel}: "${value}" is not a state of entity "${entry.entityId}"`)
+          }
+        }
+        if (hasStates && entry.effect === 'creates' && entry.to === null) {
+          issues.push(`${stepLabel}: creating "${entry.entityId}" needs "to"`)
+        }
+        if (hasStates && entry.effect === 'removes' && entry.from === null) {
+          issues.push(`${stepLabel}: removing "${entry.entityId}" needs "from"`)
         }
       }
 
@@ -849,7 +895,7 @@ export function validateProductReport(report: ProductReportV12): string[] {
             issues.push(`${contextLabel}: Screen "${resolved.screen.id}" does not expose capability "${step.capabilityId}"`)
           }
         }
-        if (step.kind === 'actor' && step.actorId) {
+        if (step.actorId) {
           const supported = supportedActorsForContainer(resolved.containerId) || new Set<string>()
           if (!supported.has(step.actorId)) {
             issues.push(`${contextLabel}: Context place does not support actor "${step.actorId}"`)
@@ -858,9 +904,8 @@ export function validateProductReport(report: ProductReportV12): string[] {
       }
     }
     if (!sameIds(scenario.actorIds, derivedActors)) {
-      issues.push(`${label}: actorIds must equal the Actor Step union`)
+      issues.push(`${label}: actorIds must equal the union of every step actorId`)
     }
-    missingRelation(issues, label, 'actor', scenario.actorIds, actorIds)
     for (const route of scenario.routes) {
       if (!(routeContextPlaces.get(route.id) || []).length) issues.push(`${label}: route "${route.id}" must have a Context on at least one Step`)
     }
@@ -982,7 +1027,7 @@ export function validateProductReport(report: ProductReportV12): string[] {
       journey.supportingSections,
       ['Intent', 'Goal', 'Success criterion', 'Trigger', 'Steps', 'Decision points', 'Outcome', 'Edge cases']
     )
-    missingRelation(issues, label, 'actor', journey.actorIds, actorIds)
+    requireActing(label, journey.actorIds)
     const scenarios = model.journeyScenarios.filter(scenario => scenario.journeyId === journey.id)
     const achieved = scenarios.filter(scenario => scenario.result === 'achieved')
     if (!achieved.length) issues.push(`${label}: needs at least one achieved Journey Scenario`)
@@ -1056,48 +1101,55 @@ export function validateProductReport(report: ProductReportV12): string[] {
   }
 
   /*
-   * Entity semantics, resolved exactly as Actor and Interface relations are.
-   * A report is expanded straight into an authored folder, so an edge the
-   * folder rules reject must not survive the wire — it would produce a
-   * `.businesslens/` that fails `lint` the moment it lands.
+   * Entity semantics, resolved exactly as Interface relations are. A report is
+   * expanded straight into an authored folder, so an edge the folder rules
+   * reject must not survive the wire — it would produce a `.businesslens/`
+   * that fails `lint` the moment it lands.
    */
-  const entityChangedBy = new Map<string, string[]>()
-  for (const capability of model.capabilities) {
-    for (const id of capability.entityIds) {
-      entityChangedBy.set(id, [...(entityChangedBy.get(id) || []), capability.id])
+  const entityChanged = new Set<string>()
+  for (const scenario of [...model.capabilityScenarios, ...model.journeyScenarios]) {
+    for (const step of scenario.steps) {
+      for (const entry of step.entities) {
+        if (entry.effect !== 'reads') entityChanged.add(entry.entityId)
+      }
     }
   }
   const entityPresentedOn = new Set(model.screens.flatMap(screen => screen.entityIds))
+  const namedAsActor = new Set<string>([
+    ...[...model.capabilityScenarios, ...model.journeyScenarios].flatMap(scenario => scenario.actorIds),
+    ...model.interfaces.flatMap(item => item.actorIds),
+    ...model.experiences.flatMap(item => item.actorIds),
+    ...model.journeys.flatMap(item => item.actorIds),
+    ...model.businessRules.flatMap(rule => (rule.permits ?? []).flatMap(grant => [
+      ...grant.actorIds,
+      ...(grant.related.length ? [grant.related[grant.related.length - 1]!.entityId] : [])
+    ]))
+  ])
+  const citedByRule = new Set<string>(model.businessRules.flatMap(rule => (rule.permits ?? []).flatMap(grant => [
+    ...(grant.configuredByEntityId ? [grant.configuredByEntityId] : []),
+    ...grant.when.flatMap(condition => [
+      ...(condition.entityId ? [condition.entityId] : []),
+      ...(typeof condition.value === 'object' && condition.value !== null ? [condition.value.configuredByEntityId] : [])
+    ])
+  ])))
   for (const entity of model.entities) {
     const label = `entity "${entity.id}"`
     validateSupportingSections(issues, label, entity.supportingSections, ['Intent', 'Information kept', 'States'])
-    if (!entity.informationKept.length && !entity.states.length) {
-      issues.push(`${label}: needs information kept or states`)
+    if (!entity.informationKept.length && !entity.states.length && entity.acts === null) {
+      issues.push(`${label}: needs information kept, states, or acts`)
+    }
+    if ((entity.acts === null) !== (entity.kind === null)) {
+      issues.push(`${label}: kind and acts are present together or not at all`)
     }
     if (entity.domainId && !domainIds.has(entity.domainId)) {
       issues.push(`${label}: references missing domain "${entity.domainId}"`)
     }
+    requireUniqueValues(issues, label, 'informationKept', entity.informationKept.map(fact => fact.name))
 
     const stateNames = new Set<string>()
     for (const state of entity.states) {
       if (stateNames.has(state.name)) issues.push(`${label}: duplicate state "${state.name}"`)
       stateNames.add(state.name)
-    }
-    if (!entity.states.length && entity.transitions.length) {
-      issues.push(`${label}: transitions need states`)
-    }
-    if (entity.states.length && !entity.transitions.length) {
-      issues.push(`${label}: states need transitions`)
-    }
-    for (const transition of entity.transitions) {
-      const move = `${label}: transition "${transition.from} \u2192 ${transition.to}"`
-      if (!stateNames.has(transition.from)) issues.push(`${move}: "${transition.from}" is not a state of this Entity`)
-      if (!stateNames.has(transition.to)) issues.push(`${move}: "${transition.to}" is not a state of this Entity`)
-      const capability = capabilitiesById.get(transition.capabilityId)
-      if (!capability) issues.push(`${move}: references missing capability "${transition.capabilityId}"`)
-      else if (!capability.entityIds.includes(entity.id)) {
-        issues.push(`${move}: capability "${transition.capabilityId}" does not list this Entity`)
-      }
     }
 
     // Declared on one side; only a repeated verb at the same target is wrong.
@@ -1120,10 +1172,42 @@ export function validateProductReport(report: ProductReportV12): string[] {
     }
 
     // A relation between Entities never satisfies this: vocabulary that only
-    // points at itself is still vocabulary no behaviour uses.
-    if (!(entityChangedBy.get(entity.id) || []).length && !entityPresentedOn.has(entity.id)) {
-      issues.push(`${label}: no Capability changes it and no Screen presents it`)
+    // points at itself is still vocabulary no behaviour uses. Acting does, and
+    // so does a Rule reading a settings Entity.
+    if (!entityChanged.has(entity.id) && !entityPresentedOn.has(entity.id)
+      && !namedAsActor.has(entity.id) && !citedByRule.has(entity.id)) {
+      issues.push(`${label}: no step changes it, no Screen presents it, nothing names it as an actor, and no Rule reads it`)
     }
+  }
+
+  /*
+   * A `related` path starts at the Rule's one Entity target and walks declared
+   * relations and their inverses, one unambiguous hop at a time, onto an
+   * Entity that acts.
+   */
+  const walkRelated = (start: string, segments: Array<{ verb: string, entityId: string }>, label: string): string | undefined => {
+    let current = start
+    for (const [index, segment] of segments.entries()) {
+      const segmentLabel = `${label}: related segment ${index + 1}`
+      if (!entityIds.has(segment.entityId)) {
+        issues.push(`${segmentLabel}: references missing entity "${segment.entityId}"`)
+        return undefined
+      }
+      if (segment.entityId === current) {
+        issues.push(`${segmentLabel}: a self-relation has no direction to follow`)
+        return undefined
+      }
+      const forward = (entitiesById.get(current)?.relations ?? [])
+        .filter(relation => relation.verb === segment.verb && relation.entityId === segment.entityId).length
+      const inverse = (entitiesById.get(segment.entityId)?.relations ?? [])
+        .filter(relation => relation.verb === segment.verb && relation.entityId === current).length
+      if (forward + inverse !== 1) {
+        issues.push(`${segmentLabel}: "${segment.verb}" joins "${current}" and "${segment.entityId}" ${forward + inverse === 0 ? 'in neither direction' : 'more than once'}`)
+        return undefined
+      }
+      current = segment.entityId
+    }
+    return current
   }
 
   for (const rule of model.businessRules) {
@@ -1147,6 +1231,43 @@ export function validateProductReport(report: ProductReportV12): string[] {
         if (overlapping) issues.push(`${targetLabel}: Context target place "${place}" is redundant with "${overlapping}"`)
         seenTargets.add(key)
         directContextPlaces.push(place)
+        continue
+      }
+      if (target.type === 'entity') {
+        const entity = entitiesById.get(target.entityId)
+        if (!entity) issues.push(`${targetLabel}: references missing entity "${target.entityId}"`)
+        const entityKey = `entity\0${target.entityId}\0${target.effect ?? ''}\0${target.from ?? ''}\0${target.to ?? ''}\0${target.facts.join(',')}`
+        if (seenTargets.has(entityKey)) issues.push(`${targetLabel}: duplicate target "entity:${target.entityId}"`)
+        seenTargets.add(entityKey)
+        if (target.from !== null && (target.effect === 'creates' || target.effect === 'reads')) {
+          issues.push(`${targetLabel}: "from" selects nothing on a "${target.effect}" target`)
+        }
+        if (target.to !== null && (target.effect === 'removes' || target.effect === 'reads')) {
+          issues.push(`${targetLabel}: "to" selects nothing on a "${target.effect}" target`)
+        }
+        if (entity) {
+          for (const value of [target.from, target.to]) {
+            if (value !== null && !entity.states.some(state => state.name === value)) {
+              issues.push(`${targetLabel}: "${value}" is not a state of entity "${target.entityId}"`)
+            }
+          }
+          for (const fact of target.facts) {
+            if (!entity.informationKept.some(item => item.name === fact)) {
+              issues.push(`${targetLabel}: "${fact}" is not a fact of entity "${target.entityId}"`)
+            }
+          }
+        }
+        const presenting = model.screens.filter(screen => screen.entityIds.includes(target.entityId)).map(screen => screen.id)
+        const seenEntityPlaces: string[] = []
+        for (const [contextIndex, context] of target.contexts.entries()) {
+          const contextLabel = `${targetLabel}: Context ${contextIndex + 1}`
+          const place = validateContextPlace(issues, contextLabel, context, placeIds)
+          if (seenEntityPlaces.includes(place)) issues.push(`${contextLabel}: duplicate Context place "${place}"`)
+          seenEntityPlaces.push(place)
+          if (placeIds.has(place) && !presenting.some(screenId => screenId === place || containsPlace(place, screenId))) {
+            issues.push(`${contextLabel}: Context place "${place}" presents entity "${target.entityId}" nowhere`)
+          }
+        }
         continue
       }
       const key = `${target.type}\0${target.id}`
@@ -1206,6 +1327,87 @@ export function validateProductReport(report: ProductReportV12): string[] {
         issues.push(`${label}: target "journey-scenario:${scenarioId}" is redundant with journey target "${journeyId}"`)
       }
     }
+
+    /* Grants resolve exactly as the folder's do: every id, every path, every fact. */
+    if (rule.permits !== null) {
+      const entityTargets = rule.appliesTo.filter(target => target.type === 'entity')
+      if (entityTargets.length !== rule.appliesTo.length) {
+        issues.push(`${label}: permits needs Entity targets only`)
+      }
+      const singleTarget = entityTargets.length === 1 ? entityTargets[0] : undefined
+      const targetEntity = singleTarget && singleTarget.type === 'entity' ? entitiesById.get(singleTarget.entityId) : undefined
+      for (const [grantIndex, grant] of rule.permits.entries()) {
+        const grantLabel = `${label}: grant ${grantIndex + 1}`
+        requireUniqueValues(issues, grantLabel, 'actorIds', grant.actorIds)
+        requireActing(grantLabel, grant.actorIds)
+        if (!grant.actorIds.length && !grant.related.length && !grant.self && !grant.unattended && grant.configuredByEntityId === null) {
+          issues.push(`${grantLabel}: names nobody`)
+        }
+        if (grant.configuredByEntityId !== null && !entityIds.has(grant.configuredByEntityId)) {
+          issues.push(`${grantLabel}: configuredByEntityId references missing entity "${grant.configuredByEntityId}"`)
+        }
+        if (grant.self) {
+          for (const target of entityTargets) {
+            if (target.type === 'entity' && entityIds.has(target.entityId) && !actorIds.has(target.entityId)) {
+              issues.push(`${grantLabel}: self needs entity "${target.entityId}" to act`)
+            }
+          }
+        }
+        if (grant.related.length) {
+          if (!singleTarget || singleTarget.type !== 'entity') {
+            issues.push(`${grantLabel}: related needs exactly one Entity target`)
+          } else {
+            const endpoint = walkRelated(singleTarget.entityId, grant.related, grantLabel)
+            if (endpoint !== undefined && !actorIds.has(endpoint)) issues.push(`${grantLabel}: related ends on "${endpoint}", which does not act`)
+            if (endpoint !== undefined && grant.actorIds.length && !grant.actorIds.includes(endpoint)) {
+              issues.push(`${grantLabel}: actorIds excludes "${endpoint}", where related ends`)
+            }
+          }
+        }
+        for (const [conditionIndex, condition] of grant.when.entries()) {
+          const conditionLabel = `${grantLabel}: condition ${conditionIndex + 1}`
+          if (condition.state !== null) {
+            if (condition.fact !== null || condition.operator !== null || condition.entityId !== null || condition.value !== null) {
+              issues.push(`${conditionLabel}: a state condition carries nothing else`)
+              continue
+            }
+            if (!singleTarget || singleTarget.type !== 'entity') {
+              issues.push(`${conditionLabel}: a state condition needs exactly one Entity target`)
+              continue
+            }
+            if (singleTarget.effect === 'creates') issues.push(`${conditionLabel}: a state condition on a creates target`)
+            if (targetEntity && !targetEntity.states.some(state => state.name === condition.state)) {
+              issues.push(`${conditionLabel}: "${condition.state}" is not a state of entity "${singleTarget.entityId}"`)
+            }
+            continue
+          }
+          if (condition.fact === null || condition.operator === null) {
+            issues.push(`${conditionLabel}: needs a fact with an operator, or a state`)
+            continue
+          }
+          if ((condition.operator === 'present' || condition.operator === 'absent') !== (condition.value === true)
+            && (condition.operator === 'present' || condition.operator === 'absent')) {
+            issues.push(`${conditionLabel}: "${condition.operator}" takes true`)
+          }
+          let holder = targetEntity
+          let holderId = singleTarget && singleTarget.type === 'entity' ? singleTarget.entityId : undefined
+          if (condition.entityId !== null) {
+            holder = entitiesById.get(condition.entityId)
+            holderId = condition.entityId
+            if (!holder) issues.push(`${conditionLabel}: references missing entity "${condition.entityId}"`)
+          } else if (!singleTarget) {
+            issues.push(`${conditionLabel}: a fact without entityId needs exactly one Entity target`)
+            continue
+          }
+          if (holder && !holder.informationKept.some(item => item.name === condition.fact)) {
+            issues.push(`${conditionLabel}: "${condition.fact}" is not a fact of entity "${holderId}"`)
+          }
+          if (typeof condition.value === 'object' && condition.value !== null && !entityIds.has(condition.value.configuredByEntityId)) {
+            issues.push(`${conditionLabel}: configuredByEntityId references missing entity "${condition.value.configuredByEntityId}"`)
+          }
+        }
+      }
+    }
   }
 
   if (report.coverage.status === 'complete' && model.capabilities.length === 0) {
@@ -1213,7 +1415,6 @@ export function validateProductReport(report: ProductReportV12): string[] {
   }
 
   const expectedCounts = {
-    actors: model.actors.length,
     interfaces: model.interfaces.length,
     experiences: model.experiences.length,
     screens: model.screens.length,
@@ -1295,7 +1496,7 @@ function isRepositoryEntryPoint(value: string): boolean {
 }
 
 /** Project a report into the source-free profile delivered outside its repository. */
-export function projectPortableReport(report: ProductReportV12): ProductReportV12 {
+export function projectPortableReport(report: ProductReportV13): ProductReportV13 {
   const portableReferences = <T extends { kind: string, role: string, target: string }>(items: T[]): T[] =>
     items.filter(reference =>
       reference.kind !== 'code'
@@ -1322,7 +1523,6 @@ export function projectPortableReport(report: ProductReportV12): ProductReportV1
     references: portableReferences(report.references),
     model: {
       ...report.model,
-      actors: strip(report.model.actors),
       interfaces: stripWithEntryPoints(report.model.interfaces),
       experiences: stripWithEntryPoints(report.model.experiences),
       screens: stripWithEntryPoints(report.model.screens),
@@ -1338,15 +1538,15 @@ export function projectPortableReport(report: ProductReportV12): ProductReportV1
   }
 }
 
-export function parseProductReport(input: unknown): ProductReportV12 {
-  const report = ProductReportV12Schema.parse(input)
+export function parseProductReport(input: unknown): ProductReportV13 {
+  const report = ProductReportV13Schema.parse(input)
   const issues = validateProductReport(report)
   if (issues.length) throw new Error(`Report validation failed:\n- ${issues.join('\n- ')}`)
   return report
 }
 
 /** Additional publication policy for a Product Report entering the public Blueprint catalog. */
-export function validateBlueprintReport(report: ProductReportV12): string[] {
+export function validateBlueprintReport(report: ProductReportV13): string[] {
   const issues: string[] = []
   if (!report.category) issues.push('category is required for a public Blueprint')
   if (!report.tags.length) issues.push('at least one tag is required for a public Blueprint')

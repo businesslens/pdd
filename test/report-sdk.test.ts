@@ -10,7 +10,7 @@ import { reportDigest } from '../src/report-digest.js'
 import { compileReport } from '../src/commands/export.js'
 import { loadModel } from '../src/core/model.js'
 import { resolveModelRoot } from '../src/core/model-root.js'
-import type { ProductReportV12, ReportReference } from '../src/core/portable.js'
+import type { ProductReportV13, ReportReference } from '../src/core/portable.js'
 
 const packageJson = JSON.parse(
   await readFile(fileURLToPath(new URL('../package.json', import.meta.url)), 'utf8')
@@ -29,10 +29,13 @@ describe('report SDK entry point', () => {
   })
 
   it('exports the schema, semantic validator, portable projection, and digest', () => {
-    expect(sdk.REPORT_SCHEMA_VERSION).toBe('12.0.0')
+    expect(sdk.REPORT_SCHEMA_VERSION).toBe('13.0.0')
     for (const name of [
-      'ProductReportV12Schema',
-      'ReportScenarioStepChangeSchema',
+      'ProductReportV13Schema',
+      'ReportScenarioStepEntitySchema',
+      'ReportEntityFactSchema',
+      'ReportGrantSchema',
+      'ReportGrantConditionSchema',
       'ProductReportSchema',
       'ReportReferenceSchema',
       'ReportSupportingSectionSchema',
@@ -96,9 +99,9 @@ describe('report SDK entry point', () => {
 describe('projectPortableReport', () => {
   const FIXTURE = join(fileURLToPath(new URL('.', import.meta.url)), 'fixtures', 'fixture-shop')
   let repo: string
-  let report: ProductReportV12
+  let report: ProductReportV13
 
-  const allReferences = (value: ProductReportV12): ReportReference[] => [
+  const allReferences = (value: ProductReportV13): ReportReference[] => [
     ...value.references,
     ...Object.values(value.model).flatMap(entry =>
       Array.isArray(entry) ? entry.flatMap(item => item.references ?? []) : [])
@@ -204,8 +207,7 @@ describe('projectPortableReport', () => {
           kind: 'actor',
           actorId: 'shopper',
           capabilityId: 'place-order',
-          changes: [],
-          readEntityIds: [],
+          entities: [],
           unattended: false,
           contexts: [{
             routeId: 'web-to-admin',
@@ -217,12 +219,11 @@ describe('projectPortableReport', () => {
           kind: 'actor',
           actorId: 'store-admin',
           capabilityId: 'manage-orders',
-          changes: [],
-          readEntityIds: [],
+          entities: [],
           unattended: false,
           contexts: [{
             routeId: 'web-to-admin',
-            placeId: 'admin-web'
+            placeId: 'admin-web::order-detail'
           }]
         }
       ],
@@ -234,18 +235,19 @@ describe('projectPortableReport', () => {
       supportingSections: [],
       references: []
     })
-    withFailure.model.screens.find(screen => screen.id === 'customer-web::storefront::product-record')!
-      .journeyScenarioIds.push('checkout-needs-operator-help')
+    for (const screenId of ['customer-web::storefront::product-record', 'admin-web::order-detail']) {
+      withFailure.model.screens.find(screen => screen.id === screenId)!.journeyScenarioIds.push('checkout-needs-operator-help')
+    }
     withFailure.counts.journeyScenarios += 1
-    withFailure.model.journeys[0]!.failureOnlyCapabilityIds = ['manage-orders']
+    withFailure.model.journeys[0]!.failureOnlyCapabilityIds = ['cancel-order', 'manage-orders']
 
-    expect(withFailure.model.journeys[0]!.capabilityIds).toEqual(['browse-catalog', 'place-order'])
+    expect(withFailure.model.journeys[0]!.capabilityIds).toEqual(['browse-catalog', 'place-order', 'settle-payment'])
     expect(sdk.validateProductReport(withFailure)).toEqual([])
   })
 
   it('keeps only HTTP(S) intent and context references', () => {
     const enriched = structuredClone(report)
-    enriched.model.actors[0]!.references = [
+    enriched.model.entities[0]!.references = [
       { kind: 'code', role: 'intent', target: 'src/routes/storefront.ts' },
       { kind: 'doc', role: 'context', target: 'docs/local.md' },
       { kind: 'doc', role: 'context', target: 'https://example.com/handbook', title: 'Handbook' },
@@ -256,7 +258,7 @@ describe('projectPortableReport', () => {
 
     const portable = sdk.projectPortableReport(enriched)
     expect(portable.referenceProfile).toBe('portable')
-    expect(portable.model.actors[0]!.references).toEqual([
+    expect(portable.model.entities[0]!.references).toEqual([
       { kind: 'doc', role: 'context', target: 'https://example.com/handbook', title: 'Handbook' },
       { kind: 'prd', role: 'intent', target: 'https://example.com/checkout-prd', title: 'Checkout PRD' },
       { kind: 'proposal', role: 'intent', target: 'https://example.com/proposal' }
@@ -301,7 +303,7 @@ describe('projectPortableReport', () => {
     ]
     for (const reference of cases) {
       const tampered = structuredClone(base)
-      tampered.model.actors[0]!.references = [reference]
+      tampered.model.entities[0]!.references = [reference]
       expect(sdk.validateProductReport(tampered).join('\n')).toContain(
         `portable report still exposes reference "${reference.target}"`
       )
@@ -316,7 +318,7 @@ describe('projectPortableReport', () => {
 
   it('rejects duplicate targets on one resource', () => {
     const duplicate = structuredClone(report)
-    duplicate.model.actors[0]!.references = [
+    duplicate.model.entities[0]!.references = [
       { kind: 'doc', role: 'context', target: 'https://example.com/same' },
       { kind: 'visual', role: 'intent', target: 'https://example.com/same' }
     ]
@@ -344,7 +346,7 @@ describe('projectPortableReport', () => {
     )
 
     const nestedHeading = structuredClone(report)
-    nestedHeading.model.actors[0]!.supportingSections = [{
+    nestedHeading.model.entities[0]!.supportingSections = [{
       heading: 'Notes',
       content: '## Injected structure'
     }]
@@ -391,13 +393,13 @@ describe('projectPortableReport', () => {
 
   it('uses a strict reference record and rejects removed fields', () => {
     const unknown = structuredClone(report) as Record<string, any>
-    unknown.model.actors[0].references = [{
+    unknown.model.entities[0].references = [{
       kind: 'doc', role: 'context', target: 'https://example.com', verified: true
     }]
     expect(sdk.ProductReportSchema.safeParse(unknown).success).toBe(false)
 
     const legacy = structuredClone(report) as Record<string, any>
-    legacy.model.actors[0].codeRefs = []
+    legacy.model.entities[0].codeRefs = []
     expect(sdk.ProductReportSchema.safeParse(legacy).success).toBe(false)
 
     const legacyJourney = structuredClone(report) as Record<string, any>
@@ -494,47 +496,40 @@ describe('projectPortableReport', () => {
    * checked when the Entity collection shipped.
    */
   it('resolves every Entity edge the folder rules resolve', () => {
-    const moving = (value: ProductReportV12) => value.model.entities.find(item => item.transitions.length)!
+    const cart = (value: ProductReportV13) => value.model.entities.find(item => item.id === 'cart')!
 
-    const cases: Array<[string, (value: ProductReportV12) => void]> = [
+    const cases: Array<[string, (value: ProductReportV13) => void]> = [
       ['relation references missing entity "ghost"', (value) => {
         value.model.entities[0]!.relations.push({ entityId: 'ghost', verb: 'holds', cardinality: 'many-to-many' })
-      }],
-      ['"Nowhere" is not a state of this Entity', (value) => {
-        moving(value).transitions[0]!.to = 'Nowhere'
-      }],
-      ['does not list this Entity', (value) => {
-        const entity = moving(value)
-        const other = value.model.capabilities.find(item => !item.entityIds.includes(entity.id))!
-        entity.transitions[0]!.capabilityId = other.id
-      }],
-      ['references missing entity "ghost"', (value) => {
-        value.model.capabilities[0]!.entityIds = ['ghost']
       }],
       ['references missing entity "ghost"', (value) => {
         value.model.screens[0]!.entityIds = ['ghost']
       }],
-      ['no Capability changes it and no Screen presents it', (value) => {
-        const entity = value.model.entities[0]!
-        for (const capability of value.model.capabilities) {
-          capability.entityIds = capability.entityIds.filter(entityId => entityId !== entity.id)
-        }
+      ['no step changes it, no Screen presents it, nothing names it as an actor, and no Rule reads it', (value) => {
+        const entity = cart(value)
         for (const screen of value.model.screens) {
           screen.entityIds = screen.entityIds.filter(entityId => entityId !== entity.id)
         }
-        entity.transitions = []
-        entity.states = []
         for (const scenario of [...value.model.capabilityScenarios, ...value.model.journeyScenarios]) {
           for (const step of scenario.steps) {
-            step.changes = step.changes.filter(change => change.entityId !== entity.id)
+            step.entities = step.entities.filter(entry => entry.entityId !== entity.id)
           }
         }
       }],
-      ['needs information kept or states', (value) => {
-        const entity = value.model.entities[0]!
+      ['needs information kept, states, or acts', (value) => {
+        const entity = cart(value)
         entity.informationKept = []
         entity.states = []
-        entity.transitions = []
+      }],
+      ['kind and acts are present together or not at all', (value) => {
+        value.model.entities.find(item => item.id === 'shopper')!.kind = null
+      }],
+      ['"order" does not act', (value) => {
+        value.model.interfaces[0]!.actorIds = ['order']
+      }],
+      ['informationKept contains duplicate "Delivery address"', (value) => {
+        const shopper = value.model.entities.find(item => item.id === 'shopper')!
+        shopper.informationKept.push({ ...shopper.informationKept[0]! })
       }]
     ]
 
@@ -546,41 +541,79 @@ describe('projectPortableReport', () => {
   })
 
   it('checks what a Scenario step claims against the Entity it names', () => {
-    const changeOf = (value: ProductReportV12) => {
+    const moveOf = (value: ProductReportV13) => {
       for (const scenario of [...value.model.capabilityScenarios, ...value.model.journeyScenarios]) {
         for (const step of scenario.steps) {
-          const change = step.changes.find(item => item.state)
-          if (change) return { step, change }
+          const entry = step.entities.find(item => item.from !== null && item.to !== null)
+          if (entry) return { step, entry }
         }
       }
-      throw new Error('the fixture needs one step change that names an Entity and a state')
+      throw new Error('the fixture needs one step entry that moves an Entity between states')
     }
 
     const missing = structuredClone(report)
-    changeOf(missing).change.entityId = 'ghost'
+    moveOf(missing).entry.entityId = 'ghost'
     expect(sdk.validateProductReport(missing).join('\n')).toContain('references missing entity "ghost"')
 
     const unknownState = structuredClone(report)
-    changeOf(unknownState).change.state = 'Nowhere'
+    moveOf(unknownState).entry.to = 'Nowhere'
     expect(sdk.validateProductReport(unknownState).join('\n')).toContain('is not a state of entity')
 
-    /* Ending a thing and leaving it in a state are different claims, and the
-       second cannot follow the first. */
-    const removed = structuredClone(report)
-    changeOf(removed).change.effect = 'removes'
-    expect(sdk.validateProductReport(removed).join('\n')).toContain('cannot also leave')
+    /* State keys follow the effect: a read carries none, a creation has no
+       origin, a removal leaves nothing anywhere. */
+    const read = structuredClone(report)
+    moveOf(read).entry.effect = 'reads'
+    expect(sdk.validateProductReport(read).join('\n')).toContain('a "reads" entry carries no state')
 
-    /* A creation has no `from`, so no transition can ever witness one. */
     const created = structuredClone(report)
-    const { change: createdChange } = changeOf(created)
-    createdChange.effect = 'creates'
-    expect(sdk.validateProductReport(created).join('\n')).not.toContain('no transition of')
+    moveOf(created).entry.effect = 'creates'
+    expect(sdk.validateProductReport(created).join('\n')).toContain('a "creates" entry has no "from"')
 
-    /* One Step states one thing about one Entity. */
+    const removed = structuredClone(report)
+    moveOf(removed).entry.effect = 'removes'
+    expect(sdk.validateProductReport(removed).join('\n')).toContain('a "removes" entry has no "to"')
+
+    /* One Step states one thing about one instance. */
     const twice = structuredClone(report)
-    const { step, change } = changeOf(twice)
-    step.changes.push({ ...change })
-    expect(sdk.validateProductReport(twice).join('\n')).toContain('changes')
+    const { step, entry } = moveOf(twice)
+    step.entities.push({ ...entry })
+    expect(sdk.validateProductReport(twice).join('\n')).toContain('entities contains duplicate')
+
+    /* A Journey Step that changes a thing names the Capability that owns the change. */
+    const unowned = structuredClone(report)
+    const journeyStep = unowned.model.journeyScenarios[0]!.steps.find(item => item.entities.some(entry => entry.effect !== 'reads'))!
+    journeyStep.capabilityId = null
+    expect(sdk.validateProductReport(unowned).join('\n')).toContain('needs a capabilityId')
+  })
+
+  /*
+   * Grants resolve on the wire exactly as they do in the folder: every id,
+   * every path, every fact — and never a claim that a grant is satisfied.
+   */
+  it('resolves a permission Rule the way the folder does', () => {
+    const rule = (value: ProductReportV13, id: string) => value.model.businessRules.find(item => item.id === id)!
+
+    const behavioural = structuredClone(report)
+    rule(behavioural, 'payment-before-confirmation').permits = [{
+      actorIds: ['store-admin'], related: [], self: false, when: [], unattended: false, configuredByEntityId: null
+    }]
+    expect(sdk.validateProductReport(behavioural).join('\n')).toContain('permits needs Entity targets only')
+
+    const badPath = structuredClone(report)
+    rule(badPath, 'a-refund-is-visible-to-its-shopper').permits![0]!.related = [{ verb: 'belongs to', entityId: 'order' }]
+    expect(sdk.validateProductReport(badPath).join('\n')).toContain('"belongs to" joins "refund" and "order" in neither direction')
+
+    const nobody = structuredClone(report)
+    rule(nobody, 'margin-is-for-operators').permits![0]!.actorIds = []
+    expect(sdk.validateProductReport(nobody).join('\n')).toContain('grant 1: names nobody')
+
+    const noSuchFact = structuredClone(report)
+    rule(noSuchFact, 'refunds-need-an-operator').permits![0]!.when[0]!.fact = 'Weight'
+    expect(sdk.validateProductReport(noSuchFact).join('\n')).toContain('"Weight" is not a fact of entity "order"')
+
+    const closed = structuredClone(report)
+    expect(rule(closed, 'orders-are-never-deleted').permits).toEqual([])
+    expect(rule(closed, 'payment-before-confirmation').permits).toBeNull()
   })
 
   it('keeps a relation to one encoding and one side on the wire', () => {

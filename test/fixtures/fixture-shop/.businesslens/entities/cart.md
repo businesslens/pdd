@@ -13,5 +13,5 @@ recoverable failure never costs the selection.
 
 ## Information kept
 
-- The quantity chosen of each product
-- When it was last changed
+- **Quantity chosen** — how many of each product the shopper has picked
+- **When last changed** — when the selection last moved

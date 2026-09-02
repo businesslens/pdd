@@ -1,19 +1,12 @@
----
-transitions:
-  - from: Available
-    to: Unavailable
-    by: place-order
----
-
 # Catalog product
 
 Something the store offers for sale, and whether a shopper may buy it now.
 
 ## Information kept
 
-- Its name and description
-- Its price
-- Whether stock remains
+- **Name and description** — what the shopper reads about it
+- **Price** — what one unit costs
+- **Stock remaining** — how many units can still be sold
 
 ## States
 

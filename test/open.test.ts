@@ -7,7 +7,7 @@ import { buildProject } from '../src/commands/export.js'
 import { runOpen } from '../src/commands/open.js'
 import { lsFiles } from '../src/core/git.js'
 import { loadModel } from '../src/core/model.js'
-import { projectPortableReport, type ProductReportV12 } from '../src/core/portable.js'
+import { projectPortableReport, type ProductReportV13 } from '../src/core/portable.js'
 import { lintModel } from '../src/commands/lint.js'
 
 const FIXTURE = join(__dirname, 'fixtures', 'fixture-shop')
@@ -25,7 +25,7 @@ function initialize(cwd: string): void {
   git(cwd, 'commit', '--allow-empty', '-m', 'fixture')
 }
 
-function withoutRepositoryEvidence(report: ProductReportV12): Record<string, any> {
+function withoutRepositoryEvidence(report: ProductReportV13): Record<string, any> {
   const portable = projectPortableReport(report)
   return {
     ...portable,
@@ -77,23 +77,28 @@ describe('open report', () => {
     expect(imported.journeyScenarios[0]!.steps.map(step => [step.text, step.capability])).toEqual([
       ['The shopper finds and selects an available product', 'browse-catalog'],
       ['The shopper submits checkout', 'place-order'],
-      ['The Product confirms the paid order', undefined]
+      ['The Product confirms the paid order', 'settle-payment']
     ])
     expect(imported.experiences.flatMap(experience => experience.entryPoints))
       .toEqual(expect.arrayContaining([{ type: 'customer-web', path: '/' }]))
     // The Screen exists once per Interface: same purpose, two places, and the id
     // carries which is which.
     expect(imported.screens.map(screen => screen.id)).toEqual([
+      'admin-web::order-detail',
+      'customer-mobile::storefront::order-status',
       'customer-mobile::storefront::product-record',
+      'customer-web::storefront::order-status',
       'customer-web::storefront::product-record'
     ])
-    expect(imported.screens[1]).toMatchObject({
-      id: 'customer-web::storefront::product-record',
+    expect(imported.screens.find(screen => screen.id === 'customer-web::storefront::product-record')).toMatchObject({
       containerId: 'customer-web::storefront',
       capabilities: ['browse-catalog', 'place-order']
     })
     expect(imported.screens.flatMap(screen => screen.entryPoints.map(point => point.path))).toEqual([
+      '/admin/orders/:id',
+      'fixture-shop://orders/:id',
       'fixture-shop://products/:id',
+      '/orders/:id',
       '/products/:id'
     ])
 
@@ -201,7 +206,7 @@ describe('open report', () => {
       expect(readFileSync(join(fresh, '.businesslens/capabilities/place-order/capability.md'), 'utf8'))
         .not.toContain('::')
       expect(readFileSync(join(fresh, '.businesslens/config.yaml'), 'utf8'))
-        .toContain('schema: 7')
+        .toContain('schema: 8')
 
       const rebuilt = buildProject(fresh)
       expect(withoutRepositoryEvidence(rebuilt.report)).toEqual(withoutRepositoryEvidence(report))
@@ -283,11 +288,26 @@ describe('open report', () => {
     expect(product).not.toContain('accent:')
     expect(product).toContain('license: MIT')
 
-    const actor = readFileSync(join(target, '.businesslens/actors/shopper.md'), 'utf8')
-    expect(actor).toMatch(/^---\nkind: person\nrelationship: external\n---\n/)
+    const shopper = readFileSync(join(target, '.businesslens/entities/shopper.md'), 'utf8')
+    expect(shopper).toMatch(/^---\nkind: person\nacts: external\nrelations:\n/)
+    expect(shopper).toContain('- **Delivery address** — ')
+    const order = readFileSync(join(target, '.businesslens/entities/order.md'), 'utf8')
+    expect(order).not.toContain('kind:')
+    expect(order).not.toContain('transitions:')
 
     expect(readFileSync(join(target, '.businesslens/capabilities/place-order/capability.md'), 'utf8'))
-      .toMatch(/^---\ndomain: ordering\nentities:\n(?:  - .*\n)+availability:/)
+      .toMatch(/^---\ndomain: ordering\navailability:/)
+
+    // `permits: []` is a claim and survives; an absent `permits` stays absent.
+    expect(readFileSync(join(target, '.businesslens/business-rules/orders-are-never-deleted.md'), 'utf8'))
+      .toContain('permits: []')
+    expect(readFileSync(join(target, '.businesslens/business-rules/payment-before-confirmation.md'), 'utf8'))
+      .not.toContain('permits')
+    expect(readFileSync(join(target, '.businesslens/business-rules/refunds-need-an-operator.md'), 'utf8'))
+      .toContain('configuredBy: store-settings')
+    // Every Step carries `entities`, `[]` included.
+    expect(readFileSync(join(target, '.businesslens/capabilities/settle-payment/scenarios/settle-a-refund.md'), 'utf8'))
+      .toContain('entities: []')
   })
 
   it('refuses to overwrite a non-empty product model without force', async () => {
@@ -302,7 +322,7 @@ describe('open report', () => {
     const rejectedTarget = mkdtempSync(join(tmpdir(), 'bl-open-invalid-markdown-'))
     const original = buildProject(source)
     const report = structuredClone(original.report)
-    report.model.actors[0]!.name = 'Injected actor\n## Extra'
+    report.model.entities[0]!.title = 'Injected entity\n## Extra'
     const file = join(rejectedTarget, 'invalid.json')
     writeFileSync(file, JSON.stringify(report))
     vi.spyOn(console, 'error').mockImplementation(() => undefined)
@@ -319,7 +339,7 @@ describe('open report', () => {
     const rejectedTarget = mkdtempSync(join(tmpdir(), 'bl-open-invalid-reference-'))
     const original = buildProject(source)
     const report = structuredClone(original.report)
-    report.model.actors[0]!.references = [
+    report.model.entities[0]!.references = [
       { kind: 'doc', role: 'context', target: 'docs/private.md' }
     ]
     const file = join(rejectedTarget, 'invalid.json')

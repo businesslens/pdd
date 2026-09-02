@@ -6,6 +6,8 @@ steps:
     kind: actor
     actor: shopper
     capability: browse-catalog
+    entities:
+      - { entity: catalog-product, effect: reads }
     contexts:
       web:
         place: customer-web::storefront::product-record
@@ -15,6 +17,9 @@ steps:
     kind: actor
     actor: shopper
     capability: place-order
+    entities:
+      - { entity: order, effect: creates, to: Pending }
+      - { entity: cart, effect: removes }
     contexts:
       web:
         place: customer-web::storefront::product-record
@@ -22,6 +27,15 @@ steps:
         place: customer-mobile::storefront::product-record
   - text: The Product confirms the paid order
     kind: product
+    actor: payment-gateway
+    capability: settle-payment
+    entities:
+      - { entity: order, effect: changes, from: Pending, to: Confirmed }
+    contexts:
+      web:
+        place: payment-webhook
+      mobile:
+        place: payment-webhook
 references:
   - kind: code
     role: implementation

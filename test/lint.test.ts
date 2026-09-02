@@ -45,6 +45,39 @@ function compactResource(expandedFile: string, compactFile: string) {
   rmdirSync(dirname(expandedFile))
 }
 
+/** The fixture's Shopper, with an extra frontmatter block spliced in. */
+function shopperWith(block: string): string {
+  return `---
+kind: person
+acts: external
+relations:
+  - entity: order
+    verb: owns
+    cardinality: one-to-many
+${block}
+---
+
+# Shopper
+
+Lead.
+
+## Information kept
+
+- **Delivery address** — where their orders are sent
+`
+}
+
+function writeRule(cwd: string, id: string, frontmatter: string) {
+  writeResource(join(cwd, `.businesslens/business-rules/${id}.md`), `---
+${frontmatter}
+---
+
+# ${id}
+
+Lead.
+`)
+}
+
 describe('lintModel', () => {
   it('accepts a reference state that names a View state, and rejects one that does not', () => {
     const cwd = fixtureCopy()
@@ -80,36 +113,36 @@ describe('lintModel', () => {
 
   it('reports an unexpected collection entry instead of silently dropping it', () => {
     const cwd = fixtureCopy()
-    const actors = join(cwd, '.businesslens', 'actors')
+    const entities = join(cwd, '.businesslens', 'entities')
 
     // A wrong extension, or an expanded folder that forgot its own file, used
     // to vanish with no finding at all.
-    writeFileSync(join(actors, 'draft.txt'), '# Draft\n')
-    mkdirSync(join(actors, 'courier'), { recursive: true })
+    writeFileSync(join(entities, 'draft.txt'), '# Draft\n')
+    mkdirSync(join(entities, 'courier'), { recursive: true })
 
     const result = run(cwd)
     expect(result.ok).toBe(false)
-    expect(result.errors).toContain('actors/draft.txt: expected <id>.md or <id>/actor.md')
-    expect(result.errors).toContain('actors/courier/ is missing actor.md')
+    expect(result.errors).toContain('entities/draft.txt: expected <id>.md or <id>/entity.md')
+    expect(result.errors).toContain('entities/courier/ is missing entity.md')
   })
 
   it('rejects duplicate compact and expanded shapes for one resource', () => {
     const cwd = fixtureCopy()
     writeResource(
-      join(cwd, '.businesslens/actors/shopper/actor.md'),
-      readFileSync(join(cwd, '.businesslens/actors/shopper.md'), 'utf8')
+      join(cwd, '.businesslens/entities/shopper/entity.md'),
+      readFileSync(join(cwd, '.businesslens/entities/shopper.md'), 'utf8')
     )
 
     expect(run(cwd).errors).toContain(
-      'actors/shopper: both shopper.md and shopper/actor.md exist; keep exactly one resource shape'
+      'entities/shopper: both shopper.md and shopper/entity.md exist; keep exactly one resource shape'
     )
   })
 
   it('warns rather than fails on an expanded resource that owns nothing yet', () => {
     const cwd = fixtureCopy()
     expandResource(
-      join(cwd, '.businesslens/actors/shopper.md'),
-      join(cwd, '.businesslens/actors/shopper/actor.md')
+      join(cwd, '.businesslens/entities/shopper.md'),
+      join(cwd, '.businesslens/entities/shopper/entity.md')
     )
     const result = run(cwd)
 
@@ -118,10 +151,10 @@ describe('lintModel', () => {
     // folder back to the compact form — so it is reported, but it does not
     // fail a model that is otherwise correct.
     expect(result.warnings).toContain(
-      'actors/shopper/ has no assets or child resources; use actors/shopper.md'
+      'entities/shopper/ has no assets or child resources; use entities/shopper.md'
     )
     expect(result.errors).not.toContain(
-      'actors/shopper/ has no assets or child resources; use actors/shopper.md'
+      'entities/shopper/ has no assets or child resources; use entities/shopper.md'
     )
     expect(result.ok).toBe(true)
   })
@@ -169,32 +202,32 @@ describe('lintModel', () => {
   it('passes the golden fixture', () => {
     const result = run(fixtureCopy())
     expect(result.errors).toEqual([])
+    expect(result.warnings).toEqual([])
     expect(result.ok).toBe(true)
     expect(result.counts).toEqual({
-      actors: 2,
-      interfaces: 4,
+      interfaces: 5,
       experiences: 2,
-      screens: 2,
+      screens: 5,
       domains: 1,
-      entities: 3,
-      capabilities: 3,
-      capabilityScenarios: 5,
+      entities: 8,
+      capabilities: 6,
+      capabilityScenarios: 11,
       journeys: 1,
       journeyScenarios: 2,
-      businessRules: 2
+      businessRules: 12
     })
   })
 
   it('rejects historical folder schemas', () => {
     const cwd = fixtureCopy()
     writeFileSync(join(cwd, '.businesslens/config.yaml'), 'schema: 5\nsdd:\n  paths: []\n')
-    expect(run(cwd).errors).toContain('config.yaml: schema 5 is not supported (expected 7)')
+    expect(run(cwd).errors).toContain('config.yaml: schema 5 is not supported (expected 8)')
   })
 
   it('rejects unsupported future folder schemas explicitly', () => {
     const cwd = fixtureCopy()
     writeFileSync(join(cwd, '.businesslens/config.yaml'), 'schema: 99\nsdd:\n  paths: []\n')
-    expect(run(cwd).errors).toContain('config.yaml: schema 99 is not supported (expected 7)')
+    expect(run(cwd).errors).toContain('config.yaml: schema 99 is not supported (expected 8)')
   })
 
   it('requires the committed orientation and generated-path ignores', () => {
@@ -212,90 +245,152 @@ describe('lintModel', () => {
     expect(run(cwd).errors).toContain('.gitignore is missing')
   })
 
-  it('requires both Actor classifications', () => {
+  /*
+   * There is one resource type for things. An Entity that acts says so with
+   * `acts`, and with it `kind` — an Actor was always a person or a system, and
+   * an Entity that acts without saying which would be a regression from the
+   * Actor it replaces. A thing that does not act says nothing.
+   */
+  it('classifies an Entity that acts, and only one that acts', () => {
     const cwd = fixtureCopy()
-    writeFileSync(join(cwd, '.businesslens/actors/shopper.md'), `# Shopper
+    const admin = join(cwd, '.businesslens/entities/store-admin.md')
+    const source = readFileSync(admin, 'utf8')
 
-A visitor who browses and buys.
-`)
+    writeFileSync(admin, source.replace('kind: person\n', ''))
+    expect(run(cwd).errors.join('\n')).toContain('an Entity that acts needs "kind": person|system')
+
+    writeFileSync(admin, source.replace('acts: internal\n', ''))
     const errors = run(cwd).errors.join('\n')
-    expect(errors).toContain('kind "" must be person|system')
-    expect(errors).toContain('relationship "" must be external|internal')
+    expect(errors).toContain('"kind" is only valid together with "acts"')
+    // Without `acts` there is nothing kept and no state either, so it is not an Entity at all.
+    expect(errors).toContain('an Entity needs "## Information kept", "## States", or "acts"')
+
+    writeFileSync(admin, source.replace('kind: person', 'kind: robot').replace('acts: internal', 'acts: sideways'))
+    const bad = run(cwd).errors.join('\n')
+    expect(bad).toContain('kind "robot" must be person|system')
+    expect(bad).toContain('acts "sideways" must be external|internal')
   })
 
-  it('supports all person/system and internal/external Actor combinations', () => {
+  it('supports every person/system and external/internal combination', () => {
     const cwd = fixtureCopy()
-    writeResource(join(cwd, '.businesslens/actors/partner-system.md'), `---
+    writeResource(join(cwd, '.businesslens/entities/partner-system.md'), `---
 kind: system
-relationship: external
+acts: external
 ---
 
 # Partner system
 
 An external system that uses a supported integration.
 `)
-    writeResource(join(cwd, '.businesslens/actors/store-scheduler.md'), `---
+    writeResource(join(cwd, '.businesslens/entities/store-scheduler.md'), `---
 kind: system
-relationship: internal
+acts: internal
 ---
 
 # Store scheduler
 
 An internal system that initiates store operations.
 `)
+    // Acting is reason enough to exist, once something names them as actors.
+    const cli = join(cwd, '.businesslens/interfaces/operator-cli.md')
+    writeFileSync(cli, readFileSync(cli, 'utf8').replace('actors: [store-admin]', 'actors: [store-admin, partner-system, store-scheduler]'))
     expect(run(cwd).errors).toEqual([])
+  })
+
+  it('names facts, and refuses a bullet that is not one', () => {
+    const cwd = fixtureCopy()
+    const order = join(cwd, '.businesslens/entities/order.md')
+    const source = readFileSync(order, 'utf8')
+
+    writeFileSync(order, source.replace('- **Tax** — the tax charged', '- The tax charged'))
+    expect(run(cwd).errors.join('\n')).toContain('fact "The tax charged" must read "**Name** — prose"')
+
+    writeFileSync(order, source.replace('- **Tax** — the tax charged', '- **Subtotal** — the tax charged'))
+    expect(run(cwd).errors.join('\n')).toContain('duplicate fact "Subtotal"')
+  })
+
+  it('resolves every actor reference to an Entity that acts', () => {
+    const cwd = fixtureCopy()
+    const cli = join(cwd, '.businesslens/interfaces/operator-cli.md')
+    writeFileSync(cli, readFileSync(cli, 'utf8').replace('actors: [store-admin]', 'actors: [order]'))
+    expect(run(cwd).errors.join('\n')).toContain('"order" does not act; an actor is an Entity with "acts" and "kind"')
+
+    const scenario = join(cwd, '.businesslens/capabilities/browse-catalog/scenarios/browse-catalog.md')
+    writeFileSync(scenario, readFileSync(scenario, 'utf8').replace('actor: shopper', 'actor: ghost'))
+    expect(run(cwd).errors.join('\n')).toContain('step 2: references missing entity "ghost"')
+  })
+
+  /*
+   * A Product Step may name the Actor it is attributable to — the Product did
+   * it for them — and a Business Rule reads it as "who did". An unattended
+   * Scenario names nobody: its permission is a Rule's `unattended` grant.
+   */
+  it('lets a Product Step name who it is attributable to, and nobody in an unattended Scenario', () => {
+    const cwd = fixtureCopy()
+    const expiry = join(cwd, '.businesslens/capabilities/cancel-order/scenarios/expire-an-unpaid-order.md')
+    writeFileSync(expiry, readFileSync(expiry, 'utf8').replace('    kind: product\n', '    kind: product\n    actor: store-admin\n'))
+    expect(run(cwd).errors.join('\n')).toContain('an unattended Scenario names no actor')
+  })
+
+  it('requires a Capability on a Journey Step that changes a thing', () => {
+    const cwd = fixtureCopy()
+    const scenario = join(cwd, '.businesslens/journeys/browse-and-buy/scenarios/browse-and-complete-checkout.md')
+    writeFileSync(scenario, readFileSync(scenario, 'utf8').replace('    capability: settle-payment\n', ''))
+    expect(run(cwd).errors.join('\n')).toContain('step 3: a Journey Step that creates, changes or removes an Entity needs a "capability"')
+  })
+
+  it('refuses an Entity nothing touches', () => {
+    const cwd = fixtureCopy()
+    writeResource(join(cwd, '.businesslens/entities/ghost-thing.md'), `# Ghost thing
+
+Lead.
+
+## Information kept
+
+- **Weight** — how heavy it is
+`)
+    expect(run(cwd).errors.join('\n')).toContain(
+      'ghost-thing.md: no Step changes it, no Screen presents it, nothing names it as an actor, and no Rule reads it'
+    )
   })
 
   it('allows Products with no Domains and no Screens', () => {
     const cwd = fixtureCopy()
-    rmSync(join(cwd, '.businesslens/domains'), { recursive: true })
-    rmSync(join(cwd, '.businesslens/entities'), { recursive: true })
-    // Removing every Entity also removes what declared them.
-    for (const relative of readdirSync(join(cwd, '.businesslens/capabilities'), { recursive: true })) {
-      const file = join(cwd, '.businesslens/capabilities', String(relative))
-      if (!String(relative).endsWith('.md')) continue
-      writeFileSync(file, readFileSync(file, 'utf8').replace(/^entities:\n(?:  - .*\n)+/m, ''))
+    const bl = join(cwd, '.businesslens')
+    rmSync(join(bl, 'domains'), { recursive: true })
+    const walk = (directory: string, edit: (file: string) => void) => {
+      for (const entry of readdirSync(directory, { withFileTypes: true })) {
+        const full = join(directory, entry.name)
+        if (entry.isDirectory()) walk(full, edit)
+        else if (entry.name.endsWith('.md')) edit(full)
+      }
     }
-    for (const relative of readdirSync(join(cwd, '.businesslens/interfaces'), { recursive: true })) {
-      const file = join(cwd, '.businesslens/interfaces', String(relative))
-      if (!String(relative).endsWith('.md')) continue
-      writeFileSync(file, readFileSync(file, 'utf8').replace(/^entities:\n(?:  - .*\n)+/m, ''))
-    }
-    for (const relative of readdirSync(join(cwd, '.businesslens/capabilities'), { recursive: true })) {
-      const file = join(cwd, '.businesslens/capabilities', String(relative))
-      if (!String(relative).endsWith('.md')) continue
-      writeFileSync(file, readFileSync(file, 'utf8')
-        .replace(/^ *changes:\n(?: +- entity: .*\n(?: +(?:effect|state): .*\n)*)+/gm, '')
-        .replace(/^ *reads:\n(?: +- .*\n)+/gm, ''))
-    }
+    // Stripping a lone `domain:` leaves an empty frontmatter block, which is not a shape.
+    walk(bl, file => writeFileSync(file, readFileSync(file, 'utf8').replace(/^domain: .*\n/m, '').replace(/^---\n---\n\n?/, '')))
+
+    // Every Screen goes, so every Context names its container instead, and the
+    // one Rule scoped to a Screen loses its scope.
     for (const relative of [
       'interfaces/customer-web/experiences/storefront/screens',
-      'interfaces/customer-mobile/experiences/storefront/screens'
+      'interfaces/customer-mobile/experiences/storefront/screens',
+      'interfaces/admin-web/screens'
     ]) {
-      rmSync(join(cwd, '.businesslens', relative), { recursive: true })
+      rmSync(join(bl, relative), { recursive: true })
     }
     for (const interfaceId of ['customer-web', 'customer-mobile']) {
       compactResource(
-        join(cwd, `.businesslens/interfaces/${interfaceId}/experiences/storefront/experience.md`),
-        join(cwd, `.businesslens/interfaces/${interfaceId}/experiences/storefront.md`)
+        join(bl, `interfaces/${interfaceId}/experiences/storefront/experience.md`),
+        join(bl, `interfaces/${interfaceId}/experiences/storefront.md`)
       )
     }
-    for (const name of ['browse-catalog', 'place-order', 'manage-orders']) {
-      const file = join(cwd, `.businesslens/capabilities/${name}/capability.md`)
-      writeFileSync(file, readFileSync(file, 'utf8').replace(/^domain: .*\n/m, ''))
-    }
-    for (const file of [
-      ...readdirSync(join(cwd, '.businesslens/capabilities'), { recursive: true })
-        .filter(item => String(item).endsWith('.md'))
-        .map(item => join(cwd, '.businesslens/capabilities', String(item))),
-      ...readdirSync(join(cwd, '.businesslens/journeys'), { recursive: true })
-        .filter(item => String(item).endsWith('.md'))
-        .map(item => join(cwd, '.businesslens/journeys', String(item)))
-    ]) {
-      writeFileSync(file, readFileSync(file, 'utf8')
-        .replaceAll('customer-web::storefront::product-record', 'customer-web::storefront')
-        .replaceAll('customer-mobile::storefront::product-record', 'customer-mobile::storefront'))
-    }
+    compactResource(join(bl, 'interfaces/admin-web/interface.md'), join(bl, 'interfaces/admin-web.md'))
+    walk(bl, file => writeFileSync(file, readFileSync(file, 'utf8')
+      .replaceAll('::product-record', '')
+      .replaceAll('::order-status', '')
+      .replaceAll('admin-web::order-detail', 'admin-web')))
+    const margin = join(bl, 'business-rules/margin-is-for-operators.md')
+    writeFileSync(margin, readFileSync(margin, 'utf8').replace('    contexts:\n      - place: admin-web\n', ''))
+
     const result = run(cwd)
     expect(result.errors).toEqual([])
     expect(result.counts.domains).toBe(0)
@@ -407,7 +502,8 @@ Supports order operations. It does not expose a shopper's account.
     )
     for (const relative of [
       '.businesslens/capabilities/manage-orders/capability.md',
-      '.businesslens/capabilities/manage-orders/scenarios/refund-order.md'
+      '.businesslens/capabilities/manage-orders/scenarios/refund-order.md',
+      '.businesslens/capabilities/manage-orders/scenarios/merge-duplicate-orders.md'
     ]) {
       const file = join(cwd, relative)
       writeFileSync(
@@ -487,7 +583,7 @@ Supports order operations. It does not expose a shopper's account.
   it('requires every Scenario Actor to participate in a selected Context', () => {
     const cwd = fixtureCopy()
     const scenario = join(cwd, '.businesslens/capabilities/manage-orders/scenarios/refund-order.md')
-    writeFileSync(scenario, readFileSync(scenario, 'utf8').replace(
+    writeFileSync(scenario, readFileSync(scenario, 'utf8').replaceAll(
       'actor: store-admin',
       'actor: shopper'
     ))
@@ -504,6 +600,7 @@ Supports order operations. It does not expose a shopper's account.
       readFileSync(scenario, 'utf8')
         .replace('  - text: The shopper finds and selects an available product', '  - text: ""')
         .replace('    capability: place-order', '    capability: browse-catalog')
+        .replace('    capability: settle-payment', '    capability: browse-catalog')
     )
     const errors = run(cwd).errors.join('\n')
     expect(errors).toContain('step 1: needs non-empty text')
@@ -574,15 +671,13 @@ Supports order operations. It does not expose a shopper's account.
 
   it('grades missing Capability Scenario coverage by model coverage status', () => {
     const cwd = fixtureCopy()
-    unlinkSync(join(cwd, '.businesslens/capabilities/manage-orders/scenarios/refund-order.md'))
-    rmdirSync(join(cwd, '.businesslens/capabilities/manage-orders/scenarios'))
+    rmSync(join(cwd, '.businesslens/capabilities/manage-orders/scenarios'), { recursive: true })
     compactResource(
       join(cwd, '.businesslens/capabilities/manage-orders/capability.md'),
       join(cwd, '.businesslens/capabilities/manage-orders.md')
     )
-    unlinkSync(join(cwd, '.businesslens/business-rules/refunds-apply-only-to-existing-orders.md'))
 
-    expect(run(cwd).errors.join('\n')).toContain('availability Context place "admin-web" needs Capability Scenario coverage')
+    expect(run(cwd).errors.join('\n')).toContain('availability Context place "operator-cli" needs Capability Scenario coverage')
 
     const coverage = join(cwd, '.businesslens/coverage.md')
     writeFileSync(coverage, readFileSync(coverage, 'utf8').replace('status: complete', 'status: partial'))
@@ -596,34 +691,77 @@ Supports order operations. It does not expose a shopper's account.
    * validates the pair once it is there, which is how three shipped models came
    * to declare lifecycles their Scenarios never demonstrated.
    */
-  it('requires every transition to have a Scenario Step that reaches its state', () => {
+  /*
+   * The Entity declares its states and nothing about the moves between them.
+   * The lifecycle is composed from every Scenario, and the composition says
+   * what it is missing: a state nothing produces, and an origin nothing
+   * produced. The first listed state is where a thing starts, so it is
+   * reachable by construction.
+   */
+  it('composes the lifecycle from Steps and reports what it is missing', () => {
     const cwd = fixtureCopy()
-    const scenario = join(cwd, '.businesslens/capabilities/manage-orders/scenarios/refund-order.md')
-    writeFileSync(
-      scenario,
-      readFileSync(scenario, 'utf8')
-        .replace('    changes:\n      - entity: order\n        state: Refunded\n', '')
-    )
+    const order = join(cwd, '.businesslens/entities/order.md')
+    writeFileSync(order, `${readFileSync(order, 'utf8')}
+### Archived
 
-    expect(run(cwd).errors.join('\n')).toContain(
-      'no Step of a "manage-orders" Scenario leaves it in "Refunded"'
-    )
+Filed away.
+`)
+    const merge = join(cwd, '.businesslens/capabilities/manage-orders/scenarios/merge-duplicate-orders.md')
+    writeFileSync(merge, readFileSync(merge, 'utf8').replace(
+      'as: duplicate, effect: changes, from: Pending, to: Cancelled',
+      'as: duplicate, effect: changes, from: Archived, to: Cancelled'
+    ))
+
+    const result = run(cwd)
+    expect(result.errors).toEqual([])
+    expect(result.warnings.join('\n')).toContain('order.md: no Step leaves it in "Archived"')
+    expect(result.warnings.join('\n')).toContain('moves it from "Archived", which no Step produces')
   })
 
-  it('grades an undemonstrated transition by model coverage status', () => {
+  /*
+   * A Step whose text names a thing it does not declare is the silence the
+   * `entities` key exists to end. Titles only, and the Step's own actor and
+   * "The Product" are exempt.
+   */
+  it('grades a Step whose text names an Entity it does not declare', () => {
     const cwd = fixtureCopy()
-    const scenario = join(cwd, '.businesslens/capabilities/manage-orders/scenarios/refund-order.md')
-    writeFileSync(
-      scenario,
-      readFileSync(scenario, 'utf8')
-        .replace('    changes:\n      - entity: order\n        state: Refunded\n', '')
+    const scenario = join(cwd, '.businesslens/capabilities/browse-catalog/scenarios/browse-catalog.md')
+    writeFileSync(scenario, readFileSync(scenario, 'utf8').replace(
+      'text: The catalog is listed',
+      'text: The catalog is listed beside any refunds the shopper has'
+    ))
+    expect(run(cwd).errors.join('\n')).toContain(
+      'browse-catalog.md: step 1: text names "Refund" and "entities" does not declare it'
     )
+    // "the shopper" is the Step's actor on step 2 only; on step 1 it is another Entity named and undeclared.
+    expect(run(cwd).errors.join('\n')).toContain('step 1: text names "Shopper" and "entities" does not declare it')
+
     const coverage = join(cwd, '.businesslens/coverage.md')
     writeFileSync(coverage, readFileSync(coverage, 'utf8').replace('status: complete', 'status: partial'))
-
     const partial = run(cwd)
-    expect(partial.errors.some(error => error.includes('has no acceptance case'))).toBe(false)
-    expect(partial.warnings.some(warning => warning.includes('has no acceptance case'))).toBe(true)
+    expect(partial.errors.some(error => error.includes('does not declare it'))).toBe(false)
+    expect(partial.warnings.some(warning => warning.includes('does not declare it'))).toBe(true)
+  })
+
+  /*
+   * A title inside a longer declared title is covered by it: "Catalog product"
+   * declared says nothing about "Catalog". And "the Product" is the Product in
+   * any case, mid-sentence as much as at the start.
+   */
+  it('reads a shorter title inside a declared longer one as the longer one', () => {
+    const cwd = fixtureCopy()
+    writeFileSync(join(cwd, '.businesslens/entities/catalog.md'), '# Catalog\n\nThe shelf.\n\n## Information kept\n\n- **Name** — what it is called\n')
+    writeFileSync(join(cwd, '.businesslens/entities/product.md'), '# Product\n\nThe whole thing.\n\n## Information kept\n\n- **Name** — what it is called\n')
+    const scenario = join(cwd, '.businesslens/capabilities/browse-catalog/scenarios/browse-catalog.md')
+    writeFileSync(scenario, readFileSync(scenario, 'utf8').replace(
+      'text: The catalog is listed',
+      'text: The Catalog product list is shown, and the Product keeps it current'
+    ))
+    const findings = [...run(cwd).errors, ...run(cwd).warnings].join('\n')
+    expect(findings).not.toContain('browse-catalog.md: step 1: text names "Catalog"')
+    expect(findings).not.toContain('browse-catalog.md: step 1: text names "Product"')
+    // Elsewhere, "the catalog" is still a Catalog nobody declared.
+    expect(findings).toContain('text names "Catalog"')
   })
 
   /*
@@ -631,18 +769,30 @@ Supports order operations. It does not expose a shopper's account.
    * from, so two transitions into one state share a demonstration. Demanding a
    * witness per edge would demand a `from` the format never gives a Step.
    */
-  it('lets one Step demonstrate every transition into the same state', () => {
+  /*
+   * Where an earlier Step left an instance in a state, a later Step leaves
+   * from it — and the way out of a false alarm is an alias, never a guess.
+   */
+  it('chains Steps per instance and points at aliases', () => {
     const cwd = fixtureCopy()
-    const entity = join(cwd, '.businesslens/entities/order.md')
-    writeFileSync(
-      entity,
-      readFileSync(entity, 'utf8').replace(
-        '  - from: Confirmed\n    to: Refunded\n    by: manage-orders\n',
-        '  - from: Confirmed\n    to: Refunded\n    by: manage-orders\n  - from: Pending\n    to: Refunded\n    by: manage-orders\n'
-      )
+    const refund = join(cwd, '.businesslens/capabilities/manage-orders/scenarios/refund-order.md')
+    const source = readFileSync(refund, 'utf8')
+    writeFileSync(refund, source.replace(
+      '      - { entity: order, effect: reads }',
+      '      - { entity: order, effect: changes, from: Pending, to: Confirmed }'
+    ).replace('from: Confirmed, to: Refunded', 'from: Pending, to: Refunded'))
+    expect(run(cwd).errors.join('\n')).toContain(
+      '"order" was left in "Confirmed" by an earlier Step, not "Pending"; if these are different instances, give them aliases'
     )
 
-    expect(run(cwd).errors).toEqual([])
+    const merge = join(cwd, '.businesslens/capabilities/manage-orders/scenarios/merge-duplicate-orders.md')
+    writeFileSync(merge, readFileSync(merge, 'utf8').replace(
+      '{ entity: order, as: duplicate, effect: changes, from: Pending, to: Cancelled }',
+      '{ entity: order, effect: changes, from: Pending, to: Cancelled }'
+    ))
+    expect(run(cwd).errors.join('\n')).toContain(
+      '"order" is aliased elsewhere in this Scenario; once an Entity is aliased, every mention of it is'
+    )
   })
 
   /*
@@ -656,17 +806,11 @@ Supports order operations. It does not expose a shopper's account.
    * Step's `changes` is what one concrete case *does*, so the two differ by
    * design.
    */
-  it('requires a Capability that declares Entities to change one somewhere', () => {
+  it('refuses the retired Capability entities list, and names the replacement', () => {
     const cwd = fixtureCopy()
     const capability = join(cwd, '.businesslens/capabilities/browse-catalog/capability.md')
-    writeFileSync(
-      capability,
-      readFileSync(capability, 'utf8').replace('---\n', '---\nentities:\n  - catalog-product\n')
-    )
-
-    expect(run(cwd).errors.join('\n')).toContain(
-      'declares the Entities it changes, and no Step of its Scenarios changes any of them'
-    )
+    writeFileSync(capability, readFileSync(capability, 'utf8').replace('---\n', '---\nentities:\n  - catalog-product\n'))
+    expect(run(cwd).errors.join('\n')).toContain('"entities" is gone from a Capability; each Step\'s "entities" says what it changes')
   })
 
   /*
@@ -674,31 +818,25 @@ Supports order operations. It does not expose a shopper's account.
    * that writes any part of a model can touch every resource type while no
    * single acceptance case touches all of them.
    */
-  it('accepts a Capability whose Scenarios change some of what it declares', () => {
+  it('requires entities on every Step, so silence is impossible', () => {
     const cwd = fixtureCopy()
-    const capability = join(cwd, '.businesslens/capabilities/manage-orders/capability.md')
-    writeFileSync(
-      capability,
-      readFileSync(capability, 'utf8').replace('entities:\n  - order\n', 'entities:\n  - order\n  - cart\n')
-    )
-
-    // Its Steps change the Order and never the Cart, and that is not a finding.
-    expect(run(cwd).errors.join('\n')).not.toContain('no Step of its Scenarios changes any of them')
+    const scenario = join(cwd, '.businesslens/capabilities/browse-catalog/scenarios/browse-catalog.md')
+    writeFileSync(scenario, readFileSync(scenario, 'utf8').replace(
+      '    entities:\n      - { entity: catalog-product, effect: reads }\n    contexts:\n      web:\n        place: customer-web::storefront::product-record\n      mobile:\n        place: customer-mobile::storefront::product-record\n  - text: The shopper opens',
+      '    contexts:\n      web:\n        place: customer-web::storefront::product-record\n      mobile:\n        place: customer-mobile::storefront::product-record\n  - text: The shopper opens'
+    ))
+    expect(run(cwd).errors.join('\n')).toContain('step 1: needs "entities" — what this Step does to the Product\'s things, or [] when it touches nothing')
   })
 
-  it('grades a silent acceptance surface by model coverage status', () => {
+  it('refuses the retired transitions key on an Entity, and the earlier Step spellings', () => {
     const cwd = fixtureCopy()
-    const capability = join(cwd, '.businesslens/capabilities/browse-catalog/capability.md')
-    writeFileSync(
-      capability,
-      readFileSync(capability, 'utf8').replace('---\n', '---\nentities:\n  - catalog-product\n')
-    )
-    const coverage = join(cwd, '.businesslens/coverage.md')
-    writeFileSync(coverage, readFileSync(coverage, 'utf8').replace('status: complete', 'status: partial'))
+    const order = join(cwd, '.businesslens/entities/order.md')
+    writeFileSync(order, readFileSync(order, 'utf8').replace('domain: ordering', 'domain: ordering\ntransitions:\n  - { from: Pending, to: Confirmed, by: settle-payment }'))
+    expect(run(cwd).errors.join('\n')).toContain('"transitions" is gone; a Step\'s "entities" entry says which state it moves the thing from and to')
 
-    const partial = run(cwd)
-    expect(partial.errors.some(error => error.includes('no Step of its Scenarios changes'))).toBe(false)
-    expect(partial.warnings.some(warning => warning.includes('no Step of its Scenarios changes'))).toBe(true)
+    const scenario = join(cwd, '.businesslens/capabilities/browse-catalog/scenarios/browse-catalog.md')
+    writeFileSync(scenario, readFileSync(scenario, 'utf8').replace('    entities:\n', '    reads:\n      - catalog-product\n    entities:\n'))
+    expect(run(cwd).errors.join('\n')).toContain('"reads" is now an entry of "entities"')
   })
 
   /*
@@ -706,32 +844,43 @@ Supports order operations. It does not expose a shopper's account.
    * and changing one thing in one act are two claims that cannot both be the
    * whole truth about that Step.
    */
-  it('takes a Step read as a mention, never as a change', () => {
+  /*
+   * A read is a bare mention. It resolves like any other reference, and it
+   * never keeps an Entity from being an orphan.
+   */
+  it('resolves a Step read like any other reference', () => {
     const cwd = fixtureCopy()
     const scenario = join(cwd, '.businesslens/capabilities/browse-catalog/scenarios/browse-catalog.md')
     const source = readFileSync(scenario, 'utf8')
 
-    writeFileSync(scenario, source.replace('      - catalog-product\n', '      - ghost\n'))
-    expect(run(cwd).errors.join('\n')).toContain('reads missing entity "ghost"')
+    writeFileSync(scenario, source.replace('{ entity: catalog-product, effect: reads }', '{ entity: ghost, effect: reads }'))
+    expect(run(cwd).errors.join('\n')).toContain('step 1: references missing entity "ghost"')
 
-    /* Reading it is not declaring that this Capability changes it, so the
-       Capability stays out of `entities` and the read alone must not put it back. */
     writeFileSync(scenario, source)
     expect(run(cwd).errors).toEqual([])
   })
 
-  it('refuses a Step that both reads and changes one Entity', () => {
+  it('refuses two entries for one instance, and state keys an effect cannot carry', () => {
     const cwd = fixtureCopy()
-    const scenario = join(cwd, '.businesslens/capabilities/manage-orders/scenarios/refund-order.md')
-    writeFileSync(
-      join(cwd, '.businesslens/capabilities/manage-orders/scenarios/refund-order.md'),
-      readFileSync(scenario, 'utf8').replace(
-        '    changes:\n      - entity: order\n        state: Refunded\n',
-        '    changes:\n      - entity: order\n        state: Refunded\n    reads:\n      - order\n'
-      )
-    )
+    const refund = join(cwd, '.businesslens/capabilities/manage-orders/scenarios/refund-order.md')
+    const source = readFileSync(refund, 'utf8')
+    const withEntry = (entry: string) => {
+      writeFileSync(refund, source.replace(
+        '      - { entity: refund, effect: creates, to: Requested }',
+        `      - { entity: refund, effect: creates, to: Requested }\n      - ${entry}`
+      ))
+      return run(cwd).errors.join('\n')
+    }
 
-    expect(run(cwd).errors.join('\n')).toContain('"order" is both read and changed by this Step')
+    expect(withEntry('{ entity: refund, effect: reads }')).toContain('"refund" already appears in this Step')
+    expect(withEntry('{ entity: cart, effect: reads, to: Full }')).toContain('a "reads" entry carries no "from" or "to"')
+    expect(withEntry('{ entity: cart, effect: creates, from: Empty }')).toContain('a "creates" entry has no "from"')
+    expect(withEntry('{ entity: cart, effect: removes, to: Empty }')).toContain('a "removes" entry has no "to"')
+    expect(withEntry('{ entity: cart, effect: changes, to: Full }')).toContain('a "changes" entry carries both "from" and "to", or neither')
+    expect(withEntry('{ entity: cart, effect: changes, from: Full, to: Empty }')).toContain('names a state, and entity "cart" declares none')
+    expect(withEntry('{ entity: catalog-product, effect: creates }')).toContain('creating "catalog-product" needs "to", the state it starts in')
+    expect(withEntry('{ entity: catalog-product, effect: removes }')).toContain('removing "catalog-product" needs "from", the state it ends in')
+    expect(withEntry('{ entity: catalog-product, effect: changes, from: Available, to: Sold }')).toContain('"Sold" is not a state of entity "catalog-product"')
   })
 
   it('requires Capability Scenario coverage for every availability Context', () => {
@@ -775,9 +924,9 @@ Supports order operations. It does not expose a shopper's account.
 
   it('rejects narrowed Rule contexts outside their target and redundant ancestor targets', () => {
     const cwd = fixtureCopy()
-    const file = join(cwd, '.businesslens/business-rules/refunds-apply-only-to-existing-orders.md')
+    const file = join(cwd, '.businesslens/business-rules/payment-before-confirmation.md')
     writeFileSync(file, readFileSync(file, 'utf8').replace(
-      'appliesTo:\n  - type: capability-scenario\n    id: refund-order\n  - type: journey\n    id: browse-and-buy',
+      'appliesTo:\n  - type: capability\n    id: place-order\n  - type: journey\n    id: browse-and-buy',
       `appliesTo:
   - type: capability
     id: manage-orders
@@ -794,9 +943,9 @@ Supports order operations. It does not expose a shopper's account.
 
   it('lets a Rule Context select descendants and rejects redundant nested selectors', () => {
     const cwd = fixtureCopy()
-    const file = join(cwd, '.businesslens/business-rules/refunds-apply-only-to-existing-orders.md')
+    const file = join(cwd, '.businesslens/business-rules/payment-before-confirmation.md')
     const source = readFileSync(file, 'utf8').replace(
-      'appliesTo:\n  - type: capability-scenario\n    id: refund-order',
+      'appliesTo:\n  - type: capability\n    id: place-order',
       'appliesTo:\n  - type: capability\n    id: browse-catalog\n    contexts:\n      - place: customer-web'
     )
     writeFileSync(file, source)
@@ -850,8 +999,8 @@ Supports order operations. It does not expose a shopper's account.
       .replace('# Complete checkout\n\n## Trigger', '# Complete checkout\n\nLegacy Scenario summary.\n\n## Trigger')
       .replace('## Outcome', '## Goal\n\nWrong resource shape.\n\n## Trigger\n\nDuplicate trigger.\n\n## Outcome')
       .replace(
-        'The order is stored and a confirmation is shown.',
-        'The order is stored and a confirmation is shown.\n\n## Edge cases\n\nNot a bullet item.'
+        'The order is stored as pending, awaiting settlement, and a confirmation is shown.',
+        'The order is stored as pending, awaiting settlement, and a confirmation is shown.\n\n## Edge cases\n\nNot a bullet item.'
       )
       .replace(
         'Payment recovery remains supporting context rather than another structured field.',
@@ -981,7 +1130,7 @@ An order exists.
       'place: customer-web::missing-experience::product-record'
     ))
     const errors = run(cwd).errors.join('\n')
-    expect(errors).toContain('missing actor "ghost"')
+    expect(errors).toContain('references missing entity "ghost"')
     expect(errors).toContain('Context references missing place "customer-web::missing-experience::product-record"')
   })
 
@@ -1078,19 +1227,10 @@ Lead.
 
   it('warns on a missing repository-relative reference without failing', () => {
     const cwd = fixtureCopy()
-    writeFileSync(join(cwd, '.businesslens/actors/shopper.md'), `---
-kind: person
-relationship: external
-references:
+    writeFileSync(join(cwd, '.businesslens/entities/shopper.md'), shopperWith(`references:
   - kind: doc
     role: context
-    target: docs/missing.md
----
-
-# Shopper
-
-Lead.
-`)
+    target: docs/missing.md`))
     const result = run(cwd)
     expect(result.ok).toBe(true)
     expect(result.warnings.some(warning => warning.includes('docs/missing.md'))).toBe(true)
@@ -1098,19 +1238,10 @@ Lead.
 
   it('checks the local path behind a reference query or fragment', () => {
     const cwd = fixtureCopy()
-    writeFileSync(join(cwd, '.businesslens/actors/shopper.md'), `---
-kind: person
-relationship: external
-references:
+    writeFileSync(join(cwd, '.businesslens/entities/shopper.md'), shopperWith(`references:
   - kind: research
     role: context
-    target: README.md?plain=1#method
----
-
-# Shopper
-
-Lead.
-`)
+    target: README.md?plain=1#method`))
     const result = run(cwd)
     expect(result.errors).toEqual([])
     expect(result.warnings).toEqual([])
@@ -1118,40 +1249,22 @@ Lead.
 
   it('rejects unsafe supporting-reference schemes', () => {
     const cwd = fixtureCopy()
-    writeFileSync(join(cwd, '.businesslens/actors/shopper.md'), `---
-kind: person
-relationship: external
-references:
+    writeFileSync(join(cwd, '.businesslens/entities/shopper.md'), shopperWith(`references:
   - kind: visual
     role: intent
-    target: file:///tmp/screen.png
----
-
-# Shopper
-
-Lead.
-`)
+    target: file:///tmp/screen.png`))
     expect(run(cwd).errors.join('\n')).toContain('must use HTTP(S) or a repository-relative path')
   })
 
   it('rejects duplicate reference targets on one resource', () => {
     const cwd = fixtureCopy()
-    writeFileSync(join(cwd, '.businesslens/actors/shopper.md'), `---
-kind: person
-relationship: external
-references:
+    writeFileSync(join(cwd, '.businesslens/entities/shopper.md'), shopperWith(`references:
   - kind: doc
     role: context
     target: https://example.com/same
   - kind: visual
     role: intent
-    target: https://example.com/same
----
-
-# Shopper
-
-Lead.
-`)
+    target: https://example.com/same`))
     expect(run(cwd).errors.join('\n')).toContain('duplicate reference target')
   })
 
@@ -1259,12 +1372,14 @@ references:
   it('warns when two Entities declare relations at each other', () => {
     const cwd = fixtureCopy()
     const product = join(cwd, '.businesslens/entities/catalog-product.md')
-    writeFileSync(product, readFileSync(product, 'utf8').replace('---\n', `---
+    writeFileSync(product, `---
 relations:
   - entity: order
     verb: was ordered in
     cardinality: many-to-many
-`))
+---
+
+${readFileSync(product, 'utf8')}`)
     const result = run(cwd)
     expect(result.errors).toEqual([])
     expect(result.warnings.join('\n')).toContain('faces "was ordered in order"')
@@ -1303,4 +1418,214 @@ Lead.
 `)
     expect(run(cwd).errors.some(error => error.includes('unknown frontmatter key "color"'))).toBe(true)
   })
+
+  /*
+   * `permits` is checked for structure: every id resolves, every path walks one
+   * unambiguous hop at a time onto an Entity that acts, and no grant is
+   * impossible by construction. Nothing here claims a grant is satisfied.
+   */
+  it('checks a permission Rule for structure', () => {
+    const cwd = fixtureCopy()
+    const errorsWith = (frontmatter: string) => {
+      writeRule(cwd, 'probe', frontmatter)
+      return run(cwd).errors.join('\n')
+    }
+
+    expect(errorsWith(`appliesTo:
+  - type: capability
+    id: manage-orders
+permits:
+  - actors: [store-admin]`)).toContain('"permits" needs Entity targets only')
+
+    expect(errorsWith(`appliesTo:
+  - type: entity
+    id: refund
+permits:
+  - when: [{ fact: Amount, over: 10 }]`)).toContain('grant 1: names nobody')
+
+    expect(errorsWith(`appliesTo:
+  - type: entity
+    id: refund
+permits:
+  - related: []`)).toContain('"related" is empty; the instance itself is "self: true"')
+
+    expect(errorsWith(`appliesTo:
+  - type: entity
+    id: refund
+permits:
+  - related: [{ verb: belongs to, entity: order }]`)).toContain('no relation "belongs to" joins "refund" and "order" in either direction')
+
+    expect(errorsWith(`appliesTo:
+  - type: entity
+    id: refund
+permits:
+  - related: [{ verb: is repaid by, entity: order }]`)).toContain('"related" ends on "order", which does not act')
+
+    expect(errorsWith(`appliesTo:
+  - type: entity
+    id: refund
+permits:
+  - actors: [store-admin]
+    related: [{ verb: is repaid by, entity: order }, { verb: owns, entity: shopper }]`)).toContain('"actors" excludes "shopper", where "related" ends; the grant can never be satisfied')
+
+    expect(errorsWith(`appliesTo:
+  - type: entity
+    id: refund
+permits:
+  - related: [{ verb: is repaid by, entity: refund }]`)).toContain('walks "refund" to itself')
+
+    expect(errorsWith(`appliesTo:
+  - type: entity
+    id: order
+permits:
+  - self: true`)).toContain('"self" needs entity "order" to act')
+
+    expect(errorsWith(`appliesTo:
+  - type: entity
+    id: order
+    effect: creates
+permits:
+  - actors: [shopper]
+    when: [{ state: Pending }]`)).toContain('a "state" condition on a "creates" target; there is no instance yet')
+
+    expect(errorsWith(`appliesTo:
+  - type: entity
+    id: order
+permits:
+  - actors: [shopper]
+    when: [{ state: Shipped }, { fact: Weight, over: 1 }, { entity: store-settings, fact: Nope, is: true }]`))
+      .toMatch(/"Shipped" is not a state of entity "order"[\s\S]*"Weight" is not a fact of entity "order"[\s\S]*"Nope" is not a fact of entity "store-settings"/)
+
+    expect(errorsWith(`appliesTo:
+  - type: entity
+    id: order
+permits:
+  - actors: [shopper]
+    when: [{ fact: Subtotal, over: 1, under: 2 }]`)).toContain('needs exactly one operator')
+
+    expect(errorsWith(`appliesTo:
+  - type: entity
+    id: order
+    effect: removes
+    to: Cancelled
+permits: []`)).toContain('"to" selects nothing on a "removes" target')
+
+    expect(errorsWith(`appliesTo:
+  - type: entity
+    id: order
+    effect: reads
+    contexts:
+      - place: customer-web::storefront::product-record
+permits:
+  - actors: [shopper]`)).toContain('Context place "customer-web::storefront::product-record" presents entity "order" nowhere')
+
+    expect(errorsWith(`appliesTo:
+  - type: entity
+    id: order
+  - type: entity
+    id: refund
+permits:
+  - related: [{ verb: owns, entity: shopper }]
+    when: [{ state: Pending }]`)).toMatch(/"related" needs exactly one Entity target[\s\S]*a "state" condition needs exactly one Entity target/)
+  })
+
+  it('walks a related path only where a hop is unambiguous', () => {
+    const cwd = fixtureCopy()
+    // A second relation with the same verb between the same pair, facing the other way.
+    const refund = join(cwd, '.businesslens/entities/refund.md')
+    writeFileSync(refund, readFileSync(refund, 'utf8').replace('domain: ordering', `domain: ordering
+relations:
+  - entity: order
+    verb: is repaid by
+    cardinality: one-to-one`))
+    expect(run(cwd).errors.join('\n')).toContain('"is repaid by" joins "refund" and "order" more than once; give one of them another verb')
+  })
+
+  /*
+   * A target selects a Step by the keys its `entities` entry carries; a grant
+   * is possible for the Step's actor when every who-key it carries could be
+   * that actor. Rules selecting one operation AND.
+   */
+  it('holds Steps to the Rules that govern them', () => {
+    const cwd = fixtureCopy()
+    const merge = join(cwd, '.businesslens/capabilities/manage-orders/scenarios/merge-duplicate-orders.md')
+    writeFileSync(merge, readFileSync(merge, 'utf8').replace(
+      'as: duplicate, effect: changes, from: Pending, to: Cancelled',
+      'as: duplicate, effect: changes, from: Refunded, to: Cancelled'
+    ))
+    expect(run(cwd).errors.join('\n')).toContain(
+      'step 2: moves "order (duplicate)" from Refunded to Cancelled, which rule "a-refunded-order-is-never-cancelled" forbids to everyone'
+    )
+
+    writeRule(cwd, 'gateway-only', `appliesTo:
+  - type: entity
+    id: order
+    effect: changes
+    to: Refunded
+permits:
+  - actors: [payment-gateway]`)
+    expect(run(cwd).errors.join('\n')).toContain(
+      'actor "store-admin" moves "order" from Confirmed to Refunded, and no grant of rule "gateway-only" can permit it'
+    )
+    unlinkSync(join(cwd, '.businesslens/business-rules/gateway-only.md'))
+
+    const refund = join(cwd, '.businesslens/capabilities/manage-orders/scenarios/refund-order.md')
+    const source = readFileSync(refund, 'utf8')
+    writeFileSync(refund, source.replace('    kind: product\n    actor: store-admin\n', '    kind: product\n'))
+    expect(run(cwd).errors.join('\n')).toContain(
+      'step 2: moves "order" from Confirmed to Refunded, which rule "who-may-change-an-order" governs, so it needs an actor'
+    )
+    writeFileSync(refund, source)
+
+    const rule = join(cwd, '.businesslens/business-rules/who-may-change-an-order.md')
+    writeFileSync(rule, readFileSync(rule, 'utf8').replace('  - unattended: true\n    when: [{ state: Pending }]\n', ''))
+    expect(run(cwd).errors.join('\n')).toContain(
+      'moves "order" from Pending to Cancelled unattended, and rule "who-may-change-an-order" has no "unattended" grant for it'
+    )
+  })
+
+  it('warns on selectors that say nothing', () => {
+    const cwd = fixtureCopy()
+    writeRule(cwd, 'twin', `appliesTo:
+  - type: entity
+    id: order
+    effect: removes
+permits: []`)
+    expect(run(cwd).warnings.join('\n')).toMatch(/twin\.md: selects exactly what .*orders-are-never-deleted\.md selects/)
+    unlinkSync(join(cwd, '.businesslens/business-rules/twin.md'))
+
+    writeRule(cwd, 'narrow', `appliesTo:
+  - type: entity
+    id: order
+    effect: changes
+    from: Confirmed
+    to: Refunded
+permits:
+  - actors: [store-admin]
+    when: [{ state: Confirmed }]`)
+    const warnings = run(cwd).warnings.join('\n')
+    expect(warnings).toContain('"from: Confirmed" is redundant; every Step it could select already leaves from it')
+    expect(warnings).toContain('"state: Confirmed" is redundant; every selected Step already leaves from it')
+  })
+
+  it('keeps a Screen readable by somebody who reaches it', () => {
+    const cwd = fixtureCopy()
+    writeRule(cwd, 'gateway-reads', `appliesTo:
+  - type: entity
+    id: refund
+    effect: reads
+permits:
+  - actors: [payment-gateway]`)
+    expect(run(cwd).errors.join('\n')).toContain(
+      'presents "refund", and no actor of "customer-web::storefront" has a grant to read it in rule "gateway-reads"'
+    )
+
+    writeRule(cwd, 'gateway-reads', `appliesTo:
+  - type: entity
+    id: refund
+    effect: reads
+permits: []`)
+    expect(run(cwd).errors.join('\n')).toContain('presents "refund", which rule "gateway-reads" forbids anyone to read')
+  })
+
 })

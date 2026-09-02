@@ -6,6 +6,8 @@ steps:
     kind: actor
     actor: shopper
     capability: browse-catalog
+    entities:
+      - { entity: catalog-product, effect: reads }
     contexts:
       web-to-admin:
         place: customer-web::storefront::product-record
@@ -15,22 +17,39 @@ steps:
     kind: actor
     actor: shopper
     capability: place-order
+    entities:
+      - { entity: order, effect: creates, to: Pending }
+      - { entity: cart, effect: removes }
     contexts:
       web-to-admin:
         place: customer-web::storefront::product-record
       mobile-to-admin:
         place: customer-mobile::storefront::product-record
+  - text: The payment settles and the order is confirmed
+    kind: product
+    actor: payment-gateway
+    capability: settle-payment
+    entities:
+      - { entity: order, effect: changes, from: Pending, to: Confirmed }
+    contexts:
+      web-to-admin:
+        place: payment-webhook
+      mobile-to-admin:
+        place: payment-webhook
   - text: Reconciliation shows the product cannot be fulfilled
     kind: condition
+    entities: []
   - text: The store admin cancels the order and the payment is released
     kind: actor
     actor: store-admin
-    capability: manage-orders
+    capability: cancel-order
+    entities:
+      - { entity: order, effect: changes, from: Confirmed, to: Cancelled }
     contexts:
       web-to-admin:
-        place: admin-web
+        place: admin-web::order-detail
       mobile-to-admin:
-        place: admin-web
+        place: admin-web::order-detail
 routes:
   web-to-admin: Web To Admin
   mobile-to-admin: Mobile To Admin
@@ -45,5 +64,5 @@ unavailable.
 
 ## Outcome
 
-The Journey goal is not achieved: no confirmed order remains for the selected
-product, and the shopper is not charged.
+The Journey goal is not achieved: the order is cancelled and the shopper is
+repaid before anything ships.

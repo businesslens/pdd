@@ -1,6 +1,4 @@
 ---
-entities:
-  - order
 domain: ordering
 references:
   - kind: code

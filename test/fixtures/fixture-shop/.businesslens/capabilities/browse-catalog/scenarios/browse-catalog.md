@@ -6,8 +6,8 @@ routes:
 steps:
   - text: The catalog is listed
     kind: product
-    reads:
-      - catalog-product
+    entities:
+      - { entity: catalog-product, effect: reads }
     contexts:
       web:
         place: customer-web::storefront::product-record
@@ -16,6 +16,8 @@ steps:
   - text: The shopper opens a product page
     kind: actor
     actor: shopper
+    entities:
+      - { entity: catalog-product, effect: reads }
     contexts:
       web:
         place: customer-web::storefront::product-record

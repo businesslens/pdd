@@ -1,6 +1,8 @@
 import type { Context } from '../core/frontmatter.js'
 import { repositoryReferencePath } from '../core/frontmatter.js'
-import type { PddModel } from '../core/model.js'
+import type {
+  BusinessRuleEntityTarget, BusinessRuleGrant, PddModel, RelatedSegment, ScenarioStep, ScenarioStepEntity
+} from '../core/model.js'
 import { lsFiles } from '../core/git.js'
 import { containsPlace, counterpartKey, interfaceOf, isId, isQualifiedId } from '../core/ids.js'
 import { INTERFACE_TYPES } from '../core/interface-types.js'
@@ -16,14 +18,27 @@ export interface LintResult {
 }
 
 const ACCESS_MODES = new Set(['public', 'authenticated', 'restricted'])
-const ACTOR_KINDS = new Set(['person', 'system'])
-const ACTOR_RELATIONSHIPS = new Set(['external', 'internal'])
 const COVERAGE_STATUSES = new Set(['complete', 'partial', 'draft'])
 const JOURNEY_RESULTS = new Set(['achieved', 'not-achieved'])
 const INTERFACE_TYPE_SET = new Set<string>(INTERFACE_TYPES)
 
 function sameSet(left: Set<string>, right: Set<string>): boolean {
   return left.size === right.size && [...left].every(value => right.has(value))
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+/** Nothing about the entity, its effect, or its states is left to guess in a message. */
+function describeOperation(entry: ScenarioStepEntity): string {
+  const effect = entry.effect ?? 'changes'
+  const name = entry.as ? `${entry.entity} (${entry.as})` : entry.entity
+  if (effect === 'reads') return `reads "${name}"`
+  if (effect === 'creates') return `creates "${name}"${entry.to ? ` as ${entry.to}` : ''}`
+  if (effect === 'removes') return `removes "${name}"${entry.from ? ` from ${entry.from}` : ''}`
+  if (entry.from && entry.to) return `moves "${name}" from ${entry.from} to ${entry.to}`
+  return `changes "${name}"`
 }
 
 /** Pure structural rule engine over a loaded model; trackedFiles injected for testability. */
@@ -127,7 +142,22 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     }
   }
 
-  const actorIds = new Set(model.actors.map(actor => actor.id))
+  const entityIds = new Set(model.entities.map(item => item.id))
+  const entitiesById = new Map(model.entities.map(item => [item.id, item]))
+  /*
+   * An Actor is an Entity that acts. Every actor reference — a Step's `actor`,
+   * an Interface's, Experience's or Journey's `actors`, a grant's `actors` —
+   * resolves here, and the message says which of the two things went wrong.
+   */
+  const actorIds = new Set(model.entities.filter(item => item.acts !== undefined).map(item => item.id))
+  const requireActor = (label: string, id: string) => {
+    if (actorIds.has(id)) return
+    if (entityIds.has(id)) {
+      errors.push(`${label}: "${id}" does not act; an actor is an Entity with "acts" and "kind"`)
+    } else {
+      errors.push(`${label}: references missing entity "${id}"`)
+    }
+  }
   const interfaceIds = new Set(model.interfaces.map(item => item.id))
   const interfacesById = new Map(model.interfaces.map(item => [item.id, item]))
   const experiencesById = new Map(model.experiences.map(experience => [experience.id, experience]))
@@ -212,17 +242,6 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     }
   }
 
-  for (const actor of model.actors) {
-    requireTitle(actor.file, actor.doc.title, actor.doc.lead)
-    validateSections(actor.file, actor.doc, ['Intent'])
-    if (!ACTOR_KINDS.has(actor.kind)) {
-      errors.push(`${actor.file}: kind "${actor.kind}" must be person|system`)
-    }
-    if (!ACTOR_RELATIONSHIPS.has(actor.relationship)) {
-      errors.push(`${actor.file}: relationship "${actor.relationship}" must be external|internal`)
-    }
-  }
-
   for (const productInterface of model.interfaces) {
     requireTitle(productInterface.file, productInterface.doc.title, productInterface.doc.lead)
     validateSections(productInterface.file, productInterface.doc, ['Intent', 'Capability boundary'])
@@ -230,9 +249,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
       errors.push(`${productInterface.file}: type "${productInterface.type}" must be ${INTERFACE_TYPES.join('|')}`)
     }
     if (!productInterface.actors.length) errors.push(`${productInterface.file}: needs at least one actor`)
-    for (const actorId of productInterface.actors) {
-      if (!actorIds.has(actorId)) errors.push(`${productInterface.file}: references missing actor "${actorId}"`)
-    }
+    for (const actorId of productInterface.actors) requireActor(productInterface.file, actorId)
     if (!productInterface.capabilityBoundary) {
       errors.push(`${productInterface.file}: missing "## Capability boundary" section`)
     }
@@ -264,9 +281,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
       errors.push(`${experience.file}: access "${experience.access}" must be public|authenticated|restricted`)
     }
     if (!experience.actors.length) errors.push(`${experience.file}: needs at least one actor`)
-    for (const actorId of experience.actors) {
-      if (!actorIds.has(actorId)) errors.push(`${experience.file}: references missing actor "${actorId}"`)
-    }
+    for (const actorId of experience.actors) requireActor(experience.file, actorId)
     const owner = interfacesById.get(experience.interface)
     if (owner) {
       for (const actorId of experience.actors) {
@@ -350,8 +365,10 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
           model.capabilityScenarios.some(
             scenario =>
               scenario.capability === capability.id &&
-              // A Scenario's Actor set is derived from its Steps, never authored.
-              scenario.steps.some(step => step.kind === 'actor' && step.actor === actorId)
+              // A Scenario's Actor set is derived from its Steps, never authored,
+              // and an attributed actor on a Product Step counts as much as a
+              // performing one.
+              scenario.steps.some(step => step.actor === actorId)
           )
         )
       )
@@ -494,15 +511,29 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
   }
 
   /*
-   * An Entity declares nothing about who uses it. Its edges are declared by the
-   * Capability that changes it and the Screen that presents it, and checked here.
+   * An Entity declares nothing about who uses it. Steps say what changes it, a
+   * Screen says what presents it, and everything that names an actor says who
+   * acts — all resolved here, with the whole model in hand.
    */
-  const entityIds = new Set(model.entities.map(item => item.id))
-  const changedBy = new Map<string, string[]>()
-  for (const capability of model.capabilities) {
-    for (const id of capability.entities) {
-      if (!entityIds.has(id)) errors.push(`${capability.file}: names missing entity "${id}"`)
-      changedBy.set(id, [...(changedBy.get(id) || []), capability.id])
+  const allScenarios = [...model.capabilityScenarios, ...model.journeyScenarios]
+  const changedEntities = new Set<string>()
+  /* Every state some Step leaves an Entity in, and every origin some Step leaves it from. */
+  const producedStates = new Map<string, Set<string>>()
+  const originStates = new Map<string, Map<string, string>>()
+  for (const scenario of allScenarios) {
+    for (const step of scenario.steps) {
+      for (const entry of step.entities) {
+        if ((entry.effect ?? 'changes') === 'reads') continue
+        changedEntities.add(entry.entity)
+        if (entry.to !== undefined) {
+          producedStates.set(entry.entity, new Set([...(producedStates.get(entry.entity) ?? []), entry.to]))
+        }
+        if (entry.from !== undefined) {
+          const origins = originStates.get(entry.entity) ?? new Map<string, string>()
+          if (!origins.has(entry.from)) origins.set(entry.from, scenario.file)
+          originStates.set(entry.entity, origins)
+        }
+      }
     }
   }
   const presentedOn = new Map<string, string[]>()
@@ -512,13 +543,34 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
       presentedOn.set(id, [...(presentedOn.get(id) || []), screen.id])
     }
   }
+  /* A settings or policy Entity that only Rules read is still in use: a
+     condition reads a fact of it, or a grant is gated by it. */
+  const citedByRule = new Set<string>(model.businessRules.flatMap(rule => (rule.permits ?? []).flatMap(grant => [
+    ...(grant.configuredBy ? [grant.configuredBy] : []),
+    ...grant.when.flatMap(condition => [
+      ...(condition.entity ? [condition.entity] : []),
+      ...(typeof condition.value === 'object' && condition.value !== null ? [condition.value.configuredBy] : [])
+    ])
+  ])))
+  /* Named as an actor anywhere: a Step, a surface, a Journey, or a grant. */
+  const namedAsActor = new Set<string>([
+    ...allScenarios.flatMap(scenario => scenario.steps.flatMap(step => step.actor ? [step.actor] : [])),
+    ...model.interfaces.flatMap(item => item.actors),
+    ...model.experiences.flatMap(item => item.actors),
+    ...model.journeys.flatMap(item => item.actors),
+    ...model.businessRules.flatMap(rule => (rule.permits ?? []).flatMap(grant => [
+      ...grant.actors,
+      ...(grant.related.length ? [grant.related[grant.related.length - 1]!.entity] : [])
+    ]))
+  ])
 
   for (const entity of model.entities) {
     requireTitle(entity.file, entity.doc.title, entity.doc.lead)
     /*
      * `## Transitions` and `## Relations` are refused for the reason `## Steps`
-     * is refused on a Scenario: the frontmatter list is the one authority, and a
-     * prose section beside it is a second one that can disagree.
+     * is refused on a Scenario: the frontmatter and the Steps are the one
+     * authority, and a prose section beside them is a second one that can
+     * disagree.
      */
     validateSections(
       entity.file,
@@ -531,78 +583,24 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     }
 
     /*
-     * A transition's cause must be a Capability that admits acting on this
-     * Entity. Without the cross-check the two declarations could disagree
-     * silently, which is the failure the Screen/Capability check already
-     * prevents elsewhere.
+     * The lifecycle is composed from every Scenario, and this is where the
+     * composition says what it is missing. The first listed state is the one a
+     * thing starts in, so it is reachable by construction — a Catalog product no
+     * Capability creates is a real Entity whose instances pre-exist the model.
+     * Everything else has to be produced by some Step. No creation and no
+     * termination are notes the report shows, never findings here.
      */
-    for (const transition of entity.transitions) {
-      if (!capabilityIds.has(transition.by)) {
-        errors.push(`${entity.file}: transition "${transition.from} \u2192 ${transition.to}" names missing capability "${transition.by}"`)
-        continue
-      }
-      const capability = model.capabilities.find(item => item.id === transition.by)
-      if (capability && !capability.entities.includes(entity.id)) {
-        errors.push(
-          `${entity.file}: transition "${transition.from} \u2192 ${transition.to}" names capability "${transition.by}", which does not list this Entity`
-        )
-      }
-    }
-
-    /*
-     * A state nothing arrives at is either unwritten lifecycle or a state the
-     * Product cannot actually be in. The first listed state is exempt as the
-     * one a thing starts in, and a Step that creates straight into a state
-     * reaches it as surely as a transition does — which is why this is asked
-     * here, with the Scenarios in hand, and not in the Entity parser.
-     */
-    const createdStates = new Set([...model.capabilityScenarios, ...model.journeyScenarios]
-      .flatMap(scenario => scenario.steps)
-      .flatMap(step => step.changes)
-      .filter(change => change.entity === entity.id && change.effect === 'creates' && change.state)
-      .map(change => change.state as string))
-    const reached = new Set([...entity.transitions.map(transition => transition.to), ...createdStates])
+    const first = entity.states[0]?.title
+    const produced = producedStates.get(entity.id) ?? new Set<string>()
     for (const state of entity.states.slice(1)) {
-      if (!reached.has(state.title)) {
-        warnings.push(`${entity.file}: no transition reaches state "${state.title}"`)
+      if (!produced.has(state.title)) {
+        warnings.push(`${entity.file}: no Step leaves it in "${state.title}"`)
       }
     }
-
-    /*
-     * A transition is a claim, and the Scenarios of the Capability that causes
-     * it are its acceptance surface. A lifecycle move no Step is ever shown
-     * making is a claim with nothing behind it — the same hole as an Entity
-     * nothing points at, one level further in. It is also the only rule that
-     * asks for `entity`/`state` on a Step at all: every other check validates
-     * the pair once it is there, which is why models carried lifecycles their
-     * Scenarios never demonstrated and nothing said so.
-     *
-     * Only the destination is matched. A Step names the state it *leaves* the
-     * Entity in and never the one it came from, so two transitions differing
-     * only in `from` share one demonstration. That is all the format can say,
-     * and demanding a per-edge witness would demand a field that does not exist.
-     *
-     * Severity follows `coverage.status`, exactly as an availability Context
-     * without Scenario coverage does: breadth is the coverage claim's to make,
-     * and a draft is still being written.
-     */
-    for (const transition of entity.transitions) {
-      if (!capabilityIds.has(transition.by)) continue
-      const demonstrated = [...model.capabilityScenarios, ...model.journeyScenarios].some(scenario =>
-        scenario.steps.some((step) => {
-          const owner = 'capability' in scenario
-            ? (scenario as { capability: string }).capability
-            : step.capability
-          if (owner !== transition.by) return false
-          /* A creation is not a move, so it never witnesses one. */
-          return step.changes.some(change => change.entity === entity.id
-            && change.state === transition.to
-            && change.effect !== 'creates')
-        }))
-      if (demonstrated) continue
-      const finding = `${entity.file}: no Step of a "${transition.by}" Scenario leaves it in "${transition.to}", so the transition "${transition.from} \u2192 ${transition.to}" has no acceptance case`
-      if (model.coverage.status === 'complete') errors.push(finding)
-      else warnings.push(finding)
+    for (const [from, file] of originStates.get(entity.id) ?? []) {
+      if (from !== first && !produced.has(from)) {
+        warnings.push(`${entity.file}: ${file} moves it from "${from}", which no Step produces`)
+      }
     }
 
     /*
@@ -640,46 +638,12 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     }
 
     // No orphans. Vocabulary nothing points at is either unused or a relation
-    // somebody forgot to declare, and both are worth an error.
-    if (!(changedBy.get(entity.id) || []).length && !(presentedOn.get(entity.id) || []).length) {
-      errors.push(`${entity.file}: no Capability changes it and no Screen presents it`)
+    // somebody forgot to declare, and both are worth an error. A read never
+    // counts; acting does.
+    if (!changedEntities.has(entity.id) && !(presentedOn.get(entity.id) || []).length
+      && !namedAsActor.has(entity.id) && !citedByRule.has(entity.id)) {
+      errors.push(`${entity.file}: no Step changes it, no Screen presents it, nothing names it as an actor, and no Rule reads it`)
     }
-  }
-
-  /*
-   * The other end of "capability X does not declare entity Y".
-   *
-   * That check runs when a Step names an Entity. Nothing ran when a Capability
-   * named one and its whole acceptance surface stayed silent — which is how a
-   * Capability came to declare two Entities across four Scenarios that
-   * mentioned neither, and how three read-only Capabilities came to declare
-   * things they only present.
-   *
-   * It asks whether the surface says anything at all, never whether it accounts
-   * for each declared Entity one by one. `entities` is what a Capability *can*
-   * change; a Step's `changes` is what one concrete acceptance case *does*
-   * change, and those are supposed to differ. Demanding they match forces
-   * either one artificial case that touches everything or a Scenario per
-   * combination, and the first is what it actually produced: Steps reading
-   * "writes only that delta" were made to name all thirteen resource types.
-   *
-   * Severity follows `coverage.status`, as every other coverage claim does.
-   */
-  const capabilitiesNamedBySteps = new Set<string>()
-  for (const scenario of [...model.capabilityScenarios, ...model.journeyScenarios]) {
-    for (const step of scenario.steps) {
-      const owner = 'capability' in scenario
-        ? (scenario as { capability: string }).capability
-        : step.capability
-      if (owner && step.changes.length) capabilitiesNamedBySteps.add(owner)
-    }
-  }
-  for (const capability of model.capabilities) {
-    if (!capability.entities.length) continue
-    if (capabilitiesNamedBySteps.has(capability.id)) continue
-    const finding = `${capability.file}: declares the Entities it changes, and no Step of its Scenarios changes any of them`
-    if (model.coverage.status === 'complete') errors.push(finding)
-    else warnings.push(finding)
   }
 
   const capabilityAvailability = new Map<string, Set<string>>()
@@ -767,8 +731,12 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     const allContextPlaces = new Set<string>()
     const allContainers = new Set<string>()
     const scenarioActors = new Set<string>()
-    const scenarioEntities = new Set<string>()
     const capabilitySteps: Array<{ capability: string, contextPlaces: Set<string>, containers: Set<string> }> = []
+    const unattendedScenario = scenario.steps[0]?.unattended === true
+    /* Per instance, the state the last Step left it in; per Entity, whether it
+       is mentioned bare or aliased — once aliased anywhere, aliased everywhere. */
+    const instanceStates = new Map<string, string>()
+    const aliasModes = new Map<string, 'bare' | 'aliased'>()
     for (const [index, step] of scenario.steps.entries()) {
       const label = `${scenario.file}: step ${index + 1}`
       if (!step.text.trim()) errors.push(`${label}: needs non-empty text`)
@@ -776,60 +744,103 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
       if (!['actor', 'product', 'condition'].includes(step.kind)) {
         errors.push(`${label}: kind "${step.kind}" must be actor|product|condition`)
       }
-      if (step.kind === 'actor') {
-        if (!step.actor) errors.push(`${label}: an actor Step needs one actor`)
-        else {
-          scenarioActors.add(step.actor)
-          if (!actorIds.has(step.actor)) errors.push(`${label}: references missing actor "${step.actor}"`)
+      /*
+       * An actor Step names who performs it. A Product or condition Step may
+       * name who it is attributable to — the Product did it for them — and a
+       * Business Rule reads either as "who did". Every actor named joins the
+       * Scenario's Actor set. An unattended Scenario names nobody: its
+       * permission is a Rule's unattended grant, not a person.
+       */
+      if (step.kind === 'actor' && !step.actor) errors.push(`${label}: an actor Step needs one actor`)
+      if (step.actor) {
+        scenarioActors.add(step.actor)
+        requireActor(label, step.actor)
+        if (unattendedScenario) {
+          errors.push(`${label}: an unattended Scenario names no actor; its permission is a Rule's "unattended" grant`)
         }
       }
 
       /*
-       * A Step that names an Entity closes the loop the model could not check
-       * before: the Entity must be one the Capability declares, and a claimed
-       * state must be one the Entity has AND one that some transition reaches
-       * by that same Capability. A Scenario asserting an Order becomes
-       * Confirmed is therefore checked against the Order's own lifecycle.
+       * A Step's `entities` closes the loop the model could not check before.
+       * Each state named must be one the Entity has; a creation says where it
+       * starts and a removal where it ends when the Entity has states at all;
+       * two instances of one Entity are told apart by alias; and where an
+       * earlier Step left an instance in a state, this Step leaves from it.
        */
-      for (const id of step.reads) {
-        if (!entityIds.has(id)) errors.push(`${label}: reads missing entity "${id}"`)
+      if (!implicitCapability && !step.capability
+        && step.entities.some(entry => (entry.effect ?? 'changes') !== 'reads')) {
+        errors.push(`${label}: a Journey Step that creates, changes or removes an Entity needs a "capability" to own the change`)
       }
-      for (const change of step.changes) {
-        scenarioEntities.add(change.entity)
-        const entity = model.entities.find(item => item.id === change.entity)
+      for (const entry of step.entities) {
+        const entity = entitiesById.get(entry.entity)
         if (!entity) {
-          errors.push(`${label}: references missing entity "${change.entity}"`)
+          errors.push(`${label}: references missing entity "${entry.entity}"`)
           continue
         }
-        const owner = 'capability' in scenario
-          ? (scenario as { capability: string }).capability
-          : step.capability
-        if (owner) {
-          const capability = model.capabilities.find(item => item.id === owner)
-          if (capability && !capability.entities.includes(change.entity)) {
-            errors.push(`${label}: capability "${owner}" does not declare entity "${change.entity}"`)
+        const effect = entry.effect ?? 'changes'
+        const name = entry.as ? `${entry.entity} (${entry.as})` : entry.entity
+        const mode = entry.as ? 'aliased' : 'bare'
+        const priorMode = aliasModes.get(entry.entity)
+        if (priorMode && priorMode !== mode) {
+          errors.push(`${label}: "${entry.entity}" is ${priorMode === 'aliased' ? 'aliased' : 'bare'} elsewhere in this Scenario; once an Entity is aliased, every mention of it is`)
+        }
+        aliasModes.set(entry.entity, mode)
+
+        const hasStates = entity.states.length > 0
+        for (const [key, value] of [['from', entry.from], ['to', entry.to]] as const) {
+          if (value === undefined) continue
+          if (!hasStates) errors.push(`${label}: "${key}: ${value}" names a state, and entity "${entry.entity}" declares none`)
+          else if (!entity.states.some(state => state.title === value)) {
+            errors.push(`${label}: "${value}" is not a state of entity "${entry.entity}"`)
           }
         }
-        if (!change.state) continue
-        if (!entity.states.some(state => state.title === change.state)) {
-          errors.push(`${label}: "${change.state}" is not a state of entity "${change.entity}"`)
-          continue
+        if (hasStates && effect === 'creates' && entry.to === undefined) {
+          errors.push(`${label}: creating "${name}" needs "to", the state it starts in`)
         }
-        /*
-         * A creation has no `from`, so no transition can ever describe one and
-         * requiring a witness would make `creates` unauthorable. Every other
-         * effect is a move, and a move is exactly what a transition declares.
-         */
-        if (change.effect === 'creates') continue
-        if (owner && !entity.transitions.some(t => t.to === change.state && t.by === owner)) {
+        if (hasStates && effect === 'removes' && entry.from === undefined) {
+          errors.push(`${label}: removing "${name}" needs "from", the state it ends in`)
+        }
+
+        const instance = `${entry.entity}\0${entry.as ?? ''}`
+        const left = instanceStates.get(instance)
+        if (entry.from !== undefined && left !== undefined && left !== entry.from) {
           errors.push(
-            `${label}: no transition of "${change.entity}" reaches "${change.state}" by capability "${owner}"`
+            `${label}: "${name}" was left in "${left}" by an earlier Step, not "${entry.from}"; if these are different instances, give them aliases`
           )
         }
+        if (effect === 'removes') instanceStates.delete(instance)
+        else if (entry.to !== undefined) instanceStates.set(instance, entry.to)
       }
 
-      if (step.kind !== 'actor' && step.actor) {
-        errors.push(`${label}: actor is only valid when kind is "actor"`)
+      /*
+       * A Step whose text names a thing it does not declare is the silence this
+       * key exists to end. Titles only, never every word: the undefined-vocabulary
+       * check that matched all prose was abandoned for noise. The Step's own
+       * actor is exempt, and so is "The Product", which every Product Step opens
+       * with by convention.
+       */
+      const declared = new Set(step.entities.map(entry => entry.entity))
+      const scrubbed = step.text.replace(/\bthe Product\b/gi, ' ')
+      const titleSpans = (title: string): Array<[number, number]> => {
+        const pattern = new RegExp(`(?:^|[^a-z0-9])(${escapeRegExp(title)}(?:'s|s)?)(?=$|[^a-z0-9])`, 'gi')
+        return [...scrubbed.matchAll(pattern)].map(match => {
+          const start = match.index + match[0].length - match[1]!.length
+          return [start, start + match[1]!.length]
+        })
+      }
+      /* A declared title that contains the match covers it: "Product Model"
+         declared says nothing about "Product". */
+      const covered = model.entities
+        .filter(entity => entity.doc.title && (declared.has(entity.id) || entity.id === step.actor))
+        .flatMap(entity => titleSpans(entity.doc.title))
+      for (const entity of model.entities) {
+        if (!entity.doc.title || declared.has(entity.id) || entity.id === step.actor) continue
+        const exposed = titleSpans(entity.doc.title).some(([start, end]) =>
+          !covered.some(([from, to]) => from <= start && end <= to))
+        if (!exposed) continue
+        const finding = `${label}: text names "${entity.doc.title}" and "entities" does not declare it`
+        if (model.coverage.status === 'complete') errors.push(finding)
+        else warnings.push(finding)
       }
 
       const capabilityId = implicitCapability || step.capability
@@ -866,7 +877,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
             errors.push(`${contextLabel}: Screen "${resolved.screen.id}" does not expose capability "${capabilityId}"`)
           }
         }
-        if (step.kind === 'actor' && step.actor) {
+        if (step.actor) {
           const supported = supportedActorsForContainer(resolved.containerId) || new Set<string>()
           if (!supported.has(step.actor)) {
             errors.push(`${contextLabel}: Context place does not support actor "${step.actor}"`)
@@ -883,7 +894,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
      * behavior (a schedule the Product owns, an expiry, a retry) is real Product
      * behavior with nobody to name, and requiring an Actor left it uncovered.
      */
-    const unattendedTrigger = scenario.steps[0]?.unattended === true
+    const unattendedTrigger = unattendedScenario
     if (unattendedTrigger && scenario.steps[0]?.kind !== 'condition') {
       errors.push(`${scenario.file}: an unattended trigger must be a condition Step`)
     }
@@ -1026,9 +1037,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
       ['Trigger', 'Steps', 'Decision points', 'Outcome', 'Edge cases']
     )
     if (!journey.actors.length) errors.push(`${journey.file}: needs at least one actor`)
-    for (const actorId of journey.actors) {
-      if (!actorIds.has(actorId)) errors.push(`${journey.file}: references missing actor "${actorId}"`)
-    }
+    for (const actorId of journey.actors) requireActor(journey.file, actorId)
     if (!journey.goal) errors.push(`${journey.file}: missing "## Goal" section`)
     if (!journey.successCriterion) errors.push(`${journey.file}: missing "## Success criterion" section`)
     if (!model.journeyScenarios.some(scenario => scenario.journey === journey.id && scenario.result === 'achieved')) {
@@ -1126,6 +1135,43 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     }
   }
 
+  /*
+   * A `related` path starts at the Rule's one Entity target and walks declared
+   * relations and their derived inverses, one segment at a time. Each segment
+   * names the verb and the Entity it arrives at, so a hop resolves to exactly
+   * one relation or it is an error naming what went wrong. A self-relation is
+   * refused: naming the Entity does not give it a direction.
+   */
+  const walkRelated = (start: string, segments: RelatedSegment[], label: string): string | undefined => {
+    let current = start
+    for (const [index, segment] of segments.entries()) {
+      const segmentLabel = `${label}: related segment ${index + 1}`
+      if (!entityIds.has(segment.entity)) {
+        errors.push(`${segmentLabel}: references missing entity "${segment.entity}"`)
+        return undefined
+      }
+      if (segment.entity === current) {
+        errors.push(`${segmentLabel}: "${segment.verb}" walks "${current}" to itself, and a self-relation has no direction to follow`)
+        return undefined
+      }
+      const forward = (entitiesById.get(current)?.relations ?? [])
+        .filter(relation => relation.verb === segment.verb && relation.entity === segment.entity)
+      const inverse = (entitiesById.get(segment.entity)?.relations ?? [])
+        .filter(relation => relation.verb === segment.verb && relation.entity === current)
+      const matches = forward.length + inverse.length
+      if (matches === 0) {
+        errors.push(`${segmentLabel}: no relation "${segment.verb}" joins "${current}" and "${segment.entity}" in either direction`)
+        return undefined
+      }
+      if (matches > 1) {
+        errors.push(`${segmentLabel}: "${segment.verb}" joins "${current}" and "${segment.entity}" more than once; give one of them another verb`)
+        return undefined
+      }
+      current = segment.entity
+    }
+    return current
+  }
+
   for (const rule of model.businessRules) {
     requireTitle(rule.file, rule.doc.title, rule.doc.lead)
     validateSections(rule.file, rule.doc, ['Intent', 'Rationale'])
@@ -1138,12 +1184,16 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
      * `type: context` target is always fine, since a constraint on an
      * interaction context belongs to no behavior.
      */
-    const resourceTargets = rule.appliesTo.filter(target => target.type !== 'context')
+    const resourceTargets = rule.appliesTo.filter(target => target.type !== 'context' && target.type !== 'entity')
+    const entityTargets = rule.appliesTo.filter((target): target is BusinessRuleEntityTarget => target.type === 'entity')
     const narrowed = resourceTargets.some(
       target => 'contexts' in target && Array.isArray(target.contexts) && target.contexts.length > 0
     )
     const hasContextTarget = rule.appliesTo.some(target => target.type === 'context')
-    if (resourceTargets.length === 1 && !narrowed && !hasContextTarget) {
+    /* An Entity target is always valid: a durable invariant or permission on a
+       thing is a Rule even when it selects one operation, because the two homes
+       this warning suggests do not exist for a permission. */
+    if (resourceTargets.length === 1 && !narrowed && !hasContextTarget && !entityTargets.length) {
       const only = resourceTargets[0]
       const owner = only && 'id' in only ? only.id : 'that resource'
       warnings.push(
@@ -1172,8 +1222,49 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
         directContextPlaces.push(place)
         continue
       }
+      if (target.type === 'entity') {
+        const entity = entitiesById.get(target.id)
+        if (!target.id) errors.push(`${label}: needs a non-empty id`)
+        else if (!entity) errors.push(`${label}: references missing entity "${target.id}"`)
+        const key = `entity\0${target.id}\0${target.effect ?? ''}\0${target.from ?? ''}\0${target.to ?? ''}\0${target.facts.join(',')}`
+        if (seenTargets.has(key)) errors.push(`${label}: duplicate target "entity:${target.id}"`)
+        seenTargets.add(key)
+        if (entity) {
+          for (const [stateKey, value] of [['from', target.from], ['to', target.to]] as const) {
+            if (value !== undefined && !entity.states.some(state => state.title === value)) {
+              errors.push(`${label}: "${stateKey}: ${value}" is not a state of entity "${target.id}"`)
+            }
+          }
+          for (const fact of target.facts) {
+            if (!entity.informationKept.some(item => item.name === fact)) {
+              errors.push(`${label}: "${fact}" is not a fact of entity "${target.id}"`)
+            }
+          }
+        }
+        /* An Entity has no availability. A place-scoped Entity Rule is about
+           visibility, so the selector names a Screen presenting the Entity, or
+           an ancestor of one. */
+        const presenting = model.screens.filter(screen => screen.entities.includes(target.id)).map(screen => screen.id)
+        const seenEntityContextPlaces: string[] = []
+        for (const [contextIndex, context] of target.contexts.entries()) {
+          const contextLabel = `${label}: Context ${contextIndex + 1}`
+          const place = validateContextPlace(contextLabel, context)
+          if (seenEntityContextPlaces.includes(place)) errors.push(`${contextLabel}: duplicate Context place "${place}"`)
+          const overlapping = seenEntityContextPlaces.find(existing =>
+            existing !== place && (containsPlace(existing, place) || containsPlace(place, existing))
+          )
+          if (overlapping) {
+            errors.push(`${contextLabel}: Context place "${place}" is redundant with "${overlapping}"`)
+          }
+          seenEntityContextPlaces.push(place)
+          if (placeIds.has(place) && !presenting.some(screenId => screenId === place || containsPlace(place, screenId))) {
+            errors.push(`${contextLabel}: Context place "${place}" presents entity "${target.id}" nowhere`)
+          }
+        }
+        continue
+      }
       if (!['capability', 'capability-scenario', 'journey', 'journey-scenario'].includes(target.type)) {
-        errors.push(`${label}: type "${target.type}" must be capability|capability-scenario|journey|journey-scenario|context`)
+        errors.push(`${label}: type "${target.type}" must be capability|capability-scenario|journey|journey-scenario|context|entity`)
         continue
       }
       if (!target.id) errors.push(`${label}: needs a non-empty id`)
@@ -1234,6 +1325,217 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
       const journeyId = journeyScenariosById.get(scenarioId)?.journey
       if (journeyId && journeyTargets.has(journeyId)) {
         errors.push(`${rule.file}: target "journey-scenario:${scenarioId}" is redundant with journey target "${journeyId}"`)
+      }
+    }
+
+    /*
+     * `permits` — structural eligibility only. `lint` cannot prove runtime
+     * ownership, a fact's value, or customer configuration, and never claims a
+     * grant is satisfied; it checks that every id resolves, that every path
+     * walks one unambiguous hop at a time onto an Entity that acts, and that
+     * no grant is impossible by construction.
+     */
+    if (rule.permits !== undefined) {
+      if (rule.appliesTo.some(target => target.type !== 'entity')) {
+        errors.push(`${rule.file}: "permits" needs Entity targets only; an operation is an Entity effect, and who uses a surface is its Interface's "actors"`)
+      }
+      const singleTarget = entityTargets.length === 1 ? entityTargets[0] : undefined
+      const targetEntity = singleTarget ? entitiesById.get(singleTarget.id) : undefined
+      for (const [grantIndex, grant] of rule.permits.entries()) {
+        const grantLabel = `${rule.file}: grant ${grantIndex + 1}`
+        for (const actorId of grant.actors) requireActor(grantLabel, actorId)
+        if (grant.configuredBy !== undefined && !entityIds.has(grant.configuredBy)) {
+          errors.push(`${grantLabel}: "configuredBy" references missing entity "${grant.configuredBy}"`)
+        }
+        if (grant.self) {
+          for (const target of entityTargets) {
+            if (entityIds.has(target.id) && !actorIds.has(target.id)) {
+              errors.push(`${grantLabel}: "self" needs entity "${target.id}" to act`)
+            }
+          }
+        }
+        if (grant.related.length) {
+          if (!singleTarget) {
+            errors.push(`${grantLabel}: "related" needs exactly one Entity target to start from`)
+          } else {
+            const endpoint = walkRelated(singleTarget.id, grant.related, grantLabel)
+            if (endpoint !== undefined && !actorIds.has(endpoint)) {
+              errors.push(`${grantLabel}: "related" ends on "${endpoint}", which does not act`)
+            }
+            if (endpoint !== undefined && grant.actors.length && !grant.actors.includes(endpoint)) {
+              errors.push(`${grantLabel}: "actors" excludes "${endpoint}", where "related" ends; the grant can never be satisfied`)
+            }
+          }
+        }
+        for (const [conditionIndex, condition] of grant.when.entries()) {
+          const conditionLabel = `${grantLabel}: condition ${conditionIndex + 1}`
+          if (condition.state !== undefined) {
+            if (!singleTarget) {
+              errors.push(`${conditionLabel}: a "state" condition needs exactly one Entity target`)
+              continue
+            }
+            if (singleTarget.effect === 'creates') {
+              errors.push(`${conditionLabel}: a "state" condition on a "creates" target; there is no instance yet`)
+            }
+            if (targetEntity && !targetEntity.states.some(state => state.title === condition.state)) {
+              errors.push(`${conditionLabel}: "${condition.state}" is not a state of entity "${singleTarget.id}"`)
+            }
+            continue
+          }
+          let holder = targetEntity
+          let holderId = singleTarget?.id
+          if (condition.entity !== undefined) {
+            holder = entitiesById.get(condition.entity)
+            holderId = condition.entity
+            if (!holder) errors.push(`${conditionLabel}: references missing entity "${condition.entity}"`)
+          } else if (!singleTarget) {
+            errors.push(`${conditionLabel}: a "fact" without "entity" needs exactly one Entity target to read it on`)
+            continue
+          }
+          if (holder && condition.fact !== undefined && !holder.informationKept.some(item => item.name === condition.fact)) {
+            errors.push(`${conditionLabel}: "${condition.fact}" is not a fact of entity "${holderId}"`)
+          }
+          if (typeof condition.value === 'object' && condition.value !== null && !entityIds.has(condition.value.configuredBy)) {
+            errors.push(`${conditionLabel}: "configuredBy" references missing entity "${condition.value.configuredBy}"`)
+          }
+        }
+      }
+    }
+  }
+
+  /*
+   * The Rules against the Steps and Screens they govern. A target selects a
+   * Step by the keys its `entities` entry carries; a grant is *possible* for the
+   * Step's actor when every who-key it carries could be that actor — `actors`
+   * lists it, `related` ends on its type, `self` is the targeted thing itself,
+   * `unattended` is what the Scenario is — and every state condition matches
+   * the Step's origin where it has one. Fact-scoped Rules select no Step, since
+   * a Step cannot cite a fact; they are checked by Screen reach and by `verify`.
+   */
+  const permissionRules = model.businessRules.filter(
+    rule => rule.permits !== undefined && rule.appliesTo.length > 0 && rule.appliesTo.every(target => target.type === 'entity')
+  )
+  const stepInPlaces = (step: ScenarioStep, selectors: Context[]): boolean =>
+    !selectors.length || step.contexts.some(context => selectors.some(selector => containsPlace(selector.place, context.place)))
+  const selects = (target: BusinessRuleEntityTarget, entry: ScenarioStepEntity, step: ScenarioStep, ignoreFrom = false): boolean => {
+    if (target.id !== entry.entity || target.facts.length) return false
+    if (target.effect !== undefined && target.effect !== (entry.effect ?? 'changes')) return false
+    if (!ignoreFrom && target.from !== undefined && target.from !== entry.from) return false
+    if (target.to !== undefined && target.to !== entry.to) return false
+    return stepInPlaces(step, target.contexts)
+  }
+  const grantPossible = (grant: BusinessRuleGrant, step: ScenarioStep, unattended: boolean, targetId: string, entry: ScenarioStepEntity): boolean => {
+    const stateHolds = grant.when.every(condition =>
+      condition.state === undefined || entry.from === undefined || condition.state === entry.from)
+    if (unattended) return grant.unattended === true && stateHolds
+    if (grant.unattended) return false
+    const actor = step.actor
+    if (!actor) return false
+    if (grant.actors.length && !grant.actors.includes(actor)) return false
+    if (grant.related.length && grant.related[grant.related.length - 1]!.entity !== actor) return false
+    if (grant.self && actor !== targetId) return false
+    return stateHolds
+  }
+
+  /* Two permission Rules with one selector are nearly always alternatives
+     written apart — and apart, they AND. */
+  const selectorKeys = new Map<string, string>()
+  for (const rule of permissionRules) {
+    const key = rule.appliesTo
+      .map(target => target.type === 'entity'
+        ? [target.id, target.effect ?? '', target.from ?? '', target.to ?? '', target.facts.join(','), target.contexts.map(context => context.place).join(',')].join('|')
+        : '')
+      .sort()
+      .join('\n')
+    const twin = selectorKeys.get(key)
+    if (twin) {
+      warnings.push(`${rule.file}: selects exactly what ${twin} selects; grants meant as alternatives sit in one Rule, and apart they AND`)
+    } else {
+      selectorKeys.set(key, rule.file)
+    }
+  }
+
+  for (const scenario of allScenarios) {
+    const unattended = scenario.steps[0]?.unattended === true
+    for (const [index, step] of scenario.steps.entries()) {
+      const label = `${scenario.file}: step ${index + 1}`
+      for (const entry of step.entities) {
+        const described = describeOperation(entry)
+        for (const rule of permissionRules) {
+          const targets = rule.appliesTo.filter((target): target is BusinessRuleEntityTarget => target.type === 'entity' && selects(target, entry, step))
+          if (!targets.length) continue
+          const grants = rule.permits ?? []
+          if (!grants.length) {
+            errors.push(`${label}: ${described}, which rule "${rule.id}" forbids to everyone`)
+            continue
+          }
+          if (!unattended && !step.actor) {
+            errors.push(`${label}: ${described}, which rule "${rule.id}" governs, so it needs an actor`)
+            continue
+          }
+          if (!grants.some(grant => grantPossible(grant, step, unattended, targets[0]!.id, entry))) {
+            errors.push(unattended
+              ? `${label}: ${described} unattended, and rule "${rule.id}" has no "unattended" grant for it`
+              : `${label}: actor "${step.actor}" ${described}, and no grant of rule "${rule.id}" can permit it`)
+          }
+        }
+      }
+    }
+  }
+
+  /* The minimal selector is canonical: a narrowing every selected Step already
+     satisfies says nothing now and silently exempts a Step added later. */
+  for (const rule of permissionRules) {
+    for (const [targetIndex, target] of rule.appliesTo.entries()) {
+      if (target.type !== 'entity') continue
+      const label = `${rule.file}: appliesTo item ${targetIndex + 1}`
+      const selected: ScenarioStepEntity[] = []
+      const selectedIgnoringFrom: ScenarioStepEntity[] = []
+      for (const scenario of allScenarios) {
+        for (const step of scenario.steps) {
+          for (const entry of step.entities) {
+            if (selects(target, entry, step)) selected.push(entry)
+            if (selects(target, entry, step, true)) selectedIgnoringFrom.push(entry)
+          }
+        }
+      }
+      if (target.from !== undefined && selectedIgnoringFrom.length && selectedIgnoringFrom.every(entry => entry.from === target.from)) {
+        warnings.push(`${label}: "from: ${target.from}" is redundant; every Step it could select already leaves from it`)
+      }
+      for (const [grantIndex, grant] of (rule.permits ?? []).entries()) {
+        for (const condition of grant.when) {
+          if (condition.state === undefined) continue
+          if (selected.length && selected.every(entry => entry.from === condition.state)) {
+            warnings.push(`${rule.file}: grant ${grantIndex + 1}: "state: ${condition.state}" is redundant; every selected Step already leaves from it`)
+          }
+        }
+      }
+    }
+  }
+
+  /* A Screen presenting a thing nobody who reaches the Screen may read. */
+  for (const screen of model.screens) {
+    const reach = supportedActorsForContainer(screen.containerId) ?? new Set<string>()
+    for (const entityId of screen.entities) {
+      for (const rule of permissionRules) {
+        const targets = rule.appliesTo.filter((target): target is BusinessRuleEntityTarget =>
+          target.type === 'entity' && target.id === entityId
+          && (target.effect === undefined || target.effect === 'reads')
+          && (!target.contexts.length || target.contexts.some(selector => containsPlace(selector.place, screen.id))))
+        if (!targets.length) continue
+        const grants = rule.permits ?? []
+        if (!grants.length) {
+          errors.push(`${screen.file}: presents "${entityId}", which rule "${rule.id}" forbids anyone to read`)
+          continue
+        }
+        const permitted = [...reach].some(actorId => grants.some(grant =>
+          grant.unattended === undefined
+          && (!grant.actors.length || grant.actors.includes(actorId))
+          && (!grant.related.length || grant.related[grant.related.length - 1]!.entity === actorId)
+          && (!grant.self || actorId === entityId)))
+        if (!permitted) {
+          errors.push(`${screen.file}: presents "${entityId}", and no actor of "${screen.containerId}" has a grant to read it in rule "${rule.id}"`)
+        }
       }
     }
   }
@@ -1298,7 +1600,6 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     errors,
     warnings,
     counts: {
-      actors: model.actors.length,
       interfaces: model.interfaces.length,
       experiences: model.experiences.length,
       screens: model.screens.length,

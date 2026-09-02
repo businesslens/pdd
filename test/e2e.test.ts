@@ -7,7 +7,7 @@ import { buildProject } from '../src/commands/export.js'
 import { loadModel } from '../src/core/model.js'
 import { lintModel } from '../src/commands/lint.js'
 import { lsFiles } from '../src/core/git.js'
-import { ProductReportV12Schema } from '../src/core/portable.js'
+import { ProductReportV13Schema } from '../src/core/portable.js'
 
 const FIXTURE = join(__dirname, 'fixtures', 'fixture-shop')
 
@@ -41,33 +41,46 @@ describe('end to end on a real git repo', () => {
   it('builds a schema-valid source-free report deterministically', () => {
     const first = buildProject(repo)
     const output = JSON.parse(readFileSync(first.outputFile, 'utf8'))
-    const parsed = ProductReportV12Schema.parse(output)
+    const parsed = ProductReportV13Schema.parse(output)
     expect(parsed.id).toBe('fixture-shop')
     expect(parsed).toMatchObject({
-      schemaVersion: '12.0.0',
+      schemaVersion: '13.0.0',
       summary: 'Browse a product catalog, buy products, and manage the resulting orders.',
       category: 'commerce',
       authors: [{ name: 'BusinessLens' }],
       license: 'MIT'
     })
     expect(parsed.counts).toEqual({
-      actors: 2,
-      interfaces: 4,
+      interfaces: 5,
       experiences: 2,
-      screens: 2,
+      screens: 5,
       domains: 1,
-      entities: 3,
-      capabilities: 3,
-      capabilityScenarios: 5,
+      entities: 8,
+      capabilities: 6,
+      capabilityScenarios: 11,
       journeys: 1,
       journeyScenarios: 2,
-      businessRules: 2
+      businessRules: 12
     })
-    // `capabilityIds` comes from the achieved variation; `manage-orders`
+    // `capabilityIds` comes from the achieved variation; `cancel-order`
     // appears only in the not-achieved one, so it is failure-only.
     expect(parsed.model.journeys[0]).toMatchObject({
-      capabilityIds: ['browse-catalog', 'place-order'],
-      failureOnlyCapabilityIds: ['manage-orders']
+      capabilityIds: ['browse-catalog', 'place-order', 'settle-payment'],
+      failureOnlyCapabilityIds: ['cancel-order']
+    })
+    // An Actor is an Entity that acts; the wire says which of the two it is.
+    expect(parsed.model.entities.find(item => item.id === 'payment-gateway')).toMatchObject({ kind: 'system', acts: 'external' })
+    expect(parsed.model.entities.find(item => item.id === 'order')).toMatchObject({ kind: null, acts: null })
+    expect(parsed.model.entities.find(item => item.id === 'order')?.informationKept[0]).toEqual({
+      name: 'Items ordered', description: 'the quantity ordered of each product'
+    })
+    expect(parsed.model.businessRules.find(rule => rule.id === 'who-may-change-an-order')?.permits?.[0]).toEqual({
+      actorIds: [],
+      related: [{ verb: 'owns', entityId: 'shopper' }],
+      self: false,
+      when: [{ entityId: null, fact: null, state: 'Pending', operator: null, value: null }],
+      unattended: false,
+      configuredByEntityId: null
     })
     const screen = parsed.model.screens.find(item => item.id === 'customer-web::storefront::product-record')
     expect(screen).toMatchObject({
@@ -104,7 +117,7 @@ describe('end to end on a real git repo', () => {
     expect(parsed.model.journeyScenarios[0]!.steps.map(step => [step.text, step.capabilityId])).toEqual([
       ['The shopper finds and selects an available product', 'browse-catalog'],
       ['The shopper submits checkout', 'place-order'],
-      ['The Product confirms the paid order', null]
+      ['The Product confirms the paid order', 'settle-payment']
     ])
     expect(JSON.stringify(parsed)).not.toContain('github.com/example/fixture-shop')
 
@@ -139,18 +152,21 @@ describe('end to end on a real git repo', () => {
   })
 
   it('build validates untracked authored product-model files without requiring publish provenance', () => {
-    const untracked = join(repo, '.businesslens/actors/uncommitted.md')
+    const untracked = join(repo, '.businesslens/business-rules/uncommitted.md')
     mkdirSync(dirname(untracked), { recursive: true })
     writeFileSync(untracked, `---
-kind: person
-relationship: external
+appliesTo:
+  - type: capability
+    id: place-order
+  - type: journey
+    id: browse-and-buy
 ---
 
-# Uncommitted actor
+# Uncommitted rule
 
 A model resource that does not exist at HEAD.
 `)
-    expect(buildProject(repo).report.model.actors.some(actor => actor.id === 'uncommitted')).toBe(true)
+    expect(buildProject(repo).report.model.businessRules.some(rule => rule.id === 'uncommitted')).toBe(true)
     unlinkSync(untracked)
   })
 

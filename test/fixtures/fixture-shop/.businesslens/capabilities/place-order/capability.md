@@ -1,8 +1,4 @@
 ---
-entities:
-  - cart
-  - catalog-product
-  - order
 domain: ordering
 references:
   - kind: code
@@ -13,7 +9,7 @@ availability: [{ place: customer-web::storefront }, { place: customer-mobile::st
 
 # Checkout
 
-Turns a valid cart into a confirmed order.
+Turns a valid cart into an order awaiting settlement.
 
 ## Intent
 

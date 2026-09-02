@@ -15,7 +15,7 @@ describe('ids', () => {
   })
   it('slugifies and stems', () => {
     expect(slugify('Acme Shop!')).toBe('acme-shop')
-    expect(stem('actors/shopper.md')).toBe('shopper')
+    expect(stem('entities/shopper.md')).toBe('shopper')
   })
 })
 

@@ -154,7 +154,7 @@ describe('cli dispatch', () => {
         const result = cli(nested, process.env, ...args)
         expect(result.status, args.join(' ')).toBe(1)
         expect(JSON.parse(result.stdout).errors).toContain(
-          'config.yaml: schema 99 is not supported (expected 7)'
+          'config.yaml: schema 99 is not supported (expected 8)'
         )
       }
     } finally {
