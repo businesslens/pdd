@@ -1,5 +1,4 @@
 import type {
-  ActorView,
   AnyResourceView,
   CapabilityView,
   DomainView,
@@ -97,36 +96,16 @@ export function resourceCardPresentation(
   resource: AnyResourceView
 ): ResourceCardPresentation {
   switch (resource.kind) {
-    case 'actor': {
-      const actor = resource as ActorView
-      const accessIds = [...actor.interfaceIds, ...actor.experienceIds]
-      return {
-        /* Actor carries two independent authored axes and one glyph can only
-           draw one. The silhouette takes `kind`; the Product boundary takes the
-           title badge, where it sits on the reading line instead of stacking
-           under the mark and setting the width of the gutter it sat in. */
-        badge: actor.relationship,
-        metrics: [
-          { label: plural(actor.interfaceIds.length, 'interface'), value: actor.interfaceIds.length, kind: 'interface', ids: actor.interfaceIds },
-          { label: plural(actor.experienceIds.length, 'experience'), value: actor.experienceIds.length, kind: 'experience', ids: actor.experienceIds },
-          { label: plural(actor.journeyIds.length, 'journey'), value: actor.journeyIds.length, kind: 'journey', ids: actor.journeyIds }
-        ],
-        hookLabel: accessIds.length ? 'Enters' : 'Performs',
-        hook: accessIds.length
-          ? relationTitles(workspace, [['interface', actor.interfaceIds], ['experience', actor.experienceIds]])
-          : titles(workspace, 'journey', actor.journeyIds)
-      }
-    }
     case 'interface': {
       const item = resource as InterfaceView
       const metrics = item.experienceIds.length
         ? [
-            { label: plural(item.actorIds.length, 'actor'), value: item.actorIds.length, kind: 'actor' as const, ids: item.actorIds },
+            { label: plural(item.actorIds.length, 'actor'), value: item.actorIds.length, kind: 'entity' as const, ids: item.actorIds },
             { label: plural(item.experienceIds.length, 'experience'), value: item.experienceIds.length, kind: 'experience' as const, ids: item.experienceIds },
             { label: plural(item.capabilityIds.length, 'capability', 'capabilities'), value: item.capabilityIds.length, kind: 'capability' as const, ids: item.capabilityIds }
           ]
         : [
-            { label: plural(item.actorIds.length, 'actor'), value: item.actorIds.length, kind: 'actor' as const, ids: item.actorIds },
+            { label: plural(item.actorIds.length, 'actor'), value: item.actorIds.length, kind: 'entity' as const, ids: item.actorIds },
             { label: plural(item.capabilityIds.length, 'capability', 'capabilities'), value: item.capabilityIds.length, kind: 'capability' as const, ids: item.capabilityIds },
             { label: plural(item.journeyIds.length, 'journey'), value: item.journeyIds.length, kind: 'journey' as const, ids: item.journeyIds }
           ]
@@ -146,7 +125,7 @@ export function resourceCardPresentation(
       return {
         badge: item.accessMode,
         metrics: [
-          { label: plural(item.actorIds.length, 'actor'), value: item.actorIds.length, kind: 'actor', ids: item.actorIds },
+          { label: plural(item.actorIds.length, 'actor'), value: item.actorIds.length, kind: 'entity', ids: item.actorIds },
           { label: plural(item.screenIds.length, 'screen'), value: item.screenIds.length, kind: 'screen', ids: item.screenIds },
           { label: 'entry points', value: item.entryPoints.length }
         ],
@@ -185,6 +164,27 @@ export function resourceCardPresentation(
     }
     case 'entity': {
       const entity = resource as EntityView
+      if (entity.acts) {
+        const accessIds = [...entity.interfaceIds, ...entity.experienceIds]
+        /* An Entity that acts carries two independent authored axes and one
+           glyph can only draw one. The silhouette takes `kind`; the Product
+           boundary takes the title badge, where it sits on the reading line
+           instead of stacking under the mark. */
+        return {
+          badge: entity.acts,
+          metrics: [
+            { label: plural(entity.interfaceIds.length, 'interface'), value: entity.interfaceIds.length, kind: 'interface', ids: entity.interfaceIds },
+            { label: plural(entity.experienceIds.length, 'experience'), value: entity.experienceIds.length, kind: 'experience', ids: entity.experienceIds },
+            { label: plural(entity.journeyIds.length, 'journey'), value: entity.journeyIds.length, kind: 'journey', ids: entity.journeyIds }
+          ],
+          hookLabel: accessIds.length ? 'Enters' : entity.journeyIds.length ? 'Performs' : 'Keeps',
+          hook: accessIds.length
+            ? relationTitles(workspace, [['interface', entity.interfaceIds], ['experience', entity.experienceIds]])
+            : entity.journeyIds.length
+              ? titles(workspace, 'journey', entity.journeyIds)
+              : entity.informationKept.map(fact => fact.name).join(' · ')
+        }
+      }
       // A thing is read by what it can be, when it has a lifecycle, and by what
       // the Product keeps about it when it does not.
       return {
@@ -199,7 +199,7 @@ export function resourceCardPresentation(
         hookLabel: entity.states.length ? 'States' : 'Keeps',
         hook: entity.states.length
           ? entity.states.map(state => state.name).join(' → ')
-          : entity.informationKept.join(' · ')
+          : entity.informationKept.map(fact => fact.name).join(' · ')
       }
     }
     case 'capability': {
@@ -229,13 +229,13 @@ export function resourceCardPresentation(
       return {
         badge: '',
         metrics: [
-          { label: plural(journey.actorIds.length, 'actor'), value: journey.actorIds.length, kind: 'actor', ids: journey.actorIds },
+          { label: plural(journey.actorIds.length, 'actor'), value: journey.actorIds.length, kind: 'entity', ids: journey.actorIds },
           { label: plural(journey.scenarioIds.length, 'scenario'), value: journey.scenarioIds.length, kind: 'journey-scenario', ids: journey.scenarioIds },
           { label: plural(journey.stepCount, 'step'), value: journey.stepCount }
         ],
         hookLabel: journey.actorIds.length ? 'Performed by' : 'Scenarios',
         hook: journey.actorIds.length
-          ? titles(workspace, 'actor', journey.actorIds)
+          ? titles(workspace, 'entity', journey.actorIds)
           : titles(workspace, 'journey-scenario', journey.scenarioIds)
       }
     }

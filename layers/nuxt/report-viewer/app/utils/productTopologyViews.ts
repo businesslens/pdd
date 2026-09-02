@@ -16,6 +16,7 @@ export type ProductTopologyViewId =
   | 'sitemap'
   | 'rule-reach'
   | 'what-it-keeps'
+  | 'what-changes-what'
   | 'everything'
 
 export type TopologySemantics = 'identity' | 'occurrence'
@@ -46,13 +47,13 @@ export const PRODUCT_TOPOLOGY_VIEWS: ProductTopologyView[] = [
     semantics: 'identity',
     note: 'Domain lanes use their authored colours. Access paths show which Interfaces offer each Capability.',
     flow: [
-      { kind: 'actor', label: 'Actors' },
+      { kind: 'entity', label: 'Actors' },
       { kind: 'interface', label: 'Interfaces' },
       { kind: 'domain', label: 'Domains' },
       { kind: 'capability', label: 'Capabilities' }
     ],
     separators: ['→', '→', '⊃'],
-    kinds: ['actor', 'interface', 'domain', 'capability']
+    kinds: ['entity', 'interface', 'domain', 'capability']
   },
   {
     id: 'value-paths',
@@ -76,14 +77,14 @@ export const PRODUCT_TOPOLOGY_VIEWS: ProductTopologyView[] = [
     semantics: 'identity',
     note: 'Graphical Interfaces continue through Experiences and Screens. Direct integrations terminate in the Capability they deliver.',
     flow: [
-      { kind: 'actor', label: 'Actors' },
+      { kind: 'entity', label: 'Actors' },
       { kind: 'interface', label: 'Interfaces' },
       { kind: 'experience', label: 'Experiences' },
       { kind: 'screen', label: 'Screens' },
       { kind: 'capability', label: 'Direct capabilities' }
     ],
     separators: ['→', '→', '→', '·'],
-    kinds: ['actor', 'interface', 'experience', 'screen', 'capability']
+    kinds: ['entity', 'interface', 'experience', 'screen', 'capability']
   },
   {
     id: 'sitemap',
@@ -129,6 +130,20 @@ export const PRODUCT_TOPOLOGY_VIEWS: ProductTopologyView[] = [
     kinds: ['entity']
   },
   {
+    id: 'what-changes-what',
+    name: 'What changes what',
+    question: 'Which Capability creates, changes or removes each thing?',
+    semantics: 'identity',
+    note: 'Every edge is a Step somewhere, aggregated per Capability and labelled by effect. Reads are left out on purpose: a read places no claim on what can alter a thing. Relations stay quiet until a node is hovered or selected.',
+    flow: [
+      { kind: 'capability', label: 'Capabilities' },
+      { kind: 'entity', label: 'Entities' }
+    ],
+    separators: ['→'],
+    kinds: ['capability', 'entity'],
+    latentEdges: true
+  },
+  {
     id: 'everything',
     name: 'Everything',
     question: 'What is the entire product, all at once?',
@@ -138,7 +153,6 @@ export const PRODUCT_TOPOLOGY_VIEWS: ProductTopologyView[] = [
     separators: [],
     kinds: [
       'product',
-      'actor',
       'interface',
       'experience',
       'screen',

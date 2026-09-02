@@ -150,6 +150,9 @@ watch(layoutKey, async () => {
         <template #node-blr-label="nodeProps">
           <BlrFlowLabel v-bind="(nodeProps as any)" />
         </template>
+        <template #node-blr-state="nodeProps">
+          <BlrFlowState v-bind="(nodeProps as any)" />
+        </template>
         <template #edge-blr-self="edgeProps">
           <BlrFlowSelfEdge v-bind="(edgeProps as any)" />
         </template>
@@ -245,6 +248,21 @@ watch(layoutKey, async () => {
 
 .blr-flow .vue-flow__node-blr-label {
   z-index: 20 !important;
+}
+
+.blr-flow .vue-flow__node-blr-state {
+  z-index: 10 !important;
+}
+
+/* An operation a Rule closes is drawn, because it is a claim; it is drawn so
+   nobody reads it as a path. A restricted one keeps its shape and says so. */
+.blr-flow .vue-flow__edge.blr-arc--forbidden .vue-flow__edge-path {
+  stroke-dasharray: 4 4;
+  stroke: var(--ui-text-dimmed);
+}
+
+.blr-flow .vue-flow__edge.blr-arc--forbidden .vue-flow__edge-textbg {
+  fill: var(--ui-bg-elevated);
 }
 
 /* Edges never intercept the pointer — boxes are the interaction surface. */

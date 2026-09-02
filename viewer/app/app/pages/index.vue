@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import type { ProductReportV12 } from 'businesslens/report'
+import type { ProductReportV13 } from 'businesslens/report'
 
-const { data, error, refresh, status } = await useFetch<ProductReportV12>(
+const { data, error, refresh, status } = await useFetch<ProductReportV13>(
   '/_businesslens/report.json',
   { server: false, cache: 'no-store' }
 )

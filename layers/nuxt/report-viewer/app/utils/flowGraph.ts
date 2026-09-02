@@ -15,7 +15,7 @@
 import { Graph, layout } from '@dagrejs/dagre'
 import { MarkerType, Position } from '@vue-flow/core'
 import type { Edge, Node } from '@vue-flow/core'
-import type { ActorView, AnyResourceView, InterfaceView, ReportResourceKind, ReportScenarioType, ReportWorkspace } from './reportWorkspace'
+import type { ActingKind, ActingSide, AnyResourceView, InterfaceView, ReportResourceKind, ReportScenarioType, ReportWorkspace } from './reportWorkspace'
 import { ENTITY_KIND_META, resourceKey, resolveResource } from './reportWorkspace'
 
 /** Data carried by every resource box (`type: 'blr'`). */
@@ -23,9 +23,9 @@ export interface FlowNodeData {
   resourceKey: string
   resourceId: string
   kind: ReportResourceKind
-  /** Present only for a concrete Actor; the node draws kind, the sublabel writes relationship. */
-  actorKind?: ActorView['actorKind'] | null
-  actorRelationship?: ActorView['relationship'] | null
+  /** Present only for an Entity that acts; the node draws kind, the sublabel writes which side it acts from. */
+  actorKind?: ActingKind | null
+  acts?: ActingSide | null
   /** Present only for a concrete Interface; generic kind nodes keep the plug. */
   interfaceType?: InterfaceView['interfaceType'] | null
   scenarioType: ReportScenarioType | null
@@ -67,7 +67,19 @@ export interface FlowLabelData {
   count: number
 }
 
-export type BlrFlowNode = Node<FlowNodeData | FlowGroupData | FlowLabelData>
+/** One state of an Entity's composed lifecycle (`type: 'blr-state'`). Not a resource. */
+export interface FlowStateData {
+  resourceKey: ''
+  resourceId: string
+  kind: 'entity'
+  name: string
+  reached: boolean
+  initial: boolean
+  /** The dot a creation starts from, or the ring a removal ends in. */
+  terminal: 'start' | 'end' | null
+}
+
+export type BlrFlowNode = Node<FlowNodeData | FlowGroupData | FlowLabelData | FlowStateData>
 export type BlrFlowEdge = Edge
 
 export const FLOW_NODE_WIDTH = 208
@@ -118,16 +130,16 @@ export function resourceNode(
       resourceKey: resource.key,
       resourceId: resource.id,
       kind: resource.kind,
-      actorKind: resource.kind === 'actor' ? resource.actorKind : null,
-      actorRelationship: resource.kind === 'actor' ? resource.relationship : null,
+      actorKind: resource.kind === 'entity' ? resource.entityKind : null,
+      acts: resource.kind === 'entity' ? resource.acts : null,
       interfaceType: resource.kind === 'interface' ? resource.interfaceType : null,
       title: resource.title,
-      /* An Actor's second authored axis is the Product boundary, which is what
-         a topology is read for. The mark cannot carry it, so the sublabel does
-         — the same slot, and the same spelling, an Experience gives its access
-         mode. */
-      sublabel: resource.kind === 'actor'
-        ? `${ENTITY_KIND_META.actor.label} · ${resource.relationship}`
+      /* An Entity that acts is an Actor in the topology, and which side of the
+         Product boundary it acts from is what a topology is read for. The mark
+         cannot carry it, so the sublabel does — the same slot, and the same
+         spelling, an Experience gives its access mode. */
+      sublabel: resource.kind === 'entity' && resource.acts
+        ? `Actor · ${resource.acts}`
         : ENTITY_KIND_META[resource.kind].label,
       scenarioType: resource.kind === 'capability-scenario' || resource.kind === 'journey-scenario'
         ? resource.scenarioType
@@ -216,14 +228,8 @@ export function directRelations(workspace: ReportWorkspace, resource: AnyResourc
   }
 
   switch (resource.kind) {
-    case 'actor': {
-      for (const id of resource.interfaceIds) push(resource.key, resourceKey('interface', id), 'enters')
-      for (const id of resource.experienceIds) push(resource.key, resourceKey('experience', id), 'enters')
-      for (const id of resource.journeyIds) push(resource.key, resourceKey('journey', id), 'performs')
-      break
-    }
     case 'interface': {
-      for (const id of resource.actorIds) push(resourceKey('actor', id), resource.key, 'enters')
+      for (const id of resource.actorIds) push(resourceKey('entity', id), resource.key, 'enters')
       for (const id of resource.experienceIds) push(resourceKey('experience', id), resource.key, 'within')
       for (const id of resource.capabilityIds) push(resourceKey('capability', id), resource.key, 'available in')
       for (const id of resource.screenIds) push(resourceKey('screen', id), resource.key, 'available in')
@@ -231,7 +237,7 @@ export function directRelations(workspace: ReportWorkspace, resource: AnyResourc
       break
     }
     case 'experience': {
-      for (const id of resource.actorIds) push(resourceKey('actor', id), resource.key, 'enters')
+      for (const id of resource.actorIds) push(resourceKey('entity', id), resource.key, 'enters')
       for (const id of resource.interfaceIds) push(resource.key, resourceKey('interface', id), 'within')
       for (const id of resource.capabilityIds) push(resourceKey('capability', id), resource.key, 'available in')
       for (const id of resource.screenIds) push(resourceKey('screen', id), resource.key, 'available in')
@@ -251,6 +257,11 @@ export function directRelations(workspace: ReportWorkspace, resource: AnyResourc
       if (resource.domainId) push(resource.key, resourceKey('domain', resource.domainId), 'in')
       for (const id of resource.changedByIds) push(resourceKey('capability', id), resource.key, 'changes')
       for (const id of resource.presentedOnIds) push(resourceKey('screen', id), resource.key, 'presents')
+      for (const id of resource.ruleIds) push(resourceKey('rule', id), resource.key, 'constrains')
+      /* Where it acts. Empty for a thing that does not. */
+      for (const id of resource.interfaceIds) push(resource.key, resourceKey('interface', id), 'enters')
+      for (const id of resource.experienceIds) push(resource.key, resourceKey('experience', id), 'enters')
+      for (const id of resource.journeyIds) push(resource.key, resourceKey('journey', id), 'performs')
       /* Only the authored side: the inverse is derived, so pushing both would
          draw one relationship as two edges facing each other. */
       for (const relation of resource.relations) {
@@ -273,7 +284,7 @@ export function directRelations(workspace: ReportWorkspace, resource: AnyResourc
       break
     }
     case 'journey': {
-      for (const id of resource.actorIds) push(resourceKey('actor', id), resource.key, 'performs')
+      for (const id of resource.actorIds) push(resourceKey('entity', id), resource.key, 'performs')
       for (const id of resource.capabilityIds) push(resource.key, resourceKey('capability', id), 'uses')
       for (const id of resource.scenarioIds) push(resource.key, resourceKey('journey-scenario', id), 'cases into')
       for (const id of resource.screenIds) push(resource.key, resourceKey('screen', id), 'passes through')

@@ -10,7 +10,6 @@
  * real heading hierarchy the eye can skim.
  */
 import type {
-  ActorView,
   AnyResourceView,
   CapabilityView,
   ExperienceView,
@@ -27,6 +26,7 @@ import type {
   ScreenView
 } from '../utils/reportWorkspace'
 import { isScenarioKind, resolveResource, scenarioStepMatrix } from '../utils/reportWorkspace'
+import { buildEntityLifecycle, lifecycleArcLabel } from '../utils/entityLifecycle'
 import { hasAuthoredBody } from '../utils/pageSections'
 import {
   SCENARIO_ROUTE_INLINE_WIDTH,
@@ -49,6 +49,7 @@ const routeColumns = defineModel<string>('routeColumns', { default: 'auto' })
 
 const asScreen = computed(() => props.resource as ScreenView)
 const asEntity = computed(() => props.resource as EntityView)
+const asCapability = computed(() => props.resource as CapabilityView)
 const asJourney = computed(() => props.resource as JourneyView)
 const asScenario = computed(() => props.resource as ScenarioView)
 const asRule = computed(() => props.resource as RuleView)
@@ -68,12 +69,58 @@ const domainId = computed(() => {
 })
 
 /*
- * States and transitions are read separately, because they answer different
- * questions: what the thing can be, and how it moves. Folding the moves into
- * the state cards made the two indistinguishable — a reader could not tell a
- * state name from a destination, nor count the transitions at all.
+ * States and the machine are read separately, because they answer different
+ * questions: what the thing can be, and how it moves. The machine is drawn from
+ * every Scenario in the model — nothing on the Entity says how it moves — and
+ * the list under it carries what an edge label cannot: who may, and what else
+ * the same Step does.
  */
 const entityStates = computed(() => asEntity.value.states)
+const entityLifecycle = computed(() => props.resource.kind === 'entity'
+  ? buildEntityLifecycle(props.workspace, asEntity.value)
+  : { nodes: [], edges: [] })
+const entityArcs = computed(() => props.resource.kind !== 'entity'
+  ? []
+  : asEntity.value.arcs.map((arc, index) => ({
+      ...arc,
+      ...lifecycleArcLabel(props.workspace, asEntity.value, index),
+      ruleTitles: arc.ruleIds.map(id => resolveResource(props.workspace, 'rule', id)?.title ?? id),
+      forbiddenBy: arc.forbiddenByRuleIds.map(id => resolveResource(props.workspace, 'rule', id)?.title ?? id)
+    })))
+const entityProhibitions = computed(() => props.resource.kind !== 'entity'
+  ? []
+  : asEntity.value.prohibitions.map(prohibition => ({
+      ...prohibition,
+      ruleTitle: resolveResource(props.workspace, 'rule', prohibition.ruleId)?.title ?? prohibition.ruleId,
+      operation: prohibition.effect === 'reads'
+        ? 'reading it'
+        : prohibition.effect === 'creates'
+          ? `creating it${prohibition.to ? ` as ${prohibition.to}` : ''}`
+          : prohibition.effect === 'removes'
+            ? `removing it${prohibition.from ? ` from ${prohibition.from}` : ''}`
+            : prohibition.from || prohibition.to
+              ? `moving it${prohibition.from ? ` from ${prohibition.from}` : ''}${prohibition.to ? ` to ${prohibition.to}` : ''}`
+              : 'changing it'
+    })))
+function openRule(id: string) {
+  const rule = resolveResource(props.workspace, 'rule', id)
+  if (rule) emit('select', rule)
+}
+const factRuleTitles = (ruleIds: string[]) =>
+  ruleIds.map(id => resolveResource(props.workspace, 'rule', id)?.title ?? id).join(', ')
+
+/* One line per Entity a Capability touches, never a lifecycle fragment each. */
+const capabilityEffects = computed(() => props.resource.kind !== 'capability'
+  ? []
+  : asCapability.value.entityEffects.map(line => ({
+      ...line,
+      title: resolveResource(props.workspace, 'entity', line.entityId)?.title ?? line.entityId,
+      readings: line.effects.map(item => item.effect === 'creates'
+        ? `creates${item.to ? ` → ${item.to}` : ''}`
+        : item.effect === 'removes'
+          ? `removes${item.from ? ` ${item.from} →` : ''}`
+          : item.to ? `${item.from} → ${item.to}` : 'changes')
+    })))
 
 /*
  * Declared edges and derived inverses read as one list, because to a reader they
@@ -99,11 +146,6 @@ function openCapability(id: string) {
   const capability = resolveResource(props.workspace, 'capability', id)
   if (capability) emit('select', capability)
 }
-
-const entityTransitions = computed(() => asEntity.value.transitions.map(transition => ({
-  ...transition,
-  capabilityTitle: resolveResource(props.workspace, 'capability', transition.capabilityId)?.title ?? transition.capabilityId
-})))
 
 /* One authored Scenario sequence, with named Context routes as columns. */
 const stepMatrix = computed(() => (isScenario.value ? scenarioStepMatrix(asScenario.value) : null))
@@ -224,7 +266,7 @@ const stepKindLabel = (kind: 'actor' | 'product' | 'condition') => ({
 
 const stepKindDescription = (kind: 'actor' | 'product' | 'condition') => ({
   actor: 'Performed by the named Actor',
-  product: 'Performed by the Product; no Actor is assigned',
+  product: 'Performed by the Product — for the named Actor, when one is named',
   condition: 'An observable fact or state; nobody performs it'
 })[kind]
 
@@ -239,10 +281,10 @@ const restMentions = (step: ScenarioStepRow) => step.mentions
   .slice(STEP_MENTION_LIMIT)
   .map(mention => resolveResource(props.workspace, 'entity', mention.entityId)?.title ?? mention.entityId)
 
-const stepActor = (actorId: string | undefined): ActorView | undefined => {
+const stepActor = (actorId: string | undefined): EntityView | undefined => {
   if (!actorId) return undefined
-  const resource = resolveResource(props.workspace, 'actor', actorId)
-  return resource?.kind === 'actor' ? resource : undefined
+  const resource = resolveResource(props.workspace, 'entity', actorId)
+  return resource?.kind === 'entity' && resource.acts ? resource : undefined
 }
 
 const selectStepActor = (actorId: string | undefined) => {
@@ -253,18 +295,23 @@ const selectStepActor = (actorId: string | undefined) => {
 const contextLabel = (context: { screenTitle: string, experienceTitle: string, interfaceTitle: string }) =>
   context.screenTitle || context.experienceTitle || context.interfaceTitle
 
-type RuleTargetKind = Extract<ReportResourceKind, 'capability' | 'capability-scenario' | 'journey' | 'journey-scenario'>
+type RuleTargetKind = Extract<ReportResourceKind, 'capability' | 'capability-scenario' | 'journey' | 'journey-scenario' | 'entity'>
 
 interface RuleBinding {
   key: string
   targetKind: RuleTargetKind | null
   targetId: string
+  /** What an Entity target selects: the operation, or the facts it governs. */
+  selector: string
   contexts: ContextView[]
 }
 
 const ruleBindings = computed<RuleBinding[]>(() => {
   if (props.resource.kind !== 'rule') return []
   const contextByPlace = new Map(props.workspace.contexts.map(context => [context.placeId, context]))
+  const resolve = (contexts: Array<{ placeId: string }>) => contexts
+    .map(context => contextByPlace.get(context.placeId))
+    .filter((context): context is ContextView => Boolean(context))
   return asRule.value.appliesTo.map((target, index) => {
     if (target.type === 'context') {
       const context = contextByPlace.get(target.context.placeId)
@@ -272,16 +319,30 @@ const ruleBindings = computed<RuleBinding[]>(() => {
         key: `context:${target.context.placeId}:${index}`,
         targetKind: null,
         targetId: '',
+        selector: '',
         contexts: context ? [context] : []
+      }
+    }
+    if (target.type === 'entity') {
+      const operation = [
+        target.effect ?? 'every operation',
+        target.from ? `from ${target.from}` : '',
+        target.to ? `to ${target.to}` : ''
+      ].filter(Boolean).join(' ')
+      return {
+        key: `entity:${target.entityId}:${index}`,
+        targetKind: 'entity' as const,
+        targetId: target.entityId,
+        selector: target.facts.length ? `${operation} · ${target.facts.join(', ')}` : operation,
+        contexts: resolve(target.contexts)
       }
     }
     return {
       key: `${target.type}:${target.id}:${index}`,
       targetKind: target.type,
       targetId: target.id,
-      contexts: target.contexts
-        .map(context => contextByPlace.get(context.placeId))
-        .filter((context): context is ContextView => Boolean(context))
+      selector: '',
+      contexts: resolve(target.contexts)
     }
   })
 })
@@ -319,7 +380,8 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
               interactive
               @select="emit('select', $event)"
             />
-            <p v-if="binding.targetKind && !binding.contexts.length" class="blr-meta">
+            <p v-if="binding.selector" class="blr-meta">{{ binding.selector }}</p>
+            <p v-if="binding.targetKind && binding.targetKind !== 'entity' && !binding.contexts.length" class="blr-meta">
               Every supported Context
             </p>
             <div v-else-if="binding.contexts.length" class="space-y-1.5">
@@ -338,6 +400,30 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
           </article>
         </div>
       </div>
+
+      <!--
+        Permission is a kind of Rule. The grants are read back as sentences so a
+        reader who never saw the format can tell one is wrong; an empty list is
+        a claim of its own, and says so.
+      -->
+      <div v-if="asRule.permits !== null" class="space-y-2 pt-2">
+        <h3 class="text-sm font-semibold text-highlighted">Who may</h3>
+        <p v-if="asRule.prohibits" class="rounded-lg border border-dashed border-accented px-3.5 py-3 text-sm text-default">
+          <UIcon name="i-lucide-ban" class="me-1.5 inline size-4 align-text-bottom text-muted" />
+          Nobody. This operation is forbidden to everyone.
+        </p>
+        <ul v-else class="space-y-1.5">
+          <li
+            v-for="(grant, index) in asRule.grants"
+            :key="index"
+            class="flex items-start gap-2 rounded-lg border border-default bg-elevated/25 px-3.5 py-2.5 text-sm text-default"
+          >
+            <UIcon name="i-lucide-key-round" class="mt-0.5 size-4 shrink-0 text-muted" />
+            <span>{{ grant.sentence }}</span>
+          </li>
+        </ul>
+        <p v-if="asRule.grants.length > 1" class="blr-meta">Any one grant permits it. Every Rule selecting the same operation must also permit it.</p>
+      </div>
     </section>
 
     <section v-if="resource.intent" class="space-y-2">
@@ -348,6 +434,43 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
     <section v-if="resource.kind === 'journey'" class="space-y-2">
       <h2 class="blr-page-heading">Success criterion</h2>
       <BlrProse :text="asJourney.successCriterion" class="max-w-3xl" />
+      <!-- What the achieved paths leave behind — derived from their last Step
+           naming each thing, beside the prose that says it in words. -->
+      <div v-if="asJourney.leavesBehind.length" class="flex flex-wrap items-center gap-x-2 gap-y-1.5 pt-1">
+        <span class="blr-field">Leaves behind</span>
+        <BlrStepEntity
+          v-for="ending in asJourney.leavesBehind"
+          :key="`${ending.entityId}-${ending.as}`"
+          :workspace="workspace"
+          :mention="ending"
+          outcome
+          @select="emit('select', $event)"
+        />
+      </div>
+    </section>
+
+    <!-- CAPABILITY: what it does to each thing, one line per Entity. -->
+    <section v-if="resource.kind === 'capability' && capabilityEffects.length" class="space-y-2">
+      <h2 class="blr-page-heading">
+        What it changes <span class="blr-meta ms-1">{{ capabilityEffects.length }}</span>
+      </h2>
+      <ul class="space-y-1.5">
+        <li
+          v-for="line in capabilityEffects"
+          :key="line.entityId"
+          class="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border border-default bg-elevated/30 px-3 py-2 text-sm"
+        >
+          <button type="button" class="blr-chip" @click="openEntity(line.entityId)">
+            <UIcon name="i-lucide-box" class="size-3.5" />{{ line.title }}
+          </button>
+          <span v-for="reading in line.readings" :key="reading" class="text-default">{{ reading }}</span>
+          <span class="blr-meta ms-auto">{{ line.scenarioIds.length }} {{ line.scenarioIds.length === 1 ? 'Scenario' : 'Scenarios' }}</span>
+        </li>
+      </ul>
+      <p v-if="asCapability.readEntityIds.length" class="flex flex-wrap items-baseline gap-x-2 blr-meta">
+        <span>Reads only</span>
+        <BlrLinks :workspace="workspace" :ids="asCapability.readEntityIds" kind="entity" interactive @select="emit('select', $event)" />
+      </p>
     </section>
 
     <section v-if="capabilityBoundary" class="space-y-2">
@@ -536,21 +659,28 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
                     Step answers is who performs it, and the chip carries it in its tooltip.
                   -->
                   <span class="blr-meta mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1">
-                    <template v-if="step.stepKind === 'actor' && stepActor(step.actorId)">
+                    <template v-if="stepActor(step.actorId)">
+                      <UTooltip v-if="step.stepKind !== 'actor'" :text="stepKindDescription(step.stepKind)" :delay-duration="150">
+                        <span class="inline-flex items-center gap-1.5">
+                          <UIcon :name="stepKindIcon(step.stepKind)" class="size-3.5 shrink-0" />
+                          {{ stepKindLabel(step.stepKind) }}
+                        </span>
+                      </UTooltip>
+                      <span v-if="step.stepKind !== 'actor'">for</span>
                       <button
                         type="button"
                         class="inline-flex max-w-full items-center gap-1.5 rounded-full border border-default bg-elevated/60 py-0.5 pe-2 ps-1 font-sans text-xs font-medium text-highlighted transition hover:border-accented hover:bg-elevated focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                        :aria-label="`Open Actor ${stepActor(step.actorId)!.title}`"
+                        :aria-label="`Open ${stepActor(step.actorId)!.title}`"
                         @click="selectStepActor(step.actorId)"
                       >
                         <BlrActorType
-                          :actor-kind="stepActor(step.actorId)!.actorKind"
-                          :relationship="stepActor(step.actorId)!.relationship"
+                          :actor-kind="stepActor(step.actorId)!.entityKind!"
+                          :acts="stepActor(step.actorId)!.acts!"
                           size="xs"
                         />
                         <span class="min-w-0 truncate">{{ stepActor(step.actorId)!.title }}</span>
                       </button>
-                      <UTooltip :text="stepKindDescription('actor')" :delay-duration="150">
+                      <UTooltip v-if="step.stepKind === 'actor'" :text="stepKindDescription('actor')" :delay-duration="150">
                         <span>action</span>
                       </UTooltip>
                     </template>
@@ -562,7 +692,7 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
                     </UTooltip>
                     <BlrStepEntity
                       v-for="mention in shownMentions(step)"
-                      :key="`${mention.effect}-${mention.entityId}`"
+                      :key="`${mention.effect}-${mention.entityId}-${mention.as}`"
                       :workspace="workspace"
                       :mention="mention"
                       @select="emit('select', $event)"
@@ -643,21 +773,28 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
                 Step answers is who performs it, and the chip carries it in its tooltip.
               -->
               <span class="blr-meta mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1">
-                <template v-if="step.stepKind === 'actor' && stepActor(step.actorId)">
+                <template v-if="stepActor(step.actorId)">
+                  <UTooltip v-if="step.stepKind !== 'actor'" :text="stepKindDescription(step.stepKind)" :delay-duration="150">
+                    <span class="inline-flex items-center gap-1.5">
+                      <UIcon :name="stepKindIcon(step.stepKind)" class="size-3.5 shrink-0" />
+                      {{ stepKindLabel(step.stepKind) }}
+                    </span>
+                  </UTooltip>
+                  <span v-if="step.stepKind !== 'actor'">for</span>
                   <button
                     type="button"
                     class="inline-flex max-w-full items-center gap-1.5 rounded-full border border-default bg-elevated/60 py-0.5 pe-2 ps-1 font-sans text-xs font-medium text-highlighted transition hover:border-accented hover:bg-elevated focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                    :aria-label="`Open Actor ${stepActor(step.actorId)!.title}`"
+                    :aria-label="`Open ${stepActor(step.actorId)!.title}`"
                     @click="selectStepActor(step.actorId)"
                   >
                     <BlrActorType
-                      :actor-kind="stepActor(step.actorId)!.actorKind"
-                      :relationship="stepActor(step.actorId)!.relationship"
+                      :actor-kind="stepActor(step.actorId)!.entityKind!"
+                      :acts="stepActor(step.actorId)!.acts!"
                       size="xs"
                     />
                     <span class="min-w-0 truncate">{{ stepActor(step.actorId)!.title }}</span>
                   </button>
-                  <UTooltip :text="stepKindDescription('actor')" :delay-duration="150">
+                  <UTooltip v-if="step.stepKind === 'actor'" :text="stepKindDescription('actor')" :delay-duration="150">
                     <span>action</span>
                   </UTooltip>
                 </template>
@@ -669,7 +806,7 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
                 </UTooltip>
                 <BlrStepEntity
                   v-for="mention in shownMentions(step)"
-                  :key="`${mention.effect}-${mention.entityId}`"
+                  :key="`${mention.effect}-${mention.entityId}-${mention.as}`"
                   :workspace="workspace"
                   :mention="mention"
                   @select="emit('select', $event)"
@@ -767,7 +904,7 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
           <span class="blr-field">Ends with</span>
           <BlrStepEntity
             v-for="ending in asScenario.outcomeStates"
-            :key="ending.entityId"
+            :key="`${ending.entityId}-${ending.as}`"
             :workspace="workspace"
             :mention="ending"
             outcome
@@ -844,6 +981,13 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
 
     <!-- ENTITY: what the Product keeps, what it can be, and how it moves. -->
     <template v-if="resource.kind === 'entity'">
+      <section v-if="asEntity.acts" class="flex flex-wrap items-center gap-2 text-sm text-default">
+        <BlrActorType :actor-kind="asEntity.entityKind!" :acts="asEntity.acts" size="xs" />
+        <span>
+          Acts on the Product as {{ asEntity.acts === 'external' ? 'an external' : 'an internal' }} {{ asEntity.entityKind }}.
+        </span>
+      </section>
+
       <section v-if="asEntity.informationKept.length" class="space-y-2">
         <h2 class="blr-page-heading">
           Information kept <span class="blr-meta ms-1">{{ asEntity.informationKept.length }}</span>
@@ -851,10 +995,21 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
         <ul class="grid gap-2 sm:grid-cols-2">
           <li
             v-for="fact in asEntity.informationKept"
-            :key="fact"
-            class="flex gap-2 rounded-lg border border-default bg-elevated/30 px-3 py-2 text-sm"
+            :key="fact.name"
+            class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 rounded-lg border border-default bg-elevated/30 px-3 py-2 text-sm"
           >
-            <UIcon name="i-lucide-circle-small" class="mt-1 size-4 shrink-0 text-muted" />{{ fact }}
+            <span class="font-medium text-highlighted">{{ fact.name }}</span>
+            <span class="text-default">{{ fact.description }}</span>
+            <!-- A fact a Rule governs says so here and nothing more; the Rule page is the reading. -->
+            <button
+              v-if="fact.ruleIds.length"
+              type="button"
+              class="blr-chip ms-auto"
+              :title="factRuleTitles(fact.ruleIds)"
+              @click="openRule(fact.ruleIds[0]!)"
+            >
+              <UIcon name="i-lucide-scale" class="size-3.5" />{{ fact.ruleIds.length }} {{ fact.ruleIds.length === 1 ? 'Rule' : 'Rules' }}
+            </button>
           </li>
         </ul>
       </section>
@@ -884,6 +1039,69 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
         </ul>
       </section>
 
+      <!--
+        The state machine, drawn from every Scenario in the model. Nothing on
+        the Entity says how it moves, so nothing here is authored twice; the
+        list beneath carries what an edge label cannot — who may, and what the
+        same Step does to other things.
+      -->
+      <section v-if="entityStates.length" class="space-y-3">
+        <h2 class="blr-page-heading">
+          Lifecycle <span class="blr-meta ms-1">{{ entityStates.length }} {{ entityStates.length === 1 ? 'state' : 'states' }} · {{ entityArcs.length }} {{ entityArcs.length === 1 ? 'arc' : 'arcs' }}</span>
+        </h2>
+        <div v-if="entityLifecycle.edges.length" class="h-72 overflow-hidden rounded-xl border border-default bg-elevated/20">
+          <BlrFlowCanvas :nodes="entityLifecycle.nodes" :edges="entityLifecycle.edges" :fit-padding="0.2" :show-controls="false" />
+        </div>
+        <ul v-if="entityArcs.length" class="space-y-1.5">
+          <li
+            v-for="arc in entityArcs"
+            :key="arc.key"
+            class="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border border-default bg-elevated/30 px-3 py-2 text-sm"
+            :class="arc.forbidden && 'border-dashed'"
+          >
+            <template v-if="arc.effect === 'creates'">
+              <span class="blr-meta">created</span>
+              <UIcon name="i-lucide-arrow-right" class="size-3.5 shrink-0 text-muted" />
+              <span class="font-medium text-highlighted">{{ arc.to }}</span>
+            </template>
+            <template v-else-if="arc.effect === 'removes'">
+              <span class="font-medium text-highlighted">{{ arc.from }}</span>
+              <UIcon name="i-lucide-arrow-right" class="size-3.5 shrink-0 text-muted" />
+              <span class="blr-meta">removed</span>
+            </template>
+            <template v-else-if="arc.to">
+              <span class="font-medium text-highlighted">{{ arc.from }}</span>
+              <UIcon name="i-lucide-arrow-right" class="size-3.5 shrink-0 text-muted" />
+              <span class="font-medium text-highlighted">{{ arc.to }}</span>
+            </template>
+            <span v-else class="font-medium text-highlighted">information changed</span>
+            <span class="blr-meta">·</span>
+            <button
+              v-for="id in arc.capabilityIds"
+              :key="id"
+              type="button"
+              class="blr-chip"
+              @click="openCapability(id)"
+            >
+              <UIcon name="i-lucide-zap" class="size-3.5" />{{ resolveResource(workspace, 'capability', id)?.title ?? id }}
+            </button>
+            <span v-if="arc.restriction" class="blr-meta" :title="arc.ruleTitles.join(', ')">· {{ arc.restriction }}</span>
+            <span v-for="co in arc.coEffects" :key="co" class="blr-meta">· {{ co }}</span>
+            <span v-if="arc.forbidden" class="blr-meta ms-auto text-primary" :title="arc.forbiddenBy.join(', ')">forbidden by Rule</span>
+          </li>
+        </ul>
+        <!-- Prohibitions are arcs no Step draws, and notes are what the composition is missing. Neither is a fault. -->
+        <ul v-if="entityProhibitions.length || asEntity.noCreation || asEntity.noTermination" class="space-y-1 blr-meta">
+          <li v-for="prohibition in entityProhibitions" :key="`${prohibition.ruleId}-${prohibition.from}-${prohibition.to}`">
+            <UIcon name="i-lucide-ban" class="me-1 inline size-3.5 align-text-bottom" />
+            Nobody may {{ prohibition.operation }} —
+            <button type="button" class="underline decoration-dotted underline-offset-2" @click="openRule(prohibition.ruleId)">{{ prohibition.ruleTitle }}</button>
+          </li>
+          <li v-if="asEntity.noCreation">No Step creates it; its instances exist before the model begins.</li>
+          <li v-if="asEntity.noTermination">No Step removes it.</li>
+        </ul>
+      </section>
+
       <section v-if="entityStates.length" class="space-y-2">
         <h2 class="blr-page-heading">
           States <span class="blr-meta ms-1">{{ entityStates.length }}</span>
@@ -893,13 +1111,17 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
             v-for="state in entityStates"
             :key="state.name"
             class="rounded-xl border border-default bg-elevated/30 p-4"
+            :class="!state.reached && 'border-dashed'"
           >
-            <p class="text-sm font-semibold text-highlighted">{{ state.name }}</p>
+            <p class="flex items-center gap-2 text-sm font-semibold text-highlighted">
+              {{ state.name }}
+              <span v-if="!state.reached" class="blr-meta font-normal">unreached</span>
+            </p>
             <BlrProse :text="state.content" class="mt-1.5" />
             <!--
-              The lifecycle says what a thing can be and the Transitions say
-              which Capability moves it. Neither says what actually puts it
-              here, which is the question a reader arrives at a state with.
+              The lifecycle says what a thing can be and the arcs say what moves
+              it. Neither says what actually puts it here, which is the question a
+              reader arrives at a state with.
             -->
             <div
               v-if="state.capabilityScenarioIds.length || state.journeyScenarioIds.length"
@@ -923,27 +1145,6 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
             </div>
           </div>
         </div>
-      </section>
-
-      <section v-if="entityTransitions.length" class="space-y-2">
-        <h2 class="blr-page-heading">
-          Transitions <span class="blr-meta ms-1">{{ entityTransitions.length }}</span>
-        </h2>
-        <ul class="space-y-1.5">
-          <li
-            v-for="transition in entityTransitions"
-            :key="`${transition.from}-${transition.to}-${transition.capabilityId}`"
-            class="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border border-default bg-elevated/30 px-3 py-2 text-sm"
-          >
-            <span class="font-medium text-highlighted">{{ transition.from }}</span>
-            <UIcon name="i-lucide-arrow-right" class="size-3.5 shrink-0 text-muted" />
-            <span class="font-medium text-highlighted">{{ transition.to }}</span>
-            <span class="blr-meta ms-auto">by</span>
-            <button type="button" class="blr-chip" @click="openCapability(transition.capabilityId)">
-              <UIcon name="i-lucide-zap" class="size-3.5" />{{ transition.capabilityTitle }}
-            </button>
-          </li>
-        </ul>
       </section>
     </template>
 

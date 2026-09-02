@@ -20,7 +20,6 @@
 import { h } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import type {
-  ActorView,
   AnyResourceView,
   ContextView,
   CapabilityView,
@@ -138,8 +137,9 @@ const facetState = reactive<Partial<Record<ReportResourceKind, FacetSelections>>
   tree rail was asked to show actually belongs: over instances, where the model
   has it, and one click from being dismissed.
 
-  Roots (Actors, Interfaces, Domains, Journeys) are contained by nothing and
-  open flat.
+  Roots (Entities, Interfaces, Domains, Journeys) are contained by nothing and
+  open flat; the Entities that act lead their collection, which is the "Actors"
+  facet of it.
 */
 const DEFAULT_GROUPING: Partial<Record<ReportResourceKind, ReportResourceKind>> = {
   experience: 'interface',
@@ -159,7 +159,6 @@ const activeMeta = computed(() => ENTITY_KIND_META[activeKind.value])
  */
 const kindCounts = computed<Record<ReportResourceKind, number>>(() => ({
   product: 1,
-  actor: props.workspace.counts.actors,
   interface: props.workspace.counts.interfaces,
   experience: props.workspace.counts.experiences,
   screen: props.workspace.counts.screens,
@@ -241,8 +240,8 @@ const facetChips = computed(() => facetKinds.value
     return {
       kind,
       icon: meta.icon,
-      actorKind: ids.length === 1 && first?.kind === 'actor' ? first.actorKind : undefined,
-      actorRelationship: ids.length === 1 && first?.kind === 'actor' ? first.relationship : undefined,
+      actorKind: ids.length === 1 && first?.kind === 'entity' ? first.entityKind ?? undefined : undefined,
+      acts: ids.length === 1 && first?.kind === 'entity' ? first.acts ?? undefined : undefined,
       interfaceType: ids.length === 1 && first?.kind === 'interface' ? first.interfaceType : undefined,
       label: ids.length === 1 ? meta.label : meta.plural,
       value: `${first?.title ?? ids[0]}${rest > 0 ? ` +${rest}` : ''}`
@@ -256,7 +255,16 @@ const VIEW_MODE_TABS = [
   { value: 'table', label: 'Table', icon: 'i-lucide-table' }
 ]
 
-const kindResources = computed<AnyResourceView[]>(() => resourcesOfKind(props.workspace, activeKind.value))
+/* The Entities that act lead their collection: "who is this for" is the question
+   a reader opens the rail with, and it is answered before "what does it keep". */
+const kindResources = computed<AnyResourceView[]>(() => {
+  const resources = resourcesOfKind(props.workspace, activeKind.value)
+  if (activeKind.value !== 'entity') return resources
+  return [
+    ...resources.filter(resource => resource.kind === 'entity' && resource.acts),
+    ...resources.filter(resource => !(resource.kind === 'entity' && resource.acts))
+  ]
+})
 
 /** What every surface shows: the cards, the table, the counts in the bar. */
 const visibleResources = computed(() => filterResources(kindResources.value, facets.value))
@@ -467,9 +475,9 @@ function resolvedInterfaceType(kind: ReportResourceKind | null, id: string) {
 }
 
 function resolvedActor(kind: ReportResourceKind | null, id: string) {
-  if (kind !== 'actor' || !id) return undefined
-  const resource = resolveResource(props.workspace, 'actor', id)
-  return resource?.kind === 'actor' ? resource : undefined
+  if (kind !== 'entity' || !id) return undefined
+  const resource = resolveResource(props.workspace, 'entity', id)
+  return resource?.kind === 'entity' && resource.acts ? resource : undefined
 }
 
 function titleColumn(kind: ReportResourceKind): TableColumn<AnyResourceView> {
@@ -479,10 +487,10 @@ function titleColumn(kind: ReportResourceKind): TableColumn<AnyResourceView> {
     cell: ({ row }) => {
       const marker = row.original.kind === 'interface'
         ? h(BlrInterfaceTypeComponent, { type: row.original.interfaceType })
-        : row.original.kind === 'actor'
+        : row.original.kind === 'entity' && row.original.acts
           ? h(BlrActorTypeComponent, {
-              actorKind: row.original.actorKind,
-              relationship: row.original.relationship,
+              actorKind: row.original.entityKind,
+              acts: row.original.acts,
               size: 'xs'
             })
           : null
@@ -590,21 +598,12 @@ function contextColumn(): TableColumn<AnyResourceView> {
 const tableColumns = computed<TableColumn<AnyResourceView>[]>(() => {
   const base = [titleColumn(activeKind.value)]
   switch (activeKind.value) {
-    case 'actor':
-      return [
-        ...base,
-        textColumn('actorKind', 'Kind', resource => (resource as ActorView).actorKind),
-        textColumn('relationship', 'Relationship', resource => (resource as ActorView).relationship),
-        relationColumn('interface'),
-        relationColumn('experience'),
-        relationColumn('journey')
-      ]
     case 'interface':
       return [
         ...base,
         textColumn('interfaceType', 'Type', resource =>
           INTERFACE_TYPE_META[(resource as InterfaceView).interfaceType].label),
-        relationColumn('actor'),
+        relationColumn('entity', 'Actors'),
         relationColumn('experience'),
         relationColumn('capability'),
         relationColumn('screen'),
@@ -615,7 +614,7 @@ const tableColumns = computed<TableColumn<AnyResourceView>[]>(() => {
       return [
         ...base,
         textColumn('access', 'Access', resource => (resource as ExperienceView).accessMode),
-        relationColumn('actor'),
+        relationColumn('entity', 'Actors'),
         relationTitleColumn('interface', 'Interface', resource => (resource as ExperienceView).interfaceIds[0] ?? ''),
         relationColumn('capability'),
         relationColumn('screen'),
@@ -637,7 +636,18 @@ const tableColumns = computed<TableColumn<AnyResourceView>[]>(() => {
         numberColumn('actions', 'Actions', resource => (resource as ScreenView).actions.length)
       ]
     case 'entity':
-      return [...base, relationColumn('domain'), relationColumn('entity'), relationColumn('capability'), relationColumn('screen')]
+      return [
+        ...base,
+        textColumn('acts', 'Acts', (resource) => {
+          const entity = resource as EntityView
+          return entity.acts ? `${entity.entityKind} · ${entity.acts}` : ''
+        }),
+        relationColumn('domain'),
+        relationColumn('entity'),
+        relationColumn('capability', 'Changed by'),
+        relationColumn('screen'),
+        relationColumn('rule')
+      ]
     case 'domain':
       return [
         ...base,
@@ -665,7 +675,7 @@ const tableColumns = computed<TableColumn<AnyResourceView>[]>(() => {
     case 'journey':
       return [
         ...base,
-        relationColumn('actor'),
+        relationColumn('entity', 'Actors'),
         contextColumn(),
         relationColumn('capability'),
         relationColumn('entity', 'Changes'),
@@ -679,7 +689,7 @@ const tableColumns = computed<TableColumn<AnyResourceView>[]>(() => {
         ...base,
         textColumn('scenarioKind', 'Kind', resource => (resource as ScenarioView).kindName),
         relationTitleColumn('capability', 'Capability', resource => (resource as ScenarioView).capabilityId),
-        relationColumn('actor'),
+        relationColumn('entity', 'Actors'),
         contextColumn(),
         relationColumn('entity', 'Changes'),
         numberColumn('steps', 'Steps', resource => (resource as ScenarioView).steps.length),
@@ -694,7 +704,7 @@ const tableColumns = computed<TableColumn<AnyResourceView>[]>(() => {
         /* `kind` classifies the variation; `result` records how it ended. Orthogonal, so both. */
         textColumn('result', 'Result', resource => (resource as ScenarioView).result),
         relationTitleColumn('journey', 'Journey', resource => (resource as ScenarioView).journeyId),
-        relationColumn('actor'),
+        relationColumn('entity', 'Actors'),
         relationColumn('entity', 'Changes'),
         numberColumn('steps', 'Steps', resource => (resource as ScenarioView).steps.length),
         relationColumn('capability'),
@@ -1037,7 +1047,7 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
                 :kind="chip.kind"
                 :interface-type="chip.interfaceType"
                 :actor-kind="chip.actorKind"
-                :actor-relationship="chip.actorRelationship"
+                :acts="chip.acts"
                 :labelled="false"
                 size="xs"
               />
@@ -1171,8 +1181,8 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
                     v-if="group.kind"
                     :kind="group.kind"
                     :interface-type="resolvedInterfaceType(group.kind, group.key)"
-                    :actor-kind="resolvedActor(group.kind, group.key)?.actorKind"
-                    :actor-relationship="resolvedActor(group.kind, group.key)?.relationship"
+                    :actor-kind="resolvedActor(group.kind, group.key)?.entityKind"
+                    :acts="resolvedActor(group.kind, group.key)?.acts"
                     :labelled="false"
                     size="sm"
                   />

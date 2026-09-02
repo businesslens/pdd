@@ -7,7 +7,7 @@
  * quietly describe the same resource differently.
  */
 import type {
-  ActorView,
+  EntityView,
   AnyResourceView,
   CapabilityView,
   DomainView,
@@ -34,14 +34,6 @@ export function resourceFacts(workspace: ReportWorkspace, resource: AnyResourceV
     resolveResource(workspace, kind, ids[0] ?? '')?.title ?? ''
 
   switch (resource.kind) {
-    case 'actor': {
-      const actor = resource as ActorView
-      return [
-        { label: 'Kind', value: actor.actorKind },
-        { label: 'Relationship', value: actor.relationship },
-        { label: 'Journeys', value: String(actor.journeyIds.length) }
-      ]
-    }
     case 'interface': {
       const item = resource as InterfaceView
       return [
@@ -67,10 +59,18 @@ export function resourceFacts(workspace: ReportWorkspace, resource: AnyResourceV
     }
     case 'entity': {
       const entity = resource as EntityView
+      if (entity.acts) {
+        return [
+          { label: 'Kind', value: entity.entityKind ?? '' },
+          { label: 'Acts', value: entity.acts },
+          { label: 'Journeys', value: String(entity.journeyIds.length) },
+          { label: 'Kept', value: String(entity.informationKept.length) }
+        ]
+      }
       return [
         { label: 'Kept', value: String(entity.informationKept.length) },
         { label: 'States', value: String(entity.states.length) },
-        { label: 'Transitions', value: String(entity.transitions.length) },
+        { label: 'Arcs', value: String(entity.arcs.length) },
         { label: 'Changed by', value: String(entity.changedByIds.length) }
       ]
     }
@@ -92,7 +92,7 @@ export function resourceFacts(workspace: ReportWorkspace, resource: AnyResourceV
     case 'journey': {
       const journey = resource as JourneyView
       return [
-        { label: 'Actor', value: one('actor', journey.actorIds), wide: true },
+        { label: 'Actor', value: one('entity', journey.actorIds), wide: true },
         { label: 'Scenarios', value: String(journey.scenarioIds.length) },
         { label: 'Steps', value: String(journey.stepCount) }
       ]
@@ -125,7 +125,10 @@ export function resourceFacts(workspace: ReportWorkspace, resource: AnyResourceV
 
 export function resourceBadge(workspace: ReportWorkspace, resource: AnyResourceView): string {
   switch (resource.kind) {
-    case 'actor': return `${(resource as ActorView).actorKind} · ${(resource as ActorView).relationship}`
+    case 'entity': {
+      const entity = resource as EntityView
+      return entity.acts ? `${entity.entityKind} · ${entity.acts}` : ''
+    }
     case 'experience': return (resource as ExperienceView).accessMode
     case 'capability-scenario': return (resource as ScenarioView).kindName
     case 'journey-scenario': return `${(resource as ScenarioView).kindName} · ${(resource as ScenarioView).result}`

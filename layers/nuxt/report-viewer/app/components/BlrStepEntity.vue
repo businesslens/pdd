@@ -6,11 +6,9 @@
  * place it can be said: the Scenario's own `entityIds` is this set deduped, so
  * it answers *what* the reading touches and never *which Step does it*.
  *
- * The tail of the arrow is derived. A Step names the state it leaves the Entity
- * in; the lifecycle says which states reach that one by this Capability. Where
- * exactly one does, the chip reads `Unread → Read` without anything being
- * authored twice. Where several do, it shows the destination alone and names
- * the alternatives in the tooltip rather than picking one.
+ * Both ends of a move are authored on the Step — nothing is inferred from a
+ * neighbour — so the chip reads `Unread → Read` exactly as written. An alias
+ * tells two instances of one thing apart: `Collection (source)`.
  *
  * Drawn as a reference to a resource, exactly as the Step's Actor is — the
  * Entity's own mark inside a chip that opens it. States are not resources, so
@@ -63,28 +61,30 @@ const effectLabel = computed(() => ({
    changes — absence of a read means nothing, and it must not look like it does. */
 const isRead = computed(() => props.mention.effect === 'reads')
 
-const from = computed(() => props.mention.fromStates.length === 1 ? props.mention.fromStates[0] : '')
+const label = computed(() => {
+  const title = entity.value?.title ?? props.mention.entityId
+  return props.mention.as ? `${title} (${props.mention.as})` : title
+})
 
 const description = computed(() => {
-  const name = entity.value?.title ?? props.mention.entityId
+  const name = label.value
   if (props.mention.effect === 'reads') return `This Step reads ${name} without changing it`
   if (props.outcome) {
-    return props.mention.state
-      ? `The Scenario leaves ${name} in "${props.mention.state}"`
+    if (props.mention.effect === 'removes') return `The Scenario ends ${name}`
+    return props.mention.to
+      ? `The Scenario leaves ${name} in "${props.mention.to}"`
       : `The Scenario changes ${name}`
   }
-  if (props.mention.effect === 'removes') return `This Step ends ${name}`
+  if (props.mention.effect === 'removes') {
+    return props.mention.from ? `This Step ends ${name}, which was "${props.mention.from}"` : `This Step ends ${name}`
+  }
   if (props.mention.effect === 'creates') {
-    return props.mention.state
-      ? `This Step brings ${name} into being, in the state "${props.mention.state}"`
+    return props.mention.to
+      ? `This Step brings ${name} into being, in the state "${props.mention.to}"`
       : `This Step brings ${name} into being`
   }
-  if (!props.mention.state) return `This Step changes ${name}`
-  if (from.value) return `This Step moves ${name} from "${from.value}" to "${props.mention.state}"`
-  if (props.mention.fromStates.length > 1) {
-    return `This Step leaves ${name} in "${props.mention.state}", reached from ${props.mention.fromStates.join(' or ')}`
-  }
-  return `This Step leaves ${name} in "${props.mention.state}"`
+  if (!props.mention.to) return `This Step changes ${name}`
+  return `This Step moves ${name} from "${props.mention.from}" to "${props.mention.to}"`
 })
 </script>
 
@@ -104,13 +104,14 @@ const description = computed(() => {
         class="size-3.5 shrink-0"
         :style="{ color, opacity: isRead ? 0.55 : 1 }"
       />
-      <span class="min-w-0 truncate">{{ entity.title }}</span>
+      <span class="min-w-0 truncate">{{ label }}</span>
       <span v-if="effectLabel" class="shrink-0 font-normal text-muted">{{ effectLabel }}</span>
-      <template v-if="mention.state">
-        <span v-if="from" class="min-w-0 truncate font-normal text-muted">{{ from }}</span>
-        <UIcon name="i-lucide-arrow-right" class="size-3 shrink-0 text-dimmed" />
-        <span class="min-w-0 truncate text-default">{{ mention.state }}</span>
+      <template v-if="mention.to">
+        <span v-if="mention.from && !outcome" class="min-w-0 truncate font-normal text-muted">{{ mention.from }}</span>
+        <UIcon v-if="mention.from && !outcome" name="i-lucide-arrow-right" class="size-3 shrink-0 text-dimmed" />
+        <span class="min-w-0 truncate text-default">{{ mention.to }}</span>
       </template>
+      <span v-else-if="mention.from && !outcome" class="min-w-0 truncate font-normal text-muted">{{ mention.from }}</span>
     </button>
   </UTooltip>
 </template>

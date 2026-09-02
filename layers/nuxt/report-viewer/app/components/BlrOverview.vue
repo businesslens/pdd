@@ -91,7 +91,7 @@ const overviewHeading = computed(() => props.workspace.journeys.length
 function referenceActor(ownerKey?: string) {
   if (!ownerKey) return undefined
   const resource = resolveResourceKey(props.workspace, ownerKey)
-  return resource?.kind === 'actor' ? resource : undefined
+  return resource?.kind === 'entity' && resource.acts ? resource : undefined
 }
 </script>
 
@@ -109,7 +109,7 @@ function referenceActor(ownerKey?: string) {
     <div class="flex flex-wrap items-center gap-1.5">
       <span class="blr-field me-1">Made for</span>
       <UButton
-        v-for="actor in workspace.actors"
+        v-for="actor in workspace.actingEntities"
         :key="actor.key"
         color="neutral"
         variant="outline"
@@ -118,15 +118,15 @@ function referenceActor(ownerKey?: string) {
         @click="emit('select', actor)"
       >
         <BlrKind
-          kind="actor"
-          :actor-kind="actor.actorKind"
-          :actor-relationship="actor.relationship"
+          kind="entity"
+          :actor-kind="actor.entityKind"
+          :acts="actor.acts"
           :labelled="false"
           size="xs"
         />
         {{ actor.title }}
       </UButton>
-      <span v-if="!workspace.actors.length" class="text-sm text-muted italic">No Actors authored.</span>
+      <span v-if="!workspace.actingEntities.length" class="text-sm text-muted italic">No Entity acts on this Product.</span>
     </div>
     <div class="flex flex-wrap items-baseline gap-x-4 gap-y-1">
       <span v-for="fact in countFacts" :key="fact.label" class="blr-field">
@@ -306,8 +306,8 @@ function referenceActor(ownerKey?: string) {
               >
                 <BlrKind
                   :kind="group.ownerKind"
-                  :actor-kind="referenceActor(group.ownerKey)?.actorKind"
-                  :actor-relationship="referenceActor(group.ownerKey)?.relationship"
+                  :actor-kind="referenceActor(group.ownerKey)?.entityKind"
+                  :acts="referenceActor(group.ownerKey)?.acts"
                   :labelled="false"
                   size="xs"
                 />

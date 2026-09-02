@@ -72,6 +72,7 @@ describe('named Product Topology views', () => {
       'sitemap',
       'rule-reach',
       'what-it-keeps',
+      'what-changes-what',
       'everything'
     ])
     expect(PRODUCT_TOPOLOGY_VIEWS.every(view => view.question.endsWith('?'))).toBe(true)
@@ -214,9 +215,10 @@ describe('named Product Topology views', () => {
     })
     const nodeIds = new Set(filtered.nodes.map(node => node.id))
 
-    expect(filtered.nodes.some(node => node.data?.kind === 'actor')).toBe(false)
+    // The Actors on this view are the Entities that act; hiding the kind hides them.
+    expect(filtered.nodes.some(node => node.data?.kind === 'entity')).toBe(false)
     expect(filtered.edges.every(edge => nodeIds.has(edge.source) && nodeIds.has(edge.target))).toBe(true)
-    expect(base.nodes.some(node => node.data?.kind === 'actor')).toBe(true)
+    expect(base.nodes.some(node => node.data?.kind === 'entity')).toBe(true)
   })
 
   /*
@@ -255,7 +257,7 @@ describe('named Product Topology views', () => {
       base.edges.some(edge => edge.source === item.key || edge.target === item.key))!
     const expected = topologyNeighbourhood(resource.key, base.edges)
     const filtered = filterProductTopologyGraph(base, {
-      visibleKinds: ['actor', 'interface', 'experience', 'screen', 'capability'],
+      visibleKinds: ['entity', 'interface', 'experience', 'screen', 'capability'],
       focusResourceIds: [resource.key]
     })
 

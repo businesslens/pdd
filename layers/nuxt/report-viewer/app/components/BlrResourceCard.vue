@@ -26,8 +26,8 @@ const emit = defineEmits<{ open: [resource: AnyResourceView] }>()
 const presentation = computed(() => resourceCardPresentation(props.workspace, props.resource))
 const kindLabel = computed(() => ENTITY_KIND_META[props.resource.kind].label)
 const interfaceType = computed(() => props.resource.kind === 'interface' ? props.resource.interfaceType : undefined)
-const actorKind = computed(() => props.resource.kind === 'actor' ? props.resource.actorKind : undefined)
-const actorRelationship = computed(() => props.resource.kind === 'actor' ? props.resource.relationship : undefined)
+const actorKind = computed(() => props.resource.kind === 'entity' ? props.resource.entityKind ?? undefined : undefined)
+const acts = computed(() => props.resource.kind === 'entity' ? props.resource.acts ?? undefined : undefined)
 const colorMode = useColorMode()
 const mounted = ref(false)
 
@@ -51,9 +51,9 @@ function metricInterfaceType(metric: ResourceCardMetric, id: string) {
 }
 
 function metricActor(metric: ResourceCardMetric, id: string) {
-  if (metric.kind !== 'actor') return undefined
-  const resource = resolveResource(props.workspace, 'actor', id)
-  return resource?.kind === 'actor' ? resource : undefined
+  if (metric.kind !== 'entity') return undefined
+  const resource = resolveResource(props.workspace, 'entity', id)
+  return resource?.kind === 'entity' && resource.acts ? resource : undefined
 }
 </script>
 
@@ -70,7 +70,7 @@ function metricActor(metric: ResourceCardMetric, id: string) {
         :kind="resource.kind"
         :interface-type="interfaceType"
         :actor-kind="actorKind"
-        :actor-relationship="actorRelationship"
+        :acts="acts"
         :labelled="false"
         class="mt-0.5"
       />
@@ -136,8 +136,8 @@ function metricActor(metric: ResourceCardMetric, id: string) {
                   />
                   <BlrActorType
                     v-else-if="metricActor(metric, id)"
-                    :actor-kind="metricActor(metric, id)!.actorKind"
-                    :relationship="metricActor(metric, id)!.relationship"
+                    :actor-kind="metricActor(metric, id)!.entityKind!"
+                    :acts="metricActor(metric, id)!.acts!"
                     size="xs"
                   />
                   <UIcon

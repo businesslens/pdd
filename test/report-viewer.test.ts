@@ -53,7 +53,9 @@ describe('stable Product Report', () => {
       description: report.description,
       schemaVersion: report.schemaVersion
     })
-    expect(workspace.actors).toHaveLength(report.model.actors.length)
+    // An Actor is an Entity that acts: a facet of one collection, not a collection.
+    expect(workspace.actingEntities).toHaveLength(report.model.entities.filter(item => item.acts !== null).length)
+    expect(workspace.entities).toHaveLength(report.model.entities.length)
     expect(workspace.interfaces).toHaveLength(report.model.interfaces.length)
     expect(workspace.interfaces.find((item: any) => item.id === 'customer-mobile')?.interfaceType)
       .toBe('mobile-app')
@@ -124,12 +126,18 @@ describe('stable Product Report', () => {
 
     const order = workspace.entities.find((item: any) => item.id === 'order')
     expect(order.kind).toBe('entity')
-    expect(order.informationKept).toContain('When it was placed')
-    expect(order.states.map((state: any) => state.name)).toEqual(['Pending', 'Confirmed', 'Refunded'])
+    // Facts are named, and a Rule that governs one is marked on it.
+    expect(order.informationKept.map((fact: any) => fact.name)).toContain('When placed')
+    expect(order.informationKept.find((fact: any) => fact.name === 'Total charged').ruleIds).toEqual(['total-charged'])
+    expect(order.states.map((state: any) => state.name)).toEqual(['Pending', 'Confirmed', 'Cancelled', 'Refunded'])
+    // A thing that does not act says nothing; one that does says which.
+    expect(order.acts).toBeNull()
+    expect(workspace.entities.find((item: any) => item.id === 'payment-gateway')).toMatchObject({ entityKind: 'system', acts: 'external' })
 
     // A relation is declared on one side; the inverse is derived.
     expect(order.relations).toEqual([
-      { entityId: 'catalog-product', verb: 'was placed for', cardinality: 'many', ends: 'many-to-many' }
+      { entityId: 'catalog-product', verb: 'was placed for', cardinality: 'many', ends: 'many-to-many' },
+      { entityId: 'refund', verb: 'is repaid by', cardinality: 'many', ends: 'one-to-many' }
     ])
     const product = workspace.entities.find((item: any) => item.id === 'catalog-product')
     expect(product.inboundRelations).toContainEqual({
@@ -139,21 +147,35 @@ describe('stable Product Report', () => {
 
     // A Scenario's Entity set is derived from its Steps, as its Actor set is.
     const complete = workspace.capabilityScenarios.find((s: any) => s.id === 'complete-checkout')
-    // One Step, two Entities: the order it confirms and the cart it consumes.
-    expect(complete.entityIds).toEqual(['order', 'cart'])
+    // One Step, two Entities: the order it stores and the cart it consumes.
+    expect(complete.entityIds).toEqual(['shopper', 'order', 'cart'])
+    // A Capability declares nothing: what it changes is what its Steps say.
     expect(workspace.capabilities.find((c: any) => c.id === 'place-order').entityIds)
-      .toEqual(['cart', 'catalog-product', 'order'])
+      .toEqual(['cart', 'catalog-product', 'order', 'shopper'])
 
-    // Every transition names the Capability that causes it — the edge that
-    // stopped an Entity being something nothing in the model pointed at.
-    expect(order.transitions).toEqual([
-      { from: 'Pending', to: 'Confirmed', capabilityId: 'place-order' },
-      { from: 'Confirmed', to: 'Refunded', capabilityId: 'manage-orders' }
+    // The lifecycle is composed from Steps: every arc names the Capability
+    // whose Step draws it, the Rules that constrain it, and its co-effects.
+    const arc = (from: string, to: string) => order.arcs.find((item: any) => item.from === from && item.to === to)
+    expect(arc('Pending', 'Confirmed').capabilityIds).toEqual(['settle-payment'])
+    expect(arc('Confirmed', 'Refunded')).toMatchObject({ capabilityIds: ['manage-orders'], ruleIds: ['refunds-need-an-operator', 'who-may-change-an-order'] })
+    expect(arc('Confirmed', 'Refunded').coEffects).toEqual([{ entityId: 'refund', effect: 'creates', to: 'Requested' }])
+    expect(order.arcs.find((item: any) => item.effect === 'creates').to).toBe('Pending')
+    expect(order.states.every((state: any) => state.reached)).toBe(true)
+    // A Rule closing an operation is read on the machine, never drawn as a path.
+    expect(order.prohibitions.map((item: any) => item.ruleId).sort()).toEqual(['a-refunded-order-is-never-cancelled', 'orders-are-never-deleted'])
+    expect(order.noCreation).toBe(false)
+
+    // Both relations are derived from the Steps and Screens, never authored here.
+    expect(order.changedByIds).toEqual(['cancel-order', 'manage-orders', 'place-order', 'settle-payment'])
+    expect(order.readByIds).toEqual(['track-order'])
+    expect(order.presentedOnIds).toEqual([
+      'admin-web::order-detail',
+      'customer-mobile::storefront::order-status',
+      'customer-web::storefront::order-status'
     ])
-
-    // Both relations are derived from the declarations, never authored here.
-    expect(order.changedByIds).toEqual(['manage-orders', 'place-order'])
-    expect(order.presentedOnIds).toEqual([])
+    // A thing no Capability creates is a real thing whose instances pre-exist the model.
+    expect(product.noCreation).toBe(true)
+    expect(product.states.map((state: any) => state.reached)).toEqual([true, true])
 
     // A thing may be worth naming for what is kept about it alone.
     const cart = workspace.entities.find((item: any) => item.id === 'cart')
@@ -163,7 +185,9 @@ describe('stable Product Report', () => {
 
     expect(workspace.byKey.get(order.key)).toBe(order)
     expect(resourceFacts(workspace, order).map((fact: any) => fact.label))
-      .toEqual(['Kept', 'States', 'Transitions', 'Changed by'])
+      .toEqual(['Kept', 'States', 'Arcs', 'Changed by'])
+    expect(resourceFacts(workspace, workspace.entities.find((item: any) => item.id === 'shopper')).map((fact: any) => fact.label))
+      .toEqual(['Kind', 'Acts', 'Journeys', 'Kept'])
     expect(hasAuthoredBody(order)).toBe(true)
     const overview = tabsFor(workspace, order).find((tab: any) => tab.id === 'overview')!
     expect(overview.blocks).toContain('detail')
@@ -174,45 +198,48 @@ describe('stable Product Report', () => {
   })
 
   /*
-   * The wire contract carries a `changes` list on every Step, and the
-   * projection used to drop it — so the reading, which is the sequence, could
-   * never say which Step moved the thing. All that survived was the Scenario's
-   * deduped `entityIds`, which answers what it touches and not where.
+   * The wire contract carries an `entities` list on every Step, and the reading
+   * is the sequence, so the list belongs on the Step that causes it. All the
+   * Scenario's deduped `entityIds` answers is what it touches, not where.
    */
-  it('carries what a Step changes into the reading, not only into the Scenario set', async () => {
+  it('carries what a Step does into the reading, not only into the Scenario set', async () => {
     const { scenarioStepMatrix } = await import(workspaceModulePath)
     const workspace = projectReportWorkspace(compileReport(loadModel(FIXTURE), '2026-08-08'))
     const scenario = workspace.capabilityScenarios.find((item: any) => item.id === 'complete-checkout')!
 
     // One observable act, two Entities — and only one of them has a lifecycle.
     const persisted = scenario.steps.at(-1)!
-    expect(persisted.changes.map((change: any) => [change.entityId, change.effect, change.state]))
-      .toEqual([['order', 'changes', 'Confirmed'], ['cart', 'changes', '']])
+    expect(persisted.entities.map((entry: any) => [entry.entityId, entry.effect, entry.from, entry.to]))
+      .toEqual([['order', 'creates', '', 'Pending'], ['cart', 'removes', '', '']])
 
-    // A Step that changes nothing reads as an empty list, never as undefined.
-    expect(scenario.steps[0].changes).toEqual([])
+    // A Step that touches nothing reads as an empty list, never as undefined.
+    const settle = workspace.capabilityScenarios.find((item: any) => item.id === 'settle-a-refund')!
+    expect(settle.steps.at(-1)!.entities).toEqual([])
 
     // The matrix is what the page renders, so the list has to survive it.
     const row = scenarioStepMatrix(scenario).steps.at(-1)!
-    expect(row.mentions[0]).toMatchObject({ entityId: 'order', state: 'Confirmed' })
+    expect(row.mentions[0]).toMatchObject({ entityId: 'order', to: 'Pending' })
   })
 
   /*
-   * The arrow's tail is derived. A Step names the state it leaves the Entity
-   * in; the lifecycle says which states reach it by that Capability. Authoring
-   * the tail as well would be a second copy of a fact the transitions own.
+   * Both ends of a move are authored on the Step. Nothing is inferred from a
+   * neighbouring Step, and a creation starts nowhere.
    */
-  it('derives where a move starts, and stays quiet when several states could', () => {
+  it('reads both ends of a move off the Step, and an alias off an instance', () => {
     const workspace = projectReportWorkspace(compileReport(loadModel(FIXTURE), '2026-08-08'))
 
     const refund = workspace.capabilityScenarios.find((item: any) => item.id === 'refund-order')!
-    const refunded = refund.steps.flatMap((step: any) => step.changes).find((c: any) => c.state === 'Refunded')!
-    expect(refunded.fromStates).toEqual(['Confirmed'])
+    const refunded = refund.steps.flatMap((step: any) => step.entities).find((entry: any) => entry.to === 'Refunded')!
+    expect(refunded).toMatchObject({ entityId: 'order', effect: 'changes', from: 'Confirmed', to: 'Refunded' })
 
-    // A creation has no `from` at all, so nothing is derived for one.
     const sold = workspace.capabilityScenarios.find((item: any) => item.id === 'sell-the-last-available-unit')!
-    const unavailable = sold.steps.flatMap((step: any) => step.changes).find((c: any) => c.state === 'Unavailable')!
-    expect(unavailable.fromStates).toEqual(['Available'])
+    const created = sold.steps.flatMap((step: any) => step.entities).find((entry: any) => entry.effect === 'creates')!
+    expect(created).toMatchObject({ entityId: 'order', from: '', to: 'Pending' })
+
+    // Two instances of one thing in one Step are told apart by alias.
+    const merge = workspace.capabilityScenarios.find((item: any) => item.id === 'merge-duplicate-orders')!
+    expect(merge.steps.at(-1)!.entities.map((entry: any) => [entry.as, entry.effect, entry.from, entry.to]))
+      .toEqual([['duplicate', 'changes', 'Pending', 'Cancelled'], ['original', 'changes', '', '']])
   })
 
   /*
@@ -231,7 +258,7 @@ describe('stable Product Report', () => {
     // The row the page renders carries changes and reads together, told apart.
     const row = scenarioStepMatrix(browse).steps[0]!
     expect(row.mentions).toEqual([
-      { entityId: 'catalog-product', effect: 'reads', state: '', fromStates: [] }
+      { entityId: 'catalog-product', as: '', effect: 'reads', from: '', to: '' }
     ])
 
     // "What can alter this thing" keeps its answer: browsing is not in it.
@@ -250,7 +277,12 @@ describe('stable Product Report', () => {
     const complete = workspace.capabilityScenarios.find((item: any) => item.id === 'complete-checkout')!
     // Everything it changed, whether or not the thing carries a state: the
     // reader arrives here asking what the Scenario produced.
-    expect(complete.outcomeStates.map((item: any) => [item.entityId, item.state]))
+    expect(complete.outcomeStates.map((item: any) => [item.entityId, item.effect, item.to]))
+      .toEqual([['shopper', 'changes', ''], ['order', 'creates', 'Pending'], ['cart', 'removes', '']])
+
+    // A Journey states what its achieved paths leave behind, beside its Success criterion.
+    const journey = workspace.journeys.find((item: any) => item.id === 'browse-and-buy')!
+    expect(journey.leavesBehind.map((item: any) => [item.entityId, item.to]))
       .toEqual([['order', 'Confirmed'], ['cart', '']])
 
     // A Scenario that changes nothing summarises nothing.
@@ -269,20 +301,23 @@ describe('stable Product Report', () => {
     const cancelStep = cancel.steps.at(-1)!
     cancel.steps[cancel.steps.length - 1] = {
       ...cancelStep,
-      changes: [{ entityId: 'order', effect: 'changes' as const, state: 'Refunded' }]
+      entities: [{ entityId: 'order', as: null, effect: 'changes' as const, from: 'Confirmed', to: 'Refunded' }]
     }
     const workspace = projectReportWorkspace(report)
 
     const order = workspace.entities.find((item: any) => item.id === 'order')!
     const stateOf = (name: string) => order.states.find((state: any) => state.name === name)!
 
-    expect(stateOf('Confirmed').capabilityScenarioIds).toEqual(['complete-checkout'])
-    expect(stateOf('Confirmed').journeyScenarioIds).toEqual([])
+    expect(stateOf('Confirmed').capabilityScenarioIds).toEqual(['confirm-an-order-when-the-gateway-settles'])
+    expect(stateOf('Confirmed').journeyScenarioIds).toEqual(['browse-and-complete-checkout', 'cancel-an-order-before-fulfilment'])
     expect(stateOf('Refunded').journeyScenarioIds).toEqual(['cancel-an-order-before-fulfilment'])
+    expect(stateOf('Pending').capabilityScenarioIds).toEqual(['complete-checkout', 'sell-the-last-available-unit'])
 
-    // A state nothing lands in says so by holding nothing, not by guessing.
-    expect(stateOf('Pending').capabilityScenarioIds).toEqual([])
-    expect(stateOf('Pending').journeyScenarioIds).toEqual([])
+    // A state nothing lands in says so by holding nothing, not by guessing —
+    // and, past the first, is marked unreached.
+    expect(stateOf('Cancelled').journeyScenarioIds).toEqual([])
+    expect(stateOf('Cancelled').reached).toBe(true)
+    order.states.push({ name: 'Archived', content: 'Filed.', capabilityScenarioIds: [], journeyScenarioIds: [], reached: false })
 
     // Keyed on the pair: a state name is only unique within its own Entity.
     const cart = workspace.entities.find((item: any) => item.id === 'cart')!
@@ -306,8 +341,13 @@ describe('stable Product Report', () => {
 
     // A Domain classifies Entities, though the Entity is the side that says so.
     const ordering = workspace.domains.find((item: any) => item.id === 'ordering')!
-    expect(ordering.entityIds).toEqual(['cart', 'order'])
-    expect(relatedIds(ordering, 'entity')).toEqual(['cart', 'order'])
+    expect(ordering.entityIds).toEqual(['cart', 'order', 'refund'])
+    expect(relatedIds(ordering, 'entity')).toEqual(['cart', 'order', 'refund'])
+
+    // An Entity that acts is reachable from where it acts, and the other way.
+    const shopper = workspace.entities.find((item: any) => item.id === 'shopper')!
+    expect(relatedIds(shopper, 'interface')).toEqual(['customer-mobile', 'customer-web'])
+    expect(relatedIds(workspace.interfaces.find((item: any) => item.id === 'customer-web')!, 'entity')).toEqual(['shopper'])
 
     for (const kind of ['screen', 'domain', 'journey', 'capability', 'capability-scenario', 'journey-scenario']) {
       expect(facetKindsFor(kind)).toContain('entity')
@@ -320,21 +360,20 @@ describe('stable Product Report', () => {
    * touch, including ones no path through this Journey ever reaches.
    */
   it('derives what a Journey changes from its Scenarios, not from its Capabilities', () => {
-    const report = compileReport(loadModel(FIXTURE), '2026-08-08')
-    const scenario = report.model.journeyScenarios.find((item: any) => item.id === 'browse-and-complete-checkout')!
-    const placed = scenario.steps.findIndex((step: any) => step.capabilityId === 'place-order')
-    scenario.steps[placed] = {
-      ...scenario.steps[placed]!,
-      changes: [{ entityId: 'order', effect: 'changes' as const, state: 'Confirmed' }]
-    }
-    const workspace = projectReportWorkspace(report)
+    const workspace = projectReportWorkspace(compileReport(loadModel(FIXTURE), '2026-08-08'))
 
     const journey = workspace.journeys.find((item: any) => item.id === 'browse-and-buy')!
-    expect(journey.entityIds).toEqual(['order'])
-
-    // `place-order` declares three; only the one a Step names is claimed here.
+    // Its paths never touch the Shopper or the Catalog product, which its Capabilities do.
+    expect(journey.entityIds).toEqual(['order', 'cart'])
     expect(workspace.capabilities.find((item: any) => item.id === 'place-order')!.entityIds)
-      .toEqual(['cart', 'catalog-product', 'order'])
+      .toEqual(['cart', 'catalog-product', 'order', 'shopper'])
+
+    // A Capability page reads one aggregate line per Entity, never a lifecycle fragment each.
+    const settle = workspace.capabilities.find((item: any) => item.id === 'settle-payment')!
+    expect(settle.entityEffects.map((line: any) => [line.entityId, line.effects, line.scenarioIds.length])).toEqual([
+      ['order', [{ effect: 'changes', from: 'Pending', to: 'Confirmed' }], 3],
+      ['refund', [{ effect: 'changes', from: 'Requested', to: 'Settled' }], 1]
+    ])
   })
 
   it('derives backlinks without mutating the canonical report', () => {
@@ -344,21 +383,31 @@ describe('stable Product Report', () => {
 
     expect(workspace.capabilities.some((item: any) => item.journeyIds.length || item.ruleIds.length)).toBe(true)
     expect(workspace.domains.some((item: any) => item.screenIds.length)).toBe(true)
-    const scenarioRule = workspace.rules.find((item: any) => item.id === 'refunds-apply-only-to-existing-orders')!
-    expect(scenarioRule.capabilityIds).toEqual([])
-    expect(scenarioRule.derivedCapabilityIds).toEqual(['manage-orders'])
-    expect(scenarioRule.domainIds).toEqual(['ordering'])
+    const entityRule = workspace.rules.find((item: any) => item.id === 'a-refund-never-exceeds-the-charge')!
+    expect(entityRule.capabilityIds).toEqual([])
+    expect(entityRule.entityIds).toEqual(['refund'])
+    expect(entityRule.domainIds).toEqual(['ordering'])
+    expect(entityRule.permits).toBeNull()
+    // A permission Rule reads its grants back as sentences a reader can judge.
+    const refunds = workspace.rules.find((item: any) => item.id === 'refunds-need-an-operator')!
+    expect(refunds.grants.map((grant: any) => grant.sentence)).toEqual([
+      'Store admin when Total charged at most 100',
+      'whoever Store settings configures when Total charged over the Store settings threshold'
+    ])
+    expect(workspace.rules.find((item: any) => item.id === 'orders-are-never-deleted')!.prohibits).toBe(true)
+    expect(workspace.rules.find((item: any) => item.id === 'a-refund-is-visible-to-its-shopper')!.grants[0].who)
+      .toBe('the Shopper related by is repaid by → owns')
     expect(report).toEqual(before)
   })
 
   it('keeps same-id resources distinct across collections', () => {
     const report = compileReport(loadModel(FIXTURE), '2026-08-08')
     const sharedId = report.model.interfaces[0]!.id
-    report.model.actors[0] = { ...report.model.actors[0]!, id: sharedId }
+    report.model.entities[0] = { ...report.model.entities[0]!, id: sharedId }
 
     const workspace = projectReportWorkspace(report)
     expect(workspace.resourcesById.get(sharedId)).toHaveLength(2)
-    expect(workspace.byKey.get(`actor:${sharedId}`)?.kind).toBe('actor')
+    expect(workspace.byKey.get(`entity:${sharedId}`)?.kind).toBe('entity')
     expect(workspace.byKey.get(`interface:${sharedId}`)?.kind).toBe('interface')
   })
 
@@ -380,8 +429,9 @@ describe('stable Product Report', () => {
       'customer-web::storefront',
       'customer-mobile::storefront'
     ])
-    /* Parallel lanes are not transitions — neither route changes Context place. */
-    expect(matrix.steps.every((step: any) => step.cells.every((cell: any) => !cell.contextChanged))).toBe(true)
+    /* Parallel lanes are not transitions; a Step that moves to the webhook is one, on both. */
+    expect(matrix.steps[1].cells.map((cell: any) => cell.contextChanged)).toEqual([false, false])
+    expect(matrix.steps[2].cells.map((cell: any) => cell.contextChanged)).toEqual([true, true])
     expect(scenarioStepMatrix(workspace.capabilityScenarios[0]).routes).toHaveLength(2)
   })
 
@@ -407,7 +457,10 @@ describe('stable Product Report', () => {
     expect(contextPlace).toContain('<BlrInterfaceType')
     expect(source('app/components/BlrInterfaceType.vue')).toContain(":role=\"labelled ? undefined : 'img'\"")
     expect(body).toContain("asScenario.scenarioType === 'journey' && step.capabilityId")
-    expect(body).toContain("step.stepKind === 'actor' && stepActor(step.actorId)")
+    /* Any Step may name an Actor now: performing on an actor Step, attributed on
+       a Product or condition Step, and the chip is the same reference. */
+    expect(body).toContain('v-if="stepActor(step.actorId)"')
+    expect(body).toContain('<span v-if="step.stepKind !== \'actor\'">for</span>')
     expect(body).toContain('{{ stepActor(step.actorId)!.title }}')
     expect(body).not.toContain('label="Performed by"')
     expect(body).toContain('Product action')
@@ -470,7 +523,7 @@ describe('stable Product Report', () => {
     expect(actorMark).not.toContain('showRelationship')
     expect(actorMark).toContain('var(--blr-resource-mark-regular)')
     expect(actorMark).toContain('var(--blr-resource-mark-dense)')
-    expect(kind).toContain("kind === 'actor' && actorKind && actorRelationship")
+    expect(kind).toContain("kind === 'entity' && actorKind && acts")
     expect(kind).not.toContain('show-relationship')
     for (const variable of [
       '--blr-resource-mark-regular',
@@ -497,21 +550,21 @@ describe('stable Product Report', () => {
     expect(structure).toContain('--blr-interface-kind-dense: 1rem')
     expect(card).toContain(':interface-type="interfaceType"')
     expect(card).toContain(':actor-kind="actorKind"')
-    expect(card).toContain(':actor-relationship="actorRelationship"')
+    expect(card).toContain(':acts="acts"')
     expect(connections).toContain(':interface-type="interfaceType(item.kind, id)"')
-    expect(connections).toContain(':actor-kind="actorClassification(item.kind, id)?.actorKind"')
+    expect(connections).toContain(':actor-kind="actorClassification(item.kind, id)?.entityKind"')
     expect(reportShell).toContain('resolvedInterfaceType(group.kind, group.key)')
-    expect(reportShell).toContain('resolvedActor(group.kind, group.key)?.actorKind')
+    expect(reportShell).toContain('resolvedActor(group.kind, group.key)?.entityKind')
     expect(reportShell).toContain('BlrInterfaceTypeComponent')
     expect(reportShell).toContain('BlrActorTypeComponent')
     expect(flow).toContain("interfaceType: resource.kind === 'interface' ? resource.interfaceType : null")
-    expect(flow).toContain("actorKind: resource.kind === 'actor' ? resource.actorKind : null")
+    expect(flow).toContain("actorKind: resource.kind === 'entity' ? resource.entityKind : null")
     expect(flowNode).toContain("data.kind === 'interface' && data.interfaceType")
-    expect(flowNode).toContain("data.kind === 'actor' && data.actorKind && data.actorRelationship")
+    expect(flowNode).toContain("data.kind === 'entity' && data.actorKind && data.acts")
     expect(flowNode).not.toContain('show-relationship')
     /* Topology is read for the Product boundary, so the node's sublabel writes
        it — the slot and the spelling an Experience gives its access mode. */
-    expect(flow).toContain("`${ENTITY_KIND_META.actor.label} · ${resource.relationship}`")
+    expect(flow).toContain("`Actor · ${resource.acts}`")
     expect(flowGroup).toContain("data.kind === 'interface' && data.interfaceType")
     expect(flowNode).toContain('class="blr-flow-node__kind"')
     expect(flowNode).toContain('var(--blr-resource-mark-regular)')
@@ -520,13 +573,17 @@ describe('stable Product Report', () => {
     expect(source('app/components/BlrFlowLabel.vue')).toContain('var(--blr-resource-mark-dense)')
     expect(cardPresentation).not.toContain('INTERFACE_TYPE_META')
     expect(cardPresentation).toContain('Repeating it as a title badge adds no second fact')
-    expect(cardPresentation).not.toContain('`${actor.actorKind} · ${actor.relationship}`')
-    expect(cardPresentation).toContain('badge: actor.relationship')
+    expect(cardPresentation).not.toContain('`${entity.entityKind} · ${entity.acts}`')
+    expect(cardPresentation).toContain('badge: entity.acts')
 
     /* A Step names an Actor, so it renders one: the Actor's own mark in a chip
        that opens it, not a dimmed generic glyph beside plain text. */
     expect(resourceBody).toContain('<BlrActorType')
-    expect(resourceBody).toContain(':actor-kind="stepActor(step.actorId)!.actorKind"')
+    expect(resourceBody).toContain(':actor-kind="stepActor(step.actorId)!.entityKind!"')
+    /* The Entity page draws its composed state machine on the shared canvas. */
+    expect(resourceBody).toContain('buildEntityLifecycle')
+    expect(resourceBody).toContain('<BlrFlowCanvas :nodes="entityLifecycle.nodes"')
+    expect(source('app/components/BlrFlowCanvas.vue')).toContain('#node-blr-state')
 
     /* A collection or relation heading means the Interface kind, not one
        concrete Interface, so its generic plug remains deliberately generic. */
@@ -614,7 +671,7 @@ describe('stable Product Report', () => {
     const reportShell = source('app/components/BlrReportShell.vue')
     const layer = source('nuxt.config.ts')
 
-    expect(renderer).toContain('ProductReportV12')
+    expect(renderer).toContain('ProductReportV13')
     expect(renderer).toContain('projectReportWorkspace')
     expect(renderer).toContain('<BlrReportShell')
     expect(source('app/components/BlrResourceBody.vue')).toContain('scenarioStepMatrix')

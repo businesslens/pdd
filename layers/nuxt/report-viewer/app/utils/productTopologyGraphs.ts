@@ -114,10 +114,10 @@ export function buildProductMap(
 ): FlowGraphShape {
   const nodes: BlrFlowNode[] = []
   const edges: BlrFlowEdge[] = []
-  const accessRows = Math.max(workspace.actors.length, workspace.interfaces.length, 1)
+  const accessRows = Math.max(workspace.actingEntities.length, workspace.interfaces.length, 1)
   const accessHeight = accessRows * (FLOW_NODE_HEIGHT + 18) - 18
 
-  workspace.actors.forEach((actor, index) => {
+  workspace.actingEntities.forEach((actor, index) => {
     nodes.push({
       ...resourceNode(actor, { selected: options.selectedId === actor.key }),
       position: { x: 0, y: index * (FLOW_NODE_HEIGHT + 18) }
@@ -132,7 +132,7 @@ export function buildProductMap(
     })
     for (const actorId of productInterface.actorIds) {
       edges.push(relationEdge({
-        source: resourceKey('actor', actorId),
+        source: resourceKey('entity', actorId),
         target: productInterface.key,
         label: 'enters'
       }))
@@ -313,7 +313,7 @@ export function buildDeliveryByInterface(
       directInterfaceIds.has(context.interfaceId) && !context.experienceId))
     .map(capability => capability.id))
   const resources: AnyResourceView[] = [
-    ...workspace.actors,
+    ...workspace.actingEntities,
     ...workspace.interfaces,
     ...workspace.experiences,
     ...workspace.screens,
@@ -323,7 +323,7 @@ export function buildDeliveryByInterface(
 
   for (const productInterface of workspace.interfaces) {
     productInterface.actorIds.forEach(actorId => relations.push({
-      source: resourceKey('actor', actorId),
+      source: resourceKey('entity', actorId),
       target: productInterface.key,
       label: 'enters'
     }))
@@ -408,6 +408,37 @@ export function buildWhatItKeeps(
   return layoutFlow({ nodes, edges }, { ranksep: 120, nodesep: 28 })
 }
 
+/**
+ * What changes what: every Capability drawn against the Entities its Steps
+ * create, change or remove, one edge per pair labelled by effect.
+ *
+ * Not an extension of "What it keeps": adding Capabilities changes what that
+ * view means, and a filter narrows a view that already means something. Reads
+ * are deliberately absent — a read places no claim on what can alter a thing.
+ */
+export function buildWhatChangesWhat(
+  workspace: ReportWorkspace,
+  options: ProductTopologyGraphOptions = {}
+): FlowGraphShape {
+  const changedIds = new Set(workspace.capabilities.flatMap(capability => capability.entityIds))
+  const resources: AnyResourceView[] = [
+    ...workspace.capabilities.filter(capability => capability.entityIds.length),
+    ...workspace.entities.filter(entity => changedIds.has(entity.id))
+  ]
+  const shape = graphFrom(resources, [], options)
+  const present = new Set(shape.nodes.map(node => node.id))
+  const edges: BlrFlowEdge[] = []
+  for (const capability of workspace.capabilities) {
+    for (const line of capability.entityEffects) {
+      const target = resourceKey('entity', line.entityId)
+      if (!present.has(capability.key) || !present.has(target)) continue
+      const effects = [...new Set(line.effects.map(item => item.effect))]
+      edges.push(relationEdge({ source: capability.key, target, label: effects.join(' · ') }))
+    }
+  }
+  return latentGraph(layoutFlow({ nodes: shape.nodes, edges }, { ranksep: 120, nodesep: 24 }), options.highlightId)
+}
+
 export function buildRuleReach(
   workspace: ReportWorkspace,
   options: ProductTopologyGraphOptions = {}
@@ -446,7 +477,6 @@ export function buildRuleReach(
  */
 export const EVERYTHING_SHELF_ORDER = everyKind([
   'product',
-  'actor',
   'interface',
   'experience',
   'screen',
@@ -464,7 +494,6 @@ export function buildEverything(
   options: ProductTopologyGraphOptions = {}
 ): FlowGraphShape {
   const resources: AnyResourceView[] = [
-    ...workspace.actors,
     ...workspace.interfaces,
     ...workspace.experiences,
     ...workspace.screens,
@@ -579,6 +608,7 @@ export function buildProductTopologyGraph(
     case 'sitemap': return buildSitemapTree(workspace, { selectedId: options.selectedId })
     case 'rule-reach': return buildRuleReach(workspace, options)
     case 'what-it-keeps': return buildWhatItKeeps(workspace, options)
+    case 'what-changes-what': return buildWhatChangesWhat(workspace, options)
     case 'everything': return buildEverything(workspace, options)
   }
 }

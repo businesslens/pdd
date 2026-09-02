@@ -15,7 +15,6 @@ import type { AnyResourceView, ReportResourceKind, ReportWorkspace } from './rep
 /** The resources of one kind, in authored order. */
 export function resourcesOfKind(workspace: ReportWorkspace, kind: ReportResourceKind): AnyResourceView[] {
   switch (kind) {
-    case 'actor': return workspace.actors
     case 'interface': return workspace.interfaces
     case 'experience': return workspace.experiences
     case 'screen': return workspace.screens
@@ -39,22 +38,15 @@ export function resourcesOfKind(workspace: ReportWorkspace, kind: ReportResource
  */
 export function relatedIds(resource: AnyResourceView, kind: ReportResourceKind): string[] {
   switch (resource.kind) {
-    case 'actor':
-      if (kind === 'interface') return resource.interfaceIds
-      if (kind === 'experience') return resource.experienceIds
-      if (kind === 'journey') return resource.journeyIds
-      if (kind === 'capability-scenario') return resource.capabilityScenarioIds
-      if (kind === 'journey-scenario') return resource.journeyScenarioIds
-      return []
     case 'interface':
-      if (kind === 'actor') return resource.actorIds
+      if (kind === 'entity') return resource.actorIds
       if (kind === 'experience') return resource.experienceIds
       if (kind === 'capability') return resource.capabilityIds
       if (kind === 'screen') return resource.screenIds
       if (kind === 'journey') return resource.journeyIds
       return []
     case 'experience':
-      if (kind === 'actor') return resource.actorIds
+      if (kind === 'entity') return resource.actorIds
       if (kind === 'interface') return resource.interfaceIds
       if (kind === 'capability') return resource.capabilityIds
       if (kind === 'domain') return resource.domainIds
@@ -76,6 +68,13 @@ export function relatedIds(resource: AnyResourceView, kind: ReportResourceKind):
       if (kind === 'capability') return resource.changedByIds
       if (kind === 'screen') return resource.presentedOnIds
       if (kind === 'entity') return resource.relations.map(relation => relation.entityId)
+      if (kind === 'rule') return resource.ruleIds
+      /* Where it acts; empty for a thing that does not. */
+      if (kind === 'interface') return resource.interfaceIds
+      if (kind === 'experience') return resource.experienceIds
+      if (kind === 'journey') return resource.journeyIds
+      if (kind === 'capability-scenario') return resource.actorCapabilityScenarioIds
+      if (kind === 'journey-scenario') return resource.actorJourneyScenarioIds
       return []
     case 'domain':
       if (kind === 'entity') return resource.entityIds
@@ -97,8 +96,8 @@ export function relatedIds(resource: AnyResourceView, kind: ReportResourceKind):
       if (kind === 'journey-scenario') return resource.journeyScenarioIds
       return []
     case 'journey':
-      if (kind === 'entity') return resource.entityIds
-      if (kind === 'actor') return resource.actorIds
+      /* A Journey involves the things it changes and the Actors who pursue it, and both are Entities. */
+      if (kind === 'entity') return [...new Set([...resource.entityIds, ...resource.actorIds])]
       if (kind === 'interface') return resource.interfaceIds
       if (kind === 'experience') return resource.experienceIds
       if (kind === 'capability') return resource.capabilityIds
@@ -108,15 +107,13 @@ export function relatedIds(resource: AnyResourceView, kind: ReportResourceKind):
       if (kind === 'rule') return resource.ruleIds
       return []
     case 'capability-scenario':
-      if (kind === 'entity') return resource.entityIds
-      if (kind === 'actor') return resource.actorIds
+      if (kind === 'entity') return [...new Set([...resource.entityIds, ...resource.actorIds])]
       if (kind === 'capability') return [resource.capabilityId]
       if (kind === 'screen') return resource.screenIds
       if (kind === 'rule') return resource.ruleIds
       return []
     case 'journey-scenario':
-      if (kind === 'entity') return resource.entityIds
-      if (kind === 'actor') return resource.actorIds
+      if (kind === 'entity') return [...new Set([...resource.entityIds, ...resource.actorIds])]
       if (kind === 'capability') return [...new Set(resource.steps.flatMap(item => item.capabilityId ? [item.capabilityId] : []))]
       if (kind === 'journey') return resource.journeyId ? [resource.journeyId] : []
       if (kind === 'screen') return resource.screenIds
@@ -124,6 +121,7 @@ export function relatedIds(resource: AnyResourceView, kind: ReportResourceKind):
       return []
     case 'rule':
       if (kind === 'domain') return resource.domainIds
+      if (kind === 'entity') return resource.entityIds
       if (kind === 'capability') return resource.capabilityIds
       if (kind === 'journey') return resource.journeyIds
       if (kind === 'capability-scenario') return resource.capabilityScenarioIds
@@ -140,18 +138,17 @@ export function relatedIds(resource: AnyResourceView, kind: ReportResourceKind):
  */
 export function facetKindsFor(kind: ReportResourceKind): ReportResourceKind[] {
   switch (kind) {
-    case 'actor': return ['interface', 'experience', 'journey', 'capability-scenario', 'journey-scenario']
-    case 'interface': return ['actor', 'experience', 'capability', 'screen', 'journey']
-    case 'experience': return ['actor', 'interface', 'capability', 'domain', 'screen', 'journey']
+    case 'interface': return ['entity', 'experience', 'capability', 'screen', 'journey']
+    case 'experience': return ['entity', 'interface', 'capability', 'domain', 'screen', 'journey']
     case 'screen': return ['interface', 'experience', 'capability', 'domain', 'entity', 'journey', 'capability-scenario', 'journey-scenario']
     case 'domain': return ['capability', 'entity', 'journey', 'screen', 'experience', 'rule']
-    case 'entity': return ['domain', 'capability', 'screen', 'entity']
+    case 'entity': return ['domain', 'capability', 'screen', 'entity', 'rule', 'interface', 'experience', 'journey']
     case 'capability': return ['domain', 'entity', 'interface', 'experience', 'capability-scenario', 'journey-scenario', 'journey', 'screen', 'rule']
-    case 'journey': return ['actor', 'interface', 'experience', 'capability', 'domain', 'entity', 'screen', 'journey-scenario', 'rule']
+    case 'journey': return ['entity', 'interface', 'experience', 'capability', 'domain', 'screen', 'journey-scenario', 'rule']
     /* A Capability Scenario never names a Journey; offering the facet would be a permanently empty control. */
-    case 'capability-scenario': return ['actor', 'capability', 'entity', 'screen', 'rule']
-    case 'journey-scenario': return ['actor', 'journey', 'capability', 'entity', 'screen', 'rule']
-    case 'rule': return ['domain', 'capability', 'journey', 'capability-scenario', 'journey-scenario']
+    case 'capability-scenario': return ['entity', 'capability', 'screen', 'rule']
+    case 'journey-scenario': return ['entity', 'journey', 'capability', 'screen', 'rule']
+    case 'rule': return ['domain', 'entity', 'capability', 'journey', 'capability-scenario', 'journey-scenario']
     default: return []
   }
 }

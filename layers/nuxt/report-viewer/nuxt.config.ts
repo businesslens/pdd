@@ -20,6 +20,8 @@ export default defineNuxtConfig({
         'lucide:align-justify',
         'lucide:app-window',
         'lucide:audio-lines',
+        'lucide:ban',
+        'lucide:key-round',
         'lucide:arrow-down',
         'lucide:arrow-left',
         'lucide:arrow-right',

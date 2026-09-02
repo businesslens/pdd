@@ -14,7 +14,6 @@
  * the ambiguity the named views exist to avoid.
  */
 import type {
-  ActorView,
   AnyResourceView,
   CapabilityView,
   DomainView,
@@ -54,19 +53,10 @@ const rows = computed<RelationRow[]>(() => {
   const resource = props.resource
   const all: RelationRow[] = []
   switch (resource.kind) {
-    case 'actor': {
-      const actor = resource as ActorView
-      all.push(
-        row('Interfaces entered', 'interface', actor.interfaceIds, true),
-        row('Experiences entered', 'experience', actor.experienceIds, true),
-        row('Journeys performed', 'journey', actor.journeyIds, true)
-      )
-      break
-    }
     case 'interface': {
       const item = resource as InterfaceView
       all.push(
-        row('Actors', 'actor', item.actorIds, false),
+        row('Actors', 'entity', item.actorIds, false),
         row('Experiences within', 'experience', item.experienceIds, true),
         row('Capabilities available', 'capability', item.capabilityIds, true),
         row('Screens available', 'screen', item.screenIds, true),
@@ -77,7 +67,7 @@ const rows = computed<RelationRow[]>(() => {
     case 'experience': {
       const item = resource as ExperienceView
       all.push(
-        row('Actors', 'actor', item.actorIds, false),
+        row('Actors', 'entity', item.actorIds, false),
         row('Interfaces', 'interface', item.interfaceIds, false),
         row('Capabilities available', 'capability', item.capabilityIds, true),
         row('Screens available', 'screen', item.screenIds, true),
@@ -108,7 +98,14 @@ const rows = computed<RelationRow[]>(() => {
           row(`\u2190 ${relation.verb}`, 'entity', [relation.entityId], true)),
         row('Domain', 'domain', entity.domainId ? [entity.domainId] : [], false),
         row('Changed by', 'capability', entity.changedByIds, true),
-        row('Presented on', 'screen', entity.presentedOnIds, true)
+        row('Read by', 'capability', entity.readByIds, true),
+        row('Presented on', 'screen', entity.presentedOnIds, true),
+        row('Governed by', 'rule', entity.ruleIds, true),
+        /* Where it acts — empty rows are dropped, so a thing that does not act
+           shows none of these. */
+        row('Interfaces entered', 'interface', entity.interfaceIds, true),
+        row('Experiences entered', 'experience', entity.experienceIds, true),
+        row('Journeys performed', 'journey', entity.journeyIds, true)
       )
       break
     }
@@ -139,7 +136,7 @@ const rows = computed<RelationRow[]>(() => {
     case 'journey': {
       const journey = resource as JourneyView
       all.push(
-        row('Actors', 'actor', journey.actorIds, false),
+        row('Actors', 'entity', journey.actorIds, false),
         row('Primary Capabilities', 'capability', journey.capabilityIds, true),
         row('Failure-only Capabilities', 'capability', journey.failureOnlyCapabilityIds, true),
         row('Domains', 'domain', journey.domainIds, true),
@@ -154,7 +151,7 @@ const rows = computed<RelationRow[]>(() => {
     case 'journey-scenario': {
       const scenario = resource as ScenarioView
       all.push(
-        row('Actors', 'actor', scenario.actorIds, false),
+        row('Actors', 'entity', scenario.actorIds, false),
         // Derived from the Steps, exactly as the Actor set is.
         row('Changes', 'entity', scenario.entityIds, true),
         scenario.scenarioType === 'capability'
@@ -240,9 +237,9 @@ function interfaceType(kind: ReportResourceKind, id: string) {
 }
 
 function actorClassification(kind: ReportResourceKind, id: string) {
-  if (kind !== 'actor') return null
-  const resource = resolveResource(props.workspace, 'actor', id)
-  return resource?.kind === 'actor' ? resource : null
+  if (kind !== 'entity') return null
+  const resource = resolveResource(props.workspace, 'entity', id)
+  return resource?.kind === 'entity' && resource.acts ? resource : null
 }
 </script>
 
@@ -272,8 +269,8 @@ function actorClassification(kind: ReportResourceKind, id: string) {
           <BlrKind
             :kind="item.kind"
             :interface-type="interfaceType(item.kind, id)"
-            :actor-kind="actorClassification(item.kind, id)?.actorKind"
-            :actor-relationship="actorClassification(item.kind, id)?.relationship"
+            :actor-kind="actorClassification(item.kind, id)?.entityKind"
+            :acts="actorClassification(item.kind, id)?.acts"
             :labelled="false"
             size="xs"
           />

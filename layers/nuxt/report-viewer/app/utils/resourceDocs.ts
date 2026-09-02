@@ -6,7 +6,6 @@ import { ENTITY_KIND_META } from './reportWorkspace'
    Capabilities, and Journey Scenarios with Journeys. */
 const DOCS_SLUG: Record<ReportResourceKind, string> = {
   product: 'product',
-  actor: 'actors',
   interface: 'interfaces',
   experience: 'experiences',
   screen: 'screens',
