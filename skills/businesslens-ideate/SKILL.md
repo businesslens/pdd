@@ -44,10 +44,11 @@ Read before authoring:
 7. Choose depth from the request:
    - quick: a small, specific change; ask at most three batched decision
      questions;
-   - thorough: blank slate, vague, or cross-cutting; cover why, Actors,
-     Interfaces, optional Experiences, Product Screens, Domains and Entities,
-     Capabilities, Capability Scenarios, Rules, optional Journeys and Journey
-     Scenarios, availability Contexts, decisions, removals, and definition of done.
+   - thorough: blank slate, vague, or cross-cutting; cover why, Entities —
+     including the people and systems that act — Interfaces, optional
+     Experiences, Product Screens, Domains, Capabilities, Capability Scenarios,
+     Rules including who may act, optional Journeys and Journey Scenarios,
+     availability Contexts, decisions, removals, and definition of done.
 
    In thorough mode, work the decisions in rounds and wait after each — every
    question whose prerequisites are settled, then stop; answers reshape what is
@@ -73,11 +74,17 @@ Read before authoring:
    Capability per-Capability acceptance. Decide the nouns as deliberately as the
    verbs: create an Entity for a thing an Actor would call *"this one"* and the
    Product can tell apart from another, one Entity per thing the Product treats
-   differently, and name on each Capability the Entities it acts on and on each
-   Screen the Entities it presents — those two declarations are the only edges an
-   Entity has, and an Entity nothing declares is unused vocabulary. Where a
-   family of things could be one Entity or several, ask with both shapes named
-   rather than choosing the smaller model. Create a Journey only when an achieved
+   differently, name its facts, and say on each Step what it does to which
+   Entities — creates, changes, removes, or reads, with the states it leaves and
+   lands in, or `[]` — and on each Screen the Entities it presents. A Capability
+   declares none, and an Entity nothing changes, presents, names as an actor, or
+   reads by Rule is unused vocabulary. Sweep the nouns after the verbs: every
+   new thing has a Step that creates it and a Step for each state it can reach,
+   or the delta says why not. Decide who may as deliberately as what: a
+   permission is a grant on a Business Rule targeting the operation, never a
+   sentence in a Scenario, and an operation nobody may perform is `permits: []`.
+   Where a family of things could be one Entity or several, ask with both shapes
+   named rather than choosing the smaller model. Create a Journey only when an achieved
    goal path crosses at least two distinct Capabilities; define its Scenario as
    one ordered typed Steps list, annotating responsible Actors and Capabilities
    while named routes select most-specific Context places.

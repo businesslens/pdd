@@ -9,7 +9,7 @@ order: 1
 # BusinessLens: Product-Driven Development for coding agents
 
 BusinessLens is Product-Driven Development for coding agents. It stores the
-durable Product contract in `.businesslens/`: Actors and Interfaces, optional
+durable Product contract in `.businesslens/`: Entities — the ones that act included — and Interfaces, optional
 Experiences, Screens, and Domains, followed by Capabilities, Business Rules,
 local Capability Scenarios, optional multi-Capability Journeys, and their
 end-to-end Journey Scenarios.

@@ -3,7 +3,7 @@ title: blueprint contribute
 description: Open a pull request proposing your Product Model as a catalog Blueprint.
 section: open-source
 group: CLI
-order: 35
+order: 34
 ---
 
 # `businesslens blueprint contribute`
@@ -45,7 +45,7 @@ an SPDX license identifier to `product/product.md`, plus
 Check these before contributing:
 
 - **Focused scope:** one product, not a platform or suite.
-- **Complete contract:** all necessary Actors, Capabilities, Business Rules,
+- **Complete contract:** all necessary Entities, Capabilities, Business Rules,
   meaningful local Capability Scenarios, plus only coherent multi-Capability
   Journeys and end-to-end Journey Scenarios the Product deliberately supports.
 - **Honest granularity:** Capability Scenarios vary one durable behavior; they

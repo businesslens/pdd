@@ -6,7 +6,8 @@
 
 **Product-Driven Development for coding agents.** BusinessLens keeps intended
 product behavior in a Git-tracked `.businesslens/` Product Model: who the
-product serves, what they accomplish, and which rules must remain true.
+product serves, what they accomplish, what it keeps and what changes it, and
+which rules must remain true, including who may act.
 
 The model is Markdown, reviewable in pull requests, and useful without a hosted
 service. `businesslens lint` checks its structure. The `businesslens-verify`
@@ -17,7 +18,7 @@ resolution loop.
 .businesslens/
 ├── README.md
 ├── product.md                # or product/product.md beside logo.svg
-├── actors/<id>.md            # or <id>/actor.md with assets
+├── entities/<id>.md          # or <id>/entity.md with assets; the ones that act carry kind and acts
 ├── interfaces/<id>.md        # or <id>/interface.md with screens/ or experiences/
 ├── domains/<id>.md           # or <id>/domain.md with assets; optional collection
 ├── capabilities/<id>.md      # or <id>/capability.md with scenarios/ or assets

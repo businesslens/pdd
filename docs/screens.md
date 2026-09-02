@@ -50,6 +50,7 @@ expands to `<screen-id>/screen.md`. The whole Screen collection is optional.
 ```md [screens/product-record.md]
 ---
 capabilities: [catalog-browsing]
+entities: [catalog-product]
 entryPoints:
   - customer-web: /products/:id
   - customer-mobile: shop://products/:id
@@ -87,6 +88,7 @@ The Screen does not change product or inventory data.
 | Field or section | Required | Constraint |
 | --- | --- | --- |
 | `capabilities` | yes | Name at least one unique existing Capability; each must declare an availability Context for the Interface or Experience containing this Screen. |
+| `entities` | no | Name the [Entities](./entities.md) this Screen presents. A Rule that governs who may read one of them is checked against who reaches this Screen. |
 | `entryPoints` | no | Key public routes or deep links by the Interface that holds this Screen. |
 | `references` | no | Use the documented [Reference](./references.md) shape. |
 | H1 and lead paragraph | yes | Name the Screen and describe its Product purpose. |

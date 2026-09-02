@@ -46,9 +46,11 @@ Read before authoring:
 5. Trace observable behavior end to end. Treat tests and docs as leads; confirm
    claims in implementation. Do not infer permissions, guarantees, or live
    operational state from names.
-6. Draft Actors, Interfaces, optional Experiences, Product Screens, Domains and
-   Entities, Capabilities, Capability Scenarios, Business Rules, optional
-   Journeys and their Journey Scenarios, availability Contexts, and coverage.
+6. Draft Interfaces, optional Experiences, Product Screens, Domains, Entities —
+   the things the Product keeps, and the people and systems that act on it,
+   which carry `kind` and `acts` — Capabilities, Capability Scenarios, Business
+   Rules, optional Journeys and their Journey Scenarios, availability Contexts,
+   and coverage.
    Name behavioral resources verb-noun (`browse-catalog`, never
    `catalog-browsing`) and cross-cutting resources with the bare noun. Create an
    Entity for a thing an Actor would point at and call *"this one"* and the
@@ -62,10 +64,26 @@ Read before authoring:
    close, **split**: a merge stays available to anyone later, while a collapse
    deletes the difference and leaves nothing saying it was ever a question. Put
    both shapes and their counts to the author when you can; when there is no
-   author to ask, split and record it as a judgment call rather than choosing. Model unattended behavior — a schedule the Product owns, an
-   expiry, a retry — as a Scenario whose first Step is a `condition` carrying
-   `unattended: true`, availability naming where an Actor observes the outcome. Give every
-   mapped Capability evidence-backed per-Capability acceptance. Create a Journey only
+   author to ask, split and record it as a judgment call rather than choosing.
+   Name each fact the Product keeps (`- **Name** — prose`) so a Rule can cite
+   it. **Every Step says what it does to the Product's things**: `entities` is
+   required on every Step — creates, changes, removes, or reads, with the state
+   a thing leaves and lands in — and `[]` when it touches nothing. A Capability
+   declares no Entities and an Entity declares no transitions; the lifecycle is
+   composed from Steps. Sweep the nouns after the verbs: for each Entity, which
+   Steps create it, move it between each of its states, remove it, and which
+   Screen presents it. A state no Step leaves anything in, or a thing nothing
+   changes, is a question for the author or a gap in the inspection, never
+   something to fill by inference. **Sweep permissions after the nouns**: every
+   authorization check the code performs — a role check, an ownership check, a
+   threshold — becomes a grant on a Business Rule targeting the operation it
+   guards (`permits` with `actors`, `related`, `self`, `unattended`, or
+   `configuredBy`, and `when` for the condition), never a sentence in a
+   Scenario; an operation the code refuses to everyone is `permits: []`. Model
+   unattended behavior — a schedule the Product owns, an expiry, a retry — as a
+   Scenario whose first Step is a `condition` carrying `unattended: true`,
+   availability naming where an Actor observes the outcome. Give every mapped
+   Capability evidence-backed per-Capability acceptance. Create a Journey only
    for a stable goal whose achieved path crosses at least two Capabilities; do
    not wrap a single Capability in a Journey. Give every Journey an achieved
    Journey Scenario whose ordered typed Steps annotate responsible Actors and
@@ -149,8 +167,9 @@ Read before authoring:
    that could defensibly have gone the other way, the alternative, and why you
    chose as you did. Capability granularity, Entity granularity — one Entity per
    thing, or one standing for several — whether something warranted an
-   Interface, an Experience, an Entity or a Journey, and whether a constraint is
-   a Business Rule all belong there.
+   Interface, an Experience, an Entity or a Journey, whether a constraint is a
+   Business Rule, and whether an authorization check in the code is product
+   meaning — a grant — or only implementation, all belong there.
  A reviewer can see what the model says but
    not what it omits, so an unstated judgment call is one nobody can challenge —
    which makes the approval a formality rather than a check.
@@ -184,5 +203,8 @@ Read before authoring:
 - Never capture, copy, or assess screenshots. External visual and research
   References may guide inspection; their role does not make them proof.
 - Do not promote internal APIs, adapters, command namespaces, or services to
-  Interfaces or system Actors unless their independent Product contract is
+  Interfaces or acting Entities unless their independent Product contract is
   established by inspected behavior.
+- Never write a permission as Scenario prose. Who may perform an operation is a
+  Business Rule grant, and a Scenario shows the operation being performed by
+  someone the Rules could permit.

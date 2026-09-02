@@ -7,6 +7,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **One resource type for things: an Actor is an Entity that acts.** `actors/`
+  is gone; a person or system that acts on the Product is an Entity carrying
+  `acts: external|internal` and `kind: person|system`, and everything else
+  about it — facts, states, relations — is what any Entity has. The word Actor
+  names a role, not a type: a Step's `actor`, an Interface's, Experience's, or
+  Journey's `actors`, and a Rule grant's `actors` each name an Entity that
+  acts. Folder schema 8, Product Report v13. An `actors/` directory, a
+  `relationship` key, and a report before v13 are refused by name.
+- **Steps are the single source of truth for what changes.** `entities` is
+  required on every Step — `{ entity, as, effect, from, to }` with `effect` in
+  `creates|changes|removes|reads` — and `[]` says a Step touches nothing. A
+  Capability declares no `entities` and an Entity declares no `transitions`:
+  the lifecycle is composed from every Step in the model, and the report draws
+  it. A Step changes as many things as it changes, tells two instances of one
+  thing apart by alias, and chains per instance. Retired keys — a Step's
+  `changes` and `reads`, an Entity's `transitions`, a Capability's `entities` —
+  fail with the key that replaced them.
+- **Facts are named.** `## Information kept` is `- **Name** — prose`, unique
+  per Entity, so a Business Rule can govern one by exact name.
+- **A Business Rule says who may.** An Entity target
+  `{ type: entity, id, effect, from, to, facts, contexts }` selects an
+  operation on a thing; `permits` is omitted, `[]`, or a list of grants — OR
+  within a Rule, AND across Rules — each naming a who: `actors`, a `related`
+  path walked over declared and inverse relations, `self`, `unattended`, or
+  `configuredBy`, with `when` conditions on a fact (eight operators) or the
+  instance's state. `lint` checks structural eligibility: a Step performing an
+  operation a Rule closes, or one no grant could permit its actor, is an
+  error, and so is a Screen presenting a thing nobody who reaches it may read.
+- The orphan rule widened with the edges: an Entity is kept by a Step that
+  changes it, a Screen that presents it, anything naming it as an actor, or a
+  Rule that reads it as a condition's `entity` or a `configuredBy`.
+- A `product` or `condition` Step may carry `actor` — the Actor it is
+  attributable to — and it joins the Scenario's Actor set. A Journey Step with
+  any effect but a read names its Capability.
+- The report reads what a Step does on every Steps table, draws each Entity's
+  composed lifecycle with the Capability on each arc and the Rules that
+  restrict or forbid it, reads a Rule's grants as sentences, states what a
+  Journey leaves behind, and adds the topology view *what changes what*.
+- Docs: the Actors page folds into Entities, which now sits right after
+  Product; Capabilities documents what a Step does; Business rules documents
+  permission. The fixture shop, the Content feed reader Blueprint, and this
+  repository's own model are re-mapped on the new format.
+
 ## [0.9.0] - 2026-08-26
 
 ### Added

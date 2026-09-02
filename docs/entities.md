@@ -1,18 +1,20 @@
 ---
 title: Entities
-description: An Entity names a thing the Product keeps or reasons about — what it holds about that thing, the states it moves through, and the Capabilities that move it.
+description: An Entity names a thing the Product keeps or reasons about, the people and systems that act on it included — what it holds about that thing, the states it moves through, and who acts.
 section: open-source
 group: Product Model
-order: 14
+order: 9
 ---
 
 # Entities
 
 An Entity is a thing the Product keeps or reasons about, which an Actor can
 point at and the Product can tell apart from another one — an order, a listing,
-a saved item.
+a saved item, and the Reader who saved it.
 
-Capabilities name the Product's **verbs**. Entities name its **nouns**.
+Capabilities name the Product's **verbs**. Entities name its **nouns**, the
+people and systems that act on it included. There is one resource type for
+things; the ones that act carry one more field.
 
 ## The test is identity, not storage
 
@@ -35,9 +37,89 @@ Do not create one for every noun in the product. A word that appears in your
 prose and matches no Entity is a signal worth checking, but the answer is
 sometimes that it was never a thing.
 
+## Actors: an Entity that acts
+
+**An Actor is an Entity that acts on the Product.** A shopper, a store
+administrator, a partner system posting webhooks, and the AI agent harness
+running a skill are all Entities that `acts`. Nothing else distinguishes them
+from an Order: the Product keeps or reasons about instances of every one of
+them, and a thing that starts acting gains one field — no file move, no id
+change.
+
+`acts` is `external` or `internal`, relative to the Product boundary: whether
+the thing acts independently outside the Product owner's boundary, or on the
+Product owner's behalf. A staff operator is usually internal even when working
+remotely; a partner system is usually external even when connected over a
+private network. `kind` is `person` or `system`, **required when `acts` is
+set** and invalid otherwise — an Order says nothing, because *it's a thing* is
+the default, and an Entity that acts always says which it is.
+
+Two independent questions decide, neither ranking the other:
+
+| | keeps / reasons about | initiates under a contract | |
+| --- | --- | --- | --- |
+| Reader | yes | yes | Entity + `acts` |
+| Payment gateway | reasons about | yes — posts webhooks | Entity + `acts` |
+| AI agent harness | reasons about | yes | Entity + `acts` |
+| Order | yes | no | Entity |
+| Employee (payroll) | yes | no — never signs in | Entity |
+| Feed source the Product polls | yes | no | Entity |
+| An internal service with its own credentials | no | no | not modelled |
+| The Product's own scheduler | no | no — that is `unattended` | not modelled |
+
+Create an acting Entity only when its responsibility or privilege is
+product-significant. If two roles have the same goals and permissions, they are
+one Entity. **A privilege that exists only in code is authorization, not product
+meaning**, so *service X may cancel orders, service Y may not* is deliberately
+unsayable.
+
+> **Actor vs persona.** A persona describes who someone is. An Entity acts
+> because the Product must behave differently for it.
+
+**The word Actor names a role, not a type.** An Entity that acts is *an Actor*
+wherever it acts — a Step's `actor`, an Interface's, Experience's or Journey's
+`actors`, a Business Rule grant's `actors`. Every such reference must name an
+Entity that `acts`; `lint` errors otherwise.
+
+### External systems: direction decides
+
+An external system acts only when it **initiates**. Ask three questions:
+
+1. Does it start the interaction with your Product?
+2. Does it have a goal or privilege of its own inside your Product?
+3. Must you keep an inbound interaction contract stable and verifiable for it?
+
+All three yes — a partner system calling your API, a processor posting a
+webhook — and it acts, through an [Interface](./interfaces.md). Any no and it
+does not act: a system your Product calls out to is a dependency of the
+[Capability](./capabilities.md) that calls it, and is an Entity only if the
+Product keeps something about it.
+
+A syndicated feed your Product polls scores no on all three. The same provider
+pushing updates to your Product scores yes on all three. Same company, opposite
+answer, because direction changed.
+
+### An AI agent acts
+
+An AI agent harness that loads a skill and acts inside the repository is an
+Entity that acts. Give it the id `ai-agent`, `kind: system`, `acts: external`.
+
+It qualifies because its responsibility is product-significant in its own right.
+It initiates, it is the only participant that reads and writes on the person's
+behalf, and what it does is not fully determined by whoever invoked it — it
+chooses what to inspect, what to propose, and when to stop. That latitude is the
+test. A browser delivering a `web` Interface makes no such choices and does not
+act; an agent does. A CI runner executing a fixed command has no latitude of its
+own either.
+
+Name it `ai-agent`, not `coding-agent`. The same participant appears in a
+support product or a research product, and the narrower name would be wrong in
+both.
+
 ## The file
 
-An Entity with no assets lives at `entities/<id>.md`.
+An Entity with no assets lives at `entities/<id>.md`. There is no `actors/`
+directory; a folder with that name is a `lint` error naming where its files go.
 
 ```markdown
 ---
@@ -46,10 +128,6 @@ relations:
   - entity: catalog-product
     verb: was placed for
     cardinality: many-to-many
-transitions:
-  - from: Pending
-    to: Confirmed
-    by: place-order
 ---
 
 # Order
@@ -58,9 +136,9 @@ A shopper's confirmed intent to buy.
 
 ## Information kept
 
-- The items ordered and their quantities
-- The total charged
-- When it was placed
+- **Items ordered** — the items and their quantities
+- **Total charged** — the amount taken from the shopper
+- **When placed** — when the shopper submitted it
 
 ## States
 
@@ -72,18 +150,89 @@ Submitted and awaiting payment settlement.
 
 Paid and accepted; stock is committed.
 
+### Refunded
+
+Reversed after confirmation.
 ```
 
-**At least one of `## Information kept` and `## States` must be present.** A
-thing may be worth naming for what is kept about it, for how it changes, or for
-both — but not for neither.
+```markdown
+---
+kind: person
+acts: external
+relations:
+  - entity: order
+    verb: owns
+    cardinality: one-to-many
+---
 
-`transitions` is required exactly when `## States` is present. Each is
-`{ from, to, by }`, where `by` names the Capability that causes the move — and
-that Capability must list this Entity, so the two declarations can never quietly
-disagree.
+# Shopper
 
-`relations` declares edges to other Entities: `{ entity, verb, cardinality }`,
+A person who browses the catalog and buys products.
+
+## Information kept
+
+- **Delivery address** — where their orders are sent
+```
+
+| Field or section | Required | Constraint |
+| --- | --- | --- |
+| Filename | yes | Use a lowercase kebab-case stem as the Entity ID; it never opens with a verb. |
+| `acts` | no | Use `external` or `internal` relative to the Product boundary when the thing acts on the Product. |
+| `kind` | with `acts` | Use `person` or `system`. Required when `acts` is set, invalid otherwise. |
+| `domain` | no | Name one existing Domain. |
+| `relations` | no | Declare edges to other Entities as `{ entity, verb, cardinality }`; see below. |
+| `references` | no | Use the documented [Reference](./references.md) shape. |
+| H1 and lead paragraph | yes | Name and describe the thing. |
+| `## Information kept` | see below | A bullet list of named facts, each `- **Name** — prose`. |
+| `## States` | see below | H3 state names, each with prose; the first is where a thing starts. |
+
+**At least one of `## Information kept`, `## States`, and `acts` must be
+present.** A thing may have information and no lifecycle worth naming, a
+lifecycle with almost nothing kept about it, or — a payment gateway — nothing
+kept at all and a reason to exist because it acts.
+
+## Named facts
+
+Each fact is `- **Name** — prose`: the name in bold, an em dash with a space on
+each side as the separator, and non-empty prose after it. Names are unique
+within the Entity and are cited by exact match — a
+[Business Rule](./business-rules.md)'s `facts` target and its `when` condition
+are the only places that cite one. It is the idiom `## States` already uses,
+where an H3 titled `Pending` is cited as `from: Pending`.
+
+It is **what the Product keeps, never how it is stored**: *When placed*, not
+`created_at TIMESTAMP`. No types, no keys, and no structured relations between
+Entities — *Items ordered* is prose, never `hasMany`. A fact is addressable,
+never typed: addressable is what a field-level Rule and a derivation need; typed
+is a data model. Computed information is still a fact.
+
+## States, and the lifecycle nobody authors
+
+`## States` lists what a thing can be. **The Entity declares its states and
+nothing about the moves between them.** The lifecycle is composed from Scenario
+Steps: a Step's `entities` entry says which Entity it creates, changes, or
+removes, and from and to which state, and the report draws the machine from
+every Scenario in the model — each arc labelled with the Capability whose Step
+draws it, and with the Rules that restrict or forbid it.
+
+A per-Entity transition list could never express a combined lifecycle —
+*settling a payment confirms an Order and creates a Shipment* is one act on two
+things, which only a Step can say — and it stated a second time what a Step
+already states. There is no `transitions` key; one that is still authored is an
+error naming the Step keys that replaced it.
+
+`lint` composes every Scenario and reports what the composition is missing: a
+state other than the first that no Step ever leaves anything in is a warning, and
+so is a Step leaving from a state nothing produces. An Entity with states that
+no Step creates, or that nothing ever removes, is noted on its report page and is
+not a finding — a Catalog product no Capability creates is a real thing whose
+instances pre-exist the model.
+
+## Relations
+
+`relations` declares edges to other Entities — an Entity that acts included,
+which is how ownership is said: the Shopper above `owns` Orders, and a Business
+Rule walks that edge back to find who may. Each is `{ entity, verb, cardinality }`,
 where `verb` is your product's own word and `cardinality` states **both ends**,
 reading source to target — `one-to-one`, `one-to-many`, or `many-to-many`.
 
@@ -96,12 +245,13 @@ two authors cannot write it from opposite sides.
 
 **Declared on one side only** — the inverse is derived and shown on the other, so
 they cannot drift apart. Two Entities that declare relations *at each other* are
-a warning: that is the same relationship written twice, and now that each
-declaration carries both ends the two can contradict each other. A relation
-targets an Entity, never an Actor.
+a warning: that is the same relationship written twice, and the two can now
+contradict each other. A relation may target the Entity itself — a Comment
+replies to a Comment — though a Rule's `related` path cannot walk through one,
+because naming the Entity gives it no direction.
 
-Both live in frontmatter rather than a section because they name other resources
-by id, and ids are parsed rather than read out of English.
+Relations live in frontmatter rather than a section because they name other
+resources by id, and ids are parsed rather than read out of English.
 
 ## One Entity, or several?
 
@@ -141,20 +291,21 @@ levels:
 | Level | Contains | Here |
 | --- | --- | --- |
 | Conceptual | entities, relationships, cardinality | **yes** |
-| Logical | attributes as fields, keys, normalization | no — what is kept is prose |
+| Logical | attributes as fields, keys, normalization | no — what is kept is named prose |
 | Physical | types, indexes, constraints, tables | never |
 
-And it carries two things no ERD has: a **lifecycle** — states, transitions, and
-the Capability causing each — and **edges into behaviour**, because a Capability
-declares what it changes, a Screen what it presents, and a Scenario Step what it
-changes.
+And it carries three things no ERD has: a **lifecycle** — states, and the arcs
+between them composed from every Step that moves a thing; **edges into
+behaviour**, because a Step declares what it does to a thing and a Screen what
+it presents; and **who may act**, because a Business Rule's grants name the
+Entities that act and the relation paths back to them.
 
 **An ERD answers "how is the data shaped". This answers "what does the Product
-keep, and what changes it".** Neither replaces the other. An engineer designing
-storage still needs types, keys and indexes, and none of them is here — you
-cannot generate a schema from this. Going the other way, an ERD has no lifecycle,
-no link to behaviour, and is full of junction, audit and configuration tables
-that no user can name.
+keep, what changes it, and who may".** Neither replaces the other. An engineer
+designing storage still needs types, keys and indexes, and none of them is here —
+you cannot generate a schema from this. Going the other way, an ERD has no
+lifecycle, no link to behaviour, and is full of junction, audit and configuration
+tables that no user can name.
 
 Attach the schema as a Reference instead: an ERD diagram is `kind: visual`, a
 schema document is `kind: spec`, a migration is `kind: code` — each with
@@ -193,14 +344,15 @@ above it. A closed list of kinds is a vocabulary; the things those kinds
 classify are not. "Payment method" may be a fixed list of four while every
 payment is its own thing.
 
-It traps a tool whose subject is models. Why is *Actor* an Entity for
+It traps a tool whose subject is models. Why is *Capability* an Entity for
 BusinessLens but *agent skill* is not? Because it keeps information about
-Actors — `actors/` is full of them — and it ships its skills rather than keeping
-records about them. **Does the Product keep information about instances of this,
-or is this the Product itself?**
+Capabilities — `capabilities/` is full of them — and it ships its skills rather
+than keeping records about them. **Does the Product keep information about
+instances of this, or is this the Product itself?**
 
-**The author's test**: if you cannot point at it, and no Capability changes it
-and no Screen shows it, it is a table, not an Entity.
+**The author's test**: if you cannot point at it, no Step changes it, no Screen
+shows it, nothing names it as an actor, and no Rule reads it, it is a table, not
+an Entity.
 
 ## How it relates to everything else
 
@@ -209,37 +361,46 @@ use it declare the relationship, and every backlink is derived.
 
 | | |
 | --- | --- |
-| **Capability** | declares the Entities it **changes**, in `entities`; a Capability that only reads one declares nothing |
-| **Transition** | names the Capability that causes that one move |
-| **Another Entity** | related by a declared edge with a verb and both cardinality ends; the inverse is derived |
-| **Scenario Step** | may name the Entity it changes and the state it leaves it in |
+| **Scenario Step** | declares what it does to the Entity in `entities` — creates, changes, removes, or reads — and the states it leaves and lands in |
+| **Capability** | nothing; what it changes is derived from its Scenarios' Steps |
 | **Screen** | declares the Entities it presents, in `entities` |
+| **Another Entity** | related by a declared edge with a verb and both cardinality ends; the inverse is derived |
+| **Interface, Experience, Journey** | name it in `actors` when it acts |
+| **Business Rule** | targets an operation on it, cites one of its facts, walks its relations to find who may, or reads a settings Entity's fact as a condition |
 | **Domain** | optional and single, authored on the Entity itself |
-| **Actor** | never — an Actor is *who acts*, an Entity is *what is acted upon* |
-| **Business Rule** | never directly; a constraint on a thing is a constraint on what may be done to it |
 
-An [Actor](./actors.md) carries its own `## Information kept` for what the
-Product keeps about *them*, which is why a Reader needs no Entity of their own.
+An Entity never declares Capabilities, Screens, availability, or who may act on
+it. Steps say what changes it, a Screen says what presents it, a Business Rule
+says who may.
 
 ## No orphans
 
-An Entity must be referenced by a Capability that changes it or a Screen that
-presents it. **A relation from another Entity does not count** — a cluster of
-Entities referencing each other while no behaviour touches any of them is still
-vocabulary nobody uses. An Entity nothing points at is a `lint` error: it is either
-vocabulary nobody uses, or a relationship somebody forgot to declare.
+An Entity must be changed by a Step, presented by a Screen, named as an actor —
+on a Step, an Interface, an Experience, a Journey, or a Business Rule grant — or
+read by a Business Rule, as a condition's `entity` or a `configuredBy`, which is
+how a settings Entity earns its place. **A Step's read never counts, and neither
+does a relation** — a cluster of Entities referencing each other while no
+behaviour touches any of them is still vocabulary nobody uses. An Entity nothing
+points at is a `lint` error: it is either vocabulary nobody uses, or a
+relationship somebody forgot to declare.
 
 ## Findings `lint` reports
 
-- An Entity with neither `## Information kept` nor `## States` is an error.
-- `## States` without a `transitions` list, or `transitions` without
-  `## States`, is an error.
-- A `## Transitions` or `## Relations` prose section is an error: the
-  frontmatter list is the one authority, and a section beside it is a second one
-  that can disagree.
-- A transition that is not a `{ from, to, by }` mapping is an error.
-- A transition naming a state the Entity does not define is an error.
-- A transition naming a Capability that does not list this Entity is an error.
-- An Entity no Capability changes and no Screen presents is an error.
-- A state no transition reaches, other than the first, is a warning.
+- An Entity with none of `## Information kept`, `## States`, and `acts` is an
+  error.
+- `kind` without `acts`, `acts` without `kind`, or a value outside
+  `person|system` and `external|internal`, is an error.
+- An `actors/` directory is an error naming `entities/` as where its files go.
+- A fact that is not `- **Name** — prose`, or two facts with one name, is an
+  error.
+- A `transitions` key is an error naming the Step keys that replaced it; a
+  `## Transitions` or `## Relations` prose section is an error.
+- A relation naming a missing Entity, a duplicate edge, or `many-to-one` is an
+  error; two Entities declaring relations at each other is a warning.
+- A Step, Interface, Experience, Journey, or grant naming an Entity that does
+  not `acts` as an actor is an error.
+- An Entity nothing changes, presents, names as an actor, or reads by Rule is an
+  error.
+- A state other than the first that no Step leaves anything in is a warning; a
+  Step leaving from a state nothing produces is a warning.
 - An Entity naming a Domain that does not exist is an error.

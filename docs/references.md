@@ -3,7 +3,7 @@ title: References
 description: Attach intent, implementation, or context artifacts to any Product Model resource without moving external material into the model.
 section: open-source
 group: Product Model
-order: 18
+order: 17
 ---
 
 # References
@@ -14,7 +14,7 @@ currently implements behavior, a technical proposal, research, or related
 context. The referenced artifact is not part of the model and never replaces
 the resource's Product prose.
 
-Every semantic resource supports the same optional field: Product, Actor,
+Every semantic resource supports the same optional field: Product,
 Interface, Experience, Screen, Domain, Entity, Capability, Journey, Capability
 Scenario, Journey Scenario, and Business Rule. Configuration, Coverage, and
 taxonomies do not.

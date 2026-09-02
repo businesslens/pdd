@@ -42,8 +42,9 @@ versioned, or vendor-supported that integration is.
 
 Do not create an Interface for a feed your Product polls, a payment processor it
 charges, a mail provider it sends through, or a model API it queries. Those
-external systems are not [Actors](./actors.md) either—they have no goal in your
-Product and no inbound interaction contract you must keep stable for them.
+external systems do not [act](./entities.md#actors-an-entity-that-acts)
+either—they have no goal in your Product and no inbound interaction contract you
+must keep stable for them.
 Model the call inside the
 [Capability](./capabilities.md) that makes it, give its availability the
 Interfaces where an Actor actually observes the result, and make the failure
@@ -80,7 +81,7 @@ Supports customer shopping. It does not expose store administration.
 | Field or section | Required | Constraint |
 | --- | --- | --- |
 | `type` | yes | Use one supported interaction contract: `web`, `mobile-app`, `desktop-app`, `cli`, `api`, `webhook`, `messaging`, `voice`, or `device`. |
-| `actors` | yes | Name at least one existing Actor allowed to use some part of the Interface; do not repeat an ID. |
+| `actors` | yes | Name at least one existing Entity that `acts` and may use some part of the Interface; do not repeat an ID. |
 | `entryPoints` | no | List Product-facing roots such as `/`, `reader://home`, `product admin`, or `/v1`. Key each one with this Interface's own `type`, or with **another Interface's id** when that is where a reader arrives from — a local web report opened by a command says so here rather than in prose. |
 | `references` | no | Use the documented [Reference](./references.md) shape. |
 | H1 | yes | Name the Interface. |

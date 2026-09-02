@@ -3,7 +3,7 @@ title: verify
 description: Inspect model/code alignment and automatically resolve every scoped gap until aligned or explicitly blocked.
 section: open-source
 group: Skills
-order: 26
+order: 25
 ---
 
 # `businesslens-verify`
@@ -30,7 +30,7 @@ and unverifiable cases. It groups root decisions and recommends an authority.
   changes.
 - `verify current` or `verify full` inspects present behavior without needing a
   merge base or diff.
-- `verify <named scope>` inspects one Actor, Interface, Experience, Screen,
+- `verify <named scope>` inspects one Entity, Interface, Experience, Screen,
   Domain, Capability, Capability Scenario, Journey, Journey Scenario,
   availability Context, Step, or path plus its necessary dependencies.
 

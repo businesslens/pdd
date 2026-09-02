@@ -43,7 +43,9 @@ not contradict each other.
   `businesslens view`.
 - `skills/businesslens-*/SKILL.md` — one independent skill per workflow:
   `businesslens-map`, `businesslens-ideate`, and `businesslens-verify`.
-- `test/fixtures/fixture-shop/` — the golden lint fixture.
+- `test/fixtures/fixture-shop/` — the golden lint fixture. `npm run view:fixture`
+  opens it in the local report as its own repository, since its code references
+  resolve only from a Git root of its own.
 
 ## Documentation structure
 

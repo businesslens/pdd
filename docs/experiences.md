@@ -73,7 +73,7 @@ Supports operational administration. It does not grant customer privileges.
 
 | Field or section | Required | Constraint |
 | --- | --- | --- |
-| `actors` | yes | Name at least one unique existing Actor. Every Actor must be supported by the containing Interface. |
+| `actors` | yes | Name at least one unique Entity that `acts`. Every Actor must be supported by the containing Interface. |
 | `access` | yes | Use `public`, `authenticated`, or `restricted`. |
 | `entryPoints` | no | Key Product entry points using the containing Interface as the key. |
 | `references` | no | Use the documented [Reference](./references.md) shape. |

@@ -3,12 +3,12 @@ title: SDD tools
 description: Keep product intent durable in BusinessLens while technical proposals and build tasks remain in your spec-driven workflow.
 section: open-source
 group: Integrations
-order: 21
+order: 20
 ---
 
 # Use BusinessLens with spec-driven development tools
 
-BusinessLens owns Product meaning: Actors and Interfaces, optional Experiences,
+BusinessLens owns Product meaning: Entities and Interfaces, optional Experiences,
 Screens, and Domains, plus Capabilities, availability Contexts, Business Rules,
 local Capability Scenarios, optional coherent Journeys, and end-to-end Journey
 Scenarios.

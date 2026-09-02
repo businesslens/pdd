@@ -3,12 +3,12 @@ title: blueprint export
 description: Compile a Product Model into a portable Product Report that can move safely between repositories.
 section: open-source
 group: CLI
-order: 32
+order: 31
 ---
 
 # `businesslens blueprint export`
 
-Compile folder schema 7 `.businesslens/` into a portable Product Report v11:
+Compile folder schema 8 `.businesslens/` into a portable Product Report v13:
 
 ```bash
 npx businesslens blueprint export

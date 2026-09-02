@@ -3,7 +3,7 @@ title: Capabilities
 description: Durable Product abilities with explicit availability Contexts, and the local Capability Scenarios that make each ability observable.
 section: open-source
 group: Product Model
-order: 15
+order: 14
 ---
 
 # Capabilities
@@ -77,9 +77,11 @@ Complete a purchase without confirming an unpaid order.
 | `references` | no | Use the documented [Reference](./references.md) shape. |
 | H1 and lead paragraph | yes | Name the Capability and describe the durable Product ability. |
 
-Capability files do not list Actors, Capability Scenarios, Journey Scenarios,
-Journeys, Screens, or Business Rules. Other resources own those relations, and
-consumers derive backlinks. A Capability Scenario's containing Capability
+Capability files do not list Actors, Entities, Capability Scenarios, Journey
+Scenarios, Journeys, Screens, or Business Rules. Other resources own those
+relations, and consumers derive backlinks: what a Capability changes is what its
+Scenarios' Steps say, and an `entities` key on a Capability is an error naming
+the Step key that replaced it. A Capability Scenario's containing Capability
 folder creates its direct acceptance relation, while a Journey Scenario annotates concrete
 Steps with Capabilities. Journey Capability backlinks are derived from those
 Steps rather than authored on the Journey.
@@ -135,19 +137,56 @@ acceptance coverage for a Capability. Missing coverage is an error for a
 `complete` model, a warning for `partial` or `draft`, and an error for a public
 Blueprint, whether or not the Product has any [Journeys](./journeys.md).
 
-## What a Capability changes
+## What a Step does to the Product's things
 
-`entities` lists the [Entities](./entities.md) this Capability **changes**. It
-covers changes a transition can never express — renaming a thing alters its
-information, not its state — and it is what a transition's `by` is checked
-against.
+**`entities` is required on every Step**, and a Step that touches nothing
+writes `entities: []`. Silence is impossible; an omission is a claim that can be
+reviewed, linted, and contradicted by code. Each entry names an
+[Entity](./entities.md), what the Step does to it, and the states it leaves and
+lands in:
 
-**Changes, never reads.** A Capability that only presents or inspects a thing
-declares nothing here; the [Screen](./screens.md) that shows it carries
-`entities` instead, and a Capability with no Screen says what it reads in its own
-prose. The narrower word is what makes the list worth reading — a structural
-check that inspects every kind in the model would otherwise claim to change all
-of them, and *"what can alter this thing"* would have no answer left.
+```yaml
+- text: The Product refunds the order
+  kind: product
+  actor: store-admin
+  entities:
+    - { entity: order,  effect: changes, from: Confirmed, to: Refunded }
+    - { entity: refund, effect: creates, to: Requested }
+```
+
+`effect` is `creates`, `changes`, `removes`, or `reads`, defaulting to
+`changes`. State keys are explicit and never inferred from an adjacent Step:
+`creates` takes `to`, `removes` takes `from`, `changes` takes both or neither —
+neither being an information change, the rename case — and `reads` carries no
+state. Every `from` and `to` names a state the Entity declares, and there is no
+wildcard `from`: *archive from any state* is one Scenario per origin state.
+
+**A Step changes as many Entities as it changes.** One observable act can move
+two things at once, and splitting it into two Steps would turn an acceptance
+case into an implementation trace. Two instances of one Entity in a Scenario are
+told apart by `as`, a scenario-local alias — `collection (source)` and
+`collection (target)` — and once an Entity is aliased anywhere in a Scenario,
+every mention of it is. Steps chain per instance: where an earlier Step left a
+thing in a state, a later Step's `from` must equal it, or name a different
+instance.
+
+**A read is a bare mention.** `reads` carries no state, is never counted as a
+change, and never saves an Entity from being an orphan. It exists so a Step
+whose text says *the Reader chooses a saved item* also says so where a tool can
+read it. A Step whose text names an Entity's title and declares it nowhere is a
+finding — an error in a `complete` model, a warning otherwise.
+
+The lifecycle of every Entity is composed from these entries across the whole
+model, and a [Business Rule](./business-rules.md) that says who may perform an
+operation is checked against the Step that performs it: a Step doing something a
+Rule forbids to everyone, or something no grant could permit its actor, is a
+`lint` error.
+
+**A Step says who it is for.** An `actor` Step names who performs it. A
+`product` or `condition` Step may also carry `actor`, meaning the Step is
+attributable to that Actor — the Product did it for them, or the condition holds
+for them. Every actor a Step names joins the Scenario's derived Actor set, and a
+Rule reads it as *who did* against its grants' *who may*.
 
 ### Behavior nobody triggers
 
@@ -158,9 +197,11 @@ Actor *observes the outcome*, never a synthetic Interface.
 
 ```yaml
 steps:
-  - text: The Product's own collection schedule comes due for a followed source
+  - text: The Product's own polling schedule comes due for a followed source
     kind: condition
     unattended: true
+    entities:
+      - { entity: source, effect: reads }
 ```
 
 An unattended Scenario derives no Actors, and is the only Scenario that may have
@@ -195,48 +236,50 @@ Capability Scenarios normally live at
 `capabilities/<capability-id>/scenarios/<id>.md`. A Scenario with assets expands
 to `<id>/capability-scenario.md`.
 
-```md [capabilities/publish-repository-changes/scenarios/reject-an-unauthorized-repository-write.md]
+```md [capabilities/create-repository/scenarios/create-a-private-repository.md]
 ---
-kind: permission
+kind: primary
 routes:
-  git-push: Git push
+  web: Web
 steps:
-  - text: The contributor pushes a repository change
+  - text: The contributor names the repository and chooses private visibility
     kind: actor
     actor: repository-contributor
+    entities: []
     contexts:
-      git-push:
-        place: git-transport
-  - text: The Product identifies the repository and contributor
+      web:
+        place: web-ui::repository-collaboration::new-repository
+  - text: The Product checks that the name is free in the contributor's namespace
     kind: product
+    entities:
+      - { entity: repository, effect: reads }
     contexts:
-      git-push:
-        place: git-transport
-  - text: The Product evaluates write permission
+      web:
+        place: web-ui::repository-collaboration::new-repository
+  - text: The Product creates the repository with the contributor as its owner
     kind: product
+    actor: repository-contributor
+    entities:
+      - { entity: repository, effect: creates, to: Active }
     contexts:
-      git-push:
-        place: git-transport
-  - text: The Product rejects the write
-    kind: product
-    contexts:
-      git-push:
-        place: git-transport
+      web:
+        place: web-ui::repository-collaboration::repository-home
 references:
   - kind: code
     role: implementation
-    target: services/repository/push.go#AuthorizePush
+    target: services/repository/create.go#CreateRepository
 ---
 
-# Reject an unauthorized repository write
+# Create a private repository
 
 ## Trigger
 
-A contributor without write permission pushes a repository change.
+A contributor wants a new repository that nobody else can see.
 
 ## Outcome
 
-The repository is unchanged and the contributor receives a permission error.
+An Active repository exists, owned by the contributor and visible to nobody
+else.
 ```
 
 | Field or section | Required | Constraint |
@@ -245,12 +288,12 @@ The repository is unchanged and the contributor receives a permission error.
 | `kind` | yes | Name an entry in `taxonomies.yaml`. |
 | `routes` | yes | Map each unique lowercase kebab-case route ID to a unique human-readable name. |
 | `steps` | yes | Give a non-empty ordered list of typed Steps. Each Step has one-line `text`, `kind: actor|product|condition`, and optional route-specific `contexts`. |
-| `steps[].actor` | for Actor Steps | Name the responsible Actor when `kind: actor`; omit it for Product actions and unowned conditions. |
-| `steps[].changes` | no | List what this Step does to the Product's Entities. One entry per Entity, never two for the same one; one observable act may move several. |
-| `steps[].changes[].entity` | yes | Name the Entity. It must be one this Capability declares in `entities`. |
-| `steps[].changes[].effect` | no | Use `creates`, `changes`, or `removes`. Defaults to `changes`. |
-| `steps[].changes[].state` | no | Name the state this Step leaves that Entity in. It must be one of that Entity's states; under `changes` some `transition` must reach it by this Capability, under `creates` none is required, and `removes` refuses it. |
-| `steps[].reads` | no | List the Entity ids this Step picks, inspects, or displays without changing. A bare list: no effect, no state, never a change, and never enough on its own to keep an Entity from being an orphan. An Entity is named in `changes` or `reads`, never both. |
+| `steps[].actor` | for Actor Steps | Name the Entity that acts and performs the Step when `kind: actor`. On a `product` or `condition` Step it is optional and says who the Step is attributable to. |
+| `steps[].entities` | yes | List what this Step does to the Product's things, or `[]` when it touches nothing. One entry per `(entity, as)` pair; one observable act may move several. |
+| `steps[].entities[].entity` | yes | Name an existing Entity. |
+| `steps[].entities[].as` | no | A scenario-local alias telling two instances of one Entity apart. Once an Entity is aliased in a Scenario, every mention of it is. |
+| `steps[].entities[].effect` | no | Use `creates`, `changes`, `removes`, or `reads`. Defaults to `changes`. |
+| `steps[].entities[].from`, `to` | by effect | Name states the Entity declares: `to` with `creates`, `from` with `removes`, both or neither with `changes`, and neither with `reads`. Required for `creates` and `removes` when the Entity has states. |
 | `steps[].contexts` | when contextualized | Map every declared route to a strict Context whose `place` is the most-specific occurrence: a Screen when one exists, otherwise the leaf Experience or Interface. Omit it only when the Step is shared by all routes and has no Context. |
 | `references` | no | Use the documented [Reference](./references.md) shape. |
 | Lead paragraph | no | Start with a named H2; move starting-condition prose into `## Trigger`. |
@@ -261,7 +304,8 @@ The repository is unchanged and the contributor receives a permission error.
 | `## Outcome` | yes | State one local observable result of the Capability. |
 
 A Capability Scenario cannot declare `result`, `actors`, `availability`, or a
-Step `capability`; its parent Capability is implicit. Both Scenario types
+Step `capability`; its parent Capability is implicit. A Step's `changes`,
+`reads`, or `transitions` key is an error naming `entities` as its replacement. Both Scenario types
 require frontmatter `steps`, and neither declares its parent—the folder it sits
 in is the parent.
 It cannot use Journey-only `## Goal` or `## Success criterion` sections, and
