@@ -357,6 +357,23 @@ export function layoutFlow(shape: FlowGraphShape, options: LayoutOptions = {}): 
 
   layout(graph)
 
+  /* Dagre routes every edge as well: a skip arc around the ranks it passes, a
+     backward arc below the row. The points are in node-centre space, which is
+     the canvas space once a node's position is its centre less half its size,
+     so an edge that draws itself along them (`blr-routed`) lines up with the
+     handles. Edges dagre never saw keep whatever data they had. */
+  const edges = shape.edges.map((edge) => {
+    if (!graph.hasEdge(edge.source, edge.target)) return edge
+    const points = (graph.edge(edge.source, edge.target) as { points?: Array<{ x: number, y: number }> }).points ?? []
+    const from = graph.node(edge.source) as { x: number, y: number }
+    const to = graph.node(edge.target) as { x: number, y: number }
+    /* An edge against the flow — dagre ranks it reversed and hands back a
+       straight line through both nodes — is marked so the routed edge can
+       loop it round the side instead. */
+    const backward = direction === 'TB' ? to.y < from.y : to.x < from.x
+    return { ...edge, data: { ...(edge.data as Record<string, unknown> | undefined), points, backward, direction } }
+  })
+
   const vertical = direction === 'TB'
   const nodes = shape.nodes.map((node) => {
     const placed = graph.node(node.id) as { x: number, y: number }
@@ -369,7 +386,7 @@ export function layoutFlow(shape: FlowGraphShape, options: LayoutOptions = {}): 
       position: { x: placed.x - width / 2, y: placed.y - height / 2 }
     }
   })
-  return { nodes, edges: shape.edges }
+  return { nodes, edges }
 }
 
 /* ------------------------------------------------------------------ */

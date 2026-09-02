@@ -156,6 +156,9 @@ watch(layoutKey, async () => {
         <template #edge-blr-self="edgeProps">
           <BlrFlowSelfEdge v-bind="(edgeProps as any)" />
         </template>
+        <template #edge-blr-routed="edgeProps">
+          <BlrFlowRoutedEdge v-bind="(edgeProps as any)" />
+        </template>
         <Background
           :gap="30"
           :size="2"
@@ -263,6 +266,15 @@ watch(layoutKey, async () => {
 
 .blr-flow .vue-flow__edge.blr-arc--forbidden .vue-flow__edge-textbg {
   fill: var(--ui-bg-elevated);
+}
+
+.blr-flow .vue-flow__edge.blr-arc--restricted .vue-flow__edge-path {
+  stroke: var(--ui-text-muted);
+  stroke-width: 2;
+}
+
+.blr-flow .vue-flow__edge.blr-arc--restricted text {
+  fill: var(--ui-text);
 }
 
 /* Edges never intercept the pointer — boxes are the interaction surface. */

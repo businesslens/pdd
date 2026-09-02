@@ -26,7 +26,7 @@ import type {
   ScreenView
 } from '../utils/reportWorkspace'
 import { isScenarioKind, resolveResource, scenarioStepMatrix } from '../utils/reportWorkspace'
-import { buildEntityLifecycle, lifecycleArcLabel } from '../utils/entityLifecycle'
+import { LIFECYCLE_RANK_GAP, LIFECYCLE_STATE_HEIGHT, buildEntityLifecycle, lifecycleArcLabel } from '../utils/entityLifecycle'
 import { hasAuthoredBody } from '../utils/pageSections'
 import {
   SCENARIO_ROUTE_INLINE_WIDTH,
@@ -1049,7 +1049,13 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
         <h2 class="blr-page-heading">
           Lifecycle <span class="blr-meta ms-1">{{ entityStates.length }} {{ entityStates.length === 1 ? 'state' : 'states' }} · {{ entityArcs.length }} {{ entityArcs.length === 1 ? 'arc' : 'arcs' }}</span>
         </h2>
-        <div v-if="entityLifecycle.edges.length" class="h-72 overflow-hidden rounded-xl border border-default bg-elevated/20">
+        <!-- The column's own height, so the machine draws at full size; a very
+             long lifecycle fits by scaling rather than by growing without end. -->
+        <div
+          v-if="entityLifecycle.edges.length"
+          class="overflow-hidden rounded-xl border border-default bg-elevated/20"
+          :style="{ height: `${Math.min(720, Math.max(280, entityLifecycle.nodes.length * (LIFECYCLE_STATE_HEIGHT + LIFECYCLE_RANK_GAP) + 96))}px` }"
+        >
           <BlrFlowCanvas :nodes="entityLifecycle.nodes" :edges="entityLifecycle.edges" :fit-padding="0.2" :show-controls="false" />
         </div>
         <ul v-if="entityArcs.length" class="space-y-1.5">

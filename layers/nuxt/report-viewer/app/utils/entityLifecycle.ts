@@ -11,15 +11,16 @@
  * States nothing produces are drawn as unreached rather than dropped: the answer
  * to "a reader cannot count the transitions" is not "never draw the machine".
  */
-import { MarkerType, Position } from '@vue-flow/core'
+import { Position } from '@vue-flow/core'
 import type { EntityView, ReportWorkspace } from './reportWorkspace'
 import { resolveResource } from './reportWorkspace'
 import type { BlrFlowEdge, BlrFlowNode, FlowGraphShape, FlowStateData } from './flowGraph'
-import { layoutFlow } from './flowGraph'
+import { layoutFlow, relationEdge } from './flowGraph'
 
 export const LIFECYCLE_STATE_WIDTH = 168
 export const LIFECYCLE_STATE_HEIGHT = 44
 export const LIFECYCLE_TERMINAL_SIZE = 18
+export const LIFECYCLE_RANK_GAP = 84
 
 export const LIFECYCLE_START = 'blr-lifecycle-start'
 export const LIFECYCLE_END = 'blr-lifecycle-end'
@@ -87,9 +88,18 @@ export function buildEntityLifecycle(workspace: ReportWorkspace, entity: EntityV
   let hasStart = false
   let hasEnd = false
 
+  /* The canvas carries the Capability and one word for the Rule's presence;
+     the sentence — who may, and what else the Step does — is the list under
+     it. An edge label is drawn on the path, and a sentence there hides the
+     machine it labels. */
+  const caption = (label: LifecycleArcLabel): string => {
+    if (label.forbidden) return 'forbidden'
+    const [first = '', ...rest] = label.capabilities
+    const capabilities = rest.length ? `${first} +${rest.length}` : first
+    return label.restriction ? `${capabilities} · restricted` : capabilities
+  }
   entity.arcs.forEach((arc, index) => {
     const label = lifecycleArcLabel(workspace, entity, index)
-    const parts = [label.capabilities.join(', '), label.restriction, ...label.coEffects].filter(Boolean)
     const source = arc.effect === 'creates' ? LIFECYCLE_START : stateNodeId(entity.id, arc.from)
     const target = arc.effect === 'removes' ? LIFECYCLE_END : stateNodeId(entity.id, arc.to)
     /* An information change is an arc from a state to itself only when the
@@ -100,13 +110,9 @@ export function buildEntityLifecycle(workspace: ReportWorkspace, entity: EntityV
     if (arc.effect === 'removes') hasEnd = true
     if ((source !== LIFECYCLE_START && !present.has(source)) || (target !== LIFECYCLE_END && !present.has(target))) return
     edges.push({
+      ...relationEdge({ source, target, label: caption(label) }),
       id: `blr-arc:${entity.id}:${arc.key}`,
-      source,
-      target,
-      type: source === target ? 'blr-self' : 'smoothstep',
-      label: label.forbidden ? `forbidden · ${parts.join(' · ')}` : parts.join(' · '),
-      markerEnd: MarkerType.ArrowClosed,
-      animated: false,
+      type: source === target ? 'blr-self' : 'blr-routed',
       class: label.forbidden ? 'blr-arc--forbidden' : label.restriction ? 'blr-arc--restricted' : undefined
     })
   })
@@ -121,14 +127,10 @@ export function buildEntityLifecycle(workspace: ReportWorkspace, entity: EntityV
     if (edges.some(edge => edge.source === source && edge.target === target)) continue
     if (source === LIFECYCLE_START) hasStart = true
     if (target === LIFECYCLE_END) hasEnd = true
-    const rule = resolveResource(workspace, 'rule', prohibition.ruleId)
     edges.push({
+      ...relationEdge({ source, target, label: 'forbidden' }),
       id: `blr-forbidden:${entity.id}:${prohibition.ruleId}:${prohibition.from}:${prohibition.to}`,
-      source,
-      target,
-      type: source === target ? 'blr-self' : 'smoothstep',
-      label: `forbidden · ${rule?.title ?? prohibition.ruleId}`,
-      markerEnd: MarkerType.ArrowClosed,
+      type: source === target ? 'blr-self' : 'blr-routed',
       class: 'blr-arc--forbidden'
     })
   }
@@ -144,5 +146,8 @@ export function buildEntityLifecycle(workspace: ReportWorkspace, entity: EntityV
     }, { width: LIFECYCLE_TERMINAL_SIZE, height: LIFECYCLE_TERMINAL_SIZE }))
   }
 
-  return layoutFlow({ nodes, edges }, { ranksep: 96, nodesep: 32 })
+  /* Top to bottom: a lifecycle reads down the page at full size, where a row
+     of states shrinks to fit the width and takes its labels with it. The rank
+     gap holds one label and an arrowhead; a skip arc is routed round the side. */
+  return layoutFlow({ nodes, edges }, { direction: 'TB', ranksep: LIFECYCLE_RANK_GAP, nodesep: 48 })
 }

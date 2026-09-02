@@ -6,6 +6,7 @@
  * says its name, whether it is where a thing starts, and — drawn hollow — when
  * no Step in the model ever leaves anything in it.
  */
+import { Handle, Position } from '@vue-flow/core'
 import type { NodeProps } from '@vue-flow/core'
 import type { FlowStateData } from '../utils/flowGraph'
 
@@ -18,28 +19,52 @@ const title = computed(() => props.data.terminal === 'start'
 </script>
 
 <template>
-  <div
-    v-if="data.terminal"
-    class="blr-flow-terminal"
-    :data-terminal="data.terminal"
-    :title="title"
-    role="img"
-    :aria-label="title"
-  />
-  <div
-    v-else
-    class="blr-flow-state"
-    :data-reached="data.reached"
-    :data-initial="data.initial"
-    :title="title"
-  >
-    <span class="min-w-0 truncate">{{ data.name }}</span>
-    <span v-if="data.initial" class="blr-flow-state__note">start</span>
-    <span v-else-if="!data.reached" class="blr-flow-state__note">unreached</span>
+  <!-- Arcs bind to a handle per side, as the resource boxes' do; without one
+       Vue Flow anchors them to the top and bottom edges, and a left-to-right
+       machine reads as a tangle of hooks. Nothing here is drawn. -->
+  <div class="blr-flow-state-wrap">
+    <Handle type="target" :position="targetPosition ?? Position.Left" class="blr-flow-state-handle" />
+    <div
+      v-if="data.terminal"
+      class="blr-flow-terminal"
+      :data-terminal="data.terminal"
+      :title="title"
+      role="img"
+      :aria-label="title"
+    />
+    <div
+      v-else
+      class="blr-flow-state"
+      :data-reached="data.reached"
+      :data-initial="data.initial"
+      :title="title"
+    >
+      <span class="min-w-0 truncate">{{ data.name }}</span>
+      <span v-if="data.initial" class="blr-flow-state__note">start</span>
+      <span v-else-if="!data.reached" class="blr-flow-state__note">unreached</span>
+    </div>
+    <Handle type="source" :position="sourcePosition ?? Position.Right" class="blr-flow-state-handle" />
   </div>
 </template>
 
 <style scoped>
+.blr-flow-state-wrap {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.blr-flow-state-handle {
+  width: 1px !important;
+  height: 1px !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
 .blr-flow-state {
   display: flex;
   align-items: center;
