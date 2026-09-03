@@ -7,6 +7,72 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **A Screen an Interface shares beside its `experiences/` now lints.** Folder
+  schema 7 allowed it and the linter refused it, because a divided Interface is
+  never an availability place. A shared Screen is now inside every Experience
+  of its Interface: a Capability it exposes must be available in each, a Step on
+  it is inside a Capability's availability only when every Experience is, and
+  that Step counts as Scenario coverage for each. `lint` and the wire validator
+  name the Experiences a Capability is missing from. The Content Feed Reader
+  Blueprint's item reader and the fixture shop's catalog are the first two.
+- **`blueprint pull` asks for the report version it can read, and refuses
+  another.** The Accept header is derived from the schema's major, and a
+  catalog answering with a different `version` parameter is refused before the
+  body is parsed. A report of another schema version, from a catalog or a
+  file, is refused in one sentence naming both versions instead of a Zod issue
+  dump.
+- **`blueprint open` and `pull` keep the author's coverage prose.** Only
+  `method` is rewritten, as the report contract says; the note that
+  implementation alignment has not been verified here now lives in `method`
+  with the other origin claim, and `limitations` and `rationale` come through
+  exactly as authored.
+- **A Screen-read check no longer applies Rules that select a state move.** A
+  Rule target carrying `from` or `to` can never govern what a Screen presents.
+- **Whether an Interface divides is derived the way the spec says, as an
+  error.** Audiences are disjoint when no available Capability bridges them
+  (connected components over Actors and Capabilities), not when any two
+  Capabilities differ; the counterpart exception is now in the spec; both
+  findings are errors.
+- **Id-vocabulary checks read a declared thing as a noun.** `order-line` beside
+  an Entity `order` opens with a noun; `order-management` carries no verb for
+  the same reason; both Scenario types are checked like Capabilities and
+  Journeys. The spec states the check as the heuristic it is.
+- **The Lifecycle machine reads permissions per Rule.** Each selecting Rule
+  lists its grants in full, Rules compose as AND, a place-scoped Rule no longer
+  restricts the whole machine, a state's self-transition hangs off the state
+  instead of under it, and the arc count says how many arcs are drawn.
+- **The installer decides ownership by its manifest alone.** A directory that
+  merely names a skill and mentions BusinessLens is somebody else's; retired
+  skills are removed only when the manifest recorded them; every harness is
+  checked before any is written, so a refusal leaves nothing changed.
+- The teaching Blueprint's lifecycles no longer dead-end: an unlisted
+  Collection can be republished, and an unreachable Source is read again on the
+  Product's schedule or unfollowed. The fixture shop's
+  `payment-before-confirmation` Rule targets the Order transition it governs,
+  and cancelling a paid order creates the Refund its Outcome promised. The
+  self-model's model-writes Rule names the explicit `--force` backup sibling.
+- Docs and skills no longer say `## Product states`, `catalog-browsing`, or that
+  one Screen spans web and mobile; the Interface `type` list includes `agent`;
+  the map inventory script matches `entities/` directories again; the map and
+  ideate skills author against folder schema 8 (an Actor is an Entity that
+  `acts`, Steps carry `entities` effects, Rules carry Entity targets and
+  `permits`, and whether an Interface divides is derived, never judged).
+- The design record under `plans/` marks ADR-0009 to 0014 as superseded in part
+  by 0013 to 0018, dates what shipped as schema 8 / Product Report v13, and the
+  Journey rule in the spec is restated structurally (ADR-0003).
+- The report contract lists a step's `unattended` flag, names a Screen's
+  `states`, and adds the Rule-reads escape to the no-orphans rule; an empty
+  grant condition value is refused on the wire.
+
+### Changed
+
+- The open page tab lives in the URL (`t`), so a Lifecycle or Scenarios tab
+  survives a refresh and can be linked.
+- The ideate skill's proposed delta ends with a `Judgment calls` section, as
+  map's already did (ADR-0005).
+
 ## [0.9.0] - 2026-09-03
 
 ### Added
