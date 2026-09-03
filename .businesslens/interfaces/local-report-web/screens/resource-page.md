@@ -35,7 +35,7 @@ button.
 - Its relations to other resources, each openable
 - Its References, with the role explaining why each is attached
 - For a Capability or a Journey, its Scenarios with their Steps, routes, Context places, and what each Step does to the Product's things
-- For an Entity, its named facts with the Rules that govern them, and its lifecycle composed from every Step that creates, moves, or removes it, with the Capability on each arc and the Rules that restrict or forbid it
+- For an Entity, its named facts with the Rules that govern them, and, on its Lifecycle tab, its lifecycle composed from every Step that creates, moves, or removes it, with the Capability on each arc and the Rules that restrict or forbid it
 - For a Business Rule, who may perform each operation it governs, as sentences
 
 ## Available actions
@@ -57,6 +57,12 @@ References.
 
 A Capability or Journey page with one of its Scenarios selected; the selected
 Scenario and route stay in the address bar.
+
+### Lifecycle open
+
+An Entity page on its composed state machine: the states, the arcs the Steps
+draw with the Capability on each and the Rules that restrict or forbid it, and
+what leaves a thing in each state.
 
 ## Capability boundary
 

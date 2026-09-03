@@ -4,10 +4,11 @@
  *
  * Overview holds the resource's authored meaning, facts, Contexts, relations,
  * supporting material, and References. A Capability or Journey adds exactly
- * one peer tab for its Scenarios. A Scenario URL keeps the Scenario key in the
- * address while reading it inside its mandatory parent.
+ * one peer tab for its Scenarios, and an Entity with States one for its
+ * Lifecycle. A Scenario URL keeps the Scenario key in the address while
+ * reading it inside its mandatory parent.
  */
-import type { AnyResourceView, ReportWorkspace } from '../utils/reportWorkspace'
+import type { AnyResourceView, EntityView, ReportWorkspace } from '../utils/reportWorkspace'
 import { docsForResourceKind } from '../utils/resourceDocs'
 import { parentOf, tabsFor, type PageTabId } from '../utils/pageSections'
 
@@ -98,6 +99,13 @@ const current = computed(() => tabs.value.find(tab => tab.id === active.value) ?
         :workspace="workspace"
         :resource="subject"
         :selected-key="requestedChild"
+        @open="emit('open', $event)"
+      />
+
+      <BlrEntityLifecycle
+        v-else-if="current?.id === 'lifecycle' && subject.kind === 'entity'"
+        :workspace="workspace"
+        :resource="(subject as EntityView)"
         @open="emit('open', $event)"
       />
 

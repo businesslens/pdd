@@ -191,6 +191,9 @@ describe('stable Product Report', () => {
     expect(hasAuthoredBody(order)).toBe(true)
     const overview = tabsFor(workspace, order).find((tab: any) => tab.id === 'overview')!
     expect(overview.blocks).toContain('detail')
+    // A thing with States reads its machine on a peer tab; one without has only the Overview.
+    expect(tabsFor(workspace, order).map((tab: any) => tab.id)).toEqual(['overview', 'lifecycle'])
+    expect(tabsFor(workspace, workspace.entities.find((item: any) => item.id === 'cart')).map((tab: any) => tab.id)).toEqual(['overview'])
 
     // A Screen's own states stay the view's, never the thing's lifecycle.
     const screen = workspace.screens.find((item: any) => item.states.length)
@@ -580,10 +583,15 @@ describe('stable Product Report', () => {
        that opens it, not a dimmed generic glyph beside plain text. */
     expect(resourceBody).toContain('<BlrActorType')
     expect(resourceBody).toContain(':actor-kind="stepActor(step.actorId)!.entityKind!"')
-    /* The Entity page draws its composed state machine on the shared canvas. */
-    expect(resourceBody).toContain('buildEntityLifecycle')
-    expect(resourceBody).toContain('<BlrFlowCanvas :nodes="entityLifecycle.nodes"')
+    /* The Entity page draws its composed state machine on the shared canvas,
+       on its own tab, with every arc routed along the layout's points. */
+    const lifecycle = source('app/components/BlrEntityLifecycle.vue')
+    expect(lifecycle).toContain('buildEntityLifecycle')
+    expect(lifecycle).toContain('<BlrFlowCanvas :nodes="lifecycle.nodes"')
+    expect(resourceBody).not.toContain('buildEntityLifecycle')
+    expect(source('app/components/BlrResourcePage.vue')).toContain('<BlrEntityLifecycle')
     expect(source('app/components/BlrFlowCanvas.vue')).toContain('#node-blr-state')
+    expect(source('app/components/BlrFlowCanvas.vue')).toContain('#edge-blr-routed')
 
     /* A collection or relation heading means the Interface kind, not one
        concrete Interface, so its generic plug remains deliberately generic. */
@@ -863,11 +871,11 @@ describe('stable Product Report', () => {
     expect(source('app/utils/reportWorkspace.ts')).toContain('scenariosByCapability')
   })
 
-  it('uses Overview and only an optional Scenarios tab', () => {
+  it('uses Overview and one peer tab: Scenarios, or a Lifecycle', () => {
     const page = source('app/components/BlrResourcePage.vue')
     const sections = source('app/utils/pageSections.ts')
 
-    expect(sections).toContain("export type PageTabId = 'overview' | 'scenarios'")
+    expect(sections).toContain("export type PageTabId = 'overview' | 'scenarios' | 'lifecycle'")
     expect(sections).toContain("if (resource.references.length) overviewBlocks.push('references')")
     expect(sections).not.toContain("id: 'diagram'")
     expect(sections).not.toContain("id: 'references'")

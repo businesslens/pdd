@@ -6,9 +6,11 @@
  * it says, what it touches, and where else it exists. Splitting them made four
  * thin tabs where one full one was wanted.
  *
- * Scenarios are the only material with a shape of their own. References remain
- * part of the Overview, and Neighbourhood is an action into the named Topology
- * surface rather than a third page reading.
+ * Scenarios have a shape of their own, and so does a lifecycle: an Entity
+ * with States reads its composed machine on a peer tab, the way a Capability
+ * reads its Scenarios. References remain part of the Overview, and
+ * Neighbourhood is an action into the named Topology surface rather than a
+ * third page reading.
  */
 import type { AnyResourceView, ReportWorkspace } from './reportWorkspace'
 import { counterpartsOf, isScenarioKind } from './reportWorkspace'
@@ -23,7 +25,7 @@ export type PageBlockId =
   | 'supporting'
   | 'references'
 
-export type PageTabId = 'overview' | 'scenarios'
+export type PageTabId = 'overview' | 'scenarios' | 'lifecycle'
 
 export interface PageTab {
   id: PageTabId
@@ -53,7 +55,7 @@ export function childrenOf(workspace: ReportWorkspace, resource: AnyResourceView
   return []
 }
 
-/** The final page has Overview and, only for a behavioral parent, Scenarios. */
+/** The final page has Overview and one peer tab: Scenarios for a behavioral parent, Lifecycle for a thing with States. */
 export function tabsFor(workspace: ReportWorkspace, resource: AnyResourceView): PageTab[] {
   const overviewBlocks: PageBlockId[] = ['lead', 'facts']
 
@@ -86,6 +88,15 @@ export function tabsFor(workspace: ReportWorkspace, resource: AnyResourceView): 
       hint: resource.kind === 'capability'
         ? 'Each is one observable acceptance case for this Capability.'
         : 'Each is one path through this promise.',
+      blocks: []
+    })
+  }
+  if (resource.kind === 'entity' && resource.states.length) {
+    tabs.push({
+      id: 'lifecycle',
+      label: 'Lifecycle',
+      count: resource.states.length,
+      hint: 'What it can be, and every Step in the model that moves it.',
       blocks: []
     })
   }

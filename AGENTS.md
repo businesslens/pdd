@@ -137,10 +137,12 @@ not contradict each other.
   topology resource opens the resource page directly. It has a URL, a
   breadcrumb, the width its content was drawn for, and the browser's own back
   button.
-- **Overview and Scenarios are the page structure.** Overview carries the
+- **Overview and one peer tab are the page structure.** Overview carries the
   resource's authored meaning, facts, Contexts, relations, supporting material,
   and References. Capability and Journey pages add Scenarios as their only
-  second tab. Neighbourhood is an action into Topology, never another page tab.
+  second tab; an Entity with States adds Lifecycle, its composed machine and
+  what leaves a thing in each state. Neighbourhood is an action into Topology,
+  never another page tab.
 - **The rail lists resource types; they do not nest.** Containment belongs
   where instances are — the default grouping of a collection and the resource
   page. A mandatory child type does not add a peer collection tab to its

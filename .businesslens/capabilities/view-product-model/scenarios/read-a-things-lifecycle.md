@@ -3,7 +3,7 @@ kind: edge
 routes:
   local: Local
 steps:
-  - text: The Developer opens an Entity's page
+  - text: The Developer opens an Entity's page and its Lifecycle tab
     kind: actor
     actor: developer
     entities:
