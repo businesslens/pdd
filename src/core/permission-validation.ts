@@ -97,8 +97,12 @@ function grantCanPermitOperation(
 }
 
 function targetSelectsScreen(target: PermissionTarget, entityId: string, screenId: string): boolean {
+  // A read carries no state, so a target that selects by `from` or `to` is
+  // about a state move and can never govern what a Screen presents.
   return target.entityId === entityId
     && (target.effect === null || target.effect === 'reads')
+    && target.from === null
+    && target.to === null
     && (!target.contextPlaces.length || target.contextPlaces.some(place => containsPlace(place, screenId)))
 }
 

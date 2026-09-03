@@ -60,7 +60,7 @@ Product Report v13 has one collection for things: `entities`. There is no
 ordered `states` array of `{ name, content }`, and an optional `domainId`.
 `kind` is non-null exactly when `acts` is. There is no `transitions` array: the
 lifecycle is composed from Scenario steps. Entity states are authored
-lifecycle; a Screen's `viewStates` remain that view's own states and the two
+lifecycle; a Screen's `states` remain that view's own View states and the two
 are never merged.
 
 Every actor reference in the report — a step's `actorId`, an Interface's,
@@ -78,7 +78,8 @@ nullable scenario-local instance alias, `effect` is `creates`, `changes`,
 never has to know which value the folder omits — and `from` and `to` are
 nullable state names. One step never carries two records for one
 `(entityId, as)` pair, and a read never counts as a change for the rule that an
-Entity nothing changes, no Screen presents, and nothing names as an actor is
+Entity nothing changes, no Screen presents, nothing names as an actor, and no
+Rule reads through a condition's `entityId` or a `configuredByEntityId` is
 invalid.
 
 A Business Rule record carries its `appliesTo` targets and a `permits` field.
@@ -106,7 +107,8 @@ states of the named Entity and follow its effect — `creates` takes `to`,
 Rule's `from`, `to`, `facts` and condition `state` and `fact` values resolve on
 the targeted Entity; a `related` path walks declared relations and their
 inverses one unambiguous hop at a time and ends on an Entity that `acts`; and an
-Entity no step changes, no Screen presents, and nothing names as an actor is
+Entity no step changes, no Screen presents, nothing names as an actor, and no
+Rule reads is
 invalid. The report is expanded straight into an authored folder, so a report
 that carries an edge the folder rules reject would produce a `.businesslens/`
 that fails `lint` on arrival.
@@ -139,10 +141,11 @@ shape:
       "text": "The shopper finds an available product",
       "kind": "actor",
       "actorId": "shopper",
-      "capabilityId": "catalog-browsing",
+      "capabilityId": "browse-catalog",
       "entities": [
         { "entityId": "catalog-product", "as": null, "effect": "reads", "from": null, "to": null }
       ],
+      "unattended": false,
       "contexts": [
         { "routeId": "web-shopper", "placeId": "customer-web::storefront::product-record" },
         { "routeId": "mobile-shopper", "placeId": "customer-mobile::storefront::product-record" }
@@ -156,6 +159,7 @@ shape:
       "entities": [
         { "entityId": "order", "as": null, "effect": "changes", "from": "Pending", "to": "Confirmed" }
       ],
+      "unattended": false,
       "contexts": []
     }
   ]
@@ -165,7 +169,8 @@ shape:
 Every route has a unique lowercase kebab-case `id` and a unique, non-empty
 human-readable `name`. Every step has single-line `text`, `kind` (`actor`,
 `product`, or `condition`), nullable `actorId`, nullable `capabilityId`, an
-`entities` array, and an ordered `contexts` array. `actorId` is non-null for
+`entities` array, a boolean `unattended` (true only on the first `condition`
+step of an unattended Scenario), and an ordered `contexts` array. `actorId` is non-null for
 every `actor` Step, may be non-null on a `product` or `condition` Step — the
 Actor the Step is attributable to — and is `null` on every step of an
 unattended Scenario. A Journey step whose `entities` carries a non-read effect

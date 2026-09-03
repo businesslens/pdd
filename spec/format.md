@@ -196,11 +196,36 @@ question, and an author never applies a prose test to it. An Interface serving
 one audience through one access mode is one coherent context and takes direct
 Interface availability.
 
+"Disjoint" is read over the whole Interface, not Capability by Capability: the
+Actors split into groups when no Capability available there lists Actors from
+two of them — more than one connected component in the graph of Actors and
+Capabilities, an edge wherever a Capability's Scenario Steps name the Actor.
+An admin-only Capability beside a shopper-only one does not divide an Interface
+that also offers a Capability both use.
+
+**Counterparts are the one exception.** An Experience whose name also exists
+under another Interface is the same context on another platform —
+`customer-web::storefront` and `customer-mobile::storefront` — and keeps its
+Experience even where the derivation alone would flatten it, because two views
+of one context must not look unrelated. Both findings are `lint` errors: an
+Interface that must divide and does not, and one that holds Experiences it
+must not, with no counterpart.
+
 An Interface holds `experiences/`, or `screens/`, or **both** — the last when a
 Screen is genuinely shared across its Experiences rather than belonging to one.
 A Screen beside `experiences/` is reachable from every Experience of that
 Interface, and two Screens with the same name below different Experiences of one
 Interface are counterparts exactly as they are across Interfaces.
+
+**A shared Screen is inside every Experience of its Interface.** Its id is
+`interface::screen`, and its Interface is never an availability place, so
+containment reads the Interface as the set of its Experiences: a Capability the
+Screen exposes must be available in each of them, a Step that occurs on it is
+inside a Capability's availability only when every Experience is, and that
+Step counts as Scenario coverage for each. `lint` names the Experiences a
+Capability is missing from. A view whose Capabilities differ by Experience is
+not shared: it is two Screens, one under each Experience, which are
+counterparts.
 Contexts are closed to unknown keys. Additional dimensions may be added by a
 future format revision, but Context is not an arbitrary metadata bag.
 
@@ -246,6 +271,14 @@ future format revision, but Context is not an arbitrary metadata bag.
   `order-management`. A Domain, Entity, Interface, Experience, and Screen name
   something that *is*, so their ids are noun phrases: `shopper`, `ordering`,
   `listing`, `customer-web`.
+
+  `lint` checks this heuristically, as warnings, on the two shapes it can
+  recognise without conjugating English: a behavioural id whose last segment
+  is a nominalisation (`-ing`, `-ment`, `-tion`, …) while no segment is a
+  product verb, and a cross-cutting id whose first segment is a product verb.
+  A segment that names a thing this model declares is read as that thing, not
+  as a verb — `order-line` is a fine Entity id beside an Entity `order`, and
+  `order-management` carries no verb for the same reason.
 
   This is a rule, not a style. Ids are the format's whole identity mechanism, so
   two models of one product that name the same behavior differently cannot be
@@ -1382,7 +1415,7 @@ The whole `screens/` collection is optional so non-visual products remain valid.
 
 ```markdown
 ---
-capabilities: [catalog-browsing]
+capabilities: [browse-catalog]
 entities: [catalog-product]
 entryPoints:
   - customer-web: /products/:id
@@ -1429,7 +1462,9 @@ The screen does not change product or inventory data.
 
 `capabilities` needs at least one item. A Screen has no `availability` field:
 its path names its containing Interface or Experience, and every referenced
-Capability must declare an availability Context containing the Screen.
+Capability must declare an availability Context containing the Screen — for a
+Screen an Interface shares beside its `experiences/`, one for every Experience
+of that Interface.
 `entryPoints` is optional; entry-point keys must name the Interface containing
 the Screen. Scenario participation is derived from Scenario Step Contexts whose
 place names the Screen; a Screen never authors
@@ -1517,15 +1552,17 @@ Scenario must name it with `result: achieved` and exercise at least two distinct
 Capabilities. Every Journey Actor must appear in at least one achieved Scenario.
 This is Journey acceptance coverage, not the source of its identity.
 
-A Journey is established behavior only when repository evidence supports a
-deliberate transition, orchestration, shared state, navigation, command, or
-cross-Interface transition toward its Actor outcome. A wizard can establish a
-Journey but is not required. A merely plausible sequence of independent
-Product actions is not a Journey. The number of Journey Scenario variations
-does not define it; one achieved variation provides valid coverage. A goal with
-no achieved multi-Capability path belongs to Capability behavior or remains
-unsupported Journey intent. Planned Journeys may record approved intent before
-implementation but must meet the same structural distinctions.
+**A Journey exists when an achieved Journey Scenario carries its Actor through
+two or more Capabilities toward one outcome.** That is the whole test, and it
+is structural, so it reads the same way for a Journey mapped from code and one
+decided before any code exists: a wizard, an orchestration, shared state, or a
+cross-Interface hand-off is how a product usually earns one, but none is
+required, and a merely plausible sequence of independent Product actions has
+no achieved Scenario and is not a Journey. Whether the repository implements
+the Journey is `coverage.status`'s claim and `verify`'s finding, never the
+Journey's own. The number of Journey Scenario variations does not define it;
+one achieved variation provides valid coverage. A goal with no achieved
+multi-Capability path belongs to Capability behavior.
 
 ### `capabilities/<capability-id>/scenarios/<id>.md` or `<id>/capability-scenario.md`
 
@@ -1720,7 +1757,10 @@ A Step may author `contexts`, mapping every declared route id to exactly one
 strict Context object. Its `place` is the most-specific Interface, Experience,
 or Screen where that Step occurs. When an Interface or Experience owns Screens,
 the place must name a Screen; otherwise it names the leaf Experience or
-Interface. A Step either maps every route or omits `contexts` completely when
+Interface. A Step on a Screen the Interface shares beside its `experiences/`
+names that Screen, `interface::screen`, and is inside a Capability's
+availability only when every Experience of the Interface is.
+A Step either maps every route or omits `contexts` completely when
 it is shared by all routes and has no specific Context. Every route must have a
 Context on at least one Step.
 
@@ -1755,7 +1795,7 @@ steps:
   - text: The shopper finds an available product in the catalog
     kind: actor
     actor: shopper
-    capability: catalog-browsing
+    capability: browse-catalog
     entities:
       - { entity: catalog-product, effect: reads }
     contexts:

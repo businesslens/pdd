@@ -207,11 +207,11 @@ describe('lintModel', () => {
     expect(result.counts).toEqual({
       interfaces: 5,
       experiences: 2,
-      screens: 5,
+      screens: 6,
       domains: 1,
       entities: 8,
       capabilities: 6,
-      capabilityScenarios: 11,
+      capabilityScenarios: 12,
       journeys: 1,
       journeyScenarios: 2,
       businessRules: 12
@@ -383,6 +383,7 @@ Lead.
     // Every Screen goes, so every Context names its container instead, and the
     // one Rule scoped to a Screen loses its scope.
     for (const relative of [
+      'interfaces/customer-web/screens',
       'interfaces/customer-web/experiences/storefront/screens',
       'interfaces/customer-mobile/experiences/storefront/screens',
       'interfaces/admin-web/screens'
@@ -397,6 +398,7 @@ Lead.
     }
     compactResource(join(bl, 'interfaces/admin-web/interface.md'), join(bl, 'interfaces/admin-web.md'))
     walk(bl, file => writeFileSync(file, readFileSync(file, 'utf8')
+      .replaceAll('customer-web::catalog', 'customer-web::storefront')
       .replaceAll('::product-record', '')
       .replaceAll('::order-status', '')
       .replaceAll('admin-web::order-detail', 'admin-web')))
@@ -510,6 +512,26 @@ Where an operator works through orders from the command line.
 ## Capability boundary
 
 Supports order operations. It does not expose a shopper's account.
+`
+    )
+    // A second access mode is what makes the CLI a divided Interface; a lone
+    // Experience for one audience through one access mode would be an error.
+    writeResource(
+      join(cwd, '.businesslens/interfaces/operator-cli/experiences/status-desk.md'),
+      `---
+actors: [store-admin]
+access: public
+entryPoints:
+  - operator-cli: fixture-shop status
+---
+
+# Status desk
+
+Read-only status an operator can query without a session.
+
+## Capability boundary
+
+Reads status only. It changes nothing.
 `
     )
     for (const relative of [
@@ -834,8 +856,8 @@ Filed away.
     const cwd = fixtureCopy()
     const scenario = join(cwd, '.businesslens/capabilities/browse-catalog/scenarios/browse-catalog.md')
     writeFileSync(scenario, readFileSync(scenario, 'utf8').replace(
-      '    entities:\n      - { entity: catalog-product, effect: reads }\n    contexts:\n      web:\n        place: customer-web::storefront::product-record\n      mobile:\n        place: customer-mobile::storefront::product-record\n  - text: The shopper opens',
-      '    contexts:\n      web:\n        place: customer-web::storefront::product-record\n      mobile:\n        place: customer-mobile::storefront::product-record\n  - text: The shopper opens'
+      '    entities:\n      - { entity: catalog-product, effect: reads }\n    contexts:\n      web:\n        place: customer-web::catalog\n      mobile:\n        place: customer-mobile::storefront::product-record\n  - text: The shopper opens',
+      '    contexts:\n      web:\n        place: customer-web::catalog\n      mobile:\n        place: customer-mobile::storefront::product-record\n  - text: The shopper opens'
     ))
     expect(run(cwd).errors.join('\n')).toContain('step 1: needs "entities" — what this Step does to the Product\'s things, or [] when it touches nothing')
   })
@@ -938,7 +960,7 @@ Filed away.
     const cwd = fixtureCopy()
     const file = join(cwd, '.businesslens/business-rules/payment-before-confirmation.md')
     writeFileSync(file, readFileSync(file, 'utf8').replace(
-      'appliesTo:\n  - type: capability\n    id: place-order\n  - type: journey\n    id: browse-and-buy',
+      'appliesTo:\n  - type: entity\n    id: order\n    effect: changes\n    to: Confirmed',
       `appliesTo:
   - type: capability
     id: manage-orders
@@ -957,7 +979,7 @@ Filed away.
     const cwd = fixtureCopy()
     const file = join(cwd, '.businesslens/business-rules/payment-before-confirmation.md')
     const source = readFileSync(file, 'utf8').replace(
-      'appliesTo:\n  - type: capability\n    id: place-order',
+      'appliesTo:\n  - type: entity\n    id: order\n    effect: changes\n    to: Confirmed',
       'appliesTo:\n  - type: capability\n    id: browse-catalog\n    contexts:\n      - place: customer-web'
     )
     writeFileSync(file, source)
@@ -1102,6 +1124,243 @@ No bullet.
 
     const errors = run(cwd).errors.join('\n')
     expect(errors).toContain('Screen "customer-web::storefront::product-record" does not expose capability "place-order"')
+  })
+
+  it('reads a Screen shared beside experiences/ as inside every Experience of its Interface', () => {
+    const cwd = fixtureCopy()
+    // The fixture shares customer-web::catalog beside the storefront Experience.
+    // A second Experience that browse-catalog is not available in breaks both
+    // the Screen and the Step that occurs on it, and names what is missing.
+    writeResource(join(cwd, '.businesslens/interfaces/customer-web/experiences/account/experience.md'), `---
+actors: [shopper]
+access: authenticated
+entryPoints:
+  - customer-web: /account
+---
+
+# Account
+
+Lead.
+
+## Capability boundary
+
+Orders only.
+`)
+    const errors = run(cwd).errors.join('\n')
+    expect(errors).toContain(
+      'catalog.md: capability "browse-catalog" must be available in every Experience of "customer-web", which shares this Screen; missing "customer-web::account"'
+    )
+    expect(errors).toContain('Context place "customer-web::catalog" is outside capability "browse-catalog"')
+
+    // Offering the Capability in every Experience settles both, and the Step on
+    // the shared Screen covers the new Experience without a Step of its own.
+    const capability = join(cwd, '.businesslens/capabilities/browse-catalog/capability.md')
+    writeFileSync(
+      capability,
+      readFileSync(capability, 'utf8').replace(
+        '{ place: customer-web::storefront }, ',
+        '{ place: customer-web::storefront }, { place: customer-web::account }, '
+      )
+    )
+    const settled = run(cwd).errors.join('\n')
+    expect(settled).not.toContain('which shares this Screen')
+    expect(settled).not.toContain('outside capability "browse-catalog"')
+    expect(settled).not.toContain('availability Context place "customer-web::account" needs Capability Scenario coverage')
+  })
+
+  it('checks Screen reads only against Rules that can select a read', () => {
+    const cwd = fixtureCopy()
+    // A target with `to` selects a state move; a read carries no state, so it
+    // never governs what a Screen presents.
+    writeRule(cwd, 'only-an-operator-lands-refunded', `appliesTo:
+  - type: entity
+    id: order
+    to: Refunded
+permits:
+  - actors: [store-admin]`)
+    expect(run(cwd).errors.filter(error => error.includes('has a grant to read it'))).toEqual([])
+
+    // A read-governing Rule with no grant for the shopper still fails the
+    // shopper Screens that present an Order.
+    writeRule(cwd, 'only-operators-read-orders', `appliesTo:
+  - type: entity
+    id: order
+    effect: reads
+permits:
+  - actors: [store-admin]`)
+    const errors = run(cwd).errors.join('\n')
+    expect(errors).toContain('order-status.md: presents "order", and no actor of "customer-web::storefront" has a grant to read it in rule "only-operators-read-orders"')
+  })
+
+  it('divides an Interface only when no available Capability bridges its audiences, as an error', () => {
+    const cwd = fixtureCopy()
+    const adminWeb = join(cwd, '.businesslens/interfaces/admin-web/interface.md')
+    // admin-web now serves shoppers too; manage-orders is reached by the admin,
+    // cancel-order by the shopper, and nothing bridges them. (The fixture's
+    // admin-cancels-a-paid-order Scenario would bridge them, so it goes.)
+    unlinkSync(join(cwd, '.businesslens/capabilities/cancel-order/scenarios/cancel-a-paid-order-before-fulfilment.md'))
+    writeFileSync(adminWeb, readFileSync(adminWeb, 'utf8').replace('actors: [store-admin]', 'actors: [store-admin, shopper]'))
+    const disjoint = run(cwd)
+    expect(disjoint.errors).toContain(
+      `${adminWeb}: serves Actor sets no available Capability bridges; these are Experiences, not one context`
+    )
+
+    // A Capability both audiences use joins them into one context.
+    writeResource(join(cwd, '.businesslens/capabilities/review-orders/capability.md'), `---
+domain: ordering
+availability: [{ place: admin-web }]
+---
+
+# Review orders
+
+Lets an operator and the shopper look at a disputed order together.
+`)
+    writeResource(join(cwd, '.businesslens/capabilities/review-orders/scenarios/review-an-order-together.md'), `---
+kind: primary
+routes:
+  web: Web
+steps:
+  - text: The admin opens the disputed order
+    kind: actor
+    actor: store-admin
+    entities:
+      - { entity: order, effect: reads }
+    contexts:
+      web:
+        place: admin-web::order-detail
+  - text: The shopper confirms the items listed are what they received
+    kind: actor
+    actor: shopper
+    entities:
+      - { entity: order, effect: reads }
+    contexts:
+      web:
+        place: admin-web::order-detail
+---
+
+# Review an order together
+
+## Trigger
+
+A shopper disputes an order with an operator.
+
+## Outcome
+
+Both have looked at the same order record.
+`)
+    const screen = join(cwd, '.businesslens/interfaces/admin-web/screens/order-detail.md')
+    writeFileSync(screen, readFileSync(screen, 'utf8').replace('  - manage-orders\n', '  - manage-orders\n  - review-orders\n'))
+    const bridged = run(cwd)
+    expect(bridged.errors.filter(error => error.includes('no available Capability bridges'))).toEqual([])
+  })
+
+  it('flags a ceremonial Experience as an error, unless it is a counterpart', () => {
+    const cwd = fixtureCopy()
+    // As authored, customer-web's single storefront Experience is justified by
+    // customer-mobile's counterpart. Rename the mobile one and both stand alone.
+    const bl = join(cwd, '.businesslens')
+    renameSync(join(bl, 'interfaces/customer-mobile/experiences/storefront'), join(bl, 'interfaces/customer-mobile/experiences/shop'))
+    const walk = (directory: string) => {
+      for (const entry of readdirSync(directory, { withFileTypes: true })) {
+        const full = join(directory, entry.name)
+        if (entry.isDirectory()) walk(full)
+        else if (entry.name.endsWith('.md')) {
+          writeFileSync(full, readFileSync(full, 'utf8').replaceAll('customer-mobile::storefront', 'customer-mobile::shop'))
+        }
+      }
+    }
+    walk(bl)
+    const errors = run(cwd).errors.join('\n')
+    expect(errors).toContain('interfaces/customer-web/interface.md: holds Experiences but serves one audience through one access mode, and none is a counterpart; use direct Interface availability')
+    expect(errors).toContain('interfaces/customer-mobile/interface.md: holds Experiences but serves one audience through one access mode, and none is a counterpart')
+  })
+
+  it('reads a word the model declares as a thing, not as a verb, in id vocabulary checks', () => {
+    const cwd = fixtureCopy()
+    const bl = join(cwd, '.businesslens')
+    const entity = (id: string, title: string) => writeResource(join(bl, `entities/${id}.md`), `---
+---
+
+# ${title}
+
+Lead.
+
+## Information kept
+
+- **Quantity** — how many
+`)
+    // `order` and `refund` name Entities here, so these open with a noun.
+    entity('order-line', 'Order line')
+    entity('refund-request', 'Refund request')
+    // `ship` names nothing in this model, so this one does open with a verb.
+    entity('ship-manifest', 'Ship manifest')
+    // The spec's own counter-example: `order` is a thing, so the id carries no verb.
+    cpSync(join(bl, 'capabilities/manage-orders'), join(bl, 'capabilities/order-management'), { recursive: true })
+    // Scenarios are behavioural ids too.
+    cpSync(join(bl, 'capabilities/manage-orders/scenarios/refund-order.md'), join(bl, 'capabilities/manage-orders/scenarios/refund-processing.md'))
+
+    const warnings = run(cwd).warnings.join('\n')
+    expect(warnings).not.toContain('"order-line" opens with a verb')
+    expect(warnings).not.toContain('"refund-request" opens with a verb')
+    expect(warnings).toContain('Entity id "ship-manifest" opens with a verb')
+    expect(warnings).toContain('Capability id "order-management" reads as a noun phrase')
+    expect(warnings).toContain('Capability Scenario id "refund-processing" reads as a noun phrase')
+  })
+
+  it('warns on a Rule that governs exactly one behaviour with no narrowing', () => {
+    const cwd = fixtureCopy()
+    writeRule(cwd, 'orders-are-merged-by-hand', `appliesTo:
+  - type: capability
+    id: manage-orders`)
+    expect(run(cwd).warnings.join('\n')).toContain(
+      'orders-are-merged-by-hand.md: governs only "manage-orders"; a constraint true of one behavior belongs to it as a condition Step or Outcome, not a Business Rule'
+    )
+  })
+
+  it('requires a Domain Boundary to say what the Domain does not own', () => {
+    const cwd = fixtureCopy()
+    const domain = join(cwd, '.businesslens/domains/ordering.md')
+    const source = readFileSync(domain, 'utf8')
+    const boundaryAt = source.indexOf('## Boundary')
+    writeFileSync(domain, `${source.slice(0, boundaryAt)}## Boundary\n\nEverything about orders, from cart to fulfilment.\n`)
+    expect(run(cwd).errors.join('\n')).toContain(
+      'ordering.md: "## Boundary" must state what the Domain does not own, not only what it covers'
+    )
+  })
+
+  it('refuses an actors/ collection and names the replacement', () => {
+    const cwd = fixtureCopy()
+    writeResource(join(cwd, '.businesslens/actors/shopper.md'), '---\nkind: person\n---\n\n# Shopper\n\nLead.\n')
+    expect(run(cwd).errors.join('\n')).toContain(
+      'actors/: there is no Actor resource type; move each file to entities/ and say how it acts with "kind" and "acts"'
+    )
+  })
+
+  it('resolves configuredBy on a grant and on a threshold', () => {
+    const cwd = fixtureCopy()
+    writeRule(cwd, 'large-refunds-are-approved', `appliesTo:
+  - type: entity
+    id: order
+    effect: changes
+    to: Refunded
+permits:
+  - configuredBy: approval-policy
+    when: [{ fact: Total charged, over: { configuredBy: approval-policy } }]`)
+    const errors = run(cwd).errors.join('\n')
+    expect(errors).toContain('grant 1: "configuredBy" references missing entity "approval-policy"')
+    expect(errors).toContain('condition 1: "configuredBy" references missing entity "approval-policy"')
+  })
+
+  it('keys an entry point by the Interface type or another Interface id, never an unknown surface', () => {
+    const cwd = fixtureCopy()
+    const cli = join(cwd, '.businesslens/interfaces/operator-cli.md')
+    const source = readFileSync(cli, 'utf8')
+    // A reader may arrive at the CLI's report from the admin site: another Interface's id is a valid key.
+    writeFileSync(cli, source.replace('entryPoints:\n', 'entryPoints:\n  - admin-web: /admin/tools/cli\n'))
+    expect(run(cwd).errors.filter(error => error.includes('entry point'))).toEqual([])
+
+    writeFileSync(cli, source.replace('entryPoints:\n', 'entryPoints:\n  - kiosk: /kiosk\n'))
+    expect(run(cwd).errors.join('\n')).toContain('operator-cli.md: entry point key "kiosk" must be this Interface\'s type "cli" or another Interface\'s id')
   })
 
   it('rejects unknown config keys', () => {

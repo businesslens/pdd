@@ -370,18 +370,40 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
       )
       if (reached.size) actorSets.push(reached)
     }
-    const disjointAudiences = actorSets.some(left =>
-      actorSets.some(right => left !== right && ![...left].some(actorId => right.has(actorId)))
-    )
+    /*
+     * The audiences are disjoint when the Actors split into groups no Capability
+     * bridges: more than one connected component in the graph of Actors and the
+     * Capabilities available here. Any two Capabilities with no Actor in common
+     * is a different, stricter question — an admin-only and a shopper-only
+     * Capability never share one, however many shared Capabilities sit beside
+     * them — and it is not the one the format asks.
+     */
+    const root = new Map<string, string>()
+    const find = (actorId: string): string => {
+      let current = actorId
+      while (root.get(current) !== undefined && root.get(current) !== current) current = root.get(current)!
+      return current
+    }
+    for (const reached of actorSets) {
+      const [first, ...rest] = [...reached]
+      if (!first) continue
+      if (!root.has(first)) root.set(first, first)
+      for (const other of rest) {
+        if (!root.has(other)) root.set(other, other)
+        root.set(find(other), find(first))
+      }
+    }
+    const components = new Set([...root.keys()].map(find)).size
+    const disjointAudiences = components > 1
     const accessModes = new Set(owned.map(experience => experience.access).filter(Boolean))
     const mustDivide = accessModes.size > 1 || disjointAudiences
 
     /*
-     * Counterpart symmetry is an exception, and a principled one. When the same
-     * Experience name exists under another Interface, the two are counterparts by
-     * construction — the same context on two platforms. Forcing one to flatten
-     * because it happens to carry a single Experience would destroy that
-     * relationship and make two views of one context look unrelated.
+     * Counterpart symmetry is the one exception, and the spec states it: when
+     * the same Experience name exists under another Interface, the two are
+     * counterparts by construction — the same context on two platforms — and
+     * forcing one to flatten would make two views of one context look
+     * unrelated.
      */
     const hasCounterpart = owned.some(experience => {
       const localId = experience.id.split('::').pop()
@@ -390,13 +412,13 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
       )
     })
     if (owned.length && !mustDivide && !hasCounterpart) {
-      warnings.push(
+      errors.push(
         `${productInterface.file}: holds Experiences but serves one audience through one access mode, and none is a counterpart; use direct Interface availability`
       )
     }
     if (!owned.length && disjointAudiences) {
-      warnings.push(
-        `${productInterface.file}: serves Actor sets with disjoint Capability coverage; these are Experiences, not one context`
+      errors.push(
+        `${productInterface.file}: serves Actor sets no available Capability bridges; these are Experiences, not one context`
       )
     }
   }
@@ -413,35 +435,20 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
   // as verb-noun however it ends — `publish-and-share-a-collection` is fine —
   // so only a nominalised id with no verb in it is flagged.
   const PRODUCT_VERBS = new Set([
-    'add', 'answer', 'apply', 'approve', 'archive', 'assign', 'block', 'book', 'browse', 'build',
+    'add', 'answer', 'apply', 'approve', 'archive', 'assign', 'back', 'block', 'book', 'browse', 'build',
     'cancel', 'change', 'check', 'choose', 'close', 'collect', 'compare', 'complete', 'compose',
     'configure', 'confirm', 'connect', 'contribute', 'create', 'decide', 'decline', 'delete',
     'deliver', 'discover', 'edit', 'enter', 'expire', 'explore', 'export', 'find', 'follow',
     'gate', 'generate', 'grant', 'handle', 'import', 'install', 'invite', 'issue', 'join',
     'keep', 'leave', 'link', 'lint', 'list', 'manage', 'map', 'mark', 'merge', 'move', 'name',
     'open', 'order', 'organize', 'pause', 'pay', 'place', 'plan', 'preserve', 'publish', 'pull',
-    'read', 'receive', 'refresh', 'refund', 'reject', 'remove', 'rename', 'reorder', 'reply',
+    'read', 'receive', 'recover', 'refresh', 'refund', 'reject', 'remove', 'rename', 'reorder', 'reply', 'republish',
     'report', 'request', 'reset', 'resolve', 'restore', 'resume', 'retry', 'return', 'review',
     'revoke', 'run', 'save', 'schedule', 'search', 'select', 'send', 'serve', 'set', 'settle',
     'share', 'ship', 'show', 'sign', 'start', 'stop', 'submit', 'subscribe', 'switch',
     'synchronize', 'track', 'transfer', 'unfollow', 'unlist', 'update', 'upload', 'verify',
     'view', 'withdraw', 'write'
   ])
-  const behavioural: Array<{ file: string, id: string, kind: string }> = [
-    ...model.capabilities.map(item => ({ file: item.file, id: item.id, kind: 'Capability' })),
-    ...model.journeys.map(item => ({ file: item.file, id: item.id, kind: 'Journey' }))
-  ]
-  for (const resource of behavioural) {
-    const segments = resource.id.split('-')
-    const last = segments[segments.length - 1] || ''
-    const carriesVerb = segments.some(segment => PRODUCT_VERBS.has(segment))
-    if (NOMINALISED.test(last) && !carriesVerb) {
-      warnings.push(
-        `${resource.file}: ${resource.kind} id "${resource.id}" reads as a noun phrase; a behavioral id starts with a verb`
-      )
-    }
-  }
-
   /*
    * The model's own noun vocabulary: everything an id can legitimately be about.
    * A qualified id also contributes its last segment, since that is how authors
@@ -452,6 +459,26 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     nounVocabulary.add(resource.id)
     const leaf = resource.id.split('::').pop()
     if (leaf) nounVocabulary.add(leaf)
+  }
+  // A word this model declares as a thing is read as that thing, not as a verb:
+  // `order` in `order-management` names the Order, so the id carries no verb.
+  const isVerbSegment = (segment: string) => PRODUCT_VERBS.has(segment) && !nounVocabulary.has(segment)
+
+  const behavioural: Array<{ file: string, id: string, kind: string }> = [
+    ...model.capabilities.map(item => ({ file: item.file, id: item.id, kind: 'Capability' })),
+    ...model.capabilityScenarios.map(item => ({ file: item.file, id: item.id, kind: 'Capability Scenario' })),
+    ...model.journeys.map(item => ({ file: item.file, id: item.id, kind: 'Journey' })),
+    ...model.journeyScenarios.map(item => ({ file: item.file, id: item.id, kind: 'Journey Scenario' }))
+  ]
+  for (const resource of behavioural) {
+    const segments = resource.id.split('-')
+    const last = segments[segments.length - 1] || ''
+    const carriesVerb = segments.some(isVerbSegment)
+    if (NOMINALISED.test(last) && !carriesVerb) {
+      warnings.push(
+        `${resource.file}: ${resource.kind} id "${resource.id}" reads as a noun phrase; a behavioral id starts with a verb`
+      )
+    }
   }
 
   /*
@@ -499,7 +526,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     // though the same word is a verb elsewhere.
     if (segments.length < 2) continue
     const first = segments[0] || ''
-    if (PRODUCT_VERBS.has(first)) {
+    if (isVerbSegment(first)) {
       warnings.push(
         `${resource.file}: ${resource.kind} id "${resource.id}" opens with a verb; cross-cutting ids name what a thing is, not what is done`
       )
@@ -669,6 +696,20 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     screensByContainer.set(screen.containerId, siblings)
   }
 
+  /*
+   * A Screen beside `experiences/` is shared: it is inside every Experience of
+   * its Interface. Containment, Scenario coverage, and Step Contexts therefore
+   * read a divided Interface as the set of its Experiences, and an undivided
+   * Interface or an Experience as itself.
+   */
+  const isDividedInterface = (place: string) => (experiencesByInterface.get(place) || []).length > 0
+  const availabilityPlacesOf = (containerId: string): string[] =>
+    isDividedInterface(containerId)
+      ? (experiencesByInterface.get(containerId) || []).map(experience => experience.id)
+      : [containerId]
+  const insideEvery = (supported: Set<string>, containerId: string) =>
+    availabilityPlacesOf(containerId).every(place => supported.has(place))
+
   const resolveScenarioContext = (label: string, placeId: string) => {
     if (!placeId) {
       errors.push(`${label}: Context needs a non-empty place id`)
@@ -690,7 +731,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     const productInterface = interfacesById.get(placeId)
     if (productInterface) {
       if (experienceScopedInterfaces.has(placeId)) {
-        errors.push(`${label}: Interface "${placeId}" is divided into Experiences, so the Context must name one of them or one of their Screens`)
+        errors.push(`${label}: Interface "${placeId}" is divided into Experiences, so the Context must name one of them, one of their Screens, or a Screen it shares`)
       } else if ((screensByContainer.get(placeId) || []).length) {
         errors.push(`${label}: Interface "${placeId}" owns Screens, so the Context must name one of its Screens`)
       }
@@ -866,7 +907,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
         currentCapabilityStep?.containers.add(resolved.containerId)
         if (capabilityId) {
           const supported = capabilityAvailability.get(capabilityId) || new Set<string>()
-          if (!supported.has(resolved.containerId)) {
+          if (!insideEvery(supported, resolved.containerId)) {
             errors.push(`${contextLabel}: Context place "${resolved.place}" is outside capability "${capabilityId}"`)
           }
           if (resolved.screen && !resolved.screen.capabilities.includes(capabilityId)) {
@@ -1000,11 +1041,11 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     const { allContextPlaces, allContainers } = validateScenarioShape(scenario, scenario.capability)
     capabilityScenarioContextPlaces.set(scenario.id, allContextPlaces)
     const coveredPlaces = coveredCapabilityPlaces.get(scenario.capability) || new Set<string>()
-    for (const place of allContainers) coveredPlaces.add(place)
+    for (const place of allContainers) for (const inside of availabilityPlacesOf(place)) coveredPlaces.add(inside)
     coveredCapabilityPlaces.set(scenario.capability, coveredPlaces)
     const supported = capabilityAvailability.get(scenario.capability) || new Set<string>()
     for (const place of allContainers) {
-      if (!supported.has(place)) {
+      if (!insideEvery(supported, place)) {
         errors.push(`${scenario.file}: Context place "${place}" is outside capability "${scenario.capability}"`)
       }
     }
@@ -1086,8 +1127,8 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     )
     validateListSection(screen.file, screen.doc, 'Information presented', 'bullet')
     validateListSection(screen.file, screen.doc, 'Available actions', 'bullet')
-    if (!availabilityPlaceIds.has(screen.containerId)) {
-      errors.push(`${screen.file}: containing place "${screen.containerId}" must be an undivided Interface or an Experience`)
+    if (!availabilityPlacesOf(screen.containerId).every(place => availabilityPlaceIds.has(place))) {
+      errors.push(`${screen.file}: containing place "${screen.containerId}" must be an Interface or an Experience`)
     }
     if (!screen.capabilities.length) errors.push(`${screen.file}: needs at least one capability`)
     for (const capabilityId of screen.capabilities) {
@@ -1096,9 +1137,11 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
         continue
       }
       const supported = capabilityAvailability.get(capabilityId) || new Set<string>()
-      if (!supported.has(screen.containerId)) {
-        errors.push(`${screen.file}: capability "${capabilityId}" is not available in containing place "${screen.containerId}"`)
-      }
+      const missing = availabilityPlacesOf(screen.containerId).filter(place => !supported.has(place))
+      if (!missing.length) continue
+      errors.push(isDividedInterface(screen.containerId)
+        ? `${screen.file}: capability "${capabilityId}" must be available in every Experience of "${screen.containerId}", which shares this Screen; missing "${missing.join('", "')}"`
+        : `${screen.file}: capability "${capabilityId}" is not available in containing place "${screen.containerId}"`)
     }
     validateEntryPointInterfaces(
       screen.file,
@@ -1113,7 +1156,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
       errors.push(`${screen.file}: "## Available actions" needs at least one bullet item when present`)
     }
     if (section(screen.doc, 'View states') !== undefined && !screen.states.length) {
-      errors.push(`${screen.file}: "## Product states" needs at least one H3 state when present`)
+      errors.push(`${screen.file}: "## View states" needs at least one H3 state when present`)
     }
     const stateNames = new Set<string>()
     for (const state of screen.states) {
@@ -1306,7 +1349,11 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
           errors.push(`${contextLabel}: Context place "${place}" is redundant with "${overlapping}"`)
         }
         seenContextPlaces.push(place)
-        if (!supported.has(place) && ![...supported].some(candidate => containsPlace(place, candidate))) {
+        const sharedScreen = screensById.get(place)
+        const insideTarget = supported.has(place)
+          || [...supported].some(candidate => containsPlace(place, candidate))
+          || (sharedScreen !== undefined && insideEvery(supported, sharedScreen.containerId))
+        if (!insideTarget) {
           errors.push(`${contextLabel}: Context place "${place}" is outside target "${target.type}:${target.id}"`)
         }
       }

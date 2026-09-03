@@ -366,8 +366,10 @@ export const ReportGrantConditionSchema = z.strictObject({
   fact: SingleLineTextSchema.nullable(),
   state: SingleLineTextSchema.nullable(),
   operator: z.enum(GRANT_OPERATORS).nullable(),
+  /* An empty string passed the wire and then failed in staging, as a folder
+     condition with no operator value; the wire refuses it first. */
   value: z.union([
-    z.string(),
+    z.string().min(1),
     z.number(),
     z.boolean(),
     z.strictObject({ configuredByEntityId: IdSchema })
@@ -746,6 +748,27 @@ export function validateProductReport(report: ProductReportV13): string[] {
 
   const screensById = new Map(model.screens.map(screen => [screen.id, screen]))
   const screensByContainer = new Map<string, ReportScreen[]>()
+  /*
+   * A Screen beside `experiences/` is shared: it is inside every Experience of
+   * its Interface. Containment, Scenario coverage, and Step Contexts therefore
+   * read a divided Interface as the set of its Experiences, and an undivided
+   * Interface or an Experience as itself. The folder linter applies the same
+   * reading.
+   */
+  const experienceIdsByInterface = new Map<string, string[]>()
+  for (const experience of model.experiences) {
+    for (const interfaceId of experience.interfaceIds) {
+      const owned = experienceIdsByInterface.get(interfaceId) || []
+      owned.push(experience.id)
+      experienceIdsByInterface.set(interfaceId, owned)
+    }
+  }
+  const isDividedInterface = (place: string) => (experienceIdsByInterface.get(place) || []).length > 0
+  const availabilityPlacesOf = (containerId: string): string[] =>
+    isDividedInterface(containerId) ? experienceIdsByInterface.get(containerId) || [] : [containerId]
+  const insideEvery = (supported: Set<string>, containerId: string) =>
+    availabilityPlacesOf(containerId).every(place => supported.has(place))
+
   const containerForScreen = (screen: ReportScreen): string => parentPlace(screen.id) || ''
   for (const screen of model.screens) {
     const container = containerForScreen(screen)
@@ -766,7 +789,7 @@ export function validateProductReport(report: ProductReportV13): string[] {
     }
     if (interfacesById.has(placeId)) {
       if (experienceScopedInterfaces.has(placeId)) {
-        issues.push(`${label}: Interface "${placeId}" is divided into Experiences, so the Context must name one of them or one of their Screens`)
+        issues.push(`${label}: Interface "${placeId}" is divided into Experiences, so the Context must name one of them, one of their Screens, or a Screen it shares`)
       } else if ((screensByContainer.get(placeId) || []).length) {
         issues.push(`${label}: Interface "${placeId}" owns Screens, so the Context must name one of its Screens`)
       }
@@ -911,7 +934,7 @@ export function validateProductReport(report: ProductReportV13): string[] {
         capabilityStep?.containers.add(resolved.containerId)
         if (step.capabilityId) {
           const supported = capabilityAvailability.get(step.capabilityId) || new Set<string>()
-          if (!supported.has(resolved.containerId)) {
+          if (!insideEvery(supported, resolved.containerId)) {
             issues.push(`${contextLabel}: Context place "${resolved.place}" is outside capability "${step.capabilityId}"`)
           }
           if (resolved.screen && !resolved.screen.capabilityIds.includes(step.capabilityId)) {
@@ -993,11 +1016,11 @@ export function validateProductReport(report: ProductReportV13): string[] {
     capabilityScenarioScreens.set(scenario.id, screenIds)
     capabilityScenarioContextPlaces.set(scenario.id, allContextPlaces)
     const covered = coveredCapabilityPlaces.get(scenario.capabilityId) || new Set<string>()
-    for (const place of allContainers) covered.add(place)
+    for (const place of allContainers) for (const inside of availabilityPlacesOf(place)) covered.add(inside)
     coveredCapabilityPlaces.set(scenario.capabilityId, covered)
     const supported = capabilityAvailability.get(scenario.capabilityId) || new Set<string>()
     for (const place of allContainers) {
-      if (!supported.has(place)) {
+      if (!insideEvery(supported, place)) {
         issues.push(`${label}: Context place "${place}" is outside capability "${scenario.capabilityId}"`)
       }
     }
@@ -1092,8 +1115,8 @@ export function validateProductReport(report: ProductReportV13): string[] {
       ['Intent', 'Information presented', 'Available actions', 'View states', 'Capability boundary']
     )
     const containerId = containerForScreen(screen)
-    if (!availabilityPlaceIds.has(containerId)) {
-      issues.push(`${label}: containing place "${containerId}" must be an undivided Interface or an Experience`)
+    if (!availabilityPlacesOf(containerId).every(place => availabilityPlaceIds.has(place))) {
+      issues.push(`${label}: containing place "${containerId}" must be an Interface or an Experience`)
     }
     missingRelation(issues, label, 'capability', screen.capabilityIds, capabilityIds)
     missingRelation(issues, label, 'Capability Scenario', screen.capabilityScenarioIds, capabilityScenarioIds)
@@ -1102,9 +1125,11 @@ export function validateProductReport(report: ProductReportV13): string[] {
     for (const capabilityId of screen.capabilityIds) {
       const supported = capabilityAvailability.get(capabilityId)
       if (!supported) continue
-      if (!supported.has(containerId)) {
-        issues.push(`${label}: capability "${capabilityId}" is not available in containing place "${containerId}"`)
-      }
+      const missing = availabilityPlacesOf(containerId).filter(place => !supported.has(place))
+      if (!missing.length) continue
+      issues.push(isDividedInterface(containerId)
+        ? `${label}: capability "${capabilityId}" must be available in every Experience of "${containerId}", which shares this Screen; missing "${missing.join('", "')}"`
+        : `${label}: capability "${capabilityId}" is not available in containing place "${containerId}"`)
     }
     const expectedCapabilityScenarios = model.capabilityScenarios
       .filter(scenario => capabilityScenarioScreens.get(scenario.id)?.has(screen.id))
@@ -1336,7 +1361,11 @@ export function validateProductReport(report: ProductReportV13): string[] {
         )
         if (overlapping) issues.push(`${contextLabel}: Context place "${place}" is redundant with "${overlapping}"`)
         seenContextPlaces.push(place)
-        if (!supported.has(place) && ![...supported].some(candidate => containsPlace(place, candidate))) {
+        const sharedScreen = screensById.get(place)
+        const insideTarget = supported.has(place)
+          || [...supported].some(candidate => containsPlace(place, candidate))
+          || (sharedScreen !== undefined && insideEvery(supported, containerForScreen(sharedScreen)))
+        if (!insideTarget) {
           issues.push(`${contextLabel}: Context place "${place}" is outside target "${target.type}:${target.id}"`)
         }
       }
@@ -1620,10 +1649,29 @@ export function projectPortableReport(report: ProductReportV13): ProductReportV1
 }
 
 export function parseProductReport(input: unknown): ProductReportV13 {
-  const report = ProductReportV13Schema.parse(input)
+  const parsed = ProductReportV13Schema.safeParse(input)
+  if (!parsed.success) throw new Error(describeReportShapeError(input, parsed.error))
+  const report = parsed.data
   const issues = validateProductReport(report)
   if (issues.length) throw new Error(`Report validation failed:\n- ${issues.join('\n- ')}`)
   return report
+}
+
+/*
+ * A shape failure is one sentence a person can act on, never Zod's issue array.
+ * The wrong version is the common case and gets its own wording; anything else
+ * names the first offending path.
+ */
+function describeReportShapeError(input: unknown, error: z.ZodError): string {
+  const served = typeof input === 'object' && input !== null && 'schemaVersion' in input
+    ? String((input as { schemaVersion: unknown }).schemaVersion)
+    : undefined
+  if (served !== undefined && served !== REPORT_SCHEMA_VERSION) {
+    return `This is a Product Report of schema version ${served}; only ${REPORT_SCHEMA_VERSION} is accepted, and there is no compatibility reader. Export it again with a current businesslens.`
+  }
+  const first = error.issues[0]
+  const path = first?.path.length ? first.path.map(String).join('.') : 'the report'
+  return `This is not a valid Product Report: at ${path}, ${first?.message ?? 'the shape is wrong'}.`
 }
 
 /** Additional publication policy for a Product Report entering the public Blueprint catalog. */
@@ -1636,10 +1684,25 @@ export function validateBlueprintReport(report: ProductReportV13): string[] {
   if (!report.model.capabilities.length) issues.push('a public Blueprint needs at least one capability')
   const covered = new Map<string, Set<string>>()
   const screenIds = new Set(report.model.screens.map(item => item.id))
-  const availabilityPlace = (placeId: string): string => screenIds.has(placeId) ? parentPlace(placeId) || '' : placeId
+  /* A Step on a Screen the Interface shares beside its Experiences is inside
+     every one of them, so it covers each — the same reading the validator and
+     the folder linter apply. */
+  const experienceIdsByInterface = new Map<string, string[]>()
+  for (const experience of report.model.experiences) {
+    for (const interfaceId of experience.interfaceIds) {
+      experienceIdsByInterface.set(interfaceId, [...(experienceIdsByInterface.get(interfaceId) || []), experience.id])
+    }
+  }
+  const availabilityPlaces = (placeId: string): string[] => {
+    const container = screenIds.has(placeId) ? parentPlace(placeId) || '' : placeId
+    const shared = experienceIdsByInterface.get(container)
+    return shared?.length ? shared : [container]
+  }
   for (const scenario of report.model.capabilityScenarios) {
     const places = covered.get(scenario.capabilityId) || new Set<string>()
-    for (const context of scenario.steps.flatMap(step => step.contexts)) places.add(availabilityPlace(context.placeId))
+    for (const context of scenario.steps.flatMap(step => step.contexts)) {
+      for (const place of availabilityPlaces(context.placeId)) places.add(place)
+    }
     covered.set(scenario.capabilityId, places)
   }
   for (const capability of report.model.capabilities) {

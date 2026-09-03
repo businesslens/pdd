@@ -442,12 +442,13 @@ describe('projectPortableReport', () => {
     )
 
     const narrowedRule = structuredClone(report)
-    const target = narrowedRule.model.businessRules
-      .find(rule => rule.id === 'payment-before-confirmation')!
-      .appliesTo.find(item => item.type === 'capability')!
-    if (target.type !== 'context') {
-      target.contexts = [{ placeId: 'admin-web' }]
-    }
+    // The fixture's Rules all target Entities now; give this one a behavioural
+    // target to narrow, as the folder test does.
+    const narrowedTarget = narrowedRule.model.businessRules.find(rule => rule.id === 'payment-before-confirmation')!
+    narrowedTarget.appliesTo = [
+      { type: 'capability', id: 'place-order', contexts: [{ placeId: 'admin-web' }] },
+      { type: 'journey', id: 'browse-and-buy', contexts: [] }
+    ]
     expect(sdk.validateProductReport(narrowedRule).join('\n')).toContain(
       'Context place "admin-web" is outside target "capability:place-order"'
     )
@@ -622,6 +623,10 @@ describe('projectPortableReport', () => {
     const rule = (value: ProductReportV13, id: string) => value.model.businessRules.find(item => item.id === id)!
 
     const behavioural = structuredClone(report)
+    rule(behavioural, 'payment-before-confirmation').appliesTo = [
+      { type: 'capability', id: 'place-order', contexts: [] },
+      { type: 'journey', id: 'browse-and-buy', contexts: [] }
+    ]
     rule(behavioural, 'payment-before-confirmation').permits = [{
       actorIds: ['store-admin'], related: [], self: false, when: [], unattended: false, configuredByEntityId: null
     }]
@@ -733,12 +738,25 @@ describe('projectPortableReport', () => {
     expect(sdk.validateProductReport(reachedFrom).filter(issue => /entry point/.test(issue))).toEqual([])
   })
 
-  it('rejects historical Product Reports without normalization', () => {
-    for (const schemaVersion of ['4.0.0', '5.0.0', '6.0.0', '7.0.0', '8.0.0', '9.0.0']) {
+  it('rejects historical Product Reports without normalization, in one sentence', () => {
+    for (const schemaVersion of ['4.0.0', '5.0.0', '6.0.0', '7.0.0', '8.0.0', '9.0.0', '10.0.0', '11.0.0', '12.0.0']) {
       const legacy = structuredClone(report) as Record<string, any>
       legacy.schemaVersion = schemaVersion
       expect(sdk.ProductReportSchema.safeParse(legacy).success).toBe(false)
-      expect(() => sdk.parseProductReport(legacy)).toThrow()
+      expect(() => sdk.parseProductReport(legacy)).toThrow(
+        `This is a Product Report of schema version ${schemaVersion}; only 13.0.0 is accepted`
+      )
     }
+    // Any other shape failure names the first offending path, never Zod's issue array.
+    const shapeless = structuredClone(report) as Record<string, any>
+    shapeless.model.entities[0].acts = 'sideways'
+    expect(() => sdk.parseProductReport(shapeless)).toThrow(/^This is not a valid Product Report: at model\.entities\.0\.acts, /)
+  })
+
+  it('refuses an empty grant condition value on the wire', () => {
+    const empty = structuredClone(report)
+    const rule = empty.model.businessRules.find(item => item.id === 'refunds-need-an-operator')!
+    rule.permits![0]!.when[0]!.value = ''
+    expect(sdk.ProductReportSchema.safeParse(empty).success).toBe(false)
   })
 })
