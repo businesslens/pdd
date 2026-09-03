@@ -10,7 +10,7 @@ steps:
       - { entity: catalog-product, effect: reads }
     contexts:
       web:
-        place: customer-web::storefront::product-record
+        place: customer-web::catalog
       mobile:
         place: customer-mobile::storefront::product-record
   - text: The shopper opens a product page

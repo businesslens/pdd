@@ -11,7 +11,7 @@ steps:
       - { entity: source, effect: reads }
     contexts:
       web:
-        place: reader-web::personal-library::saved-items
+        place: reader-web::item-reader
       mobile:
         place: reader-mobile::personal-library::saved-items
   - text: The Reader consumes the item from the saved library
@@ -21,7 +21,7 @@ steps:
       - { entity: item, effect: reads }
     contexts:
       web:
-        place: reader-web::personal-library::saved-items
+        place: reader-web::item-reader
       mobile:
         place: reader-mobile::personal-library::saved-items
   - text: The saved state remains unchanged unless the Reader explicitly removes it

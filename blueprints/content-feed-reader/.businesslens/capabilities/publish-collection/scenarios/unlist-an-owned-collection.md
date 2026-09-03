@@ -35,4 +35,5 @@ The Reader revokes public access to an owned published collection.
 
 ## Outcome
 
-The collection is private and its former public address serves no contents.
+The collection is unlisted: its former public address serves no contents, and
+the collection itself stays in the owner's library until they publish it again.

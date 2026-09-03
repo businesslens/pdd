@@ -19,9 +19,14 @@ references:
 
 # Model writes stay inside the model directory
 
-Anything that writes product meaning writes only inside `.businesslens/`. The
-repository's own `AGENTS.md`, `CLAUDE.md`, and root README are left byte for
-byte as they were, and no managed block is added to a file the repository owns.
+Anything that writes product meaning writes only inside `.businesslens/`, with
+one exception the Developer asks for by name: opening or pulling a Blueprint
+with `--force` over an existing model first moves that model to a timestamped
+`.businesslens.backup-<timestamp>/` sibling. The backup is a sibling of the
+directory it copies, requested explicitly, and never a shared file other tools
+also manage. The repository's own `AGENTS.md`, `CLAUDE.md`, and root README are
+left byte for byte as they were, and no managed block is added to a file the
+repository owns.
 
 ## Rationale
 

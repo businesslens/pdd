@@ -11,7 +11,7 @@ steps:
       - { entity: source, effect: reads }
     contexts:
       web:
-        place: reader-web::personal-library::unread-library
+        place: reader-web::item-reader
       mobile:
         place: reader-mobile::personal-library::unread-library
   - text: The Reader consumes the item
@@ -21,7 +21,7 @@ steps:
       - { entity: item, effect: reads }
     contexts:
       web:
-        place: reader-web::personal-library::unread-library
+        place: reader-web::item-reader
       mobile:
         place: reader-mobile::personal-library::unread-library
   - text: The item remains available for an explicit track-reading-state or saving decision

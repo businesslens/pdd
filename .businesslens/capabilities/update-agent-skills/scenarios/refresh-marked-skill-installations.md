@@ -42,7 +42,8 @@ match it.
 ## Outcome
 
 Every BusinessLens-marked installation holds the current skills. No unmarked
-directory was discovered, adopted, or changed, and no Product Model was touched.
+directory was discovered, adopted, or changed unless the Developer passed
+`--force`, and no Product Model was touched.
 
 ## Edge cases
 

@@ -39,12 +39,13 @@ steps:
   - text: Reconciliation shows the product cannot be fulfilled
     kind: condition
     entities: []
-  - text: The store admin cancels the order and the payment is released
+  - text: The store admin cancels the order and requests a refund of the charge
     kind: actor
     actor: store-admin
     capability: cancel-order
     entities:
       - { entity: order, effect: changes, from: Confirmed, to: Cancelled }
+      - { entity: refund, effect: creates, to: Requested }
     contexts:
       web-to-admin:
         place: admin-web::order-detail

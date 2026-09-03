@@ -38,7 +38,8 @@ Paid and accepted. Stock is committed and the order is queued for fulfilment.
 ### Cancelled
 
 Withdrawn before fulfilment — by its shopper while unpaid, by an operator, or by
-the Product when payment never arrived. Any committed stock is released.
+the Product when payment never arrived. Any committed stock is released, and a
+charge already taken is repaid.
 
 ### Refunded
 

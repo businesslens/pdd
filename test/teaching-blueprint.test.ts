@@ -14,11 +14,11 @@ describe('Content Feed Reader teaching Blueprint', () => {
     expect(result.counts).toEqual({
       interfaces: 2,
       experiences: 3,
-      screens: 8,
+      screens: 9,
       domains: 3,
       entities: 5,
       capabilities: 10,
-      capabilityScenarios: 26,
+      capabilityScenarios: 30,
       journeys: 4,
       journeyScenarios: 8,
       businessRules: 5

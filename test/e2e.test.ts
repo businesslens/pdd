@@ -53,11 +53,11 @@ describe('end to end on a real git repo', () => {
     expect(parsed.counts).toEqual({
       interfaces: 5,
       experiences: 2,
-      screens: 5,
+      screens: 6,
       domains: 1,
       entities: 8,
       capabilities: 6,
-      capabilityScenarios: 11,
+      capabilityScenarios: 12,
       journeys: 1,
       journeyScenarios: 2,
       businessRules: 12
@@ -111,7 +111,7 @@ describe('end to end on a real git repo', () => {
     expect(references.some(reference => reference.role === 'implementation')).toBe(false)
     expect(parsed.coverage.sourceAreas).toEqual([])
     expect(parsed.model.businessRules.find(rule => rule.id === 'payment-before-confirmation')?.appliesTo)
-      .toContainEqual({ type: 'capability', id: 'place-order', contexts: [] })
+      .toContainEqual({ type: 'entity', entityId: 'order', effect: 'changes', from: null, to: 'Confirmed', facts: [], contexts: [] })
     expect(parsed.model.capabilityScenarios.find(scenario => scenario.id === 'complete-checkout')?.decisionPoints)
       .toHaveLength(1)
     expect(parsed.model.journeyScenarios[0]!.steps.map(step => [step.text, step.capabilityId])).toEqual([

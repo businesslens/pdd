@@ -44,7 +44,8 @@ added.
 ### Source unreachable
 
 The Reader sees which source could not be read and that its earlier items are
-still in the library.
+still in the library. The Product keeps trying on its own schedule, and the
+Reader can unfollow the source rather than wait.
 
 ## Capability boundary
 

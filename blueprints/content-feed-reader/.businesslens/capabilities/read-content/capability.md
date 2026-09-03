@@ -1,6 +1,6 @@
 ---
 domain: reading
-availability: [{ place: reader-web::personal-library }, { place: reader-mobile::personal-library }]
+availability: [{ place: reader-web::personal-library }, { place: reader-web::public-reading }, { place: reader-mobile::personal-library }]
 ---
 
 # Content reading
