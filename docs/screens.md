@@ -26,7 +26,7 @@ components, or every route found in source.
 **Error, legal and other capability-free views are not Screens.** A Screen must
 name at least one Capability, and a not-found page, a privacy policy, or a terms
 page exposes none — nothing about the Product's abilities happens there. Model
-such a view as a Product state of the view it interrupts, or leave it out of the
+such a view as a View state of the view it interrupts, or leave it out of the
 model entirely. A repository rule that every implemented route must appear
 somewhere is a documentation rule, not a Product Model rule; do not satisfy it by
 inventing a Capability the view does not have.
@@ -44,12 +44,13 @@ inventing a Capability the view does not have.
 
 An assetless Screen lives at
 `interfaces/<interface-id>/experiences/<experience-id>/screens/<screen-id>.md`
-(or directly under an undivided Interface's `screens/`). A Screen with assets
+(or directly under an Interface's `screens/`: an undivided Interface's own
+Screens, or a Screen a divided Interface shares across its Experiences). A Screen with assets
 expands to `<screen-id>/screen.md`. The whole Screen collection is optional.
 
 ```md [screens/product-record.md]
 ---
-capabilities: [catalog-browsing]
+capabilities: [browse-catalog]
 entities: [catalog-product]
 entryPoints:
   - customer-web: /products/:id
@@ -87,7 +88,7 @@ The Screen does not change product or inventory data.
 
 | Field or section | Required | Constraint |
 | --- | --- | --- |
-| `capabilities` | yes | Name at least one unique existing Capability; each must declare an availability Context for the Interface or Experience containing this Screen. |
+| `capabilities` | yes | Name at least one unique existing Capability; each must declare an availability Context for the Interface or Experience containing this Screen. A Screen shared beside `experiences/` needs one for every Experience of its Interface, and `lint` names the Experiences a Capability is missing from. |
 | `entities` | no | Name the [Entities](./entities.md) this Screen presents. A Rule that governs who may read one of them is checked against who reaches this Screen. |
 | `entryPoints` | no | Key public routes or deep links by the Interface that holds this Screen. |
 | `references` | no | Use the documented [Reference](./references.md) shape. |
@@ -122,13 +123,18 @@ Entity keeps. Declare the Entity and let the reader follow the link.
 
 An Interface usually holds either `screens/` or `experiences/`. It may hold
 **both** when a Screen is genuinely common to its Experiences rather than
-belonging to one — a search results page, a settings page. A Screen beside
-`experiences/` is reachable from every Experience of that Interface, and two
-Screens with the same name below different Experiences of one Interface are
-counterparts exactly as they are across Interfaces.
+belonging to one — an item reader that opens from a private library and from a
+published collection alike. A Screen beside `experiences/` is reachable from
+every Experience of that Interface, and two Screens with the same name below
+different Experiences of one Interface are counterparts exactly as they are
+across Interfaces.
 
-Reach for this only for a view that really is shared. A Screen that belongs to
-one Experience belongs inside it.
+A shared Screen is inside every Experience of its Interface. Its id is
+`interface-id::screen-id`, every Capability it exposes must be available in
+each Experience, and a Scenario Step on it counts as coverage for each. That is
+the test for whether a view is really shared: if its Capabilities differ by
+Experience, it is two Screens, one under each Experience, which are
+counterparts. A Screen that belongs to one Experience belongs inside it.
 
 ## Web and mobile
 

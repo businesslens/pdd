@@ -1,7 +1,10 @@
 # 0012 — The kind is an Entity; a kind is an Element
 
 Status: **Accepted** — 2026-08-26. Superseded in part by [ADR-0015](./0015-resource-and-resource-type.md): `Entity` stands; the kind
-of file a Product Model holds is a **Resource**, not an Element.
+of file a Product Model holds is a **Resource**, not an Element. Superseded in
+part by [ADR-0016](./0016-one-resource-type-actor-is-the-subset-that-acts.md):
+an Actor is not a resource type beside Entity — an Actor **is** an Entity that
+`acts`.
 
 ## Context
 

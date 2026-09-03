@@ -302,6 +302,67 @@ The Reader has a new private owned collection with the chosen name.
 authority, so no `capability:` field is written. A Journey Scenario has the same
 shape plus a required `result`.
 
+An Entity that acts, in full. `kind` is required exactly because `acts` is
+set; the relation is declared here, on the owner, and its inverse is derived on
+Order:
+
+```markdown
+---
+kind: person
+acts: external
+relations:
+  - entity: order
+    verb: owns
+    cardinality: one-to-many
+---
+
+# Shopper
+
+A person who browses the catalog and buys products.
+
+## Information kept
+
+- **Delivery address** — where their orders are sent
+```
+
+A Business Rule with an Entity target and grants, in full. The target selects
+every Step carrying `{ entity: order, effect: changes, to: Refunded }`; the
+grants say who may perform it, and `when` conditions the grant it sits in:
+
+```markdown
+---
+appliesTo:
+  - type: entity
+    id: order
+    effect: changes
+    to: Refunded
+permits:
+  - related: [{ verb: owns, entity: shopper }]
+    when:
+      - { fact: Total charged, under: 100 }
+  - actors: [store-admin]
+---
+
+# Refunds above the threshold need an operator
+
+A shopper refunds their own order while its total is under 100; a store admin
+refunds any order.
+```
+
+`related` walks the Shopper's `owns` relation back from Order to an Entity that
+acts. `self: true` would say the instance itself may, and requires the targeted
+Entity to act — an Order does not, so `self` here is an error. A `when`
+condition names a `fact` with exactly one operator, optionally on another
+Entity through `entity`, or `{ state: X }` for the instance's current state; a
+`state` condition cannot be combined with `entity` and is invalid on a `creates`
+target. `permits: []` says nobody may. The lifecycle the Rule governs is
+composed from Steps, not declared on Order: a Step's
+`{ entity: order, effect: changes, from: Confirmed, to: Refunded }` is what
+puts Refunded on the machine. `lint` composes every Scenario and warns on an
+**unreached state** — a state other than the first that no Step leaves anything
+in — and an **unproduced origin** — a Step leaving `from: Confirmed` when
+nothing produces Confirmed and it is not the first state.
+
 Context is the single model concept for where behavior applies. In schema 8 it
 is a strict object containing one `place` field. A Capability's availability
 Contexts name an undivided Interface or an Experience:
@@ -312,8 +373,12 @@ availability: [{ place: reader-web::personal-library }, { place: reader-mobile::
 
 An Experience belongs to exactly one Interface, so its id already names it. A
 Context place either names a declared Interface, Experience, or Screen or it
-does not. An Interface holds `screens/`, `experiences/`, or both. Availability
-is intended Product meaning, not implementation status.
+does not. An Interface holds `screens/`, `experiences/`, or both. A Screen
+beside `experiences/` is shared: it is inside every Experience of that
+Interface, so every Capability it exposes must be available in each of them,
+and a Step on it (`interface-id::screen-id`) counts as coverage for each. A
+view whose Capabilities differ by Experience is two Screens, one under each.
+Availability is intended Product meaning, not implementation status.
 
 Business Rule Contexts use the same object shape:
 

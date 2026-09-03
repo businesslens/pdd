@@ -55,6 +55,12 @@ Folder schema **7** and Product Report **v11**, in one release.
 `npm pack --dry-run` inspected, all three skills validated, and the Claude plugin
 manifest validated.
 
+> **2026-09-03.** The release that followed shipped folder schema **8** and
+> Product Report **v13** (0.9.0), after further rounds recorded in
+> [ADR-0013](./adr/0013-relationships-are-product-meaning.md) through
+> [ADR-0018](./adr/0018-steps-are-the-single-source-of-truth.md). The figures
+> above are the schema 7 snapshot and are kept as written.
+
 Two fixes were proven end to end rather than only compiled. An unattended
 Scenario survives export and expansion with its `unattended: true` intact, and
 the expanded model lints clean. An author's `unmapped`, `limitations`, and
@@ -380,6 +386,12 @@ name any place at or below the Capability's availability Context, and `lint`
 warns only when a *more specific* place is available **and the Step is the only
 one in its route**. Separately, allow an Interface to hold `screens/` beside
 `experiences/` for Screens genuinely shared across them.
+
+> **2026-09-03.** The shared-Screen half landed: an Interface may hold
+> `screens/` beside `experiences/`, a Screen there is inside every Experience of
+> its Interface, and the spec, linter, wire validator, fixture, and Blueprint all
+> carry it. The "specificity as a floor" half was **not adopted** — the spec
+> keeps most-specific Contexts, for the reason F10a records.
 
 ### F11 — `entryPoints` has three key vocabularies, one of them enforced
 *legibility*

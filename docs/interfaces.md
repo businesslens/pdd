@@ -58,8 +58,9 @@ the third party is its Actor. Direction decides, not ownership.
 
 An Interface with no assets, Experiences, or Screens lives at
 `interfaces/<interface-id>.md`. Otherwise it expands to
-`interfaces/<interface-id>/interface.md`, with `experiences/` or `screens/`
-nested in that folder.
+`interfaces/<interface-id>/interface.md`, with `experiences/`, `screens/`, or
+both nested in that folder — both only for a [Screen shared across its
+Experiences](./screens.md#screens-shared-across-experiences).
 
 ```md [interfaces/customer-web.md]
 ---
@@ -80,8 +81,8 @@ Supports customer shopping. It does not expose store administration.
 
 | Field or section | Required | Constraint |
 | --- | --- | --- |
-| `type` | yes | Use one supported interaction contract: `web`, `mobile-app`, `desktop-app`, `cli`, `api`, `webhook`, `messaging`, `voice`, or `device`. |
-| `actors` | yes | Name at least one existing Entity that `acts` and may use some part of the Interface; do not repeat an ID. |
+| `type` | yes | Use one supported interaction contract: `web`, `mobile-app`, `desktop-app`, `cli`, `api`, `webhook`, `messaging`, `voice`, `device`, or `agent`. |
+| `actors` | yes | Name at least one existing Entity that `acts` — who uses the Interface, a descriptive list, never a permission claim; do not repeat an ID. |
 | `entryPoints` | no | List Product-facing roots such as `/`, `reader://home`, `product admin`, or `/v1`. Key each one with this Interface's own `type`, or with **another Interface's id** when that is where a reader arrives from — a local web report opened by a command says so here rather than in prose. |
 | `references` | no | Use the documented [Reference](./references.md) shape. |
 | H1 | yes | Name the Interface. |
@@ -104,10 +105,20 @@ complete variations of a coherent multi-Capability goal.
 
 ## With Experiences
 
-An [Experience](./experiences.md) is optional and belongs to exactly one
-Interface: the Interface folder that contains it. Matching Experience names on
-different Interfaces are counterparts, not one shared resource. When an
-Interface has meaningful Experience contexts, Capability availability Contexts
-use their qualified Experience places. When it has none, a Context uses the
-Interface place directly. The [availability rules](./product-model.md#availability)
-show both forms.
+An [Experience](./experiences.md) belongs to exactly one Interface: the
+Interface folder that contains it. Matching Experience names on different
+Interfaces are counterparts, not one shared resource.
+
+Whether an Interface is divided into Experiences is derived from the model,
+never judged by the author. It is divided exactly when it serves more than one
+`access` value, or when its Actors split into groups no Capability available
+there bridges; otherwise it holds no Experiences. `lint` computes both
+conditions and reports a violation as an error, with one exception: an
+Experience whose name also exists under another Interface is a counterpart and
+justifies itself. The [Experience page](./experiences.md#when-you-create-one)
+states the rule in full.
+
+When an Interface is divided, Capability availability Contexts use the
+qualified Experience places. When it is not, a Context uses the Interface place
+directly. The [availability rules](./product-model.md#availability) show both
+forms.

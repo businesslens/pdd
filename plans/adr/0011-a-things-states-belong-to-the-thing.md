@@ -1,7 +1,10 @@
 # 0011 — A thing's states belong to the thing, not to the views that show it
 
 Status: **Accepted** — 2026-08-26. The kind is named **Entity**; see
-[ADR-0012](./0012-entity-and-element.md).
+[ADR-0012](./0012-entity-and-element.md). Superseded in part by
+[ADR-0018](./0018-steps-are-the-single-source-of-truth.md): an asset `state:`
+is valid only on a Screen, where it names a View state, and the thing's
+lifecycle is composed from Scenario Steps rather than declared on the Entity.
 
 ## Context
 

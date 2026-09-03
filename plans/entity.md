@@ -1,8 +1,14 @@
 # The Entity: design and outcome
 
-Status: **implemented.** Settled across nine grilling rounds and recorded as
+Status: **schema 7 design, superseded.** The design below is what shipped in
+folder schema 7, settled across nine grilling rounds and recorded as
 [ADR-0009](./adr/0009-what-the-product-keeps-is-in-scope.md) through
-[ADR-0012](./adr/0012-entity-and-element.md).
+[ADR-0012](./adr/0012-entity-and-element.md). It was superseded by
+[ADR-0013](./adr/0013-relationships-are-product-meaning.md) through
+[ADR-0018](./adr/0018-steps-are-the-single-source-of-truth.md): structured
+`relations` exist, `## Transitions` and Capability `entities:` are gone, the
+lifecycle is composed from Scenario Steps, and an Actor is an Entity that
+`acts`. The body is kept as written; read `spec/format.md` for what is current.
 
 ## What was wrong
 

@@ -1,6 +1,10 @@
 # 0009 — What the Product keeps is in scope
 
-Status: **Accepted** — 2026-08-26
+Status: **Accepted** — 2026-08-26. Superseded in part by
+[ADR-0013](./0013-relationships-are-product-meaning.md): structured relations
+between Entities exist — `relations: [{ entity, verb, cardinality }]` in
+frontmatter — and only the *data-model* reading (types, keys, foreign keys)
+stays out of scope.
 
 ## Context
 

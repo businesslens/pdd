@@ -2,7 +2,10 @@
 
 Status: **Accepted** — 2026-08-26. Amended the same day: the kind is named
 **Entity**, and the test is **identity rather than persistence**. See
-[ADR-0012](./0012-entity-and-element.md).
+[ADR-0012](./0012-entity-and-element.md). Superseded in part by
+[ADR-0018](./0018-steps-are-the-single-source-of-truth.md): transitions are not
+declared on the Entity — the lifecycle is composed from Scenario Steps — and an
+asset `state:` is valid only on a Screen, never on an Entity.
 
 ## Context
 

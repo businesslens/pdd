@@ -11,13 +11,15 @@
 
 ## Choose stable resources
 
-- Actors differ by Product goals, triggers, responsibilities, or privileges;
-  classify each as person/system and internal/external.
-- An AI agent harness that loads a skill and acts in the repository is an Actor:
-  id `ai-agent`, kind system, relationship external. It initiates, it reads and
-  writes on the person's behalf, and it chooses what to inspect and propose. Do
-  not name it after one use of it, and do not promote a fixed-command CI runner
-  by analogy.
+- An Actor is a role, not a resource type: an Entity that carries
+  `kind: person|system` and `acts: external|internal`, relative to the Product
+  boundary. Actors differ by Product goals, triggers, responsibilities, or
+  privileges; two roles with the same goals and permissions are one Entity.
+- An AI agent harness that loads a skill and acts in the repository is an Entity
+  that acts: id `ai-agent`, `kind: system`, `acts: external`. It initiates, it
+  reads and writes on the person's behalf, and it chooses what to inspect and
+  propose. Do not name it after one use of it, and do not promote a
+  fixed-command CI runner by analogy.
 - An external system is an Actor only when it initiates. An outbound client the
   target repository calls—a polled feed, payment processor, mail provider, model
   API—is not an Actor and gets no Interface. Map it inside the Capability that
@@ -29,22 +31,34 @@
   Interfaces are inbound; an inbound webhook or callback endpoint qualifies and
   makes its caller an Actor. Assign the authored interaction type that matches
   the contract; never infer it from technology, naming, or implementation.
-- Experiences are optional coherent Actor contexts with stable access and
-  capability boundaries across one or more Interfaces. Omit them when an
-  Interface is already one coherent context; do not equate them with a page,
-  command group, route tree, API, or CLI.
+- An Experience is a coherent Actor context with a stable access and capability
+  boundary inside exactly one Interface — the folder that holds it. Whether an
+  Interface is divided into Experiences is derived, never judged: it is divided
+  when it serves more than one `access` value, or when its Actors split into
+  groups no Capability available there bridges (a Capability bridges the Actors
+  its Scenario Steps name). Otherwise it holds no Experiences and availability
+  names the Interface directly. `lint` decides and reports a violation as an
+  error; the one exception is an Experience whose name also exists under
+  another Interface — a counterpart, which justifies itself. Do not equate an
+  Experience with a page, command group, route tree, API, or CLI.
 - Screens are optional stable user-visible views. Model their information,
-  actions, product-significant states, and capability boundary—not components,
-  layouts, routes mechanically discovered from source, or visual variants.
-- Reuse one Screen across web and mobile when its product semantics are shared;
-  separate it only when purpose, information, actions, states, or boundaries
-  materially differ.
+  actions, View states, and capability boundary—not components, layouts, routes
+  mechanically discovered from source, or visual variants.
+- A Screen belongs to one Interface or Experience. The same view on web and on
+  mobile is two Screens with the same name — counterparts, told apart by their
+  path — each stating its own purpose, information, actions, and boundary, so a
+  divergence between them is visible instead of silent.
 - Domains optionally group recognizable Product areas; zero is valid.
 - Capabilities are durable Product abilities, not UI labels, Journey titles, or
   sequence steps. Map availability Contexts to an undivided Interface or an
   Experience only when the repository supports that claim.
-- Business rules are reusable policies or invariants with typed behavioral or
-  direct Context targets. Derive Domain backlinks instead of targeting Domains.
+- Business Rules are durable constraints, derivations, or permissions with typed
+  behavioral, direct Context, or Entity targets. An Entity target selects an
+  operation on a thing (`effect`, `from`, `to`) or the facts it governs; who may
+  perform it is a `permits` grant — `actors`, `related`, `self`, `unattended`,
+  `configuredBy`, each optionally conditioned by `when` — and permission claims
+  live only here, never in Scenario prose. Derive Domain backlinks instead of
+  targeting Domains.
 - Capability Scenarios state observable acceptance for one Capability through
   typed Steps and named routes of most-specific Context places. Cover primary,
   permission, validation, conflict, and external-failure behavior only where it differs.
@@ -119,9 +133,12 @@ closed vocabularies** are what it *is*: where there are no instances, only
 members of a fixed list, that is a vocabulary. Discriminator: does the Product
 keep information about instances of this, or is this the Product itself?
 
-An Entity has only two authored edges — the `entities` list on a Capability that
-acts on it and on a Screen that presents it — so an Entity nothing declares is
-unused vocabulary and fails `lint`.
+A Capability declares nothing about Entities. The authored edge to a thing is
+the `entities` list on a Scenario Step that creates, changes, or removes it, and
+on a Screen that presents it; an Entity is also kept alive by being named as an
+actor, or read by a Business Rule as a condition's `entity` or a `configuredBy`.
+A Step's `reads` and a relation from another Entity never count, so an Entity
+none of those point at is unused vocabulary and fails `lint`.
 
 ## Use References honestly
 

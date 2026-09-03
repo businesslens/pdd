@@ -19,34 +19,35 @@ counterparts with separate qualified ids, not one shared resource.
 
 ## When you create one
 
-**This is decided by rule, not by judgment.** An Interface holds Experiences
-exactly when one of the following is true of it, and holds none when neither is:
+**Whether an Interface is divided into Experiences is derived, never judged.**
+An Interface holds Experiences exactly when one of two inputs says so, and holds
+none when neither does:
 
 - it serves more than one `access` value; or
-- it serves two or more Actor sets whose Capability coverage is disjoint — no
-  Capability available there lists Actors from both sets.
+- its Actors split into groups that no Capability available there bridges.
+  Formally: take the graph whose nodes are the Interface's Actors and the
+  Capabilities available on it, with an edge wherever a Capability's Scenario
+  Steps name the Actor; the Interface is divided when that graph has more than
+  one connected component.
 
-`lint` computes both from `actors`, `access`, and each Capability's
-`availability`, so you never have to argue the question. There is one exception:
-an Interface may keep a single Experience when another Interface has an
-Experience of the same name, because the two are counterparts and flattening one
-would make two views of one context look unrelated.
+`lint` computes both from `actors`, `access`, each Capability's `availability`,
+and its Scenarios' Steps, so the author never applies a prose test. An
+Interface that holds Experiences when neither input calls for them, or holds
+none when one does, is a `lint` **error**. There is one exception: an Experience
+whose name also exists under another Interface is a counterpart — the same
+context on another platform — and justifies itself, because flattening it would
+make two views of one context look unrelated.
 
-The conditions below explain what the rule is protecting:
+The rule protects one thing: an Experience is a context that stays meaningful
+when routes, commands, or navigation are reorganized, because it is defined by
+who is there and what they can do, not by how the surface is laid out. An
+overview page is usually a Screen, not an Experience. A command group is an
+Experience only when the rule divides its Interface, not because a parser groups
+its commands.
 
-1. it represents a coherent Actor context;
-2. it has a meaningful capability boundary and exclusions;
-3. it remains meaningful if routes, commands, or navigation are reorganized;
-4. it normally supports several goals, Capabilities, Screens, or commands.
-
-An overview page is usually a Screen, not an Experience. A command group is an
-Experience only when it represents a durable operating context, not just parser
-organization.
-
-Use no Experiences when every Interface is already one coherent context. In
-that case, availability names the Interface directly. Do not create a
-one-to-one Experience merely to satisfy the file shape or make the report look
-full.
+When neither input divides an Interface, availability names the Interface
+directly. Do not create a one-to-one Experience to satisfy the file shape or
+make the report look full; `lint` refuses it.
 
 ## The file
 

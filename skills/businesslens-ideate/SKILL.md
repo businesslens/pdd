@@ -68,8 +68,14 @@ Read before authoring:
    Propose concrete wording so the user corrects drafts rather than dictating
    schema. Make supported web/mobile/CLI/API/integration Interfaces an explicit
    Product decision; do not treat technologies or internal APIs as Interfaces.
-   Apply the Experience creation test. Omit Experiences and use direct
-   Interface availability when an Interface is already one coherent context.
+   Whether an Interface is divided into Experiences is derived, never judged,
+   from two inputs: divide it when it serves more than one `access` value, or
+   when its Actors split into groups no Capability available there bridges (a
+   Capability bridges the Actors its Scenario Steps name). Otherwise it holds
+   no Experiences and availability names the Interface directly. `lint` decides
+   and reports a violation as an error; the one exception is an Experience
+   whose name also exists under another Interface, a counterpart that justifies
+   itself. Do not apply a prose test of your own.
    Distinguish durable Capabilities from complete Actor goals. Give every
    Capability per-Capability acceptance. Decide the nouns as deliberately as the
    verbs: create an Entity for a thing an Actor would call *"this one"* and the
@@ -94,6 +100,16 @@ Read before authoring:
 9. Present the complete model delta before writing: every resource added,
    changed, or removed; Capability and Journey acceptance Scenarios;
    relationship repairs; limitations; and implementation work implied. Get explicit approval.
+
+   **Always end the delta with a `Judgment calls` section**, naming every
+   choice that could defensibly have gone the other way, the alternative it was
+   chosen over, and why. Capability granularity, Entity granularity — one
+   Entity per thing, or one standing for several — whether something warranted
+   an Interface, an Experience, an Entity or a Journey, whether a constraint is
+   a Business Rule, and who may perform an operation, all belong there. A
+   reviewer can see what the delta says but not what it omits, so an unstated
+   judgment call is one nobody can challenge — which makes the approval a
+   formality rather than a check.
 10. After approval, write only inside `.businesslens/`:
     - blank slate: create the complete layout, canonical README, `.gitignore`,
       taxonomies, product, coverage, and all approved resources;

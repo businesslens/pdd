@@ -2,6 +2,11 @@
 
 Status: **Accepted** — 2026-08-26
 
+Implemented: `spec/format.md` Journey rule restated structurally, 2026-09-03 —
+a Journey is established by an achieved Journey Scenario spanning two or more
+Capabilities toward its Actor outcome; whether code implements it is
+`coverage.status`'s claim.
+
 ## Context
 
 The same nine entity kinds serve two opposite directions.

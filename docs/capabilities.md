@@ -332,8 +332,11 @@ Experience.
 
 A Step Context is concrete and most-specific. If its availability boundary owns
 Screens, its `place` names the Screen. Otherwise it names the leaf Experience
-or undivided Interface. Actor support, Screen participation, and backlinks are
-all derived from these Context claims.
+or undivided Interface. A Step on a Screen an Interface shares across its
+Experiences names that Screen as `interface-id::screen-id`; it is inside the
+Capability's availability only when every Experience of that Interface is, and
+it counts as coverage for each. Actor support, Screen participation, and
+backlinks are all derived from these Context claims.
 
 ### Capability Scenario decision points
 

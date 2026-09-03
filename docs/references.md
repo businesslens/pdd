@@ -50,7 +50,7 @@ screens/unread-library/
 ```
 
 An asset needs no frontmatter entry. Add optional `assets:` metadata only when
-it needs a title or, on a Screen, a Product state:
+it needs a title or, on a Screen, a View state:
 
 ```yaml
 assets:
@@ -103,7 +103,7 @@ role meaningful.
 ## Naming the state a capture shows
 
 A [Screen](./screens.md) often collects several captures of the same view — one
-per Product state, sometimes doubled for light and dark. An optional `state` on
+per View state, sometimes doubled for light and dark. An optional `state` on
 either asset metadata or a Reference names which one:
 
 ```yaml
@@ -115,8 +115,8 @@ references:
     state: Journeys
 ```
 
-`state` is valid only on a Screen and must match one of its `## Product states`
-H3 titles. Themes are not Product states, so a light and a dark capture of the
+`state` is valid only on a Screen and must match one of its `## View states`
+H3 titles. Themes are not View states, so a light and a dark capture of the
 same state are two attachments sharing one `state` value.
 
 Without it, six captures of one Screen arrive as a flat list distinguishable
@@ -176,9 +176,9 @@ portable projection. `open`, `pull`, and `contribute` apply the same projection.
 | `code reference path "…" is not a tracked file` | Fix or remove stale navigation. |
 | duplicate Reference target | Keep only one attachment to that target on the resource. |
 | missing local target warning | Fix the target or remove it; warnings do not fail lint. |
-| `reference state "…" is not a product state of this Screen` | Name an authored `## Product states` H3, or drop the key. |
+| `reference state "…" is not a view state of this Screen` | Name an authored `## View states` H3, or drop the key. |
 | `reference "state" is only valid on a Screen` | No other resource type has a state set for it to resolve against. |
 | asset metadata names a missing file | Expand the resource and add the file, or remove the stale metadata. |
-| asset state does not name a Product state | Name an authored Screen H3 or remove `state`. |
+| asset state does not name a View state | Name an authored Screen H3 or remove `state`. |
 
 There is no missing-Reference finding. A complete model may contain none.

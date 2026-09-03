@@ -92,11 +92,15 @@ Read before authoring:
    commands, APIs, and integrations
    are evidence, not automatic Interfaces. Create an Interface only for a
    supported Product interaction contract, and do not infer cross-Interface
-   parity from shared implementation. Apply the Experience creation test: a
-   coherent Actor context, stable access and capability boundary, meaning beyond
-   current navigation, and independently meaningful availability. If
-   an Interface has no meaningful contexts, omit Experiences for it and use
-   direct Interface availability. A Screen is warranted only for a stable
+   parity from shared implementation. Whether an Interface is divided into
+   Experiences is derived, never judged, from two inputs: divide it when it
+   serves more than one `access` value, or when its Actors split into groups no
+   Capability available there bridges (a Capability bridges the Actors its
+   Scenario Steps name). Otherwise it holds no Experiences and availability
+   names the Interface directly. `lint` decides and reports a violation as an
+   error; the one exception is an Experience whose name also exists under
+   another Interface, a counterpart that justifies itself. Do not apply a prose
+   test of your own. A Screen is warranted only for a stable
    user-visible product view; do not turn every
    route, component, viewport, or visual variant into one. Preserve valid
    existing meaning in a scoped expansion. **Attach what you actually read.**

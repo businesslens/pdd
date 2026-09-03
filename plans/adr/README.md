@@ -18,12 +18,12 @@ do not carry docs frontmatter.
 | [0006](./0006-determinism-is-verified-by-independent-double-authoring.md) | Determinism is verified by independent double-authoring | Accepted |
 | [0007](./0007-blueprints-are-provenance-neutral.md) | Blueprints are provenance-neutral by design | Accepted |
 | [0008](./0008-an-ai-agent-harness-is-an-actor.md) | An AI agent harness is an Actor, named `ai-agent` | Superseded in part by [0016](./0016-one-resource-type-actor-is-the-subset-that-acts.md) |
-| [0009](./0009-what-the-product-keeps-is-in-scope.md) | What the Product keeps is in scope | Accepted |
-| [0010](./0010-a-thing-the-product-keeps.md) | A thing the Product keeps is its own entity | Accepted |
-| [0011](./0011-a-things-states-belong-to-the-thing.md) | A thing's states belong to the thing, not the views that show it | Accepted |
-| [0012](./0012-entity-and-element.md) | The kind is an Entity; a kind is an Element | Superseded in part by [0015](./0015-resource-and-resource-type.md) |
+| [0009](./0009-what-the-product-keeps-is-in-scope.md) | What the Product keeps is in scope | Superseded in part by [0013](./0013-relationships-are-product-meaning.md) |
+| [0010](./0010-a-thing-the-product-keeps.md) | A thing the Product keeps is its own entity | Superseded in part by [0018](./0018-steps-are-the-single-source-of-truth.md) |
+| [0011](./0011-a-things-states-belong-to-the-thing.md) | A thing's states belong to the thing, not the views that show it | Superseded in part by [0018](./0018-steps-are-the-single-source-of-truth.md) |
+| [0012](./0012-entity-and-element.md) | The kind is an Entity; a kind is an Element | Superseded in part by [0015](./0015-resource-and-resource-type.md) and [0016](./0016-one-resource-type-actor-is-the-subset-that-acts.md) |
 | [0013](./0013-relationships-are-product-meaning.md) | Relationships between Entities are product meaning | Superseded in part by [0016](./0016-one-resource-type-actor-is-the-subset-that-acts.md) |
-| [0014](./0014-relations-and-transitions-live-in-frontmatter.md) | Relational structure lives in frontmatter | Superseded in part by [0018](./0018-steps-are-the-single-source-of-truth.md) |
+| [0014](./0014-relations-and-transitions-live-in-frontmatter.md) | Relational structure lives in frontmatter | Superseded in part by [0013](./0013-relationships-are-product-meaning.md) and [0018](./0018-steps-are-the-single-source-of-truth.md) |
 | [0015](./0015-resource-and-resource-type.md) | A resource, and its resource type | Accepted |
 | [0016](./0016-one-resource-type-actor-is-the-subset-that-acts.md) | There is one resource type for things; Actor is the subset that acts | Accepted |
 | [0017](./0017-a-business-rule-states-what-must-remain-true.md) | A Business Rule states what must remain true, including who may | Accepted |

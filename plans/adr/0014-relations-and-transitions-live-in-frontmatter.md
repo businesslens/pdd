@@ -2,7 +2,7 @@
 
 Status: **Accepted** — 2026-08-27
 
-Superseded in part by [0018](./0018-steps-are-the-single-source-of-truth.md): relations stay in frontmatter; `transitions` is deleted and the lifecycle is composed from Steps.
+Superseded in part by [0013](./0013-relationships-are-product-meaning.md) and [0018](./0018-steps-are-the-single-source-of-truth.md): relations stay in frontmatter, but `cardinality` states both ends — `one-to-one|one-to-many|many-to-many`, not `one` or `many`; `transitions` is deleted and the lifecycle is composed from Steps, each of which carries an `entities` list of `{ entity, effect, from, to }` effects rather than a single `entity` + `state`.
 
 ## Context
 

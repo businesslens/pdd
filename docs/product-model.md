@@ -182,8 +182,8 @@ availability:
 ```
 
 Do not invent a ceremonial Experience for an Interface with only one coherent
-context. An Interface holds either Screens directly or Experiences, never
-both. The Experiences inside an Interface must collectively cover all of its
+context. An Interface holds Screens directly, or Experiences, or both when a
+Screen is genuinely shared across every one of its Experiences. The Experiences inside an Interface must collectively cover all of its
 Actors. Availability is intended Product meaning; it is not inferred from
 shared code, routes, packages, or protocols.
 
@@ -248,8 +248,15 @@ Behavioral ids are **verb-noun**; cross-cutting ids are the **bare noun**.
 Two further rules bind ids to vocabulary the model already declares. A
 behavioral id's **noun half names something the model declares** —
 `install-agent-skills`, not `install-skills`, when `agent-skills` is an
-Interface. And an Entity, Domain, or Business Rule id **never opens with a
-verb**: `refunds-apply-only-to-existing-orders`, not `refund-existing-orders`.
+Interface. And a cross-cutting id — Entity, Domain, Interface, Experience,
+Screen, or Business Rule — **never opens with a verb**:
+`refunds-apply-only-to-existing-orders`, not `refund-existing-orders`.
+
+`lint`'s vocabulary checks are heuristics, and warnings rather than errors: a
+behavioral id whose last segment is a nominalisation (`-ing`, `-ment`, `-tion`,
+and the like) with no verb segment warns, and a cross-cutting id whose first
+segment is a verb warns unless that segment also names a thing in the model —
+`order-line` is fine when an Entity `order` exists.
 
 This is a rule rather than a style because ids are the model's whole identity
 mechanism. Two models of one product that name the same behavior differently
