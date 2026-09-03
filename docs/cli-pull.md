@@ -55,7 +55,9 @@ Before writing any Product Model files, `pull` refuses:
 - redirects;
 - reports larger than 8 MiB;
 - a missing or malformed report digest, or one that does not match the body;
-- a response served for a different Blueprint; and
+- a response served for a different Blueprint;
+- a report served for a different Product Report version than this CLI reads;
+  and
 - not-found, withdrawn, and catalog-unavailable responses.
 
 ## Catalog contract
@@ -71,6 +73,29 @@ response is the Product Report body and must include
 `x-businesslens-blueprint` and `x-businesslens-report-digest`. The logo endpoint
 keeps visual identity on the same catalog and revision as the report; a missing
 logo does not prevent the Product Model itself from being pulled.
+
+### Report version
+
+`pull` asks for the one Product Report version it reads, by name:
+
+```text
+accept: application/vnd.businesslens.report+json; version=13, application/json
+```
+
+The `version` parameter is the report schema's major alone, and it is the whole
+compatibility statement: there is no compatibility reader, so a report of
+another major is refused rather than migrated. `application/json` is the
+fallback for a catalog that does not negotiate media types.
+
+Answer with either content type. If you answer with the report media type,
+carry the `version` parameter of the report you are serving — a response whose
+`version` differs from the one asked for is refused before its body is read,
+naming both versions. A response with no `version` parameter is read, and a
+mismatched `schemaVersion` inside the body is refused by validation instead.
+
+If you serve more than one report version, use the requested `version` to choose
+the representation. Any other failing status is reported with its code and, when
+the body is JSON, its `message`.
 
 | Status | Meaning |
 | --- | --- |

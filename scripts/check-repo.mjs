@@ -43,6 +43,15 @@ const localViewer = JSON.parse(await readFile(resolve(root, 'viewer/app/package.
 const reportContract = await readFile(resolve(root, 'src/core/portable.ts'), 'utf8')
 const reportViewerReadme = await readFile(resolve(root, 'layers/nuxt/report-viewer/README.md'), 'utf8')
 const nuxtConsumerFixture = await readFile(resolve(root, 'test/fixtures/nuxt-layer-consumer/app/app.vue'), 'utf8')
+const reportViewerEntry = await readFile(
+  resolve(root, 'layers/nuxt/report-viewer/app/components/BusinessLensReportViewer.vue'), 'utf8'
+)
+const reportViewerSections = await readFile(
+  resolve(root, 'layers/nuxt/report-viewer/app/utils/pageSections.ts'), 'utf8'
+)
+const pullCommand = await readFile(resolve(root, 'src/commands/pull.ts'), 'utf8')
+const reportSpec = await readFile(resolve(root, 'spec/report.md'), 'utf8')
+const pullDoc = await readFile(resolve(root, 'docs/cli-pull.md'), 'utf8')
 const expectedSkills = [
   'businesslens-map',
   'businesslens-ideate',
@@ -61,6 +70,41 @@ if (!reportVersion || !reportMajor) {
   if (!nuxtConsumerFixture.includes(`ProductReportV${reportMajor}`)
     || !nuxtConsumerFixture.includes(`schemaVersion: '${reportVersion}'`)) {
     errors.push(`packed Nuxt consumer must exercise Product Report v${reportMajor}`)
+  }
+  /*
+   * The version travels in the report media type, and the two registers a
+   * catalog operator reads are the wire contract and the pull page. A hard-coded
+   * major went stale in the CLI once already; pin the prose to the same source.
+   */
+  const negotiated = `version=${reportMajor}`
+  if (!pullCommand.includes('version=${REPORT_MAJOR}') || /version=\d/.test(pullCommand)) {
+    errors.push('blueprint pull must derive the accepted report version, never hard-code it')
+  }
+  for (const [label, source] of [['spec/report.md', reportSpec], ['docs/cli-pull.md', pullDoc]]) {
+    if (!source.includes(negotiated)) {
+      errors.push(`${label} must document the catalog media type parameter ${negotiated}`)
+    }
+  }
+}
+
+/*
+ * The report-viewer README is the only documentation a Nuxt host gets, so the
+ * page structure and the bindable models it promises are pinned to the
+ * component that actually declares them.
+ */
+for (const model of [...reportViewerEntry.matchAll(/defineModel<[^>]+>\('([^']+)'/g)].map(match => match[1])) {
+  if (!reportViewerReadme.includes(`\`${model}\``)) {
+    errors.push(`report-viewer README must document the bindable "${model}" model`)
+  }
+}
+const pageTabUnion = reportViewerSections.match(/export type PageTabId = ([^\n]+)/)?.[1]
+if (!pageTabUnion) {
+  errors.push('report-viewer must declare the PageTabId union')
+} else {
+  for (const tab of [...pageTabUnion.matchAll(/'([a-z-]+)'/g)].map(match => match[1])) {
+    if (!reportViewerReadme.toLowerCase().includes(tab)) {
+      errors.push(`report-viewer README must document the "${tab}" page tab`)
+    }
   }
 }
 

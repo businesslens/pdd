@@ -1359,10 +1359,22 @@ Capabilities that define and evaluate it.
 **What `lint` checks.** `lint` checks structural eligibility. It cannot prove
 runtime ownership, a fact's value, or customer configuration, and never claims a
 runtime grant is satisfied. A Step's actor has a **possible grant** in a Rule
-when, for some grant of that Rule: `actors` lists it; or `related` ends on its
-type; or `self` is set and it is the targeted Entity; or `unattended` is set
-and the Scenario is unattended; or `configuredBy` is set — and every `state`
-condition in that grant equals the Step's `from` when the Step has one.
+when some grant of that Rule could admit it — which reads the grant's keys the
+way the algebra above does, **AND**, so every key the grant carries must hold at
+once, and a key it omits constrains nothing:
+
+- `actors`, when present, lists the Step's actor;
+- `related`, when present, ends on the actor's Entity;
+- `self`, when set, requires the actor to be the targeted Entity;
+- `unattended` is set exactly when the Scenario is unattended;
+- `configuredBy` constrains nothing structurally, because the value is the
+  customer's;
+- and every `state` condition in that grant equals the Step's `from` when the
+  Step has one.
+
+*An admin who is also the owner* is therefore one grant carrying both `actors`
+and `related`, and an admin who is not the owner has no possible grant in it.
+Alternatives are separate grants, which is what OR within a Rule is for.
 
 Structure — errors unless marked:
 

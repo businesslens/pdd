@@ -65,6 +65,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The report contract lists a step's `unattended` flag, names a Screen's
   `states`, and adds the Rule-reads escape to the no-orphans rule; an empty
   grant condition value is refused on the wire.
+- **The catalog transport is written down where a catalog operator reads it.**
+  The report media type and its `version` parameter are now in the report
+  contract and on the `blueprint pull` page — what `pull` asks for, what a
+  catalog must answer with, and which mismatch is refused before the body is
+  read. `check-repo` pins both registers and the CLI header to the report
+  schema's major, so the version cannot go stale in prose the way it once did
+  in code.
+- **The report-viewer README documents the page it renders.** An Entity with
+  States adds a Lifecycle tab, and all five navigation models — `section`,
+  `resource`, `tab`, `scenarioRoute`, `routeColumns` — are listed with their
+  defaults and the query parameters the local viewer binds them to.
+  `check-repo` pins the model names and the tab set to the component and the
+  `PageTabId` union.
+- The retired Step keys are named correctly: `entity`, `state`, `changes`, and
+  `reads` are entries of `entities`, while `transitions` was the Entity key.
+  The **possible grant** definition now reads its keys as AND, matching the
+  algebra beside it and the checker, so *an admin who is also the owner* is one
+  grant and not two readings.
 
 ### Changed
 

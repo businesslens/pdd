@@ -304,8 +304,10 @@ else.
 | `## Outcome` | yes | State one local observable result of the Capability. |
 
 A Capability Scenario cannot declare `result`, `actors`, `availability`, or a
-Step `capability`; its parent Capability is implicit. A Step's `changes`,
-`reads`, or `transitions` key is an error naming `entities` as its replacement. Both Scenario types
+Step `capability`; its parent Capability is implicit. A Step key of `entity`,
+`state`, `changes`, or `reads` is an error naming `entities` as its
+replacement — each was an earlier spelling of what a Step does to a thing, and
+all four are now entries of that one list. Both Scenario types
 require frontmatter `steps`, and neither declares its parent—the folder it sits
 in is the parent.
 It cannot use Journey-only `## Goal` or `## Success criterion` sections, and

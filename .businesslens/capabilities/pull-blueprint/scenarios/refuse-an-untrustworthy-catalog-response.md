@@ -10,7 +10,7 @@ steps:
     contexts:
       terminal:
         place: businesslens-cli
-  - text: The catalog answers with a redirect, an oversized body, a missing or malformed digest, a body that does not match its digest, or a different entry than the one asked for
+  - text: The catalog answers with a redirect, an oversized body, a missing or malformed digest, a body that does not match its digest, a different entry than the one asked for, or a report version the Product does not read
     kind: condition
     entities: []
     contexts:

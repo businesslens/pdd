@@ -231,6 +231,38 @@ reference. Present references use `kind: code|prd|spec|proposal|doc|adr|visual|r
 and `role: intent|implementation|context`, and remain subject to the same strict
 shape and target rules defined in [`format.md`](./format.md).
 
+## Media type and version negotiation
+
+A report served over HTTP is `application/vnd.businesslens.report+json`, and its
+version travels in the media type's `version` parameter as the schema's **major
+alone** — `version=13` for `schemaVersion: "13.0.0"`. The major is the whole
+compatibility statement, because there is no compatibility reader: a report of
+another major is refused rather than migrated, and a minor or patch never
+changes what a reader must understand.
+
+`blueprint pull` asks for exactly the version it reads:
+
+```text
+accept: application/vnd.businesslens.report+json; version=13, application/json
+```
+
+`application/json` is the fallback for a catalog that does not negotiate media
+types at all, which is why the response is also accepted with that content type.
+
+A catalog answers with either content type. When it answers with the report
+media type it **must** carry the `version` parameter of the report it is
+serving; a response whose `version` differs from the one asked for is refused
+before its body is parsed, in one sentence naming both versions. A response
+carrying no `version` parameter is read, and a report whose `schemaVersion` then
+names another version is refused by validation instead — also one sentence, and
+also without a Zod issue dump. Stating the version in the header is what moves
+that refusal ahead of the download rather than after it.
+
+Both requests also carry `user-agent: businesslens/<cli-version>`, so a catalog
+operator can tell a CLI pull from a page view. The two response headers a report
+must carry, the logo endpoint, and the status codes are documented for catalog
+operators in [`docs/cli-pull.md`](../docs/cli-pull.md#catalog-contract).
+
 ## Portable projection
 
 Several report fields name the origin repository rather than the product. That

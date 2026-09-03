@@ -9,9 +9,11 @@ A collection row, relation, search result, or topology resource opens the resour
 page directly. The page is the one reading container: it has a URL, a
 breadcrumb, the authored body at full width, and browser back navigation.
 Overview contains identity facts, authored detail, Contexts, relations,
-supporting material, and References. Capability and Journey pages add Scenarios
-as their only second tab; a Scenario URL opens that parent page with the
-Scenario selected. Neighbourhood opens the named Topology surface.
+supporting material, and References. A page has Overview and at most one peer
+tab: Capability and Journey pages add Scenarios, and an Entity with States adds
+Lifecycle, its machine composed from every Step that moves the thing. A Scenario
+URL opens that parent page with the Scenario selected. Neighbourhood opens the
+named Topology surface.
 
 Authored Capability Context has one dedicated Overview reading instead of being
 repeated as a resource fact. Derived Journey and Scenario Contexts stay with
@@ -47,23 +49,36 @@ Render the canonical report directly:
 `report` must be a `ProductReportV13` from `businesslens/report`. There is
 no second, lossy public view-model contract.
 
-Two navigation facts are bindable, so a host can keep them in its own router
-and give the report deep links, a working back button, and a refresh that lands
+Where the reader is, is bindable, so a host can keep it in its own router and
+give the report deep links, a working back button, and a refresh that lands
 where it left:
 
 ```vue
 <BusinessLensReportViewer
   v-model:section="section"
   v-model:resource="resource"
+  v-model:tab="tab"
+  v-model:scenario-route="scenarioRoute"
+  v-model:route-columns="routeColumns"
   :report="report"
 />
 ```
 
-`section` is `overview`, `topology`, or a resource type such as
-`capability`. `resource` is the stable key of the open resource page
-(`screen:reader-web::…`), or `null` for the section's collection. A Scenario
-key keeps the parent collection as the section while selecting that Scenario
-inside its parent page.
+| Model | Value | Default |
+| --- | --- | --- |
+| `section` | `overview`, `topology`, or a resource type such as `capability` | `overview` |
+| `resource` | the stable key of the open resource page (`screen:reader-web::…`), or `null` for the section's collection | `null` |
+| `tab` | the open page's tab: `overview`, `scenarios`, or `lifecycle` | `overview` |
+| `scenarioRoute` | the first route in the visible Scenario route window, or `null` | `null` |
+| `routeColumns` | `auto`, or the reader's preferred number of visible route columns | `auto` |
+
+Every one is optional; bind the ones the host wants in its URL. A Scenario key
+keeps the parent collection as the section while selecting that Scenario inside
+its parent page.
+
+The bundled local viewer binds all five as short query parameters — `s`, `e`,
+`t`, `r`, `rc` — omitting each at its default, so a link carries only what the
+reader actually chose.
 
 The Product Report needs a bounded viewport. By default it fills the browser
 height. A host with persistent chrome can set `--businesslens-report-chrome`
