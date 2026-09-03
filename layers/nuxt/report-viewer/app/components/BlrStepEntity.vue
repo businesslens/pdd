@@ -15,13 +15,13 @@
  * they stay plain terminal readings rather than second targets competing with
  * the first.
  */
-import type { AnyResourceView, EntityView, ReportWorkspace, ScenarioStepMentionView } from '../utils/reportWorkspace'
+import type { AnyResourceView, EntityView, ReportWorkspace, ScenarioStepEntityView } from '../utils/reportWorkspace'
 import { ENTITY_KIND_META, resolveResource } from '../utils/reportWorkspace'
 import { slotColor } from '../utils/reportPalette'
 
 const props = defineProps<{
   workspace: ReportWorkspace
-  mention: ScenarioStepMentionView
+  mention: ScenarioStepEntityView
   /** An end-state summary states where a thing was left, not what a Step did. */
   outcome?: boolean
 }>()

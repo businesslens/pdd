@@ -7,6 +7,11 @@
  * one peer tab for its Scenarios, and an Entity with States one for its
  * Lifecycle. A Scenario URL keeps the Scenario key in the address while
  * reading it inside its mandatory parent.
+ *
+ * The open tab is bindable, so a host can keep it in the URL: a Lifecycle a
+ * reader cannot link to, return to, or refresh into is a modal with extra
+ * steps, and `businesslens view` recompiles on save, so the tab has to outlive
+ * an edit to the model.
  */
 import type { AnyResourceView, EntityView, ReportWorkspace } from '../utils/reportWorkspace'
 import { docsForResourceKind } from '../utils/resourceDocs'
@@ -30,15 +35,36 @@ const subject = computed(() => parent.value ?? props.resource)
 const requestedChild = computed(() => parent.value ? props.resource.key : null)
 const pageDocs = computed(() => docsForResourceKind(subject.value.kind))
 const tabs = computed(() => tabsFor(props.workspace, subject.value))
-const active = ref<PageTabId>('overview')
 
+/**
+ * The reader's chosen tab, as the host keeps it. `overview` is the default and
+ * the value a host leaves out of the URL. It is read, never written back when
+ * it does not fit: a tab the page does not have — `lifecycle` on an Entity
+ * whose States were just edited away — falls back to the Overview on screen
+ * and is there again when the States return.
+ */
+const tab = defineModel<string>('tab', { default: 'overview' })
+const active = ref<PageTabId>('overview')
+const isTab = (id: string): id is PageTabId => tabs.value.some(item => item.id === id)
+
+/* A Scenario key in the address outranks the tab: reading a Scenario is
+   reading the Scenarios tab, and the key alone says so in the URL. */
 watch([tabs, requestedChild], () => {
-  if (requestedChild.value && tabs.value.some(tab => tab.id === 'scenarios')) {
+  if (requestedChild.value && isTab('scenarios')) {
     active.value = 'scenarios'
     return
   }
-  if (!tabs.value.some(tab => tab.id === active.value)) active.value = 'overview'
+  active.value = isTab(tab.value) ? tab.value : 'overview'
 }, { immediate: true })
+
+watch(tab, (value) => {
+  active.value = isTab(value) ? value : 'overview'
+})
+
+function select(id: PageTabId) {
+  active.value = id
+  tab.value = id
+}
 
 const current = computed(() => tabs.value.find(tab => tab.id === active.value) ?? tabs.value[0])
 </script>
@@ -55,7 +81,7 @@ const current = computed(() => tabs.value.find(tab => tab.id === active.value) ?
         type="button"
         class="blr-page-tab"
         :data-current="tab.id === active"
-        @click="active = tab.id"
+        @click="select(tab.id)"
       >
         <span class="min-w-0 truncate">{{ tab.label }}</span>
         <span v-if="tab.count !== undefined" class="blr-meta">{{ tab.count }}</span>

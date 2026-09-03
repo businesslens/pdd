@@ -29,6 +29,13 @@ const section = defineModel<string>('section', { default: 'overview' })
  */
 const resource = defineModel<string | null>('resource', { default: null })
 
+/**
+ * The open page's tab — `overview`, `scenarios`, or `lifecycle`. Bindable so a
+ * host can keep it in the URL beside the page; `overview` is the default a
+ * host leaves out.
+ */
+const tab = defineModel<string>('tab', { default: 'overview' })
+
 /** First route in the visible Scenario route window. */
 const scenarioRoute = defineModel<string | null>('scenarioRoute', { default: null })
 
@@ -43,6 +50,7 @@ const workspace = computed(() => projectReportWorkspace(props.report))
     <BlrReportShell
       v-model:section="section"
       v-model:resource="resource"
+      v-model:tab="tab"
       v-model:scenario-route="scenarioRoute"
       v-model:route-columns="routeColumns"
       :workspace="workspace"

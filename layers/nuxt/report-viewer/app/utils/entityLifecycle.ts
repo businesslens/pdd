@@ -12,7 +12,7 @@
  * to "a reader cannot count the transitions" is not "never draw the machine".
  */
 import { Position } from '@vue-flow/core'
-import type { EntityView, ReportWorkspace } from './reportWorkspace'
+import type { EntityArcView, EntityView, ReportWorkspace } from './reportWorkspace'
 import { resolveResource } from './reportWorkspace'
 import type { BlrFlowEdge, BlrFlowNode, FlowGraphShape, FlowStateData } from './flowGraph'
 import { layoutFlow, relationEdge } from './flowGraph'
@@ -47,11 +47,28 @@ function stateNode(entity: EntityView, data: FlowStateData, size: { width: numbe
   }
 }
 
+/** One Rule with grants selecting an arc, read the way the Rule's own page reads it. */
+export interface LifecycleArcRule {
+  id: string
+  title: string
+  /**
+   * Each grant as a full sentence, its `when` conditions included — never the
+   * bare who, which reads "the Shopper" where the Rule says "the Shopper while
+   * Pending". Any one grant permits the move.
+   */
+  grants: string[]
+}
+
 export interface LifecycleArcLabel {
   /** The Capabilities whose Steps draw the arc, by title. */
   capabilities: string[]
-  /** "owner only", "Store admin only" — from the Rules with grants selecting it. */
-  restriction: string
+  /**
+   * Every Rule with grants selecting the arc, each kept apart. Grants within
+   * a Rule are OR; Rules selecting one operation are AND — every one of them
+   * must permit the move — so flattening them into "A or B or C only" would
+   * open an arc that two Rules together close. Empty when the arc is open.
+   */
+  rules: LifecycleArcRule[]
   /** "also creates Refund" — what the same Steps do to other things. */
   coEffects: string[]
   forbidden: boolean
@@ -61,15 +78,32 @@ export interface LifecycleArcLabel {
 export function lifecycleArcLabel(workspace: ReportWorkspace, entity: EntityView, arcIndex: number): LifecycleArcLabel {
   const arc = entity.arcs[arcIndex]!
   const titleOf = (kind: 'capability' | 'entity' | 'rule', id: string) => resolveResource(workspace, kind, id)?.title ?? id
-  const restrictions = arc.ruleIds
-    .map(id => resolveResource(workspace, 'rule', id))
-    .flatMap(rule => rule?.kind === 'rule' ? rule.grants.map(grant => grant.who) : [])
+  const rules = arc.ruleIds.flatMap((id) => {
+    const rule = resolveResource(workspace, 'rule', id)
+    return rule?.kind === 'rule' ? [{ id, title: rule.title, grants: rule.grants.map(grant => grant.sentence) }] : []
+  })
   return {
     capabilities: arc.capabilityIds.map(id => titleOf('capability', id)),
-    restriction: restrictions.length ? `${[...new Set(restrictions)].join(' or ')} only` : '',
+    rules,
     coEffects: arc.coEffects.map(co => `also ${co.effect} ${titleOf('entity', co.entityId)}${co.to ? ` → ${co.to}` : ''}`),
     forbidden: arc.forbiddenByRuleIds.length > 0
   }
+}
+
+/**
+ * The one word the canvas carries for a restriction, and how many Rules stand
+ * behind it when more than one does. The sentences are in the list under the
+ * machine: an edge label is drawn on the path, and a sentence there hides the
+ * machine it labels.
+ */
+export function lifecycleRestrictionMarker(label: LifecycleArcLabel): string {
+  if (!label.rules.length) return ''
+  return label.rules.length > 1 ? `restricted by ${label.rules.length} Rules` : 'restricted'
+}
+
+/** The canvas edge drawn for one arc, so the list under the machine can tell a listed arc from a drawn one. */
+export function lifecycleArcEdgeId(entityId: string, arc: Pick<EntityArcView, 'key'>): string {
+  return `blr-arc:${entityId}:${arc.key}`
 }
 
 /** Build the placed graph for one Entity's composed lifecycle. */
@@ -96,7 +130,8 @@ export function buildEntityLifecycle(workspace: ReportWorkspace, entity: EntityV
     if (label.forbidden) return 'forbidden'
     const [first = '', ...rest] = label.capabilities
     const capabilities = rest.length ? `${first} +${rest.length}` : first
-    return label.restriction ? `${capabilities} · restricted` : capabilities
+    const marker = lifecycleRestrictionMarker(label)
+    return marker ? `${capabilities} · ${marker}` : capabilities
   }
   entity.arcs.forEach((arc, index) => {
     const label = lifecycleArcLabel(workspace, entity, index)
@@ -111,9 +146,9 @@ export function buildEntityLifecycle(workspace: ReportWorkspace, entity: EntityV
     if ((source !== LIFECYCLE_START && !present.has(source)) || (target !== LIFECYCLE_END && !present.has(target))) return
     edges.push({
       ...relationEdge({ source, target, label: caption(label) }),
-      id: `blr-arc:${entity.id}:${arc.key}`,
+      id: lifecycleArcEdgeId(entity.id, arc),
       type: source === target ? 'blr-self' : 'blr-routed',
-      class: label.forbidden ? 'blr-arc--forbidden' : label.restriction ? 'blr-arc--restricted' : undefined
+      class: label.forbidden ? 'blr-arc--forbidden' : label.rules.length ? 'blr-arc--restricted' : undefined
     })
   })
 

@@ -92,6 +92,12 @@ const section = defineModel<string>('section', { default: 'overview' })
  * with extra steps.
  */
 const openResource = defineModel<string | null>('resource', { default: null })
+/**
+ * The open page's tab — `overview`, `scenarios`, or `lifecycle` — bindable so
+ * it lives in the URL beside the page. Opening a page opens its Overview; a
+ * tab is a choice made on a page, and it is not carried onto the next one.
+ */
+const pageTab = defineModel<string>('tab', { default: 'overview' })
 const scenarioRoute = defineModel<string | null>('scenarioRoute', { default: null })
 const routeColumns = defineModel<string>('routeColumns', { default: 'auto' })
 
@@ -382,7 +388,7 @@ watch([openResource, () => props.workspace], () => {
   if (!key) return
   const resource = resolveResourceKey(props.workspace, key)
   if (!resource) {
-    openResource.value = null
+    leavePage()
     return
   }
   const sectionKind = PARENT_OF[resource.kind] ?? resource.kind
@@ -393,7 +399,7 @@ watch([openResource, () => props.workspace], () => {
 /* Live recompiles replace the projection. Rehydrate selection by stable key so
    focus, filters, and the open page survive ordinary model edits. */
 watch(() => props.workspace, (workspace) => {
-  if (openResource.value && !workspace.byKey.has(openResource.value)) openResource.value = null
+  if (openResource.value && !workspace.byKey.has(openResource.value)) leavePage()
   if (topologyFocus.value && !workspace.byKey.has(topologyFocus.value)) topologyFocus.value = null
 })
 
@@ -401,17 +407,24 @@ const topologyActive = computed(() => activeSection.value === 'topology')
 const showToolbar = computed(() => activeKind.value !== 'product' && !openPage.value && !topologyActive.value)
 const collectionDocs = computed(() => docsForResourceKind(activeKind.value))
 
+/* Leaving a page, or opening one, is also leaving its tab: both change in one
+   tick, so the host writes one history entry for the one gesture. */
+function leavePage() {
+  openResource.value = null
+  pageTab.value = 'overview'
+}
+
 function setKind(kind: ReportResourceKind) {
   mobileNavOpen.value = false
   activeKind.value = kind
   activeSection.value = kind === 'product' ? 'overview' : kind
-  openResource.value = null
+  leavePage()
 }
 
 function openTopology() {
   mobileNavOpen.value = false
   activeSection.value = 'topology'
-  openResource.value = null
+  leavePage()
   topologyFocus.value = null
 }
 
@@ -429,12 +442,13 @@ function openResourcePage(resource: AnyResourceView) {
   activeKind.value = sectionKind
   activeSection.value = sectionKind
   openResource.value = resource.key
+  pageTab.value = 'overview'
 }
 
 /** One resource's neighbourhood, on the canvas that can actually draw it. */
 function focusTopology(resource: AnyResourceView) {
   activeSection.value = 'topology'
-  openResource.value = null
+  leavePage()
   topologyFocus.value = resource.key
 }
 
@@ -1149,6 +1163,7 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
           <!-- ENTITY PAGE: one resource in full, at its own URL. -->
           <BlrResourcePage
             v-else-if="openPage"
+            v-model:tab="pageTab"
             v-model:scenario-route="scenarioRoute"
             v-model:route-columns="routeColumns"
             :workspace="workspace"

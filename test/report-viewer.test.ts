@@ -74,9 +74,12 @@ describe('stable Product Report', () => {
       'customer-mobile::storefront',
       'customer-web::storefront'
     ])
+    // The catalog Step sits on a Screen customer-web shares beside its Experience,
+    // so the Scenario also reaches the Interface itself.
     expect(workspace.capabilityScenarios.find((item: any) => item.id === 'browse-catalog')!.contexts
       .map((context: any) => context.key).sort()).toEqual([
       'customer-mobile::storefront',
+      'customer-web',
       'customer-web::storefront'
     ])
     const journey = workspace.journeys.find((item: any) => item.id === 'browse-and-buy')!
@@ -366,8 +369,9 @@ describe('stable Product Report', () => {
     const workspace = projectReportWorkspace(compileReport(loadModel(FIXTURE), '2026-08-08'))
 
     const journey = workspace.journeys.find((item: any) => item.id === 'browse-and-buy')!
-    // Its paths never touch the Shopper or the Catalog product, which its Capabilities do.
-    expect(journey.entityIds).toEqual(['order', 'cart'])
+    // Its paths never touch the Shopper or the Catalog product, which its Capabilities do;
+    // the cancellation path does create a Refund.
+    expect(journey.entityIds).toEqual(['order', 'cart', 'refund'])
     expect(workspace.capabilities.find((item: any) => item.id === 'place-order')!.entityIds)
       .toEqual(['cart', 'catalog-product', 'order', 'shopper'])
 
@@ -639,7 +643,7 @@ describe('stable Product Report', () => {
 
     const capabilityScenario = workspace.capabilityScenarios.find((item: any) => item.id === 'browse-catalog')!
     expect(capabilityScenario.steps[0].contexts.map((context: any) => context.context.screenTitle))
-      .toEqual(['Product record', 'Product record'])
+      .toEqual(['Catalog', 'Product record'])
   })
 
   it('marks a Context place transition and preserves its previous Context, per route', async () => {
@@ -888,17 +892,46 @@ describe('stable Product Report', () => {
     A page a reader can reach but not link to, return to, or refresh is a modal
     with extra steps.
   */
-  it('exposes page and Scenario route state for host URL persistence', () => {
+  it('exposes page, tab and Scenario route state for host URL persistence', () => {
     const renderer = source('app/components/BusinessLensReportViewer.vue')
     const reportShell = source('app/components/BlrReportShell.vue')
+    const page = source('app/components/BlrResourcePage.vue')
 
     expect(renderer).toContain("defineModel<string>('section'")
     expect(renderer).toContain("defineModel<string | null>('resource'")
+    expect(renderer).toContain("defineModel<string>('tab'")
     expect(renderer).toContain("defineModel<string | null>('scenarioRoute'")
     expect(renderer).toContain("defineModel<string>('routeColumns'")
     expect(renderer).toContain('v-model:resource="resource"')
+    expect(renderer).toContain('v-model:tab="tab"')
     expect(renderer).toContain('v-model:scenario-route="scenarioRoute"')
     expect(reportShell).toContain("defineModel<string | null>('resource'")
+    /* The open tab is the page's model, not a ref it keeps to itself: a
+       Lifecycle a reader cannot link to or refresh into is a modal with extra
+       steps. A Scenario key in the address still outranks it. */
+    expect(reportShell).toContain("defineModel<string>('tab'")
+    expect(reportShell).toContain('v-model:tab="pageTab"')
+    expect(page).toContain("defineModel<string>('tab'")
+    expect(page).not.toContain("const active = ref<PageTabId>('overview')\n\nwatch")
+    expect(page).toContain("if (requestedChild.value && isTab('scenarios'))")
+    /* Opening a page opens its Overview; the tab is reset in the same tick as
+       the page, so one gesture is one history entry. */
+    expect(reportShell).toContain("openResource.value = resource.key\n  pageTab.value = 'overview'")
+  })
+
+  /*
+    The host maps the tab to `t`, left out for the Overview the way `s` is left
+    out for the overview section, so an ordinary page link stays as short as it
+    was.
+  */
+  it('keeps the open tab in the host URL as t', () => {
+    const host = readFileSync(join(__dirname, '..', 'viewer', 'app', 'app', 'pages', 'index.vue'), 'utf8')
+
+    expect(host).toContain("tab: typeof route.query.t === 'string' && route.query.t ? route.query.t : 'overview'")
+    expect(host).toContain('if (next.tab !== tab.value) tab.value = next.tab')
+    expect(host).toContain("if (tab.value === 'overview') delete query.t\n  else query.t = tab.value")
+    expect(host).toContain('watch([section, resource, tab, scenarioRoute, routeColumns]')
+    expect(host).toContain('v-model:tab="tab"')
   })
 
   it('moves product identity into a desktop-equivalent mobile rail', () => {
@@ -909,5 +942,193 @@ describe('stable Product Report', () => {
     expect(reportShell).toContain('class="blr-report-shell flex min-w-0 flex-1 items-center gap-3"')
     expect(reportShell).toContain('class="blr-report-shell min-h-full"')
     expect(reportShell.match(/v-if="logoSrc"/g)).toHaveLength(2)
+  })
+})
+
+/*
+ * The composed lifecycle, on a real report. Every arc is a Step somewhere; what
+ * the canvas and the list under it say about an arc is derived here, and a
+ * reading that misstates who may move a thing is worse than none.
+ */
+describe('composed lifecycle', () => {
+  const lifecycleModulePath = '../layers/nuxt/report-viewer/app/utils/entityLifecycle.ts'
+
+  const workspaceOf = (report: any) => projectReportWorkspace(report)
+  const entityOf = (workspace: any, id: string) => workspace.entities.find((item: any) => item.id === id)
+  const arcOf = (entity: any, from: string, to: string, effect = 'changes') =>
+    entity.arcs.findIndex((item: any) => item.effect === effect && item.from === from && item.to === to)
+  /** A step that does exactly the given things to Entities, appended to the first Scenario of a Capability. */
+  const addStep = (report: any, capabilityId: string, entities: Array<Record<string, unknown>>) => {
+    const scenario = report.model.capabilityScenarios.find((item: any) => item.capabilityId === capabilityId)!
+    const template = scenario.steps[scenario.steps.length - 1]
+    scenario.steps.push({ ...structuredClone(template), text: 'The test moves it.', entities })
+  }
+
+  it('draws terminals for a thing that is created and removed, and a self-transition as a loop', async () => {
+    const { buildEntityLifecycle, LIFECYCLE_START, LIFECYCLE_END } = await import(lifecycleModulePath)
+    const report = compileReport(loadModel(FIXTURE), '2026-08-08')
+    addStep(report, 'settle-payment', [
+      { entityId: 'refund', as: null, effect: 'changes', from: 'Settled', to: 'Settled' },
+      { entityId: 'refund', as: null, effect: 'removes', from: 'Settled', to: null }
+    ])
+    const workspace = workspaceOf(report)
+    const refund = entityOf(workspace, 'refund')
+    const graph = buildEntityLifecycle(workspace, refund)
+
+    const ids = graph.nodes.map((node: any) => node.id)
+    expect(ids[0]).toBe(LIFECYCLE_START)
+    expect(ids[ids.length - 1]).toBe(LIFECYCLE_END)
+    const loop = graph.edges.find((edge: any) => edge.source === edge.target)
+    expect(loop).toMatchObject({ type: 'blr-self', source: 'blr-state:refund:Settled', label: 'Payment settlement' })
+    /* The layout stamps its direction on the loop, which is how the edge knows
+       to hang off the state's right side rather than under it. */
+    expect(loop.data).toMatchObject({ direction: 'TB' })
+    expect(graph.edges.some((edge: any) => edge.source === 'blr-state:refund:Settled' && edge.target === LIFECYCLE_END)).toBe(true)
+    expect(graph.edges.every((edge: any) => edge.source === edge.target || edge.type === 'blr-routed')).toBe(true)
+  })
+
+  it('draws an arc a Rule closes to everyone as forbidden', async () => {
+    const { buildEntityLifecycle, lifecycleArcLabel, LIFECYCLE_END } = await import(lifecycleModulePath)
+    const report = compileReport(loadModel(FIXTURE), '2026-08-08')
+    addStep(report, 'manage-orders', [{ entityId: 'order', as: null, effect: 'removes', from: 'Cancelled', to: null }])
+    const workspace = workspaceOf(report)
+    const order = entityOf(workspace, 'order')
+    const index = arcOf(order, 'Cancelled', '', 'removes')
+
+    expect(order.arcs[index].forbiddenByRuleIds).toEqual(['orders-are-never-deleted'])
+    expect(lifecycleArcLabel(workspace, order, index)).toMatchObject({ forbidden: true, rules: [] })
+    const edge = buildEntityLifecycle(workspace, order).edges.find((item: any) => item.target === LIFECYCLE_END)
+    expect(edge).toMatchObject({ label: 'forbidden', class: 'blr-arc--forbidden' })
+  })
+
+  it('lists a stateless information change without drawing it, and counts what it draws', async () => {
+    const { buildEntityLifecycle, lifecycleArcEdgeId } = await import(lifecycleModulePath)
+    const workspace = workspaceOf(compileReport(loadModel(FIXTURE), '2026-08-08'))
+    const order = entityOf(workspace, 'order')
+    const graph = buildEntityLifecycle(workspace, order)
+    const drawn = new Set(graph.edges.map((edge: any) => edge.id))
+
+    const stateless = order.arcs.find((arc: any) => arc.effect === 'changes' && !arc.to)
+    expect(stateless.capabilityIds).toEqual(['manage-orders'])
+    expect(drawn.has(lifecycleArcEdgeId(order.id, stateless))).toBe(false)
+    expect(order.arcs).toHaveLength(6)
+    expect(order.arcs.filter((arc: any) => drawn.has(lifecycleArcEdgeId(order.id, arc)))).toHaveLength(5)
+    /* The heading says both numbers when they differ, so "6 arcs" over five edges never happens. */
+    const component = source('app/components/BlrEntityLifecycle.vue')
+    expect(component).toContain('drawnEdgeIds.value.has(lifecycleArcEdgeId(props.resource.id, arc))')
+    expect(component).toContain('<template v-if="drawnCount !== arcs.length">, {{ drawnCount }} drawn</template>')
+    expect(component).toContain('· not drawn')
+  })
+
+  /*
+   * Grants within a Rule are OR; Rules selecting one operation are AND. The
+   * fixture's Confirmed → Cancelled is selected by one Rule whose four grants
+   * mostly hold only while Pending, so "Shopper or admin or gateway or
+   * schedule" was three grants wider than the truth. Each Rule is read apart,
+   * with every grant's conditions, and the canvas carries only the marker.
+   */
+  it('reads restrictions per Rule with each grant in full, never flattened across Rules', async () => {
+    const { buildEntityLifecycle, lifecycleArcLabel, lifecycleRestrictionMarker } = await import(lifecycleModulePath)
+    const workspace = workspaceOf(compileReport(loadModel(FIXTURE), '2026-08-08'))
+    const order = entityOf(workspace, 'order')
+
+    const cancel = lifecycleArcLabel(workspace, order, arcOf(order, 'Confirmed', 'Cancelled'))
+    expect(cancel).not.toHaveProperty('restriction')
+    expect(cancel.rules).toEqual([{
+      id: 'who-may-change-an-order',
+      title: 'Who may change an order',
+      grants: [
+        'the Shopper related by owns while Pending',
+        'Store admin',
+        'Payment gateway while Pending',
+        "the Product's own schedule while Pending"
+      ]
+    }])
+    expect(cancel.rules[0].grants.filter((grant: string) => grant.includes('Pending'))).toHaveLength(3)
+    expect(lifecycleRestrictionMarker(cancel)).toBe('restricted')
+
+    const refund = lifecycleArcLabel(workspace, order, arcOf(order, 'Confirmed', 'Refunded'))
+    expect(refund.rules.map((rule: any) => rule.id)).toEqual(['refunds-need-an-operator', 'who-may-change-an-order'])
+    expect(refund.rules[0].grants).toEqual([
+      'Store admin when Total charged at most 100',
+      'whoever Store settings configures when Total charged over the Store settings threshold'
+    ])
+    expect(refund.rules[1].grants).toHaveLength(4)
+    expect(lifecycleRestrictionMarker(refund)).toBe('restricted by 2 Rules')
+
+    const edges = buildEntityLifecycle(workspace, order).edges
+    expect(edges.find((edge: any) => edge.target === 'blr-state:order:Refunded'))
+      .toMatchObject({ label: 'Order management · restricted by 2 Rules', class: 'blr-arc--restricted' })
+    expect(edges.find((edge: any) => edge.source === 'blr-state:order:Confirmed' && edge.target === 'blr-state:order:Cancelled'))
+      .toMatchObject({ label: 'Order cancellation · restricted' })
+    expect(edges.find((edge: any) => edge.target === 'blr-state:order:Pending')).toMatchObject({ label: 'Checkout', class: undefined })
+
+    /* The list under the machine links each Rule and says how the Rules compose. */
+    const component = source('app/components/BlrEntityLifecycle.vue')
+    expect(component).toContain('v-for="rule in arc.rules"')
+    expect(component).toContain("@click=\"open('rule', rule.id)\"")
+    expect(component).toContain('<span v-if="index" class="blr-meta"> or </span>')
+    expect(component).toContain('Each Rule must permit it; within a Rule, any one grant does.')
+    expect(component).not.toContain('arc.restriction')
+  })
+
+  it('does not restrict the machine by a Rule scoped to a place', async () => {
+    const { lifecycleArcLabel } = await import(lifecycleModulePath)
+    const report = compileReport(loadModel(FIXTURE), '2026-08-08')
+    const template = report.model.businessRules.find((rule: any) => rule.id === 'refunds-need-an-operator')!
+    report.model.businessRules.push({
+      ...structuredClone(template),
+      id: 'operators-settle-at-the-console',
+      title: 'Operators settle at the console',
+      appliesTo: [{
+        type: 'entity', entityId: 'order', effect: 'changes', from: 'Pending', to: 'Confirmed', facts: [],
+        contexts: [{ placeId: 'admin-web::order-detail' }]
+      }],
+      permits: [{ actorIds: ['store-admin'], related: [], self: false, when: [], unattended: false, configuredByEntityId: null }]
+    })
+    const workspace = workspaceOf(report)
+    const order = entityOf(workspace, 'order')
+    const index = arcOf(order, 'Pending', 'Confirmed')
+
+    expect(order.arcs[index].ruleIds).toEqual(['who-may-change-an-order'])
+    expect(lifecycleArcLabel(workspace, order, index).rules.map((rule: any) => rule.id)).toEqual(['who-may-change-an-order'])
+    /* It still reaches the Entity page as a Rule relation; only the machine leaves it off. */
+    expect(order.ruleIds).toContain('operators-settle-at-the-console')
+  })
+
+  it('draws the same machine from the same report every time', async () => {
+    const { buildEntityLifecycle, lifecycleArcLabel } = await import(lifecycleModulePath)
+    const read = () => {
+      const workspace = workspaceOf(compileReport(loadModel(FIXTURE), '2026-08-08'))
+      const order = entityOf(workspace, 'order')
+      return {
+        graph: buildEntityLifecycle(workspace, order),
+        labels: order.arcs.map((_: unknown, index: number) => lifecycleArcLabel(workspace, order, index))
+      }
+    }
+    expect(read()).toEqual(read())
+  })
+
+  /*
+   * The lifecycle lays out top to bottom, so its source handle is the bottom
+   * of the pill; a loop hung from there sat on the next rank and put its label
+   * over the state's name. The edge reads the layout direction and the node's
+   * own size instead of assuming a left-to-right graph.
+   */
+  it('hangs a self-loop off the state rather than under it', () => {
+    const edge = source('app/components/BlrFlowSelfEdge.vue')
+
+    expect(edge).toContain("if (props.data?.direction !== 'TB' || !node) return { x: props.sourceX, y: props.sourceY }")
+    expect(edge).toContain('node.computedPosition.x + size.value.width')
+    expect(edge).toContain('sourceNode?.dimensions.width')
+    expect(edge).toContain("import { FLOW_NODE_HEIGHT, FLOW_NODE_WIDTH } from '../utils/flowGraph'")
+    expect(source('app/utils/flowGraph.ts')).toContain('data: { ...(edge.data as Record<string, unknown> | undefined), points, backward, direction }')
+  })
+
+  it('keeps one name for what a Step does to an Entity', () => {
+    const workspaceSource = source('app/utils/reportWorkspace.ts')
+    expect(workspaceSource).not.toContain('ScenarioStepMentionView')
+    expect(workspaceSource).toContain('mentions: ScenarioStepEntityView[]')
+    expect(source('app/components/BlrStepEntity.vue')).toContain('mention: ScenarioStepEntityView')
   })
 })

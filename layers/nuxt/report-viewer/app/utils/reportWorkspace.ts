@@ -492,9 +492,6 @@ export interface ScenarioStepEntityView {
   to: string
 }
 
-/** The reading's name for a Step entry. Reads sit beside changes here and nowhere else. */
-export type ScenarioStepMentionView = ScenarioStepEntityView
-
 export interface ScenarioView extends ResourceBase {
   /** Entities the Steps create, change or remove. Derived, exactly as the Actor set is. */
   entityIds: string[]
@@ -1174,7 +1171,12 @@ export function projectReportWorkspace(report: ProductReportV13): ReportWorkspac
     }
   }
 
-  /* A Rule's Entity target selects an arc by the same keys the Step carries. */
+  /* A Rule's Entity target selects an arc by the same keys the Step carries.
+     A target scoped by `contexts` governs the operation only at those places,
+     and the machine is drawn for the whole Product — so it does not restrict
+     an arc globally, and is left off. The Rule still reaches the Entity page
+     through its Rule relations. A target naming `facts` governs information,
+     not an operation, and is left off for the same reason. */
   const targetSelects = (
     target: Extract<ReportBusinessRuleTarget, { type: 'entity' }>,
     entityId: string,
@@ -1183,6 +1185,7 @@ export function projectReportWorkspace(report: ProductReportV13): ReportWorkspac
     to: string
   ) => target.entityId === entityId
     && !target.facts.length
+    && !target.contexts.length
     && (target.effect === null || target.effect === effect)
     && (target.from === null || target.from === from)
     && (target.to === null || target.to === to)
@@ -1551,7 +1554,10 @@ export function projectReportWorkspace(report: ProductReportV13): ReportWorkspac
     if (grant.configuredByEntityId) who.push(`whoever ${entityTitle(grant.configuredByEntityId)} configures`)
     const when = grant.when.map(condition => describeCondition(condition, targetId))
     const subject = who.join(' and ') || 'nobody'
-    return { who: subject, when, sentence: when.length ? `${subject} when ${when.join(' and ')}` : subject }
+    // A state condition already reads "while Pending"; a fact condition needs
+    // its "when". "the Shopper related by owns while Pending", never "when while".
+    const clauses = when.map(clause => clause.startsWith('while ') ? clause : `when ${clause}`)
+    return { who: subject, when, sentence: clauses.length ? `${subject} ${clauses.join(' and ')}` : subject }
   }
 
   const rules: RuleView[] = model.businessRules.map((rule: ReportBusinessRule) => {
@@ -1851,8 +1857,8 @@ export interface ScenarioStepRow {
   stepKind: 'actor' | 'product' | 'condition'
   actorId: string
   capabilityId: string
-  /** Everything this Step names — changes first, then reads. */
-  mentions: ScenarioStepMentionView[]
+  /** Everything this Step names — changes first, then reads. Reads sit beside changes here and nowhere else. */
+  mentions: ScenarioStepEntityView[]
   routeNeutral: boolean
   /** One cell per route, in authored route order. */
   cells: ScenarioStepCell[]
