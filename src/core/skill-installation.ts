@@ -111,23 +111,19 @@ function readManifest(skillsDir: string): InstallationManifest | undefined {
   return undefined
 }
 
-function looksLikeBusinessLensSkill(directory: string, expectedName: string): boolean {
-  const skillFile = join(directory, 'SKILL.md')
-  if (!existsSync(skillFile)) return false
-  try {
-    const source = readFileSync(skillFile, 'utf8')
-    return source.includes(`name: ${expectedName}`)
-      && (source.includes('BusinessLens') || source.includes('.businesslens/'))
-  } catch {
-    return false
-  }
-}
-
+/*
+ * Ownership is the manifest, and nothing else. A directory carrying a skill's
+ * name without a valid marker is somebody else's — a fork, a hand-written
+ * skill, an install by another tool — and the Product leaves it alone. The
+ * earlier text heuristic (a SKILL.md that named the skill and mentioned
+ * BusinessLens) was a guess, and guessing wrong costs someone work they cannot
+ * recover, which is the Rule the model states.
+ */
 function assertSafeTargets(skillsDir: string, existing: InstallationManifest | undefined, force: boolean): void {
   for (const name of BUSINESSLENS_SKILLS) {
     const target = join(skillsDir, name)
     if (!existsSync(target)) continue
-    const owned = existing?.skills.includes(name) || looksLikeBusinessLensSkill(target, name)
+    const owned = existing?.skills.includes(name) ?? false
     if (!owned && !force) {
       throw new Error(
         `Refusing to overwrite ${target}: it is not marked as a BusinessLens-managed skill. Pass --force only if you own that directory.`
@@ -136,11 +132,30 @@ function assertSafeTargets(skillsDir: string, existing: InstallationManifest | u
   }
 }
 
-function removeLegacySkills(skillsDir: string): string[] {
+/**
+ * Check every harness target before any is written, so a refusal in the second
+ * harness does not leave the first installed. Throws the same error the install
+ * itself would.
+ */
+export function assertInstallTargets(
+  cwd: string,
+  targets: InstallTarget[],
+  options: { force?: boolean, home?: string } = {}
+): void {
+  for (const target of targets) {
+    const skillsDir = providerSkillsDir(target.provider, target.scope, cwd, options.home)
+    if (!existsSync(skillsDir)) continue
+    assertSafeTargets(skillsDir, readManifest(skillsDir), Boolean(options.force))
+  }
+}
+
+/* A retired skill is removed only when the manifest says BusinessLens installed
+   it. One that is merely named like a retired skill is left alone. */
+function removeLegacySkills(skillsDir: string, existing: InstallationManifest | undefined): string[] {
   const removed: string[] = []
   for (const name of LEGACY_SKILLS) {
     const target = join(skillsDir, name)
-    if (!existsSync(target) || !looksLikeBusinessLensSkill(target, name)) continue
+    if (!existsSync(target) || !existing?.skills.includes(name)) continue
     rmSync(target, { recursive: true, force: true })
     removed.push(name)
   }
@@ -216,19 +231,20 @@ export function installSkillsToTarget(
   const existing = readManifest(skillsDir)
   assertSafeTargets(skillsDir, existing, Boolean(options.force))
 
-  const staleSkills: string[] = []
-  for (const previous of existing?.skills ?? []) {
-    if (!BUSINESSLENS_SKILLS.includes(previous as BusinessLensSkill)) {
-      const stale = join(skillsDir, previous)
-      if (looksLikeBusinessLensSkill(stale, previous)) {
-        staleSkills.push(stale)
-      }
-    }
-  }
+  // A skill the manifest recorded that this version no longer ships is ours to
+  // remove; the manifest is the only proof of that.
+  const staleSkills = (existing?.skills ?? [])
+    .filter(previous => !BUSINESSLENS_SKILLS.includes(previous as BusinessLensSkill))
+    .map(previous => join(skillsDir, previous))
+    .filter(stale => existsSync(stale))
 
   for (const name of BUSINESSLENS_SKILLS) installSkill(sourceRoot, skillsDir, name)
-  for (const stale of staleSkills) rmSync(stale, { recursive: true, force: true })
-  const removedLegacySkills = removeLegacySkills(skillsDir)
+  // Retired names first, so the report can say which retired skills went; any
+  // other skill the manifest recorded and this version no longer ships follows.
+  const removedLegacySkills = removeLegacySkills(skillsDir, existing)
+  for (const stale of staleSkills) {
+    if (existsSync(stale)) rmSync(stale, { recursive: true, force: true })
+  }
   const removedLegacyCommands = removeLegacyCommands(cwd, target)
 
   const now = new Date().toISOString()

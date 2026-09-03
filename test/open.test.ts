@@ -88,8 +88,14 @@ describe('open report', () => {
       'customer-mobile::storefront::order-status',
       'customer-mobile::storefront::product-record',
       'customer-web::storefront::order-status',
-      'customer-web::storefront::product-record'
+      'customer-web::storefront::product-record',
+      'customer-web::catalog'
     ])
+    // A Screen shared beside experiences/ comes back beside them, on the Interface.
+    expect(imported.screens.find(screen => screen.id === 'customer-web::catalog')).toMatchObject({
+      containerId: 'customer-web',
+      capabilities: ['browse-catalog']
+    })
     expect(imported.screens.find(screen => screen.id === 'customer-web::storefront::product-record')).toMatchObject({
       containerId: 'customer-web::storefront',
       capabilities: ['browse-catalog', 'place-order']
@@ -99,7 +105,8 @@ describe('open report', () => {
       'fixture-shop://orders/:id',
       'fixture-shop://products/:id',
       '/orders/:id',
-      '/products/:id'
+      '/products/:id',
+      '/'
     ])
 
     const rebuilt = buildProject(target)
@@ -260,20 +267,36 @@ describe('open report', () => {
     }
   })
 
+  it('replaces only coverage method, and keeps the author\'s unmapped, limitations and rationale', async () => {
+    // Only `method` is a claim about origin, so only `method` is rewritten. What
+    // the author said about the model's own completeness comes through as
+    // written — the recipient must be able to tell which limitations are the
+    // author's, which they cannot if expansion adds one in the author's voice.
+    const authored = readFileSync(join(source, '.businesslens/coverage.md'), 'utf8')
+    const opened = readFileSync(join(target, '.businesslens/coverage.md'), 'utf8')
+    expect(authored).toContain('limitations: []')
+    expect(opened).toContain('limitations: []')
+    expect(opened).not.toContain('Implementation alignment must be verified')
+    expect(opened).toContain('Opened from a portable Product Report')
+    expect(opened).toContain('Implementation alignment has not been verified in this repository.')
+    expect(opened).toContain('The fixture map intentionally covers the whole toy codebase.')
+    expect(loadModel(target).coverage).toMatchObject({
+      unmapped: [],
+      limitations: [],
+      rationale: 'The fixture map intentionally covers the whole toy codebase.'
+    })
+  })
+
   it('expands to a fixed point so a re-opened model is byte-identical', async () => {
     // A catalog Blueprint's committed model is itself an expanded report, so
-    // `pull` re-expands it and the result has to match what is committed. The
-    // open-coverage limitation used to be appended unconditionally, gaining one
-    // copy per cycle and making that comparison fail from the second pull on.
+    // `pull` re-expands it and the result has to match what is committed.
     const first = readFileSync(join(target, '.businesslens/coverage.md'), 'utf8')
-    expect(first.match(/Implementation alignment must be verified/g)).toHaveLength(1)
 
     const roundTrip = mkdtempSync(join(tmpdir(), 'businesslens-open-fixed-point-'))
     try {
       initialize(roundTrip)
       expect(await runOpen(roundTrip, buildProject(target).outputFile, false)).toBe(0)
       const second = readFileSync(join(roundTrip, '.businesslens/coverage.md'), 'utf8')
-      expect(second.match(/Implementation alignment must be verified/g)).toHaveLength(1)
       expect(second).toEqual(first)
     } finally {
       rmSync(roundTrip, { recursive: true, force: true })

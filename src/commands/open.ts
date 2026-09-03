@@ -27,9 +27,16 @@ import { UsageError } from '../core/usage-error.js'
 import { validateProductLogo } from '../logo.js'
 
 const MAX_REPORT_BYTES = 8 * 1024 * 1024
-const OPEN_COVERAGE_METHOD = 'Opened from a portable Product Report; source-repository navigation was intentionally removed.'
-const OPEN_COVERAGE_LIMITATION = 'Implementation alignment must be verified in this repository.'
-const OPEN_COVERAGE_RATIONALE = 'Product behavior, relationships, and model breadth were imported from a Product Report. Source-repository references were removed because they do not navigate this repository.'
+/* `method` is the one coverage field expansion rewrites: it states how the
+   model was derived, which is a claim about origin, and a Blueprint carries
+   none. Both sentences below are origin claims — where the model came from and
+   that nobody has yet checked it against this repository — so both live here
+   and nowhere else. The author's `unmapped`, `limitations`, and `rationale`
+   pass through untouched. */
+const OPEN_COVERAGE_METHOD = [
+  'Opened from a portable Product Report; source-repository navigation was intentionally removed.',
+  'Implementation alignment has not been verified in this repository.'
+]
 
 function readReportSource(source: string): unknown {
   if (/^https?:\/\//i.test(source)) {
@@ -214,7 +221,7 @@ function writeReport(root: string, report: ProductReportV13, hasLogo: boolean): 
     join(root, 'coverage.md'),
     frontmatter({
       status: report.coverage.status,
-      method: [OPEN_COVERAGE_METHOD],
+      method: OPEN_COVERAGE_METHOD,
       sourceAreas: [],
       // Unmapped product areas explain model breadth and survive the
       // source-free projection. Source paths live in sourceAreas, not here.
@@ -224,14 +231,8 @@ function writeReport(root: string, report: ProductReportV13, hasLogo: boolean): 
       // needs. Only `method`, which is a claim about how the model was derived,
       // is replaced: a Blueprint carries no claim about its own origin.
       unmapped: report.coverage.unmapped,
-      // Deduplicated so expansion is idempotent. A Blueprint's committed model is
-      // itself an expanded report, so re-expanding it must reproduce the same
-      // files byte for byte; an unconditional append accumulated one copy of this
-      // limitation per open/pull cycle.
-      limitations: report.coverage.limitations.includes(OPEN_COVERAGE_LIMITATION)
-        ? [...report.coverage.limitations]
-        : [...report.coverage.limitations, OPEN_COVERAGE_LIMITATION]
-    }) + body('Coverage', report.coverage.rationale.trim() || OPEN_COVERAGE_RATIONALE, '', [], [])
+      limitations: [...report.coverage.limitations]
+    }) + body('Coverage', report.coverage.rationale, '', [], [])
   )
 
   for (const productInterface of report.model.interfaces) {
