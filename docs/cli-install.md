@@ -53,8 +53,17 @@ The installer writes `.businesslens-install.json` into each managed skills
 directory. That marker records the provider, scope, package version, and owned
 skill names so a later [`update`](./cli-update.md) can find the installation.
 
-A managed BusinessLens skill can be refreshed. An unrelated directory with the
-same `businesslens-*` name stops the installation unless `--force` is explicit.
+**The marker is the only proof of ownership.** A `businesslens-*` directory that
+the marker does not list is somebody else's — a fork, a hand-written skill, an
+install by another tool, or an installation predating the marker — and it stops
+the run unless `--force` is explicit. BusinessLens does not read a directory's
+contents to guess that it wrote it: guessing wrong costs someone work they
+cannot recover. For the same reason, a skill this release no longer ships is
+removed only where the marker recorded it.
+
+**A refusal changes nothing.** Every selected harness is checked before any is
+written, so an install for two harnesses that stops on the second leaves the
+first untouched. The message names the directory that blocked the run.
 
 The command distributes skills only. It does not:
 

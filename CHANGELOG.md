@@ -83,6 +83,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   The **possible grant** definition now reads its keys as AND, matching the
   algebra beside it and the checker, so *an admin who is also the owner* is one
   grant and not two readings.
+- The `install` page states the ownership rule the installer now applies: the
+  marker is the only proof, an unlisted `businesslens-*` directory is somebody
+  else's, a retired skill goes only where the marker recorded it, and a refusal
+  leaves every harness untouched. The `ideate` page describes the decision
+  rounds and the `Judgment calls` section, as the `map` page already did.
 
 ### Changed
 
