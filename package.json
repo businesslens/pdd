@@ -49,6 +49,7 @@
     "docs",
     "layers",
     "!layers/nuxt/report-viewer-lab",
+    "!layers/**/node_modules",
     "skills"
   ],
   "scripts": {

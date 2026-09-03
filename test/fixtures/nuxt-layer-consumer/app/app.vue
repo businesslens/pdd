@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import type { ProductReportV12 } from 'businesslens/report'
+import type { ProductReportV13 } from 'businesslens/report'
 
-const report: ProductReportV12 = {
-  schemaVersion: '10.0.0',
+const report: ProductReportV13 = {
+  schemaVersion: '13.0.0',
   id: 'packed-layer-smoke',
   title: 'Packed Layer Smoke Test',
   summary: 'Builds the public Nuxt layer from the packed businesslens artifact.',
@@ -16,13 +16,13 @@ const report: ProductReportV12 = {
   referenceProfile: 'portable',
   tags: ['smoke-test'],
   generatedAt: '2026-08-09',
-  generator: { name: 'businesslens', version: '0.7.2' },
+  generator: { name: 'businesslens', version: '0.9.0' },
   counts: {
-    actors: 1,
     interfaces: 1,
     experiences: 0,
     screens: 0,
     domains: 0,
+    entities: 1,
     capabilities: 0,
     capabilityScenarios: 0,
     journeys: 0,
@@ -32,12 +32,15 @@ const report: ProductReportV12 = {
   limitations: [],
   model: {
     taxonomies: { scenarioKinds: [] },
-    actors: [{
+    entities: [{
       id: 'reader',
-      name: 'Reader',
+      title: 'Reader',
       description: 'A person viewing the report.',
       kind: 'person',
-      relationship: 'external',
+      acts: 'external',
+      informationKept: [],
+      relations: [],
+      states: [],
       intent: '',
       supportingSections: [],
       references: []

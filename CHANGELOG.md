@@ -7,466 +7,89 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
-
-- **One resource type for things: an Actor is an Entity that acts.** `actors/`
-  is gone; a person or system that acts on the Product is an Entity carrying
-  `acts: external|internal` and `kind: person|system`, and everything else
-  about it — facts, states, relations — is what any Entity has. The word Actor
-  names a role, not a type: a Step's `actor`, an Interface's, Experience's, or
-  Journey's `actors`, and a Rule grant's `actors` each name an Entity that
-  acts. Folder schema 8, Product Report v13. An `actors/` directory, a
-  `relationship` key, and a report before v13 are refused by name.
-- **Steps are the single source of truth for what changes.** `entities` is
-  required on every Step — `{ entity, as, effect, from, to }` with `effect` in
-  `creates|changes|removes|reads` — and `[]` says a Step touches nothing. A
-  Capability declares no `entities` and an Entity declares no `transitions`:
-  the lifecycle is composed from every Step in the model, and the report draws
-  it. A Step changes as many things as it changes, tells two instances of one
-  thing apart by alias, and chains per instance. Retired keys — a Step's
-  `changes` and `reads`, an Entity's `transitions`, a Capability's `entities` —
-  fail with the key that replaced them.
-- **Facts are named.** `## Information kept` is `- **Name** — prose`, unique
-  per Entity, so a Business Rule can govern one by exact name.
-- **A Business Rule says who may.** An Entity target
-  `{ type: entity, id, effect, from, to, facts, contexts }` selects an
-  operation on a thing; `permits` is omitted, `[]`, or a list of grants — OR
-  within a Rule, AND across Rules — each naming a who: `actors`, a `related`
-  path walked over declared and inverse relations, `self`, `unattended`, or
-  `configuredBy`, with `when` conditions on a fact (eight operators) or the
-  instance's state. `lint` checks structural eligibility: a Step performing an
-  operation a Rule closes, or one no grant could permit its actor, is an
-  error, and so is a Screen presenting a thing nobody who reaches it may read.
-- The orphan rule widened with the edges: an Entity is kept by a Step that
-  changes it, a Screen that presents it, anything naming it as an actor, or a
-  Rule that reads it as a condition's `entity` or a `configuredBy`.
-- A `product` or `condition` Step may carry `actor` — the Actor it is
-  attributable to — and it joins the Scenario's Actor set. A Journey Step with
-  any effect but a read names its Capability.
-- The report reads what a Step does on every Steps table, draws each Entity's
-  composed lifecycle with the Capability on each arc and the Rules that
-  restrict or forbid it, reads a Rule's grants as sentences, states what a
-  Journey leaves behind, and adds the topology view *what changes what*.
-- Docs: the Actors page folds into Entities, which now sits right after
-  Product; Capabilities documents what a Step does; Business rules documents
-  permission. The fixture shop, the Content feed reader Blueprint, and this
-  repository's own model are re-mapped on the new format.
-
-## [0.9.0] - 2026-08-26
+## [0.9.0] - 2026-09-03
 
 ### Added
 
-- **Entity — a thing the Product keeps or reasons about.** Capabilities name the
-  Product's verbs; Entities name its nouns. The test is identity, not storage: a
-  draft the Product never persists still qualifies, a row no Actor can name does
-  not. The unit is the naming test — a shopper says "this order", never "this
-  order line". It carries `## Information kept` and/or `## States` with
-  frontmatter `transitions`, at least one of the two. What the Product keeps,
-  never how it is stored: no types, no keys, no join entities.
-- **Three edges, each with one owner.** A Capability declares the `entities` it
-  **changes** — covering changes to information, which a transition cannot
-  express — and declares nothing for a thing it merely reads, so *what can alter
-  this* keeps an answer. A transition is `{ from, to, by }`, cross-checked
-  against that declaration. A Screen declares the `entities` it presents. An
-  Entity nothing references is an error.
-- **Every Entity edge is resolved on the wire, not only in the folder.** A report
-  cannot carry a relation to a thing that does not exist, a transition to a state
-  the Entity lacks or by a Capability that does not list it, an `entityIds`
-  member naming nothing, or a Step claiming a state its lifecycle never reaches.
-  A report expands straight into an authored folder, so an edge the folder
-  rejects must not survive the wire.
-- Ids, References and assets are checked on an Entity exactly as on every other
-  resource, and both "for every resource" lists are now derived from the model and
-  from the schema rather than written by hand — a new resource type fails the
-  build until every check has it.
-- `## Relations` and `## Transitions` are invalid sections on an Entity, for the
-  reason `## Steps` is invalid on a Scenario: the frontmatter list is the one
-  authority and a prose section beside it is a second one that can disagree.
-  `state` stays Screen-only — a capture depicts a view, and no artifact depicts
-  "Confirmed".
-- An **Actor** may carry `## Information kept` for what the Product keeps about
-  them, so a Reader's reading position has a home without modelling the Reader
-  twice. An Actor is who acts; an Entity is what is acted upon.
-- **Entities relate to each other.** `relations: [{ entity, verb, cardinality }]`
-  declares an edge in the product's own words — `holds many-to-many item` — with
-  the inverse derived so the two sides cannot disagree. Relationships between
-  things a user can point at are product meaning; the guard is the format's
-  existing test, *is it observable to an Actor*.
-- **A relation states both ends.** `one-to-one`, `one-to-many`, `many-to-many`,
-  read source to target. One end is not a relationship: *a Source publishes many
-  Items* leaves unanswered whether an Item may come from two feeds, and *can I
-  save this article into two collections* is a product decision a reader will
-  ask about — `collection-membership-does-not-control-saving` only means anything
-  because the answer is yes. An author who needed the second end and had nowhere
-  to put it wrote the relationship twice facing itself, which the Content Feed
-  Reader Blueprint did.
-
-  **`many-to-one` does not exist.** That relationship is declared from the other
-  Entity, where it reads `one-to-many`, so one `1:N` has exactly one encoding and
-  two independent authors cannot write it from opposite sides. Two Entities that
-  declare relations at each other are a `lint` warning naming both files.
-
-  The Entity page reads each row's *far* end, so an Item published by one Source
-  says so — it previously copied the authored end onto the inverse and printed
-  "publishes many Source" on the page of a thing that has exactly one. The
-  Topology label carries both ends in the notation an ERD reader already has:
-  `publishes 1:N`, `holds M:N`.
-- **A Scenario Step may name the `entity` it acts on and the `state` it leaves
-  it in.** The Scenario's Entity set is derived from its Steps, exactly as its
-  Actor set is, and `lint` closes the loop: the state must be one the Entity
-  has, and some transition must reach it by that same Capability.
-- **A new Topology view, "What it keeps"** — the Product's own ERD, and the only
-  view whose subject is its nouns. Entities and the authored relations between
-  them, each labelled with its verb and both cardinality ends, each drawn once
-  because the inverse is derived. A relation an Entity declares at itself is drawn as a loop
-  rather than the stub a step router collapses it to. Capabilities are
-  deliberately absent: one edge per (Capability, Entity) pair buried the reading
-  the view exists for, and what changes a thing is on the thing's own page.
-  Entities also take their place on the Everything canvas, and their relations
-  join its resolved relation web.
-- A Capability page shows what it changes, a Screen what it presents, and a
-  Scenario what it moves. The authored direction was declared in the model and
-  dropped by the viewer.
-- The Product Model's own description gains **what it keeps**.
-- **Unattended Scenarios.** A Scenario's first Step may be a `condition`
-  carrying `unattended: true`, and such a Scenario needs no Actor Step. A
-  schedule the Product owns, an expiry, or a retry is real Product behavior with
-  nobody to name, and requiring an Actor forced it to be written as somebody
-  else's request or left uncovered. The Content Feed Reader Blueprint stated a
-  recurring collection schedule in prose and had no Scenario for it; it does now.
-- `agent` joins the Interface interaction types: the surface an AI coding
-  harness reaches through installed skills or tools. Two independent authors
-  modelling one such surface picked two different existing values, because none
-  of the nine fitted.
-- An Interface may hold `screens/` beside `experiences/`, for a Screen genuinely
-  shared across its Experiences. Previously a search or settings view common to
-  several Experiences had to be duplicated into each one.
-- **The Product Report renders Entities.** An Entity has a rail entry with its
-  count and icon, a collection, a page, search results, connections, and a place
-  on the Everything topology canvas. Its page reads the lifecycle forward from each state — the
-  states it can move to sit beside the state's own prose, and a terminal state
-  says so rather than simply having no outbound row. A Screen's `Product states`
-  stay the view's own and are never merged with an Entity's lifecycle.
-- `docs/product-model.md` draws the two hierarchies and two axes it had only
-  described, and states every structural boundary as the rule that decides it.
-  A new Entities page joins the Product Model group.
+- **Entity — one resource type for every thing the Product keeps or reasons
+  about.** Identity, not storage, is the test. An Entity carries named facts,
+  optional states, and relations in product language; implementation types,
+  keys, indexes, join records, and regenerable representations stay out.
+  A person or system that acts is an Entity with `kind:
+  person|system` and `acts: external|internal`. Actor remains a role, not a
+  separate resource type or `actors/` collection.
+- **Entity relations state both ends.** `one-to-one`, `one-to-many`, and
+  `many-to-many` read from the declaring Entity to its target; the inverse is
+  derived so two files cannot disagree. Entity pages and the *What it keeps*
+  topology view render the product's own relationship graph.
+- **Business Rules can express authorization.** An Entity target selects an
+  operation, facts, states, and optional Contexts. `permits` grants name
+  actors, a related Entity path, self, unattended work, or configuration, with
+  optional fact and state conditions. `lint` rejects Steps and Screens that
+  no applicable grant can permit without claiming runtime authorization has
+  been proved.
+- **Unattended Scenarios.** A first condition Step may state
+  `unattended: true` for schedules, expiry, retry, and other Product-owned
+  behavior with no Actor.
+- `agent` joins the Interface types, and an Interface may own shared Screens
+  beside its Experiences.
+- **The Product Report renders every Entity edge.** Entities have a rail entry,
+  collection, page, search results, facts, relations, composed lifecycle, and
+  topology presence. Scenario Steps show what they create, change, remove, or
+  read; Journey outcomes summarize what they leave behind; Rules read their
+  grants as sentences.
+- BusinessLens now keeps a reviewed Product Model of itself. The Content Feed
+  Reader Blueprint and golden Fixture Shop were expanded to exercise Entities,
+  relations, lifecycles, unattended behavior, and permission Rules.
 
 ### Changed
 
-- **Relational structure lives in frontmatter.** `transitions` moves out of a
-  Markdown section and joins `relations` there, because both name other resources
-  by id — which is the rule every other field already follows. The prose form
-  also had a silent mis-parse: `- Available → Sold by owner` read as
-  `to: "Sold", by: "owner"` and linted clean.
-- **One authored file in a Product Model is a `Resource`; what it is one of is a
-  `resource type`.** *Entity* had been the loose word for both and gave the use
-  up, so the type that genuinely means a thing with identity could take it. The
-  base word is now shared and the type level is marked by a modifier, because
-  naming two levels with one unmarked word is what made the old vocabulary
-  unreadable — `docs/` headed a table of types with the same noun the spec used
-  for one file. `kind` stays a field name — on a `references` item, an Actor,
-  both Scenario types and a Scenario Step, five unrelated closed enums — and
-  never means a resource type: a resource states its type through its path,
-  never through a header. The rename reaches
-  BusinessLens's own model and the Content Feed Reader Blueprint, which had kept
-  the old sense in prose throughout — a Screen declaring
-  `entities: [product-model, …]` in frontmatter while calling a resource an
-  entity two lines below it was the exact collision it existed to remove.
-- **One vocabulary for the id-naming rule.** It had three spellings:
-  `spec/format.md` and the docs said *verb-entity*, `businesslens-map` and the
-  `lint` message itself said *verb-object*, and both of those nouns had been
-  retired as kind names. It is **verb-noun** everywhere, including the finding a
-  reader actually sees. "Entity" no longer stands in for a plain JSON object in
-  the two contracts either.
-- **A thing's states leave the views that showed them.** Screen
-  `## Product states` becomes `## View states` and holds only the view's own;
-  `## Information presented` narrows to what that view shows. The Blueprint was
-  writing Private/Published/Unlisted on two Screens and on the Collection.
-- The Blueprint gains `item`, its most-mentioned noun and previously absent; the
-  fixture gains `catalog-product` and `cart`, the latter appearing 15 times in
-  prose and nowhere in the model.
-- **An AI agent harness is an Actor**, with the id `ai-agent`. Three independent
-  mappings of one repository split on whether the agent that loads a skill is a
-  participant or the runtime an `agent` Interface is delivered through. It is a
-  participant: it initiates, it reads and writes on the person's behalf, and it
-  chooses what to inspect, propose, and when to stop — latitude a browser
-  delivering a `web` Interface does not have. Named `ai-agent` rather than after
-  one use of it, since the same participant appears in products unrelated to
-  code. This promotes nothing else by analogy.
-- **A behavioral id's noun half names something the model declares.**
-  `install-agent-skills`, not `install-skills`, when `agent-skills` is an
-  Interface. `lint` warns only where the author already declared the fuller
-  term. Two independent mappings agreed on 95% of the Capabilities they found
-  while sharing 29% of the ids; the concepts matched and the nouns did not.
-- **An Entity, Domain, or Business Rule id never opens with a verb.** They name
-  what a thing is, or what must remain true, so they read as nouns and
-  assertions rather than commands. A single-segment id such as `order` is a noun
-  by construction and is exempt.
-- The report SDK type is `ProductReportV11`, matching the schema version it
-  describes. `ReportObject` and its state and transition types are exported
-  alongside it.
-- **Folder schema 7 and Product Report v11 are the only accepted formats.**
-  There is no compatibility reader.
-- **Behavioral ids are verb-noun; cross-cutting ids are the bare noun.**
-  `browse-catalog`, not `catalog-browsing`. Ids are the model's whole identity
-  mechanism, and two models of one product that name the same behavior
-  differently cannot be diffed, merged, or compared. The golden fixture and the
-  Content Feed Reader Blueprint are renamed accordingly.
-- **Whether an Interface holds Experiences is derived, never judged.** It holds
-  them exactly when it serves more than one `access` value or two Actor sets
-  with disjoint Capability coverage; `lint` computes this from fields already
-  authored. A counterpart Experience under another Interface is exempt, so
-  platform pairs keep their symmetry. One product previously had two lint-clean
-  encodings — two Interfaces, or one Interface with two Experiences — whose ids
-  shared nothing.
-- **A Business Rule governs two or more behaviors, or a Context independent of
-  any behavior.** Anything true of exactly one Capability is a `condition` Step
-  or its Outcome, and `lint` warns otherwise. The boundary was previously
-  unstated, and two independent authors classified the same two facts in exactly
-  opposite directions.
-- A Domain must state a `## Boundary` naming something it does not own, and
-  warns when it holds fewer than two Capabilities.
-- On an Interface, every `entryPoints` key must equal that Interface's own
-  `type`. The key was unvalidated there while being enforced on Experiences and
-  Screens, so one field carried three vocabularies and all of them linted clean.
-- **`blueprint open` no longer overwrites the author's coverage prose.**
-  `unmapped`, `limitations`, and `rationale` describe the model's own
-  completeness and survive expansion intact; only `method`, which is a claim
-  about how a model was derived, is replaced. A Blueprint carries no claim about
-  its own origin.
-- `businesslens-map` must end every proposed delta with a `Judgment calls`
-  section naming each choice that could have gone the other way. A reviewer can
-  see what a model says but not what it omits, which is where two independent
-  maps of one repository actually diverged.
-- **Attach what you read.** `businesslens-map` no longer treats References as
-  optional polish: it attaches to each resource the artifacts that established its
-  meaning — the code it traced, the spec or PRD stating intent, the document it
-  took context from — and `businesslens-ideate` attaches the `role: intent`
-  artifact a decision came from. Permission with no trigger is why a whole
-  release shipped with References on Capabilities and Interfaces and nowhere
-  else.
-- **`businesslens-map` asks rather than collapsing a distinction.** Its Entity
-  rule is the identity and naming test rather than the retired state count, one
-  Entity per thing the Product treats differently, and Entity granularity joins
-  the required `Judgment calls` list. Folding several things into one resource is
-  not a smaller model; the information is gone and no reader can recover it.
-- **The rounds reach `businesslens-ideate` and `businesslens-verify` too.**
-  Ideate invents the same model from scratch, and verify re-authors parts of it
-  in three of its five resolution branches — its scoped-map branch *is* mapping.
-  Both were still draft-then-approve, which is where approval becomes a
-  formality. Ideate works all four rounds in thorough mode and keeps its three
-  batched questions for a quick change, which has no frontier. Verify's
-  authoring branches settle the undetermined calls before drafting; its
-  authority question in step 6 is untouched, because that one already asks the
-  right thing the right way. Each skill carries its own copy, as a self-contained
-  skill must.
-- **`businesslens-verify` verifies the nouns.** Information kept, each named
-  state, each transition's cause, each relation and its cardinality, and every
-  `entities` list on a Capability and a Screen. `businesslens-ideate` covers
-  Entities at all, which it did not.
-- **`businesslens-map` settles the undetermined calls with the author, in
-  rounds, before writing anything.** Boundary first, because everything hangs
-  off which surfaces are Interfaces and who the Actors are; then Granularity,
-  quoting both counts wherever a family could be one Entity or several; then
-  Naming. Each question carries its options, what each one costs, and a
-  recommendation, so the author corrects a draft rather than filling a blank.
-  Finding facts stays the agent's job — it asks only what it cannot look up.
-  With no author reachable it does not quietly choose: the defaults apply and
-  every unanswered question lands in `Judgment calls` as an open question.
-
-  Three independent mappings of one repository agreed on about 93% of the
-  Capabilities they found and shared 69% of the ids. Every divergence that
-  mattered was a decision the source cannot settle. `Judgment calls` had been
-  surfacing these *after* the model was written, as a list to review, which
-  makes approval a formality.
-
-  A fourth round covers the acceptance surface: how many Scenarios each
-  Capability needs, and where the line falls between a Scenario and an
-  `## Edge cases` bullet. A guided run negotiated every resource count except
-  that one, chose 19 of its 71 resources alone, and invented the rule it used to
-  decide them — then reported it against itself when asked what the rounds had
-  missed. Availability joins the same round wherever a Capability would be
-  offered on two Interfaces because one implementation serves both, which is the
-  parity inference the rubric already refused and the same run made anyway.
-- **How many Entities is a step, not a judgement.** Write the
-  `## Information kept` list first: one Entity if a single list is true of every
-  candidate, several the moment it needs *"depending on the kind"*. Being
-  stored, parsed and rendered alike is named as not the test, because that is
-  the argument that most often wins when it should not. When the call is still
-  close, split — a merge stays available to anyone later, while a collapse
-  deletes the difference and leaves nothing saying the question existed.
-- **An Interface entry point may be keyed by another Interface's id.** The key
-  had to equal that Interface's own `type`, so a surface reached *from* another
-  surface had nowhere to say so — the local Product Report is opened by
-  `businesslens view`, and a `cli:` key could not sit on a `web` Interface. A
-  mapping run decided that placement in a round, hit the constraint at write
-  time, and fell back to prose. Where you reach a surface from is a fact about
-  the surface reached. Its own id stays refused, because `type` already says it.
-  The rule also reaches the wire, which had never checked an Interface key at
-  all.
-- **`product-model` loses a lifecycle that forbade nothing.** Every other
-  shipped lifecycle rules something out — an Order cannot be un-refunded, a
-  Collection cannot go Published to Private. Its four transitions of six
-  possible pairs ruled out nothing: a model genuinely can return to Draft, so
-  the two omissions were unwritten rather than impossible. `coverage.status` is
-  a field the linter switches on, which is not the same as a lifecycle, and the
-  breadth claim already lives in `## Information kept`. Three independent
-  mapping runs declined to author these states; they were right.
-- **A subset is not an answer.** Where one candidate's kept information is
-  contained in another's, an intersection always exists, so "a single list is
-  true of both" is trivially satisfiable and decides nothing. Ask instead
-  whether anything names the smaller one on its own: reached only through the
-  larger thing makes it information kept inside it, while stored, addressed,
-  sent or changed independently makes it an Entity however much the information
-  overlaps. Two honest applications of the procedure had reached opposite
-  answers on the same pair.
-- **Three more things are not Entities**, each of which passes the naming test
-  and is still not product meaning. A **representation** of an Entity — a
-  serialization, export or rendering — is that thing in another shape; if you
-  can regenerate it, it belongs in that Entity's information. A **receipt** the
-  Product keeps so its own work is safe is for the Product, not an Actor. The
-  Product's own **surfaces, shipped content and closed vocabularies** are what
-  it *is*: where there are no instances, only members of a fixed list, that is a
-  vocabulary. The discriminator is stated outright, because it traps a tool
-  whose subject is models — does the Product keep information about instances of
-  this, or is this the Product itself?
-- **The Product Report reads an Entity where the Entity is, not only where its
-  own page is.** A Step's `entity` and `state` reached the wire and were checked
-  against that Entity's lifecycle, then dropped by the viewer's projection — so
-  the Scenario reading, which *is* the sequence, could never say which Step moved
-  the thing. All that survived was the Scenario's deduped Entity set, one row in
-  Connections. The Step now carries the pair into the reading and draws it beside
-  who performs the Step, as a chip that opens the Entity.
-- **An Entity's state says what leaves it there.** The lifecycle said what a
-  thing can be and the transitions named the Capability that moves it. Neither
-  answered what actually puts it in a state, which is the question a reader
-  arrives at one with. Each state now names the Scenarios whose Steps land in it,
-  derived from the link the report already proves.
-- **Every Entity edge is readable from both of its ends.** A Screen declares what
-  it presents, a Capability what it changes, and a Journey Scenario's Steps what
-  they move — yet only the Entity could be filtered, grouped or counted by any of
-  them, so "Entities on this Screen" worked and "Screens presenting this Entity"
-  did not. Screens, Capabilities, Journeys, Domains and both Scenario collections
-  gain the Entity facet and column. A Journey derives what it changes from its
-  Scenarios' Steps rather than its Capabilities' declarations, because a
-  Capability it uses may change things no path through this Journey reaches; a
-  Domain reads back the Entities that name it. A Screen's page names what it
-  presents before listing what it shows about it, since `## Information
-  presented` is this view's and never a restatement of what the Entity keeps.
-- **A transition now needs an acceptance case.** `steps[].entity` and
-  `steps[].state` reached `spec/format.md` and both validators and neither
-  authoring contract: the three skill format references and the docs pages a
-  Scenario is actually written from never named either key, and no rule ever
-  asked for the pair — so every check policed it once present and nothing
-  noticed it was absent. Across BusinessLens's own model and the teaching
-  Blueprint, three Steps out of 264 named an Entity and one named a state.
-  `lint` now reads a transition as a claim whose acceptance surface is the
-  causing Capability's Scenarios: if no Step is ever shown leaving the Entity in
-  that state, the lifecycle asserts a move nothing demonstrates. Only the
-  destination is matched, because a Step names the state it *leaves* an Entity
-  in and never the one it came from, so two transitions into one state share a
-  demonstration. Severity follows `coverage.status`, exactly as an availability
-  Context without Scenario coverage does.
-- **Both authoring contracts name the pair.** The skill format references say
-  when to author `entity` and `state` and which Step carries them — the one that
-  performs the change, never the condition that observes it — and
-  `docs/capabilities.md` and `docs/journeys.md` carry both as fields of the
-  Scenario they belong to.
-- **The shipped models say what they move.** The teaching Blueprint demonstrates
-  all seven of its transitions where it demonstrated one; the golden fixture
-  gains `Sell the last available unit`, the acceptance case its Catalog product
-  lifecycle never had; and BusinessLens's own model names the Product Model on
-  all seven Steps that write it rather than two. Its Entities have no states, so
-  it carries `entity` without `state` throughout — which is the whole of what
-  that model can truthfully say.
-- **A Step changes as many Entities as it changes** (Product Report v12). The
-  Step's singular `entity`/`state` are now entries of a `changes` list. One
-  observable act can move two things at once — a transfer debits one account,
-  and crediting the other is not a second Step an Actor could watch happen on
-  its own — and splitting an act to fit a singular field turns an acceptance
-  case into an implementation trace, which is what prose `## Steps` was removed
-  for. The singular was never a stated rule either: nothing said "at most one",
-  so an author with two had no signal and would silently drop one. An Entity
-  still appears at most once per Step, because two entries for it are two
-  authorities that can disagree.
-- **Not every change is a move.** Each entry carries an `effect` of `creates`,
-  `changes`, or `removes`. Beginning and ceasing to exist are things an Actor
-  observes and no transition can express — a Reader creates a collection, a
-  Reader stops following a source — while `entity` alone flattened both into
-  "touched it". `changes` is the default and the ordinary case; a fourth value
-  meaning "updated" would have appeared on almost every entry and separated
-  nothing. `state` follows the effect: under `changes` a transition must reach
-  it, under `creates` none is required because a creation has no `from`, and
-  `removes` refuses a state outright. A state a Step creates into now counts as
-  reached, so that warning moved from the Entity parser — which sees one file —
-  to `lint`, which sees the Scenarios.
-- **The reading shows where a move starts, without anything authoring it.** A
-  Step names the state it *leaves* an Entity in; the lifecycle says which states
-  reach that one by that Capability. Where exactly one does, the Product Report
-  draws `Unread → Read` from the authored `Read` alone. Where several do it
-  shows the destination and names the alternatives in the tooltip rather than
-  picking a tail. Authoring the origin instead would have made `state` mean the
-  state left behind on one Step and the state arrived from on another, which is
-  the two-authorities failure `## Relations` and `## Transitions` are refused
-  for.
-- **A Step says what it reads, not only what it changes.** A Step reading "the
-  Reader chooses a saved item and an owned collection" said nothing at all in
-  the model, leaving anyone who wanted to know what it was about to parse the
-  English. `reads` is a bare list of Entity ids beside `changes`, and the two
-  are deliberately unlike each other: `changes` carries an effect and a state,
-  is checked against the Capability's declaration and the Entity's lifecycle,
-  and is what *what can alter this thing* is derived from; `reads` carries none
-  of that, never counts as a change, and never keeps an Entity from being an
-  orphan. The asymmetry is the point, and it is what lets the Capability's
-  **changes, never reads** rule stand unweakened. An Entity is named in one list
-  or the other and never in both.
-- **A declaration is a claim, and its Capability's Scenarios are where it is
-  shown.** `lint` checked that a Step's Entity was one its Capability declares
-  and never the reverse, so a Capability could declare what it changes while its
-  whole acceptance surface stayed silent — which is how one Capability came to
-  declare two Entities across four Scenarios that mentioned neither. The rule is
-  the transition rule one level out, graded by `coverage.status` the same way.
-  It found six holes in the teaching Blueprint and one in the golden fixture,
-  and half of them were the opposite defect: `read-content`, `browse-catalog`
-  and `read-public-collection` declared things they only present, which
-  **changes, never reads** already forbade and nothing had ever caught. They now
-  declare nothing and their Steps read instead.
-
-  The check asks whether the acceptance surface says anything at all, never
-  whether it accounts for each declared Entity separately. `entities` is what a
-  Capability *can* change and a Step's `changes` is what one concrete case
-  *does* change, so the two are supposed to differ: a Capability that writes any
-  part of a model can touch every resource type while no single case touches all
-  of them. Asking for a Step per declared Entity forces either one artificial
-  case that touches everything or a Scenario per combination — and it briefly
-  produced the first, with Steps reading "writes only that delta" made to name
-  all thirteen resource types.
-- **BusinessLens's own model names the Actor that performs its skill Steps.**
-  `map-established-behavior`, `decide-intended-behavior` and
-  `verify-model-alignment` are available on the `agent-skills` Interface, where
-  no BusinessLens process runs at all: the skill is text the AI agent reads and
-  follows. Eleven Steps reading "The Product writes the approved delta" named an
-  executor that does not exist there, and now name the `ai-agent` Actor that
-  does. The Capabilities on `businesslens-cli` keep `kind: product`, because
-  `businesslens blueprint open` genuinely is a running process.
-- **The Scenario reading answers "what is this about" before the prose does.** A
-  subject band above the Trigger names what the Scenario changes and what it
-  reads, in separate rows so a read is never promoted into the first answer. An
-  end-state summary under the Outcome names where each changed Entity is left —
-  the last change naming it in Step order, derived rather than authored a second
-  time. Read chips sit at a lower weight than changes throughout, because
-  absence of a read means nothing and must not look like it does.
-- `ProductReportV11Schema` and `ProductReportV11` are now
-  `ProductReportV12Schema` and `ProductReportV12`, and
-  `ReportScenarioStepChangeSchema` joins the report SDK exports. v11 reports are
-  refused rather than migrated, as every earlier version is.
+- **Folder schema 8 and Product Report v13 are the only accepted contracts.**
+  Historical reports are refused rather than migrated. The report SDK exports
+  `ProductReportV13Schema`, `ProductReportV13`, the unversioned current
+  aliases, Entity/fact/relation types, Step effect types, and grant types.
+- **Scenario Steps are the single source of truth for what happens to
+  Entities.** Every Step carries `entities: []` or entries shaped as
+  `{ entity, as, effect, from, to }`, where `effect` is
+  `creates|changes|removes|reads`. A Capability no longer declares Entities
+  and an Entity no longer declares transitions; lifecycles and reverse edges
+  are composed from acceptance Steps.
+- `## Information kept` is a list of uniquely named facts, so a Rule can
+  govern one fact exactly.
+- Behavioral ids are verb-noun and reuse vocabulary the model already
+  declares. Entity, Domain, and Business Rule ids do not begin with a verb.
+  The linter derives these naming findings rather than asking an author to
+  judge them.
+- Whether an Interface needs Experiences is derived from its access and Actor
+  sets, with the counterpart exception for symmetric platform pairs. Interface
+  entry-point keys may name the Interface's type or another Interface from
+  which it is reached.
+- A Business Rule governs at least two behaviors or an independent Context. A
+  Domain states what its Boundary excludes. Both constraints are now linted.
+- `businesslens-map`, `businesslens-ideate`, and the authoring branches of
+  `businesslens-verify` settle undetermined boundary, granularity, naming,
+  and acceptance calls in rounds before writing. They attach the evidence they
+  read and surface remaining judgment calls explicitly.
+- `businesslens-verify` re-derives findings from the current model and
+  repository, verifies Entity facts, states, relations, composed transitions,
+  Step effects, and Rule grants, and never persists a workflow ledger.
+- `blueprint open` preserves authored coverage `unmapped`, `limitations`,
+  and `rationale`; only provenance-specific `method` is replaced.
+- The docs define each resource type on its owning page. Actor guidance moved
+  into Entities, Capability and Journey pages own their Scenario fields, and
+  Business Rules owns permission semantics.
 
 ### Fixed
 
-- `docs/cli-open.md`, `docs/cli-export.md`, `docs/product-model.md`,
-  `spec/report.md` and the three bundled skill format references still described
-  folder schema 6 and Product Report v10 — one of them asserting that v10 was the
-  only accepted report version, which the schema had not agreed with since v11.
+- Portable validation now resolves every Entity, actor-role, relation, state,
+  Step effect, Context, and grant reference before a report can be served or
+  expanded.
+- The stable viewer reads Entity lifecycles on their own tab, routes transitions
+  as a state machine, keeps the current page and filters through recompiles,
+  and exposes authored relations from both ends without inventing edges.
+- The packed Nuxt Layer consumer, viewer documentation, and package manifest
+  stay aligned with the current report major, and generated Layer
+  `node_modules` are excluded from the npm tarball.
 
 ## [0.8.0] - 2026-08-25
 

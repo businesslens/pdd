@@ -1,6 +1,6 @@
 # BusinessLens Product Report
 
-The stable Product Report v10 renderer used by `businesslens view` and exported
+The stable Product Report v13 renderer used by `businesslens view` and exported
 from the `businesslens` package. It projects the complete portable report into
 a resource-first experience: a flat rail of resource types, a collection surface
 per type, a page for every resource, search, and named topology views.
@@ -44,7 +44,7 @@ Render the canonical report directly:
 <BusinessLensReportViewer :report="report" :logo-src="logoSrc" />
 ```
 
-`report` must be a `ProductReportV12` from `businesslens/report`. There is
+`report` must be a `ProductReportV13` from `businesslens/report`. There is
 no second, lossy public view-model contract.
 
 Two navigation facts are bindable, so a host can keep them in its own router

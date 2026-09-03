@@ -40,11 +40,29 @@ const lock = JSON.parse(await readFile(resolve(root, 'package-lock.json'), 'utf8
 const plugin = JSON.parse(await readFile(resolve(root, '.claude-plugin/plugin.json'), 'utf8'))
 const marketplace = JSON.parse(await readFile(resolve(root, '.claude-plugin/marketplace.json'), 'utf8'))
 const localViewer = JSON.parse(await readFile(resolve(root, 'viewer/app/package.json'), 'utf8'))
+const reportContract = await readFile(resolve(root, 'src/core/portable.ts'), 'utf8')
+const reportViewerReadme = await readFile(resolve(root, 'layers/nuxt/report-viewer/README.md'), 'utf8')
+const nuxtConsumerFixture = await readFile(resolve(root, 'test/fixtures/nuxt-layer-consumer/app/app.vue'), 'utf8')
 const expectedSkills = [
   'businesslens-map',
   'businesslens-ideate',
   'businesslens-verify'
 ]
+
+const reportVersion = reportContract.match(/REPORT_SCHEMA_VERSION = '([^']+)'/)?.[1]
+const reportMajor = reportVersion?.split('.')[0]
+if (!reportVersion || !reportMajor) {
+  errors.push('src/core/portable.ts must declare REPORT_SCHEMA_VERSION')
+} else {
+  if (!reportViewerReadme.includes(`Product Report v${reportMajor}`)
+    || !reportViewerReadme.includes(`ProductReportV${reportMajor}`)) {
+    errors.push(`report-viewer README must document Product Report v${reportMajor}`)
+  }
+  if (!nuxtConsumerFixture.includes(`ProductReportV${reportMajor}`)
+    || !nuxtConsumerFixture.includes(`schemaVersion: '${reportVersion}'`)) {
+    errors.push(`packed Nuxt consumer must exercise Product Report v${reportMajor}`)
+  }
+}
 
 if (pkg.name !== 'businesslens') errors.push(`package.json name must be businesslens, found ${pkg.name}`)
 if (pkg.repository?.url !== 'git+https://github.com/businesslens/pdd.git') {
@@ -92,6 +110,9 @@ if (pkg.exports?.['./nuxt/report-viewer-lab']) {
 }
 if (!pkg.files?.includes('!layers/nuxt/report-viewer-lab')) {
   errors.push('package.json files must exclude the private report-viewer-lab')
+}
+if (!pkg.files?.includes('!layers/**/node_modules')) {
+  errors.push('package.json files must exclude generated layer node_modules')
 }
 for (const retired of ['layers/nuxt/report-lab', 'layers/nuxt/workbench-lab', 'src/report-view-model.ts']) {
   if (await exists(retired)) errors.push(`retired report artifact must stay removed: ${retired}`)
