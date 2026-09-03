@@ -579,6 +579,34 @@ describe('projectPortableReport', () => {
     step.entities.push({ ...entry })
     expect(sdk.validateProductReport(twice).join('\n')).toContain('entities contains duplicate')
 
+    /* Mentions of one Entity keep one alias mode, and a later Step resumes the
+       same instance from the state the earlier Step produced. */
+    const aliases = structuredClone(report)
+    const merge = aliases.model.capabilityScenarios.find(item => item.id === 'merge-duplicate-orders')!
+    merge.steps[1]!.entities.find(item => item.as === 'duplicate')!.as = null
+    expect(sdk.validateProductReport(aliases).join('\n')).toContain(
+      '"order" is aliased elsewhere in this Scenario; once an Entity is aliased, every mention of it is'
+    )
+
+    const chained = structuredClone(report)
+    const refund = chained.model.capabilityScenarios.find(item => item.id === 'refund-order')!
+    const firstOrder = refund.steps[0]!.entities.find(item => item.entityId === 'order')!
+    firstOrder.effect = 'changes'
+    firstOrder.from = 'Pending'
+    firstOrder.to = 'Confirmed'
+    refund.steps[1]!.entities.find(item => item.entityId === 'order')!.from = 'Pending'
+    expect(sdk.validateProductReport(chained).join('\n')).toContain(
+      '"order" was left in "Confirmed" by an earlier Step, not "Pending"; if these are different instances, give them aliases'
+    )
+
+    /* Attribution on a Product Step still does not make it an Actor Step. */
+    const attributedOnly = structuredClone(report)
+    const attributedScenario = attributedOnly.model.capabilityScenarios.find(item => item.id === 'refund-order')!
+    attributedScenario.steps.find(item => item.kind === 'actor')!.kind = 'product'
+    expect(sdk.validateProductReport(attributedOnly).join('\n')).toContain(
+      'needs at least one actor Step, or an unattended first condition Step'
+    )
+
     /* A Journey Step that changes a thing names the Capability that owns the change. */
     const unowned = structuredClone(report)
     const journeyStep = unowned.model.journeyScenarios[0]!.steps.find(item => item.entities.some(entry => entry.effect !== 'reads'))!
@@ -614,6 +642,63 @@ describe('projectPortableReport', () => {
     const closed = structuredClone(report)
     expect(rule(closed, 'orders-are-never-deleted').permits).toEqual([])
     expect(rule(closed, 'payment-before-confirmation').permits).toBeNull()
+  })
+
+  it('applies permission Rules to the Steps and Screens they govern', () => {
+    const rule = (value: ProductReportV13, id: string) => value.model.businessRules.find(item => item.id === id)!
+
+    const forbidden = structuredClone(report)
+    rule(forbidden, 'orders-are-never-deleted').appliesTo = [{
+      type: 'entity', entityId: 'order', effect: 'changes', from: 'Confirmed', to: 'Refunded', facts: [], contexts: []
+    }]
+    expect(sdk.validateProductReport(forbidden).join('\n')).toContain(
+      'moves "order" from Confirmed to Refunded, which rule "orders-are-never-deleted" forbids to everyone'
+    )
+    expect(() => sdk.parseProductReport(forbidden)).toThrow('forbids to everyone')
+
+    // Matching Rules AND: one Rule without a possible grant is enough to reject the Step.
+    const noGrant = structuredClone(report)
+    rule(noGrant, 'refunds-need-an-operator').permits = [{
+      actorIds: ['payment-gateway'], related: [], self: false, when: [], unattended: false, configuredByEntityId: null
+    }]
+    expect(sdk.validateProductReport(noGrant).join('\n')).toContain(
+      'actor "store-admin" moves "order" from Confirmed to Refunded, and no grant of rule "refunds-need-an-operator" can permit it'
+    )
+
+    const noSchedule = structuredClone(report)
+    const broad = rule(noSchedule, 'who-may-change-an-order')
+    broad.permits = broad.permits!.filter(grant => !grant.unattended)
+    expect(sdk.validateProductReport(noSchedule).join('\n')).toContain(
+      'moves "order" from Pending to Cancelled unattended, and rule "who-may-change-an-order" has no "unattended" grant for it'
+    )
+
+    // A Context selector governs only Steps beneath that place.
+    const elsewhere = structuredClone(report)
+    rule(elsewhere, 'orders-are-never-deleted').appliesTo = [{
+      type: 'entity',
+      entityId: 'order',
+      effect: 'changes',
+      from: 'Confirmed',
+      to: 'Refunded',
+      facts: [],
+      contexts: [{ placeId: 'customer-web::storefront::order-status' }]
+    }]
+    expect(sdk.validateProductReport(elsewhere).some(issue =>
+      issue.includes('rule "orders-are-never-deleted" forbids to everyone'))).toBe(false)
+
+    const here = structuredClone(elsewhere)
+    const target = rule(here, 'orders-are-never-deleted').appliesTo[0]!
+    if (target.type !== 'entity') throw new Error('test requires one Entity target')
+    target.contexts = [{ placeId: 'admin-web::order-detail' }]
+    expect(sdk.validateProductReport(here).join('\n')).toContain(
+      'moves "order" from Confirmed to Refunded, which rule "orders-are-never-deleted" forbids to everyone'
+    )
+
+    const unreadable = structuredClone(report)
+    rule(unreadable, 'margin-is-for-operators').permits = []
+    expect(sdk.validateProductReport(unreadable).join('\n')).toContain(
+      'screen "admin-web::order-detail": presents "order", which rule "margin-is-for-operators" forbids anyone to read'
+    )
   })
 
   it('keeps a relation to one encoding and one side on the wire', () => {

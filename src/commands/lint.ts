@@ -9,6 +9,13 @@ import { INTERFACE_TYPES } from '../core/interface-types.js'
 import { containsStructuralHeading, section, type MarkdownDoc } from '../core/markdown.js'
 import { allResources, resourceCollections, loadModel } from '../core/model.js'
 import { resolveModelRoot } from '../core/model-root.js'
+import {
+  permissionTargetSelectsOperation,
+  validatePermissionBehavior,
+  type PermissionGrant,
+  type PermissionOperation,
+  type PermissionTarget
+} from '../core/permission-validation.js'
 
 export interface LintResult {
   ok: boolean
@@ -28,17 +35,6 @@ function sameSet(left: Set<string>, right: Set<string>): boolean {
 
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-}
-
-/** Nothing about the entity, its effect, or its states is left to guess in a message. */
-function describeOperation(entry: ScenarioStepEntity): string {
-  const effect = entry.effect ?? 'changes'
-  const name = entry.as ? `${entry.entity} (${entry.as})` : entry.entity
-  if (effect === 'reads') return `reads "${name}"`
-  if (effect === 'creates') return `creates "${name}"${entry.to ? ` as ${entry.to}` : ''}`
-  if (effect === 'removes') return `removes "${name}"${entry.from ? ` from ${entry.from}` : ''}`
-  if (entry.from && entry.to) return `moves "${name}" from ${entry.from} to ${entry.to}`
-  return `changes "${name}"`
 }
 
 /** Pure structural rule engine over a loaded model; trackedFiles injected for testability. */
@@ -903,7 +899,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
         errors.push(`${scenario.file}: step ${index + 1}: "unattended" is valid only on the first Step`)
       }
     }
-    if (!scenarioActors.size && !unattendedTrigger) {
+    if (!scenario.steps.some(step => step.kind === 'actor') && !unattendedTrigger) {
       errors.push(`${scenario.file}: needs at least one actor Step, or an unattended first condition Step`)
     }
     for (const route of scenario.routes) {
@@ -1412,35 +1408,59 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
    * the Step's origin where it has one. Fact-scoped Rules select no Step, since
    * a Step cannot cite a fact; they are checked by Screen reach and by `verify`.
    */
-  const permissionRules = model.businessRules.filter(
+  const permissionRuleResources = model.businessRules.filter(
     rule => rule.permits !== undefined && rule.appliesTo.length > 0 && rule.appliesTo.every(target => target.type === 'entity')
   )
-  const stepInPlaces = (step: ScenarioStep, selectors: Context[]): boolean =>
-    !selectors.length || step.contexts.some(context => selectors.some(selector => containsPlace(selector.place, context.place)))
+  const permissionTarget = (target: BusinessRuleEntityTarget): PermissionTarget => ({
+    entityId: target.id,
+    effect: target.effect ?? null,
+    from: target.from ?? null,
+    to: target.to ?? null,
+    facts: target.facts,
+    contextPlaces: target.contexts.map(context => context.place)
+  })
+  const permissionGrant = (grant: BusinessRuleGrant): PermissionGrant => ({
+    actorIds: grant.actors,
+    relatedActorId: grant.related.at(-1)?.entity ?? null,
+    self: grant.self === true,
+    unattended: grant.unattended === true,
+    stateConditions: grant.when.flatMap(condition => condition.state === undefined ? [] : [condition.state])
+  })
+  const permissionOperation = (
+    label: string,
+    step: ScenarioStep,
+    entry: ScenarioStepEntity,
+    unattended: boolean
+  ): PermissionOperation => ({
+    label,
+    actorId: step.actor ?? null,
+    unattended,
+    entityId: entry.entity,
+    alias: entry.as ?? null,
+    effect: entry.effect ?? 'changes',
+    from: entry.from ?? null,
+    to: entry.to ?? null,
+    contextPlaces: step.contexts.map(context => context.place)
+  })
+  const permissionRules = permissionRuleResources.map(rule => ({
+    id: rule.id,
+    targets: rule.appliesTo
+      .filter((target): target is BusinessRuleEntityTarget => target.type === 'entity')
+      .map(permissionTarget),
+    grants: (rule.permits ?? []).map(permissionGrant)
+  }))
   const selects = (target: BusinessRuleEntityTarget, entry: ScenarioStepEntity, step: ScenarioStep, ignoreFrom = false): boolean => {
-    if (target.id !== entry.entity || target.facts.length) return false
-    if (target.effect !== undefined && target.effect !== (entry.effect ?? 'changes')) return false
-    if (!ignoreFrom && target.from !== undefined && target.from !== entry.from) return false
-    if (target.to !== undefined && target.to !== entry.to) return false
-    return stepInPlaces(step, target.contexts)
-  }
-  const grantPossible = (grant: BusinessRuleGrant, step: ScenarioStep, unattended: boolean, targetId: string, entry: ScenarioStepEntity): boolean => {
-    const stateHolds = grant.when.every(condition =>
-      condition.state === undefined || entry.from === undefined || condition.state === entry.from)
-    if (unattended) return grant.unattended === true && stateHolds
-    if (grant.unattended) return false
-    const actor = step.actor
-    if (!actor) return false
-    if (grant.actors.length && !grant.actors.includes(actor)) return false
-    if (grant.related.length && grant.related[grant.related.length - 1]!.entity !== actor) return false
-    if (grant.self && actor !== targetId) return false
-    return stateHolds
+    return permissionTargetSelectsOperation(
+      permissionTarget(target),
+      permissionOperation('', step, entry, false),
+      ignoreFrom
+    )
   }
 
   /* Two permission Rules with one selector are nearly always alternatives
      written apart — and apart, they AND. */
   const selectorKeys = new Map<string, string>()
-  for (const rule of permissionRules) {
+  for (const rule of permissionRuleResources) {
     const key = rule.appliesTo
       .map(target => target.type === 'entity'
         ? [target.id, target.effect ?? '', target.from ?? '', target.to ?? '', target.facts.join(','), target.contexts.map(context => context.place).join(',')].join('|')
@@ -1455,37 +1475,9 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     }
   }
 
-  for (const scenario of allScenarios) {
-    const unattended = scenario.steps[0]?.unattended === true
-    for (const [index, step] of scenario.steps.entries()) {
-      const label = `${scenario.file}: step ${index + 1}`
-      for (const entry of step.entities) {
-        const described = describeOperation(entry)
-        for (const rule of permissionRules) {
-          const targets = rule.appliesTo.filter((target): target is BusinessRuleEntityTarget => target.type === 'entity' && selects(target, entry, step))
-          if (!targets.length) continue
-          const grants = rule.permits ?? []
-          if (!grants.length) {
-            errors.push(`${label}: ${described}, which rule "${rule.id}" forbids to everyone`)
-            continue
-          }
-          if (!unattended && !step.actor) {
-            errors.push(`${label}: ${described}, which rule "${rule.id}" governs, so it needs an actor`)
-            continue
-          }
-          if (!grants.some(grant => grantPossible(grant, step, unattended, targets[0]!.id, entry))) {
-            errors.push(unattended
-              ? `${label}: ${described} unattended, and rule "${rule.id}" has no "unattended" grant for it`
-              : `${label}: actor "${step.actor}" ${described}, and no grant of rule "${rule.id}" can permit it`)
-          }
-        }
-      }
-    }
-  }
-
   /* The minimal selector is canonical: a narrowing every selected Step already
      satisfies says nothing now and silently exempts a Step added later. */
-  for (const rule of permissionRules) {
+  for (const rule of permissionRuleResources) {
     for (const [targetIndex, target] of rule.appliesTo.entries()) {
       if (target.type !== 'entity') continue
       const label = `${rule.file}: appliesTo item ${targetIndex + 1}`
@@ -1513,32 +1505,21 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     }
   }
 
-  /* A Screen presenting a thing nobody who reaches the Screen may read. */
-  for (const screen of model.screens) {
-    const reach = supportedActorsForContainer(screen.containerId) ?? new Set<string>()
-    for (const entityId of screen.entities) {
-      for (const rule of permissionRules) {
-        const targets = rule.appliesTo.filter((target): target is BusinessRuleEntityTarget =>
-          target.type === 'entity' && target.id === entityId
-          && (target.effect === undefined || target.effect === 'reads')
-          && (!target.contexts.length || target.contexts.some(selector => containsPlace(selector.place, screen.id))))
-        if (!targets.length) continue
-        const grants = rule.permits ?? []
-        if (!grants.length) {
-          errors.push(`${screen.file}: presents "${entityId}", which rule "${rule.id}" forbids anyone to read`)
-          continue
-        }
-        const permitted = [...reach].some(actorId => grants.some(grant =>
-          grant.unattended === undefined
-          && (!grant.actors.length || grant.actors.includes(actorId))
-          && (!grant.related.length || grant.related[grant.related.length - 1]!.entity === actorId)
-          && (!grant.self || actorId === entityId)))
-        if (!permitted) {
-          errors.push(`${screen.file}: presents "${entityId}", and no actor of "${screen.containerId}" has a grant to read it in rule "${rule.id}"`)
-        }
-      }
-    }
-  }
+  errors.push(...validatePermissionBehavior({
+    rules: permissionRules,
+    operations: allScenarios.flatMap(scenario => {
+      const unattended = scenario.steps[0]?.unattended === true
+      return scenario.steps.flatMap((step, index) =>
+        step.entities.map(entry => permissionOperation(`${scenario.file}: step ${index + 1}`, step, entry, unattended)))
+    }),
+    screens: model.screens.map(screen => ({
+      label: screen.file,
+      id: screen.id,
+      containerId: screen.containerId,
+      entityIds: screen.entities,
+      actorIds: [...(supportedActorsForContainer(screen.containerId) ?? [])]
+    }))
+  }))
 
   if (model.interfaces.length === 0) errors.push('interfaces/: the model needs at least one interface')
   if (model.coverage.status === 'complete' && model.capabilities.length === 0) {

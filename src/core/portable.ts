@@ -3,6 +3,7 @@ import { parseCodeTarget } from './coderefs.js'
 import { containsPlace, interfaceOf, parentPlace } from './ids.js'
 import { containsStructuralHeading } from './markdown.js'
 import { INTERFACE_TYPES } from './interface-types.js'
+import { validatePermissionBehavior } from './permission-validation.js'
 
 export const REPORT_SCHEMA_VERSION = '13.0.0'
 
@@ -799,6 +800,11 @@ export function validateProductReport(report: ProductReportV13): string[] {
     const capabilitySteps: Array<{ capabilityId: string, contextPlaces: Set<string>, containers: Set<string> }> = []
     const screenIds = new Set<string>()
     const unattendedScenario = scenario.steps[0]?.unattended === true
+    /* Keep the same cross-Step invariants as the authored folder: an Entity is
+       either bare or aliased throughout one Scenario, and each named instance
+       resumes from the state the preceding Step left it in. */
+    const instanceStates = new Map<string, string>()
+    const aliasModes = new Map<string, 'bare' | 'aliased'>()
     for (const [index, step] of scenario.steps.entries()) {
       const stepLabel = `${label}: step ${index + 1}`
       /* An actor Step names who performs it; a Product or condition Step may
@@ -836,6 +842,13 @@ export function validateProductReport(report: ProductReportV13): string[] {
           issues.push(`${stepLabel}: references missing entity "${entry.entityId}"`)
           continue
         }
+        const name = entry.as ? `${entry.entityId} (${entry.as})` : entry.entityId
+        const mode = entry.as ? 'aliased' : 'bare'
+        const priorMode = aliasModes.get(entry.entityId)
+        if (priorMode && priorMode !== mode) {
+          issues.push(`${stepLabel}: "${entry.entityId}" is ${priorMode === 'aliased' ? 'aliased' : 'bare'} elsewhere in this Scenario; once an Entity is aliased, every mention of it is`)
+        }
+        aliasModes.set(entry.entityId, mode)
         if (entry.effect === 'reads' && (entry.from !== null || entry.to !== null)) {
           issues.push(`${stepLabel}: a "reads" entry carries no state`)
           continue
@@ -861,11 +874,21 @@ export function validateProductReport(report: ProductReportV13): string[] {
           }
         }
         if (hasStates && entry.effect === 'creates' && entry.to === null) {
-          issues.push(`${stepLabel}: creating "${entry.entityId}" needs "to"`)
+          issues.push(`${stepLabel}: creating "${name}" needs "to"`)
         }
         if (hasStates && entry.effect === 'removes' && entry.from === null) {
-          issues.push(`${stepLabel}: removing "${entry.entityId}" needs "from"`)
+          issues.push(`${stepLabel}: removing "${name}" needs "from"`)
         }
+
+        const instance = `${entry.entityId}\0${entry.as ?? ''}`
+        const left = instanceStates.get(instance)
+        if (entry.from !== null && left !== undefined && left !== entry.from) {
+          issues.push(
+            `${stepLabel}: "${name}" was left in "${left}" by an earlier Step, not "${entry.from}"; if these are different instances, give them aliases`
+          )
+        }
+        if (entry.effect === 'removes') instanceStates.delete(instance)
+        else if (entry.to !== null) instanceStates.set(instance, entry.to)
       }
 
       requireUniqueValues(issues, stepLabel, 'routeIds', step.contexts.map(context => context.routeId))
@@ -902,6 +925,9 @@ export function validateProductReport(report: ProductReportV13): string[] {
           }
         }
       }
+    }
+    if (!scenario.steps.some(step => step.kind === 'actor') && !unattendedScenario) {
+      issues.push(`${label}: needs at least one actor Step, or an unattended first condition Step`)
     }
     if (!sameIds(scenario.actorIds, derivedActors)) {
       issues.push(`${label}: actorIds must equal the union of every step actorId`)
@@ -1409,6 +1435,61 @@ export function validateProductReport(report: ProductReportV13): string[] {
       }
     }
   }
+
+  /* A structurally valid permission Rule must also agree with every Step and
+     Screen it selects. This is the same pure evaluator used by folder lint, so
+     accepting a report cannot defer a contradiction until expansion. */
+  issues.push(...validatePermissionBehavior({
+    rules: model.businessRules
+      .filter(rule => rule.permits !== null
+        && rule.appliesTo.length > 0
+        && rule.appliesTo.every(target => target.type === 'entity'))
+      .map(rule => ({
+        id: rule.id,
+        targets: rule.appliesTo.flatMap(target => target.type === 'entity' ? [{
+          entityId: target.entityId,
+          effect: target.effect,
+          from: target.from,
+          to: target.to,
+          facts: target.facts,
+          contextPlaces: target.contexts.map(context => context.placeId)
+        }] : []),
+        grants: (rule.permits ?? []).map(grant => ({
+          actorIds: grant.actorIds,
+          relatedActorId: grant.related.at(-1)?.entityId ?? null,
+          self: grant.self,
+          unattended: grant.unattended,
+          stateConditions: grant.when.flatMap(condition => condition.state === null ? [] : [condition.state])
+        }))
+      })),
+    operations: [...model.capabilityScenarios, ...model.journeyScenarios].flatMap(scenario => {
+      const unattended = scenario.steps[0]?.unattended === true
+      const scenarioLabel = 'capabilityId' in scenario
+        ? `capability scenario "${scenario.id}"`
+        : `journey scenario "${scenario.id}"`
+      return scenario.steps.flatMap((step, index) => step.entities.map(entry => ({
+        label: `${scenarioLabel}: step ${index + 1}`,
+        actorId: step.actorId,
+        unattended,
+        entityId: entry.entityId,
+        alias: entry.as,
+        effect: entry.effect,
+        from: entry.from,
+        to: entry.to,
+        contextPlaces: step.contexts.map(context => context.placeId)
+      })))
+    }),
+    screens: model.screens.map(screen => {
+      const containerId = containerForScreen(screen)
+      return {
+        label: `screen "${screen.id}"`,
+        id: screen.id,
+        containerId,
+        entityIds: screen.entityIds,
+        actorIds: [...(supportedActorsForContainer(containerId) ?? [])]
+      }
+    })
+  }))
 
   if (report.coverage.status === 'complete' && model.capabilities.length === 0) {
     issues.push('a complete model needs at least one capability')

@@ -332,6 +332,18 @@ An internal system that initiates store operations.
     expect(run(cwd).errors.join('\n')).toContain('an unattended Scenario names no actor')
   })
 
+  it('requires an Actor Step rather than an actor attributed only to Product Steps', () => {
+    const cwd = fixtureCopy()
+    const scenario = join(cwd, '.businesslens/capabilities/browse-catalog/scenarios/browse-catalog.md')
+    writeFileSync(scenario, readFileSync(scenario, 'utf8').replace(
+      '    kind: actor\n    actor: shopper\n',
+      '    kind: product\n    actor: shopper\n'
+    ))
+    expect(run(cwd).errors.join('\n')).toContain(
+      'needs at least one actor Step, or an unattended first condition Step'
+    )
+  })
+
   it('requires a Capability on a Journey Step that changes a thing', () => {
     const cwd = fixtureCopy()
     const scenario = join(cwd, '.businesslens/journeys/browse-and-buy/scenarios/browse-and-complete-checkout.md')
