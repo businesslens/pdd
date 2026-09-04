@@ -197,8 +197,9 @@ export function compileReport(
         id: domain.id,
         name: domain.doc.title,
         description: domain.doc.lead,
+        boundary: domain.boundary,
         ...(domain.colorSlot !== undefined ? { colorSlot: domain.colorSlot } : {}),
-        ...resourceContent(domain, [], assetBase)
+        ...resourceContent(domain, ['Boundary'], assetBase)
       })),
       entities: byId(model.entities).map(entity => ({
         id: entity.id,

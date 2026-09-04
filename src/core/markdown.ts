@@ -79,6 +79,17 @@ export function parseMarkdown(body: string): MarkdownDoc {
   return { title, lead: leadLines.join('\n').trim(), sections }
 }
 
+/**
+ * Whether a boundary statement says what its subject does *not* own.
+ *
+ * A Boundary that only asserts inclusion is a label, not a region. The folder
+ * linter and the report validator share the one heuristic, so a Domain cannot
+ * be refused in a repository and accepted on the wire.
+ */
+export function statesAnExclusion(value: string): boolean {
+  return /\b(does not|doesn't|not own|never|excludes?|rather than|outside)\b/i.test(value)
+}
+
 export function section(doc: MarkdownDoc, heading: string): string | undefined {
   return doc.sections.find(candidate => candidate.heading.toLowerCase() === heading.toLowerCase())?.body
 }

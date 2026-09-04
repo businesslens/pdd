@@ -309,6 +309,15 @@ An internal system that initiates store operations.
     expect(run(cwd).errors.join('\n')).toContain('duplicate fact "Subtotal"')
   })
 
+  it('names states, and refuses two with one name', () => {
+    // The wire validator has always refused these; the folder linter did not,
+    // so a model could lint clean and fail `blueprint export`.
+    const cwd = fixtureCopy()
+    const order = join(cwd, '.businesslens/entities/order.md')
+    writeFileSync(order, readFileSync(order, 'utf8').replace('### Cancelled', '### Confirmed'))
+    expect(run(cwd).errors.join('\n')).toContain('duplicate state "Confirmed"')
+  })
+
   it('resolves every actor reference to an Entity that acts', () => {
     const cwd = fixtureCopy()
     const cli = join(cwd, '.businesslens/interfaces/operator-cli.md')
@@ -1852,6 +1861,38 @@ permits:
     writeFileSync(rule, readFileSync(rule, 'utf8').replace('  - unattended: true\n    when: [{ state: Pending }]\n', ''))
     expect(run(cwd).errors.join('\n')).toContain(
       'moves "order" from Pending to Cancelled unattended, and rule "who-may-change-an-order" has no "unattended" grant for it'
+    )
+  })
+
+  it('holds a Step with no contexts to the place-scoped Rules of its Scenario', () => {
+    // A Step that omits `contexts` is shared by every route, so it happens
+    // inside the Scenario's places. Reading it as happening nowhere would let
+    // deleting a key walk out of an authorization claim.
+    const cwd = fixtureCopy()
+    const refund = join(cwd, '.businesslens/capabilities/manage-orders/scenarios/refund-order.md')
+    writeFileSync(refund, readFileSync(refund, 'utf8').replace(
+      `      - { entity: refund, effect: creates, to: Requested }
+    contexts:
+      web:
+        place: admin-web::order-detail
+      cli:
+        place: operator-cli
+`,
+      '      - { entity: refund, effect: creates, to: Requested }\n'
+    ))
+    expect(run(cwd).errors).toEqual([])
+
+    writeRule(cwd, 'refunds-on-the-console-are-the-gateway', `appliesTo:
+  - type: entity
+    id: order
+    effect: changes
+    to: Refunded
+    contexts:
+      - place: admin-web::order-detail
+permits:
+  - actors: [payment-gateway]`)
+    expect(run(cwd).errors.join('\n')).toContain(
+      'actor "store-admin" moves "order" from Confirmed to Refunded, and no grant of rule "refunds-on-the-console-are-the-gateway" can permit it'
     )
   })
 

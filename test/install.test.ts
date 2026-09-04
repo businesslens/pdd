@@ -125,6 +125,73 @@ describe('skill installation', () => {
     expect(readFileSync(join(fork, 'SKILL.md'), 'utf8')).toContain('MY CUSTOM EDIT')
   })
 
+  it('refuses a manifest that records a name outside the skills directory', () => {
+    // The manifest is read out of the target repository, which is untrusted. A
+    // recorded name reaches a recursive remove, so a name that escapes the
+    // skills directory invalidates the marker instead of being followed.
+    const project = temporary('bl-hostile-manifest-')
+    const skillsDir = join(project, '.agents', 'skills')
+    const victim = join(project, 'victim')
+    const claimed = join(skillsDir, 'businesslens-map')
+    mkdirSync(victim, { recursive: true })
+    mkdirSync(claimed, { recursive: true })
+    writeFileSync(join(victim, 'secret.txt'), 'not BusinessLens property\n')
+    writeFileSync(join(claimed, 'SKILL.md'), '---\nname: businesslens-map\n---\nSomebody else.\n')
+    writeFileSync(join(skillsDir, '.businesslens-install.json'), JSON.stringify({
+      schema: 1,
+      package: 'businesslens',
+      version: '0.5.0',
+      provider: 'codex',
+      scope: 'project',
+      skills: ['businesslens-map', '../../victim'],
+      installedAt: '2026-01-01T00:00:00.000Z'
+    }))
+
+    // The marker is not ours, so it grants no ownership either.
+    expect(() => installSkillsToTarget(
+      project,
+      { provider: providerById('codex'), scope: 'project' },
+      '9.9.9'
+    )).toThrow(/not marked as a BusinessLens-managed skill/)
+    expect(existsSync(join(victim, 'secret.txt'))).toBe(true)
+
+    // Not even `--force`, which grants overwriting this skills directory and
+    // nothing above it.
+    installSkillsToTarget(
+      project,
+      { provider: providerById('codex'), scope: 'project' },
+      '9.9.9',
+      { force: true }
+    )
+    expect(existsSync(join(victim, 'secret.txt'))).toBe(true)
+  })
+
+  it('leaves a recorded name this Product could never have written', () => {
+    // A well-formed marker still only proves ownership of names BusinessLens
+    // ships or once shipped; anything else in the list is somebody's own work.
+    const project = temporary('bl-stale-name-')
+    const skillsDir = join(project, '.agents', 'skills')
+    const notOurs = join(skillsDir, 'my-notes')
+    mkdirSync(notOurs, { recursive: true })
+    writeFileSync(join(notOurs, 'SKILL.md'), '---\nname: my-notes\n---\nMine.\n')
+    writeFileSync(join(skillsDir, '.businesslens-install.json'), JSON.stringify({
+      schema: 1,
+      package: 'businesslens',
+      version: '0.5.0',
+      provider: 'codex',
+      scope: 'project',
+      skills: [...BUSINESSLENS_SKILLS, 'my-notes'],
+      installedAt: '2026-01-01T00:00:00.000Z'
+    }))
+
+    installSkillsToTarget(
+      project,
+      { provider: providerById('codex'), scope: 'project' },
+      '9.9.9'
+    )
+    expect(existsSync(join(notOurs, 'SKILL.md'))).toBe(true)
+  })
+
   it('checks every harness target before writing any', () => {
     const project = temporary('bl-check-first-')
     const collision = join(project, '.agents', 'skills', 'businesslens-map')

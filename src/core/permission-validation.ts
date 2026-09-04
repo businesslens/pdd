@@ -64,6 +64,18 @@ export function describePermissionOperation(operation: PermissionOperation): str
   return `changes "${name}"`
 }
 
+/**
+ * The places an operation occurs in.
+ *
+ * A Step that omits `contexts` is shared by every route of its Scenario, which
+ * puts it inside that Scenario's places — not nowhere. Reading it as nowhere
+ * would let a place-scoped Rule be sidestepped by deleting a key, and an
+ * authorization claim that a deletion can escape is not a claim.
+ */
+export function operationPlaces(stepPlaces: string[], scenarioPlaces: string[]): string[] {
+  return stepPlaces.length ? stepPlaces : scenarioPlaces
+}
+
 function operationInPlaces(operation: PermissionOperation, selectors: string[]): boolean {
   return !selectors.length || operation.contextPlaces.some(place =>
     selectors.some(selector => containsPlace(selector, place)))

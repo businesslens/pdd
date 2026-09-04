@@ -925,7 +925,7 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
         </ul>
       </section>
       <section v-if="asScreen.states.length" class="space-y-2">
-        <h2 class="blr-page-heading">Product states <span class="blr-meta ms-1">{{ asScreen.states.length }}</span></h2>
+        <h2 class="blr-page-heading">View states <span class="blr-meta ms-1">{{ asScreen.states.length }}</span></h2>
         <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           <div
             v-for="state in asScreen.states"

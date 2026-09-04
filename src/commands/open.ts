@@ -260,7 +260,13 @@ function writeReport(root: string, report: ProductReportV13, hasLogo: boolean): 
       frontmatter(compactRecord({
         colorSlot: domain.colorSlot,
         references: references(domain.references)
-      })) + body(domain.name, domain.description, domain.intent, [], domain.supportingSections)
+      })) + body(
+        domain.name,
+        domain.description,
+        domain.intent,
+        [{ heading: 'Boundary', content: domain.boundary }],
+        domain.supportingSections
+      )
     )
   }
   for (const entity of report.model.entities) {

@@ -706,19 +706,64 @@ describe('projectPortableReport', () => {
     )
   })
 
-  it('keeps a relation to one encoding and one side on the wire', () => {
+  it('accepts the relations the folder accepts, and refuses a derived cardinality', () => {
+    // Two Entities relating at each other are usually one relationship written
+    // twice, and sometimes two genuinely different ones. Nothing here can tell
+    // those apart, so the folder grades it a warning and the wire — which has
+    // only errors — refuses nothing the folder accepts.
     const facing = structuredClone(report)
     const [first, second] = facing.model.entities
     first!.relations = [{ entityId: second!.id, verb: 'holds', cardinality: 'one-to-many' }]
     second!.relations = [{ entityId: first!.id, verb: 'belongs to', cardinality: 'many-to-many' }]
-    expect(sdk.validateProductReport(facing).join('\n'))
-      .toContain('faces a relation declared back at it')
+    expect(sdk.validateProductReport(facing).filter(issue => /relation/.test(issue))).toEqual([])
 
     const backwards = structuredClone(report) as unknown as {
       model: { entities: Array<{ relations: Array<{ cardinality: string }> }> }
     }
     backwards.model.entities[0]!.relations = [{ cardinality: 'many-to-one' } as never]
     expect(sdk.ProductReportSchema.safeParse(backwards).success).toBe(false)
+  })
+
+  it('holds a Domain to the Boundary the folder requires', () => {
+    // The wire form carried no Boundary at all, so a Domain that validated here
+    // expanded into a folder `lint` refuses for missing `## Boundary`.
+    const missing = structuredClone(report) as unknown as { model: { domains: Array<Record<string, unknown>> } }
+    delete missing.model.domains[0]!.boundary
+    expect(sdk.ProductReportSchema.safeParse(missing).success).toBe(false)
+
+    const inclusionOnly = structuredClone(report)
+    inclusionOnly.model.domains[0]!.boundary = 'Everything about orders.'
+    expect(sdk.validateProductReport(inclusionOnly).join('\n'))
+      .toContain('boundary must state what the Domain does not own')
+  })
+
+  it('holds an Experience to the one Interface its id names', () => {
+    // `interfaceIds` is a second encoding of containment, and expansion files
+    // an Experience by its id — so a report could validate under one Interface
+    // and expand under another.
+    const elsewhere = structuredClone(report)
+    const experience = elsewhere.model.experiences[0]!
+    const otherInterface = elsewhere.model.interfaces.find(item => !experience.id.startsWith(`${item.id}::`))!
+    experience.interfaceIds = [otherInterface.id]
+    expect(sdk.validateProductReport(elsewhere).join('\n')).toContain('interfaceIds must be exactly')
+
+    const both = structuredClone(report)
+    both.model.experiences[0]!.interfaceIds.push(otherInterface.id)
+    expect(sdk.validateProductReport(both).join('\n')).toContain('interfaceIds must be exactly')
+  })
+
+  it('keeps an unattended trigger on the first Step, and a condition', () => {
+    const later = structuredClone(report)
+    const scenario = later.model.capabilityScenarios.find(item => item.steps.length > 1)!
+    scenario.steps[1]!.unattended = true
+    expect(sdk.validateProductReport(later).join('\n'))
+      .toContain('step 2: "unattended" is valid only on the first Step')
+
+    const notACondition = structuredClone(report)
+    const first = notACondition.model.capabilityScenarios.find(item => item.steps[0]?.kind !== 'condition')!
+    first.steps[0]!.unattended = true
+    expect(sdk.validateProductReport(notACondition).join('\n'))
+      .toContain('an unattended trigger must be a condition Step')
   })
 
   it('checks an Interface entry-point key on the wire, which it never did', () => {

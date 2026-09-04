@@ -94,6 +94,34 @@ export function bundledSkillsDir(): string | undefined {
   return undefined
 }
 
+/*
+ * A manifest is read out of the repository being installed into, and a target
+ * repository is untrusted. Every name it records reaches `join` and a recursive
+ * remove, so a name that is not a plain directory — `..`, a separator, an
+ * absolute path — is not a skill this Product ever wrote, and the marker
+ * carrying it is not ours.
+ */
+const SKILL_DIRECTORY_NAME = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
+
+function isSkillDirectoryName(name: unknown): name is string {
+  return typeof name === 'string' && SKILL_DIRECTORY_NAME.test(name)
+}
+
+/* Only a name this Product could have written is removable: the namespaced
+   skills it ships and the retired bare names it once shipped. */
+function isBusinessLensSkillName(name: string): boolean {
+  return name.startsWith('businesslens-') || LEGACY_SKILLS.includes(name)
+}
+
+/* Belt and braces beside the name check: a path handed to a removal must still
+   resolve to a direct child of the skills directory. */
+function ownedChildPath(skillsDir: string, name: string): string | undefined {
+  if (!isSkillDirectoryName(name)) return undefined
+  const target = resolve(skillsDir, name)
+  if (dirname(target) !== resolve(skillsDir)) return undefined
+  return target
+}
+
 function readManifest(skillsDir: string): InstallationManifest | undefined {
   const file = join(skillsDir, MANIFEST_FILE)
   if (!existsSync(file)) return undefined
@@ -104,6 +132,7 @@ function readManifest(skillsDir: string): InstallationManifest | undefined {
       && parsed.package === 'businesslens'
       && typeof parsed.version === 'string'
       && Array.isArray(parsed.skills)
+      && parsed.skills.every(isSkillDirectoryName)
     ) return parsed
   } catch {
     // Invalid markers never grant overwrite permission.
@@ -154,7 +183,8 @@ export function assertInstallTargets(
 function removeLegacySkills(skillsDir: string, existing: InstallationManifest | undefined): string[] {
   const removed: string[] = []
   for (const name of LEGACY_SKILLS) {
-    const target = join(skillsDir, name)
+    const target = ownedChildPath(skillsDir, name)
+    if (target === undefined) continue
     if (!existsSync(target) || !existing?.skills.includes(name)) continue
     rmSync(target, { recursive: true, force: true })
     removed.push(name)
@@ -232,11 +262,15 @@ export function installSkillsToTarget(
   assertSafeTargets(skillsDir, existing, Boolean(options.force))
 
   // A skill the manifest recorded that this version no longer ships is ours to
-  // remove; the manifest is the only proof of that.
+  // remove; the manifest is the only proof of that. The proof extends to the
+  // name it records and no further: a name this Product could not have written,
+  // or one that does not resolve inside the skills directory, is removed by
+  // nobody.
   const staleSkills = (existing?.skills ?? [])
     .filter(previous => !BUSINESSLENS_SKILLS.includes(previous as BusinessLensSkill))
-    .map(previous => join(skillsDir, previous))
-    .filter(stale => existsSync(stale))
+    .filter(isBusinessLensSkillName)
+    .map(previous => ownedChildPath(skillsDir, previous))
+    .filter((stale): stale is string => stale !== undefined && existsSync(stale))
 
   for (const name of BUSINESSLENS_SKILLS) installSkill(sourceRoot, skillsDir, name)
   // Retired names first, so the report can say which retired skills went; any

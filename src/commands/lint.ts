@@ -10,6 +10,7 @@ import { containsStructuralHeading, section, type MarkdownDoc } from '../core/ma
 import { allResources, resourceCollections, loadModel } from '../core/model.js'
 import { resolveModelRoot } from '../core/model-root.js'
 import {
+  operationPlaces,
   permissionTargetSelectsOperation,
   validatePermissionBehavior,
   type PermissionGrant,
@@ -633,6 +634,14 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
      * referencing each other while no behaviour touches any of them is still
      * vocabulary nobody uses.
      */
+    /* Two states with one name are two rows a Step's `from` and `to` cannot
+       tell apart, so the lifecycle they compose is ambiguous. */
+    const stateTitles = new Set<string>()
+    for (const state of entity.states) {
+      if (stateTitles.has(state.title)) errors.push(`${entity.file}: duplicate state "${state.title}"`)
+      stateTitles.add(state.title)
+    }
+
     // A relation may target this same Entity: a Comment replies to another
     // Comment, a Task blocks another Task. Only a duplicate edge is wrong.
     const relationTargets = new Set<string>()
@@ -1473,11 +1482,18 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     unattended: grant.unattended === true,
     stateConditions: grant.when.flatMap(condition => condition.state === undefined ? [] : [condition.state])
   })
+  /* A Step without `contexts` is shared by all routes, so it happens inside the
+     Scenario's places rather than in none of them. */
+  const scenarioPlaces = new Map<string, string[]>(allScenarios.map(scenario => [
+    scenario.file,
+    [...new Set(scenario.steps.flatMap(step => step.contexts.map(context => context.place)))]
+  ]))
   const permissionOperation = (
     label: string,
     step: ScenarioStep,
     entry: ScenarioStepEntity,
-    unattended: boolean
+    unattended: boolean,
+    scenarioFile: string
   ): PermissionOperation => ({
     label,
     actorId: step.actor ?? null,
@@ -1487,7 +1503,10 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     effect: entry.effect ?? 'changes',
     from: entry.from ?? null,
     to: entry.to ?? null,
-    contextPlaces: step.contexts.map(context => context.place)
+    contextPlaces: operationPlaces(
+      step.contexts.map(context => context.place),
+      scenarioPlaces.get(scenarioFile) ?? []
+    )
   })
   const permissionRules = permissionRuleResources.map(rule => ({
     id: rule.id,
@@ -1496,10 +1515,16 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
       .map(permissionTarget),
     grants: (rule.permits ?? []).map(permissionGrant)
   }))
-  const selects = (target: BusinessRuleEntityTarget, entry: ScenarioStepEntity, step: ScenarioStep, ignoreFrom = false): boolean => {
+  const selects = (
+    target: BusinessRuleEntityTarget,
+    entry: ScenarioStepEntity,
+    step: ScenarioStep,
+    scenarioFile: string,
+    ignoreFrom = false
+  ): boolean => {
     return permissionTargetSelectsOperation(
       permissionTarget(target),
-      permissionOperation('', step, entry, false),
+      permissionOperation('', step, entry, false, scenarioFile),
       ignoreFrom
     )
   }
@@ -1533,8 +1558,8 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
       for (const scenario of allScenarios) {
         for (const step of scenario.steps) {
           for (const entry of step.entities) {
-            if (selects(target, entry, step)) selected.push(entry)
-            if (selects(target, entry, step, true)) selectedIgnoringFrom.push(entry)
+            if (selects(target, entry, step, scenario.file)) selected.push(entry)
+            if (selects(target, entry, step, scenario.file, true)) selectedIgnoringFrom.push(entry)
           }
         }
       }
@@ -1557,7 +1582,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     operations: allScenarios.flatMap(scenario => {
       const unattended = scenario.steps[0]?.unattended === true
       return scenario.steps.flatMap((step, index) =>
-        step.entities.map(entry => permissionOperation(`${scenario.file}: step ${index + 1}`, step, entry, unattended)))
+        step.entities.map(entry => permissionOperation(`${scenario.file}: step ${index + 1}`, step, entry, unattended, scenario.file)))
     }),
     screens: model.screens.map(screen => ({
       label: screen.file,
@@ -1608,7 +1633,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
         errors.push(`${resource.file}: duplicate reference target "${reference.target}"`)
       }
       targets.add(reference.target)
-      // Product states are a Screen concept; nowhere else has an H3 set for a
+      // View states are a Screen concept; nowhere else has an H3 set for a
       // state to resolve against, so the key would mean nothing there.
       if (reference.state !== undefined && !screenFiles.has(resource.file)) {
         errors.push(`${resource.file}: reference "state" is only valid on a Screen`)

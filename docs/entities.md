@@ -397,6 +397,8 @@ relationship somebody forgot to declare.
   `## Transitions` or `## Relations` prose section is an error.
 - A relation naming a missing Entity, a duplicate edge, or `many-to-one` is an
   error; two Entities declaring relations at each other is a warning.
+- Two states with one name are an error: a Step's `from` and `to` cannot tell
+  them apart.
 - A Step, Interface, Experience, Journey, or grant naming an Entity that does
   not `acts` as an actor is an error.
 - An Entity nothing changes, presents, names as an actor, or reads by Rule is an

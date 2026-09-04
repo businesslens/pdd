@@ -330,7 +330,7 @@ future format revision, but Context is not an arbitrary metadata bag.
   assets:
     - file: mockup.svg
       title: Approved empty state
-      state: Empty                 # Screens only; resolves to an H3 Product state
+      state: Empty                 # Screens only; resolves to an H3 View state
   ```
 
   `file` is relative to the expanded resource folder and cannot escape it.
@@ -424,7 +424,7 @@ but never fetched. Absolute filesystem paths, `file:` URLs, other URL schemes,
 and backslash paths are invalid.
 
 One Screen commonly collects several captures of the same view — one per
-Product state, sometimes doubled for light and dark. Without `state` they arrive
+View state, sometimes doubled for light and dark. Without `state` they arrive
 as a flat list distinguishable only by free-text title; with it, each capture is
 placed beside the state it shows. Themes are deliberately not View states, so
 a light and a dark capture of one state are two references sharing one `state`.
@@ -1204,6 +1204,13 @@ operation. `contexts` scopes the Rule to places; an Entity has no availability,
 so the selector must name a Screen that presents the Entity, or an ancestor of
 one.
 
+**A place-scoped Rule is not escaped by omitting `contexts`.** A Step that omits
+them is shared by every route, which puts its operations inside the Scenario's
+own places — the union of the places its contextualized Steps name — and a
+place-scoped Rule selects it there. Reading such a Step as happening nowhere
+would let deleting a key sidestep an authorization claim, and a claim a deletion
+escapes is not a claim.
+
 **The minimal selector is canonical.** A `from` that every Step landing in `to`
 already leaves from is a `lint` warning, as is a `when` state condition every
 selected Step already satisfies. Refunds only ever leave Confirmed, so
@@ -1251,9 +1258,9 @@ permits:
   - { actors: [store-admin] }
   - { related: [{ verb: owns, entity: shopper }] }
 
-# an admin who is also the owner
+# an admin, and only while the Order is still Confirmed
 permits:
-  - { actors: [store-admin], related: [{ verb: owns, entity: shopper }] }
+  - { actors: [store-admin], when: [{ state: Confirmed }] }
 
 # the owner under 100; at 100 and above, an admin
 permits:
@@ -1272,7 +1279,13 @@ target selectors.
 **Every grant names a who.** A grant needs at least one of `actors`, `related`,
 `self`, `unattended`, `configuredBy`. An empty grant, or a grant with only
 `when`, is an error: *anyone* already has an encoding — list every Entity that
-acts — and a second one would be silent.
+acts — and a second one would be silent. A grant may carry more than one
+who-key, but only one of them can do work: `related` and `self` already fix
+which Entity the actor is, so an `actors` list beside either restates it when it
+names that endpoint and contradicts it when it does not — the second can never
+be satisfied and is an error. *An admin who is also the owner* is not a grant
+shape; it is an `owns` relation whose endpoint is the admin Entity. AND within a
+grant is for a who-key and its `when` conditions.
 
 | Grant key | Says | Value |
 | --- | --- | --- |
@@ -1372,9 +1385,11 @@ once, and a key it omits constrains nothing:
 - and every `state` condition in that grant equals the Step's `from` when the
   Step has one.
 
-*An admin who is also the owner* is therefore one grant carrying both `actors`
-and `related`, and an admin who is not the owner has no possible grant in it.
-Alternatives are separate grants, which is what OR within a Rule is for.
+Only one who-key narrows the actor, so a grant reads as that key and its `when`
+conditions. `related` ending on Shopper already says the actor is a Shopper, and
+an `actors` list beside it that excludes Shopper describes nobody — refused
+rather than silently closed. Alternatives are separate grants, which is what OR
+within a Rule is for.
 
 Structure — errors unless marked:
 

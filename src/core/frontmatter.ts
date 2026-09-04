@@ -235,7 +235,7 @@ export interface ResourceReference {
   target: string
   title?: string
   /**
-   * The Product state this artefact depicts.
+   * The View state this artefact depicts.
    *
    * Screens only, and validated against that Screen's `## View states`. Six
    * captures of one Screen are otherwise a flat list distinguishable only by

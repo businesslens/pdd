@@ -1172,11 +1172,14 @@ export function projectReportWorkspace(report: ProductReportV13): ReportWorkspac
   }
 
   /* A Rule's Entity target selects an arc by the same keys the Step carries.
-     A target scoped by `contexts` governs the operation only at those places,
-     and the machine is drawn for the whole Product — so it does not restrict
-     an arc globally, and is left off. The Rule still reaches the Entity page
-     through its Rule relations. A target naming `facts` governs information,
-     not an operation, and is left off for the same reason. */
+     A target scoped by `contexts` governs the operation only at those places.
+     Validation resolves a Step's places — its own, or its Scenario's when it
+     omits `contexts` — and holds the Rule to them; an arc cannot, because it is
+     one aggregate over every Step that performs the move, drawn for the whole
+     Product. Restricting it globally would overstate the Rule, so it is left
+     off and reaches the Entity page through its Rule relations instead. A
+     target naming `facts` governs information, not an operation, and is left
+     off for the same reason. */
   const targetSelects = (
     target: Extract<ReportBusinessRuleTarget, { type: 'entity' }>,
     entityId: string,

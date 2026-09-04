@@ -141,9 +141,13 @@ export function buildEntityLifecycle(workspace: ReportWorkspace, entity: EntityV
        Step says which state; with no state it is not drawn — it is on the
        Capability's own page. */
     if (arc.effect === 'changes' && !arc.to) return
+    /* Skip before claiming a terminal: an arc whose state does not resolve
+       draws no edge, and flagging Start or End for it would leave a node the
+       machine never reaches. `lint` resolves every state, so this is the
+       defensive order rather than a case the model can reach. */
+    if ((source !== LIFECYCLE_START && !present.has(source)) || (target !== LIFECYCLE_END && !present.has(target))) return
     if (arc.effect === 'creates') hasStart = true
     if (arc.effect === 'removes') hasEnd = true
-    if ((source !== LIFECYCLE_START && !present.has(source)) || (target !== LIFECYCLE_END && !present.has(target))) return
     edges.push({
       ...relationEdge({ source, target, label: caption(label) }),
       id: lifecycleArcEdgeId(entity.id, arc),

@@ -63,6 +63,13 @@ lifecycle is composed from Scenario steps. Entity states are authored
 lifecycle; a Screen's `states` remain that view's own View states and the two
 are never merged.
 
+A Domain record carries `id`, `name`, `description`, a required `boundary`, and
+an optional `colorSlot`. `boundary` is the region the Domain owns stated by what
+it does not — the folder's `## Boundary`, which `lint` requires and holds to the
+same exclusion test. It is a field of its own rather than a supporting section
+because expansion must write the heading the folder requires, and a wire form
+that could omit it expanded into a `.businesslens/` that fails `lint`.
+
 Every actor reference in the report — a step's `actorId`, an Interface's,
 Experience's or Journey's `actorIds`, a grant's `actorIds` — names an Entity
 whose `acts` is non-null. Interface and Experience `actorIds` say who uses the
@@ -100,8 +107,7 @@ relations: a `relations` target, a Screen `entityIds` member, every step
 `entities` record's `entityId`, every Entity target's `entityId`, every grant's
 `actorIds`, `related` segment and `configuredByEntityId`, and every condition's
 `entityId` must name an Entity in the same report; every actor reference must
-name one that `acts`; a relation never reads `many-to-one`, and two Entities
-never declare relations at each other; a step record's `from` and `to` must be
+name one that `acts`; a relation never reads `many-to-one`; a step record's `from` and `to` must be
 states of the named Entity and follow its effect — `creates` takes `to`,
 `removes` takes `from`, `changes` takes both or neither, `reads` neither; a
 Rule's `from`, `to`, `facts` and condition `state` and `fact` values resolve on
@@ -112,6 +118,13 @@ Rule reads is
 invalid. The report is expanded straight into an authored folder, so a report
 that carries an edge the folder rules reject would produce a `.businesslens/`
 that fails `lint` on arrival.
+
+Two Entities declaring relations at each other is **not** refused here. It is
+usually one relationship written twice, and sometimes two genuinely different
+relationships between one pair, and nothing structural tells those apart.
+`format.md` grades the guess as a `lint` warning; the wire carries only
+refusals, and a refusal here would reject a folder `lint` accepts — which would
+break export for a lint-clean model, the opposite of the promise above.
 
 Product Report v13 stores `capabilityScenarios` and `journeyScenarios` as
 separate resource collections and separate counts. It has no generic `scenarios`
@@ -200,7 +213,11 @@ non-empty array of these records. Business Rule resource targets use the same
 records in `contexts`, an Entity target carries them in the same field, and a
 direct Context target stores one nested `context` record. Screen records carry
 no `availability` field because their qualified id
-and path already determine their Interface and optional Experience.
+and path already determine their Interface and optional Experience. An
+Experience's `interfaceIds` is held to exactly the Interface its own qualified id
+names, for the same reason: expansion files an Experience by that id, so a list
+saying anything else is a second encoding of containment, and a report could
+validate under one Interface and expand under another.
 
 Compilation produces a `workspace` reference profile. As written by
 `blueprint export`, a report carries the **portable** reference profile: it

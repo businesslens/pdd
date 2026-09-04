@@ -1,9 +1,9 @@
 import * as z from 'zod'
 import { parseCodeTarget } from './coderefs.js'
 import { containsPlace, interfaceOf, parentPlace } from './ids.js'
-import { containsStructuralHeading } from './markdown.js'
+import { containsStructuralHeading, statesAnExclusion } from './markdown.js'
 import { INTERFACE_TYPES } from './interface-types.js'
-import { validatePermissionBehavior } from './permission-validation.js'
+import { operationPlaces, validatePermissionBehavior } from './permission-validation.js'
 
 export const REPORT_SCHEMA_VERSION = '13.0.0'
 
@@ -149,6 +149,10 @@ export const ReportDomainSchema = z.strictObject({
   id: IdSchema,
   name: SingleLineTextSchema,
   description: RequiredMarkdownFragmentSchema,
+  /* The region the Domain owns, stated by what it does not. The folder requires
+     a `## Boundary`, so a wire form that could omit it expanded to a folder
+     `lint` refuses. */
+  boundary: RequiredMarkdownFragmentSchema,
   colorSlot: z.number().int().optional(),
   ...ResourceContentSchema
 })
@@ -660,7 +664,12 @@ export function validateProductReport(report: ProductReportV13): string[] {
   }
 
   for (const domain of model.domains) {
-    validateSupportingSections(issues, `domain "${domain.id}"`, domain.supportingSections, ['Intent'])
+    validateSupportingSections(issues, `domain "${domain.id}"`, domain.supportingSections, ['Intent', 'Boundary'])
+    // A Boundary that only asserts inclusion is a label, not a region — the
+    // same heuristic the folder applies, so the two cannot disagree.
+    if (!statesAnExclusion(domain.boundary)) {
+      issues.push(`domain "${domain.id}": boundary must state what the Domain does not own, not only what it covers`)
+    }
   }
 
   for (const productInterface of model.interfaces) {
@@ -685,6 +694,17 @@ export function validateProductReport(report: ProductReportV13): string[] {
   for (const experience of model.experiences) {
     requireUniqueValues(issues, `experience "${experience.id}"`, 'actorIds', experience.actorIds)
     requireUniqueValues(issues, `experience "${experience.id}"`, 'interfaceIds', experience.interfaceIds)
+    /* An Experience sits inside exactly one Interface, and its qualified id
+       already names which. Expansion files it by that id, so an `interfaceIds`
+       that says anything else is a second encoding of containment that the
+       folder can never carry — a report validating under one Interface and
+       expanding under another. */
+    const parentInterfaceId = interfaceOf(experience.id)
+    if (experience.interfaceIds.length !== 1 || experience.interfaceIds[0] !== parentInterfaceId) {
+      issues.push(
+        `experience "${experience.id}": interfaceIds must be exactly ["${parentInterfaceId}"], the Interface its id names`
+      )
+    }
     validateSupportingSections(
       issues,
       `experience "${experience.id}"`,
@@ -823,6 +843,18 @@ export function validateProductReport(report: ProductReportV13): string[] {
     const capabilitySteps: Array<{ capabilityId: string, contextPlaces: Set<string>, containers: Set<string> }> = []
     const screenIds = new Set<string>()
     const unattendedScenario = scenario.steps[0]?.unattended === true
+    /* `unattended` is a trigger, not a step property: it says this Scenario is
+       started by the Product's own schedule. Only the first Step can carry it,
+       and a trigger nobody performs is a condition. The folder has always said
+       so; a report that did not expanded into a folder `lint` refuses. */
+    if (unattendedScenario && scenario.steps[0]?.kind !== 'condition') {
+      issues.push(`${label}: an unattended trigger must be a condition Step`)
+    }
+    for (const [index, step] of scenario.steps.entries()) {
+      if (index > 0 && step.unattended) {
+        issues.push(`${label}: step ${index + 1}: "unattended" is valid only on the first Step`)
+      }
+    }
     /* Keep the same cross-Step invariants as the authored folder: an Entity is
        either bare or aliased throughout one Scenario, and each named instance
        resumes from the state the preceding Step left it in. */
@@ -1213,13 +1245,11 @@ export function validateProductReport(report: ProductReportV13): string[] {
       if (relationKeys.has(key)) issues.push(`${label}: duplicate relation "${relation.verb} ${relation.entityId}"`)
       relationKeys.add(key)
 
-      /* A relation states both ends, so an Entity relating back is the same
-         relationship written twice and the two can contradict each other. */
-      if (relation.entityId === entity.id) continue
-      const facing = entitiesById.get(relation.entityId)
-      if (facing?.relations.some(back => back.entityId === entity.id)) {
-        issues.push(`${label}: relation "${relation.verb} ${relation.entityId}" faces a relation declared back at it; a relation is declared on one side only`)
-      }
+      /* A relation states both ends, so an Entity relating back is very often
+         the same relationship written twice — but it can equally be a second,
+         genuinely different relationship between one pair, which nothing here
+         can tell apart. The folder grades that guess as a warning, and the wire
+         refuses nothing the folder accepts, so it is not checked here. */
     }
 
     // A relation between Entities never satisfies this: vocabulary that only
@@ -1496,6 +1526,9 @@ export function validateProductReport(report: ProductReportV13): string[] {
       const scenarioLabel = 'capabilityId' in scenario
         ? `capability scenario "${scenario.id}"`
         : `journey scenario "${scenario.id}"`
+      /* A Step without `contexts` is shared by all routes, so it happens inside
+         the Scenario's places rather than in none of them. */
+      const places = [...new Set(scenario.steps.flatMap(step => step.contexts.map(context => context.placeId)))]
       return scenario.steps.flatMap((step, index) => step.entities.map(entry => ({
         label: `${scenarioLabel}: step ${index + 1}`,
         actorId: step.actorId,
@@ -1505,7 +1538,7 @@ export function validateProductReport(report: ProductReportV13): string[] {
         effect: entry.effect,
         from: entry.from,
         to: entry.to,
-        contextPlaces: step.contexts.map(context => context.placeId)
+        contextPlaces: operationPlaces(step.contexts.map(context => context.placeId), places)
       })))
     }),
     screens: model.screens.map(screen => {

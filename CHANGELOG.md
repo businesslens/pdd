@@ -7,95 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Fixed
-
-- **A Screen an Interface shares beside its `experiences/` now lints.** Folder
-  schema 7 allowed it and the linter refused it, because a divided Interface is
-  never an availability place. A shared Screen is now inside every Experience
-  of its Interface: a Capability it exposes must be available in each, a Step on
-  it is inside a Capability's availability only when every Experience is, and
-  that Step counts as Scenario coverage for each. `lint` and the wire validator
-  name the Experiences a Capability is missing from. The Content Feed Reader
-  Blueprint's item reader and the fixture shop's catalog are the first two.
-- **`blueprint pull` asks for the report version it can read, and refuses
-  another.** The Accept header is derived from the schema's major, and a
-  catalog answering with a different `version` parameter is refused before the
-  body is parsed. A report of another schema version, from a catalog or a
-  file, is refused in one sentence naming both versions instead of a Zod issue
-  dump.
-- **`blueprint open` and `pull` keep the author's coverage prose.** Only
-  `method` is rewritten, as the report contract says; the note that
-  implementation alignment has not been verified here now lives in `method`
-  with the other origin claim, and `limitations` and `rationale` come through
-  exactly as authored.
-- **A Screen-read check no longer applies Rules that select a state move.** A
-  Rule target carrying `from` or `to` can never govern what a Screen presents.
-- **Whether an Interface divides is derived the way the spec says, as an
-  error.** Audiences are disjoint when no available Capability bridges them
-  (connected components over Actors and Capabilities), not when any two
-  Capabilities differ; the counterpart exception is now in the spec; both
-  findings are errors.
-- **Id-vocabulary checks read a declared thing as a noun.** `order-line` beside
-  an Entity `order` opens with a noun; `order-management` carries no verb for
-  the same reason; both Scenario types are checked like Capabilities and
-  Journeys. The spec states the check as the heuristic it is.
-- **The Lifecycle machine reads permissions per Rule.** Each selecting Rule
-  lists its grants in full, Rules compose as AND, a place-scoped Rule no longer
-  restricts the whole machine, a state's self-transition hangs off the state
-  instead of under it, and the arc count says how many arcs are drawn.
-- **The installer decides ownership by its manifest alone.** A directory that
-  merely names a skill and mentions BusinessLens is somebody else's; retired
-  skills are removed only when the manifest recorded them; every harness is
-  checked before any is written, so a refusal leaves nothing changed.
-- The teaching Blueprint's lifecycles no longer dead-end: an unlisted
-  Collection can be republished, and an unreachable Source is read again on the
-  Product's schedule or unfollowed. The fixture shop's
-  `payment-before-confirmation` Rule targets the Order transition it governs,
-  and cancelling a paid order creates the Refund its Outcome promised. The
-  self-model's model-writes Rule names the explicit `--force` backup sibling.
-- Docs and skills no longer say `## Product states`, `catalog-browsing`, or that
-  one Screen spans web and mobile; the Interface `type` list includes `agent`;
-  the map inventory script matches `entities/` directories again; the map and
-  ideate skills author against folder schema 8 (an Actor is an Entity that
-  `acts`, Steps carry `entities` effects, Rules carry Entity targets and
-  `permits`, and whether an Interface divides is derived, never judged).
-- The design record under `plans/` marks ADR-0009 to 0014 as superseded in part
-  by 0013 to 0018, dates what shipped as schema 8 / Product Report v13, and the
-  Journey rule in the spec is restated structurally (ADR-0003).
-- The report contract lists a step's `unattended` flag, names a Screen's
-  `states`, and adds the Rule-reads escape to the no-orphans rule; an empty
-  grant condition value is refused on the wire.
-- **The catalog transport is written down where a catalog operator reads it.**
-  The report media type and its `version` parameter are now in the report
-  contract and on the `blueprint pull` page — what `pull` asks for, what a
-  catalog must answer with, and which mismatch is refused before the body is
-  read. `check-repo` pins both registers and the CLI header to the report
-  schema's major, so the version cannot go stale in prose the way it once did
-  in code.
-- **The report-viewer README documents the page it renders.** An Entity with
-  States adds a Lifecycle tab, and all five navigation models — `section`,
-  `resource`, `tab`, `scenarioRoute`, `routeColumns` — are listed with their
-  defaults and the query parameters the local viewer binds them to.
-  `check-repo` pins the model names and the tab set to the component and the
-  `PageTabId` union.
-- The retired Step keys are named correctly: `entity`, `state`, `changes`, and
-  `reads` are entries of `entities`, while `transitions` was the Entity key.
-  The **possible grant** definition now reads its keys as AND, matching the
-  algebra beside it and the checker, so *an admin who is also the owner* is one
-  grant and not two readings.
-- The `install` page states the ownership rule the installer now applies: the
-  marker is the only proof, an unlisted `businesslens-*` directory is somebody
-  else's, a retired skill goes only where the marker recorded it, and a refusal
-  leaves every harness untouched. The `ideate` page describes the decision
-  rounds and the `Judgment calls` section, as the `map` page already did.
-
-### Changed
-
-- The open page tab lives in the URL (`t`), so a Lifecycle or Scenarios tab
-  survives a refresh and can be linked.
-- The ideate skill's proposed delta ends with a `Judgment calls` section, as
-  map's already did (ADR-0005).
-
 ## [0.9.0] - 2026-09-03
 
 ### Added
@@ -167,6 +78,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The docs define each resource type on its owning page. Actor guidance moved
   into Entities, Capability and Journey pages own their Scenario fields, and
   Business Rules owns permission semantics.
+- The open page tab lives in the URL (`t`), so a Lifecycle or Scenarios tab
+  survives a refresh and can be linked.
+- The ideate skill's proposed delta ends with a `Judgment calls` section, as
+  map's already did (ADR-0005).
 
 ### Fixed
 
@@ -179,6 +94,131 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The packed Nuxt Layer consumer, viewer documentation, and package manifest
   stay aligned with the current report major, and generated Layer
   `node_modules` are excluded from the npm tarball.
+- **A Screen an Interface shares beside its `experiences/` now lints.** Folder
+  schema 7 allowed it and the linter refused it, because a divided Interface is
+  never an availability place. A shared Screen is now inside every Experience
+  of its Interface: a Capability it exposes must be available in each, a Step on
+  it is inside a Capability's availability only when every Experience is, and
+  that Step counts as Scenario coverage for each. `lint` and the wire validator
+  name the Experiences a Capability is missing from. The Content Feed Reader
+  Blueprint's item reader and the fixture shop's catalog are the first two.
+- **`blueprint pull` asks for the report version it can read, and refuses
+  another.** The Accept header is derived from the schema's major, and a
+  catalog answering with a different `version` parameter is refused before the
+  body is parsed. A report of another schema version, from a catalog or a
+  file, is refused in one sentence naming both versions instead of a Zod issue
+  dump.
+- **`blueprint open` and `pull` keep the author's coverage prose.** Only
+  `method` is rewritten, as the report contract says; the note that
+  implementation alignment has not been verified here now lives in `method`
+  with the other origin claim, and `limitations` and `rationale` come through
+  exactly as authored.
+- **A Screen-read check no longer applies Rules that select a state move.** A
+  Rule target carrying `from` or `to` can never govern what a Screen presents.
+- **Whether an Interface divides is derived the way the spec says, as an
+  error.** Audiences are disjoint when no available Capability bridges them
+  (connected components over Actors and Capabilities), not when any two
+  Capabilities differ; the counterpart exception is now in the spec; both
+  findings are errors.
+- **Id-vocabulary checks read a declared thing as a noun.** `order-line` beside
+  an Entity `order` opens with a noun; `order-management` carries no verb for
+  the same reason; both Scenario types are checked like Capabilities and
+  Journeys. The spec states the check as the heuristic it is.
+- **The Lifecycle machine reads permissions per Rule.** Each selecting Rule
+  lists its grants in full, Rules compose as AND, a place-scoped Rule no longer
+  restricts the whole machine, a state's self-transition hangs off the state
+  instead of under it, and the arc count says how many arcs are drawn.
+- **The installer decides ownership by its manifest alone.** A directory that
+  merely names a skill and mentions BusinessLens is somebody else's; retired
+  skills are removed only when the manifest recorded them; every harness is
+  checked before any is written, so a refusal leaves nothing changed. This is
+  visible on upgrade: an installation made before the marker existed carries no
+  proof it is ours, so `install` and `update` refuse it with *Refusing to
+  overwrite … Pass `--force`*. One `--force` re-adopts it, and every later run
+  is marked.
+- The teaching Blueprint's lifecycles no longer dead-end: an unlisted
+  Collection can be republished, and an unreachable Source is read again on the
+  Product's schedule or unfollowed. The fixture shop's
+  `payment-before-confirmation` Rule targets the Order transition it governs,
+  and cancelling a paid order creates the Refund its Outcome promised. The
+  self-model's model-writes Rule names the explicit `--force` backup sibling.
+- Docs and skills no longer say `## Product states`, `catalog-browsing`, or that
+  one Screen spans web and mobile; the Interface `type` list includes `agent`;
+  the map inventory script matches `entities/` directories again; the map and
+  ideate skills author against folder schema 8 (an Actor is an Entity that
+  `acts`, Steps carry `entities` effects, Rules carry Entity targets and
+  `permits`, and whether an Interface divides is derived, never judged).
+- The design record under `plans/` marks ADR-0009 to 0014 as superseded in part
+  by 0013 to 0018, dates what shipped as schema 8 / Product Report v13, and the
+  Journey rule in the spec is restated structurally (ADR-0003).
+- The report contract lists a step's `unattended` flag, names a Screen's
+  `states`, and adds the Rule-reads escape to the no-orphans rule; an empty
+  grant condition value is refused on the wire.
+- **The catalog transport is written down where a catalog operator reads it.**
+  The report media type and its `version` parameter are now in the report
+  contract and on the `blueprint pull` page — what `pull` asks for, what a
+  catalog must answer with, and which mismatch is refused before the body is
+  read. `check-repo` pins both registers and the CLI header to the report
+  schema's major, so the version cannot go stale in prose the way it once did
+  in code.
+- **The report-viewer README documents the page it renders.** An Entity with
+  States adds a Lifecycle tab, and all five navigation models — `section`,
+  `resource`, `tab`, `scenarioRoute`, `routeColumns` — are listed with their
+  defaults and the query parameters the local viewer binds them to.
+  `check-repo` pins the model names and the tab set to the component and the
+  `PageTabId` union.
+- The retired Step keys are named correctly: `entity`, `state`, `changes`, and
+  `reads` are entries of `entities`, while `transitions` was the Entity key.
+  The **possible grant** definition now reads its keys as AND, matching the
+  algebra beside it and the checker, so *an admin who is also the owner* is one
+  grant and not two readings.
+- The `install` page states the ownership rule the installer now applies: the
+  marker is the only proof, an unlisted `businesslens-*` directory is somebody
+  else's, a retired skill goes only where the marker recorded it, and a refusal
+  leaves every harness untouched. The `ideate` page describes the decision
+  rounds and the `Judgment calls` section, as the `map` page already did.
+
+- **A place-scoped permission Rule is no longer escaped by deleting a key.** A
+  Step that omits `contexts` is shared by every route, so its operations happen
+  inside its Scenario's places rather than nowhere; `lint` and the wire
+  validator both hold it there, and both registers say so. Before this, a Step
+  under a Rule scoped to a Screen was governed by that Rule only while it
+  carried the key.
+- **The Product Report carries a Domain's Boundary.** It was not on the wire at
+  all, so a report validated while its Domains expanded into a `.businesslens/`
+  that `lint` refuses for a missing `## Boundary`. `boundary` is now a required
+  field held to the same exclusion test the folder applies.
+- **An Experience's `interfaceIds` is exactly the Interface its id names.**
+  Expansion files an Experience by its qualified id, so a list saying anything
+  else was a second encoding of containment — a report could validate under one
+  Interface and expand under another.
+- **`unattended` is a trigger on the wire too.** A later Step carrying it, or a
+  first Step that is not a condition, is refused where only `lint` refused
+  before.
+- **Two Entity states with one name are a `lint` error.** The wire validator
+  always refused them, so a lint-clean model could fail `blueprint export`.
+- **The wire accepts the relations the folder accepts.** Two Entities declaring
+  relations at each other is a `lint` warning and no longer a wire refusal: one
+  relationship written twice and two genuinely different ones are not
+  distinguishable structurally, and a refusal there rejected a lint-clean model.
+- The **possible grant** worked example now matches the algebra it sits under.
+  `actors` beside `related` is the combination the checker refuses, so *an admin
+  who is also the owner* is stated as what it is — an `owns` relation ending on
+  the admin Entity — and the AND example is a who-key with its `when`.
+- A lifecycle arc whose state does not resolve no longer flags a Start or End
+  the machine never reaches.
+- The renderer, the format spec, and the contributor guide say `View states` and
+  *resource-type page*.
+
+### Security
+
+- **The installer follows no name it did not write.** The installation manifest
+  is read out of the target repository, which BusinessLens treats as untrusted,
+  and every name it records reaches a recursive remove. A `skills` entry that is
+  not a plain directory name now invalidates the marker, a recorded name this
+  Product could not have written is left alone, and every removal must resolve
+  to a direct child of the skills directory — so a crafted manifest can no
+  longer point `install` at a directory outside it.
 
 ## [0.8.0] - 2026-08-25
 
@@ -727,7 +767,8 @@ Initial public launch of the repository.
   `docs/format.md`.
 - Claude plugin manifest and marketplace entry.
 
-[Unreleased]: https://github.com/businesslens/pdd/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/businesslens/pdd/compare/v0.9.0...HEAD
+[0.9.0]: https://github.com/businesslens/pdd/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/businesslens/pdd/compare/v0.7.2...v0.8.0
 [0.7.2]: https://github.com/businesslens/pdd/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/businesslens/pdd/compare/v0.7.0...v0.7.1
