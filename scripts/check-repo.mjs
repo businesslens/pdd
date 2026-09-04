@@ -40,11 +40,73 @@ const lock = JSON.parse(await readFile(resolve(root, 'package-lock.json'), 'utf8
 const plugin = JSON.parse(await readFile(resolve(root, '.claude-plugin/plugin.json'), 'utf8'))
 const marketplace = JSON.parse(await readFile(resolve(root, '.claude-plugin/marketplace.json'), 'utf8'))
 const localViewer = JSON.parse(await readFile(resolve(root, 'viewer/app/package.json'), 'utf8'))
+const reportContract = await readFile(resolve(root, 'src/core/portable.ts'), 'utf8')
+const reportViewerReadme = await readFile(resolve(root, 'layers/nuxt/report-viewer/README.md'), 'utf8')
+const nuxtConsumerFixture = await readFile(resolve(root, 'test/fixtures/nuxt-layer-consumer/app/app.vue'), 'utf8')
+const reportViewerEntry = await readFile(
+  resolve(root, 'layers/nuxt/report-viewer/app/components/BusinessLensReportViewer.vue'), 'utf8'
+)
+const reportViewerSections = await readFile(
+  resolve(root, 'layers/nuxt/report-viewer/app/utils/pageSections.ts'), 'utf8'
+)
+const pullCommand = await readFile(resolve(root, 'src/commands/pull.ts'), 'utf8')
+const reportSpec = await readFile(resolve(root, 'spec/report.md'), 'utf8')
+const pullDoc = await readFile(resolve(root, 'docs/cli-pull.md'), 'utf8')
 const expectedSkills = [
   'businesslens-map',
   'businesslens-ideate',
   'businesslens-verify'
 ]
+
+const reportVersion = reportContract.match(/REPORT_SCHEMA_VERSION = '([^']+)'/)?.[1]
+const reportMajor = reportVersion?.split('.')[0]
+if (!reportVersion || !reportMajor) {
+  errors.push('src/core/portable.ts must declare REPORT_SCHEMA_VERSION')
+} else {
+  if (!reportViewerReadme.includes(`Product Report v${reportMajor}`)
+    || !reportViewerReadme.includes(`ProductReportV${reportMajor}`)) {
+    errors.push(`report-viewer README must document Product Report v${reportMajor}`)
+  }
+  if (!nuxtConsumerFixture.includes(`ProductReportV${reportMajor}`)
+    || !nuxtConsumerFixture.includes(`schemaVersion: '${reportVersion}'`)) {
+    errors.push(`packed Nuxt consumer must exercise Product Report v${reportMajor}`)
+  }
+  /*
+   * The version travels in the report media type, and the two registers a
+   * catalog operator reads are the wire contract and the pull page. A hard-coded
+   * major went stale in the CLI once already; pin the prose to the same source.
+   */
+  const negotiated = `version=${reportMajor}`
+  if (!pullCommand.includes('version=${REPORT_MAJOR}') || /version=\d/.test(pullCommand)) {
+    errors.push('blueprint pull must derive the accepted report version, never hard-code it')
+  }
+  for (const [label, source] of [['spec/report.md', reportSpec], ['docs/cli-pull.md', pullDoc]]) {
+    if (!source.includes(negotiated)) {
+      errors.push(`${label} must document the catalog media type parameter ${negotiated}`)
+    }
+  }
+}
+
+/*
+ * The report-viewer README is the only documentation a Nuxt host gets, so the
+ * page structure and the bindable models it promises are pinned to the
+ * component that actually declares them.
+ */
+for (const model of [...reportViewerEntry.matchAll(/defineModel<[^>]+>\('([^']+)'/g)].map(match => match[1])) {
+  if (!reportViewerReadme.includes(`\`${model}\``)) {
+    errors.push(`report-viewer README must document the bindable "${model}" model`)
+  }
+}
+const pageTabUnion = reportViewerSections.match(/export type PageTabId = ([^\n]+)/)?.[1]
+if (!pageTabUnion) {
+  errors.push('report-viewer must declare the PageTabId union')
+} else {
+  for (const tab of [...pageTabUnion.matchAll(/'([a-z-]+)'/g)].map(match => match[1])) {
+    if (!reportViewerReadme.toLowerCase().includes(tab)) {
+      errors.push(`report-viewer README must document the "${tab}" page tab`)
+    }
+  }
+}
 
 if (pkg.name !== 'businesslens') errors.push(`package.json name must be businesslens, found ${pkg.name}`)
 if (pkg.repository?.url !== 'git+https://github.com/businesslens/pdd.git') {
@@ -92,6 +154,9 @@ if (pkg.exports?.['./nuxt/report-viewer-lab']) {
 }
 if (!pkg.files?.includes('!layers/nuxt/report-viewer-lab')) {
   errors.push('package.json files must exclude the private report-viewer-lab')
+}
+if (!pkg.files?.includes('!layers/**/node_modules')) {
+  errors.push('package.json files must exclude generated layer node_modules')
 }
 for (const retired of ['layers/nuxt/report-lab', 'layers/nuxt/workbench-lab', 'src/report-view-model.ts']) {
   if (await exists(retired)) errors.push(`retired report artifact must stay removed: ${retired}`)
@@ -193,14 +258,14 @@ if (!canonicalFormatContract) {
 // an *unrecognized* H2 survives export; it is not a recognized section.
 const UNRECOGNIZED_SPEC_SECTIONS = new Set(['Anything else'])
 const specSource = await readFile(resolve(root, 'spec/format.md'), 'utf8')
-const entityTable = specSource.match(/\| Entity \| Compact \|[\s\S]*?\n\n/)?.[0]
-if (!entityTable) {
-  errors.push('spec/format.md does not expose the entity layout table')
+const resourceTable = specSource.match(/\| Resource type \| Compact \|[\s\S]*?\n\n/)?.[0]
+if (!resourceTable) {
+  errors.push('spec/format.md does not expose the resource type layout table')
 } else {
   const specNames = new Map()
-  for (const row of entityTable.matchAll(/^\| ([^|]+) \|/gm)) {
+  for (const row of resourceTable.matchAll(/^\| ([^|]+) \|/gm)) {
     const kind = row[1].trim()
-    if (kind !== 'Entity' && !kind.startsWith('---')) specNames.set(kind, 'entity kind')
+    if (kind !== 'Resource type' && !kind.startsWith('---')) specNames.set(kind, 'resource type')
   }
   for (const [, example] of specSource.matchAll(/```markdown\n([\s\S]*?)```/g)) {
     for (const heading of example.matchAll(/^## (.+)$/gm)) {

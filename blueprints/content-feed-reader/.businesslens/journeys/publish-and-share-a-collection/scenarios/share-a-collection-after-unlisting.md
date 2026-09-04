@@ -5,26 +5,34 @@ steps:
   - text: The Reader publishes the owned collection and shares its public address
     kind: actor
     actor: reader
-    capability: collection-publication
+    capability: publish-collection
+    entities:
+      - { entity: collection, from: Private, to: Published }
     contexts:
       unlist-on-web:
         place: reader-web::personal-library::collection-workspace
   - text: The Reader unlists the collection
     kind: actor
     actor: reader
-    capability: collection-publication
+    capability: publish-collection
+    entities:
+      - { entity: collection, from: Published, to: Unlisted }
     contexts:
       unlist-on-web:
         place: reader-web::personal-library::collection-workspace
   - text: The Visitor opens the shared address
     kind: actor
     actor: visitor
-    capability: public-collection-reading
+    capability: read-public-collection
+    entities: []
     contexts:
       unlist-on-web:
         place: reader-web::public-reading::public-collection
   - text: The Product withholds the collection contents and shows a neutral unavailable state
     kind: product
+    actor: visitor
+    entities:
+      - { entity: collection, effect: reads }
 routes:
   unlist-on-web: Unlist On Web
 ---

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * What one entity touches.
+ * What one resource touches.
  *
  * The rows are grouped by the kind on the other end, because that is the
  * question a reader arrives with — "what Screens does this reach" — and not by
@@ -14,59 +14,49 @@
  * the ambiguity the named views exist to avoid.
  */
 import type {
-  ActorView,
-  AnyEntityView,
+  AnyResourceView,
   CapabilityView,
   DomainView,
   ExperienceView,
   InterfaceView,
   JourneyView,
-  ReportEntityKind,
+  ReportResourceKind,
   ReportWorkspace,
   RuleView,
   ScenarioView,
   ScreenView
 } from '../utils/reportWorkspace'
-import { ENTITY_KIND_META, resolveEntity } from '../utils/reportWorkspace'
+import { ENTITY_KIND_META, resolveResource } from '../utils/reportWorkspace'
 
 const props = withDefaults(defineProps<{
   workspace: ReportWorkspace
-  entity: AnyEntityView
+  resource: AnyResourceView
   /** Cap the chips per row; the overflow becomes a count. 0 shows everything. */
   max?: number
   /** Cap the rows themselves, so a peek stays one screen whatever it is on. */
   maxRows?: number
 }>(), { max: 0, maxRows: 0 })
 
-const emit = defineEmits<{ select: [entity: AnyEntityView] }>()
+const emit = defineEmits<{ select: [resource: AnyResourceView] }>()
 
 interface RelationRow {
   label: string
-  kind: ReportEntityKind
+  kind: ReportResourceKind
   ids: string[]
   derived: boolean
 }
 
-const row = (label: string, kind: ReportEntityKind, ids: string[], derived: boolean): RelationRow =>
+const row = (label: string, kind: ReportResourceKind, ids: string[], derived: boolean): RelationRow =>
   ({ label, kind, ids, derived })
 
 const rows = computed<RelationRow[]>(() => {
-  const entity = props.entity
+  const resource = props.resource
   const all: RelationRow[] = []
-  switch (entity.kind) {
-    case 'actor': {
-      const actor = entity as ActorView
-      all.push(
-        row('Interfaces entered', 'interface', actor.interfaceIds, true),
-        row('Experiences entered', 'experience', actor.experienceIds, true),
-        row('Journeys performed', 'journey', actor.journeyIds, true)
-      )
-      break
-    }
+  switch (resource.kind) {
     case 'interface': {
-      const item = entity as InterfaceView
+      const item = resource as InterfaceView
       all.push(
-        row('Actors', 'actor', item.actorIds, false),
+        row('Actors', 'entity', item.actorIds, false),
         row('Experiences within', 'experience', item.experienceIds, true),
         row('Capabilities available', 'capability', item.capabilityIds, true),
         row('Screens available', 'screen', item.screenIds, true),
@@ -75,9 +65,9 @@ const rows = computed<RelationRow[]>(() => {
       break
     }
     case 'experience': {
-      const item = entity as ExperienceView
+      const item = resource as ExperienceView
       all.push(
-        row('Actors', 'actor', item.actorIds, false),
+        row('Actors', 'entity', item.actorIds, false),
         row('Interfaces', 'interface', item.interfaceIds, false),
         row('Capabilities available', 'capability', item.capabilityIds, true),
         row('Screens available', 'screen', item.screenIds, true),
@@ -86,8 +76,9 @@ const rows = computed<RelationRow[]>(() => {
       break
     }
     case 'screen': {
-      const screen = entity as ScreenView
+      const screen = resource as ScreenView
       all.push(
+        row('Presents', 'entity', screen.entityIds, false),
         row('Capabilities', 'capability', screen.capabilityIds, false),
         row('Capability Scenarios', 'capability-scenario', screen.capabilityScenarioIds, false),
         row('Journey Scenarios', 'journey-scenario', screen.journeyScenarioIds, false),
@@ -96,10 +87,33 @@ const rows = computed<RelationRow[]>(() => {
       )
       break
     }
+    case 'entity': {
+      const entity = resource as EntityView
+      all.push(
+        ...entity.relations.map(relation =>
+          row(`${relation.verb} ${relation.cardinality === 'many' ? 'many' : 'one'}`, 'entity', [relation.entityId], false)),
+        // The inverse is the other Entity's verb pointing back, so the arrow
+        // carries the direction — "holds by" would read as this Entity holding.
+        ...entity.inboundRelations.map(relation =>
+          row(`\u2190 ${relation.verb}`, 'entity', [relation.entityId], true)),
+        row('Domain', 'domain', entity.domainId ? [entity.domainId] : [], false),
+        row('Changed by', 'capability', entity.changedByIds, true),
+        row('Read by', 'capability', entity.readByIds, true),
+        row('Presented on', 'screen', entity.presentedOnIds, true),
+        row('Governed by', 'rule', entity.ruleIds, true),
+        /* Where it acts — empty rows are dropped, so a thing that does not act
+           shows none of these. */
+        row('Interfaces entered', 'interface', entity.interfaceIds, true),
+        row('Experiences entered', 'experience', entity.experienceIds, true),
+        row('Journeys performed', 'journey', entity.journeyIds, true)
+      )
+      break
+    }
     case 'domain': {
-      const domain = entity as DomainView
+      const domain = resource as DomainView
       all.push(
         row('Capabilities', 'capability', domain.capabilityIds, true),
+        row('Entities', 'entity', domain.entityIds, true),
         row('Journeys reached', 'journey', domain.journeyIds, true),
         row('Screens reached', 'screen', domain.screenIds, true),
         row('Rules', 'rule', domain.ruleIds, true)
@@ -107,8 +121,9 @@ const rows = computed<RelationRow[]>(() => {
       break
     }
     case 'capability': {
-      const capability = entity as CapabilityView
+      const capability = resource as CapabilityView
       all.push(
+        row('Changes', 'entity', capability.entityIds, false),
         row('Domain', 'domain', capability.domainId ? [capability.domainId] : [], false),
         row('Capability Scenarios', 'capability-scenario', capability.scenarioIds, true),
         row('Exercised by Journey Scenarios', 'journey-scenario', capability.journeyScenarioIds, true),
@@ -119,12 +134,13 @@ const rows = computed<RelationRow[]>(() => {
       break
     }
     case 'journey': {
-      const journey = entity as JourneyView
+      const journey = resource as JourneyView
       all.push(
-        row('Actors', 'actor', journey.actorIds, false),
+        row('Actors', 'entity', journey.actorIds, false),
         row('Primary Capabilities', 'capability', journey.capabilityIds, true),
         row('Failure-only Capabilities', 'capability', journey.failureOnlyCapabilityIds, true),
         row('Domains', 'domain', journey.domainIds, true),
+        row('Changes', 'entity', journey.entityIds, true),
         row('Scenarios', 'journey-scenario', journey.scenarioIds, true),
         row('Screens', 'screen', journey.screenIds, true),
         row('Constrained by Rules', 'rule', journey.ruleIds, true)
@@ -133,9 +149,11 @@ const rows = computed<RelationRow[]>(() => {
     }
     case 'capability-scenario':
     case 'journey-scenario': {
-      const scenario = entity as ScenarioView
+      const scenario = resource as ScenarioView
       all.push(
-        row('Actors', 'actor', scenario.actorIds, false),
+        row('Actors', 'entity', scenario.actorIds, false),
+        // Derived from the Steps, exactly as the Actor set is.
+        row('Changes', 'entity', scenario.entityIds, true),
         scenario.scenarioType === 'capability'
           ? row('Capability', 'capability', [scenario.capabilityId], false)
           : row('Journey', 'journey', [scenario.journeyId], false),
@@ -145,7 +163,7 @@ const rows = computed<RelationRow[]>(() => {
       break
     }
     case 'rule': {
-      const rule = entity as RuleView
+      const rule = resource as RuleView
       const reachedCapabilities = new Set([...rule.capabilityIds, ...rule.derivedCapabilityIds])
       const reachedJourneys = new Set([...rule.journeyIds, ...rule.derivedJourneyIds])
       const derivedScreens = props.workspace.screens
@@ -186,42 +204,42 @@ function overflow(item: RelationRow): number {
 }
 
 /*
-  Two counterparts reaching the same entity produce two chips with one name.
+  Two counterparts reaching the same resource produce two chips with one name.
 
   "Source list, Source list" reads as a rendering bug rather than as the true
   statement that this Capability is exposed through both Interfaces. The Interface is
   the segment that distinguishes them, and it is added only where the ambiguity
   is actually present — every other chip stays short.
 */
-function title(kind: ReportEntityKind, id: string, siblings: string[]): string {
-  const entity = resolveEntity(props.workspace, kind, id)
-  if (!entity) return id
+function title(kind: ReportResourceKind, id: string, siblings: string[]): string {
+  const resource = resolveResource(props.workspace, kind, id)
+  if (!resource) return id
   const shared = siblings.filter((other) => {
     if (other === id) return false
-    return resolveEntity(props.workspace, kind, other)?.title === entity.title
+    return resolveResource(props.workspace, kind, other)?.title === resource.title
   })
-  if (!shared.length) return entity.title
-  const [interfaceId] = entity.id.split('::')
-  if (!interfaceId || interfaceId === entity.id) return entity.title
-  const owner = resolveEntity(props.workspace, 'interface', interfaceId)?.title ?? interfaceId
-  return `${entity.title} · ${owner.replace(/ application$/, '')}`
+  if (!shared.length) return resource.title
+  const [interfaceId] = resource.id.split('::')
+  if (!interfaceId || interfaceId === resource.id) return resource.title
+  const owner = resolveResource(props.workspace, 'interface', interfaceId)?.title ?? interfaceId
+  return `${resource.title} · ${owner.replace(/ application$/, '')}`
 }
 
-function pick(kind: ReportEntityKind, id: string) {
-  const entity = resolveEntity(props.workspace, kind, id)
-  if (entity) emit('select', entity)
+function pick(kind: ReportResourceKind, id: string) {
+  const resource = resolveResource(props.workspace, kind, id)
+  if (resource) emit('select', resource)
 }
 
-function interfaceType(kind: ReportEntityKind, id: string) {
+function interfaceType(kind: ReportResourceKind, id: string) {
   if (kind !== 'interface') return undefined
-  const entity = resolveEntity(props.workspace, 'interface', id)
-  return entity?.kind === 'interface' ? entity.interfaceType : undefined
+  const resource = resolveResource(props.workspace, 'interface', id)
+  return resource?.kind === 'interface' ? resource.interfaceType : undefined
 }
 
-function actorClassification(kind: ReportEntityKind, id: string) {
-  if (kind !== 'actor') return null
-  const entity = resolveEntity(props.workspace, 'actor', id)
-  return entity?.kind === 'actor' ? entity : null
+function actorClassification(kind: ReportResourceKind, id: string) {
+  if (kind !== 'entity') return null
+  const resource = resolveResource(props.workspace, 'entity', id)
+  return resource?.kind === 'entity' && resource.acts ? resource : null
 }
 </script>
 
@@ -251,8 +269,8 @@ function actorClassification(kind: ReportEntityKind, id: string) {
           <BlrKind
             :kind="item.kind"
             :interface-type="interfaceType(item.kind, id)"
-            :actor-kind="actorClassification(item.kind, id)?.actorKind"
-            :actor-relationship="actorClassification(item.kind, id)?.relationship"
+            :actor-kind="actorClassification(item.kind, id)?.entityKind"
+            :acts="actorClassification(item.kind, id)?.acts"
             :labelled="false"
             size="xs"
           />

@@ -1,7 +1,10 @@
 ---
+entities:
+  - item
+  - collection
 capabilities:
-  - content-reading
-  - item-saving
+  - read-content
+  - save-item
 entryPoints:
   - reader-web: /saved
 ---
@@ -23,7 +26,7 @@ return to their content.
 - Remove an item's saved state
 - Continue to collection organization
 
-## Product states
+## View states
 
 ### Saved items available
 

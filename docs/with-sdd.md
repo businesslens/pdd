@@ -8,7 +8,7 @@ order: 20
 
 # Use BusinessLens with spec-driven development tools
 
-BusinessLens owns Product meaning: Actors and Interfaces, optional Experiences,
+BusinessLens owns Product meaning: Entities and Interfaces, optional Experiences,
 Screens, and Domains, plus Capabilities, availability Contexts, Business Rules,
 local Capability Scenarios, optional coherent Journeys, and end-to-end Journey
 Scenarios.
@@ -17,12 +17,12 @@ decomposition.
 
 ```text
 businesslens-ideate       → approved product delta
-OpenSpec / spec-kit       → technical proposal citing affected entity IDs
+OpenSpec / spec-kit       → technical proposal citing affected resource IDs
 builder                   → implementation
 businesslens-verify       → semantic resolution and final structural lint
 ```
 
-Model entities may attach technical documents without copying them:
+Model resources may attach technical documents without copying them:
 
 ```yaml
 references:

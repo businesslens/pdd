@@ -1,5 +1,5 @@
 /**
- * `businesslens/report` — strict Product Report v10 contract as a library.
+ * `businesslens/report` — strict Product Report v13 contract as a library.
  *
  * This entry point depends only on `zod` and stays free of Node built-ins so
  * browser consumers can validate, project, and digest reports consistently.
@@ -23,10 +23,13 @@ export {
   ReportGeneratorSchema,
   ReportEntryPointSchema,
   ReportContextSchema,
-  ReportActorSchema,
   ReportInterfaceSchema,
   ReportExperienceSchema,
   ReportDomainSchema,
+  ReportEntitySchema,
+  ReportEntityStateSchema,
+  ReportEntityFactSchema,
+  ReportEntityRelationSchema,
   ReportCapabilitySchema,
   ReportScreenStateSchema,
   ReportScreenSchema,
@@ -34,13 +37,18 @@ export {
   ReportDecisionPointSchema,
   ReportScenarioRouteSchema,
   ReportScenarioStepContextSchema,
+  ReportScenarioStepEntitySchema,
+  ReportGrantSchema,
+  ReportGrantConditionSchema,
+  GRANT_OPERATORS,
+  STEP_EFFECTS,
   ReportScenarioStepSchema,
   ReportCapabilityScenarioSchema,
   ReportJourneyScenarioSchema,
   ReportBusinessRuleTargetSchema,
   ReportBusinessRuleSchema,
   ReportCoverageSchema,
-  ProductReportV10Schema,
+  ProductReportV13Schema,
   ProductReportSchema,
   validateProductReport,
   validateBlueprintReport,
@@ -50,15 +58,18 @@ export {
 } from './core/portable.js'
 
 export type {
-  ProductReportV10,
+  ProductReportV13,
   ProductReport,
   ReportCoverage,
   ReportCounts,
   ReportAuthor,
-  ReportActor,
   ReportInterface,
   ReportExperience,
   ReportDomain,
+  ReportEntity,
+  ReportEntityState,
+  ReportEntityFact,
+  ReportEntityRelation,
   ReportCapability,
   ReportContext,
   ReportScreen,
@@ -68,6 +79,9 @@ export type {
   ReportScenarioRoute,
   ReportScenarioStepContext,
   ReportScenarioStep,
+  ReportScenarioStepEntity,
+  ReportGrant,
+  ReportGrantCondition,
   ReportJourneyScenario,
   ReportBusinessRule,
   ReportBusinessRuleTarget,

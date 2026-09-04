@@ -16,10 +16,16 @@ Lint is deterministic and read-only. It checks:
 
 - required files, including the orientation README and generated-path
   `.gitignore`, plus frontmatter allowlists, IDs, titles, and behavior sections;
-- Actor classifications; required Interface interaction types; Interface and Experience relations, including full
-  Interface Actor coverage by Experience contexts; valid
-  availability; Capability, Domain, Business Rule, Journey, both Scenario
-  types, and taxonomy relationships;
+- Entity kinds and acting sides, named facts, states, and relations with both
+  cardinality ends; required Interface interaction types; Interface and
+  Experience relations, including full Interface Actor coverage by Experience
+  contexts; valid availability; Capability, Domain, Business Rule, Journey,
+  both Scenario types, and taxonomy relationships;
+- what every Step does to the Product's things: the effect, the states it
+  leaves and lands in, aliases, chaining per instance, and the composed
+  lifecycle — a state no Step reaches or an origin nothing produces is a
+  warning, an Entity nothing changes, presents, names as an actor, or reads by
+  Rule is an error;
 - Capability Scenario ownership, named routes, typed Actor/Product/condition
   Steps, most-specific Context places, and direct coverage for every Capability,
   warning for gaps in `draft` or `partial` and failing them in `complete`;
@@ -28,8 +34,10 @@ Lint is deterministic and read-only. It checks:
 - Journey Scenario results, ordered typed Steps, complete named routes,
   most-specific Context places, route entry Actors, distinct Capability counts, and derived
   Interface/Experience contexts;
-- typed Business Rule targets, optional context narrowing, and redundant
-  parent/Scenario targets;
+- typed Business Rule targets, optional context narrowing, redundant
+  parent/Scenario targets, Entity operation targets, and every grant — its who,
+  its relation path, its conditions — against the Steps that perform the
+  operation and the Screens that present the thing;
 - access modes, both Scenario step/decision shapes, and globally unique
   Scenario IDs across both collections;
 - strict Reference shape, kinds, roles, targets, and duplicate targets;
@@ -52,11 +60,11 @@ Use `businesslens-verify` for semantic alignment.
   "errors": [],
   "warnings": [],
   "counts": {
-    "actors": 2,
     "interfaces": 3,
     "experiences": 2,
     "screens": 1,
     "domains": 2,
+    "entities": 6,
     "capabilities": 3,
     "journeys": 2,
     "capabilityScenarios": 4,

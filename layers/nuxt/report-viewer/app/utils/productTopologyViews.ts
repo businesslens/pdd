@@ -7,7 +7,7 @@
  * direct integrations, and `value-flow` and `domain-anatomy` folded into
  * Product map once Domains grouped Capabilities under the access rail.
  */
-import type { ReportEntityKind } from './reportWorkspace'
+import type { ReportResourceKind } from './reportWorkspace'
 
 export type ProductTopologyViewId =
   | 'product-map'
@@ -15,12 +15,14 @@ export type ProductTopologyViewId =
   | 'delivery-by-interface'
   | 'sitemap'
   | 'rule-reach'
+  | 'what-it-keeps'
+  | 'what-changes-what'
   | 'everything'
 
 export type TopologySemantics = 'identity' | 'occurrence'
 
 export interface TopologyFlowStep {
-  kind: ReportEntityKind
+  kind: ReportResourceKind
   label: string
 }
 
@@ -32,7 +34,7 @@ export interface ProductTopologyView {
   note?: string
   flow: TopologyFlowStep[]
   separators: string[]
-  kinds: ReportEntityKind[]
+  kinds: ReportResourceKind[]
   /** Draw every relation quietly until a node lights its neighbourhood. */
   latentEdges?: true
 }
@@ -45,13 +47,13 @@ export const PRODUCT_TOPOLOGY_VIEWS: ProductTopologyView[] = [
     semantics: 'identity',
     note: 'Domain lanes use their authored colours. Access paths show which Interfaces offer each Capability.',
     flow: [
-      { kind: 'actor', label: 'Actors' },
+      { kind: 'entity', label: 'Actors' },
       { kind: 'interface', label: 'Interfaces' },
       { kind: 'domain', label: 'Domains' },
       { kind: 'capability', label: 'Capabilities' }
     ],
     separators: ['→', '→', '⊃'],
-    kinds: ['actor', 'interface', 'domain', 'capability']
+    kinds: ['entity', 'interface', 'domain', 'capability']
   },
   {
     id: 'value-paths',
@@ -75,14 +77,14 @@ export const PRODUCT_TOPOLOGY_VIEWS: ProductTopologyView[] = [
     semantics: 'identity',
     note: 'Graphical Interfaces continue through Experiences and Screens. Direct integrations terminate in the Capability they deliver.',
     flow: [
-      { kind: 'actor', label: 'Actors' },
+      { kind: 'entity', label: 'Actors' },
       { kind: 'interface', label: 'Interfaces' },
       { kind: 'experience', label: 'Experiences' },
       { kind: 'screen', label: 'Screens' },
       { kind: 'capability', label: 'Direct capabilities' }
     ],
     separators: ['→', '→', '→', '·'],
-    kinds: ['actor', 'interface', 'experience', 'screen', 'capability']
+    kinds: ['entity', 'interface', 'experience', 'screen', 'capability']
   },
   {
     id: 'sitemap',
@@ -118,16 +120,39 @@ export const PRODUCT_TOPOLOGY_VIEWS: ProductTopologyView[] = [
     latentEdges: true
   },
   {
+    id: 'what-it-keeps',
+    name: 'What it keeps',
+    question: 'What does the Product keep, and how do those things relate?',
+    semantics: 'identity',
+    note: 'Each relation is authored on one side and drawn once. The label reads source end to target end \u2014 1:N means one of the left, many of the right. Colour is the Domain; what changes a thing is on its page.',
+    flow: [{ kind: 'entity', label: 'Entities' }],
+    separators: [],
+    kinds: ['entity']
+  },
+  {
+    id: 'what-changes-what',
+    name: 'What changes what',
+    question: 'Which Capability creates, changes or removes each thing?',
+    semantics: 'identity',
+    note: 'Every edge is a Step somewhere, aggregated per Capability and labelled by effect. Reads are left out on purpose: a read places no claim on what can alter a thing. Relations stay quiet until a node is hovered or selected.',
+    flow: [
+      { kind: 'capability', label: 'Capabilities' },
+      { kind: 'entity', label: 'Entities' }
+    ],
+    separators: ['→'],
+    kinds: ['capability', 'entity'],
+    latentEdges: true
+  },
+  {
     id: 'everything',
     name: 'Everything',
     question: 'What is the entire product, all at once?',
     semantics: 'identity',
-    note: 'Fixed shelves read access → Interface → behaviour → governance. The resolved relation web stays quiet until a node is hovered or selected; hide a shelf or focus an entity to thin it.',
+    note: 'Fixed shelves read access → Interface → behaviour → governance. The resolved relation web stays quiet until a node is hovered or selected; hide a shelf or focus a resource to thin it.',
     flow: [],
     separators: [],
     kinds: [
       'product',
-      'actor',
       'interface',
       'experience',
       'screen',
@@ -135,6 +160,7 @@ export const PRODUCT_TOPOLOGY_VIEWS: ProductTopologyView[] = [
       'journey-scenario',
       'journey',
       'capability',
+      'entity',
       'domain',
       'rule'
     ],

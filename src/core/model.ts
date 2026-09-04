@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync, existsSync } from 'node:fs'
 import { basename, join } from 'node:path'
 import { parse } from 'yaml'
-import type { CompactEntryPoint, Context, EntityAsset, EntityReference } from './frontmatter.js'
+import type { CompactEntryPoint, Context, ResourceAsset, ResourceReference } from './frontmatter.js'
 import type { MarkdownDoc } from './markdown.js'
 import {
   assetsField,
@@ -16,24 +16,24 @@ import {
   stringListField,
   uniqueStringListField
 } from './frontmatter.js'
-import { counterpartKey, interfaceOf, qualify } from './ids.js'
+import { counterpartKey, interfaceOf, isId, qualify } from './ids.js'
 import { readProductLogo } from './logo-file.js'
 import {
   bulletList, containsStructuralHeading, decisionPoints, parseMarkdown, screenStates, section
 } from './markdown.js'
 
-export interface EntityFile {
+export interface ResourceFile {
   id: string
   file: string
   /**
-   * The entity's expanded namespace, whether or not it currently exists.
+   * The resource's expanded namespace, whether or not it currently exists.
    * Assets sit beside `<type>.md`; children are typed subfolders.
    */
   directory: string
   doc: MarkdownDoc
-  references: EntityReference[]
+  references: ResourceReference[]
   /**
-   * Files found beside `<type>.md`, path-relative to the entity folder.
+   * Files found beside `<type>.md`, path-relative to the resource folder.
    *
    * Anything under `implementation/` describes this realization of the Product
    * and is workspace-profile only; everything else is authored intent and
@@ -41,15 +41,10 @@ export interface EntityFile {
    */
   assets: string[]
   /** Optional authored metadata over those files. Never sets class. */
-  assetMeta: EntityAsset[]
+  assetMeta: ResourceAsset[]
 }
 
-export interface ActorEntity extends EntityFile {
-  kind: string
-  relationship: string
-}
-
-export interface InterfaceEntity extends EntityFile {
+export interface InterfaceResource extends ResourceFile {
   type: string
   actors: string[]
   entryPoints: CompactEntryPoint[]
@@ -58,7 +53,7 @@ export interface InterfaceEntity extends EntityFile {
   screens: string[]
 }
 
-export interface ExperienceEntity extends EntityFile {
+export interface ExperienceResource extends ResourceFile {
   actors: string[]
   /** The one Interface that owns it, read from the path. Never authored. */
   interface: string
@@ -69,17 +64,85 @@ export interface ExperienceEntity extends EntityFile {
   screens: string[]
 }
 
-export interface DomainEntity extends EntityFile {
+export interface DomainResource extends ResourceFile {
   colorSlot?: number
   boundary: string
 }
 
-export interface CapabilityEntity extends EntityFile {
+export interface CapabilityResource extends ResourceFile {
   domain?: string
   availability: Context[]
 }
 
-export interface ScreenEntity extends EntityFile {
+/**
+ * A named fact the Product keeps about a thing: `- **Name** — prose`.
+ *
+ * The name is what a Business Rule cites — a `facts` target or a `when`
+ * condition — by exact match, the idiom `## States` already uses for an H3.
+ * Nothing else cites one, and the fact stays untyped: addressable is what a
+ * field-level Rule and a derivation need; typed is a data model.
+ */
+export interface EntityFact {
+  name: string
+  description: string
+}
+
+export const ENTITY_KINDS = ['person', 'system'] as const
+export const ENTITY_ACTS = ['external', 'internal'] as const
+
+/**
+ * Both ends of a relation, reading source to target.
+ *
+ * One end is not a relationship: "a Source publishes many Items" leaves
+ * unanswered whether an Item may come from two feeds, and that is a product
+ * decision rather than a storage detail. `many-to-one` is deliberately absent —
+ * declare that relationship from the other Entity, where it reads
+ * `one-to-many`, so one `1:N` has exactly one encoding.
+ */
+export type EntityCardinality = 'one-to-one' | 'one-to-many' | 'many-to-many'
+
+/**
+ * An edge to another Entity. Declared on one side only; the inverse is derived.
+ * `verb` is the product's own word for the relationship.
+ */
+export interface EntityRelation {
+  entity: string
+  verb: string
+  cardinality: EntityCardinality
+}
+
+/**
+ * A thing the Product keeps or reasons about — the people and systems that act
+ * on it included.
+ *
+ * Entities name the Product's nouns where Capabilities name its verbs. The test
+ * is identity, not storage: a thing an Actor would point at and call "this one",
+ * which the Product can tell apart from another. There is one resource type for
+ * things; "Actor" is the word for the subset that `acts`, and it names the role
+ * such an Entity plays on a Step, an Interface, a Journey, or a grant.
+ *
+ * The Entity declares its states and nothing about the moves between them: the
+ * lifecycle is composed from Scenario Steps.
+ */
+export interface EntityResource extends ResourceFile {
+  domain?: string
+  /** Named single-line facts the Product keeps about the thing. Never how it is stored. */
+  informationKept: EntityFact[]
+  /** `person` or `system`. Present exactly when `acts` is. */
+  kind?: string
+  /**
+   * `external` or `internal`, relative to the Product boundary. Present when
+   * the thing initiates, with a goal or privilege of its own, under an inbound
+   * contract the Product must keep stable; absent for a thing that does not.
+   */
+  acts?: string
+  relations: EntityRelation[]
+  states: ReturnType<typeof screenStates>
+}
+
+export interface ScreenResource extends ResourceFile {
+  /** The Entities this view presents. */
+  entities: string[]
   /** The Interface or Experience that owns it, read from the path. Never authored. */
   containerId: string
   capabilities: string[]
@@ -90,7 +153,7 @@ export interface ScreenEntity extends EntityFile {
   capabilityBoundary: string
 }
 
-interface ScenarioEntity extends EntityFile {
+interface ScenarioResource extends ResourceFile {
   kind: string
   routes: ScenarioRoute[]
   steps: ScenarioStep[]
@@ -100,7 +163,7 @@ interface ScenarioEntity extends EntityFile {
   decisionPoints: ReturnType<typeof decisionPoints>
 }
 
-export interface CapabilityScenarioEntity extends ScenarioEntity {
+export interface CapabilityScenarioResource extends ScenarioResource {
   /** The Capability that owns it, read from the path. Never authored. */
   capability: string
 }
@@ -116,7 +179,58 @@ export interface ScenarioStepContext extends Context {
   routeId: string
 }
 
+/**
+ * What a Step does to one Entity.
+ *
+ * `changes` is the default and the ordinary case. `creates` and `removes` are
+ * the boundaries of a thing's existence, which an Actor observes. `reads` is a
+ * bare mention: it never counts as a change and never keeps an Entity from
+ * being an orphan, and it exists because the alternative was a Step whose text
+ * names a thing while the model says nothing.
+ */
+export type ScenarioStepEffect = 'creates' | 'changes' | 'removes' | 'reads'
+
+export const SCENARIO_STEP_EFFECTS: ScenarioStepEffect[] = ['creates', 'changes', 'removes', 'reads']
+
+/**
+ * One entry of a Step's `entities` list.
+ *
+ * State keys follow the effect and are never inferred from a neighbouring Step:
+ * `creates` takes `to`, `removes` takes `from`, `changes` takes both or neither
+ * (neither is an information change — a rename), `reads` takes none.
+ */
+export interface ScenarioStepEntity {
+  entity: string
+  /**
+   * Scenario-local instance alias, for two instances of one Entity in one
+   * Scenario. Once an Entity is aliased anywhere in a Scenario, every mention
+   * of it there is aliased.
+   */
+  as?: string
+  /** Absent in the folder when it is the default `changes`. */
+  effect?: ScenarioStepEffect
+  from?: string
+  to?: string
+}
+
 export interface ScenarioStep {
+  /**
+   * What this Step does to the Product's Entities. Required on every Step, and
+   * `[]` when it touches nothing: silence is impossible, and an omission is a
+   * claim that can be reviewed, linted, and contradicted by code.
+   *
+   * A list because one observable act can move two things at once, and
+   * splitting it to fit a singular field would turn an acceptance case into an
+   * implementation trace.
+   */
+  entities: ScenarioStepEntity[]
+  /**
+   * Marks a Scenario nobody triggers — a schedule the Product owns, an expiry,
+   * a retry. Valid only on the first Step and only when `kind` is `condition`.
+   * Without it, unattended behavior had to be modelled as somebody else's
+   * request or left with no acceptance coverage at all.
+   */
+  unattended?: boolean
   text: string
   kind: string
   actor?: string
@@ -124,31 +238,89 @@ export interface ScenarioStep {
   contexts: ScenarioStepContext[]
 }
 
-export interface JourneyScenarioEntity extends ScenarioEntity {
+export interface JourneyScenarioResource extends ScenarioResource {
   /** The Journey that owns it, read from the path. Never authored. */
   journey: string
   result: string
 }
 
-export interface JourneyEntity extends EntityFile {
+export interface JourneyResource extends ResourceFile {
   actors: string[]
   goal: string
   successCriterion: string
 }
 
-export interface BusinessRuleEntity extends EntityFile {
+export interface BusinessRuleResource extends ResourceFile {
   appliesTo: BusinessRuleTarget[]
+  /**
+   * Absent: the Rule makes no authorization claim. `[]`: the selected operation
+   * is forbidden to everyone. Otherwise the grants, any one of which permits it.
+   */
+  permits?: BusinessRuleGrant[]
   rationale: string
 }
 
-export type BusinessRuleEntityTargetType =
+/**
+ * A target selects; a grant conditions. `effect`, `from` and `to` select Steps
+ * by the keys their `entities` entry already carries; `facts` names the facts
+ * the Rule governs; `contexts` scopes it to places that present the Entity.
+ */
+export interface BusinessRuleEntityTarget {
+  type: 'entity'
+  id: string
+  effect?: ScenarioStepEffect
+  from?: string
+  to?: string
+  facts: string[]
+  contexts: Context[]
+}
+
+export const GRANT_OPERATORS = ['over', 'under', 'at-least', 'at-most', 'is', 'is-not', 'present', 'absent'] as const
+export type GrantOperator = typeof GRANT_OPERATORS[number]
+
+/** A threshold is a scalar, or the id of the Entity the customer sets it on. */
+export type GrantValue = string | number | boolean | { configuredBy: string }
+
+/**
+ * One `when` condition. Either a fact with exactly one operator — on the
+ * targeted Entity, or on `entity` — or the instance's own `state`.
+ */
+export interface GrantCondition {
+  entity?: string
+  fact?: string
+  state?: string
+  operator?: GrantOperator
+  value?: GrantValue
+}
+
+/** One hop of a `related` path: the verb walked and the Entity it arrives at. */
+export interface RelatedSegment {
+  verb: string
+  entity: string
+}
+
+/**
+ * One grant. Keys within it are AND; grants within a Rule are OR. Every grant
+ * names a who — at least one of `actors`, `related`, `self`, `unattended`,
+ * `configuredBy` — and `when` narrows it.
+ */
+export interface BusinessRuleGrant {
+  actors: string[]
+  related: RelatedSegment[]
+  self?: true
+  when: GrantCondition[]
+  unattended?: true
+  configuredBy?: string
+}
+
+export type BusinessRuleResourceTargetType =
   | 'capability'
   | 'capability-scenario'
   | 'journey'
   | 'journey-scenario'
 
-export interface BusinessRuleEntityTarget {
-  type: BusinessRuleEntityTargetType
+export interface BusinessRuleResourceTarget {
+  type: BusinessRuleResourceTargetType
   id: string
   contexts: Context[]
 }
@@ -158,7 +330,7 @@ export interface BusinessRuleContextTarget {
   context: Context
 }
 
-export type BusinessRuleTarget = BusinessRuleEntityTarget | BusinessRuleContextTarget
+export type BusinessRuleTarget = BusinessRuleResourceTarget | BusinessRuleContextTarget | BusinessRuleEntityTarget
 
 export interface ScenarioKind {
   id: string
@@ -184,7 +356,7 @@ export interface PddModel {
     license?: string
     limitations: string[]
     doc: MarkdownDoc
-    references: EntityReference[]
+    references: ResourceReference[]
   }
   scenarioKinds: ScenarioKind[]
   coverage: {
@@ -195,21 +367,60 @@ export interface PddModel {
     limitations: string[]
     rationale: string
   }
-  actors: ActorEntity[]
-  interfaces: InterfaceEntity[]
-  experiences: ExperienceEntity[]
-  screens: ScreenEntity[]
-  domains: DomainEntity[]
-  capabilities: CapabilityEntity[]
-  capabilityScenarios: CapabilityScenarioEntity[]
-  businessRules: BusinessRuleEntity[]
-  journeys: JourneyEntity[]
-  journeyScenarios: JourneyScenarioEntity[]
+  interfaces: InterfaceResource[]
+  experiences: ExperienceResource[]
+  screens: ScreenResource[]
+  domains: DomainResource[]
+  entities: EntityResource[]
+  capabilities: CapabilityResource[]
+  capabilityScenarios: CapabilityScenarioResource[]
+  businessRules: BusinessRuleResource[]
+  journeys: JourneyResource[]
+  journeyScenarios: JourneyScenarioResource[]
   issues: string[]
   notices: string[]
 }
 
+/**
+ * Every semantic resource collection on the model, keyed by its own name.
+ *
+ * The key union is derived from `PddModel` rather than written out, so adding an
+ * resource kind to the model leaves this record incomplete and fails the build.
+ * That is not defensive typing for its own sake: Entity was added as a kind
+ * without it, and four separate "for every resource" checks — id shape, duplicate
+ * ids, asset metadata, and reference targets — silently skipped Entities,
+ * because each was a hand-written list nothing forced anyone to revisit.
+ */
+export type ResourceCollectionName = {
+  [K in keyof PddModel]-?: PddModel[K] extends ResourceFile[] ? K : never
+}[keyof PddModel]
+
+export function resourceCollections(model: PddModel): Record<ResourceCollectionName, ResourceFile[]> {
+  return {
+    interfaces: model.interfaces,
+    experiences: model.experiences,
+    screens: model.screens,
+    domains: model.domains,
+    entities: model.entities,
+    capabilities: model.capabilities,
+    capabilityScenarios: model.capabilityScenarios,
+    businessRules: model.businessRules,
+    journeys: model.journeys,
+    journeyScenarios: model.journeyScenarios
+  }
+}
+
+/** Every semantic resource in the model, in collection order. */
+export function allResources(model: PddModel): ResourceFile[] {
+  return Object.values(resourceCollections(model)).flat()
+}
+
+const ENTITY_CARDINALITIES = new Set<string>(['one-to-one', 'one-to-many', 'many-to-many'])
+
 export const FOLDER = '.businesslens'
+
+/** The one folder-format version this release reads and writes. */
+export const FOLDER_SCHEMA = 8
 
 /**
  * The two channels a model load reports into.
@@ -223,10 +434,10 @@ export interface LoadFindings {
   notices: string[]
 }
 
-/** One compact or expanded entity: its id segment, namespace, and Markdown file. */
-export interface EntityLocation {
+/** One compact or expanded resource: its id segment, namespace, and Markdown file. */
+export interface ResourceLocation {
   id: string
-  /** `<collection>/<id>/`, including for a compact entity where it does not exist. */
+  /** `<collection>/<id>/`, including for a compact resource where it does not exist. */
   directory: string
   file: string
   expanded: boolean
@@ -235,7 +446,7 @@ export interface EntityLocation {
 /**
  * The compact files and expanded folders of one collection, in id order.
  *
- * `<id>.md` is canonical while an entity has no owned children or assets.
+ * `<id>.md` is canonical while a resource has no owned children or assets.
  * `<id>/<type>.md` is required once it needs that namespace. The logical id is
  * identical in both forms, and the two forms may never coexist.
  *
@@ -243,15 +454,15 @@ export interface EntityLocation {
  * vanish with no finding, so a misplaced file looked exactly like one that was
  * never written.
  */
-function listEntities(
+function listResources(
   parent: string,
   type: string,
   findings: LoadFindings,
   collection: string,
   childDirectories: string[] = []
-): EntityLocation[] {
+): ResourceLocation[] {
   if (!existsSync(parent)) return []
-  const found: EntityLocation[] = []
+  const found: ResourceLocation[] = []
   const compact = new Map<string, string>()
   const expanded = new Map<string, string>()
 
@@ -269,7 +480,7 @@ function listEntities(
       expanded.set(entry.name, join(parent, entry.name))
       continue
     }
-    findings.issues.push(`${collection}/${entry.name}: expected a regular entity file or directory`)
+    findings.issues.push(`${collection}/${entry.name}: expected a regular resource file or directory`)
   }
 
   const ids = new Set([...compact.keys(), ...expanded.keys()])
@@ -282,7 +493,7 @@ function listEntities(
     if (compactFile && expanded.has(id)) {
       findings.issues.push(
         hasExpandedFile
-          ? `${collection}/${id}: both ${id}.md and ${id}/${type}.md exist; keep exactly one entity shape`
+          ? `${collection}/${id}: both ${id}.md and ${id}/${type}.md exist; keep exactly one resource shape`
           : `${collection}/${id}.md cannot also have ${collection}/${id}/; move it to ${collection}/${id}/${type}.md before adding children or assets`
       )
       found.push({ id, directory, file: compactFile, expanded: false })
@@ -324,7 +535,7 @@ function listEntities(
       // steps. Report expansion derives shape from owned children, so the round
       // trip normalizes this folder back to the compact form the rule requires.
       findings.notices.push(
-        `${collection}/${id}/ has no assets or child entities; use ${collection}/${id}.md`
+        `${collection}/${id}/ has no assets or child resources; use ${collection}/${id}.md`
       )
     }
     found.push({ id, directory, file: expandedFile, expanded: true })
@@ -348,17 +559,17 @@ function listAssets(directory: string, ownFile: string): string[] {
   return found.sort()
 }
 
-function readEntity(
-  location: Pick<EntityLocation, 'file' | 'directory' | 'expanded'>,
+function readResource(
+  location: Pick<ResourceLocation, 'file' | 'directory' | 'expanded'>,
   allowedKeys: string[],
   issues: string[]
 ): {
   data: Record<string, unknown>
   doc: MarkdownDoc
-  references: EntityReference[]
+  references: ResourceReference[]
   directory: string
   assets: string[]
-  assetMeta: EntityAsset[]
+  assetMeta: ResourceAsset[]
 } {
   const { file, directory, expanded } = location
   const source = readFileSync(file, 'utf8')
@@ -423,7 +634,30 @@ function scenarioStepsField(
       continue
     }
     const item = raw as Record<string, unknown>
-    rejectUnknownKeys(item, ['text', 'kind', 'actor', 'contexts', ...(allowCapability ? ['capability'] : [])], issues, itemLabel)
+    /*
+     * `entity`, `state`, `changes` and `reads` were earlier spellings of what a
+     * Step does to a thing and are now entries of `entities`. They would
+     * otherwise fall through as unknown keys, which says what is wrong and not
+     * what to write instead.
+     */
+    const RETIRED_STEP_KEYS = ['entity', 'state', 'changes', 'reads']
+    for (const retired of RETIRED_STEP_KEYS) {
+      if (item[retired] !== undefined) {
+        issues.push(`${itemLabel}: "${retired}" is now an entry of "entities"`)
+      }
+    }
+    rejectUnknownKeys(
+      item,
+      ['text', 'kind', 'actor', 'entities', 'contexts', 'unattended', ...RETIRED_STEP_KEYS, ...(allowCapability ? ['capability'] : [])],
+      issues,
+      itemLabel
+    )
+    /* Required, and `[]` is a claim: silence is what made 91% of Steps say
+       nothing about the things they touched. */
+    if (item.entities === undefined || item.entities === null) {
+      issues.push(`${itemLabel}: needs "entities" — what this Step does to the Product's things, or [] when it touches nothing`)
+    }
+    const entities = stepEntities(item.entities, issues, itemLabel)
     const contexts: ScenarioStepContext[] = []
     if (item.contexts !== undefined && item.contexts !== null) {
       if (typeof item.contexts !== 'object' || Array.isArray(item.contexts)) {
@@ -435,15 +669,93 @@ function scenarioStepsField(
         }
       }
     }
+    const unattended = item.unattended
+    if (unattended !== undefined && typeof unattended !== 'boolean') {
+      issues.push(`${itemLabel}: "unattended" must be true or false`)
+    }
     steps.push({
       text: stringField(item, 'text', issues, itemLabel) || '',
       kind: stringField(item, 'kind', issues, itemLabel) || '',
       actor: stringField(item, 'actor', issues, itemLabel),
+      entities,
       capability: allowCapability ? stringField(item, 'capability', issues, itemLabel) : undefined,
+      unattended: unattended === true ? true : undefined,
       contexts
     })
   }
   return steps
+}
+
+/**
+ * One Step's `entities` list, parsed but not resolved.
+ *
+ * Shape only: whether the ids exist, whether a state is one the Entity has,
+ * and whether the Steps chain are model-wide questions `lint` answers once the
+ * whole model is loaded.
+ */
+function stepEntities(raw: unknown, issues: string[], label: string): ScenarioStepEntity[] {
+  if (raw === undefined || raw === null) return []
+  if (!Array.isArray(raw)) {
+    issues.push(`${label}: "entities" must be a list`)
+    return []
+  }
+  const entries: ScenarioStepEntity[] = []
+  const seen = new Set<string>()
+  for (const [index, entry] of raw.entries()) {
+    const entryLabel = `${label}: entity ${index + 1}`
+    if (typeof entry !== 'object' || entry === null || Array.isArray(entry)) {
+      issues.push(`${entryLabel} must be a mapping`)
+      continue
+    }
+    const item = entry as Record<string, unknown>
+    rejectUnknownKeys(item, ['entity', 'as', 'effect', 'from', 'to'], issues, entryLabel)
+    const entity = stringField(item, 'entity', issues, entryLabel) || ''
+    if (!entity) {
+      issues.push(`${entryLabel}: needs an "entity"`)
+      continue
+    }
+    const alias = stringField(item, 'as', issues, entryLabel)
+    if (alias !== undefined && !isId(alias)) {
+      issues.push(`${entryLabel}: "as" must be a lowercase kebab-case alias`)
+    }
+    /* One Step states one thing about one instance; two entries for it are two
+       authorities that can disagree, exactly as a facing relation is. */
+    const key = `${entity}\0${alias ?? ''}`
+    if (seen.has(key)) {
+      issues.push(`${entryLabel}: "${entity}${alias ? ` (${alias})` : ''}" already appears in this Step`)
+      continue
+    }
+    seen.add(key)
+    const effect = stringField(item, 'effect', issues, entryLabel)
+    if (effect !== undefined && !SCENARIO_STEP_EFFECTS.includes(effect as ScenarioStepEffect)) {
+      issues.push(`${entryLabel}: effect "${effect}" must be ${SCENARIO_STEP_EFFECTS.join('|')}`)
+      continue
+    }
+    const resolved = (effect ?? 'changes') as ScenarioStepEffect
+    const from = stringField(item, 'from', issues, entryLabel)
+    const to = stringField(item, 'to', issues, entryLabel)
+    /* State keys follow the effect. A creation starts nowhere, a removal leaves
+       nothing in a state, a read says nothing about state, and a change either
+       moves — both keys — or alters information — neither. */
+    if (resolved === 'reads' && (from !== undefined || to !== undefined)) {
+      issues.push(`${entryLabel}: a "reads" entry carries no "from" or "to"`)
+      continue
+    }
+    if (resolved === 'creates' && from !== undefined) {
+      issues.push(`${entryLabel}: a "creates" entry has no "from"; a creation starts nowhere`)
+      continue
+    }
+    if (resolved === 'removes' && to !== undefined) {
+      issues.push(`${entryLabel}: a "removes" entry has no "to"; nothing is left in a state after it ends`)
+      continue
+    }
+    if (resolved === 'changes' && (from === undefined) !== (to === undefined)) {
+      issues.push(`${entryLabel}: a "changes" entry carries both "from" and "to", or neither`)
+      continue
+    }
+    entries.push({ entity, as: alias, effect: effect as ScenarioStepEffect | undefined, from, to })
+  }
+  return entries
 }
 
 function parsedContextField(
@@ -487,29 +799,238 @@ function businessRuleTargetsField(
       if (parsed) targets.push({ type: 'context', context: parsed })
       continue
     }
-    rejectUnknownKeys(target, ['type', 'id', 'contexts'], issues, targetLabel)
-    const rawContexts = target.contexts
-    const contexts: Context[] = []
-    if (rawContexts !== undefined && rawContexts !== null) {
-      if (!Array.isArray(rawContexts) || rawContexts.length === 0) {
-        issues.push(`${targetLabel}: "contexts" must be a non-empty list when present`)
-      } else {
-        for (const [contextIndex, rawContext] of rawContexts.entries()) {
-          const parsed = contextValue(rawContext, issues, `${targetLabel}: context ${contextIndex + 1}`)
-          if (parsed) contexts.push(parsed)
-        }
+    if (type === 'entity') {
+      rejectUnknownKeys(target, ['type', 'id', 'effect', 'from', 'to', 'facts', 'contexts'], issues, targetLabel)
+      const effect = stringField(target, 'effect', issues, targetLabel)
+      if (effect !== undefined && !SCENARIO_STEP_EFFECTS.includes(effect as ScenarioStepEffect)) {
+        issues.push(`${targetLabel}: effect "${effect}" must be ${SCENARIO_STEP_EFFECTS.join('|')}`)
       }
+      const from = stringField(target, 'from', issues, targetLabel)
+      const to = stringField(target, 'to', issues, targetLabel)
+      /* A target selects Steps by the keys their entry carries, so it takes only
+         the state keys that effect can have. */
+      if (from !== undefined && (effect === 'creates' || effect === 'reads')) {
+        issues.push(`${targetLabel}: "from" selects nothing on a "${effect}" target; a ${effect === 'creates' ? 'creation starts nowhere' : 'read carries no state'}`)
+      }
+      if (to !== undefined && (effect === 'removes' || effect === 'reads')) {
+        issues.push(`${targetLabel}: "to" selects nothing on a "${effect}" target`)
+      }
+      targets.push({
+        type: 'entity',
+        id: stringField(target, 'id', issues, targetLabel) || '',
+        effect: effect as ScenarioStepEffect | undefined,
+        from,
+        to,
+        facts: uniqueStringListField(target, 'facts', issues, targetLabel),
+        contexts: targetContextsField(target, issues, targetLabel)
+      })
+      continue
     }
+    rejectUnknownKeys(target, ['type', 'id', 'contexts'], issues, targetLabel)
     targets.push({
-      type: type as BusinessRuleEntityTargetType,
+      type: type as BusinessRuleResourceTargetType,
       id: stringField(target, 'id', issues, targetLabel) || '',
-      contexts
+      contexts: targetContextsField(target, issues, targetLabel)
     })
   }
   return targets
 }
 
-/** Load the strict schema 6 .businesslens/ folder, collecting parse issues. */
+function targetContextsField(target: Record<string, unknown>, issues: string[], label: string): Context[] {
+  const rawContexts = target.contexts
+  const contexts: Context[] = []
+  if (rawContexts === undefined || rawContexts === null) return contexts
+  if (!Array.isArray(rawContexts) || rawContexts.length === 0) {
+    issues.push(`${label}: "contexts" must be a non-empty list when present`)
+    return contexts
+  }
+  for (const [contextIndex, rawContext] of rawContexts.entries()) {
+    const parsed = contextValue(rawContext, issues, `${label}: context ${contextIndex + 1}`)
+    if (parsed) contexts.push(parsed)
+  }
+  return contexts
+}
+
+/** A `self` or `unattended` key: present and `true`, or absent. Nothing else. */
+function literalTrue(data: Record<string, unknown>, key: string, issues: string[], label: string): true | undefined {
+  const value = data[key]
+  if (value === undefined || value === null) return undefined
+  if (value !== true) {
+    issues.push(`${label}: "${key}" is either true or absent`)
+    return undefined
+  }
+  return true
+}
+
+function relatedPathField(raw: unknown, issues: string[], label: string): RelatedSegment[] {
+  if (raw === undefined || raw === null) return []
+  if (!Array.isArray(raw)) {
+    issues.push(`${label}: "related" must be a list of { verb, entity } segments`)
+    return []
+  }
+  /* The zero-hop path has one spelling, and it is not an empty list. */
+  if (!raw.length) {
+    issues.push(`${label}: "related" is empty; the instance itself is "self: true"`)
+    return []
+  }
+  const segments: RelatedSegment[] = []
+  for (const [index, entry] of raw.entries()) {
+    const segmentLabel = `${label}: related segment ${index + 1}`
+    if (typeof entry !== 'object' || entry === null || Array.isArray(entry)) {
+      issues.push(`${segmentLabel} must be a { verb, entity } mapping`)
+      continue
+    }
+    const item = entry as Record<string, unknown>
+    rejectUnknownKeys(item, ['verb', 'entity'], issues, segmentLabel)
+    const verb = stringField(item, 'verb', issues, segmentLabel) || ''
+    const entity = stringField(item, 'entity', issues, segmentLabel) || ''
+    if (!verb) issues.push(`${segmentLabel}: needs a "verb"`)
+    if (!entity) issues.push(`${segmentLabel}: needs an "entity"`)
+    if (verb && entity) segments.push({ verb, entity })
+  }
+  return segments
+}
+
+function grantConditionsField(raw: unknown, issues: string[], label: string): GrantCondition[] {
+  if (raw === undefined || raw === null) return []
+  if (!Array.isArray(raw)) {
+    issues.push(`${label}: "when" must be a list of conditions`)
+    return []
+  }
+  const conditions: GrantCondition[] = []
+  for (const [index, entry] of raw.entries()) {
+    const conditionLabel = `${label}: condition ${index + 1}`
+    if (typeof entry !== 'object' || entry === null || Array.isArray(entry)) {
+      issues.push(`${conditionLabel} must be a mapping`)
+      continue
+    }
+    const item = entry as Record<string, unknown>
+    rejectUnknownKeys(item, ['entity', 'fact', 'state', ...GRANT_OPERATORS], issues, conditionLabel)
+    const entity = stringField(item, 'entity', issues, conditionLabel)
+    const fact = stringField(item, 'fact', issues, conditionLabel)
+    const state = stringField(item, 'state', issues, conditionLabel)
+    const operators = GRANT_OPERATORS.filter(operator => item[operator] !== undefined)
+    if (state !== undefined) {
+      /* Another Entity's instance has no path from this one, so a state
+         condition is always about the targeted thing and carries nothing else. */
+      if (entity !== undefined || fact !== undefined || operators.length) {
+        issues.push(`${conditionLabel}: a "state" condition carries nothing else`)
+        continue
+      }
+      conditions.push({ state })
+      continue
+    }
+    if (fact === undefined) {
+      issues.push(`${conditionLabel}: needs a "fact" with one operator, or a "state"`)
+      continue
+    }
+    if (operators.length !== 1) {
+      issues.push(`${conditionLabel}: needs exactly one operator of ${GRANT_OPERATORS.join('|')}`)
+      continue
+    }
+    const operator = operators[0]!
+    const rawValue = item[operator]
+    let value: GrantValue | undefined
+    if (operator === 'present' || operator === 'absent') {
+      if (rawValue !== true) {
+        issues.push(`${conditionLabel}: "${operator}" takes true`)
+        continue
+      }
+      value = true
+    } else if (typeof rawValue === 'string' || typeof rawValue === 'number' || typeof rawValue === 'boolean') {
+      value = rawValue
+    } else if (typeof rawValue === 'object' && rawValue !== null && !Array.isArray(rawValue)) {
+      const holder = rawValue as Record<string, unknown>
+      rejectUnknownKeys(holder, ['configuredBy'], issues, `${conditionLabel}: "${operator}"`)
+      const configuredBy = stringField(holder, 'configuredBy', issues, `${conditionLabel}: "${operator}"`)
+      if (!configuredBy) {
+        issues.push(`${conditionLabel}: "${operator}" needs a scalar or { configuredBy: <entity-id> }`)
+        continue
+      }
+      value = { configuredBy }
+    } else {
+      issues.push(`${conditionLabel}: "${operator}" needs a scalar or { configuredBy: <entity-id> }`)
+      continue
+    }
+    conditions.push({ entity, fact, operator, value })
+  }
+  return conditions
+}
+
+/**
+ * A Rule's `permits`: absent, `[]`, or grants. Shape only — whether an actor
+ * acts, a path resolves, or a fact exists are model-wide questions for `lint`.
+ */
+function businessRulePermitsField(
+  data: Record<string, unknown>,
+  issues: string[],
+  label: string
+): BusinessRuleGrant[] | undefined {
+  const value = data.permits
+  if (value === undefined || value === null) return undefined
+  if (!Array.isArray(value)) {
+    issues.push(`${label}: "permits" must be a list of grants, or [] to forbid the operation to everyone`)
+    return undefined
+  }
+  const grants: BusinessRuleGrant[] = []
+  for (const [index, raw] of value.entries()) {
+    const grantLabel = `${label}: grant ${index + 1}`
+    if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
+      issues.push(`${grantLabel} must be a mapping`)
+      continue
+    }
+    const item = raw as Record<string, unknown>
+    rejectUnknownKeys(item, ['actors', 'related', 'self', 'when', 'unattended', 'configuredBy'], issues, grantLabel)
+    const grant: BusinessRuleGrant = {
+      actors: uniqueStringListField(item, 'actors', issues, grantLabel),
+      related: relatedPathField(item.related, issues, grantLabel),
+      self: literalTrue(item, 'self', issues, grantLabel),
+      when: grantConditionsField(item.when, issues, grantLabel),
+      unattended: literalTrue(item, 'unattended', issues, grantLabel),
+      configuredBy: stringField(item, 'configuredBy', issues, grantLabel)
+    }
+    /* "Anyone" already has an encoding — list every Entity that acts — and a
+       grant with no who is indistinguishable from a forgotten one. */
+    if (!grant.actors.length && !grant.related.length && !grant.self && !grant.unattended && !grant.configuredBy) {
+      issues.push(`${grantLabel}: names nobody; a grant needs at least one of actors, related, self, unattended, configuredBy`)
+    }
+    grants.push(grant)
+  }
+  return grants
+}
+
+const FACT_PATTERN = /^\*\*(.+?)\*\*\s+—\s+(\S.*)$/
+
+/**
+ * `## Information kept`, one named fact per bullet.
+ *
+ * The name is what a Rule cites, so it is parsed rather than read out of
+ * English, and the separator is one thing — an em dash — so that two authors
+ * cannot spell one fact two ways.
+ */
+function entityFacts(body: string | undefined, issues: string[], file: string): EntityFact[] {
+  const facts: EntityFact[] = []
+  if (body === undefined) return facts
+  const seen = new Set<string>()
+  for (const line of bulletList(body)) {
+    const match = FACT_PATTERN.exec(line)
+    if (!match) {
+      issues.push(`${file}: fact "${line}" must read "**Name** — prose"`)
+      continue
+    }
+    const name = match[1]!.trim()
+    if (seen.has(name)) {
+      issues.push(`${file}: duplicate fact "${name}"`)
+      continue
+    }
+    seen.add(name)
+    facts.push({ name, description: match[2]!.trim() })
+  }
+  return facts
+}
+
+
+/** Load the strict schema 8 .businesslens/ folder, collecting parse issues. */
 export function loadModel(cwd: string): PddModel {
   const root = join(cwd, FOLDER)
   const issues: string[] = []
@@ -544,7 +1065,7 @@ export function loadModel(cwd: string): PddModel {
     }
   }
 
-  let config = { schema: 6, sddPaths: [] as string[] }
+  let config = { schema: FOLDER_SCHEMA, sddPaths: [] as string[] }
   const configFile = join(root, 'config.yaml')
   if (existsSync(configFile)) {
     try {
@@ -568,8 +1089,8 @@ export function loadModel(cwd: string): PddModel {
   } else if (existsSync(root)) {
     issues.push('config.yaml is missing')
   }
-  if (config.schema !== 6) {
-    issues.push(`config.yaml: schema ${config.schema} is not supported (expected 6)`)
+  if (config.schema !== FOLDER_SCHEMA) {
+    issues.push(`config.yaml: schema ${config.schema} is not supported (expected ${FOLDER_SCHEMA})`)
   }
 
   let scenarioKinds: ScenarioKind[] = []
@@ -608,7 +1129,7 @@ export function loadModel(cwd: string): PddModel {
   if (hasCompactProduct && hasProductDirectory) {
     issues.push(
       hasExpandedProduct
-        ? 'product: both product.md and product/product.md exist; keep exactly one entity shape'
+        ? 'product: both product.md and product/product.md exist; keep exactly one resource shape'
         : 'product.md cannot also have product/; move it to product/product.md before adding logo.svg'
     )
   }
@@ -703,16 +1224,11 @@ export function loadModel(cwd: string): PddModel {
     issues.push('coverage.md is missing')
   }
 
-  const actors: ActorEntity[] = listEntities(join(root, 'actors'), 'actor', findings, 'actors')
-    .map((location) => {
-      const { id, file } = location
-      const { data, doc, references, directory, assets, assetMeta } = readEntity(location, ['kind', 'relationship'], issues)
-      return {
-        id, file, doc, references, directory, assets, assetMeta,
-        kind: stringField(data, 'kind', issues, file) || '',
-        relationship: stringField(data, 'relationship', issues, file) || ''
-      }
-    })
+  /* There is no `actors/`. A folder that still has one is reported as the
+     misplaced collection it is, with the move named. */
+  if (existsSync(join(root, 'actors'))) {
+    issues.push('actors/: there is no Actor resource type; move each file to entities/ and say how it acts with "kind" and "acts"')
+  }
 
   /*
     The Interface → Experience → Screen hierarchy is walked, not listed. An
@@ -720,18 +1236,19 @@ export function loadModel(cwd: string): PddModel {
     relation and the id — one authority instead of two that can disagree, and
     reparenting becomes a `git mv` that reads correctly in a pull request.
   */
-  const interfaces: InterfaceEntity[] = []
-  const experiences: ExperienceEntity[] = []
-  const screens: ScreenEntity[] = []
+  const interfaces: InterfaceResource[] = []
+  const experiences: ExperienceResource[] = []
+  const screens: ScreenResource[] = []
 
   const readScreens = (parent: string, containerId: string, label: string) => {
-    for (const location of listEntities(join(parent, 'screens'), 'screen', findings, `${label}/screens`)) {
-      const { data, doc, references, directory, assets, assetMeta } = readEntity(
+    for (const location of listResources(join(parent, 'screens'), 'screen', findings, `${label}/screens`)) {
+      const { data, doc, references, directory, assets, assetMeta } = readResource(
         location,
-        ['capabilities', 'entryPoints'],
+        ['capabilities', 'entities', 'entryPoints'],
         issues
       )
       screens.push({
+        entities: uniqueStringListField(data, 'entities', issues, location.file),
         id: qualify(containerId, location.id),
         file: location.file,
         doc,
@@ -744,20 +1261,20 @@ export function loadModel(cwd: string): PddModel {
         entryPoints: entryPointsField(data, issues, location.file),
         information: bulletList(section(doc, 'Information presented') || ''),
         actions: bulletList(section(doc, 'Available actions') || ''),
-        states: screenStates(section(doc, 'Product states') || '', issues, location.file),
+        states: screenStates(section(doc, 'View states') || '', issues, location.file),
         capabilityBoundary: section(doc, 'Capability boundary') || ''
       })
     }
   }
 
-  for (const productInterface of listEntities(
+  for (const productInterface of listResources(
     join(root, 'interfaces'),
     'interface',
     findings,
     'interfaces',
     ['experiences', 'screens']
   )) {
-    const { data, doc, references, directory, assets, assetMeta } = readEntity(
+    const { data, doc, references, directory, assets, assetMeta } = readResource(
       productInterface,
       ['type', 'actors', 'entryPoints', 'screens'],
       issues
@@ -777,25 +1294,17 @@ export function loadModel(cwd: string): PddModel {
       screens: uniqueStringListField(data, 'screens', issues, productInterface.file)
     })
 
-    const experienceLocations = listEntities(
+    const experienceLocations = listResources(
       join(productInterface.directory, 'experiences'),
       'experience',
       findings,
       `interfaces/${productInterface.id}/experiences`,
       ['screens']
     )
-    const hasDirectScreens = existsSync(join(productInterface.directory, 'screens'))
-    if (experienceLocations.length && hasDirectScreens) {
-      // An Interface has one structural child shape, so a Screen always has one
-      // unambiguous Interface or Experience container.
-      issues.push(
-        `interfaces/${productInterface.id}/: an Interface holds either screens/ or experiences/, never both`
-      )
-    }
 
     for (const location of experienceLocations) {
       const experienceId = qualify(productInterface.id, location.id)
-      const parsed = readEntity(location, ['actors', 'access', 'entryPoints', 'screens'], issues)
+      const parsed = readResource(location, ['actors', 'access', 'entryPoints', 'screens'], issues)
       experiences.push({
         id: experienceId,
         file: location.file,
@@ -814,15 +1323,18 @@ export function loadModel(cwd: string): PddModel {
       readScreens(location.directory, experienceId, `interfaces/${productInterface.id}/experiences/${location.id}`)
     }
 
-    if (!experienceLocations.length) {
+    // Screens beside experiences/ are shared across every Experience of this
+    // Interface. A view common to several Experiences would otherwise have to be
+    // duplicated into each of them.
+    if (existsSync(join(productInterface.directory, 'screens'))) {
       readScreens(productInterface.directory, productInterface.id, `interfaces/${productInterface.id}`)
     }
   }
 
-  const domains: DomainEntity[] = listEntities(join(root, 'domains'), 'domain', findings, 'domains')
+  const domains: DomainResource[] = listResources(join(root, 'domains'), 'domain', findings, 'domains')
     .map((location) => {
       const { id, file } = location
-      const { data, doc, references, directory, assets, assetMeta } = readEntity(location, ['colorSlot'], issues)
+      const { data, doc, references, directory, assets, assetMeta } = readResource(location, ['colorSlot'], issues)
       return {
         id, file, doc, references, directory, assets, assetMeta,
         colorSlot: typeof data.colorSlot === 'number' ? data.colorSlot : undefined,
@@ -830,16 +1342,106 @@ export function loadModel(cwd: string): PddModel {
       }
     })
 
-  const capabilities: CapabilityEntity[] = []
-  const capabilityScenarios: CapabilityScenarioEntity[] = []
-  for (const location of listEntities(
+  const entities: EntityResource[] = listResources(join(root, 'entities'), 'entity', findings, 'entities')
+    .map((location) => {
+      const { id, file } = location
+      const { data, doc, references, directory, assets, assetMeta } =
+        readResource(location, ['domain', 'kind', 'acts', 'relations', 'transitions'], issues)
+      /* The lifecycle is composed from Steps. A list that restated it was the
+         second authority the format removed, and the message names the first. */
+      if (data.transitions !== undefined) {
+        issues.push(`${file}: "transitions" is gone; a Step's "entities" entry says which state it moves the thing from and to`)
+      }
+      const informationKept = entityFacts(section(doc, 'Information kept'), issues, file)
+      const states = screenStates(section(doc, 'States') || '', issues, file, 'States', 'entity state')
+      const hasStates = section(doc, 'States') !== undefined
+
+      const kind = stringField(data, 'kind', issues, file)
+      const acts = stringField(data, 'acts', issues, file)
+      if (acts !== undefined && !(ENTITY_ACTS as readonly string[]).includes(acts)) {
+        issues.push(`${file}: acts "${acts}" must be external|internal`)
+      }
+      if (kind !== undefined && !(ENTITY_KINDS as readonly string[]).includes(kind)) {
+        issues.push(`${file}: kind "${kind}" must be person|system`)
+      }
+      /* An Actor was always a person or a system; an Entity that acts without
+         saying which would be a regression from the Actor it replaces. A thing
+         that does not act says nothing, because "it's a thing" is the default. */
+      if (acts !== undefined && kind === undefined) {
+        issues.push(`${file}: an Entity that acts needs "kind": person|system`)
+      }
+      if (acts === undefined && kind !== undefined) {
+        issues.push(`${file}: "kind" is only valid together with "acts"`)
+      }
+
+      // Identity, not storage: a thing may be worth naming for what the Product
+      // keeps about it, for how it changes, or because it acts — but not for none.
+      if (!informationKept.length && !hasStates && acts === undefined) {
+        issues.push(`${file}: an Entity needs "## Information kept", "## States", or "acts"`)
+      }
+
+      const relations: EntityRelation[] = []
+      const rawRelations = data.relations
+      if (rawRelations !== undefined && rawRelations !== null) {
+        if (!Array.isArray(rawRelations)) {
+          issues.push(`${file}: "relations" must be a list`)
+        } else {
+          for (const [index, raw] of rawRelations.entries()) {
+            const label = `${file}: relation ${index + 1}`
+            if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
+              issues.push(`${label} must be a mapping`)
+              continue
+            }
+            const item = raw as Record<string, unknown>
+            rejectUnknownKeys(item, ['entity', 'verb', 'cardinality'], issues, label)
+            const entity = stringField(item, 'entity', issues, label) || ''
+            const verb = stringField(item, 'verb', issues, label) || ''
+            const cardinality = stringField(item, 'cardinality', issues, label) || ''
+            if (!entity) issues.push(`${label}: needs an "entity"`)
+            if (!verb) issues.push(`${label}: needs a "verb"`)
+            if (cardinality === 'many-to-one') {
+              // One 1:N, one encoding: the side that has one of the other declares it.
+              issues.push(`${label}: "cardinality" is many-to-one; declare this relation on "${entity}", where it reads one-to-many`)
+              continue
+            }
+            if (!ENTITY_CARDINALITIES.has(cardinality)) {
+              issues.push(`${label}: "cardinality" must be one-to-one, one-to-many, or many-to-many`)
+              continue
+            }
+            relations.push({ entity, verb, cardinality: cardinality as EntityCardinality })
+          }
+        }
+      }
+
+      /* Whether a state is reachable is a model-wide question — a Step may
+         create straight into one — so `lint` asks it once the whole model is
+         loaded rather than this parser asking it one Entity file at a time. */
+      return {
+        id, file, doc, references, directory, assets, assetMeta,
+        domain: stringField(data, 'domain', issues, file),
+        informationKept,
+        kind,
+        acts,
+        relations,
+        states
+      }
+    })
+
+  const capabilities: CapabilityResource[] = []
+  const capabilityScenarios: CapabilityScenarioResource[] = []
+  for (const location of listResources(
     join(root, 'capabilities'),
     'capability',
     findings,
     'capabilities',
     ['scenarios']
   )) {
-    const { data, doc, references, directory, assets, assetMeta } = readEntity(location, ['domain', 'availability'], issues)
+    const { data, doc, references, directory, assets, assetMeta } = readResource(location, ['domain', 'entities', 'availability'], issues)
+    /* What a Capability changes is what its Steps say it changes. A list here
+       restated that from the other side, and the message names the replacement. */
+    if (data.entities !== undefined) {
+      issues.push(`${location.file}: "entities" is gone from a Capability; each Step's "entities" says what it changes`)
+    }
     capabilities.push({
       id: location.id,
       file: location.file,
@@ -851,13 +1453,13 @@ export function loadModel(cwd: string): PddModel {
       domain: stringField(data, 'domain', issues, location.file),
       availability: availabilityField(data, issues, location.file)
     })
-    for (const scenario of listEntities(
+    for (const scenario of listResources(
       join(location.directory, 'scenarios'),
       'capability-scenario',
       findings,
       `capabilities/${location.id}/scenarios`
     )) {
-      const parsed = readEntity(scenario, ['kind', 'routes', 'steps'], issues)
+      const parsed = readResource(scenario, ['kind', 'routes', 'steps'], issues)
       capabilityScenarios.push({
         id: scenario.id,
         file: scenario.file,
@@ -875,16 +1477,16 @@ export function loadModel(cwd: string): PddModel {
     }
   }
 
-  const journeys: JourneyEntity[] = []
-  const journeyScenarios: JourneyScenarioEntity[] = []
-  for (const location of listEntities(
+  const journeys: JourneyResource[] = []
+  const journeyScenarios: JourneyScenarioResource[] = []
+  for (const location of listResources(
     join(root, 'journeys'),
     'journey',
     findings,
     'journeys',
     ['scenarios']
   )) {
-    const { data, doc, references, directory, assets, assetMeta } = readEntity(location, ['actors'], issues)
+    const { data, doc, references, directory, assets, assetMeta } = readResource(location, ['actors'], issues)
     journeys.push({
       id: location.id,
       file: location.file,
@@ -897,13 +1499,13 @@ export function loadModel(cwd: string): PddModel {
       goal: section(doc, 'Goal') || '',
       successCriterion: section(doc, 'Success criterion') || ''
     })
-    for (const scenario of listEntities(
+    for (const scenario of listResources(
       join(location.directory, 'scenarios'),
       'journey-scenario',
       findings,
       `journeys/${location.id}/scenarios`
     )) {
-      const parsed = readEntity(scenario, ['kind', 'result', 'routes', 'steps'], issues)
+      const parsed = readResource(scenario, ['kind', 'result', 'routes', 'steps'], issues)
       journeyScenarios.push({
         id: scenario.id,
         file: scenario.file,
@@ -922,17 +1524,18 @@ export function loadModel(cwd: string): PddModel {
     }
   }
 
-  const businessRules: BusinessRuleEntity[] = listEntities(
+  const businessRules: BusinessRuleResource[] = listResources(
     join(root, 'business-rules'),
     'business-rule',
     findings,
     'business-rules'
   ).map((location) => {
     const { id, file } = location
-    const { data, doc, references, directory, assets, assetMeta } = readEntity(location, ['appliesTo'], issues)
+    const { data, doc, references, directory, assets, assetMeta } = readResource(location, ['appliesTo', 'permits'], issues)
     return {
       id, file, doc, references, directory, assets, assetMeta,
       appliesTo: businessRuleTargetsField(data, issues, file),
+      permits: businessRulePermitsField(data, issues, file),
       rationale: section(doc, 'Rationale') || ''
     }
   })
@@ -943,11 +1546,11 @@ export function loadModel(cwd: string): PddModel {
     product,
     scenarioKinds,
     coverage,
-    actors,
     interfaces,
     experiences,
     screens,
     domains,
+    entities,
     capabilities,
     capabilityScenarios,
     businessRules,

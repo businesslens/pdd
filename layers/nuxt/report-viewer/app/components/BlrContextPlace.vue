@@ -2,12 +2,12 @@
 /**
  * One Context place, wherever it is read.
  *
- * Scenario route cells, entity Context sections, and Journey starts use this
- * same renderer so Interface type, entity-kind markers, truncation, and
+ * Scenario route cells, resource Context sections, and Journey starts use this
+ * same renderer so Interface type, resource-kind markers, truncation, and
  * navigation never drift.
  */
-import type { AnyEntityView, ContextView, ReportWorkspace, ResolvedContextView } from '../utils/reportWorkspace'
-import { resolveEntity } from '../utils/reportWorkspace'
+import type { AnyResourceView, ContextView, ReportWorkspace, ResolvedContextView } from '../utils/reportWorkspace'
+import { resolveResource } from '../utils/reportWorkspace'
 
 const props = defineProps<{
   workspace: ReportWorkspace
@@ -15,16 +15,16 @@ const props = defineProps<{
   compact?: boolean
 }>()
 
-const emit = defineEmits<{ select: [entity: AnyEntityView] }>()
+const emit = defineEmits<{ select: [resource: AnyResourceView] }>()
 
 const productInterface = computed(() => {
-  const entity = resolveEntity(props.workspace, 'interface', props.context.interfaceId)
-  return entity?.kind === 'interface' ? entity : undefined
+  const resource = resolveResource(props.workspace, 'interface', props.context.interfaceId)
+  return resource?.kind === 'interface' ? resource : undefined
 })
 
 function select(kind: 'interface' | 'experience' | 'screen', id: string) {
-  const entity = resolveEntity(props.workspace, kind, id)
-  if (entity) emit('select', entity)
+  const resource = resolveResource(props.workspace, kind, id)
+  if (resource) emit('select', resource)
 }
 </script>
 

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * The entity box every Product Report graph is built from.
+ * The resource box every Product Report graph is built from.
  *
  * One box, nine kinds: colour, icon and the kind label do the identifying, the
  * geometry does the state — focused boxes are larger with a standing glow,
@@ -53,9 +53,9 @@ const colorVar = computed(() => {
     >
       <span class="blr-flow-node__icon">
         <BlrActorType
-          v-if="data.kind === 'actor' && data.actorKind && data.actorRelationship"
+          v-if="data.kind === 'entity' && data.actorKind && data.acts"
           :actor-kind="data.actorKind"
-          :relationship="data.actorRelationship"
+          :acts="data.acts"
         />
         <BlrInterfaceType
           v-else-if="data.kind === 'interface' && data.interfaceType"
@@ -130,8 +130,8 @@ const colorVar = computed(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: calc(var(--blr-entity-mark-regular) + 0.5rem);
-  height: calc(var(--blr-entity-mark-regular) + 0.5rem);
+  width: calc(var(--blr-resource-mark-regular) + 0.5rem);
+  height: calc(var(--blr-resource-mark-regular) + 0.5rem);
   flex-shrink: 0;
   border-radius: 8px;
   background: color-mix(in srgb, var(--node-color) 18%, transparent);
@@ -139,14 +139,14 @@ const colorVar = computed(() => {
 }
 
 .blr-flow-node__kind {
-  width: var(--blr-entity-mark-regular);
-  height: var(--blr-entity-mark-regular);
-  flex: 0 0 var(--blr-entity-mark-regular);
+  width: var(--blr-resource-mark-regular);
+  height: var(--blr-resource-mark-regular);
+  flex: 0 0 var(--blr-resource-mark-regular);
 }
 
 .blr-flow-node.is-focus .blr-flow-node__icon {
-  width: calc(var(--blr-entity-mark-regular) + 0.75rem);
-  height: calc(var(--blr-entity-mark-regular) + 0.75rem);
+  width: calc(var(--blr-resource-mark-regular) + 0.75rem);
+  height: calc(var(--blr-resource-mark-regular) + 0.75rem);
 }
 
 .blr-flow-node__text {

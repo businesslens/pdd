@@ -37,9 +37,9 @@ Read before work:
      only to choose the inspection worklist;
    - `current` or `full` → inspect the present modeled product independent of
      Git history;
-   - named Actor, Interface, Experience, Screen, Domain, Capability, Capability
-     Scenario, Journey, Journey Scenario, availability Context, or path → inspect
-     it and behaviorally necessary dependencies;
+   - named Entity, Interface, Experience, Screen, Domain, Capability, Capability
+     Scenario, Journey, Journey Scenario, Business Rule, availability Context,
+     or path → inspect it and behaviorally necessary dependencies;
    - no explicit scope → prefer a reliable changed-surface worklist; when no
      useful diff exists, inspect the current modeled product.
 
@@ -65,8 +65,27 @@ the diff.
    Capability Scenario route, each Capability-bearing Journey Step and its
    Step Context places, and the observable
    Journey Scenario outcome.
-   For each Scenario, confirm that every Actor Step is supported at its Context
-   places and every derived availability place supports a Scenario Actor.
+   For each Scenario, confirm that every Step naming an actor is supported at
+   its Context places and every derived availability place supports a Scenario
+   Actor.
+
+   Verify the nouns as well as the behavior. For each Entity, confirm the
+   Product really does keep each named fact `## Information kept` claims, that
+   each named state is a state the Product distinguishes rather than an
+   implementation flag, and that each declared relation and its cardinality
+   hold. Confirm every Step's `entities`: the code performs each declared effect
+   on that thing, moves it between exactly the states the Step names, and
+   touches nothing the Step leaves out; confirm each Screen's `entities` the
+   same way. An overstatement either way is a `code-right` finding like any
+   other.
+
+   Verify who may. For each Business Rule with `permits`, confirm the code lets
+   exactly the granted actors perform the operation, under the stated
+   conditions, and refuses everyone else; an operation the Rule closes with
+   `permits: []` must be refused. A grant the code does not enforce is a
+   `model-right` gap reported as **not established** — a green structural check
+   never stands in for it. Confirm a fact-scoped Rule — a derivation, a field's
+   visibility — against the code that computes or shows the fact.
    Compare the one authored Journey Steps claim directly with repository
    behavior. Shared code does not
    establish Interface parity. Distinguish a missing Interface commitment from
@@ -97,25 +116,39 @@ the diff.
    - Ask for authorization to change implementation when not already explicit.
    - Delegate to the injected external builder, then return directly to step 4.
 
+   Three of the branches below re-author product meaning, and authoring faces
+   calls no inspection settles — one Capability or several, one Entity or a
+   family, what a thing is called. Put those to the author **before drafting**,
+   in rounds, and wait: Boundary, then Granularity quoting both counts, then
+   Coverage, then Naming. Only what inspection cannot answer; finding facts
+   stays your job. With no author reachable, split rather than collapse, omit
+   rather than assert, and carry each unanswered question into the delta as an
+   open question rather than a settled decision. This does not touch the
+   authority question in step 6, which is already asked the right way.
+
    **Code-right**
 
-   - Run the internal intent-resolution protocol: draft the smallest exact model
-     delta from the finding; do not brainstorm unrelated directions.
-   - Present the entity-by-entity delta and get explicit approval.
+   - Run the internal intent-resolution protocol: settle the undetermined calls
+     in rounds, then draft the smallest exact model delta from the finding; do
+     not brainstorm unrelated directions.
+   - Present the resource-by-resource delta and get explicit approval.
    - Write only the approved model meaning, then return directly to step 4.
 
    **Neither-right**
 
-   - Run intent resolution first. Recommend a product outcome, negotiate only
-     material decisions, present the exact model delta, and get approval.
+   - Run intent resolution first, rounds included. Recommend a product outcome,
+     negotiate only material decisions, present the exact model delta, and get
+     approval.
    - Write the approved model, prepare the resulting build packet, obtain code
      authorization, delegate to the injected builder, then return to step 4.
 
    **Unmapped**
 
-   - Run the internal scoped-map protocol. Inspect established behavior, draft
-     only the missing model area and necessary relationships, state coverage and
-     uncertainty, and get approval before writing.
+   - Run the internal scoped-map protocol. Inspect established behavior, settle
+     the undetermined calls in rounds, then draft only the missing model area
+     and necessary relationships, state coverage and uncertainty, and get
+     approval before writing. This branch is mapping, so it faces every call
+     mapping faces.
    - Write the approved delta, then return to step 4.
 
    **Unverifiable**

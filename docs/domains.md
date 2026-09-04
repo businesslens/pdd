@@ -1,6 +1,6 @@
 ---
 title: Domains
-description: Optional regions of the Product's subject matter that classify Capabilities, Screens and Journeys without owning any of them.
+description: Optional regions of the Product's subject matter that classify Capabilities, Entities, Screens and Journeys without owning any of them.
 section: open-source
 group: Product Model
 order: 13
@@ -13,13 +13,22 @@ catalog, billing. It has its own vocabulary and its own invariants, and it is
 named in Product language rather than after code directories, services, teams,
 or deployment boundaries.
 
-A Domain is an **axis, not a level**. It classifies; it does not contain. A
-Capability names the one Domain it is about, and every other Domain relation is
-derived from that: a Screen is about the Domains of the Capabilities it exposes,
-a Journey about the Domains its Scenarios traverse. Nothing has to restate what
-can be computed, and nothing can contradict it.
+A Domain is an **axis, not a level**. It classifies; it does not contain. Two
+resource types name the one Domain they are about — a
+[Capability](./capabilities.md) and an [Entity](./entities.md) — and every other
+Domain relation is derived from those: a Screen is about the Domains of the
+Capabilities it exposes, a Journey about the Domains its Scenarios traverse.
+Nothing has to restate what can be computed, and nothing can contradict it.
+
+Only Capabilities count toward the two-Capability threshold below. An Entity's
+`domain` classifies the thing; it does not make a region.
 
 ## When you create one
+
+A Domain must state a `## Boundary` naming something it does **not** own, and
+must hold at least two Capabilities. A Boundary that only asserts inclusion is a
+label rather than a region, and a Domain holding one Capability is a folder.
+`lint` checks both.
 
 Create a Domain when a region of the Product has a boundary you can state — what
 it covers and what it explicitly does not. Zero Domains is valid, and a small
@@ -70,9 +79,9 @@ Every Domain ID named by a Capability must have a corresponding file.
 ## What a Domain answers
 
 Because the relation is derived in both directions, one Domain answers *"show me
-everything about Collections"* across the whole model — the Capabilities that
-are about it, their Scenarios, the Screens that expose them, the Journeys that
-traverse them, and the Business Rules that constrain them. That reach is the
+everything about ordering"* across the whole model — the Capabilities and
+Entities that are about it, their Scenarios, the Screens that expose them, the
+Journeys that traverse them, and the Business Rules that constrain them. That reach is the
 reason a Domain earns a place in the model; organizing a long Capability list
 is not.
 
@@ -95,4 +104,5 @@ The model describes the Product, not the organization building it.
 | From | Key | Cardinality |
 | --- | --- | --- |
 | [Capabilities](./capabilities.md) | `domain:` | Zero or one |
+| [Entities](./entities.md) | `domain:` | Zero or one |
 | [Screens](./screens.md) · [Journeys](./journeys.md) | derived through Capabilities | Zero or more |

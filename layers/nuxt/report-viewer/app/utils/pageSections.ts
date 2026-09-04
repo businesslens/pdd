@@ -2,15 +2,17 @@
  * What a page is made of, now that the Overview absorbs most of it.
  *
  * The first audition put Detail, Connections and Also-on beside the Overview as
- * peers. They are not peers: they *are* what an overview of an entity is — what
+ * peers. They are not peers: they *are* what an overview of a resource is — what
  * it says, what it touches, and where else it exists. Splitting them made four
  * thin tabs where one full one was wanted.
  *
- * Scenarios are the only material with a shape of their own. References remain
- * part of the Overview, and Neighbourhood is an action into the named Topology
- * surface rather than a third page reading.
+ * Scenarios have a shape of their own, and so does a lifecycle: an Entity
+ * with States reads its composed machine on a peer tab, the way a Capability
+ * reads its Scenarios. References remain part of the Overview, and
+ * Neighbourhood is an action into the named Topology surface rather than a
+ * third page reading.
  */
-import type { AnyEntityView, ReportWorkspace } from './reportWorkspace'
+import type { AnyResourceView, ReportWorkspace } from './reportWorkspace'
 import { counterpartsOf, isScenarioKind } from './reportWorkspace'
 
 export type PageBlockId =
@@ -23,7 +25,7 @@ export type PageBlockId =
   | 'supporting'
   | 'references'
 
-export type PageTabId = 'overview' | 'scenarios'
+export type PageTabId = 'overview' | 'scenarios' | 'lifecycle'
 
 export interface PageTab {
   id: PageTabId
@@ -33,37 +35,43 @@ export interface PageTab {
   blocks: PageBlockId[]
 }
 
-function hasAuthoredBody(entity: AnyEntityView): boolean {
-  if (isScenarioKind(entity.kind)) return true
-  if (entity.kind === 'screen' || entity.kind === 'rule' || entity.kind === 'journey') return true
-  if (entity.intent) return true
-  if ('capabilityBoundary' in entity && (entity as { capabilityBoundary: string }).capabilityBoundary) return true
-  return entity.kind === 'capability'
+/*
+ * Whether BlrResourceBody would render anything. Exported because the component
+ * asks the same question about itself, and keeping two copies of this list is
+ * what let an Entity reach its page with no body at all: the kind was added to
+ * one enumeration and not the other, so the block was never composed.
+ */
+export function hasAuthoredBody(resource: AnyResourceView): boolean {
+  if (isScenarioKind(resource.kind)) return true
+  if (resource.kind === 'screen' || resource.kind === 'entity' || resource.kind === 'rule' || resource.kind === 'journey') return true
+  if (resource.intent) return true
+  if ('capabilityBoundary' in resource && (resource as { capabilityBoundary: string }).capabilityBoundary) return true
+  return resource.kind === 'capability'
 }
 
-export function childrenOf(workspace: ReportWorkspace, entity: AnyEntityView): AnyEntityView[] {
-  if (entity.kind === 'capability') return workspace.scenariosByCapability.get(entity.id) ?? []
-  if (entity.kind === 'journey') return workspace.scenariosByJourney.get(entity.id) ?? []
+export function childrenOf(workspace: ReportWorkspace, resource: AnyResourceView): AnyResourceView[] {
+  if (resource.kind === 'capability') return workspace.scenariosByCapability.get(resource.id) ?? []
+  if (resource.kind === 'journey') return workspace.scenariosByJourney.get(resource.id) ?? []
   return []
 }
 
-/** The final page has Overview and, only for a behavioral parent, Scenarios. */
-export function tabsFor(workspace: ReportWorkspace, entity: AnyEntityView): PageTab[] {
+/** The final page has Overview and one peer tab: Scenarios for a behavioral parent, Lifecycle for a thing with States. */
+export function tabsFor(workspace: ReportWorkspace, resource: AnyResourceView): PageTab[] {
   const overviewBlocks: PageBlockId[] = ['lead', 'facts']
 
   /* Only authored Capability Contexts belong in an Overview. A Journey keeps
      only its derived starting places; raw entry-point routes are not a useful
-     human reading and the place-bearing entity kinds already identify place. */
-  const hasOverviewContexts = entity.kind === 'capability' && entity.contexts.length > 0
-  const hasEntryPoints = entity.kind === 'journey' && entity.entryPoints.length > 0
+     human reading and the place-bearing resource kinds already identify place. */
+  const hasOverviewContexts = resource.kind === 'capability' && resource.contexts.length > 0
+  const hasEntryPoints = resource.kind === 'journey' && resource.entryPoints.length > 0
   if (hasOverviewContexts || hasEntryPoints) overviewBlocks.push('contexts')
 
-  if (hasAuthoredBody(entity)) overviewBlocks.push('detail')
+  if (hasAuthoredBody(resource)) overviewBlocks.push('detail')
 
-  if (counterpartsOf(workspace, entity).length) overviewBlocks.push('counterparts')
+  if (counterpartsOf(workspace, resource).length) overviewBlocks.push('counterparts')
   overviewBlocks.push('connections')
-  if (entity.supportingContent) overviewBlocks.push('supporting')
-  if (entity.references.length) overviewBlocks.push('references')
+  if (resource.supportingContent) overviewBlocks.push('supporting')
+  if (resource.references.length) overviewBlocks.push('references')
 
   const tabs: PageTab[] = [{
     id: 'overview',
@@ -71,15 +79,24 @@ export function tabsFor(workspace: ReportWorkspace, entity: AnyEntityView): Page
     blocks: overviewBlocks
   }]
 
-  const children = childrenOf(workspace, entity)
-  if (entity.kind === 'capability' || entity.kind === 'journey') {
+  const children = childrenOf(workspace, resource)
+  if (resource.kind === 'capability' || resource.kind === 'journey') {
     tabs.push({
       id: 'scenarios',
       label: 'Scenarios',
       count: children.length,
-      hint: entity.kind === 'capability'
+      hint: resource.kind === 'capability'
         ? 'Each is one observable acceptance case for this Capability.'
         : 'Each is one path through this promise.',
+      blocks: []
+    })
+  }
+  if (resource.kind === 'entity' && resource.states.length) {
+    tabs.push({
+      id: 'lifecycle',
+      label: 'Lifecycle',
+      count: resource.states.length,
+      hint: 'What it can be, and every Step in the model that moves it.',
       blocks: []
     })
   }
@@ -88,9 +105,9 @@ export function tabsFor(workspace: ReportWorkspace, entity: AnyEntityView): Page
 }
 
 /** The parent of a Scenario — the page a Scenario is read inside. */
-export function parentOf(workspace: ReportWorkspace, entity: AnyEntityView): AnyEntityView | null {
-  if (!isScenarioKind(entity.kind)) return null
-  const scenario = entity as { scenarioType: string, capabilityId: string, journeyId: string }
+export function parentOf(workspace: ReportWorkspace, resource: AnyResourceView): AnyResourceView | null {
+  if (!isScenarioKind(resource.kind)) return null
+  const scenario = resource as { scenarioType: string, capabilityId: string, journeyId: string }
   const key = scenario.scenarioType === 'capability'
     ? `capability:${scenario.capabilityId}`
     : `journey:${scenario.journeyId}`

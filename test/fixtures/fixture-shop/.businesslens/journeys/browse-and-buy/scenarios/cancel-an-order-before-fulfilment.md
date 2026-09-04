@@ -5,7 +5,9 @@ steps:
   - text: The shopper finds and selects an available product
     kind: actor
     actor: shopper
-    capability: catalog-browsing
+    capability: browse-catalog
+    entities:
+      - { entity: catalog-product, effect: reads }
     contexts:
       web-to-admin:
         place: customer-web::storefront::product-record
@@ -14,23 +16,41 @@ steps:
   - text: The shopper submits checkout and the order is placed
     kind: actor
     actor: shopper
-    capability: checkout
+    capability: place-order
+    entities:
+      - { entity: order, effect: creates, to: Pending }
+      - { entity: cart, effect: removes }
     contexts:
       web-to-admin:
         place: customer-web::storefront::product-record
       mobile-to-admin:
         place: customer-mobile::storefront::product-record
-  - text: Reconciliation shows the product cannot be fulfilled
-    kind: condition
-  - text: The store admin cancels the order and the payment is released
-    kind: actor
-    actor: store-admin
-    capability: order-management
+  - text: The payment settles and the order is confirmed
+    kind: product
+    actor: payment-gateway
+    capability: settle-payment
+    entities:
+      - { entity: order, effect: changes, from: Pending, to: Confirmed }
     contexts:
       web-to-admin:
-        place: admin-web::admin-console
+        place: payment-webhook
       mobile-to-admin:
-        place: admin-web::admin-console
+        place: payment-webhook
+  - text: Reconciliation shows the product cannot be fulfilled
+    kind: condition
+    entities: []
+  - text: The store admin cancels the order and requests a refund of the charge
+    kind: actor
+    actor: store-admin
+    capability: cancel-order
+    entities:
+      - { entity: order, effect: changes, from: Confirmed, to: Cancelled }
+      - { entity: refund, effect: creates, to: Requested }
+    contexts:
+      web-to-admin:
+        place: admin-web::order-detail
+      mobile-to-admin:
+        place: admin-web::order-detail
 routes:
   web-to-admin: Web To Admin
   mobile-to-admin: Mobile To Admin
@@ -45,5 +65,5 @@ unavailable.
 
 ## Outcome
 
-The Journey goal is not achieved: no confirmed order remains for the selected
-product, and the shopper is not charged.
+The Journey goal is not achieved: the order is cancelled and the shopper is
+repaid before anything ships.

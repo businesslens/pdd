@@ -1,6 +1,9 @@
 ---
+entities:
+  - collection
+  - item
 capabilities:
-  - public-collection-reading
+  - read-public-collection
 entryPoints:
   - reader-web: /collections/:collectionSlug
 ---
@@ -20,7 +23,7 @@ Presents one published collection to anyone holding its web address.
 - Read an item in the collection
 - Leave the collection
 
-## Product states
+## View states
 
 ### Published
 

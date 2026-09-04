@@ -13,6 +13,6 @@ a mobile device.
 
 ## Capability boundary
 
-Every item, reading-state change and saved item belongs to the signed-in Reader.
+Every item, track-reading-state change and saved item belongs to the signed-in Reader.
 This context never exposes another Reader's library, and it does not organize or
 publish collections — that stays on the web.

@@ -14,20 +14,29 @@ import { dirname, isAbsolute, join, resolve } from 'node:path'
 import { stringify } from 'yaml'
 import { writeModelReadme } from '../core/model-readme.js'
 import type {
-  ProductReportV10,
+  ProductReportV13,
   ReportContext,
-  ReportSupportingSection
+  ReportGrant,
+  ReportScenarioStep,
+  ReportSupportingSection,
 } from '../core/portable.js'
 import { lintModel } from './lint.js'
-import { loadModel } from '../core/model.js'
+import { FOLDER_SCHEMA, loadModel } from '../core/model.js'
 import { parseProductReport, projectPortableReport } from '../core/portable.js'
 import { UsageError } from '../core/usage-error.js'
 import { validateProductLogo } from '../logo.js'
 
 const MAX_REPORT_BYTES = 8 * 1024 * 1024
-const OPEN_COVERAGE_METHOD = 'Opened from a portable Product Report; source-repository navigation was intentionally removed.'
-const OPEN_COVERAGE_LIMITATION = 'Implementation alignment must be verified in this repository.'
-const OPEN_COVERAGE_RATIONALE = 'Product behavior, relationships, and model breadth were imported from a Product Report. Source-repository references were removed because they do not navigate this repository.'
+/* `method` is the one coverage field expansion rewrites: it states how the
+   model was derived, which is a claim about origin, and a Blueprint carries
+   none. Both sentences below are origin claims — where the model came from and
+   that nobody has yet checked it against this repository — so both live here
+   and nowhere else. The author's `unmapped`, `limitations`, and `rationale`
+   pass through untouched. */
+const OPEN_COVERAGE_METHOD = [
+  'Opened from a portable Product Report; source-repository navigation was intentionally removed.',
+  'Implementation alignment has not been verified in this repository.'
+]
 
 function readReportSource(source: string): unknown {
   if (/^https?:\/\//i.test(source)) {
@@ -42,13 +51,13 @@ function readReportSource(source: string): unknown {
   return JSON.parse(readFileSync(file, 'utf8'))
 }
 
-/** Entities with no frontmatter fields get no frontmatter block, not `{}`. */
+/** Resources with no frontmatter fields get no frontmatter block, not `{}`. */
 function frontmatter(data: Record<string, unknown>): string {
   if (!Object.keys(data).length) return ''
   return `---\n${stringify(data, { lineWidth: 0 }).trimEnd()}\n---\n\n`
 }
 
-function references(value: ProductReportV10['references']): Array<Record<string, string>> {
+function references(value: ProductReportV13['references']): Array<Record<string, string>> {
   return value.map(reference => ({
     kind: reference.kind,
     role: reference.role,
@@ -89,8 +98,8 @@ function screenPath(root: string, id: string): string {
   return join(root, 'interfaces', parts[0]!, 'screens', `${parts[1]!}.md`)
 }
 
-/** Compact until an entity needs a namespace for children or assets. */
-function entityPath(parent: string, id: string, type: string, expanded: boolean): string {
+/** Compact until a resource needs a namespace for children or assets. */
+function resourcePath(parent: string, id: string, type: string, expanded: boolean): string {
   return expanded ? join(parent, id, `${type}.md`) : join(parent, `${id}.md`)
 }
 
@@ -99,6 +108,44 @@ function compactRecord(input: Record<string, unknown>): Record<string, unknown> 
     if (value === undefined || value === null || value === '') return false
     return !Array.isArray(value) || value.length > 0
   }))
+}
+
+/**
+ * A Step's `entities` list as the folder writes it. Required on every Step,
+ * and `[]` is a claim, so it never goes through `compactRecord`. The default
+ * effect is omitted: writing it back would make a round trip differ from what
+ * an author would have written.
+ */
+function stepEntities(step: ReportScenarioStep): Array<Record<string, unknown>> {
+  return step.entities.map(entry => compactRecord({
+    entity: entry.entityId,
+    as: entry.as ?? undefined,
+    effect: entry.effect === 'changes' ? undefined : entry.effect,
+    from: entry.from ?? undefined,
+    to: entry.to ?? undefined
+  }))
+}
+
+function grantRecord(grant: ReportGrant): Record<string, unknown> {
+  return compactRecord({
+    actors: grant.actorIds,
+    related: grant.related.map(segment => ({ verb: segment.verb, entity: segment.entityId })),
+    self: grant.self ? true : undefined,
+    when: grant.when.map(condition => compactRecord({
+      entity: condition.entityId ?? undefined,
+      fact: condition.fact ?? undefined,
+      state: condition.state ?? undefined,
+      ...(condition.operator
+        ? {
+            [condition.operator]: typeof condition.value === 'object' && condition.value !== null
+              ? { configuredBy: condition.value.configuredByEntityId }
+              : condition.value ?? undefined
+          }
+        : {})
+    })),
+    unattended: grant.unattended ? true : undefined,
+    configuredBy: grant.configuredByEntityId ?? undefined
+  })
 }
 
 function body(
@@ -150,8 +197,8 @@ function prepareTarget(cwd: string, force: boolean): string {
   return root
 }
 
-function writeReport(root: string, report: ProductReportV10, hasLogo: boolean): void {
-  write(join(root, 'config.yaml'), stringify({ schema: 6, sdd: { paths: [] } }, { lineWidth: 0 }))
+function writeReport(root: string, report: ProductReportV13, hasLogo: boolean): void {
+  write(join(root, 'config.yaml'), stringify({ schema: FOLDER_SCHEMA, sdd: { paths: [] } }, { lineWidth: 0 }))
   write(join(root, '.gitignore'), 'build/\ncache/\n')
   write(
     join(root, 'taxonomies.yaml'),
@@ -174,37 +221,25 @@ function writeReport(root: string, report: ProductReportV10, hasLogo: boolean): 
     join(root, 'coverage.md'),
     frontmatter({
       status: report.coverage.status,
-      method: [OPEN_COVERAGE_METHOD],
+      method: OPEN_COVERAGE_METHOD,
       sourceAreas: [],
       // Unmapped product areas explain model breadth and survive the
       // source-free projection. Source paths live in sourceAreas, not here.
+      // The author's own account of what is unmapped, what the limitations are,
+      // and why — never rewritten. It describes the MODEL'S completeness rather
+      // than its origin, and it is exactly what a reader receiving a Blueprint
+      // needs. Only `method`, which is a claim about how the model was derived,
+      // is replaced: a Blueprint carries no claim about its own origin.
       unmapped: report.coverage.unmapped,
-      // Deduplicated so expansion is idempotent. A Blueprint's committed model is
-      // itself an expanded report, so re-expanding it must reproduce the same
-      // files byte for byte; an unconditional append accumulated one copy of this
-      // limitation per open/pull cycle.
-      limitations: report.coverage.limitations.includes(OPEN_COVERAGE_LIMITATION)
-        ? [...report.coverage.limitations]
-        : [...report.coverage.limitations, OPEN_COVERAGE_LIMITATION]
-    }) + body('Coverage', OPEN_COVERAGE_RATIONALE, '', [], [])
+      limitations: [...report.coverage.limitations]
+    }) + body('Coverage', report.coverage.rationale, '', [], [])
   )
 
-  for (const actor of report.model.actors) {
-    write(
-      entityPath(join(root, 'actors'), actor.id, 'actor', false),
-      frontmatter(compactRecord({
-        kind: actor.kind,
-        relationship: actor.relationship,
-        references: references(actor.references)
-      }))
-      + body(actor.name, actor.description, actor.intent, [], actor.supportingSections)
-    )
-  }
   for (const productInterface of report.model.interfaces) {
     const hasChildren = report.model.experiences.some(experience => idSegments(experience.id)[0] === productInterface.id)
       || report.model.screens.some(screen => idSegments(screen.id)[0] === productInterface.id)
     write(
-      entityPath(join(root, 'interfaces'), productInterface.id, 'interface', hasChildren),
+      resourcePath(join(root, 'interfaces'), productInterface.id, 'interface', hasChildren),
       frontmatter(compactRecord({
         type: productInterface.type,
         actors: productInterface.actorIds,
@@ -221,11 +256,41 @@ function writeReport(root: string, report: ProductReportV10, hasLogo: boolean): 
   }
   for (const domain of report.model.domains) {
     write(
-      entityPath(join(root, 'domains'), domain.id, 'domain', false),
+      resourcePath(join(root, 'domains'), domain.id, 'domain', false),
       frontmatter(compactRecord({
         colorSlot: domain.colorSlot,
         references: references(domain.references)
-      })) + body(domain.name, domain.description, domain.intent, [], domain.supportingSections)
+      })) + body(
+        domain.name,
+        domain.description,
+        domain.intent,
+        [{ heading: 'Boundary', content: domain.boundary }],
+        domain.supportingSections
+      )
+    )
+  }
+  for (const entity of report.model.entities) {
+    write(
+      resourcePath(join(root, 'entities'), entity.id, 'entity', false),
+      frontmatter(compactRecord({
+        kind: entity.kind ?? undefined,
+        acts: entity.acts ?? undefined,
+        domain: entity.domainId,
+        relations: entity.relations.length
+          ? entity.relations.map(relation => ({
+            entity: relation.entityId, verb: relation.verb, cardinality: relation.cardinality
+          }))
+          : undefined,
+        references: references(entity.references)
+      })) + body(entity.title, entity.description, entity.intent, [], [
+        ...(entity.informationKept.length
+          ? [{ heading: 'Information kept', content: entity.informationKept.map(fact => `- **${fact.name}** — ${fact.description}`).join('\n') }]
+          : []),
+        ...(entity.states.length
+          ? [{ heading: 'States', content: entity.states.map(state => `### ${state.name}\n\n${state.content}`).join('\n\n') }]
+          : []),
+        ...entity.supportingSections
+      ])
     )
   }
   for (const experience of report.model.experiences) {
@@ -235,7 +300,7 @@ function writeReport(root: string, report: ProductReportV10, hasLogo: boolean): 
       return parts.length === 3 && parts[0] === interfaceId && parts[1] === experienceId
     })
     write(
-      entityPath(
+      resourcePath(
         join(root, 'interfaces', interfaceId!, 'experiences'),
         experienceId!,
         'experience',
@@ -261,6 +326,7 @@ function writeReport(root: string, report: ProductReportV10, hasLogo: boolean): 
       screenPath(root, screen.id),
       frontmatter(compactRecord({
         capabilities: screen.capabilityIds,
+        entities: screen.entityIds.length ? screen.entityIds : undefined,
         entryPoints: entryPoints(screen.entryPoints),
         references: references(screen.references)
       })) + body(
@@ -270,7 +336,7 @@ function writeReport(root: string, report: ProductReportV10, hasLogo: boolean): 
         [
           { heading: 'Information presented', content: screen.information.map(item => `- ${item}`).join('\n') },
           { heading: 'Available actions', content: screen.actions.map(item => `- ${item}`).join('\n') },
-          { heading: 'Product states', content: states },
+          { heading: 'View states', content: states },
           { heading: 'Capability boundary', content: screen.capabilityBoundary }
         ],
         screen.supportingSections
@@ -280,7 +346,7 @@ function writeReport(root: string, report: ProductReportV10, hasLogo: boolean): 
   for (const capability of report.model.capabilities) {
     const hasScenarios = report.model.capabilityScenarios.some(scenario => scenario.capabilityId === capability.id)
     write(
-      entityPath(join(root, 'capabilities'), capability.id, 'capability', hasScenarios),
+      resourcePath(join(root, 'capabilities'), capability.id, 'capability', hasScenarios),
       frontmatter(compactRecord({
         domain: capability.domainId,
         availability: contexts(capability.availability),
@@ -290,17 +356,30 @@ function writeReport(root: string, report: ProductReportV10, hasLogo: boolean): 
   }
   for (const rule of report.model.businessRules) {
     write(
-      entityPath(join(root, 'business-rules'), rule.id, 'business-rule', false),
-      frontmatter(compactRecord({
+      resourcePath(join(root, 'business-rules'), rule.id, 'business-rule', false),
+      frontmatter({
         appliesTo: rule.appliesTo.map(target => target.type === 'context'
           ? { type: 'context', context: context(target.context) }
-          : compactRecord({
-              type: target.type,
-              id: target.id,
-              contexts: target.contexts.map(context)
-            })),
-        references: references(rule.references)
-      })) + body(
+          : target.type === 'entity'
+            ? compactRecord({
+                type: 'entity',
+                id: target.entityId,
+                effect: target.effect ?? undefined,
+                from: target.from ?? undefined,
+                to: target.to ?? undefined,
+                facts: target.facts,
+                contexts: target.contexts.map(context)
+              })
+            : compactRecord({
+                type: target.type,
+                id: target.id,
+                contexts: target.contexts.map(context)
+              })),
+        /* `permits: []` is a claim — forbidden to everyone — so it is never
+           compacted away; only an absent `permits` is. */
+        ...(rule.permits === null ? {} : { permits: rule.permits.map(grantRecord) }),
+        ...compactRecord({ references: references(rule.references) })
+      }) + body(
         rule.title,
         rule.statement,
         rule.intent,
@@ -312,8 +391,8 @@ function writeReport(root: string, report: ProductReportV10, hasLogo: boolean): 
 
   const scenarioSections = (
     scenario:
-      | ProductReportV10['model']['capabilityScenarios'][number]
-      | ProductReportV10['model']['journeyScenarios'][number]
+      | ProductReportV13['model']['capabilityScenarios'][number]
+      | ProductReportV13['model']['journeyScenarios'][number]
   ) => {
     const decisions = scenario.decisionPoints.map(decision =>
       `### ${decision.title}\n\n${decision.question}\n\n${
@@ -330,7 +409,7 @@ function writeReport(root: string, report: ProductReportV10, hasLogo: boolean): 
 
   for (const scenario of report.model.capabilityScenarios) {
     write(
-      entityPath(
+      resourcePath(
         join(root, 'capabilities', scenario.capabilityId, 'scenarios'),
         scenario.id,
         'capability-scenario',
@@ -339,13 +418,19 @@ function writeReport(root: string, report: ProductReportV10, hasLogo: boolean): 
       frontmatter(compactRecord({
         kind: scenario.kindId,
         routes: Object.fromEntries(scenario.routes.map(route => [route.id, route.name])),
-        steps: scenario.steps.map(step => compactRecord({
-          text: step.text,
-          kind: step.kind,
-          actor: step.actorId ?? undefined,
-          contexts: step.contexts.length
-            ? Object.fromEntries(step.contexts.map(context => [context.routeId, { place: context.placeId }]))
-            : undefined
+        steps: scenario.steps.map(step => ({
+          ...compactRecord({
+            text: step.text,
+            kind: step.kind,
+            actor: step.actorId ?? undefined,
+            unattended: step.unattended ? true : undefined
+          }),
+          entities: stepEntities(step),
+          ...compactRecord({
+            contexts: step.contexts.length
+              ? Object.fromEntries(step.contexts.map(context => [context.routeId, { place: context.placeId }]))
+              : undefined
+          })
         })),
         references: references(scenario.references)
       })) + body(
@@ -360,7 +445,7 @@ function writeReport(root: string, report: ProductReportV10, hasLogo: boolean): 
   for (const journey of report.model.journeys) {
     const hasScenarios = report.model.journeyScenarios.some(scenario => scenario.journeyId === journey.id)
     write(
-      entityPath(join(root, 'journeys'), journey.id, 'journey', hasScenarios),
+      resourcePath(join(root, 'journeys'), journey.id, 'journey', hasScenarios),
       frontmatter(compactRecord({
         actors: journey.actorIds,
         references: references(journey.references)
@@ -378,7 +463,7 @@ function writeReport(root: string, report: ProductReportV10, hasLogo: boolean): 
   }
   for (const scenario of report.model.journeyScenarios) {
     write(
-      entityPath(
+      resourcePath(
         join(root, 'journeys', scenario.journeyId, 'scenarios'),
         scenario.id,
         'journey-scenario',
@@ -388,14 +473,20 @@ function writeReport(root: string, report: ProductReportV10, hasLogo: boolean): 
         kind: scenario.kindId,
         result: scenario.result,
         routes: Object.fromEntries(scenario.routes.map(route => [route.id, route.name])),
-        steps: scenario.steps.map(step => compactRecord({
-          text: step.text,
-          kind: step.kind,
-          actor: step.actorId ?? undefined,
-          capability: step.capabilityId ?? undefined,
-          contexts: step.contexts.length
-            ? Object.fromEntries(step.contexts.map(context => [context.routeId, { place: context.placeId }]))
-            : undefined
+        steps: scenario.steps.map(step => ({
+          ...compactRecord({
+            text: step.text,
+            kind: step.kind,
+            actor: step.actorId ?? undefined,
+            capability: step.capabilityId ?? undefined,
+            unattended: step.unattended ? true : undefined
+          }),
+          entities: stepEntities(step),
+          ...compactRecord({
+            contexts: step.contexts.length
+              ? Object.fromEntries(step.contexts.map(context => [context.routeId, { place: context.placeId }]))
+              : undefined
+          })
         })),
         references: references(scenario.references)
       })) + body(
@@ -410,7 +501,7 @@ function writeReport(root: string, report: ProductReportV10, hasLogo: boolean): 
 }
 
 export interface ExpandedProductReport {
-  report: ProductReportV10
+  report: ProductReportV13
   root: string
 }
 

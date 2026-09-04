@@ -1,10 +1,22 @@
 import { parseCanonicalName } from '../core/canonical-name.js'
 import { resolveCatalogUrl } from '../core/catalog-url.js'
+import { REPORT_SCHEMA_VERSION } from '../core/portable.js'
 import { reportDigest } from '../core/report-digest.js'
 import { cliVersion } from '../version.js'
 import { expandProductReport } from './open.js'
 import { UsageError } from '../core/usage-error.js'
 import { MAX_PRODUCT_LOGO_BYTES, validateProductLogo } from '../logo.js'
+
+const REPORT_MEDIA_TYPE = 'application/vnd.businesslens.report+json'
+/* The only accepted report version is the schema's own major; the catalog is
+   asked for it by name and refused when it answers with another. */
+const REPORT_MAJOR = REPORT_SCHEMA_VERSION.split('.')[0]!
+
+/** The `version` parameter of a report media type, or null when the header carries none. */
+function reportVersionOf(contentType: string): string | null {
+  const match = /;\s*version\s*=\s*"?(\d+)"?/i.exec(contentType)
+  return match?.[1] ?? null
+}
 
 const MAX_REPORT_BYTES = 8 * 1024 * 1024
 
@@ -119,7 +131,7 @@ export async function runPull(
   try {
     response = await fetch(url, {
       headers: {
-        accept: 'application/vnd.businesslens.report+json; version=10, application/json',
+        accept: `${REPORT_MEDIA_TYPE}; version=${REPORT_MAJOR}, application/json`,
         // Identify the CLI so catalog pulls are distinguishable from browser
         // fetches. Without it every pull is indistinguishable from a page view.
         'user-agent': `businesslens/${cliVersion()}`
@@ -151,10 +163,17 @@ export async function runPull(
 
   const contentType = response.headers.get('content-type') || ''
   if (
-    !contentType.includes('application/vnd.businesslens.report+json')
+    !contentType.includes(REPORT_MEDIA_TYPE)
     && !contentType.includes('application/json')
   ) {
     console.error('The catalog returned an unexpected Blueprint report content type.')
+    return 1
+  }
+  const servedVersion = reportVersionOf(contentType)
+  if (servedVersion !== null && servedVersion !== REPORT_MAJOR) {
+    console.error(
+      `The catalog serves Product Report version ${servedVersion}; this CLI reads version ${REPORT_MAJOR} only. Update businesslens, or ask the catalog for a current report.`
+    )
     return 1
   }
 

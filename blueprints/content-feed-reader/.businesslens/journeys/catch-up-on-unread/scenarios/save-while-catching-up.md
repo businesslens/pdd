@@ -5,7 +5,9 @@ steps:
   - text: The Reader reads the item
     kind: actor
     actor: reader
-    capability: content-reading
+    capability: read-content
+    entities:
+      - { entity: item, effect: reads }
     contexts:
       web:
         place: reader-web::personal-library::unread-library
@@ -14,7 +16,9 @@ steps:
   - text: The Reader saves it
     kind: actor
     actor: reader
-    capability: item-saving
+    capability: save-item
+    entities:
+      - { entity: item }
     contexts:
       web:
         place: reader-web::personal-library::unread-library
@@ -23,7 +27,9 @@ steps:
   - text: The Reader marks it read
     kind: actor
     actor: reader
-    capability: reading-state
+    capability: track-reading-state
+    entities:
+      - { entity: item, from: Unread, to: Read }
     contexts:
       web:
         place: reader-web::personal-library::unread-library
@@ -31,6 +37,7 @@ steps:
         place: reader-mobile::personal-library::unread-library
   - text: The Product removes it from the unread backlog without removing the saved copy
     kind: product
+    entities: []
 routes:
   web: Web
   mobile: Mobile

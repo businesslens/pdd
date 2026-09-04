@@ -40,8 +40,8 @@ const colorVar = computed(() => `var(--blr-slot-${meta.value.slot})`)
 }
 
 .blr-flow-label__kind {
-  width: var(--blr-entity-mark-dense);
-  height: var(--blr-entity-mark-dense);
-  flex: 0 0 var(--blr-entity-mark-dense);
+  width: var(--blr-resource-mark-dense);
+  height: var(--blr-resource-mark-dense);
+  flex: 0 0 var(--blr-resource-mark-dense);
 }
 </style>

@@ -26,7 +26,7 @@ components, or every route found in source.
 **Error, legal and other capability-free views are not Screens.** A Screen must
 name at least one Capability, and a not-found page, a privacy policy, or a terms
 page exposes none — nothing about the Product's abilities happens there. Model
-such a view as a Product state of the view it interrupts, or leave it out of the
+such a view as a View state of the view it interrupts, or leave it out of the
 model entirely. A repository rule that every implemented route must appear
 somewhere is a documentation rule, not a Product Model rule; do not satisfy it by
 inventing a Capability the view does not have.
@@ -44,12 +44,14 @@ inventing a Capability the view does not have.
 
 An assetless Screen lives at
 `interfaces/<interface-id>/experiences/<experience-id>/screens/<screen-id>.md`
-(or directly under an undivided Interface's `screens/`). A Screen with assets
+(or directly under an Interface's `screens/`: an undivided Interface's own
+Screens, or a Screen a divided Interface shares across its Experiences). A Screen with assets
 expands to `<screen-id>/screen.md`. The whole Screen collection is optional.
 
 ```md [screens/product-record.md]
 ---
-capabilities: [catalog-browsing]
+capabilities: [browse-catalog]
+entities: [catalog-product]
 entryPoints:
   - customer-web: /products/:id
   - customer-mobile: shop://products/:id
@@ -73,7 +75,7 @@ Shows the information a shopper needs to evaluate one product.
 - Add the product to the cart
 - Return to the catalog
 
-## Product states
+## View states
 
 ### Available
 
@@ -86,13 +88,14 @@ The Screen does not change product or inventory data.
 
 | Field or section | Required | Constraint |
 | --- | --- | --- |
-| `capabilities` | yes | Name at least one unique existing Capability; each must declare an availability Context for the Interface or Experience containing this Screen. |
+| `capabilities` | yes | Name at least one unique existing Capability; each must declare an availability Context for the Interface or Experience containing this Screen. A Screen shared beside `experiences/` needs one for every Experience of its Interface, and `lint` names the Experiences a Capability is missing from. |
+| `entities` | no | Name the [Entities](./entities.md) this Screen presents. A Rule that governs who may read one of them is checked against who reaches this Screen. |
 | `entryPoints` | no | Key public routes or deep links by the Interface that holds this Screen. |
 | `references` | no | Use the documented [Reference](./references.md) shape. |
 | H1 and lead paragraph | yes | Name the Screen and describe its Product purpose. |
 | `## Information presented` | yes | Include at least one meaningful bullet item, with each item on one physical line. |
 | `## Available actions` | no | Include a bullet list when present, with each item on one physical line. |
-| `## Product states` | no | Give every H3 state a description. |
+| `## View states` | no | Give every H3 state a description. |
 | `## Capability boundary` | yes | State what the Screen supports and excludes. |
 
 Screens do not declare availability and do not list Scenarios. Their folder
@@ -101,6 +104,37 @@ Scenario participates in a Screen when one of its Step Contexts names that
 Screen as its most-specific `place`. When that Step names a Capability, the Screen must
 expose it. Consumers derive both Capability Scenario and Journey Scenario
 backlinks from those Step Contexts.
+
+## View states are the view's, never the thing's
+
+`## View states` describes what **this view** looks like when the difference
+changes what an Actor understands or can do — empty, populated, unauthorized,
+caught-up.
+
+A thing's own states belong to an [Entity](./entities.md). A Screen that shows a
+thing declares it in `entities` and names its own view state for the difference,
+because one state of a thing renders differently on different Screens.
+
+`## Information presented` follows the same split: what *this view* shows —
+counts, feedback, derived values, combinations — never a restatement of what the
+Entity keeps. Declare the Entity and let the reader follow the link.
+
+## Screens shared across Experiences
+
+An Interface usually holds either `screens/` or `experiences/`. It may hold
+**both** when a Screen is genuinely common to its Experiences rather than
+belonging to one — an item reader that opens from a private library and from a
+published collection alike. A Screen beside `experiences/` is reachable from
+every Experience of that Interface, and two Screens with the same name below
+different Experiences of one Interface are counterparts exactly as they are
+across Interfaces.
+
+A shared Screen is inside every Experience of its Interface. Its id is
+`interface-id::screen-id`, every Capability it exposes must be available in
+each Experience, and a Scenario Step on it counts as coverage for each. That is
+the test for whether a view is really shared: if its Capabilities differ by
+Experience, it is two Screens, one under each Experience, which are
+counterparts. A Screen that belongs to one Experience belongs inside it.
 
 ## Web and mobile
 
@@ -124,7 +158,7 @@ External or separately maintained artifacts such as Figma files attach through
 [References](./references.md). `lint` checks asset metadata and paths, but does
 not interpret whether a visual matches the Product.
 
-A CLI or API does not need substitute Command or Endpoint entities. Keep
+A CLI or API does not need substitute Command or Endpoint resource types. Keep
 command syntax in CLI help and endpoint schemas in the API contract; model the
 durable Capabilities, both observable Scenario types, optional Journeys, and
 Rules they expose.

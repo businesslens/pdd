@@ -2,16 +2,16 @@
 /**
  * One authored Context, read through its containing Interface path.
  */
-import type { AnyEntityView, ResolvedContextView, ReportWorkspace } from '../utils/reportWorkspace'
+import type { AnyResourceView, ResolvedContextView, ReportWorkspace } from '../utils/reportWorkspace'
 
 const props = defineProps<{
   workspace: ReportWorkspace
   context: ResolvedContextView
-  /** A narrow Step keeps one path line and truncates each entity name to fit. */
+  /** A narrow Step keeps one path line and truncates each resource name to fit. */
   compact?: boolean
 }>()
 
-const emit = defineEmits<{ select: [entity: AnyEntityView] }>()
+const emit = defineEmits<{ select: [resource: AnyResourceView] }>()
 </script>
 
 <template>

@@ -5,7 +5,149 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.9.0] - 2026-09-04
+
+### Added
+
+- **Entity — one resource type for every thing the Product keeps or reasons
+  about.** Identity, not storage, is the test. An Entity carries named facts,
+  optional states, and relations in product language; implementation types,
+  keys, indexes, join records, and regenerable representations stay out.
+- **Entity relations state both ends.** `one-to-one`, `one-to-many`, and
+  `many-to-many` read from the declaring Entity to its target; the inverse is
+  derived so two files cannot disagree. Entity pages and the *What it keeps*
+  topology view render the product's own relationship graph.
+- **Business Rules can express authorization.** An Entity target selects an
+  operation, facts, states, and optional Contexts. `permits` grants name
+  actors, a related Entity path, self, unattended work, or configuration, with
+  optional fact and state conditions. `lint` rejects Steps and Screens that no
+  applicable grant can permit, without claiming runtime authorization has been
+  proved.
+- **A Scenario Step says what it does to the Product's things.** Every Step
+  carries `entities: []` or entries shaped as
+  `{ entity, as, effect, from, to }`, where `effect` is
+  `creates|changes|removes|reads`. Lifecycles and reverse edges are composed
+  from acceptance Steps rather than authored a second time.
+- **Unattended Scenarios.** A first condition Step may state
+  `unattended: true` for schedules, expiry, retry, and other Product-owned
+  behavior with no Actor.
+- `agent` joins the Interface types, and an Interface may own shared Screens
+  beside its Experiences. A shared Screen is inside every Experience of its
+  Interface: a Capability it exposes must be available in each, a Step on it is
+  inside a Capability's availability only when every Experience is, and that
+  Step counts as Scenario coverage for each.
+- **A Domain states what its Boundary excludes**, in the authored folder and on
+  the wire.
+- **The Product Report renders every Entity edge.** Entities have a rail entry,
+  collection, page, search results, facts, relations, composed lifecycle, and
+  topology presence. An Entity with States reads its lifecycle as a state
+  machine on its own tab, with each selecting Rule's grants in full. Scenario
+  Steps show what they create, change, remove, or read; Journey outcomes
+  summarize what they leave behind; Rules read their grants as sentences.
+- **`spec/rejected.md`** — shapes designed far enough to be costed and then
+  chosen against, so the same argument is not had twice. It binds nothing and
+  takes rejections and deferrals only: never a plan, a status, or a file
+  reference. Entries are appended, so reopening a decision means a superseding
+  entry rather than an edit. It carries what a format or report change most
+  often re-proposes — tags and free-form metadata, a glossary resource type,
+  typed facts, `actors/` as its own collection, permission on a Capability
+  target, `transitions` on the Entity, the permission algebra's discarded
+  spellings, and Blueprint provenance.
+- BusinessLens now keeps a reviewed Product Model of itself. The Content Feed
+  Reader Blueprint and golden Fixture Shop were expanded to exercise Entities,
+  relations, lifecycles, unattended behavior, and permission Rules.
+
+### Changed
+
+- **Folder schema 8 and Product Report v13 are the only accepted contracts.**
+  Historical reports are refused rather than migrated. The report SDK exports
+  `ProductReportV13Schema`, `ProductReportV13`, the unversioned current
+  aliases, Entity/fact/relation types, Step effect types, and grant types.
+- **A Capability no longer declares Entities and an Entity no longer declares
+  transitions.** Scenario Steps are the single source of truth for what happens
+  to the things the Product keeps.
+- `## Information kept` is a list of uniquely named facts, so a Rule can govern
+  one fact exactly. `## Product states` is retired.
+- Behavioral ids are verb-noun and reuse vocabulary the model already declares.
+  Entity, Domain, and Business Rule ids do not begin with a verb. The linter
+  derives these naming findings rather than asking an author to judge them.
+- Whether an Interface needs Experiences, and whether it divides, is derived
+  rather than judged: audiences are disjoint when no available Capability
+  bridges them, with the counterpart exception for symmetric platform pairs.
+  Interface entry-point keys may name the Interface's type or another Interface
+  from which it is reached.
+- A Business Rule governs at least two behaviors or an independent Context, and
+  a Domain states what its Boundary excludes. Both are now linted.
+- **The installer decides ownership by its manifest alone.** A directory that
+  merely names a skill and mentions BusinessLens is somebody else's; retired
+  skills are removed only when the manifest recorded them; every harness is
+  checked before any is written, so a refusal leaves nothing changed. This is
+  visible on upgrade: an installation made before the marker existed carries no
+  proof it is ours, so `install` and `update` refuse it with *Refusing to
+  overwrite … Pass `--force`*. One `--force` re-adopts it, and every later run
+  is marked.
+- `businesslens-map`, `businesslens-ideate`, and the authoring branches of
+  `businesslens-verify` settle undetermined boundary, granularity, naming, and
+  acceptance calls in rounds before writing. They attach the evidence they read
+  and surface remaining judgment calls explicitly; ideate's proposed delta ends
+  with a `Judgment calls` section, as map's already did.
+- `businesslens-verify` re-derives findings from the current model and
+  repository, verifies Entity facts, states, relations, composed transitions,
+  Step effects, and Rule grants, and never persists a workflow ledger.
+- The docs define each resource type on its owning page. Actor guidance moved
+  into Entities, Capability and Journey pages own their Scenario fields,
+  Business Rules owns permission semantics, and the catalog transport — the
+  report media type and its `version` parameter — is written where a catalog
+  operator reads it.
+- The open page tab lives in the URL (`t`), so a Lifecycle or Scenarios tab
+  survives a refresh and can be linked.
+- **The design record under `plans/` is retired; the constraints it carried
+  moved into the registers that govern them.** `AGENTS.md` gains *How format
+  decisions are judged* — the shipped agent as the standard a rule must meet,
+  the ranked quality axes, empirical double-authoring, descriptive and
+  generative use judged equally, and the pull-request diff as the binding human
+  surface. Its report viewer standards gain four rendering rules and the
+  four-row test for making a section render as more than prose.
+
+### Removed
+
+- **`actors/` is no longer a collection, and Actor is no longer a resource
+  type.** A person or system that acts is an Entity with
+  `kind: person|system` and `acts: external|internal`. Actor remains a role.
+
+### Fixed
+
+- **`blueprint pull` asks for the report version it can read, and refuses
+  another.** The Accept header is derived from the schema's major, and a
+  catalog answering with a different `version` parameter is refused before the
+  body is parsed. A report of another schema version, from a catalog or a file,
+  is refused in one sentence naming both versions instead of a Zod issue dump.
+- **`blueprint open` and `pull` keep the author's coverage prose.** Only
+  `method` is rewritten, as the report contract says; the note that
+  implementation alignment has not been verified here now lives in `method`
+  with the other origin claim, and `limitations` and `rationale` come through
+  exactly as authored.
+- **An Experience's `interfaceIds` is exactly the Interface its id names.**
+  Expansion files an Experience by its qualified id, so a list saying anything
+  else was a second encoding of containment — a report could validate under one
+  Interface and expand under another.
+- The stable viewer keeps the current page and its filters through a recompile,
+  so `businesslens view` can stay open while the model is edited.
+- The packed Nuxt Layer consumer, viewer documentation, and package manifest
+  stay aligned with the current report major; generated Layer `node_modules`
+  are excluded from the npm tarball; and `check-repo` pins both registers and
+  the CLI header to the report schema's major, so the version cannot go stale
+  in prose the way it once did in code.
+
+### Security
+
+- **The installer follows no name it did not write.** The installation manifest
+  is read out of the target repository, which BusinessLens treats as untrusted,
+  and every name it records reaches a recursive remove. A `skills` entry that is
+  not a plain directory name now invalidates the marker, a recorded name this
+  Product could not have written is left alone, and every removal must resolve
+  to a direct child of the skills directory — so a crafted manifest can no
+  longer point `install` at a directory outside it.
 
 ## [0.8.0] - 2026-08-25
 
@@ -554,7 +696,8 @@ Initial public launch of the repository.
   `docs/format.md`.
 - Claude plugin manifest and marketplace entry.
 
-[Unreleased]: https://github.com/businesslens/pdd/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/businesslens/pdd/compare/v0.9.0...HEAD
+[0.9.0]: https://github.com/businesslens/pdd/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/businesslens/pdd/compare/v0.7.2...v0.8.0
 [0.7.2]: https://github.com/businesslens/pdd/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/businesslens/pdd/compare/v0.7.0...v0.7.1

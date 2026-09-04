@@ -5,21 +5,29 @@ steps:
   - text: The Reader publishes the owned collection
     kind: actor
     actor: reader
-    capability: collection-publication
+    capability: publish-collection
+    entities:
+      - { entity: collection, from: Private, to: Published }
     contexts:
       publish-on-web:
         place: reader-web::personal-library::collection-workspace
   - text: The Product exposes a stable public web address
     kind: product
+    entities: []
   - text: The Visitor opens that address without joining the private library
     kind: actor
     actor: visitor
-    capability: public-collection-reading
+    capability: read-public-collection
+    entities: []
     contexts:
       publish-on-web:
         place: reader-web::public-reading::public-collection
   - text: The Product presents the collection's ordered items read-only
     kind: product
+    actor: visitor
+    entities:
+      - { entity: collection, effect: reads }
+      - { entity: item, effect: reads }
 routes:
   publish-on-web: Publish On Web
 ---

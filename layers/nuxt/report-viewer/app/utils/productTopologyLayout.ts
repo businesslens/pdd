@@ -1,8 +1,8 @@
 /**
  * Pure layout helpers for the whole-product "Everything" view.
  *
- * Every entity kind keeps a fixed shelf. Only the order inside a shelf moves,
- * using the barycentre of related entities on the other shelves. Keeping this
+ * Every resource kind keeps a fixed shelf. Only the order inside a shelf moves,
+ * using the barycentre of related resources on the other shelves. Keeping this
  * dependency-free makes the most important topology invariant easy to test.
  */
 

@@ -1,7 +1,9 @@
 ---
 appliesTo:
-  - type: capability
-    id: checkout
+  - type: entity
+    id: order
+    effect: changes
+    to: Confirmed
   - type: journey
     id: browse-and-buy
 references:

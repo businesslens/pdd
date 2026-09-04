@@ -1,5 +1,5 @@
-import type { EntityFile, PddModel } from '../core/model.js'
-import type { ProductReportV10 } from '../core/portable.js'
+import type { ResourceFile, PddModel } from '../core/model.js'
+import type { ProductReportV13 } from '../core/portable.js'
 import { join, relative, sep } from 'node:path'
 import { writeGeneratedFile } from '../core/generated-files.js'
 import { lsFiles } from '../core/git.js'
@@ -8,7 +8,7 @@ import type { InterfaceType } from '../core/interface-types.js'
 import { loadModel } from '../core/model.js'
 import { resolveModelRoot, type ModelRoot } from '../core/model-root.js'
 import {
-  ProductReportV10Schema,
+  ProductReportV13Schema,
   REPORT_SCHEMA_VERSION,
   projectPortableReport,
   validateProductReport
@@ -31,25 +31,25 @@ const IMAGE_ASSET = /\.(png|jpe?g|gif|webp|avif|svg)$/i
  * projection already drops — along with every repository-relative target. That
  * is why assets need no new wire field and why export carries no binaries yet.
  */
-function assetReferences(entity: EntityFile, modelRoot: string) {
-  const meta = new Map(entity.assetMeta.map(item => [item.file, item]))
-  return entity.assets.map((file) => {
+function assetReferences(resource: ResourceFile, modelRoot: string) {
+  const meta = new Map(resource.assetMeta.map(item => [item.file, item]))
+  return resource.assets.map((file) => {
     const declared = meta.get(file)
     return {
       kind: (IMAGE_ASSET.test(file) ? 'visual' : 'doc') as 'visual' | 'doc',
       role: (file.startsWith('implementation/') ? 'implementation' : 'intent') as 'implementation' | 'intent',
-      target: relative(modelRoot, join(entity.directory, file)).split(sep).join('/'),
+      target: relative(modelRoot, join(resource.directory, file)).split(sep).join('/'),
       ...(declared?.title ? { title: declared.title } : {}),
       ...(declared?.state ? { state: declared.state } : {})
     }
   })
 }
 
-function entityContent(entity: EntityFile, recognized: string[], modelRoot: string) {
+function resourceContent(resource: ResourceFile, recognized: string[], modelRoot: string) {
   return {
-    intent: section(entity.doc, 'Intent') || '',
-    supportingSections: supportingSections(entity.doc, ['Intent', ...recognized]),
-    references: [...assetReferences(entity, modelRoot), ...entity.references].map(reference => ({
+    intent: section(resource.doc, 'Intent') || '',
+    supportingSections: supportingSections(resource.doc, ['Intent', ...recognized]),
+    references: [...assetReferences(resource, modelRoot), ...resource.references].map(reference => ({
       kind: reference.kind,
       role: reference.role,
       target: reference.target,
@@ -74,7 +74,7 @@ export function compileReport(
    * nested model's assets stay addressable from the repository root.
    */
   assetBase = model.root
-): ProductReportV10 {
+): ProductReportV13 {
   const capabilityById = new Map(model.capabilities.map(capability => [capability.id, capability]))
   const journeyScenariosByJourney = new Map(model.journeys.map(journey => [
     journey.id,
@@ -92,6 +92,16 @@ export function compileReport(
     kind: step.kind as 'actor' | 'product' | 'condition',
     actorId: step.actor ?? null,
     capabilityId: parentCapability ?? step.capability ?? null,
+    /* The default is resolved here, so a reader of the wire never has to know
+       which value the folder is allowed to omit. */
+    entities: step.entities.map(entry => ({
+      entityId: entry.entity,
+      as: entry.as ?? null,
+      effect: entry.effect ?? 'changes' as const,
+      from: entry.from ?? null,
+      to: entry.to ?? null
+    })),
+    unattended: step.unattended === true,
     contexts: scenario.routes.flatMap(route => {
       const context = step.contexts.find(item => item.routeId === route.id)
       return context ? [{ routeId: route.id, placeId: context.place }] : []
@@ -103,7 +113,7 @@ export function compileReport(
       .map(scenario => scenario.id)
   )
 
-  const report: ProductReportV10 = {
+  const report: ProductReportV13 = {
     schemaVersion: REPORT_SCHEMA_VERSION,
     id: model.product.id,
     title: model.product.doc.title,
@@ -126,11 +136,11 @@ export function compileReport(
     generatedAt: today,
     generator: { name: 'businesslens-cli', version: cliVersion() },
     counts: {
-      actors: model.actors.length,
       interfaces: model.interfaces.length,
       experiences: model.experiences.length,
       screens: model.screens.length,
       domains: model.domains.length,
+      entities: model.entities.length,
       capabilities: model.capabilities.length,
       capabilityScenarios: model.capabilityScenarios.length,
       journeys: model.journeys.length,
@@ -147,14 +157,6 @@ export function compileReport(
           ...(kind.colorSlot !== undefined ? { colorSlot: kind.colorSlot } : {})
         }))
       },
-      actors: byId(model.actors).map(actor => ({
-        id: actor.id,
-        name: actor.doc.title,
-        description: actor.doc.lead,
-        kind: actor.kind as 'person' | 'system',
-        relationship: actor.relationship as 'external' | 'internal',
-        ...entityContent(actor, [], assetBase)
-      })),
       interfaces: byId(model.interfaces).map(productInterface => ({
         id: productInterface.id,
         title: productInterface.doc.title,
@@ -163,7 +165,7 @@ export function compileReport(
         actorIds: sorted(productInterface.actors),
         entryPoints: productInterface.entryPoints,
         capabilityBoundary: productInterface.capabilityBoundary,
-        ...entityContent(productInterface, ['Capability boundary'], assetBase)
+        ...resourceContent(productInterface, ['Capability boundary'], assetBase)
       })),
       experiences: byId(model.experiences).map(experience => ({
         id: experience.id,
@@ -174,13 +176,14 @@ export function compileReport(
         accessMode: experience.access as 'public' | 'authenticated' | 'restricted',
         entryPoints: experience.entryPoints,
         capabilityBoundary: experience.capabilityBoundary,
-        ...entityContent(experience, ['Capability boundary'], assetBase)
+        ...resourceContent(experience, ['Capability boundary'], assetBase)
       })),
       screens: byId(model.screens).map(screen => ({
         id: screen.id,
         title: screen.doc.title,
         description: screen.doc.lead,
         capabilityIds: sorted(screen.capabilities),
+        entityIds: sorted(screen.entities),
         capabilityScenarioIds: screenScenarioIds(screen.id, 'capability'),
         journeyScenarioIds: screenScenarioIds(screen.id, 'journey'),
         entryPoints: screen.entryPoints,
@@ -188,14 +191,29 @@ export function compileReport(
         actions: screen.actions,
         states: screen.states,
         capabilityBoundary: screen.capabilityBoundary,
-        ...entityContent(screen, ['Information presented', 'Available actions', 'Product states', 'Capability boundary'], assetBase)
+        ...resourceContent(screen, ['Information presented', 'Available actions', 'View states', 'Capability boundary'], assetBase)
       })),
       domains: byId(model.domains).map(domain => ({
         id: domain.id,
         name: domain.doc.title,
         description: domain.doc.lead,
+        boundary: domain.boundary,
         ...(domain.colorSlot !== undefined ? { colorSlot: domain.colorSlot } : {}),
-        ...entityContent(domain, [], assetBase)
+        ...resourceContent(domain, ['Boundary'], assetBase)
+      })),
+      entities: byId(model.entities).map(entity => ({
+        id: entity.id,
+        title: entity.doc.title,
+        description: entity.doc.lead,
+        ...(entity.domain ? { domainId: entity.domain } : {}),
+        kind: (entity.kind as 'person' | 'system' | undefined) ?? null,
+        acts: (entity.acts as 'external' | 'internal' | undefined) ?? null,
+        informationKept: entity.informationKept.map(fact => ({ name: fact.name, description: fact.description })),
+        relations: entity.relations.map(relation => ({
+          entityId: relation.entity, verb: relation.verb, cardinality: relation.cardinality
+        })),
+        states: entity.states.map(state => ({ name: state.title, content: state.description })),
+        ...resourceContent(entity, ['Information kept', 'States'], assetBase)
       })),
       capabilities: byId(model.capabilities).map(capability => ({
         id: capability.id,
@@ -203,7 +221,7 @@ export function compileReport(
         description: capability.doc.lead,
         ...(capability.domain ? { domainId: capability.domain } : {}),
         availability: contexts(capability.availability),
-        ...entityContent(capability, [], assetBase)
+        ...resourceContent(capability, [], assetBase)
       })),
       capabilityScenarios: byId(model.capabilityScenarios).map(scenario => ({
         id: scenario.id,
@@ -217,7 +235,7 @@ export function compileReport(
         decisionPoints: scenario.decisionPoints,
         outcome: scenario.outcome,
         edgeCases: scenario.edgeCases,
-        ...entityContent(scenario, ['Trigger', 'Steps', 'Decision points', 'Outcome', 'Edge cases'], assetBase)
+        ...resourceContent(scenario, ['Trigger', 'Steps', 'Decision points', 'Outcome', 'Edge cases'], assetBase)
       })),
       journeys: byId(model.journeys).map((journey) => {
         const scenarios = journeyScenariosByJourney.get(journey.id) || []
@@ -242,7 +260,7 @@ export function compileReport(
           capabilityIds: sorted([...achievedCapabilityIds]),
           failureOnlyCapabilityIds: sorted(failureOnlyCapabilityIds),
           domainIds: sorted([...new Set(domainIds)]),
-          ...entityContent(journey, ['Goal', 'Success criterion'], assetBase)
+          ...resourceContent(journey, ['Goal', 'Success criterion'], assetBase)
         }
       }),
       journeyScenarios: byId(model.journeyScenarios).map(scenario => ({
@@ -258,7 +276,7 @@ export function compileReport(
         decisionPoints: scenario.decisionPoints,
         outcome: scenario.outcome,
         edgeCases: scenario.edgeCases,
-        ...entityContent(scenario, ['Trigger', 'Decision points', 'Outcome', 'Edge cases'], assetBase)
+        ...resourceContent(scenario, ['Trigger', 'Decision points', 'Outcome', 'Edge cases'], assetBase)
       })),
       businessRules: byId(model.businessRules).map(rule => ({
         id: rule.id,
@@ -267,12 +285,40 @@ export function compileReport(
         rationale: rule.rationale,
         appliesTo: rule.appliesTo.map(target => target.type === 'context'
           ? { type: 'context' as const, context: { placeId: target.context.place } }
-          : {
-              type: target.type,
-              id: target.id,
-              contexts: target.contexts.map(context => ({ placeId: context.place }))
-            }),
-        ...entityContent(rule, ['Rationale'], assetBase)
+          : target.type === 'entity'
+            ? {
+                type: 'entity' as const,
+                entityId: target.id,
+                effect: target.effect ?? null,
+                from: target.from ?? null,
+                to: target.to ?? null,
+                facts: target.facts,
+                contexts: target.contexts.map(context => ({ placeId: context.place }))
+              }
+            : {
+                type: target.type,
+                id: target.id,
+                contexts: target.contexts.map(context => ({ placeId: context.place }))
+              }),
+        permits: rule.permits === undefined ? null : rule.permits.map(grant => ({
+          actorIds: sorted(grant.actors),
+          related: grant.related.map(segment => ({ verb: segment.verb, entityId: segment.entity })),
+          self: grant.self === true,
+          when: grant.when.map(condition => ({
+            entityId: condition.entity ?? null,
+            fact: condition.fact ?? null,
+            state: condition.state ?? null,
+            operator: condition.operator ?? null,
+            value: condition.value === undefined
+              ? null
+              : typeof condition.value === 'object'
+                ? { configuredByEntityId: condition.value.configuredBy }
+                : condition.value
+          })),
+          unattended: grant.unattended === true,
+          configuredByEntityId: grant.configuredBy ?? null
+        })),
+        ...resourceContent(rule, ['Rationale'], assetBase)
       }))
     },
     coverage: {
@@ -285,24 +331,24 @@ export function compileReport(
     }
   }
 
-  const parsed = ProductReportV10Schema.parse(report)
+  const parsed = ProductReportV13Schema.parse(report)
   const issues = validateProductReport(parsed)
   if (issues.length) throw new Error(`Report validation failed:\n- ${issues.join('\n- ')}`)
   return parsed
 }
 
 export interface BuildOutcome {
-  report: ProductReportV10
+  report: ProductReportV13
   outputFile: string
 }
 
 /** Compile the current workspace without writing generated artifacts. */
-export function compileWorkspaceReport(cwd: string): ProductReportV10 {
+export function compileWorkspaceReport(cwd: string): ProductReportV13 {
   return compileResolvedWorkspaceReport(resolveModelRoot(cwd))
 }
 
 /** Compile a model whose ownership boundary has already been resolved. */
-export function compileResolvedWorkspaceReport({ modelRoot, gitRoot }: ModelRoot): ProductReportV10 {
+export function compileResolvedWorkspaceReport({ modelRoot, gitRoot }: ModelRoot): ProductReportV13 {
   const model = loadModel(modelRoot)
   const tracked = gitRoot ? lsFiles(gitRoot) : []
   const result = lintModel(model, tracked)

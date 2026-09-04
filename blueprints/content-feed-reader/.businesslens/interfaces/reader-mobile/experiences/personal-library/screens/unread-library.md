@@ -1,8 +1,11 @@
 ---
+entities:
+  - item
 capabilities:
-  - content-reading
-  - reading-state
-  - item-saving
+  - read-content
+  - track-reading-state
+  - save-item
+  - synchronize-feeds
 entryPoints:
   - reader-mobile: content-reader://library/unread
 references:
@@ -30,7 +33,7 @@ Presents a finite backlog and the actions that make progress through it.
 - Save an item
 - Remove an item's saved state
 
-## Product states
+## View states
 
 ### Unread items available
 

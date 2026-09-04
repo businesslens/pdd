@@ -8,7 +8,7 @@ order: 31
 
 # `businesslens blueprint export`
 
-Compile folder schema 6 `.businesslens/` into a portable Product Report v10:
+Compile folder schema 8 `.businesslens/` into a portable Product Report v13:
 
 ```bash
 npx businesslens blueprint export
@@ -36,10 +36,11 @@ not travel with the Product contract:
 report. See [Coverage](./product-model.md#coverage) and
 [References](./references.md) for those contracts.
 
-Product and entity records carry unrecognized authored H2 sections as ordered
-`supportingSections` records with separate `heading` and `content` fields. The
-report never flattens them into an opaque Markdown string, so `blueprint open`
-can restore the same section boundaries.
+Unrecognized authored H2 sections survive as ordered `supportingSections`
+records with separate `heading` and `content` fields — on the Product, whose
+record is the report root, and on every other resource record. The report never
+flattens them into an opaque Markdown string, so `blueprint open` can restore
+the same section boundaries.
 
 ## Where it lands
 

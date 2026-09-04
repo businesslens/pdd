@@ -7,9 +7,14 @@ const { version: pddVersion } = createRequire(import.meta.url)('../../package.js
 
 // `businesslens view` serves these paths from the CLI. `nuxt dev` has no CLI in
 // front of it, so dev-only handlers stand in with a catalog Blueprint — a model
-// rich enough to exercise every entity kind the Product Report has to render. They are
+// rich enough to exercise every element kind the Product Report has to render. They are
 // dev handlers, so nothing here reaches the generated viewer.
-const fixtureRoot = resolve('../../blueprints/content-feed-reader/.businesslens')
+//
+// `BLR_DEV_MODEL` points them at another `.businesslens/` instead — this
+// repository's own model is the one case the catalog Blueprint cannot stand in
+// for, because a rendering bug in a kind it happens not to use is invisible
+// until someone opens the model that does.
+const fixtureRoot = resolve(process.env.BLR_DEV_MODEL || '../../blueprints/content-feed-reader/.businesslens')
 
 const devHandlers = [
   {

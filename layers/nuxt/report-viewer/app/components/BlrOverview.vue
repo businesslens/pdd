@@ -8,8 +8,8 @@
  * body now; the metadata stays, one disclosure each, for the visits that want
  * it.
  */
-import type { AnyEntityView, ReportWorkspace } from '../utils/reportWorkspace'
-import { resolveEntityKey } from '../utils/reportWorkspace'
+import type { AnyResourceView, ReportWorkspace } from '../utils/reportWorkspace'
+import { resolveResourceKey } from '../utils/reportWorkspace'
 import { firstSentence } from '../utils/reportMarkdown'
 
 const props = defineProps<{
@@ -18,7 +18,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  select: [entity: AnyEntityView]
+  select: [resource: AnyResourceView]
   selectKey: [key: string]
 }>()
 
@@ -28,7 +28,7 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
   draft: 'neutral'
 }
 
-/** The one-line shape of the model, in the order the entities depend on. */
+/** The one-line shape of the model, in the order the resources depend on. */
 const countFacts = computed(() => [
   { label: 'Journeys', value: props.workspace.counts.journeys },
   { label: 'Journey Scenarios', value: props.workspace.counts.journeyScenarios },
@@ -36,6 +36,7 @@ const countFacts = computed(() => [
   { label: 'Steps', value: props.workspace.counts.steps },
   { label: 'Capabilities', value: props.workspace.counts.capabilities },
   { label: 'Domains', value: props.workspace.counts.domains },
+  { label: 'Entities', value: props.workspace.counts.entities },
   { label: 'Screens', value: props.workspace.counts.screens },
   { label: 'Interfaces', value: props.workspace.counts.interfaces },
   { label: 'Experiences', value: props.workspace.counts.experiences },
@@ -49,6 +50,7 @@ const authoredCounts = computed<Array<[string, number]>>(() => [
   ['Experiences', props.workspace.counts.experiences],
   ['Screens', props.workspace.counts.screens],
   ['Domains', props.workspace.counts.domains],
+  ['Entities', props.workspace.counts.entities],
   ['Capabilities', props.workspace.counts.capabilities],
   ['Journeys', props.workspace.counts.journeys],
   ['Capability Scenarios', props.workspace.counts.capabilityScenarios],
@@ -78,7 +80,7 @@ const sections = reactive({ about: false, coverage: false, counts: false, refere
   Capabilities — showing an empty section instead would report the absence of a
   section rather than the shape of the model.
 */
-const overviewEntities = computed<AnyEntityView[]>(() => props.workspace.journeys.length
+const overviewResources = computed<AnyResourceView[]>(() => props.workspace.journeys.length
   ? props.workspace.journeys
   : props.workspace.capabilities)
 
@@ -88,8 +90,8 @@ const overviewHeading = computed(() => props.workspace.journeys.length
 
 function referenceActor(ownerKey?: string) {
   if (!ownerKey) return undefined
-  const entity = resolveEntityKey(props.workspace, ownerKey)
-  return entity?.kind === 'actor' ? entity : undefined
+  const resource = resolveResourceKey(props.workspace, ownerKey)
+  return resource?.kind === 'entity' && resource.acts ? resource : undefined
 }
 </script>
 
@@ -107,7 +109,7 @@ function referenceActor(ownerKey?: string) {
     <div class="flex flex-wrap items-center gap-1.5">
       <span class="blr-field me-1">Made for</span>
       <UButton
-        v-for="actor in workspace.actors"
+        v-for="actor in workspace.actingEntities"
         :key="actor.key"
         color="neutral"
         variant="outline"
@@ -116,15 +118,15 @@ function referenceActor(ownerKey?: string) {
         @click="emit('select', actor)"
       >
         <BlrKind
-          kind="actor"
-          :actor-kind="actor.actorKind"
-          :actor-relationship="actor.relationship"
+          kind="entity"
+          :actor-kind="actor.entityKind"
+          :acts="actor.acts"
           :labelled="false"
           size="xs"
         />
         {{ actor.title }}
       </UButton>
-      <span v-if="!workspace.actors.length" class="text-sm text-muted italic">No Actors authored.</span>
+      <span v-if="!workspace.actingEntities.length" class="text-sm text-muted italic">No Entity acts on this Product.</span>
     </div>
     <div class="flex flex-wrap items-baseline gap-x-4 gap-y-1">
       <span v-for="fact in countFacts" :key="fact.label" class="blr-field">
@@ -149,18 +151,18 @@ function referenceActor(ownerKey?: string) {
     with `Model counts` given a heading of its own while the Journeys
     — the whole reason the model exists — sat one rail click away.
   -->
-  <section v-if="overviewEntities.length" class="space-y-3">
+  <section v-if="overviewResources.length" class="space-y-3">
     <header class="flex flex-wrap items-baseline gap-2">
       <h2 class="text-base font-semibold tracking-tight text-highlighted">{{ overviewHeading.title }}</h2>
-      <span class="blr-meta">{{ overviewEntities.length }}</span>
+      <span class="blr-meta">{{ overviewResources.length }}</span>
       <span class="text-xs text-muted">{{ overviewHeading.note }}</span>
     </header>
     <div class="space-y-2">
-      <BlrEntityCard
-        v-for="entity in overviewEntities"
-        :key="entity.key"
+      <BlrResourceCard
+        v-for="resource in overviewResources"
+        :key="resource.key"
         :workspace="workspace"
-        :entity="entity"
+        :resource="resource"
         @open="emit('select', $event)"
       />
     </div>
@@ -304,8 +306,8 @@ function referenceActor(ownerKey?: string) {
               >
                 <BlrKind
                   :kind="group.ownerKind"
-                  :actor-kind="referenceActor(group.ownerKey)?.actorKind"
-                  :actor-relationship="referenceActor(group.ownerKey)?.relationship"
+                  :actor-kind="referenceActor(group.ownerKey)?.entityKind"
+                  :acts="referenceActor(group.ownerKey)?.acts"
                   :labelled="false"
                   size="xs"
                 />

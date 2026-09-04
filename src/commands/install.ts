@@ -17,6 +17,7 @@ import {
 } from '../core/providers.js'
 import {
   BUSINESSLENS_SKILLS,
+  assertInstallTargets,
   installSkillsToTarget
 } from '../core/skill-installation.js'
 import { cliVersion } from '../version.js'
@@ -157,6 +158,11 @@ export async function runInstall(cwd: string, options: InstallOptions = {}): Pro
     if (!providerIds) return 1
     const scope = await selectScope(options)
     if (!scope) return 1
+
+    // Every harness is checked before any is written, so a refusal names the
+    // directory that blocked the run and nothing on disk has changed.
+    const targets = providerIds.map(id => ({ provider: providerById(id), scope }))
+    assertInstallTargets(cwd, targets, { force: options.force })
 
     const progress = process.stdout.isTTY ? spinner() : undefined
     progress?.start('Installing BusinessLens skills...')

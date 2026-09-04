@@ -3,7 +3,7 @@ import { createServer, type IncomingMessage, type Server, type ServerResponse } 
 import { lstatSync, readFileSync, watch, type FSWatcher } from 'node:fs'
 import { basename, extname, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import type { ProductReportV10 } from './portable.js'
+import type { ProductReportV13 } from './portable.js'
 import { MAX_PRODUCT_LOGO_BYTES, validateProductLogo } from '../logo.js'
 
 const LOOPBACK_HOST = '127.0.0.1'
@@ -64,8 +64,8 @@ export interface LocalViewer {
 
 export interface LocalViewerOptions {
   port?: number
-  compile: () => ProductReportV10
-  initialReport?: ProductReportV10
+  compile: () => ProductReportV13
+  initialReport?: ProductReportV13
   watchRoot?: string
   debounceMs?: number
   viewerRoot?: string
@@ -74,14 +74,14 @@ export interface LocalViewerOptions {
    * Repository root for the read-only asset mount.
    *
    * Reference targets resolve repository-relative, and product assets live
-   * beside the entity they describe, so the viewer serves from the repository
+   * beside the resource they describe, so the viewer serves from the repository
    * rather than only from `.businesslens/`. Omit it and the mount is off.
    */
   assetRoot?: string
 }
 
 interface ReportSnapshot {
-  report?: ProductReportV10
+  report?: ProductReportV13
   error?: string
   revision: number
 }
@@ -100,7 +100,7 @@ interface ReportEvent {
  * report means one temporarily invalid file never blanks the whole viewer.
  */
 class LocalReportStore {
-  private report?: ProductReportV10
+  private report?: ProductReportV13
   private serialized?: string
   private error?: string
   private revision = 0
@@ -169,7 +169,7 @@ class LocalReportStore {
       || Boolean(this.options.watchRoot && normalized === basename(this.options.watchRoot))
   }
 
-  private accept(report: ProductReportV10, notify: boolean, forceNotify = false): void {
+  private accept(report: ProductReportV13, notify: boolean, forceNotify = false): void {
     const serialized = JSON.stringify(report)
     const recovered = this.error !== undefined
     const changed = serialized !== this.serialized

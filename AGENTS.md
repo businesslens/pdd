@@ -14,9 +14,12 @@ Two engineering contracts, each changed *before* the behavior it governs:
   and expansion. Change it before changing `export`, `open`, `pull`,
   `contribute`, or anything the catalog server agrees with.
 
-Neither is a docs-site page. The user-facing explanation of the same entities
-lives in the Product Model group under `docs/`, and the two registers must not
-contradict each other.
+Neither is a docs-site page. The user-facing explanation of the same resource
+types lives in the Product Model group under `docs/`, and the two registers must
+not contradict each other.
+
+`spec/rejected.md` sits beside them and binds nothing: it records shapes that
+were costed and then chosen against, so the same argument is not had twice.
 
 ## Layout
 
@@ -43,7 +46,9 @@ contradict each other.
   `businesslens view`.
 - `skills/businesslens-*/SKILL.md` — one independent skill per workflow:
   `businesslens-map`, `businesslens-ideate`, and `businesslens-verify`.
-- `test/fixtures/fixture-shop/` — the golden lint fixture.
+- `test/fixtures/fixture-shop/` — the golden lint fixture. `npm run view:fixture`
+  opens it in the local report as its own repository, since its code references
+  resolve only from a Git root of its own.
 
 ## Documentation structure
 
@@ -57,18 +62,65 @@ contradict each other.
   characters so it never truncates; the body H1 carries the full page
   title.
 - This repository authors the documentation with groups Get started, Product
-  Model (one page per top-level entity), Integrations (one page per thing you
-  integrate with), Skills (one page per skill), and CLI (one page per command).
-- Each entity is explained in exactly one place. An entity page carries its
+  Model (one page per top-level resource type), Integrations (one page per
+  thing you integrate with), Skills (one page per skill), and CLI (one page per
+  command).
+- Each resource type is explained in exactly one place. Its page carries its
   narrative, when to create one, its file shape, and the `lint` findings
   that constrain it — do not reintroduce a separate glossary, a separate
   format page, or a separate error catalog.
-- An entity with a mandatory single parent is documented on its parent's page,
-  never on one of its own. Scenarios are the only such entity: Capability
-  Scenarios live in `docs/capabilities.md`, Journey Scenarios in
+- A resource type is documented on its parent's page when **its type name names
+  that parent** — never on one of its own. Scenarios are the only such types:
+  Capability Scenarios live in `docs/capabilities.md`, Journey Scenarios in
   `docs/journeys.md`. A page they shared would have to state the containment
   rule before either could be read, and a reader arrives already knowing which
-  parent they are authoring.
+  parent they are authoring. The test is the name, not the containment: an
+  Experience also sits inside exactly one Interface, and keeps its own page,
+  because nothing calls it an Interface Experience.
+
+## How format decisions are judged
+
+These constrain `spec/format.md` and `spec/report.md`. A change that contradicts
+one supersedes it explicitly; it does not route around it. Check
+`spec/rejected.md` before proposing a shape — much of what looks new has been
+costed already.
+
+- **The shipped agent, not the spec, is the standard.** A model is authored from
+  what installs — `SKILL.md` plus its `references/` — against an unfamiliar
+  repository, so a rule decidable only with the full spec in hand is decidable
+  nowhere that matters. Where a rule is sound but its distillation into the
+  rubric dropped what made it decidable, the defect is the **skill's** and the
+  fix is a rubric edit.
+- **Axes, ranked: determinism → reviewability → economy → falsifiability →
+  expressiveness → legibility → buildability.** Prefer removing author freedom
+  over adding it. A format that refuses to model something is honest and
+  visible; one that models a thing two valid ways is broken and invisible,
+  because both encodings lint clean. "An author might reasonably want it either
+  way" argues *against* a rule.
+- **Reviewability is second, and it is not legibility.** Divergence between two
+  lint-clean models concentrates in what is *absent*, which no delta shows, so
+  `docs/` is written for the reviewer: a resource type whose granularity cannot
+  be challenged from `docs/` is a candidate for removal.
+- **A determinism claim is established empirically**: map one product twice from
+  one rubric, independently, then diff. Both readings defensible is a defect in
+  the format and needs no adjudication; one plainly wrong against the spec is a
+  defect in the rubric. Validate a fix by re-running the test, never by
+  re-reading the wording. Every boundary deciding *how many* resources exist and
+  *which type* a thing is — Capability granularity, Interface against
+  Experience, Rule against Scenario, Domain cuts — is open by this measure, and
+  the human approval gate does not catch it; do not claim a change closed one
+  without a round that measures it.
+- **Descriptive and generative use are judged equally.** A rule phrased as an
+  evidence test is inert for `ideate` and `blueprint pull`. Restate it
+  structurally, or say the type means something in one direction only.
+- **The pull-request diff of `.businesslens/` is the binding human surface.**
+  Frontmatter density, key vocabularies, and relation encoding are judged as
+  diff artifacts. The report viewer is not a legibility instrument for the
+  format: a finding visible only there is evidence against the encoding.
+- **A container declares only a subset of what already resolves.** An optional
+  authored list may narrow or order a derived relation, never create one.
+- **Model it only when `lint` can say something specific.** Where the only
+  possible message is "unknown key", it does not belong in the model.
 
 ## Skill-writing standards
 
@@ -126,20 +178,23 @@ contradict each other.
   where the full material is — the file path.
 - **State must survive a recompile, and a refresh.** `businesslens view`
   recompiles on save, so focus and filter have to outlive an edit to the model.
-  The open section and the open entity page also live in the URL, so a reader
+  The open section and the open resource page also live in the URL, so a reader
   can link to what they are reading, walk back out of it, and reload into it.
 - **The page is the reading.** A collection row, relation, search result, or
-  topology entity opens the entity page directly. It has a URL, a breadcrumb,
-  the width its content was drawn for, and the browser's own back button.
-- **Overview and Scenarios are the page structure.** Overview carries the
-  entity's authored meaning, facts, Contexts, relations, supporting material,
+  topology resource opens the resource page directly. It has a URL, a
+  breadcrumb, the width its content was drawn for, and the browser's own back
+  button.
+- **Overview and one peer tab are the page structure.** Overview carries the
+  resource's authored meaning, facts, Contexts, relations, supporting material,
   and References. Capability and Journey pages add Scenarios as their only
-  second tab. Neighbourhood is an action into Topology, never another page tab.
-- **The rail lists kinds; kinds do not nest.** Containment belongs where
-  instances are — the default grouping of a collection and the entity page. A
-  mandatory child kind does not add a peer collection tab to its parent's main
-  screen. A rail that indents some kinds and not others advertises a hierarchy
-  it cannot keep.
+  second tab; an Entity with States adds Lifecycle, its composed machine and
+  what leaves a thing in each state. Neighbourhood is an action into Topology,
+  never another page tab.
+- **The rail lists resource types; they do not nest.** Containment belongs
+  where instances are — the default grouping of a collection and the resource
+  page. A mandatory child type does not add a peer collection tab to its
+  parent's main screen. A rail that indents some types and not others
+  advertises a hierarchy it cannot keep.
 - **Chrome scales with the collection.** No control costs a row above a
   two-item list, and a filter offer is not rendered where scanning is faster.
 - **Named views, not a view builder.** Filters narrow a view that already means
@@ -151,6 +206,19 @@ contradict each other.
   the point.
 - A view that needs a paragraph before it can be read is not ready to ship, and
   no view opens onto an empty configuration screen.
+- **The surface names the resource type; the row does not repeat it**, and a
+  fact appears once per screen.
+- **Counts where the set is many, names where the set is one** — in rows,
+  tables, and facts alike. Nothing renders an empty label: a missing hook or an
+  empty facet set shrinks the element rather than reserving space for what is
+  not there.
+- **A section renders as more than prose only when four things align**: a
+  recognized H2 in `spec/format.md`; a **required content shape** — bullet list,
+  H3 plus prose, or prose — enforced by `lint`; a typed field in
+  `src/core/portable.ts`; and a component that reads it. The content shape is
+  the row that gets skipped and the one that makes rendering possible. Where the
+  UI cannot render it differently from prose, leave it in `supportingSections`,
+  which round-trips losslessly.
 
 ## Change and release checks
 

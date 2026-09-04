@@ -9,8 +9,7 @@
  * This is the stable view projection used by the shipped report viewer.
  */
 import type {
-  ProductReportV10,
-  ReportActor,
+  ProductReportV13,
   ReportContext,
   ReportBusinessRule,
   ReportBusinessRuleTarget,
@@ -19,7 +18,11 @@ import type {
   ReportCoverage,
   ReportDecisionPoint,
   ReportDomain,
+  ReportEntity,
+  ReportEntityRelation,
   ReportExperience,
+  ReportGrant,
+  ReportGrantCondition,
   ReportInterface,
   ReportJourney,
   ReportJourneyScenario,
@@ -29,13 +32,29 @@ import type {
   ReportSupportingSection
 } from 'businesslens/report'
 
-export type ReportEntityKind =
+/**
+ * Split an authored `cardinality` into its two ends.
+ *
+ * A relation is authored once and read from both sides. The side that declares
+ * it reads the `target` end — how many of the other Entity it reaches — and the
+ * side it points at reads `source`. Copying one end onto both is how an Item
+ * came to claim many Sources on a page whose whole point was that it has one.
+ */
+export function relationEnds(cardinality: ReportEntityRelation['cardinality']): {
+  source: 'one' | 'many'
+  target: 'one' | 'many'
+} {
+  const [source, , target] = cardinality.split('-') as ['one' | 'many', string, 'one' | 'many']
+  return { source, target }
+}
+
+export type ReportResourceKind =
   | 'product'
-  | 'actor'
   | 'interface'
   | 'experience'
   | 'screen'
   | 'domain'
+  | 'entity'
   | 'capability'
   | 'journey'
   | 'capability-scenario'
@@ -50,11 +69,11 @@ export type ReportEntityKind =
  */
 export type ReportScenarioKind = 'capability-scenario' | 'journey-scenario'
 export type ReportScenarioType = 'capability' | 'journey'
-export type ReportEntityKey = string
+export type ReportResourceKey = string
 
 export const SCENARIO_KINDS: ReportScenarioKind[] = ['capability-scenario', 'journey-scenario']
 
-export function isScenarioKind(kind: ReportEntityKind): kind is ReportScenarioKind {
+export function isScenarioKind(kind: ReportResourceKind): kind is ReportScenarioKind {
   return kind === 'capability-scenario' || kind === 'journey-scenario'
 }
 
@@ -62,13 +81,13 @@ export function scenarioKindOf(type: ReportScenarioType): ReportScenarioKind {
   return type === 'capability' ? 'capability-scenario' : 'journey-scenario'
 }
 
-/** Stable UI identity; raw ids are unique only within an entity collection. */
-export function entityKey(kind: ReportEntityKind, id: string): ReportEntityKey {
+/** Stable UI identity; raw ids are unique only within a resource collection. */
+export function resourceKey(kind: ReportResourceKind, id: string): ReportResourceKey {
   return `${kind}:${id}`
 }
 
-export interface EntityKindMeta {
-  kind: ReportEntityKind
+export interface ResourceKindMeta {
+  kind: ReportResourceKind
   /** Singular label used in prose and inspectors. */
   label: string
   /** Plural label used for section headings and counts. */
@@ -78,29 +97,70 @@ export interface EntityKindMeta {
   slot: number
 }
 
-export const REPORT_ENTITY_KINDS: EntityKindMeta[] = [
-  { kind: 'actor', label: 'Actor', plural: 'Actors', icon: 'i-lucide-users', slot: 0 },
-  { kind: 'interface', label: 'Interface', plural: 'Interfaces', icon: 'i-lucide-plug', slot: 1 },
-  { kind: 'experience', label: 'Experience', plural: 'Experiences', icon: 'i-lucide-layout-panel-left', slot: 2 },
-  { kind: 'screen', label: 'Screen', plural: 'Screens', icon: 'i-lucide-monitor', slot: 3 },
-  { kind: 'domain', label: 'Domain', plural: 'Domains', icon: 'i-lucide-boxes', slot: 4 },
-  { kind: 'capability', label: 'Capability', plural: 'Capabilities', icon: 'i-lucide-zap', slot: 5 },
-  { kind: 'journey', label: 'Journey', plural: 'Journeys', icon: 'i-lucide-route', slot: 6 },
+/**
+ * Every kind, once, in rail order.
+ *
+ * The type annotation is doing real work here. This was two lists — an array of the rail
+ * kinds and a record spread from it, closed with `as Record<ReportResourceKind,
+ * ResourceKindMeta>` — and that cast asserted completeness instead of proving it.
+ * A kind added to `ReportResourceKind` and forgotten here compiled, then rendered
+ * `undefined.icon` and `undefined.plural` at runtime, which is exactly how
+ * Entity reached its own page with no icon and its rail row with no count.
+ *
+ * Insertion order is the rail order, and `Object.values` preserves it for
+ * string keys — so the ordered list below is derived rather than restated.
+ * Product sits last because it is the report itself, not a rail collection.
+ */
+export const ENTITY_KIND_META: Record<ReportResourceKind, ResourceKindMeta> = {
+  /*
+    Entity leads the rail and takes slot 0 outright. There is one resource type
+    for things — the people and systems that act on the Product included — so
+    the collection a reader opens first is the one that says who it is for and
+    what it keeps. Actor is the word for the subset that acts, and it is a facet
+    over this collection rather than a row of its own.
+  */
+  entity: { kind: 'entity', label: 'Entity', plural: 'Entities', icon: 'i-lucide-box', slot: 0 },
+  interface: { kind: 'interface', label: 'Interface', plural: 'Interfaces', icon: 'i-lucide-plug', slot: 1 },
+  experience: { kind: 'experience', label: 'Experience', plural: 'Experiences', icon: 'i-lucide-layout-panel-left', slot: 2 },
+  screen: { kind: 'screen', label: 'Screen', plural: 'Screens', icon: 'i-lucide-monitor', slot: 3 },
+  domain: { kind: 'domain', label: 'Domain', plural: 'Domains', icon: 'i-lucide-boxes', slot: 4 },
+  capability: { kind: 'capability', label: 'Capability', plural: 'Capabilities', icon: 'i-lucide-zap', slot: 5 },
+  journey: { kind: 'journey', label: 'Journey', plural: 'Journeys', icon: 'i-lucide-route', slot: 6 },
   /*
     Both Scenario kinds hold slot 7. Ten kinds is past the nine-slot categorical
     order, and the two that belong to one family are the honest pair to merge:
     the shared hue reads as "Scenario", and the icon, label and node sublabel
     carry the distinction — colour is never the only encoding here.
   */
-  { kind: 'capability-scenario', label: 'Capability Scenario', plural: 'Capability Scenarios', icon: 'i-lucide-list-checks', slot: 7 },
-  { kind: 'journey-scenario', label: 'Journey Scenario', plural: 'Journey Scenarios', icon: 'i-lucide-list-ordered', slot: 7 },
-  { kind: 'rule', label: 'Business rule', plural: 'Business rules', icon: 'i-lucide-scale', slot: 8 }
-]
+  'capability-scenario': { kind: 'capability-scenario', label: 'Capability Scenario', plural: 'Capability Scenarios', icon: 'i-lucide-list-checks', slot: 7 },
+  'journey-scenario': { kind: 'journey-scenario', label: 'Journey Scenario', plural: 'Journey Scenarios', icon: 'i-lucide-list-ordered', slot: 7 },
+  rule: { kind: 'rule', label: 'Business rule', plural: 'Business rules', icon: 'i-lucide-scale', slot: 8 },
+  product: { kind: 'product', label: 'Product', plural: 'Product', icon: 'i-lucide-package', slot: 9 }
+}
 
-export const ENTITY_KIND_META: Record<ReportEntityKind, EntityKindMeta> = {
-  product: { kind: 'product', label: 'Product', plural: 'Product', icon: 'i-lucide-package', slot: 9 },
-  ...Object.fromEntries(REPORT_ENTITY_KINDS.map(meta => [meta.kind, meta]))
-} as Record<ReportEntityKind, EntityKindMeta>
+/**
+ * A kind ordering that has to name every kind, checked when it is written.
+ *
+ * `EVERYTHING_SHELF_ORDER` was a plain `ReportResourceKind[]`, so adding Entity
+ * to the model left it out of the one view whose question is "the entire
+ * product, all at once" — and the kind filter, seeing no shelf for it, removed
+ * all thirteen. An ordering is the one place a missing kind is invisible: the
+ * list still looks complete, because nothing about it says what complete is.
+ *
+ * A missing kind turns the parameter into a shape no array satisfies, and the
+ * compiler names the absentee in the failure.
+ */
+export function everyKind<const T extends readonly ReportResourceKind[]>(
+  kinds: Exclude<ReportResourceKind, T[number]> extends never
+    ? T
+    : { orderingIsMissingResourceKind: Exclude<ReportResourceKind, T[number]> }
+): T {
+  return kinds as T
+}
+
+/** The rail collections, in rail order. Product is the report, not a collection. */
+export const REPORT_ENTITY_KINDS: ResourceKindMeta[] =
+  Object.values(ENTITY_KIND_META).filter(meta => meta.kind !== 'product')
 
 export const INTERFACE_TYPE_META: Record<ReportInterface['type'], { label: string, icon: string }> = {
   web: { label: 'Web', icon: 'i-lucide-globe' },
@@ -111,15 +171,21 @@ export const INTERFACE_TYPE_META: Record<ReportInterface['type'], { label: strin
   webhook: { label: 'Webhook', icon: 'i-lucide-webhook' },
   messaging: { label: 'Messaging', icon: 'i-lucide-messages-square' },
   voice: { label: 'Voice', icon: 'i-lucide-audio-lines' },
-  device: { label: 'Device', icon: 'i-lucide-cpu' }
+  device: { label: 'Device', icon: 'i-lucide-cpu' },
+  agent: { label: 'Agent', icon: 'i-lucide-bot' }
 }
 
-export const ACTOR_KIND_META: Record<ReportActor['kind'], { label: string, icon: string }> = {
+export type ActingKind = NonNullable<ReportEntity['kind']>
+export type ActingSide = NonNullable<ReportEntity['acts']>
+
+/** The mark an Entity that acts is drawn with: a person or a system. */
+export const ACTOR_KIND_META: Record<ActingKind, { label: string, icon: string }> = {
   person: { label: 'Person', icon: 'i-lucide-user-round' },
   system: { label: 'System', icon: 'i-lucide-cpu' }
 }
 
-export const ACTOR_RELATIONSHIP_META: Record<ReportActor['relationship'], { label: string }> = {
+/** Which side of the Product boundary an Entity acts from. */
+export const ACTOR_ACTS_META: Record<ActingSide, { label: string }> = {
   external: { label: 'External' },
   internal: { label: 'Internal' }
 }
@@ -146,10 +212,10 @@ export interface EntryPointView {
   key: string
 }
 
-interface EntityBase {
-  key: ReportEntityKey
+interface ResourceBase {
+  key: ReportResourceKey
   id: string
-  kind: ReportEntityKind
+  kind: ReportResourceKind
   title: string
   /** Lead prose: description, summary, or rule statement depending on kind. */
   lead: string
@@ -158,19 +224,7 @@ interface EntityBase {
   references: ReportReference[]
 }
 
-export interface ActorView extends EntityBase {
-  kind: 'actor'
-  actorKind: 'person' | 'system'
-  relationship: 'external' | 'internal'
-  interfaceIds: string[]
-  experienceIds: string[]
-  journeyIds: string[]
-  /* Scenarios name their Actors, so an Actor with no Journey still has behaviour. */
-  capabilityScenarioIds: string[]
-  journeyScenarioIds: string[]
-}
-
-export interface InterfaceView extends EntityBase {
+export interface InterfaceView extends ResourceBase {
   kind: 'interface'
   interfaceType: ReportInterface['type']
   actorIds: string[]
@@ -182,7 +236,7 @@ export interface InterfaceView extends EntityBase {
   journeyIds: string[]
 }
 
-export interface ExperienceView extends EntityBase {
+export interface ExperienceView extends ResourceBase {
   kind: 'experience'
   actorIds: string[]
   interfaceIds: string[]
@@ -196,7 +250,9 @@ export interface ExperienceView extends EntityBase {
   domainIds: string[]
 }
 
-export interface ScreenView extends EntityBase {
+export interface ScreenView extends ResourceBase {
+  /** The Entities this view presents, as authored. */
+  entityIds: string[]
   kind: 'screen'
   contexts: ContextView[]
   capabilityIds: string[]
@@ -219,10 +275,12 @@ export interface ScreenView extends EntityBase {
   domainIds: string[]
 }
 
-export interface DomainView extends EntityBase {
+export interface DomainView extends ResourceBase {
   kind: 'domain'
   /** Experiences reached through this Domain's Capabilities. Never authored. */
   experienceIds: string[]
+  /** Entities in this subject region. Authored on the Entity, read back here. */
+  entityIds: string[]
   colorSlot?: number
   capabilityIds: string[]
   journeyIds: string[]
@@ -230,9 +288,162 @@ export interface DomainView extends EntityBase {
   ruleIds: string[]
 }
 
-export interface CapabilityView extends EntityBase {
+/**
+ * A thing the Product keeps whose state an Actor observes. Its states are an
+ * authored lifecycle; a Screen's productStates are that view's own states, and
+ * the two are never merged.
+ */
+/** An authored relation, resolved for the side being read. */
+export interface EntityRelationView {
+  entityId: string
+  verb: string
+  /** How many of `entityId` the Entity being read relates to. */
+  cardinality: 'one' | 'many'
+  /**
+   * Both ends exactly as authored, source to target of the *declaring* side.
+   *
+   * A row reads one end and needs `cardinality`; a diagram draws the edge once
+   * and needs both. Only the declaring side's rows carry a meaningful `ends`,
+   * which is why an inbound row reads `cardinality` and never this.
+   */
+  ends: ReportEntityRelation['cardinality']
+}
+
+/**
+ * One state the thing can be in, and the Scenarios that leave it there.
+ *
+ * The back-link is derived, never authored: a Step names the Entity and the
+ * state it moves it to. Without it a lifecycle said what a thing can be and
+ * never what actually puts it there.
+ */
+export interface EntityStateView {
+  name: string
+  content: string
+  /** Capability Scenarios whose Steps leave the Entity in this state. */
+  capabilityScenarioIds: string[]
+  /** Journey Scenarios whose Steps leave the Entity in this state. */
+  journeyScenarioIds: string[]
+  /**
+   * Whether the composed lifecycle ever gets here. The first listed state is
+   * where a thing starts, so it is reached by construction; every other state
+   * has to be produced by some Step, and one that is not is drawn as unreached
+   * rather than dropped.
+   */
+  reached: boolean
+}
+
+/** A named fact the Product keeps, and the Rules that govern it. */
+export interface EntityFactView {
+  name: string
+  description: string
+  /** Rules whose Entity target names this fact — a derivation, or field-level visibility. */
+  ruleIds: string[]
+}
+
+/**
+ * One arc of the composed state machine.
+ *
+ * Nothing here is authored on the Entity. Every arc is a Step somewhere that
+ * creates, moves or removes the thing, grouped by what it does; its labels are
+ * the Capabilities those Steps belong to; its constraints are the Rules whose
+ * target selects that operation; and its co-effects are what the same Steps do
+ * to other things at the same time — the only place the model makes a
+ * combined cross-entity lifecycle visible.
+ */
+export interface EntityArcView {
+  key: string
+  effect: 'creates' | 'changes' | 'removes'
+  /** Empty for a creation. */
+  from: string
+  /** Empty for a removal, and for an information change. */
+  to: string
+  capabilityIds: string[]
+  capabilityScenarioIds: string[]
+  journeyScenarioIds: string[]
+  /** Rules with grants that select this operation. */
+  ruleIds: string[]
+  /** A Rule closing this operation to everyone; the arc is drawn as forbidden. */
+  forbiddenByRuleIds: string[]
+  coEffects: Array<{ entityId: string, effect: 'creates' | 'changes' | 'removes', to: string }>
+}
+
+/** An operation a Rule closes to everyone, read on the state it would leave. */
+export interface EntityProhibitionView {
+  ruleId: string
+  effect: 'creates' | 'changes' | 'removes' | 'reads' | ''
+  from: string
+  to: string
+}
+
+export interface EntityView extends ResourceBase {
+  kind: 'entity'
+  domainId?: string
+  /**
+   * `person` or `system` when the thing acts, else null. There is one resource
+   * type for things; "Actor" is the word for the subset that acts.
+   */
+  entityKind: ActingKind | null
+  /** Which side of the Product boundary it acts from, or null for a thing that does not act. */
+  acts: ActingSide | null
+  /** What the Product keeps about the thing, by name. Never how it is stored. */
+  informationKept: EntityFactView[]
+  states: EntityStateView[]
+  /** The composed lifecycle: every arc a Step draws, labelled, constrained, and with its co-effects. */
+  arcs: EntityArcView[]
+  /** Operations a Rule closes to everyone. */
+  prohibitions: EntityProhibitionView[]
+  /** Notes the page shows and lint never reports: a thing with states nothing creates, or nothing ends. */
+  noCreation: boolean
+  noTermination: boolean
+  /** Edges this Entity declares, each carrying how many of the target it reaches. */
+  relations: EntityRelationView[]
+  /**
+   * Edges other Entities declare at this one, flipped.
+   *
+   * `cardinality` here is the *source* end of the authored relation — how many
+   * of the other Entity this one relates to. A Source publishing many Items
+   * means an Item has one Source, and copying the authored end instead printed
+   * the opposite on the Item's page.
+   */
+  inboundRelations: EntityRelationView[]
+  /** Capabilities whose Steps create, change or remove this Entity. Derived. */
+  changedByIds: string[]
+  /** Capabilities whose Steps only read it. Derived, never merged into changedByIds. */
+  readByIds: string[]
+  /** Screens that declare presenting it. Derived. */
+  presentedOnIds: string[]
+  /** Rules with an Entity target naming this thing. Derived. */
+  ruleIds: string[]
+  /* Where it acts. Empty for a thing that does not act. */
+  interfaceIds: string[]
+  experienceIds: string[]
+  journeyIds: string[]
+  /** Scenarios whose Steps name it as an actor, performing or attributed. */
+  actorCapabilityScenarioIds: string[]
+  actorJourneyScenarioIds: string[]
+}
+
+/**
+ * What one Capability does to one Entity, aggregated over its Scenarios.
+ *
+ * One line per Entity, never a lifecycle fragment each: a Capability that
+ * touches thirteen things gets thirteen lines, which a page can carry, and not
+ * thirteen state machines, which it cannot.
+ */
+export interface CapabilityEntityEffectView {
+  entityId: string
+  effects: Array<{ effect: 'creates' | 'changes' | 'removes', from: string, to: string }>
+  scenarioIds: string[]
+}
+
+export interface CapabilityView extends ResourceBase {
   kind: 'capability'
   domainId?: string
+  /** The Entities its Scenarios' Steps create, change or remove. Derived, never authored. */
+  entityIds: string[]
+  /** The Entities its Steps only read. Derived, never merged into entityIds. */
+  readEntityIds: string[]
+  entityEffects: CapabilityEntityEffectView[]
   contexts: ContextView[]
   /** Capability Scenarios — the only direct acceptance coverage for this ability. */
   scenarioIds: string[]
@@ -245,7 +456,7 @@ export interface CapabilityView extends EntityBase {
   experienceIds: string[]
 }
 
-export interface JourneyView extends EntityBase {
+export interface JourneyView extends ResourceBase {
   kind: 'journey'
   actorIds: string[]
   capabilityIds: string[]
@@ -255,6 +466,10 @@ export interface JourneyView extends EntityBase {
   entryPoints: EntryPointView[]
   scenarioIds: string[]
   domainIds: string[]
+  /** Entities its Scenarios' Steps change. Derived, exactly as domainIds are. */
+  entityIds: string[]
+  /** Where its achieved Scenarios leave each thing they changed. Derived, beside the Success criterion. */
+  leavesBehind: ScenarioStepEntityView[]
   screenIds: string[]
   ruleIds: string[]
   interfaceIds: string[]
@@ -263,7 +478,32 @@ export interface JourneyView extends EntityBase {
   stepCount: number
 }
 
-export interface ScenarioView extends EntityBase {
+/**
+ * What one Step does to one Entity, as the wire carries it: the effect resolved,
+ * the alias for a second instance of one thing, and the states it leaves from
+ * and lands in. Nothing is derived from a neighbouring Step.
+ */
+export interface ScenarioStepEntityView {
+  entityId: string
+  /** Scenario-local instance alias, or empty. */
+  as: string
+  effect: 'creates' | 'changes' | 'removes' | 'reads'
+  from: string
+  to: string
+}
+
+export interface ScenarioView extends ResourceBase {
+  /** Entities the Steps create, change or remove. Derived, exactly as the Actor set is. */
+  entityIds: string[]
+  /** Entities the Steps only read. Derived, and never merged into entityIds. */
+  readEntityIds: string[]
+  /**
+   * Where each changed instance is left when the Scenario ends.
+   *
+   * The last non-read entry naming it, in Step order — which is what "what did
+   * this accomplish" means, and what the Outcome prose says in words.
+   */
+  outcomeStates: ScenarioStepEntityView[]
   kind: ReportScenarioKind
   scenarioType: ReportScenarioType
   capabilityId: string
@@ -283,6 +523,15 @@ export interface ScenarioView extends EntityBase {
     stepKind: 'actor' | 'product' | 'condition'
     actorId: string
     capabilityId: string
+    /**
+     * What this Step does to the Product's Entities, in authored order.
+     *
+     * A list because one observable act can move two things at once. The
+     * Scenario's `entityIds` is this set deduped across Steps, which answers
+     * *what* a Scenario touches but never *where*; the reading is the sequence,
+     * so the entries belong on the Step that causes them.
+     */
+    entities: ScenarioStepEntityView[]
     contexts: Array<{
       routeId: string
       context: ResolvedContextView
@@ -309,10 +558,36 @@ export interface ResolvedContextView {
   boundary: ContextView
 }
 
-export interface RuleView extends EntityBase {
+/** One grant, read back as a sentence a reader who never saw the format can judge. */
+export interface GrantView {
+  /** Who: the acting Entities, the path, the thing itself, the schedule, the gate. */
+  who: string
+  /** The conditions, each a phrase; AND-ed. */
+  when: string[]
+  sentence: string
+}
+
+export interface RuleEntityTargetView {
+  entityId: string
+  effect: 'creates' | 'changes' | 'removes' | 'reads' | ''
+  from: string
+  to: string
+  facts: string[]
+  contexts: ContextView[]
+}
+
+export interface RuleView extends ResourceBase {
   kind: 'rule'
   statement: string
   rationale: string
+  /** Entities its Entity targets name. */
+  entityIds: string[]
+  entityTargets: RuleEntityTargetView[]
+  /** Null when the Rule makes no authorization claim; empty when it forbids the operation to everyone. */
+  permits: ReportGrant[] | null
+  grants: GrantView[]
+  /** True exactly when `permits` is the empty list. */
+  prohibits: boolean
   /** Domains reached through targeted behavior; Domains are never authored Rule targets. */
   domainIds: string[]
   capabilityIds: string[]
@@ -326,12 +601,12 @@ export interface RuleView extends EntityBase {
   appliesTo: ReportBusinessRuleTarget[]
 }
 
-export type AnyEntityView =
-  | ActorView
+export type AnyResourceView =
   | InterfaceView
   | ExperienceView
   | ScreenView
   | DomainView
+  | EntityView
   | CapabilityView
   | JourneyView
   | ScenarioView
@@ -358,11 +633,13 @@ export interface ReportIdentity {
 }
 
 export interface WorkspaceCounts {
+  /** Entities that act. A facet of `entities`, not a collection of its own. */
   actors: number
   interfaces: number
   experiences: number
   screens: number
   domains: number
+  entities: number
   capabilities: number
   journeys: number
   capabilityScenarios: number
@@ -382,10 +659,10 @@ export interface WorkspaceCounts {
 
 export interface ReferenceGroup {
   reference: ReportReference
-  ownerKey: ReportEntityKey | ''
+  ownerKey: ReportResourceKey | ''
   ownerId: string
   ownerTitle: string
-  ownerKind: ReportEntityKind
+  ownerKind: ReportResourceKind
 }
 
 export interface ReportWorkspace {
@@ -393,11 +670,13 @@ export interface ReportWorkspace {
   coverage: ReportCoverage
   counts: WorkspaceCounts
   scenarioKinds: Array<{ id: string, name: string, description: string, slot: number, count: number }>
-  actors: ActorView[]
+  /** The Entities that act, in authored order: the "Actors" facet of `entities`. */
+  actingEntities: EntityView[]
   interfaces: InterfaceView[]
   experiences: ExperienceView[]
   screens: ScreenView[]
   domains: DomainView[]
+  entities: EntityView[]
   capabilities: CapabilityView[]
   journeys: JourneyView[]
   capabilityScenarios: ScenarioView[]
@@ -406,12 +685,12 @@ export interface ReportWorkspace {
   rules: RuleView[]
   /** Every distinct Context declared or derived in the model. */
   contexts: ContextView[]
-  /** All references in the model, each tagged with the entity that owns it. */
+  /** All references in the model, each tagged with the resource that owns it. */
   references: ReferenceGroup[]
   /** Collision-safe lookup used by navigation, selection, and graphs. */
-  byKey: Map<ReportEntityKey, AnyEntityView>
+  byKey: Map<ReportResourceKey, AnyResourceView>
   /** Raw-id index retained for diagnostics and explicitly typed resolution. */
-  entitiesById: Map<string, AnyEntityView[]>
+  resourcesById: Map<string, AnyResourceView[]>
   /** Scenarios grouped by their parent Journey, in authored order. */
   scenariosByJourney: Map<string, ScenarioView[]>
   /** Scenarios grouped by their parent Capability, in authored order. */
@@ -501,7 +780,7 @@ function entryPoints(
  * once — a Business Rule lists its Capabilities, a Capability never lists its
  * Rules — so every backlink here is derived, never authored.
  */
-export function projectReportWorkspace(report: ProductReportV10): ReportWorkspace {
+export function projectReportWorkspace(report: ProductReportV13): ReportWorkspace {
   const model = report.model
   const interfaceOf = (interfaceId: string): ReportInterface => {
     const productInterface = model.interfaces.find(item => item.id === interfaceId)
@@ -617,6 +896,7 @@ export function projectReportWorkspace(report: ProductReportV10): ReportWorkspac
   const rulesByDomain = new Map<string, string[]>()
   const rulesByJourney = new Map<string, string[]>()
   const rulesByScenario = new Map<string, string[]>()
+  const rulesByEntity = new Map<string, string[]>()
   const screensByScenario = new Map<string, string[]>()
   const journeysByActor = new Map<string, string[]>()
   const experiencesByActor = new Map<string, string[]>()
@@ -636,6 +916,7 @@ export function projectReportWorkspace(report: ProductReportV10): ReportWorkspac
     const capabilityScenarioIds = targetIds('capability-scenario')
     const journeyIds = targetIds('journey')
     const journeyScenarioIds = targetIds('journey-scenario')
+    const entityIds = unique(rule.appliesTo.flatMap(target => target.type === 'entity' ? [target.entityId] : []))
     const backlinkCapabilityIds = unique([
       ...capabilityIds,
       ...capabilityScenarioIds
@@ -656,12 +937,16 @@ export function projectReportWorkspace(report: ProductReportV10): ReportWorkspac
       ...journeyScenarioIds.flatMap(id => journeyScenarioById.get(id)?.steps
         .flatMap(item => item.capabilityId ? [item.capabilityId] : []) || [])
     ])
-    const domainIds = unique(domainCapabilityIds
-      .map(id => capabilityById.get(id)?.domainId)
-      .filter((id): id is string => Boolean(id)))
+    const domainIds = unique([
+      ...domainCapabilityIds.map(id => capabilityById.get(id)?.domainId),
+      ...entityIds.map(id => model.entities.find(entity => entity.id === id)?.domainId)
+    ].filter((id): id is string => Boolean(id)))
     const contexts = uniqueContexts(rule.appliesTo.flatMap((target) => {
       if (target.type === 'context') return [resolveContext(target.context)]
       if (target.contexts.length) return target.contexts.map(resolveContext)
+      /* An Entity target with no place scope governs the thing wherever it is,
+         which is nowhere in particular. */
+      if (target.type === 'entity') return []
       if (target.type === 'capability') {
         const capability = capabilityById.get(target.id)
         return capability ? contextsOf(capability.availability) : []
@@ -679,6 +964,7 @@ export function projectReportWorkspace(report: ProductReportV10): ReportWorkspac
       capabilityScenarioIds,
       journeyIds,
       journeyScenarioIds,
+      entityIds,
       backlinkCapabilityIds,
       backlinkJourneyIds,
       derivedCapabilityIds,
@@ -721,25 +1007,8 @@ export function projectReportWorkspace(report: ProductReportV10): ReportWorkspac
     for (const scenarioId of [...relations.capabilityScenarioIds, ...relations.journeyScenarioIds]) {
       push(rulesByScenario, scenarioId, rule.id)
     }
+    for (const entityId of relations.entityIds) push(rulesByEntity, entityId, rule.id)
   }
-
-  const actors: ActorView[] = model.actors.map((actor: ReportActor) => ({
-    key: entityKey('actor', actor.id),
-    id: actor.id,
-    kind: 'actor',
-    title: actor.name,
-    lead: actor.description,
-    intent: actor.intent,
-    supportingContent: supportingMarkdown(actor.supportingSections),
-    references: actor.references,
-    actorKind: actor.kind,
-    relationship: actor.relationship,
-    interfaceIds: interfacesByActor.get(actor.id) || [],
-    experienceIds: experiencesByActor.get(actor.id) || [],
-    journeyIds: journeysByActor.get(actor.id) || [],
-    capabilityScenarioIds: capabilityScenariosByActor.get(actor.id) || [],
-    journeyScenarioIds: journeyScenariosByActor.get(actor.id) || []
-  }))
 
   const interfaces: InterfaceView[] = model.interfaces.map((item: ReportInterface) => {
     const experienceIds = experiencesByInterface.get(item.id) || []
@@ -747,7 +1016,7 @@ export function projectReportWorkspace(report: ProductReportV10): ReportWorkspac
       contexts.some(context => context.placeId === item.id || context.placeId.startsWith(`${item.id}::`))
     const containsScreen = (screen: ReportScreen) => screen.id.startsWith(`${item.id}::`)
     return {
-      key: entityKey('interface', item.id),
+      key: resourceKey('interface', item.id),
       id: item.id,
       kind: 'interface',
       title: item.title,
@@ -780,7 +1049,7 @@ export function projectReportWorkspace(report: ProductReportV10): ReportWorkspac
       contexts.some(context => context.placeId === item.id)
     const containsScreen = (screen: ReportScreen) => screen.id.startsWith(`${item.id}::`)
     return {
-      key: entityKey('experience', item.id),
+      key: resourceKey('experience', item.id),
       id: item.id,
       kind: 'experience',
       title: item.title,
@@ -809,7 +1078,8 @@ export function projectReportWorkspace(report: ProductReportV10): ReportWorkspac
       .filter(journey => journey.capabilityIds.some(id => screen.capabilityIds.includes(id)))
       .map(journey => journey.id))
     return {
-      key: entityKey('screen', screen.id),
+      key: resourceKey('screen', screen.id),
+      entityIds: screen.entityIds,
       id: screen.id,
       kind: 'screen',
       title: screen.title,
@@ -836,10 +1106,184 @@ export function projectReportWorkspace(report: ProductReportV10): ReportWorkspac
     }
   })
 
+  /*
+   * Everything the Steps say about every Entity, indexed once.
+   *
+   * The lifecycle is composed here and nowhere else: which Scenarios leave a
+   * thing in which state, which Capabilities change it, and every arc a Step
+   * draws. Keyed on (Entity, state), because two Entities may both have a
+   * "Draft" and merging them would put one thing's acceptance cases on another
+   * thing's lifecycle.
+   */
+  const scenarioOwner = (scenario: ReportCapabilityScenario | ReportJourneyScenario, step: { capabilityId: string | null }) =>
+    'capabilityId' in scenario ? scenario.capabilityId : step.capabilityId ?? ''
+  const isCapabilityScenario = (scenario: ReportCapabilityScenario | ReportJourneyScenario): scenario is ReportCapabilityScenario =>
+    'capabilityId' in scenario
+  const scenariosByState = new Map<string, { capability: string[], journey: string[] }>()
+  const changedBy = new Map<string, Set<string>>()
+  const readBy = new Map<string, Set<string>>()
+  type ArcAccumulator = Omit<EntityArcView, 'capabilityIds' | 'capabilityScenarioIds' | 'journeyScenarioIds' | 'ruleIds' | 'forbiddenByRuleIds' | 'coEffects'> & {
+    capabilityIds: Set<string>
+    capabilityScenarioIds: Set<string>
+    journeyScenarioIds: Set<string>
+    coEffects: Map<string, EntityArcView['coEffects'][number]>
+  }
+  const arcsByEntity = new Map<string, Map<string, ArcAccumulator>>()
+  for (const scenario of allReportScenarios) {
+    for (const step of scenario.steps) {
+      const owner = scenarioOwner(scenario, step)
+      for (const entry of step.entities) {
+        if (entry.effect === 'reads') {
+          if (owner) readBy.set(entry.entityId, new Set([...(readBy.get(entry.entityId) ?? []), owner]))
+          continue
+        }
+        if (owner) changedBy.set(entry.entityId, new Set([...(changedBy.get(entry.entityId) ?? []), owner]))
+        if (entry.to) {
+          const key = `${entry.entityId}\u0000${entry.to}`
+          const found = scenariosByState.get(key) ?? { capability: [], journey: [] }
+          const bucket = isCapabilityScenario(scenario) ? found.capability : found.journey
+          if (!bucket.includes(scenario.id)) bucket.push(scenario.id)
+          scenariosByState.set(key, found)
+        }
+        const arcKey = `${entry.effect}\u0000${entry.from ?? ''}\u0000${entry.to ?? ''}`
+        const arcs = arcsByEntity.get(entry.entityId) ?? new Map<string, ArcAccumulator>()
+        const arc = arcs.get(arcKey) ?? {
+          key: arcKey,
+          effect: entry.effect,
+          from: entry.from ?? '',
+          to: entry.to ?? '',
+          capabilityIds: new Set<string>(),
+          capabilityScenarioIds: new Set<string>(),
+          journeyScenarioIds: new Set<string>(),
+          coEffects: new Map()
+        }
+        if (owner) arc.capabilityIds.add(owner)
+        if (isCapabilityScenario(scenario)) arc.capabilityScenarioIds.add(scenario.id)
+        else arc.journeyScenarioIds.add(scenario.id)
+        for (const other of step.entities) {
+          if (other === entry || other.effect === 'reads' || other.entityId === entry.entityId) continue
+          const coKey = `${other.entityId}\u0000${other.effect}\u0000${other.to ?? ''}`
+          if (!arc.coEffects.has(coKey)) arc.coEffects.set(coKey, { entityId: other.entityId, effect: other.effect, to: other.to ?? '' })
+        }
+        arcs.set(arcKey, arc)
+        arcsByEntity.set(entry.entityId, arcs)
+      }
+    }
+  }
+
+  /* A Rule's Entity target selects an arc by the same keys the Step carries.
+     A target scoped by `contexts` governs the operation only at those places.
+     Validation resolves a Step's places — its own, or its Scenario's when it
+     omits `contexts` — and holds the Rule to them; an arc cannot, because it is
+     one aggregate over every Step that performs the move, drawn for the whole
+     Product. Restricting it globally would overstate the Rule, so it is left
+     off and reaches the Entity page through its Rule relations instead. A
+     target naming `facts` governs information, not an operation, and is left
+     off for the same reason. */
+  const targetSelects = (
+    target: Extract<ReportBusinessRuleTarget, { type: 'entity' }>,
+    entityId: string,
+    effect: string,
+    from: string,
+    to: string
+  ) => target.entityId === entityId
+    && !target.facts.length
+    && !target.contexts.length
+    && (target.effect === null || target.effect === effect)
+    && (target.from === null || target.from === from)
+    && (target.to === null || target.to === to)
+  const rulesSelecting = (entityId: string, effect: string, from: string, to: string, closed: boolean) =>
+    model.businessRules
+      .filter(rule => rule.permits !== null && (closed ? rule.permits.length === 0 : rule.permits.length > 0)
+        && rule.appliesTo.some(target => target.type === 'entity' && targetSelects(target, entityId, effect, from, to)))
+      .map(rule => rule.id)
+
+  const entities: EntityView[] = model.entities.map((entity: ReportEntity) => {
+    const first = entity.states[0]?.name ?? ''
+    const arcs: EntityArcView[] = [...(arcsByEntity.get(entity.id)?.values() ?? [])].map(arc => ({
+      key: arc.key,
+      effect: arc.effect,
+      from: arc.from,
+      to: arc.to,
+      capabilityIds: [...arc.capabilityIds].sort(),
+      capabilityScenarioIds: [...arc.capabilityScenarioIds],
+      journeyScenarioIds: [...arc.journeyScenarioIds],
+      ruleIds: rulesSelecting(entity.id, arc.effect, arc.from, arc.to, false),
+      forbiddenByRuleIds: rulesSelecting(entity.id, arc.effect, arc.from, arc.to, true),
+      coEffects: [...arc.coEffects.values()]
+    }))
+    const produced = new Set(arcs.map(arc => arc.to).filter(Boolean))
+    const prohibitions: EntityProhibitionView[] = model.businessRules
+      .filter(rule => rule.permits !== null && rule.permits.length === 0)
+      .flatMap(rule => rule.appliesTo
+        .filter((target): target is Extract<ReportBusinessRuleTarget, { type: 'entity' }> =>
+          target.type === 'entity' && target.entityId === entity.id)
+        .map(target => ({ ruleId: rule.id, effect: target.effect ?? '', from: target.from ?? '', to: target.to ?? '' })))
+    const factRules = (name: string) => model.businessRules
+      .filter(rule => rule.appliesTo.some(target => target.type === 'entity' && target.entityId === entity.id && target.facts.includes(name)))
+      .map(rule => rule.id)
+    return {
+      key: resourceKey('entity', entity.id),
+      id: entity.id,
+      kind: 'entity' as const,
+      title: entity.title,
+      lead: entity.description,
+      intent: entity.intent,
+      supportingContent: supportingMarkdown(entity.supportingSections),
+      references: entity.references,
+      domainId: entity.domainId,
+      entityKind: entity.kind,
+      acts: entity.acts,
+      informationKept: entity.informationKept.map(fact => ({
+        name: fact.name,
+        description: fact.description,
+        ruleIds: factRules(fact.name)
+      })),
+      relations: entity.relations.map(r => ({
+        entityId: r.entityId,
+        verb: r.verb,
+        cardinality: relationEnds(r.cardinality).target,
+        ends: r.cardinality
+      })),
+      // The inverse is derived so the two sides can never disagree.
+      inboundRelations: model.entities
+        .filter(other => other.id !== entity.id)
+        .flatMap(other => other.relations
+          .filter(r => r.entityId === entity.id)
+          .map(r => ({
+            entityId: other.id,
+            verb: r.verb,
+            cardinality: relationEnds(r.cardinality).source,
+            ends: r.cardinality
+          }))),
+      changedByIds: [...(changedBy.get(entity.id) ?? [])].sort(),
+      readByIds: [...(readBy.get(entity.id) ?? [])].filter(id => !changedBy.get(entity.id)?.has(id)).sort(),
+      presentedOnIds: model.screens.filter(sc => sc.entityIds.includes(entity.id)).map(sc => sc.id),
+      ruleIds: rulesByEntity.get(entity.id) || [],
+      states: entity.states.map(state => ({
+        name: state.name,
+        content: state.content,
+        capabilityScenarioIds: scenariosByState.get(`${entity.id}\u0000${state.name}`)?.capability ?? [],
+        journeyScenarioIds: scenariosByState.get(`${entity.id}\u0000${state.name}`)?.journey ?? [],
+        reached: state.name === first || produced.has(state.name)
+      })),
+      arcs,
+      prohibitions,
+      noCreation: entity.states.length > 0 && !arcs.some(arc => arc.effect === 'creates'),
+      noTermination: entity.states.length > 0 && !arcs.some(arc => arc.effect === 'removes'),
+      interfaceIds: interfacesByActor.get(entity.id) || [],
+      experienceIds: experiencesByActor.get(entity.id) || [],
+      journeyIds: journeysByActor.get(entity.id) || [],
+      actorCapabilityScenarioIds: capabilityScenariosByActor.get(entity.id) || [],
+      actorJourneyScenarioIds: journeyScenariosByActor.get(entity.id) || []
+    }
+  })
+  const actingEntities = entities.filter(entity => entity.acts !== null)
+
   const domains: DomainView[] = model.domains.map((domain: ReportDomain) => {
     const capabilityIds = model.capabilities.filter(c => c.domainId === domain.id).map(c => c.id)
     return {
-      key: entityKey('domain', domain.id),
+      key: resourceKey('domain', domain.id),
       id: domain.id,
       kind: 'domain',
       title: domain.name,
@@ -849,6 +1293,7 @@ export function projectReportWorkspace(report: ProductReportV10): ReportWorkspac
       references: domain.references,
       colorSlot: domain.colorSlot,
       capabilityIds,
+      entityIds: model.entities.filter(entity => entity.domainId === domain.id).map(entity => entity.id),
       journeyIds: unique(capabilityIds.flatMap(id => journeysByCapability.get(id) || [])),
       screenIds: unique(capabilityIds.flatMap(id => screensByCapability.get(id) || [])),
       experienceIds: unique(model.capabilities
@@ -864,9 +1309,34 @@ export function projectReportWorkspace(report: ProductReportV10): ReportWorkspac
 
   const capabilities: CapabilityView[] = model.capabilities.map((capability: ReportCapability) => {
     const contexts = contextsOf(capability.availability)
+    /* What a Capability does to each thing, read off every Step of every
+       Scenario that belongs to it — its own, and Journey Steps that name it. */
+    const effects = new Map<string, CapabilityEntityEffectView>()
+    const readIds = new Set<string>()
+    for (const scenario of allReportScenarios) {
+      for (const step of scenario.steps) {
+        if (scenarioOwner(scenario, step) !== capability.id) continue
+        for (const entry of step.entities) {
+          if (entry.effect === 'reads') {
+            readIds.add(entry.entityId)
+            continue
+          }
+          const line = effects.get(entry.entityId) ?? { entityId: entry.entityId, effects: [], scenarioIds: [] }
+          if (!line.effects.some(item => item.effect === entry.effect && item.from === (entry.from ?? '') && item.to === (entry.to ?? ''))) {
+            line.effects.push({ effect: entry.effect, from: entry.from ?? '', to: entry.to ?? '' })
+          }
+          if (!line.scenarioIds.includes(scenario.id)) line.scenarioIds.push(scenario.id)
+          effects.set(entry.entityId, line)
+        }
+      }
+    }
+    const entityIds = [...effects.keys()].sort()
     return {
-      key: entityKey('capability', capability.id),
+      key: resourceKey('capability', capability.id),
       id: capability.id,
+      entityIds,
+      readEntityIds: [...readIds].filter(id => !effects.has(id)).sort(),
+      entityEffects: entityIds.map(id => effects.get(id)!),
       kind: 'capability',
       title: capability.title,
       lead: capability.description,
@@ -887,12 +1357,49 @@ export function projectReportWorkspace(report: ProductReportV10): ReportWorkspac
     }
   })
 
+  const outcomeStates = (steps: ScenarioView['steps']): ScenarioStepEntityView[] => {
+    const last = new Map<string, ScenarioStepEntityView>()
+    for (const step of steps) {
+      for (const entry of step.entities) {
+        if (entry.effect === 'reads') continue
+        last.set(`${entry.entityId}\u0000${entry.as}`, entry)
+      }
+    }
+    /*
+     * Everything it changed, not only what carries a state. A reader arrives at
+     * the Outcome asking what the Scenario produced, and an empty line there is
+     * a worse answer than one that repeats the subject band.
+     */
+    return [...last.values()]
+  }
+
+  const scenarioSteps = (
+    scenario: ReportCapabilityScenario | ReportJourneyScenario
+  ): ScenarioView['steps'] =>
+    scenario.steps.map(step => ({
+      text: step.text,
+      stepKind: step.kind,
+      actorId: step.actorId ?? '',
+      capabilityId: step.capabilityId ?? '',
+      entities: step.entities.map(entry => ({
+        entityId: entry.entityId,
+        as: entry.as ?? '',
+        effect: entry.effect,
+        from: entry.from ?? '',
+        to: entry.to ?? ''
+      })),
+      contexts: step.contexts.map(context => ({
+        routeId: context.routeId,
+        context: placeOf(context.placeId)
+      }))
+    }))
+
   const journeys: JourneyView[] = model.journeys.map((journey: ReportJourney) => {
     const contexts = journeyContexts(journey.id)
     const journeyScenarios = journeyScenariosOf(journey.id)
     const scenarioIds = journeyScenarios.map(scenario => scenario.id)
     return {
-      key: entityKey('journey', journey.id),
+      key: resourceKey('journey', journey.id),
       id: journey.id,
       kind: 'journey',
       title: journey.title,
@@ -910,6 +1417,14 @@ export function projectReportWorkspace(report: ProductReportV10): ReportWorkspac
       domainIds: unique(journey.capabilityIds
         .map(id => capabilityById.get(id)?.domainId)
         .filter((id): id is string => Boolean(id))),
+      /* Its Scenarios' Steps, not its Capabilities' declarations: a Journey
+         moves what it is actually shown moving, and a Capability it uses may
+         change things no path through this Journey ever reaches. */
+      entityIds: unique(journeyScenarios.flatMap(scenario => scenario.steps
+        .flatMap(step => step.entities.filter(entry => entry.effect !== 'reads').map(entry => entry.entityId)))),
+      leavesBehind: outcomeStates(journeyScenarios
+        .filter(scenario => scenario.result === 'achieved')
+        .flatMap(scenario => scenarioSteps(scenario))),
       screenIds: unique([
         ...scenarioIds.flatMap(id => screensByScenario.get(id) || []),
         ...journey.capabilityIds.flatMap(id => screensByCapability.get(id) || [])
@@ -924,24 +1439,16 @@ export function projectReportWorkspace(report: ProductReportV10): ReportWorkspac
     }
   })
 
-  const scenarioSteps = (scenario: ReportCapabilityScenario | ReportJourneyScenario): ScenarioView['steps'] =>
-    scenario.steps.map(step => ({
-      text: step.text,
-      stepKind: step.kind,
-      actorId: step.actorId ?? '',
-      capabilityId: step.capabilityId ?? '',
-      contexts: step.contexts.map(context => ({
-        routeId: context.routeId,
-        context: placeOf(context.placeId)
-      }))
-    }))
 
   const capabilityScenarios: ScenarioView[] = model.capabilityScenarios.map((scenario: ReportCapabilityScenario) => {
     const kind = kindBySlot.get(scenario.kindId)
     return {
-      key: entityKey('capability-scenario', scenario.id),
+      key: resourceKey('capability-scenario', scenario.id),
       id: scenario.id,
       kind: 'capability-scenario',
+      entityIds: unique(scenario.steps.flatMap(step => step.entities.filter(entry => entry.effect !== 'reads').map(entry => entry.entityId))),
+      readEntityIds: unique(scenario.steps.flatMap(step => step.entities.filter(entry => entry.effect === 'reads').map(entry => entry.entityId)))
+        .filter(id => !scenario.steps.some(step => step.entities.some(entry => entry.entityId === id && entry.effect !== 'reads'))),
       title: scenario.title,
       lead: scenario.trigger,
       intent: scenario.intent,
@@ -960,6 +1467,7 @@ export function projectReportWorkspace(report: ProductReportV10): ReportWorkspac
       trigger: scenario.trigger,
       routes: scenario.routes,
       steps: scenarioSteps(scenario),
+      outcomeStates: outcomeStates(scenarioSteps(scenario)),
       decisionPoints: scenario.decisionPoints,
       outcome: scenario.outcome,
       edgeCases: scenario.edgeCases,
@@ -972,9 +1480,12 @@ export function projectReportWorkspace(report: ProductReportV10): ReportWorkspac
   const journeyScenarios: ScenarioView[] = model.journeyScenarios.map((scenario: ReportJourneyScenario) => {
     const kind = kindBySlot.get(scenario.kindId)
     return {
-      key: entityKey('journey-scenario', scenario.id),
+      key: resourceKey('journey-scenario', scenario.id),
       id: scenario.id,
       kind: 'journey-scenario',
+      entityIds: unique(scenario.steps.flatMap(step => step.entities.filter(entry => entry.effect !== 'reads').map(entry => entry.entityId))),
+      readEntityIds: unique(scenario.steps.flatMap(step => step.entities.filter(entry => entry.effect === 'reads').map(entry => entry.entityId)))
+        .filter(id => !scenario.steps.some(step => step.entities.some(entry => entry.entityId === id && entry.effect !== 'reads'))),
       title: scenario.title,
       lead: scenario.trigger,
       intent: scenario.intent,
@@ -993,6 +1504,7 @@ export function projectReportWorkspace(report: ProductReportV10): ReportWorkspac
       trigger: scenario.trigger,
       routes: scenario.routes,
       steps: scenarioSteps(scenario),
+      outcomeStates: outcomeStates(scenarioSteps(scenario)),
       decisionPoints: scenario.decisionPoints,
       outcome: scenario.outcome,
       edgeCases: scenario.edgeCases,
@@ -1004,10 +1516,73 @@ export function projectReportWorkspace(report: ProductReportV10): ReportWorkspac
 
   const scenarios: ScenarioView[] = [...capabilityScenarios, ...journeyScenarios]
 
+  const entityTitle = (id: string) => titleOf(model.entities, id)
+  const describeValue = (value: ReportGrantCondition['value']): string => {
+    if (value === null) return ''
+    if (typeof value === 'object') return `the ${entityTitle(value.configuredByEntityId)} threshold`
+    return String(value)
+  }
+  const describeCondition = (condition: ReportGrantCondition, targetId: string): string => {
+    if (condition.state !== null) return `while ${condition.state}`
+    const subject = condition.entityId && condition.entityId !== targetId
+      ? `${entityTitle(condition.entityId)}'s ${condition.fact}`
+      : condition.fact ?? ''
+    switch (condition.operator) {
+      case 'over': return `${subject} over ${describeValue(condition.value)}`
+      case 'under': return `${subject} under ${describeValue(condition.value)}`
+      case 'at-least': return `${subject} at least ${describeValue(condition.value)}`
+      case 'at-most': return `${subject} at most ${describeValue(condition.value)}`
+      case 'is': return `${subject} is ${describeValue(condition.value)}`
+      case 'is-not': return `${subject} is not ${describeValue(condition.value)}`
+      case 'present': return `${subject} is present`
+      case 'absent': return `${subject} is absent`
+      default: return subject
+    }
+  }
+  /*
+   * A grant read back as a sentence, so a reader who never saw the format can
+   * tell it is wrong. Keys within a grant are AND, so the who-parts join with
+   * "and" and the conditions follow "when".
+   */
+  const describeGrant = (grant: ReportGrant, targetId: string): GrantView => {
+    const who: string[] = []
+    if (grant.actorIds.length) who.push(grant.actorIds.map(entityTitle).join(' or '))
+    if (grant.related.length) {
+      const end = grant.related[grant.related.length - 1]!
+      const path = grant.related.map(segment => segment.verb).join(' → ')
+      who.push(`the ${entityTitle(end.entityId)} related by ${path}`)
+    }
+    if (grant.self) who.push('the thing itself')
+    if (grant.unattended) who.push("the Product's own schedule")
+    if (grant.configuredByEntityId) who.push(`whoever ${entityTitle(grant.configuredByEntityId)} configures`)
+    const when = grant.when.map(condition => describeCondition(condition, targetId))
+    const subject = who.join(' and ') || 'nobody'
+    // A state condition already reads "while Pending"; a fact condition needs
+    // its "when". "the Shopper related by owns while Pending", never "when while".
+    const clauses = when.map(clause => clause.startsWith('while ') ? clause : `when ${clause}`)
+    return { who: subject, when, sentence: clauses.length ? `${subject} ${clauses.join(' and ')}` : subject }
+  }
+
   const rules: RuleView[] = model.businessRules.map((rule: ReportBusinessRule) => {
     const relations = ruleRelationsById.get(rule.id)!
+    const entityTargets: RuleEntityTargetView[] = rule.appliesTo.flatMap(target => target.type === 'entity'
+      ? [{
+          entityId: target.entityId,
+          effect: target.effect ?? '',
+          from: target.from ?? '',
+          to: target.to ?? '',
+          facts: target.facts,
+          contexts: target.contexts.map(resolveContext)
+        }]
+      : [])
+    const targetId = entityTargets[0]?.entityId ?? ''
     return {
-      key: entityKey('rule', rule.id),
+      entityIds: relations.entityIds,
+      entityTargets,
+      permits: rule.permits,
+      grants: (rule.permits ?? []).map(grant => describeGrant(grant, targetId)),
+      prohibits: rule.permits !== null && rule.permits.length === 0,
+      key: resourceKey('rule', rule.id),
       id: rule.id,
       kind: 'rule',
       title: rule.title,
@@ -1030,8 +1605,8 @@ export function projectReportWorkspace(report: ProductReportV10): ReportWorkspac
     }
   })
 
-  const allEntities: AnyEntityView[] = [
-    ...actors,
+  const allResources: AnyResourceView[] = [
+    ...entities,
     ...interfaces,
     ...experiences,
     ...screens,
@@ -1050,18 +1625,18 @@ export function projectReportWorkspace(report: ProductReportV10): ReportWorkspac
       ownerTitle: report.title,
       ownerKind: 'product' as const
     })),
-    ...allEntities.flatMap(entity => entity.references.map(reference => ({
+    ...allResources.flatMap(resource => resource.references.map(reference => ({
       reference,
-      ownerKey: entity.key,
-      ownerId: entity.id,
-      ownerTitle: entity.title,
-      ownerKind: entity.kind
+      ownerKey: resource.key,
+      ownerId: resource.id,
+      ownerTitle: resource.title,
+      ownerKind: resource.kind
     })))
   ]
 
   const contextSeen = new Map<string, ContextView>()
-  for (const entity of allEntities) {
-    const contexts = (entity as { contexts?: ContextView[] }).contexts || []
+  for (const resource of allResources) {
+    const contexts = (resource as { contexts?: ContextView[] }).contexts || []
     for (const context of contexts) if (!contextSeen.has(context.key)) contextSeen.set(context.key, context)
   }
   // Every Experience declares its Interfaces even when nothing is mapped to the
@@ -1086,11 +1661,12 @@ export function projectReportWorkspace(report: ProductReportV10): ReportWorkspac
   }
 
   const counts: WorkspaceCounts = {
-    actors: model.actors.length,
+    actors: actingEntities.length,
     interfaces: model.interfaces.length,
     experiences: model.experiences.length,
     screens: model.screens.length,
     domains: model.domains.length,
+    entities: model.entities.length,
     capabilities: model.capabilities.length,
     journeys: model.journeys.length,
     capabilityScenarios: model.capabilityScenarios.length,
@@ -1142,9 +1718,9 @@ export function projectReportWorkspace(report: ProductReportV10): ReportWorkspac
     capabilitiesByDomain.set(key, [...(capabilitiesByDomain.get(key) || []), capability])
   }
 
-  const entitiesById = new Map<string, AnyEntityView[]>()
-  for (const entity of allEntities) {
-    entitiesById.set(entity.id, [...(entitiesById.get(entity.id) ?? []), entity])
+  const resourcesById = new Map<string, AnyResourceView[]>()
+  for (const resource of allResources) {
+    resourcesById.set(resource.id, [...(resourcesById.get(resource.id) ?? []), resource])
   }
 
   return {
@@ -1170,11 +1746,12 @@ export function projectReportWorkspace(report: ProductReportV10): ReportWorkspac
     coverage: report.coverage,
     counts,
     scenarioKinds,
-    actors,
+    actingEntities,
     interfaces,
     experiences,
     screens,
     domains,
+    entities,
     capabilities,
     journeys,
     capabilityScenarios,
@@ -1184,8 +1761,8 @@ export function projectReportWorkspace(report: ProductReportV10): ReportWorkspac
     contexts: [...contextSeen.values()].sort((left, right) =>
       left.interfaceId.localeCompare(right.interfaceId) || left.experienceId.localeCompare(right.experienceId)),
     references,
-    byKey: new Map(allEntities.map(entity => [entity.key, entity])),
-    entitiesById,
+    byKey: new Map(allResources.map(resource => [resource.key, resource])),
+    resourcesById,
     scenariosByJourney,
     scenariosByCapability,
     capabilitiesByDomain
@@ -1195,7 +1772,7 @@ export function projectReportWorkspace(report: ProductReportV10): ReportWorkspac
 /**
  * The same thing on another Interface.
  *
- * Qualified ids carry their path, so two entities of one kind sharing the
+ * Qualified ids carry their path, so two resources of one kind sharing the
  * path *below* their Interface are counterparts:
  * `reader-web::personal-library::unread-library` and
  * `reader-mobile::personal-library::unread-library` are one goal on two
@@ -1207,15 +1784,15 @@ export function projectReportWorkspace(report: ProductReportV10): ReportWorkspac
  * report, from the same ids, because the report carries no counterpart field
  * and should not need one.
  */
-export function counterpartsOf(workspace: ReportWorkspace, entity: AnyEntityView): AnyEntityView[] {
-  const suffix = entity.id.split('::').slice(1).join('::')
+export function counterpartsOf(workspace: ReportWorkspace, resource: AnyResourceView): AnyResourceView[] {
+  const suffix = resource.id.split('::').slice(1).join('::')
   if (!suffix) return []
-  return entitiesOfKindInternal(workspace, entity.kind)
-    .filter(other => other.key !== entity.key
+  return resourcesOfKindInternal(workspace, resource.kind)
+    .filter(other => other.key !== resource.key
       && other.id.split('::').slice(1).join('::') === suffix)
 }
 
-function entitiesOfKindInternal(workspace: ReportWorkspace, kind: ReportEntityKind): AnyEntityView[] {
+function resourcesOfKindInternal(workspace: ReportWorkspace, kind: ReportResourceKind): AnyResourceView[] {
   switch (kind) {
     case 'interface': return workspace.interfaces
     case 'experience': return workspace.experiences
@@ -1225,12 +1802,12 @@ function entitiesOfKindInternal(workspace: ReportWorkspace, kind: ReportEntityKi
 }
 
 /** Resolve one id within a kind's collection. */
-export function resolveEntity(
+export function resolveResource(
   workspace: ReportWorkspace,
-  kind: ReportEntityKind,
+  kind: ReportResourceKind,
   id: string
-): AnyEntityView | undefined {
-  return workspace.byKey.get(entityKey(kind, id))
+): AnyResourceView | undefined {
+  return workspace.byKey.get(resourceKey(kind, id))
 }
 
 /**
@@ -1241,31 +1818,31 @@ export function resolveEntity(
  */
 export function resolveScenario(workspace: ReportWorkspace, id: string): ScenarioView | undefined {
   for (const kind of SCENARIO_KINDS) {
-    const entity = workspace.byKey.get(entityKey(kind, id))
-    if (entity) return entity as ScenarioView
+    const resource = workspace.byKey.get(resourceKey(kind, id))
+    if (resource) return resource as ScenarioView
   }
   return undefined
 }
 
-export function resolveEntityKey(workspace: ReportWorkspace, key: ReportEntityKey): AnyEntityView | undefined {
+export function resolveResourceKey(workspace: ReportWorkspace, key: ReportResourceKey): AnyResourceView | undefined {
   return workspace.byKey.get(key)
 }
 
-export function resolveEntities(
+export function resolveResources(
   workspace: ReportWorkspace,
-  kind: ReportEntityKind,
+  kind: ReportResourceKind,
   ids: string[]
-): AnyEntityView[] {
+): AnyResourceView[] {
   return ids
-    .map(id => resolveEntity(workspace, kind, id))
-    .filter((entity): entity is AnyEntityView => Boolean(entity))
+    .map(id => resolveResource(workspace, kind, id))
+    .filter((resource): resource is AnyResourceView => Boolean(resource))
 }
 
 /** Resolve a mixed Scenario id list, dropping anything unresolved. */
 export function resolveScenarios(workspace: ReportWorkspace, ids: string[]): ScenarioView[] {
   return ids
     .map(id => resolveScenario(workspace, id))
-    .filter((entity): entity is ScenarioView => Boolean(entity))
+    .filter((resource): resource is ScenarioView => Boolean(resource))
 }
 
 /** One route's Context at one Scenario step. */
@@ -1283,6 +1860,8 @@ export interface ScenarioStepRow {
   stepKind: 'actor' | 'product' | 'condition'
   actorId: string
   capabilityId: string
+  /** Everything this Step names — changes first, then reads. Reads sit beside changes here and nowhere else. */
+  mentions: ScenarioStepEntityView[]
   routeNeutral: boolean
   /** One cell per route, in authored route order. */
   cells: ScenarioStepCell[]
@@ -1320,6 +1899,7 @@ export function scenarioStepMatrix(scenario: ScenarioView): ScenarioStepMatrix {
       stepKind: step.stepKind,
       actorId: step.actorId,
       capabilityId: step.capabilityId,
+      mentions: step.entities,
       routeNeutral: step.contexts.length === 0,
       cells
     }

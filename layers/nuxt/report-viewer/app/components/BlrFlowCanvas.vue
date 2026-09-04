@@ -4,7 +4,7 @@
  *
  * Owning the canvas in one place keeps the graphs comparable across views:
  * the same dotted background, the same controls, the same fit behaviour, the
- * same entity boxes. Views pass placed nodes and edges (see flowGraph.ts)
+ * same resource boxes. Views pass placed nodes and edges (see flowGraph.ts)
  * and listen for selection; nothing here decides what a graph contains.
  */
 import { VueFlow, useVueFlow } from '@vue-flow/core'
@@ -26,14 +26,14 @@ const props = withDefaults(defineProps<{
 })
 
 const emit = defineEmits<{
-  /** A box was clicked; the key is the collision-safe entity identity. */
-  select: [entityKey: string]
+  /** A box was clicked; the key is the collision-safe resource identity. */
+  select: [resourceKey: string]
   /** A box was double-clicked — views treat this as "make this the focus". */
-  focus: [entityKey: string]
+  focus: [resourceKey: string]
   /** The empty canvas was clicked. */
   clear: []
-  /** An entity box was entered or left; synthetic chrome emits null. */
-  hover: [entityKey: string | null]
+  /** A resource box was entered or left; synthetic chrome emits null. */
+  hover: [resourceKey: string | null]
 }>()
 
 const flowId = useId()
@@ -61,15 +61,15 @@ const fitParams = computed(() => ({
 
 onNodeClick(({ node }) => {
   const data = node.data as FlowNodeData | FlowGroupData
-  if (data?.entityKey) emit('select', data.entityKey)
+  if (data?.resourceKey) emit('select', data.resourceKey)
 })
 onNodeDoubleClick(({ node }) => {
   const data = node.data as FlowNodeData | FlowGroupData
-  if (data?.entityKey) emit('focus', data.entityKey)
+  if (data?.resourceKey) emit('focus', data.resourceKey)
 })
 onNodeMouseEnter(({ node }) => {
   const data = node.data as FlowNodeData | FlowGroupData | FlowLabelData
-  emit('hover', data?.entityKey || null)
+  emit('hover', data?.resourceKey || null)
 })
 onNodeMouseLeave(() => emit('hover', null))
 onPaneClick(() => emit('clear'))
@@ -149,6 +149,15 @@ watch(layoutKey, async () => {
         </template>
         <template #node-blr-label="nodeProps">
           <BlrFlowLabel v-bind="(nodeProps as any)" />
+        </template>
+        <template #node-blr-state="nodeProps">
+          <BlrFlowState v-bind="(nodeProps as any)" />
+        </template>
+        <template #edge-blr-self="edgeProps">
+          <BlrFlowSelfEdge v-bind="(edgeProps as any)" />
+        </template>
+        <template #edge-blr-routed="edgeProps">
+          <BlrFlowRoutedEdge v-bind="(edgeProps as any)" />
         </template>
         <Background
           :gap="30"
@@ -242,6 +251,30 @@ watch(layoutKey, async () => {
 
 .blr-flow .vue-flow__node-blr-label {
   z-index: 20 !important;
+}
+
+.blr-flow .vue-flow__node-blr-state {
+  z-index: 10 !important;
+}
+
+/* An operation a Rule closes is drawn, because it is a claim; it is drawn so
+   nobody reads it as a path. A restricted one keeps its shape and says so. */
+.blr-flow .vue-flow__edge.blr-arc--forbidden .vue-flow__edge-path {
+  stroke-dasharray: 4 4;
+  stroke: var(--ui-text-dimmed);
+}
+
+.blr-flow .vue-flow__edge.blr-arc--forbidden .vue-flow__edge-textbg {
+  fill: var(--ui-bg-elevated);
+}
+
+.blr-flow .vue-flow__edge.blr-arc--restricted .vue-flow__edge-path {
+  stroke: var(--ui-text-muted);
+  stroke-width: 2;
+}
+
+.blr-flow .vue-flow__edge.blr-arc--restricted text {
+  fill: var(--ui-text);
 }
 
 /* Edges never intercept the pointer — boxes are the interaction surface. */

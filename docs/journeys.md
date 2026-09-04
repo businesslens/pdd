@@ -100,7 +100,9 @@ rather than becoming Journey frontmatter.
 
 Consumers derive the primary Capability and Domain sets from achieved paths.
 Capabilities seen only in not-achieved paths are marked separately as
-failure-only. These are modeled coverage projections, not a mandatory canonical
+failure-only. What a Journey leaves behind — the things its achieved paths
+create, move, or remove, and the state each is left in — is derived from those
+paths' Steps and read beside the Success criterion. These are modeled coverage projections, not a mandatory canonical
 path or proof that partial mapping is exhaustive.
 
 At least one Journey Scenario must name every Journey with `result: achieved`.
@@ -111,7 +113,7 @@ Every Journey Actor must participate in at least one achieved Scenario.
 ## Relationship to code
 
 A Journey does not need one matching class, controller, route, test, or wizard.
-Like other Product entities, it is a Product-level projection over code. During
+Like other Product resources, it is a Product-level projection over code. During
 mapping, however, its Goal, Capability handoffs, and achieved path must remain
 traceable through supported behavior rather than invented from plausible
 actions.
@@ -164,12 +166,16 @@ steps:
     kind: actor
     actor: repository-contributor
     capability: publish-repository-changes
+    entities:
+      - { entity: branch, effect: creates }
     contexts:
       git-to-web:
         place: git-transport
   - text: The contributor opens the branch comparison in the repository workspace
     kind: actor
     actor: repository-contributor
+    entities:
+      - { entity: branch, effect: reads }
     contexts:
       git-to-web:
         place: web-ui::repository-collaboration::branch-comparison
@@ -177,6 +183,8 @@ steps:
     kind: actor
     actor: repository-contributor
     capability: propose-code-change
+    entities:
+      - { entity: pull-request, effect: creates, to: Open }
     contexts:
       git-to-web:
         place: web-ui::repository-collaboration::pull-request
@@ -204,7 +212,8 @@ The Journey goal is achieved: a reviewable change proposal exists.
 | `result` | yes | Use `achieved` or `not-achieved`; it is orthogonal to `kind`. |
 | `routes` | yes | Map each unique lowercase kebab-case route ID to a unique human-readable name. |
 | `steps` | yes | Give a non-empty ordered list with one-line `text` and `kind: actor|product|condition`. A Step may name a Capability independently of its kind. |
-| `steps[].actor` | for Actor Steps | Name the responsible Actor when `kind: actor`; omit it for Product actions and unowned conditions. At least one Actor Step must name a Journey Actor. |
+| `steps[].actor` | for Actor Steps | Name the Entity that acts and performs the Step when `kind: actor`; optional on a `product` or `condition` Step, where it says who the Step is attributable to. |
+| `steps[].entities` | yes | List what this Step does to the Product's things, exactly as on a [Capability Scenario Step](./capabilities.md#what-a-step-does-to-the-products-things), or `[]`. A Step whose effect is anything but a read must name the `capability` it exercises, because a Journey Step that changes a thing on its own would be behavior no Capability owns. |
 | `steps[].contexts` | when contextualized | Map every declared route to a strict Context whose `place` is the most-specific occurrence. Omit it only when the Step is shared by all routes and has no Context. |
 | `references` | no | Use the documented [Reference](./references.md) shape. |
 | Lead paragraph | no | Start with a named H2; move starting-condition prose into `## Trigger`. |
@@ -237,12 +246,16 @@ steps:
     kind: actor
     actor: repository-contributor
     capability: publish-repository-changes
+    entities:
+      - { entity: branch, effect: creates }
     contexts:
       git-to-web:
         place: git-transport
   - text: The contributor opens the branch comparison in the repository workspace
     kind: actor
     actor: repository-contributor
+    entities:
+      - { entity: branch, effect: reads }
     contexts:
       git-to-web:
         place: web-ui::repository-collaboration::branch-comparison
@@ -250,6 +263,8 @@ steps:
     kind: actor
     actor: repository-contributor
     capability: propose-code-change
+    entities:
+      - { entity: pull-request, effect: creates, to: Open }
     contexts:
       git-to-web:
         place: web-ui::repository-collaboration::pull-request
@@ -266,7 +281,7 @@ transport and the web workspace; its position makes that transition first-class.
 Capability-bearing steps reference Capabilities, never Capability Scenarios. A
 Capability is durable while its Scenarios split and merge as local behavior is
 refined. Composition therefore names the stable ability without turning a
-local acceptance case into a reusable operation entity.
+local acceptance case into a reusable operation resource.
 
 Every contextualized Step declares the same route-id set. Matching keys
 correlate the complete paths. The Context `place` is the most-specific
@@ -293,8 +308,9 @@ The path is linear. A Decision point may vary detail while preserving the same
 Capability sequence and Outcome. A branch that changes either belongs in a
 separate Journey Scenario.
 
-The Scenario Actor set is derived from Actor Steps. Every Actor must be
-supported by at least one selected Context, and every selected availability boundary
+The Scenario Actor set is derived from every Step that names an actor —
+performing on an Actor Step, attributed on a Product or condition Step. Every
+Actor must be supported by at least one selected Context, and every selected availability boundary
 must support a Scenario Actor. The first contextualized Actor Step of
 every route must belong to a Journey Actor, so the end-to-end variation begins
 with the goal owner rather than an internal or downstream participant.

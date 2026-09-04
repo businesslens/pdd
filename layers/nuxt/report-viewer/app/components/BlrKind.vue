@@ -1,24 +1,24 @@
 <script setup lang="ts">
 /**
- * Entity-kind marker: colour, silhouette-free but always icon + label.
+ * Resource-kind marker: colour, silhouette-free but always icon + label.
  *
  * Nine kinds is past what hue alone can separate, so this component never emits
  * a bare colour swatch — the label is part of the mark.
  */
-import type { ReportActor, ReportInterface } from 'businesslens/report'
-import type { ReportEntityKind } from '../utils/reportWorkspace'
+import type { ReportInterface } from 'businesslens/report'
+import type { ActingKind, ActingSide, ReportResourceKind } from '../utils/reportWorkspace'
 import { ENTITY_KIND_META } from '../utils/reportWorkspace'
 import { slotColor } from '../utils/reportPalette'
 
 const props = withDefaults(defineProps<{
-  kind: ReportEntityKind
+  kind: ReportResourceKind
   count?: number | null
   size?: 'xs' | 'sm'
   /** A concrete Interface can retain its kind and disclose its authored type. */
   interfaceType?: ReportInterface['type'] | null
-  /** A concrete Actor discloses both independent authored classifications. */
-  actorKind?: ReportActor['kind'] | null
-  actorRelationship?: ReportActor['relationship'] | null
+  /** An Entity that acts discloses both independent authored classifications. */
+  actorKind?: ActingKind | null
+  acts?: ActingSide | null
   /** Suppress the text label only where a nearby label already names the kind. */
   labelled?: boolean
 }>(), {
@@ -26,7 +26,7 @@ const props = withDefaults(defineProps<{
   size: 'sm',
   interfaceType: null,
   actorKind: null,
-  actorRelationship: null,
+  acts: null,
   labelled: true
 })
 
@@ -47,9 +47,9 @@ const color = computed(() => slotColor(meta.value.slot, mounted.value && colorMo
     :title="meta.label"
   >
     <BlrActorType
-      v-if="kind === 'actor' && actorKind && actorRelationship"
+      v-if="kind === 'entity' && actorKind && acts"
       :actor-kind="actorKind"
-      :relationship="actorRelationship"
+      :acts="acts"
       :size="size"
     />
     <BlrInterfaceType
@@ -65,14 +65,14 @@ const color = computed(() => slotColor(meta.value.slot, mounted.value && colorMo
 
 <style scoped>
 .blr-kind__icon {
-  width: var(--blr-entity-mark-regular);
-  height: var(--blr-entity-mark-regular);
-  flex: 0 0 var(--blr-entity-mark-regular);
+  width: var(--blr-resource-mark-regular);
+  height: var(--blr-resource-mark-regular);
+  flex: 0 0 var(--blr-resource-mark-regular);
 }
 
 .blr-kind[data-size='xs'] > .blr-kind__icon {
-  width: var(--blr-entity-mark-dense);
-  height: var(--blr-entity-mark-dense);
-  flex-basis: var(--blr-entity-mark-dense);
+  width: var(--blr-resource-mark-dense);
+  height: var(--blr-resource-mark-dense);
+  flex-basis: var(--blr-resource-mark-dense);
 }
 </style>

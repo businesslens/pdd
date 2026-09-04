@@ -15,7 +15,7 @@ describe('ids', () => {
   })
   it('slugifies and stems', () => {
     expect(slugify('Acme Shop!')).toBe('acme-shop')
-    expect(stem('actors/shopper.md')).toBe('shopper')
+    expect(stem('entities/shopper.md')).toBe('shopper')
   })
 })
 
@@ -147,7 +147,7 @@ describe('markdown', () => {
       { heading: 'Notes', content: 'Keep this context.' }
     ])
   })
-  it('parses embedded Screen product states', () => {
+  it('parses embedded Screen view states', () => {
     const body = '### Available\n\nThe item can be selected.\n\n### Unavailable\n\nThe reason is shown.'
     const issues: string[] = []
     expect(screenStates(body, issues, 'screen')).toEqual([

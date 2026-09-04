@@ -5,29 +5,29 @@
  * that result; they never alter report navigation or invent relationships.
  */
 import type { BlrFlowEdge, BlrFlowNode, FlowGraphShape, FlowLabelData } from './flowGraph'
-import type { ReportEntityKind } from './reportWorkspace'
+import type { ReportResourceKind } from './reportWorkspace'
 import { topologyNeighbourhood } from './productTopologyLayout'
 
 export interface ProductTopologyFilterOptions {
-  /** Entity kinds currently visible inside the active topology view. */
-  visibleKinds: readonly ReportEntityKind[]
-  /** Model entities to focus; every matching occurrence keeps one-hop context. */
-  focusEntityIds?: readonly string[]
+  /** Resource kinds currently visible inside the active topology view. */
+  visibleKinds: readonly ReportResourceKind[]
+  /** Model resources to focus; every matching occurrence keeps one-hop context. */
+  focusResourceIds?: readonly string[]
 }
 
-function kindOf(node: BlrFlowNode): ReportEntityKind | null {
+function kindOf(node: BlrFlowNode): ReportResourceKind | null {
   return node.data?.kind ?? null
 }
 
-function entityIdOf(node: BlrFlowNode): string {
-  return node.data?.entityKey ?? ''
+function resourceIdOf(node: BlrFlowNode): string {
+  return node.data?.resourceKey ?? ''
 }
 
 /**
  * Narrow an already-built named view.
  *
- * Focus is resolved against node ids rather than entity ids because occurrence
- * views may draw the same entity in several contexts. Containment parents are
+ * Focus is resolved against node ids rather than resource ids because occurrence
+ * views may draw the same resource in several contexts. Containment parents are
  * treated as graph neighbours, so focusing a Capability retains its Domain
  * frame. If that frame's kind is hidden, the child is safely detached and
  * keeps its absolute position.
@@ -37,7 +37,7 @@ export function filterProductTopologyGraph(
   options: ProductTopologyFilterOptions
 ): FlowGraphShape {
   const visibleKinds = new Set(options.visibleKinds)
-  const focusEntityIds = new Set(options.focusEntityIds ?? [])
+  const focusResourceIds = new Set(options.focusResourceIds ?? [])
   const nodesById = new Map(shape.nodes.map(node => [node.id, node]))
   const contextLinks = [
     ...shape.edges.map(edge => ({ source: edge.source, target: edge.target })),
@@ -47,8 +47,8 @@ export function filterProductTopologyGraph(
   ]
 
   let scopedNodeIds: Set<string> | null = null
-  if (focusEntityIds.size) {
-    const matches = shape.nodes.filter(node => focusEntityIds.has(entityIdOf(node)))
+  if (focusResourceIds.size) {
+    const matches = shape.nodes.filter(node => focusResourceIds.has(resourceIdOf(node)))
     scopedNodeIds = new Set<string>()
     for (const match of matches) {
       for (const id of topologyNeighbourhood(match.id, contextLinks)) scopedNodeIds.add(id)

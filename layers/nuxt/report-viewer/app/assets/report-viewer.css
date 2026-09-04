@@ -1,7 +1,7 @@
 /* Stable Product Report structure and shared type roles. */
 
 /*
-  One scale owns entity identity everywhere in the Product Report. A concrete
+  One scale owns resource identity everywhere in the Product Report. A concrete
   Interface needs a slightly larger frame because its authored type sits on top
   of the kind icon. An Actor does not: its second authored axis is written as a
   word beside the title rather than stacked onto the mark, so it sits on the
@@ -9,8 +9,8 @@
   proportionally instead of fixing one component at a time.
 */
 :root {
-  --blr-entity-mark-regular: 1.25rem;
-  --blr-entity-mark-dense: 1.125rem;
+  --blr-resource-mark-regular: 1.25rem;
+  --blr-resource-mark-dense: 1.125rem;
   --blr-interface-mark-regular: 1.375rem;
   --blr-interface-kind-regular: 1.125rem;
   --blr-interface-badge-regular: 0.8125rem;

@@ -1,9 +1,9 @@
 ---
 appliesTo:
   - type: capability
-    id: item-saving
+    id: save-item
   - type: capability
-    id: collection-organization
+    id: organize-collection
   - type: journey
     id: save-and-organize
 ---

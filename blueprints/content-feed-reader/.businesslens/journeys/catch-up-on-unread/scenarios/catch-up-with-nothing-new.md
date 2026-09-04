@@ -5,7 +5,8 @@ steps:
   - text: The Reader opens an unread library with nothing left to read
     kind: actor
     actor: reader
-    capability: reading-state
+    capability: track-reading-state
+    entities: []
     contexts:
       web:
         place: reader-web::personal-library::unread-library
@@ -14,7 +15,9 @@ steps:
   - text: The Reader refreshes their followed sources
     kind: actor
     actor: reader
-    capability: feed-synchronization
+    capability: synchronize-feeds
+    entities:
+      - { entity: source, effect: reads }
     contexts:
       web:
         place: reader-web::personal-library::source-list
@@ -22,9 +25,12 @@ steps:
         place: reader-mobile::personal-library::source-list
   - text: No feed returns an item the library does not already hold
     kind: condition
+    entities:
+      - { entity: item, effect: reads }
   - text: The unread library still presents the caught-up state
     kind: condition
-    capability: reading-state
+    capability: track-reading-state
+    entities: []
     contexts:
       web:
         place: reader-web::personal-library::unread-library

@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import type { ProductReportV10 } from 'businesslens/report'
+import type { ProductReportV13 } from 'businesslens/report'
 
-const { data, error, refresh, status } = await useFetch<ProductReportV10>(
+const { data, error, refresh, status } = await useFetch<ProductReportV13>(
   '/_businesslens/report.json',
   { server: false, cache: 'no-store' }
 )
@@ -50,9 +50,10 @@ const errorMessage = computed(() => {
 /*
   Where you are, in the address bar.
 
-  The viewer keeps the report's navigation facts and the Scenario route reading
-  in the query string. That makes a link to a Capability a link, back and
-  forward mean what they say, and a refresh return to the same route comparison
+  The viewer keeps the report's navigation facts, the open page's tab and the
+  Scenario route reading in the query string. That makes a link to a Capability
+  a link — and a link to an Entity's Lifecycle one too — back and forward mean
+  what they say, and a refresh return to the same tab and route comparison
   instead of resetting the reading.
 
   Both directions are guarded on inequality, so the URL and the report never
@@ -63,13 +64,15 @@ const route = useRoute()
 const router = useRouter()
 
 const section = ref('overview')
-const entity = ref<string | null>(null)
+const resource = ref<string | null>(null)
+const tab = ref('overview')
 const scenarioRoute = ref<string | null>(null)
 const routeColumns = ref('auto')
 
 const readQuery = () => ({
   section: typeof route.query.s === 'string' && route.query.s ? route.query.s : 'overview',
-  entity: typeof route.query.e === 'string' && route.query.e ? route.query.e : null,
+  resource: typeof route.query.e === 'string' && route.query.e ? route.query.e : null,
+  tab: typeof route.query.t === 'string' && route.query.t ? route.query.t : 'overview',
   scenarioRoute: typeof route.query.r === 'string' && route.query.r ? route.query.r : null,
   routeColumns: typeof route.query.rc === 'string' && route.query.rc ? route.query.rc : 'auto'
 })
@@ -77,22 +80,26 @@ const readQuery = () => ({
 watch(() => route.query, () => {
   const next = readQuery()
   if (next.section !== section.value) section.value = next.section
-  if (next.entity !== entity.value) entity.value = next.entity
+  if (next.resource !== resource.value) resource.value = next.resource
+  if (next.tab !== tab.value) tab.value = next.tab
   if (next.scenarioRoute !== scenarioRoute.value) scenarioRoute.value = next.scenarioRoute
   if (next.routeColumns !== routeColumns.value) routeColumns.value = next.routeColumns
 }, { immediate: true })
 
-watch([section, entity, scenarioRoute, routeColumns], () => {
+watch([section, resource, tab, scenarioRoute, routeColumns], () => {
   const current = readQuery()
   if (current.section === section.value
-    && current.entity === entity.value
+    && current.resource === resource.value
+    && current.tab === tab.value
     && current.scenarioRoute === scenarioRoute.value
     && current.routeColumns === routeColumns.value) return
   const query = { ...route.query }
   if (section.value === 'overview') delete query.s
   else query.s = section.value
-  if (entity.value) query.e = entity.value
+  if (resource.value) query.e = resource.value
   else delete query.e
+  if (tab.value === 'overview') delete query.t
+  else query.t = tab.value
   if (scenarioRoute.value) query.r = scenarioRoute.value
   else delete query.r
   if (routeColumns.value === 'auto') delete query.rc
@@ -133,7 +140,8 @@ watch([section, entity, scenarioRoute, routeColumns], () => {
       </UContainer>
       <BusinessLensReportViewer
         v-model:section="section"
-        v-model:entity="entity"
+        v-model:resource="resource"
+        v-model:tab="tab"
         v-model:scenario-route="scenarioRoute"
         v-model:route-columns="routeColumns"
         :report="data"

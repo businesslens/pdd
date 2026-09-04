@@ -15,25 +15,39 @@ automation are possible Experiences.
 Experiences are optional. An Experience has a stable audience, access boundary,
 and capability boundary inside exactly one [Interface](./interfaces.md), which
 is determined by its folder. Similar Experiences on another Interface are
-counterparts with separate qualified ids, not one shared entity.
+counterparts with separate qualified ids, not one shared resource.
 
 ## When you create one
 
-Create an Experience when all of these are true:
+**Whether an Interface is divided into Experiences is derived, never judged.**
+`lint` computes it from `actors`, `access`, each Capability's `availability`,
+and its Scenarios' Steps, so the author never applies a prose test. Two rules
+decide it, one in each direction:
 
-1. it represents a coherent Actor context;
-2. it has a meaningful capability boundary and exclusions;
-3. it remains meaningful if routes, commands, or navigation are reorganized;
-4. it normally supports several goals, Capabilities, Screens, or commands.
+- **An Interface must hold Experiences** when its Actors split into groups that
+  no Capability available there bridges. Holding none is a `lint` **error**:
+  those groups are separate contexts, not one.
+- **An Interface that holds Experiences must justify them.** Its Experiences
+  differ in `access`, or its audiences are disjoint, or one is a counterpart —
+  an Experience whose name also exists under another Interface, the same context
+  on another platform, which justifies itself because flattening it would make
+  two views of one context look unrelated. None of the three, and it is a
+  `lint` **error**: use direct Interface availability instead.
 
-An overview page is usually a Screen, not an Experience. A command group is an
-Experience only when it represents a durable operating context, not just parser
-organization.
+Disjoint audiences is the only input that *requires* division. `access` only
+justifies Experiences that already exist, because an Interface declares no
+`access` of its own — the value lives on each Experience.
 
-Use no Experiences when every Interface is already one coherent context. In
-that case, availability names the Interface directly. Do not create a
-one-to-one Experience merely to satisfy the file shape or make the report look
-full.
+The rule protects one thing: an Experience is a context that stays meaningful
+when routes, commands, or navigation are reorganized, because it is defined by
+who is there and what they can do, not by how the surface is laid out. An
+overview page is usually a Screen, not an Experience. A command group is an
+Experience only when the rule divides its Interface, not because a parser groups
+its commands.
+
+When nothing divides an Interface, availability names the Interface directly.
+Do not create a one-to-one Experience to satisfy the file shape or make the
+report look full; `lint` refuses it.
 
 ## The file
 
@@ -60,7 +74,7 @@ Supports operational administration. It does not grant customer privileges.
 
 | Field or section | Required | Constraint |
 | --- | --- | --- |
-| `actors` | yes | Name at least one unique existing Actor. Every Actor must be supported by the containing Interface. |
+| `actors` | yes | Name at least one unique Entity that `acts`. Every Actor must be supported by the containing Interface. |
 | `access` | yes | Use `public`, `authenticated`, or `restricted`. |
 | `entryPoints` | no | Key Product entry points using the containing Interface as the key. |
 | `references` | no | Use the documented [Reference](./references.md) shape. |

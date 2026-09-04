@@ -32,7 +32,7 @@ function reportResponse(canonicalName = 'fixture-shop'): Response {
   return new Response(JSON.stringify(report), {
     status: 200,
     headers: {
-      'content-type': 'application/vnd.businesslens.report+json; version=10',
+      'content-type': 'application/vnd.businesslens.report+json; version=13',
       'x-businesslens-blueprint': canonicalName,
       'x-businesslens-report-digest': reportDigest(report)
     }
@@ -83,7 +83,7 @@ describe('pull', () => {
     )
     // No credential is read, sent, or required.
     expect((requested?.init.headers as Record<string, string>).authorization).toBeUndefined()
-    expect((requested?.init.headers as Record<string, string>).accept).toContain('version=10')
+    expect((requested?.init.headers as Record<string, string>).accept).toContain('version=13')
     expect(existsSync(join(target, '.businesslens/product/product.md'))).toBe(true)
     expect(existsSync(join(
       target,
@@ -218,7 +218,7 @@ describe('pull', () => {
     const fetch = vi.fn(async () => new Response(JSON.stringify(report), {
       status: 200,
       headers: {
-        'content-type': 'application/vnd.businesslens.report+json; version=6',
+        'content-type': 'application/vnd.businesslens.report+json; version=13',
         'x-businesslens-blueprint': 'fixture-shop',
         'x-businesslens-report-digest': 'a'.repeat(64)
       }
@@ -226,6 +226,44 @@ describe('pull', () => {
 
     expect(await runPull(target, 'fixture-shop', { force: false }, { fetch, env: {} })).toBe(1)
     expect(existsSync(join(target, '.businesslens'))).toBe(false)
+  })
+
+  it('asks the catalog for the schema\'s own report version and refuses another', async () => {
+    const target = temporary('bl-pull-version-')
+    const errors: string[] = []
+    vi.spyOn(console, 'error').mockImplementation(message => { errors.push(String(message)) })
+    const fetch = vi.fn(async () => new Response(JSON.stringify(report), {
+      status: 200,
+      headers: {
+        'content-type': 'application/vnd.businesslens.report+json; version=11',
+        'x-businesslens-blueprint': 'fixture-shop',
+        'x-businesslens-report-digest': reportDigest(report)
+      }
+    })) as unknown as typeof globalThis.fetch
+
+    expect(await runPull(target, 'fixture-shop', { force: false }, { fetch, env: {} })).toBe(1)
+    expect(errors[0]).toContain('The catalog serves Product Report version 11; this CLI reads version 13 only')
+    expect(existsSync(join(target, '.businesslens'))).toBe(false)
+  })
+
+  it('names the schema version of a report it cannot read, in one sentence', async () => {
+    const target = temporary('bl-pull-old-report-')
+    const errors: string[] = []
+    vi.spyOn(console, 'error').mockImplementation(message => { errors.push(String(message)) })
+    const stale = { ...report, schemaVersion: '12.0.0' }
+    const fetch = vi.fn(async (url: string) => String(url).endsWith('/logo.svg')
+      ? logoResponse()
+      : new Response(JSON.stringify(stale), {
+        status: 200,
+        headers: {
+          'content-type': 'application/vnd.businesslens.report+json; version=13',
+          'x-businesslens-blueprint': 'fixture-shop',
+          'x-businesslens-report-digest': reportDigest(stale)
+        }
+      })) as unknown as typeof globalThis.fetch
+
+    expect(await runPull(target, 'fixture-shop', { force: false }, { fetch, env: {} })).toBe(1)
+    expect(errors[0]).toBe('This is a Product Report of schema version 12.0.0; only 13.0.0 is accepted, and there is no compatibility reader. Export it again with a current businesslens.')
   })
 
   it('refuses a report served for a different Blueprint', async () => {
@@ -255,7 +293,7 @@ describe('pull', () => {
     const fetch = vi.fn(async () => new Response(JSON.stringify(report), {
       status: 200,
       headers: {
-        'content-type': 'application/vnd.businesslens.report+json; version=6',
+        'content-type': 'application/vnd.businesslens.report+json; version=13',
         'content-length': String(9 * 1024 * 1024),
         'x-businesslens-blueprint': 'fixture-shop',
         'x-businesslens-report-digest': reportDigest(report)

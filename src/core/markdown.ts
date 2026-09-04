@@ -34,7 +34,7 @@ export function containsStructuralHeading(value: string): boolean {
 }
 
 /**
- * Deterministic parser for the constrained entity-markdown shape:
+ * Deterministic parser for the constrained resource-markdown shape:
  * one H1, a lead paragraph, then optional `##` sections.
  * Lines inside ``` fences are content, never structure.
  */
@@ -77,6 +77,17 @@ export function parseMarkdown(body: string): MarkdownDoc {
   if (current) sections.push({ heading: current.heading, body: current.lines.join('\n').trim() })
 
   return { title, lead: leadLines.join('\n').trim(), sections }
+}
+
+/**
+ * Whether a boundary statement says what its subject does *not* own.
+ *
+ * A Boundary that only asserts inclusion is a label, not a region. The folder
+ * linter and the report validator share the one heuristic, so a Domain cannot
+ * be refused in a repository and accepted on the wire.
+ */
+export function statesAnExclusion(value: string): boolean {
+  return /\b(does not|doesn't|not own|never|excludes?|rather than|outside)\b/i.test(value)
 }
 
 export function section(doc: MarkdownDoc, heading: string): string | undefined {
@@ -161,11 +172,13 @@ export function decisionPoints(
   })
 }
 
-/** Parse Screen product states: one H3 name followed by non-empty prose. */
+/** Parse Screen view states: one H3 name followed by non-empty prose. */
 export function screenStates(
   body: string,
   issues: string[],
-  label: string
+  label: string,
+  heading = 'View states',
+  noun = 'view state'
 ): MarkdownScreenState[] {
   if (!body.trim()) return []
   const lines = body.split('\n')
@@ -180,7 +193,7 @@ export function screenStates(
       continue
     }
     if (!current) {
-      if (line.trim()) issues.push(`${label}: "## Product states" content must begin with an H3 title`)
+      if (line.trim()) issues.push(`${label}: "## ${heading}" content must begin with an H3 title`)
       continue
     }
     current.lines.push(line)
@@ -189,8 +202,8 @@ export function screenStates(
 
   return chunks.map((chunk) => {
     const description = chunk.lines.join('\n').trim()
-    if (!chunk.title) issues.push(`${label}: product state needs a title`)
-    if (!description) issues.push(`${label}: product state "${chunk.title}" needs a description`)
+    if (!chunk.title) issues.push(`${label}: ${noun} needs a title`)
+    if (!description) issues.push(`${label}: ${noun} "${chunk.title}" needs a description`)
     return { title: chunk.title, description }
   })
 }

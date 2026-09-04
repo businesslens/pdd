@@ -30,9 +30,9 @@ and unverifiable cases. It groups root decisions and recommends an authority.
   changes.
 - `verify current` or `verify full` inspects present behavior without needing a
   merge base or diff.
-- `verify <named scope>` inspects one Actor, Interface, Experience, Screen,
-  Domain, Capability, Capability Scenario, Journey, Journey Scenario,
-  availability Context, Step, or path plus its necessary dependencies.
+- `verify <named scope>` inspects one Entity, Interface, Experience, Screen,
+  Domain, Capability, Capability Scenario, Journey, Journey Scenario, Business
+  Rule, availability Context, or path plus its necessary dependencies.
 
 Git is a scope tool, never an authority tool. A model committed on the default
 branch can still be the approved plan for code added later.

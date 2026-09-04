@@ -4,7 +4,7 @@
  * One node vocabulary, one relation vocabulary, one layout: every view draws
  * its graphs from here so the boxes read the same everywhere. Relation verbs
  * are fixed here for the same reason — an edge between
- * the same two entities must say the same thing in every view.
+ * the same two resources must say the same thing in every view.
  *
  * Layout is @dagrejs/dagre for relation graphs, a deterministic measured
  * grid for the containment-shaped Screen map, where nesting — not rank — is
@@ -15,24 +15,24 @@
 import { Graph, layout } from '@dagrejs/dagre'
 import { MarkerType, Position } from '@vue-flow/core'
 import type { Edge, Node } from '@vue-flow/core'
-import type { ActorView, AnyEntityView, InterfaceView, ReportEntityKind, ReportScenarioType, ReportWorkspace } from './reportWorkspace'
-import { ENTITY_KIND_META, entityKey, resolveEntity } from './reportWorkspace'
+import type { ActingKind, ActingSide, AnyResourceView, InterfaceView, ReportResourceKind, ReportScenarioType, ReportWorkspace } from './reportWorkspace'
+import { ENTITY_KIND_META, resourceKey, resolveResource } from './reportWorkspace'
 
-/** Data carried by every entity box (`type: 'blr'`). */
+/** Data carried by every resource box (`type: 'blr'`). */
 export interface FlowNodeData {
-  entityKey: string
-  entityId: string
-  kind: ReportEntityKind
-  /** Present only for a concrete Actor; the node draws kind, the sublabel writes relationship. */
-  actorKind?: ActorView['actorKind'] | null
-  actorRelationship?: ActorView['relationship'] | null
+  resourceKey: string
+  resourceId: string
+  kind: ReportResourceKind
+  /** Present only for an Entity that acts; the node draws kind, the sublabel writes which side it acts from. */
+  actorKind?: ActingKind | null
+  acts?: ActingSide | null
   /** Present only for a concrete Interface; generic kind nodes keep the plug. */
   interfaceType?: InterfaceView['interfaceType'] | null
   scenarioType: ReportScenarioType | null
   title: string
   /** Small line under the title; defaults to the kind label. */
   sublabel: string
-  /** The entity the graph is currently about — drawn larger, with a glow. */
+  /** The resource the graph is currently about — drawn larger, with a glow. */
   focus: boolean
   dimmed: boolean
   selected: boolean
@@ -44,9 +44,9 @@ export interface FlowNodeData {
 
 /** Data carried by a container box (`type: 'blr-group'`). */
 export interface FlowGroupData {
-  entityKey: string
-  entityId: string
-  kind: ReportEntityKind
+  resourceKey: string
+  resourceId: string
+  kind: ReportResourceKind
   interfaceType?: InterfaceView['interfaceType'] | null
   title: string
   sublabel: string
@@ -60,14 +60,26 @@ export interface FlowGroupData {
 
 /** Non-interactive shelf or column caption used by designed topology views. */
 export interface FlowLabelData {
-  entityKey: ''
-  entityId: ''
-  kind: ReportEntityKind
+  resourceKey: ''
+  resourceId: ''
+  kind: ReportResourceKind
   label: string
   count: number
 }
 
-export type BlrFlowNode = Node<FlowNodeData | FlowGroupData | FlowLabelData>
+/** One state of an Entity's composed lifecycle (`type: 'blr-state'`). Not a resource. */
+export interface FlowStateData {
+  resourceKey: ''
+  resourceId: string
+  kind: 'entity'
+  name: string
+  reached: boolean
+  initial: boolean
+  /** The dot a creation starts from, or the ring a removal ends in. */
+  terminal: 'start' | 'end' | null
+}
+
+export type BlrFlowNode = Node<FlowNodeData | FlowGroupData | FlowLabelData | FlowStateData>
 export type BlrFlowEdge = Edge
 
 export const FLOW_NODE_WIDTH = 208
@@ -75,7 +87,7 @@ export const FLOW_NODE_HEIGHT = 58
 export const FLOW_FOCUS_WIDTH = 244
 export const FLOW_FOCUS_HEIGHT = 70
 
-/** One relation drawn between two entities, always in its canonical direction. */
+/** One relation drawn between two resources, always in its canonical direction. */
 export interface FlowRelation {
   source: string
   target: string
@@ -88,8 +100,8 @@ export interface FlowGraphShape {
   edges: BlrFlowEdge[]
 }
 
-export function entityNode(
-  entity: AnyEntityView,
+export function resourceNode(
+  resource: AnyResourceView,
   options: {
     focus?: boolean
     dimmed?: boolean
@@ -102,7 +114,7 @@ export function entityNode(
   const width = focus ? FLOW_FOCUS_WIDTH : FLOW_NODE_WIDTH
   const height = focus ? FLOW_FOCUS_HEIGHT : FLOW_NODE_HEIGHT
   return {
-    id: entity.key,
+    id: resource.key,
     type: 'blr',
     position: { x: 0, y: 0 },
     width,
@@ -115,22 +127,22 @@ export function entityNode(
     targetPosition: Position.Left,
     style: { width: `${width}px`, height: `${height}px` },
     data: {
-      entityKey: entity.key,
-      entityId: entity.id,
-      kind: entity.kind,
-      actorKind: entity.kind === 'actor' ? entity.actorKind : null,
-      actorRelationship: entity.kind === 'actor' ? entity.relationship : null,
-      interfaceType: entity.kind === 'interface' ? entity.interfaceType : null,
-      title: entity.title,
-      /* An Actor's second authored axis is the Product boundary, which is what
-         a topology is read for. The mark cannot carry it, so the sublabel does
-         — the same slot, and the same spelling, an Experience gives its access
-         mode. */
-      sublabel: entity.kind === 'actor'
-        ? `${ENTITY_KIND_META.actor.label} · ${entity.relationship}`
-        : ENTITY_KIND_META[entity.kind].label,
-      scenarioType: entity.kind === 'capability-scenario' || entity.kind === 'journey-scenario'
-        ? entity.scenarioType
+      resourceKey: resource.key,
+      resourceId: resource.id,
+      kind: resource.kind,
+      actorKind: resource.kind === 'entity' ? resource.entityKind : null,
+      acts: resource.kind === 'entity' ? resource.acts : null,
+      interfaceType: resource.kind === 'interface' ? resource.interfaceType : null,
+      title: resource.title,
+      /* An Entity that acts is an Actor in the topology, and which side of the
+         Product boundary it acts from is what a topology is read for. The mark
+         cannot carry it, so the sublabel does — the same slot, and the same
+         spelling, an Experience gives its access mode. */
+      sublabel: resource.kind === 'entity' && resource.acts
+        ? `Actor · ${resource.acts}`
+        : ENTITY_KIND_META[resource.kind].label,
+      scenarioType: resource.kind === 'capability-scenario' || resource.kind === 'journey-scenario'
+        ? resource.scenarioType
         : null,
       focus,
       dimmed: options.dimmed ?? false,
@@ -142,7 +154,7 @@ export function entityNode(
 }
 
 /** Slot index for a kind — the CSS variable the components resolve to colour. */
-export function kindSlot(kind: ReportEntityKind): number {
+export function kindSlot(kind: ReportResourceKind): number {
   return ENTITY_KIND_META[kind].slot
 }
 
@@ -156,7 +168,9 @@ export function relationEdge(
     id: `${relation.source}->${relation.target}:${relation.label}`,
     source: relation.source,
     target: relation.target,
-    type: 'smoothstep',
+    /* A relation a resource declares at itself needs a loop; the step router
+       collapses it to a stub that reads as a broken line. */
+    type: relation.source === relation.target ? 'blr-self' : 'smoothstep',
     label: relation.label,
     selectable: false,
     focusable: false,
@@ -192,14 +206,14 @@ export function relationEdge(
 }
 
 /**
- * Every relation one entity takes part in, in canonical direction.
+ * Every relation one resource takes part in, in canonical direction.
  *
  * The verb set is deliberately small and fixed: Actors perform Journeys and
  * enter contexts; Journeys use Capabilities and case into Scenarios; Screens
- * expose Capabilities and serve Scenarios; Rules constrain; every entity with
+ * expose Capabilities and serve Scenarios; Rules constrain; every resource with
  * Contexts connects to those places.
  */
-export function directRelations(workspace: ReportWorkspace, entity: AnyEntityView): FlowRelation[] {
+export function directRelations(workspace: ReportWorkspace, resource: AnyResourceView): FlowRelation[] {
   const relations: FlowRelation[] = []
   const push = (source: string, target: string, label: string) => {
     if (workspace.byKey.has(source) && workspace.byKey.has(target)) relations.push({ source, target, label })
@@ -207,88 +221,98 @@ export function directRelations(workspace: ReportWorkspace, entity: AnyEntityVie
   const contexts = (items: Array<{ interfaceId: string, experienceId: string }>, sourceKey: string, label = 'available in') => {
     for (const context of items) {
       const target = context.experienceId
-        ? entityKey('experience', context.experienceId)
-        : entityKey('interface', context.interfaceId)
+        ? resourceKey('experience', context.experienceId)
+        : resourceKey('interface', context.interfaceId)
       push(sourceKey, target, label)
     }
   }
 
-  switch (entity.kind) {
-    case 'actor': {
-      for (const id of entity.interfaceIds) push(entity.key, entityKey('interface', id), 'enters')
-      for (const id of entity.experienceIds) push(entity.key, entityKey('experience', id), 'enters')
-      for (const id of entity.journeyIds) push(entity.key, entityKey('journey', id), 'performs')
-      break
-    }
+  switch (resource.kind) {
     case 'interface': {
-      for (const id of entity.actorIds) push(entityKey('actor', id), entity.key, 'enters')
-      for (const id of entity.experienceIds) push(entityKey('experience', id), entity.key, 'within')
-      for (const id of entity.capabilityIds) push(entityKey('capability', id), entity.key, 'available in')
-      for (const id of entity.screenIds) push(entityKey('screen', id), entity.key, 'available in')
-      for (const id of entity.journeyIds) push(entityKey('journey', id), entity.key, 'available in')
+      for (const id of resource.actorIds) push(resourceKey('entity', id), resource.key, 'enters')
+      for (const id of resource.experienceIds) push(resourceKey('experience', id), resource.key, 'within')
+      for (const id of resource.capabilityIds) push(resourceKey('capability', id), resource.key, 'available in')
+      for (const id of resource.screenIds) push(resourceKey('screen', id), resource.key, 'available in')
+      for (const id of resource.journeyIds) push(resourceKey('journey', id), resource.key, 'available in')
       break
     }
     case 'experience': {
-      for (const id of entity.actorIds) push(entityKey('actor', id), entity.key, 'enters')
-      for (const id of entity.interfaceIds) push(entity.key, entityKey('interface', id), 'within')
-      for (const id of entity.capabilityIds) push(entityKey('capability', id), entity.key, 'available in')
-      for (const id of entity.screenIds) push(entityKey('screen', id), entity.key, 'available in')
-      for (const id of entity.journeyIds) push(entityKey('journey', id), entity.key, 'available in')
+      for (const id of resource.actorIds) push(resourceKey('entity', id), resource.key, 'enters')
+      for (const id of resource.interfaceIds) push(resource.key, resourceKey('interface', id), 'within')
+      for (const id of resource.capabilityIds) push(resourceKey('capability', id), resource.key, 'available in')
+      for (const id of resource.screenIds) push(resourceKey('screen', id), resource.key, 'available in')
+      for (const id of resource.journeyIds) push(resourceKey('journey', id), resource.key, 'available in')
       break
     }
     case 'screen': {
-      for (const id of entity.capabilityIds) push(entity.key, entityKey('capability', id), 'exposes')
-      for (const id of entity.capabilityScenarioIds) push(entity.key, entityKey('capability-scenario', id), 'serves')
-      for (const id of entity.journeyScenarioIds) push(entity.key, entityKey('journey-scenario', id), 'serves')
-      for (const id of entity.scenarioJourneyIds) push(entityKey('journey', id), entity.key, 'passes through scenario')
-      for (const id of entity.capabilityJourneyIds) push(entityKey('journey', id), entity.key, 'reaches via capability')
-      contexts(entity.contexts, entity.key)
+      for (const id of resource.capabilityIds) push(resource.key, resourceKey('capability', id), 'exposes')
+      for (const id of resource.capabilityScenarioIds) push(resource.key, resourceKey('capability-scenario', id), 'serves')
+      for (const id of resource.journeyScenarioIds) push(resource.key, resourceKey('journey-scenario', id), 'serves')
+      for (const id of resource.scenarioJourneyIds) push(resourceKey('journey', id), resource.key, 'passes through scenario')
+      for (const id of resource.capabilityJourneyIds) push(resourceKey('journey', id), resource.key, 'reaches via capability')
+      contexts(resource.contexts, resource.key)
+      break
+    }
+    case 'entity': {
+      if (resource.domainId) push(resource.key, resourceKey('domain', resource.domainId), 'in')
+      for (const id of resource.changedByIds) push(resourceKey('capability', id), resource.key, 'changes')
+      for (const id of resource.presentedOnIds) push(resourceKey('screen', id), resource.key, 'presents')
+      for (const id of resource.ruleIds) push(resourceKey('rule', id), resource.key, 'constrains')
+      /* Where it acts. Empty for a thing that does not. */
+      for (const id of resource.interfaceIds) push(resource.key, resourceKey('interface', id), 'enters')
+      for (const id of resource.experienceIds) push(resource.key, resourceKey('experience', id), 'enters')
+      for (const id of resource.journeyIds) push(resource.key, resourceKey('journey', id), 'performs')
+      /* Only the authored side: the inverse is derived, so pushing both would
+         draw one relationship as two edges facing each other. */
+      for (const relation of resource.relations) {
+        push(resource.key, resourceKey('entity', relation.entityId), `${relation.verb} ${relation.cardinality}`)
+      }
       break
     }
     case 'domain': {
-      for (const id of entity.capabilityIds) push(entityKey('capability', id), entity.key, 'in')
-      for (const id of entity.ruleIds) push(entityKey('rule', id), entity.key, 'reaches through target')
+      for (const id of resource.capabilityIds) push(resourceKey('capability', id), resource.key, 'in')
+      for (const id of resource.ruleIds) push(resourceKey('rule', id), resource.key, 'reaches through target')
       break
     }
     case 'capability': {
-      if (entity.domainId) push(entity.key, entityKey('domain', entity.domainId), 'in')
-      for (const id of entity.scenarioIds) push(entity.key, entityKey('capability-scenario', id), 'cases into')
-      for (const id of entity.journeyIds) push(entityKey('journey', id), entity.key, 'uses')
-      for (const id of entity.screenIds) push(entityKey('screen', id), entity.key, 'exposes')
-      for (const id of entity.ruleIds) push(entityKey('rule', id), entity.key, 'constrains')
-      contexts(entity.contexts, entity.key)
+      if (resource.domainId) push(resource.key, resourceKey('domain', resource.domainId), 'in')
+      for (const id of resource.scenarioIds) push(resource.key, resourceKey('capability-scenario', id), 'cases into')
+      for (const id of resource.journeyIds) push(resourceKey('journey', id), resource.key, 'uses')
+      for (const id of resource.screenIds) push(resourceKey('screen', id), resource.key, 'exposes')
+      for (const id of resource.ruleIds) push(resourceKey('rule', id), resource.key, 'constrains')
+      contexts(resource.contexts, resource.key)
       break
     }
     case 'journey': {
-      for (const id of entity.actorIds) push(entityKey('actor', id), entity.key, 'performs')
-      for (const id of entity.capabilityIds) push(entity.key, entityKey('capability', id), 'uses')
-      for (const id of entity.scenarioIds) push(entity.key, entityKey('journey-scenario', id), 'cases into')
-      for (const id of entity.screenIds) push(entity.key, entityKey('screen', id), 'passes through')
-      for (const id of entity.ruleIds) push(entityKey('rule', id), entity.key, 'constrains')
-      contexts(entity.contexts, entity.key)
+      for (const id of resource.actorIds) push(resourceKey('entity', id), resource.key, 'performs')
+      for (const id of resource.capabilityIds) push(resource.key, resourceKey('capability', id), 'uses')
+      for (const id of resource.scenarioIds) push(resource.key, resourceKey('journey-scenario', id), 'cases into')
+      for (const id of resource.screenIds) push(resource.key, resourceKey('screen', id), 'passes through')
+      for (const id of resource.ruleIds) push(resourceKey('rule', id), resource.key, 'constrains')
+      contexts(resource.contexts, resource.key)
       break
     }
     case 'capability-scenario':
     case 'journey-scenario': {
-      if (entity.scenarioType === 'capability') {
-        push(entityKey('capability', entity.capabilityId), entity.key, 'cases into')
+      if (resource.scenarioType === 'capability') {
+        push(resourceKey('capability', resource.capabilityId), resource.key, 'cases into')
       } else {
-        push(entityKey('journey', entity.journeyId), entity.key, 'cases into')
-        for (const capabilityId of new Set(entity.steps.flatMap(step => step.capabilityId ? [step.capabilityId] : []))) {
-          push(entity.key, entityKey('capability', capabilityId), 'uses')
+        push(resourceKey('journey', resource.journeyId), resource.key, 'cases into')
+        for (const capabilityId of new Set(resource.steps.flatMap(step => step.capabilityId ? [step.capabilityId] : []))) {
+          push(resource.key, resourceKey('capability', capabilityId), 'uses')
         }
       }
-      for (const id of entity.screenIds) push(entityKey('screen', id), entity.key, 'serves')
-      for (const id of entity.ruleIds) push(entityKey('rule', id), entity.key, 'constrains')
-      contexts(entity.contexts, entity.key)
+      for (const id of resource.screenIds) push(resourceKey('screen', id), resource.key, 'serves')
+      for (const id of resource.ruleIds) push(resourceKey('rule', id), resource.key, 'constrains')
+      contexts(resource.contexts, resource.key)
       break
     }
     case 'rule': {
-      for (const id of entity.capabilityIds) push(entity.key, entityKey('capability', id), 'constrains')
-      for (const id of entity.journeyIds) push(entity.key, entityKey('journey', id), 'constrains')
-      for (const id of entity.capabilityScenarioIds) push(entity.key, entityKey('capability-scenario', id), 'constrains')
-      for (const id of entity.journeyScenarioIds) push(entity.key, entityKey('journey-scenario', id), 'constrains')
-      contexts(entity.contexts, entity.key, 'applies in')
+      for (const id of resource.capabilityIds) push(resource.key, resourceKey('capability', id), 'constrains')
+      for (const id of resource.journeyIds) push(resource.key, resourceKey('journey', id), 'constrains')
+      for (const id of resource.capabilityScenarioIds) push(resource.key, resourceKey('capability-scenario', id), 'constrains')
+      for (const id of resource.journeyScenarioIds) push(resource.key, resourceKey('journey-scenario', id), 'constrains')
+      contexts(resource.contexts, resource.key, 'applies in')
       break
     }
   }
@@ -333,6 +357,23 @@ export function layoutFlow(shape: FlowGraphShape, options: LayoutOptions = {}): 
 
   layout(graph)
 
+  /* Dagre routes every edge as well: a skip arc around the ranks it passes, a
+     backward arc below the row. The points are in node-centre space, which is
+     the canvas space once a node's position is its centre less half its size,
+     so an edge that draws itself along them (`blr-routed`) lines up with the
+     handles. Edges dagre never saw keep whatever data they had. */
+  const edges = shape.edges.map((edge) => {
+    if (!graph.hasEdge(edge.source, edge.target)) return edge
+    const points = (graph.edge(edge.source, edge.target) as { points?: Array<{ x: number, y: number }> }).points ?? []
+    const from = graph.node(edge.source) as { x: number, y: number }
+    const to = graph.node(edge.target) as { x: number, y: number }
+    /* An edge against the flow — dagre ranks it reversed and hands back a
+       straight line through both nodes — is marked so the routed edge can
+       loop it round the side instead. */
+    const backward = direction === 'TB' ? to.y < from.y : to.x < from.x
+    return { ...edge, data: { ...(edge.data as Record<string, unknown> | undefined), points, backward, direction } }
+  })
+
   const vertical = direction === 'TB'
   const nodes = shape.nodes.map((node) => {
     const placed = graph.node(node.id) as { x: number, y: number }
@@ -345,7 +386,7 @@ export function layoutFlow(shape: FlowGraphShape, options: LayoutOptions = {}): 
       position: { x: placed.x - width / 2, y: placed.y - height / 2 }
     }
   })
-  return { nodes, edges: shape.edges }
+  return { nodes, edges }
 }
 
 /* ------------------------------------------------------------------ */
@@ -377,10 +418,10 @@ export function buildScreenMap(workspace: ReportWorkspace, options: ScreenMapOpt
   const emphasize = options.emphasizeScreenIds ?? null
 
   const screenCell = (screenId: string, parentId: string, x: number, y: number): number => {
-    const screen = resolveEntity(workspace, 'screen', screenId)
+    const screen = resolveResource(workspace, 'screen', screenId)
     if (!screen) return y
     nodes.push({
-      ...entityNode(screen, {
+      ...resourceNode(screen, {
         dimmed: emphasize ? !emphasize.has(screenId) : false,
         selected: options.selectedId === screen.key
       }),
@@ -436,8 +477,8 @@ export function buildScreenMap(workspace: ReportWorkspace, options: ScreenMapOpt
       focusable: false,
       style: { width: `${interfaceWidth}px`, height: `${interfaceHeight}px` },
       data: {
-        entityKey: productInterface.key,
-        entityId: productInterface.id,
+        resourceKey: productInterface.key,
+        resourceId: productInterface.id,
         kind: 'interface',
         interfaceType: productInterface.interfaceType,
         title: productInterface.title,
@@ -470,8 +511,8 @@ export function buildScreenMap(workspace: ReportWorkspace, options: ScreenMapOpt
         focusable: false,
         style: { width: `${groupWidth}px`, height: `${groupHeight}px` },
         data: {
-          entityKey: experience.key,
-          entityId: experience.id,
+          resourceKey: experience.key,
+          resourceId: experience.id,
           kind: 'experience',
           title: experience.title,
           sublabel: `Experience · ${experience.accessMode}`,
@@ -508,7 +549,7 @@ const SITEMAP_TREE_COLUMN = FLOW_NODE_WIDTH + 30
 /** Row pitch of the top-down tree — one row per click depth. */
 const SITEMAP_TREE_ROW = 170
 
-/** The root node is synthetic — the Product itself is not a model entity. */
+/** The root node is synthetic — the Product itself is not a model resource. */
 export const SITEMAP_ROOT_ID = 'blr-sitemap-root'
 
 export interface SitemapOptions {
@@ -519,7 +560,7 @@ export interface SitemapOptions {
 
 interface SitemapBranch {
   nodeId: string
-  entity: AnyEntityView
+  resource: AnyResourceView
   depth: number
   children: SitemapBranch[]
   /** Leaf slots this subtree occupies on the rim or bottom row — empty branches still claim one. */
@@ -538,11 +579,11 @@ interface SitemapBranch {
  */
 function sitemapBranches(workspace: ReportWorkspace, emphasize: ReadonlySet<string> | null): SitemapBranch[] {
   const screenBranch = (screenId: string, parentId: string, depth: number): SitemapBranch | null => {
-    const screen = resolveEntity(workspace, 'screen', screenId)
+    const screen = resolveResource(workspace, 'screen', screenId)
     if (!screen) return null
     return {
       nodeId: `${parentId}::${screen.key}`,
-      entity: screen,
+      resource: screen,
       depth,
       children: [],
       leaves: 1,
@@ -571,7 +612,7 @@ function sitemapBranches(workspace: ReportWorkspace, emphasize: ReadonlySet<stri
         .filter((branch): branch is SitemapBranch => branch !== null)
       children.push({
         nodeId,
-        entity: experience,
+        resource: experience,
         depth: 2,
         children: screens,
         leaves: Math.max(1, screens.reduce((total, child) => total + child.leaves, 0)),
@@ -583,12 +624,12 @@ function sitemapBranches(workspace: ReportWorkspace, emphasize: ReadonlySet<stri
 
     return {
       nodeId: productInterface.key,
-      entity: productInterface,
+      resource: productInterface,
       depth: 1,
       children,
       leaves: Math.max(1, children.reduce((total, child) => total + child.leaves, 0)),
       lit: !emphasize || children.some(child => child.lit),
-      count: children.reduce((total, child) => total + (child.entity.kind === 'screen' ? 1 : child.children.length), 0),
+      count: children.reduce((total, child) => total + (child.resource.kind === 'screen' ? 1 : child.children.length), 0),
       angle: 0
     }
   })
@@ -645,8 +686,8 @@ function sitemapRootNode(workspace: ReportWorkspace, center: { x: number, y: num
     targetPosition: Position.Left,
     style: { width: `${FLOW_FOCUS_WIDTH}px`, height: `${FLOW_FOCUS_HEIGHT}px` },
     data: {
-      entityKey: '',
-      entityId: '',
+      resourceKey: '',
+      resourceId: '',
       kind: 'product',
       scenarioType: null,
       title: workspace.identity.title,
@@ -661,9 +702,9 @@ function sitemapRootNode(workspace: ReportWorkspace, center: { x: number, y: num
 
 function sitemapBranchNode(branch: SitemapBranch, center: { x: number, y: number }, emphasize: ReadonlySet<string> | null, options: SitemapOptions): BlrFlowNode {
   return {
-    ...entityNode(branch.entity, {
+    ...resourceNode(branch.resource, {
       dimmed: emphasize ? !branch.lit : false,
-      selected: options.selectedId === branch.entity.key,
+      selected: options.selectedId === branch.resource.key,
       count: branch.count
     }),
     id: branch.nodeId,

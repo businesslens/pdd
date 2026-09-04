@@ -1,7 +1,9 @@
 ---
+entities:
+  - source
 capabilities:
-  - source-following
-  - feed-synchronization
+  - follow-source
+  - synchronize-feeds
 entryPoints:
   - reader-mobile: content-reader://library/sources
 ---
@@ -28,7 +30,7 @@ ask for their new items now.
 - Refresh the followed sources
 - Unfollow an existing source
 
-## Product states
+## View states
 
 ### Sources followed
 
@@ -42,7 +44,8 @@ added.
 ### Source unreachable
 
 The Reader sees which source could not be read and that its earlier items are
-still in the library.
+still in the library. The Product keeps trying on its own schedule, and the
+Reader can unfollow the source rather than wait.
 
 ## Capability boundary
 
