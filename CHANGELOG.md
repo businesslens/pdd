@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **The design record under `plans/` is retired; the constraints it carried moved
+  into the registers that govern them.** `AGENTS.md` gains *How format decisions
+  are judged* — the shipped agent as the standard a rule must meet, the ranked
+  quality axes, empirical double-authoring, descriptive and generative use judged
+  equally, the pull-request diff as the binding human surface, and the three
+  principles format design keeps reaching for. Its report viewer standards gain
+  four rendering rules and the four-row test for making a section render as more
+  than prose. Eighteen ADRs and twelve plan documents are deleted: each was
+  already absorbed into the spec, the docs, or this changelog, or still described
+  as unstarted work that had in fact shipped. The one open item they held —
+  bringing the landing repository from Product Report v10 to v13, where Actors
+  are no longer a resource type — is left to git history and to the type errors
+  the version gap raises on its own.
+
+### Added
+
+- **`spec/rejected.md`** — shapes designed far enough to be costed and then
+  chosen against, so the same argument is not had twice. It binds nothing and
+  takes rejections and deferrals only: never a plan, a status, or a file
+  reference, which are what made the previous design record rot. Entries are
+  appended, so reopening a decision means a superseding entry rather than an
+  edit. Carries what a format or report change most often re-proposes — tags and
+  free-form metadata, a glossary resource type, typed facts, `actors/` as its own
+  collection, permission on a Capability target, `transitions` on the Entity, the
+  permission algebra's discarded spellings, and Blueprint provenance.
+
 ## [0.9.0] - 2026-09-03
 
 ### Added

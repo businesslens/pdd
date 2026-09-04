@@ -18,6 +18,12 @@ Neither is a docs-site page. The user-facing explanation of the same resource
 types lives in the Product Model group under `docs/`, and the two registers must
 not contradict each other.
 
+`spec/rejected.md` sits beside them and binds nothing. It holds shapes that were
+designed far enough to be costed and then chosen against, so the same argument
+is not had twice. It takes rejections and deferrals only — never a plan, a
+status, or a file reference, which are the things that rot — and it is appended
+to rather than edited, so reopening a decision means a superseding entry.
+
 ## Layout
 
 - `src/cli.ts` — public command dispatch: `install`, `update`, `lint`, `view`,
@@ -74,6 +80,56 @@ not contradict each other.
   parent they are authoring. The test is the name, not the containment: an
   Experience also sits inside exactly one Interface, and keeps its own page,
   because nothing calls it an Interface Experience.
+
+## How format decisions are judged
+
+These constrain `spec/format.md` and `spec/report.md`. A change that contradicts
+one supersedes it explicitly; it does not route around it. Check
+`spec/rejected.md` before proposing a shape — much of what looks new has been
+costed already.
+
+- **The shipped agent, not the spec, is the standard.** A model is authored from
+  what installs — `SKILL.md` plus its `references/` — against an unfamiliar
+  repository, so a rule decidable only with the full spec in hand is decidable
+  nowhere that matters. Where a rule is sound but its distillation into the
+  rubric dropped what made it decidable, the defect is the **skill's** and the
+  fix is a rubric edit.
+- **Axes, ranked: determinism → reviewability → economy → falsifiability →
+  expressiveness → legibility → buildability.** Prefer removing author freedom
+  over adding it. A format that refuses to model something is honest and
+  visible; one that models a thing two valid ways is broken and invisible,
+  because both encodings lint clean. "An author might reasonably want it either
+  way" argues *against* a rule.
+- **Reviewability is second, and it is not legibility.** Divergence between two
+  lint-clean models concentrates in granularity and omission — what is *absent*,
+  which no delta shows. So `docs/` is written for the reviewer, and a resource
+  type whose granularity cannot be challenged from `docs/` is a candidate for
+  removal.
+- **A determinism claim is established empirically**: map one product twice from
+  one rubric, independently, then diff. Both readings defensible is a defect in
+  the format and needs no adjudication; one plainly wrong against the spec is a
+  defect in the rubric. Validate a fix by re-running the test, never by
+  re-reading the wording.
+- **Descriptive and generative use are judged equally.** A rule phrased as an
+  evidence test is inert for `ideate` and `blueprint pull`. Restate it
+  structurally, or say the type means something in one direction only.
+- **The pull-request diff of `.businesslens/` is the binding human surface.**
+  Frontmatter density, key vocabularies, and relation encoding are judged as
+  diff artifacts. The report viewer is not a legibility instrument for the
+  format: a finding visible only there is evidence against the encoding.
+- **The path owns classification.** Parent relations, ids, counterparts, and
+  asset class read from where a file sits, never from frontmatter — reparenting
+  is a `git mv`, and nothing edits frontmatter on a CI run.
+- **A container declares only a subset of what already resolves.** An optional
+  authored list may narrow or order a derived relation, never create one.
+- **Model it only when `lint` can say something specific.** Where the only
+  possible message is "unknown key", it does not belong in the model.
+
+Every boundary deciding *how many* resources exist and *which type* a thing is —
+Capability granularity, Interface against Experience, Rule against Scenario,
+Domain cuts — does not converge between independent authors, and the human
+approval gate does not catch it. Do not claim a change closed one without a
+double-authoring round that measures it.
 
 ## Skill-writing standards
 
@@ -159,6 +215,19 @@ not contradict each other.
   the point.
 - A view that needs a paragraph before it can be read is not ready to ship, and
   no view opens onto an empty configuration screen.
+- **The surface names the resource type; the row does not repeat it**, and a
+  fact appears once per screen.
+- **Counts where the set is many, names where the set is one** — in rows,
+  tables, and facts alike. Nothing renders an empty label: a missing hook or an
+  empty facet set shrinks the element rather than reserving space for what is
+  not there.
+- **A section renders as more than prose only when four things align**: a
+  recognized H2 in `spec/format.md`; a **required content shape** — bullet list,
+  H3 plus prose, or prose — enforced by `lint`; a typed field in
+  `src/core/portable.ts`; and a component that reads it. The content shape is
+  the row that gets skipped and the one that makes rendering possible. Where the
+  UI cannot render it differently from prose, leave it in `supportingSections`,
+  which round-trips losslessly.
 
 ## Change and release checks
 

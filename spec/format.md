@@ -10,7 +10,8 @@
 >
 > This document defines the **authored folder**. The wire contract that
 > serializes it — the Product Report, its portable projection, and expansion —
-> is [`report.md`](./report.md).
+> is [`report.md`](./report.md). Shapes considered for either and chosen against
+> are in [`rejected.md`](./rejected.md).
 
 This document is the contract for the BusinessLens PDD folder: the git-tracked
 product model that lives inside a repository. Everything the public CLI lints is
