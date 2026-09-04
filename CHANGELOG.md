@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   into the registers that govern them.** `AGENTS.md` gains *How format decisions
   are judged* — the shipped agent as the standard a rule must meet, the ranked
   quality axes, empirical double-authoring, descriptive and generative use judged
-  equally, the pull-request diff as the binding human surface, and the three
+  equally, the pull-request diff as the binding human surface, and the two
   principles format design keeps reaching for. Its report viewer standards gain
   four rendering rules and the four-row test for making a section render as more
   than prose. Eighteen ADRs and twelve plan documents are deleted: each was

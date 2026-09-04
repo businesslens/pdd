@@ -18,11 +18,8 @@ Neither is a docs-site page. The user-facing explanation of the same resource
 types lives in the Product Model group under `docs/`, and the two registers must
 not contradict each other.
 
-`spec/rejected.md` sits beside them and binds nothing. It holds shapes that were
-designed far enough to be costed and then chosen against, so the same argument
-is not had twice. It takes rejections and deferrals only — never a plan, a
-status, or a file reference, which are the things that rot — and it is appended
-to rather than edited, so reopening a decision means a superseding entry.
+`spec/rejected.md` sits beside them and binds nothing: it records shapes that
+were costed and then chosen against, so the same argument is not had twice.
 
 ## Layout
 
@@ -101,15 +98,18 @@ costed already.
   because both encodings lint clean. "An author might reasonably want it either
   way" argues *against* a rule.
 - **Reviewability is second, and it is not legibility.** Divergence between two
-  lint-clean models concentrates in granularity and omission — what is *absent*,
-  which no delta shows. So `docs/` is written for the reviewer, and a resource
-  type whose granularity cannot be challenged from `docs/` is a candidate for
-  removal.
+  lint-clean models concentrates in what is *absent*, which no delta shows, so
+  `docs/` is written for the reviewer: a resource type whose granularity cannot
+  be challenged from `docs/` is a candidate for removal.
 - **A determinism claim is established empirically**: map one product twice from
   one rubric, independently, then diff. Both readings defensible is a defect in
   the format and needs no adjudication; one plainly wrong against the spec is a
   defect in the rubric. Validate a fix by re-running the test, never by
-  re-reading the wording.
+  re-reading the wording. Every boundary deciding *how many* resources exist and
+  *which type* a thing is — Capability granularity, Interface against
+  Experience, Rule against Scenario, Domain cuts — is open by this measure, and
+  the human approval gate does not catch it; do not claim a change closed one
+  without a round that measures it.
 - **Descriptive and generative use are judged equally.** A rule phrased as an
   evidence test is inert for `ideate` and `blueprint pull`. Restate it
   structurally, or say the type means something in one direction only.
@@ -117,19 +117,10 @@ costed already.
   Frontmatter density, key vocabularies, and relation encoding are judged as
   diff artifacts. The report viewer is not a legibility instrument for the
   format: a finding visible only there is evidence against the encoding.
-- **The path owns classification.** Parent relations, ids, counterparts, and
-  asset class read from where a file sits, never from frontmatter — reparenting
-  is a `git mv`, and nothing edits frontmatter on a CI run.
 - **A container declares only a subset of what already resolves.** An optional
   authored list may narrow or order a derived relation, never create one.
 - **Model it only when `lint` can say something specific.** Where the only
   possible message is "unknown key", it does not belong in the model.
-
-Every boundary deciding *how many* resources exist and *which type* a thing is —
-Capability granularity, Interface against Experience, Rule against Scenario,
-Domain cuts — does not converge between independent authors, and the human
-approval gate does not catch it. Do not claim a change closed one without a
-double-authoring round that measures it.
 
 ## Skill-writing standards
 
