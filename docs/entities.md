@@ -1,6 +1,6 @@
 ---
 title: Entities
-description: An Entity names a thing the Product keeps or reasons about, the people and systems that act on it included — what it holds about that thing, the states it moves through, and who acts.
+description: An Entity names a thing the Product keeps or reasons about, including the people and systems that act on it — what it holds about that thing, the states it moves through, and who acts.
 section: open-source
 group: Product Model
 order: 9
@@ -12,18 +12,9 @@ An Entity is a thing the Product keeps or reasons about, which an Actor can
 point at and the Product can tell apart from another one — an order, a listing,
 a saved item, and the Reader who saved it.
 
-Capabilities name the Product's **verbs**. Entities name its **nouns**, the
-people and systems that act on it included. There is one resource type for
-things; the ones that act carry one more field.
-
-## The test is identity, not storage
-
-A draft recommendation the Product never persists is still an Entity when a
-reader points at it and the Product distinguishes it from another. A database
-row no Actor can name is not.
-
-This is why the section is called *Information kept* rather than *stored*.
-"Kept" means held, in the sense of *keep a record* — not written to a table.
+Capabilities name the Product's **verbs**. Entities name its **nouns**,
+including the people and systems that act on it: one resource type for things,
+and the ones that act carry one more field.
 
 ## When you create one
 
@@ -32,6 +23,12 @@ Apply the naming test: **a thing an Actor would call "this one"**.
 A shopper says *"this order"*, never *"this order line"* — that is "The items
 ordered" inside Order. A reader says *"this item"* and *"this collection"*, but
 "library" is simply all of them. Containers and parts are not Entities.
+
+**The test is identity, not storage.** A draft recommendation the Product never
+persists is still an Entity when a reader points at it and the Product
+distinguishes it from another. A database row no Actor can name is not. This is
+why the section is called *Information kept* rather than *stored*: "kept" means
+held, in the sense of *keep a record* — not written to a table.
 
 Do not create one for every noun in the product. A word that appears in your
 prose and matches no Entity is a signal worth checking, but the answer is
@@ -43,8 +40,7 @@ sometimes that it was never a thing.
 administrator, a partner system posting webhooks, and the AI agent harness
 running a skill are all Entities that `acts`. Nothing else distinguishes them
 from an Order: the Product keeps or reasons about instances of every one of
-them, and a thing that starts acting gains one field — no file move, no id
-change.
+them, and the ones that act carry `acts` and `kind`.
 
 `acts` is `external` or `internal`, relative to the Product boundary: whether
 the thing acts independently outside the Product owner's boundary, or on the
@@ -118,8 +114,8 @@ both.
 
 ## The file
 
-An Entity with no assets lives at `entities/<id>.md`. There is no `actors/`
-directory; a folder with that name is a `lint` error naming where its files go.
+An Entity with no assets lives at `entities/<id>.md`, whether or not it acts —
+one directory holds all of them.
 
 ```markdown
 ---
@@ -215,11 +211,9 @@ removes, and from and to which state, and the report draws the machine from
 every Scenario in the model — each arc labelled with the Capability whose Step
 draws it, and with the Rules that restrict or forbid it.
 
-A per-Entity transition list could never express a combined lifecycle —
-*settling a payment confirms an Order and creates a Shipment* is one act on two
-things, which only a Step can say — and it stated a second time what a Step
-already states. There is no `transitions` key; one that is still authored is an
-error naming the Step keys that replaced it.
+There is no `transitions` key. One act can move two things at once — *settling a
+payment confirms an Order and creates a Shipment* — which only a Step can say,
+so the moves live where the act does.
 
 `lint` composes every Scenario and reports what the composition is missing: a
 state other than the first that no Step ever leaves anything in is a warning, and
@@ -249,9 +243,6 @@ a warning: that is the same relationship written twice, and the two can now
 contradict each other. A relation may target the Entity itself — a Comment
 replies to a Comment — though a Rule's `related` path cannot walk through one,
 because naming the Entity gives it no direction.
-
-Relations live in frontmatter rather than a section because they name other
-resources by id, and ids are parsed rather than read out of English.
 
 ## One Entity, or several?
 
@@ -344,15 +335,11 @@ above it. A closed list of kinds is a vocabulary; the things those kinds
 classify are not. "Payment method" may be a fixed list of four while every
 payment is its own thing.
 
-It traps a tool whose subject is models. Why is *Capability* an Entity for
-BusinessLens but *agent skill* is not? Because it keeps information about
-Capabilities — `capabilities/` is full of them — and it ships its skills rather
-than keeping records about them. **Does the Product keep information about
-instances of this, or is this the Product itself?**
-
-**The author's test**: if you cannot point at it, no Step changes it, no Screen
-shows it, nothing names it as an actor, and no Rule reads it, it is a table, not
-an Entity.
+It catches products whose subject matter resembles their own machinery. A
+recipe app keeps information about instances of *recipe*, so Recipe is an
+Entity; the measurement units it ships are a fixed list it *is*, not records it
+keeps. **Does the Product keep information about instances of this, or is this
+the Product itself?**
 
 ## How it relates to everything else
 
@@ -393,8 +380,8 @@ relationship somebody forgot to declare.
 - An `actors/` directory is an error naming `entities/` as where its files go.
 - A fact that is not `- **Name** — prose`, or two facts with one name, is an
   error.
-- A `transitions` key is an error naming the Step keys that replaced it; a
-  `## Transitions` or `## Relations` prose section is an error.
+- A `transitions` key is an error naming the Step keys that carry the moves;
+  a `## Transitions` or `## Relations` prose section is an error.
 - A relation naming a missing Entity, a duplicate edge, or `many-to-one` is an
   error; two Entities declaring relations at each other is a warning.
 - Two states with one name are an error: a Step's `from` and `to` cannot tell

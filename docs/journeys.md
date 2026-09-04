@@ -212,7 +212,7 @@ The Journey goal is achieved: a reviewable change proposal exists.
 | `result` | yes | Use `achieved` or `not-achieved`; it is orthogonal to `kind`. |
 | `routes` | yes | Map each unique lowercase kebab-case route ID to a unique human-readable name. |
 | `steps` | yes | Give a non-empty ordered list with one-line `text` and `kind: actor|product|condition`. A Step may name a Capability independently of its kind. |
-| `steps[].actor` | for Actor Steps | Name the Entity that acts and performs the Step when `kind: actor`; optional on a `product` or `condition` Step, where it says who the Step is attributable to. At least one Step must name a Journey Actor. |
+| `steps[].actor` | for Actor Steps | Name the Entity that acts and performs the Step when `kind: actor`; optional on a `product` or `condition` Step, where it says who the Step is attributable to. |
 | `steps[].entities` | yes | List what this Step does to the Product's things, exactly as on a [Capability Scenario Step](./capabilities.md#what-a-step-does-to-the-products-things), or `[]`. A Step whose effect is anything but a read must name the `capability` it exercises, because a Journey Step that changes a thing on its own would be behavior no Capability owns. |
 | `steps[].contexts` | when contextualized | Map every declared route to a strict Context whose `place` is the most-specific occurrence. Omit it only when the Step is shared by all routes and has no Context. |
 | `references` | no | Use the documented [Reference](./references.md) shape. |

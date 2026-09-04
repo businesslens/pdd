@@ -698,10 +698,13 @@ is a folder. The entire Domain collection is optional.
 **Domain is an axis, not a level.** It classifies members of both the Interface →
 Experience → Screen hierarchy and the behavior hierarchy, so it neither contains
 nor is contained by anything.
-`domain` on a Capability is the only *authored* Domain edge in the model; every
-other Domain relation is derived. A Screen, Experience or Journey is about the
-Domains its Capabilities are about, and computing that is more reliable than
-asking an author to restate it — a second authority can disagree with the first.
+`domain` on a Capability and on an Entity are the only *authored* Domain edges
+in the model; every other Domain relation is derived. A Screen, Experience or
+Journey is about the Domains its Capabilities are about, and computing that is
+more reliable than asking an author to restate it — a second authority can
+disagree with the first. Only Capabilities count toward the two-Capability
+threshold: an Entity's `domain` classifies the thing, it does not make a
+region.
 
 `domain` is optional and single. A Capability about two subject regions means
 either a `## Boundary` is wrong or the Capability should split.

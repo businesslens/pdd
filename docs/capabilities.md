@@ -81,7 +81,7 @@ Capability files do not list Actors, Entities, Capability Scenarios, Journey
 Scenarios, Journeys, Screens, or Business Rules. Other resources own those
 relations, and consumers derive backlinks: what a Capability changes is what its
 Scenarios' Steps say, and an `entities` key on a Capability is an error naming
-the Step key that replaced it. A Capability Scenario's containing Capability
+the Step key that carries it. A Capability Scenario's containing Capability
 folder creates its direct acceptance relation, while a Journey Scenario annotates concrete
 Steps with Capabilities. Journey Capability backlinks are derived from those
 Steps rather than authored on the Journey.
@@ -140,8 +140,8 @@ Blueprint, whether or not the Product has any [Journeys](./journeys.md).
 ## What a Step does to the Product's things
 
 **`entities` is required on every Step**, and a Step that touches nothing
-writes `entities: []`. Silence is impossible; an omission is a claim that can be
-reviewed, linted, and contradicted by code. Each entry names an
+writes `entities: []`, so an omission is always a claim rather than a silence.
+Each entry names an
 [Entity](./entities.md), what the Step does to it, and the states it leaves and
 lands in:
 
@@ -205,8 +205,7 @@ steps:
 ```
 
 An unattended Scenario derives no Actors, and is the only Scenario that may have
-none. Without it, unattended behavior had to be written as somebody else's
-request, or left with no acceptance coverage at all.
+none.
 
 ### When you create a Capability Scenario
 
@@ -305,9 +304,8 @@ else.
 
 A Capability Scenario cannot declare `result`, `actors`, `availability`, or a
 Step `capability`; its parent Capability is implicit. A Step key of `entity`,
-`state`, `changes`, or `reads` is an error naming `entities` as its
-replacement — each was an earlier spelling of what a Step does to a thing, and
-all four are now entries of that one list. Both Scenario types
+`state`, `changes`, or `reads` is an error naming `entities`, whose entries
+carry all four. Both Scenario types
 require frontmatter `steps`, and neither declares its parent—the folder it sits
 in is the parent.
 It cannot use Journey-only `## Goal` or `## Success criterion` sections, and

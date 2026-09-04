@@ -20,23 +20,23 @@ counterparts with separate qualified ids, not one shared resource.
 ## When you create one
 
 **Whether an Interface is divided into Experiences is derived, never judged.**
-An Interface holds Experiences exactly when one of two inputs says so, and holds
-none when neither does:
+`lint` computes it from `actors`, `access`, each Capability's `availability`,
+and its Scenarios' Steps, so the author never applies a prose test. Two rules
+decide it, one in each direction:
 
-- it serves more than one `access` value; or
-- its Actors split into groups that no Capability available there bridges.
-  Formally: take the graph whose nodes are the Interface's Actors and the
-  Capabilities available on it, with an edge wherever a Capability's Scenario
-  Steps name the Actor; the Interface is divided when that graph has more than
-  one connected component.
+- **An Interface must hold Experiences** when its Actors split into groups that
+  no Capability available there bridges. Holding none is a `lint` **error**:
+  those groups are separate contexts, not one.
+- **An Interface that holds Experiences must justify them.** Its Experiences
+  differ in `access`, or its audiences are disjoint, or one is a counterpart —
+  an Experience whose name also exists under another Interface, the same context
+  on another platform, which justifies itself because flattening it would make
+  two views of one context look unrelated. None of the three, and it is a
+  `lint` **error**: use direct Interface availability instead.
 
-`lint` computes both from `actors`, `access`, each Capability's `availability`,
-and its Scenarios' Steps, so the author never applies a prose test. An
-Interface that holds Experiences when neither input calls for them, or holds
-none when one does, is a `lint` **error**. There is one exception: an Experience
-whose name also exists under another Interface is a counterpart — the same
-context on another platform — and justifies itself, because flattening it would
-make two views of one context look unrelated.
+Disjoint audiences is the only input that *requires* division. `access` only
+justifies Experiences that already exist, because an Interface declares no
+`access` of its own — the value lives on each Experience.
 
 The rule protects one thing: an Experience is a context that stays meaningful
 when routes, commands, or navigation are reorganized, because it is defined by
@@ -45,9 +45,9 @@ overview page is usually a Screen, not an Experience. A command group is an
 Experience only when the rule divides its Interface, not because a parser groups
 its commands.
 
-When neither input divides an Interface, availability names the Interface
-directly. Do not create a one-to-one Experience to satisfy the file shape or
-make the report look full; `lint` refuses it.
+When nothing divides an Interface, availability names the Interface directly.
+Do not create a one-to-one Experience to satisfy the file shape or make the
+report look full; `lint` refuses it.
 
 ## The file
 

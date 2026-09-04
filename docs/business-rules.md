@@ -29,8 +29,7 @@ Capability's own business — a `condition` Step, or its Scenario's Outcome — 
 `lint` warns when a Rule's behavioral targets resolve to a single resource with
 no `contexts` narrowing them. A Rule with an Entity target is always valid: a
 durable invariant or permission on a thing is a Rule even when it selects a
-single operation, because the two homes the warning suggests do not exist for a
-permission.
+single operation.
 
 Write something that must remain true, not a sequential step.
 
@@ -131,15 +130,13 @@ one.
 **A place-scoped Rule is not escaped by omitting `contexts`.** A Step that omits
 them is shared by every route, which puts its operations inside the Scenario's
 own places — the union of the places its contextualized Steps name — and a
-place-scoped Rule selects it there. Reading such a Step as happening nowhere
-would let deleting a key sidestep an authorization claim, and a claim a deletion
-escapes is not a claim.
+place-scoped Rule selects it there.
 
 **The minimal selector is canonical.** A `from` that every Step landing in `to`
 already leaves from is a warning, as is a `when` state condition every selected
 Step already satisfies. Refunds only ever leave Confirmed, so
-`{ changes, to: Refunded }` is the Rule. The minimal form is also the safe one:
-a refund added later from Pending is governed by it and silently open under the
+`{ changes, to: Refunded }` is the Rule. It is also the safer form: a refund
+added later from Pending is governed by it, and silently open under the
 narrower one.
 
 A Rule reaches Capabilities through Steps: every Capability whose Scenario has a
@@ -200,11 +197,11 @@ permits:
 
 AND across Rules is what lets a broad Rule and a narrow one compose: *owner or
 admin may change an Order* plus *admin may refund* yields admin-only refunds
-without either Rule knowing about the other. Its cost is the split-grant trap:
-*the owner may read a Collection* and *a Visitor may read a Published
-Collection* written as two Rules AND to owner-only. Grants meant as alternatives
-sit in one Rule, and `lint` warns when two permission Rules carry identical
-target selectors.
+without either Rule knowing about the other. It also means grants meant as
+alternatives must sit in one Rule: *the owner may read a Collection* and *a
+Visitor may read a Published Collection*, written as two Rules, AND to
+owner-only. `lint` warns when two permission Rules carry identical target
+selectors.
 
 ### Grant keys
 
@@ -316,10 +313,10 @@ hold at once, and a key it omits constrains nothing:
   Step has one.
 
 Only one who-key narrows the actor, so a grant reads as that key and its `when`
-conditions. `related` ending on Shopper already says the actor is a Shopper, and
-an `actors` list beside it that excludes Shopper describes nobody — refused
-rather than silently closed. Alternatives are separate grants — that is what OR
-within a Rule is for.
+conditions. `related` ending on Shopper already says the actor is a Shopper, and an
+`actors` list beside it that excludes Shopper describes nobody, so `lint`
+refuses it. Alternatives are separate grants — that is what OR within a Rule is
+for.
 
 Structure — errors unless marked:
 

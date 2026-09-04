@@ -46,8 +46,16 @@ For non-interactive installation, provider flags, and collision safety, see
 
 ## Claude Code plugin
 
-Claude Code users may alternatively install from this repository's marketplace
-manifest.
+Claude Code users can install the same three skills as a plugin instead, by
+adding this repository as a marketplace:
+
+```text
+/plugin marketplace add businesslens/pdd
+/plugin install businesslens@businesslens
+```
+
+The plugin and the CLI installer deliver the same skills; use one or the other,
+not both.
 
 Next, pick your door: [From your repo](./from-your-repo.md),
 [From a Blueprint](./from-a-blueprint.md), or [From an idea](./from-an-idea.md).

@@ -110,13 +110,8 @@ Interface folder that contains it. Matching Experience names on different
 Interfaces are counterparts, not one shared resource.
 
 Whether an Interface is divided into Experiences is derived from the model,
-never judged by the author. It is divided exactly when it serves more than one
-`access` value, or when its Actors split into groups no Capability available
-there bridges; otherwise it holds no Experiences. `lint` computes both
-conditions and reports a violation as an error, with one exception: an
-Experience whose name also exists under another Interface is a counterpart and
-justifies itself. The [Experience page](./experiences.md#when-you-create-one)
-states the rule in full.
+never judged by the author, and `lint` reports a violation as an error. The
+[Experience page](./experiences.md#when-you-create-one) states the rule.
 
 When an Interface is divided, Capability availability Contexts use the
 qualified Experience places. When it is not, a Context uses the Interface place

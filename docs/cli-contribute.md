@@ -39,8 +39,8 @@ A Blueprint should be small enough to build end to end and complete enough that
 a coding agent can produce a recognizable product from the pulled model alone.
 
 Before contributing, add a category, at least one tag, at least one author, and
-an SPDX license identifier to `product/product.md`, plus
-`.businesslens/product/logo.svg`.
+an SPDX license identifier to `.businesslens/product/product.md`, plus
+`.businesslens/product/logo.svg` beside it.
 
 Check these before contributing:
 

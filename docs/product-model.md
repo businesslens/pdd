@@ -31,7 +31,7 @@ of both.
             └────────────────── what the Product does ───────────────────┘
 
    Domain  ── classifies members of both by subject matter
-   Entity  ── what the Product keeps, the ones that act included; Steps act on it
+   Entity  ── what the Product keeps, including whoever acts; Steps act on it
    Business Rule ── what must stay true, and who may
 ```
 
@@ -148,8 +148,7 @@ of Context, and its value names an Interface, Experience, or Screen by
 qualified id:
 `Interface`, `Interface::Experience`, or
 `Interface::Experience::Screen` (with Screens directly under an undivided
-Interface using `Interface::Screen`). A future folder schema may add another
-Context property when the model needs one; schema 8 accepts only `place`, so
+Interface using `Interface::Screen`). `place` is the only Context property, so
 misspelled or speculative keys are reported instead of ignored.
 
 Different fields use the same Context shape at the precision their meaning
@@ -257,11 +256,6 @@ behavioral id whose last segment is a nominalisation (`-ing`, `-ment`, `-tion`,
 and the like) with no verb segment warns, and a cross-cutting id whose first
 segment is a verb warns unless that segment also names a thing in the model —
 `order-line` is fine when an Entity `order` exists.
-
-This is a rule rather than a style because ids are the model's whole identity
-mechanism. Two models of one product that name the same behavior differently
-cannot be diffed, merged, or compared — which is exactly what reviewing a change
-and reusing a Blueprint both require.
 
 Capability Scenarios must remain variations rather than hidden operations. If
 `manage-repositories` produces create, configure, archive, and delete cases
