@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * Every word the report uses, in one panel.
+ * The documented vocabulary, in one searchable panel.
  *
  * A reader can browse the list or search a word and its meaning here. The panel
  * stays over the reading so looking up a word preserves the resource page.
@@ -63,7 +63,7 @@ watch(open, (isOpen) => {
   <USlideover
     v-model:open="open"
     title="Vocabulary"
-    description="Every word the model and this report use, with the page that defines each one."
+    description="Selected Product Model and report terms, with the page that defines each one."
     :content="{ onOpenAutoFocus }"
     :ui="{ content: 'w-full max-w-md', body: 'p-0' }"
   >

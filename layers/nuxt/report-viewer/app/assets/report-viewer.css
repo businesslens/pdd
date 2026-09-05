@@ -72,5 +72,9 @@
   border-bottom-color: var(--ui-color-primary-500);
   border-bottom-style: solid;
   color: var(--ui-primary);
-  outline: none;
+}
+
+.blr-term-mention:focus-visible {
+  outline: 2px solid var(--ui-text-highlighted);
+  outline-offset: 3px;
 }

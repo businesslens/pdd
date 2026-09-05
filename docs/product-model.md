@@ -86,9 +86,9 @@ and SDD roots. `coverage.md` describes model breadth.
 Use [`businesslens view`](./cli-view.md) to browse the current model as a local
 report while editing.
 
-Every word this table and the rest of the documentation use is listed, one line
-each, in the [Vocabulary](./vocabulary.md) — which is also what the Product
-Report shows in place when you meet one of them there.
+The [Vocabulary](./vocabulary.md) indexes selected Product Model and report
+terms, with one-line definitions. The Product Report uses those same definitions
+for its dotted terms and searchable Vocabulary panel.
 
 ## Is this replacing my PRD?
 

@@ -9,16 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Every word the Product Report uses is answerable where it stands.** A page
-  heading, a fact label, and a collection name each open the term's one-line
-  meaning and a way out to the page that explains it. **Vocabulary** in the
-  report header lists all of them and lets the reader search their names and
-  meanings.
+- **Inline definitions for selected Product Model terms, plus a searchable
+  vocabulary.** Dotted terms in page headings, fact labels, and collection names
+  open a one-line meaning and a link to the page that explains it. **Vocabulary**
+  in the report header lists the documented terms and lets the reader search
+  their names and meanings.
 - **A definition that leans on another word links to it**, in the documentation
   and in the report alike. Following one in the report opens the Vocabulary
   panel on that word, so a reader can chase a term through as many definitions
   as it takes without losing the page they were reading.
-- **A Vocabulary page in the documentation**, listing every term with the page
+- **A Vocabulary page in the documentation**, listing declared terms with the page
   that defines each one. It is generated and defines nothing itself: a
   definition is declared in the `terms:` frontmatter of the page that owns the
   term, and `npm run vocabulary` projects those onto the docs index and the

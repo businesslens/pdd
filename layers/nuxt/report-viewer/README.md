@@ -5,10 +5,10 @@ from the `businesslens` package. It projects the complete portable report into
 a resource-first experience: a flat rail of resource types, a collection surface
 per type, a page for every resource, search, and named topology views.
 
-Every word the report renders is answerable where it stands: a page heading, a
-fact label, and a collection name each open the term's one-line meaning and a
-link to the documentation page that owns it. A Vocabulary panel lists all of
-them and lets the reader search their names and meanings. The lines are
+Selected Product Model terms have inline definitions. Dotted terms in page
+headings, fact labels, and collection names open a one-line meaning and a link
+to the documentation page that owns it. A Vocabulary panel lists the documented
+terms and lets the reader search their names and meanings. The lines are
 generated from the documentation, so the report never carries a second
 definition of anything.
 

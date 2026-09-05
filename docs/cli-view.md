@@ -57,9 +57,9 @@ which Screens expose an ability — rather than a builder that asks you to inven
 the question first. **Neighbourhood** is the action a resource page offers into
 it, drawing that same canvas around one resource and everything touching it.
 
-Any word the report shows can be read where it stands: a dotted term opens its
-one-line meaning, and **Vocabulary** in the header lists every one of them. Both
-link out to the page here that explains the term in full.
+Selected Product Model terms have a dotted underline: each opens its one-line
+meaning, and **Vocabulary** in the header lets you search the documented terms.
+Both link out to the page here that explains the term in full.
 
 Use [`blueprint export`](./cli-export.md) when you need to write a source-free,
 portable Product Report.

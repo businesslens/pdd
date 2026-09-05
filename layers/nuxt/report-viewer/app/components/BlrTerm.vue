@@ -44,7 +44,7 @@ function follow(slug: VocabularySlug) {
     <button
       type="button"
       class="blr-term"
-      :aria-label="`What ${entry.term} means`"
+      :aria-label="`${label} — what ${entry.term} means`"
     >{{ label }}</button>
 
     <template #content>
@@ -56,7 +56,7 @@ function follow(slug: VocabularySlug) {
               v-if="segment.slug"
               type="button"
               class="blr-term-mention"
-              :aria-label="`What ${segment.text} means`"
+              :aria-label="`${segment.text} — show definition`"
               @click="follow(segment.slug)"
             >{{ segment.text }}</button>
             <template v-else>{{ segment.text }}</template>
@@ -96,6 +96,10 @@ function follow(slug: VocabularySlug) {
   border-bottom-color: var(--ui-color-primary-500);
   border-bottom-style: solid;
   color: var(--ui-text-highlighted);
-  outline: none;
+}
+
+.blr-term:focus-visible {
+  outline: 2px solid var(--ui-text-highlighted);
+  outline-offset: 3px;
 }
 </style>

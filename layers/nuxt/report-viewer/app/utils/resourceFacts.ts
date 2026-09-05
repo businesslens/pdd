@@ -115,7 +115,7 @@ export function resourceFacts(workspace: ReportWorkspace, resource: AnyResourceV
         parent,
         { label: 'Steps', value: String(scenario.steps.length), term: 'step' },
         scenario.result
-          ? { label: 'Result', value: scenario.result, term: 'journey-scenario-result' }
+          ? { label: 'Result', value: scenario.result, term: 'result' }
           : { label: 'Screens', value: String(scenario.screenIds.length), term: KIND_TERM.screen }
       ]
     }

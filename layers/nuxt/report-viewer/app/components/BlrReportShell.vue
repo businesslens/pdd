@@ -980,7 +980,7 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
           aria-label="Search Product Model"
           @click="searchOpen = true"
         />
-        <UTooltip text="Every word this report uses">
+        <UTooltip text="Look up Product Model terms">
           <UButton
             icon="i-lucide-book-a"
             color="neutral"
@@ -991,7 +991,7 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
             @click="vocabulary.show()"
           />
         </UTooltip>
-        <UTooltip text="Every word this report uses" class="lg:hidden">
+        <UTooltip text="Look up Product Model terms" class="lg:hidden">
           <UButton
             icon="i-lucide-book-a"
             color="neutral"
@@ -1002,7 +1002,7 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
           />
         </UTooltip>
         <UBadge class="hidden md:inline-flex" :color="COVERAGE_TONE[workspace.coverage.status] || 'neutral'" variant="subtle" size="sm">
-          <BlrTerm slug="coverage" text="coverage" />: {{ workspace.coverage.status }}
+          <span><BlrTerm slug="coverage" text="coverage" />: {{ workspace.coverage.status }}</span>
         </UBadge>
         <span class="blr-meta hidden sm:inline">{{ workspace.identity.schemaVersion }}</span>
         <span class="blr-meta hidden md:inline">{{ workspace.identity.generatedAt.slice(0, 10) }}</span>

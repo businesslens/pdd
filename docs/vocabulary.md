@@ -1,6 +1,6 @@
 ---
 title: Vocabulary
-description: Every term the Product Model and the Product Report use, and the page that defines each one.
+description: Selected Product Model and report terms, and the page that defines each one.
 section: open-source
 group: Product Model
 order: 8
@@ -10,13 +10,13 @@ order: 8
 
 # Vocabulary
 
-Every word the model and the report use, with one line each and a link to
+Selected Product Model and report terms, with one line each and a link to
 the page that explains it. This page is an index: it defines nothing itself,
 so it can never disagree with the pages it points at.
 
-The same lines are what the Product Report shows in place — on a heading, on
-a fact label, and under `Vocabulary` in its header — so a reader who meets a
-word there never has to come here to find out what it means.
+The Product Report uses these same definitions for dotted terms in headings,
+fact labels, and collection names, and in the searchable `Vocabulary` panel
+in its header.
 
 A definition that leans on another word links to it, here and in the report:
 nobody is left holding a second unfamiliar term.

@@ -111,7 +111,7 @@ function mentionForms(terms) {
   const owners = new Map()
   for (const term of terms) {
     for (const name of [term.term, ...term.aliases]) {
-      const plural = name.endsWith('y') ? `${name.slice(0, -1)}ies` : `${name}s`
+      const plural = /[^aeiou]y$/.test(name) ? `${name.slice(0, -1)}ies` : `${name}s`
       for (const form of new Set([name, plural])) {
         owners.set(form, (owners.get(form) ?? []).concat(term.slug))
       }
@@ -287,6 +287,11 @@ function docsHref(term) {
   return `./${term.page}.md${term.anchor ? `#${term.anchor}` : ''}`
 }
 
+/** Escape table delimiters and inline Markdown syntax in authored cell text. */
+function tableText(text) {
+  return text.replace(/[\\`*_\[\]<>|]/g, '\\$&')
+}
+
 /** A definition with each word it leans on linked to the page that owns it. */
 function linkedDefinition(term, byslug) {
   let rendered = ''
@@ -294,11 +299,11 @@ function linkedDefinition(term, byslug) {
   for (const mention of term.mentions) {
     const target = byslug.get(mention.slug)
     if (!target) continue
-    rendered += term.definition.slice(at, mention.from)
-    rendered += `[${term.definition.slice(mention.from, mention.to)}](${docsHref(target)})`
+    rendered += tableText(term.definition.slice(at, mention.from))
+    rendered += `[${tableText(term.definition.slice(mention.from, mention.to))}](${docsHref(target)})`
     at = mention.to
   }
-  return rendered + term.definition.slice(at)
+  return rendered + tableText(term.definition.slice(at))
 }
 
 /**
@@ -310,7 +315,7 @@ export function renderDoc(terms) {
   const lines = [
     '---',
     'title: Vocabulary',
-    'description: Every term the Product Model and the Product Report use, and the page that defines each one.',
+    'description: Selected Product Model and report terms, and the page that defines each one.',
     'section: open-source',
     'group: Product Model',
     `order: ${VOCABULARY_ORDER}`,
@@ -320,13 +325,13 @@ export function renderDoc(terms) {
     '',
     '# Vocabulary',
     '',
-    'Every word the model and the report use, with one line each and a link to',
+    'Selected Product Model and report terms, with one line each and a link to',
     'the page that explains it. This page is an index: it defines nothing itself,',
     'so it can never disagree with the pages it points at.',
     '',
-    'The same lines are what the Product Report shows in place — on a heading, on',
-    'a fact label, and under `Vocabulary` in its header — so a reader who meets a',
-    'word there never has to come here to find out what it means.',
+    'The Product Report uses these same definitions for dotted terms in headings,',
+    'fact labels, and collection names, and in the searchable `Vocabulary` panel',
+    'in its header.',
     '',
     'A definition that leans on another word links to it, here and in the report:',
     'nobody is left holding a second unfamiliar term.',
@@ -339,7 +344,7 @@ export function renderDoc(terms) {
     lines.push(`## ${group.group}`, '')
     lines.push('| Term | Meaning | Defined in |', '| --- | --- | --- |')
     for (const term of group.terms) {
-      lines.push(`| **${term.term}** | ${linkedDefinition(term, byslug)} | [${term.pageTitle}](${docsHref(term)}) |`)
+      lines.push(`| **${tableText(term.term)}** | ${linkedDefinition(term, byslug)} | [${tableText(term.pageTitle)}](${docsHref(term)}) |`)
     }
     lines.push('')
   }

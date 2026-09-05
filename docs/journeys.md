@@ -25,7 +25,6 @@ terms:
     anchor: the-journey-scenario-file
     definition: "Where the path ends, and whether the Journey's goal was achieved."
   - term: Result
-    on: journey-scenario
     anchor: the-journey-scenario-file
     definition: "Whether this path achieves the Journey's goal: achieved, or not-achieved."
   - term: Route

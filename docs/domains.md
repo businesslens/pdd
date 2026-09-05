@@ -8,7 +8,6 @@ terms:
   - term: Domain
     definition: "What a Capability or Entity is about, in the Product's own words. One Domain reaches everything on that subject, which is why it earns a place."
   - term: Boundary
-    on: domain
     anchor: the-file
     definition: "What a Domain takes in and what it leaves out, stated in the Product's own words."
 ---
