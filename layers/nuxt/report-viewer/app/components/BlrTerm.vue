@@ -27,6 +27,7 @@ const props = defineProps<{
 }>()
 
 const open = ref(false)
+const trigger = ref<HTMLButtonElement | null>(null)
 const entry = computed(() => vocabularyTerm(props.slug))
 const label = computed(() => props.text ?? entry.value.term)
 const segments = computed(() => definitionSegments(props.slug))
@@ -34,21 +35,31 @@ const segments = computed(() => definitionSegments(props.slug))
 const panel = useVocabularyPanel()
 
 function follow(slug: VocabularySlug) {
+  panel.show(slug, trigger.value?.id)
   open.value = false
-  panel.show(slug)
+}
+
+function onCloseAutoFocus(event: Event) {
+  // The panel owns focus during a handoff; the closing popover must not take it back.
+  if (panel.open.value) event.preventDefault()
 }
 </script>
 
 <template>
-  <UPopover v-model:open="open" :ui="{ content: 'w-72' }">
+  <UPopover
+    v-model:open="open"
+    :content="{ collisionPadding: 16, onCloseAutoFocus }"
+    :ui="{ content: 'w-84 max-w-[calc(100vw-2rem)]' }"
+  >
     <button
+      ref="trigger"
       type="button"
       class="blr-term"
       :aria-label="`${label} — what ${entry.term} means`"
     >{{ label }}</button>
 
     <template #content>
-      <div class="space-y-2 p-3">
+      <div class="space-y-2 p-4">
         <p class="text-sm font-semibold text-highlighted">{{ entry.term }}</p>
         <p class="text-sm leading-relaxed text-muted">
           <template v-for="(segment, index) in segments" :key="index">

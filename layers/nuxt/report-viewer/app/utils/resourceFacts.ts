@@ -69,7 +69,7 @@ export function resourceFacts(workspace: ReportWorkspace, resource: AnyResourceV
       const entity = resource as EntityView
       if (entity.acts) {
         return [
-          { label: 'Kind', value: entity.entityKind ?? '', term: 'actor' },
+          { label: 'Kind', value: entity.entityKind ?? '', term: 'entity-kind' },
           { label: 'Acts', value: entity.acts, term: 'acts' },
           { label: 'Journeys', value: String(entity.journeyIds.length), term: KIND_TERM.journey },
           { label: 'Kept', value: String(entity.informationKept.length), term: 'information-kept' }

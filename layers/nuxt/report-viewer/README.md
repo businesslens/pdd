@@ -8,7 +8,10 @@ per type, a page for every resource, search, and named topology views.
 Selected Product Model terms have inline definitions. Dotted terms in page
 headings, fact labels, and collection names open a one-line meaning and a link
 to the documentation page that owns it. A Vocabulary panel lists the documented
-terms and lets the reader search their names and meanings. The lines are
+terms and lets the reader search their names and meanings, with exact names
+first. Linked definitions keep a return trail through earlier searches and
+positions; closing the panel returns focus to the original trigger. Collection
+names offer the same definitions on mobile. The lines are
 generated from the documentation, so the report never carries a second
 definition of anything.
 

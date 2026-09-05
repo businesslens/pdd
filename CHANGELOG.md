@@ -30,6 +30,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `businesslens view` documents how the report is read — the rail, Topology,
   Neighbourhood, and the vocabulary affordances.
 
+### Changed
+
+- Vocabulary uses a wider reading column, consistent gutters, larger search
+  targets, and a lighter backdrop. Inline definitions have more room, and
+  collection-name definitions are available on mobile.
+- Vocabulary search ranks exact names before partial names and definition
+  matches. Following a linked definition offers **Back to…**, restoring the
+  previous search, scroll position, and focus.
+
+### Fixed
+
+- The acting Entity's **Kind** definition explains person versus system.
+- Starting a new vocabulary search resets its scroll position and clears the
+  previous term highlight. Opening the panel from the desktop header focuses
+  search; closing a lookup reached through a definition restores the original
+  report trigger.
+
 ## [0.9.0] - 2026-09-04
 
 ### Added

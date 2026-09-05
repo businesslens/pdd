@@ -900,7 +900,8 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
               class="size-3.5 shrink-0"
               :style="{ color: `var(--blr-slot-${activeMeta.slot})` }"
             />
-            <span class="truncate">{{ activeKind === 'product' ? 'Overview' : activeMeta.plural }}</span>
+            <span v-if="activeKind === 'product'" class="truncate">Overview</span>
+            <BlrTerm v-else :slug="KIND_TERM[activeKind]" :text="activeMeta.plural" class="min-w-0 truncate" />
           </span>
           <span v-if="activeKind !== 'product'" class="blr-meta shrink-0">
             {{ visibleResources.length }}<template v-if="visibleResources.length !== kindResources.length"> / {{ kindResources.length }}</template>

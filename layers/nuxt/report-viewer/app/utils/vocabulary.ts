@@ -96,22 +96,35 @@ export function scenarioTerm(
 }
 
 export interface VocabularySection {
-  /** The docs sidebar cluster, which is the only grouping the panel needs. */
+  /** Browse by docs cluster; a search reads as one ranked list. */
   group: string
   items: VocabularyItem[]
 }
 
 /**
- * Every term, clustered the way the documentation is, and narrowed by a query.
+ * Browse in documentation order. Search by name first, then by meaning.
  *
  * The panel searches the definition as well as the word: a reader who half
  * remembers "the thing that says who may" should land on Who may.
  */
 export function vocabularySections(query = ''): VocabularySection[] {
   const needle = query.trim().toLowerCase()
+  if (needle) {
+    const rank = (item: VocabularyItem) => {
+      const name = item.term.toLowerCase()
+      if (name === needle) return 0
+      if (name.includes(needle)) return 1
+      return item.definition.toLowerCase().includes(needle) ? 2 : 3
+    }
+    // Stable sorting retains documentation order for equally relevant terms,
+    // including names with distinct Scenario owners. Do not regroup afterward:
+    // a definition in another docs group must not jump ahead of an exact name.
+    const items = VOCABULARY_ITEMS.filter(item => rank(item) < 3)
+      .sort((a, b) => rank(a) - rank(b))
+    return items.length ? [{ group: 'Search results', items }] : []
+  }
   const sections: VocabularySection[] = []
   for (const item of VOCABULARY_ITEMS) {
-    if (needle && !`${item.term} ${item.definition}`.toLowerCase().includes(needle)) continue
     let section = sections.find(candidate => candidate.group === item.group)
     if (!section) {
       section = { group: item.group, items: [] }

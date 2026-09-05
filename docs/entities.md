@@ -10,6 +10,9 @@ terms:
   - term: Actor
     anchor: actors-an-entity-that-acts
     definition: "An Entity that acts on the Product. Actor is a role a thing plays where it acts, never a resource type of its own."
+  - term: Entity kind
+    anchor: actors-an-entity-that-acts
+    definition: "Whether an Entity that acts on the Product is a person or a system."
   - term: Acts
     anchor: external-systems-direction-decides
     definition: "Which side of the boundary an Actor acts from: internal to the organisation running the Product, or external to it."
@@ -73,9 +76,9 @@ them, and the ones that act carry `acts` and `kind`.
 the thing acts independently outside the Product owner's boundary, or on the
 Product owner's behalf. A staff operator is usually internal even when working
 remotely; a partner system is usually external even when connected over a
-private network. `kind` is `person` or `system`, **required when `acts` is
-set** and invalid otherwise — an Order says nothing, because *it's a thing* is
-the default, and an Entity that acts always says which it is.
+private network. Entity kind (`kind`) is `person` or `system`, **required when
+`acts` is set** and invalid otherwise — an Order says nothing, because *it's a
+thing* is the default, and an Entity that acts always says which it is.
 
 Two independent questions decide, neither ranking the other:
 

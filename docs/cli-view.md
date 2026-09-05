@@ -59,7 +59,13 @@ it, drawing that same canvas around one resource and everything touching it.
 
 Selected Product Model terms have a dotted underline: each opens its one-line
 meaning, and **Vocabulary** in the header lets you search the documented terms.
-Both link out to the page here that explains the term in full.
+Exact term names appear before partial names and matches inside definitions.
+Following a word inside a definition opens its entry; **Back to…** returns to
+the previous lookup, including its search and scroll position. Closing a lookup
+opened through an inline definition returns keyboard focus to its trigger.
+Collection-name definitions are also available on mobile.
+Both the inline definitions and the panel link out to the page here that explains
+the term in full.
 
 Use [`blueprint export`](./cli-export.md) when you need to write a source-free,
 portable Product Report.

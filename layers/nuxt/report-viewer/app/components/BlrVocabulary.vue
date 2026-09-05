@@ -13,19 +13,71 @@
  * is the reason a reader is here, and it should never cost them their place.
  */
 import type { VocabularySlug } from '../utils/vocabulary.generated'
-import { definitionSegments, vocabularySections } from '../utils/vocabulary'
+import { definitionSegments, vocabularySections, vocabularyTerm } from '../utils/vocabulary'
 
 /*
   The panel is shared state, not a prop: a term rendered ten components deep can
   ask for it, and the reader means the same panel every time.
 */
-const { open, lookup, show } = useVocabularyPanel()
+const { open, lookup, returnFocusId, show } = useVocabularyPanel()
 
 const query = ref('')
 const sections = computed(() => vocabularySections(query.value))
 const count = computed(() => sections.value.reduce((total, section) => total + section.items.length, 0))
 const listEl = ref<HTMLElement | null>(null)
-const marked = ref<string | null>(null)
+const searchInput = ref<{ inputRef: HTMLInputElement | null } | null>(null)
+const marked = ref<VocabularySlug | null>(null)
+
+interface VocabularyVisit {
+  query: string
+  marked: VocabularySlug | null
+  scrollTop: number
+  source: VocabularySlug
+}
+
+const history = ref<VocabularyVisit[]>([])
+const backLabel = computed(() => {
+  const previous = history.value.at(-1)
+  return previous ? `Back to ${vocabularyTerm(previous.source).term}` : null
+})
+
+function follow(slug: VocabularySlug, source: VocabularySlug) {
+  history.value.push({
+    query: query.value,
+    marked: marked.value,
+    scrollTop: listEl.value?.scrollTop ?? 0,
+    source
+  })
+  show(slug)
+}
+
+async function goBack() {
+  const previous = history.value.pop()
+  if (!previous) return
+  lookup.value = null
+  query.value = previous.query
+  marked.value = previous.marked
+  await nextTick()
+  const row = listEl.value?.querySelector<HTMLElement>(`[data-term="${previous.source}"]`)
+  row?.focus({ preventScroll: true })
+  if (listEl.value) listEl.value.scrollTop = previous.scrollTop
+}
+
+// Only a reader's edit starts a new search. Restoring a visit above must retain
+// its position and history rather than firing a query watcher that erases them.
+async function search(value: string | number | null | undefined) {
+  query.value = String(value ?? '')
+  lookup.value = null
+  marked.value = null
+  history.value = []
+  await nextTick()
+  if (listEl.value) listEl.value.scrollTop = 0
+}
+
+function clearSearch() {
+  void search('')
+  searchInput.value?.inputRef?.focus()
+}
 
 /* Arriving by name outranks whatever was typed here last: the reader asked for
    one word, and a stale filter that hides it would be the panel's own doing. */
@@ -47,15 +99,28 @@ function focusTerm() {
 // A lookup arriving from a popover should receive focus when the dialog mounts,
 // before its default autofocus can choose the close button instead.
 function onOpenAutoFocus(event: Event) {
-  if (!lookup.value) return
+  if (lookup.value) {
+    event.preventDefault()
+    focusTerm()
+  } else if (window.matchMedia('(min-width: 640px) and (pointer: fine)').matches) {
+    event.preventDefault()
+    searchInput.value?.inputRef?.focus()
+  }
+}
+
+function onCloseAutoFocus(event: Event) {
+  const origin = returnFocusId.value ? document.getElementById(returnFocusId.value) : null
+  returnFocusId.value = null
+  if (!origin) return
   event.preventDefault()
-  focusTerm()
+  origin.focus({ preventScroll: true })
 }
 
 watch(open, (isOpen) => {
   if (isOpen) return
   lookup.value = null
   marked.value = null
+  history.value = []
 })
 </script>
 
@@ -63,21 +128,31 @@ watch(open, (isOpen) => {
   <USlideover
     v-model:open="open"
     title="Vocabulary"
-    description="Selected Product Model and report terms, with the page that defines each one."
-    :content="{ onOpenAutoFocus }"
-    :ui="{ content: 'w-full max-w-md', body: 'p-0' }"
+    description="Definitions and links to the full documentation."
+    :content="{ onOpenAutoFocus, onCloseAutoFocus }"
+    :ui="{
+      content: 'w-full max-w-[480px]',
+      header: 'px-4 py-4 sm:px-5',
+      title: 'pe-10 text-lg leading-6',
+      body: 'min-h-0 overflow-hidden p-0 sm:p-0',
+      overlay: 'bg-black/14 dark:bg-black/30',
+      close: 'top-1.5 end-1.5 size-11 justify-center sm:top-4 sm:end-4 sm:size-7'
+    }"
   >
     <template #body>
       <div class="flex h-full min-h-0 flex-col">
-        <div class="border-b border-default p-3">
+        <div class="shrink-0 border-b border-default px-4 py-3 sm:px-5">
           <UInput
-            v-model="query"
+            ref="searchInput"
+            :model-value="query"
             icon="i-lucide-search"
             size="sm"
             variant="outline"
             class="w-full"
+            :ui="{ base: 'h-11 text-base sm:h-9 sm:text-sm md:text-sm' }"
             placeholder="Find a word, or what it means…"
             aria-label="Filter the vocabulary"
+            @update:model-value="search"
           >
             <template v-if="query" #trailing>
               <UButton
@@ -86,13 +161,23 @@ watch(open, (isOpen) => {
                 variant="link"
                 size="xs"
                 aria-label="Clear the filter"
-                @click="query = ''"
+                @click="clearSearch"
               />
             </template>
           </UInput>
+          <UButton
+            v-if="backLabel"
+            icon="i-lucide-arrow-left"
+            color="neutral"
+            variant="ghost"
+            size="sm"
+            class="-ms-2 mt-2 min-h-11 max-w-full sm:min-h-9"
+            :label="backLabel"
+            @click="goBack"
+          />
         </div>
 
-        <div ref="listEl" class="min-h-0 flex-1 overflow-y-auto">
+        <div ref="listEl" data-vocabulary-list class="min-h-0 flex-1 overflow-y-auto">
           <p v-if="!count" class="p-4 text-sm text-muted">
             No word matches “{{ query }}”.
           </p>
@@ -109,7 +194,7 @@ watch(open, (isOpen) => {
                 tabindex="-1"
               >
                 <dt class="flex items-baseline gap-2">
-                  <span class="text-sm font-semibold text-highlighted">{{ item.term }}</span>
+                  <span class="text-[15px] font-semibold text-highlighted">{{ item.term }}</span>
                   <a
                     :href="item.href"
                     target="_blank"
@@ -117,14 +202,14 @@ watch(open, (isOpen) => {
                     class="blr-meta ms-auto shrink-0 hover:text-primary"
                   >{{ item.pageTitle }}</a>
                 </dt>
-                <dd class="mt-1 text-sm leading-relaxed text-muted">
+                <dd class="mt-1 text-[15px] leading-[23px] text-muted">
                   <template v-for="(segment, index) in definitionSegments(item.slug)" :key="index">
                     <button
                       v-if="segment.slug"
                       type="button"
                       class="blr-term-mention"
                       :aria-label="`Go to ${segment.text}`"
-                      @click="show(segment.slug as VocabularySlug)"
+                      @click="follow(segment.slug, item.slug)"
                     >{{ segment.text }}</button>
                     <template v-else>{{ segment.text }}</template>
                   </template>
@@ -146,7 +231,7 @@ watch(open, (isOpen) => {
   padding: 0.5rem 1rem 0.375rem;
   background: var(--ui-bg);
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.09em;
   text-transform: uppercase;
@@ -155,12 +240,19 @@ watch(open, (isOpen) => {
 }
 
 .blr-vocab-row {
-  padding: 0.625rem 1rem;
+  padding: 0.875rem 1rem;
   border-bottom: 1px solid var(--ui-border-muted);
 }
 
 .blr-vocab-row[data-marked='true'] {
   background: color-mix(in srgb, var(--ui-color-primary-500) 8%, transparent);
   box-shadow: inset 2px 0 0 var(--ui-color-primary-500);
+}
+
+@media (min-width: 640px) {
+  .blr-vocab-group,
+  .blr-vocab-row {
+    padding-inline: 1.25rem;
+  }
 }
 </style>

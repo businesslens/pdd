@@ -32,6 +32,7 @@ nobody is left holding a second unfamiliar term.
 | **Product** | The one coherent value promise this model describes, and the boundary drawn around it. | [Product](./product.md) |
 | **Entity** | A thing the [Product](./product.md) keeps or reasons about and can tell apart from another one, the people and systems acting on it included. | [Entities](./entities.md) |
 | **Actor** | An [Entity](./entities.md) that acts on the [Product](./product.md). Actor is a role a thing plays where it acts, never a resource type of its own. | [Entities](./entities.md#actors-an-entity-that-acts) |
+| **Entity kind** | Whether an [Entity](./entities.md) that acts on the [Product](./product.md) is a person or a system. | [Entities](./entities.md#actors-an-entity-that-acts) |
 | **Acts** | Which side of the boundary an [Actor](./entities.md#actors-an-entity-that-acts) acts from: internal to the organisation running the [Product](./product.md), or external to it. | [Entities](./entities.md#external-systems-direction-decides) |
 | **Information kept** | What the [Product](./product.md) keeps about the thing, as one named fact each. Kept means held, as in keep a record; a fact is addressable, never typed. | [Entities](./entities.md#the-file) |
 | **State** | One of the things an [Entity](./entities.md) can be. The Entity lists its states and says nothing at all about the moves between them. | [Entities](./entities.md#states-and-the-lifecycle-nobody-authors) |

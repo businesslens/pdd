@@ -4,6 +4,7 @@ import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import { stringify } from 'yaml'
 import { readVocabulary, renderDoc, renderModule } from '../scripts/vocabulary.mjs'
+import { vocabularySections } from '../layers/nuxt/report-viewer/app/utils/vocabulary.ts'
 
 const temporaryDirectories = []
 
@@ -20,6 +21,34 @@ async function vocabulary(terms, title = 'Terms') {
 
 afterEach(async () => {
   await Promise.all(temporaryDirectories.splice(0).map(root => rm(root, { recursive: true, force: true })))
+})
+
+describe('vocabulary lookup', () => {
+  const results = query => vocabularySections(query).flatMap(section => section.items)
+
+  it('puts the requested word ahead of definitions that mention it', () => {
+    expect(results(' Step ')[0].slug).toBe('step')
+    expect(results('Step').some(item => item.slug === 'arc')).toBe(true)
+  })
+
+  it('ranks exact names, partial names, and meanings across documentation groups', () => {
+    const items = results('PRODUCT')
+    expect(items[0].slug).toBe('product')
+    expect(items.findIndex(item => item.slug === 'product-report'))
+      .toBeLessThan(items.findIndex(item => item.slug === 'entity'))
+  })
+
+  it('preserves both Scenario owners when the same word is defined twice', () => {
+    expect(results('Trigger').slice(0, 2).map(item => item.slug)).toEqual([
+      'capability-scenario-trigger', 'journey-scenario-trigger'
+    ])
+  })
+
+  it('still finds a term by its meaning and returns an empty result for an unknown word', () => {
+    expect(results('machine').map(item => item.slug)).toContain('lifecycle')
+    expect(results('zzzz-no-match')).toEqual([])
+    expect(vocabularySections(' ').map(section => section.group)).toEqual(['Product Model', 'CLI'])
+  })
 })
 
 describe('vocabulary generation', () => {
