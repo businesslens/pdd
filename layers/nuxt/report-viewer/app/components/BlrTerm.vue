@@ -18,7 +18,7 @@
  * built to be read down.
  */
 import type { VocabularySlug } from '../utils/vocabulary.generated'
-import { definitionSegments, termHref, vocabularyTerm } from '../utils/vocabulary'
+import { vocabularyTerm } from '../utils/vocabulary'
 
 const props = defineProps<{
   slug: VocabularySlug
@@ -30,7 +30,6 @@ const open = ref(false)
 const trigger = ref<HTMLButtonElement | null>(null)
 const entry = computed(() => vocabularyTerm(props.slug))
 const label = computed(() => props.text ?? entry.value.term)
-const segments = computed(() => definitionSegments(props.slug))
 
 const panel = useVocabularyPanel()
 
@@ -59,33 +58,7 @@ function onCloseAutoFocus(event: Event) {
     >{{ label }}</button>
 
     <template #content>
-      <div class="space-y-2 p-4">
-        <p class="text-sm font-semibold text-highlighted">{{ entry.term }}</p>
-        <p class="text-sm leading-relaxed text-muted">
-          <template v-for="(segment, index) in segments" :key="index">
-            <button
-              v-if="segment.slug"
-              type="button"
-              class="blr-term-mention"
-              :aria-label="`${segment.text} — show definition`"
-              @click="follow(segment.slug)"
-            >{{ segment.text }}</button>
-            <template v-else>{{ segment.text }}</template>
-          </template>
-        </p>
-        <UButton
-          :to="termHref(slug)"
-          external
-          target="_blank"
-          rel="noopener noreferrer"
-          icon="i-lucide-book-open"
-          color="neutral"
-          variant="link"
-          size="xs"
-          class="-mx-1.5"
-          :label="`Read more in ${entry.pageTitle}`"
-        />
-      </div>
+      <BlrTermDefinition :slug="slug" @follow="follow" />
     </template>
   </UPopover>
 </template>

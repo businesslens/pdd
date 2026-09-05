@@ -95,10 +95,24 @@ export function scenarioTerm(
   return `${scenarioType}-scenario-${word}`
 }
 
-export interface VocabularySection {
-  /** Browse by docs cluster; a search reads as one ranked list. */
-  group: string
+export interface VocabularyPage {
+  page: string
+  title: string
   items: VocabularyItem[]
+}
+
+/** Nest terms under the documentation page that defines them, in docs order. */
+export function vocabularyPages(items: VocabularyItem[]): VocabularyPage[] {
+  const pages: VocabularyPage[] = []
+  for (const item of items) {
+    let page = pages.find(candidate => candidate.page === item.page)
+    if (!page) {
+      page = { page: item.page, title: item.pageTitle, items: [] }
+      pages.push(page)
+    }
+    page.items.push(item)
+  }
+  return pages
 }
 
 /**
@@ -107,30 +121,18 @@ export interface VocabularySection {
  * The panel searches the definition as well as the word: a reader who half
  * remembers "the thing that says who may" should land on Who may.
  */
-export function vocabularySections(query = ''): VocabularySection[] {
+export function vocabularyMatches(query = ''): VocabularyItem[] {
   const needle = query.trim().toLowerCase()
-  if (needle) {
-    const rank = (item: VocabularyItem) => {
-      const name = item.term.toLowerCase()
-      if (name === needle) return 0
-      if (name.includes(needle)) return 1
-      return item.definition.toLowerCase().includes(needle) ? 2 : 3
-    }
-    // Stable sorting retains documentation order for equally relevant terms,
-    // including names with distinct Scenario owners. Do not regroup afterward:
-    // a definition in another docs group must not jump ahead of an exact name.
-    const items = VOCABULARY_ITEMS.filter(item => rank(item) < 3)
-      .sort((a, b) => rank(a) - rank(b))
-    return items.length ? [{ group: 'Search results', items }] : []
+  if (!needle) return VOCABULARY_ITEMS
+  const rank = (item: VocabularyItem) => {
+    const name = item.term.toLowerCase()
+    if (name === needle) return 0
+    if (name.includes(needle)) return 1
+    return item.definition.toLowerCase().includes(needle) ? 2 : 3
   }
-  const sections: VocabularySection[] = []
-  for (const item of VOCABULARY_ITEMS) {
-    let section = sections.find(candidate => candidate.group === item.group)
-    if (!section) {
-      section = { group: item.group, items: [] }
-      sections.push(section)
-    }
-    section.items.push(item)
-  }
-  return sections
+  // Stable sorting retains documentation order for equally relevant terms,
+  // including names with distinct Scenario owners. Search stays ranked rather
+  // than regrouping a definition ahead of an exact name on another page.
+  return VOCABULARY_ITEMS.filter(item => rank(item) < 3)
+    .sort((a, b) => rank(a) - rank(b))
 }

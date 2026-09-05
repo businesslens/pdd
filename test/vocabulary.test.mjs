@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import { stringify } from 'yaml'
 import { readVocabulary, renderDoc, renderModule } from '../scripts/vocabulary.mjs'
-import { vocabularySections } from '../layers/nuxt/report-viewer/app/utils/vocabulary.ts'
+import { vocabularyMatches, vocabularyPages } from '../layers/nuxt/report-viewer/app/utils/vocabulary.ts'
 
 const temporaryDirectories = []
 
@@ -24,14 +24,14 @@ afterEach(async () => {
 })
 
 describe('vocabulary lookup', () => {
-  const results = query => vocabularySections(query).flatMap(section => section.items)
+  const results = vocabularyMatches
 
   it('puts the requested word ahead of definitions that mention it', () => {
     expect(results(' Step ')[0].slug).toBe('step')
     expect(results('Step').some(item => item.slug === 'arc')).toBe(true)
   })
 
-  it('ranks exact names, partial names, and meanings across documentation groups', () => {
+  it('ranks exact names, partial names, and meanings across pages', () => {
     const items = results('PRODUCT')
     expect(items[0].slug).toBe('product')
     expect(items.findIndex(item => item.slug === 'product-report'))
@@ -44,10 +44,23 @@ describe('vocabulary lookup', () => {
     ])
   })
 
+  it('nests every term under its owning page without mixing Scenario definitions', () => {
+    const items = results('')
+    const pages = vocabularyPages(items)
+    expect(pages.flatMap(page => page.items)).toEqual(items)
+    expect(pages.every(page => page.items.every(item => item.page === page.page))).toBe(true)
+    expect(pages.find(page => page.page === 'entities').items.map(item => item.slug))
+      .toEqual(expect.arrayContaining(['entity', 'actor', 'entity-kind', 'state', 'arc']))
+    expect(pages.find(page => page.page === 'capabilities').items.map(item => item.slug))
+      .toContain('capability-scenario-trigger')
+    expect(pages.find(page => page.page === 'journeys').items.map(item => item.slug))
+      .toContain('journey-scenario-trigger')
+  })
+
   it('still finds a term by its meaning and returns an empty result for an unknown word', () => {
     expect(results('machine').map(item => item.slug)).toContain('lifecycle')
     expect(results('zzzz-no-match')).toEqual([])
-    expect(vocabularySections(' ').map(section => section.group)).toEqual(['Product Model', 'CLI'])
+    expect(results(' ')).toEqual(results(''))
   })
 })
 

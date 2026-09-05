@@ -412,6 +412,11 @@ watch(() => props.workspace, (workspace) => {
 })
 
 const topologyActive = computed(() => activeSection.value === 'topology')
+const vocabularyContext = computed(() => {
+  if (topologyActive.value) return 'topology'
+  if (openPage.value) return KIND_TERM[openPage.value.kind]
+  return activeKind.value === 'product' ? 'product-model' : KIND_TERM[activeKind.value]
+})
 const showToolbar = computed(() => activeKind.value !== 'product' && !openPage.value && !topologyActive.value)
 const collectionDocs = computed(() => docsForResourceKind(activeKind.value))
 
@@ -1326,7 +1331,7 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
       @select="onSearchSelect"
     />
 
-    <BlrVocabulary />
+    <BlrVocabulary :context="vocabularyContext" />
 
     <USlideover
       v-model:open="mobileNavOpen"

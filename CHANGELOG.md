@@ -35,6 +35,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Vocabulary uses a wider reading column, consistent gutters, larger search
   targets, and a lighter backdrop. Inline definitions have more room, and
   collection-name definitions are available on mobile.
+- Vocabulary entries share the inline definition layout, with documentation
+  links below their meanings. Terms nest under one list of expandable
+  documentation pages, and the panel grows on larger screens. Each header
+  opening clears the previous search and expands only the current report page's
+  group. Returning through linked definitions also restores expanded groups.
 - Vocabulary search ranks exact names before partial names and definition
   matches. Following a linked definition offers **Back to…**, restoring the
   previous search, scroll position, and focus.
