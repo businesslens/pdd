@@ -54,3 +54,23 @@
   color: var(--ui-text-dimmed);
   font-variant-numeric: tabular-nums;
 }
+
+/*
+  A word inside a definition that is itself defined. Shared by the popover and
+  the vocabulary panel, because a reader following a word twice must not have to
+  learn a second affordance for the same act.
+*/
+.blr-term-mention {
+  text-align: start;
+  color: var(--ui-text-highlighted);
+  border-bottom: 1px dotted var(--ui-border-accented);
+  cursor: help;
+}
+
+.blr-term-mention:hover,
+.blr-term-mention:focus-visible {
+  border-bottom-color: var(--ui-color-primary-500);
+  border-bottom-style: solid;
+  color: var(--ui-primary);
+  outline: none;
+}

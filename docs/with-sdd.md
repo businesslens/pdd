@@ -3,7 +3,7 @@ title: SDD tools
 description: Keep product intent durable in BusinessLens while technical proposals and build tasks remain in your spec-driven workflow.
 section: open-source
 group: Integrations
-order: 20
+order: 21
 ---
 
 # Use BusinessLens with spec-driven development tools

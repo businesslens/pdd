@@ -50,6 +50,7 @@ import {
   relatedIds
 } from '../utils/resourceFacets'
 import { docsForResourceKind } from '../utils/resourceDocs'
+import { KIND_TERM } from '../utils/vocabulary'
 import { firstSentence } from '../utils/reportMarkdown'
 
 const UButton = resolveComponent('UButton')
@@ -121,6 +122,13 @@ watch(activeSection, (value) => {
    page that cannot give the graph the full report width. */
 const topologyFocus = ref<string | null>(null)
 const searchOpen = ref(false)
+/*
+  The vocabulary is a panel over the reading, never a section of it: a rail row
+  would claim it is a collection, and a page would make looking a word up cost
+  the place the reader was standing. Its state is shared rather than owned here,
+  because a term deep inside a page asks for the same panel this header does.
+*/
+const vocabulary = useVocabularyPanel()
 const mobileNavOpen = ref(false)
 /* The internal name for the open page is the bindable model itself, so a page
    opened by a click and a page opened by a URL are the same state. */
@@ -938,7 +946,8 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
       <template v-else>
         <span class="blr-eyebrow hidden shrink-0 items-center gap-1.5 sm:inline-flex">
           <UIcon :name="activeMeta.icon" class="size-3.5" :style="{ color: `var(--blr-slot-${activeMeta.slot})` }" />
-          {{ activeKind === 'product' ? 'Overview' : activeMeta.plural }}
+          <template v-if="activeKind === 'product'">Overview</template>
+          <BlrTerm v-else :slug="KIND_TERM[activeKind]" :text="activeMeta.plural" />
         </span>
         <span v-if="activeKind !== 'product'" class="blr-meta hidden shrink-0 sm:inline">
           {{ visibleResources.length }}<template v-if="visibleResources.length !== kindResources.length"> / {{ kindResources.length }}</template>
@@ -971,8 +980,29 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
           aria-label="Search Product Model"
           @click="searchOpen = true"
         />
+        <UTooltip text="Every word this report uses">
+          <UButton
+            icon="i-lucide-book-a"
+            color="neutral"
+            variant="ghost"
+            size="xs"
+            label="Vocabulary"
+            class="hidden lg:inline-flex"
+            @click="vocabulary.show()"
+          />
+        </UTooltip>
+        <UTooltip text="Every word this report uses" class="lg:hidden">
+          <UButton
+            icon="i-lucide-book-a"
+            color="neutral"
+            variant="ghost"
+            size="xs"
+            aria-label="Open the vocabulary"
+            @click="vocabulary.show()"
+          />
+        </UTooltip>
         <UBadge class="hidden md:inline-flex" :color="COVERAGE_TONE[workspace.coverage.status] || 'neutral'" variant="subtle" size="sm">
-          coverage: {{ workspace.coverage.status }}
+          <BlrTerm slug="coverage" text="coverage" />: {{ workspace.coverage.status }}
         </UBadge>
         <span class="blr-meta hidden sm:inline">{{ workspace.identity.schemaVersion }}</span>
         <span class="blr-meta hidden md:inline">{{ workspace.identity.generatedAt.slice(0, 10) }}</span>
@@ -1294,6 +1324,8 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
       :workspace="workspace"
       @select="onSearchSelect"
     />
+
+    <BlrVocabulary />
 
     <USlideover
       v-model:open="mobileNavOpen"

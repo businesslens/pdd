@@ -3,7 +3,45 @@ title: Capabilities
 description: Durable Product abilities with explicit availability Contexts, and the local Capability Scenarios that make each ability observable.
 section: open-source
 group: Product Model
-order: 14
+order: 15
+terms:
+  - term: Capability
+    definition: "A durable ability of the Product: what it can do, independent of any one route, command, or module."
+  - term: Capability Scenario
+    anchor: capability-scenarios
+    definition: "One observable acceptance case for a Capability: a trigger, typed Steps, and an outcome."
+  - term: Context
+    anchor: availability
+    definition: "Where behavior is available, occurs, or is constrained: one Interface, Experience, or Screen. How specific it must be depends on what uses it."
+  - term: Step
+    anchor: what-a-step-does-to-the-products-things
+    definition: "One act in a Scenario: an Actor's, the Product's own, or a condition that holds. Each says what it does to the Product's things."
+  - term: Ends with
+    anchor: what-a-step-does-to-the-products-things
+    definition: "Where a Scenario leaves each thing it changed, from the last Step that named it."
+  - term: Scenario kind
+    anchor: the-capability-scenario-file
+    definition: "The taxonomy label a Scenario carries, named in the model's taxonomies.yaml."
+  - term: Trigger
+    on: capability-scenario
+    anchor: the-capability-scenario-file
+    definition: "The observable condition that starts the Scenario."
+  - term: Outcome
+    on: capability-scenario
+    anchor: the-capability-scenario-file
+    definition: "The observable result once the Scenario has run."
+  - term: Route
+    on: capability-scenario
+    anchor: routes-steps-and-context-places
+    definition: "One named way the same Steps play out in different places. A route varies Context only; different Steps mean a different Scenario."
+  - term: Decision point
+    on: capability-scenario
+    anchor: capability-scenario-decision-points
+    definition: "A question the Scenario answers inline, in branches that converge on its one Outcome. A branch changing the Outcome is another Scenario."
+  - term: Edge case
+    on: capability-scenario
+    anchor: the-capability-scenario-file
+    definition: "A condition and its consequence, noted in one line because it matters but does not change the path the Scenario walks."
 ---
 
 # Capabilities

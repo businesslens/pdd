@@ -1,12 +1,25 @@
 ---
-title: Business rules
+title: Business Rules
 description: Durable assertions of what must remain true — constraints, derivations, and who may perform an operation on a thing — applied to behavior, Contexts, or Entity operations.
 section: open-source
 group: Product Model
-order: 16
+order: 17
+terms:
+  - term: Business Rule
+    aliases: [Rule]
+    definition: "A durable assertion that must stay true, and the only place the model says who may act."
+  - term: Applies to
+    anchor: behavioral-and-context-targets
+    definition: "What a Rule constrains: a resource, a Context it holds in, or an operation on a thing."
+  - term: Operation
+    anchor: entity-targets-an-operation-on-a-thing
+    definition: "What may be done to a thing: creates, changes, removes, or reads. A Step calls it an effect; a Business Rule selects the same word as an operation."
+  - term: Who may
+    anchor: permission
+    definition: "Who may perform an operation, and when. Any one grant permits it, and every Rule on that operation must permit too, so a new Rule can only narrow."
 ---
 
-# Business rules
+# Business Rules
 
 **A Business Rule states what must remain true:** an order is confirmed only
 after payment succeeds; total charged always equals subtotal plus tax minus

@@ -3,7 +3,7 @@ title: verify
 description: Inspect model/code alignment and automatically resolve every scoped gap until aligned or explicitly blocked.
 section: open-source
 group: Skills
-order: 25
+order: 26
 ---
 
 # `businesslens-verify`

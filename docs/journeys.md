@@ -3,7 +3,43 @@ title: Journeys
 description: Optional coherent Actor goals that deliberately compose multiple durable Product Capabilities, and the Journey Scenarios that route them end to end.
 section: open-source
 group: Product Model
-order: 15
+order: 16
+terms:
+  - term: Journey
+    definition: "One coherent Actor goal that deliberately composes several Capabilities."
+  - term: Journey Scenario
+    anchor: journey-scenarios
+    definition: "One path through a Journey, ending with its goal achieved or not achieved."
+  - term: Success criterion
+    anchor: the-file
+    definition: "How you know the Journey's goal was met."
+  - term: Leaves behind
+    anchor: the-file
+    definition: "The things an achieved path leaves in a known state, from the last Step that names each one."
+  - term: Trigger
+    on: journey-scenario
+    anchor: the-journey-scenario-file
+    definition: "The observable condition that starts the Journey Scenario."
+  - term: Outcome
+    on: journey-scenario
+    anchor: the-journey-scenario-file
+    definition: "Where the path ends, and whether the Journey's goal was achieved."
+  - term: Result
+    on: journey-scenario
+    anchor: the-journey-scenario-file
+    definition: "Whether this path achieves the Journey's goal: achieved, or not-achieved."
+  - term: Route
+    on: journey-scenario
+    anchor: steps-and-routes
+    definition: "One named way the same Steps play out in different places. A route varies Context only; different Steps mean a different Journey Scenario."
+  - term: Decision point
+    on: journey-scenario
+    anchor: journey-scenario-decision-points
+    definition: "A question the Journey Scenario answers inline, in branches that converge on its one Outcome. A branch changing the Outcome is another Scenario."
+  - term: Edge case
+    on: journey-scenario
+    anchor: the-journey-scenario-file
+    definition: "A condition and its consequence, noted in one line because it matters but does not change the path the Journey Scenario walks."
 ---
 
 # Journeys

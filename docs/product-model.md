@@ -4,6 +4,19 @@ description: The .businesslens/ folder models one coherent Product with required
 section: open-source
 group: Product Model
 order: 7
+terms:
+  - term: Product Model
+    anchor: the-shape-of-a-model
+    definition: "The .businesslens/ folder: one coherent product described in Markdown, tracked in Git, and free to cite the repository's code."
+  - term: Intent
+    anchor: authoring-conventions
+    definition: "Why a resource exists and which outcome it protects, never a restatement of what it does."
+  - term: Coverage
+    anchor: coverage
+    definition: "How broadly the model has been authored, as draft, partial or complete, and why the known gaps remain."
+  - term: Resource type
+    anchor: what-belongs-in-a-model
+    definition: "What a file in the model is one of. There are eleven, and the folder a file sits in is what says which."
 ---
 
 # The Product Model
@@ -72,6 +85,10 @@ and SDD roots. `coverage.md` describes model breadth.
 
 Use [`businesslens view`](./cli-view.md) to browse the current model as a local
 report while editing.
+
+Every word this table and the rest of the documentation use is listed, one line
+each, in the [Vocabulary](./vocabulary.md) — which is also what the Product
+Report shows in place when you meet one of them there.
 
 ## Is this replacing my PRD?
 

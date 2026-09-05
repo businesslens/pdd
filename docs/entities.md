@@ -3,7 +3,34 @@ title: Entities
 description: An Entity names a thing the Product keeps or reasons about, including the people and systems that act on it — what it holds about that thing, the states it moves through, and who acts.
 section: open-source
 group: Product Model
-order: 9
+order: 10
+terms:
+  - term: Entity
+    definition: "A thing the Product keeps or reasons about and can tell apart from another one, the people and systems acting on it included."
+  - term: Actor
+    anchor: actors-an-entity-that-acts
+    definition: "An Entity that acts on the Product. Actor is a role a thing plays where it acts, never a resource type of its own."
+  - term: Acts
+    anchor: external-systems-direction-decides
+    definition: "Which side of the boundary an Actor acts from: internal to the organisation running the Product, or external to it."
+  - term: Information kept
+    anchor: the-file
+    definition: "What the Product keeps about the thing, as one named fact each. Kept means held, as in keep a record; a fact is addressable, never typed."
+  - term: State
+    anchor: states-and-the-lifecycle-nobody-authors
+    definition: "One of the things an Entity can be. The Entity lists its states and says nothing at all about the moves between them."
+  - term: Arc
+    anchor: states-and-the-lifecycle-nobody-authors
+    definition: "A move a Step makes: into a State, out of one, or between two. Nothing declares arcs; the report composes them from the Scenarios."
+  - term: Lifecycle
+    anchor: states-and-the-lifecycle-nobody-authors
+    definition: "The machine composed from every arc in the model. Nobody authors it; it is derived from the Steps."
+  - term: Relation
+    anchor: relations
+    definition: "An edge to another Entity in the Product's own verb, stating both ends. Declared on one side only; the inverse is derived on the other."
+  - term: Changed by
+    anchor: relations
+    definition: "The Capabilities whose Steps create, change, or remove this thing."
 ---
 
 # Entities

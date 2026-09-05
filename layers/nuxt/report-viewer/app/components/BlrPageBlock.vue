@@ -34,7 +34,10 @@ const facts = computed(() => resourceFacts(props.workspace, props.resource).filt
 
   <dl v-else-if="id === 'facts' && facts.length" class="flex flex-wrap gap-x-8 gap-y-3">
     <div v-for="fact in facts" :key="fact.label" class="min-w-0">
-      <dt class="text-xs text-dimmed">{{ fact.label }}</dt>
+      <dt class="text-xs text-dimmed">
+        <BlrTerm v-if="fact.term" :slug="fact.term" :text="fact.label" />
+        <template v-else>{{ fact.label }}</template>
+      </dt>
       <dd class="mt-0.5 truncate text-sm font-medium text-highlighted">{{ fact.value }}</dd>
     </div>
   </dl>

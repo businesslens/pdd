@@ -65,7 +65,8 @@ function open(kind: 'capability' | 'rule', id: string) {
   <div class="min-w-0 space-y-6">
     <section class="space-y-3">
       <h2 class="blr-page-heading">
-        Machine <span class="blr-meta ms-1">{{ states.length }} {{ states.length === 1 ? 'state' : 'states' }} · {{ arcs.length }} {{ arcs.length === 1 ? 'arc' : 'arcs' }}<template v-if="drawnCount !== arcs.length">, {{ drawnCount }} drawn</template></span>
+        <BlrTerm slug="lifecycle" text="Machine" />
+        <span class="blr-meta ms-1">{{ states.length }} {{ states.length === 1 ? 'state' : 'states' }} · {{ arcs.length }} {{ arcs.length === 1 ? 'arc' : 'arcs' }}<template v-if="drawnCount !== arcs.length">, {{ drawnCount }} drawn</template></span>
       </h2>
       <div
         v-if="lifecycle.edges.length"
@@ -151,7 +152,8 @@ function open(kind: 'capability' | 'rule', id: string) {
 
     <section class="space-y-2">
       <h2 class="blr-page-heading">
-        States <span class="blr-meta ms-1">{{ states.length }}</span>
+        <BlrTerm slug="state" text="States" />
+        <span class="blr-meta ms-1">{{ states.length }}</span>
       </h2>
       <div class="grid gap-3 sm:grid-cols-2">
         <div
@@ -174,7 +176,7 @@ function open(kind: 'capability' | 'rule', id: string) {
             v-if="state.capabilityScenarioIds.length || state.journeyScenarioIds.length"
             class="mt-2.5 space-y-1.5"
           >
-            <p class="blr-field">Left here by</p>
+            <p class="blr-field"><BlrTerm slug="arc" text="Left here by" /></p>
             <BlrLinks
               :workspace="workspace"
               :ids="state.capabilityScenarioIds"

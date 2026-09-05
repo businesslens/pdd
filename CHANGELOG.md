@@ -5,6 +5,31 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Every word the Product Report uses is answerable where it stands.** A page
+  heading, a fact label, and a collection name each open the term's one-line
+  meaning and a way out to the page that explains it. **Vocabulary** in the
+  report header lists all of them and lets the reader search their names and
+  meanings.
+- **A definition that leans on another word links to it**, in the documentation
+  and in the report alike. Following one in the report opens the Vocabulary
+  panel on that word, so a reader can chase a term through as many definitions
+  as it takes without losing the page they were reading.
+- **A Vocabulary page in the documentation**, listing every term with the page
+  that defines each one. It is generated and defines nothing itself: a
+  definition is declared in the `terms:` frontmatter of the page that owns the
+  term, and `npm run vocabulary` projects those onto the docs index and the
+  report viewer's registry. `npm run check` fails while either is stale, so no
+  surface can drift from the page it points at.
+- **`Business rule` is `Business Rule`.** Every prose mention and `spec/format.md`
+  already capitalized it; only the page title and the report's own label did not,
+  which is a resource type spelled two ways.
+- `businesslens view` documents how the report is read — the rail, Topology,
+  Neighbourhood, and the vocabulary affordances.
+
 ## [0.9.0] - 2026-09-04
 
 ### Added

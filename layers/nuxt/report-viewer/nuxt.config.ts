@@ -27,6 +27,7 @@ export default defineNuxtConfig({
         'lucide:arrow-right',
         'lucide:arrow-up',
         'lucide:arrow-up-down',
+        'lucide:book-a',
         'lucide:book-open',
         'lucide:bot',
         'lucide:box',

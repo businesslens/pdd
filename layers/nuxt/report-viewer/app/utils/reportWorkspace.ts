@@ -134,7 +134,7 @@ export const ENTITY_KIND_META: Record<ReportResourceKind, ResourceKindMeta> = {
   */
   'capability-scenario': { kind: 'capability-scenario', label: 'Capability Scenario', plural: 'Capability Scenarios', icon: 'i-lucide-list-checks', slot: 7 },
   'journey-scenario': { kind: 'journey-scenario', label: 'Journey Scenario', plural: 'Journey Scenarios', icon: 'i-lucide-list-ordered', slot: 7 },
-  rule: { kind: 'rule', label: 'Business rule', plural: 'Business rules', icon: 'i-lucide-scale', slot: 8 },
+  rule: { kind: 'rule', label: 'Business Rule', plural: 'Business Rules', icon: 'i-lucide-scale', slot: 8 },
   product: { kind: 'product', label: 'Product', plural: 'Product', icon: 'i-lucide-package', slot: 9 }
 }
 

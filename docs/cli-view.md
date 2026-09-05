@@ -3,7 +3,14 @@ title: view
 description: Open the current Product Model as a private local report that stays updated while you edit.
 section: open-source
 group: CLI
-order: 30
+order: 31
+terms:
+  - term: Topology
+    anchor: reading-the-report
+    definition: "The report's cross-kind canvas, whose named views each answer one fixed question about the whole model."
+  - term: Neighbourhood
+    anchor: reading-the-report
+    definition: "One resource drawn on the Topology canvas with everything that touches it."
 ---
 
 # `businesslens view`
@@ -36,6 +43,23 @@ Git repository root. See
 nested Blueprint, another repository, or a standalone model with `--cwd`.
 
 The server listens only on `127.0.0.1` and stops when the command exits.
+
+## Reading the report
+
+The report opens on the Overview, with a rail of the model's resource types
+down the side. A row opens that collection, and a card or table row opens the
+resource's own page at its own URL. `⌘K` searches every resource in the model
+by name.
+
+**Topology** is the single breadth destination: a cross-kind canvas whose named
+views each answer one fixed question — which Capabilities a Journey composes,
+which Screens expose an ability — rather than a builder that asks you to invent
+the question first. **Neighbourhood** is the action a resource page offers into
+it, drawing that same canvas around one resource and everything touching it.
+
+Any word the report shows can be read where it stands: a dotted term opens its
+one-line meaning, and **Vocabulary** in the header lists every one of them. Both
+link out to the page here that explains the term in full.
 
 Use [`blueprint export`](./cli-export.md) when you need to write a source-free,
 portable Product Report.

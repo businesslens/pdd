@@ -3,7 +3,17 @@ title: References
 description: Attach intent, implementation, or context artifacts to any Product Model resource without moving external material into the model.
 section: open-source
 group: Product Model
-order: 17
+order: 18
+terms:
+  - term: Reference
+    anchor: asset-or-reference
+    definition: "A pointer to material outside the model, such as code, a spec, or a screenshot, saying what it is and why it is attached."
+  - term: Reference kind
+    anchor: kind-and-role
+    definition: "What the referenced material is: code, prd, spec, proposal, doc, adr, visual, or research."
+  - term: Reference role
+    anchor: kind-and-role
+    definition: "Why it is attached: intent, implementation, or context. A published Blueprint drops implementation, and every code reference whatever its role."
 ---
 
 # References

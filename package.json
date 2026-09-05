@@ -64,6 +64,7 @@
     "test": "vitest run",
     "package:size": "node scripts/check-package-size.mjs",
     "theme:icons": "node scripts/build-theme-icons.mjs",
+    "vocabulary": "node scripts/build-vocabulary.mjs",
     "blueprints:check": "node scripts/blueprints-check.mjs",
     "blueprints:publish": "node scripts/blueprints-publish.mjs",
     "check": "node scripts/check-repo.mjs",

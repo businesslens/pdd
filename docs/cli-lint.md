@@ -3,7 +3,7 @@ title: lint
 description: Check Product Model structure, relationships, Reference grammar, and tracked code-reference paths without claiming semantic alignment.
 section: open-source
 group: CLI
-order: 29
+order: 30
 ---
 
 # `businesslens lint`

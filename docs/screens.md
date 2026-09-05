@@ -3,7 +3,13 @@ title: Screens
 description: Optional meaningful visual Product views whose filesystem path determines their Context without duplicating availability.
 section: open-source
 group: Product Model
-order: 12
+order: 13
+terms:
+  - term: Screen
+    definition: "A meaningful visual view, named in the Product's own words, directly under an Interface or inside one of its Experiences."
+  - term: View state
+    anchor: view-states-are-the-views-never-the-things
+    definition: "A state of this view: empty, populated, unauthorized, caught-up. Never a State of the thing it shows, which renders differently per Screen."
 ---
 
 # Screens

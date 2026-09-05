@@ -3,7 +3,13 @@ title: Experiences
 description: Coherent contexts of Product use with a stable audience, access boundary, and capability boundary inside one Interface.
 section: open-source
 group: Product Model
-order: 11
+order: 12
+terms:
+  - term: Experience
+    definition: "A durable context of use inside one Interface, named when audience, access, or capability boundary differ."
+  - term: Access mode
+    anchor: the-file
+    definition: "Who may enter an Experience: public, authenticated, or restricted."
 ---
 
 # Experiences

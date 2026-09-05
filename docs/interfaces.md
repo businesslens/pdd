@@ -3,7 +3,19 @@ title: Interfaces
 description: Supported interaction forms through which Actors access the Product and for which behavior can be required independently.
 section: open-source
 group: Product Model
-order: 10
+order: 11
+terms:
+  - term: Interface
+    definition: "A supported interaction form Actors reach the Product through, such as a web app, a CLI, or a partner API."
+  - term: Interface type
+    anchor: the-file
+    definition: "The form an Interface takes: web, mobile app, desktop app, CLI, API, webhook, messaging, voice, device, or agent."
+  - term: Capability boundary
+    anchor: the-file
+    definition: "Prose saying what a surface promises and what it deliberately does not. It names no Capabilities: availability is declared on the Capability."
+  - term: Entry point
+    anchor: the-file
+    definition: "A Product-facing route or address where an Actor arrives, such as a path, a deep link, or a command."
 ---
 
 # Interfaces

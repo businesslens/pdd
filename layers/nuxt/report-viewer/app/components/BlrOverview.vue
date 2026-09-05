@@ -55,7 +55,7 @@ const authoredCounts = computed<Array<[string, number]>>(() => [
   ['Journeys', props.workspace.counts.journeys],
   ['Capability Scenarios', props.workspace.counts.capabilityScenarios],
   ['Journey Scenarios', props.workspace.counts.journeyScenarios],
-  ['Business rules', props.workspace.counts.rules]
+  ['Business Rules', props.workspace.counts.rules]
 ])
 
 const derivedCounts = computed<Array<[string, number]>>(() => [

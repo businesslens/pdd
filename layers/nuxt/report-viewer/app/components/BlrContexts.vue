@@ -22,7 +22,7 @@ const contextLabel = computed(() => props.contexts.length === 1 ? 'Context' : 'C
 <template>
   <div v-if="contexts.length || (!compact && entryPoints.length)" class="space-y-3">
     <section v-if="contexts.length" class="space-y-1.5">
-      <p class="blr-field">{{ contextLabel }}</p>
+      <p class="blr-field"><BlrTerm slug="context" :text="contextLabel" /></p>
       <div class="flex flex-wrap gap-1.5">
         <BlrContextPlace
           v-for="context in visibleContexts"
@@ -39,7 +39,7 @@ const contextLabel = computed(() => props.contexts.length === 1 ? 'Context' : 'C
     </section>
 
     <section v-if="!compact && entryPoints.length" class="space-y-1.5">
-      <p class="blr-field">Starts at</p>
+      <p class="blr-field"><BlrTerm slug="entry-point" text="Starts at" /></p>
       <ul class="flex flex-wrap gap-1.5">
         <li
           v-for="point in entryPoints"

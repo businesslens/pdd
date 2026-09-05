@@ -1,6 +1,9 @@
 import type { ReportResourceKind } from './reportWorkspace'
 import { ENTITY_KIND_META } from './reportWorkspace'
 
+/** Where the documentation lives. The vocabulary links out to the same pages. */
+export const DOCS_ORIGIN = 'https://businesslens.io/docs'
+
 /* Documentation explains a resource kind, never one report instance. Scenario
    containment follows the authored docs: Capability Scenarios live with
    Capabilities, and Journey Scenarios with Journeys. */
@@ -26,7 +29,7 @@ const DOCUMENTED_AS: Partial<Record<ReportResourceKind, ReportResourceKind>> = {
 export function docsForResourceKind(kind: ReportResourceKind) {
   const documentedKind = DOCUMENTED_AS[kind] ?? kind
   return {
-    url: `https://businesslens.io/docs/${DOCS_SLUG[kind]}`,
+    url: `${DOCS_ORIGIN}/${DOCS_SLUG[kind]}`,
     label: `Read ${ENTITY_KIND_META[documentedKind].label} documentation`
   }
 }
