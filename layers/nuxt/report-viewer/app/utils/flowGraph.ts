@@ -15,16 +15,16 @@
 import { Graph, layout } from '@dagrejs/dagre'
 import { MarkerType, Position } from '@vue-flow/core'
 import type { Edge, Node } from '@vue-flow/core'
-import type { ActingKind, ActingSide, AnyResourceView, InterfaceView, ReportResourceKind, ReportScenarioType, ReportWorkspace } from './reportWorkspace'
-import { ENTITY_KIND_META, resourceKey, resolveResource } from './reportWorkspace'
+import type { ActingSide, AnyResourceView, EntityFacet, InterfaceView, ReportResourceKind, ReportScenarioType, ReportWorkspace } from './reportWorkspace'
+import { ENTITY_KIND_META, entityFacetOf, resourceKey, resolveResource } from './reportWorkspace'
 
 /** Data carried by every resource box (`type: 'blr'`). */
 export interface FlowNodeData {
   resourceKey: string
   resourceId: string
   kind: ReportResourceKind
-  /** Present only for an Entity that acts; the node draws kind, the sublabel writes which side it acts from. */
-  actorKind?: ActingKind | null
+  /** Present for every Entity; the node draws the facet, the sublabel writes which side an Actor acts from. */
+  entityFacet?: EntityFacet | null
   acts?: ActingSide | null
   /** Present only for a concrete Interface; generic kind nodes keep the plug. */
   interfaceType?: InterfaceView['interfaceType'] | null
@@ -130,7 +130,7 @@ export function resourceNode(
       resourceKey: resource.key,
       resourceId: resource.id,
       kind: resource.kind,
-      actorKind: resource.kind === 'entity' ? resource.entityKind : null,
+      entityFacet: entityFacetOf(resource),
       acts: resource.kind === 'entity' ? resource.acts : null,
       interfaceType: resource.kind === 'interface' ? resource.interfaceType : null,
       title: resource.title,

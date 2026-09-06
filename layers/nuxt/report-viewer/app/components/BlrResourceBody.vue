@@ -25,7 +25,7 @@ import type {
   EntityView,
   ScreenView
 } from '../utils/reportWorkspace'
-import { isScenarioKind, resolveResource, scenarioStepMatrix } from '../utils/reportWorkspace'
+import { entityFacetOf, isScenarioKind, resolveResource, scenarioStepMatrix } from '../utils/reportWorkspace'
 import { scenarioTerm } from '../utils/vocabulary'
 import { hasAuthoredBody } from '../utils/pageSections'
 import {
@@ -54,6 +54,14 @@ const asJourney = computed(() => props.resource as JourneyView)
 const asScenario = computed(() => props.resource as ScenarioView)
 const asRule = computed(() => props.resource as RuleView)
 const isScenario = computed(() => isScenarioKind(props.resource.kind))
+
+/* An Entity chip is drawn by the facet the thing plays. The relation beside it
+   already says it is an Entity, so the type glyph would spend the mark on the
+   sentence it sits inside. */
+function entityChip(id: string) {
+  const resource = resolveResource(props.workspace, 'entity', id)
+  return resource?.kind === 'entity' ? resource : undefined
+}
 
 /* Trigger, Outcome and the rest are explained once per Scenario type, and a
    reader on a Journey Scenario asking what a Trigger is means that one. */
@@ -428,7 +436,11 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
           class="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border border-default bg-elevated/30 px-3 py-2 text-sm"
         >
           <button type="button" class="blr-chip" @click="openEntity(line.entityId)">
-            <UIcon name="i-lucide-box" class="size-3.5" />{{ line.title }}
+            <BlrEntityMark
+              :facet="entityFacetOf(entityChip(line.entityId)) ?? 'kept'"
+              :acts="entityChip(line.entityId)?.acts"
+              size="xs"
+            />{{ line.title }}
           </button>
           <span v-for="reading in line.readings" :key="reading" class="text-default">{{ reading }}</span>
           <span class="blr-meta ms-auto">{{ line.scenarioIds.length }} {{ line.scenarioIds.length === 1 ? 'Scenario' : 'Scenarios' }}</span>
@@ -643,8 +655,8 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
                         :aria-label="`Open ${stepActor(step.actorId)!.title}`"
                         @click="selectStepActor(step.actorId)"
                       >
-                        <BlrActorType
-                          :actor-kind="stepActor(step.actorId)!.entityKind!"
+                        <BlrEntityMark
+                          :facet="stepActor(step.actorId)!.entityKind!"
                           :acts="stepActor(step.actorId)!.acts!"
                           size="xs"
                         />
@@ -757,8 +769,8 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
                     :aria-label="`Open ${stepActor(step.actorId)!.title}`"
                     @click="selectStepActor(step.actorId)"
                   >
-                    <BlrActorType
-                      :actor-kind="stepActor(step.actorId)!.entityKind!"
+                    <BlrEntityMark
+                      :facet="stepActor(step.actorId)!.entityKind!"
                       :acts="stepActor(step.actorId)!.acts!"
                       size="xs"
                     />
@@ -959,7 +971,7 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
     <!-- ENTITY: what the Product keeps, what it can be, and how it moves. -->
     <template v-if="resource.kind === 'entity'">
       <section v-if="asEntity.acts" class="flex flex-wrap items-center gap-2 text-sm text-default">
-        <BlrActorType :actor-kind="asEntity.entityKind!" :acts="asEntity.acts" size="xs" />
+        <BlrEntityMark :facet="asEntity.entityKind!" :acts="asEntity.acts" size="xs" />
         <span>
           Acts on the Product as {{ asEntity.acts === 'external' ? 'an external' : 'an internal' }} {{ asEntity.entityKind }}.
         </span>
@@ -1011,7 +1023,11 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
             <span class="font-medium text-highlighted">{{ relation.verb }}</span>
             <span class="blr-meta">{{ relation.cardinality }}</span>
             <button type="button" class="blr-chip" @click="openEntity(relation.entityId)">
-              <UIcon name="i-lucide-box" class="size-3.5" />{{ relation.title }}
+              <BlrEntityMark
+                :facet="entityFacetOf(entityChip(relation.entityId)) ?? 'kept'"
+                :acts="entityChip(relation.entityId)?.acts"
+                size="xs"
+              />{{ relation.title }}
             </button>
             <span v-if="relation.derived" class="blr-meta ms-auto">derived</span>
           </li>

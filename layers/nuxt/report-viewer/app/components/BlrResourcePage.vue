@@ -104,7 +104,7 @@ const current = computed(() => tabs.value.find(tab => tab.id === active.value) ?
         </UTooltip>
         <UTooltip text="Show this resource on the topology canvas">
           <UButton
-            icon="i-lucide-waypoints"
+            icon="i-lucide-network"
             color="neutral"
             variant="outline"
             size="xs"

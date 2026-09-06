@@ -4,8 +4,8 @@
  *
  * The reader's question is local — they are looking at "Arcs 4" and do not know
  * what an arc is — so the answer is local too, and costs no row until it is
- * asked for. A dotted underline is the whole of the chrome; the popover holds
- * one line and a way out to the page that argues it.
+ * asked for. A question mark identifies the definition action; the popover
+ * holds the answer and a way out to the page that argues it.
  *
  * It opens on click rather than hover so a touch reader and a keyboard reader
  * both have it, and it never replaces the word it explains: the surface still
@@ -24,6 +24,8 @@ const props = defineProps<{
   slug: VocabularySlug
   /** What this surface calls the term, when that is not the term itself. */
   text?: string
+  /** Beside a navigable label, the definition gets its own sibling button. */
+  iconOnly?: boolean
 }>()
 
 const open = ref(false)
@@ -54,8 +56,12 @@ function onCloseAutoFocus(event: Event) {
       ref="trigger"
       type="button"
       class="blr-term"
+      :class="{ 'blr-term--icon-only': iconOnly }"
       :aria-label="`${label} — what ${entry.term} means`"
-    >{{ label }}</button>
+    >
+      <span v-if="!iconOnly" class="blr-term-label">{{ label }}</span>
+      <UIcon name="i-lucide-circle-question-mark" class="blr-term-mark size-3.5 shrink-0" aria-hidden="true" />
+    </button>
 
     <template #content>
       <BlrTermDefinition :slug="slug" @follow="follow" />
@@ -64,26 +70,57 @@ function onCloseAutoFocus(event: Event) {
 </template>
 
 <style scoped>
-/*
-  The affordance rides under the word rather than beside it: an icon per label
-  would put a mark on every heading and fact on the page, which is the chrome
-  this report spends its budget avoiding.
-*/
 .blr-term {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 1.5rem;
   text-align: start;
-  border-bottom: 1px dotted var(--ui-border-accented);
-  cursor: help;
+  vertical-align: middle;
+  cursor: pointer;
+}
+
+.blr-term-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.blr-term-mark {
+  color: var(--ui-text-muted);
+}
+
+.blr-term--icon-only {
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.5rem;
 }
 
 .blr-term:hover,
 .blr-term:focus-visible {
-  border-bottom-color: var(--ui-color-primary-500);
-  border-bottom-style: solid;
   color: var(--ui-text-highlighted);
+}
+
+.blr-term:hover .blr-term-mark,
+.blr-term:focus-visible .blr-term-mark {
+  color: var(--ui-primary);
 }
 
 .blr-term:focus-visible {
   outline: 2px solid var(--ui-text-highlighted);
   outline-offset: 3px;
+}
+
+@media (pointer: coarse) {
+  .blr-term {
+    min-height: 2rem;
+  }
+
+  .blr-term--icon-only {
+    width: 2.75rem;
+    min-height: 2.75rem;
+  }
 }
 </style>

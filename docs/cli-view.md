@@ -4,13 +4,6 @@ description: Open the current Product Model as a private local report that stays
 section: open-source
 group: CLI
 order: 31
-terms:
-  - term: Topology
-    anchor: reading-the-report
-    definition: "The report's cross-kind canvas, whose named views each answer one fixed question about the whole model."
-  - term: Neighbourhood
-    anchor: reading-the-report
-    definition: "One resource drawn on the Topology canvas with everything that touches it."
 ---
 
 # `businesslens view`
@@ -46,31 +39,8 @@ The server listens only on `127.0.0.1` and stops when the command exits.
 
 ## Reading the report
 
-The report opens on the Overview, with a rail of the model's resource types
-down the side. A row opens that collection, and a card or table row opens the
-resource's own page at its own URL. `⌘K` searches every resource in the model
-by name.
-
-**Topology** is the single breadth destination: a cross-kind canvas whose named
-views each answer one fixed question — which Capabilities a Journey composes,
-which Screens expose an ability — rather than a builder that asks you to invent
-the question first. **Neighbourhood** is the action a resource page offers into
-it, drawing that same canvas around one resource and everything touching it.
-
-Selected Product Model terms have a dotted underline: each opens its one-line
-meaning, and **Vocabulary** in the header lets you search the documented terms.
-Browse one list of documentation pages, with terms nested under the page that
-defines them. Each opening from the report header clears the previous search
-and expands the current report page's group. A linked lookup reveals its
-destination group. Each entry has the same title,
-definition, and **Read more in…** link as an inline definition.
-Exact term names appear before partial names and matches inside definitions.
-Following a word inside a definition opens its entry; **Back to…** returns to
-the previous lookup, including its search, expanded groups, and scroll position.
-Closing a lookup opened through an inline definition returns keyboard focus to its trigger.
-Collection-name definitions are also available on mobile.
-Both the inline definitions and the panel link out to the page here that explains
-the term in full.
+See [Reading the report](./product-model.md#reading-the-report) for navigation,
+Topology, Neighbourhood, and the Vocabulary panel.
 
 Use [`blueprint export`](./cli-export.md) when you need to write a source-free,
 portable Product Report.

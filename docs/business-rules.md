@@ -16,7 +16,7 @@ terms:
     definition: "What may be done to a thing: creates, changes, removes, or reads. A Step calls it an effect; a Business Rule selects the same word as an operation."
   - term: Who may
     anchor: permission
-    definition: "Who may perform an operation, and when. Any one grant permits it, and every Rule on that operation must permit too, so a new Rule can only narrow."
+    definition: "Who can perform an Entity operation and under what conditions. Each applicable permission Rule must have at least one grant that allows it."
 ---
 
 # Business Rules
@@ -159,6 +159,11 @@ grants, forbidding the ones it closes.
 
 ## Permission
 
+Permissions state who can perform an Entity operation and under what
+conditions. Every applicable Rule that defines permissions must have at least
+one grant allowing the operation. A Rule without `permits` makes no permission
+claim; its other constraints still apply.
+
 `permits` has three states:
 
 | `permits` | Says |
@@ -188,8 +193,8 @@ what Interface `actors` already records as *who uses it*.
 - Targets within one Rule select the union of governed operations.
 - Grants within one Rule are **OR**.
 - Keys within one grant are **AND**.
-- Rules that select the same operation are **AND** — every matching Rule
-  constrains it.
+- Permission Rules that select the same operation are **AND** — every matching
+  Rule with `permits` must allow it.
 - An operation no Rule with `permits` selects is open.
 
 ```yaml

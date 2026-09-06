@@ -32,12 +32,12 @@ still belongs to your SDD tool of choice and may be attached through
 | --- | --- |
 | **Product Model** | `.businesslens/` — the git-tracked folder this document defines. May cite the repository's code. |
 | **Resource** | one authored file in a Product Model — `capabilities/lint-product-model/capability.md` is one. |
-| **Resource type** | what a resource is one of. This document defines eleven: Product, Interface, Experience, Screen, Domain, Entity, Capability, Capability Scenario, Journey, Journey Scenario, and Business Rule. |
+| **Resource type** | a category of resource determined by its path. This document defines eleven: Product, Interface, Experience, Screen, Domain, Entity, Capability, Capability Scenario, Journey, Journey Scenario, and Business Rule. |
 | **Actor** | the role an Entity plays where it acts — a Step's `actor`, an Interface's, Experience's or Journey's `actors`, a Business Rule grant's `actors`. Not a resource type: an Entity that `acts` is an Actor in that position. |
 | **Product Report** | the portable serialization of a Product Model. One format, two profiles. |
 | — *workspace* | `referenceProfile: workspace`. Repository-relative references and entry points intact, as optional navigation. For a full product instance inside the boundary that owns the code. |
 | — *portable* | `referenceProfile: portable`. No `kind: code`, no repository-relative targets or entry points. Required whenever a report crosses an ownership boundary. |
-| **Blueprint** | a Product Report curated into the public catalog under a slug. Always the portable profile, because that is what the catalog accepts. |
+| **Blueprint** | a portable Product Report. Publishing it in a catalog is a separate step. |
 
 **Redaction is a property a report has, never a category it belongs to.** A
 report carrying repository navigation is still a Product Report; it is simply
@@ -524,11 +524,11 @@ scenarioKinds:
 
 ### `interfaces/<id>.md` or `interfaces/<id>/interface.md`
 
-An Interface is a supported interaction form through which Actors access the
-Product and for which product behavior can be independently required and
-verified. A customer web application, mobile application, operator CLI, partner
-API, and inbound webhook endpoint are Interfaces. Frameworks, internal adapters,
-and private component APIs are not.
+An Interface is a supported way for Actors to interact with the Product.
+Product behavior can be independently required and verified for each Interface.
+A customer web application, mobile application, operator CLI, partner API, and
+inbound webhook endpoint are Interfaces. Frameworks, internal adapters, and
+private component APIs are not.
 
 An Interface is **inbound**: something arrives at the Product through it. An
 outbound connection the Product opens to a third party is not an Interface,
@@ -1252,8 +1252,8 @@ behavioural or Context target is an error.
 - Targets within one Rule select the union of governed operations.
 - Grants within one Rule are **OR**.
 - Keys within one grant are **AND**.
-- Rules that select the same operation are **AND** — every matching Rule
-  constrains it.
+- Permission Rules that select the same operation are **AND** — every matching
+  Rule with `permits` must allow it.
 - An operation no Rule with `permits` selects is open.
 
 ```yaml
@@ -1530,10 +1530,10 @@ references.
 
 ### `journeys/<id>.md` or `journeys/<id>/journey.md`
 
-A Journey is an optional, evidence-backed coherent Actor goal that requires
-deliberate composition of multiple Capabilities. It owns only its high-level
-Goal and Success criterion. Concrete Capability selection, order, branches,
-repetition, and failure belong to Journey Scenarios.
+A Journey is an optional, evidence-backed coherent Actor goal whose successful
+completion requires several Capabilities working together. It owns only its
+high-level Goal and Success criterion. Concrete Capability selection, order,
+branches, repetition, and failure belong to Journey Scenarios.
 
 ```markdown
 ---

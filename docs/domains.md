@@ -6,7 +6,7 @@ group: Product Model
 order: 14
 terms:
   - term: Domain
-    definition: "What a Capability or Entity is about, in the Product's own words. One Domain reaches everything on that subject, which is why it earns a place."
+    definition: "A subject area of the Product, such as ordering or billing, that classifies related Capabilities and Entities."
   - term: Boundary
     anchor: the-file
     definition: "What a Domain takes in and what it leaves out, stated in the Product's own words."
@@ -14,10 +14,10 @@ terms:
 
 # Domains
 
-**A Domain is a coherent region of the Product's subject matter** — ordering,
-catalog, billing. It has its own vocabulary and its own invariants, and it is
-named in Product language rather than after code directories, services, teams,
-or deployment boundaries.
+**A Domain is a subject area of the Product**, such as ordering, catalog, or
+billing. It classifies related Capabilities and Entities, with its own
+vocabulary and constraints. Name it in Product language rather than after code
+directories, services, teams, or deployment boundaries.
 
 A Domain is an **axis, not a level**. It classifies; it does not contain. Two
 resource types name the one Domain they are about — a
@@ -87,9 +87,9 @@ Every Domain ID named by a Capability must have a corresponding file.
 Because the relation is derived in both directions, one Domain answers *"show me
 everything about ordering"* across the whole model — the Capabilities and
 Entities that are about it, their Scenarios, the Screens that expose them, the
-Journeys that traverse them, and the Business Rules that constrain them. That reach is the
-reason a Domain earns a place in the model; organizing a long Capability list
-is not.
+Journeys that traverse them, and the Business Rules that constrain them. These
+connections let a reader explore the subject across resource types. The Domain
+must still meet the Boundary and Capability requirements above.
 
 ## Grouping that is not subject matter
 

@@ -8,8 +8,10 @@ package files, so an audition cannot become part of the public renderer by
 accident.
 
 There are no active report experiments. The selected Overview/Scenarios page
-and direct-to-page navigation now live in `report-viewer`; the background
-audition remains independently owned by `theme-lab`.
+and direct-to-page navigation now live in `report-viewer`; the coverage mark
+was auditioned here across the whole palette and its umber reading is now the
+stable `BlrCoverageBadge`; the background audition remains independently owned
+by `theme-lab`.
 
 A future report experiment belongs here when it needs to shadow a stable
 component or add a local-only control. Once decided, promote the selected

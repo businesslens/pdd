@@ -9,7 +9,7 @@ terms:
     definition: "A meaningful visual view, named in the Product's own words, directly under an Interface or inside one of its Experiences."
   - term: View state
     anchor: view-states-are-the-views-never-the-things
-    definition: "A state of this view: empty, populated, unauthorized, caught-up. Never a State of the thing it shows, which renders differently per Screen."
+    definition: "A condition of a Screen, such as empty, populated, or unauthorized. It describes the view rather than an Entity's Lifecycle."
 ---
 
 # Screens
@@ -113,13 +113,14 @@ backlinks from those Step Contexts.
 
 ## View states are the view's, never the thing's
 
-`## View states` describes what **this view** looks like when the difference
-changes what an Actor understands or can do — empty, populated, unauthorized,
-caught-up.
+`## View states` lists conditions of a Screen, such as empty, populated,
+unauthorized, or caught-up. Include a condition when it changes what an Actor
+understands or can do in that view.
 
-A thing's own states belong to an [Entity](./entities.md). A Screen that shows a
-thing declares it in `entities` and names its own view state for the difference,
-because one state of a thing renders differently on different Screens.
+An [Entity's lifecycle](./entities.md#states-and-the-lifecycle-nobody-authors)
+describes the Entity's States. A Screen that presents the Entity declares it in
+`entities` and describes how its own view changes. The same Entity State can
+appear differently on different Screens.
 
 `## Information presented` follows the same split: what *this view* shows —
 counts, feedback, derived values, combinations — never a restatement of what the

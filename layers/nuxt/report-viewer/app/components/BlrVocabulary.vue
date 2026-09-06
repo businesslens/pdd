@@ -8,12 +8,30 @@
  * It defines nothing of its own. Each row is one generated line and a way out
  * to the documentation page that owns the term.
  *
+ * A section's own term — Experience, on Experiences — is its meaning, not
+ * a row inside it: the head states it once, and the rows beneath are the words
+ * grouped beside it. Product also carries the Model overview terms. A section
+ * whose only term is its lead has nothing to disclose, so it carries no control.
+ *
  * A word inside a definition that is itself defined is followable, and following
- * one reveals its owning page and marks the term. Back restores the previous
+ * one reveals its browsing section and marks the term. Back restores the previous
  * reading, including which pages were expanded.
  */
 import type { VocabularySlug } from '../utils/vocabulary.generated'
-import { vocabularyMatches, vocabularyPages, vocabularyTerm } from '../utils/vocabulary'
+import { VOCABULARY_PAGES, vocabularyMatches, vocabularySection, vocabularyTerm } from '../utils/vocabulary'
+import type { ReportResourceKind } from '../utils/reportWorkspace'
+
+const pageKinds: Partial<Record<string, ReportResourceKind>> = {
+  product: 'product',
+  entities: 'entity',
+  interfaces: 'interface',
+  experiences: 'experience',
+  screens: 'screen',
+  domains: 'domain',
+  capabilities: 'capability',
+  journeys: 'journey',
+  'business-rules': 'rule'
+}
 
 const props = defineProps<{ context?: VocabularySlug }>()
 
@@ -26,7 +44,6 @@ const { open, lookup, returnFocusId, show } = useVocabularyPanel()
 const query = ref('')
 const searching = computed(() => Boolean(query.value.trim()))
 const items = computed(() => vocabularyMatches(query.value))
-const pages = computed(() => vocabularyPages(items.value))
 const listEl = ref<HTMLElement | null>(null)
 const searchInput = ref<{ inputRef: HTMLInputElement | null } | null>(null)
 const marked = ref<VocabularySlug | null>(null)
@@ -37,6 +54,11 @@ function revealPage(page: string) {
   if (!expandedPages.value.includes(page)) expandedPages.value.push(page)
 }
 
+/* A section owning nothing but its lead has nothing to hide, and reads as open. */
+function opened(page: VocabularyPage) {
+  return !page.items.length || expandedPages.value.includes(page.page)
+}
+
 function togglePage(page: string) {
   expandedPages.value = expandedPages.value.includes(page)
     ? expandedPages.value.filter(current => current !== page)
@@ -44,7 +66,7 @@ function togglePage(page: string) {
 }
 
 function contextPage() {
-  return vocabularyTerm(props.context ?? 'product-model').page
+  return vocabularySection(props.context ?? 'product')
 }
 
 interface VocabularyVisit {
@@ -107,7 +129,7 @@ watch([open, lookup], async ([isOpen, request]) => {
   if (!isOpen || !request) return
   query.value = ''
   marked.value = request.slug
-  revealPage(vocabularyTerm(request.slug).page)
+  revealPage(vocabularySection(request.slug))
   await nextTick()
   focusTerm()
 }, { immediate: true })
@@ -126,7 +148,7 @@ function onOpenAutoFocus(event: Event) {
     event.preventDefault()
     focusTerm()
   } else {
-    listEl.value?.querySelector<HTMLElement>(`[data-vocabulary-page="${contextPage()}"]`)
+    listEl.value?.querySelector<HTMLElement>(`[data-term="${props.context ?? 'product'}"]`)
       ?.scrollIntoView({ block: 'start' })
     if (window.matchMedia('(min-width: 640px) and (pointer: fine)').matches) {
       event.preventDefault()
@@ -147,7 +169,7 @@ watch(open, (isOpen) => {
   if (isOpen) {
     // Each opening starts with the reading the reader came from. A named
     // lookup wins; a header opening must not inherit a search from another page.
-    expandedPages.value = [lookup.value ? vocabularyTerm(lookup.value.slug).page : contextPage()]
+    expandedPages.value = [lookup.value ? vocabularySection(lookup.value.slug) : contextPage()]
     if (!lookup.value) {
       query.value = ''
       marked.value = null
@@ -164,7 +186,7 @@ watch(open, (isOpen) => {
   <USlideover
     v-model:open="open"
     title="Vocabulary"
-    description="Explore terms by page, or search for a word."
+    description="Explore terms by category, or search for a word."
     :content="{ onOpenAutoFocus, onCloseAutoFocus }"
     :ui="{
       content: 'w-full max-w-full sm:max-w-[480px] lg:max-w-[560px] xl:max-w-[640px] 2xl:max-w-[720px]',
@@ -218,12 +240,12 @@ watch(open, (isOpen) => {
             No word matches “{{ query }}”.
           </p>
 
-          <div v-if="searching" class="space-y-3 p-4 sm:px-5">
+          <div v-if="searching">
             <article
               v-for="item in items"
               :key="item.slug"
               :data-term="item.slug"
-              class="blr-vocab-row"
+              class="blr-vocab-row px-4 py-3 first:border-t-0 sm:px-5"
               :data-marked="marked === item.slug"
               tabindex="-1"
             >
@@ -231,42 +253,65 @@ watch(open, (isOpen) => {
             </article>
           </div>
           <section
-            v-for="page in searching ? [] : pages"
+            v-for="page in searching ? [] : VOCABULARY_PAGES"
             :key="page.page"
             :data-vocabulary-page="page.page"
-            class="blr-vocab-page"
           >
             <h3 class="sticky top-0 z-10 bg-default">
-              <button
-                type="button"
-                class="flex min-h-12 w-full items-center gap-2 px-4 py-3 text-start text-highlighted hover:bg-elevated focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary sm:px-5"
-                :aria-expanded="expandedPages.includes(page.page)"
-                :aria-controls="`${pageId}-${page.page}`"
-                @click="togglePage(page.page)"
+              <component
+                :is="page.items.length ? 'button' : 'div'"
+                v-bind="page.items.length
+                  ? {
+                    type: 'button',
+                    'aria-expanded': expandedPages.includes(page.page),
+                    'aria-controls': `${pageId}-${page.page}`,
+                    onClick: () => togglePage(page.page)
+                  }
+                  : { tabindex: -1 }"
+                :data-term="page.lead.slug"
+                :data-marked="marked === page.lead.slug"
+                class="blr-vocab-head flex min-h-12 w-full items-center gap-2 border-b border-default px-4 py-3 text-start text-highlighted focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary sm:px-5"
+                :class="[opened(page) ? 'bg-accented' : 'bg-muted', page.items.length ? 'hover:bg-accented' : '']"
               >
                 <UIcon
+                  v-if="page.items.length"
                   name="i-lucide-chevron-right"
                   class="size-4 shrink-0 text-dimmed"
-                  :class="{ 'rotate-90': expandedPages.includes(page.page) }"
+                  :class="{ 'rotate-90': opened(page) }"
                 />
+                <!-- One list, one column: a section with nothing to disclose keeps the type icons aligned. -->
+                <span v-else aria-hidden="true" class="size-4 shrink-0" />
+                <span aria-hidden="true" class="flex size-4 shrink-0 items-center justify-center">
+                  <BlrKind v-if="pageKinds[page.page]" :kind="pageKinds[page.page]!" :labelled="false" size="xs" />
+                  <BlrReferenceIcon v-else-if="page.page === 'references'" class="size-4" />
+                </span>
                 <span class="text-[15px] font-semibold">{{ page.title }}</span>
-                <span class="ms-auto text-xs text-dimmed">{{ page.items.length }} {{ page.items.length === 1 ? 'term' : 'terms' }}</span>
-              </button>
+                <span v-if="page.items.length" class="ms-auto text-xs text-dimmed">
+                  {{ page.items.length }} more {{ page.items.length === 1 ? 'term' : 'terms' }}
+                </span>
+              </component>
             </h3>
-            <div
-              v-show="expandedPages.includes(page.page)"
-              :id="`${pageId}-${page.page}`"
-              class="ms-5 me-4 mb-4 space-y-3 border-s border-default ps-3 sm:ms-6 sm:me-5 sm:ps-4"
-            >
+            <div v-show="opened(page)" :id="`${pageId}-${page.page}`" class="pb-2">
+              <BlrTermDefinition
+                :slug="page.lead.slug"
+                lead
+                class="ps-10 pe-4 py-3 sm:ps-11 sm:pe-5"
+                @follow="follow($event, page.lead.slug)"
+              />
               <article
                 v-for="item in page.items"
                 :key="item.slug"
                 :data-term="item.slug"
-                class="blr-vocab-row"
+                class="blr-vocab-row ps-10 pe-4 py-3 sm:ps-11 sm:pe-5"
                 :data-marked="marked === item.slug"
                 tabindex="-1"
               >
-                <BlrTermDefinition :slug="item.slug" :heading-level="4" @follow="follow($event, item.slug)" />
+                <BlrTermDefinition
+                  :slug="item.slug"
+                  :heading-level="4"
+                  icon-link
+                  @follow="follow($event, item.slug)"
+                />
               </article>
             </div>
           </section>
@@ -277,17 +322,14 @@ watch(open, (isOpen) => {
 </template>
 
 <style scoped>
+/* One rule between words, so nothing encloses a meaning two lines long. */
 .blr-vocab-row {
-  border: 1px solid var(--ui-border-muted);
-  border-radius: 0.5rem;
-  background: var(--ui-bg);
+  border-top: 1px solid var(--ui-border-muted);
 }
 
-.blr-vocab-page {
-  border-bottom: 1px solid var(--ui-border-muted);
-}
-
-.blr-vocab-row[data-marked='true'] {
+/* A followed term is marked where it is read: a row, or the head that states it. */
+.blr-vocab-row[data-marked='true'],
+.blr-vocab-head[data-marked='true'] {
   background: color-mix(in srgb, var(--ui-color-primary-500) 8%, transparent);
   box-shadow: inset 2px 0 0 var(--ui-color-primary-500);
 }

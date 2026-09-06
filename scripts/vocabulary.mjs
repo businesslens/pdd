@@ -196,6 +196,7 @@ export async function readVocabulary(root) {
       continue
     }
     const anchors = new Set(headingsOf(page.body).map(anchorFor))
+    let lead = null
     for (const entry of declared) {
       const at = `docs/${page.name} terms`
       if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
@@ -235,6 +236,13 @@ export async function readVocabulary(root) {
         errors.push(`${at} "${term}" aliases must be a list of non-empty strings`)
         continue
       }
+      if (lead === null && on !== undefined) {
+        errors.push(
+          `${at} "${term}" is the page's lead and cannot be scoped with "on". `
+          + 'A page leads with the term it is named for, which no other page shares.'
+        )
+        continue
+      }
       const slug = slugFor(term, on)
       const previous = seen.get(slug)
       if (previous) {
@@ -245,6 +253,7 @@ export async function readVocabulary(root) {
         continue
       }
       seen.set(slug, at)
+      if (lead === null) lead = slug
       terms.push({
         slug,
         term: term.trim(),
@@ -281,6 +290,19 @@ function byGroup(terms) {
     group.terms.push(term)
   }
   return groups
+}
+
+/**
+ * Each page's lead: the first term it declares.
+ *
+ * For pages included in the panel, the report states it in the section head, so
+ * reordering a page's `terms:` is a visible change to the generated leads rather
+ * than a silent change to what the panel calls a section's meaning.
+ */
+export function leadsOf(terms) {
+  const leads = new Map()
+  for (const term of terms) if (!leads.has(term.page)) leads.set(term.page, term.slug)
+  return leads
 }
 
 function docsHref(term) {
@@ -325,16 +347,11 @@ export function renderDoc(terms) {
     '',
     '# Vocabulary',
     '',
-    'Selected Product Model and report terms, with one line each and a link to',
-    'the page that explains it. This page is an index: it defines nothing itself,',
-    'so it can never disagree with the pages it points at.',
-    '',
-    'The Product Report uses these same definitions for dotted terms in headings,',
-    'fact labels, and collection names, and in the searchable `Vocabulary` panel',
-    'in its header.',
-    '',
-    'A definition that leans on another word links to it, here and in the report:',
-    'nobody is left holding a second unfamiliar term.',
+    'Definitions of Product Model and report terms, with links to their full',
+    'explanations. The Product Report uses these definitions for inline lookups',
+    'and its Vocabulary panel. Export and publishing terms are included here;',
+    'CLI terms are excluded from the panel\'s browsing and search. Follow linked',
+    'terms to explore related concepts.',
     ''
   ]
 
@@ -366,6 +383,9 @@ export function renderModule(terms) {
     ]
     return `  ${JSON.stringify(term.slug)}: { ${fields.join(', ')} }`
   })
+
+  const leads = [...leadsOf(terms)]
+    .map(([page, slug]) => `  ${JSON.stringify(page)}: ${JSON.stringify(slug)}`)
 
   return `/**
  * ${BANNER}
@@ -400,5 +420,13 @@ ${entries.join(',\n')}
 
 /** Every addressable term. A surface naming one that is gone fails to compile. */
 export type VocabularySlug = keyof typeof VOCABULARY
+
+/**
+ * Each page's first declared term. For pages included in the vocabulary panel,
+ * it appears in the section head, with the page's other terms beneath it.
+ */
+export const VOCABULARY_LEADS: Readonly<Record<string, VocabularySlug>> = {
+${leads.join(',\n')}
+}
 `
 }

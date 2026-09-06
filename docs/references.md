@@ -13,7 +13,7 @@ terms:
     definition: "What the referenced material is: code, prd, spec, proposal, doc, adr, visual, or research."
   - term: Reference role
     anchor: kind-and-role
-    definition: "Why it is attached: intent, implementation, or context. A published Blueprint drops implementation, and every code reference whatever its role."
+    definition: "Why a Reference is attached: intent helps define the Product, implementation points to what was built, and context provides background."
 ---
 
 # References

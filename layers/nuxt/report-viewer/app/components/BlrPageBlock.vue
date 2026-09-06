@@ -32,9 +32,10 @@ const facts = computed(() => resourceFacts(props.workspace, props.resource).filt
 <template>
   <BlrProse v-if="id === 'lead' && resource.lead" :text="resource.lead" size="base" class="max-w-3xl" />
 
-  <dl v-else-if="id === 'facts' && facts.length" class="flex flex-wrap gap-x-8 gap-y-3">
+  <dl v-else-if="id === 'facts' && facts.length" class="flex flex-wrap gap-x-8 gap-y-3 max-[359px]:gap-x-4">
     <div v-for="fact in facts" :key="fact.label" class="min-w-0">
-      <dt class="text-xs text-dimmed">
+      <dt class="flex items-center gap-1.5 text-xs text-dimmed">
+        <BlrReferenceIcon v-if="fact.term === 'reference'" class="size-3.5" />
         <BlrTerm v-if="fact.term" :slug="fact.term" :text="fact.label" />
         <template v-else>{{ fact.label }}</template>
       </dt>

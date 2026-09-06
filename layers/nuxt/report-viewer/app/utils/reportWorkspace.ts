@@ -119,11 +119,16 @@ export const ENTITY_KIND_META: Record<ReportResourceKind, ResourceKindMeta> = {
     what it keeps. Actor is the word for the subset that acts, and it is a facet
     over this collection rather than a row of its own.
   */
-  entity: { kind: 'entity', label: 'Entity', plural: 'Entities', icon: 'i-lucide-box', slot: 0 },
+  entity: { kind: 'entity', label: 'Entity', plural: 'Entities', icon: 'i-lucide-shapes', slot: 0 },
   interface: { kind: 'interface', label: 'Interface', plural: 'Interfaces', icon: 'i-lucide-plug', slot: 1 },
   experience: { kind: 'experience', label: 'Experience', plural: 'Experiences', icon: 'i-lucide-layout-panel-left', slot: 2 },
   screen: { kind: 'screen', label: 'Screen', plural: 'Screens', icon: 'i-lucide-monitor', slot: 3 },
-  domain: { kind: 'domain', label: 'Domain', plural: 'Domains', icon: 'i-lucide-boxes', slot: 4 },
+  /*
+    A Domain classifies; it does not contain. A stack of crates drew the
+    containment the format denies, so the mark is a demarcated region instead —
+    the Domain's own second term is Boundary.
+  */
+  domain: { kind: 'domain', label: 'Domain', plural: 'Domains', icon: 'i-lucide-land-plot', slot: 4 },
   capability: { kind: 'capability', label: 'Capability', plural: 'Capabilities', icon: 'i-lucide-zap', slot: 5 },
   journey: { kind: 'journey', label: 'Journey', plural: 'Journeys', icon: 'i-lucide-route', slot: 6 },
   /*
@@ -135,7 +140,12 @@ export const ENTITY_KIND_META: Record<ReportResourceKind, ResourceKindMeta> = {
   'capability-scenario': { kind: 'capability-scenario', label: 'Capability Scenario', plural: 'Capability Scenarios', icon: 'i-lucide-list-checks', slot: 7 },
   'journey-scenario': { kind: 'journey-scenario', label: 'Journey Scenario', plural: 'Journey Scenarios', icon: 'i-lucide-list-ordered', slot: 7 },
   rule: { kind: 'rule', label: 'Business Rule', plural: 'Business Rules', icon: 'i-lucide-scale', slot: 8 },
-  product: { kind: 'product', label: 'Product', plural: 'Product', icon: 'i-lucide-package', slot: 9 }
+  /*
+    Product is the Overview, and the Overview is where a reader lands and
+    returns. Slot 9 wraps onto slot 0, so Product and Entity share a hue and
+    shape had to separate them on its own — which a package and a box did not.
+  */
+  product: { kind: 'product', label: 'Product', plural: 'Product', icon: 'i-lucide-house', slot: 9 }
 }
 
 /**
@@ -178,10 +188,30 @@ export const INTERFACE_TYPE_META: Record<ReportInterface['type'], { label: strin
 export type ActingKind = NonNullable<ReportEntity['kind']>
 export type ActingSide = NonNullable<ReportEntity['acts']>
 
-/** The mark an Entity that acts is drawn with: a person or a system. */
-export const ACTOR_KIND_META: Record<ActingKind, { label: string, icon: string }> = {
+/**
+ * The facet an Entity instance is drawn as, which is never its type.
+ *
+ * The rail, the breadcrumb and the kind filter name the type, and Entity's
+ * glyph has to cover a person, an AI agent and a Blueprint at once — so it can
+ * only say "a thing of some kind". A mark beside a title sits on a surface that
+ * already said Entities, and spends its one slot on what tells this thing from
+ * its neighbours instead: whether it acts, and as what.
+ *
+ * `kept` is the third value, not a fallback. Left to fall through to the type
+ * glyph it marked fourteen of sixteen rows "Entity" on a screen titled
+ * Entities — the one fact the reader arrived holding.
+ */
+export type EntityFacet = ActingKind | 'kept'
+
+export const ENTITY_FACET_META: Record<EntityFacet, { label: string, icon: string }> = {
   person: { label: 'Person', icon: 'i-lucide-user-round' },
-  system: { label: 'System', icon: 'i-lucide-cpu' }
+  system: { label: 'System', icon: 'i-lucide-cpu' },
+  kept: { label: 'Kept', icon: 'i-lucide-box' }
+}
+
+/** The facet to draw a resource with, or null where it is not an Entity. */
+export function entityFacetOf(resource: AnyResourceView | null | undefined): EntityFacet | null {
+  return resource?.kind === 'entity' ? resource.entityKind ?? 'kept' : null
 }
 
 /** Which side of the Product boundary an Entity acts from. */

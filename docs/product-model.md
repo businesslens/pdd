@@ -16,14 +16,20 @@ terms:
     definition: "How broadly the model has been authored, as draft, partial or complete, and why the known gaps remain."
   - term: Resource type
     anchor: what-belongs-in-a-model
-    definition: "What a file in the model is one of. There are eleven, and the folder a file sits in is what says which."
+    definition: "A category of resource, such as Entity or Capability, determined by the file's location in the Product Model."
+  - term: Topology
+    anchor: reading-the-report
+    definition: "The report's visual map of resources and their connections, with named views that answer specific questions about the model."
+  - term: Neighbourhood
+    anchor: reading-the-report
+    definition: "One resource drawn on the Topology canvas with everything that touches it."
 ---
 
 # The Product Model
 
 The Product Model is a Git-tracked directory of Markdown describing one
-coherent Product promise: who it serves, through which supported interaction
-forms, in which usage contexts, what it can do, **what it keeps** and what
+coherent Product promise: who it serves, how Actors interact with it,
+in which usage contexts, what it can do, **what it keeps** and what
 changes it, which goals matter, and what must remain true — including who may
 act.
 
@@ -59,16 +65,20 @@ The resources describe Product meaning rather than mirroring source files,
 frameworks, commands, or endpoints. Start with the required foundation, then
 add optional resources only when they communicate a real Product distinction.
 
+A resource's file path identifies its resource type, such as Entity or
+Capability. The type determines what the file describes and which fields and
+sections it can contain.
+
 | Resource type | Model requirement | What it adds |
 | --- | --- | --- |
 | [Product](./product.md) | Exactly one | The coherent value promise and its boundary |
 | [Entity](./entities.md) | At least one that acts, because every Interface names an Actor | A thing the Product keeps or reasons about — what it holds about it, the states it moves through, and whether it acts on the Product |
 | [Interface](./interfaces.md) | At least one | An independently supported interaction contract |
-| [Experience](./experiences.md) | Optional | A durable context of use inside one Interface when audience, access, or capability boundaries differ |
+| [Experience](./experiences.md) | When its Interface requires or justifies division | A stable context for using the Product within one Interface, with a defined audience, access mode, and capability boundary |
 | [Screen](./screens.md) | Optional | A meaningful visual view; non-visual Products do not need one |
 | [Domain](./domains.md) | Optional | A Product-language grouping that makes a larger Capability set easier to navigate |
 | [Capability](./capabilities.md) | At least one in a complete model | A durable Product ability reused across views, behavior contracts, or goals |
-| [Journey](./journeys.md) | Optional | One coherent Actor Goal that deliberately composes multiple Capabilities |
+| [Journey](./journeys.md) | Optional | An Actor goal whose successful completion requires several Capabilities working together |
 | [Business Rule](./business-rules.md) | Optional | A durable assertion that must remain true, and the only place that says who may act |
 
 Do not add an Experience, Domain, Screen, or any other resource type to make the model
@@ -79,16 +89,43 @@ Command or Endpoint resource types: syntax belongs in CLI help, and endpoints an
 payloads belong in an API contract such as OpenAPI. Attach those artifacts as
 [References](./references.md) when they help explain intent or implementation.
 
-`taxonomies.yaml` defines Scenario kinds. `config.yaml` records folder schema
+`taxonomies.yaml` defines the categories available as Scenario kinds, such as
+`primary` and `edge`. `config.yaml` records folder schema
 and SDD roots. `coverage.md` describes model breadth.
 `.businesslens/README.md` orients an agent that encounters the model.
+
+## Reading the report
 
 Use [`businesslens view`](./cli-view.md) to browse the current model as a local
 report while editing.
 
-The [Vocabulary](./vocabulary.md) indexes selected Product Model and report
-terms, with one-line definitions. The Product Report uses those same definitions
-for its dotted terms and searchable Vocabulary panel.
+The report opens on the Overview, with a rail of the model's resource types
+down the side. A row opens that collection, and a card or table row opens the
+resource's own page at its own URL. `⌘K` searches every resource in the model
+by name.
+
+**Topology** is the report's visual map of resources and their connections.
+Its named views answer specific questions about the model, such as which
+Capabilities a Journey uses or which Screens expose an ability.
+**Neighbourhood** opens this map from a resource page, focused on that resource
+and its connections.
+
+Selected Product Model terms have a dotted underline: each opens its one-line
+meaning, and **Vocabulary** in the header lets you search the documented terms.
+Browse one list of documentation pages, with terms nested under the page that
+defines them. Each opening from the report header clears the previous search
+and expands the current report page's group. A linked lookup reveals its
+destination group. Each entry has the same title,
+definition, and **Read more in…** link as an inline definition.
+Exact term names appear before partial names and matches inside definitions.
+Following a word inside a definition opens its entry; **Back to…** returns to
+the previous lookup, including its search, expanded groups, and scroll position.
+Closing a lookup opened through an inline definition returns keyboard focus to its trigger.
+Collection-name definitions are also available on mobile.
+Both the inline definitions and the panel link out to the page here that explains
+the term in full. The [Vocabulary index](./vocabulary.md) uses the same definitions
+and also includes export and publishing terms, which the report panel omits
+from browsing and search.
 
 ## Is this replacing my PRD?
 
@@ -247,7 +284,7 @@ one. Where a rule can be computed, an author never has to argue it.
 
 | Question | Rule that decides it |
 | --- | --- |
-| Interface, or Experience of one? | An Interface holds Experiences exactly when it serves more than one `access` value, or two Actor sets whose Capability coverage is disjoint. Otherwise it is one coherent context and takes direct availability. |
+| Interface, or Experience of one? | The [Experience rules](./experiences.md#when-you-create-one) determine when an Interface must be divided and when existing Experiences are justified. Otherwise, use direct Interface availability. |
 | Interface, or nothing? | Interfaces are **inbound**. Something the Product calls out to is a dependency of the Capability that calls it, and gets no resource type. |
 | Acts, or dependency? | Direction decides. An external system acts only when it **initiates**. The same third party can be a dependency one way and an Actor the other. |
 | Screen, or Entity state? | A Screen's `## View states` are that **view's** states. A thing's own lifecycle, and what the Product keeps about it, belong to an [Entity](./entities.md). |

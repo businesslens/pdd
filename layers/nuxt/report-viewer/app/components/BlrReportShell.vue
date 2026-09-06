@@ -35,6 +35,7 @@ import {
   ENTITY_KIND_META,
   INTERFACE_TYPE_META,
   REPORT_ENTITY_KINDS,
+  entityFacetOf,
   isScenarioKind,
   resolveResources,
   resolveResource,
@@ -51,10 +52,11 @@ import {
 } from '../utils/resourceFacets'
 import { docsForResourceKind } from '../utils/resourceDocs'
 import { KIND_TERM } from '../utils/vocabulary'
+import type { VocabularySlug } from '../utils/vocabulary.generated'
 import { firstSentence } from '../utils/reportMarkdown'
 
 const UButton = resolveComponent('UButton')
-const BlrActorTypeComponent = resolveComponent('BlrActorType')
+const BlrEntityMarkComponent = resolveComponent('BlrEntityMark')
 const BlrInterfaceTypeComponent = resolveComponent('BlrInterfaceType')
 
 const props = defineProps<{ workspace: ReportWorkspace, logoSrc?: string | null }>()
@@ -254,7 +256,7 @@ const facetChips = computed(() => facetKinds.value
     return {
       kind,
       icon: meta.icon,
-      actorKind: ids.length === 1 && first?.kind === 'entity' ? first.entityKind ?? undefined : undefined,
+      facet: ids.length === 1 ? entityFacetOf(first) : null,
       acts: ids.length === 1 && first?.kind === 'entity' ? first.acts ?? undefined : undefined,
       interfaceType: ids.length === 1 && first?.kind === 'interface' ? first.interfaceType : undefined,
       label: ids.length === 1 ? meta.label : meta.plural,
@@ -347,6 +349,8 @@ interface TrailStep {
   slot?: number
   /** True for a collection segment, which reads as an eyebrow rather than a name. */
   collection?: boolean
+  /** Only resource types have a definition; named instances keep navigation. */
+  term?: VocabularySlug
   go?: () => void
 }
 
@@ -373,6 +377,7 @@ const pageTrail = computed<TrailStep[]>(() => {
     icon: collectionMeta.icon,
     slot: collectionMeta.slot,
     collection: true,
+    term: KIND_TERM[collectionKind],
     go: () => setKind(collectionKind)
   }]
 
@@ -415,7 +420,7 @@ const topologyActive = computed(() => activeSection.value === 'topology')
 const vocabularyContext = computed(() => {
   if (topologyActive.value) return 'topology'
   if (openPage.value) return KIND_TERM[openPage.value.kind]
-  return activeKind.value === 'product' ? 'product-model' : KIND_TERM[activeKind.value]
+  return KIND_TERM[activeKind.value]
 })
 const showToolbar = computed(() => activeKind.value !== 'product' && !openPage.value && !topologyActive.value)
 const collectionDocs = computed(() => docsForResourceKind(activeKind.value))
@@ -501,10 +506,10 @@ function resolvedInterfaceType(kind: ReportResourceKind | null, id: string) {
   return resource?.kind === 'interface' ? resource.interfaceType : undefined
 }
 
-function resolvedActor(kind: ReportResourceKind | null, id: string) {
+function resolvedEntity(kind: ReportResourceKind | null, id: string) {
   if (kind !== 'entity' || !id) return undefined
   const resource = resolveResource(props.workspace, 'entity', id)
-  return resource?.kind === 'entity' && resource.acts ? resource : undefined
+  return resource?.kind === 'entity' ? resource : undefined
 }
 
 function titleColumn(kind: ReportResourceKind): TableColumn<AnyResourceView> {
@@ -514,9 +519,9 @@ function titleColumn(kind: ReportResourceKind): TableColumn<AnyResourceView> {
     cell: ({ row }) => {
       const marker = row.original.kind === 'interface'
         ? h(BlrInterfaceTypeComponent, { type: row.original.interfaceType })
-        : row.original.kind === 'entity' && row.original.acts
-          ? h(BlrActorTypeComponent, {
-              actorKind: row.original.entityKind,
+        : row.original.kind === 'entity'
+          ? h(BlrEntityMarkComponent, {
+              facet: entityFacetOf(row.original),
               acts: row.original.acts,
               size: 'xs'
             })
@@ -552,7 +557,9 @@ function relationTitleColumn(
       const resource = resolveResource(props.workspace, kind, read(row.original))
       const marker = resource?.kind === 'interface'
         ? h(BlrInterfaceTypeComponent, { type: resource.interfaceType, size: 'xs' })
-        : h(resolveComponent('UIcon'), { name: ENTITY_KIND_META[kind].icon, class: 'size-3.5 shrink-0 text-dimmed' })
+        : resource?.kind === 'entity'
+          ? h(BlrEntityMarkComponent, { facet: entityFacetOf(resource), acts: resource.acts, size: 'xs' })
+          : h(resolveComponent('UIcon'), { name: ENTITY_KIND_META[kind].icon, class: 'size-3.5 shrink-0 text-dimmed' })
       return h('span', { class: 'inline-flex items-center gap-1.5 text-sm text-default' }, [
         marker,
         h('span', { class: 'truncate' }, resource?.title ?? '—')
@@ -817,19 +824,12 @@ const tableNote = computed(() => {
 const orphanScenarios = computed(() => props.workspace.scenarios
   .filter(scenario => scenario.scenarioType === 'journey'
     && !resolveResource(props.workspace, 'journey', scenario.journeyId)))
-
-/* The status bar badge and `BlrOverview` read coverage in the same tone. */
-const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
-  complete: 'success',
-  partial: 'warning',
-  draft: 'neutral'
-}
 </script>
 
 <template>
   <div class="blr-report-shell flex h-full min-h-0 flex-col text-sm">
     <!-- Status bar: the product, its coverage, and the way to anything. -->
-    <header class="flex shrink-0 items-center gap-3 border-b border-default px-4 py-2.5">
+    <header class="blr-report-header flex shrink-0 items-center gap-3 border-b border-default px-4 py-2.5">
       <UButton
         icon="i-lucide-menu"
         color="neutral"
@@ -840,7 +840,7 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
         @click="mobileNavOpen = true"
       />
       <img v-if="logoSrc" :src="logoSrc" alt="" class="hidden size-6 shrink-0 rounded-md border border-muted bg-elevated object-contain p-0.5 lg:block">
-      <UIcon v-else name="i-lucide-package" class="hidden size-5 shrink-0 text-primary lg:block" />
+      <UIcon v-else name="i-lucide-house" class="hidden size-5 shrink-0 text-primary lg:block" />
       <button
         type="button"
         class="hidden min-w-0 max-w-48 truncate text-sm font-semibold tracking-tight text-highlighted hover:text-primary lg:block"
@@ -857,7 +857,7 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
            thing a breadcrumb exists to prevent. -->
       <nav
         data-mobile-location
-        class="flex min-w-0 flex-1 items-center gap-1 overflow-hidden sm:hidden"
+        class="flex min-w-0 flex-1 items-center gap-1 sm:hidden"
         aria-label="Page breadcrumb"
       >
         <template v-if="openPage">
@@ -867,24 +867,32 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
               name="i-lucide-chevron-right"
               class="size-3.5 shrink-0 text-dimmed"
             />
-            <UTooltip v-if="step.go" :text="step.label">
-              <button
-                type="button"
-                class="inline-flex min-w-0 max-w-32 items-center gap-1.5 hover:underline hover:underline-offset-4"
-                :class="step.collection ? 'blr-eyebrow' : 'text-sm text-muted'"
-                @click="step.go()"
-              >
-                <UIcon
-                  v-if="step.icon"
-                  :name="step.icon"
-                  class="size-3.5 shrink-0"
-                  :style="{ color: `var(--blr-slot-${step.slot})` }"
-                />
-                <span class="truncate">{{ step.label }}</span>
-              </button>
-            </UTooltip>
+            <span
+              v-if="step.go"
+              class="blr-mobile-ancestor inline-flex items-center gap-1"
+              :class="{ 'blr-mobile-collection': step.collection }"
+            >
+              <UTooltip :text="step.label">
+                <button
+                  type="button"
+                  class="blr-breadcrumb-link inline-flex min-w-0 max-w-32 items-center gap-1.5 hover:underline hover:underline-offset-4"
+                  :class="step.collection ? 'blr-eyebrow' : 'text-sm text-muted'"
+                  :aria-label="step.title"
+                  @click="step.go()"
+                >
+                  <UIcon
+                    v-if="step.icon"
+                    :name="step.icon"
+                    class="blr-breadcrumb-type-icon size-3.5 shrink-0"
+                    :style="{ color: `var(--blr-slot-${step.slot})` }"
+                  />
+                  <span class="truncate">{{ step.label }}</span>
+                </button>
+              </UTooltip>
+              <BlrTerm v-if="step.term" :slug="step.term" :text="step.label" icon-only />
+            </span>
             <UTooltip v-else :text="step.label">
-              <span class="min-w-0 flex-1 truncate text-sm font-medium text-highlighted">
+              <span class="blr-mobile-current min-w-0 truncate text-sm font-medium text-highlighted" aria-current="page">
                 {{ step.label }}
               </span>
             </UTooltip>
@@ -895,14 +903,14 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
           class="blr-eyebrow inline-flex min-w-0 items-center gap-1.5"
           data-mobile-section
         >
-          <UIcon name="i-lucide-waypoints" class="size-3.5 shrink-0" style="color: var(--blr-slot-9)" />
+          <UIcon name="i-lucide-network" class="size-3.5 shrink-0" style="color: var(--blr-slot-9)" />
           <span class="truncate">Topology</span>
         </span>
         <template v-else>
           <span class="blr-eyebrow inline-flex min-w-0 items-center gap-1.5" data-mobile-section>
             <UIcon
               :name="activeMeta.icon"
-              class="size-3.5 shrink-0"
+              class="blr-breadcrumb-type-icon size-3.5 shrink-0"
               :style="{ color: `var(--blr-slot-${activeMeta.slot})` }"
             />
             <span v-if="activeKind === 'product'" class="truncate">Overview</span>
@@ -920,24 +928,32 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
             name="i-lucide-chevron-right"
             class="hidden size-3.5 shrink-0 text-dimmed sm:block"
           />
-          <UTooltip v-if="step.go" :text="step.label">
-            <button
-              type="button"
-              class="hidden shrink-0 items-center gap-1.5 hover:underline hover:underline-offset-4 sm:inline-flex"
-              :class="step.collection ? 'blr-eyebrow' : 'min-w-0 max-w-40 truncate text-sm text-muted'"
-              @click="step.go()"
-            >
-              <UIcon
-                v-if="step.icon"
-                :name="step.icon"
-                class="size-3.5 shrink-0"
-                :style="{ color: `var(--blr-slot-${step.slot})` }"
-              />
-              <span class="truncate">{{ step.label }}</span>
-            </button>
-          </UTooltip>
+          <span
+            v-if="step.go"
+            class="hidden items-center gap-1 sm:inline-flex"
+            :class="step.collection ? 'shrink-0' : 'min-w-10 max-w-40'"
+          >
+            <UTooltip :text="step.label">
+              <button
+                type="button"
+                class="blr-breadcrumb-link inline-flex min-w-0 items-center gap-1.5 hover:underline hover:underline-offset-4"
+                :class="step.collection ? 'blr-eyebrow' : 'text-sm text-muted'"
+                :aria-label="step.title"
+                @click="step.go()"
+              >
+                <UIcon
+                  v-if="step.icon"
+                  :name="step.icon"
+                  class="size-3.5 shrink-0"
+                  :style="{ color: `var(--blr-slot-${step.slot})` }"
+                />
+                <span class="truncate">{{ step.label }}</span>
+              </button>
+            </UTooltip>
+            <BlrTerm v-if="step.term" :slug="step.term" :text="step.label" icon-only />
+          </span>
           <UTooltip v-else :text="step.label">
-            <span class="hidden min-w-0 truncate text-sm font-medium text-highlighted sm:inline">
+            <span class="hidden min-w-16 truncate text-sm font-medium text-highlighted sm:inline" aria-current="page">
               {{ step.label }}
             </span>
           </UTooltip>
@@ -945,7 +961,7 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
       </template>
       <template v-else-if="topologyActive">
         <span class="blr-eyebrow hidden shrink-0 items-center gap-1.5 sm:inline-flex">
-          <UIcon name="i-lucide-waypoints" class="size-3.5" style="color: var(--blr-slot-9)" />
+          <UIcon name="i-lucide-network" class="size-3.5" style="color: var(--blr-slot-9)" />
           Topology
         </span>
       </template>
@@ -986,14 +1002,16 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
           aria-label="Search Product Model"
           @click="searchOpen = true"
         />
+        <!-- The same offer as Docs, which is the other way out of a word you
+             do not know: a bordered neutral button, in the pill of its row. -->
         <UTooltip text="Look up Product Model terms">
           <UButton
             icon="i-lucide-book-a"
             color="neutral"
-            variant="ghost"
+            variant="outline"
             size="xs"
             label="Vocabulary"
-            class="hidden lg:inline-flex"
+            class="hidden rounded-full lg:inline-flex"
             @click="vocabulary.show()"
           />
         </UTooltip>
@@ -1007,11 +1025,11 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
             @click="vocabulary.show()"
           />
         </UTooltip>
-        <UBadge class="hidden md:inline-flex" :color="COVERAGE_TONE[workspace.coverage.status] || 'neutral'" variant="subtle" size="sm">
-          <span><BlrTerm slug="coverage" text="coverage" />: {{ workspace.coverage.status }}</span>
-        </UBadge>
-        <span class="blr-meta hidden sm:inline">{{ workspace.identity.schemaVersion }}</span>
-        <span class="blr-meta hidden md:inline">{{ workspace.identity.generatedAt.slice(0, 10) }}</span>
+        <span :class="openPage ? 'hidden xl:inline-flex' : 'hidden md:inline-flex'">
+          <BlrCoverageBadge :status="workspace.coverage.status" named size="md" />
+        </span>
+        <span class="blr-meta" :class="openPage ? 'hidden xl:inline' : 'hidden sm:inline'">{{ workspace.identity.schemaVersion }}</span>
+        <span class="blr-meta" :class="openPage ? 'hidden xl:inline' : 'hidden md:inline'">{{ workspace.identity.generatedAt.slice(0, 10) }}</span>
       </span>
     </header>
 
@@ -1096,7 +1114,7 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
               <BlrKind
                 :kind="chip.kind"
                 :interface-type="chip.interfaceType"
-                :actor-kind="chip.actorKind"
+                :facet="chip.facet"
                 :acts="chip.acts"
                 :labelled="false"
                 size="xs"
@@ -1232,8 +1250,8 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
                     v-if="group.kind"
                     :kind="group.kind"
                     :interface-type="resolvedInterfaceType(group.kind, group.key)"
-                    :actor-kind="resolvedActor(group.kind, group.key)?.entityKind"
-                    :acts="resolvedActor(group.kind, group.key)?.acts"
+                    :facet="entityFacetOf(resolvedEntity(group.kind, group.key))"
+                    :acts="resolvedEntity(group.kind, group.key)?.acts"
                     :labelled="false"
                     size="sm"
                   />
@@ -1346,7 +1364,7 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
             alt=""
             class="size-6 shrink-0 rounded-md border border-muted bg-elevated object-contain p-0.5"
           >
-          <UIcon v-else name="i-lucide-package" class="size-5 shrink-0 text-primary" />
+          <UIcon v-else name="i-lucide-house" class="size-5 shrink-0 text-primary" />
           <button
             type="button"
             class="min-w-0 max-w-48 truncate text-sm font-semibold tracking-tight text-highlighted hover:text-primary"
@@ -1418,6 +1436,56 @@ const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
   --blr-slot-7: #e66767;
   --blr-slot-8: #ab9d81;
   --blr-slot-9: #3987e5;
+}
+
+/* Collection links keep the same casing as their collection heading. */
+.blr-breadcrumb-link {
+  text-transform: none;
+}
+
+/* Match the labeled definition's gap and icon position while keeping its hit area. */
+.blr-report-header :deep(.blr-term--icon-only) {
+  justify-content: flex-start;
+}
+
+/* Ancestors yield width before the current page; definition buttons stay whole. */
+.blr-mobile-ancestor {
+  flex: 0 1 auto;
+  min-width: 1rem;
+}
+
+.blr-mobile-ancestor .blr-breadcrumb-link {
+  min-width: 1rem;
+}
+
+.blr-mobile-current {
+  flex: 1 0 30%;
+}
+
+/* Keep a short collection label, its gap, and the entire help target together. */
+.blr-mobile-collection {
+  min-width: calc(1rem + 0.25rem + 1.5rem);
+}
+
+@media (pointer: coarse) {
+  /* Opening a resource must not grow the header to fit its definition button. */
+  .blr-report-header :deep(.blr-term) {
+    min-height: 2.75rem;
+  }
+
+  .blr-mobile-collection {
+    min-width: calc(1rem + 0.25rem + 2.75rem);
+  }
+}
+
+@media (max-width: 359px) {
+  .blr-report-header {
+    gap: 0.25rem;
+  }
+
+  .blr-breadcrumb-type-icon {
+    display: none;
+  }
 }
 
 /* An active filter, stating what it selected and clearing itself on click. */

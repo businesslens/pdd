@@ -79,6 +79,18 @@ were costed and then chosen against, so the same argument is not had twice.
   is why a fourth surface costs nothing and why none of them can contradict a
   page: a definition that lived anywhere but beside its narrative would be the
   separate glossary the rule above rejects.
+- **The first term a page declares is its lead.** Product Model pages lead with
+  the term they are named for, which their whole narrative explains. For pages
+  included in the Vocabulary panel, it appears in the section's own head, so
+  nothing repeats it as a row underneath, and a
+  page owning nothing else has no control to work. Reordering `terms:` is
+  therefore a visible change to the generated leads rather than a silent change
+  to what a section means. A lead cannot be scoped with `on`: a word two pages
+  share is not a word one page is named for.
+- **Definition ownership and panel inclusion are separate.** CLI pages retain
+  their `terms:` in the documentation index and generated registry. The report
+  panel excludes CLI-owned terms from browsing and search; that presentation
+  choice never deletes or relocates their definitions.
 - **A definition that leans on another term links to it**, resolved at
   generation so every surface links the same words. Matching is case-sensitive —
   capitalize a word to point at the type, leave it lowercase to mean the

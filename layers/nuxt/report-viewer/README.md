@@ -7,8 +7,10 @@ per type, a page for every resource, search, and named topology views.
 
 Selected Product Model terms have inline definitions. Dotted terms in page
 headings, fact labels, and collection names open a one-line meaning and a link
-to the documentation page that owns it. A Vocabulary panel lists the documented
-terms nested under one list of expandable documentation pages. Each header
+to the documentation page that owns it. A Vocabulary panel lists terms nested
+under one list of expandable documentation pages. CLI-owned definitions remain
+in the documentation index and generated registry, outside the panel's browsing
+and search. Each header
 opening clears the previous search and expands only the current report page's
 group. Entries share the popover's typography and bottom documentation link,
 and the panel grows with wider screens. Search ranks exact names first. Linked

@@ -9,7 +9,7 @@
  * counterparts reads as a list of duplicates.
  */
 import type { AnyResourceView, ReportWorkspace } from '../utils/reportWorkspace'
-import { ENTITY_KIND_META, resolveResource } from '../utils/reportWorkspace'
+import { ENTITY_KIND_META, entityFacetOf, resolveResource } from '../utils/reportWorkspace'
 import type { ResourceCardMetric } from '../utils/resourceCards'
 import { resourceCardPresentation } from '../utils/resourceCards'
 import { slotColor } from '../utils/reportPalette'
@@ -26,7 +26,7 @@ const emit = defineEmits<{ open: [resource: AnyResourceView] }>()
 const presentation = computed(() => resourceCardPresentation(props.workspace, props.resource))
 const kindLabel = computed(() => ENTITY_KIND_META[props.resource.kind].label)
 const interfaceType = computed(() => props.resource.kind === 'interface' ? props.resource.interfaceType : undefined)
-const actorKind = computed(() => props.resource.kind === 'entity' ? props.resource.entityKind ?? undefined : undefined)
+const facet = computed(() => entityFacetOf(props.resource))
 const acts = computed(() => props.resource.kind === 'entity' ? props.resource.acts ?? undefined : undefined)
 const colorMode = useColorMode()
 const mounted = ref(false)
@@ -50,10 +50,10 @@ function metricInterfaceType(metric: ResourceCardMetric, id: string) {
   return resource?.kind === 'interface' ? resource.interfaceType : undefined
 }
 
-function metricActor(metric: ResourceCardMetric, id: string) {
+function metricEntity(metric: ResourceCardMetric, id: string) {
   if (metric.kind !== 'entity') return undefined
   const resource = resolveResource(props.workspace, 'entity', id)
-  return resource?.kind === 'entity' && resource.acts ? resource : undefined
+  return resource?.kind === 'entity' ? resource : undefined
 }
 </script>
 
@@ -69,7 +69,7 @@ function metricActor(metric: ResourceCardMetric, id: string) {
       <BlrKind
         :kind="resource.kind"
         :interface-type="interfaceType"
-        :actor-kind="actorKind"
+        :facet="facet"
         :acts="acts"
         :labelled="false"
         class="mt-0.5"
@@ -134,10 +134,10 @@ function metricActor(metric: ResourceCardMetric, id: string) {
                     :type="metricInterfaceType(metric, id)!"
                     size="xs"
                   />
-                  <BlrActorType
-                    v-else-if="metricActor(metric, id)"
-                    :actor-kind="metricActor(metric, id)!.entityKind!"
-                    :acts="metricActor(metric, id)!.acts!"
+                  <BlrEntityMark
+                    v-else-if="metricEntity(metric, id)"
+                    :facet="entityFacetOf(metricEntity(metric, id))!"
+                    :acts="metricEntity(metric, id)!.acts"
                     size="xs"
                   />
                   <UIcon

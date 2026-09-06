@@ -27,14 +27,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`Business rule` is `Business Rule`.** Every prose mention and `spec/format.md`
   already capitalized it; only the page title and the report's own label did not,
   which is a resource type spelled two ways.
-- `businesslens view` documents how the report is read — the rail, Topology,
+- The Model overview documents how the report is read — the rail, Topology,
   Neighbourhood, and the vocabulary affordances.
 
 ### Changed
 
+- **The report's marks separate again.** Overview, Entities and Domains were
+  three densities of one isometric container, and Product's slot wraps onto
+  Entity's, so the first two shared a hue as well. Overview is now a house,
+  Entities a set of assorted shapes, Domains a demarcated plot, and Topology a
+  node graph rather than waypoints.
+- **An Entity is drawn by the facet it plays, never by its type.** A person, a
+  system, and — new — a thing the Product keeps. The subset that does not act
+  used to fall through to the type glyph, which marked every non-Actor row
+  "Entity" on a screen already titled Entities. `BlrActorType` is now
+  `BlrEntityMark`, and it draws all three.
+
+- The report Vocabulary panel excludes CLI-owned terms from browsing and search.
+  Product Report and Blueprint retain their definitions in the CLI documentation,
+  full Vocabulary index, and shared registry. Topology and Neighbourhood appear
+  under Model overview.
+- The Blueprint definition matches the existing export contract: a portable
+  Product Report is a Blueprint before catalog publication.
+- Vocabulary definitions use clearer language, with matching explanations in
+  the documentation. Lifecycle and outcome summaries describe their actual
+  scope.
 - Vocabulary uses a wider reading column, consistent gutters, larger search
   targets, and a lighter backdrop. Inline definitions have more room, and
   collection-name definitions are available on mobile.
+- The Vocabulary panel states a page's own term — Experience, on Experiences —
+  in the section head rather than as the first row inside it, so the word and
+  its meaning appear once. Each head counts the words the page owns beside its
+  lead, and **Product**, whose page owns only its lead, opens with its meaning
+  and carries no control.
+- A Vocabulary section is a bar and a ruled list. The head takes its own ground
+  with a rule under it, so a section has an edge whether it is open or closed;
+  the words beneath it are name-then-meaning separated by hairlines, without the
+  cards or the rail they hung from. Each row's way out to the documentation is
+  an icon on the term's own line, since the head has already said the page —
+  an open **Interfaces** halves in height.
 - Vocabulary entries share the inline definition layout, with documentation
   links below their meanings. Terms nest under one list of expandable
   documentation pages, and the panel grows on larger screens. Each header

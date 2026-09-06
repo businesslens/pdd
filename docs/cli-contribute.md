@@ -4,7 +4,7 @@ description: Open a pull request proposing your Product Model as a catalog Bluep
 terms:
   - term: Blueprint
     anchor: a-good-blueprint
-    definition: "A Product Report curated into the public catalog under a slug. Always the portable profile, because that is what the catalog accepts."
+    definition: "A portable Product Report. Publishing it in a catalog is a separate step."
 section: open-source
 group: CLI
 order: 35

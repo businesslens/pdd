@@ -10,16 +10,11 @@ order: 8
 
 # Vocabulary
 
-Selected Product Model and report terms, with one line each and a link to
-the page that explains it. This page is an index: it defines nothing itself,
-so it can never disagree with the pages it points at.
-
-The Product Report uses these same definitions for dotted terms in headings,
-fact labels, and collection names, and in the searchable `Vocabulary` panel
-in its header.
-
-A definition that leans on another word links to it, here and in the report:
-nobody is left holding a second unfamiliar term.
+Definitions of Product Model and report terms, with links to their full
+explanations. The Product Report uses these definitions for inline lookups
+and its Vocabulary panel. Export and publishing terms are included here;
+CLI terms are excluded from the panel's browsing and search. Follow linked
+terms to explore related concepts.
 
 ## Product Model
 
@@ -28,62 +23,62 @@ nobody is left holding a second unfamiliar term.
 | **Product Model** | The .businesslens/ folder: one coherent product described in Markdown, tracked in Git, and free to cite the repository's code. | [Model overview](./product-model.md#the-shape-of-a-model) |
 | **Intent** | Why a resource exists and which outcome it protects, never a restatement of what it does. | [Model overview](./product-model.md#authoring-conventions) |
 | **Coverage** | How broadly the model has been authored, as draft, partial or complete, and why the known gaps remain. | [Model overview](./product-model.md#coverage) |
-| **Resource type** | What a file in the model is one of. There are eleven, and the folder a file sits in is what says which. | [Model overview](./product-model.md#what-belongs-in-a-model) |
+| **Resource type** | A category of resource, such as [Entity](./entities.md) or [Capability](./capabilities.md), determined by the file's location in the [Product Model](./product-model.md#the-shape-of-a-model). | [Model overview](./product-model.md#what-belongs-in-a-model) |
+| **Topology** | The report's visual map of resources and their connections, with named views that answer specific questions about the model. | [Model overview](./product-model.md#reading-the-report) |
+| **Neighbourhood** | One resource drawn on the [Topology](./product-model.md#reading-the-report) canvas with everything that touches it. | [Model overview](./product-model.md#reading-the-report) |
 | **Product** | The one coherent value promise this model describes, and the boundary drawn around it. | [Product](./product.md) |
-| **Entity** | A thing the [Product](./product.md) keeps or reasons about and can tell apart from another one, the people and systems acting on it included. | [Entities](./entities.md) |
+| **Entity** | A distinct thing the [Product](./product.md) keeps or reasons about, including the people and systems that act on it. | [Entities](./entities.md) |
 | **Actor** | An [Entity](./entities.md) that acts on the [Product](./product.md). Actor is a role a thing plays where it acts, never a resource type of its own. | [Entities](./entities.md#actors-an-entity-that-acts) |
 | **Entity kind** | Whether an [Entity](./entities.md) that acts on the [Product](./product.md) is a person or a system. | [Entities](./entities.md#actors-an-entity-that-acts) |
 | **Acts** | Which side of the boundary an [Actor](./entities.md#actors-an-entity-that-acts) acts from: internal to the organisation running the [Product](./product.md), or external to it. | [Entities](./entities.md#external-systems-direction-decides) |
-| **Information kept** | What the [Product](./product.md) keeps about the thing, as one named fact each. Kept means held, as in keep a record; a fact is addressable, never typed. | [Entities](./entities.md#the-file) |
-| **State** | One of the things an [Entity](./entities.md) can be. The Entity lists its states and says nothing at all about the moves between them. | [Entities](./entities.md#states-and-the-lifecycle-nobody-authors) |
+| **Information kept** | Named facts the [Product](./product.md) keeps about an [Entity](./entities.md). Each can be referenced by name; storage details and data types stay outside the model. | [Entities](./entities.md#the-file) |
+| **State** | A named condition an [Entity](./entities.md) can be in, such as Pending or Refunded. Scenario [Steps](./capabilities.md#what-a-step-does-to-the-products-things) define how it moves between States. | [Entities](./entities.md#states-and-the-lifecycle-nobody-authors) |
 | **Arc** | A move a [Step](./capabilities.md#what-a-step-does-to-the-products-things) makes: into a [State](./entities.md#states-and-the-lifecycle-nobody-authors), out of one, or between two. Nothing declares arcs; the report composes them from the Scenarios. | [Entities](./entities.md#states-and-the-lifecycle-nobody-authors) |
-| **Lifecycle** | The machine composed from every arc in the model. Nobody authors it; it is derived from the [Steps](./capabilities.md#what-a-step-does-to-the-products-things). | [Entities](./entities.md#states-and-the-lifecycle-nobody-authors) |
-| **Relation** | An edge to another [Entity](./entities.md) in the [Product](./product.md)'s own verb, stating both ends. Declared on one side only; the inverse is derived on the other. | [Entities](./entities.md#relations) |
+| **Lifecycle** | An [Entity](./entities.md)'s [States](./entities.md#states-and-the-lifecycle-nobody-authors) and [Arcs](./entities.md#states-and-the-lifecycle-nobody-authors), showing how it is created, changes state, or is removed, derived from Scenario [Steps](./capabilities.md#what-a-step-does-to-the-products-things) across the model. | [Entities](./entities.md#states-and-the-lifecycle-nobody-authors) |
+| **Relation** | A relationship between [Entities](./entities.md), such as Shopper owns Orders, stating how many instances can relate on each side. | [Entities](./entities.md#relations) |
 | **Changed by** | The [Capabilities](./capabilities.md) whose [Steps](./capabilities.md#what-a-step-does-to-the-products-things) create, change, or remove this thing. | [Entities](./entities.md#relations) |
-| **Interface** | A supported interaction form [Actors](./entities.md#actors-an-entity-that-acts) reach the [Product](./product.md) through, such as a web app, a CLI, or a partner API. | [Interfaces](./interfaces.md) |
+| **Interface** | A supported way for [Actors](./entities.md#actors-an-entity-that-acts) to interact with the [Product](./product.md), such as a web app, a CLI, or a partner API. | [Interfaces](./interfaces.md) |
 | **Interface type** | The form an [Interface](./interfaces.md) takes: web, mobile app, desktop app, CLI, API, webhook, messaging, voice, device, or agent. | [Interfaces](./interfaces.md#the-file) |
-| **Capability boundary** | Prose saying what a surface promises and what it deliberately does not. It names no [Capabilities](./capabilities.md): availability is declared on the Capability. | [Interfaces](./interfaces.md#the-file) |
+| **Capability boundary** | What an [Interface](./interfaces.md), [Experience](./experiences.md), or [Screen](./screens.md) supports and excludes. [Capability](./capabilities.md) availability is declared on each Capability. | [Interfaces](./interfaces.md#the-file) |
 | **Entry point** | A [Product](./product.md)-facing route or address where an [Actor](./entities.md#actors-an-entity-that-acts) arrives, such as a path, a deep link, or a command. | [Interfaces](./interfaces.md#the-file) |
-| **Experience** | A durable context of use inside one [Interface](./interfaces.md), named when audience, access, or capability boundary differ. | [Experiences](./experiences.md) |
+| **Experience** | A stable context for using the [Product](./product.md) within one [Interface](./interfaces.md), with a defined audience, access mode, and capability boundary. | [Experiences](./experiences.md) |
 | **Access mode** | Who may enter an [Experience](./experiences.md): public, authenticated, or restricted. | [Experiences](./experiences.md#the-file) |
 | **Screen** | A meaningful visual view, named in the [Product](./product.md)'s own words, directly under an [Interface](./interfaces.md) or inside one of its [Experiences](./experiences.md). | [Screens](./screens.md) |
-| **View state** | A state of this view: empty, populated, unauthorized, caught-up. Never a [State](./entities.md#states-and-the-lifecycle-nobody-authors) of the thing it shows, which renders differently per [Screen](./screens.md). | [Screens](./screens.md#view-states-are-the-views-never-the-things) |
-| **Domain** | What a [Capability](./capabilities.md) or [Entity](./entities.md) is about, in the [Product](./product.md)'s own words. One Domain reaches everything on that subject, which is why it earns a place. | [Domains](./domains.md) |
+| **View state** | A condition of a [Screen](./screens.md), such as empty, populated, or unauthorized. It describes the view rather than an [Entity](./entities.md)'s [Lifecycle](./entities.md#states-and-the-lifecycle-nobody-authors). | [Screens](./screens.md#view-states-are-the-views-never-the-things) |
+| **Domain** | A subject area of the [Product](./product.md), such as ordering or billing, that classifies related [Capabilities](./capabilities.md) and [Entities](./entities.md). | [Domains](./domains.md) |
 | **Boundary** | What a [Domain](./domains.md) takes in and what it leaves out, stated in the [Product](./product.md)'s own words. | [Domains](./domains.md#the-file) |
 | **Capability** | A durable ability of the [Product](./product.md): what it can do, independent of any one route, command, or module. | [Capabilities](./capabilities.md) |
 | **Capability Scenario** | One observable acceptance case for a [Capability](./capabilities.md): a trigger, typed [Steps](./capabilities.md#what-a-step-does-to-the-products-things), and an outcome. | [Capabilities](./capabilities.md#capability-scenarios) |
 | **Context** | Where behavior is available, occurs, or is constrained: one [Interface](./interfaces.md), [Experience](./experiences.md), or [Screen](./screens.md). How specific it must be depends on what uses it. | [Capabilities](./capabilities.md#availability) |
-| **Step** | One act in a Scenario: an [Actor](./entities.md#actors-an-entity-that-acts)'s, the [Product](./product.md)'s own, or a condition that holds. Each says what it does to the Product's things. | [Capabilities](./capabilities.md#what-a-step-does-to-the-products-things) |
-| **Ends with** | Where a Scenario leaves each thing it changed, from the last [Step](./capabilities.md#what-a-step-does-to-the-products-things) that named it. | [Capabilities](./capabilities.md#what-a-step-does-to-the-products-things) |
-| **Scenario kind** | The taxonomy label a Scenario carries, named in the model's taxonomies.yaml. | [Capabilities](./capabilities.md#the-capability-scenario-file) |
+| **Step** | One action or condition in a Scenario. Actions are performed by an [Actor](./entities.md#actors-an-entity-that-acts) or the [Product](./product.md); effects on [Entities](./entities.md) are recorded explicitly. | [Capabilities](./capabilities.md#what-a-step-does-to-the-products-things) |
+| **Ends with** | The last creation, change, or removal of each [Entity](./entities.md) instance in a Scenario, including the resulting [State](./entities.md#states-and-the-lifecycle-nobody-authors) when specified. | [Capabilities](./capabilities.md#what-a-step-does-to-the-products-things) |
+| **Scenario kind** | A category for a Scenario, such as primary or edge, defined in the model's taxonomies.yaml. | [Capabilities](./capabilities.md#the-capability-scenario-file) |
 | **Trigger** | The observable condition that starts the Scenario. | [Capabilities](./capabilities.md#the-capability-scenario-file) |
 | **Outcome** | The observable result once the Scenario has run. | [Capabilities](./capabilities.md#the-capability-scenario-file) |
 | **Route** | One named way the same [Steps](./capabilities.md#what-a-step-does-to-the-products-things) play out in different places. A route varies [Context](./capabilities.md#availability) only; different Steps mean a different Scenario. | [Capabilities](./capabilities.md#routes-steps-and-context-places) |
-| **Decision point** | A question the Scenario answers inline, in branches that converge on its one Outcome. A branch changing the Outcome is another Scenario. | [Capabilities](./capabilities.md#capability-scenario-decision-points) |
-| **Edge case** | A condition and its consequence, noted in one line because it matters but does not change the path the Scenario walks. | [Capabilities](./capabilities.md#the-capability-scenario-file) |
-| **Journey** | One coherent [Actor](./entities.md#actors-an-entity-that-acts) goal that deliberately composes several [Capabilities](./capabilities.md). | [Journeys](./journeys.md) |
+| **Decision point** | A question with alternative branches that lead to the same [Capability Scenario](./capabilities.md#capability-scenarios) outcome. A different outcome requires another Scenario. | [Capabilities](./capabilities.md#capability-scenario-decision-points) |
+| **Edge case** | A condition and its consequence recorded within a Scenario, without changing its path. | [Capabilities](./capabilities.md#the-capability-scenario-file) |
+| **Journey** | An [Actor](./entities.md#actors-an-entity-that-acts) goal whose successful completion requires several [Capabilities](./capabilities.md) working together. | [Journeys](./journeys.md) |
 | **Journey Scenario** | One path through a [Journey](./journeys.md), ending with its goal achieved or not achieved. | [Journeys](./journeys.md#journey-scenarios) |
 | **Success criterion** | How you know the [Journey](./journeys.md)'s goal was met. | [Journeys](./journeys.md#the-file) |
-| **Leaves behind** | The things an achieved path leaves in a known state, from the last [Step](./capabilities.md#what-a-step-does-to-the-products-things) that names each one. | [Journeys](./journeys.md#the-file) |
+| **Leaves behind** | The [Entity](./entities.md) instances created, changed, or removed by a [Journey](./journeys.md)'s achieved paths, with final [States](./entities.md#states-and-the-lifecycle-nobody-authors) when specified. | [Journeys](./journeys.md#the-file) |
 | **Trigger** | The observable condition that starts the [Journey Scenario](./journeys.md#journey-scenarios). | [Journeys](./journeys.md#the-journey-scenario-file) |
 | **Outcome** | Where the path ends, and whether the [Journey](./journeys.md)'s goal was achieved. | [Journeys](./journeys.md#the-journey-scenario-file) |
 | **Result** | Whether this path achieves the [Journey](./journeys.md)'s goal: achieved, or not-achieved. | [Journeys](./journeys.md#the-journey-scenario-file) |
 | **Route** | One named way the same [Steps](./capabilities.md#what-a-step-does-to-the-products-things) play out in different places. A route varies [Context](./capabilities.md#availability) only; different Steps mean a different [Journey Scenario](./journeys.md#journey-scenarios). | [Journeys](./journeys.md#steps-and-routes) |
-| **Decision point** | A question the [Journey Scenario](./journeys.md#journey-scenarios) answers inline, in branches that converge on its one Outcome. A branch changing the Outcome is another Scenario. | [Journeys](./journeys.md#journey-scenario-decision-points) |
-| **Edge case** | A condition and its consequence, noted in one line because it matters but does not change the path the [Journey Scenario](./journeys.md#journey-scenarios) walks. | [Journeys](./journeys.md#the-journey-scenario-file) |
+| **Decision point** | A question with alternative branches that preserve the [Journey Scenario](./journeys.md#journey-scenarios)'s [Capability](./capabilities.md) sequence and outcome. | [Journeys](./journeys.md#journey-scenario-decision-points) |
+| **Edge case** | A condition and its consequence recorded within a Scenario, without changing its path. | [Journeys](./journeys.md#the-journey-scenario-file) |
 | **Business Rule** | A durable assertion that must stay true, and the only place the model says who may act. | [Business Rules](./business-rules.md) |
 | **Applies to** | What a [Rule](./business-rules.md) constrains: a resource, a [Context](./capabilities.md#availability) it holds in, or an operation on a thing. | [Business Rules](./business-rules.md#behavioral-and-context-targets) |
 | **Operation** | What may be done to a thing: creates, changes, removes, or reads. A [Step](./capabilities.md#what-a-step-does-to-the-products-things) calls it an effect; a [Business Rule](./business-rules.md) selects the same word as an operation. | [Business Rules](./business-rules.md#entity-targets-an-operation-on-a-thing) |
-| **Who may** | Who may perform an operation, and when. Any one grant permits it, and every [Rule](./business-rules.md) on that operation must permit too, so a new Rule can only narrow. | [Business Rules](./business-rules.md#permission) |
+| **Who may** | Who can perform an [Entity](./entities.md) operation and under what conditions. Each applicable permission [Rule](./business-rules.md) must have at least one grant that allows it. | [Business Rules](./business-rules.md#permission) |
 | **Reference** | A pointer to material outside the model, such as code, a spec, or a screenshot, saying what it is and why it is attached. | [References](./references.md#asset-or-reference) |
 | **Reference kind** | What the referenced material is: code, prd, spec, proposal, doc, adr, visual, or research. | [References](./references.md#kind-and-role) |
-| **Reference role** | Why it is attached: intent, implementation, or context. A published [Blueprint](./cli-contribute.md#a-good-blueprint) drops implementation, and every code reference whatever its role. | [References](./references.md#kind-and-role) |
+| **Reference role** | Why a [Reference](./references.md#asset-or-reference) is attached: intent helps define the [Product](./product.md), implementation points to what was built, and context provides background. | [References](./references.md#kind-and-role) |
 
 ## CLI
 
 | Term | Meaning | Defined in |
 | --- | --- | --- |
-| **Topology** | The report's cross-kind canvas, whose named views each answer one fixed question about the whole model. | [view](./cli-view.md#reading-the-report) |
-| **Neighbourhood** | One resource drawn on the [Topology](./cli-view.md#reading-the-report) canvas with everything that touches it. | [view](./cli-view.md#reading-the-report) |
 | **Product Report** | The serialization of a [Product Model](./product-model.md#the-shape-of-a-model). One format, two profiles: workspace keeps repository navigation, portable carries none of it. | [blueprint export](./cli-export.md#portable-export) |
-| **Blueprint** | A [Product Report](./cli-export.md#portable-export) curated into the public catalog under a slug. Always the portable profile, because that is what the catalog accepts. | [blueprint contribute](./cli-contribute.md#a-good-blueprint) |
+| **Blueprint** | A portable [Product Report](./cli-export.md#portable-export). Publishing it in a catalog is a separate step. | [blueprint contribute](./cli-contribute.md#a-good-blueprint) |

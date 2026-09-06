@@ -9,7 +9,7 @@
  * it.
  */
 import type { AnyResourceView, ReportWorkspace } from '../utils/reportWorkspace'
-import { resolveResourceKey } from '../utils/reportWorkspace'
+import { entityFacetOf, resolveResourceKey } from '../utils/reportWorkspace'
 import { firstSentence } from '../utils/reportMarkdown'
 
 const props = defineProps<{
@@ -21,12 +21,6 @@ const emit = defineEmits<{
   select: [resource: AnyResourceView]
   selectKey: [key: string]
 }>()
-
-const COVERAGE_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
-  complete: 'success',
-  partial: 'warning',
-  draft: 'neutral'
-}
 
 /** The one-line shape of the model, in the order the resources depend on. */
 const countFacts = computed(() => [
@@ -88,10 +82,10 @@ const overviewHeading = computed(() => props.workspace.journeys.length
   ? { title: 'Journeys', note: 'What the Product promises, and who it promises it to.' }
   : { title: 'Capabilities', note: 'What the Product can do. This model declares no Journeys.' })
 
-function referenceActor(ownerKey?: string) {
+function referenceEntity(ownerKey?: string) {
   if (!ownerKey) return undefined
   const resource = resolveResourceKey(props.workspace, ownerKey)
-  return resource?.kind === 'entity' && resource.acts ? resource : undefined
+  return resource?.kind === 'entity' ? resource : undefined
 }
 </script>
 
@@ -119,7 +113,7 @@ function referenceActor(ownerKey?: string) {
       >
         <BlrKind
           kind="entity"
-          :actor-kind="actor.entityKind"
+          :facet="entityFacetOf(actor)"
           :acts="actor.acts"
           :labelled="false"
           size="xs"
@@ -224,9 +218,7 @@ function referenceActor(ownerKey?: string) {
     <UCollapsible v-model:open="sections.coverage">
       <button type="button" class="blr-disclosure">
         <span class="flex-1 text-start text-sm font-medium text-highlighted">Coverage</span>
-        <UBadge :color="COVERAGE_TONE[workspace.coverage.status] || 'neutral'" variant="subtle" size="sm">
-          {{ workspace.coverage.status }}
-        </UBadge>
+        <BlrCoverageBadge :status="workspace.coverage.status" size="sm" />
         <UIcon :name="sections.coverage ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'" class="size-4 text-dimmed" />
       </button>
       <template #content>
@@ -280,7 +272,10 @@ function referenceActor(ownerKey?: string) {
           <div class="grid grid-cols-3 gap-x-4 gap-y-3 sm:grid-cols-5">
             <div v-for="[label, value] in derivedCounts" :key="label">
               <p class="font-mono text-lg text-highlighted tabular-nums">{{ value }}</p>
-              <p class="blr-field">{{ label }}</p>
+              <p class="blr-field flex items-center gap-1.5">
+                <BlrReferenceIcon v-if="label === 'References'" class="size-3.5" />
+                {{ label }}
+              </p>
             </div>
           </div>
         </div>
@@ -289,6 +284,7 @@ function referenceActor(ownerKey?: string) {
 
     <UCollapsible v-model:open="sections.references">
       <button type="button" class="blr-disclosure">
+        <BlrReferenceIcon class="size-4" />
         <span class="flex-1 text-start text-sm font-medium text-highlighted">References</span>
         <span class="blr-meta">{{ workspace.references.length }}</span>
         <UIcon :name="sections.references ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'" class="size-4 text-dimmed" />
@@ -297,7 +293,10 @@ function referenceActor(ownerKey?: string) {
         <div class="space-y-3 pb-5">
           <BlrRefs :references="workspace.identity.references" variant="list" label="Product references" />
           <div v-if="workspace.references.length" class="space-y-1.5">
-            <p class="blr-field">All references in the model</p>
+            <p class="blr-field flex items-center gap-2">
+              <BlrReferenceIcon class="size-3.5" />
+              All references in the model
+            </p>
             <ul class="space-y-1">
               <li
                 v-for="(group, index) in workspace.references"
@@ -306,8 +305,8 @@ function referenceActor(ownerKey?: string) {
               >
                 <BlrKind
                   :kind="group.ownerKind"
-                  :actor-kind="referenceActor(group.ownerKey)?.entityKind"
-                  :acts="referenceActor(group.ownerKey)?.acts"
+                  :facet="entityFacetOf(referenceEntity(group.ownerKey))"
+                  :acts="referenceEntity(group.ownerKey)?.acts"
                   :labelled="false"
                   size="xs"
                 />
@@ -319,8 +318,9 @@ function referenceActor(ownerKey?: string) {
                 >
                   {{ group.ownerTitle }}
                 </button>
-                <span class="blr-meta truncate">
-                  {{ group.reference.title || group.reference.target }}
+                <span class="blr-meta flex min-w-0 items-center gap-1.5">
+                  <BlrReferenceIcon :kind="group.reference.kind" class="size-3.5" />
+                  <span class="truncate">{{ group.reference.title || group.reference.target }}</span>
                 </span>
                 <span class="blr-meta ms-auto shrink-0">
                   {{ group.reference.kind }} · {{ group.reference.role }}

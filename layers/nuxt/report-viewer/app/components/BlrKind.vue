@@ -6,7 +6,7 @@
  * a bare colour swatch — the label is part of the mark.
  */
 import type { ReportInterface } from 'businesslens/report'
-import type { ActingKind, ActingSide, ReportResourceKind } from '../utils/reportWorkspace'
+import type { ActingSide, EntityFacet, ReportResourceKind } from '../utils/reportWorkspace'
 import { ENTITY_KIND_META } from '../utils/reportWorkspace'
 import { slotColor } from '../utils/reportPalette'
 
@@ -16,8 +16,8 @@ const props = withDefaults(defineProps<{
   size?: 'xs' | 'sm'
   /** A concrete Interface can retain its kind and disclose its authored type. */
   interfaceType?: ReportInterface['type'] | null
-  /** An Entity that acts discloses both independent authored classifications. */
-  actorKind?: ActingKind | null
+  /** An Entity instance is drawn by its facet; a kind heading passes none. */
+  facet?: EntityFacet | null
   acts?: ActingSide | null
   /** Suppress the text label only where a nearby label already names the kind. */
   labelled?: boolean
@@ -25,7 +25,7 @@ const props = withDefaults(defineProps<{
   count: null,
   size: 'sm',
   interfaceType: null,
-  actorKind: null,
+  facet: null,
   acts: null,
   labelled: true
 })
@@ -46,9 +46,9 @@ const color = computed(() => slotColor(meta.value.slot, mounted.value && colorMo
     :data-size="size"
     :title="meta.label"
   >
-    <BlrActorType
-      v-if="kind === 'entity' && actorKind && acts"
-      :actor-kind="actorKind"
+    <BlrEntityMark
+      v-if="kind === 'entity' && facet"
+      :facet="facet"
       :acts="acts"
       :size="size"
     />

@@ -496,11 +496,20 @@ describe('stable Product Report', () => {
     for (const icon of ['align-justify', 'circle-dot-dashed', 'user-round']) {
       expect(layer).toContain(`'lucide:${icon}'`)
     }
+    /* The rail's ten rows have to separate by shape: Product takes slot 9,
+       which wraps onto Entity's slot 0, so Overview and Entities carry the same
+       hue and one container glyph drawn twice separated nothing. */
+    for (const icon of ['house', 'shapes', 'land-plot', 'network', 'box']) {
+      expect(layer, icon).toContain(`'lucide:${icon}'`)
+    }
+    for (const gone of ['package', 'boxes', 'waypoints']) {
+      expect(layer, gone).not.toContain(`'lucide:${gone}'`)
+    }
   })
 
   it('keeps kind icons and submarks concrete Interfaces and Actors with authored classifications', () => {
     const mark = source('app/components/BlrInterfaceType.vue')
-    const actorMark = source('app/components/BlrActorType.vue')
+    const entityMark = source('app/components/BlrEntityMark.vue')
     const kind = source('app/components/BlrKind.vue')
     const structure = source('app/assets/report-viewer.css')
     const cardPresentation = source('app/utils/resourceCards.ts')
@@ -521,16 +530,18 @@ describe('stable Product Report', () => {
     expect(mark).toContain('var(--blr-interface-mark-regular)')
     expect(mark).toContain('var(--blr-interface-badge-glyph-dense)')
     expect(mark).toContain(".blr-interface-mark[data-size='xs']")
-    /* One glyph, on the shared resource scale. Actor carries two independent
-       authored axes and a mark can only draw one, so `kind` is the silhouette
-       and `relationship` is written where the surface has room for a word. */
-    expect(actorMark).toContain(':name="kindMeta.icon"')
-    expect(actorMark).not.toContain('i-lucide-users')
-    expect(actorMark).not.toContain('blr-actor-relationship')
-    expect(actorMark).not.toContain('showRelationship')
-    expect(actorMark).toContain('var(--blr-resource-mark-regular)')
-    expect(actorMark).toContain('var(--blr-resource-mark-dense)')
-    expect(kind).toContain("kind === 'entity' && actorKind && acts")
+    /* One glyph, on the shared resource scale. An Actor carries two independent
+       authored axes and a mark can only draw one, so the facet is the silhouette
+       and `relationship` is written where the surface has room for a word. The
+       subset that does not act is a facet value, never a fallthrough to the
+       type glyph — the rail already said Entities. */
+    expect(entityMark).toContain(':name="facetMeta.icon"')
+    expect(entityMark).not.toContain('i-lucide-users')
+    expect(entityMark).not.toContain('blr-actor-relationship')
+    expect(entityMark).not.toContain('showRelationship')
+    expect(entityMark).toContain('var(--blr-resource-mark-regular)')
+    expect(entityMark).toContain('var(--blr-resource-mark-dense)')
+    expect(kind).toContain("kind === 'entity' && facet")
     expect(kind).not.toContain('show-relationship')
     for (const variable of [
       '--blr-resource-mark-regular',
@@ -556,18 +567,18 @@ describe('stable Product Report', () => {
     expect(structure).toContain('--blr-interface-kind-regular: 1.125rem')
     expect(structure).toContain('--blr-interface-kind-dense: 1rem')
     expect(card).toContain(':interface-type="interfaceType"')
-    expect(card).toContain(':actor-kind="actorKind"')
+    expect(card).toContain(':facet="facet"')
     expect(card).toContain(':acts="acts"')
     expect(connections).toContain(':interface-type="interfaceType(item.kind, id)"')
-    expect(connections).toContain(':actor-kind="actorClassification(item.kind, id)?.entityKind"')
+    expect(connections).toContain(':facet="entityFacetOf(entityAt(item.kind, id))"')
     expect(reportShell).toContain('resolvedInterfaceType(group.kind, group.key)')
-    expect(reportShell).toContain('resolvedActor(group.kind, group.key)?.entityKind')
+    expect(reportShell).toContain('entityFacetOf(resolvedEntity(group.kind, group.key))')
     expect(reportShell).toContain('BlrInterfaceTypeComponent')
-    expect(reportShell).toContain('BlrActorTypeComponent')
+    expect(reportShell).toContain('BlrEntityMarkComponent')
     expect(flow).toContain("interfaceType: resource.kind === 'interface' ? resource.interfaceType : null")
-    expect(flow).toContain("actorKind: resource.kind === 'entity' ? resource.entityKind : null")
+    expect(flow).toContain('entityFacet: entityFacetOf(resource)')
     expect(flowNode).toContain("data.kind === 'interface' && data.interfaceType")
-    expect(flowNode).toContain("data.kind === 'entity' && data.actorKind && data.acts")
+    expect(flowNode).toContain("data.kind === 'entity' && data.entityFacet")
     expect(flowNode).not.toContain('show-relationship')
     /* Topology is read for the Product boundary, so the node's sublabel writes
        it — the slot and the spelling an Experience gives its access mode. */
@@ -585,8 +596,8 @@ describe('stable Product Report', () => {
 
     /* A Step names an Actor, so it renders one: the Actor's own mark in a chip
        that opens it, not a dimmed generic glyph beside plain text. */
-    expect(resourceBody).toContain('<BlrActorType')
-    expect(resourceBody).toContain(':actor-kind="stepActor(step.actorId)!.entityKind!"')
+    expect(resourceBody).toContain('<BlrEntityMark')
+    expect(resourceBody).toContain(':facet="stepActor(step.actorId)!.entityKind!"')
     /* The Entity page draws its composed state machine on the shared canvas,
        on its own tab, with every arc routed along the layout's points. */
     const lifecycle = source('app/components/BlrEntityLifecycle.vue')
@@ -744,6 +755,44 @@ describe('stable Product Report', () => {
     expect(topology).toContain('v-for="(step, index) in kindSteps"')
   })
 
+  /*
+    Coverage is one fact on two surfaces, so it is one component. It is drawn
+    in umber at every status: an amber partial and a green complete spent two
+    ramps this theme never chose, and told the reader that the honest
+    declaration the format asks for was a fault to clear.
+  */
+  it('reads coverage as one umber mark on both surfaces that carry it', () => {
+    const badge = source('app/components/BlrCoverageBadge.vue')
+    const shell = source('app/components/BlrReportShell.vue')
+    const overview = source('app/components/BlrOverview.vue')
+
+    expect(badge).toContain("color=\"neutral\"")
+    expect(badge).toContain('rounded-full')
+    expect(shell).toContain('<BlrCoverageBadge :status="workspace.coverage.status" named size="md" />')
+    expect(overview).toContain('<BlrCoverageBadge :status="workspace.coverage.status" size="sm" />')
+    for (const [label, file] of [['badge', badge], ['shell', shell], ['overview', overview]] as const) {
+      expect(file, label).not.toContain('COVERAGE_TONE')
+      for (const offPalette of ["'warning'", "'success'", '"warning"', '"success"']) {
+        expect(file, `${label} ${offPalette}`).not.toContain(offPalette)
+      }
+    }
+  })
+
+  /*
+    Vocabulary and Docs are the same offer — the two ways out of a word the
+    reader does not know — so they are not two different affordances. A ghost
+    Vocabulary beside a bordered Docs read as chrome rather than a control.
+  */
+  it('offers Vocabulary as the same bordered control as Docs', () => {
+    const shell = source('app/components/BlrReportShell.vue')
+    const vocabulary = shell.indexOf('label="Vocabulary"')
+    const button = shell.lastIndexOf('<UButton', vocabulary)
+
+    expect(vocabulary).toBeGreaterThan(-1)
+    expect(shell.slice(button, vocabulary)).toContain('variant="outline"')
+    expect(shell.slice(vocabulary, vocabulary + 200)).toContain('rounded-full')
+  })
+
   it('scrolls collection controls with their list instead of pinning them as chrome', () => {
     const reportShell = source('app/components/BlrReportShell.vue')
     const docs = source('app/utils/resourceDocs.ts')
@@ -838,7 +887,8 @@ describe('stable Product Report', () => {
     expect(reportShell).toContain('aria-label="Page breadcrumb"')
     expect(reportShell).toContain('data-mobile-location')
     expect(reportShell).toContain('data-mobile-section')
-    expect(reportShell).toContain('class="flex min-w-0 flex-1 items-center gap-1 overflow-hidden sm:hidden"')
+    // Narrow-screen bounds and help targets are exercised in the browser
+    // regression script; clipping the entire trail would cut off focus rings.
     expect(reportShell).not.toContain('class="inline-flex min-w-0 flex-1 items-center gap-1.5 hover:underline hover:underline-offset-4"')
     expect(reportShell).not.toContain(':title="step.title"')
     expect(reportShell).not.toContain('label="Neighbourhood"')

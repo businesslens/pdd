@@ -11,7 +11,7 @@
  * one line is what a reader stuck mid-sentence needs; the page is what a reader
  * who wants the argument needs, and the report is not that page.
  */
-import { VOCABULARY, type VocabularyEntry, type VocabularySlug } from './vocabulary.generated'
+import { VOCABULARY, VOCABULARY_LEADS, type VocabularyEntry, type VocabularySlug } from './vocabulary.generated'
 import { DOCS_ORIGIN } from './resourceDocs'
 import type { ReportResourceKind, ReportScenarioType } from './reportWorkspace'
 
@@ -65,6 +65,9 @@ export function termItem(slug: VocabularySlug): VocabularyItem {
 
 export const VOCABULARY_ITEMS: VocabularyItem[] = SLUGS.map(termItem)
 
+/** CLI terms remain in the shared registry and docs index, outside panel browse and search. */
+const PANEL_ITEMS = VOCABULARY_ITEMS.filter(item => item.group !== 'CLI')
+
 /**
  * The word for a resource type, which the rail and every collection show before
  * a reader has read anything at all.
@@ -98,22 +101,38 @@ export function scenarioTerm(
 export interface VocabularyPage {
   page: string
   title: string
+  /**
+   * The term the section is named for. The section head states it; no row inside
+   * the section repeats it.
+   */
+  lead: VocabularyItem
+  /** The section's remaining words, in documentation order. */
   items: VocabularyItem[]
 }
 
-/** Nest terms under the documentation page that defines them, in docs order. */
-export function vocabularyPages(items: VocabularyItem[]): VocabularyPage[] {
-  const pages: VocabularyPage[] = []
-  for (const item of items) {
-    let page = pages.find(candidate => candidate.page === item.page)
-    if (!page) {
-      page = { page: item.page, title: item.pageTitle, items: [] }
-      pages.push(page)
-    }
-    page.items.push(item)
-  }
-  return pages
+/** Browsing groups model-wide terms under Product; documentation links keep their owner. */
+export function vocabularySection(slug: VocabularySlug): string {
+  const page = VOCABULARY[slug].page
+  return page === 'product-model' ? 'product' : page
 }
+
+/**
+ * Browsing follows documentation order, with Model overview folded into Product.
+ * Product leads that combined section; all other sections retain their page lead.
+ *
+ * Search does not group. A reader who typed a word wants that word ranked, so
+ * the flat list keeps every term as a row, leads included.
+ */
+export const VOCABULARY_PAGES: VocabularyPage[] = [...new Set(PANEL_ITEMS.map(item => vocabularySection(item.slug)))]
+  .map((page) => {
+    const lead = VOCABULARY_LEADS[page]!
+    return {
+      page,
+      title: VOCABULARY[lead].pageTitle,
+      lead: termItem(lead),
+      items: PANEL_ITEMS.filter(item => vocabularySection(item.slug) === page && item.slug !== lead)
+    }
+  })
 
 /**
  * Browse in documentation order. Search by name first, then by meaning.
@@ -123,7 +142,7 @@ export function vocabularyPages(items: VocabularyItem[]): VocabularyPage[] {
  */
 export function vocabularyMatches(query = ''): VocabularyItem[] {
   const needle = query.trim().toLowerCase()
-  if (!needle) return VOCABULARY_ITEMS
+  if (!needle) return PANEL_ITEMS
   const rank = (item: VocabularyItem) => {
     const name = item.term.toLowerCase()
     if (name === needle) return 0
@@ -133,6 +152,6 @@ export function vocabularyMatches(query = ''): VocabularyItem[] {
   // Stable sorting retains documentation order for equally relevant terms,
   // including names with distinct Scenario owners. Search stays ranked rather
   // than regrouping a definition ahead of an exact name on another page.
-  return VOCABULARY_ITEMS.filter(item => rank(item) < 3)
+  return PANEL_ITEMS.filter(item => rank(item) < 3)
     .sort((a, b) => rank(a) - rank(b))
 }
