@@ -1,25 +1,24 @@
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { afterEach, describe, expect, it } from 'vitest'
 import { stringify } from 'yaml'
-import { leadsOf, readVocabulary, renderDoc, renderModule } from '../scripts/vocabulary.mjs'
+import { leadsOf, readVocabulary, renderModule } from '../scripts/vocabulary.mjs'
 import { VOCABULARY_ITEMS, VOCABULARY_PAGES, vocabularyMatches, vocabularySection } from '../layers/nuxt/report-viewer/app/utils/vocabulary.ts'
 
 const temporaryDirectories = []
 
-async function read(terms, title = 'Terms') {
+async function read(terms, group = 'Product Model') {
   const root = await mkdtemp(join(tmpdir(), 'bl-vocabulary-'))
   temporaryDirectories.push(root)
   await mkdir(join(root, 'docs'))
-  const frontmatter = stringify({ title, group: 'Product Model', order: 1, terms })
+  const frontmatter = stringify({ title: 'Terms', group, order: 1, terms })
   await writeFile(join(root, 'docs', 'terms.md'), `---\n${frontmatter}---\n# Terms\n`)
   return readVocabulary(root)
 }
 
-async function vocabulary(terms, title = 'Terms') {
-  const result = await read(terms, title)
+async function vocabulary(terms) {
+  const result = await read(terms)
   expect(result.errors).toEqual([])
   return result.terms
 }
@@ -43,38 +42,27 @@ describe('vocabulary lookup', () => {
       .toBeLessThan(items.findIndex(item => item.slug === 'entity'))
   })
 
+  it.each([
+    ['Machine', 'lifecycle'],
+    ['Bindings', 'applies-to'],
+    ['Relationships', 'relation'],
+    ['permissions', 'who-may'],
+    ['Left here by', 'left-here-by'],
+    ['Entities', 'entity'],
+    ['Capabilities', 'capability']
+  ])('finds the definition for the report label %s first', (query, slug) => {
+    expect(results(query)[0].slug).toBe(slug)
+  })
+
   it('preserves both Scenario owners when the same word is defined twice', () => {
     expect(results('Trigger').slice(0, 2).map(item => item.slug)).toEqual([
       'capability-scenario-trigger', 'journey-scenario-trigger'
     ])
   })
 
-  it('keeps CLI definitions in the documentation and registry, outside panel browse and search', async () => {
-    const { terms, errors } = await readVocabulary(fileURLToPath(new URL('../', import.meta.url)))
-    expect(errors).toEqual([])
-    const doc = renderDoc(terms)
-    expect(doc).toContain('## CLI')
-    const browse = VOCABULARY_PAGES.flatMap(page => [page.lead, ...page.items])
-
-    for (const [slug, term, page] of [
-      ['product-report', 'Product Report', 'cli-export'],
-      ['blueprint', 'Blueprint', 'cli-contribute']
-    ]) {
-      const source = terms.find(entry => entry.slug === slug)
-      expect(source).toMatchObject({ term, page, group: 'CLI' })
-      expect(doc).toContain(`| **${term}** |`)
-      expect(doc).toContain(`./${page}.md#${source.anchor}`)
-      expect(VOCABULARY_ITEMS.find(item => item.slug === slug))
-        .toMatchObject({ term, page, definition: source.definition })
-      expect(browse.some(item => item.slug === slug)).toBe(false)
-      for (const query of ['', term, 'report', 'portable', 'catalog']) {
-        expect(results(query).some(item => item.slug === slug)).toBe(false)
-      }
-    }
-  })
-
   it('groups every panel term exactly once without mixing Scenario definitions', () => {
     const items = results('')
+    expect(items).toEqual(VOCABULARY_ITEMS)
     const pages = VOCABULARY_PAGES
     const grouped = pages.flatMap(page => [page.lead, ...page.items])
     expect(grouped.map(item => item.slug).sort()).toEqual(items.map(item => item.slug).sort())
@@ -119,6 +107,15 @@ describe('vocabulary lookup', () => {
 })
 
 describe('vocabulary generation', () => {
+  it('accepts CLI pages without terms and rejects their term declarations', async () => {
+    expect(await read(undefined, 'CLI')).toEqual({ terms: [], errors: [] })
+    const result = await read([
+      { term: 'Blueprint', definition: 'A portable Product Report.' }
+    ], 'CLI')
+    expect(result.terms).toEqual([])
+    expect(result.errors).toEqual(['docs/terms.md CLI pages must not declare "terms"'])
+  })
+
   it.each([
     ['Journey', 'Journeys', 'Journeies'],
     ['Capability', 'Capabilities', 'Capabilitys'],
@@ -132,7 +129,6 @@ describe('vocabulary generation', () => {
     const collection = terms.find(entry => entry.term === 'Collection')
     expect(collection.mentions).toEqual([{ from: 8, to: 8 + plural.length, slug: term.toLowerCase() }])
     expect(terms.find(entry => entry.term === 'Typo').mentions).toEqual([])
-    expect(renderDoc(terms)).toContain(`Several [${plural}](./terms.md) belong here.`)
   })
 
   it('also resolves vowel-y plurals of aliases', async () => {
@@ -158,26 +154,5 @@ describe('vocabulary generation', () => {
       { term: 'Journey', definition: 'A model term.' }
     ])
     expect(errors).toEqual([expect.stringContaining('is the page\'s lead and cannot be scoped with "on"')])
-  })
-
-  it('escapes pipes in every table cell and linked text without changing registry definitions', async () => {
-    const definition = 'Pick A | B before a Journey.'
-    const terms = await vocabulary([
-      { term: 'Journey', definition: 'A model term.' },
-      { term: 'Choice | route', definition },
-      { term: 'Selection', definition: 'Use a Choice | route.' }
-    ], 'Terms | examples')
-    const doc = renderDoc(terms)
-    expect(doc).toContain(String.raw`| **Choice \| route** | Pick A \| B before a [Journey](./terms.md). | [Terms \| examples](./terms.md) |`)
-    expect(doc).toContain(String.raw`| **Selection** | Use a [Choice \| route](./terms.md). | [Terms \| examples](./terms.md) |`)
-    expect(terms.find(entry => entry.term === 'Choice | route').definition).toBe(definition)
-    expect(renderModule(terms)).toContain(`definition: ${JSON.stringify(definition)}`)
-  })
-
-  it('preserves literal backslashes before pipes and Markdown punctuation', async () => {
-    const terms = await vocabulary([
-      { term: 'Notation', definition: String.raw`Use A \| B with [brackets] and *stars*.` }
-    ])
-    expect(renderDoc(terms)).toContain(String.raw`Use A \\\| B with \[brackets\] and \*stars\*.`)
   })
 })

@@ -123,9 +123,7 @@ the previous lookup, including its search, expanded groups, and scroll position.
 Closing a lookup opened through an inline definition returns keyboard focus to its trigger.
 Collection-name definitions are also available on mobile.
 Both the inline definitions and the panel link out to the page here that explains
-the term in full. The [Vocabulary index](./vocabulary.md) uses the same definitions
-and also includes export and publishing terms, which the report panel omits
-from browsing and search.
+the term in full.
 
 ## Is this replacing my PRD?
 

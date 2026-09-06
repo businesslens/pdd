@@ -31,7 +31,7 @@ export function vocabularyTerm(slug: VocabularySlug): VocabularyEntry {
  * A definition split into plain runs and the words that point at other terms.
  *
  * Which words those are is decided once, when the vocabulary is generated, so a
- * definition reads identically in the documentation and in the report and no
+ * definition reads identically in the popover and panel and no
  * surface gets to have an opinion about what a sentence meant.
  */
 export interface DefinitionSegment {
@@ -64,9 +64,6 @@ export function termItem(slug: VocabularySlug): VocabularyItem {
 }
 
 export const VOCABULARY_ITEMS: VocabularyItem[] = SLUGS.map(termItem)
-
-/** CLI terms remain in the shared registry and docs index, outside panel browse and search. */
-const PANEL_ITEMS = VOCABULARY_ITEMS.filter(item => item.group !== 'CLI')
 
 /**
  * The word for a resource type, which the rail and every collection show before
@@ -123,35 +120,35 @@ export function vocabularySection(slug: VocabularySlug): string {
  * Search does not group. A reader who typed a word wants that word ranked, so
  * the flat list keeps every term as a row, leads included.
  */
-export const VOCABULARY_PAGES: VocabularyPage[] = [...new Set(PANEL_ITEMS.map(item => vocabularySection(item.slug)))]
+export const VOCABULARY_PAGES: VocabularyPage[] = [...new Set(VOCABULARY_ITEMS.map(item => vocabularySection(item.slug)))]
   .map((page) => {
     const lead = VOCABULARY_LEADS[page]!
     return {
       page,
       title: VOCABULARY[lead].pageTitle,
       lead: termItem(lead),
-      items: PANEL_ITEMS.filter(item => vocabularySection(item.slug) === page && item.slug !== lead)
+      items: VOCABULARY_ITEMS.filter(item => vocabularySection(item.slug) === page && item.slug !== lead)
     }
   })
 
 /**
- * Browse in documentation order. Search by name first, then by meaning.
+ * Browse in documentation order. Search by name or alias first, then by meaning.
  *
  * The panel searches the definition as well as the word: a reader who half
  * remembers "the thing that says who may" should land on Who may.
  */
 export function vocabularyMatches(query = ''): VocabularyItem[] {
   const needle = query.trim().toLowerCase()
-  if (!needle) return PANEL_ITEMS
+  if (!needle) return VOCABULARY_ITEMS
   const rank = (item: VocabularyItem) => {
-    const name = item.term.toLowerCase()
-    if (name === needle) return 0
-    if (name.includes(needle)) return 1
+    const names = item.searchNames.map(name => name.toLowerCase())
+    if (names.includes(needle)) return 0
+    if (names.some(name => name.includes(needle))) return 1
     return item.definition.toLowerCase().includes(needle) ? 2 : 3
   }
   // Stable sorting retains documentation order for equally relevant terms,
   // including names with distinct Scenario owners. Search stays ranked rather
   // than regrouping a definition ahead of an exact name on another page.
-  return PANEL_ITEMS.filter(item => rank(item) < 3)
+  return VOCABULARY_ITEMS.filter(item => rank(item) < 3)
     .sort((a, b) => rank(a) - rank(b))
 }

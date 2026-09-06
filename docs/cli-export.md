@@ -1,13 +1,9 @@
 ---
 title: blueprint export
 description: Compile a Product Model into a portable Product Report that can move safely between repositories.
-terms:
-  - term: Product Report
-    anchor: portable-export
-    definition: "The serialization of a Product Model. One format, two profiles: workspace keeps repository navigation, portable carries none of it."
 section: open-source
 group: CLI
-order: 32
+order: 31
 ---
 
 # `businesslens blueprint export`

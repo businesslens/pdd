@@ -3,7 +3,7 @@ title: References
 description: Attach intent, implementation, or context artifacts to any Product Model resource without moving external material into the model.
 section: open-source
 group: Product Model
-order: 18
+order: 17
 terms:
   - term: Reference
     anchor: asset-or-reference

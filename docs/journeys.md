@@ -3,7 +3,7 @@ title: Journeys
 description: Optional Actor goals whose successful completion requires several Capabilities working together, with Journey Scenarios describing each path.
 section: open-source
 group: Product Model
-order: 16
+order: 15
 terms:
   - term: Journey
     definition: "An Actor goal whose successful completion requires several Capabilities working together."

@@ -176,7 +176,7 @@ function open(kind: 'capability' | 'rule', id: string) {
             v-if="state.capabilityScenarioIds.length || state.journeyScenarioIds.length"
             class="mt-2.5 space-y-1.5"
           >
-            <p class="blr-field"><BlrTerm slug="arc" text="Left here by" /></p>
+            <p class="blr-field"><BlrTerm slug="left-here-by" /></p>
             <BlrLinks
               :workspace="workspace"
               :ids="state.capabilityScenarioIds"

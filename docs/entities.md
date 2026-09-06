@@ -3,7 +3,7 @@ title: Entities
 description: An Entity names a thing the Product keeps or reasons about, including the people and systems that act on it — what it holds about that thing, the states it moves through, and who acts.
 section: open-source
 group: Product Model
-order: 10
+order: 9
 terms:
   - term: Entity
     definition: "A distinct thing the Product keeps or reasons about, including the people and systems that act on it."
@@ -22,13 +22,18 @@ terms:
   - term: State
     anchor: states-and-the-lifecycle-nobody-authors
     definition: "A named condition an Entity can be in, such as Pending or Refunded. Scenario Steps define how it moves between States."
+  - term: Left here by
+    anchor: states-and-the-lifecycle-nobody-authors
+    definition: "Scenarios containing a Step that puts this Entity in this State, even if a later Step changes it again."
   - term: Arc
     anchor: states-and-the-lifecycle-nobody-authors
     definition: "A move a Step makes: into a State, out of one, or between two. Nothing declares arcs; the report composes them from the Scenarios."
   - term: Lifecycle
+    aliases: [Machine]
     anchor: states-and-the-lifecycle-nobody-authors
     definition: "An Entity's States and Arcs, showing how it is created, changes state, or is removed, derived from Scenario Steps across the model."
   - term: Relation
+    aliases: [Relationship]
     anchor: relations
     definition: "A relationship between Entities, such as Shopper owns Orders, stating how many instances can relate on each side."
   - term: Changed by
@@ -247,6 +252,10 @@ and any States it leaves or enters.
 The report combines those Steps across the model into a Lifecycle for each
 Entity. It shows that Entity's States and Arcs, with each Arc labelled by the
 Capabilities whose Steps produce it and the Rules that restrict or forbid it.
+
+Each State's **Left here by** list shows Scenarios containing a Step that puts
+the Entity in that State. A Scenario can appear under several States when its
+Steps move the Entity through them; the list does not claim it ends there.
 
 There is no `transitions` key. One act can move two things at once — *settling a
 payment confirms an Order and creates a Shipment* — which only a Step can say,

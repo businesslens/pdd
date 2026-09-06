@@ -3,7 +3,7 @@ title: Product
 description: The coherent value promise named by one Product Model, including its identity, attribution, intent, classification, limitations, and optional References.
 section: open-source
 group: Product Model
-order: 9
+order: 8
 terms:
   - term: Product
     definition: "The one coherent value promise this model describes, and the boundary drawn around it."

@@ -5,83 +5,58 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.10.0] - 2026-09-06
 
 ### Added
 
-- **Inline definitions for selected Product Model terms, plus a searchable
-  vocabulary.** Dotted terms in page headings, fact labels, and collection names
-  open a one-line meaning and a link to the page that explains it. **Vocabulary**
-  in the report header lists the documented terms and lets the reader search
-  their names and meanings.
-- **A definition that leans on another word links to it**, in the documentation
-  and in the report alike. Following one in the report opens the Vocabulary
-  panel on that word, so a reader can chase a term through as many definitions
-  as it takes without losing the page they were reading.
-- **A Vocabulary page in the documentation**, listing declared terms with the page
-  that defines each one. It is generated and defines nothing itself: a
-  definition is declared in the `terms:` frontmatter of the page that owns the
-  term, and `npm run vocabulary` projects those onto the docs index and the
-  report viewer's registry. `npm run check` fails while either is stale, so no
-  surface can drift from the page it points at.
-- **`Business rule` is `Business Rule`.** Every prose mention and `spec/format.md`
-  already capitalized it; only the page title and the report's own label did not,
-  which is a resource type spelled two ways.
-- The Model overview documents how the report is read — the rail, Topology,
-  Neighbourhood, and the vocabulary affordances.
+- **Inline Product Model definitions and a searchable Vocabulary panel.**
+  Question-mark buttons in report headings, fact labels, and collection names
+  explain terms without leaving the current resource. Each definition links to
+  the documentation page that explains it in full.
+- **Linked definitions with a return trail.** Following a term opens its
+  vocabulary entry. **Back to…** restores the previous search, expanded groups,
+  scroll position, and keyboard focus.
+- **Vocabulary browsing follows the current report page.** Opening the panel
+  clears the previous search and expands the relevant group. Product includes
+  the model-wide terms, including Topology and Neighbourhood. Search ranks exact
+  names and aliases before partial names and definition matches.
+- **A shared definition registry generated from documentation.** Definitions
+  live in the owning documentation page's `terms:` frontmatter. Run
+  `npm run vocabulary` to regenerate the report registry;
+  `npm run check` rejects stale output and term declarations on CLI pages.
+- Documentation for report navigation, Topology, Neighbourhood, and vocabulary
+  lookups in the Model overview.
 
 ### Changed
 
-- **The report's marks separate again.** Overview, Entities and Domains were
-  three densities of one isometric container, and Product's slot wraps onto
-  Entity's, so the first two shared a hue as well. Overview is now a house,
-  Entities a set of assorted shapes, Domains a demarcated plot, and Topology a
-  node graph rather than waypoints.
-- **An Entity is drawn by the facet it plays, never by its type.** A person, a
-  system, and — new — a thing the Product keeps. The subset that does not act
-  used to fall through to the type glyph, which marked every non-Actor row
-  "Entity" on a screen already titled Entities. `BlrActorType` is now
-  `BlrEntityMark`, and it draws all three.
-
-- The report Vocabulary panel excludes CLI-owned terms from browsing and search.
-  Product Report and Blueprint retain their definitions in the CLI documentation,
-  full Vocabulary index, and shared registry. Topology and Neighbourhood appear
-  under Model overview.
-- The Blueprint definition matches the existing export contract: a portable
-  Product Report is a Blueprint before catalog publication.
-- Vocabulary definitions use clearer language, with matching explanations in
-  the documentation. Lifecycle and outcome summaries describe their actual
-  scope.
-- Vocabulary uses a wider reading column, consistent gutters, larger search
-  targets, and a lighter backdrop. Inline definitions have more room, and
-  collection-name definitions are available on mobile.
-- The Vocabulary panel states a page's own term — Experience, on Experiences —
-  in the section head rather than as the first row inside it, so the word and
-  its meaning appear once. Each head counts the words the page owns beside its
-  lead, and **Product**, whose page owns only its lead, opens with its meaning
-  and carries no control.
-- A Vocabulary section is a bar and a ruled list. The head takes its own ground
-  with a rule under it, so a section has an edge whether it is open or closed;
-  the words beneath it are name-then-meaning separated by hairlines, without the
-  cards or the rail they hung from. Each row's way out to the documentation is
-  an icon on the term's own line, since the head has already said the page —
-  an open **Interfaces** halves in height.
-- Vocabulary entries share the inline definition layout, with documentation
-  links below their meanings. Terms nest under one list of expandable
-  documentation pages, and the panel grows on larger screens. Each header
-  opening clears the previous search and expands only the current report page's
-  group. Returning through linked definitions also restores expanded groups.
-- Vocabulary search ranks exact names before partial names and definition
-  matches. Following a linked definition offers **Back to…**, restoring the
-  previous search, scroll position, and focus.
+- Distinct icons identify Overview, Entities, Domains, and Topology. Entity
+  instances use marks for people, systems, and things the Product keeps.
+  Tooltips explain which side of the Product boundary an Actor acts from.
+  `BlrEntityMark` replaces `BlrActorType`.
+- Coverage uses one neutral badge treatment in the report header and Overview.
+- Vocabulary sections state their lead definition once, with additional terms
+  beneath it and documentation links beside their names. The panel grows on
+  wider screens and fits mobile viewports, with larger touch targets.
+- Standardize **Business Rule** capitalization in documentation and report labels.
+- Clarify resource types, Journey composition, Experience boundaries, lifecycle
+  and outcome summaries, and permission semantics in the shared definitions and
+  documentation. A Blueprint is a portable Product Report before catalog
+  publication, matching the existing export contract.
 
 ### Fixed
 
-- The acting Entity's **Kind** definition explains person versus system.
-- Starting a new vocabulary search resets its scroll position and clears the
-  previous term highlight. Opening the panel from the desktop header focuses
-  search; closing a lookup reached through a definition restores the original
-  report trigger.
+- Vocabulary search recognizes report labels and their plural forms, including
+  Machine, Bindings, Relationships, permissions, What it changes, and Starts at.
+- **Left here by** explains Scenarios that reach a State, including intermediate
+  States. **Who may** explains that every applicable permission Rule must allow
+  the operation and an empty grant list forbids it. An acting Entity's **Kind**
+  explains person versus system.
+- Vocabulary lookups reveal the requested term even after an earlier search or
+  collapsed group hid it. New searches clear stale selection and scroll position;
+  closing a lookup reached through an inline definition restores its trigger.
+- Collection breadcrumb navigation and definition buttons remain accessible on
+  nested Scenario pages and narrow screens. Definition buttons preserve their
+  visible labels in accessible names and show keyboard focus in both themes.
 
 ## [0.9.0] - 2026-09-04
 

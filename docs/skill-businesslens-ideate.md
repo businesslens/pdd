@@ -3,7 +3,7 @@ title: ideate
 description: Explore or define intended behavior, then write only the exact Product Model delta the user approves.
 section: open-source
 group: Skills
-order: 25
+order: 24
 ---
 
 # `businesslens-ideate`

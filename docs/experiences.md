@@ -3,7 +3,7 @@ title: Experiences
 description: Coherent contexts of Product use with a stable audience, access boundary, and capability boundary inside one Interface.
 section: open-source
 group: Product Model
-order: 12
+order: 11
 terms:
   - term: Experience
     definition: "A stable context for using the Product within one Interface, with a defined audience, access mode, and capability boundary."

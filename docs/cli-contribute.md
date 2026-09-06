@@ -1,13 +1,9 @@
 ---
 title: blueprint contribute
 description: Open a pull request proposing your Product Model as a catalog Blueprint.
-terms:
-  - term: Blueprint
-    anchor: a-good-blueprint
-    definition: "A portable Product Report. Publishing it in a catalog is a separate step."
 section: open-source
 group: CLI
-order: 35
+order: 34
 ---
 
 # `businesslens blueprint contribute`

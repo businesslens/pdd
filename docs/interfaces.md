@@ -3,7 +3,7 @@ title: Interfaces
 description: Supported ways for Actors to interact with the Product, with behavior that can be required independently.
 section: open-source
 group: Product Model
-order: 11
+order: 10
 terms:
   - term: Interface
     definition: "A supported way for Actors to interact with the Product, such as a web app, a CLI, or a partner API."
@@ -14,6 +14,7 @@ terms:
     anchor: the-file
     definition: "What an Interface, Experience, or Screen supports and excludes. Capability availability is declared on each Capability."
   - term: Entry point
+    aliases: [Starts at]
     anchor: the-file
     definition: "A Product-facing route or address where an Actor arrives, such as a path, a deep link, or a command."
 ---

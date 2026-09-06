@@ -3,7 +3,7 @@ title: blueprint open
 description: Expand a local Product Report into a canonical Product Model.
 section: open-source
 group: CLI
-order: 33
+order: 32
 ---
 
 # `businesslens blueprint open`

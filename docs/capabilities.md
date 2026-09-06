@@ -3,7 +3,7 @@ title: Capabilities
 description: Durable Product abilities with explicit availability Contexts, and the local Capability Scenarios that make each ability observable.
 section: open-source
 group: Product Model
-order: 15
+order: 14
 terms:
   - term: Capability
     definition: "A durable ability of the Product: what it can do, independent of any one route, command, or module."

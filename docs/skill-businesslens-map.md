@@ -3,7 +3,7 @@ title: map
 description: Create or expand a Product Model from established repository behavior without executing target code.
 section: open-source
 group: Skills
-order: 24
+order: 23
 ---
 
 # `businesslens-map`

@@ -3,20 +3,23 @@ title: Business Rules
 description: Durable assertions of what must remain true — constraints, derivations, and who may perform an operation on a thing — applied to behavior, Contexts, or Entity operations.
 section: open-source
 group: Product Model
-order: 17
+order: 16
 terms:
   - term: Business Rule
     aliases: [Rule]
     definition: "A durable assertion that must stay true, and the only place the model says who may act."
   - term: Applies to
+    aliases: [Binding]
     anchor: behavioral-and-context-targets
     definition: "What a Rule constrains: a resource, a Context it holds in, or an operation on a thing."
   - term: Operation
+    aliases: [What it changes]
     anchor: entity-targets-an-operation-on-a-thing
     definition: "What may be done to a thing: creates, changes, removes, or reads. A Step calls it an effect; a Business Rule selects the same word as an operation."
   - term: Who may
+    aliases: [Permission]
     anchor: permission
-    definition: "Who can perform an Entity operation and under what conditions. Each applicable permission Rule must have at least one grant that allows it."
+    definition: "To allow an operation, at least one grant must match in every applicable permission Rule. An empty grant list forbids it."
 ---
 
 # Business Rules
@@ -160,9 +163,9 @@ grants, forbidding the ones it closes.
 ## Permission
 
 Permissions state who can perform an Entity operation and under what
-conditions. Every applicable Rule that defines permissions must have at least
-one grant allowing the operation. A Rule without `permits` makes no permission
-claim; its other constraints still apply.
+conditions. To allow an operation, at least one grant must match in every
+applicable permission Rule. An empty grant list forbids it. A Rule without
+`permits` makes no permission claim; its other constraints still apply.
 
 `permits` has three states:
 
