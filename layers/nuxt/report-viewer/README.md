@@ -6,9 +6,7 @@ a resource-first experience: a flat rail of resource types, a collection surface
 per type, a page for every resource, search, and named topology views.
 
 Inline definitions and the Vocabulary panel share a registry generated from
-the documentation's `terms:` frontmatter. See
-[Reading the report](../../../docs/product-model.md#reading-the-report) for
-navigation and term lookups.
+the documentation's `terms:` frontmatter.
 
 A collection row, relation, search result, or topology resource opens the resource
 page directly. The page is the one reading container: it has a URL, a

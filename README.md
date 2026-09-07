@@ -177,8 +177,6 @@ The package also exposes separately composable Nuxt layers:
   presentation from `theme`; a background graduates by moving into `theme`,
   never by a consumer depending on `theme-lab` in production.
 
-The report layer includes inline term definitions and a searchable Vocabulary panel, also available to docs hosts.
-
 ## Safety
 
 - BusinessLens analysis phases inspect untrusted repositories without executing

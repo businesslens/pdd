@@ -37,10 +37,5 @@ nested Blueprint, another repository, or a standalone model with `--cwd`.
 
 The server listens only on `127.0.0.1` and stops when the command exits.
 
-## Reading the report
-
-See [Reading the report](./product-model.md#reading-the-report) for navigation,
-Topology, Neighbourhood, and the Vocabulary panel.
-
 Use [`blueprint export`](./cli-export.md) when you need to write a source-free,
 portable Product Report.

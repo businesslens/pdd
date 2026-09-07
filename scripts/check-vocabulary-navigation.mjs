@@ -267,7 +267,7 @@ try {
   await expect(filter).toHaveValue('')
   await expect(panel.locator('[data-vocabulary-page="product"] button[aria-expanded="true"]')).toHaveCount(1)
   await expect(panel.locator('button[aria-expanded="true"]')).toHaveCount(1)
-  await expect(panel.locator('[data-term="topology"]')).toBeInViewport()
+  await expect(panel.locator('[data-term="product"]')).toBeInViewport()
   await page.keyboard.press('Escape')
   await expect(panel).toBeHidden()
   console.log('Passed: every header opening clears stale searches and opens only the current collection, resource, or Topology group.')

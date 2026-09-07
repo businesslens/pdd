@@ -17,12 +17,6 @@ terms:
   - term: Resource type
     anchor: what-belongs-in-a-model
     definition: "A category of resource, such as Entity or Capability, determined by the file's location in the Product Model."
-  - term: Topology
-    anchor: reading-the-report
-    definition: "The report's visual map of resources and their connections, with named views that answer specific questions about the model."
-  - term: Neighbourhood
-    anchor: reading-the-report
-    definition: "One resource drawn on the Topology canvas with everything that touches it."
 ---
 
 # The Product Model
@@ -94,25 +88,8 @@ payloads belong in an API contract such as OpenAPI. Attach those artifacts as
 and SDD roots. `coverage.md` describes model breadth.
 `.businesslens/README.md` orients an agent that encounters the model.
 
-## Reading the report
-
 Use [`businesslens view`](./cli-view.md) to browse the current model as a local
 report while editing.
-
-The report opens on the Overview, with a rail of the model's resource types
-down the side. A row opens that collection, and a card or table row opens the
-resource's own page at its own URL. `⌘K` searches every resource in the model
-by name.
-
-**Topology** is the report's visual map of resources and their connections.
-Its named views answer specific questions about the model, such as which
-Capabilities a Journey uses or which Screens expose an ability.
-**Neighbourhood** opens this map from a resource page, focused on that resource
-and its connections.
-
-Question-mark buttons beside selected Product Model terms open a short
-definition. Use **Vocabulary** in the header to browse or search the documented
-terms. Each definition links to the documentation page that explains it in full.
 
 ## Is this replacing my PRD?
 
