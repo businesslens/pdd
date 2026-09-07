@@ -216,6 +216,10 @@ costed already.
   tables, and facts alike. Nothing renders an empty label: a missing hook or an
   empty facet set shrinks the element rather than reserving space for what is
   not there.
+- **A teaching affordance can be turned off, and never hides the way back.**
+  Term tooltips are dismissed from the tooltip and restored from the Vocabulary
+  panel, which is never behind the preference; the choice is a cookie, so a
+  server-rendered report draws it on the first paint.
 - **A section renders as more than prose only when four things align**: a
   recognized H2 in `spec/format.md`; a **required content shape** — bullet list,
   H3 plus prose, or prose — enforced by `lint`; a typed field in

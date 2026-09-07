@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Inline term definitions and a searchable Vocabulary panel for reports and docs.
-- Option to hide term marks, with the preference remembered.
+- Option to hide the tooltips that explain terms, with the preference remembered.
 
 ### Changed
 

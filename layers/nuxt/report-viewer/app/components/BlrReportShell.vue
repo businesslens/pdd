@@ -418,7 +418,7 @@ watch(() => props.workspace, (workspace) => {
 
 const topologyActive = computed(() => activeSection.value === 'topology')
 const vocabularyContext = computed(() => {
-  if (topologyActive.value) return 'topology'
+  if (topologyActive.value) return 'product'
   if (openPage.value) return KIND_TERM[openPage.value.kind]
   return KIND_TERM[activeKind.value]
 })
@@ -1308,7 +1308,7 @@ const orphanScenarios = computed(() => props.workspace.scenarios
       @select="onSearchSelect"
     />
 
-    <BlrVocabulary :context="vocabularyContext" />
+    <BlrVocabulary :context="vocabularyContext" tooltips />
 
     <USlideover
       v-model:open="mobileNavOpen"

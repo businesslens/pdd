@@ -16,6 +16,18 @@
  * A word inside a definition that is itself defined is followable, and following
  * one reveals its browsing section and marks the term. Back restores the previous
  * reading, including which pages were expanded.
+ *
+ * A host that draws tooltips says so, and the panel becomes where they come
+ * back: the control sits in the head, beside what the panel is for, where it
+ * costs no row of the list and stays clear of the search field and of the Back
+ * button that appears beneath it.
+ *
+ * It shows both states at once rather than naming an act, because the two
+ * surfaces answer different questions. Inside a tooltip "Hide tooltips" is
+ * unambiguous — the thing it acts on is the thing you are reading. Alone in
+ * this head there is nothing to read the state off, and a lone button naming an
+ * act cannot say whether the act has already happened. Two segments with one
+ * filled leave nothing to infer: the filled half is where you are.
  */
 import type { VocabularySlug } from '../utils/vocabulary.generated'
 import { VOCABULARY_PAGES, vocabularyMatches, vocabularySection, vocabularyTerm } from '../utils/vocabulary'
@@ -39,6 +51,8 @@ const props = defineProps<{
   docsBase?: string
   /** Stable state namespace when the host also embeds a report's own panel. */
   stateKey?: string
+  /** The host renders term tooltips, so this panel carries the control for them. */
+  tooltips?: boolean
 }>()
 
 /*
@@ -46,6 +60,9 @@ const props = defineProps<{
   ask for it, and the reader means the same panel every time.
 */
 const { open, lookup, returnFocusId, show } = useVocabularyPanel(props.stateKey)
+
+const { shown: tooltipsShown } = useTooltips()
+const tooltipsId = useId()
 
 const query = ref('')
 const searching = computed(() => Boolean(query.value.trim()))
@@ -226,6 +243,7 @@ onBeforeUnmount(() => {
       header: 'px-4 py-4 sm:px-5',
       title: 'pe-10 text-lg leading-6',
       body: 'min-h-0 overflow-hidden p-0 sm:p-0',
+      wrapper: 'min-w-0',
       overlay: 'bg-black/14 dark:bg-black/30',
       close: 'top-1.5 end-1.5 size-11 justify-center sm:top-4 sm:end-4 sm:size-7'
     }"
@@ -359,6 +377,49 @@ onBeforeUnmount(() => {
             </div>
           </section>
         </div>
+      </div>
+    </template>
+
+    <!--
+      Beneath the close button, on the line that says what the panel is for: the
+      control belongs to the head rather than to the list, and no row of the
+      vocabulary pays for it. A host that draws no tooltips passes no `tooltips`
+      and gets no control.
+
+      It hangs a little below that line because the pill is taller than the text
+      beside it, and its top corner would otherwise sit inside the close
+      button's box and take a click meant for it.
+    -->
+    <template v-if="tooltips" #actions>
+      <div class="-mb-1 ms-auto flex shrink-0 items-center gap-2 self-end">
+        <span :id="tooltipsId" class="text-xs text-muted">Tooltips</span>
+        <UFieldGroup size="xs" role="group" :aria-labelledby="tooltipsId">
+          <!--
+            On a panel this narrow the words would cost the description its own
+            line, so they go and the eyes carry it — one filled, one not. The
+            accessible name keeps the whole sentence at every width.
+          -->
+          <UButton
+            icon="i-lucide-eye"
+            label="Show"
+            aria-label="Show tooltips"
+            :color="tooltipsShown ? 'primary' : 'neutral'"
+            :variant="tooltipsShown ? 'solid' : 'outline'"
+            :aria-pressed="tooltipsShown"
+            :ui="{ leadingIcon: 'size-3.5', label: 'hidden sm:inline' }"
+            @click="tooltipsShown = true"
+          />
+          <UButton
+            icon="i-lucide-eye-off"
+            label="Hide"
+            aria-label="Hide tooltips"
+            :color="tooltipsShown ? 'neutral' : 'primary'"
+            :variant="tooltipsShown ? 'outline' : 'solid'"
+            :aria-pressed="!tooltipsShown"
+            :ui="{ leadingIcon: 'size-3.5', label: 'hidden sm:inline' }"
+            @click="tooltipsShown = false"
+          />
+        </UFieldGroup>
       </div>
     </template>
   </USlideover>

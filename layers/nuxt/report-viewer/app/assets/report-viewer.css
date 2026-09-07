@@ -78,3 +78,25 @@
   outline: 2px solid var(--ui-text-highlighted);
   outline-offset: 3px;
 }
+
+/*
+  A word inside a toast that goes somewhere. The toast is rendered outside the
+  component that raised it, so this cannot be a scoped rule; it is solid rather
+  than dotted because it navigates, where a mention only reveals a reading.
+*/
+.blr-toast-link {
+  color: var(--ui-text-highlighted);
+  border-bottom: 1px solid var(--ui-border-accented);
+  cursor: pointer;
+}
+
+.blr-toast-link:hover,
+.blr-toast-link:focus-visible {
+  border-bottom-color: var(--ui-color-primary-500);
+  color: var(--ui-primary);
+}
+
+.blr-toast-link:focus-visible {
+  outline: 2px solid var(--ui-text-highlighted);
+  outline-offset: 3px;
+}

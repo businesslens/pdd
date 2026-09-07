@@ -793,6 +793,133 @@ describe('stable Product Report', () => {
     expect(shell.slice(vocabulary, vocabulary + 200)).toContain('rounded-full')
   })
 
+  /*
+    A reader who has learned the words puts the tooltips away. The word stays in
+    the sentence as plain text, and beside a label that already names it — an
+    icon-only mark in a breadcrumb — nothing is left behind at all.
+  */
+  it('renders a term as plain text when the tooltips are off', () => {
+    const term = source('app/components/BlrTerm.vue')
+    const plain = term.indexOf('<span')
+    const popover = term.indexOf('<UPopover')
+
+    expect(term).toContain('v-if="!shown && !iconOnly"')
+    expect(term).toContain('v-else-if="shown"')
+    expect(plain).toBeGreaterThan(-1)
+    expect(plain).toBeLessThan(popover)
+    /*
+      A button carries `text-transform: none` from the user agent, so the
+      breadcrumb's uppercase eyebrow never reached the term while it was one.
+      The span replacing it has to say so, or Entities becomes ENTITIES.
+    */
+    expect(term).toMatch(/\.blr-term-plain \{[^}]*text-transform: none/)
+  })
+
+  /*
+    Hiding destroys the button the popover belongs to, so the preference flips on
+    the popover's close and focus is placed by hand. Flipping it on the click
+    unmounts the trigger mid-close and drops focus on the document body.
+  */
+  it('closes the tooltip before it hides them, and lands focus on the word', () => {
+    const term = source('app/components/BlrTerm.vue')
+
+    expect(term).toContain('function requestHide()')
+    expect(term).toMatch(/function onCloseAutoFocus[\s\S]*?hiding = false[\s\S]*?completeHide\(\)/)
+    expect(term).toMatch(/completeHide[\s\S]*?hide\(\)[\s\S]*?await nextTick\(\)[\s\S]*?\.focus\(/)
+    expect(term).toContain("actions: [{ label: 'Undo'")
+    /*
+      The sentence that names the way back is the way back: the toast renders
+      outside this component, so the word is a rendered node rather than a slot.
+    */
+    expect(term).toMatch(/description: \(\) => h\('span'/)
+    expect(term).toContain("'blr-toast-link'")
+    expect(term).toContain('panel.show()')
+  })
+
+  /*
+    Both ways back are load-bearing: the exit sits where the annoyance is, the
+    switch sits in the panel a reader already knows to open, and the header
+    control that opens that panel is never behind the preference.
+  */
+  it('offers the exit in the tooltip and the way back in the panel', () => {
+    const definition = source('app/components/BlrTermDefinition.vue')
+    const vocabulary = source('app/components/BlrVocabulary.vue')
+    const shell = source('app/components/BlrReportShell.vue')
+
+    expect(definition).toContain("emit('hide')")
+    expect(definition).toContain('v-if="inPopover"')
+    expect(definition).toContain('label="Hide tooltips"')
+    /*
+      A command, not a link: the exit carries the report's own bordered pill so
+      it reads as pressable beside the documentation link it sits with. Flattened
+      to a bare label it reads as a caption, which is where this started.
+    */
+    const hide = definition.indexOf('label="Hide tooltips"')
+    expect(definition.slice(hide - 200, hide + 200)).toContain('variant="outline"')
+    expect(definition.slice(hide - 200, hide + 200)).toContain('rounded-full')
+    expect(vocabulary).toContain('#actions')
+    /*
+      The panel shows both states rather than naming an act on them: alone in
+      that head there is nothing to read the state off, and a lone button naming
+      an act cannot say whether the act already happened. One segment is filled,
+      and it is the one you are in.
+    */
+    expect(vocabulary).toContain('<UFieldGroup')
+    expect(vocabulary).toContain(":variant=\"tooltipsShown ? 'solid' : 'outline'\"")
+    expect(vocabulary).toContain(":variant=\"tooltipsShown ? 'outline' : 'solid'\"")
+    /* Selection is the theme's own accent; the report has no black of its own. */
+    expect(vocabulary).toContain(":color=\"tooltipsShown ? 'primary' : 'neutral'\"")
+    expect(vocabulary).toContain(":color=\"tooltipsShown ? 'neutral' : 'primary'\"")
+    expect(vocabulary).toContain(':aria-pressed="tooltipsShown"')
+    expect(vocabulary).toContain(':aria-pressed="!tooltipsShown"')
+    expect(shell).toContain('<BlrVocabulary :context="vocabularyContext" tooltips />')
+    expect(shell).not.toMatch(/<BlrReportTools[^>]*v-if/)
+  })
+
+  /*
+    The panel's own job is looking a word up, so the switch rides in the head
+    beside the close button rather than costing a row of the list or a band under
+    the search field, where the Back button already appears.
+  */
+  it('keeps the tooltip switch in the panel head, not in its list', () => {
+    const vocabulary = source('app/components/BlrVocabulary.vue')
+    const actions = vocabulary.indexOf('#actions')
+    const list = vocabulary.indexOf('data-vocabulary-list')
+
+    expect(actions).toBeGreaterThan(-1)
+    expect(actions).toBeGreaterThan(list)
+    expect(vocabulary).not.toContain('#footer')
+    /* On the description's line, under the close button, not centred on the title. */
+    const block = vocabulary.slice(actions, vocabulary.indexOf('</template>', actions))
+    expect(block).toContain('self-end')
+  })
+
+  /*
+    The docs host mounts the same panel and draws no tooltips, so the switch is
+    behind a host declaration rather than something the panel assumes.
+  */
+  it('keeps the tooltip switch behind the host that draws tooltips', () => {
+    const vocabulary = source('app/components/BlrVocabulary.vue')
+    const actions = vocabulary.indexOf('#actions')
+
+    expect(vocabulary).toContain('tooltips?: boolean')
+    expect(vocabulary.slice(actions - 40, actions)).toContain('v-if="tooltips"')
+  })
+
+  /*
+    A host may render the report on the server, so the preference has to be known
+    before the first paint. Local storage would draw the tooltips and take them
+    away on every page load for the one reader who asked for them gone.
+  */
+  it('keeps the tooltip preference in a cookie that outlives a refresh', () => {
+    const tooltips = source('app/composables/useTooltips.ts')
+
+    expect(tooltips).toContain("useCookie<'on' | 'off'>('blr-tooltips'")
+    expect(tooltips).toContain('maxAge: 60 * 60 * 24 * 365')
+    expect(tooltips).not.toContain('localStorage')
+    expect(tooltips).not.toContain('useState')
+  })
+
   it('scrolls collection controls with their list instead of pinning them as chrome', () => {
     const reportShell = source('app/components/BlrReportShell.vue')
     const docs = source('app/utils/resourceDocs.ts')
