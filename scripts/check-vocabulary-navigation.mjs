@@ -59,6 +59,22 @@ async function checkBreadcrumbDefinitions(page, touch = false) {
     await expect(help).toBeFocused()
 
     if (route.parent) {
+      await page.getByRole('button', { name: 'Vocabulary', exact: true }).click()
+      const panel = page.getByRole('dialog', { name: 'Vocabulary', exact: true })
+      const term = panel.locator(`[data-term="${route.key.split(':')[0]}"]`)
+      // Being in the viewport is insufficient: the sticky category heading
+      // must not cover the Scenario's title or its documentation link.
+      for (const element of [term.getByRole('heading'), term.getByRole('link')]) {
+        await expect.poll(() => element.evaluate(el => {
+          const bounds = el.getBoundingClientRect()
+          return [bounds.top + 1, bounds.bottom - 1].every(y =>
+            el.contains(document.elementFromPoint(bounds.left + bounds.width / 2, y)))
+        })).toBe(true)
+      }
+      await page.keyboard.press('Escape')
+      await expect(panel).toBeHidden()
+      await expect(page).toHaveURL(resourceUrl)
+
       await header.getByRole('button', { name: `Back to ${route.parent}`, exact: true }).click()
       await expect.poll(() => new URL(page.url()).searchParams.get('e')).toBe(route.parentKey)
       await expect(help).toBeVisible()
@@ -345,7 +361,7 @@ try {
     expect(bounds.x + bounds.width).toBeLessThanOrEqual(width - 15)
     await mobile.keyboard.press('Escape')
   }
-  await mobile.getByRole('button', { name: 'Open the vocabulary', exact: true }).click()
+  await mobile.getByRole('button', { name: 'Vocabulary', exact: true }).click()
   const mobilePanel = mobile.getByRole('dialog', { name: 'Vocabulary', exact: true })
   await expect(mobilePanel).toBeVisible()
   await expect(mobilePanel.getByRole('button', { name: 'Close', exact: true })).toBeFocused()
@@ -370,7 +386,7 @@ try {
   await mobilePanel.getByRole('textbox', { name: 'Filter the vocabulary' }).fill('Arc')
   await mobilePanel.getByRole('button', { name: 'Close', exact: true }).click()
   await expect(mobilePanel).toBeHidden()
-  await mobile.getByRole('button', { name: 'Open the vocabulary', exact: true }).click()
+  await mobile.getByRole('button', { name: 'Vocabulary', exact: true }).click()
   await expect(mobilePanel.getByRole('textbox', { name: 'Filter the vocabulary' })).toHaveValue('')
   await expect(mobilePanel.getByRole('button', { name: /^Interfaces \d+ more terms$/ }))
     .toHaveAttribute('aria-expanded', 'true')

@@ -162,8 +162,15 @@ function onOpenAutoFocus(event: Event) {
     event.preventDefault()
     focusTerm()
   } else {
-    listEl.value?.querySelector<HTMLElement>(`[data-term="${props.context ?? 'product'}"]`)
-      ?.scrollIntoView({ block: 'start' })
+    const row = listEl.value?.querySelector<HTMLElement>(`[data-term="${props.context ?? 'product'}"]`)
+    row?.scrollIntoView({ block: 'start' })
+    // A nested term must start below its sticky section heading. Measure the
+    // overlap so wrapped headings and rows near the list's end also work.
+    const heading = row?.closest('[data-vocabulary-page]')?.querySelector('h3')
+    if (row && heading && !heading.contains(row) && listEl.value) {
+      const overlap = heading.getBoundingClientRect().bottom - row.getBoundingClientRect().top
+      if (overlap > 0) listEl.value.scrollTop -= overlap
+    }
     if (window.matchMedia('(min-width: 640px) and (pointer: fine)').matches) {
       event.preventDefault()
       searchInput.value?.inputRef?.focus({ preventScroll: true })
