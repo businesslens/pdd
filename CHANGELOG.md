@@ -5,6 +5,21 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.0] - 2026-09-06
+
+### Added
+
+- Inline term definitions and a searchable Vocabulary panel for reports and docs.
+- Option to hide the tooltips that explain terms, with the preference remembered.
+
+### Changed
+
+- Refined report header controls, icons, coverage badges, and documentation.
+
+### Fixed
+
+- Improved breadcrumb and definition-button accessibility.
+
 ## [0.9.0] - 2026-09-04
 
 ### Added
@@ -696,7 +711,7 @@ Initial public launch of the repository.
   `docs/format.md`.
 - Claude plugin manifest and marketplace entry.
 
-[Unreleased]: https://github.com/businesslens/pdd/compare/v0.9.0...HEAD
+[0.10.0]: https://github.com/businesslens/pdd/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/businesslens/pdd/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/businesslens/pdd/compare/v0.7.2...v0.8.0
 [0.7.2]: https://github.com/businesslens/pdd/compare/v0.7.1...v0.7.2

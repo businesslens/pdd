@@ -4,18 +4,25 @@ description: Coherent contexts of Product use with a stable audience, access bou
 section: open-source
 group: Product Model
 order: 11
+terms:
+  - term: Experience
+    definition: "A stable context for using the Product within one Interface, with a defined audience, access mode, and capability boundary."
+  - term: Access mode
+    anchor: the-file
+    definition: "Who may enter an Experience: public, authenticated, or restricted."
 ---
 
 # Experiences
 
-**An Experience is a coherent context in which Actors use the Product.** Public
-discovery, personal workspace, administration, account management, and partner
-automation are possible Experiences.
+**An Experience is a stable context for using the Product within one
+[Interface](./interfaces.md).** It has a defined audience, access mode, and
+capability boundary. Public discovery, personal workspace, administration,
+account management, and partner automation are possible Experiences.
 
-Experiences are optional. An Experience has a stable audience, access boundary,
-and capability boundary inside exactly one [Interface](./interfaces.md), which
-is determined by its folder. Similar Experiences on another Interface are
-counterparts with separate qualified ids, not one shared resource.
+An Experience belongs to exactly one Interface, determined by its folder.
+Similar Experiences on another Interface are counterparts with separate
+qualified ids. The rules below determine when an Interface requires Experiences
+and when existing Experiences are justified.
 
 ## When you create one
 

@@ -4,6 +4,44 @@ description: Durable Product abilities with explicit availability Contexts, and 
 section: open-source
 group: Product Model
 order: 14
+terms:
+  - term: Capability
+    definition: "A durable ability of the Product: what it can do, independent of any one route, command, or module."
+  - term: Capability Scenario
+    anchor: capability-scenarios
+    definition: "One observable acceptance case for a Capability: a trigger, typed Steps, and an outcome."
+  - term: Context
+    anchor: availability
+    definition: "Where behavior is available, occurs, or is constrained: one Interface, Experience, or Screen. How specific it must be depends on what uses it."
+  - term: Step
+    anchor: what-a-step-does-to-the-products-things
+    definition: "One action or condition in a Scenario. Actions are performed by an Actor or the Product; effects on Entities are recorded explicitly."
+  - term: Ends with
+    anchor: what-a-step-does-to-the-products-things
+    definition: "The last creation, change, or removal of each Entity instance in a Scenario, including the resulting State when specified."
+  - term: Scenario kind
+    anchor: the-capability-scenario-file
+    definition: "A category for a Scenario, such as primary or edge, defined in the model's taxonomies.yaml."
+  - term: Trigger
+    on: capability-scenario
+    anchor: the-capability-scenario-file
+    definition: "The observable condition that starts the Scenario."
+  - term: Outcome
+    on: capability-scenario
+    anchor: the-capability-scenario-file
+    definition: "The observable result once the Scenario has run."
+  - term: Route
+    on: capability-scenario
+    anchor: routes-steps-and-context-places
+    definition: "One named way the same Steps play out in different places. A route varies Context only; different Steps mean a different Scenario."
+  - term: Decision point
+    on: capability-scenario
+    anchor: capability-scenario-decision-points
+    definition: "A question with alternative branches that lead to the same Capability Scenario outcome. A different outcome requires another Scenario."
+  - term: Edge case
+    on: capability-scenario
+    anchor: the-capability-scenario-file
+    definition: "A condition and its consequence recorded within a Scenario, without changing its path."
 ---
 
 # Capabilities
@@ -126,8 +164,8 @@ is verified independently.
 one Capability.** It states a particular starting condition, the local behavior,
 and one terminal result for that ability.
 
-A Scenario always belongs to exactly one parent, and the parent decides which
-kind it is. A Scenario owned by a Capability is a Capability Scenario; a
+A Scenario always belongs to exactly one parent, which determines its resource
+type. A Scenario owned by a Capability is a Capability Scenario; a
 Scenario owned by a Journey is a
 [Journey Scenario](./journeys.md#journey-scenarios). There is no unowned
 Scenario and no way for one Scenario to serve both parents.
@@ -138,6 +176,10 @@ acceptance coverage for a Capability. Missing coverage is an error for a
 Blueprint, whether or not the Product has any [Journeys](./journeys.md).
 
 ## What a Step does to the Product's things
+
+A Step records one action or condition in a Scenario. Its `kind` is `actor`
+for an Actor's action, `product` for the Product's action, or `condition` for a
+condition that holds. Its effects on Entities are recorded explicitly.
 
 **`entities` is required on every Step**, and a Step that touches nothing
 writes `entities: []`, so an omission is always a claim rather than a silence.
@@ -175,6 +217,11 @@ change, and never saves an Entity from being an orphan. It exists so a Step
 whose text says *the Reader chooses a saved item* also says so where a tool can
 read it. A Step whose text names an Entity's title and declares it nowhere is a
 finding — an error in a `complete` model, a warning otherwise.
+
+The report's **Ends with** summary takes the last creation, change, or removal
+of each Entity instance in Step order. It includes the resulting State when
+specified, and also shows removals and changes without a named State. Later
+reads do not replace that result.
 
 The lifecycle of every Entity is composed from these entries across the whole
 model, and a [Business Rule](./business-rules.md) that says who may perform an
@@ -284,7 +331,7 @@ else.
 | Field or section | Required | Constraint |
 | --- | --- | --- |
 | Filename | yes | Use a globally unique lowercase kebab-case Scenario ID. |
-| `kind` | yes | Name an entry in `taxonomies.yaml`. |
+| `kind` | yes | Choose a Scenario category, such as `primary` or `edge`, defined in `taxonomies.yaml`. |
 | `routes` | yes | Map each unique lowercase kebab-case route ID to a unique human-readable name. |
 | `steps` | yes | Give a non-empty ordered list of typed Steps. Each Step has one-line `text`, `kind: actor|product|condition`, and optional route-specific `contexts`. |
 | `steps[].actor` | for Actor Steps | Name the Entity that acts and performs the Step when `kind: actor`. On a `product` or `condition` Step it is optional and says who the Step is attributable to. |
@@ -299,7 +346,7 @@ else.
 | `## Trigger` | yes | State the observable starting condition. |
 | `## Steps` | no | Structured Steps live only in frontmatter. |
 | `## Decision points` | no | Give each H3 decision one Product question and at least two `condition → outcome` branches. |
-| `## Edge cases` | no | Provide a non-empty bullet list when present, with each item on one physical line. |
+| `## Edge cases` | no | List conditions and their consequences without changing the Scenario's path. When present, use a non-empty bullet list with each item on one physical line. |
 | `## Outcome` | yes | State one local observable result of the Capability. |
 
 A Capability Scenario cannot declare `result`, `actors`, `availability`, or a
@@ -340,7 +387,7 @@ backlinks are all derived from these Context claims.
 
 ### Capability Scenario decision points
 
-Each decision has an H3 title, one non-empty Product question, and at least two
-`condition → outcome` branches. Use decisions for real behavioral forks whose
-branches converge on the Scenario's one Outcome. A branch with a materially
-different Outcome belongs in another Capability Scenario.
+Each Decision point asks a Product question with alternative branches that
+lead to the same Capability Scenario Outcome. Give it an H3 title, one
+non-empty question, and at least two `condition → outcome` branches. A branch
+with a materially different Outcome belongs in another Capability Scenario.

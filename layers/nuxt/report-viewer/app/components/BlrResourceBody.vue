@@ -25,7 +25,8 @@ import type {
   EntityView,
   ScreenView
 } from '../utils/reportWorkspace'
-import { isScenarioKind, resolveResource, scenarioStepMatrix } from '../utils/reportWorkspace'
+import { entityFacetOf, isScenarioKind, resolveResource, scenarioStepMatrix } from '../utils/reportWorkspace'
+import { scenarioTerm } from '../utils/vocabulary'
 import { hasAuthoredBody } from '../utils/pageSections'
 import {
   SCENARIO_ROUTE_INLINE_WIDTH,
@@ -53,6 +54,19 @@ const asJourney = computed(() => props.resource as JourneyView)
 const asScenario = computed(() => props.resource as ScenarioView)
 const asRule = computed(() => props.resource as RuleView)
 const isScenario = computed(() => isScenarioKind(props.resource.kind))
+
+/* An Entity chip is drawn by the facet the thing plays. The relation beside it
+   already says it is an Entity, so the type glyph would spend the mark on the
+   sentence it sits inside. */
+function entityChip(id: string) {
+  const resource = resolveResource(props.workspace, 'entity', id)
+  return resource?.kind === 'entity' ? resource : undefined
+}
+
+/* Trigger, Outcome and the rest are explained once per Scenario type, and a
+   reader on a Journey Scenario asking what a Trigger is means that one. */
+const scenarioWord = (word: 'trigger' | 'outcome' | 'route' | 'decision-point' | 'edge-case') =>
+  scenarioTerm(asScenario.value.scenarioType, word)
 
 const capabilityBoundary = computed(() => {
   if (props.resource.kind === 'interface') return (props.resource as InterfaceView).capabilityBoundary
@@ -325,7 +339,7 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
       </div>
 
       <div class="space-y-2 pt-2">
-        <h3 class="text-sm font-semibold text-highlighted">Applies to</h3>
+        <h3 class="text-sm font-semibold text-highlighted"><BlrTerm slug="applies-to" /></h3>
         <div class="space-y-2">
           <article
             v-for="binding in ruleBindings"
@@ -345,8 +359,8 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
               Every supported Context
             </p>
             <div v-else-if="binding.contexts.length" class="space-y-1.5">
-              <p v-if="binding.targetKind" class="blr-field">Only in</p>
-              <p v-else class="blr-field">Context</p>
+              <p v-if="binding.targetKind" class="blr-field"><BlrTerm slug="context" text="Only in" /></p>
+              <p v-else class="blr-field"><BlrTerm slug="context" /></p>
               <div class="flex flex-wrap gap-1.5">
                 <BlrContextPlace
                   v-for="context in binding.contexts"
@@ -367,7 +381,7 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
         a claim of its own, and says so.
       -->
       <div v-if="asRule.permits !== null" class="space-y-2 pt-2">
-        <h3 class="text-sm font-semibold text-highlighted">Who may</h3>
+        <h3 class="text-sm font-semibold text-highlighted"><BlrTerm slug="who-may" /></h3>
         <p v-if="asRule.prohibits" class="rounded-lg border border-dashed border-accented px-3.5 py-3 text-sm text-default">
           <UIcon name="i-lucide-ban" class="me-1.5 inline size-4 align-text-bottom text-muted" />
           Nobody. This operation is forbidden to everyone.
@@ -387,17 +401,17 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
     </section>
 
     <section v-if="resource.intent" class="space-y-2">
-      <h2 class="blr-page-heading">Intent</h2>
+      <h2 class="blr-page-heading"><BlrTerm slug="intent" /></h2>
       <BlrProse :text="resource.intent" class="max-w-3xl" />
     </section>
 
     <section v-if="resource.kind === 'journey'" class="space-y-2">
-      <h2 class="blr-page-heading">Success criterion</h2>
+      <h2 class="blr-page-heading"><BlrTerm slug="success-criterion" /></h2>
       <BlrProse :text="asJourney.successCriterion" class="max-w-3xl" />
       <!-- What the achieved paths leave behind — derived from their last Step
            naming each thing, beside the prose that says it in words. -->
       <div v-if="asJourney.leavesBehind.length" class="flex flex-wrap items-center gap-x-2 gap-y-1.5 pt-1">
-        <span class="blr-field">Leaves behind</span>
+        <span class="blr-field"><BlrTerm slug="leaves-behind" /></span>
         <BlrStepEntity
           v-for="ending in asJourney.leavesBehind"
           :key="`${ending.entityId}-${ending.as}`"
@@ -412,7 +426,8 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
     <!-- CAPABILITY: what it does to each thing, one line per Entity. -->
     <section v-if="resource.kind === 'capability' && capabilityEffects.length" class="space-y-2">
       <h2 class="blr-page-heading">
-        What it changes <span class="blr-meta ms-1">{{ capabilityEffects.length }}</span>
+        <BlrTerm slug="operation" text="What it changes" />
+        <span class="blr-meta ms-1">{{ capabilityEffects.length }}</span>
       </h2>
       <ul class="space-y-1.5">
         <li
@@ -421,7 +436,11 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
           class="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border border-default bg-elevated/30 px-3 py-2 text-sm"
         >
           <button type="button" class="blr-chip" @click="openEntity(line.entityId)">
-            <UIcon name="i-lucide-box" class="size-3.5" />{{ line.title }}
+            <BlrEntityMark
+              :facet="entityFacetOf(entityChip(line.entityId)) ?? 'kept'"
+              :acts="entityChip(line.entityId)?.acts"
+              size="xs"
+            />{{ line.title }}
           </button>
           <span v-for="reading in line.readings" :key="reading" class="text-default">{{ reading }}</span>
           <span class="blr-meta ms-auto">{{ line.scenarioIds.length }} {{ line.scenarioIds.length === 1 ? 'Scenario' : 'Scenarios' }}</span>
@@ -434,7 +453,7 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
     </section>
 
     <section v-if="capabilityBoundary" class="space-y-2">
-      <h2 class="blr-page-heading">Capability boundary</h2>
+      <h2 class="blr-page-heading"><BlrTerm slug="capability-boundary" /></h2>
       <div class="max-w-3xl rounded-xl border border-default bg-elevated/35 p-4 text-default">
         <BlrProse :text="capabilityBoundary" />
       </div>
@@ -471,20 +490,23 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
       </section>
 
       <section class="space-y-2">
-        <h2 class="blr-page-heading">Trigger</h2>
+        <h2 class="blr-page-heading"><BlrTerm :slug="scenarioWord('trigger')" text="Trigger" /></h2>
         <BlrProse :text="asScenario.trigger" size="base" class="max-w-3xl" />
       </section>
 
       <!-- One authored Scenario sequence: meaning and Contexts stay together. -->
       <section v-if="stepMatrix" ref="routeShellEl" class="space-y-3">
         <header class="flex flex-wrap items-center gap-x-4 gap-y-2">
-          <h2 class="blr-page-heading">Steps <span class="blr-meta ms-1">{{ stepMeta }}</span></h2>
+          <h2 class="blr-page-heading">
+            <BlrTerm slug="step" text="Steps" />
+            <span class="blr-meta ms-1">{{ stepMeta }}</span>
+          </h2>
 
           <!-- A narrow reading chooses one route. A wider reading pages an
                authored-order window and lets the reader choose its width. -->
           <div v-if="stepMatrix.routes.length > 1" class="ms-auto flex min-w-0 flex-wrap items-center gap-1.5">
             <template v-if="routeInline">
-              <span class="blr-field me-1">Route</span>
+              <span class="blr-field me-1"><BlrTerm :slug="scenarioWord('route')" text="Route" /></span>
               <UButton
                 icon="i-lucide-chevron-left"
                 color="neutral"
@@ -521,7 +543,7 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
 
             <template v-else>
               <template v-if="routeWindowItems.length > 1">
-                <span class="blr-field me-1">Routes</span>
+                <span class="blr-field me-1"><BlrTerm :slug="scenarioWord('route')" text="Routes" /></span>
                 <UButton
                   icon="i-lucide-chevron-left"
                   color="neutral"
@@ -633,8 +655,8 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
                         :aria-label="`Open ${stepActor(step.actorId)!.title}`"
                         @click="selectStepActor(step.actorId)"
                       >
-                        <BlrActorType
-                          :actor-kind="stepActor(step.actorId)!.entityKind!"
+                        <BlrEntityMark
+                          :facet="stepActor(step.actorId)!.entityKind!"
                           :acts="stepActor(step.actorId)!.acts!"
                           size="xs"
                         />
@@ -747,8 +769,8 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
                     :aria-label="`Open ${stepActor(step.actorId)!.title}`"
                     @click="selectStepActor(step.actorId)"
                   >
-                    <BlrActorType
-                      :actor-kind="stepActor(step.actorId)!.entityKind!"
+                    <BlrEntityMark
+                      :facet="stepActor(step.actorId)!.entityKind!"
                       :acts="stepActor(step.actorId)!.acts!"
                       size="xs"
                     />
@@ -827,7 +849,8 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
 
       <section v-if="asScenario.decisionPoints.length" class="space-y-3">
         <h2 class="blr-page-heading">
-          Decision points <span class="blr-meta ms-1">{{ asScenario.decisionPoints.length }}</span>
+          <BlrTerm :slug="scenarioWord('decision-point')" text="Decision points" />
+          <span class="blr-meta ms-1">{{ asScenario.decisionPoints.length }}</span>
         </h2>
         <div class="grid gap-3 lg:grid-cols-2">
           <div
@@ -853,7 +876,7 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
       </section>
 
       <section class="space-y-2">
-        <h2 class="blr-page-heading">Outcome</h2>
+        <h2 class="blr-page-heading"><BlrTerm :slug="scenarioWord('outcome')" text="Outcome" /></h2>
         <BlrProse :text="asScenario.outcome" class="max-w-3xl" />
         <!--
           Where the Scenario leaves each thing it changed — the last change
@@ -861,7 +884,7 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
           only wants the answer should not have to parse the sentence for it.
         -->
         <div v-if="asScenario.outcomeStates.length" class="flex flex-wrap items-center gap-x-2 gap-y-1.5 pt-1">
-          <span class="blr-field">Ends with</span>
+          <span class="blr-field"><BlrTerm slug="ends-with" /></span>
           <BlrStepEntity
             v-for="ending in asScenario.outcomeStates"
             :key="`${ending.entityId}-${ending.as}`"
@@ -874,7 +897,10 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
       </section>
 
       <section v-if="asScenario.edgeCases.length" class="space-y-2">
-        <h2 class="blr-page-heading">Edge cases <span class="blr-meta ms-1">{{ asScenario.edgeCases.length }}</span></h2>
+        <h2 class="blr-page-heading">
+          <BlrTerm :slug="scenarioWord('edge-case')" text="Edge cases" />
+          <span class="blr-meta ms-1">{{ asScenario.edgeCases.length }}</span>
+        </h2>
         <ul class="max-w-3xl space-y-2 text-sm text-default">
           <li v-for="edgeCase in asScenario.edgeCases" :key="edgeCase" class="flex gap-2">
             <span class="mt-2 size-1.5 shrink-0 rounded-full bg-(--ui-border-accented)" />{{ edgeCase }}
@@ -925,7 +951,10 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
         </ul>
       </section>
       <section v-if="asScreen.states.length" class="space-y-2">
-        <h2 class="blr-page-heading">View states <span class="blr-meta ms-1">{{ asScreen.states.length }}</span></h2>
+        <h2 class="blr-page-heading">
+          <BlrTerm slug="view-state" text="View states" />
+          <span class="blr-meta ms-1">{{ asScreen.states.length }}</span>
+        </h2>
         <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           <div
             v-for="state in asScreen.states"
@@ -942,7 +971,7 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
     <!-- ENTITY: what the Product keeps, what it can be, and how it moves. -->
     <template v-if="resource.kind === 'entity'">
       <section v-if="asEntity.acts" class="flex flex-wrap items-center gap-2 text-sm text-default">
-        <BlrActorType :actor-kind="asEntity.entityKind!" :acts="asEntity.acts" size="xs" />
+        <BlrEntityMark :facet="asEntity.entityKind!" :acts="asEntity.acts" size="xs" />
         <span>
           Acts on the Product as {{ asEntity.acts === 'external' ? 'an external' : 'an internal' }} {{ asEntity.entityKind }}.
         </span>
@@ -950,7 +979,8 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
 
       <section v-if="asEntity.informationKept.length" class="space-y-2">
         <h2 class="blr-page-heading">
-          Information kept <span class="blr-meta ms-1">{{ asEntity.informationKept.length }}</span>
+          <BlrTerm slug="information-kept" text="Information kept" />
+          <span class="blr-meta ms-1">{{ asEntity.informationKept.length }}</span>
         </h2>
         <ul class="grid gap-2 sm:grid-cols-2">
           <li
@@ -976,7 +1006,8 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
 
       <section v-if="entityRelations.length" class="space-y-2">
         <h2 class="blr-page-heading">
-          Relationships <span class="blr-meta ms-1">{{ entityRelations.length }}</span>
+          <BlrTerm slug="relation" text="Relationships" />
+          <span class="blr-meta ms-1">{{ entityRelations.length }}</span>
         </h2>
         <ul class="space-y-1.5">
           <li
@@ -992,7 +1023,11 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
             <span class="font-medium text-highlighted">{{ relation.verb }}</span>
             <span class="blr-meta">{{ relation.cardinality }}</span>
             <button type="button" class="blr-chip" @click="openEntity(relation.entityId)">
-              <UIcon name="i-lucide-box" class="size-3.5" />{{ relation.title }}
+              <BlrEntityMark
+                :facet="entityFacetOf(entityChip(relation.entityId)) ?? 'kept'"
+                :acts="entityChip(relation.entityId)?.acts"
+                size="xs"
+              />{{ relation.title }}
             </button>
             <span v-if="relation.derived" class="blr-meta ms-auto">derived</span>
           </li>
@@ -1002,7 +1037,7 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
     </template>
 
     <section v-if="domainId" class="space-y-2">
-      <h2 class="blr-page-heading">Subject</h2>
+      <h2 class="blr-page-heading"><BlrTerm slug="domain" text="Subject" /></h2>
       <BlrLinks
         :workspace="workspace"
         :ids="[domainId]"

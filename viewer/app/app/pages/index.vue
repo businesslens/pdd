@@ -146,6 +146,7 @@ watch([section, resource, tab, scenarioRoute, routeColumns], () => {
         v-model:route-columns="routeColumns"
         :report="data"
         :logo-src="logoSrc"
+        tools-target="#businesslens-report-tools"
         class="businesslens-local-report min-h-0 flex-1"
       />
     </template>

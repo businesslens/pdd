@@ -1,15 +1,28 @@
 ---
 title: Interfaces
-description: Supported interaction forms through which Actors access the Product and for which behavior can be required independently.
+description: Supported ways for Actors to interact with the Product, with behavior that can be required independently.
 section: open-source
 group: Product Model
 order: 10
+terms:
+  - term: Interface
+    definition: "A supported way for Actors to interact with the Product, such as a web app, a CLI, or a partner API."
+  - term: Interface type
+    anchor: the-file
+    definition: "The form an Interface takes: web, mobile app, desktop app, CLI, API, webhook, messaging, voice, device, or agent."
+  - term: Capability boundary
+    anchor: the-file
+    definition: "What an Interface, Experience, or Screen supports and excludes. Capability availability is declared on each Capability."
+  - term: Entry point
+    aliases: [Starts at]
+    anchor: the-file
+    definition: "A Product-facing route or address where an Actor arrives, such as a path, a deep link, or a command."
 ---
 
 # Interfaces
 
-**An Interface is a supported interaction form through which Actors access the
-Product.** Customer web, reader mobile, operator CLI, and partner API can be
+**An Interface is a supported way for Actors to interact with the Product.**
+Customer web, reader mobile, operator CLI, and partner API can be
 Interfaces when the Product makes an independently meaningful commitment
 through them.
 
@@ -86,8 +99,13 @@ Supports customer shopping. It does not expose store administration.
 | `entryPoints` | no | List Product-facing roots such as `/`, `reader://home`, `product admin`, or `/v1`. Key each one with this Interface's own `type`, or with **another Interface's id** when that is where a reader arrives from — a local web report opened by a command says so here rather than in prose. |
 | `references` | no | Use the documented [Reference](./references.md) shape. |
 | H1 | yes | Name the Interface. |
-| Lead paragraph | yes | Describe the supported interaction form. |
+| Lead paragraph | yes | Describe how Actors interact with the Product through this Interface. |
 | `## Capability boundary` | yes | State what the Interface supports and excludes. |
+
+The Capability boundary describes what the Interface supports and excludes in
+prose. It does not list Capability names: each [Capability](./capabilities.md#availability)
+declares where it is available. Experiences and Screens also require this
+section, describing what each supports and excludes.
 
 Every model needs at least one Interface.
 

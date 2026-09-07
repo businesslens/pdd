@@ -1,6 +1,6 @@
 {
   "name": "businesslens",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "description": "Product-Driven Development for coding agents: a git-tracked Product Model in .businesslens/, verified against implementation.",
   "type": "module",
   "license": "MIT",
@@ -64,6 +64,7 @@
     "test": "vitest run",
     "package:size": "node scripts/check-package-size.mjs",
     "theme:icons": "node scripts/build-theme-icons.mjs",
+    "vocabulary": "node scripts/build-vocabulary.mjs",
     "blueprints:check": "node scripts/blueprints-check.mjs",
     "blueprints:publish": "node scripts/blueprints-publish.mjs",
     "check": "node scripts/check-repo.mjs",

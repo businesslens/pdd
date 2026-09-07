@@ -2,6 +2,11 @@
 import { readFile, readdir, access } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 import { parse as parseYaml } from 'yaml'
+import {
+  VOCABULARY_MODULE,
+  readVocabulary,
+  renderModule
+} from './vocabulary.mjs'
 
 const root = process.cwd()
 const errors = []
@@ -382,6 +387,18 @@ for (const section of DOC_SECTIONS) {
     errors.push(
       `docs section "${section}" orders must be contiguous from 1; found ${orders.join(', ')}`
     )
+  }
+}
+
+// Definitions live in the frontmatter of the page that explains each term.
+// Check the generated registry still matches its source, so an edit on a page
+// cannot reach the docs site while the report still shows the old line.
+const vocabulary = await readVocabulary(root)
+errors.push(...vocabulary.errors)
+if (!vocabulary.errors.length) {
+  const actual = await readFile(resolve(root, VOCABULARY_MODULE), 'utf8').catch(() => null)
+  if (actual !== renderModule(vocabulary.terms)) {
+    errors.push(`${VOCABULARY_MODULE} is stale; run \`npm run vocabulary\``)
   }
 }
 

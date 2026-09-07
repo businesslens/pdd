@@ -16,8 +16,7 @@
  * the first.
  */
 import type { AnyResourceView, EntityView, ReportWorkspace, ScenarioStepEntityView } from '../utils/reportWorkspace'
-import { ENTITY_KIND_META, resolveResource } from '../utils/reportWorkspace'
-import { slotColor } from '../utils/reportPalette'
+import { entityFacetOf, resolveResource } from '../utils/reportWorkspace'
 
 const props = defineProps<{
   workspace: ReportWorkspace
@@ -28,21 +27,10 @@ const props = defineProps<{
 
 const emit = defineEmits<{ select: [resource: AnyResourceView] }>()
 
-const colorMode = useColorMode()
-const mounted = ref(false)
-onMounted(() => {
-  mounted.value = true
-})
-
 const entity = computed<EntityView | undefined>(() => {
   const resource = resolveResource(props.workspace, 'entity', props.mention.entityId)
   return resource?.kind === 'entity' ? resource : undefined
 })
-
-const color = computed(() => slotColor(
-  ENTITY_KIND_META.entity.slot,
-  mounted.value && colorMode.value === 'dark'
-))
 
 /* `changes` is the default and the ordinary case, so it is the one effect that
    costs no word — a label on every chip would separate nothing. */
@@ -99,10 +87,12 @@ const description = computed(() => {
       :aria-label="`Open Entity ${entity.title}`"
       @click="emit('select', entity)"
     >
-      <UIcon
-        :name="ENTITY_KIND_META.entity.icon"
-        class="size-3.5 shrink-0"
-        :style="{ color, opacity: isRead ? 0.55 : 1 }"
+      <BlrEntityMark
+        :facet="entityFacetOf(entity) ?? 'kept'"
+        :acts="entity?.acts"
+        size="xs"
+        class="shrink-0"
+        :style="{ opacity: isRead ? 0.55 : 1 }"
       />
       <span class="min-w-0 truncate">{{ label }}</span>
       <span v-if="effectLabel" class="shrink-0 font-normal text-muted">{{ effectLabel }}</span>

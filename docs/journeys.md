@@ -1,16 +1,51 @@
 ---
 title: Journeys
-description: Optional coherent Actor goals that deliberately compose multiple durable Product Capabilities, and the Journey Scenarios that route them end to end.
+description: Optional Actor goals whose successful completion requires several Capabilities working together, with Journey Scenarios describing each path.
 section: open-source
 group: Product Model
 order: 15
+terms:
+  - term: Journey
+    definition: "An Actor goal whose successful completion requires several Capabilities working together."
+  - term: Journey Scenario
+    anchor: journey-scenarios
+    definition: "One path through a Journey, ending with its goal achieved or not achieved."
+  - term: Success criterion
+    anchor: the-file
+    definition: "How you know the Journey's goal was met."
+  - term: Leaves behind
+    anchor: the-file
+    definition: "The Entity instances created, changed, or removed by a Journey's achieved paths, with final States when specified."
+  - term: Trigger
+    on: journey-scenario
+    anchor: the-journey-scenario-file
+    definition: "The observable condition that starts the Journey Scenario."
+  - term: Outcome
+    on: journey-scenario
+    anchor: the-journey-scenario-file
+    definition: "Where the path ends, and whether the Journey's goal was achieved."
+  - term: Result
+    anchor: the-journey-scenario-file
+    definition: "Whether this path achieves the Journey's goal: achieved, or not-achieved."
+  - term: Route
+    on: journey-scenario
+    anchor: steps-and-routes
+    definition: "One named way the same Steps play out in different places. A route varies Context only; different Steps mean a different Journey Scenario."
+  - term: Decision point
+    on: journey-scenario
+    anchor: journey-scenario-decision-points
+    definition: "A question with alternative branches that preserve the Journey Scenario's Capability sequence and outcome."
+  - term: Edge case
+    on: journey-scenario
+    anchor: the-journey-scenario-file
+    definition: "A condition and its consequence recorded within a Scenario, without changing its path."
 ---
 
 # Journeys
 
-**A Journey is one coherent Actor goal that requires deliberate composition of
-multiple [Capabilities](./capabilities.md):** contribute a code change, deliver
-an application, recover a deployment, or browse and buy.
+**A Journey is an Actor goal whose successful completion requires several
+[Capabilities](./capabilities.md) working together:** contribute a code change,
+deliver an application, recover a deployment, or browse and buy.
 
 A Journey owns only its high-level Goal, Success criterion, and Actors. Concrete
 Capability selection, order, branches, repetition, and failure belong to its
@@ -100,10 +135,12 @@ rather than becoming Journey frontmatter.
 
 Consumers derive the primary Capability and Domain sets from achieved paths.
 Capabilities seen only in not-achieved paths are marked separately as
-failure-only. What a Journey leaves behind — the things its achieved paths
-create, move, or remove, and the state each is left in — is derived from those
-paths' Steps and read beside the Success criterion. These are modeled coverage projections, not a mandatory canonical
-path or proof that partial mapping is exhaustive.
+failure-only. The report's **Leaves behind** summary shows Entity instances
+created, changed, or removed by achieved paths, with final States when specified.
+It derives these results from the paths' Steps and displays them beside the
+Success criterion. Removals and changes without a named State are included;
+reads do not replace the last change. These summaries describe the modeled
+paths, without claiming that a partial model covers every path.
 
 At least one Journey Scenario must name every Journey with `result: achieved`.
 That achieved Scenario must use at least two distinct Capabilities. This gives
@@ -208,7 +245,7 @@ The Journey goal is achieved: a reviewable change proposal exists.
 | Field or section | Required | Constraint |
 | --- | --- | --- |
 | Filename | yes | Use a globally unique lowercase kebab-case Scenario ID. |
-| `kind` | yes | Name an entry in `taxonomies.yaml`. |
+| `kind` | yes | Choose a Scenario category, such as `primary` or `edge`, defined in `taxonomies.yaml`. |
 | `result` | yes | Use `achieved` or `not-achieved`; it is orthogonal to `kind`. |
 | `routes` | yes | Map each unique lowercase kebab-case route ID to a unique human-readable name. |
 | `steps` | yes | Give a non-empty ordered list with one-line `text` and `kind: actor|product|condition`. A Step may name a Capability independently of its kind. |
@@ -220,7 +257,7 @@ The Journey goal is achieved: a reviewable change proposal exists.
 | `## Trigger` | yes | Begin with the Actor pursuing the Journey Goal. |
 | `## Steps` | no | Journey Steps live only in frontmatter so their text, kind, Actor, Capability, and Context places cannot disagree. |
 | `## Decision points` | no | Give each H3 decision one Product question and at least two `condition → outcome` branches. |
-| `## Edge cases` | no | Provide a non-empty bullet list when present, with each item on one physical line. |
+| `## Edge cases` | no | List conditions and their consequences without changing the Scenario's path. When present, use a non-empty bullet list with each item on one physical line. |
 | `## Outcome` | yes | State whether and why the Journey Goal was achieved or not achieved. |
 
 Business Rules own their Scenario relations; Journey Scenarios do not duplicate
@@ -321,7 +358,8 @@ Journey Goal was achieved. `kind: edge` with `result: achieved` and
 
 ### Journey Scenario decision points
 
-Each decision has an H3 title, one non-empty Product question, and at least two
-`condition → outcome` branches. Its branches stay within and converge on this
-Scenario's one Journey-level Outcome. A materially different Outcome belongs in
-another Journey Scenario.
+Each Decision point asks a Product question with alternative branches that
+preserve the Journey Scenario's Capability sequence and Outcome. Give it an H3
+title, one non-empty question, and at least two `condition → outcome` branches.
+A branch that changes the Capability sequence or has a materially different
+Outcome belongs in another Journey Scenario.

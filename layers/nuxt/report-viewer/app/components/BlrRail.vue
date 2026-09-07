@@ -63,7 +63,7 @@ const overviewColor = `var(--blr-slot-${ENTITY_KIND_META.product.slot})`
       :style="{ '--kind-color': overviewColor }"
       @click="emit('kind', 'product')"
     >
-      <UIcon name="i-lucide-package" class="size-4 shrink-0" :style="{ color: overviewColor }" />
+      <UIcon :name="ENTITY_KIND_META.product.icon" class="size-4 shrink-0" :style="{ color: overviewColor }" />
       <span class="flex-1 truncate text-start">Overview</span>
     </button>
     <button
@@ -73,7 +73,7 @@ const overviewColor = `var(--blr-slot-${ENTITY_KIND_META.product.slot})`
       :style="{ '--kind-color': overviewColor }"
       @click="emit('topology')"
     >
-      <UIcon name="i-lucide-waypoints" class="size-4 shrink-0" :style="{ color: overviewColor }" />
+      <UIcon name="i-lucide-network" class="size-4 shrink-0" :style="{ color: overviewColor }" />
       <span class="flex-1 truncate text-start">Topology</span>
     </button>
 

@@ -4,13 +4,49 @@ description: An Entity names a thing the Product keeps or reasons about, includi
 section: open-source
 group: Product Model
 order: 9
+terms:
+  - term: Entity
+    definition: "A distinct thing the Product keeps or reasons about, including the people and systems that act on it."
+  - term: Actor
+    anchor: actors-an-entity-that-acts
+    definition: "An Entity that acts on the Product. Actor is a role a thing plays where it acts, never a resource type of its own."
+  - term: Entity kind
+    anchor: actors-an-entity-that-acts
+    definition: "Whether an Entity that acts on the Product is a person or a system."
+  - term: Acts
+    anchor: external-systems-direction-decides
+    definition: "Which side of the boundary an Actor acts from: internal to the organisation running the Product, or external to it."
+  - term: Information kept
+    anchor: the-file
+    definition: "Named facts the Product keeps about an Entity. Each can be referenced by name; storage details and data types stay outside the model."
+  - term: State
+    anchor: states-and-the-lifecycle-nobody-authors
+    definition: "A named condition an Entity can be in, such as Pending or Refunded. Scenario Steps define how it moves between States."
+  - term: Left here by
+    anchor: states-and-the-lifecycle-nobody-authors
+    definition: "Scenarios containing a Step that puts this Entity in this State, even if a later Step changes it again."
+  - term: Arc
+    anchor: states-and-the-lifecycle-nobody-authors
+    definition: "A move a Step makes: into a State, out of one, or between two. Nothing declares arcs; the report composes them from the Scenarios."
+  - term: Lifecycle
+    aliases: [Machine]
+    anchor: states-and-the-lifecycle-nobody-authors
+    definition: "An Entity's States and Arcs, showing how it is created, changes state, or is removed, derived from Scenario Steps across the model."
+  - term: Relation
+    aliases: [Relationship]
+    anchor: relations
+    definition: "A relationship between Entities, such as Shopper owns Orders, stating how many instances can relate on each side."
+  - term: Changed by
+    anchor: relations
+    definition: "The Capabilities whose Steps create, change, or remove this thing."
 ---
 
 # Entities
 
-An Entity is a thing the Product keeps or reasons about, which an Actor can
-point at and the Product can tell apart from another one — an order, a listing,
-a saved item, and the Reader who saved it.
+An Entity is a distinct thing the Product keeps or reasons about, including
+the people and systems that act on it. An Actor can point to an instance and
+the Product can distinguish it from another — an order, a listing, a saved
+item, or the Reader who saved it.
 
 Capabilities name the Product's **verbs**. Entities name its **nouns**,
 including the people and systems that act on it: one resource type for things,
@@ -28,7 +64,7 @@ ordered" inside Order. A reader says *"this item"* and *"this collection"*, but
 persists is still an Entity when a reader points at it and the Product
 distinguishes it from another. A database row no Actor can name is not. This is
 why the section is called *Information kept* rather than *stored*: "kept" means
-held, in the sense of *keep a record* — not written to a table.
+information the Product holds, even when it is never saved to a database.
 
 Do not create one for every noun in the product. A word that appears in your
 prose and matches no Entity is a signal worth checking, but the answer is
@@ -46,9 +82,9 @@ them, and the ones that act carry `acts` and `kind`.
 the thing acts independently outside the Product owner's boundary, or on the
 Product owner's behalf. A staff operator is usually internal even when working
 remotely; a partner system is usually external even when connected over a
-private network. `kind` is `person` or `system`, **required when `acts` is
-set** and invalid otherwise — an Order says nothing, because *it's a thing* is
-the default, and an Entity that acts always says which it is.
+private network. Entity kind (`kind`) is `person` or `system`, **required when
+`acts` is set** and invalid otherwise — an Order says nothing, because *it's a
+thing* is the default, and an Entity that acts always says which it is.
 
 Two independent questions decide, neither ranking the other:
 
@@ -189,6 +225,10 @@ kept at all and a reason to exist because it acts.
 
 ## Named facts
 
+Information kept consists of named facts about an Entity, described in Product
+language. Each fact can be referenced by name; storage details and data types
+stay outside the model.
+
 Each fact is `- **Name** — prose`: the name in bold, an em dash with a space on
 each side as the separator, and non-empty prose after it. Names are unique
 within the Entity and are cited by exact match — a
@@ -196,20 +236,26 @@ within the Entity and are cited by exact match — a
 are the only places that cite one. It is the idiom `## States` already uses,
 where an H3 titled `Pending` is cited as `from: Pending`.
 
-It is **what the Product keeps, never how it is stored**: *When placed*, not
-`created_at TIMESTAMP`. No types, no keys, and no structured relations between
-Entities — *Items ordered* is prose, never `hasMany`. A fact is addressable,
-never typed: addressable is what a field-level Rule and a derivation need; typed
-is a data model. Computed information is still a fact.
+Write *When placed* instead of `created_at TIMESTAMP`. Describe *Items ordered*
+in prose; declare relationships between Entities in `relations`. Business Rules
+can use a fact's name to constrain access to it or describe how it is derived.
+Computed information is still a fact. Database keys and field types belong in
+the implementation documentation.
 
 ## States, and the lifecycle nobody authors
 
-`## States` lists what a thing can be. **The Entity declares its states and
-nothing about the moves between them.** The lifecycle is composed from Scenario
-Steps: a Step's `entities` entry says which Entity it creates, changes, or
-removes, and from and to which state, and the report draws the machine from
-every Scenario in the model — each arc labelled with the Capability whose Step
-draws it, and with the Rules that restrict or forbid it.
+`## States` lists the named conditions an Entity can be in, such as Pending or
+Refunded. **The Entity declares its States; Scenario Steps describe its creation,
+changes, and removal.** A Step's `entities` entry names the Entity, the effect,
+and any States it leaves or enters.
+
+The report combines those Steps across the model into a Lifecycle for each
+Entity. It shows that Entity's States and Arcs, with each Arc labelled by the
+Capabilities whose Steps produce it and the Rules that restrict or forbid it.
+
+Each State's **Left here by** list shows Scenarios containing a Step that puts
+the Entity in that State. A Scenario can appear under several States when its
+Steps move the Entity through them; the list does not claim it ends there.
 
 There is no `transitions` key. One act can move two things at once — *settling a
 payment confirms an Order and creates a Shipment* — which only a Step can say,
@@ -224,10 +270,11 @@ instances pre-exist the model.
 
 ## Relations
 
-`relations` declares edges to other Entities — an Entity that acts included,
-which is how ownership is said: the Shopper above `owns` Orders, and a Business
-Rule walks that edge back to find who may. Each is `{ entity, verb, cardinality }`,
-where `verb` is your product's own word and `cardinality` states **both ends**,
+`relations` describes relationships between Entities, including those that act.
+For example, the Shopper above `owns` Orders, and a Business Rule can follow
+that relationship to identify who may act on an Order. Each relation is
+`{ entity, verb, cardinality }`: `verb` names the relationship in Product
+language, and `cardinality` states how many instances can relate on each side,
 reading source to target — `one-to-one`, `one-to-many`, or `many-to-many`.
 
 Both ends, because one end is not a relationship. *A Source publishes many

@@ -69,6 +69,10 @@ were costed and then chosen against, so the same argument is not had twice.
   narrative, when to create one, its file shape, and the `lint` findings
   that constrain it — do not reintroduce a separate glossary, a separate
   format page, or a separate error catalog.
+- Define vocabulary in the owning doc's `terms:` frontmatter. Run
+  `npm run vocabulary` after edits and commit the generated registry.
+- Keep definitions self-contained and capitalize referenced types. Put the page's
+  main term first; CLI pages do not declare terms.
 - A resource type is documented on its parent's page when **its type name names
   that parent** — never on one of its own. Scenarios are the only such types:
   Capability Scenarios live in `docs/capabilities.md`, Journey Scenarios in
@@ -212,6 +216,10 @@ costed already.
   tables, and facts alike. Nothing renders an empty label: a missing hook or an
   empty facet set shrinks the element rather than reserving space for what is
   not there.
+- **A teaching affordance can be turned off, and never hides the way back.**
+  Term tooltips are dismissed from the tooltip and restored from the Vocabulary
+  panel, which is never behind the preference; the choice is a cookie, so a
+  server-rendered report draws it on the first paint.
 - **A section renders as more than prose only when four things align**: a
   recognized H2 in `spec/format.md`; a **required content shape** — bullet list,
   H3 plus prose, or prose — enforced by `lint`; a typed field in
@@ -222,6 +230,7 @@ costed already.
 
 ## Change and release checks
 
+- Keep changelog entries brief and nontechnical: state only user-visible outcomes.
 - Run `npm run verify` after any change.
 - Inspect `npm pack --dry-run` before a release.
 - Roll the `[Unreleased]` section of `CHANGELOG.md` into a new version heading

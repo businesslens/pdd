@@ -12,17 +12,6 @@ withDefaults(defineProps<{
   label: 'References'
 })
 
-const KIND_ICON: Record<string, string> = {
-  code: 'i-lucide-file-code',
-  prd: 'i-lucide-clipboard-list',
-  spec: 'i-lucide-file-text',
-  proposal: 'i-lucide-file-diff',
-  doc: 'i-lucide-book-open',
-  adr: 'i-lucide-gavel',
-  visual: 'i-lucide-image',
-  research: 'i-lucide-microscope'
-}
-
 /** Role is why the artefact is attached — never a verification result. */
 const ROLE_TONE: Record<string, 'primary' | 'neutral' | 'secondary'> = {
   intent: 'primary',
@@ -74,7 +63,8 @@ const onActivate = (reference: ReportReference, event: MouseEvent) => {
 
 <template>
   <div v-if="references.length" class="space-y-2">
-    <p v-if="label" class="blr-field">
+    <p v-if="label" class="blr-field flex items-center gap-2">
+      <BlrReferenceIcon class="size-3.5" />
       {{ label }} · {{ references.length }}
     </p>
     <ul :class="variant === 'inline' ? 'flex flex-wrap gap-1.5' : 'space-y-1.5'">
@@ -94,7 +84,7 @@ const onActivate = (reference: ReportReference, event: MouseEvent) => {
           :title="`${reference.kind} · ${reference.role} · ${reference.target}`"
           @click="onActivate(reference, $event)"
         >
-          <UIcon :name="KIND_ICON[reference.kind] || 'i-lucide-link'" class="size-3.5 shrink-0 text-dimmed" />
+          <BlrReferenceIcon :kind="reference.kind" class="size-3.5" />
           <span class="truncate text-sm text-default">
             {{ reference.title || reference.target }}
           </span>

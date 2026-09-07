@@ -1,12 +1,28 @@
 ---
-title: Business rules
+title: Business Rules
 description: Durable assertions of what must remain true — constraints, derivations, and who may perform an operation on a thing — applied to behavior, Contexts, or Entity operations.
 section: open-source
 group: Product Model
 order: 16
+terms:
+  - term: Business Rule
+    aliases: [Rule]
+    definition: "A durable assertion that must stay true, and the only place the model says who may act."
+  - term: Applies to
+    aliases: [Binding]
+    anchor: behavioral-and-context-targets
+    definition: "What a Rule constrains: a resource, a Context it holds in, or an operation on a thing."
+  - term: Operation
+    aliases: [What it changes]
+    anchor: entity-targets-an-operation-on-a-thing
+    definition: "What may be done to a thing: creates, changes, removes, or reads. A Step calls it an effect; a Business Rule selects the same word as an operation."
+  - term: Who may
+    aliases: [Permission]
+    anchor: permission
+    definition: "To allow an operation, at least one grant must match in every applicable permission Rule. An empty grant list forbids it."
 ---
 
-# Business rules
+# Business Rules
 
 **A Business Rule states what must remain true:** an order is confirmed only
 after payment succeeds; total charged always equals subtotal plus tax minus
@@ -146,6 +162,11 @@ grants, forbidding the ones it closes.
 
 ## Permission
 
+Permissions state who can perform an Entity operation and under what
+conditions. To allow an operation, at least one grant must match in every
+applicable permission Rule. An empty grant list forbids it. A Rule without
+`permits` makes no permission claim; its other constraints still apply.
+
 `permits` has three states:
 
 | `permits` | Says |
@@ -175,8 +196,8 @@ what Interface `actors` already records as *who uses it*.
 - Targets within one Rule select the union of governed operations.
 - Grants within one Rule are **OR**.
 - Keys within one grant are **AND**.
-- Rules that select the same operation are **AND** — every matching Rule
-  constrains it.
+- Permission Rules that select the same operation are **AND** — every matching
+  Rule with `permits` must allow it.
 - An operation no Rule with `permits` selects is open.
 
 ```yaml

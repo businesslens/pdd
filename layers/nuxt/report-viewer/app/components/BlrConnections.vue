@@ -26,7 +26,7 @@ import type {
   ScenarioView,
   ScreenView
 } from '../utils/reportWorkspace'
-import { ENTITY_KIND_META, resolveResource } from '../utils/reportWorkspace'
+import { ENTITY_KIND_META, entityFacetOf, resolveResource } from '../utils/reportWorkspace'
 
 const props = withDefaults(defineProps<{
   workspace: ReportWorkspace
@@ -236,10 +236,10 @@ function interfaceType(kind: ReportResourceKind, id: string) {
   return resource?.kind === 'interface' ? resource.interfaceType : undefined
 }
 
-function actorClassification(kind: ReportResourceKind, id: string) {
+function entityAt(kind: ReportResourceKind, id: string) {
   if (kind !== 'entity') return null
   const resource = resolveResource(props.workspace, 'entity', id)
-  return resource?.kind === 'entity' && resource.acts ? resource : null
+  return resource?.kind === 'entity' ? resource : null
 }
 </script>
 
@@ -269,8 +269,8 @@ function actorClassification(kind: ReportResourceKind, id: string) {
           <BlrKind
             :kind="item.kind"
             :interface-type="interfaceType(item.kind, id)"
-            :actor-kind="actorClassification(item.kind, id)?.entityKind"
-            :acts="actorClassification(item.kind, id)?.acts"
+            :facet="entityFacetOf(entityAt(item.kind, id))"
+            :acts="entityAt(item.kind, id)?.acts"
             :labelled="false"
             size="xs"
           />

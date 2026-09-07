@@ -496,11 +496,20 @@ describe('stable Product Report', () => {
     for (const icon of ['align-justify', 'circle-dot-dashed', 'user-round']) {
       expect(layer).toContain(`'lucide:${icon}'`)
     }
+    /* The rail's ten rows have to separate by shape: Product takes slot 9,
+       which wraps onto Entity's slot 0, so Overview and Entities carry the same
+       hue and one container glyph drawn twice separated nothing. */
+    for (const icon of ['house', 'shapes', 'land-plot', 'network', 'box']) {
+      expect(layer, icon).toContain(`'lucide:${icon}'`)
+    }
+    for (const gone of ['package', 'boxes', 'waypoints']) {
+      expect(layer, gone).not.toContain(`'lucide:${gone}'`)
+    }
   })
 
   it('keeps kind icons and submarks concrete Interfaces and Actors with authored classifications', () => {
     const mark = source('app/components/BlrInterfaceType.vue')
-    const actorMark = source('app/components/BlrActorType.vue')
+    const entityMark = source('app/components/BlrEntityMark.vue')
     const kind = source('app/components/BlrKind.vue')
     const structure = source('app/assets/report-viewer.css')
     const cardPresentation = source('app/utils/resourceCards.ts')
@@ -521,16 +530,18 @@ describe('stable Product Report', () => {
     expect(mark).toContain('var(--blr-interface-mark-regular)')
     expect(mark).toContain('var(--blr-interface-badge-glyph-dense)')
     expect(mark).toContain(".blr-interface-mark[data-size='xs']")
-    /* One glyph, on the shared resource scale. Actor carries two independent
-       authored axes and a mark can only draw one, so `kind` is the silhouette
-       and `relationship` is written where the surface has room for a word. */
-    expect(actorMark).toContain(':name="kindMeta.icon"')
-    expect(actorMark).not.toContain('i-lucide-users')
-    expect(actorMark).not.toContain('blr-actor-relationship')
-    expect(actorMark).not.toContain('showRelationship')
-    expect(actorMark).toContain('var(--blr-resource-mark-regular)')
-    expect(actorMark).toContain('var(--blr-resource-mark-dense)')
-    expect(kind).toContain("kind === 'entity' && actorKind && acts")
+    /* One glyph, on the shared resource scale. An Actor carries two independent
+       authored axes and a mark can only draw one, so the facet is the silhouette
+       and `relationship` is written where the surface has room for a word. The
+       subset that does not act is a facet value, never a fallthrough to the
+       type glyph — the rail already said Entities. */
+    expect(entityMark).toContain(':name="facetMeta.icon"')
+    expect(entityMark).not.toContain('i-lucide-users')
+    expect(entityMark).not.toContain('blr-actor-relationship')
+    expect(entityMark).not.toContain('showRelationship')
+    expect(entityMark).toContain('var(--blr-resource-mark-regular)')
+    expect(entityMark).toContain('var(--blr-resource-mark-dense)')
+    expect(kind).toContain("kind === 'entity' && facet")
     expect(kind).not.toContain('show-relationship')
     for (const variable of [
       '--blr-resource-mark-regular',
@@ -556,18 +567,18 @@ describe('stable Product Report', () => {
     expect(structure).toContain('--blr-interface-kind-regular: 1.125rem')
     expect(structure).toContain('--blr-interface-kind-dense: 1rem')
     expect(card).toContain(':interface-type="interfaceType"')
-    expect(card).toContain(':actor-kind="actorKind"')
+    expect(card).toContain(':facet="facet"')
     expect(card).toContain(':acts="acts"')
     expect(connections).toContain(':interface-type="interfaceType(item.kind, id)"')
-    expect(connections).toContain(':actor-kind="actorClassification(item.kind, id)?.entityKind"')
+    expect(connections).toContain(':facet="entityFacetOf(entityAt(item.kind, id))"')
     expect(reportShell).toContain('resolvedInterfaceType(group.kind, group.key)')
-    expect(reportShell).toContain('resolvedActor(group.kind, group.key)?.entityKind')
+    expect(reportShell).toContain('entityFacetOf(resolvedEntity(group.kind, group.key))')
     expect(reportShell).toContain('BlrInterfaceTypeComponent')
-    expect(reportShell).toContain('BlrActorTypeComponent')
+    expect(reportShell).toContain('BlrEntityMarkComponent')
     expect(flow).toContain("interfaceType: resource.kind === 'interface' ? resource.interfaceType : null")
-    expect(flow).toContain("actorKind: resource.kind === 'entity' ? resource.entityKind : null")
+    expect(flow).toContain('entityFacet: entityFacetOf(resource)')
     expect(flowNode).toContain("data.kind === 'interface' && data.interfaceType")
-    expect(flowNode).toContain("data.kind === 'entity' && data.actorKind && data.acts")
+    expect(flowNode).toContain("data.kind === 'entity' && data.entityFacet")
     expect(flowNode).not.toContain('show-relationship')
     /* Topology is read for the Product boundary, so the node's sublabel writes
        it — the slot and the spelling an Experience gives its access mode. */
@@ -585,8 +596,8 @@ describe('stable Product Report', () => {
 
     /* A Step names an Actor, so it renders one: the Actor's own mark in a chip
        that opens it, not a dimmed generic glyph beside plain text. */
-    expect(resourceBody).toContain('<BlrActorType')
-    expect(resourceBody).toContain(':actor-kind="stepActor(step.actorId)!.entityKind!"')
+    expect(resourceBody).toContain('<BlrEntityMark')
+    expect(resourceBody).toContain(':facet="stepActor(step.actorId)!.entityKind!"')
     /* The Entity page draws its composed state machine on the shared canvas,
        on its own tab, with every arc routed along the layout's points. */
     const lifecycle = source('app/components/BlrEntityLifecycle.vue')
@@ -744,6 +755,171 @@ describe('stable Product Report', () => {
     expect(topology).toContain('v-for="(step, index) in kindSteps"')
   })
 
+  /*
+    Coverage is one fact on two surfaces, so it is one component. It is drawn
+    in umber at every status: an amber partial and a green complete spent two
+    ramps this theme never chose, and told the reader that the honest
+    declaration the format asks for was a fault to clear.
+  */
+  it('reads coverage as one umber mark on both surfaces that carry it', () => {
+    const badge = source('app/components/BlrCoverageBadge.vue')
+    const shell = source('app/components/BlrReportShell.vue')
+    const overview = source('app/components/BlrOverview.vue')
+
+    expect(badge).toContain("color=\"neutral\"")
+    expect(badge).toContain('rounded-full')
+    expect(shell).toContain('<BlrCoverageBadge :status="workspace.coverage.status" named size="md" />')
+    expect(overview).toContain('<BlrCoverageBadge :status="workspace.coverage.status" size="sm" />')
+    for (const [label, file] of [['badge', badge], ['shell', shell], ['overview', overview]] as const) {
+      expect(file, label).not.toContain('COVERAGE_TONE')
+      for (const offPalette of ["'warning'", "'success'", '"warning"', '"success"']) {
+        expect(file, `${label} ${offPalette}`).not.toContain(offPalette)
+      }
+    }
+  })
+
+  /*
+    Embedded reports without a host-header target keep the bordered controls
+    that fit their report row. A host can instead move them into its header.
+  */
+  it('keeps the bordered Vocabulary control when the host has no tools target', () => {
+    const tools = source('app/components/BlrReportTools.vue')
+    const shell = tools.slice(tools.indexOf('<template v-else>'))
+    const vocabulary = shell.indexOf('label="Vocabulary"')
+    const button = shell.lastIndexOf('<UButton', vocabulary)
+
+    expect(vocabulary).toBeGreaterThan(-1)
+    expect(shell.slice(button, vocabulary)).toContain('variant="outline"')
+    expect(shell.slice(vocabulary, vocabulary + 200)).toContain('rounded-full')
+  })
+
+  /*
+    A reader who has learned the words puts the tooltips away. The word stays in
+    the sentence as plain text, and beside a label that already names it — an
+    icon-only mark in a breadcrumb — nothing is left behind at all.
+  */
+  it('renders a term as plain text when the tooltips are off', () => {
+    const term = source('app/components/BlrTerm.vue')
+    const plain = term.indexOf('<span')
+    const popover = term.indexOf('<UPopover')
+
+    expect(term).toContain('v-if="!shown && !iconOnly"')
+    expect(term).toContain('v-else-if="shown"')
+    expect(plain).toBeGreaterThan(-1)
+    expect(plain).toBeLessThan(popover)
+    /*
+      A button carries `text-transform: none` from the user agent, so the
+      breadcrumb's uppercase eyebrow never reached the term while it was one.
+      The span replacing it has to say so, or Entities becomes ENTITIES.
+    */
+    expect(term).toMatch(/\.blr-term-plain \{[^}]*text-transform: none/)
+  })
+
+  /*
+    Hiding destroys the button the popover belongs to, so the preference flips on
+    the popover's close and focus is placed by hand. Flipping it on the click
+    unmounts the trigger mid-close and drops focus on the document body.
+  */
+  it('closes the tooltip before it hides them, and lands focus on the word', () => {
+    const term = source('app/components/BlrTerm.vue')
+
+    expect(term).toContain('function requestHide()')
+    expect(term).toMatch(/function onCloseAutoFocus[\s\S]*?hiding = false[\s\S]*?completeHide\(\)/)
+    expect(term).toMatch(/completeHide[\s\S]*?hide\(\)[\s\S]*?await nextTick\(\)[\s\S]*?\.focus\(/)
+    expect(term).toContain("actions: [{ label: 'Undo'")
+    /*
+      The sentence that names the way back is the way back: the toast renders
+      outside this component, so the word is a rendered node rather than a slot.
+    */
+    expect(term).toMatch(/description: \(\) => h\('span'/)
+    expect(term).toContain("'blr-toast-link'")
+    expect(term).toContain('panel.show()')
+  })
+
+  /*
+    Both ways back are load-bearing: the exit sits where the annoyance is, the
+    switch sits in the panel a reader already knows to open, and the header
+    control that opens that panel is never behind the preference.
+  */
+  it('offers the exit in the tooltip and the way back in the panel', () => {
+    const definition = source('app/components/BlrTermDefinition.vue')
+    const vocabulary = source('app/components/BlrVocabulary.vue')
+    const shell = source('app/components/BlrReportShell.vue')
+
+    expect(definition).toContain("emit('hide')")
+    expect(definition).toContain('v-if="inPopover"')
+    expect(definition).toContain('label="Hide tooltips"')
+    /*
+      A command, not a link: the exit carries the report's own bordered pill so
+      it reads as pressable beside the documentation link it sits with. Flattened
+      to a bare label it reads as a caption, which is where this started.
+    */
+    const hide = definition.indexOf('label="Hide tooltips"')
+    expect(definition.slice(hide - 200, hide + 200)).toContain('variant="outline"')
+    expect(definition.slice(hide - 200, hide + 200)).toContain('rounded-full')
+    expect(vocabulary).toContain('#actions')
+    /*
+      The panel shows both states rather than naming an act on them: alone in
+      that head there is nothing to read the state off, and a lone button naming
+      an act cannot say whether the act already happened. One segment is filled,
+      and it is the one you are in.
+    */
+    expect(vocabulary).toContain('<UFieldGroup')
+    expect(vocabulary).toContain(":variant=\"tooltipsShown ? 'solid' : 'outline'\"")
+    expect(vocabulary).toContain(":variant=\"tooltipsShown ? 'outline' : 'solid'\"")
+    /* Selection is the theme's own accent; the report has no black of its own. */
+    expect(vocabulary).toContain(":color=\"tooltipsShown ? 'primary' : 'neutral'\"")
+    expect(vocabulary).toContain(":color=\"tooltipsShown ? 'neutral' : 'primary'\"")
+    expect(vocabulary).toContain(':aria-pressed="tooltipsShown"')
+    expect(vocabulary).toContain(':aria-pressed="!tooltipsShown"')
+    expect(shell).toContain('<BlrVocabulary :context="vocabularyContext" tooltips />')
+    expect(shell).not.toMatch(/<BlrReportTools[^>]*v-if/)
+  })
+
+  /*
+    The panel's own job is looking a word up, so the switch rides in the head
+    beside the close button rather than costing a row of the list or a band under
+    the search field, where the Back button already appears.
+  */
+  it('keeps the tooltip switch in the panel head, not in its list', () => {
+    const vocabulary = source('app/components/BlrVocabulary.vue')
+    const actions = vocabulary.indexOf('#actions')
+    const list = vocabulary.indexOf('data-vocabulary-list')
+
+    expect(actions).toBeGreaterThan(-1)
+    expect(actions).toBeGreaterThan(list)
+    expect(vocabulary).not.toContain('#footer')
+    /* On the description's line, under the close button, not centred on the title. */
+    const block = vocabulary.slice(actions, vocabulary.indexOf('</template>', actions))
+    expect(block).toContain('self-end')
+  })
+
+  /*
+    The docs host mounts the same panel and draws no tooltips, so the switch is
+    behind a host declaration rather than something the panel assumes.
+  */
+  it('keeps the tooltip switch behind the host that draws tooltips', () => {
+    const vocabulary = source('app/components/BlrVocabulary.vue')
+    const actions = vocabulary.indexOf('#actions')
+
+    expect(vocabulary).toContain('tooltips?: boolean')
+    expect(vocabulary.slice(actions - 40, actions)).toContain('v-if="tooltips"')
+  })
+
+  /*
+    A host may render the report on the server, so the preference has to be known
+    before the first paint. Local storage would draw the tooltips and take them
+    away on every page load for the one reader who asked for them gone.
+  */
+  it('keeps the tooltip preference in a cookie that outlives a refresh', () => {
+    const tooltips = source('app/composables/useTooltips.ts')
+
+    expect(tooltips).toContain("useCookie<'on' | 'off'>('blr-tooltips'")
+    expect(tooltips).toContain('maxAge: 60 * 60 * 24 * 365')
+    expect(tooltips).not.toContain('localStorage')
+    expect(tooltips).not.toContain('useState')
+  })
+
   it('scrolls collection controls with their list instead of pinning them as chrome', () => {
     const reportShell = source('app/components/BlrReportShell.vue')
     const docs = source('app/utils/resourceDocs.ts')
@@ -838,7 +1014,8 @@ describe('stable Product Report', () => {
     expect(reportShell).toContain('aria-label="Page breadcrumb"')
     expect(reportShell).toContain('data-mobile-location')
     expect(reportShell).toContain('data-mobile-section')
-    expect(reportShell).toContain('class="flex min-w-0 flex-1 items-center gap-1 overflow-hidden sm:hidden"')
+    // Narrow-screen bounds and help targets are exercised in the browser
+    // regression script; clipping the entire trail would cut off focus rings.
     expect(reportShell).not.toContain('class="inline-flex min-w-0 flex-1 items-center gap-1.5 hover:underline hover:underline-offset-4"')
     expect(reportShell).not.toContain(':title="step.title"')
     expect(reportShell).not.toContain('label="Neighbourhood"')
