@@ -177,24 +177,7 @@ The package also exposes separately composable Nuxt layers:
   presentation from `theme`; a background graduates by moving into `theme`,
   never by a consumer depending on `theme-lab` in production.
 
-The report layer also supplies `BlrVocabulary` for docs hosts. Mount it once in
-the docs layout with `docs-base="/docs"` to keep documentation links in the same
-tab. Pass `vocabularyPageContext(pageBasename)` as its `context`, and call
-`useVocabularyPanel().show(undefined, triggerId)` from the host's header button.
-The panel and report use the same generated definitions, search, and return
-trail. Omitting `docs-base` preserves the report's external documentation links.
-If the host also embeds a report on the same page, give its site-wide panel a
-stable `state-key="site-vocabulary"` and use
-`useVocabularyPanel('site-vocabulary')` for that panel's triggers. The report's
-own lookups then remain independent.
-
-The local viewer places model search and Vocabulary in its top header, beside
-the theme and documentation controls. A host can provide a mounted header
-element and pass its CSS selector as `tools-target` to
-`BusinessLensReportViewer`; the report moves its controls there and retains
-their search, context, and focus behavior. The target must exist before the
-report mounts. Without a target, embedded reports keep their controls in the
-report row.
+The report layer includes inline term definitions and a searchable Vocabulary panel, also available to docs hosts.
 
 ## Safety
 

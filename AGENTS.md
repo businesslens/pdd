@@ -233,6 +233,7 @@ costed already.
 
 ## Change and release checks
 
+- Keep changelog entries as short and simple as possible for a nontechnical reader: state only the user-visible outcome, without implementation details.
 - Run `npm run verify` after any change.
 - Inspect `npm pack --dry-run` before a release.
 - Roll the `[Unreleased]` section of `CHANGELOG.md` into a new version heading

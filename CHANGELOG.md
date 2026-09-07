@@ -9,36 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Inline Product Model definitions and a searchable Vocabulary panel.**
-  Question-mark buttons explain terms in place and link to their documentation.
-  The panel follows the current page, searches names, aliases, and meanings,
-  and offers a return trail through linked definitions.
-- **A shared definition registry generated from documentation.** Definitions
-  live in the owning documentation page's `terms:` frontmatter. Run
-  `npm run vocabulary` to regenerate the report registry;
-  `npm run check` rejects stale output.
-- Docs hosts can mount the Vocabulary panel with page context, links that
-  navigate in the same tab, and state independent of an embedded report.
+- Inline term definitions and a searchable Vocabulary panel for reports and docs.
+- Option to hide term marks, with the preference remembered.
 
 ### Changed
 
-- The local viewer places Search and Vocabulary in its top header. Model search
-  keeps its keyboard shortcut; embedded reports can use a host header through
-  `tools-target`.
-- Distinct icons identify Overview, Entities, Domains, and Topology. Entity
-  instances use marks for people, systems, and things the Product keeps.
-  Tooltips explain which side of the Product boundary an Actor acts from.
-  `BlrEntityMark` replaces `BlrActorType`.
-- Coverage uses one neutral badge treatment in the report header and Overview.
-- Documentation explains report navigation and clarifies resource boundaries,
-  lifecycle summaries, and permission semantics. **Business Rule** capitalization
-  is consistent. A Blueprint is a portable Product Report regardless of catalog
-  publication.
+- Refined report header controls, icons, coverage badges, and documentation.
 
 ### Fixed
 
-- Collection breadcrumb navigation and definition buttons remain accessible on
-  nested Scenario pages and narrow screens, with keyboard focus in both themes.
+- Improved breadcrumb and definition-button accessibility.
 
 ## [0.9.0] - 2026-09-04
 
@@ -731,7 +711,7 @@ Initial public launch of the repository.
   `docs/format.md`.
 - Claude plugin manifest and marketplace entry.
 
-[Unreleased]: https://github.com/businesslens/pdd/compare/v0.9.0...HEAD
+[0.10.0]: https://github.com/businesslens/pdd/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/businesslens/pdd/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/businesslens/pdd/compare/v0.7.2...v0.8.0
 [0.7.2]: https://github.com/businesslens/pdd/compare/v0.7.1...v0.7.2
