@@ -32,12 +32,18 @@ for each thing, which is what makes two models of one product comparable at all.
 A quick change keeps its three batched questions instead: a small specific
 change has no frontier.
 
-The proposed delta then ends with a **Judgment calls** section naming every
-choice that could defensibly have gone the other way and the alternative it was
-chosen over — Capability and Entity granularity, whether something warranted an
-Interface, Experience, Entity or Journey, whether a constraint is a Business
-Rule, and who may perform an operation. A reviewer can see what a delta says but
-not what it omits, so an unstated judgment call is one nobody can challenge.
+The proposed delta explains the selected model shape and its consequences.
+Significant omissions, consequential modeling boundaries, and material
+uncertainty remain visible in brief explanations of the current proposal. An
+**Open questions** section appears only when questions remain. Review output
+does not enumerate discarded options or repeat settled discussion on later runs.
+
+Exploration and comparisons stay in the conversation. Generated model files
+contain current, approved product meaning without rejected approaches or
+deliberation history, including in resource prose, supporting sections,
+limitations, or README. An unchosen option does not become a product exclusion.
+Approved constraints, refusal and failure behavior, and material unresolved
+questions or missing evidence remain visible.
 
 Ideate never implements. Its output is the approved Product contract for the
 plan/build flow between ideate and verify.

@@ -51,6 +51,19 @@ loop, and a missing builder produces a complete handoff packet. The user never
 has to manually invoke Map or Ideate to continue verification. Verify persists
 no receipt, ledger, or lifecycle state.
 
+Its internal mapping and intent resolution write current product meaning without
+rejected approaches or deliberation history anywhere in `.businesslens/`,
+including resource prose, supporting sections, limitations, and README. An
+unchosen option does not become a product exclusion. Current constraints,
+refusal and failure behavior, and material unresolved questions or missing
+evidence remain visible.
+
+Proposed deltas explain the selected shape, consequential boundaries, significant
+omissions, and material uncertainty briefly. **Open questions** appears only
+when questions remain. Verify reports the resulting authority decision and
+approval without enumerating discarded options or replaying settled discussion
+on later runs.
+
 ## Allowed changes
 
 The semantic inspection changes nothing. Automatic resolution may:

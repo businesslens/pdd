@@ -1,5 +1,16 @@
 # Product Model format
 
+Author current, approved product meaning. Do not persist alternatives considered,
+rejected approaches, explanations of why another option was not selected, or
+deliberation history anywhere in `.businesslens/`, including resource prose,
+supporting sections, limitations, README, and additional files. Keep discussion
+needed to reach a decision in the conversation; record the resulting behavior
+without replaying settled discussion on later runs. An unchosen option is not a
+product exclusion: record exclusions only when they are established or approved
+product constraints. Preserve observable refusal and failure behavior, current
+constraints, and material unresolved questions or missing evidence. Structural
+lint does not determine whether prose contains deliberation history.
+
 ## Layout
 
 A representative model looks like this:
@@ -200,7 +211,9 @@ not contain another H1 or H2.
   information changes carry no state to select by). A value is a scalar or
   `{ configuredBy: <entity-id> }`. Permission claims appear only here. A Rule
   on exactly one behavioral target with no `contexts` is a warning; Entity and
-  Context targets are always valid.
+  Context targets are always valid. Rationale explains the current condition or
+  consequence that makes the constraint necessary; it never recounts alternative
+  designs or why they were rejected.
 - Journey: at least one unique `actors` entry, H1, no lead prose, `## Goal`,
   and `## Success criterion`. A Journey is a stable goal, not a route or
   Capability wrapper. Every Journey needs achieved Journey Scenario coverage

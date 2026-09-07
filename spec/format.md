@@ -26,6 +26,18 @@ authoritative. The technical *how* of a change (specs, designs, task lists)
 still belongs to your SDD tool of choice and may be attached through
 `references`.
 
+**The model holds current product meaning.** Do not persist alternatives
+considered, rejected approaches, explanations of why another option was not
+selected, or deliberation history anywhere in `.businesslens/`. This includes
+resource prose, supporting sections, limitations, README, and additional files.
+Keep discussion needed to reach a decision in the conversation; record the
+resulting approved behavior without replaying settled discussion on later runs.
+An unchosen option does not become a product exclusion: record exclusions only
+when they are established or approved product constraints. Preserve observable
+refusal and failure behavior, current constraints, and material unresolved
+questions or missing evidence. These are authoring requirements; structural
+lint does not determine whether prose contains deliberation history.
+
 ## Terms
 
 | Term | Meaning |
@@ -1145,7 +1157,9 @@ Total charged always equals Subtotal plus Tax minus Discount.
 ```
 
 The lead paragraph is the rule statement; `## Intent` and `## Rationale` are
-optional prose. `appliesTo` is a required non-empty list of typed targets, and
+optional prose. Rationale explains the current condition or consequence that
+makes the constraint necessary; it never recounts alternative designs or why
+they were rejected. `appliesTo` is a required non-empty list of typed targets, and
 targets are additive: the Rule governs their union. Business Rule owns these
 relations; consumers derive every backlink.
 

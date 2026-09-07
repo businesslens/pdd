@@ -126,6 +126,13 @@ the diff.
    open question rather than a settled decision. This does not touch the
    authority question in step 6, which is already asked the right way.
 
+   In every model delta, present the selected shape and its consequences.
+   Surface significant omissions, consequential modeling boundaries, and material
+   uncertainty needed for approval. Explain these briefly in terms of the current
+   proposal. Do not enumerate discarded options or repeat settled discussion.
+   Include `Open questions` only when questions remain. Every model-writing
+   branch follows the persistence guardrails below.
+
    **Code-right**
 
    - Run the internal intent-resolution protocol: settle the undetermined calls
@@ -174,7 +181,8 @@ the diff.
 11. Run final lint. Report:
     - requested and inspected scope;
     - aligned contracts;
-    - authority decisions and approvals;
+    - resulting authority decisions and approvals, without replaying settled
+      alternatives or unchanged deliberation;
     - model deltas and external build attempts;
     - References refreshed;
     - unresolved or unverifiable blockers;
@@ -187,6 +195,12 @@ the diff.
 
 - Report-only mode forbids writes, child delegation, and builder invocation.
 - Never change product meaning without explicit approval.
+- Never persist rejected approaches, reasons another option was not selected,
+  or deliberation history anywhere in `.businesslens/`, including resource prose,
+  supporting sections, limitations, README, and additional files. Keep decision
+  discussion in the conversation. An unchosen option is not a product exclusion;
+  preserve established or approved constraints, refusal and failure behavior,
+  and material unresolved questions or missing evidence.
 - Never change implementation inside a BusinessLens analysis phase.
 - Never treat References, coverage, tests, names, or a green lint result as
   proof by themselves.

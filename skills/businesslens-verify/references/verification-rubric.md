@@ -41,7 +41,16 @@ When authority is not already explicit, present:
 
 Group questions by root decision. Do not ask a menu of symptoms.
 
+Discuss the choices only while authority remains open. After resolution, report
+the resulting decision without replaying settled alternatives on later runs.
+
 ## Internal intent resolution
+
+Both internal authoring flows write current product meaning under the format's
+persistence rule. Keep rejected approaches and selection history in the
+conversation, including when drafting resource prose, supporting sections,
+limitations, or README. Preserve current constraints and material unresolved
+questions or missing evidence; an unchosen option is not a product exclusion.
 
 Use when code-right or neither-right is chosen. Draft the smallest exact Product
 Model delta. Cover affected Interfaces, optional Experiences, Capabilities,
