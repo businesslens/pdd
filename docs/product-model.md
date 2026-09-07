@@ -110,20 +110,9 @@ Capabilities a Journey uses or which Screens expose an ability.
 **Neighbourhood** opens this map from a resource page, focused on that resource
 and its connections.
 
-Selected Product Model terms have a dotted underline: each opens its one-line
-meaning, and **Vocabulary** in the header lets you search the documented terms.
-Browse one list of documentation pages, with terms nested under the page that
-defines them. Each opening from the report header clears the previous search
-and expands the current report page's group. A linked lookup reveals its
-destination group. Each entry has the same title,
-definition, and **Read more in…** link as an inline definition.
-Exact term names appear before partial names and matches inside definitions.
-Following a word inside a definition opens its entry; **Back to…** returns to
-the previous lookup, including its search, expanded groups, and scroll position.
-Closing a lookup opened through an inline definition returns keyboard focus to its trigger.
-Collection-name definitions are also available on mobile.
-Both the inline definitions and the panel link out to the page here that explains
-the term in full.
+Question-mark buttons beside selected Product Model terms open a short
+definition. Use **Vocabulary** in the header to browse or search the documented
+terms. Each definition links to the documentation page that explains it in full.
 
 ## Is this replacing my PRD?
 

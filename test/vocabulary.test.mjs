@@ -111,7 +111,7 @@ describe('vocabulary lookup', () => {
     for (const item of product.items) {
       expect(vocabularySection(item.slug)).toBe('product')
       expect(item.page).toBe('product-model')
-      expect(item.href).toContain('/product-model#')
+      expect(termHref(item.slug)).toContain('/product-model#')
       expect(results(item.term)[0].slug).toBe(item.slug)
     }
   })

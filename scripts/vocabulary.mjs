@@ -261,7 +261,6 @@ export async function readVocabulary(root) {
         definition: definition.trim(),
         page: page.name.replace(/\.md$/, ''),
         pageTitle: typeof page.data.title === 'string' ? page.data.title : page.name,
-        group: typeof page.data.group === 'string' ? page.data.group : '',
         anchor: typeof anchor === 'string' ? anchor : '',
         aliases: Array.isArray(aliases) ? aliases.map(alias => alias.trim()) : [],
         mentions: []
@@ -301,7 +300,6 @@ export function renderModule(terms) {
       `definition: ${JSON.stringify(term.definition)}`,
       `page: ${JSON.stringify(term.page)}`,
       `pageTitle: ${JSON.stringify(term.pageTitle)}`,
-      `group: ${JSON.stringify(term.group)}`,
       `anchor: ${JSON.stringify(term.anchor)}`,
       `mentions: [${term.mentions.map(m => `[${m.from}, ${m.to}, ${JSON.stringify(m.slug)}]`).join(', ')}]`
     ]
@@ -328,9 +326,8 @@ export interface VocabularyEntry {
   /** The docs page that owns it, and the heading to land on. */
   page: string
   anchor: string
-  /** How the owning page names itself, and the sidebar cluster it sits in. */
+  /** How the owning page names itself. */
   pageTitle: string
-  group: string
   /**
    * Where this definition leans on another term: from, to, slug — slices of the
    * definition above. Resolved once at generation so every surface links the

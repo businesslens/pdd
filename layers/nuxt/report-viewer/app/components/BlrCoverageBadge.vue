@@ -1,17 +1,6 @@
 <script setup lang="ts">
-/*
-  Coverage is one fact rendered on two surfaces — the status bar and the
-  Overview disclosure — and a reader who learns the mark in one has to
-  recognise it in the other. One component owns that reading.
-
-  It is drawn in umber at every status, because coverage is a position on a
-  ramp and not an alert: a partial model is the honest declaration the format
-  asks for, and colouring it as a fault reads as a defect the reader has to
-  clear. The status word carries the whole of the fact; the chip only says
-  which fact it is. An earlier mark spent amber on partial and green on
-  complete — two ramps this theme never chose, printed on parchment they sit a
-  few degrees off.
-*/
+/* Neutral styling lets the status word describe model breadth without
+   presenting partial coverage as an alert. */
 import type { ReportCoverage } from 'businesslens/report'
 
 withDefaults(defineProps<{

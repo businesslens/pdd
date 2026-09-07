@@ -17,7 +17,6 @@ import type { ReportResourceKind, ReportScenarioType } from './reportWorkspace'
 
 export interface VocabularyItem extends VocabularyEntry {
   slug: VocabularySlug
-  href: string
 }
 
 const SLUGS = Object.keys(VOCABULARY) as VocabularySlug[]
@@ -65,7 +64,7 @@ export function vocabularyPageContext(page: string): VocabularySlug {
 }
 
 export function termItem(slug: VocabularySlug): VocabularyItem {
-  return { ...VOCABULARY[slug], slug, href: termHref(slug) }
+  return { ...VOCABULARY[slug], slug }
 }
 
 export const VOCABULARY_ITEMS: VocabularyItem[] = SLUGS.map(termItem)

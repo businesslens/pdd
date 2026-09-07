@@ -10,61 +10,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Inline Product Model definitions and a searchable Vocabulary panel.**
-  Question-mark buttons in report headings, fact labels, and collection names
-  explain terms without leaving the current resource. Each definition links to
-  the documentation page that explains it in full.
-- **Linked definitions with a return trail.** Following a term opens its
-  vocabulary entry. **Back to…** restores the previous search, expanded groups,
-  scroll position, and keyboard focus.
-- **Vocabulary browsing follows the current report page.** Opening the panel
-  clears the previous search and expands the relevant group. Product includes
-  the model-wide terms, including Topology and Neighbourhood. Search ranks exact
-  names and aliases before partial names and definition matches.
+  Question-mark buttons explain terms in place and link to their documentation.
+  The panel follows the current page, searches names, aliases, and meanings,
+  and offers a return trail through linked definitions.
 - **A shared definition registry generated from documentation.** Definitions
   live in the owning documentation page's `terms:` frontmatter. Run
   `npm run vocabulary` to regenerate the report registry;
-  `npm run check` rejects stale output and term declarations on CLI pages.
-- Documentation for report navigation, Topology, Neighbourhood, and vocabulary
-  lookups in the Model overview.
-- The shared Vocabulary panel can also be mounted by docs hosts, with the
-  current documentation page as context and links that close the panel and
-  navigate to the owning heading in the same tab. A separate state key lets a
-  site's panel coexist with an embedded report's own vocabulary lookups.
+  `npm run check` rejects stale output.
+- Docs hosts can mount the Vocabulary panel with page context, links that
+  navigate in the same tab, and state independent of an embedded report.
 
 ### Changed
 
-- The local viewer places Search and Vocabulary in its top header, matching the
-  landing site's controls. Model search keeps its keyboard shortcut and
-  Vocabulary follows the current report page. Embedded reports can opt into a
-  host header through `tools-target`.
+- The local viewer places Search and Vocabulary in its top header. Model search
+  keeps its keyboard shortcut; embedded reports can use a host header through
+  `tools-target`.
 - Distinct icons identify Overview, Entities, Domains, and Topology. Entity
   instances use marks for people, systems, and things the Product keeps.
   Tooltips explain which side of the Product boundary an Actor acts from.
   `BlrEntityMark` replaces `BlrActorType`.
 - Coverage uses one neutral badge treatment in the report header and Overview.
-- Vocabulary sections state their lead definition once, with additional terms
-  beneath it and documentation links beside their names. The panel grows on
-  wider screens and fits mobile viewports, with larger touch targets.
-- Standardize **Business Rule** capitalization in documentation and report labels.
-- Clarify resource types, Journey composition, Experience boundaries, lifecycle
-  and outcome summaries, and permission semantics in the shared definitions and
-  documentation. A Blueprint is a portable Product Report before catalog
-  publication, matching the existing export contract.
+- Documentation explains report navigation and clarifies resource boundaries,
+  lifecycle summaries, and permission semantics. **Business Rule** capitalization
+  is consistent. A Blueprint is a portable Product Report regardless of catalog
+  publication.
 
 ### Fixed
 
-- Vocabulary search recognizes report labels and their plural forms, including
-  Machine, Bindings, Relationships, permissions, What it changes, and Starts at.
-- **Left here by** explains Scenarios that reach a State, including intermediate
-  States. **Who may** explains that every applicable permission Rule must allow
-  the operation and an empty grant list forbids it. An acting Entity's **Kind**
-  explains person versus system.
-- Vocabulary lookups reveal the requested term even after an earlier search or
-  collapsed group hid it. New searches clear stale selection and scroll position;
-  closing a lookup reached through an inline definition restores its trigger.
 - Collection breadcrumb navigation and definition buttons remain accessible on
-  nested Scenario pages and narrow screens. Definition buttons preserve their
-  visible labels in accessible names and show keyboard focus in both themes.
+  nested Scenario pages and narrow screens, with keyboard focus in both themes.
 
 ## [0.9.0] - 2026-09-04
 
