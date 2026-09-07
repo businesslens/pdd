@@ -69,17 +69,10 @@ were costed and then chosen against, so the same argument is not had twice.
   narrative, when to create one, its file shape, and the `lint` findings
   that constrain it — do not reintroduce a separate glossary, a separate
   format page, or a separate error catalog.
-- Define `terms:` in the owning doc's frontmatter with a one-line `definition` and
-  `anchor`; `on` disambiguates shared-word slugs only. Run `npm run vocabulary`
-  and commit the viewer registry; `npm run check` rejects drift. Inline
-  definitions and the Vocabulary panel share it; no standalone vocabulary page.
-- The first term is the unscoped lead; Product Model leads name their page.
-  The panel shows it as the heading, without a duplicate row or controls for
-  lead-only sections. Reordering terms changes the lead.
-- CLI pages do not declare `terms:` at this stage; `npm run check` rejects them.
-- Definitions must read independently and capitalize referenced types.
-  Generation links terms and `aliases` case-sensitively, skipping definition
-  starts and words shared by multiple terms.
+- Define vocabulary in the owning doc's `terms:` frontmatter. Run
+  `npm run vocabulary` after edits and commit the generated registry.
+- Keep definitions self-contained and capitalize referenced types. Put the page's
+  main term first; CLI pages do not declare terms.
 - A resource type is documented on its parent's page when **its type name names
   that parent** — never on one of its own. Scenarios are the only such types:
   Capability Scenarios live in `docs/capabilities.md`, Journey Scenarios in
@@ -233,7 +226,7 @@ costed already.
 
 ## Change and release checks
 
-- Keep changelog entries as short and simple as possible for a nontechnical reader: state only the user-visible outcome, without implementation details.
+- Keep changelog entries brief and nontechnical: state only user-visible outcomes.
 - Run `npm run verify` after any change.
 - Inspect `npm pack --dry-run` before a release.
 - Roll the `[Unreleased]` section of `CHANGELOG.md` into a new version heading
