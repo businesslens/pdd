@@ -26,7 +26,7 @@ withDefaults(defineProps<{
 </script>
 
 <template>
-  <!-- The pill shape of the status bar it sits in, beside Search and Vocabulary. -->
+  <!-- The pill shape of the report's status bar. -->
   <UBadge
     :label="named ? `Coverage: ${status}` : status"
     color="neutral"

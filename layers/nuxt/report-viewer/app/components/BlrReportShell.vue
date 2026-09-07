@@ -59,7 +59,7 @@ const UButton = resolveComponent('UButton')
 const BlrEntityMarkComponent = resolveComponent('BlrEntityMark')
 const BlrInterfaceTypeComponent = resolveComponent('BlrInterfaceType')
 
-const props = defineProps<{ workspace: ReportWorkspace, logoSrc?: string | null }>()
+const props = defineProps<{ workspace: ReportWorkspace, logoSrc?: string | null, toolsTarget?: string }>()
 
 /* ------------------------------------------------------------------ */
 /* Selection: `activeKind` is what the collection view is about, and */
@@ -977,54 +977,13 @@ const orphanScenarios = computed(() => props.workspace.scenarios
       </template>
 
       <span class="ms-auto flex shrink-0 items-center gap-2.5">
-        <UButton
-          icon="i-lucide-search"
-          color="neutral"
-          variant="outline"
-          size="xs"
-          label="Search"
-          class="hidden rounded-full sm:inline-flex"
-          @click="searchOpen = true"
-        >
-          <template #trailing>
-            <span class="hidden items-center gap-0.5 sm:flex">
-              <UKbd value="meta" />
-              <UKbd value="K" />
-            </span>
-          </template>
-        </UButton>
-        <UButton
-          icon="i-lucide-search"
-          color="neutral"
-          variant="ghost"
-          size="xs"
-          class="sm:hidden"
-          aria-label="Search Product Model"
-          @click="searchOpen = true"
-        />
-        <!-- The same offer as Docs, which is the other way out of a word you
-             do not know: a bordered neutral button, in the pill of its row. -->
-        <UTooltip text="Look up Product Model terms">
-          <UButton
-            icon="i-lucide-book-a"
-            color="neutral"
-            variant="outline"
-            size="xs"
-            label="Vocabulary"
-            class="hidden rounded-full lg:inline-flex"
-            @click="vocabulary.show()"
+        <Teleport :to="toolsTarget || 'body'" :disabled="!toolsTarget">
+          <BlrReportTools
+            :in-header="Boolean(toolsTarget)"
+            @search="searchOpen = true"
+            @vocabulary="vocabulary.show(undefined, $event)"
           />
-        </UTooltip>
-        <UTooltip text="Look up Product Model terms" class="lg:hidden">
-          <UButton
-            icon="i-lucide-book-a"
-            color="neutral"
-            variant="ghost"
-            size="xs"
-            aria-label="Open the vocabulary"
-            @click="vocabulary.show()"
-          />
-        </UTooltip>
+        </Teleport>
         <span :class="openPage ? 'hidden xl:inline-flex' : 'hidden md:inline-flex'">
           <BlrCoverageBadge :status="workspace.coverage.status" named size="md" />
         </span>

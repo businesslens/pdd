@@ -779,12 +779,12 @@ describe('stable Product Report', () => {
   })
 
   /*
-    Vocabulary and Docs are the same offer — the two ways out of a word the
-    reader does not know — so they are not two different affordances. A ghost
-    Vocabulary beside a bordered Docs read as chrome rather than a control.
+    Embedded reports without a host-header target keep the bordered controls
+    that fit their report row. A host can instead move them into its header.
   */
-  it('offers Vocabulary as the same bordered control as Docs', () => {
-    const shell = source('app/components/BlrReportShell.vue')
+  it('keeps the bordered Vocabulary control when the host has no tools target', () => {
+    const tools = source('app/components/BlrReportTools.vue')
+    const shell = tools.slice(tools.indexOf('<template v-else>'))
     const vocabulary = shell.indexOf('label="Vocabulary"')
     const button = shell.lastIndexOf('<UButton', vocabulary)
 

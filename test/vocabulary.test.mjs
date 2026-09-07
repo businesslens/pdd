@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import { stringify } from 'yaml'
 import { leadsOf, readVocabulary, renderModule } from '../scripts/vocabulary.mjs'
-import { VOCABULARY_ITEMS, VOCABULARY_PAGES, vocabularyMatches, vocabularySection } from '../layers/nuxt/report-viewer/app/utils/vocabulary.ts'
+import { VOCABULARY_ITEMS, VOCABULARY_PAGES, termHref, vocabularyMatches, vocabularyPageContext, vocabularySection } from '../layers/nuxt/report-viewer/app/utils/vocabulary.ts'
 
 const temporaryDirectories = []
 
@@ -29,6 +29,23 @@ afterEach(async () => {
 
 describe('vocabulary lookup', () => {
   const results = vocabularyMatches
+
+  it('uses the owning docs page as context, including the combined Product group', () => {
+    expect(vocabularyPageContext('entities')).toBe('entity')
+    expect(vocabularyPageContext('product-model')).toBe('product-model')
+    expect(vocabularySection(vocabularyPageContext('product-model'))).toBe('product')
+    expect(vocabularyPageContext('cli-view')).toBe('product')
+    expect(vocabularyPageContext('')).toBe('product')
+  })
+
+  it('keeps term anchors and Scenario owners when docs links stay in the host', () => {
+    for (const slug of ['product-model', 'capability-scenario-trigger', 'journey-scenario-trigger']) {
+      expect(termHref(slug, '/docs')).toBe(termHref(slug).replace('https://businesslens.io', ''))
+      expect(termHref(slug, '/docs/')).toBe(termHref(slug, '/docs'))
+    }
+    expect(termHref('capability-scenario-trigger', '/docs')).toContain('/capabilities#')
+    expect(termHref('journey-scenario-trigger', '/docs')).toContain('/journeys#')
+  })
 
   it('puts the requested word ahead of definitions that mention it', () => {
     expect(results(' Step ')[0].slug).toBe('step')

@@ -14,6 +14,8 @@ const props = defineProps<{
   report: ProductReportV13
   /** Host-resolved `.businesslens/product/logo.svg`; rendered in the product header. */
   logoSrc?: string | null
+  /** Mounted host-header element receiving the report's search and Vocabulary controls. */
+  toolsTarget?: string
 }>()
 
 /**
@@ -55,6 +57,7 @@ const workspace = computed(() => projectReportWorkspace(props.report))
       v-model:route-columns="routeColumns"
       :workspace="workspace"
       :logo-src="logoSrc"
+      :tools-target="toolsTarget"
     >
       <template v-if="$slots.navigation" #navigation>
         <slot name="navigation" />

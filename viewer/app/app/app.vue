@@ -30,8 +30,9 @@ useHead({
       <NuxtLoadingIndicator />
       <BusinessLensThemeLabBar />
       <UHeader
+        data-local-viewer-header
         sticky
-        :ui="{ root: 'top-(--businesslens-theme-lab-height) shrink-0', right: 'gap-0.5' }"
+        :ui="{ root: 'top-(--businesslens-theme-lab-height) shrink-0', left: 'min-w-0', right: 'min-w-0 gap-0.5' }"
       >
         <template #left>
           <div class="flex items-center gap-2.5">
@@ -59,6 +60,7 @@ useHead({
         </template>
 
         <template #right>
+          <div id="businesslens-report-tools" class="flex items-center gap-0.5" />
           <UTooltip :text="themeLabLabel">
             <UButton
               icon="i-lucide-sliders-horizontal"

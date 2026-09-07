@@ -18,15 +18,23 @@ const props = defineProps<{
    * under all ten of a page's terms is the page's name, ten times.
    */
   iconLink?: boolean
+  /** Root-relative docs prefix for a host that reads documentation in this tab. */
+  docsBase?: string
 }>()
 
-const emit = defineEmits<{ follow: [slug: VocabularySlug] }>()
+const emit = defineEmits<{ follow: [slug: VocabularySlug], read: [event: MouseEvent] }>()
 const entry = computed(() => vocabularyTerm(props.slug))
 const segments = computed(() => definitionSegments(props.slug))
 /* In the panel a mention navigates; in a popover it reveals another reading. */
 const navigates = computed(() => Boolean(props.headingLevel) || Boolean(props.lead))
 /* An icon says where it goes to a pointer; this says it to everything else. */
 const documentation = computed(() => `Read more in ${entry.value.pageTitle}`)
+const documentationLink = computed(() => ({
+  to: termHref(props.slug, props.docsBase),
+  external: !props.docsBase,
+  target: props.docsBase ? undefined : '_blank',
+  rel: props.docsBase ? undefined : 'noopener noreferrer'
+}))
 </script>
 
 <template>
@@ -38,10 +46,7 @@ const documentation = computed(() => `Read more in ${entry.value.pageTitle}`)
       >{{ entry.term }}</component>
       <UButton
         v-if="iconLink"
-        :to="termHref(slug)"
-        external
-        target="_blank"
-        rel="noopener noreferrer"
+        v-bind="documentationLink"
         icon="i-lucide-book-open"
         color="neutral"
         variant="link"
@@ -49,6 +54,7 @@ const documentation = computed(() => `Read more in ${entry.value.pageTitle}`)
         class="-my-1 -me-1.5 ms-auto shrink-0"
         :aria-label="`${documentation}, at ${entry.term}`"
         :title="documentation"
+        @click="emit('read', $event)"
       />
     </div>
     <p class="text-sm leading-relaxed text-muted">
@@ -65,16 +71,14 @@ const documentation = computed(() => `Read more in ${entry.value.pageTitle}`)
     </p>
     <UButton
       v-if="!iconLink"
-      :to="termHref(slug)"
-      external
-      target="_blank"
-      rel="noopener noreferrer"
+      v-bind="documentationLink"
       icon="i-lucide-book-open"
       color="neutral"
       variant="link"
       size="xs"
       class="-mx-1.5"
       :label="documentation"
+      @click="emit('read', $event)"
     />
   </div>
 </template>

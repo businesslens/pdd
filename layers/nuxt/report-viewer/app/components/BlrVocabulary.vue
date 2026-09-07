@@ -33,13 +33,19 @@ const pageKinds: Partial<Record<string, ReportResourceKind>> = {
   'business-rules': 'rule'
 }
 
-const props = defineProps<{ context?: VocabularySlug }>()
+const props = defineProps<{
+  context?: VocabularySlug
+  /** Root-relative docs prefix. Omit to open public documentation in a new tab. */
+  docsBase?: string
+  /** Stable state namespace when the host also embeds a report's own panel. */
+  stateKey?: string
+}>()
 
 /*
   The panel is shared state, not a prop: a term rendered ten components deep can
   ask for it, and the reader means the same panel every time.
 */
-const { open, lookup, returnFocusId, show } = useVocabularyPanel()
+const { open, lookup, returnFocusId, show } = useVocabularyPanel(props.stateKey)
 
 const query = ref('')
 const searching = computed(() => Boolean(query.value.trim()))
@@ -49,6 +55,14 @@ const searchInput = ref<{ inputRef: HTMLInputElement | null } | null>(null)
 const marked = ref<VocabularySlug | null>(null)
 const expandedPages = ref<string[]>([])
 const pageId = useId()
+let leavingForDocs = false
+
+function readDocumentation(event: MouseEvent) {
+  if (!props.docsBase || event.defaultPrevented || event.button !== 0
+    || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+  leavingForDocs = true
+  open.value = false
+}
 
 function revealPage(page: string) {
   if (!expandedPages.value.includes(page)) expandedPages.value.push(page)
@@ -160,6 +174,11 @@ function onOpenAutoFocus(event: Event) {
 function onCloseAutoFocus(event: Event) {
   const origin = returnFocusId.value ? document.getElementById(returnFocusId.value) : null
   returnFocusId.value = null
+  if (leavingForDocs) {
+    leavingForDocs = false
+    event.preventDefault()
+    return
+  }
   if (!origin) return
   event.preventDefault()
   origin.focus({ preventScroll: true })
@@ -179,6 +198,13 @@ watch(open, (isOpen) => {
   lookup.value = null
   marked.value = null
   history.value = []
+}, { immediate: true })
+
+// A host change must not carry an open docs panel into a report, or vice versa.
+onBeforeUnmount(() => {
+  open.value = false
+  lookup.value = null
+  returnFocusId.value = null
 })
 </script>
 
@@ -249,7 +275,13 @@ watch(open, (isOpen) => {
               :data-marked="marked === item.slug"
               tabindex="-1"
             >
-              <BlrTermDefinition :slug="item.slug" :heading-level="3" @follow="follow($event, item.slug)" />
+              <BlrTermDefinition
+                :slug="item.slug"
+                :heading-level="3"
+                :docs-base="docsBase"
+                @follow="follow($event, item.slug)"
+                @read="readDocumentation"
+              />
             </article>
           </div>
           <section
@@ -294,9 +326,11 @@ watch(open, (isOpen) => {
             <div v-show="opened(page)" :id="`${pageId}-${page.page}`" class="pb-2">
               <BlrTermDefinition
                 :slug="page.lead.slug"
+                :docs-base="docsBase"
                 lead
                 class="ps-10 pe-4 py-3 sm:ps-11 sm:pe-5"
                 @follow="follow($event, page.lead.slug)"
+                @read="readDocumentation"
               />
               <article
                 v-for="item in page.items"
@@ -308,9 +342,11 @@ watch(open, (isOpen) => {
               >
                 <BlrTermDefinition
                   :slug="item.slug"
+                  :docs-base="docsBase"
                   :heading-level="4"
                   icon-link
                   @follow="follow($event, item.slug)"
+                  @read="readDocumentation"
                 />
               </article>
             </div>

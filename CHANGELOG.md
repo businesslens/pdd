@@ -26,9 +26,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `npm run check` rejects stale output and term declarations on CLI pages.
 - Documentation for report navigation, Topology, Neighbourhood, and vocabulary
   lookups in the Model overview.
+- The shared Vocabulary panel can also be mounted by docs hosts, with the
+  current documentation page as context and links that close the panel and
+  navigate to the owning heading in the same tab. A separate state key lets a
+  site's panel coexist with an embedded report's own vocabulary lookups.
 
 ### Changed
 
+- The local viewer places Search and Vocabulary in its top header, matching the
+  landing site's controls. Model search keeps its keyboard shortcut and
+  Vocabulary follows the current report page. Embedded reports can opt into a
+  host header through `tools-target`.
 - Distinct icons identify Overview, Entities, Domains, and Topology. Entity
   instances use marks for people, systems, and things the Product keeps.
   Tooltips explain which side of the Product boundary an Actor acts from.

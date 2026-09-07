@@ -54,9 +54,14 @@ export function definitionSegments(slug: VocabularySlug): DefinitionSegment[] {
 }
 
 /** The page that explains the term in full, at the heading that does it. */
-export function termHref(slug: VocabularySlug): string {
+export function termHref(slug: VocabularySlug, base = DOCS_ORIGIN): string {
   const entry = VOCABULARY[slug]
-  return `${DOCS_ORIGIN}/${entry.page}${entry.anchor ? `#${entry.anchor}` : ''}`
+  return `${base.replace(/\/$/, '')}/${entry.page}${entry.anchor ? `#${entry.anchor}` : ''}`
+}
+
+/** A docs host supplies its page basename; pages without terms start at Product. */
+export function vocabularyPageContext(page: string): VocabularySlug {
+  return Object.hasOwn(VOCABULARY_LEADS, page) ? VOCABULARY_LEADS[page]! : 'product'
 }
 
 export function termItem(slug: VocabularySlug): VocabularyItem {
