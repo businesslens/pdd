@@ -89,7 +89,7 @@ own act, and the threshold is the store's decision rather than the Product's.
 | `references` | no | Use the documented [Reference](./references.md) shape. |
 | H1 and lead paragraph | yes | Name the Rule and state its durable assertion. |
 | `## Intent` | no | Explain the outcome the Rule protects. |
-| `## Rationale` | no | Explain why the constraint exists. |
+| `## Rationale` | no | Explain the current condition or consequence that makes the constraint necessary. Do not recount alternative designs or why they were rejected. |
 
 ## Behavioral and Context targets
 

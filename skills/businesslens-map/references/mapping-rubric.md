@@ -111,7 +111,9 @@ When the call is still close, **split**. A merge stays available to anyone later
 A collapse throws away exactly the differences a reader came for and leaves
 nothing in the model saying they existed, so the next reader cannot tell there
 was a question. Put both shapes and their counts to the author when you can; with
-no author to ask, split and record it as a judgment call rather than choosing.
+no author to ask, split and surface the unresolved granularity question in the
+proposed delta. Once resolved, record the resulting product meaning without
+retaining the compared shapes or replaying the discussion on later runs.
 
 One shape defeats the list test: a candidate whose kept information is a
 **subset** of another's. An intersection always exists, so "a single list is true

@@ -64,7 +64,8 @@ Read before authoring:
    close, **split**: a merge stays available to anyone later, while a collapse
    deletes the difference and leaves nothing saying it was ever a question. Put
    both shapes and their counts to the author when you can; when there is no
-   author to ask, split and record it as a judgment call rather than choosing.
+   author to ask, split and surface the unresolved granularity question in the
+   proposed delta.
    Name each fact the Product keeps (`- **Name** — prose`) so a Rule can cite
    it. **Every Step says what it does to the Product's things**: `entities` is
    required on every Step — creates, changes, removes, or reads, with the state
@@ -154,7 +155,7 @@ Read before authoring:
 
    **With no author reachable**, do not quietly choose. Apply the recorded
    defaults — split rather than collapse, omit rather than assert — and carry
-   every unanswered question into `Judgment calls` as an open question rather
+   every unanswered question into `Open questions` as an open question rather
    than a settled decision.
 
    Those defaults key on the call being close, so a rule that appears to settle
@@ -167,19 +168,15 @@ Read before authoring:
    uncertainty. Get explicit approval for product meaning. Do not silently
    replace a mature model.
 
-   **Always end the delta with a `Judgment calls` section**, naming every choice
-   that could defensibly have gone the other way, the alternative, and why you
-   chose as you did. Capability granularity, Entity granularity — one Entity per
-   thing, or one standing for several — whether something warranted an
-   Interface, an Experience, an Entity or a Journey, whether a constraint is a
-   Business Rule, and whether an authorization check in the code is product
-   meaning — a grant — or only implementation, all belong there.
- A reviewer can see what the model says but
-   not what it omits, so an unstated judgment call is one nobody can challenge —
-   which makes the approval a formality rather than a check.
+   Present the selected model shape and its consequences. Surface significant
+   omissions, consequential modeling boundaries, and material uncertainty needed
+   for approval. Explain these briefly in terms of the current proposal. Do not
+   enumerate discarded options or repeat settled discussion. Include
+   `Open questions` only when questions remain.
 9. Write only inside `.businesslens/` after approval. Create the complete
    authored layout when absent, including the canonical `.businesslens/README.md`
-   and `.gitignore`. Set coverage by model breadth:
+   and `.gitignore`. Write current product meaning under the guardrails below.
+   Set coverage by model breadth:
    - `draft` while the model itself still needs author review;
    - `partial` when useful but known areas remain unmapped;
    - `complete` only when the intended product breadth is modeled.
@@ -199,6 +196,12 @@ Read before authoring:
 ## Guardrails
 
 - Describe established behavior, never desired behavior.
+- Never persist rejected approaches, reasons another option was not selected,
+  or deliberation history anywhere in `.businesslens/`, including resource prose,
+  supporting sections, limitations, README, and additional files. Keep decision
+  discussion in the conversation. An unchosen option is not a product exclusion;
+  preserve established constraints, refusal and failure behavior, and material
+  unresolved questions or missing evidence.
 - Write no placeholder resources and claim no certainty beyond inspected source.
 - Never write outside `.businesslens/`; leave target `AGENTS.md`, `CLAUDE.md`,
   and root README byte-identical.

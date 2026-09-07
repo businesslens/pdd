@@ -29,11 +29,19 @@ puts what the repository cannot settle to you before writing anything — which
 surfaces are supported Interfaces, whether a family of things is one Entity or
 several, where a Scenario ends and an `## Edge cases` bullet begins, and the
 Product's own name for each thing — in rounds, with a recommendation on each.
-It then presents the proposed delta for approval, ending with a **Judgment
-calls** section that names every choice that could defensibly have gone the
-other way and the alternative it was chosen over, so a reviewer can challenge
-what the model omits as well as what it says. It writes only inside
-`.businesslens/` and runs structural lint in an isolated runner.
+It then presents the proposed delta for approval, explaining the selected model
+shape and its consequences. Significant omissions, consequential modeling
+boundaries, and material uncertainty remain visible in brief explanations of the
+current proposal. An **Open questions** section appears only when questions
+remain. Review output does not enumerate discarded options or repeat settled
+discussion on later runs.
+
+Map writes current product meaning only inside `.businesslens/` and runs
+structural lint in an isolated runner. Generated files contain no rejected
+approaches or deliberation history, including in resource prose, supporting
+sections, limitations, or README. An unchosen option does not become a product
+exclusion. Established constraints, refusal and failure behavior, and material
+unresolved questions or missing evidence remain visible.
 
 Map never executes target code and never silently replaces a mature model.
 Optional implementation References can provide useful navigation, not proof.

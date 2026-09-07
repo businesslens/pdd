@@ -111,6 +111,17 @@ The model deliberately holds **no time** (milestones, phasing, v1 against v2),
 cost), **no alternatives considered**, and **no risk**. All of that is real
 product work, and none of it is *what the product does*.
 
+This applies throughout `.businesslens/`: resource prose, supporting sections,
+limitations, README, and additional files must not retain rejected approaches,
+explanations of why another option was not selected, or deliberation history.
+Keep that discussion in the conversation. An unchosen option does not become a
+product exclusion; record exclusions only when they are established or approved
+product constraints. Current constraints, refusal and failure behavior, and
+material unresolved questions or missing evidence still belong in the model.
+Business Rule rationale may explain what makes a current constraint necessary
+without recounting discarded designs. Structural lint checks the format, not
+whether prose follows this authoring boundary.
+
 What overlaps is the PRD's **requirements** section — and
 [`businesslens-ideate`](./skill-businesslens-ideate.md) produces it directly, as
 an approved model delta. The healthy division: **the PRD says why, for whom, how

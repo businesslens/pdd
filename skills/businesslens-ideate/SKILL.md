@@ -101,15 +101,11 @@ Read before authoring:
    changed, or removed; Capability and Journey acceptance Scenarios;
    relationship repairs; limitations; and implementation work implied. Get explicit approval.
 
-   **Always end the delta with a `Judgment calls` section**, naming every
-   choice that could defensibly have gone the other way, the alternative it was
-   chosen over, and why. Capability granularity, Entity granularity — one
-   Entity per thing, or one standing for several — whether something warranted
-   an Interface, an Experience, an Entity or a Journey, whether a constraint is
-   a Business Rule, and who may perform an operation, all belong there. A
-   reviewer can see what the delta says but not what it omits, so an unstated
-   judgment call is one nobody can challenge — which makes the approval a
-   formality rather than a check.
+   Present the selected model shape and its consequences. Surface significant
+   omissions, consequential modeling boundaries, and material uncertainty needed
+   for approval. Explain these briefly in terms of the current proposal. Do not
+   enumerate discarded options or repeat settled discussion. Include
+   `Open questions` only when questions remain.
 10. After approval, write only inside `.businesslens/`:
     - blank slate: create the complete layout, canonical README, `.gitignore`,
       taxonomies, product, coverage, and all approved resources;
@@ -117,6 +113,7 @@ Read before authoring:
       relationships;
     - resolution: apply only the approved narrow delta.
 
+    Write current product meaning under the guardrails below.
     Attach to each resource the artifacts that state its intended behavior — the
     PRD, spec, proposal or design the decision came from, with `role: intent` —
     and preserve existing References only where they remain useful. Keep every
@@ -141,6 +138,12 @@ Read before authoring:
 ## Guardrails
 
 - Never write model meaning without explicit approval.
+- Never persist rejected approaches, reasons another option was not selected,
+  or deliberation history anywhere in `.businesslens/`, including resource prose,
+  supporting sections, limitations, README, and additional files. Keep decision
+  discussion in the conversation. An unchosen option is not a product exclusion;
+  preserve approved constraints, refusal and failure behavior, and material
+  unresolved questions or missing evidence.
 - Never present a proposal as a decision or reopen a decision already supplied
   by a verification handoff.
 - Keep model prose at product altitude; do not invent stacks, endpoints,

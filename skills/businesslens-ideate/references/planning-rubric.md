@@ -58,8 +58,8 @@
   identified Capabilities, and place every named route at its most-specific Context place.
 - Use a decision point only when branches converge on the same result without
   changing the Capability sequence. Otherwise write separate Scenarios.
-- Record intent where the reason behind a boundary or behavior will guide
-  implementation choices.
+- Record intent as the outcome a boundary or behavior protects, without
+  comparisons to discarded designs.
 - Do not assume parity across Interfaces. Decide each availability Context and
   every Scenario's Step Contexts independently.
 
@@ -78,8 +78,11 @@ that apply to all routes may omit `contexts`, and Journey Steps may omit Capabil
 
 - Propose concrete drafts and let the user correct them.
 - Batch related open questions; ask only decisions the user must make.
-- State a recommendation and its tradeoff when multiple directions remain.
-- Record unresolved points as limitations instead of guessing.
+- While a choice remains open, discuss a recommendation and its tradeoff in the
+  conversation. After resolution, record the resulting product meaning without
+  retaining discarded directions or replaying settled discussion on later runs.
+- Record material unresolved points as limitations instead of guessing; an
+  unchosen option is not a limitation or product exclusion.
 - Keep screenshots, mockups, research, and sitemaps external. References may
   attach them with `role: intent` or `role: context`, but BusinessLens neither
   creates nor certifies them.
