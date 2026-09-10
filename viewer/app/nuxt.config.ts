@@ -57,6 +57,8 @@ export default defineNuxtConfig({
     resolve('../../layers/nuxt/theme-lab')
   ],
   ssr: false,
+  // Keep the downloadable CLI within its archive budget as graph engines grow.
+  vite: { build: { minify: 'terser', terserOptions: { compress: { passes: 2 } } } },
   devtools: { enabled: false },
   colorMode: {
     preference: 'light',

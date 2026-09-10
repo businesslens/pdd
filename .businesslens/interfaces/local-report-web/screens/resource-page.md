@@ -12,7 +12,7 @@ entities:
   - journey
   - journey-scenario
   - business-rule
-capabilities: [view-product-model]
+capabilities: [view-product-model, explore-product-topology]
 entryPoints:
   - local-report-web: /?s=capability&e=capability:lint-product-model
 references:
@@ -23,13 +23,16 @@ references:
 
 # Resource page
 
-One resource, at the width its content was drawn for. This is the reading: it has
-its own address, a breadcrumb back to its collection, and the browser's own back
-button.
+One resource, at the width its content was drawn for. This is the reading: it
+has its own address, a trail back through the resources that own it, and the
+browser's own back button. The page names itself — the trail ends at the parent,
+and the heading carries the resource's title, its type, and the ways out of it.
 
 ## Information presented
 
-- The resource's title, kind, and the identifying facts of that kind
+- The resource's title and type, stated once, above the reading
+- The path back through the resources that actually own it
+- The identifying facts of that kind
 - Its authored description, Intent, and any supporting sections
 - Its Contexts, where the resource type carries them
 - Its relations to other resources, each openable
@@ -42,8 +45,13 @@ button.
 
 - Open any related resource's page
 - Read a Scenario, and compare its named routes side by side
-- Open this resource's neighbourhood in the Product Topology
-- Return to the collection through the breadcrumb
+- Read this resource’s incoming and outgoing connections in Overview
+- Open a named view of another subject, focused on this resource, from the heading row
+- Read the documentation for this resource type
+- Read an Interface’s delivered Capabilities and contained resources in Overview
+- Follow actual ownership through Interfaces, an Interface, an optional Experience, and a Screen
+- Open an Experience’s own Screens and references to shared Screens
+- Return to the main collection through the breadcrumb
 - Search the whole model by name
 
 ## View states
@@ -64,8 +72,16 @@ An Entity page on its composed state machine: the states, the arcs the Steps
 draw with the Capability on each and the Rules that restrict or forbid it, and
 what leaves a thing in each state.
 
+### One reading only
+
+A resource with no second tab shows no tab strip: there is nothing to switch,
+and the ways out sit on the heading row whichever reading is open.
+
 ## Capability boundary
 
-One resource's authored meaning and its relations. It never edits the resource, and
-it does not draw the graph — a neighbourhood is an action into the Topology, not
-a second reading here.
+One resource’s authored meaning, relations, and resource-specific readings.
+Overview contains Connections and Interface delivery; an Entity reads its state
+machine in Lifecycle. Every comparison across resources — how Journeys compose,
+how Interfaces deliver — belongs to the owning collection, because a page
+showing one resource cannot answer a question about how several compare.
+Interfaces stays selected for Experience and Screen pages.

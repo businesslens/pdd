@@ -12,4 +12,6 @@ if (!existsSync(resolve(source, 'index.html'))) {
 
 rmSync(target, { recursive: true, force: true })
 mkdirSync(resolve(target, '..'), { recursive: true })
-cpSync(source, target, { recursive: true })
+// The package already ships these exact assets in its shared theme layer.
+// The local server serves /brand/ from that copy; Nuxt's own output stays intact.
+cpSync(source, target, { recursive: true, filter: path => path !== resolve(source, 'brand') })

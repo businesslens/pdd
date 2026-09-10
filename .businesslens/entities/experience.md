@@ -11,7 +11,7 @@ references:
     title: The .businesslens/ folder contract
   - kind: doc
     role: context
-    target: docs/experiences.md
+    target: docs/interfaces.md
   - kind: code
     role: implementation
     target: src/core/portable.ts#ReportExperienceSchema

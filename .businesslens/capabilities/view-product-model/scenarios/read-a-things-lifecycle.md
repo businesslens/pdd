@@ -43,6 +43,7 @@ somewhere, every label a Capability, and every restriction a Rule they can open.
 
 ## Edge cases
 
-- A state no Step leaves anything in is drawn hollow and marked unreached rather than dropped, so the gap is visible.
+- A state no Step leaves anything in is marked unreached and remains visible, including when the Entity has no transitions.
 - A thing no Step creates is noted as pre-existing the model, which is a fact about the model and not a finding against it.
-- An arc a Rule forbids to everyone is drawn crossed out, with the Rule's name on it, and never as a path.
+- An arc a Rule forbids to everyone is labelled forbidden; the accompanying reading identifies the Rule and keeps its restrictions separate from grants.
+- Every State and transition remains readable as the machine grows; the Developer can zoom and pan to inspect the complete machine, with its viewport retained through navigation and refresh.

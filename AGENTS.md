@@ -62,7 +62,7 @@ were costed and then chosen against, so the same argument is not had twice.
   characters so it never truncates; the body H1 carries the full page
   title.
 - This repository authors the documentation with groups Get started, Product
-  Model (one page per top-level resource type), Integrations (one page per
+  Model (one page per main resource family), Integrations (one page per
   thing you integrate with), Skills (one page per skill), and CLI (one page per
   command).
 - Each resource type is explained in exactly one place. Its page carries its
@@ -73,14 +73,12 @@ were costed and then chosen against, so the same argument is not had twice.
   `npm run vocabulary` after edits and commit the generated registry.
 - Keep definitions self-contained and capitalize referenced types. Put the page's
   main term first; CLI pages do not declare terms.
-- A resource type is documented on its parent's page when **its type name names
-  that parent** — never on one of its own. Scenarios are the only such types:
-  Capability Scenarios live in `docs/capabilities.md`, Journey Scenarios in
-  `docs/journeys.md`. A page they shared would have to state the containment
-  rule before either could be read, and a reader arrives already knowing which
-  parent they are authoring. The test is the name, not the containment: an
-  Experience also sits inside exactly one Interface, and keeps its own page,
-  because nothing calls it an Interface Experience.
+- Experiences and Screens are sections of `docs/interfaces.md`, including their
+  definitions, file shapes, and lint rules. They have no separate docs pages or
+  sidebar entries. Capability Scenarios live in `docs/capabilities.md`, Journey
+  Scenarios in `docs/journeys.md`. This supersedes the earlier rule requiring
+  Experiences and Screens to have their own pages; their resource types and
+  authored containment remain unchanged.
 
 ## How format decisions are judged
 
@@ -188,17 +186,54 @@ costed already.
   topology resource opens the resource page directly. It has a URL, a
   breadcrumb, the width its content was drawn for, and the browser's own back
   button.
+- **Tabs are the only switch.** A tab changes which set is on screen, the rail
+  changes the subject, and the toolbar only narrows what is already there. There
+  is no representation control, because "the same rows drawn differently" was
+  never true of any of them: a relationship graph shows edges a list does not,
+  and a containment map adds the Product root. A second drawing is a tab of its
+  own, accountable for its own derivation and free to grow the controls that
+  drawing needs. One idiom means a reader learns the report once.
+- **Every surface names itself, with the name the reader clicked.** The
+  breadcrumb is a path, not a title: it ends at the parent, and an H1 carries the
+  current collection or resource with its type mark, its count or type label, and
+  its term tooltip. The heading is the destination, never the report the reader
+  is already inside — a rail row and the heading it opens say the same word, so
+  Overview heads its page `Overview` exactly as Entities heads its page
+  `Entities`. The Product's own name and logo are the report's identity and
+  belong to the chrome that carries them on every surface. Ways out —
+  documentation, and a named view belonging to another subject — sit on that H1
+  row, because an exit belongs to the subject and not to whichever tab happens
+  to be open. Every surface then reads the same way down the page: what this is
+  and the ways out, which set, what narrows it. The tab strip renders only where
+  a second tab exists.
+- **The Product's page is a page like the others.** It carries the same heading,
+  the same tab strip and the same full width, and it is headed `Overview` like
+  the rail row that opens it. Its About, Coverage, Model counts
+  and References are peer tabs, not stacked disclosures a reader has to open to
+  learn whether they hold anything — a disclosure column is a switch idiom
+  nowhere else in the report uses, and it hides the answer behind the question.
+  It never reprints a collection that already has a rail row, a page and a count
+  of its own: listing Journeys on the way past made the Product page a duplicate
+  of the one place that owns them, and a centred column made it the one surface
+  that read differently from every other.
 - **Overview and one peer tab are the page structure.** Overview carries the
   resource's authored meaning, facts, Contexts, relations, supporting material,
   and References. Capability and Journey pages add Scenarios as their only
   second tab; an Entity with States adds Lifecycle, its composed machine and
-  what leaves a thing in each state. Neighbourhood is an action into Topology,
-  never another page tab.
-- **The rail lists resource types; they do not nest.** Containment belongs
-  where instances are — the default grouping of a collection and the resource
-  page. A mandatory child type does not add a peer collection tab to its
-  parent's main screen. A rail that indents some types and not others
-  advertises a hierarchy it cannot keep.
+  what leaves a thing in each state. A view that compares resources belongs to
+  the collection, never to a third tab on one of them: one Journey's page cannot
+  answer a question about how Journeys compare, so Composition is a Journeys
+  tab. This supersedes the prior convention placing a neighbourhood action on
+  the page.
+- **The rail lists six main resource collections.** Entities, Interfaces,
+  Domains, Capabilities, Journeys, and Business Rules sit below Overview in
+  Resources. Experiences and Screens are reached through Interfaces, Scenarios
+  through their Capability or Journey. Containment belongs in the Interfaces
+  list rows and resource pages, with actual ownership breadcrumbs — a
+  collection reads as one row shape whatever it holds, so no collection draws
+  itself as a tree. Named visualizations are tabs of their subject collection.
+  This supersedes the prior convention exposing Experiences and Screens as
+  independent rail entries.
 - **Chrome scales with the collection.** No control costs a row above a
   two-item list, and a filter offer is not rendered where scanning is faster.
 - **Named views, not a view builder.** Filters narrow a view that already means
@@ -208,6 +243,18 @@ costed already.
   uses*, and those give different grids. A named view picks one, states its
   derivation, and is accountable for it. A new correlation costs code, which is
   the point.
+- **Grouping is authored, never configured.** Offering a reader every related
+  kind to group by is a view builder wearing a select menu — "Capabilities by
+  Journeys" states no derivation and nothing is accountable for it. Domain is
+  the only grouping axis, it is always on wherever the type carries one, and
+  there is no control. Entities that act lead their collection in a group of
+  their own, because who the Product is for is the question the rail is opened
+  with.
+- **A filter offers only what the row already prints.** A facet the reader
+  cannot see on a card is a correlation they have to take on trust, and a
+  popover of nine of them above a twelve-item list costs more than the scan it
+  replaces. Filters narrow; they never reach for a relation the reading does not
+  already show.
 - A view that needs a paragraph before it can be read is not ready to ship, and
   no view opens onto an empty configuration screen.
 - **The surface names the resource type; the row does not repeat it**, and a

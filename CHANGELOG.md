@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Find diagrams alongside six resource collections, and browse Experiences and Screens through Interfaces.
+- Experiences and Screens are explained inside the Interfaces documentation.
+- Journey composition, Interface delivery, and Connections sit with their resources.
+- Every report surface reads the same way: what it is and the ways out, then tabs for which set, then a filter.
+- Tabs are the report's only switch. Named readings sit beside List in the collection they belong to.
+- The Cards and Table toggle is gone; every collection uses one row shape, including Interfaces.
+- Collections group by Domain automatically, with no grouping menu to choose from.
+- Entities that act are listed together under Actors.
+- A resource page shows its own title and type, with a trail back to what owns it.
+- Documentation and related readings sit beside the title instead of under the tabs.
+- Filters offer only the relations a row already shows.
+- Compare delivery and Journey composition are now tabs of Interfaces and Journeys.
+- The Overview reads like every other page, with About, Coverage, Model counts and References as tabs.
+- The Overview no longer repeats the Journeys list, which has its own collection.
+- The All resources and connections view is gone; the rail and each resource's page already answer it.
+- Report links shared before this release open the Overview.
+- Interface map shows a connected tree through Interfaces, Experiences, and Screens.
+- Domain map groups both Capabilities and Entities, keeping unassigned resources visible.
+- Named readings use maps, Scenario columns, trees, and relationship tables.
+- Graphs retain their familiar interactive canvas with clearer placement and connections.
+- Graph positions, collection preferences, filters, and expanded groups survive refresh and navigation.
+- Rule attachments include direct Entity and Context attachments with their restrictions.
+
 ## [0.11.0] - 2026-09-07
 
 ### Fixed

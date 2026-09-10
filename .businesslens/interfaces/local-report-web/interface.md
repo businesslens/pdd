@@ -24,7 +24,7 @@ button, and a reload.
 
 Reading: browsing resources by kind, opening any resource's page, reading a
 thing's composed lifecycle and who may move it, searching by name, and reading
-the named topology views. It presents what the model already says and never
+named visualizations in their subject collections and resource-specific readings. It presents what the model already says and never
 edits it, never accepts an account, and never publishes or transmits the report.
 It shows the model, not the code — it makes no claim about whether the
 repository agrees with what it displays.

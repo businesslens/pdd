@@ -1,368 +1,126 @@
 <script setup lang="ts">
-/**
- * The product-level topology surface: question-led readings.
- * The host owns resource navigation; this component owns view choice, graph-local
- * visibility and focus, hover, and the Journey selector required by Value
- * paths. None of this state reaches the Product Report navigation rail.
- */
-import type { AnyResourceView, ReportResourceKind, ReportWorkspace } from '../utils/reportWorkspace'
-import { ENTITY_KIND_META, resolveResourceKey } from '../utils/reportWorkspace'
-import { buildProductTopologyGraph } from '../utils/productTopologyGraphs'
-import { filterProductTopologyGraph } from '../utils/productTopologyFilters'
-import type { ProductTopologyViewId } from '../utils/productTopologyViews'
-import {
-  DEFAULT_PRODUCT_TOPOLOGY_VIEW,
-  PRODUCT_TOPOLOGY_VIEWS,
-  findProductTopologyView
-} from '../utils/productTopologyViews'
+import type { AnyResourceView, ReportWorkspace } from '../utils/reportWorkspace'
+import { ENTITY_KIND_META, resourceKey } from '../utils/reportWorkspace'
+import { findProductTopologyView } from '../utils/productTopologyViews'
+import type { TopologyReading } from '../utils/topologyState'
+import { defaultTopologyReading, sanitizeTopologyReading, toggleTopologyGroup } from '../utils/topologyState'
+import { entityRelationsProjection, filterBranches, interfaceProjection, journeyCompositionProjection, mutationProjection, productMapProjection, ruleReachProjection, sitemapProjection } from '../utils/topologyProjections'
+import { diagramResource } from '../utils/diagram'
+import { topologyRelations } from '../utils/topologyRelations'
+import type { TopologyMatrix } from '../utils/topologyProjections'
 
-const props = defineProps<{
-  workspace: ReportWorkspace
-  /**
-   * One resource's neighbourhood, requested from elsewhere in the report.
-   *
-   * This is a *filter*, not a seventh named view: "Everything, one hop around
-   * this resource" needs no new derivation, and the focus control below already
-   * means exactly that. Adding a view would have invented a question the model
-   * does not ask.
-   */
-  focus?: string | null
-}>()
-
-const emit = defineEmits<{
-  select: [resource: AnyResourceView]
-}>()
-
-/* Whole-model readings fit tighter and cap lower; a small graph would otherwise
-   be padded into a stamp while a wide one overflows. */
-const DENSE_VIEWS = new Set<ProductTopologyViewId>(['product-map', 'everything', 'rule-reach', 'sitemap'])
-
-const viewId = ref<ProductTopologyViewId>(DEFAULT_PRODUCT_TOPOLOGY_VIEW)
-const hoveredId = ref<string | null>(null)
-const journeyId = ref(props.workspace.journeys[0]?.id ?? '')
-const hiddenKinds = ref<ReportResourceKind[]>([])
-const focusIds = ref<string[]>([])
+const props = defineProps<{ workspace: ReportWorkspace }>()
+const emit = defineEmits<{ select: [resource: AnyResourceView], product: [] }>()
+const reading = defineModel<TopologyReading>('reading', { default: defaultTopologyReading })
 const filtersOpen = ref(false)
-
-const view = computed(() => findProductTopologyView(viewId.value))
-const kindSteps = computed(() => view.value.flow.length
-  ? view.value.flow
-  : view.value.kinds.map(kind => ({ kind, label: ENTITY_KIND_META[kind].plural })))
-const visibleKinds = computed(() => view.value.kinds.filter(kind => !hiddenKinds.value.includes(kind)))
-const journeyItems = computed(() => props.workspace.journeys.map(journey => ({
-  label: journey.title,
-  value: journey.id
-})))
-
-const baseGraph = computed(() => buildProductTopologyGraph(props.workspace, viewId.value, {
-  highlightId: hoveredId.value,
-  journeyId: journeyId.value
-}))
-const graph = computed(() => filterProductTopologyGraph(baseGraph.value, {
-  visibleKinds: visibleKinds.value,
-  focusResourceIds: focusIds.value
-}))
-
-const baseResourceIds = computed(() => new Set(baseGraph.value.nodes
-  .map(node => node.data?.resourceKey)
-  .filter((id): id is string => Boolean(id))))
-const focusItems = computed(() => view.value.kinds.flatMap((kind) => {
-  if (kind === 'product' || hiddenKinds.value.includes(kind)) return []
-  const resources = [...props.workspace.byKey.values()]
-    .filter(resource => resource.kind === kind && baseResourceIds.value.has(resource.key))
-  if (!resources.length) return []
-  return [
-    { type: 'label' as const, label: ENTITY_KIND_META[kind].plural, value: `blr-kind-${kind}` },
-    ...resources.map(resource => ({
-      label: resource.title,
-      value: resource.key,
-      icon: ENTITY_KIND_META[kind].icon,
-      description: resource.id
-    }))
-  ]
-}))
-const activeFilterCount = computed(() => hiddenKinds.value.length + focusIds.value.length)
-const filtersActive = computed(() => activeFilterCount.value > 0)
-
-const resourceNodeCount = computed(() => graph.value.nodes.filter(node => node.type !== 'blr-label').length)
-const baseResourceNodeCount = computed(() => baseGraph.value.nodes.filter(node => node.type !== 'blr-label').length)
-const emptyNote = computed(() => {
-  if (resourceNodeCount.value) return ''
-  if (filtersActive.value && baseResourceNodeCount.value) return 'No resources match these topology filters.'
-  switch (viewId.value) {
-    case 'product-map': return 'This model declares no access paths, Domains, or Capabilities to map.'
-    case 'value-paths': return 'This model declares no Journeys to unfold.'
-    case 'delivery-by-interface': return 'This model declares no Interfaces to map.'
-    case 'sitemap': return 'This model declares no Interfaces to map.'
-    case 'rule-reach': return 'This model declares no Business Rules with reach to draw.'
-    case 'what-it-keeps': return 'This model declares no Entities.'
-    case 'everything': return 'This model has no resources to draw.'
-    default: return 'This model has no resources in this view.'
+const search = ref('')
+const view = computed(() => findProductTopologyView(reading.value.view))
+const relations = computed(() => topologyRelations(props.workspace))
+const neighbourhood = computed(() => {
+  if (!reading.value.focus.length) return null
+  const focus = new Set(reading.value.focus)
+  const keys = new Set(focus)
+  for (const relation of relations.value) if (focus.has(relation.source) || focus.has(relation.target)) { keys.add(relation.source); keys.add(relation.target) }
+  if (view.value.id === 'sitemap') {
+    const descend = (node: ReturnType<typeof sitemapProjection>, included = false) => {
+      const inside = included || focus.has(node.id)
+      if (inside) keys.add(node.id)
+      node.children.forEach(child => descend(child, inside))
+    }
+    descend(sitemapProjection(props.workspace))
   }
+  if (view.value.id === 'product-map') {
+    for (const item of [...props.workspace.capabilities, ...props.workspace.entities]) {
+      if (item.domainId && focus.has(resourceKey('domain', item.domainId))) keys.add(item.key)
+    }
+  }
+  return keys
 })
-
-watch(viewId, () => {
-  hoveredId.value = null
-  hiddenKinds.value = []
-  const compatible = baseResourceIds.value
-  focusIds.value = focusIds.value.filter(id => compatible.has(id))
+const visible = (resource: AnyResourceView) => !reading.value.hiddenKinds.includes(resource.kind) && (!neighbourhood.value || neighbourhood.value.has(resource.key))
+const map = computed(() => productMapProjection(props.workspace))
+const branches = computed(() => filterBranches(
+  view.value.id === 'product-map' ? map.value.groups : interfaceProjection(props.workspace, view.value.id === 'delivery-by-interface'), visible))
+const sitemap = computed(() => filterBranches([sitemapProjection(props.workspace)], visible)[0])
+const matrix = computed<TopologyMatrix>(() => {
+  const base = view.value.id === 'rule-reach' ? ruleReachProjection(props.workspace) : mutationProjection(props.workspace)
+  const selectedRows = base.rows.filter(item => reading.value.focus.includes(item.key))
+  const selectedColumns = base.columns.filter(item => reading.value.focus.includes(item.key))
+  const rows = base.rows.filter(item => visible(item) && (!selectedRows.length || selectedRows.includes(item)))
+  const columns = base.columns.filter(item => visible(item) && (!selectedColumns.length || selectedColumns.includes(item)))
+  const rowKeys = new Set(rows.map(row => row.key))
+  const columnKeys = new Set(columns.map(column => column.key))
+  return { rows, columns, cells: base.cells.filter(cell => rowKeys.has(cell.row) && columnKeys.has(cell.column)) }
 })
-
-watch(journeyId, () => {
-  const compatible = baseResourceIds.value
-  focusIds.value = focusIds.value.filter(id => compatible.has(id))
+const diagram = computed(() => {
+  const base = entityRelationsProjection(props.workspace)
+  const nodes = base.nodes.filter(node => visible(props.workspace.byKey.get(node.id)!)).map(node => ({ ...diagramResource(props.workspace.byKey.get(node.id)!), ...node }))
+  const keys = new Set(nodes.map(node => node.id))
+  return { ...base, nodes, edges: base.edges.filter(edge => keys.has(edge.source) && keys.has(edge.target)) }
 })
-
-/* A neighbourhood asked for from a page: the widest view, narrowed to one hop. */
-watch(() => props.focus, (key) => {
-  if (!key) return
-  viewId.value = 'everything'
-  hiddenKinds.value = []
-  focusIds.value = [key]
+const compositions = computed(() => journeyCompositionProjection(props.workspace))
+const isGraph = computed(() => view.value.id === 'sitemap' || view.value.id === 'what-it-keeps')
+const filterKinds = computed(() => view.value.kinds.filter(kind => kind !== 'product'
+  && [...props.workspace.byKey.values()].some(item => item.kind === kind)))
+const filtersOffered = computed(() => props.workspace.byKey.size > 8 && filterKinds.value.length > 1)
+const focusItems = computed(() => [...props.workspace.byKey.values()].filter(resource => view.value.kinds.includes(resource.kind) && resource.title.toLocaleLowerCase().includes(search.value.toLocaleLowerCase())))
+const filterCount = computed(() => reading.value.hiddenKinds.length + reading.value.focus.length)
+const scrollKey = computed(() => JSON.stringify([props.workspace.identity.id, reading.value]))
+const { element: pane, save, restore } = useBlrTopologyScroll(scrollKey)
+watch(() => props.workspace, () => { save(); void restore() }, { flush: 'pre' })
+watch(() => [props.workspace, reading.value] as const, () => {
+  const next = sanitizeTopologyReading(reading.value, props.workspace)
+  if (JSON.stringify(next) !== JSON.stringify(reading.value)) reading.value = next
 }, { immediate: true })
-
-function setView(next: ProductTopologyViewId) {
-  viewId.value = next
-}
-
-function separatorAt(index: number): string {
-  return view.value.flow.length ? (view.value.separators[index - 1] ?? '·') : '·'
-}
-
-function kindVisible(kind: ReportResourceKind): boolean {
-  return !hiddenKinds.value.includes(kind)
-}
-
-function toggleKind(kind: ReportResourceKind) {
-  if (hiddenKinds.value.includes(kind)) {
-    hiddenKinds.value = hiddenKinds.value.filter(item => item !== kind)
-    return
-  }
-  if (visibleKinds.value.length === 1) return
-  hiddenKinds.value = [...hiddenKinds.value, kind]
-  focusIds.value = focusIds.value.filter((id) => {
-    const resource = resolveResourceKey(props.workspace, id)
-    return resource?.kind !== kind
-  })
-}
-
-function setFocus(ids: string[]) {
-  const compatible = new Set(focusItems.value
-    .filter(item => !('type' in item && item.type === 'label'))
-    .map(item => item.value))
-  focusIds.value = ids.filter(id => compatible.has(id))
-}
-
-function resetFilters() {
-  hiddenKinds.value = []
-  focusIds.value = []
-}
-
-function selectResource(resourceId: string) {
-  const resource = resolveResourceKey(props.workspace, resourceId)
+function update(patch: Partial<TopologyReading>) { reading.value = { ...reading.value, ...patch } }
+function open(key: string) {
+  save()
+  if (key === resourceKey('product', props.workspace.identity.id)) { emit('product'); return }
+  const resource = props.workspace.byKey.get(key)
   if (resource) emit('select', resource)
 }
+function focus(key: string) { open(key) }
+function toggle(id: string, open: boolean) { reading.value = toggleTopologyGroup(reading.value, id, open) }
 </script>
-
 <template>
-  <div class="blr-product-topology flex h-full min-h-0 flex-col">
-    <div class="shrink-0 border-b border-default px-2 pt-2">
-      <div class="overflow-x-auto pb-2">
-        <div class="inline-flex min-w-max items-center gap-0.5 rounded-lg bg-elevated p-0.5" role="tablist" aria-label="Product topology views">
-          <button
-            v-for="item in PRODUCT_TOPOLOGY_VIEWS"
-            :key="item.id"
-            type="button"
-            role="tab"
-            class="blr-topology-tab"
-            :data-current="item.id === viewId"
-            :aria-selected="item.id === viewId"
-            @click="setView(item.id)"
-          >
-            {{ item.name }}
-          </button>
-        </div>
-      </div>
-
-      <div class="flex min-h-9 flex-wrap items-center gap-x-3 gap-y-1 border-t border-muted py-2">
-        <p class="text-sm text-muted">{{ view.question }}</p>
-        <div class="flex flex-wrap items-center gap-1" :aria-label="`Resource visibility for ${view.name}`">
-          <template v-for="(step, index) in kindSteps" :key="`${view.id}:${step.kind}`">
-            <span v-if="index" class="px-0.5 text-xs text-dimmed">{{ separatorAt(index) }}</span>
-            <button
-              type="button"
-              class="blr-topology-kind"
-              :data-visible="kindVisible(step.kind)"
-              :aria-pressed="kindVisible(step.kind)"
-              :disabled="visibleKinds.length === 1 && kindVisible(step.kind)"
-              :aria-label="`${kindVisible(step.kind) ? 'Hide' : 'Show'} ${step.label} in ${view.name}`"
-              :title="visibleKinds.length === 1 && kindVisible(step.kind)
-                ? 'At least one resource type must remain visible.'
-                : `${kindVisible(step.kind) ? 'Hide' : 'Show'} ${step.label} in this graph`"
-              @click="toggleKind(step.kind)"
-            >
-              <BlrKind :kind="step.kind" :labelled="false" size="xs" />
-              <span class="font-mono text-[10px] uppercase tracking-[0.07em] text-muted">{{ step.label }}</span>
-            </button>
+  <div class="blr-product-topology">
+    <header v-if="filtersOffered || filterCount" class="flex flex-wrap items-center gap-2 px-4 py-2">
+      <UPopover v-if="filtersOffered" v-model:open="filtersOpen">
+        <UButton icon="i-lucide-list-filter" color="neutral" :variant="filterCount ? 'soft' : 'outline'" size="xs" label="Filter" trailing-icon="i-lucide-chevron-down">
+          <template v-if="filterCount" #trailing>
+            <UBadge color="primary" variant="solid" size="sm">{{ filterCount }}</UBadge>
           </template>
-        </div>
-        <div class="ms-auto flex shrink-0 items-center gap-1.5">
-          <UBadge
-            color="neutral"
-            variant="subtle"
-            size="sm"
-            class="capitalize"
-            :title="view.semantics === 'identity'
-              ? 'One node per resource, even when it appears in several contexts.'
-              : 'A resource repeats once per context; repetition is part of the answer.'"
-          >
-            {{ view.semantics }}
-          </UBadge>
-          <UButton
-            icon="i-lucide-list-filter"
-            color="neutral"
-            :variant="filtersOpen ? 'soft' : 'ghost'"
-            size="xs"
-            :label="activeFilterCount ? `Filters ${activeFilterCount}` : 'Filters'"
-            :aria-expanded="filtersOpen"
-            @click="filtersOpen = !filtersOpen"
-          />
-          <UButton
-            v-if="filtersActive"
-            icon="i-lucide-filter-x"
-            color="neutral"
-            variant="ghost"
-            size="xs"
-            label="Reset"
-            @click="resetFilters"
-          />
-        </div>
-      </div>
-
-      <div v-if="filtersOpen" class="flex min-h-11 flex-wrap items-center gap-x-3 gap-y-2 border-t border-muted py-2">
-        <span class="blr-field">Focus resources</span>
-        <USelectMenu
-          :model-value="focusIds"
-          :items="focusItems"
-          value-key="value"
-          multiple
-          size="xs"
-          variant="outline"
-          icon="i-lucide-focus"
-          class="min-w-72 max-w-full"
-          placeholder="Choose resources"
-          :search-input="{ placeholder: 'Search resources in this view…' }"
-          @update:model-value="setFocus($event as string[])"
-        >
-          <template #default>
-            <span class="truncate">{{ focusIds.length ? `${focusIds.length} focused` : 'Choose resources' }}</span>
-          </template>
-        </USelectMenu>
-        <p class="min-w-52 flex-1 text-xs text-dimmed">
-          Focus keeps each match and its directly connected context.
-        </p>
-        <UButton
-          v-if="focusIds.length"
-          icon="i-lucide-x"
-          color="neutral"
-          variant="ghost"
-          size="xs"
-          label="Clear focus"
-          @click="focusIds = []"
-        />
-      </div>
-
-      <div v-if="view.note || viewId === 'value-paths'" class="flex min-h-9 flex-wrap items-center gap-2 border-t border-muted py-2">
-        <template v-if="viewId === 'value-paths'">
-          <span class="blr-field">Journey</span>
-          <USelect
-            v-model="journeyId"
-            :items="journeyItems"
-            value-key="value"
-            size="xs"
-            class="min-w-60"
-            icon="i-lucide-route"
-            placeholder="Choose a Journey"
-          />
+        </UButton>
+        <template #content>
+          <div class="blr-topology-filters w-80 space-y-3 p-3">
+            <fieldset><legend>Resource types</legend><label v-for="kind in filterKinds" :key="kind"><input type="checkbox" :checked="!reading.hiddenKinds.includes(kind)" @change="update({ hiddenKinds: reading.hiddenKinds.includes(kind) ? reading.hiddenKinds.filter(item => item !== kind) : [...reading.hiddenKinds, kind] })">{{ ENTITY_KIND_META[kind].plural }}</label></fieldset>
+            <label>Focus with one-hop context <input v-model="search" type="search" placeholder="Find a resource" aria-label="Find a resource to focus"></label>
+            <select aria-label="Focus resource" :value="''" @change="update({ focus: [...new Set([...reading.focus, ($event.target as HTMLSelectElement).value])] })"><option value="" disabled>Choose a resource</option><option v-for="resource in focusItems" :key="resource.key" :value="resource.key">{{ ENTITY_KIND_META[resource.kind].label }} · {{ resource.title }}</option></select>
+          </div>
         </template>
-        <p v-if="view.note" class="min-w-0 flex-1 text-xs italic text-dimmed">{{ view.note }}</p>
+      </UPopover>
+      <div v-if="filterCount" class="flex min-w-0 flex-wrap items-center gap-1.5">
+        <button v-for="key in reading.focus" :key="key" type="button" class="blr-chip" title="Stop focusing this resource" @click="update({ focus: reading.focus.filter(item => item !== key) })">
+          <span class="text-dimmed">Focus</span>
+          <span class="truncate font-medium text-highlighted">{{ workspace.byKey.get(key)?.title }}</span>
+          <UIcon name="i-lucide-x" class="size-3 shrink-0 text-dimmed" />
+        </button>
+        <button v-if="reading.hiddenKinds.length" type="button" class="blr-chip" title="Show every resource type" @click="update({ hiddenKinds: [] })">
+          <span class="text-dimmed">Hidden types</span>
+          <span class="truncate font-medium text-highlighted">{{ reading.hiddenKinds.length }}</span>
+          <UIcon name="i-lucide-x" class="size-3 shrink-0 text-dimmed" />
+        </button>
       </div>
-    </div>
-
-    <div v-if="!emptyNote" class="relative min-h-0 flex-1">
-      <BlrFlowCanvas
-        :nodes="graph.nodes"
-        :edges="graph.edges"
-        :fit-padding="DENSE_VIEWS.has(viewId) ? 0.08 : 0.14"
-        :max-zoom="DENSE_VIEWS.has(viewId) ? 1.05 : 1.25"
-        @select="selectResource"
-        @focus="selectResource"
-        @hover="hoveredId = $event"
-      />
-      <span class="pointer-events-none absolute bottom-3 left-3 rounded-md border border-default bg-default/90 px-2 py-1 font-mono text-[10px] text-dimmed shadow-sm backdrop-blur">
-        {{ resourceNodeCount }} boxes · {{ graph.edges.length }} relations
-      </span>
-    </div>
-    <div v-else class="grid min-h-0 flex-1 place-items-center p-8">
-      <div class="flex max-w-md flex-col items-center gap-3 text-center">
-        <p class="text-sm italic text-muted">{{ emptyNote }}</p>
-        <UButton
-          v-if="filtersActive"
-          icon="i-lucide-filter-x"
-          color="neutral"
-          variant="outline"
-          size="xs"
-          label="Reset filters"
-          @click="resetFilters"
-        />
-      </div>
+    </header>
+    <div ref="pane" class="blr-topology-reading" :class="{ 'blr-topology-reading--graph': isGraph }" @scroll.capture.passive="save">
+      <BlrTopologyMatrix v-if="view.id === 'rule-reach' || view.id === 'what-changes-what'" :matrix="matrix" :column="reading.column" :mode="view.id === 'rule-reach' ? 'rules' : 'mutations'" @column="update({ column: $event })" @open="open" />
+      <template v-else-if="view.id === 'sitemap'"><BlrTopologyTree v-if="sitemap" :tree="sitemap" :reading="reading" :viewport-key="scrollKey" @open="open" @toggle="toggle" @ready="restore" /><p v-else class="blr-topology-empty">No resources in this scope.</p></template>
+      <BlrTopologyComposition v-else-if="view.id === 'value-paths'" :compositions="compositions" :scenario="reading.scenario" @scenario="update({ scenario: $event })" @open="open" />
+      <template v-else-if="view.id === 'what-it-keeps'"><BlrDiagram v-if="diagram.nodes.length" :diagram="diagram" title="Entity relationships" :viewport-key="scrollKey" @open="open" @ready="restore" /><p v-else class="blr-topology-empty">No Entities in this scope.</p></template>
+      <template v-else>
+        <div class="blr-topology-grid"><BlrTopologyBranch v-for="item in branches" :key="item.id" :branch="item" :reading="reading" @open="open" @toggle="toggle" /></div>
+        <p v-if="!branches.length" class="blr-topology-empty">No resources in this scope.</p>
+      </template>
+      <details class="blr-topology-about"><summary>About this view</summary><p><strong>{{ view.diagramType }}.</strong> {{ view.note }}</p></details>
     </div>
   </div>
 </template>
-
-<style scoped>
-.blr-topology-tab {
-  padding: 0.38rem 0.72rem;
-  border-radius: 0.45rem;
-  color: var(--ui-text-muted);
-  font-size: var(--text-sm);
-  line-height: 1.2;
-  transition: background 0.12s ease, color 0.12s ease, box-shadow 0.12s ease;
-}
-
-.blr-topology-tab:hover {
-  color: var(--ui-text-highlighted);
-}
-
-.blr-topology-tab[data-current='true'] {
-  background: var(--ui-bg);
-  color: var(--ui-text-highlighted);
-  box-shadow: 0 1px 3px color-mix(in srgb, var(--ui-text) 12%, transparent);
-  font-weight: 600;
-}
-
-.blr-topology-kind {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.125rem 0.5rem;
-  border: 1px solid var(--ui-border);
-  border-radius: 999px;
-  background: var(--ui-bg);
-  transition: opacity 0.12s ease, border-color 0.12s ease, background 0.12s ease;
-}
-
-.blr-topology-kind:hover {
-  border-color: var(--ui-border-accented);
-  background: var(--ui-bg-elevated);
-}
-
-.blr-topology-kind[data-visible='false'] {
-  opacity: 0.38;
-  background: transparent;
-}
-
-.blr-topology-kind:disabled {
-  cursor: not-allowed;
-}
-</style>

@@ -100,3 +100,32 @@
   outline: 2px solid var(--ui-text-highlighted);
   outline-offset: 3px;
 }
+
+/*
+  The report's only switch, drawn once.
+
+  A collection's tabs and a resource page's tabs are the same control on the
+  same kind of surface, so the rule lives beside the report rather than inside
+  whichever component happened to need it first.
+*/
+.blr-surface-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: -1px;
+  border-bottom: 2px solid transparent;
+  font-size: var(--text-sm);
+  color: var(--ui-text-muted);
+  transition: color 0.12s ease, border-color 0.12s ease;
+}
+
+.blr-surface-tab:hover {
+  color: var(--ui-text-highlighted);
+}
+
+.blr-surface-tab[data-current='true'] {
+  border-bottom-color: var(--ui-color-primary-500);
+  color: var(--ui-text-highlighted);
+  font-weight: 600;
+}

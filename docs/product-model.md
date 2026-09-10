@@ -33,25 +33,29 @@ Two hierarchies and two axes. One hierarchy says **where** Actors meet the
 Product, the other says **what** the Product does, and the axes classify members
 of both.
 
-```text
-            ┌─────────────────── where Actors meet it ───────────────────┐
-            │   Interface  ──▶  Experience  ──▶  Screen                  │
-            └───────────────────────┬────────────────────────────────────┘
-                                    │  availability joins the two
-            ┌───────────────────────┴────────────────────────────────────┐
-            │   Capability ──▶ Capability Scenario                       │
-            │   Journey    ──▶ Journey Scenario                          │
-            └────────────────── what the Product does ───────────────────┘
+The report and homepage introduce six main collections: **Entities, Interfaces,
+Domains, Capabilities, Journeys, and Business Rules**. Product describes the
+whole. Experiences and Screens are reached through Interfaces; each Capability
+or Journey owns its Scenarios. All remain distinct resource types.
 
-   Domain  ── classifies members of both by subject matter
-   Entity  ── what the Product keeps, including whoever acts; Steps act on it
-   Business Rule ── what must stay true, and who may
+```text
+Interface
+├── Experience (when the Interface is divided)
+│   └── Screen (optional)
+└── Screen (direct, or shared across its Experiences)
+
+Capability ── Capability Scenario
+Journey    ── Journey Scenario
+
+Domain ── classifies Capabilities and Entities by subject
+Entity ── what the Product keeps or reasons about, including whoever acts
+Business Rule ── what must stay true, and who may
 ```
 
-Domain and Entity are axes, not levels: they classify and are classified, and
-they contain nothing. Business Rules attach across everything, and an Entity
-that acts is *an Actor* wherever it acts — on a Step, an Interface, a Journey,
-a grant.
+Availability joins behavior to its Interface or Experience. Domains classify
+resources without containing them. An Entity that acts is an Actor wherever it
+acts — on a Step, an Interface, a Journey, or a grant. Interfaces may be complete
+without Experiences or Screens; optional types are created only when meaningful.
 
 ## What belongs in a model
 
@@ -68,8 +72,8 @@ sections it can contain.
 | [Product](./product.md) | Exactly one | The coherent value promise and its boundary |
 | [Entity](./entities.md) | At least one that acts, because every Interface names an Actor | A thing the Product keeps or reasons about — what it holds about it, the states it moves through, and whether it acts on the Product |
 | [Interface](./interfaces.md) | At least one | An independently supported interaction contract |
-| [Experience](./experiences.md) | When its Interface requires or justifies division | A stable context for using the Product within one Interface, with a defined audience, access mode, and capability boundary |
-| [Screen](./screens.md) | Optional | A meaningful visual view; non-visual Products do not need one |
+| [Experience](./interfaces.md#experiences) | When its Interface requires or justifies division | A stable context for using the Product within one Interface, with a defined audience, access mode, and capability boundary |
+| [Screen](./interfaces.md#screens) | Optional | A meaningful visual view; non-visual Products do not need one |
 | [Domain](./domains.md) | Optional | A Product-language grouping that makes a larger Capability set easier to navigate |
 | [Capability](./capabilities.md) | At least one in a complete model | A durable Product ability reused across views, behavior contracts, or goals |
 | [Journey](./journeys.md) | Optional | An Actor goal whose successful completion requires several Capabilities working together |
@@ -259,7 +263,7 @@ one. Where a rule can be computed, an author never has to argue it.
 
 | Question | Rule that decides it |
 | --- | --- |
-| Interface, or Experience of one? | The [Experience rules](./experiences.md#when-you-create-one) determine when an Interface must be divided and when existing Experiences are justified. Otherwise, use direct Interface availability. |
+| Interface, or Experience of one? | The [Experience rules](./interfaces.md#when-to-create-an-experience) determine when an Interface must be divided and when existing Experiences are justified. Otherwise, use direct Interface availability. |
 | Interface, or nothing? | Interfaces are **inbound**. Something the Product calls out to is a dependency of the Capability that calls it, and gets no resource type. |
 | Acts, or dependency? | Direction decides. An external system acts only when it **initiates**. The same third party can be a dependency one way and an Actor the other. |
 | Screen, or Entity state? | A Screen's `## View states` are that **view's** states. A thing's own lifecycle, and what the Product keeps about it, belong to an [Entity](./entities.md). |

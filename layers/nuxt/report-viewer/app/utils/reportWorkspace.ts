@@ -1,13 +1,4 @@
-/**
- * The complete Product Report, projected once for the renderer.
- *
- * A report that claims to describe a product must show the whole model, so
- * this projection keeps every authored field and
- * adds the backlinks a reader needs but the format never stores: the format
- * records relations in exactly one direction, and a reader needs both.
- *
- * This is the stable view projection used by the shipped report viewer.
- */
+
 import type {
   ProductReportV13,
   ReportContext,
@@ -32,14 +23,7 @@ import type {
   ReportSupportingSection
 } from 'businesslens/report'
 
-/**
- * Split an authored `cardinality` into its two ends.
- *
- * A relation is authored once and read from both sides. The side that declares
- * it reads the `target` end — how many of the other Entity it reaches — and the
- * side it points at reads `source`. Copying one end onto both is how an Item
- * came to claim many Sources on a page whose whole point was that it has one.
- */
+/** Split an authored `cardinality` into its two ends. */
 export function relationEnds(cardinality: ReportEntityRelation['cardinality']): {
   source: 'one' | 'many'
   target: 'one' | 'many'
@@ -61,12 +45,7 @@ export type ReportResourceKind =
   | 'journey-scenario'
   | 'rule'
 
-/**
- * The two Scenario collections are separate kinds, not one kind with a flag.
- * They answer different questions — local acceptance for one Capability versus
- * one end-to-end variation of a Journey — so they get their own navigation,
- * facets and columns rather than sharing a surface that fits neither.
- */
+/** The two Scenario collections are separate kinds, not one kind with a flag. */
 export type ReportScenarioKind = 'capability-scenario' | 'journey-scenario'
 export type ReportScenarioType = 'capability' | 'journey'
 export type ReportResourceKey = string
@@ -97,69 +76,24 @@ export interface ResourceKindMeta {
   slot: number
 }
 
-/**
- * Every kind, once, in rail order.
- *
- * The type annotation is doing real work here. This was two lists — an array of the rail
- * kinds and a record spread from it, closed with `as Record<ReportResourceKind,
- * ResourceKindMeta>` — and that cast asserted completeness instead of proving it.
- * A kind added to `ReportResourceKind` and forgotten here compiled, then rendered
- * `undefined.icon` and `undefined.plural` at runtime, which is exactly how
- * Entity reached its own page with no icon and its rail row with no count.
- *
- * Insertion order is the rail order, and `Object.values` preserves it for
- * string keys — so the ordered list below is derived rather than restated.
- * Product sits last because it is the report itself, not a rail collection.
- */
 export const ENTITY_KIND_META: Record<ReportResourceKind, ResourceKindMeta> = {
-  /*
-    Entity leads the rail and takes slot 0 outright. There is one resource type
-    for things — the people and systems that act on the Product included — so
-    the collection a reader opens first is the one that says who it is for and
-    what it keeps. Actor is the word for the subset that acts, and it is a facet
-    over this collection rather than a row of its own.
-  */
+  /* Entity leads the rail and takes slot 0 outright. */
   entity: { kind: 'entity', label: 'Entity', plural: 'Entities', icon: 'i-lucide-shapes', slot: 0 },
   interface: { kind: 'interface', label: 'Interface', plural: 'Interfaces', icon: 'i-lucide-plug', slot: 1 },
   experience: { kind: 'experience', label: 'Experience', plural: 'Experiences', icon: 'i-lucide-layout-panel-left', slot: 2 },
   screen: { kind: 'screen', label: 'Screen', plural: 'Screens', icon: 'i-lucide-monitor', slot: 3 },
-  /*
-    A Domain classifies; it does not contain. A stack of crates drew the
-    containment the format denies, so the mark is a demarcated region instead —
-    the Domain's own second term is Boundary.
-  */
+  /* A Domain classifies; it does not contain. */
   domain: { kind: 'domain', label: 'Domain', plural: 'Domains', icon: 'i-lucide-land-plot', slot: 4 },
   capability: { kind: 'capability', label: 'Capability', plural: 'Capabilities', icon: 'i-lucide-zap', slot: 5 },
   journey: { kind: 'journey', label: 'Journey', plural: 'Journeys', icon: 'i-lucide-route', slot: 6 },
-  /*
-    Both Scenario kinds hold slot 7. Ten kinds is past the nine-slot categorical
-    order, and the two that belong to one family are the honest pair to merge:
-    the shared hue reads as "Scenario", and the icon, label and node sublabel
-    carry the distinction — colour is never the only encoding here.
-  */
+  /* Both Scenario kinds hold slot 7. */
   'capability-scenario': { kind: 'capability-scenario', label: 'Capability Scenario', plural: 'Capability Scenarios', icon: 'i-lucide-list-checks', slot: 7 },
   'journey-scenario': { kind: 'journey-scenario', label: 'Journey Scenario', plural: 'Journey Scenarios', icon: 'i-lucide-list-ordered', slot: 7 },
   rule: { kind: 'rule', label: 'Business Rule', plural: 'Business Rules', icon: 'i-lucide-scale', slot: 8 },
-  /*
-    Product is the Overview, and the Overview is where a reader lands and
-    returns. Slot 9 wraps onto slot 0, so Product and Entity share a hue and
-    shape had to separate them on its own — which a package and a box did not.
-  */
+  /* Product is the Overview, and the Overview is where a reader lands and returns. */
   product: { kind: 'product', label: 'Product', plural: 'Product', icon: 'i-lucide-house', slot: 9 }
 }
 
-/**
- * A kind ordering that has to name every kind, checked when it is written.
- *
- * `EVERYTHING_SHELF_ORDER` was a plain `ReportResourceKind[]`, so adding Entity
- * to the model left it out of the one view whose question is "the entire
- * product, all at once" — and the kind filter, seeing no shelf for it, removed
- * all thirteen. An ordering is the one place a missing kind is invisible: the
- * list still looks complete, because nothing about it says what complete is.
- *
- * A missing kind turns the parameter into a shape no array satisfies, and the
- * compiler names the absentee in the failure.
- */
 export function everyKind<const T extends readonly ReportResourceKind[]>(
   kinds: Exclude<ReportResourceKind, T[number]> extends never
     ? T
@@ -188,19 +122,6 @@ export const INTERFACE_TYPE_META: Record<ReportInterface['type'], { label: strin
 export type ActingKind = NonNullable<ReportEntity['kind']>
 export type ActingSide = NonNullable<ReportEntity['acts']>
 
-/**
- * The facet an Entity instance is drawn as, which is never its type.
- *
- * The rail, the breadcrumb and the kind filter name the type, and Entity's
- * glyph has to cover a person, an AI agent and a Blueprint at once — so it can
- * only say "a thing of some kind". A mark beside a title sits on a surface that
- * already said Entities, and spends its one slot on what tells this thing from
- * its neighbours instead: whether it acts, and as what.
- *
- * `kept` is the third value, not a fallback. Left to fall through to the type
- * glyph it marked fourteen of sixteen rows "Entity" on a screen titled
- * Entities — the one fact the reader arrived holding.
- */
 export type EntityFacet = ActingKind | 'kept'
 
 export const ENTITY_FACET_META: Record<EntityFacet, { label: string, icon: string }> = {
@@ -318,34 +239,18 @@ export interface DomainView extends ResourceBase {
   ruleIds: string[]
 }
 
-/**
- * A thing the Product keeps whose state an Actor observes. Its states are an
- * authored lifecycle; a Screen's productStates are that view's own states, and
- * the two are never merged.
- */
+/** A thing the Product keeps whose state an Actor observes. */
 /** An authored relation, resolved for the side being read. */
 export interface EntityRelationView {
   entityId: string
   verb: string
   /** How many of `entityId` the Entity being read relates to. */
   cardinality: 'one' | 'many'
-  /**
-   * Both ends exactly as authored, source to target of the *declaring* side.
-   *
-   * A row reads one end and needs `cardinality`; a diagram draws the edge once
-   * and needs both. Only the declaring side's rows carry a meaningful `ends`,
-   * which is why an inbound row reads `cardinality` and never this.
-   */
+  /** Both ends exactly as authored, source to target of the *declaring* side. */
   ends: ReportEntityRelation['cardinality']
 }
 
-/**
- * One state the thing can be in, and the Scenarios that leave it there.
- *
- * The back-link is derived, never authored: a Step names the Entity and the
- * state it moves it to. Without it a lifecycle said what a thing can be and
- * never what actually puts it there.
- */
+/** One state the thing can be in, and the Scenarios that leave it there. */
 export interface EntityStateView {
   name: string
   content: string
@@ -353,12 +258,7 @@ export interface EntityStateView {
   capabilityScenarioIds: string[]
   /** Journey Scenarios whose Steps leave the Entity in this state. */
   journeyScenarioIds: string[]
-  /**
-   * Whether the composed lifecycle ever gets here. The first listed state is
-   * where a thing starts, so it is reached by construction; every other state
-   * has to be produced by some Step, and one that is not is drawn as unreached
-   * rather than dropped.
-   */
+  /** Whether the composed lifecycle ever gets here. */
   reached: boolean
 }
 
@@ -370,16 +270,6 @@ export interface EntityFactView {
   ruleIds: string[]
 }
 
-/**
- * One arc of the composed state machine.
- *
- * Nothing here is authored on the Entity. Every arc is a Step somewhere that
- * creates, moves or removes the thing, grouped by what it does; its labels are
- * the Capabilities those Steps belong to; its constraints are the Rules whose
- * target selects that operation; and its co-effects are what the same Steps do
- * to other things at the same time — the only place the model makes a
- * combined cross-entity lifecycle visible.
- */
 export interface EntityArcView {
   key: string
   effect: 'creates' | 'changes' | 'removes'
@@ -408,10 +298,7 @@ export interface EntityProhibitionView {
 export interface EntityView extends ResourceBase {
   kind: 'entity'
   domainId?: string
-  /**
-   * `person` or `system` when the thing acts, else null. There is one resource
-   * type for things; "Actor" is the word for the subset that acts.
-   */
+  /** `person` or `system` when the thing acts, else null. */
   entityKind: ActingKind | null
   /** Which side of the Product boundary it acts from, or null for a thing that does not act. */
   acts: ActingSide | null
@@ -427,14 +314,7 @@ export interface EntityView extends ResourceBase {
   noTermination: boolean
   /** Edges this Entity declares, each carrying how many of the target it reaches. */
   relations: EntityRelationView[]
-  /**
-   * Edges other Entities declare at this one, flipped.
-   *
-   * `cardinality` here is the *source* end of the authored relation — how many
-   * of the other Entity this one relates to. A Source publishing many Items
-   * means an Item has one Source, and copying the authored end instead printed
-   * the opposite on the Item's page.
-   */
+  /** Edges other Entities declare at this one, flipped. */
   inboundRelations: EntityRelationView[]
   /** Capabilities whose Steps create, change or remove this Entity. Derived. */
   changedByIds: string[]
@@ -453,13 +333,7 @@ export interface EntityView extends ResourceBase {
   actorJourneyScenarioIds: string[]
 }
 
-/**
- * What one Capability does to one Entity, aggregated over its Scenarios.
- *
- * One line per Entity, never a lifecycle fragment each: a Capability that
- * touches thirteen things gets thirteen lines, which a page can carry, and not
- * thirteen state machines, which it cannot.
- */
+/** What one Capability does to one Entity, aggregated over its Scenarios. */
 export interface CapabilityEntityEffectView {
   entityId: string
   effects: Array<{ effect: 'creates' | 'changes' | 'removes', from: string, to: string }>
@@ -508,11 +382,7 @@ export interface JourneyView extends ResourceBase {
   stepCount: number
 }
 
-/**
- * What one Step does to one Entity, as the wire carries it: the effect resolved,
- * the alias for a second instance of one thing, and the states it leaves from
- * and lands in. Nothing is derived from a neighbouring Step.
- */
+/** What one Step does to one Entity, as the wire carries it: the effect resolved, the alias for a second instance of one thing, and the states it leaves from and lands in. */
 export interface ScenarioStepEntityView {
   entityId: string
   /** Scenario-local instance alias, or empty. */
@@ -527,12 +397,7 @@ export interface ScenarioView extends ResourceBase {
   entityIds: string[]
   /** Entities the Steps only read. Derived, and never merged into entityIds. */
   readEntityIds: string[]
-  /**
-   * Where each changed instance is left when the Scenario ends.
-   *
-   * The last non-read entry naming it, in Step order — which is what "what did
-   * this accomplish" means, and what the Outcome prose says in words.
-   */
+  /** Where each changed instance is left when the Scenario ends. */
   outcomeStates: ScenarioStepEntityView[]
   kind: ReportScenarioKind
   scenarioType: ReportScenarioType
@@ -553,14 +418,7 @@ export interface ScenarioView extends ResourceBase {
     stepKind: 'actor' | 'product' | 'condition'
     actorId: string
     capabilityId: string
-    /**
-     * What this Step does to the Product's Entities, in authored order.
-     *
-     * A list because one observable act can move two things at once. The
-     * Scenario's `entityIds` is this set deduped across Steps, which answers
-     * *what* a Scenario touches but never *where*; the reading is the sequence,
-     * so the entries belong on the Step that causes them.
-     */
+    /** What this Step does to the Product's Entities, in authored order. */
     entities: ScenarioStepEntityView[]
     contexts: Array<{
       routeId: string
@@ -732,13 +590,7 @@ export interface ReportWorkspace {
 const titleOf = (items: Array<{ id: string, title?: string, name?: string }>, id: string): string =>
   items.find(item => item.id === id)?.title ?? items.find(item => item.id === id)?.name ?? id
 
-/**
- * One context, keyed by its own id.
- *
- * An Experience id already names the Interface that owns it, so the key is just
- * that id; an undivided Interface keys by its own. Concatenating the two would
- * repeat the Interface segment.
- */
+/** One context, keyed by its own id. */
 export function contextKey(interfaceId: string, experienceId: string): string {
   return experienceId || interfaceId
 }
@@ -803,13 +655,7 @@ function entryPoints(
   }))
 }
 
-/**
- * Build the complete renderable projection of a Product Report.
- *
- * Relations are resolved in both directions. The format stores each relation
- * once — a Business Rule lists its Capabilities, a Capability never lists its
- * Rules — so every backlink here is derived, never authored.
- */
+/** Build the complete renderable projection of a Product Report. */
 export function projectReportWorkspace(report: ProductReportV13): ReportWorkspace {
   const model = report.model
   const interfaceOf = (interfaceId: string): ReportInterface => {
@@ -1065,12 +911,7 @@ export function projectReportWorkspace(report: ProductReportV13): ReportWorkspac
     }
   })
 
-  /*
-    Domain is an axis, not a level: `domain` on a Capability is the only authored
-    Domain edge, and everything else is about the Domains of the Capabilities it
-    reaches. Deriving it keeps one authority — a second, authored copy could
-    disagree with the first and nothing would say which was right.
-  */
+  /* Domain is an axis, not a level: `domain` on a Capability is the only authored Domain edge, and everything else is about the Domains of the Capabilities it reaches. */
   const domainsOfCapabilities = (capabilityIds: string[]): string[] =>
     unique(capabilityIds.map(id => capabilityById.get(id)?.domainId).filter((id): id is string => Boolean(id)))
 
@@ -1136,15 +977,7 @@ export function projectReportWorkspace(report: ProductReportV13): ReportWorkspac
     }
   })
 
-  /*
-   * Everything the Steps say about every Entity, indexed once.
-   *
-   * The lifecycle is composed here and nowhere else: which Scenarios leave a
-   * thing in which state, which Capabilities change it, and every arc a Step
-   * draws. Keyed on (Entity, state), because two Entities may both have a
-   * "Draft" and merging them would put one thing's acceptance cases on another
-   * thing's lifecycle.
-   */
+
   const scenarioOwner = (scenario: ReportCapabilityScenario | ReportJourneyScenario, step: { capabilityId: string | null }) =>
     'capabilityId' in scenario ? scenario.capabilityId : step.capabilityId ?? ''
   const isCapabilityScenario = (scenario: ReportCapabilityScenario | ReportJourneyScenario): scenario is ReportCapabilityScenario =>
@@ -1201,15 +1034,7 @@ export function projectReportWorkspace(report: ProductReportV13): ReportWorkspac
     }
   }
 
-  /* A Rule's Entity target selects an arc by the same keys the Step carries.
-     A target scoped by `contexts` governs the operation only at those places.
-     Validation resolves a Step's places — its own, or its Scenario's when it
-     omits `contexts` — and holds the Rule to them; an arc cannot, because it is
-     one aggregate over every Step that performs the move, drawn for the whole
-     Product. Restricting it globally would overstate the Rule, so it is left
-     off and reaches the Entity page through its Rule relations instead. A
-     target naming `facts` governs information, not an operation, and is left
-     off for the same reason. */
+
   const targetSelects = (
     target: Extract<ReportBusinessRuleTarget, { type: 'entity' }>,
     entityId: string,
@@ -1339,8 +1164,7 @@ export function projectReportWorkspace(report: ProductReportV13): ReportWorkspac
 
   const capabilities: CapabilityView[] = model.capabilities.map((capability: ReportCapability) => {
     const contexts = contextsOf(capability.availability)
-    /* What a Capability does to each thing, read off every Step of every
-       Scenario that belongs to it — its own, and Journey Steps that name it. */
+    /* What a Capability does to each thing, read off every Step of every Scenario that belongs to it — its own, and Journey Steps that name it. */
     const effects = new Map<string, CapabilityEntityEffectView>()
     const readIds = new Set<string>()
     for (const scenario of allReportScenarios) {
@@ -1395,11 +1219,7 @@ export function projectReportWorkspace(report: ProductReportV13): ReportWorkspac
         last.set(`${entry.entityId}\u0000${entry.as}`, entry)
       }
     }
-    /*
-     * Everything it changed, not only what carries a state. A reader arrives at
-     * the Outcome asking what the Scenario produced, and an empty line there is
-     * a worse answer than one that repeats the subject band.
-     */
+    /* Everything it changed, not only what carries a state. */
     return [...last.values()]
   }
 
@@ -1447,9 +1267,7 @@ export function projectReportWorkspace(report: ProductReportV13): ReportWorkspac
       domainIds: unique(journey.capabilityIds
         .map(id => capabilityById.get(id)?.domainId)
         .filter((id): id is string => Boolean(id))),
-      /* Its Scenarios' Steps, not its Capabilities' declarations: a Journey
-         moves what it is actually shown moving, and a Capability it uses may
-         change things no path through this Journey ever reaches. */
+      /* Its Scenarios' Steps, not its Capabilities' declarations: a Journey moves what it is actually shown moving, and a Capability it uses may change things no path through this Journey ever reaches. */
       entityIds: unique(journeyScenarios.flatMap(scenario => scenario.steps
         .flatMap(step => step.entities.filter(entry => entry.effect !== 'reads').map(entry => entry.entityId)))),
       leavesBehind: outcomeStates(journeyScenarios
@@ -1468,7 +1286,6 @@ export function projectReportWorkspace(report: ProductReportV13): ReportWorkspac
       stepCount: journeyScenarios.reduce((total, scenario) => total + scenario.steps.length, 0)
     }
   })
-
 
   const capabilityScenarios: ScenarioView[] = model.capabilityScenarios.map((scenario: ReportCapabilityScenario) => {
     const kind = kindBySlot.get(scenario.kindId)
@@ -1569,11 +1386,7 @@ export function projectReportWorkspace(report: ProductReportV13): ReportWorkspac
       default: return subject
     }
   }
-  /*
-   * A grant read back as a sentence, so a reader who never saw the format can
-   * tell it is wrong. Keys within a grant are AND, so the who-parts join with
-   * "and" and the conditions follow "when".
-   */
+  /* A grant read back as a sentence, so a reader who never saw the format can tell it is wrong. */
   const describeGrant = (grant: ReportGrant, targetId: string): GrantView => {
     const who: string[] = []
     if (grant.actorIds.length) who.push(grant.actorIds.map(entityTitle).join(' or '))
@@ -1799,21 +1612,6 @@ export function projectReportWorkspace(report: ProductReportV13): ReportWorkspac
   }
 }
 
-/**
- * The same thing on another Interface.
- *
- * Qualified ids carry their path, so two resources of one kind sharing the
- * path *below* their Interface are counterparts:
- * `reader-web::personal-library::unread-library` and
- * `reader-mobile::personal-library::unread-library` are one goal on two
- * Interfaces, and the format says so on purpose. Matching the whole suffix rather
- * than the last segment keeps `personal-library::saved-items` and
- * `public-reading::saved-items` correctly distinct inside one Interface.
- *
- * The CLI computes this over authored files; the viewer computes it over the
- * report, from the same ids, because the report carries no counterpart field
- * and should not need one.
- */
 export function counterpartsOf(workspace: ReportWorkspace, resource: AnyResourceView): AnyResourceView[] {
   const suffix = resource.id.split('::').slice(1).join('::')
   if (!suffix) return []
@@ -1840,12 +1638,7 @@ export function resolveResource(
   return workspace.byKey.get(resourceKey(kind, id))
 }
 
-/**
- * Resolve a Scenario id when the caller holds a mixed list.
- *
- * Scenario ids are globally unique across both collections, so an id alone is
- * enough — but only the projection knows which collection it landed in.
- */
+/** Resolve a Scenario id when the caller holds a mixed list. */
 export function resolveScenario(workspace: ReportWorkspace, id: string): ScenarioView | undefined {
   for (const kind of SCENARIO_KINDS) {
     const resource = workspace.byKey.get(resourceKey(kind, id))
@@ -1902,11 +1695,7 @@ export interface ScenarioStepMatrix {
   steps: ScenarioStepRow[]
 }
 
-/**
- * Either Scenario type's one authored sequence: Steps down, named routes
- * across, and the Context in every placed cell. Route-neutral Steps
- * keep their place in the reading and span the route columns.
- */
+/** Either Scenario type's one authored sequence: Steps down, named routes across, and the Context in every placed cell. */
 export function scenarioStepMatrix(scenario: ScenarioView): ScenarioStepMatrix {
   const routeIds = scenario.routes.map(route => route.id)
   const previousContexts = new Map<string, ResolvedContextView>()

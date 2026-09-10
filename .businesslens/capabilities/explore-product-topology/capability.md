@@ -8,17 +8,21 @@ references:
     title: The named views
 ---
 
-# Explore the Product Topology
+# Explore Product structure and connections
 
-Draws the model's cross-kind structure as one of a fixed set of named views.
-Each view states the question it answers and how it derives its answer, and the
-reader can hide a kind, narrow the view, or focus a single resource's
-neighbourhood.
+Presents the model’s structure and connections through named readings, each a
+tab of the collection whose subject it draws. Domain map belongs to Domains,
+Interface map and delivery comparison to Interfaces, Entity relationships to
+Entities, mutations to Capabilities, attachments to Business Rules, and Journey
+composition to Journeys. There is no view of the whole model: the rail names
+every collection with its count, and a resource's own connections belong to its
+page. Each view states the question it answers and explains its derivation. The
+Developer can expand groups, narrow the visible resources, inspect a resource’s
+incoming and outgoing connections, and open any included resource’s page. The
+selected reading survives returning from a page, reloading, and valid model
+edits.
 
 ## Intent
 
-"Which Capabilities does each Journey Scenario compose" has more than one
-defensible derivation, and a view builder would make the reader invent the
-meaning before they could read anything. A named view picks one derivation,
-states it, and is accountable for it; a new correlation costs code, which is the
-point.
+Give the Developer a readable, accountable answer to a question spanning resource
+types, with the scope and supporting relationships available for inspection.

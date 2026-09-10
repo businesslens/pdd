@@ -360,7 +360,7 @@ write a type, you have left product meaning.**
 when the Product promises it. The mechanism is never product meaning; what the
 Product undertakes to know is.
 
-**Not a view's states.** "Empty list" belongs to a [Screen](./screens.md).
+**Not a view's states.** "Empty list" belongs to a [Screen](./interfaces.md#screens).
 "Archived" belongs to the thing.
 
 **Not a representation of another Entity.** A serialization, export or rendering
@@ -440,3 +440,11 @@ relationship somebody forgot to declare.
 - A state other than the first that no Step leaves anything in is a warning; a
   Step leaving from a state nothing produces is a warning.
 - An Entity naming a Domain that does not exist is an error.
+
+## In the Product Report
+
+Entities offers List and Relationships. The relationship graph keeps authored
+verbs, direction, both cardinalities, and disconnected Entities. An Entity page
+opens that graph with the Entity in focus. Its Lifecycle tab shows the state
+machine derived from Scenario effects. What changes what opens the Capabilities
+mutation matrix filtered to this Entity, with supporting Scenarios.

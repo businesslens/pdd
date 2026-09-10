@@ -3,7 +3,7 @@ title: Business Rules
 description: Durable assertions of what must remain true — constraints, derivations, and who may perform an operation on a thing — applied to behavior, Contexts, or Entity operations.
 section: open-source
 group: Product Model
-order: 16
+order: 14
 terms:
   - term: Business Rule
     aliases: [Rule]
@@ -379,3 +379,10 @@ Rules against Steps and Screens — errors, ungraded by `coverage.status`:
 Fact-scoped Rules are checked by Screen reach only, since a Step cannot cite a
 fact; the rest is `verify`'s. A derivation is prose plus `facts`; there is no
 machine-readable arithmetic.
+
+## In the Product Report
+
+Business Rules offers List and Attachments. The matrix shows each explicitly
+authored attachment and preserves operation, State, fact, and Context
+restrictions. An empty cell makes no permission or enforcement claim. Rule pages
+and explicitly targeted resource pages open the same matrix with relevant focus.

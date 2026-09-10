@@ -28,6 +28,7 @@ function temporary(prefix: string): string {
 
 afterEach(() => {
   vi.restoreAllMocks()
+  vi.unstubAllEnvs()
   for (const directory of temporaryDirectories.splice(0)) {
     rmSync(directory, { recursive: true, force: true })
   }
@@ -73,6 +74,8 @@ describe('skill installation', () => {
   })
 
   it('uses provider-specific global destinations', () => {
+    // Exercise the default location without inheriting a real harness home.
+    vi.stubEnv('CODEX_HOME', undefined)
     const project = temporary('bl-global-project-')
     const home = temporary('bl-global-home-')
 

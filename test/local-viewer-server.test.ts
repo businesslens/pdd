@@ -178,6 +178,18 @@ describe('local Product Report server', () => {
     expect(manifest.headers['content-type']).toBe('application/manifest+json; charset=utf-8')
   })
 
+  it('serves the shared packaged brand without duplicating it in the static viewer', async () => {
+    const viewer = await startLocalViewer({ viewerRoot: staticViewer(), compile: report })
+    viewers.push(viewer)
+    const icon = await get(viewer.url, '/brand/icons/favicon.svg')
+    expect(icon.status).toBe(200)
+    expect(icon.headers['content-type']).toBe('image/svg+xml')
+    expect(icon.body).toBe(readFileSync(new URL('../layers/nuxt/theme/public/brand/icons/favicon.svg', import.meta.url), 'utf8'))
+    for (const path of ['/brand/missing.svg', '/brand/%2e%2e%2fnuxt.config.ts', '/brand/%ZZ']) {
+      expect((await get(viewer.url, path)).status).toBe(404)
+    }
+  })
+
   it('watches model sources and announces a new report over server-sent events', { timeout: WATCH_TEST_TIMEOUT_MS }, async () => {
     const model = mkdtempSync(join(tmpdir(), 'businesslens-model-'))
     directories.push(model)

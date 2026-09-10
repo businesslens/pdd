@@ -4,6 +4,6 @@ export default defineNuxtConfig({
   extends: [
     'businesslens/nuxt/report-viewer'
   ],
-  ssr: false,
+  ssr: true,
   compatibilityDate: '2024-11-01'
 })

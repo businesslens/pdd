@@ -3,7 +3,7 @@ title: Capabilities
 description: Durable Product abilities with explicit availability Contexts, and the local Capability Scenarios that make each ability observable.
 section: open-source
 group: Product Model
-order: 14
+order: 12
 terms:
   - term: Capability
     definition: "A durable ability of the Product: what it can do, independent of any one route, command, or module."
@@ -78,7 +78,7 @@ contracts. Split those into Capabilities and, when navigation benefits, group
 them under a Repository administration [Domain](./domains.md).
 
 Every Capability declares explicit availability Contexts, naming
-[Experiences](./experiences.md) only where the Interface uses them. An optional
+[Experiences](./interfaces.md#experiences) only where the Interface uses them. An optional
 [Domain](./domains.md) can organize it, but Domains are not required.
 
 ## The file
@@ -391,3 +391,11 @@ Each Decision point asks a Product question with alternative branches that
 lead to the same Capability Scenario Outcome. Give it an H3 title, one
 non-empty question, and at least two `condition → outcome` branches. A branch
 with a materially different Outcome belongs in another Capability Scenario.
+
+## In the Product Report
+
+Capabilities offers List and What changes what. The matrix shows which
+Capabilities create, change, or remove each Entity, with supporting Scenarios;
+reads are excluded. An empty cell means no declared mutation. A Capability page
+opens the matrix filtered to its own effects and keeps its acceptance cases in
+Scenarios, including Step and route comparisons.

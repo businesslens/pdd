@@ -78,6 +78,9 @@ jobs:
           for ui_dependency in \
             nuxt \
             vue \
+            elkjs \
+            @vue-flow/core \
+            @vue-flow/background \
             tailwindcss \
             @nuxt/ui \
             @fontsource-variable/archivo \
@@ -128,6 +131,9 @@ jobs:
           pnpm --dir "$pnpm_smoke" run typecheck
           pnpm --dir "$pnpm_smoke" run build
 
+          "$GITHUB_WORKSPACE/node_modules/.bin/playwright" install --with-deps chromium
+          node "$GITHUB_WORKSPACE/scripts/check-packed-diagrams.mjs" "$nuxt_smoke" "$pnpm_smoke"
+
           view_project="$smoke_root/view-project"
           view_runner="$smoke_root/view-runner"
           mkdir -p "$view_project" "$view_runner"
@@ -156,6 +162,7 @@ jobs:
           test -n "$viewer_url"
           curl --fail --silent "$viewer_url/_businesslens/health" | grep '"ok":true' >/dev/null
           curl --fail --silent "$viewer_url/" | grep -i '<!DOCTYPE html>' >/dev/null
+          curl --fail --silent "$viewer_url/brand/icons/favicon.svg" | grep '<svg' >/dev/null
           curl --fail --silent "$viewer_url/_businesslens/report.json" \
             | grep '"id":"fixture-shop"' >/dev/null
           curl --fail --silent "$viewer_url/_businesslens/logo.svg" \

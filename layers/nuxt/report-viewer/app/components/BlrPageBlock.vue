@@ -5,9 +5,11 @@
  * The page owns arrangement; this switchboard keeps each authored or derived
  * reading in one implementation.
  */
-import type { AnyResourceView, ReportWorkspace } from '../utils/reportWorkspace'
+import type { AnyResourceView, ReportWorkspace, InterfaceView } from '../utils/reportWorkspace'
 import { ENTITY_KIND_META, counterpartsOf } from '../utils/reportWorkspace'
 import { resourceFacts } from '../utils/resourceFacts'
+import type { TopologyReading } from '../utils/topologyState'
+import { defaultTopologyReading } from '../utils/topologyState'
 import type { PageBlockId } from '../utils/pageSections'
 
 const props = defineProps<{
@@ -22,6 +24,11 @@ const emit = defineEmits<{
   open: [resource: AnyResourceView]
 }>()
 
+const reading = defineModel<TopologyReading>('reading', { default: defaultTopologyReading })
+function openKey(key: string) {
+  const resource = props.workspace.byKey.get(key)
+  if (resource) emit('open', resource)
+}
 const meta = computed(() => ENTITY_KIND_META[props.resource.kind])
 const contexts = computed(() => props.resource.kind === 'capability' ? props.resource.contexts : [])
 const entryPoints = computed(() => props.resource.kind === 'journey' ? props.resource.entryPoints : [])
@@ -74,7 +81,11 @@ const facts = computed(() => resourceFacts(props.workspace, props.resource).filt
     />
   </div>
 
-  <div v-else-if="id === 'connections'" class="space-y-2.5">
+  <BlrInterfaceDelivery v-else-if="id === 'delivery' && resource.kind === 'interface'" v-model:reading="reading" :workspace="workspace" :resource="resource as InterfaceView" @open="openKey" />
+
+  <BlrExperienceContents v-else-if="id === 'screens' && resource.kind === 'experience'" :workspace="workspace" :resource="resource" @open="openKey" />
+
+  <div v-else-if="id === 'connections'" data-resource-connections class="space-y-2.5">
     <p v-if="heading" class="blr-block-heading">Connections</p>
     <BlrConnections :workspace="workspace" :resource="resource" @select="emit('open', $event)" />
   </div>

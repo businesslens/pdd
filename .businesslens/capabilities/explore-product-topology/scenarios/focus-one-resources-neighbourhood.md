@@ -8,20 +8,20 @@ steps:
     entities: []
     contexts:
       local:
-        place: local-report-web::product-topology
+        place: local-report-web::resource-collection
   - text: The Developer focuses one resource, or hides a kind they are not asking about
     kind: actor
     actor: developer
     entities: []
     contexts:
       local:
-        place: local-report-web::product-topology
+        place: local-report-web::resource-collection
   - text: The Product redraws only that resource's neighbourhood, at the report's full width
     kind: product
     entities: []
     contexts:
       local:
-        place: local-report-web::product-topology
+        place: local-report-web::resource-collection
 ---
 
 # Focus one resource's neighbourhood

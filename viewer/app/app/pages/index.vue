@@ -47,65 +47,7 @@ const errorMessage = computed(() => {
   return failure?.data?.message ?? failure?.message ?? 'The Product Model could not be compiled.'
 })
 
-/*
-  Where you are, in the address bar.
-
-  The viewer keeps the report's navigation facts, the open page's tab and the
-  Scenario route reading in the query string. That makes a link to a Capability
-  a link — and a link to an Entity's Lifecycle one too — back and forward mean
-  what they say, and a refresh return to the same tab and route comparison
-  instead of resetting the reading.
-
-  Both directions are guarded on inequality, so the URL and the report never
-  push each other in a loop, and one reader gesture is one history entry even
-  when it changes both values.
-*/
-const route = useRoute()
-const router = useRouter()
-
-const section = ref('overview')
-const resource = ref<string | null>(null)
-const tab = ref('overview')
-const scenarioRoute = ref<string | null>(null)
-const routeColumns = ref('auto')
-
-const readQuery = () => ({
-  section: typeof route.query.s === 'string' && route.query.s ? route.query.s : 'overview',
-  resource: typeof route.query.e === 'string' && route.query.e ? route.query.e : null,
-  tab: typeof route.query.t === 'string' && route.query.t ? route.query.t : 'overview',
-  scenarioRoute: typeof route.query.r === 'string' && route.query.r ? route.query.r : null,
-  routeColumns: typeof route.query.rc === 'string' && route.query.rc ? route.query.rc : 'auto'
-})
-
-watch(() => route.query, () => {
-  const next = readQuery()
-  if (next.section !== section.value) section.value = next.section
-  if (next.resource !== resource.value) resource.value = next.resource
-  if (next.tab !== tab.value) tab.value = next.tab
-  if (next.scenarioRoute !== scenarioRoute.value) scenarioRoute.value = next.scenarioRoute
-  if (next.routeColumns !== routeColumns.value) routeColumns.value = next.routeColumns
-}, { immediate: true })
-
-watch([section, resource, tab, scenarioRoute, routeColumns], () => {
-  const current = readQuery()
-  if (current.section === section.value
-    && current.resource === resource.value
-    && current.tab === tab.value
-    && current.scenarioRoute === scenarioRoute.value
-    && current.routeColumns === routeColumns.value) return
-  const query = { ...route.query }
-  if (section.value === 'overview') delete query.s
-  else query.s = section.value
-  if (resource.value) query.e = resource.value
-  else delete query.e
-  if (tab.value === 'overview') delete query.t
-  else query.t = tab.value
-  if (scenarioRoute.value) query.r = scenarioRoute.value
-  else delete query.r
-  if (routeColumns.value === 'auto') delete query.rc
-  else query.rc = routeColumns.value
-  void router.push({ query })
-})
+const { section, resource, tab, scenarioRoute, routeColumns, topology } = useBlrReportNavigation()
 </script>
 
 <template>
@@ -144,6 +86,7 @@ watch([section, resource, tab, scenarioRoute, routeColumns], () => {
         v-model:tab="tab"
         v-model:scenario-route="scenarioRoute"
         v-model:route-columns="routeColumns"
+        v-model:topology="topology"
         :report="data"
         :logo-src="logoSrc"
         tools-target="#businesslens-report-tools"

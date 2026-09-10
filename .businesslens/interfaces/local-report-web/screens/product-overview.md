@@ -13,25 +13,49 @@ references:
 
 # Product overview
 
-Where the report opens. It answers "what is this product, and how much of it is
-modeled" before the reader goes looking for anything in particular.
+Where the report opens, and the Product's own page. It answers "what is this
+product, and how much of it is modeled" before the reader goes looking for
+anything in particular, and it reads like every other surface: it is headed with
+the name of the reading the Developer chose, and each further reading of the
+Product is a peer tab. It lists no collection of its own — Journeys, like every
+other collection, have a rail row, a page, and a count.
 
 ## Information presented
 
-- The Product's name, logo, summary, and description
-- Its category, tags, authors, and licence
-- The authored Intent and any supporting sections the Product carries
-- How many resources of each kind the model holds, and how many of its things act
-- Coverage status, method, unmapped areas, and limitations
-- The Product's own References
+- The name of the open reading, above it
+- The Product's summary, the things that act on it, and the one-line shape of the model
+- Its description, Intent, supporting sections, category, tags, licence, authors, and known limitations
+- Coverage status, rationale, method, source areas, unmapped areas, and limitations
+- How many resources of each kind the model authors, and the depth derived from them
+- The Product's own References, and every reference in the model with the resource that carries it
+- Which generator and schema version produced the report, and when
 
 ## Available actions
 
-- Move to any resource type's collection
+- Open Entities, Interfaces, Domains, Capabilities, Journeys, or Business Rules
+- Read About, Coverage, Model counts, or References as tabs beside the Overview
+- Open the page of any resource that carries a reference
+- Open the page of a thing that acts on the Product
+- Read the documentation for the Product resource type
 - Search the whole model by name
-- Open the Product Topology
+
+## View states
+
+### Overview open
+
+The Product's summary, who it is made for, the one-line shape of the model, and
+the first sentence of its coverage rationale.
+
+### A further reading open
+
+About, Coverage, Model counts, or References, each at full width. Nothing is
+hidden behind a disclosure the reader must open to learn whether it holds
+anything.
 
 ## Capability boundary
 
 Product identity and model breadth. It does not present any single resource's
-detail, and it makes no claim about whether the implementation matches.
+detail, it lists no resource collection of its own, it carries no named view of
+the whole model — the rail names every collection with its count, and a
+resource's connections belong to its page — and it makes no claim about whether
+the implementation matches.

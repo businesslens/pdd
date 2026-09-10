@@ -3,7 +3,7 @@ title: References
 description: Attach intent, implementation, or context artifacts to any Product Model resource without moving external material into the model.
 section: open-source
 group: Product Model
-order: 17
+order: 15
 terms:
   - term: Reference
     anchor: asset-or-reference
@@ -112,7 +112,7 @@ role meaningful.
 
 ## Naming the state a capture shows
 
-A [Screen](./screens.md) often collects several captures of the same view — one
+A [Screen](./interfaces.md#screens) often collects several captures of the same view — one
 per View state, sometimes doubled for light and dark. An optional `state` on
 either asset metadata or a Reference names which one:
 

@@ -3,7 +3,7 @@ title: Journeys
 description: Optional Actor goals whose successful completion requires several Capabilities working together, with Journey Scenarios describing each path.
 section: open-source
 group: Product Model
-order: 15
+order: 13
 terms:
   - term: Journey
     definition: "An Actor goal whose successful completion requires several Capabilities working together."
@@ -363,3 +363,11 @@ preserve the Journey Scenario's Capability sequence and Outcome. Give it an H3
 title, one non-empty question, and at least two `condition → outcome` branches.
 A branch that changes the Capability sequence or has a materially different
 Outcome belongs in another Journey Scenario.
+
+## In the Product Report
+
+Journeys remains a main resource collection because goals can span Capabilities,
+Domains, and Interfaces. Open a Journey, then Scenarios → Composition to compare
+its Scenario columns. Every Capability-bearing Step stays in authored order,
+including repeated occurrences and its exact route Contexts. Columns do not mean
+simultaneous work. Details provides each Scenario's complete sequence and outcome.

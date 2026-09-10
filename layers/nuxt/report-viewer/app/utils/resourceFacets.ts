@@ -11,6 +11,8 @@
  */
 
 import type { AnyResourceView, ReportResourceKind, ReportWorkspace } from './reportWorkspace'
+import { ENTITY_KIND_META } from './reportWorkspace'
+import { resourceCardPresentation } from './resourceCards'
 
 /** The resources of one kind, in authored order. */
 export function resourcesOfKind(workspace: ReportWorkspace, kind: ReportResourceKind): AnyResourceView[] {
@@ -132,25 +134,45 @@ export function relatedIds(resource: AnyResourceView, kind: ReportResourceKind):
   }
 }
 
+/** Reading order for whatever a collection turns out to offer. */
+const FACET_ORDER: ReportResourceKind[] = [
+  'domain', 'entity', 'interface', 'experience', 'screen',
+  'capability', 'journey', 'capability-scenario', 'journey-scenario', 'rule'
+]
+
 /**
- * The kinds a resource kind can be filtered and grouped by, in reading order:
- * who reaches it, where it lives, what it serves, what constrains it.
+ * The kinds a collection can be filtered by: exactly the relations its own rows
+ * already print.
+ *
+ * A facet the reader cannot see on a card is a correlation they have to take on
+ * trust, and a hand-kept list drifts from the card the moment either changes.
+ * So the offer is derived from the card itself — every metric that names a kind,
+ * plus the Domain a card carries as its badge — and a collection that prints
+ * nothing relational offers no filter at all.
  */
-export function facetKindsFor(kind: ReportResourceKind): ReportResourceKind[] {
-  switch (kind) {
-    case 'interface': return ['entity', 'experience', 'capability', 'screen', 'journey']
-    case 'experience': return ['entity', 'interface', 'capability', 'domain', 'screen', 'journey']
-    case 'screen': return ['interface', 'experience', 'capability', 'domain', 'entity', 'journey', 'capability-scenario', 'journey-scenario']
-    case 'domain': return ['capability', 'entity', 'journey', 'screen', 'experience', 'rule']
-    case 'entity': return ['domain', 'capability', 'screen', 'entity', 'rule', 'interface', 'experience', 'journey']
-    case 'capability': return ['domain', 'entity', 'interface', 'experience', 'capability-scenario', 'journey-scenario', 'journey', 'screen', 'rule']
-    case 'journey': return ['entity', 'interface', 'experience', 'capability', 'domain', 'screen', 'journey-scenario', 'rule']
-    /* A Capability Scenario never names a Journey; offering the facet would be a permanently empty control. */
-    case 'capability-scenario': return ['entity', 'capability', 'screen', 'rule']
-    case 'journey-scenario': return ['entity', 'journey', 'capability', 'screen', 'rule']
-    case 'rule': return ['domain', 'entity', 'capability', 'journey', 'capability-scenario', 'journey-scenario']
-    default: return []
+export function facetKindsFor(workspace: ReportWorkspace, kind: ReportResourceKind): ReportResourceKind[] {
+  const printed = new Set<ReportResourceKind>()
+  for (const resource of resourcesOfKind(workspace, kind)) {
+    if (relatedIds(resource, 'domain').length) printed.add('domain')
+    for (const metric of resourceCardPresentation(workspace, resource).metrics) {
+      if (metric.kind) printed.add(metric.kind)
+    }
   }
+  return FACET_ORDER.filter(item => item !== kind && printed.has(item))
+}
+
+/**
+ * The one grouping rule: Domain, wherever the type carries one.
+ *
+ * Nothing here is configurable. Offering every related kind as a grouping axis
+ * was a view builder wearing a select menu — "Capabilities by Journeys" states
+ * no derivation and nothing is accountable for it — while a single authored
+ * axis is a fact about the model the reader can challenge from `docs/`.
+ */
+export const GROUPING_KIND: Partial<Record<ReportResourceKind, ReportResourceKind>> = {
+  entity: 'domain',
+  capability: 'domain',
+  rule: 'domain'
 }
 
 export type FacetSelections = Partial<Record<ReportResourceKind, string[]>>
@@ -175,6 +197,32 @@ export function filterResources<T extends AnyResourceView>(resources: T[], selec
     const related = new Set(relatedIds(resource, kind))
     return ids.some(id => related.has(id))
   }))
+}
+
+/**
+ * A collection's groups, under the fixed rule.
+ *
+ * Entities that act lead their own collection in a group of their own: who the
+ * Product is for is the question the rail is opened with, and it was previously
+ * answered by an invisible sort that no header explained.
+ */
+export function collectionGroups<T extends AnyResourceView>(
+  workspace: ReportWorkspace,
+  kind: ReportResourceKind,
+  resources: T[]
+): Array<ResourceGroup<T>> {
+  const by = GROUPING_KIND[kind]
+  if (!by) return [{ key: '', title: '', kind: null, resources }]
+  const unassigned = `No ${ENTITY_KIND_META[by].label}`
+  if (kind !== 'entity') return groupResources(workspace, resources, by, unassigned)
+
+  const acts = (resource: AnyResourceView) => resource.kind === 'entity' && Boolean(resource.acts)
+  const actors = resources.filter(acts)
+  const kept = resources.filter(resource => !acts(resource))
+  return [
+    ...(actors.length ? [{ key: 'actors', title: 'Actors', kind: 'entity' as ReportResourceKind, resources: actors }] : []),
+    ...groupResources(workspace, kept, by, unassigned)
+  ]
 }
 
 export interface ResourceGroup<T extends AnyResourceView = AnyResourceView> {
