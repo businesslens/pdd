@@ -133,21 +133,6 @@ contain public and restricted Experiences. It also has no success exit;
 Capability Scenarios own local observable outcomes. Journey Scenarios own
 complete variations of a coherent multi-Capability goal.
 
-## In the Product Report
-
-Interfaces is the entry point for Interfaces, Experiences, and Screens. List
-reads as rows, like every other collection, and each row names what its
-Interface contains; Map draws that containment as a connected interactive
-tree. An Interface's Overview shows its contained resources and
-Capability delivery. Compare delivery opens the cross-Interface reading: a
-Capability by Interface matrix, where a row with two cells is delivered twice
-and a row with one is exclusive to that Interface.
-
-Each name opens its own resource page. Breadcrumbs follow actual ownership;
-shared Screens appear once under their Interface, with links from Experiences.
-Search can find an Experience or Screen across Interfaces without drilling
-through each parent. Experiences and Screens are explained below.
-
 ## Experiences
 
 **An Experience is a stable context for using the Product within one
@@ -243,10 +228,8 @@ concrete cases.
 
 ### Experiences in the Product Report
 
-Find an Experience through Interfaces or search. Its page keeps Interfaces
-selected and shows its owning Interface in the breadcrumb. Overview includes its
-Screens, references to shared Screens, and available Capabilities. Interface map
-opens the same containment graph focused on this Experience.
+An Experience belongs to its Interface, and carries its own Screens, references
+to shared Screens, and the Capabilities available within it.
 
 ## Screens
 
@@ -408,7 +391,6 @@ Rules they expose.
 
 ### Screens in the Product Report
 
-Find Screens in the Interfaces directory or search. A Screen opens its own page
-with its actual Interface and optional Experience in the breadcrumb. A shared
-Screen has one canonical page under its Interface. Interface map shows its
-containment context; lines do not represent Screen-to-Screen navigation.
+A Screen belongs to its actual Interface and optional Experience, and a shared
+Screen belongs to one of them canonically. Containment says what holds what; it
+never says a reader moves from one Screen to another.

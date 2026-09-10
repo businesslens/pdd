@@ -33,9 +33,8 @@ Two hierarchies and two axes. One hierarchy says **where** Actors meet the
 Product, the other says **what** the Product does, and the axes classify members
 of both.
 
-The report and homepage introduce six main collections: **Entities, Interfaces,
-Domains, Capabilities, Journeys, and Business Rules**. Product describes the
-whole. Experiences and Screens are reached through Interfaces; each Capability
+Six of them are main collections: **Entities, Interfaces, Domains,
+Capabilities, Journeys, and Business Rules**. Product describes the whole. Experiences and Screens are reached through Interfaces; each Capability
 or Journey owns its Scenarios. All remain distinct resource types.
 
 ```text
@@ -235,8 +234,8 @@ distinct Capabilities, and every Journey Actor must appear in an achieved
 Scenario. A
 complete Product Model may have zero Journeys.
 
-The report derives a Journey's primary Capabilities and Domains from achieved
-Journey Scenario Steps. Capabilities found only in not-achieved paths are
+A Journey's primary Capabilities and Domains are derived from achieved Journey
+Scenario Steps. Capabilities found only in not-achieved paths are
 marked separately as failure-only. These describe modeled coverage, not one
 mandatory path or proof that partial mapping is exhaustive.
 
@@ -325,7 +324,7 @@ inspected repository areas, `unmapped` names intentionally absent Product
 breadth, `limitations` states what could not be established, and the lead prose
 is the rationale. Coverage accepts no H2 sections. Coverage has no resource type
 counts or Reference-derived fields;
-resource totals belong to the Product Report's About reading.
+resource totals are derived from the model itself.
 
 Availability and Coverage do not claim implementation status. Every status may
 describe planned, implemented, or mixed behavior, and a complete model may have

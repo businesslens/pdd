@@ -112,11 +112,3 @@ The model describes the Product, not the organization building it.
 | [Capabilities](./capabilities.md) | `domain:` | Zero or one |
 | [Entities](./entities.md) | `domain:` | Zero or one |
 | [Screens](./interfaces.md#screens) · [Journeys](./journeys.md) | derived through Capabilities | Zero or more |
-
-## In the Product Report
-
-Domains offers List and Map. Domain map groups the Capabilities and Entities
-classified by each Domain. Unassigned resources stay visible, including when no
-Domains are modeled; Unassigned is a display group, not an authored Domain.
-Groups express classification, not ownership or dependencies. A Domain page can
-open the map focused on that subject.

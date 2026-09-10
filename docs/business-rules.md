@@ -156,9 +156,9 @@ added later from Pending is governed by it, and silently open under the
 narrower one.
 
 A Rule reaches Capabilities through Steps: every Capability whose Scenario has a
-Step performing the selected operation is in the Rule's derived reach, and the
-report draws the Rule on that Entity's lifecycle — restricting the arcs it
-grants, forbidding the ones it closes.
+Step performing the selected operation is in the Rule's derived reach. The Rule
+then governs that Entity's lifecycle: it restricts the arcs it grants and
+forbids the ones it closes.
 
 ## Permission
 
@@ -379,10 +379,3 @@ Rules against Steps and Screens — errors, ungraded by `coverage.status`:
 Fact-scoped Rules are checked by Screen reach only, since a Step cannot cite a
 fact; the rest is `verify`'s. A derivation is prose plus `facts`; there is no
 machine-readable arithmetic.
-
-## In the Product Report
-
-Business Rules offers List and Attachments. The matrix shows each explicitly
-authored attachment and preserves operation, State, fact, and Context
-restrictions. An empty cell makes no permission or enforcement claim. Rule pages
-and explicitly targeted resource pages open the same matrix with relevant focus.

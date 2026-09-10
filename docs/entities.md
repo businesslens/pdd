@@ -27,7 +27,7 @@ terms:
     definition: "Scenarios containing a Step that puts this Entity in this State, even if a later Step changes it again."
   - term: Arc
     anchor: states-and-the-lifecycle-nobody-authors
-    definition: "A move a Step makes: into a State, out of one, or between two. Nothing declares arcs; the report composes them from the Scenarios."
+    definition: "A move a Step makes: into a State, out of one, or between two. Nothing declares arcs; they are composed from the Scenarios."
   - term: Lifecycle
     aliases: [Machine]
     anchor: states-and-the-lifecycle-nobody-authors
@@ -249,9 +249,9 @@ Refunded. **The Entity declares its States; Scenario Steps describe its creation
 changes, and removal.** A Step's `entities` entry names the Entity, the effect,
 and any States it leaves or enters.
 
-The report combines those Steps across the model into a Lifecycle for each
-Entity. It shows that Entity's States and Arcs, with each Arc labelled by the
-Capabilities whose Steps produce it and the Rules that restrict or forbid it.
+Those Steps combine across the model into a Lifecycle for each Entity: its
+States and Arcs, with each Arc carrying the Capabilities whose Steps produce it
+and the Rules that restrict or forbid it.
 
 Each State's **Left here by** list shows Scenarios containing a Step that puts
 the Entity in that State. A Scenario can appear under several States when its
@@ -440,11 +440,3 @@ relationship somebody forgot to declare.
 - A state other than the first that no Step leaves anything in is a warning; a
   Step leaving from a state nothing produces is a warning.
 - An Entity naming a Domain that does not exist is an error.
-
-## In the Product Report
-
-Entities offers List and Relationships. The relationship graph keeps authored
-verbs, direction, both cardinalities, and disconnected Entities. An Entity page
-opens that graph with the Entity in focus. Its Lifecycle tab shows the state
-machine derived from Scenario effects. What changes what opens the Capabilities
-mutation matrix filtered to this Entity, with supporting Scenarios.

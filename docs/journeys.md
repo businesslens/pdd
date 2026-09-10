@@ -135,10 +135,9 @@ rather than becoming Journey frontmatter.
 
 Consumers derive the primary Capability and Domain sets from achieved paths.
 Capabilities seen only in not-achieved paths are marked separately as
-failure-only. The report's **Leaves behind** summary shows Entity instances
-created, changed, or removed by achieved paths, with final States when specified.
-It derives these results from the paths' Steps and displays them beside the
-Success criterion. Removals and changes without a named State are included;
+failure-only. **Leaves behind** is the set of Entity instances created, changed,
+or removed by achieved paths, with final States when specified, derived from
+those paths' Steps. Removals and changes without a named State are included;
 reads do not replace the last change. These summaries describe the modeled
 paths, without claiming that a partial model covers every path.
 
@@ -363,14 +362,3 @@ preserve the Journey Scenario's Capability sequence and Outcome. Give it an H3
 title, one non-empty question, and at least two `condition → outcome` branches.
 A branch that changes the Capability sequence or has a materially different
 Outcome belongs in another Journey Scenario.
-
-## In the Product Report
-
-Journeys remains a main resource collection because goals can span Capabilities,
-Domains, and Interfaces. Journeys offers List and Composition. Composition draws
-every Journey in the model, each with its Scenarios as columns of the
-Capabilities they compose: every Capability-bearing Step stays in authored
-order, including repeated occurrences and its exact route Contexts. Columns do
-not mean simultaneous work. Comparing Journeys belongs to the collection because
-one Journey's page cannot answer it; that page's Scenarios tab gives each
-Scenario's complete sequence and outcome.

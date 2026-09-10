@@ -69,6 +69,14 @@ were costed and then chosen against, so the same argument is not had twice.
   narrative, when to create one, its file shape, and the `lint` findings
   that constrain it — do not reintroduce a separate glossary, a separate
   format page, or a separate error catalog.
+- **`docs/` explains the model, never the report.** A page says what a resource
+  type means, when to author one, what its file holds, and what `lint` will say
+  — not which tab draws it, what its heading reads, or where a control sits. A
+  derivation is a fact about the model and belongs here; the surface that happens
+  to draw it does not. Two registers describing one screen drift the moment
+  either moves, and the one the reader is looking at wins, so the other is only
+  ever wrong. The CLI page for `view` documents the command, not the reading it
+  opens.
 - Define vocabulary in the owning doc's `terms:` frontmatter. Run
   `npm run vocabulary` after edits and commit the generated registry.
 - Keep definitions self-contained and capitalize referenced types. Put the page's
@@ -173,6 +181,12 @@ costed already.
   model reads `.businesslens/` directly — the files are the contract, already
   addressable and already complete. Nothing in the renderer is justified by
   "an agent might need it".
+- **The report explains itself.** No page of `docs/` describes how to read it,
+  so nothing outside the renderer can be relied on to make a surface legible. A
+  reading that needs prose elsewhere to be understood is not finished; what it
+  needs is a clearer surface, a term tooltip, or its own `About this view`. What
+  the report links out to is the documentation for a resource *type*, which is
+  the one thing `docs/` owns.
 - **It is a place you go, not a document you read.** It is opened repeatedly
   during authoring. Completeness is therefore a cost, not a virtue: every field
   rendered competes with the field answering the question the reader arrived

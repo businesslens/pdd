@@ -218,8 +218,8 @@ whose text says *the Reader chooses a saved item* also says so where a tool can
 read it. A Step whose text names an Entity's title and declares it nowhere is a
 finding — an error in a `complete` model, a warning otherwise.
 
-The report's **Ends with** summary takes the last creation, change, or removal
-of each Entity instance in Step order. It includes the resulting State when
+**Ends with** is the last creation, change, or removal of each Entity instance
+in Step order. It includes the resulting State when
 specified, and also shows removals and changes without a named State. Later
 reads do not replace that result.
 
@@ -391,11 +391,3 @@ Each Decision point asks a Product question with alternative branches that
 lead to the same Capability Scenario Outcome. Give it an H3 title, one
 non-empty question, and at least two `condition → outcome` branches. A branch
 with a materially different Outcome belongs in another Capability Scenario.
-
-## In the Product Report
-
-Capabilities offers List and What changes what. The matrix shows which
-Capabilities create, change, or remove each Entity, with supporting Scenarios;
-reads are excluded. An empty cell means no declared mutation. A Capability page
-opens the matrix filtered to its own effects and keeps its acceptance cases in
-Scenarios, including Step and route comparisons.
