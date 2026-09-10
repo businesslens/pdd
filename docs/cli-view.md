@@ -45,11 +45,16 @@ the toolbar only narrows what is already there.
 | Lifecycle | An Entity → Lifecycle |
 | Scenarios | A Capability or Journey → Scenarios |
 
-Each collection starts with List and states the question its open view answers.
+Each collection starts with List. A named view states the question it answers,
+and how it derives it, under `About this view` beneath the reading itself.
 Collections that carry an authored Domain group by it; nothing about the
 grouping is configurable, and Entities that act lead their collection in a group
-of their own. Filters are offered only where scanning would be slower, and only
-over relations the rows already print.
+of their own. A collection offers every axis it has, whatever its size, and only
+over relations the rows already print. Each axis gets its own control, on one
+line above the rows it narrows; a control shows how many values it holds and the
+values themselves sit on a second row, each removable on its own. A named view
+narrows the same way, over which resource types it draws and which resource it
+focuses.
 
 The Overview is the Product's own page and reads like every other one: it is
 headed `Overview`, the same word as the rail row that opens it, qualified by

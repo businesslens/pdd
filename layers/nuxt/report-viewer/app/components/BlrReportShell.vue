@@ -72,7 +72,6 @@ const mobileNavOpen = ref(false)
 /* The internal name for the open page is the bindable model itself, so a page
    opened by a click and a page opened by a URL are the same state. */
 const openPageKey = openResource
-const filterOpen = ref(false)
 
 /* Filter state is kept per kind: moving to another kind and back returns to
    the narrowing you left, which is the point of a persistent working view.
@@ -166,14 +165,28 @@ function clearFacets() {
 const facetKinds = computed(() => facetKindsFor(props.workspace, activeKind.value)
   .filter(kind => resourcesOfKind(props.workspace, kind).length))
 
+/* An option carries its resource: a filter list reads like the collection it
+   narrows, so an Actor keeps its silhouette and a Web Interface its globe. */
 function facetOptions(kind: ReportResourceKind) {
-  return resourcesOfKind(props.workspace, kind).map(resource => ({ label: resource.title, value: resource.id }))
+  return resourcesOfKind(props.workspace, kind).map(resource => ({
+    label: resource.title,
+    value: resource.id,
+    facet: entityFacetOf(resource),
+    acts: resource.kind === 'entity' ? resource.acts ?? undefined : undefined,
+    interfaceType: resource.kind === 'interface' ? resource.interfaceType : undefined
+  }))
 }
 
-const FILTER_THRESHOLD = 8
+/*
+  A collection offers every axis it has, always.
 
-const filtersOffered = computed(() => facetKinds.value.length > 0
-  && kindResources.value.length >= FILTER_THRESHOLD)
+  A size threshold made two reports of the same renderer differ for no reason
+  the reader could see: a five-Entity product had no filters and a sixteen-Entity
+  one did, and nothing on either screen said why. An axis that exists is an axis
+  the reader can narrow by; the only reason not to draw a control is that there
+  is nothing behind it.
+*/
+const filtersOffered = computed(() => facetKinds.value.length > 0)
 
 /** One chip per *active* facet, naming what it selected — never one per offer. */
 const facetChips = computed(() => facetKinds.value
@@ -184,8 +197,9 @@ const facetChips = computed(() => facetKinds.value
     const [first] = resolveResources(props.workspace, kind, ids)
     const rest = ids.length - 1
     return {
+      /* The facet kind is the chip's identity: one chip per active facet. */
+      key: kind,
       kind,
-      icon: meta.icon,
       facet: ids.length === 1 ? entityFacetOf(first) : null,
       acts: ids.length === 1 && first?.kind === 'entity' ? first.acts ?? undefined : undefined,
       interfaceType: ids.length === 1 && first?.kind === 'interface' ? first.interfaceType : undefined,
@@ -342,26 +356,27 @@ const surfaceDocs = computed(() => docsForResourceKind(pageSubject.value?.kind ?
  * held anything, and the switch that did it was a fifth idiom nowhere else uses.
  */
 const PRODUCT_TABS = [
-  { id: 'coverage', label: 'Coverage', hint: '' },
-  { id: 'references', label: 'References', hint: '' }
+  { id: 'coverage', label: 'Coverage' },
+  { id: 'references', label: 'References' }
 ]
 
 /* Compared as strings: no named view belongs to the Overview any more, so the
    rail union no longer includes it, and a collection that has none is normal. */
 const surfaceViews = computed(() => REPORT_DESTINATIONS.filter(item => (item.rail as string) === activeSection.value))
 const surfaceTabs = computed(() => openPage.value ? [] : [
-  { id: 'overview', label: activeKind.value === 'product' ? 'About' : 'List', hint: '' },
+  { id: 'overview', label: activeKind.value === 'product' ? 'About' : 'List' },
   ...(activeKind.value === 'product' ? PRODUCT_TABS : []),
-  ...surfaceViews.value.map(item => ({ id: item.mode, label: item.label, hint: findProductTopologyView(item.view).question }))
+  ...surfaceViews.value.map(item => ({ id: item.mode, label: item.label }))
 ])
 const activeSurfaceTab = computed(() => {
   if (destination.value) return destination.value.mode
   return surfaceTabs.value.some(tab => tab.id === pageTab.value) ? pageTab.value : 'overview'
 })
-const surfaceHint = computed(() => surfaceTabs.value.find(tab => tab.id === activeSurfaceTab.value)?.hint ?? '')
 
 const showToolbar = computed(() => !openPage.value && activeKind.value !== 'product' && !topologyActive.value
-  && (filtersOffered.value || facetChips.value.length > 0))
+  && filtersOffered.value)
+
+
 const pageReadingKey = computed(() => JSON.stringify([props.workspace.identity.id, activeSection.value, openPageKey.value, pageTab.value, topology.value.scenario, topology.value.expanded, topology.value.collapsed]))
 const { element: resourcePane, save: savePageScroll, restore: restorePageScroll } = useBlrTopologyScroll(pageReadingKey)
 
@@ -590,90 +605,63 @@ const orphanScenarios = computed(() => props.workspace.scenarios
           </button>
         </div>
 
-        <!-- What the open tab answers. The view no longer titles itself: the
-             heading names the subject and the tab names the reading. -->
-        <p v-if="surfaceHint" class="border-b border-default px-5 py-2 text-xs text-muted">{{ surfaceHint }}</p>
         <!-- Collection controls belong to the list reading, so they scroll
              away with its cards or table. Topology remains a bounded canvas. -->
         <div v-if="!topologyActive" ref="resourcePane" class="blr-pane min-h-0 flex-1" @scroll.capture.passive="savePageScroll">
-          <!-- Toolbar: what is shown on the left, how it is shown on the right. -->
-          <div
-            v-if="showToolbar"
-            class="flex items-center gap-2 px-4 py-2"
-          >
-          <!-- One control, opened on demand, holding the facets this kind has. -->
-          <UPopover v-if="filtersOffered" v-model:open="filterOpen">
-            <UButton
-              icon="i-lucide-list-filter"
-              color="neutral"
-              :variant="filtersActive ? 'soft' : 'outline'"
-              size="xs"
-              label="Filter"
-              trailing-icon="i-lucide-chevron-down"
-            >
-              <template v-if="activeFacetCount" #trailing>
-                <UBadge color="primary" variant="solid" size="sm">{{ activeFacetCount }}</UBadge>
-              </template>
-            </UButton>
-            <template #content>
-              <div class="w-80 space-y-3 p-3">
-                <div v-for="kind in facetKinds" :key="kind" class="space-y-1.5">
-                  <p class="blr-field flex items-center gap-1.5">
-                    <UIcon :name="ENTITY_KIND_META[kind].icon" class="size-3.5" :style="{ color: `var(--blr-slot-${ENTITY_KIND_META[kind].slot})` }" />
-                    {{ ENTITY_KIND_META[kind].plural }}
-                  </p>
-                  <USelectMenu
-                    :model-value="facetValues(kind)"
-                    :items="facetOptions(kind)"
-                    value-key="value"
-                    multiple
-                    size="xs"
-                    variant="outline"
-                    class="w-full"
-                    :placeholder="`Any ${ENTITY_KIND_META[kind].label.toLowerCase()}`"
-                    :search-input="{ placeholder: `Filter ${ENTITY_KIND_META[kind].plural.toLowerCase()}…` }"
-                    @update:model-value="setFacet(kind, $event as string[])"
-                  />
-                </div>
-              </div>
-            </template>
-          </UPopover>
-
-          <!-- A chip per active facet, never one per facet on offer. -->
-          <div v-if="facetChips.length" class="flex min-w-0 flex-wrap items-center gap-1.5">
-            <button
-              v-for="chip in facetChips"
-              :key="chip.kind"
-              type="button"
-              class="blr-chip"
-              :title="`Clear this ${chip.label.toLowerCase()} filter`"
-              @click="setFacet(chip.kind, [])"
-            >
-              <BlrKind
-                :kind="chip.kind"
-                :interface-type="chip.interfaceType"
-                :facet="chip.facet"
-                :acts="chip.acts"
-                :labelled="false"
-                size="xs"
-              />
-              <span class="text-dimmed">{{ chip.label }}</span>
-              <span class="truncate font-medium text-highlighted">{{ chip.value }}</span>
-              <UIcon name="i-lucide-x" class="size-3 shrink-0 text-dimmed" />
-            </button>
-            <UButton
-              v-if="facetChips.length > 1"
-              color="neutral"
-              variant="ghost"
-              size="xs"
-              label="Clear"
-              @click="clearFacets"
-            />
-          </div>
-
-          </div>
-
           <div class="p-5">
+          <!-- Narrowing belongs to the reading it narrows, aligned with the
+               rows it acts on rather than banded above them as chrome. -->
+          <BlrFilterBar
+            v-if="showToolbar"
+            class="mb-4"
+            :chips="facetChips"
+            @remove="setFacet($event as ReportResourceKind, [])"
+            @clear="clearFacets"
+          >
+            <USelectMenu
+              v-for="kind in facetKinds"
+              :key="kind"
+              :model-value="facetValues(kind)"
+              :items="facetOptions(kind)"
+              value-key="value"
+              multiple
+              size="md"
+              variant="outline"
+              class="min-w-44"
+              :ui="{ content: 'blr-filter-menu', item: 'py-2' }"
+              :virtualize="facetOptions(kind).length > 100"
+              :search-input="{ placeholder: `Find a ${ENTITY_KIND_META[kind].label.toLowerCase()}…` }"
+              :aria-label="`Filter by ${ENTITY_KIND_META[kind].plural}`"
+              @update:model-value="setFacet(kind, $event as string[])"
+            >
+              <template #leading>
+                <UIcon
+                  :name="ENTITY_KIND_META[kind].icon"
+                  class="size-5 shrink-0"
+                  :style="{ color: `var(--blr-slot-${ENTITY_KIND_META[kind].slot})` }"
+                />
+              </template>
+              <template #default>
+                <span class="truncate">{{ ENTITY_KIND_META[kind].plural }}</span>
+                <span v-if="facetValues(kind).length" class="blr-meta">({{ facetValues(kind).length }})</span>
+              </template>
+              <!-- The control above says `Interfaces`, so a row need not
+                   repeat the plug: its slot goes to the type instead. -->
+              <template #item-leading="{ item }">
+                <BlrKind
+                  :kind="kind"
+                  :interface-type="item.interfaceType"
+                  :facet="item.facet"
+                  :acts="item.acts"
+                  :labelled="false"
+                  :with-kind="false"
+                  size="xs"
+                />
+              </template>
+            </USelectMenu>
+          </BlrFilterBar>
+
+
           <!-- OVERVIEW: the Product, and what it promises -->
           <BlrOverview
             v-if="activeKind === 'product'"
@@ -913,23 +901,4 @@ const orphanScenarios = computed(() => props.workspace.scenarios
     display: none;
   }
 }
-
-/* An active filter, stating what it selected and clearing itself on click. */
-.blr-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  max-width: 18rem;
-  padding: 0.1875rem 0.5rem;
-  border: 1px solid var(--ui-border);
-  border-radius: 9999px;
-  background: var(--ui-bg-elevated);
-  font-size: 12px;
-  line-height: 1.25rem;
-}
-
-.blr-chip:hover {
-  border-color: var(--ui-border-accented);
-}
-
 </style>

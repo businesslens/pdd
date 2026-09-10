@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from 'node:fs'
+import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { compileReport } from '../src/commands/export.js'
@@ -496,7 +496,10 @@ describe('stable Product Report', () => {
     expect(body).toContain('scenarioRouteColumnCount')
     expect(body).toContain('visibleRouteWindow.start + 1')
     expect(body).toContain('aria-label="Number of route columns"')
-    expect(body).toContain("icon: 'i-lucide-route'")
+    /* A named route is one way a Scenario can run, not a Journey, so it does
+       not wear the Journey's mark. */
+    expect(body).toContain("icon: 'i-lucide-split'")
+    expect(body).not.toContain('i-lucide-route')
     expect(body.match(/aria-label="Show previous route"/g)).toHaveLength(2)
     expect(body.match(/aria-label="Show next route"/g)).toHaveLength(2)
     expect(body).toContain('compact')
@@ -758,12 +761,15 @@ describe('stable Product Report', () => {
     expect(reportShell).not.toContain('surface.question')
     expect(reportShell).not.toContain('surface.flow')
     /* The surface heading names the subject and the tab names the reading, so
-       the view states only what it answers — once, as the tab's hint. */
+       a view neither titles itself nor spends a row restating its question:
+       that belongs with the derivation it qualifies, behind About this view. */
     expect(topology).not.toContain('{{ view.name }}')
     expect(topology).not.toContain('blr-topology-title-row')
     expect(topology).toContain('{{ view.diagramType }}')
-    expect(reportShell).toContain('{{ surfaceHint }}')
-    expect(reportShell).toContain('findProductTopologyView(item.view).question')
+    expect(topology).toContain('{{ view.question }}')
+    expect(reportShell).not.toContain('surfaceHint')
+    expect(source('app/components/BlrResourcePage.vue')).not.toContain('current.hint')
+    expect(source('app/utils/pageSections.ts')).not.toContain('hint')
   })
 
   /*
@@ -931,26 +937,80 @@ describe('stable Product Report', () => {
     expect(tooltips).not.toContain('useState')
   })
 
-  it('scrolls collection controls with their list instead of pinning them as chrome', () => {
+  /*
+    The bundled viewer is a generated SPA with no icon endpoint, so an icon that
+    is not in a client bundle renders as a silent blank box — correct size,
+    correct place, no glyph. Nothing else catches it: the build succeeds, the
+    typecheck passes, and the gap only shows on a surface someone happens to
+    open. So the icons a component asks for and the icons the bundles carry are
+    checked against each other here.
+  */
+  it('bundles every icon the viewer draws', () => {
+    const configs = [
+      readFileSync(join(VIEWER, 'nuxt.config.ts'), 'utf8'),
+      readFileSync(join(__dirname, '..', 'viewer', 'app', 'nuxt.config.ts'), 'utf8')
+    ]
+    const bundled = new Set(configs.flatMap(config =>
+      [...config.matchAll(/'(lucide|simple-icons):([a-z0-9-]+)'/g)].map(match => `${match[1]}:${match[2]}`)))
+
+    const roots = [join(VIEWER, 'app'), join(__dirname, '..', 'viewer', 'app', 'app')]
+    const sources: string[] = []
+    const walk = (directory: string) => {
+      for (const entry of readdirSync(directory, { withFileTypes: true })) {
+        if (entry.name === 'node_modules' || entry.name.startsWith('.')) continue
+        const path = join(directory, entry.name)
+        if (entry.isDirectory()) walk(path)
+        else if (/\.(vue|ts)$/.test(entry.name)) sources.push(readFileSync(path, 'utf8'))
+      }
+    }
+    roots.forEach(walk)
+
+    const asked = new Set(sources.flatMap(source =>
+      [...source.matchAll(/i-(lucide|simple-icons)-([a-z0-9-]+)/g)].map(match => `${match[1]}:${match[2]}`)))
+
+    expect([...asked].filter(icon => !bundled.has(icon)).sort()).toEqual([])
+  })
+
+  it('narrows inside the reading, with one control per axis', () => {
     const reportShell = source('app/components/BlrReportShell.vue')
+    const bar = source('app/components/BlrFilterBar.vue')
+    const topology = source('app/components/BlrProductTopology.vue')
     const docs = source('app/utils/resourceDocs.ts')
     const pane = reportShell.indexOf('v-if="!topologyActive" ref="resourcePane" class="blr-pane min-h-0 flex-1"')
-    const toolbar = reportShell.indexOf('v-if="showToolbar"', pane)
-    const reading = reportShell.indexOf('<div class="p-5">', toolbar)
+    const reading = reportShell.indexOf('<div class="p-5">', pane)
 
     expect(pane).toBeGreaterThan(-1)
-    expect(toolbar).toBeGreaterThan(pane)
-    expect(reading).toBeGreaterThan(toolbar)
-    expect(reportShell.slice(toolbar, reading)).not.toContain('border-b border-default')
-    /* Narrowing scrolls with the list. Identity and the ways out do not: an
-       exit belongs to the subject, so it sits on the heading row above. */
-    expect(reportShell.slice(toolbar, reading)).not.toContain('label="Docs"')
+    /* Narrowing belongs to the reading it narrows, aligned with the rows it
+       acts on rather than banded above them. Identity and the ways out do not:
+       an exit belongs to the subject, so it sits on the heading row above. */
+    expect(reportShell.indexOf('<BlrFilterBar', reading)).toBeGreaterThan(reading)
     expect(reportShell.indexOf(':to="surfaceDocs.url"')).toBeLessThan(pane)
     expect(reportShell.indexOf('v-for="link in exits"')).toBeLessThan(pane)
-    /* One Filter, one slot: the collection and its named views share it. */
-    expect(reportShell.slice(toolbar, reading)).toContain('label="Filter"')
-    expect(source('app/components/BlrProductTopology.vue')).toContain('label="Filter"')
-    expect(source('app/components/BlrProductTopology.vue')).not.toContain("'Filters'")
+
+    /* One control per axis, not one popover holding four. A reader should see
+       which axes exist without opening anything, and read the state of each
+       without remembering what they picked. */
+    expect(reportShell).toContain('v-for="kind in facetKinds"')
+    expect(reportShell).not.toContain('label="Filter"')
+    expect(reportShell).not.toContain('<UPopover')
+
+    /* A control says how many values it holds; the values sit on a second row,
+       so the control line keeps a fixed width however much is selected. */
+    expect(bar).toContain('v-for="chip in chips"')
+    expect(bar).toContain('label="Clear"')
+    expect(bar).toContain('class="blr-chip"')
+    /* The chips are drawn beside the report, not scoped to one component. */
+    expect(source('app/assets/report-viewer.css')).toContain('.blr-chip')
+    expect(reportShell).not.toContain('.blr-chip {')
+
+    /* A named view narrows on its own axes, in the same shape — and no longer
+       through a bare search box and a native select inside a popover. */
+    expect(topology).toContain('<BlrFilterBar')
+    expect(topology).not.toContain('<UPopover')
+    expect(topology).not.toContain("type=\"search\"")
+    expect(topology).not.toContain('<select')
+    expect(topology).not.toContain("'Filters'")
+
     expect(docs).toContain("experience: 'interfaces#experiences'")
     expect(docs).toContain("screen: 'interfaces#screens'")
     expect(docs).toContain("domain: 'domains'")

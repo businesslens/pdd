@@ -247,8 +247,13 @@ costed already.
   itself as a tree. Named visualizations are tabs of their subject collection.
   This supersedes the prior convention exposing Experiences and Screens as
   independent rail entries.
-- **Chrome scales with the collection.** No control costs a row above a
-  two-item list, and a filter offer is not rendered where scanning is faster.
+- **Chrome scales with the collection**, but never on a hidden threshold. No
+  control costs a row above a two-item list. A control is absent only when there
+  is nothing behind it — no axis to narrow by, no second option to choose. Sizing
+  the offer to the collection instead made two reports of the same renderer
+  differ for a reason no reader could see, which is worse than the row it saved:
+  a reader learns the report once, and what they learned has to hold in the next
+  one.
 - **Named views, not a view builder.** Filters narrow a view that already means
   something; a builder asks the reader to invent the meaning first. The concrete
   failure is derivation ambiguity — "journeys × screens" is either *screens this
@@ -264,14 +269,32 @@ costed already.
   their own, because who the Product is for is the question the rail is opened
   with.
 - **A filter offers only what the row already prints.** A facet the reader
-  cannot see on a card is a correlation they have to take on trust, and a
-  popover of nine of them above a twelve-item list costs more than the scan it
-  replaces. Filters narrow; they never reach for a relation the reading does not
-  already show.
+  cannot see on a card is a correlation they have to take on trust, and nine of
+  them above a twelve-item list cost more than the scan they replace. Filters
+  narrow; they never reach for a relation the reading does not already show.
+- **One control per axis, inside the reading it narrows.** A single `Filter`
+  button hid both which axes exist and the state of each, behind a click. Every
+  axis gets its own control, on one scannable line, aligned with the rows it acts
+  on rather than banded above them as chrome — narrowing belongs to the reading,
+  where identity and the ways out belong to the surface. A control says how many
+  values it holds, never which: the values sit on a second row, so the control
+  line keeps a fixed width however much is selected, and each value keeps its own
+  way out. A surface that narrows on unrelated axes — which types a view draws,
+  and which resource it focuses — gets one control each, not one popover holding
+  both.
 - A view that needs a paragraph before it can be read is not ready to ship, and
-  no view opens onto an empty configuration screen.
+  no view opens onto an empty configuration screen. It does not spend a row of
+  the reading restating its own question either: the heading names the subject,
+  the tab names the reading, and the question belongs with the derivation it
+  qualifies, behind the view's own disclosure.
 - **The surface names the resource type; the row does not repeat it**, and a
   fact appears once per screen.
+- **A resource type's mark is reserved.** Chrome wears a kind's icon only where
+  it names that kind — an exit to Rule attachments may carry the Business Rule
+  mark, and a Capability on a lifecycle arc carries the Capability's. Anything
+  else borrows a glyph that already means something: a control naming every type
+  is not the Entity type, a Scenario's named route is not a Journey, and a Step
+  kind is not a resource at all. Reach for an unreserved glyph instead.
 - **Counts where the set is many, names where the set is one** — in rows,
   tables, and facts alike. Nothing renders an empty label: a missing hook or an
   empty facet set shrinks the element rather than reserving space for what is

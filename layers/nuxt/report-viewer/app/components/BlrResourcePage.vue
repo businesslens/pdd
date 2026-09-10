@@ -95,8 +95,6 @@ const current = computed(() => tabs.value.find(tab => tab.id === active.value) ?
     </nav>
 
     <div class="min-w-0 space-y-5">
-      <p v-if="current?.hint" class="text-xs text-muted">{{ current.hint }}</p>
-
       <BlrScenarios
         v-if="current?.id === 'scenarios'"
         v-model:scenario-route="scenarioRoute"

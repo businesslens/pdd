@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { AnyResourceView, ReportWorkspace } from '../utils/reportWorkspace'
-import { ENTITY_KIND_META, resourceKey } from '../utils/reportWorkspace'
+import { ENTITY_KIND_META, entityFacetOf, resourceKey } from '../utils/reportWorkspace'
 import { findProductTopologyView } from '../utils/productTopologyViews'
 import type { TopologyReading } from '../utils/topologyState'
 import { defaultTopologyReading, sanitizeTopologyReading, toggleTopologyGroup } from '../utils/topologyState'
@@ -12,8 +12,6 @@ import type { TopologyMatrix } from '../utils/topologyProjections'
 const props = defineProps<{ workspace: ReportWorkspace }>()
 const emit = defineEmits<{ select: [resource: AnyResourceView], product: [] }>()
 const reading = defineModel<TopologyReading>('reading', { default: defaultTopologyReading })
-const filtersOpen = ref(false)
-const search = ref('')
 const view = computed(() => findProductTopologyView(reading.value.view))
 const relations = computed(() => topologyRelations(props.workspace))
 const neighbourhood = computed(() => {
@@ -61,9 +59,46 @@ const compositions = computed(() => journeyCompositionProjection(props.workspace
 const isGraph = computed(() => view.value.id === 'sitemap' || view.value.id === 'what-it-keeps')
 const filterKinds = computed(() => view.value.kinds.filter(kind => kind !== 'product'
   && [...props.workspace.byKey.values()].some(item => item.kind === kind)))
-const filtersOffered = computed(() => props.workspace.byKey.size > 8 && filterKinds.value.length > 1)
-const focusItems = computed(() => [...props.workspace.byKey.values()].filter(resource => view.value.kinds.includes(resource.kind) && resource.title.toLocaleLowerCase().includes(search.value.toLocaleLowerCase())))
+/* Every view offers its axes. A type control with one option is not an axis. */
+const typesOffered = computed(() => filterKinds.value.length > 1)
+/*
+  A named view narrows on two unrelated axes: which resource types it draws, and
+  which one resource it draws the neighbourhood of. They were stacked in one
+  popover behind one `Filter` button, alongside a bare search box and a raw
+  `select`. They are two controls, in the shape every other filter uses.
+*/
+const focusItems = computed(() => [...props.workspace.byKey.values()]
+  .filter(resource => view.value.kinds.includes(resource.kind))
+  .map(resource => ({
+    label: resource.title,
+    value: resource.key,
+    kind: resource.kind,
+    facet: entityFacetOf(resource),
+    acts: resource.kind === 'entity' ? resource.acts ?? undefined : undefined,
+    interfaceType: resource.kind === 'interface' ? resource.interfaceType : undefined
+  })))
+const typeItems = computed(() => filterKinds.value.map(kind => ({ label: ENTITY_KIND_META[kind].plural, value: kind, kind })))
+const visibleKinds = computed(() => filterKinds.value.filter(kind => !reading.value.hiddenKinds.includes(kind)))
 const filterCount = computed(() => reading.value.hiddenKinds.length + reading.value.focus.length)
+
+const filterChips = computed(() => [
+  ...reading.value.hiddenKinds.length
+    ? [{ key: 'hidden', label: 'Hidden types', value: reading.value.hiddenKinds.map(kind => ENTITY_KIND_META[kind].plural).join(', ') }]
+    : [],
+  ...reading.value.focus.map((key) => {
+    const resource = props.workspace.byKey.get(key)
+    return { key: `focus:${key}`, label: 'Focus', value: resource?.title ?? key, kind: resource?.kind }
+  })
+])
+
+function removeFilter(key: string) {
+  if (key === 'hidden') update({ hiddenKinds: [] })
+  else update({ focus: reading.value.focus.filter(item => `focus:${item}` !== key) })
+}
+
+function showKinds(kinds: string[]) {
+  update({ hiddenKinds: filterKinds.value.filter(kind => !kinds.includes(kind)) })
+}
 const scrollKey = computed(() => JSON.stringify([props.workspace.identity.id, reading.value]))
 const { element: pane, save, restore } = useBlrTopologyScroll(scrollKey)
 watch(() => props.workspace, () => { save(); void restore() }, { flush: 'pre' })
@@ -83,34 +118,72 @@ function toggle(id: string, open: boolean) { reading.value = toggleTopologyGroup
 </script>
 <template>
   <div class="blr-product-topology">
-    <header v-if="filtersOffered || filterCount" class="flex flex-wrap items-center gap-2 px-4 py-2">
-      <UPopover v-if="filtersOffered" v-model:open="filtersOpen">
-        <UButton icon="i-lucide-list-filter" color="neutral" :variant="filterCount ? 'soft' : 'outline'" size="xs" label="Filter" trailing-icon="i-lucide-chevron-down">
-          <template v-if="filterCount" #trailing>
-            <UBadge color="primary" variant="solid" size="sm">{{ filterCount }}</UBadge>
+    <div class="px-5 pt-4">
+      <BlrFilterBar :chips="filterChips" @remove="removeFilter" @clear="update({ focus: [], hiddenKinds: [] })">
+        <USelectMenu
+          v-if="typesOffered"
+          :model-value="visibleKinds"
+          :items="typeItems"
+          value-key="value"
+          multiple
+          size="md"
+          variant="outline"
+          class="min-w-44"
+          :ui="{ content: 'blr-filter-menu', item: 'py-2' }"
+          :search-input="false"
+          aria-label="Which resource types this view draws"
+          @update:model-value="showKinds($event as string[])"
+        >
+          <!-- Not the Entity mark: that glyph names a resource type, and this
+               control names all of them. A reserved mark stays reserved. -->
+          <template #leading>
+            <UIcon name="i-lucide-layers" class="size-5 shrink-0 text-muted" />
           </template>
-        </UButton>
-        <template #content>
-          <div class="blr-topology-filters w-80 space-y-3 p-3">
-            <fieldset><legend>Resource types</legend><label v-for="kind in filterKinds" :key="kind"><input type="checkbox" :checked="!reading.hiddenKinds.includes(kind)" @change="update({ hiddenKinds: reading.hiddenKinds.includes(kind) ? reading.hiddenKinds.filter(item => item !== kind) : [...reading.hiddenKinds, kind] })">{{ ENTITY_KIND_META[kind].plural }}</label></fieldset>
-            <label>Focus with one-hop context <input v-model="search" type="search" placeholder="Find a resource" aria-label="Find a resource to focus"></label>
-            <select aria-label="Focus resource" :value="''" @change="update({ focus: [...new Set([...reading.focus, ($event.target as HTMLSelectElement).value])] })"><option value="" disabled>Choose a resource</option><option v-for="resource in focusItems" :key="resource.key" :value="resource.key">{{ ENTITY_KIND_META[resource.kind].label }} · {{ resource.title }}</option></select>
-          </div>
-        </template>
-      </UPopover>
-      <div v-if="filterCount" class="flex min-w-0 flex-wrap items-center gap-1.5">
-        <button v-for="key in reading.focus" :key="key" type="button" class="blr-chip" title="Stop focusing this resource" @click="update({ focus: reading.focus.filter(item => item !== key) })">
-          <span class="text-dimmed">Focus</span>
-          <span class="truncate font-medium text-highlighted">{{ workspace.byKey.get(key)?.title }}</span>
-          <UIcon name="i-lucide-x" class="size-3 shrink-0 text-dimmed" />
-        </button>
-        <button v-if="reading.hiddenKinds.length" type="button" class="blr-chip" title="Show every resource type" @click="update({ hiddenKinds: [] })">
-          <span class="text-dimmed">Hidden types</span>
-          <span class="truncate font-medium text-highlighted">{{ reading.hiddenKinds.length }}</span>
-          <UIcon name="i-lucide-x" class="size-3 shrink-0 text-dimmed" />
-        </button>
-      </div>
-    </header>
+          <template #default>
+            <span class="truncate">Resource types</span>
+            <span v-if="reading.hiddenKinds.length" class="blr-meta">({{ reading.hiddenKinds.length }} hidden)</span>
+          </template>
+          <!-- BlrKind resolves its colour in script. The menu is portalled out
+               of the shell, where `--blr-slot-*` is defined and would not. -->
+          <template #item-leading="{ item }">
+            <BlrKind :kind="item.kind" :labelled="false" size="xs" />
+          </template>
+        </USelectMenu>
+
+        <USelectMenu
+          :model-value="reading.focus"
+          :items="focusItems"
+          value-key="value"
+          multiple
+          size="md"
+          variant="outline"
+          class="min-w-44"
+          :ui="{ content: 'blr-filter-menu', item: 'py-2' }"
+          :virtualize="focusItems.length > 100"
+          :search-input="{ placeholder: 'Find a resource…' }"
+          aria-label="Focus one resource and its one-hop context"
+          @update:model-value="update({ focus: $event as string[] })"
+        >
+          <template #leading>
+            <UIcon name="i-lucide-focus" class="size-5 shrink-0 text-muted" />
+          </template>
+          <template #default>
+            <span class="truncate">Focus</span>
+            <span v-if="reading.focus.length" class="blr-meta">({{ reading.focus.length }})</span>
+          </template>
+          <template #item-leading="{ item }">
+            <BlrKind
+              :kind="item.kind"
+              :interface-type="item.interfaceType"
+              :facet="item.facet"
+              :acts="item.acts"
+              :labelled="false"
+              size="xs"
+            />
+          </template>
+        </USelectMenu>
+      </BlrFilterBar>
+    </div>
     <div ref="pane" class="blr-topology-reading" :class="{ 'blr-topology-reading--graph': isGraph }" @scroll.capture.passive="save">
       <BlrTopologyMatrix v-if="view.id === 'rule-reach' || view.id === 'what-changes-what'" :matrix="matrix" :column="reading.column" :mode="view.id === 'rule-reach' ? 'rules' : 'mutations'" @column="update({ column: $event })" @open="open" />
       <template v-else-if="view.id === 'sitemap'"><BlrTopologyTree v-if="sitemap" :tree="sitemap" :reading="reading" :viewport-key="scrollKey" @open="open" @toggle="toggle" @ready="restore" /><p v-else class="blr-topology-empty">No resources in this scope.</p></template>
@@ -120,7 +193,7 @@ function toggle(id: string, open: boolean) { reading.value = toggleTopologyGroup
         <div class="blr-topology-grid"><BlrTopologyBranch v-for="item in branches" :key="item.id" :branch="item" :reading="reading" @open="open" @toggle="toggle" /></div>
         <p v-if="!branches.length" class="blr-topology-empty">No resources in this scope.</p>
       </template>
-      <details class="blr-topology-about"><summary>About this view</summary><p><strong>{{ view.diagramType }}.</strong> {{ view.note }}</p></details>
+      <details class="blr-topology-about"><summary>About this view</summary><p><strong>{{ view.question }}</strong></p><p><strong>{{ view.diagramType }}.</strong> {{ view.note }}</p></details>
     </div>
   </div>
 </template>

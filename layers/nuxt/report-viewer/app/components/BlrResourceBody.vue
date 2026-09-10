@@ -146,7 +146,7 @@ const selectedCell = (step: ScenarioStepRow): ScenarioStepCell | undefined => vi
 const routeItems = computed(() => (stepMatrix.value?.routes ?? []).map(route => ({
   label: route.name,
   value: route.id,
-  icon: 'i-lucide-route'
+  icon: 'i-lucide-split'
 })))
 
 const routeWindowItems = computed(() => {
@@ -156,7 +156,7 @@ const routeWindowItems = computed(() => {
   return routes.slice(0, lastStart + 1).map((route, index) => ({
     value: route.id,
     label: routes.slice(index, index + count).map(item => item.name).join(' · '),
-    icon: 'i-lucide-route'
+    icon: 'i-lucide-split'
   }))
 })
 
@@ -201,9 +201,12 @@ const stepMeta = computed(() => {
   return `${steps} · ${matrix.routes.length} ${matrix.routes.length === 1 ? 'route' : 'routes'}`
 })
 
+/* These name a kind of Step, not a resource, so none wears a resource's mark:
+   `user-round` is the Person facet and `cpu` the System facet, and an Actor Step
+   can be performed by either. */
 const stepKindIcon = (kind: 'actor' | 'product' | 'condition') => ({
-  actor: 'i-lucide-user-round',
-  product: 'i-lucide-cpu',
+  actor: 'i-lucide-hand',
+  product: 'i-lucide-cog',
   condition: 'i-lucide-circle-dot-dashed'
 })[kind]
 
@@ -497,7 +500,7 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
                 value-key="value"
                 size="xs"
                 variant="outline"
-                icon="i-lucide-route"
+                icon="i-lucide-split"
                 class="min-w-44 max-w-full"
                 aria-label="Route to show"
                 @update:model-value="setRouteWindow(String($event))"
@@ -534,7 +537,7 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
                   value-key="value"
                   size="xs"
                   variant="outline"
-                  icon="i-lucide-route"
+                  icon="i-lucide-split"
                   class="w-48 max-w-full"
                   aria-label="Visible route window"
                   @update:model-value="setRouteWindow(String($event))"
@@ -590,7 +593,7 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
                 >
                   <div class="flex min-w-0 items-center gap-2">
                     <UTooltip text="Named route — one way this Scenario can run" :delay-duration="150">
-                      <UIcon name="i-lucide-route" class="size-3.5 shrink-0 text-dimmed" />
+                      <UIcon name="i-lucide-split" class="size-3.5 shrink-0 text-dimmed" />
                     </UTooltip>
                     <span class="truncate text-xs font-medium text-default" :title="route.name">{{ route.name }}</span>
                   </div>

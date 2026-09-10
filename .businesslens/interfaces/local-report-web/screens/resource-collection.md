@@ -42,8 +42,9 @@ group of their own, because a reader arrives asking who this is for.
 - What an Interface contains, on its row, alongside the Actors who enter it
 - The identifying facts that distinguish resources of that kind from each other
 - The authored Domain grouping, wherever the type carries one
-- The filters that narrow this collection, offered only where scanning would be slower and only over relations its own rows already print
-- The open tab's question, and the note explaining how that view derives its answer
+- The filters that narrow this collection, one control per axis, over every relation its own rows print
+- How many values each filter holds, and the chosen values themselves, each removable on its own
+- The open view's question and the note explaining how it derives its answer, beneath the reading
 - Every resource a named view includes, labelled and shaped by kind, with the things that act marked as Actors
 - A named view's groups, ordered occurrences, attachments, effects, containment, or Entity relationships
 - Interface map's Product root, connected containment branches, and distinct Interface, Experience, and Screen nodes
@@ -58,7 +59,8 @@ group of their own, because a reader arrives asking who this is for.
 - Read Domain-classified Capabilities and Entities, including unassigned resources
 - Reach any Experience, Screen or Scenario through the collection that owns it
 - Compare delivery across Interfaces, and compose every Journey's Scenarios side by side
-- Narrow the collection or a named view by a facet it already shows
+- Narrow the collection or a named view by one axis at a time, and clear one value or all of them
+- Choose which resource types a named view draws, and focus one resource in it
 - Hide a kind, or focus one resource and read only its neighbourhood
 - Expand or collapse a group
 - Move through relationship targets while retaining readable titles

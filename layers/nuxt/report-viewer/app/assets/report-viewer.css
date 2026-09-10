@@ -129,3 +129,48 @@
   color: var(--ui-text-highlighted);
   font-weight: 600;
 }
+
+/*
+  An active filter, stating what it selected and clearing itself on click.
+
+  It is drawn beside the report rather than inside one component: the filter bar
+  renders the chips and the surfaces supply them, so the rule cannot be scoped
+  to whichever component happened to own them first.
+*/
+/* An active filter, stating what it selected and clearing itself on click. */
+.blr-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  max-width: 22rem;
+  /* One line, always. A two-word kind label wrapped inside the pill made the
+     chip twice as tall as its neighbours and broke the row it sits in; the
+     value is the only part that gives way, and it truncates. */
+  white-space: nowrap;
+  padding: 0.1875rem 0.5rem;
+  border: 1px solid var(--ui-border);
+  border-radius: 9999px;
+  background: var(--ui-bg-elevated);
+  font-size: 12px;
+  line-height: 1.25rem;
+}
+
+.blr-chip:hover {
+  border-color: var(--ui-border-accented);
+}
+
+/*
+  A filter menu is read, not squinted at.
+
+  Its width follows the trigger by default, which truncates the names a reader
+  opened it to compare. It grows to what it holds instead, with a floor wide
+  enough for a qualified resource title.
+*/
+.blr-filter-menu {
+  /* Sized to what it holds: never narrower than the control it hangs from,
+     never wider than a readable line. A fixed floor made a two-option list as
+     wide as a list of qualified Screen names. */
+  width: max-content;
+  min-width: var(--reka-combobox-trigger-width, 12rem);
+  max-width: min(28rem, calc(100vw - 2rem));
+}

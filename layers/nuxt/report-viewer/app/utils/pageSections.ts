@@ -20,7 +20,6 @@ export interface PageTab {
   id: PageTabId
   label: string
   count?: number
-  hint?: string
   blocks: PageBlockId[]
 }
 
@@ -65,24 +64,10 @@ export function tabsFor(workspace: ReportWorkspace, resource: AnyResourceView): 
 
   const children = childrenOf(workspace, resource)
   if (resource.kind === 'capability' || resource.kind === 'journey') {
-    tabs.push({
-      id: 'scenarios',
-      label: 'Scenarios',
-      count: children.length,
-      hint: resource.kind === 'capability'
-        ? 'Each is one observable acceptance case for this Capability.'
-        : 'Each is one path through this promise.',
-      blocks: []
-    })
+    tabs.push({ id: 'scenarios', label: 'Scenarios', count: children.length, blocks: [] })
   }
   if (resource.kind === 'entity' && resource.states.length) {
-    tabs.push({
-      id: 'lifecycle',
-      label: 'Lifecycle',
-      count: resource.states.length,
-      hint: 'What it can be, and every Step in the model that moves it.',
-      blocks: []
-    })
+    tabs.push({ id: 'lifecycle', label: 'Lifecycle', count: resource.states.length, blocks: [] })
   }
 
   return tabs

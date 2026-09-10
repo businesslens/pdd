@@ -1,5 +1,14 @@
 <script setup lang="ts">
-/** The authored interaction contract of an Interface, never guessed from its name. */
+/**
+ * The authored interaction contract of an Interface, never guessed from its name.
+ *
+ * The mark normally badges the type onto the Interface's plug, so a row in a
+ * mixed list says both what it is and how it is reached. Where the surface has
+ * already named the kind — a filter labelled `Interfaces`, whose every option is
+ * one — the plug says nothing the reader does not have, and the mark spends its
+ * whole slot on the type instead. That is what `BlrEntityMark` does with a
+ * facet, for the same reason.
+ */
 import type { ReportInterface } from 'businesslens/report'
 import { INTERFACE_TYPE_META } from '../utils/reportWorkspace'
 import { slotColor } from '../utils/reportPalette'
@@ -8,7 +17,9 @@ const props = withDefaults(defineProps<{
   type: ReportInterface['type']
   labelled?: boolean
   size?: 'xs' | 'sm'
-}>(), { labelled: false, size: 'sm' })
+  /** False where the surface already names the kind: draw the type alone. */
+  withKind?: boolean
+}>(), { labelled: false, size: 'sm', withKind: true })
 
 const meta = computed(() => INTERFACE_TYPE_META[props.type])
 const explanation = computed(() => `${meta.value.label} Interface — authored as type: ${props.type}`)
@@ -27,7 +38,14 @@ const interfaceColor = computed(() => slotColor(1, mounted.value && colorMode.va
       :role="labelled ? undefined : 'img'"
       :aria-label="labelled ? undefined : explanation"
     >
-      <span class="blr-interface-mark" :data-size="size">
+      <UIcon
+        v-if="!withKind"
+        :name="meta.icon"
+        class="blr-interface-mark__solo shrink-0"
+        :data-size="size"
+        :style="{ color: interfaceColor }"
+      />
+      <span v-else class="blr-interface-mark" :data-size="size">
         <UIcon name="i-lucide-plug" class="blr-interface-mark__kind" :style="{ color: interfaceColor }" />
         <span class="blr-interface-mark__type">
           <UIcon :name="meta.icon" />
@@ -39,6 +57,18 @@ const interfaceColor = computed(() => slotColor(1, mounted.value && colorMode.va
 </template>
 
 <style scoped>
+.blr-interface-mark__solo {
+  width: var(--blr-resource-mark-regular);
+  height: var(--blr-resource-mark-regular);
+  flex-basis: var(--blr-resource-mark-regular);
+}
+
+.blr-interface-mark__solo[data-size='xs'] {
+  width: var(--blr-resource-mark-dense);
+  height: var(--blr-resource-mark-dense);
+  flex-basis: var(--blr-resource-mark-dense);
+}
+
 .blr-interface-mark {
   position: relative;
   display: inline-flex;

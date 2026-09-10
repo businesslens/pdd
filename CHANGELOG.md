@@ -19,7 +19,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Entities that act are listed together under Actors.
 - A resource page shows its own title and type, with a trail back to what owns it.
 - Documentation and related readings sit beside the title instead of under the tabs.
-- Filters offer only the relations a row already shows.
+- Filters offer only the relations a row already shows, with one control per axis instead of one menu holding all of them.
+- Each filter shows how many values it holds, with the chosen values on their own row, each removable on its own.
+- Filters sit with the rows they narrow rather than in a band of their own.
+- Every collection offers its filters, whatever its size, so two reports of the same tool no longer differ for an invisible reason.
+- Filter menus are larger and wide enough to read the names they list, and every option carries its own mark.
+- A named view no longer spends a row restating its question; it sits with the derivation under About this view.
+- Marks that name a resource type are no longer borrowed by controls that mean something else.
 - Compare delivery and Journey composition are now tabs of Interfaces and Journeys.
 - The Overview reads like every other page, with About, Coverage and References as tabs.
 - About carries the Product's logo, name and summary again, alongside what the model holds.

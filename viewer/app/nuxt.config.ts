@@ -66,7 +66,13 @@ export default defineNuxtConfig({
   },
   icon: {
     clientBundle: {
-      icons: ['lucide:refresh-cw', 'simple-icons:github']
+      icons: [
+        'lucide:loader-circle',
+        'lucide:refresh-cw',
+        'lucide:sliders-horizontal',
+        'lucide:triangle-alert',
+        'simple-icons:github'
+      ]
     }
   },
   compatibilityDate: '2024-11-01',

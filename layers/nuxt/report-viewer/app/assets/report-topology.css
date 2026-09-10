@@ -1,6 +1,8 @@
 /* Named readings share typography and spacing, not one forced graph shape. */
 .businesslens-report .blr-product-topology { display: flex; flex-direction: column; height: 100%; min-height: 0; min-width: 0; }
 .blr-topology-header { padding: 16px 20px 12px; border-bottom: 1px solid var(--ui-border); flex-shrink: 0; }
+/* A filter row costs nothing when the surface has nothing to narrow. */
+[data-blr-filter-row]:has(> [data-blr-filter-slot]:empty) { display: none; }
 .blr-topology-title-row { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
 .blr-topology-title-row > button { margin-inline-start: auto; }
 .blr-topology-header select, .blr-topology-window select, .blr-topology-filters input[type='search'], .blr-topology-filters select { max-width: 100%; min-width: 0; padding: 8px 30px 8px 10px; border: 1px solid var(--ui-border-accented); border-radius: 8px; background: var(--ui-bg); color: var(--ui-text-highlighted); font-size: 14px; }
