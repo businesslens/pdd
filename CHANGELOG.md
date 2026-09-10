@@ -9,37 +9,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Find diagrams alongside six resource collections, and browse Experiences and Screens through Interfaces.
-- Experiences and Screens are explained inside the Interfaces documentation.
-- Journey composition, Interface delivery, and Connections sit with their resources.
-- Every report surface reads the same way: what it is and the ways out, then tabs for which set, then a filter.
-- Tabs are the report's only switch. Named readings sit beside List in the collection they belong to.
-- The Cards and Table toggle is gone; every collection uses one row shape, including Interfaces.
-- Collections group by Domain automatically, with no grouping menu to choose from.
-- Entities that act are listed together under Actors.
-- A resource page shows its own title and type, with a trail back to what owns it.
-- Documentation and related readings sit beside the title instead of under the tabs.
-- Filters offer only the relations a row already shows, with one control per axis instead of one menu holding all of them.
-- Each filter shows how many values it holds, with the chosen values on their own row, each removable on its own.
-- Filters sit with the rows they narrow rather than in a band of their own.
-- Compare delivery is now a Capability by Interface matrix, so a Capability reachable from two Interfaces, or from only one, is visible without reading three lists side by side.
-- Every collection offers its filters, whatever its size, so two reports of the same tool no longer differ for an invisible reason.
-- Filter menus are larger and wide enough to read the names they list, and every option carries its own mark.
-- A named view no longer spends a row restating its question; it sits with the derivation under About this view.
-- Marks that name a resource type are no longer borrowed by controls that mean something else.
-- Compare delivery and Journey composition are now tabs of Interfaces and Journeys.
-- The Overview reads like every other page, with About, Coverage and References as tabs.
-- About carries the Product's logo, name and summary again, alongside what the model holds.
-- The Overview names the Product resource type it presents, so nothing is labelled "Product Report" any more.
-- The Overview no longer repeats the Journeys list, which has its own collection.
-- The All resources and connections view is gone; the rail and each resource's page already answer it.
+- Every page of the local report reads the same way: what it is and the ways out of it, then tabs for which set you are reading, then what narrows it.
+- Tabs are the report's only switch. Each named reading sits beside List in the collection it belongs to; the Cards and Table toggle and the grouping menu are gone.
+- Every collection uses one row shape, Interfaces included, and each Interface row names what it contains.
+- Collections group by Domain on their own, and Entities that act are listed together under Actors.
+- Filters are one control per axis, beside the rows they narrow, offering only the relations a row already shows. Each says how many values it holds, with the chosen values on their own row.
+- Every collection offers its filters whatever its size, so two reports no longer differ for an invisible reason.
+- The Overview is the Product's own page, with About, Coverage and References as its readings. It no longer repeats a collection that has its own.
+- Composition draws every Journey, from the Journeys collection.
+- Compare delivery is a Capability by Interface matrix, so a Capability reachable from two Interfaces, or from only one, is visible at a glance.
+- Rule attachments include direct Entity and Context attachments with their restrictions, and Domain map groups both Capabilities and Entities while keeping unassigned resources visible.
+- A resource page shows its own title and type, with a trail back to what owns it, and its documentation and related readings beside the title.
+- Interface map, Domain map, Entity relationships and Lifecycle keep interactive canvases, and graph positions, filters and expanded groups survive refresh and navigation.
+- Experiences and Screens are reached through Interfaces and explained inside the Interfaces documentation.
+- The documentation explains the Product Model. The report explains itself, so no page describes how to read it.
 - Report links shared before this release open the Overview.
-- Interface map shows a connected tree through Interfaces, Experiences, and Screens.
-- Domain map groups both Capabilities and Entities, keeping unassigned resources visible.
-- Named readings use maps, Scenario columns, trees, and relationship tables.
-- Graphs retain their familiar interactive canvas with clearer placement and connections.
-- Graph positions, collection preferences, filters, and expanded groups survive refresh and navigation.
-- Rule attachments include direct Entity and Context attachments with their restrictions.
+
+### Removed
+
+- The All resources and connections view. The rail already lists every collection with its count, and a resource's connections are on its page.
+
+### Fixed
+
+- Icons missing from the local report, including the loading indicator and the warning shown while an edit is invalid.
+- Interactive controls now show the hand cursor.
 
 ## [0.11.0] - 2026-09-07
 
