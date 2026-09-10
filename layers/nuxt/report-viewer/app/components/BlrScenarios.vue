@@ -8,6 +8,10 @@
  *
  * The chosen reading is split while its container supports two panes, then
  * becomes inline rather than squeezing the Scenario beside its sibling list.
+ *
+ * There is no second reading here. Comparing Scenarios across Journeys is the
+ * Journeys collection's Composition tab, because one Journey's page cannot
+ * answer a question about how Journeys compare.
  */
 import type { AnyResourceView, ReportWorkspace, ScenarioView } from '../utils/reportWorkspace'
 import { ENTITY_KIND_META } from '../utils/reportWorkspace'
@@ -61,7 +65,8 @@ watch([children, () => props.selectedKey], () => {
 const openScenario = computed(() => children.value.find(item => item.key === openKey.value) ?? null)
 
 function toggle(item: ScenarioView) {
-  openKey.value = openKey.value === item.key ? null : item.key
+  if (openKey.value === item.key) openKey.value = null
+  else emit('open', item)
 }
 
 const summary = (item: ScenarioView) => item.trigger || item.lead
@@ -121,7 +126,7 @@ const summary = (item: ScenarioView) => item.trigger || item.lead
           type="button"
           class="blr-scn-row"
           :data-current="item.key === openKey"
-          @click="openKey = item.key"
+          @click="emit('open', item)"
         >
           <span class="blr-scn-index">{{ index + 1 }}</span>
           <span class="min-w-0 flex-1 text-start">

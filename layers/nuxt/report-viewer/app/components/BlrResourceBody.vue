@@ -1,14 +1,5 @@
 <script setup lang="ts">
-/**
- * The authored body of one resource: everything the model states in prose, steps,
- * branches and states.
- *
- * This is page material. It used to render inside a 672px drawer, where a
- * Journey Scenario ran to two and a half screens of scrolling and every heading
- * carried the same weight as every other, so nothing was ranked and nothing was
- * skippable. Here it has the width its tables and grids were drawn for, and a
- * real heading hierarchy the eye can skim.
- */
+
 import type {
   AnyResourceView,
   CapabilityView,
@@ -101,22 +92,6 @@ const capabilityEffects = computed(() => props.resource.kind !== 'capability'
           : item.to ? `${item.from} → ${item.to}` : 'changes')
     })))
 
-/*
- * Declared edges and derived inverses read as one list, because to a reader they
- * are the same fact seen from two sides. The derived ones are marked so nobody
- * looks for them in the file.
- */
-const entityRelations = computed(() => [
-  ...asEntity.value.relations.map(relation => ({
-    ...relation, derived: false,
-    title: resolveResource(props.workspace, 'entity', relation.entityId)?.title ?? relation.entityId
-  })),
-  ...asEntity.value.inboundRelations.map(relation => ({
-    ...relation, derived: true,
-    title: resolveResource(props.workspace, 'entity', relation.entityId)?.title ?? relation.entityId
-  }))
-])
-
 function openEntity(id: string) {
   const entity = resolveResource(props.workspace, 'entity', id)
   if (entity) emit('select', entity)
@@ -171,7 +146,7 @@ const selectedCell = (step: ScenarioStepRow): ScenarioStepCell | undefined => vi
 const routeItems = computed(() => (stepMatrix.value?.routes ?? []).map(route => ({
   label: route.name,
   value: route.id,
-  icon: 'i-lucide-route'
+  icon: 'i-lucide-split'
 })))
 
 const routeWindowItems = computed(() => {
@@ -181,7 +156,7 @@ const routeWindowItems = computed(() => {
   return routes.slice(0, lastStart + 1).map((route, index) => ({
     value: route.id,
     label: routes.slice(index, index + count).map(item => item.name).join(' · '),
-    icon: 'i-lucide-route'
+    icon: 'i-lucide-split'
   }))
 })
 
@@ -226,9 +201,12 @@ const stepMeta = computed(() => {
   return `${steps} · ${matrix.routes.length} ${matrix.routes.length === 1 ? 'route' : 'routes'}`
 })
 
+/* These name a kind of Step, not a resource, so none wears a resource's mark:
+   `user-round` is the Person facet and `cpu` the System facet, and an Actor Step
+   can be performed by either. */
 const stepKindIcon = (kind: 'actor' | 'product' | 'condition') => ({
-  actor: 'i-lucide-user-round',
-  product: 'i-lucide-cpu',
+  actor: 'i-lucide-hand',
+  product: 'i-lucide-cog',
   condition: 'i-lucide-circle-dot-dashed'
 })[kind]
 
@@ -522,7 +500,7 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
                 value-key="value"
                 size="xs"
                 variant="outline"
-                icon="i-lucide-route"
+                icon="i-lucide-split"
                 class="min-w-44 max-w-full"
                 aria-label="Route to show"
                 @update:model-value="setRouteWindow(String($event))"
@@ -559,7 +537,7 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
                   value-key="value"
                   size="xs"
                   variant="outline"
-                  icon="i-lucide-route"
+                  icon="i-lucide-split"
                   class="w-48 max-w-full"
                   aria-label="Visible route window"
                   @update:model-value="setRouteWindow(String($event))"
@@ -615,7 +593,7 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
                 >
                   <div class="flex min-w-0 items-center gap-2">
                     <UTooltip text="Named route — one way this Scenario can run" :delay-duration="150">
-                      <UIcon name="i-lucide-route" class="size-3.5 shrink-0 text-dimmed" />
+                      <UIcon name="i-lucide-split" class="size-3.5 shrink-0 text-dimmed" />
                     </UTooltip>
                     <span class="truncate text-xs font-medium text-default" :title="route.name">{{ route.name }}</span>
                   </div>
@@ -633,13 +611,7 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
                   class="border-e border-default bg-default px-4 py-3 font-normal"
                 >
                   <p class="text-sm font-medium text-highlighted">{{ step.index + 1 }}. {{ step.text }}</p>
-                  <!--
-                    A named Actor is a reference to a resource, so it is drawn as one: the
-                    Actor's own mark inside a chip that opens it. A dimmed generic glyph
-                    beside plain text read as narration, at the weight of the Condition
-                    rows around it. The boundary axis is not repeated here — the question a
-                    Step answers is who performs it, and the chip carries it in its tooltip.
-                  -->
+
                   <span class="blr-meta mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1">
                     <template v-if="stepActor(step.actorId)">
                       <UTooltip v-if="step.stepKind !== 'actor'" :text="stepKindDescription(step.stepKind)" :delay-duration="150">
@@ -747,13 +719,7 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
           <article v-for="step in stepMatrix.steps" :key="step.index">
             <div class="bg-default px-4 py-3">
               <p class="text-sm font-medium text-highlighted">{{ step.index + 1 }}. {{ step.text }}</p>
-              <!--
-                A named Actor is a reference to a resource, so it is drawn as one: the
-                Actor's own mark inside a chip that opens it. A dimmed generic glyph
-                beside plain text read as narration, at the weight of the Condition
-                rows around it. The boundary axis is not repeated here — the question a
-                Step answers is who performs it, and the chip carries it in its tooltip.
-              -->
+
               <span class="blr-meta mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1">
                 <template v-if="stepActor(step.actorId)">
                   <UTooltip v-if="step.stepKind !== 'actor'" :text="stepKindDescription(step.stepKind)" :delay-duration="150">
@@ -1000,36 +966,6 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
             >
               <UIcon name="i-lucide-scale" class="size-3.5" />{{ fact.ruleIds.length }} {{ fact.ruleIds.length === 1 ? 'Rule' : 'Rules' }}
             </button>
-          </li>
-        </ul>
-      </section>
-
-      <section v-if="entityRelations.length" class="space-y-2">
-        <h2 class="blr-page-heading">
-          <BlrTerm slug="relation" text="Relationships" />
-          <span class="blr-meta ms-1">{{ entityRelations.length }}</span>
-        </h2>
-        <ul class="space-y-1.5">
-          <li
-            v-for="relation in entityRelations"
-            :key="`${relation.derived ? 'in' : 'out'}-${relation.entityId}-${relation.verb}`"
-            class="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border border-default bg-elevated/30 px-3 py-2 text-sm"
-          >
-            <UIcon
-              v-if="relation.derived"
-              name="i-lucide-arrow-left"
-              class="size-3.5 shrink-0 text-muted"
-            />
-            <span class="font-medium text-highlighted">{{ relation.verb }}</span>
-            <span class="blr-meta">{{ relation.cardinality }}</span>
-            <button type="button" class="blr-chip" @click="openEntity(relation.entityId)">
-              <BlrEntityMark
-                :facet="entityFacetOf(entityChip(relation.entityId)) ?? 'kept'"
-                :acts="entityChip(relation.entityId)?.acts"
-                size="xs"
-              />{{ relation.title }}
-            </button>
-            <span v-if="relation.derived" class="blr-meta ms-auto">derived</span>
           </li>
         </ul>
       </section>

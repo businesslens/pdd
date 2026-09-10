@@ -13,19 +13,9 @@
  * the same kind by different derivations, and collapsing them would be exactly
  * the ambiguity the named views exist to avoid.
  */
-import type {
-  AnyResourceView,
-  CapabilityView,
-  DomainView,
-  ExperienceView,
-  InterfaceView,
-  JourneyView,
-  ReportResourceKind,
-  ReportWorkspace,
-  RuleView,
-  ScenarioView,
-  ScreenView
-} from '../utils/reportWorkspace'
+import type { AnyResourceView, ReportResourceKind, ReportWorkspace } from '../utils/reportWorkspace'
+import { resourceConnectionRows } from '../utils/resourceConnections'
+import type { RelationRow } from '../utils/resourceConnections'
 import { ENTITY_KIND_META, entityFacetOf, resolveResource } from '../utils/reportWorkspace'
 
 const props = withDefaults(defineProps<{
@@ -39,153 +29,7 @@ const props = withDefaults(defineProps<{
 
 const emit = defineEmits<{ select: [resource: AnyResourceView] }>()
 
-interface RelationRow {
-  label: string
-  kind: ReportResourceKind
-  ids: string[]
-  derived: boolean
-}
-
-const row = (label: string, kind: ReportResourceKind, ids: string[], derived: boolean): RelationRow =>
-  ({ label, kind, ids, derived })
-
-const rows = computed<RelationRow[]>(() => {
-  const resource = props.resource
-  const all: RelationRow[] = []
-  switch (resource.kind) {
-    case 'interface': {
-      const item = resource as InterfaceView
-      all.push(
-        row('Actors', 'entity', item.actorIds, false),
-        row('Experiences within', 'experience', item.experienceIds, true),
-        row('Capabilities available', 'capability', item.capabilityIds, true),
-        row('Screens available', 'screen', item.screenIds, true),
-        row('Journeys available', 'journey', item.journeyIds, true)
-      )
-      break
-    }
-    case 'experience': {
-      const item = resource as ExperienceView
-      all.push(
-        row('Actors', 'entity', item.actorIds, false),
-        row('Interfaces', 'interface', item.interfaceIds, false),
-        row('Capabilities available', 'capability', item.capabilityIds, true),
-        row('Screens available', 'screen', item.screenIds, true),
-        row('Journeys available', 'journey', item.journeyIds, true)
-      )
-      break
-    }
-    case 'screen': {
-      const screen = resource as ScreenView
-      all.push(
-        row('Presents', 'entity', screen.entityIds, false),
-        row('Capabilities', 'capability', screen.capabilityIds, false),
-        row('Capability Scenarios', 'capability-scenario', screen.capabilityScenarioIds, false),
-        row('Journey Scenarios', 'journey-scenario', screen.journeyScenarioIds, false),
-        row('Journeys via linked Journey Scenarios', 'journey', screen.scenarioJourneyIds, true),
-        row('Journeys via exposed Capabilities', 'journey', screen.capabilityJourneyIds, true)
-      )
-      break
-    }
-    case 'entity': {
-      const entity = resource as EntityView
-      all.push(
-        ...entity.relations.map(relation =>
-          row(`${relation.verb} ${relation.cardinality === 'many' ? 'many' : 'one'}`, 'entity', [relation.entityId], false)),
-        // The inverse is the other Entity's verb pointing back, so the arrow
-        // carries the direction — "holds by" would read as this Entity holding.
-        ...entity.inboundRelations.map(relation =>
-          row(`\u2190 ${relation.verb}`, 'entity', [relation.entityId], true)),
-        row('Domain', 'domain', entity.domainId ? [entity.domainId] : [], false),
-        row('Changed by', 'capability', entity.changedByIds, true),
-        row('Read by', 'capability', entity.readByIds, true),
-        row('Presented on', 'screen', entity.presentedOnIds, true),
-        row('Governed by', 'rule', entity.ruleIds, true),
-        /* Where it acts — empty rows are dropped, so a thing that does not act
-           shows none of these. */
-        row('Interfaces entered', 'interface', entity.interfaceIds, true),
-        row('Experiences entered', 'experience', entity.experienceIds, true),
-        row('Journeys performed', 'journey', entity.journeyIds, true)
-      )
-      break
-    }
-    case 'domain': {
-      const domain = resource as DomainView
-      all.push(
-        row('Capabilities', 'capability', domain.capabilityIds, true),
-        row('Entities', 'entity', domain.entityIds, true),
-        row('Journeys reached', 'journey', domain.journeyIds, true),
-        row('Screens reached', 'screen', domain.screenIds, true),
-        row('Rules', 'rule', domain.ruleIds, true)
-      )
-      break
-    }
-    case 'capability': {
-      const capability = resource as CapabilityView
-      all.push(
-        row('Changes', 'entity', capability.entityIds, false),
-        row('Domain', 'domain', capability.domainId ? [capability.domainId] : [], false),
-        row('Capability Scenarios', 'capability-scenario', capability.scenarioIds, true),
-        row('Exercised by Journey Scenarios', 'journey-scenario', capability.journeyScenarioIds, true),
-        row('Used by Journeys', 'journey', capability.journeyIds, true),
-        row('Exposed by Screens', 'screen', capability.screenIds, true),
-        row('Constrained by Rules', 'rule', capability.ruleIds, true)
-      )
-      break
-    }
-    case 'journey': {
-      const journey = resource as JourneyView
-      all.push(
-        row('Actors', 'entity', journey.actorIds, false),
-        row('Primary Capabilities', 'capability', journey.capabilityIds, true),
-        row('Failure-only Capabilities', 'capability', journey.failureOnlyCapabilityIds, true),
-        row('Domains', 'domain', journey.domainIds, true),
-        row('Changes', 'entity', journey.entityIds, true),
-        row('Scenarios', 'journey-scenario', journey.scenarioIds, true),
-        row('Screens', 'screen', journey.screenIds, true),
-        row('Constrained by Rules', 'rule', journey.ruleIds, true)
-      )
-      break
-    }
-    case 'capability-scenario':
-    case 'journey-scenario': {
-      const scenario = resource as ScenarioView
-      all.push(
-        row('Actors', 'entity', scenario.actorIds, false),
-        // Derived from the Steps, exactly as the Actor set is.
-        row('Changes', 'entity', scenario.entityIds, true),
-        scenario.scenarioType === 'capability'
-          ? row('Capability', 'capability', [scenario.capabilityId], false)
-          : row('Journey', 'journey', [scenario.journeyId], false),
-        row('Shown on Screens', 'screen', scenario.screenIds, true),
-        row('Constrained by Rules', 'rule', scenario.ruleIds, true)
-      )
-      break
-    }
-    case 'rule': {
-      const rule = resource as RuleView
-      const reachedCapabilities = new Set([...rule.capabilityIds, ...rule.derivedCapabilityIds])
-      const reachedJourneys = new Set([...rule.journeyIds, ...rule.derivedJourneyIds])
-      const derivedScreens = props.workspace.screens
-        .filter(screen => screen.capabilityIds.some(id => reachedCapabilities.has(id))
-          || screen.scenarioIds.some(id => rule.scenarioIds.includes(id))
-          || screen.journeyIds.some(id => reachedJourneys.has(id)))
-        .map(screen => screen.id)
-      all.push(
-        row('Capabilities', 'capability', rule.capabilityIds, false),
-        row('Journeys', 'journey', rule.journeyIds, false),
-        row('Capability Scenarios', 'capability-scenario', rule.capabilityScenarioIds, false),
-        row('Journey Scenarios', 'journey-scenario', rule.journeyScenarioIds, false),
-        row('Domains through targets', 'domain', rule.domainIds, true),
-        row('Parent Capabilities', 'capability', rule.derivedCapabilityIds, true),
-        row('Parent Journeys', 'journey', rule.derivedJourneyIds, true),
-        row('Screens reached', 'screen', derivedScreens, true)
-      )
-      break
-    }
-  }
-  return all.filter(item => item.ids.length)
-})
+const rows = computed(() => resourceConnectionRows(props.workspace, props.resource))
 
 /* Authored rows first when the list is capped: a derived reach is the thing a
    reader is most willing to open a page for. */
@@ -193,6 +37,7 @@ const ordered = computed(() => [...rows.value].sort((left, right) =>
   Number(left.derived) - Number(right.derived)))
 
 const shownRows = computed(() => props.maxRows ? ordered.value.slice(0, props.maxRows) : ordered.value)
+const directions = computed(() => (['Incoming', 'Outgoing'] as const).map(name => ({ name, rows: shownRows.value.filter(item => item.direction === name) })).filter(group => group.rows.length))
 const hiddenRows = computed(() => ordered.value.length - shownRows.value.length)
 
 function shown(item: RelationRow): string[] {
@@ -245,7 +90,9 @@ function entityAt(kind: ReportResourceKind, id: string) {
 
 <template>
   <div v-if="rows.length" class="space-y-3.5">
-    <div v-for="item in shownRows" :key="item.label" class="space-y-1.5">
+    <section v-for="group in directions" :key="group.name" class="space-y-3">
+    <h3 class="text-xs font-semibold text-muted">{{ group.name }}</h3>
+    <div v-for="item in group.rows" :key="`${item.label}:${item.kind}:${item.ids.join(',')}`" class="space-y-1.5">
       <p class="flex items-center gap-2 text-xs font-medium text-muted">
         <UIcon
           :name="ENTITY_KIND_META[item.kind].icon"
@@ -253,7 +100,7 @@ function entityAt(kind: ReportResourceKind, id: string) {
           :style="{ color: `var(--blr-slot-${ENTITY_KIND_META[item.kind].slot})` }"
         />
         {{ item.label }}
-        <span class="font-mono text-dimmed">{{ item.ids.length }}</span>
+        <span v-if="item.ids.length > 1" class="font-mono text-dimmed">{{ item.ids.length }}</span>
         <!-- Provenance rides on the row, not above a wall of them. -->
         <span v-if="item.derived" class="blr-derived" title="Derived from the model, never authored here">derived</span>
       </p>
@@ -279,11 +126,13 @@ function entityAt(kind: ReportResourceKind, id: string) {
         <span v-if="overflow(item)" class="self-center text-xs text-dimmed">+{{ overflow(item) }}</span>
       </div>
     </div>
+    </section>
     <!-- Say what was left out. A silent cut reads as "that is all of it". -->
     <p v-if="hiddenRows > 0" class="text-xs text-dimmed">
       {{ hiddenRows }} more {{ hiddenRows === 1 ? 'relation' : 'relations' }} on the page.
     </p>
   </div>
+  <p v-else class="text-sm text-muted">No additional connections are modeled.</p>
 </template>
 
 <style scoped>

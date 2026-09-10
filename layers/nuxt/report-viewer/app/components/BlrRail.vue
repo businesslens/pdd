@@ -1,24 +1,7 @@
 <script setup lang="ts">
-/**
- * The navigation rail: which collection, never which resource.
- *
- * It lists *kinds*, and kinds do not nest — instances do. An earlier revision
- * indented the two Scenario kinds under the parent that owns them, which read
- * as a tree that gave up: schema 6 declares a complete Interface → Experience → Screen hierarchy as well
- * (Interface ⊃ Experience ⊃ Screen), so indenting two rows is either incomplete
- * or becomes a three-level tree inside a ten-row rail.
- *
- * Containment is shown where instances are: as the default grouping of a
- * collection and on the resource page. Both Scenario kinds are therefore read
- * from their parent rather than listed here, which is the same resolution the
- * documentation reached — a mandatory single parent is explained on its
- * parent's page, never on one of its own.
- *
- * There is no ranking group. Splitting the list into "product" and "structure"
- * puts an Experience below a Capability, and the model says no such thing.
- */
 import type { ReportResourceKind, ReportWorkspace } from '../utils/reportWorkspace'
-import { ENTITY_KIND_META, REPORT_ENTITY_KINDS } from '../utils/reportWorkspace'
+import { MAIN_RESOURCE_KINDS } from '../utils/reportDestinations'
+import { ENTITY_KIND_META } from '../utils/reportWorkspace'
 
 defineProps<{
   workspace: ReportWorkspace
@@ -26,26 +9,12 @@ defineProps<{
   counts: Record<ReportResourceKind, number>
 }>()
 
-const emit = defineEmits<{
-  kind: [kind: ReportResourceKind]
-  topology: []
-}>()
+/* The rail changes the subject, and only that: a named view is a tab of the
+   collection it belongs to, reached once you are there. */
+const emit = defineEmits<{ kind: [kind: ReportResourceKind] }>()
 
-/** A kind with a mandatory single parent is reached from that parent. */
-const PARENTED: ReportResourceKind[] = ['capability-scenario', 'journey-scenario']
-
-const RAIL_KINDS = REPORT_ENTITY_KINDS.filter(meta => !PARENTED.includes(meta.kind))
-
-/** A parent row stays current while one of its Scenario pages is open. */
-const SECTION_PARENT: Record<string, ReportResourceKind> = {
-  'capability-scenario': 'capability',
-  'journey-scenario': 'journey'
-}
-
-function isCurrent(kind: ReportResourceKind, section: string): boolean {
-  return section === kind || SECTION_PARENT[section] === kind
-}
-
+const RAIL_KINDS = MAIN_RESOURCE_KINDS.map(kind => ENTITY_KIND_META[kind])
+const isCurrent = (kind: ReportResourceKind, section: string) => kind === section
 const overviewColor = `var(--blr-slot-${ENTITY_KIND_META.product.slot})`
 </script>
 
@@ -55,7 +24,6 @@ const overviewColor = `var(--blr-slot-${ENTITY_KIND_META.product.slot})`
       <slot name="navigation" />
     </div>
 
-    <p class="blr-navgroup">Explore</p>
     <button
       type="button"
       class="blr-navitem"
@@ -66,24 +34,14 @@ const overviewColor = `var(--blr-slot-${ENTITY_KIND_META.product.slot})`
       <UIcon :name="ENTITY_KIND_META.product.icon" class="size-4 shrink-0" :style="{ color: overviewColor }" />
       <span class="flex-1 truncate text-start">Overview</span>
     </button>
-    <button
-      type="button"
-      class="blr-navitem"
-      :data-current="activeSection === 'topology'"
-      :style="{ '--kind-color': overviewColor }"
-      @click="emit('topology')"
-    >
-      <UIcon name="i-lucide-network" class="size-4 shrink-0" :style="{ color: overviewColor }" />
-      <span class="flex-1 truncate text-start">Topology</span>
-    </button>
-
-    <p class="blr-navgroup mt-3">Browse</p>
+    <p class="blr-navgroup mt-3">Resources</p>
     <button
       v-for="meta in RAIL_KINDS"
       :key="meta.kind"
       type="button"
       class="blr-navitem"
       :data-current="isCurrent(meta.kind, activeSection)"
+      :aria-current="isCurrent(meta.kind, activeSection) ? 'page' : undefined"
       :style="{ '--kind-color': `var(--blr-slot-${meta.slot})` }"
       @click="emit('kind', meta.kind)"
     >

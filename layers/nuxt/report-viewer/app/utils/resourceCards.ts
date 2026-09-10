@@ -106,18 +106,23 @@ export function resourceCardPresentation(
           ]
         : [
             { label: plural(item.actorIds.length, 'actor'), value: item.actorIds.length, kind: 'entity' as const, ids: item.actorIds },
-            { label: plural(item.capabilityIds.length, 'capability', 'capabilities'), value: item.capabilityIds.length, kind: 'capability' as const, ids: item.capabilityIds },
-            { label: plural(item.journeyIds.length, 'journey'), value: item.journeyIds.length, kind: 'journey' as const, ids: item.journeyIds }
+            { label: plural(item.screenIds.length, 'screen'), value: item.screenIds.length, kind: 'screen' as const, ids: item.screenIds },
+            { label: plural(item.capabilityIds.length, 'capability', 'capabilities'), value: item.capabilityIds.length, kind: 'capability' as const, ids: item.capabilityIds }
           ]
       return {
         /* The concrete Interface marker already carries its authored type as a
            sub-icon. Repeating it as a title badge adds no second fact. */
         badge: '',
         metrics,
-        hookLabel: item.experienceIds.length ? 'Contains' : 'Delivers directly',
+        /* Containment is what an Interface row is read for, and it is the
+           reason this collection no longer draws itself as a tree: the row
+           already says what is inside, and the Map draws the shape. */
+        hookLabel: item.experienceIds.length || item.screenIds.length ? 'Contains' : 'Delivers directly',
         hook: item.experienceIds.length
           ? titles(workspace, 'experience', item.experienceIds)
-          : titles(workspace, 'capability', item.capabilityIds)
+          : item.screenIds.length
+            ? titles(workspace, 'screen', item.screenIds)
+            : titles(workspace, 'capability', item.capabilityIds)
       }
     }
     case 'experience': {

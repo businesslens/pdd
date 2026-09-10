@@ -3,7 +3,7 @@ title: Journeys
 description: Optional Actor goals whose successful completion requires several Capabilities working together, with Journey Scenarios describing each path.
 section: open-source
 group: Product Model
-order: 15
+order: 13
 terms:
   - term: Journey
     definition: "An Actor goal whose successful completion requires several Capabilities working together."
@@ -135,10 +135,9 @@ rather than becoming Journey frontmatter.
 
 Consumers derive the primary Capability and Domain sets from achieved paths.
 Capabilities seen only in not-achieved paths are marked separately as
-failure-only. The report's **Leaves behind** summary shows Entity instances
-created, changed, or removed by achieved paths, with final States when specified.
-It derives these results from the paths' Steps and displays them beside the
-Success criterion. Removals and changes without a named State are included;
+failure-only. **Leaves behind** is the set of Entity instances created, changed,
+or removed by achieved paths, with final States when specified, derived from
+those paths' Steps. Removals and changes without a named State are included;
 reads do not replace the last change. These summaries describe the modeled
 paths, without claiming that a partial model covers every path.
 

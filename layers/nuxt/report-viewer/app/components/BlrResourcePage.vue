@@ -8,13 +8,20 @@
  * Lifecycle. A Scenario URL keeps the Scenario key in the address while
  * reading it inside its mandatory parent.
  *
+ * The page's name, its type, and the ways out of it belong to the surface and
+ * are drawn by the host above this component — an exit leads out of the
+ * resource whichever tab is open, so it is not part of the strip. With one tab
+ * there is nothing to switch, and the strip does not render.
+ *
  * The open tab is bindable, so a host can keep it in the URL: a Lifecycle a
  * reader cannot link to, return to, or refresh into is a modal with extra
  * steps, and `businesslens view` recompiles on save, so the tab has to outlive
  * an edit to the model.
  */
 import type { AnyResourceView, EntityView, ReportWorkspace } from '../utils/reportWorkspace'
-import { docsForResourceKind } from '../utils/resourceDocs'
+import { ENTITY_KIND_META } from '../utils/reportWorkspace'
+import type { TopologyReading } from '../utils/topologyState'
+import { defaultTopologyReading } from '../utils/topologyState'
 import { parentOf, tabsFor, type PageTabId } from '../utils/pageSections'
 
 const props = defineProps<{
@@ -24,16 +31,16 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   open: [resource: AnyResourceView]
-  focus: [resource: AnyResourceView]
+  ready: []
 }>()
 
 const scenarioRoute = defineModel<string | null>('scenarioRoute', { default: null })
 const routeColumns = defineModel<string>('routeColumns', { default: 'auto' })
+const reading = defineModel<TopologyReading>('reading', { default: defaultTopologyReading })
 
 const parent = computed(() => parentOf(props.workspace, props.resource))
 const subject = computed(() => parent.value ?? props.resource)
 const requestedChild = computed(() => parent.value ? props.resource.key : null)
-const pageDocs = computed(() => docsForResourceKind(subject.value.kind))
 const tabs = computed(() => tabsFor(props.workspace, subject.value))
 
 /**
@@ -49,7 +56,7 @@ const isTab = (id: string): id is PageTabId => tabs.value.some(item => item.id =
 
 /* A Scenario key in the address outranks the tab: reading a Scenario is
    reading the Scenarios tab, and the key alone says so in the URL. */
-watch([tabs, requestedChild], () => {
+watch([tabs, requestedChild, tab], () => {
   if (requestedChild.value && isTab('scenarios')) {
     active.value = 'scenarios'
     return
@@ -57,11 +64,8 @@ watch([tabs, requestedChild], () => {
   active.value = isTab(tab.value) ? tab.value : 'overview'
 }, { immediate: true })
 
-watch(tab, (value) => {
-  active.value = isTab(value) ? value : 'overview'
-})
-
 function select(id: PageTabId) {
+  if (id === 'overview' && requestedChild.value) emit('open', subject.value)
   active.value = id
   tab.value = id
 }
@@ -70,54 +74,30 @@ const current = computed(() => tabs.value.find(tab => tab.id === active.value) ?
 </script>
 
 <template>
-  <div class="-mt-5 min-w-0">
+  <div class="min-w-0">
     <nav
+      v-if="tabs.length > 1"
       data-sticky-page-tabs
-      class="sticky top-0 z-20 mb-5 flex flex-wrap items-center gap-1 border-b border-default bg-default/95 pt-5 backdrop-blur"
+      role="tablist"
+      :aria-label="`${ENTITY_KIND_META[subject.kind].label} readings`"
+      class="sticky top-0 z-20 -mt-5 mb-5 flex flex-wrap items-center gap-1 border-b border-default bg-default/95 pt-5 backdrop-blur"
     >
       <button
         v-for="tab in tabs"
         :key="tab.id"
         type="button"
-        class="blr-page-tab"
+        role="tab"
+        class="blr-surface-tab"
         :data-current="tab.id === active"
+        :aria-selected="tab.id === active"
         @click="select(tab.id)"
       >
         <span class="min-w-0 truncate">{{ tab.label }}</span>
         <span v-if="tab.count !== undefined" class="blr-meta">{{ tab.count }}</span>
       </button>
-
-      <div class="ms-auto mb-1 flex items-center gap-1.5">
-        <UTooltip :text="pageDocs.label">
-          <UButton
-            :to="pageDocs.url"
-            external
-            target="_blank"
-            rel="noopener noreferrer"
-            icon="i-lucide-book-open"
-            color="neutral"
-            variant="outline"
-            size="xs"
-            label="Docs"
-            :aria-label="pageDocs.label"
-          />
-        </UTooltip>
-        <UTooltip text="Show this resource on the topology canvas">
-          <UButton
-            icon="i-lucide-network"
-            color="neutral"
-            variant="outline"
-            size="xs"
-            label="Neighbourhood"
-            @click="emit('focus', subject)"
-          />
-        </UTooltip>
-      </div>
     </nav>
 
     <div class="min-w-0 space-y-5">
-      <p v-if="current?.hint" class="text-xs text-muted">{{ current.hint }}</p>
-
       <BlrScenarios
         v-if="current?.id === 'scenarios'"
         v-model:scenario-route="scenarioRoute"
@@ -133,12 +113,14 @@ const current = computed(() => tabs.value.find(tab => tab.id === active.value) ?
         :workspace="workspace"
         :resource="(subject as EntityView)"
         @open="emit('open', $event)"
+        @ready="emit('ready')"
       />
 
       <template v-else>
         <BlrPageBlock
           v-for="id in current?.blocks ?? []"
           :key="id"
+          v-model:reading="reading"
           :workspace="workspace"
           :resource="subject"
           :id="id"
@@ -150,26 +132,3 @@ const current = computed(() => tabs.value.find(tab => tab.id === active.value) ?
   </div>
 </template>
 
-<style scoped>
-.blr-page-tab {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  margin-bottom: -1px;
-  border-bottom: 2px solid transparent;
-  font-size: var(--text-sm);
-  color: var(--ui-text-muted);
-  transition: color 0.12s ease, border-color 0.12s ease;
-}
-
-.blr-page-tab:hover {
-  color: var(--ui-text-highlighted);
-}
-
-.blr-page-tab[data-current='true'] {
-  border-bottom-color: var(--ui-color-primary-500);
-  color: var(--ui-text-highlighted);
-  font-weight: 600;
-}
-</style>

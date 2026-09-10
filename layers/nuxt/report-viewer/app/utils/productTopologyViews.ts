@@ -6,6 +6,11 @@
  * possible — `access-map` folded into Delivery by Interface once that view carried
  * direct integrations, and `value-flow` and `domain-anatomy` folded into
  * Product map once Domains grouped Capabilities under the access rail.
+ *
+ * `everything` was removed rather than folded: "what is in the Product, and how
+ * is it connected" is answered by the rail, which lists every collection with
+ * its count, and by each resource's own Connections. A view that redraws the
+ * whole index answers a question nothing was asking.
  */
 import type { ReportResourceKind } from './reportWorkspace'
 
@@ -17,154 +22,72 @@ export type ProductTopologyViewId =
   | 'rule-reach'
   | 'what-it-keeps'
   | 'what-changes-what'
-  | 'everything'
-
-export type TopologySemantics = 'identity' | 'occurrence'
-
-export interface TopologyFlowStep {
-  kind: ReportResourceKind
-  label: string
-}
 
 export interface ProductTopologyView {
   id: ProductTopologyViewId
   name: string
+  diagramType: string
   question: string
-  semantics: TopologySemantics
-  note?: string
-  flow: TopologyFlowStep[]
-  separators: string[]
+  note: string
   kinds: ReportResourceKind[]
-  /** Draw every relation quietly until a node lights its neighbourhood. */
-  latentEdges?: true
 }
 
 export const PRODUCT_TOPOLOGY_VIEWS: ProductTopologyView[] = [
   {
     id: 'product-map',
-    name: 'Product map',
-    question: 'What can the product do, and how is that capability grouped?',
-    semantics: 'identity',
-    note: 'Domain lanes use their authored colours. Access paths show which Interfaces offer each Capability.',
-    flow: [
-      { kind: 'entity', label: 'Actors' },
-      { kind: 'interface', label: 'Interfaces' },
-      { kind: 'domain', label: 'Domains' },
-      { kind: 'capability', label: 'Capabilities' }
-    ],
-    separators: ['→', '→', '⊃'],
-    kinds: ['entity', 'interface', 'domain', 'capability']
+    diagramType: 'Grouped map',
+    name: 'Domain map',
+    question: 'How are Capabilities and Entities classified by subject?',
+    note: 'Capabilities and Entities are grouped by their authored Domain. Unassigned resources remain visible. Groups express classification, not containment or dependencies.',
+    kinds: ['entity', 'domain', 'capability']
   },
   {
     id: 'value-paths',
-    name: 'Journey composition',
+    diagramType: 'Scenario columns',
+    name: 'Composition',
     question: 'Which Capabilities does each Journey Scenario compose, and where does it land?',
-    semantics: 'occurrence',
-    note: 'This is a Capability projection, not the complete Scenario. Variations run side by side and their Capability-bearing Steps read downward; read the Scenario for conditions, seams and Product-side Steps without a Capability.',
-    flow: [
-      { kind: 'journey', label: 'Journey' },
-      { kind: 'journey-scenario', label: 'Variations' },
-      { kind: 'capability', label: 'Capability Steps' },
-      { kind: 'screen', label: 'Landings' }
-    ],
-    separators: ['↓', '↓', '↓'],
+    note: 'Every Journey in the model, each with its Scenarios as columns in authored Step order. Repeated Capabilities are separate occurrences; Contexts belong to their exact Step and route. Columns do not imply simultaneous Steps. Open a Scenario for its complete sequence, conditions and outcome.',
     kinds: ['journey', 'journey-scenario', 'capability', 'screen']
   },
   {
     id: 'delivery-by-interface',
-    name: 'Delivery by Interface',
-    question: 'Where does each human or system enter, and what does each Interface deliver?',
-    semantics: 'identity',
-    note: 'Graphical Interfaces continue through Experiences and Screens. Direct integrations terminate in the Capability they deliver.',
-    flow: [
-      { kind: 'entity', label: 'Actors' },
-      { kind: 'interface', label: 'Interfaces' },
-      { kind: 'experience', label: 'Experiences' },
-      { kind: 'screen', label: 'Screens' },
-      { kind: 'capability', label: 'Direct capabilities' }
-    ],
-    separators: ['→', '→', '→', '·'],
+    diagramType: 'Delivery matrix',
+    name: 'Compare delivery',
+    question: 'Which Interfaces deliver each Capability, and by what route?',
+    note: 'Each cell is one authored delivery: a Screen of that Interface exposing the Capability, an Experience of it whose Context the Capability names, or the Interface itself where a Context names no Experience and no Screen carries it. A row with two cells is delivered twice; a row with one is exclusive to that Interface. An empty cell makes no claim beyond the absence of an authored Context.',
     kinds: ['entity', 'interface', 'experience', 'screen', 'capability']
   },
   {
     id: 'sitemap',
-    name: 'Sitemap',
+    diagramType: 'Containment tree',
+    name: 'Interface map',
     question: 'What does each Interface contain?',
-    semantics: 'occurrence',
-    note: 'Shared Experiences and Screens repeat under every Interface context that offers them, because repetition is part of the answer.',
-    flow: [
-      { kind: 'product', label: 'Product' },
-      { kind: 'interface', label: 'Interfaces' },
-      { kind: 'experience', label: 'Experiences' },
-      { kind: 'screen', label: 'Screens' }
-    ],
-    separators: ['→', '→', '→'],
+    note: 'The Product root branches into Interfaces, their Experiences and Screens. Lines show actual containment, not Screen-to-Screen navigation. Similar names remain distinct. Expand a branch to reveal its children; select a node to open its page.',
     kinds: ['product', 'interface', 'experience', 'screen']
   },
   {
     id: 'rule-reach',
-    name: 'Rule reach',
-    question: 'Where is each invariant enforced?',
-    semantics: 'identity',
-    note: 'Every edge is an authored attachment, never derived reach. Relations stay quiet until a node is hovered or selected; focus one Rule in Filters to read its reach alone.',
-    flow: [
-      { kind: 'rule', label: 'Rules' },
-      { kind: 'domain', label: 'Domains' },
-      { kind: 'capability', label: 'Capabilities' },
-      { kind: 'journey', label: 'Journeys' },
-      { kind: 'capability-scenario', label: 'Cap. Scenarios' },
-      { kind: 'journey-scenario', label: 'Journey Scenarios' }
-    ],
-    separators: ['→', '·', '·', '·', '·'],
-    kinds: ['rule', 'domain', 'capability', 'journey', 'capability-scenario', 'journey-scenario'],
-    latentEdges: true
+    diagramType: 'Attachment matrix',
+    name: 'Rule attachments',
+    question: 'Where is each Business Rule explicitly attached?',
+    note: 'Each cell is an authored Rule attachment. Details retain Entity operations, States, facts and Context restrictions. Derived Domains and inherited reach are excluded. An empty cell makes no permission or enforcement claim.',
+    kinds: ['rule', 'entity', 'capability', 'journey', 'capability-scenario', 'journey-scenario', 'interface', 'experience', 'screen']
   },
   {
     id: 'what-it-keeps',
-    name: 'What it keeps',
+    diagramType: 'Entity relationship diagram',
+    name: 'Entity relationships',
     question: 'What does the Product keep, and how do those things relate?',
-    semantics: 'identity',
-    note: 'Each relation is authored on one side and drawn once. The label reads source end to target end \u2014 1:N means one of the left, many of the right. Colour is the Domain; what changes a thing is on its page.',
-    flow: [{ kind: 'entity', label: 'Entities' }],
-    separators: [],
+    note: 'Each authored Entity relation is drawn once, from its declaring source to its target. Labels include both cardinalities: 1:N means one source to many targets. Disconnected Entities remain visible.',
     kinds: ['entity']
   },
   {
     id: 'what-changes-what',
+    diagramType: 'Mutation matrix',
     name: 'What changes what',
     question: 'Which Capability creates, changes or removes each thing?',
-    semantics: 'identity',
-    note: 'Every edge is a Step somewhere, aggregated per Capability and labelled by effect. Reads are left out on purpose: a read places no claim on what can alter a thing. Relations stay quiet until a node is hovered or selected.',
-    flow: [
-      { kind: 'capability', label: 'Capabilities' },
-      { kind: 'entity', label: 'Entities' }
-    ],
-    separators: ['→'],
+    note: 'Capability and Journey Scenario Step effects are aggregated by Capability and Entity. Cells show creates, changes and removes, with supporting Scenarios. Reads are excluded. An empty cell means no declared mutation.',
     kinds: ['capability', 'entity'],
-    latentEdges: true
-  },
-  {
-    id: 'everything',
-    name: 'Everything',
-    question: 'What is the entire product, all at once?',
-    semantics: 'identity',
-    note: 'Fixed shelves read access → Interface → behaviour → governance. The resolved relation web stays quiet until a node is hovered or selected; hide a shelf or focus a resource to thin it.',
-    flow: [],
-    separators: [],
-    kinds: [
-      'product',
-      'interface',
-      'experience',
-      'screen',
-      'capability-scenario',
-      'journey-scenario',
-      'journey',
-      'capability',
-      'entity',
-      'domain',
-      'rule'
-    ],
-    latentEdges: true
   }
 ]
 

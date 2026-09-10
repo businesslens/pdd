@@ -62,25 +62,25 @@ were costed and then chosen against, so the same argument is not had twice.
   characters so it never truncates; the body H1 carries the full page
   title.
 - This repository authors the documentation with groups Get started, Product
-  Model (one page per top-level resource type), Integrations (one page per
+  Model (one page per main resource family), Integrations (one page per
   thing you integrate with), Skills (one page per skill), and CLI (one page per
   command).
 - Each resource type is explained in exactly one place. Its page carries its
   narrative, when to create one, its file shape, and the `lint` findings
   that constrain it — do not reintroduce a separate glossary, a separate
   format page, or a separate error catalog.
+- **`docs/` explains the model, never the report.** A derivation is a fact about
+  the model and belongs here; the surface that draws it does not.
 - Define vocabulary in the owning doc's `terms:` frontmatter. Run
   `npm run vocabulary` after edits and commit the generated registry.
 - Keep definitions self-contained and capitalize referenced types. Put the page's
   main term first; CLI pages do not declare terms.
-- A resource type is documented on its parent's page when **its type name names
-  that parent** — never on one of its own. Scenarios are the only such types:
-  Capability Scenarios live in `docs/capabilities.md`, Journey Scenarios in
-  `docs/journeys.md`. A page they shared would have to state the containment
-  rule before either could be read, and a reader arrives already knowing which
-  parent they are authoring. The test is the name, not the containment: an
-  Experience also sits inside exactly one Interface, and keeps its own page,
-  because nothing calls it an Interface Experience.
+- Experiences and Screens are sections of `docs/interfaces.md`, including their
+  definitions, file shapes, and lint rules. They have no separate docs pages or
+  sidebar entries. Capability Scenarios live in `docs/capabilities.md`, Journey
+  Scenarios in `docs/journeys.md`. This supersedes the earlier rule requiring
+  Experiences and Screens to have their own pages; their resource types and
+  authored containment remain unchanged.
 
 ## How format decisions are judged
 
@@ -171,62 +171,59 @@ costed already.
 
 ## Report viewer standards
 
-- **The rendered Product Report is for humans only.** An agent that needs the
-  model reads `.businesslens/` directly — the files are the contract, already
-  addressable and already complete. Nothing in the renderer is justified by
-  "an agent might need it".
-- **It is a place you go, not a document you read.** It is opened repeatedly
-  during authoring. Completeness is therefore a cost, not a virtue: every field
-  rendered competes with the field answering the question the reader arrived
-  with. The renderer's job is selection and ranking. Where it omits, it says
-  where the full material is — the file path.
-- **State must survive a recompile, and a refresh.** `businesslens view`
-  recompiles on save, so focus and filter have to outlive an edit to the model.
-  The open section and the open resource page also live in the URL, so a reader
-  can link to what they are reading, walk back out of it, and reload into it.
-- **The page is the reading.** A collection row, relation, search result, or
-  topology resource opens the resource page directly. It has a URL, a
-  breadcrumb, the width its content was drawn for, and the browser's own back
-  button.
-- **Overview and one peer tab are the page structure.** Overview carries the
-  resource's authored meaning, facts, Contexts, relations, supporting material,
-  and References. Capability and Journey pages add Scenarios as their only
-  second tab; an Entity with States adds Lifecycle, its composed machine and
-  what leaves a thing in each state. Neighbourhood is an action into Topology,
-  never another page tab.
-- **The rail lists resource types; they do not nest.** Containment belongs
-  where instances are — the default grouping of a collection and the resource
-  page. A mandatory child type does not add a peer collection tab to its
-  parent's main screen. A rail that indents some types and not others
-  advertises a hierarchy it cannot keep.
-- **Chrome scales with the collection.** No control costs a row above a
-  two-item list, and a filter offer is not rendered where scanning is faster.
-- **Named views, not a view builder.** Filters narrow a view that already means
-  something; a builder asks the reader to invent the meaning first. The concrete
-  failure is derivation ambiguity — "journeys × screens" is either *screens this
-  journey's scenarios name* or *screens exposing capabilities this journey
-  uses*, and those give different grids. A named view picks one, states its
-  derivation, and is accountable for it. A new correlation costs code, which is
-  the point.
-- A view that needs a paragraph before it can be read is not ready to ship, and
-  no view opens onto an empty configuration screen.
-- **The surface names the resource type; the row does not repeat it**, and a
-  fact appears once per screen.
-- **Counts where the set is many, names where the set is one** — in rows,
-  tables, and facts alike. Nothing renders an empty label: a missing hook or an
-  empty facet set shrinks the element rather than reserving space for what is
-  not there.
+- **The rendered report is for humans only.** An agent that needs the model
+  reads `.businesslens/` directly.
+- **It is a place you go, not a document you read.** Completeness is a cost:
+  every field rendered competes with the one answering the question the reader
+  arrived with. Where it omits, it names the file path.
+- **The report explains itself.** A reading that needs prose elsewhere to be
+  understood is not finished. It links out only to the documentation for a
+  resource *type*.
+- **Tabs are the only switch.** A tab changes which set is on screen, the rail
+  changes the subject, the toolbar only narrows. There is no representation
+  control: a second drawing is a tab of its own, accountable for its own
+  derivation.
+- **Every surface names itself, with the name the reader clicked.** The
+  breadcrumb ends at the parent; the H1 carries the surface with its type mark
+  and a qualifier — a count for a collection, a type for a resource. Ways out
+  sit on that row, and the report's identity and the way home stay in the header
+  everywhere.
+- **The page is the reading**: every row, relation, search result and diagram
+  resource opens a resource page with its own URL. The open section, page and
+  tab live there too, so state survives a refresh and a recompile.
+- **The rail lists six collections** below Overview: Entities, Interfaces,
+  Domains, Capabilities, Journeys, Business Rules. Experiences and Screens are
+  reached through Interfaces, Scenarios through their parent, and named views
+  are tabs of their subject collection.
+- **A resource page is Overview and at most one peer tab** — Scenarios for a
+  Capability or Journey, Lifecycle for an Entity with States. A view comparing
+  resources belongs to the collection, never to one of them.
+- **The Product's page is a page like the others** — same heading, tab strip and
+  width, headed `Overview` like the rail row that opens it and qualified by
+  `Product`. Its readings are About, Coverage and References, and it never
+  reprints a collection that has a rail row of its own.
+- **Named views, not a view builder.** A named view picks one derivation, states
+  it, and is accountable for it. A new correlation costs code, which is the
+  point.
+- **Grouping is authored, never configured.** Domain is the only axis, always on
+  where the type carries one. Entities that act lead their collection.
+- **One filter control per axis, inside the reading it narrows**, offering only
+  what the row already prints. A control says how many values it holds, never
+  which; the values sit on a second row, each with its own way out. It is absent
+  only when there is nothing behind it — never on a size threshold, which makes
+  two reports differ for a reason no reader can see.
+- **The surface names the resource type; the row does not repeat it**, a fact
+  appears once per screen, and nothing renders an empty label. Counts where the
+  set is many, names where it is one.
+- **A resource type's mark is reserved.** Chrome wears a kind's icon only where
+  it names that kind; reach for an unreserved glyph otherwise.
 - **A teaching affordance can be turned off, and never hides the way back.**
-  Term tooltips are dismissed from the tooltip and restored from the Vocabulary
-  panel, which is never behind the preference; the choice is a cookie, so a
-  server-rendered report draws it on the first paint.
+  Term tooltips are restored from the Vocabulary panel; the choice is a cookie,
+  so the first paint is right.
 - **A section renders as more than prose only when four things align**: a
-  recognized H2 in `spec/format.md`; a **required content shape** — bullet list,
-  H3 plus prose, or prose — enforced by `lint`; a typed field in
-  `src/core/portable.ts`; and a component that reads it. The content shape is
-  the row that gets skipped and the one that makes rendering possible. Where the
-  UI cannot render it differently from prose, leave it in `supportingSections`,
-  which round-trips losslessly.
+  recognized H2 in `spec/format.md`; a lint-enforced content shape; a typed
+  field in `src/core/portable.ts`; and a component that reads it. Otherwise it
+  stays in `supportingSections`, which round-trips losslessly.
 
 ## Change and release checks
 

@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from 'node:fs'
+import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { compileReport } from '../src/commands/export.js'
@@ -337,7 +337,8 @@ describe('stable Product Report', () => {
    * and missing in the other is a filter the reader cannot find.
    */
   it('reads every Entity relation from both of its ends', async () => {
-    const { relatedIds, facetKindsFor } = await import(resourceFacetsModulePath)
+    const { relatedIds, facetKindsFor, resourcesOfKind } = await import(resourceFacetsModulePath)
+    const { resourceCardPresentation } = await import(resourceFacetsModulePath.replace('resourceFacets', 'resourceCards'))
     const workspace = projectReportWorkspace(compileReport(loadModel(FIXTURE), '2026-08-08'))
 
     const screen = workspace.screens.find((item: any) => item.entityIds.length)!
@@ -355,8 +356,22 @@ describe('stable Product Report', () => {
     expect(relatedIds(shopper, 'interface')).toEqual(['customer-mobile', 'customer-web'])
     expect(relatedIds(workspace.interfaces.find((item: any) => item.id === 'customer-web')!, 'entity')).toEqual(['shopper'])
 
-    for (const kind of ['screen', 'domain', 'journey', 'capability', 'capability-scenario', 'journey-scenario']) {
-      expect(facetKindsFor(kind)).toContain('entity')
+    /* A collection filters by what its rows print, so the offer is derived from
+       the card rather than kept by hand beside it — which is why a Domain, whose
+       card names its Capabilities and not its Entities, no longer offers an
+       Entity facet the reader could not have seen coming. */
+    for (const kind of ['interface', 'journey', 'capability']) {
+      expect(facetKindsFor(workspace, kind), kind).toContain('entity')
+    }
+    expect(facetKindsFor(workspace, 'domain')).not.toContain('entity')
+    expect(facetKindsFor(workspace, 'capability').length).toBeLessThan(6)
+    for (const kind of ['entity', 'capability', 'journey', 'interface', 'domain', 'screen', 'rule']) {
+      const printed = new Set(resourcesOfKind(workspace, kind)
+        .flatMap((resource: any) => resourceCardPresentation(workspace, resource).metrics)
+        .flatMap((metric: any) => metric.kind ? [metric.kind] : []))
+      for (const facet of facetKindsFor(workspace, kind)) {
+        expect(printed.has(facet) || facet === 'domain', `${kind} offers ${facet}`).toBe(true)
+      }
     }
   })
 
@@ -481,7 +496,10 @@ describe('stable Product Report', () => {
     expect(body).toContain('scenarioRouteColumnCount')
     expect(body).toContain('visibleRouteWindow.start + 1')
     expect(body).toContain('aria-label="Number of route columns"')
-    expect(body).toContain("icon: 'i-lucide-route'")
+    /* A named route is one way a Scenario can run, not a Journey, so it does
+       not wear the Journey's mark. */
+    expect(body).toContain("icon: 'i-lucide-split'")
+    expect(body).not.toContain('i-lucide-route')
     expect(body.match(/aria-label="Show previous route"/g)).toHaveLength(2)
     expect(body.match(/aria-label="Show next route"/g)).toHaveLength(2)
     expect(body).toContain('compact')
@@ -516,9 +534,6 @@ describe('stable Product Report', () => {
     const card = source('app/components/BlrResourceCard.vue')
     const connections = source('app/components/BlrConnections.vue')
     const reportShell = source('app/components/BlrReportShell.vue')
-    const flow = source('app/utils/flowGraph.ts')
-    const flowNode = source('app/components/BlrFlowNode.vue')
-    const flowGroup = source('app/components/BlrFlowGroup.vue')
     const resourceBody = source('app/components/BlrResourceBody.vue')
 
     expect(mark).toContain('name="i-lucide-plug"')
@@ -571,24 +586,7 @@ describe('stable Product Report', () => {
     expect(card).toContain(':acts="acts"')
     expect(connections).toContain(':interface-type="interfaceType(item.kind, id)"')
     expect(connections).toContain(':facet="entityFacetOf(entityAt(item.kind, id))"')
-    expect(reportShell).toContain('resolvedInterfaceType(group.kind, group.key)')
-    expect(reportShell).toContain('entityFacetOf(resolvedEntity(group.kind, group.key))')
-    expect(reportShell).toContain('BlrInterfaceTypeComponent')
-    expect(reportShell).toContain('BlrEntityMarkComponent')
-    expect(flow).toContain("interfaceType: resource.kind === 'interface' ? resource.interfaceType : null")
-    expect(flow).toContain('entityFacet: entityFacetOf(resource)')
-    expect(flowNode).toContain("data.kind === 'interface' && data.interfaceType")
-    expect(flowNode).toContain("data.kind === 'entity' && data.entityFacet")
-    expect(flowNode).not.toContain('show-relationship')
-    /* Topology is read for the Product boundary, so the node's sublabel writes
-       it — the slot and the spelling an Experience gives its access mode. */
-    expect(flow).toContain("`Actor · ${resource.acts}`")
-    expect(flowGroup).toContain("data.kind === 'interface' && data.interfaceType")
-    expect(flowNode).toContain('class="blr-flow-node__kind"')
-    expect(flowNode).toContain('var(--blr-resource-mark-regular)')
-    expect(flowGroup).toContain('class="blr-flow-group__kind"')
-    expect(flowGroup).toContain('var(--blr-resource-mark-regular)')
-    expect(source('app/components/BlrFlowLabel.vue')).toContain('var(--blr-resource-mark-dense)')
+    expect(reportShell).toContain('entityFacetOf(resolvedGroupEntity(group.kind, group.key))')
     expect(cardPresentation).not.toContain('INTERFACE_TYPE_META')
     expect(cardPresentation).toContain('Repeating it as a title badge adds no second fact')
     expect(cardPresentation).not.toContain('`${entity.entityKind} · ${entity.acts}`')
@@ -602,11 +600,9 @@ describe('stable Product Report', () => {
        on its own tab, with every arc routed along the layout's points. */
     const lifecycle = source('app/components/BlrEntityLifecycle.vue')
     expect(lifecycle).toContain('buildEntityLifecycle')
-    expect(lifecycle).toContain('<BlrFlowCanvas :nodes="lifecycle.nodes"')
+    expect(lifecycle).toContain(':diagram="lifecycle"')
     expect(resourceBody).not.toContain('buildEntityLifecycle')
     expect(source('app/components/BlrResourcePage.vue')).toContain('<BlrEntityLifecycle')
-    expect(source('app/components/BlrFlowCanvas.vue')).toContain('#node-blr-state')
-    expect(source('app/components/BlrFlowCanvas.vue')).toContain('#edge-blr-routed')
 
     /* A collection or relation heading means the Interface kind, not one
        concrete Interface, so its generic plug remains deliberately generic. */
@@ -699,9 +695,29 @@ describe('stable Product Report', () => {
     expect(renderer).toContain('<BlrReportShell')
     expect(source('app/components/BlrResourceBody.vue')).toContain('scenarioStepMatrix')
     expect(reportShell).toContain('<BlrProductTopology')
-    /* Grouping is how authored Domains earn their place in navigation. */
-    expect(reportShell).toContain('groupKind')
-    expect(reportShell).toContain('groupOptions')
+    /* The Product's page is a page: same heading, same strip, same width, and
+       its readings are peer tabs rather than a column of disclosures. */
+    expect(source('app/components/BlrOverview.vue')).not.toContain('<UCollapsible')
+    expect(source('app/components/BlrOverview.vue')).not.toContain('blr-disclosure')
+    expect(source('app/components/BlrOverview.vue')).not.toContain('mx-auto max-w-3xl')
+    expect(source('app/components/BlrOverview.vue')).not.toContain('<BlrResourceCard')
+    expect(reportShell).toContain('PRODUCT_TABS')
+    /* A rail row and the heading it opens say the same word, and the qualifier
+       beside it names the resource type the surface presents. `Product Report`
+       named the rendered artifact rather than anything the model authors. */
+    expect(reportShell).toContain("title: 'Overview', meta: meta.label")
+    expect(reportShell).not.toContain("'Product Report'")
+    /* The report's identity and the way home are on every surface. */
+    expect(reportShell).not.toContain('atProductRoot')
+
+    /* Grouping is how authored Domains earn their place in navigation, and it
+       is a fact about the model rather than a control on it: offering every
+       related kind as an axis was a view builder wearing a select menu. */
+    expect(reportShell).toContain('collectionGroups(props.workspace, activeKind.value, visibleResources.value)')
+    expect(reportShell).not.toContain('groupOptions')
+    expect(reportShell).not.toContain('aria-label="Stop grouping"')
+    expect(source('app/utils/resourceFacets.ts')).toContain('export const GROUPING_KIND')
+    expect(source('app/utils/resourceFacets.ts')).toContain("title: 'Actors'")
     expect(layer).toContain("extends: [join(currentDir, '../theme')]")
   })
 
@@ -731,17 +747,10 @@ describe('stable Product Report', () => {
     expect(panes).toContain('overflow-y: auto')
   })
 
-  it('uses the shared flow canvas for Product topology', () => {
-    const flow = source('app/utils/flowGraph.ts')
-    const canvas = source('app/components/BlrFlowCanvas.vue')
+  it('keeps structured readings beside the shared Vue Flow diagram canvas', () => {
+    expect(existsSync(join(VIEWER, 'app/components/BlrFlowCanvas.vue'))).toBe(true)
     const topology = source('app/components/BlrProductTopology.vue')
-
-    expect(flow).toContain('export function directRelations')
-    expect(flow).toContain('export function buildScreenMap')
-    expect(existsSync(join(VIEWER, 'app/components/BlrTopology.vue'))).toBe(false)
-    expect(topology).toContain('buildProductTopologyGraph')
-    expect(canvas).toContain('@vue-flow/core')
-    expect(canvas).toContain('#node-blr')
+    for (const family of ['BlrTopologyMatrix', 'BlrTopologyBranch', 'BlrDiagram']) expect(topology).toContain(family)
   })
 
   it('keeps the question-and-derivation bar exclusive to Topology', () => {
@@ -751,8 +760,16 @@ describe('stable Product Report', () => {
     expect(existsSync(join(VIEWER, 'app/utils/browseSurfaces.ts'))).toBe(false)
     expect(reportShell).not.toContain('surface.question')
     expect(reportShell).not.toContain('surface.flow')
+    /* The surface heading names the subject and the tab names the reading, so
+       a view neither titles itself nor spends a row restating its question:
+       that belongs with the derivation it qualifies, behind About this view. */
+    expect(topology).not.toContain('{{ view.name }}')
+    expect(topology).not.toContain('blr-topology-title-row')
+    expect(topology).toContain('{{ view.diagramType }}')
     expect(topology).toContain('{{ view.question }}')
-    expect(topology).toContain('v-for="(step, index) in kindSteps"')
+    expect(reportShell).not.toContain('surfaceHint')
+    expect(source('app/components/BlrResourcePage.vue')).not.toContain('current.hint')
+    expect(source('app/utils/pageSections.ts')).not.toContain('hint')
   })
 
   /*
@@ -769,7 +786,7 @@ describe('stable Product Report', () => {
     expect(badge).toContain("color=\"neutral\"")
     expect(badge).toContain('rounded-full')
     expect(shell).toContain('<BlrCoverageBadge :status="workspace.coverage.status" named size="md" />')
-    expect(overview).toContain('<BlrCoverageBadge :status="workspace.coverage.status" size="sm" />')
+    expect(overview).toContain('<BlrCoverageBadge :status="workspace.coverage.status" named size="md" />')
     for (const [label, file] of [['badge', badge], ['shell', shell], ['overview', overview]] as const) {
       expect(file, label).not.toContain('COVERAGE_TONE')
       for (const offPalette of ["'warning'", "'success'", '"warning"', '"success"']) {
@@ -920,20 +937,82 @@ describe('stable Product Report', () => {
     expect(tooltips).not.toContain('useState')
   })
 
-  it('scrolls collection controls with their list instead of pinning them as chrome', () => {
+  /*
+    The bundled viewer is a generated SPA with no icon endpoint, so an icon that
+    is not in a client bundle renders as a silent blank box — correct size,
+    correct place, no glyph. Nothing else catches it: the build succeeds, the
+    typecheck passes, and the gap only shows on a surface someone happens to
+    open. So the icons a component asks for and the icons the bundles carry are
+    checked against each other here.
+  */
+  it('bundles every icon the viewer draws', () => {
+    const configs = [
+      readFileSync(join(VIEWER, 'nuxt.config.ts'), 'utf8'),
+      readFileSync(join(__dirname, '..', 'viewer', 'app', 'nuxt.config.ts'), 'utf8')
+    ]
+    const bundled = new Set(configs.flatMap(config =>
+      [...config.matchAll(/'(lucide|simple-icons):([a-z0-9-]+)'/g)].map(match => `${match[1]}:${match[2]}`)))
+
+    const roots = [join(VIEWER, 'app'), join(__dirname, '..', 'viewer', 'app', 'app')]
+    const sources: string[] = []
+    const walk = (directory: string) => {
+      for (const entry of readdirSync(directory, { withFileTypes: true })) {
+        if (entry.name === 'node_modules' || entry.name.startsWith('.')) continue
+        const path = join(directory, entry.name)
+        if (entry.isDirectory()) walk(path)
+        else if (/\.(vue|ts)$/.test(entry.name)) sources.push(readFileSync(path, 'utf8'))
+      }
+    }
+    roots.forEach(walk)
+
+    const asked = new Set(sources.flatMap(source =>
+      [...source.matchAll(/i-(lucide|simple-icons)-([a-z0-9-]+)/g)].map(match => `${match[1]}:${match[2]}`)))
+
+    expect([...asked].filter(icon => !bundled.has(icon)).sort()).toEqual([])
+  })
+
+  it('narrows inside the reading, with one control per axis', () => {
     const reportShell = source('app/components/BlrReportShell.vue')
+    const bar = source('app/components/BlrFilterBar.vue')
+    const topology = source('app/components/BlrProductTopology.vue')
     const docs = source('app/utils/resourceDocs.ts')
-    const pane = reportShell.indexOf('v-if="!topologyActive" class="blr-pane min-h-0 flex-1"')
-    const toolbar = reportShell.indexOf('v-if="showToolbar"', pane)
-    const reading = reportShell.indexOf('<div class="p-5">', toolbar)
+    const pane = reportShell.indexOf('v-if="!topologyActive" ref="resourcePane" class="blr-pane min-h-0 flex-1"')
+    const reading = reportShell.indexOf('<div class="p-5">', pane)
 
     expect(pane).toBeGreaterThan(-1)
-    expect(toolbar).toBeGreaterThan(pane)
-    expect(reading).toBeGreaterThan(toolbar)
-    expect(reportShell.slice(toolbar, reading)).not.toContain('border-b border-default')
-    expect(reportShell.slice(toolbar, reading)).toContain(':to="collectionDocs.url"')
-    expect(reportShell.slice(toolbar, reading)).toContain('label="Docs"')
-    expect(docs).toContain("screen: 'screens'")
+    /* Narrowing belongs to the reading it narrows, aligned with the rows it
+       acts on rather than banded above them. Identity and the ways out do not:
+       an exit belongs to the subject, so it sits on the heading row above. */
+    expect(reportShell.indexOf('<BlrFilterBar', reading)).toBeGreaterThan(reading)
+    expect(reportShell.indexOf(':to="surfaceDocs.url"')).toBeLessThan(pane)
+    expect(reportShell.indexOf('v-for="link in exits"')).toBeLessThan(pane)
+
+    /* One control per axis, not one popover holding four. A reader should see
+       which axes exist without opening anything, and read the state of each
+       without remembering what they picked. */
+    expect(reportShell).toContain('v-for="kind in facetKinds"')
+    expect(reportShell).not.toContain('label="Filter"')
+    expect(reportShell).not.toContain('<UPopover')
+
+    /* A control says how many values it holds; the values sit on a second row,
+       so the control line keeps a fixed width however much is selected. */
+    expect(bar).toContain('v-for="chip in chips"')
+    expect(bar).toContain('label="Clear"')
+    expect(bar).toContain('class="blr-chip"')
+    /* The chips are drawn beside the report, not scoped to one component. */
+    expect(source('app/assets/report-viewer.css')).toContain('.blr-chip')
+    expect(reportShell).not.toContain('.blr-chip {')
+
+    /* A named view narrows on its own axes, in the same shape — and no longer
+       through a bare search box and a native select inside a popover. */
+    expect(topology).toContain('<BlrFilterBar')
+    expect(topology).not.toContain('<UPopover')
+    expect(topology).not.toContain("type=\"search\"")
+    expect(topology).not.toContain('<select')
+    expect(topology).not.toContain("'Filters'")
+
+    expect(docs).toContain("experience: 'interfaces#experiences'")
+    expect(docs).toContain("screen: 'interfaces#screens'")
     expect(docs).toContain("domain: 'domains'")
   })
 
@@ -946,7 +1025,8 @@ describe('stable Product Report', () => {
     expect(existsSync(join(VIEWER, 'app/components/BlrResourcePeek.vue'))).toBe(false)
     expect(reportShell).not.toContain('<BlrInspector')
     expect(reportShell).toContain('<BlrResourcePage')
-    expect(reportShell).toContain(':on-select="(_event: Event, row: any) => openResourcePage(row.original)"')
+    expect(reportShell).not.toContain('<UTable')
+    expect(reportShell).not.toContain('TableColumn')
     expect(reportShell).toContain('@open="openResourcePage"')
     expect(reportShell).toContain('@select="openResourcePage"')
     expect(page).toContain('<BlrPageBlock')
@@ -1012,8 +1092,14 @@ describe('stable Product Report', () => {
 
     expect(reportShell).toContain('v-for="(step, index) in pageTrail"')
     expect(reportShell).toContain('aria-label="Page breadcrumb"')
-    expect(reportShell).toContain('data-mobile-location')
-    expect(reportShell).toContain('data-mobile-section')
+    /* One trail at every width, and it is a path rather than a title: it ends
+       at the parent, and the surface names itself in its own heading. */
+    expect(reportShell).toContain('data-page-trail')
+    expect(reportShell).not.toContain('data-mobile-location')
+    expect(reportShell).not.toContain('blr-mobile-ancestor')
+    expect(reportShell).not.toContain("aria-current=\"page\"")
+    expect(reportShell).toContain('...parents.map(parent => ({')
+    expect(reportShell).toContain('<h1 v-if="surfaceHeading"')
     // Narrow-screen bounds and help targets are exercised in the browser
     // regression script; clipping the entire trail would cut off focus rings.
     expect(reportShell).not.toContain('class="inline-flex min-w-0 flex-1 items-center gap-1.5 hover:underline hover:underline-offset-4"')
@@ -1021,8 +1107,6 @@ describe('stable Product Report', () => {
     expect(reportShell).not.toContain('label="Neighbourhood"')
     expect(globalHeader).not.toContain('label="Docs"')
     expect(reportShell).not.toContain('DOCS_SLUG')
-    expect(reportShell).toContain('@focus="focusTopology"')
-    expect(page).toContain('label="Neighbourhood"')
     expect(page).not.toContain('<h1')
     expect(page).not.toContain('<BlrKind :kind="resource.kind"')
     expect(page).toContain('parentOf(props.workspace, props.resource)')
@@ -1040,8 +1124,9 @@ describe('stable Product Report', () => {
     const sections = source('app/utils/pageSections.ts')
     const scenarios = source('app/components/BlrScenarios.vue')
 
-    expect(rail).toContain("PARENTED: ReportResourceKind[] = ['capability-scenario', 'journey-scenario']")
     expect(rail).not.toContain('blr-navchild')
+    /* The rail changes the subject; a named view is a tab of its collection. */
+    expect(rail).not.toContain('view: [section: string]')
     expect(reportShell).not.toContain('SCENARIO_OF')
     expect(reportShell).not.toContain('parentTabs')
     expect(reportShell).not.toContain('class="blr-tab"')
@@ -1061,8 +1146,16 @@ describe('stable Product Report', () => {
     expect(sections).not.toContain("id: 'diagram'")
     expect(sections).not.toContain("id: 'references'")
     expect(page).toContain('data-sticky-page-tabs')
-    expect(page).toContain('label="Neighbourhood"')
-    expect(page).toContain("emit('focus', subject)")
+    /* A strip with one tab switches nothing, so it does not render — and the
+       ways out live on the heading row, which the host draws. */
+    expect(page).toContain('v-if="tabs.length > 1"')
+    expect(page).not.toContain('aria-label="Explore this resource"')
+    expect(page).not.toContain("emit('view', link.section, subject)")
+    expect(page).not.toContain('label="Docs"')
+    /* Both strips are the same control, so the rule is not scoped to one. */
+    expect(page).toContain('class="blr-surface-tab"')
+    expect(source('app/components/BlrReportShell.vue')).toContain('class="blr-surface-tab"')
+    expect(source('app/assets/report-viewer.css')).toContain('.blr-surface-tab')
   })
 
   /*
@@ -1079,8 +1172,10 @@ describe('stable Product Report', () => {
     expect(renderer).toContain("defineModel<string>('tab'")
     expect(renderer).toContain("defineModel<string | null>('scenarioRoute'")
     expect(renderer).toContain("defineModel<string>('routeColumns'")
-    expect(renderer).toContain('v-model:resource="resource"')
-    expect(renderer).toContain('v-model:tab="tab"')
+    expect(renderer).toContain(':resource="location.resource"')
+    expect(renderer).toContain('@update:resource="resource = $event"')
+    expect(renderer).toContain(':tab="location.tab"')
+    expect(renderer).toContain('@update:tab="tab = $event"')
     expect(renderer).toContain('v-model:scenario-route="scenarioRoute"')
     expect(reportShell).toContain("defineModel<string | null>('resource'")
     /* The open tab is the page's model, not a ref it keeps to itself: a
@@ -1104,21 +1199,28 @@ describe('stable Product Report', () => {
   it('keeps the open tab in the host URL as t', () => {
     const host = readFileSync(join(__dirname, '..', 'viewer', 'app', 'app', 'pages', 'index.vue'), 'utf8')
 
-    expect(host).toContain("tab: typeof route.query.t === 'string' && route.query.t ? route.query.t : 'overview'")
-    expect(host).toContain('if (next.tab !== tab.value) tab.value = next.tab')
-    expect(host).toContain("if (tab.value === 'overview') delete query.t\n  else query.t = tab.value")
-    expect(host).toContain('watch([section, resource, tab, scenarioRoute, routeColumns]')
+    expect(host).toContain('useBlrReportNavigation()')
+    const navigation = source('app/composables/useBlrReportNavigation.ts')
+    expect(navigation).toContain("options.tabKey ?? 't'")
+    expect(navigation).toContain('topologyToQuery(next.topology)')
+    expect(host).toContain('v-model:topology="topology"')
     expect(host).toContain('v-model:tab="tab"')
   })
 
   it('moves product identity into a desktop-equivalent mobile rail', () => {
     const reportShell = source('app/components/BlrReportShell.vue')
 
-    expect(reportShell).toContain("class=\"hidden size-6 shrink-0 rounded-md border border-muted bg-elevated object-contain p-0.5 lg:block\"")
+    /* The way home is one affordance at both widths: the same house, the same
+       name, the same target. A mark that changes shape with the model — a logo
+       here, a glyph there — is two affordances wearing one slot, so a Product's
+       own logo is content and lives on the reading that names it. */
+    expect(reportShell.match(/i-lucide-house/g)).toHaveLength(2)
+    expect(reportShell.match(/title="Open the Overview"/g)).toHaveLength(2)
+    expect(reportShell).not.toContain('v-if="logoSrc"')
+    expect(source('app/components/BlrOverview.vue')).toContain('v-if="logoSrc"')
     expect(reportShell).toContain(":ui=\"{ content: 'w-64 max-w-[85vw]', body: 'p-2' }\"")
     expect(reportShell).toContain('class="blr-report-shell flex min-w-0 flex-1 items-center gap-3"')
     expect(reportShell).toContain('class="blr-report-shell min-h-full"')
-    expect(reportShell.match(/v-if="logoSrc"/g)).toHaveLength(2)
   })
 })
 
@@ -1156,12 +1258,9 @@ describe('composed lifecycle', () => {
     expect(ids[0]).toBe(LIFECYCLE_START)
     expect(ids[ids.length - 1]).toBe(LIFECYCLE_END)
     const loop = graph.edges.find((edge: any) => edge.source === edge.target)
-    expect(loop).toMatchObject({ type: 'blr-self', source: 'blr-state:refund:Settled', label: 'Payment settlement' })
-    /* The layout stamps its direction on the loop, which is how the edge knows
-       to hang off the state's right side rather than under it. */
-    expect(loop.data).toMatchObject({ direction: 'TB' })
+    expect(loop).toMatchObject({ source: 'blr-state:refund:Settled', target: 'blr-state:refund:Settled', label: 'Payment settlement' })
+    expect(graph.direction).toBe('DOWN')
     expect(graph.edges.some((edge: any) => edge.source === 'blr-state:refund:Settled' && edge.target === LIFECYCLE_END)).toBe(true)
-    expect(graph.edges.every((edge: any) => edge.source === edge.target || edge.type === 'blr-routed')).toBe(true)
   })
 
   it('draws an arc a Rule closes to everyone as forbidden', async () => {
@@ -1175,7 +1274,7 @@ describe('composed lifecycle', () => {
     expect(order.arcs[index].forbiddenByRuleIds).toEqual(['orders-are-never-deleted'])
     expect(lifecycleArcLabel(workspace, order, index)).toMatchObject({ forbidden: true, rules: [] })
     const edge = buildEntityLifecycle(workspace, order).edges.find((item: any) => item.target === LIFECYCLE_END)
-    expect(edge).toMatchObject({ label: 'forbidden', class: 'blr-arc--forbidden' })
+    expect(edge).toMatchObject({ label: 'forbidden', forbidden: true })
   })
 
   it('lists a stateless information change without drawing it, and counts what it draws', async () => {
@@ -1235,10 +1334,10 @@ describe('composed lifecycle', () => {
 
     const edges = buildEntityLifecycle(workspace, order).edges
     expect(edges.find((edge: any) => edge.target === 'blr-state:order:Refunded'))
-      .toMatchObject({ label: 'Order management · restricted by 2 Rules', class: 'blr-arc--restricted' })
+      .toMatchObject({ label: 'Order management · restricted by 2 Rules' })
     expect(edges.find((edge: any) => edge.source === 'blr-state:order:Confirmed' && edge.target === 'blr-state:order:Cancelled'))
       .toMatchObject({ label: 'Order cancellation · restricted' })
-    expect(edges.find((edge: any) => edge.target === 'blr-state:order:Pending')).toMatchObject({ label: 'Checkout', class: undefined })
+    expect(edges.find((edge: any) => edge.target === 'blr-state:order:Pending')).toMatchObject({ label: 'Checkout', forbidden: false })
 
     /* The list under the machine links each Rule and says how the Rules compose. */
     const component = source('app/components/BlrEntityLifecycle.vue')
@@ -1284,22 +1383,6 @@ describe('composed lifecycle', () => {
       }
     }
     expect(read()).toEqual(read())
-  })
-
-  /*
-   * The lifecycle lays out top to bottom, so its source handle is the bottom
-   * of the pill; a loop hung from there sat on the next rank and put its label
-   * over the state's name. The edge reads the layout direction and the node's
-   * own size instead of assuming a left-to-right graph.
-   */
-  it('hangs a self-loop off the state rather than under it', () => {
-    const edge = source('app/components/BlrFlowSelfEdge.vue')
-
-    expect(edge).toContain("if (props.data?.direction !== 'TB' || !node) return { x: props.sourceX, y: props.sourceY }")
-    expect(edge).toContain('node.computedPosition.x + size.value.width')
-    expect(edge).toContain('sourceNode?.dimensions.width')
-    expect(edge).toContain("import { FLOW_NODE_HEIGHT, FLOW_NODE_WIDTH } from '../utils/flowGraph'")
-    expect(source('app/utils/flowGraph.ts')).toContain('data: { ...(edge.data as Record<string, unknown> | undefined), points, backward, direction }')
   })
 
   it('keeps one name for what a Step does to an Entity', () => {

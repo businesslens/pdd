@@ -11,20 +11,20 @@
  */
 import type { AnyResourceView, EntityView, ReportWorkspace } from '../utils/reportWorkspace'
 import { resolveResource } from '../utils/reportWorkspace'
-import { LIFECYCLE_RANK_GAP, LIFECYCLE_STATE_HEIGHT, buildEntityLifecycle, lifecycleArcEdgeId, lifecycleArcLabel, lifecycleRestrictionMarker } from '../utils/entityLifecycle'
+import { buildEntityLifecycle, lifecycleArcEdgeId, lifecycleArcLabel, lifecycleRestrictionMarker } from '../utils/entityLifecycle'
 
 const props = defineProps<{
   workspace: ReportWorkspace
   resource: EntityView
 }>()
 
-const emit = defineEmits<{ open: [resource: AnyResourceView] }>()
+const emit = defineEmits<{ open: [resource: AnyResourceView], ready: [] }>()
 
 const states = computed(() => props.resource.states)
 const lifecycle = computed(() => buildEntityLifecycle(props.workspace, props.resource))
-/* The column's own height, so the machine draws at full size; a very long
-   lifecycle fits by scaling rather than by growing without end. */
-const canvasHeight = computed(() => Math.min(720, Math.max(280, lifecycle.value.nodes.length * (LIFECYCLE_STATE_HEIGHT + LIFECYCLE_RANK_GAP) + 96)))
+const scrollKey = computed(() => JSON.stringify([props.workspace.identity.id, 'lifecycle', props.resource.key]))
+const { element: pane, save, restore } = useBlrTopologyScroll(scrollKey)
+watch(() => props.workspace, () => { save(); void restore() }, { flush: 'pre' })
 /* The list is every arc; the machine draws the ones with a state at each end.
    An information change with no state is listed — it is a Step that changes
    the thing — and marked as not drawn, so the count above the canvas and the
@@ -62,20 +62,14 @@ function open(kind: 'capability' | 'rule', id: string) {
 </script>
 
 <template>
-  <div class="min-w-0 space-y-6">
+  <div ref="pane" class="min-w-0 space-y-6" @scroll.capture.passive="save">
     <section class="space-y-3">
       <h2 class="blr-page-heading">
         <BlrTerm slug="lifecycle" text="Machine" />
         <span class="blr-meta ms-1">{{ states.length }} {{ states.length === 1 ? 'state' : 'states' }} · {{ arcs.length }} {{ arcs.length === 1 ? 'arc' : 'arcs' }}<template v-if="drawnCount !== arcs.length">, {{ drawnCount }} drawn</template></span>
       </h2>
-      <div
-        v-if="lifecycle.edges.length"
-        class="overflow-hidden rounded-xl border border-default bg-elevated/20"
-        :style="{ height: `${canvasHeight}px` }"
-      >
-        <BlrFlowCanvas :nodes="lifecycle.nodes" :edges="lifecycle.edges" :fit-padding="0.2" :show-controls="false" />
-      </div>
-      <p v-else class="text-sm text-muted">No Step moves it between its states yet, so there is no machine to draw.</p>
+      <BlrDiagram v-if="lifecycle.nodes.length" :diagram="lifecycle" :viewport-key="scrollKey" class="blr-lifecycle-diagram" :title="`${resource.title} lifecycle`" @ready="restore(); emit('ready')" />
+      <p v-if="!lifecycle.edges.length" class="text-sm text-muted">No Step moves it between its states yet. Every declared State remains visible.</p>
       <ul v-if="arcs.length" class="space-y-1.5">
         <li
           v-for="arc in arcs"
@@ -197,3 +191,7 @@ function open(kind: 'capability' | 'rule', id: string) {
     </section>
   </div>
 </template>
+
+<style scoped>
+.blr-lifecycle-diagram { height: min(640px, 72vh); min-height: 420px; }
+</style>

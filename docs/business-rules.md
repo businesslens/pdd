@@ -3,7 +3,7 @@ title: Business Rules
 description: Durable assertions of what must remain true — constraints, derivations, and who may perform an operation on a thing — applied to behavior, Contexts, or Entity operations.
 section: open-source
 group: Product Model
-order: 16
+order: 14
 terms:
   - term: Business Rule
     aliases: [Rule]
@@ -156,9 +156,9 @@ added later from Pending is governed by it, and silently open under the
 narrower one.
 
 A Rule reaches Capabilities through Steps: every Capability whose Scenario has a
-Step performing the selected operation is in the Rule's derived reach, and the
-report draws the Rule on that Entity's lifecycle — restricting the arcs it
-grants, forbidding the ones it closes.
+Step performing the selected operation is in the Rule's derived reach. The Rule
+then governs that Entity's lifecycle: it restricts the arcs it grants and
+forbids the ones it closes.
 
 ## Permission
 

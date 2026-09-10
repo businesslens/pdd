@@ -3,7 +3,7 @@ title: Domains
 description: Optional regions of the Product's subject matter that classify Capabilities, Entities, Screens and Journeys without owning any of them.
 section: open-source
 group: Product Model
-order: 13
+order: 11
 terms:
   - term: Domain
     definition: "A subject area of the Product, such as ordering or billing, that classifies related Capabilities and Entities."
@@ -111,4 +111,4 @@ The model describes the Product, not the organization building it.
 | --- | --- | --- |
 | [Capabilities](./capabilities.md) | `domain:` | Zero or one |
 | [Entities](./entities.md) | `domain:` | Zero or one |
-| [Screens](./screens.md) · [Journeys](./journeys.md) | derived through Capabilities | Zero or more |
+| [Screens](./interfaces.md#screens) · [Journeys](./journeys.md) | derived through Capabilities | Zero or more |

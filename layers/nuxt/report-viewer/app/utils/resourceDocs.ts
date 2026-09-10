@@ -4,14 +4,12 @@ import { ENTITY_KIND_META } from './reportWorkspace'
 /** Where the documentation lives. The vocabulary links out to the same pages. */
 export const DOCS_ORIGIN = 'https://businesslens.io/docs'
 
-/* Documentation explains a resource kind, never one report instance. Scenario
-   containment follows the authored docs: Capability Scenarios live with
-   Capabilities, and Journey Scenarios with Journeys. */
+/* Child resources link to their owning documentation's relevant section. */
 const DOCS_SLUG: Record<ReportResourceKind, string> = {
   product: 'product',
   interface: 'interfaces',
-  experience: 'experiences',
-  screen: 'screens',
+  experience: 'interfaces#experiences',
+  screen: 'interfaces#screens',
   domain: 'domains',
   entity: 'entities',
   capability: 'capabilities',

@@ -57,6 +57,8 @@ export default defineNuxtConfig({
     resolve('../../layers/nuxt/theme-lab')
   ],
   ssr: false,
+  // Keep the downloadable CLI within its archive budget as graph engines grow.
+  vite: { build: { minify: 'terser', terserOptions: { compress: { passes: 2 } } } },
   devtools: { enabled: false },
   colorMode: {
     preference: 'light',
@@ -64,7 +66,13 @@ export default defineNuxtConfig({
   },
   icon: {
     clientBundle: {
-      icons: ['lucide:refresh-cw', 'simple-icons:github']
+      icons: [
+        'lucide:loader-circle',
+        'lucide:refresh-cw',
+        'lucide:sliders-horizontal',
+        'lucide:triangle-alert',
+        'simple-icons:github'
+      ]
     }
   },
   compatibilityDate: '2024-11-01',

@@ -3,6 +3,7 @@ import { createServer, type IncomingMessage, type Server, type ServerResponse } 
 import { lstatSync, readFileSync, watch, type FSWatcher } from 'node:fs'
 import { basename, extname, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { createRequire } from 'node:module'
 import type { ProductReportV13 } from './portable.js'
 import { MAX_PRODUCT_LOGO_BYTES, validateProductLogo } from '../logo.js'
 
@@ -13,6 +14,7 @@ const HEALTH_PATH = '/_businesslens/health'
 const LOGO_PATH = '/_businesslens/logo.svg'
 const ASSET_PREFIX = '/_businesslens/file/'
 const VIEWER_ROOT = fileURLToPath(new URL('./viewer/', import.meta.url))
+const BRAND_ROOT = resolve(createRequire(import.meta.url).resolve('businesslens/package.json'), '../layers/nuxt/theme/public/brand')
 
 /** 25 MB. A product asset is a mockup or a capture, never a build output. */
 const MAX_ASSET_BYTES = 25 * 1024 * 1024
@@ -381,6 +383,7 @@ function requestHandler(
     }
 
     const file = staticFile(viewerRoot, pathname)
+      ?? (pathname.startsWith('/brand/') ? staticFile(BRAND_ROOT, pathname.slice('/brand/'.length)) : undefined)
     if (!file) {
       json(response, 404, { message: 'Not found.' }, head)
       return

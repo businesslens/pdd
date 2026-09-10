@@ -21,13 +21,16 @@ const props = withDefaults(defineProps<{
   acts?: ActingSide | null
   /** Suppress the text label only where a nearby label already names the kind. */
   labelled?: boolean
+  /** False where the surface names the kind: a sub-marked kind drops its glyph. */
+  withKind?: boolean
 }>(), {
   count: null,
   size: 'sm',
   interfaceType: null,
   facet: null,
   acts: null,
-  labelled: true
+  labelled: true,
+  withKind: true
 })
 
 const colorMode = useColorMode()
@@ -37,6 +40,10 @@ onMounted(() => {
 })
 
 const meta = computed(() => ENTITY_KIND_META[props.kind])
+/* A sub-mark explains itself — "Web Interface", "External person that acts on
+   the Product" — so the wrapper must not stack a plainer tooltip beneath it. */
+const subMarked = computed(() => (props.kind === 'entity' && props.facet !== null)
+  || (props.kind === 'interface' && props.interfaceType !== null))
 const color = computed(() => slotColor(meta.value.slot, mounted.value && colorMode.value === 'dark'))
 </script>
 
@@ -44,7 +51,7 @@ const color = computed(() => slotColor(meta.value.slot, mounted.value && colorMo
   <span
     class="blr-kind inline-flex items-center gap-1.5 text-xs whitespace-nowrap"
     :data-size="size"
-    :title="meta.label"
+    :title="subMarked ? undefined : meta.label"
   >
     <BlrEntityMark
       v-if="kind === 'entity' && facet"
@@ -55,6 +62,7 @@ const color = computed(() => slotColor(meta.value.slot, mounted.value && colorMo
     <BlrInterfaceType
       v-else-if="kind === 'interface' && interfaceType"
       :type="interfaceType"
+      :with-kind="withKind"
       :size="size"
     />
     <UIcon v-else :name="meta.icon" class="blr-kind__icon shrink-0" :style="{ color }" />

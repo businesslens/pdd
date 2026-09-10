@@ -47,7 +47,7 @@ const marketplace = JSON.parse(await readFile(resolve(root, '.claude-plugin/mark
 const localViewer = JSON.parse(await readFile(resolve(root, 'viewer/app/package.json'), 'utf8'))
 const reportContract = await readFile(resolve(root, 'src/core/portable.ts'), 'utf8')
 const reportViewerReadme = await readFile(resolve(root, 'layers/nuxt/report-viewer/README.md'), 'utf8')
-const nuxtConsumerFixture = await readFile(resolve(root, 'test/fixtures/nuxt-layer-consumer/app/app.vue'), 'utf8')
+const nuxtConsumerFixture = await readFile(resolve(root, 'test/fixtures/nuxt-layer-consumer/app/pages/index.vue'), 'utf8')
 const reportViewerEntry = await readFile(
   resolve(root, 'layers/nuxt/report-viewer/app/components/BusinessLensReportViewer.vue'), 'utf8'
 )

@@ -167,3 +167,34 @@
 ::selection {
   background: color-mix(in srgb, var(--color-brass-500) 30%, transparent);
 }
+
+/*
+  An interactive control takes the hand.
+
+  Nuxt UI marks button-like elements `cursor-default`, which reads as "not
+  clickable" on a web page even where the element is the primary control on the
+  surface. The rule in `@layer base` above cannot win that: a Tailwind utility
+  is layered, and any layered rule beats a base one. This block is unlayered,
+  which beats every layer regardless of specificity, and `:where()` keeps it at
+  zero specificity so a component can still opt out deliberately.
+*/
+:where(
+  button,
+  summary,
+  [role='button'],
+  [role='option'],
+  [role='tab'],
+  [role='menuitem'],
+  [role='menuitemcheckbox'],
+  [role='menuitemradio'],
+  [role='switch'],
+  [role='checkbox'],
+  [role='radio']
+):not(:disabled):not([aria-disabled='true']) {
+  cursor: pointer;
+}
+
+:where(button, [role='button'])[disabled],
+:where(button, [role='button'])[aria-disabled='true'] {
+  cursor: not-allowed;
+}

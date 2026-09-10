@@ -1,4 +1,8 @@
 <script setup lang="ts">
+provide('businesslens:viewer', useId())
+import type { TopologyReading } from '../utils/topologyState'
+import { defaultTopologyReading } from '../utils/topologyState'
+import { destinationForLocation } from '../utils/reportDestinations'
 /**
  * The public entry point every host renders.
  *
@@ -19,8 +23,8 @@ const props = defineProps<{
 }>()
 
 /**
- * The open section: `overview`, `topology`, or a resource kind such as
- * `capability`. Bindable so a host can keep it in the URL.
+ * The open section: `overview` or a main resource collection. Bindable so a
+ * host can keep it in the URL.
  */
 const section = defineModel<string>('section', { default: 'overview' })
 
@@ -43,21 +47,50 @@ const scenarioRoute = defineModel<string | null>('scenarioRoute', { default: nul
 
 /** `auto`, or the reader's preferred number of visible route columns. */
 const routeColumns = defineModel<string>('routeColumns', { default: 'auto' })
+const topology = defineModel<TopologyReading>('topology', { default: defaultTopologyReading })
 
 const workspace = computed(() => projectReportWorkspace(props.report))
+
+/*
+  Render the canonical location on both server and client. Only the tab's own
+  view is reconciled here: an address that names no destination this report has
+  simply reads as the section's first tab, which is the honest landing for a
+  link written against a report the reader no longer has.
+*/
+const location = computed(() => {
+  const next = { section: section.value, resource: resource.value, tab: tab.value, topology: topology.value }
+  const destination = destinationForLocation(next.section, next.tab, next.resource)
+  return destination && next.topology.view !== destination.view ? { ...next, topology: { ...next.topology, view: destination.view } } : next
+})
+let mounted = false
+function synchronizeLocation() {
+  if (!mounted) return
+  const next = location.value
+  if (section.value !== next.section) section.value = next.section
+  if (resource.value !== next.resource) resource.value = next.resource
+  if (tab.value !== next.tab) tab.value = next.tab
+  if (JSON.stringify(topology.value) !== JSON.stringify(next.topology)) topology.value = next.topology
+}
+watch(location, synchronizeLocation, { flush: 'post' })
+onMounted(() => { mounted = true; synchronizeLocation() })
 </script>
 
 <template>
   <article data-businesslens-report-viewer class="businesslens-report">
     <BlrReportShell
-      v-model:section="section"
-      v-model:resource="resource"
-      v-model:tab="tab"
+      :section="location.section"
+      :resource="location.resource"
+      :tab="location.tab"
       v-model:scenario-route="scenarioRoute"
       v-model:route-columns="routeColumns"
+      :topology="location.topology"
       :workspace="workspace"
       :logo-src="logoSrc"
       :tools-target="toolsTarget"
+      @update:section="section = $event"
+      @update:resource="resource = $event"
+      @update:tab="tab = $event"
+      @update:topology="topology = $event"
     >
       <template v-if="$slots.navigation" #navigation>
         <slot name="navigation" />

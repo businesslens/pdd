@@ -5,7 +5,33 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.12.0] - 2026-09-10
+
+### Changed
+
+- Every page of the report reads the same way: what it is and the ways out of
+  it, then tabs for which set you are reading, then what narrows it.
+- Tabs are the report's only switch. Each named reading sits beside List in the
+  collection it belongs to; the Cards/Table toggle and the grouping menu are
+  gone.
+- Filters sit beside the rows they narrow, one control per axis, on every
+  collection whatever its size.
+- Collections group by Domain on their own, and Entities that act lead the list.
+- Overview is the Product's own page, with About, Coverage and References.
+- Compare delivery is now a Capability by Interface matrix.
+- The documentation explains the Product Model. The report explains itself.
+- Report links shared before this release open the Overview.
+
+### Removed
+
+- The All resources and connections view. The rail already lists every
+  collection with its count, and a resource's connections are on its page.
+
+### Fixed
+
+- Icons missing from the local report, including the loading indicator and the
+  warning shown while an edit is invalid.
+- Interactive controls now show the hand cursor.
 
 ## [0.11.0] - 2026-09-07
 
@@ -719,6 +745,7 @@ Initial public launch of the repository.
   `docs/format.md`.
 - Claude plugin manifest and marketplace entry.
 
+[0.12.0]: https://github.com/businesslens/pdd/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/businesslens/pdd/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/businesslens/pdd/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/businesslens/pdd/compare/v0.8.0...v0.9.0

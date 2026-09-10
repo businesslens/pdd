@@ -3,7 +3,7 @@ title: Capabilities
 description: Durable Product abilities with explicit availability Contexts, and the local Capability Scenarios that make each ability observable.
 section: open-source
 group: Product Model
-order: 14
+order: 12
 terms:
   - term: Capability
     definition: "A durable ability of the Product: what it can do, independent of any one route, command, or module."
@@ -78,7 +78,7 @@ contracts. Split those into Capabilities and, when navigation benefits, group
 them under a Repository administration [Domain](./domains.md).
 
 Every Capability declares explicit availability Contexts, naming
-[Experiences](./experiences.md) only where the Interface uses them. An optional
+[Experiences](./interfaces.md#experiences) only where the Interface uses them. An optional
 [Domain](./domains.md) can organize it, but Domains are not required.
 
 ## The file
@@ -218,8 +218,8 @@ whose text says *the Reader chooses a saved item* also says so where a tool can
 read it. A Step whose text names an Entity's title and declares it nowhere is a
 finding — an error in a `complete` model, a warning otherwise.
 
-The report's **Ends with** summary takes the last creation, change, or removal
-of each Entity instance in Step order. It includes the resulting State when
+**Ends with** is the last creation, change, or removal of each Entity instance
+in Step order. It includes the resulting State when
 specified, and also shows removals and changes without a named State. Later
 reads do not replace that result.
 

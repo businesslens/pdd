@@ -86,6 +86,8 @@ describe('vocabulary lookup', () => {
     expect(pages.every(page => [page.lead, ...page.items].every(item => vocabularySection(item.slug) === page.page))).toBe(true)
     expect(pages.find(page => page.page === 'entities').items.map(item => item.slug))
       .toEqual(expect.arrayContaining(['actor', 'entity-kind', 'state', 'arc']))
+    expect(pages.find(page => page.page === 'interfaces').items.map(item => item.slug))
+      .toEqual(expect.arrayContaining(['experience', 'access-mode', 'screen', 'view-state']))
     expect(pages.find(page => page.page === 'capabilities').items.map(item => item.slug))
       .toContain('capability-scenario-trigger')
     expect(pages.find(page => page.page === 'journeys').items.map(item => item.slug))
@@ -94,7 +96,7 @@ describe('vocabulary lookup', () => {
 
   it('leads every section with the term it is named for, and never repeats it as a row', () => {
     expect(VOCABULARY_PAGES.map(page => page.lead.slug)).toEqual([
-      'product', 'entity', 'interface', 'experience', 'screen',
+      'product', 'entity', 'interface',
       'domain', 'capability', 'journey', 'business-rule', 'reference'
     ])
     expect(VOCABULARY_PAGES.every(page => !page.items.some(item => item.slug === page.lead.slug))).toBe(true)
