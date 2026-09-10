@@ -342,9 +342,7 @@ const surfaceDocs = computed(() => docsForResourceKind(pageSubject.value?.kind ?
  * held anything, and the switch that did it was a fifth idiom nowhere else uses.
  */
 const PRODUCT_TABS = [
-  { id: 'about', label: 'About', hint: '' },
   { id: 'coverage', label: 'Coverage', hint: '' },
-  { id: 'counts', label: 'Model counts', hint: '' },
   { id: 'references', label: 'References', hint: '' }
 ]
 
@@ -352,7 +350,7 @@ const PRODUCT_TABS = [
    rail union no longer includes it, and a collection that has none is normal. */
 const surfaceViews = computed(() => REPORT_DESTINATIONS.filter(item => (item.rail as string) === activeSection.value))
 const surfaceTabs = computed(() => openPage.value ? [] : [
-  { id: 'overview', label: activeKind.value === 'product' ? 'Overview' : 'List', hint: '' },
+  { id: 'overview', label: activeKind.value === 'product' ? 'About' : 'List', hint: '' },
   ...(activeKind.value === 'product' ? PRODUCT_TABS : []),
   ...surfaceViews.value.map(item => ({ id: item.mode, label: item.label, hint: findProductTopologyView(item.view).question }))
 ])
@@ -453,8 +451,10 @@ const orphanScenarios = computed(() => props.workspace.scenarios
         aria-label="Open report navigation"
         @click="mobileNavOpen = true"
       />
-      <img v-if="logoSrc" :src="logoSrc" alt="" class="hidden size-6 shrink-0 rounded-md border border-muted bg-elevated object-contain p-0.5 lg:block">
-      <UIcon v-else name="i-lucide-house" class="hidden size-5 shrink-0 text-primary lg:block" />
+      <!-- The first crumb is the way home, so it carries the house at every
+           width and in every model. A Product's own logo is content, and it
+           belongs to the reading that carries its name. -->
+      <UIcon name="i-lucide-house" class="hidden size-5 shrink-0 text-primary lg:block" />
       <button
         type="button"
         class="hidden min-w-0 max-w-48 truncate text-sm font-semibold tracking-tight text-highlighted hover:text-primary lg:block"
@@ -678,6 +678,7 @@ const orphanScenarios = computed(() => props.workspace.scenarios
           <BlrOverview
             v-if="activeKind === 'product'"
             :workspace="workspace"
+            :logo-src="logoSrc"
             :tab="activeSurfaceTab"
             @select="openResourcePage"
             @select-key="openResourceKey"
@@ -825,13 +826,7 @@ const orphanScenarios = computed(() => props.workspace.scenarios
     >
       <template #header>
         <div class="blr-report-shell flex min-w-0 flex-1 items-center gap-3">
-          <img
-            v-if="logoSrc"
-            :src="logoSrc"
-            alt=""
-            class="size-6 shrink-0 rounded-md border border-muted bg-elevated object-contain p-0.5"
-          >
-          <UIcon v-else name="i-lucide-house" class="size-5 shrink-0 text-primary" />
+          <UIcon name="i-lucide-house" class="size-5 shrink-0 text-primary" />
           <button
             type="button"
             class="min-w-0 max-w-48 truncate text-sm font-semibold tracking-tight text-highlighted hover:text-primary"

@@ -24,17 +24,17 @@ page, and a count.
 ## Information presented
 
 - The name of the open reading and the resource type it presents, above it
-- The Product's summary, the things that act on it, and the one-line shape of the model
+- The Product's mark, name and summary, and the things that act on it
 - Its description, Intent, supporting sections, category, tags, licence, authors, and known limitations
-- Coverage status, rationale, method, source areas, unmapped areas, and limitations
 - How many resources of each kind the model authors, and the depth derived from them
+- Coverage status, rationale, method, source areas, unmapped areas, and limitations
 - The Product's own References, and every reference in the model with the resource that carries it
 - Which generator and schema version produced the report, and when
 
 ## Available actions
 
 - Open Entities, Interfaces, Domains, Capabilities, Journeys, or Business Rules
-- Read About, Coverage, Model counts, or References as tabs beside the Overview
+- Read About, Coverage or References, the Product's three readings
 - Open the page of any resource that carries a reference
 - Open the page of a thing that acts on the Product
 - Read the documentation for the Product resource type
@@ -42,16 +42,15 @@ page, and a count.
 
 ## View states
 
-### Overview open
+### About open
 
-The Product's summary, who it is made for, the one-line shape of the model, and
-the first sentence of its coverage rationale.
+The Product itself, at full width: its mark, name and summary, who it is made
+for, what it says about itself, and how many resources the model authors.
 
 ### A further reading open
 
-About, Coverage, Model counts, or References, each at full width. Nothing is
-hidden behind a disclosure the reader must open to learn whether it holds
-anything.
+Coverage or References. Nothing is hidden behind a disclosure the reader must
+open to learn whether it holds anything.
 
 ## Capability boundary
 

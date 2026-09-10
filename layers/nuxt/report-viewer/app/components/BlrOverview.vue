@@ -3,10 +3,15 @@
  * The Product's own page.
  *
  * It reads like every other surface, because it is one: the heading names the
- * Product and the tabs name each reading of it. What used to be four collapsed
+ * surface and the tabs name each reading of it. What used to be four collapsed
  * disclosures stacked under a centred column — asking the reader to open each
  * one to find out whether it held anything — are now peer tabs, which is the
  * report's only switch everywhere else.
+ *
+ * About is the Product itself: its mark and name, who it is for, what it says
+ * about itself, and how much of it the model holds. Splitting that identity
+ * across an Overview and an About made the reader open two tabs to learn one
+ * thing, and left the first with too little to be worth arriving at.
  *
  * Journeys are not listed here. They are a collection with a rail row, a page
  * and a count, and printing them a second time on the way past made the Product
@@ -14,11 +19,12 @@
  */
 import type { AnyResourceView, ReportWorkspace } from '../utils/reportWorkspace'
 import { entityFacetOf, resolveResourceKey } from '../utils/reportWorkspace'
-import { firstSentence } from '../utils/reportMarkdown'
 
 const props = defineProps<{
   workspace: ReportWorkspace
-  /** The open reading: `overview`, `about`, `coverage`, `counts`, `references`. */
+  /** Host-resolved product logo, rendered with the Product's own name. */
+  logoSrc?: string | null
+  /** The open reading: `overview` (About), `coverage`, or `references`. */
   tab: string
 }>()
 
@@ -26,22 +32,6 @@ const emit = defineEmits<{
   select: [resource: AnyResourceView]
   selectKey: [key: string]
 }>()
-
-/** The one-line shape of the model, in the order the resources depend on. */
-const countFacts = computed(() => [
-  { label: 'Journeys', value: props.workspace.counts.journeys },
-  { label: 'Journey Scenarios', value: props.workspace.counts.journeyScenarios },
-  { label: 'Capability Scenarios', value: props.workspace.counts.capabilityScenarios },
-  { label: 'Steps', value: props.workspace.counts.steps },
-  { label: 'Capabilities', value: props.workspace.counts.capabilities },
-  { label: 'Domains', value: props.workspace.counts.domains },
-  { label: 'Entities', value: props.workspace.counts.entities },
-  { label: 'Screens', value: props.workspace.counts.screens },
-  { label: 'Interfaces', value: props.workspace.counts.interfaces },
-  { label: 'Experiences', value: props.workspace.counts.experiences },
-  { label: 'Rules', value: props.workspace.counts.rules },
-  { label: 'Actors', value: props.workspace.counts.actors }
-])
 
 const authoredCounts = computed<Array<[string, number]>>(() => [
   ['Actors', props.workspace.counts.actors],
@@ -77,9 +67,16 @@ function referenceEntity(ownerKey?: string) {
 
 <template>
   <div class="min-w-0 space-y-5">
-    <!-- OVERVIEW: what this Product is, and the shape of what is modeled. -->
+    <!-- ABOUT: the Product itself — who it is for, what it says about itself,
+         and how much of it the model holds. -->
     <template v-if="tab === 'overview'">
-      <p class="text-base leading-7 text-default">{{ workspace.identity.summary }}</p>
+      <div class="flex flex-wrap items-start gap-4">
+        <img v-if="logoSrc" :src="logoSrc" alt="" class="size-12 shrink-0 rounded-lg border border-default">
+        <div class="min-w-0 flex-1 space-y-1.5">
+          <h2 class="text-xl font-semibold tracking-[-0.02em] text-highlighted">{{ workspace.identity.title }}</h2>
+          <p class="text-base leading-7 text-default">{{ workspace.identity.summary }}</p>
+        </div>
+      </div>
 
       <div class="flex flex-wrap items-center gap-1.5">
         <span class="blr-field me-1">Made for</span>
@@ -104,29 +101,11 @@ function referenceEntity(ownerKey?: string) {
         <span v-if="!workspace.actingEntities.length" class="text-sm text-muted italic">No Entity acts on this Product.</span>
       </div>
 
-      <div class="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-        <span v-for="fact in countFacts" :key="fact.label" class="blr-field">
-          <span class="font-mono text-highlighted tabular-nums">{{ fact.value }}</span>
-          {{ fact.label }}
-        </span>
-        <span v-if="workspace.coverage.rationale" class="text-xs text-dimmed italic">
-          {{ firstSentence(workspace.coverage.rationale) }}
-        </span>
-      </div>
-
       <!-- The host's call to action sits with the identity it acts on. -->
       <div v-if="$slots['primary-action']">
         <slot name="primary-action" />
       </div>
 
-      <!-- Where this report came from, which only the host can know. -->
-      <div v-if="$slots.provenance" class="text-sm text-muted">
-        <slot name="provenance" />
-      </div>
-    </template>
-
-    <!-- ABOUT: the authored meaning the identity header cannot hold. -->
-    <template v-else-if="tab === 'about'">
       <BlrProse :text="workspace.identity.description" />
       <section v-if="workspace.identity.intent" class="space-y-1.5">
         <h2 class="blr-field">Intent</h2>
@@ -166,6 +145,31 @@ function referenceEntity(ownerKey?: string) {
           <li v-for="(item, index) in workspace.identity.limitations" :key="index">{{ item }}</li>
         </ul>
       </section>
+
+      <section class="space-y-3 border-t border-default pt-5">
+        <h2 class="blr-field">Model counts (authored)</h2>
+        <div class="grid grid-cols-3 gap-x-4 gap-y-3 sm:grid-cols-5 lg:grid-cols-6">
+          <div v-for="[label, value] in authoredCounts" :key="label">
+            <p class="font-mono text-lg text-highlighted tabular-nums">{{ value }}</p>
+            <p class="blr-field">{{ label }}</p>
+          </div>
+        </div>
+        <h2 class="blr-field pt-1">Depth (derived from the model)</h2>
+        <div class="grid grid-cols-3 gap-x-4 gap-y-3 sm:grid-cols-5 lg:grid-cols-6">
+          <div v-for="[label, value] in derivedCounts" :key="label">
+            <p class="font-mono text-lg text-highlighted tabular-nums">{{ value }}</p>
+            <p class="blr-field flex items-center gap-1.5">
+              <BlrReferenceIcon v-if="label === 'References'" class="size-3.5" />
+              {{ label }}
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Where this report came from, which only the host can know. -->
+      <div v-if="$slots.provenance" class="text-sm text-muted">
+        <slot name="provenance" />
+      </div>
     </template>
 
     <!-- COVERAGE: how much of the repository this model claims to speak for. -->
@@ -199,26 +203,6 @@ function referenceEntity(ownerKey?: string) {
             <li v-for="(item, index) in workspace.coverage.limitations" :key="index">{{ item }}</li>
           </ul>
         </section>
-      </div>
-    </template>
-
-    <!-- MODEL COUNTS: what was authored, and what the model derives from it. -->
-    <template v-else-if="tab === 'counts'">
-      <div class="grid grid-cols-3 gap-x-4 gap-y-3 sm:grid-cols-5 lg:grid-cols-6">
-        <div v-for="[label, value] in authoredCounts" :key="label">
-          <p class="font-mono text-lg text-highlighted tabular-nums">{{ value }}</p>
-          <p class="blr-field">{{ label }}</p>
-        </div>
-      </div>
-      <h2 class="blr-field pt-1">Depth (derived from the model)</h2>
-      <div class="grid grid-cols-3 gap-x-4 gap-y-3 sm:grid-cols-5 lg:grid-cols-6">
-        <div v-for="[label, value] in derivedCounts" :key="label">
-          <p class="font-mono text-lg text-highlighted tabular-nums">{{ value }}</p>
-          <p class="blr-field flex items-center gap-1.5">
-            <BlrReferenceIcon v-if="label === 'References'" class="size-3.5" />
-            {{ label }}
-          </p>
-        </div>
       </div>
     </template>
 

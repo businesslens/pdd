@@ -1150,11 +1150,17 @@ describe('stable Product Report', () => {
   it('moves product identity into a desktop-equivalent mobile rail', () => {
     const reportShell = source('app/components/BlrReportShell.vue')
 
-    expect(reportShell).toContain("class=\"hidden size-6 shrink-0 rounded-md border border-muted bg-elevated object-contain p-0.5 lg:block\"")
+    /* The way home is one affordance at both widths: the same house, the same
+       name, the same target. A mark that changes shape with the model — a logo
+       here, a glyph there — is two affordances wearing one slot, so a Product's
+       own logo is content and lives on the reading that names it. */
+    expect(reportShell.match(/i-lucide-house/g)).toHaveLength(2)
+    expect(reportShell.match(/title="Open the Overview"/g)).toHaveLength(2)
+    expect(reportShell).not.toContain('v-if="logoSrc"')
+    expect(source('app/components/BlrOverview.vue')).toContain('v-if="logoSrc"')
     expect(reportShell).toContain(":ui=\"{ content: 'w-64 max-w-[85vw]', body: 'p-2' }\"")
     expect(reportShell).toContain('class="blr-report-shell flex min-w-0 flex-1 items-center gap-3"')
     expect(reportShell).toContain('class="blr-report-shell min-h-full"')
-    expect(reportShell.match(/v-if="logoSrc"/g)).toHaveLength(2)
   })
 })
 

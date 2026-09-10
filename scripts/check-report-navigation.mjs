@@ -98,19 +98,22 @@ try {
     await page.goto(`${origin}/?s=topology&tv=sitemap`)
     await expect(page.locator('.blr-report-shell')).toBeVisible()
     await expect(page.getByRole('heading', { level: 1 })).toContainText('Overview')
-    await expect(tab(page, 'Overview').first()).toHaveAttribute('aria-selected', 'true')
+    await expect(tab(page, 'About').first()).toHaveAttribute('aria-selected', 'true')
     /* The way home is chrome: it is on every surface, this one included. */
     await expect(page.locator('.blr-report-header')).toContainText(report.title)
     /* The Product's page is a page: its readings are peer tabs, not disclosures. */
     await expect(page.locator('.blr-disclosure')).toHaveCount(0)
-    for (const [label, mode] of [['About', 'about'], ['Coverage', 'coverage'], ['Model counts', 'counts'], ['References', 'references']]) {
+    /* About is the default reading and carries the Product's own name, so it
+       needs no tab parameter and nothing else repeats the identity. */
+    await expect(page.getByRole('heading', { level: 2 }).first()).toContainText(report.title)
+    for (const [label, mode] of [['Coverage', 'coverage'], ['References', 'references']]) {
       await tab(page, label).first().click()
       await expect(page).toHaveURL(new RegExp(`[?&]t=${mode}(?:&|$)`))
       await page.reload()
       await expect(tab(page, label).first()).toHaveAttribute('aria-selected', 'true')
       await capture(page, `${width}-product-${mode}`)
     }
-    await tab(page, 'Overview').first().click()
+    await tab(page, 'About').first().click()
     await expect(page).not.toHaveURL(/[?&]t=/)
 
     const journey = report.model.journeys[0]

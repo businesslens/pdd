@@ -21,7 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Documentation and related readings sit beside the title instead of under the tabs.
 - Filters offer only the relations a row already shows.
 - Compare delivery and Journey composition are now tabs of Interfaces and Journeys.
-- The Overview reads like every other page, with About, Coverage, Model counts and References as tabs.
+- The Overview reads like every other page, with About, Coverage and References as tabs.
+- About carries the Product's logo, name and summary again, alongside what the model holds.
 - The Overview names the Product resource type it presents, so nothing is labelled "Product Report" any more.
 - The Overview no longer repeats the Journeys list, which has its own collection.
 - The All resources and connections view is gone; the rail and each resource's page already answer it.

@@ -204,7 +204,10 @@ costed already.
   looking at rather than anything the model authors, and naming it there put a
   view, an artifact and a type in one line while the tooltip defined a fourth.
   The report's identity and the way home stay in the header on every surface,
-  including the one they lead to. Ways out —
+  including the one they lead to, and the first crumb carries the house in every
+  model — a way home that changes shape with the model is not one affordance. A
+  Product's own logo is content rather than chrome: it belongs to the reading
+  that carries its name. Ways out —
   documentation, and a named view belonging to another subject — sit on that H1
   row, because an exit belongs to the subject and not to whichever tab happens
   to be open. Every surface then reads the same way down the page: what this is
@@ -214,7 +217,11 @@ costed already.
   the same tab strip and the same full width, and it is headed `Overview` like
   the rail row that opens it, qualified by the resource type it presents. It is
   the one row that opens a resource rather than a collection, which is why its
-  qualifier is a type where a collection's is a count. Its About, Coverage, Model counts
+  qualifier is a type where a collection's is a count. Its readings are About,
+  Coverage and References. About is the Product itself — its mark and name, who
+  it is for, what it says about itself, and how much of it the model holds — and
+  it is one tab because splitting an identity across two made the reader open
+  both to learn one thing, and left the first with too little to arrive at. Its About, Coverage, Model counts
   and References are peer tabs, not stacked disclosures a reader has to open to
   learn whether they hold anything — a disclosure column is a switch idiom
   nowhere else in the report uses, and it hides the answer behind the question.

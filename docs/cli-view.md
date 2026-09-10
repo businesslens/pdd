@@ -41,7 +41,7 @@ the toolbar only narrows what is already there.
 | What changes what | Capabilities → What changes what |
 | Rule attachments | Business Rules → Attachments |
 | Journey composition | Journeys → Composition |
-| About, Coverage, Model counts, References | Overview → its own tabs |
+| About, Coverage, References | Overview → its own tabs |
 | Lifecycle | An Entity → Lifecycle |
 | Scenarios | A Capability or Journey → Scenarios |
 
@@ -53,8 +53,9 @@ over relations the rows already print.
 
 The Overview is the Product's own page and reads like every other one: it is
 headed `Overview`, the same word as the rail row that opens it, qualified by
-`Product` — the resource type it presents — and About, Coverage, Model counts and
-References are tabs beside it. It carries no named view of its own: the rail
+`Product` — the resource type it presents. About carries the Product's mark,
+name, summary, who it is made for, what it says about itself and how much of it
+the model holds; Coverage and References are tabs beside it. It carries no named view of its own: the rail
 already lists every collection with its count, and a resource's connections are
 on its page. It does not list Journeys — they have a rail row, a page and a count
 of their own.
