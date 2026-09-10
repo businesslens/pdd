@@ -1,7 +1,9 @@
 # Resource navigation and visualization placement
 
-Status: implemented, 2026-09-09. Landing authentication conflicts are resolved;
-the latest verification results and remaining gates are recorded below.
+Status: implemented 2026-09-09, superseded in part 2026-09-10. The plan body
+records what was decided and shipped then. Read **Surface grammar, 2026-09-10**
+at the end first: it carries the current placement table and lists every
+statement above that no longer holds.
 
 ## Outcome
 
@@ -242,3 +244,106 @@ Validation of this refinement:
 
 The full unrelated browser suite and packed-consumer tests were not repeated for
 this documentation refinement. No commit, push or deployment was performed.
+
+## Surface grammar, 2026-09-10
+
+Per the user's review of the shipped report, the placements above survived but
+the controls around them did not. The report had four switch idioms for two
+concepts, and the reader had to learn which was which on every surface.
+
+**Tabs are the only switch.** A tab changes which set is on screen, the rail
+changes the subject, and the toolbar only narrows what is already there. There is
+no representation control: "the same rows drawn differently" was never true of
+any of them, since a relationship graph shows edges a list does not and a
+containment map adds the Product root. Six controls came out — the Cards/Table
+toggle, the Group by select, the link-styled Compare delivery outlier, the second
+Filters idiom on view canvases, the Details/Composition pair, and the bespoke
+Interfaces directory — and one row was promoted in their place.
+
+**Every surface names itself, with the name the reader clicked.** The breadcrumb
+is a path that ends at the parent; an H1 carries the current collection or
+resource with its type mark, count or type label, and term tooltip. A rail row
+and the heading it opens say the same word. Ways out — documentation, and a named
+view of another subject focused on this resource — sit on that heading row, because
+an exit belongs to the subject and not to whichever tab is open. The tab strip
+renders only where a second tab exists.
+
+**Grouping is authored, never configured.** Domain is the only axis, always on
+where the type carries one, with Entities that act leading their collection in a
+group of their own. Offering every related kind was a view builder wearing a
+select menu. **A filter offers only what the row already prints**, derived from
+the card rather than kept beside it.
+
+### Current placement
+
+| Reading | Home | Form |
+| --- | --- | --- |
+| Domain map | Domains → Map | Grouped Capabilities and Entities by authored Domain |
+| Interface map | Interfaces → Map | Interactive Vue Flow containment tree |
+| Compare delivery | Interfaces → Compare delivery | Structured cross-Interface delivery reading |
+| Entity relationships | Entities → Relationships | Vue Flow graph with verbs and cardinalities |
+| What changes what | Capabilities → What changes what | Capability × Entity mutation matrix with Scenario evidence |
+| Rule attachments | Business Rules → Attachments | Explicit attachment matrix retaining target restrictions |
+| Composition | Journeys → Composition | Every Journey's Scenarios as Capability occurrence columns |
+| Scenarios | A Capability or Journey → Scenarios | One parent's Scenarios, read beside their siblings |
+| Lifecycle | An Entity → Lifecycle | Vue Flow state machine derived from Scenario effects |
+| About, Coverage, Model counts, References | Overview → its own tabs | The Product's authored meaning, breadth and references |
+
+### What this supersedes above
+
+- *"Collections open List by default; card/table appearance stays inside List."*
+  There is no card/table appearance. One row shape, every collection.
+- *"Interfaces List is an expandable instance directory,"* and the search and
+  type narrowing it paid for. Interfaces read as rows like every other
+  collection, naming what they contain; the tree is what the Map tab draws.
+- *"Compare delivery → Interfaces → secondary action"* and *"All resources and
+  connections → Overview → secondary action."* A named view is a tab of its
+  collection or it does not exist; there are no secondary actions.
+- *"Journey composition → Journey → Scenarios → Composition."* Composition
+  compares Journeys, and one Journey's page cannot answer a question about how
+  Journeys compare, so it belongs to the collection.
+- *"All resources and connections."* Removed outright rather than moved: the rail
+  names every collection with its count and a resource's connections are on its
+  page, so a view redrawing the whole index answered nobody. Its projection, the
+  one-hop relation panel and the per-branch focus button went with it. The
+  reachability guarantee it carried is now asserted against the rail.
+- *"Migrate original Topology URLs and newer Explore destination URLs."* The shim
+  is deleted. Every one of those shapes changed, and silently landing a reader
+  somewhere else is worse than a clean Overview.
+- *"Collection facets, grouping, card/table preferences and collapsed groups use
+  session storage."* Only facets and collapsed groups are kept; the reading and
+  its grouping are decided by the report, not auditioned on every visit.
+- *"No additional resource-page tabs beyond Overview, Scenarios or Lifecycle"*
+  still holds, and now holds for a reason the page can state: a comparison across
+  resources belongs to the collection.
+
+The Overview becomes the Product's own page under the same rule — full width
+rather than a centred column, headed `Overview` like the rail row that opens it,
+with About, Coverage, Model counts and References as peer tabs instead of stacked
+disclosures a reader had to open to learn whether they held anything. It no longer
+reprints the Journeys list: Journeys have a rail row, a page and a count already.
+
+Authored paths, the portable Product Report schema and `spec/report.md` remain
+unchanged. Nothing here adds or removes a wire field.
+
+### Validation
+
+- PDD `npm run verify`: 374 tests in 27 files passed, with both typechecks, the
+  production viewer build, package size, repository and Blueprint checks.
+- Self-model structural lint: sound. `Resource visualizations` merged into
+  `Resource collection`, and the Scenario Steps that named it were repointed.
+- `scripts/check-report-navigation.mjs` passed at 1440 and 390 px: tabs as the
+  only switch, self-naming surfaces, the four Product tabs through reload and
+  Back, exits, Composition and Interface delivery.
+- `scripts/check-topology-diagrams.mjs` passed across every remaining view at
+  four widths, plus the 500-resource / 2,000-relation stress case, which now
+  exercises the Entities collection rather than the removed inventory view. Both
+  browser scripts had gone stale against the restructure and were repointed.
+- Landing passes editorconfig, peers, lint, typecheck and knip. Its Blueprint host
+  dropped the retired Scenario reading mode, and its report parity spec reads tabs
+  rather than view headings.
+
+Not rerun in this pass: the skill and Claude plugin validators, the report
+accessibility scans, the packed npm/pnpm consumer checks, and landing's browser,
+visual and performance suites. Both repositories are committed on
+`feat/report-surface-grammar`; nothing was pushed.
