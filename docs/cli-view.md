@@ -21,10 +21,6 @@ open, valid changes appear automatically. If an edit introduces a lint error,
 the browser keeps the last valid report visible and recovers after the error is
 fixed.
 
-The report explains itself: every resource type it draws is defined on its own
-documentation page, and each surface links to the page for the type it presents.
-This page documents the command.
-
 ## Options
 
 | Option | Effect |
