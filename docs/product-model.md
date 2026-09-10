@@ -325,7 +325,7 @@ inspected repository areas, `unmapped` names intentionally absent Product
 breadth, `limitations` states what could not be established, and the lead prose
 is the rationale. Coverage accepts no H2 sections. Coverage has no resource type
 counts or Reference-derived fields;
-resource totals belong to the Product Report Counts.
+resource totals belong to the Product Report's About reading.
 
 Availability and Coverage do not claim implementation status. Every status may
 describe planned, implemented, or mixed behavior, and a complete model may have

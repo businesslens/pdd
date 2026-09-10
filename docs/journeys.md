@@ -367,7 +367,10 @@ Outcome belongs in another Journey Scenario.
 ## In the Product Report
 
 Journeys remains a main resource collection because goals can span Capabilities,
-Domains, and Interfaces. Open a Journey, then Scenarios → Composition to compare
-its Scenario columns. Every Capability-bearing Step stays in authored order,
-including repeated occurrences and its exact route Contexts. Columns do not mean
-simultaneous work. Details provides each Scenario's complete sequence and outcome.
+Domains, and Interfaces. Journeys offers List and Composition. Composition draws
+every Journey in the model, each with its Scenarios as columns of the
+Capabilities they compose: every Capability-bearing Step stays in authored
+order, including repeated occurrences and its exact route Contexts. Columns do
+not mean simultaneous work. Comparing Journeys belongs to the collection because
+one Journey's page cannot answer it; that page's Scenarios tab gives each
+Scenario's complete sequence and outcome.

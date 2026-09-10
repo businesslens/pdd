@@ -2,8 +2,8 @@
 
 Status: implemented 2026-09-09, superseded in part 2026-09-10. The plan body
 records what was decided and shipped then. Read **Surface grammar, 2026-09-10**
-at the end first: it carries the current placement table and lists every
-statement above that no longer holds.
+and the **Consolidation** section that follows it first: together they carry the
+current placement table and list every statement above that no longer holds.
 
 ## Outcome
 
@@ -347,3 +347,93 @@ Not rerun in this pass: the skill and Claude plugin validators, the report
 accessibility scans, the packed npm/pnpm consumer checks, and landing's browser,
 visual and performance suites. Both repositories are committed on
 `feat/report-surface-grammar`; nothing was pushed.
+
+## Consolidation, 2026-09-10
+
+Four further decisions closed after the surface grammar landed. They are
+recorded here because they change the placement table above, not merely its
+styling.
+
+**The Product's page is a page.** The Overview surface is the one instance of
+the Product resource type, so it carries the same heading, tab strip and full
+width as every other surface. It is headed `Overview` — the word on the rail row
+that opens it — qualified by `Product`, the resource type it presents; `Product
+Report` named the rendered artifact rather than anything the model authors, and
+is gone. Its readings are About, Coverage and References. About is the Product
+itself — mark, name, summary, who it is for, what it says about itself, and how
+much of it the model holds — because splitting an identity across an Overview
+and an About made a reader open both to learn one thing. The Product now
+authors a logo, so the report demonstrates the feature it ships. The way home
+keeps the house in every model: an affordance that changes shape with the model
+is not one affordance, and a Product's own logo is content rather than chrome.
+
+**One filter control per axis, inside the reading it narrows.** A single
+`Filter` button hid both which axes a collection has and the state of each. Each
+axis now has its own control, aligned with the rows it acts on; a control says
+how many values it holds and the values sit on a second row, each removable on
+its own. The size threshold is gone: a collection offers every axis it has,
+whatever its size, because sizing the offer to the collection made two reports
+of the same renderer differ for a reason no reader could see. A named view
+narrows the same way, over which resource types it draws and which resource it
+focuses. Four placements were auditioned in the private viewer lab; the
+reading-aligned one won and the experiment was removed.
+
+**Compare delivery is a matrix.** It asks which Interfaces deliver each
+Capability and answered with columns of independent lists, leaving the reader to
+diff them. It is now a Capability by Interface matrix, the shape the other two
+cross-collection readings already use: a row with two cells is delivered twice,
+a row with one is exclusive, and each cell states its authored route. The
+derivation is unchanged. An Interface's own page keeps its delivery tree, and a
+test holds the two derivations to the same answer.
+
+**A resource type's mark is reserved.** Chrome wears a kind's icon only where it
+names that kind. Three controls had borrowed one — a control naming every type
+wore the Entity mark, a Scenario's named route wore the Journey's, and the Step
+kind legend wore the Person and System facets, though an Actor Step can be
+either. All now carry unreserved glyphs.
+
+### Current placement, superseding the table above
+
+| Reading | Home |
+| --- | --- |
+| Domain map | Domains → Map |
+| Interface map | Interfaces → Map |
+| Compare delivery | Interfaces → Compare delivery |
+| Entity relationships | Entities → Relationships |
+| What changes what | Capabilities → What changes what |
+| Rule attachments | Business Rules → Attachments |
+| Composition | Journeys → Composition |
+| Scenarios | A Capability or Journey → Scenarios |
+| Lifecycle | An Entity → Lifecycle |
+| About, Coverage, References | Overview → its own tabs |
+
+### Defects found and fixed on the way
+
+- Twelve icons rendered as silent blank boxes. The bundled viewer is a generated
+  SPA with no icon endpoint, so an icon outside a client bundle is the right size
+  in the right place with no glyph, and neither the build nor the typecheck
+  catches it. Seven predated this work, including the loading spinner and the
+  invalid-model alert. A test now checks what components ask for against what the
+  bundles carry.
+- Interactive controls showed the arrow. The theme asked for the hand from
+  `@layer base`, which cannot beat the `cursor-default` utility Nuxt UI puts on
+  button-like elements; the rule is now unlayered and covers the ARIA roles menus
+  and tabs render.
+- A sub-marked kind stacked two tooltips: its own rich one and a plainer wrapper
+  title beneath it.
+
+### Validation
+
+- PDD `npm run verify`: 376 tests in 27 files, both typechecks, the production
+  viewer build, package size, repository and Blueprint checks.
+- Self-model structural lint: sound.
+- Both browser scripts pass at 1440 and 390 px, against the repository's own
+  model and the Content Feed Reader Blueprint.
+- Public documentation was re-read against what ships: the Interfaces directory,
+  the Journey composition flow, the Product Report Counts and the layer README's
+  URL contract were stale and are corrected. `docs/product.md` gained the
+  `In the Product Report` section every other main resource type already had.
+
+Not rerun: the skill and Claude plugin validators, the report accessibility
+scans, the packed npm/pnpm consumer checks, and landing's browser, visual and
+performance suites.

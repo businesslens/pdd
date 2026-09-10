@@ -78,6 +78,16 @@ Unrecognized H2 sections are kept in order as structured supporting sections
 when the model is exported and expanded. A recognized H2 such as `## Intent`
 may appear only once.
 
+## In the Product Report
+
+The Product has one instance, so the report opens on its page: the rail's
+Overview row, headed by the Product's name and `Product`. About carries its
+mark, name, summary, the things that act on it, its description, Intent,
+supporting sections, classification, authors, limitations, and how many
+resources of each kind the model authors. Coverage and References are its other
+two readings. It lists no resource collection of its own — every collection has
+a rail row, a page, and a count.
+
 ## Visual identity
 
 Adding a logo expands the Product: move the manifest to

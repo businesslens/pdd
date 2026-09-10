@@ -136,8 +136,9 @@ complete variations of a coherent multi-Capability goal.
 ## In the Product Report
 
 Interfaces is the entry point for Interfaces, Experiences, and Screens. List
-shows an expandable directory; Map draws their actual containment as a connected
-interactive tree. An Interface's Overview shows its contained resources and
+reads as rows, like every other collection, and each row names what its
+Interface contains; Map draws that containment as a connected interactive
+tree. An Interface's Overview shows its contained resources and
 Capability delivery. Compare delivery opens the cross-Interface reading: a
 Capability by Interface matrix, where a row with two cells is delivered twice
 and a row with one is exclusive to that Interface.

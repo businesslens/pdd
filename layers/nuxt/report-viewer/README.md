@@ -86,15 +86,17 @@ keeps the parent collection as the section while selecting that Scenario inside
 its parent page.
 
 The layer auto-imports `useBlrReportNavigation()` for hosts that use Vue Router.
-It returns these seven models and encodes `s`, `e`, `t`, `r`, `rc`, `sm`, plus reading
-keys `tv`, `tj`, `ts`, `tm`, `tf`, `th`, `tx`, `tc`, and `tq`. Set
+It returns these six models and encodes `s`, `e`, `t`, `r`, `rc`, plus reading
+keys `tv`, `tj`, `ts`, `tm`, `tf`, `th`, `tx`, and `tc`. Set
 `useBlrReportNavigation({ sectionKey: 'tab' })` for the catalog's section URLs.
 Defaults are omitted; array keys repeat, preserving qualified resource IDs.
 Navigation pushes history; reading filters and expansion replace the current entry.
-Hosts can instead bind their own state. Collection facets, grouping, card/table
-preferences, collapsed groups, scroll anchors and graph position use session
-storage when available, isolated by report and host path. They survive refresh
-and recompilation without entering the Product Model; removed facet IDs are pruned.
+Hosts can instead bind their own state. Collection facets, collapsed groups,
+scroll anchors and graph position use session storage when available, isolated
+by report and host path. They survive refresh and recompilation without entering
+the Product Model; removed facet IDs are pruned. Nothing else is kept, because
+nothing else is configurable: the reading and its grouping are decided by the
+report rather than auditioned on every visit.
 
 Collection readings are selected with `section` and `tab`, with no resource key:
 
@@ -105,21 +107,24 @@ Collection readings are selected with `section` and `tab`, with no resource key:
 | `entity` | `overview` | `relationships`: Entity relationships |
 | `capability` | `overview` | `mutations`: What changes what |
 | `rule` | `overview` | `attachments`: Rule attachments |
-| `journey` | `overview` | Composition lives in a Journey's Scenarios |
+| `journey` | `overview` | `composition`: Composition |
 
-Interfaces List shows actual ownership, including direct and shared Screens.
-Directory search uses `tq`, type narrowing uses `th`, and expansion uses `tx`/`tc`.
-Resource links open their subject collection's reading with explicit scope.
-Journey composition remains inside Scenarios; Entity Lifecycle keeps its tab.
-Interface Overview retains delivery, and resource Overview retains Connections.
-Domain map groups both Capabilities and Entities, including Unassigned; it does
-not imply containment or dependencies. Interface access belongs to delivery.
+Tabs are the only switch: a tab changes which set is on screen, the rail changes
+the subject, and the toolbar only narrows. Every collection reads as one row
+shape, Interfaces included — a row names what its Interface contains, and Map
+draws the shape. Composition draws every Journey, because comparing them is a
+question one Journey's page cannot answer. Compare delivery is a Capability by
+Interface matrix; an Interface's own page keeps its delivery tree. Entity
+Lifecycle keeps its tab, and resource Overview retains Connections. Domain map
+groups both Capabilities and Entities, including Unassigned; it does not imply
+containment or dependencies. Type narrowing uses `th`, focus uses `tf`, and
+expansion uses `tx`/`tc`.
 
-Original `topology` section URLs and later standalone named destinations migrate
-to these collection readings. Old Experience/Screen collection links open the
-Interfaces directory filtered to that type. Resource links retain their ids;
-Experience and Screen pages keep Interfaces selected. Existing view ids remain
-accepted, including `product-map` for Domain map.
+There is no URL migration. Every standalone `topology` and named-destination
+shape changed with the restructure, and an address naming a destination this
+report has no home for opens the Overview rather than landing the reader
+somewhere else without saying so. Resource links retain their ids, and
+Experience and Screen pages keep Interfaces selected.
 
 Interface map follows a containment tree: measured nodes in horizontal tiers,
 parents above children, shared orthogonal branches, and a distinct Product root.
