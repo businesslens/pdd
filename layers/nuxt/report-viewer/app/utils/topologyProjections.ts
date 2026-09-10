@@ -37,7 +37,13 @@ export function productMapProjection(workspace: ReportWorkspace) {
   ] }
 }
 
-/** Qualified ownership; a counterpart never merges with another by title. */
+/**
+ * Qualified ownership; a counterpart never merges with another by title.
+ *
+ * `delivery` enriches one Interface's own tree with what each level carries —
+ * the reading an Interface page gives of itself. Comparing Interfaces is a
+ * different question and a different shape: see `deliveryMatrixProjection`.
+ */
 export function interfaceProjection(workspace: ReportWorkspace, delivery = false): TopologyBranch[] {
   return workspace.interfaces.map(resource => {
     const screenBranch = (screen: typeof workspace.screens[number]) => ({ ...branch(screen),
@@ -61,6 +67,53 @@ export function interfaceProjection(workspace: ReportWorkspace, delivery = false
       referenceLabel: 'Entered by', note: !children.length ? 'No contained resources are modeled.' : undefined
     }
   })
+}
+
+/**
+ * Which Interface delivers each Capability, and by what route.
+ *
+ * Delivery is a question about two collections at once — where can I reach this,
+ * and what does this one carry — so it is a matrix, like the model's other two
+ * cross-collection readings. Columns of independent lists staged the comparison
+ * and left the reader to diff them by eye, which is not the same as answering
+ * it: a row with two marks is delivered twice, a row with one is exclusive to
+ * that Interface, and neither fact survives being spread across three columns.
+ *
+ * The routes are the ones the outline drew: a Screen of that Interface that
+ * exposes it, an Experience of that Interface whose Context it names, or the
+ * Interface itself where a Context names no Experience and no Screen carries it.
+ */
+export function deliveryMatrixProjection(workspace: ReportWorkspace): TopologyMatrix {
+  const cells: TopologyMatrixCell[] = []
+  for (const capability of workspace.capabilities) {
+    for (const resource of workspace.interfaces) {
+      const screens = workspace.screens.filter(screen => screen.capabilityIds.includes(capability.id)
+        && screen.contexts.some(context => context.interfaceId === resource.id))
+      const experiences = workspace.experiences.filter(experience => experience.interfaceIds.includes(resource.id)
+        && capability.contexts.some(context => context.experienceId === experience.id)
+        && !screens.some(screen => screen.contexts.some(context => context.experienceId === experience.id)))
+      const direct = !screens.length
+        && capability.contexts.some(context => context.interfaceId === resource.id && !context.experienceId)
+      if (!screens.length && !experiences.length && !direct) continue
+      cells.push({
+        id: `${capability.key}->${resource.key}`,
+        row: capability.key,
+        column: resource.key,
+        labels: [
+          ...(direct ? ['direct'] : []),
+          ...(experiences.length ? ['in experience'] : []),
+          ...(screens.length ? ['on screen'] : [])
+        ],
+        evidence: [...experiences, ...screens],
+        details: []
+      })
+    }
+  }
+  return {
+    rows: workspace.capabilities.filter(item => cells.some(cell => cell.row === item.key)),
+    columns: workspace.interfaces.filter(item => cells.some(cell => cell.column === item.key)),
+    cells
+  }
 }
 
 /** A Product-rooted containment tree, with no synthetic Experience level. */

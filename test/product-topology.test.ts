@@ -65,6 +65,35 @@ describe('named topology semantics', () => {
     expect(flatten(groups).filter(item => item.resource).length).toBe(resources.length)
   })
 
+  /*
+    Comparing Interfaces is a different question from reading one, and now a
+    different shape: a matrix, where a row with two cells is delivered twice and
+    a row with one is exclusive. Columns of independent lists staged that
+    comparison and left it to the reader's eye. The two readings derive the same
+    delivery, so the matrix can never quietly disagree with the Interface page.
+  */
+  it('compares delivery as a matrix that agrees with each Interface reading', () => {
+    for (const root of [teachingRoot, shopRoot]) {
+      const workspace = workspaceOf(root)
+      const matrix = projections.deliveryMatrixProjection(workspace)
+
+      for (const resource of workspace.interfaces) {
+        const inMatrix = new Set(matrix.cells.filter((cell: any) => cell.column === resource.key).map((cell: any) => cell.row))
+        const inOutline = new Set(flatten(projections.interfaceProjection(workspace, true).filter((item: any) => item.id === resource.key))
+          .flatMap((node: any) => [node.resource, ...node.references])
+          .filter((item: any) => item?.kind === 'capability')
+          .map((item: any) => item.key))
+        expect(inMatrix, resource.key).toEqual(inOutline)
+      }
+
+      /* A cell always says how it is delivered, and rows and columns carry only
+         what the model actually authors. */
+      expect(matrix.cells.every((cell: any) => cell.labels.length > 0)).toBe(true)
+      expect(matrix.rows.every((row: any) => matrix.cells.some((cell: any) => cell.row === row.key))).toBe(true)
+      expect(matrix.columns.every((column: any) => matrix.cells.some((cell: any) => cell.column === column.key))).toBe(true)
+    }
+  })
+
   it('keeps qualified ownership and direct delivery without invented Experiences', () => {
     const workspace = workspaceOf(shopRoot)
     const outline = projections.interfaceProjection(workspace, true)

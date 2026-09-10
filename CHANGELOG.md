@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Filters offer only the relations a row already shows, with one control per axis instead of one menu holding all of them.
 - Each filter shows how many values it holds, with the chosen values on their own row, each removable on its own.
 - Filters sit with the rows they narrow rather than in a band of their own.
+- Compare delivery is now a Capability by Interface matrix, so a Capability reachable from two Interfaces, or from only one, is visible without reading three lists side by side.
 - Every collection offers its filters, whatever its size, so two reports of the same tool no longer differ for an invisible reason.
 - Filter menus are larger and wide enough to read the names they list, and every option carries its own mark.
 - A named view no longer spends a row restating its question; it sits with the derivation under About this view.

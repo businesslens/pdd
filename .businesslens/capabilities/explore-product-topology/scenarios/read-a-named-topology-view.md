@@ -45,6 +45,7 @@ page.
 - Interface map is a connected tree: the Product root branches into Interfaces and their actual Experiences and Screens. Every visible non-root node has a containment connector to its parent, including on narrow screens. Expanding a branch reveals connected children; selecting a node opens its resource page.
 - Journey composition covers every Journey in the model and preserves every Capability-bearing Step in order, including repeated uses and non-achieved variations, with each Step's exact route Contexts. Each Journey windows its own Scenarios, and the complete Scenario remains available from its page.
 - What changes what shows each Capability's creates, changes, and removes effects on Entities, with the supporting Scenarios. Reads do not become mutations.
+- Compare delivery is a Capability by Interface matrix stating the authored route for each cell. A row with more than one cell is delivered by more than one Interface; a row with one is exclusive to it. An empty cell claims only that no Context authorises that delivery.
 - Entity relationships retains disconnected Entities and each authored relation's direction and both cardinalities, including self-relations and multiple distinct relations between the same Entities.
 - A delayed or unavailable diagram arrangement leaves the complete resource and relationship reading available.
 

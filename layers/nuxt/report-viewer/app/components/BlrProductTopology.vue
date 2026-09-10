@@ -4,7 +4,7 @@ import { ENTITY_KIND_META, entityFacetOf, resourceKey } from '../utils/reportWor
 import { findProductTopologyView } from '../utils/productTopologyViews'
 import type { TopologyReading } from '../utils/topologyState'
 import { defaultTopologyReading, sanitizeTopologyReading, toggleTopologyGroup } from '../utils/topologyState'
-import { entityRelationsProjection, filterBranches, interfaceProjection, journeyCompositionProjection, mutationProjection, productMapProjection, ruleReachProjection, sitemapProjection } from '../utils/topologyProjections'
+import { deliveryMatrixProjection, entityRelationsProjection, filterBranches, interfaceProjection, journeyCompositionProjection, mutationProjection, productMapProjection, ruleReachProjection, sitemapProjection } from '../utils/topologyProjections'
 import { diagramResource } from '../utils/diagram'
 import { topologyRelations } from '../utils/topologyRelations'
 import type { TopologyMatrix } from '../utils/topologyProjections'
@@ -37,10 +37,14 @@ const neighbourhood = computed(() => {
 const visible = (resource: AnyResourceView) => !reading.value.hiddenKinds.includes(resource.kind) && (!neighbourhood.value || neighbourhood.value.has(resource.key))
 const map = computed(() => productMapProjection(props.workspace))
 const branches = computed(() => filterBranches(
-  view.value.id === 'product-map' ? map.value.groups : interfaceProjection(props.workspace, view.value.id === 'delivery-by-interface'), visible))
+  view.value.id === 'product-map' ? map.value.groups : interfaceProjection(props.workspace), visible))
 const sitemap = computed(() => filterBranches([sitemapProjection(props.workspace)], visible)[0])
+const matrixMode = computed(() => view.value.id === 'rule-reach' ? 'rules' as const
+  : view.value.id === 'delivery-by-interface' ? 'delivery' as const : 'mutations' as const)
 const matrix = computed<TopologyMatrix>(() => {
-  const base = view.value.id === 'rule-reach' ? ruleReachProjection(props.workspace) : mutationProjection(props.workspace)
+  const base = view.value.id === 'rule-reach' ? ruleReachProjection(props.workspace)
+    : view.value.id === 'delivery-by-interface' ? deliveryMatrixProjection(props.workspace)
+      : mutationProjection(props.workspace)
   const selectedRows = base.rows.filter(item => reading.value.focus.includes(item.key))
   const selectedColumns = base.columns.filter(item => reading.value.focus.includes(item.key))
   const rows = base.rows.filter(item => visible(item) && (!selectedRows.length || selectedRows.includes(item)))
@@ -185,7 +189,7 @@ function toggle(id: string, open: boolean) { reading.value = toggleTopologyGroup
       </BlrFilterBar>
     </div>
     <div ref="pane" class="blr-topology-reading" :class="{ 'blr-topology-reading--graph': isGraph }" @scroll.capture.passive="save">
-      <BlrTopologyMatrix v-if="view.id === 'rule-reach' || view.id === 'what-changes-what'" :matrix="matrix" :column="reading.column" :mode="view.id === 'rule-reach' ? 'rules' : 'mutations'" @column="update({ column: $event })" @open="open" />
+      <BlrTopologyMatrix v-if="matrixMode !== 'mutations' || view.id === 'what-changes-what'" :matrix="matrix" :column="reading.column" :mode="matrixMode" @column="update({ column: $event })" @open="open" />
       <template v-else-if="view.id === 'sitemap'"><BlrTopologyTree v-if="sitemap" :tree="sitemap" :reading="reading" :viewport-key="scrollKey" @open="open" @toggle="toggle" @ready="restore" /><p v-else class="blr-topology-empty">No resources in this scope.</p></template>
       <BlrTopologyComposition v-else-if="view.id === 'value-paths'" :compositions="compositions" :scenario="reading.scenario" @scenario="update({ scenario: $event })" @open="open" />
       <template v-else-if="view.id === 'what-it-keeps'"><BlrDiagram v-if="diagram.nodes.length" :diagram="diagram" title="Entity relationships" :viewport-key="scrollKey" @open="open" @ready="restore" /><p v-else class="blr-topology-empty">No Entities in this scope.</p></template>

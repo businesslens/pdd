@@ -58,7 +58,7 @@ group of their own, because a reader arrives asking who this is for.
 - Open a named view of this collection as a tab beside its List
 - Read Domain-classified Capabilities and Entities, including unassigned resources
 - Reach any Experience, Screen or Scenario through the collection that owns it
-- Compare delivery across Interfaces, and compose every Journey's Scenarios side by side
+- Read which Interfaces deliver each Capability and by what route, and compose every Journey's Scenarios side by side
 - Narrow the collection or a named view by one axis at a time, and clear one value or all of them
 - Choose which resource types a named view draws, and focus one resource in it
 - Hide a kind, or focus one resource and read only its neighbourhood

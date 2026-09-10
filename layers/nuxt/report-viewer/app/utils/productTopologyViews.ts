@@ -51,10 +51,10 @@ export const PRODUCT_TOPOLOGY_VIEWS: ProductTopologyView[] = [
   },
   {
     id: 'delivery-by-interface',
-    diagramType: 'Delivery outline',
+    diagramType: 'Delivery matrix',
     name: 'Compare delivery',
-    question: 'Where does each human or system enter, and what does each Interface deliver?',
-    note: 'Interfaces contain their actual Experiences and Screens. Direct delivery lists available Capabilities without adding a synthetic Experience. Actor references show who enters each Interface.',
+    question: 'Which Interfaces deliver each Capability, and by what route?',
+    note: 'Each cell is one authored delivery: a Screen of that Interface exposing the Capability, an Experience of it whose Context the Capability names, or the Interface itself where a Context names no Experience and no Screen carries it. A row with two cells is delivered twice; a row with one is exclusive to that Interface. An empty cell makes no claim beyond the absence of an authored Context.',
     kinds: ['entity', 'interface', 'experience', 'screen', 'capability']
   },
   {

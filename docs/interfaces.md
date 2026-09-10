@@ -138,7 +138,9 @@ complete variations of a coherent multi-Capability goal.
 Interfaces is the entry point for Interfaces, Experiences, and Screens. List
 shows an expandable directory; Map draws their actual containment as a connected
 interactive tree. An Interface's Overview shows its contained resources and
-Capability delivery. Compare delivery opens the cross-Interface reading.
+Capability delivery. Compare delivery opens the cross-Interface reading: a
+Capability by Interface matrix, where a row with two cells is delivered twice
+and a row with one is exclusive to that Interface.
 
 Each name opens its own resource page. Breadcrumbs follow actual ownership;
 shared Screens appear once under their Interface, with links from Experiences.
