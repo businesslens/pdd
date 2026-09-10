@@ -699,9 +699,13 @@ describe('stable Product Report', () => {
     expect(source('app/components/BlrOverview.vue')).not.toContain('mx-auto max-w-3xl')
     expect(source('app/components/BlrOverview.vue')).not.toContain('<BlrResourceCard')
     expect(reportShell).toContain('PRODUCT_TABS')
-    /* A rail row and the heading it opens say the same word. */
-    expect(reportShell).toContain("title: 'Overview', meta: 'Product Report'")
-    expect(reportShell).not.toContain('title: props.workspace.identity.title')
+    /* A rail row and the heading it opens say the same word, and the qualifier
+       beside it names the resource type the surface presents. `Product Report`
+       named the rendered artifact rather than anything the model authors. */
+    expect(reportShell).toContain("title: 'Overview', meta: meta.label")
+    expect(reportShell).not.toContain("'Product Report'")
+    /* The report's identity and the way home are on every surface. */
+    expect(reportShell).not.toContain('atProductRoot')
 
     /* Grouping is how authored Domains earn their place in navigation, and it
        is a fact about the model rather than a control on it: offering every

@@ -195,12 +195,16 @@ costed already.
   drawing needs. One idiom means a reader learns the report once.
 - **Every surface names itself, with the name the reader clicked.** The
   breadcrumb is a path, not a title: it ends at the parent, and an H1 carries the
-  current collection or resource with its type mark, its count or type label, and
-  its term tooltip. The heading is the destination, never the report the reader
-  is already inside — a rail row and the heading it opens say the same word, so
-  Overview heads its page `Overview` exactly as Entities heads its page
-  `Entities`. The Product's own name and logo are the report's identity and
-  belong to the chrome that carries them on every surface. Ways out —
+  current surface with its type mark, a qualifier, and its term tooltip. A rail
+  row and the heading it opens say the same word, so Overview heads its page
+  `Overview` exactly as Entities heads its page `Entities`. The qualifier says
+  what you are looking at — a count for a collection, a type for a resource, and
+  for the Overview the resource type it presents, which is `Product`. Nothing in
+  the report names the rendered artifact: `Product Report` is what the reader is
+  looking at rather than anything the model authors, and naming it there put a
+  view, an artifact and a type in one line while the tooltip defined a fourth.
+  The report's identity and the way home stay in the header on every surface,
+  including the one they lead to. Ways out —
   documentation, and a named view belonging to another subject — sit on that H1
   row, because an exit belongs to the subject and not to whichever tab happens
   to be open. Every surface then reads the same way down the page: what this is
@@ -208,7 +212,9 @@ costed already.
   a second tab exists.
 - **The Product's page is a page like the others.** It carries the same heading,
   the same tab strip and the same full width, and it is headed `Overview` like
-  the rail row that opens it. Its About, Coverage, Model counts
+  the rail row that opens it, qualified by the resource type it presents. It is
+  the one row that opens a resource rather than a collection, which is why its
+  qualifier is a type where a collection's is a count. Its About, Coverage, Model counts
   and References are peer tabs, not stacked disclosures a reader has to open to
   learn whether they hold anything — a disclosure column is a switch idiom
   nowhere else in the report uses, and it hides the answer behind the question.

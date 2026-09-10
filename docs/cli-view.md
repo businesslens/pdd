@@ -52,13 +52,12 @@ of their own. Filters are offered only where scanning would be slower, and only
 over relations the rows already print.
 
 The Overview is the Product's own page and reads like every other one: it is
-headed `Overview`, the same word as the rail row that opens it, and About,
-Coverage, Model counts and References are tabs beside it. It carries no named
-view of its own: the rail already lists every collection with its count, and a
-resource's connections are on its page. The Product's name and
-logo stay in the report header, where they sit on every surface. The Overview
-does not list Journeys — they have a rail row, a page and a count of their
-own.
+headed `Overview`, the same word as the rail row that opens it, qualified by
+`Product` — the resource type it presents — and About, Coverage, Model counts and
+References are tabs beside it. It carries no named view of its own: the rail
+already lists every collection with its count, and a resource's connections are
+on its page. It does not list Journeys — they have a rail row, a page and a count
+of their own.
 
 A resource page names itself: the trail ends at its parent, and the heading
 carries its title, its type, and its ways out — the documentation for its type,

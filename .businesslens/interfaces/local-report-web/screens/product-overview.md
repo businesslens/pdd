@@ -16,13 +16,14 @@ references:
 Where the report opens, and the Product's own page. It answers "what is this
 product, and how much of it is modeled" before the reader goes looking for
 anything in particular, and it reads like every other surface: it is headed with
-the name of the reading the Developer chose, and each further reading of the
-Product is a peer tab. It lists no collection of its own — Journeys, like every
-other collection, have a rail row, a page, and a count.
+the name of the rail row that opens it, qualified by the resource type it
+presents, and each further reading of the Product is a peer tab. It lists no
+collection of its own — Journeys, like every other collection, have a rail row, a
+page, and a count.
 
 ## Information presented
 
-- The name of the open reading, above it
+- The name of the open reading and the resource type it presents, above it
 - The Product's summary, the things that act on it, and the one-line shape of the model
 - Its description, Intent, supporting sections, category, tags, licence, authors, and known limitations
 - Coverage status, rationale, method, source areas, unmapped areas, and limitations

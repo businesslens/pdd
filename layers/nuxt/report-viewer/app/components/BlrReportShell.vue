@@ -298,14 +298,17 @@ const pageSubject = computed(() => {
 })
 
 /**
- * What this surface is, named once — the Product's page included.
+ * What this surface is, named once.
  *
- * The heading names the surface the reader chose, never the report they are
- * already inside: clicking Entities heads the page `Entities`, so clicking
- * Overview heads it `Overview`. The Product's own name is the report's identity
- * and belongs to the chrome that carries it on every surface, with its logo;
- * printing it again here made the one page that should have looked like the
- * others the one page that did not.
+ * The heading is the destination the reader chose: a rail row and the heading it
+ * opens say the same word, so Overview heads its page `Overview` exactly as
+ * Entities heads its page `Entities`.
+ *
+ * Beside it sits the qualifier that says what you are looking at — a count for a
+ * collection, a type for a resource, and for the Overview the resource type it
+ * presents. That type is `Product`. `Product Report` named the rendered artifact
+ * rather than anything the model authors, and put a view, an artifact and a type
+ * in one line while the tooltip defined a fourth thing.
  */
 const surfaceHeading = computed(() => {
   const resource = openPage.value
@@ -316,8 +319,8 @@ const surfaceHeading = computed(() => {
   }
   if (activeKind.value === 'product') {
     const meta = ENTITY_KIND_META.product
-    return { icon: meta.icon, slot: meta.slot, title: 'Overview', meta: 'Product Report',
-      term: KIND_TERM.product, termText: 'Product Report' }
+    return { icon: meta.icon, slot: meta.slot, title: 'Overview', meta: meta.label,
+      term: KIND_TERM.product, termText: meta.label }
   }
   const shown = visibleResources.value.length
   const all = kindResources.value.length

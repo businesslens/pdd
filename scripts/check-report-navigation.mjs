@@ -99,6 +99,8 @@ try {
     await expect(page.locator('.blr-report-shell')).toBeVisible()
     await expect(page.getByRole('heading', { level: 1 })).toContainText('Overview')
     await expect(tab(page, 'Overview').first()).toHaveAttribute('aria-selected', 'true')
+    /* The way home is chrome: it is on every surface, this one included. */
+    await expect(page.locator('.blr-report-header')).toContainText(report.title)
     /* The Product's page is a page: its readings are peer tabs, not disclosures. */
     await expect(page.locator('.blr-disclosure')).toHaveCount(0)
     for (const [label, mode] of [['About', 'about'], ['Coverage', 'coverage'], ['Model counts', 'counts'], ['References', 'references']]) {
