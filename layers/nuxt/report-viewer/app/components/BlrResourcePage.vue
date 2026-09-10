@@ -19,6 +19,7 @@
  * an edit to the model.
  */
 import type { AnyResourceView, EntityView, ReportWorkspace } from '../utils/reportWorkspace'
+import { ENTITY_KIND_META } from '../utils/reportWorkspace'
 import type { TopologyReading } from '../utils/topologyState'
 import { defaultTopologyReading } from '../utils/topologyState'
 import { parentOf, tabsFor, type PageTabId } from '../utils/pageSections'
@@ -77,6 +78,8 @@ const current = computed(() => tabs.value.find(tab => tab.id === active.value) ?
     <nav
       v-if="tabs.length > 1"
       data-sticky-page-tabs
+      role="tablist"
+      :aria-label="`${ENTITY_KIND_META[subject.kind].label} readings`"
       class="sticky top-0 z-20 -mt-5 mb-5 flex flex-wrap items-center gap-1 border-b border-default bg-default/95 pt-5 backdrop-blur"
     >
       <button
