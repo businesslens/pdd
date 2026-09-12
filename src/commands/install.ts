@@ -26,9 +26,6 @@ import { UsageError } from '../core/usage-error.js'
 export interface InstallOptions {
   providers?: string
   scope?: string
-  project?: boolean
-  global?: boolean
-  user?: boolean
   yes?: boolean
   force?: boolean
 }
@@ -38,22 +35,11 @@ function canPrompt(options: InstallOptions): boolean {
 }
 
 function resolveScope(options: InstallOptions): InstallScope | undefined {
-  const aliases = [
-    options.project ? 'project' : undefined,
-    options.global || options.user ? 'global' : undefined
-  ].filter(Boolean)
-  if (aliases.length > 1) throw new UsageError('Choose only one of --project, --global, or --user.')
-
-  const explicit = options.scope?.trim().toLowerCase()
-  if (explicit && explicit !== 'project' && explicit !== 'global' && explicit !== 'user') {
+  const scope = options.scope?.trim().toLowerCase()
+  if (scope && scope !== 'project' && scope !== 'global') {
     throw new UsageError('--scope must be project or global.')
   }
-  const normalized = explicit === 'user' ? 'global' : explicit
-  const alias = aliases[0]
-  if (normalized && alias && normalized !== alias) {
-    throw new UsageError('--scope conflicts with the selected scope flag.')
-  }
-  return (normalized || alias) as InstallScope | undefined
+  return scope as InstallScope | undefined
 }
 
 function printDetected(cwd: string): ReturnType<typeof detectProviders> {
@@ -179,14 +165,6 @@ export async function runInstall(cwd: string, options: InstallOptions = {}): Pro
     )
     console.log(`Installed BusinessLens into: ${roots.join(', ')} (${scope}).`)
     console.log(`Installed skills: ${BUSINESSLENS_SKILLS.join(', ')}.`)
-    const removed = results.flatMap(result => result.removedLegacySkills)
-    if (removed.length > 0) {
-      console.log(`Removed retired BusinessLens skills: ${[...new Set(removed)].join(', ')}.`)
-    }
-    const removedCommands = results.flatMap(result => result.removedLegacyCommands)
-    if (removedCommands.length > 0) {
-      console.log(`Removed retired BusinessLens commands: ${[...new Set(removedCommands)].join(', ')}.`)
-    }
     return 0
   } catch (error) {
     console.error((error as Error).message)

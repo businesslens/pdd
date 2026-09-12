@@ -105,7 +105,7 @@ describe('cli help', () => {
     expect(pull.stdout).not.toContain('--providers')
   })
 
-  it('keeps legacy scope shortcuts out of install help', () => {
+  it('lists only the current scope option in install help', () => {
     const result = cli(repo, process.env, 'install', '--help')
     expect(result.status).toBe(0)
     expect(result.stdout).toContain('--scope <scope>')
@@ -130,13 +130,12 @@ describe('cli dispatch', () => {
     expect(output.branch).toBeUndefined()
   })
 
-  it('accepts --cwd and -c before or after a command, plus legacy -C', () => {
+  it('accepts --cwd and -c before or after a command', () => {
     for (const args of [
       ['--cwd', repo, 'lint', '--json'],
       ['lint', '--cwd', repo, '--json'],
       ['-c', repo, 'lint', '--json'],
-      ['lint', '-c', repo, '--json'],
-      ['-C', repo, 'lint', '--json']
+      ['lint', '-c', repo, '--json']
     ]) {
       const result = cli(ROOT, process.env, ...args)
       expect(result.status, args.join(' ')).toBe(0)
@@ -168,22 +167,25 @@ describe('cli dispatch', () => {
     expect(existsSync(join(repo, '.businesslens', 'build', 'report.json'))).toBe(true)
   })
 
-  it('refuses retired command spellings and names their replacements', () => {
-    for (const command of ['export', 'open', 'pull', 'contribute']) {
+  it('refuses removed commands and options as ordinary usage errors', () => {
+    for (const command of ['export', 'open', 'pull', 'contribute', 'build', 'validate']) {
       const result = cli(ROOT, process.env, '--cwd', repo, command)
       expect(result.status, command).toBe(2)
-      expect(result.stderr, command).toContain(
-        `\`businesslens ${command}\` has moved. Use \`businesslens blueprint ${command}\`.`
-      )
+      expect(result.stderr, command).toContain(`unknown command '${command}'`)
     }
-
-    const build = cli(ROOT, process.env, '--cwd', repo, 'build')
-    expect(build.status).toBe(2)
-    expect(build.stderr).toContain('Use `businesslens blueprint export`')
-
-    const validate = cli(ROOT, process.env, '--cwd', repo, 'validate')
-    expect(validate.status).toBe(2)
-    expect(validate.stderr).toContain('Use `businesslens lint`')
+    for (const command of ['install', 'update']) {
+      for (const option of ['--project', '--global', '--user']) {
+        const result = cli(repo, process.env, command, option)
+        expect(result.status, `${command} ${option}`).toBe(2)
+        expect(result.stderr).toContain(`unknown option '${option}'`)
+      }
+      const scope = cli(repo, process.env, command, '--scope', 'user')
+      expect(scope.status).toBe(2)
+      expect(scope.stderr).toContain('expected "project" or "global"')
+    }
+    const cwd = cli(ROOT, process.env, '-C', repo, 'lint')
+    expect(cwd.status).toBe(2)
+    expect(cwd.stderr).toContain("unknown option '-C'")
   })
 
   it('shows Blueprint help without running anything when the group is bare', () => {

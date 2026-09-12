@@ -26,6 +26,8 @@ npx businesslens <command> [options]
 | [`blueprint contribute`](./cli-contribute.md) | Propose a Blueprint by pull request |
 
 Global options are `-c, --cwd <path>`, `-h, --help`, and `-V, --version`.
+Only documented commands and options are accepted; removed spellings produce
+normal usage errors. Installation scope uses `--scope project|global`.
 Each command's help lists only the arguments and options that command accepts:
 
 ```bash

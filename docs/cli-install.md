@@ -59,7 +59,8 @@ install by another tool, or an installation predating the marker — and it stop
 the run unless `--force` is explicit. BusinessLens does not read a directory's
 contents to guess that it wrote it: guessing wrong costs someone work they
 cannot recover. For the same reason, a skill this release no longer ships is
-removed only where the marker recorded it.
+removed only where the marker recorded a `businesslens-*` name. Bare-name skills
+and command files are outside the current installer contract.
 
 **A refusal changes nothing.** Every selected harness is checked before any is
 written, so an install for two harnesses that stops on the second leaves the

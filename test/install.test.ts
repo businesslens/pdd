@@ -211,64 +211,36 @@ describe('skill installation', () => {
     expect(() => assertInstallTargets(project, targets, { force: true })).not.toThrow()
   })
 
-  it('removes retired skills only when the manifest says BusinessLens installed them', () => {
-    const project = temporary('bl-legacy-')
+  it('removes stale owned namespaced skills and leaves unowned files alone', () => {
+    const project = temporary('bl-owned-skills-')
     const skillsDir = join(project, '.agents', 'skills')
-    const oldMap = join(skillsDir, 'map')
-    const oldPlan = join(skillsDir, 'businesslens-plan')
-    const retiredSync = join(skillsDir, 'businesslens-sync')
-    const lookalike = join(skillsDir, 'businesslens-implement')
-    const unrelatedSync = join(skillsDir, 'sync')
-    for (const directory of [oldMap, oldPlan, retiredSync, lookalike, unrelatedSync]) mkdirSync(directory, { recursive: true })
-    writeFileSync(join(oldMap, 'SKILL.md'), '---\nname: map\n---\nBuild a BusinessLens .businesslens/ Product Model.\n')
-    writeFileSync(join(oldPlan, 'SKILL.md'), '---\nname: businesslens-plan\n---\nPlan behavior in the .businesslens/ model.\n')
-    writeFileSync(join(retiredSync, 'SKILL.md'), '---\nname: businesslens-sync\n---\nReconcile the BusinessLens .businesslens/ model.\n')
-    // Named like a retired skill and mentioning BusinessLens, but never recorded
-    // by a manifest: it is somebody else's and stays.
-    writeFileSync(join(lookalike, 'SKILL.md'), '---\nname: businesslens-implement\n---\nImplement the BusinessLens .businesslens/ model.\n')
-    writeFileSync(join(unrelatedSync, 'SKILL.md'), '---\nname: sync\n---\nUnrelated synchronization.\n')
+    const stale = join(skillsDir, 'businesslens-example')
+    const lookalike = join(skillsDir, 'businesslens-unowned')
+    const unrelated = join(skillsDir, 'map')
+    for (const directory of [stale, lookalike, unrelated]) {
+      mkdirSync(directory, { recursive: true })
+      writeFileSync(join(directory, 'SKILL.md'), '# Example BusinessLens skill')
+    }
     writeFileSync(join(skillsDir, '.businesslens-install.json'), JSON.stringify({
       schema: 1,
       package: 'businesslens',
-      version: '0.5.0',
+      version: '0.12.0',
       provider: 'codex',
       scope: 'project',
-      skills: ['map', 'businesslens-plan', 'businesslens-sync'],
+      skills: ['businesslens-example', 'map'],
       installedAt: '2026-01-01T00:00:00.000Z'
     }))
 
-    const result = installSkillsToTarget(
-      project,
-      { provider: providerById('codex'), scope: 'project' },
-      '9.9.9'
-    )
-
-    // `plan` folded into `ideate`, so an installed copy is a skill an agent
-    // could still invoke and must go — because the manifest says it was ours.
-    expect(result.removedLegacySkills).toEqual([
-      'businesslens-sync',
-      'businesslens-plan',
-      'map'
-    ])
-    expect(existsSync(oldMap)).toBe(false)
-    expect(existsSync(oldPlan)).toBe(false)
-    expect(existsSync(retiredSync)).toBe(false)
+    installSkillsToTarget(project, { provider: providerById('codex'), scope: 'project' }, '9.9.9')
+    expect(existsSync(stale)).toBe(false)
     expect(existsSync(lookalike)).toBe(true)
-    expect(existsSync(unrelatedSync)).toBe(true)
+    expect(existsSync(unrelated)).toBe(true)
 
-    const oldCommand = join(project, '.claude', 'commands', 'businesslens', 'init.md')
-    mkdirSync(join(project, '.claude', 'skills'), { recursive: true })
+    const command = join(project, '.claude', 'commands', 'businesslens', 'init.md')
     mkdirSync(join(project, '.claude', 'commands', 'businesslens'), { recursive: true })
-    writeFileSync(oldCommand, '# Initialize BusinessLens\n\nCreate `.businesslens/`.\n')
-    const claudeResult = installSkillsToTarget(
-      project,
-      { provider: providerById('claude'), scope: 'project' },
-      '9.9.9'
-    )
-    expect(claudeResult.removedLegacyCommands).toEqual([
-      join('.claude', 'commands', 'businesslens', 'init.md')
-    ])
-    expect(existsSync(oldCommand)).toBe(false)
+    writeFileSync(command, '# BusinessLens command owned by another tool')
+    installSkillsToTarget(project, { provider: providerById('claude'), scope: 'project' }, '9.9.9')
+    expect(existsSync(command)).toBe(true)
   })
 
   it('updates managed skills without changing product files', async () => {
@@ -293,7 +265,7 @@ describe('skill installation', () => {
     mkdirSync(join(project, '.businesslens'), { recursive: true })
     writeFileSync(product, '# Keep me\n')
 
-    expect(await runUpdate(project, { project: true })).toBe(0)
+    expect(await runUpdate(project, { scope: 'project' })).toBe(0)
     expect(readFileSync(product, 'utf8')).toBe('# Keep me\n')
     expect(existsSync(join(skillsDir, 'businesslens-verify', 'SKILL.md'))).toBe(true)
     const manifest = JSON.parse(readFileSync(manifestFile, 'utf8'))

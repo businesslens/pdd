@@ -9,7 +9,7 @@ import {
   rmSync,
   writeFileSync
 } from 'node:fs'
-import { dirname, join, relative, resolve } from 'node:path'
+import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type { InstallScope, Provider } from './providers.js'
 import { providerSkillsDir } from './providers.js'
@@ -23,32 +23,6 @@ export const BUSINESSLENS_SKILLS = [
 export type BusinessLensSkill = (typeof BUSINESSLENS_SKILLS)[number]
 
 const MANIFEST_FILE = '.businesslens-install.json'
-const LEGACY_SKILLS = [
-  // Retired in favor of map, ideate, and the verification-owned resolution
-  // loop. Contribution remains a deterministic CLI workflow.
-  'businesslens-init',
-  'businesslens-sync',
-  'businesslens-deep-dive',
-  'businesslens-doctor',
-  'businesslens-contribute',
-  'businesslens-implement',
-  'businesslens-validate',
-  // Folded into `businesslens-ideate`: deciding what to build and writing that
-  // decision into the model are one converging conversation, not two skills.
-  'businesslens-plan',
-  // Renamed in 0.6.0: the catalog's push action is `publish`, so the skill that
-  // proposes a Blueprint by pull request is `contribute`.
-  'businesslens-publish',
-  'map',
-  'sync',
-  'deep-dive',
-  'publish',
-  'analyze-repo',
-  'validate-report',
-  'submit-report',
-  'push-report'
-]
-
 export interface InstallationManifest {
   schema: 1
   package: 'businesslens'
@@ -76,8 +50,6 @@ export interface InstallResult {
   provider: Provider
   scope: InstallScope
   skillsDir: string
-  removedLegacySkills: string[]
-  removedLegacyCommands: string[]
 }
 
 export function bundledSkillsDir(): string | undefined {
@@ -105,12 +77,6 @@ const SKILL_DIRECTORY_NAME = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 
 function isSkillDirectoryName(name: unknown): name is string {
   return typeof name === 'string' && SKILL_DIRECTORY_NAME.test(name)
-}
-
-/* Only a name this Product could have written is removable: the namespaced
-   skills it ships and the retired bare names it once shipped. */
-function isBusinessLensSkillName(name: string): boolean {
-  return name.startsWith('businesslens-') || LEGACY_SKILLS.includes(name)
 }
 
 /* Belt and braces beside the name check: a path handed to a removal must still
@@ -178,42 +144,6 @@ export function assertInstallTargets(
   }
 }
 
-/* A retired skill is removed only when the manifest says BusinessLens installed
-   it. One that is merely named like a retired skill is left alone. */
-function removeLegacySkills(skillsDir: string, existing: InstallationManifest | undefined): string[] {
-  const removed: string[] = []
-  for (const name of LEGACY_SKILLS) {
-    const target = ownedChildPath(skillsDir, name)
-    if (target === undefined) continue
-    if (!existsSync(target) || !existing?.skills.includes(name)) continue
-    rmSync(target, { recursive: true, force: true })
-    removed.push(name)
-  }
-  return removed
-}
-
-function removeLegacyCommands(cwd: string, target: InstallTarget): string[] {
-  if (target.scope !== 'project' || target.provider.id !== 'claude') return []
-
-  const project = resolve(cwd)
-  const commandFile = join(project, '.claude', 'commands', 'businesslens', 'init.md')
-  if (!existsSync(commandFile)) return []
-
-  try {
-    const source = readFileSync(commandFile, 'utf8')
-    if (!source.includes('BusinessLens') && !source.includes('.businesslens/')) return []
-  } catch {
-    return []
-  }
-
-  rmSync(commandFile, { force: true })
-  const commandDirectory = dirname(commandFile)
-  if (readdirSync(commandDirectory).length === 0) {
-    rmSync(commandDirectory, { recursive: true })
-  }
-  return [relative(project, commandFile)]
-}
-
 function writeManifest(skillsDir: string, manifest: InstallationManifest): void {
   const file = join(skillsDir, MANIFEST_FILE)
   const temporary = `${file}.${randomUUID()}.tmp`
@@ -268,18 +198,14 @@ export function installSkillsToTarget(
   // nobody.
   const staleSkills = (existing?.skills ?? [])
     .filter(previous => !BUSINESSLENS_SKILLS.includes(previous as BusinessLensSkill))
-    .filter(isBusinessLensSkillName)
+    .filter(name => name.startsWith('businesslens-'))
     .map(previous => ownedChildPath(skillsDir, previous))
     .filter((stale): stale is string => stale !== undefined && existsSync(stale))
 
   for (const name of BUSINESSLENS_SKILLS) installSkill(sourceRoot, skillsDir, name)
-  // Retired names first, so the report can say which retired skills went; any
-  // other skill the manifest recorded and this version no longer ships follows.
-  const removedLegacySkills = removeLegacySkills(skillsDir, existing)
   for (const stale of staleSkills) {
     if (existsSync(stale)) rmSync(stale, { recursive: true, force: true })
   }
-  const removedLegacyCommands = removeLegacyCommands(cwd, target)
 
   const now = new Date().toISOString()
   writeManifest(skillsDir, {
@@ -293,7 +219,7 @@ export function installSkillsToTarget(
     updatedAt: now
   })
 
-  return { ...target, skillsDir, removedLegacySkills, removedLegacyCommands }
+  return { ...target, skillsDir }
 }
 
 export function findManagedInstallations(
