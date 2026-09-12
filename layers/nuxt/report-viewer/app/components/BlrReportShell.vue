@@ -884,7 +884,6 @@ const orphanScenarios = computed(() => props.workspace.scenarios
               @update:open="setCollectionGroupOpen(group.key, $event)"
               :disabled="!grouped"
               :class="grouped && 'overflow-hidden rounded-xl border border-default bg-elevated/20'"
-              :ui="{ content: grouped ? 'border-t border-muted p-2' : '' }"
             >
               <template v-if="grouped" #default="{ open }">
                 <UButton
@@ -919,8 +918,11 @@ const orphanScenarios = computed(() => props.workspace.scenarios
                 </UButton>
               </template>
 
+              <!-- Padding and the divider sit inside the animated content, not
+                   on it: the height animation reaches zero, and padding on the
+                   element itself would hold the box open until it unmounts. -->
               <template #content>
-                <div class="space-y-2" :style="rowGrid" data-collection-rows>
+                <div class="space-y-2" :class="grouped && 'border-t border-muted p-2'" :style="rowGrid" data-collection-rows>
                   <template v-if="expandable">
                     <BlrExpandableRow
                       v-for="resource in group.resources"

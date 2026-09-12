@@ -175,33 +175,8 @@
   max-width: min(28rem, calc(100vw - 2rem));
 }
 
-/* A row that opens to its children: the toggle beside the card, the children
-   indented under one rule, the way a branch draws its contents. */
-.blr-row-toggle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.25rem;
-  width: 3.25rem;
-  flex-shrink: 0;
-  border: 1px solid var(--ui-border);
-  border-radius: 0.625rem;
-  background: var(--ui-bg);
-  color: var(--ui-text-muted);
-  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
-}
-
-.blr-row-toggle:hover {
-  background: var(--ui-bg-elevated);
-  border-color: var(--ui-border-accented);
-  color: var(--ui-text-highlighted);
-}
-
-.blr-row-toggle:focus-visible {
-  outline: 2px solid var(--ui-primary);
-  outline-offset: 2px;
-}
-
+/* A row that opens to its children: the children indented under one rule,
+   the way a branch draws its contents. */
 .blr-row-children {
   display: grid;
   gap: 0.5rem;
@@ -235,14 +210,3 @@
   min-width: 14rem;
 }
 
-.blr-tree-card-count {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.125rem 0.375rem;
-  border-radius: 0.3125rem;
-  background: var(--ui-bg-elevated);
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  color: var(--ui-text-muted);
-}

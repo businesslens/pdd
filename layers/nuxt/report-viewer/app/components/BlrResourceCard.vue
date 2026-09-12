@@ -26,9 +26,14 @@ const props = withDefaults(defineProps<{
   /** In a multi-column grid the metrics stack under the title instead of
       hiding below the large breakpoint. */
   stacked?: boolean
-}>(), { badge: true, stacked: false })
+  /** A row that opens to children: the row itself toggles, as a group header
+      does, and a dedicated button at its end opens the page. */
+  expandable?: boolean
+  open?: boolean
+  count?: number
+}>(), { badge: true, stacked: false, expandable: false, open: false, count: 0 })
 
-const emit = defineEmits<{ open: [resource: AnyResourceView] }>()
+const emit = defineEmits<{ open: [resource: AnyResourceView], toggle: [resource: AnyResourceView] }>()
 const presentation = computed(() => {
   const own = resourceCardPresentation(props.workspace, props.resource)
   return props.hook ? { ...own, hookLabel: props.hookLabel ?? own.hookLabel, hook: props.hook } : own
@@ -67,12 +72,14 @@ function metricEntity(metric: ResourceCardMetric, id: string) {
 </script>
 
 <template>
+  <div class="relative">
   <button
     type="button"
     class="blr-resource-row group relative flex w-full items-center gap-4 overflow-hidden rounded-[0.625rem] border bg-default px-4 py-3 text-start transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-    :class="active ? 'border-primary bg-primary/5' : 'border-default hover:border-accented hover:bg-elevated/40'"
-    :aria-label="`Open ${kindLabel} ${resource.title}`"
-    @click="emit('open', resource)"
+    :class="[active ? 'border-primary bg-primary/5' : expandable ? 'border-default hover:bg-elevated' : 'border-default hover:border-accented hover:bg-elevated/40']"
+    :aria-label="expandable ? `${open ? 'Collapse' : 'Expand'} ${kindLabel} ${resource.title}, ${count} ${count === 1 ? 'item' : 'items'}` : `Open ${kindLabel} ${resource.title}`"
+    :aria-expanded="expandable ? open : undefined"
+    @click="expandable ? emit('toggle', resource) : emit('open', resource)"
   >
     <span class="flex min-w-0 flex-1 items-start gap-3">
       <BlrKind
@@ -175,9 +182,32 @@ function metricEntity(metric: ResourceCardMetric, id: string) {
       </UTooltip>
     </span>
 
+    <!-- The row's own end: a count and chevron where the row opens to
+         children, as its group header wears them; the way into the page
+         where it does not. -->
+    <span v-if="expandable" class="flex shrink-0 items-center gap-1 ps-[4.5rem]">
+      <span class="blr-meta">{{ count }}</span>
+      <UIcon name="i-lucide-chevron-down" class="size-3.5 shrink-0 text-dimmed transition-transform" :class="open && 'rotate-180'" />
+    </span>
     <UIcon
+      v-else
       name="i-lucide-chevron-right"
       class="size-4 shrink-0 text-dimmed transition group-hover:translate-x-0.5 group-hover:text-default"
     />
   </button>
+  <!-- Drilling down is a deliberate step from a row that otherwise keeps the
+       reader here, so it has its own button. Outside the row: a button cannot
+       hold a button. -->
+  <UButton
+    v-if="expandable"
+    icon="i-lucide-arrow-right"
+    color="neutral"
+    variant="outline"
+    size="xs"
+    class="absolute end-14 top-1/2 -translate-y-1/2"
+    data-open-page
+    :aria-label="`Open ${kindLabel} ${resource.title}`"
+    @click="emit('open', resource)"
+  />
+  </div>
 </template>

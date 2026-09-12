@@ -2,12 +2,12 @@
 /**
  * A row that opens to what the model files under it.
  *
- * The row is the resource's card, and clicking it opens the page as every row
- * does. The toggle at its end is a separate control — a button cannot hold a
- * button — and it says how many children wait below, the way a branch in the
- * Interface map does. Children are rows of the same shape, indented once, so a
- * Domain reads as a Domain and then its Capabilities and Entities, an Interface
- * as an Interface and then its Experiences and their Screens.
+ * The row is the resource's card, and the whole row opens and closes, the way
+ * the group header above it does and with the same count-and-chevron at its
+ * end; a dedicated button beside them opens the page, so the reader stays on
+ * this surface until they choose to leave it. A row with nothing under it is an
+ * ordinary row and opens its page. Children are rows of the same shape,
+ * indented once, so a Capability reads as a Capability and then its Scenarios.
  */
 import type { AnyResourceView, ReportWorkspace } from '../utils/reportWorkspace'
 import type { RowChild } from '../utils/collectionChildren'
@@ -21,11 +21,9 @@ const props = withDefaults(defineProps<{
   badge?: boolean
   /** Which rows are open, by resource key; nested rows share the one list. */
   expanded: string[]
-  /** Whether a row with no children still reserves the toggle's width. */
-  aligned?: boolean
   /** Narrow rows in a grid stack their metrics under the title. */
   stacked?: boolean
-}>(), { badge: true, aligned: true, stacked: false })
+}>(), { badge: true, stacked: false })
 
 const emit = defineEmits<{ open: [resource: AnyResourceView], toggle: [key: string, open: boolean] }>()
 const isOpen = computed(() => props.expanded.includes(props.resource.key))
@@ -33,30 +31,19 @@ const isOpen = computed(() => props.expanded.includes(props.resource.key))
 
 <template>
   <div class="blr-row-tree" :data-row-key="resource.key">
-    <div class="flex items-stretch gap-2">
-      <BlrResourceCard
-        class="min-w-0 flex-1"
-        :workspace="workspace"
-        :resource="resource"
-        :badge="badge"
-        :hook-label="hookLabel"
-        :hook="hook"
-        :stacked="stacked"
-        @open="emit('open', $event)"
-      />
-      <button
-        v-if="children.length"
-        type="button"
-        class="blr-row-toggle"
-        :aria-expanded="isOpen"
-        :aria-label="`${isOpen ? 'Collapse' : 'Expand'} ${resource.title}, ${children.length} ${children.length === 1 ? 'item' : 'items'}`"
-        @click="emit('toggle', resource.key, !isOpen)"
-      >
-        <span class="font-mono text-xs tabular-nums">{{ children.length }}</span>
-        <UIcon name="i-lucide-chevron-down" class="size-3.5 transition-transform" :class="isOpen && 'rotate-180'" />
-      </button>
-      <span v-else-if="aligned" class="blr-row-toggle invisible" aria-hidden="true" />
-    </div>
+    <BlrResourceCard
+      :workspace="workspace"
+      :resource="resource"
+      :badge="badge"
+      :hook-label="hookLabel"
+      :hook="hook"
+      :stacked="stacked"
+      :expandable="children.length > 0"
+      :open="isOpen"
+      :count="children.length"
+      @open="emit('open', $event)"
+      @toggle="emit('toggle', resource.key, !isOpen)"
+    />
     <div v-if="children.length && isOpen" class="blr-row-children">
       <BlrExpandableRow
         v-for="child in children"
@@ -69,7 +56,6 @@ const isOpen = computed(() => props.expanded.includes(props.resource.key))
         :badge="resource.kind !== 'domain'"
         :stacked="stacked"
         :expanded="expanded"
-        :aligned="children.some(item => item.children.length)"
         @open="emit('open', $event)"
         @toggle="(key, open) => emit('toggle', key, open)"
       />

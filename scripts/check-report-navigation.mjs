@@ -96,7 +96,9 @@ try {
       await expect(groups.first()).toHaveAttribute('aria-expanded', 'false')
       await page.reload()
       await expect(groups.first()).toHaveAttribute('aria-expanded', 'false')
-      const card = page.locator('.blr-resource-row:visible').first()
+      /* A row that opens to Scenarios toggles on click; its page is behind
+         the dedicated open button at its end. */
+      const card = page.locator('[data-open-page]:visible').first()
       if (await card.count()) {
         await card.click()
         await expect(page).toHaveURL(/e=capability/)

@@ -57,58 +57,94 @@ const total = (card: TreeCard) => card.children.reduce((sum, group) => sum + (gr
 </script>
 
 <template>
-  <section
-    v-for="card in cards"
-    :key="card.key"
-    class="blr-topology-group blr-tree-card"
-    data-tree-card
-    :data-card-key="card.key"
-    :style="card.colorSlot != null ? { '--blr-group-color': `var(--blr-slot-${card.colorSlot})` } : undefined"
+  <!-- The same box an Entity or Capability group is: a header that toggles as
+       a whole, and the tree as its content. Opening the subject's page is a
+       deliberate step, so it has its own button at the header's end. -->
+  <div v-for="card in cards" :key="card.key" class="relative" data-tree-card :data-card-key="card.key">
+  <UCollapsible
+    :open="!isClosed(card)"
+    class="overflow-hidden rounded-xl border border-default bg-elevated/20"
+    :style="card.colorSlot != null ? { borderTop: `3px solid var(--blr-slot-${card.colorSlot})` } : undefined"
+    @update:open="emit('close', card.key, !$event)"
   >
-    <div class="blr-topology-branch-heading">
-      <BlrTopologyResource v-if="card.resource" :resource="card.resource" @open="emit('open', card.resource!)" />
-      <h3 v-else>{{ card.title }}</h3>
-      <button
-        type="button"
-        class="blr-topology-toggle"
-        :aria-expanded="!isClosed(card)"
-        :aria-label="`${isClosed(card) ? 'Expand' : 'Collapse'} ${card.title}, ${total(card)} ${total(card) === 1 ? 'item' : 'items'}`"
-        @click="emit('close', card.key, !isClosed(card))"
+    <template #default="{ open }">
+      <UButton
+        color="neutral"
+        variant="ghost"
+        size="lg"
+        block
+        data-group-header
+        class="w-full justify-start rounded-none px-3 py-2 text-start"
+        :aria-label="`${open ? 'Collapse' : 'Expand'} ${card.title}, ${total(card)} ${total(card) === 1 ? 'item' : 'items'}`"
       >
-        {{ total(card) }} <UIcon :name="isClosed(card) ? 'i-lucide-chevron-down' : 'i-lucide-chevron-up'" class="size-4" />
-      </button>
-    </div>
-    <p v-if="card.note" class="blr-topology-note">{{ card.note }}</p>
-    <UTree
-      v-if="!isClosed(card) && card.children.length"
-      class="blr-tree-card-tree mt-3"
-      :items="itemsOf(card)"
-      :get-key="(item: Node) => item.value"
-      :expanded="expandedOf(card)"
-      color="neutral"
-      size="md"
-      :ui="{ link: 'gap-2', linkLabel: 'font-medium' }"
-      @update:expanded="emit('expand', card.key, $event)"
-    >
-      <template #item-leading="{ item }">
         <BlrKind
-          v-if="item.resource"
-          :kind="item.resource.kind"
-          :interface-type="item.resource.kind === 'interface' ? item.resource.interfaceType : undefined"
-          :facet="entityFacetOf(item.resource)"
-          :acts="item.resource.kind === 'entity' ? item.resource.acts ?? undefined : undefined"
+          v-if="card.resource"
+          :kind="card.resource.kind"
+          :interface-type="card.resource.kind === 'interface' ? card.resource.interfaceType : undefined"
+          :facet="entityFacetOf(card.resource)"
           :labelled="false"
-          size="xs"
+          size="sm"
         />
-      </template>
-      <template #item-label="{ item }">
-        <span :class="item.resource ? 'text-highlighted' : 'text-muted'">{{ item.label }}</span>
-      </template>
-      <template #item-trailing="{ item, expanded }">
-        <span v-if="item.count" class="blr-tree-card-count">
-          {{ item.count }} <UIcon :name="expanded ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'" class="size-3.5" />
-        </span>
-      </template>
-    </UTree>
-  </section>
+        <UIcon v-else name="i-lucide-minus" class="size-3.5 shrink-0 text-dimmed" />
+        <span class="min-w-0 truncate text-sm font-semibold tracking-tight" :class="card.resource ? 'text-highlighted' : 'text-muted'">{{ card.title }}</span>
+        <!-- Room for the open button, which sits beside the header. -->
+        <span class="ms-auto w-14 shrink-0" aria-hidden="true" />
+        <span class="blr-meta">{{ total(card) }}</span>
+        <UIcon name="i-lucide-chevron-down" class="size-3.5 shrink-0 text-dimmed transition-transform" :class="open && 'rotate-180'" />
+      </UButton>
+    </template>
+    <!-- Padding inside the animated content, not on it, so the height
+         animation lands at zero without a jump. -->
+    <template #content>
+      <div class="border-t border-muted px-3 py-2">
+      <p v-if="card.note" class="blr-topology-note">{{ card.note }}</p>
+      <UTree
+        v-if="card.children.length"
+        class="blr-tree-card-tree"
+        :items="itemsOf(card)"
+        :get-key="(item: Node) => item.value"
+        :expanded="expandedOf(card)"
+        color="neutral"
+        size="md"
+        :ui="{ link: 'gap-2 rounded-md transition hover:bg-elevated', linkLabel: 'font-medium' }"
+        @update:expanded="emit('expand', card.key, $event)"
+      >
+        <template #item-leading="{ item }">
+          <BlrKind
+            v-if="item.resource"
+            :kind="item.resource.kind"
+            :interface-type="item.resource.kind === 'interface' ? item.resource.interfaceType : undefined"
+            :facet="entityFacetOf(item.resource)"
+            :acts="item.resource.kind === 'entity' ? item.resource.acts ?? undefined : undefined"
+            :labelled="false"
+            size="xs"
+          />
+        </template>
+        <template #item-label="{ item }">
+          <span :class="item.resource ? 'text-highlighted' : 'text-muted'">{{ item.label }}</span>
+        </template>
+        <!-- The same count-and-chevron a group header and an expandable row wear. -->
+        <template #item-trailing="{ item, expanded }">
+          <span v-if="item.count" class="flex items-center gap-1">
+            <span class="blr-meta">{{ item.count }}</span>
+            <UIcon name="i-lucide-chevron-down" class="size-3.5 shrink-0 text-dimmed transition-transform" :class="expanded && 'rotate-180'" />
+          </span>
+        </template>
+      </UTree>
+      </div>
+    </template>
+  </UCollapsible>
+  <!-- Beside the box, not inside its header: a button cannot hold a button. -->
+  <UButton
+    v-if="card.resource"
+    icon="i-lucide-arrow-right"
+    color="neutral"
+    variant="outline"
+    size="xs"
+    class="absolute end-14 top-2.5"
+    data-open-page
+    :aria-label="`Open ${card.title}`"
+    @click="emit('open', card.resource!)"
+  />
+  </div>
 </template>
