@@ -3,7 +3,7 @@ kind: primary
 routes:
   local: Local
 steps:
-  - text: The Developer opens the collection that owns their question, then its named view alongside the List
+  - text: The Developer opens the collection that owns their question and switches its drawing from Rows to Graph
     kind: actor
     actor: developer
     entities: []
@@ -43,11 +43,12 @@ page.
 ## Edge cases
 
 - Interface map is a connected tree: the Product root branches into Interfaces and their actual Experiences and Screens. Every visible non-root node has a containment connector to its parent, including on narrow screens. Expanding a branch reveals connected children; selecting a node opens its resource page.
-- Journey composition covers every Journey in the model and preserves every Capability-bearing Step in order, including repeated uses and non-achieved variations, with each Step's exact route Contexts. Each Journey windows its own Scenarios, and the complete Scenario remains available from its page.
+- A reach tree roots at the Product and branches through each Domain, Capability, Journey or Business Rule to the places it is reached in and the Rules attached to it. A place reached from two subjects is drawn under each; selecting either opens the one page.
 - What changes what shows each Capability's creates, changes, and removes effects on Entities, with the supporting Scenarios. Reads do not become mutations.
 - Compare delivery is a Capability by Interface matrix stating the authored route for each cell. A row with more than one cell is delivered by more than one Interface; a row with one is exclusive to it. An empty cell claims only that no Context authorises that delivery.
 - Entity relationships retains disconnected Entities and each authored relation's direction and both cardinalities, including self-relations and multiple distinct relations between the same Entities.
 - A delayed or unavailable diagram arrangement leaves the complete resource and relationship reading available.
 
-- A named view states its question once, above the reading: the collection heading names the subject and the tab names the view, so the reading never titles itself a third time.
+- A Graph states its question once, below the drawing: the collection heading names the subject and the switch names the drawing, so the reading never titles itself a third time. Switching back to Rows keeps the filters and the count.
+- Compare delivery, What changes what and Rule attachments compare two collections at once, so each is a rail row of its own below Overview, with no tabs.
 - An address naming a view this report does not have opens the Overview rather than guessing at a replacement.

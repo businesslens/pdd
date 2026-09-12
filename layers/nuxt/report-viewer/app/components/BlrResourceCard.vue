@@ -20,10 +20,19 @@ const props = withDefaults(defineProps<{
   active?: boolean
   /** False inside a group whose header already states what the badge would. */
   badge?: boolean
-}>(), { badge: true })
+  /** A hook the surface supplies where the row's own would repeat its parent. */
+  hookLabel?: string
+  hook?: string
+  /** In a multi-column grid the metrics stack under the title instead of
+      hiding below the large breakpoint. */
+  stacked?: boolean
+}>(), { badge: true, stacked: false })
 
 const emit = defineEmits<{ open: [resource: AnyResourceView] }>()
-const presentation = computed(() => resourceCardPresentation(props.workspace, props.resource))
+const presentation = computed(() => {
+  const own = resourceCardPresentation(props.workspace, props.resource)
+  return props.hook ? { ...own, hookLabel: props.hookLabel ?? own.hookLabel, hook: props.hook } : own
+})
 const kindLabel = computed(() => ENTITY_KIND_META[props.resource.kind].label)
 const interfaceType = computed(() => props.resource.kind === 'interface' ? props.resource.interfaceType : undefined)
 const facet = computed(() => entityFacetOf(props.resource))
@@ -82,7 +91,7 @@ function metricEntity(metric: ResourceCardMetric, id: string) {
             color="neutral"
             variant="subtle"
             size="sm"
-            class="max-w-40 shrink-0 truncate"
+            class="min-w-12 max-w-40 truncate"
           >
             {{ presentation.badge }}
           </UBadge>
@@ -93,10 +102,18 @@ function metricEntity(metric: ResourceCardMetric, id: string) {
           <span class="shrink-0 text-xs text-dimmed">{{ presentation.hookLabel }}</span>
           <span class="truncate text-xs font-medium text-muted">{{ presentation.hook }}</span>
         </span>
+        <!-- Stacked: the same metrics, under the title, where a narrow column
+             has no room beside it. -->
+        <span v-if="stacked" class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
+          <span v-for="metric in presentation.metrics" :key="metric.label" :title="metric.kind ? metric.ids?.map(id => metricTitle(metric, id)).join(', ') : undefined">
+            <span class="font-mono text-xs font-medium text-highlighted tabular-nums">{{ metric.value }}</span>
+            <span class="ms-1 text-xs text-muted">{{ metric.label }}</span>
+          </span>
+        </span>
       </span>
     </span>
 
-    <span class="hidden shrink-0 items-center gap-4 lg:flex">
+    <span class="shrink-0 items-center gap-4" :class="stacked ? 'hidden' : 'hidden lg:flex'">
       <UTooltip
         v-for="metric in presentation.metrics"
         :key="metric.label"

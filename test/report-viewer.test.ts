@@ -520,8 +520,14 @@ describe('stable Product Report', () => {
     for (const icon of ['house', 'shapes', 'land-plot', 'network', 'box']) {
       expect(layer, icon).toContain(`'lucide:${icon}'`)
     }
-    for (const gone of ['package', 'boxes', 'waypoints']) {
+    for (const gone of ['package', 'boxes']) {
       expect(layer, gone).not.toContain(`'lucide:${gone}'`)
+    }
+    /* The drawing switch wears two unreserved glyphs: neither is a kind's mark. */
+    const marks = source('app/utils/reportWorkspace.ts')
+    for (const glyph of ['rows-3', 'waypoints']) {
+      expect(layer, glyph).toContain(`'lucide:${glyph}'`)
+      expect(marks, glyph).not.toContain(`i-lucide-${glyph}`)
     }
   })
 
@@ -749,8 +755,14 @@ describe('stable Product Report', () => {
 
   it('keeps structured readings beside the shared Vue Flow diagram canvas', () => {
     expect(existsSync(join(VIEWER, 'app/components/BlrFlowCanvas.vue'))).toBe(true)
+    /* The Overview's matrices and a collection's Graph are two components: one
+       narrows on its own two axes, the other draws the set the filters left. */
     const topology = source('app/components/BlrProductTopology.vue')
-    for (const family of ['BlrTopologyMatrix', 'BlrTopologyBranch', 'BlrDiagram']) expect(topology).toContain(family)
+    expect(topology).toContain('BlrTopologyMatrix')
+    const graph = source('app/components/BlrCollectionGraph.vue')
+    for (const family of ['BlrTopologyTree', 'BlrDiagram']) expect(graph).toContain(family)
+    expect(graph).not.toContain('<BlrFilterBar')
+    expect(graph).toContain('visibleKeys')
   })
 
   it('keeps the question-and-derivation bar exclusive to Topology', () => {
@@ -977,15 +989,20 @@ describe('stable Product Report', () => {
     const topology = source('app/components/BlrProductTopology.vue')
     const docs = source('app/utils/resourceDocs.ts')
     const pane = reportShell.indexOf('v-if="!topologyActive" ref="resourcePane" class="blr-pane min-h-0 flex-1"')
-    const reading = reportShell.indexOf('<div class="p-5">', pane)
+    const toolbar = reportShell.indexOf('data-collection-toolbar')
 
     expect(pane).toBeGreaterThan(-1)
-    /* Narrowing belongs to the reading it narrows, aligned with the rows it
-       acts on rather than banded above them. Identity and the ways out do not:
-       an exit belongs to the subject, so it sits on the heading row above. */
-    expect(reportShell.indexOf('<BlrFilterBar', reading)).toBeGreaterThan(reading)
-    expect(reportShell.indexOf(':to="surfaceDocs.url"')).toBeLessThan(pane)
-    expect(reportShell.indexOf('v-for="link in exits"')).toBeLessThan(pane)
+    /* One bar for both drawings of a collection: it sits above Rows and Graph
+       alike, because a filter narrows the set and the set is what either
+       drawing shows. Identity and the ways out sit on the heading row above it,
+       and the switch between drawings is at the bar's end, not a tab. */
+    expect(toolbar).toBeGreaterThan(-1)
+    expect(reportShell.indexOf('<BlrFilterBar', toolbar)).toBeLessThan(pane)
+    expect(reportShell.indexOf(':to="surfaceDocs.url"')).toBeLessThan(toolbar)
+    expect(reportShell.indexOf('v-for="link in exits"')).toBeLessThan(toolbar)
+    expect(reportShell.indexOf('data-drawing-switch', toolbar)).toBeLessThan(pane)
+    /* Tabs stay on the Overview and on pages; a collection has none. */
+    expect(reportShell).toContain("activeKind.value !== 'product' ? [] : [")
 
     /* One control per axis, not one popover holding four. A reader should see
        which axes exist without opening anything, and read the state of each
@@ -1125,8 +1142,11 @@ describe('stable Product Report', () => {
     const scenarios = source('app/components/BlrScenarios.vue')
 
     expect(rail).not.toContain('blr-navchild')
-    /* The rail changes the subject; a named view is a tab of its collection. */
-    expect(rail).not.toContain('view: [section: string]')
+    /* The rail changes the subject. A collection's Graph is reached inside it;
+       a matrix compares two collections, so it is a rail row of its own. */
+    expect(rail).toContain('view: [section: string]')
+    expect(rail).toContain('v-for="item in MATRIX_DESTINATIONS"')
+    expect(rail.indexOf('MATRIX_DESTINATIONS"')).toBeLessThan(rail.indexOf('v-for="meta in RAIL_KINDS"'))
     expect(reportShell).not.toContain('SCENARIO_OF')
     expect(reportShell).not.toContain('parentTabs')
     expect(reportShell).not.toContain('class="blr-tab"')

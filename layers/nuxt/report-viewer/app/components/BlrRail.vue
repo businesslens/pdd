@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ReportResourceKind, ReportWorkspace } from '../utils/reportWorkspace'
-import { MAIN_RESOURCE_KINDS } from '../utils/reportDestinations'
+import { MAIN_RESOURCE_KINDS, MATRIX_DESTINATIONS } from '../utils/reportDestinations'
 import { ENTITY_KIND_META } from '../utils/reportWorkspace'
 
 defineProps<{
@@ -9,9 +9,9 @@ defineProps<{
   counts: Record<ReportResourceKind, number>
 }>()
 
-/* The rail changes the subject, and only that: a named view is a tab of the
-   collection it belongs to, reached once you are there. */
-const emit = defineEmits<{ kind: [kind: ReportResourceKind] }>()
+/* The rail changes the subject, and only that. A collection's Graph is reached
+   inside it; a matrix compares two collections, so it is a row of its own. */
+const emit = defineEmits<{ kind: [kind: ReportResourceKind], view: [section: string] }>()
 
 const RAIL_KINDS = MAIN_RESOURCE_KINDS.map(kind => ENTITY_KIND_META[kind])
 const isCurrent = (kind: ReportResourceKind, section: string) => kind === section
@@ -33,6 +33,19 @@ const overviewColor = `var(--blr-slot-${ENTITY_KIND_META.product.slot})`
     >
       <UIcon :name="ENTITY_KIND_META.product.icon" class="size-4 shrink-0" :style="{ color: overviewColor }" />
       <span class="flex-1 truncate text-start">Overview</span>
+    </button>
+    <button
+      v-for="item in MATRIX_DESTINATIONS"
+      :key="item.section"
+      type="button"
+      class="blr-navitem"
+      :data-current="activeSection === item.section"
+      :aria-current="activeSection === item.section ? 'page' : undefined"
+      :style="{ '--kind-color': overviewColor }"
+      @click="emit('view', item.section)"
+    >
+      <UIcon :name="item.icon" class="size-4 shrink-0" :style="{ color: overviewColor }" />
+      <span class="flex-1 truncate text-start">{{ item.name }}</span>
     </button>
     <p class="blr-navgroup mt-3">Resources</p>
     <button

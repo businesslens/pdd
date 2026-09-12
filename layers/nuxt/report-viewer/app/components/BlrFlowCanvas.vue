@@ -4,8 +4,8 @@ import { Background } from '@vue-flow/background'
 import type { Node, Edge, ViewportTransform } from '@vue-flow/core'
 import type { DiagramLayout, DiagramNode } from '../utils/diagram'
 
-const props = defineProps<{ layout: DiagramLayout, title: string, viewportKey: string, direction?: 'RIGHT' | 'DOWN', quiet?: boolean, totalNodes?: number }>()
-const emit = defineEmits<{ open: [key: string], toggle: [id: string, open: boolean], ready: [] }>()
+const props = defineProps<{ layout: DiagramLayout, title: string, viewportKey: string, direction?: 'RIGHT' | 'DOWN', quiet?: boolean, totalNodes?: number, branches?: boolean }>()
+const emit = defineEmits<{ open: [key: string], toggle: [id: string, open: boolean], toggleAll: [open: boolean], ready: [] }>()
 const id = useId()
 const viewerId = inject<string>('businesslens:viewer', '')
 const shell = ref<HTMLElement>()
@@ -105,6 +105,9 @@ onBeforeUnmount(() => { save(); mounted = false; resize?.disconnect(); window.re
       <button type="button" aria-label="Zoom in" title="Zoom in" @click="zoom(true)">+</button>
       <button type="button" aria-label="Zoom out" title="Zoom out" @click="zoom(false)">−</button>
       <button type="button" aria-label="Fit map to view" title="Fit map to view" @click="fit"><UIcon name="i-lucide-scan" class="size-4" /></button>
+      <!-- A tree opens and closes as a whole from the same controls it is zoomed with. -->
+      <button v-if="branches" type="button" aria-label="Expand all branches" title="Expand all" @click="emit('toggleAll', true)"><UIcon name="i-lucide-chevrons-up-down" class="size-4" /></button>
+      <button v-if="branches" type="button" aria-label="Collapse all branches" title="Collapse all" @click="emit('toggleAll', false)"><UIcon name="i-lucide-chevrons-down-up" class="size-4" /></button>
     </div>
     <div class="blr-flow-summary">{{ layout.nodes.length }}<template v-if="totalNodes && totalNodes !== layout.nodes.length"> of {{ totalNodes }}</template> boxes · {{ layout.edges.length }} connections<span> · Drag to explore</span></div>
   </div>

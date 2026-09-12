@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Every collection is one set with two drawings, Rows and Graph, switched
+  beside the filters. A filter narrows both drawings alike, and the heading
+  count is the same in either.
+- Interfaces and Domains read as one tree card per resource: an Interface's
+  Experiences and Screens, a Domain's Capabilities and Entities. Capability and
+  Journey rows expand in place to their Scenarios, and a Journey Scenario reads
+  its Capability chain in Step order.
+- Domains, Capabilities, Journeys and Business Rules gained a Graph: a tree
+  from the Product through each resource to the places it is reached in and
+  the Rules attached to it.
+- Rows can be laid out two, three or four per line, remembered per collection.
+- Compare delivery, What changes what and Rule attachments are rows of the
+  rail, directly below Overview.
+
+### Removed
+
+- The Composition tab of Journeys. Its reading lives in the expanded Journey
+  rows.
+
 ## [0.13.0] - 2026-09-12
 
 ### Removed

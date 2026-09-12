@@ -180,10 +180,15 @@ costed already.
 - **The report explains itself.** A reading that needs prose elsewhere to be
   understood is not finished. It links out only to the documentation for a
   resource *type*.
-- **Tabs are the only switch.** A tab changes which set is on screen, the rail
-  changes the subject, the toolbar only narrows. There is no representation
-  control: a second drawing is a tab of its own, accountable for its own
-  derivation.
+- **A collection is one set with two drawings.** The rail changes the subject,
+  the filters narrow the set, and a Rows/Graph switch beside the filters changes
+  only how the same set is drawn: the heading count, the controls and the chips
+  are identical in both. Each collection's Graph states one derivation and is
+  accountable for it. Tabs exist only on the Overview and on resource pages,
+  where they change which set is on screen.
+- **Row density is the reader's, per collection.** How many columns the Rows
+  drawing uses is a cookie keyed by collection, so the first paint is right;
+  nothing else about a drawing is configurable.
 - **Every surface names itself, with the name the reader clicked.** The
   breadcrumb ends at the parent; the H1 carries the surface with its type mark
   and a qualifier — a count for a collection, a type for a resource. Ways out
@@ -192,10 +197,13 @@ costed already.
 - **The page is the reading**: every row, relation, search result and diagram
   resource opens a resource page with its own URL. The open section, page and
   tab live there too, so state survives a refresh and a recompile.
-- **The rail lists six collections** below Overview: Entities, Interfaces,
-  Domains, Capabilities, Journeys, Business Rules. Experiences and Screens are
-  reached through Interfaces, Scenarios through their parent, and named views
-  are tabs of their subject collection.
+- **The rail lists Overview, three cross-collection views, then six
+  collections.** The views — Compare delivery, What changes what, Rule
+  attachments — each compare two collections, so no collection owns them and
+  each is a row of its own. The collections are Entities, Interfaces, Domains,
+  Capabilities, Journeys, Business Rules. Experiences and Screens are reached
+  through Interfaces, Scenarios through their parent, and a collection's Graph
+  through its drawing switch.
 - **A resource page is Overview and at most one peer tab** — Scenarios for a
   Capability or Journey, Lifecycle for an Entity with States. A view comparing
   resources belongs to the collection, never to one of them.

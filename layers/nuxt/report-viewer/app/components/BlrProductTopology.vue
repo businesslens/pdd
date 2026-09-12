@@ -1,48 +1,31 @@
 <script setup lang="ts">
+/**
+ * The Overview's cross-collection readings.
+ *
+ * A matrix compares two collections at once, so no single collection's Rows
+ * drawing lists its set and no collection's filters narrow it. It keeps its own
+ * two controls: which resource types it draws, and one resource whose
+ * neighbourhood it draws.
+ */
 import type { AnyResourceView, ReportWorkspace } from '../utils/reportWorkspace'
-import { ENTITY_KIND_META, entityFacetOf, resourceKey } from '../utils/reportWorkspace'
+import { ENTITY_KIND_META, entityFacetOf } from '../utils/reportWorkspace'
 import { findProductTopologyView } from '../utils/productTopologyViews'
 import type { TopologyReading } from '../utils/topologyState'
-import { defaultTopologyReading, sanitizeTopologyReading, toggleTopologyGroup } from '../utils/topologyState'
-import { deliveryMatrixProjection, entityRelationsProjection, filterBranches, interfaceProjection, journeyCompositionProjection, mutationProjection, productMapProjection, ruleReachProjection, sitemapProjection } from '../utils/topologyProjections'
-import { diagramResource } from '../utils/diagram'
-import { topologyRelations } from '../utils/topologyRelations'
+import { defaultTopologyReading, sanitizeTopologyReading } from '../utils/topologyState'
+import { deliveryMatrixProjection, mutationProjection, ruleAttachmentsProjection } from '../utils/topologyProjections'
+import { topologyNeighbourhood } from '../utils/topologyFocus'
 import type { TopologyMatrix } from '../utils/topologyProjections'
 
 const props = defineProps<{ workspace: ReportWorkspace }>()
-const emit = defineEmits<{ select: [resource: AnyResourceView], product: [] }>()
+const emit = defineEmits<{ select: [resource: AnyResourceView] }>()
 const reading = defineModel<TopologyReading>('reading', { default: defaultTopologyReading })
 const view = computed(() => findProductTopologyView(reading.value.view))
-const relations = computed(() => topologyRelations(props.workspace))
-const neighbourhood = computed(() => {
-  if (!reading.value.focus.length) return null
-  const focus = new Set(reading.value.focus)
-  const keys = new Set(focus)
-  for (const relation of relations.value) if (focus.has(relation.source) || focus.has(relation.target)) { keys.add(relation.source); keys.add(relation.target) }
-  if (view.value.id === 'sitemap') {
-    const descend = (node: ReturnType<typeof sitemapProjection>, included = false) => {
-      const inside = included || focus.has(node.id)
-      if (inside) keys.add(node.id)
-      node.children.forEach(child => descend(child, inside))
-    }
-    descend(sitemapProjection(props.workspace))
-  }
-  if (view.value.id === 'product-map') {
-    for (const item of [...props.workspace.capabilities, ...props.workspace.entities]) {
-      if (item.domainId && focus.has(resourceKey('domain', item.domainId))) keys.add(item.key)
-    }
-  }
-  return keys
-})
+const neighbourhood = computed(() => topologyNeighbourhood(props.workspace, reading.value.focus))
 const visible = (resource: AnyResourceView) => !reading.value.hiddenKinds.includes(resource.kind) && (!neighbourhood.value || neighbourhood.value.has(resource.key))
-const map = computed(() => productMapProjection(props.workspace))
-const branches = computed(() => filterBranches(
-  view.value.id === 'product-map' ? map.value.groups : interfaceProjection(props.workspace), visible))
-const sitemap = computed(() => filterBranches([sitemapProjection(props.workspace)], visible)[0])
-const matrixMode = computed(() => view.value.id === 'rule-reach' ? 'rules' as const
+const matrixMode = computed(() => view.value.id === 'rule-attachments' ? 'rules' as const
   : view.value.id === 'delivery-by-interface' ? 'delivery' as const : 'mutations' as const)
 const matrix = computed<TopologyMatrix>(() => {
-  const base = view.value.id === 'rule-reach' ? ruleReachProjection(props.workspace)
+  const base = view.value.id === 'rule-attachments' ? ruleAttachmentsProjection(props.workspace)
     : view.value.id === 'delivery-by-interface' ? deliveryMatrixProjection(props.workspace)
       : mutationProjection(props.workspace)
   const selectedRows = base.rows.filter(item => reading.value.focus.includes(item.key))
@@ -53,14 +36,6 @@ const matrix = computed<TopologyMatrix>(() => {
   const columnKeys = new Set(columns.map(column => column.key))
   return { rows, columns, cells: base.cells.filter(cell => rowKeys.has(cell.row) && columnKeys.has(cell.column)) }
 })
-const diagram = computed(() => {
-  const base = entityRelationsProjection(props.workspace)
-  const nodes = base.nodes.filter(node => visible(props.workspace.byKey.get(node.id)!)).map(node => ({ ...diagramResource(props.workspace.byKey.get(node.id)!), ...node }))
-  const keys = new Set(nodes.map(node => node.id))
-  return { ...base, nodes, edges: base.edges.filter(edge => keys.has(edge.source) && keys.has(edge.target)) }
-})
-const compositions = computed(() => journeyCompositionProjection(props.workspace))
-const isGraph = computed(() => view.value.id === 'sitemap' || view.value.id === 'what-it-keeps')
 const filterKinds = computed(() => view.value.kinds.filter(kind => kind !== 'product'
   && [...props.workspace.byKey.values()].some(item => item.kind === kind)))
 /* Every view offers its axes. A type control with one option is not an axis. */
@@ -113,12 +88,9 @@ watch(() => [props.workspace, reading.value] as const, () => {
 function update(patch: Partial<TopologyReading>) { reading.value = { ...reading.value, ...patch } }
 function open(key: string) {
   save()
-  if (key === resourceKey('product', props.workspace.identity.id)) { emit('product'); return }
   const resource = props.workspace.byKey.get(key)
   if (resource) emit('select', resource)
 }
-function focus(key: string) { open(key) }
-function toggle(id: string, open: boolean) { reading.value = toggleTopologyGroup(reading.value, id, open) }
 </script>
 <template>
   <div class="blr-product-topology">
@@ -188,15 +160,8 @@ function toggle(id: string, open: boolean) { reading.value = toggleTopologyGroup
         </USelectMenu>
       </BlrFilterBar>
     </div>
-    <div ref="pane" class="blr-topology-reading" :class="{ 'blr-topology-reading--graph': isGraph }" @scroll.capture.passive="save">
-      <BlrTopologyMatrix v-if="matrixMode !== 'mutations' || view.id === 'what-changes-what'" :matrix="matrix" :column="reading.column" :mode="matrixMode" @column="update({ column: $event })" @open="open" />
-      <template v-else-if="view.id === 'sitemap'"><BlrTopologyTree v-if="sitemap" :tree="sitemap" :reading="reading" :viewport-key="scrollKey" @open="open" @toggle="toggle" @ready="restore" /><p v-else class="blr-topology-empty">No resources in this scope.</p></template>
-      <BlrTopologyComposition v-else-if="view.id === 'value-paths'" :compositions="compositions" :scenario="reading.scenario" @scenario="update({ scenario: $event })" @open="open" />
-      <template v-else-if="view.id === 'what-it-keeps'"><BlrDiagram v-if="diagram.nodes.length" :diagram="diagram" title="Entity relationships" :viewport-key="scrollKey" @open="open" @ready="restore" /><p v-else class="blr-topology-empty">No Entities in this scope.</p></template>
-      <template v-else>
-        <div class="blr-topology-grid"><BlrTopologyBranch v-for="item in branches" :key="item.id" :branch="item" :reading="reading" @open="open" @toggle="toggle" /></div>
-        <p v-if="!branches.length" class="blr-topology-empty">No resources in this scope.</p>
-      </template>
+    <div ref="pane" class="blr-topology-reading" @scroll.capture.passive="save">
+      <BlrTopologyMatrix :matrix="matrix" :column="reading.column" :mode="matrixMode" @column="update({ column: $event })" @open="open" />
       <details class="blr-topology-about"><summary>About this view</summary><p><strong>{{ view.question }}</strong></p><p><strong>{{ view.diagramType }}.</strong> {{ view.note }}</p></details>
     </div>
   </div>

@@ -11,16 +11,23 @@
  * is it connected" is answered by the rail, which lists every collection with
  * its count, and by each resource's own Connections. A view that redraws the
  * whole index answers a question nothing was asking.
+ *
+ * `value-paths` (Composition) folded into the Journeys collection's Rows: a
+ * Journey row expands to its Scenarios, each reading its Capability chain in
+ * Step order. The columns drew the same chain beside route Contexts a reader
+ * comparing Journeys never asked for.
  */
 import type { ReportResourceKind } from './reportWorkspace'
 
 export type ProductTopologyViewId =
-  | 'product-map'
-  | 'value-paths'
-  | 'delivery-by-interface'
-  | 'sitemap'
+  | 'domain-reach'
+  | 'capability-reach'
+  | 'journey-reach'
   | 'rule-reach'
+  | 'sitemap'
   | 'what-it-keeps'
+  | 'delivery-by-interface'
+  | 'rule-attachments'
   | 'what-changes-what'
 
 export interface ProductTopologyView {
@@ -33,29 +40,41 @@ export interface ProductTopologyView {
 }
 
 export const PRODUCT_TOPOLOGY_VIEWS: ProductTopologyView[] = [
+  /* The four reach graphs draw one collection's set as a tree rooted at the
+     Product. A child is an occurrence: a Screen three Capabilities are
+     available on is drawn under each of them, because the question is asked
+     of the Capability, not of the Screen. */
   {
-    id: 'product-map',
-    diagramType: 'Grouped map',
-    name: 'Domain map',
-    question: 'How are Capabilities and Entities classified by subject?',
-    note: 'Capabilities and Entities are grouped by their authored Domain. Unassigned resources remain visible. Groups express classification, not containment or dependencies.',
-    kinds: ['entity', 'domain', 'capability']
+    id: 'domain-reach',
+    diagramType: 'Reach tree',
+    name: 'Domain reach',
+    question: 'Where is each Domain reached, and what is reached there?',
+    note: 'Each Domain branches into the places its Capabilities, Journeys and Business Rules are available in — a Screen, else an Experience, else an Interface, resolved from authored Contexts — and each place into what is reached there. A member with no Context sits directly under its Domain. Domains classify; the tree does not imply containment.',
+    kinds: ['product', 'domain', 'interface', 'experience', 'screen', 'capability', 'journey', 'rule']
   },
   {
-    id: 'value-paths',
-    diagramType: 'Scenario columns',
-    name: 'Composition',
-    question: 'Which Capabilities does each Journey Scenario compose, and where does it land?',
-    note: 'Every Journey in the model, each with its Scenarios as columns in authored Step order. Repeated Capabilities are separate occurrences; Contexts belong to their exact Step and route. Columns do not imply simultaneous Steps. Open a Scenario for its complete sequence, conditions and outcome.',
-    kinds: ['journey', 'journey-scenario', 'capability', 'screen']
+    id: 'capability-reach',
+    diagramType: 'Reach tree',
+    name: 'Capability reach',
+    question: 'Where is each Capability available, and which Business Rules attach to it?',
+    note: 'Each Capability branches into the places its Contexts name and the Business Rules attached to it. A place is the most specific resource the Context resolves to. A Capability with neither is a leaf.',
+    kinds: ['product', 'capability', 'interface', 'experience', 'screen', 'rule']
   },
   {
-    id: 'delivery-by-interface',
-    diagramType: 'Delivery matrix',
-    name: 'Compare delivery',
-    question: 'Which Interfaces deliver each Capability, and by what route?',
-    note: 'Each cell is one authored delivery: a Screen of that Interface exposing the Capability, an Experience of it whose Context the Capability names, or the Interface itself where a Context names no Experience and no Screen carries it. A row with two cells is delivered twice; a row with one is exclusive to that Interface. An empty cell makes no claim beyond the absence of an authored Context.',
-    kinds: ['entity', 'interface', 'experience', 'screen', 'capability']
+    id: 'journey-reach',
+    diagramType: 'Reach tree',
+    name: 'Journey reach',
+    question: 'Where does each Journey take place, and which Business Rules attach to it?',
+    note: 'Each Journey branches into the places its Scenarios\' Steps resolve to and the Business Rules attached to it. Places are derived from the Steps, so a Journey with no Capability-bearing Step names no place.',
+    kinds: ['product', 'journey', 'interface', 'experience', 'screen', 'rule']
+  },
+  {
+    id: 'rule-reach',
+    diagramType: 'Reach tree',
+    name: 'Rule reach',
+    question: 'What is each Business Rule attached to, and where does it apply?',
+    note: 'Each Business Rule branches into its authored attachment targets — Entities, Capabilities, Journeys and Scenarios — and the places its Contexts restrict it to. Derived Domains and inherited reach are excluded.',
+    kinds: ['product', 'rule', 'entity', 'capability', 'journey', 'capability-scenario', 'journey-scenario', 'interface', 'experience', 'screen']
   },
   {
     id: 'sitemap',
@@ -66,20 +85,28 @@ export const PRODUCT_TOPOLOGY_VIEWS: ProductTopologyView[] = [
     kinds: ['product', 'interface', 'experience', 'screen']
   },
   {
-    id: 'rule-reach',
-    diagramType: 'Attachment matrix',
-    name: 'Rule attachments',
-    question: 'Where is each Business Rule explicitly attached?',
-    note: 'Each cell is an authored Rule attachment. Details retain Entity operations, States, facts and Context restrictions. Derived Domains and inherited reach are excluded. An empty cell makes no permission or enforcement claim.',
-    kinds: ['rule', 'entity', 'capability', 'journey', 'capability-scenario', 'journey-scenario', 'interface', 'experience', 'screen']
-  },
-  {
     id: 'what-it-keeps',
     diagramType: 'Entity relationship diagram',
     name: 'Entity relationships',
     question: 'What does the Product keep, and how do those things relate?',
     note: 'Each authored Entity relation is drawn once, from its declaring source to its target. Labels include both cardinalities: 1:N means one source to many targets. Disconnected Entities remain visible.',
     kinds: ['entity']
+  },
+  {
+    id: 'delivery-by-interface',
+    diagramType: 'Delivery matrix',
+    name: 'Compare delivery',
+    question: 'Which Interfaces deliver each Capability, and by what route?',
+    note: 'Each cell is one authored delivery: a Screen of that Interface exposing the Capability, an Experience of it whose Context the Capability names, or the Interface itself where a Context names no Experience and no Screen carries it. A row with two cells is delivered twice; a row with one is exclusive to that Interface. An empty cell makes no claim beyond the absence of an authored Context.',
+    kinds: ['entity', 'interface', 'experience', 'screen', 'capability']
+  },
+  {
+    id: 'rule-attachments',
+    diagramType: 'Attachment matrix',
+    name: 'Rule attachments',
+    question: 'Where is each Business Rule explicitly attached?',
+    note: 'Each cell is an authored Rule attachment. Details retain Entity operations, States, facts and Context restrictions. Derived Domains and inherited reach are excluded. An empty cell makes no permission or enforcement claim.',
+    kinds: ['rule', 'entity', 'capability', 'journey', 'capability-scenario', 'journey-scenario', 'interface', 'experience', 'screen']
   },
   {
     id: 'what-changes-what',
@@ -91,7 +118,7 @@ export const PRODUCT_TOPOLOGY_VIEWS: ProductTopologyView[] = [
   }
 ]
 
-export const DEFAULT_PRODUCT_TOPOLOGY_VIEW: ProductTopologyViewId = 'product-map'
+export const DEFAULT_PRODUCT_TOPOLOGY_VIEW: ProductTopologyViewId = 'domain-reach'
 
 export function findProductTopologyView(id: ProductTopologyViewId): ProductTopologyView {
   return PRODUCT_TOPOLOGY_VIEWS.find(view => view.id === id) ?? PRODUCT_TOPOLOGY_VIEWS[0]!

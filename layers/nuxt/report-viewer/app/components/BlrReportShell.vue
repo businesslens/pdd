@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { REPORT_DESTINATIONS, destinationForSection, destinationForLocation, collectionKindFor, resourceAncestors, resourceViewLinks } from '../utils/reportDestinations'
+import { MATRIX_SECTIONS, MATRIX_DESTINATIONS, destinationForSection, destinationForLocation, graphForCollection, collectionKindFor, resourceAncestors, resourceViewLinks } from '../utils/reportDestinations'
 import { findProductTopologyView } from '../utils/productTopologyViews'
 import { parentOf } from '../utils/pageSections'
 import type { TopologyReading } from '../utils/topologyState'
@@ -25,6 +25,9 @@ import {
   hasSelections
 } from '../utils/resourceFacets'
 import { docsForResourceKind } from '../utils/resourceDocs'
+import { EXPANDABLE_KINDS, TREE_CARD_KINDS, rowChildren, treeCards } from '../utils/collectionChildren'
+import { COLUMN_CHOICES } from '../composables/useColumns'
+import type { ColumnChoice } from '../composables/useColumns'
 import { KIND_TERM } from '../utils/vocabulary'
 import type { VocabularySlug } from '../utils/vocabulary.generated'
 import { firstSentence } from '../utils/reportMarkdown'
@@ -36,7 +39,7 @@ const props = defineProps<{ workspace: ReportWorkspace, logoSrc?: string | null,
 /* `openResource` is the page you are on.                               */
 /* ------------------------------------------------------------------ */
 
-type ReportSection = 'overview' | ReportResourceKind | typeof REPORT_DESTINATIONS[number]['section']
+type ReportSection = 'overview' | ReportResourceKind | typeof MATRIX_DESTINATIONS[number]['section']
 
 const section = defineModel<string>('section', { default: 'overview' })
 
@@ -50,14 +53,17 @@ const topology = defineModel<TopologyReading>('topology', { default: defaultTopo
 const activeKind = ref<ReportResourceKind>('product')
 const activeSection = ref<ReportSection>('overview')
 
-const KNOWN_SECTIONS = new Set<string>(['overview', ...REPORT_DESTINATIONS.map(item => item.section), ...REPORT_ENTITY_KINDS.map(meta => meta.kind)])
+const KNOWN_SECTIONS = new Set<string>(['overview', ...MATRIX_SECTIONS, ...REPORT_ENTITY_KINDS.map(meta => meta.kind)])
+/* A matrix is a section with the Product as its subject: no collection's set. */
+const isMatrixSection = (value: string) => MATRIX_SECTIONS.has(value)
 
 /* Two-way, but never fighting: each side only writes when the value differs. */
 watch(section, (value) => {
   if (value === activeSection.value) return
-  const next = (KNOWN_SECTIONS.has(value) ? value : 'overview') as ReportSection
+  const known = (KNOWN_SECTIONS.has(value) ? value : 'overview') as ReportSection
+  const next = known === 'overview' || isMatrixSection(known) ? known : collectionKindFor(known as ReportResourceKind)
   activeSection.value = next
-  activeKind.value = next === 'overview' ? 'product' : next as ReportResourceKind
+  activeKind.value = next === 'overview' || isMatrixSection(next) ? 'product' : next as ReportResourceKind
 }, { immediate: true })
 
 watch(activeSection, (value) => {
@@ -80,6 +86,12 @@ const openPageKey = openResource
    ed on every visit. */
 const facetState = reactive<Partial<Record<ReportResourceKind, FacetSelections>>>({})
 const closedGroups = ref<string[]>([])
+/* Rows open to their children on request and stay open for the session, keyed
+   by collection and resource so a Screen open under one Interface is not open
+   under another. */
+const expandedRows = ref<string[]>([])
+/* Tree cards remember which nodes the reader opened, per card. */
+const treeExpansion = ref<Record<string, string[]>>({})
 const collectionStateReady = ref(false)
 const collectionStorageKey = () => `blr:collections:${location.pathname}:${props.workspace.identity.id}`
 
@@ -97,6 +109,8 @@ function restoreCollectionState() {
   collectionStateReady.value = false
   for (const key of Object.keys(facetState)) delete (facetState as Record<string, unknown>)[key]
   closedGroups.value = []
+  expandedRows.value = []
+  treeExpansion.value = {}
   try {
     const saved = JSON.parse(sessionStorage.getItem(collectionStorageKey()) ?? 'null')
     if (saved) {
@@ -110,6 +124,11 @@ function restoreCollectionState() {
         }
       }
       if (Array.isArray(saved.closed)) closedGroups.value = saved.closed.filter((id: unknown) => typeof id === 'string')
+      if (Array.isArray(saved.expanded)) expandedRows.value = saved.expanded.filter((id: unknown) => typeof id === 'string')
+      if (saved.trees && typeof saved.trees === 'object') {
+        treeExpansion.value = Object.fromEntries(Object.entries(saved.trees as Record<string, unknown>)
+          .filter((entry): entry is [string, string[]] => Array.isArray(entry[1]) && entry[1].every(item => typeof item === 'string')))
+      }
     }
   } catch { /* Collections remain usable when storage is unavailable. */ }
   pruneFacets()
@@ -119,15 +138,36 @@ function restoreCollectionState() {
 onMounted(restoreCollectionState)
 watch(() => props.workspace.identity.id, () => { if (collectionStateReady.value) restoreCollectionState() })
 watch(() => props.workspace, pruneFacets)
-watch([facetState, closedGroups], () => {
+watch([facetState, closedGroups, expandedRows, treeExpansion], () => {
   if (!collectionStateReady.value) return
-  try { sessionStorage.setItem(collectionStorageKey(), JSON.stringify({ facets: facetState, closed: closedGroups.value })) } catch { /* Optional persistence. */ }
+  try { sessionStorage.setItem(collectionStorageKey(), JSON.stringify({ facets: facetState, closed: closedGroups.value, expanded: expandedRows.value, trees: treeExpansion.value })) } catch { /* Optional persistence. */ }
 }, { deep: true })
 
 const collectionGroupKey = (key: string) => `${activeKind.value}:${key}`
 function setCollectionGroupOpen(key: string, open: boolean) {
   const id = collectionGroupKey(key)
   closedGroups.value = [...closedGroups.value.filter(item => item !== id), ...(!open ? [id] : [])]
+}
+
+/* Domains and Interfaces draw as tree cards; Capabilities and Journeys as rows
+   that expand to their Scenarios. */
+const treeCardsShown = computed(() => TREE_CARD_KINDS.includes(activeKind.value))
+const closedCards = computed(() => closedGroups.value
+  .filter(id => id.startsWith(`${activeKind.value}:`)).map(id => id.slice(activeKind.value.length + 1)))
+const cardExpansion = computed(() => Object.fromEntries(Object.entries(treeExpansion.value)
+  .filter(([id]) => id.startsWith(`${activeKind.value}:`)).map(([id, values]) => [id.slice(activeKind.value.length + 1), values])))
+function setCardExpansion(key: string, values: string[]) {
+  treeExpansion.value = { ...treeExpansion.value, [`${activeKind.value}:${key}`]: values }
+}
+
+/* The open rows of this collection, as the resource keys the row component reads. */
+const expandable = computed(() => EXPANDABLE_KINDS.includes(activeKind.value))
+const expandedKeys = computed(() => expandedRows.value
+  .filter(id => id.startsWith(`${activeKind.value}:`))
+  .map(id => id.slice(activeKind.value.length + 1)))
+function setRowOpen(key: string, open: boolean) {
+  const id = `${activeKind.value}:${key}`
+  expandedRows.value = [...expandedRows.value.filter(item => item !== id), ...(open ? [id] : [])]
 }
 
 const activeMeta = computed(() => ENTITY_KIND_META[activeKind.value])
@@ -300,8 +340,12 @@ watch(() => props.workspace, (workspace) => {
 
 const destination = computed(() => destinationForLocation(activeSection.value, pageTab.value, openResource.value))
 const topologyActive = computed(() => Boolean(destination.value))
+const matrixSection = computed(() => !openPage.value && isMatrixSection(activeSection.value) ? destinationForSection(activeSection.value) : undefined)
+/* The collection's Graph, when it has one. Absent, not disabled, when it does
+   not: the switch appears only where a second drawing exists. */
+const collectionGraph = computed(() => openPage.value || activeKind.value === 'product' ? undefined : graphForCollection(activeKind.value))
+const drawing = computed<'rows' | 'graph'>(() => collectionGraph.value && pageTab.value === 'graph' ? 'graph' : 'rows')
 const vocabularyContext = computed(() => {
-  if (topologyActive.value) return 'product'
   if (openPage.value) return KIND_TERM[openPage.value.kind]
   return KIND_TERM[activeKind.value]
 })
@@ -331,6 +375,13 @@ const surfaceHeading = computed(() => {
     return { icon: meta.icon, slot: meta.slot, title: resource.title, meta: meta.label,
       term: KIND_TERM[resource.kind], termText: resource.title }
   }
+  /* A matrix names itself with the name its rail row wears; its qualifier is
+     the shape it draws, since it is no resource type. */
+  const matrix = matrixSection.value
+  if (matrix) {
+    return { icon: matrix.icon, slot: ENTITY_KIND_META.product.slot, title: matrix.name,
+      meta: findProductTopologyView(matrix.view).diagramType, term: undefined, termText: '' }
+  }
   if (activeKind.value === 'product') {
     const meta = ENTITY_KIND_META.product
     return { icon: meta.icon, slot: meta.slot, title: 'Overview', meta: meta.label,
@@ -349,35 +400,110 @@ const exits = computed(() => pageSubject.value ? resourceViewLinks(pageSubject.v
 const surfaceDocs = computed(() => docsForResourceKind(pageSubject.value?.kind ?? activeKind.value))
 
 /**
- * Every named view of a collection is a tab of it, and nothing else is.
+ * Tabs belong to the Overview and to resource pages, where they change which
+ * set is on screen. A collection has no tabs: its two drawings show one set,
+ * and the switch between them sits beside the filters that narrow it. A matrix
+ * has none either: it is one reading, reached from its own rail row.
  *
- * The Product's own readings are tabs too. They were four collapsed disclosures
+ * The Product's own readings are tabs. They were four collapsed disclosures
  * stacked below the identity — a reader had to open each one to learn whether it
- * held anything, and the switch that did it was a fifth idiom nowhere else uses.
+ * held anything.
  */
 const PRODUCT_TABS = [
   { id: 'coverage', label: 'Coverage' },
   { id: 'references', label: 'References' }
 ]
 
-/* Compared as strings: no named view belongs to the Overview any more, so the
-   rail union no longer includes it, and a collection that has none is normal. */
-const surfaceViews = computed(() => REPORT_DESTINATIONS.filter(item => (item.rail as string) === activeSection.value))
-const surfaceTabs = computed(() => openPage.value ? [] : [
-  { id: 'overview', label: activeKind.value === 'product' ? 'About' : 'List' },
-  ...(activeKind.value === 'product' ? PRODUCT_TABS : []),
-  ...surfaceViews.value.map(item => ({ id: item.mode, label: item.label }))
+const surfaceTabs = computed(() => openPage.value || matrixSection.value || activeKind.value !== 'product' ? [] : [
+  { id: 'overview', label: 'About' },
+  ...PRODUCT_TABS
 ])
 const activeSurfaceTab = computed(() => {
   if (destination.value) return destination.value.mode
   return surfaceTabs.value.some(tab => tab.id === pageTab.value) ? pageTab.value : 'overview'
 })
 
-const showToolbar = computed(() => !openPage.value && activeKind.value !== 'product' && !topologyActive.value
-  && filtersOffered.value)
+/* One bar for both drawings: a filter narrows the set, and the set is what
+   either drawing shows. The bar exists when there is something to narrow by or
+   a second drawing to switch to. */
+const showToolbar = computed(() => !openPage.value && activeKind.value !== 'product'
+  && (filtersOffered.value || Boolean(collectionGraph.value)))
+
+/* Focus is a narrowing only the Graph can express — one resource and what
+   touches it — so it is a chip there, and leaving for Rows lets it go. */
+const focusChips = computed(() => drawing.value !== 'graph' ? [] : topology.value.focus.map((key) => {
+  const resource = props.workspace.byKey.get(key)
+  return { key: `focus:${key}`, label: 'Focus', value: resource?.title ?? key, kind: resource?.kind,
+    facet: resource ? entityFacetOf(resource) : null,
+    acts: resource?.kind === 'entity' ? resource.acts ?? undefined : undefined,
+    interfaceType: resource?.kind === 'interface' ? resource.interfaceType : undefined }
+}))
+const toolbarChips = computed(() => [...facetChips.value, ...focusChips.value])
+function removeChip(key: string) {
+  if (key.startsWith('focus:')) topology.value = { ...topology.value, focus: topology.value.focus.filter(item => `focus:${item}` !== key) }
+  else setFacet(key as ReportResourceKind, [])
+}
+function clearToolbar() {
+  clearFacets()
+  topology.value = { ...topology.value, focus: [] }
+}
+/** The keys the filters left in the set: what both drawings show. */
+const visibleKeys = computed(() => visibleResources.value.map(resource => resource.key))
+
+/* Row density is the reader's, per collection, and only for Rows: a graph has
+   no columns to count. */
+const { columnsFor, setColumns } = useColumns()
+/* Rows start one per line; tree cards start three abreast, as the Domain map did. */
+const columns = computed(() => columnsFor(activeKind.value, treeCardsShown.value ? 3 : 1))
+const columnItems = COLUMN_CHOICES.map(value => ({ value, label: `${value} per row` }))
+const rowGrid = computed(() => columns.value > 1
+  ? { display: 'grid', gridTemplateColumns: `repeat(${columns.value}, minmax(0, 1fr))`, gap: '0.5rem', alignItems: 'start' }
+  : undefined)
+/* Expand all and collapse all act on whatever this collection opens: its
+   Domain groups, its expandable rows, and the trees inside its cards. */
+const expandsAnything = computed(() => grouped.value || expandable.value || treeCardsShown.value)
+function toggleAllRows(open: boolean) {
+  const prefix = `${activeKind.value}:`
+  if (grouped.value) {
+    const keys = resourceGroups.value.map(group => collectionGroupKey(group.key))
+    closedGroups.value = [...closedGroups.value.filter(id => !id.startsWith(prefix)), ...(open ? [] : keys)]
+  }
+  if (expandable.value) {
+    const keys = visibleResources.value.filter(resource => rowChildren(props.workspace, resource).length).map(resource => `${prefix}${resource.key}`)
+    expandedRows.value = [...expandedRows.value.filter(id => !id.startsWith(prefix)), ...(open ? keys : [])]
+  }
+  if (treeCardsShown.value) {
+    const cards = treeCards(props.workspace, activeKind.value, visibleResources.value, filtersActive.value)
+    /* The card itself opens and closes with everything inside it. */
+    closedGroups.value = [...closedGroups.value.filter(id => !id.startsWith(prefix)), ...(open ? [] : cards.map(card => `${prefix}${card.key}`))]
+    const next = { ...treeExpansion.value }
+    for (const card of cards) {
+      const ids: string[] = []
+      const walk = (node: { id: string, children: any[] }) => { if (node.children.length) ids.push(node.id); node.children.forEach(walk) }
+      card.children.forEach(walk)
+      next[`${prefix}${card.key}`] = open ? ids : []
+    }
+    treeExpansion.value = next
+  }
+}
+
+/* Tree cards keep their own gap; only the column count is the reader's. */
+const cardGrid = computed(() => ({ gridTemplateColumns: `repeat(${columns.value}, minmax(0, 1fr))` }))
+
+function setDrawing(next: 'rows' | 'graph') {
+  const target = collectionGraph.value
+  openResource.value = null
+  if (next === 'graph' && target) {
+    topology.value = { ...topology.value, view: target.view, hiddenKinds: [] }
+    pageTab.value = 'graph'
+    return
+  }
+  topology.value = { ...topology.value, focus: [] }
+  pageTab.value = 'overview'
+}
 
 
-const pageReadingKey = computed(() => JSON.stringify([props.workspace.identity.id, activeSection.value, openPageKey.value, pageTab.value, topology.value.scenario, topology.value.expanded, topology.value.collapsed]))
+const pageReadingKey = computed(() => JSON.stringify([props.workspace.identity.id, activeSection.value, openPageKey.value, pageTab.value, topology.value.expanded, topology.value.collapsed]))
 const { element: resourcePane, save: savePageScroll, restore: restorePageScroll } = useBlrTopologyScroll(pageReadingKey)
 
 /* Leaving a page, or opening one, is also leaving its tab: both change in one
@@ -401,10 +527,9 @@ function openView(sectionId: string, resource?: AnyResourceView) {
   mobileNavOpen.value = false
   leavePage()
   topology.value = { ...topology.value, view: target.view, hiddenKinds: [], query: '', focus: resource ? [resource.key] : [], column: resource?.kind === 'entity' && target.view === 'what-changes-what' ? resource.key : null }
-  /* Every named view now belongs to a resource collection, so its rail row is
-     that collection: nothing routes back to the Overview. */
+  /* A matrix compares two collections, so its rail row is its own. */
   activeSection.value = target.rail
-  activeKind.value = target.rail
+  activeKind.value = isMatrixSection(target.rail) ? 'product' : target.rail as ReportResourceKind
   pageTab.value = target.mode
 }
 
@@ -425,11 +550,6 @@ function openResourcePage(resource: AnyResourceView) {
 }
 
 function openSurfaceTab(id: string) {
-  const target = surfaceViews.value.find(item => item.mode === id)
-  if (target) {
-    openView(target.section)
-    return
-  }
   mobileNavOpen.value = false
   openResource.value = null
   pageTab.value = id
@@ -541,6 +661,7 @@ const orphanScenarios = computed(() => props.workspace.scenarios
             :active-section="activeSection"
             :counts="kindCounts"
             @kind="setKind"
+            @view="openView"
           >
             <!-- The host's own way back out, above its sections. -->
             <template v-if="$slots.navigation" #navigation>
@@ -605,18 +726,14 @@ const orphanScenarios = computed(() => props.workspace.scenarios
           </button>
         </div>
 
-        <!-- Collection controls belong to the list reading, so they scroll
-             away with its cards or table. Topology remains a bounded canvas. -->
-        <div v-if="!topologyActive" ref="resourcePane" class="blr-pane min-h-0 flex-1" @scroll.capture.passive="savePageScroll">
-          <div class="p-5">
-          <!-- Narrowing belongs to the reading it narrows, aligned with the
-               rows it acts on rather than banded above them as chrome. -->
+        <!-- One bar above both drawings of a collection. It narrows the set,
+             and the set is what Rows lists and Graph draws; the switch at its
+             end changes only the drawing. -->
+        <div v-if="showToolbar" class="shrink-0 px-5 pt-3" data-collection-toolbar>
           <BlrFilterBar
-            v-if="showToolbar"
-            class="mb-4"
-            :chips="facetChips"
-            @remove="setFacet($event as ReportResourceKind, [])"
-            @clear="clearFacets"
+            :chips="toolbarChips"
+            @remove="removeChip"
+            @clear="clearToolbar"
           >
             <USelectMenu
               v-for="kind in facetKinds"
@@ -659,8 +776,57 @@ const orphanScenarios = computed(() => props.workspace.scenarios
                 />
               </template>
             </USelectMenu>
+            <template v-if="collectionGraph || drawing === 'rows'" #end>
+              <UFieldGroup v-if="drawing === 'rows' && expandsAnything" size="md" data-expand-all>
+                <UTooltip text="Expand all">
+                  <UButton icon="i-lucide-chevrons-up-down" color="neutral" variant="outline" aria-label="Expand all" @click="toggleAllRows(true)" />
+                </UTooltip>
+                <UTooltip text="Collapse all">
+                  <UButton icon="i-lucide-chevrons-down-up" color="neutral" variant="outline" aria-label="Collapse all" @click="toggleAllRows(false)" />
+                </UTooltip>
+              </UFieldGroup>
+              <USelect
+                v-if="drawing === 'rows'"
+                :model-value="columns"
+                :items="columnItems"
+                value-key="value"
+                size="md"
+                variant="outline"
+                class="w-36"
+                icon="i-lucide-layout-grid"
+                aria-label="Rows per line"
+                data-columns-control
+                @update:model-value="setColumns(activeKind, $event as ColumnChoice)"
+              />
+              <UFieldGroup v-if="collectionGraph" size="md" data-drawing-switch>
+                <UTooltip text="Rows">
+                  <UButton
+                    icon="i-lucide-rows-3"
+                    :color="drawing === 'rows' ? 'primary' : 'neutral'"
+                    :variant="drawing === 'rows' ? 'soft' : 'outline'"
+                    :aria-pressed="drawing === 'rows'"
+                    aria-label="Draw as rows"
+                    @click="setDrawing('rows')"
+                  />
+                </UTooltip>
+                <UTooltip text="Graph">
+                  <UButton
+                    icon="i-lucide-waypoints"
+                    :color="drawing === 'graph' ? 'primary' : 'neutral'"
+                    :variant="drawing === 'graph' ? 'soft' : 'outline'"
+                    :aria-pressed="drawing === 'graph'"
+                    aria-label="Draw as graph"
+                    @click="setDrawing('graph')"
+                  />
+                </UTooltip>
+              </UFieldGroup>
+            </template>
           </BlrFilterBar>
+        </div>
 
+        <!-- Rows, a resource page, or the Overview: a scrolling reading. -->
+        <div v-if="!topologyActive" ref="resourcePane" class="blr-pane min-h-0 flex-1" @scroll.capture.passive="savePageScroll">
+          <div class="p-5">
 
           <!-- OVERVIEW: the Product, and what it promises -->
           <BlrOverview
@@ -697,8 +863,22 @@ const orphanScenarios = computed(() => props.workspace.scenarios
           <!-- COLLECTION SURFACE: one named subject, one row shape. -->
           <div v-else :class="grouped ? 'space-y-3' : 'space-y-6'">
             <p v-if="multiGroupNote" class="text-xs text-dimmed">{{ multiGroupNote }}</p>
+            <!-- Domains and Interfaces: one tree card per subject. -->
+            <div v-if="treeCardsShown" class="blr-tree-cards" :style="cardGrid" data-collection-rows>
+              <BlrTreeCards
+                :workspace="workspace"
+                :kind="activeKind"
+                :resources="visibleResources"
+                :narrowed="filtersActive"
+                :closed="closedCards"
+                :expansion="cardExpansion"
+                @open="openResourcePage"
+                @close="(key, closed) => setCollectionGroupOpen(key, !closed)"
+                @expand="setCardExpansion"
+              />
+            </div>
             <UCollapsible
-              v-for="group in resourceGroups"
+              v-for="group in treeCardsShown ? [] : resourceGroups"
               :key="group.key || 'all'"
               :open="!grouped || !closedGroups.includes(collectionGroupKey(group.key))"
               @update:open="setCollectionGroupOpen(group.key, $event)"
@@ -740,13 +920,28 @@ const orphanScenarios = computed(() => props.workspace.scenarios
               </template>
 
               <template #content>
-                <div class="space-y-2">
+                <div class="space-y-2" :style="rowGrid" data-collection-rows>
+                  <template v-if="expandable">
+                    <BlrExpandableRow
+                      v-for="resource in group.resources"
+                      :key="resource.key"
+                      :workspace="workspace"
+                      :resource="resource"
+                      :children="rowChildren(workspace, resource)"
+                      :badge="group.kind !== 'domain'"
+                      :stacked="columns > 1"
+                      :expanded="expandedKeys"
+                      @open="openResourcePage"
+                      @toggle="setRowOpen"
+                    />
+                  </template>
                   <BlrResourceCard
-                    v-for="resource in group.resources"
+                    v-for="resource in expandable ? [] : group.resources"
                     :key="resource.key"
                     :workspace="workspace"
                     :resource="resource"
                     :badge="group.kind !== 'domain'"
+                    :stacked="columns > 1"
                     @open="openResourcePage"
                   />
                 </div>
@@ -786,13 +981,26 @@ const orphanScenarios = computed(() => props.workspace.scenarios
           </div>
         </div>
 
-        <!-- Product-level breadth: each named topology view has a specific reading. -->
+        <!-- GRAPH: the collection's second drawing of the same set. -->
+        <div v-else-if="collectionGraph" class="min-h-0 flex-1">
+          <BlrCollectionGraph
+            v-model:reading="topology"
+            :workspace="workspace"
+            :kind="activeKind"
+            :view="collectionGraph.view"
+            :visible-keys="visibleKeys"
+            :narrowed="filtersActive"
+            @select="openResourcePage"
+            @product="setKind('product')"
+          />
+        </div>
+
+        <!-- A matrix: one reading comparing two collections, from its rail row. -->
         <div v-else class="min-h-0 flex-1">
           <BlrProductTopology
             :workspace="workspace"
             v-model:reading="topology"
             @select="openResourcePage"
-            @product="setKind('product')"
           />
         </div>
       </section>
@@ -843,6 +1051,7 @@ const orphanScenarios = computed(() => props.workspace.scenarios
             :active-section="activeSection"
             :counts="kindCounts"
             @kind="setKind"
+            @view="openView"
           >
             <template v-if="$slots.navigation" #navigation>
               <slot name="navigation" />

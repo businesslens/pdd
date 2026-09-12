@@ -5,7 +5,8 @@ import { diagramLayoutInput, diagramLayoutResult } from '../utils/diagram'
 import { layoutTopologyTree } from '../utils/topologyTree'
 
 const props = defineProps<{ diagram: Diagram, title: string, viewportKey?: string }>()
-const emit = defineEmits<{ open: [key: string], toggle: [id: string, open: boolean], ready: [] }>()
+const emit = defineEmits<{ open: [key: string], toggle: [id: string, open: boolean], toggleAll: [open: boolean], ready: [] }>()
+const branches = computed(() => props.diagram.nodes.some(node => node.branch))
 const measure = ref<HTMLElement>()
 const layout = shallowRef<DiagramLayout | null>(null)
 const pending = ref(true)
@@ -127,7 +128,7 @@ const titleOf = (id: string) => props.diagram.nodes.find(node => node.id === id)
       <div v-for="edge in diagram.edges" :key="edge.id" :data-measure="`edge:${edge.id}`" class="blr-flow-edge-label">{{ edge.label }}</div>
     </div>
     <div v-if="layout" class="blr-diagram-canvas">
-      <LazyBlrFlowCanvas :layout="layout" :title="title" :direction="diagram.direction" :quiet="diagram.quiet" :total-nodes="diagram.totalNodes" :viewport-key="placedViewportKey" @open="emit('open', $event)" @toggle="(id, open) => emit('toggle', id, open)" @ready="emit('ready')" />
+      <LazyBlrFlowCanvas :layout="layout" :title="title" :direction="diagram.direction" :quiet="diagram.quiet" :total-nodes="diagram.totalNodes" :viewport-key="placedViewportKey" :branches="branches" @open="emit('open', $event)" @toggle="(id, open) => emit('toggle', id, open)" @toggle-all="emit('toggleAll', $event)" @ready="emit('ready')" />
     </div>
     <div v-else class="blr-diagram-fallback">
       <p class="text-sm text-muted" role="status">{{ failed ? 'Diagram layout is unavailable. The complete reading is below.' : 'Arranging diagram…' }}</p>

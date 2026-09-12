@@ -11,27 +11,24 @@ const { interfaceProjection } = await utility('topologyProjections')
 const workspace = projectReportWorkspace(compileReport(loadModel(join(__dirname, '../test/fixtures/fixture-shop')), '2026-09-08'))
 
 describe('report destinations', () => {
-  it('gives each named view one collection home, reachable as a tab of it', () => {
+  it('gives each named view one home: a collection Graph, or a rail row of its own for a matrix', () => {
     expect(MAIN_RESOURCE_KINDS).toEqual(['entity', 'interface', 'domain', 'capability', 'journey', 'rule'])
-    /* Every named view belongs to a resource collection. The Overview owns none:
-       "what is in the Product, and how is it connected" is answered by the rail,
-       which lists every collection with its count, and by each resource's own
-       Connections — a view redrawing the whole index answered nobody. */
+    /* A collection's Graph is the second drawing of its own set. A matrix
+       compares two collections, so no single one owns it: each is a rail row
+       below Overview, whose section is its rail. Nothing redraws the whole index. */
     const homes = new Set<string>(MAIN_RESOURCE_KINDS)
-    expect(REPORT_DESTINATIONS.some((item: any) => item.rail === 'overview')).toBe(false)
+    const matrices = REPORT_DESTINATIONS.filter((item: any) => item.mode === 'overview')
+    expect(matrices.map((item: any) => item.section).sort()).toEqual(['delivery', 'rule-attachments', 'what-changes-what'])
     for (const item of REPORT_DESTINATIONS) {
-      /* The rail changes the subject and a tab changes the set, so every named
-         view belongs to exactly one collection and is reached from inside it. */
-      expect(homes.has(item.rail), `${item.section} has no collection`).toBe(true)
+      if (item.mode === 'overview') expect(item.rail).toBe(item.section)
+      else expect(homes.has(item.rail), `${item.section} has no home`).toBe(true)
       expect(destinationForLocation(item.rail, item.mode)?.section).toBe(item.section)
-      /* Its question is the tab's hint, so the view never titles itself. */
       expect(findProductTopologyView(item.view).question).toBeTruthy()
     }
-    /* One tab per mode within a collection, or two tabs would answer to one URL. */
+    /* One Graph per collection, never a second drawing answering to Rows' URL. */
     for (const rail of homes) {
       const modes = REPORT_DESTINATIONS.filter((item: any) => item.rail === rail).map((item: any) => item.mode)
-      expect(new Set(modes).size, rail).toBe(modes.length)
-      expect(modes).not.toContain('overview')
+      expect(modes, rail).toEqual(['graph'])
     }
   })
 
@@ -39,8 +36,10 @@ describe('report destinations', () => {
     /* Every standalone view URL changed shape with the restructure. A shim that
        silently lands a reader somewhere else is worse than a clean landing. */
     expect(destinationForLocation('topology', 'overview')).toBeUndefined()
-    expect(destinationForLocation('what-changes-what', 'overview')).toBeUndefined()
     expect(destinationForLocation('capability', 'mutations', 'capability:checkout')).toBeUndefined()
+    /* A matrix is its own section, so its bare address is exactly its home. */
+    expect(destinationForLocation('what-changes-what', 'overview')?.view).toBe('what-changes-what')
+    expect(destinationForLocation('what-changes-what', 'graph')).toBeUndefined()
   })
 
   it('keeps child pages in Interfaces and derives actual ownership', () => {
@@ -56,7 +55,9 @@ describe('report destinations', () => {
     const sections = (resource: any) => resourceViewLinks(resource, workspace).map((item: any) => item.section)
     expect(sections(workspace.entities[0])).toContain('entity-relationships')
     expect(sections(workspace.interfaces[0])).toContain('interface-map')
-    expect(sections(workspace.domains[0])).toContain('product-map')
+    expect(sections(workspace.domains[0])).toContain('domain-reach')
+    expect(sections(workspace.journeys[0])).toContain('journey-reach')
+    expect(sections(workspace.rules[0])).toEqual(['rule-reach', 'rule-attachments'])
     for (const resource of workspace.byKey.values()) {
       for (const section of sections(resource)) {
         /* An exit leads somewhere that exists, and never back to itself. */

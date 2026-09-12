@@ -1,7 +1,7 @@
 /** Named semantic readings. No coordinates, hover state, or renderer types. */
-import type { AnyResourceView, ContextView, ReportWorkspace } from './reportWorkspace'
+import type { AnyResourceView, ContextView, DomainView, ReportWorkspace, RuleView } from './reportWorkspace'
 import { ENTITY_KIND_META, resourceKey } from './reportWorkspace'
-import { ruleAttachments } from './topologyTargets'
+import { ruleAttachments, topologyPlace } from './topologyTargets'
 import type { TopologyAttachment } from './topologyTargets'
 import type { Diagram } from './diagram'
 
@@ -21,20 +21,97 @@ export function branch(resource: AnyResourceView, children: TopologyBranch[] = [
   return { id: resource.key, title: resource.title, resource, children, references: [] }
 }
 
-export function productMapProjection(workspace: ReportWorkspace) {
-  const group = (id: string, title: string, domainId?: string, resource?: AnyResourceView): TopologyBranch => {
-    const capabilities = workspace.capabilities.filter(item => item.domainId === domainId).map(item => branch(item))
-    const entities = workspace.entities.filter(item => item.domainId === domainId).map(item => branch(item))
-    return { id, title, resource, references: [], children: [
-      ...(capabilities.length ? [{ id: `${id}:capabilities`, title: 'Capabilities', references: [], children: capabilities }] : []),
-      ...(entities.length ? [{ id: `${id}:entities`, title: 'Entities', references: [], children: entities }] : [])
-    ] }
+/**
+ * Reach trees: one collection's set, rooted at the Product, each subject
+ * branching into where it is reached and what reaches it.
+ *
+ * A child is an occurrence — `parent>child`, every segment a key — because the
+ * question is asked of the subject: a Screen three Capabilities are available
+ * on is an answer under each of them, and drawing it once would turn a tree
+ * into a graph nothing asked for. The subject tier keeps plain keys so a page's
+ * focus lands on its own branch.
+ */
+export const OCCURRENCE_SEPARATOR = '>'
+export type ReachKind = 'domain' | 'capability' | 'journey' | 'rule'
+
+const occurrence = (parent: string, resource: AnyResourceView, children: TopologyBranch[] = []): TopologyBranch =>
+  ({ id: `${parent}${OCCURRENCE_SEPARATOR}${resource.key}`, title: resource.title, resource, children, references: [] })
+
+/** The most specific resource each Context resolves to, each place once. */
+export function placesOf(workspace: ReportWorkspace, contexts: ContextView[]): AnyResourceView[] {
+  const seen = new Map<string, AnyResourceView>()
+  for (const context of contexts) {
+    const place = topologyPlace(workspace, context.placeId)
+    if (place) seen.set(place.key, place)
   }
-  const unassigned = group('unassigned', 'Unassigned')
-  return { groups: [
-    ...workspace.domains.map(domain => ({ ...group(domain.key, domain.title, domain.id, domain), colorSlot: domain.colorSlot })),
-    ...(unassigned.children.length ? [unassigned] : [])
+  return [...seen.values()]
+}
+
+/** Authored attachment targets, each once, in authored order. */
+function ruleTargets(workspace: ReportWorkspace, rule: RuleView): AnyResourceView[] {
+  const seen = new Map<string, AnyResourceView>()
+  for (const attachment of ruleAttachments(workspace, rule)) seen.set(attachment.resource.key, attachment.resource)
+  return [...seen.values()]
+}
+
+const productRoot = (workspace: ReportWorkspace, children: TopologyBranch[]): TopologyBranch =>
+  ({ id: resourceKey('product', workspace.identity.id), title: workspace.identity.title, children, references: [] })
+
+/** Places first, then Rules, both as occurrences under the subject. */
+function reachOf(workspace: ReportWorkspace, subject: AnyResourceView & { contexts: ContextView[], ruleIds: string[] }): TopologyBranch[] {
+  return [
+    ...placesOf(workspace, subject.contexts).map(place => occurrence(subject.key, place)),
+    ...subject.ruleIds.flatMap((id) => { const rule = workspace.byKey.get(resourceKey('rule', id)); return rule ? [occurrence(subject.key, rule)] : [] })
+  ]
+}
+
+/** A Domain's members, grouped under the places they are reached in. */
+function domainBranch(workspace: ReportWorkspace, id: string, title: string, members: Array<AnyResourceView & { contexts: ContextView[] }>, resource?: DomainView): TopologyBranch {
+  const places = new Map<string, { place: AnyResourceView, members: AnyResourceView[] }>()
+  const direct: AnyResourceView[] = []
+  for (const member of members) {
+    const reached = placesOf(workspace, member.contexts)
+    if (!reached.length) direct.push(member)
+    for (const place of reached) {
+      const entry = places.get(place.key) ?? { place, members: [] }
+      entry.members.push(member)
+      places.set(place.key, entry)
+    }
+  }
+  return { id, title, resource, references: [], colorSlot: resource?.colorSlot, children: [
+    ...[...places.values()].map(({ place, members }) => occurrence(id, place, members.map(member => occurrence(`${id}${OCCURRENCE_SEPARATOR}${place.key}`, member)))),
+    ...direct.map(member => occurrence(id, member))
   ] }
+}
+
+export function reachTreeProjection(workspace: ReportWorkspace, kind: ReachKind): TopologyBranch {
+  switch (kind) {
+    case 'domain': {
+      const membersOf = (ids: { capabilityIds: string[], journeyIds: string[], ruleIds: string[] }) => [
+        ...workspace.capabilities.filter(item => ids.capabilityIds.includes(item.id)),
+        ...workspace.journeys.filter(item => ids.journeyIds.includes(item.id)),
+        ...workspace.rules.filter(item => ids.ruleIds.includes(item.id))
+      ]
+      const unassigned = domainBranch(workspace, 'unassigned', 'Unassigned', [
+        ...workspace.capabilities.filter(item => !item.domainId),
+        ...workspace.journeys.filter(item => !item.domainIds.length),
+        ...workspace.rules.filter(item => !item.domainIds.length)
+      ])
+      return productRoot(workspace, [
+        ...workspace.domains.map(domain => domainBranch(workspace, domain.key, domain.title, membersOf(domain), domain)),
+        ...(unassigned.children.length ? [unassigned] : [])
+      ])
+    }
+    case 'capability':
+      return productRoot(workspace, workspace.capabilities.map(item => branch(item, reachOf(workspace, item))))
+    case 'journey':
+      return productRoot(workspace, workspace.journeys.map(item => branch(item, reachOf(workspace, item))))
+    case 'rule':
+      return productRoot(workspace, workspace.rules.map(rule => branch(rule, [
+        ...ruleTargets(workspace, rule).map(target => occurrence(rule.key, target)),
+        ...placesOf(workspace, rule.contexts).map(place => occurrence(rule.key, place))
+      ])))
+  }
 }
 
 /**
@@ -123,33 +200,6 @@ export function sitemapProjection(workspace: ReportWorkspace): TopologyBranch {
     children: interfaceProjection(workspace), references: [] }
 }
 
-/**
- * Every Journey's Scenarios as columns.
- *
- * Composition compares Journeys, and one Journey's page cannot answer a question
- * about how Journeys compare — so the collection owns the reading and the
- * projection covers the whole model rather than a chosen subject.
- */
-export function journeyCompositionProjection(workspace: ReportWorkspace) {
-  return workspace.journeys.map(journey => compositionProjection(workspace, journey.id))
-}
-
-export function compositionProjection(workspace: ReportWorkspace, journeyId?: string | null) {
-  const journey = workspace.journeys.find(item => item.id === journeyId) ?? workspace.journeys[0]
-  return { journey, scenarios: journey ? (workspace.scenariosByJourney.get(journey.id) ?? []).map(scenario => ({
-    resource: scenario,
-    steps: scenario.steps.flatMap((step, index) => {
-      const capability = step.capabilityId ? workspace.byKey.get(resourceKey('capability', step.capabilityId)) : undefined
-      return capability ? [{ id: `${scenario.key}:step:${index}`, number: index + 1, resource: capability, text: step.text,
-        contexts: step.contexts.map(context => ({ ...context,
-          routeName: scenario.routes.find(route => route.id === context.routeId)?.name ?? context.routeId,
-          resource: workspace.byKey.get(resourceKey(context.context.kind, context.context.id))
-        }))
-      }] : []
-    })
-  })) : [] }
-}
-
 export interface TopologyMatrixCell {
   id: string
   row: string
@@ -165,7 +215,7 @@ export interface TopologyMatrix {
   cells: TopologyMatrixCell[]
 }
 
-export function ruleReachProjection(workspace: ReportWorkspace): TopologyMatrix {
+export function ruleAttachmentsProjection(workspace: ReportWorkspace): TopologyMatrix {
   const columns = new Map<string, AnyResourceView>()
   const cells: TopologyMatrixCell[] = []
   for (const rule of workspace.rules) {

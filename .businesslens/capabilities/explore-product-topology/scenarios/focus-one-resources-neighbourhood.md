@@ -9,7 +9,7 @@ steps:
     contexts:
       local:
         place: local-report-web::resource-collection
-  - text: The Developer focuses one resource, or hides a kind they are not asking about
+  - text: The Developer focuses one resource from its page, or narrows the set with the filters both drawings share
     kind: actor
     actor: developer
     entities: []
@@ -28,7 +28,7 @@ steps:
 
 ## Trigger
 
-A named view is too dense to answer the reader's narrower question.
+A Graph is too dense to answer the reader's narrower question.
 
 ## Outcome
 

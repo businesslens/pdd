@@ -4,8 +4,8 @@ import type { TopologyReading } from '../utils/topologyState'
 import type { Diagram } from '../utils/diagram'
 import { diagramResource } from '../utils/diagram'
 import { layoutTopologyTree } from '../utils/topologyTree'
-const props = defineProps<{ tree: TopologyBranch, reading: TopologyReading, viewportKey: string }>()
-const emit = defineEmits<{ open: [key: string], toggle: [id: string, open: boolean], ready: [] }>()
+const props = withDefaults(defineProps<{ tree: TopologyBranch, reading: TopologyReading, viewportKey: string, label?: string, relation?: string }>(), { label: 'Interface map', relation: 'Contained by' })
+const emit = defineEmits<{ open: [key: string], toggle: [id: string, open: boolean], toggleAll: [open: boolean, ids: string[]], ready: [] }>()
 const isOpen = (node: TopologyBranch) => {
   if (props.reading.expanded.includes(node.id)) return true
   if (props.reading.collapsed.includes(node.id)) return false
@@ -41,16 +41,20 @@ const initialDepth = computed(() => {
   return 1
 })
 
+/* Every branch below the root: the root stays open, or nothing would show. */
+const branchIds = computed(() => all.value.filter(node => node.children.length && node.id !== props.tree.id).map(node => node.id))
 const diagram = computed<Diagram>(() => {
   const originals = new Map(all.value.map(node => [node.id, node]))
   const visible = flatten(visibleTree.value)
   return { direction: 'DOWN', layout: 'tree', totalNodes: all.value.length,
-    nodes: visible.map(node => ({ ...(node.resource ? diagramResource(node.resource) : { id: node.id, resourceKey: node.id, title: node.title, kind: 'product' as const }),
-      description: parents.value.has(node.id) ? `Contained by ${parents.value.get(node.id)!.title}.` : 'Product root.',
+    /* An occurrence keeps its branch id, so the same resource drawn under two
+       parents is two nodes; `resourceKey` still opens the one page. */
+    nodes: visible.map(node => ({ ...(node.resource ? { ...diagramResource(node.resource), id: node.id } : { id: node.id, resourceKey: node.id, title: node.title, kind: 'product' as const }),
+      description: parents.value.has(node.id) ? `${props.relation} ${parents.value.get(node.id)!.title}.` : 'Product root.',
       branch: originals.get(node.id)!.children.length ? { id: node.id, count: originals.get(node.id)!.children.length, open: isOpen(node) } : undefined })),
     edges: visible.flatMap(node => node.children.map(child => ({ id: `${node.id}->${child.id}`, source: node.id, target: child.id, label: '', arrow: false }))) }
 })
 </script>
 <template>
-  <BlrDiagram :diagram="diagram" :title="`${tree.title} Interface map`" :viewport-key="viewportKey" @open="emit('open', $event)" @toggle="(id, open) => emit('toggle', id, open)" @ready="emit('ready')" />
+  <BlrDiagram :diagram="diagram" :title="`${tree.title} ${label}`" :viewport-key="viewportKey" @open="emit('open', $event)" @toggle="(id, open) => emit('toggle', id, open)" @toggle-all="open => emit('toggleAll', open, branchIds)" @ready="emit('ready')" />
 </template>

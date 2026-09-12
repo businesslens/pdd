@@ -66,18 +66,16 @@ where it left:
   v-model:scenario-route="scenarioRoute"
   v-model:route-columns="routeColumns"
   v-model:topology="topology"
-  v-model:scenario-mode="scenarioMode"
   :report="report"
 />
 ```
 
 | Model | Value | Default |
 | --- | --- | --- |
-| `section` | `overview`, `entity`, `interface`, `domain`, `capability`, `journey`, or `rule` | `overview` |
+| `section` | `overview`; a cross-collection view: `delivery`, `what-changes-what`, or `rule-attachments`; or a collection: `entity`, `interface`, `domain`, `capability`, `journey`, or `rule` | `overview` |
 | `resource` | the stable key of the open resource page (`screen:reader-web::…`), or `null` for the section's collection | `null` |
-| `tab` | page: `overview`, `scenarios`, `lifecycle`; collection: `overview` (List), `map`, `relationships`, `mutations`, `attachments`, `delivery`, or `connections` | `overview` |
+| `tab` | page: `overview`, `scenarios`, `lifecycle`; collection: `overview` (Rows) or `graph`; Overview: `overview` (About), `coverage`, or `references` | `overview` |
 | `scenarioRoute` | the first route in the visible Scenario route window, or `null` | `null` |
-| `scenarioMode` | `details` or Journey `composition`, within Scenarios | `details` |
 | `routeColumns` | `auto`, or the reader's preferred number of visible route columns | `auto` |
 | `topology` | selected view, Journey, Scenario window, matrix column, focus, hidden kinds, expanded/collapsed groups, directory search | Domain map; no filters |
 
@@ -92,33 +90,37 @@ keys `tv`, `tj`, `ts`, `tm`, `tf`, `th`, `tx`, and `tc`. Set
 Defaults are omitted; array keys repeat, preserving qualified resource IDs.
 Navigation pushes history; reading filters and expansion replace the current entry.
 Hosts can instead bind their own state. Collection facets, collapsed groups,
-scroll anchors and graph position use session storage when available, isolated
-by report and host path. They survive refresh and recompilation without entering
-the Product Model; removed facet IDs are pruned. Nothing else is kept, because
+expanded rows, scroll anchors and graph position use session storage when
+available, isolated by report and host path. They survive refresh and
+recompilation without entering the Product Model; removed facet IDs are pruned.
+Two preferences are cookies, so a server-rendered host paints them right on the
+first load: `blr-tooltips` (whether term tooltips are drawn) and `blr-columns`
+(how many columns each collection's Rows use, keyed by collection, one to
+four; rows start at one, tree cards at three). Nothing else is kept, because
 nothing else is configurable: the reading and its grouping are decided by the
 report rather than auditioned on every visit.
 
-Collection readings are selected with `section` and `tab`, with no resource key:
+A collection is one set with two drawings, selected with `section` and `tab`
+and no resource key. The rail changes the subject, the filters narrow the set,
+and a Rows/Graph switch beside the filters changes only how that set is drawn:
+the heading count, the filter controls and the chips are the same in both.
 
-| Section | List | Named reading |
+| Section | Rows (`overview`) | Graph (`graph`) |
 | --- | --- | --- |
-| `domain` | `overview` | `map`: Domain map |
-| `interface` | `overview` | `map`: Interface map; `delivery`: Compare delivery |
-| `entity` | `overview` | `relationships`: Entity relationships |
-| `capability` | `overview` | `mutations`: What changes what |
-| `rule` | `overview` | `attachments`: Rule attachments |
-| `journey` | `overview` | `composition`: Composition |
+| `entity` | one row per Entity, grouped by Domain; Actors lead | Entity relationships |
+| `interface` | one tree card per Interface: its Experiences, each with its Screens, and its direct Screens | Interface map |
+| `domain` | one tree card per Domain: its Capabilities and its Entities, Unassigned trailing | Domain reach: Domain, then the places its Capabilities are available in, then the Capabilities, Journeys and Rules reached there |
+| `capability` | one row per Capability, grouped by Domain, expanding to its Scenarios | Capability reach: Capability, then its places and Rules |
+| `journey` | one row per Journey, expanding to its Scenarios and their Capability chain | Journey reach: Journey, then its places and Rules |
+| `rule` | one row per Business Rule, grouped by Domain | Rule reach: Rule, then its attachment targets and Contexts |
 
-Tabs are the only switch: a tab changes which set is on screen, the rail changes
-the subject, and the toolbar only narrows. Every collection reads as one row
-shape, Interfaces included — a row names what its Interface contains, and Map
-draws the shape. Composition draws every Journey, because comparing them is a
-question one Journey's page cannot answer. Compare delivery is a Capability by
-Interface matrix; an Interface's own page keeps its delivery tree. Entity
-Lifecycle keeps its tab, and resource Overview retains Connections. Domain map
-groups both Capabilities and Entities, including Unassigned; it does not imply
-containment or dependencies. Type narrowing uses `th`, focus uses `tf`, and
-expansion uses `tx`/`tc`.
+The cross-collection matrices are rail rows below Overview, each its own
+section with no tabs: `delivery` (Compare delivery, a Capability by Interface
+matrix), `what-changes-what` and `rule-attachments`. Each keeps its own type
+narrowing (`th`) and focus (`tf`). A collection Graph
+draws the facet-filtered set and honours `tf` as a neighbourhood; branch
+expansion uses `tx`/`tc`. Entity Lifecycle keeps its tab, and resource Overview
+retains Connections.
 
 There is no URL migration. Every standalone `topology` and named-destination
 shape changed with the restructure, and an address naming a destination this
@@ -126,8 +128,10 @@ report has no home for opens the Overview rather than landing the reader
 somewhere else without saying so. Resource links retain their ids, and
 Experience and Screen pages keep Interfaces selected.
 
-Interface map follows a containment tree: measured nodes in horizontal tiers,
-parents above children, shared orthogonal branches, and a distinct Product root.
+Interface map and the four reach graphs follow a containment tree: measured
+nodes in horizontal tiers, parents above children, shared orthogonal branches,
+and a distinct Product root. A reach graph draws occurrences, so a Screen
+reached by three Capabilities appears under each of them.
 Vue Flow provides its canvas, resource styling, zoom, and pan. Deeper branches
 retain their counts and expand in place, with the choice preserved in the URL.
 The renderer never runs Diagram Design or generates model-controlled HTML.

@@ -12,19 +12,30 @@ if (!urls.length) throw new Error('Pass at least one running CLI viewer URL.')
 const browser = await chromium.launch()
 const failures = []
 const measurements = []
-const views = ['product-map', 'value-paths', 'delivery-by-interface', 'sitemap', 'rule-reach', 'what-it-keeps', 'what-changes-what']
-/* Every named view is a tab of the collection whose subject it draws. */
+const views = ['domain-reach', 'capability-reach', 'journey-reach', 'rule-reach', 'sitemap', 'what-it-keeps', 'delivery-by-interface', 'rule-attachments', 'what-changes-what']
+/* A collection's Graph is the second drawing of its own set; the matrices are
+   readings of the Overview. */
 const LOCATION = {
-  'product-map': ['domain', 'map'],
-  'sitemap': ['interface', 'map'],
-  'delivery-by-interface': ['interface', 'delivery'],
-  'what-it-keeps': ['entity', 'relationships'],
-  'what-changes-what': ['capability', 'mutations'],
-  'rule-reach': ['rule', 'attachments'],
-  'value-paths': ['journey', 'composition']
+  'domain-reach': ['domain', 'graph'],
+  'capability-reach': ['capability', 'graph'],
+  'journey-reach': ['journey', 'graph'],
+  'rule-reach': ['rule', 'graph'],
+  'sitemap': ['interface', 'graph'],
+  'what-it-keeps': ['entity', 'graph'],
+  'delivery-by-interface': ['delivery', 'overview'],
+  'what-changes-what': ['what-changes-what', 'overview'],
+  'rule-attachments': ['rule-attachments', 'overview']
 }
-const viewUrl = (origin, view, query = '') => `${origin}/?s=${LOCATION[view][0]}&t=${LOCATION[view][1]}${query}`
+const isMatrix = view => LOCATION[view][1] === 'overview'
+const NAMES = { 'delivery-by-interface': 'Compare delivery', 'what-changes-what': 'What changes what', 'rule-attachments': 'Rule attachments' }
+const viewUrl = (origin, view, query = '') => `${origin}/?s=${LOCATION[view][0]}${isMatrix(view) ? '' : `&t=${LOCATION[view][1]}`}${query}`
 const openTab = page => page.locator('.blr-surface-tab[data-current="true"]')
+/* A collection Graph is chosen by the switch beside the filters, not a tab. */
+const graphOn = page => page.getByRole('button', { name: 'Draw as graph', exact: true })
+const expectOpen = async (page, view) => {
+  if (isMatrix(view)) await expect(page.getByRole('heading', { level: 1 })).toContainText(NAMES[view])
+  else await expect(graphOn(page)).toHaveAttribute('aria-pressed', 'true')
+}
 const screenshotRoot = process.env.BLR_DIAGRAM_SCREENSHOTS
 if (screenshotRoot) mkdirSync(screenshotRoot, { recursive: true })
 
@@ -76,10 +87,10 @@ async function checkBounds(page) {
 async function selectView(page, view) {
   await page.goto(viewUrl(new URL(page.url()).origin, view))
   await expect(page.locator('.blr-report-shell')).toBeVisible()
-  await expect(openTab(page)).toHaveCount(1)
+  await expectOpen(page, view)
   await page.evaluate(async () => { await document.fonts.ready; await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))) })
   if (view === 'what-it-keeps' && await page.locator('.blr-diagram').count()) { await flowReady(page); expect(await geometry(page)).toEqual({ overlaps: [], clipped: [] }) }
-  if (view === 'sitemap') {
+  if (view === 'sitemap' && await page.locator('.blr-diagram').count()) {
     await checkSitemap(page)
     if (page.viewportSize().width >= 1400) await expect.poll(() => page.locator('.vue-flow').evaluate(viewport => {
       const bounds = viewport.getBoundingClientRect()
@@ -100,7 +111,7 @@ try {
     page.on('pageerror', error => failures.push(`${report.id}: ${error.message}`))
     for (const [width, height, dark] of [[1440, 1000, false], [1024, 768, true], [390, 844, false], [320, 844, true]]) {
       await page.setViewportSize({ width: 1440, height: 1000 })
-      await page.goto(viewUrl(url, 'product-map'))
+      await page.goto(viewUrl(url, 'domain-reach'))
       await expect(page.getByRole('heading', { level: 1 })).toContainText('Domains')
       if ((await page.locator('html').getAttribute('class')).includes('dark') !== dark) await page.getByRole('button', { name: 'Toggle color mode' }).click()
       await page.setViewportSize({ width, height })
@@ -109,14 +120,6 @@ try {
         await selectView(page, view)
         await checkBounds(page)
         measurements.push({ report: report.id, width, view, ms: Math.round(performance.now() - started) })
-        if (view === 'value-paths' && report.model.journeys.length) {
-          /* Columns align within the Journey they compose; each Journey is its
-             own subgrid, so the guarantee is per section rather than global. */
-          await expect.poll(() => page.locator('.blr-composition-journey').evaluateAll(sections => sections.map(section => {
-            const tops = [...section.querySelectorAll('.blr-composition-column > header')].map(item => item.getBoundingClientRect().top)
-            return tops.length ? Math.max(...tops) - Math.min(...tops) : 0
-          }).filter(spread => spread >= 1))).toEqual([])
-        }
         if (screenshotRoot && (width === 1440 || width === 390)) await page.screenshot({ path: join(screenshotRoot, `${report.id}-${width}-${view}.png`) })
       }
     }
@@ -161,36 +164,30 @@ try {
       await expect(page.locator('.vue-flow__node')).toHaveCount(expanded)
       await checkSitemap(page)
     }
-    // Navigation, group overrides and scroll survive a resource visit and reload.
+    // A reach tree: branch expansion survives a resource visit and a reload,
+    // and an occurrence opens the one page of the resource it draws.
     await page.setViewportSize({ width: 1440, height: 1000 })
-    await page.goto(viewUrl(url, 'product-map'))
-    const group = page.locator('[data-group-id]').first()
-    const toggle = group.getByRole('button', { name: /Expand.*items|Collapse.*items/ }).first()
-    if (await toggle.count()) {
-      if (await toggle.getAttribute('aria-expanded') !== 'true') await toggle.click()
-      await expect(toggle).toHaveAttribute('aria-expanded', 'true')
-      const link = group.locator('.blr-topology-link').first()
-      await link.scrollIntoViewIfNeeded()
-      const beforeScroll = await page.locator('.blr-topology-reading').evaluate(item => item.scrollTop)
-      await link.click()
-      await expect(page).toHaveURL(/e=/)
+    for (const view of ['domain-reach', 'capability-reach', 'journey-reach', 'rule-reach']) {
+      await page.goto(viewUrl(url, view))
+      await checkSitemap(page)
+      const closed = page.locator('.vue-flow__node .blr-flow-node__count[aria-expanded="false"]').first()
+      if (await closed.count()) {
+        await closed.click()
+        await expect(page).toHaveURL(/tx=/)
+        await checkSitemap(page)
+      }
+      const before = await page.locator('.vue-flow__node').count()
+      const occurrence = page.locator('.vue-flow__node [data-resource-key]').last()
+      const key = await occurrence.getAttribute('data-resource-key')
+      await occurrence.click()
+      await expect(page).toHaveURL(new RegExp(`e=${key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`))
       await page.goBack()
-      await expect(openTab(page)).toHaveText(/Map/)
-      await expect(group.getByRole('button', { name: /Collapse.*items/ }).first()).toHaveAttribute('aria-expanded', 'true')
-      await expect.poll(() => page.locator('.blr-topology-reading').evaluate(item => item.scrollTop)).toBeGreaterThanOrEqual(Math.max(0, beforeScroll - 4))
+      await expect(graphOn(page)).toHaveAttribute('aria-pressed', 'true')
+      await checkSitemap(page)
+      await expect(page.locator('.vue-flow__node')).toHaveCount(before)
       await page.reload()
-      await expect(group.getByRole('button', { name: /Collapse.*items/ }).first()).toHaveAttribute('aria-expanded', 'true')
-    }
-    // URL-selected Journey, Scenario window and matrix column remain selected.
-    const journey = report.model.journeys.at(-1)
-    if (journey) {
-      /* Composition compares Journeys, so it draws every one of them. */
-      await page.goto(viewUrl(url, 'value-paths'))
-      await expect(openTab(page)).toHaveText(/Composition/)
-      await expect(page.locator('.blr-composition-journey')).toHaveCount(report.model.journeys.length)
-      await page.reload()
-      await expect(openTab(page)).toHaveText(/Composition/)
-      await expect(page.locator('.blr-composition-journey')).toHaveCount(report.model.journeys.length)
+      await checkSitemap(page)
+      await expect(page.locator('.vue-flow__node')).toHaveCount(before)
     }
     const entity = report.model.entities.find(item => item.states.length)
     if (entity) {
@@ -285,24 +282,6 @@ try {
   await page.reload()
   await checkSitemap(page)
   await expect.poll(() => flowTransform(page)).toBe(treeViewport)
-  await page.goto(viewUrl(urls[0], 'value-paths', '&ts=long-scenario-11'))
-  /* The window holds however many columns fit; what the URL names stays inside
-     it, through a move, a reload and a visit to a resource and back. */
-  const owner = page.locator('.blr-composition-journey').first()
-  const column = id => owner.locator(`.blr-composition-column[data-scenario-id="${id}"]`)
-  await expect(column('long-scenario-11')).toBeVisible()
-  await expect(column('long-scenario-11').locator('[data-occurrence-id]')).toHaveCount(31)
-  await checkBounds(page)
-  await owner.getByRole('button', { name: 'Previous Scenario', exact: true }).click()
-  await expect(page).toHaveURL(/ts=long-scenario-10/)
-  await page.reload()
-  await expect(column('long-scenario-10')).toBeVisible()
-  const firstStep = column('long-scenario-10').locator('.blr-composition-step .blr-topology-link').first()
-  await firstStep.focus()
-  await page.keyboard.press('Enter')
-  await expect(page).toHaveURL(/e=capability/)
-  await page.goBack()
-  await expect(column('long-scenario-10')).toBeVisible()
   await selectView(page, 'what-changes-what')
   const columnPicker = page.getByRole('combobox', { name: 'Matrix column' })
   if (await columnPicker.count()) {
@@ -322,17 +301,16 @@ try {
   await page.goto(`${urls[0]}/?s=topology&tv=unknown`)
   await expect(page.getByRole('heading', { level: 1 })).toContainText('Overview')
   /* A reading naming resources an edit removed is cleared by the view that owns it. */
-  await page.goto(viewUrl(urls[0], 'product-map', '&tf=entity%3Aremoved&tx=kind%3Aremoved'))
+  await page.goto(viewUrl(urls[0], 'domain-reach', '&tf=entity%3Aremoved&tx=kind%3Aremoved'))
   await expect(page.getByRole('heading', { level: 1 })).toContainText('Domains')
   await expect(page).not.toHaveURL(/tf=|tx=/)
   for (const view of views) {
     await selectView(page, view)
     await checkBounds(page)
-    if (view !== 'sitemap') await expect(page.locator('.vue-flow')).toHaveCount(0)
-    if (view === 'sitemap') {
-      await checkSitemap(page)
-      await expect(page.locator('.vue-flow__node')).toHaveCount(1)
-    }
+    if (isMatrix(view) || view === 'what-it-keeps') await expect(page.locator('.vue-flow')).toHaveCount(0)
+    else if (await page.locator('.blr-diagram').count()) await checkSitemap(page)
+    /* A tree with no subjects says so instead of drawing the Product root alone. */
+    else await expect(page.locator('.blr-topology-empty')).toBeVisible()
   }
   await context.close()
   expect(failures).toEqual([])
