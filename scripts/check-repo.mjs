@@ -321,7 +321,7 @@ if (!modelReadmeMatch) {
 
 // Docs frontmatter contract, consumed by the landing repository's nav:
 // section = top-level tab, group = sidebar cluster, order = global within section.
-const DOC_SECTIONS = new Set(['open-source', 'platform'])
+const DOC_SECTIONS = new Set(['open-source'])
 const DOC_GROUPS = new Set([
   'Get started',
   'Product Model',

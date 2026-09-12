@@ -17,30 +17,13 @@ import { UsageError } from '../core/usage-error.js'
 export interface UpdateOptions {
   providers?: string
   scope?: string
-  project?: boolean
-  global?: boolean
-  user?: boolean
   force?: boolean
 }
 
 function resolveScopes(options: UpdateOptions): InstallScope[] {
-  const aliases = [
-    options.project ? 'project' : undefined,
-    options.global || options.user ? 'global' : undefined
-  ].filter(Boolean)
-  if (aliases.length > 1) throw new UsageError('Choose only one of --project, --global, or --user.')
-
-  if (!options.scope && aliases.length === 0) return ['project', 'global']
-  const normalized = options.scope?.trim().toLowerCase()
-  if (normalized && normalized !== 'project' && normalized !== 'global' && normalized !== 'user') {
-    throw new UsageError('--scope must be project or global.')
-  }
-  const scope = normalized === 'user' ? 'global' : normalized
-  if (scope && aliases[0] && scope !== aliases[0]) {
-    throw new UsageError('--scope conflicts with the selected scope flag.')
-  }
-  if ((scope || aliases[0]) === 'project') return ['project']
-  if ((scope || aliases[0]) === 'global') return ['global']
+  const scope = options.scope?.trim().toLowerCase()
+  if (!scope) return ['project', 'global']
+  if (scope === 'project' || scope === 'global') return [scope]
   throw new UsageError('--scope must be project or global.')
 }
 

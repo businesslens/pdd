@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { resolve } from 'node:path'
-import { Command, CommanderError, Help, InvalidArgumentError, Option } from 'commander'
+import { Command, CommanderError, Help, InvalidArgumentError } from 'commander'
 import { runContribute } from './commands/contribute.js'
 import { runExport } from './commands/export.js'
 import { runInstall } from './commands/install.js'
@@ -14,9 +14,6 @@ import { cliVersion } from './version.js'
 interface InstallCliOptions {
   providers?: string
   scope?: string
-  project?: boolean
-  global?: boolean
-  user?: boolean
   yes?: boolean
   force?: boolean
 }
@@ -24,9 +21,6 @@ interface InstallCliOptions {
 interface UpdateCliOptions {
   providers?: string
   scope?: string
-  project?: boolean
-  global?: boolean
-  user?: boolean
   force?: boolean
 }
 
@@ -52,8 +46,8 @@ interface ContributeCliOptions {
 }
 
 function cwdFor(command: Command): string {
-  const { cwd, C: legacyCwd } = command.optsWithGlobals() as { cwd?: string; C?: string }
-  return resolve(process.cwd(), cwd || legacyCwd || '.')
+  const { cwd } = command.optsWithGlobals() as { cwd?: string }
+  return resolve(process.cwd(), cwd || '.')
 }
 
 function scope(value: string): 'project' | 'global' {
@@ -75,23 +69,6 @@ function port(value: string): number {
   return parsed
 }
 
-function legacyScopeOptions(command: Command): Command {
-  return command
-    .addOption(new Option('--project').hideHelp())
-    .addOption(new Option('--global').hideHelp())
-    .addOption(new Option('--user').hideHelp())
-}
-
-function retiredCommand(program: Command, name: string, replacement: string): void {
-  program
-    .command(`${name} [arguments...]`, { hidden: true })
-    .allowUnknownOption(true)
-    .description(`Use businesslens ${replacement}`)
-    .action((_arguments: string[], _options: Record<string, never>, command: Command) => {
-      command.error(`error: \`businesslens ${name}\` has moved. Use \`businesslens ${replacement}\`.`)
-    })
-}
-
 function commandsBeforeOptions(output: string): string {
   const trailingNewline = output.endsWith('\n') ? '\n' : ''
   const sections = output.trimEnd().split(/\n{2,}/)
@@ -110,7 +87,6 @@ function createProgram(setExitCode: (code: number) => void): Command {
     .description('Product-Driven Development for coding agents')
     .usage('<command> [options]')
     .option('-c, --cwd <path>', 'Run from another directory')
-    .addOption(new Option('-C <path>').hideHelp().conflicts('cwd'))
     .version(cliVersion(), '-V, --version', 'Show the CLI version')
     .helpOption('-h, --help', 'Show help for command')
     .helpCommand('help [command]', 'Show help for command')
@@ -124,25 +100,25 @@ function createProgram(setExitCode: (code: number) => void): Command {
     })
     .exitOverride()
 
-  legacyScopeOptions(program
+  program
     .command('install')
     .summary('Install BusinessLens skills')
     .description('Install BusinessLens skills for detected AI harnesses.')
     .option('--providers <list>', 'Comma-separated providers: claude,codex,cursor,gemini,github')
     .option('--scope <scope>', 'Installation scope: project or global', scope)
     .option('--yes', 'Accept detected providers and default to project scope')
-    .option('--force', 'Replace an unmarked colliding BusinessLens skill directory'))
+    .option('--force', 'Replace an unmarked colliding BusinessLens skill directory')
     .action(async (options: InstallCliOptions, command: Command) => {
       setExitCode(await runInstall(cwdFor(command), options))
     })
 
-  legacyScopeOptions(program
+  program
     .command('update')
     .summary('Update managed skill installations')
     .description('Update BusinessLens-managed skill installations.')
     .option('--providers <list>', 'Limit discovery to: claude,codex,cursor,gemini,github')
     .option('--scope <scope>', 'Installation scope: project or global', scope)
-    .option('--force', 'Replace an unmarked collision inside a managed installation'))
+    .option('--force', 'Replace an unmarked collision inside a managed installation')
     .action(async (options: UpdateCliOptions, command: Command) => {
       setExitCode(await runUpdate(cwdFor(command), options))
     })
@@ -216,18 +192,6 @@ function createProgram(setExitCode: (code: number) => void): Command {
     .option('--yes', 'Skip the confirmation prompt')
     .action(async (options: ContributeCliOptions, command: Command) => {
       setExitCode(await runContribute(cwdFor(command), { yes: Boolean(options.yes) }))
-    })
-
-  for (const name of ['export', 'open', 'pull', 'contribute']) {
-    retiredCommand(program, name, `blueprint ${name}`)
-  }
-  retiredCommand(program, 'build', 'blueprint export')
-
-  program
-    .command('validate [arguments...]', { hidden: true })
-    .allowUnknownOption(true)
-    .action((_arguments: string[], _options: Record<string, never>, command: Command) => {
-      command.error('error: `businesslens validate` has been renamed. Use `businesslens lint`.')
     })
 
   return program

@@ -5,6 +5,16 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+## [0.13.0] - 2026-09-12
+
+### Removed
+
+- Hidden historical CLI options and command migration messages. Use the commands
+  and options shown in help, including `--cwd` and `--scope project|global`.
+- One-off cleanup of old bare-name skills and Claude commands during installation.
+
 ## [0.12.0] - 2026-09-10
 
 ### Changed

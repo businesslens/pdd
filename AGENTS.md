@@ -25,9 +25,10 @@ were costed and then chosen against, so the same argument is not had twice.
 
 - `src/cli.ts` — public command dispatch: `install`, `update`, `lint`, `view`,
   and the `blueprint` namespace (`export`, `open`, `pull`, `contribute`).
-  Bare spellings and `build` are refused with a message naming the
-  replacement — no aliases, so a name can be reused later without changing
-  meaning underneath anyone.
+  Only documented commands and options are accepted. Removed spellings use
+  normal usage errors; there are no hidden migration commands or scope aliases.
+  Before launch, publication or installation alone does not require historical
+  behavior. Coordinate current producer and consumer changes together.
 - `src/commands/` — public command implementations.
 - `src/core/providers.ts` — supported harness paths and detection.
 - `src/core/skill-installation.ts` — ownership-safe skill installation.
