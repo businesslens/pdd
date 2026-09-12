@@ -24,8 +24,8 @@ body:
     validations:
       required: true
   - type: textarea
-    id: validate-output
+    id: lint-output
     attributes:
-      label: Validate output (optional)
-      description: Output of `npx businesslens validate` if relevant. Redact anything private.
+      label: Lint output (optional)
+      description: Output of `npx businesslens lint` if relevant. Redact anything private.
       render: shell

@@ -63,7 +63,7 @@ jobs:
             | grep 'view \[options\]' >/dev/null
           npx --yes --package "${{ steps.pack.outputs.tarball }}" businesslens install \
             --providers claude,codex \
-            --project \
+            --scope project \
             --yes
 
           cli_only="$smoke_root/cli-only"
