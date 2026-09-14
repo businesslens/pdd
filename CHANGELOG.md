@@ -9,13 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Scenario Steps use one compact layout with visible field labels and explicit
+- Capabilities and Journeys now have one Scenarios tab, using expandable cards.
+  Scenario Steps use one compact layout with visible field labels and explicit
   Entity effects. Scenario summaries separate Trigger, Outcome and Entity results,
   with one step count and no repeated Entity list. Click a summary to expand its
   Steps in the same card, with full location breadcrumbs. Larger titles and
   clearer section labels make summaries easier to scan. One expansion reveals
   the Steps followed by decision points and edge cases.
-- Page tabs use a lighter header with keyboard navigation. Scenarios v2 keeps
+- Page tabs use a lighter header with keyboard navigation. Scenarios keeps
   expand, collapse and per-row controls alongside them, without a filled band
   or an extra scrollbar.
 - Every collection is one set with two drawings, Rows and Graph, switched
@@ -36,7 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 - Scenarios v3 and the extra navigation arrows on Domain, Interface and
-  Scenario v2 cards.
+  Scenario cards.
 - The Composition tab of Journeys. Its reading lives in the expanded Journey
   rows.
 

@@ -94,7 +94,7 @@ const columnItems = COLUMN_CHOICES.map(value => ({ value, label: `${value} per r
         :class="!tabsTarget && 'mb-5'"
         @update:model-value="select"
       >
-        <template v-if="current?.id === 'scenarios-v2' && current.count" #actions>
+        <template v-if="current?.id === 'scenarios' && current.count" #actions>
           <div class="flex items-center gap-2" data-scenario-controls>
             <UFieldGroup size="md">
               <UTooltip text="Expand all">
@@ -121,22 +121,13 @@ const columnItems = COLUMN_CHOICES.map(value => ({ value, label: `${value} per r
     </Teleport>
 
     <div class="min-w-0 space-y-5">
-      <BlrScenarios
-        v-if="current?.id === 'scenarios'"
-        v-model:scenario-route="scenarioRoute"
-        v-model:route-columns="routeColumns"
-        :workspace="workspace"
-        :resource="subject"
-        :selected-key="requestedChild"
-        @open="emit('open', $event)"
-      />
-
       <BlrScenariosList
-        v-else-if="current?.id === 'scenarios-v2'"
+        v-if="current?.id === 'scenarios'"
         ref="scenariosList"
         :workspace="workspace"
         :resource="subject"
         :columns="scenarioColumns"
+        :selected-key="requestedChild"
         @open="emit('open', $event)"
       />
 

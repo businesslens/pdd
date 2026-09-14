@@ -122,6 +122,8 @@ draws the facet-filtered set and honours `tf` as a neighbourhood; branch
 expansion uses `tx`/`tc`. Entity Lifecycle keeps its tab, and resource Overview
 retains Connections.
 
+Capabilities and Journeys have one Scenarios tab, using expandable cards.
+Direct Scenario links open and scroll to the matching card inside its parent.
 Scenario cards separate Trigger and Outcome from the Entities they leave behind.
 The whole summary, including its title, toggles the ordered Steps followed by
 any decision points and edge cases inside the same contained card. The single
@@ -138,7 +140,7 @@ selector has been retired.
 Resource pages and the Product Overview share Nuxt UI's link-style tabs on a
 transparent header. The host places the resource tab strip above the scroll
 pane, so it stays available without a filled sticky backdrop or a nested
-scrollbar. Scenarios v2 keeps Expand all, Collapse all and the per-row selector
+scrollbar. Scenarios keeps Expand all, Collapse all and the per-row selector
 on the right of that strip. The controls wrap when the screen is too narrow
 for one row; tabs retain Nuxt UI's arrow-key navigation and visible focus.
 
@@ -157,7 +159,7 @@ Backgrounds follow the item's role, independently of which levels are visible:
 | Resource | Entity, Capability, Journey and Scenario cards | Solid `bg-default` |
 | Detail | Steps inside a Scenario | Opaque `--blr-bg-detail`: 80% resource background, 20% elevated tone |
 
-Scenarios v2 therefore starts at the resource level and expands to detail-level
+Scenarios therefore starts at the resource level and expands to detail-level
 Steps. Its summary keeps the soft hover. Step cards and their number markers
 use the detail background; the cards keep a steady background and border on
 hover, while resource links remain interactive.

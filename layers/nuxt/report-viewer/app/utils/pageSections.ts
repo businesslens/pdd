@@ -14,7 +14,7 @@ export type PageBlockId =
   | 'supporting'
   | 'references'
 
-export type PageTabId = 'overview' | 'scenarios' | 'scenarios-v2' | 'lifecycle'
+export type PageTabId = 'overview' | 'scenarios' | 'lifecycle'
 
 export interface PageTab {
   id: PageTabId
@@ -65,9 +65,6 @@ export function tabsFor(workspace: ReportWorkspace, resource: AnyResourceView): 
   const children = childrenOf(workspace, resource)
   if (resource.kind === 'capability' || resource.kind === 'journey') {
     tabs.push({ id: 'scenarios', label: 'Scenarios', count: children.length, blocks: [] })
-    /* An audition beside the reading it may replace: Scenarios as cards that
-       open to their labelled Steps. */
-    tabs.push({ id: 'scenarios-v2', label: 'Scenarios v2', count: children.length, blocks: [] })
   }
   if (resource.kind === 'entity' && resource.states.length) {
     tabs.push({ id: 'lifecycle', label: 'Lifecycle', count: resource.states.length, blocks: [] })

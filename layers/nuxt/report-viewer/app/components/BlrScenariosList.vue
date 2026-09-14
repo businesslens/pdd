@@ -6,7 +6,13 @@ import { childrenOf } from '../utils/pageSections'
 import type { ColumnChoice } from '../composables/useColumns'
 import { scenarioTerm } from '../utils/vocabulary'
 
-const props = defineProps<{ workspace: ReportWorkspace, resource: AnyResourceView, columns: ColumnChoice }>()
+const props = defineProps<{
+  workspace: ReportWorkspace
+  resource: AnyResourceView
+  columns: ColumnChoice
+  /** A Scenario reached by URL or search opens its card inside the parent. */
+  selectedKey?: string | null
+}>()
 const emit = defineEmits<{ open: [resource: AnyResourceView] }>()
 
 const scenarios = computed(() => childrenOf(props.workspace, props.resource) as ScenarioView[])
@@ -15,6 +21,29 @@ const scenarioKind = computed(() => props.resource.kind === 'journey' ? 'journey
 /* One expansion opens the Steps followed by any decisions and edge cases.
    Scenario cards start closed, as rows do everywhere else. */
 const openScenarios = ref<string[]>([])
+const scenariosRoot = useTemplateRef('scenariosRoot')
+watch([scenarios, () => props.selectedKey], () => {
+  const keys = new Set(scenarios.value.map(item => item.key))
+  openScenarios.value = openScenarios.value.filter(key => keys.has(key))
+  if (props.selectedKey && keys.has(props.selectedKey) && !openScenarios.value.includes(props.selectedKey)) {
+    openScenarios.value.push(props.selectedKey)
+  }
+}, { immediate: true })
+
+watch([scenariosRoot, () => props.selectedKey], async ([root, key], _previous, onCleanup) => {
+  if (!root || !key) return
+  let cancelled = false
+  onCleanup(() => { cancelled = true })
+  await nextTick()
+  await document.fonts.ready
+  // Let the host restore its pane before bringing the requested card into view.
+  requestAnimationFrame(() => {
+    if (cancelled) return
+    const row = [...root.querySelectorAll<HTMLElement>('[data-row-key]')].find(item => item.dataset.rowKey === key)
+    row?.querySelector<HTMLElement>('[data-scenario-summary]')?.scrollIntoView({ block: 'start' })
+  })
+}, { flush: 'post' })
+
 const isOpen = (scenario: ScenarioView) => openScenarios.value.includes(scenario.key)
 function toggleScenario(scenario: ScenarioView) {
   openScenarios.value = isOpen(scenario) ? openScenarios.value.filter(key => key !== scenario.key) : [...openScenarios.value, scenario.key]
@@ -40,7 +69,7 @@ const scenarioWord = (word: 'trigger' | 'outcome' | 'decision-point' | 'edge-cas
   <p v-if="!scenarios.length" class="text-sm text-muted italic">
     No Scenarios name this {{ ENTITY_KIND_META[resource.kind].label }}.
   </p>
-  <div v-else data-scenarios-v2>
+  <div v-else ref="scenariosRoot" data-scenarios>
     <div class="space-y-2" :style="rowGrid" data-collection-rows>
       <div v-for="scenario in scenarios" :key="scenario.key" class="blr-row-tree" :data-row-key="scenario.key">
         <!-- The cards drawing: the Scenario itself is read on the card, open

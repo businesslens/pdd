@@ -1139,7 +1139,7 @@ describe('stable Product Report', () => {
     const reportShell = source('app/components/BlrReportShell.vue')
     const page = source('app/components/BlrResourcePage.vue')
     const sections = source('app/utils/pageSections.ts')
-    const scenarios = source('app/components/BlrScenarios.vue')
+    const scenarios = source('app/components/BlrScenariosList.vue')
 
     expect(rail).not.toContain('blr-navchild')
     /* The rail changes the subject. A collection's Graph is reached inside it;
@@ -1150,7 +1150,8 @@ describe('stable Product Report', () => {
     expect(reportShell).not.toContain('SCENARIO_OF')
     expect(reportShell).not.toContain('parentTabs')
     expect(reportShell).not.toContain('class="blr-tab"')
-    expect(page).toContain('<BlrScenarios')
+    expect(page).toContain('<BlrScenariosList')
+    expect(page).toContain(':selected-key="requestedChild"')
     expect(sections).toContain('scenariosByCapability')
     expect(sections).toContain('scenariosByJourney')
     expect(scenarios).toContain('selectedKey')
@@ -1161,8 +1162,17 @@ describe('stable Product Report', () => {
     const page = source('app/components/BlrResourcePage.vue')
     const sections = source('app/utils/pageSections.ts')
 
-    /* `scenarios-v2` is an audition beside Scenarios, not a third reading. */
-    expect(sections).toContain("export type PageTabId = 'overview' | 'scenarios' | 'scenarios-v2' | 'lifecycle'")
+    const workspace = projectReportWorkspace(compileReport(loadModel(FIXTURE), '2026-09-14'))
+    for (const resource of [...workspace.capabilities, ...workspace.journeys]) {
+      const tabs = tabsFor(workspace, resource)
+      expect(tabs.map((tab: any) => [tab.id, tab.label])).toEqual([
+        ['overview', 'Overview'], ['scenarios', 'Scenarios']
+      ])
+      const children = resource.kind === 'capability'
+        ? workspace.scenariosByCapability.get(resource.id)
+        : workspace.scenariosByJourney.get(resource.id)
+      expect(tabs[1].count).toBe(children?.length ?? 0)
+    }
     expect(sections).toContain("if (resource.references.length) overviewBlocks.push('references')")
     expect(sections).not.toContain("id: 'diagram'")
     expect(sections).not.toContain("id: 'references'")
