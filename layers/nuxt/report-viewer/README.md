@@ -123,12 +123,14 @@ expansion uses `tx`/`tc`. Entity Lifecycle keeps its tab, and resource Overview
 retains Connections.
 
 Scenario cards separate Trigger and Outcome from the Entities they leave behind.
-The whole summary, including its title, toggles the ordered Steps inside the
-same contained card. Resource links, definitions and the details control work independently
-of expansion. Each Entity appears once in the terminal reading, with its
+The whole summary, including its title, toggles the ordered Steps followed by
+any decision points and edge cases inside the same contained card. The single
+expansion control includes the Step and detail counts; there is no separate
+details toggle. Resource links and definitions work independently of expansion.
+Each Entity appears once in the terminal reading, with its
 last creation, change or removal, and Entities only read sit separately.
-Decision points and edge cases are available from one details control when
-present. Step cards use the selected Guided flow layout: visible labels for
+Scenario titles use 16px semibold text, section labels 13px semibold, and body
+text 14px regular. Step cards use the selected Guided flow layout: visible labels for
 Action or Condition, Who, Entity effects, Where and Capability, with effects
 spelled out in words. Where reuses the original Context breadcrumbs — Interface,
 Experience and Screen — without route-name prefixes. The Step card variant

@@ -12,23 +12,15 @@ const emit = defineEmits<{ open: [resource: AnyResourceView] }>()
 const scenarios = computed(() => childrenOf(props.workspace, props.resource) as ScenarioView[])
 const scenarioKind = computed(() => props.resource.kind === 'journey' ? 'journey-scenario' as const : 'capability-scenario' as const)
 
-/* Which Scenarios are open to their Steps, and which show their further
-   details — decisions and edge cases — inside the card. Both start closed, as
-   rows do everywhere else. */
+/* One expansion opens the Steps followed by any decisions and edge cases.
+   Scenario cards start closed, as rows do everywhere else. */
 const openScenarios = ref<string[]>([])
-const openDetails = ref<string[]>([])
 const isOpen = (scenario: ScenarioView) => openScenarios.value.includes(scenario.key)
-const detailsOpen = (scenario: ScenarioView) => openDetails.value.includes(scenario.key)
-const hasDetails = (scenario: ScenarioView) => scenario.decisionPoints.length > 0 || scenario.edgeCases.length > 0
 function toggleScenario(scenario: ScenarioView) {
   openScenarios.value = isOpen(scenario) ? openScenarios.value.filter(key => key !== scenario.key) : [...openScenarios.value, scenario.key]
 }
-function toggleDetails(scenario: ScenarioView) {
-  openDetails.value = detailsOpen(scenario) ? openDetails.value.filter(key => key !== scenario.key) : [...openDetails.value, scenario.key]
-}
 function toggleAll(open: boolean) {
   openScenarios.value = open ? scenarios.value.map(item => item.key) : []
-  openDetails.value = open ? scenarios.value.filter(hasDetails).map(item => item.key) : []
 }
 
 /* The page places the list controls beside its tabs. Expansion stays local
@@ -53,14 +45,12 @@ const scenarioWord = (word: 'trigger' | 'outcome' | 'decision-point' | 'edge-cas
       <div v-for="scenario in scenarios" :key="scenario.key" class="blr-row-tree" :data-row-key="scenario.key">
         <!-- The cards drawing: the Scenario itself is read on the card, open
              or closed — what starts it, how it ends, what it touches and where
-             it leaves each thing. Opening it adds only the Steps. -->
+             it leaves each thing. Opening it adds the Steps, then details. -->
         <BlrScenarioSummary
           :workspace="workspace"
           :scenario="scenario"
           :expanded="isOpen(scenario)"
-          :details-expanded="detailsOpen(scenario)"
           @toggle="toggleScenario(scenario)"
-          @details="toggleDetails(scenario)"
           @open="emit('open', $event)"
         >
           <ol class="blr-steps-list">
@@ -71,7 +61,7 @@ const scenarioWord = (word: 'trigger' | 'outcome' | 'decision-point' | 'edge-cas
           </ol>
           <template #details>
             <section v-if="scenario.decisionPoints.length" class="space-y-2">
-              <h3 class="blr-field"><BlrTerm :slug="scenarioWord('decision-point')" text="Decision points" /> <span class="blr-meta">{{ scenario.decisionPoints.length }}</span></h3>
+              <h4 class="text-[0.8125rem] font-semibold text-highlighted"><BlrTerm :slug="scenarioWord('decision-point')" text="Decision points" /></h4>
               <div class="grid gap-3 lg:grid-cols-2">
                 <div v-for="point in scenario.decisionPoints" :key="point.title" class="rounded-xl border border-dashed border-accented p-4">
                   <p class="flex items-center gap-2 text-sm font-semibold text-highlighted">
@@ -89,7 +79,7 @@ const scenarioWord = (word: 'trigger' | 'outcome' | 'decision-point' | 'edge-cas
               </div>
             </section>
             <section v-if="scenario.edgeCases.length" class="space-y-1">
-              <h3 class="blr-field"><BlrTerm :slug="scenarioWord('edge-case')" text="Edge cases" /> <span class="blr-meta">{{ scenario.edgeCases.length }}</span></h3>
+              <h4 class="text-[0.8125rem] font-semibold text-highlighted"><BlrTerm :slug="scenarioWord('edge-case')" text="Edge cases" /></h4>
               <ul class="max-w-3xl space-y-1.5 text-sm text-default">
                 <li v-for="edgeCase in scenario.edgeCases" :key="edgeCase" class="flex gap-2">
                   <span class="mt-2 size-1.5 shrink-0 rounded-full bg-(--ui-border-accented)" />{{ edgeCase }}

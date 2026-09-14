@@ -8,10 +8,9 @@ const props = defineProps<{
   workspace: ReportWorkspace
   scenario: ScenarioView
   expanded: boolean
-  detailsExpanded: boolean
 }>()
-const emit = defineEmits<{ open: [resource: AnyResourceView], toggle: [], details: [] }>()
-const stepsId = useId()
+const emit = defineEmits<{ open: [resource: AnyResourceView], toggle: [] }>()
+const expansionId = useId()
 const trigger = computed(() => props.scenario.trigger || props.scenario.lead)
 const word = (name: 'trigger' | 'outcome') => scenarioTerm(props.scenario.scenarioType, name)
 const results = computed(() => props.scenario.outcomeStates.map(ending => {
@@ -30,6 +29,10 @@ const reads = computed(() => props.scenario.readEntityIds.map(id => ({
 const detailLabel = computed(() => [
   props.scenario.decisionPoints.length ? `${props.scenario.decisionPoints.length} ${props.scenario.decisionPoints.length === 1 ? 'decision' : 'decisions'}` : '',
   props.scenario.edgeCases.length ? `${props.scenario.edgeCases.length} ${props.scenario.edgeCases.length === 1 ? 'edge case' : 'edge cases'}` : ''
+].filter(Boolean).join(' · '))
+const expansionLabel = computed(() => [
+  `${props.scenario.steps.length} ${props.scenario.steps.length === 1 ? 'step' : 'steps'}`,
+  detailLabel.value
 ].filter(Boolean).join(' · '))
 const open = (key: string) => { const resource = props.workspace.byKey.get(key); if (resource) emit('open', resource) }
 </script>
@@ -52,11 +55,11 @@ const open = (key: string) => { const resource = props.workspace.byKey.get(key);
           type="button"
           class="blr-summary-toggle"
           :aria-expanded="expanded"
-          :aria-controls="stepsId"
-          :aria-label="`${expanded ? 'Collapse' : 'Expand'} ${ENTITY_KIND_META[scenario.kind].label} ${scenario.title}, ${scenario.steps.length} ${scenario.steps.length === 1 ? 'step' : 'steps'}`"
+          :aria-controls="expansionId"
+          :aria-label="`${expanded ? 'Collapse' : 'Expand'} ${ENTITY_KIND_META[scenario.kind].label} ${scenario.title}, ${expansionLabel}`"
           @click="emit('toggle')"
         >
-          <span>{{ scenario.steps.length }} {{ scenario.steps.length === 1 ? 'step' : 'steps' }}</span>
+          <span>{{ expansionLabel }}</span>
           <UIcon name="i-lucide-chevron-down" class="size-3.5 shrink-0 transition-transform" :class="expanded && 'rotate-180'" />
         </button>
       </div>
@@ -103,23 +106,12 @@ const open = (key: string) => { const resource = props.workspace.byKey.get(key);
       </div>
     </dl>
 
-    <div v-if="detailLabel" class="blr-summary-details">
-      <UButton
-        color="neutral"
-        variant="link"
-        size="xs"
-        class="px-0"
-        :label="detailLabel"
-        :trailing-icon="detailsExpanded ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
-        :aria-expanded="detailsExpanded"
-        :aria-label="`${detailsExpanded ? 'Hide' : 'Show'} details for ${scenario.title}`"
-        @click="emit('details')"
-      />
-    </div>
   </div>
-  <div v-if="detailLabel && detailsExpanded" class="border-t border-muted p-4 space-y-4" data-scenario-details><slot name="details" /></div>
-  <div v-show="expanded" :id="stepsId" class="border-t border-muted p-4" data-scenario-steps>
-    <slot v-if="expanded" />
+  <div v-show="expanded" :id="expansionId" class="border-t border-muted" data-scenario-content>
+    <template v-if="expanded">
+      <div class="p-4" data-scenario-steps><slot /></div>
+      <div v-if="detailLabel" class="border-t border-muted p-4 space-y-4" data-scenario-details><slot name="details" /></div>
+    </template>
   </div>
   </div>
 </template>
@@ -136,21 +128,20 @@ const open = (key: string) => { const resource = props.workspace.byKey.get(key);
 .blr-summary-identity { display: flex; align-items: flex-start; gap: 0.75rem; min-width: 0; }
 .blr-summary-heading { display: flex; flex-wrap: wrap; align-items: center; gap: 0.375rem 0.625rem; min-width: 0; }
 .blr-summary-heading h3 { min-width: 0; }
-.blr-summary-title { min-width: 0; text-align: start; font-size: 0.9375rem; font-weight: 600; line-height: 1.5; color: var(--ui-text-highlighted); overflow-wrap: anywhere; }
+.blr-summary-title { min-width: 0; text-align: start; font-size: 1rem; font-weight: 600; line-height: 1.5; color: var(--ui-text-highlighted); overflow-wrap: anywhere; }
 .blr-summary-story { display: grid; gap: 1rem 2rem; margin-top: 1rem; }
 .blr-summary-story > div { min-width: 0; }
-.blr-summary-label { font-size: 0.75rem; font-weight: 600; color: var(--ui-text); }
+.blr-summary-label { font-size: 0.8125rem; font-weight: 600; color: var(--ui-text-highlighted); }
 .blr-summary-story dd { margin-top: 0.25rem; max-width: 75ch; overflow-wrap: anywhere; }
 .blr-summary-outcome-label { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.75rem; }
-.blr-summary-result { font-weight: 400; color: var(--ui-text-muted); }
-.blr-summary-entities { display: grid; gap: 0.625rem; margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--ui-border-muted); font-size: 0.8125rem; }
+.blr-summary-result { font-size: 0.75rem; font-weight: 400; color: var(--ui-text-muted); }
+.blr-summary-entities { display: grid; gap: 0.625rem; margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--ui-border-muted); font-size: 0.875rem; }
 .blr-summary-entity-row { display: grid; grid-template-columns: 6rem minmax(0, 1fr); gap: 0.25rem 1rem; align-items: start; }
 .blr-summary-entity-row > dd { min-width: 0; }
 .blr-summary-endings, .blr-summary-reads { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0.5rem 1.5rem; margin: 0; padding: 0; list-style: none; }
 .blr-summary-ending { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0.25rem 0.5rem; min-width: 0; max-width: 100%; }
 .blr-summary-ending-result { color: var(--ui-text-muted); overflow-wrap: anywhere; }
 .blr-summary-entities :deep(.blr-topology-link) { font-size: inherit; line-height: inherit; }
-.blr-summary-details { margin-top: 0.75rem; }
 @container (min-width: 48rem) {
   .blr-summary-story:has(> div:nth-child(2)) { grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); }
 }
