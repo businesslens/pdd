@@ -57,9 +57,7 @@ const total = (card: TreeCard) => card.children.reduce((sum, group) => sum + (gr
 </script>
 
 <template>
-  <!-- The same box an Entity or Capability group is: a header that toggles as
-       a whole, and the tree as its content. Opening the subject's page is a
-       deliberate step, so it has its own button at the header's end. -->
+  <!-- Like a Capability group, the whole header toggles the contained tree. -->
   <div v-for="card in cards" :key="card.key" class="relative" data-tree-card :data-card-key="card.key">
   <UCollapsible
     :open="!isClosed(card)"
@@ -87,9 +85,7 @@ const total = (card: TreeCard) => card.children.reduce((sum, group) => sum + (gr
         />
         <UIcon v-else name="i-lucide-minus" class="size-3.5 shrink-0 text-dimmed" />
         <span class="min-w-0 truncate text-sm font-semibold tracking-tight" :class="card.resource ? 'text-highlighted' : 'text-muted'">{{ card.title }}</span>
-        <!-- Room for the open button, which sits beside the header. -->
-        <span class="ms-auto w-14 shrink-0" aria-hidden="true" />
-        <span class="blr-meta">{{ total(card) }}</span>
+        <span class="blr-meta ms-auto">{{ total(card) }}</span>
         <UIcon name="i-lucide-chevron-down" class="size-3.5 shrink-0 text-dimmed transition-transform" :class="open && 'rotate-180'" />
       </UButton>
     </template>
@@ -106,7 +102,7 @@ const total = (card: TreeCard) => card.children.reduce((sum, group) => sum + (gr
         :expanded="expandedOf(card)"
         color="neutral"
         size="md"
-        :ui="{ link: 'gap-2 rounded-md transition hover:bg-elevated', linkLabel: 'font-medium' }"
+        :ui="{ link: 'gap-2 rounded-md bg-default transition hover:bg-elevated/40 hover:before:bg-transparent', linkLabel: 'font-medium' }"
         @update:expanded="emit('expand', card.key, $event)"
       >
         <template #item-leading="{ item }">
@@ -134,17 +130,5 @@ const total = (card: TreeCard) => card.children.reduce((sum, group) => sum + (gr
       </div>
     </template>
   </UCollapsible>
-  <!-- Beside the box, not inside its header: a button cannot hold a button. -->
-  <UButton
-    v-if="card.resource"
-    icon="i-lucide-arrow-right"
-    color="neutral"
-    variant="outline"
-    size="xs"
-    class="absolute end-14 top-2.5"
-    data-open-page
-    :aria-label="`Open ${card.title}`"
-    @click="emit('open', card.resource!)"
-  />
   </div>
 </template>

@@ -488,6 +488,7 @@ function setDrawing(next: 'rows' | 'graph') {
 
 const pageReadingKey = computed(() => JSON.stringify([props.workspace.identity.id, activeSection.value, openPageKey.value, pageTab.value, topology.value.expanded, topology.value.collapsed]))
 const { element: resourcePane, save: savePageScroll, restore: restorePageScroll } = useBlrTopologyScroll(pageReadingKey)
+const pageTabsTarget = useTemplateRef('pageTabsTarget')
 
 /* Leaving a page, or opening one, is also leaving its tab: both change in one
    tick, so the host writes one history entry for the one gesture. */
@@ -693,21 +694,17 @@ const orphanScenarios = computed(() => props.workspace.scenarios
           </div>
         </div>
 
-        <!-- Which set. Rendered only where there is more than one. -->
-        <div v-if="surfaceTabs.length > 1" class="flex flex-wrap items-center gap-1 border-b border-default px-5" role="tablist" :aria-label="`${activeMeta.plural} readings`">
-          <button
-            v-for="tab in surfaceTabs"
-            :key="tab.id"
-            type="button"
-            role="tab"
-            class="blr-surface-tab"
-            :data-current="tab.id === activeSurfaceTab"
-            :aria-selected="tab.id === activeSurfaceTab"
-            @click="openSurfaceTab(tab.id)"
-          >
-            {{ tab.label }}
-          </button>
-        </div>
+        <!-- Both kinds of reading switch sit outside the scroll pane, on the
+             page's own background. Resource controls remain owned by the page. -->
+        <div v-if="openPage" ref="pageTabsTarget" class="shrink-0 px-5" data-page-tabs-host />
+        <BlrPageTabs
+          v-if="surfaceTabs.length > 1"
+          :model-value="activeSurfaceTab"
+          :items="surfaceTabs"
+          :label="`${activeMeta.plural} readings`"
+          class="shrink-0 px-5"
+          @update:model-value="openSurfaceTab"
+        />
 
         <!-- One bar above both drawings of a collection. It narrows the set,
              and the set is what Rows lists and Graph draws; the switch at its
@@ -837,6 +834,7 @@ const orphanScenarios = computed(() => props.workspace.scenarios
             v-model:reading="topology"
             :workspace="workspace"
             :resource="openPage"
+            :tabs-target="pageTabsTarget"
             @open="openResourcePage"
             @ready="restorePageScroll"
           />

@@ -3,13 +3,12 @@
 import type { AnyResourceView, ReportWorkspace, ScenarioView } from '../utils/reportWorkspace'
 import { entityFacetOf, resolveResource } from '../utils/reportWorkspace'
 import type { ScenarioStep } from '../utils/scenarioSteps'
-import { stepActor, stepCapability, stepRoutes } from '../utils/scenarioSteps'
+import { stepActor, stepCapability } from '../utils/scenarioSteps'
 
 const props = defineProps<{ workspace: ReportWorkspace, scenario: ScenarioView, step: ScenarioStep, index: number }>()
 const emit = defineEmits<{ open: [resource: AnyResourceView] }>()
 const actor = computed(() => stepActor(props.workspace, props.step))
 const capability = computed(() => stepCapability(props.workspace, props.scenario, props.step))
-const routes = computed(() => stepRoutes(props.workspace, props.scenario, props.step))
 const effects = computed(() => props.step.entities.map(mention => {
   const entity = resolveResource(props.workspace, 'entity', mention.entityId)
   const title = entity?.title ?? mention.entityId
@@ -20,7 +19,7 @@ const open = (key: string) => { const resource = props.workspace.byKey.get(key);
 </script>
 
 <template>
-  <div class="blr-guided-step min-w-0 flex-1 overflow-hidden rounded-[0.625rem] border border-default bg-default" data-scenario-step>
+  <div class="blr-guided-step min-w-0 flex-1 overflow-hidden rounded-[0.625rem] border border-default bg-(--blr-bg-detail)" data-scenario-step>
     <dl class="blr-guided-fields">
       <div class="blr-guided-field blr-guided-action">
         <dt>{{ step.stepKind === 'condition' ? 'Condition' : 'Action' }}</dt>
@@ -66,18 +65,16 @@ const open = (key: string) => { const resource = props.workspace.byKey.get(key);
         </dd>
       </div>
 
-      <div v-if="routes.length" class="blr-guided-field">
+      <div v-if="step.contexts.length" class="blr-guided-field">
         <dt>Where</dt>
-        <dd>
-          <dl class="blr-guided-places">
-            <div v-for="(route, position) in routes" :key="route.routeId" class="blr-guided-phrase">
-              <dt>{{ route.routeName }}:</dt>
-              <dd>
-                <BlrTopologyResource v-if="route.place" :resource="route.place" @open="open" />
-                <span v-else>{{ step.contexts[position]?.context.id }}</span>
-              </dd>
-            </div>
-          </dl>
+        <dd class="blr-guided-places">
+          <BlrStepContext
+            v-for="context in step.contexts"
+            :key="context.routeId"
+            :workspace="workspace"
+            :context="context.context"
+            @select="emit('open', $event)"
+          />
         </dd>
       </div>
 
@@ -101,8 +98,7 @@ const open = (key: string) => { const resource = props.workspace.byKey.get(key);
 .blr-guided-state-phrase { display: inline-flex; align-items: flex-start; gap: 0.375rem; min-width: 0; max-width: 100%; }
 .blr-guided-state-phrase > span { min-width: 0; overflow-wrap: anywhere; }
 .blr-guided-state-phrase > .blr-guided-cue { flex-shrink: 0; white-space: nowrap; }
-.blr-guided-cue, .blr-guided-places dt { color: var(--ui-text-muted); }
-.blr-guided-places dd { min-width: 0; max-width: 100%; }
+.blr-guided-cue { color: var(--ui-text-muted); }
 .blr-guided-verb, .blr-guided-state { font-weight: 500; color: var(--ui-text-highlighted); }
 .blr-guided-effect[data-effect='reads'] { color: var(--ui-text-muted); }
 .blr-guided-effect[data-effect='reads'] .blr-guided-verb { color: inherit; }

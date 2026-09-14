@@ -1162,21 +1162,22 @@ describe('stable Product Report', () => {
     const sections = source('app/utils/pageSections.ts')
 
     /* `scenarios-v2` is an audition beside Scenarios, not a third reading. */
-    expect(sections).toContain("export type PageTabId = 'overview' | 'scenarios' | 'scenarios-v2' | 'scenarios-v3' | 'lifecycle'")
+    expect(sections).toContain("export type PageTabId = 'overview' | 'scenarios' | 'scenarios-v2' | 'lifecycle'")
     expect(sections).toContain("if (resource.references.length) overviewBlocks.push('references')")
     expect(sections).not.toContain("id: 'diagram'")
     expect(sections).not.toContain("id: 'references'")
-    expect(page).toContain('data-sticky-page-tabs')
     /* A strip with one tab switches nothing, so it does not render — and the
        ways out live on the heading row, which the host draws. */
     expect(page).toContain('v-if="tabs.length > 1"')
     expect(page).not.toContain('aria-label="Explore this resource"')
     expect(page).not.toContain("emit('view', link.section, subject)")
     expect(page).not.toContain('label="Docs"')
-    /* Both strips are the same control, so the rule is not scoped to one. */
-    expect(page).toContain('class="blr-surface-tab"')
-    expect(source('app/components/BlrReportShell.vue')).toContain('class="blr-surface-tab"')
-    expect(source('app/assets/report-viewer.css')).toContain('.blr-surface-tab')
+    /* Both strips share Nuxt UI's keyboard-aware tabs. The host keeps them
+       outside the scroll pane so the strip needs no painted sticky surface. */
+    expect(page).toContain('<BlrPageTabs')
+    expect(source('app/components/BlrReportShell.vue')).toContain('<BlrPageTabs')
+    expect(source('app/components/BlrReportShell.vue')).toContain(':tabs-target="pageTabsTarget"')
+    expect(source('app/components/BlrPageTabs.vue')).toContain('<UTabs')
   })
 
   /*

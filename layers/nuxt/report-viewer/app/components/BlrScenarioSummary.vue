@@ -1,5 +1,5 @@
 <script setup lang="ts">
-/** A Scenario's story and terminal Entity results, above its ordered Steps. */
+/** One expandable box for a Scenario's story, Entity results and ordered Steps. */
 import type { AnyResourceView, ReportWorkspace, ScenarioView } from '../utils/reportWorkspace'
 import { ENTITY_KIND_META, entityFacetOf, resolveResource } from '../utils/reportWorkspace'
 import { scenarioTerm } from '../utils/vocabulary'
@@ -11,6 +11,7 @@ const props = defineProps<{
   detailsExpanded: boolean
 }>()
 const emit = defineEmits<{ open: [resource: AnyResourceView], toggle: [], details: [] }>()
+const stepsId = useId()
 const trigger = computed(() => props.scenario.trigger || props.scenario.lead)
 const word = (name: 'trigger' | 'outcome') => scenarioTerm(props.scenario.scenarioType, name)
 const results = computed(() => props.scenario.outcomeStates.map(ending => {
@@ -34,31 +35,31 @@ const open = (key: string) => { const resource = props.workspace.byKey.get(key);
 </script>
 
 <template>
-  <div class="blr-scenario-summary" data-scenario-summary>
+  <div class="blr-scenario-card min-w-0 overflow-hidden rounded-xl border border-default bg-default" data-scenario-card>
+  <div class="blr-scenario-summary hover:bg-elevated/40" data-scenario-summary>
     <div class="blr-summary-header">
       <div class="blr-summary-identity">
         <BlrKind :kind="scenario.kind" :labelled="false" class="mt-0.5 shrink-0" />
         <div class="blr-summary-heading">
-          <h3>
-            <button type="button" class="blr-summary-title" :aria-label="`Open ${ENTITY_KIND_META[scenario.kind].label} ${scenario.title}`" data-open-page @click="emit('open', scenario)">
-              <span>{{ scenario.title }}</span>
-              <UIcon name="i-lucide-arrow-right" class="mt-1 size-3.5 shrink-0 text-dimmed" />
-            </button>
-          </h3>
+          <h3 class="blr-summary-title">{{ scenario.title }}</h3>
           <UBadge v-if="scenario.kindName" color="neutral" variant="subtle" size="sm">{{ scenario.kindName }}</UBadge>
         </div>
       </div>
-      <UButton
-        color="neutral"
-        variant="outline"
-        size="sm"
-        class="shrink-0"
-        :label="`${scenario.steps.length} ${scenario.steps.length === 1 ? 'step' : 'steps'}`"
-        :trailing-icon="expanded ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
-        :aria-expanded="expanded"
-        :aria-label="`${expanded ? 'Collapse' : 'Expand'} ${ENTITY_KIND_META[scenario.kind].label} ${scenario.title}, ${scenario.steps.length} ${scenario.steps.length === 1 ? 'step' : 'steps'}`"
-        @click="emit('toggle')"
-      />
+      <div class="blr-summary-actions">
+        <!-- Stretch this native button over the summary. Resource links and
+             definitions sit above it, so they remain independent controls. -->
+        <button
+          type="button"
+          class="blr-summary-toggle"
+          :aria-expanded="expanded"
+          :aria-controls="stepsId"
+          :aria-label="`${expanded ? 'Collapse' : 'Expand'} ${ENTITY_KIND_META[scenario.kind].label} ${scenario.title}, ${scenario.steps.length} ${scenario.steps.length === 1 ? 'step' : 'steps'}`"
+          @click="emit('toggle')"
+        >
+          <span>{{ scenario.steps.length }} {{ scenario.steps.length === 1 ? 'step' : 'steps' }}</span>
+          <UIcon name="i-lucide-chevron-down" class="size-3.5 shrink-0 transition-transform" :class="expanded && 'rotate-180'" />
+        </button>
+      </div>
     </div>
 
     <dl v-if="trigger || scenario.outcome || scenario.result" class="blr-summary-story">
@@ -114,20 +115,28 @@ const open = (key: string) => { const resource = props.workspace.byKey.get(key);
         :aria-label="`${detailsExpanded ? 'Hide' : 'Show'} details for ${scenario.title}`"
         @click="emit('details')"
       />
-      <div v-if="detailsExpanded" class="mt-3 space-y-4" data-scenario-details><slot name="details" /></div>
     </div>
+  </div>
+  <div v-if="detailLabel && detailsExpanded" class="border-t border-muted p-4 space-y-4" data-scenario-details><slot name="details" /></div>
+  <div v-show="expanded" :id="stepsId" class="border-t border-muted p-4" data-scenario-steps>
+    <slot v-if="expanded" />
+  </div>
   </div>
 </template>
 
 <style scoped>
-.blr-scenario-summary { container-type: inline-size; min-width: 0; border: 1px solid var(--ui-border); border-radius: 0.625rem; padding: 1rem; background: var(--ui-bg); font-size: 0.875rem; line-height: 1.6; color: var(--ui-text); }
+.blr-scenario-summary { position: relative; container-type: inline-size; min-width: 0; padding: 1rem; font-size: 0.875rem; line-height: 1.6; color: var(--ui-text); transition: background-color 150ms; }
+.blr-summary-actions { display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0; }
+.blr-summary-toggle { display: inline-flex; align-items: center; gap: 0.375rem; min-height: 1.5rem; font-size: 0.75rem; color: var(--ui-text-muted); }
+.blr-summary-toggle::after { content: ''; position: absolute; inset: 0; z-index: 1; cursor: pointer; }
+.blr-summary-toggle:focus-visible { outline: none; }
+.blr-summary-toggle:focus-visible::after { outline: 2px solid var(--ui-primary); outline-offset: -3px; border-radius: 0.625rem; }
+.blr-scenario-summary :deep(button:not(.blr-summary-toggle)) { position: relative; z-index: 2; }
 .blr-summary-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
 .blr-summary-identity { display: flex; align-items: flex-start; gap: 0.75rem; min-width: 0; }
 .blr-summary-heading { display: flex; flex-wrap: wrap; align-items: center; gap: 0.375rem 0.625rem; min-width: 0; }
 .blr-summary-heading h3 { min-width: 0; }
-.blr-summary-title { display: flex; align-items: flex-start; gap: 0.375rem; min-width: 0; text-align: start; font-size: 0.9375rem; font-weight: 600; line-height: 1.5; color: var(--ui-text-highlighted); overflow-wrap: anywhere; cursor: pointer; }
-.blr-summary-title:hover { text-decoration: underline; text-underline-offset: 3px; }
-.blr-summary-title:focus-visible { outline: 2px solid var(--ui-primary); outline-offset: 3px; border-radius: 3px; }
+.blr-summary-title { min-width: 0; text-align: start; font-size: 0.9375rem; font-weight: 600; line-height: 1.5; color: var(--ui-text-highlighted); overflow-wrap: anywhere; }
 .blr-summary-story { display: grid; gap: 1rem 2rem; margin-top: 1rem; }
 .blr-summary-story > div { min-width: 0; }
 .blr-summary-label { font-size: 0.75rem; font-weight: 600; color: var(--ui-text); }
@@ -147,7 +156,7 @@ const open = (key: string) => { const resource = props.workspace.byKey.get(key);
 }
 @container (max-width: 26rem) {
   .blr-summary-header { flex-wrap: wrap; gap: 0.625rem; }
-  .blr-summary-header > button { margin-inline-start: auto; }
+  .blr-summary-actions { margin-inline-start: auto; }
   .blr-summary-entity-row { grid-template-columns: minmax(0, 1fr); }
   .blr-summary-endings { flex-direction: column; }
 }

@@ -123,13 +123,44 @@ expansion uses `tx`/`tc`. Entity Lifecycle keeps its tab, and resource Overview
 retains Connections.
 
 Scenario cards separate Trigger and Outcome from the Entities they leave behind.
-One step-count control opens the ordered Steps; the title opens the Scenario's
-resource reading. Each Entity appears once in the terminal reading, with its
+The whole summary, including its title, toggles the ordered Steps inside the
+same contained card. Resource links, definitions and the details control work independently
+of expansion. Each Entity appears once in the terminal reading, with its
 last creation, change or removal, and Entities only read sit separately.
 Decision points and edge cases are available from one details control when
 present. Step cards use the selected Guided flow layout: visible labels for
 Action or Condition, Who, Entity effects, Where and Capability, with effects
-spelled out in words. The Step card variant selector has been retired.
+spelled out in words. Where reuses the original Context breadcrumbs — Interface,
+Experience and Screen — without route-name prefixes. The Step card variant
+selector has been retired.
+Resource pages and the Product Overview share Nuxt UI's link-style tabs on a
+transparent header. The host places the resource tab strip above the scroll
+pane, so it stays available without a filled sticky backdrop or a nested
+scrollbar. Scenarios v2 keeps Expand all, Collapse all and the per-row selector
+on the right of that strip. The controls wrap when the screen is too narrow
+for one row; tabs retain Nuxt UI's arrow-key navigation and visible focus.
+
+Domain and Interface cards use the Capabilities list's surfaces: a translucent
+parent, a solid header highlight on hover, and solid child rows with a softer
+hover. The trees retain their compact, borderless rows, original spacing and
+indentation, and counts beside the labels. Parent headers only expand and
+collapse; they have no separate page-opening arrows. Scenarios v3 and its table
+drawing have been retired.
+
+Backgrounds follow the item's role, independently of which levels are visible:
+
+| Role | Examples | Background |
+| --- | --- | --- |
+| Group | Domain groups in Entities and Capabilities | Translucent `bg-elevated/20` |
+| Resource | Entity, Capability, Journey and Scenario cards | Solid `bg-default` |
+| Detail | Steps inside a Scenario | Opaque `--blr-bg-detail`: 80% resource background, 20% elevated tone |
+
+Scenarios v2 therefore starts at the resource level and expands to detail-level
+Steps. Its summary keeps the soft hover. Step cards and their number markers
+use the detail background; the cards keep a steady background and border on
+hover, while resource links remain interactive.
+The detail tint is half the summary's 40% hover treatment, keeping the third
+level subtle and distinct from an interaction highlight in both themes.
 
 There is no URL migration. Every standalone `topology` and named-destination
 shape changed with the restructure, and an address naming a destination this

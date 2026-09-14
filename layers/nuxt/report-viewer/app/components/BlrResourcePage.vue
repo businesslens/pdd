@@ -23,10 +23,12 @@ import { ENTITY_KIND_META } from '../utils/reportWorkspace'
 import type { TopologyReading } from '../utils/topologyState'
 import { defaultTopologyReading } from '../utils/topologyState'
 import { parentOf, tabsFor, type PageTabId } from '../utils/pageSections'
+import { COLUMN_CHOICES, type ColumnChoice } from '../composables/useColumns'
 
 const props = defineProps<{
   workspace: ReportWorkspace
   resource: AnyResourceView
+  tabsTarget?: HTMLElement | null
 }>()
 
 const emit = defineEmits<{
@@ -64,38 +66,59 @@ watch([tabs, requestedChild, tab], () => {
   active.value = isTab(tab.value) ? tab.value : 'overview'
 }, { immediate: true })
 
-function select(id: PageTabId) {
+function select(id: string) {
+  if (!isTab(id)) return
   if (id === 'overview' && requestedChild.value) emit('open', subject.value)
   active.value = id
   tab.value = id
 }
 
 const current = computed(() => tabs.value.find(tab => tab.id === active.value) ?? tabs.value[0])
+const scenariosList = useTemplateRef('scenariosList')
+const scenarioKind = computed(() => subject.value.kind === 'journey' ? 'journey-scenario' as const : 'capability-scenario' as const)
+const { columnsFor, setColumns } = useColumns()
+const scenarioColumns = computed(() => columnsFor(scenarioKind.value, 1))
+const columnItems = COLUMN_CHOICES.map(value => ({ value, label: `${value} per row` }))
 </script>
 
 <template>
   <div class="min-w-0">
-    <nav
-      v-if="tabs.length > 1"
-      data-sticky-page-tabs
-      role="tablist"
-      :aria-label="`${ENTITY_KIND_META[subject.kind].label} readings`"
-      class="sticky top-0 z-20 -mt-5 mb-5 flex flex-wrap items-center gap-1 border-b border-default bg-default/95 pt-5 backdrop-blur"
-    >
-      <button
-        v-for="tab in tabs"
-        :key="tab.id"
-        type="button"
-        role="tab"
-        class="blr-surface-tab"
-        :data-current="tab.id === active"
-        :aria-selected="tab.id === active"
-        @click="select(tab.id)"
+    <!-- The host places the strip above the scrolling reading. It needs no
+         painted sticky backdrop, and standalone use keeps it in normal flow. -->
+    <Teleport :to="tabsTarget || 'body'" :disabled="!tabsTarget">
+      <BlrPageTabs
+        v-if="tabs.length > 1"
+        :model-value="active"
+        :items="tabs"
+        :label="`${ENTITY_KIND_META[subject.kind].label} readings`"
+        :class="!tabsTarget && 'mb-5'"
+        @update:model-value="select"
       >
-        <span class="min-w-0 truncate">{{ tab.label }}</span>
-        <span v-if="tab.count !== undefined" class="blr-meta">{{ tab.count }}</span>
-      </button>
-    </nav>
+        <template v-if="current?.id === 'scenarios-v2' && current.count" #actions>
+          <div class="flex items-center gap-2" data-scenario-controls>
+            <UFieldGroup size="md">
+              <UTooltip text="Expand all">
+                <UButton icon="i-lucide-chevrons-up-down" color="neutral" variant="outline" aria-label="Expand all" @click="scenariosList?.toggleAll(true)" />
+              </UTooltip>
+              <UTooltip text="Collapse all">
+                <UButton icon="i-lucide-chevrons-down-up" color="neutral" variant="outline" aria-label="Collapse all" @click="scenariosList?.toggleAll(false)" />
+              </UTooltip>
+            </UFieldGroup>
+            <USelect
+              :model-value="scenarioColumns"
+              :items="columnItems"
+              value-key="value"
+              size="md"
+              variant="outline"
+              class="w-36"
+              icon="i-lucide-layout-grid"
+              aria-label="Rows per line"
+              @update:model-value="setColumns(scenarioKind, $event as ColumnChoice)"
+            />
+          </div>
+        </template>
+      </BlrPageTabs>
+    </Teleport>
 
     <div class="min-w-0 space-y-5">
       <BlrScenarios
@@ -109,10 +132,11 @@ const current = computed(() => tabs.value.find(tab => tab.id === active.value) ?
       />
 
       <BlrScenariosList
-        v-else-if="current?.id === 'scenarios-v2' || current?.id === 'scenarios-v3'"
+        v-else-if="current?.id === 'scenarios-v2'"
+        ref="scenariosList"
         :workspace="workspace"
         :resource="subject"
-        :steps="current?.id === 'scenarios-v3' ? 'table' : 'cards'"
+        :columns="scenarioColumns"
         @open="emit('open', $event)"
       />
 
@@ -139,4 +163,3 @@ const current = computed(() => tabs.value.find(tab => tab.id === active.value) ?
     </div>
   </div>
 </template>
-

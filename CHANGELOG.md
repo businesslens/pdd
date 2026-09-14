@@ -11,12 +11,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Scenario Steps use one compact layout with visible field labels and explicit
   Entity effects. Scenario summaries separate Trigger, Outcome and Entity results,
-  with one step count and no repeated Entity list.
+  with one step count and no repeated Entity list. Click a summary to expand its
+  Steps in the same card, with full location breadcrumbs.
+- Page tabs use a lighter header with keyboard navigation. Scenarios v2 keeps
+  expand, collapse and per-row controls alongside them, without a filled band
+  or an extra scrollbar.
 - Every collection is one set with two drawings, Rows and Graph, switched
   beside the filters. A filter narrows both drawings alike, and the heading
   count is the same in either.
 - Interfaces and Domains read as one tree card per resource: an Interface's
   Experiences and Screens, a Domain's Capabilities and Entities.
+- Group, resource and detail backgrounds stay consistent across collections.
+  Scenarios use the resource background; their Steps have a distinct, steady
+  background and summaries have a softer hover.
 - Domains, Capabilities, Journeys and Business Rules gained a Graph: a tree
   from the Product through each resource to the places it is reached in and
   the Rules attached to it.
@@ -26,6 +33,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- Scenarios v3 and the extra navigation arrows on Domain, Interface and
+  Scenario v2 cards.
 - The Composition tab of Journeys. Its reading lives in the expanded Journey
   rows.
 
