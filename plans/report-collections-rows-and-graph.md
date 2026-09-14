@@ -19,6 +19,7 @@ and `scripts/check-topology-diagrams.mjs` pass against the fixture at 1440 and
 | The matrix view id `rule-reach` | Renamed `rule-attachments`; `rule-reach` now names the Business Rules Graph | The README calls the graph "Rule reach", and the matrix is what its tab says: attachments. |
 | Focus stays a graph-only chip | As planned, and switching to Rows clears it | Rows cannot express a neighbourhood, so a chip claiming one there would lie. |
 | The drawing switch as `UButtonGroup` | `UFieldGroup` | Nuxt UI v4 renamed the component. |
+| Capability and Journey rows expanding to their Scenarios (D6, D7) | Plain rows; Scenarios are read on the page | Review feedback: the Scenarios added nothing a collection reader asked for. Composition is simply retired. |
 | Interface and Domain rows as expandable resource rows (D5, D6) | One tree card per Interface or Domain, the Domain map's card grid with a Nuxt UI Tree inside | Review feedback: the expandable rows were awkward; the old map's cards read better and both collections share the design. |
 | The three matrices as tabs of the Overview page (D9) | Rail rows of their own directly below Overview, at `s=delivery`, `s=what-changes-what`, `s=rule-attachments` | "Under the Overview" meant the rail, not the page. Review feedback after the first pass. |
 

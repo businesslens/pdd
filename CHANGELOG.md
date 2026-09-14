@@ -9,13 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Scenario Steps use one compact layout with visible field labels and explicit
+  Entity effects. Scenario summaries separate Trigger, Outcome and Entity results,
+  with one step count and no repeated Entity list.
 - Every collection is one set with two drawings, Rows and Graph, switched
   beside the filters. A filter narrows both drawings alike, and the heading
   count is the same in either.
 - Interfaces and Domains read as one tree card per resource: an Interface's
-  Experiences and Screens, a Domain's Capabilities and Entities. Capability and
-  Journey rows expand in place to their Scenarios, and a Journey Scenario reads
-  its Capability chain in Step order.
+  Experiences and Screens, a Domain's Capabilities and Entities.
 - Domains, Capabilities, Journeys and Business Rules gained a Graph: a tree
   from the Product through each resource to the places it is reached in and
   the Rules attached to it.

@@ -52,6 +52,7 @@ export default defineNuxtConfig({
         'lucide:focus',
         'lucide:gavel',
         'lucide:git-branch',
+        'lucide:git-fork',
         'lucide:globe',
         'lucide:hand',
         'lucide:house',

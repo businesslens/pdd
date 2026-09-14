@@ -25,7 +25,7 @@ import {
   hasSelections
 } from '../utils/resourceFacets'
 import { docsForResourceKind } from '../utils/resourceDocs'
-import { EXPANDABLE_KINDS, TREE_CARD_KINDS, rowChildren, treeCards } from '../utils/collectionChildren'
+import { TREE_CARD_KINDS, treeCards } from '../utils/collectionChildren'
 import { COLUMN_CHOICES } from '../composables/useColumns'
 import type { ColumnChoice } from '../composables/useColumns'
 import { KIND_TERM } from '../utils/vocabulary'
@@ -89,7 +89,6 @@ const closedGroups = ref<string[]>([])
 /* Rows open to their children on request and stay open for the session, keyed
    by collection and resource so a Screen open under one Interface is not open
    under another. */
-const expandedRows = ref<string[]>([])
 /* Tree cards remember which nodes the reader opened, per card. */
 const treeExpansion = ref<Record<string, string[]>>({})
 const collectionStateReady = ref(false)
@@ -109,7 +108,6 @@ function restoreCollectionState() {
   collectionStateReady.value = false
   for (const key of Object.keys(facetState)) delete (facetState as Record<string, unknown>)[key]
   closedGroups.value = []
-  expandedRows.value = []
   treeExpansion.value = {}
   try {
     const saved = JSON.parse(sessionStorage.getItem(collectionStorageKey()) ?? 'null')
@@ -124,7 +122,6 @@ function restoreCollectionState() {
         }
       }
       if (Array.isArray(saved.closed)) closedGroups.value = saved.closed.filter((id: unknown) => typeof id === 'string')
-      if (Array.isArray(saved.expanded)) expandedRows.value = saved.expanded.filter((id: unknown) => typeof id === 'string')
       if (saved.trees && typeof saved.trees === 'object') {
         treeExpansion.value = Object.fromEntries(Object.entries(saved.trees as Record<string, unknown>)
           .filter((entry): entry is [string, string[]] => Array.isArray(entry[1]) && entry[1].every(item => typeof item === 'string')))
@@ -138,9 +135,9 @@ function restoreCollectionState() {
 onMounted(restoreCollectionState)
 watch(() => props.workspace.identity.id, () => { if (collectionStateReady.value) restoreCollectionState() })
 watch(() => props.workspace, pruneFacets)
-watch([facetState, closedGroups, expandedRows, treeExpansion], () => {
+watch([facetState, closedGroups, treeExpansion], () => {
   if (!collectionStateReady.value) return
-  try { sessionStorage.setItem(collectionStorageKey(), JSON.stringify({ facets: facetState, closed: closedGroups.value, expanded: expandedRows.value, trees: treeExpansion.value })) } catch { /* Optional persistence. */ }
+  try { sessionStorage.setItem(collectionStorageKey(), JSON.stringify({ facets: facetState, closed: closedGroups.value, trees: treeExpansion.value })) } catch { /* Optional persistence. */ }
 }, { deep: true })
 
 const collectionGroupKey = (key: string) => `${activeKind.value}:${key}`
@@ -158,16 +155,6 @@ const cardExpansion = computed(() => Object.fromEntries(Object.entries(treeExpan
   .filter(([id]) => id.startsWith(`${activeKind.value}:`)).map(([id, values]) => [id.slice(activeKind.value.length + 1), values])))
 function setCardExpansion(key: string, values: string[]) {
   treeExpansion.value = { ...treeExpansion.value, [`${activeKind.value}:${key}`]: values }
-}
-
-/* The open rows of this collection, as the resource keys the row component reads. */
-const expandable = computed(() => EXPANDABLE_KINDS.includes(activeKind.value))
-const expandedKeys = computed(() => expandedRows.value
-  .filter(id => id.startsWith(`${activeKind.value}:`))
-  .map(id => id.slice(activeKind.value.length + 1)))
-function setRowOpen(key: string, open: boolean) {
-  const id = `${activeKind.value}:${key}`
-  expandedRows.value = [...expandedRows.value.filter(item => item !== id), ...(open ? [id] : [])]
 }
 
 const activeMeta = computed(() => ENTITY_KIND_META[activeKind.value])
@@ -460,17 +447,13 @@ const rowGrid = computed(() => columns.value > 1
   ? { display: 'grid', gridTemplateColumns: `repeat(${columns.value}, minmax(0, 1fr))`, gap: '0.5rem', alignItems: 'start' }
   : undefined)
 /* Expand all and collapse all act on whatever this collection opens: its
-   Domain groups, its expandable rows, and the trees inside its cards. */
-const expandsAnything = computed(() => grouped.value || expandable.value || treeCardsShown.value)
+   Domain groups, and the trees inside its cards. */
+const expandsAnything = computed(() => grouped.value || treeCardsShown.value)
 function toggleAllRows(open: boolean) {
   const prefix = `${activeKind.value}:`
   if (grouped.value) {
     const keys = resourceGroups.value.map(group => collectionGroupKey(group.key))
     closedGroups.value = [...closedGroups.value.filter(id => !id.startsWith(prefix)), ...(open ? [] : keys)]
-  }
-  if (expandable.value) {
-    const keys = visibleResources.value.filter(resource => rowChildren(props.workspace, resource).length).map(resource => `${prefix}${resource.key}`)
-    expandedRows.value = [...expandedRows.value.filter(id => !id.startsWith(prefix)), ...(open ? keys : [])]
   }
   if (treeCardsShown.value) {
     const cards = treeCards(props.workspace, activeKind.value, visibleResources.value, filtersActive.value)
@@ -923,22 +906,8 @@ const orphanScenarios = computed(() => props.workspace.scenarios
                    element itself would hold the box open until it unmounts. -->
               <template #content>
                 <div class="space-y-2" :class="grouped && 'border-t border-muted p-2'" :style="rowGrid" data-collection-rows>
-                  <template v-if="expandable">
-                    <BlrExpandableRow
-                      v-for="resource in group.resources"
-                      :key="resource.key"
-                      :workspace="workspace"
-                      :resource="resource"
-                      :children="rowChildren(workspace, resource)"
-                      :badge="group.kind !== 'domain'"
-                      :stacked="columns > 1"
-                      :expanded="expandedKeys"
-                      @open="openResourcePage"
-                      @toggle="setRowOpen"
-                    />
-                  </template>
                   <BlrResourceCard
-                    v-for="resource in expandable ? [] : group.resources"
+                    v-for="resource in group.resources"
                     :key="resource.key"
                     :workspace="workspace"
                     :resource="resource"

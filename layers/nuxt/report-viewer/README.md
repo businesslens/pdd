@@ -90,7 +90,7 @@ keys `tv`, `tj`, `ts`, `tm`, `tf`, `th`, `tx`, and `tc`. Set
 Defaults are omitted; array keys repeat, preserving qualified resource IDs.
 Navigation pushes history; reading filters and expansion replace the current entry.
 Hosts can instead bind their own state. Collection facets, collapsed groups,
-expanded rows, scroll anchors and graph position use session storage when
+expanded tree nodes, scroll anchors and graph position use session storage when
 available, isolated by report and host path. They survive refresh and
 recompilation without entering the Product Model; removed facet IDs are pruned.
 Two preferences are cookies, so a server-rendered host paints them right on the
@@ -110,8 +110,8 @@ the heading count, the filter controls and the chips are the same in both.
 | `entity` | one row per Entity, grouped by Domain; Actors lead | Entity relationships |
 | `interface` | one tree card per Interface: its Experiences, each with its Screens, and its direct Screens | Interface map |
 | `domain` | one tree card per Domain: its Capabilities and its Entities, Unassigned trailing | Domain reach: Domain, then the places its Capabilities are available in, then the Capabilities, Journeys and Rules reached there |
-| `capability` | one row per Capability, grouped by Domain, expanding to its Scenarios | Capability reach: Capability, then its places and Rules |
-| `journey` | one row per Journey, expanding to its Scenarios and their Capability chain | Journey reach: Journey, then its places and Rules |
+| `capability` | one row per Capability, grouped by Domain | Capability reach: Capability, then its places and Rules |
+| `journey` | one row per Journey | Journey reach: Journey, then its places and Rules |
 | `rule` | one row per Business Rule, grouped by Domain | Rule reach: Rule, then its attachment targets and Contexts |
 
 The cross-collection matrices are rail rows below Overview, each its own
@@ -121,6 +121,15 @@ narrowing (`th`) and focus (`tf`). A collection Graph
 draws the facet-filtered set and honours `tf` as a neighbourhood; branch
 expansion uses `tx`/`tc`. Entity Lifecycle keeps its tab, and resource Overview
 retains Connections.
+
+Scenario cards separate Trigger and Outcome from the Entities they leave behind.
+One step-count control opens the ordered Steps; the title opens the Scenario's
+resource reading. Each Entity appears once in the terminal reading, with its
+last creation, change or removal, and Entities only read sit separately.
+Decision points and edge cases are available from one details control when
+present. Step cards use the selected Guided flow layout: visible labels for
+Action or Condition, Who, Entity effects, Where and Capability, with effects
+spelled out in words. The Step card variant selector has been retired.
 
 There is no URL migration. Every standalone `topology` and named-destination
 shape changed with the restructure, and an address naming a destination this

@@ -16,7 +16,8 @@ const graphs = ['Domains', 'Interfaces', 'Entities']
 const matrices = [['Compare delivery', 'delivery'], ['Rule attachments', 'rule-attachments'], ['What changes what', 'what-changes-what']]
 const sectionOf = { Domains: 'domain', Interfaces: 'interface', Entities: 'entity' }
 const resourceUrl = (kind, id, suffix = '') => `${origin}/?s=${kind}&e=${encodeURIComponent(`${kind}:${id}`)}${suffix}`
-const tab = (page, name) => page.locator('.blr-surface-tab').filter({ hasText: new RegExp(`^${name}`) })
+/* A tab is its label and, at most, a count: `Scenarios 3` is Scenarios, `Scenarios v2` is not. */
+const tab = (page, name) => page.getByRole('tab', { name: new RegExp(`^${name}( \\d+)?$`) })
 async function choose(page, name) {
   if (page.viewportSize().width < 1024) await page.getByRole('button', { name: 'Open report navigation', exact: true }).click()
   await page.locator('.blr-navitem:visible').filter({ hasText: new RegExp(`^${name}`) }).click()
@@ -96,9 +97,7 @@ try {
       await expect(groups.first()).toHaveAttribute('aria-expanded', 'false')
       await page.reload()
       await expect(groups.first()).toHaveAttribute('aria-expanded', 'false')
-      /* A row that opens to Scenarios toggles on click; its page is behind
-         the dedicated open button at its end. */
-      const card = page.locator('[data-open-page]:visible').first()
+      const card = page.locator('.blr-resource-row:visible').first()
       if (await card.count()) {
         await card.click()
         await expect(page).toHaveURL(/e=capability/)

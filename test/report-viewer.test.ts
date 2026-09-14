@@ -1161,7 +1161,8 @@ describe('stable Product Report', () => {
     const page = source('app/components/BlrResourcePage.vue')
     const sections = source('app/utils/pageSections.ts')
 
-    expect(sections).toContain("export type PageTabId = 'overview' | 'scenarios' | 'lifecycle'")
+    /* `scenarios-v2` is an audition beside Scenarios, not a third reading. */
+    expect(sections).toContain("export type PageTabId = 'overview' | 'scenarios' | 'scenarios-v2' | 'scenarios-v3' | 'lifecycle'")
     expect(sections).toContain("if (resource.references.length) overviewBlocks.push('references')")
     expect(sections).not.toContain("id: 'diagram'")
     expect(sections).not.toContain("id: 'references'")

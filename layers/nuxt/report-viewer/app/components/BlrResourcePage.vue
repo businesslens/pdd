@@ -108,6 +108,14 @@ const current = computed(() => tabs.value.find(tab => tab.id === active.value) ?
         @open="emit('open', $event)"
       />
 
+      <BlrScenariosList
+        v-else-if="current?.id === 'scenarios-v2' || current?.id === 'scenarios-v3'"
+        :workspace="workspace"
+        :resource="subject"
+        :steps="current?.id === 'scenarios-v3' ? 'table' : 'cards'"
+        @open="emit('open', $event)"
+      />
+
       <BlrEntityLifecycle
         v-else-if="current?.id === 'lifecycle' && subject.kind === 'entity'"
         :workspace="workspace"

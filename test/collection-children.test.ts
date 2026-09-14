@@ -5,15 +5,17 @@ import { loadModel } from '../src/core/model.js'
 
 const utility = (name: string) => import(`../layers/nuxt/report-viewer/app/utils/${name}.ts`)
 const { projectReportWorkspace } = await utility('reportWorkspace')
-const { rowChildren, scenarioCapabilityChain, treeCards, EXPANDABLE_KINDS, TREE_CARD_KINDS } = await utility('collectionChildren')
+const { rowChildren, treeCards, TREE_CARD_KINDS } = await utility('collectionChildren')
 const { interfaceProjection } = await utility('topologyProjections')
 const workspace = projectReportWorkspace(compileReport(loadModel(join(__dirname, '../blueprints/content-feed-reader')), '2026-09-12'))
 const flatten = (rows: any[]): any[] => rows.flatMap(row => [row, ...flatten(row.children)])
 
 describe('collection rows that expand', () => {
-  it('draws Interfaces and Domains as tree cards, and expands Capability and Journey rows', () => {
+  it('draws Interfaces and Domains as tree cards, and every other collection as plain rows', () => {
     expect(TREE_CARD_KINDS).toEqual(['interface', 'domain'])
-    expect(EXPANDABLE_KINDS).toEqual(['capability', 'journey'])
+    for (const kind of ['entity', 'capability', 'journey', 'rule']) {
+      for (const resource of workspace.byKey.values()) if (resource.kind === kind) expect(rowChildren(workspace, resource)).toEqual([])
+    }
     /* A Domain card groups Capabilities then Entities; the grid ends with what
        no Domain claims, unless a filter narrowed it. */
     const domainCards = treeCards(workspace, 'domain', workspace.domains, false)
@@ -57,23 +59,6 @@ describe('collection rows that expand', () => {
         .toEqual(workspace.capabilities.filter((item: any) => item.domainId === domain.id).map((item: any) => item.id))
       expect(rows.filter((row: any) => row.resource.kind === 'entity').map((row: any) => row.resource.id))
         .toEqual(workspace.entities.filter((item: any) => item.domainId === domain.id).map((item: any) => item.id))
-    }
-  })
-
-  it('reads a Journey Scenario as its Capability chain in Step order, and a Capability as its Scenarios', () => {
-    for (const journey of workspace.journeys) {
-      const rows = rowChildren(workspace, journey)
-      expect(rows.map((row: any) => row.resource.id)).toEqual(journey.scenarioIds)
-      for (const row of rows) {
-        const expected = row.resource.steps.filter((step: any) => step.capabilityId)
-          .map((step: any) => workspace.byKey.get(`capability:${step.capabilityId}`).title).join(' → ')
-        expect(scenarioCapabilityChain(workspace, row.resource)).toBe(expected)
-        if (expected) expect(row).toMatchObject({ hookLabel: 'Composes', hook: expected })
-        else expect(row.hook).toBeUndefined()
-      }
-    }
-    for (const capability of workspace.capabilities) {
-      expect(rowChildren(workspace, capability).map((row: any) => row.resource.id)).toEqual(capability.scenarioIds)
     }
   })
 })
