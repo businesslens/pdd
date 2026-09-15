@@ -29,11 +29,15 @@ connected and when the model last changed on screen.
 ## What changed
 
 The report can compare the model as it stands against an earlier state. The
-**What changed** row in the rail opens the comparison: every resource added,
+**What changed** button beside Coverage in the header opens the comparison: every resource added,
 removed, or changed since the baseline, grouped by collection, each opening its
 page, with the fields that differ under it. A changed or added resource also
 wears its mark on its row and beside its name on its page, so the difference is
 visible while reading, not only on the comparison.
+
+The button counts changed resources and stays available when nothing has
+changed or before the first baseline, so you can switch baselines or pin a
+state. On narrow screens it shows the history icon and count.
 
 The baseline is one of:
 

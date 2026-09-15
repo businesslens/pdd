@@ -7,8 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- The local report shows what changed: a **What changed** row compares the
-  model against the last commit or a checkpoint, and changed resources wear a
+- The local report shows what changed: **What changed** beside Coverage opens a
+  comparison against the last commit or a checkpoint, and changed resources wear a
   mark on their rows and pages.
 - `businesslens checkpoint "<label>"` marks a round of work; the agent skills
   run it after each approved delta, and **Pin this state** does the same from

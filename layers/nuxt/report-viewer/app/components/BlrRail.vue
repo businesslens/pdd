@@ -7,18 +7,11 @@ defineProps<{
   workspace: ReportWorkspace
   activeSection: string
   counts: Record<ReportResourceKind, number>
-  /**
-   * How many things differ from the host's baseline. Undefined where the host
-   * has no comparison, and the row is absent; null where it has baselines but
-   * no comparison yet, and the row carries no count.
-   */
-  changesCount?: number | null
 }>()
 
 /* The rail changes the subject, and only that. A collection's Graph is reached
-   inside it; a matrix compares two collections, so it is a row of its own, and
-   so is What changed, which compares two states of the whole model. */
-const emit = defineEmits<{ kind: [kind: ReportResourceKind], view: [section: string], changes: [] }>()
+   inside it; a matrix compares two collections, so it is a row of its own. */
+const emit = defineEmits<{ kind: [kind: ReportResourceKind], view: [section: string] }>()
 
 const RAIL_KINDS = MAIN_RESOURCE_KINDS.map(kind => ENTITY_KIND_META[kind])
 const isCurrent = (kind: ReportResourceKind, section: string) => kind === section
@@ -53,20 +46,6 @@ const overviewColor = `var(--blr-slot-${ENTITY_KIND_META.product.slot})`
     >
       <UIcon :name="item.icon" class="size-4 shrink-0" :style="{ color: overviewColor }" />
       <span class="flex-1 truncate text-start">{{ item.name }}</span>
-    </button>
-    <button
-      v-if="changesCount !== undefined"
-      type="button"
-      class="blr-navitem"
-      :data-current="activeSection === 'changes'"
-      :aria-current="activeSection === 'changes' ? 'page' : undefined"
-      :style="{ '--kind-color': overviewColor }"
-      data-rail-changes
-      @click="emit('changes')"
-    >
-      <UIcon name="i-lucide-history" class="size-4 shrink-0" :style="{ color: overviewColor }" />
-      <span class="flex-1 truncate text-start">What changed</span>
-      <span v-if="changesCount !== null" class="blr-meta">{{ changesCount }}</span>
     </button>
     <p class="blr-navgroup mt-3">Resources</p>
     <button

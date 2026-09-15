@@ -41,7 +41,7 @@ const props = defineProps<{
   /**
    * The host's comparison of this model against a baseline. The local viewer
    * has one; a host with no notion of an earlier state passes nothing, and
-   * the rail, the rows and the pages show no trace of it.
+   * the header, the rows and the pages show no trace of it.
    */
   changes?: ReportChanges | null
 }>()
@@ -53,8 +53,8 @@ const emit = defineEmits<{ baseline: [id: string], pin: [label: string | null] }
 /* `openResource` is the page you are on.                               */
 /* ------------------------------------------------------------------ */
 
-/* What changed compares two states of the whole model, so like a matrix it
-   is a section with the Product as its subject and a rail row of its own. */
+/* What changed compares two states of the whole model. Its section has the
+   Product as its subject and opens from the header beside Coverage. */
 const CHANGES_SECTION = 'changes'
 
 type ReportSection = 'overview' | ReportResourceKind | typeof MATRIX_DESTINATIONS[number]['section'] | typeof CHANGES_SECTION
@@ -353,8 +353,10 @@ const matrixSection = computed(() => !openPage.value && isMatrixSection(activeSe
 const changesOpen = computed(() => !openPage.value && isChangesSection(activeSection.value))
 /* Every changed resource by key, so a row or a page can wear its standing. */
 const changeByKey = computed(() => changesByKey(props.changes?.diff))
-/* The rail's count: undefined hides the row, null draws it without a number. */
-const changesCount = computed(() => !props.changes ? undefined : props.changes.diff ? changeCount(props.changes.diff) : null)
+/* The header counts resources; a comparison that is not ready has no number. */
+const changesCount = computed(() => props.changes?.diff ? changeCount(props.changes.diff) : null)
+const changesLabel = computed(() => changesCount.value === null ? 'What changed'
+  : `What changed: ${changesCount.value} ${changesCount.value === 1 ? 'resource' : 'resources'}`)
 const changesBaseline = computed(() => {
   const baseline = props.changes?.baselines.find(item => item.id === props.changes?.baseline)
   return baseline ? baselineTitle(baseline) : ''
@@ -543,7 +545,7 @@ function setKind(kind: ReportResourceKind) {
   leavePage()
 }
 
-/** What changed: a section with the Product as its subject, from its rail row. */
+/** What changed: a section with the Product as its subject, from the header. */
 function openChanges() {
   if (!props.changes) return
   mobileNavOpen.value = false
@@ -678,13 +680,32 @@ const orphanScenarios = computed(() => props.workspace.scenarios
         <span :class="openPage ? 'hidden xl:inline-flex' : 'hidden md:inline-flex'">
           <BlrCoverageBadge :status="workspace.coverage.status" named size="md" />
         </span>
-        <span class="blr-meta" :class="openPage ? 'hidden xl:inline' : 'hidden sm:inline'">{{ workspace.identity.schemaVersion }}</span>
+        <UTooltip v-if="changes" :text="changesBaseline ? `What changed since ${changesBaseline}` : 'What changed'">
+          <UButton
+            icon="i-lucide-history"
+            color="neutral"
+            :variant="changesOpen ? 'soft' : 'outline'"
+            size="xs"
+            class="shrink-0 rounded-full font-mono text-[11px]"
+            :aria-label="changesLabel"
+            :aria-current="changesOpen ? 'page' : undefined"
+            data-header-changes
+            @click="openChanges"
+          >
+            <span class="hidden md:inline">What changed</span>
+            <template v-if="changesCount !== null">
+              <span class="hidden text-dimmed md:inline" aria-hidden="true">·</span>
+              <span class="tabular-nums">{{ changesCount }}</span>
+            </template>
+          </UButton>
+        </UTooltip>
         <!-- The state of this report, as the host knows it. A live host puts
              its pulse here and it supersedes the generated date, which for a
              report compiled on every save is always today; a published
              Blueprint keeps the date, since there it is a fact. -->
         <slot v-if="$slots.status" name="status" />
-        <span v-else class="blr-meta" :class="openPage ? 'hidden xl:inline' : 'hidden md:inline'">{{ workspace.identity.generatedAt.slice(0, 10) }}</span>
+        <span class="blr-meta" :class="openPage ? 'hidden xl:inline' : 'hidden sm:inline'">{{ workspace.identity.schemaVersion }}</span>
+        <span v-if="!$slots.status" class="blr-meta" :class="openPage ? 'hidden xl:inline' : 'hidden md:inline'">{{ workspace.identity.generatedAt.slice(0, 10) }}</span>
       </span>
     </header>
 
@@ -697,10 +718,8 @@ const orphanScenarios = computed(() => props.workspace.scenarios
             :workspace="workspace"
             :active-section="activeSection"
             :counts="kindCounts"
-            :changes-count="changesCount"
             @kind="setKind"
             @view="openView"
-            @changes="openChanges"
           >
             <!-- The host's own way back out, above its sections. -->
             <template v-if="$slots.navigation" #navigation>
@@ -1093,10 +1112,8 @@ const orphanScenarios = computed(() => props.workspace.scenarios
             :workspace="workspace"
             :active-section="activeSection"
             :counts="kindCounts"
-            :changes-count="changesCount"
             @kind="setKind"
             @view="openView"
-            @changes="openChanges"
           >
             <template v-if="$slots.navigation" #navigation>
               <slot name="navigation" />

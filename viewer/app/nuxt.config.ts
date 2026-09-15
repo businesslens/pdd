@@ -34,7 +34,7 @@ const devHandlers = [
     })
   },
   {
-    // No CLI, no checkpoints and no committed model: the What changed row
+    // No CLI, no checkpoints and no committed model: the What changed button
     // draws with nothing to compare against, which is a state worth seeing.
     route: '/_businesslens/changes',
     handler: defineEventHandler((event) => {

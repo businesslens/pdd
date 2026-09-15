@@ -202,16 +202,20 @@ costed already.
 - **The page is the reading**: every row, relation, search result and diagram
   resource opens a resource page with its own URL. The open section, page and
   tab live there too, so state survives a refresh and a recompile.
-- **The rail lists Overview, three cross-collection views, What changed where
-  the host has a baseline, then six collections.** The views — Compare
+- **The rail lists Overview, three cross-collection views, then six
+  collections.** The views — Compare
   delivery, What changes what, Rule attachments — each compare two
-  collections, so no collection owns them and each is a row of its own. What
-  changed compares two states of the whole model, so it is a row of its own
-  too, present only in a host that holds an earlier state: the local viewer
-  does, the catalog does not. The collections are Entities, Interfaces,
+  collections, so no collection owns them and each is a row of its own.
+  The collections are Entities, Interfaces,
   Domains, Capabilities, Journeys, Business Rules. Experiences and Screens are
   reached through Interfaces, Scenarios through their parent, and a
   collection's Graph through its drawing switch.
+- **What changed opens from the header beside Coverage.** Its button counts
+  changed resources, stays available at zero changes or before the first
+  baseline, and marks the comparison page as current. On narrow screens it
+  keeps its icon and count with an accessible name. It appears only where the
+  host supports comparisons: the local viewer does, the catalog does not.
+  The comparison keeps its own URL, baseline selector and pin control.
 - **What changed is computed by the CLI and drawn by the report.** A
   comparison is the current report against one baseline — the committed model
   or a checkpoint — at the resource and field level, never a text diff of

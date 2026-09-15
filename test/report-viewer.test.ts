@@ -1458,15 +1458,18 @@ describe('what changed', () => {
     expect(baselineTitle({ ...checkpoint, label: 'Mapped billing' })).toBe('Mapped billing')
   })
 
-  it('draws the row, the surface and the marks only where the host holds a comparison', () => {
+  it('draws the header action, the surface and the marks only where the host holds a comparison', () => {
     const shell = source('app/components/BlrReportShell.vue')
     const rail = source('app/components/BlrRail.vue')
     const entry = source('app/components/BusinessLensReportViewer.vue')
     expect(entry).toContain('changes?: ReportChanges | null')
     expect(shell).toContain('<BlrChanges')
     expect(shell).toContain(':change="changeByKey.get(resource.key)?.change"')
-    expect(shell).toContain(':changes-count="changesCount"')
-    expect(rail).toContain('v-if="changesCount !== undefined"')
+    const header = shell.slice(shell.indexOf('<header'), shell.indexOf('</header>'))
+    expect(header).toContain('<UTooltip v-if="changes"')
+    expect(header).toContain('data-header-changes')
+    expect(header.indexOf('<BlrCoverageBadge')).toBeLessThan(header.indexOf('data-header-changes'))
+    expect(rail).not.toContain('What changed')
     // A live host puts its pulse in the status bar in place of the generated date.
     expect(shell).toContain('<slot v-if="$slots.status" name="status" />')
     expect(entry).toContain('#status')
