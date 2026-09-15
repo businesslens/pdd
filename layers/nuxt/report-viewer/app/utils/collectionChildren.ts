@@ -9,6 +9,7 @@
  * Scenarios are read on its page.
  */
 import type { AnyResourceView, ReportResourceKind, ReportWorkspace } from './reportWorkspace'
+import { ENTITY_KIND_META } from './reportWorkspace'
 import { interfaceProjection } from './topologyProjections'
 import type { TopologyBranch } from './topologyProjections'
 
@@ -24,6 +25,7 @@ export interface TreeCardNode {
   id: string
   title: string
   resource?: AnyResourceView
+  groupKind?: ReportResourceKind
   children: TreeCardNode[]
 }
 
@@ -31,12 +33,11 @@ export interface TreeCard {
   key: string
   title: string
   resource?: AnyResourceView
-  note?: string
   children: TreeCardNode[]
 }
 
 const leaf = (resource: AnyResourceView, children: TreeCardNode[] = []): TreeCardNode => ({ id: resource.key, title: resource.title, resource, children })
-const group = (id: string, title: string, children: TreeCardNode[]): TreeCardNode[] => children.length ? [{ id, title, children }] : []
+const group = (id: string, kind: ReportResourceKind, children: TreeCardNode[]): TreeCardNode => ({ id, title: ENTITY_KIND_META[kind].plural, groupKind: kind, children })
 
 /**
  * A Domain card groups its Capabilities and its Entities; an Interface card its
@@ -47,12 +48,12 @@ export function treeCards(workspace: ReportWorkspace, kind: ReportResourceKind, 
   if (kind === 'domain') {
     const domainCard = (key: string, title: string, capabilities: AnyResourceView[], entities: AnyResourceView[], resource?: AnyResourceView): TreeCard => ({
       key, title, resource,
-      children: [...group(`${key}:capabilities`, 'Capabilities', capabilities.map(item => leaf(item))), ...group(`${key}:entities`, 'Entities', entities.map(item => leaf(item)))]
+      children: [group(`${key}:capabilities`, 'capability', capabilities.map(item => leaf(item))), group(`${key}:entities`, 'entity', entities.map(item => leaf(item)))]
     })
     const cards = resources.filter(item => item.kind === 'domain').map(domain => domainCard(domain.key, domain.title,
       workspace.capabilities.filter(item => item.domainId === domain.id), workspace.entities.filter(item => item.domainId === domain.id), domain))
     const unassigned = domainCard('unassigned', 'Unassigned', workspace.capabilities.filter(item => !item.domainId), workspace.entities.filter(item => !item.domainId))
-    return [...cards, ...(!narrowed && unassigned.children.length ? [unassigned] : [])]
+    return [...cards, ...(!narrowed && unassigned.children.some(group => group.children.length) ? [unassigned] : [])]
   }
   if (kind === 'interface') {
     return resources.filter(item => item.kind === 'interface').map((iface) => {
@@ -60,8 +61,7 @@ export function treeCards(workspace: ReportWorkspace, kind: ReportResourceKind, 
       const experiences = rows.filter(row => row.resource.kind === 'experience').map(row => leaf(row.resource, row.children.map(child => leaf(child.resource))))
       const screens = rows.filter(row => row.resource.kind === 'screen').map(row => leaf(row.resource))
       return { key: iface.key, title: iface.title, resource: iface,
-        note: !rows.length ? 'No contained resources are modeled.' : undefined,
-        children: [...group(`${iface.key}:experiences`, 'Experiences', experiences), ...group(`${iface.key}:screens`, 'Screens', screens)] }
+        children: [group(`${iface.key}:experiences`, 'experience', experiences), group(`${iface.key}:screens`, 'screen', screens)] }
     })
   }
   return []

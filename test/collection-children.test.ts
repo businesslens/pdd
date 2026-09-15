@@ -22,18 +22,41 @@ describe('collection rows that expand', () => {
     expect(domainCards.map((card: any) => card.key)).toEqual([...workspace.domains.map((item: any) => item.key), ...(workspace.capabilities.some((item: any) => !item.domainId) || workspace.entities.some((item: any) => !item.domainId) ? ['unassigned'] : [])])
     expect(treeCards(workspace, 'domain', workspace.domains, true).some((card: any) => card.key === 'unassigned')).toBe(false)
     for (const card of domainCards.filter((item: any) => item.resource)) {
-      expect(card.children.map((group: any) => group.title)).toEqual(['Capabilities', 'Entities'].filter(title => card.children.some((group: any) => group.title === title)))
+      expect(card.children.map((group: any) => group.title)).toEqual(['Capabilities', 'Entities'])
       expect(card.children.flatMap((group: any) => group.children.map((node: any) => node.resource.key)).sort())
         .toEqual(rowChildren(workspace, card.resource).map((row: any) => row.resource.key).sort())
     }
     /* An Interface card groups its Experiences, each with its Screens, and its direct Screens. */
     for (const card of treeCards(workspace, 'interface', workspace.interfaces, false)) {
+      expect(card.children.map((group: any) => group.title)).toEqual(['Experiences', 'Screens'])
       const screens = flatten(card.children).filter((node: any) => node.resource?.kind === 'screen').map((node: any) => node.resource.key)
       expect(screens.sort()).toEqual(flatten(rowChildren(workspace, card.resource)).filter((row: any) => row.resource.kind === 'screen').map((row: any) => row.resource.key).sort())
     }
     for (const kind of ['entity', 'rule']) {
       for (const resource of workspace.byKey.values()) if (resource.kind === kind) expect(rowChildren(workspace, resource)).toEqual([])
     }
+  })
+
+  it('keeps empty folders without inventing resources or an empty Unassigned card', () => {
+    const empty = { ...workspace, capabilities: [], entities: [], experiences: [], screens: [] }
+    const domains = treeCards(empty, 'domain', empty.domains, false)
+    expect(domains.map((card: any) => card.key)).toEqual(empty.domains.map((domain: any) => domain.key))
+    for (const card of domains) {
+      expect(card.children.map((group: any) => [group.title, group.children.length]))
+        .toEqual([['Capabilities', 0], ['Entities', 0]])
+    }
+    for (const card of treeCards(empty, 'interface', empty.interfaces, false)) {
+      expect(card.children.map((group: any) => [group.title, group.children.length]))
+        .toEqual([['Experiences', 0], ['Screens', 0]])
+    }
+    const unassignedEntity = { ...workspace.entities[0], domainId: null }
+    const partlyUnassigned = { ...empty, entities: [unassignedEntity] }
+    const unassigned = treeCards(partlyUnassigned, 'domain', empty.domains, false).at(-1)
+    expect(unassigned.key).toBe('unassigned')
+    expect(unassigned.children.map((group: any) => [group.title, group.children.length]))
+      .toEqual([['Capabilities', 0], ['Entities', 1]])
+    expect(unassigned.children[1].children[0].resource).toBe(unassignedEntity)
+    expect(treeCards(partlyUnassigned, 'domain', empty.domains, true).some((card: any) => card.key === 'unassigned')).toBe(false)
   })
 
   it('files each Screen once under its Interface, inside its Experience where it has one', () => {

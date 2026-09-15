@@ -144,12 +144,19 @@ scrollbar. Scenarios keeps Expand all, Collapse all and the per-row selector
 on the right of that strip. The controls wrap when the screen is too narrow
 for one row; tabs retain Nuxt UI's arrow-key navigation and visible focus.
 
-Domain and Interface cards use the Capabilities list's surfaces: a translucent
-parent, a solid header highlight on hover, and solid child rows with a softer
-hover. The trees retain their compact, borderless rows, original spacing and
-indentation, and counts beside the labels. Parent headers only expand and
-collapse; they have no separate page-opening arrows. Scenarios v3 and its table
-drawing have been retired.
+Domain and Interface cards have translucent parents and a solid header highlight
+on hover. Their borderless tree rows fill each card's width and use the
+parent's background, with a subtle row highlight on hover. Each group has its
+matching resource-type icon, including when empty. Expansion chevrons sit before
+these icons; counts align at the right edge. Resource entries retain
+their type marks. Parent headers only expand and collapse. Each tree starts
+with a text-only Overview link to the Domain or
+Interface's resource page, even when it has no contained resources. The header
+count describes contained resources; Unassigned has no resource link.
+Experiences and Screens folders always appear in Interfaces; Capabilities and
+Entities folders always appear in Domains. Empty folders show a zero count and
+have no expansion control. Unassigned appears only when it contains resources.
+Scenarios v3 and its table drawing have been retired.
 
 Backgrounds follow the item's role, independently of which levels are visible:
 

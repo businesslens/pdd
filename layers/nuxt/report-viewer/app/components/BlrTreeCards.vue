@@ -5,8 +5,9 @@
  * This is the Rows drawing of Domains and Interfaces: the shape the Domain map
  * had, with Nuxt UI's Tree inside each card. A Domain card branches into its
  * Capabilities and its Entities; an Interface card into its Experiences, each
- * with its Screens, and the Screens it holds directly. Every node that is a
- * resource opens its page; a group node only opens and closes.
+ * with its Screens, and the Screens it holds directly. Each tree starts with
+ * an Overview link to the subject itself. Every resource node
+ * opens its page; a group node only opens and closes.
  */
 import type { TreeItem } from '@nuxt/ui'
 import type { AnyResourceView, ReportResourceKind, ReportWorkspace } from '../utils/reportWorkspace'
@@ -28,7 +29,7 @@ const props = defineProps<{
 }>()
 const emit = defineEmits<{ open: [resource: AnyResourceView], close: [key: string, closed: boolean], expand: [key: string, values: string[]] }>()
 
-interface Node extends TreeItem { value: string, label: string, resource?: AnyResourceView, count?: number, children?: Node[] }
+interface Node extends TreeItem { value: string, label: string, resource?: AnyResourceView, groupKind?: ReportResourceKind, count?: number, children?: Node[] }
 
 const cards = computed(() => treeCards(props.workspace, props.kind, props.resources, props.narrowed))
 
@@ -38,15 +39,22 @@ const toNode = (node: TreeCardNode): Node => ({
   value: node.id,
   label: node.title,
   resource: node.resource,
-  count: node.children.length || undefined,
+  groupKind: node.groupKind,
+  count: node.resource ? node.children.length || undefined : node.children.length,
   children: node.children.length ? node.children.map(toNode) : undefined,
+  ui: !node.resource && !node.children.length ? { link: 'cursor-default hover:bg-transparent' } : undefined,
   onSelect: (event: Event) => { event.preventDefault(); if (node.resource) emit('open', node.resource) },
   onToggle: (event) => {
     // A resource label navigates; its chevron or the tree's arrow keys expand.
     if (node.resource && event.detail.originalEvent.type === 'click') event.preventDefault()
   }
 })
-const itemsOf = (card: TreeCard) => card.children.map(toNode)
+/* The header toggles the card; its subject is reached through the first tree
+   item, including when it has no children. Counts describe contained resources. */
+const itemsOf = (card: TreeCard): Node[] => [
+  ...(card.resource ? [toNode({ id: card.resource.key, title: 'Overview', resource: card.resource, children: [] })] : []),
+  ...card.children.map(toNode)
+]
 
 /* Open by default where a glance can take it in; larger groups open on request. */
 const defaultsOf = (card: TreeCard): string[] => {
@@ -96,9 +104,8 @@ const total = (card: TreeCard) => card.children.reduce((sum, group) => sum + (gr
          animation lands at zero without a jump. -->
     <template #content>
       <div class="border-t border-muted px-3 py-2">
-      <p v-if="card.note" class="blr-topology-note">{{ card.note }}</p>
       <UTree
-        v-if="card.children.length"
+        v-if="card.resource || card.children.length"
         class="blr-tree-card-tree"
         :as="{ link: 'div' }"
         :items="itemsOf(card)"
@@ -106,12 +113,30 @@ const total = (card: TreeCard) => card.children.reduce((sum, group) => sum + (gr
         :expanded="expandedOf(card)"
         color="neutral"
         size="md"
-        :ui="{ link: 'cursor-pointer gap-2 rounded-md bg-default transition hover:bg-elevated/40 hover:before:bg-transparent', linkLabel: 'font-medium' }"
+        :ui="{ link: 'cursor-pointer gap-2 rounded-md bg-transparent transition hover:bg-elevated/40 hover:before:bg-transparent', linkLabel: 'font-medium' }"
         @update:expanded="emit('expand', card.key, $event)"
       >
-        <template #item-leading="{ item }">
+        <template #item-leading="{ item, expanded, handleToggle }">
+          <button
+            v-if="item.count"
+            type="button"
+            class="flex size-4 shrink-0 items-center justify-center rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            :aria-label="`${expanded ? 'Collapse' : 'Expand'} ${item.label}`"
+            :aria-expanded="expanded"
+            @click.stop="handleToggle()"
+            @keydown.stop
+          >
+            <UIcon name="i-lucide-chevron-right" class="size-3.5 shrink-0 text-dimmed transition-transform" :class="expanded && 'rotate-90'" />
+          </button>
+          <span v-else-if="!item.resource" aria-hidden="true" class="size-4 shrink-0" />
           <BlrKind
-            v-if="item.resource"
+            v-if="item.groupKind"
+            :kind="item.groupKind"
+            :labelled="false"
+            size="xs"
+          />
+          <BlrKind
+            v-else-if="item.resource && item.resource.key !== card.resource?.key"
             :kind="item.resource.kind"
             :interface-type="item.resource.kind === 'interface' ? item.resource.interfaceType : undefined"
             :facet="entityFacetOf(item.resource)"
@@ -123,20 +148,8 @@ const total = (card: TreeCard) => card.children.reduce((sum, group) => sum + (gr
         <template #item-label="{ item }">
           <span :class="item.resource ? 'text-highlighted' : 'text-muted'">{{ item.label }}</span>
         </template>
-        <!-- The same count-and-chevron a group header and an expandable row wear. -->
-        <template #item-trailing="{ item, expanded, handleToggle }">
-          <button
-            v-if="item.count"
-            type="button"
-            class="flex items-center gap-1 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-            :aria-label="`${expanded ? 'Collapse' : 'Expand'} ${item.label}`"
-            :aria-expanded="expanded"
-            @click.stop="handleToggle()"
-            @keydown.stop
-          >
-            <span class="blr-meta">{{ item.count }}</span>
-            <UIcon name="i-lucide-chevron-down" class="size-3.5 shrink-0 text-dimmed transition-transform" :class="expanded && 'rotate-180'" />
-          </button>
+        <template #item-trailing="{ item }">
+          <span v-if="item.count !== undefined" class="blr-meta">{{ item.count }}</span>
         </template>
       </UTree>
       </div>

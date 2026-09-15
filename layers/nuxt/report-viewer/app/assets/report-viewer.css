@@ -180,13 +180,11 @@
   }
 }
 
-/* The tree takes its content's width, as Nuxt UI draws it, so a group's count
-   and chevron sit in a column just past the longest label rather than at the
-   card's far edge, where they read as belonging to nothing. */
+/* Tree rows fill their parent card, with counts aligned at the right edge. */
 .blr-tree-card-tree {
-  width: max-content;
+  width: 100%;
   max-width: 100%;
-  min-width: 14rem;
+  min-width: 0;
 }
 
 /* The cards drawing of Steps: numbers on one connector line, as the

@@ -78,8 +78,37 @@ try {
         await expect(page.getByRole('heading', { level: 1 })).toContainText(label)
       }
     }
-    /* Interfaces read as rows like every other collection: the row says what it
-       contains, and the tree is what the Map tab is for. */
+    /* Headers expand; the first Overview tree item opens the Domain or Interface
+       itself, including Interfaces with no contained resources. */
+    for (const [collection, kind, resources] of [
+      ['Domains', 'domain', report.model.domains],
+      ['Interfaces', 'interface', report.model.interfaces]
+    ]) {
+      await choose(page, collection)
+      for (const resource of resources) {
+        const title = kind === 'domain' ? resource.name : resource.title
+        const card = page.locator(`[data-card-key="${kind}:${resource.id}"]`)
+        const header = card.locator('[data-group-header]')
+        if (await header.getAttribute('aria-expanded') === 'false') await header.click()
+        const label = await header.getAttribute('aria-label')
+        await header.click()
+        await expect(header).toHaveAttribute('aria-expanded', 'false')
+        await expect(page).not.toHaveURL(/[?&]e=/)
+        await header.click()
+        await expect(header).toHaveAttribute('aria-expanded', 'true')
+        const subject = card.getByRole('treeitem').first()
+        await expect(subject).toHaveText('Overview')
+        await subject.getByText('Overview', { exact: true }).click()
+        await expect.poll(() => new URL(page.url()).searchParams.get('e')).toBe(`${kind}:${resource.id}`)
+        await expect(page.getByRole('heading', { level: 1 })).toContainText(title)
+        await page.reload()
+        await expect(page.getByRole('heading', { level: 1 })).toContainText(title)
+        await page.goBack()
+        await expect(header).toHaveAttribute('aria-expanded', 'true')
+        await expect(header).toHaveAttribute('aria-label', label)
+      }
+      await capture(page, `${width}-${kind}-tree-links`)
+    }
     await choose(page, 'Interfaces')
     await expect(page.locator('[data-interface-directory]')).toHaveCount(0)
     /* Interfaces and Domains read as one tree card per subject. */
