@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-09-15
+
+- Redesigned Capability and Journey Scenarios with clearer Steps and details.
+- Added Rows and Graph views with shared filters and saved row layouts.
+- Simplified report navigation and made styling consistent.
+- Fixed Back navigation, expansion state, and duplicate graph nodes.
+
 ## [0.13.0] - 2026-09-12
 
 ### Removed
@@ -755,6 +762,9 @@ Initial public launch of the repository.
   `docs/format.md`.
 - Claude plugin manifest and marketplace entry.
 
+[Unreleased]: https://github.com/businesslens/pdd/compare/v0.14.0...HEAD
+[0.14.0]: https://github.com/businesslens/pdd/compare/v0.13.0...v0.14.0
+[0.13.0]: https://github.com/businesslens/pdd/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/businesslens/pdd/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/businesslens/pdd/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/businesslens/pdd/compare/v0.9.0...v0.10.0

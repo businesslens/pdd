@@ -78,8 +78,8 @@ describe('shared BusinessLens theme lab', () => {
     const localViewer = readFileSync(join(root, 'viewer/app/app/app.vue'), 'utf8')
     const localPage = readFileSync(join(root, 'viewer/app/app/pages/index.vue'), 'utf8')
     const localCss = readFileSync(join(root, 'viewer/app/app/assets/local-viewer.css'), 'utf8')
-    /* The private viewer lab extends the stable report layer without adding a
-       current experiment. The background lab remains the second layer. */
+    /* The private viewer lab extends the stable report layer and may add its
+       own audition row. The background lab remains the second layer. */
     const reportLayer = config.indexOf("resolve('../../layers/nuxt/report-viewer-lab')")
     const themeLabLayer = config.indexOf("resolve('../../layers/nuxt/theme-lab')")
     const labConfig = readFileSync(join(root, 'layers/nuxt/report-viewer-lab/nuxt.config.ts'), 'utf8')
@@ -90,7 +90,7 @@ describe('shared BusinessLens theme lab', () => {
     expect(localViewer).toContain('useBusinessLensThemeHead()')
     expect(localViewer).toContain('useBusinessLensThemeLabHead()')
     expect(localViewer).toContain('useBusinessLensThemeLab()')
-    expect(localViewer).toContain('<BusinessLensThemeLabBar />')
+    expect(localViewer).toMatch(/<BusinessLensThemeLabBar(?:\s|>)/)
     expect(localViewer).toContain('top-(--businesslens-theme-lab-height)')
     expect(localViewer).toContain('var(--businesslens-theme-lab-height)')
     expect(localViewer).toContain('class="flex h-dvh flex-col overflow-hidden"')

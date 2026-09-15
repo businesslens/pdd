@@ -19,8 +19,8 @@ const workspaceOf = (root = teachingRoot) => projectReportWorkspace(reportOf(roo
 const flatten = (branches: any[]): any[] => branches.flatMap(item => [item, ...flatten(item.children)])
 
 describe('named topology semantics', () => {
-  it('keeps seven questions with explicit diagram types and stable view IDs', () => {
-    expect(PRODUCT_TOPOLOGY_VIEWS.map((view: any) => view.id)).toEqual(['product-map', 'value-paths', 'delivery-by-interface', 'sitemap', 'rule-reach', 'what-it-keeps', 'what-changes-what'])
+  it('keeps nine questions with explicit diagram types and stable view IDs', () => {
+    expect(PRODUCT_TOPOLOGY_VIEWS.map((view: any) => view.id)).toEqual(['domain-reach', 'capability-reach', 'journey-reach', 'rule-reach', 'sitemap', 'what-it-keeps', 'delivery-by-interface', 'rule-attachments', 'what-changes-what'])
     expect(PRODUCT_TOPOLOGY_VIEWS.every((view: any) => view.question.endsWith('?') && view.diagramType && view.note)).toBe(true)
   })
 
@@ -42,27 +42,92 @@ describe('named topology semantics', () => {
     expect(collectionKindFor('journey-scenario')).toBe('journey')
   })
 
-  it('groups by authored Domain and keeps empty Domains and unassigned Capabilities', () => {
-    const workspace = workspaceOf()
-    workspace.domains.push({ ...workspace.domains[0], id: 'empty', key: 'domain:empty', title: 'Empty' })
-    const map = projections.productMapProjection(workspace)
-    for (const domain of workspace.domains) {
-      const group = map.groups.find((group: any) => group.resource?.key === domain.key)
-      expect(group.colorSlot).toBe(domain.colorSlot)
-      expect(flatten(group.children).filter((item: any) => item.resource?.kind === 'capability').map((item: any) => item.resource.id)).toEqual(workspace.capabilities.filter((cap: any) => cap.domainId === domain.id).map((cap: any) => cap.id))
+  /*
+    A reach tree draws one collection's set rooted at the Product. Every subject
+    is a first-tier node under its own key; everything below is an occurrence
+    whose id is the path of keys, so a place two Capabilities share is two nodes
+    that open the same page.
+  */
+  it.each(['domain', 'capability', 'journey', 'rule'])('roots the %s reach tree at the Product with every subject once and occurrences below', (kind) => {
+    const workspace = workspaceOf(shopRoot)
+    const tree = projections.reachTreeProjection(workspace, kind)
+    expect(tree.id).toBe(`product:${workspace.identity.id}`)
+    const subjects = tree.children.filter((item: any) => item.resource)
+    const all = { domain: workspace.domains, capability: workspace.capabilities, journey: workspace.journeys, rule: workspace.rules }[kind]
+    expect(subjects.map((item: any) => item.id)).toEqual(all.map((item: any) => item.key))
+    const ids = new Set<string>()
+    for (const node of flatten(tree.children)) {
+      expect(ids.has(node.id), node.id).toBe(false)
+      ids.add(node.id)
+      if (node.resource) expect(workspace.byKey.get(node.resource.key)).toBe(node.resource)
+      const segments = node.id.split(projections.OCCURRENCE_SEPARATOR)
+      for (const segment of segments) expect(workspace.byKey.has(segment) || segment === 'unassigned', segment).toBe(true)
+      if (node.resource && segments.length > 1) expect(segments.at(-1)).toBe(node.resource.key)
     }
-    expect(map.groups.find((group: any) => group.id === 'domain:empty').children).toEqual([])
+    /* Only a subject with a Context or an attachment branches. */
+    for (const subject of subjects) {
+      const resource = subject.resource
+      const reach = kind === 'rule' ? [...resource.appliesTo, ...resource.contexts] : kind === 'domain' ? [...resource.capabilityIds, ...resource.journeyIds, ...resource.ruleIds] : [...resource.contexts, ...resource.ruleIds]
+      expect(subject.children.length > 0, subject.id).toBe(reach.length > 0)
+    }
   })
 
-  it('keeps every Entity and Capability classified once, including models without Domains', () => {
+  it('draws a place once under each Rule, even when it is both a direct target and a reached Context', () => {
+    const report = reportOf(shopRoot)
+    const first = report.model.interfaces[0]!.id
+    const second = report.model.interfaces[1]!.id
+    const entity = report.model.entities[0]!.id
+    const template = report.model.businessRules[0]!
+    report.model.businessRules.push(
+      { ...template, id: 'direct-places', appliesTo: [
+        { type: 'context', context: { placeId: first } },
+        { type: 'context', context: { placeId: second } }
+      ] },
+      { ...template, id: 'mixed-places', appliesTo: [
+        { type: 'context', context: { placeId: first } },
+        { type: 'entity', entityId: entity, effect: null, from: null, to: null, facts: [], contexts: [{ placeId: first }, { placeId: second }] }
+      ] }
+    )
+    const tree = projections.reachTreeProjection(projectReportWorkspace(report), 'rule')
+    const direct = tree.children.find((node: any) => node.id === 'rule:direct-places')
+    const mixed = tree.children.find((node: any) => node.id === 'rule:mixed-places')
+    expect(direct.children.map((node: any) => node.resource.key)).toEqual([`interface:${first}`, `interface:${second}`])
+    expect(mixed.children.map((node: any) => node.resource.key)).toEqual([`interface:${first}`, `entity:${entity}`, `interface:${second}`])
+    // Sharing a place across different Rules still gives each Rule its own occurrence.
+    const ids = flatten(tree.children).map(node => node.id)
+    expect(new Set(ids).size).toBe(ids.length)
+  })
+
+  it('reaches a Domain through the places its members are available in, and keeps the rest directly under it', () => {
     const workspace = workspaceOf()
-    const map = projections.productMapProjection(workspace)
-    const resources = flatten(map.groups).flatMap(item => item.resource && item.resource.kind !== 'domain' ? [item.resource] : [])
-    expect(resources.map(item => item.key).sort()).toEqual([...workspace.capabilities, ...workspace.entities].map(item => item.key).sort())
-    const plain = { ...workspace, domains: [], capabilities: workspace.capabilities.map((item: any) => ({ ...item, domainId: undefined })), entities: workspace.entities.map((item: any) => ({ ...item, domainId: undefined })) }
-    const groups = projections.productMapProjection(plain).groups
-    expect(groups.map((item: any) => item.title)).toEqual(['Unassigned'])
-    expect(flatten(groups).filter(item => item.resource).length).toBe(resources.length)
+    const tree = projections.reachTreeProjection(workspace, 'domain')
+    for (const branch of tree.children) {
+      const members = new Map(flatten(branch.children).filter((node: any) => node.resource && !['interface', 'experience', 'screen'].includes(node.resource.kind)).map((node: any) => [node.resource.key, node]))
+      const expected = branch.resource
+        ? [...branch.resource.capabilityIds.map((id: string) => `capability:${id}`), ...branch.resource.journeyIds.map((id: string) => `journey:${id}`), ...branch.resource.ruleIds.map((id: string) => `rule:${id}`)]
+        : [...workspace.capabilities.filter((item: any) => !item.domainId), ...workspace.journeys.filter((item: any) => !item.domainIds.length), ...workspace.rules.filter((item: any) => !item.domainIds.length)].map((item: any) => item.key)
+      expect([...members.keys()].sort()).toEqual([...new Set(expected)].sort())
+      for (const place of branch.children.filter((node: any) => ['interface', 'experience', 'screen'].includes(node.resource?.kind))) {
+        for (const member of place.children) expect(projections.placesOf(workspace, member.resource.contexts).map((item: any) => item.key)).toContain(place.resource.key)
+      }
+      for (const direct of branch.children.filter((node: any) => node.resource && !['interface', 'experience', 'screen'].includes(node.resource.kind))) {
+        expect(projections.placesOf(workspace, direct.resource.contexts)).toEqual([])
+      }
+    }
+    const plain = { ...workspace, domains: [], capabilities: workspace.capabilities.map((item: any) => ({ ...item, domainId: undefined })), journeys: workspace.journeys.map((item: any) => ({ ...item, domainIds: [] })), rules: workspace.rules.map((item: any) => ({ ...item, domainIds: [] })) }
+    expect(projections.reachTreeProjection(plain, 'domain').children.map((item: any) => item.title)).toEqual(['Unassigned'])
+  })
+
+  it('resolves a place to the most specific resource a Context names, each once', () => {
+    const workspace = workspaceOf()
+    for (const capability of workspace.capabilities) {
+      const places = projections.placesOf(workspace, capability.contexts)
+      expect(new Set(places.map((item: any) => item.key)).size).toBe(places.length)
+      for (const [index, context] of capability.contexts.entries()) {
+        const expected = context.screenId ? `screen:${context.screenId}` : context.experienceId ? `experience:${context.experienceId}` : `interface:${context.interfaceId}`
+        if (workspace.byKey.has(expected)) expect(places.map((item: any) => item.key), `${capability.id} context ${index}`).toContain(expected)
+      }
+    }
   })
 
   /*
@@ -112,27 +177,6 @@ describe('named topology semantics', () => {
     expect(new Set(screens.map(item => item.resource.key)).size).toBe(screens.length)
   })
 
-  it('keeps every Capability-bearing Step in order, with its exact route Contexts', () => {
-    const workspace = workspaceOf()
-    for (const journey of workspace.journeys) {
-      const composition = projections.compositionProjection(workspace, journey.id)
-      expect(composition.journey.id).toBe(journey.id)
-      for (const column of composition.scenarios) {
-        const expected = column.resource.steps.map((step: any, index: number) => ({ step, index })).filter((item: any) => item.step.capabilityId)
-        expect(column.steps.map((step: any) => step.number)).toEqual(expected.map((item: any) => item.index + 1))
-        for (const [index, occurrence] of column.steps.entries()) {
-          expect(occurrence.id).toBe(`${column.resource.key}:step:${expected[index].index}`)
-          expect(occurrence.contexts.map((context: any) => [context.routeId, context.context.id])).toEqual(expected[index].step.contexts.map((context: any) => [context.routeId, context.context.id]))
-        }
-      }
-    }
-    const composition = projections.compositionProjection(workspace)
-    const occurrences = composition.scenarios.flatMap((scenario: any) => scenario.steps)
-    expect(new Set(occurrences.map((item: any) => item.id)).size).toBe(occurrences.length)
-    expect(new Set(occurrences.map((item: any) => item.resource.key)).size).toBeLessThan(occurrences.length)
-    expect(composition.scenarios.some((scenario: any) => scenario.resource.result === 'not-achieved')).toBe(true)
-  })
-
   it('preserves all direct typed Rule selectors, including scoped Entity and Context targets', () => {
     const report = reportOf(shopRoot)
     const template = report.model.businessRules[0]!
@@ -152,7 +196,7 @@ describe('named topology semantics', () => {
     expect(attachments.map((item: any) => item.target)).toEqual(rule.appliesTo)
     expect(attachments[0].details).toEqual(['from Pending', 'to Confirmed', 'fact: Total charged'])
     expect(attachments[0].contexts[0].id).toBe(placeId)
-    const matrix = projections.ruleReachProjection(workspace)
+    const matrix = projections.ruleAttachmentsProjection(workspace)
     expect(matrix.cells.filter((cell: any) => cell.row === rule.key).flatMap((cell: any) => cell.attachments)).toHaveLength(6)
     expect(matrix.columns.some((column: any) => column.kind === 'domain')).toBe(false)
   })
@@ -214,11 +258,9 @@ describe('topology reading state', () => {
   })
   it('preserves surviving resources after an edit and clears removed selections', () => {
     const workspace = workspaceOf()
-    const reading = { ...state.defaultTopologyReading(), focus: [workspace.entities[0].key, 'entity:removed'], journey: 'removed', scenario: 'removed', column: 'removed', expanded: ['kind:entity', 'domain:removed'], collapsed: ['kind:entity', 'invalid'] }
+    const reading = { ...state.defaultTopologyReading(), focus: [workspace.entities[0].key, 'entity:removed'], column: 'removed', expanded: ['kind:entity', 'domain:removed'], collapsed: ['kind:entity', 'invalid'] }
     const next = state.sanitizeTopologyReading(reading, workspace)
     expect(next.focus).toEqual([workspace.entities[0].key])
-    expect(next.journey).toBe(null)
-    expect(next.scenario).toBe(null)
     expect(next.column).toBe(null)
     expect(next.expanded).toEqual(['kind:entity'])
     expect(next.collapsed).toEqual([])
@@ -237,6 +279,6 @@ describe('topology reading state', () => {
     expect(state.topologyPushesHistory(before, { ...before, focus: ['entity:order'] })).toBe(true)
     expect(state.topologyPushesHistory(before, { ...before, hiddenKinds: ['entity'] })).toBe(false)
     expect(state.topologyPushesHistory(before, { ...before, expanded: ['kind:entity'] })).toBe(false)
-    expect(state.topologyPushesHistory({ ...before, focus: ['entity:removed'], journey: 'removed', scenario: 'removed', column: 'removed' }, before)).toBe(false)
+    expect(state.topologyPushesHistory({ ...before, focus: ['entity:removed'], column: 'removed' }, before)).toBe(false)
   })
 })

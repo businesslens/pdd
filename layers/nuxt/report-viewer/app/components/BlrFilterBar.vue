@@ -43,6 +43,11 @@ const emit = defineEmits<{ remove: [key: string], clear: [] }>()
         aria-label="Clear every filter"
         @click="emit('clear')"
       />
+      <!-- What is not a filter but belongs on the same line: how the set is
+           drawn, and how densely. It sits at the end, clear of the controls. -->
+      <div v-if="$slots.end" class="ms-auto flex shrink-0 items-center gap-2">
+        <slot name="end" />
+      </div>
     </div>
 
     <!-- What the controls narrowed it to. Absent rather than empty. -->

@@ -30,7 +30,7 @@ export function useBlrReportNavigation(options: { sectionKey?: string, tabKey?: 
   watch([section, resource, tab, scenarioRoute, routeColumns, topology], () => {
     const before = read()
     const next = { section: section.value, resource: resource.value, tab: tab.value, scenarioRoute: scenarioRoute.value, routeColumns: routeColumns.value, topology: topology.value }
-    const push = !destinationForSection(before.section) && (before.section !== next.section || before.resource !== next.resource || before.tab !== next.tab || before.scenarioRoute !== next.scenarioRoute || before.routeColumns !== next.routeColumns || topologyPushesHistory(before.topology, next.topology))
+    const push = before.section !== next.section || before.resource !== next.resource || before.tab !== next.tab || before.scenarioRoute !== next.scenarioRoute || before.routeColumns !== next.routeColumns || topologyPushesHistory(before.topology, next.topology)
     const query = { ...route.query, [sectionKey]: next.section === 'overview' ? undefined : next.section,
       e: next.resource ?? undefined, [tabKey]: next.tab === 'overview' ? undefined : next.tab,
       r: next.scenarioRoute ?? undefined, rc: next.routeColumns === 'auto' ? undefined : next.routeColumns,

@@ -3,7 +3,7 @@ kind: primary
 routes:
   local: Local
 steps:
-  - text: The Developer opens a Journey and selects composition in its Scenarios
+  - text: The Developer opens a Journey's Scenarios tab and expands a Scenario
     kind: actor
     actor: developer
     entities:
@@ -11,7 +11,7 @@ steps:
     contexts:
       local:
         place: local-report-web::resource-page
-  - text: The Product presents that Journey's Scenario compositions with each Capability occurrence in Step order and a way to read the full Scenario
+  - text: The Product presents the Scenario's Steps in order, showing each Step's Capability and location breadcrumbs
     kind: product
     entities:
       - { entity: product-model, effect: reads }
@@ -43,15 +43,15 @@ steps:
 
 ## Trigger
 
-The Developer wants to inspect one Journey's composition or one Interface's delivery.
+The Developer wants to inspect one Journey's Scenarios and their Capability chains, or one Interface's delivery.
 
 ## Outcome
 
-The reading appears with its owning resource, and every referenced resource can be opened. Product-wide comparisons remain available through named resource visualizations and Compare delivery from the Interfaces collection.
+The reading appears with its owning resource — Scenarios are read on their parent Journey's page, and an Interface page keeps its delivery tree — and every referenced resource can be opened. Product-wide comparisons remain available through each collection's Graph and the rail's Compare delivery.
 
 ## Edge cases
 
-- An Entity, Domain, Capability, Interface, Experience, Screen, or Business Rule can open its relevant global comparison with that resource in focus. Journey composition and Scenarios remain readings inside their parent.
+- An Entity, Domain, Capability, Interface, Experience, Screen, Journey, or Business Rule can open its collection's Graph, or its relevant cross-collection view, with that resource in focus. Scenarios remain readings inside their parent.
 - Connections distinguish incoming and outgoing relationships and retain their distinct derivations.
 
 - Domains opens a map of classified Capabilities and Entities; unassigned resources stay visible without creating a Domain.

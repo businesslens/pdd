@@ -3,7 +3,7 @@ kind: edge
 routes:
   local: Local
 steps:
-  - text: The Developer opens a resource from the selected named reading and returns with browser Back
+  - text: The Developer opens a resource from the selected drawing and returns with browser Back
     kind: actor
     actor: developer
     entities: []

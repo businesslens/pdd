@@ -22,16 +22,20 @@ describe('private Product Report viewer lab', () => {
   it('keeps the extension point without retaining decided experiments', () => {
     const readme = readFileSync(join(lab, 'README.md'), 'utf8')
 
-    expect(readme).toContain('There are no active report experiments.')
-    expect(existsSync(join(lab, 'app'))).toBe(false)
+    expect(readme).toContain('There are no active report experiments in this layer.')
+    for (const name of ['BlrScenarioStep', 'BlrStepGuidedReading', 'BlrStepReading', 'BlrStepEffectReading', 'BlrStepCardLabRow']) {
+      expect(existsSync(join(lab, `app/components/${name}.vue`))).toBe(false)
+    }
+    expect(existsSync(join(lab, 'app/composables/useBlrStepCardLab.ts'))).toBe(false)
+    expect(existsSync(join(root, 'layers/nuxt/report-viewer/app/components/BlrScenarioStep.vue'))).toBe(true)
     expect(existsSync(join(lab, 'app/components/BlrResourcePage.vue'))).toBe(false)
     expect(existsSync(join(lab, 'app/utils/labVariants.ts'))).toBe(false)
   })
 
-  it('leaves the experiment bar to the independent background lab', () => {
+  it('leaves only the background lab bar after the Step card decision', () => {
     const app = readFileSync(join(root, 'viewer/app/app/app.vue'), 'utf8')
 
     expect(app).toContain('<BusinessLensThemeLabBar />')
-    expect(app).not.toContain(':row-count="2"')
+    expect(app).not.toContain('BlrStepCardLabRow')
   })
 })

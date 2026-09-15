@@ -13,7 +13,6 @@
 .blr-topology-about summary, .blr-topology-contexts summary, .blr-topology-references summary { cursor: pointer; }
 .blr-topology-about p { padding: 8px 0 2px; line-height: 1.6; }
 .blr-topology-reading { flex: 1; overflow: auto; overscroll-behavior: contain; padding: 20px; min-height: 0; min-width: 0; scroll-padding: 20px; }
-.blr-topology-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr)); align-items: start; gap: 18px; }
 .blr-topology-branch { min-width: 0; }
 .blr-topology-group { border: 1px solid var(--ui-border); border-top: 3px solid var(--blr-group-color, var(--ui-border-accented)); border-radius: 10px; background: var(--ui-bg); padding: 14px; }
 .blr-topology-branch-heading { display: flex; align-items: start; gap: 10px; }
@@ -47,26 +46,6 @@
 .blr-topology-neighbourhood { margin-top: 24px; }
 .blr-topology-neighbourhood li { display: flex; align-items: start; flex-wrap: wrap; gap: 8px; padding: 10px 0; border-bottom: 1px solid var(--ui-border); }
 .blr-topology-neighbourhood li > span { font-size: 12px; color: var(--ui-text-muted); padding-top: 2px; }
-.blr-composition-columns { display: grid; gap: 0 20px; }
-.blr-composition-column { display: grid; grid-template-rows: subgrid; grid-row: span 2; min-width: 0; }
-.blr-composition-column > header { padding: 14px; border: 1px solid var(--ui-border); border-radius: 10px; background: var(--ui-bg-elevated); margin-bottom: 20px; }
-.blr-composition-column > header .blr-topology-link { font-weight: 600; }
-.blr-composition-result { display: block; font-size: 12px; color: var(--ui-text-muted); margin-top: 8px; }
-.blr-composition-set { display: grid; gap: 32px; }
-.blr-composition-journey-header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--ui-border); }
-.blr-composition-journey-header .blr-topology-link { font-weight: 600; font-size: 14px; }
-.blr-composition-journey-header .blr-composition-result { margin-top: 0; }
-.blr-composition-journey-header .blr-topology-window { margin-inline-start: auto; padding: 0; }
-.blr-composition-steps { display: grid; gap: 20px; }
-.blr-composition-steps > li { position: relative; display: flex; align-items: start; gap: 10px; }
-.blr-composition-steps > li:not(:last-child)::after { content: ''; position: absolute; inset-inline-start: 11px; top: 27px; bottom: -18px; border-inline-start: 1px solid var(--ui-border-accented); }
-.blr-composition-step-number { display: grid; place-items: center; width: 24px; height: 24px; flex: 0 0 24px; border-radius: 50%; background: var(--ui-bg-elevated); border: 1px solid var(--ui-border); color: var(--ui-text-muted); font-size: 12px; }
-.blr-composition-step { flex: 1; min-width: 0; border: 1px solid var(--ui-border); border-radius: 10px; padding: 12px; background: var(--ui-bg); }
-.blr-composition-step > .blr-topology-link { font-weight: 600; }
-.blr-composition-step > p { font-size: 12px; line-height: 1.6; color: var(--ui-text-muted); margin-top: 8px; overflow-wrap: anywhere; }
-.blr-composition-contexts { border-top: 1px solid var(--ui-border); margin-top: 10px; padding-top: 10px; display: grid; gap: 10px; }
-.blr-composition-contexts li > span { display: block; font-size: 12px; color: var(--ui-text-muted); margin-bottom: 4px; }
-.blr-composition-contexts .blr-topology-link { font-size: 12px; }
 .blr-matrix-scroll { overflow: auto; max-height: 68vh; border: 1px solid var(--ui-border); border-radius: 10px; }
 .blr-topology-matrix table { border-collapse: separate; border-spacing: 0; width: 100%; font-size: 14px; }
 .blr-topology-matrix caption { text-align: start; padding: 12px; font-size: 12px; color: var(--ui-text-muted); }
