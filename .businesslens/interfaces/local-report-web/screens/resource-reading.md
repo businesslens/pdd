@@ -83,7 +83,8 @@ Connections.
 The inspected resource's attached documents, designs, code references and images,
 grouped by reference type in an expandable tree with counts. Groups start open;
 each attachment keeps its role, and local images expand into an inline preview.
-An authored title keeps its file path or URL visible beneath it.
+Local References lead with their file path, with any distinct authored title
+alongside it as context. External References keep their descriptive title and URL.
 Local References replace the slideover reading while preserving the resource's
 selected tab, expansion and scroll. Back restores that reading or the previously
 opened document; Close returns to the working view. Refresh and browser

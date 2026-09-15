@@ -39,8 +39,9 @@ The Product Overview's References reading uses the same tree for every attachmen
 in the model, including the Product's own. Each item names its owner, and resource
 owner links open that resource's References tab over the current reading. The
 catalog keeps its own expansion separately from individual resource trees.
-References with authored titles show their file path or URL below the title;
-untitled references show the target once as their label.
+Local References always lead with the file path; a distinct authored title follows
+inline as muted context. External References use their authored title with the URL
+below it, or the URL alone when untitled. A title identical to the target is not repeated.
 Local References open inside the same slideover, with Back restoring the prior
 document or resource reading, including scroll and expansion. Close returns to
 the working view. The `f` query parameter carries the local preview URL, independent

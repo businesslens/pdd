@@ -46,7 +46,7 @@ const items = computed<Node[]>(() => Object.entries(KIND_LABEL).flatMap(([kind, 
   const children = props.references.flatMap((reference, index): Node[] => {
     if (reference.kind !== kind) return []
     const value = JSON.stringify([reference.kind, reference.target, reference.role, reference.state, index])
-    return [{ value, kind: reference.kind, label: reference.title || reference.target, reference, referenceIndex: index,
+    return [{ value, kind: reference.kind, label: isExternal(reference.target) ? reference.title || reference.target : reference.target, reference, referenceIndex: index,
       children: isLocalImage(reference)
         ? [{ value: `${value}:preview`, kind: reference.kind, label: `Preview: ${reference.title || reference.target}`, reference, preview: true }]
         : undefined }]
@@ -117,11 +117,17 @@ const select = (event: Event, item: Node) => {
                 :title="item.reference.target"
                 @click="(event: MouseEvent) => { if (!item.children) follow(event, item.reference!) }"
                 @keydown="(event: KeyboardEvent) => { if (!item.children) event.stopPropagation() }"
-              >{{ item.label }}<UIcon v-if="isExternal(item.reference.target)" name="i-lucide-external-link" class="ms-1 inline-block size-3 align-baseline text-dimmed" aria-hidden="true" data-external-reference /></component>
+              >
+                <span data-reference-label>{{ item.label }}</span>
+                <template v-if="!isExternal(item.reference.target) && item.reference.title && item.reference.title !== item.reference.target">
+                  <span aria-hidden="true" class="text-dimmed"> · </span><span class="text-muted" data-reference-title>{{ item.reference.title }}</span>
+                </template>
+                <UIcon v-if="isExternal(item.reference.target)" name="i-lucide-external-link" class="ms-1 inline-block size-3 align-baseline text-dimmed" aria-hidden="true" data-external-reference />
+              </component>
               <UBadge v-if="item.reference.state" color="neutral" variant="outline" size="sm" :title="`Depicts the ${item.reference.state} product state`">{{ item.reference.state }}</UBadge>
               <UBadge :color="ROLE_TONE[item.reference.role] || 'neutral'" variant="subtle" size="sm">{{ item.reference.role }}</UBadge>
               <span
-                v-if="item.reference.title && item.reference.title !== item.reference.target"
+                v-if="isExternal(item.reference.target) && item.reference.title && item.reference.title !== item.reference.target"
                 class="blr-meta w-full min-w-0 [overflow-wrap:anywhere]"
                 data-reference-location
               >{{ item.reference.target }}</span>

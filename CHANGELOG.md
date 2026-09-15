@@ -7,25 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- References have their own tab and expandable tree, grouped by type with counts, roles and previews; narrow tab strips scroll to keep every reading accessible.
-- The Product's reference tree shows every attachment with its owner and opens the owner's References tab directly.
-- Reference titles keep their file paths and URLs visible.
-- Local references open inside the slideover with Back to your previous reading; external links are clearly marked.
-- Code previews highlight referenced lines, and Markdown previews have working relative links and collapsible metadata.
-- Connections have their own tab, keeping resource overviews focused while making every relationship easy to find.
-- Resources open in a spacious side panel, keeping your place as you explore related resources.
-- Resource panels use a compact header, with actions beside Close and clearly separated tabs.
+## [0.15.0] - 2026-09-15
 
-- Graph expand and collapse badges use compact pill shapes, neutral colors, and subtle hover feedback.
-- Graphs centre smoothly after expansion or collapse, with corner badges and clearer context on hover or keyboard focus.
-- Graph cards keep a consistent size, with ellipses for long labels and full text on hover.
-- Expand and collapse buttons now use diagonal arrow icons across pages and graphs.
-- Matrix view icons now use neutral colors.
-- Removed Intent sections from Scenario cards.
-- Domain list cards now use neutral borders.
-- Domain and Interface tree rows now show a hand pointer on hover.
-- Tree branches expand and collapse; Overview links open their resource pages.
-- Domain and Interface trees fill their cards with transparent rows, left-side chevrons, and resource icons.
+- Explore resources in side panels without losing your place.
+- Find connections and grouped references in dedicated tabs, with file paths and owners clearly shown.
+- Preview local documents and highlighted code inside the report; external links are clearly marked.
+- Smoother graph expansion and clearer Domain and Interface trees.
+- Simplified resource headers, controls, and Scenario cards.
 
 ## [0.14.0] - 2026-09-15
 
@@ -782,7 +770,8 @@ Initial public launch of the repository.
   `docs/format.md`.
 - Claude plugin manifest and marketplace entry.
 
-[Unreleased]: https://github.com/businesslens/pdd/compare/v0.14.0...HEAD
+[Unreleased]: https://github.com/businesslens/pdd/compare/v0.15.0...HEAD
+[0.15.0]: https://github.com/businesslens/pdd/compare/v0.14.0...v0.15.0
 [0.14.0]: https://github.com/businesslens/pdd/compare/v0.13.0...v0.14.0
 [0.13.0]: https://github.com/businesslens/pdd/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/businesslens/pdd/compare/v0.11.0...v0.12.0
