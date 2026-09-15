@@ -31,7 +31,6 @@ export interface TreeCard {
   key: string
   title: string
   resource?: AnyResourceView
-  colorSlot?: number
   note?: string
   children: TreeCardNode[]
 }
@@ -46,8 +45,8 @@ const group = (id: string, title: string, children: TreeCardNode[]): TreeCardNod
  */
 export function treeCards(workspace: ReportWorkspace, kind: ReportResourceKind, resources: AnyResourceView[], narrowed: boolean): TreeCard[] {
   if (kind === 'domain') {
-    const domainCard = (key: string, title: string, capabilities: AnyResourceView[], entities: AnyResourceView[], resource?: AnyResourceView & { colorSlot?: number }): TreeCard => ({
-      key, title, resource, colorSlot: resource?.colorSlot,
+    const domainCard = (key: string, title: string, capabilities: AnyResourceView[], entities: AnyResourceView[], resource?: AnyResourceView): TreeCard => ({
+      key, title, resource,
       children: [...group(`${key}:capabilities`, 'Capabilities', capabilities.map(item => leaf(item))), ...group(`${key}:entities`, 'Entities', entities.map(item => leaf(item)))]
     })
     const cards = resources.filter(item => item.kind === 'domain').map(domain => domainCard(domain.key, domain.title,

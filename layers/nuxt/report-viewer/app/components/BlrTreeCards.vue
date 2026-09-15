@@ -66,7 +66,6 @@ const total = (card: TreeCard) => card.children.reduce((sum, group) => sum + (gr
   <UCollapsible
     :open="!isClosed(card)"
     class="overflow-hidden rounded-xl border border-default bg-elevated/20"
-    :style="card.colorSlot != null ? { borderTop: `3px solid var(--blr-slot-${card.colorSlot})` } : undefined"
     @update:open="emit('close', card.key, !$event)"
   >
     <template #default="{ open }">
@@ -107,7 +106,7 @@ const total = (card: TreeCard) => card.children.reduce((sum, group) => sum + (gr
         :expanded="expandedOf(card)"
         color="neutral"
         size="md"
-        :ui="{ link: 'gap-2 rounded-md bg-default transition hover:bg-elevated/40 hover:before:bg-transparent', linkLabel: 'font-medium' }"
+        :ui="{ link: 'cursor-pointer gap-2 rounded-md bg-default transition hover:bg-elevated/40 hover:before:bg-transparent', linkLabel: 'font-medium' }"
         @update:expanded="emit('expand', card.key, $event)"
       >
         <template #item-leading="{ item }">
