@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Expand and collapse buttons now use diagonal arrow icons across pages and graphs.
+- Matrix view icons now use neutral colors.
 - Removed Intent sections from Scenario cards.
 - Domain list cards now use neutral borders.
 - Domain and Interface tree rows now show a hand pointer on hover.

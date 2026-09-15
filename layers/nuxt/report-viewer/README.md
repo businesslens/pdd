@@ -116,7 +116,8 @@ the heading count, the filter controls and the chips are the same in both.
 
 The cross-collection matrices are rail rows below Overview, each its own
 section with no tabs: `delivery` (Compare delivery, a Capability by Interface
-matrix), `what-changes-what` and `rule-attachments`. Each keeps its own type
+matrix), `what-changes-what` and `rule-attachments`. Their navigation icons,
+selection accents and heading icons use neutral colors. Each keeps its own type
 narrowing (`th`) and focus (`tf`). A collection Graph
 draws the facet-filtered set and honours `tf` as a neighbourhood; branch
 expansion uses `tx`/`tc`. Entity Lifecycle keeps its tab, and resource Overview
@@ -143,6 +144,8 @@ pane, so it stays available without a filled sticky backdrop or a nested
 scrollbar. Scenarios keeps Expand all, Collapse all and the per-row selector
 on the right of that strip. The controls wrap when the screen is too narrow
 for one row; tabs retain Nuxt UI's arrow-key navigation and visible focus.
+Expand all and Collapse all use diagonal outward and inward arrows across
+page and graph toolbars.
 
 Domain and Interface cards are trees inside translucent containers, without a
 separate header. Their borderless tree rows fill each card's width and use the

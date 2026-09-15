@@ -366,7 +366,7 @@ const surfaceHeading = computed(() => {
      the shape it draws, since it is no resource type. */
   const matrix = matrixSection.value
   if (matrix) {
-    return { icon: matrix.icon, slot: ENTITY_KIND_META.product.slot, title: matrix.name,
+    return { icon: matrix.icon, slot: undefined, title: matrix.name,
       meta: findProductTopologyView(matrix.view).diagramType, term: undefined, termText: '' }
   }
   if (activeKind.value === 'product') {
@@ -662,7 +662,7 @@ const orphanScenarios = computed(() => props.workspace.scenarios
              subject, so it sits here and not inside the tab strip. -->
         <div v-if="surfaceHeading || exits.length" class="flex flex-wrap items-center gap-x-3 gap-y-2 px-5 pt-4 pb-2">
           <h1 v-if="surfaceHeading" class="flex min-w-0 items-center gap-2">
-            <UIcon :name="surfaceHeading.icon" class="size-5 shrink-0" :style="{ color: `var(--blr-slot-${surfaceHeading.slot})` }" />
+            <UIcon :name="surfaceHeading.icon" class="size-5 shrink-0 text-muted" :style="surfaceHeading.slot === undefined ? undefined : { color: `var(--blr-slot-${surfaceHeading.slot})` }" />
             <span class="truncate text-lg font-semibold tracking-tight text-highlighted">{{ surfaceHeading.title }}</span>
             <span class="blr-meta shrink-0">{{ surfaceHeading.meta }}</span>
             <BlrTerm v-if="surfaceHeading.term" :slug="surfaceHeading.term" :text="surfaceHeading.termText" icon-only />
@@ -760,10 +760,10 @@ const orphanScenarios = computed(() => props.workspace.scenarios
             <template v-if="collectionGraph || drawing === 'rows'" #end>
               <UFieldGroup v-if="drawing === 'rows' && expandsAnything" size="md" data-expand-all>
                 <UTooltip text="Expand all">
-                  <UButton icon="i-lucide-chevrons-up-down" color="neutral" variant="outline" aria-label="Expand all" @click="toggleAllRows(true)" />
+                  <UButton icon="i-lucide-maximize-2" color="neutral" variant="outline" aria-label="Expand all" @click="toggleAllRows(true)" />
                 </UTooltip>
                 <UTooltip text="Collapse all">
-                  <UButton icon="i-lucide-chevrons-down-up" color="neutral" variant="outline" aria-label="Collapse all" @click="toggleAllRows(false)" />
+                  <UButton icon="i-lucide-minimize-2" color="neutral" variant="outline" aria-label="Collapse all" @click="toggleAllRows(false)" />
                 </UTooltip>
               </UFieldGroup>
               <USelect

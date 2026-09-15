@@ -106,8 +106,8 @@ onBeforeUnmount(() => { save(); mounted = false; resize?.disconnect(); window.re
       <button type="button" aria-label="Zoom out" title="Zoom out" @click="zoom(false)">−</button>
       <button type="button" aria-label="Fit map to view" title="Fit map to view" @click="fit"><UIcon name="i-lucide-scan" class="size-4" /></button>
       <!-- A tree opens and closes as a whole from the same controls it is zoomed with. -->
-      <button v-if="branches" type="button" aria-label="Expand all branches" title="Expand all" @click="emit('toggleAll', true)"><UIcon name="i-lucide-chevrons-up-down" class="size-4" /></button>
-      <button v-if="branches" type="button" aria-label="Collapse all branches" title="Collapse all" @click="emit('toggleAll', false)"><UIcon name="i-lucide-chevrons-down-up" class="size-4" /></button>
+      <button v-if="branches" type="button" aria-label="Expand all branches" title="Expand all" @click="emit('toggleAll', true)"><UIcon name="i-lucide-maximize-2" class="size-4" /></button>
+      <button v-if="branches" type="button" aria-label="Collapse all branches" title="Collapse all" @click="emit('toggleAll', false)"><UIcon name="i-lucide-minimize-2" class="size-4" /></button>
     </div>
     <div class="blr-flow-summary">{{ layout.nodes.length }}<template v-if="totalNodes && totalNodes !== layout.nodes.length"> of {{ totalNodes }}</template> boxes · {{ layout.edges.length }} connections<span> · Drag to explore</span></div>
   </div>

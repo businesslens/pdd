@@ -98,10 +98,10 @@ const columnItems = COLUMN_CHOICES.map(value => ({ value, label: `${value} per r
           <div class="flex items-center gap-2" data-scenario-controls>
             <UFieldGroup size="md">
               <UTooltip text="Expand all">
-                <UButton icon="i-lucide-chevrons-up-down" color="neutral" variant="outline" aria-label="Expand all" @click="scenariosList?.toggleAll(true)" />
+                <UButton icon="i-lucide-maximize-2" color="neutral" variant="outline" aria-label="Expand all" @click="scenariosList?.toggleAll(true)" />
               </UTooltip>
               <UTooltip text="Collapse all">
-                <UButton icon="i-lucide-chevrons-down-up" color="neutral" variant="outline" aria-label="Collapse all" @click="scenariosList?.toggleAll(false)" />
+                <UButton icon="i-lucide-minimize-2" color="neutral" variant="outline" aria-label="Collapse all" @click="scenariosList?.toggleAll(false)" />
               </UTooltip>
             </UFieldGroup>
             <USelect
