@@ -22,7 +22,7 @@ button, and a reload.
 
 ## Capability boundary
 
-Reading: browsing resources by kind, opening any resource's page, reading a
+Reading: browsing resources by kind, opening any resource’s reading, reading a
 thing's composed lifecycle and who may move it, searching by name, and reading
 named visualizations in their subject collections and resource-specific readings. It presents what the model already says and never
 edits it, never accepts an account, and never publishes or transmits the report.

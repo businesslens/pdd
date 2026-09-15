@@ -19,6 +19,11 @@ const resourceUrl = (kind, id, suffix = '') => `${origin}/?s=${kind}&e=${encodeU
 /* A tab is its label and, at most, a count: `Scenarios 3` is Scenarios, `Scenarios v2` is not. */
 const tab = (page, name) => page.getByRole('tab', { name: new RegExp(`^${name}( \\d+)?$`) })
 async function choose(page, name) {
+  const close = page.getByRole('button', { name: 'Close resource', exact: true })
+  if (new URL(page.url()).searchParams.has('e')) {
+    await close.click()
+    await expect(page.locator('[data-resource-panel]')).toHaveCount(0)
+  }
   if (page.viewportSize().width < 1024) await page.getByRole('button', { name: 'Open report navigation', exact: true }).click()
   await page.locator('.blr-navitem:visible').filter({ hasText: new RegExp(`^${name}`) }).click()
 }
@@ -78,8 +83,81 @@ try {
         await expect(page.getByRole('heading', { level: 1 })).toContainText(label)
       }
     }
-    /* Interfaces read as rows like every other collection: the row says what it
-       contains, and the tree is what the Map tab is for. */
+    /* Branch rows only toggle. Each resource root contains an Overview link,
+       including roots with no modeled children. */
+    for (const [collection, kind, resources] of [
+      ['Domains', 'domain', report.model.domains],
+      ['Interfaces', 'interface', report.model.interfaces]
+    ]) {
+      await choose(page, collection)
+      await expect(page.locator('[data-tree-card] [data-group-header]')).toHaveCount(0)
+      const roots = page.locator('[data-tree-card] [role="treeitem"][aria-level="1"][aria-expanded]')
+      await page.getByRole('button', { name: 'Collapse all', exact: true }).click()
+      for (const root of await roots.all()) await expect(root).toHaveAttribute('aria-expanded', 'false')
+      await page.getByRole('button', { name: 'Expand all', exact: true }).click()
+      for (const root of await roots.all()) await expect(root).toHaveAttribute('aria-expanded', 'true')
+      for (const resource of resources) {
+        const title = kind === 'domain' ? resource.name : resource.title
+        const card = page.locator(`[data-card-key="${kind}:${resource.id}"]`)
+        const subject = card.getByRole('treeitem').first()
+        const toggle = subject.getByRole('button')
+        await expect(subject.getByText(title, { exact: true })).toBeVisible()
+        const folders = card.locator('[role="treeitem"][aria-level="2"][aria-expanded]')
+        const folderStates = () => folders.evaluateAll(items => items.map(item => item.getAttribute('aria-expanded')))
+        const before = await folderStates()
+        /* Every displayed folder has items and toggles on its label. */
+        for (const folder of await folders.all()) {
+          await expect(folder).toHaveAttribute('aria-expanded', 'true')
+          await folder.locator('[data-slot="linkLabel"]').click()
+          await expect(folder).toHaveAttribute('aria-expanded', 'false')
+          await expect(page).not.toHaveURL(/[?&]e=/)
+          await folder.press('Enter')
+          await expect(folder).toHaveAttribute('aria-expanded', 'true')
+        }
+        await subject.getByText(title, { exact: true }).click()
+        await expect(subject).toHaveAttribute('aria-expanded', 'false')
+        await expect(card.getByRole('treeitem')).toHaveCount(1)
+        await expect(page).not.toHaveURL(/[?&]e=/)
+        await page.reload()
+        await expect(subject).toHaveAttribute('aria-expanded', 'false')
+        await subject.press('Enter')
+        await expect(subject).toHaveAttribute('aria-expanded', 'true')
+        await expect.poll(folderStates).toEqual(before)
+        await subject.press('Space')
+        await expect(subject).toHaveAttribute('aria-expanded', 'false')
+        await toggle.press('Space')
+        await expect(subject).toHaveAttribute('aria-expanded', 'true')
+        await toggle.click()
+        await expect(subject).toHaveAttribute('aria-expanded', 'false')
+        await toggle.click()
+        await expect(subject).toHaveAttribute('aria-expanded', 'true')
+        await subject.press('ArrowLeft')
+        await expect(subject).toHaveAttribute('aria-expanded', 'false')
+        await subject.press('ArrowRight')
+        await expect(subject).toHaveAttribute('aria-expanded', 'true')
+        const overview = card.locator('[role="treeitem"][aria-level="2"]').filter({ has: page.getByText('Overview', { exact: true }) })
+        await expect(overview).toHaveCount(1)
+        await expect(overview.locator('.iconify')).toHaveCount(0)
+        if (!before.length) await expect(card.getByRole('treeitem')).toHaveCount(2)
+        await overview.click()
+        await expect.poll(() => new URL(page.url()).searchParams.get('e')).toBe(`${kind}:${resource.id}`)
+        await expect(page.locator('[data-resource-heading]')).toContainText(title)
+        await page.reload()
+        await expect(page.locator('[data-resource-heading]')).toContainText(title)
+        await page.goBack()
+        await expect(subject).toHaveAttribute('aria-expanded', 'true')
+        await expect.poll(folderStates).toEqual(before)
+      }
+      const unassigned = page.locator('[data-card-key="unassigned"] [role="treeitem"]').first()
+      if (await unassigned.count()) {
+        await unassigned.getByText('Unassigned', { exact: true }).click()
+        await expect(unassigned).toHaveAttribute('aria-expanded', 'false')
+        await expect(page).not.toHaveURL(/[?&]e=/)
+        await unassigned.getByText('Unassigned', { exact: true }).click()
+        await expect(unassigned).toHaveAttribute('aria-expanded', 'true')
+      }
+      await capture(page, `${width}-${kind}-tree-links`)
+    }
     await choose(page, 'Interfaces')
     await expect(page.locator('[data-interface-directory]')).toHaveCount(0)
     /* Interfaces and Domains read as one tree card per subject. */
@@ -101,6 +179,13 @@ try {
       await item.press('ArrowRight')
       await expect(item).toHaveAttribute('aria-expanded', 'true')
       await item.getByText(experience.title, { exact: true }).click()
+      await expect(item).toHaveAttribute('aria-expanded', 'false')
+      await expect(page).not.toHaveURL(/[?&]e=/)
+      await item.press('Enter')
+      await expect(item).toHaveAttribute('aria-expanded', 'true')
+      const overview = item.locator('..').getByRole('treeitem').filter({ has: page.getByText('Overview', { exact: true }) }).first()
+      await expect(overview.locator('.iconify')).toHaveCount(0)
+      await overview.click()
       await expect(page).toHaveURL(/[?&]e=experience/)
       await page.goBack()
       await expect(item).toHaveAttribute('aria-expanded', 'true')
@@ -110,10 +195,8 @@ try {
       const screen = screens.find(item => item.id.split('::').length === 2) ?? screens[0]
       await page.goto(`${origin}/?s=interface&e=${encodeURIComponent(`screen:${screen.id}`)}`)
       /* The page names itself; the trail stops at its parent. */
-      await expect(page.getByRole('heading', { level: 1 })).toContainText(screen.title)
-      const trail = page.locator('[data-page-trail]')
-      await expect(trail).toContainText('Interfaces')
-      await expect(trail).not.toContainText(screen.title)
+      await expect(page.locator('[data-resource-heading]')).toContainText(screen.title)
+      await expect(page.locator('[data-resource-panel]')).toContainText('Screen')
       await capture(page, `${width}-screen-page`)
       /* One tab switches nothing, so no strip renders — and the ways out stay. */
       await expect(page.locator('.blr-surface-tab')).toHaveCount(0)
@@ -166,7 +249,7 @@ try {
     if (journey) {
       await page.goto(resourceUrl('journey', journey.id))
       await tab(page, 'Scenarios').click()
-      await expect(page).toHaveURL(/t=scenarios/)
+      await expect(page).toHaveURL(/rt=scenarios/)
       /* Comparing Journeys is the collection's job, not a third tab here. */
       await expect(page.getByRole('button', { name: 'Composition', exact: true })).toHaveCount(0)
     }
@@ -175,26 +258,16 @@ try {
       const parent = parents.find(item => report.model[`${kind}Scenarios`].some(scenario => scenario[`${kind}Id`] === item.id))
       if (!parent) continue
       const scenario = report.model[`${kind}Scenarios`].find(item => item[`${kind}Id`] === parent.id)
-      // Most sample Scenarios omit Intent. Exercise authored Markdown without changing the model.
-      const withIntent = structuredClone(report)
-      withIntent.model[`${kind}Scenarios`].find(item => item.id === scenario.id).intent = 'Explain **why this Scenario matters** before its actions.'
-      const serveIntent = route => route.fulfill({ json: withIntent })
-      await page.route('**/_businesslens/report.json', serveIntent)
-      await page.goto(resourceUrl(kind, parent.id, '&t=scenarios'))
+      await page.goto(resourceUrl(kind, parent.id, '&rt=scenarios'))
       const card = page.locator(`[data-row-key="${kind}-scenario:${scenario.id}"] [data-scenario-card]`)
       const toggle = card.locator('.blr-summary-toggle')
       await expect(toggle).toHaveAttribute('aria-expanded', 'false')
-      await expect(card.locator('[data-scenario-intent]')).toHaveCount(0)
       await toggle.click()
       await expect(toggle).toHaveAttribute('aria-expanded', 'true')
-      const intent = card.locator('[data-scenario-intent]')
-      await expect(intent.getByRole('heading', { name: /^Intent/ })).toBeVisible()
-      await expect(intent.locator('strong')).toHaveText('why this Scenario matters')
-      expect(await card.evaluate(element => !!(element.querySelector('[data-scenario-intent]').compareDocumentPosition(element.querySelector('.blr-steps-list')) & Node.DOCUMENT_POSITION_FOLLOWING))).toBe(true)
-      const link = card.getByRole('button', { name: /^Open / }).first()
+      const link = card.locator('a[data-resource-key]').first()
       if (await link.count()) {
         await link.click()
-        await expect(page).not.toHaveURL(/t=scenarios/)
+        await expect(page).not.toHaveURL(/rt=scenarios/)
       } else {
         await choose(page, 'Entities')
         await expect(page).toHaveURL(/[?&]s=entity(?:&|$)/)
@@ -207,12 +280,11 @@ try {
       await expect(page).not.toHaveURL(/[?&]t=/)
       await tab(page, 'Scenarios').click()
       await expect(toggle).toHaveAttribute('aria-expanded', 'true')
-      await page.getByRole('button', { name: 'Collapse all', exact: true }).click()
+      await page.locator('[data-resource-panel]').getByRole('button', { name: 'Collapse all', exact: true }).click()
       await page.reload()
       await expect(page.locator('.blr-summary-toggle[aria-expanded=true]')).toHaveCount(0)
       await page.goto(resourceUrl(kind, scenario.id).replace(`e=${kind}%3A`, `e=${kind}-scenario%3A`))
       await expect(page.locator('.blr-summary-toggle[aria-expanded=true]')).toHaveCount(1)
-      await page.unroute('**/_businesslens/report.json', serveIntent)
     }
     const capability = report.model.capabilities[0]
     if (capability && journey) {
@@ -235,13 +307,13 @@ try {
     if (iface) {
       await page.goto(resourceUrl('interface', iface.id))
       await expect(page.locator('[data-interface-delivery]')).toBeVisible()
-      await expect(page.locator('[data-resource-connections]').getByText('Screens available', { exact: true })).toHaveCount(0)
+      await expect(page.locator('[data-resource-connections]')).toHaveCount(0)
       const toggle = page.locator('[data-interface-delivery] button[aria-expanded]').first()
       if (await toggle.count()) {
         const old = await toggle.getAttribute('aria-expanded')
         await toggle.click()
         await expect(toggle).toHaveAttribute('aria-expanded', old === 'true' ? 'false' : 'true')
-        await expect(page).toHaveURL(new RegExp(`[?&]${old === 'true' ? 'tc' : 'tx'}=`))
+        // Resource expansion is remembered separately from the working graph.
         await page.reload()
         await expect(toggle).toHaveAttribute('aria-expanded', old === 'true' ? 'false' : 'true')
       }
@@ -255,6 +327,8 @@ try {
     const entity = report.model.entities.find(item => item.relations.length) ?? report.model.entities[0]
     if (entity) {
       await page.goto(resourceUrl('entity', entity.id))
+      await expect(page.locator('[data-resource-connections]')).toHaveCount(0)
+      await tab(page, 'Connections').click()
       await expect(page.locator('[data-resource-connections]')).toBeVisible()
       await capture(page, `${width}-entity-connections`)
       await page.getByRole('button', { name: 'Entity relationships', exact: true }).click()

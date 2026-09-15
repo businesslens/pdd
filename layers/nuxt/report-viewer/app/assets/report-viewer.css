@@ -180,13 +180,11 @@
   }
 }
 
-/* The tree takes its content's width, as Nuxt UI draws it, so a group's count
-   and chevron sit in a column just past the longest label rather than at the
-   card's far edge, where they read as belonging to nothing. */
+/* Tree rows fill their parent card, with counts aligned at the right edge. */
 .blr-tree-card-tree {
-  width: max-content;
+  width: 100%;
   max-width: 100%;
-  min-width: 14rem;
+  min-width: 0;
 }
 
 /* The cards drawing of Steps: numbers on one connector line, as the
@@ -195,3 +193,35 @@
 .blr-steps-list > li { position: relative; display: flex; align-items: flex-start; gap: 0.625rem; }
 .blr-steps-list > li:not(:last-child)::after { content: ''; position: absolute; inset-inline-start: 11px; top: 2.25rem; bottom: -0.75rem; border-inline-start: 1px solid var(--ui-border-accented); }
 .blr-steps-number { display: grid; place-items: center; flex: 0 0 1.5rem; width: 1.5rem; height: 1.5rem; margin-top: 0.625rem; border-radius: 9999px; border: 1px solid var(--ui-border); background: var(--blr-bg-detail); font-family: var(--font-mono); font-size: 0.75rem; color: var(--ui-text-muted); }
+
+.blr-report-shell, .blr-resource-panel {
+  --blr-slot-0: #2a78d6;
+  --blr-slot-1: #eb6834;
+  --blr-slot-2: #1baf7a;
+  --blr-slot-3: #eda100;
+  --blr-slot-4: #e87ba4;
+  --blr-slot-5: #008300;
+  --blr-slot-6: #4a3aa7;
+  --blr-slot-7: #e34948;
+  --blr-slot-8: #746651;
+  --blr-slot-9: #2a78d6;
+  font-variant-numeric: tabular-nums;
+}
+
+.dark .blr-report-shell, .dark .blr-resource-panel {
+  --blr-slot-0: #3987e5;
+  --blr-slot-1: #d95926;
+  --blr-slot-2: #199e70;
+  --blr-slot-3: #c98500;
+  --blr-slot-4: #d55181;
+  --blr-slot-5: #008300;
+  --blr-slot-6: #9085e9;
+  --blr-slot-7: #e66767;
+  --blr-slot-8: #ab9d81;
+  --blr-slot-9: #3987e5;
+}
+
+/* The reading's width, including its Scenario density, follows the panel. */
+@container (max-width: 639px) {
+  .blr-resource-panel [data-collection-rows] { grid-template-columns: minmax(0, 1fr) !important; }
+}

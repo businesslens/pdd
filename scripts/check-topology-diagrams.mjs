@@ -42,8 +42,129 @@ if (screenshotRoot) mkdirSync(screenshotRoot, { recursive: true })
 async function flowReady(page) {
   await expect(page.locator('[data-diagram-pending="true"]')).toHaveCount(0, { timeout: 15000 })
   await expect(page.locator('[data-flow-ready="true"]')).toBeVisible({ timeout: 15000 })
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))
 }
 const flowTransform = page => page.locator('.vue-flow__transformationpane').getAttribute('style')
+async function expectCentered(page) {
+  await expect.poll(() => page.locator('.vue-flow').evaluate(root => {
+    const boxes = [...root.querySelectorAll('.vue-flow__node')].map(node => node.getBoundingClientRect())
+    const viewport = root.getBoundingClientRect()
+    const left = Math.min(...boxes.map(box => box.left)), right = Math.max(...boxes.map(box => box.right))
+    const top = Math.min(...boxes.map(box => box.top)), bottom = Math.max(...boxes.map(box => box.bottom))
+    return Math.max(Math.abs((left + right - viewport.left - viewport.right) / 2), Math.abs((top + bottom - viewport.top - viewport.bottom) / 2))
+  })).toBeLessThanOrEqual(1)
+}
+async function checkBranchCentering(page) {
+  const branches = page.locator('.vue-flow__node:has(.blr-flow-node__count)')
+  if (!await branches.count()) return
+  const id = await branches.last().getAttribute('data-id')
+  const branch = page.locator(`.vue-flow__node[data-id=${JSON.stringify(id)}]`)
+  const toggle = branch.locator('.blr-flow-node__count')
+  await page.getByRole('button', { name: 'Zoom in', exact: true }).click()
+  await toggle.focus()
+  const start = await branch.boundingBox()
+  const initialCount = await page.locator('.vue-flow__node').count()
+  const initialOpen = await toggle.getAttribute('aria-expanded')
+  const badge = await toggle.boundingBox()
+  expect(badge.y).toBeLessThan(start.y)
+  expect(badge.x + badge.width).toBeGreaterThan(start.x + start.width)
+  for (const expanded of [initialOpen !== 'true', initialOpen === 'true']) {
+    const beforeCount = await page.locator('.vue-flow__node').count()
+    await page.keyboard.press('Enter')
+    await expect(toggle).toHaveAttribute('aria-expanded', String(expanded))
+    await expect.poll(() => page.locator('.vue-flow__node').count()).not.toBe(beforeCount)
+    await flowReady(page)
+    await expectCentered(page)
+    await expect(toggle).toBeFocused()
+    if (!expanded) await expect(toggle).toHaveText(/^\+\d+$/)
+  }
+  await expect(page.locator('.vue-flow__node')).toHaveCount(initialCount)
+  const transform = await flowTransform(page)
+  await page.reload()
+  await flowReady(page)
+  expect(await flowTransform(page)).toBe(transform)
+  await page.getByRole('button', { name: 'Fit map to view', exact: true }).click()
+}
+async function checkCenterAnimation(page) {
+  async function motionFrames(action) {
+    const samples = page.evaluate(() => new Promise(resolve => {
+      const frames = new Set()
+      const start = performance.now()
+      function sample() {
+        frames.add(document.querySelector('.vue-flow__transformationpane').getAttribute('style'))
+        if (performance.now() - start < 900) requestAnimationFrame(sample)
+        else resolve(frames.size)
+      }
+      sample()
+    }))
+    await action()
+    return samples
+  }
+  const fit = page.getByRole('button', { name: 'Fit map to view', exact: true })
+  await page.emulateMedia({ reducedMotion: 'no-preference' })
+  await page.getByRole('button', { name: 'Zoom in', exact: true }).click()
+  expect(await motionFrames(() => fit.click())).toBeGreaterThan(4)
+  await expectCentered(page)
+  const rootToggle = page.locator('.vue-flow__node .blr-flow-node__count').first()
+  if (await rootToggle.count()) {
+    for (let index = 0; index < 2; index++) {
+      await rootToggle.focus()
+      expect(await motionFrames(() => page.keyboard.press('Enter'))).toBeGreaterThan(4)
+      await flowReady(page)
+      await expectCentered(page)
+    }
+    const fullCount = await page.locator('.vue-flow__node').count()
+    const settled = await flowTransform(page)
+    await page.reload()
+    await flowReady(page)
+    expect(await flowTransform(page)).toBe(settled)
+    // Commit the first URL change, then interrupt its 500 ms centering move.
+    await rootToggle.focus()
+    await page.keyboard.press('Enter')
+    await expect(page.locator('.vue-flow__node')).toHaveCount(1)
+    await expect(page).toHaveURL(/[?&]tc=product/)
+    await page.keyboard.press('Enter')
+    await expect(page).not.toHaveURL(/[?&]tc=product/)
+    await flowReady(page)
+    await expectCentered(page)
+    await expect(page.locator('.vue-flow__node')).toHaveCount(fullCount)
+  }
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.getByRole('button', { name: 'Zoom in', exact: true }).click()
+  expect(await motionFrames(() => fit.click())).toBeLessThanOrEqual(2)
+  await expectCentered(page)
+}
+async function checkTreeContext(page) {
+  const graph = await page.locator('.vue-flow').evaluate(root => ({
+    nodes: [...root.querySelectorAll('.vue-flow__node')].map(node => node.dataset.id),
+    edges: [...root.querySelectorAll('.vue-flow__edge')].map(edge => ({ id: edge.dataset.id, ends: edge.dataset.id.split('->') }))
+  }))
+  const pathTo = id => {
+    const path = [id]
+    let parent
+    while ((parent = graph.edges.find(edge => edge.ends[1] === path.at(-1))?.ends[0]) && !path.includes(parent)) path.push(parent)
+    return path
+  }
+  const path = graph.nodes.map(pathTo).sort((a, b) => b.length - a.length)[0]
+  if (!path || path.length < 3) return
+  const node = page.locator(`.vue-flow__node[data-id=${JSON.stringify(path[0])}]`)
+  const undimmed = () => page.locator('.vue-flow__node').evaluateAll(nodes => nodes
+    .filter(node => Number(getComputedStyle(node.querySelector('.blr-flow-node-wrap')).opacity) > 0.99)
+    .map(node => node.dataset.id).sort())
+  const expectedEdges = graph.edges.filter(edge => path.includes(edge.ends[0]) && path.includes(edge.ends[1])).map(edge => edge.id).sort()
+  const visibleEdges = () => page.locator('.vue-flow__edge').evaluateAll(edges => edges
+    .filter(edge => Number(getComputedStyle(edge.querySelector('g[opacity]')).opacity) > 0.99)
+    .map(edge => edge.dataset.id).sort())
+  await node.hover()
+  await expect.poll(undimmed).toEqual([...path].sort())
+  await expect.poll(visibleEdges).toEqual(expectedEdges)
+  await page.mouse.move(0, 0)
+  await node.locator('.blr-flow-node__main').focus()
+  await expect.poll(undimmed).toEqual([...path].sort())
+  await expect.poll(visibleEdges).toEqual(expectedEdges)
+  await page.getByRole('button', { name: 'Fit map to view', exact: true }).focus()
+  await expect.poll(undimmed).toEqual([...graph.nodes].sort())
+}
 async function geometry(page) {
   return page.locator('.vue-flow').evaluate(root => {
     const boxes = [...root.querySelectorAll('.vue-flow__node, .blr-flow-edge-label')].map(item => ({ title: item.textContent, rect: item.getBoundingClientRect() }))
@@ -127,6 +248,9 @@ try {
     await page.setViewportSize({ width: 1440, height: 1000 })
     await page.goto(viewUrl(url, 'sitemap'))
     await checkSitemap(page)
+    await checkBranchCentering(page)
+    await checkCenterAnimation(page)
+    await checkTreeContext(page)
     const rootNode = page.locator('.vue-flow__node:has([data-resource-key^="product:"])')
     const rootToggle = rootNode.locator('.blr-flow-node__count')
     const nodeCount = await page.locator('.vue-flow__node').count()
@@ -177,9 +301,10 @@ try {
         await checkSitemap(page)
       }
       const before = await page.locator('.vue-flow__node').count()
-      const occurrence = page.locator('.vue-flow__node [data-resource-key]').last()
+      const occurrence = page.locator('.vue-flow__node [data-resource-key*=":"]:not([data-resource-key^="product:"])').last()
       const key = await occurrence.getAttribute('data-resource-key')
-      await occurrence.click()
+      await occurrence.locator('.blr-flow-node__main').focus()
+      await page.keyboard.press('Enter')
       await expect(page).toHaveURL(new RegExp(`e=${key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`))
       await page.goBack()
       await expect(graphOn(page)).toHaveAttribute('aria-pressed', 'true')
@@ -191,7 +316,7 @@ try {
     }
     const entity = report.model.entities.find(item => item.states.length)
     if (entity) {
-      await page.goto(`${url}/?s=entity&e=${encodeURIComponent(`entity:${entity.id}`)}&t=lifecycle`)
+      await page.goto(`${url}/?s=entity&e=${encodeURIComponent(`entity:${entity.id}`)}&rt=lifecycle`)
       await flowReady(page)
       expect(await geometry(page)).toEqual({ overlaps: [], clipped: [] })
       await page.reload()
@@ -249,6 +374,7 @@ try {
   measurements.push({ report: stress.id, resources: 500, relations: 2000, ms: Math.round(performance.now() - started) })
   await page.locator('.blr-resource-row').first().click()
   await expect(page).toHaveURL(/e=entity/)
+  await page.getByRole('tab', { name: 'Connections', exact: true }).click()
   await expect(page.locator('[data-resource-connections]')).toBeVisible()
   await expect(page.locator('[data-resource-connections]').getByRole('heading', { name: 'Incoming' })).toBeVisible()
   await expect(page.locator('[data-resource-connections]').getByRole('heading', { name: 'Outgoing' })).toBeVisible()

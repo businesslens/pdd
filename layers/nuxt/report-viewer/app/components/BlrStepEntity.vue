@@ -78,14 +78,14 @@ const description = computed(() => {
 
 <template>
   <UTooltip v-if="entity" :text="description" :delay-duration="150">
-    <button
-      type="button"
+    <BlrResourceLink
+      :resource-key="entity.key"
       class="inline-flex max-w-full items-center gap-1.5 rounded-full border px-2 py-0.5 font-sans text-xs transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
       :class="isRead
         ? 'border-dashed border-muted bg-transparent font-normal text-muted hover:border-default hover:text-default'
         : 'border-default bg-elevated/60 font-medium text-highlighted hover:border-accented hover:bg-elevated'"
       :aria-label="`Open Entity ${entity.title}`"
-      @click="emit('select', entity)"
+      @open="emit('select', entity)"
     >
       <BlrEntityMark
         :facet="entityFacetOf(entity) ?? 'kept'"
@@ -102,6 +102,6 @@ const description = computed(() => {
         <span class="min-w-0 truncate text-default">{{ mention.to }}</span>
       </template>
       <span v-else-if="mention.from && !outcome" class="min-w-0 truncate font-normal text-muted">{{ mention.from }}</span>
-    </button>
+    </BlrResourceLink>
   </UTooltip>
 </template>

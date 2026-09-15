@@ -37,28 +37,28 @@ function select(kind: 'interface' | 'experience' | 'screen', id: string) {
   >
     <BlrInterfaceType v-if="productInterface" :type="productInterface.interfaceType" size="xs" />
     <UTooltip :text="context.interfaceTitle" :delay-duration="150">
-      <button
-        type="button"
+      <BlrResourceLink
+        :resource-key="`interface:${context.interfaceId}`"
         class="min-w-0 shrink truncate text-start text-default underline decoration-dotted underline-offset-2 hover:text-highlighted"
         :class="compact ? 'max-w-24' : 'max-w-52'"
-        @click.stop="select('interface', context.interfaceId)"
+        @open="select('interface', context.interfaceId)"
       >
         {{ context.interfaceTitle }}
-      </button>
+      </BlrResourceLink>
     </UTooltip>
 
     <template v-if="context.experienceId">
       <UIcon name="i-lucide-chevron-right" class="size-3 shrink-0 text-dimmed" />
       <BlrKind kind="experience" :labelled="false" size="xs" class="shrink-0" />
       <UTooltip :text="context.experienceTitle" :delay-duration="150">
-        <button
-          type="button"
+        <BlrResourceLink
+          :resource-key="`experience:${context.experienceId}`"
           class="min-w-0 shrink truncate text-start text-muted underline decoration-dotted underline-offset-2 hover:text-highlighted"
           :class="compact ? 'max-w-24' : 'max-w-52'"
-          @click.stop="select('experience', context.experienceId)"
+          @open="select('experience', context.experienceId)"
         >
           {{ context.experienceTitle }}
-        </button>
+        </BlrResourceLink>
       </UTooltip>
     </template>
 
@@ -66,14 +66,14 @@ function select(kind: 'interface' | 'experience' | 'screen', id: string) {
       <UIcon name="i-lucide-chevron-right" class="size-3 shrink-0 text-dimmed" />
       <BlrKind kind="screen" :labelled="false" size="xs" class="shrink-0" />
       <UTooltip :text="context.screenTitle" :delay-duration="150">
-        <button
-          type="button"
+        <BlrResourceLink
+          :resource-key="`screen:${context.screenId}`"
           class="min-w-0 shrink truncate text-start text-muted underline decoration-dotted underline-offset-2 hover:text-highlighted"
           :class="compact ? 'max-w-24' : 'max-w-52'"
-          @click.stop="select('screen', context.screenId)"
+          @open="select('screen', context.screenId)"
         >
           {{ context.screenTitle }}
-        </button>
+        </BlrResourceLink>
       </UTooltip>
     </template>
   </UBadge>

@@ -413,13 +413,13 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
           :key="line.entityId"
           class="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border border-default bg-elevated/30 px-3 py-2 text-sm"
         >
-          <button type="button" class="blr-chip" @click="openEntity(line.entityId)">
+          <BlrResourceLink :resource-key="`entity:${line.entityId}`" class="blr-chip" @open="openEntity(line.entityId)">
             <BlrEntityMark
               :facet="entityFacetOf(entityChip(line.entityId)) ?? 'kept'"
               :acts="entityChip(line.entityId)?.acts"
               size="xs"
             />{{ line.title }}
-          </button>
+          </BlrResourceLink>
           <span v-for="reading in line.readings" :key="reading" class="text-default">{{ reading }}</span>
           <span class="blr-meta ms-auto">{{ line.scenarioIds.length }} {{ line.scenarioIds.length === 1 ? 'Scenario' : 'Scenarios' }}</span>
         </li>
@@ -621,11 +621,11 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
                         </span>
                       </UTooltip>
                       <span v-if="step.stepKind !== 'actor'">for</span>
-                      <button
-                        type="button"
+                      <BlrResourceLink
+                        :resource-key="`entity:${step.actorId}`"
                         class="inline-flex max-w-full items-center gap-1.5 rounded-full border border-default bg-elevated/60 py-0.5 pe-2 ps-1 font-sans text-xs font-medium text-highlighted transition hover:border-accented hover:bg-elevated focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                         :aria-label="`Open ${stepActor(step.actorId)!.title}`"
-                        @click="selectStepActor(step.actorId)"
+                        @open="selectStepActor(step.actorId)"
                       >
                         <BlrEntityMark
                           :facet="stepActor(step.actorId)!.entityKind!"
@@ -633,7 +633,7 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
                           size="xs"
                         />
                         <span class="min-w-0 truncate">{{ stepActor(step.actorId)!.title }}</span>
-                      </button>
+                      </BlrResourceLink>
                       <UTooltip v-if="step.stepKind === 'actor'" :text="stepKindDescription('actor')" :delay-duration="150">
                         <span>action</span>
                       </UTooltip>
@@ -729,11 +729,11 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
                     </span>
                   </UTooltip>
                   <span v-if="step.stepKind !== 'actor'">for</span>
-                  <button
-                    type="button"
+                  <BlrResourceLink
+                    :resource-key="`entity:${step.actorId}`"
                     class="inline-flex max-w-full items-center gap-1.5 rounded-full border border-default bg-elevated/60 py-0.5 pe-2 ps-1 font-sans text-xs font-medium text-highlighted transition hover:border-accented hover:bg-elevated focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                     :aria-label="`Open ${stepActor(step.actorId)!.title}`"
-                    @click="selectStepActor(step.actorId)"
+                    @open="selectStepActor(step.actorId)"
                   >
                     <BlrEntityMark
                       :facet="stepActor(step.actorId)!.entityKind!"
@@ -741,7 +741,7 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
                       size="xs"
                     />
                     <span class="min-w-0 truncate">{{ stepActor(step.actorId)!.title }}</span>
-                  </button>
+                  </BlrResourceLink>
                   <UTooltip v-if="step.stepKind === 'actor'" :text="stepKindDescription('actor')" :delay-duration="150">
                     <span>action</span>
                   </UTooltip>
@@ -818,7 +818,7 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
           <BlrTerm :slug="scenarioWord('decision-point')" text="Decision points" />
           <span class="blr-meta ms-1">{{ asScenario.decisionPoints.length }}</span>
         </h2>
-        <div class="grid gap-3 lg:grid-cols-2">
+        <div class="grid gap-3 @min-[640px]:grid-cols-2">
           <div
             v-for="point in asScenario.decisionPoints"
             :key="point.title"
@@ -896,7 +896,7 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
         <h2 class="blr-page-heading">
           Information presented <span class="blr-meta ms-1">{{ asScreen.information.length }}</span>
         </h2>
-        <ul class="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+        <ul class="grid gap-2 @min-[480px]:grid-cols-2 @min-[720px]:grid-cols-3">
           <li
             v-for="item in asScreen.information"
             :key="item"
@@ -910,7 +910,7 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
         <h2 class="blr-page-heading">
           Available actions <span class="blr-meta ms-1">{{ asScreen.actions.length }}</span>
         </h2>
-        <ul class="grid gap-x-8 gap-y-2 sm:grid-cols-2">
+        <ul class="grid gap-x-8 gap-y-2 @min-[480px]:grid-cols-2">
           <li v-for="item in asScreen.actions" :key="item" class="flex items-start gap-2 text-sm text-default">
             <UIcon name="i-lucide-mouse-pointer-click" class="mt-0.5 size-4 shrink-0 text-muted" />{{ item }}
           </li>
@@ -921,7 +921,7 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
           <BlrTerm slug="view-state" text="View states" />
           <span class="blr-meta ms-1">{{ asScreen.states.length }}</span>
         </h2>
-        <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <div class="grid gap-3 @min-[480px]:grid-cols-2 @min-[720px]:grid-cols-3">
           <div
             v-for="state in asScreen.states"
             :key="state.title"
@@ -948,7 +948,7 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
           <BlrTerm slug="information-kept" text="Information kept" />
           <span class="blr-meta ms-1">{{ asEntity.informationKept.length }}</span>
         </h2>
-        <ul class="grid gap-2 sm:grid-cols-2">
+        <ul class="grid gap-2 @min-[480px]:grid-cols-2">
           <li
             v-for="fact in asEntity.informationKept"
             :key="fact.name"
@@ -957,15 +957,15 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
             <span class="font-medium text-highlighted">{{ fact.name }}</span>
             <span class="text-default">{{ fact.description }}</span>
             <!-- A fact a Rule governs says so here and nothing more; the Rule page is the reading. -->
-            <button
+            <BlrResourceLink
               v-if="fact.ruleIds.length"
-              type="button"
+              :resource-key="`rule:${fact.ruleIds[0]!}`"
               class="blr-chip ms-auto"
               :title="factRuleTitles(fact.ruleIds)"
-              @click="openRule(fact.ruleIds[0]!)"
+              @open="openRule(fact.ruleIds[0]!)"
             >
               <UIcon name="i-lucide-scale" class="size-3.5" />{{ fact.ruleIds.length }} {{ fact.ruleIds.length === 1 ? 'Rule' : 'Rules' }}
-            </button>
+            </BlrResourceLink>
           </li>
         </ul>
       </section>

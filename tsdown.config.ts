@@ -12,6 +12,8 @@ export default defineConfig({
   },
   format: 'esm',
   platform: 'node',
+  // Keep the CLI and library bundles within the release tarball's size budget.
+  minify: true,
   dts: true,
   clean: true
 })

@@ -122,8 +122,7 @@ export function resourceFacts(workspace: ReportWorkspace, resource: AnyResourceV
     case 'rule': {
       const rule = resource as RuleView
       return [
-        { label: 'Bindings', value: String(rule.appliesTo.length), term: 'applies-to' },
-        { label: 'References', value: String(rule.references.length), term: 'reference' }
+        { label: 'Bindings', value: String(rule.appliesTo.length), term: 'applies-to' }
       ]
     }
     default:

@@ -1,6 +1,7 @@
-/** What a page is made of, now that the Overview absorbs most of it. */
+/** Resource readings separate explanation, behavior, relationships and references. */
 import type { AnyResourceView, ReportWorkspace } from './reportWorkspace'
 import { counterpartsOf, isScenarioKind } from './reportWorkspace'
+import { resourceConnectionRows } from './resourceConnections'
 
 export type PageBlockId =
   | 'lead'
@@ -14,7 +15,7 @@ export type PageBlockId =
   | 'supporting'
   | 'references'
 
-export type PageTabId = 'overview' | 'scenarios' | 'lifecycle'
+export type PageTabId = 'overview' | 'scenarios' | 'lifecycle' | 'connections' | 'references'
 
 export interface PageTab {
   id: PageTabId
@@ -38,8 +39,9 @@ export function childrenOf(workspace: ReportWorkspace, resource: AnyResourceView
   return []
 }
 
-/** The final page has Overview and one peer tab: Scenarios for a behavioral parent, Lifecycle for a thing with States. */
-export function tabsFor(workspace: ReportWorkspace, resource: AnyResourceView): PageTab[] {
+/** A Scenario shares its parent's readings while retaining its own References. */
+export function tabsFor(workspace: ReportWorkspace, requestedResource: AnyResourceView): PageTab[] {
+  const resource = parentOf(workspace, requestedResource) ?? requestedResource
   const overviewBlocks: PageBlockId[] = ['lead', 'facts']
 
   /* Only authored Capability Contexts belong in an Overview. */
@@ -52,9 +54,7 @@ export function tabsFor(workspace: ReportWorkspace, resource: AnyResourceView): 
   if (counterpartsOf(workspace, resource).length) overviewBlocks.push('counterparts')
   if (resource.kind === 'interface') overviewBlocks.push('delivery')
   if (resource.kind === 'experience') overviewBlocks.push('screens')
-  overviewBlocks.push('connections')
   if (resource.supportingContent) overviewBlocks.push('supporting')
-  if (resource.references.length) overviewBlocks.push('references')
 
   const tabs: PageTab[] = [{
     id: 'overview',
@@ -68,6 +68,12 @@ export function tabsFor(workspace: ReportWorkspace, resource: AnyResourceView): 
   }
   if (resource.kind === 'entity' && resource.states.length) {
     tabs.push({ id: 'lifecycle', label: 'Lifecycle', count: resource.states.length, blocks: [] })
+  }
+  if (resourceConnectionRows(workspace, resource).length) {
+    tabs.push({ id: 'connections', label: 'Connections', blocks: ['connections'] })
+  }
+  if (requestedResource.references.length) {
+    tabs.push({ id: 'references', label: 'References', count: requestedResource.references.length, blocks: ['references'] })
   }
 
   return tabs

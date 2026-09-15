@@ -184,19 +184,22 @@ costed already.
   the filters narrow the set, and a Rows/Graph switch beside the filters changes
   only how the same set is drawn: the heading count, the controls and the chips
   are identical in both. Each collection's Graph states one derivation and is
-  accountable for it. Tabs exist only on the Overview and on resource pages,
+  accountable for it. Tabs exist only on the Overview and in resource readings,
   where they change which set is on screen.
 - **Row density is the reader's, per collection.** How many columns the Rows
   drawing uses is a cookie keyed by collection, so the first paint is right;
   nothing else about a drawing is configurable.
-- **Every surface names itself, with the name the reader clicked.** The
-  breadcrumb ends at the parent; the H1 carries the surface with its type mark
-  and a qualifier — a count for a collection, a type for a resource. Ways out
-  sit on that row, and the report's identity and the way home stay in the header
-  everywhere.
-- **The page is the reading**: every row, relation, search result and diagram
-  resource opens a resource page with its own URL. The open section, page and
-  tab live there too, so state survives a refresh and a recompile.
+- **Every surface names itself, with the name the reader clicked.** The main
+  H1 keeps the working view and its count or Product qualifier. A resource
+  slideover names its resource and type, with actual ownership shown separately
+  from the return trail. Report identity and the way home stay in the header.
+- **Resources open in one complete slideover.** This supersedes the resource-page
+  navigation rule. Opening a row, relation, search result or diagram resource
+  preserves the underlying section, drawing, filters, expansion and viewport.
+  The resource and its tab have an address independent of the working view.
+  Back restores the previous resource reading; Close returns to the working
+  view. Desktop background interaction remains available; narrow screens use
+  the full width. Refresh and valid recompilation preserve the reading.
 - **The rail lists Overview, three cross-collection views, then six
   collections.** The views — Compare delivery, What changes what, Rule
   attachments — each compare two collections, so no collection owns them and
@@ -204,11 +207,17 @@ costed already.
   Capabilities, Journeys, Business Rules. Experiences and Screens are reached
   through Interfaces, Scenarios through their parent, and a collection's Graph
   through its drawing switch.
-- **A resource page is Overview and at most one peer tab** — Scenarios for a
-  Capability or Journey, Lifecycle for an Entity with States. A view comparing
-  resources belongs to the collection, never to one of them.
-- **The Product's page is a page like the others** — same heading, tab strip and
-  width, headed `Overview` like the rail row that opens it and qualified by
+- **A resource reading separates meaning, behavior, connections and references.** Overview
+  carries the resource's explanation and contextual links. Scenarios follows
+  for a Capability or Journey, Lifecycle for an Entity with States. Connections
+  follows when relationships exist and includes the complete relationship
+  list, including links also explained in Overview. References comes last when
+  attachments exist, with a count and attribution to the inspected resource,
+  including a Scenario's own attachments. This supersedes the limit
+  of one peer tab. A view comparing resources belongs to the collection, never
+  to one of them.
+- **The Product's page is the report Overview** — headed `Overview` like the
+  rail row that opens it and qualified by
   `Product`. Its readings are About, Coverage and References, and it never
   reprints a collection that has a rail row of its own.
 - **Named views, not a view builder.** A named view picks one derivation, states

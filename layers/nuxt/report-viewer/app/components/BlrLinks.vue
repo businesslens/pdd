@@ -39,17 +39,10 @@ const overflow = computed(() => resources.value.length - shown.value.length)
       {{ label || meta.plural }}
     </span>
     <span class="flex flex-wrap gap-x-2 gap-y-1">
-      <component
-        :is="interactive ? 'button' : 'span'"
-        v-for="resource in shown"
-        :key="resource.key"
-        :type="interactive ? 'button' : undefined"
-        class="text-default"
-        :class="interactive && 'inline-flex min-h-6 items-center rounded-sm underline decoration-(--ui-border-accented) underline-offset-3 transition-colors hover:text-highlighted hover:decoration-(--ui-text-dimmed)'"
-        @click="interactive && emit('select', resource)"
-      >
-        {{ resource.title }}
-      </component>
+      <template v-for="resource in shown" :key="resource.key">
+        <BlrResourceLink v-if="interactive" :resource-key="resource.key" class="text-default inline-flex min-h-6 items-center rounded-sm underline decoration-(--ui-border-accented) underline-offset-3 transition-colors hover:text-highlighted hover:decoration-(--ui-text-dimmed)" @open="emit('select', resource)">{{ resource.title }}</BlrResourceLink>
+        <span v-else class="text-default">{{ resource.title }}</span>
+      </template>
       <span v-if="overflow > 0" class="text-dimmed">+{{ overflow }}</span>
     </span>
   </div>

@@ -48,7 +48,7 @@ jobs:
           npm pack --pack-destination "$pack_dir"
           tarball="$pack_dir/businesslens-${package_version}.tgz"
           test -f "$tarball"
-          test "$(stat --format=%s "$tarball")" -le 2097152
+          node scripts/check-package-size.mjs "$tarball"
           echo "tarball=$tarball" >> "$GITHUB_OUTPUT"
 
       - name: Smoke-test release artifact
