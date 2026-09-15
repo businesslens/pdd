@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { resourceNavigationKey } from '../utils/resourceNavigation'
-const props = defineProps<{ resourceKey: string }>()
+const props = defineProps<{ resourceKey: string, tab?: string }>()
 const emit = defineEmits<{ open: [] }>()
 const navigation = inject(resourceNavigationKey, null)
-const href = computed(() => navigation?.href(props.resourceKey))
+const href = computed(() => navigation?.href(props.resourceKey, props.tab))
 function select(event: MouseEvent) {
   event.stopPropagation()
   if (href.value && (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0)) return

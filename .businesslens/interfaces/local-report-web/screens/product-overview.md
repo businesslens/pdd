@@ -28,14 +28,15 @@ page, and a count.
 - Its description, Intent, supporting sections, category, tags, licence, authors, and known limitations
 - How many resources of each kind the model authors, and the depth derived from them
 - Coverage status, rationale, method, source areas, unmapped areas, and limitations
-- The Product's own References, and every reference in the model with the resource that carries it
+- Every Reference in the model, including the Product's own, grouped by type with the resource that carries it
 - Which generator and schema version produced the report, and when
 
 ## Available actions
 
 - Open Entities, Interfaces, Domains, Capabilities, Journeys, or Business Rules
 - Read About, Coverage or References, the Product's three readings
-- Open the page of any resource that carries a reference
+- Expand Reference groups and local image previews
+- Open the References reading of any resource that carries a reference
 - Open the page of a thing that acts on the Product
 - Read the documentation for the Product resource type
 - Search the whole model by name
@@ -47,10 +48,19 @@ page, and a count.
 The Product itself, at full width: its mark, name and summary, who it is made
 for, what it says about itself, and how many resources the model authors.
 
-### A further reading open
+### Coverage open
 
-Coverage or References. Nothing is hidden behind a disclosure the reader must
-open to learn whether it holds anything.
+The model's coverage status, rationale, method, source areas, unmapped areas and
+limitations.
+
+### References open
+
+All attached material appears once per attachment, grouped by reference type in
+an expandable tree with counts, roles, links and local image previews. Each item
+names its owner; a resource owner's link opens its own References reading while
+preserving this Product reading underneath. Groups start open, and expansion is
+remembered across reading changes, Back and refresh independently of resource
+References trees.
 
 ## Capability boundary
 

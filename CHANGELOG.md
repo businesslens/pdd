@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- References have their own tab and expandable tree, grouped by type with counts, roles and previews; narrow tab strips scroll to keep every reading accessible.
+- The Product's reference tree shows every attachment with its owner and opens the owner's References tab directly.
+- Reference titles keep their file paths and URLs visible.
+- Local references open inside the slideover with Back to your previous reading; external links are clearly marked.
+- Code previews highlight referenced lines, and Markdown previews have working relative links and collapsible metadata.
+- Connections have their own tab, keeping resource overviews focused while making every relationship easy to find.
 - Resources open in a spacious side panel, keeping your place as you explore related resources.
 - Resource panels use a compact header, with actions beside Close and clearly separated tabs.
 

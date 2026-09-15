@@ -132,7 +132,7 @@ function entityAt(kind: ReportResourceKind, id: string) {
       {{ hiddenRows }} more {{ hiddenRows === 1 ? 'relation' : 'relations' }} on the page.
     </p>
   </div>
-  <p v-else class="text-sm text-muted">No additional connections are modeled.</p>
+  <p v-else class="text-sm text-muted">No connections are modeled.</p>
 </template>
 
 <style scoped>

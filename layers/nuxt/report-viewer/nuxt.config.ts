@@ -46,6 +46,8 @@ export default defineNuxtConfig({
         'lucide:eye',
         'lucide:eye-off',
         'lucide:file-code',
+        'lucide:external-link',
+        'lucide:file-question',
         'lucide:file-diff',
         'lucide:file-text',
         'lucide:filter-x',

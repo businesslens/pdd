@@ -18,12 +18,53 @@ reading position. Close returns to the working view. Resource links support the
 browser's new-tab and copy-link actions. The compact header keeps the resource's
 identity on the left and named-view and documentation actions beside Close.
 
-Overview contains identity facts, authored detail, Contexts, relations,
-supporting material, and References. Capability and Journey readings add
-Scenarios; an Entity with States adds Lifecycle. A Scenario URL selects and
+Overview contains identity facts, authored detail, Contexts and supporting material,
+with contextual links beside the facts they explain. Capability
+and Journey readings add Scenarios; an Entity with States adds Lifecycle.
+Connections follows whenever relationships exist and gives the complete
+relationship list, including links also explained in Overview. References comes
+last when attachments exist, with its count, roles and image previews. Attachments
+use the same Nuxt UI Tree styling as Domains and Interfaces, grouped by their
+authored reference type. Groups start open; image previews expand beneath their
+reference. Expansion is remembered per resource across tab changes, Back and
+refresh. A Scenario URL selects and
 expands that Scenario inside its parent. Named-view actions explicitly change
 the working view and close the panel. Ownership remains visible inside the
-resource reading and is separate from its return trail.
+resource reading and is separate from its return trail. Selecting Connections
+from a Scenario reading opens its parent's Connections tab. References stays
+scoped to the inspected resource: a Scenario's `rt=references` reads that
+Scenario's attachments under its own title.
+
+The Product Overview's References reading uses the same tree for every attachment
+in the model, including the Product's own. Each item names its owner, and resource
+owner links open that resource's References tab over the current reading. The
+catalog keeps its own expansion separately from individual resource trees.
+References with authored titles show their file path or URL below the title;
+untitled references show the target once as their label.
+Local References open inside the same slideover, with Back restoring the prior
+document or resource reading, including scroll and expansion. Close returns to
+the working view. The `f` query parameter carries the local preview URL, independent
+of the resource and its tab; refresh and browser Back/Forward preserve the reading.
+External HTTP(S) References show an external-link icon and open in a new tab.
+Code References use `/_businesslens/code?target=<encoded-target>#reference`.
+The local viewer renders escaped source with line numbers and highlights
+an authored line range or the first textual match for a symbol (trying its final
+qualified name when the full name is not present). Missing locators are explained
+beside the file. This endpoint serves only exact Code Reference targets in the
+current workspace report, from regular UTF-8 files up to 2 MiB inside the repository;
+symlinks and binary files are refused. Source bytes stay outside the Product Report.
+Hosts serving workspace reports must provide this endpoint alongside the local
+asset mount; portable reports have no Code References.
+The asset mount renders `.md`
+files as documents with headings, tables, lists, code blocks and heading anchors;
+frontmatter stays in a collapsed Document metadata section. View source adds
+`?raw=1` to the same URL. Relative links and images resolve from the document's
+directory within the repository; linked Markdown uses the same preview. Raw HTML
+is displayed as text and executable URLs are refused. Markdown previews share
+the source preview's 2 MiB UTF-8 limit, repository boundary and symlink guard.
+The in-report preview embeds these documents in a sandbox without script permission,
+intercepts local document links for report navigation, and follows the report theme.
+Images and plain text open in the same reading; PDF uses the browser's local viewer.
 
 Authored Capability Context has one dedicated Overview reading instead of being
 repeated as a resource fact. Derived Journey and Scenario Contexts stay with
@@ -82,13 +123,14 @@ where it left:
 | `section` | `overview`; a cross-collection view: `delivery`, `what-changes-what`, or `rule-attachments`; or a collection: `entity`, `interface`, `domain`, `capability`, `journey`, or `rule` | `overview` |
 | `resource` | the stable key of the inspected resource (`screen:reader-web::…`), or `null` for the section's collection | `null` |
 | `tab` | underlying collection: `overview` (Rows) or `graph`; Product Overview: `overview` (About), `coverage`, or `references` | `overview` |
-| `resourceTab` | resource reading: `overview`, `scenarios`, or `lifecycle`; independent of `tab` | `overview` |
+| `resourceTab` | resource reading: `overview`, `scenarios`, `lifecycle`, `connections`, or `references`; independent of `tab` | `overview` |
 | `scenarioRoute` | the first route in the visible Scenario route window, or `null` | `null` |
 | `routeColumns` | `auto`, or the reader's preferred number of visible route columns | `auto` |
 | `topology` | selected view, Journey, Scenario window, matrix column, focus, hidden kinds, expanded/collapsed groups, directory search | Domain map; no filters |
 
-Every one is optional; bind the ones the host wants in its URL. A Scenario key selects that Scenario inside its parent reading while the
-section stays on the originating working view.
+Every one is optional; bind the ones the host wants in its URL. A Scenario key
+selects that Scenario inside its parent reading, or its own References when
+requested, while the section stays on the originating working view.
 
 The layer auto-imports `useBlrReportNavigation()` for hosts that use Vue Router.
 It returns these seven models and encodes `s`, `e`, `t`, `rt`, `r`, `rc`, plus reading
@@ -136,8 +178,8 @@ matrix), `what-changes-what` and `rule-attachments`. Their navigation icons,
 selection accents and heading icons use neutral colors. Each keeps its own type
 narrowing (`th`) and focus (`tf`). A collection Graph
 draws the facet-filtered set and honours `tf` as a neighbourhood; branch
-expansion uses `tx`/`tc`. Entity Lifecycle keeps its tab, and resource Overview
-retains Connections.
+expansion uses `tx`/`tc`. Entity Lifecycle and resource Connections each keep
+their own tab and reading position, including after following a link and returning.
 
 Capabilities and Journeys have one Scenarios tab, using expandable cards.
 Direct Scenario links open and scroll to the matching card inside its parent.
@@ -160,7 +202,9 @@ pane, with a subtle upper divider and a full-width lower separator aligned with
 the active underline. It stays available without a filled sticky backdrop or a nested
 scrollbar. Scenarios keeps Expand all, Collapse all and the per-row selector
 on the right of that strip. The controls wrap when the screen is too narrow
-for one row; tabs retain Nuxt UI's arrow-key navigation and visible focus.
+for one row. Tabs scroll horizontally when needed, retain Nuxt UI's arrow-key
+navigation and visible focus, and bring the selected tab into view after a
+refresh or resize.
 Expand all and Collapse all use diagonal outward and inward arrows across
 page and graph toolbars.
 
@@ -249,6 +293,8 @@ Against a running built fixture-shop report, run
 `node scripts/check-resource-slideover.mjs <url>` for desktop and mobile
 inspection, independent Graph/Lifecycle state, nested Back/Forward, Scenario
 position, direct links and keyboard dismissal.
+`node scripts/check-resource-references.mjs <url>` covers reference ownership,
+counts, previews, browser history and scrolling tabs on desktop and narrow screens.
 `node scripts/check-report-navigation.mjs <url>` covers the collections, trees,
 filters and named-view exits. Set `BLR_NAV_SCREENSHOTS` to a directory outside
 the Product Model to save layout captures.

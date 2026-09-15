@@ -194,9 +194,9 @@ describe('stable Product Report', () => {
     expect(hasAuthoredBody(order)).toBe(true)
     const overview = tabsFor(workspace, order).find((tab: any) => tab.id === 'overview')!
     expect(overview.blocks).toContain('detail')
-    // A thing with States reads its machine on a peer tab; one without has only the Overview.
-    expect(tabsFor(workspace, order).map((tab: any) => tab.id)).toEqual(['overview', 'lifecycle'])
-    expect(tabsFor(workspace, workspace.entities.find((item: any) => item.id === 'cart')).map((tab: any) => tab.id)).toEqual(['overview'])
+    // Lifecycle is specific to things with States; Connections remains a separate reading.
+    expect(tabsFor(workspace, order).map((tab: any) => tab.id)).toEqual(['overview', 'lifecycle', 'connections'])
+    expect(tabsFor(workspace, workspace.entities.find((item: any) => item.id === 'cart')).map((tab: any) => tab.id)).toEqual(['overview', 'connections'])
 
     // A Screen's own states stay the view's, never the thing's lifecycle.
     const screen = workspace.screens.find((item: any) => item.states.length)
@@ -1129,7 +1129,7 @@ describe('stable Product Report', () => {
     expect(source('app/utils/reportWorkspace.ts')).toContain('scenariosByCapability')
   })
 
-  it('uses Overview and one peer tab: Scenarios, or a Lifecycle', () => {
+  it('keeps Connections after Overview and the resource’s behavior reading', () => {
     const page = source('app/components/BlrResourcePage.vue')
     const sections = source('app/utils/pageSections.ts')
 
@@ -1137,16 +1137,28 @@ describe('stable Product Report', () => {
     for (const resource of [...workspace.capabilities, ...workspace.journeys]) {
       const tabs = tabsFor(workspace, resource)
       expect(tabs.map((tab: any) => [tab.id, tab.label])).toEqual([
-        ['overview', 'Overview'], ['scenarios', 'Scenarios']
+        ['overview', 'Overview'], ['scenarios', 'Scenarios'], ['connections', 'Connections'],
+        ...(resource.references.length ? [['references', 'References']] : [])
       ])
       const children = resource.kind === 'capability'
         ? workspace.scenariosByCapability.get(resource.id)
         : workspace.scenariosByJourney.get(resource.id)
       expect(tabs[1].count).toBe(children?.length ?? 0)
     }
-    expect(sections).toContain("if (resource.references.length) overviewBlocks.push('references')")
+    for (const resource of workspace.byKey.values()) {
+      const tabs = tabsFor(workspace, resource)
+      expect(tabs[0].blocks).not.toContain('connections')
+      expect(tabs[0].blocks).not.toContain('references')
+      const connections = tabs.find((tab: any) => tab.id === 'connections')
+      if (connections) {
+        expect(tabs.at(resource.references.length ? -2 : -1)).toBe(connections)
+        expect(connections.blocks).toEqual(['connections'])
+      }
+      if (resource.references.length) {
+        expect(tabs.at(-1)).toMatchObject({ id: 'references', count: resource.references.length, blocks: ['references'] })
+      } else expect(tabs.some((tab: any) => tab.id === 'references')).toBe(false)
+    }
     expect(sections).not.toContain("id: 'diagram'")
-    expect(sections).not.toContain("id: 'references'")
     /* A strip with one tab switches nothing, so it does not render — and the
        ways out live on the heading row, which the host draws. */
     expect(page).toContain('v-if="tabs.length > 1"')
@@ -1183,12 +1195,11 @@ describe('stable Product Report', () => {
     expect(reportShell).toContain("defineModel<string | null>('resource'")
     /* The open tab is the page's model, not a ref it keeps to itself: a
        Lifecycle a reader cannot link to or refresh into is a modal with extra
-       steps. A Scenario key in the address still outranks it. */
+       steps. Scenario addresses retain the child for its own References. */
     expect(reportShell).toContain("defineModel<string>('tab'")
     expect(reportShell).toContain('v-model:tab="resourceTab"')
     expect(page).toContain("defineModel<string>('tab'")
     expect(page).not.toContain("const active = ref<PageTabId>('overview')\n\nwatch")
-    expect(page).toContain("if (requestedChild.value && isTab('scenarios'))")
     /* Opening a page opens its Overview; the tab is reset in the same tick as
        the page, so one gesture is one history entry. */
     expect(reportShell).toContain("openResource.value = resource.key\n  resourceTab.value = 'overview'")

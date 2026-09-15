@@ -6,15 +6,18 @@ import { docsForResourceKind } from '../utils/resourceDocs'
 import { KIND_TERM } from '../utils/vocabulary'
 import { parentOf } from '../utils/pageSections'
 import { defaultTopologyReading } from '../utils/topologyState'
+import { referenceHref } from '../utils/referenceNavigation'
 
 const props = defineProps<{
   workspace: ReportWorkspace
   resource: AnyResourceView | null
+  reference?: string | null
+  previousReference?: string | null
   previous?: AnyResourceView | null
   returnFocus?: HTMLElement | null
   fallbackFocus?: HTMLElement | null
 }>()
-const emit = defineEmits<{ close: [], back: [], open: [resource: AnyResourceView], view: [section: string, resource: AnyResourceView] }>()
+const emit = defineEmits<{ close: [], back: [], open: [resource: AnyResourceView], view: [section: string, resource: AnyResourceView], referenceBack: [], referenceOpen: [href: string] }>()
 const tab = defineModel<string>('tab', { default: 'overview' })
 const scenarioRoute = defineModel<string | null>('scenarioRoute', { default: null })
 const routeColumns = defineModel<string>('routeColumns', { default: 'auto' })
@@ -33,6 +36,24 @@ const exits = computed(() => subject.value ? resourceViewLinks(subject.value, pr
 const docs = computed(() => docsForResourceKind(subject.value?.kind ?? 'product'))
 const tabsTarget = useTemplateRef('tabsTarget')
 const heading = useTemplateRef('heading')
+const referenceHeading = useTemplateRef('referenceHeading')
+function referenceInfo(href: string) {
+  const url = new URL(href, 'http://businesslens.local')
+  const source = url.pathname === '/_businesslens/code'
+  const reference = props.workspace.references.find(item => {
+    const original = new URL(referenceHref(item.reference), 'http://businesslens.local')
+    return source ? referenceHref(item.reference) === href : original.pathname === url.pathname
+  })?.reference
+  let target = source ? url.searchParams.get('target') ?? '' : url.pathname.slice('/_businesslens/file/'.length)
+  if (!source) { try { target = decodeURIComponent(target) } catch { /* Show malformed paths literally. */ } }
+  const raw = url.searchParams.get('raw') === '1'
+  if (raw) url.searchParams.delete('raw')
+  else url.searchParams.set('raw', '1')
+  return { title: reference?.title || target, target, kind: source ? 'code' as const : reference?.kind ?? 'doc' as const,
+    sourceLink: !source && /\.md$/i.test(target) ? url.pathname + url.search : null, raw }
+}
+const file = computed(() => props.reference ? referenceInfo(props.reference) : null)
+const fileBackTitle = computed(() => props.previousReference ? referenceInfo(props.previousReference).title : props.resource?.title ?? 'References')
 const readingKey = computed(() => JSON.stringify([props.workspace.identity.id, 'resource', props.resource?.key, tab.value]))
 const { element: pane, save, restore, hasSaved } = useBlrTopologyScroll(readingKey)
 const restorePosition = computed(() => { void readingKey.value; return hasSaved() })
@@ -53,8 +74,14 @@ watch(reading, value => {
 
 function focusReading(event?: Event) {
   event?.preventDefault()
-  void nextTick(() => heading.value?.focus({ preventScroll: true }))
+  void nextTick(() => (props.reference ? referenceHeading.value : heading.value)?.focus({ preventScroll: true }))
 }
+let referenceFocus: HTMLElement | null = null
+watch(() => props.reference, (next, before) => {
+  if (next && !before) { save(); referenceFocus = document.activeElement as HTMLElement | null }
+  if (next) focusReading()
+  else if (before && props.resource) void nextTick(async () => { await restore(); (referenceFocus?.isConnected ? referenceFocus : heading.value)?.focus({ preventScroll: true }) })
+})
 watch(() => props.resource?.key, key => { if (key) focusReading() })
 function closeFocus(event: Event) {
   event.preventDefault()
@@ -66,19 +93,34 @@ function open(resource: AnyResourceView) { save(); emit('open', resource) }
 
 <template>
   <USlideover
-    :open="Boolean(resource)"
+    :open="Boolean(resource || reference)"
     :modal="narrow"
     :overlay="narrow"
-    :title="resource?.title"
-    :description="resource ? ENTITY_KIND_META[resource.kind].label : ''"
+    :title="file?.title ?? resource?.title"
+    :description="file ? 'Reference' : resource ? ENTITY_KIND_META[resource.kind].label : ''"
     :content="{ onInteractOutside: (event: Event) => event.preventDefault(), onOpenAutoFocus: focusReading, onCloseAutoFocus: closeFocus }"
     :ui="{ content: 'blr-resource-slideover w-full max-w-full md:max-w-[min(880px,70vw)] shadow-2xl', body: 'min-h-0 flex-1 overflow-hidden p-0 sm:p-0' }"
     @update:open="!$event && emit('close')"
     @after:enter="restore"
   >
     <template #content>
-      <div v-if="resource" class="blr-resource-panel flex h-full min-h-0 flex-col" data-resource-panel>
-        <header class="flex shrink-0 items-start gap-2 border-b border-default px-5 py-3">
+      <div v-if="resource || reference" class="blr-resource-panel flex h-full min-h-0 flex-col" data-resource-panel>
+        <template v-if="file && reference">
+          <header class="flex shrink-0 items-start gap-2 border-b border-default px-5 py-3" data-reference-header>
+            <UTooltip :text="`Back to ${fileBackTitle}`"><UButton icon="i-lucide-arrow-left" color="neutral" variant="ghost" size="sm" class="-ms-1 shrink-0" :aria-label="`Back to ${fileBackTitle}`" @click="emit('referenceBack')" /></UTooltip>
+            <BlrReferenceIcon :kind="file.kind" class="mt-1.5 size-4" />
+            <div class="min-w-0 flex-1 pt-0.5">
+              <h2 ref="referenceHeading" tabindex="-1" class="text-base leading-6 font-semibold text-highlighted outline-none [overflow-wrap:anywhere]" data-reference-heading>{{ file.title }}</h2>
+              <p class="mt-0.5 text-xs text-muted [overflow-wrap:anywhere]">{{ file.title !== file.target ? file.target : 'Reference' }}</p>
+            </div>
+            <div class="flex shrink-0 items-center gap-1">
+              <UTooltip v-if="file.sourceLink" :text="file.raw ? 'View document' : 'View source'"><UButton :icon="file.raw ? 'i-lucide-file-text' : 'i-lucide-file-code'" :aria-label="file.raw ? 'View document' : 'View source'" color="neutral" variant="ghost" size="sm" @click="emit('referenceOpen', file.sourceLink!)" /></UTooltip>
+              <UTooltip text="Close resource"><UButton icon="i-lucide-x" color="neutral" variant="ghost" size="sm" aria-label="Close resource" @click="emit('close')" /></UTooltip>
+            </div>
+          </header>
+          <BlrReferencePreview :href="reference" :title="file.title" :scope="workspace.identity.id" @navigate="emit('referenceOpen', $event)" @close="emit('close')" />
+        </template>
+        <header v-if="resource" v-show="!reference" class="flex shrink-0 items-start gap-2 border-b border-default px-5 py-3">
           <UTooltip v-if="previous" :text="`Back to ${previous.title}`">
             <UButton icon="i-lucide-arrow-left" color="neutral" variant="ghost" size="sm" class="-ms-1 shrink-0" :aria-label="`Back to ${previous.title}`" @click="save(); emit('back')" />
           </UTooltip>
@@ -110,9 +152,10 @@ function open(resource: AnyResourceView) { save(); emit('open', resource) }
             </UTooltip>
           </div>
         </header>
-        <div ref="tabsTarget" class="blr-resource-tabs shrink-0" data-page-tabs-host />
-        <div ref="pane" class="blr-pane min-h-0 flex-1 p-5" data-resource-scroll @scroll.capture.passive="save">
+        <div ref="tabsTarget" v-show="!reference" class="blr-resource-tabs shrink-0" data-page-tabs-host />
+        <div ref="pane" v-show="!reference" class="blr-pane min-h-0 flex-1 p-5" data-resource-scroll @scroll.capture.passive="!reference && save()">
           <BlrResourcePage
+            v-if="resource"
             :key="resource.key"
             v-model:tab="tab"
             v-model:scenario-route="scenarioRoute"
@@ -157,7 +200,7 @@ function open(resource: AnyResourceView) { save(); emit('open', resource) }
 .blr-resource-tabs :deep([role='tab']) { padding-inline: 1rem; }
 
 .blr-resource-tabs :deep([data-slot='indicator']) {
-  bottom: -1px;
+  bottom: 0;
   background-color: var(--ui-text-highlighted);
 }
 

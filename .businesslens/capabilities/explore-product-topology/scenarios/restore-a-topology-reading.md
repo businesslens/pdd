@@ -51,4 +51,6 @@ The Developer resumes the same reading after navigation, refresh, or a valid rec
 - Opening a resource preserves the selected collection or comparison, drawing, filters, expansion and viewport behind its reading.
 - Following Journey → Entity → Business Rule and using Back restores each previous resource’s tab, expanded Scenario and reading position. Close dismisses the resource reading and returns to the original working view.
 - The underlying view and resource tab have independent addresses: a Graph remains selected while an Entity Lifecycle is open, including after refresh.
+- Opening a relationship from Connections and returning with Back restores Connections and its reading position; refresh preserves that reading too.
+- References remains selected after refresh and after leaving the resource and returning with Back, including a Scenario's own References.
 - A direct resource address without an originating view opens over its owning collection. A removed resource closes its reading while keeping the working view available.

@@ -2,6 +2,7 @@
 import { MATRIX_SECTIONS, MATRIX_DESTINATIONS, destinationForSection, destinationForLocation, graphForCollection, collectionKindFor } from '../utils/reportDestinations'
 import { findProductTopologyView } from '../utils/productTopologyViews'
 import { resourceNavigationKey } from '../utils/resourceNavigation'
+import { referenceNavigationKey, localReferenceHref } from '../utils/referenceNavigation'
 import type { TopologyReading } from '../utils/topologyState'
 import { defaultTopologyReading } from '../utils/topologyState'
 import type {
@@ -268,6 +269,26 @@ const openPage = computed<AnyResourceView | null>(() => openPageKey.value
 
 /* The resource is inspected over the working view; it never selects a rail row. */
 const navigation = inject(resourceNavigationKey, null)
+const referenceNavigation = inject(referenceNavigationKey, null)
+const reference = referenceNavigation?.current ?? ref<string | null>(null)
+const localReferenceTrail = ref<Array<string | null>>([])
+const previousReference = referenceNavigation?.previous ?? computed(() => localReferenceTrail.value.at(-1) ?? null)
+function openReference(href: string) {
+  const target = localReferenceHref(href)
+  if (!target || target === reference.value) return
+  if (!openResource.value && !reference.value) returnFocus.value = document.activeElement as HTMLElement | null
+  if (referenceNavigation) referenceNavigation.open(target)
+  else { localReferenceTrail.value.push(reference.value); reference.value = target }
+}
+function backReference() {
+  if (referenceNavigation) referenceNavigation.back()
+  else reference.value = localReferenceTrail.value.pop() ?? null
+}
+provide(referenceNavigationKey, {
+  current: reference, previous: previousReference,
+  href: href => referenceNavigation?.href(href) ?? href,
+  open: openReference, back: backReference
+})
 const returnFocus = shallowRef<HTMLElement | null>(null)
 const workingHeading = useTemplateRef('workingHeading')
 const localTrail = ref<Array<{ key: string, tab: string }>>([])
@@ -437,6 +458,8 @@ const { element: resourcePane, save: savePageScroll, restore: restorePageScroll 
 
 /* Close clears only inspection state. The working view keeps its reading. */
 function leavePage() {
+  reference.value = null
+  localReferenceTrail.value = []
   openResource.value = null
   resourceTab.value = 'overview'
   scenarioRoute.value = null
@@ -467,13 +490,18 @@ function openView(sectionId: string, resource?: AnyResourceView) {
 }
 
 /** Resolve a key from an overview projection and open its page. */
-function openResourceKey(key: string) {
+function openResourceKey(key: string, tab = 'overview') {
   const resource = resolveResourceKey(props.workspace, key)
-  if (resource) openResourcePage(resource)
+  if (resource) {
+    openResourcePage(resource)
+    resourceTab.value = tab
+  }
 }
 
 /** Inspection preserves the working view, including a graph's drawing and focus. */
 function openResourcePage(resource: AnyResourceView) {
+  reference.value = null
+  localReferenceTrail.value = []
   if (resource.key === openResource.value) return
   mobileNavOpen.value = false
   if (!openResource.value) returnFocus.value = document.activeElement as HTMLElement | null
@@ -872,11 +900,15 @@ const orphanScenarios = computed(() => props.workspace.scenarios
       v-model:route-columns="routeColumns"
       :workspace="workspace"
       :resource="openPage"
+      :reference="reference"
+      :previous-reference="previousReference"
       :previous="previousResource"
       :return-focus="returnFocus"
       :fallback-focus="workingHeading"
       @open="openResourcePage"
       @back="backResource"
+      @reference-back="backReference"
+      @reference-open="openReference"
       @close="leavePage"
       @view="openView"
     />

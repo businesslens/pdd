@@ -1,140 +1,142 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import type { TreeItem } from '@nuxt/ui'
 import type { ReportReference } from 'businesslens/report'
+import { referenceNavigationKey, referenceHref, referenceFileHref, isExternalReference as isExternal } from '../utils/referenceNavigation'
 
-withDefaults(defineProps<{
+const props = withDefaults(defineProps<{
   references: ReportReference[]
-  /** `inline` is a wrapped chip row; `list` is one reference per line. */
-  variant?: 'inline' | 'list'
+  /** Isolates expansion by report and the resource that owns the attachments. */
+  scope: string
   label?: string
-}>(), {
-  variant: 'inline',
-  label: 'References'
-})
+}>(), { label: 'References' })
 
-/** Role is why the artefact is attached — never a verification result. */
+const KIND_LABEL: Record<ReportReference['kind'], string> = {
+  code: 'Code', visual: 'Visuals', doc: 'Documentation',
+  prd: 'Product requirements', spec: 'Specifications', proposal: 'Proposals',
+  adr: 'Architecture decisions', research: 'Research'
+}
+/** Role describes why material is attached, never a verification result. */
 const ROLE_TONE: Record<string, 'primary' | 'neutral' | 'secondary'> = {
-  intent: 'primary',
-  implementation: 'secondary',
-  context: 'neutral'
+  intent: 'primary', implementation: 'secondary', context: 'neutral'
+}
+const navigation = inject(referenceNavigationKey, null)
+const localHref = referenceFileHref
+const isLocalImage = (reference: ReportReference) => !isExternal(reference.target)
+  && reference.kind !== 'code' && /\.(png|jpe?g|gif|webp|avif|svg)$/i.test(reference.target.split(/[?#]/)[0] ?? '')
+const hrefFor = (reference: ReportReference) => isExternal(reference.target)
+  ? reference.target : navigation?.href(referenceHref(reference)) ?? referenceHref(reference)
+function follow(event: MouseEvent, reference: ReportReference) {
+  event.stopPropagation()
+  if (!navigation || isExternal(reference.target) || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+  event.preventDefault()
+  navigation.open(referenceHref(reference))
 }
 
-/**
- * Where the local viewer serves repository files.
- *
- * Only a workspace-profile report carries repository-relative targets; the
- * portable profile drops them, so a host without this mount never renders one.
- */
-const ASSET_PREFIX = '/_businesslens/file/'
-const IMAGE_EXTENSIONS = /\.(png|jpe?g|gif|webp|avif|svg)$/i
+interface Node extends TreeItem {
+  value: string
+  label: string
+  kind: ReportReference['kind']
+  reference?: ReportReference
+  referenceIndex?: number
+  count?: number
+  preview?: boolean
+  children?: Node[]
+}
+const items = computed<Node[]>(() => Object.entries(KIND_LABEL).flatMap(([kind, label]) => {
+  const children = props.references.flatMap((reference, index): Node[] => {
+    if (reference.kind !== kind) return []
+    const value = JSON.stringify([reference.kind, reference.target, reference.role, reference.state, index])
+    return [{ value, kind: reference.kind, label: reference.title || reference.target, reference, referenceIndex: index,
+      children: isLocalImage(reference)
+        ? [{ value: `${value}:preview`, kind: reference.kind, label: `Preview: ${reference.title || reference.target}`, reference, preview: true }]
+        : undefined }]
+  })
+  return children.length ? [{ value: kind, kind: kind as ReportReference['kind'], label, count: children.length, children }] : []
+}))
+const branchKeys = computed(() => items.value.flatMap(group => [group.value, ...group.children!.filter(item => item.children).map(item => item.value)]))
+const expanded = useBlrReferenceExpansion(computed(() => props.scope), branchKeys, computed(() => items.value.map(item => item.value)))
 
-const isExternal = (target: string) => /^https?:\/\//i.test(target)
-
-/** A code target carries a `#symbol` or `:line` suffix that is not part of the path. */
-const isCode = (reference: ReportReference) => reference.kind === 'code'
-
-const localHref = (target: string) =>
-  `${ASSET_PREFIX}${target.split('/').map(encodeURIComponent).join('/')}`
-
-const isLocalImage = (reference: ReportReference) =>
-  !isExternal(reference.target)
-  && !isCode(reference)
-  && IMAGE_EXTENSIONS.test(reference.target.split(/[?#]/)[0] ?? '')
-
-const hrefFor = (reference: ReportReference) =>
-  isExternal(reference.target)
-    ? reference.target
-    : isCode(reference)
-      ? undefined
-      : localHref(reference.target)
-
-const tagFor = (reference: ReportReference) => hrefFor(reference) ? 'a' : 'span'
-
-const keyFor = (reference: ReportReference) => `${reference.kind}-${reference.target}`
-
-const expanded = ref<string>()
-const onActivate = (reference: ReportReference, event: MouseEvent) => {
-  if (!isLocalImage(reference)) return
+const select = (event: Event, item: Node) => {
   event.preventDefault()
-  const key = keyFor(reference)
-  expanded.value = expanded.value === key ? undefined : key
+  if (item.children?.length) {
+    expanded.value = expanded.value.includes(item.value)
+      ? expanded.value.filter(value => value !== item.value) : [...expanded.value, item.value]
+  } else {
+    // Row clicks and Enter/Space follow the same native link as its label.
+    // Label clicks stop propagation, preserving new-tab and copy-link actions.
+    (event.currentTarget as HTMLElement | null)?.querySelector<HTMLAnchorElement>('a')?.click()
+  }
 }
 </script>
 
 <template>
-  <div v-if="references.length" class="space-y-2">
+  <div v-if="references.length" class="min-w-0 space-y-2">
     <p v-if="label" class="blr-field flex items-center gap-2">
-      <BlrReferenceIcon class="size-3.5" />
-      {{ label }} · {{ references.length }}
+      <BlrReferenceIcon class="size-3.5" />{{ label }} · {{ references.length }}
     </p>
-    <ul :class="variant === 'inline' ? 'flex flex-wrap gap-1.5' : 'space-y-1.5'">
-      <li
-        v-for="reference in references"
-        :key="keyFor(reference)"
-        class="min-w-0"
-        :class="isLocalImage(reference) && variant === 'list' && 'space-y-1.5'"
+    <div class="min-w-0 rounded-xl border border-default bg-elevated/20 px-3 py-2">
+      <UTree
+        v-model:expanded="expanded"
+        :items="items"
+        :get-key="(item: Node) => item.value"
+        :as="{ link: 'div' }"
+        :aria-label="label || 'References'"
+        color="neutral"
+        size="md"
+        :ui="{
+          link: 'min-w-0 items-start gap-2 rounded-md bg-transparent transition hover:bg-elevated/40 hover:before:bg-transparent'
+        }"
+        @select="select"
+        @toggle="event => { if (event.detail.originalEvent.type === 'click') event.preventDefault() }"
       >
-        <component
-          :is="tagFor(reference)"
-          :href="hrefFor(reference)"
-          :target="isExternal(reference.target) ? '_blank' : undefined"
-          rel="noopener noreferrer"
-          class="inline-flex max-w-full items-center gap-1.5 rounded-md border border-default bg-elevated/50 px-2 py-1 text-xs"
-          :class="hrefFor(reference) && 'hover:border-inverted/30 hover:bg-elevated'"
-          :title="`${reference.kind} · ${reference.role} · ${reference.target}`"
-          @click="onActivate(reference, $event)"
-        >
-          <BlrReferenceIcon :kind="reference.kind" class="size-3.5" />
-          <span class="truncate text-sm text-default">
-            {{ reference.title || reference.target }}
-          </span>
-          <UBadge
-            v-if="reference.state"
-            color="neutral"
-            variant="outline"
-            size="sm"
-            class="shrink-0"
-            :title="`Depicts the ${reference.state} product state`"
-          >
-            {{ reference.state }}
-          </UBadge>
-          <UBadge
-            :color="ROLE_TONE[reference.role] || 'neutral'"
-            variant="subtle"
-            size="sm"
-            class="shrink-0"
-          >
-            {{ reference.role }}
-          </UBadge>
-          <UIcon
-            v-if="isLocalImage(reference)"
-            :name="expanded === keyFor(reference) ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
-            class="size-3.5 shrink-0 text-dimmed"
-          />
-        </component>
-
-        <!--
-          A local image is the point of a `visual` reference, so show it rather
-          than describing it. Collapsed by default: the report is a place people
-          scan, and an always-open gallery buries the fields beneath it.
-        -->
-        <div
-          v-if="isLocalImage(reference) && expanded === keyFor(reference)"
-          class="mt-1.5 overflow-hidden rounded-md border border-default bg-elevated/30 p-2"
-        >
-          <a :href="localHref(reference.target)" target="_blank" rel="noopener noreferrer">
-            <img
-              :src="localHref(reference.target)"
-              :alt="reference.title || reference.target"
-              loading="lazy"
-              class="max-h-96 w-auto max-w-full rounded"
+        <template #item="{ item, expanded: open, handleToggle }">
+          <template v-if="!item.preview">
+            <button
+              v-if="item.children?.length"
+              type="button"
+              class="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              :aria-label="`${open ? 'Collapse' : 'Expand'} ${item.label}`"
+              :aria-expanded="open"
+              @click.stop="handleToggle()"
+              @keydown.stop
             >
-          </a>
-          <p class="blr-field mt-1.5 truncate">
-            {{ reference.target }}
-          </p>
-        </div>
-      </li>
-    </ul>
+              <UIcon name="i-lucide-chevron-right" class="size-3.5 text-dimmed transition-transform" :class="open && 'rotate-90'" />
+            </button>
+            <BlrReferenceIcon :kind="item.kind" class="mt-0.5 size-3.5" />
+
+            <span v-if="!item.reference" class="min-w-0 flex-1 cursor-pointer font-semibold text-highlighted">{{ item.label }}</span>
+            <span v-else class="flex min-w-0 flex-1 select-text flex-wrap items-center gap-x-2 gap-y-1" :data-reference-target="item.reference.target">
+              <component
+                :is="!item.children && hrefFor(item.reference) ? 'a' : 'span'"
+                :href="!item.children ? hrefFor(item.reference) : undefined"
+                :target="isExternal(item.reference.target) ? '_blank' : undefined"
+                :aria-description="isExternal(item.reference.target) ? 'Opens in a new tab' : 'Opens in this report'"
+                rel="noopener noreferrer"
+                class="min-w-0 text-default [overflow-wrap:anywhere]"
+                :class="item.children ? 'cursor-pointer' : hrefFor(item.reference) && 'hover:text-primary hover:underline'"
+                :title="item.reference.target"
+                @click="(event: MouseEvent) => { if (!item.children) follow(event, item.reference!) }"
+                @keydown="(event: KeyboardEvent) => { if (!item.children) event.stopPropagation() }"
+              >{{ item.label }}<UIcon v-if="isExternal(item.reference.target)" name="i-lucide-external-link" class="ms-1 inline-block size-3 align-baseline text-dimmed" aria-hidden="true" data-external-reference /></component>
+              <UBadge v-if="item.reference.state" color="neutral" variant="outline" size="sm" :title="`Depicts the ${item.reference.state} product state`">{{ item.reference.state }}</UBadge>
+              <UBadge :color="ROLE_TONE[item.reference.role] || 'neutral'" variant="subtle" size="sm">{{ item.reference.role }}</UBadge>
+              <span
+                v-if="item.reference.title && item.reference.title !== item.reference.target"
+                class="blr-meta w-full min-w-0 [overflow-wrap:anywhere]"
+                data-reference-location
+              >{{ item.reference.target }}</span>
+              <slot name="reference-owner" :index="item.referenceIndex!" :reference="item.reference" />
+            </span>
+
+            <span v-if="item.count !== undefined" class="blr-meta">{{ item.count }}</span>
+          </template>
+          <div v-else class="min-w-0 flex-1 rounded-md py-1" data-reference-preview>
+            <a :href="hrefFor(item.reference!)" class="block w-fit max-w-full" @click="follow($event, item.reference!)" @keydown.stop>
+              <img :src="localHref(item.reference!.target)" :alt="item.reference!.title || item.reference!.target" loading="lazy" class="max-h-96 w-auto max-w-full rounded border border-default">
+            </a>
+          </div>
+        </template>
+      </UTree>
+    </div>
   </div>
 </template>

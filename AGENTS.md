@@ -207,9 +207,15 @@ costed already.
   Capabilities, Journeys, Business Rules. Experiences and Screens are reached
   through Interfaces, Scenarios through their parent, and a collection's Graph
   through its drawing switch.
-- **A resource reading is Overview and at most one peer tab** — Scenarios for a
-  Capability or Journey, Lifecycle for an Entity with States. A view comparing
-  resources belongs to the collection, never to one of them.
+- **A resource reading separates meaning, behavior, connections and references.** Overview
+  carries the resource's explanation and contextual links. Scenarios follows
+  for a Capability or Journey, Lifecycle for an Entity with States. Connections
+  follows when relationships exist and includes the complete relationship
+  list, including links also explained in Overview. References comes last when
+  attachments exist, with a count and attribution to the inspected resource,
+  including a Scenario's own attachments. This supersedes the limit
+  of one peer tab. A view comparing resources belongs to the collection, never
+  to one of them.
 - **The Product's page is the report Overview** — headed `Overview` like the
   rail row that opens it and qualified by
   `Product`. Its readings are About, Coverage and References, and it never

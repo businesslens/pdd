@@ -47,7 +47,10 @@ its owning collection when it names no working view.
 
 - Open any related resource’s reading
 - Read a Scenario, and compare its named routes side by side
-- Read this resource’s incoming and outgoing connections in Overview
+- Read this resource’s complete incoming and outgoing relationships in Connections
+- Read the resource's attached material in References, including each attachment's role and available image preview
+- Open a Code Reference inside the slideover while preserving the resource reading
+- Open a Markdown Reference as a formatted document while keeping the resource reading open
 - Open a named view of another subject, focused on this resource, from the heading row
 - Read the documentation for this resource type
 - Read an Interface’s delivered Capabilities and contained resources in Overview
@@ -61,8 +64,45 @@ its owning collection when it names no working view.
 
 ### Overview open
 
-The resource's authored meaning, facts, relations, supporting material, and
-References.
+The resource's authored meaning, facts, and supporting material.
+Contextual links stay beside the facts they explain, including the Domain and
+Rules governing individual facts.
+
+### Connections open
+
+The resource's complete relationship list, grouped by direction and relationship.
+Relationships remain available here when their targets also appear in Overview.
+Connections follows Lifecycle or Scenarios when that reading exists, otherwise
+Overview. It is offered only when relationships are present. Its address and
+reading position survive refresh and following a related resource then returning
+with Back. Selecting Connections while reading a Scenario opens its parent's
+Connections.
+
+### References open
+
+The inspected resource's attached documents, designs, code references and images,
+grouped by reference type in an expandable tree with counts. Groups start open;
+each attachment keeps its role, and local images expand into an inline preview.
+An authored title keeps its file path or URL visible beneath it.
+Local References replace the slideover reading while preserving the resource's
+selected tab, expansion and scroll. Back restores that reading or the previously
+opened document; Close returns to the working view. Refresh and browser
+Back/Forward retain the opened file. External links show an external-link icon
+and open in a new tab.
+Code References open the local source file inside the slideover with line
+numbers. A line locator highlights that range; a symbol locator highlights its
+first text match, with a visible explanation when no match is found. Only code
+targets attached to the current model can be opened this way.
+Markdown References open inside the slideover with formatted headings,
+tables, lists and code blocks. Document metadata is collapsed separately from
+the body, and View source shows the original file. Relative document links and
+images resolve within the repository, and linked Markdown keeps the same preview.
+Expansion is remembered for this resource when changing readings, returning with
+Back or refreshing. References is the last reading and names its count;
+it is offered only when attachments exist. A Scenario's References belongs to
+that Scenario, while its behavioral reading stays inside its parent. The selected
+reading survives Back and refresh. Documentation explaining the resource type
+remains available from the heading.
 
 ### Scenarios open
 
@@ -83,8 +123,10 @@ and the ways out sit on the heading row whichever reading is open.
 ## Capability boundary
 
 One resource’s authored meaning, relations, and resource-specific readings.
-Overview contains Connections and Interface delivery; an Entity reads its state
-machine in Lifecycle. Every comparison across resources — how Journeys compose,
+Overview contains the resource's explanation and Interface delivery; Connections
+contains its relationships, References contains its attached material, and an
+Entity reads its state machine in Lifecycle.
+Every comparison across resources — how Journeys compose,
 how Interfaces deliver — belongs to the owning collection, because a page
 showing one resource cannot answer a question about how several compare.
 The working view stays selected while any resource is inspected.

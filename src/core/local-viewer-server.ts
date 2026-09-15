@@ -1,11 +1,13 @@
 import { spawn } from 'node:child_process'
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http'
 import { lstatSync, readFileSync, watch, type FSWatcher } from 'node:fs'
-import { basename, extname, resolve, sep } from 'node:path'
+import { basename, extname, relative, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { createRequire } from 'node:module'
 import type { ProductReportV13 } from './portable.js'
 import { MAX_PRODUCT_LOGO_BYTES, validateProductLogo } from '../logo.js'
+import { localCodePreview } from './local-code-preview.js'
+import { localMarkdownPreview } from './local-markdown-preview.js'
 
 const LOOPBACK_HOST = '127.0.0.1'
 const REPORT_PATH = '/_businesslens/report.json'
@@ -13,6 +15,7 @@ const EVENTS_PATH = '/_businesslens/events'
 const HEALTH_PATH = '/_businesslens/health'
 const LOGO_PATH = '/_businesslens/logo.svg'
 const ASSET_PREFIX = '/_businesslens/file/'
+const CODE_PATH = '/_businesslens/code'
 const VIEWER_ROOT = fileURLToPath(new URL('./viewer/', import.meta.url))
 const BRAND_ROOT = resolve(createRequire(import.meta.url).resolve('businesslens/package.json'), '../layers/nuxt/theme/public/brand')
 
@@ -41,6 +44,7 @@ const CONTENT_TYPES: Record<string, string> = {
  * inert product material only, never source, never an executable, never a
  * format that scripts when opened. Everything else 404s whether or not it
  * exists, so the mount cannot be used to enumerate a repository.
+ * Declared code References use a separate escaped, read-only source preview.
  */
 const ASSET_CONTENT_TYPES: Record<string, string> = {
   '.avif': 'image/avif',
@@ -200,7 +204,7 @@ function securityHeaders(response: ServerResponse): void {
   response.setHeader('cache-control', 'no-store')
   response.setHeader(
     'content-security-policy',
-    "default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; manifest-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+    "default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; frame-src 'self'; manifest-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
   )
   response.setHeader('cross-origin-resource-policy', 'same-origin')
   response.setHeader('permissions-policy', 'camera=(), microphone=(), geolocation=()')
@@ -290,6 +294,11 @@ function assetFile(assetRoot: string, pathname: string): string | undefined {
   if (!candidate.startsWith(`${root}${sep}`)) return undefined
   if (!(extname(candidate).toLowerCase() in ASSET_CONTENT_TYPES)) return undefined
   try {
+    let part = root
+    for (const segment of relative(root, candidate).split(sep)) {
+      part = resolve(part, segment)
+      if (lstatSync(part).isSymbolicLink()) return undefined
+    }
     const stat = lstatSync(candidate)
     if (!stat.isFile() || stat.isSymbolicLink()) return undefined
     if (stat.size > MAX_ASSET_BYTES) return undefined
@@ -310,9 +319,21 @@ function repositoryAsset(response: ServerResponse, file: string, head: boolean):
     }
   }
   response.statusCode = 200
+  if (extension === '.pdf') {
+    response.setHeader('x-frame-options', 'SAMEORIGIN')
+    response.setHeader('content-security-policy', "default-src 'none'; script-src 'none'; frame-ancestors 'self'")
+  }
   response.setHeader('content-type', ASSET_CONTENT_TYPES[extension] ?? 'application/octet-stream')
   response.setHeader('content-length', body.byteLength)
   response.end(head ? undefined : body)
+}
+
+function htmlPreview(response: ServerResponse, preview: { status: number, html: string }, head: boolean, images = false): void {
+  response.statusCode = preview.status
+  response.setHeader('content-security-policy', `default-src 'none'; script-src 'none'; style-src 'unsafe-inline'; ${images ? "img-src 'self' https: http:; " : ''}base-uri 'none'; form-action 'none'; frame-ancestors 'none'`)
+  response.setHeader('content-type', 'text/html; charset=utf-8')
+  response.setHeader('content-length', Buffer.byteLength(preview.html))
+  response.end(head ? undefined : preview.html)
 }
 
 function requestHandler(
@@ -335,7 +356,8 @@ function requestHandler(
       return
     }
 
-    const pathname = new URL(request.url ?? '/', `http://${LOOPBACK_HOST}:${port}`).pathname
+    const url = new URL(request.url ?? '/', `http://${LOOPBACK_HOST}:${port}`)
+    const pathname = url.pathname
     if (pathname === HEALTH_PATH) {
       json(response, 200, { ok: true }, head)
       return
@@ -353,9 +375,17 @@ function requestHandler(
       productLogo(response, options.logoFile, head)
       return
     }
+    if (pathname === CODE_PATH) {
+      const preview = localCodePreview(store.snapshot().report, options.assetRoot, url.searchParams.get('target') ?? '')
+      htmlPreview(response, preview, head)
+      return
+    }
     if (pathname.startsWith(ASSET_PREFIX)) {
       const asset = options.assetRoot && assetFile(options.assetRoot, pathname)
       if (!asset) json(response, 404, { message: 'Not found.' }, head)
+      else if (extname(asset).toLowerCase() === '.md' && url.searchParams.get('raw') !== '1') {
+        htmlPreview(response, localMarkdownPreview(options.assetRoot!, relative(options.assetRoot!, asset).split(sep).join('/')), head, true)
+      }
       else repositoryAsset(response, asset, head)
       return
     }

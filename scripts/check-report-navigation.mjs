@@ -307,7 +307,7 @@ try {
     if (iface) {
       await page.goto(resourceUrl('interface', iface.id))
       await expect(page.locator('[data-interface-delivery]')).toBeVisible()
-      await expect(page.locator('[data-resource-connections]').getByText('Screens available', { exact: true })).toHaveCount(0)
+      await expect(page.locator('[data-resource-connections]')).toHaveCount(0)
       const toggle = page.locator('[data-interface-delivery] button[aria-expanded]').first()
       if (await toggle.count()) {
         const old = await toggle.getAttribute('aria-expanded')
@@ -327,6 +327,8 @@ try {
     const entity = report.model.entities.find(item => item.relations.length) ?? report.model.entities[0]
     if (entity) {
       await page.goto(resourceUrl('entity', entity.id))
+      await expect(page.locator('[data-resource-connections]')).toHaveCount(0)
+      await tab(page, 'Connections').click()
       await expect(page.locator('[data-resource-connections]')).toBeVisible()
       await capture(page, `${width}-entity-connections`)
       await page.getByRole('button', { name: 'Entity relationships', exact: true }).click()

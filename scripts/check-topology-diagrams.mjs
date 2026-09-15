@@ -374,6 +374,7 @@ try {
   measurements.push({ report: stress.id, resources: 500, relations: 2000, ms: Math.round(performance.now() - started) })
   await page.locator('.blr-resource-row').first().click()
   await expect(page).toHaveURL(/e=entity/)
+  await page.getByRole('tab', { name: 'Connections', exact: true }).click()
   await expect(page.locator('[data-resource-connections]')).toBeVisible()
   await expect(page.locator('[data-resource-connections]').getByRole('heading', { name: 'Incoming' })).toBeVisible()
   await expect(page.locator('[data-resource-connections]').getByRole('heading', { name: 'Outgoing' })).toBeVisible()
