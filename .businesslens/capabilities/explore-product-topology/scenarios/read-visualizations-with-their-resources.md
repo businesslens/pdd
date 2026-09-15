@@ -3,7 +3,7 @@ kind: primary
 routes:
   local: Local
 steps:
-  - text: The Developer opens a Journey and selects composition in its Scenarios
+  - text: The Developer opens a Journey's Scenarios tab and expands a Scenario
     kind: actor
     actor: developer
     entities:
@@ -11,7 +11,7 @@ steps:
     contexts:
       local:
         place: local-report-web::resource-page
-  - text: The Product presents that Journey's Scenario compositions with each Capability occurrence in Step order and a way to read the full Scenario
+  - text: The Product presents the Scenario's Steps in order, showing each Step's Capability and location breadcrumbs
     kind: product
     entities:
       - { entity: product-model, effect: reads }
@@ -47,7 +47,7 @@ The Developer wants to inspect one Journey's Scenarios and their Capability chai
 
 ## Outcome
 
-The reading appears with its owning resource — a Journey row expands to its Scenarios in the Journeys collection, and an Interface page keeps its delivery tree — and every referenced resource can be opened. Product-wide comparisons remain available through each collection's Graph and the rail's Compare delivery.
+The reading appears with its owning resource — Scenarios are read on their parent Journey's page, and an Interface page keeps its delivery tree — and every referenced resource can be opened. Product-wide comparisons remain available through each collection's Graph and the rail's Compare delivery.
 
 ## Edge cases
 
