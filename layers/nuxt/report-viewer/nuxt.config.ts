@@ -72,6 +72,7 @@ export default defineNuxtConfig({
         'lucide:messages-square',
         'lucide:microscope',
         'lucide:minus',
+        'lucide:square-minus',
         'lucide:monitor',
         'lucide:mouse-pointer-click',
         'lucide:network',

@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Graph expand and collapse badges use compact pill shapes, neutral colors, and subtle hover feedback.
+- Graphs centre smoothly after expansion or collapse, with corner badges and clearer context on hover or keyboard focus.
+- Graph cards keep a consistent size, with ellipses for long labels and full text on hover.
 - Expand and collapse buttons now use diagonal arrow icons across pages and graphs.
 - Matrix view icons now use neutral colors.
 - Removed Intent sections from Scenario cards.

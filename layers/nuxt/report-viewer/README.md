@@ -190,8 +190,10 @@ Interface map and the four reach graphs follow a containment tree: measured
 nodes in horizontal tiers, parents above children, shared orthogonal branches,
 and a distinct Product root. A reach graph draws occurrences, so a Screen
 reached by three Capabilities appears under each of them.
-Vue Flow provides its canvas, resource styling, zoom, and pan. Deeper branches
-retain their counts and expand in place, with the choice preserved in the URL.
+Vue Flow provides its canvas, resource styling, zoom, and pan. Collapsed branches
+show corner count badges, with the expansion choice preserved in the URL.
+Expansion, collapse, and Fit smoothly centre the visible graph after layout;
+centering is immediate when the reader prefers reduced motion.
 The renderer never runs Diagram Design or generates model-controlled HTML.
 HTML readings remain available while graph geometry loads. A locally bundled
 ELK worker arranges Entity relationships and Lifecycle; it loads on demand and
