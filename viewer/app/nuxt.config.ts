@@ -34,6 +34,15 @@ const devHandlers = [
     })
   },
   {
+    // No CLI, no checkpoints and no committed model: the What changed button
+    // draws with nothing to compare against, which is a state worth seeing.
+    route: '/_businesslens/changes',
+    handler: defineEventHandler((event) => {
+      setHeader(event, 'cache-control', 'no-store')
+      return { baselines: [] }
+    })
+  },
+  {
     // The viewer opens a stream immediately; without this the dev console fills
     // with reconnect noise that hides real errors.
     route: '/_businesslens/events',
@@ -68,6 +77,7 @@ export default defineNuxtConfig({
     clientBundle: {
       icons: [
         'lucide:loader-circle',
+        'lucide:pin',
         'lucide:refresh-cw',
         'lucide:sliders-horizontal',
         'lucide:triangle-alert',

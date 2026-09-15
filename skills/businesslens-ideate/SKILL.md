@@ -122,6 +122,18 @@ Read before authoring:
     that does not exist is a claim, not a link. Coverage describes model breadth,
     not whether the plan is built; use `draft` only while the model itself
     remains under review.
+
+    Write in slices that each lint on their own, so a `businesslens view` left
+    open shows the model as it grows instead of an error until the last file:
+    - first README, `.gitignore`, product, coverage as `draft`, and one
+      Interface with its actors and Capability boundary;
+    - then one Capability at a time, together with its availability Context,
+      one Scenario, and the Entities that Scenario changes — an Entity nothing
+      changes, presents or names is a lint error on its own;
+    - then each Journey with one achieved Scenario;
+    - then each Business Rule once the two or more behaviors it governs exist.
+    Never write a resource whose targets are not written yet. Raise coverage
+    only at the end.
 11. Run the bundled linter outside the untrusted target:
 
     ```bash
@@ -131,7 +143,11 @@ Read before authoring:
 
     Fix every error and assess each warning. Green lint means structurally
     sound, not implemented or verified.
-12. Report the approved delta and implementation acceptance contract. The next
+12. Mark the round. Once lint is clean, run the same runner with
+    `checkpoint "<what this round added>"` in place of `lint --json`. One
+    checkpoint per approved delta written, never per lint fix: the local
+    report reads later work against it.
+13. Report the approved delta and implementation acceptance contract. The next
     phase is the user's injected build flow, followed by `businesslens-verify`.
     Do not implement from this skill.
 

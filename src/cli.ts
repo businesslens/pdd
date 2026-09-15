@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { resolve } from 'node:path'
 import { Command, CommanderError, Help, InvalidArgumentError } from 'commander'
+import { runCheckpoint } from './commands/checkpoint.js'
 import { runContribute } from './commands/contribute.js'
 import { runExport } from './commands/export.js'
 import { runInstall } from './commands/install.js'
@@ -130,6 +131,14 @@ function createProgram(setExitCode: (code: number) => void): Command {
     .option('--json', 'Write the lint result as JSON')
     .action((options: LintCliOptions, command: Command) => {
       setExitCode(runLint(cwdFor(command), Boolean(options.json)))
+    })
+
+  program
+    .command('checkpoint [label]')
+    .summary('Mark a round of Product Model work')
+    .description('Seal the current Product Model as a checkpoint the local report compares later work against.')
+    .action((label: string | undefined, _options: Record<string, never>, command: Command) => {
+      setExitCode(runCheckpoint(cwdFor(command), label))
     })
 
   program

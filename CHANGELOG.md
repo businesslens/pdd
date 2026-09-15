@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- The local report shows what changed: **What changed** beside Coverage opens a
+  comparison against the last commit or a checkpoint, and changed resources wear a
+  mark on their rows and pages.
+- `businesslens checkpoint "<label>"` marks a round of work; the agent skills
+  run it after each approved delta, and **Pin this state** does the same from
+  the report.
+- The report's status bar shows, beside Coverage, whether the viewer is live
+  and when the model last changed on screen.
+- `businesslens view` starts before the model exists or while it does not lint,
+  and comes alive on the first clean save, so a model can be watched from its
+  first file.
+- The agent skills write the model in slices that each lint on their own, so
+  the report stays live while the model grows.
+- Comparisons update after commits and include taxonomy changes and detailed
+  Scenario changes.
+- Local Reference file edits now appear in comparisons, with before/after text
+  and indicators for changed binary files.
+
 ## [0.14.0] - 2026-09-15
 
 - Redesigned Capability and Journey Scenarios with clearer Steps and details.

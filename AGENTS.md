@@ -23,8 +23,9 @@ were costed and then chosen against, so the same argument is not had twice.
 
 ## Layout
 
-- `src/cli.ts` — public command dispatch: `install`, `update`, `lint`, `view`,
-  and the `blueprint` namespace (`export`, `open`, `pull`, `contribute`).
+- `src/cli.ts` — public command dispatch: `install`, `update`, `lint`,
+  `checkpoint`, `view`, and the `blueprint` namespace (`export`, `open`,
+  `pull`, `contribute`).
   Only documented commands and options are accepted. Removed spellings use
   normal usage errors; there are no hidden migration commands or scope aliases.
   Before launch, publication or installation alone does not require historical
@@ -33,7 +34,9 @@ were costed and then chosen against, so the same argument is not had twice.
 - `src/core/providers.ts` — supported harness paths and detection.
 - `src/core/skill-installation.ts` — ownership-safe skill installation.
 - `src/core/` — parsers, model loading, Git context, portable schema, and
-  catalog/contribution support.
+  catalog/contribution support. `report-diff.ts` compares two reports;
+  `checkpoints.ts` seals reports into `.businesslens/cache/checkpoints/` and
+  compiles the committed model as the other baseline.
 - `layers/nuxt/report-viewer/` — the stable Nuxt Product Report, its
   complete report projection, and its dependency-free topology engine.
 - `layers/nuxt/report-viewer-lab/` — the private, unexported extension point
@@ -149,6 +152,8 @@ costed already.
   durable certainty after the surrounding code, runtime assumptions, or
   inspection method changed. Git diffs may narrow the worklist but never supply
   authority. `.businesslens/` holds product meaning, not workflow receipts.
+  Checkpoints under `cache/` are not an exception: the directory is generated,
+  ignored, and carries no meaning a clone would miss.
 
 ## Installer standards
 
@@ -198,12 +203,33 @@ costed already.
   resource opens a resource page with its own URL. The open section, page and
   tab live there too, so state survives a refresh and a recompile.
 - **The rail lists Overview, three cross-collection views, then six
-  collections.** The views — Compare delivery, What changes what, Rule
-  attachments — each compare two collections, so no collection owns them and
-  each is a row of its own. The collections are Entities, Interfaces, Domains,
-  Capabilities, Journeys, Business Rules. Experiences and Screens are reached
-  through Interfaces, Scenarios through their parent, and a collection's Graph
-  through its drawing switch.
+  collections.** The views — Compare
+  delivery, What changes what, Rule attachments — each compare two
+  collections, so no collection owns them and each is a row of its own.
+  The collections are Entities, Interfaces,
+  Domains, Capabilities, Journeys, Business Rules. Experiences and Screens are
+  reached through Interfaces, Scenarios through their parent, and a
+  collection's Graph through its drawing switch.
+- **What changed opens from the header beside Coverage.** Its button counts
+  changed resources, stays available at zero changes or before the first
+  baseline, and marks the comparison page as current. On narrow screens it
+  keeps its icon and count with an accessible name. It appears only where the
+  host supports comparisons: the local viewer does, the catalog does not.
+  The comparison keeps its own URL, baseline selector and pin control.
+- **The local report server computes What changed; the report UI renders it.**
+  The server compares the current report against the committed model or a
+  checkpoint, using the shared comparison core. It compares model resources
+  and fields, plus local Reference file contents. Edits are detected regardless
+  of which person, agent or tool made them. The browser requests the comparison
+  through the server API. A changed resource wears its mark on its row and page.
+- **Checkpoints are explicit baselines shared by the CLI and report server.**
+  The `checkpoint` command and the server API used by **Pin this state** call
+  the same checkpoint writer. Snapshots live in the generated cache and
+  survive server restarts; the browser does not store them. Creating a
+  checkpoint saves a baseline, independent of who made the edits. The skills
+  run `checkpoint` once per approved delta as a workflow convention, not a
+  requirement for detecting changes. `lint` creates no checkpoints, and no
+  silence timer or harness hook infers a work boundary.
 - **A resource page is Overview and at most one peer tab** — Scenarios for a
   Capability or Journey, Lifecycle for an Entity with States. A view comparing
   resources belongs to the collection, never to one of them.

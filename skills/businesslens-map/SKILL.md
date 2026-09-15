@@ -180,6 +180,18 @@ Read before authoring:
    - `draft` while the model itself still needs author review;
    - `partial` when useful but known areas remain unmapped;
    - `complete` only when the intended product breadth is modeled.
+
+   Write in slices that each lint on their own, so a `businesslens view` left
+   open shows the model as it grows instead of an error until the last file:
+   - first README, `.gitignore`, product, coverage as `draft`, and one
+     Interface with its actors and Capability boundary;
+   - then one Capability at a time, together with its availability Context,
+     one Scenario, and the Entities that Scenario changes — an Entity nothing
+     changes, presents or names is a lint error on its own;
+   - then each Journey with one achieved Scenario;
+   - then each Business Rule once the two or more behaviors it governs exist.
+   Never write a resource whose targets are not written yet. Raise coverage
+   only at the end.
 10. Run the bundled linter outside the untrusted target:
 
    ```bash
@@ -189,7 +201,12 @@ Read before authoring:
 
    Fix every error and assess every warning. A green lint result proves
    structure only, not semantic alignment.
-11. Report the approved files written, resource counts, inspected areas, unmapped
+11. Mark the round. Once lint is clean, run the same runner with
+    `checkpoint "<what this round wrote>"` in place of `lint --json`. One
+    checkpoint per approved delta written, never per lint fix: the local
+    report reads later work against it. Repeat steps 7–11 for each further
+    scope in the same session.
+12. Report the approved files written, resource counts, inspected areas, unmapped
     areas, limitations, useful References added, and lint result. Recommend
     `businesslens-verify` for a semantic current-state audit.
 

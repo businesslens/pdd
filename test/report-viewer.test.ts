@@ -32,6 +32,12 @@ describe('bundled icons', () => {
   )
   const asBundleName = (icon: string) => icon.replace(/^i-([a-z0-9-]+?)-/, '$1:')
 
+  it('bundles the glyphs What changed and its marks wear', () => {
+    for (const icon of ['lucide:history', 'lucide:pencil', 'lucide:pin', 'lucide:git-commit-horizontal', 'lucide:plus', 'lucide:minus']) {
+      expect(bundled.has(icon), icon).toBe(true)
+    }
+  })
+
   it('bundles the icon of every resource kind and every Interface type', () => {
     const icons = (record: unknown) =>
       Object.values(record as Record<string, { icon: string }>).map(meta => meta.icon)
@@ -1422,5 +1428,52 @@ describe('composed lifecycle', () => {
     expect(workspaceSource).not.toContain('ScenarioStepMentionView')
     expect(workspaceSource).toContain('mentions: ScenarioStepEntityView[]')
     expect(source('app/components/BlrStepEntity.vue')).toContain('mention: ScenarioStepEntityView')
+  })
+})
+
+describe('what changed', () => {
+  const changesModulePath = '../layers/nuxt/report-viewer/app/utils/reportChanges.ts'
+
+  it('keys every change the way the surfaces address resources, and picks the newest checkpoint by default', async () => {
+    const { changesByKey, changeCount, defaultBaseline, baselineTitle, changeSummary } = await import(changesModulePath)
+    const diff = {
+      product: [],
+      resources: [
+        { collection: 'capabilityScenarios', id: 'browse-catalog', title: 'Browse catalog', change: 'changed', fields: [] },
+        { collection: 'businessRules', id: 'new-rule', title: 'New rule', change: 'added', fields: [] }
+      ],
+      counts: { added: 1, removed: 0, changed: 1 }
+    }
+    const byKey = changesByKey(diff)
+    expect([...byKey.keys()]).toEqual(['capability-scenario:browse-catalog', 'rule:new-rule'])
+    expect(changeCount(diff)).toBe(2)
+    expect(changeSummary(diff)).toBe('1 added · 1 changed')
+
+    const committed = { id: 'head', kind: 'committed', available: true, at: '2026-08-08T00:00:00Z', detail: 'abcdef0 fixture' }
+    const checkpoint = { id: '20260915T100000000Z', kind: 'checkpoint', available: true, at: '2026-09-15T10:00:00.000Z', source: 'checkpoint', label: null }
+    expect(defaultBaseline([committed, checkpoint])).toBe(checkpoint.id)
+    expect(defaultBaseline([committed])).toBe('head')
+    expect(defaultBaseline([{ id: 'head', kind: 'committed', available: false, reason: 'no commit' }])).toBeNull()
+    expect(baselineTitle(committed)).toBe('Last commit')
+    expect(baselineTitle({ ...checkpoint, label: 'Mapped billing' })).toBe('Mapped billing')
+  })
+
+  it('draws the header action, the surface and the marks only where the host holds a comparison', () => {
+    const shell = source('app/components/BlrReportShell.vue')
+    const rail = source('app/components/BlrRail.vue')
+    const entry = source('app/components/BusinessLensReportViewer.vue')
+    expect(entry).toContain('changes?: ReportChanges | null')
+    expect(shell).toContain('<BlrChanges')
+    expect(shell).toContain(':change="changeByKey.get(resource.key)?.change"')
+    const header = shell.slice(shell.indexOf('<header'), shell.indexOf('</header>'))
+    expect(header).toContain('<UTooltip v-if="changes"')
+    expect(header).toContain('data-header-changes')
+    expect(header.indexOf('<BlrCoverageBadge')).toBeLessThan(header.indexOf('data-header-changes'))
+    expect(rail).not.toContain('What changed')
+    // A live host puts its pulse in the status bar in place of the generated date.
+    expect(shell).toContain('<slot v-if="$slots.status" name="status" />')
+    expect(entry).toContain('#status')
+    expect(existsSync(join(VIEWER, 'app/components/BlrChanges.vue'))).toBe(true)
+    expect(existsSync(join(VIEWER, 'app/components/BlrChangeMark.vue'))).toBe(true)
   })
 })

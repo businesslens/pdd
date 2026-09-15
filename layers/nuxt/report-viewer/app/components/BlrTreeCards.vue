@@ -9,6 +9,7 @@
  * resource opens its page; a group node only opens and closes.
  */
 import type { TreeItem } from '@nuxt/ui'
+import type { ResourceChange } from 'businesslens/report'
 import type { AnyResourceView, ReportResourceKind, ReportWorkspace } from '../utils/reportWorkspace'
 import { entityFacetOf } from '../utils/reportWorkspace'
 import type { TreeCard, TreeCardNode } from '../utils/collectionChildren'
@@ -25,6 +26,8 @@ const props = defineProps<{
   closed: string[]
   /** Expanded node values per card, where the reader has chosen; else the default. */
   expansion: Record<string, string[]>
+  /** Each resource's standing against the host's baseline, by key, where the host has one. */
+  changes?: Map<string, ResourceChange>
 }>()
 const emit = defineEmits<{ open: [resource: AnyResourceView], close: [key: string, closed: boolean], expand: [key: string, values: string[]] }>()
 
@@ -89,6 +92,10 @@ const total = (card: TreeCard) => card.children.reduce((sum, group) => sum + (gr
         />
         <UIcon v-else name="i-lucide-minus" class="size-3.5 shrink-0 text-dimmed" />
         <span class="min-w-0 truncate text-sm font-semibold tracking-tight" :class="card.resource ? 'text-highlighted' : 'text-muted'">{{ card.title }}</span>
+        <BlrChangeMark
+          v-if="card.resource && changes?.get(card.resource.key)"
+          :change="changes!.get(card.resource.key)!.change"
+        />
         <span class="blr-meta ms-auto">{{ total(card) }}</span>
         <UIcon name="i-lucide-chevron-down" class="size-3.5 shrink-0 text-dimmed transition-transform" :class="open && 'rotate-180'" />
       </UButton>
@@ -123,6 +130,11 @@ const total = (card: TreeCard) => card.children.reduce((sum, group) => sum + (gr
         </template>
         <template #item-label="{ item }">
           <span :class="item.resource ? 'text-highlighted' : 'text-muted'">{{ item.label }}</span>
+          <BlrChangeMark
+            v-if="item.resource && changes?.get(item.resource.key)"
+            :change="changes!.get(item.resource.key)!.change"
+            class="ms-2"
+          />
         </template>
         <!-- The same count-and-chevron a group header and an expandable row wear. -->
         <template #item-trailing="{ item, expanded, handleToggle }">
