@@ -7,39 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-09-15
+
 ### Changed
 
-- Capabilities and Journeys now have one Scenarios tab, using expandable cards.
-  Scenario Steps use one compact layout with visible field labels and explicit
-  Entity effects. Scenario summaries separate Trigger, Outcome and Entity results,
-  with one step count and no repeated Entity list. Click a summary to expand its
-  Steps in the same card, with full location breadcrumbs. Larger titles and
-  clearer section labels make summaries easier to scan. One expansion reveals
-  the Steps followed by decision points and edge cases.
-- Page tabs use a lighter header with keyboard navigation. Scenarios keeps
-  expand, collapse and per-row controls alongside them, without a filled band
-  or an extra scrollbar.
-- Every collection is one set with two drawings, Rows and Graph, switched
-  beside the filters. A filter narrows both drawings alike, and the heading
-  count is the same in either.
+- Capabilities and Journeys have one Scenarios tab with expandable cards.
+  Summaries show Trigger, Outcome and Entity results; one expansion reveals
+  Intent, labelled Steps, location breadcrumbs, decision points and edge cases.
+- Page tabs have a lighter header with keyboard navigation, with Scenario
+  expansion and row-density controls alongside them.
+- Every collection offers Rows and Graph drawings with shared filters and counts.
 - Interfaces and Domains read as one tree card per resource: an Interface's
   Experiences and Screens, a Domain's Capabilities and Entities.
-- Group, resource and detail backgrounds stay consistent across collections.
-  Scenarios use the resource background; their Steps have a distinct, steady
-  background and summaries have a softer hover.
-- Domains, Capabilities, Journeys and Business Rules gained a Graph: a tree
-  from the Product through each resource to the places it is reached in and
-  the Rules attached to it.
+- Groups, resources and details use consistent backgrounds, with hover feedback
+  on interactive surfaces.
+- Domains, Capabilities, Journeys and Business Rules have reach graphs.
 - Rows can be laid out two, three or four per line, remembered per collection.
 - Compare delivery, What changes what and Rule attachments are rows of the
   rail, directly below Overview.
+
+### Fixed
+
+- Back returns to the matrix after opening a resource. Expanded Scenarios stay
+  open when returning to their page or refreshing it.
+- Switching collections clears the previous Graph's focus. Tree chevrons
+  expand their children without opening a resource page.
+- Business Rule graphs show each reached place once, with matching child counts.
 
 ### Removed
 
 - Scenarios v3 and the extra navigation arrows on Domain, Interface and
   Scenario cards.
-- The Composition tab of Journeys. Its reading lives in the expanded Journey
-  rows.
+- The Composition tab of Journeys. Scenario Steps show the Capability used.
 
 ## [0.13.0] - 2026-09-12
 
@@ -789,6 +788,9 @@ Initial public launch of the repository.
   `docs/format.md`.
 - Claude plugin manifest and marketplace entry.
 
+[Unreleased]: https://github.com/businesslens/pdd/compare/v0.14.0...HEAD
+[0.14.0]: https://github.com/businesslens/pdd/compare/v0.13.0...v0.14.0
+[0.13.0]: https://github.com/businesslens/pdd/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/businesslens/pdd/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/businesslens/pdd/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/businesslens/pdd/compare/v0.9.0...v0.10.0

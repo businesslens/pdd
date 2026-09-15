@@ -500,6 +500,7 @@ function leavePage() {
 function setKind(kind: ReportResourceKind) {
   mobileNavOpen.value = false
   kind = collectionKindFor(kind)
+  topology.value = { ...topology.value, focus: [] }
   activeKind.value = kind
   activeSection.value = kind === 'product' ? 'overview' : kind
   leavePage()

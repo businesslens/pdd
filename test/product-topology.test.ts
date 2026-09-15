@@ -72,6 +72,32 @@ describe('named topology semantics', () => {
     }
   })
 
+  it('draws a place once under each Rule, even when it is both a direct target and a reached Context', () => {
+    const report = reportOf(shopRoot)
+    const first = report.model.interfaces[0]!.id
+    const second = report.model.interfaces[1]!.id
+    const entity = report.model.entities[0]!.id
+    const template = report.model.businessRules[0]!
+    report.model.businessRules.push(
+      { ...template, id: 'direct-places', appliesTo: [
+        { type: 'context', context: { placeId: first } },
+        { type: 'context', context: { placeId: second } }
+      ] },
+      { ...template, id: 'mixed-places', appliesTo: [
+        { type: 'context', context: { placeId: first } },
+        { type: 'entity', entityId: entity, effect: null, from: null, to: null, facts: [], contexts: [{ placeId: first }, { placeId: second }] }
+      ] }
+    )
+    const tree = projections.reachTreeProjection(projectReportWorkspace(report), 'rule')
+    const direct = tree.children.find((node: any) => node.id === 'rule:direct-places')
+    const mixed = tree.children.find((node: any) => node.id === 'rule:mixed-places')
+    expect(direct.children.map((node: any) => node.resource.key)).toEqual([`interface:${first}`, `interface:${second}`])
+    expect(mixed.children.map((node: any) => node.resource.key)).toEqual([`interface:${first}`, `entity:${entity}`, `interface:${second}`])
+    // Sharing a place across different Rules still gives each Rule its own occurrence.
+    const ids = flatten(tree.children).map(node => node.id)
+    expect(new Set(ids).size).toBe(ids.length)
+  })
+
   it('reaches a Domain through the places its members are available in, and keeps the rest directly under it', () => {
     const workspace = workspaceOf()
     const tree = projections.reachTreeProjection(workspace, 'domain')

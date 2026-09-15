@@ -47,10 +47,12 @@ export function placesOf(workspace: ReportWorkspace, contexts: ContextView[]): A
   return [...seen.values()]
 }
 
-/** Authored attachment targets, each once, in authored order. */
-function ruleTargets(workspace: ReportWorkspace, rule: RuleView): AnyResourceView[] {
+/** Attachment targets first, then additional reached places; each resource once per Rule. */
+function ruleReach(workspace: ReportWorkspace, rule: RuleView): AnyResourceView[] {
   const seen = new Map<string, AnyResourceView>()
   for (const attachment of ruleAttachments(workspace, rule)) seen.set(attachment.resource.key, attachment.resource)
+  // A direct Context target is also in rule.contexts; it is one child, not two.
+  for (const place of placesOf(workspace, rule.contexts)) seen.set(place.key, place)
   return [...seen.values()]
 }
 
@@ -107,10 +109,9 @@ export function reachTreeProjection(workspace: ReportWorkspace, kind: ReachKind)
     case 'journey':
       return productRoot(workspace, workspace.journeys.map(item => branch(item, reachOf(workspace, item))))
     case 'rule':
-      return productRoot(workspace, workspace.rules.map(rule => branch(rule, [
-        ...ruleTargets(workspace, rule).map(target => occurrence(rule.key, target)),
-        ...placesOf(workspace, rule.contexts).map(place => occurrence(rule.key, place))
-      ])))
+      return productRoot(workspace, workspace.rules.map(rule => branch(rule,
+        ruleReach(workspace, rule).map(target => occurrence(rule.key, target))
+      )))
   }
 }
 

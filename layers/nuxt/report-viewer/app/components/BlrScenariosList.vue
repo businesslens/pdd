@@ -18,17 +18,14 @@ const emit = defineEmits<{ open: [resource: AnyResourceView] }>()
 const scenarios = computed(() => childrenOf(props.workspace, props.resource) as ScenarioView[])
 const scenarioKind = computed(() => props.resource.kind === 'journey' ? 'journey-scenario' as const : 'capability-scenario' as const)
 
-/* One expansion opens the Steps followed by any decisions and edge cases.
+/* One expansion opens any Intent, then Steps, decisions and edge cases.
    Scenario cards start closed, as rows do everywhere else. */
-const openScenarios = ref<string[]>([])
+const openScenarios = useBlrScenarioExpansion(
+  computed(() => JSON.stringify([props.workspace.identity.id, props.resource.key])),
+  computed(() => scenarios.value.map(item => item.key)),
+  computed(() => props.selectedKey ?? null)
+)
 const scenariosRoot = useTemplateRef('scenariosRoot')
-watch([scenarios, () => props.selectedKey], () => {
-  const keys = new Set(scenarios.value.map(item => item.key))
-  openScenarios.value = openScenarios.value.filter(key => keys.has(key))
-  if (props.selectedKey && keys.has(props.selectedKey) && !openScenarios.value.includes(props.selectedKey)) {
-    openScenarios.value.push(props.selectedKey)
-  }
-}, { immediate: true })
 
 watch([scenariosRoot, () => props.selectedKey], async ([root, key], _previous, onCleanup) => {
   if (!root || !key) return
@@ -52,8 +49,8 @@ function toggleAll(open: boolean) {
   openScenarios.value = open ? scenarios.value.map(item => item.key) : []
 }
 
-/* The page places the list controls beside its tabs. Expansion stays local
-   to this reading, including the additional details opened by Expand all. */
+/* The page places the list controls beside its tabs. Expansion is remembered
+   for this parent, including the additional details opened by Expand all. */
 defineExpose({ toggleAll })
 const rowGrid = computed(() => props.columns > 1
   ? { display: 'grid', gridTemplateColumns: `repeat(${props.columns}, minmax(0, 1fr))`, gap: '0.5rem', alignItems: 'start' }
@@ -74,7 +71,7 @@ const scenarioWord = (word: 'trigger' | 'outcome' | 'decision-point' | 'edge-cas
       <div v-for="scenario in scenarios" :key="scenario.key" class="blr-row-tree" :data-row-key="scenario.key">
         <!-- The cards drawing: the Scenario itself is read on the card, open
              or closed — what starts it, how it ends, what it touches and where
-             it leaves each thing. Opening it adds the Steps, then details. -->
+             it leaves each thing. Opening it adds Intent, Steps and details. -->
         <BlrScenarioSummary
           :workspace="workspace"
           :scenario="scenario"
@@ -82,6 +79,10 @@ const scenarioWord = (word: 'trigger' | 'outcome' | 'decision-point' | 'edge-cas
           @toggle="toggleScenario(scenario)"
           @open="emit('open', $event)"
         >
+          <section v-if="scenario.intent.trim()" class="mb-4 space-y-2" data-scenario-intent>
+            <h4 class="text-[0.8125rem] font-semibold text-highlighted"><BlrTerm slug="intent" /></h4>
+            <BlrProse :text="scenario.intent" class="max-w-3xl" />
+          </section>
           <ol class="blr-steps-list">
             <li v-for="(step, index) in scenario.steps" :key="index" :data-step="index + 1">
               <span class="blr-steps-number">{{ index + 1 }}</span>

@@ -40,7 +40,11 @@ const toNode = (node: TreeCardNode): Node => ({
   resource: node.resource,
   count: node.children.length || undefined,
   children: node.children.length ? node.children.map(toNode) : undefined,
-  onSelect: (event: Event) => { event.preventDefault(); if (node.resource) emit('open', node.resource) }
+  onSelect: (event: Event) => { event.preventDefault(); if (node.resource) emit('open', node.resource) },
+  onToggle: (event) => {
+    // A resource label navigates; its chevron or the tree's arrow keys expand.
+    if (node.resource && event.detail.originalEvent.type === 'click') event.preventDefault()
+  }
 })
 const itemsOf = (card: TreeCard) => card.children.map(toNode)
 
@@ -97,6 +101,7 @@ const total = (card: TreeCard) => card.children.reduce((sum, group) => sum + (gr
       <UTree
         v-if="card.children.length"
         class="blr-tree-card-tree"
+        :as="{ link: 'div' }"
         :items="itemsOf(card)"
         :get-key="(item: Node) => item.value"
         :expanded="expandedOf(card)"
@@ -120,11 +125,19 @@ const total = (card: TreeCard) => card.children.reduce((sum, group) => sum + (gr
           <span :class="item.resource ? 'text-highlighted' : 'text-muted'">{{ item.label }}</span>
         </template>
         <!-- The same count-and-chevron a group header and an expandable row wear. -->
-        <template #item-trailing="{ item, expanded }">
-          <span v-if="item.count" class="flex items-center gap-1">
+        <template #item-trailing="{ item, expanded, handleToggle }">
+          <button
+            v-if="item.count"
+            type="button"
+            class="flex items-center gap-1 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            :aria-label="`${expanded ? 'Collapse' : 'Expand'} ${item.label}`"
+            :aria-expanded="expanded"
+            @click.stop="handleToggle()"
+            @keydown.stop
+          >
             <span class="blr-meta">{{ item.count }}</span>
             <UIcon name="i-lucide-chevron-down" class="size-3.5 shrink-0 text-dimmed transition-transform" :class="expanded && 'rotate-180'" />
-          </span>
+          </button>
         </template>
       </UTree>
       </div>
