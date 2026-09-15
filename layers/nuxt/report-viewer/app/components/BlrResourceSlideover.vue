@@ -37,6 +37,7 @@ const docs = computed(() => docsForResourceKind(subject.value?.kind ?? 'product'
 const tabsTarget = useTemplateRef('tabsTarget')
 const heading = useTemplateRef('heading')
 const referenceHeading = useTemplateRef('referenceHeading')
+const referenceDetails = ref<string>()
 function referenceInfo(href: string) {
   const url = new URL(href, 'http://businesslens.local')
   const source = url.pathname === '/_businesslens/code'
@@ -78,6 +79,7 @@ function focusReading(event?: Event) {
 }
 let referenceFocus: HTMLElement | null = null
 watch(() => props.reference, (next, before) => {
+  referenceDetails.value = undefined
   if (next && !before) { save(); referenceFocus = document.activeElement as HTMLElement | null }
   if (next) focusReading()
   else if (before && props.resource) void nextTick(async () => { await restore(); (referenceFocus?.isConnected ? referenceFocus : heading.value)?.focus({ preventScroll: true }) })
@@ -112,13 +114,14 @@ function open(resource: AnyResourceView) { save(); emit('open', resource) }
             <div class="min-w-0 flex-1 pt-0.5">
               <h2 ref="referenceHeading" tabindex="-1" class="text-base leading-6 font-semibold text-highlighted outline-none [overflow-wrap:anywhere]" data-reference-heading>{{ file.title }}</h2>
               <p class="mt-0.5 text-xs text-muted [overflow-wrap:anywhere]">{{ file.title !== file.target ? file.target : 'Reference' }}</p>
+              <p v-if="referenceDetails" class="mt-0.5 text-xs text-muted [overflow-wrap:anywhere]" data-source-details>{{ referenceDetails }}</p>
             </div>
             <div class="flex shrink-0 items-center gap-1">
               <UTooltip v-if="file.sourceLink" :text="file.raw ? 'View document' : 'View source'"><UButton :icon="file.raw ? 'i-lucide-file-text' : 'i-lucide-file-code'" :aria-label="file.raw ? 'View document' : 'View source'" color="neutral" variant="ghost" size="sm" @click="emit('referenceOpen', file.sourceLink!)" /></UTooltip>
               <UTooltip text="Close resource"><UButton icon="i-lucide-x" color="neutral" variant="ghost" size="sm" aria-label="Close resource" @click="emit('close')" /></UTooltip>
             </div>
           </header>
-          <BlrReferencePreview :href="reference" :title="file.title" :scope="workspace.identity.id" @navigate="emit('referenceOpen', $event)" @close="emit('close')" />
+          <BlrReferencePreview :href="reference" :title="file.title" :scope="workspace.identity.id" @details="referenceDetails = $event" @navigate="emit('referenceOpen', $event)" @close="emit('close')" />
         </template>
         <header v-if="resource" v-show="!reference" class="flex shrink-0 items-start gap-2 border-b border-default px-5 py-3">
           <UTooltip v-if="previous" :text="`Back to ${previous.title}`">

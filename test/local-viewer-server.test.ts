@@ -307,8 +307,8 @@ describe('local Product Report server', () => {
 
     const markdown = await get(viewer.url, '/_businesslens/file/docs/notes.md')
     expect(markdown.status).toBe(200)
-    expect(markdown.headers['content-type']).toContain('text/html')
-    expect(markdown.body).toContain('<h1 id="notes">Notes</h1>')
+    expect(markdown.headers['content-type']).toContain('application/json')
+    expect(JSON.parse(markdown.body)).toMatchObject({ kind: 'markdown', document: { nodes: [['h1', { id: 'notes' }, 'Notes']] } })
     expect((await get(viewer.url, '/_businesslens/file/docs/notes.md?raw=1')).body).toBe('# Notes')
 
     // Not on the allowlist: refused whether or not it exists, so the mount

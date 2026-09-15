@@ -8,6 +8,7 @@ export default defineNuxtConfig({
     name: 'businesslens-nuxt-report-viewer'
   },
   extends: [join(currentDir, '../theme')],
+  ui: { prose: true },
   css: [
     join(currentDir, './app/assets/report-structure.css'),
     join(currentDir, './app/assets/report-viewer.css'),
@@ -43,6 +44,8 @@ export default defineNuxtConfig({
         'lucide:cog',
         'lucide:corner-down-right',
         'lucide:cpu',
+        'lucide:copy',
+        'lucide:copy-check',
         'lucide:eye',
         'lucide:eye-off',
         'lucide:file-code',

@@ -204,7 +204,7 @@ function securityHeaders(response: ServerResponse): void {
   response.setHeader('cache-control', 'no-store')
   response.setHeader(
     'content-security-policy',
-    "default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; frame-src 'self'; manifest-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+    "default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https: http:; frame-src 'self'; manifest-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
   )
   response.setHeader('cross-origin-resource-policy', 'same-origin')
   response.setHeader('permissions-policy', 'camera=(), microphone=(), geolocation=()')
@@ -328,12 +328,22 @@ function repositoryAsset(response: ServerResponse, file: string, head: boolean):
   response.end(head ? undefined : body)
 }
 
-function htmlPreview(response: ServerResponse, preview: { status: number, html: string }, head: boolean, images = false): void {
-  response.statusCode = preview.status
-  response.setHeader('content-security-policy', `default-src 'none'; script-src 'none'; style-src 'unsafe-inline'; ${images ? "img-src 'self' https: http:; " : ''}base-uri 'none'; form-action 'none'; frame-ancestors 'none'`)
-  response.setHeader('content-type', 'text/html; charset=utf-8')
-  response.setHeader('content-length', Buffer.byteLength(preview.html))
-  response.end(head ? undefined : preview.html)
+function referencePreview(
+  request: IncomingMessage, response: ServerResponse, url: URL, head: boolean,
+  preview: () => Promise<{ status: number, data: unknown }>
+): void {
+  // Direct browser visits open the same reader as references inside the report.
+  if (request.headers.accept?.includes('text/html') && !request.headers.accept.includes('application/json')) {
+    response.statusCode = 302
+    response.setHeader('location', '/?f=' + encodeURIComponent(url.pathname + url.search + (url.pathname === CODE_PATH ? '#reference' : '')))
+    response.end()
+    return
+  }
+  void preview().then(result => {
+    if (!response.destroyed) json(response, result.status, result.data, head)
+  }).catch(() => {
+    if (!response.destroyed) json(response, 500, { message: 'This reference could not be rendered.' }, head)
+  })
 }
 
 function requestHandler(
@@ -376,15 +386,14 @@ function requestHandler(
       return
     }
     if (pathname === CODE_PATH) {
-      const preview = localCodePreview(store.snapshot().report, options.assetRoot, url.searchParams.get('target') ?? '')
-      htmlPreview(response, preview, head)
+      referencePreview(request, response, url, head, () => localCodePreview(store.snapshot().report, options.assetRoot, url.searchParams.get('target') ?? ''))
       return
     }
     if (pathname.startsWith(ASSET_PREFIX)) {
       const asset = options.assetRoot && assetFile(options.assetRoot, pathname)
       if (!asset) json(response, 404, { message: 'Not found.' }, head)
       else if (extname(asset).toLowerCase() === '.md' && url.searchParams.get('raw') !== '1') {
-        htmlPreview(response, localMarkdownPreview(options.assetRoot!, relative(options.assetRoot!, asset).split(sep).join('/')), head, true)
+        referencePreview(request, response, url, head, () => localMarkdownPreview(options.assetRoot!, relative(options.assetRoot!, asset).split(sep).join('/')))
       }
       else repositoryAsset(response, asset, head)
       return

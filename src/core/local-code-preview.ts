@@ -1,7 +1,9 @@
 import { parseCodeTarget, type ParsedCodeTarget } from './coderefs.js'
 import { reportResourceCollections, type ProductReportV13, type ReportReference } from './portable.js'
 
-import { escapeHtml, previewDocument, previewText } from './local-preview.js'
+import { previewText } from './local-preview.js'
+import { fileLanguage, highlightedCode } from './syntax-highlighting.js'
+import type { ReferencePreview } from '../../layers/nuxt/report-viewer/app/utils/referencePreview.js'
 
 /** The source mount accepts exact code targets already disclosed by the report. */
 function declaredReference(report: ProductReportV13 | undefined, target: string): ReportReference | undefined {
@@ -33,33 +35,20 @@ function focusFor(lines: string[], target: ParsedCodeTarget): { first?: number, 
   return { note: `No text match for ${target.symbol} in this file.` }
 }
 
-function document(title: string, details: string, body: string): string {
-  return previewDocument({ title, details, kind: 'Source', body, styles: `
-main{padding:16px 0}pre{margin:0;overflow:auto;tab-size:2}code{font:13px/1.6 ui-monospace,SFMono-Regular,Consolas,monospace;display:block;min-width:max-content}
-.line{display:block;min-height:1.6em;padding-right:24px;scroll-margin-top:9rem}.highlight{background:var(--highlight)}
-.line:target{background:var(--highlight)}.number{display:inline-block;width:6ch;margin-right:20px;text-align:right;color:var(--muted);text-decoration:none;user-select:none}
-.number:hover{text-decoration:underline}#reference{scroll-margin-top:9rem}.message{margin:0 24px}
-` })
-}
-
-export function localCodePreview(report: ProductReportV13 | undefined, root: string | undefined, target: string): { status: number, html: string } {
+export async function localCodePreview(report: ProductReportV13 | undefined, root: string | undefined, target: string): Promise<{ status: number, data: ReferencePreview | { message: string } }> {
   const reference = declaredReference(report, target)
   const parsed = reference && parseCodeTarget(reference.target, [], 'reference')
   const source = root && parsed ? previewText(root, parsed.path) : undefined
   if (!reference || !parsed || source === undefined) return {
     status: 404,
-    html: document('Source unavailable', '', '<p class="message">This code reference is unavailable. Open it from the current local report with its repository files present.</p>')
+    data: { message: 'This code reference is unavailable in the current local report.' }
   }
   const lines = source.split(/\r\n|\n|\r/)
   if (lines.length > 1 && lines.at(-1) === '') lines.pop()
   const focus = focusFor(lines, parsed)
-  const markup = lines.map((line, index) => {
-    const number = index + 1
-    const highlighted = focus.first !== undefined && number >= focus.first && number <= focus.last!
-    const anchor = number === (focus.first ?? 1) ? '<span id="reference"></span>' : ''
-    return `<span class="line${highlighted ? ' highlight' : ''}" id="L${number}">${anchor}<a class="number" href="#L${number}" aria-label="Line ${number}">${number}</a>${escapeHtml(line)}</span>`
-  }).join('')
-  const title = reference.title || parsed.path
-  const details = `${reference.title ? `${parsed.path} · ` : ''}${lines.length} ${lines.length === 1 ? 'line' : 'lines'}${focus.note ? ` · ${focus.note}` : ''}`
-  return { status: 200, html: document(title, details, `<pre aria-label="Source code"><code>${markup}</code></pre>`) }
+  return { status: 200, data: {
+    kind: 'code', path: parsed.path,
+    details: String(lines.length) + (lines.length === 1 ? ' line' : ' lines') + (focus.note ? ' · ' + focus.note : ''),
+    document: { nodes: [await highlightedCode(source, fileLanguage(parsed.path), { sourceFile: true, ...focus })], frontmatter: {}, meta: {} }
+  } }
 }

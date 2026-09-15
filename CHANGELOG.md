@@ -10,8 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.15.0] - 2026-09-15
 
 - Explore resources in side panels without losing your place.
-- Find connections and grouped references in dedicated tabs, with file paths and owners clearly shown.
-- Preview local documents and highlighted code inside the report; external links are clearly marked.
+- Find connections and grouped references in dedicated tabs, with clear file paths, owners, and external links.
+- Read formatted documents and color-coded source files inside the report, in either theme.
 - Smoother graph expansion and clearer Domain and Interface trees.
 - Simplified resource headers, controls, and Scenario cards.
 

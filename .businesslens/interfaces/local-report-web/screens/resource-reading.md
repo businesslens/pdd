@@ -91,11 +91,11 @@ opened document; Close returns to the working view. Refresh and browser
 Back/Forward retain the opened file. External links show an external-link icon
 and open in a new tab.
 Code References open the local source file inside the slideover with line
-numbers. A line locator highlights that range; a symbol locator highlights its
+numbers and syntax colors that follow the report theme. A line locator highlights that range; a symbol locator highlights its
 first text match, with a visible explanation when no match is found. Only code
 targets attached to the current model can be opened this way.
 Markdown References open inside the slideover with formatted headings,
-tables, lists and code blocks. Document metadata is collapsed separately from
+tables, lists and syntax-colored code blocks. Document metadata is collapsed separately from
 the body, and View source shows the original file. Relative document links and
 images resolve within the repository, and linked Markdown keeps the same preview.
 Expansion is remembered for this resource when changing readings, returning with

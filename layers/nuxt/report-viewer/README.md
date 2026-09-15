@@ -48,7 +48,8 @@ the working view. The `f` query parameter carries the local preview URL, indepen
 of the resource and its tab; refresh and browser Back/Forward preserve the reading.
 External HTTP(S) References show an external-link icon and open in a new tab.
 Code References use `/_businesslens/code?target=<encoded-target>#reference`.
-The local viewer renders escaped source with line numbers and highlights
+The local viewer returns structured preview data and renders source with Nuxt UI
+Prose components, Shiki syntax colors in both themes, line numbers, and highlights
 an authored line range or the first textual match for a symbol (trying its final
 qualified name when the full name is not present). Missing locators are explained
 beside the file. This endpoint serves only exact Code Reference targets in the
@@ -63,8 +64,13 @@ frontmatter stays in a collapsed Document metadata section. View source adds
 directory within the repository; linked Markdown uses the same preview. Raw HTML
 is displayed as text and executable URLs are refused. Markdown previews share
 the source preview's 2 MiB UTF-8 limit, repository boundary and symlink guard.
-The in-report preview embeds these documents in a sandbox without script permission,
-intercepts local document links for report navigation, and follows the report theme.
+The local server parses Markdown with Comark, with HTML and component plugins
+disabled, and colors code blocks with Shiki. Only standard Markdown elements and
+validated presentation attributes reach the Vue reader. Source and Markdown
+previews return JSON; direct browser visits open the report slideover. The reader
+uses Nuxt UI Prose components, intercepts local links for report navigation, and
+inherits the report theme. Parsing and language grammars stay on the server.
+Unknown languages and large grammar inputs remain readable as plain text.
 Images and plain text open in the same reading; PDF uses the browser's local viewer.
 
 Authored Capability Context has one dedicated Overview reading instead of being
@@ -276,10 +282,13 @@ Report is the canonical BusinessLens report experience. The theme remains a
 separately exported layer for other BusinessLens Nuxt surfaces. Hosts retain
 final authority over configuration and CSS.
 
-Nuxt, Vue, Nuxt UI, Tailwind, Vue Flow (`@vue-flow/core` and
+Nuxt, Vue, Nuxt UI, Comark Vue (`@comark/vue`), Tailwind, Vue Flow (`@vue-flow/core` and
 `@vue-flow/background`), ELK (`elkjs`), icons, and fonts remain optional
 peer dependencies of the CLI package; Nuxt consumers install the UI peers they
 use.
+
+Run `node scripts/check-reference-previews.mjs` after building to check Markdown
+and source previews in an isolated fixture at desktop and mobile widths.
 
 For browser regression checks, install Playwright Chromium and run
 `node scripts/check-topology-diagrams.mjs <CLI viewer URL> [more URLs]` from the
