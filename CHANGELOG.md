@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Removed Intent sections from Scenario cards.
+
 ## [0.14.0] - 2026-09-15
 
 - Redesigned Capability and Journey Scenarios with clearer Steps and details.

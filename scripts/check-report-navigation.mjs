@@ -175,22 +175,12 @@ try {
       const parent = parents.find(item => report.model[`${kind}Scenarios`].some(scenario => scenario[`${kind}Id`] === item.id))
       if (!parent) continue
       const scenario = report.model[`${kind}Scenarios`].find(item => item[`${kind}Id`] === parent.id)
-      // Most sample Scenarios omit Intent. Exercise authored Markdown without changing the model.
-      const withIntent = structuredClone(report)
-      withIntent.model[`${kind}Scenarios`].find(item => item.id === scenario.id).intent = 'Explain **why this Scenario matters** before its actions.'
-      const serveIntent = route => route.fulfill({ json: withIntent })
-      await page.route('**/_businesslens/report.json', serveIntent)
       await page.goto(resourceUrl(kind, parent.id, '&t=scenarios'))
       const card = page.locator(`[data-row-key="${kind}-scenario:${scenario.id}"] [data-scenario-card]`)
       const toggle = card.locator('.blr-summary-toggle')
       await expect(toggle).toHaveAttribute('aria-expanded', 'false')
-      await expect(card.locator('[data-scenario-intent]')).toHaveCount(0)
       await toggle.click()
       await expect(toggle).toHaveAttribute('aria-expanded', 'true')
-      const intent = card.locator('[data-scenario-intent]')
-      await expect(intent.getByRole('heading', { name: /^Intent/ })).toBeVisible()
-      await expect(intent.locator('strong')).toHaveText('why this Scenario matters')
-      expect(await card.evaluate(element => !!(element.querySelector('[data-scenario-intent]').compareDocumentPosition(element.querySelector('.blr-steps-list')) & Node.DOCUMENT_POSITION_FOLLOWING))).toBe(true)
       const link = card.getByRole('button', { name: /^Open / }).first()
       if (await link.count()) {
         await link.click()
@@ -212,7 +202,6 @@ try {
       await expect(page.locator('.blr-summary-toggle[aria-expanded=true]')).toHaveCount(0)
       await page.goto(resourceUrl(kind, scenario.id).replace(`e=${kind}%3A`, `e=${kind}-scenario%3A`))
       await expect(page.locator('.blr-summary-toggle[aria-expanded=true]')).toHaveCount(1)
-      await page.unroute('**/_businesslens/report.json', serveIntent)
     }
     const capability = report.model.capabilities[0]
     if (capability && journey) {
