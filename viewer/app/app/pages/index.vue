@@ -47,7 +47,7 @@ const errorMessage = computed(() => {
   return failure?.data?.message ?? failure?.message ?? 'The Product Model could not be compiled.'
 })
 
-const { section, resource, tab, scenarioRoute, routeColumns, topology } = useBlrReportNavigation()
+const { section, resource, tab, resourceTab, scenarioRoute, routeColumns, topology } = useBlrReportNavigation()
 </script>
 
 <template>
@@ -83,7 +83,7 @@ const { section, resource, tab, scenarioRoute, routeColumns, topology } = useBlr
       <BusinessLensReportViewer
         v-model:section="section"
         v-model:resource="resource"
-        v-model:tab="tab"
+        v-model:tab="tab" v-model:resource-tab="resourceTab"
         v-model:scenario-route="scenarioRoute"
         v-model:route-columns="routeColumns"
         v-model:topology="topology"

@@ -1033,7 +1033,7 @@ describe('stable Product Report', () => {
     expect(docs).toContain("domain: 'domains'")
   })
 
-  it('opens resources directly into the one page reading', () => {
+  it('opens resources into the complete resource reading', () => {
     const reportShell = source('app/components/BlrReportShell.vue')
     const page = source('app/components/BlrResourcePage.vue')
     const body = source('app/components/BlrResourceBody.vue')
@@ -1041,7 +1041,7 @@ describe('stable Product Report', () => {
     expect(existsSync(join(VIEWER, 'app/components/BlrInspector.vue'))).toBe(false)
     expect(existsSync(join(VIEWER, 'app/components/BlrResourcePeek.vue'))).toBe(false)
     expect(reportShell).not.toContain('<BlrInspector')
-    expect(reportShell).toContain('<BlrResourcePage')
+    expect(source('app/components/BlrResourceSlideover.vue')).toContain('<BlrResourcePage')
     expect(reportShell).not.toContain('<UTable')
     expect(reportShell).not.toContain('TableColumn')
     expect(reportShell).toContain('@open="openResourcePage"')
@@ -1099,35 +1099,6 @@ describe('stable Product Report', () => {
     expect(body).toContain('Only in')
   })
 
-  it('uses the Product Report trail as the only resource-page identity', () => {
-    const reportShell = source('app/components/BlrReportShell.vue')
-    const page = source('app/components/BlrResourcePage.vue')
-    const globalHeader = reportShell.slice(
-      reportShell.indexOf('<header'),
-      reportShell.indexOf('<div class="flex min-h-0 flex-1">')
-    )
-
-    expect(reportShell).toContain('v-for="(step, index) in pageTrail"')
-    expect(reportShell).toContain('aria-label="Page breadcrumb"')
-    /* One trail at every width, and it is a path rather than a title: it ends
-       at the parent, and the surface names itself in its own heading. */
-    expect(reportShell).toContain('data-page-trail')
-    expect(reportShell).not.toContain('data-mobile-location')
-    expect(reportShell).not.toContain('blr-mobile-ancestor')
-    expect(reportShell).not.toContain("aria-current=\"page\"")
-    expect(reportShell).toContain('...parents.map(parent => ({')
-    expect(reportShell).toContain('<h1 v-if="surfaceHeading"')
-    // Narrow-screen bounds and help targets are exercised in the browser
-    // regression script; clipping the entire trail would cut off focus rings.
-    expect(reportShell).not.toContain('class="inline-flex min-w-0 flex-1 items-center gap-1.5 hover:underline hover:underline-offset-4"')
-    expect(reportShell).not.toContain(':title="step.title"')
-    expect(reportShell).not.toContain('label="Neighbourhood"')
-    expect(globalHeader).not.toContain('label="Docs"')
-    expect(reportShell).not.toContain('DOCS_SLUG')
-    expect(page).not.toContain('<h1')
-    expect(page).not.toContain('<BlrKind :kind="resource.kind"')
-    expect(page).toContain('parentOf(props.workspace, props.resource)')
-  })
 
   /*
     The rail lists kinds, and kinds do not nest. Scenarios are read from the
@@ -1186,7 +1157,7 @@ describe('stable Product Report', () => {
        outside the scroll pane so the strip needs no painted sticky surface. */
     expect(page).toContain('<BlrPageTabs')
     expect(source('app/components/BlrReportShell.vue')).toContain('<BlrPageTabs')
-    expect(source('app/components/BlrReportShell.vue')).toContain(':tabs-target="pageTabsTarget"')
+    expect(source('app/components/BlrResourceSlideover.vue')).toContain(':tabs-target="tabsTarget"')
     expect(source('app/components/BlrPageTabs.vue')).toContain('<UTabs')
   })
 
@@ -1214,13 +1185,13 @@ describe('stable Product Report', () => {
        Lifecycle a reader cannot link to or refresh into is a modal with extra
        steps. A Scenario key in the address still outranks it. */
     expect(reportShell).toContain("defineModel<string>('tab'")
-    expect(reportShell).toContain('v-model:tab="pageTab"')
+    expect(reportShell).toContain('v-model:tab="resourceTab"')
     expect(page).toContain("defineModel<string>('tab'")
     expect(page).not.toContain("const active = ref<PageTabId>('overview')\n\nwatch")
     expect(page).toContain("if (requestedChild.value && isTab('scenarios'))")
     /* Opening a page opens its Overview; the tab is reset in the same tick as
        the page, so one gesture is one history entry. */
-    expect(reportShell).toContain("openResource.value = resource.key\n  pageTab.value = 'overview'")
+    expect(reportShell).toContain("openResource.value = resource.key\n  resourceTab.value = 'overview'")
   })
 
   /*
@@ -1374,7 +1345,7 @@ describe('composed lifecycle', () => {
     /* The list under the machine links each Rule and says how the Rules compose. */
     const component = source('app/components/BlrEntityLifecycle.vue')
     expect(component).toContain('v-for="rule in arc.rules"')
-    expect(component).toContain("@click=\"open('rule', rule.id)\"")
+    expect(component).toContain("@open=\"open('rule', rule.id)\"")
     expect(component).toContain('<span v-if="index" class="blr-meta"> or </span>')
     expect(component).toContain('Each Rule must permit it; within a Rule, any one grant does.')
     expect(component).not.toContain('arc.restriction')

@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Resources open in a spacious side panel, keeping your place as you explore related resources.
+- Resource panels use a compact header, with actions beside Close and clearly separated tabs.
+
 - Graph expand and collapse badges use compact pill shapes, neutral colors, and subtle hover feedback.
 - Graphs centre smoothly after expansion or collapse, with corner badges and clearer context on hover or keyboard focus.
 - Graph cards keep a consistent size, with ellipses for long labels and full text on hover.

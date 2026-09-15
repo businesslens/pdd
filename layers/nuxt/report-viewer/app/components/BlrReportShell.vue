@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { MATRIX_SECTIONS, MATRIX_DESTINATIONS, destinationForSection, destinationForLocation, graphForCollection, collectionKindFor, resourceAncestors, resourceViewLinks } from '../utils/reportDestinations'
+import { MATRIX_SECTIONS, MATRIX_DESTINATIONS, destinationForSection, destinationForLocation, graphForCollection, collectionKindFor } from '../utils/reportDestinations'
 import { findProductTopologyView } from '../utils/productTopologyViews'
-import { parentOf } from '../utils/pageSections'
+import { resourceNavigationKey } from '../utils/resourceNavigation'
 import type { TopologyReading } from '../utils/topologyState'
 import { defaultTopologyReading } from '../utils/topologyState'
 import type {
@@ -36,7 +36,7 @@ const props = defineProps<{ workspace: ReportWorkspace, logoSrc?: string | null,
 
 /* ------------------------------------------------------------------ */
 /* Selection: `activeKind` is what the collection view is about, and */
-/* `openResource` is the page you are on.                               */
+/* `openResource` is inspected over that working view.                   */
 /* ------------------------------------------------------------------ */
 
 type ReportSection = 'overview' | ReportResourceKind | typeof MATRIX_DESTINATIONS[number]['section']
@@ -46,6 +46,7 @@ const section = defineModel<string>('section', { default: 'overview' })
 const openResource = defineModel<string | null>('resource', { default: null })
 
 const pageTab = defineModel<string>('tab', { default: 'overview' })
+const resourceTab = defineModel<string>('resourceTab', { default: 'overview' })
 const scenarioRoute = defineModel<string | null>('scenarioRoute', { default: null })
 const routeColumns = defineModel<string>('routeColumns', { default: 'auto' })
 const topology = defineModel<TopologyReading>('topology', { default: defaultTopologyReading })
@@ -75,8 +76,7 @@ const searchOpen = ref(false)
 
 const vocabulary = useVocabularyPanel()
 const mobileNavOpen = ref(false)
-/* The internal name for the open page is the bindable model itself, so a page
-   opened by a click and a page opened by a URL are the same state. */
+/* Clicks and direct links select the same resource reading. */
 const openPageKey = openResource
 
 /* Filter state is kept per kind: moving to another kind and back returns to
@@ -266,82 +266,37 @@ const openPage = computed<AnyResourceView | null>(() => openPageKey.value
   ? resolveResourceKey(props.workspace, openPageKey.value) ?? null
   : null)
 
-interface TrailStep {
-  key: string
-  label: string
-  title: string
-  icon?: string
-  slot?: number
-  go: () => void
-}
-
-const pageTrail = computed<TrailStep[]>(() => {
-  const resource = openPage.value
-  if (!resource) return []
-
-  const parents = resourceAncestors(props.workspace, resource)
-  const collectionKind = collectionKindFor(resource.kind)
-  const collectionMeta = ENTITY_KIND_META[collectionKind]
-
-  /* The trail ends at the parent: the page names itself in its own H1, and a
-     breadcrumb doing title duty is what made a Screen four levels deep read as
-     three competing type treatments in one line. */
-  return [
-    {
-      key: 'collection',
-      label: collectionMeta.plural,
-      title: `Back to ${collectionMeta.plural}`,
-      icon: collectionMeta.icon,
-      slot: collectionMeta.slot,
-      go: () => setKind(collectionKind)
-    },
-    ...parents.map(parent => ({
-      key: parent.key,
-      label: parent.title,
-      title: `Back to ${parent.title}`,
-      go: () => openResourcePage(parent)
-    }))
-  ]
+/* The resource is inspected over the working view; it never selects a rail row. */
+const navigation = inject(resourceNavigationKey, null)
+const returnFocus = shallowRef<HTMLElement | null>(null)
+const workingHeading = useTemplateRef('workingHeading')
+const localTrail = ref<Array<{ key: string, tab: string }>>([])
+const previousResource = computed(() => {
+  const key = navigation ? navigation.previous.value?.resource : localTrail.value.at(-1)?.key
+  return key ? resolveResourceKey(props.workspace, key) : null
 })
-
-/* A page brings its own section with it, so a link lands with the rail, the
-   breadcrumb and the surface behind it already agreeing. */
-watch([openResource, () => props.workspace], () => {
-  const key = openResource.value
-  if (!key) return
-  const resource = resolveResourceKey(props.workspace, key)
-  if (!resource) {
-    leavePage()
-    return
-  }
-  const sectionKind = collectionKindFor(resource.kind)
-  activeKind.value = sectionKind
-  activeSection.value = sectionKind
-}, { immediate: true })
-
+function backResource() {
+  if (navigation) { navigation.back(); return }
+  const previous = localTrail.value.pop()
+  if (previous) { openResource.value = previous.key; resourceTab.value = previous.tab }
+}
 /* Live recompiles replace the projection. Rehydrate selection by stable key so
    focus, filters, and the open page survive ordinary model edits. */
-watch(() => props.workspace, (workspace) => {
+watch([() => props.workspace, openResource], ([workspace]) => {
   if (openResource.value && !workspace.byKey.has(openResource.value)) leavePage()
-})
+}, { immediate: true })
 
-const destination = computed(() => destinationForLocation(activeSection.value, pageTab.value, openResource.value))
+const destination = computed(() => destinationForLocation(activeSection.value, pageTab.value))
 const topologyActive = computed(() => Boolean(destination.value))
-const matrixSection = computed(() => !openPage.value && isMatrixSection(activeSection.value) ? destinationForSection(activeSection.value) : undefined)
+const matrixSection = computed(() => isMatrixSection(activeSection.value) ? destinationForSection(activeSection.value) : undefined)
 /* The collection's Graph, when it has one. Absent, not disabled, when it does
    not: the switch appears only where a second drawing exists. */
-const collectionGraph = computed(() => openPage.value || activeKind.value === 'product' ? undefined : graphForCollection(activeKind.value))
+const collectionGraph = computed(() => activeKind.value === 'product' ? undefined : graphForCollection(activeKind.value))
 const drawing = computed<'rows' | 'graph'>(() => collectionGraph.value && pageTab.value === 'graph' ? 'graph' : 'rows')
 const vocabularyContext = computed(() => {
   if (openPage.value) return KIND_TERM[openPage.value.kind]
   return KIND_TERM[activeKind.value]
 })
-/* A Scenario is read inside its parent, so the page's subject is the parent. */
-const pageSubject = computed(() => {
-  const resource = openPage.value
-  return resource ? parentOf(props.workspace, resource) ?? resource : null
-})
-
 /**
  * What this surface is, named once.
  *
@@ -356,12 +311,6 @@ const pageSubject = computed(() => {
  * in one line while the tooltip defined a fourth thing.
  */
 const surfaceHeading = computed(() => {
-  const resource = openPage.value
-  if (resource) {
-    const meta = ENTITY_KIND_META[resource.kind]
-    return { icon: meta.icon, slot: meta.slot, title: resource.title, meta: meta.label,
-      term: KIND_TERM[resource.kind], termText: resource.title }
-  }
   /* A matrix names itself with the name its rail row wears; its qualifier is
      the shape it draws, since it is no resource type. */
   const matrix = matrixSection.value
@@ -381,10 +330,7 @@ const surfaceHeading = computed(() => {
     term: KIND_TERM[activeKind.value], termText: activeMeta.value.plural }
 })
 
-/* Ways out belong to the subject, not to whichever tab is open, so they sit on
-   the heading row rather than inside the tab strip. */
-const exits = computed(() => pageSubject.value ? resourceViewLinks(pageSubject.value, props.workspace) : [])
-const surfaceDocs = computed(() => docsForResourceKind(pageSubject.value?.kind ?? activeKind.value))
+const surfaceDocs = computed(() => docsForResourceKind(activeKind.value))
 
 /**
  * Tabs belong to the Overview and to resource pages, where they change which
@@ -401,7 +347,7 @@ const PRODUCT_TABS = [
   { id: 'references', label: 'References' }
 ]
 
-const surfaceTabs = computed(() => openPage.value || matrixSection.value || activeKind.value !== 'product' ? [] : [
+const surfaceTabs = computed(() => matrixSection.value || activeKind.value !== 'product' ? [] : [
   { id: 'overview', label: 'About' },
   ...PRODUCT_TABS
 ])
@@ -413,7 +359,7 @@ const activeSurfaceTab = computed(() => {
 /* One bar for both drawings: a filter narrows the set, and the set is what
    either drawing shows. The bar exists when there is something to narrow by or
    a second drawing to switch to. */
-const showToolbar = computed(() => !openPage.value && activeKind.value !== 'product'
+const showToolbar = computed(() => activeKind.value !== 'product'
   && (filtersOffered.value || Boolean(collectionGraph.value)))
 
 /* Focus is a narrowing only the Graph can express — one resource and what
@@ -475,7 +421,7 @@ const cardGrid = computed(() => ({ gridTemplateColumns: `repeat(${columns.value}
 
 function setDrawing(next: 'rows' | 'graph') {
   const target = collectionGraph.value
-  openResource.value = null
+  leavePage()
   if (next === 'graph' && target) {
     topology.value = { ...topology.value, view: target.view, hiddenKinds: [] }
     pageTab.value = 'graph'
@@ -486,15 +432,16 @@ function setDrawing(next: 'rows' | 'graph') {
 }
 
 
-const pageReadingKey = computed(() => JSON.stringify([props.workspace.identity.id, activeSection.value, openPageKey.value, pageTab.value, topology.value.expanded, topology.value.collapsed]))
+const pageReadingKey = computed(() => JSON.stringify([props.workspace.identity.id, activeSection.value, pageTab.value, topology.value.expanded, topology.value.collapsed]))
 const { element: resourcePane, save: savePageScroll, restore: restorePageScroll } = useBlrTopologyScroll(pageReadingKey)
-const pageTabsTarget = useTemplateRef('pageTabsTarget')
 
-/* Leaving a page, or opening one, is also leaving its tab: both change in one
-   tick, so the host writes one history entry for the one gesture. */
+/* Close clears only inspection state. The working view keeps its reading. */
 function leavePage() {
   openResource.value = null
-  pageTab.value = 'overview'
+  resourceTab.value = 'overview'
+  scenarioRoute.value = null
+  routeColumns.value = 'auto'
+  localTrail.value = []
 }
 
 function setKind(kind: ReportResourceKind) {
@@ -503,6 +450,7 @@ function setKind(kind: ReportResourceKind) {
   topology.value = { ...topology.value, focus: [] }
   activeKind.value = kind
   activeSection.value = kind === 'product' ? 'overview' : kind
+  pageTab.value = 'overview'
   leavePage()
 }
 
@@ -524,19 +472,21 @@ function openResourceKey(key: string) {
   if (resource) openResourcePage(resource)
 }
 
-/** The page: a place, with a URL, that the browser's back button can leave. */
+/** Inspection preserves the working view, including a graph's drawing and focus. */
 function openResourcePage(resource: AnyResourceView) {
+  if (resource.key === openResource.value) return
   mobileNavOpen.value = false
-  const sectionKind = collectionKindFor(resource.kind)
-  activeKind.value = sectionKind
-  activeSection.value = sectionKind
+  if (!openResource.value) returnFocus.value = document.activeElement as HTMLElement | null
+  else if (!navigation) localTrail.value.push({ key: openResource.value, tab: resourceTab.value })
   openResource.value = resource.key
-  pageTab.value = 'overview'
+  resourceTab.value = 'overview'
+  scenarioRoute.value = null
+  routeColumns.value = 'auto'
 }
 
 function openSurfaceTab(id: string) {
   mobileNavOpen.value = false
-  openResource.value = null
+  leavePage()
   pageTab.value = id
 }
 
@@ -547,7 +497,7 @@ function resolvedGroupEntity(kind: ReportResourceKind | null, id: string) {
   return resource?.kind === 'entity' ? resource : undefined
 }
 
-/** ⌘K lands on the resource's page — you named it, so you meant it. */
+/** Search inspects a resource over the current working view. */
 function onSearchSelect(resource: AnyResourceView) {
   openResourcePage(resource)
 }
@@ -584,41 +534,7 @@ const orphanScenarios = computed(() => props.workspace.scenarios
         {{ workspace.identity.title }}
       </button>
 
-      <!-- Where this sits. Only the path back: the surface names itself in its
-           own heading, so the current page is never repeated here and every
-           step reads in one type treatment. -->
-      <UIcon v-if="pageTrail.length" name="i-lucide-chevron-right" class="hidden size-3.5 shrink-0 text-dimmed lg:block" />
-      <nav
-        v-if="pageTrail.length"
-        data-page-trail
-        class="flex min-w-0 flex-1 items-center gap-1"
-        aria-label="Page breadcrumb"
-      >
-        <template v-for="(step, index) in pageTrail" :key="step.key">
-          <UIcon
-            v-if="index"
-            name="i-lucide-chevron-right"
-            class="size-3.5 shrink-0 text-dimmed"
-          />
-          <UTooltip :text="step.label">
-            <button
-              type="button"
-              class="blr-breadcrumb-link inline-flex min-w-0 max-w-40 items-center gap-1.5 text-sm text-muted hover:text-default hover:underline hover:underline-offset-4"
-              :aria-label="step.title"
-              @click="step.go()"
-            >
-              <UIcon
-                v-if="step.icon"
-                :name="step.icon"
-                class="blr-breadcrumb-type-icon size-3.5 shrink-0"
-                :style="{ color: `var(--blr-slot-${step.slot})` }"
-              />
-              <span class="truncate">{{ step.label }}</span>
-            </button>
-          </UTooltip>
-        </template>
-      </nav>
-      <span v-else class="min-w-0 flex-1" />
+      <span class="min-w-0 flex-1" />
 
       <span class="ms-auto flex shrink-0 items-center gap-2.5">
         <Teleport :to="toolsTarget || 'body'" :disabled="!toolsTarget">
@@ -628,11 +544,11 @@ const orphanScenarios = computed(() => props.workspace.scenarios
             @vocabulary="vocabulary.show(undefined, $event)"
           />
         </Teleport>
-        <span :class="openPage ? 'hidden xl:inline-flex' : 'hidden md:inline-flex'">
+        <span class="hidden md:inline-flex">
           <BlrCoverageBadge :status="workspace.coverage.status" named size="md" />
         </span>
-        <span class="blr-meta" :class="openPage ? 'hidden xl:inline' : 'hidden sm:inline'">{{ workspace.identity.schemaVersion }}</span>
-        <span class="blr-meta" :class="openPage ? 'hidden xl:inline' : 'hidden md:inline'">{{ workspace.identity.generatedAt.slice(0, 10) }}</span>
+        <span class="blr-meta hidden sm:inline">{{ workspace.identity.schemaVersion }}</span>
+        <span class="blr-meta hidden md:inline">{{ workspace.identity.generatedAt.slice(0, 10) }}</span>
       </span>
     </header>
 
@@ -660,24 +576,14 @@ const orphanScenarios = computed(() => props.workspace.scenarios
       <section class="flex min-w-0 flex-1 flex-col">
         <!-- What this is, and the ways out of it. An exit belongs to the
              subject, so it sits here and not inside the tab strip. -->
-        <div v-if="surfaceHeading || exits.length" class="flex flex-wrap items-center gap-x-3 gap-y-2 px-5 pt-4 pb-2">
-          <h1 v-if="surfaceHeading" class="flex min-w-0 items-center gap-2">
+        <div v-if="surfaceHeading" class="flex flex-wrap items-center gap-x-3 gap-y-2 px-5 pt-4 pb-2">
+          <h1 v-if="surfaceHeading" ref="workingHeading" tabindex="-1" class="flex min-w-0 items-center gap-2">
             <UIcon :name="surfaceHeading.icon" class="size-5 shrink-0 text-muted" :style="surfaceHeading.slot === undefined ? undefined : { color: `var(--blr-slot-${surfaceHeading.slot})` }" />
             <span class="truncate text-lg font-semibold tracking-tight text-highlighted">{{ surfaceHeading.title }}</span>
             <span class="blr-meta shrink-0">{{ surfaceHeading.meta }}</span>
             <BlrTerm v-if="surfaceHeading.term" :slug="surfaceHeading.term" :text="surfaceHeading.termText" icon-only />
           </h1>
           <div class="ms-auto flex shrink-0 flex-wrap items-center gap-1.5">
-            <UButton
-              v-for="link in exits"
-              :key="link.section"
-              :label="link.name"
-              :icon="link.icon"
-              color="neutral"
-              variant="outline"
-              size="xs"
-              @click="openView(link.section, pageSubject ?? undefined)"
-            />
             <UTooltip :text="surfaceDocs.label">
               <UButton
                 :to="surfaceDocs.url"
@@ -697,7 +603,6 @@ const orphanScenarios = computed(() => props.workspace.scenarios
 
         <!-- Both kinds of reading switch sit outside the scroll pane, on the
              page's own background. Resource controls remain owned by the page. -->
-        <div v-if="openPage" ref="pageTabsTarget" class="shrink-0 px-5" data-page-tabs-host />
         <BlrPageTabs
           v-if="surfaceTabs.length > 1"
           :model-value="activeSurfaceTab"
@@ -825,22 +730,6 @@ const orphanScenarios = computed(() => props.workspace.scenarios
               <slot name="provenance" />
             </template>
           </BlrOverview>
-
-          <!-- ENTITY PAGE: one resource in full, at its own URL. -->
-          <BlrResourcePage
-            v-else-if="openPage"
-            v-model:tab="pageTab"
-            v-model:scenario-route="scenarioRoute"
-            v-model:route-columns="routeColumns"
-            v-model:reading="topology"
-            :workspace="workspace"
-            :resource="openPage"
-            :tabs-target="pageTabsTarget"
-            @open="openResourcePage"
-            @ready="restorePageScroll"
-          />
-
-
 
           <!-- COLLECTION SURFACE: one named subject, one row shape. -->
           <div v-else :class="grouped ? 'space-y-3' : 'space-y-6'">
@@ -977,6 +866,21 @@ const orphanScenarios = computed(() => props.workspace.scenarios
 
     </div>
 
+    <BlrResourceSlideover
+      v-model:tab="resourceTab"
+      v-model:scenario-route="scenarioRoute"
+      v-model:route-columns="routeColumns"
+      :workspace="workspace"
+      :resource="openPage"
+      :previous="previousResource"
+      :return-focus="returnFocus"
+      :fallback-focus="workingHeading"
+      @open="openResourcePage"
+      @back="backResource"
+      @close="leavePage"
+      @view="openView"
+    />
+
     <BlrSearchPalette
       v-model:open="searchOpen"
       :workspace="workspace"
@@ -1034,50 +938,7 @@ const orphanScenarios = computed(() => props.workspace.scenarios
 </template>
 
 <style scoped>
-/*
-  The categorical slot variables use the shared theme so the kind colours read
-  identically inside and outside the graphs. Hexes appear only here, as the
-  definition of the vars the markup consumes.
-*/
-.blr-report-shell {
-  --blr-slot-0: #2a78d6;
-  --blr-slot-1: #eb6834;
-  --blr-slot-2: #1baf7a;
-  --blr-slot-3: #eda100;
-  --blr-slot-4: #e87ba4;
-  --blr-slot-5: #008300;
-  --blr-slot-6: #4a3aa7;
-  --blr-slot-7: #e34948;
-  --blr-slot-8: #746651;
-  --blr-slot-9: #2a78d6;
-  font-variant-numeric: tabular-nums;
-}
-
-:global(.dark) .blr-report-shell {
-  --blr-slot-0: #3987e5;
-  --blr-slot-1: #d95926;
-  --blr-slot-2: #199e70;
-  --blr-slot-3: #c98500;
-  --blr-slot-4: #d55181;
-  --blr-slot-5: #008300;
-  --blr-slot-6: #9085e9;
-  --blr-slot-7: #e66767;
-  --blr-slot-8: #ab9d81;
-  --blr-slot-9: #3987e5;
-}
-
-/* Collection links keep the same casing as their collection heading. */
-.blr-breadcrumb-link {
-  text-transform: none;
-}
-
 @media (max-width: 359px) {
-  .blr-report-header {
-    gap: 0.25rem;
-  }
-
-  .blr-breadcrumb-type-icon {
-    display: none;
-  }
+  .blr-report-header { gap: 0.25rem; }
 }
 </style>

@@ -12,6 +12,7 @@ const props = defineProps<{
   columns: ColumnChoice
   /** A Scenario reached by URL or search opens its card inside the parent. */
   selectedKey?: string | null
+  revealSelected?: boolean
 }>()
 const emit = defineEmits<{ open: [resource: AnyResourceView] }>()
 
@@ -28,7 +29,7 @@ const openScenarios = useBlrScenarioExpansion(
 const scenariosRoot = useTemplateRef('scenariosRoot')
 
 watch([scenariosRoot, () => props.selectedKey], async ([root, key], _previous, onCleanup) => {
-  if (!root || !key) return
+  if (!root || !key || props.revealSelected === false) return
   let cancelled = false
   onCleanup(() => { cancelled = true })
   await nextTick()
@@ -88,7 +89,7 @@ const scenarioWord = (word: 'trigger' | 'outcome' | 'decision-point' | 'edge-cas
           <template #details>
             <section v-if="scenario.decisionPoints.length" class="space-y-2">
               <h4 class="text-[0.8125rem] font-semibold text-highlighted"><BlrTerm :slug="scenarioWord('decision-point')" text="Decision points" /></h4>
-              <div class="grid gap-3 lg:grid-cols-2">
+              <div class="grid gap-3 @min-[640px]:grid-cols-2">
                 <div v-for="point in scenario.decisionPoints" :key="point.title" class="rounded-xl border border-dashed border-accented p-4">
                   <p class="flex items-center gap-2 text-sm font-semibold text-highlighted">
                     <UIcon name="i-lucide-git-branch" class="size-4 text-muted" />{{ point.title }}

@@ -1,22 +1,7 @@
 <script setup lang="ts">
-/**
- * One resource reading, at one URL.
- *
- * Overview holds the resource's authored meaning, facts, Contexts, relations,
- * supporting material, and References. A Capability or Journey adds exactly
- * one peer tab for its Scenarios, and an Entity with States one for its
- * Lifecycle. A Scenario URL keeps the Scenario key in the address while
- * reading it inside its mandatory parent.
- *
- * The page's name, its type, and the ways out of it belong to the surface and
- * are drawn by the host above this component — an exit leads out of the
- * resource whichever tab is open, so it is not part of the strip. With one tab
- * there is nothing to switch, and the strip does not render.
- *
- * The open tab is bindable, so a host can keep it in the URL: a Lifecycle a
- * reader cannot link to, return to, or refresh into is a modal with extra
- * steps, and `businesslens view` recompiles on save, so the tab has to outlive
- * an edit to the model.
+/** Complete resource content reused inside the URL-addressable slideover.
+ * Scenarios remain inside their parent; Lifecycle belongs to an Entity.
+ * The host places tabs above the scrolling reading and owns navigation.
  */
 import type { AnyResourceView, EntityView, ReportWorkspace } from '../utils/reportWorkspace'
 import { ENTITY_KIND_META } from '../utils/reportWorkspace'
@@ -29,6 +14,7 @@ const props = defineProps<{
   workspace: ReportWorkspace
   resource: AnyResourceView
   tabsTarget?: HTMLElement | null
+  restorePosition?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -128,6 +114,7 @@ const columnItems = COLUMN_CHOICES.map(value => ({ value, label: `${value} per r
         :resource="subject"
         :columns="scenarioColumns"
         :selected-key="requestedChild"
+        :reveal-selected="!restorePosition"
         @open="emit('open', $event)"
       />
 

@@ -1,8 +1,16 @@
 <script setup lang="ts">
+import { resourceNavigationKey } from '../utils/resourceNavigation'
 import type { DiagramNode } from '../utils/diagram'
 import { ENTITY_KIND_META } from '../utils/reportWorkspace'
 const props = defineProps<{ node: DiagramNode, highlighted?: boolean }>()
 const emit = defineEmits<{ open: [key: string], toggle: [id: string, open: boolean] }>()
+const navigation = inject(resourceNavigationKey, null)
+const href = computed(() => props.node.resourceKey ? navigation?.href(props.node.resourceKey) : undefined)
+function activate(event: MouseEvent) {
+  if (href.value && (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0)) return
+  event.preventDefault()
+  if (props.node.resourceKey) emit('open', props.node.resourceKey)
+}
 const meta = computed(() => props.node.kind ? ENTITY_KIND_META[props.node.kind] : undefined)
 const color = computed(() => `var(--blr-slot-${props.node.colorSlot ?? meta.value?.slot ?? 0})`)
 const branchLabel = computed(() => props.node.branch
@@ -13,8 +21,8 @@ const branchLabel = computed(() => props.node.branch
 <template>
   <div class="blr-flow-node" :class="{ 'blr-flow-node--state': !node.kind, 'blr-flow-node--terminal': node.terminal, 'blr-flow-node--highlighted': highlighted }"
     :data-unreached="node.unreached || undefined" :data-resource-key="node.resourceKey" :style="{ '--node-color': color }">
-    <component :is="node.resourceKey ? 'button' : 'div'" :type="node.resourceKey ? 'button' : undefined" :tabindex="node.resourceKey ? undefined : 0" class="blr-flow-node__main" :aria-description="node.description"
-    @click.stop="node.resourceKey && emit('open', node.resourceKey)">
+    <component :is="href ? 'a' : node.resourceKey ? 'button' : 'div'" :href="href" :type="node.resourceKey && !href ? 'button' : undefined" :tabindex="node.resourceKey ? undefined : 0" class="blr-flow-node__main" :aria-description="node.description"
+    @click.stop="activate">
     <span v-if="meta" class="blr-flow-node__icon">
       <BlrEntityMark v-if="node.kind === 'entity' && node.entityFacet" :facet="node.entityFacet" :acts="node.acts" />
       <BlrInterfaceType v-else-if="node.kind === 'interface' && node.interfaceType" :type="node.interfaceType" />

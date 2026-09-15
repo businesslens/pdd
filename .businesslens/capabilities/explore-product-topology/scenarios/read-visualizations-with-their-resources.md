@@ -10,7 +10,7 @@ steps:
       - { entity: journey, effect: reads }
     contexts:
       local:
-        place: local-report-web::resource-page
+        place: local-report-web::resource-reading
   - text: The Product presents the Scenario's Steps in order, showing each Step's Capability and location breadcrumbs
     kind: product
     entities:
@@ -20,7 +20,7 @@ steps:
       - { entity: capability, effect: reads }
     contexts:
       local:
-        place: local-report-web::resource-page
+        place: local-report-web::resource-reading
   - text: The Developer opens an Interface's Overview
     kind: actor
     actor: developer
@@ -28,7 +28,7 @@ steps:
       - { entity: interface, effect: reads }
     contexts:
       local:
-        place: local-report-web::resource-page
+        place: local-report-web::resource-reading
   - text: The Product presents the Interface's delivery and Connections without repeating the same relation in both readings
     kind: product
     entities:
@@ -36,7 +36,7 @@ steps:
       - { entity: interface, effect: reads }
     contexts:
       local:
-        place: local-report-web::resource-page
+        place: local-report-web::resource-reading
 ---
 
 # Read visualizations with their resources

@@ -4,20 +4,26 @@ The stable Product Report v13 renderer used by `businesslens view` and exported
 from the `businesslens` package. It projects the complete portable report into
 six main resource collections: Entities, Interfaces, Domains, Capabilities,
 Journeys, and Business Rules. Overview sits above Resources. Experiences and
-Screens are reached through Interfaces, with pages and ownership breadcrumbs.
+Screens are reached through Interfaces, with ownership shown inside their resource readings.
 
 Inline definitions and the Vocabulary panel share a registry generated from
 the documentation's `terms:` frontmatter.
 
-A collection row, relation, search result, or topology resource opens the resource
-page directly. The page is the one reading container: it has a URL, a
-breadcrumb, the authored body at full width, and browser back navigation.
+A collection row, relation, search result, or topology resource opens one complete
+resource slideover. The underlying collection or comparison keeps its heading,
+rail selection, Rows/Graph drawing, filters, expansion, scroll and graph viewport.
+Desktop readers can continue interacting with that view; narrow screens use a
+full-width modal reading. Back restores the previous resource and its tab and
+reading position. Close returns to the working view. Resource links support the
+browser's new-tab and copy-link actions. The compact header keeps the resource's
+identity on the left and named-view and documentation actions beside Close.
+
 Overview contains identity facts, authored detail, Contexts, relations,
-supporting material, and References. A page has Overview and at most one peer
-tab: Capability and Journey pages add Scenarios, and an Entity with States adds
-Lifecycle, its machine composed from every Step that moves the thing. A Scenario
-URL opens that parent page with the Scenario selected. Connections remain in Overview; contextual actions open the appropriate
-named collection reading.
+supporting material, and References. Capability and Journey readings add
+Scenarios; an Entity with States adds Lifecycle. A Scenario URL selects and
+expands that Scenario inside its parent. Named-view actions explicitly change
+the working view and close the panel. Ownership remains visible inside the
+resource reading and is separate from its return trail.
 
 Authored Capability Context has one dedicated Overview reading instead of being
 repeated as a resource fact. Derived Journey and Scenario Contexts stay with
@@ -63,6 +69,7 @@ where it left:
   v-model:section="section"
   v-model:resource="resource"
   v-model:tab="tab"
+  v-model:resource-tab="resourceTab"
   v-model:scenario-route="scenarioRoute"
   v-model:route-columns="routeColumns"
   v-model:topology="topology"
@@ -73,23 +80,32 @@ where it left:
 | Model | Value | Default |
 | --- | --- | --- |
 | `section` | `overview`; a cross-collection view: `delivery`, `what-changes-what`, or `rule-attachments`; or a collection: `entity`, `interface`, `domain`, `capability`, `journey`, or `rule` | `overview` |
-| `resource` | the stable key of the open resource page (`screen:reader-web::…`), or `null` for the section's collection | `null` |
-| `tab` | page: `overview`, `scenarios`, `lifecycle`; collection: `overview` (Rows) or `graph`; Overview: `overview` (About), `coverage`, or `references` | `overview` |
+| `resource` | the stable key of the inspected resource (`screen:reader-web::…`), or `null` for the section's collection | `null` |
+| `tab` | underlying collection: `overview` (Rows) or `graph`; Product Overview: `overview` (About), `coverage`, or `references` | `overview` |
+| `resourceTab` | resource reading: `overview`, `scenarios`, or `lifecycle`; independent of `tab` | `overview` |
 | `scenarioRoute` | the first route in the visible Scenario route window, or `null` | `null` |
 | `routeColumns` | `auto`, or the reader's preferred number of visible route columns | `auto` |
 | `topology` | selected view, Journey, Scenario window, matrix column, focus, hidden kinds, expanded/collapsed groups, directory search | Domain map; no filters |
 
-Every one is optional; bind the ones the host wants in its URL. A Scenario key
-keeps the parent collection as the section while selecting that Scenario inside
-its parent page.
+Every one is optional; bind the ones the host wants in its URL. A Scenario key selects that Scenario inside its parent reading while the
+section stays on the originating working view.
 
 The layer auto-imports `useBlrReportNavigation()` for hosts that use Vue Router.
-It returns these six models and encodes `s`, `e`, `t`, `r`, `rc`, plus reading
+It returns these seven models and encodes `s`, `e`, `t`, `rt`, `r`, `rc`, plus reading
 keys `tv`, `tj`, `ts`, `tm`, `tf`, `th`, `tx`, and `tc`. Set
 `useBlrReportNavigation({ sectionKey: 'tab' })` for the catalog's section URLs.
 Defaults are omitted; array keys repeat, preserving qualified resource IDs.
 Navigation pushes history; reading filters and expansion replace the current entry.
-Hosts can instead bind their own state. Collection facets, collapsed groups,
+`rt` selects the resource tab independently of the working view's `t`. For example,
+`?s=entity&t=graph&e=entity:order&rt=lifecycle` keeps Entity relationships behind
+Order's Lifecycle. A resource-only address defaults to its owning collection.
+The return trail lives in browser history state, survives reload, and follows
+Back/Forward; shared URLs carry the current reading without the sender's trail.
+The composable also supplies native resource URLs to descendant viewer links.
+Hosts providing their own routing should adopt `resourceTab` independently of
+`tab`; uncontrolled embedded readers retain a local return trail.
+Hosts can instead bind their own state. Interface delivery expansion is stored per resource, separately from the underlying graph.
+Collection facets, collapsed groups,
 expanded tree nodes, scroll anchors and graph position use session storage when
 available, isolated by report and host path. They survive refresh and
 recompilation without entering the Product Model; removed facet IDs are pruned.
@@ -138,9 +154,10 @@ Action or Condition, Who, Entity effects, Where and Capability, with effects
 spelled out in words. Where reuses the original Context breadcrumbs — Interface,
 Experience and Screen — without route-name prefixes. The Step card variant
 selector has been retired.
-Resource pages and the Product Overview share Nuxt UI's link-style tabs on a
-transparent header. The host places the resource tab strip above the scroll
-pane, so it stays available without a filled sticky backdrop or a nested
+Resource readings and the Product Overview share Nuxt UI's link-style tabs on a
+transparent header. The slideover places the resource tab strip above its scroll
+pane, with a subtle upper divider and a full-width lower separator aligned with
+the active underline. It stays available without a filled sticky backdrop or a nested
 scrollbar. Scenarios keeps Expand all, Collapse all and the per-row selector
 on the right of that strip. The controls wrap when the screen is too narrow
 for one row; tabs retain Nuxt UI's arrow-key navigation and visible focus.
@@ -155,8 +172,8 @@ these icons; counts align at the right edge. Resource entries retain
 their type marks. The named Domain or Interface is the tree root. Clicking any
 branch row, including its name or chevron, only expands or collapses its children;
 Enter, Space and arrow keys also control expansion. A resource branch starts
-with an icon-free Overview link to its page, including an Experience with Screens.
-Resource leaves open their pages directly. Closing a root preserves its folders'
+with an icon-free Overview link to its reading, including an Experience with Screens.
+Resource leaves open their readings directly. Closing a root preserves its folders'
 expansion state. Counts exclude Overview links. Unassigned only expands and
 collapses and has no Overview link.
 Experiences and Screens folders appear in Interfaces only when they contain
@@ -184,7 +201,7 @@ There is no URL migration. Every standalone `topology` and named-destination
 shape changed with the restructure, and an address naming a destination this
 report has no home for opens the Overview rather than landing the reader
 somewhere else without saying so. Resource links retain their ids, and
-Experience and Screen pages keep Interfaces selected.
+Inspecting an Experience or Screen preserves the originating rail selection.
 
 Interface map and the four reach graphs follow a containment tree: measured
 nodes in horizontal tiers, parents above children, shared orthogonal branches,
@@ -225,3 +242,13 @@ repository root. The publish workflow also runs
 `scripts/check-packed-diagrams.mjs` against built npm and pnpm consumers to check
 SSR, hydration, worker loading, multiple instances, and navigation from the
 actual packed layer.
+
+## Navigation regression checks
+
+Against a running built fixture-shop report, run
+`node scripts/check-resource-slideover.mjs <url>` for desktop and mobile
+inspection, independent Graph/Lifecycle state, nested Back/Forward, Scenario
+position, direct links and keyboard dismissal.
+`node scripts/check-report-navigation.mjs <url>` covers the collections, trees,
+filters and named-view exits. Set `BLR_NAV_SCREENSHOTS` to a directory outside
+the Product Model to save layout captures.

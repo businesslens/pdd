@@ -36,13 +36,13 @@ describe('report destinations', () => {
     /* Every standalone view URL changed shape with the restructure. A shim that
        silently lands a reader somewhere else is worse than a clean landing. */
     expect(destinationForLocation('topology', 'overview')).toBeUndefined()
-    expect(destinationForLocation('capability', 'mutations', 'capability:checkout')).toBeUndefined()
+    expect(destinationForLocation('capability', 'mutations')).toBeUndefined()
     /* A matrix is its own section, so its bare address is exactly its home. */
     expect(destinationForLocation('what-changes-what', 'overview')?.view).toBe('what-changes-what')
     expect(destinationForLocation('what-changes-what', 'graph')).toBeUndefined()
   })
 
-  it('keeps child pages in Interfaces and derives actual ownership', () => {
+  it('finds the owning collection of children and derives actual ownership', () => {
     for (const resource of [...workspace.experiences, ...workspace.screens]) {
       expect(collectionKindFor(resource.kind)).toBe('interface')
       const parents = resourceAncestors(workspace, resource)

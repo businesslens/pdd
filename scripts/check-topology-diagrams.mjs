@@ -316,7 +316,7 @@ try {
     }
     const entity = report.model.entities.find(item => item.states.length)
     if (entity) {
-      await page.goto(`${url}/?s=entity&e=${encodeURIComponent(`entity:${entity.id}`)}&t=lifecycle`)
+      await page.goto(`${url}/?s=entity&e=${encodeURIComponent(`entity:${entity.id}`)}&rt=lifecycle`)
       await flowReady(page)
       expect(await geometry(page)).toEqual({ overlaps: [], clipped: [] })
       await page.reload()

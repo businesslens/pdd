@@ -85,10 +85,10 @@ const open = (key: string) => { const resource = props.workspace.byKey.get(key);
         <dd>
           <ul class="blr-summary-endings">
             <li v-for="ending in results" :key="`${ending.entityId}-${ending.as}`" class="blr-summary-ending">
-              <button v-if="ending.entity" type="button" class="blr-topology-link" :aria-label="`Open Entity ${ending.label}`" @click="emit('open', ending.entity)">
+              <BlrResourceLink v-if="ending.entity" :resource-key="ending.entity.key" class="blr-topology-link" :aria-label="`Open Entity ${ending.label}`" @open="emit('open', ending.entity)">
                 <BlrEntityMark :facet="entityFacetOf(ending.entity) ?? 'kept'" :acts="ending.entity.kind === 'entity' ? ending.entity.acts : undefined" size="xs" />
                 <span>{{ ending.label }}</span>
-              </button>
+              </BlrResourceLink>
               <span v-else>{{ ending.label }}</span>
               <span class="blr-summary-ending-result">{{ ending.result }}</span>
             </li>
@@ -123,7 +123,8 @@ const open = (key: string) => { const resource = props.workspace.byKey.get(key);
 .blr-summary-toggle::after { content: ''; position: absolute; inset: 0; z-index: 1; cursor: pointer; }
 .blr-summary-toggle:focus-visible { outline: none; }
 .blr-summary-toggle:focus-visible::after { outline: 2px solid var(--ui-primary); outline-offset: -3px; border-radius: 0.625rem; }
-.blr-scenario-summary :deep(button:not(.blr-summary-toggle)) { position: relative; z-index: 2; }
+.blr-scenario-summary :deep(button:not(.blr-summary-toggle)),
+.blr-scenario-summary :deep(a) { position: relative; z-index: 2; }
 .blr-summary-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
 .blr-summary-identity { display: flex; align-items: flex-start; gap: 0.75rem; min-width: 0; }
 .blr-summary-heading { display: flex; flex-wrap: wrap; align-items: center; gap: 0.375rem 0.625rem; min-width: 0; }

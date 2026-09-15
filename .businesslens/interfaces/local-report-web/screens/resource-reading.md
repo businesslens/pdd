@@ -21,17 +21,19 @@ references:
     target: layers/nuxt/report-viewer/app/components/BlrResourcePage.vue
 ---
 
-# Resource page
+# Resource reading
 
-One resource, at the width its content was drawn for. This is the reading: it
-has its own address, a trail back through the resources that own it, and the
-browser's own back button. The page names itself — the trail ends at the parent,
-and the heading carries the resource's title, its type, and the ways out of it.
+One resource’s complete reading, opened over the current working view. Opening
+related resources preserves the underlying collection or comparison, its
+filters, drawing, expansion and viewport. The resource and its selected reading
+have their own address. Back restores the previous resource and its reading
+position; Close returns to the working view. A fresh resource address opens over
+its owning collection when it names no working view.
 
 ## Information presented
 
 - The resource's title and type, stated once, above the reading
-- The path back through the resources that actually own it
+- Actual ownership, separate from the trail through previously inspected resources
 - The identifying facts of that kind
 - Its authored description, Intent, and any supporting sections
 - Its Contexts, where the resource type carries them
@@ -43,7 +45,7 @@ and the heading carries the resource's title, its type, and the ways out of it.
 
 ## Available actions
 
-- Open any related resource's page
+- Open any related resource’s reading
 - Read a Scenario, and compare its named routes side by side
 - Read this resource’s incoming and outgoing connections in Overview
 - Open a named view of another subject, focused on this resource, from the heading row
@@ -51,7 +53,8 @@ and the heading carries the resource's title, its type, and the ways out of it.
 - Read an Interface’s delivered Capabilities and contained resources in Overview
 - Follow actual ownership through Interfaces, an Interface, an optional Experience, and a Screen
 - Open an Experience’s own Screens and references to shared Screens
-- Return to the main collection through the breadcrumb
+- Return to the previous resource reading, or close to the preserved working view
+- Open a resource link in another browser tab
 - Search the whole model by name
 
 ## View states
@@ -63,12 +66,12 @@ References.
 
 ### Scenarios open
 
-A Capability or Journey page with one of its Scenarios selected; the selected
+A Capability or Journey reading with one of its Scenarios selected; the selected
 Scenario and route stay in the address bar.
 
 ### Lifecycle open
 
-An Entity page on its composed state machine: the states, the arcs the Steps
+An Entity reading on its composed state machine: the states, the arcs the Steps
 draw with the Capability on each and the Rules that restrict or forbid it, and
 what leaves a thing in each state.
 
@@ -84,4 +87,4 @@ Overview contains Connections and Interface delivery; an Entity reads its state
 machine in Lifecycle. Every comparison across resources — how Journeys compose,
 how Interfaces deliver — belongs to the owning collection, because a page
 showing one resource cannot answer a question about how several compare.
-Interfaces stays selected for Experience and Screen pages.
+The working view stays selected while any resource is inspected.

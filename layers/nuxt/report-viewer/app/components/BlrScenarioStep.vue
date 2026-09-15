@@ -44,10 +44,10 @@ const open = (key: string) => { const resource = props.workspace.byKey.get(key);
           <ul class="blr-guided-effects">
             <li v-for="(effect, position) in effects" :key="`${position}-${effect.entityId}-${effect.as}`" class="blr-guided-effect" :data-effect="effect.effect">
               <span class="blr-guided-verb">{{ effectVerb[effect.effect] }}</span>
-              <button v-if="effect.entity" type="button" class="blr-topology-link" :aria-label="`Open Entity ${effect.label}`" @click="emit('open', effect.entity)">
+              <BlrResourceLink v-if="effect.entity" :resource-key="effect.entity.key" class="blr-topology-link" :aria-label="`Open Entity ${effect.label}`" @open="emit('open', effect.entity)">
                 <BlrEntityMark :facet="entityFacetOf(effect.entity) ?? 'kept'" :acts="effect.entity.kind === 'entity' ? effect.entity.acts : undefined" size="xs" />
                 <span>{{ effect.label }}</span>
-              </button>
+              </BlrResourceLink>
               <span v-else>{{ effect.label }}</span>
               <span v-if="effect.effect === 'reads'" class="blr-guided-cue">without changing it</span>
               <template v-else-if="effect.effect === 'creates' && effect.to">

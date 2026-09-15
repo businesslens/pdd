@@ -11,9 +11,14 @@ export function useBlrTopologyScroll(key: Ref<string>) {
     if (!mounted || restoring || !element.value || element.value.querySelector('[data-diagram-pending="true"]')) return
     const pane = element.value
     const top = pane.getBoundingClientRect().top
-    const anchor = [...pane.querySelectorAll<HTMLElement>('[data-occurrence-id], [data-group-id], [data-resource-key]')].find(item => item.getBoundingClientRect().top >= top)
+    const anchors = [...pane.querySelectorAll<HTMLElement>('[data-occurrence-id], [data-group-id], [data-resource-key]')]
+    const anchor = anchors.find(item => item.getBoundingClientRect().top >= top)
+    const anchorKey = (item: HTMLElement) => item.dataset.occurrenceId ?? item.dataset.groupId ?? item.dataset.resourceKey
     const value = JSON.stringify({ top: pane.scrollTop, left: pane.scrollLeft,
       anchor: anchor?.dataset.occurrenceId ?? anchor?.dataset.groupId ?? anchor?.dataset.resourceKey,
+      // The same Entity can occur on several Steps. Restore the occurrence we
+      // left, rather than jumping to its first mention earlier in the Scenario.
+      occurrence: anchor ? anchors.filter(item => anchorKey(item) === anchorKey(anchor)).indexOf(anchor) : 0,
       offset: anchor ? anchor.getBoundingClientRect().top - top : 0,
       nested: [...pane.querySelectorAll<HTMLElement>('.blr-matrix-scroll, .blr-diagram-scroll')].map(item => ({ top: item.scrollTop, left: item.scrollLeft })) })
     memory.set(currentKey, value)
@@ -36,7 +41,7 @@ export function useBlrTopologyScroll(key: Ref<string>) {
       pane.scrollTop = value?.top ?? 0
       pane.scrollLeft = value?.left ?? 0
       if (value?.anchor) {
-        const anchor = [...pane.querySelectorAll<HTMLElement>('[data-occurrence-id], [data-group-id], [data-resource-key]')].find(item => (item.dataset.occurrenceId ?? item.dataset.groupId ?? item.dataset.resourceKey) === value.anchor)
+        const anchor = [...pane.querySelectorAll<HTMLElement>('[data-occurrence-id], [data-group-id], [data-resource-key]')].filter(item => (item.dataset.occurrenceId ?? item.dataset.groupId ?? item.dataset.resourceKey) === value.anchor)[value.occurrence ?? 0]
         if (anchor) pane.scrollTop += anchor.getBoundingClientRect().top - pane.getBoundingClientRect().top - value.offset
       }
       pane.querySelectorAll<HTMLElement>('.blr-matrix-scroll, .blr-diagram-scroll').forEach((item, index) => {
@@ -50,5 +55,10 @@ export function useBlrTopologyScroll(key: Ref<string>) {
   watch(key, next => { save(); currentKey = next; void restore() }, { flush: 'pre' })
   onMounted(() => { mounted = true; void restore() })
   onBeforeUnmount(() => { save(); mounted = false; restoration++ })
-  return { element, save, restore }
+  function hasSaved() {
+    if (memory.has(key.value)) return true
+    if (!import.meta.client) return false
+    try { return Boolean(sessionStorage.getItem(storageKey(key.value))) } catch { return false }
+  }
+  return { element, save, restore, hasSaved }
 }

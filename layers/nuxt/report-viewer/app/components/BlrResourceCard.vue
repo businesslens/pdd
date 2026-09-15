@@ -8,6 +8,7 @@
  * Scenario's parent, an Experience's Interface. Without it a collection of
  * counterparts reads as a list of duplicates.
  */
+import { resourceNavigationKey } from '../utils/resourceNavigation'
 import type { AnyResourceView, ReportWorkspace } from '../utils/reportWorkspace'
 import { ENTITY_KIND_META, entityFacetOf, resolveResource } from '../utils/reportWorkspace'
 import type { ResourceCardMetric } from '../utils/resourceCards'
@@ -32,6 +33,15 @@ const props = withDefaults(defineProps<{
   open?: boolean
   count?: number
 }>(), { badge: true, stacked: false, expandable: false, open: false, count: 0 })
+
+const navigation = inject(resourceNavigationKey, null)
+const href = computed(() => props.expandable ? undefined : navigation?.href(props.resource.key))
+function activate(event: MouseEvent) {
+  if (href.value && (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0)) return
+  event.preventDefault()
+  if (props.expandable) emit('toggle', props.resource)
+  else emit('open', props.resource)
+}
 
 const emit = defineEmits<{ open: [resource: AnyResourceView], toggle: [resource: AnyResourceView] }>()
 const presentation = computed(() => {
@@ -73,13 +83,16 @@ function metricEntity(metric: ResourceCardMetric, id: string) {
 
 <template>
   <div class="relative">
-  <button
-    type="button"
+  <component
+    :is="href ? 'a' : 'button'"
+    :href="href"
+    :type="href ? undefined : 'button'"
+    :data-resource-key="resource.key"
     class="blr-resource-row group relative flex w-full items-center gap-4 overflow-hidden rounded-[0.625rem] border bg-default px-4 py-3 text-start transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
     :class="[active ? 'border-primary bg-primary/5' : expandable ? 'border-default hover:bg-elevated' : 'border-default hover:border-accented hover:bg-elevated/40']"
     :aria-label="expandable ? `${open ? 'Collapse' : 'Expand'} ${kindLabel} ${resource.title}, ${count} ${count === 1 ? 'item' : 'items'}` : `Open ${kindLabel} ${resource.title}`"
     :aria-expanded="expandable ? open : undefined"
-    @click="expandable ? emit('toggle', resource) : emit('open', resource)"
+    @click="activate"
   >
     <span class="flex min-w-0 flex-1 items-start gap-3">
       <BlrKind
@@ -194,7 +207,7 @@ function metricEntity(metric: ResourceCardMetric, id: string) {
       name="i-lucide-chevron-right"
       class="size-4 shrink-0 text-dimmed transition group-hover:translate-x-0.5 group-hover:text-default"
     />
-  </button>
+  </component>
   <!-- Drilling down is a deliberate step from a row that otherwise keeps the
        reader here, so it has its own button. Outside the row: a button cannot
        hold a button. -->

@@ -47,3 +47,8 @@ The Developer resumes the same reading after navigation, refresh, or a valid rec
 
 - Journey Scenario reading mode and composition window survive browser Back, refresh, and valid model edits.
 - Interface delivery expansion choices survive opening a resource, returning, and refreshing.
+
+- Opening a resource preserves the selected collection or comparison, drawing, filters, expansion and viewport behind its reading.
+- Following Journey → Entity → Business Rule and using Back restores each previous resource’s tab, expanded Scenario and reading position. Close dismisses the resource reading and returns to the original working view.
+- The underlying view and resource tab have independent addresses: a Graph remains selected while an Entity Lifecycle is open, including after refresh.
+- A direct resource address without an originating view opens over its owning collection. A removed resource closes its reading while keeping the working view available.

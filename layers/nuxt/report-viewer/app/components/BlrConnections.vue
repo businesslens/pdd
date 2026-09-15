@@ -105,13 +105,13 @@ function entityAt(kind: ReportResourceKind, id: string) {
         <span v-if="item.derived" class="blr-derived" title="Derived from the model, never authored here">derived</span>
       </p>
       <div class="flex flex-wrap gap-1.5">
-        <button
+        <BlrResourceLink
           v-for="id in shown(item)"
           :key="id"
-          type="button"
+          :resource-key="`${item.kind}:${id}`"
           class="blr-connection"
           :class="item.derived && 'blr-connection--derived'"
-          @click="pick(item.kind, id)"
+          @open="pick(item.kind, id)"
         >
           <BlrKind
             :kind="item.kind"
@@ -122,7 +122,7 @@ function entityAt(kind: ReportResourceKind, id: string) {
             size="xs"
           />
           <span class="truncate">{{ title(item.kind, id, item.ids) }}</span>
-        </button>
+        </BlrResourceLink>
         <span v-if="overflow(item)" class="self-center text-xs text-dimmed">+{{ overflow(item) }}</span>
       </div>
     </div>

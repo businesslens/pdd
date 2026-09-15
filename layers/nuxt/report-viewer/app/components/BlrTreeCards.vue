@@ -136,7 +136,8 @@ const total = (card: TreeCard) => card.children.reduce((sum, group) => sum + (gr
         />
       </template>
       <template #item-label="{ item }">
-        <span :class="item.value === card.key ? 'font-semibold text-highlighted' : item.resource ? 'text-highlighted' : 'text-muted'">{{ item.label }}</span>
+        <BlrResourceLink v-if="item.resource && !item.children?.length" :resource-key="item.resource.key" class="text-highlighted" @open="emit('open', item.resource)">{{ item.label }}</BlrResourceLink>
+        <span v-else :class="item.value === card.key ? 'font-semibold text-highlighted' : item.resource ? 'text-highlighted' : 'text-muted'">{{ item.label }}</span>
       </template>
       <template #item-trailing="{ item }">
         <span v-if="item.count !== undefined" class="blr-meta">{{ item.count }}</span>

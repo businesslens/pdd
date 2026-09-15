@@ -19,6 +19,11 @@ const resourceUrl = (kind, id, suffix = '') => `${origin}/?s=${kind}&e=${encodeU
 /* A tab is its label and, at most, a count: `Scenarios 3` is Scenarios, `Scenarios v2` is not. */
 const tab = (page, name) => page.getByRole('tab', { name: new RegExp(`^${name}( \\d+)?$`) })
 async function choose(page, name) {
+  const close = page.getByRole('button', { name: 'Close resource', exact: true })
+  if (new URL(page.url()).searchParams.has('e')) {
+    await close.click()
+    await expect(page.locator('[data-resource-panel]')).toHaveCount(0)
+  }
   if (page.viewportSize().width < 1024) await page.getByRole('button', { name: 'Open report navigation', exact: true }).click()
   await page.locator('.blr-navitem:visible').filter({ hasText: new RegExp(`^${name}`) }).click()
 }
@@ -136,9 +141,9 @@ try {
         if (!before.length) await expect(card.getByRole('treeitem')).toHaveCount(2)
         await overview.click()
         await expect.poll(() => new URL(page.url()).searchParams.get('e')).toBe(`${kind}:${resource.id}`)
-        await expect(page.getByRole('heading', { level: 1 })).toContainText(title)
+        await expect(page.locator('[data-resource-heading]')).toContainText(title)
         await page.reload()
-        await expect(page.getByRole('heading', { level: 1 })).toContainText(title)
+        await expect(page.locator('[data-resource-heading]')).toContainText(title)
         await page.goBack()
         await expect(subject).toHaveAttribute('aria-expanded', 'true')
         await expect.poll(folderStates).toEqual(before)
@@ -190,10 +195,8 @@ try {
       const screen = screens.find(item => item.id.split('::').length === 2) ?? screens[0]
       await page.goto(`${origin}/?s=interface&e=${encodeURIComponent(`screen:${screen.id}`)}`)
       /* The page names itself; the trail stops at its parent. */
-      await expect(page.getByRole('heading', { level: 1 })).toContainText(screen.title)
-      const trail = page.locator('[data-page-trail]')
-      await expect(trail).toContainText('Interfaces')
-      await expect(trail).not.toContainText(screen.title)
+      await expect(page.locator('[data-resource-heading]')).toContainText(screen.title)
+      await expect(page.locator('[data-resource-panel]')).toContainText('Screen')
       await capture(page, `${width}-screen-page`)
       /* One tab switches nothing, so no strip renders — and the ways out stay. */
       await expect(page.locator('.blr-surface-tab')).toHaveCount(0)
@@ -246,7 +249,7 @@ try {
     if (journey) {
       await page.goto(resourceUrl('journey', journey.id))
       await tab(page, 'Scenarios').click()
-      await expect(page).toHaveURL(/t=scenarios/)
+      await expect(page).toHaveURL(/rt=scenarios/)
       /* Comparing Journeys is the collection's job, not a third tab here. */
       await expect(page.getByRole('button', { name: 'Composition', exact: true })).toHaveCount(0)
     }
@@ -255,16 +258,16 @@ try {
       const parent = parents.find(item => report.model[`${kind}Scenarios`].some(scenario => scenario[`${kind}Id`] === item.id))
       if (!parent) continue
       const scenario = report.model[`${kind}Scenarios`].find(item => item[`${kind}Id`] === parent.id)
-      await page.goto(resourceUrl(kind, parent.id, '&t=scenarios'))
+      await page.goto(resourceUrl(kind, parent.id, '&rt=scenarios'))
       const card = page.locator(`[data-row-key="${kind}-scenario:${scenario.id}"] [data-scenario-card]`)
       const toggle = card.locator('.blr-summary-toggle')
       await expect(toggle).toHaveAttribute('aria-expanded', 'false')
       await toggle.click()
       await expect(toggle).toHaveAttribute('aria-expanded', 'true')
-      const link = card.getByRole('button', { name: /^Open / }).first()
+      const link = card.locator('a[data-resource-key]').first()
       if (await link.count()) {
         await link.click()
-        await expect(page).not.toHaveURL(/t=scenarios/)
+        await expect(page).not.toHaveURL(/rt=scenarios/)
       } else {
         await choose(page, 'Entities')
         await expect(page).toHaveURL(/[?&]s=entity(?:&|$)/)
@@ -277,7 +280,7 @@ try {
       await expect(page).not.toHaveURL(/[?&]t=/)
       await tab(page, 'Scenarios').click()
       await expect(toggle).toHaveAttribute('aria-expanded', 'true')
-      await page.getByRole('button', { name: 'Collapse all', exact: true }).click()
+      await page.locator('[data-resource-panel]').getByRole('button', { name: 'Collapse all', exact: true }).click()
       await page.reload()
       await expect(page.locator('.blr-summary-toggle[aria-expanded=true]')).toHaveCount(0)
       await page.goto(resourceUrl(kind, scenario.id).replace(`e=${kind}%3A`, `e=${kind}-scenario%3A`))
@@ -310,7 +313,7 @@ try {
         const old = await toggle.getAttribute('aria-expanded')
         await toggle.click()
         await expect(toggle).toHaveAttribute('aria-expanded', old === 'true' ? 'false' : 'true')
-        await expect(page).toHaveURL(new RegExp(`[?&]${old === 'true' ? 'tc' : 'tx'}=`))
+        // Resource expansion is remembered separately from the working graph.
         await page.reload()
         await expect(toggle).toHaveAttribute('aria-expanded', old === 'true' ? 'false' : 'true')
       }
