@@ -216,17 +216,20 @@ costed already.
   keeps its icon and count with an accessible name. It appears only where the
   host supports comparisons: the local viewer does, the catalog does not.
   The comparison keeps its own URL, baseline selector and pin control.
-- **What changed is computed by the CLI and drawn by the report.** A
-  comparison is the current report against one baseline — the committed model
-  or a checkpoint — at the resource and field level, never a text diff of
-  files. The viewer never owns history: checkpoints are sealed by
-  `checkpoint` or by the pin, into the generated cache, so the viewer can
-  start before, during or after the work and read the same comparison. A
-  round is the agent's to declare: the skills run `checkpoint` once per
-  approved delta, which every harness runs alike. `lint` seals nothing, since
-  a pass lints in a loop and none of those runs is a boundary; nothing infers
-  a turn from silence or from harness hooks. A changed resource wears its mark on its row and its page, so the
-  difference is visible while reading and not only on the comparison.
+- **The local report server computes What changed; the report UI renders it.**
+  The server compares the current report against the committed model or a
+  checkpoint, using the shared comparison core. It compares model resources
+  and fields, plus local Reference file contents. Edits are detected regardless
+  of which person, agent or tool made them. The browser requests the comparison
+  through the server API. A changed resource wears its mark on its row and page.
+- **Checkpoints are explicit baselines shared by the CLI and report server.**
+  The `checkpoint` command and the server API used by **Pin this state** call
+  the same checkpoint writer. Snapshots live in the generated cache and
+  survive server restarts; the browser does not store them. Creating a
+  checkpoint saves a baseline, independent of who made the edits. The skills
+  run `checkpoint` once per approved delta as a workflow convention, not a
+  requirement for detecting changes. `lint` creates no checkpoints, and no
+  silence timer or harness hook infers a work boundary.
 - **A resource page is Overview and at most one peer tab** — Scenarios for a
   Capability or Journey, Lifecycle for an Entity with States. A view comparing
   resources belongs to the collection, never to one of them.

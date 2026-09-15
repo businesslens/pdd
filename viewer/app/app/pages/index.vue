@@ -28,8 +28,8 @@ async function refreshLogo() {
 }
 
 /* ------------------------------------------------------------------ */
-/* What changed: the CLI holds the baselines and computes the diff;    */
-/* the page only chooses which baseline and keeps that choice.         */
+/* What changed: the local server reads baselines and computes diffs;  */
+/* the page requests a comparison and remembers the baseline choice.   */
 /* ------------------------------------------------------------------ */
 
 const baselines = ref<ReportBaseline[]>([])

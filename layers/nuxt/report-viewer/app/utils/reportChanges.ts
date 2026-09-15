@@ -4,7 +4,8 @@
  * The host that has a comparison — the local viewer, with its checkpoints and
  * its committed model — hands one in; a host that has none, like the catalog,
  * passes nothing and the report shows no trace of the feature. The diff itself
- * is computed by the CLI; this module only keys it the way the surfaces do.
+ * is computed by the local report server using the shared comparison core;
+ * this module only keys it the way the surfaces do.
  */
 import type { ChangeKind, ReportBaseline, ReportCollectionName, ReportDiff, ResourceChange } from 'businesslens/report'
 import type { ReportResourceKind } from './reportWorkspace'

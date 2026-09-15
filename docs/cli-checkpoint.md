@@ -35,8 +35,9 @@ convenience for the local report, not part of the model: a clone of the
 repository has none, and deleting the directory loses nothing the model says.
 
 [`lint`](./cli-lint.md) seals nothing. A pass lints in a loop while fixing
-errors, and none of those runs is a boundary. **Pin this state** in the report
-is the same operation from the page.
+errors, and none of those runs is a boundary. **Pin this state** requests a
+checkpoint through the local report server's API. The API and this command use
+the same checkpoint writer; the command also works while the server is stopped.
 
 ## Options
 

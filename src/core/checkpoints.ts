@@ -1,12 +1,12 @@
 /**
  * Checkpoints: compiled reports sealed into `.businesslens/cache/checkpoints/`.
  *
- * The local viewer is a separate process from whoever edits the model, and it
- * may not be running while an agent works. So the durable record of "the model
- * as it stood when a round finished" is written by the CLI — the `checkpoint`
- * command an agent runs at each round it decides is one, or the viewer's own
- * pin — and the viewer only reads. Lint seals nothing: a mapping pass lints in
- * a loop, and a boundary is the agent's to declare, not a side effect.
+ * The CLI's `checkpoint` command and the local report server's checkpoint API
+ * use this shared writer. The server also reads snapshots for comparisons;
+ * the browser requests a snapshot through Pin this state. Cache files survive
+ * server restarts, and the CLI can create them while the server is stopped.
+ * A checkpoint records an explicitly requested baseline, regardless of who
+ * edited the model or its referenced files. Lint creates no checkpoints.
  * `cache/` is generated and never committed, so `.businesslens/` still holds
  * product meaning and nothing else that is tracked.
  *

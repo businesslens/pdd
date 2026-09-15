@@ -35,6 +35,11 @@ page, with the fields that differ under it. A changed or added resource also
 wears its mark on its row and beside its name on its page, so the difference is
 visible while reading, not only on the comparison.
 
+The local report server computes the comparison and the browser displays it.
+Model and local Reference file edits are detected regardless of which editor,
+person or agent made them. A checkpoint saves a state for later comparisons;
+creating one is separate from detecting edits.
+
 The button counts changed resources and stays available when nothing has
 changed or before the first baseline, so you can switch baselines or pin a
 state. On narrow screens it shows the history icon and count.
