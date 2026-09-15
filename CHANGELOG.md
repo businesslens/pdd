@@ -9,36 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.14.0] - 2026-09-15
 
-### Changed
-
-- Capabilities and Journeys have one Scenarios tab with expandable cards.
-  Summaries show Trigger, Outcome and Entity results; one expansion reveals
-  Intent, labelled Steps, location breadcrumbs, decision points and edge cases.
-- Page tabs have a lighter header with keyboard navigation, with Scenario
-  expansion and row-density controls alongside them.
-- Every collection offers Rows and Graph drawings with shared filters and counts.
-- Interfaces and Domains read as one tree card per resource: an Interface's
-  Experiences and Screens, a Domain's Capabilities and Entities.
-- Groups, resources and details use consistent backgrounds, with hover feedback
-  on interactive surfaces.
-- Domains, Capabilities, Journeys and Business Rules have reach graphs.
-- Rows can be laid out two, three or four per line, remembered per collection.
-- Compare delivery, What changes what and Rule attachments are rows of the
-  rail, directly below Overview.
-
-### Fixed
-
-- Back returns to the matrix after opening a resource. Expanded Scenarios stay
-  open when returning to their page or refreshing it.
-- Switching collections clears the previous Graph's focus. Tree chevrons
-  expand their children without opening a resource page.
-- Business Rule graphs show each reached place once, with matching child counts.
-
-### Removed
-
-- Scenarios v3 and the extra navigation arrows on Domain, Interface and
-  Scenario cards.
-- The Composition tab of Journeys. Scenario Steps show the Capability used.
+- Redesigned Capability and Journey Scenarios with clearer Steps and details.
+- Added Rows and Graph views with shared filters and saved row layouts.
+- Simplified report navigation and made styling consistent.
+- Fixed Back navigation, expansion state, and duplicate graph nodes.
 
 ## [0.13.0] - 2026-09-12
 
