@@ -3,7 +3,7 @@ title: blueprint export
 description: Compile a Product Model into a portable Product Report that can move safely between repositories.
 section: open-source
 group: CLI
-order: 29
+order: 30
 ---
 
 # `businesslens blueprint export`

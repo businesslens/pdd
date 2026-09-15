@@ -19,6 +19,7 @@ npx businesslens <command> [options]
 | [`install`](./cli-install.md) | Install map, ideate, and verify |
 | [`update`](./cli-update.md) | Refresh marked skill installations |
 | [`lint`](./cli-lint.md) | Check Product Model structure without semantic claims |
+| [`checkpoint`](./cli-checkpoint.md) | Seal the current model so the local report can show what changed since |
 | [`view`](./cli-view.md) | Render the current Product Model on localhost without exporting it |
 | [`blueprint export`](./cli-export.md) | Compile a portable Product Report (a Blueprint) |
 | [`blueprint open`](./cli-open.md) | Expand a local Blueprint into `.businesslens/` |
@@ -37,8 +38,8 @@ npx businesslens blueprint pull --help
 
 ## Choosing the Product Model
 
-`lint`, `view`, `blueprint export`, and `blueprint contribute` start from the
-current directory. If that directory directly contains `.businesslens/`, that
+`lint`, `checkpoint`, `view`, `blueprint export`, and `blueprint contribute`
+start from the current directory. If that directory directly contains `.businesslens/`, that
 model is used; otherwise BusinessLens checks the Git repository root. This lets
 a nested Blueprint take precedence when the command runs from its directory,
 while ordinary repository subdirectories still use the repository model.

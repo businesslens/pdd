@@ -1990,3 +1990,14 @@ administrator decision.
 `blueprint export` writes into them is defined by [`report.md`](./report.md) —
 including the portable projection, the validation the report schema applies on
 top of the rules above, and the `open`/`pull` expansion round trip.
+
+`cache/checkpoints/` holds checkpoints: workspace-profile Product Reports that
+the `checkpoint` command or the local viewer sealed, each as a `<id>.json`
+record naming when and what sealed it beside its `<id>.report.json`.
+Its `<id>.references.json` companion records the bytes of local Reference
+files at that boundary as fingerprints and bounded text previews. This is
+generated comparison data, never an authored Reference field or a claim of
+semantic alignment. The local comparison contract is in `report.md`.
+They are read only by `view`, which compares the current model against them.
+Like everything under `cache/`, they are never committed and carry no product
+meaning: a model with none is complete, and a clone starts with none.

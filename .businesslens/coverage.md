@@ -17,6 +17,8 @@ sourceAreas:
   - viewer/app/app/
   - docs/
   - spec/
+  - cats/
+  - test/
 unmapped:
   - The Nuxt layers and JavaScript entry points the package exports for third-party hosts (`businesslens/nuxt/report-viewer`, `businesslens/nuxt/theme`, `businesslens/nuxt/theme-lab`, `businesslens/report`, `businesslens/logo`). They are a supported package contract, but no inbound Product interaction was modeled for them.
   - The BusinessLens visual identity carried by the theme layer — palette, type, approved surfaces, logo and icon family — and the shared background experiments in the theme lab.

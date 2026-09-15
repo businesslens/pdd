@@ -31,15 +31,33 @@ import type { ColumnChoice } from '../composables/useColumns'
 import { KIND_TERM } from '../utils/vocabulary'
 import type { VocabularySlug } from '../utils/vocabulary.generated'
 import { firstSentence } from '../utils/reportMarkdown'
+import type { ReportChanges } from '../utils/reportChanges'
+import { baselineTitle, changeCount, changesByKey } from '../utils/reportChanges'
 
-const props = defineProps<{ workspace: ReportWorkspace, logoSrc?: string | null, toolsTarget?: string }>()
+const props = defineProps<{
+  workspace: ReportWorkspace
+  logoSrc?: string | null
+  toolsTarget?: string
+  /**
+   * The host's comparison of this model against a baseline. The local viewer
+   * has one; a host with no notion of an earlier state passes nothing, and
+   * the rail, the rows and the pages show no trace of it.
+   */
+  changes?: ReportChanges | null
+}>()
+
+const emit = defineEmits<{ baseline: [id: string], pin: [label: string | null] }>()
 
 /* ------------------------------------------------------------------ */
 /* Selection: `activeKind` is what the collection view is about, and */
 /* `openResource` is the page you are on.                               */
 /* ------------------------------------------------------------------ */
 
-type ReportSection = 'overview' | ReportResourceKind | typeof MATRIX_DESTINATIONS[number]['section']
+/* What changed compares two states of the whole model, so like a matrix it
+   is a section with the Product as its subject and a rail row of its own. */
+const CHANGES_SECTION = 'changes'
+
+type ReportSection = 'overview' | ReportResourceKind | typeof MATRIX_DESTINATIONS[number]['section'] | typeof CHANGES_SECTION
 
 const section = defineModel<string>('section', { default: 'overview' })
 
@@ -56,14 +74,17 @@ const activeSection = ref<ReportSection>('overview')
 const KNOWN_SECTIONS = new Set<string>(['overview', ...MATRIX_SECTIONS, ...REPORT_ENTITY_KINDS.map(meta => meta.kind)])
 /* A matrix is a section with the Product as its subject: no collection's set. */
 const isMatrixSection = (value: string) => MATRIX_SECTIONS.has(value)
+const isChangesSection = (value: string) => value === CHANGES_SECTION && Boolean(props.changes)
+/* A section whose subject is the Product rather than a collection's set. */
+const isProductSection = (value: string) => value === 'overview' || isMatrixSection(value) || isChangesSection(value)
 
 /* Two-way, but never fighting: each side only writes when the value differs. */
-watch(section, (value) => {
+watch([section, () => Boolean(props.changes)], ([value]) => {
   if (value === activeSection.value) return
-  const known = (KNOWN_SECTIONS.has(value) ? value : 'overview') as ReportSection
-  const next = known === 'overview' || isMatrixSection(known) ? known : collectionKindFor(known as ReportResourceKind)
+  const known = (KNOWN_SECTIONS.has(value) || isChangesSection(value) ? value : 'overview') as ReportSection
+  const next = isProductSection(known) ? known : collectionKindFor(known as ReportResourceKind)
   activeSection.value = next
-  activeKind.value = next === 'overview' || isMatrixSection(next) ? 'product' : next as ReportResourceKind
+  activeKind.value = isProductSection(next) ? 'product' : next as ReportResourceKind
 }, { immediate: true })
 
 watch(activeSection, (value) => {
@@ -328,6 +349,16 @@ watch(() => props.workspace, (workspace) => {
 const destination = computed(() => destinationForLocation(activeSection.value, pageTab.value, openResource.value))
 const topologyActive = computed(() => Boolean(destination.value))
 const matrixSection = computed(() => !openPage.value && isMatrixSection(activeSection.value) ? destinationForSection(activeSection.value) : undefined)
+/* What changed, when it is the open surface and the host has a comparison. */
+const changesOpen = computed(() => !openPage.value && isChangesSection(activeSection.value))
+/* Every changed resource by key, so a row or a page can wear its standing. */
+const changeByKey = computed(() => changesByKey(props.changes?.diff))
+/* The rail's count: undefined hides the row, null draws it without a number. */
+const changesCount = computed(() => !props.changes ? undefined : props.changes.diff ? changeCount(props.changes.diff) : null)
+const changesBaseline = computed(() => {
+  const baseline = props.changes?.baselines.find(item => item.id === props.changes?.baseline)
+  return baseline ? baselineTitle(baseline) : ''
+})
 /* The collection's Graph, when it has one. Absent, not disabled, when it does
    not: the switch appears only where a second drawing exists. */
 const collectionGraph = computed(() => openPage.value || activeKind.value === 'product' ? undefined : graphForCollection(activeKind.value))
@@ -369,6 +400,12 @@ const surfaceHeading = computed(() => {
     return { icon: matrix.icon, slot: ENTITY_KIND_META.product.slot, title: matrix.name,
       meta: findProductTopologyView(matrix.view).diagramType, term: undefined, termText: '' }
   }
+  /* What changed is qualified by its count, as a collection is: the count of
+     things that differ from the baseline named inside the reading. */
+  if (changesOpen.value) {
+    return { icon: 'i-lucide-history', slot: ENTITY_KIND_META.product.slot, title: 'What changed',
+      meta: changesCount.value === null ? 'Comparison' : String(changesCount.value), term: undefined, termText: '' }
+  }
   if (activeKind.value === 'product') {
     const meta = ENTITY_KIND_META.product
     return { icon: meta.icon, slot: meta.slot, title: 'Overview', meta: meta.label,
@@ -401,7 +438,7 @@ const PRODUCT_TABS = [
   { id: 'references', label: 'References' }
 ]
 
-const surfaceTabs = computed(() => openPage.value || matrixSection.value || activeKind.value !== 'product' ? [] : [
+const surfaceTabs = computed(() => openPage.value || matrixSection.value || changesOpen.value || activeKind.value !== 'product' ? [] : [
   { id: 'overview', label: 'About' },
   ...PRODUCT_TABS
 ])
@@ -504,6 +541,16 @@ function setKind(kind: ReportResourceKind) {
   activeKind.value = kind
   activeSection.value = kind === 'product' ? 'overview' : kind
   leavePage()
+}
+
+/** What changed: a section with the Product as its subject, from its rail row. */
+function openChanges() {
+  if (!props.changes) return
+  mobileNavOpen.value = false
+  leavePage()
+  topology.value = { ...topology.value, focus: [] }
+  activeSection.value = CHANGES_SECTION
+  activeKind.value = 'product'
 }
 
 function openView(sectionId: string, resource?: AnyResourceView) {
@@ -632,7 +679,12 @@ const orphanScenarios = computed(() => props.workspace.scenarios
           <BlrCoverageBadge :status="workspace.coverage.status" named size="md" />
         </span>
         <span class="blr-meta" :class="openPage ? 'hidden xl:inline' : 'hidden sm:inline'">{{ workspace.identity.schemaVersion }}</span>
-        <span class="blr-meta" :class="openPage ? 'hidden xl:inline' : 'hidden md:inline'">{{ workspace.identity.generatedAt.slice(0, 10) }}</span>
+        <!-- The state of this report, as the host knows it. A live host puts
+             its pulse here and it supersedes the generated date, which for a
+             report compiled on every save is always today; a published
+             Blueprint keeps the date, since there it is a fact. -->
+        <slot v-if="$slots.status" name="status" />
+        <span v-else class="blr-meta" :class="openPage ? 'hidden xl:inline' : 'hidden md:inline'">{{ workspace.identity.generatedAt.slice(0, 10) }}</span>
       </span>
     </header>
 
@@ -645,8 +697,10 @@ const orphanScenarios = computed(() => props.workspace.scenarios
             :workspace="workspace"
             :active-section="activeSection"
             :counts="kindCounts"
+            :changes-count="changesCount"
             @kind="setKind"
             @view="openView"
+            @changes="openChanges"
           >
             <!-- The host's own way back out, above its sections. -->
             <template v-if="$slots.navigation" #navigation>
@@ -666,6 +720,13 @@ const orphanScenarios = computed(() => props.workspace.scenarios
             <span class="truncate text-lg font-semibold tracking-tight text-highlighted">{{ surfaceHeading.title }}</span>
             <span class="blr-meta shrink-0">{{ surfaceHeading.meta }}</span>
             <BlrTerm v-if="surfaceHeading.term" :slug="surfaceHeading.term" :text="surfaceHeading.termText" icon-only />
+            <!-- The page's standing against the baseline, beside its name. -->
+            <BlrChangeMark
+              v-if="openPage && changeByKey.get(openPage.key)"
+              :change="changeByKey.get(openPage.key)!.change"
+              :since="changesBaseline"
+              size="md"
+            />
           </h1>
           <div class="ms-auto flex shrink-0 flex-wrap items-center gap-1.5">
             <UButton
@@ -809,9 +870,19 @@ const orphanScenarios = computed(() => props.workspace.scenarios
         <div v-if="!topologyActive" ref="resourcePane" class="blr-pane min-h-0 flex-1" @scroll.capture.passive="savePageScroll">
           <div class="p-5">
 
+          <!-- WHAT CHANGED: the model against a baseline the host holds. -->
+          <BlrChanges
+            v-if="changesOpen && changes"
+            :workspace="workspace"
+            :changes="changes"
+            @baseline="emit('baseline', $event)"
+            @pin="emit('pin', $event)"
+            @open="openResourcePage"
+          />
+
           <!-- OVERVIEW: the Product, and what it promises -->
           <BlrOverview
-            v-if="activeKind === 'product'"
+            v-else-if="activeKind === 'product'"
             :workspace="workspace"
             :logo-src="logoSrc"
             :tab="activeSurfaceTab"
@@ -854,6 +925,7 @@ const orphanScenarios = computed(() => props.workspace.scenarios
                 :narrowed="filtersActive"
                 :closed="closedCards"
                 :expansion="cardExpansion"
+                :changes="changeByKey"
                 @open="openResourcePage"
                 @close="(key, closed) => setCollectionGroupOpen(key, !closed)"
                 @expand="setCardExpansion"
@@ -912,6 +984,7 @@ const orphanScenarios = computed(() => props.workspace.scenarios
                     :resource="resource"
                     :badge="group.kind !== 'domain'"
                     :stacked="columns > 1"
+                    :change="changeByKey.get(resource.key)?.change"
                     @open="openResourcePage"
                   />
                 </div>
@@ -1020,8 +1093,10 @@ const orphanScenarios = computed(() => props.workspace.scenarios
             :workspace="workspace"
             :active-section="activeSection"
             :counts="kindCounts"
+            :changes-count="changesCount"
             @kind="setKind"
             @view="openView"
+            @changes="openChanges"
           >
             <template v-if="$slots.navigation" #navigation>
               <slot name="navigation" />

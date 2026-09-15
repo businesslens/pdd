@@ -23,6 +23,41 @@ The map inventory is emitted to stdout and writes no cache file. All of
 `build/` and `cache/` are gitignored by model-creation workflows. Generated
 files are derived artifacts and must not be edited or committed.
 
+### Local Reference file comparisons
+
+The local viewer compares local Reference file contents as well as report
+fields. File snapshots are separate from Product Report v13: neither profile
+embeds file contents, and export, expansion and catalog operations retain
+their existing contracts.
+
+`cache/checkpoints/<id>.references.json` contains `{ version: 1, files }`.
+`files` maps normalized repository-relative paths to one of:
+
+- `{ status: "present", digest, bytes, text, omitted }`, with a SHA-256 digest,
+  byte count, complete UTF-8 text or `null`, and `omitted` equal to `null`,
+  `"binary"` or `"large"`;
+- `{ status: "missing" }`;
+- `{ status: "unavailable", reason }` for a file that cannot safely be read.
+
+Checkpoint and pin capture files referenced by the sealed report. The committed
+baseline reads files from that exact Git commit, including paths outside the
+model directory. Code symbols and line suffixes select the underlying file;
+the comparison covers the whole file. HTTP(S) References are never fetched.
+Only regular files inside the repository root (or the standalone model root)
+are read; symbolic links and Git/generated cache internals are excluded.
+Files up to 25 MiB are fingerprinted; complete text previews are retained up to
+256 KiB. Larger files are explicitly unavailable, and binary or larger text
+files carry a change indication without a text preview.
+
+A file referenced by the same resource in both states contributes a file
+change to that resource when its content, presence or readability differs.
+Reference additions and removals remain report-field changes; an absent old
+snapshot is unknown, never evidence of a newly created file. A checkpoint
+without its companion still compares report fields, with a notice that file
+contents cannot be compared. File-only edits refresh the live comparison and
+its resource marks without requiring an authored model edit. A changed file
+says nothing about whether implementation and model agree.
+
 ## Report contents
 
 `build/report.json` is a Product Report with `schemaVersion: "13.0.0"`. It

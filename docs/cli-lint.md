@@ -50,7 +50,8 @@ implementation completeness. It warns when a local non-code target is not
 tracked. A green result means the model is structurally sound—not that model
 and code agree. See [References](./references.md) for the full target rules.
 
-Use `businesslens-verify` for semantic alignment.
+Use `businesslens-verify` for semantic alignment. Lint seals nothing; to mark
+a round of work for the local report, use [`checkpoint`](./cli-checkpoint.md).
 
 ## JSON output
 

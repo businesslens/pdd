@@ -1,9 +1,11 @@
-import { execFileSync } from 'node:child_process'
+import { execFileSync, spawnSync } from 'node:child_process'
 import {
   chmodSync,
+  cpSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
+  readdirSync,
   realpathSync,
   rmSync,
   writeFileSync
@@ -12,7 +14,7 @@ import { tmpdir } from 'node:os'
 import { delimiter, join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 
-const LINT_RUNNERS = [
+const RUNNERS = [
   {
     name: 'map',
     file: join(__dirname, '..', 'skills', 'businesslens-map', 'scripts', 'run-businesslens.mjs')
@@ -41,7 +43,7 @@ afterEach(() => {
 })
 
 describe.skipIf(process.platform === 'win32')('isolated skill runners', () => {
-  it.each(LINT_RUNNERS)('$name runs npm outside the target and scrubs the key during lint', ({ file }) => {
+  it.each(RUNNERS.flatMap(runner => ['lint', 'checkpoint'].map(command => ({ ...runner, command }))))('$name runs $command through npm outside the target and scrubs the key', ({ file, command }) => {
     const repo = temporary('bl-runner-repo-')
     const bin = temporary('bl-runner-bin-')
     const capture = join(temporary('bl-runner-capture-'), 'npm.json')
@@ -66,9 +68,10 @@ fs.writeFileSync(process.env.CAPTURE_FILE, JSON.stringify({
     )
     chmodSync(fakeNpm, 0o755)
 
+    const commandArgs = command === 'lint' ? ['lint', '--json'] : ['checkpoint', 'Mapped billing; $(never execute)']
     execFileSync(
       process.execPath,
-      [file, '--root', repo, 'lint', '--json'],
+      [file, '--root', repo, ...commandArgs],
       {
         env: {
           ...process.env,
@@ -93,13 +96,12 @@ fs.writeFileSync(process.env.CAPTURE_FILE, JSON.stringify({
       'businesslens',
       '--cwd',
       realpathSync(repo),
-      'lint',
-      '--json'
+      ...commandArgs
     ])
     expect(recorded.apiKey).toBeNull()
   })
 
-  it.each(LINT_RUNNERS)('$name pins the CLI to the version the skills were installed from', ({ name, file }) => {
+  it.each(RUNNERS)('$name pins the CLI to the version the skills were installed from', ({ name, file }) => {
     // `businesslens@latest` would lint a model against whatever is published
     // rather than against the release these skills shipped with, reporting the
     // current format's frontmatter keys as unknown.
@@ -149,7 +151,7 @@ require('node:fs').writeFileSync(process.env.CAPTURE_FILE, JSON.stringify({
     expect(recorded.args).toContain('--package=businesslens@9.9.9')
   })
 
-  it.each(LINT_RUNNERS)('$name prefers the explicitly active local development CLI', ({ file }) => {
+  it.each(RUNNERS)('$name prefers the explicitly active local development CLI', ({ file }) => {
     const repo = temporary('bl-runner-dev-repo-')
     const developmentRoot = temporary('bl-runner-dev-pdd-')
     const bin = temporary('bl-runner-dev-bin-')
@@ -191,5 +193,28 @@ console.log(${JSON.stringify(cli)})
     expect(recorded.cwd).toContain('businesslens-cli-')
     expect(recorded.args).toEqual(['--cwd', realpathSync(repo), 'lint', '--json'])
     expect(recorded.apiKey).toBeNull()
+  })
+
+  it.each(RUNNERS)('$name seals a real checkpoint through the development CLI', ({ file }) => {
+    const repo = temporary('bl-runner-checkpoint-')
+    const bin = temporary('bl-runner-checkpoint-bin-')
+    cpSync(join(__dirname, 'fixtures', 'fixture-shop'), repo, { recursive: true })
+    execFileSync('git', ['init', '--initial-branch=main'], { cwd: repo, stdio: 'pipe' })
+    execFileSync('git', ['add', '.'], { cwd: repo, stdio: 'pipe' })
+    const cli = join(__dirname, '..', 'dist', 'cli.js')
+    writeFileSync(join(bin, 'bl'), `#!/usr/bin/env node\nconsole.log(${JSON.stringify(cli)})\n`)
+    chmodSync(join(bin, 'bl'), 0o755)
+    const options = { env: { ...process.env, BUSINESSLENS_DEV_BIN_DIR: bin }, encoding: 'utf8' as const }
+
+    const result = spawnSync(process.execPath, [file, '--root', repo, 'checkpoint', 'Mapped billing'], options)
+    expect(result.status, result.stderr).toBe(0)
+    const directory = join(repo, '.businesslens', 'cache', 'checkpoints')
+    const metadata = readdirSync(directory).filter(name => /^\d{8}T\d{9}Z\.json$/.test(name))
+    expect(metadata).toHaveLength(1)
+    expect(JSON.parse(readFileSync(join(directory, metadata[0]!), 'utf8'))).toMatchObject({ source: 'checkpoint', label: 'Mapped billing' })
+
+    const rejected = spawnSync(process.execPath, [file, '--root', repo, 'blueprint', 'export'], options)
+    expect(rejected.status).toBe(2)
+    expect(rejected.stderr).toContain('supports only lint and checkpoint')
   })
 })

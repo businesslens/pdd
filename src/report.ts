@@ -57,7 +57,25 @@ export {
   canonicalReportJson
 } from './core/portable.js'
 
+export {
+  diffReports,
+  diffIsEmpty,
+  describeValue
+} from './core/report-diff.js'
+
+export type { ReferenceFileSnapshot, ReportReferenceFiles } from './core/report-reference-files.js'
+
 export type {
+  ChangeKind,
+  CheckpointSource,
+  FieldChange,
+  ReportBaseline,
+  ReportDiff,
+  ResourceChange
+} from './core/report-diff.js'
+
+export type {
+  ReportCollectionName,
   ProductReportV13,
   ProductReport,
   ReportCoverage,

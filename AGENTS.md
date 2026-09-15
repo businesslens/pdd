@@ -23,8 +23,9 @@ were costed and then chosen against, so the same argument is not had twice.
 
 ## Layout
 
-- `src/cli.ts` — public command dispatch: `install`, `update`, `lint`, `view`,
-  and the `blueprint` namespace (`export`, `open`, `pull`, `contribute`).
+- `src/cli.ts` — public command dispatch: `install`, `update`, `lint`,
+  `checkpoint`, `view`, and the `blueprint` namespace (`export`, `open`,
+  `pull`, `contribute`).
   Only documented commands and options are accepted. Removed spellings use
   normal usage errors; there are no hidden migration commands or scope aliases.
   Before launch, publication or installation alone does not require historical
@@ -33,7 +34,9 @@ were costed and then chosen against, so the same argument is not had twice.
 - `src/core/providers.ts` — supported harness paths and detection.
 - `src/core/skill-installation.ts` — ownership-safe skill installation.
 - `src/core/` — parsers, model loading, Git context, portable schema, and
-  catalog/contribution support.
+  catalog/contribution support. `report-diff.ts` compares two reports;
+  `checkpoints.ts` seals reports into `.businesslens/cache/checkpoints/` and
+  compiles the committed model as the other baseline.
 - `layers/nuxt/report-viewer/` — the stable Nuxt Product Report, its
   complete report projection, and its dependency-free topology engine.
 - `layers/nuxt/report-viewer-lab/` — the private, unexported extension point
@@ -149,6 +152,8 @@ costed already.
   durable certainty after the surrounding code, runtime assumptions, or
   inspection method changed. Git diffs may narrow the worklist but never supply
   authority. `.businesslens/` holds product meaning, not workflow receipts.
+  Checkpoints under `cache/` are not an exception: the directory is generated,
+  ignored, and carries no meaning a clone would miss.
 
 ## Installer standards
 
@@ -197,13 +202,27 @@ costed already.
 - **The page is the reading**: every row, relation, search result and diagram
   resource opens a resource page with its own URL. The open section, page and
   tab live there too, so state survives a refresh and a recompile.
-- **The rail lists Overview, three cross-collection views, then six
-  collections.** The views — Compare delivery, What changes what, Rule
-  attachments — each compare two collections, so no collection owns them and
-  each is a row of its own. The collections are Entities, Interfaces, Domains,
-  Capabilities, Journeys, Business Rules. Experiences and Screens are reached
-  through Interfaces, Scenarios through their parent, and a collection's Graph
-  through its drawing switch.
+- **The rail lists Overview, three cross-collection views, What changed where
+  the host has a baseline, then six collections.** The views — Compare
+  delivery, What changes what, Rule attachments — each compare two
+  collections, so no collection owns them and each is a row of its own. What
+  changed compares two states of the whole model, so it is a row of its own
+  too, present only in a host that holds an earlier state: the local viewer
+  does, the catalog does not. The collections are Entities, Interfaces,
+  Domains, Capabilities, Journeys, Business Rules. Experiences and Screens are
+  reached through Interfaces, Scenarios through their parent, and a
+  collection's Graph through its drawing switch.
+- **What changed is computed by the CLI and drawn by the report.** A
+  comparison is the current report against one baseline — the committed model
+  or a checkpoint — at the resource and field level, never a text diff of
+  files. The viewer never owns history: checkpoints are sealed by
+  `checkpoint` or by the pin, into the generated cache, so the viewer can
+  start before, during or after the work and read the same comparison. A
+  round is the agent's to declare: the skills run `checkpoint` once per
+  approved delta, which every harness runs alike. `lint` seals nothing, since
+  a pass lints in a loop and none of those runs is a boundary; nothing infers
+  a turn from silence or from harness hooks. A changed resource wears its mark on its row and its page, so the
+  difference is visible while reading and not only on the comparison.
 - **A resource page is Overview and at most one peer tab** — Scenarios for a
   Capability or Journey, Lifecycle for an Entity with States. A view comparing
   resources belongs to the collection, never to one of them.

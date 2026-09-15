@@ -13,6 +13,7 @@ import { destinationForLocation } from '../utils/reportDestinations'
  */
 import type { ProductReportV13 } from 'businesslens/report'
 import { projectReportWorkspace } from '../utils/reportWorkspace'
+import type { ReportChanges } from '../utils/reportChanges'
 
 const props = defineProps<{
   report: ProductReportV13
@@ -20,6 +21,18 @@ const props = defineProps<{
   logoSrc?: string | null
   /** Mounted host-header element receiving the report's search and Vocabulary controls. */
   toolsTarget?: string
+  /**
+   * The host's comparison against an earlier state of this model, where it
+   * keeps one. The local viewer does; the catalog does not, and passes nothing.
+   */
+  changes?: ReportChanges | null
+}>()
+
+const emit = defineEmits<{
+  /** The reader chose another baseline to compare against. */
+  baseline: [id: string]
+  /** The reader asked to seal the current state as a checkpoint. */
+  pin: [label: string | null]
 }>()
 
 /**
@@ -87,6 +100,9 @@ onMounted(() => { mounted = true; synchronizeLocation() })
       :workspace="workspace"
       :logo-src="logoSrc"
       :tools-target="toolsTarget"
+      :changes="changes"
+      @baseline="emit('baseline', $event)"
+      @pin="emit('pin', $event)"
       @update:section="section = $event"
       @update:resource="resource = $event"
       @update:tab="tab = $event"
@@ -100,6 +116,9 @@ onMounted(() => { mounted = true; synchronizeLocation() })
       </template>
       <template v-if="$slots.provenance" #provenance>
         <slot name="provenance" />
+      </template>
+      <template v-if="$slots.status" #status>
+        <slot name="status" />
       </template>
     </BlrReportShell>
   </article>

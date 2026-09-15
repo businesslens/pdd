@@ -178,7 +178,9 @@ the diff.
 10. Once meaning and implementation align, optionally refresh or remove stale
     implementation References as navigational bookkeeping. This must not change
     product prose or relationships. Skip it in report-only mode.
-11. Run final lint. Report:
+11. Run final lint. If this run changed the model, mark the round: run the
+    same runner with `checkpoint "<what this run changed>"` in place of
+    `lint --json`. Report-only mode and an unchanged model seal nothing. Report:
     - requested and inspected scope;
     - aligned contracts;
     - resulting authority decisions and approvals, without replaying settled
@@ -206,6 +208,10 @@ the diff.
   proof by themselves.
 - Never capture, compare, or certify screenshots. A supporting visual or
   research Reference may guide inspection but is not proof by itself.
+- Write model changes in slices that each lint on their own — a resource
+  together with the Contexts, Scenarios and Entities it needs — so an open
+  `businesslens view` follows the change rather than showing an error until
+  the last file.
 - Never write outside `.businesslens/`; model-resolution writes must leave target
   `AGENTS.md`, `CLAUDE.md`, and root README byte-identical.
 - Never stage, commit, publish, submit, or contribute.

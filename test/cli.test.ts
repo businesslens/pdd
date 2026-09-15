@@ -1,5 +1,5 @@
 import { execFileSync, spawnSync } from 'node:child_process'
-import { cpSync, existsSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { cpSync, existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
@@ -56,6 +56,7 @@ describe('cli help', () => {
       expect(result.stdout).toContain('install [options]')
       expect(result.stdout).toContain('update [options]')
       expect(result.stdout).toContain('lint [options]')
+      expect(result.stdout).toContain('checkpoint [label]')
       expect(result.stdout).toContain('view [options]')
       expect(result.stdout).toContain('blueprint')
       expect(result.stdout).toContain('-c, --cwd <path>')
@@ -128,6 +129,26 @@ describe('cli dispatch', () => {
     const output = JSON.parse(result.stdout)
     expect(output).toMatchObject({ ok: true, errors: [], warnings: [] })
     expect(output.branch).toBeUndefined()
+  })
+
+  it('marks a round with checkpoint, while lint seals nothing', () => {
+    const checkpoints = join(repo, '.businesslens', 'cache', 'checkpoints')
+    rmSync(checkpoints, { recursive: true, force: true })
+
+    expect(cli(repo, process.env, 'lint').status).toBe(0)
+    expect(existsSync(checkpoints)).toBe(false)
+
+    const unnamed = cli(repo, process.env, 'checkpoint')
+    expect(unnamed.status).toBe(0)
+    expect(unnamed.stdout).toMatch(/^Checkpoint saved at /)
+    const named = cli(repo, process.env, 'checkpoint', 'Mapped billing')
+    expect(named.status).toBe(0)
+    expect(named.stdout).toContain('Checkpoint saved: Mapped billing')
+    const records = readdirSync(checkpoints).filter(name => /^\d{8}T\d{9}Z\.json$/.test(name)).sort()
+    expect(records).toHaveLength(2)
+    expect(JSON.parse(readFileSync(join(checkpoints, records[1]!), 'utf8'))).toMatchObject({ source: 'checkpoint', label: 'Mapped billing' })
+    // The generated cache never reaches the repository.
+    expect(execFileSync('git', ['status', '--porcelain'], { cwd: repo, encoding: 'utf8' })).toBe('')
   })
 
   it('accepts --cwd and -c before or after a command', () => {
