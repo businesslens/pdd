@@ -48,12 +48,12 @@ export function treeCards(workspace: ReportWorkspace, kind: ReportResourceKind, 
   if (kind === 'domain') {
     const domainCard = (key: string, title: string, capabilities: AnyResourceView[], entities: AnyResourceView[], resource?: AnyResourceView): TreeCard => ({
       key, title, resource,
-      children: [group(`${key}:capabilities`, 'capability', capabilities.map(item => leaf(item))), group(`${key}:entities`, 'entity', entities.map(item => leaf(item)))]
+      children: [group(`${key}:capabilities`, 'capability', capabilities.map(item => leaf(item))), group(`${key}:entities`, 'entity', entities.map(item => leaf(item)))].filter(group => group.children.length)
     })
     const cards = resources.filter(item => item.kind === 'domain').map(domain => domainCard(domain.key, domain.title,
       workspace.capabilities.filter(item => item.domainId === domain.id), workspace.entities.filter(item => item.domainId === domain.id), domain))
     const unassigned = domainCard('unassigned', 'Unassigned', workspace.capabilities.filter(item => !item.domainId), workspace.entities.filter(item => !item.domainId))
-    return [...cards, ...(!narrowed && unassigned.children.some(group => group.children.length) ? [unassigned] : [])]
+    return [...cards, ...(!narrowed && unassigned.children.length ? [unassigned] : [])]
   }
   if (kind === 'interface') {
     return resources.filter(item => item.kind === 'interface').map((iface) => {
@@ -61,7 +61,7 @@ export function treeCards(workspace: ReportWorkspace, kind: ReportResourceKind, 
       const experiences = rows.filter(row => row.resource.kind === 'experience').map(row => leaf(row.resource, row.children.map(child => leaf(child.resource))))
       const screens = rows.filter(row => row.resource.kind === 'screen').map(row => leaf(row.resource))
       return { key: iface.key, title: iface.title, resource: iface,
-        children: [group(`${iface.key}:experiences`, 'experience', experiences), group(`${iface.key}:screens`, 'screen', screens)] }
+        children: [group(`${iface.key}:experiences`, 'experience', experiences), group(`${iface.key}:screens`, 'screen', screens)].filter(group => group.children.length) }
     })
   }
   return []

@@ -10,8 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed Intent sections from Scenario cards.
 - Domain list cards now use neutral borders.
 - Domain and Interface tree rows now show a hand pointer on hover.
-- Open Domains and Interfaces from Overview links inside expanded cards.
-- Keep empty folders visible in Domain and Interface cards with zero counts.
+- Tree branches expand and collapse; Overview links open their resource pages.
 - Domain and Interface trees fill their cards with transparent rows, left-side chevrons, and resource icons.
 
 ## [0.14.0] - 2026-09-15

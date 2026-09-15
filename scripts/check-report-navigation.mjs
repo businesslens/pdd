@@ -78,34 +78,78 @@ try {
         await expect(page.getByRole('heading', { level: 1 })).toContainText(label)
       }
     }
-    /* Headers expand; the first Overview tree item opens the Domain or Interface
-       itself, including Interfaces with no contained resources. */
+    /* Branch rows only toggle. Each resource root contains an Overview link,
+       including roots with no modeled children. */
     for (const [collection, kind, resources] of [
       ['Domains', 'domain', report.model.domains],
       ['Interfaces', 'interface', report.model.interfaces]
     ]) {
       await choose(page, collection)
+      await expect(page.locator('[data-tree-card] [data-group-header]')).toHaveCount(0)
+      const roots = page.locator('[data-tree-card] [role="treeitem"][aria-level="1"][aria-expanded]')
+      await page.getByRole('button', { name: 'Collapse all', exact: true }).click()
+      for (const root of await roots.all()) await expect(root).toHaveAttribute('aria-expanded', 'false')
+      await page.getByRole('button', { name: 'Expand all', exact: true }).click()
+      for (const root of await roots.all()) await expect(root).toHaveAttribute('aria-expanded', 'true')
       for (const resource of resources) {
         const title = kind === 'domain' ? resource.name : resource.title
         const card = page.locator(`[data-card-key="${kind}:${resource.id}"]`)
-        const header = card.locator('[data-group-header]')
-        if (await header.getAttribute('aria-expanded') === 'false') await header.click()
-        const label = await header.getAttribute('aria-label')
-        await header.click()
-        await expect(header).toHaveAttribute('aria-expanded', 'false')
-        await expect(page).not.toHaveURL(/[?&]e=/)
-        await header.click()
-        await expect(header).toHaveAttribute('aria-expanded', 'true')
         const subject = card.getByRole('treeitem').first()
-        await expect(subject).toHaveText('Overview')
-        await subject.getByText('Overview', { exact: true }).click()
+        const toggle = subject.getByRole('button')
+        await expect(subject.getByText(title, { exact: true })).toBeVisible()
+        const folders = card.locator('[role="treeitem"][aria-level="2"][aria-expanded]')
+        const folderStates = () => folders.evaluateAll(items => items.map(item => item.getAttribute('aria-expanded')))
+        const before = await folderStates()
+        /* Every displayed folder has items and toggles on its label. */
+        for (const folder of await folders.all()) {
+          await expect(folder).toHaveAttribute('aria-expanded', 'true')
+          await folder.locator('[data-slot="linkLabel"]').click()
+          await expect(folder).toHaveAttribute('aria-expanded', 'false')
+          await expect(page).not.toHaveURL(/[?&]e=/)
+          await folder.press('Enter')
+          await expect(folder).toHaveAttribute('aria-expanded', 'true')
+        }
+        await subject.getByText(title, { exact: true }).click()
+        await expect(subject).toHaveAttribute('aria-expanded', 'false')
+        await expect(card.getByRole('treeitem')).toHaveCount(1)
+        await expect(page).not.toHaveURL(/[?&]e=/)
+        await page.reload()
+        await expect(subject).toHaveAttribute('aria-expanded', 'false')
+        await subject.press('Enter')
+        await expect(subject).toHaveAttribute('aria-expanded', 'true')
+        await expect.poll(folderStates).toEqual(before)
+        await subject.press('Space')
+        await expect(subject).toHaveAttribute('aria-expanded', 'false')
+        await toggle.press('Space')
+        await expect(subject).toHaveAttribute('aria-expanded', 'true')
+        await toggle.click()
+        await expect(subject).toHaveAttribute('aria-expanded', 'false')
+        await toggle.click()
+        await expect(subject).toHaveAttribute('aria-expanded', 'true')
+        await subject.press('ArrowLeft')
+        await expect(subject).toHaveAttribute('aria-expanded', 'false')
+        await subject.press('ArrowRight')
+        await expect(subject).toHaveAttribute('aria-expanded', 'true')
+        const overview = card.locator('[role="treeitem"][aria-level="2"]').filter({ has: page.getByText('Overview', { exact: true }) })
+        await expect(overview).toHaveCount(1)
+        await expect(overview.locator('.iconify')).toHaveCount(0)
+        if (!before.length) await expect(card.getByRole('treeitem')).toHaveCount(2)
+        await overview.click()
         await expect.poll(() => new URL(page.url()).searchParams.get('e')).toBe(`${kind}:${resource.id}`)
         await expect(page.getByRole('heading', { level: 1 })).toContainText(title)
         await page.reload()
         await expect(page.getByRole('heading', { level: 1 })).toContainText(title)
         await page.goBack()
-        await expect(header).toHaveAttribute('aria-expanded', 'true')
-        await expect(header).toHaveAttribute('aria-label', label)
+        await expect(subject).toHaveAttribute('aria-expanded', 'true')
+        await expect.poll(folderStates).toEqual(before)
+      }
+      const unassigned = page.locator('[data-card-key="unassigned"] [role="treeitem"]').first()
+      if (await unassigned.count()) {
+        await unassigned.getByText('Unassigned', { exact: true }).click()
+        await expect(unassigned).toHaveAttribute('aria-expanded', 'false')
+        await expect(page).not.toHaveURL(/[?&]e=/)
+        await unassigned.getByText('Unassigned', { exact: true }).click()
+        await expect(unassigned).toHaveAttribute('aria-expanded', 'true')
       }
       await capture(page, `${width}-${kind}-tree-links`)
     }
@@ -130,6 +174,13 @@ try {
       await item.press('ArrowRight')
       await expect(item).toHaveAttribute('aria-expanded', 'true')
       await item.getByText(experience.title, { exact: true }).click()
+      await expect(item).toHaveAttribute('aria-expanded', 'false')
+      await expect(page).not.toHaveURL(/[?&]e=/)
+      await item.press('Enter')
+      await expect(item).toHaveAttribute('aria-expanded', 'true')
+      const overview = item.locator('..').getByRole('treeitem').filter({ has: page.getByText('Overview', { exact: true }) }).first()
+      await expect(overview.locator('.iconify')).toHaveCount(0)
+      await overview.click()
       await expect(page).toHaveURL(/[?&]e=experience/)
       await page.goBack()
       await expect(item).toHaveAttribute('aria-expanded', 'true')
