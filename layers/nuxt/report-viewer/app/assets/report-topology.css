@@ -46,12 +46,21 @@
 .blr-topology-neighbourhood { margin-top: 24px; }
 .blr-topology-neighbourhood li { display: flex; align-items: start; flex-wrap: wrap; gap: 8px; padding: 10px 0; border-bottom: 1px solid var(--ui-border); }
 .blr-topology-neighbourhood li > span { font-size: 12px; color: var(--ui-text-muted); padding-top: 2px; }
-.blr-matrix-scroll { overflow: auto; max-height: 68vh; border: 1px solid var(--ui-border); border-radius: 10px; }
+.blr-matrix-scroll { overflow: auto; max-height: 68vh; scroll-padding-top: var(--blr-matrix-header-height, 0px); border: 1px solid var(--ui-border); border-radius: 10px; }
 .blr-topology-matrix table { border-collapse: separate; border-spacing: 0; width: 100%; font-size: 14px; }
-.blr-topology-matrix caption { text-align: start; padding: 12px; font-size: 12px; color: var(--ui-text-muted); }
-.blr-topology-matrix th, .blr-topology-matrix td { min-width: 180px; max-width: 320px; padding: 14px; border-top: 1px solid var(--ui-border); border-inline-end: 1px solid var(--ui-border); vertical-align: top; text-align: start; background: var(--ui-bg); overflow-wrap: anywhere; }
+.blr-topology-matrix th, .blr-topology-matrix td { min-width: 180px; max-width: 320px; padding: 14px; border-top: 1px solid var(--ui-border); border-inline-end: 1px solid var(--ui-border); vertical-align: top; text-align: start; overflow-wrap: anywhere; }
+.blr-topology-matrix tbody th, .blr-topology-matrix td { background: var(--ui-bg); }
 .blr-topology-matrix th { font-weight: 600; }
-.blr-topology-matrix thead th { position: sticky; top: 0; z-index: 2; background: var(--ui-bg-elevated); }
+/* Headers use the same bg-elevated/20 class as collection parents. */
+.blr-topology-matrix thead th { position: sticky; top: 0; z-index: 2; border-top: 0; }
+.blr-topology-matrix thead th:first-child { left: 0; z-index: 3; }
+.blr-topology-matrix th.blr-matrix-corner { padding: 0; min-width: 196px; }
+.blr-matrix-corner-space { display: block; height: 98px; }
+.blr-matrix-corner-line { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.blr-matrix-corner-line line { stroke: var(--ui-border-accented); stroke-width: 1; }
+.blr-matrix-axis-column, .blr-matrix-axis-row { position: absolute; font-size: 14px; line-height: 22px; font-weight: 700; color: var(--ui-text-highlighted); white-space: nowrap; }
+.blr-matrix-axis-column { top: 16%; right: 10%; }
+.blr-matrix-axis-row { bottom: 16%; left: 10%; }
 .blr-topology-matrix tbody th { position: sticky; left: 0; z-index: 1; }
 .blr-matrix-kind { display: block; color: var(--ui-text-muted); font-weight: 400; font-size: 12px; margin-bottom: 6px; }
 .blr-matrix-effects { display: flex; flex-wrap: wrap; gap: 5px; }

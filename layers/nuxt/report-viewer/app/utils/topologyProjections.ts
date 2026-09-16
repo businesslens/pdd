@@ -237,7 +237,7 @@ export function mutationProjection(workspace: ReportWorkspace): TopologyMatrix {
   const cells = workspace.capabilities.flatMap(capability => capability.entityEffects.flatMap(line => {
     const entity = workspace.byKey.get(resourceKey('entity', line.entityId))
     if (!entity) return []
-    return [{ id: `${capability.key}->${entity.key}`, row: capability.key, column: entity.key,
+    return [{ id: `${entity.key}->${capability.key}`, row: entity.key, column: capability.key,
       labels: [...new Set(line.effects.map(effect => effect.effect))],
       evidence: line.scenarioIds.flatMap(id => workspace.scenarios.filter(scenario => scenario.id === id && scenario.steps.some(step =>
         (scenario.scenarioType === 'capability' ? scenario.capabilityId : step.capabilityId) === capability.id &&
@@ -245,8 +245,8 @@ export function mutationProjection(workspace: ReportWorkspace): TopologyMatrix {
       details: line.effects.filter(effect => effect.from || effect.to).map(effect => `${effect.effect}${effect.from ? ` from ${effect.from}` : ''}${effect.to ? ` to ${effect.to}` : ''}`)
     }]
   }))
-  return { rows: workspace.capabilities.filter(item => cells.some(cell => cell.row === item.key)),
-    columns: workspace.entities.filter(item => cells.some(cell => cell.column === item.key)), cells }
+  return { rows: workspace.entities.filter(item => cells.some(cell => cell.row === item.key)),
+    columns: workspace.capabilities.filter(item => cells.some(cell => cell.column === item.key)), cells }
 }
 
 export function entityRelationsProjection(workspace: ReportWorkspace): Diagram {

@@ -765,20 +765,19 @@ describe('stable Product Report', () => {
     expect(graph).toContain('visibleKeys')
   })
 
-  it('keeps the question-and-derivation bar exclusive to Topology', () => {
+  it('keeps matrix readings focused on their filters and data', () => {
     const reportShell = source('app/components/BlrReportShell.vue')
     const topology = source('app/components/BlrProductTopology.vue')
 
     expect(existsSync(join(VIEWER, 'app/utils/browseSurfaces.ts'))).toBe(false)
     expect(reportShell).not.toContain('surface.question')
     expect(reportShell).not.toContain('surface.flow')
-    /* The surface heading names the subject and the tab names the reading, so
-       a view neither titles itself nor spends a row restating its question:
-       that belongs with the derivation it qualifies, behind About this view. */
+    /* The shell names the view; the matrix adds no title or explanation. */
     expect(topology).not.toContain('{{ view.name }}')
     expect(topology).not.toContain('blr-topology-title-row')
-    expect(topology).toContain('{{ view.diagramType }}')
-    expect(topology).toContain('{{ view.question }}')
+    expect(topology).not.toContain('{{ view.diagramType }}')
+    expect(topology).not.toContain('{{ view.question }}')
+    expect(topology).not.toContain('About this view')
     expect(reportShell).not.toContain('surfaceHint')
     expect(source('app/components/BlrResourcePage.vue')).not.toContain('current.hint')
     expect(source('app/utils/pageSections.ts')).not.toContain('hint')

@@ -7,8 +7,12 @@ bundled local viewer. It has no package export and is excluded from published
 package files, so an audition cannot become part of the public renderer by
 accident.
 
-There are no active report experiments in this layer. The **Scenario Step
-card** audition is decided: Guided flow is now the stable `BlrScenarioStep`.
+There are no active report experiments in this layer. The **Table corner**
+audition is decided: Inset at 14 px is the stable diagonal header across
+Compare delivery, What changes what, and Rule attachments. The alternatives,
+cookie composable, and Table corner selector have been removed.
+
+The **Scenario Step card** audition is decided: Guided flow is now the stable `BlrScenarioStep`.
 It labels Action or Condition, Who, Entity effects, Where and Capability, and
 reads each Entity effect as a phrase. The alternative drawings, their cookie
 composable and the Step card selector have been removed.

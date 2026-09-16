@@ -162,7 +162,6 @@ function open(key: string) {
     </div>
     <div ref="pane" class="blr-topology-reading" @scroll.capture.passive="save">
       <BlrTopologyMatrix :matrix="matrix" :column="reading.column" :mode="matrixMode" @column="update({ column: $event })" @open="open" />
-      <details class="blr-topology-about"><summary>About this view</summary><p><strong>{{ view.question }}</strong></p><p><strong>{{ view.diagramType }}.</strong> {{ view.note }}</p></details>
     </div>
   </div>
 </template>

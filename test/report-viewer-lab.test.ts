@@ -23,19 +23,26 @@ describe('private Product Report viewer lab', () => {
     const readme = readFileSync(join(lab, 'README.md'), 'utf8')
 
     expect(readme).toContain('There are no active report experiments in this layer.')
-    for (const name of ['BlrScenarioStep', 'BlrStepGuidedReading', 'BlrStepReading', 'BlrStepEffectReading', 'BlrStepCardLabRow']) {
+    for (const name of ['BlrScenarioStep', 'BlrStepGuidedReading', 'BlrStepReading', 'BlrStepEffectReading', 'BlrStepCardLabRow', 'BlrMatrixCornerLabRow']) {
       expect(existsSync(join(lab, `app/components/${name}.vue`))).toBe(false)
     }
     expect(existsSync(join(lab, 'app/composables/useBlrStepCardLab.ts'))).toBe(false)
+    expect(existsSync(join(lab, 'app/composables/useBlrMatrixCornerLab.ts'))).toBe(false)
+    expect(existsSync(join(lab, 'app/assets/matrix-corner-lab.css'))).toBe(false)
     expect(existsSync(join(root, 'layers/nuxt/report-viewer/app/components/BlrScenarioStep.vue'))).toBe(true)
     expect(existsSync(join(lab, 'app/components/BlrResourcePage.vue'))).toBe(false)
     expect(existsSync(join(lab, 'app/utils/labVariants.ts'))).toBe(false)
   })
 
-  it('leaves only the background lab bar after the Step card decision', () => {
+  it('leaves only the background lab bar after the report experiments are decided', () => {
     const app = readFileSync(join(root, 'viewer/app/app/app.vue'), 'utf8')
+    const stable = readFileSync(join(root, 'layers/nuxt/report-viewer/app/components/BlrTopologyMatrix.vue'), 'utf8')
 
     expect(app).toContain('<BusinessLensThemeLabBar />')
+    expect(app).not.toContain('BlrMatrixCornerLabRow')
+    expect(app).not.toContain('useBlrMatrixCornerLab()')
+    expect(stable).not.toContain('useBlrMatrixCornerLab')
+    expect(existsSync(join(lab, 'app/components/BlrTopologyMatrix.vue'))).toBe(false)
     expect(app).not.toContain('BlrStepCardLabRow')
   })
 })

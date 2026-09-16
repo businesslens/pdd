@@ -180,8 +180,9 @@ the heading count, the filter controls and the chips are the same in both.
 | `rule` | one row per Business Rule, grouped by Domain | Rule reach: Rule, then its attachment targets and Contexts |
 
 The cross-collection matrices are rail rows below Overview, each its own
-section with no tabs: `delivery` (Compare delivery, a Capability by Interface
-matrix), `what-changes-what` and `rule-attachments`. Their navigation icons,
+section with no tabs: `delivery` (Compare delivery, Capability rows by Interface
+columns), `what-changes-what` (Entity rows by Capability columns), and
+`rule-attachments` (Business Rule rows by attachment target columns). Their navigation icons,
 selection accents and heading icons use neutral colors. Each keeps its own type
 narrowing (`th`) and focus (`tf`). A collection Graph
 draws the facet-filtered set and honours `tf` as a neighbourhood; branch

@@ -201,14 +201,18 @@ describe('named topology semantics', () => {
     expect(matrix.columns.some((column: any) => column.kind === 'domain')).toBe(false)
   })
 
-  it('aggregates mutations with evidence, without converting reads into changes', () => {
+  it('compares Entities by Capability, retaining mutation evidence and excluding reads', () => {
     const workspace = workspaceOf(shopRoot)
     const matrix = projections.mutationProjection(workspace)
+    expect(matrix.rows.length).toBeGreaterThan(0)
+    expect(matrix.columns.length).toBeGreaterThan(0)
+    expect(matrix.rows.every((row: any) => row.kind === 'entity')).toBe(true)
+    expect(matrix.columns.every((column: any) => column.kind === 'capability')).toBe(true)
     for (const capability of workspace.capabilities) {
-      const cells = matrix.cells.filter((cell: any) => cell.row === capability.key)
+      const cells = matrix.cells.filter((cell: any) => cell.column === capability.key)
       expect(cells).toHaveLength(capability.entityEffects.length)
       for (const cell of cells) {
-        const effect = capability.entityEffects.find((line: any) => `entity:${line.entityId}` === cell.column)
+        const effect = capability.entityEffects.find((line: any) => `entity:${line.entityId}` === cell.row)
         expect(cell.labels).toEqual([...new Set(effect.effects.map((item: any) => item.effect))])
         expect(cell.labels).not.toContain('reads')
         expect(cell.evidence.map((item: any) => item.id)).toEqual(effect.scenarioIds)
