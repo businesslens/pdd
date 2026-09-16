@@ -1,6 +1,7 @@
 <script setup lang="ts">
 /** A parent's Scenarios as expandable cards with labelled Steps in authored order. */
 import type { AnyResourceView, ReportWorkspace, ScenarioView } from '../utils/reportWorkspace'
+import type { ResourceChange } from 'businesslens/report'
 import { ENTITY_KIND_META } from '../utils/reportWorkspace'
 import { childrenOf } from '../utils/pageSections'
 import type { ColumnChoice } from '../composables/useColumns'
@@ -9,6 +10,7 @@ import { scenarioTerm } from '../utils/vocabulary'
 const props = defineProps<{
   workspace: ReportWorkspace
   resource: AnyResourceView
+  changes?: ReadonlyMap<string, ResourceChange>
   columns: ColumnChoice
   /** A Scenario reached by URL or search opens its card inside the parent. */
   selectedKey?: string | null
@@ -76,6 +78,7 @@ const scenarioWord = (word: 'trigger' | 'outcome' | 'decision-point' | 'edge-cas
         <BlrScenarioSummary
           :workspace="workspace"
           :scenario="scenario"
+          :change="changes?.get(scenario.key)?.change"
           :expanded="isOpen(scenario)"
           @toggle="toggleScenario(scenario)"
           @open="emit('open', $event)"

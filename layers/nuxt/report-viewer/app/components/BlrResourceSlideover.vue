@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ChangeKind } from 'businesslens/report'
+import type { ChangeKind, ResourceChange } from 'businesslens/report'
 import type { AnyResourceView, ReportWorkspace } from '../utils/reportWorkspace'
 import { ENTITY_KIND_META } from '../utils/reportWorkspace'
 import { resourceAncestors, resourceViewLinks } from '../utils/reportDestinations'
@@ -13,6 +13,7 @@ const props = defineProps<{
   workspace: ReportWorkspace
   resource: AnyResourceView | null
   change?: ChangeKind | null
+  changes?: ReadonlyMap<string, ResourceChange>
   since?: string
   reference?: string | null
   previousReference?: string | null
@@ -136,7 +137,6 @@ function open(resource: AnyResourceView) { save(); emit('open', resource) }
               <h2 ref="heading" tabindex="-1" class="flex min-w-0 items-start gap-2 text-base leading-6 font-semibold text-highlighted outline-none" data-resource-heading>
                 <span class="min-w-0 break-words">{{ resource.title }}</span>
                 <BlrTerm :slug="KIND_TERM[resource.kind]" :text="resource.title" icon-only />
-                <BlrChangeMark v-if="change" :change="change" :since="since" size="md" />
               </h2>
               <div class="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-muted">
                 <span>{{ ENTITY_KIND_META[resource.kind].label }}</span>
@@ -144,6 +144,9 @@ function open(resource: AnyResourceView) { save(); emit('open', resource) }
                   <UIcon name="i-lucide-chevron-right" class="size-3 shrink-0" />
                   <BlrResourceLink :resource-key="ancestor.key" class="min-w-0 break-words hover:underline" @open="open(ancestor)">{{ ancestor.title }}</BlrResourceLink>
                 </template>
+              </div>
+              <div v-if="change" class="mt-2 flex min-w-0">
+                <BlrChangeMark :change="change" :since="since" size="md" />
               </div>
             </div>
           </div>
@@ -170,6 +173,7 @@ function open(resource: AnyResourceView) { save(); emit('open', resource) }
             v-model:reading="reading"
             :workspace="workspace"
             :resource="resource"
+            :changes="changes"
             :tabs-target="tabsTarget"
             :restore-position="restorePosition"
             @open="open"

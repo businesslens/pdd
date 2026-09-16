@@ -24,6 +24,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Scenario changes.
 - Local Reference file edits now appear in comparisons, with before/after text
   and indicators for changed binary files.
+- Comparisons keep up with baseline switches and models created after the viewer
+  opens. Startup errors update live, Scenario cards show change marks, and long
+  checkpoint labels fit narrow resource panels.
 
 ## [0.15.0] - 2026-09-15
 

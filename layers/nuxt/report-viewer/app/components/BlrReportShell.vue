@@ -989,6 +989,7 @@ const orphanScenarios = computed(() => props.workspace.scenarios
       :previous-reference="previousReference"
       :previous="previousResource"
       :change="openPage ? changeByKey.get(openPage.key)?.change : undefined"
+      :changes="changeByKey"
       :since="changesBaseline"
       :return-focus="returnFocus"
       :fallback-focus="workingHeading"

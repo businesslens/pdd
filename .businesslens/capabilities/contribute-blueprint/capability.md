@@ -19,7 +19,7 @@ pull request against the catalog's source repository. The model is checked,
 exported, regenerated from the portable report, and submitted under the
 Product's own identifier as its catalog name. Everything is prepared in a
 temporary directory: the Developer's repository gains no branch, remote, commit,
-or catalog file. i'm the mannnn
+or catalog file.
 
 ## Intent
 

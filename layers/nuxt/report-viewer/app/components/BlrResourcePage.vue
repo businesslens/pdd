@@ -4,6 +4,7 @@
  * The host places tabs above the scrolling reading and owns navigation.
  */
 import type { AnyResourceView, EntityView, ReportWorkspace } from '../utils/reportWorkspace'
+import type { ResourceChange } from 'businesslens/report'
 import { ENTITY_KIND_META } from '../utils/reportWorkspace'
 import type { TopologyReading } from '../utils/topologyState'
 import { defaultTopologyReading } from '../utils/topologyState'
@@ -13,6 +14,7 @@ import { COLUMN_CHOICES, type ColumnChoice } from '../composables/useColumns'
 const props = defineProps<{
   workspace: ReportWorkspace
   resource: AnyResourceView
+  changes?: ReadonlyMap<string, ResourceChange>
   tabsTarget?: HTMLElement | null
   restorePosition?: boolean
 }>()
@@ -112,6 +114,7 @@ const columnItems = COLUMN_CHOICES.map(value => ({ value, label: `${value} per r
         ref="scenariosList"
         :workspace="workspace"
         :resource="subject"
+        :changes="changes"
         :columns="scenarioColumns"
         :selected-key="requestedChild"
         :reveal-selected="!restorePosition"

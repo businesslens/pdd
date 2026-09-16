@@ -10,7 +10,6 @@ references:
 
 Getting the BusinessLens skills to where a coding agent will find them, and
 keeping them current, without disturbing anything the Product does not own.
-sd
 
 ## Boundary
 

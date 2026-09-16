@@ -27,9 +27,9 @@ const meta = computed(() => CHANGE_META[props.change])
     :icon="meta.icon"
     data-change-mark
     :data-change="change"
-    class="shrink-0 gap-1 font-medium"
+    class="min-w-0 max-w-full shrink-0 gap-1 font-medium"
     :title="since ? `${meta.label} since ${since}` : meta.label"
   >
-    {{ meta.label }}<template v-if="since"> since {{ since }}</template>
+    <span class="truncate">{{ meta.label }}<template v-if="since"> since {{ since }}</template></span>
   </UBadge>
 </template>

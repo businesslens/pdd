@@ -39,6 +39,8 @@ const referenceFileNotice = ref<string | null>(null)
 /* The choice outlives a refresh and a recompile; a baseline that has since
    left the ring falls back to the newest one. */
 const chosenBaseline = useCookie<string | null>('blr-baseline', { default: () => null, sameSite: 'lax', path: '/' })
+let listingRequest = 0
+let diffRequest = 0
 
 const baseline = computed(() => {
   const chosen = chosenBaseline.value
@@ -47,16 +49,23 @@ const baseline = computed(() => {
 })
 
 async function refreshChanges() {
+  const request = ++listingRequest
+  const previousBaseline = baseline.value
   try {
     const listing = await $fetch<{ baselines: ReportBaseline[] }>('/_businesslens/changes', { cache: 'no-store' })
+    if (request !== listingRequest) return
     baselines.value = listing.baselines
   } catch {
+    if (request !== listingRequest) return
     baselines.value = []
   }
-  await refreshDiff()
+  // A changed selection refreshes through the watcher below, including when
+  // the first model brings its baselines into a viewer that was waiting.
+  if (previousBaseline === baseline.value) await refreshDiff()
 }
 
 async function refreshDiff() {
+  const request = ++diffRequest
   const base = baseline.value
   if (!base) {
     diff.value = null
@@ -66,10 +75,12 @@ async function refreshDiff() {
   }
   try {
     const result = await $fetch<{ diff: ReportDiff, referenceFileNotice?: string }>('/_businesslens/changes/diff', { query: { base }, cache: 'no-store' })
+    if (request !== diffRequest || base !== baseline.value) return
     diff.value = result.diff
     referenceFileNotice.value = result.referenceFileNotice ?? null
     changesError.value = null
   } catch (failure) {
+    if (request !== diffRequest || base !== baseline.value) return
     diff.value = null
     referenceFileNotice.value = null
     const detail = failure as { data?: { message?: string }, message?: string }
@@ -77,9 +88,17 @@ async function refreshDiff() {
   }
 }
 
+watch(baseline, () => {
+  // Never draw the previous comparison under the newly selected name, even
+  // while its request is still pending. Cookie updates follow this path too.
+  diff.value = null
+  changesError.value = null
+  referenceFileNotice.value = null
+  void refreshDiff()
+}, { flush: 'sync' })
+
 function chooseBaseline(id: string) {
   chosenBaseline.value = id
-  void refreshDiff()
 }
 
 const toast = useToast()
@@ -123,7 +142,7 @@ onMounted(() => {
       revision = (JSON.parse((event as MessageEvent).data) as { revision?: number }).revision ?? revision
     } catch { /* The count is a courtesy. */ }
     live.value = { revision, updatedAt: Date.now(), connected: true }
-    void refresh().then(refreshDiff)
+    void refresh().then(refreshChanges)
     void refreshLogo()
   })
   events.addEventListener('baselines', () => {
@@ -143,9 +162,14 @@ onMounted(() => {
   })
 })
 
-onBeforeUnmount(() => events?.close())
+onBeforeUnmount(() => {
+  events?.close()
+  listingRequest += 1
+  diffRequest += 1
+})
 
 const errorMessage = computed(() => {
+  if (liveError.value) return liveError.value
   const failure = error.value as { data?: { message?: string }, message?: string } | null
   return failure?.data?.message ?? failure?.message ?? 'The Product Model could not be compiled.'
 })

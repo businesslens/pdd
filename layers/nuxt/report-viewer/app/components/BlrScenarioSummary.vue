@@ -1,12 +1,14 @@
 <script setup lang="ts">
 /** One expandable box for a Scenario's story, Entity results and ordered Steps. */
 import type { AnyResourceView, ReportWorkspace, ScenarioView } from '../utils/reportWorkspace'
+import type { ChangeKind } from 'businesslens/report'
 import { ENTITY_KIND_META, entityFacetOf, resolveResource } from '../utils/reportWorkspace'
 import { scenarioTerm } from '../utils/vocabulary'
 
 const props = defineProps<{
   workspace: ReportWorkspace
   scenario: ScenarioView
+  change?: ChangeKind
   expanded: boolean
 }>()
 const emit = defineEmits<{ open: [resource: AnyResourceView], toggle: [] }>()
@@ -46,6 +48,7 @@ const open = (key: string) => { const resource = props.workspace.byKey.get(key);
         <div class="blr-summary-heading">
           <h3 class="blr-summary-title">{{ scenario.title }}</h3>
           <UBadge v-if="scenario.kindName" color="neutral" variant="subtle" size="sm">{{ scenario.kindName }}</UBadge>
+          <BlrChangeMark v-if="change" :change="change" />
         </div>
       </div>
       <div class="blr-summary-actions">
