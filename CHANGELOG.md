@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rule attachments shows all target columns together and offers attachment details only when they add information.
 - What changes what lists Entities down the side and all Capabilities across the top, with horizontal scrolling when needed.
 - Table corners name both axes diagonally with inset labels, removing repeated column labels where every column has the same type.
+- Compare delivery uses the same compact first-column width as the other comparison views.
 
 ## [0.16.0] - 2026-09-16
 
