@@ -52,7 +52,7 @@ function childrenLabel(children: TopologyBranch[]) {
 const diagram = computed<Diagram>(() => {
   const originals = new Map(all.value.map(node => [node.id, node]))
   const visible = flatten(visibleTree.value)
-  return { direction: 'DOWN', layout: 'tree', totalNodes: all.value.length,
+  return { direction: 'DOWN', layout: 'tree',
     /* An occurrence keeps its branch id, so the same resource drawn under two
        parents is two nodes; `resourceKey` still opens the one page. */
     nodes: visible.map(node => ({ ...(node.resource ? { ...diagramResource(node.resource), id: node.id } : { id: node.id, resourceKey: node.id, title: node.title, kind: 'product' as const }),

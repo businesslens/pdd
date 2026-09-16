@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.16.0] - 2026-09-16
+
+- Responsive filters and consistent report controls across screen sizes.
+- Cleaner graphs with more room to explore.
+- Resource panels dim the page and close when clicking outside.
+
 ## [0.15.0] - 2026-09-15
 
 - Explore resources in side panels without losing your place.
@@ -770,7 +776,8 @@ Initial public launch of the repository.
   `docs/format.md`.
 - Claude plugin manifest and marketplace entry.
 
-[Unreleased]: https://github.com/businesslens/pdd/compare/v0.15.0...HEAD
+[Unreleased]: https://github.com/businesslens/pdd/compare/v0.16.0...HEAD
+[0.16.0]: https://github.com/businesslens/pdd/compare/v0.15.0...v0.16.0
 [0.15.0]: https://github.com/businesslens/pdd/compare/v0.14.0...v0.15.0
 [0.14.0]: https://github.com/businesslens/pdd/compare/v0.13.0...v0.14.0
 [0.13.0]: https://github.com/businesslens/pdd/compare/v0.12.0...v0.13.0

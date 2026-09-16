@@ -41,7 +41,6 @@ export interface Diagram {
   direction?: 'RIGHT' | 'DOWN'
   quiet?: boolean
   layout?: 'tree'
-  totalNodes?: number
 }
 
 export interface DiagramSize { width: number, height: number }

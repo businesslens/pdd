@@ -25,14 +25,20 @@ try {
     await title(page, 'Order')
     expect(urlValue(page, 's')).toBe('what-changes-what')
     await expect(page.locator('.blr-topology-matrix')).toBeAttached()
+    await expect(page.locator('.blr-resource-overlay')).toBeVisible()
+    // Focus stays inside the reading while the working view remains mounted.
+    await page.keyboard.press('Shift+Tab')
+    await expect.poll(() => panel.evaluate(element => element.contains(document.activeElement))).toBe(true)
     if (width >= 768) {
-      await expect(page.getByRole('heading', { level: 1 })).toContainText('What changes what')
+      await expect(page.getByRole('heading', { level: 1, includeHidden: true })).toContainText('What changes what')
       await expect(page.locator('.blr-navitem[data-current=true]')).toContainText('What changes what')
-      // The backdrop remains interactive; another visible matrix row replaces the inspection.
-      const next = page.locator('.blr-topology-matrix a[data-resource-key^="capability:"]').first()
-      await next.click()
-      await expect.poll(() => urlValue(page, 'e')).toMatch(/^capability:/)
-      await panel.getByRole('button', { name: 'Back to Order', exact: true }).click()
+      // A click over the rail dismisses the reading without navigating underneath.
+      await page.mouse.click(24, 140)
+      await expect(panel).toHaveCount(0)
+      await expect.poll(() => urlValue(page, 'e')).toBeNull()
+      expect(urlValue(page, 's')).toBe('what-changes-what')
+      await expect(source).toBeFocused()
+      await source.click()
       await title(page, 'Order')
     }
     await panel.getByRole('tab', { name: /^Lifecycle/ }).click()
@@ -162,7 +168,7 @@ try {
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true)
     await panel.getByRole('button', { name: 'Close resource', exact: true }).click()
     await expect(page.getByRole('heading', { level: 1 })).toContainText('Entities')
-    console.log(`Passed ${width}px: matrix context, independent tabs, Connections and Scenario return, nested Back/Forward, reload, direct links, Escape and overflow.`)
+    console.log(`Passed ${width}px: modal backdrop and focus, outside dismissal, matrix context, independent tabs, Connections and Scenario return, nested Back/Forward, reload, direct links, Escape and overflow.`)
     await context.close()
   }
   expect(errors).toEqual([])
