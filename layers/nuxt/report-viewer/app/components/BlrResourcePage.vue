@@ -68,7 +68,7 @@ const columnItems = COLUMN_CHOICES.map(value => ({ value, label: `${value} per r
 </script>
 
 <template>
-  <div class="min-w-0">
+  <div class="min-w-0" :class="current?.id === 'lifecycle' && 'flex h-full min-h-0 flex-col'">
     <!-- The host places the strip above the scrolling reading. It needs no
          painted sticky backdrop, and standalone use keeps it in normal flow. -->
     <Teleport :to="tabsTarget || 'body'" :disabled="!tabsTarget">
@@ -106,7 +106,7 @@ const columnItems = COLUMN_CHOICES.map(value => ({ value, label: `${value} per r
       </BlrPageTabs>
     </Teleport>
 
-    <div class="min-w-0 space-y-5">
+    <div class="min-w-0" :class="current?.id === 'lifecycle' ? 'min-h-0 flex-1' : 'space-y-5'">
       <BlrScenariosList
         v-if="current?.id === 'scenarios'"
         ref="scenariosList"

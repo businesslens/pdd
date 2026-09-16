@@ -66,12 +66,6 @@ const capabilityBoundary = computed(() => {
   return ''
 })
 
-const domainId = computed(() => {
-  if (props.resource.kind === 'capability') return (props.resource as CapabilityView).domainId
-  if (props.resource.kind === 'entity') return asEntity.value.domainId
-  return ''
-})
-
 function openRule(id: string) {
   const rule = resolveResource(props.workspace, 'rule', id)
   if (rule) emit('select', rule)
@@ -934,7 +928,7 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
       </section>
     </template>
 
-    <!-- ENTITY: what the Product keeps, what it can be, and how it moves. -->
+    <!-- ENTITY: what the Product keeps. States and their changes are in Lifecycle. -->
     <template v-if="resource.kind === 'entity'">
       <section v-if="asEntity.acts" class="flex flex-wrap items-center gap-2 text-sm text-default">
         <BlrEntityMark :facet="asEntity.entityKind!" :acts="asEntity.acts" size="xs" />
@@ -972,17 +966,6 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
 
     </template>
 
-    <section v-if="domainId" class="space-y-2">
-      <h2 class="blr-page-heading"><BlrTerm slug="domain" text="Subject" /></h2>
-      <BlrLinks
-        :workspace="workspace"
-        :ids="[domainId]"
-        kind="domain"
-        label="Domain"
-        interactive
-        @select="emit('select', $event)"
-      />
-    </section>
   </div>
 </template>
 

@@ -4,8 +4,8 @@ import type { Diagram, DiagramLayout, DiagramSize } from '../utils/diagram'
 import { diagramLayoutInput, diagramLayoutResult } from '../utils/diagram'
 import { layoutTopologyTree } from '../utils/topologyTree'
 
-const props = defineProps<{ diagram: Diagram, title: string, viewportKey?: string }>()
-const emit = defineEmits<{ open: [key: string], toggle: [id: string, open: boolean], toggleAll: [open: boolean], ready: [] }>()
+const props = defineProps<{ diagram: Diagram, title: string, viewportKey?: string, selected?: string | null }>()
+const emit = defineEmits<{ open: [key: string], inspect: [key: string], toggle: [id: string, open: boolean], toggleAll: [open: boolean], ready: [] }>()
 const branches = computed(() => props.diagram.nodes.some(node => node.branch))
 const measure = ref<HTMLElement>()
 const layout = shallowRef<DiagramLayout | null>(null)
@@ -127,11 +127,11 @@ onBeforeUnmount(() => { mounted = false; requestId++; stopWorker(); observer?.di
       <div v-for="edge in diagram.edges" :key="edge.id" :data-measure="`edge:${edge.id}`" class="blr-flow-edge-label">{{ edge.label }}</div>
     </div>
     <div v-if="layout" class="blr-diagram-canvas">
-      <LazyBlrFlowCanvas :layout="layout" :tree="diagram.layout === 'tree'" :title="title" :direction="diagram.direction" :quiet="diagram.quiet" :viewport-key="placedViewportKey" :branches="branches" @open="emit('open', $event)" @toggle="(id, open) => emit('toggle', id, open)" @toggle-all="emit('toggleAll', $event)" @ready="emit('ready')" />
+      <LazyBlrFlowCanvas :layout="layout" :tree="diagram.layout === 'tree'" :title="title" :direction="diagram.direction" :quiet="diagram.quiet" :viewport-key="placedViewportKey" :branches="branches" :selected="selected" @open="emit('open', $event)" @inspect="emit('inspect', $event)" @toggle="(id, open) => emit('toggle', id, open)" @toggle-all="emit('toggleAll', $event)" @ready="emit('ready')" />
     </div>
     <div v-else class="blr-diagram-fallback">
       <p class="text-sm text-muted" role="status">{{ failed ? 'Diagram layout is unavailable. Items are listed below.' : 'Arranging diagram…' }}</p>
-      <ul><li v-for="node in diagram.nodes" :key="node.id"><button v-if="node.resourceKey" type="button" class="blr-topology-link" @click="emit('open', node.resourceKey)">{{ node.title }}</button><span v-else>{{ node.title }}</span><span v-if="node.unreached"> · unreached</span></li></ul>
+      <ul><li v-for="node in diagram.nodes" :key="node.id"><button v-if="node.resourceKey" type="button" class="blr-topology-link" @click="emit('open', node.resourceKey)">{{ node.title }}</button><button v-else-if="node.inspectionKey" type="button" class="blr-topology-link" @click="emit('inspect', node.inspectionKey)">{{ node.title }}</button><span v-else>{{ node.title }}</span><span v-if="node.unreached"> · unreached</span></li></ul>
     </div>
   </div>
 </template>

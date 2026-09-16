@@ -203,6 +203,8 @@ costed already.
   view. The slideover dims and blocks the background; clicking outside or
   pressing Escape closes it and restores the working view. Narrow screens use
   the full width. Refresh and valid recompilation preserve the reading.
+  Expand fills the window with the same resource reading; Restore returns to
+  the panel width without losing its drawing, selected detail or graph viewport.
 - **The rail lists Overview, three cross-collection views, then six
   collections.** The views — Compare delivery, What changes what, Rule
   attachments — each compare two collections, so no collection owns them and
@@ -211,8 +213,17 @@ costed already.
   through Interfaces, Scenarios through their parent, and a collection's Graph
   through its drawing switch.
 - **A resource reading separates meaning, behavior, connections and references.** Overview
-  carries the resource's explanation and contextual links. Scenarios follows
-  for a Capability or Journey, Lifecycle for an Entity with States. Connections
+  carries the resource's explanation and contextual links, including an Entity's
+  Information kept. Scenarios follows for a Capability or
+  Journey, Lifecycle for an Entity with States. Lifecycle switches between Rows
+  and Graph; selecting a change reads its Rules and supporting Scenarios, and
+  selecting a State reads its definition and the Scenarios that leave it there.
+  Rows uses the collection list's parent/child styling: each State contains its
+  definition and outgoing changes, including States with none. Creation and
+  changes without a starting State have separate groups. This supersedes placing
+  State definitions in Overview or stacking separate State cards below the graph.
+  Changes without specified states remain accessible beside the graph.
+  Connections
   follows when relationships exist and includes the complete relationship
   list, including links also explained in Overview. References comes last when
   attachments exist, with a count and attribution to the inspected resource,

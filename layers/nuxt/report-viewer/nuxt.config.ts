@@ -89,6 +89,8 @@ export default defineNuxtConfig({
         'lucide:rows-3',
         'lucide:maximize-2',
         'lucide:minimize-2',
+        'lucide:maximize',
+        'lucide:minimize',
         'lucide:grid-2x2',
         'lucide:link-2',
         'lucide:waypoints',

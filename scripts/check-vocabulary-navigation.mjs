@@ -272,21 +272,21 @@ try {
   await expect(panel).toBeHidden()
   console.log('Passed: every header opening clears stale searches and opens only the current collection, resource, or Topology group.')
 
-  // Alternate surface labels must remain available to heading navigation and
-  // voice control, even when their definitions use a different canonical term.
+  // Resource labels remain available to heading navigation and voice control.
   const orderUrl = new URL(url)
   orderUrl.searchParams.set('s', 'entity')
   orderUrl.searchParams.set('e', 'entity:order')
   await page.goto(orderUrl.href)
   for (const [label, term] of [
-    ['Subject', 'Domain'],
+    ['Domain', 'Domain'],
     ['Relationships', 'Relation'],
-    ['Kept', 'Information kept']
+    ['Information kept', 'Information kept']
   ]) {
-    const button = page.locator('button.blr-term').filter({ hasText: new RegExp(`^${label}$`) })
-    await expect(button).toHaveAccessibleName(`${label} — what ${term} means`)
+    const buttons = page.locator('[data-resource-panel] button.blr-term').filter({ hasText: new RegExp(`^${label}$`) })
+    await expect(buttons.first()).toBeVisible()
+    for (const button of await buttons.all()) await expect(button).toHaveAccessibleName(`${label} — what ${term} means`)
   }
-  await expect(page.getByRole('heading', { name: 'Subject — what Domain means', exact: true })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Domain — what Domain means', exact: true })).toBeVisible()
   await expect(page.getByRole('heading', { name: /^Relationships — what Relation means \d+$/ })).toBeVisible()
   console.log('Passed: heading and button names retain their visible labels.')
 

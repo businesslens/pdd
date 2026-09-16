@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { AnyResourceView, ReportWorkspace } from '../utils/reportWorkspace'
 import { ENTITY_KIND_META } from '../utils/reportWorkspace'
-import { resourceAncestors, resourceViewLinks } from '../utils/reportDestinations'
+import { resourceAncestors, resourceDomains, resourceViewLinks } from '../utils/reportDestinations'
 import { docsForResourceKind } from '../utils/resourceDocs'
 import { KIND_TERM } from '../utils/vocabulary'
 import { parentOf } from '../utils/pageSections'
@@ -19,10 +19,13 @@ const props = defineProps<{
 }>()
 const emit = defineEmits<{ close: [], back: [], open: [resource: AnyResourceView], view: [section: string, resource: AnyResourceView], referenceBack: [], referenceOpen: [href: string] }>()
 const tab = defineModel<string>('tab', { default: 'overview' })
+const expanded = useCookie<boolean>('blr-resource-expanded', { default: () => false, sameSite: 'lax' })
+const expandLabel = computed(() => expanded.value ? 'Restore resource size' : 'Expand resource')
 const scenarioRoute = defineModel<string | null>('scenarioRoute', { default: null })
 const routeColumns = defineModel<string>('routeColumns', { default: 'auto' })
 const subject = computed(() => props.resource ? parentOf(props.workspace, props.resource) ?? props.resource : null)
 const ancestors = computed(() => props.resource ? resourceAncestors(props.workspace, props.resource) : [])
+const domains = computed(() => props.resource ? resourceDomains(props.workspace, props.resource) : [])
 const exits = computed(() => subject.value ? resourceViewLinks(subject.value, props.workspace) : [])
 const docs = computed(() => docsForResourceKind(subject.value?.kind ?? 'product'))
 const tabsTarget = useTemplateRef('tabsTarget')
@@ -92,7 +95,7 @@ function open(resource: AnyResourceView) { save(); emit('open', resource) }
     :title="file?.title ?? resource?.title"
     :description="file ? 'Reference' : resource ? ENTITY_KIND_META[resource.kind].label : ''"
     :content="{ onOpenAutoFocus: focusReading, onCloseAutoFocus: closeFocus }"
-    :ui="{ overlay: 'blr-resource-overlay bg-black/40 dark:bg-black/60', content: 'blr-resource-slideover w-full max-w-full md:max-w-[min(880px,70vw)] shadow-2xl', body: 'min-h-0 flex-1 overflow-hidden p-0 sm:p-0' }"
+    :ui="{ overlay: 'blr-resource-overlay bg-black/40 dark:bg-black/60', content: `blr-resource-slideover w-full max-w-full ${expanded ? '' : 'md:max-w-[min(880px,70vw)]'} shadow-2xl`, body: 'min-h-0 flex-1 overflow-hidden p-0 sm:p-0' }"
     @update:open="!$event && emit('close')"
     @after:enter="restore"
   >
@@ -108,6 +111,7 @@ function open(resource: AnyResourceView) { save(); emit('open', resource) }
               <p v-if="referenceDetails" class="mt-0.5 text-xs text-muted [overflow-wrap:anywhere]" data-source-details>{{ referenceDetails }}</p>
             </div>
             <div class="flex shrink-0 items-center gap-1">
+              <UTooltip :text="expandLabel"><UButton :icon="expanded ? 'i-lucide-minimize' : 'i-lucide-maximize'" :aria-label="expandLabel" :aria-pressed="expanded" class="hidden md:inline-flex" color="neutral" variant="ghost" size="sm" @click="expanded = !expanded" /></UTooltip>
               <UTooltip v-if="file.sourceLink" :text="file.raw ? 'View document' : 'View source'"><UButton :icon="file.raw ? 'i-lucide-file-text' : 'i-lucide-file-code'" :aria-label="file.raw ? 'View document' : 'View source'" color="neutral" variant="ghost" size="sm" @click="emit('referenceOpen', file.sourceLink!)" /></UTooltip>
               <UTooltip text="Close resource"><UButton icon="i-lucide-x" color="neutral" variant="ghost" size="sm" aria-label="Close resource" @click="emit('close')" /></UTooltip>
             </div>
@@ -131,6 +135,13 @@ function open(resource: AnyResourceView) { save(); emit('open', resource) }
                   <UIcon name="i-lucide-chevron-right" class="size-3 shrink-0" />
                   <BlrResourceLink :resource-key="ancestor.key" class="min-w-0 break-words hover:underline" @open="open(ancestor)">{{ ancestor.title }}</BlrResourceLink>
                 </template>
+                <template v-for="domain in domains" :key="domain.key">
+                  <span aria-hidden="true">·</span>
+                  <BlrResourceLink :resource-key="domain.key" :aria-label="`Domain: ${domain.title}`" class="inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-sm text-default hover:underline" @open="open(domain)">
+                    <BlrKind kind="domain" :labelled="false" size="xs" class="shrink-0" />
+                    <span class="min-w-0 [overflow-wrap:anywhere]">{{ domain.title }}</span>
+                  </BlrResourceLink>
+                </template>
               </div>
             </div>
           </div>
@@ -140,6 +151,9 @@ function open(resource: AnyResourceView) { save(); emit('open', resource) }
             </UTooltip>
             <UTooltip :text="docs.label">
               <UButton :to="docs.url" external target="_blank" rel="noopener noreferrer" icon="i-lucide-book-open" color="neutral" variant="ghost" size="sm" label="Docs" :aria-label="docs.label" :ui="{ label: 'blr-resource-action-label text-xs' }" />
+            </UTooltip>
+            <UTooltip :text="expandLabel">
+              <UButton :icon="expanded ? 'i-lucide-minimize' : 'i-lucide-maximize'" :aria-label="expandLabel" :aria-pressed="expanded" class="hidden md:inline-flex" color="neutral" variant="ghost" size="sm" @click="expanded = !expanded" />
             </UTooltip>
             <UTooltip text="Close resource">
               <UButton icon="i-lucide-x" color="neutral" variant="ghost" size="sm" aria-label="Close resource" @click="save(); emit('close')" />
@@ -170,6 +184,7 @@ function open(resource: AnyResourceView) { save(); emit('open', resource) }
 
 <style scoped>
 .blr-resource-panel { container-type: inline-size; }
+.blr-pane:has([data-lifecycle]) { overflow: hidden; }
 
 /* Only a populated strip splits the header from the reading. Single-reading
    resources keep their one header border, with no empty tab row. */

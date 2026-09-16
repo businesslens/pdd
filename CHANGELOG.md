@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Explore entity lifecycles as States with their outgoing changes, or as an interactive graph.
+- Expand resource panels to the full window without losing your place.
+- Use consistent model terms in resource headings and summaries.
+- Show consistent resource icon colors in lifecycle details and relationship lists.
+- Keep related Domains visible in resource headers across tabs.
+
 ## [0.16.0] - 2026-09-16
 
 - Responsive filters and consistent report controls across screen sizes.
