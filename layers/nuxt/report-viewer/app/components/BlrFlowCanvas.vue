@@ -5,7 +5,7 @@ import type { Node, Edge, ViewportTransform } from '@vue-flow/core'
 import type { DiagramLayout, DiagramNode } from '../utils/diagram'
 import { diagramBounds, diagramContext } from '../utils/diagramInteraction'
 
-const props = defineProps<{ layout: DiagramLayout, title: string, viewportKey: string, tree?: boolean, direction?: 'RIGHT' | 'DOWN', quiet?: boolean, totalNodes?: number, branches?: boolean }>()
+const props = defineProps<{ layout: DiagramLayout, title: string, viewportKey: string, tree?: boolean, direction?: 'RIGHT' | 'DOWN', quiet?: boolean, branches?: boolean }>()
 const emit = defineEmits<{ open: [key: string], toggle: [id: string, open: boolean], toggleAll: [open: boolean], ready: [] }>()
 const id = useId()
 const viewerId = inject<string>('businesslens:viewer', '')
@@ -83,8 +83,8 @@ function fit() {
   cancelCentering()
   centering = true
   const request = centerRequest
-  // Root collapse also removes the Relationships footer. Let that resize settle
-  // before centering, and keep the resize observer from interrupting this move.
+  // Let layout and container measurements settle before centering, and keep
+  // the resize observer from interrupting this move.
   centeringFrame = requestAnimationFrame(() => {
     centeringFrame = requestAnimationFrame(() => {
       centeringFrame = undefined
@@ -175,7 +175,6 @@ onBeforeUnmount(() => { save(); mounted = false; cancelCentering(); resize?.disc
       <UButton v-if="branches" icon="i-lucide-maximize-2" color="neutral" variant="outline" aria-label="Expand all branches" title="Expand all" @click="toggleAll(true)" />
       <UButton v-if="branches" icon="i-lucide-minimize-2" color="neutral" variant="outline" aria-label="Collapse all branches" title="Collapse all" @click="toggleAll(false)" />
     </UFieldGroup>
-    <div class="blr-flow-summary">{{ layout.nodes.length }}<template v-if="totalNodes && totalNodes !== layout.nodes.length"> of {{ totalNodes }}</template> boxes · {{ layout.edges.length }} connections<span> · Drag to explore</span></div>
   </div>
 </template>
 
@@ -191,7 +190,5 @@ onBeforeUnmount(() => { save(); mounted = false; cancelCentering(); resize?.disc
 .blr-flow .vue-flow__edge { pointer-events: none; }
 .blr-flow .blr-flow-route { stroke: var(--ui-text-muted); stroke-width: 1.5; }
 .blr-flow-controls { position: absolute; right: 12px; bottom: 12px; z-index: 30; }
-.blr-flow-summary { position: absolute; bottom: 12px; left: 12px; padding: 5px 8px; max-width: calc(100% - 68px); border: 1px solid var(--ui-border); border-radius: 6px; background: var(--ui-bg); color: var(--ui-text-muted); font-size: 12px; pointer-events: none; }
 .blr-flow-edge-label { width: max-content; max-width: 200px; box-sizing: border-box; padding: 3px 6px; font-size: 12px; line-height: 1.4; overflow-wrap: anywhere; color: var(--ui-text-muted); background: var(--ui-bg-elevated); border-radius: 4px; pointer-events: none; }
-@media (max-width: 640px) { .blr-flow-summary span { display: none; } }
 </style>
