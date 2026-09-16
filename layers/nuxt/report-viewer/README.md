@@ -184,7 +184,11 @@ section with no tabs: `delivery` (Compare delivery, Capability rows by Interface
 columns), `what-changes-what` (Entity rows by Capability columns), and
 `rule-attachments` (Business Rule rows by attachment target columns). Their navigation icons,
 selection accents and heading icons use neutral colors. Each keeps its own type
-narrowing (`th`) and focus (`tf`). A collection Graph
+narrowing (`th`) and focus (`tf`). Matrices scroll vertically with the reading;
+Previous/Next controls, horizontal trackpad gestures, and touch swipes move
+between complete column groups beside a fixed subject column. The first visible
+column uses `tm`; moving between groups preserves vertical position and expanded
+cell details. A collection Graph
 draws the facet-filtered set and honours `tf` as a neighbourhood; branch
 expansion uses `tx`/`tc`. Entity Lifecycle and resource Connections each keep
 their own tab and reading position, including after following a link and returning.

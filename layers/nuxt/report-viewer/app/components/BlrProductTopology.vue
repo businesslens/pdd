@@ -74,7 +74,8 @@ function removeFilter(key: string) {
 function showKinds(kinds: string[]) {
   update({ hiddenKinds: filterKinds.value.filter(kind => !kinds.includes(kind)) })
 }
-const scrollKey = computed(() => JSON.stringify([props.workspace.identity.id, reading.value]))
+// Column navigation changes the horizontal window, keeping the same vertical reading position.
+const scrollKey = computed(() => JSON.stringify([props.workspace.identity.id, { ...reading.value, column: null }]))
 const { element: pane, save, restore } = useBlrTopologyScroll(scrollKey)
 watch(() => props.workspace, () => { save(); void restore() }, { flush: 'pre' })
 watch(() => [props.workspace, reading.value] as const, () => {
