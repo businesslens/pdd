@@ -12,6 +12,11 @@ audition is decided: Inset at 14 px is the stable diagonal header across
 Compare delivery, What changes what, and Rule attachments. The alternatives,
 cookie composable, and Table corner selector have been removed.
 
+The **Control size**
+audition is decided: page controls, filters and graph buttons use Nuxt UI's
+`sm` size (28px) at every viewport width. The top navbar retains its own sizing.
+The size selector, cookie composable and global override have been removed.
+
 The **Scenario Step card** audition is decided: Guided flow is now the stable `BlrScenarioStep`.
 It labels Action or Condition, Who, Entity effects, Where and Capability, and
 reads each Entity effect as a phrase. The alternative drawings, their cookie

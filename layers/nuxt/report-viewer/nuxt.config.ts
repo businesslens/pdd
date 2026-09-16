@@ -54,6 +54,7 @@ export default defineNuxtConfig({
         'lucide:file-diff',
         'lucide:file-text',
         'lucide:filter-x',
+        'lucide:funnel',
         'lucide:focus',
         'lucide:gavel',
         'lucide:git-branch',

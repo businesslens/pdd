@@ -23,12 +23,14 @@ describe('private Product Report viewer lab', () => {
     const readme = readFileSync(join(lab, 'README.md'), 'utf8')
 
     expect(readme).toContain('There are no active report experiments in this layer.')
-    for (const name of ['BlrScenarioStep', 'BlrStepGuidedReading', 'BlrStepReading', 'BlrStepEffectReading', 'BlrStepCardLabRow', 'BlrMatrixCornerLabRow']) {
+    for (const name of ['BlrScenarioStep', 'BlrStepGuidedReading', 'BlrStepReading', 'BlrStepEffectReading', 'BlrStepCardLabRow', 'BlrMatrixCornerLabRow', 'BlrControlSizeLabRow']) {
       expect(existsSync(join(lab, `app/components/${name}.vue`))).toBe(false)
     }
     expect(existsSync(join(lab, 'app/composables/useBlrStepCardLab.ts'))).toBe(false)
     expect(existsSync(join(lab, 'app/composables/useBlrMatrixCornerLab.ts'))).toBe(false)
     expect(existsSync(join(lab, 'app/assets/matrix-corner-lab.css'))).toBe(false)
+    expect(existsSync(join(lab, 'app/composables/useBlrControlSizeLab.ts'))).toBe(false)
+    expect(existsSync(join(lab, 'app/plugins/control-size.ts'))).toBe(false)
     expect(existsSync(join(root, 'layers/nuxt/report-viewer/app/components/BlrScenarioStep.vue'))).toBe(true)
     expect(existsSync(join(lab, 'app/components/BlrResourcePage.vue'))).toBe(false)
     expect(existsSync(join(lab, 'app/utils/labVariants.ts'))).toBe(false)
@@ -43,6 +45,7 @@ describe('private Product Report viewer lab', () => {
     expect(app).not.toContain('useBlrMatrixCornerLab()')
     expect(stable).not.toContain('useBlrMatrixCornerLab')
     expect(existsSync(join(lab, 'app/components/BlrTopologyMatrix.vue'))).toBe(false)
+    expect(app).not.toContain('BlrControlSizeLabRow')
     expect(app).not.toContain('BlrStepCardLabRow')
   })
 })

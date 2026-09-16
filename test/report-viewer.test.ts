@@ -1003,9 +1003,8 @@ describe('stable Product Report', () => {
     /* Tabs stay on the Overview and on pages; a collection has none. */
     expect(reportShell).toContain("activeKind.value !== 'product' ? [] : [")
 
-    /* One control per axis, not one popover holding four. A reader should see
-       which axes exist without opening anything, and read the state of each
-       without remembering what they picked. */
+    /* Each axis has a control. Phones put those same controls in a sheet,
+       while selected values stay visible above the reading. */
     expect(reportShell).toContain('v-for="kind in facetKinds"')
     expect(reportShell).not.toContain('label="Filter"')
     expect(reportShell).not.toContain('<UPopover')
