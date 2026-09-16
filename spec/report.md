@@ -23,7 +23,65 @@ The map inventory is emitted to stdout and writes no cache file. All of
 `build/` and `cache/` are gitignored by model-creation workflows. Generated
 files are derived artifacts and must not be edited or committed.
 
-### Local Reference file comparisons
+### Local History
+
+The local viewer's **History** supersedes **What changed**. It compares a
+selected Base with a selected Compare to state. Either side may be the working
+state, a checkpoint, a locally available Git commit, branch, or tag. Branches,
+tags (including annotated tags), and HEAD resolve to immutable commit identities
+for each comparison. Both choices
+and historical resource readings have URL addresses. Swapping the sides reverses
+the comparison. Compact state selectors identify each kind with its own icon.
+Their pickers separate Checkpoints, Branches, Commits, and Tags into tabs, with
+Working state directly available in every tab. Each selector searches and pages through history without
+compiling each commit; selected revisions compile on demand without changing the checkout
+or running repository code. Missing models, unsupported historical formats and
+unavailable revisions produce an explicit reason, never a different baseline.
+
+Branches identify the repository's locally recorded default branch and the
+checked-out branch with Default and Current badges. The default branch leads
+the picker. Detection uses the selected remote's symbolic HEAD: the current
+branch's configured remote, otherwise origin, otherwise the sole remote. A
+missing or ambiguous default is not guessed from branch names. Symbolic remote
+HEAD aliases do not appear as additional branches.
+
+With no explicit comparison, a feature branch starts from the default branch
+against Working state. On the default branch, or when it cannot be identified,
+Last commit is the initial base. If that revision has no Product Model, try
+Last commit and then the newest checkpoint. Initial selection inspects Git
+model presence without compiling history. Explicit URL selections and choices
+retained while navigating take precedence over initial defaults. An explicitly
+selected revision that fails to compile continues to show its error.
+
+When no model has been saved in reachable Git history or a checkpoint, History
+shows a centered Nothing to compare yet explanation and directs the reader to
+save the model first. If older model history exists but no initial baseline
+can be chosen, it instead asks the reader to choose an earlier state. Loading,
+unavailable selections, and a valid comparison with no differences remain
+distinct states.
+
+The header entry remains beside Coverage and names History. A question-mark
+control beside the History heading opens the comparison explanation. The viewer
+supplies this text independently of the vocabulary. Historical
+comparisons do not mark current collection rows as changed. Opening either side
+of a changed resource, including a removed resource, reads that side's complete
+report and References. Connections retain the selected state. Back and refresh
+preserve it; Close returns to the underlying working view. Historical Reference
+requests carry the immutable state identity and never fall back to working files.
+
+**Create a checkpoint** supersedes **Pin this state** and always captures the
+current valid working model and its local References, even while comparing two
+historical states. It refuses a stale report following a failed compilation.
+After successful creation in History, the new checkpoint becomes Base and the
+Compare to selection stays unchanged. The updated comparison is recorded in the
+URL; a failed creation leaves both selections unchanged. Checkpoints created
+outside this page do not change its selections.
+The newest 50 checkpoints are retained locally. Commit reports use a bounded
+process-local cache; Git remains their source of truth. These storage details
+do not appear in the comparison view. Unavailable historical file contents are
+explained when opening the affected Reference.
+
+### Local Reference snapshots
 
 The local viewer compares local Reference file contents as well as report
 fields. File snapshots are separate from Product Report v13: neither profile
@@ -35,7 +93,8 @@ their existing contracts.
 
 - `{ status: "present", digest, bytes, text, omitted }`, with a SHA-256 digest,
   byte count, complete UTF-8 text or `null`, and `omitted` equal to `null`,
-  `"binary"` or `"large"`;
+  `"binary"` or `"large"`. Checkpoints may additionally carry `content` equal to
+  `"stored"` or `"budget-exceeded"`;
 - `{ status: "missing" }`;
 - `{ status: "unavailable", reason }` for a file that cannot safely be read.
 
@@ -48,6 +107,21 @@ are read; symbolic links and Git/generated cache internals are excluded.
 Files up to 25 MiB are fingerprinted; complete text previews are retained up to
 256 KiB. Larger files are explicitly unavailable, and binary or larger text
 files carry a change indication without a text preview.
+
+New checkpoints also preserve exact bytes, including binary files, in
+`cache/checkpoints/blobs/<digest>`. A checkpoint captures at most 100 MiB of
+unique file contents, with the existing 25 MiB per-file limit. Paths are visited
+in sorted order; files beyond the aggregate budget retain their fingerprints
+without inline text and report that their contents were not saved. Identical contents share a blob
+across checkpoints. Pruning removes only blobs no retained checkpoint uses;
+checkpoint publication and pruning are serialized. Historical serving checks
+blob integrity. Older snapshots can still serve their saved UTF-8 text; omitted
+contents remain explicitly unavailable. Git reads exact bytes at the selected
+commit. HTTP(S) targets remain external links, not archived documents.
+
+Historical Markdown's local links retain the state, including embedded images.
+Checkpoint links to files that were not captured are unavailable. Existing
+inert-file restrictions and code-preview escaping also apply to historical files.
 
 A file referenced by the same resource in both states contributes a file
 change to that resource when its content, presence or readability differs.

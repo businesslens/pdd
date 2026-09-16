@@ -1,5 +1,5 @@
 /**
- * What changed, as the report draws it.
+ * History, as the report draws it.
  *
  * The host that has a comparison — the local viewer, with its checkpoints and
  * its committed model — hands one in; a host that has none, like the catalog,
@@ -7,7 +7,7 @@
  * is computed by the local report server using the shared comparison core;
  * this module only keys it the way the surfaces do.
  */
-import type { ChangeKind, ReportBaseline, ReportCollectionName, ReportDiff, ResourceChange } from 'businesslens/report'
+import type { ChangeKind, ProductReportV13, ReportBaseline, ReportCollectionName, ReportDiff, ResourceChange } from 'businesslens/report'
 import type { ReportResourceKind } from './reportWorkspace'
 import { resourceKey } from './reportWorkspace'
 
@@ -16,6 +16,18 @@ export interface ReportChanges {
   baselines: ReportBaseline[]
   /** The chosen baseline's id, or null when there is nothing to choose. */
   baseline: string | null
+  target?: string
+  baseState?: ReportBaseline | null
+  targetState?: ReportBaseline | null
+  before?: ProductReportV13 | null
+  after?: ProductReportV13 | null
+  historyStates?: ReportBaseline[]
+  historyLoading?: boolean
+  historyMore?: boolean
+  historyQuery?: string
+  checkpointLimit?: number
+  initializing?: boolean
+  emptyReason?: 'no-saved-model' | 'choose-state' | null
   /** The comparison against the chosen baseline, or null while there is none. */
   diff: ReportDiff | null
   /** Why there is no comparison, when the baseline exists but could not be used. */
@@ -68,7 +80,7 @@ export function changeCount(diff: ReportDiff | null | undefined): number {
   return diff.resources.length + (diff.product.length ? 1 : 0)
 }
 
-const SOURCE_LABEL = { checkpoint: 'Checkpoint', pin: 'Pinned' } as const
+const SOURCE_LABEL = { checkpoint: 'Checkpoint', pin: 'Checkpoint' } as const
 
 export function formatCheckpointTime(iso: string): string {
   const date = new Date(iso)
@@ -81,6 +93,8 @@ export function formatCheckpointTime(iso: string): string {
 
 /** The name a baseline wears in the picker and in every "since" phrase. */
 export function baselineTitle(baseline: ReportBaseline): string {
+  if (baseline.kind === 'working') return 'Working state'
+  if (baseline.kind === 'commit' || baseline.kind === 'branch' || baseline.kind === 'tag') return baseline.label
   if (baseline.kind === 'committed') return 'Last commit'
   return baseline.label ?? `${SOURCE_LABEL[baseline.source]} ${formatCheckpointTime(baseline.at)}`
 }
@@ -91,6 +105,8 @@ export function baselineTitle(baseline: ReportBaseline): string {
  * already its source and time, adds the full date.
  */
 export function baselineDetail(baseline: ReportBaseline): string {
+  if (baseline.kind === 'working') return 'Current files, including uncommitted edits'
+  if (baseline.kind === 'commit' || baseline.kind === 'branch' || baseline.kind === 'tag') return baseline.detail
   if (baseline.kind === 'committed') return baseline.available ? baseline.detail : baseline.reason
   if (baseline.label) return `${SOURCE_LABEL[baseline.source]} · ${formatCheckpointTime(baseline.at)}`
   const date = new Date(baseline.at)
@@ -105,12 +121,4 @@ export function changeSummary(diff: ReportDiff): string {
   if (diff.counts.removed) parts.push(`${diff.counts.removed} removed`)
   if (diff.product.length) parts.push('Product changed')
   return parts.join(' · ')
-}
-
-/** The default comparison: the newest checkpoint, else the last commit, else nothing. */
-export function defaultBaseline(baselines: ReportBaseline[]): string | null {
-  const checkpoint = baselines.find(item => item.kind === 'checkpoint')
-  if (checkpoint) return checkpoint.id
-  const committed = baselines.find(item => item.kind === 'committed' && item.available)
-  return committed?.id ?? null
 }

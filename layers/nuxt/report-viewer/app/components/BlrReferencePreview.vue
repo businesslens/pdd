@@ -26,7 +26,10 @@ async function load() {
     const href = localReferenceHref(props.href)
     if (!href) throw new Error('This reference cannot be previewed.')
     const response = await fetch(href, { signal: controller.signal, headers: { accept: 'application/json' } })
-    if (!response.ok) throw new Error('This file is unavailable in the local repository.')
+    if (!response.ok) {
+      const detail = await response.json().catch(() => ({})) as { message?: string }
+      throw new Error(detail.message ?? 'This file is unavailable in the selected state.')
+    }
     const type = response.headers.get('content-type') ?? ''
     if (type.startsWith('application/json')) {
       const value = await response.json() as ReferencePreview

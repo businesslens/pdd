@@ -1,7 +1,19 @@
 <script setup lang="ts">
-import type { FieldChange } from 'businesslens/report'
+import { referenceNavigationKey, referenceFileHref, referenceHref, withReferenceState } from '../utils/referenceNavigation'
+import type { FieldChange, ReportReference } from 'businesslens/report'
 
-defineProps<{ field: FieldChange }>()
+const props = defineProps<{ field: FieldChange, base?: string, target?: string, beforeReferences?: ReportReference[], afterReferences?: ReportReference[] }>()
+const navigation = inject(referenceNavigationKey, null)
+const href = (side: 'before' | 'after') => {
+  const path = props.field.referenceFile!
+  const references = (side === 'before' ? props.beforeReferences : props.afterReferences) ?? []
+  const reference = references.find(item => {
+    const file = item.kind === 'code' ? item.target.split('#')[0]!.replace(/:\d+(?:-\d+)?$/, '') : item.target
+    return file.split('/').filter(part => part && part !== '.').join('/') === path
+  })
+  return withReferenceState(reference ? referenceHref(reference) : referenceFileHref(path), (side === 'before' ? props.base : props.target) ?? 'working')
+}
+
 </script>
 
 <template>
@@ -10,7 +22,9 @@ defineProps<{ field: FieldChange }>()
     <p class="text-muted">Local file {{ field.change }}.</p>
     <div class="grid min-w-0 gap-2 lg:grid-cols-2">
       <div v-for="side in (['before', 'after'] as const)" :key="side" class="min-w-0 rounded-md border border-muted">
-        <p class="border-b border-muted px-2 py-1 font-medium text-muted">{{ side === 'before' ? 'Before' : 'After' }}</p>
+        <p class="border-b border-muted px-2 py-1 font-medium text-muted">{{ side === 'before' ? 'Base' : 'Compare to' }}
+          <button v-if="navigation && field[side] !== null" class="ms-2 text-primary hover:underline" @click="navigation.open(href(side))">Open file</button>
+        </p>
         <pre
           v-if="field[side] !== null"
           class="max-h-96 overflow-auto whitespace-pre-wrap break-words p-2 font-mono text-xs"

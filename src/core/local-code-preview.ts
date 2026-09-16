@@ -35,13 +35,13 @@ function focusFor(lines: string[], target: ParsedCodeTarget): { first?: number, 
   return { note: `No text match for ${target.symbol} in this file.` }
 }
 
-export async function localCodePreview(report: ProductReportV13 | undefined, root: string | undefined, target: string): Promise<{ status: number, data: ReferencePreview | { message: string } }> {
+export async function localCodePreview(report: ProductReportV13 | undefined, root: string | undefined, target: string, read?: (path: string) => string | undefined): Promise<{ status: number, data: ReferencePreview | { message: string } }> {
   const reference = declaredReference(report, target)
   const parsed = reference && parseCodeTarget(reference.target, [], 'reference')
-  const source = root && parsed ? previewText(root, parsed.path) : undefined
+  const source = parsed ? read ? read(parsed.path) : root ? previewText(root, parsed.path) : undefined : undefined
   if (!reference || !parsed || source === undefined) return {
     status: 404,
-    data: { message: 'This code reference is unavailable in the current local report.' }
+    data: { message: 'This code reference is unavailable in the selected report state.' }
   }
   const lines = source.split(/\r\n|\n|\r/)
   if (lines.length > 1 && lines.at(-1) === '') lines.pop()

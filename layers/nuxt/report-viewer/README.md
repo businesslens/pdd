@@ -53,7 +53,7 @@ Prose components, Shiki syntax colors in both themes, line numbers, and highligh
 an authored line range or the first textual match for a symbol (trying its final
 qualified name when the full name is not present). Missing locators are explained
 beside the file. This endpoint serves only exact Code Reference targets in the
-current workspace report, from regular UTF-8 files up to 2 MiB inside the repository;
+selected workspace report, from regular UTF-8 files up to 2 MiB inside the repository;
 symlinks and binary files are refused. Source bytes stay outside the Product Report.
 Hosts serving workspace reports must provide this endpoint alongside the local
 asset mount; portable reports have no Code References.
@@ -116,6 +116,7 @@ where it left:
 <BusinessLensReportViewer
   v-model:section="section"
   v-model:resource="resource"
+  v-model:resource-state="resourceState"
   v-model:tab="tab"
   v-model:resource-tab="resourceTab"
   v-model:scenario-route="scenarioRoute"
@@ -127,8 +128,9 @@ where it left:
 
 | Model | Value | Default |
 | --- | --- | --- |
-| `section` | `overview`; a cross-collection view: `delivery`, `what-changes-what`, or `rule-attachments`; or a collection: `entity`, `interface`, `domain`, `capability`, `journey`, or `rule` | `overview` |
+| `section` | `overview`; `history` when the host supplies comparisons; a cross-collection view: `delivery`, `what-changes-what`, or `rule-attachments`; or a collection: `entity`, `interface`, `domain`, `capability`, `journey`, or `rule` | `overview` |
 | `resource` | the stable key of the inspected resource (`screen:reader-web::…`), or `null` for the section's collection | `null` |
+| `resourceState` | `working`, an immutable `commit:<sha>`, or a checkpoint id for the inspected resource and References | `working` |
 | `tab` | underlying collection: `overview` (Rows) or `graph`; Product Overview: `overview` (About), `coverage`, or `references` | `overview` |
 | `resourceTab` | resource reading: `overview`, `scenarios`, `lifecycle`, `connections`, or `references`; independent of `tab` | `overview` |
 | `scenarioRoute` | the first route in the visible Scenario route window, or `null` | `null` |
@@ -140,7 +142,7 @@ selects that Scenario inside its parent reading, or its own References when
 requested, while the section stays on the originating working view.
 
 The layer auto-imports `useBlrReportNavigation()` for hosts that use Vue Router.
-It returns these seven models and encodes `s`, `e`, `t`, `rt`, `r`, `rc`, plus reading
+It returns these eight models and encodes `s`, `e`, `v`, `t`, `rt`, `r`, `rc`, plus reading
 keys `tv`, `tj`, `ts`, `tm`, `tf`, `th`, `tx`, and `tc`. Set
 `useBlrReportNavigation({ sectionKey: 'tab' })` for the catalog's section URLs.
 Defaults are omitted; array keys repeat, preserving qualified resource IDs.
@@ -154,6 +156,51 @@ The composable also supplies native resource URLs to descendant viewer links.
 Hosts providing their own routing should adopt `resourceTab` independently of
 `tab`; uncontrolled embedded readers retain a local return trail.
 Hosts can instead bind their own state. Interface delivery expansion is stored per resource, separately from the underlying graph.
+
+## Local History
+
+The optional `changes` prop enables **History** beside Coverage. Its Base and
+Compare to controls use compact buttons with icons for the selected state kinds.
+Their pickers have Checkpoints, Branches, Commits and Tags tabs, with search,
+commit pagination and a directly available Working state. Swap reverses the comparison. The host handles
+`compare(base, target)`, `historySearch(query)` and `historyMore()` events.
+The existing `pin(label)` event now presents **Create a checkpoint** and always
+captures the valid working state, independently of the comparison selections.
+After creation, the local host selects the new checkpoint as Base, preserves
+Compare to, and updates the comparison URL. Failed creation and checkpoints
+created outside the page leave its selections unchanged.
+Hosts without comparisons omit `changes`; the catalog has no History entry.
+
+The local host keeps both selections in `base` and `target` URL parameters and
+computes differences on the server. `changes.before`, `changes.after`,
+`changes.baseState` and `changes.targetState` carry the reports and resolved
+identities used by that comparison. Both sides open complete resource readings,
+including removed resources. Only comparisons whose target is working mark the
+current collections.
+
+The local server supplies initial selections through `/_businesslens/history/defaults`.
+On feature branches, the base is the locally recorded default branch; on that
+branch, or when no default is known, it is HEAD. A missing model at those
+revisions falls back to the newest checkpoint. Explicit selections take
+precedence. Branch entries carry `isDefault` and `isCurrent` flags. The host
+supplies `changes.initializing` and `changes.emptyReason` so loading, no saved
+model, and history that requires a manual selection have distinct readings.
+
+When `resourceState` is historical, the host supplies `readingReport`,
+`readingLabel` and, on failure, `readingError`. The ordinary `report` stays the
+working view beneath it. The `v` address preserves the inspected state; resource
+connections and Reference URLs retain it. Historical file endpoints use
+`state=<immutable-id>`, including nested Markdown links and images. Missing
+snapshots never fall back to current files. Git reads from its object database;
+checkpoints preserve file bytes within the checkpoint storage limits. Older
+checkpoints can open their saved text and explain when other contents are absent.
+
+Run `node scripts/check-history-browser.mjs` after building for isolated Git and
+checkpoint comparisons, deleted resources, historical References, navigation,
+checkpoint creation and mobile layout checks.
+
+## Collection state
+
 Collection facets, collapsed groups,
 expanded tree nodes, scroll anchors and graph position use session storage when
 available, isolated by report and host path. They survive refresh and

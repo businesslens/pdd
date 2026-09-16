@@ -1,3 +1,5 @@
+import { isUtf8 } from 'node:buffer'
+import type { GitHistory } from './git-history.js'
 import { spawn } from 'node:child_process'
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http'
 import { lstatSync, readFileSync, watch, type FSWatcher } from 'node:fs'
@@ -6,7 +8,7 @@ import { fileURLToPath } from 'node:url'
 import { createRequire } from 'node:module'
 import type { ProductReportV13 } from './portable.js'
 import { MAX_PRODUCT_LOGO_BYTES, validateProductLogo } from '../logo.js'
-import { listCheckpoints, normalizeCheckpointLabel, readCheckpoint, type CheckpointMeta, type CommittedReport } from './checkpoints.js'
+import { checkpointReferenceBody, CHECKPOINT_LIMIT, listCheckpoints, normalizeCheckpointLabel, readCheckpoint, type CheckpointMeta, type CommittedReport } from './checkpoints.js'
 import { diffReports, type ReportBaseline, type ReportDiff } from './report-diff.js'
 import { createReferenceFileSource } from './reference-files.js'
 import type { ReportReferenceFiles } from './report-reference-files.js'
@@ -87,7 +89,7 @@ export interface LocalViewer {
 
 /** Everything about one model: what to compile, and where to watch and read. */
 export type LocalViewerBinding = Pick<LocalViewerOptions,
-  'compile' | 'initialReport' | 'watchRoot' | 'logoFile' | 'assetRoot' | 'referenceRoot' | 'checkpointsRoot' | 'committed' | 'pin'>
+  'compile' | 'initialReport' | 'watchRoot' | 'logoFile' | 'assetRoot' | 'referenceRoot' | 'checkpointsRoot' | 'committed' | 'history' | 'pin'>
 
 export interface LocalViewerOptions {
   port?: number
@@ -117,6 +119,7 @@ export interface LocalViewerOptions {
   checkpointsRoot?: string
   /** The model at the last commit; throws with a reason when there is none. */
   committed?: () => CommittedReport
+  history?: GitHistory
   /** Seal the current report from the viewer's pin. Omit it and pinning is off. */
   pin?: (report: ProductReportV13, label: string | null) => CheckpointMeta | undefined
 }
@@ -227,7 +230,7 @@ class LocalReportStore {
     if (options.committed) {
       const committed = options.committed
       const readRevision = () => {
-        try { return committed().commit }
+        try { return options.history ? options.history.revision() : committed().commit }
         catch (error) { return `unavailable:${(error as Error).message}` }
       }
       let revision = readRevision()
@@ -313,10 +316,75 @@ class LocalReportStore {
     return { ok: true, value: { base: baseline, diff: diffReports(before.report, this.report, files), revision: this.revision, referenceFileNotice } }
   }
 
+  historyDefaults() {
+    const git = this.options.history?.defaults()
+    const checkpoints = this.options.checkpointsRoot ? listCheckpoints(this.options.checkpointsRoot) : []
+    const base = git?.base ?? (!this.options.history ? this.baselines().find(item => item.kind === 'committed' && item.available)?.id : null)
+      ?? checkpoints[0]?.id ?? null
+    return { base, target: 'working', emptyReason: base ? null : git?.hasModelHistory ? 'choose-state' : 'no-saved-model' }
+  }
+
+  history(query = '', offset = 0) {
+    const page = this.options.history?.list(query, offset) ?? { states: [], more: false }
+    const checkpoints = this.options.checkpointsRoot ? listCheckpoints(this.options.checkpointsRoot) : []
+    const states: ReportBaseline[] = offset ? [] : [
+      { id: 'working', kind: 'working', available: true },
+      ...checkpoints.filter(item => !query || `${item.label ?? ''} ${item.at}`.toLowerCase().includes(query.toLowerCase()))
+        .map(item => ({ ...item, kind: 'checkpoint' as const, available: true as const }))
+    ]
+    if (!this.options.history && offset === 0) states.push(...this.baselines().filter(item => item.kind === 'committed'))
+    return { states: [...states, ...page.states], more: page.more, nextOffset: offset + 50, checkpointLimit: CHECKPOINT_LIMIT }
+  }
+
+  state(id: string): { id: string, state: ReportBaseline, report: ProductReportV13, referenceFiles?: ReportReferenceFiles } {
+    if (id === 'working') {
+      if (!this.report || this.error) throw new Error(this.error ?? 'The working model is not ready.')
+      this.refreshReferences()
+      return { id, state: { id: 'working', kind: 'working', available: true }, report: this.report, referenceFiles: this.referenceFiles }
+    }
+    if (id === 'head' || id.startsWith('commit:') || id.startsWith('branch:') || id.startsWith('tag:')) {
+      const value = this.options.history?.read(id) ?? (id === 'head' ? this.options.committed?.() : undefined)
+      if (!value) throw new Error('This Git state is unavailable.')
+      const resolvedId = `commit:${value.commit}`
+      return { ...value, id: resolvedId, state: { id: resolvedId, kind: 'commit', available: true,
+        commit: value.commit, at: value.committedAt, label: `${value.commit.slice(0, 7)} ${value.subject}`, detail: value.committedAt } }
+    }
+    const value = this.options.checkpointsRoot && readCheckpoint(this.options.checkpointsRoot, id)
+    if (!value) throw new Error('This checkpoint is unavailable. Only the newest 50 checkpoints are retained.')
+    return { ...value, state: { id, kind: 'checkpoint', available: true, at: value.at, label: value.label, source: value.source } }
+  }
+
+  compare(base: string, target: string) {
+    const before = this.state(base)
+    const after = base === target ? before : this.state(target)
+    const files = before.referenceFiles && after.referenceFiles ? { before: before.referenceFiles, after: after.referenceFiles } : undefined
+    const notices: string[] = []
+    if (!files) notices.push('One state has no Reference snapshots. Only model fields can be compared.')
+    for (const [side, snapshot] of [['Base', before], ['Compare to', after]] as const) {
+      for (const [path, file] of Object.entries(snapshot.referenceFiles ?? {})) {
+        if (file.status === 'unavailable') notices.push(`${side}: ${path}: ${file.reason}`)
+        else if (file.status === 'present' && file.content === 'budget-exceeded') notices.push(`${side}: ${path}: contents exceeded the checkpoint budget; the fingerprint is available.`)
+      }
+    }
+    return { base: before.state, target: after.state, before: before.report, after: after.report,
+      diff: diffReports(before.report, after.report, files), revision: this.revision,
+      referenceFileNotice: notices.length ? notices.join('\n') : undefined }
+  }
+
+  historicalBody(id: string, path: string): Buffer {
+    if (id === 'working') throw new Error('Select a historical state.')
+    const snapshot = this.state(id)
+    if (snapshot.state.kind === 'commit' && this.options.history) return this.options.history.body(snapshot.state.commit, path)
+    const checkpoint = this.options.checkpointsRoot && readCheckpoint(this.options.checkpointsRoot, id)
+    if (!checkpoint) throw new Error('This historical file is unavailable.')
+    return checkpointReferenceBody(this.options.checkpointsRoot!, checkpoint, path)
+  }
+
   /** Seal the current report from the viewer. */
   pin(label: string | null): { ok: true, checkpoint: CheckpointMeta } | { ok: false, status: number, message: string } {
     if (!this.options.pin) return { ok: false, status: 404, message: 'Not found.' }
-    if (!this.report) return { ok: false, status: 422, message: this.error ?? 'The Product Model has not compiled yet.' }
+    this.refresh(false)
+    if (!this.report || this.error) return { ok: false, status: 422, message: this.error ?? 'The Product Model has not compiled yet.' }
     try {
       const checkpoint = this.options.pin(this.report, label)
       if (!checkpoint) return { ok: false, status: 422, message: 'Nothing was sealed.' }
@@ -528,8 +596,11 @@ function assetFile(assetRoot: string, pathname: string): string | undefined {
 }
 
 function repositoryAsset(response: ServerResponse, file: string, head: boolean): void {
+  assetBody(response, file, readFileSync(file), head)
+}
+
+function assetBody(response: ServerResponse, file: string, body: Buffer, head: boolean): void {
   const extension = extname(file).toLowerCase()
-  const body = readFileSync(file)
   if (extension === '.svg') {
     const issues = validateProductLogo(body)
     if (issues.length) {
@@ -559,15 +630,15 @@ function repositoryAsset(response: ServerResponse, file: string, head: boolean):
 function pinCheckpoint(request: IncomingMessage, response: ServerResponse, store: LocalReportStore): void {
   const site = request.headers['sec-fetch-site']
   if (site && site !== 'same-origin' && site !== 'none') {
-    json(response, 403, { message: 'Checkpoints are pinned from the local viewer only.' }, false)
+    json(response, 403, { message: 'Checkpoints are created from the local viewer only.' }, false)
     return
   }
   if (!request.headers[PIN_HEADER]) {
-    json(response, 403, { message: 'Checkpoints are pinned from the local viewer only.' }, false)
+    json(response, 403, { message: 'Checkpoints are created from the local viewer only.' }, false)
     return
   }
   if (!String(request.headers['content-type'] ?? '').toLowerCase().startsWith('application/json')) {
-    json(response, 415, { message: 'A pin is a JSON body.' }, false)
+    json(response, 415, { message: 'A checkpoint request is a JSON body.' }, false)
     return
   }
   const chunks: Buffer[] = []
@@ -578,7 +649,7 @@ function pinCheckpoint(request: IncomingMessage, response: ServerResponse, store
     size += chunk.byteLength
     if (size > MAX_PIN_BODY_BYTES) {
       refused = true
-      json(response, 413, { message: 'A pin label is short.' }, false)
+      json(response, 413, { message: 'A checkpoint label is short.' }, false)
       request.destroy()
       return
     }
@@ -614,8 +685,8 @@ function referencePreview(
   }
   void preview().then(result => {
     if (!response.destroyed) json(response, result.status, result.data, head)
-  }).catch(() => {
-    if (!response.destroyed) json(response, 500, { message: 'This reference could not be rendered.' }, head)
+  }).catch((error) => {
+    if (!response.destroyed) json(response, 404, { message: (error as Error).message || 'This reference could not be rendered.' }, head)
   })
 }
 
@@ -647,6 +718,43 @@ function requestHandler(
 
     if (pathname === HEALTH_PATH) {
       json(response, 200, { ok: true }, head)
+      return
+    }
+    if (pathname === '/_businesslens/history' || pathname === '/_businesslens/history/diff' || pathname === '/_businesslens/history/defaults' || pathname === '/_businesslens/state') {
+      try {
+        if (pathname.endsWith('/defaults')) json(response, 200, store.historyDefaults(), head)
+        else if (pathname.endsWith('/diff')) json(response, 200, store.compare(url.searchParams.get('base') ?? '', url.searchParams.get('target') ?? 'working'), head)
+        else if (pathname.endsWith('/state')) {
+          const value = store.state(url.searchParams.get('state') ?? '')
+          json(response, 200, { id: value.id, state: value.state, report: value.report }, head)
+        } else {
+          const offset = Number(url.searchParams.get('offset') ?? 0)
+          if (!Number.isSafeInteger(offset) || offset < 0) throw new Error('Invalid history offset.')
+          json(response, 200, store.history((url.searchParams.get('q') ?? '').slice(0, 200), offset), head)
+        }
+      } catch (error) { json(response, 422, { message: (error as Error).message }, head) }
+      return
+    }
+    const historicalState = url.searchParams.get('state')
+    if (historicalState && historicalState !== 'working' && (pathname === CODE_PATH || pathname.startsWith(ASSET_PREFIX))) {
+      try {
+        // Resolve movable refs once, then carry the immutable id into nested links.
+        const snapshot = store.state(historicalState)
+        const textBody = (path: string) => {
+          const body = store.historicalBody(snapshot.id, path)
+          if (body.length > 2 * 1024 * 1024 || body.includes(0) || !isUtf8(body)) return undefined
+          return body.toString('utf8')
+        }
+        if (pathname === CODE_PATH) {
+          referencePreview(request, response, url, head, () => localCodePreview(snapshot.report, undefined, url.searchParams.get('target') ?? '', textBody))
+        } else {
+          const path = decodeURIComponent(pathname.slice(ASSET_PREFIX.length))
+          if (!(extname(path).toLowerCase() in ASSET_CONTENT_TYPES)) throw new Error('This file type cannot be previewed.')
+          if (extname(path).toLowerCase() === '.md' && url.searchParams.get('raw') !== '1') {
+            referencePreview(request, response, url, head, () => localMarkdownPreview('', path, textBody, snapshot.id))
+          } else assetBody(response, path, store.historicalBody(snapshot.id, path), head)
+        }
+      } catch (error) { json(response, 404, { message: (error as Error).message }, head) }
       return
     }
     if (pathname === CHANGES_PATH) {

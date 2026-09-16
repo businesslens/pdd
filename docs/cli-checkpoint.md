@@ -30,12 +30,15 @@ statement about the round.
 
 Checkpoints are written to `.businesslens/cache/checkpoints/`, which is
 generated and never committed. Each includes a snapshot of local Reference
-files for later content comparisons. The newest fifty are kept. They are a
+files for later content comparisons and historical previews, including images.
+Exact contents are saved up to 25 MiB per file and 100 MiB per checkpoint; files
+outside these limits are explicitly unavailable. The newest fifty are kept.
+Deleting a checkpoint also loses any captured state not recorded in Git. They are a
 convenience for the local report, not part of the model: a clone of the
 repository has none, and deleting the directory loses nothing the model says.
 
 [`lint`](./cli-lint.md) seals nothing. A pass lints in a loop while fixing
-errors, and none of those runs is a boundary. **Pin this state** requests a
+errors, and none of those runs is a boundary. **Create a checkpoint** requests a
 checkpoint through the local report server's API. The API and this command use
 the same checkpoint writer; the command also works while the server is stopped.
 

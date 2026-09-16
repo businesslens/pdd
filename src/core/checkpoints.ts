@@ -3,7 +3,7 @@
  *
  * The CLI's `checkpoint` command and the local report server's checkpoint API
  * use this shared writer. The server also reads snapshots for comparisons;
- * the browser requests a snapshot through Pin this state. Cache files survive
+ * the browser requests a snapshot through Create a checkpoint. Cache files survive
  * server restarts, and the CLI can create them while the server is stopped.
  * A checkpoint records an explicitly requested baseline, regardless of who
  * edited the model or its referenced files. Lint creates no checkpoints.
@@ -13,8 +13,9 @@
  * A small `<id>.json` for the list, `<id>.report.json` for the model, and
  * `<id>.references.json` for local file contents at the same boundary.
  */
+import { createHash } from 'node:crypto'
 import { spawnSync } from 'node:child_process'
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, realpathSync, rmSync, unlinkSync, writeFileSync } from 'node:fs'
+import { closeSync, existsSync, lstatSync, openSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, realpathSync, rmSync, unlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join, relative, sep } from 'node:path'
 import { compileReport } from '../commands/export.js'
@@ -47,6 +48,7 @@ export interface Checkpoint extends CheckpointMeta {
 
 /** How many checkpoints the ring keeps; the oldest beyond it are removed. */
 export const CHECKPOINT_LIMIT = 50
+export const CHECKPOINT_CONTENT_BUDGET = 100 * 1024 * 1024
 export const CHECKPOINT_LABEL_LIMIT = 120
 
 const META_FILE = /^(\d{8}T\d{9}Z)\.json$/
@@ -137,35 +139,102 @@ export function writeCheckpoint(
 ): CheckpointMeta {
   const label = normalizeCheckpointLabel(options.label)
   const digest = reportDigest(report)
-  const referenceFiles = createReferenceFileSource(options.referenceRoot ?? modelRoot)(report)
-  const directory = checkpointsDirectory(modelRoot)
+  const directory = ensureCheckpointsDirectory(modelRoot)
+  const lock = generatedFilePath(modelRoot, '.businesslens', 'cache', 'checkpoints', '.write-lock')
+  const release = checkpointLock(lock)
+  try {
+    const captured = new Set<string>()
+    let bytes = 0
+    const referenceFiles = createReferenceFileSource(options.referenceRoot ?? modelRoot, (body, digest) => {
+      if (captured.has(digest)) return 'stored'
+      if (bytes + body.length > CHECKPOINT_CONTENT_BUDGET) return 'budget-exceeded'
+      const file = generatedFilePath(modelRoot, '.businesslens', 'cache', 'checkpoints', 'blobs', digest)
+      // Rewrite under the lock: a corrupt existing cache blob must not poison a new checkpoint.
+      writeFileSync(file, body, { mode: 0o600 })
+      captured.add(digest)
+      bytes += body.length
+      return 'stored'
+    })(report)
 
-  let at = options.now ?? new Date()
-  let id = checkpointId(at)
-  while (existsSync(join(directory, `${id}.json`))) {
-    at = new Date(at.getTime() + 1)
-    id = checkpointId(at)
+    let at = options.now ?? new Date()
+    let id = checkpointId(at)
+    while (existsSync(join(directory, `${id}.json`))) {
+      at = new Date(at.getTime() + 1)
+      id = checkpointId(at)
+    }
+    const meta: CheckpointMeta = { id, at: at.toISOString(), source: options.source, label, digest }
+    const reportFile = generatedFilePath(modelRoot, '.businesslens', 'cache', 'checkpoints', `${id}.report.json`)
+    writeFileSync(reportFile, `${canonicalReportJson(report)}\n`)
+    const referencesFile = generatedFilePath(modelRoot, '.businesslens', 'cache', 'checkpoints', `${id}.references.json`)
+    writeFileSync(referencesFile, `${JSON.stringify({ version: 1, files: referenceFiles })}\n`, { mode: 0o600 })
+    const metaFile = generatedFilePath(modelRoot, '.businesslens', 'cache', 'checkpoints', `${id}.json`)
+    writeFileSync(metaFile, `${JSON.stringify(meta, null, 2)}\n`)
+    pruneCheckpoints(directory)
+    return meta
+  } finally { release() }
+}
+
+/** Serialize publication and blob pruning across the CLI and server. */
+function checkpointLock(path: string): () => void {
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      const fd = openSync(path, 'wx', 0o600)
+      try { writeFileSync(fd, String(process.pid)) } finally { closeSync(fd) }
+      return () => unlinkSync(path)
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error
+      const pid = Number(readFileSync(path, 'utf8'))
+      if (Number.isSafeInteger(pid) && pid > 0) {
+        try { process.kill(pid, 0) } catch (probe) {
+          if ((probe as NodeJS.ErrnoException).code === 'ESRCH') { unlinkSync(path); continue }
+        }
+      }
+      throw new Error('Another checkpoint is being created. Try again when it finishes.')
+    }
   }
-  const meta: CheckpointMeta = { id, at: at.toISOString(), source: options.source, label, digest }
-  const reportFile = generatedFilePath(modelRoot, '.businesslens', 'cache', 'checkpoints', `${id}.report.json`)
-  writeFileSync(reportFile, `${canonicalReportJson(report)}\n`)
-  const referencesFile = generatedFilePath(modelRoot, '.businesslens', 'cache', 'checkpoints', `${id}.references.json`)
-  writeFileSync(referencesFile, `${JSON.stringify({ version: 1, files: referenceFiles })}\n`, { mode: 0o600 })
-  const metaFile = generatedFilePath(modelRoot, '.businesslens', 'cache', 'checkpoints', `${id}.json`)
-  writeFileSync(metaFile, `${JSON.stringify(meta, null, 2)}\n`)
-  pruneCheckpoints(directory)
-  return meta
+  throw new Error('Could not acquire the checkpoint writer.')
 }
 
 function pruneCheckpoints(directory: string): void {
-  const stale = listCheckpoints(directory).slice(CHECKPOINT_LIMIT)
-  for (const meta of stale) {
-    for (const file of [`${meta.id}.json`, `${meta.id}.report.json`, `${meta.id}.references.json`]) {
-      try {
-        unlinkSync(join(directory, file))
-      } catch { /* Already gone. */ }
+  const checkpoints = listCheckpoints(directory)
+  const retained = new Set<string>()
+  for (const meta of checkpoints.slice(0, CHECKPOINT_LIMIT)) {
+    const snapshot = readCheckpoint(directory, meta.id)
+    for (const file of Object.values(snapshot?.referenceFiles ?? {})) {
+      if (file.status === 'present' && file.content === 'stored') retained.add(file.digest)
     }
   }
+  for (const meta of checkpoints.slice(CHECKPOINT_LIMIT)) {
+    for (const file of [`${meta.id}.json`, `${meta.id}.report.json`, `${meta.id}.references.json`]) {
+      try { unlinkSync(join(directory, file)) } catch { /* Already gone. */ }
+    }
+  }
+  const blobs = join(directory, 'blobs')
+  if (existsSync(blobs) && !lstatSync(blobs).isSymbolicLink()) {
+    for (const digest of readdirSync(blobs)) {
+      if (/^[a-f0-9]{64}$/.test(digest) && !retained.has(digest)) unlinkSync(join(blobs, digest))
+    }
+  }
+}
+
+/** A saved file is served only from its checkpoint, with its digest verified. */
+export function checkpointReferenceBody(directory: string, checkpoint: Checkpoint, path: string): Buffer {
+  const file = checkpoint.referenceFiles?.[path]
+  if (!file || file.status !== 'present') throw new Error('This file was not captured in this checkpoint.')
+  let body: Buffer
+  if (file.content === 'stored') {
+    const blobs = join(directory, 'blobs')
+    const target = join(blobs, file.digest)
+    if (lstatSync(blobs).isSymbolicLink() || lstatSync(target).isSymbolicLink() || !lstatSync(target).isFile() || lstatSync(target).size !== file.bytes) {
+      throw new Error('This checkpoint file is unavailable.')
+    }
+    body = readFileSync(target)
+  } else if (file.text !== null) body = Buffer.from(file.text, 'utf8')
+  else throw new Error(file.content === 'budget-exceeded'
+    ? 'This file exceeded the checkpoint content budget; its contents were not saved.'
+    : 'This older checkpoint records the file fingerprint but did not save its contents.')
+  if (createHash('sha256').update(body).digest('hex') !== file.digest) throw new Error('This checkpoint file failed its integrity check.')
+  return body
 }
 
 /**
@@ -231,7 +300,7 @@ function committedBlobs(gitRoot: string, commit: string, paths: string[]): Map<s
  * there is no repository, no committed model, or a committed model that does
  * not lint.
  */
-export function compileCommittedReport(resolved: ModelRoot, today = new Date().toISOString().slice(0, 10)): CommittedReport {
+export function compileCommittedReport(resolved: ModelRoot, today = new Date().toISOString().slice(0, 10), revision = 'HEAD'): CommittedReport {
   if (!resolved.gitRoot) throw new Error('This Product Model is not in a Git repository, so it has no committed baseline.')
   /* Git reports the real path; the model root is whatever the command was
      given, and on macOS a temporary directory is reached through a symlink. */
@@ -239,7 +308,7 @@ export function compileCommittedReport(resolved: ModelRoot, today = new Date().t
   const modelRoot = realpathSync(resolved.modelRoot)
   let commit: string
   try {
-    commit = git(gitRoot, 'rev-parse', '--verify', 'HEAD')
+    commit = git(gitRoot, 'rev-parse', '--verify', '--end-of-options', `${revision}^{commit}`)
   } catch {
     throw new Error('The Product Model has not been committed yet, so there is no committed baseline.')
   }

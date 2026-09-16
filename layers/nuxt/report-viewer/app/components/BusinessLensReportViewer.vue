@@ -26,11 +26,16 @@ const props = defineProps<{
    * keeps one. The local viewer does; the catalog does not, and passes nothing.
    */
   changes?: ReportChanges | null
+  readingReport?: ProductReportV13 | null
+  readingLabel?: string
+  readingError?: string | null
 }>()
 
 const emit = defineEmits<{
   /** The reader chose another baseline to compare against. */
-  baseline: [id: string]
+  compare: [base: string, target: string]
+  historySearch: [query: string]
+  historyMore: []
   /** The reader asked to seal the current state as a checkpoint. */
   pin: [label: string | null]
 }>()
@@ -47,6 +52,8 @@ const section = defineModel<string>('section', { default: 'overview' })
  * deep links, a working back button, and a refresh that lands where it left.
  */
 const resource = defineModel<string | null>('resource', { default: null })
+const resourceState = defineModel<string>('resourceState', { default: 'working' })
+const readingWorkspace = computed(() => props.readingReport ? projectReportWorkspace(props.readingReport) : null)
 
 /**
  * The underlying view's drawing or Product tab; independent of the resource.
@@ -94,6 +101,10 @@ onMounted(() => { mounted = true; synchronizeLocation() })
     <BlrReportShell
       :section="location.section"
       :resource="location.resource"
+      v-model:resource-state="resourceState"
+      :reading-workspace="readingWorkspace"
+      :reading-label="readingLabel"
+      :reading-error="readingError"
       :tab="location.tab"
       v-model:resource-tab="resourceTab"
       v-model:scenario-route="scenarioRoute"
@@ -103,7 +114,9 @@ onMounted(() => { mounted = true; synchronizeLocation() })
       :logo-src="logoSrc"
       :tools-target="toolsTarget"
       :changes="changes"
-      @baseline="emit('baseline', $event)"
+      @compare="(base, target) => emit('compare', base, target)"
+      @history-search="emit('historySearch', $event)"
+      @history-more="emit('historyMore')"
       @pin="emit('pin', $event)"
       @update:section="section = $event"
       @update:resource="resource = $event"

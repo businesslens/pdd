@@ -3,7 +3,7 @@
  * The pulse: the report is being built while you watch, and this says so.
  *
  * A dot for the stream, and the moment the model last changed on screen — not
- * the count of edits, which no reader asked for. What changed opens beside
+ * the count of edits, which no reader asked for. History opens beside
  * Coverage; this only says that something did, and how long ago.
  */
 const live = useLocalLive()

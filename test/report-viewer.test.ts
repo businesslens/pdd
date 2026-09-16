@@ -1415,8 +1415,8 @@ describe('composed lifecycle', () => {
 describe('what changed', () => {
   const changesModulePath = '../layers/nuxt/report-viewer/app/utils/reportChanges.ts'
 
-  it('keys every change the way the surfaces address resources, and picks the newest checkpoint by default', async () => {
-    const { changesByKey, changeCount, defaultBaseline, baselineTitle, changeSummary } = await import(changesModulePath)
+  it('keys every change the way the surfaces address resources and names the compared states', async () => {
+    const { changesByKey, changeCount, baselineTitle, changeSummary } = await import(changesModulePath)
     const diff = {
       product: [],
       resources: [
@@ -1432,9 +1432,6 @@ describe('what changed', () => {
 
     const committed = { id: 'head', kind: 'committed', available: true, at: '2026-08-08T00:00:00Z', detail: 'abcdef0 fixture' }
     const checkpoint = { id: '20260915T100000000Z', kind: 'checkpoint', available: true, at: '2026-09-15T10:00:00.000Z', source: 'checkpoint', label: null }
-    expect(defaultBaseline([committed, checkpoint])).toBe(checkpoint.id)
-    expect(defaultBaseline([committed])).toBe('head')
-    expect(defaultBaseline([{ id: 'head', kind: 'committed', available: false, reason: 'no commit' }])).toBeNull()
     expect(baselineTitle(committed)).toBe('Last commit')
     expect(baselineTitle({ ...checkpoint, label: 'Mapped billing' })).toBe('Mapped billing')
   })

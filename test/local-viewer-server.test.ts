@@ -535,7 +535,7 @@ describe('local Product Report server', () => {
       expect(compileCount).toBe(1)
     })
 
-    it('refreshes file-only edits, deletions and pins without recompiling the model', { timeout: 30_000 }, async () => {
+    it('refreshes file-only edits without recompiling and revalidates checkpoint capture', { timeout: 30_000 }, async () => {
       const root = mkdtempSync(join(tmpdir(), 'businesslens-reference-events-'))
       directories.push(root)
       cpSync(FIXTURE, root, { recursive: true })
@@ -574,7 +574,8 @@ describe('local Product Report server', () => {
       const legacy = await comparison()
       expect(legacy.referenceFileNotice).toContain('no local Reference file snapshots')
       expect(legacy.diff.resources).toEqual([])
-      expect(compileCount).toBe(1)
+      // Creating a checkpoint revalidates the current model before capture.
+      expect(compileCount).toBe(2)
     })
 
     it('pins the current report only from the viewer itself', async () => {

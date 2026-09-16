@@ -3,7 +3,7 @@
  * One resource's standing against the baseline: added, changed, or removed.
  *
  * Worn on a row beside its title and on a page beside its name, with the
- * same three words and colours as the What changed surface, so the mark is
+ * same three words and colours as the History surface, so the mark is
  * read once and recognized everywhere.
  */
 import type { ChangeKind } from 'businesslens/report'

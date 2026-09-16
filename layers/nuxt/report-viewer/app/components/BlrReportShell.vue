@@ -33,6 +33,7 @@ import { KIND_TERM } from '../utils/vocabulary'
 import type { VocabularySlug } from '../utils/vocabulary.generated'
 import { firstSentence } from '../utils/reportMarkdown'
 import type { ReportChanges } from '../utils/reportChanges'
+import { projectReportWorkspace } from '../utils/reportWorkspace'
 import { baselineTitle, changeCount, changesByKey } from '../utils/reportChanges'
 
 const props = defineProps<{
@@ -45,18 +46,23 @@ const props = defineProps<{
    * the header, the rows and the pages show no trace of it.
    */
   changes?: ReportChanges | null
+  readingWorkspace?: ReportWorkspace | null
+  readingLabel?: string
+  readingError?: string | null
 }>()
 
-const emit = defineEmits<{ baseline: [id: string], pin: [label: string | null] }>()
+const emit = defineEmits<{ compare: [base: string, target: string], historySearch: [query: string], historyMore: [], pin: [label: string | null] }>()
+const resourceState = defineModel<string>('resourceState', { default: 'working' })
+const readingWorkspace = computed(() => resourceState.value === 'working' ? props.workspace : props.readingWorkspace)
 
 /* ------------------------------------------------------------------ */
 /* Selection: `activeKind` is what the collection view is about, and */
 /* `openResource` is inspected over that working view.                   */
 /* ------------------------------------------------------------------ */
 
-/* What changed compares two states of the whole model. Its section has the
+/* History compares two states of the whole model. Its section has the
    Product as its subject and opens from the header beside Coverage. */
-const CHANGES_SECTION = 'changes'
+const CHANGES_SECTION = 'history'
 
 type ReportSection = 'overview' | ReportResourceKind | typeof MATRIX_DESTINATIONS[number]['section'] | typeof CHANGES_SECTION
 
@@ -280,9 +286,8 @@ const multiGroupNote = computed(() => {
     + `Domain and ${count === 1 ? 'appears' : 'appear'} under each.`
 })
 
-const openPage = computed<AnyResourceView | null>(() => openPageKey.value
-  ? resolveResourceKey(props.workspace, openPageKey.value) ?? null
-  : null)
+const openPage = computed<AnyResourceView | null>(() => openPageKey.value && readingWorkspace.value
+  ? resolveResourceKey(readingWorkspace.value, openPageKey.value) ?? null : null)
 
 /* The resource is inspected over the working view; it never selects a rail row. */
 const navigation = inject(resourceNavigationKey, null)
@@ -292,6 +297,7 @@ const localReferenceTrail = ref<Array<string | null>>([])
 const previousReference = referenceNavigation?.previous ?? computed(() => localReferenceTrail.value.at(-1) ?? null)
 function openReference(href: string) {
   const target = localReferenceHref(href)
+  if (target) resourceState.value = new URL(target, 'http://businesslens.local').searchParams.get('state') ?? 'working'
   if (!target || target === reference.value) return
   if (!openResource.value && !reference.value) returnFocus.value = document.activeElement as HTMLElement | null
   if (referenceNavigation) referenceNavigation.open(target)
@@ -310,9 +316,17 @@ const returnFocus = shallowRef<HTMLElement | null>(null)
 const workingHeading = useTemplateRef('workingHeading')
 const localTrail = ref<Array<{ key: string, tab: string }>>([])
 const previousResource = computed(() => {
-  const key = navigation ? navigation.previous.value?.resource : localTrail.value.at(-1)?.key
-  return key ? resolveResourceKey(props.workspace, key) : null
+  const visit = navigation?.previous.value
+  const key = navigation ? visit?.resource : localTrail.value.at(-1)?.key
+  if (!key) return null
+  const state = visit?.state ?? 'working'
+  const report = props.changes?.baseState?.id === state ? props.changes.before
+    : props.changes?.targetState?.id === state ? props.changes.after : null
+  const workspace = state === resourceState.value ? readingWorkspace.value
+    : state === 'working' ? props.workspace : report ? projectReportWorkspace(report) : null
+  return workspace ? resolveResourceKey(workspace, key) ?? { title: 'previous resource' } : { title: 'previous resource' }
 })
+
 function backResource() {
   if (navigation) { navigation.back(); return }
   const previous = localTrail.value.pop()
@@ -320,21 +334,21 @@ function backResource() {
 }
 /* Live recompiles replace the projection. Rehydrate selection by stable key so
    focus, filters, and the open page survive ordinary model edits. */
-watch([() => props.workspace, openResource], ([workspace]) => {
-  if (openResource.value && !workspace.byKey.has(openResource.value)) leavePage()
+watch([readingWorkspace, openResource], ([workspace]) => {
+  if (resourceState.value === 'working' && workspace && openResource.value && !workspace.byKey.has(openResource.value)) leavePage()
 }, { immediate: true })
 
 const destination = computed(() => destinationForLocation(activeSection.value, pageTab.value))
 const topologyActive = computed(() => Boolean(destination.value))
 const matrixSection = computed(() => isMatrixSection(activeSection.value) ? destinationForSection(activeSection.value) : undefined)
-/* What changed, when it is the open surface and the host has a comparison. */
+/* History, when it is the open surface and the host has a comparison. */
 const changesOpen = computed(() => isChangesSection(activeSection.value))
 /* Every changed resource by key, so a row or a page can wear its standing. */
-const changeByKey = computed(() => changesByKey(props.changes?.diff))
+const changeByKey = computed(() => changesByKey((props.changes?.target ?? 'working') === 'working' ? props.changes?.diff : null))
 /* The header counts resources; a comparison that is not ready has no number. */
 const changesCount = computed(() => props.changes?.diff ? changeCount(props.changes.diff) : null)
-const changesLabel = computed(() => changesCount.value === null ? 'What changed'
-  : `What changed: ${changesCount.value} ${changesCount.value === 1 ? 'resource' : 'resources'}`)
+const changesLabel = computed(() => changesCount.value === null ? 'History'
+  : `History: ${changesCount.value} ${changesCount.value === 1 ? 'resource' : 'resources'}`)
 const changesBaseline = computed(() => {
   const baseline = props.changes?.baselines.find(item => item.id === props.changes?.baseline)
   return baseline ? baselineTitle(baseline) : ''
@@ -368,10 +382,10 @@ const surfaceHeading = computed(() => {
     return { icon: matrix.icon, slot: undefined, title: matrix.name,
       meta: findProductTopologyView(matrix.view).diagramType, term: undefined, termText: '' }
   }
-  /* What changed is qualified by its count, as a collection is: the count of
+  /* History is qualified by its count, as a collection is: the count of
      things that differ from the baseline named inside the reading. */
   if (changesOpen.value) {
-    return { icon: 'i-lucide-history', slot: ENTITY_KIND_META.product.slot, title: 'What changed',
+    return { icon: 'i-lucide-history', slot: ENTITY_KIND_META.product.slot, title: 'History',
       meta: changesCount.value === null ? 'Comparison' : String(changesCount.value), term: undefined, termText: '' }
   }
   if (activeKind.value === 'product') {
@@ -499,6 +513,7 @@ function leavePage() {
   reference.value = null
   localReferenceTrail.value = []
   openResource.value = null
+  resourceState.value = 'working'
   resourceTab.value = 'overview'
   scenarioRoute.value = null
   routeColumns.value = 'auto'
@@ -515,7 +530,7 @@ function setKind(kind: ReportResourceKind) {
   leavePage()
 }
 
-/** What changed: a section with the Product as its subject, from the header. */
+/** History: a section with the Product as its subject, from the header. */
 function openChanges() {
   if (!props.changes) return
   mobileNavOpen.value = false
@@ -547,14 +562,25 @@ function openResourceKey(key: string, tab = 'overview') {
 }
 
 /** Inspection preserves the working view, including a graph's drawing and focus. */
-function openResourcePage(resource: AnyResourceView) {
+function openResourcePage(resource: AnyResourceView, state = 'working') {
+  const sameState = resourceState.value === state
+  resourceState.value = state
   reference.value = null
   localReferenceTrail.value = []
-  if (resource.key === openResource.value) return
+  if (resource.key === openResource.value && sameState) return
   mobileNavOpen.value = false
   if (!openResource.value) returnFocus.value = document.activeElement as HTMLElement | null
   else if (!navigation) localTrail.value.push({ key: openResource.value, tab: resourceTab.value })
   openResource.value = resource.key
+  resourceTab.value = 'overview'
+  scenarioRoute.value = null
+  routeColumns.value = 'auto'
+}
+
+function inspectHistory(key: string, state: string) {
+  reference.value = null
+  resourceState.value = state
+  openResource.value = key
   resourceTab.value = 'overview'
   scenarioRoute.value = null
   routeColumns.value = 'auto'
@@ -617,7 +643,7 @@ const orphanScenarios = computed(() => props.workspace.scenarios
         <span class="hidden md:inline-flex">
           <BlrCoverageBadge :status="workspace.coverage.status" named size="md" class="blr-header-pill" />
         </span>
-        <UTooltip v-if="changes" :text="changesBaseline ? `What changed since ${changesBaseline}` : 'What changed'">
+        <UTooltip v-if="changes" text="Compare working and saved states">
           <UButton
             icon="i-lucide-history"
             color="neutral"
@@ -630,7 +656,7 @@ const orphanScenarios = computed(() => props.workspace.scenarios
             data-header-changes
             @click="openChanges"
           >
-            <span class="hidden md:inline">What changed</span>
+            <span class="hidden md:inline">History</span>
             <template v-if="changesCount !== null">
               <span class="hidden text-dimmed md:inline" aria-hidden="true">·</span>
               <span class="tabular-nums">{{ changesCount }}</span>
@@ -685,6 +711,7 @@ const orphanScenarios = computed(() => props.workspace.scenarios
             <span class="truncate text-lg font-semibold tracking-tight text-highlighted">{{ surfaceHeading.title }}</span>
             <span class="blr-meta shrink-0">{{ surfaceHeading.meta }}</span>
             <BlrTerm v-if="surfaceHeading.term" :slug="surfaceHeading.term" :text="surfaceHeading.termText" icon-only />
+            <BlrHistoryHelp v-else-if="changesOpen" />
           </h1>
           <div class="ms-auto flex shrink-0 flex-wrap items-center gap-1.5">
             <UTooltip :text="surfaceDocs.label">
@@ -821,12 +848,14 @@ const orphanScenarios = computed(() => props.workspace.scenarios
         <div v-if="!topologyActive" ref="resourcePane" class="blr-pane min-h-0 flex-1" @scroll.capture.passive="savePageScroll">
           <div class="p-5">
 
-          <!-- WHAT CHANGED: the model against a baseline the host holds. -->
+          <!-- HISTORY: the model against a baseline the host holds. -->
           <BlrChanges
             v-if="changesOpen && changes"
-            :workspace="workspace"
             :changes="changes"
-            @baseline="emit('baseline', $event)"
+            @compare="(base, target) => emit('compare', base, target)"
+            @search="emit('historySearch', $event)"
+            @more="emit('historyMore')"
+            @inspect="inspectHistory"
             @pin="emit('pin', $event)"
             @open="openResourcePage"
           />
@@ -985,21 +1014,25 @@ const orphanScenarios = computed(() => props.workspace.scenarios
 
     </div>
 
+    <UAlert v-if="resourceState !== 'working' && !readingWorkspace && (openResource || reference)" class="fixed bottom-4 right-4 z-50 max-w-md" :title="readingError ? 'Historical state unavailable' : 'Loading historical state…'" :description="readingError ?? undefined" :actions="[{ label: 'Close', onClick: leavePage }]" />
+
     <BlrResourceSlideover
       v-model:tab="resourceTab"
       v-model:scenario-route="scenarioRoute"
       v-model:route-columns="routeColumns"
-      :workspace="workspace"
+      :workspace="readingWorkspace ?? workspace"
+      :state-label="resourceState !== 'working' ? readingLabel ?? resourceState : undefined"
+      :state-id="resourceState"
       :resource="openPage"
-      :reference="reference"
+      :reference="resourceState === 'working' || readingWorkspace ? reference : null"
       :previous-reference="previousReference"
       :previous="previousResource"
-      :change="openPage ? changeByKey.get(openPage.key)?.change : undefined"
-      :changes="changeByKey"
+      :change="resourceState === 'working' && openPage ? changeByKey.get(openPage.key)?.change : undefined"
+      :changes="resourceState === 'working' ? changeByKey : undefined"
       :since="changesBaseline"
       :return-focus="returnFocus"
       :fallback-focus="workingHeading"
-      @open="openResourcePage"
+      @open="openResourcePage($event, resourceState)"
       @back="backResource"
       @reference-back="backReference"
       @reference-open="openReference"

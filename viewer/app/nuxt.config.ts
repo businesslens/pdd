@@ -34,12 +34,19 @@ const devHandlers = [
     })
   },
   {
-    // No CLI, no checkpoints and no committed model: the What changed button
+    // No CLI, no checkpoints and no committed model: the History button
     // draws with nothing to compare against, which is a state worth seeing.
-    route: '/_businesslens/changes',
+    route: '/_businesslens/history',
     handler: defineEventHandler((event) => {
       setHeader(event, 'cache-control', 'no-store')
-      return { baselines: [] }
+      return { states: [{ id: 'working', kind: 'working', available: true }], more: false, nextOffset: 50, checkpointLimit: 50 }
+    })
+  },
+  {
+    route: '/_businesslens/history/defaults',
+    handler: defineEventHandler((event) => {
+      setHeader(event, 'cache-control', 'no-store')
+      return { base: null, target: 'working', emptyReason: 'no-saved-model' }
     })
   },
   {

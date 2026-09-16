@@ -4,7 +4,7 @@ import type { ProductReportV13, ReportReference } from './portable.js'
 import { reportResourceCollections } from './portable.js'
 
 export type ReferenceFileSnapshot =
-  | { status: 'present', digest: string, bytes: number, text: string | null, omitted: 'binary' | 'large' | null }
+  | { status: 'present', digest: string, bytes: number, text: string | null, omitted: 'binary' | 'large' | null, content?: 'stored' | 'budget-exceeded' }
   | { status: 'missing' }
   | { status: 'unavailable', reason: string }
 

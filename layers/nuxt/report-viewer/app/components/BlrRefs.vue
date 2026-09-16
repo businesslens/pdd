@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { TreeItem } from '@nuxt/ui'
 import type { ReportReference } from 'businesslens/report'
-import { referenceNavigationKey, referenceHref, referenceFileHref, isExternalReference as isExternal } from '../utils/referenceNavigation'
+import { referenceNavigationKey, referenceStateKey, withReferenceState, referenceHref as unscopedReferenceHref, referenceFileHref, isExternalReference as isExternal } from '../utils/referenceNavigation'
 
 const props = withDefaults(defineProps<{
   references: ReportReference[]
@@ -20,7 +20,9 @@ const ROLE_TONE: Record<string, 'primary' | 'neutral' | 'secondary'> = {
   intent: 'primary', implementation: 'secondary', context: 'neutral'
 }
 const navigation = inject(referenceNavigationKey, null)
-const localHref = referenceFileHref
+const state = inject(referenceStateKey, ref('working'))
+const localHref = (target: string) => withReferenceState(referenceFileHref(target), state.value)
+const referenceHref = (reference: ReportReference) => withReferenceState(unscopedReferenceHref(reference), state.value)
 const isLocalImage = (reference: ReportReference) => !isExternal(reference.target)
   && reference.kind !== 'code' && /\.(png|jpe?g|gif|webp|avif|svg)$/i.test(reference.target.split(/[?#]/)[0] ?? '')
 const hrefFor = (reference: ReportReference) => isExternal(reference.target)

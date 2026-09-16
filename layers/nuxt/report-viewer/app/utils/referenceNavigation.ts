@@ -33,3 +33,12 @@ export interface ReferenceNavigation {
   back: () => void
 }
 export const referenceNavigationKey: InjectionKey<ReferenceNavigation> = Symbol('businesslens:reference-navigation')
+
+/** Apply state only to local Reference routes, preserving raw mode and fragments. */
+export function withReferenceState(href: string, state: string): string {
+  if (!localReferenceHref(href) || state === 'working') return href
+  const url = new URL(href, 'http://businesslens.local')
+  url.searchParams.set('state', state)
+  return url.pathname + url.search + url.hash
+}
+export const referenceStateKey: InjectionKey<Ref<string>> = Symbol('businesslens:reference-state')

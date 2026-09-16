@@ -7,11 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- The local report shows what changed: **What changed** beside Coverage opens a
-  comparison against the last commit or a checkpoint, and changed resources wear a
-  mark on their rows and pages.
+- **History** compares any two working, commit, branch, tag or checkpoint states.
+  Open resources and local References as they were, including removed resources.
+- History highlights the default and current branches, chooses a starting
+  comparison, and explains when there is no earlier saved model.
+- Checkpoints preserve local Reference files, including images, for later review.
+  Creating one in History selects it as the new comparison base.
 - `businesslens checkpoint "<label>"` marks a round of work; the agent skills
-  run it after each approved delta, and **Pin this state** does the same from
+  run it after each approved delta, and **Create a checkpoint** does the same from
   the report.
 - The report's status bar shows, beside Coverage, whether the viewer is live
   and when the model last changed on screen.

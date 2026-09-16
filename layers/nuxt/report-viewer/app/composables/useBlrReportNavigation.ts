@@ -1,5 +1,5 @@
 import { resourceNavigationKey, resourceTrail, nextResourceTrail, type ResourceVisit } from '../utils/resourceNavigation'
-import { referenceNavigationKey, referenceTrail, localReferenceHref } from '../utils/referenceNavigation'
+import { referenceNavigationKey, referenceTrail, localReferenceHref, type ReferenceNavigation } from '../utils/referenceNavigation'
 import { destinationForSection, destinationForLocation } from '../utils/reportDestinations'
 import { defaultTopologyReading, topologyFromQuery, topologyPushesHistory, topologyToQuery } from '../utils/topologyState'
 
@@ -11,6 +11,7 @@ export function useBlrReportNavigation(options: { sectionKey?: string, tabKey?: 
   const tabKey = options.tabKey ?? 't'
   const section = ref('overview')
   const resource = ref<string | null>(null)
+  const resourceState = ref('working')
   const tab = ref('overview')
   const resourceTab = ref('overview')
   const reference = ref<string | null>(null)
@@ -22,6 +23,7 @@ export function useBlrReportNavigation(options: { sectionKey?: string, tabKey?: 
   const one = (key: string) => typeof route.query[key] === 'string' && route.query[key] ? route.query[key] as string : null
   const baseSection = () => one(sectionKey) ?? (one('e') ? collectionForKey(one('e')!) : 'overview')
   const read = () => ({ section: baseSection(), resource: one('e'), tab: one(tabKey) ?? 'overview', resourceTab: one('rt') ?? 'overview',
+    resourceState: one('v') ?? (one('f') ? new URL(one('f')!, 'http://businesslens.local').searchParams.get('state') : null) ?? 'working',
     reference: localReferenceHref(one('f')), scenarioRoute: one('r'), routeColumns: one('rc') ?? 'auto',
     topology: { ...topologyFromQuery(route.query), view: (destinationForLocation(baseSection(), one(tabKey) ?? 'overview') ?? destinationForSection(one(sectionKey) ?? ''))?.view ?? topologyFromQuery(route.query).view } })
   const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b)
@@ -29,6 +31,7 @@ export function useBlrReportNavigation(options: { sectionKey?: string, tabKey?: 
     const next = read()
     section.value = next.section
     resource.value = next.resource
+    resourceState.value = next.resourceState
     tab.value = next.tab
     resourceTab.value = next.resourceTab
     reference.value = next.reference
@@ -38,12 +41,12 @@ export function useBlrReportNavigation(options: { sectionKey?: string, tabKey?: 
     routeColumns.value = next.routeColumns
     if (!same(topology.value, next.topology)) topology.value = next.topology
   }, { immediate: true })
-  watch([section, resource, tab, resourceTab, reference, scenarioRoute, routeColumns, topology], () => {
+  watch([section, resource, resourceState, tab, resourceTab, reference, scenarioRoute, routeColumns, topology], () => {
     const before = read()
-    const next = { section: section.value, resource: resource.value, tab: tab.value, resourceTab: resourceTab.value, reference: reference.value, scenarioRoute: scenarioRoute.value, routeColumns: routeColumns.value, topology: topology.value }
-    const push = before.section !== next.section || before.resource !== next.resource || before.tab !== next.tab || before.resourceTab !== next.resourceTab || before.reference !== next.reference || before.scenarioRoute !== next.scenarioRoute || before.routeColumns !== next.routeColumns || topologyPushesHistory(before.topology, next.topology)
+    const next = { section: section.value, resource: resource.value, resourceState: resourceState.value, tab: tab.value, resourceTab: resourceTab.value, reference: reference.value, scenarioRoute: scenarioRoute.value, routeColumns: routeColumns.value, topology: topology.value }
+    const push = before.resourceState !== next.resourceState || before.section !== next.section || before.resource !== next.resource || before.tab !== next.tab || before.resourceTab !== next.resourceTab || before.reference !== next.reference || before.scenarioRoute !== next.scenarioRoute || before.routeColumns !== next.routeColumns || topologyPushesHistory(before.topology, next.topology)
     const query = { ...route.query, [sectionKey]: next.section === 'overview' && !next.resource ? undefined : next.section,
-      e: next.resource ?? undefined, [tabKey]: next.tab === 'overview' ? undefined : next.tab,
+      e: next.resource ?? undefined, v: (next.resource || next.reference) && next.resourceState !== 'working' ? next.resourceState : undefined, [tabKey]: next.tab === 'overview' ? undefined : next.tab,
       rt: next.resource && next.resourceTab !== 'overview' ? next.resourceTab : undefined,
       f: next.reference ?? undefined,
       r: next.scenarioRoute ?? undefined, rc: next.routeColumns === 'auto' ? undefined : next.routeColumns,
@@ -51,17 +54,17 @@ export function useBlrReportNavigation(options: { sectionKey?: string, tabKey?: 
     if (same(before, next) && router.resolve({ query }).fullPath === route.fullPath) return
     const history = import.meta.client ? window.history.state : null
     const trail = nextResourceTrail(resourceTrail(history?.blrResourceTrail),
-      before.resource ? { resource: before.resource, tab: before.resourceTab, position: history?.position ?? 0 } : null,
-      next.resource, before.section === next.section && before.tab === next.tab)
-    const sameReading = before.section === next.section && before.tab === next.tab && before.resource === next.resource && before.resourceTab === next.resourceTab
+      before.resource ? { resource: before.resource, tab: before.resourceTab, state: before.resourceState, position: history?.position ?? 0 } : null,
+      next.resource, before.section === next.section && before.tab === next.tab, next.resourceState)
+    const sameReading = before.section === next.section && before.tab === next.tab && before.resourceState === next.resourceState && before.resource === next.resource && before.resourceTab === next.resourceTab
     const files = next.reference && sameReading ? referenceTrail(history?.blrReferenceTrail) : []
     if (next.reference && before.reference !== next.reference) files.push({ href: sameReading ? before.reference : null, position: history?.position ?? 0 })
     void router[push ? 'push' : 'replace']({ query, state: { blrResourceTrail: trail.map(item => ({ ...item })), blrReferenceTrail: files.map(item => ({ ...item })) } })
   }, { flush: 'post', deep: true, immediate: true })
   provide(resourceNavigationKey, {
     previous,
-    href: (key, reading = 'overview') => router.resolve({ query: { ...route.query,
-      [sectionKey]: section.value, e: key, rt: reading === 'overview' ? undefined : reading, f: undefined,
+    href: (key, reading = 'overview', state = 'working') => router.resolve({ query: { ...route.query,
+      [sectionKey]: section.value, e: key, v: state === 'working' ? undefined : state, rt: reading === 'overview' ? undefined : reading, f: undefined,
       r: key === resource.value ? scenarioRoute.value ?? undefined : undefined,
       rc: key === resource.value && routeColumns.value !== 'auto' ? routeColumns.value : undefined } }).href,
     back: () => {
@@ -71,7 +74,7 @@ export function useBlrReportNavigation(options: { sectionKey?: string, tabKey?: 
       if (delta < 0) router.go(delta)
     }
   })
-  provide(referenceNavigationKey, {
+  const referenceNavigation: ReferenceNavigation = {
     current: reference, previous: previousReference,
     href: href => router.resolve({ query: { ...route.query, f: localReferenceHref(href) ?? undefined } }).href,
     open: href => { reference.value = localReferenceHref(href) },
@@ -81,8 +84,9 @@ export function useBlrReportNavigation(options: { sectionKey?: string, tabKey?: 
       if (delta < 0) router.go(delta)
       else reference.value = null
     }
-  })
-  return { section, resource, tab, resourceTab, scenarioRoute, routeColumns, topology }
+  }
+  provide(referenceNavigationKey, referenceNavigation)
+  return { reference, previousReference, backReference: referenceNavigation.back, section, resource, resourceState, tab, resourceTab, scenarioRoute, routeColumns, topology }
 }
 
 /** A direct resource address has a useful closing destination even without s. */

@@ -53,6 +53,10 @@ export type ReportBaseline =
   | { id: 'head', kind: 'committed', available: true, at: string, detail: string }
   | { id: 'head', kind: 'committed', available: false, reason: string }
   | { id: string, kind: 'checkpoint', available: true, at: string, source: CheckpointSource, label: string | null }
+  | { id: 'working', kind: 'working', available: true }
+  | { id: string, kind: 'commit', available: true, at: string, commit: string, label: string, detail: string }
+  | { id: string, kind: 'branch', available: true, at: string, commit: string, label: string, detail: string, isDefault?: boolean, isCurrent?: boolean }
+  | { id: string, kind: 'tag', available: true, at: string, commit: string, label: string, detail: string }
 
 /** Who sealed a checkpoint: the `checkpoint` command, or the viewer's pin. */
 export type CheckpointSource = 'checkpoint' | 'pin'
@@ -171,7 +175,8 @@ function describeFile(file: ReferenceFileSnapshot): string | null {
   if (file.status === 'missing') return null
   if (file.status === 'unavailable') return `Unavailable: ${file.reason}`
   if (file.text !== null) return file.text
-  const kind = file.omitted === 'binary' ? 'Binary file' : 'File too large for a text preview'
+  const kind = file.content === 'budget-exceeded' ? 'Checkpoint content budget exceeded'
+    : file.omitted === 'binary' ? 'Binary file' : 'File too large for a text preview'
   return `${kind} · ${file.bytes} bytes · SHA-256 ${file.digest.slice(0, 12)}`
 }
 

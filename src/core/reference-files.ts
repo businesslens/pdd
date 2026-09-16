@@ -14,7 +14,8 @@ const FileSnapshotSchema = z.discriminatedUnion('status', [
     status: z.literal('present'), digest: z.string().regex(/^[a-f0-9]{64}$/),
     bytes: z.number().int().nonnegative().max(MAX_REFERENCE_BYTES),
     text: z.string().max(MAX_REFERENCE_TEXT_BYTES).nullable(),
-    omitted: z.enum(['binary', 'large']).nullable()
+    omitted: z.enum(['binary', 'large']).nullable(),
+    content: z.enum(['stored', 'budget-exceeded']).optional()
   }),
   z.object({ status: z.literal('missing') }),
   z.object({ status: z.literal('unavailable'), reason: z.string() })
@@ -37,7 +38,7 @@ function fingerprint(body: Buffer): ReferenceFileSnapshot {
 }
 
 /** Cache bytes until stat changes; recheck every path component before reuse. */
-export function createReferenceFileSource(root: string): (report: ProductReportV13) => ReportReferenceFiles {
+export function createReferenceFileSource(root: string, capture?: (body: Buffer, digest: string) => 'stored' | 'budget-exceeded'): (report: ProductReportV13) => ReportReferenceFiles {
   const base = realpathSync(root)
   let cache = new Map<string, { stamp: string, value: ReferenceFileSnapshot }>()
   return (report) => {
@@ -84,6 +85,10 @@ export function createReferenceFileSource(root: string): (report: ProductReportV
           throw new Error('File changed while being captured; it will be checked again.')
         }
         const value = fingerprint(body.subarray(0, length))
+        if (capture && value.status === 'present') {
+          value.content = capture(body.subarray(0, length), value.digest)
+          if (value.content === 'budget-exceeded') value.text = null
+        }
         files[path] = value
         next.set(path, { stamp, value })
       } catch (error) {

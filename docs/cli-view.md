@@ -26,54 +26,38 @@ introduces a lint error, the browser keeps the last valid report visible and
 recovers after the error is fixed. A pulse in the header says the viewer is
 connected and when the model last changed on screen.
 
-## What changed
+## History
 
-The report can compare the model as it stands against an earlier state. The
-**What changed** button beside Coverage in the header opens the comparison: every resource added,
-removed, or changed since the baseline, grouped by collection, each opening its
-page, with the fields that differ under it. A changed or added resource also
-wears its mark on its row and beside its name on its page, so the difference is
-visible while reading, not only on the comparison.
+**History** compares two selected states: the working model, Git commits,
+branches or tags, and local [checkpoints](./cli-checkpoint.md). Both selections are kept
+in the URL. Browse or search local history, paste a commit SHA, or swap the
+comparison direction. Git states are read without changing your checkout;
+unavailable revisions and models that cannot compile explain why.
 
-The local report server computes the comparison and the browser displays it.
-Model and local Reference file edits are detected regardless of which editor,
-person or agent made them. A checkpoint saves a state for later comparisons;
-creating one is separate from detecting edits.
+The initial base is the repository's known default branch, or the last commit
+when working on that branch. If the default branch cannot be identified, the
+last commit is used. When no model is saved at those revisions, the newest
+checkpoint is used instead. Your explicit selections take precedence. If no
+earlier model has been saved, create a checkpoint or commit the model before
+comparing later changes.
 
-The button counts changed resources and stays available when nothing has
-changed or before the first baseline, so you can switch baselines or pin a
-state. On narrow screens it shows the history icon and count.
+The comparison includes resource and field changes, plus changes to local
+Reference files. Opening either side of a resource reads that state's model
+and files, including resources since removed. Branches and tags resolve to exact commits
+for each comparison. A historical file never silently opens its current copy.
+HTTP(S) References remain external links.
 
-The baseline is one of:
+**Create a checkpoint** saves the current valid working model and its local
+References, even while comparing historical states. The newest fifty are kept
+locally. Checkpoints preserve supported file contents, including images, up to
+25 MiB per file and 100 MiB per checkpoint. Identical files share storage.
+Older checkpoints may preserve only text or fingerprints; missing contents
+are explicitly unavailable. Text comparisons show up to 256 KiB per file.
 
-- **Last commit** — the model as the last commit has it. This shows everything
-  not yet committed, including new resource files. It is absent when the model
-  is not in a Git repository or has never been committed.
-- **A checkpoint** — a round of work marked by
-  [`checkpoint`](./cli-checkpoint.md), or by **Pin this state** in the
-  comparison itself. The agent skills mark each approved delta they write, so
-  a session leaves one named checkpoint per round, whichever harness runs the
-  skill.
-
-Checkpoints live in `.businesslens/cache/checkpoints/`, which is generated and
-never committed. The viewer reads whatever is there, so it can be opened before,
-during, or after the work and show the same comparison. The newest checkpoint is
-the default baseline; the choice is remembered in a cookie.
-
-Changes to local Reference files also appear under the resources that reference
-them, even when no model file changed. Text files show their contents before and
-after; binary files show that their contents changed. This includes source code,
-documents and co-located assets, including files outside `.businesslens/`.
-Code symbols and line ranges still compare the whole referenced file.
-
-**Last commit** uses the files at that commit. Checkpoints and pins capture their
-local contents when saved. Older checkpoints without file snapshots compare
-model fields only and say so. HTTP(S) References are never fetched, and a changed
-file does not establish whether the model and implementation agree.
-
-Only regular files inside the repository or standalone model root are captured;
-symbolic links are excluded. Files up to 25 MiB are compared, with text previews
-up to 256 KiB. Unreadable or larger files are named as unavailable.
+Model and Reference edits are detected independently of checkpoint creation.
+A changed file does not establish whether the model and implementation agree.
+Only regular files within the repository or standalone model root are captured;
+symbolic links and generated BusinessLens history are excluded.
 
 ## Options
 

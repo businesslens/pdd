@@ -4,11 +4,12 @@ export interface ResourceVisit {
   resource: string
   tab: string
   position: number
+  state?: string
 }
 
 /** Router support is optional for hosts that embed an uncontrolled reader. */
 export interface ResourceNavigation {
-  href: (resource: string, tab?: string) => string
+  href: (resource: string, tab?: string, state?: string) => string
   previous: Ref<ResourceVisit | null>
   back: () => void
 }
@@ -22,8 +23,8 @@ export function resourceTrail(value: unknown): ResourceVisit[] {
 }
 
 /** A tab change keeps the trail; another resource records the reading we left. */
-export function nextResourceTrail(trail: ResourceVisit[], before: ResourceVisit | null, resource: string | null, sameSurface: boolean): ResourceVisit[] {
+export function nextResourceTrail(trail: ResourceVisit[], before: ResourceVisit | null, resource: string | null, sameSurface: boolean, state = 'working'): ResourceVisit[] {
   if (!resource || !sameSurface) return []
-  if (!before || before.resource === resource) return trail
+  if (!before || (before.resource === resource && (before.state ?? 'working') === state)) return trail
   return [...trail, before]
 }

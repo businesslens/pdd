@@ -56,7 +56,7 @@ describe('checkpoints', () => {
     expect(first.id).toBe('20260915T100000000Z')
     expect(first.label).toBeNull()
     const directory = checkpointsDirectory(root)
-    expect(readdirSync(directory).sort()).toEqual(['20260915T100000000Z.json', '20260915T100000000Z.references.json', '20260915T100000000Z.report.json'])
+    expect(readdirSync(directory).sort()).toEqual(['20260915T100000000Z.json', '20260915T100000000Z.references.json', '20260915T100000000Z.report.json', 'blobs'])
 
     const labelled = writeCheckpoint(root, report(root), { source: 'checkpoint', label: '  Mapped   billing ', now: new Date('2026-09-15T10:05:00.000Z') })
     expect(labelled.label).toBe('Mapped billing')
@@ -100,7 +100,7 @@ describe('checkpoints', () => {
     expect(kept).toHaveLength(CHECKPOINT_LIMIT)
     expect(kept[0]!.id).toBe('20260915T000051000Z')
     expect(kept.at(-1)!.id).toBe('20260915T000002000Z')
-    expect(readdirSync(checkpointsDirectory(root))).toHaveLength(CHECKPOINT_LIMIT * 3)
+    expect(readdirSync(checkpointsDirectory(root))).toHaveLength(CHECKPOINT_LIMIT * 3 + 1)
   })
 
   it('creates the watched directory inside the generated cache', () => {

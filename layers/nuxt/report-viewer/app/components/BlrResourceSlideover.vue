@@ -7,7 +7,8 @@ import { docsForResourceKind } from '../utils/resourceDocs'
 import { KIND_TERM } from '../utils/vocabulary'
 import { parentOf } from '../utils/pageSections'
 import { defaultTopologyReading } from '../utils/topologyState'
-import { referenceHref } from '../utils/referenceNavigation'
+import { resourceNavigationKey } from '../utils/resourceNavigation'
+import { referenceHref, referenceStateKey } from '../utils/referenceNavigation'
 
 const props = defineProps<{
   workspace: ReportWorkspace
@@ -15,12 +16,17 @@ const props = defineProps<{
   change?: ChangeKind | null
   changes?: ReadonlyMap<string, ResourceChange>
   since?: string
+  stateLabel?: string
+  stateId?: string
   reference?: string | null
   previousReference?: string | null
-  previous?: AnyResourceView | null
+  previous?: Pick<AnyResourceView, 'title'> | null
   returnFocus?: HTMLElement | null
   fallbackFocus?: HTMLElement | null
 }>()
+provide(referenceStateKey, computed(() => props.stateId ?? 'working'))
+const resourceNavigation = inject(resourceNavigationKey, null)
+if (resourceNavigation) provide(resourceNavigationKey, { ...resourceNavigation, href: (key, tab) => resourceNavigation.href(key, tab, props.stateId ?? 'working') })
 const emit = defineEmits<{ close: [], back: [], open: [resource: AnyResourceView], view: [section: string, resource: AnyResourceView], referenceBack: [], referenceOpen: [href: string] }>()
 const tab = defineModel<string>('tab', { default: 'overview' })
 const scenarioRoute = defineModel<string | null>('scenarioRoute', { default: null })
@@ -38,7 +44,7 @@ function referenceInfo(href: string) {
   const source = url.pathname === '/_businesslens/code'
   const reference = props.workspace.references.find(item => {
     const original = new URL(referenceHref(item.reference), 'http://businesslens.local')
-    return source ? referenceHref(item.reference) === href : original.pathname === url.pathname
+    return source ? original.searchParams.get('target') === url.searchParams.get('target') : original.pathname === url.pathname
   })?.reference
   let target = source ? url.searchParams.get('target') ?? '' : url.pathname.slice('/_businesslens/file/'.length)
   if (!source) { try { target = decodeURIComponent(target) } catch { /* Show malformed paths literally. */ } }
@@ -50,7 +56,7 @@ function referenceInfo(href: string) {
 }
 const file = computed(() => props.reference ? referenceInfo(props.reference) : null)
 const fileBackTitle = computed(() => props.previousReference ? referenceInfo(props.previousReference).title : props.resource?.title ?? 'References')
-const readingKey = computed(() => JSON.stringify([props.workspace.identity.id, 'resource', props.resource?.key, tab.value]))
+const readingKey = computed(() => JSON.stringify([props.workspace.identity.id, props.stateId, 'resource', props.resource?.key, tab.value]))
 const { element: pane, save, restore, hasSaved } = useBlrTopologyScroll(readingKey)
 const restorePosition = computed(() => { void readingKey.value; return hasSaved() })
 
@@ -102,6 +108,7 @@ function open(resource: AnyResourceView) { save(); emit('open', resource) }
   >
     <template #content>
       <div v-if="resource || reference" class="blr-resource-panel flex h-full min-h-0 flex-col" data-resource-panel>
+        <p v-if="stateLabel" class="border-b border-default bg-elevated px-5 py-2 text-xs text-muted" data-historical-state>{{ stateLabel }}</p>
         <template v-if="file && reference">
           <header class="flex shrink-0 items-start gap-2 border-b border-default px-5 py-3" data-reference-header>
             <UTooltip :text="`Back to ${fileBackTitle}`"><UButton icon="i-lucide-arrow-left" color="neutral" variant="ghost" size="sm" class="-ms-1 shrink-0" :aria-label="`Back to ${fileBackTitle}`" @click="emit('referenceBack')" /></UTooltip>
@@ -142,7 +149,7 @@ function open(resource: AnyResourceView) { save(); emit('open', resource) }
             </div>
           </div>
           <div class="blr-resource-actions flex shrink-0 items-center gap-1">
-            <UTooltip v-for="link in exits" :key="link.section" :text="link.name">
+            <UTooltip v-for="link in (stateLabel ? [] : exits)" :key="link.section" :text="link.name">
               <UButton :label="link.name" :aria-label="link.name" :icon="link.icon" color="neutral" variant="ghost" size="sm" :ui="{ label: 'blr-resource-action-label text-xs' }" @click="subject && emit('view', link.section, subject)" />
             </UTooltip>
             <UTooltip :text="docs.label">

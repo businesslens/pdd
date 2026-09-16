@@ -1,3 +1,4 @@
+import { withReferenceState } from '../../layers/nuxt/report-viewer/app/utils/referenceNavigation.js'
 import { posix } from 'node:path'
 import { createMarkdownParser } from 'comark/parse'
 import type { ElementNode, Node } from 'comark'
@@ -32,13 +33,13 @@ const parse = createMarkdownParser({ registerDefaultPlugins: false, autoUnwrap: 
 const tags = new Set(['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'strong', 'em', 's', 'del', 'ul', 'ol', 'li', 'blockquote', 'hr', 'br', 'a', 'img', 'code', 'pre', 'table', 'thead', 'tbody', 'tr', 'th', 'td'])
 const text = (nodes: Node[]): string => nodes.map(node => typeof node === 'string' ? node : text(node.slice(2) as Node[])).join('')
 
-async function readingNodes(nodes: Node[], path: string): Promise<Node[]> {
+async function readingNodes(nodes: Node[], path: string, state?: string): Promise<Node[]> {
   const result: Node[] = []
   for (const node of nodes) {
     if (typeof node === 'string') { result.push(node); continue }
     const [tag, attrs, ...children] = node
     if (!tag) continue
-    if (!tags.has(tag)) { result.push(...await readingNodes(children, path)); continue }
+    if (!tags.has(tag)) { result.push(...await readingNodes(children, path, state)); continue }
     if (tag === 'pre') {
       result.push(await highlightedCode(text(children), String(attrs.language ?? 'text'), {
         filename: typeof attrs.filename === 'string' ? attrs.filename : undefined
@@ -56,7 +57,7 @@ async function readingNodes(nodes: Node[], path: string): Promise<Node[]> {
         result.push(tag === 'img' ? String(attrs.alt || text(children) || 'Image') + ' (image unavailable)' : text(children))
         continue
       }
-      safe[tag === 'a' ? 'href' : 'src'] = target
+      safe[tag === 'a' ? 'href' : 'src'] = state ? withReferenceState(target, state) : target
       if (typeof attrs.title === 'string') safe.title = attrs.title
       if (tag === 'img') { safe.alt = String(attrs.alt ?? text(children)); safe.loading = 'lazy' }
       else if (/^(?:https?:|mailto:)/i.test(target)) {
@@ -64,13 +65,13 @@ async function readingNodes(nodes: Node[], path: string): Promise<Node[]> {
         safe['aria-description'] = 'Opens in a new tab'
       }
     }
-    result.push([tag, safe, ...await readingNodes(children, path)])
+    result.push([tag, safe, ...await readingNodes(children, path, state)])
   }
   return result
 }
 
-export async function localMarkdownPreview(root: string, path: string): Promise<{ status: number, data: ReferencePreview | { message: string } }> {
-  const source = /\.md$/i.test(path) ? previewText(root, path) : undefined
+export async function localMarkdownPreview(root: string, path: string, read?: (path: string) => string | undefined, state?: string): Promise<{ status: number, data: ReferencePreview | { message: string } }> {
+  const source = /\.md$/i.test(path) ? read ? read(path) : previewText(root, path) : undefined
   if (source === undefined) return { status: 404, data: { message: 'This document is unavailable in the local repository.' } }
   const normalized = source.replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n')
   // Preserve frontmatter verbatim, without evaluating or passing it to Vue components.
@@ -80,6 +81,6 @@ export async function localMarkdownPreview(root: string, path: string): Promise<
   const parsed = await parse(body)
   return { status: 200, data: {
     kind: 'markdown', path, metadata: frontmatter?.[1] ?? null,
-    document: { nodes: await readingNodes(parsed.nodes, path), frontmatter: {}, meta: {} }
+    document: { nodes: await readingNodes(parsed.nodes, path, state), frontmatter: {}, meta: {} }
   } }
 }
