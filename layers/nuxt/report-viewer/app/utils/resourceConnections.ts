@@ -1,4 +1,4 @@
-/** One resource’s directional reading; facts shown in other Overview blocks are omitted. */
+/** One resource’s complete directional reading, independent of other tabs. */
 import type {
   AnyResourceView,
   CapabilityView,
@@ -101,7 +101,7 @@ export function resourceConnectionRows(workspace: ReportWorkspace, resource: Any
     case 'capability': {
       const capability = resource as CapabilityView
       all.push(
-        row('Changes', 'entity', capability.entityIds, false),
+        row('Changes', 'entity', capability.entityIds, true),
         row('Domain', 'domain', capability.domainId ? [capability.domainId] : [], false),
         row('Capability Scenarios', 'capability-scenario', capability.scenarioIds, true),
         row('Exercised by Journey Scenarios', 'journey-scenario', capability.journeyScenarioIds, true),
@@ -176,10 +176,5 @@ export function resourceConnectionRows(workspace: ReportWorkspace, resource: Any
     else additional.set(key, { label: relation.label, kind: other.kind, ids: [other.id], derived: relation.label === 'available in', direction })
   }
   all.push(...additional.values())
-  return all.filter(item => item.ids.length
-    && !(resource.kind === 'interface' && ['Actors', 'Experiences within', 'Screens available', 'Capabilities available'].includes(item.label))
-    && !(resource.kind === 'experience' && item.kind === 'screen')
-    && !(resource.kind === 'capability' && item.label === 'Changes')
-    && !(resource.kind === 'rule' && !item.derived && item.direction === 'Outgoing')
-    && item.label !== 'Domain')
+  return all.filter(item => item.ids.length)
 }

@@ -200,9 +200,9 @@ describe('stable Product Report', () => {
     expect(hasAuthoredBody(order)).toBe(true)
     const overview = tabsFor(workspace, order).find((tab: any) => tab.id === 'overview')!
     expect(overview.blocks).toContain('detail')
-    // A thing with States reads its machine on a peer tab; one without has only the Overview.
-    expect(tabsFor(workspace, order).map((tab: any) => tab.id)).toEqual(['overview', 'lifecycle'])
-    expect(tabsFor(workspace, workspace.entities.find((item: any) => item.id === 'cart')).map((tab: any) => tab.id)).toEqual(['overview'])
+    // Lifecycle is specific to things with States; Connections remains a separate reading.
+    expect(tabsFor(workspace, order).map((tab: any) => tab.id)).toEqual(['overview', 'lifecycle', 'connections'])
+    expect(tabsFor(workspace, workspace.entities.find((item: any) => item.id === 'cart')).map((tab: any) => tab.id)).toEqual(['overview', 'connections'])
 
     // A Screen's own states stay the view's, never the thing's lifecycle.
     const screen = workspace.screens.find((item: any) => item.states.length)
@@ -1039,7 +1039,7 @@ describe('stable Product Report', () => {
     expect(docs).toContain("domain: 'domains'")
   })
 
-  it('opens resources directly into the one page reading', () => {
+  it('opens resources into the complete resource reading', () => {
     const reportShell = source('app/components/BlrReportShell.vue')
     const page = source('app/components/BlrResourcePage.vue')
     const body = source('app/components/BlrResourceBody.vue')
@@ -1047,7 +1047,7 @@ describe('stable Product Report', () => {
     expect(existsSync(join(VIEWER, 'app/components/BlrInspector.vue'))).toBe(false)
     expect(existsSync(join(VIEWER, 'app/components/BlrResourcePeek.vue'))).toBe(false)
     expect(reportShell).not.toContain('<BlrInspector')
-    expect(reportShell).toContain('<BlrResourcePage')
+    expect(source('app/components/BlrResourceSlideover.vue')).toContain('<BlrResourcePage')
     expect(reportShell).not.toContain('<UTable')
     expect(reportShell).not.toContain('TableColumn')
     expect(reportShell).toContain('@open="openResourcePage"')
@@ -1105,35 +1105,6 @@ describe('stable Product Report', () => {
     expect(body).toContain('Only in')
   })
 
-  it('uses the Product Report trail as the only resource-page identity', () => {
-    const reportShell = source('app/components/BlrReportShell.vue')
-    const page = source('app/components/BlrResourcePage.vue')
-    const globalHeader = reportShell.slice(
-      reportShell.indexOf('<header'),
-      reportShell.indexOf('<div class="flex min-h-0 flex-1">')
-    )
-
-    expect(reportShell).toContain('v-for="(step, index) in pageTrail"')
-    expect(reportShell).toContain('aria-label="Page breadcrumb"')
-    /* One trail at every width, and it is a path rather than a title: it ends
-       at the parent, and the surface names itself in its own heading. */
-    expect(reportShell).toContain('data-page-trail')
-    expect(reportShell).not.toContain('data-mobile-location')
-    expect(reportShell).not.toContain('blr-mobile-ancestor')
-    expect(reportShell).not.toContain("aria-current=\"page\"")
-    expect(reportShell).toContain('...parents.map(parent => ({')
-    expect(reportShell).toContain('<h1 v-if="surfaceHeading"')
-    // Narrow-screen bounds and help targets are exercised in the browser
-    // regression script; clipping the entire trail would cut off focus rings.
-    expect(reportShell).not.toContain('class="inline-flex min-w-0 flex-1 items-center gap-1.5 hover:underline hover:underline-offset-4"')
-    expect(reportShell).not.toContain(':title="step.title"')
-    expect(reportShell).not.toContain('label="Neighbourhood"')
-    expect(globalHeader).not.toContain('label="Docs"')
-    expect(reportShell).not.toContain('DOCS_SLUG')
-    expect(page).not.toContain('<h1')
-    expect(page).not.toContain('<BlrKind :kind="resource.kind"')
-    expect(page).toContain('parentOf(props.workspace, props.resource)')
-  })
 
   /*
     The rail lists kinds, and kinds do not nest. Scenarios are read from the
@@ -1164,7 +1135,7 @@ describe('stable Product Report', () => {
     expect(source('app/utils/reportWorkspace.ts')).toContain('scenariosByCapability')
   })
 
-  it('uses Overview and one peer tab: Scenarios, or a Lifecycle', () => {
+  it('keeps Connections after Overview and the resource’s behavior reading', () => {
     const page = source('app/components/BlrResourcePage.vue')
     const sections = source('app/utils/pageSections.ts')
 
@@ -1172,16 +1143,28 @@ describe('stable Product Report', () => {
     for (const resource of [...workspace.capabilities, ...workspace.journeys]) {
       const tabs = tabsFor(workspace, resource)
       expect(tabs.map((tab: any) => [tab.id, tab.label])).toEqual([
-        ['overview', 'Overview'], ['scenarios', 'Scenarios']
+        ['overview', 'Overview'], ['scenarios', 'Scenarios'], ['connections', 'Connections'],
+        ...(resource.references.length ? [['references', 'References']] : [])
       ])
       const children = resource.kind === 'capability'
         ? workspace.scenariosByCapability.get(resource.id)
         : workspace.scenariosByJourney.get(resource.id)
       expect(tabs[1].count).toBe(children?.length ?? 0)
     }
-    expect(sections).toContain("if (resource.references.length) overviewBlocks.push('references')")
+    for (const resource of workspace.byKey.values()) {
+      const tabs = tabsFor(workspace, resource)
+      expect(tabs[0].blocks).not.toContain('connections')
+      expect(tabs[0].blocks).not.toContain('references')
+      const connections = tabs.find((tab: any) => tab.id === 'connections')
+      if (connections) {
+        expect(tabs.at(resource.references.length ? -2 : -1)).toBe(connections)
+        expect(connections.blocks).toEqual(['connections'])
+      }
+      if (resource.references.length) {
+        expect(tabs.at(-1)).toMatchObject({ id: 'references', count: resource.references.length, blocks: ['references'] })
+      } else expect(tabs.some((tab: any) => tab.id === 'references')).toBe(false)
+    }
     expect(sections).not.toContain("id: 'diagram'")
-    expect(sections).not.toContain("id: 'references'")
     /* A strip with one tab switches nothing, so it does not render — and the
        ways out live on the heading row, which the host draws. */
     expect(page).toContain('v-if="tabs.length > 1"')
@@ -1192,7 +1175,7 @@ describe('stable Product Report', () => {
        outside the scroll pane so the strip needs no painted sticky surface. */
     expect(page).toContain('<BlrPageTabs')
     expect(source('app/components/BlrReportShell.vue')).toContain('<BlrPageTabs')
-    expect(source('app/components/BlrReportShell.vue')).toContain(':tabs-target="pageTabsTarget"')
+    expect(source('app/components/BlrResourceSlideover.vue')).toContain(':tabs-target="tabsTarget"')
     expect(source('app/components/BlrPageTabs.vue')).toContain('<UTabs')
   })
 
@@ -1218,15 +1201,14 @@ describe('stable Product Report', () => {
     expect(reportShell).toContain("defineModel<string | null>('resource'")
     /* The open tab is the page's model, not a ref it keeps to itself: a
        Lifecycle a reader cannot link to or refresh into is a modal with extra
-       steps. A Scenario key in the address still outranks it. */
+       steps. Scenario addresses retain the child for its own References. */
     expect(reportShell).toContain("defineModel<string>('tab'")
-    expect(reportShell).toContain('v-model:tab="pageTab"')
+    expect(reportShell).toContain('v-model:tab="resourceTab"')
     expect(page).toContain("defineModel<string>('tab'")
     expect(page).not.toContain("const active = ref<PageTabId>('overview')\n\nwatch")
-    expect(page).toContain("if (requestedChild.value && isTab('scenarios'))")
     /* Opening a page opens its Overview; the tab is reset in the same tick as
        the page, so one gesture is one history entry. */
-    expect(reportShell).toContain("openResource.value = resource.key\n  pageTab.value = 'overview'")
+    expect(reportShell).toContain("openResource.value = resource.key\n  resourceTab.value = 'overview'")
   })
 
   /*
@@ -1380,7 +1362,7 @@ describe('composed lifecycle', () => {
     /* The list under the machine links each Rule and says how the Rules compose. */
     const component = source('app/components/BlrEntityLifecycle.vue')
     expect(component).toContain('v-for="rule in arc.rules"')
-    expect(component).toContain("@click=\"open('rule', rule.id)\"")
+    expect(component).toContain("@open=\"open('rule', rule.id)\"")
     expect(component).toContain('<span v-if="index" class="blr-meta"> or </span>')
     expect(component).toContain('Each Rule must permit it; within a Rule, any one grant does.')
     expect(component).not.toContain('arc.restriction')

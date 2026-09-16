@@ -66,6 +66,14 @@ export default defineNuxtConfig({
     resolve('../../layers/nuxt/theme-lab')
   ],
   ssr: false,
+  hooks: {
+    'components:extend'(components) {
+      // The private host uses explicit Prose mappings; unrelated global readers need not ship.
+      for (const component of components) {
+        if (component.pascalName.startsWith('Prose')) component.global = false
+      }
+    }
+  },
   // Keep the downloadable CLI within its archive budget as graph engines grow.
   vite: { build: { minify: 'terser', terserOptions: { compress: { passes: 2 } } } },
   devtools: { enabled: false },

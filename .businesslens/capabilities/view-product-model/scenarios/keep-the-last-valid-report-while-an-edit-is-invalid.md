@@ -10,27 +10,27 @@ steps:
       - { entity: product-model, effect: reads }
     contexts:
       local:
-        place: local-report-web::resource-page
+        place: local-report-web::resource-reading
   - text: A save leaves the model temporarily unable to pass its structural check
     kind: condition
     entities:
       - { entity: product-model, effect: reads }
     contexts:
       local:
-        place: local-report-web::resource-page
+        place: local-report-web::resource-reading
   - text: The Product keeps the last valid report in view and says that the latest edit is not valid yet
     kind: product
     entities: []
     contexts:
       local:
-        place: local-report-web::resource-page
+        place: local-report-web::resource-reading
   - text: The Product recompiles once the edit is fixed and returns the reader to what they were reading
     kind: product
     entities:
       - { entity: product-model, effect: reads }
     contexts:
       local:
-        place: local-report-web::resource-page
+        place: local-report-web::resource-reading
 ---
 
 # Keep the last valid report while an edit is invalid

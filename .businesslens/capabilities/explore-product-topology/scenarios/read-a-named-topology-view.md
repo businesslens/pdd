@@ -42,7 +42,7 @@ page.
 
 ## Edge cases
 
-- Interface map is a connected tree: the Product root branches into Interfaces and their actual Experiences and Screens. Every visible non-root node has a containment connector to its parent, including on narrow screens. Expanding a branch reveals connected children; selecting a node opens its resource page.
+- Interface map is a connected tree: the Product root branches into Interfaces and their actual Experiences and Screens. Every visible non-root node has a containment connector to its parent, including on narrow screens. Expanding a branch reveals connected children; selecting a node opens its resource reading.
 - A reach tree roots at the Product and branches through each Domain, Capability, Journey or Business Rule to the places it is reached in and the Rules attached to it. A place reached from two subjects is drawn under each; selecting either opens the one page.
 - What changes what shows each Capability's creates, changes, and removes effects on Entities, with the supporting Scenarios. Reads do not become mutations.
 - Compare delivery is a Capability by Interface matrix stating the authored route for each cell. A row with more than one cell is delivered by more than one Interface; a row with one is exclusive to it. An empty cell claims only that no Context authorises that delivery.

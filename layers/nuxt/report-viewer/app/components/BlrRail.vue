@@ -41,10 +41,10 @@ const overviewColor = `var(--blr-slot-${ENTITY_KIND_META.product.slot})`
       class="blr-navitem"
       :data-current="activeSection === item.section"
       :aria-current="activeSection === item.section ? 'page' : undefined"
-      :style="{ '--kind-color': overviewColor }"
+      style="--kind-color: var(--ui-text-muted)"
       @click="emit('view', item.section)"
     >
-      <UIcon :name="item.icon" class="size-4 shrink-0" :style="{ color: overviewColor }" />
+      <UIcon :name="item.icon" class="size-4 shrink-0" />
       <span class="flex-1 truncate text-start">{{ item.name }}</span>
     </button>
     <p class="blr-navgroup mt-3">Resources</p>

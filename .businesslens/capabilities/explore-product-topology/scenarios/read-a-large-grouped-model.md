@@ -31,7 +31,7 @@ steps:
       - { entity: product-model, effect: reads }
     contexts:
       local:
-        place: local-report-web::resource-page
+        place: local-report-web::resource-reading
 ---
 
 # Read a large grouped model

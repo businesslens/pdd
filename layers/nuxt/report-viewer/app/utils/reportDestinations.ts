@@ -30,7 +30,7 @@ export const MATRIX_SECTIONS = new Set<string>(MATRIX_DESTINATIONS.map(item => i
 export const MAIN_RESOURCE_KINDS = ['entity', 'interface', 'domain', 'capability', 'journey', 'rule'] as const
 export const destinationForSection = (section: string) => REPORT_DESTINATIONS.find(item => item.section === section)
 export const destinationForView = (view: ProductTopologyViewId) => REPORT_DESTINATIONS.find(item => item.view === view)
-export const destinationForLocation = (section: string, tab: string, resource?: string | null) => resource ? undefined : REPORT_DESTINATIONS.find(item => item.rail === section && item.mode === tab)
+export const destinationForLocation = (section: string, tab: string) => REPORT_DESTINATIONS.find(item => item.rail === section && item.mode === tab)
 /** The Graph drawing of one collection, if it has one. */
 export const graphForCollection = (kind: ReportResourceKind) => REPORT_DESTINATIONS.find(item => item.rail === kind && item.mode === 'graph')
 export const collectionKindFor = (kind: ReportResourceKind): ReportResourceKind => kind === 'experience' || kind === 'screen' ? 'interface' : kind === 'capability-scenario' ? 'capability' : kind === 'journey-scenario' ? 'journey' : kind

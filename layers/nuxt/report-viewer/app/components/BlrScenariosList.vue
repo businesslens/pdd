@@ -12,13 +12,14 @@ const props = defineProps<{
   columns: ColumnChoice
   /** A Scenario reached by URL or search opens its card inside the parent. */
   selectedKey?: string | null
+  revealSelected?: boolean
 }>()
 const emit = defineEmits<{ open: [resource: AnyResourceView] }>()
 
 const scenarios = computed(() => childrenOf(props.workspace, props.resource) as ScenarioView[])
 const scenarioKind = computed(() => props.resource.kind === 'journey' ? 'journey-scenario' as const : 'capability-scenario' as const)
 
-/* One expansion opens any Intent, then Steps, decisions and edge cases.
+/* One expansion opens Steps, decisions and edge cases.
    Scenario cards start closed, as rows do everywhere else. */
 const openScenarios = useBlrScenarioExpansion(
   computed(() => JSON.stringify([props.workspace.identity.id, props.resource.key])),
@@ -28,7 +29,7 @@ const openScenarios = useBlrScenarioExpansion(
 const scenariosRoot = useTemplateRef('scenariosRoot')
 
 watch([scenariosRoot, () => props.selectedKey], async ([root, key], _previous, onCleanup) => {
-  if (!root || !key) return
+  if (!root || !key || props.revealSelected === false) return
   let cancelled = false
   onCleanup(() => { cancelled = true })
   await nextTick()
@@ -71,7 +72,7 @@ const scenarioWord = (word: 'trigger' | 'outcome' | 'decision-point' | 'edge-cas
       <div v-for="scenario in scenarios" :key="scenario.key" class="blr-row-tree" :data-row-key="scenario.key">
         <!-- The cards drawing: the Scenario itself is read on the card, open
              or closed — what starts it, how it ends, what it touches and where
-             it leaves each thing. Opening it adds Intent, Steps and details. -->
+             it leaves each thing. Opening it adds Steps and details. -->
         <BlrScenarioSummary
           :workspace="workspace"
           :scenario="scenario"
@@ -79,10 +80,6 @@ const scenarioWord = (word: 'trigger' | 'outcome' | 'decision-point' | 'edge-cas
           @toggle="toggleScenario(scenario)"
           @open="emit('open', $event)"
         >
-          <section v-if="scenario.intent.trim()" class="mb-4 space-y-2" data-scenario-intent>
-            <h4 class="text-[0.8125rem] font-semibold text-highlighted"><BlrTerm slug="intent" /></h4>
-            <BlrProse :text="scenario.intent" class="max-w-3xl" />
-          </section>
           <ol class="blr-steps-list">
             <li v-for="(step, index) in scenario.steps" :key="index" :data-step="index + 1">
               <span class="blr-steps-number">{{ index + 1 }}</span>
@@ -92,7 +89,7 @@ const scenarioWord = (word: 'trigger' | 'outcome' | 'decision-point' | 'edge-cas
           <template #details>
             <section v-if="scenario.decisionPoints.length" class="space-y-2">
               <h4 class="text-[0.8125rem] font-semibold text-highlighted"><BlrTerm :slug="scenarioWord('decision-point')" text="Decision points" /></h4>
-              <div class="grid gap-3 lg:grid-cols-2">
+              <div class="grid gap-3 @min-[640px]:grid-cols-2">
                 <div v-for="point in scenario.decisionPoints" :key="point.title" class="rounded-xl border border-dashed border-accented p-4">
                   <p class="flex items-center gap-2 text-sm font-semibold text-highlighted">
                     <UIcon name="i-lucide-git-branch" class="size-4 text-muted" />{{ point.title }}

@@ -16,7 +16,7 @@ export interface DiagramNode {
   acts?: ActingSide | null
   interfaceType?: InterfaceView['interfaceType'] | null
   scenarioType?: ReportScenarioType | null
-  branch?: { id: string, count: number, open: boolean }
+  branch?: { id: string, count: number, open: boolean, childrenLabel: string }
 }
 
 export function diagramResource(resource: AnyResourceView): DiagramNode {

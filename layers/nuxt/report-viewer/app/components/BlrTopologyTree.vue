@@ -4,6 +4,7 @@ import type { TopologyReading } from '../utils/topologyState'
 import type { Diagram } from '../utils/diagram'
 import { diagramResource } from '../utils/diagram'
 import { layoutTopologyTree } from '../utils/topologyTree'
+import { ENTITY_KIND_META } from '../utils/reportWorkspace'
 const props = withDefaults(defineProps<{ tree: TopologyBranch, reading: TopologyReading, viewportKey: string, label?: string, relation?: string }>(), { label: 'Interface map', relation: 'Contained by' })
 const emit = defineEmits<{ open: [key: string], toggle: [id: string, open: boolean], toggleAll: [open: boolean, ids: string[]], ready: [] }>()
 const isOpen = (node: TopologyBranch) => {
@@ -43,6 +44,11 @@ const initialDepth = computed(() => {
 
 /* Every branch below the root: the root stays open, or nothing would show. */
 const branchIds = computed(() => all.value.filter(node => node.children.length && node.id !== props.tree.id).map(node => node.id))
+function childrenLabel(children: TopologyBranch[]) {
+  const kind = children[0]?.resource?.kind
+  if (!kind || children.some(child => child.resource?.kind !== kind)) return 'branches'
+  return children.length === 1 ? ENTITY_KIND_META[kind].label : ENTITY_KIND_META[kind].plural
+}
 const diagram = computed<Diagram>(() => {
   const originals = new Map(all.value.map(node => [node.id, node]))
   const visible = flatten(visibleTree.value)
@@ -51,7 +57,7 @@ const diagram = computed<Diagram>(() => {
        parents is two nodes; `resourceKey` still opens the one page. */
     nodes: visible.map(node => ({ ...(node.resource ? { ...diagramResource(node.resource), id: node.id } : { id: node.id, resourceKey: node.id, title: node.title, kind: 'product' as const }),
       description: parents.value.has(node.id) ? `${props.relation} ${parents.value.get(node.id)!.title}.` : 'Product root.',
-      branch: originals.get(node.id)!.children.length ? { id: node.id, count: originals.get(node.id)!.children.length, open: isOpen(node) } : undefined })),
+      branch: originals.get(node.id)!.children.length ? { id: node.id, count: originals.get(node.id)!.children.length, open: isOpen(node), childrenLabel: childrenLabel(originals.get(node.id)!.children) } : undefined })),
     edges: visible.flatMap(node => node.children.map(child => ({ id: `${node.id}->${child.id}`, source: node.id, target: child.id, label: '', arrow: false }))) }
 })
 </script>

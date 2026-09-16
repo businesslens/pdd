@@ -34,12 +34,12 @@ steps:
     contexts:
       local:
         place: local-report-web::resource-collection
-  - text: The Product opens that resource's page at its own address, with a breadcrumb back to the collection
+  - text: The Product opens that resource’s reading at its own address, while preserving the collection behind it
     kind: product
     entities: []
     contexts:
       local:
-        place: local-report-web::resource-page
+        place: local-report-web::resource-reading
 ---
 
 # Open the model on localhost
@@ -57,4 +57,4 @@ address bar, and nothing has been written or transmitted.
 ## Edge cases
 
 - Asking for a specific port, or for the address to be printed without opening a browser, changes only how the report is reached.
-- Searching by name lands on the resource's page directly, for the same reason a collection row does.
+- Searching by name lands on the resource’s reading directly, for the same reason a collection row does.

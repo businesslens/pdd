@@ -1,22 +1,7 @@
 <script setup lang="ts">
-/**
- * One resource reading, at one URL.
- *
- * Overview holds the resource's authored meaning, facts, Contexts, relations,
- * supporting material, and References. A Capability or Journey adds exactly
- * one peer tab for its Scenarios, and an Entity with States one for its
- * Lifecycle. A Scenario URL keeps the Scenario key in the address while
- * reading it inside its mandatory parent.
- *
- * The page's name, its type, and the ways out of it belong to the surface and
- * are drawn by the host above this component — an exit leads out of the
- * resource whichever tab is open, so it is not part of the strip. With one tab
- * there is nothing to switch, and the strip does not render.
- *
- * The open tab is bindable, so a host can keep it in the URL: a Lifecycle a
- * reader cannot link to, return to, or refresh into is a modal with extra
- * steps, and `businesslens view` recompiles on save, so the tab has to outlive
- * an edit to the model.
+/** Complete resource content reused inside the URL-addressable slideover.
+ * Scenarios remain inside their parent; Lifecycle belongs to an Entity.
+ * The host places tabs above the scrolling reading and owns navigation.
  */
 import type { AnyResourceView, EntityView, ReportWorkspace } from '../utils/reportWorkspace'
 import { ENTITY_KIND_META } from '../utils/reportWorkspace'
@@ -29,6 +14,7 @@ const props = defineProps<{
   workspace: ReportWorkspace
   resource: AnyResourceView
   tabsTarget?: HTMLElement | null
+  restorePosition?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -43,7 +29,7 @@ const reading = defineModel<TopologyReading>('reading', { default: defaultTopolo
 const parent = computed(() => parentOf(props.workspace, props.resource))
 const subject = computed(() => parent.value ?? props.resource)
 const requestedChild = computed(() => parent.value ? props.resource.key : null)
-const tabs = computed(() => tabsFor(props.workspace, subject.value))
+const tabs = computed(() => tabsFor(props.workspace, props.resource))
 
 /**
  * The reader's chosen tab, as the host keeps it. `overview` is the default and
@@ -56,10 +42,10 @@ const tab = defineModel<string>('tab', { default: 'overview' })
 const active = ref<PageTabId>('overview')
 const isTab = (id: string): id is PageTabId => tabs.value.some(item => item.id === id)
 
-/* A Scenario key in the address outranks the tab: reading a Scenario is
-   reading the Scenarios tab, and the key alone says so in the URL. */
+/* A Scenario address defaults to its parent's Scenarios reading. An explicit
+   References address reads the attachments owned by that Scenario. */
 watch([tabs, requestedChild, tab], () => {
-  if (requestedChild.value && isTab('scenarios')) {
+  if (requestedChild.value && (tab.value !== 'references' || !isTab('references')) && isTab('scenarios')) {
     active.value = 'scenarios'
     return
   }
@@ -68,7 +54,7 @@ watch([tabs, requestedChild, tab], () => {
 
 function select(id: string) {
   if (!isTab(id)) return
-  if (id === 'overview' && requestedChild.value) emit('open', subject.value)
+  if (id !== 'scenarios' && id !== 'references' && requestedChild.value) emit('open', subject.value)
   active.value = id
   tab.value = id
 }
@@ -90,7 +76,7 @@ const columnItems = COLUMN_CHOICES.map(value => ({ value, label: `${value} per r
         v-if="tabs.length > 1"
         :model-value="active"
         :items="tabs"
-        :label="`${ENTITY_KIND_META[subject.kind].label} readings`"
+        :label="`${ENTITY_KIND_META[resource.kind].label} readings`"
         :class="!tabsTarget && 'mb-5'"
         @update:model-value="select"
       >
@@ -98,10 +84,10 @@ const columnItems = COLUMN_CHOICES.map(value => ({ value, label: `${value} per r
           <div class="flex items-center gap-2" data-scenario-controls>
             <UFieldGroup size="md">
               <UTooltip text="Expand all">
-                <UButton icon="i-lucide-chevrons-up-down" color="neutral" variant="outline" aria-label="Expand all" @click="scenariosList?.toggleAll(true)" />
+                <UButton icon="i-lucide-maximize-2" color="neutral" variant="outline" aria-label="Expand all" @click="scenariosList?.toggleAll(true)" />
               </UTooltip>
               <UTooltip text="Collapse all">
-                <UButton icon="i-lucide-chevrons-down-up" color="neutral" variant="outline" aria-label="Collapse all" @click="scenariosList?.toggleAll(false)" />
+                <UButton icon="i-lucide-minimize-2" color="neutral" variant="outline" aria-label="Collapse all" @click="scenariosList?.toggleAll(false)" />
               </UTooltip>
             </UFieldGroup>
             <USelect
@@ -128,6 +114,7 @@ const columnItems = COLUMN_CHOICES.map(value => ({ value, label: `${value} per r
         :resource="subject"
         :columns="scenarioColumns"
         :selected-key="requestedChild"
+        :reveal-selected="!restorePosition"
         @open="emit('open', $event)"
       />
 
@@ -145,9 +132,9 @@ const columnItems = COLUMN_CHOICES.map(value => ({ value, label: `${value} per r
           :key="id"
           v-model:reading="reading"
           :workspace="workspace"
-          :resource="subject"
+          :resource="current?.id === 'references' ? resource : subject"
           :id="id"
-          heading
+          :heading="current?.id === 'overview'"
           @open="emit('open', $event)"
         />
       </template>

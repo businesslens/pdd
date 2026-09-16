@@ -42,18 +42,19 @@ const emit = defineEmits<{
 const section = defineModel<string>('section', { default: 'overview' })
 
 /**
- * The resource whose page is open, by stable key, or `null` for the section's own
+ * The resource whose slideover is open, by stable key, or `null` for the section's own
  * surface. Bindable for the same reason: a host that keeps both in the URL gets
  * deep links, a working back button, and a refresh that lands where it left.
  */
 const resource = defineModel<string | null>('resource', { default: null })
 
 /**
- * The open page's tab — `overview`, `scenarios`, or `lifecycle`. Bindable so a
- * host can keep it in the URL beside the page; `overview` is the default a
- * host leaves out.
+ * The underlying view's drawing or Product tab; independent of the resource.
  */
 const tab = defineModel<string>('tab', { default: 'overview' })
+
+/** The resource reading is independent of the underlying collection drawing. */
+const resourceTab = defineModel<string>('resourceTab', { default: 'overview' })
 
 /** First route in the visible Scenario route window. */
 const scenarioRoute = defineModel<string | null>('scenarioRoute', { default: null })
@@ -72,7 +73,7 @@ const workspace = computed(() => projectReportWorkspace(props.report))
 */
 const location = computed(() => {
   const next = { section: section.value, resource: resource.value, tab: tab.value, topology: topology.value }
-  const destination = destinationForLocation(next.section, next.tab, next.resource)
+  const destination = destinationForLocation(next.section, next.tab)
   return destination && next.topology.view !== destination.view ? { ...next, topology: { ...next.topology, view: destination.view } } : next
 })
 let mounted = false
@@ -94,6 +95,7 @@ onMounted(() => { mounted = true; synchronizeLocation() })
       :section="location.section"
       :resource="location.resource"
       :tab="location.tab"
+      v-model:resource-tab="resourceTab"
       v-model:scenario-route="scenarioRoute"
       v-model:route-columns="routeColumns"
       :topology="location.topology"

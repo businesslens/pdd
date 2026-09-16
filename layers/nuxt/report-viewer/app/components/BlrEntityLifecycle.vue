@@ -95,15 +95,15 @@ function open(kind: 'capability' | 'rule', id: string) {
             </template>
             <span v-else class="font-medium text-highlighted">information changed</span>
             <span class="blr-meta">·</span>
-            <button
+            <BlrResourceLink
               v-for="id in arc.capabilityIds"
               :key="id"
-              type="button"
+              :resource-key="`capability:${id}`"
               class="blr-chip"
-              @click="open('capability', id)"
+              @open="open('capability', id)"
             >
               <UIcon name="i-lucide-zap" class="size-3.5" />{{ resolveResource(workspace, 'capability', id)?.title ?? id }}
-            </button>
+            </BlrResourceLink>
             <span v-if="arc.marker" class="blr-meta">· {{ arc.marker }}</span>
             <span v-for="co in arc.coEffects" :key="co" class="blr-meta">· {{ co }}</span>
             <span v-if="!arc.drawn" class="blr-meta">· not drawn</span>
@@ -117,11 +117,11 @@ function open(kind: 'capability' | 'rule', id: string) {
           -->
           <ul v-if="arc.rules.length" class="mt-1.5 space-y-1 border-t border-default pt-1.5">
             <li v-for="rule in arc.rules" :key="rule.id" class="text-sm text-default">
-              <button
-                type="button"
+              <BlrResourceLink
+                :resource-key="`rule:${rule.id}`"
                 class="font-medium text-highlighted underline decoration-dotted underline-offset-2"
-                @click="open('rule', rule.id)"
-              >{{ rule.title }}</button>
+                @open="open('rule', rule.id)"
+              >{{ rule.title }}</BlrResourceLink>
               <span class="text-muted"> — </span>
               <template v-for="(grant, index) in rule.grants" :key="index">
                 <span v-if="index" class="blr-meta"> or </span>
@@ -137,7 +137,7 @@ function open(kind: 'capability' | 'rule', id: string) {
         <li v-for="prohibition in prohibitions" :key="`${prohibition.ruleId}-${prohibition.from}-${prohibition.to}`">
           <UIcon name="i-lucide-ban" class="me-1 inline size-3.5 align-text-bottom" />
           Nobody may {{ prohibition.operation }} —
-          <button type="button" class="underline decoration-dotted underline-offset-2" @click="open('rule', prohibition.ruleId)">{{ prohibition.ruleTitle }}</button>
+          <BlrResourceLink :resource-key="`rule:${prohibition.ruleId}`" class="underline decoration-dotted underline-offset-2" @open="open('rule', prohibition.ruleId)">{{ prohibition.ruleTitle }}</BlrResourceLink>
         </li>
         <li v-if="resource.noCreation">No Step creates it; its instances exist before the model begins.</li>
         <li v-if="resource.noTermination">No Step removes it.</li>
@@ -149,7 +149,7 @@ function open(kind: 'capability' | 'rule', id: string) {
         <BlrTerm slug="state" text="States" />
         <span class="blr-meta ms-1">{{ states.length }}</span>
       </h2>
-      <div class="grid gap-3 sm:grid-cols-2">
+      <div class="grid gap-3 @min-[480px]:grid-cols-2">
         <div
           v-for="state in states"
           :key="state.name"

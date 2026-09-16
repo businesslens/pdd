@@ -25,6 +25,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Local Reference file edits now appear in comparisons, with before/after text
   and indicators for changed binary files.
 
+## [0.15.0] - 2026-09-15
+
+- Explore resources in side panels without losing your place.
+- Find connections and grouped references in dedicated tabs, with clear file paths, owners, and external links.
+- Read formatted documents and color-coded source files inside the report, in either theme.
+- Smoother graph expansion and clearer Domain and Interface trees.
+- Simplified resource headers, controls, and Scenario cards.
+
 ## [0.14.0] - 2026-09-15
 
 - Redesigned Capability and Journey Scenarios with clearer Steps and details.
@@ -780,7 +788,8 @@ Initial public launch of the repository.
   `docs/format.md`.
 - Claude plugin manifest and marketplace entry.
 
-[Unreleased]: https://github.com/businesslens/pdd/compare/v0.14.0...HEAD
+[Unreleased]: https://github.com/businesslens/pdd/compare/v0.15.0...HEAD
+[0.15.0]: https://github.com/businesslens/pdd/compare/v0.14.0...v0.15.0
 [0.14.0]: https://github.com/businesslens/pdd/compare/v0.13.0...v0.14.0
 [0.13.0]: https://github.com/businesslens/pdd/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/businesslens/pdd/compare/v0.11.0...v0.12.0

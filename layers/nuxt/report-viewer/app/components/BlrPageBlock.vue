@@ -95,7 +95,7 @@ const facts = computed(() => resourceFacts(props.workspace, props.resource).filt
     <BlrProse :text="resource.supportingContent" class="max-w-3xl" />
   </div>
 
-  <BlrRefs v-else-if="id === 'references'" :references="resource.references" variant="list" />
+  <BlrRefs v-else-if="id === 'references'" :references="resource.references" :scope="JSON.stringify([workspace.identity.id, resource.key])" :label="heading ? 'References' : ''" data-resource-references />
 </template>
 
 <style scoped>

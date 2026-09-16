@@ -54,7 +54,7 @@ group of their own, because a reader arrives asking who this is for.
 
 ## Available actions
 
-- Open a resource's page
+- Open a resource’s reading
 - Open a named view of this collection as a tab beside its List
 - Read Domain-classified Capabilities and Entities, including unassigned resources
 - Reach any Experience, Screen or Scenario through the collection that owns it

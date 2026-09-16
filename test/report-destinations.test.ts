@@ -7,6 +7,9 @@ const { projectReportWorkspace } = await utility('reportWorkspace')
 const { REPORT_DESTINATIONS, MAIN_RESOURCE_KINDS, resourceAncestors, destinationForLocation, collectionKindFor, resourceViewLinks } = await utility('reportDestinations')
 const { findProductTopologyView } = await utility('productTopologyViews')
 const { resourceConnectionRows } = await utility('resourceConnections')
+const { tabsFor } = await utility('pageSections')
+const { topologyRelations } = await utility('topologyRelations')
+const { ruleAttachments } = await utility('topologyTargets')
 const { interfaceProjection } = await utility('topologyProjections')
 const workspace = projectReportWorkspace(compileReport(loadModel(join(__dirname, '../test/fixtures/fixture-shop')), '2026-09-08'))
 
@@ -36,13 +39,13 @@ describe('report destinations', () => {
     /* Every standalone view URL changed shape with the restructure. A shim that
        silently lands a reader somewhere else is worse than a clean landing. */
     expect(destinationForLocation('topology', 'overview')).toBeUndefined()
-    expect(destinationForLocation('capability', 'mutations', 'capability:checkout')).toBeUndefined()
+    expect(destinationForLocation('capability', 'mutations')).toBeUndefined()
     /* A matrix is its own section, so its bare address is exactly its home. */
     expect(destinationForLocation('what-changes-what', 'overview')?.view).toBe('what-changes-what')
     expect(destinationForLocation('what-changes-what', 'graph')).toBeUndefined()
   })
 
-  it('keeps child pages in Interfaces and derives actual ownership', () => {
+  it('finds the owning collection of children and derives actual ownership', () => {
     for (const resource of [...workspace.experiences, ...workspace.screens]) {
       expect(collectionKindFor(resource.kind)).toBe('interface')
       const parents = resourceAncestors(workspace, resource)
@@ -85,7 +88,52 @@ describe('resource readings', () => {
       const shown = new Set(collect(branch))
       const resource = workspace.byKey.get(branch.id)
       for (const capability of resource.capabilityIds) expect(shown.has(`capability:${capability}`), `${branch.id}: ${capability}`).toBe(true)
-      expect(resourceConnectionRows(workspace, resource).map((row: any) => row.label)).not.toContain('Screens available')
+      if (resource.screenIds.length) expect(resourceConnectionRows(workspace, resource).map((row: any) => row.label)).toContain('Screens available')
     }
+  })
+
+  it('includes relationships also explained in Overview in the complete Connections reading', () => {
+    for (const resource of [...workspace.interfaces, ...workspace.experiences]) {
+      const rows = resourceConnectionRows(workspace, resource)
+      expect(rows.find((row: any) => row.label === 'Actors').ids).toEqual(resource.actorIds)
+      if (resource.screenIds.length) expect(rows.find((row: any) => row.label === 'Screens available').ids).toEqual(resource.screenIds)
+      if (resource.capabilityIds.length) expect(rows.find((row: any) => row.label === 'Capabilities available').ids).toEqual(resource.capabilityIds)
+    }
+    for (const resource of [...workspace.entities, ...workspace.capabilities]) {
+      const rows = resourceConnectionRows(workspace, resource)
+      if (resource.domainId) expect(rows.find((row: any) => row.label === 'Domain').ids).toEqual([resource.domainId])
+      if (resource.kind === 'capability' && resource.entityIds.length) {
+        expect(rows.find((row: any) => row.label === 'Changes')).toMatchObject({ ids: resource.entityIds, derived: true })
+      }
+    }
+    for (const rule of workspace.rules) {
+      const targets = resourceConnectionRows(workspace, rule).flatMap((row: any) => row.ids.map((id: string) => `${row.kind}:${id}`))
+      for (const attachment of ruleAttachments(workspace, rule)) expect(targets, rule.key).toContain(attachment.resource.key)
+    }
+    // Every direct topology neighbor remains discoverable from either endpoint.
+    for (const relation of topologyRelations(workspace)) {
+      for (const [key, target] of [[relation.source, relation.target], [relation.target, relation.source]]) {
+        const rows = resourceConnectionRows(workspace, workspace.byKey.get(key))
+        expect(rows.flatMap((row: any) => row.ids.map((id: string) => `${row.kind}:${id}`)), key).toContain(target)
+      }
+    }
+  })
+
+  it('omits Connections for a resource with no relationships', () => {
+    const resource = { ...workspace.entities[0], key: 'entity:isolated', id: 'isolated', states: [], domainId: '', references: [],
+      relations: [], inboundRelations: [], changedByIds: [], readByIds: [], presentedOnIds: [], ruleIds: [],
+      interfaceIds: [], experienceIds: [], journeyIds: [] }
+    const isolated = { ...workspace, byKey: new Map([[resource.key, resource]]) }
+    expect(resourceConnectionRows(isolated, resource)).toEqual([])
+    expect(tabsFor(isolated, resource).map((tab: any) => tab.id)).toEqual(['overview'])
+  })
+
+  it('keeps Scenario References and their count scoped to their owner', () => {
+    const parent = workspace.byKey.get('capability:browse-catalog')
+    const scenario = workspace.byKey.get('capability-scenario:browse-catalog')
+    expect(tabsFor(workspace, parent).at(-1)).toMatchObject({ id: 'references', count: 1 })
+    expect(tabsFor(workspace, scenario).at(-1)).toMatchObject({ id: 'references', count: 2 })
+    const withoutReferences = { ...scenario, references: [] }
+    expect(tabsFor(workspace, withoutReferences).map((tab: any) => tab.id)).toEqual(['overview', 'scenarios', 'connections'])
   })
 })

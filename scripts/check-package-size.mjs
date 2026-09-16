@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { readdir, stat } from 'node:fs/promises'
+import { execSync } from 'node:child_process'
 import { resolve } from 'node:path'
 
 const root = process.cwd()
@@ -30,6 +31,18 @@ for (const budget of budgets) {
     console.error(`error: ${budget.label} exceeds its ${maximumKibibytes} KiB budget`)
     failed = true
   }
+}
+
+// Check the compressed artifact here as well as in Publish. Prose rendering adds
+// a small client-side runtime; keep the archive budget explicit and shared.
+const maximumTarballBytes = 2176 * 1024
+const tarballBytes = process.argv[2]
+  ? (await stat(resolve(process.argv[2]))).size
+  : JSON.parse(execSync('npm pack --dry-run --ignore-scripts --json', { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }))[0].size
+console.log(`package tarball: ${Math.ceil(tarballBytes / 1024)} KiB / ${maximumTarballBytes / 1024} KiB`)
+if (tarballBytes > maximumTarballBytes) {
+  console.error('error: package tarball exceeds its compressed size budget')
+  failed = true
 }
 
 if (failed) process.exit(1)

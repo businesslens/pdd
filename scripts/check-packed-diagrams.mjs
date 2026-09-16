@@ -61,7 +61,7 @@ try {
       await expect(page).toHaveURL(/e=entity/)
       await page.goBack()
       await expect(page.locator('[data-flow-ready="true"]')).toHaveCount(2)
-      await page.goto(`${origin}/?s=entity&e=entity%3Areader&t=lifecycle`)
+      await page.goto(`${origin}/?s=entity&e=entity%3Areader&rt=lifecycle`)
       await expect(page.locator('.vue-flow__node .blr-flow-node__main')).toHaveCount(2)
       await expect(page.locator('.vue-flow__node:has([data-unreached="true"])')).toHaveCount(1)
       await page.reload()

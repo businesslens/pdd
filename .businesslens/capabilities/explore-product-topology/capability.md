@@ -21,7 +21,7 @@ whole model: the rail names every collection with its count, and a resource's
 own connections belong to its page. Each Graph states the question it answers
 and explains its derivation. The Developer can expand branches, narrow the
 visible resources, inspect a resource’s incoming and outgoing connections, and
-open any included resource’s page. The selected drawing survives returning
+open any included resource’s reading. The selected drawing survives returning
 from a page, reloading, and valid model edits.
 
 ## Intent
