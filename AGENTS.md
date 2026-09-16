@@ -200,7 +200,8 @@ costed already.
   preserves the underlying section, drawing, filters, expansion and viewport.
   The resource and its tab have an address independent of the working view.
   Back restores the previous resource reading; Close returns to the working
-  view. Desktop background interaction remains available; narrow screens use
+  view. The slideover dims and blocks the background; clicking outside or
+  pressing Escape closes it and restores the working view. Narrow screens use
   the full width. Refresh and valid recompilation preserve the reading.
 - **The rail lists Overview, three cross-collection views, then six
   collections.** The views — Compare delivery, What changes what, Rule
