@@ -44,11 +44,21 @@
 .blr-topology-neighbourhood { margin-top: 24px; }
 .blr-topology-neighbourhood li { display: flex; align-items: start; flex-wrap: wrap; gap: 8px; padding: 10px 0; border-bottom: 1px solid var(--ui-border); }
 .blr-topology-neighbourhood li > span { font-size: 12px; color: var(--ui-text-muted); padding-top: 2px; }
-.blr-matrix-navigation { position: sticky; top: 0; z-index: 4; display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding-bottom: 8px; background: var(--ui-bg); }
-.blr-matrix-range { font-size: 12px; color: var(--ui-text-muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.blr-topology-matrix { position: relative; }
+.blr-matrix-navigation { position: sticky; top: 0; z-index: 4; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 8px; min-height: 36px; padding-bottom: 8px; }
+.blr-topology-matrix[data-edge-handles='true'] .blr-matrix-navigation { display: flex; justify-content: center; }
+.blr-matrix-range { font-size: 13px; font-weight: 600; color: var(--ui-text); text-align: center; white-space: nowrap; font-variant-numeric: tabular-nums; }
+/* Opaque tints keep the table divider from showing through the handles. */
+.blr-topology-matrix :is(.blr-matrix-navigation, .blr-matrix-edge-handles) > button:enabled { background: color-mix(in srgb, var(--ui-primary) 12%, var(--ui-bg)); }
+.blr-topology-matrix :is(.blr-matrix-navigation, .blr-matrix-edge-handles) > button:enabled:is(:hover, :active) { background: color-mix(in srgb, var(--ui-primary) 18%, var(--ui-bg)); }
+.blr-topology-matrix :is(.blr-matrix-navigation, .blr-matrix-edge-handles) > button:disabled { background: var(--ui-bg); color: var(--ui-text-dimmed); opacity: 1; }
+.blr-matrix-edge-handles { position: absolute; top: 0; inset-inline: 0; height: 0; z-index: 5; pointer-events: none; }
+.blr-matrix-edge-handles > button { position: absolute; top: var(--blr-matrix-handle-top, 200px); transform: translateY(-50%); height: 64px; width: 28px; padding: 0; justify-content: center; border-radius: 999px; pointer-events: auto; }
+.blr-matrix-left-handle { inset-inline-start: calc(var(--blr-matrix-gutter) + 196px + 1px - 14px); }
+.blr-matrix-right-handle { inset-inline-end: calc(var(--blr-matrix-gutter) - 14px); }
 /* Clip sideways without creating another scrolling container: sticky headers
    follow the page, and every cell stays mounted to preserve row heights/details. */
-.blr-matrix-viewport { overflow: clip; border: 1px solid var(--ui-border); border-radius: 10px; touch-action: pan-y pinch-zoom; }
+.blr-matrix-viewport { margin-inline: var(--blr-matrix-gutter); overflow: clip; border: 1px solid var(--ui-border); border-radius: 10px; touch-action: pan-y pinch-zoom; }
 .blr-matrix-viewport:focus-visible { outline: 2px solid var(--ui-primary); outline-offset: 3px; }
 .blr-topology-matrix table { table-layout: fixed; border-collapse: separate; border-spacing: 0; width: var(--blr-matrix-table-width); transform: translateX(calc(-1 * var(--blr-matrix-offset))); font-size: 14px; }
 .blr-topology-matrix th, .blr-topology-matrix td { min-width: 0; padding: 14px; border-top: 1px solid var(--ui-border); border-inline-end: 1px solid var(--ui-border); vertical-align: top; text-align: start; overflow-wrap: anywhere; }
@@ -88,3 +98,7 @@
 
 .blr-topology-reading--graph { padding: 0; overflow: hidden; }
 .blr-topology-reading--graph > .blr-diagram { min-height: 0; }
+
+/* Keep handles clear of row labels, resource links, and cell content. */
+.blr-topology-matrix[data-edge-handles='true'] tbody th { padding-inline-end: 20px; }
+.blr-topology-matrix[data-edge-handles='true'] :is(thead th:not(.blr-matrix-corner), td) { padding-inline: 20px; }

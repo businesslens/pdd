@@ -14,7 +14,7 @@ describe('matrix column navigation', () => {
     }
   })
 
-  it('reaches every column and reverses through the same groups, including the final overlap', () => {
+  it('advances one column at a time and reverses through the same windows to the start', () => {
     const visited: number[] = []
     const starts: number[] = []
     let page = matrixColumnWindow(1100, 12, 0)
@@ -25,7 +25,7 @@ describe('matrix column navigation', () => {
       page = matrixColumnWindow(1100, 12, page.next)
     }
     expect([...new Set(visited)]).toEqual(Array.from({ length: 12 }, (_, index) => index))
-    expect(starts).toEqual([0, 5, 7])
+    expect(starts).toEqual([0, 1, 2, 3, 4, 5, 6, 7])
     const reverse = [page.start]
     while (page.previous !== null) {
       page = matrixColumnWindow(1100, 12, page.previous)
@@ -38,7 +38,7 @@ describe('matrix column navigation', () => {
     expect(matrixColumnWindow(1000, 0, -1)).toMatchObject({ start: 0, end: 0, previous: null, next: null })
     expect(matrixColumnWindow(1000, 3, 2)).toMatchObject({ start: 0, end: 3, previous: null, next: null })
     expect(matrixColumnWindow(390, 12, 7)).toMatchObject({ start: 7, end: 8, previous: 6, next: 8 })
-    expect(matrixColumnWindow(1640, 12, 7)).toMatchObject({ start: 4, end: 12, previous: 0, next: null })
+    expect(matrixColumnWindow(1640, 12, 7)).toMatchObject({ start: 4, end: 12, previous: 3, next: null })
     expect(matrixColumnWindow(640, 3, 99)).toMatchObject({ start: 1, end: 3, previous: 0, next: null })
   })
 })

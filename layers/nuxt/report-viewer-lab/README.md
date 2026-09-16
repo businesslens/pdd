@@ -7,7 +7,15 @@ bundled local viewer. It has no package export and is excluded from published
 package files, so an audition cannot become part of the public renderer by
 accident.
 
-There are no active report experiments in this layer. The **Table corner**
+The **Table navigation** audition is decided: Edge handles with Divider middle
+now live in `report-viewer` across all three comparison views. Subtle handles sit
+on the subject divider and the table’s right edge, centered on the visible rows;
+narrow readings use compact header arrows. Controls move one column at a time,
+with page scrolling, sticky headers, and expanded details preserved. The shadow
+component, alternative placements, selectors, and experiment cookies have been
+removed. The background audition remains independently owned by `theme-lab`.
+
+The **Table corner**
 audition is decided: Inset at 14 px is the stable diagonal header across
 Compare delivery, What changes what, and Rule attachments. The alternatives,
 cookie composable, and Table corner selector have been removed.

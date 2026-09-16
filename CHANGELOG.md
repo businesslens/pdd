@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - What changes what lists Entities down the side and Capabilities across the top.
 - Table corners name both axes diagonally with inset labels, removing repeated column labels where every column has the same type.
 - Compare delivery uses the same compact first-column width as the other comparison views.
-- Comparison tables scroll with the page and offer Previous/Next controls for complete groups of columns, preserving expanded details.
+- Comparison tables scroll with the page and use subtle edge handles to move one column at a time, preserving expanded details.
 
 ## [0.16.0] - 2026-09-16
 

@@ -22,11 +22,12 @@ describe('private Product Report viewer lab', () => {
   it('keeps the extension point without retaining decided experiments', () => {
     const readme = readFileSync(join(lab, 'README.md'), 'utf8')
 
-    expect(readme).toContain('There are no active report experiments in this layer.')
-    for (const name of ['BlrScenarioStep', 'BlrStepGuidedReading', 'BlrStepReading', 'BlrStepEffectReading', 'BlrStepCardLabRow', 'BlrMatrixCornerLabRow', 'BlrControlSizeLabRow']) {
+    expect(readme).toContain('The **Table navigation** audition is decided')
+    for (const name of ['BlrScenarioStep', 'BlrStepGuidedReading', 'BlrStepReading', 'BlrStepEffectReading', 'BlrStepCardLabRow', 'BlrMatrixCornerLabRow', 'BlrControlSizeLabRow', 'BlrTopologyMatrix', 'BlrMatrixNavigationLabRow', 'BlrMatrixHandleLabRow']) {
       expect(existsSync(join(lab, `app/components/${name}.vue`))).toBe(false)
     }
     expect(existsSync(join(lab, 'app/composables/useBlrStepCardLab.ts'))).toBe(false)
+    expect(existsSync(join(lab, 'app/composables/useBlrMatrixNavigationLab.ts'))).toBe(false)
     expect(existsSync(join(lab, 'app/composables/useBlrMatrixCornerLab.ts'))).toBe(false)
     expect(existsSync(join(lab, 'app/assets/matrix-corner-lab.css'))).toBe(false)
     expect(existsSync(join(lab, 'app/composables/useBlrControlSizeLab.ts'))).toBe(false)
@@ -36,15 +37,20 @@ describe('private Product Report viewer lab', () => {
     expect(existsSync(join(lab, 'app/utils/labVariants.ts'))).toBe(false)
   })
 
-  it('leaves only the background lab bar after the report experiments are decided', () => {
+  it('keeps decided experiments out of the host and the stable report viewer', () => {
     const app = readFileSync(join(root, 'viewer/app/app/app.vue'), 'utf8')
     const stable = readFileSync(join(root, 'layers/nuxt/report-viewer/app/components/BlrTopologyMatrix.vue'), 'utf8')
 
     expect(app).toContain('<BusinessLensThemeLabBar />')
+    expect(app).not.toContain('useBlrMatrixNavigationLab')
+    expect(app).not.toContain('BlrMatrixNavigationLabRow')
+    expect(app).not.toContain('BlrMatrixHandleLabRow')
+    expect(stable).not.toContain('useBlrMatrixNavigationLab')
     expect(app).not.toContain('BlrMatrixCornerLabRow')
     expect(app).not.toContain('useBlrMatrixCornerLab()')
     expect(stable).not.toContain('useBlrMatrixCornerLab')
-    expect(existsSync(join(lab, 'app/components/BlrTopologyMatrix.vue'))).toBe(false)
+    expect(stable).not.toContain('data-navigation-variant')
+    expect(stable).not.toContain('data-left-handle-placement')
     expect(app).not.toContain('BlrControlSizeLabRow')
     expect(app).not.toContain('BlrStepCardLabRow')
   })

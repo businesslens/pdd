@@ -28,17 +28,52 @@ const words = computed(() => ({
 }[props.mode]))
 const emit = defineEmits<{ open: [key: string], column: [key: string] }>()
 const { element, width } = useBlrReadingWidth()
+const gutter = computed(() => width.value >= 600
+  && props.matrix.columns.length > matrixColumnWindow(width.value, props.matrix.columns.length, 0).capacity ? 36 : 0)
 const tableId = useId()
-const window = computed(() => matrixColumnWindow(width.value, props.matrix.columns.length,
+const window = computed(() => matrixColumnWindow(width.value - gutter.value * 2, props.matrix.columns.length,
   props.matrix.columns.findIndex(item => item.key === props.column)))
 const paged = computed(() => props.matrix.columns.length > window.value.capacity)
-const columnVisible = (index: number) => index >= window.value.start && index < window.value.end
+const handles = computed(() => paged.value && gutter.value > 0)
+const navigationButton = (index: number | null) => index !== null
+  ? { color: 'primary', variant: 'subtle' } as const
+  : { color: 'neutral', variant: 'outline' } as const
+const offset = ref(window.value.offset)
+const visibleStart = computed(() => Math.floor(offset.value / window.value.columnWidth + 0.00001))
+const visibleEnd = computed(() => Math.min(props.matrix.columns.length, Math.ceil(offset.value / window.value.columnWidth + window.value.capacity - 0.00001)))
+const columnVisible = (index: number) => index >= visibleStart.value && index < visibleEnd.value
+// Moving columns must never paint through the translucent, fixed corner cell.
+const columnStyle = (index: number) => ({ clipPath: `inset(0 0 0 ${Math.max(0, offset.value - index * window.value.columnWidth)}px)` })
 const matrixStyle = computed(() => ({
-  '--blr-matrix-offset': `${window.value.offset}px`,
-  '--blr-matrix-table-width': `${window.value.tableWidth}px`
+  '--blr-matrix-offset': `${offset.value}px`,
+  '--blr-matrix-table-width': `${window.value.tableWidth}px`,
+  '--blr-matrix-gutter': `${gutter.value}px`
 }))
 const cells = computed(() => new Map(props.matrix.cells.map(cell => [JSON.stringify([cell.row, cell.column]), cell])))
 const cellAt = (row: string, column: string) => cells.value.get(JSON.stringify([row, column]))
+
+let animation = 0
+function stopMotion() {
+  cancelAnimationFrame(animation)
+}
+function animateTo(target: number, animate = true) {
+  stopMotion()
+  if (!animate || matchMedia('(prefers-reduced-motion: reduce)').matches) { offset.value = target; return }
+  const from = offset.value
+  const start = performance.now()
+  function frame(now: number) {
+    const progress = Math.min(1, (now - start) / 180)
+    offset.value = from + (target - from) * (1 - (1 - progress) ** 3)
+    if (progress < 1) animation = requestAnimationFrame(frame)
+  }
+  animation = requestAnimationFrame(frame)
+}
+watch([() => window.value.offset, () => window.value.columnWidth],
+  ([next, size], [, oldSize]) => {
+    animateTo(next, size === oldSize)
+    void nextTick(clipScrollContent)
+  })
+onBeforeUnmount(stopMotion)
 
 function move(index: number | null) {
   const column = index === null ? undefined : props.matrix.columns[index]
@@ -52,16 +87,18 @@ function onKeydown(event: KeyboardEvent) {
   }
 }
 
-// Horizontal gestures page the columns; vertical wheel/touch scrolling belongs to the reading.
+// Horizontal gestures step through columns; vertical wheel/touch scrolling belongs to the reading.
 let wheelDistance = 0
 let wheelTime = 0
 let wheelMoved = false
 function onWheel(event: WheelEvent) {
-  if (!paged.value || event.ctrlKey || Math.abs(event.deltaX) <= Math.abs(event.deltaY)) return
+  const horizontal = event.shiftKey && !event.deltaX ? event.deltaY : event.deltaX
+  if (!paged.value || event.ctrlKey || (!event.shiftKey && Math.abs(horizontal) <= Math.abs(event.deltaY))) return
   event.preventDefault()
+  const distance = horizontal * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? width.value : 1)
   if (event.timeStamp - wheelTime > 180) { wheelDistance = 0; wheelMoved = false }
   wheelTime = event.timeStamp
-  wheelDistance += event.deltaX * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? width.value : 1)
+  wheelDistance += distance
   if (!wheelMoved && Math.abs(wheelDistance) >= 40) {
     move(wheelDistance > 0 ? window.value.next : window.value.previous)
     wheelMoved = true
@@ -103,12 +140,27 @@ function clipScrollContent() {
   element.value.style.setProperty('--blr-matrix-navigation-height', `${navigationHeight}px`)
   const clipped = Math.max(0, corner.getBoundingClientRect().bottom - body.getBoundingClientRect().top)
   body.style.clipPath = `inset(${clipped}px 0 0)`
+  const pane = viewport?.closest('.blr-topology-reading')
+  if (pane && viewport) {
+    const rootTop = element.value.getBoundingClientRect().top
+    const paneBox = pane.getBoundingClientRect()
+    const viewportBox = viewport.getBoundingClientRect()
+    const cornerBox = corner.getBoundingClientRect()
+    // With a transparent count bar, also keep the table's outer border below it.
+    const clippedTop = Math.max(0, cornerBox.top - viewportBox.top)
+    viewport.style.clipPath = clippedTop > 1 ? `inset(${clippedTop}px 0 0)` : ''
+    const top = Math.max(cornerBox.bottom, paneBox.top)
+    const bottom = Math.min(viewportBox.bottom, paneBox.bottom)
+    const center = (top + Math.max(top, bottom)) / 2 - rootTop
+    element.value.style.setProperty('--blr-matrix-handle-top', `${center}px`)
+  }
 }
 watch([matrixViewport, navigation], ([viewport], _, onCleanup) => {
   if (!viewport) return
   const pane = viewport.closest<HTMLElement>('.blr-topology-reading')
   const resize = new ResizeObserver(clipScrollContent)
   for (const node of viewport.querySelectorAll('table, thead, tbody')) resize.observe(node)
+  if (pane) resize.observe(pane)
   if (navigation.value) resize.observe(navigation.value)
   pane?.addEventListener('scroll', clipScrollContent, { passive: true })
   clipScrollContent()
@@ -116,11 +168,15 @@ watch([matrixViewport, navigation], ([viewport], _, onCleanup) => {
 }, { flush: 'post' })
 </script>
 <template>
-  <div ref="element" class="blr-topology-matrix" :style="matrixStyle">
+  <div ref="element" class="blr-topology-matrix" :data-edge-handles="handles" :style="matrixStyle">
     <div v-if="paged" ref="navigation" class="blr-matrix-navigation" role="group" aria-label="Column navigation">
-      <UButton icon="i-lucide-chevron-left" label="Previous" :ui="{ label: 'hidden sm:inline' }" color="neutral" variant="outline" size="sm" aria-label="Previous columns" :aria-controls="tableId" :disabled="window.previous === null" @click="move(window.previous)" />
+      <UButton v-if="!handles" icon="i-lucide-chevron-left" v-bind="navigationButton(window.previous)" size="sm" aria-label="Previous columns" title="Previous columns" :aria-controls="tableId" :disabled="window.previous === null" @click="move(window.previous)" />
       <span class="blr-matrix-range" role="status" aria-live="polite" aria-atomic="true">Columns {{ window.start + 1 }}–{{ window.end }} of {{ matrix.columns.length }}</span>
-      <UButton trailing-icon="i-lucide-chevron-right" label="Next" :ui="{ label: 'hidden sm:inline' }" color="neutral" variant="outline" size="sm" aria-label="Next columns" :aria-controls="tableId" :disabled="window.next === null" @click="move(window.next)" />
+      <UButton v-if="!handles" trailing-icon="i-lucide-chevron-right" v-bind="navigationButton(window.next)" size="sm" aria-label="Next columns" title="Next columns" :aria-controls="tableId" :disabled="window.next === null" @click="move(window.next)" />
+    </div>
+    <div v-if="handles" class="blr-matrix-edge-handles" role="group" aria-label="Column navigation">
+      <UButton class="blr-matrix-left-handle" icon="i-lucide-chevron-left" v-bind="navigationButton(window.previous)" size="sm" aria-label="Previous columns" title="Previous columns" :aria-controls="tableId" :disabled="window.previous === null" @click="move(window.previous)" />
+      <UButton class="blr-matrix-right-handle" icon="i-lucide-chevron-right" v-bind="navigationButton(window.next)" size="sm" aria-label="Next columns" title="Next columns" :aria-controls="tableId" :disabled="window.next === null" @click="move(window.next)" />
     </div>
     <div v-if="matrix.columns.length" ref="matrixViewport" class="blr-matrix-viewport" :tabindex="paged ? 0 : undefined" role="region" aria-label="Relationship table" @keydown="onKeydown" @wheel="onWheel" @touchstart.passive="onTouchStart" @touchend.passive="onTouchEnd" @touchcancel.passive="touchStart = null" @click.capture="onClick">
       <table :id="tableId" :aria-colcount="matrix.columns.length + 1">
@@ -138,14 +194,14 @@ watch([matrixViewport, navigation], ([viewport], _, onCleanup) => {
               <span class="blr-matrix-axis-column" aria-hidden="true">{{ words.column }}</span>
               <span class="blr-matrix-axis-row" aria-hidden="true">{{ words.row }}</span>
             </th>
-            <th v-for="(item, index) in matrix.columns" :key="item.key" scope="col" class="bg-elevated/20" :class="{ 'blr-matrix-column-hidden': !columnVisible(index) }" :inert="!columnVisible(index)" :aria-hidden="!columnVisible(index) || undefined" :aria-colindex="index + 2">
+            <th v-for="(item, index) in matrix.columns" :key="item.key" scope="col" class="bg-elevated/20" :class="{ 'blr-matrix-column-hidden': !columnVisible(index) }" :style="columnStyle(index)" :inert="!columnVisible(index)" :aria-hidden="!columnVisible(index) || undefined" :aria-colindex="index + 2">
               <span v-if="mode === 'rules'" class="blr-matrix-kind">{{ ENTITY_KIND_META[item.kind].label }}</span>
               <BlrTopologyResource :resource="item" @open="emit('open', $event)" />
             </th>
           </tr>
         </thead>
         <tbody><tr v-for="row in matrix.rows" :key="row.key"><th scope="row"><BlrTopologyResource :resource="row" @open="emit('open', $event)" /></th>
-          <td v-for="(column, index) in matrix.columns" :key="column.key" :data-cell="`${row.key}->${column.key}`" :class="{ 'blr-matrix-column-hidden': !columnVisible(index) }" :inert="!columnVisible(index)" :aria-hidden="!columnVisible(index) || undefined" :aria-colindex="index + 2">
+          <td v-for="(column, index) in matrix.columns" :key="column.key" :data-cell="`${row.key}->${column.key}`" :class="{ 'blr-matrix-column-hidden': !columnVisible(index) }" :style="columnStyle(index)" :inert="!columnVisible(index)" :aria-hidden="!columnVisible(index) || undefined" :aria-colindex="index + 2">
             <template v-if="cellAt(row.key, column.key)">
               <div class="blr-matrix-effects"><span v-for="label in cellAt(row.key, column.key)!.labels" :key="label" :data-effect="label">{{ label }}</span></div>
               <details v-if="cellAt(row.key, column.key)!.attachments?.some(attachment => attachment.details.length || attachment.contexts.length)"><summary>Attachment details</summary>
