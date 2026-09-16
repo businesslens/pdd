@@ -17,6 +17,9 @@ terms:
   - term: Resource type
     anchor: what-belongs-in-a-model
     definition: "A category of resource, such as Entity or Capability, determined by the file's location in the Product Model."
+  - term: Report format
+    anchor: report-format
+    definition: "The JSON structure used to exchange a compiled Product Model. Its version identifies the data format."
 ---
 
 # The Product Model
@@ -93,6 +96,13 @@ and SDD roots. `coverage.md` describes model breadth.
 
 Use [`businesslens view`](./cli-view.md) to browse the current model as a local
 report while editing.
+
+## Report format
+
+A Product Model is compiled into a Product Report for exchange between tools.
+Its `schemaVersion` identifies the **Report format**: the JSON structure a
+consumer can read. This version is separate from the BusinessLens package
+version and any version of the Product itself.
 
 ## Is this replacing my PRD?
 

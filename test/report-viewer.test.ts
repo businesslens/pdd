@@ -803,7 +803,7 @@ describe('stable Product Report', () => {
 
     expect(badge).toContain("color=\"neutral\"")
     expect(badge).toContain('rounded-full')
-    expect(shell).toContain('<BlrCoverageBadge :status="workspace.coverage.status" named size="md" />')
+    expect(shell).toContain('<BlrCoverageBadge :status="workspace.coverage.status" named size="md"')
     expect(overview).toContain('<BlrCoverageBadge :status="workspace.coverage.status" named size="md" />')
     for (const [label, file] of [['badge', badge], ['shell', shell], ['overview', overview]] as const) {
       expect(file, label).not.toContain('COVERAGE_TONE')

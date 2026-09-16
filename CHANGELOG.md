@@ -27,6 +27,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Comparisons keep up with baseline switches and models created after the viewer
   opens. Startup errors update live, Scenario cards show change marks, and long
   checkpoint labels fit narrow resource panels.
+- Header badges align consistently. The report format version lives in Overview →
+  About, with a definition shared with Vocabulary under Product.
 
 ## [0.15.0] - 2026-09-15
 

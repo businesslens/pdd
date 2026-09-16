@@ -622,7 +622,7 @@ const orphanScenarios = computed(() => props.workspace.scenarios
           />
         </Teleport>
         <span class="hidden md:inline-flex">
-          <BlrCoverageBadge :status="workspace.coverage.status" named size="md" />
+          <BlrCoverageBadge :status="workspace.coverage.status" named size="md" class="blr-header-pill" />
         </span>
         <UTooltip v-if="changes" :text="changesBaseline ? `What changed since ${changesBaseline}` : 'What changed'">
           <UButton
@@ -630,7 +630,8 @@ const orphanScenarios = computed(() => props.workspace.scenarios
             color="neutral"
             :variant="changesOpen ? 'soft' : 'outline'"
             size="xs"
-            class="shrink-0 rounded-full font-mono text-[11px]"
+            class="blr-header-pill shrink-0"
+            :ui="{ leadingIcon: 'size-3.5' }"
             :aria-label="changesLabel"
             :aria-current="changesOpen ? 'page' : undefined"
             data-header-changes
@@ -648,7 +649,6 @@ const orphanScenarios = computed(() => props.workspace.scenarios
              report compiled on every save is always today; a published
              Blueprint keeps the date, since there it is a fact. -->
         <slot v-if="$slots.status" name="status" />
-        <span class="blr-meta hidden sm:inline">{{ workspace.identity.schemaVersion }}</span>
         <span v-if="!$slots.status" class="blr-meta hidden md:inline">{{ workspace.identity.generatedAt.slice(0, 10) }}</span>
       </span>
     </header>

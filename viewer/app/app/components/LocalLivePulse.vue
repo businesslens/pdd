@@ -31,7 +31,7 @@ const title = computed(() => live.value.connected
     <span
       data-local-live
       :data-connected="live.connected"
-      class="hidden items-center gap-1.5 rounded-full border border-default px-2 py-0.5 font-mono text-[11px] leading-none text-muted md:inline-flex"
+      class="blr-header-pill hidden items-center gap-1.5 border border-default text-muted md:inline-flex"
       :aria-label="title"
     >
       <span

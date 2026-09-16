@@ -63,6 +63,19 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Header facts and actions share one pill size, including host status slots. */
+.blr-header-pill {
+  height: 1.5rem;
+  padding-block: 0;
+  padding-inline: 0.5rem;
+  border-radius: 9999px;
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  line-height: 1rem;
+  white-space: nowrap;
+}
+
 /*
   A word inside a definition that is itself defined. Shared by the popover and
   the vocabulary panel, because a reader following a word twice must not have to
