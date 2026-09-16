@@ -34,6 +34,25 @@ try {
     await expect(panel.locator('[data-lifecycle-unplaced]')).toContainText('Changes without specified states · 1')
 
     const state = panel.locator('.vue-flow__node').getByRole('button', { name: 'Pending', exact: true })
+    const stateCard = state.locator('..')
+    // Click the visible card's padding, border and label. Hover feedback alone
+    // must never mask a dead area around the smaller text control.
+    const idleBorder = await state.evaluate(element => getComputedStyle(element).borderColor)
+    for (const [x, y] of [[0.5, 0.05], [0.02, 0.5], [0.98, 0.5], [0.5, 0.95], [0.06, 0.12], [0.94, 0.88], [0.5, 0.005], [0.5, 0.5]]) {
+      await panel.getByRole('button', { name: 'Fit map to view', exact: true }).click()
+      await expect.poll(async () => {
+        const card = await stateCard.boundingBox()
+        const graph = await panel.locator('.blr-flow-shell').boundingBox()
+        return card.x >= graph.x && card.y >= graph.y && card.x + card.width <= graph.x + graph.width && card.y + card.height <= graph.y + graph.height
+      }).toBe(true)
+      const card = await stateCard.boundingBox()
+      await page.mouse.click(card.x + card.width * x, card.y + card.height * y)
+      await expect(inspector.getByRole('heading', { name: 'Pending', exact: true })).toBeFocused()
+      await page.mouse.move(0, 0)
+      expect(await state.evaluate(element => getComputedStyle(element).borderColor)).not.toBe(idleBorder)
+      await inspector.getByRole('button', { name: 'Close lifecycle details' }).click()
+      await expect(inspector).toHaveCount(0)
+    }
     await state.focus()
     await page.keyboard.press('Enter')
     await expect(inspector.getByRole('heading', { name: 'Pending', exact: true })).toBeFocused()
@@ -129,7 +148,7 @@ try {
     await page.keyboard.press('Escape')
     await expect(panel).toHaveCount(0)
     await expect(page.getByRole('button', { name: 'Draw as graph', exact: true })).toHaveAttribute('aria-pressed', 'true')
-    console.log(`Passed ${width}px: States with outgoing changes, empty States, group/child expansion and persistence, keyboard inspection, panel expansion, Graph/Rows selection, linked-resource Back and stateless changes.`)
+    console.log(`Passed ${width}px: whole-card selection and highlight, States with outgoing changes, empty States, group/child expansion and persistence, keyboard inspection, panel expansion, Graph/Rows selection, linked-resource Back and stateless changes.`)
     await context.close()
   }
   expect(errors).toEqual([])

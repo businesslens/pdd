@@ -46,11 +46,10 @@ const branchLabel = computed(() => props.node.branch
 </template>
 
 <style scoped>
-.blr-flow-node { position: relative; display: flex; align-items: center; gap: 9px; width: 100%; min-height: 66px; padding: 10px 12px; box-sizing: border-box; border: 2px solid color-mix(in srgb, var(--node-color) 65%, var(--ui-border)); border-radius: 8px; background: color-mix(in srgb, var(--node-color) 6%, var(--ui-bg)); color: var(--ui-text-highlighted); text-align: start; }
-.blr-flow-node__main { display: flex; align-items: center; gap: 9px; flex: 1; min-width: 0; text-align: inherit; border-radius: 4px; }
+.blr-flow-node { --node-border: color-mix(in srgb, var(--node-color) 65%, var(--ui-border)); position: relative; display: flex; width: 100%; color: var(--ui-text-highlighted); text-align: start; }
+/* The control owns the complete visible card, including its padding and border. */
+.blr-flow-node__main { display: flex; align-items: center; gap: 9px; flex: 1; min-width: 0; min-height: 66px; padding: 10px 12px; box-sizing: border-box; border: 2px solid var(--node-border); border-radius: 8px; background: color-mix(in srgb, var(--node-color) 6%, var(--ui-bg)); text-align: inherit; }
 button.blr-flow-node__main { cursor: pointer; }
-.blr-flow-node:has(button:hover), .blr-flow-node:focus-within, .blr-flow-node--highlighted { border-color: var(--node-color); box-shadow: 0 0 0 2px color-mix(in srgb, var(--node-color) 35%, transparent); }
-.blr-flow-node:has(.blr-flow-node__count:hover) { border-color: color-mix(in srgb, var(--node-color) 65%, var(--ui-border)); box-shadow: none; }
 .blr-flow-node :focus-visible { outline: 2px solid var(--node-color); outline-offset: 3px; }
 .blr-flow-node__icon { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; flex-shrink: 0; border-radius: 8px; background: color-mix(in srgb, var(--node-color) 18%, transparent); color: var(--node-color); }
 .blr-flow-node__text { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
@@ -63,9 +62,14 @@ button.blr-flow-node__main { cursor: pointer; }
 .blr-flow-node__count:focus-visible { outline-color: var(--ui-text-muted); }
 .blr-flow-node__count[aria-expanded='true'] { top: -10px; inset-inline-end: -10px; z-index: 20; min-width: 22px; height: 22px; padding: 0 4px; }
 .blr-flow-node__count[aria-expanded='true']::before { inset: -5px; }
-.blr-flow-node--state { border-radius: 12px; background: var(--ui-bg); border-color: var(--ui-border-accented); }
-.blr-flow-node--terminal { min-height: 48px; border-radius: 999px; }
-.blr-flow-node[data-unreached] { border-style: dashed; }
+.blr-flow-node--state { --node-border: var(--ui-border-accented); }
+.blr-flow-node--state > .blr-flow-node__main { border-radius: 12px; background: var(--ui-bg); }
+.blr-flow-node--terminal > .blr-flow-node__main { min-height: 48px; border-radius: 999px; }
+.blr-flow-node[data-unreached] > .blr-flow-node__main { border-style: dashed; }
+.blr-flow-node:has(.blr-flow-node__main:hover) > .blr-flow-node__main,
+.blr-flow-node:focus-within > .blr-flow-node__main,
+.blr-flow-node--highlighted > .blr-flow-node__main { border-color: var(--node-color); box-shadow: 0 0 0 2px color-mix(in srgb, var(--node-color) 35%, transparent); }
+.blr-flow-node:has(.blr-flow-node__count:hover) > .blr-flow-node__main { border-color: var(--node-border); box-shadow: none; }
 .blr-flow-terminal { width: 16px; height: 16px; flex: 0 0 16px; border-radius: 50%; background: var(--ui-text-muted); }
 .blr-flow-terminal[data-terminal='end'] { border: 3px double var(--ui-bg); outline: 2px solid var(--ui-text-muted); }
 </style>

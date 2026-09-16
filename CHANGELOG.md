@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Select lifecycle states by clicking anywhere on their cards, with consistent highlighting.
 - Explore entity lifecycles as States with their outgoing changes, or as an interactive graph.
 - Expand resource panels to the full window without losing your place.
 - Use consistent model terms in resource headings and summaries.
