@@ -84,7 +84,7 @@ const columnItems = COLUMN_CHOICES.map(value => ({ value, label: `${value} per r
       >
         <template v-if="current?.id === 'scenarios' && current.count" #actions>
           <div class="flex items-center gap-2" data-scenario-controls>
-            <UFieldGroup size="md">
+            <UFieldGroup size="sm">
               <UTooltip text="Expand all">
                 <UButton icon="i-lucide-maximize-2" color="neutral" variant="outline" aria-label="Expand all" @click="scenariosList?.toggleAll(true)" />
               </UTooltip>
@@ -96,9 +96,9 @@ const columnItems = COLUMN_CHOICES.map(value => ({ value, label: `${value} per r
               :model-value="scenarioColumns"
               :items="columnItems"
               value-key="value"
-              size="md"
+              size="sm"
               variant="outline"
-              class="w-36"
+              class="hidden w-36 sm:inline-flex"
               icon="i-lucide-layout-grid"
               aria-label="Rows per line"
               @update:model-value="setColumns(scenarioKind, $event as ColumnChoice)"

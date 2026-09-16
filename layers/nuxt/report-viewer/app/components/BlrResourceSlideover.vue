@@ -25,15 +25,6 @@ const emit = defineEmits<{ close: [], back: [], open: [resource: AnyResourceView
 const tab = defineModel<string>('tab', { default: 'overview' })
 const scenarioRoute = defineModel<string | null>('scenarioRoute', { default: null })
 const routeColumns = defineModel<string>('routeColumns', { default: 'auto' })
-const narrow = ref(false)
-let media: MediaQueryList | undefined
-const updateWidth = () => { narrow.value = media?.matches ?? false }
-onMounted(() => {
-  media = window.matchMedia('(max-width: 767px)')
-  updateWidth()
-  media.addEventListener('change', updateWidth)
-})
-onBeforeUnmount(() => media?.removeEventListener('change', updateWidth))
 const subject = computed(() => props.resource ? parentOf(props.workspace, props.resource) ?? props.resource : null)
 const ancestors = computed(() => props.resource ? resourceAncestors(props.workspace, props.resource) : [])
 const exits = computed(() => subject.value ? resourceViewLinks(subject.value, props.workspace) : [])
@@ -100,12 +91,12 @@ function open(resource: AnyResourceView) { save(); emit('open', resource) }
 <template>
   <USlideover
     :open="Boolean(resource || reference)"
-    :modal="narrow"
-    :overlay="narrow"
+    modal
+    overlay
     :title="file?.title ?? resource?.title"
     :description="file ? 'Reference' : resource ? ENTITY_KIND_META[resource.kind].label : ''"
-    :content="{ onInteractOutside: (event: Event) => event.preventDefault(), onOpenAutoFocus: focusReading, onCloseAutoFocus: closeFocus }"
-    :ui="{ content: 'blr-resource-slideover w-full max-w-full md:max-w-[min(880px,70vw)] shadow-2xl', body: 'min-h-0 flex-1 overflow-hidden p-0 sm:p-0' }"
+    :content="{ onOpenAutoFocus: focusReading, onCloseAutoFocus: closeFocus }"
+    :ui="{ overlay: 'blr-resource-overlay bg-black/40 dark:bg-black/60', content: 'blr-resource-slideover w-full max-w-full md:max-w-[min(880px,70vw)] shadow-2xl', body: 'min-h-0 flex-1 overflow-hidden p-0 sm:p-0' }"
     @update:open="!$event && emit('close')"
     @after:enter="restore"
   >

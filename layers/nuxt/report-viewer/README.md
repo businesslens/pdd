@@ -12,9 +12,9 @@ the documentation's `terms:` frontmatter.
 A collection row, relation, search result, or topology resource opens one complete
 resource slideover. The underlying collection or comparison keeps its heading,
 rail selection, Rows/Graph drawing, filters, expansion, scroll and graph viewport.
-Desktop readers can continue interacting with that view; narrow screens use a
-full-width modal reading. Back restores the previous resource and its tab and
-reading position. Close returns to the working view. Resource links support the
+The modal reading dims and blocks the underlying view; narrow screens use the
+full width. Back restores the previous resource and its tab and reading position.
+Close, Escape or a click outside returns to the preserved working view. Resource links support the
 browser's new-tab and copy-link actions. The compact header keeps the resource's
 identity on the left and named-view and documentation actions beside Close.
 

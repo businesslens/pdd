@@ -116,7 +116,6 @@ onMounted(() => {
   if (measure.value) observer.observe(measure.value)
 })
 onBeforeUnmount(() => { mounted = false; requestId++; stopWorker(); observer?.disconnect() })
-const titleOf = (id: string) => props.diagram.nodes.find(node => node.id === id)?.title ?? id
 </script>
 
 <template>
@@ -128,16 +127,12 @@ const titleOf = (id: string) => props.diagram.nodes.find(node => node.id === id)
       <div v-for="edge in diagram.edges" :key="edge.id" :data-measure="`edge:${edge.id}`" class="blr-flow-edge-label">{{ edge.label }}</div>
     </div>
     <div v-if="layout" class="blr-diagram-canvas">
-      <LazyBlrFlowCanvas :layout="layout" :tree="diagram.layout === 'tree'" :title="title" :direction="diagram.direction" :quiet="diagram.quiet" :total-nodes="diagram.totalNodes" :viewport-key="placedViewportKey" :branches="branches" @open="emit('open', $event)" @toggle="(id, open) => emit('toggle', id, open)" @toggle-all="emit('toggleAll', $event)" @ready="emit('ready')" />
+      <LazyBlrFlowCanvas :layout="layout" :tree="diagram.layout === 'tree'" :title="title" :direction="diagram.direction" :quiet="diagram.quiet" :viewport-key="placedViewportKey" :branches="branches" @open="emit('open', $event)" @toggle="(id, open) => emit('toggle', id, open)" @toggle-all="emit('toggleAll', $event)" @ready="emit('ready')" />
     </div>
     <div v-else class="blr-diagram-fallback">
-      <p class="text-sm text-muted" role="status">{{ failed ? 'Diagram layout is unavailable. The complete reading is below.' : 'Arranging diagram…' }}</p>
+      <p class="text-sm text-muted" role="status">{{ failed ? 'Diagram layout is unavailable. Items are listed below.' : 'Arranging diagram…' }}</p>
       <ul><li v-for="node in diagram.nodes" :key="node.id"><button v-if="node.resourceKey" type="button" class="blr-topology-link" @click="emit('open', node.resourceKey)">{{ node.title }}</button><span v-else>{{ node.title }}</span><span v-if="node.unreached"> · unreached</span></li></ul>
     </div>
-    <details v-if="diagram.edges.length" class="blr-diagram-reading" :open="!layout || undefined">
-      <summary>Relationships · {{ diagram.edges.length }}</summary>
-      <ul><li v-for="edge in diagram.edges" :key="edge.id"><strong>{{ titleOf(edge.source) }}</strong> → <template v-if="edge.label">{{ edge.label }} → </template><strong>{{ titleOf(edge.target) }}</strong></li></ul>
-    </details>
   </div>
 </template>
 
@@ -146,8 +141,6 @@ const titleOf = (id: string) => props.diagram.nodes.find(node => node.id === id)
 :global(.blr-flow-edge-label) { width: max-content; max-width: 200px; box-sizing: border-box; padding: 3px 6px; font-size: 12px; line-height: 1.4; overflow-wrap: anywhere; color: var(--ui-text-muted); background: var(--ui-bg-elevated); border-radius: 4px; pointer-events: none; }
 .blr-flow-measure { position: absolute; left: -100000px; top: 0; visibility: hidden; width: 276px; }
 .blr-diagram-canvas { flex: 1; min-height: 360px; }
-.blr-diagram-reading, .blr-diagram-fallback { padding: 12px; font-size: 14px; overflow: auto; }
-.blr-diagram-reading { flex-shrink: 0; max-height: 30%; border-top: 1px solid var(--ui-border); }
-.blr-diagram-reading summary { cursor: pointer; color: var(--ui-text-muted); }
-.blr-diagram-reading li, .blr-diagram-fallback li { padding: 6px 0; }
+.blr-diagram-fallback { padding: 12px; font-size: 14px; overflow: auto; }
+.blr-diagram-fallback li { padding: 6px 0; }
 </style>

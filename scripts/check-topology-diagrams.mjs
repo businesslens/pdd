@@ -347,7 +347,7 @@ try {
     const zoom = await page.locator('.vue-flow__transformationpane').evaluate(item => new DOMMatrix(getComputedStyle(item).transform).a)
     await page.setViewportSize({ width: 1024, height: 768 })
     await expect.poll(() => page.locator('.vue-flow__transformationpane').evaluate(item => new DOMMatrix(getComputedStyle(item).transform).a)).toBe(zoom)
-    // A blocked worker leaves every resource and relationship readable.
+    // A blocked worker leaves every resource accessible in the fallback list.
     await page.route('**/*diagram.worker*', route => route.abort())
     await page.reload()
     await expect(page.getByRole('status')).toContainText('Diagram layout is unavailable', { timeout: 20000 })
