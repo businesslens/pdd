@@ -216,27 +216,23 @@ function facetOptions(kind: ReportResourceKind) {
 */
 const filtersOffered = computed(() => facetKinds.value.length > 0)
 
-/** One chip per *active* facet, naming what it selected — never one per offer. */
+/** Each selected value has its own way out, including multiple values on one axis. */
 const facetChips = computed(() => facetKinds.value
-  .filter(kind => facetValues(kind).length)
-  .map((kind) => {
-    const ids = facetValues(kind)
+  .flatMap((kind) => {
     const meta = ENTITY_KIND_META[kind]
-    const [first] = resolveResources(props.workspace, kind, ids)
-    const rest = ids.length - 1
-    return {
-      /* The facet kind is the chip's identity: one chip per active facet. */
-      key: kind,
-      kind,
-      facet: ids.length === 1 ? entityFacetOf(first) : null,
-      acts: ids.length === 1 && first?.kind === 'entity' ? first.acts ?? undefined : undefined,
-      interfaceType: ids.length === 1 && first?.kind === 'interface' ? first.interfaceType : undefined,
-      label: ids.length === 1 ? meta.label : meta.plural,
-      value: `${first?.title ?? ids[0]}${rest > 0 ? ` +${rest}` : ''}`
-    }
+    return facetValues(kind).map((id) => {
+      const resource = resolveResource(props.workspace, kind, id)
+      return {
+        key: `${kind}:${id}`,
+        kind,
+        facet: resource ? entityFacetOf(resource) : null,
+        acts: resource?.kind === 'entity' ? resource.acts ?? undefined : undefined,
+        interfaceType: resource?.kind === 'interface' ? resource.interfaceType : undefined,
+        label: meta.label,
+        value: resource?.title ?? id
+      }
+    })
   }))
-
-const activeFacetCount = computed(() => facetChips.value.length)
 
 const kindResources = computed<AnyResourceView[]>(() => resourcesOfKind(props.workspace, activeKind.value))
 
@@ -395,7 +391,10 @@ const focusChips = computed(() => drawing.value !== 'graph' ? [] : topology.valu
 const toolbarChips = computed(() => [...facetChips.value, ...focusChips.value])
 function removeChip(key: string) {
   if (key.startsWith('focus:')) topology.value = { ...topology.value, focus: topology.value.focus.filter(item => `focus:${item}` !== key) }
-  else setFacet(key as ReportResourceKind, [])
+  else {
+    const kind = facetKinds.value.find(kind => key.startsWith(`${kind}:`))
+    if (kind) setFacet(kind, facetValues(kind).filter(id => `${kind}:${id}` !== key))
+  }
 }
 function clearToolbar() {
   clearFacets()
@@ -416,6 +415,10 @@ const rowGrid = computed(() => columns.value > 1
 /* Expand all and collapse all act on whatever this collection opens: its
    Domain groups, and the trees inside its cards. */
 const expandsAnything = computed(() => grouped.value || treeCardsShown.value)
+const rowActions = [
+  { label: 'Expand all', icon: 'i-lucide-maximize-2', onSelect: () => toggleAllRows(true) },
+  { label: 'Collapse all', icon: 'i-lucide-minimize-2', onSelect: () => toggleAllRows(false) }
+]
 function toggleAllRows(open: boolean) {
   const prefix = `${activeKind.value}:`
   if (grouped.value) {
@@ -539,16 +542,10 @@ const orphanScenarios = computed(() => props.workspace.scenarios
 <template>
   <div class="blr-report-shell flex h-full min-h-0 flex-col text-sm">
     <!-- Status bar: the product, its coverage, and the way to anything. -->
-    <header class="blr-report-header flex shrink-0 items-center gap-3 border-b border-default px-4 py-2.5">
-      <UButton
-        icon="i-lucide-menu"
-        color="neutral"
-        variant="ghost"
-        size="xs"
-        class="lg:hidden"
-        aria-label="Open report navigation"
-        @click="mobileNavOpen = true"
-      />
+    <header
+      class="blr-report-header shrink-0 items-center gap-3 border-b border-default px-4 py-2.5"
+      :class="toolsTarget ? 'hidden sm:flex' : 'flex'"
+    >
       <!-- The first crumb is the way home, so it carries the house at every
            width and in every model. A Product's own logo is content, and it
            belongs to the reading that carries its name. -->
@@ -604,8 +601,17 @@ const orphanScenarios = computed(() => props.workspace.scenarios
       <section class="flex min-w-0 flex-1 flex-col">
         <!-- What this is, and the ways out of it. An exit belongs to the
              subject, so it sits here and not inside the tab strip. -->
-        <div v-if="surfaceHeading" class="flex flex-wrap items-center gap-x-3 gap-y-2 px-5 pt-4 pb-2">
-          <h1 v-if="surfaceHeading" ref="workingHeading" tabindex="-1" class="flex min-w-0 items-center gap-2">
+        <div v-if="surfaceHeading" class="flex items-center gap-2 px-4 pt-3 pb-1 sm:gap-3 sm:px-5 sm:pt-4 sm:pb-2">
+          <UButton
+            icon="i-lucide-menu"
+            color="neutral"
+            variant="ghost"
+            size="md"
+            class="lg:hidden"
+            aria-label="Open report navigation"
+            @click="mobileNavOpen = true"
+          />
+          <h1 v-if="surfaceHeading" ref="workingHeading" tabindex="-1" class="flex min-w-0 flex-1 items-center gap-2">
             <UIcon :name="surfaceHeading.icon" class="size-5 shrink-0 text-muted" :style="surfaceHeading.slot === undefined ? undefined : { color: `var(--blr-slot-${surfaceHeading.slot})` }" />
             <span class="truncate text-lg font-semibold tracking-tight text-highlighted">{{ surfaceHeading.title }}</span>
             <span class="blr-meta shrink-0">{{ surfaceHeading.meta }}</span>
@@ -643,55 +649,59 @@ const orphanScenarios = computed(() => props.workspace.scenarios
         <!-- One bar above both drawings of a collection. It narrows the set,
              and the set is what Rows lists and Graph draws; the switch at its
              end changes only the drawing. -->
-        <div v-if="showToolbar" class="shrink-0 px-5 pt-3" data-collection-toolbar>
+        <div v-if="showToolbar" class="shrink-0 px-4 pt-2 sm:px-5 sm:pt-3" data-collection-toolbar>
           <BlrFilterBar
+            :key="activeKind"
             :chips="toolbarChips"
+            :filters-offered="filtersOffered"
             @remove="removeChip"
             @clear="clearToolbar"
           >
-            <USelectMenu
-              v-for="kind in facetKinds"
-              :key="kind"
-              :model-value="facetValues(kind)"
-              :items="facetOptions(kind)"
-              value-key="value"
-              multiple
-              size="md"
-              variant="outline"
-              class="min-w-44"
-              :ui="{ content: 'blr-filter-menu', item: 'py-2' }"
-              :virtualize="facetOptions(kind).length > 100"
-              :search-input="{ placeholder: `Find a ${ENTITY_KIND_META[kind].label.toLowerCase()}…` }"
-              :aria-label="`Filter by ${ENTITY_KIND_META[kind].plural}`"
-              @update:model-value="setFacet(kind, $event as string[])"
-            >
-              <template #leading>
-                <UIcon
-                  :name="ENTITY_KIND_META[kind].icon"
-                  class="size-5 shrink-0"
-                  :style="{ color: `var(--blr-slot-${ENTITY_KIND_META[kind].slot})` }"
-                />
-              </template>
-              <template #default>
-                <span class="truncate">{{ ENTITY_KIND_META[kind].plural }}</span>
-                <span v-if="facetValues(kind).length" class="blr-meta">({{ facetValues(kind).length }})</span>
-              </template>
-              <!-- The control above says `Interfaces`, so a row need not
-                   repeat the plug: its slot goes to the type instead. -->
-              <template #item-leading="{ item }">
-                <BlrKind
-                  :kind="kind"
-                  :interface-type="item.interfaceType"
-                  :facet="item.facet"
-                  :acts="item.acts"
-                  :labelled="false"
-                  :with-kind="false"
-                  size="xs"
-                />
-              </template>
-            </USelectMenu>
+            <template #default="{ mobile }">
+              <USelectMenu
+                v-for="kind in facetKinds"
+                :key="kind"
+                :model-value="facetValues(kind)"
+                :items="facetOptions(kind)"
+                value-key="value"
+                multiple
+                size="md"
+                variant="outline"
+                :class="mobile ? 'w-full' : 'min-w-44'"
+                :ui="{ content: 'blr-filter-menu', item: 'py-2' }"
+                :virtualize="facetOptions(kind).length > 100"
+                :search-input="{ placeholder: `Find a ${ENTITY_KIND_META[kind].label.toLowerCase()}…` }"
+                :aria-label="`Filter by ${ENTITY_KIND_META[kind].plural}`"
+                @update:model-value="setFacet(kind, $event as string[])"
+              >
+                <template #leading>
+                  <UIcon
+                    :name="ENTITY_KIND_META[kind].icon"
+                    class="size-5 shrink-0"
+                    :style="{ color: `var(--blr-slot-${ENTITY_KIND_META[kind].slot})` }"
+                  />
+                </template>
+                <template #default>
+                  <span class="truncate">{{ ENTITY_KIND_META[kind].plural }}</span>
+                  <span v-if="facetValues(kind).length" class="blr-meta">({{ facetValues(kind).length }})</span>
+                </template>
+                <!-- The control above says `Interfaces`, so a row need not
+                     repeat the plug: its slot goes to the type instead. -->
+                <template #item-leading="{ item }">
+                  <BlrKind
+                    :kind="kind"
+                    :interface-type="item.interfaceType"
+                    :facet="item.facet"
+                    :acts="item.acts"
+                    :labelled="false"
+                    :with-kind="false"
+                    size="xs"
+                  />
+                </template>
+              </USelectMenu>
+            </template>
             <template v-if="collectionGraph || drawing === 'rows'" #end>
-              <UFieldGroup v-if="drawing === 'rows' && expandsAnything" size="md" data-expand-all>
+              <UFieldGroup v-if="drawing === 'rows' && expandsAnything" size="md" class="hidden sm:inline-flex" data-expand-all>
                 <UTooltip text="Expand all">
                   <UButton icon="i-lucide-maximize-2" color="neutral" variant="outline" aria-label="Expand all" @click="toggleAllRows(true)" />
                 </UTooltip>
@@ -706,7 +716,7 @@ const orphanScenarios = computed(() => props.workspace.scenarios
                 value-key="value"
                 size="md"
                 variant="outline"
-                class="w-36"
+                class="hidden w-36 sm:inline-flex"
                 icon="i-lucide-layout-grid"
                 aria-label="Rows per line"
                 data-columns-control
@@ -734,6 +744,21 @@ const orphanScenarios = computed(() => props.workspace.scenarios
                   />
                 </UTooltip>
               </UFieldGroup>
+              <UDropdownMenu
+                v-if="drawing === 'rows' && expandsAnything"
+                :items="rowActions"
+                size="md"
+                :content="{ align: 'end' }"
+              >
+                <UButton
+                  icon="i-lucide-ellipsis"
+                  color="neutral"
+                  variant="outline"
+                  size="md"
+                  class="sm:hidden"
+                  aria-label="Collection actions"
+                />
+              </UDropdownMenu>
             </template>
           </BlrFilterBar>
         </div>

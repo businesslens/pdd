@@ -96,7 +96,7 @@ const columnItems = COLUMN_CHOICES.map(value => ({ value, label: `${value} per r
               value-key="value"
               size="md"
               variant="outline"
-              class="w-36"
+              class="hidden w-36 sm:inline-flex"
               icon="i-lucide-layout-grid"
               aria-label="Rows per line"
               @update:model-value="setColumns(scenarioKind, $event as ColumnChoice)"

@@ -58,12 +58,8 @@ const focusItems = computed(() => [...props.workspace.byKey.values()]
   })))
 const typeItems = computed(() => filterKinds.value.map(kind => ({ label: ENTITY_KIND_META[kind].plural, value: kind, kind })))
 const visibleKinds = computed(() => filterKinds.value.filter(kind => !reading.value.hiddenKinds.includes(kind)))
-const filterCount = computed(() => reading.value.hiddenKinds.length + reading.value.focus.length)
-
 const filterChips = computed(() => [
-  ...reading.value.hiddenKinds.length
-    ? [{ key: 'hidden', label: 'Hidden types', value: reading.value.hiddenKinds.map(kind => ENTITY_KIND_META[kind].plural).join(', ') }]
-    : [],
+  ...reading.value.hiddenKinds.map(kind => ({ key: `hidden:${kind}`, label: 'Hidden type', value: ENTITY_KIND_META[kind].plural })),
   ...reading.value.focus.map((key) => {
     const resource = props.workspace.byKey.get(key)
     return { key: `focus:${key}`, label: 'Focus', value: resource?.title ?? key, kind: resource?.kind }
@@ -71,7 +67,7 @@ const filterChips = computed(() => [
 ])
 
 function removeFilter(key: string) {
-  if (key === 'hidden') update({ hiddenKinds: [] })
+  if (key.startsWith('hidden:')) update({ hiddenKinds: reading.value.hiddenKinds.filter(kind => `hidden:${kind}` !== key) })
   else update({ focus: reading.value.focus.filter(item => `focus:${item}` !== key) })
 }
 
@@ -95,69 +91,71 @@ function open(key: string) {
 <template>
   <div class="blr-product-topology">
     <div class="px-5 pt-4">
-      <BlrFilterBar :chips="filterChips" @remove="removeFilter" @clear="update({ focus: [], hiddenKinds: [] })">
-        <USelectMenu
-          v-if="typesOffered"
-          :model-value="visibleKinds"
-          :items="typeItems"
-          value-key="value"
-          multiple
-          size="md"
-          variant="outline"
-          class="min-w-44"
-          :ui="{ content: 'blr-filter-menu', item: 'py-2' }"
-          :search-input="false"
-          aria-label="Which resource types this view draws"
-          @update:model-value="showKinds($event as string[])"
-        >
-          <!-- Not the Entity mark: that glyph names a resource type, and this
-               control names all of them. A reserved mark stays reserved. -->
-          <template #leading>
-            <UIcon name="i-lucide-layers" class="size-5 shrink-0 text-muted" />
-          </template>
-          <template #default>
-            <span class="truncate">Resource types</span>
-            <span v-if="reading.hiddenKinds.length" class="blr-meta">({{ reading.hiddenKinds.length }} hidden)</span>
-          </template>
-          <!-- BlrKind resolves its colour in script. The menu is portalled out
-               of the shell, where `--blr-slot-*` is defined and would not. -->
-          <template #item-leading="{ item }">
-            <BlrKind :kind="item.kind" :labelled="false" size="xs" />
-          </template>
-        </USelectMenu>
+      <BlrFilterBar :key="view.id" :chips="filterChips" @remove="removeFilter" @clear="update({ focus: [], hiddenKinds: [] })">
+        <template #default="{ mobile }">
+          <USelectMenu
+            v-if="typesOffered"
+            :model-value="visibleKinds"
+            :items="typeItems"
+            value-key="value"
+            multiple
+            size="md"
+            variant="outline"
+            :class="mobile ? 'w-full' : 'min-w-44'"
+            :ui="{ content: 'blr-filter-menu', item: 'py-2' }"
+            :search-input="false"
+            aria-label="Which resource types this view draws"
+            @update:model-value="showKinds($event as string[])"
+          >
+            <!-- Not the Entity mark: that glyph names a resource type, and this
+                 control names all of them. A reserved mark stays reserved. -->
+            <template #leading>
+              <UIcon name="i-lucide-layers" class="size-5 shrink-0 text-muted" />
+            </template>
+            <template #default>
+              <span class="truncate">Resource types</span>
+              <span v-if="reading.hiddenKinds.length" class="blr-meta">({{ reading.hiddenKinds.length }} hidden)</span>
+            </template>
+            <!-- BlrKind resolves its colour in script. The menu is portalled out
+                 of the shell, where `--blr-slot-*` is defined and would not. -->
+            <template #item-leading="{ item }">
+              <BlrKind :kind="item.kind" :labelled="false" size="xs" />
+            </template>
+          </USelectMenu>
 
-        <USelectMenu
-          :model-value="reading.focus"
-          :items="focusItems"
-          value-key="value"
-          multiple
-          size="md"
-          variant="outline"
-          class="min-w-44"
-          :ui="{ content: 'blr-filter-menu', item: 'py-2' }"
-          :virtualize="focusItems.length > 100"
-          :search-input="{ placeholder: 'Find a resource…' }"
-          aria-label="Focus one resource and its one-hop context"
-          @update:model-value="update({ focus: $event as string[] })"
-        >
-          <template #leading>
-            <UIcon name="i-lucide-focus" class="size-5 shrink-0 text-muted" />
-          </template>
-          <template #default>
-            <span class="truncate">Focus</span>
-            <span v-if="reading.focus.length" class="blr-meta">({{ reading.focus.length }})</span>
-          </template>
-          <template #item-leading="{ item }">
-            <BlrKind
-              :kind="item.kind"
-              :interface-type="item.interfaceType"
-              :facet="item.facet"
-              :acts="item.acts"
-              :labelled="false"
-              size="xs"
-            />
-          </template>
-        </USelectMenu>
+          <USelectMenu
+            :model-value="reading.focus"
+            :items="focusItems"
+            value-key="value"
+            multiple
+            size="md"
+            variant="outline"
+            :class="mobile ? 'w-full' : 'min-w-44'"
+            :ui="{ content: 'blr-filter-menu', item: 'py-2' }"
+            :virtualize="focusItems.length > 100"
+            :search-input="{ placeholder: 'Find a resource…' }"
+            aria-label="Focus one resource and its one-hop context"
+            @update:model-value="update({ focus: $event as string[] })"
+          >
+            <template #leading>
+              <UIcon name="i-lucide-focus" class="size-5 shrink-0 text-muted" />
+            </template>
+            <template #default>
+              <span class="truncate">Focus</span>
+              <span v-if="reading.focus.length" class="blr-meta">({{ reading.focus.length }})</span>
+            </template>
+            <template #item-leading="{ item }">
+              <BlrKind
+                :kind="item.kind"
+                :interface-type="item.interfaceType"
+                :facet="item.facet"
+                :acts="item.acts"
+                :labelled="false"
+                size="xs"
+              />
+            </template>
+          </USelectMenu>
+        </template>
       </BlrFilterBar>
     </div>
     <div ref="pane" class="blr-topology-reading" @scroll.capture.passive="save">

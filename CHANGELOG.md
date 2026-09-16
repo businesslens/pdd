@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- More room for mobile reports, with a compact toolbar, filter sheet, and individually removable filters.
+
 ## [0.15.0] - 2026-09-15
 
 - Explore resources in side panels without losing your place.
