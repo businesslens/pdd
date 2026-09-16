@@ -92,16 +92,16 @@ function open(key: string) {
   <div class="blr-product-topology">
     <div class="px-5 pt-4">
       <BlrFilterBar :key="view.id" :chips="filterChips" @remove="removeFilter" @clear="update({ focus: [], hiddenKinds: [] })">
-        <template #default="{ mobile }">
+        <template #default="{ inSheet }">
           <USelectMenu
             v-if="typesOffered"
             :model-value="visibleKinds"
             :items="typeItems"
             value-key="value"
             multiple
-            size="md"
+            size="sm"
             variant="outline"
-            :class="mobile ? 'w-full' : 'min-w-44'"
+            :class="inSheet ? 'w-full' : 'min-w-44'"
             :ui="{ content: 'blr-filter-menu', item: 'py-2' }"
             :search-input="false"
             aria-label="Which resource types this view draws"
@@ -110,7 +110,7 @@ function open(key: string) {
             <!-- Not the Entity mark: that glyph names a resource type, and this
                  control names all of them. A reserved mark stays reserved. -->
             <template #leading>
-              <UIcon name="i-lucide-layers" class="size-5 shrink-0 text-muted" />
+              <UIcon name="i-lucide-layers" class="size-4 shrink-0 text-muted" />
             </template>
             <template #default>
               <span class="truncate">Resource types</span>
@@ -128,9 +128,9 @@ function open(key: string) {
             :items="focusItems"
             value-key="value"
             multiple
-            size="md"
+            size="sm"
             variant="outline"
-            :class="mobile ? 'w-full' : 'min-w-44'"
+            :class="inSheet ? 'w-full' : 'min-w-44'"
             :ui="{ content: 'blr-filter-menu', item: 'py-2' }"
             :virtualize="focusItems.length > 100"
             :search-input="{ placeholder: 'Find a resource…' }"
@@ -138,7 +138,7 @@ function open(key: string) {
             @update:model-value="update({ focus: $event as string[] })"
           >
             <template #leading>
-              <UIcon name="i-lucide-focus" class="size-5 shrink-0 text-muted" />
+              <UIcon name="i-lucide-focus" class="size-4 shrink-0 text-muted" />
             </template>
             <template #default>
               <span class="truncate">Focus</span>

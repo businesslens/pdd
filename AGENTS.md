@@ -190,7 +190,7 @@ costed already.
   drawing uses is a cookie keyed by collection, so the first paint is right;
   nothing else about a drawing is configurable. Phones use one column and hide
   the density control without changing the saved preference. Expand all and
-  Collapse all live in a labelled actions menu on phones.
+  Collapse all stay directly beside the drawing controls at every width.
 - **Every surface names itself, with the name the reader clicked.** The main
   H1 keeps the working view and its count or Product qualifier. A resource
   slideover names its resource and type, with actual ownership shown separately
@@ -231,12 +231,15 @@ costed already.
   what the row already prints. A control says how many values it holds, never
   which; the values sit on a second row, each with its own way out. It is absent
   only when there is nothing behind it — never on a size threshold, which makes
-  two reports differ for a reason no reader can see. On phones, a Filters button
-  opens those same axis controls in a bottom sheet; its badge counts selected
+  two reports differ for a reason no reader can see. On phones, and whenever
+  inline filters plus actions would wrap, a Filters button opens those same axis
+  controls in a bottom sheet; its badge counts selected
   values, and individually removable chips remain above the reading. Rows/Graph
-  stays beside Filters, with the same icons and Nuxt UI control sizes at every
-  width. This is the mobile exception to showing every axis
-  inline. Report navigation sits beside the working view's heading.
+  stays beside Filters with the same icons. Page controls, filters and graph
+  buttons use Nuxt UI's `sm` size (28px) at every viewport width. The top navbar
+  retains its own sizing; report controls never override global UI defaults.
+  Filter collapse follows the reading's available width. Report navigation
+  sits beside the working view's heading.
 - **The surface names the resource type; the row does not repeat it**, a fact
   appears once per screen, and nothing renders an empty label. Counts where the
   set is many, names where it is one.

@@ -27,12 +27,6 @@ async function choose(page, name) {
   if (page.viewportSize().width < 1024) await page.getByRole('button', { name: 'Open report navigation', exact: true }).click()
   await page.locator('.blr-navitem:visible').filter({ hasText: new RegExp(`^${name}`) }).click()
 }
-async function toggleCollection(page, name) {
-  if (page.viewportSize().width < 640) {
-    await page.getByRole('button', { name: 'Collection actions', exact: true }).click()
-    await page.getByRole('menuitem', { name, exact: true }).click()
-  } else await page.getByRole('button', { name, exact: true }).click()
-}
 const capture = async (page, name) => { if (screenshots) await page.screenshot({ path: join(screenshots, `${name}.png`) }) }
 try {
   for (const width of [1440, 390]) {
@@ -98,9 +92,9 @@ try {
       await choose(page, collection)
       await expect(page.locator('[data-tree-card] [data-group-header]')).toHaveCount(0)
       const roots = page.locator('[data-tree-card] [role="treeitem"][aria-level="1"][aria-expanded]')
-      await toggleCollection(page, 'Collapse all')
+      await page.getByRole('button', { name: 'Collapse all', exact: true }).click()
       for (const root of await roots.all()) await expect(root).toHaveAttribute('aria-expanded', 'false')
-      await toggleCollection(page, 'Expand all')
+      await page.getByRole('button', { name: 'Expand all', exact: true }).click()
       for (const root of await roots.all()) await expect(root).toHaveAttribute('aria-expanded', 'true')
       for (const resource of resources) {
         const title = kind === 'domain' ? resource.name : resource.title

@@ -415,10 +415,6 @@ const rowGrid = computed(() => columns.value > 1
 /* Expand all and collapse all act on whatever this collection opens: its
    Domain groups, and the trees inside its cards. */
 const expandsAnything = computed(() => grouped.value || treeCardsShown.value)
-const rowActions = [
-  { label: 'Expand all', icon: 'i-lucide-maximize-2', onSelect: () => toggleAllRows(true) },
-  { label: 'Collapse all', icon: 'i-lucide-minimize-2', onSelect: () => toggleAllRows(false) }
-]
 function toggleAllRows(open: boolean) {
   const prefix = `${activeKind.value}:`
   if (grouped.value) {
@@ -606,7 +602,7 @@ const orphanScenarios = computed(() => props.workspace.scenarios
             icon="i-lucide-menu"
             color="neutral"
             variant="ghost"
-            size="md"
+            size="sm"
             class="lg:hidden"
             aria-label="Open report navigation"
             @click="mobileNavOpen = true"
@@ -627,7 +623,7 @@ const orphanScenarios = computed(() => props.workspace.scenarios
                 icon="i-lucide-book-open"
                 color="neutral"
                 variant="outline"
-                size="xs"
+                size="sm"
                 label="Docs"
                 :aria-label="surfaceDocs.label"
               />
@@ -657,7 +653,7 @@ const orphanScenarios = computed(() => props.workspace.scenarios
             @remove="removeChip"
             @clear="clearToolbar"
           >
-            <template #default="{ mobile }">
+            <template #default="{ inSheet }">
               <USelectMenu
                 v-for="kind in facetKinds"
                 :key="kind"
@@ -665,9 +661,9 @@ const orphanScenarios = computed(() => props.workspace.scenarios
                 :items="facetOptions(kind)"
                 value-key="value"
                 multiple
-                size="md"
+                size="sm"
                 variant="outline"
-                :class="mobile ? 'w-full' : 'min-w-44'"
+                :class="inSheet ? 'w-full' : 'min-w-44'"
                 :ui="{ content: 'blr-filter-menu', item: 'py-2' }"
                 :virtualize="facetOptions(kind).length > 100"
                 :search-input="{ placeholder: `Find a ${ENTITY_KIND_META[kind].label.toLowerCase()}…` }"
@@ -677,7 +673,7 @@ const orphanScenarios = computed(() => props.workspace.scenarios
                 <template #leading>
                   <UIcon
                     :name="ENTITY_KIND_META[kind].icon"
-                    class="size-5 shrink-0"
+                    class="size-4 shrink-0"
                     :style="{ color: `var(--blr-slot-${ENTITY_KIND_META[kind].slot})` }"
                   />
                 </template>
@@ -701,7 +697,7 @@ const orphanScenarios = computed(() => props.workspace.scenarios
               </USelectMenu>
             </template>
             <template v-if="collectionGraph || drawing === 'rows'" #end>
-              <UFieldGroup v-if="drawing === 'rows' && expandsAnything" size="md" class="hidden sm:inline-flex" data-expand-all>
+              <UFieldGroup v-if="drawing === 'rows' && expandsAnything" size="sm" data-expand-all>
                 <UTooltip text="Expand all">
                   <UButton icon="i-lucide-maximize-2" color="neutral" variant="outline" aria-label="Expand all" @click="toggleAllRows(true)" />
                 </UTooltip>
@@ -714,7 +710,7 @@ const orphanScenarios = computed(() => props.workspace.scenarios
                 :model-value="columns"
                 :items="columnItems"
                 value-key="value"
-                size="md"
+                size="sm"
                 variant="outline"
                 class="hidden w-36 sm:inline-flex"
                 icon="i-lucide-layout-grid"
@@ -722,7 +718,7 @@ const orphanScenarios = computed(() => props.workspace.scenarios
                 data-columns-control
                 @update:model-value="setColumns(activeKind, $event as ColumnChoice)"
               />
-              <UFieldGroup v-if="collectionGraph" size="md" data-drawing-switch>
+              <UFieldGroup v-if="collectionGraph" size="sm" data-drawing-switch>
                 <UTooltip text="Rows">
                   <UButton
                     icon="i-lucide-rows-3"
@@ -744,21 +740,6 @@ const orphanScenarios = computed(() => props.workspace.scenarios
                   />
                 </UTooltip>
               </UFieldGroup>
-              <UDropdownMenu
-                v-if="drawing === 'rows' && expandsAnything"
-                :items="rowActions"
-                size="md"
-                :content="{ align: 'end' }"
-              >
-                <UButton
-                  icon="i-lucide-ellipsis"
-                  color="neutral"
-                  variant="outline"
-                  size="md"
-                  class="sm:hidden"
-                  aria-label="Collection actions"
-                />
-              </UDropdownMenu>
             </template>
           </BlrFilterBar>
         </div>
@@ -871,7 +852,7 @@ const orphanScenarios = computed(() => props.workspace.scenarios
                 icon="i-lucide-filter-x"
                 color="neutral"
                 variant="outline"
-                size="xs"
+                size="sm"
                 label="Clear filters"
                 @click="clearFacets"
               />

@@ -7,8 +7,12 @@ bundled local viewer. It has no package export and is excluded from published
 package files, so an audition cannot become part of the public renderer by
 accident.
 
-There are no active report experiments in this layer. The **Scenario Step
-card** audition is decided: Guided flow is now the stable `BlrScenarioStep`.
+There are no active report experiments in this layer. The **Control size**
+audition is decided: page controls, filters and graph buttons use Nuxt UI's
+`sm` size (28px) at every viewport width. The top navbar retains its own sizing.
+The size selector, cookie composable and global override have been removed.
+
+The **Scenario Step card** audition is decided: Guided flow is now the stable `BlrScenarioStep`.
 It labels Action or Condition, Who, Entity effects, Where and Capability, and
 reads each Entity effect as a phrase. The alternative drawings, their cookie
 composable and the Step card selector have been removed.

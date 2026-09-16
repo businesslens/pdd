@@ -167,14 +167,14 @@ onBeforeUnmount(() => { save(); mounted = false; cancelCentering(); resize?.disc
       <template #edge-blr-routed="edgeProps"><BlrFlowRoutedEdge v-bind="edgeProps" /></template>
       <Background :gap="30" :size="1.5" variant="dots" pattern-color="var(--blr-flow-dot)" />
     </VueFlow>
-    <div class="blr-flow-controls" role="group" aria-label="Map controls">
-      <button type="button" aria-label="Zoom in" title="Zoom in" @click="zoom(true)">+</button>
-      <button type="button" aria-label="Zoom out" title="Zoom out" @click="zoom(false)">−</button>
-      <button type="button" aria-label="Fit map to view" title="Fit map to view" @click="fit"><UIcon name="i-lucide-scan" class="size-4" /></button>
+    <UFieldGroup class="blr-flow-controls bg-default" orientation="vertical" size="sm" role="group" aria-label="Map controls">
+      <UButton icon="i-lucide-plus" color="neutral" variant="outline" aria-label="Zoom in" title="Zoom in" @click="zoom(true)" />
+      <UButton icon="i-lucide-minus" color="neutral" variant="outline" aria-label="Zoom out" title="Zoom out" @click="zoom(false)" />
+      <UButton icon="i-lucide-scan" color="neutral" variant="outline" aria-label="Fit map to view" title="Fit map to view" @click="fit" />
       <!-- A tree opens and closes as a whole from the same controls it is zoomed with. -->
-      <button v-if="branches" type="button" aria-label="Expand all branches" title="Expand all" @click="toggleAll(true)"><UIcon name="i-lucide-maximize-2" class="size-4" /></button>
-      <button v-if="branches" type="button" aria-label="Collapse all branches" title="Collapse all" @click="toggleAll(false)"><UIcon name="i-lucide-minimize-2" class="size-4" /></button>
-    </div>
+      <UButton v-if="branches" icon="i-lucide-maximize-2" color="neutral" variant="outline" aria-label="Expand all branches" title="Expand all" @click="toggleAll(true)" />
+      <UButton v-if="branches" icon="i-lucide-minimize-2" color="neutral" variant="outline" aria-label="Collapse all branches" title="Collapse all" @click="toggleAll(false)" />
+    </UFieldGroup>
     <div class="blr-flow-summary">{{ layout.nodes.length }}<template v-if="totalNodes && totalNodes !== layout.nodes.length"> of {{ totalNodes }}</template> boxes · {{ layout.edges.length }} connections<span> · Drag to explore</span></div>
   </div>
 </template>
@@ -190,11 +190,7 @@ onBeforeUnmount(() => { save(); mounted = false; cancelCentering(); resize?.disc
 .dark .blr-flow, .dark .blr-flow-measure { --blr-slot-0: #3987e5; --blr-slot-1: #d95926; --blr-slot-2: #199e70; --blr-slot-3: #c98500; --blr-slot-4: #d55181; --blr-slot-5: #008300; --blr-slot-6: #9085e9; --blr-slot-7: #e66767; --blr-slot-8: #ab9d81; --blr-slot-9: #3987e5; }
 .blr-flow .vue-flow__edge { pointer-events: none; }
 .blr-flow .blr-flow-route { stroke: var(--ui-text-muted); stroke-width: 1.5; }
-.blr-flow-controls { position: absolute; right: 12px; bottom: 12px; z-index: 30; display: grid; border: 1px solid var(--ui-border); border-radius: 8px; background: var(--ui-bg); overflow: hidden; }
-.blr-flow-controls button { display: grid; place-items: center; width: 36px; height: 36px; border-bottom: 1px solid var(--ui-border); color: var(--ui-text); font: 18px var(--font-mono); cursor: pointer; }
-.blr-flow-controls button:last-child { border-bottom: 0; }
-.blr-flow-controls button:hover { background: var(--ui-bg-elevated); }
-.blr-flow-controls button:focus-visible { outline: 2px solid var(--ui-primary); outline-offset: -3px; }
+.blr-flow-controls { position: absolute; right: 12px; bottom: 12px; z-index: 30; }
 .blr-flow-summary { position: absolute; bottom: 12px; left: 12px; padding: 5px 8px; max-width: calc(100% - 68px); border: 1px solid var(--ui-border); border-radius: 6px; background: var(--ui-bg); color: var(--ui-text-muted); font-size: 12px; pointer-events: none; }
 .blr-flow-edge-label { width: max-content; max-width: 200px; box-sizing: border-box; padding: 3px 6px; font-size: 12px; line-height: 1.4; overflow-wrap: anywhere; color: var(--ui-text-muted); background: var(--ui-bg-elevated); border-radius: 4px; pointer-events: none; }
 @media (max-width: 640px) { .blr-flow-summary span { display: none; } }

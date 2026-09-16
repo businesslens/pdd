@@ -3,8 +3,8 @@
  * The filter area of a surface: the controls that narrow it, above what they
  * narrowed it to.
  *
- * One control per axis, inline on wider screens and in a bottom sheet on
- * phones. The selected values stay above the reading at every width.
+ * One control per axis, inline when the filters and actions fit on one row,
+ * otherwise in a sheet. The selected values stay above the reading at every width.
  *
  * A control says how many values it holds, never which: the chosen values sit
  * on the second row, so the control line stays a fixed, scannable width however
@@ -30,25 +30,46 @@ withDefaults(defineProps<{
 }>(), { filtersOffered: true })
 const emit = defineEmits<{ remove: [key: string], clear: [] }>()
 const sheetOpen = ref(false)
-let inlineFilters: MediaQueryList | undefined
-function closeSheetOnWideScreen() {
-  if (inlineFilters?.matches) sheetOpen.value = false
+const bar = useTemplateRef('bar')
+const inlineFilters = useTemplateRef('inlineFilters')
+const actions = useTemplateRef('actions')
+const collapsed = ref(true)
+let resize: ResizeObserver | undefined
+let phone: MediaQueryList | undefined
+
+/** Measure the full inline controls even while their clipped wrapper is hidden.
+ * Keeping their natural width avoids a collapse/expand loop at the boundary. */
+function updateLayout() {
+  if (!bar.value || !inlineFilters.value) return
+  const gap = parseFloat(getComputedStyle(bar.value).columnGap) || 0
+  const required = inlineFilters.value.getBoundingClientRect().width
+    + (actions.value ? actions.value.getBoundingClientRect().width + gap : 0)
+  collapsed.value = Boolean(phone?.matches) || Math.ceil(required) > bar.value.clientWidth
+  if (!collapsed.value) sheetOpen.value = false
 }
 onMounted(() => {
-  inlineFilters = window.matchMedia('(min-width: 640px)')
-  inlineFilters.addEventListener('change', closeSheetOnWideScreen)
+  phone = window.matchMedia('(width < 640px)')
+  phone.addEventListener('change', updateLayout)
+  resize = new ResizeObserver(updateLayout)
+  for (const element of [bar.value, inlineFilters.value, actions.value]) {
+    if (element) resize.observe(element)
+  }
+  updateLayout()
 })
-onBeforeUnmount(() => inlineFilters?.removeEventListener('change', closeSheetOnWideScreen))
+onBeforeUnmount(() => {
+  resize?.disconnect()
+  phone?.removeEventListener('change', updateLayout)
+})
 </script>
 
 <template>
-  <div data-blr-filter-bar class="space-y-2">
-    <div class="flex flex-wrap items-center gap-2">
+  <div data-blr-filter-bar :data-filters-collapsed="collapsed" class="space-y-2">
+    <div ref="bar" class="relative flex items-center gap-2">
       <UDrawer
         v-if="filtersOffered || chips.length"
         v-model:open="sheetOpen"
         title="Filters"
-        close
+        :close="{ size: 'sm' }"
         :ui="{
           content: 'blr-report-shell max-h-[85dvh]',
           container: 'min-h-0',
@@ -57,11 +78,11 @@ onBeforeUnmount(() => inlineFilters?.removeEventListener('change', closeSheetOnW
         }"
       >
         <UButton
+          v-show="collapsed"
           icon="i-lucide-funnel"
           color="neutral"
           variant="outline"
-          size="md"
-          class="sm:hidden"
+          size="sm"
           data-mobile-filters
         >
           Filters
@@ -69,7 +90,7 @@ onBeforeUnmount(() => inlineFilters?.removeEventListener('change', closeSheetOnW
         </UButton>
         <template #body>
           <div class="flex flex-col gap-3" data-mobile-filter-controls>
-            <slot :mobile="true" />
+            <slot :in-sheet="true" />
           </div>
         </template>
         <template #footer>
@@ -77,29 +98,31 @@ onBeforeUnmount(() => inlineFilters?.removeEventListener('change', closeSheetOnW
             color="neutral"
             variant="outline"
             label="Clear all"
-            size="md"
+            size="sm"
             :disabled="!chips.length"
             @click="emit('clear')"
           />
-          <UButton label="Show results" size="md" class="flex-1 justify-center" @click="sheetOpen = false" />
+          <UButton label="Show results" size="sm" class="flex-1 justify-center" @click="sheetOpen = false" />
         </template>
       </UDrawer>
-      <div class="hidden sm:contents">
-        <slot :mobile="false" />
+      <div :class="collapsed ? 'pointer-events-none invisible absolute inset-x-0 overflow-hidden' : 'contents'">
+        <div ref="inlineFilters" class="flex w-max shrink-0 items-center gap-2" :inert="collapsed" :aria-hidden="collapsed || undefined">
+          <slot :in-sheet="false" />
+          <UButton
+            v-if="chips.length"
+            icon="i-lucide-x"
+            color="neutral"
+            variant="ghost"
+            size="sm"
+            label="Clear"
+            aria-label="Clear every filter"
+            @click="emit('clear')"
+          />
+        </div>
       </div>
-      <UButton
-        v-if="chips.length"
-        icon="i-lucide-x"
-        color="neutral"
-        variant="ghost"
-        label="Clear"
-        aria-label="Clear every filter"
-        class="hidden sm:inline-flex"
-        @click="emit('clear')"
-      />
       <!-- What is not a filter but belongs on the same line: how the set is
            drawn, and how densely. It sits at the end, clear of the controls. -->
-      <div v-if="$slots.end" class="ms-auto flex shrink-0 items-center gap-1 sm:gap-2">
+      <div v-if="$slots.end" ref="actions" class="ms-auto flex shrink-0 items-center gap-1 sm:gap-2">
         <slot name="end" />
       </div>
     </div>

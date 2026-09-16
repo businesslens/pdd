@@ -48,7 +48,6 @@ export default defineNuxtConfig({
         'lucide:copy-check',
         'lucide:eye',
         'lucide:eye-off',
-        'lucide:ellipsis',
         'lucide:file-code',
         'lucide:external-link',
         'lucide:file-question',
