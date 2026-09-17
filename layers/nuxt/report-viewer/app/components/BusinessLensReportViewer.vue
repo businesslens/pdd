@@ -16,7 +16,7 @@ import { projectReportWorkspace } from '../utils/reportWorkspace'
 
 const props = defineProps<{
   report: ProductReportV13
-  /** Host-resolved `.businesslens/product/logo.svg`; rendered in the product header. */
+  /** Host-resolved `.businesslens/product/logo.svg`; rendered in the Product Overview. */
   logoSrc?: string | null
   /** Mounted host-header element receiving the report's search and Vocabulary controls. */
   toolsTarget?: string
@@ -94,8 +94,14 @@ onMounted(() => { mounted = true; synchronizeLocation() })
       @update:tab="tab = $event"
       @update:topology="topology = $event"
     >
-      <template v-if="$slots.navigation" #navigation>
-        <slot name="navigation" />
+      <template v-if="$slots['sidebar-header']" #sidebar-header="{ collapsed }">
+        <slot name="sidebar-header" :collapsed="collapsed" />
+      </template>
+      <template v-if="$slots['sidebar-footer']" #sidebar-footer="{ collapsed }">
+        <slot name="sidebar-footer" :collapsed="collapsed" />
+      </template>
+      <template v-if="$slots.navigation" #navigation="{ collapsed }">
+        <slot name="navigation" :collapsed="collapsed" />
       </template>
       <template v-if="$slots['primary-action']" #primary-action>
         <slot name="primary-action" />

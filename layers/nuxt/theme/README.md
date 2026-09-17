@@ -29,7 +29,9 @@ export default defineNuxtConfig({
   requests only the asset for the active color mode; painting both twins and
   hiding one with CSS downloads two 111 KB wordmarks on every page.
   `compactOnMobile` drops the wordmark on narrow viewports and keeps the mark
-  as the home link.
+  as the home link. `wordmarkHeight` scales the complete lockup proportionally
+  for compact hosts, defaulting to 26 pixels. `markOnly` keeps just the mark
+  when the host navigation is collapsed.
 - **`useBusinessLensThemeHead()`** — registers the browser and install icon
   family from `public/brand/icons`, including the manifest and Apple touch
   icon. Call it once in the host's root component.

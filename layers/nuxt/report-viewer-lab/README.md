@@ -7,9 +7,16 @@ bundled local viewer. It has no package export and is excluded from published
 package files, so an audition cannot become part of the public renderer by
 accident.
 
-There are no active report experiments in this layer. The **Control size**
+There are no active report experiments in this layer.
+
+The **Collapsed icons** audition is decided: collapsed navigation and utility
+icons use 17px glyphs with 32px-high targets. The selected size now lives in the
+stable menu components. The size selector, cookie composable and override have
+been removed; expanded and mobile menus retain their existing sizes.
+
+The **Control size**
 audition is decided: page controls, filters and graph buttons use Nuxt UI's
-`sm` size (28px) at every viewport width. The top navbar retains its own sizing.
+`sm` size (28px) at every viewport width. The optional theme lab retains its own sizing.
 The size selector, cookie composable and global override have been removed.
 
 The **Scenario Step card** audition is decided: Guided flow is now the stable `BlrScenarioStep`.

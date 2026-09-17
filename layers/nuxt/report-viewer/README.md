@@ -107,7 +107,23 @@ and actions outside the report.
 
 The layer renders the report and nothing around it. Site chrome — the header,
 the footer, and any brand or legal links — belongs to the host, which already
-has the navigation, routing, and legal context the report does not.
+has the navigation, routing, and legal context the report does not. The report's
+sidebar holds search, Vocabulary and sections, with Overview as the way home.
+The working view's header serves as its navbar: the heading shares it with
+coverage, report schema version and generation date, above a bottom divider. Status wraps onto a second line on narrow screens.
+Hosts can supply `sidebar-header` and `sidebar-footer` slots for branding and
+utilities; both also appear in the mobile navigation drawer. The bundled local
+viewer places its version beside the brand in the sidebar header, with docs,
+GitHub, color mode and the theme lab toggle in the sidebar footer. There is no
+separate host navbar; the theme lab bar appears above the report only when
+opened. Desktop navigation uses Nuxt UI's
+`DashboardSidebar` and `DashboardSidebarCollapse`, expanding to 288px or
+collapsing to a 64px icon rail. The choice is saved in a cookie. Navigation and
+utility icons keep accessible labels and tooltips; the mobile drawer always
+shows the full menu. Collapsing keeps the current reading and its state.
+Collapsed navigation and utility icons use 17px glyphs with 32px-high targets.
+The `sidebar-header`, `sidebar-footer` and `navigation` slots receive
+`{ collapsed }`, so host branding and utilities can follow the rail's width.
 
 Extend the layer from a Nuxt application:
 
@@ -293,8 +309,8 @@ See [third-party notices](THIRD_PARTY.md).
 
 The Product Report needs a bounded viewport. By default it fills the browser
 height. A host with persistent chrome can set `--businesslens-report-chrome`
-to the chrome height. The bundled local viewer sets it to `4rem` for its
-header.
+to the chrome height. The bundled local viewer fills a bounded flex viewport,
+with only the optional theme lab bar above it.
 
 The report viewer extends the stable BusinessLens theme because the Product
 Report is the canonical BusinessLens report experience. The theme remains a
@@ -329,3 +345,5 @@ counts, previews, browser history and scrolling tabs on desktop and narrow scree
 `node scripts/check-report-navigation.mjs <url>` covers the collections, trees,
 filters and named-view exits. Set `BLR_NAV_SCREENSHOTS` to a directory outside
 the Product Model to save layout captures.
+`node scripts/check-report-sidebar.mjs <url>` checks desktop collapse, keyboard
+access, tooltips, saved state, utilities and the independent mobile drawer.

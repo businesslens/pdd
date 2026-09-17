@@ -83,6 +83,8 @@ export default defineNuxtConfig({
         'lucide:mouse-pointer-click',
         'lucide:network',
         'lucide:panel-right-open',
+        'lucide:panel-left-open',
+        'lucide:panel-left-close',
         'lucide:plug',
         'lucide:plus',
         'lucide:route',

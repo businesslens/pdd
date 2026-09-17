@@ -10,18 +10,23 @@
  * light and dark twins and hiding one with CSS downloads both 111 KB
  * wordmarks on every page.
  */
-withDefaults(defineProps<{
+const props = withDefaults(defineProps<{
   /** Drop the wordmark on narrow viewports, keeping the mark as the home link. */
   compactOnMobile?: boolean
+  /** Scale the lockup proportionally to fit its host. */
+  wordmarkHeight?: number
+  /** Keep just the mark in a collapsed navigation rail. */
+  markOnly?: boolean
 }>(), {
-  compactOnMobile: false
+  compactOnMobile: false,
+  wordmarkHeight: 26,
+  markOnly: false
 })
 
 const BRAND_BASE = '/brand/logo'
 
 /* Stamp geometry: the wordmark sets the scale and the mark rides slightly
    taller than the caps so the two optically align. */
-const WORDMARK_HEIGHT = 26
 const MARK_SCALE = 1.31
 const GAP_RATIO = 0.25
 
@@ -31,11 +36,11 @@ const suffix = computed(() => colorMode.value === 'dark' ? '-dark' : '')
 const markSrc = computed(() => `${BRAND_BASE}/mark${suffix.value}.svg`)
 const wordmarkSrc = computed(() => `${BRAND_BASE}/wordmark${suffix.value}.svg`)
 
-const metrics = {
-  gap: `${Math.round(WORDMARK_HEIGHT * GAP_RATIO)}px`,
-  markHeight: `${Math.round(WORDMARK_HEIGHT * MARK_SCALE)}px`,
-  wordmarkHeight: `${WORDMARK_HEIGHT}px`
-}
+const metrics = computed(() => ({
+  gap: `${Math.round(props.wordmarkHeight * GAP_RATIO)}px`,
+  markHeight: `${Math.round(props.wordmarkHeight * MARK_SCALE)}px`,
+  wordmarkHeight: `${props.wordmarkHeight}px`
+}))
 </script>
 
 <template>
@@ -48,6 +53,7 @@ const metrics = {
       class="w-auto shrink-0 object-contain"
     >
     <span
+      v-if="!markOnly"
       data-logo-wordmark
       :class="compactOnMobile ? 'hidden min-[400px]:contents' : 'contents'"
     >

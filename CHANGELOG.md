@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Collapse the desktop sidebar to an icon rail and keep that choice between visits.
+
+- Move navigation and viewer controls into the sidebar, with report status in the page header.
+
 ## [0.17.0] - 2026-09-16
 
 - Select lifecycle states by clicking anywhere on their cards, with consistent highlighting.

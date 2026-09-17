@@ -194,7 +194,19 @@ costed already.
 - **Every surface names itself, with the name the reader clicked.** The main
   H1 keeps the working view and its count or Product qualifier. A resource
   slideover names its resource and type, with actual ownership shown separately
-  from the return trail. Report identity and the way home stay in the header.
+  from the return trail. The working view's header is the report's navbar:
+  its heading, coverage, report schema version and date sit above a bottom
+  divider, with more space before the reading than below the heading. Status
+  wraps below the heading on narrow screens. Overview in the sidebar is the
+  way home; there is no separate product home button.
+  The local viewer's package version sits beside its logo in the sidebar;
+  Documentation and other utilities stay below the navigation. The
+  experimentation bar remains above the report when opened.
+- **Desktop navigation can collapse to an icon rail.** Use Nuxt UI's
+  DashboardSidebar and collapse control, with cookie-persisted state and
+  NavigationMenu tooltips for icon-only navigation. Collapsing preserves the
+  current reading, filters, drawing and scroll. The mobile drawer always shows
+  full labels and does not change the desktop preference.
 - **Resources open in one complete slideover.** This supersedes the resource-page
   navigation rule. Opening a row, relation, search result or diagram resource
   preserves the underlying section, drawing, filters, expansion and viewport.
@@ -248,8 +260,9 @@ costed already.
   controls in a bottom sheet; its badge counts selected
   values, and individually removable chips remain above the reading. Rows/Graph
   stays beside Filters with the same icons. Page controls, filters and graph
-  buttons use Nuxt UI's `sm` size (28px) at every viewport width. The top navbar
-  retains its own sizing; report controls never override global UI defaults.
+  buttons use Nuxt UI's `sm` size (28px) at every viewport width. The
+  experimentation bar retains its own sizing; report controls never override
+  global UI defaults.
   Filter collapse follows the reading's available width. Report navigation
   sits beside the working view's heading.
 - **The surface names the resource type; the row does not repeat it**, a fact
