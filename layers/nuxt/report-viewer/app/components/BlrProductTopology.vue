@@ -160,7 +160,7 @@ function open(key: string) {
       </BlrFilterBar>
     </div>
     <div ref="pane" class="blr-topology-reading" @scroll.capture.passive="save">
-      <BlrTopologyMatrix :matrix="matrix" :column="reading.column" :mode="matrixMode" @column="update({ column: $event })" @open="open" />
+      <BlrTopologyMatrix :workspace="workspace" :matrix="matrix" :column="reading.column" :mode="matrixMode" @column="update({ column: $event })" @open="open" />
     </div>
   </div>
 </template>

@@ -13,9 +13,12 @@ const props = defineProps<{
   workspace: ReportWorkspace
   context: ContextView | ResolvedContextView
   compact?: boolean
+  /** Omit the Interface when the surrounding view already names it. */
+  hideInterface?: boolean
 }>()
 
 const emit = defineEmits<{ select: [resource: AnyResourceView] }>()
+const showInterface = computed(() => !props.hideInterface || (!props.context.experienceId && !props.context.screenId))
 
 const productInterface = computed(() => {
   const resource = resolveResource(props.workspace, 'interface', props.context.interfaceId)
@@ -35,8 +38,8 @@ function select(kind: 'interface' | 'experience' | 'screen', id: string) {
     size="sm"
     class="max-w-full justify-start overflow-hidden whitespace-nowrap"
   >
-    <BlrInterfaceType v-if="productInterface" :type="productInterface.interfaceType" size="xs" />
-    <UTooltip :text="context.interfaceTitle" :delay-duration="150">
+    <BlrInterfaceType v-if="showInterface && productInterface" :type="productInterface.interfaceType" size="xs" />
+    <UTooltip v-if="showInterface" :text="context.interfaceTitle" :delay-duration="150">
       <BlrResourceLink
         :resource-key="`interface:${context.interfaceId}`"
         class="min-w-0 shrink truncate text-start text-default underline decoration-dotted underline-offset-2 hover:text-highlighted"
@@ -48,7 +51,7 @@ function select(kind: 'interface' | 'experience' | 'screen', id: string) {
     </UTooltip>
 
     <template v-if="context.experienceId">
-      <UIcon name="i-lucide-chevron-right" class="size-3 shrink-0 text-dimmed" />
+      <UIcon v-if="showInterface" name="i-lucide-chevron-right" class="size-3 shrink-0 text-dimmed" />
       <BlrKind kind="experience" :labelled="false" size="xs" class="shrink-0" />
       <UTooltip :text="context.experienceTitle" :delay-duration="150">
         <BlrResourceLink
@@ -63,7 +66,7 @@ function select(kind: 'interface' | 'experience' | 'screen', id: string) {
     </template>
 
     <template v-if="context.screenId">
-      <UIcon name="i-lucide-chevron-right" class="size-3 shrink-0 text-dimmed" />
+      <UIcon v-if="showInterface || context.experienceId" name="i-lucide-chevron-right" class="size-3 shrink-0 text-dimmed" />
       <BlrKind kind="screen" :labelled="false" size="xs" class="shrink-0" />
       <UTooltip :text="context.screenTitle" :delay-duration="150">
         <BlrResourceLink

@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type { TopologyMatrix } from '../utils/topologyProjections'
-import { ENTITY_KIND_META, entityFacetOf } from '../utils/reportWorkspace'
+import { ENTITY_KIND_META, entityFacetOf, type ReportWorkspace } from '../utils/reportWorkspace'
 import { matrixColumnWindow } from '../utils/matrixColumnWindow'
-const props = defineProps<{ matrix: TopologyMatrix, column: string | null, mode: 'rules' | 'mutations' | 'delivery' }>()
+const props = defineProps<{ workspace: ReportWorkspace, matrix: TopologyMatrix, column: string | null, mode: 'rules' | 'mutations' | 'delivery' }>()
 
 /* Every matrix answers "which of these, against which of those". State each
    reading's nouns and empty-state message once. */
@@ -10,20 +10,17 @@ const words = computed(() => ({
   rules: {
     row: 'Business Rule',
     column: 'Target',
-    empty: 'No direct Rule attachments in this scope.',
-    evidence: ['supporting Scenario', 'supporting Scenarios']
+    empty: 'No direct Rule attachments in this scope.'
   },
   mutations: {
     row: 'Entity',
     column: 'Capability',
-    empty: 'No modeled mutations in this scope.',
-    evidence: ['supporting Scenario', 'supporting Scenarios']
+    empty: 'No modeled mutations in this scope.'
   },
   delivery: {
     row: 'Capability',
     column: 'Interface',
-    empty: 'No modeled delivery in this scope.',
-    evidence: ['route', 'routes']
+    empty: 'No modeled delivery in this scope.'
   }
 }[props.mode]))
 const emit = defineEmits<{ open: [key: string], column: [key: string] }>()
@@ -203,18 +200,9 @@ watch([matrixViewport, navigation], ([viewport], _, onCleanup) => {
                     :mutation="mutation" :entity-title="row.title" :entity-facet="entityFacetOf(row)" :capability-title="column.title"
                     :view-key="`${window.offset}:${window.columnWidth}`" @open="emit('open', $event)" />
                 </template>
-                <template v-else><span v-for="label in cellAt(row.key, column.key)!.labels" :key="label" :data-effect="label">{{ label }}</span></template>
+                <BlrRelationshipBadges v-else :workspace="workspace" :cell="cellAt(row.key, column.key)!" :row="row" :column="column" :mode="mode"
+                  :view-key="`${window.offset}:${window.columnWidth}`" @open="emit('open', $event)" />
               </div>
-              <details v-if="cellAt(row.key, column.key)!.attachments?.some(attachment => attachment.details.length || attachment.contexts.length)"><summary>Attachment details</summary>
-                <div v-for="attachment in cellAt(row.key, column.key)!.attachments" :key="attachment.id" class="blr-matrix-detail">
-                  <p>{{ attachment.label }}<template v-for="detail in attachment.details" :key="detail"> · {{ detail }}</template></p>
-                  <template v-if="attachment.contexts.length"><span>Only in</span><BlrTopologyResource v-for="context in attachment.contexts" :key="context.key" :resource="context" @open="emit('open', $event)" /></template>
-                </div>
-              </details>
-              <details v-if="mode !== 'mutations' && cellAt(row.key, column.key)!.evidence.length"><summary>{{ cellAt(row.key, column.key)!.evidence.length }} {{ cellAt(row.key, column.key)!.evidence.length === 1 ? words.evidence[0] : words.evidence[1] }}</summary>
-                <p v-for="detail in cellAt(row.key, column.key)!.details" :key="detail">{{ detail }}</p>
-                <BlrTopologyResource v-for="evidence in cellAt(row.key, column.key)!.evidence" :key="evidence.key" :resource="evidence" @open="emit('open', $event)" />
-              </details>
             </template><span v-else aria-label="No modeled relation" class="text-dimmed">—</span>
           </td>
         </tr></tbody>

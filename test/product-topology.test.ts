@@ -8,6 +8,7 @@ const utility = (name: string) => import(`../layers/nuxt/report-viewer/app/utils
 const { projectReportWorkspace } = await utility('reportWorkspace')
 const projections = await utility('topologyProjections')
 const { ruleAttachments } = await utility('topologyTargets')
+const { relationshipBadges } = await utility('matrixBadges')
 const { topologyRelations } = await utility('topologyRelations')
 const state = await utility('topologyState')
 const { PRODUCT_TOPOLOGY_VIEWS } = await utility('productTopologyViews')
@@ -175,6 +176,42 @@ describe('named topology semantics', () => {
     const screens = flatten(projections.interfaceProjection(workspaceOf())).filter(item => item.resource?.kind === 'screen')
     expect(screens.length).toBe(workspaceOf().screens.length)
     expect(new Set(screens.map(item => item.resource.key)).size).toBe(screens.length)
+  })
+
+  it('keeps delivery popovers tied to their own route kind within a mixed cell', () => {
+    const workspace = workspaceOf(shopRoot)
+    const screen = workspace.screens[0]
+    const experience = workspace.experiences[0]
+    const cell = { id: 'mixed', row: workspace.capabilities[0].key, column: workspace.interfaces[0].key,
+      labels: ['in experience', 'on screen'], evidence: [experience, screen], details: [] }
+    const badges = relationshipBadges(cell, 'delivery')
+    expect(badges.map((badge: any) => [badge.label, badge.routes.map((route: any) => route.key)])).toEqual([
+      ['in experience', [experience.key]], ['on screen', [screen.key]]
+    ])
+    const direct = relationshipBadges({ ...cell, labels: ['direct', 'in experience'], evidence: [experience] }, 'delivery')
+    expect(direct[0].routes).toEqual([])
+    expect(direct[1].routes).toEqual([experience])
+  })
+
+  it('keeps each attachment badge tied to all of its own selectors and scopes', () => {
+    const report = reportOf(shopRoot)
+    const placeId = report.model.screens[0]!.id
+    const entity = { type: 'entity' as const, entityId: 'order', effect: 'changes' as const, from: null, to: null, facts: [], contexts: [] }
+    report.model.businessRules.push({ ...report.model.businessRules[0]!, id: 'badge-scopes', appliesTo: [
+      { ...entity, from: 'Pending', to: 'Confirmed', contexts: [{ placeId }] },
+      { ...entity, to: 'Cancelled' },
+      { ...entity, effect: 'creates', to: 'Pending' },
+      { ...entity, effect: null, facts: ['Total charged'] }
+    ] })
+    const workspace = projectReportWorkspace(report)
+    const cell = projections.ruleAttachmentsProjection(workspace).cells.find((cell: any) => cell.row === 'rule:badge-scopes')
+    const badges = relationshipBadges(cell, 'rules')
+    expect(badges.map((badge: any) => badge.label)).toEqual(['changes', 'creates', 'attached'])
+    expect(badges[0].attachments.map((attachment: any) => attachment.target.to)).toEqual(['Confirmed', 'Cancelled'])
+    expect(badges[0].attachments[0].contexts.map((context: any) => context.id)).toEqual([placeId])
+    expect(badges[0].attachments[1].contexts).toEqual([])
+    expect(badges[1].attachments.map((attachment: any) => attachment.target.to)).toEqual(['Pending'])
+    expect(badges[2].attachments[0].target.facts).toEqual(['Total charged'])
   })
 
   it('preserves all direct typed Rule selectors, including scoped Entity and Context targets', () => {
