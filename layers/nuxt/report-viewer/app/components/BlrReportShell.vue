@@ -348,7 +348,7 @@ const surfaceHeading = computed(() => {
 })
 
 const surfaceDocs = computed(() => docsForResourceKind(activeKind.value))
-const matrixLegendTarget = `blr-matrix-legend-${useId()}`
+const matrixView = useBlrMatrixView(() => props.workspace, topology)
 
 /**
  * Tabs belong to the Overview and to resource pages, where they change which
@@ -615,7 +615,9 @@ const orphanScenarios = computed(() => props.workspace.scenarios
             <BlrTerm v-if="surfaceHeading.term" :slug="surfaceHeading.term" :text="surfaceHeading.termText" icon-only />
           </h1>
           <div class="ms-auto flex max-w-full shrink-0 flex-wrap items-center gap-1.5">
-            <div v-if="matrixSection" :id="matrixLegendTarget" class="min-w-0 max-w-full" data-matrix-legend-target />
+            <div v-if="matrixSection" class="min-w-0 max-w-full" data-matrix-legend-target>
+              <BlrMatrixLegend :matrix="matrixView.matrix" :mode="matrixView.mode" />
+            </div>
             <UTooltip v-else :text="surfaceDocs.label">
               <UButton
                 :to="surfaceDocs.url"
@@ -894,7 +896,7 @@ const orphanScenarios = computed(() => props.workspace.scenarios
         <div v-else class="min-h-0 flex-1">
           <BlrProductTopology
             :workspace="workspace"
-            :legend-target="`#${matrixLegendTarget}`"
+            :matrix-view="matrixView"
             v-model:reading="topology"
             @select="openResourcePage"
           />

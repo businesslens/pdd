@@ -10,6 +10,8 @@ export function matrixColumnWindow(width: number, count: number, anchor: number)
   const columnWidth = available / capacity
   return {
     capacity,
+    renderStart: Math.max(0, start - 1),
+    renderEnd: Math.min(count, start + capacity + 1),
     start,
     end: Math.min(count, start + capacity),
     previous: start > 0 ? start - 1 : null,

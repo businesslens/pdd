@@ -55,7 +55,10 @@
 .blr-topology-neighbourhood { margin-top: 24px; }
 .blr-topology-neighbourhood li { display: flex; align-items: start; flex-wrap: wrap; gap: 8px; padding: 10px 0; border-bottom: 1px solid var(--ui-border); }
 .blr-topology-neighbourhood li > span { font-size: 12px; color: var(--ui-text-muted); padding-top: 2px; }
-.blr-topology-matrix { position: relative; }
+@property --blr-matrix-offset { syntax: '<length>'; inherits: true; initial-value: 0px; }
+.blr-topology-matrix { position: relative; transition: none; }
+.blr-topology-matrix[data-column-motion='true'] { transition: --blr-matrix-offset 180ms ease-out; }
+@media (prefers-reduced-motion: reduce) { .blr-topology-matrix[data-column-motion='true'] { transition: none; } }
 .blr-matrix-navigation { position: sticky; top: 0; z-index: 4; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 8px; min-height: 36px; padding-bottom: 8px; }
 .blr-topology-matrix[data-edge-handles='true'] .blr-matrix-navigation { display: flex; justify-content: center; }
 .blr-matrix-range { font-size: 13px; font-weight: 600; color: var(--ui-text); text-align: center; white-space: nowrap; font-variant-numeric: tabular-nums; }
@@ -67,13 +70,15 @@
 .blr-matrix-edge-handles > button { position: absolute; top: var(--blr-matrix-handle-top, 200px); transform: translateY(-50%); height: 64px; width: 28px; padding: 0; justify-content: center; border-radius: 999px; pointer-events: auto; }
 .blr-matrix-left-handle { inset-inline-start: calc(196px + 1px - 14px); }
 .blr-matrix-right-handle { inset-inline-end: -14px; }
-/* Clip sideways without creating another scrolling container: sticky headers
-   follow the page, and every cell stays mounted to preserve row heights/details. */
+/* Clip sideways without another scrolling container. Only the visible body
+   columns and their neighbours are mounted; the fixed subject stays in place. */
 .blr-matrix-viewport { overflow: clip; border: 1px solid var(--ui-border); border-radius: 10px; touch-action: pan-y pinch-zoom; }
 .blr-matrix-viewport:focus-visible { outline: 2px solid var(--ui-primary); outline-offset: 3px; }
 .blr-topology-matrix table { table-layout: fixed; border-collapse: separate; border-spacing: 0; width: var(--blr-matrix-table-width); transform: translateX(calc(-1 * var(--blr-matrix-offset))); font-size: 14px; }
 .blr-topology-matrix th, .blr-topology-matrix td { min-width: 0; padding: 14px; border-top: 1px solid var(--ui-border); border-inline-end: 1px solid var(--ui-border); vertical-align: top; text-align: start; overflow-wrap: anywhere; }
-.blr-matrix-column-hidden { visibility: hidden; }
+/* The inherited animated offset clips columns before they reach the translucent corner. */
+.blr-matrix-column { clip-path: inset(0 0 0 max(0px, calc(var(--blr-matrix-offset) - var(--blr-matrix-column-index) * var(--blr-matrix-column-width)))); }
+.blr-topology-matrix td.blr-matrix-spacer { padding: 0; border: 0; visibility: hidden; }
 .blr-topology-matrix tbody th, .blr-topology-matrix td { background: var(--ui-bg); }
 .blr-topology-matrix th { font-weight: 600; }
 /* Keep the subject column the same width even when few comparison columns fill the table. */

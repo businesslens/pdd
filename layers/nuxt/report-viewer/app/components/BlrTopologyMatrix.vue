@@ -30,41 +30,39 @@ const window = computed(() => matrixColumnWindow(width.value, props.matrix.colum
   props.matrix.columns.findIndex(item => item.key === props.column)))
 const paged = computed(() => props.matrix.columns.length > window.value.capacity)
 const handles = computed(() => paged.value && width.value >= 600)
-const offset = ref(window.value.offset)
-const visibleStart = computed(() => Math.floor(offset.value / window.value.columnWidth + 0.00001))
-const visibleEnd = computed(() => Math.min(props.matrix.columns.length, Math.ceil(offset.value / window.value.columnWidth + window.value.capacity - 0.00001)))
-const columnVisible = (index: number) => index >= visibleStart.value && index < visibleEnd.value
-// Moving columns must never paint through the translucent, fixed corner cell.
-const columnStyle = (index: number) => ({ clipPath: `inset(0 0 0 ${Math.max(0, offset.value - index * window.value.columnWidth)}px)` })
+const columns = computed(() => props.matrix.columns.slice(window.value.renderStart, window.value.renderEnd)
+  .map((resource, index) => ({ resource, index: window.value.renderStart + index })))
+const columnVisible = (index: number) => index >= window.value.start && index < window.value.end
+const columnStyle = (index: number) => ({ '--blr-matrix-column-index': index })
 const matrixStyle = computed(() => ({
-  '--blr-matrix-offset': `${offset.value}px`,
+  '--blr-matrix-offset': `${window.value.offset}px`,
+  '--blr-matrix-column-width': `${window.value.columnWidth}px`,
   '--blr-matrix-table-width': `${window.value.tableWidth}px`
 }))
 const cells = computed(() => new Map(props.matrix.cells.map(cell => [JSON.stringify([cell.row, cell.column]), cell])))
 const cellAt = (row: string, column: string) => cells.value.get(JSON.stringify([row, column]))
 
-let animation = 0
-function stopMotion() {
-  cancelAnimationFrame(animation)
+// CSS animates the shared offset. Vue patches only the new window, never every
+// cell on every frame. One buffered column on either side covers a single step.
+const moving = ref(false)
+let motionTimer: ReturnType<typeof setTimeout> | undefined
+function retainRowHeights(reset = false) {
+  const rows = [...(matrixViewport.value?.querySelectorAll<HTMLTableRowElement>('tbody tr') ?? [])]
+  const heights = reset ? [] : rows.map(row => row.getBoundingClientRect().height)
+  rows.forEach((row, index) => { row.style.height = reset ? '' : `${heights[index]}px` })
 }
-function animateTo(target: number, animate = true) {
-  stopMotion()
-  if (!animate || matchMedia('(prefers-reduced-motion: reduce)').matches) { offset.value = target; return }
-  const from = offset.value
-  const start = performance.now()
-  function frame(now: number) {
-    const progress = Math.min(1, (now - start) / 180)
-    offset.value = from + (target - from) * (1 - (1 - progress) ** 3)
-    if (progress < 1) animation = requestAnimationFrame(frame)
-  }
-  animation = requestAnimationFrame(frame)
-}
-watch([() => window.value.offset, () => window.value.columnWidth],
-  ([next, size], [, oldSize]) => {
-    animateTo(next, size === oldSize)
+watch([() => window.value.offset, () => window.value.columnWidth, () => props.mode],
+  ([next, size, mode], [previous, oldSize, oldMode]) => {
+    retainRowHeights(size !== oldSize || mode !== oldMode)
+    const singleStep = Math.abs(Math.abs(next - previous) - size) < 0.5
+    moving.value = import.meta.client && !moving.value && singleStep && size === oldSize && mode === oldMode
+      && !matchMedia('(prefers-reduced-motion: reduce)').matches
+    clearTimeout(motionTimer)
+    if (moving.value) motionTimer = setTimeout(() => { moving.value = false }, 200)
     void nextTick(clipScrollContent)
   })
-onBeforeUnmount(stopMotion)
+watch(() => props.matrix, () => { retainRowHeights(true); void nextTick(clipScrollContent) })
+onBeforeUnmount(() => clearTimeout(motionTimer))
 
 function move(index: number | null) {
   const column = index === null ? undefined : props.matrix.columns[index]
@@ -159,7 +157,7 @@ watch([matrixViewport, navigation], ([viewport], _, onCleanup) => {
 }, { flush: 'post' })
 </script>
 <template>
-  <div ref="element" class="blr-topology-matrix" :data-edge-handles="handles" :style="matrixStyle">
+  <div ref="element" class="blr-topology-matrix" :data-edge-handles="handles" :data-column-motion="moving" :style="matrixStyle">
     <div v-if="paged" ref="navigation" class="blr-matrix-navigation" role="group" aria-label="Column navigation">
       <UButton v-if="!handles" icon="i-lucide-chevron-left" color="neutral" variant="outline" size="sm" aria-label="Previous columns" title="Previous columns" :aria-controls="tableId" :disabled="window.previous === null" @click="move(window.previous)" />
       <span class="blr-matrix-range" role="status" aria-live="polite" aria-atomic="true">Columns {{ window.start + 1 }}–{{ window.end }} of {{ matrix.columns.length }}</span>
@@ -185,14 +183,15 @@ watch([matrixViewport, navigation], ([viewport], _, onCleanup) => {
               <span class="blr-matrix-axis-column" aria-hidden="true">{{ words.column }}</span>
               <span class="blr-matrix-axis-row" aria-hidden="true">{{ words.row }}</span>
             </th>
-            <th v-for="(item, index) in matrix.columns" :key="item.key" scope="col" class="bg-elevated/20" :class="{ 'blr-matrix-column-hidden': !columnVisible(index) }" :style="columnStyle(index)" :inert="!columnVisible(index)" :aria-hidden="!columnVisible(index) || undefined" :aria-colindex="index + 2">
+            <th v-for="(item, index) in matrix.columns" :key="item.key" scope="col" class="blr-matrix-column bg-elevated/20" :style="columnStyle(index)" :inert="!columnVisible(index)" :aria-hidden="!columnVisible(index) || undefined" :aria-colindex="index + 2">
               <span v-if="mode === 'rules'" class="blr-matrix-kind">{{ ENTITY_KIND_META[item.kind].label }}</span>
               <BlrTopologyResource :resource="item" @open="emit('open', $event)" />
             </th>
           </tr>
         </thead>
         <tbody><tr v-for="row in matrix.rows" :key="row.key"><th scope="row"><BlrTopologyResource :resource="row" @open="emit('open', $event)" /></th>
-          <td v-for="(column, index) in matrix.columns" :key="column.key" :data-cell="`${row.key}->${column.key}`" :class="{ 'blr-matrix-column-hidden': !columnVisible(index) }" :style="columnStyle(index)" :inert="!columnVisible(index)" :aria-hidden="!columnVisible(index) || undefined" :aria-colindex="index + 2">
+          <td v-if="window.renderStart" :colspan="window.renderStart" class="blr-matrix-spacer" aria-hidden="true" inert />
+          <td v-for="{ resource: column, index } in columns" :key="column.key" :data-cell="`${row.key}->${column.key}`" class="blr-matrix-column" :style="columnStyle(index)" :inert="!columnVisible(index)" :aria-hidden="!columnVisible(index) || undefined" :aria-colindex="index + 2">
             <template v-if="cellAt(row.key, column.key)">
               <div class="blr-matrix-effects">
                 <template v-if="mode === 'mutations'">
@@ -205,6 +204,7 @@ watch([matrixViewport, navigation], ([viewport], _, onCleanup) => {
               </div>
             </template><span v-else aria-label="No modeled relation" class="text-dimmed">—</span>
           </td>
+          <td v-if="window.renderEnd < matrix.columns.length" :colspan="matrix.columns.length - window.renderEnd" class="blr-matrix-spacer" aria-hidden="true" inert />
         </tr></tbody>
       </table>
     </div>

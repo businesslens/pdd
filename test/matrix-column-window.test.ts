@@ -34,6 +34,25 @@ describe('matrix column navigation', () => {
     expect(reverse).toEqual([...starts].reverse())
   })
 
+  it('bounds mounted body columns to the visible window and one neighbour per side', () => {
+    for (const count of [1, 9, 200]) for (const width of [390, 1100, 1640]) {
+      for (let anchor = 0; anchor < count; anchor++) {
+        const page = matrixColumnWindow(width, count, anchor)
+        expect(page.renderStart).toBeGreaterThanOrEqual(0)
+        expect(page.renderStart).toBeLessThanOrEqual(page.start)
+        expect(page.renderEnd).toBeGreaterThanOrEqual(page.end)
+        expect(page.renderEnd).toBeLessThanOrEqual(count)
+        expect(page.renderEnd - page.renderStart).toBeLessThanOrEqual(page.capacity + 2)
+        for (const adjacent of [page.previous, page.next]) {
+          if (adjacent === null) continue
+          const neighbour = matrixColumnWindow(width, count, adjacent)
+          expect(page.renderStart).toBeLessThanOrEqual(neighbour.start)
+          expect(page.renderEnd).toBeGreaterThanOrEqual(neighbour.end)
+        }
+      }
+    }
+  })
+
   it('clamps removed or resized anchors and disables navigation when everything fits', () => {
     expect(matrixColumnWindow(1000, 0, -1)).toMatchObject({ start: 0, end: 0, previous: null, next: null })
     expect(matrixColumnWindow(1000, 3, 2)).toMatchObject({ start: 0, end: 3, previous: null, next: null })

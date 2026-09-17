@@ -1,10 +1,13 @@
 import { join } from 'node:path'
+import { shallowRef } from 'vue'
 import { describe, expect, it } from 'vitest'
 import { compileReport } from '../src/commands/export.js'
 import { loadModel } from '../src/core/model.js'
 
 // Renderer utilities use Nuxt's bundler resolution, not root NodeNext imports.
 const utility = (name: string) => import(`../layers/nuxt/report-viewer/app/utils/${name}.ts`)
+const matrixViewModule = '../layers/nuxt/report-viewer/app/composables/useBlrMatrixView.ts'
+const { useBlrMatrixView } = await import(matrixViewModule)
 const { projectReportWorkspace } = await utility('reportWorkspace')
 const projections = await utility('topologyProjections')
 const { ruleAttachments } = await utility('topologyTargets')
@@ -20,6 +23,29 @@ const workspaceOf = (root = teachingRoot) => projectReportWorkspace(reportOf(roo
 const flatten = (branches: any[]): any[] => branches.flatMap(item => [item, ...flatten(item.children)])
 
 describe('named topology semantics', () => {
+  it('shares a stable matrix through column navigation while reacting to scope and report changes', () => {
+    const workspace = shallowRef(workspaceOf(shopRoot))
+    const reading = shallowRef({ ...state.defaultTopologyReading(), view: 'what-changes-what' })
+    const view = useBlrMatrixView(workspace, reading)
+    const original = view.value
+    expect(original.mode).toBe('mutations')
+    expect(original.matrix.columns.length).toBeGreaterThan(0)
+    reading.value = { ...reading.value, column: original.matrix.columns.at(-1).key, focus: [], hiddenKinds: [] }
+    expect(view.value).toBe(original)
+    const focused = original.matrix.rows[0].key
+    reading.value = { ...reading.value, focus: [focused] }
+    expect(view.value.matrix.rows.map((row: any) => row.key)).toEqual([focused])
+    reading.value = { ...reading.value, hiddenKinds: ['entity'] }
+    expect(view.value.matrix.cells).toEqual([])
+    reading.value = { ...reading.value, view: 'delivery-by-interface', hiddenKinds: [], focus: [] }
+    expect(view.value.mode).toBe('delivery')
+    expect(view.value.matrix.columns.every((column: any) => column.kind === 'interface')).toBe(true)
+    const previous = view.value
+    workspace.value = workspaceOf(teachingRoot)
+    expect(view.value).not.toBe(previous)
+    expect(view.value.matrix.rows.length).toBeGreaterThan(0)
+  })
+
   it('keeps nine questions with explicit diagram types and stable view IDs', () => {
     expect(PRODUCT_TOPOLOGY_VIEWS.map((view: any) => view.id)).toEqual(['domain-reach', 'capability-reach', 'journey-reach', 'rule-reach', 'sitemap', 'what-it-keeps', 'delivery-by-interface', 'rule-attachments', 'what-changes-what'])
     expect(PRODUCT_TOPOLOGY_VIEWS.every((view: any) => view.question.endsWith('?') && view.diagramType && view.note)).toBe(true)

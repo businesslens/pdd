@@ -12,30 +12,15 @@ import { ENTITY_KIND_META, entityFacetOf } from '../utils/reportWorkspace'
 import { findProductTopologyView } from '../utils/productTopologyViews'
 import type { TopologyReading } from '../utils/topologyState'
 import { defaultTopologyReading, sanitizeTopologyReading } from '../utils/topologyState'
-import { deliveryMatrixProjection, mutationProjection, ruleAttachmentsProjection } from '../utils/topologyProjections'
-import { topologyNeighbourhood } from '../utils/topologyFocus'
-import type { TopologyMatrix } from '../utils/topologyProjections'
+import type { MatrixView } from '../composables/useBlrMatrixView'
 
-const props = defineProps<{ workspace: ReportWorkspace, legendTarget?: string }>()
+const props = defineProps<{ workspace: ReportWorkspace, matrixView?: MatrixView }>()
 const emit = defineEmits<{ select: [resource: AnyResourceView] }>()
 const reading = defineModel<TopologyReading>('reading', { default: defaultTopologyReading })
 const view = computed(() => findProductTopologyView(reading.value.view))
-const neighbourhood = computed(() => topologyNeighbourhood(props.workspace, reading.value.focus))
-const visible = (resource: AnyResourceView) => !reading.value.hiddenKinds.includes(resource.kind) && (!neighbourhood.value || neighbourhood.value.has(resource.key))
-const matrixMode = computed(() => view.value.id === 'rule-attachments' ? 'rules' as const
-  : view.value.id === 'delivery-by-interface' ? 'delivery' as const : 'mutations' as const)
-const matrix = computed<TopologyMatrix>(() => {
-  const base = view.value.id === 'rule-attachments' ? ruleAttachmentsProjection(props.workspace)
-    : view.value.id === 'delivery-by-interface' ? deliveryMatrixProjection(props.workspace)
-      : mutationProjection(props.workspace)
-  const selectedRows = base.rows.filter(item => reading.value.focus.includes(item.key))
-  const selectedColumns = base.columns.filter(item => reading.value.focus.includes(item.key))
-  const rows = base.rows.filter(item => visible(item) && (!selectedRows.length || selectedRows.includes(item)))
-  const columns = base.columns.filter(item => visible(item) && (!selectedColumns.length || selectedColumns.includes(item)))
-  const rowKeys = new Set(rows.map(row => row.key))
-  const columnKeys = new Set(columns.map(column => column.key))
-  return { rows, columns, cells: base.cells.filter(cell => rowKeys.has(cell.row) && columnKeys.has(cell.column)) }
-})
+const localMatrixView = useBlrMatrixView(() => props.workspace, reading)
+const matrix = computed(() => (props.matrixView ?? localMatrixView.value).matrix)
+const matrixMode = computed(() => (props.matrixView ?? localMatrixView.value).mode)
 const filterKinds = computed(() => view.value.kinds.filter(kind => kind !== 'product'
   && [...props.workspace.byKey.values()].some(item => item.kind === kind)))
 /* Every view offers its axes. A type control with one option is not an axis. */
@@ -158,11 +143,7 @@ function open(key: string) {
           </USelectMenu>
         </template>
       </BlrFilterBar>
-      <!-- Keep the legend bound to this filtered matrix while the shell places
-           it beside the working view's heading. Standalone readings keep it here. -->
-      <Teleport :to="legendTarget || 'body'" :disabled="!legendTarget" defer>
-        <BlrMatrixLegend :matrix="matrix" :mode="matrixMode" />
-      </Teleport>
+      <BlrMatrixLegend v-if="!matrixView" :matrix="matrix" :mode="matrixMode" />
     </div>
     <div ref="pane" class="blr-topology-reading" @scroll.capture.passive="save">
       <BlrTopologyMatrix :workspace="workspace" :matrix="matrix" :column="reading.column" :mode="matrixMode" @column="update({ column: $event })" @open="open" />

@@ -10,6 +10,7 @@ const props = defineProps<{
 }>()
 const emit = defineEmits<{ open: [key: string] }>()
 const open = ref(false)
+const trigger = useTemplateRef('trigger')
 let handingOffFocus = false
 
 watch(open, value => { if (value) handingOffFocus = false })
@@ -21,6 +22,8 @@ watch([() => props.viewKey, () => props.contentKey], () => {
 function follow(key: string) {
   handingOffFocus = true
   open.value = false
+  // The panel must remember the surviving badge, not a link that closes with this popover.
+  trigger.value?.focus({ preventScroll: true })
   emit('open', key)
 }
 function onCloseAutoFocus(event: Event) {
@@ -32,7 +35,7 @@ function onCloseAutoFocus(event: Event) {
   <UPopover v-model:open="open"
     :content="{ align: 'start', collisionPadding: 16, onCloseAutoFocus }"
     :ui="{ content: 'blr-matrix-popover' }">
-    <button type="button" class="blr-matrix-badge blr-matrix-tone" :data-effect="label" :data-tone="tone" :aria-label="accessibleLabel">
+    <button ref="trigger" type="button" class="blr-matrix-badge blr-matrix-tone" :data-effect="label" :data-tone="tone" :aria-label="accessibleLabel">
       {{ label }}<UIcon name="i-lucide-chevron-down" aria-hidden="true" />
     </button>
     <template #content>

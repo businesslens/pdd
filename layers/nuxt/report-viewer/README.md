@@ -208,7 +208,9 @@ Edge controls, horizontal trackpad gestures, and touch swipes move one column
 at a time beside a fixed subject column. The first visible column uses `tm`;
 moving between columns preserves vertical position and cell details. Each page
 header offers a Legend popover with the visible set’s badge colors and meanings,
-including columns outside the current window. A collection Graph
+including columns outside the current window. The header and reading share one
+projection and render together on the server. Body cells mount only for the
+visible columns and one neighbour on each side; the browser animates their offset. A collection Graph
 draws the facet-filtered set and honours `tf` as a neighbourhood; branch
 expansion uses `tx`/`tc`. Entity Lifecycle and resource Connections each keep
 their own tab and reading position, including after following a link and returning.
@@ -321,6 +323,10 @@ repository root. The publish workflow also runs
 `scripts/check-packed-diagrams.mjs` against built npm and pnpm consumers to check
 SSR, hydration, worker loading, multiple instances, and navigation from the
 actual packed layer.
+
+Run `node scripts/check-comparison-tables.mjs <CLI viewer URL>` against this
+repository's report or fixture-shop to check badge-to-panel keyboard focus,
+bounded cell rendering on a large matrix, column navigation and mobile resizing.
 
 ## Navigation regression checks
 
