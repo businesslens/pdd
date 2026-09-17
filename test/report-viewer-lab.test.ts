@@ -24,6 +24,12 @@ describe('private Product Report viewer lab', () => {
 
     expect(readme).toContain('The **Table navigation** audition is decided')
     expect(readme).toContain('The **Mutation popover** audition is decided')
+    expect(readme).toContain('The **Context sizing** audition is decided')
+    for (const name of ['BlrContextPlace', 'BlrContextLabRow', 'BlrContextLabDock']) {
+      expect(existsSync(join(lab, `app/components/${name}.vue`))).toBe(false)
+    }
+    expect(existsSync(join(lab, 'app/composables/useBlrContextLab.ts'))).toBe(false)
+    expect(existsSync(join(lab, 'app/assets/context-lab.css'))).toBe(false)
     for (const name of ['BlrScenarioStep', 'BlrStepGuidedReading', 'BlrStepReading', 'BlrStepEffectReading', 'BlrStepCardLabRow', 'BlrMatrixCornerLabRow', 'BlrControlSizeLabRow', 'BlrTopologyMatrix', 'BlrMatrixNavigationLabRow', 'BlrMatrixHandleLabRow', 'BlrMutationBadge', 'BlrMutationPopoverLabRow']) {
       expect(existsSync(join(lab, `app/components/${name}.vue`))).toBe(false)
     }
@@ -45,6 +51,7 @@ describe('private Product Report viewer lab', () => {
     const stable = readFileSync(join(root, 'layers/nuxt/report-viewer/app/components/BlrTopologyMatrix.vue'), 'utf8')
 
     expect(app).toContain('<BusinessLensThemeLabBar />')
+    expect(app).not.toContain('BlrContextLab')
     expect(app).not.toContain('BlrMutationPopoverLabRow')
     expect(app).not.toContain('useBlrMatrixNavigationLab')
     expect(app).not.toContain('BlrMatrixNavigationLabRow')

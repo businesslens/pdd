@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Context paths are easier to read in resource details and comparison popovers.
 - Compare delivery, What changes what, and Rule attachments now use list colors and omit introductory text and the "About this view" section.
 - Rule attachments includes every target and offers attachment details only when they add information.
 - What changes what lists Entities down the side and Capabilities across the top.

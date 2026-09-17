@@ -142,7 +142,7 @@
   background: color-mix(in srgb, var(--blr-badge-ink) 6%, var(--blr-badge-background));
   border-color: color-mix(in srgb, var(--blr-badge-ink) 25%, var(--blr-badge-outline));
 }
-.blr-matrix-popover { display: flex; flex-direction: column; width: 340px; max-width: calc(100vw - 32px); max-height: var(--reka-popover-content-available-height, 80vh); overflow: hidden; }
+.blr-matrix-popover { --blr-context-font: 12px; display: flex; flex-direction: column; width: 340px; max-width: calc(100vw - 32px); max-height: var(--reka-popover-content-available-height, 80vh); overflow: hidden; }
 .blr-matrix-popover-heading { display: flex; flex-shrink: 0; align-items: start; justify-content: space-between; gap: 12px; padding: 16px; border-bottom: 1px solid var(--ui-border); }
 .blr-matrix-popover-resource { display: flex; align-items: start; gap: 8px; min-width: 0; font-size: 14px; font-weight: 600; color: var(--ui-text-highlighted); }
 .blr-matrix-popover-resource > .blr-kind { flex-shrink: 0; margin-top: 2px; }

@@ -7,6 +7,13 @@ bundled local viewer. It has no package export and is excluded from published
 package files, so an audition cannot become part of the public renderer by
 accident.
 
+The **Context sizing** audition is decided: Roomier is the stable Context
+renderer, at 13 px in resource drilldowns and 12 px in the three comparison
+views' popovers. Icons scale with the text; the chosen border, spacing, path
+and resource navigation are preserved. The shadow, alternate sizes, selector,
+modal dock, cookie composable and experiment stylesheet have been removed.
+The background audition remains independently owned by `theme-lab`.
+
 The **Mutation badges** audition is decided: What changes what now uses soft
 green creates, gold changes with a clearer border, and Terracotta removals in
 light mode or Muted red in dark mode. The chosen styles live in the stable
