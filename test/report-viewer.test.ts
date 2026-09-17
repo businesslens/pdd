@@ -612,7 +612,7 @@ describe('stable Product Report', () => {
 
     /* A collection or relation heading means the Interface kind, not one
        concrete Interface, so its generic plug remains deliberately generic. */
-    expect(source('app/components/BlrRail.vue')).toContain(':name="meta.icon"')
+    expect(source('app/components/BlrRail.vue')).toContain('icon: meta.icon')
   })
 
   it('fits and pages an authored-order route window without empty columns', async () => {
@@ -807,19 +807,14 @@ describe('stable Product Report', () => {
     }
   })
 
-  /*
-    Embedded reports without a host-header target keep the bordered controls
-    that fit their report row. A host can instead move them into its header.
-  */
-  it('keeps the bordered Vocabulary control when the host has no tools target', () => {
+  it('keeps Search and Vocabulary visible in the sidebar at every width', () => {
     const tools = source('app/components/BlrReportTools.vue')
-    const shell = tools.slice(tools.indexOf('<template v-else>'))
-    const vocabulary = shell.indexOf('label="Vocabulary"')
-    const button = shell.lastIndexOf('<UButton', vocabulary)
+    const sidebar = tools.slice(tools.indexOf('<template v-else>'))
 
-    expect(vocabulary).toBeGreaterThan(-1)
-    expect(shell.slice(button, vocabulary)).toContain('variant="outline"')
-    expect(shell.slice(vocabulary, vocabulary + 200)).toContain('rounded-full')
+    expect(sidebar).toContain('aria-label="Search Product Model"')
+    expect(sidebar).toContain('label="Vocabulary"')
+    expect(sidebar).not.toContain('hidden')
+    expect(source('app/components/BlrReportSidebar.vue')).toContain('<BlrReportTools')
   })
 
   /*
@@ -998,7 +993,6 @@ describe('stable Product Report', () => {
        and the switch between drawings is at the bar's end, not a tab. */
     expect(toolbar).toBeGreaterThan(-1)
     expect(reportShell.indexOf('<BlrFilterBar', toolbar)).toBeLessThan(pane)
-    expect(reportShell.indexOf(':to="surfaceDocs.url"')).toBeLessThan(toolbar)
     expect(reportShell.indexOf('v-for="link in exits"')).toBeLessThan(toolbar)
     expect(reportShell.indexOf('data-drawing-switch', toolbar)).toBeLessThan(pane)
     /* Tabs stay on the Overview and on pages; a collection has none. */
@@ -1115,8 +1109,8 @@ describe('stable Product Report', () => {
     /* The rail changes the subject. A collection's Graph is reached inside it;
        a matrix compares two collections, so it is a rail row of its own. */
     expect(rail).toContain('view: [section: string]')
-    expect(rail).toContain('v-for="item in MATRIX_DESTINATIONS"')
-    expect(rail.indexOf('MATRIX_DESTINATIONS"')).toBeLessThan(rail.indexOf('v-for="meta in RAIL_KINDS"'))
+    expect(rail).toContain('MATRIX_DESTINATIONS.map')
+    expect(rail.indexOf('MATRIX_DESTINATIONS.map')).toBeLessThan(rail.indexOf('RAIL_KINDS.map'))
     expect(reportShell).not.toContain('SCENARIO_OF')
     expect(reportShell).not.toContain('parentTabs')
     expect(reportShell).not.toContain('class="blr-tab"')
@@ -1220,20 +1214,17 @@ describe('stable Product Report', () => {
     expect(host).toContain('v-model:tab="tab"')
   })
 
-  it('moves product identity into a desktop-equivalent mobile rail', () => {
+  it('uses the same sidebar and Overview navigation on desktop and mobile', () => {
     const reportShell = source('app/components/BlrReportShell.vue')
+    const sidebar = source('app/components/BlrReportSidebar.vue')
 
-    /* The way home is one affordance at both widths: the same house, the same
-       name, the same target. A mark that changes shape with the model — a logo
-       here, a glyph there — is two affordances wearing one slot, so a Product's
-       own logo is content and lives on the reading that names it. */
-    expect(reportShell.match(/i-lucide-house/g)).toHaveLength(2)
-    expect(reportShell.match(/title="Open the Overview"/g)).toHaveLength(2)
-    expect(reportShell).not.toContain('v-if="logoSrc"')
+    expect(reportShell.match(/<BlrReportSidebar/g)).toHaveLength(2)
+    expect(sidebar).not.toContain('data-report-home')
+    expect(source('app/components/BlrRail.vue')).toContain("emit('kind', 'product')")
+    expect(sidebar).not.toContain('v-if="logoSrc"')
     expect(source('app/components/BlrOverview.vue')).toContain('v-if="logoSrc"')
-    expect(reportShell).toContain(":ui=\"{ content: 'w-64 max-w-[85vw]', body: 'p-2' }\"")
-    expect(reportShell).toContain('class="blr-report-shell flex min-w-0 flex-1 items-center gap-3"')
-    expect(reportShell).toContain('class="blr-report-shell min-h-full"')
+    expect(reportShell).toContain(":ui=\"{ content: 'w-72 max-w-[90vw]' }\"")
+    expect(reportShell).toContain('class="blr-report-shell"')
   })
 })
 

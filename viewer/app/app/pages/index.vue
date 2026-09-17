@@ -89,9 +89,11 @@ const { section, resource, tab, resourceTab, scenarioRoute, routeColumns, topolo
         v-model:topology="topology"
         :report="data"
         :logo-src="logoSrc"
-        tools-target="#businesslens-report-tools"
         class="businesslens-local-report min-h-0 flex-1"
-      />
+      >
+        <template #sidebar-header="{ collapsed }"><LocalViewerBrand :collapsed="collapsed" /></template>
+        <template #sidebar-footer="{ collapsed }"><LocalViewerTools :collapsed="collapsed" /></template>
+      </BusinessLensReportViewer>
     </template>
   </div>
 </template>
