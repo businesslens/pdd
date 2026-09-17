@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import type { ProductReportV13 } from 'businesslens/report'
+import type { ProductReportV16 } from 'businesslens/report'
 
 const route = useRoute()
-const { section, resource, tab, resourceTab, scenarioRoute, routeColumns, topology } = useBlrReportNavigation({ sectionKey: route.query.catalog === '1' ? 'tab' : 's' })
+const { section, resource, tab, resourceTab, scenarioRoute, routeColumns, topology, coverage } = useBlrReportNavigation({ sectionKey: route.query.catalog === '1' ? 'tab' : 's' })
 
-const report: ProductReportV13 = {
-  schemaVersion: '13.0.0',
+const report: ProductReportV16 = {
+  schemaVersion: '16.0.0',
   id: 'packed-layer-smoke',
   title: 'Packed Layer Smoke Test',
   summary: 'Builds the public Nuxt layer from the packed businesslens artifact.',
@@ -71,10 +71,13 @@ const report: ProductReportV13 = {
   },
   coverage: {
     status: 'complete',
+    scope: 'The fixture Product.',
+    exclusions: [],
     method: ['Static packed-artifact smoke fixture.'],
     sourceAreas: [],
     unmapped: [],
     limitations: [],
+    review: null,
     rationale: 'The fixture exercises package resolution, not a Product claim.'
   }
 }
@@ -82,6 +85,6 @@ const report: ProductReportV13 = {
 
 <template>
   <div>
-    <BusinessLensReportViewer v-for="index in route.query.multi === '1' ? 2 : 1" :key="index" v-model:section="section" v-model:resource="resource" v-model:tab="tab" v-model:resource-tab="resourceTab" v-model:scenario-route="scenarioRoute" v-model:route-columns="routeColumns" v-model:topology="topology" :report="report" />
+    <BusinessLensReportViewer v-for="index in route.query.multi === '1' ? 2 : 1" :key="index" v-model:section="section" v-model:resource="resource" v-model:tab="tab" v-model:resource-tab="resourceTab" v-model:scenario-route="scenarioRoute" v-model:route-columns="routeColumns" v-model:topology="topology" v-model:coverage="coverage" :report="report" />
   </div>
 </template>

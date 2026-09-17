@@ -60,14 +60,14 @@ const args = process.argv.slice(2)
 const rootIndex = args.indexOf('--root')
 const requestedRoot = rootIndex >= 0 ? args[rootIndex + 1] : undefined
 if (!requestedRoot) {
-  fail('Usage: run-businesslens.mjs --root <repository> <lint [--json] | checkpoint [label]>')
+  fail('Usage: run-businesslens.mjs --root <repository> (lint [--json] | coverage <command>)')
 }
 
 const commandArgs = args.filter(
   (_, index) => index !== rootIndex && index !== rootIndex + 1
 )
-if (!['lint', 'checkpoint'].includes(commandArgs[0])) {
-  fail('The isolated BusinessLens runner supports only lint and checkpoint.')
+if (!['lint', 'coverage'].includes(commandArgs[0])) {
+  fail('The isolated BusinessLens runner supports only lint and coverage.')
 }
 
 let root

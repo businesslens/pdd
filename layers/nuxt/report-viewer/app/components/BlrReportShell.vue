@@ -34,10 +34,14 @@ import type { VocabularySlug } from '../utils/vocabulary.generated'
 import { firstSentence } from '../utils/reportMarkdown'
 import type { ReportChanges } from '../utils/reportChanges'
 import { projectReportWorkspace } from '../utils/reportWorkspace'
-import { baselineTitle, changeCount, changesByKey } from '../utils/reportChanges'
+import type { RepositoryInventoryLoader, RepositoryFileLoader } from 'businesslens/report'
+import { defaultCoverageReading, type CoverageReading } from '../utils/coverageState'
+import { baselineTitle, changesByKey } from '../utils/reportChanges'
 
 const props = defineProps<{
   workspace: ReportWorkspace
+  loadRepository?: RepositoryInventoryLoader
+  loadRepositoryFile?: RepositoryFileLoader
   logoSrc?: string | null
   toolsTarget?: string
   /**
@@ -51,7 +55,7 @@ const props = defineProps<{
   readingError?: string | null
 }>()
 
-const emit = defineEmits<{ compare: [base: string, target: string], historySearch: [query: string], historyMore: [], pin: [label: string | null] }>()
+const emit = defineEmits<{ compare: [base: string, target: string], historySearch: [query: string], historyMore: [] }>()
 const resourceState = defineModel<string>('resourceState', { default: 'working' })
 const readingWorkspace = computed(() => resourceState.value === 'working' ? props.workspace : props.readingWorkspace)
 
@@ -60,9 +64,9 @@ const readingWorkspace = computed(() => resourceState.value === 'working' ? prop
 /* `openResource` is inspected over that working view.                   */
 /* ------------------------------------------------------------------ */
 
-/* History compares two states of the whole model. Its section has the
+/* Review compares two states of the whole model. Its section has the
    Product as its subject and opens from the header beside Coverage. */
-const CHANGES_SECTION = 'history'
+const CHANGES_SECTION = 'review'
 
 type ReportSection = 'overview' | ReportResourceKind | typeof MATRIX_DESTINATIONS[number]['section'] | typeof CHANGES_SECTION
 
@@ -74,6 +78,8 @@ const pageTab = defineModel<string>('tab', { default: 'overview' })
 const resourceTab = defineModel<string>('resourceTab', { default: 'overview' })
 const scenarioRoute = defineModel<string | null>('scenarioRoute', { default: null })
 const routeColumns = defineModel<string>('routeColumns', { default: 'auto' })
+const coverage = defineModel<CoverageReading>('coverage', { default: defaultCoverageReading })
+const reviewPath = defineModel<string | null>('reviewPath', { default: null })
 const topology = defineModel<TopologyReading>('topology', { default: defaultTopologyReading })
 
 const activeKind = ref<ReportResourceKind>('product')
@@ -341,14 +347,11 @@ watch([readingWorkspace, openResource], ([workspace]) => {
 const destination = computed(() => destinationForLocation(activeSection.value, pageTab.value))
 const topologyActive = computed(() => Boolean(destination.value))
 const matrixSection = computed(() => isMatrixSection(activeSection.value) ? destinationForSection(activeSection.value) : undefined)
-/* History, when it is the open surface and the host has a comparison. */
+/* Review, when it is the open surface and the host has a comparison. */
 const changesOpen = computed(() => isChangesSection(activeSection.value))
 /* Every changed resource by key, so a row or a page can wear its standing. */
 const changeByKey = computed(() => changesByKey((props.changes?.target ?? 'working') === 'working' ? props.changes?.diff : null))
-/* The header counts resources; a comparison that is not ready has no number. */
-const changesCount = computed(() => props.changes?.diff ? changeCount(props.changes.diff) : null)
-const changesLabel = computed(() => changesCount.value === null ? 'History'
-  : `History: ${changesCount.value} ${changesCount.value === 1 ? 'resource' : 'resources'}`)
+const changesLabel = 'Review model and repository changes'
 const changesBaseline = computed(() => {
   const baseline = props.changes?.baselines.find(item => item.id === props.changes?.baseline)
   return baseline ? baselineTitle(baseline) : ''
@@ -382,11 +385,11 @@ const surfaceHeading = computed(() => {
     return { icon: matrix.icon, slot: undefined, title: matrix.name,
       meta: findProductTopologyView(matrix.view).diagramType, term: undefined, termText: '' }
   }
-  /* History is qualified by its count, as a collection is: the count of
+  /* Review is qualified by its count, as a collection is: the count of
      things that differ from the baseline named inside the reading. */
   if (changesOpen.value) {
-    return { icon: 'i-lucide-history', slot: ENTITY_KIND_META.product.slot, title: 'History',
-      meta: changesCount.value === null ? 'Comparison' : String(changesCount.value), term: undefined, termText: '' }
+    return { icon: 'i-lucide-history', slot: ENTITY_KIND_META.product.slot, title: 'Review',
+      meta: 'Product & repository', term: undefined, termText: '' }
   }
   if (activeKind.value === 'product') {
     const meta = ENTITY_KIND_META.product
@@ -530,7 +533,7 @@ function setKind(kind: ReportResourceKind) {
   leavePage()
 }
 
-/** History: a section with the Product as its subject, from the header. */
+/** Review: a section with the Product as its subject, from the header. */
 function openChanges() {
   if (!props.changes) return
   mobileNavOpen.value = false
@@ -578,6 +581,7 @@ function openResourcePage(resource: AnyResourceView, state = 'working') {
 }
 
 function inspectHistory(key: string, state: string) {
+  if (!openResource.value && !reference.value) returnFocus.value = document.activeElement as HTMLElement | null
   reference.value = null
   resourceState.value = state
   openResource.value = key
@@ -656,11 +660,7 @@ const orphanScenarios = computed(() => props.workspace.scenarios
             data-header-changes
             @click="openChanges"
           >
-            <span class="hidden md:inline">History</span>
-            <template v-if="changesCount !== null">
-              <span class="hidden text-dimmed md:inline" aria-hidden="true">·</span>
-              <span class="tabular-nums">{{ changesCount }}</span>
-            </template>
+            <span class="hidden md:inline">Review</span>
           </UButton>
         </UTooltip>
         <!-- The state of this report, as the host knows it. A live host puts
@@ -848,20 +848,23 @@ const orphanScenarios = computed(() => props.workspace.scenarios
         <div v-if="!topologyActive" ref="resourcePane" class="blr-pane min-h-0 flex-1" @scroll.capture.passive="savePageScroll">
           <div class="p-5">
 
-          <!-- HISTORY: the model against a baseline the host holds. -->
+          <!-- Review model and repository changes between the host's states. -->
           <BlrChanges
             v-if="changesOpen && changes"
             :changes="changes"
+            v-model:path="reviewPath"
+            :load-repository-file="loadRepositoryFile"
+            :resource-reading-open="Boolean(openResource || reference)"
             @compare="(base, target) => emit('compare', base, target)"
             @search="emit('historySearch', $event)"
             @more="emit('historyMore')"
             @inspect="inspectHistory"
-            @pin="emit('pin', $event)"
-            @open="openResourcePage"
           />
 
           <!-- OVERVIEW: the Product, and what it promises -->
           <BlrOverview
+            v-model:coverage="coverage"
+            :load-repository="loadRepository"
             v-else-if="activeKind === 'product'"
             :workspace="workspace"
             :logo-src="logoSrc"

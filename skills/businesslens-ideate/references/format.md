@@ -20,7 +20,7 @@ A representative model looks like this:
 ├── README.md
 ├── config.yaml
 ├── taxonomies.yaml
-├── coverage.md
+├── coverage.json
 ├── .gitignore
 ├── product.md                    # or product/product.md beside logo.svg
 ├── interfaces/<id>/
@@ -91,7 +91,7 @@ not contain another H1 or H2.
 
 ## Required shapes
 
-- `config.yaml`: exactly `schema: 8` and `sdd.paths`.
+- `config.yaml`: exactly `schema: 11` and `sdd.paths`.
 - `product.md`: `id`, optional `summary`, `category`, `tags`, `authors`,
   `license`, `limitations`, H1, lead description, and optional `## Intent`.
   `summary` is one line of at most 400 characters, `category` is lowercase
@@ -224,9 +224,60 @@ not contain another H1 or H2.
   `routes`, and ordered non-empty typed `steps`. A Step may name a Capability,
   and must when its `entities` carries a `creates`, `changes` or `removes`
   effect. An achieved Scenario traverses at least two distinct Capabilities.
-- `coverage.md`: `status`, `method`, `sourceAreas`, `unmapped`, `limitations`,
-  H1, and lead rationale with no H2 sections. Status is model breadth only:
+- `coverage.json`: `status`, `scope`, `exclusions`, `method`, `sourceAreas`, `unmapped`, `limitations`,
+  `rationale`, and `review`. This is a strict JSON object, not Markdown.
+  All fields are required; rationale is Markdown without H1/H2 headings.
+  `review` is null until completion, then the CLI writes the exact-input review. Status is model breadth only:
   `draft|partial|complete`. A complete model has at least one Capability.
+
+A new Coverage document starts with explicit authored fields and no review:
+
+```json
+{
+  "status": "draft",
+  "scope": "The intended Product behavior.",
+  "exclusions": [],
+  "method": [],
+  "sourceAreas": [],
+  "unmapped": [],
+  "limitations": [],
+  "rationale": "The model is still being authored.",
+  "review": null
+}
+```
+
+Product narrative fields have distinct jobs: Summary briefly identifies the
+promise, Description explains what the Product offers, and Intent explains the
+outcome it exists to protect. Product `limitations` states deliberate exclusions
+or constraints. Coverage `unmapped` names Product behavior absent from the model;
+a separate product outside the boundary is not a coverage gap. Coverage
+`limitations` states what could not be established during authoring, while
+`method` describes how the model was created or expanded. Keep mapping history
+and past modeling decisions out of limitations.
+
+Coverage `scope` is required non-empty single-line Markdown stating the model's
+intended breadth. `exclusions` uses the same description/paths shape as `unmapped`:
+an Exclusion is an approved modeling boundary; Unmapped is known missing behavior
+inside scope. Never turn an oversight, deferred work or incomplete inspection into
+an exclusion without the user's approval. Descriptions must be unique within and
+across both lists. `complete` means the declared model scope is modeled and
+requires no Unmapped entries. Exclusions remain explicit; a complete model makes
+no claim that all repository files were inspected. Source areas are broad
+inspection context. The latest completed review lives in `coverage.json.review`
+and is committed with the model. Pending work remains worktree-local. Review
+fingerprints include authored Coverage fields but exclude the review itself.
+Portable Blueprints clear the review to null; never infer verification from it.
+
+Coverage `unmapped` is a list of objects, each with a non-empty single-line
+Markdown `description` and a required `paths` list. Use `paths: []` when a gap
+has no known implementation location. Paths are unique within an entry,
+repository-relative POSIX paths; directories end in `/`. Do not use absolute
+paths, URLs, backslashes, `.` or `..` segments, globs, or fragment/line suffixes.
+A missing path is permitted for intended behavior. A path locates a behavioral
+gap and does not say everything under it is unmapped. Source areas, References,
+and Unmapped paths may overlap. Never classify files as fully mapped from
+inspection or references. Portable Blueprints keep scope, exclusion and gap descriptions and empty
+both path lists.
 
 Both Scenario types have no lead prose, author `routes` and `steps` in
 frontmatter, require `## Trigger` and `## Outcome`, and forbid Markdown
@@ -376,7 +427,7 @@ puts Refunded on the machine. `lint` composes every Scenario and warns on an
 in — and an **unproduced origin** — a Step leaving `from: Confirmed` when
 nothing produces Confirmed and it is not the first state.
 
-Context is the single model concept for where behavior applies. In schema 8 it
+Context is the single model concept for where behavior applies. In schema 11 it
 is a strict object containing one `place` field. A Capability's availability
 Contexts name an undivided Interface or an Experience:
 
@@ -441,8 +492,8 @@ Write this orientation for every new Product Model:
 # Product Model
 
 This directory is a **BusinessLens Product Model**: what this product does and
-for whom. It is plain Markdown tracked in Git, and it is the source of truth for
-intended product behavior.
+for whom. Its resources are Markdown tracked in Git, and they are the source of
+truth for intended product behavior. Structured Coverage lives in JSON.
 
 ## If you are an agent working in this repository
 
@@ -462,6 +513,10 @@ intended product behavior.
   for structural checks.
 - Use `businesslens-ideate` to change intended behavior and `businesslens-map`
   only to map established absent or deliberately untrusted behavior.
+- Read `coverage.json` for model scope, exclusions, known gaps and the latest
+  completed repository review. Review conclusions are historical; compare
+  current inputs with `businesslens coverage status` before using them.
+  Preserve the saved review when changing authored scope or gaps.
 - Never edit `cache/`.
 
 Documentation: https://businesslens.io

@@ -23,6 +23,20 @@ Read before work:
 - [references/build-handoff.md](references/build-handoff.md) — the required
   packet for an injected builder.
 
+## Repository accounting
+
+Read [references/coverage-review.md](references/coverage-review.md)
+when assessing repository inputs or detecting changes. Whole-repository mapping
+captures an exact file worklist and accounts for every file before completing
+a Coverage review. Source areas and References never replace this accounting.
+Named reviews preserve their actual scope; they cannot finish whole-repository
+accounting without inspecting the remaining inputs. Report-only mode reads
+coverage status but never starts, records, finishes or cancels a review.
+Coverage commands write completed reviews to `.businesslens/coverage.json`;
+only pending work lives outside the model in worktree Git metadata. Product
+meaning still requires approval. Preserve the saved review when editing scope
+or gaps; the CLI replaces it only after a new inspection completes.
+
 ## 1. Establish scope and mode
 
 1. Require an existing Product Model. If none exists and repository behavior is
@@ -171,16 +185,15 @@ the diff.
 9. After every mutation, discard the earlier findings and inspect again. Keep
    only an in-memory signature of build-directed gaps during this invocation.
    If the same gap returns unchanged after a build attempt, stop and report it;
-   do not loop. Persist no receipt, ledger, or lifecycle state.
+   do not loop. Persist no current-finding ledger or model lifecycle state. The local
+   exact-input accounting record is the exception described above.
 
 ## 4. Finish
 
 10. Once meaning and implementation align, optionally refresh or remove stale
     implementation References as navigational bookkeeping. This must not change
     product prose or relationships. Skip it in report-only mode.
-11. Run final lint. If this run changed the model, mark the round: run the
-    same runner with `checkpoint "<what this run changed>"` in place of
-    `lint --json`. Report-only mode and an unchanged model seal nothing. Report:
+11. Run final lint. Report:
     - requested and inspected scope;
     - aligned contracts;
     - resulting authority decisions and approvals, without replaying settled
@@ -212,7 +225,7 @@ the diff.
   together with the Contexts, Scenarios and Entities it needs — so an open
   `businesslens view` follows the change rather than showing an error until
   the last file.
-- Never write outside `.businesslens/`; model-resolution writes must leave target
+- Except for the local review commands described above, never write outside `.businesslens/`; model-resolution writes must leave target
   `AGENTS.md`, `CLAUDE.md`, and root README byte-identical.
 - Never stage, commit, publish, submit, or contribute.
 - Never ask the user to manually invoke map or ideate to continue this run.

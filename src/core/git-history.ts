@@ -1,8 +1,6 @@
 /** Read historical models and files from Git objects, without touching the checkout. */
 import { spawnSync } from 'node:child_process'
-import { realpathSync } from 'node:fs'
-import { join, relative, sep } from 'node:path'
-import { compileCommittedReport, type CommittedReport } from './checkpoints.js'
+import { compileCommittedReport, type CommittedReport } from './committed-report.js'
 import { git } from './git.js'
 import type { ModelRoot } from './model-root.js'
 import type { ReportBaseline } from './report-diff.js'
@@ -13,6 +11,7 @@ export interface HistoryPage { states: ReportBaseline[], more: boolean }
 export interface GitHistory {
   list: (query?: string, offset?: number) => HistoryPage
   defaults: () => { base: string | null, hasModelHistory: boolean }
+  resolve: (id: string) => Extract<ReportBaseline, { kind: 'commit' }>
   read: (id: string) => CommittedReport
   body: (commit: string, path: string) => Buffer
   revision: () => string
@@ -22,9 +21,6 @@ const COMMIT = /^[a-f0-9]{40}(?:[a-f0-9]{24})?$/
 
 export function createGitHistory(resolved: ModelRoot): GitHistory {
   const root = resolved.gitRoot
-  const cache = new Map<string, CommittedReport | Error>()
-  const modelPaths = root ? ['product.md', 'product/product.md'].map(path =>
-    join(relative(realpathSync(root), realpathSync(resolved.modelRoot)), '.businesslens', path).split(sep).join('/')) : []
   const optionalGit = (...args: string[]) => {
     if (!root) return ''
     try { return git(root, ...args) } catch { return '' }
@@ -64,13 +60,9 @@ export function createGitHistory(resolved: ModelRoot): GitHistory {
       const context = branches()
       const candidates = context.defaultBranch && !context.onDefault ? [`branch:${context.defaultBranch}`, 'head'] : ['head']
       for (const id of candidates) {
-        try {
-          const commit = resolveCommit(id)
-          const entries = git(root, '--literal-pathspecs', 'ls-tree', commit, '--', ...modelPaths)
-          if (/^100(644|755) blob /m.test(entries)) return { base: id, hasModelHistory: true }
-        } catch { /* An unborn repository or a missing ref has no model at this state. */ }
+        try { resolveCommit(id); return { base: id, hasModelHistory: true } } catch { /* Unborn revision. */ }
       }
-      return { base: null, hasModelHistory: !!optionalGit('--literal-pathspecs', 'log', '--all', '--max-count=1', '--format=%H', '--', ...modelPaths) }
+      return { base: null, hasModelHistory: !!optionalGit('log', '--all', '--max-count=1', '--format=%H') }
     },
     list(query = '', offset = 0) {
       if (!root) return { states: [], more: false }
@@ -125,18 +117,14 @@ export function createGitHistory(resolved: ModelRoot): GitHistory {
       states.push(...lines.slice(0, PAGE_SIZE).map(commitState))
       return { states: [...new Map(states.map(state => [state.id, state])).values()], more: lines.length > PAGE_SIZE }
     },
-    read(id) {
+    resolve(id) {
       const commit = resolveCommit(id)
-      let value = cache.get(commit)
-      if (!value) {
-        try { value = compileCommittedReport(resolved, undefined, commit) }
-        catch (error) { value = error as Error }
-      }
-      cache.delete(commit)
-      cache.set(commit, value)
-      while (cache.size > 8) cache.delete(cache.keys().next().value!)
-      if (value instanceof Error) throw value
-      return value
+      const [at = '', subject = ''] = git(root!, 'show', '-s', '--format=%cI%x00%s', commit).split('\0')
+      return { id: `commit:${commit}`, kind: 'commit', available: true, commit, at,
+        label: `${commit.slice(0, 7)} ${subject}`, detail: at }
+    },
+    read(id) {
+      return compileCommittedReport(resolved, undefined, resolveCommit(id))
     },
     body(commit, path) {
       if (!root || !COMMIT.test(commit) || excludedReferencePath(path) || localReferencePath({ kind: 'doc', target: path }) !== path) {

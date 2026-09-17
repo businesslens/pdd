@@ -49,7 +49,9 @@ In resolution mode, Verify automatically runs the next bounded phase:
 It re-derives findings after every change. An unchanged recurring gap stops the
 loop, and a missing builder produces a complete handoff packet. The user never
 has to manually invoke Map or Ideate to continue verification. Verify persists
-no receipt, ledger, or lifecycle state.
+no current-finding ledger or model lifecycle state. The separate completed
+[Coverage review](./cli-coverage.md) may retain exact inspected inputs
+and historical accounting, which never establishes current correctness.
 
 Its internal mapping and intent resolution write current product meaning without
 rejected approaches or deliberation history anywhere in `.businesslens/`,

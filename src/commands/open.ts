@@ -14,7 +14,7 @@ import { dirname, isAbsolute, join, resolve } from 'node:path'
 import { stringify } from 'yaml'
 import { writeModelReadme } from '../core/model-readme.js'
 import type {
-  ProductReportV13,
+  ProductReportV16,
   ReportContext,
   ReportGrant,
   ReportScenarioStep,
@@ -57,7 +57,7 @@ function frontmatter(data: Record<string, unknown>): string {
   return `---\n${stringify(data, { lineWidth: 0 }).trimEnd()}\n---\n\n`
 }
 
-function references(value: ProductReportV13['references']): Array<Record<string, string>> {
+function references(value: ProductReportV16['references']): Array<Record<string, string>> {
   return value.map(reference => ({
     kind: reference.kind,
     role: reference.role,
@@ -197,7 +197,7 @@ function prepareTarget(cwd: string, force: boolean): string {
   return root
 }
 
-function writeReport(root: string, report: ProductReportV13, hasLogo: boolean): void {
+function writeReport(root: string, report: ProductReportV16, hasLogo: boolean): void {
   write(join(root, 'config.yaml'), stringify({ schema: FOLDER_SCHEMA, sdd: { paths: [] } }, { lineWidth: 0 }))
   write(join(root, '.gitignore'), 'build/\ncache/\n')
   write(
@@ -218,21 +218,13 @@ function writeReport(root: string, report: ProductReportV13, hasLogo: boolean): 
     })) + body(report.title, report.description, report.intent, [], report.supportingSections)
   )
   write(
-    join(root, 'coverage.md'),
-    frontmatter({
-      status: report.coverage.status,
+    join(root, 'coverage.json'),
+    JSON.stringify({
+      ...report.coverage,
       method: OPEN_COVERAGE_METHOD,
       sourceAreas: [],
-      // Unmapped product areas explain model breadth and survive the
-      // source-free projection. Source paths live in sourceAreas, not here.
-      // The author's own account of what is unmapped, what the limitations are,
-      // and why — never rewritten. It describes the MODEL'S completeness rather
-      // than its origin, and it is exactly what a reader receiving a Blueprint
-      // needs. Only `method`, which is a claim about how the model was derived,
-      // is replaced: a Blueprint carries no claim about its own origin.
-      unmapped: report.coverage.unmapped,
-      limitations: [...report.coverage.limitations]
-    }) + body('Coverage', report.coverage.rationale, '', [], [])
+      review: null
+    }, null, 2) + '\n'
   )
 
   for (const productInterface of report.model.interfaces) {
@@ -391,8 +383,8 @@ function writeReport(root: string, report: ProductReportV13, hasLogo: boolean): 
 
   const scenarioSections = (
     scenario:
-      | ProductReportV13['model']['capabilityScenarios'][number]
-      | ProductReportV13['model']['journeyScenarios'][number]
+      | ProductReportV16['model']['capabilityScenarios'][number]
+      | ProductReportV16['model']['journeyScenarios'][number]
   ) => {
     const decisions = scenario.decisionPoints.map(decision =>
       `### ${decision.title}\n\n${decision.question}\n\n${
@@ -501,7 +493,7 @@ function writeReport(root: string, report: ProductReportV13, hasLogo: boolean): 
 }
 
 export interface ExpandedProductReport {
-  report: ProductReportV13
+  report: ProductReportV16
   root: string
 }
 

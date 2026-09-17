@@ -119,7 +119,9 @@ Read before authoring:
     and preserve existing References only where they remain useful. Keep every
     role honest and add no invented local targets: an intended-behavior model
     has no implementation to point at yet, and a `role: implementation` target
-    that does not exist is a claim, not a link. Coverage describes model breadth,
+    that does not exist is a claim, not a link. Preserve an existing `coverage.json.review` when editing authored Coverage
+    fields; use `review: null` when creating a model. Never invent a review for
+    intended behavior without implementation. Coverage status describes model breadth,
     not whether the plan is built; use `draft` only while the model itself
     remains under review.
 
@@ -143,11 +145,7 @@ Read before authoring:
 
     Fix every error and assess each warning. Green lint means structurally
     sound, not implemented or verified.
-12. Mark the round. Once lint is clean, run the same runner with
-    `checkpoint "<what this round added>"` in place of `lint --json`. One
-    checkpoint per approved delta written, never per lint fix: the local
-    report reads later work against it.
-13. Report the approved delta and implementation acceptance contract. The next
+12. Report the approved delta and implementation acceptance contract. The next
     phase is the user's injected build flow, followed by `businesslens-verify`.
     Do not implement from this skill.
 

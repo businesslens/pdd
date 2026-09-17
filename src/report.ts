@@ -1,5 +1,5 @@
 /**
- * `businesslens/report` — strict Product Report v13 contract as a library.
+ * `businesslens/report` — strict Product Report v16 contract as a library.
  *
  * This entry point depends only on `zod` and stays free of Node built-ins so
  * browser consumers can validate, project, and digest reports consistently.
@@ -48,7 +48,8 @@ export {
   ReportBusinessRuleTargetSchema,
   ReportBusinessRuleSchema,
   ReportCoverageSchema,
-  ProductReportV13Schema,
+  ReportUnmappedAreaSchema,
+  ProductReportV16Schema,
   ProductReportSchema,
   validateProductReport,
   validateBlueprintReport,
@@ -67,7 +68,6 @@ export type { ReferenceFileSnapshot, ReportReferenceFiles } from './core/report-
 
 export type {
   ChangeKind,
-  CheckpointSource,
   FieldChange,
   ReportBaseline,
   ReportDiff,
@@ -76,9 +76,10 @@ export type {
 
 export type {
   ReportCollectionName,
-  ProductReportV13,
+  ProductReportV16,
   ProductReport,
   ReportCoverage,
+  ReportUnmappedArea,
   ReportCounts,
   ReportAuthor,
   ReportInterface,
@@ -107,3 +108,7 @@ export type {
   ReportReference,
   ReportSupportingSection
 } from './core/portable.js'
+
+export type { RepositoryInventory, RepositoryInventoryLoader, CoverageReview, CoverageComparison, CoverageReviewPolicy, CoverageReviewFile, CoverageReviewEntry, CoverageChange } from './core/coverage.js'
+
+export type { RepositoryChange, RepositoryFileChange, RepositoryDiff, RepositoryFileReading, RepositoryFileComparison, RepositoryFileLoader } from './core/repository-diff-types.js'

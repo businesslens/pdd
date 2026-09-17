@@ -3,12 +3,12 @@ title: blueprint export
 description: Compile a Product Model into a portable Product Report that can move safely between repositories.
 section: open-source
 group: CLI
-order: 30
+order: 29
 ---
 
 # `businesslens blueprint export`
 
-Compile folder schema 8 `.businesslens/` into a portable Product Report v13:
+Compile folder schema 11 `.businesslens/` into a portable Product Report v16:
 
 ```bash
 npx businesslens blueprint export
@@ -30,6 +30,8 @@ not travel with the Product contract:
 | `references` | Keep only HTTP(S) intent and context References |
 | `entryPoints` | Remove repository paths and `file:` URLs; keep Product routes, HTTP(S) URLs, non-file deep links, and commands |
 | `coverage.sourceAreas` | Empty the list |
+| `coverage.exclusions[].paths` | Empty lists; exclusion descriptions remain |
+| `coverage.unmapped[].paths` | Empty each list; retain every description |
 | `referenceProfile` | Set to `portable` |
 
 `export` lints before it compiles. A model with lint errors does not produce a

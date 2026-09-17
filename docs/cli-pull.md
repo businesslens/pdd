@@ -3,7 +3,7 @@ title: blueprint pull
 description: Pull a Blueprint from the public catalog into the current directory.
 section: open-source
 group: CLI
-order: 32
+order: 31
 ---
 
 # `businesslens blueprint pull`
@@ -79,7 +79,7 @@ logo does not prevent the Product Model itself from being pulled.
 `pull` asks for the one Product Report version it reads, by name:
 
 ```text
-accept: application/vnd.businesslens.report+json; version=13, application/json
+accept: application/vnd.businesslens.report+json; version=16, application/json
 ```
 
 The `version` parameter is the report schema's major alone, and it is the whole

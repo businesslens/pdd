@@ -1,0 +1,15 @@
+{
+  "status": "complete",
+  "scope": "Customer shopping, checkout and staff order management.",
+  "exclusions": [],
+  "method": [
+    "Hand-authored golden fixture covering every source file."
+  ],
+  "sourceAreas": [
+    "src"
+  ],
+  "unmapped": [],
+  "limitations": [],
+  "rationale": "The fixture map intentionally covers the whole toy codebase.",
+  "review": null
+}

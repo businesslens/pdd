@@ -82,7 +82,7 @@
 
 - `draft`: the model itself is still being authored or reviewed.
 - `partial`: the model is useful and known product areas remain unmapped.
-- `complete`: the intended product breadth is modeled.
+- `complete`: the declared model scope is modeled, with exclusions explicit and no known Unmapped entries.
 
 Coverage never states whether behavior is implemented or verified. List
 uninspected or ambiguous areas explicitly. A small, honest partial model is

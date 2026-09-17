@@ -2,26 +2,11 @@ import { createHash } from 'node:crypto'
 import { spawnSync } from 'node:child_process'
 import { closeSync, constants, fstatSync, lstatSync, openSync, readSync, realpathSync } from 'node:fs'
 import { join } from 'node:path'
-import { z } from 'zod'
-import type { ProductReportV13 } from './portable.js'
+import type { ProductReportV16 } from './portable.js'
 import { excludedReferencePath, reportReferencePaths, type ReferenceFileSnapshot, type ReportReferenceFiles } from './report-reference-files.js'
 
 export const MAX_REFERENCE_BYTES = 25 * 1024 * 1024
 export const MAX_REFERENCE_TEXT_BYTES = 256 * 1024
-
-const FileSnapshotSchema = z.discriminatedUnion('status', [
-  z.object({
-    status: z.literal('present'), digest: z.string().regex(/^[a-f0-9]{64}$/),
-    bytes: z.number().int().nonnegative().max(MAX_REFERENCE_BYTES),
-    text: z.string().max(MAX_REFERENCE_TEXT_BYTES).nullable(),
-    omitted: z.enum(['binary', 'large']).nullable(),
-    content: z.enum(['stored', 'budget-exceeded']).optional()
-  }),
-  z.object({ status: z.literal('missing') }),
-  z.object({ status: z.literal('unavailable'), reason: z.string() })
-])
-
-export const ReferenceFilesSchema = z.object({ version: z.literal(1), files: z.record(z.string(), FileSnapshotSchema) })
 
 const unavailable = (reason: string): ReferenceFileSnapshot => ({ status: 'unavailable', reason })
 
@@ -38,7 +23,7 @@ function fingerprint(body: Buffer): ReferenceFileSnapshot {
 }
 
 /** Cache bytes until stat changes; recheck every path component before reuse. */
-export function createReferenceFileSource(root: string, capture?: (body: Buffer, digest: string) => 'stored' | 'budget-exceeded'): (report: ProductReportV13) => ReportReferenceFiles {
+export function createReferenceFileSource(root: string): (report: ProductReportV16) => ReportReferenceFiles {
   const base = realpathSync(root)
   let cache = new Map<string, { stamp: string, value: ReferenceFileSnapshot }>()
   return (report) => {
@@ -85,10 +70,6 @@ export function createReferenceFileSource(root: string, capture?: (body: Buffer,
           throw new Error('File changed while being captured; it will be checked again.')
         }
         const value = fingerprint(body.subarray(0, length))
-        if (capture && value.status === 'present') {
-          value.content = capture(body.subarray(0, length), value.digest)
-          if (value.content === 'budget-exceeded') value.text = null
-        }
         files[path] = value
         next.set(path, { stamp, value })
       } catch (error) {
@@ -106,7 +87,7 @@ export function createReferenceFileSource(root: string, capture?: (body: Buffer,
 }
 
 /** Read blobs by object id so every file belongs to the same pinned commit. */
-export function committedReferenceFiles(root: string, commit: string, report: ProductReportV13): ReportReferenceFiles {
+export function committedReferenceFiles(root: string, commit: string, report: ProductReportV16): ReportReferenceFiles {
   const listing = spawnSync('git', ['-C', root, 'ls-tree', '-rlz', commit], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 })
   if (listing.status !== 0) throw new Error('Could not list committed Reference files.')
   const entries = new Map<string, { mode: string, oid: string, bytes: number }>()

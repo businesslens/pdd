@@ -6,10 +6,11 @@ import { lstatSync, readFileSync, watch, type FSWatcher } from 'node:fs'
 import { basename, extname, relative, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { createRequire } from 'node:module'
-import type { ProductReportV13 } from './portable.js'
+import type { ProductReportV16 } from './portable.js'
 import { MAX_PRODUCT_LOGO_BYTES, validateProductLogo } from '../logo.js'
-import { checkpointReferenceBody, CHECKPOINT_LIMIT, listCheckpoints, normalizeCheckpointLabel, readCheckpoint, type CheckpointMeta, type CommittedReport } from './checkpoints.js'
-import { diffReports, type ReportBaseline, type ReportDiff } from './report-diff.js'
+import { repositoryContext } from './repository-coverage.js'
+import { createRepositoryComparison } from './repository-diff.js'
+import { diffReports, type ReportBaseline } from './report-diff.js'
 import { createReferenceFileSource } from './reference-files.js'
 import type { ReportReferenceFiles } from './report-reference-files.js'
 import { localCodePreview } from './local-code-preview.js'
@@ -20,11 +21,7 @@ const REPORT_PATH = '/_businesslens/report.json'
 const EVENTS_PATH = '/_businesslens/events'
 const HEALTH_PATH = '/_businesslens/health'
 const LOGO_PATH = '/_businesslens/logo.svg'
-const CHANGES_PATH = '/_businesslens/changes'
-const CHANGES_DIFF_PATH = '/_businesslens/changes/diff'
-const CHECKPOINTS_PATH = '/_businesslens/checkpoints'
-const PIN_HEADER = 'x-businesslens-pin'
-const MAX_PIN_BODY_BYTES = 4096
+const REPOSITORY_PATH = '/_businesslens/repository.json'
 const ASSET_PREFIX = '/_businesslens/file/'
 const CODE_PATH = '/_businesslens/code'
 const VIEWER_ROOT = fileURLToPath(new URL('./viewer/', import.meta.url))
@@ -89,15 +86,15 @@ export interface LocalViewer {
 
 /** Everything about one model: what to compile, and where to watch and read. */
 export type LocalViewerBinding = Pick<LocalViewerOptions,
-  'compile' | 'initialReport' | 'watchRoot' | 'logoFile' | 'assetRoot' | 'referenceRoot' | 'checkpointsRoot' | 'committed' | 'history' | 'pin'>
+  'compile' | 'initialReport' | 'watchRoot' | 'logoFile' | 'assetRoot' | 'referenceRoot' | 'modelRoot' | 'history'>
 
 export interface LocalViewerOptions {
   port?: number
   /** Absent until a model is bound: the viewer then serves the waiting message. */
-  compile?: () => ProductReportV13
+  compile?: () => ProductReportV16
   /** What `report.json` and the stream say while no model is bound. */
   waitingMessage?: string
-  initialReport?: ProductReportV13
+  initialReport?: ProductReportV16
   watchRoot?: string
   debounceMs?: number
   viewerRoot?: string
@@ -112,20 +109,13 @@ export interface LocalViewerOptions {
   assetRoot?: string
   /** Root for local Reference file comparisons, including code and documents. */
   referenceRoot?: string
-  /**
-   * Directory holding sealed checkpoints. It is watched, so a `checkpoint` run in
-   * another terminal reaches every open viewer. Omit it and there are none.
-   */
-  checkpointsRoot?: string
-  /** The model at the last commit; throws with a reason when there is none. */
-  committed?: () => CommittedReport
+  /** Selected model root, which may be nested within the repository. */
+  modelRoot?: string
   history?: GitHistory
-  /** Seal the current report from the viewer's pin. Omit it and pinning is off. */
-  pin?: (report: ProductReportV13, label: string | null) => CheckpointMeta | undefined
 }
 
 interface ReportSnapshot {
-  report?: ProductReportV13
+  report?: ProductReportV16
   error?: string
   revision: number
 }
@@ -136,21 +126,6 @@ interface ReportEvent {
   message?: string
 }
 
-/** What `/_businesslens/changes` answers: every baseline a comparison can use. */
-export interface ReportChangesListing {
-  baselines: ReportBaseline[]
-}
-
-/** What `/_businesslens/changes/diff` answers for one baseline. */
-export interface ReportChangesDiff {
-  base: ReportBaseline
-  diff: ReportDiff
-  /** The report revision the comparison was made against. */
-  revision: number
-  /** Missing snapshots or unreadable files must not look like a complete comparison. */
-  referenceFileNotice?: string
-}
-
 /**
  * Compile once per source edit and retain the last valid result.
  *
@@ -159,7 +134,7 @@ export interface ReportChangesDiff {
  * report means one temporarily invalid file never blanks the whole viewer.
  */
 class LocalReportStore {
-  private report?: ProductReportV13
+  private report?: ProductReportV16
   private serialized?: string
   private error?: string
   private revision = 0
@@ -169,9 +144,9 @@ class LocalReportStore {
   private referenceTimer?: ReturnType<typeof setInterval>
   private referenceFiles?: ReportReferenceFiles
   private referenceRevision?: string
-  private readReferenceFiles?: (report: ProductReportV13) => ReportReferenceFiles
+  private readReferenceFiles?: (report: ProductReportV16) => ReportReferenceFiles
   private watcher?: FSWatcher
-  private checkpointWatcher?: FSWatcher
+  private repository?: ReturnType<typeof createRepositoryComparison>
   private readonly listeners = new Set<(event: ReportEvent) => void>()
 
   constructor(private readonly options: LocalViewerOptions) {
@@ -196,6 +171,9 @@ class LocalReportStore {
 
   private attach(): void {
     const options = this.options
+    if (options.assetRoot) {
+      try { this.repository = createRepositoryComparison(options.assetRoot) } catch { /* No Git inventory. */ }
+    }
     if (options.referenceRoot) this.readReferenceFiles = createReferenceFileSource(options.referenceRoot)
 
     if (options.watchRoot) {
@@ -211,28 +189,10 @@ class LocalReportStore {
       this.watcher.on('error', error => this.reject(`File watching failed: ${error.message}`))
     }
 
-    /* Checkpoints arrive from another process — a `checkpoint` in the agent's
-       terminal — so they are watched separately from the model sources, and
-       announced without recompiling anything. */
-    if (options.checkpointsRoot) {
-      try {
-        this.checkpointWatcher = watch(options.checkpointsRoot, (_event, filename) => {
-          if (filename && !filename.toString().endsWith('.json')) return
-          this.announceBaselines()
-        })
-        this.checkpointWatcher.on('error', () => { /* Checkpoints still list on request. */ })
-      } catch { /* A missing directory means no checkpoints yet. */ }
-    }
-
-    /* Commits need not touch any model source. Poll the cached source, which
-       checks HEAD and recompiles only when it moves. This also covers packed
-       refs, linked worktrees and the first commit without watching Git internals. */
-    if (options.committed) {
-      const committed = options.committed
-      const readRevision = () => {
-        try { return options.history ? options.history.revision() : committed().commit }
-        catch (error) { return `unavailable:${(error as Error).message}` }
-      }
+    // Watch Git refs without compiling or retaining historical reports.
+    if (options.history) {
+      const history = options.history
+      const readRevision = () => history.revision()
       let revision = readRevision()
       this.committedTimer = setInterval(() => {
         const next = readRevision()
@@ -257,8 +217,8 @@ class LocalReportStore {
     if (this.referenceTimer) clearInterval(this.referenceTimer)
     this.timer = this.baselineTimer = this.committedTimer = this.referenceTimer = undefined
     this.watcher?.close()
-    this.checkpointWatcher?.close()
-    this.watcher = this.checkpointWatcher = undefined
+    this.watcher = undefined
+    this.repository = undefined
     this.readReferenceFiles = undefined
     this.referenceFiles = undefined
     this.referenceRevision = undefined
@@ -268,131 +228,67 @@ class LocalReportStore {
     return { report: this.report, error: this.error, revision: this.revision }
   }
 
-  /** Every baseline a comparison can be made against, committed first, then checkpoints newest first. */
-  baselines(): ReportBaseline[] {
-    const list: ReportBaseline[] = []
-    if (this.options.committed) {
-      try {
-        const committed = this.options.committed()
-        list.push({
-          id: 'head',
-          kind: 'committed',
-          available: true,
-          at: committed.committedAt,
-          detail: `${committed.commit.slice(0, 7)} ${committed.subject}`.trim()
-        })
-      } catch (error) {
-        list.push({ id: 'head', kind: 'committed', available: false, reason: (error as Error).message })
-      }
-    }
-    if (this.options.checkpointsRoot) {
-      for (const meta of listCheckpoints(this.options.checkpointsRoot)) {
-        list.push({ id: meta.id, kind: 'checkpoint', available: true, at: meta.at, source: meta.source, label: meta.label })
-      }
-    }
-    return list
-  }
-
-  /** The current report against one baseline, or the reason there is no comparison. */
-  changes(base: string): { ok: true, value: ReportChangesDiff } | { ok: false, message: string } {
-    if (!this.report) return { ok: false, message: this.error ?? 'The Product Model has not compiled yet.' }
-    const baseline = this.baselines().find(item => item.id === base)
-    if (!baseline) return { ok: false, message: 'That baseline is not available.' }
-    if (!baseline.available) return { ok: false, message: baseline.reason }
-    const before = baseline.kind === 'committed'
-      ? this.options.committed!()
-      : readCheckpoint(this.options.checkpointsRoot!, baseline.id)
-    if (!before) return { ok: false, message: 'That checkpoint could not be read.' }
-    this.refreshReferences()
-    const files = before.referenceFiles && this.referenceFiles ? { before: before.referenceFiles, after: this.referenceFiles } : undefined
-    let referenceFileNotice: string | undefined
-    if (this.referenceFiles && !before.referenceFiles) {
-      referenceFileNotice = 'This baseline has no local Reference file snapshots. Only model fields are compared; pin this state to compare later file edits.'
-    } else if (files) {
-      const unreadable = [...new Set([files.before, files.after].flatMap(snapshot => Object.entries(snapshot)
-        .flatMap(([path, file]) => file.status === 'unavailable' ? [`${path}: ${file.reason}`] : [])))]
-      if (unreadable.length) referenceFileNotice = `Some local Reference files could not be compared:\n${unreadable.join('\n')}`
-    }
-    return { ok: true, value: { base: baseline, diff: diffReports(before.report, this.report, files), revision: this.revision, referenceFileNotice } }
-  }
-
   historyDefaults() {
     const git = this.options.history?.defaults()
-    const checkpoints = this.options.checkpointsRoot ? listCheckpoints(this.options.checkpointsRoot) : []
-    const base = git?.base ?? (!this.options.history ? this.baselines().find(item => item.kind === 'committed' && item.available)?.id : null)
-      ?? checkpoints[0]?.id ?? null
+    const base = git?.base ?? null
     return { base, target: 'working', emptyReason: base ? null : git?.hasModelHistory ? 'choose-state' : 'no-saved-model' }
   }
 
   history(query = '', offset = 0) {
     const page = this.options.history?.list(query, offset) ?? { states: [], more: false }
-    const checkpoints = this.options.checkpointsRoot ? listCheckpoints(this.options.checkpointsRoot) : []
-    const states: ReportBaseline[] = offset ? [] : [
-      { id: 'working', kind: 'working', available: true },
-      ...checkpoints.filter(item => !query || `${item.label ?? ''} ${item.at}`.toLowerCase().includes(query.toLowerCase()))
-        .map(item => ({ ...item, kind: 'checkpoint' as const, available: true as const }))
-    ]
-    if (!this.options.history && offset === 0) states.push(...this.baselines().filter(item => item.kind === 'committed'))
-    return { states: [...states, ...page.states], more: page.more, nextOffset: offset + 50, checkpointLimit: CHECKPOINT_LIMIT }
+    const states: ReportBaseline[] = offset ? [] : [{ id: 'working', kind: 'working', available: true }]
+    return { states: [...states, ...page.states], more: page.more, nextOffset: offset + 50 }
   }
 
-  state(id: string): { id: string, state: ReportBaseline, report: ProductReportV13, referenceFiles?: ReportReferenceFiles } {
+  private identity(id: string): ReportBaseline {
+    if (id === 'working') return { id, kind: 'working', available: true }
+    if (this.options.history) return this.options.history.resolve(id)
+    throw new Error('This Git state is unavailable.')
+  }
+
+  state(id: string): { id: string, state: ReportBaseline, report: ProductReportV16, referenceFiles?: ReportReferenceFiles } {
     if (id === 'working') {
       if (!this.report || this.error) throw new Error(this.error ?? 'The working model is not ready.')
       this.refreshReferences()
       return { id, state: { id: 'working', kind: 'working', available: true }, report: this.report, referenceFiles: this.referenceFiles }
     }
-    if (id === 'head' || id.startsWith('commit:') || id.startsWith('branch:') || id.startsWith('tag:')) {
-      const value = this.options.history?.read(id) ?? (id === 'head' ? this.options.committed?.() : undefined)
-      if (!value) throw new Error('This Git state is unavailable.')
-      const resolvedId = `commit:${value.commit}`
-      return { ...value, id: resolvedId, state: { id: resolvedId, kind: 'commit', available: true,
-        commit: value.commit, at: value.committedAt, label: `${value.commit.slice(0, 7)} ${value.subject}`, detail: value.committedAt } }
-    }
-    const value = this.options.checkpointsRoot && readCheckpoint(this.options.checkpointsRoot, id)
-    if (!value) throw new Error('This checkpoint is unavailable. Only the newest 50 checkpoints are retained.')
-    return { ...value, state: { id, kind: 'checkpoint', available: true, at: value.at, label: value.label, source: value.source } }
+    const value = this.options.history?.read(id)
+    if (!value) throw new Error('This Git state is unavailable.')
+    const resolvedId = `commit:${value.commit}`
+    return { ...value, id: resolvedId, state: { id: resolvedId, kind: 'commit', available: true,
+      commit: value.commit, at: value.committedAt, label: `${value.commit.slice(0, 7)} ${value.subject}`, detail: value.committedAt } }
   }
 
-  compare(base: string, target: string) {
-    const before = this.state(base)
-    const after = base === target ? before : this.state(target)
-    const files = before.referenceFiles && after.referenceFiles ? { before: before.referenceFiles, after: after.referenceFiles } : undefined
-    const notices: string[] = []
-    if (!files) notices.push('One state has no Reference snapshots. Only model fields can be compared.')
-    for (const [side, snapshot] of [['Base', before], ['Compare to', after]] as const) {
-      for (const [path, file] of Object.entries(snapshot.referenceFiles ?? {})) {
-        if (file.status === 'unavailable') notices.push(`${side}: ${path}: ${file.reason}`)
-        else if (file.status === 'present' && file.content === 'budget-exceeded') notices.push(`${side}: ${path}: contents exceeded the checkpoint budget; the fingerprint is available.`)
-      }
+  async compare(base: string, target: string) {
+    const baseState = this.identity(base)
+    const targetState = base === target ? baseState : this.identity(target)
+    const modelNotices: string[] = []
+    const model = (state: ReportBaseline, side: string) => {
+      try { return this.state(state.id) }
+      catch (error) { modelNotices.push(`${side}: ${(error as Error).message}`); return null }
     }
-    return { base: before.state, target: after.state, before: before.report, after: after.report,
-      diff: diffReports(before.report, after.report, files), revision: this.revision,
+    const before = model(baseState, 'Base')
+    const after = baseState.id === targetState.id ? before : model(targetState, 'Compare to')
+    const files = before?.referenceFiles && after?.referenceFiles ? { before: before.referenceFiles, after: after.referenceFiles } : undefined
+    const notices = files ? [...new Set([files.before, files.after].flatMap(snapshot => Object.entries(snapshot)
+      .flatMap(([path, file]) => file.status === 'unavailable' ? [`${path}: ${file.reason}`] : [])))] : []
+    const repository = this.repository ? await this.repository.compare(baseState.id, targetState.id) : undefined
+    return { base: baseState, target: targetState, before: before?.report ?? null, after: after?.report ?? null,
+      diff: before && after ? diffReports(before.report, after.report, files) : null, repository,
+      modelNotice: modelNotices.length ? modelNotices.join('\n') : undefined, revision: this.revision,
       referenceFileNotice: notices.length ? notices.join('\n') : undefined }
   }
 
-  historicalBody(id: string, path: string): Buffer {
-    if (id === 'working') throw new Error('Select a historical state.')
-    const snapshot = this.state(id)
-    if (snapshot.state.kind === 'commit' && this.options.history) return this.options.history.body(snapshot.state.commit, path)
-    const checkpoint = this.options.checkpointsRoot && readCheckpoint(this.options.checkpointsRoot, id)
-    if (!checkpoint) throw new Error('This historical file is unavailable.')
-    return checkpointReferenceBody(this.options.checkpointsRoot!, checkpoint, path)
+  async repositoryFile(base: string, target: string, path: string) {
+    if (!this.repository) throw new Error('Repository comparison is unavailable.')
+    const before = this.identity(base), after = base === target ? before : this.identity(target)
+    return this.repository.file(before.id, after.id, path)
   }
 
-  /** Seal the current report from the viewer. */
-  pin(label: string | null): { ok: true, checkpoint: CheckpointMeta } | { ok: false, status: number, message: string } {
-    if (!this.options.pin) return { ok: false, status: 404, message: 'Not found.' }
-    this.refresh(false)
-    if (!this.report || this.error) return { ok: false, status: 422, message: this.error ?? 'The Product Model has not compiled yet.' }
-    try {
-      const checkpoint = this.options.pin(this.report, label)
-      if (!checkpoint) return { ok: false, status: 422, message: 'Nothing was sealed.' }
-      this.announceBaselines()
-      return { ok: true, checkpoint }
-    } catch (error) {
-      return { ok: false, status: 422, message: (error as Error).message }
-    }
+  historicalBody(id: string, path: string): Buffer {
+    const state = this.identity(id)
+    if (state.kind !== 'commit' || !this.options.history) throw new Error('Select a historical Git state.')
+    return this.options.history.body(state.commit, path)
   }
 
   private announceBaselines(): void {
@@ -435,7 +331,7 @@ class LocalReportStore {
     // macOS reports the watched directory's basename for some direct-child
     // changes when recursive mode is enabled, rather than the child filename.
     if (this.options.watchRoot && normalized === basename(this.options.watchRoot)) return true
-    return /\.(?:md|ya?ml|svg)$/i.test(normalized)
+    return normalized === 'coverage.json' || /\.(?:md|ya?ml|svg)$/i.test(normalized)
   }
 
   private isLogoSource(filename: string | Buffer | null): boolean {
@@ -446,7 +342,7 @@ class LocalReportStore {
       || Boolean(this.options.watchRoot && normalized === basename(this.options.watchRoot))
   }
 
-  private accept(report: ProductReportV13, notify: boolean, forceNotify = false): void {
+  private accept(report: ProductReportV16, notify: boolean, forceNotify = false): void {
     const serialized = JSON.stringify(report)
     const recovered = this.error !== undefined
     const changed = serialized !== this.serialized
@@ -618,60 +514,6 @@ function assetBody(response: ServerResponse, file: string, body: Buffer, head: b
   response.end(head ? undefined : body)
 }
 
-/**
- * The one write the viewer can make: seal the report it is showing.
- *
- * A page on any origin can POST to localhost, and the Host header alone does
- * not tell them apart. Two guards make the request one only the viewer's own
- * script can send: a custom header, which forces a cross-origin page through
- * a preflight the server never answers, and the browser's own fetch metadata
- * where it sends it.
- */
-function pinCheckpoint(request: IncomingMessage, response: ServerResponse, store: LocalReportStore): void {
-  const site = request.headers['sec-fetch-site']
-  if (site && site !== 'same-origin' && site !== 'none') {
-    json(response, 403, { message: 'Checkpoints are created from the local viewer only.' }, false)
-    return
-  }
-  if (!request.headers[PIN_HEADER]) {
-    json(response, 403, { message: 'Checkpoints are created from the local viewer only.' }, false)
-    return
-  }
-  if (!String(request.headers['content-type'] ?? '').toLowerCase().startsWith('application/json')) {
-    json(response, 415, { message: 'A checkpoint request is a JSON body.' }, false)
-    return
-  }
-  const chunks: Buffer[] = []
-  let size = 0
-  let refused = false
-  request.on('data', (chunk: Buffer) => {
-    if (refused) return
-    size += chunk.byteLength
-    if (size > MAX_PIN_BODY_BYTES) {
-      refused = true
-      json(response, 413, { message: 'A checkpoint label is short.' }, false)
-      request.destroy()
-      return
-    }
-    chunks.push(Buffer.from(chunk))
-  })
-  request.on('end', () => {
-    if (refused) return
-    let label: string | null
-    try {
-      const body = chunks.length ? JSON.parse(Buffer.concat(chunks).toString('utf8')) as { label?: unknown } : {}
-      if (body.label !== undefined && body.label !== null && typeof body.label !== 'string') throw new Error('The label is text.')
-      label = normalizeCheckpointLabel(body.label as string | null | undefined)
-    } catch (error) {
-      json(response, 422, { message: (error as Error).message }, false)
-      return
-    }
-    const result = store.pin(label)
-    if (result.ok) json(response, 201, { checkpoint: result.checkpoint }, false)
-    else json(response, result.status, { message: result.message }, false)
-  })
-}
-
 function referencePreview(
   request: IncomingMessage, response: ServerResponse, url: URL, head: boolean,
   preview: () => Promise<{ status: number, data: unknown }>
@@ -706,10 +548,6 @@ function requestHandler(
     }
     const url = new URL(request.url ?? '/', `http://${LOOPBACK_HOST}:${port}`)
     const pathname = url.pathname
-    if (request.method === 'POST' && pathname === CHECKPOINTS_PATH) {
-      pinCheckpoint(request, response, store)
-      return
-    }
     if (request.method !== 'GET' && !head) {
       response.setHeader('allow', 'GET, HEAD')
       json(response, 405, { message: 'Method not allowed.' }, false)
@@ -723,7 +561,10 @@ function requestHandler(
     if (pathname === '/_businesslens/history' || pathname === '/_businesslens/history/diff' || pathname === '/_businesslens/history/defaults' || pathname === '/_businesslens/state') {
       try {
         if (pathname.endsWith('/defaults')) json(response, 200, store.historyDefaults(), head)
-        else if (pathname.endsWith('/diff')) json(response, 200, store.compare(url.searchParams.get('base') ?? '', url.searchParams.get('target') ?? 'working'), head)
+        else if (pathname.endsWith('/diff')) {
+          void store.compare(url.searchParams.get('base') ?? '', url.searchParams.get('target') ?? 'working')
+            .then(value => json(response, 200, value, head)).catch(error => json(response, 422, { message: error.message }, head))
+        }
         else if (pathname.endsWith('/state')) {
           const value = store.state(url.searchParams.get('state') ?? '')
           json(response, 200, { id: value.id, state: value.state, report: value.report }, head)
@@ -757,14 +598,15 @@ function requestHandler(
       } catch (error) { json(response, 404, { message: (error as Error).message }, head) }
       return
     }
-    if (pathname === CHANGES_PATH) {
-      json(response, 200, { baselines: store.baselines() } satisfies ReportChangesListing, head)
+    if (pathname === '/_businesslens/review/file') {
+      void store.repositoryFile(url.searchParams.get('base') ?? '', url.searchParams.get('target') ?? 'working', url.searchParams.get('path') ?? '')
+        .then(value => json(response, 200, value, head)).catch(error => json(response, 422, { message: error.message }, head))
       return
     }
-    if (pathname === CHANGES_DIFF_PATH) {
-      const result = store.changes(url.searchParams.get('base') ?? '')
-      if (result.ok) json(response, 200, result.value, head)
-      else json(response, 422, { message: result.message }, head)
+    if (pathname === REPOSITORY_PATH) {
+      if (!options.assetRoot) json(response, 404, { message: 'This report has no local repository inventory.' }, head)
+      else void repositoryContext(options.assetRoot, url.searchParams.get('includeIgnored') === 'true', options.modelRoot)
+        .then(value => json(response, 200, value, head)).catch(error => json(response, 503, { message: error.message }, head))
       return
     }
     if (pathname === REPORT_PATH) {

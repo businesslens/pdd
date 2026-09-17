@@ -21,7 +21,7 @@ symbols, lines, runtime behavior, the truth of authored Product meaning, or
 model/code agreement.
 
 Run `businesslens-verify` before merge or release when semantic alignment is
-required. Verification findings are re-derived on every run and never persisted:
+required. Current verification findings are re-derived on every run:
 a tracked ledger would imply durable certainty after the surrounding code or
 inspection method changed. There is no semantic CI command, so CI must not infer
 verification from lint.
@@ -31,3 +31,9 @@ For machine-readable structural findings:
 ```bash
 npx businesslens lint --json
 ```
+
+Repository reviews can separately retain historical accounting tied to exact
+source and model inputs in the committed Coverage document. A fresh checkout can
+compare against that shared review. Pending work stays local and is not shared
+with CI. A clean comparison never replaces semantic verification. See
+[`coverage`](./cli-coverage.md).

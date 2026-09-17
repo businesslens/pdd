@@ -25,7 +25,8 @@ approving the exact delta a workflow proposes — every resource added, changed,
 or removed, the limitations, and the material uncertainty — or by asking, by
 name, for a Blueprint to land in a directory. The AI agent holds no grant of its
 own. A proposal is never presented as a decision, and a mature model is never
-silently replaced.
+silently replaced. Recording a related Coverage review preserves the authored
+Product Model meaning; review completion updates that review’s accounting only.
 
 ## Rationale
 

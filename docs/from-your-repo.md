@@ -24,7 +24,7 @@ or deliberately untrusted.
    Codex: `$businesslens-map`. It statically inspects repository instructions,
    entry points, services, persistence, integrations, configuration, and tests.
    It never executes target code. It shows the proposed model and coverage
-   assessment before writing product meaning.
+   review before writing product meaning.
 
 3. Review the `.businesslens/` diff. Check that supported Interfaces are Product
    contracts rather than discovered technologies, optional Experiences exist

@@ -16,9 +16,11 @@ references:
 
 A Blueprint carries product meaning and nothing that only navigated the
 repository it came from: no code references, no implementation-role references,
-no repository-relative targets, no repository entry points, and no source areas.
-It also carries no claim about how it was derived, because a Blueprint's origin
-is not part of its contract. This holds wherever a Blueprint is written or read.
+no repository-relative Reference targets, no repository entry points, no Source
+areas, and no Exclusion or Unmapped paths. Repository reviews never
+travel with it. Authored prose remains, including Scope and exclusion or gap
+descriptions. Opening the Blueprint replaces Method with how the receiving
+model was produced. This holds wherever a Blueprint is written or read.
 
 ## Rationale
 

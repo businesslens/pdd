@@ -1,13 +1,24 @@
 <script setup lang="ts">
-import type { ProductReportV13, ReportBaseline, ReportDiff } from 'businesslens/report'
+import type { ProductReportV16, ReportBaseline, ReportDiff, RepositoryDiff, RepositoryInventory, RepositoryFileLoader } from 'businesslens/report'
 import type { ReportChanges } from '../../../../layers/nuxt/report-viewer/app/utils/reportChanges'
 import { projectReportWorkspace, resolveResourceKey } from '../../../../layers/nuxt/report-viewer/app/utils/reportWorkspace'
 import { baselineTitle } from '../../../../layers/nuxt/report-viewer/app/utils/reportChanges'
 
-const { data, error, refresh, status } = await useFetch<ProductReportV13>(
+const { data, error, refresh, status } = await useFetch<ProductReportV16>(
   '/_businesslens/report.json',
   { server: false, cache: 'no-store' }
 )
+
+async function loadRepository(includeIgnored: boolean): Promise<RepositoryInventory> {
+  try {
+    return await $fetch('/_businesslens/repository.json', { query: { includeIgnored }, cache: 'no-store' })
+  } catch (failure) { throw new Error(message(failure)) }
+}
+const loadRepositoryFile: RepositoryFileLoader = async (base, target, path) => {
+  try {
+    return await $fetch('/_businesslens/review/file', { query: { base, target, path }, cache: 'no-store' })
+  } catch (failure) { throw new Error(message(failure)) }
+}
 
 const liveError = ref<string | null>(null)
 const logoSrc = ref<string | null>(null)
@@ -28,7 +39,7 @@ async function refreshLogo() {
   }
 }
 
-const { reference, previousReference, backReference, section, resource, resourceState, tab, resourceTab, scenarioRoute, routeColumns, topology } = useBlrReportNavigation()
+const { reference, previousReference, backReference, section, resource, resourceState, tab, resourceTab, scenarioRoute, routeColumns, topology, coverage, reviewPath } = useBlrReportNavigation()
 const route = useRoute()
 const router = useRouter()
 const queryState = (key: string) => typeof route.query[key] === 'string' ? route.query[key] as string : null
@@ -41,13 +52,14 @@ const emptyReason = ref<ReportChanges['emptyReason']>(null)
 let defaultsRequest = 0
 const baseline = computed(() => queryState('base') ?? initialBaseline.value)
 const target = computed(() => queryState('target') ?? 'working')
-type Comparison = { base: ReportBaseline, target: ReportBaseline, before: ProductReportV13, after: ProductReportV13, diff: ReportDiff, referenceFileNotice?: string }
+type Comparison = { base: ReportBaseline, target: ReportBaseline, before: ProductReportV16 | null, after: ProductReportV16 | null, diff: ReportDiff | null, repository?: RepositoryDiff, modelNotice?: string, referenceFileNotice?: string }
 const comparison = shallowRef<Comparison | null>(null)
 const changesError = ref<string | null>(null)
 const historyQuery = ref('')
 const historyLoading = ref(false)
 const historyMore = ref(false)
-const checkpointLimit = ref(50)
+const diffLoading = ref(false)
+let repositoryTimer: ReturnType<typeof setInterval> | undefined
 let nextOffset = 0
 let listingRequest = 0
 let diffRequest = 0
@@ -74,14 +86,13 @@ async function refreshChanges(append = false) {
   historyLoading.value = true
   const previousBase = baseline.value
   try {
-    const listing = await $fetch<{ states: ReportBaseline[], more: boolean, nextOffset: number, checkpointLimit: number }>('/_businesslens/history', {
+    const listing = await $fetch<{ states: ReportBaseline[], more: boolean, nextOffset: number }>('/_businesslens/history', {
       query: { q: historyQuery.value, offset: append ? nextOffset : 0 }, cache: 'no-store'
     })
     if (request !== listingRequest) return
     historyStates.value = append ? [...historyStates.value, ...listing.states] : listing.states
     const keep = append ? baselines.value : baselines.value.filter(item => [baseline.value, target.value].includes(item.id))
     baselines.value = [...new Map([...keep, ...listing.states].map(item => [item.id, item])).values()]
-    checkpointLimit.value = listing.checkpointLimit
     historyMore.value = listing.more
     nextOffset = listing.nextOffset
     if (previousBase === baseline.value) await refreshDiff()
@@ -91,9 +102,10 @@ async function refreshChanges(append = false) {
 }
 async function refreshDiff() {
   const request = ++diffRequest
+  diffLoading.value = true
   const base = baseline.value
   const to = target.value
-  if (!base) { comparison.value = null; changesError.value = null; return }
+  if (!base) { comparison.value = null; changesError.value = null; diffLoading.value = false; return }
   try {
     const result = await $fetch<Comparison>('/_businesslens/history/diff', { query: { base, target: to }, cache: 'no-store' })
     if (request !== diffRequest || base !== baseline.value || to !== target.value) return
@@ -103,7 +115,7 @@ async function refreshDiff() {
     if (request !== diffRequest) return
     comparison.value = null
     changesError.value = message(failure)
-  }
+  } finally { if (request === diffRequest) diffLoading.value = false }
 }
 watch([baseline, target], () => {
   comparison.value = null
@@ -123,29 +135,13 @@ function searchHistory(query: string) {
   if (searchTimer) clearTimeout(searchTimer)
   searchTimer = setTimeout(() => void refreshChanges(), 250)
 }
-const toast = useToast()
-async function pin(label: string | null) {
-  try {
-    const { checkpoint } = await $fetch<{ checkpoint: { id: string } }>('/_businesslens/checkpoints', {
-      method: 'POST', headers: { 'content-type': 'application/json', 'x-businesslens-pin': '1' }, body: { label }
-    })
-    await chooseComparison(checkpoint.id, target.value)
-    toast.add({ title: label ? `Checkpoint created: ${label}` : 'Checkpoint created.', icon: 'i-lucide-history', color: 'success' })
-    await refreshChanges()
-  } catch (failure) {
-    toast.add({ title: 'Could not create a checkpoint.', description: message(failure), icon: 'i-lucide-triangle-alert', color: 'error' })
-  }
-}
-const readingReport = shallowRef<ProductReportV13 | null>(null)
+const readingReport = shallowRef<ProductReportV16 | null>(null)
 const readingLabel = ref('')
 const readingError = ref<string | null>(null)
 let readingRequest = 0
-let loadedReadingState: string | undefined
 watch([resourceState, comparison], async () => {
   const request = ++readingRequest
   const id = resourceState.value
-  if (id !== 'working' && loadedReadingState === id && readingReport.value) return
-  loadedReadingState = undefined
   readingReport.value = null
   readingError.value = null
   readingLabel.value = ''
@@ -153,11 +149,10 @@ watch([resourceState, comparison], async () => {
   const known = comparison.value
   const side = known?.base.id === id ? { report: known.before, state: known.base }
     : known?.target.id === id ? { report: known.after, state: known.target } : null
-  if (side) { loadedReadingState = id; readingReport.value = side.report; readingLabel.value = baselineTitle(side.state); return }
+  if (side?.report) { readingReport.value = side.report; readingLabel.value = baselineTitle(side.state); return }
   try {
-    const result = await $fetch<{ id: string, report: ProductReportV13, state: ReportBaseline }>('/_businesslens/state', { query: { state: id }, cache: 'no-store' })
+    const result = await $fetch<{ id: string, report: ProductReportV16, state: ReportBaseline }>('/_businesslens/state', { query: { state: id }, cache: 'no-store' })
     if (request !== readingRequest) return
-    loadedReadingState = result.id
     readingReport.value = result.report
     resourceState.value = result.id
     readingLabel.value = baselineTitle(result.state)
@@ -177,10 +172,14 @@ const changes = computed<ReportChanges>(() => ({
   error: defaultsError.value ?? changesError.value, referenceFileNotice: comparison.value?.referenceFileNotice,
   initializing: !defaultsReady.value, emptyReason: emptyReason.value,
   historyLoading: historyLoading.value, historyMore: historyMore.value, historyQuery: historyQuery.value,
-  checkpointLimit: checkpointLimit.value, pinnable: true
+  repository: comparison.value?.repository, modelNotice: comparison.value?.modelNotice
 }))
 
+watch(section, value => { if (value === 'review') void refreshDiff() })
 onMounted(() => {
+  repositoryTimer = setInterval(() => {
+    if (section.value === 'review' && (baseline.value === 'working' || target.value === 'working') && !diffLoading.value && document.visibilityState === 'visible') void refreshDiff()
+  }, 3000)
   void refreshLogo()
   events = new EventSource('/_businesslens/events')
   events.addEventListener('open', () => {
@@ -219,6 +218,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   events?.close()
+  if (repositoryTimer) clearInterval(repositoryTimer)
   listingRequest += 1
   defaultsRequest += 1
   diffRequest += 1
@@ -252,8 +252,8 @@ const errorMessage = computed(() => {
         :description="errorMessage"
         :actions="[{ label: 'Try again', icon: 'i-lucide-refresh-cw', onClick: () => refresh() }]"
       />
-      <h1 class="mt-8 mb-4 flex items-center gap-2 text-2xl font-semibold">History <BlrHistoryHelp /></h1>
-      <BlrChanges :changes="changes" @compare="chooseComparison" @search="searchHistory" @more="refreshChanges(true)" @pin="pin" @inspect="inspectHistorical" />
+      <h1 class="mt-8 mb-4 flex items-center gap-2 text-2xl font-semibold">Review <BlrHistoryHelp /></h1>
+      <BlrChanges v-model:path="reviewPath" :load-repository-file="loadRepositoryFile" :changes="changes" :resource-reading-open="Boolean(resource || reference)" @compare="chooseComparison" @search="searchHistory" @more="refreshChanges(true)" @inspect="inspectHistorical" />
       <BlrResourceSlideover v-if="fallbackWorkspace" v-model:tab="resourceTab" :workspace="fallbackWorkspace" :resource="fallbackResource" :state-label="readingLabel" :state-id="resourceState" :reference="reference" :previous-reference="previousReference" @reference-open="reference = $event" @reference-back="backReference" @open="resource = $event.key; reference = null" @close="resource = null; reference = null; resourceState = 'working'" />
       <UAlert v-if="readingError" class="mt-4" title="Historical state unavailable" :description="readingError" />
     </UContainer>
@@ -280,6 +280,8 @@ const errorMessage = computed(() => {
         v-model:route-columns="routeColumns"
         v-model:topology="topology"
         :report="data"
+        v-model:coverage="coverage" v-model:review-path="reviewPath"
+        :load-repository="loadRepository" :load-repository-file="loadRepositoryFile"
         :logo-src="logoSrc"
         :changes="changes"
         tools-target="#businesslens-report-tools"
@@ -287,7 +289,7 @@ const errorMessage = computed(() => {
         @compare="chooseComparison"
         @history-search="searchHistory"
         @history-more="refreshChanges(true)"
-        @pin="pin"
+
       >
         <!-- The pulse sits with the report's other state facts, beside Coverage. -->
         <template #status>

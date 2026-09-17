@@ -7,31 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- **History** compares any two working, commit, branch, tag or checkpoint states.
-  Open resources and local References as they were, including removed resources.
-- History highlights the default and current branches, chooses a starting
-  comparison, and explains when there is no earlier saved model.
-- Checkpoints preserve local Reference files, including images, for later review.
-  Creating one in History selects it as the new comparison base.
-- `businesslens checkpoint "<label>"` marks a round of work; the agent skills
-  run it after each approved delta, and **Create a checkpoint** does the same from
-  the report.
-- The report's status bar shows, beside Coverage, whether the viewer is live
-  and when the model last changed on screen.
-- `businesslens view` starts before the model exists or while it does not lint,
-  and comes alive on the first clean save, so a model can be watched from its
-  first file.
-- The agent skills write the model in slices that each lint on their own, so
-  the report stays live while the model grows.
-- Comparisons update after commits and include taxonomy changes and detailed
-  Scenario changes.
-- Local Reference file edits now appear in comparisons, with before/after text
-  and indicators for changed binary files.
-- Comparisons keep up with baseline switches and models created after the viewer
-  opens. Startup errors update live, Scenario cards show change marks, and long
-  checkpoint labels fit narrow resource panels.
-- Header badges align consistently. The report format version lives in Overview →
-  About, with a definition shared with Vocabulary under Product.
+- Review model and repository changes together between Git states, with historical resource and file readings.
+- Explore Coverage in Overview through a shared repository tree, with clear scope, exclusions, gaps and recorded inspection.
+- Share completed repository inspections with the model and see what changed afterward.
+- The report stays read-only and updates while models and source files change.
+- Open the local report before a model exists and follow it from its first valid state.
+- Clearer About information, report badges and live connection status.
 
 ## [0.16.0] - 2026-09-16
 

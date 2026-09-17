@@ -24,7 +24,7 @@ resolution loop.
 ├── capabilities/<id>.md      # or <id>/capability.md with scenarios/ or assets
 ├── journeys/<id>.md          # or <id>/journey.md with scenarios/ or assets; optional
 ├── business-rules/<id>.md    # or <id>/business-rule.md with assets
-└── coverage.md
+└── coverage.json
 ```
 
 Leaf resources stay compact as `<id>.md`. A resource expands to
@@ -80,8 +80,7 @@ drift, before release, or for a named/full current-state audit.
 | Terminal | `npx businesslens install` | Install the three skills |
 | Terminal | `npx businesslens update` | Refresh managed skill installations |
 | Terminal | `npx businesslens lint` | Check Product Model structure; no semantic claim |
-| Terminal | `npx businesslens view` | View the current Product Model privately on localhost, with what changed since the last commit or checkpoint |
-| Terminal | `npx businesslens checkpoint "<label>"` | Mark a round of model work for the local report to compare against |
+| Terminal | `npx businesslens view` | View the current Product Model privately on localhost, with Coverage and read-only Git comparisons of model and repository changes |
 | Terminal | `npx businesslens blueprint export` | Compile the model into a source-free Blueprint |
 | Terminal | `npx businesslens blueprint pull <name>` | Pull a catalog Blueprint |
 | Terminal | `npx businesslens blueprint open <report>` | Expand a local Blueprint |
@@ -99,7 +98,7 @@ Catalog contribution stays in the CLI; there is no contribution skill.
   proof or verification receipts.
 - `coverage.status` describes model breadth: `draft` while the model itself is
   under review, `partial` with known unmapped areas, and `complete` when the
-  intended product breadth is modeled.
+  declared model scope is modeled, with exclusions explicit and no known gaps.
 - A complete model may contain zero References.
 - A Product may expose several Interfaces—such as web, mobile, CLI, and a
   supported API—without being classified as one of those delivery forms.

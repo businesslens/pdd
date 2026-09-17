@@ -7,14 +7,14 @@ const { shown } = useTooltips()
     <button
       type="button"
       class="blr-history-help"
-      aria-label="About History"
+      aria-label="About Review"
     >
       <UIcon name="i-lucide-circle-question-mark" class="size-3.5 shrink-0" aria-hidden="true" />
     </button>
     <template #content>
       <div class="space-y-2 p-4">
-        <p class="text-sm font-semibold text-highlighted">History</p>
-        <p class="text-sm leading-relaxed text-muted">Compare two states of the Product Model and its local References. Added and removed are measured from Base to Compare to.</p>
+        <p class="text-sm font-semibold text-highlighted">Review</p>
+        <p class="text-sm leading-relaxed text-muted">Read changes to the Product Model and repository between two Git states. Browsing does not record or approve a review. Added and removed are measured from Base to Compare to.</p>
       </div>
     </template>
   </UPopover>

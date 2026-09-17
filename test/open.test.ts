@@ -7,7 +7,7 @@ import { buildProject } from '../src/commands/export.js'
 import { runOpen } from '../src/commands/open.js'
 import { lsFiles } from '../src/core/git.js'
 import { loadModel } from '../src/core/model.js'
-import { projectPortableReport, type ProductReportV13 } from '../src/core/portable.js'
+import { projectPortableReport, type ProductReportV16 } from '../src/core/portable.js'
 import { lintModel } from '../src/commands/lint.js'
 
 const FIXTURE = join(__dirname, 'fixtures', 'fixture-shop')
@@ -25,7 +25,7 @@ function initialize(cwd: string): void {
   git(cwd, 'commit', '--allow-empty', '-m', 'fixture')
 }
 
-function withoutRepositoryEvidence(report: ProductReportV13): Record<string, any> {
+function withoutRepositoryEvidence(report: ProductReportV16): Record<string, any> {
   const portable = projectPortableReport(report)
   return {
     ...portable,
@@ -156,14 +156,15 @@ describe('open report', () => {
     try {
       const report = structuredClone(buildProject(source).report)
       report.coverage.status = 'partial'
-      report.coverage.unmapped = ['Back-office dispute handling']
+      report.referenceProfile = 'workspace'
+      report.coverage.unmapped = [{ description: 'Back-office dispute handling', paths: ['src/disputes/'] }]
       const file = join(fresh, 'partial.json')
       writeFileSync(file, JSON.stringify(report))
 
       expect(await runOpen(fresh, file, false)).toBe(0)
       const imported = loadModel(fresh)
       expect(imported.coverage.status).toBe('partial')
-      expect(imported.coverage.unmapped).toEqual(['Back-office dispute handling'])
+      expect(imported.coverage.unmapped).toEqual([{ description: 'Back-office dispute handling', paths: [] }])
     } finally {
       rmSync(fresh, { recursive: true, force: true })
     }
@@ -213,7 +214,7 @@ describe('open report', () => {
       expect(readFileSync(join(fresh, '.businesslens/capabilities/place-order/capability.md'), 'utf8'))
         .not.toContain('::')
       expect(readFileSync(join(fresh, '.businesslens/config.yaml'), 'utf8'))
-        .toContain('schema: 8')
+        .toContain('schema: 11')
 
       const rebuilt = buildProject(fresh)
       expect(withoutRepositoryEvidence(rebuilt.report)).toEqual(withoutRepositoryEvidence(report))
@@ -272,10 +273,11 @@ describe('open report', () => {
     // the author said about the model's own completeness comes through as
     // written — the recipient must be able to tell which limitations are the
     // author's, which they cannot if expansion adds one in the author's voice.
-    const authored = readFileSync(join(source, '.businesslens/coverage.md'), 'utf8')
-    const opened = readFileSync(join(target, '.businesslens/coverage.md'), 'utf8')
-    expect(authored).toContain('limitations: []')
-    expect(opened).toContain('limitations: []')
+    const authored = readFileSync(join(source, '.businesslens/coverage.json'), 'utf8')
+    const opened = readFileSync(join(target, '.businesslens/coverage.json'), 'utf8')
+    expect(JSON.parse(authored).limitations).toEqual([])
+    expect(JSON.parse(opened).limitations).toEqual([])
+    expect(JSON.parse(opened).review).toBeNull()
     expect(opened).not.toContain('Implementation alignment must be verified')
     expect(opened).toContain('Opened from a portable Product Report')
     expect(opened).toContain('Implementation alignment has not been verified in this repository.')
@@ -290,13 +292,13 @@ describe('open report', () => {
   it('expands to a fixed point so a re-opened model is byte-identical', async () => {
     // A catalog Blueprint's committed model is itself an expanded report, so
     // `pull` re-expands it and the result has to match what is committed.
-    const first = readFileSync(join(target, '.businesslens/coverage.md'), 'utf8')
+    const first = readFileSync(join(target, '.businesslens/coverage.json'), 'utf8')
 
     const roundTrip = mkdtempSync(join(tmpdir(), 'businesslens-open-fixed-point-'))
     try {
       initialize(roundTrip)
       expect(await runOpen(roundTrip, buildProject(target).outputFile, false)).toBe(0)
-      const second = readFileSync(join(roundTrip, '.businesslens/coverage.md'), 'utf8')
+      const second = readFileSync(join(roundTrip, '.businesslens/coverage.json'), 'utf8')
       expect(second).toEqual(first)
     } finally {
       rmSync(roundTrip, { recursive: true, force: true })

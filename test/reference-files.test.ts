@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import { compileReport } from '../src/commands/export.js'
-import { checkpointsDirectory, compileCommittedReport, readCheckpoint, writeCheckpoint } from '../src/core/checkpoints.js'
+import { compileCommittedReport } from '../src/core/committed-report.js'
 import { loadModel } from '../src/core/model.js'
 import { resolveModelRoot } from '../src/core/model-root.js'
 import { createReferenceFileSource, MAX_REFERENCE_BYTES, MAX_REFERENCE_TEXT_BYTES } from '../src/core/reference-files.js'
@@ -101,21 +101,7 @@ describe('local Reference files', () => {
     expect(JSON.stringify(snapshot)).not.toContain('must not be captured')
   })
 
-  it('seals file contents beside a checkpoint and tolerates older checkpoints', () => {
-    const { root, report, read, path } = fixture()
-    writeFileSync(path, 'sealed')
-    const meta = writeCheckpoint(root, report, { source: 'checkpoint' })
-    const directory = checkpointsDirectory(root)
-    writeFileSync(path, 'edited')
-    const checkpoint = readCheckpoint(directory, meta.id)!
-    expect(checkpoint.referenceFiles?.['notes.txt']).toMatchObject({ status: 'present', text: 'sealed' })
-    expect(diffReports(report, report, { before: checkpoint.referenceFiles!, after: read(report) }).resources[0]!.fields[0]).toMatchObject({ before: 'sealed', after: 'edited' })
-    rmSync(join(directory, `${meta.id}.references.json`))
-    expect(readCheckpoint(directory, meta.id)?.report).toEqual(report)
-    expect(readCheckpoint(directory, meta.id)?.referenceFiles).toBeUndefined()
-  })
-
-  it('reads committed and checkpoint Reference files from the Git root of a nested model', { timeout: 30_000 }, () => {
+  it('reads committed Reference files from the Git root of a nested model', { timeout: 30_000 }, () => {
     const { root } = fixture()
     const nested = join(root, 'models', 'shop')
     mkdirSync(nested, { recursive: true })
@@ -131,8 +117,6 @@ describe('local Reference files', () => {
     writeFileSync(join(root, path), '// working tree\n')
     const baseline = compileCommittedReport(resolveModelRoot(nested))
     expect(baseline.referenceFiles?.[path]).toMatchObject({ status: 'present', text: original })
-    const meta = writeCheckpoint(nested, baseline.report, { source: 'pin', referenceRoot: root })
-    const checkpoint = readCheckpoint(checkpointsDirectory(nested), meta.id)!
-    expect(checkpoint.referenceFiles?.[path]).toMatchObject({ status: 'present', text: '// working tree\n' })
+
   })
 })

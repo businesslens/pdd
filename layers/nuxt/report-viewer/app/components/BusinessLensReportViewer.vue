@@ -1,5 +1,6 @@
 <script setup lang="ts">
 provide('businesslens:viewer', useId())
+import { defaultCoverageReading, type CoverageReading } from '../utils/coverageState'
 import type { TopologyReading } from '../utils/topologyState'
 import { defaultTopologyReading } from '../utils/topologyState'
 import { destinationForLocation } from '../utils/reportDestinations'
@@ -11,12 +12,15 @@ import { destinationForLocation } from '../utils/reportDestinations'
  * navigation and a pull command. Those differences arrive as slots and a
  * bindable section, so the Product Report stays one implementation.
  */
-import type { ProductReportV13 } from 'businesslens/report'
+import type { ProductReportV16, RepositoryInventoryLoader, RepositoryFileLoader } from 'businesslens/report'
 import { projectReportWorkspace } from '../utils/reportWorkspace'
 import type { ReportChanges } from '../utils/reportChanges'
 
 const props = defineProps<{
-  report: ProductReportV13
+  report: ProductReportV16
+  /** Optional live file inventory supplied by the local host, outside the report. */
+  loadRepository?: RepositoryInventoryLoader
+  loadRepositoryFile?: RepositoryFileLoader
   /** Host-resolved `.businesslens/product/logo.svg`; rendered in the product header. */
   logoSrc?: string | null
   /** Mounted host-header element receiving the report's search and Vocabulary controls. */
@@ -26,7 +30,7 @@ const props = defineProps<{
    * keeps one. The local viewer does; the catalog does not, and passes nothing.
    */
   changes?: ReportChanges | null
-  readingReport?: ProductReportV13 | null
+  readingReport?: ProductReportV16 | null
   readingLabel?: string
   readingError?: string | null
 }>()
@@ -36,8 +40,6 @@ const emit = defineEmits<{
   compare: [base: string, target: string]
   historySearch: [query: string]
   historyMore: []
-  /** The reader asked to seal the current state as a checkpoint. */
-  pin: [label: string | null]
 }>()
 
 /**
@@ -69,6 +71,8 @@ const scenarioRoute = defineModel<string | null>('scenarioRoute', { default: nul
 /** `auto`, or the reader's preferred number of visible route columns. */
 const routeColumns = defineModel<string>('routeColumns', { default: 'auto' })
 const topology = defineModel<TopologyReading>('topology', { default: defaultTopologyReading })
+const reviewPath = defineModel<string | null>('reviewPath', { default: null })
+const coverage = defineModel<CoverageReading>('coverage', { default: defaultCoverageReading })
 
 const workspace = computed(() => projectReportWorkspace(props.report))
 
@@ -106,18 +110,22 @@ onMounted(() => { mounted = true; synchronizeLocation() })
       :reading-label="readingLabel"
       :reading-error="readingError"
       :tab="location.tab"
+      v-model:coverage="coverage"
+      v-model:review-path="reviewPath"
+      :load-repository-file="loadRepositoryFile"
+
       v-model:resource-tab="resourceTab"
       v-model:scenario-route="scenarioRoute"
       v-model:route-columns="routeColumns"
       :topology="location.topology"
       :workspace="workspace"
+      :load-repository="loadRepository"
       :logo-src="logoSrc"
       :tools-target="toolsTarget"
       :changes="changes"
       @compare="(base, target) => emit('compare', base, target)"
       @history-search="emit('historySearch', $event)"
       @history-more="emit('historyMore')"
-      @pin="emit('pin', $event)"
       @update:section="section = $event"
       @update:resource="resource = $event"
       @update:tab="tab = $event"

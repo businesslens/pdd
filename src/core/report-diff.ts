@@ -7,7 +7,7 @@
  * show up as changes no file diff could name. Free of Node built-ins so the
  * viewer can import the types and the browser could run it if it needed to.
  */
-import type { ProductReportV13, ReportCollectionName } from './portable.js'
+import type { ProductReportV16, ReportCollectionName } from './portable.js'
 import { canonicalReportJson, reportResourceCollections } from './portable.js'
 import type { ReportReference } from './portable.js'
 import { referencePaths, type ReferenceFileSnapshot, type ReportReferenceFiles } from './report-reference-files.js'
@@ -42,24 +42,14 @@ export interface ReportDiff {
   counts: { added: number, removed: number, changed: number }
 }
 
-/**
- * What the reader compares against.
- *
- * `committed` is the model at the last commit; a `checkpoint` is a report the
- * `checkpoint` command or the viewer's pin sealed into
- * `.businesslens/cache/checkpoints/`.
- */
+/** Git identities used by the read-only Review page. */
 export type ReportBaseline =
   | { id: 'head', kind: 'committed', available: true, at: string, detail: string }
   | { id: 'head', kind: 'committed', available: false, reason: string }
-  | { id: string, kind: 'checkpoint', available: true, at: string, source: CheckpointSource, label: string | null }
   | { id: 'working', kind: 'working', available: true }
   | { id: string, kind: 'commit', available: true, at: string, commit: string, label: string, detail: string }
   | { id: string, kind: 'branch', available: true, at: string, commit: string, label: string, detail: string, isDefault?: boolean, isCurrent?: boolean }
   | { id: string, kind: 'tag', available: true, at: string, commit: string, label: string, detail: string }
-
-/** Who sealed a checkpoint: the `checkpoint` command, or the viewer's pin. */
-export type CheckpointSource = 'checkpoint' | 'pin'
 
 /* Report metadata that changes without the model changing. */
 const IGNORED_TOP_LEVEL = new Set(['generatedAt', 'generator', 'counts', 'model', 'schemaVersion', 'referenceProfile'])
@@ -98,7 +88,7 @@ export function diffFields(before: Record<string, unknown>, after: Record<string
   const changes: FieldChange[] = []
   const keys = [...new Set([...Object.keys(before), ...Object.keys(after)])].sort()
   for (const key of keys) {
-    if (!prefix && ignore.has(key)) continue
+    if ((!prefix && ignore.has(key)) || (prefix === 'coverage' && key === 'review')) continue
     const left = before[key]
     const right = after[key]
     const field = prefix ? `${prefix}.${key}` : key
@@ -130,8 +120,8 @@ function titleOf(resource: Resource): string {
 
 /** The differences from `before` to `after`, in collection order then by id. */
 export function diffReports(
-  before: ProductReportV13,
-  after: ProductReportV13,
+  before: ProductReportV16,
+  after: ProductReportV16,
   files?: { before: ReportReferenceFiles, after: ReportReferenceFiles }
 ): ReportDiff {
   const product = diffFields(
@@ -175,8 +165,7 @@ function describeFile(file: ReferenceFileSnapshot): string | null {
   if (file.status === 'missing') return null
   if (file.status === 'unavailable') return `Unavailable: ${file.reason}`
   if (file.text !== null) return file.text
-  const kind = file.content === 'budget-exceeded' ? 'Checkpoint content budget exceeded'
-    : file.omitted === 'binary' ? 'Binary file' : 'File too large for a text preview'
+  const kind = file.omitted === 'binary' ? 'Binary file' : 'File too large for a text preview'
   return `${kind} · ${file.bytes} bytes · SHA-256 ${file.digest.slice(0, 12)}`
 }
 
@@ -187,7 +176,7 @@ function diffReferenceFiles(
   if (!files) return []
   const previous = new Set(referencePaths(before))
   return referencePaths(after).flatMap(path => {
-    // A newly attached Reference has no checkpoint history for its file.
+    // A newly attached Reference has no comparison history for its file.
     if (!previous.has(path) || !Object.hasOwn(files.before, path) || !Object.hasOwn(files.after, path)) return []
     const left = files.before[path]!
     const right = files.after[path]!

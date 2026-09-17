@@ -26,5 +26,6 @@ Reading: browsing resources by kind, opening any resource’s reading, reading a
 thing's composed lifecycle and who may move it, searching by name, and reading
 named visualizations in their subject collections and resource-specific readings. It presents what the model already says and never
 edits it, never accepts an account, and never publishes or transmits the report.
-It shows the model, not the code — it makes no claim about whether the
-repository agrees with what it displays.
+It reads model resources, attached material and repository changes, while making
+no claim that model and implementation agree. Review never marks work inspected,
+approves changes or creates saved states.

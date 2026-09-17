@@ -7,13 +7,13 @@ order: 7
 terms:
   - term: Product Model
     anchor: the-shape-of-a-model
-    definition: "The .businesslens/ folder: one coherent product described in Markdown, tracked in Git, and free to cite the repository's code."
+    definition: "The .businesslens/ folder: one product described in Markdown with structured Coverage, tracked in Git, and free to cite repository code."
   - term: Intent
     anchor: authoring-conventions
     definition: "Why a resource exists and which outcome it protects, never a restatement of what it does."
   - term: Coverage
     anchor: coverage
-    definition: "How broadly the model has been authored, as draft, partial or complete, and why the known gaps remain."
+    definition: "The model’s declared scope, breadth, exclusions and known gaps, together with its latest completed repository review."
   - term: Resource type
     anchor: what-belongs-in-a-model
     definition: "A category of resource, such as Entity or Capability, determined by the file's location in the Product Model."
@@ -91,7 +91,7 @@ payloads belong in an API contract such as OpenAPI. Attach those artifacts as
 
 `taxonomies.yaml` defines the categories available as Scenario kinds, such as
 `primary` and `edge`. `config.yaml` records folder schema
-and SDD roots. `coverage.md` describes model breadth.
+and SDD roots. `coverage.json` records model breadth and the latest completed repository review.
 `.businesslens/README.md` orients an agent that encounters the model.
 
 Use [`businesslens view`](./cli-view.md) to browse the current model as a local
@@ -306,41 +306,86 @@ Domain as the optional umbrella.
 
 ## Coverage
 
-`coverage.md` records how broadly the Product Model has been authored and why
-known gaps remain:
+`coverage.json` is one committed document containing the model's declared breadth
+and its latest completed repository review. It is required even when the Product
+has no implementation yet; use `review: null` until code has been reviewed.
 
-```md
----
-status: partial
-method: ["Static inspection without executing target code"]
-sourceAreas: [src, server]
-unmapped: [deployment]
-limitations: ["Runtime-only billing policy was not established"]
----
-
-# Coverage
-
-The mapped breadth and why known gaps remain.
+```json
+{
+  "status": "partial",
+  "scope": "Customer purchasing and order fulfillment.",
+  "exclusions": [
+    { "description": "Staff payroll is deliberately outside this model.", "paths": ["server/payroll/"] }
+  ],
+  "method": ["Static source inspection without executing code"],
+  "sourceAreas": ["src/", "server/"],
+  "unmapped": [
+    { "description": "Background fulfillment jobs are not modeled.", "paths": ["server/jobs/"] }
+  ],
+  "limitations": ["Runtime scheduling policy could not be established"],
+  "rationale": "Purchasing is modeled; background work remains.",
+  "review": null
+}
 ```
 
-| Status | Meaning |
-| --- | --- |
-| `draft` | The model itself is still being authored or reviewed |
-| `partial` | Useful model with known unmapped areas |
-| `complete` | Intended Product breadth is modeled |
+Every field shown is required. `lint` rejects unknown keys, invalid JSON and the
+retired `coverage.md` file. `rationale` may contain Markdown prose, but no H1 or
+H2 headings. The remaining resources continue to use Markdown.
 
-`method` describes how the model was created or expanded. `sourceAreas` records
-inspected repository areas, `unmapped` names intentionally absent Product
-breadth, `limitations` states what could not be established, and the lead prose
-is the rationale. Coverage accepts no H2 sections. Coverage has no resource type
-counts or Reference-derived fields;
-resource totals are derived from the model itself.
+`scope` states the model's intended breadth. `exclusions` names approved omissions;
+`unmapped` names known missing behavior inside that scope. An agent can propose
+scope and exclusions, but skipped work never becomes an approved exclusion on
+its own. `limitations` records what could not be established. Product constraints
+belong in the Product's own limitations. `method` describes how the model was
+authored; `sourceAreas` records broad inspection context; `rationale` explains
+its breadth and remaining gaps.
 
-Availability and Coverage do not claim implementation status. Every status may
-describe planned, implemented, or mixed behavior, and a complete model may have
-no References. `businesslens-verify` checks semantic alignment.
+Status describes model breadth, never whether code is implemented or verified:
 
-Resource files, config, taxonomy, coverage, and orientation are committed.
-The model's `.gitignore` ignores `build/` and `cache/`, which are generated and
-never committed. See [References](./references.md) for optional external
-artifacts.
+- `draft`: the model itself is still being authored or reviewed.
+- `partial`: the model is useful and has known unmapped areas.
+- `complete`: the declared scope is modeled, with approved exclusions explicit
+  and no known Unmapped entries. A complete model needs at least one Capability.
+
+Exclusions and Unmapped entries each require exactly `description` and `paths`.
+Descriptions are non-empty single-line Markdown without a structural heading,
+unique within and across both lists. Paths use repository-relative POSIX spelling;
+directories end in `/`. Use `[]` when a location is unknown or code does not yet
+exist. `lint` rejects duplicate paths, absolute paths, URLs, backslashes,
+traversal, globs, and fragment or line suffixes. A path need not currently exist.
+Paths locate described behavior; no directory annotation classifies every file
+beneath it. Source areas and References do not establish file-level completeness.
+
+The nullable `review` contains the latest completed inspection:
+
+- `id`, `startedAt`, and `completedAt` identify and date the review.
+- `policy` states which repository files were eligible, including explicitly
+  selected ignored paths.
+- `files` records exact repository-relative paths and content fingerprints;
+  unreadable inputs retain an explicit error.
+- `entries` groups exact paths with a `reviewed`, `excluded`, or `uncertain`
+  conclusion, a summary, model resource paths, and known exclusions or gaps.
+- `modelDigest` identifies the model contents against which review completed.
+
+The [coverage commands](./cli-coverage.md) capture files, record conclusions and
+write this block on completion. Do not invent fingerprints or mark uninspected
+files reviewed. Every captured file requires a conclusion before completion;
+known gaps and uncertainty remain visible. Completed review and complete model
+coverage are independent. Subsequent resource edits can make historical links
+stale without erasing the recorded review.
+
+Pending work stays local to each worktree. Commit the completed `coverage.json`
+to share it with other agents and clones. Current file and model changes are
+computed against that saved snapshot, never stored as a freshness flag.
+The model fingerprint includes authored Coverage fields but excludes the review
+itself, JSON formatting, and generated `build/` and `cache/` contents. Matching
+fingerprints establish content identity, not semantic correctness.
+
+Blueprints retain authored scope, exclusions, gaps, limitations, and rationale;
+repository paths and inspection context are removed. The review is cleared to
+`null`, including after expansion into another repository. A newly designed model
+can have complete breadth without having code or a completed review.
+
+Resource files, config, taxonomy, Coverage, and orientation are committed.
+The model's `.gitignore` ignores generated `build/` and `cache/` directories.
+See [References](./references.md) for optional external artifacts.

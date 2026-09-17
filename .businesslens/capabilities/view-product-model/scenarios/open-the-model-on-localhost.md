@@ -23,6 +23,7 @@ steps:
     actor: developer
     entities:
       - { entity: product, effect: reads }
+      - { entity: coverage-review, effect: reads }
       - { entity: product-model, effect: reads }
     contexts:
       local:
@@ -57,4 +58,11 @@ address bar, and nothing has been written or transmitted.
 ## Edge cases
 
 - Asking for a specific port, or for the address to be printed without opening a browser, changes only how the report is reached.
-- Searching by name lands on the resource’s reading directly, for the same reason a collection row does.
+- Searching by name lands on the resource's reading directly, for the same reason a collection row does.
+- Coverage can show current repository file names with declared Source areas, known behavioral gaps, and links to referencing model resources; a directory can carry all three annotations.
+- The absence of model annotations does not establish coverage status. Inspection, references, and a folder's aggregate counts never establish file-level completeness.
+- Refreshing the inventory reflects newly added and removed files. Ignored files are available on request, and symbolic-link targets are not traversed.
+- Missing or failed repository access leaves the authored Coverage information readable, including gaps with no recorded paths.
+- Coverage distinguishes saved accounting from current file changes and model changes; a pending review never replaces the completed baseline.
+- The report displays exact selected-file conclusions, including uncertainty and approved exclusions; refreshing never records a review or updates the baseline.
+- Missing review history, including a fresh clone, is explicit. Failed review reads preserve all authored Coverage information and the current file list.

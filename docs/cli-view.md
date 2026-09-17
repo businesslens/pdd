@@ -3,7 +3,7 @@ title: view
 description: Open the current Product Model as a private local report that stays updated while you edit.
 section: open-source
 group: CLI
-order: 29
+order: 28
 ---
 
 # `businesslens view`
@@ -26,38 +26,34 @@ introduces a lint error, the browser keeps the last valid report visible and
 recovers after the error is fixed. A pulse in the header says the viewer is
 connected and when the model last changed on screen.
 
-## History
+## Review
 
-**History** compares two selected states: the working model, Git commits,
-branches or tags, and local [checkpoints](./cli-checkpoint.md). Both selections are kept
-in the URL. Browse or search local history, paste a commit SHA, or swap the
-comparison direction. Git states are read without changing your checkout;
-unavailable revisions and models that cannot compile explain why.
+**Review** compares the Product Model and repository between two selected Git
+states, including the working state. Commits, branches and tags resolve locally;
+both selections stay in the URL. Historical models must use the current model
+format; earlier formats are not converted. Reports and file trees are read from
+Git on demand, without a separate history cache. Browse or search history, enter a commit SHA,
+or swap the comparison direction without changing the checkout.
 
-The initial base is the repository's known default branch, or the last commit
-when working on that branch. If the default branch cannot be identified, the
-last commit is used. When no model is saved at those revisions, the newest
-checkpoint is used instead. Your explicit selections take precedence. If no
-earlier model has been saved, create a checkpoint or commit the model before
-comparing later changes.
+The default base is the repository's known default branch on a feature branch,
+otherwise the last commit. Explicit selections take precedence. A revision with
+no readable model explains the unavailable model comparison while its repository
+files remain comparable. With no commits, there is no saved comparison state.
 
-The comparison includes resource and field changes, plus changes to local
-Reference files. Opening either side of a resource reads that state's model
-and files, including resources since removed. Branches and tags resolve to exact commits
-for each comparison. A historical file never silently opens its current copy.
-HTTP(S) References remain external links.
+Model changes name resources and fields, independently of file references.
+Repository changes include tracked and nonignored untracked files, staged and
+unstaged edits, additions, deletions and executable-mode changes. Select a file
+for its before/after contents, or a resource for that state's complete reading.
+Historical contents never fall back to current files. Text previews are bounded;
+binary, oversized, unreadable and submodule contents are identified explicitly.
 
-**Create a checkpoint** saves the current valid working model and its local
-References, even while comparing historical states. The newest fifty are kept
-locally. Checkpoints preserve supported file contents, including images, up to
-25 MiB per file and 100 MiB per checkpoint. Identical files share storage.
-Older checkpoints may preserve only text or fingerprints; missing contents
-are explicitly unavailable. Text comparisons show up to 256 KiB per file.
+Overview retains **Coverage** for current model scope, exclusions, gaps and
+recorded inspection. Coverage and Review share the repository tree. Coverage's
+changes since inspection have their own baseline; Review compares only its two
+selected states. A changed file does not establish whether model and code agree.
 
-Model and Reference edits are detected independently of checkpoint creation.
-A changed file does not establish whether the model and implementation agree.
-Only regular files within the repository or standalone model root are captured;
-symbolic links and generated BusinessLens history are excluded.
+The report is read-only. Selecting, filtering, inspecting and refreshing never
+record a review, approve changes, save a snapshot or alter the repository.
 
 ## Options
 

@@ -1,5 +1,4 @@
 import { compileResolvedWorkspaceReport } from './export.js'
-import { createCommittedReportSource, ensureCheckpointsDirectory, writeCheckpoint } from '../core/checkpoints.js'
 import { createGitHistory } from '../core/git-history.js'
 import { repoRoot } from '../core/git.js'
 import { openBrowser, startLocalViewer, type LocalViewerBinding } from '../core/local-viewer-server.js'
@@ -26,12 +25,8 @@ function bindingFor(resolved: ModelRoot): LocalViewerBinding {
     // repository has no repository-relative targets, so it gets no mount.
     assetRoot: resolved.gitRoot,
     referenceRoot: resolved.gitRoot ?? resolved.modelRoot,
-    // History: read checkpoints from the generated cache and check
-    // HEAD periodically so committing also updates an open comparison.
-    checkpointsRoot: ensureCheckpointsDirectory(resolved.modelRoot),
-    committed: createCommittedReportSource(resolved),
-    history: createGitHistory(resolved),
-    pin: (report, label) => writeCheckpoint(resolved.modelRoot, report, { source: 'checkpoint', label, referenceRoot: resolved.gitRoot ?? resolved.modelRoot })
+    modelRoot: resolved.modelRoot,
+    history: createGitHistory(resolved)
   }
 }
 

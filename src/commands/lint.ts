@@ -1,3 +1,4 @@
+import { isUnmappedDescription } from '../core/coverage.js'
 import type { Context } from '../core/frontmatter.js'
 import { repositoryReferencePath } from '../core/frontmatter.js'
 import type {
@@ -121,8 +122,12 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     }
   }
 
+  if (!isUnmappedDescription(model.coverage.scope)) errors.push('coverage.json: scope must be non-empty single-line Markdown without a heading')
+  const coverageDescriptions = [...model.coverage.exclusions, ...model.coverage.unmapped].map(area => area.description)
+  if (new Set(coverageDescriptions).size !== coverageDescriptions.length) errors.push('coverage.json: descriptions must be unique across exclusions and unmapped')
+  if (model.coverage.status === 'complete' && model.coverage.unmapped.length) errors.push('coverage.json: complete coverage cannot have known unmapped behavior')
   if (!COVERAGE_STATUSES.has(model.coverage.status)) {
-    errors.push(`coverage.md: status "${model.coverage.status}" must be complete|partial|draft`)
+    errors.push(`coverage.json: status "${model.coverage.status}" must be complete|partial|draft`)
   }
 
   const collections: Array<[string, Array<{ id: string }>]> = [

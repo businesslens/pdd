@@ -124,7 +124,7 @@ Screen. A representative model can therefore look like this:
 .businesslens/
 ├── config.yaml              # tool config (committed)
 ├── taxonomies.yaml          # scenario kinds (committed)
-├── coverage.md              # coverage assessment (committed)
+├── coverage.json              # model coverage and completed review (committed)
 ├── product.md               # compact Product when it has no logo
 ├── product/                 # expanded Product alternative
 │   ├── product.md
@@ -391,7 +391,7 @@ future format revision, but Context is not an arbitrary metadata bag.
 `references` is an optional extension on every semantic resource: Product,
 Interface, Experience, Screen, Domain, Entity, Capability, Journey, Capability
 Scenario, Journey Scenario, and Business Rule. It is not accepted in
-`config.yaml`, `coverage.md`, or `taxonomies.yaml`.
+`config.yaml`, `coverage.json`, or `taxonomies.yaml`.
 
 ```yaml
 references:
@@ -458,12 +458,12 @@ but the artifact remains evidence to assess rather than proof to trust.
 ### `config.yaml`
 
 ```yaml
-schema: 8                          # folder-format version
+schema: 11                         # folder-format version
 sdd:
   paths: [openspec/]               # detected/declared SDD roots; empty if none
 ```
 
-`config.yaml` has no other keys. Schema 8 is the only supported folder format.
+`config.yaml` has no other keys. Schema 9 is the only supported folder format.
 
 ### `product.md` or `product/product.md`
 
@@ -503,6 +503,13 @@ characters maximum), `category` is a lowercase kebab-case classification,
 `authors` is a list of `{ name, url? }` records, and `license` is an SPDX
 license identifier. The H1 remains the Product title and the lead prose remains
 its full description.
+
+Give each narrative field its own job: the Summary briefly identifies the
+promise, the Description explains what the Product offers, and Intent explains
+the outcome it exists to protect. Product `limitations` states deliberate
+exclusions or constraints of that promise. Missing modeled behavior belongs in
+Coverage `unmapped`; uncertainty in what could be established belongs in
+Coverage `limitations`.
 
 The compact form is `.businesslens/product.md`. Adding a Product logo expands
 it to `.businesslens/product/product.md`, with the identity asset at
@@ -1069,7 +1076,7 @@ files do not duplicate Rule IDs. Capability Scenario files own the acceptance
 relation, so Capability files do not duplicate Scenario IDs. A Capability
 Scenario is the only direct acceptance coverage for a Capability; Journey
 Scenario use does not satisfy that coverage rule. Missing coverage is an error
-when `coverage.md` is `complete`, a warning when it is `partial` or `draft`, and
+when `coverage.json` is `complete`, a warning when it is `partial` or `draft`, and
 always a publication error for a public Blueprint.
 
 A Capability is the smallest durable behavior that remains independently
@@ -1941,37 +1948,77 @@ sequence, observable behavior, or Journey-level Outcome changes. Journey
 Scenarios cannot declare `actors` or `availability`. Business Rules own Scenario
 applicability, so Journey Scenarios do not duplicate Rule IDs.
 
-### `coverage.md`
+### `coverage.json`
 
-```markdown
----
-status: partial                    # complete | partial | draft
-method: ["Static review of the pinned revision without executing code"]
-sourceAreas: [src, server]
-unmapped: ["deployment/"]
-limitations: ["Background jobs not yet mapped"]
----
+Folder schema 11 uses one committed JSON document for authored model breadth and
+its latest completed repository review. `coverage.md` is no longer accepted.
+Every key shown below is required; unknown keys are errors. `review` is `null`
+until a repository review has completed. Authored text may contain Markdown;
+`rationale` is a Markdown fragment without H1 or H2 headings.
 
-# Coverage
-
-Free prose rationale retained with the coverage assessment.
+```json
+{
+  "status": "partial",
+  "scope": "Customer purchasing and order fulfillment.",
+  "exclusions": [
+    { "description": "Staff payroll is deliberately outside this model's scope.", "paths": ["server/payroll/"] }
+  ],
+  "method": ["Static review without executing repository code"],
+  "sourceAreas": ["src/", "server/"],
+  "unmapped": [
+    { "description": "Background job behavior has not been modeled.", "paths": ["server/jobs/"] }
+  ],
+  "limitations": ["Runtime-only scheduling policy was not established"],
+  "rationale": "The purchasing flow is modeled; background work remains to be inspected.",
+  "review": null
+}
 ```
 
-The coverage frontmatter (`status`, `method`, `sourceAreas`, `unmapped`,
-`limitations`) and the prose rationale are authored from the inspection that
-created or expanded the model. Resource totals in a Product Report belong to its
-Summary, not Coverage. Coverage has no reference counts and is never inferred
-from `references`. The linter checks authored resources and relationships; it
-does not compile, publish, or semantically verify the model.
+`scope` is required non-empty single-line Markdown describing the intended
+breadth of this model. `exclusions` declares approved omissions from that scope;
+`unmapped` declares known missing behavior within it. An oversight or unfinished
+inspection must never become an exclusion without approval. A complete model
+cannot contain Unmapped entries. Descriptions are unique within and across
+Exclusions and Unmapped.
 
-Coverage accepts one H1 and its lead rationale only. It has no H2 sections;
-put structured assessment data in the defined frontmatter fields.
+Each exclusion or gap has exactly `description` and `paths`. Description is
+non-empty single-line Markdown without a structural heading. Paths are unique
+repository-relative POSIX paths; files have no suffix, directories end in `/`.
+Use `[]` when no location is known, including intended behavior before code
+exists. Absolute paths, URLs, backslashes, globs, `.` or `..` segments, empty
+segments, surrounding whitespace, control characters, and fragment or line
+suffixes are invalid. Missing workspace paths are not structural errors.
+Paths locate the description, never classify every behavior in a directory.
+Descriptions survive portability; their repository paths do not.
 
-`status` describes **model breadth**, never implementation or verification:
+`method` describes how the model was authored; `sourceAreas` records broad
+inspection context. `limitations` records what could not be established.
+`rationale` explains the declared breadth and remaining gaps. Product limitations
+belong to the Product, not Coverage. Source areas, References, and silence never
+establish file-level completeness. Resource totals are derived from the model,
+not authored here. Current changes are computed, never stored as freshness flags.
+
+`status` describes model breadth, never implementation or verification:
 
 - `draft` — the model itself is still being authored or reviewed.
 - `partial` — the model is useful and has known unmapped areas.
-- `complete` — the intended product breadth is modeled.
+- `complete` — the declared model scope is modeled, with exclusions visible.
+
+`review` stores the latest completed exact-input repository review described in
+`spec/coverage.md`: identity, inventory policy, captured files with fingerprints,
+conclusions, started/completed timestamps, and the model fingerprint. It is
+historical accounting, not semantic proof. All captured files have a conclusion;
+uncertainty and known gaps remain explicit. A review can coexist with any model
+breadth status. An incomplete review cannot be stored in this field.
+
+This supersedes the local-only assessment boundary: completed reviews are
+committed with the model and shared by clones and worktrees. Pending work stays
+in worktree Git metadata. Model identity includes the authored Coverage fields
+but excludes `review` itself and generated `build/` and `cache/` contents.
+Blueprints omit the review and expand with `review: null`. Reviewing or refreshing
+a report never changes Coverage. Only explicit completion replaces the saved
+review, preserving the authored fields. Deleting or editing resources later
+makes historical links stale; it does not invalidate the historical record.
 
 A complete model has at least one Capability. Every Capability availability
 Context is selected by at least one Capability Scenario, and every
@@ -1990,14 +2037,3 @@ administrator decision.
 `blueprint export` writes into them is defined by [`report.md`](./report.md) —
 including the portable projection, the validation the report schema applies on
 top of the rules above, and the `open`/`pull` expansion round trip.
-
-`cache/checkpoints/` holds checkpoints: workspace-profile Product Reports that
-the `checkpoint` command or the local viewer sealed, each as a `<id>.json`
-record naming when and what sealed it beside its `<id>.report.json`.
-Its `<id>.references.json` companion records the bytes of local Reference
-files at that boundary as fingerprints and bounded text previews. This is
-generated comparison data, never an authored Reference field or a claim of
-semantic alignment. The local comparison contract is in `report.md`.
-They are read only by `view`, which compares the current model against them.
-Like everything under `cache/`, they are never committed and carry no product
-meaning: a model with none is complete, and a clone starts with none.

@@ -1,0 +1,2903 @@
+{
+  "status": "draft",
+  "scope": "The terminal command, installed agent skills, local Product Report, coverage reviews and Blueprint movement between repositories.",
+  "method": [
+    "Static inspection of the repository's instructions, documentation, CLI source, bundled agent skills, report viewer, local host, supporting tests, fixtures, configuration and maintenance scripts.",
+    "Command behavior traced from `src/cli.ts` through each command implementation into the core parsing, portability, installation, and local-server modules.",
+    "Skill behavior traced from each `SKILL.md` and its references; the repository's docs and specs were used as leads and confirmed against implementation.",
+    "What each Step does to the things the product keeps, and who may, read from the format contract and the structural rules that enforce it.",
+    "Supporting files were considered for their effect on modeled behavior; development tooling and test examples do not automatically become Product capabilities.",
+    "Source areas locate broad inspection context. Exact considered files and their conclusions belong to the latest completed review in this Coverage document, not to a directory-wide completeness claim.",
+    "Source inspection did not execute the target application, tests, build or package scripts; structural lint used the isolated BusinessLens CLI."
+  ],
+  "sourceAreas": [
+    "src/",
+    "skills/",
+    "layers/",
+    "viewer/",
+    "docs/",
+    "spec/",
+    "scripts/",
+    "test/",
+    "blueprints/",
+    ".agents/",
+    ".claude/",
+    ".claude-plugin/",
+    ".codex/",
+    ".github/",
+    "AGENTS.md",
+    "README.md",
+    "package.json",
+    "package-lock.json"
+  ],
+  "unmapped": [],
+  "exclusions": [
+    {
+      "description": "The public Nuxt layers and JavaScript entry points for third-party hosts are deliberately outside this model’s scope.",
+      "paths": [
+        "layers/nuxt/report-viewer/",
+        "layers/nuxt/theme/",
+        "layers/nuxt/theme-lab/",
+        "src/report.ts",
+        "src/logo.ts",
+        "package.json"
+      ]
+    },
+    {
+      "description": "The visual identity — palette, type, approved surfaces, logo and icon family — and shared background experiments are deliberately outside this model’s scope.",
+      "paths": [
+        "layers/nuxt/theme/",
+        "layers/nuxt/theme-lab/"
+      ]
+    },
+    {
+      "description": "Installing skills through the Claude plugin marketplace is deliberately outside this model’s scope.",
+      "paths": [
+        ".claude-plugin/"
+      ]
+    }
+  ],
+  "limitations": [
+    "The model describes established behavior found by reading source; it makes no claim that behavior is currently correct, released, or verified.",
+    "Provider detection paths and the harness invocation syntaxes are recorded as the product's own claims; no harness was run to confirm them.",
+    "Catalog and GitHub interactions were read from source only. No network call was made."
+  ],
+  "rationale": "The model describes the terminal command, installed agent skills, local Product\nReport, coverage reviews and Blueprint movement between repositories.\nPublic hosting contracts, visual identity and Claude plugin marketplace\ninstallation are explicit model exclusions. Operating the external Blueprint\ncatalog remains outside the Product boundary. The model is under review; its\nstatus does not claim that a Coverage review has been completed.",
+  "review": {
+    "id": "59747398-91ba-44a3-8ef8-4051c96d52d8",
+    "startedAt": "2026-09-15T18:23:04.591Z",
+    "completedAt": "2026-09-15T18:30:20.279Z",
+    "modelDigest": "9faa32d1763cd8da34b35e2afab486db74d8e852d62ed2cd30ce4b3a51517a8a",
+    "policy": {
+      "version": "project-files-v1",
+      "includePaths": []
+    },
+    "files": [
+      {
+        "path": ".agents/skills/grill-me/SKILL.md",
+        "digest": "6d70786bf5cc60a3cf50a2213359c38bbf403d927f67724d92281dd1e71b5562"
+      },
+      {
+        "path": ".agents/skills/grill-me/agents/openai.yaml",
+        "digest": "00a3628db761330908f0a5e91c35303f5ed402e8e450ae57be81f753f61dd9fc"
+      },
+      {
+        "path": ".agents/skills/grill-with-docs/SKILL.md",
+        "digest": "747837803688d30f21dcde56fe3cb7fc2c54c9f52e81d5eb91fc4123d44cf6ae"
+      },
+      {
+        "path": ".agents/skills/grill-with-docs/agents/openai.yaml",
+        "digest": "c12e1a382cd4510506a5a3aa9413d0cc75046c0642dbf4e29b88060aa00d24f6"
+      },
+      {
+        "path": ".agents/skills/grilling/SKILL.md",
+        "digest": "d02a3bafa5c3fe3844e404243d313d9d7aadf3821736d06785c26df5ff35d3f8"
+      },
+      {
+        "path": ".agents/skills/grilling/agents/openai.yaml",
+        "digest": "ee9da396f2a788a2d2d17c7ed6076f96513f53ce60024e2d2f50db70b2699464"
+      },
+      {
+        "path": ".claude-plugin/marketplace.json",
+        "digest": "cb737dc8a7615f4adbae7bfd840079c40be2fa067c2a715032b71ce60e08548a"
+      },
+      {
+        "path": ".claude-plugin/plugin.json",
+        "digest": "13954b7def7605d88591a191856a11560a17e78907c6faca13dc505ba62af802"
+      },
+      {
+        "path": ".claude/settings.json",
+        "digest": "699b1e2997be3dc636d00c094d5d8ba4b9d099765883d368d02d44a2dcba541b"
+      },
+      {
+        "path": ".claude/skills/grill-me",
+        "digest": "f23ab107c4dfb7c836948bf975c23a4d65f5b5e111bcfdec31b00ea0403638ab"
+      },
+      {
+        "path": ".claude/skills/grill-with-docs",
+        "digest": "80dbd8e6ebb31a14828eadec0cbb25469aff74e29466c5ebceeb13d7a262d7fe"
+      },
+      {
+        "path": ".claude/skills/grilling",
+        "digest": "1b15302b670ed6e0c83be19e1affa7242989b9f8eb430b1ac79a63b1bc18689b"
+      },
+      {
+        "path": ".codex/config.toml",
+        "digest": "5cfb57d0efdb57ae62cb4f82e26612b0d6b0a344a207ae0e17c549ff1520fc3a"
+      },
+      {
+        "path": ".github/ISSUE_TEMPLATE/bug_report.yml",
+        "digest": "98a771e0819515f4accb183b2157e5a22f40890583835ed7189fc15f92b63f44"
+      },
+      {
+        "path": ".github/ISSUE_TEMPLATE/config.yml",
+        "digest": "48cde5a9c08ebfcf7270171abd4f9c7769a5d44993d671c1e3b71f3384daa7fd"
+      },
+      {
+        "path": ".github/ISSUE_TEMPLATE/feature_request.yml",
+        "digest": "79a095f3c0aad776669389095dbb82b5bc5dc45bb3115cb187c52408619484d8"
+      },
+      {
+        "path": ".github/PULL_REQUEST_TEMPLATE.md",
+        "digest": "5ce4a37a9046584dbe39c43f8ba5a5de01f92dc24af4f6e1409ec5a43dd9fd90"
+      },
+      {
+        "path": ".github/workflows/check.yml",
+        "digest": "b1246467288f08daa59981c6685dca5ec5b8d1cb14a9727854f7bb4905990fa4"
+      },
+      {
+        "path": ".github/workflows/docs-dispatch.yml",
+        "digest": "13345aa73f50b02887f0043ac06d70dcceef11778c405861d718e5064e4606b6"
+      },
+      {
+        "path": ".github/workflows/publish.yml",
+        "digest": "f2e73383179f52bfad881983b2448292e025bc6da69fc1332ae7b17d5fa0c38b"
+      },
+      {
+        "path": ".github/workflows/release.yml",
+        "digest": "e98d4bf7ec1cd0c28891ca72cff58371ac4119d4cbbebdfb252b1a3061521216"
+      },
+      {
+        "path": ".gitignore",
+        "digest": "d820276c93a51e37b5cabad063af322d3100606463405e93357c7732303f5f4b"
+      },
+      {
+        "path": ".mcp.json",
+        "digest": "cf5ec5377355ae5e23a142f82ec698c24b38a50519aed3c5e317cd824d160dc7"
+      },
+      {
+        "path": "AGENTS.md",
+        "digest": "8271fc2ff36ee7057e8bc7be608050bff92202616d5c7056dea7a50da05fe206"
+      },
+      {
+        "path": "CHANGELOG.md",
+        "digest": "bcc12b1f8b9cf63c1f44b6b4932bc418581a5f4bc6a5650741d6ee081b6f04dd"
+      },
+      {
+        "path": "CLAUDE.md",
+        "digest": "21c9b7c9636422a905ddb38861e0185619ba707edfa5546be7aa28956b47d6b4"
+      },
+      {
+        "path": "CONTRIBUTING.md",
+        "digest": "124dbe11e830e2ab32a532931417b4a962c5e0d9b2c25cc61e9b5ab619263c1c"
+      },
+      {
+        "path": "LICENSE",
+        "digest": "176d4076fe178462fefa8e6f5b85c4d88ffb1e854a31f2c7b1b45450677b5779"
+      },
+      {
+        "path": "README.md",
+        "digest": "4be6dc94cf45e6d4c454e4d0b7f7d4e2b7c38efefb0a8ac7b832f20b5020d8ad"
+      },
+      {
+        "path": "SECURITY.md",
+        "digest": "5bf240c5586a4464d97edfebe80e9eabecbabfda8dd920e9f1d93135a5199e19"
+      },
+      {
+        "path": "blueprints/LICENSE",
+        "digest": "176d4076fe178462fefa8e6f5b85c4d88ffb1e854a31f2c7b1b45450677b5779"
+      },
+      {
+        "path": "blueprints/content-feed-reader/references/reader-research.md",
+        "digest": "edd0d41fdcf8a76178620196de7df42bd5005fdf9e24e568a10ad3eb56866fed"
+      },
+      {
+        "path": "blueprints/content-feed-reader/references/screen-map.md",
+        "digest": "3ae8402be31ddb64104e03af02e76210a4b113505a50fa1014df9781ed0ba760"
+      },
+      {
+        "path": "docs/business-rules.md",
+        "digest": "4eee2eee12ae60e8092541b5505b7eb81ea2a21c94c9a64128b7b2c7264a2a62"
+      },
+      {
+        "path": "docs/capabilities.md",
+        "digest": "c7d9d344cd362d34c04cc4778e0f891dad5228999a4580631ca39b226c554079"
+      },
+      {
+        "path": "docs/ci.md",
+        "digest": "74c0d2bdff6b1f74e44fb6d2604fce8dd41f320b12e4a296413acde897ce2d02"
+      },
+      {
+        "path": "docs/cli-assessment.md",
+        "digest": "e4aac062c65dd1681cf344dac0eee04e9cd22caae2a99c593be9639b08a66f0f"
+      },
+      {
+        "path": "docs/cli-contribute.md",
+        "digest": "133d2b1b198911f8b1cb08579294273f55531fdbfd99e2271a3d567f65580eab"
+      },
+      {
+        "path": "docs/cli-export.md",
+        "digest": "05433c0a120179a7cf9b7f5b3aeecff946b72f6c15ee003f3e1fa1eee1d38213"
+      },
+      {
+        "path": "docs/cli-install.md",
+        "digest": "7abc754fa69f8fe08e4f267a5eb9ab1a2dd953166c4c15c9a5fbe8a531ae190c"
+      },
+      {
+        "path": "docs/cli-lint.md",
+        "digest": "9d31a10dc8b83b31740493a4f217d00198fc807722fb82c1b4c105fb15e52ef7"
+      },
+      {
+        "path": "docs/cli-open.md",
+        "digest": "22aa5f44d7bd1b1e5d579943332b7c5b221b8b0477620b80fde6a044e11a0652"
+      },
+      {
+        "path": "docs/cli-pull.md",
+        "digest": "7566b42e83a797cfe34674aa8355a0cf17ad59d476f5eb798c42100d3502296c"
+      },
+      {
+        "path": "docs/cli-update.md",
+        "digest": "0a8bb8198e8a5eca8e8b762267e8d25c8fb3063474e7520c40295a39f1610c36"
+      },
+      {
+        "path": "docs/cli-view.md",
+        "digest": "ed28b294de4ef86003471d1098dd3630bddc7f93f6a6264d5cabce7f86241e8a"
+      },
+      {
+        "path": "docs/cli.md",
+        "digest": "070523ce7de4c7954938b8c663f88f9ef19647c38f7706689026adb8513e0e96"
+      },
+      {
+        "path": "docs/domains.md",
+        "digest": "e259df0b56d8c87a375799d63a62b90abd5f1f4d1bc54c629e36c8e68d9cfe3d"
+      },
+      {
+        "path": "docs/entities.md",
+        "digest": "057c4d83dd9118938db86655a0547536377ff376d4844ef332fe821069d04784"
+      },
+      {
+        "path": "docs/from-a-blueprint.md",
+        "digest": "bb09901e87b6b1927f762e9db5b42171c3de92695a85fd59d3908699dabc4f41"
+      },
+      {
+        "path": "docs/from-an-idea.md",
+        "digest": "e283e9d3f95ab6bbaacc0073f9e5afeb30b095ead19f827916bca9df605b67bd"
+      },
+      {
+        "path": "docs/from-your-repo.md",
+        "digest": "bbc849b7316f56f87ab98c05e90014c71b908c4797dce7bc56dfea168fa0e5b6"
+      },
+      {
+        "path": "docs/index.md",
+        "digest": "dba0e436a6db6b7c82259a730bd2243bb8f23d8564d1f3039d1245b64fe94b6a"
+      },
+      {
+        "path": "docs/installation.md",
+        "digest": "34431f298496b83de1a5b73ec230927e8709d914940d765298c08fc0b111bd9d"
+      },
+      {
+        "path": "docs/integration.md",
+        "digest": "15f2f62796d9a1a435c9aa4b3a84971bac92a824fcd75a6a3a2990697e561966"
+      },
+      {
+        "path": "docs/interfaces.md",
+        "digest": "a611c52b77ba339710737f311b9b97cc6b90238b762525c97a3b85f128d92bb5"
+      },
+      {
+        "path": "docs/journeys.md",
+        "digest": "92f48665c06ac9320100275b2d6306f2d2bb595089336c80e5e7e7267de2f3dc"
+      },
+      {
+        "path": "docs/product-model.md",
+        "digest": "8b91cf6310ee0f44d1e2e61a7f1edc2f2c81a2278aa717e07984a97ae8942375"
+      },
+      {
+        "path": "docs/product.md",
+        "digest": "1215a2451762a506fe271d6909ea510bdcd87702efc67a340287d6f9fdf7e56a"
+      },
+      {
+        "path": "docs/references.md",
+        "digest": "f9444232368aa7d1e95973d7bbe1b4b3304d7689756fef96d6e7cb03c4399b4e"
+      },
+      {
+        "path": "docs/skill-businesslens-ideate.md",
+        "digest": "6de09fd2189642505b783308651ec28ca40cb0c7e5c84fa5590e7d7f28d886cf"
+      },
+      {
+        "path": "docs/skill-businesslens-map.md",
+        "digest": "deef7c9d1ea3cbba3af1ea6ff3d7e490d07b91eedfc0853258f7f94bf044c0cc"
+      },
+      {
+        "path": "docs/skill-businesslens-verify.md",
+        "digest": "b62ba792b45bd1192fc004cb1d8b3bccca5dd6d0a26e2b7d55796eff40a8f5e5"
+      },
+      {
+        "path": "docs/skills.md",
+        "digest": "5392884c294999db932cc738d59cc3b224f93e06a61c369c59c092e0a36af36b"
+      },
+      {
+        "path": "docs/the-loop.md",
+        "digest": "810c9e14a2d980a2ab7504222a2b3a7a898854c63aa7be2ff3e3067c8a79b314"
+      },
+      {
+        "path": "docs/with-plan-mode.md",
+        "digest": "dc0b738137642050e6cab4ce2cfafc9c7ce98a8e65b4fa9d2d3ec3814f0d1d73"
+      },
+      {
+        "path": "docs/with-sdd.md",
+        "digest": "058dee8e40ffd59f653fa0e33bbcc5871dd7b00af37e0ed0acbc65f158f880b8"
+      },
+      {
+        "path": "layers/nuxt/report-viewer-lab/README.md",
+        "digest": "0f7a7884a83802f1874fe3521a9ea457a7abb4eb6fb7ca5178e2d2b286efcef6"
+      },
+      {
+        "path": "layers/nuxt/report-viewer-lab/nuxt.config.ts",
+        "digest": "e10582a936b1ab099e2b773ebc20833668ce299c29d1654d126a62c1f5ff38d1"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/README.md",
+        "digest": "df3f8d782e13fc73367e186c1c8d2737884d87552da92a10ce501dee9219cea0"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/THIRD_PARTY.md",
+        "digest": "e45506cb436242d278d33bc83c942a23a1bd2c1cfb15228a09a3db30329505ce"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/assets/product-logo-placeholder.svg",
+        "digest": "7721fa08a2cf73cbe899cb8bdf325b3ce23b9120d55f378bdfef2fc496980e02"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/assets/report-structure.css",
+        "digest": "39fed7c7423639f6f63e33e5b246cd0c358b3c0c6dc6b5c94dbb7fb5be904847"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/assets/report-topology.css",
+        "digest": "832c23b744d9aef19de24c1a86dabb52cdbd0badf052720883c45b3d0cf61b8e"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/assets/report-viewer.css",
+        "digest": "0db14099d3389efe4bc887966fa24df7770aed0bed19ebd89e9c9c7da1ca32f7"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/components/BlrAssessmentEntries.vue",
+        "digest": "e1537144dc7d2841931eebafd45f93b084136f4d9f89e252b0681cca844ce450"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/components/BlrAssessmentSummary.vue",
+        "digest": "61445b1d1342ce154e6833f8e8fe3477c232aa2ff79fab3a33e1d1b6a715aaa3"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/components/BlrCollectionGraph.vue",
+        "digest": "0047c7f72a9cbb3a4e4e5882d945f13d843c5b13926ae20aed482686cb6cbc9d"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/components/BlrConnections.vue",
+        "digest": "fbcee762048a23c6b9b397fc4cd146ffe3b38d71687c9c0f206b0f40029f0fb9"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/components/BlrContextPlace.vue",
+        "digest": "d3532e8a5f80e7848a0155910deed937b66c033ea3c150c79e2e3714f29033b9"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/components/BlrContexts.vue",
+        "digest": "2670d5f3217b0aabb2921929a8e6a6780d93d790d4ce52ede7c5b1a24c10253f"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/components/BlrCoverageBadge.vue",
+        "digest": "f3376a78727150028a2140acc90c01fd10304ab4f6c2d6f2e1b5e7295b8d66cc"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/components/BlrCoverageRepository.vue",
+        "digest": "c55b4790de44afa2076fcdcd4ecb21af955942fca9d651153c613cfe2d7f64b6"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/components/BlrDiagram.vue",
+        "digest": "45bb2ae0007e3372ef93a66d464ea7a211961ed67fb90760dd064ca958790564"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/components/BlrEntityLifecycle.vue",
+        "digest": "4a9dcb3368fd3d2a2e03b9a1c09953ac9cf450b7d99946b4ac579c33fd1b769c"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/components/BlrEntityMark.vue",
+        "digest": "957a471bf67f7c193cdec53a331bd129ccca15ab24a39da2bea44611a8618a5f"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/components/BlrExperienceContents.vue",
+        "digest": "af38047e818ee99906bbf88aa1a2cc1e7a48fd28640a5100b95f849d5913d740"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/components/BlrFilterBar.vue",
+        "digest": "d5db0f2aecb422aa7277c467698d62652a0a26b88cf0cfd5297370c82dc5a8a8"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/components/BlrFlowCanvas.vue",
+        "digest": "0ae568ee82203da628ad325f7404756238b726b59a243637d1b291bdbcdcc75e"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/components/BlrFlowNode.vue",
+        "digest": "3fb390119e7a0aa15fdf7bffc25843becd11efc1c93d965f5cc0c917657802c6"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/components/BlrFlowNodeContent.vue",
+        "digest": "0d7bf037ca529e5e52f56481ed1aeb186f0488823107c9501e6ce73cbea17ddb"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/components/BlrFlowRoutedEdge.vue",
+        "digest": "d14291c81bc8648f711c056a96799d51d5c09810163bfb56785b745138246e47"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/components/BlrInterfaceDelivery.vue",
+        "digest": "ad9cf4db2969269131af5ea15e0d4200dd906f2a1903fb3d58226b9802716efd"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/components/BlrInterfaceType.vue",
+        "digest": "eb7e4dc9ca31117ffc039f97b2d38c7768a3b82b7feb4e56c1c065da1a190448"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/components/BlrKind.vue",
+        "digest": "a6d3553bdbe866247ef0b2b102b5f196eb1f32c3c5f05564b47176dd4859545b"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/components/BlrLinks.vue",
+        "digest": "99987d0f20f4144f070d28eda8b156ed2a1066bb732d612625e4e32e31ff0bac"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/components/BlrOverview.vue",
+        "digest": "29c753e52a3f765000cc1d0a73f520950293e20cbe008a76a2526bb6d5dcaf3e"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/components/BlrPageBlock.vue",
+        "digest": "1a6c2f76578ed82102eefe34e17061b00a6ca4a1f041fac082e1842ff1360939"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/components/BlrPageTabs.vue",
+        "digest": "210d1d04192ce9745b505e547f9bfa829f4f60302081fd6558e3c3a5acb22edd"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/components/BlrProductTopology.vue",
+        "digest": "fe4d8929410e3039fc45e117d442cf1906348927badab7d7c293b64483c41c2a"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/components/BlrProse.vue",
+        "digest": "d4ab1106692722421167f446886611446f8b5319a11dbe18899183a0a892316b"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/components/BlrRail.vue",
+        "digest": "b05e5a9f4b56cdf4b0a58927cfa1941a45030210b22e0244b857ec37bd35eda8"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/components/BlrReferenceIcon.vue",
+        "digest": "79d0d0bad3f3e2253427833629bd3a3f9ee3ccd4c94e47831275ad80a9527624"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/components/BlrRefs.vue",
+        "digest": "a65543f2d89a5dc5622dfcc2a132dcd6d41c04ef5242a95711986353e2aa22c1"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/components/BlrReportShell.vue",
+        "digest": "1819721a0f99acf3a936ea3ae7600937cebb77c8dbc9448e41554013cab4bf84"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/components/BlrReportTools.vue",
+        "digest": "ba188da491524064425a32177f73566c51588916b9e7d87fa4a24d14ab803096"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/components/BlrResourceBody.vue",
+        "digest": "4d5db3ccd7ac8e321e5bb07d848a989cf965afeb047bda1f8273c4dcd195d56f"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/components/BlrResourceCard.vue",
+        "digest": "ccbec34f666f0b00b6cb5867e60cb97bc982261996b4307b3b4a154f0e9acf18"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/components/BlrResourcePage.vue",
+        "digest": "bd7701fe2c5fe88ae886399cd8b3aab9d1ebe0fbc46b325b77d571534d3cb920"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/components/BlrScenarioStep.vue",
+        "digest": "493cac2209a9dd48a4022b004ecfc97e3bd9db8beff1aeb8928373ba3984868e"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/components/BlrScenarioSummary.vue",
+        "digest": "8d0c88d9933680fc48989bf5944dd92cb0180224f5f8fd6f256d04e6dd1804e4"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/components/BlrScenariosList.vue",
+        "digest": "3b74b0478e23dbfe6d2a3ad18584f72da4db0631eb2a66ab0a8100fcbf4e3f7b"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/components/BlrSearchPalette.vue",
+        "digest": "5c96a2a9c15952eb8c740d28ac17ebd9cc7f2db7b31a0011e3c6509ca809a675"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/components/BlrStepContext.vue",
+        "digest": "01de36f3a3a53c83032935f624d3cf3279e57784c6e3741e49b1f438b772f008"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/components/BlrStepEntity.vue",
+        "digest": "4d43ff26f131d0e36772bdff45c9dbc346a621b1fb05ceadfbfd16c47ee819b3"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/components/BlrTerm.vue",
+        "digest": "e53e3988d44764d126afaaf9e727584549b056735963fe1f618e8ec9ce9c4530"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/components/BlrTermDefinition.vue",
+        "digest": "19eb4626d8b1f306513dc488f74d843c31b46471c1957680951eba133f5581b7"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/components/BlrTopologyBranch.vue",
+        "digest": "280a1b5c4c758046402758850750d213265f35d3c5388ea5c23f51fc97082ba2"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/components/BlrTopologyMatrix.vue",
+        "digest": "eb789c3c0544fb8558e19f1b6c511d7c576eccebcdde68b91233c382f43ac806"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/components/BlrTopologyResource.vue",
+        "digest": "0773aa73ba1368f12d3351b30f830370ca33331db4fcdc0cc3f3973fd27ddf17"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/components/BlrTopologyTree.vue",
+        "digest": "e01646c2e21564f11b0a59092429c04a373c8e5919cf351c0578033196f9afa5"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/components/BlrTreeCards.vue",
+        "digest": "b07400ba8dd1d0d8a27c1ee0ffe8d50b3dd4d14730d8a7aa99333beb0bac0bbd"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/components/BlrVocabulary.vue",
+        "digest": "7c679f7f8a6152a76e5ba0a0864945ee2a06bce83ef4fe2859f9c7549c2abf66"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/components/BusinessLensProductLogo.vue",
+        "digest": "888e29eb938983924332344f520eb1f5e72d6a41122f2edf42fb3c1c07ed6873"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/components/BusinessLensReportViewer.vue",
+        "digest": "572bdab5f3c505a104d311054c5fb4840ffc0ed4d31571586f3e0a61428ccbac"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/composables/useBlrReadingWidth.ts",
+        "digest": "2147952ab6bbb2105336df29d747bbe7892cf4b4ee6a09165b54872a13148905"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/composables/useBlrReportNavigation.ts",
+        "digest": "096ead196b68a153314ae39d24609ff55e8e97901112ce25202de111b663d792"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/composables/useBlrScenarioExpansion.ts",
+        "digest": "5f93d0fc3d078953b1c275efd04f917ff32a77ae5b2c9e7eefc0c3791d4d3907"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/composables/useBlrTopologyScroll.ts",
+        "digest": "717e4497214a6a43505bec47bdc2f895fe808b45819a4c09de4940e6e9490713"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/composables/useColumns.ts",
+        "digest": "00136670aa08f50e6cbc08d2ffed4c92e9bb93e7b13bc7f048172c50e0ce42cc"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/composables/useTooltips.ts",
+        "digest": "8941b5d0a34d5d192b879472ea1ca709a3c5f691a684a48d812b2a0bc1dca8f2"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/composables/useVocabularyPanel.ts",
+        "digest": "49f656f426a00cc8c781b5013acd0f3439e10f327ee8673e42c96d0d45e11263"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/utils/collectionChildren.ts",
+        "digest": "ea2cb4ceb9c260ac73c22513c65c3724dafcf46139ba8b2d4385e3a34498266a"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/utils/coverageRepository.ts",
+        "digest": "e903b030a0cfadec2723ea7520e1f8229c0edb0ae7add654260eed5dc5d18abb"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/utils/diagram.ts",
+        "digest": "8e448cbd1aaf82609e0944e7c60071543991d18d5e0182c062c8bb2a6e3b37a0"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/utils/diagram.worker.ts",
+        "digest": "18258f0582a267413514de2eca122ee0ac25ff97bedfaa20c3601c3f47038983"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/utils/entityLifecycle.ts",
+        "digest": "34d97a00a5a5f0487cf7d6c067014f121e7edc22793edfc8d3057fd4b40c28e1"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/utils/pageSections.ts",
+        "digest": "7b03d942fd79de27e9e5bc3f0f2e594f290108237c82d7849f4f3d7e20221117"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/utils/productTopologyViews.ts",
+        "digest": "fddaae3dfe12039c45475ec785072cd7cc20ff0e15eca69a2ccb09d68068ffb8"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/utils/reportDestinations.ts",
+        "digest": "200c859244f8dcfb0524c7cce9a703a9befbd84cb788c8c856e678241da4200d"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/utils/reportMarkdown.ts",
+        "digest": "282aa46c55d30263abc39c4cbeea4852e3677439a9585d14a602c53b1038073e"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/utils/reportPalette.ts",
+        "digest": "35e9376ce742e3574aabc32414d3a38080e149ef686e7852e7f203dab1caad57"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/utils/reportWorkspace.ts",
+        "digest": "2755ea32a521733a31fcb8e23e0a28d00f403637e34f0264a219b4436ab8524b"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/utils/resourceCards.ts",
+        "digest": "537d676cde498860a484f73dd12bb786d9f93d185b2a5d1f06412cf08bb30029"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/utils/resourceConnections.ts",
+        "digest": "65a36800b7bdb8e4fbae0c2f1e1b54aa5c7af40e596d7e01c8b3f28f81ef12ee"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/utils/resourceDocs.ts",
+        "digest": "7f25051e3f9752464538ad4e4f594d808decabfeb405cf2eaf0421d68443bece"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/utils/resourceFacets.ts",
+        "digest": "cafca1c17dfcbbe48f12f8949b6fe1685ca7c498458d9af56dd8b67005928919"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/utils/resourceFacts.ts",
+        "digest": "dfa084ecb6b9db004df507c0b9eda9177ecfd60410b732acf4cb9433bab128f5"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/utils/scenarioRouteWindow.ts",
+        "digest": "bd6a2da04dcc8b837660235fda0a8b0a0cc2f5e2293af8827ddb5d2491b0b28b"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/utils/scenarioSteps.ts",
+        "digest": "4f1dfdd573338235b52b1f5aafb1ee7a8b671b96037d17c33d32f0eb3094a4e1"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/utils/topologyFocus.ts",
+        "digest": "56bc330aef8dcdbd3425595106dc26c64767b82e13e4fd3488657d689d34cab2"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/utils/topologyProjections.ts",
+        "digest": "4fb79071fe8fa16a94175dab7346ad6f0479f5b6ab568e732226c23b52dd03df"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/utils/topologyRelations.ts",
+        "digest": "0a63c1e90ceb4fc616c35553fef21070aa5c3bd7507005be2d22f3c2c6001474"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/utils/topologyState.ts",
+        "digest": "9749f8e83d0bd8ea7f6b92b390aa28cc04d71d975d365bf684cdfde909621458"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/utils/topologyTargets.ts",
+        "digest": "782f700418162a8ad0c4f04bfc9190d5aceaa7d1bc3c866d79b33b4fd84a66a1"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/utils/topologyTree.ts",
+        "digest": "e589fb6f27f439ba0faf85e297318f7d469fe637f7e0b3a77124d0432205f2bc"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/utils/vocabulary.generated.ts",
+        "digest": "6977d821e519938d5e37c0f28adbfe9ef20c7d013b06d409f781b1900d2a5ec8"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/app/utils/vocabulary.ts",
+        "digest": "347b0898867493eef9cff24bb2badfc6026a50e92c83b22c760c4f9ef33424e4"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/licenses/ELK-EPL-2.0.md",
+        "digest": "b7b3bb65cdef2e5518c1e79aef6dc8f3b4fbef0ea41f0d5cb47310238e175e5f"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/licenses/diagram-design-MIT.txt",
+        "digest": "4d7a2e13deb712adf0f2325ea768c1f5e05f37117de70e2b690ce9f6b162ffed"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/licenses/vue-flow-MIT.txt",
+        "digest": "0a9d3425115fa0adc5d3e19c358126181f4863854cd2dee8114758c4a3143f87"
+      },
+      {
+        "path": "layers/nuxt/report-viewer/nuxt.config.ts",
+        "digest": "f088a2026dc0637de8d7c3586482153470dd24f75cd0e20b86dd4271a1177eb9"
+      },
+      {
+        "path": "layers/nuxt/theme-lab/app/assets/theme-lab.css",
+        "digest": "a3022f16d688cd7118d62ddcbf515495294a02cd76532b8fdbf04930724a0de2"
+      },
+      {
+        "path": "layers/nuxt/theme-lab/app/components/BusinessLensThemeLabBackgroundRow.vue",
+        "digest": "3d2a88b455532b48f0c25efe3f07010b4a7210f4d1f20fe3ef3f6e6aaf131055"
+      },
+      {
+        "path": "layers/nuxt/theme-lab/app/components/BusinessLensThemeLabBar.vue",
+        "digest": "6594a84c629c45e5b59c9f4e9080472eed45ff2da299cf1722bfd62b8174e178"
+      },
+      {
+        "path": "layers/nuxt/theme-lab/app/components/BusinessLensThemeLabDivider.vue",
+        "digest": "1405475a7d0a10945d3e1eadabf7a363c9de0e9f0510382eb36fe5fe937f27df"
+      },
+      {
+        "path": "layers/nuxt/theme-lab/app/composables/useBusinessLensBackgroundVariant.ts",
+        "digest": "28308beba0f8ab4e9ad48d4e595a567a9465e23f3af3729a4ec9a0d7494ac6a3"
+      },
+      {
+        "path": "layers/nuxt/theme-lab/app/composables/useBusinessLensThemeLab.ts",
+        "digest": "3199ab715065390a0752735fd6de2c5c1d0c65dd9dd13899dc997f4a88cd8cbd"
+      },
+      {
+        "path": "layers/nuxt/theme-lab/app/composables/useBusinessLensThemeLabHead.ts",
+        "digest": "774a1f2780e6f3f0c4574875fcebb1856452fb3745f14df23e5e16d88e42515a"
+      },
+      {
+        "path": "layers/nuxt/theme-lab/app/utils/businesslensThemeLabVariants.ts",
+        "digest": "60f0aaa539a52f4d6c78b45e734d68f354d52be3b6f8d6af106a362afbe5e0f9"
+      },
+      {
+        "path": "layers/nuxt/theme-lab/nuxt.config.ts",
+        "digest": "1e66b72e37af7de6d3867a3c0eb7926b9bafc06827b7d5d7cfcff898907db9e3"
+      },
+      {
+        "path": "layers/nuxt/theme/README.md",
+        "digest": "8862acb24b0e0cf8c067929085d6ce64d89716867d59ecc85418a54eaad7e36a"
+      },
+      {
+        "path": "layers/nuxt/theme/app/app.config.ts",
+        "digest": "9364b7ffe771c48c34149d276a7349dff2152a21841b1f223824e849ada61f1f"
+      },
+      {
+        "path": "layers/nuxt/theme/app/assets/theme.css",
+        "digest": "9ff6a50d925e89ed8bf662b2644fadbe92592e222fb1bd82144b6f51ef331440"
+      },
+      {
+        "path": "layers/nuxt/theme/app/components/BusinessLensBrand.vue",
+        "digest": "6832e3fb4e94cf842c1d6a0a16c5a846742701b44be6607e8df6f02cac3b215a"
+      },
+      {
+        "path": "layers/nuxt/theme/app/composables/useBusinessLensThemeHead.ts",
+        "digest": "8f98ce98dc24b406f2f6d2045c6c22205f7bd4c106bcae5c34dfde3889d8cfbd"
+      },
+      {
+        "path": "layers/nuxt/theme/nuxt.config.ts",
+        "digest": "88bbb4115900cd78a7bbc52df0c6e2abee529103ea3b98f232fa5a3902eafadb"
+      },
+      {
+        "path": "layers/nuxt/theme/public/brand/icons/apple-touch-icon.png",
+        "digest": "a129306764acf3e5d344565828d32a814ae5af83ae9c11c99b6d017ea1afae56"
+      },
+      {
+        "path": "layers/nuxt/theme/public/brand/icons/businesslens-app-icon.svg",
+        "digest": "c711577d766363cd999f26a00c433171363dd16271f1e2392537f141ea8062f8"
+      },
+      {
+        "path": "layers/nuxt/theme/public/brand/icons/businesslens-maskable-icon.svg",
+        "digest": "bbbfa3f9a64c99310cc0d3e99996fb86241f55e09dbcf2af0266a202eda12319"
+      },
+      {
+        "path": "layers/nuxt/theme/public/brand/icons/favicon-32.png",
+        "digest": "5b7e343ab335de43bed01af0c8d42af792d13b874400a6e27f82d8647d6db7e1"
+      },
+      {
+        "path": "layers/nuxt/theme/public/brand/icons/favicon.ico",
+        "digest": "d4bc26a76a149ecd8ab7a900730628daabc83658cf378e799fdf9c9328593b9b"
+      },
+      {
+        "path": "layers/nuxt/theme/public/brand/icons/favicon.svg",
+        "digest": "8024f61b60aa04390a7fe38449fe30fd2e50732b14317c433edd4487effa37a1"
+      },
+      {
+        "path": "layers/nuxt/theme/public/brand/icons/icon-1024.png",
+        "digest": "c537a1ab8f9535e9b4c0e3dcb894e068fd449df3f35270078cc29f5566c5f605"
+      },
+      {
+        "path": "layers/nuxt/theme/public/brand/icons/icon-192.png",
+        "digest": "8b5dc9cf34f7af71774018098b7ba49e2bb9885e63d843c7132ed86f337a27d1"
+      },
+      {
+        "path": "layers/nuxt/theme/public/brand/icons/icon-512.png",
+        "digest": "f9af2d8d8d768ca42a54206c0212759daa1300c0ec09862196f7efd0eca2675b"
+      },
+      {
+        "path": "layers/nuxt/theme/public/brand/icons/maskable-icon-512.png",
+        "digest": "de5806954ba9dd3ce98f290ea2916bc9f725c34708c54040d37c484978f1cc7e"
+      },
+      {
+        "path": "layers/nuxt/theme/public/brand/logo/mark-dark.svg",
+        "digest": "38ac44780bcff65d9d53d60bc570944a7d3678924cc372c72bd8c46caf155f07"
+      },
+      {
+        "path": "layers/nuxt/theme/public/brand/logo/mark.svg",
+        "digest": "20c37826595b5a8f77a15b6a45d36875649e2ac45966e9cc2403c0afd324bdc8"
+      },
+      {
+        "path": "layers/nuxt/theme/public/brand/logo/wordmark-dark.svg",
+        "digest": "d4f291a838b216922a68342e84ade39b5c405ce4afe5816b5e3375c3f5172598"
+      },
+      {
+        "path": "layers/nuxt/theme/public/brand/logo/wordmark.svg",
+        "digest": "f141568a4d7b57ee785e4e3e4a81192475136541894106a4923b7a3181136b71"
+      },
+      {
+        "path": "layers/nuxt/theme/public/favicon.ico",
+        "digest": "d4bc26a76a149ecd8ab7a900730628daabc83658cf378e799fdf9c9328593b9b"
+      },
+      {
+        "path": "layers/nuxt/theme/public/site.webmanifest",
+        "digest": "b04932262ed370d8dac46d957a9738655802e9d8df6e4e9541830f7bf048e413"
+      },
+      {
+        "path": "package-lock.json",
+        "digest": "b6759200402874a6b87f4945dd864624efc64c9064270fde255551bc4e910e21"
+      },
+      {
+        "path": "package.json",
+        "digest": "a420e1919d46b418bb234fbfa37ba1595b3863238dd836becbb44656e453b333"
+      },
+      {
+        "path": "scripts/bl-dev.mjs",
+        "digest": "40e40dfe0e807ac1c1b98aa70d73dacb4867f6756ce8df99e00549bdeb84d973"
+      },
+      {
+        "path": "scripts/blueprints-check.mjs",
+        "digest": "dc26c19c2e977e3dcfc21322353efb2e94827f3200aab52ac9e17cf906f8d645"
+      },
+      {
+        "path": "scripts/blueprints-publish.mjs",
+        "digest": "8decfb13a74e2a69e9fe7d2d9f8017ca4ccdf1dd85ca7a5908625a333208f0ac"
+      },
+      {
+        "path": "scripts/build-theme-icons.mjs",
+        "digest": "f486fd5ea4f1dd30d0642c9ac2f00b0ecbe0954be0c3b9272ce19d4de1c1a845"
+      },
+      {
+        "path": "scripts/build-vocabulary.mjs",
+        "digest": "19f7da968180c2d99303cd9892cf58484cb8df824e44788c12d37309f3834d25"
+      },
+      {
+        "path": "scripts/check-package-size.mjs",
+        "digest": "5ee29b5cd9b6a10e26c5342be3951db45d5af7bab162607b79cadee8e6aab9f0"
+      },
+      {
+        "path": "scripts/check-packed-diagrams.mjs",
+        "digest": "b12dce86c931ac1e33197078e49f655d27302b2ffddfff9c8d476a77d9f4f200"
+      },
+      {
+        "path": "scripts/check-repo.mjs",
+        "digest": "40db7e50a479c253fe23b904f084f42a4d7afbb73590dfbf29d0d22bf87e6a32"
+      },
+      {
+        "path": "scripts/check-report-navigation.mjs",
+        "digest": "69fdbe0a559207581be212c76998c76431302fc7e5dbc7bc2cfe853d66b54920"
+      },
+      {
+        "path": "scripts/check-topology-diagrams.mjs",
+        "digest": "375508d72ccc430dd0e688b8d3be54ad6d745fee566dba4b8b81262358571ce2"
+      },
+      {
+        "path": "scripts/check-vocabulary-navigation.mjs",
+        "digest": "1f37dd19f03a4db33c511fa32a269c3e8683f09e81a24011fd30cd7e2977881b"
+      },
+      {
+        "path": "scripts/copy-viewer.mjs",
+        "digest": "972449d47c7db59d8efe571584142fa6eca0ef0b91e625051a31ba0451168ef8"
+      },
+      {
+        "path": "scripts/dev-link.d.mts",
+        "digest": "f2b85d40de05e9a2eb69bac51abf6ffc5a7963fe727bb33796afcd27decffde0"
+      },
+      {
+        "path": "scripts/dev-link.mjs",
+        "digest": "66f659c79201599542aa67e52cf8a476a4133e71e8a8fd612976449ffb677a32"
+      },
+      {
+        "path": "scripts/dev.mjs",
+        "digest": "70941801cf0f6fe94e28a0cd80c7f36c51910e0c1ff1c9df3f62f270f550f646"
+      },
+      {
+        "path": "scripts/sync-version.mjs",
+        "digest": "4a28ae40bb736d9d2c3bf19cb374c2c46a6fa45de1da96384633c85a4ec0671d"
+      },
+      {
+        "path": "scripts/view-fixture.mjs",
+        "digest": "54e1e376f6ebe949ba9e0cb52c67af65bfd993171fbd49cb5cb95e1018b8466d"
+      },
+      {
+        "path": "scripts/vocabulary.mjs",
+        "digest": "a8c2ad49836a993a8dfedda60931487c3ec9d4cd81ec8c36d5b38cf995579473"
+      },
+      {
+        "path": "skills-lock.json",
+        "digest": "aab4461c01821c27f701748ba4422a47f34e9d4c80e3df36cdf597394a7a8d04"
+      },
+      {
+        "path": "skills/businesslens-ideate/SKILL.md",
+        "digest": "281e410f8f60afe1baab05f37f34dc47e904ea88f203c917c1299ec62233c48a"
+      },
+      {
+        "path": "skills/businesslens-ideate/agents/openai.yaml",
+        "digest": "39909043c96c3989dadb40f8fbd7056a6d1e6f86f1d041add8a54330cc7a4b7c"
+      },
+      {
+        "path": "skills/businesslens-ideate/references/format.md",
+        "digest": "7a770712246b0d52d3ec360361ff2c488de45982f5f7918663fdb6e872baca01"
+      },
+      {
+        "path": "skills/businesslens-ideate/references/planning-rubric.md",
+        "digest": "a60662d9b43c6ee3520b490e6b0bdb8adac8f03914952c2e0caedd6771238b9f"
+      },
+      {
+        "path": "skills/businesslens-ideate/scripts/run-businesslens.mjs",
+        "digest": "ae0613385cbd1d0ad33a5c7c1ecbb4bab9d9fb7dc29bc4993a3fe1d27d0d2234"
+      },
+      {
+        "path": "skills/businesslens-map/SKILL.md",
+        "digest": "6bf78955448f3f0d6d035bb0c92c0c9a673106b3b2524c6c27d505a71bdb3925"
+      },
+      {
+        "path": "skills/businesslens-map/agents/openai.yaml",
+        "digest": "c1fc6df885b00ad9a6d05ba57c8c5ba22fe0713ae2bbb5ebb2b4ee555e8c6618"
+      },
+      {
+        "path": "skills/businesslens-map/references/format.md",
+        "digest": "7a770712246b0d52d3ec360361ff2c488de45982f5f7918663fdb6e872baca01"
+      },
+      {
+        "path": "skills/businesslens-map/references/mapping-rubric.md",
+        "digest": "8924a419f0d80b75f89b418060347b0bdba7c11459434da7504fb2ffdaaa383d"
+      },
+      {
+        "path": "skills/businesslens-map/references/repository-assessment.md",
+        "digest": "e39cf0a02c68fd2f745a65ccec3d40bf293d594f3a2b6bd505c774564e8c0ec9"
+      },
+      {
+        "path": "skills/businesslens-map/scripts/inventory-repository.mjs",
+        "digest": "fa3665e422882b3c58456e68a066ff28791588e5e494244e8e17692b34f6ad89"
+      },
+      {
+        "path": "skills/businesslens-map/scripts/run-businesslens.mjs",
+        "digest": "ae0613385cbd1d0ad33a5c7c1ecbb4bab9d9fb7dc29bc4993a3fe1d27d0d2234"
+      },
+      {
+        "path": "skills/businesslens-verify/SKILL.md",
+        "digest": "eb17ce6eb4332cc1edd4da6461dfa8f62aaa8c17577215994bd2a788e9cb9d77"
+      },
+      {
+        "path": "skills/businesslens-verify/agents/openai.yaml",
+        "digest": "eccdbc30ef9d89ed7c80419662cdf0451deda7819686c7a9dbc1717191f6942d"
+      },
+      {
+        "path": "skills/businesslens-verify/references/build-handoff.md",
+        "digest": "a19e51d959e2b71bfd0ede6a376659d9f550dd2efea3fefd150927a02302899e"
+      },
+      {
+        "path": "skills/businesslens-verify/references/format.md",
+        "digest": "6b2b95da7485b22acdc6f170f4789d5a815229260a2dc3605b9a86fcc9bf1f32"
+      },
+      {
+        "path": "skills/businesslens-verify/references/repository-assessment.md",
+        "digest": "e39cf0a02c68fd2f745a65ccec3d40bf293d594f3a2b6bd505c774564e8c0ec9"
+      },
+      {
+        "path": "skills/businesslens-verify/references/verification-rubric.md",
+        "digest": "49d19a0357bdab49f2273821a883570c7c1c4a0a4177fba43aab4094faf1dd1c"
+      },
+      {
+        "path": "skills/businesslens-verify/scripts/run-businesslens.mjs",
+        "digest": "ae0613385cbd1d0ad33a5c7c1ecbb4bab9d9fb7dc29bc4993a3fe1d27d0d2234"
+      },
+      {
+        "path": "spec/assessment.md",
+        "digest": "3d861c516450b7663e4b8a28b82f6fb3c289ba2d3b50e64fe419453370fa60b4"
+      },
+      {
+        "path": "spec/format.md",
+        "digest": "e4126dd4078243f7bcca96549e1d563ce1feed1afa6d7ad8acce59cdca934efb"
+      },
+      {
+        "path": "spec/rejected.md",
+        "digest": "bffc16e8e6e822d9487cd1052eaf761a46f2bf22f525ff9e1683e7719624d286"
+      },
+      {
+        "path": "spec/report.md",
+        "digest": "df8b92da68360c7aa71032253b28465be4a059893391d30bae519b6907516fc6"
+      },
+      {
+        "path": "src/cli.ts",
+        "digest": "58adbef14a05946de6654b37ee3c8673ce2ca658a57f7e9870482e1868662dbe"
+      },
+      {
+        "path": "src/commands/assessment.ts",
+        "digest": "7530828b49816ec2f65fc8266fa2266cae79ddea8b95734a58da2bc8cff91261"
+      },
+      {
+        "path": "src/commands/contribute.ts",
+        "digest": "927a71e9d5f58f4a736f11c5956b141520a23ddf258e67ab5b6b80ce4bb064b1"
+      },
+      {
+        "path": "src/commands/export.ts",
+        "digest": "9f529812494d2bf2dd24b04532940883790b33f99c197fe64b6b61c2c67d4deb"
+      },
+      {
+        "path": "src/commands/install.ts",
+        "digest": "a85a25123b916b735b8473da9c65145738f879d49395ce447394f41c71910a18"
+      },
+      {
+        "path": "src/commands/lint.ts",
+        "digest": "42efae22ff27239426bc2a49cf1a4f2e1d51658b6c3e3a11219c269f9557178e"
+      },
+      {
+        "path": "src/commands/open.ts",
+        "digest": "175773efcf6ab83cd5343801374b9ea43fb6b35134d4e72f977917674b736f30"
+      },
+      {
+        "path": "src/commands/pull.ts",
+        "digest": "7fda18803b5297589873c93d540d91bba93b1d966068ddb94674699ef58d537f"
+      },
+      {
+        "path": "src/commands/update.ts",
+        "digest": "3f38836595c5e5fe7cf7bdcff1c3971155480afba771d570ff8c3e97963c4820"
+      },
+      {
+        "path": "src/commands/view.ts",
+        "digest": "56443a493c3729601a4b9d82e44e1847c68f21ef5c5e658d55d55f3549e9c32a"
+      },
+      {
+        "path": "src/core/canonical-name.ts",
+        "digest": "687dd00c9893ed2c5acb15178c34245100a6fb0aa22941f7f7fe1acabad5f9b3"
+      },
+      {
+        "path": "src/core/catalog-url.ts",
+        "digest": "66f835fab9f4797a66de59ca1a406f91a4ef0badd79a8184e2bb1fac6607c679"
+      },
+      {
+        "path": "src/core/coderefs.ts",
+        "digest": "74bfaefbe0d97fdfbb942c6f47a35d141b521f20e2487d35ad0cf2f53b33b766"
+      },
+      {
+        "path": "src/core/coverage.ts",
+        "digest": "6357aee3e02bed967357e5e5e58fa40be5dbebcfdcb362bb5d26f2b175f37443"
+      },
+      {
+        "path": "src/core/frontmatter.ts",
+        "digest": "e35bf1239bca4c5b76ad11fca09ca93596e8ba5694776b3d4094837e6aca00f9"
+      },
+      {
+        "path": "src/core/generated-files.ts",
+        "digest": "5ebc197bbfb13f84682dde0a8cd906880a7924d6a2f5dcccd8b456a91f02a52e"
+      },
+      {
+        "path": "src/core/git.ts",
+        "digest": "f0d908e9bc141b9602a622fffa51f70b4b68d225cb0a10fb4818d47cb354e47b"
+      },
+      {
+        "path": "src/core/ids.ts",
+        "digest": "4edda8347649c063ac96e491b93c0865906342334951e3260fc1abeb46e99460"
+      },
+      {
+        "path": "src/core/interface-types.ts",
+        "digest": "086765818328c1cfdfbb60f118a0485d9a564280e38d6c302239b116c608aea1"
+      },
+      {
+        "path": "src/core/local-viewer-server.ts",
+        "digest": "baa03a7b83f67520ae05a948cb9db27723b0ed67207919c02d2802935cd45b89"
+      },
+      {
+        "path": "src/core/logo-file.ts",
+        "digest": "b3907a579f5ec786df04ce6d714bfab60c44d2e81a7fae4f4bc760eebeee9b36"
+      },
+      {
+        "path": "src/core/markdown.ts",
+        "digest": "2a854ffe5366515e9b8639cbe1dead41c826ac03a411466ae6ea3bcb18457f31"
+      },
+      {
+        "path": "src/core/model-readme.ts",
+        "digest": "2d56767b451612563b449728bbc37542c13018b6f0905ff2d7427edc8a0a3d3a"
+      },
+      {
+        "path": "src/core/model-root.ts",
+        "digest": "6911e79db52d587c2af06086f336e9eb292c2a8c471b300041f2bd0f714d3bb4"
+      },
+      {
+        "path": "src/core/model.ts",
+        "digest": "f9cd020be167f5e40c4e550822c0f9fa8120da0425f4f7f117186ead473d0755"
+      },
+      {
+        "path": "src/core/permission-validation.ts",
+        "digest": "cea136d41cd10170da89ee788bd5f93346598680da1d33411f165135ddf97bed"
+      },
+      {
+        "path": "src/core/portable.ts",
+        "digest": "9ce4656a15730bc8f7a5aa98fb76089e458e256e384d705602eeb54c1a1d5d66"
+      },
+      {
+        "path": "src/core/providers.ts",
+        "digest": "71d2d0f4fddc8991b6349b4a124fcbf6dcd333ecb7737c5918b1248b7f6acfb1"
+      },
+      {
+        "path": "src/core/report-digest.ts",
+        "digest": "5507ae113ad3e01e517ff3b56398f07bd8a2be8e9f226efb52b046e3aafab4b7"
+      },
+      {
+        "path": "src/core/repository-assessment.ts",
+        "digest": "f2d67af20dcacd939ea0fd4c50a5ec6d990f4addf7b8a9694952ceaa33f55647"
+      },
+      {
+        "path": "src/core/repository-inventory.ts",
+        "digest": "37d9d09f7909ba9dad0dde4d01814127d6123c1992214e63f4de31fa934f9ea2"
+      },
+      {
+        "path": "src/core/skill-installation.ts",
+        "digest": "ba8974fc37d05afd4b208f3781334e22d063a9638b4ce48075a4cc12e10ece66"
+      },
+      {
+        "path": "src/core/usage-error.ts",
+        "digest": "de3d7b369b7ba3f6ed1cc58afb73b2ca4114f4ca07bf159ca249db1b6189ffc3"
+      },
+      {
+        "path": "src/logo.ts",
+        "digest": "d110dfa77ead588575d6f54713a311319b89897fe868137e5de78b84ba4c8c1d"
+      },
+      {
+        "path": "src/report-digest.ts",
+        "digest": "812fa28ae64fef4f5fb313ee462e56fa47ee737d5cc44927d649b37117404cfc"
+      },
+      {
+        "path": "src/report.ts",
+        "digest": "4c5f44387f8ce84a19557f273f85392d1486b5ce2d5f8068a101549fd925d8f8"
+      },
+      {
+        "path": "src/version.ts",
+        "digest": "0011d26a4e03a3a0bf27e959d629007fdd9df1942c10795561b2c31b21f4dd35"
+      },
+      {
+        "path": "test/blueprints-publish.test.ts",
+        "digest": "8a519ed1c175dffc25ef147536747d5c439bf359a80e7997510370f39616642d"
+      },
+      {
+        "path": "test/catalog-url.test.ts",
+        "digest": "d6f23d1869b1e11fc7118f7617f88b8a220bed4dc7a03544636cbd29b3920d7f"
+      },
+      {
+        "path": "test/cli.test.ts",
+        "digest": "8b7893d88d98ddbaf4a6d1b836448af81fd253bc0f239271266c1755c6eeb5a3"
+      },
+      {
+        "path": "test/collection-children.test.ts",
+        "digest": "38752b2983123e0a193e6204e02e0786c71cef7a74b6e5fd0e2ccc61756b6cdb"
+      },
+      {
+        "path": "test/contribute.test.ts",
+        "digest": "69025dc33e1f57e49773c0bfcada5bee8e3dce61e3c1b20db25d7ef7036a71ee"
+      },
+      {
+        "path": "test/coverage-repository.test.ts",
+        "digest": "968a3745387acbc916ec98659624b2e1d2025c3038f429c8d1ac499e48fc6a19"
+      },
+      {
+        "path": "test/coverage.test.ts",
+        "digest": "b7140914409bbfd2162f4dfcb1fbe7c2207460c2de26a3eb0818e59848c12612"
+      },
+      {
+        "path": "test/dev-link.test.ts",
+        "digest": "eafb85a331f0a3352e3535cb794eb8dac6f1c3109a1a0689fe4434d6f4bf2ad5"
+      },
+      {
+        "path": "test/diagram-layout.test.ts",
+        "digest": "a3de2e3ebeaacb2c8f70c31bc82dc9297a2ed4f51d701ddb2ed0ef6b2d41f781"
+      },
+      {
+        "path": "test/e2e.test.ts",
+        "digest": "fb73375f10ae5616d87d0e37b60b8d23dacfda8a7bc0b6d2e8be6b6efcb33b72"
+      },
+      {
+        "path": "test/fixtures/fixture-shop/README.md",
+        "digest": "fd980d319785dc238cf58c8843368fa2d3efac6525e60914ffb69ea901890f27"
+      },
+      {
+        "path": "test/fixtures/fixture-shop/src/models/order.ts",
+        "digest": "0c0ea0f6a202768cb3bea08d6a806c1ed6358b63f45d42029617083db0c5e349"
+      },
+      {
+        "path": "test/fixtures/fixture-shop/src/models/product.ts",
+        "digest": "1ccd26c74721593c431f120fb5f59228da2bf0bad9005f174820cb802b190bc4"
+      },
+      {
+        "path": "test/fixtures/fixture-shop/src/routes/admin.ts",
+        "digest": "6cac1e380e34128efd5e96f304dea04d2458928e5d5afa8f06891876043269e5"
+      },
+      {
+        "path": "test/fixtures/fixture-shop/src/routes/storefront.ts",
+        "digest": "f8639b37e37db706c4ba6ca6f84f24fa17380aa832ebb66add87e2b66e35374b"
+      },
+      {
+        "path": "test/fixtures/fixture-shop/src/services/catalog.ts",
+        "digest": "c7540b518492a97d9654f2dd87584996bd5c170268618b07ab29fd0f78c4798c"
+      },
+      {
+        "path": "test/fixtures/fixture-shop/src/services/orders.ts",
+        "digest": "071f1599962c6650bde602773f294ba9f4b0c5225f43651d451401735b7078f7"
+      },
+      {
+        "path": "test/fixtures/fixture-shop/src/services/payments.ts",
+        "digest": "490114a026c9514c77dba40bef39e370b8c55d9c4b1f14fe2d3d71b8956b5dad"
+      },
+      {
+        "path": "test/fixtures/nuxt-layer-consumer/app/app.vue",
+        "digest": "207e829284133efb02288e2fbcf148a04efb9804c593e67201d15303d6cf3b3c"
+      },
+      {
+        "path": "test/fixtures/nuxt-layer-consumer/app/pages/index.vue",
+        "digest": "a34b513b6333cf45d4e87dff6010c0f9e7782c9a63861ffbfdd45a6abc6d58c2"
+      },
+      {
+        "path": "test/fixtures/nuxt-layer-consumer/nuxt.config.ts",
+        "digest": "888ac40ffeab0afad780b81506a43b650ef52091662c5216860bd3e0d8d05e4a"
+      },
+      {
+        "path": "test/fixtures/nuxt-layer-consumer/package.json",
+        "digest": "b2f5dceb9a85d58587499eee58e0681a3e7c18021460c97d9039d73c97f5b4d9"
+      },
+      {
+        "path": "test/fixtures/nuxt-layer-consumer/tsconfig.json",
+        "digest": "dc8b36d8de6c8644a2f9843401b25d072398264fa9c7533a3e37e88b1bc627d5"
+      },
+      {
+        "path": "test/global-setup.ts",
+        "digest": "18523a03755a5dca87b96471bd6b00df2364fb34f5376deeed37937df10382f6"
+      },
+      {
+        "path": "test/install.test.ts",
+        "digest": "c522601ebb53233434c391f93b08dd9c28d0c384a0588e27dcd0cb1502ad871b"
+      },
+      {
+        "path": "test/inventory.test.ts",
+        "digest": "581a1ded6d5788b90d6b40c70792a84ebc89a90701dab84208b103c851df4809"
+      },
+      {
+        "path": "test/lint.test.ts",
+        "digest": "7ab7d750fd58681bab5399ef5db84c624a6f2e5fc2b53cea444cc6da045c5914"
+      },
+      {
+        "path": "test/local-viewer-server.test.ts",
+        "digest": "0434f30a458c7ce711acc3ab552e1b01e69868d7c9f30a52d7d49dd674454856"
+      },
+      {
+        "path": "test/logo.test.ts",
+        "digest": "0f041522a762e949693c91c123845a2af2f409c561cf22bf37cfd05b709148c9"
+      },
+      {
+        "path": "test/model-root.test.ts",
+        "digest": "69960316d22269215175d9e692d68d413b352b9134d59f28b4c403942c7ac1c1"
+      },
+      {
+        "path": "test/open.test.ts",
+        "digest": "0b8929575ff36193e44ff3d3e63a7996378967337be95d5a614ece7a28942ec4"
+      },
+      {
+        "path": "test/parsers.test.ts",
+        "digest": "53ad73fbd9fe3f2773082c391d3b26d994e149965f3ce6cab366081bca769469"
+      },
+      {
+        "path": "test/product-topology.test.ts",
+        "digest": "98eac1f1f7ccd48bb2c1b0ae613ac8fe64269d3489d27bec5d7a4393ddb26bac"
+      },
+      {
+        "path": "test/pull.test.ts",
+        "digest": "acd4b2a22fe7322868b214be72f430f7dead77ae857eea376b5add9cf031178f"
+      },
+      {
+        "path": "test/report-destinations.test.ts",
+        "digest": "1ef08d0e86fdc8efecbebe708b2338bb04f5df53ce0f951f82dc4728dd7ce05a"
+      },
+      {
+        "path": "test/report-sdk.test.ts",
+        "digest": "d5b76872fa95dbccae15730aedd6bbf57821830d81a9b8b121f8d459acd4cfee"
+      },
+      {
+        "path": "test/report-viewer-lab.test.ts",
+        "digest": "2fc8655e9e9109f3a9cf0f09bbe88977d1f573b34547c925f724610db34da0a1"
+      },
+      {
+        "path": "test/report-viewer.test.ts",
+        "digest": "5c48cf649d6f104a82503a52c4fdc0b39b0f30598bc50e827966806b133c1b14"
+      },
+      {
+        "path": "test/repository-assessment.test.ts",
+        "digest": "31183f978c9d6080888c3596e87dad702daa9856d3c4daa906add847d92fdc2e"
+      },
+      {
+        "path": "test/repository-inventory.test.ts",
+        "digest": "7d45c5d4f328ce3e351ab3cc2b841b16d83a451269a9f7455af42e79f7857322"
+      },
+      {
+        "path": "test/skill-runners.test.ts",
+        "digest": "1fdb2aea4612b4ae26f2b866520f692bec109bf63b994a770a159bd249c79f2a"
+      },
+      {
+        "path": "test/skills-contract.test.ts",
+        "digest": "d77114a3216a0507208ba6a76cc4cecebeefc2f846daffd371b7e150b4051846"
+      },
+      {
+        "path": "test/teaching-blueprint.test.ts",
+        "digest": "0f1e18c67bc4e6b8fe8e05871923525b948abed87e58db10d385c9e324707df6"
+      },
+      {
+        "path": "test/theme-lab.test.ts",
+        "digest": "06b15aec953d88f058d936b3b8f256e8bc5c253bc358dd1c05da9341545fbc68"
+      },
+      {
+        "path": "test/topology-tree.test.ts",
+        "digest": "959eda1dc011fc3d8c55012c853fe8fb7c77307f4fa7b2fc1edcafa987f31aea"
+      },
+      {
+        "path": "test/vocabulary.test.mjs",
+        "digest": "6b2588c30d38fc14110c1d913adf81b9127bdd788aac8e1346371316469f1feb"
+      },
+      {
+        "path": "tsconfig.json",
+        "digest": "8729e98c734d6d5818d1e29e84eaf81d4a608dc4d5fd996fe732ee51639f47fd"
+      },
+      {
+        "path": "tsdown.config.ts",
+        "digest": "fea33f7c1bb1863b18570db8a9347e26916ea8402c89c8a9772abde8b026ddcb"
+      },
+      {
+        "path": "viewer/app/app/app.vue",
+        "digest": "fbd7222129338be1060a7191480dea3bef7fba2d5a0ba4467d3ee0bcd92d8510"
+      },
+      {
+        "path": "viewer/app/app/assets/local-viewer.css",
+        "digest": "1b9e2f9ccf85386be9ddfe780208c2bd5720c240ee486c1d34dc7190011f4e41"
+      },
+      {
+        "path": "viewer/app/app/pages/index.vue",
+        "digest": "ba96ac0f92ebeceef49c930e11f3cfaec2b0fa84b1d102ef942c7e95ade9ffb2"
+      },
+      {
+        "path": "viewer/app/nuxt.config.ts",
+        "digest": "f4729ae3c063bb3f9e7054b89982ce66d4b468773503c704c65eb7e6a7721a78"
+      },
+      {
+        "path": "viewer/app/package.json",
+        "digest": "e05e6b9d32a848aed8e358dd720be1ed73d54130d7a24a863ddddde3ee260f2f"
+      },
+      {
+        "path": "viewer/app/tsconfig.json",
+        "digest": "dc8b36d8de6c8644a2f9843401b25d072398264fa9c7533a3e37e88b1bc627d5"
+      },
+      {
+        "path": "vitest.config.ts",
+        "digest": "891770473db2f9d0d8264f0837e03e18bbf4f743e3e26f2a7d371a420b71828b"
+      }
+    ],
+    "entries": [
+      {
+        "paths": [
+          "src/cli.ts",
+          "src/core/usage-error.ts",
+          "src/version.ts"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read public dispatch, argument validation, model working-directory handling, output/exit behavior and package version resolution. The CLI exposes install, update, lint, view, assessment and Blueprint commands. Assessment commands emit JSON and do not write model meaning. Updated the CLI model summary to include this existing public surface.",
+        "resources": [
+          "interfaces/businesslens-cli.md",
+          "capabilities/assess-repository/capability.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "src/commands/assessment.ts",
+          "src/core/repository-assessment.ts",
+          "src/core/repository-inventory.ts",
+          "src/core/coverage.ts"
+        ],
+        "outcome": "reviewed",
+        "summary": "Traced capture, exact-file fingerprints, no-symlink traversal, ignored-input policy, pending/completed lifecycle, atomic worktree-local storage, conclusion replacement and link validation. Completion requires all inputs accounted for, unchanged sources and a structurally valid final model. Status derives later additions, modifications, deletions, unreadability and policy changes without advancing the baseline. The Product checks record consistency, not whether an agent actually understood a file. No local baseline exists in a new clone; model files are fingerprinted separately.",
+        "resources": [
+          "entities/repository-assessment.md",
+          "capabilities/assess-repository/capability.md",
+          "capabilities/map-established-behavior/scenarios/map-a-repository-with-no-model.md",
+          "journeys/establish-a-product-model/scenarios/map-an-existing-repository.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "src/commands/install.ts",
+          "src/commands/update.ts",
+          "src/core/providers.ts",
+          "src/core/skill-installation.ts"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read provider registry and detection, interactive/default/explicit selection, project/global destinations, ownership marker validation, preflight installation refusal, safe replacement and managed update discovery. These implement skill distribution without creating a Product Model. Corrected the installation Scenario to describe printed scope and --yes defaults accurately; retired managed skills are removed but not individually reported. Provider harnesses were not executed.",
+        "resources": [
+          "entities/skill-installation.md",
+          "capabilities/install-agent-skills/capability.md",
+          "capabilities/update-agent-skills/capability.md",
+          "business-rules/unowned-files-are-never-replaced-without-force.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "src/core/model.ts",
+          "src/core/frontmatter.ts",
+          "src/core/markdown.ts",
+          "src/core/ids.ts",
+          "src/core/interface-types.ts",
+          "src/core/coderefs.ts",
+          "src/core/model-root.ts"
+        ],
+        "outcome": "reviewed",
+        "summary": "Inspected resource discovery, compact/expanded ownership, schema-10 loading, YAML and Markdown sections, typed Steps, Entity facts/states/relations, Context identifiers, Rule grants, Reference grammar and root selection. Coverage keeps Scope, approved Exclusions and known Unmapped behavior distinct. These support modeled resources and structural inspection; Source areas and navigation references cannot substitute for exact-file assessment.",
+        "resources": [
+          "entities/product-model.md",
+          "entities/product.md",
+          "entities/entity.md",
+          "entities/interface.md",
+          "entities/experience.md",
+          "entities/screen.md",
+          "entities/domain.md",
+          "entities/capability.md",
+          "entities/capability-scenario.md",
+          "entities/journey.md",
+          "entities/journey-scenario.md",
+          "entities/business-rule.md",
+          "capabilities/lint-product-model/capability.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "src/commands/lint.ts",
+          "src/core/permission-validation.ts"
+        ],
+        "outcome": "reviewed",
+        "summary": "Traced structural error/warning handling, identifier/reference resolution, Context and Actor compatibility, coverage requirements, Step state continuity and permission selection. Read the shared grant evaluator: it rejects impossible actors/closed operations and checks state compatibility; it does not evaluate target runtime authorization or prove semantic alignment. Lint is read-only and returns JSON findings and counts when requested.",
+        "resources": [
+          "capabilities/lint-product-model/capability.md",
+          "business-rules/structural-lint-makes-no-semantic-claim.md",
+          "entities/business-rule.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "src/commands/export.ts",
+          "src/commands/open.ts",
+          "src/core/portable.ts",
+          "src/core/generated-files.ts",
+          "src/core/model-readme.ts",
+          "src/core/report-digest.ts"
+        ],
+        "outcome": "reviewed",
+        "summary": "Traced workspace compilation, schema-15 resource fields and relations, portable projection, canonical digests, safe generated output, staged expansion, lint-before-replacement and explicit-force backups. Projection removes repository-navigation fields, source/exclusion/gap paths and local assessment data; authored prose and Method remain until expansion replaces Method. Corrected Blueprint and export wording to describe semantic preservation and the exact redaction boundary, not byte identity or automatic removal of origin statements.",
+        "resources": [
+          "entities/blueprint.md",
+          "capabilities/export-blueprint/capability.md",
+          "capabilities/open-blueprint/capability.md",
+          "business-rules/blueprints-carry-no-source-navigation.md",
+          "business-rules/model-writes-stay-inside-the-model-directory.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "src/commands/pull.ts",
+          "src/core/catalog-url.ts",
+          "src/core/canonical-name.ts"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read catalog-name/origin validation, anonymous requests, redirect and response size limits, media-type/schema/identity/digest checks, optional safe logo retrieval and canonical expansion. The source distinguishes missing, withdrawn and unavailable Blueprints. These support the pull Scenarios; no external catalog or network behavior was exercised.",
+        "resources": [
+          "capabilities/pull-blueprint/capability.md",
+          "entities/blueprint.md",
+          "business-rules/model-data-leaves-only-by-explicit-contribution.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "src/commands/contribute.ts",
+          "src/core/git.ts"
+        ],
+        "outcome": "reviewed",
+        "summary": "Traced Git context/provenance helpers and contribution from authenticated gh preflight through lint, public metadata checks, portable canonical expansion, confirmation, temporary fork/clone, command-owned branch replacement and new/existing pull request reporting. Corrected the missing-metadata Scenario: metadata failures are reported first, logo separately after they pass. External GitHub behavior and credentials were not exercised; source repository branch/remotes are not mutated by contribution.",
+        "resources": [
+          "capabilities/contribute-blueprint/capability.md",
+          "business-rules/model-data-leaves-only-by-explicit-contribution.md",
+          "entities/blueprint.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "src/commands/view.ts",
+          "src/core/local-viewer-server.ts"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read structural gate before server startup, loopback binding/Host checks, static report and asset routes, read-only repository inventory/assessment context, debounced model watch, SSE revisions, last-valid report retention and shutdown. Status refresh reads local assessment state without creating or advancing it. This review used source evidence, not target server execution.",
+        "resources": [
+          "capabilities/view-product-model/capability.md",
+          "interfaces/local-report-web/screens/product-overview.md",
+          "business-rules/the-report-never-edits-the-model.md",
+          "entities/repository-assessment.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "src/core/logo-file.ts",
+          "src/logo.ts"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read Product-logo location, regular-file and size restrictions, UTF-8/XML parsing, inert SVG allowlists, namespace checks and prohibition of external or active content. Validation supports local viewing and Blueprint logo handling. The separate exported JavaScript logo-validation API is within the existing public-host contract exclusion; this mixed file still supports in-scope CLI behavior.",
+        "resources": [
+          "entities/product.md",
+          "capabilities/pull-blueprint/capability.md",
+          "capabilities/contribute-blueprint/capability.md",
+          "capabilities/view-product-model/capability.md"
+        ],
+        "exclusions": [
+          "The public Nuxt layers and JavaScript entry points for third-party hosts are deliberately outside this model’s scope."
+        ],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "src/report.ts",
+          "src/report-digest.ts"
+        ],
+        "outcome": "excluded",
+        "summary": "Read the public re-export modules for third-party Product Report consumers and the Node-only digest entry point. These expose the package hosting/library contract explicitly excluded from this model; shared internal implementation is separately reviewed for CLI and local-report behavior.",
+        "resources": [],
+        "exclusions": [
+          "The public Nuxt layers and JavaScript entry points for third-party hosts are deliberately outside this model’s scope."
+        ],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "layers/nuxt/theme-lab/app/assets/theme-lab.css",
+          "layers/nuxt/theme-lab/app/components/BusinessLensThemeLabBackgroundRow.vue",
+          "layers/nuxt/theme-lab/app/components/BusinessLensThemeLabBar.vue",
+          "layers/nuxt/theme-lab/app/components/BusinessLensThemeLabDivider.vue",
+          "layers/nuxt/theme-lab/app/composables/useBusinessLensBackgroundVariant.ts",
+          "layers/nuxt/theme-lab/app/composables/useBusinessLensThemeLab.ts",
+          "layers/nuxt/theme-lab/app/composables/useBusinessLensThemeLabHead.ts",
+          "layers/nuxt/theme-lab/app/utils/businesslensThemeLabVariants.ts",
+          "layers/nuxt/theme-lab/nuxt.config.ts",
+          "layers/nuxt/theme/README.md",
+          "layers/nuxt/theme/app/app.config.ts",
+          "layers/nuxt/theme/app/assets/theme.css",
+          "layers/nuxt/theme/app/components/BusinessLensBrand.vue",
+          "layers/nuxt/theme/app/composables/useBusinessLensThemeHead.ts",
+          "layers/nuxt/theme/nuxt.config.ts",
+          "layers/nuxt/theme/public/brand/icons/apple-touch-icon.png",
+          "layers/nuxt/theme/public/brand/icons/businesslens-app-icon.svg",
+          "layers/nuxt/theme/public/brand/icons/businesslens-maskable-icon.svg",
+          "layers/nuxt/theme/public/brand/icons/favicon-32.png",
+          "layers/nuxt/theme/public/brand/icons/favicon.ico",
+          "layers/nuxt/theme/public/brand/icons/favicon.svg",
+          "layers/nuxt/theme/public/brand/icons/icon-1024.png",
+          "layers/nuxt/theme/public/brand/icons/icon-192.png",
+          "layers/nuxt/theme/public/brand/icons/icon-512.png",
+          "layers/nuxt/theme/public/brand/icons/maskable-icon-512.png",
+          "layers/nuxt/theme/public/brand/logo/mark-dark.svg",
+          "layers/nuxt/theme/public/brand/logo/mark.svg",
+          "layers/nuxt/theme/public/brand/logo/wordmark-dark.svg",
+          "layers/nuxt/theme/public/brand/logo/wordmark.svg",
+          "layers/nuxt/theme/public/favicon.ico",
+          "layers/nuxt/theme/public/site.webmanifest"
+        ],
+        "outcome": "excluded",
+        "summary": "Inspected the theme and background-lab configuration, semantic colors and fonts, light/dark asset selection, icon/manifest registration, cookie-backed background choices and audition controls. Checked each PNG/ICO file header and dimensions or image count, and SVG structure/viewBox and embedded vector contents without rendering or executing them. These files implement the approved visual-identity/background and public-hosting exclusions; no separate in-scope Product behavior is claimed. No legal, accessibility or screenshot certification was performed.",
+        "resources": [],
+        "exclusions": [
+          "The public Nuxt layers and JavaScript entry points for third-party hosts are deliberately outside this model’s scope.",
+          "The visual identity — palette, type, approved surfaces, logo and icon family — and shared background experiments are deliberately outside this model’s scope."
+        ],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "viewer/app/app/app.vue",
+          "viewer/app/app/assets/local-viewer.css",
+          "viewer/app/app/pages/index.vue",
+          "viewer/app/nuxt.config.ts",
+          "viewer/app/package.json",
+          "viewer/app/tsconfig.json"
+        ],
+        "outcome": "reviewed",
+        "summary": "Traced the private static host from its Nuxt composition into the local report page. It reads report JSON, optionally loads repository and assessment context separately, subscribes to report/compile-error events, retains valid displayed data on edit failure, refreshes the logo, and binds report navigation to router state. Host chrome supplies documentation, theme and external project links. Configuration also contains development-only fixture handlers; no application, build or browser was run in this inspection.",
+        "resources": [
+          "capabilities/view-product-model/capability.md",
+          "interfaces/local-report-web/interface.md",
+          "capabilities/view-product-model/scenarios/keep-the-last-valid-report-while-an-edit-is-invalid.md",
+          "interfaces/local-report-web/screens/product-overview.md",
+          "entities/repository-assessment.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "layers/nuxt/report-viewer-lab/README.md",
+          "layers/nuxt/report-viewer-lab/nuxt.config.ts"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read the private lab README and Nuxt configuration. The layer currently only extends the stable report viewer and declares no active experiment behavior; the local host composes it as its private extension point. Historical audition notes do not add a current Product capability.",
+        "resources": [
+          "capabilities/view-product-model/capability.md",
+          "interfaces/local-report-web/interface.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "layers/nuxt/report-viewer/README.md",
+          "layers/nuxt/report-viewer/nuxt.config.ts"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read renderer integration documentation and Nuxt configuration. The stable layer loads theme/structure assets and bundles needed icons for a generated local SPA. Documentation explains local reading and public host bindings; the public integration contract remains excluded. Some README route-window bindings describe an older Scenario reading, whereas the active renderer uses expandable cards, so prose alone was not treated as evidence of that interaction.",
+        "resources": [
+          "capabilities/view-product-model/capability.md",
+          "interfaces/local-report-web/interface.md"
+        ],
+        "exclusions": [
+          "The public Nuxt layers and JavaScript entry points for third-party hosts are deliberately outside this model’s scope."
+        ],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "layers/nuxt/report-viewer/THIRD_PARTY.md",
+          "layers/nuxt/report-viewer/licenses/ELK-EPL-2.0.md",
+          "layers/nuxt/report-viewer/licenses/diagram-design-MIT.txt",
+          "layers/nuxt/report-viewer/licenses/vue-flow-MIT.txt"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read third-party attribution and license texts as supporting distribution material for Diagram Design inspiration, Vue Flow and the separately loaded ELK worker. These files carry notices rather than independent Product behavior. Their presence was considered; this accounting makes no legal-compliance determination.",
+        "resources": [
+          "capabilities/explore-product-topology/capability.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "layers/nuxt/report-viewer/app/assets/product-logo-placeholder.svg",
+          "layers/nuxt/report-viewer/app/assets/report-structure.css",
+          "layers/nuxt/report-viewer/app/assets/report-topology.css",
+          "layers/nuxt/report-viewer/app/assets/report-viewer.css"
+        ],
+        "outcome": "reviewed",
+        "summary": "Inspected the neutral Product-logo SVG and shared report CSS. The assets establish bounded viewport/pane scrolling, row and Step presentation, responsive single-column rows, resource marks, topology/table overflow and focus affordances. These are supporting presentation inputs for the local report; source inspection establishes their declared rules without claiming rendered visual correctness.",
+        "resources": [
+          "capabilities/view-product-model/capability.md",
+          "interfaces/local-report-web/interface.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "layers/nuxt/report-viewer/app/components/BlrOverview.vue",
+          "layers/nuxt/report-viewer/app/components/BlrCoverageRepository.vue",
+          "layers/nuxt/report-viewer/app/components/BlrAssessmentSummary.vue",
+          "layers/nuxt/report-viewer/app/components/BlrAssessmentEntries.vue",
+          "layers/nuxt/report-viewer/app/components/BlrCoverageBadge.vue"
+        ],
+        "outcome": "reviewed",
+        "summary": "Traced About/Coverage/References rendering and local repository accounting. Authored Product/Coverage fields retain their labels; current paths, exact annotations, completed and pending assessments and file comparisons remain separate. The loader is read-only; refresh cannot complete assessment. Without a baseline, Unassessed means no completed historical accounting. Selected files expose recorded outcome, summary, model resource paths, exclusions and gaps; missing/failed inventory preserves authored paths and unlocated entries. Parents aggregate counts and do not confer assessment on children.",
+        "resources": [
+          "interfaces/local-report-web/screens/product-overview.md",
+          "entities/repository-assessment.md",
+          "capabilities/view-product-model/scenarios/open-the-model-on-localhost.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "layers/nuxt/report-viewer/app/utils/coverageRepository.ts"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read tree construction and filtering: live inventory, comparison paths, pending worklist paths, authored source/gap/exclusion paths and local References are inserted independently; removed paths therefore remain selectable. Ancestors aggregate distinct annotation IDs and comparison counts, unannotated one-child paths may be compressed, and string filtering retains ancestor context. No path acquires a reviewed outcome from a source-area parent or Reference.",
+        "resources": [
+          "interfaces/local-report-web/screens/product-overview.md",
+          "entities/repository-assessment.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "layers/nuxt/report-viewer/app/components/BusinessLensReportViewer.vue",
+          "layers/nuxt/report-viewer/app/components/BlrReportShell.vue",
+          "layers/nuxt/report-viewer/app/components/BlrRail.vue",
+          "layers/nuxt/report-viewer/app/components/BlrReportTools.vue",
+          "layers/nuxt/report-viewer/app/components/BlrPageTabs.vue",
+          "layers/nuxt/report-viewer/app/components/BlrSearchPalette.vue"
+        ],
+        "outcome": "reviewed",
+        "summary": "Traced report projection, six collection rail entries and three cross-collection views, Overview tabs, resource-page ownership, search-by-title/description/ID, facet filtering, Rows/Graph controls and state persistence. The Resource collection Screen was corrected to describe the existing shared Rows/Graph toolbar and populated filter axes. Confirmed a separate unresolved implementation mismatch: multiple chosen values are summarized in one per-axis chip and clearing that chip removes the axis, despite the model promising individually removable selected-value chips. Read-only UI state changes do not edit model files.",
+        "resources": [
+          "capabilities/view-product-model/capability.md",
+          "interfaces/local-report-web/interface.md",
+          "interfaces/local-report-web/screens/resource-collection.md",
+          "capabilities/explore-product-topology/capability.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "layers/nuxt/report-viewer/app/composables/useBlrReportNavigation.ts",
+          "layers/nuxt/report-viewer/app/composables/useBlrTopologyScroll.ts",
+          "layers/nuxt/report-viewer/app/composables/useColumns.ts",
+          "layers/nuxt/report-viewer/app/composables/useBlrReadingWidth.ts"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read URL serialization and browser-local reading preferences. Navigation binds section/resource/tab/topology selections, per-reading scroll/graph state is restored when possible, removed model IDs are pruned, and row-count choices use a per-collection cookie. The navigation composable still carries r/rc route-window state but active Scenario cards do not consume it; this does not establish a currently available route selector. Width observation only selects responsive presentation.",
+        "resources": [
+          "capabilities/view-product-model/capability.md",
+          "interfaces/local-report-web/interface.md",
+          "interfaces/local-report-web/screens/resource-collection.md",
+          "capabilities/explore-product-topology/capability.md",
+          "interfaces/local-report-web/screens/resource-page.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "layers/nuxt/report-viewer/app/components/BlrCollectionGraph.vue",
+          "layers/nuxt/report-viewer/app/components/BlrResourceCard.vue",
+          "layers/nuxt/report-viewer/app/components/BlrTreeCards.vue",
+          "layers/nuxt/report-viewer/app/components/BlrFilterBar.vue"
+        ],
+        "outcome": "reviewed",
+        "summary": "Inspected collection subject filtering, resource row presentation, Domain/Interface Nuxt UI tree cards and toolbar chips. Graph subjects come from the same facet-filtered collection; focus adds a graph neighbourhood; row cards show summaries and relations and tree children navigate separately from expansion. Domain cards retain unassigned resources. The filter chip component emits one removal per supplied chip; the shell supplies one chip per axis, an explicitly retained discrepancy against per-value-chip intent.",
+        "resources": [
+          "interfaces/local-report-web/screens/resource-collection.md",
+          "capabilities/explore-product-topology/capability.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "layers/nuxt/report-viewer/app/utils/collectionChildren.ts",
+          "layers/nuxt/report-viewer/app/utils/resourceCards.ts",
+          "layers/nuxt/report-viewer/app/utils/resourceFacets.ts",
+          "layers/nuxt/report-viewer/app/utils/resourceFacts.ts"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read collection/row/fact projections for every resource type. Domain and Interface cards derive child resources from classification and containment; ordinary rows expose kind-specific identifying metrics. Filters derive offered axes from row presentation, combine selections with OR within an axis and AND across axes, and Domain grouping/Actor-first grouping preserve unassigned resources. These modules summarize model relations rather than inspect implementation correctness.",
+        "resources": [
+          "interfaces/local-report-web/screens/resource-collection.md",
+          "capabilities/explore-product-topology/capability.md",
+          "interfaces/local-report-web/screens/resource-page.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "layers/nuxt/report-viewer/app/components/BlrResourcePage.vue",
+          "layers/nuxt/report-viewer/app/components/BlrPageBlock.vue",
+          "layers/nuxt/report-viewer/app/components/BlrResourceBody.vue",
+          "layers/nuxt/report-viewer/app/components/BlrConnections.vue",
+          "layers/nuxt/report-viewer/app/components/BlrExperienceContents.vue",
+          "layers/nuxt/report-viewer/app/components/BlrInterfaceDelivery.vue",
+          "layers/nuxt/report-viewer/app/components/BlrContexts.vue",
+          "layers/nuxt/report-viewer/app/components/BlrContextPlace.vue",
+          "layers/nuxt/report-viewer/app/components/BlrLinks.vue",
+          "layers/nuxt/report-viewer/app/components/BlrRefs.vue",
+          "layers/nuxt/report-viewer/app/components/BlrProse.vue"
+        ],
+        "outcome": "reviewed",
+        "summary": "Traced resource page Overview blocks, Scenarios/Lifecycle peers, authored body fields, resource connections, Interface delivery, Experience shared Screens, Context breadcrumbs, references and escaped prose rendering. Resource pages use stable keys and parent ownership. Active Scenario URLs are redirected into their parent card list; the older route-window renderer in ResourceBody is not the active Scenario path. Resource links and source references support navigation but are not verification evidence. No account, mutation or publish operation was found in these UI components.",
+        "resources": [
+          "interfaces/local-report-web/screens/resource-page.md",
+          "capabilities/view-product-model/capability.md",
+          "interfaces/local-report-web/interface.md",
+          "business-rules/the-report-never-edits-the-model.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "layers/nuxt/report-viewer/app/utils/pageSections.ts",
+          "layers/nuxt/report-viewer/app/utils/reportDestinations.ts",
+          "layers/nuxt/report-viewer/app/utils/resourceConnections.ts",
+          "layers/nuxt/report-viewer/app/utils/reportMarkdown.ts",
+          "layers/nuxt/report-viewer/app/utils/resourceDocs.ts"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read page-tab/block selection, resource ownership and named destinations, incoming/outgoing connection derivation, documentation routing and the constrained Markdown renderer. Capability/Journey pages have Scenarios and Entities with States have Lifecycle; Scenarios resolve to their mandatory parent. Markdown escapes authored HTML before restoring recognized formatting and only permits HTTP(S) prose links. Connections preserve model relationships and distinguish derived reach.",
+        "resources": [
+          "interfaces/local-report-web/screens/resource-page.md",
+          "interfaces/local-report-web/screens/resource-collection.md",
+          "capabilities/explore-product-topology/capability.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "layers/nuxt/report-viewer/app/components/BlrScenariosList.vue",
+          "layers/nuxt/report-viewer/app/components/BlrScenarioSummary.vue",
+          "layers/nuxt/report-viewer/app/components/BlrScenarioStep.vue",
+          "layers/nuxt/report-viewer/app/components/BlrStepContext.vue",
+          "layers/nuxt/report-viewer/app/components/BlrStepEntity.vue"
+        ],
+        "outcome": "reviewed",
+        "summary": "Inspected the active Scenario card path. Cards present Trigger/Outcome and ending Entity effects, then expand Intent, ordered Steps, Actor/Product identity, Entity effect phrases, all Context breadcrumbs, Journey Step Capabilities, decisions and edge cases. Confirmed unresolved visibility gaps: this path does not render Scenario supportingContent or References, and Where iterates contexts without displaying authored route names, so equal places on differently named routes cannot be distinguished by those labels. The obsolete model claim of choosing/restoring a route window was corrected to describe card expansion. These known issues are not treated as missing model scope or proof of full UI alignment.",
+        "resources": [
+          "interfaces/local-report-web/screens/resource-page.md",
+          "capabilities/explore-product-topology/scenarios/read-visualizations-with-their-resources.md",
+          "capabilities/explore-product-topology/scenarios/restore-a-topology-reading.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "layers/nuxt/report-viewer/app/composables/useBlrScenarioExpansion.ts"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read per-report/parent Scenario card expansion persistence: known keys are restored from app memory/session storage, direct Scenario selection opens the matching card, removed keys are pruned, and denied/malformed storage leaves reading usable. This supports card expansion persistence; it does not implement route selection or composition windows.",
+        "resources": [
+          "interfaces/local-report-web/screens/resource-page.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "layers/nuxt/report-viewer/app/utils/scenarioSteps.ts",
+          "layers/nuxt/report-viewer/app/utils/scenarioRouteWindow.ts"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read shared Step Actor/Capability resolution and route-window capacity/clamping functions. Actor lookup and Journey-only Step Capability lookup feed the active cards. Route-window helpers remain in the older ResourceBody renderer; their presence alone does not establish route controls in the current card reading.",
+        "resources": [
+          "interfaces/local-report-web/screens/resource-page.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "layers/nuxt/report-viewer/app/utils/reportWorkspace.ts"
+        ],
+        "outcome": "reviewed",
+        "summary": "Traced the typed Product Report projection and its principal relations: qualified Context resolution, complete Product/Coverage passthrough, resource fields and support sections/references, Capability/Journey effects, ending states, Entity lifecycle arcs, Rule targets/grants and resource indexes. No repository assessment or live inventory is inferred from this portable model projection. Scenario routes/supporting sections/references survive this projection, so their absence in the active card reading is a rendering issue. These source-level derivations were inspected without running a report or treating relation counts as semantic completeness.",
+        "resources": [
+          "capabilities/view-product-model/capability.md",
+          "interfaces/local-report-web/interface.md",
+          "interfaces/local-report-web/screens/resource-page.md",
+          "interfaces/local-report-web/screens/resource-collection.md",
+          "capabilities/explore-product-topology/capability.md",
+          "interfaces/local-report-web/screens/product-overview.md",
+          "entities/repository-assessment.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "layers/nuxt/report-viewer/app/components/BlrProductTopology.vue",
+          "layers/nuxt/report-viewer/app/components/BlrTopologyMatrix.vue"
+        ],
+        "outcome": "reviewed",
+        "summary": "Traced Compare delivery, What changes what and Rule attachments matrices, per-view focus/type controls, column windowing and resource/evidence links. Cells come only from authored model relations. Confirmed unresolved explanatory mismatch: the delivery table caption says an empty cell means the Interface does not deliver it, while the named-view contract only supports absence of an authored delivery Context; no runtime absence was established.",
+        "resources": [
+          "interfaces/local-report-web/screens/resource-collection.md",
+          "capabilities/explore-product-topology/capability.md",
+          "capabilities/explore-product-topology/scenarios/read-a-named-topology-view.md",
+          "capabilities/explore-product-topology/scenarios/read-exact-rule-attachments.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "layers/nuxt/report-viewer/app/utils/productTopologyViews.ts",
+          "layers/nuxt/report-viewer/app/utils/topologyProjections.ts",
+          "layers/nuxt/report-viewer/app/utils/topologyRelations.ts",
+          "layers/nuxt/report-viewer/app/utils/topologyTargets.ts",
+          "layers/nuxt/report-viewer/app/utils/topologyFocus.ts",
+          "layers/nuxt/report-viewer/app/utils/topologyState.ts"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read all fixed view definitions and their derivations: Product-rooted Interface containment, Domain/Capability/Journey/Rule reach occurrences, authored Entity relations, delivery and mutation matrices and exact Rule attachment selectors. Focus preserves one-hop connections and focused containment descendants; URL state is validated against current resources; direct attachments remain distinct from inherited reach. Reads are excluded from mutations and disconnected Entities remain in relationship input. These are model-derived readings, not claims that repository behavior agrees.",
+        "resources": [
+          "interfaces/local-report-web/screens/resource-collection.md",
+          "capabilities/explore-product-topology/capability.md",
+          "capabilities/explore-product-topology/scenarios/read-exact-rule-attachments.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "layers/nuxt/report-viewer/app/components/BlrEntityLifecycle.vue"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read lifecycle rendering from projected States and Step arcs, including creation/removal, unreached states, grants/restrictions, forbidden arcs and the full textual arc reading beneath the diagram. Information changes without stated state transitions remain listed when not drawable. No execution or permission enforcement was inferred from the rendered Rule sentences.",
+        "resources": [
+          "interfaces/local-report-web/screens/resource-page.md",
+          "capabilities/view-product-model/scenarios/read-a-things-lifecycle.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "layers/nuxt/report-viewer/app/utils/entityLifecycle.ts"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read lifecycle graph construction: named States become nodes; explicit Step endpoints create edges; nondrawable information changes stay outside the machine; creation/removal terminals are added only when used; applicable prohibitions and Rule restriction markers are retained. The source code composes existing model assertions rather than checking real-world lifecycle or permissions.",
+        "resources": [
+          "interfaces/local-report-web/screens/resource-page.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "layers/nuxt/report-viewer/app/components/BlrDiagram.vue",
+          "layers/nuxt/report-viewer/app/components/BlrFlowCanvas.vue",
+          "layers/nuxt/report-viewer/app/components/BlrFlowNode.vue",
+          "layers/nuxt/report-viewer/app/components/BlrFlowNodeContent.vue",
+          "layers/nuxt/report-viewer/app/components/BlrFlowRoutedEdge.vue",
+          "layers/nuxt/report-viewer/app/components/BlrTopologyBranch.vue",
+          "layers/nuxt/report-viewer/app/components/BlrTopologyTree.vue",
+          "layers/nuxt/report-viewer/app/components/BlrTopologyResource.vue"
+        ],
+        "outcome": "reviewed",
+        "summary": "Traced diagram measurement, Product-rooted tree placement or cancellable ELK-worker arrangement, complete fallback nodes/relationships when layout fails, branch expansion, resource opening and non-editable Vue Flow nodes. Browser-local viewport state supports zoom/pan restoration and resizing retains the visible center. Hover changes emphasis, not geometry. The source implements reading affordances; no screenshots, live browser or graph execution were used to certify visual results.",
+        "resources": [
+          "interfaces/local-report-web/screens/resource-collection.md",
+          "capabilities/explore-product-topology/capability.md",
+          "capabilities/explore-product-topology/scenarios/restore-a-topology-reading.md",
+          "capabilities/explore-product-topology/scenarios/read-a-large-grouped-model.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "layers/nuxt/report-viewer/app/utils/diagram.ts",
+          "layers/nuxt/report-viewer/app/utils/diagram.worker.ts",
+          "layers/nuxt/report-viewer/app/utils/topologyTree.ts"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read dependency-free diagram data/projection adapters, ELK input/output conversion and worker bootstrap, plus measured contour-based tree layout with orthogonal branch routes. These files arrange a previously derived model graph and do not add Product relations or inspect repository source.",
+        "resources": [
+          "interfaces/local-report-web/screens/resource-collection.md",
+          "capabilities/explore-product-topology/capability.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "layers/nuxt/report-viewer/app/components/BlrVocabulary.vue",
+          "layers/nuxt/report-viewer/app/components/BlrTerm.vue",
+          "layers/nuxt/report-viewer/app/components/BlrTermDefinition.vue"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read contextual term definitions, searchable/browsable vocabulary, links between definitions and their documentation, return-focus handling and the tooltips show/hide/undo controls. Definitions are sourced from the generated registry and UI preferences are browser-local, with no Product Model write.",
+        "resources": [
+          "capabilities/view-product-model/capability.md",
+          "interfaces/local-report-web/interface.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "layers/nuxt/report-viewer/app/composables/useTooltips.ts",
+          "layers/nuxt/report-viewer/app/composables/useVocabularyPanel.ts"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read the cookie-backed term-tooltip preference and shared vocabulary panel state, including an origin element ID for focus restoration. Hiding teaching affordances retains the vocabulary panel as the way to restore them. These preferences do not change authored meaning.",
+        "resources": [
+          "capabilities/view-product-model/capability.md",
+          "interfaces/local-report-web/interface.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "layers/nuxt/report-viewer/app/utils/vocabulary.ts",
+          "layers/nuxt/report-viewer/app/utils/vocabulary.generated.ts"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read vocabulary addressing/search/grouping and the generated term registry structure and definitions. Terms link to owning documentation pages, mentions are precomputed text ranges, Scenario words retain their owner, and search ranks name/alias before definition matches. The generated registry is supporting explanatory data; it does not create model resources.",
+        "resources": [
+          "capabilities/view-product-model/capability.md",
+          "interfaces/local-report-web/interface.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "layers/nuxt/report-viewer/app/components/BlrKind.vue",
+          "layers/nuxt/report-viewer/app/components/BlrEntityMark.vue",
+          "layers/nuxt/report-viewer/app/components/BlrInterfaceType.vue",
+          "layers/nuxt/report-viewer/app/components/BlrReferenceIcon.vue",
+          "layers/nuxt/report-viewer/app/components/BusinessLensProductLogo.vue"
+        ],
+        "outcome": "reviewed",
+        "summary": "Inspected resource/Actor/Interface/reference marks and Product-logo fallback. Labels and type metadata accompany visual marks; Actor side and Interface type are kept distinct from resource kind; the fallback asset is used when no Product logo loads. These are supporting local-report presentation inputs, with no independent claim of modeled product behavior or visual certification.",
+        "resources": [
+          "capabilities/view-product-model/capability.md",
+          "interfaces/local-report-web/interface.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "layers/nuxt/report-viewer/app/utils/reportPalette.ts"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read categorical, sequential and ordinal palette declarations and color-selection helpers. This supports consistent local-report marks/charts; palette values and internal historical contrast comments were not treated as fresh accessibility evidence.",
+        "resources": [
+          "capabilities/view-product-model/capability.md",
+          "interfaces/local-report-web/interface.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "docs/cli-assessment.md",
+          "spec/assessment.md",
+          "skills/businesslens-map/references/repository-assessment.md",
+          "skills/businesslens-verify/references/repository-assessment.md"
+        ],
+        "outcome": "reviewed",
+        "summary": "Inspected the complete local accounting protocol: capture tracked and nonignored untracked source inputs, record exact-path reviewed/excluded/uncertain conclusions, validate resource and Coverage links, finish only against unchanged sources and a structurally valid final model, retain worktree-local history and compare later source/model changes. No baseline means unknown inspection history, not an absent model. The CLI lifecycle and the agent adoption handoffs are represented in the updated model.",
+        "resources": [
+          "entities/repository-assessment.md",
+          "capabilities/assess-repository/capability.md",
+          "capabilities/map-established-behavior/capability.md",
+          "capabilities/verify-model-alignment/capability.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "skills/businesslens-map/SKILL.md",
+          "skills/businesslens-map/references/mapping-rubric.md",
+          "skills/businesslens-map/agents/openai.yaml",
+          "docs/skill-businesslens-map.md"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read the shipped adoption workflow and rubric, including static entry-point tracing, explicit author decisions, preserving established meaning during scoped expansion, structural lint, and exact-file accounting for whole-repository mapping. The map capability/scenarios represent these responsibilities; repository-assessment lifecycle handoffs are now explicit in the adoption Journey.",
+        "resources": [
+          "interfaces/agent-skills.md",
+          "capabilities/map-established-behavior/capability.md",
+          "journeys/establish-a-product-model/scenarios/map-an-existing-repository.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "skills/businesslens-ideate/SKILL.md",
+          "skills/businesslens-ideate/references/planning-rubric.md",
+          "skills/businesslens-ideate/agents/openai.yaml",
+          "docs/skill-businesslens-ideate.md"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read exploration, convergence and narrow intent-resolution instructions: exploration writes nothing, authoring waits for approved meaning, established code without a model routes to mapping, and implementation belongs to the external build flow. These contracts are represented by decide-intended-behavior and its three Scenarios. No harness was executed.",
+        "resources": [
+          "interfaces/agent-skills.md",
+          "capabilities/decide-intended-behavior/capability.md",
+          "business-rules/product-meaning-changes-need-explicit-approval.md",
+          "business-rules/target-code-is-never-executed.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "skills/businesslens-verify/SKILL.md",
+          "skills/businesslens-verify/references/verification-rubric.md",
+          "skills/businesslens-verify/references/build-handoff.md",
+          "skills/businesslens-verify/agents/openai.yaml",
+          "docs/skill-businesslens-verify.md"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read current verification modes, six finding classifications, independent Context/Scenario/Entity/permission inspection, grouped authority decisions, approved model resolution, bounded external-builder handoffs, and reinspection/stopping conditions. Report-only mode forbids writes and delegation. Local historical accounting is explicitly separate from re-derived semantic findings. Existing verify capability/scenarios and rules carry these contracts; runtime harness enforcement was not exercised.",
+        "resources": [
+          "interfaces/agent-skills.md",
+          "capabilities/verify-model-alignment/capability.md",
+          "business-rules/product-meaning-changes-need-explicit-approval.md",
+          "business-rules/target-code-is-never-executed.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "skills/businesslens-map/scripts/inventory-repository.mjs"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read the discovery helper: resolves the Git root, reads tracked names, derives extension/top-level counts and bounded candidate lists by category, then emits JSON without writing. This discovery list is a lead for map and is distinct from the uncapped exact-input assessment worklist.",
+        "resources": [
+          "capabilities/map-established-behavior/capability.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "skills/businesslens-map/scripts/run-businesslens.mjs",
+          "skills/businesslens-verify/scripts/run-businesslens.mjs",
+          "skills/businesslens-ideate/scripts/run-businesslens.mjs"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read the isolated CLI runner and confirmed the three shipped copies are identical. It permits lint/assessment commands only, resolves the Git root, invokes the explicitly activated development CLI or the installation-pinned npm package from a temporary external directory, removes BUSINESSLENS_API_KEY from the child environment, forwards output/exit status and cleans up. This supports static skill analysis; it does not establish installed harness runtime behavior.",
+        "resources": [
+          "capabilities/lint-product-model/capability.md",
+          "capabilities/assess-repository/capability.md",
+          "business-rules/target-code-is-never-executed.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "skills/businesslens-map/references/format.md",
+          "skills/businesslens-ideate/references/format.md",
+          "skills/businesslens-verify/references/format.md"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read the bundled schema-10 authoring contract and compared copies: map/ideate are identical; verify adds only its edit boundary and scoped-map orientation wording. Resource shapes, required Step effects, Contexts, grants, canonical README, and the Scope/Exclusions/Unmapped distinction support the authored Product Model; no assessment receipt belongs inside the model.",
+        "resources": [
+          "entities/product-model.md",
+          "capabilities/map-established-behavior/capability.md",
+          "capabilities/decide-intended-behavior/capability.md",
+          "capabilities/verify-model-alignment/capability.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "spec/format.md",
+          "docs/product-model.md"
+        ],
+        "outcome": "reviewed",
+        "summary": "Inspected the authored-folder contract, model overview, resource boundaries, Context and naming conventions, coverage constraints and examples. Schema 10 distinguishes declared Scope, approved Exclusions and known Unmapped behavior; Source areas are broad inspection context and never exact-file completeness. This is supporting contract material for model authoring and structural lint, not an additional Product surface.",
+        "resources": [
+          "entities/product-model.md",
+          "capabilities/lint-product-model/capability.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "spec/report.md"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read the schema-15 wire contract, semantic resource projections, media-type negotiation, local inventory separation, portable redaction and expansion rules. Scope and exclusion/gap descriptions survive portability while paths and local assessments do not. Semantic round trips normalize generation metadata and expansion replaces Method; the Blueprint Entity wording now reflects semantic preservation rather than byte identity.",
+        "resources": [
+          "entities/blueprint.md",
+          "capabilities/export-blueprint/capability.md",
+          "capabilities/open-blueprint/capability.md",
+          "capabilities/pull-blueprint/capability.md",
+          "capabilities/contribute-blueprint/capability.md",
+          "capabilities/view-product-model/capability.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "spec/rejected.md"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read the nonbinding engineering decision record covering discarded metadata, Actor/Entity separation, lifecycle duplication, permission alternatives and provenance. It is supporting authoring context; rejected designs are not current Product behavior and were not added to the Product Model.",
+        "resources": [],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "docs/product.md",
+          "docs/references.md"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read Product identity/narrative/limitations, co-located asset rules, optional Reference kinds and roles, code target grammar and tracking, Screen-state annotations and portable profiles. These explain the Product and navigational attachments retained by model authoring/lint; they do not establish referenced runtime behavior.",
+        "resources": [
+          "entities/product.md",
+          "entities/product-model.md",
+          "capabilities/lint-product-model/capability.md",
+          "business-rules/blueprints-carry-no-source-navigation.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "docs/entities.md"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read Entity/Actor identity, named Information kept, composed lifecycle, relations/cardinality, granularity examples and lint findings. This documents the Entity resource the Product stores and checks; supporting examples are illustrative inputs, not behavior of BusinessLens itself.",
+        "resources": [
+          "entities/entity.md",
+          "capabilities/lint-product-model/capability.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "docs/interfaces.md"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read inbound Interface boundaries, derived Experience division, actors/access, most-specific Screen containment, View states, shared Screens and example file shapes. These support the modeled Interface, Experience and Screen resource types and their structural validation; no new public interaction surface was inferred from documentation.",
+        "resources": [
+          "entities/interface.md",
+          "entities/experience.md",
+          "entities/screen.md",
+          "capabilities/lint-product-model/capability.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "docs/domains.md"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read optional subject grouping, exclusion-bearing Boundary requirement, minimum Capability count and authored-versus-derived Domain relations. This supports the modeled Domain resource and structural lint; documentation grouping does not create additional business capabilities.",
+        "resources": [
+          "entities/domain.md",
+          "capabilities/lint-product-model/capability.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "docs/capabilities.md",
+          "docs/journeys.md"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read durable Capability boundaries, direct Scenario acceptance, typed Step effects and aliases, unattended behavior, route Contexts, Journey goals, multi-Capability handoffs, terminal results and example file shapes. These support the separate Capability/Journey and Scenario resource Entities and their validation; examples are teaching material.",
+        "resources": [
+          "entities/capability.md",
+          "entities/capability-scenario.md",
+          "entities/journey.md",
+          "entities/journey-scenario.md",
+          "capabilities/lint-product-model/capability.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "docs/business-rules.md"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read Rule assertions, behavioral/Context/Entity selectors, grant algebra, related/self/configured/unattended permissions, fact/state conditions, and structural eligibility findings. These are represented in the Business Rule resource and lint/verify distinction; no claim was made about live authorization decisions in a target product.",
+        "resources": [
+          "entities/business-rule.md",
+          "capabilities/lint-product-model/capability.md",
+          "capabilities/verify-model-alignment/scenarios/report-an-unenforced-grant.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "docs/cli.md",
+          "docs/cli-lint.md",
+          "docs/ci.md"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read CLI dispatch/model selection and exit-code documentation, detailed read-only lint guarantees, JSON findings and CI guidance. CI performs structural checks only; local assessments are not shared by a fresh checkout and never replace verification. This supports the CLI Interface and lint/assessment capabilities, not a separate CI Interface.",
+        "resources": [
+          "interfaces/businesslens-cli.md",
+          "capabilities/lint-product-model/capability.md",
+          "capabilities/assess-repository/capability.md",
+          "business-rules/structural-lint-makes-no-semantic-claim.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "docs/cli-install.md",
+          "docs/cli-update.md",
+          "docs/installation.md"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read provider/scope selection, managed ownership markers, preflight collision refusal, explicit force, updates restricted to marked installations, and the prerequisite Node/runtime claims. Installation documentation also describes the already excluded Claude marketplace route. Docs corroborate modeled skill installation/update behavior; no provider harness was run.",
+        "resources": [
+          "capabilities/install-agent-skills/capability.md",
+          "capabilities/update-agent-skills/capability.md",
+          "entities/skill-installation.md"
+        ],
+        "exclusions": [
+          "Installing skills through the Claude plugin marketplace is deliberately outside this model’s scope."
+        ],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "docs/cli-view.md"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read localhost viewing, structural lint gate, valid-edit refresh, last-valid-report retention, no-open/port/model-selection options and read-only local data behavior. This supports the existing local-report view capability and its server Scenarios.",
+        "resources": [
+          "capabilities/view-product-model/capability.md",
+          "interfaces/local-report-web/interface.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "docs/cli-export.md",
+          "docs/cli-open.md"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read portable schema-15 export and schema-10 expansion, redaction of local navigation and Coverage paths, supporting-section preservation, offline input limits, staging and structural validation, refusal/explicit-force backup behavior. Blueprint Coverage wording now includes Scope/Exclusions; these docs promise semantic Product preservation, not source-byte preservation.",
+        "resources": [
+          "entities/blueprint.md",
+          "capabilities/export-blueprint/capability.md",
+          "capabilities/open-blueprint/capability.md",
+          "business-rules/blueprints-carry-no-source-navigation.md",
+          "business-rules/unowned-files-are-never-replaced-without-force.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "docs/cli-pull.md",
+          "docs/cli-contribute.md"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read anonymous catalog retrieval, origin/redirect/digest/version/identity checks, logo handling, GitHub-authenticated contribution, canonical temporary expansion, command-owned branch/PR updates and separate publication/listing responsibility. These are documentation for existing Blueprint movement capabilities; external catalog and GitHub operation were not exercised.",
+        "resources": [
+          "capabilities/pull-blueprint/capability.md",
+          "capabilities/contribute-blueprint/capability.md",
+          "business-rules/model-data-leaves-only-by-explicit-contribution.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "docs/index.md",
+          "docs/from-a-blueprint.md",
+          "docs/from-an-idea.md",
+          "docs/from-your-repo.md",
+          "docs/integration.md",
+          "docs/skills.md",
+          "docs/the-loop.md",
+          "docs/with-plan-mode.md",
+          "docs/with-sdd.md"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read the onboarding and integration narratives: adopt established code, decide new intent, or pull a Blueprint; then author approved meaning, build through an external flow and verify. SDD/plan artifacts remain outside the model and CI/harness mechanisms are not new Product Interfaces. These support the existing establishment and alignment Journeys and the three agent capabilities.",
+        "resources": [
+          "journeys/establish-a-product-model/journey.md",
+          "journeys/keep-the-model-and-code-aligned/journey.md",
+          "interfaces/agent-skills.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          ".agents/skills/grill-me/SKILL.md",
+          ".agents/skills/grill-me/agents/openai.yaml",
+          ".agents/skills/grill-with-docs/SKILL.md",
+          ".agents/skills/grill-with-docs/agents/openai.yaml",
+          ".agents/skills/grilling/SKILL.md",
+          ".agents/skills/grilling/agents/openai.yaml",
+          ".claude/settings.json",
+          ".codex/config.toml",
+          ".mcp.json",
+          "skills-lock.json"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read local contributor skill definitions, their UI metadata, harness/MCP settings and the external-skill lock records. They configure development in this checkout, including the grilling workflow and browser tools; they are not the three BusinessLens workflows shipped from skills/. Environment values were not exposed, no configured command or server was invoked, and no additional Product behavior is inferred from these local settings.",
+        "resources": [],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          ".claude/skills/grill-me",
+          ".claude/skills/grill-with-docs",
+          ".claude/skills/grilling"
+        ],
+        "outcome": "reviewed",
+        "summary": "Inspected the symbolic-link text only: these three links point to the contributor grilling skills under .agents/skills/. No target traversal or invocation was used. These are local harness wiring, not BusinessLens skill distribution or Product Model resources.",
+        "resources": [],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          ".claude-plugin/marketplace.json",
+          ".claude-plugin/plugin.json"
+        ],
+        "outcome": "excluded",
+        "summary": "Read both Claude plugin manifests. They expose the same three BusinessLens skills through the Claude marketplace, with plugin version 0.14.0. This delivery path is the approved marketplace-installation exclusion; it was considered explicitly and remains outside the modeled CLI installer.",
+        "resources": [],
+        "exclusions": [
+          "Installing skills through the Claude plugin marketplace is deliberately outside this model’s scope."
+        ],
+        "gaps": []
+      },
+      {
+        "paths": [
+          ".github/ISSUE_TEMPLATE/bug_report.yml",
+          ".github/ISSUE_TEMPLATE/config.yml",
+          ".github/ISSUE_TEMPLATE/feature_request.yml",
+          ".github/PULL_REQUEST_TEMPLATE.md",
+          "SECURITY.md",
+          "CONTRIBUTING.md",
+          "LICENSE",
+          "blueprints/LICENSE"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read issue/PR templates, contribution and security guidance, and both MIT licenses. They describe repository maintenance, review and disclosure processes rather than another BusinessLens interaction. Contribution guidance distinguishes source-only BusinessLens analysis from an externally supplied builder; these files are considered supporting material without a separate modeled Capability.",
+        "resources": [],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          ".github/workflows/check.yml",
+          ".github/workflows/docs-dispatch.yml",
+          ".github/workflows/publish.yml",
+          ".github/workflows/release.yml"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read the CI workflows and their inline scripts: verify on changes, dispatch docs updates, explicitly prepared/tagged releases, package smoke checks and npm publication. They maintain and distribute this repository; they are not operations the shipped businesslens command offers to a target repository. No workflow, dependency installation, network request or publication was executed.",
+        "resources": [],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "AGENTS.md",
+          "CLAUDE.md"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read repository guidance and the CLAUDE.md include. The instructions define format/report contracts, human report readings, owned-write boundaries, and the explicit local assessment exception in worktree Git metadata. They support the existing Product limits and assessment behavior; they are contributor instructions, not files BusinessLens installs into target repositories.",
+        "resources": [
+          "capabilities/assess-repository/capability.md",
+          "business-rules/model-writes-stay-inside-the-model-directory.md",
+          "business-rules/target-code-is-never-executed.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "README.md"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read the current repository overview, public command table, model semantics, Nuxt integration explanation and safety boundaries. It supports the existing skills, CLI and Blueprint model; the public Nuxt integration section belongs to the approved hosting-contract exclusion. The command table has not yet listed assessment, so it is treated as an incomplete overview rather than evidence that the implemented command is absent.",
+        "resources": [
+          "product/product.md",
+          "interfaces/businesslens-cli.md"
+        ],
+        "exclusions": [
+          "The public Nuxt layers and JavaScript entry points for third-party hosts are deliberately outside this model’s scope."
+        ],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "CHANGELOG.md"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read Unreleased and recent release entries and inspected the historical release headings. Current notes describe the Overview/Coverage reorganization, explicit exclusions and saved assessment comparison. Historical release prose is release context, not authority for the current model or evidence of current runtime correctness.",
+        "resources": [
+          "product/product.md",
+          "capabilities/assess-repository/capability.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "package.json",
+          "package-lock.json"
+        ],
+        "outcome": "reviewed",
+        "summary": "Inspected package scripts, published files/exports, dependencies, optional Nuxt peers and the npm lockfile structure. The lock has 1,041 package records, one private viewer workspace and registry.npmjs.org resolutions plus its local workspace link; root/runtime dependencies match the manifest. The package ships a CLI, skills, static viewer and the explicitly excluded public host APIs. Dependency contents and install scripts were not executed or audited as Product behavior.",
+        "resources": [
+          "interfaces/businesslens-cli.md",
+          "capabilities/install-agent-skills/capability.md",
+          "capabilities/view-product-model/capability.md"
+        ],
+        "exclusions": [
+          "The public Nuxt layers and JavaScript entry points for third-party hosts are deliberately outside this model’s scope."
+        ],
+        "gaps": []
+      },
+      {
+        "paths": [
+          ".gitignore",
+          "tsconfig.json",
+          "tsdown.config.ts",
+          "vitest.config.ts",
+          "test/global-setup.ts",
+          "scripts/copy-viewer.mjs",
+          "scripts/check-package-size.mjs",
+          "scripts/sync-version.mjs"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read ignore rules, compiler/bundler/test configuration, static-viewer copy and package-size checks, and version synchronization. They build/package the CLI and viewer, exclude generated/dependency files, serialize test files, and synchronize root/plugin/viewer versions. They are considered development support, not another public Capability; no build or test code was executed.",
+        "resources": [
+          "capabilities/view-product-model/capability.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "scripts/bl-dev.mjs",
+          "scripts/dev-link.mjs",
+          "scripts/dev-link.d.mts",
+          "scripts/dev.mjs",
+          "test/dev-link.test.ts"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read the development launcher, owned-link activation/removal and tests. The developer flow builds before linking a worktree, refuses unrelated launchers, forwards CLI arguments/exit codes and preserves another worktree’s link. This is contributor support used by the installed runner’s explicit development override, not a shipped target-repository workflow. Test cases were inspected, not run.",
+        "resources": [
+          "capabilities/install-agent-skills/capability.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "scripts/view-fixture.mjs"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read the fixture preview helper. It copies a nested model into a temporary Git repository so its repository-relative References resolve, watches and copies source edits, starts the built local viewer and removes the temporary copy on exit. This supports inspection of test/example models and adds no separate Product capability.",
+        "resources": [
+          "capabilities/view-product-model/capability.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "scripts/blueprints-check.mjs",
+          "scripts/blueprints-publish.mjs",
+          "test/blueprints-publish.test.ts"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read the Blueprint maintenance scripts and their tests. The check compiles examples and validates portability/logo/public metadata; the maintainer publisher restricts credential destinations, prepares all payloads before writes, confirms publication and withdrawals, and requires clean main for the production catalog. These are catalog-maintenance support outside the Product’s stated boundary, not an additional command in the shipped CLI. No publishing operation was executed.",
+        "resources": [
+          "product/product.md",
+          "capabilities/export-blueprint/capability.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "scripts/build-theme-icons.mjs"
+        ],
+        "outcome": "excluded",
+        "summary": "Read the icon generator: it composes the approved mark, creates light/dark-safe SVG and raster install icons, and writes their web manifest. This implements the approved visual-identity exclusion. The generator and its browser were not executed.",
+        "resources": [],
+        "exclusions": [
+          "The visual identity — palette, type, approved surfaces, logo and icon family — and shared background experiments are deliberately outside this model’s scope."
+        ],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "scripts/build-vocabulary.mjs",
+          "scripts/vocabulary.mjs",
+          "scripts/check-repo.mjs",
+          "test/vocabulary.test.mjs"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read vocabulary generation and repository checks, plus vocabulary case definitions/assertions. They derive a committed term registry from owning docs, resolve conservative definition mentions/plurals, and check docs order/links, schema-facing names, package exports and self-contained skill copies. The tests specify lookup, grouping and definition navigation expectations. These are supporting derivations/quality gates for the modeled report and skills; no generated registry was written and no checks ran.",
+        "resources": [
+          "capabilities/view-product-model/capability.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "scripts/check-packed-diagrams.mjs",
+          "scripts/check-report-navigation.mjs",
+          "scripts/check-topology-diagrams.mjs",
+          "scripts/check-vocabulary-navigation.mjs"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read the browser-regression scripts, including their page actions and assertions. They exercise packaged host diagrams, full-width About/Coverage readings, resource/tree navigation, route persistence, geometry/fallbacks, vocabulary focus/history and narrow viewports. They supply development test expectations for the existing report and excluded host integration, not proof those interactions passed in this assessment; no browser/server was started.",
+        "resources": [
+          "capabilities/view-product-model/capability.md",
+          "capabilities/explore-product-topology/capability.md"
+        ],
+        "exclusions": [
+          "The public Nuxt layers and JavaScript entry points for third-party hosts are deliberately outside this model’s scope."
+        ],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "blueprints/content-feed-reader/references/reader-research.md",
+          "blueprints/content-feed-reader/references/screen-map.md",
+          "test/teaching-blueprint.test.ts"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read the Content Feed Reader’s explicit research assumptions, supporting screen-navigation diagram and teaching-model regression cases. These are example-model material: assumptions remain unvalidated, diagram arrows are not Journey steps, and tests require multiple examples of each resource family plus achieved/failure paths. They inform BusinessLens model teaching and portability, without treating the reader example as BusinessLens behavior.",
+        "resources": [
+          "capabilities/export-blueprint/capability.md",
+          "capabilities/open-blueprint/capability.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "test/fixtures/fixture-shop/README.md",
+          "test/fixtures/fixture-shop/src/models/order.ts",
+          "test/fixtures/fixture-shop/src/models/product.ts",
+          "test/fixtures/fixture-shop/src/routes/admin.ts",
+          "test/fixtures/fixture-shop/src/routes/storefront.ts",
+          "test/fixtures/fixture-shop/src/services/catalog.ts",
+          "test/fixtures/fixture-shop/src/services/orders.ts",
+          "test/fixtures/fixture-shop/src/services/payments.ts"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read the fixture README and every toy source file: two data interfaces, route lists, and stub catalog/order/payment services. They are deliberately small fake-shop inputs for lint, References, report and portability tests. They are considered supporting fixtures, not a real commerce behavior claim or a missing BusinessLens Capability.",
+        "resources": [
+          "capabilities/lint-product-model/capability.md",
+          "capabilities/export-blueprint/capability.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "test/fixtures/nuxt-layer-consumer/app/app.vue",
+          "test/fixtures/nuxt-layer-consumer/app/pages/index.vue",
+          "test/fixtures/nuxt-layer-consumer/nuxt.config.ts",
+          "test/fixtures/nuxt-layer-consumer/package.json",
+          "test/fixtures/nuxt-layer-consumer/tsconfig.json"
+        ],
+        "outcome": "excluded",
+        "summary": "Read the packaged Nuxt consumer’s configuration, manifest and single-page sample Product Report. It exercises the public layer, navigation bindings, schema 15, multiple viewer instances and isolated Entity States. Its only purpose is checking the approved excluded third-party hosting contract; no fixture build or app was run.",
+        "resources": [],
+        "exclusions": [
+          "The public Nuxt layers and JavaScript entry points for third-party hosts are deliberately outside this model’s scope."
+        ],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "test/cli.test.ts"
+        ],
+        "outcome": "reviewed",
+        "summary": "Inspected CLI test setup, command cases and expected status/output assertions. They specify concise command-specific help, cwd selection, structural JSON lint, export, strict option ownership, removed-spelling rejection and valid viewer-port handling. The tests corroborate the terminal boundary without establishing runtime success in this source-only assessment.",
+        "resources": [
+          "interfaces/businesslens-cli.md",
+          "capabilities/lint-product-model/capability.md",
+          "capabilities/export-blueprint/capability.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "test/install.test.ts"
+        ],
+        "outcome": "reviewed",
+        "summary": "Inspected installer/update cases and assertions for namespaced skills, provider-specific global destinations, marked ownership, refusal before writes across multiple targets, stale-owned cleanup and preserved target Product files. These support the modeled safe skill-installation/update flows; no provider installation or test was executed during this source inspection.",
+        "resources": [
+          "capabilities/install-agent-skills/capability.md",
+          "capabilities/update-agent-skills/capability.md",
+          "business-rules/unowned-files-are-never-replaced-without-force.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "test/contribute.test.ts"
+        ],
+        "outcome": "reviewed",
+        "summary": "Inspected contribution fixtures, fake GitHub/push adapters, cases and assertions. They cover source-free generated PR contents, upstream-owner versus fork handling, fork synchronization before cloning, repeated submissions, authenticated/confirmed preflight and temporary-directory cleanup. These are source-defined expectations for the existing contribution behavior; no GitHub or test execution occurred.",
+        "resources": [
+          "capabilities/contribute-blueprint/capability.md",
+          "business-rules/model-data-leaves-only-by-explicit-contribution.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "test/catalog-url.test.ts",
+          "test/pull.test.ts",
+          "test/open.test.ts"
+        ],
+        "outcome": "reviewed",
+        "summary": "Inspected catalog-origin, pull and open test cases/assertions and their local setup. They cover anonymous reads, origin precedence, schema/digest/name/redirect/size refusal, missing/withdrawn catalog results, staged expansion, force/backups, preserved authored Coverage meaning, canonical round trips and unchanged target instructions. No network or test execution was used.",
+        "resources": [
+          "capabilities/pull-blueprint/capability.md",
+          "capabilities/open-blueprint/capability.md",
+          "business-rules/blueprints-carry-no-source-navigation.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "test/lint.test.ts",
+          "test/parsers.test.ts",
+          "test/model-root.test.ts",
+          "test/e2e.test.ts"
+        ],
+        "outcome": "reviewed",
+        "summary": "Inspected parser/model-root setup and the large lint/end-to-end suites through their case definitions and substantive assertions. They specify schema 10 and strict authored shapes, compact/expanded ownership, Actors/Contexts/Steps/Rules, state and grant constraints, legal References, nearest-model selection, deterministic portable output and refusal to write through generated-output symlinks. Fixture mutations are test inputs, not new Product meaning; no tests were run.",
+        "resources": [
+          "capabilities/lint-product-model/capability.md",
+          "capabilities/export-blueprint/capability.md",
+          "business-rules/structural-lint-makes-no-semantic-claim.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "test/report-sdk.test.ts",
+          "test/logo.test.ts"
+        ],
+        "outcome": "reviewed",
+        "summary": "Inspected SDK and logo case definitions/assertions. They exercise schema 15, strict structural/relationship validation, key-order-independent report digests, nonmutating source-free projection, and inert bounded self-contained Product SVGs. The same validators support CLI portability and local asset reading; the published library entry-point tests concern the approved host-API exclusion. No SDK or logo code was executed.",
+        "resources": [
+          "capabilities/export-blueprint/capability.md",
+          "capabilities/open-blueprint/capability.md",
+          "capabilities/pull-blueprint/capability.md"
+        ],
+        "exclusions": [
+          "The public Nuxt layers and JavaScript entry points for third-party hosts are deliberately outside this model’s scope."
+        ],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "test/inventory.test.ts",
+          "test/skill-runners.test.ts",
+          "test/skills-contract.test.ts"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read the inventory helper and isolated-runner/workflow contract tests. Their cases keep the optional inventory helper tracked-only/read-only, run owned tooling outside target cwd, scrub credentials, honor pinned/explicit-development CLIs, pass assessment packets, and retain the three independent map/ideate/verify workflows with approval and builder boundaries. Test source was considered without execution.",
+        "resources": [
+          "capabilities/map-established-behavior/capability.md",
+          "capabilities/decide-intended-behavior/capability.md",
+          "capabilities/verify-model-alignment/capability.md",
+          "business-rules/target-code-is-never-executed.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "test/coverage.test.ts",
+          "test/coverage-repository.test.ts",
+          "test/repository-assessment.test.ts",
+          "test/repository-inventory.test.ts"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read the new Coverage/inventory/assessment test cases and substantive assertions. They distinguish scope/exclusions/gaps, never infer a completed baseline, account exact file versions, retain unreadable/deleted inputs, compare model and source changes, isolate nested models/worktrees, preserve prior completion during pending work, and refuse stale or invalid records. Paths, References and parent source areas never supply file conclusions. These cases define expected behavior, not runtime proof.",
+        "resources": [
+          "capabilities/assess-repository/capability.md",
+          "entities/repository-assessment.md",
+          "interfaces/local-report-web/screens/product-overview.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "test/local-viewer-server.test.ts"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read local-server test setup and assertions for cached reports, model/logo refresh events, last-valid report retention/recovery, loopback Host and method restrictions, permitted repository assets and inert SVG refusal. They support the modeled private read-only viewer and its error states; no HTTP server or tests were run.",
+        "resources": [
+          "capabilities/view-product-model/capability.md",
+          "business-rules/the-report-never-edits-the-model.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "test/collection-children.test.ts",
+          "test/diagram-layout.test.ts",
+          "test/product-topology.test.ts",
+          "test/report-destinations.test.ts",
+          "test/report-viewer.test.ts",
+          "test/topology-tree.test.ts"
+        ],
+        "outcome": "reviewed",
+        "summary": "Inspected report/topology regression definitions and assertions, including the large report suite’s projection, resource reading, Scenario routing, permission/lifecycle, filter, navigation and persistence cases. The smaller geometry/tree suites specify complete owned containment, exact relation endpoints, deterministic layout and readable fallback structure. They support the existing six collections, nine named readings and resource pages; fixture-derived expectations do not establish runtime success.",
+        "resources": [
+          "capabilities/view-product-model/capability.md",
+          "capabilities/explore-product-topology/capability.md",
+          "interfaces/local-report-web/screens/resource-collection.md",
+          "interfaces/local-report-web/screens/resource-page.md"
+        ],
+        "exclusions": [],
+        "gaps": []
+      },
+      {
+        "paths": [
+          "test/report-viewer-lab.test.ts",
+          "test/theme-lab.test.ts"
+        ],
+        "outcome": "reviewed",
+        "summary": "Read private viewer-lab and shared theme test definitions. They keep the report extension private with no remaining Step-card experiment, and specify stable identity assets plus background audition integration. The shared identity/background claims belong to the approved visual exclusion; the private host wiring supports the existing local report.",
+        "resources": [
+          "capabilities/view-product-model/capability.md"
+        ],
+        "exclusions": [
+          "The visual identity — palette, type, approved surfaces, logo and icon family — and shared background experiments are deliberately outside this model’s scope.",
+          "The public Nuxt layers and JavaScript entry points for third-party hosts are deliberately outside this model’s scope."
+        ],
+        "gaps": []
+      }
+    ]
+  }
+}

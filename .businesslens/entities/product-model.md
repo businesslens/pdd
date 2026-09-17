@@ -1,5 +1,8 @@
 ---
 relations:
+  - entity: coverage-review
+    verb: has
+    cardinality: one-to-many
   - entity: product
     verb: holds
     cardinality: one-to-one
@@ -44,9 +47,10 @@ references:
 # Product model
 
 The `.businesslens/` directory a repository keeps: the durable statement of what
-its product is intended to do. It is the first thing every BusinessLens workflow
-establishes before acting, and the one thing in this Product that only the
-Developer may write. Whether one exists at all is not a state it is in: a
+its product is intended to do. Workflows that read or edit product meaning
+resolve this directory before acting on it; installing skills and capturing
+repository inputs do not require one. Only the Developer may authorize its
+creation or changes. Whether one exists at all is not a state it is in: a
 repository with no `.businesslens/` has no Product Model to have one. Its
 declared coverage is a claim it carries, authored with it and moved with it,
 not a state anything here moves it through.
@@ -54,5 +58,5 @@ not a state anything here moves it through.
 ## Information kept
 
 - **Product** — which Product it describes, with that Product's identity and attribution
-- **Coverage** — how much of the intended breadth it claims to hold: draft, partial, or complete
-- **Inspection** — the method that produced it, the source areas it read, what it leaves unmapped, and its limitations
+- **Coverage** — the declared scope and approved exclusions within which breadth is claimed: draft, partial, or complete
+- **Inspection** — the method that produced it, the source areas it read, known gaps inside scope, and its limitations

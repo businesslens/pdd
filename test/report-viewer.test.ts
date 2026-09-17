@@ -702,7 +702,7 @@ describe('stable Product Report', () => {
     const reportShell = source('app/components/BlrReportShell.vue')
     const layer = source('nuxt.config.ts')
 
-    expect(renderer).toContain('ProductReportV13')
+    expect(renderer).toContain('ProductReportV16')
     expect(renderer).toContain('projectReportWorkspace')
     expect(renderer).toContain('<BlrReportShell')
     expect(source('app/components/BlrResourceBody.vue')).toContain('scenarioStepMatrix')
@@ -799,12 +799,12 @@ describe('stable Product Report', () => {
   it('reads coverage as one umber mark on both surfaces that carry it', () => {
     const badge = source('app/components/BlrCoverageBadge.vue')
     const shell = source('app/components/BlrReportShell.vue')
-    const overview = source('app/components/BlrOverview.vue')
+    const overview = source('app/components/BlrCoverageDetails.vue')
 
     expect(badge).toContain("color=\"neutral\"")
     expect(badge).toContain('rounded-full')
     expect(shell).toContain('<BlrCoverageBadge :status="workspace.coverage.status" named size="md"')
-    expect(overview).toContain('<BlrCoverageBadge :status="workspace.coverage.status" named size="md" />')
+    expect(overview).toContain('<BlrCoverageBadge :status="workspace.coverage.status" size="md" />')
     for (const [label, file] of [['badge', badge], ['shell', shell], ['overview', overview]] as const) {
       expect(file, label).not.toContain('COVERAGE_TONE')
       for (const offPalette of ["'warning'", "'success'", '"warning"', '"success"']) {
@@ -1431,9 +1431,9 @@ describe('what changed', () => {
     expect(changeSummary(diff)).toBe('1 added · 1 changed')
 
     const committed = { id: 'head', kind: 'committed', available: true, at: '2026-08-08T00:00:00Z', detail: 'abcdef0 fixture' }
-    const checkpoint = { id: '20260915T100000000Z', kind: 'checkpoint', available: true, at: '2026-09-15T10:00:00.000Z', source: 'checkpoint', label: null }
+    const branch = { id: 'branch:refs/heads/main', kind: 'branch', available: true, label: 'main' }
     expect(baselineTitle(committed)).toBe('Last commit')
-    expect(baselineTitle({ ...checkpoint, label: 'Mapped billing' })).toBe('Mapped billing')
+    expect(baselineTitle({ ...branch, label: 'feature/billing' })).toBe('feature/billing')
   })
 
   it('draws the header action, the surface and the marks only where the host holds a comparison', () => {

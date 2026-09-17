@@ -2,12 +2,12 @@ import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { compileReport } from '../src/commands/export.js'
 import { loadModel } from '../src/core/model.js'
-import type { ProductReportV13 } from '../src/core/portable.js'
+import type { ProductReportV16 } from '../src/core/portable.js'
 import { describeValue, diffFields, diffIsEmpty, diffReports } from '../src/core/report-diff.js'
 
 const FIXTURE = join(__dirname, 'fixtures', 'fixture-shop')
 
-function report(): ProductReportV13 {
+function report(): ProductReportV16 {
   return compileReport(loadModel(FIXTURE), '2026-08-08')
 }
 

@@ -29,6 +29,10 @@ function run(cwd: string, tracked = TRACKED) {
   return lintModel(loadModel(cwd), tracked)
 }
 
+function editCoverage(file: string, changes: Record<string, unknown>) {
+  writeFileSync(file, JSON.stringify({ ...JSON.parse(readFileSync(file, 'utf8')), ...changes }, null, 2))
+}
+
 /** Write a compact or expanded resource file, creating its parent path. */
 function writeResource(file: string, content: string) {
   mkdirSync(dirname(file), { recursive: true })
@@ -218,16 +222,27 @@ describe('lintModel', () => {
     })
   })
 
+  it('requires coverage.json and rejects the retired coverage.md even alongside it', () => {
+    const cwd = fixtureCopy()
+    const legacy = join(cwd, '.businesslens/coverage.md')
+    writeFileSync(legacy, '# Coverage\n')
+    expect(run(cwd).errors.join('\n')).toContain('coverage.md is no longer supported')
+    rmSync(join(cwd, '.businesslens/coverage.json'))
+    expect(run(cwd).errors).toContain('coverage.json is missing')
+  })
+
   it('rejects historical folder schemas', () => {
     const cwd = fixtureCopy()
-    writeFileSync(join(cwd, '.businesslens/config.yaml'), 'schema: 5\nsdd:\n  paths: []\n')
-    expect(run(cwd).errors).toContain('config.yaml: schema 5 is not supported (expected 8)')
+    for (const schema of [5, 8, 9, 10]) {
+      writeFileSync(join(cwd, '.businesslens/config.yaml'), `schema: ${schema}\nsdd:\n  paths: []\n`)
+      expect(run(cwd).errors).toContain(`config.yaml: schema ${schema} is not supported (expected 11)`)
+    }
   })
 
   it('rejects unsupported future folder schemas explicitly', () => {
     const cwd = fixtureCopy()
     writeFileSync(join(cwd, '.businesslens/config.yaml'), 'schema: 99\nsdd:\n  paths: []\n')
-    expect(run(cwd).errors).toContain('config.yaml: schema 99 is not supported (expected 8)')
+    expect(run(cwd).errors).toContain('config.yaml: schema 99 is not supported (expected 11)')
   })
 
   it('requires the committed orientation and generated-path ignores', () => {
@@ -722,8 +737,8 @@ Reads status only. It changes nothing.
 
     expect(run(cwd).errors.join('\n')).toContain('availability Context place "operator-cli" needs Capability Scenario coverage')
 
-    const coverage = join(cwd, '.businesslens/coverage.md')
-    writeFileSync(coverage, readFileSync(coverage, 'utf8').replace('status: complete', 'status: partial'))
+    const coverage = join(cwd, '.businesslens/coverage.json')
+    editCoverage(coverage, { status: 'partial' })
     const partial = run(cwd)
     expect(partial.errors.some(error => error.includes('needs Capability Scenario coverage'))).toBe(false)
     expect(partial.warnings.some(warning => warning.includes('needs Capability Scenario coverage'))).toBe(true)
@@ -779,8 +794,8 @@ Filed away.
     // "the shopper" is the Step's actor on step 2 only; on step 1 it is another Entity named and undeclared.
     expect(run(cwd).errors.join('\n')).toContain('step 1: text names "Shopper" and "entities" does not declare it')
 
-    const coverage = join(cwd, '.businesslens/coverage.md')
-    writeFileSync(coverage, readFileSync(coverage, 'utf8').replace('status: complete', 'status: partial'))
+    const coverage = join(cwd, '.businesslens/coverage.json')
+    editCoverage(coverage, { status: 'partial' })
     const partial = run(cwd)
     expect(partial.errors.some(error => error.includes('does not declare it'))).toBe(false)
     expect(partial.warnings.some(warning => warning.includes('does not declare it'))).toBe(true)
@@ -1055,8 +1070,8 @@ Filed away.
       '- Product name and description',
       '- Product name and description\n  with a continuation that is not a second item'
     ))
-    const coverage = join(cwd, '.businesslens/coverage.md')
-    writeFileSync(coverage, `${readFileSync(coverage, 'utf8')}\n## Notes\n\nThis section would be dropped.\n`)
+    const coverage = join(cwd, '.businesslens/coverage.json')
+    editCoverage(coverage, { rationale: '## Notes\n\nThis section would be dropped.' })
 
     const errors = run(cwd).errors.join('\n')
     expect(errors.match(/carries no lead paragraph/g)).toHaveLength(2)
@@ -1067,7 +1082,7 @@ Filed away.
     expect(errors).toContain('"## Edge cases" needs at least one bullet item when present')
     expect(errors).toContain('"## Recovery note" content must not contain an H1 or H2 heading')
     expect(errors).toContain('"## Information presented" must contain only single-line bullet-list items')
-    expect(errors).toContain('coverage.md: "## Notes" sections are not supported')
+    expect(errors).toContain('coverage.json: rationale: Rationale must not contain an H1 or H2 heading')
   })
 
   it('rejects duplicate values in every set-valued frontmatter list', () => {
@@ -1422,18 +1437,7 @@ An order exists.
   it('allows missing references at every coverage status', () => {
     for (const status of ['draft', 'partial', 'complete']) {
       const cwd = fixtureCopy()
-      writeFileSync(join(cwd, '.businesslens/coverage.md'), `---
-status: ${status}
-method: ["Authored model"]
-sourceAreas: []
-unmapped: []
-limitations: []
----
-
-# Coverage
-
-Model breadth.
-`)
+      editCoverage(join(cwd, '.businesslens/coverage.json'), { status, scope: 'The fixture Product.', method: ['Authored model'], sourceAreas: [], rationale: 'Model breadth.' })
       const journeyFile = join(cwd, '.businesslens/journeys/browse-and-buy/journey.md')
       const scenarioFile = join(cwd, '.businesslens/capabilities/manage-orders/scenarios/refund-order.md')
       const referenceBlock = /references:\n(?:  - kind: .*\n    role: .*\n    target: .*\n)+/
@@ -1557,12 +1561,9 @@ Lead.
     ))
     expect(run(cwd).errors).toEqual([])
 
-    const coverage = join(cwd, '.businesslens/coverage.md')
-    writeFileSync(coverage, readFileSync(coverage, 'utf8').replace(
-      'limitations:',
-      'references: []\nlimitations:'
-    ))
-    expect(run(cwd).errors.join('\n')).toContain('coverage.md: unknown frontmatter key "references"')
+    const coverage = join(cwd, '.businesslens/coverage.json')
+    editCoverage(coverage, { references: [] })
+    expect(run(cwd).errors.join('\n')).toContain('Unrecognized key: "references"')
   })
 
   /*

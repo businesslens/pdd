@@ -10,14 +10,12 @@ const search = useTemplateRef('search')
 const picker = useTemplateRef<HTMLElement>('picker')
 const category = ref('branch')
 const tabs = [
-  { value: 'checkpoint', label: 'Checkpoints', placeholder: 'Find a checkpoint…' },
   { value: 'branch', label: 'Branches', placeholder: 'Find a branch…' },
   { value: 'commit', label: 'Commits', placeholder: 'Find a commit or enter a SHA…' },
   { value: 'tag', label: 'Tags', placeholder: 'Find a tag…' }
 ]
 const marks = {
   working: { icon: 'i-lucide-file-pen-line', label: 'Working state' },
-  checkpoint: { icon: 'i-lucide-bookmark', label: 'Checkpoint' },
   branch: { icon: 'i-lucide-git-branch', label: 'Branch' },
   commit: { icon: 'i-lucide-git-commit-horizontal', label: 'Commit' },
   committed: { icon: 'i-lucide-git-commit-horizontal', label: 'Commit' },

@@ -66,9 +66,9 @@ describe('connected Sitemap tree', () => {
     const nodes = flatten(tree)
     expect(new Set(nodes.map(node => node.id))).toEqual(new Set([tree.id, ...[...workspace.byKey.values()].filter((resource: any) => ['interface', 'experience', 'screen'].includes(resource.kind)).map((resource: any) => resource.key)]))
     if (root === '.') {
-      expect(nodes.length).toBe(7)
+      expect(nodes.length).toBe(8)
       expect(tree.children.filter((node: any) => !node.children.length).length).toBe(2)
-      expect(tree.children.flatMap((node: any) => node.children).map((node: any) => node.resource.kind)).toEqual(['screen', 'screen', 'screen'])
+      expect(tree.children.flatMap((node: any) => node.children).map((node: any) => node.resource.kind)).toEqual(['screen', 'screen', 'screen', 'screen'])
     }
     verifyTree(tree)
   })

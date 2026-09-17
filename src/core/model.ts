@@ -3,6 +3,7 @@ import { basename, join } from 'node:path'
 import { parse } from 'yaml'
 import type { CompactEntryPoint, Context, ResourceAsset, ResourceReference } from './frontmatter.js'
 import type { MarkdownDoc } from './markdown.js'
+import { CoverageDocumentSchema, type CoverageDocument } from './coverage.js'
 import {
   assetsField,
   availabilityField,
@@ -359,14 +360,7 @@ export interface PddModel {
     references: ResourceReference[]
   }
   scenarioKinds: ScenarioKind[]
-  coverage: {
-    status: string
-    method: string[]
-    sourceAreas: string[]
-    unmapped: string[]
-    limitations: string[]
-    rationale: string
-  }
+  coverage: CoverageDocument
   interfaces: InterfaceResource[]
   experiences: ExperienceResource[]
   screens: ScreenResource[]
@@ -420,7 +414,7 @@ const ENTITY_CARDINALITIES = new Set<string>(['one-to-one', 'one-to-many', 'many
 export const FOLDER = '.businesslens'
 
 /** The one folder-format version this release reads and writes. */
-export const FOLDER_SCHEMA = 8
+export const FOLDER_SCHEMA = 11
 
 /**
  * The two channels a model load reports into.
@@ -1030,7 +1024,7 @@ function entityFacts(body: string | undefined, issues: string[], file: string): 
 }
 
 
-/** Load the strict schema 8 .businesslens/ folder, collecting parse issues. */
+/** Load the strict schema 11 .businesslens/ folder, collecting parse issues. */
 export function loadModel(cwd: string): PddModel {
   const root = join(cwd, FOLDER)
   const issues: string[] = []
@@ -1197,31 +1191,21 @@ export function loadModel(cwd: string): PddModel {
     issues.push('product.md is missing')
   }
 
-  let coverage: PddModel['coverage'] = {
-    status: 'draft', method: [], sourceAreas: [], unmapped: [], limitations: [], rationale: ''
+  let coverage: CoverageDocument = {
+    status: 'draft', scope: '', exclusions: [], method: [], sourceAreas: [], unmapped: [], limitations: [], rationale: '', review: null
   }
-  const coverageFile = join(root, 'coverage.md')
+  const coverageFile = join(root, 'coverage.json')
+  if (existsSync(join(root, 'coverage.md'))) issues.push('coverage.md is no longer supported; use coverage.json (folder schema 11)')
   if (existsSync(coverageFile)) {
-    const source = readFileSync(coverageFile, 'utf8')
-    const { data, body } = splitFrontmatter(source, issues, 'coverage.md')
-    const doc = parseMarkdown(body)
-    rejectUnknownKeys(data, ['status', 'method', 'sourceAreas', 'unmapped', 'limitations'], issues, 'coverage.md')
-    if (containsStructuralHeading(doc.lead)) {
-      issues.push('coverage.md: rationale must not contain an H1 or H2 heading')
-    }
-    for (const item of doc.sections) {
-      issues.push(`coverage.md: "## ${item.heading}" sections are not supported; keep the rationale in the lead paragraph`)
-    }
-    coverage = {
-      status: stringField(data, 'status', issues, 'coverage.md') || 'draft',
-      method: stringListField(data, 'method', issues, 'coverage.md'),
-      sourceAreas: stringListField(data, 'sourceAreas', issues, 'coverage.md'),
-      unmapped: stringListField(data, 'unmapped', issues, 'coverage.md'),
-      limitations: stringListField(data, 'limitations', issues, 'coverage.md'),
-      rationale: doc.lead
+    try {
+      const parsed = CoverageDocumentSchema.safeParse(JSON.parse(readFileSync(coverageFile, 'utf8')))
+      if (parsed.success) coverage = parsed.data
+      else for (const issue of parsed.error.issues) issues.push(`coverage.json: ${issue.path.join('.') || 'document'}: ${issue.message}`)
+    } catch (error) {
+      issues.push(`coverage.json: invalid JSON (${(error as Error).message})`)
     }
   } else if (existsSync(root)) {
-    issues.push('coverage.md is missing')
+    issues.push('coverage.json is missing')
   }
 
   /* There is no `actors/`. A folder that still has one is reported as the

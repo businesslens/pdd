@@ -10,7 +10,7 @@ import { reportDigest } from '../src/report-digest.js'
 import { compileReport } from '../src/commands/export.js'
 import { loadModel } from '../src/core/model.js'
 import { resolveModelRoot } from '../src/core/model-root.js'
-import type { ProductReportV13, ReportReference } from '../src/core/portable.js'
+import type { ProductReportV16, ReportReference } from '../src/core/portable.js'
 
 const packageJson = JSON.parse(
   await readFile(fileURLToPath(new URL('../package.json', import.meta.url)), 'utf8')
@@ -29,15 +29,16 @@ describe('report SDK entry point', () => {
   })
 
   it('exports the schema, semantic validator, portable projection, and digest', () => {
-    expect(sdk.REPORT_SCHEMA_VERSION).toBe('13.0.0')
+    expect(sdk.REPORT_SCHEMA_VERSION).toBe('16.0.0')
     for (const name of [
-      'ProductReportV13Schema',
+      'ProductReportV16Schema',
       'ReportScenarioStepEntitySchema',
       'ReportEntityFactSchema',
       'ReportGrantSchema',
       'ReportGrantConditionSchema',
       'ProductReportSchema',
       'ReportReferenceSchema',
+      'ReportUnmappedAreaSchema',
       'ReportSupportingSectionSchema',
       'ReportInterfaceSchema',
       'INTERFACE_TYPES',
@@ -99,9 +100,9 @@ describe('report SDK entry point', () => {
 describe('projectPortableReport', () => {
   const FIXTURE = join(fileURLToPath(new URL('.', import.meta.url)), 'fixtures', 'fixture-shop')
   let repo: string
-  let report: ProductReportV13
+  let report: ProductReportV16
 
-  const allReferences = (value: ProductReportV13): ReportReference[] => [
+  const allReferences = (value: ProductReportV16): ReportReference[] => [
     ...value.references,
     ...Object.values(value.model).flatMap(entry =>
       Array.isArray(entry) ? entry.flatMap(item => item.references ?? []) : [])
@@ -129,11 +130,14 @@ describe('projectPortableReport', () => {
     expect(allReferences(report).some(reference => reference.kind === 'code')).toBe(true)
     expect(report.coverage).toEqual({
       status: 'complete',
+      scope: 'Customer shopping, checkout and staff order management.',
+      exclusions: [],
       method: ['Hand-authored golden fixture covering every source file.'],
       sourceAreas: ['src'],
       unmapped: [],
       limitations: [],
-      rationale: 'The fixture map intentionally covers the whole toy codebase.'
+      rationale: 'The fixture map intentionally covers the whole toy codebase.',
+      review: null
     })
     expect(report.supportingSections).toEqual([{
       heading: 'Teaching note',
@@ -497,9 +501,9 @@ describe('projectPortableReport', () => {
    * checked when the Entity collection shipped.
    */
   it('resolves every Entity edge the folder rules resolve', () => {
-    const cart = (value: ProductReportV13) => value.model.entities.find(item => item.id === 'cart')!
+    const cart = (value: ProductReportV16) => value.model.entities.find(item => item.id === 'cart')!
 
-    const cases: Array<[string, (value: ProductReportV13) => void]> = [
+    const cases: Array<[string, (value: ProductReportV16) => void]> = [
       ['relation references missing entity "ghost"', (value) => {
         value.model.entities[0]!.relations.push({ entityId: 'ghost', verb: 'holds', cardinality: 'many-to-many' })
       }],
@@ -542,7 +546,7 @@ describe('projectPortableReport', () => {
   })
 
   it('checks what a Scenario step claims against the Entity it names', () => {
-    const moveOf = (value: ProductReportV13) => {
+    const moveOf = (value: ProductReportV16) => {
       for (const scenario of [...value.model.capabilityScenarios, ...value.model.journeyScenarios]) {
         for (const step of scenario.steps) {
           const entry = step.entities.find(item => item.from !== null && item.to !== null)
@@ -620,7 +624,7 @@ describe('projectPortableReport', () => {
    * every path, every fact — and never a claim that a grant is satisfied.
    */
   it('resolves a permission Rule the way the folder does', () => {
-    const rule = (value: ProductReportV13, id: string) => value.model.businessRules.find(item => item.id === id)!
+    const rule = (value: ProductReportV16, id: string) => value.model.businessRules.find(item => item.id === id)!
 
     const behavioural = structuredClone(report)
     rule(behavioural, 'payment-before-confirmation').appliesTo = [
@@ -650,7 +654,7 @@ describe('projectPortableReport', () => {
   })
 
   it('applies permission Rules to the Steps and Screens they govern', () => {
-    const rule = (value: ProductReportV13, id: string) => value.model.businessRules.find(item => item.id === id)!
+    const rule = (value: ProductReportV16, id: string) => value.model.businessRules.find(item => item.id === id)!
 
     const forbidden = structuredClone(report)
     rule(forbidden, 'orders-are-never-deleted').appliesTo = [{
@@ -784,12 +788,12 @@ describe('projectPortableReport', () => {
   })
 
   it('rejects historical Product Reports without normalization, in one sentence', () => {
-    for (const schemaVersion of ['4.0.0', '5.0.0', '6.0.0', '7.0.0', '8.0.0', '9.0.0', '10.0.0', '11.0.0', '12.0.0']) {
+    for (const schemaVersion of ['4.0.0', '5.0.0', '6.0.0', '7.0.0', '8.0.0', '9.0.0', '10.0.0', '11.0.0', '12.0.0', '13.0.0', '14.0.0']) {
       const legacy = structuredClone(report) as Record<string, any>
       legacy.schemaVersion = schemaVersion
       expect(sdk.ProductReportSchema.safeParse(legacy).success).toBe(false)
       expect(() => sdk.parseProductReport(legacy)).toThrow(
-        `This is a Product Report of schema version ${schemaVersion}; only 13.0.0 is accepted`
+        `This is a Product Report of schema version ${schemaVersion}; only 16.0.0 is accepted`
       )
     }
     // Any other shape failure names the first offending path, never Zod's issue array.

@@ -56,7 +56,7 @@ describe('cli help', () => {
       expect(result.stdout).toContain('install [options]')
       expect(result.stdout).toContain('update [options]')
       expect(result.stdout).toContain('lint [options]')
-      expect(result.stdout).toContain('checkpoint [label]')
+      expect(result.stdout).not.toContain('checkpoint [label]')
       expect(result.stdout).toContain('view [options]')
       expect(result.stdout).toContain('blueprint')
       expect(result.stdout).toContain('-c, --cwd <path>')
@@ -131,24 +131,11 @@ describe('cli dispatch', () => {
     expect(output.branch).toBeUndefined()
   })
 
-  it('marks a round with checkpoint, while lint seals nothing', () => {
-    const checkpoints = join(repo, '.businesslens', 'cache', 'checkpoints')
-    rmSync(checkpoints, { recursive: true, force: true })
-
-    expect(cli(repo, process.env, 'lint').status).toBe(0)
-    expect(existsSync(checkpoints)).toBe(false)
-
-    const unnamed = cli(repo, process.env, 'checkpoint')
-    expect(unnamed.status).toBe(0)
-    expect(unnamed.stdout).toMatch(/^Checkpoint saved at /)
-    const named = cli(repo, process.env, 'checkpoint', 'Mapped billing')
-    expect(named.status).toBe(0)
-    expect(named.stdout).toContain('Checkpoint saved: Mapped billing')
-    const records = readdirSync(checkpoints).filter(name => /^\d{8}T\d{9}Z\.json$/.test(name)).sort()
-    expect(records).toHaveLength(2)
-    expect(JSON.parse(readFileSync(join(checkpoints, records[1]!), 'utf8'))).toMatchObject({ source: 'checkpoint', label: 'Mapped billing' })
-    // The generated cache never reaches the repository.
-    expect(execFileSync('git', ['status', '--porcelain'], { cwd: repo, encoding: 'utf8' })).toBe('')
+  it('rejects the removed checkpoint command without creating a saved state', () => {
+    const result = cli(repo, process.env, 'checkpoint', 'Old command')
+    expect(result.status).toBe(2)
+    expect(result.stderr).toContain('unknown command')
+    expect(existsSync(join(repo, '.businesslens/cache/checkpoints'))).toBe(false)
   })
 
   it('accepts --cwd and -c before or after a command', () => {
@@ -174,7 +161,7 @@ describe('cli dispatch', () => {
         const result = cli(nested, process.env, ...args)
         expect(result.status, args.join(' ')).toBe(1)
         expect(JSON.parse(result.stdout).errors).toContain(
-          'config.yaml: schema 99 is not supported (expected 8)'
+          'config.yaml: schema 99 is not supported (expected 11)'
         )
       }
     } finally {
@@ -188,7 +175,7 @@ describe('cli dispatch', () => {
     expect(existsSync(join(repo, '.businesslens', 'build', 'report.json'))).toBe(true)
   })
 
-  it('refuses removed commands and options as ordinary usage errors', () => {
+  it('refuses removed commands and options as ordinary usage errors', { timeout: 15_000 }, () => {
     for (const command of ['export', 'open', 'pull', 'contribute', 'build', 'validate']) {
       const result = cli(ROOT, process.env, '--cwd', repo, command)
       expect(result.status, command).toBe(2)

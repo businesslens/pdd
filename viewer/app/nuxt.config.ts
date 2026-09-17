@@ -34,12 +34,12 @@ const devHandlers = [
     })
   },
   {
-    // No CLI, no checkpoints and no committed model: the History button
+    // No CLI or committed model: the Review button
     // draws with nothing to compare against, which is a state worth seeing.
     route: '/_businesslens/history',
     handler: defineEventHandler((event) => {
       setHeader(event, 'cache-control', 'no-store')
-      return { states: [{ id: 'working', kind: 'working', available: true }], more: false, nextOffset: 50, checkpointLimit: 50 }
+      return { states: [{ id: 'working', kind: 'working', available: true }], more: false, nextOffset: 50 }
     })
   },
   {

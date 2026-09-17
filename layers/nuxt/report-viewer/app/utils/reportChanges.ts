@@ -1,13 +1,5 @@
-/**
- * History, as the report draws it.
- *
- * The host that has a comparison — the local viewer, with its checkpoints and
- * its committed model — hands one in; a host that has none, like the catalog,
- * passes nothing and the report shows no trace of the feature. The diff itself
- * is computed by the local report server using the shared comparison core;
- * this module only keys it the way the surfaces do.
- */
-import type { ChangeKind, ProductReportV13, ReportBaseline, ReportCollectionName, ReportDiff, ResourceChange } from 'businesslens/report'
+/** Read-only model and repository comparisons supplied by the host. */
+import type { ChangeKind, ProductReportV16, ReportBaseline, ReportCollectionName, ReportDiff, ResourceChange, RepositoryDiff } from 'businesslens/report'
 import type { ReportResourceKind } from './reportWorkspace'
 import { resourceKey } from './reportWorkspace'
 
@@ -19,13 +11,14 @@ export interface ReportChanges {
   target?: string
   baseState?: ReportBaseline | null
   targetState?: ReportBaseline | null
-  before?: ProductReportV13 | null
-  after?: ProductReportV13 | null
+  before?: ProductReportV16 | null
+  after?: ProductReportV16 | null
   historyStates?: ReportBaseline[]
   historyLoading?: boolean
   historyMore?: boolean
   historyQuery?: string
-  checkpointLimit?: number
+  repository?: RepositoryDiff
+  modelNotice?: string | null
   initializing?: boolean
   emptyReason?: 'no-saved-model' | 'choose-state' | null
   /** The comparison against the chosen baseline, or null while there is none. */
@@ -34,8 +27,6 @@ export interface ReportChanges {
   error: string | null
   /** An incomplete file comparison still permits a complete model comparison. */
   referenceFileNotice?: string | null
-  /** Whether the host can seal the current state as a checkpoint. */
-  pinnable: boolean
 }
 
 export const COLLECTION_KIND: Record<ReportCollectionName, ReportResourceKind> = {
@@ -80,37 +71,17 @@ export function changeCount(diff: ReportDiff | null | undefined): number {
   return diff.resources.length + (diff.product.length ? 1 : 0)
 }
 
-const SOURCE_LABEL = { checkpoint: 'Checkpoint', pin: 'Checkpoint' } as const
-
-export function formatCheckpointTime(iso: string): string {
-  const date = new Date(iso)
-  if (Number.isNaN(date.getTime())) return iso
-  const today = new Date()
-  const sameDay = date.toDateString() === today.toDateString()
-  const time = date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
-  return sameDay ? time : `${date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} ${time}`
-}
-
-/** The name a baseline wears in the picker and in every "since" phrase. */
+/** The selected Git state, used wherever its contents are read. */
 export function baselineTitle(baseline: ReportBaseline): string {
   if (baseline.kind === 'working') return 'Working state'
-  if (baseline.kind === 'commit' || baseline.kind === 'branch' || baseline.kind === 'tag') return baseline.label
   if (baseline.kind === 'committed') return 'Last commit'
-  return baseline.label ?? `${SOURCE_LABEL[baseline.source]} ${formatCheckpointTime(baseline.at)}`
+  return baseline.label
 }
 
-/**
- * The second line under a baseline: what the first line left out. A labelled
- * checkpoint adds who sealed it and when; an unlabelled one, whose name is
- * already its source and time, adds the full date.
- */
 export function baselineDetail(baseline: ReportBaseline): string {
   if (baseline.kind === 'working') return 'Current files, including uncommitted edits'
-  if (baseline.kind === 'commit' || baseline.kind === 'branch' || baseline.kind === 'tag') return baseline.detail
   if (baseline.kind === 'committed') return baseline.available ? baseline.detail : baseline.reason
-  if (baseline.label) return `${SOURCE_LABEL[baseline.source]} · ${formatCheckpointTime(baseline.at)}`
-  const date = new Date(baseline.at)
-  return Number.isNaN(date.getTime()) ? baseline.at : date.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
+  return baseline.detail
 }
 
 /** "3 added · 1 removed · 5 changed", only the parts that are non-zero. */

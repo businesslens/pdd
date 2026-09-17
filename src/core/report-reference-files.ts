@@ -1,10 +1,10 @@
 /** Local comparison data; never part of a portable Product Report. */
 import { parseCodeTarget } from './coderefs.js'
-import type { ProductReportV13, ReportReference } from './portable.js'
+import type { ProductReportV16, ReportReference } from './portable.js'
 import { reportResourceCollections } from './portable.js'
 
 export type ReferenceFileSnapshot =
-  | { status: 'present', digest: string, bytes: number, text: string | null, omitted: 'binary' | 'large' | null, content?: 'stored' | 'budget-exceeded' }
+  | { status: 'present', digest: string, bytes: number, text: string | null, omitted: 'binary' | 'large' | null }
   | { status: 'missing' }
   | { status: 'unavailable', reason: string }
 
@@ -29,7 +29,7 @@ export function referencePaths(references: ReportReference[]): string[] {
   }))].sort()
 }
 
-export function reportReferencePaths(report: ProductReportV13): string[] {
+export function reportReferencePaths(report: ProductReportV16): string[] {
   return referencePaths([
     ...report.references,
     ...Object.values(reportResourceCollections(report.model)).flatMap(resources => resources.flatMap(resource => resource.references))
