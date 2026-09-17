@@ -48,17 +48,17 @@
 .blr-matrix-navigation { position: sticky; top: 0; z-index: 4; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 8px; min-height: 36px; padding-bottom: 8px; }
 .blr-topology-matrix[data-edge-handles='true'] .blr-matrix-navigation { display: flex; justify-content: center; }
 .blr-matrix-range { font-size: 13px; font-weight: 600; color: var(--ui-text); text-align: center; white-space: nowrap; font-variant-numeric: tabular-nums; }
-/* Opaque tints keep the table divider from showing through the handles. */
-.blr-topology-matrix :is(.blr-matrix-navigation, .blr-matrix-edge-handles) > button:enabled { background: color-mix(in srgb, var(--ui-primary) 12%, var(--ui-bg)); }
-.blr-topology-matrix :is(.blr-matrix-navigation, .blr-matrix-edge-handles) > button:enabled:is(:hover, :active) { background: color-mix(in srgb, var(--ui-primary) 18%, var(--ui-bg)); }
-.blr-topology-matrix :is(.blr-matrix-navigation, .blr-matrix-edge-handles) > button:disabled { background: var(--ui-bg); color: var(--ui-text-dimmed); opacity: 1; }
+/* Fade disabled icons and outlines while keeping the fill opaque over the divider. */
+.blr-topology-matrix :is(.blr-matrix-navigation, .blr-matrix-edge-handles) > button { background: var(--ui-bg); color: var(--ui-text-dimmed); }
+.blr-topology-matrix :is(.blr-matrix-navigation, .blr-matrix-edge-handles) > button:enabled:is(:hover, :active) { background: var(--ui-bg-elevated); }
+.blr-topology-matrix :is(.blr-matrix-navigation, .blr-matrix-edge-handles) > button:disabled { color: color-mix(in srgb, var(--ui-text-dimmed) 40%, transparent); --tw-ring-color: color-mix(in srgb, var(--ui-border-accented) 40%, transparent); opacity: 1; }
 .blr-matrix-edge-handles { position: absolute; top: 0; inset-inline: 0; height: 0; z-index: 5; pointer-events: none; }
 .blr-matrix-edge-handles > button { position: absolute; top: var(--blr-matrix-handle-top, 200px); transform: translateY(-50%); height: 64px; width: 28px; padding: 0; justify-content: center; border-radius: 999px; pointer-events: auto; }
-.blr-matrix-left-handle { inset-inline-start: calc(var(--blr-matrix-gutter) + 196px + 1px - 14px); }
-.blr-matrix-right-handle { inset-inline-end: calc(var(--blr-matrix-gutter) - 14px); }
+.blr-matrix-left-handle { inset-inline-start: calc(196px + 1px - 14px); }
+.blr-matrix-right-handle { inset-inline-end: -14px; }
 /* Clip sideways without creating another scrolling container: sticky headers
    follow the page, and every cell stays mounted to preserve row heights/details. */
-.blr-matrix-viewport { margin-inline: var(--blr-matrix-gutter); overflow: clip; border: 1px solid var(--ui-border); border-radius: 10px; touch-action: pan-y pinch-zoom; }
+.blr-matrix-viewport { overflow: clip; border: 1px solid var(--ui-border); border-radius: 10px; touch-action: pan-y pinch-zoom; }
 .blr-matrix-viewport:focus-visible { outline: 2px solid var(--ui-primary); outline-offset: 3px; }
 .blr-topology-matrix table { table-layout: fixed; border-collapse: separate; border-spacing: 0; width: var(--blr-matrix-table-width); transform: translateX(calc(-1 * var(--blr-matrix-offset))); font-size: 14px; }
 .blr-topology-matrix th, .blr-topology-matrix td { min-width: 0; padding: 14px; border-top: 1px solid var(--ui-border); border-inline-end: 1px solid var(--ui-border); vertical-align: top; text-align: start; overflow-wrap: anywhere; }
@@ -80,9 +80,28 @@
 .blr-topology-matrix tbody th { position: relative; z-index: 1; }
 .blr-matrix-kind { display: block; color: var(--ui-text-muted); font-weight: 400; font-size: 12px; margin-bottom: 6px; }
 .blr-matrix-effects { display: flex; flex-wrap: wrap; gap: 5px; }
-.blr-matrix-effects > span { border: 1px solid var(--ui-border-accented); padding: 2px 6px; border-radius: 5px; font-size: 12px; }
-.blr-matrix-effects > span[data-effect='creates'] { border-color: var(--ui-success); }
-.blr-matrix-effects > span[data-effect='removes'] { border-color: var(--ui-error); }
+.blr-matrix-effects > :is(span, .blr-mutation-badge) { border: 1px solid var(--ui-border-accented); padding: 2px 6px; border-radius: 5px; font-size: 12px; }
+.blr-matrix-effects > [data-effect='creates'] { border-color: var(--ui-success); }
+.blr-matrix-effects > [data-effect='removes'] { border-color: var(--ui-error); }
+.blr-mutation-badge { display: inline-flex; align-items: center; gap: 4px; color: var(--ui-text); cursor: pointer; }
+.blr-mutation-badge:hover, .blr-mutation-badge[data-state='open'] { background: var(--ui-bg-elevated); }
+.blr-mutation-badge:focus-visible { outline: 2px solid var(--ui-primary); outline-offset: 3px; }
+.blr-mutation-badge > .iconify { width: 12px; height: 12px; }
+.blr-mutation-popover { display: flex; flex-direction: column; width: 340px; max-width: calc(100vw - 32px); max-height: var(--reka-popover-content-available-height, 80vh); overflow: hidden; }
+.blr-mutation-heading { display: flex; flex-shrink: 0; align-items: start; justify-content: space-between; gap: 12px; padding: 16px; border-bottom: 1px solid var(--ui-border); }
+.blr-mutation-resource { display: flex; align-items: start; gap: 8px; min-width: 0; font-size: 14px; font-weight: 600; color: var(--ui-text-highlighted); }
+.blr-mutation-resource > .blr-kind { flex-shrink: 0; margin-top: 2px; }
+.blr-mutation-resource > span:last-child { min-width: 0; overflow-wrap: anywhere; }
+.blr-mutation-entity { margin-bottom: 10px; }
+.blr-mutation-popover :is(p, strong) { overflow-wrap: anywhere; }
+.blr-mutation-variants { max-height: 360px; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+.blr-mutation-variant { padding: 16px; font-size: 13px; }
+.blr-mutation-variant + .blr-mutation-variant { border-top: 1px solid var(--ui-border); }
+.blr-mutation-state { color: var(--ui-text); margin-bottom: 12px; }
+.blr-mutation-state strong { font-weight: 600; }
+.blr-mutation-count { font-size: 12px; color: var(--ui-text-muted); margin-bottom: 8px; }
+.blr-mutation-variant ul { display: grid; gap: 8px; }
+.blr-mutation-variant .blr-topology-link { font-size: 13px; }
 .blr-topology-matrix details { font-size: 12px; color: var(--ui-text-muted); margin-top: 8px; }
 .blr-topology-matrix details summary { cursor: pointer; }
 .blr-matrix-detail { display: grid; gap: 6px; margin-top: 8px; }
@@ -90,6 +109,8 @@
 @media (max-width: 640px) {
   .blr-topology-header { padding: 12px; }
   .blr-topology-reading { padding: 12px; }
+  /* Leave room for half of the 28px handle without horizontal page overflow. */
+  .blr-topology-reading:has(.blr-topology-matrix) { padding-inline-end: 14px; }
   .blr-topology-title-row { gap: 8px; }
   .blr-topology-matrix th, .blr-topology-matrix td { padding: 10px; }
   .blr-topology-toggle { min-height: 36px; min-width: 36px; }

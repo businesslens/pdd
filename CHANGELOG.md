@@ -10,9 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Compare delivery, What changes what, and Rule attachments now use list colors and omit introductory text and the "About this view" section.
 - Rule attachments includes every target and offers attachment details only when they add information.
 - What changes what lists Entities down the side and Capabilities across the top.
+- What changes what badges open their matching Scenarios and state details in popovers.
 - Table corners name both axes diagonally with inset labels, removing repeated column labels where every column has the same type.
 - Compare delivery uses the same compact first-column width as the other comparison views.
-- Comparison tables scroll with the page and use subtle edge handles to move one column at a time, preserving expanded details.
+- Comparison tables use the full available width, scroll with the page and use subtle edge handles to move one column at a time, preserving expanded details.
 
 ## [0.17.0] - 2026-09-16
 

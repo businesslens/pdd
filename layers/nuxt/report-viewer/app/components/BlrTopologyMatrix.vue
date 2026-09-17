@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { TopologyMatrix } from '../utils/topologyProjections'
-import { ENTITY_KIND_META } from '../utils/reportWorkspace'
+import { ENTITY_KIND_META, entityFacetOf } from '../utils/reportWorkspace'
 import { matrixColumnWindow } from '../utils/matrixColumnWindow'
 const props = defineProps<{ matrix: TopologyMatrix, column: string | null, mode: 'rules' | 'mutations' | 'delivery' }>()
 
@@ -28,16 +28,11 @@ const words = computed(() => ({
 }[props.mode]))
 const emit = defineEmits<{ open: [key: string], column: [key: string] }>()
 const { element, width } = useBlrReadingWidth()
-const gutter = computed(() => width.value >= 600
-  && props.matrix.columns.length > matrixColumnWindow(width.value, props.matrix.columns.length, 0).capacity ? 36 : 0)
 const tableId = useId()
-const window = computed(() => matrixColumnWindow(width.value - gutter.value * 2, props.matrix.columns.length,
+const window = computed(() => matrixColumnWindow(width.value, props.matrix.columns.length,
   props.matrix.columns.findIndex(item => item.key === props.column)))
 const paged = computed(() => props.matrix.columns.length > window.value.capacity)
-const handles = computed(() => paged.value && gutter.value > 0)
-const navigationButton = (index: number | null) => index !== null
-  ? { color: 'primary', variant: 'subtle' } as const
-  : { color: 'neutral', variant: 'outline' } as const
+const handles = computed(() => paged.value && width.value >= 600)
 const offset = ref(window.value.offset)
 const visibleStart = computed(() => Math.floor(offset.value / window.value.columnWidth + 0.00001))
 const visibleEnd = computed(() => Math.min(props.matrix.columns.length, Math.ceil(offset.value / window.value.columnWidth + window.value.capacity - 0.00001)))
@@ -46,8 +41,7 @@ const columnVisible = (index: number) => index >= visibleStart.value && index < 
 const columnStyle = (index: number) => ({ clipPath: `inset(0 0 0 ${Math.max(0, offset.value - index * window.value.columnWidth)}px)` })
 const matrixStyle = computed(() => ({
   '--blr-matrix-offset': `${offset.value}px`,
-  '--blr-matrix-table-width': `${window.value.tableWidth}px`,
-  '--blr-matrix-gutter': `${gutter.value}px`
+  '--blr-matrix-table-width': `${window.value.tableWidth}px`
 }))
 const cells = computed(() => new Map(props.matrix.cells.map(cell => [JSON.stringify([cell.row, cell.column]), cell])))
 const cellAt = (row: string, column: string) => cells.value.get(JSON.stringify([row, column]))
@@ -170,13 +164,13 @@ watch([matrixViewport, navigation], ([viewport], _, onCleanup) => {
 <template>
   <div ref="element" class="blr-topology-matrix" :data-edge-handles="handles" :style="matrixStyle">
     <div v-if="paged" ref="navigation" class="blr-matrix-navigation" role="group" aria-label="Column navigation">
-      <UButton v-if="!handles" icon="i-lucide-chevron-left" v-bind="navigationButton(window.previous)" size="sm" aria-label="Previous columns" title="Previous columns" :aria-controls="tableId" :disabled="window.previous === null" @click="move(window.previous)" />
+      <UButton v-if="!handles" icon="i-lucide-chevron-left" color="neutral" variant="outline" size="sm" aria-label="Previous columns" title="Previous columns" :aria-controls="tableId" :disabled="window.previous === null" @click="move(window.previous)" />
       <span class="blr-matrix-range" role="status" aria-live="polite" aria-atomic="true">Columns {{ window.start + 1 }}–{{ window.end }} of {{ matrix.columns.length }}</span>
-      <UButton v-if="!handles" trailing-icon="i-lucide-chevron-right" v-bind="navigationButton(window.next)" size="sm" aria-label="Next columns" title="Next columns" :aria-controls="tableId" :disabled="window.next === null" @click="move(window.next)" />
+      <UButton v-if="!handles" trailing-icon="i-lucide-chevron-right" color="neutral" variant="outline" size="sm" aria-label="Next columns" title="Next columns" :aria-controls="tableId" :disabled="window.next === null" @click="move(window.next)" />
     </div>
     <div v-if="handles" class="blr-matrix-edge-handles" role="group" aria-label="Column navigation">
-      <UButton class="blr-matrix-left-handle" icon="i-lucide-chevron-left" v-bind="navigationButton(window.previous)" size="sm" aria-label="Previous columns" title="Previous columns" :aria-controls="tableId" :disabled="window.previous === null" @click="move(window.previous)" />
-      <UButton class="blr-matrix-right-handle" icon="i-lucide-chevron-right" v-bind="navigationButton(window.next)" size="sm" aria-label="Next columns" title="Next columns" :aria-controls="tableId" :disabled="window.next === null" @click="move(window.next)" />
+      <UButton class="blr-matrix-left-handle" icon="i-lucide-chevron-left" color="neutral" variant="outline" size="sm" aria-label="Previous columns" title="Previous columns" :aria-controls="tableId" :disabled="window.previous === null" @click="move(window.previous)" />
+      <UButton class="blr-matrix-right-handle" icon="i-lucide-chevron-right" color="neutral" variant="outline" size="sm" aria-label="Next columns" title="Next columns" :aria-controls="tableId" :disabled="window.next === null" @click="move(window.next)" />
     </div>
     <div v-if="matrix.columns.length" ref="matrixViewport" class="blr-matrix-viewport" :tabindex="paged ? 0 : undefined" role="region" aria-label="Relationship table" @keydown="onKeydown" @wheel="onWheel" @touchstart.passive="onTouchStart" @touchend.passive="onTouchEnd" @touchcancel.passive="touchStart = null" @click.capture="onClick">
       <table :id="tableId" :aria-colcount="matrix.columns.length + 1">
@@ -203,14 +197,21 @@ watch([matrixViewport, navigation], ([viewport], _, onCleanup) => {
         <tbody><tr v-for="row in matrix.rows" :key="row.key"><th scope="row"><BlrTopologyResource :resource="row" @open="emit('open', $event)" /></th>
           <td v-for="(column, index) in matrix.columns" :key="column.key" :data-cell="`${row.key}->${column.key}`" :class="{ 'blr-matrix-column-hidden': !columnVisible(index) }" :style="columnStyle(index)" :inert="!columnVisible(index)" :aria-hidden="!columnVisible(index) || undefined" :aria-colindex="index + 2">
             <template v-if="cellAt(row.key, column.key)">
-              <div class="blr-matrix-effects"><span v-for="label in cellAt(row.key, column.key)!.labels" :key="label" :data-effect="label">{{ label }}</span></div>
+              <div class="blr-matrix-effects">
+                <template v-if="mode === 'mutations'">
+                  <BlrMutationBadge v-for="mutation in cellAt(row.key, column.key)!.mutations" :key="mutation.effect"
+                    :mutation="mutation" :entity-title="row.title" :entity-facet="entityFacetOf(row)" :capability-title="column.title"
+                    :view-key="`${window.offset}:${window.columnWidth}`" @open="emit('open', $event)" />
+                </template>
+                <template v-else><span v-for="label in cellAt(row.key, column.key)!.labels" :key="label" :data-effect="label">{{ label }}</span></template>
+              </div>
               <details v-if="cellAt(row.key, column.key)!.attachments?.some(attachment => attachment.details.length || attachment.contexts.length)"><summary>Attachment details</summary>
                 <div v-for="attachment in cellAt(row.key, column.key)!.attachments" :key="attachment.id" class="blr-matrix-detail">
                   <p>{{ attachment.label }}<template v-for="detail in attachment.details" :key="detail"> · {{ detail }}</template></p>
                   <template v-if="attachment.contexts.length"><span>Only in</span><BlrTopologyResource v-for="context in attachment.contexts" :key="context.key" :resource="context" @open="emit('open', $event)" /></template>
                 </div>
               </details>
-              <details v-if="cellAt(row.key, column.key)!.evidence.length"><summary>{{ cellAt(row.key, column.key)!.evidence.length }} {{ cellAt(row.key, column.key)!.evidence.length === 1 ? words.evidence[0] : words.evidence[1] }}</summary>
+              <details v-if="mode !== 'mutations' && cellAt(row.key, column.key)!.evidence.length"><summary>{{ cellAt(row.key, column.key)!.evidence.length }} {{ cellAt(row.key, column.key)!.evidence.length === 1 ? words.evidence[0] : words.evidence[1] }}</summary>
                 <p v-for="detail in cellAt(row.key, column.key)!.details" :key="detail">{{ detail }}</p>
                 <BlrTopologyResource v-for="evidence in cellAt(row.key, column.key)!.evidence" :key="evidence.key" :resource="evidence" @open="emit('open', $event)" />
               </details>

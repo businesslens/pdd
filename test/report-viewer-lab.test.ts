@@ -23,7 +23,8 @@ describe('private Product Report viewer lab', () => {
     const readme = readFileSync(join(lab, 'README.md'), 'utf8')
 
     expect(readme).toContain('The **Table navigation** audition is decided')
-    for (const name of ['BlrScenarioStep', 'BlrStepGuidedReading', 'BlrStepReading', 'BlrStepEffectReading', 'BlrStepCardLabRow', 'BlrMatrixCornerLabRow', 'BlrControlSizeLabRow', 'BlrTopologyMatrix', 'BlrMatrixNavigationLabRow', 'BlrMatrixHandleLabRow']) {
+    expect(readme).toContain('The **Mutation popover** audition is decided')
+    for (const name of ['BlrScenarioStep', 'BlrStepGuidedReading', 'BlrStepReading', 'BlrStepEffectReading', 'BlrStepCardLabRow', 'BlrMatrixCornerLabRow', 'BlrControlSizeLabRow', 'BlrTopologyMatrix', 'BlrMatrixNavigationLabRow', 'BlrMatrixHandleLabRow', 'BlrMutationBadge', 'BlrMutationPopoverLabRow']) {
       expect(existsSync(join(lab, `app/components/${name}.vue`))).toBe(false)
     }
     expect(existsSync(join(lab, 'app/composables/useBlrStepCardLab.ts'))).toBe(false)
@@ -32,6 +33,8 @@ describe('private Product Report viewer lab', () => {
     expect(existsSync(join(lab, 'app/assets/matrix-corner-lab.css'))).toBe(false)
     expect(existsSync(join(lab, 'app/composables/useBlrControlSizeLab.ts'))).toBe(false)
     expect(existsSync(join(lab, 'app/plugins/control-size.ts'))).toBe(false)
+    expect(existsSync(join(lab, 'app/composables/useBlrMutationPopoverLab.ts'))).toBe(false)
+    expect(existsSync(join(lab, 'app/assets/mutation-popover-lab.css'))).toBe(false)
     expect(existsSync(join(root, 'layers/nuxt/report-viewer/app/components/BlrScenarioStep.vue'))).toBe(true)
     expect(existsSync(join(lab, 'app/components/BlrResourcePage.vue'))).toBe(false)
     expect(existsSync(join(lab, 'app/utils/labVariants.ts'))).toBe(false)
@@ -42,6 +45,7 @@ describe('private Product Report viewer lab', () => {
     const stable = readFileSync(join(root, 'layers/nuxt/report-viewer/app/components/BlrTopologyMatrix.vue'), 'utf8')
 
     expect(app).toContain('<BusinessLensThemeLabBar />')
+    expect(app).not.toContain('BlrMutationPopoverLabRow')
     expect(app).not.toContain('useBlrMatrixNavigationLab')
     expect(app).not.toContain('BlrMatrixNavigationLabRow')
     expect(app).not.toContain('BlrMatrixHandleLabRow')

@@ -7,6 +7,12 @@ bundled local viewer. It has no package export and is excluded from published
 package files, so an audition cannot become part of the public renderer by
 accident.
 
+The **Mutation popover** audition is decided: Capability first is now the
+stable reading in What changes what. The header names the Capability with its
+icon; the body names the Entity with its icon, then shows each effect's state
+details and matching Scenarios. The shadow component, alternatives, selector,
+cookie composable and experiment styles have been removed.
+
 The **Table navigation** audition is decided: Edge handles with Divider middle
 now live in `report-viewer` across all three comparison views. Subtle handles sit
 on the subject divider and the table’s right edge, centered on the visible rows;

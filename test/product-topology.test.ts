@@ -220,6 +220,52 @@ describe('named topology semantics', () => {
     }
   })
 
+  it('keeps each mutation badge tied to its own Scenarios and authored states', () => {
+    const matrix = projections.mutationProjection(workspaceOf(join(__dirname, '..')))
+    const mutations = (entity: string, capability: string) => matrix.cells.find((cell: any) =>
+      cell.row === `entity:${entity}` && cell.column === `capability:${capability}`).mutations
+    const evidenceIds = (mutation: any) => mutation.variants.flatMap((variant: any) => variant.evidence.map((scenario: any) => scenario.id)).sort()
+    const decision = mutations('product-model', 'decide-intended-behavior')
+    expect(evidenceIds(decision.find((item: any) => item.effect === 'creates'))).toEqual(['decide-a-new-product'])
+    expect(evidenceIds(decision.find((item: any) => item.effect === 'changes'))).toEqual(['change-behavior-and-verify-the-branch', 'write-an-approved-model-delta'])
+
+    const exported = mutations('blueprint', 'export-blueprint')[0]
+    expect(exported.effect).toBe('creates')
+    expect(exported.variants).toHaveLength(1)
+    expect(exported.variants[0]).toMatchObject({ from: '', to: 'Exported' })
+    expect(evidenceIds(exported)).toEqual(['export-a-portable-blueprint', 'export-here-and-open-there'])
+
+    const contributed = mutations('blueprint', 'contribute-blueprint')
+    expect(contributed.map((item: any) => item.effect)).toEqual(['creates', 'changes'])
+    expect(contributed[1].variants[0]).toMatchObject({ from: 'Exported', to: 'Proposed' })
+    // The same Scenario can support both badges when its Steps do both things.
+    for (const mutation of contributed) expect(evidenceIds(mutation)).toEqual(['open-a-blueprint-pull-request'])
+  })
+
+  it('separates state variants and deduplicates repeated Steps without borrowing evidence from another Capability', () => {
+    const workspace = workspaceOf(join(__dirname, '..'))
+    const source = workspace.scenarios.find((scenario: any) => scenario.id === 'export-here-and-open-there')
+    const step = (capabilityId: string, effect: string, to: string) => ({ ...source.steps[0], capabilityId,
+      entities: [{ entityId: 'blueprint', as: '', effect, from: '', to }] })
+    // Shared ids across Scenario kinds must not merge their distinct evidence.
+    workspace.scenarios = [
+      { ...source, id: 'shared', key: 'journey-scenario:shared', steps: [
+        step('export-blueprint', 'creates', 'Exported'), step('export-blueprint', 'creates', 'Exported'),
+        step('contribute-blueprint', 'creates', 'Proposed')
+      ] },
+      { ...source, id: 'shared', key: 'capability-scenario:shared', scenarioType: 'capability', capabilityId: 'export-blueprint',
+        steps: [step('', 'creates', 'Proposed')] },
+      { ...source, key: 'journey-scenario:read-only', steps: [step('export-blueprint', 'reads', '')] }
+    ]
+    const capability = workspace.capabilities.find((item: any) => item.id === 'export-blueprint')
+    capability.entityEffects.find((item: any) => item.entityId === 'blueprint').effects.push({ effect: 'creates', from: '', to: 'Proposed' })
+    const cell = projections.mutationProjection(workspace).cells.find((item: any) => item.id === 'entity:blueprint->capability:export-blueprint')
+    const variants = cell.mutations[0].variants
+    expect(variants.map((item: any) => item.to)).toEqual(['Exported', 'Proposed'])
+    expect(variants[0].evidence.map((item: any) => item.key)).toEqual(['journey-scenario:shared'])
+    expect(variants[1].evidence.map((item: any) => item.key)).toEqual(['capability-scenario:shared'])
+  })
+
   it('draws each authored Entity relation exactly once, including parallel and self relations', () => {
     const workspace = workspaceOf()
     const entity = workspace.entities[0]
