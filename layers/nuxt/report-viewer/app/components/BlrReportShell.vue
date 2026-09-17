@@ -632,7 +632,7 @@ const orphanScenarios = computed(() => props.workspace.scenarios
             <h1 v-if="surfaceHeading" ref="workingHeading" tabindex="-1" class="flex min-w-0 flex-1 items-center gap-2">
               <UIcon :name="surfaceHeading.icon" class="size-5 shrink-0 text-muted" :style="surfaceHeading.slot === undefined ? undefined : { color: `var(--blr-slot-${surfaceHeading.slot})` }" />
               <span class="truncate text-lg font-semibold tracking-tight text-highlighted">{{ surfaceHeading.title }}</span>
-              <span class="blr-meta shrink-0">{{ surfaceHeading.meta }}</span>
+              <span class="blr-meta shrink-0" :class="matrixSection ? 'hidden xl:inline' : undefined">{{ surfaceHeading.meta }}</span>
               <BlrTerm v-if="surfaceHeading.term" :slug="surfaceHeading.term" :text="surfaceHeading.termText" icon-only />
             </h1>
           </div>
