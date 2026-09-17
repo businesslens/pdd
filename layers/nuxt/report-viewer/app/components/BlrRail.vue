@@ -57,14 +57,17 @@ const items = computed<RailItem[][]>(() => [
   ]
 ])
 const menuUi = computed(() => ({
-  link: ['blr-navitem gap-2.5 font-normal data-[current=true]:font-semibold', props.collapsed ? 'min-h-8 justify-center' : 'px-2.5'],
-  label: 'px-2.5 pt-3 pb-1 font-mono text-[10px] tracking-widest uppercase text-dimmed'
+  root: 'gap-1',
+  list: 'flex flex-col gap-1',
+  link: ['blr-navitem min-h-9 gap-2.5 font-normal data-[current=true]:font-semibold', props.collapsed ? 'justify-center' : 'px-2.5'],
+  label: 'px-2.5 pt-0 pb-1 font-mono text-[10px] tracking-widest uppercase text-dimmed',
+  separator: 'h-4 bg-transparent'
 }))
 </script>
 
 <template>
   <div :style="{ '--blr-rail-active-color': activeColor }">
-    <div v-if="$slots.navigation" class="mb-1 border-b border-default px-1 pb-2">
+    <div v-if="$slots.navigation" class="mb-4 px-1">
       <slot name="navigation" :collapsed="collapsed" />
     </div>
     <UNavigationMenu
@@ -77,7 +80,7 @@ const menuUi = computed(() => ({
       :ui="menuUi"
     >
       <template #list-leading>
-        <div data-report-overview-actions class="flex" :class="collapsed ? 'flex-col' : 'items-center gap-1'">
+        <div data-report-overview-actions class="flex gap-1" :class="collapsed ? 'flex-col' : 'items-center'">
           <UNavigationMenu
             :items="overviewItems"
             :collapsed="collapsed"

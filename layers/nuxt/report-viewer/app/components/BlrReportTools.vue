@@ -39,7 +39,7 @@ const vocabularyId = useId()
         size="sm"
         square
         aria-label="Search Product Model"
-        class="min-h-8 min-w-8 justify-center text-muted hover:text-highlighted"
+        class="min-h-9 min-w-9 justify-center text-muted hover:text-highlighted"
         :class="{ 'w-full': collapsed }"
         :ui="{ leadingIcon: collapsed ? 'size-[17px]' : 'size-4' }"
         @click="emit('search')"
@@ -55,8 +55,8 @@ const vocabularyId = useId()
         :label="collapsed ? undefined : 'Vocabulary'"
         :square="collapsed"
         aria-label="Vocabulary"
-        class="w-full gap-2.5 text-sm font-normal text-muted hover:text-highlighted"
-        :class="collapsed ? 'min-h-8 justify-center' : 'justify-start'"
+        class="min-h-9 w-full gap-2.5 text-sm font-normal text-muted hover:text-highlighted"
+        :class="collapsed ? 'justify-center' : 'justify-start'"
         :ui="{ leadingIcon: collapsed ? 'size-[17px]' : 'size-4' }"
         @click="emit('vocabulary', vocabularyId)"
       />

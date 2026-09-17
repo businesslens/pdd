@@ -121,7 +121,10 @@ Catalog hosts should key the viewer by Blueprint identity so switching Products
 starts a fresh reading. In the collapsed rail, the picker shows a 17px Product
 logo in a 32px trigger and a name tooltip; the mobile drawer keeps its full label.
 An icon-only Search button sits beside Overview, stacking directly below it
-when collapsed. Vocabulary follows the collections after a divider.
+when collapsed. Navigation rows are 36px high with 4px gaps, starting 20px below
+the Product picker. Whitespace and the Resources label separate the navigation
+groups. Vocabulary leads the bottom reference group above Documentation and
+GitHub, with one divider above the whole group.
 The working view's header serves as its navbar: the heading shares it with
 coverage, report schema version and generation date, above a bottom divider. Status wraps onto a second line on narrow screens.
 Hosts can supply `sidebar-header` and `sidebar-footer` slots for branding and
@@ -136,7 +139,8 @@ opened. Desktop navigation uses Nuxt UI's
 collapsing to a 64px icon rail. The choice is saved in a cookie. Navigation and
 utility icons keep accessible labels and tooltips; the mobile drawer always
 shows the full menu. Collapsing keeps the current reading and its state.
-Collapsed navigation and utility icons use 17px glyphs with 32px-high targets.
+Collapsed navigation and utility icons use 17px glyphs. Navigation, Search and
+reference rows have 36px-high targets; brand controls and the picker retain 32px.
 The `sidebar-header`, `sidebar-footer` and `navigation` slots receive
 `{ collapsed }`, so host branding and utilities can follow the rail's width.
 

@@ -18,8 +18,8 @@ defineProps<{ collapsed?: boolean }>()
         color="neutral"
         variant="ghost"
         size="sm"
-        class="w-full gap-2.5 text-sm font-normal text-muted hover:text-highlighted"
-        :class="collapsed ? 'min-h-8 justify-center' : 'justify-start'"
+        class="min-h-9 w-full gap-2.5 text-sm font-normal text-muted hover:text-highlighted"
+        :class="collapsed ? 'justify-center' : 'justify-start'"
         :ui="{ leadingIcon: collapsed ? 'size-[17px]' : 'size-4', trailingIcon: 'ms-auto size-3' }"
       />
     </UTooltip>
@@ -36,8 +36,8 @@ defineProps<{ collapsed?: boolean }>()
         color="neutral"
         variant="ghost"
         size="sm"
-        class="w-full gap-2.5 text-sm font-normal text-muted hover:text-highlighted"
-        :class="collapsed ? 'min-h-8 justify-center' : 'justify-start'"
+        class="min-h-9 w-full gap-2.5 text-sm font-normal text-muted hover:text-highlighted"
+        :class="collapsed ? 'justify-center' : 'justify-start'"
         :ui="{ leadingIcon: collapsed ? 'size-[17px]' : 'size-4', trailingIcon: 'ms-auto size-3' }"
         aria-label="BusinessLens on GitHub"
       />

@@ -206,8 +206,11 @@ costed already.
   The local viewer's package version sits beside its logo in the sidebar.
   Theme lab is a header icon, followed by the color-mode switch at the right
   edge, aligned with the icon-only Search beside Overview. Header controls and
-  Search stack below their rows when collapsed. Vocabulary follows the
-  collections after a divider; Documentation and GitHub stay in the footer. The
+  Search stack below their rows when collapsed. Navigation and reference rows
+  are 36px high with 4px gaps; the Product picker has 20px of space below it.
+  Whitespace and the Resources label separate navigation groups. Vocabulary,
+  Documentation and GitHub form the bottom reference group, with one divider
+  above it. The
   experimentation bar remains above the report when opened.
 - **Desktop navigation can collapse to an icon rail.** Use Nuxt UI's
   DashboardSidebar and collapse control, with cookie-persisted state and

@@ -17,9 +17,11 @@ the shared picker for local and catalog hosts; the variant selector, cookie
 composable and experimental stylesheet have been removed.
 
 The **Collapsed icons** audition is decided: collapsed navigation and utility
-icons use 17px glyphs with 32px-high targets. The selected size now lives in the
+icons use 17px glyphs. The selected size now lives in the
 stable menu components. The size selector, cookie composable and override have
-been removed; expanded and mobile menus retain their existing sizes.
+been removed; expanded and mobile menus retain their existing glyph sizes.
+Navigation and reference rows now use 36px targets for more breathing room;
+brand controls and the collapsed Product picker retain 32px targets.
 
 The **Control size**
 audition is decided: page controls, filters and graph buttons use Nuxt UI's

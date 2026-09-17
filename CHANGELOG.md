@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Give sidebar items more breathing room and group Vocabulary with the reference links.
+
 - Restore the selected sidebar item's tinted background and colored accent.
 
 - Give the product picker a quieter outline and align its menu labels and checkmarks.

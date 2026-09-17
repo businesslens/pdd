@@ -28,7 +28,7 @@ const emit = defineEmits<{
       <slot name="close" />
     </div>
 
-    <div class="mb-3 shrink-0">
+    <div class="mb-5 shrink-0">
       <BlrProductPicker
         :title="workspace.identity.title"
         :logo-src="logoSrc"
@@ -55,12 +55,13 @@ const emit = defineEmits<{
       </template>
     </BlrRail>
 
-    <div v-if="tools" data-report-sidebar-vocabulary class="mt-3 shrink-0 border-t border-default pt-2">
-      <BlrReportTools tool="vocabulary" :collapsed="collapsed" @vocabulary="emit('vocabulary', $event)" />
-    </div>
-
-    <div v-if="$slots.footer" data-report-sidebar-footer class="mt-auto grid shrink-0 gap-1 pt-6">
-      <slot name="footer" />
+    <div v-if="tools || $slots.footer" data-report-sidebar-footer class="mt-auto shrink-0 pt-6">
+      <div class="grid gap-1 border-t border-default pt-3">
+        <div v-if="tools" data-report-sidebar-vocabulary>
+          <BlrReportTools tool="vocabulary" :collapsed="collapsed" @vocabulary="emit('vocabulary', $event)" />
+        </div>
+        <slot name="footer" />
+      </div>
     </div>
   </div>
 </template>
