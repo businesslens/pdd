@@ -16,17 +16,17 @@ const emit = defineEmits<{ kind: [kind: ReportResourceKind], view: [section: str
 
 type RailItem = NavigationMenuItem & { iconColor?: string, count?: number }
 const RAIL_KINDS = MAIN_RESOURCE_KINDS.map(kind => ENTITY_KIND_META[kind])
+const overviewItems = computed<RailItem[]>(() => [{
+  label: 'Overview',
+  icon: ENTITY_KIND_META.product.icon,
+  iconColor: `var(--blr-slot-${ENTITY_KIND_META.product.slot})`,
+  active: props.activeSection === 'overview',
+  'data-current': props.activeSection === 'overview',
+  'aria-label': 'Overview',
+  onSelect: () => emit('kind', 'product')
+}])
 const items = computed<RailItem[][]>(() => [
   [
-    {
-      label: 'Overview',
-      icon: ENTITY_KIND_META.product.icon,
-      iconColor: `var(--blr-slot-${ENTITY_KIND_META.product.slot})`,
-      active: props.activeSection === 'overview',
-      'data-current': props.activeSection === 'overview',
-      'aria-label': 'Overview',
-      onSelect: () => emit('kind', 'product')
-    },
     ...MATRIX_DESTINATIONS.map(item => ({
       label: item.name,
       icon: item.icon,
@@ -50,6 +50,10 @@ const items = computed<RailItem[][]>(() => [
     }))
   ]
 ])
+const menuUi = computed(() => ({
+  link: ['blr-navitem gap-2.5 font-normal data-[current=true]:font-semibold', props.collapsed ? 'min-h-8 justify-center' : 'px-2.5'],
+  label: 'px-2.5 pt-3 pb-1 font-mono text-[10px] tracking-widest uppercase text-dimmed'
+}))
 </script>
 
 <template>
@@ -64,11 +68,27 @@ const items = computed<RailItem[][]>(() => [
       color="neutral"
       tooltip
       aria-label="Report sections"
-      :ui="{
-        link: ['blr-navitem gap-2.5 font-normal data-[current=true]:font-semibold', collapsed ? 'min-h-8 justify-center' : 'px-2.5'],
-        label: 'px-2.5 pt-3 pb-1 font-mono text-[10px] tracking-widest uppercase text-dimmed'
-      }"
+      :ui="menuUi"
     >
+      <template #list-leading>
+        <div data-report-overview-actions class="flex" :class="collapsed ? 'flex-col' : 'items-center gap-1'">
+          <UNavigationMenu
+            :items="overviewItems"
+            :collapsed="collapsed"
+            orientation="vertical"
+            color="neutral"
+            tooltip
+            aria-label="Report overview"
+            :class="collapsed ? 'w-full' : 'min-w-0 flex-1'"
+            :ui="menuUi"
+          >
+            <template #item-leading="{ item }">
+              <UIcon v-if="item.icon" :name="item.icon" class="shrink-0" :class="collapsed ? 'size-[17px]' : 'size-4'" :style="{ color: item.iconColor }" />
+            </template>
+          </UNavigationMenu>
+          <slot name="overview-action" />
+        </div>
+      </template>
       <template #item-leading="{ item }">
         <UIcon v-if="item.icon" :name="item.icon" class="shrink-0" :class="collapsed ? 'size-[17px]' : 'size-4'" :style="{ color: item.iconColor }" />
       </template>

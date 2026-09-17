@@ -950,7 +950,7 @@ const orphanScenarios = computed(() => props.workspace.scenarios
               color="neutral"
               variant="ghost"
               size="sm"
-              class="ms-auto"
+              class="ms-auto min-h-8 min-w-8 shrink-0 self-start"
               aria-label="Close report navigation"
               @click="mobileNavOpen = false"
             />

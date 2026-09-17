@@ -109,12 +109,16 @@ The layer renders the report and nothing around it. Site chrome — the header,
 the footer, and any brand or legal links — belongs to the host, which already
 has the navigation, routing, and legal context the report does not. The report's
 sidebar holds search, Vocabulary and sections, with Overview as the way home.
+An icon-only Search button sits beside Overview, stacking directly below it
+when collapsed. Vocabulary follows the collections after a divider.
 The working view's header serves as its navbar: the heading shares it with
 coverage, report schema version and generation date, above a bottom divider. Status wraps onto a second line on narrow screens.
 Hosts can supply `sidebar-header` and `sidebar-footer` slots for branding and
 utilities; both also appear in the mobile navigation drawer. The bundled local
-viewer places its version beside the brand in the sidebar header, with docs,
-GitHub, color mode and the theme lab toggle in the sidebar footer. There is no
+viewer places its version beside the brand in the sidebar header, followed by
+an icon-only Theme lab button and the color-mode switch at the right edge,
+aligned with Search. Header controls stack below the mark when collapsed.
+Documentation and GitHub stay in the sidebar footer. There is no
 separate host navbar; the theme lab bar appears above the report only when
 opened. Desktop navigation uses Nuxt UI's
 `DashboardSidebar` and `DashboardSidebarCollapse`, expanding to 288px or

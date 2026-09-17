@@ -199,8 +199,11 @@ costed already.
   divider, with more space before the reading than below the heading. Status
   wraps below the heading on narrow screens. Overview in the sidebar is the
   way home; there is no separate product home button.
-  The local viewer's package version sits beside its logo in the sidebar;
-  Documentation and other utilities stay below the navigation. The
+  The local viewer's package version sits beside its logo in the sidebar.
+  Theme lab is a header icon, followed by the color-mode switch at the right
+  edge, aligned with the icon-only Search beside Overview. Header controls and
+  Search stack below their rows when collapsed. Vocabulary follows the
+  collections after a divider; Documentation and GitHub stay in the footer. The
   experimentation bar remains above the report when opened.
 - **Desktop navigation can collapse to an icon rail.** Use Nuxt UI's
   DashboardSidebar and collapse control, with cookie-persisted state and

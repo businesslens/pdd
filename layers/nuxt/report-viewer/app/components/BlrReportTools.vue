@@ -1,5 +1,5 @@
 <script setup lang="ts">
-defineProps<{ inHeader?: boolean, collapsed?: boolean }>()
+defineProps<{ inHeader?: boolean, collapsed?: boolean, tool?: 'search' | 'vocabulary' }>()
 const emit = defineEmits<{ search: [], vocabulary: [originId: string] }>()
 const vocabularyId = useId()
 </script>
@@ -31,29 +31,21 @@ const vocabularyId = useId()
     </UTooltip>
   </template>
   <template v-else>
-    <UTooltip text="Search Product Model" :kbds="['meta', 'k']" :disabled="!collapsed" :content="{ side: 'right' }">
+    <UTooltip v-if="tool !== 'vocabulary'" text="Search Product Model" :kbds="['meta', 'k']" :content="{ side: 'right' }">
       <UButton
         icon="i-lucide-search"
         color="neutral"
-        :variant="collapsed ? 'ghost' : 'outline'"
+        variant="ghost"
         size="sm"
-        :label="collapsed ? undefined : 'Search'"
-        :square="collapsed"
+        square
         aria-label="Search Product Model"
-        class="w-full"
-        :class="collapsed ? 'min-h-8 justify-center' : 'justify-start'"
+        class="min-h-8 min-w-8 justify-center text-muted hover:text-highlighted"
+        :class="{ 'w-full': collapsed }"
         :ui="{ leadingIcon: collapsed ? 'size-[17px]' : 'size-4' }"
         @click="emit('search')"
-      >
-        <template v-if="!collapsed" #trailing>
-          <span class="ms-auto flex items-center gap-0.5">
-            <UKbd value="meta" />
-            <UKbd value="K" />
-          </span>
-        </template>
-      </UButton>
+      />
     </UTooltip>
-    <UTooltip text="Vocabulary" :disabled="!collapsed" :content="{ side: 'right' }">
+    <UTooltip v-if="tool !== 'search'" text="Vocabulary" :disabled="!collapsed" :content="{ side: 'right' }">
       <UButton
         :id="vocabularyId"
         icon="i-lucide-book-a"
@@ -63,7 +55,7 @@ const vocabularyId = useId()
         :label="collapsed ? undefined : 'Vocabulary'"
         :square="collapsed"
         aria-label="Vocabulary"
-        class="w-full"
+        class="w-full gap-2.5 text-sm font-normal text-muted hover:text-highlighted"
         :class="collapsed ? 'min-h-8 justify-center' : 'justify-start'"
         :ui="{ leadingIcon: collapsed ? 'size-[17px]' : 'size-4' }"
         @click="emit('vocabulary', vocabularyId)"

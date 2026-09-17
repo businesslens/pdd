@@ -89,7 +89,7 @@ describe('shared BusinessLens theme lab', () => {
     expect(labConfig).toContain("join(currentDir, '../report-viewer')")
     expect(localViewer).toContain('useBusinessLensThemeHead()')
     expect(localViewer).toContain('useBusinessLensThemeLabHead()')
-    expect(readFileSync(join(root, 'viewer/app/app/components/LocalViewerTools.vue'), 'utf8')).toContain('useBusinessLensThemeLab()')
+    expect(readFileSync(join(root, 'viewer/app/app/components/LocalViewerBrand.vue'), 'utf8')).toContain('useBusinessLensThemeLab()')
     expect(localViewer).toMatch(/<BusinessLensThemeLabBar(?:\s|>)/)
     expect(localViewer).not.toContain('<UHeader')
     expect(localViewer).toContain('var(--businesslens-theme-lab-height)')
