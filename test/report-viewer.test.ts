@@ -474,8 +474,9 @@ describe('stable Product Report', () => {
     expect(body).not.toContain('{{ column.id }}')
     expect(context).toContain('<BlrContextPlace')
     for (const kind of ['experience', 'screen']) {
-      expect(contextPlace).toContain(`<BlrKind kind="${kind}"`)
+      expect(contextPlace).toContain(`kind: '${kind}', id: context.${kind}Id`)
     }
+    expect(contextPlace).toContain(':kind="segment.kind"')
     expect(contextPlace).toContain('<BlrInterfaceType')
     expect(source('app/components/BlrInterfaceType.vue')).toContain(":role=\"labelled ? undefined : 'img'\"")
     expect(body).toContain("asScenario.scenarioType === 'journey' && step.capabilityId")
@@ -504,11 +505,12 @@ describe('stable Product Report', () => {
     expect(body.match(/aria-label="Show next route"/g)).toHaveLength(2)
     expect(body).toContain('compact')
     expect(body).not.toContain('Context ·')
-    expect(contextPlace).toContain(':type="productInterface.interfaceType"')
-    expect(contextPlace).toContain('whitespace-nowrap')
-    expect(contextPlace).toContain("compact ? 'max-w-24'")
-    expect(contextPlace).toContain('truncate')
-    expect(contextPlace.match(/<UTooltip/g)).toHaveLength(3)
+    expect(contextPlace).toContain(':type="segment.resource.interfaceType"')
+    expect(contextPlace).toContain('white-space: nowrap')
+    expect(contextPlace).toContain('.blr-context-place[data-compact] .blr-context-place-label { max-width: 10rem; }')
+    expect(contextPlace).toContain('text-overflow: ellipsis')
+    expect(contextPlace).toContain('v-for="(segment, index) in segments"')
+    expect(contextPlace).toContain('<UTooltip :text="segment.title"')
     expect(contextPlace).not.toContain(':title="place.')
     expect(links).toContain('inline-flex min-h-6 items-center')
     for (const icon of ['align-justify', 'circle-dot-dashed', 'user-round']) {
@@ -765,20 +767,19 @@ describe('stable Product Report', () => {
     expect(graph).toContain('visibleKeys')
   })
 
-  it('keeps the question-and-derivation bar exclusive to Topology', () => {
+  it('keeps matrix readings focused on their filters and data', () => {
     const reportShell = source('app/components/BlrReportShell.vue')
     const topology = source('app/components/BlrProductTopology.vue')
 
     expect(existsSync(join(VIEWER, 'app/utils/browseSurfaces.ts'))).toBe(false)
     expect(reportShell).not.toContain('surface.question')
     expect(reportShell).not.toContain('surface.flow')
-    /* The surface heading names the subject and the tab names the reading, so
-       a view neither titles itself nor spends a row restating its question:
-       that belongs with the derivation it qualifies, behind About this view. */
+    /* The shell names the view; the matrix adds no title or explanation. */
     expect(topology).not.toContain('{{ view.name }}')
     expect(topology).not.toContain('blr-topology-title-row')
-    expect(topology).toContain('{{ view.diagramType }}')
-    expect(topology).toContain('{{ view.question }}')
+    expect(topology).not.toContain('{{ view.diagramType }}')
+    expect(topology).not.toContain('{{ view.question }}')
+    expect(topology).not.toContain('About this view')
     expect(reportShell).not.toContain('surfaceHint')
     expect(source('app/components/BlrResourcePage.vue')).not.toContain('current.hint')
     expect(source('app/utils/pageSections.ts')).not.toContain('hint')
@@ -1073,8 +1074,9 @@ describe('stable Product Report', () => {
     expect(contexts).toContain('<BlrContextPlace')
     expect(source('app/components/BlrStepContext.vue')).toContain('<BlrContextPlace')
     expect(contextPlace).toContain('<BlrInterfaceType')
-    expect(contextPlace).toContain('<BlrKind kind="experience"')
-    expect(contextPlace).toContain('<BlrKind kind="screen"')
+    expect(contextPlace).toContain("if (context.experienceId)")
+    expect(contextPlace).toContain("if (context.screenId)")
+    expect(contextPlace).toContain(':kind="segment.kind"')
     expect(contexts).toContain("props.contexts.length === 1 ? 'Context' : 'Contexts'")
     expect(contexts).not.toContain('CONTEXT_NOTE')
     expect(contexts).not.toContain('Derived from achieved Scenarios')

@@ -374,6 +374,8 @@ const surfaceHeading = computed(() => {
     term: KIND_TERM[activeKind.value], termText: activeMeta.value.plural }
 })
 
+const matrixView = useBlrMatrixView(() => props.workspace, topology)
+
 /**
  * Tabs belong to the Overview and to resource pages, where they change which
  * set is on screen. A collection has no tabs: its two drawings show one set,
@@ -506,7 +508,7 @@ function openView(sectionId: string, resource?: AnyResourceView) {
   if (!target) return
   mobileNavOpen.value = false
   leavePage()
-  topology.value = { ...topology.value, view: target.view, hiddenKinds: [], query: '', focus: resource ? [resource.key] : [], column: resource?.kind === 'entity' && target.view === 'what-changes-what' ? resource.key : null }
+  topology.value = { ...topology.value, view: target.view, hiddenKinds: [], query: '', focus: resource ? [resource.key] : [], column: null }
   /* A matrix compares two collections, so its rail row is its own. */
   activeSection.value = target.rail
   activeKind.value = isMatrixSection(target.rail) ? 'product' : target.rail as ReportResourceKind
@@ -608,7 +610,8 @@ const orphanScenarios = computed(() => props.workspace.scenarios
         <header
           v-if="surfaceHeading"
           data-report-page-header
-          class="mb-2 grid shrink-0 grid-cols-[minmax(0,1fr)] items-center gap-x-3 gap-y-2 border-b border-default px-4 py-2 sm:px-5 md:grid-cols-[minmax(0,1fr)_auto]"
+          class="mb-2 grid shrink-0 items-center gap-x-3 gap-y-2 border-b border-default px-4 py-2 sm:px-5"
+          :class="matrixSection ? 'grid-cols-[minmax(0,1fr)_auto] md:grid-cols-[minmax(0,1fr)_auto_auto]' : 'grid-cols-[minmax(0,1fr)] md:grid-cols-[minmax(0,1fr)_auto]'"
         >
           <div class="flex min-w-0 items-center gap-2 sm:gap-3">
             <UDashboardSidebarCollapse
@@ -629,14 +632,17 @@ const orphanScenarios = computed(() => props.workspace.scenarios
             <h1 v-if="surfaceHeading" ref="workingHeading" tabindex="-1" class="flex min-w-0 flex-1 items-center gap-2">
               <UIcon :name="surfaceHeading.icon" class="size-5 shrink-0 text-muted" :style="surfaceHeading.slot === undefined ? undefined : { color: `var(--blr-slot-${surfaceHeading.slot})` }" />
               <span class="truncate text-lg font-semibold tracking-tight text-highlighted">{{ surfaceHeading.title }}</span>
-              <span class="blr-meta shrink-0">{{ surfaceHeading.meta }}</span>
+              <span class="blr-meta shrink-0" :class="matrixSection ? 'hidden xl:inline' : undefined">{{ surfaceHeading.meta }}</span>
               <BlrTerm v-if="surfaceHeading.term" :slug="surfaceHeading.term" :text="surfaceHeading.termText" icon-only />
             </h1>
           </div>
-          <div data-report-status class="row-start-2 flex items-center gap-2.5 md:col-start-2 md:row-start-1">
+          <div data-report-status class="row-start-2 flex items-center gap-2.5 md:col-start-2 md:row-start-1" :class="matrixSection ? 'col-span-2 md:col-span-1' : undefined">
             <BlrCoverageBadge :status="workspace.coverage.status" named size="md" />
             <span class="blr-meta" :title="`Report schema ${workspace.identity.schemaVersion}`">{{ workspace.identity.schemaVersion }}</span>
             <time class="blr-meta" :datetime="workspace.identity.generatedAt" :title="`Generated ${workspace.identity.generatedAt}`">{{ workspace.identity.generatedAt.slice(0, 10) }}</time>
+          </div>
+          <div v-if="matrixSection" class="col-start-2 row-start-1 min-w-0 justify-self-end md:col-start-3" data-matrix-legend-target>
+            <BlrMatrixLegend :mode="matrixView.mode" />
           </div>
         </header>
 
@@ -901,6 +907,7 @@ const orphanScenarios = computed(() => props.workspace.scenarios
         <div v-else class="min-h-0 flex-1">
           <BlrProductTopology
             :workspace="workspace"
+            :matrix-view="matrixView"
             v-model:reading="topology"
             @select="openResourcePage"
           />

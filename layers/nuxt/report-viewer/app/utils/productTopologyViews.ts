@@ -112,9 +112,9 @@ export const PRODUCT_TOPOLOGY_VIEWS: ProductTopologyView[] = [
     id: 'what-changes-what',
     diagramType: 'Mutation matrix',
     name: 'What changes what',
-    question: 'Which Capability creates, changes or removes each thing?',
-    note: 'Capability and Journey Scenario Step effects are aggregated by Capability and Entity. Cells show creates, changes and removes, with supporting Scenarios. Reads are excluded. An empty cell means no declared mutation.',
-    kinds: ['capability', 'entity'],
+    question: 'Which Capabilities create, change or remove each Entity?',
+    note: 'Each row is an Entity; each column is a Capability. Capability and Journey Scenario Step effects are aggregated in their cells, showing creates, changes and removes with supporting Scenarios. Reads are excluded. An empty cell means no declared mutation.',
+    kinds: ['entity', 'capability'],
   }
 ]
 

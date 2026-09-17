@@ -239,10 +239,26 @@ the heading count, the filter controls and the chips are the same in both.
 | `rule` | one row per Business Rule, grouped by Domain | Rule reach: Rule, then its attachment targets and Contexts |
 
 The cross-collection matrices are rail rows below Overview, each its own
-section with no tabs: `delivery` (Compare delivery, a Capability by Interface
-matrix), `what-changes-what` and `rule-attachments`. Their navigation icons,
-selection accents and heading icons use neutral colors. Each keeps its own type
-narrowing (`th`) and focus (`tf`). A collection Graph
+section with no tabs: `delivery` (Compare delivery, Capability rows by Interface
+columns), `what-changes-what` (Entity rows by Capability columns), and
+`rule-attachments` (Business Rule rows by attachment target columns). Their navigation icons,
+selection accents and heading icons use neutral colors. Searchable multiselects
+name each matrix's axes: Entities and Capabilities, Capabilities and Interfaces,
+or Rules followed by a separate filter for each kind of attachment target
+present in the table. Selected resources (`tf`) narrow only their own axis;
+empty intersections remain visible. Target selections from different types
+combine into one set of columns. Clearing all selections on an axis restores
+all its resources. Rule attachments also offers Resource types (`th`): hiding a target type removes
+its columns, resource filter and any selections of that type. Rules remain
+independently selectable; hidden-type chips restore types individually.
+Matrices scroll vertically with the reading; edge controls, horizontal trackpad
+gestures, and touch swipes move one column
+at a time beside a fixed subject column. The first visible column uses `tm`;
+moving between columns preserves vertical position and cell details. Each page
+header offers a Legend popover with every possible badge color and meaning for
+that view, regardless of report data, filters or the current column window.
+The header and reading render together on the server. Body cells mount only for the
+visible columns and one neighbour on each side; the browser animates their offset. A collection Graph
 draws the facet-filtered set and honours `tf` as a neighbourhood; branch
 expansion uses `tx`/`tc`. Entity Lifecycle and resource Connections each keep
 their own tab and reading position, including after following a link and returning.
@@ -355,6 +371,10 @@ repository root. The publish workflow also runs
 `scripts/check-packed-diagrams.mjs` against built npm and pnpm consumers to check
 SSR, hydration, worker loading, multiple instances, and navigation from the
 actual packed layer.
+
+Run `node scripts/check-comparison-tables.mjs <CLI viewer URL>` against this
+repository's report or fixture-shop to check badge-to-panel keyboard focus,
+bounded cell rendering on a large matrix, column navigation and mobile resizing.
 
 ## Navigation regression checks
 

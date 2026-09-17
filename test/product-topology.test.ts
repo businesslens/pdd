@@ -1,13 +1,18 @@
 import { join } from 'node:path'
+import { shallowRef } from 'vue'
 import { describe, expect, it } from 'vitest'
 import { compileReport } from '../src/commands/export.js'
 import { loadModel } from '../src/core/model.js'
 
 // Renderer utilities use Nuxt's bundler resolution, not root NodeNext imports.
 const utility = (name: string) => import(`../layers/nuxt/report-viewer/app/utils/${name}.ts`)
+const matrixViewModule = '../layers/nuxt/report-viewer/app/composables/useBlrMatrixView.ts'
+const { useBlrMatrixView } = await import(matrixViewModule)
 const { projectReportWorkspace } = await utility('reportWorkspace')
 const projections = await utility('topologyProjections')
 const { ruleAttachments } = await utility('topologyTargets')
+const { relationshipBadges } = await utility('matrixBadges')
+const { sanitizeMatrixReading } = await utility('matrixFilters')
 const { topologyRelations } = await utility('topologyRelations')
 const state = await utility('topologyState')
 const { PRODUCT_TOPOLOGY_VIEWS } = await utility('productTopologyViews')
@@ -19,6 +24,92 @@ const workspaceOf = (root = teachingRoot) => projectReportWorkspace(reportOf(roo
 const flatten = (branches: any[]): any[] => branches.flatMap(item => [item, ...flatten(item.children)])
 
 describe('named topology semantics', () => {
+  it('shares a stable matrix through column navigation while reacting to scope and report changes', () => {
+    const workspace = shallowRef(workspaceOf(shopRoot))
+    const reading = shallowRef({ ...state.defaultTopologyReading(), view: 'what-changes-what' })
+    const view = useBlrMatrixView(workspace, reading)
+    const original = view.value
+    expect(original.mode).toBe('mutations')
+    expect(original.matrix.columns.length).toBeGreaterThan(0)
+    reading.value = { ...reading.value, column: original.matrix.columns.at(-1).key, focus: [], hiddenKinds: [] }
+    expect(view.value).toBe(original)
+    const focused = original.matrix.rows[0].key
+    reading.value = { ...reading.value, focus: [focused] }
+    expect(view.value.matrix.rows.map((row: any) => row.key)).toEqual([focused])
+    expect(view.value.matrix.columns).toEqual(original.matrix.columns)
+    reading.value = { ...reading.value, view: 'delivery-by-interface', hiddenKinds: [], focus: [] }
+    expect(view.value.mode).toBe('delivery')
+    expect(view.value.matrix.columns.every((column: any) => column.kind === 'interface')).toBe(true)
+    const previous = view.value
+    workspace.value = workspaceOf(teachingRoot)
+    expect(view.value).not.toBe(previous)
+    expect(view.value.matrix.rows.length).toBeGreaterThan(0)
+  })
+
+  it.each(['what-changes-what', 'delivery-by-interface', 'rule-attachments'])('filters both axes independently and keeps empty intersections in %s', name => {
+    const reading = shallowRef({ ...state.defaultTopologyReading(), view: name })
+    const view = useBlrMatrixView(workspaceOf(), reading)
+    const { source } = view.value
+    const row = source.rows.find((row: any) => source.columns.some((column: any) => !source.cells.some((cell: any) => cell.row === row.key && cell.column === column.key)))
+    expect(row).toBeDefined()
+    const column = source.columns.find((column: any) => !source.cells.some((cell: any) => cell.row === row.key && cell.column === column.key))
+    reading.value = { ...reading.value, focus: [row.key] }
+    expect(view.value.matrix.rows).toEqual([row])
+    expect(view.value.matrix.columns).toEqual(source.columns)
+    reading.value = { ...reading.value, focus: [column.key] }
+    expect(view.value.matrix.rows).toEqual(source.rows)
+    expect(view.value.matrix.columns).toEqual([column])
+    reading.value = { ...reading.value, focus: [row.key, column.key] }
+    expect(view.value.matrix).toEqual({ rows: [row], columns: [column], cells: [] })
+    reading.value = { ...reading.value, focus: source.rows.slice(0, 2).map((row: any) => row.key) }
+    expect(view.value.matrix.rows).toEqual(source.rows.slice(0, 2))
+    expect(view.value.matrix.columns).toEqual(source.columns)
+    reading.value = { ...reading.value, focus: [] }
+    expect(view.value.matrix).toEqual(source)
+  })
+
+  it('combines Rule targets across resource types and preserves surviving selections after edits', () => {
+    const workspace = workspaceOf()
+    const reading = shallowRef({ ...state.defaultTopologyReading(), view: 'rule-attachments' })
+    const view = useBlrMatrixView(workspace, reading)
+    const { source } = view.value
+    const entity = source.columns.find((resource: any) => resource.kind === 'entity')
+    const other = source.columns.find((resource: any) => resource.kind !== 'entity')
+    expect(entity).toBeDefined()
+    expect(other).toBeDefined()
+    reading.value = { ...reading.value, focus: [entity.key, other.key] }
+    expect(view.value.matrix.rows).toEqual(source.rows)
+    expect(view.value.matrix.columns).toEqual(source.columns.filter((resource: any) => [entity.key, other.key].includes(resource.key)))
+    reading.value = { ...reading.value, focus: [other.key] }
+    expect(view.value.matrix.columns).toEqual([other])
+    reading.value = { ...reading.value, focus: [source.rows[0].key, entity.key, other.key], column: entity.key }
+    expect(view.value.matrix.rows).toEqual([source.rows[0]])
+    const updated = { ...source, columns: source.columns.filter((resource: any) => resource.kind !== 'entity') }
+    const repaired = sanitizeMatrixReading(reading.value, updated)
+    expect(repaired.column).toBe(null)
+    expect(repaired.focus).toEqual([source.rows[0].key, other.key])
+  })
+
+  it('hides Rule target types without hiding Rules, clears excluded selections and restores types', () => {
+    const reading = shallowRef({ ...state.defaultTopologyReading(), view: 'rule-attachments' })
+    const view = useBlrMatrixView(workspaceOf(), reading)
+    const { source } = view.value
+    const entity = source.columns.find((resource: any) => resource.kind === 'entity')
+    reading.value = { ...reading.value, focus: [source.rows[0].key, entity.key], hiddenKinds: ['entity', 'rule'], column: entity.key }
+    const clean = sanitizeMatrixReading(reading.value, source)
+    expect(clean.focus).toEqual([source.rows[0].key])
+    expect(clean.hiddenKinds).toEqual(['entity'])
+    expect(clean.column).toBe(null)
+    expect(view.value.matrix.rows).toEqual([source.rows[0]])
+    expect(view.value.matrix.columns).toEqual(source.columns.filter((resource: any) => resource.kind !== 'entity'))
+    reading.value = { ...clean, hiddenKinds: [] }
+    expect(view.value.matrix.columns).toEqual(source.columns)
+    reading.value = { ...reading.value, hiddenKinds: [...new Set(source.columns.map((resource: any) => resource.kind))] }
+    expect(view.value.matrix.columns).toEqual([])
+    expect(view.value.matrix.cells).toEqual([])
+    expect(view.value.matrix.rows).toEqual([source.rows[0]])
+  })
+
   it('keeps nine questions with explicit diagram types and stable view IDs', () => {
     expect(PRODUCT_TOPOLOGY_VIEWS.map((view: any) => view.id)).toEqual(['domain-reach', 'capability-reach', 'journey-reach', 'rule-reach', 'sitemap', 'what-it-keeps', 'delivery-by-interface', 'rule-attachments', 'what-changes-what'])
     expect(PRODUCT_TOPOLOGY_VIEWS.every((view: any) => view.question.endsWith('?') && view.diagramType && view.note)).toBe(true)
@@ -177,6 +268,42 @@ describe('named topology semantics', () => {
     expect(new Set(screens.map(item => item.resource.key)).size).toBe(screens.length)
   })
 
+  it('keeps delivery popovers tied to their own route kind within a mixed cell', () => {
+    const workspace = workspaceOf(shopRoot)
+    const screen = workspace.screens[0]
+    const experience = workspace.experiences[0]
+    const cell = { id: 'mixed', row: workspace.capabilities[0].key, column: workspace.interfaces[0].key,
+      labels: ['in experience', 'on screen'], evidence: [experience, screen], details: [] }
+    const badges = relationshipBadges(cell, 'delivery')
+    expect(badges.map((badge: any) => [badge.label, badge.routes.map((route: any) => route.key)])).toEqual([
+      ['in experience', [experience.key]], ['on screen', [screen.key]]
+    ])
+    const direct = relationshipBadges({ ...cell, labels: ['direct', 'in experience'], evidence: [experience] }, 'delivery')
+    expect(direct[0].routes).toEqual([])
+    expect(direct[1].routes).toEqual([experience])
+  })
+
+  it('keeps each attachment badge tied to all of its own selectors and scopes', () => {
+    const report = reportOf(shopRoot)
+    const placeId = report.model.screens[0]!.id
+    const entity = { type: 'entity' as const, entityId: 'order', effect: 'changes' as const, from: null, to: null, facts: [], contexts: [] }
+    report.model.businessRules.push({ ...report.model.businessRules[0]!, id: 'badge-scopes', appliesTo: [
+      { ...entity, from: 'Pending', to: 'Confirmed', contexts: [{ placeId }] },
+      { ...entity, to: 'Cancelled' },
+      { ...entity, effect: 'creates', to: 'Pending' },
+      { ...entity, effect: null, facts: ['Total charged'] }
+    ] })
+    const workspace = projectReportWorkspace(report)
+    const cell = projections.ruleAttachmentsProjection(workspace).cells.find((cell: any) => cell.row === 'rule:badge-scopes')
+    const badges = relationshipBadges(cell, 'rules')
+    expect(badges.map((badge: any) => badge.label)).toEqual(['changes', 'creates', 'attached'])
+    expect(badges[0].attachments.map((attachment: any) => attachment.target.to)).toEqual(['Confirmed', 'Cancelled'])
+    expect(badges[0].attachments[0].contexts.map((context: any) => context.id)).toEqual([placeId])
+    expect(badges[0].attachments[1].contexts).toEqual([])
+    expect(badges[1].attachments.map((attachment: any) => attachment.target.to)).toEqual(['Pending'])
+    expect(badges[2].attachments[0].target.facts).toEqual(['Total charged'])
+  })
+
   it('preserves all direct typed Rule selectors, including scoped Entity and Context targets', () => {
     const report = reportOf(shopRoot)
     const template = report.model.businessRules[0]!
@@ -201,19 +328,69 @@ describe('named topology semantics', () => {
     expect(matrix.columns.some((column: any) => column.kind === 'domain')).toBe(false)
   })
 
-  it('aggregates mutations with evidence, without converting reads into changes', () => {
+  it('compares Entities by Capability, retaining mutation evidence and excluding reads', () => {
     const workspace = workspaceOf(shopRoot)
     const matrix = projections.mutationProjection(workspace)
+    expect(matrix.rows.length).toBeGreaterThan(0)
+    expect(matrix.columns.length).toBeGreaterThan(0)
+    expect(matrix.rows.every((row: any) => row.kind === 'entity')).toBe(true)
+    expect(matrix.columns.every((column: any) => column.kind === 'capability')).toBe(true)
     for (const capability of workspace.capabilities) {
-      const cells = matrix.cells.filter((cell: any) => cell.row === capability.key)
+      const cells = matrix.cells.filter((cell: any) => cell.column === capability.key)
       expect(cells).toHaveLength(capability.entityEffects.length)
       for (const cell of cells) {
-        const effect = capability.entityEffects.find((line: any) => `entity:${line.entityId}` === cell.column)
+        const effect = capability.entityEffects.find((line: any) => `entity:${line.entityId}` === cell.row)
         expect(cell.labels).toEqual([...new Set(effect.effects.map((item: any) => item.effect))])
         expect(cell.labels).not.toContain('reads')
         expect(cell.evidence.map((item: any) => item.id)).toEqual(effect.scenarioIds)
       }
     }
+  })
+
+  it('keeps each mutation badge tied to its own Scenarios and authored states', () => {
+    const matrix = projections.mutationProjection(workspaceOf(join(__dirname, '..')))
+    const mutations = (entity: string, capability: string) => matrix.cells.find((cell: any) =>
+      cell.row === `entity:${entity}` && cell.column === `capability:${capability}`).mutations
+    const evidenceIds = (mutation: any) => mutation.variants.flatMap((variant: any) => variant.evidence.map((scenario: any) => scenario.id)).sort()
+    const decision = mutations('product-model', 'decide-intended-behavior')
+    expect(evidenceIds(decision.find((item: any) => item.effect === 'creates'))).toEqual(['decide-a-new-product'])
+    expect(evidenceIds(decision.find((item: any) => item.effect === 'changes'))).toEqual(['change-behavior-and-verify-the-branch', 'write-an-approved-model-delta'])
+
+    const exported = mutations('blueprint', 'export-blueprint')[0]
+    expect(exported.effect).toBe('creates')
+    expect(exported.variants).toHaveLength(1)
+    expect(exported.variants[0]).toMatchObject({ from: '', to: 'Exported' })
+    expect(evidenceIds(exported)).toEqual(['export-a-portable-blueprint', 'export-here-and-open-there'])
+
+    const contributed = mutations('blueprint', 'contribute-blueprint')
+    expect(contributed.map((item: any) => item.effect)).toEqual(['creates', 'changes'])
+    expect(contributed[1].variants[0]).toMatchObject({ from: 'Exported', to: 'Proposed' })
+    // The same Scenario can support both badges when its Steps do both things.
+    for (const mutation of contributed) expect(evidenceIds(mutation)).toEqual(['open-a-blueprint-pull-request'])
+  })
+
+  it('separates state variants and deduplicates repeated Steps without borrowing evidence from another Capability', () => {
+    const workspace = workspaceOf(join(__dirname, '..'))
+    const source = workspace.scenarios.find((scenario: any) => scenario.id === 'export-here-and-open-there')
+    const step = (capabilityId: string, effect: string, to: string) => ({ ...source.steps[0], capabilityId,
+      entities: [{ entityId: 'blueprint', as: '', effect, from: '', to }] })
+    // Shared ids across Scenario kinds must not merge their distinct evidence.
+    workspace.scenarios = [
+      { ...source, id: 'shared', key: 'journey-scenario:shared', steps: [
+        step('export-blueprint', 'creates', 'Exported'), step('export-blueprint', 'creates', 'Exported'),
+        step('contribute-blueprint', 'creates', 'Proposed')
+      ] },
+      { ...source, id: 'shared', key: 'capability-scenario:shared', scenarioType: 'capability', capabilityId: 'export-blueprint',
+        steps: [step('', 'creates', 'Proposed')] },
+      { ...source, key: 'journey-scenario:read-only', steps: [step('export-blueprint', 'reads', '')] }
+    ]
+    const capability = workspace.capabilities.find((item: any) => item.id === 'export-blueprint')
+    capability.entityEffects.find((item: any) => item.entityId === 'blueprint').effects.push({ effect: 'creates', from: '', to: 'Proposed' })
+    const cell = projections.mutationProjection(workspace).cells.find((item: any) => item.id === 'entity:blueprint->capability:export-blueprint')
+    const variants = cell.mutations[0].variants
+    expect(variants.map((item: any) => item.to)).toEqual(['Exported', 'Proposed'])
+    expect(variants[0].evidence.map((item: any) => item.key)).toEqual(['journey-scenario:shared'])
+    expect(variants[1].evidence.map((item: any) => item.key)).toEqual(['capability-scenario:shared'])
   })
 
   it('draws each authored Entity relation exactly once, including parallel and self relations', () => {
@@ -255,6 +432,8 @@ describe('topology reading state', () => {
     expect(state.topologyFromQuery(state.topologyToQuery(reading))).toEqual(reading)
     expect(Object.values(state.topologyToQuery(state.defaultTopologyReading())).every(value => value === undefined)).toBe(true)
     expect(state.topologyFromQuery({ tv: 'made-up', th: ['not-a-kind'] })).toEqual(state.defaultTopologyReading())
+    const matrixReading = { ...state.defaultTopologyReading(), view: 'rule-attachments', focus: ['rule:one', 'entity:a,b', 'screen:web::item'] }
+    expect(state.topologyFromQuery(state.topologyToQuery(matrixReading))).toEqual(matrixReading)
   })
   it('preserves surviving resources after an edit and clears removed selections', () => {
     const workspace = workspaceOf()

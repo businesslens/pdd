@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.19.0] - 2026-09-17
+
+- Clearer comparison tables with independent filters and smoother navigation.
+- Colored badges with details on click and complete legends.
+- Larger Context paths and improved keyboard navigation.
+
 ## [0.18.0] - 2026-09-17
 
 - Navigate reports with a collapsible sidebar and clearer page headers.

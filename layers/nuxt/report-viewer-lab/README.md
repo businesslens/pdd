@@ -23,6 +23,45 @@ been removed; expanded and mobile menus retain their existing glyph sizes.
 Navigation and reference rows now use 36px targets for more breathing room;
 brand controls and the collapsed Product picker retain 32px targets.
 
+The **Comparison legend** audition is decided: Explained is the stable Legend
+popover on Compare delivery, What changes what and Rule attachments. Its button
+lives in these page headers; each colored badge has a short meaning.
+Entries cover every possible badge for the view, regardless of filters. The
+shadow, alternatives, selector, cookie composable and experiment stylesheet have
+been removed. The background audition remains independently owned by `theme-lab`.
+
+The **Context sizing** audition is decided: Roomier is the stable Context
+renderer, at 13 px in resource drilldowns and 12 px in the three comparison
+views' popovers. Icons scale with the text; the chosen border, spacing, path
+and resource navigation are preserved. The shadow, alternate sizes, selector,
+modal dock, cookie composable and experiment stylesheet have been removed.
+The background audition remains independently owned by `theme-lab`.
+
+The **Mutation badges** audition is decided: What changes what now uses soft
+green creates, gold changes with a clearer border, and Terracotta removals in
+light mode or Muted red in dark mode. The chosen styles live in the stable
+report, including hover, open and focus states. The alternate palettes, preview,
+selector, cookie composable and experiment stylesheet have been removed.
+
+The **Mutation popover** audition is decided: Capability first is now the
+stable reading in What changes what. The header names the Capability with its
+icon; the body names the Entity with its icon, then shows each effect's state
+details and matching Scenarios. The shadow component, alternatives, selector,
+cookie composable and experiment styles have been removed.
+
+The **Table navigation** audition is decided: Edge handles with Divider middle
+now live in `report-viewer` across all three comparison views. Subtle handles sit
+on the subject divider and the table’s right edge, centered on the visible rows;
+narrow readings use compact header arrows. Controls move one column at a time,
+with page scrolling, sticky headers, and expanded details preserved. The shadow
+component, alternative placements, selectors, and experiment cookies have been
+removed. The background audition remains independently owned by `theme-lab`.
+
+The **Table corner**
+audition is decided: Inset at 14 px is the stable diagonal header across
+Compare delivery, What changes what, and Rule attachments. The alternatives,
+cookie composable, and Table corner selector have been removed.
+
 The **Control size**
 audition is decided: page controls, filters and graph buttons use Nuxt UI's
 `sm` size (28px) at every viewport width. The optional theme lab retains its own sizing.

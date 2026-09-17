@@ -20,7 +20,7 @@ export function useBlrTopologyScroll(key: Ref<string>) {
       // left, rather than jumping to its first mention earlier in the Scenario.
       occurrence: anchor ? anchors.filter(item => anchorKey(item) === anchorKey(anchor)).indexOf(anchor) : 0,
       offset: anchor ? anchor.getBoundingClientRect().top - top : 0,
-      nested: [...pane.querySelectorAll<HTMLElement>('.blr-matrix-scroll, .blr-diagram-scroll')].map(item => ({ top: item.scrollTop, left: item.scrollLeft })) })
+      nested: [...pane.querySelectorAll<HTMLElement>('.blr-diagram-scroll')].map(item => ({ top: item.scrollTop, left: item.scrollLeft })) })
     memory.set(currentKey, value)
     try { sessionStorage.setItem(storageKey(currentKey), value) } catch { /* Private storage may be unavailable. */ }
   }
@@ -44,7 +44,7 @@ export function useBlrTopologyScroll(key: Ref<string>) {
         const anchor = [...pane.querySelectorAll<HTMLElement>('[data-occurrence-id], [data-group-id], [data-resource-key]')].filter(item => (item.dataset.occurrenceId ?? item.dataset.groupId ?? item.dataset.resourceKey) === value.anchor)[value.occurrence ?? 0]
         if (anchor) pane.scrollTop += anchor.getBoundingClientRect().top - pane.getBoundingClientRect().top - value.offset
       }
-      pane.querySelectorAll<HTMLElement>('.blr-matrix-scroll, .blr-diagram-scroll').forEach((item, index) => {
+      pane.querySelectorAll<HTMLElement>('.blr-diagram-scroll').forEach((item, index) => {
         item.scrollTop = value?.nested?.[index]?.top ?? 0
         item.scrollLeft = value?.nested?.[index]?.left ?? Number(item.dataset.initialScrollLeft ?? 0)
       })
