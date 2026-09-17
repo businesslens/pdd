@@ -23,13 +23,15 @@ describe('private Product Report viewer lab', () => {
     const readme = readFileSync(join(lab, 'README.md'), 'utf8')
 
     expect(readme).toContain('There are no active report experiments in this layer.')
-    for (const name of ['BlrScenarioStep', 'BlrStepGuidedReading', 'BlrStepReading', 'BlrStepEffectReading', 'BlrStepCardLabRow', 'BlrControlSizeLabRow', 'BlrSidebarIconSizeLabRow']) {
+    for (const name of ['BlrScenarioStep', 'BlrStepGuidedReading', 'BlrStepReading', 'BlrStepEffectReading', 'BlrStepCardLabRow', 'BlrControlSizeLabRow', 'BlrSidebarIconSizeLabRow', 'BlrProductPickerLabRow']) {
       expect(existsSync(join(lab, `app/components/${name}.vue`))).toBe(false)
     }
     expect(existsSync(join(lab, 'app/composables/useBlrStepCardLab.ts'))).toBe(false)
     expect(existsSync(join(lab, 'app/composables/useBlrControlSizeLab.ts'))).toBe(false)
     expect(existsSync(join(lab, 'app/composables/useBlrSidebarIconSizeLab.ts'))).toBe(false)
+    expect(existsSync(join(lab, 'app/composables/useBlrProductPickerVariant.ts'))).toBe(false)
     expect(existsSync(join(lab, 'app/assets/sidebar-icon-size.css'))).toBe(false)
+    expect(existsSync(join(lab, 'app/assets/product-picker-lab.css'))).toBe(false)
     expect(existsSync(join(lab, 'app/plugins/control-size.ts'))).toBe(false)
     expect(existsSync(join(root, 'layers/nuxt/report-viewer/app/components/BlrScenarioStep.vue'))).toBe(true)
     expect(existsSync(join(lab, 'app/components/BlrResourcePage.vue'))).toBe(false)
@@ -40,6 +42,8 @@ describe('private Product Report viewer lab', () => {
     const app = readFileSync(join(root, 'viewer/app/app/app.vue'), 'utf8')
 
     expect(app).toMatch(/<BusinessLensThemeLabBar(?:\s|>)/)
+    expect(app).not.toContain('BlrProductPickerLabRow')
+    expect(app).not.toContain('useBlrProductPickerVariant')
     expect(app).not.toContain('BlrSidebarIconSizeLabRow')
     expect(app).not.toContain('useBlrSidebarIconSizeLab')
     expect(app).not.toContain('BlrControlSizeLabRow')

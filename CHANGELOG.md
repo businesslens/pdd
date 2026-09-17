@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Restore the selected sidebar item's tinted background and colored accent.
+
+- Give the product picker a quieter outline and align its menu labels and checkmarks.
+
+- Keep the current product visible in the sidebar and switch between catalog Blueprints.
+
 - Collapse the desktop sidebar to an icon rail and keep that choice between visits.
 
 - Move navigation and viewer controls into the sidebar, with report status in the page header.

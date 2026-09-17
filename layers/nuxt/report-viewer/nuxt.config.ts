@@ -33,6 +33,7 @@ export default defineNuxtConfig({
         'lucide:bot',
         'lucide:box',
         'lucide:braces',
+        'lucide:check',
         'lucide:chevron-down',
         'lucide:chevron-left',
         'lucide:chevron-right',

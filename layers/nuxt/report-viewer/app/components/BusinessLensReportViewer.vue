@@ -13,11 +13,14 @@ import { destinationForLocation } from '../utils/reportDestinations'
  */
 import type { ProductReportV13 } from 'businesslens/report'
 import { projectReportWorkspace } from '../utils/reportWorkspace'
+import type { ReportProductLink } from '../utils/reportProducts'
 
 const props = defineProps<{
   report: ProductReportV13
-  /** Host-resolved `.businesslens/product/logo.svg`; rendered in the Product Overview. */
+  /** Host-resolved `.businesslens/product/logo.svg`; used in the picker and Overview. */
   logoSrc?: string | null
+  /** Other products available in this host; mark the current destination active. */
+  products?: ReportProductLink[]
   /** Mounted host-header element receiving the report's search and Vocabulary controls. */
   toolsTarget?: string
 }>()
@@ -88,6 +91,7 @@ onMounted(() => { mounted = true; synchronizeLocation() })
       :topology="location.topology"
       :workspace="workspace"
       :logo-src="logoSrc"
+      :products="products"
       :tools-target="toolsTarget"
       @update:section="section = $event"
       @update:resource="resource = $event"

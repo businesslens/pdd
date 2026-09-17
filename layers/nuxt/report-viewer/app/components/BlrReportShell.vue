@@ -31,8 +31,9 @@ import type { ColumnChoice } from '../composables/useColumns'
 import { KIND_TERM } from '../utils/vocabulary'
 import type { VocabularySlug } from '../utils/vocabulary.generated'
 import { firstSentence } from '../utils/reportMarkdown'
+import type { ReportProductLink } from '../utils/reportProducts'
 
-const props = defineProps<{ workspace: ReportWorkspace, logoSrc?: string | null, toolsTarget?: string }>()
+const props = defineProps<{ workspace: ReportWorkspace, logoSrc?: string | null, products?: ReportProductLink[], toolsTarget?: string }>()
 
 /* ------------------------------------------------------------------ */
 /* Selection: `activeKind` is what the collection view is about, and */
@@ -572,6 +573,8 @@ const orphanScenarios = computed(() => props.workspace.scenarios
         <template #default="{ collapsed }">
           <BlrReportSidebar
             :workspace="workspace"
+            :logo-src="logoSrc"
+            :products="products"
             :collapsed="collapsed"
             :active-section="activeSection"
             :counts="kindCounts"
@@ -580,6 +583,7 @@ const orphanScenarios = computed(() => props.workspace.scenarios
             @view="openView"
             @search="openSidebarTool(() => searchOpen = true)"
             @vocabulary="openVocabulary"
+            @navigate="mobileNavOpen = false"
           >
             <template v-if="$slots['sidebar-header']" #brand><slot name="sidebar-header" :collapsed="collapsed" /></template>
             <template v-if="$slots['sidebar-footer']" #footer><slot name="sidebar-footer" :collapsed="collapsed" /></template>
@@ -935,6 +939,8 @@ const orphanScenarios = computed(() => props.workspace.scenarios
         <BlrReportSidebar
           class="blr-report-shell"
           :workspace="workspace"
+          :logo-src="logoSrc"
+          :products="products"
           :active-section="activeSection"
           :counts="kindCounts"
           tools
@@ -942,6 +948,7 @@ const orphanScenarios = computed(() => props.workspace.scenarios
           @view="openView"
           @search="openSidebarTool(() => searchOpen = true)"
           @vocabulary="openVocabulary"
+          @navigate="mobileNavOpen = false"
         >
           <template v-if="$slots['sidebar-header']" #brand><slot name="sidebar-header" :collapsed="false" /></template>
           <template #close>

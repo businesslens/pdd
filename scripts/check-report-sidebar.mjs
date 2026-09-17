@@ -18,8 +18,33 @@ try {
   const desktop = page.locator('[aria-label="Report navigation"][data-collapsed]')
   const rail = page.locator('[data-report-sidebar]:visible')
   const capture = async name => { if (screenshots) await page.screenshot({ path: join(screenshots, `${name}.png`) }) }
+  const expectProductRowCentered = async () => {
+    const row = page.getByRole('menuitem', { name: /Fixture Shop/ })
+    const centers = await row.evaluate(element => [
+      element,
+      element.querySelector('[data-businesslens-logo]'),
+      element.querySelector('[data-slot="itemLabel"]'),
+      element.querySelector('[data-slot="itemTrailing"] .iconify')
+    ].map(node => {
+      const rect = node.getBoundingClientRect()
+      return rect.y + rect.height / 2
+    }))
+    expect(Math.max(...centers) - Math.min(...centers)).toBeLessThan(1)
+  }
   await expect(desktop).toHaveAttribute('data-collapsed', 'false')
   await expect(desktop).toHaveCSS('width', '288px')
+  const product = rail.getByRole('button', { name: 'Choose product: Fixture Shop', exact: true })
+  await expect(product).toContainText('Fixture Shop')
+  await expect(product.locator('[data-businesslens-logo]')).toBeVisible()
+  await product.focus()
+  await page.keyboard.press('Enter')
+  await expect(page.getByRole('menuitem')).toHaveCount(1)
+  await expect(page.getByRole('menuitem')).toHaveAttribute('aria-current', 'true')
+  await expect(page.getByRole('menuitem')).toContainText('Fixture Shop')
+  await expectProductRowCentered()
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('menu')).toHaveCount(0)
+  await expect(product).toBeFocused()
   await rail.getByRole('button', { name: 'Entities', exact: true }).click()
   await page.getByRole('button', { name: 'Draw as graph', exact: true }).click()
   await expect(page.locator('[data-flow-ready=true]')).toBeVisible()
@@ -38,6 +63,7 @@ try {
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(heading)
   await expect(page.getByRole('button', { name: 'Draw as graph', exact: true })).toHaveAttribute('aria-pressed', 'true')
   await expect(rail.locator('[data-logo-wordmark], [data-pdd-version]')).toHaveCount(0)
+  await expect(product.locator('[data-businesslens-logo]')).toHaveCSS('width', '17px')
 
   const entities = rail.getByRole('button', { name: 'Entities', exact: true })
   await expect(entities).toHaveAttribute('aria-current', 'page')
@@ -48,6 +74,13 @@ try {
   await expect(page.locator('[data-slot="content"] [data-slot="text"]').filter({ hasText: /^Entities$/ })).toBeVisible()
   await page.mouse.move(500, 10)
   await capture('sidebar-collapsed')
+  await product.hover()
+  await expect(page.locator('[data-slot="content"] [data-slot="text"]').filter({ hasText: /^Fixture Shop$/ })).toBeVisible()
+  await product.click()
+  await expect(page.getByRole('menuitem')).toContainText('Fixture Shop')
+  await expectProductRowCentered()
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('menu')).toHaveCount(0)
   await page.reload()
   await expect(desktop).toHaveCSS('width', '64px')
   await expect(page.getByRole('button', { name: 'Draw as graph', exact: true })).toHaveAttribute('aria-pressed', 'true')
@@ -78,6 +111,7 @@ try {
   await page.getByRole('button', { name: 'Open report navigation', exact: true }).click()
   await expect(rail).toHaveAttribute('data-collapsed', 'false')
   await expect(rail.locator('[data-pdd-version]')).toBeVisible()
+  await expect(product).toContainText('Fixture Shop')
   await expect(rail.getByRole('button', { name: 'Entities', exact: true })).toHaveText(/Entities/)
   await expect.poll(async () => Math.round((await rail.boundingBox()).x)).toBe(0)
   await capture('sidebar-mobile')

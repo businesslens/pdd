@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import type { ReportResourceKind, ReportWorkspace } from '../utils/reportWorkspace'
+import type { ReportProductLink } from '../utils/reportProducts'
 
 defineProps<{
   workspace: ReportWorkspace
+  logoSrc?: string | null
+  products?: ReportProductLink[]
   activeSection: string
   counts: Record<ReportResourceKind, number>
   tools?: boolean
@@ -14,14 +17,25 @@ const emit = defineEmits<{
   view: [section: string]
   search: []
   vocabulary: [originId: string]
+  navigate: []
 }>()
 </script>
 
 <template>
   <div data-report-sidebar :data-collapsed="Boolean(collapsed)" class="blr-pane flex h-full flex-col py-4" :class="collapsed ? 'px-2' : 'px-3'">
-    <div v-if="$slots.brand || $slots.close" class="mb-5 flex min-h-7 shrink-0 items-start gap-2" :class="collapsed ? 'justify-center' : 'justify-between'">
+    <div v-if="$slots.brand || $slots.close" class="mb-4 flex min-h-7 shrink-0 items-start gap-2" :class="collapsed ? 'justify-center' : 'justify-between'">
       <slot name="brand" />
       <slot name="close" />
+    </div>
+
+    <div class="mb-3 shrink-0">
+      <BlrProductPicker
+        :title="workspace.identity.title"
+        :logo-src="logoSrc"
+        :products="products"
+        :collapsed="collapsed"
+        @navigate="emit('navigate')"
+      />
     </div>
 
     <BlrRail

@@ -199,6 +199,10 @@ costed already.
   divider, with more space before the reading than below the heading. Status
   wraps below the heading on narrow screens. Overview in the sidebar is the
   way home; there is no separate product home button.
+  A Product picker below the sidebar brand keeps the current Product's logo
+  and name visible on every section. The local viewer lists its one Product;
+  catalog hosts supply links to their available Blueprints. Collapsed mode shows
+  the Product logo with a name tooltip, and the mobile drawer shows the full picker.
   The local viewer's package version sits beside its logo in the sidebar.
   Theme lab is a header icon, followed by the color-mode switch at the right
   edge, aligned with the icon-only Search beside Overview. Header controls and

@@ -16,6 +16,12 @@ const emit = defineEmits<{ kind: [kind: ReportResourceKind], view: [section: str
 
 type RailItem = NavigationMenuItem & { iconColor?: string, count?: number }
 const RAIL_KINDS = MAIN_RESOURCE_KINDS.map(kind => ENTITY_KIND_META[kind])
+const activeColor = computed(() => {
+  const meta = props.activeSection === 'overview'
+    ? ENTITY_KIND_META.product
+    : RAIL_KINDS.find(kind => kind.kind === props.activeSection)
+  return meta ? `var(--blr-slot-${meta.slot})` : 'var(--ui-text-muted)'
+})
 const overviewItems = computed<RailItem[]>(() => [{
   label: 'Overview',
   icon: ENTITY_KIND_META.product.icon,
@@ -57,7 +63,7 @@ const menuUi = computed(() => ({
 </script>
 
 <template>
-  <div>
+  <div :style="{ '--blr-rail-active-color': activeColor }">
     <div v-if="$slots.navigation" class="mb-1 border-b border-default px-1 pb-2">
       <slot name="navigation" :collapsed="collapsed" />
     </div>
@@ -98,3 +104,11 @@ const menuUi = computed(() => ({
     </UNavigationMenu>
   </div>
 </template>
+
+<style scoped>
+/* Keep Nuxt UI's navigation and focus treatment, with the original rail tint. */
+:deep(.blr-navitem[data-current='true']::before) {
+  background: color-mix(in srgb, var(--blr-rail-active-color) 10%, var(--ui-bg-elevated));
+  box-shadow: inset 2px 0 0 var(--blr-rail-active-color);
+}
+</style>

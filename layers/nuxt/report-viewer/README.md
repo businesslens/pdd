@@ -109,6 +109,17 @@ The layer renders the report and nothing around it. Site chrome — the header,
 the footer, and any brand or legal links — belongs to the host, which already
 has the navigation, routing, and legal context the report does not. The report's
 sidebar holds search, Vocabulary and sections, with Overview as the way home.
+A Product picker below the host brand shows the current Product's logo and name.
+It uses Nuxt UI's DropdownMenu with keyboard navigation and a selected-item check.
+The trigger uses the selected Hairline treatment: a faint outline and transparent
+background. Menu rows center the logo, Product name and checkmark vertically.
+The local viewer lists its single Product. Hosts can supply `products` as
+`{ label, to, logoSrc?, active? }[]`, marking the current destination `active`;
+the current report remains the selected entry even while the host's list loads.
+Other entries are native links, with the menu's keyboard type-ahead navigation.
+Catalog hosts should key the viewer by Blueprint identity so switching Products
+starts a fresh reading. In the collapsed rail, the picker shows a 17px Product
+logo in a 32px trigger and a name tooltip; the mobile drawer keeps its full label.
 An icon-only Search button sits beside Overview, stacking directly below it
 when collapsed. Vocabulary follows the collections after a divider.
 The working view's header serves as its navbar: the heading shares it with
