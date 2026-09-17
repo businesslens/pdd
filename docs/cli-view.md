@@ -37,13 +37,15 @@ or swap the comparison direction without changing the checkout.
 
 The default base is the repository's known default branch on a feature branch,
 otherwise the last commit. Explicit selections take precedence. A revision with
-no readable model explains the unavailable model comparison while its repository
-files remain comparable. With no commits, there is no saved comparison state.
+no readable model still supports file comparison; unavailable resource links are
+explained in the selected file's Model references. With no commits, there is no
+saved comparison state.
 
-Model changes name resources and fields, independently of file references.
-Repository changes include tracked and nonignored untracked files, staged and
-unstaged edits, additions, deletions and executable-mode changes. Select a file
-for its before/after contents, or a resource for that state's complete reading.
+One changed-file tree includes model files under `.businesslens/` alongside
+implementation and other project files. It includes tracked and nonignored
+untracked files, staged and unstaged edits, additions, deletions and
+executable-mode changes. Select a file for its before/after contents and recorded
+model connections. Open a related resource for that state's complete reading.
 Historical contents never fall back to current files. Text previews are bounded;
 binary, oversized, unreadable and submodule contents are identified explicitly.
 

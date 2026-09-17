@@ -64,7 +64,7 @@ const readingWorkspace = computed(() => resourceState.value === 'working' ? prop
 /* `openResource` is inspected over that working view.                   */
 /* ------------------------------------------------------------------ */
 
-/* Review compares two states of the whole model. Its section has the
+/* Review compares two states of the repository. Its section has the
    Product as its subject and opens from the header beside Coverage. */
 const CHANGES_SECTION = 'review'
 
@@ -385,11 +385,11 @@ const surfaceHeading = computed(() => {
     return { icon: matrix.icon, slot: undefined, title: matrix.name,
       meta: findProductTopologyView(matrix.view).diagramType, term: undefined, termText: '' }
   }
-  /* Review is qualified by its count, as a collection is: the count of
-     things that differ from the baseline named inside the reading. */
+  /* Review counts changed files, including authored model files. */
   if (changesOpen.value) {
+    const count = props.changes?.repository?.files.length
     return { icon: 'i-lucide-history', slot: ENTITY_KIND_META.product.slot, title: 'Review',
-      meta: 'Product & repository', term: undefined, termText: '' }
+      meta: count === undefined ? '' : `${count} ${count === 1 ? 'file' : 'files'}`, term: undefined, termText: '' }
   }
   if (activeKind.value === 'product') {
     const meta = ENTITY_KIND_META.product

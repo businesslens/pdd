@@ -6,7 +6,7 @@ import { repositoryTree } from '../utils/repositoryTree'
 
 const props = defineProps<{
   diff: RepositoryDiff, base: string, target: string, before: ReportWorkspace | null, after: ReportWorkspace | null,
-  loadFile?: RepositoryFileLoader, resourceReadingOpen?: boolean
+  loadFile?: RepositoryFileLoader, resourceReadingOpen?: boolean, modelNotice?: string | null
 }>()
 const emit = defineEmits<{ inspect: [key: string, state: string] }>()
 const path = defineModel<string | null>('path', { default: null })
@@ -78,17 +78,16 @@ function counts(prefix: string) {
 </script>
 
 <template>
-  <section class="space-y-3 border-t border-default pt-6" data-review-repository>
-    <div class="flex items-baseline gap-2"><h2 class="text-base font-semibold">Repository changes</h2><span class="text-sm text-muted">{{ diff.files.length }} {{ diff.files.length === 1 ? 'file' : 'files' }}</span></div>
-    <p class="text-sm text-muted">Changes between the selected states, including files without model references.</p>
-    <BlrRepositoryTree v-model:path="path" :nodes="tree" root-label="Repository">
+  <section class="space-y-3" data-review-repository>
+    <p class="text-sm text-muted">Changed files, including the Product Model in <code>.businesslens/</code>. Select a file to compare its contents.</p>
+    <BlrRepositoryTree v-model:path="path" :nodes="tree" root-label="Repository" :empty-message="diff.files.length ? 'No changed files match this filter.' : 'No file changes between these states.'">
       <template #filters><USelect v-model="filter" :items="states" aria-label="Filter repository changes" size="sm" class="w-40 shrink-0" /></template>
       <template #controls><UCheckbox v-model="showContext" label="Show unchanged context" class="shrink-0 whitespace-nowrap" /></template>
+      <template #status><p v-if="!diff.files.length && tree.length" class="text-sm text-muted">No file changes between these states.</p></template>
       <template #indicators="{ node }">
         <span v-for="(count, state) in counts(node.value)" :key="state" class="rounded border border-default px-1 text-[10px]" :data-repository-change="state">{{ labels[state] }}<span v-if="node.directory" class="ms-1">{{ count }}</span></span>
       </template>
     </BlrRepositoryTree>
-    <p v-if="!diff.files.length" class="text-sm text-muted">No repository file changes between these states.</p>
     <USlideover v-model:open="open" :title="path === '.' ? 'Repository changes' : path ?? 'File changes'" :description="directory ? 'Changes within this location between the selected states.' : 'File contents at Base and Compare to.'" :content="{ onCloseAutoFocus: closeFocus }" :ui="{ content: 'w-full max-w-full sm:max-w-5xl', title: 'break-all pe-8 font-mono text-sm', body: 'min-w-0' }">
       <template #body>
         <div class="space-y-6" data-review-file-details>
@@ -112,6 +111,10 @@ function counts(prefix: string) {
           <section class="space-y-3 border-t border-default pt-4">
             <h3 class="text-sm font-semibold">Model references</h3>
             <p class="text-xs text-muted">Recorded connections at each selected state. A reference does not establish agreement.</p>
+            <details v-if="modelNotice" class="text-sm text-muted" data-review-model-notice>
+              <summary class="cursor-pointer">Some model references are unavailable</summary>
+              <p class="mt-2 whitespace-pre-line break-words">{{ modelNotice }}</p>
+            </details>
             <div v-for="side in connections" :key="side.label" class="space-y-2">
               <h4 class="text-xs font-medium text-muted">{{ side.label }}</h4>
               <p v-if="!side.workspace" class="text-sm text-muted">The model is unavailable at this state.</p>

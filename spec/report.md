@@ -44,10 +44,13 @@ navigation state, not a store of historical reports or file contents.
 
 Review opens from the header beside Coverage. Overview retains its Coverage tab,
 which explains current authored model breadth and repository inspection context.
-Review presents Product Model changes and Repository changes as separate
-sections for the same two states. It shares Coverage's repository tree,
-expansion, search and path selection, with change indicators in place of
-inspection-age indicators. File links never determine which model changes exist.
+Review presents one changed-file tree for both model and implementation files.
+Authored `.businesslens/` files appear at their repository paths, once each,
+alongside other project files. There is no separate resource-level change list
+or field summary. The heading counts changed files. It shares Coverage's
+repository tree, expansion, search and path selection, with change indicators
+in place of inspection-age indicators. Model References enrich a selected
+location with resource links; they never determine which files appear.
 Coverage's changes since the last completed inspection are distinct from Review's
 changes between the selected states. Neither establishes semantic alignment.
 
@@ -63,14 +66,18 @@ on a feature branch, otherwise Last commit. Detection uses the configured remote
 otherwise origin, otherwise the sole remote, and never guesses a branch name.
 Explicit URL choices take precedence. An unavailable selected revision is an
 error, never a request to silently choose another. When a valid Git state has no
-compilable model, the model comparison explains why it is unavailable and the
-repository comparison remains usable. With no Git baseline, explain that no
-saved state is available. Empty comparisons differ from unavailable comparisons.
+compilable model, the file tree and contents remain usable. The selected
+location's Model references reading explains unavailable resource links; model
+compilation failures do not become a page-level comparison error. With no Git
+baseline, explain that no saved state is available. Empty comparisons differ
+from unavailable comparisons.
 
-Product changes compare authored and derived resource fields, taxonomies and
-Coverage declarations. `coverage.review` is inspection accounting and is excluded
-from the model diff; completing a review alone is not a Product meaning change.
-Local Reference file changes remain explicitly labeled as file changes.
+Resource change marks elsewhere in the report compare authored and derived
+resource fields, taxonomies and Coverage declarations. `coverage.review` is
+inspection accounting and is excluded
+from those model change marks; completing a review alone is not a Product meaning
+change. Review still shows every changed authored file, including saved
+inspection accounting, configuration and formatting-only edits.
 
 ### Repository comparison and file readings
 
@@ -79,8 +86,9 @@ states use their exact tree contents and modes. Working state includes existing
 tracked and nonignored untracked files, plus tracked deletions; staged and
 unstaged edits are read as current working contents. Git administration,
 BusinessLens generated build/cache directories and model backup directories are
-excluded. Authored model files remain repository files and also have their
-resource-level comparison. Ignored untracked files are outside this comparison.
+excluded. Authored model files are compared as files, even when their format is
+unsupported or their contents cannot compile. Ignored untracked files are
+outside this comparison.
 
 Paths are identified exactly, so a rename is an addition and a deletion. File
 changes are added, modified or deleted; unreadable inputs remain explicitly

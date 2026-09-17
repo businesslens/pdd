@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { filterRepositoryTree, repositoryTreeNodes, type RepositoryTreeNode } from '../utils/repositoryTree'
 
-const props = defineProps<{ nodes: RepositoryTreeNode[], rootLabel: string, loading?: boolean }>()
+const props = defineProps<{ nodes: RepositoryTreeNode[], rootLabel: string, loading?: boolean, emptyMessage?: string }>()
 const emit = defineEmits<{ select: [event: Event, node: RepositoryTreeNode] }>()
 const path = defineModel<string | null>('path', { default: null })
 const query = ref('')
@@ -65,6 +65,6 @@ function toggle(event: CustomEvent<{ originalEvent: Event }>) {
         <template #item-trailing="{ item }"><slot name="indicators" :node="item" /></template>
       </UTree>
     </div>
-    <p v-if="!visible.length" class="text-sm text-muted">{{ loading ? 'Loading repository paths…' : query ? 'No paths match this search.' : 'No paths to show.' }}</p>
+    <p v-if="!visible.length" class="text-sm text-muted">{{ loading ? 'Loading repository paths…' : query ? 'No paths match this search.' : emptyMessage ?? 'No paths to show.' }}</p>
   </div>
 </template>

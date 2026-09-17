@@ -20,8 +20,9 @@ resources by kind, opens any resource’s reading, reads a thing's lifecycle as 
 Steps compose it, searches by name, and keeps their place across a save and a
 reload.
 
-Review compares model and repository changes between selected Git states,
-including the working state. Coverage in Overview explains current breadth,
+Review compares model and project files in one tree between selected Git states,
+including the working state. Selecting a file opens its before and after
+contents with related resource links. Coverage in Overview explains current breadth,
 exclusions, known gaps and recorded inspection. Both readings share repository
 navigation while naming their own comparison context. Reading never records
 inspection or changes the repository.

@@ -213,12 +213,15 @@ costed already.
 - **Review is a read-only comparison opened from the header beside Coverage.**
   Overview retains its Coverage tab for current model breadth and repository
   inspection context. Review compares any two Git states or the working state,
-  showing Product Model changes and repository file changes together. State
+  showing one changed-file tree containing authored model and project files. State
   selection, filtering and inspection never write model or repository data.
   There are no checkpoints, review checklists, approval or completion actions.
   Coverage and Review share the repository tree and selection behavior while
   retaining their own annotations and explicitly named comparison baselines.
-  Model changes remain visible independently of file links. Historical file and
+  Review has no separate resource-level change list. Model files appear once at
+  their repository paths, independently of References. Selected files open
+  before/after contents with related resources; an unreadable model limits
+  those links, never the file comparison. Historical file and
   resource readings use the selected immutable commit, never current contents.
 - **The rail lists Overview, three cross-collection views, then six
   collections.** The views — Compare delivery, What changes what, Rule

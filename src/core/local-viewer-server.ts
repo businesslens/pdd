@@ -270,13 +270,10 @@ class LocalReportStore {
     const before = model(baseState, 'Base')
     const after = baseState.id === targetState.id ? before : model(targetState, 'Compare to')
     const files = before?.referenceFiles && after?.referenceFiles ? { before: before.referenceFiles, after: after.referenceFiles } : undefined
-    const notices = files ? [...new Set([files.before, files.after].flatMap(snapshot => Object.entries(snapshot)
-      .flatMap(([path, file]) => file.status === 'unavailable' ? [`${path}: ${file.reason}`] : [])))] : []
     const repository = this.repository ? await this.repository.compare(baseState.id, targetState.id) : undefined
     return { base: baseState, target: targetState, before: before?.report ?? null, after: after?.report ?? null,
       diff: before && after ? diffReports(before.report, after.report, files) : null, repository,
-      modelNotice: modelNotices.length ? modelNotices.join('\n') : undefined, revision: this.revision,
-      referenceFileNotice: notices.length ? notices.join('\n') : undefined }
+      modelNotice: modelNotices.length ? modelNotices.join('\n') : undefined, revision: this.revision }
   }
 
   async repositoryFile(base: string, target: string, path: string) {

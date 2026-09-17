@@ -22,11 +22,11 @@ in Overview.
 ## Information presented
 
 - The selected Base and Compare to states, including the working state
-- Added, removed and changed model resources with their changed fields
-- Repository file changes, including files with no model connection
+- One tree of added, modified and deleted files, including authored `.businesslens/` files and files with no model connection
+- The total number of changed files
 - Before and after file contents, or an explicit reason contents are unavailable
 - Model References associated with a file at each selected state
-- A separate explanation when a model cannot be read while repository changes remain available
+- An explanation within Model references when a selected state's model cannot be read
 
 ## Available actions
 
@@ -40,14 +40,15 @@ in Overview.
 
 ### Comparison available
 
-Model and repository changes refer to the same selected states. Each set can be
-empty independently. A file's connection to a resource does not establish that
-their behavior agrees.
+One tree shows all changed files between the selected states. Model files appear
+once at their repository paths; selecting one opens its Markdown or JSON diff.
+A file's connection to a resource does not establish that their behavior agrees.
 
 ### Model unavailable
 
-The selected revision has no supported, structurally valid model. Its repository
-comparison remains available and the missing model has an explicit explanation.
+The selected revision has no supported, structurally valid model. Its tree and
+file contents remain available, including the model files themselves. The
+selected location's Model references explain unavailable resource links.
 
 ### No saved state
 

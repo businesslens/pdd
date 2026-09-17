@@ -52,7 +52,7 @@ const emptyReason = ref<ReportChanges['emptyReason']>(null)
 let defaultsRequest = 0
 const baseline = computed(() => queryState('base') ?? initialBaseline.value)
 const target = computed(() => queryState('target') ?? 'working')
-type Comparison = { base: ReportBaseline, target: ReportBaseline, before: ProductReportV16 | null, after: ProductReportV16 | null, diff: ReportDiff | null, repository?: RepositoryDiff, modelNotice?: string, referenceFileNotice?: string }
+type Comparison = { base: ReportBaseline, target: ReportBaseline, before: ProductReportV16 | null, after: ProductReportV16 | null, diff: ReportDiff | null, repository?: RepositoryDiff, modelNotice?: string }
 const comparison = shallowRef<Comparison | null>(null)
 const changesError = ref<string | null>(null)
 const historyQuery = ref('')
@@ -169,7 +169,7 @@ const changes = computed<ReportChanges>(() => ({
   baselines: baselines.value, historyStates: historyStates.value, baseline: baseline.value, target: target.value,
   diff: comparison.value?.diff ?? null, before: comparison.value?.before, after: comparison.value?.after,
   baseState: comparison.value?.base, targetState: comparison.value?.target,
-  error: defaultsError.value ?? changesError.value, referenceFileNotice: comparison.value?.referenceFileNotice,
+  error: defaultsError.value ?? changesError.value,
   initializing: !defaultsReady.value, emptyReason: emptyReason.value,
   historyLoading: historyLoading.value, historyMore: historyMore.value, historyQuery: historyQuery.value,
   repository: comparison.value?.repository, modelNotice: comparison.value?.modelNotice
@@ -252,7 +252,7 @@ const errorMessage = computed(() => {
         :description="errorMessage"
         :actions="[{ label: 'Try again', icon: 'i-lucide-refresh-cw', onClick: () => refresh() }]"
       />
-      <h1 class="mt-8 mb-4 flex items-center gap-2 text-2xl font-semibold">Review <BlrHistoryHelp /></h1>
+      <h1 class="mt-8 mb-4 flex items-center gap-2 text-2xl font-semibold">Review <span v-if="changes.repository" class="text-sm font-normal text-muted">{{ changes.repository.files.length }} {{ changes.repository.files.length === 1 ? 'file' : 'files' }}</span><BlrHistoryHelp /></h1>
       <BlrChanges v-model:path="reviewPath" :load-repository-file="loadRepositoryFile" :changes="changes" :resource-reading-open="Boolean(resource || reference)" @compare="chooseComparison" @search="searchHistory" @more="refreshChanges(true)" @inspect="inspectHistorical" />
       <BlrResourceSlideover v-if="fallbackWorkspace" v-model:tab="resourceTab" :workspace="fallbackWorkspace" :resource="fallbackResource" :state-label="readingLabel" :state-id="resourceState" :reference="reference" :previous-reference="previousReference" @reference-open="reference = $event" @reference-back="backReference" @open="resource = $event.key; reference = null" @close="resource = null; reference = null; resourceState = 'working'" />
       <UAlert v-if="readingError" class="mt-4" title="Historical state unavailable" :description="readingError" />

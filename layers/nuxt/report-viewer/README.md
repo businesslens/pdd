@@ -358,8 +358,9 @@ the Product Model to save layout captures.
 
 ## Read-only Review
 
-The optional `changes` prop supplies model and repository comparisons for two
-selected Git states. `loadRepositoryFile(base, target, path)` reads a selected
+The optional `changes` prop supplies a repository comparison and models for two
+selected Git states. Review displays one changed-file tree, including authored
+model files at their repository paths. `loadRepositoryFile(base, target, path)` reads a selected
 file's bounded before/after contents. The `compare`, `historySearch` and
 `historyMore` events request read-only host data. No event records inspection,
 approves work or writes a saved state. Hosts without Git context omit Review.
@@ -367,6 +368,7 @@ approves work or writes a saved state. Hosts without Git context omit Review.
 Overview retains Coverage and its independent `loadRepository` input. The shared
 `BlrRepositoryTree` renders both pages' trees, search, expansion and selection.
 Coverage supplies current scope and inspection context; Review supplies changes
-between its selected states. Resource-level changes remain independent of file
-connections. The navigation composable persists `reviewPath` as `rp`,
+between its selected states. There is no separate resource or field change list.
+File details use the two models for related resource links; unavailable models
+limit these links, not the tree or file previews. The navigation composable persists `reviewPath` as `rp`,
 `resourceState` as `v`, and Coverage's path separately as `cp`.

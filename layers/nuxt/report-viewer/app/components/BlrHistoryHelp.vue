@@ -14,7 +14,7 @@ const { shown } = useTooltips()
     <template #content>
       <div class="space-y-2 p-4">
         <p class="text-sm font-semibold text-highlighted">Review</p>
-        <p class="text-sm leading-relaxed text-muted">Read changes to the Product Model and repository between two Git states. Browsing does not record or approve a review. Added and removed are measured from Base to Compare to.</p>
+        <p class="text-sm leading-relaxed text-muted">Compare two Git states in one file tree, including Product Model files under .businesslens/. Select a file to read its before and after contents and related model resources. Added and deleted are measured from Base to Compare to. Browsing does not record or approve a review.</p>
       </div>
     </template>
   </UPopover>

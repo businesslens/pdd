@@ -1416,7 +1416,7 @@ describe('what changed', () => {
   const changesModulePath = '../layers/nuxt/report-viewer/app/utils/reportChanges.ts'
 
   it('keys every change the way the surfaces address resources and names the compared states', async () => {
-    const { changesByKey, changeCount, baselineTitle, changeSummary } = await import(changesModulePath)
+    const { changesByKey, baselineTitle } = await import(changesModulePath)
     const diff = {
       product: [],
       resources: [
@@ -1427,8 +1427,6 @@ describe('what changed', () => {
     }
     const byKey = changesByKey(diff)
     expect([...byKey.keys()]).toEqual(['capability-scenario:browse-catalog', 'rule:new-rule'])
-    expect(changeCount(diff)).toBe(2)
-    expect(changeSummary(diff)).toBe('1 added · 1 changed')
 
     const committed = { id: 'head', kind: 'committed', available: true, at: '2026-08-08T00:00:00Z', detail: 'abcdef0 fixture' }
     const branch = { id: 'branch:refs/heads/main', kind: 'branch', available: true, label: 'main' }

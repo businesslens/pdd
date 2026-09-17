@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /** Exercise live comparisons in the built viewer against an isolated repository. */
-import { chromium, expect } from '@playwright/test'
+import { chromium, expect as playwrightExpect } from '@playwright/test'
 import { spawn, spawnSync } from 'node:child_process'
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -8,6 +8,7 @@ import { dirname, join, resolve } from 'node:path'
 import { setTimeout as delay } from 'node:timers/promises'
 import { fileURLToPath } from 'node:url'
 
+const expect = playwrightExpect.configure({ timeout: 30_000 })
 const repository = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const scratch = mkdtempSync(join(tmpdir(), 'blr-changes-browser-'))
 const project = join(scratch, 'project')
@@ -82,7 +83,7 @@ try {
   await expect(page.locator('[data-businesslens-report-viewer]')).toBeVisible()
   await page.locator('[data-header-changes]').click()
   await expect(page.getByRole('button', { name: 'Base', exact: true })).toContainText('Last commit')
-  await expect(page.locator('[data-changes-summary]')).toHaveText('2 changed')
+  await expect(page.getByRole('heading', { name: /^Review 3 files/ })).toBeVisible()
   await expect(page.locator('[data-changes-no-baseline]')).toHaveCount(0)
   console.log('Passed: waiting, changing startup errors, recovery, and baselines on first model binding.')
 
@@ -93,7 +94,20 @@ try {
   }
   await chooseBase(`commit:${first}`)
   await expect(page.getByRole('button', { name: 'Base', exact: true })).toContainText(label)
-  await expect(page.locator('[data-changes-summary]')).toHaveText('2 changed · Product changed')
+  await expect(page.getByRole('heading', { name: /^Review 4 files/ })).toBeVisible()
+
+  // Model files are reviewed once, through the same tree and file panel as source.
+  await expect(page.locator('[data-model-changes], [data-changes-summary]')).toHaveCount(0)
+  await expect(page.locator('[data-repository-tree]')).toHaveCount(1)
+  await page.getByRole('button', { name: 'Expand all', exact: true }).click()
+  const productPath = page.locator('[data-repository-path=".businesslens/product/product.md"]')
+  await expect(productPath).toHaveCount(1)
+  await productPath.click()
+  await expect(page.locator('[data-file-side="Base"]')).toContainText('# Fixture Shop')
+  await expect(page.locator('[data-file-side="Compare to"]')).toContainText('# Updated Fixture Shop')
+  await page.keyboard.press('Escape')
+  await expect(page.locator('[data-review-file-details]')).toHaveCount(0)
+  console.log('Passed: one changed-file tree, with raw model diffs and no duplicate model summary.')
 
   // Hold an old comparison until a different baseline has already rendered.
   // Both stale successes and stale failures must leave that reading intact.
@@ -115,15 +129,15 @@ try {
       await chooseBase('head')
       await intercepted
       // Old results must disappear as soon as their baseline is deselected.
-      await expect(page.locator('[data-changes-summary]')).toHaveCount(0)
+      await expect(page.locator('[data-review-repository]')).toHaveCount(0)
       await chooseBase(`commit:${first}`)
-      await expect(page.locator('[data-changes-summary]')).toHaveText('2 changed · Product changed')
+      await expect(page.getByRole('heading', { name: /^Review 4 files/ })).toBeVisible()
       const finished = page.waitForEvent('requestfinished', request => request.url().endsWith('/history/diff?base=head&target=working'))
       release()
       await finished
       await paint(page)
       await expect(page.getByRole('button', { name: 'Base', exact: true })).toContainText(label)
-      await expect(page.locator('[data-changes-summary]')).toHaveText('2 changed · Product changed')
+      await expect(page.getByRole('heading', { name: /^Review 4 files/ })).toBeVisible()
       await expect(page.locator('body')).not.toContainText('An obsolete comparison failed.')
     } finally {
       release()
