@@ -194,7 +194,7 @@ costed already.
 - **Every surface names itself, with the name the reader clicked.** The main
   H1 keeps the working view and its count or Product qualifier. A resource
   slideover names its resource and type, with actual ownership shown separately
-  from the return trail. Report identity and the way home stay in the header.
+  from the return trail. Report identity and the way home stay in the sidebar.
 - **Resources open in one complete slideover.** This supersedes the resource-page
   navigation rule. Opening a row, relation, search result or diagram resource
   preserves the underlying section, drawing, filters, expansion and viewport.
@@ -248,7 +248,7 @@ costed already.
   controls in a bottom sheet; its badge counts selected
   values, and individually removable chips remain above the reading. Rows/Graph
   stays beside Filters with the same icons. Page controls, filters and graph
-  buttons use Nuxt UI's `sm` size (28px) at every viewport width. The top navbar
+  buttons use Nuxt UI's `sm` size (28px) at every viewport width. Host chrome
   retains its own sizing; report controls never override global UI defaults.
   Filter collapse follows the reading's available width. Report navigation
   sits beside the working view's heading.

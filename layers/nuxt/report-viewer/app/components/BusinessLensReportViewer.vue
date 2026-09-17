@@ -13,14 +13,21 @@ import { destinationForLocation } from '../utils/reportDestinations'
  */
 import type { ProductReportV13 } from 'businesslens/report'
 import { projectReportWorkspace } from '../utils/reportWorkspace'
+import type { ReportProductCatalogLink, ReportProductLink } from '../utils/reportProducts'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   report: ProductReportV13
-  /** Host-resolved `.businesslens/product/logo.svg`; rendered in the product header. */
+  /** Host-resolved `.businesslens/product/logo.svg`; used in the picker and Overview. */
   logoSrc?: string | null
+  /** Other products available in this host; mark the current destination active. */
+  products?: ReportProductLink[]
+  /** Optional link below the product choices to the host's full catalog. */
+  productCatalog?: ReportProductCatalogLink
+  /** Set false when the host already provides Vocabulary in its header. */
+  sidebarVocabulary?: boolean
   /** Mounted host-header element receiving the report's search and Vocabulary controls. */
   toolsTarget?: string
-}>()
+}>(), { sidebarVocabulary: true })
 
 /**
  * The open section: `overview` or a main resource collection. Bindable so a
@@ -88,14 +95,23 @@ onMounted(() => { mounted = true; synchronizeLocation() })
       :topology="location.topology"
       :workspace="workspace"
       :logo-src="logoSrc"
+      :products="products"
+      :product-catalog="productCatalog"
+      :sidebar-vocabulary="sidebarVocabulary"
       :tools-target="toolsTarget"
       @update:section="section = $event"
       @update:resource="resource = $event"
       @update:tab="tab = $event"
       @update:topology="topology = $event"
     >
-      <template v-if="$slots.navigation" #navigation>
-        <slot name="navigation" />
+      <template v-if="$slots['sidebar-header']" #sidebar-header="{ collapsed }">
+        <slot name="sidebar-header" :collapsed="collapsed" />
+      </template>
+      <template v-if="$slots['sidebar-footer']" #sidebar-footer="{ collapsed }">
+        <slot name="sidebar-footer" :collapsed="collapsed" />
+      </template>
+      <template v-if="$slots.navigation" #navigation="{ collapsed }">
+        <slot name="navigation" :collapsed="collapsed" />
       </template>
       <template v-if="$slots['primary-action']" #primary-action>
         <slot name="primary-action" />

@@ -25,15 +25,22 @@ import {
   filterResources,
   hasSelections
 } from '../utils/resourceFacets'
-import { docsForResourceKind } from '../utils/resourceDocs'
 import { TREE_CARD_KINDS, treeCards } from '../utils/collectionChildren'
 import { COLUMN_CHOICES } from '../composables/useColumns'
 import type { ColumnChoice } from '../composables/useColumns'
 import { KIND_TERM } from '../utils/vocabulary'
 import type { VocabularySlug } from '../utils/vocabulary.generated'
 import { firstSentence } from '../utils/reportMarkdown'
+import type { ReportProductCatalogLink, ReportProductLink } from '../utils/reportProducts'
 
-const props = defineProps<{ workspace: ReportWorkspace, logoSrc?: string | null, toolsTarget?: string }>()
+const props = withDefaults(defineProps<{
+  workspace: ReportWorkspace
+  logoSrc?: string | null
+  products?: ReportProductLink[]
+  productCatalog?: ReportProductCatalogLink
+  sidebarVocabulary?: boolean
+  toolsTarget?: string
+}>(), { sidebarVocabulary: true })
 
 /* ------------------------------------------------------------------ */
 /* Selection: `activeKind` is what the collection view is about, and */
@@ -77,6 +84,26 @@ const searchOpen = ref(false)
 
 const vocabulary = useVocabularyPanel()
 const mobileNavOpen = ref(false)
+const mobileNavId = useId()
+const sidebarId = useId()
+const sidebarCollapsed = ref(false)
+let afterNavigationClose: (() => void) | undefined
+
+/* Finish closing the drawer before opening another modal and moving focus. */
+function openSidebarTool(action: () => void) {
+  if (!mobileNavOpen.value) { action(); return }
+  afterNavigationClose = action
+  mobileNavOpen.value = false
+}
+function finishNavigationClose() {
+  const action = afterNavigationClose
+  afterNavigationClose = undefined
+  action?.()
+}
+function openVocabulary(originId: string) {
+  const returnId = mobileNavOpen.value ? mobileNavId : originId
+  openSidebarTool(() => vocabulary.show(undefined, returnId))
+}
 /* Clicks and direct links select the same resource reading. */
 const openPageKey = openResource
 
@@ -347,7 +374,6 @@ const surfaceHeading = computed(() => {
     term: KIND_TERM[activeKind.value], termText: activeMeta.value.plural }
 })
 
-const surfaceDocs = computed(() => docsForResourceKind(activeKind.value))
 const matrixView = useBlrMatrixView(() => props.workspace, topology)
 
 /**
@@ -538,102 +564,87 @@ const orphanScenarios = computed(() => props.workspace.scenarios
 
 <template>
   <div class="blr-report-shell flex h-full min-h-0 flex-col text-sm">
-    <!-- Status bar: the product, its coverage, and the way to anything. -->
-    <header
-      class="blr-report-header shrink-0 items-center gap-3 border-b border-default px-4 py-2.5"
-      :class="toolsTarget ? 'hidden sm:flex' : 'flex'"
-    >
-      <!-- The first crumb is the way home, so it carries the house at every
-           width and in every model. A Product's own logo is content, and it
-           belongs to the reading that carries its name. -->
-      <UIcon name="i-lucide-house" class="hidden size-5 shrink-0 text-primary lg:block" />
-      <button
-        type="button"
-        class="hidden min-w-0 max-w-48 truncate text-sm font-semibold tracking-tight text-highlighted hover:text-primary lg:block"
-        title="Open the Overview"
-        @click="setKind('product')"
+    <Teleport v-if="toolsTarget" :to="toolsTarget">
+      <BlrReportTools in-header @search="searchOpen = true" @vocabulary="openVocabulary" />
+    </Teleport>
+
+    <UDashboardGroup storage-key="businesslens-report" unit="px" class="relative min-h-0 flex-1">
+      <UDashboardSidebar
+        :id="sidebarId"
+        v-model:collapsed="sidebarCollapsed"
+        collapsible
+        :default-size="288"
+        :collapsed-size="64"
+        :toggle="false"
+        aria-label="Report navigation"
+        :ui="{ root: 'min-h-0', body: 'min-h-0 gap-0 overflow-hidden p-0' }"
       >
-        {{ workspace.identity.title }}
-      </button>
-
-      <span class="min-w-0 flex-1" />
-
-      <span class="ms-auto flex shrink-0 items-center gap-2.5">
-        <Teleport :to="toolsTarget || 'body'" :disabled="!toolsTarget">
-          <BlrReportTools
-            :in-header="Boolean(toolsTarget)"
-            @search="searchOpen = true"
-            @vocabulary="vocabulary.show(undefined, $event)"
-          />
-        </Teleport>
-        <span class="hidden md:inline-flex">
-          <BlrCoverageBadge :status="workspace.coverage.status" named size="md" />
-        </span>
-        <span class="blr-meta hidden sm:inline">{{ workspace.identity.schemaVersion }}</span>
-        <span class="blr-meta hidden md:inline">{{ workspace.identity.generatedAt.slice(0, 10) }}</span>
-      </span>
-    </header>
-
-    <div class="flex min-h-0 flex-1">
-      <!-- LEFT: stable navigation. Topology is a destination, never a mode
-           that silently changes these kind rows into filters. -->
-      <nav class="blr-pane hidden w-64 shrink-0 border-e border-default lg:block">
-        <div class="p-2">
-          <BlrRail
+        <template #default="{ collapsed }">
+          <BlrReportSidebar
             :workspace="workspace"
+            :logo-src="logoSrc"
+            :products="products"
+            :product-catalog="productCatalog"
+            :vocabulary="sidebarVocabulary"
+            :collapsed="collapsed"
             :active-section="activeSection"
             :counts="kindCounts"
+            :tools="!toolsTarget"
             @kind="setKind"
             @view="openView"
+            @search="openSidebarTool(() => searchOpen = true)"
+            @vocabulary="openVocabulary"
+            @navigate="mobileNavOpen = false"
           >
-            <!-- The host's own way back out, above its sections. -->
-            <template v-if="$slots.navigation" #navigation>
-              <slot name="navigation" />
-            </template>
-          </BlrRail>
-        </div>
-      </nav>
+            <template v-if="$slots['sidebar-header']" #brand><slot name="sidebar-header" :collapsed="collapsed" /></template>
+            <template v-if="$slots['sidebar-footer']" #footer><slot name="sidebar-footer" :collapsed="collapsed" /></template>
+            <template v-if="$slots.navigation" #navigation><slot name="navigation" :collapsed="collapsed" /></template>
+          </BlrReportSidebar>
+        </template>
+      </UDashboardSidebar>
 
       <!-- CENTER: the working view for the active kind -->
       <section class="flex min-w-0 flex-1 flex-col">
-        <!-- What this is, and the ways out of it. An exit belongs to the
-             subject, so it sits here and not inside the tab strip. -->
-        <div v-if="surfaceHeading" class="flex items-center gap-2 px-4 pt-3 pb-1 sm:gap-3 sm:px-5 sm:pt-4 sm:pb-2">
-          <UButton
-            icon="i-lucide-menu"
-            color="neutral"
-            variant="ghost"
-            size="sm"
-            class="lg:hidden"
-            aria-label="Open report navigation"
-            @click="mobileNavOpen = true"
-          />
-          <h1 v-if="surfaceHeading" ref="workingHeading" tabindex="-1" class="flex min-w-0 flex-1 items-center gap-2">
-            <UIcon :name="surfaceHeading.icon" class="size-5 shrink-0 text-muted" :style="surfaceHeading.slot === undefined ? undefined : { color: `var(--blr-slot-${surfaceHeading.slot})` }" />
-            <span class="truncate text-lg font-semibold tracking-tight text-highlighted">{{ surfaceHeading.title }}</span>
-            <span class="blr-meta shrink-0">{{ surfaceHeading.meta }}</span>
-            <BlrTerm v-if="surfaceHeading.term" :slug="surfaceHeading.term" :text="surfaceHeading.termText" icon-only />
-          </h1>
-          <div class="ms-auto flex max-w-full shrink-0 flex-wrap items-center gap-1.5">
-            <div v-if="matrixSection" class="min-w-0 max-w-full" data-matrix-legend-target>
-              <BlrMatrixLegend :mode="matrixView.mode" />
-            </div>
-            <UTooltip v-else :text="surfaceDocs.label">
-              <UButton
-                :to="surfaceDocs.url"
-                external
-                target="_blank"
-                rel="noopener noreferrer"
-                icon="i-lucide-book-open"
-                color="neutral"
-                variant="outline"
-                size="sm"
-                label="Docs"
-                :aria-label="surfaceDocs.label"
-              />
-            </UTooltip>
+        <!-- The working view's header owns report status and stays above its
+             scrolling reading. On narrow screens, status gets its own line. -->
+        <header
+          v-if="surfaceHeading"
+          data-report-page-header
+          class="mb-2 grid shrink-0 items-center gap-x-3 gap-y-2 border-b border-default px-4 py-2 sm:px-5"
+          :class="matrixSection ? 'grid-cols-[minmax(0,1fr)_auto] md:grid-cols-[minmax(0,1fr)_auto_auto]' : 'grid-cols-[minmax(0,1fr)] md:grid-cols-[minmax(0,1fr)_auto]'"
+        >
+          <div class="flex min-w-0 items-center gap-2 sm:gap-3">
+            <UDashboardSidebarCollapse
+              size="sm"
+              :aria-expanded="!sidebarCollapsed"
+              :aria-controls="`businesslens-report-sidebar-${sidebarId}`"
+            />
+            <UButton
+              icon="i-lucide-menu"
+              color="neutral"
+              variant="ghost"
+              size="sm"
+              class="lg:hidden"
+              :id="mobileNavId"
+              aria-label="Open report navigation"
+              @click="mobileNavOpen = true"
+            />
+            <h1 v-if="surfaceHeading" ref="workingHeading" tabindex="-1" class="flex min-w-0 flex-1 items-center gap-2">
+              <UIcon :name="surfaceHeading.icon" class="size-5 shrink-0 text-muted" :style="surfaceHeading.slot === undefined ? undefined : { color: `var(--blr-slot-${surfaceHeading.slot})` }" />
+              <span class="truncate text-lg font-semibold tracking-tight text-highlighted">{{ surfaceHeading.title }}</span>
+              <span class="blr-meta shrink-0">{{ surfaceHeading.meta }}</span>
+              <BlrTerm v-if="surfaceHeading.term" :slug="surfaceHeading.term" :text="surfaceHeading.termText" icon-only />
+            </h1>
           </div>
-        </div>
+          <div data-report-status class="row-start-2 flex items-center gap-2.5 md:col-start-2 md:row-start-1" :class="matrixSection ? 'col-span-2 md:col-span-1' : undefined">
+            <BlrCoverageBadge :status="workspace.coverage.status" named size="md" />
+            <span class="blr-meta" :title="`Report schema ${workspace.identity.schemaVersion}`">{{ workspace.identity.schemaVersion }}</span>
+            <time class="blr-meta" :datetime="workspace.identity.generatedAt" :title="`Generated ${workspace.identity.generatedAt}`">{{ workspace.identity.generatedAt.slice(0, 10) }}</time>
+          </div>
+          <div v-if="matrixSection" class="col-start-2 row-start-1 min-w-0 justify-self-end md:col-start-3" data-matrix-legend-target>
+            <BlrMatrixLegend :mode="matrixView.mode" />
+          </div>
+        </header>
 
         <!-- Both kinds of reading switch sit outside the scroll pane, on the
              page's own background. Resource controls remain owned by the page. -->
@@ -903,7 +914,7 @@ const orphanScenarios = computed(() => props.workspace.scenarios
         </div>
       </section>
 
-    </div>
+    </UDashboardGroup>
 
     <BlrResourceSlideover
       v-model:tab="resourceTab"
@@ -934,54 +945,45 @@ const orphanScenarios = computed(() => props.workspace.scenarios
 
     <USlideover
       v-model:open="mobileNavOpen"
+      title="Report navigation"
+      description="Report sections, search, vocabulary and viewer settings."
       side="left"
-      :ui="{ content: 'w-64 max-w-[85vw]', body: 'p-2' }"
+      :ui="{ content: 'w-72 max-w-[90vw]' }"
+      @after:leave="finishNavigationClose"
     >
-      <template #header>
-        <div class="blr-report-shell flex min-w-0 flex-1 items-center gap-3">
-          <UIcon name="i-lucide-house" class="size-5 shrink-0 text-primary" />
-          <button
-            type="button"
-            class="min-w-0 max-w-48 truncate text-sm font-semibold tracking-tight text-highlighted hover:text-primary"
-            title="Open the Overview"
-            @click="setKind('product')"
-          >
-            {{ workspace.identity.title }}
-          </button>
-          <UButton
-            icon="i-lucide-x"
-            color="neutral"
-            variant="ghost"
-            size="sm"
-            class="ms-auto"
-            aria-label="Close report navigation"
-            @click="mobileNavOpen = false"
-          />
-        </div>
-      </template>
-      <template #body>
-        <!-- One rail, two placements: the narrow viewport gets the same rows,
-             not a second copy that drifts from them. -->
-        <div class="blr-report-shell min-h-full">
-          <BlrRail
-            :workspace="workspace"
-            :active-section="activeSection"
-            :counts="kindCounts"
-            @kind="setKind"
-            @view="openView"
-          >
-            <template v-if="$slots.navigation" #navigation>
-              <slot name="navigation" />
-            </template>
-          </BlrRail>
-        </div>
+      <template #content>
+        <BlrReportSidebar
+          class="blr-report-shell"
+          :workspace="workspace"
+          :logo-src="logoSrc"
+          :products="products"
+          :product-catalog="productCatalog"
+          :vocabulary="sidebarVocabulary"
+          :active-section="activeSection"
+          :counts="kindCounts"
+          tools
+          @kind="setKind"
+          @view="openView"
+          @search="openSidebarTool(() => searchOpen = true)"
+          @vocabulary="openVocabulary"
+          @navigate="mobileNavOpen = false"
+        >
+          <template v-if="$slots['sidebar-header']" #brand><slot name="sidebar-header" :collapsed="false" /></template>
+          <template #close>
+            <UButton
+              icon="i-lucide-x"
+              color="neutral"
+              variant="ghost"
+              size="sm"
+              class="ms-auto min-h-8 min-w-8 shrink-0 self-start"
+              aria-label="Close report navigation"
+              @click="mobileNavOpen = false"
+            />
+          </template>
+          <template v-if="$slots['sidebar-footer']" #footer><slot name="sidebar-footer" :collapsed="false" /></template>
+          <template v-if="$slots.navigation" #navigation><slot name="navigation" :collapsed="false" /></template>
+        </BlrReportSidebar>
       </template>
     </USlideover>
   </div>
 </template>
-
-<style scoped>
-@media (max-width: 359px) {
-  .blr-report-header { gap: 0.25rem; }
-}
-</style>

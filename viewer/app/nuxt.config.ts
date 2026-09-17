@@ -75,6 +75,7 @@ export default defineNuxtConfig({
   icon: {
     clientBundle: {
       icons: [
+        'lucide:arrow-up-right',
         'lucide:loader-circle',
         'lucide:refresh-cw',
         'lucide:sliders-horizontal',

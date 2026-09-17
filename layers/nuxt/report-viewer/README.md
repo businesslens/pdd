@@ -107,7 +107,47 @@ and actions outside the report.
 
 The layer renders the report and nothing around it. Site chrome — the header,
 the footer, and any brand or legal links — belongs to the host, which already
-has the navigation, routing, and legal context the report does not.
+has the navigation, routing, and legal context the report does not. The report's
+sidebar holds search, Vocabulary and sections, with Overview as the way home.
+A Product picker below the host brand shows the current Product's logo and name.
+It uses Nuxt UI's DropdownMenu with keyboard navigation and a selected-item check.
+The trigger uses the selected Hairline treatment: a faint outline and transparent
+background. Menu rows center the logo, Product name and checkmark vertically.
+The local viewer lists its single Product. Hosts can supply `products` as
+`{ label, to, logoSrc?, active? }[]`, marking the current destination `active`;
+the current report remains the selected entry even while the host's list loads.
+Other entries are native links, with the menu's keyboard type-ahead navigation.
+Hosts can supply `productCatalog: { label, to }` to add a link to the full
+catalog below the Product choices, separated from them by a divider.
+Catalog hosts should key the viewer by Blueprint identity so switching Products
+starts a fresh reading. In the collapsed rail, the picker shows a 17px Product
+logo in a 32px trigger and a name tooltip; the mobile drawer keeps its full label.
+An icon-only Search button sits beside Overview, stacking directly below it
+when collapsed. Navigation rows are 36px high with 4px gaps, starting 20px below
+the Product picker. Whitespace and the Resources label separate the navigation
+groups. Vocabulary leads the bottom reference group above Documentation and
+GitHub, with one divider above the whole group.
+Hosts with Vocabulary in their own header can set `sidebarVocabulary` to
+`false` to omit the sidebar entry and its empty reference group. That header
+must keep the Vocabulary panel's tooltip controls available for report readers.
+The working view's header serves as its navbar: the heading shares it with
+coverage, report schema version and generation date, above a bottom divider. Status wraps onto a second line on narrow screens.
+Hosts can supply `sidebar-header` and `sidebar-footer` slots for branding and
+utilities; both also appear in the mobile navigation drawer. The bundled local
+viewer places its version beside the brand in the sidebar header, followed by
+an icon-only Theme lab button and the color-mode switch at the right edge,
+aligned with Search. Header controls stack below the mark when collapsed.
+Documentation and GitHub stay in the sidebar footer. There is no
+separate host navbar; the theme lab bar appears above the report only when
+opened. Desktop navigation uses Nuxt UI's
+`DashboardSidebar` and `DashboardSidebarCollapse`, expanding to 288px or
+collapsing to a 64px icon rail. The choice is saved in a cookie. Navigation and
+utility icons keep accessible labels and tooltips; the mobile drawer always
+shows the full menu. Collapsing keeps the current reading and its state.
+Collapsed navigation and utility icons use 17px glyphs. Navigation, Search and
+reference rows have 36px-high targets; brand controls and the picker retain 32px.
+The `sidebar-header`, `sidebar-footer` and `navigation` slots receive
+`{ collapsed }`, so host branding and utilities can follow the rail's width.
 
 Extend the layer from a Nuxt application:
 
@@ -309,8 +349,8 @@ See [third-party notices](THIRD_PARTY.md).
 
 The Product Report needs a bounded viewport. By default it fills the browser
 height. A host with persistent chrome can set `--businesslens-report-chrome`
-to the chrome height. The bundled local viewer sets it to `4rem` for its
-header.
+to the chrome height. The bundled local viewer fills a bounded flex viewport,
+with only the optional theme lab bar above it.
 
 The report viewer extends the stable BusinessLens theme because the Product
 Report is the canonical BusinessLens report experience. The theme remains a
@@ -349,3 +389,5 @@ counts, previews, browser history and scrolling tabs on desktop and narrow scree
 `node scripts/check-report-navigation.mjs <url>` covers the collections, trees,
 filters and named-view exits. Set `BLR_NAV_SCREENSHOTS` to a directory outside
 the Product Model to save layout captures.
+`node scripts/check-report-sidebar.mjs <url>` checks desktop collapse, keyboard
+access, tooltips, saved state, utilities and the independent mobile drawer.
