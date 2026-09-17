@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rule attachments includes every target and offers attachment details only when they add information.
 - What changes what lists Entities down the side and Capabilities across the top.
 - What changes what badges open their matching Scenarios and state details in popovers.
+- What changes what uses soft green and gold badges, with Terracotta removals in light mode and Muted red in dark mode.
 - Table corners name both axes diagonally with inset labels, removing repeated column labels where every column has the same type.
 - Compare delivery uses the same compact first-column width as the other comparison views.
 - Comparison tables use the full available width, scroll with the page and use subtle edge handles to move one column at a time, preserving expanded details.

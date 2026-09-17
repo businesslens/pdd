@@ -7,6 +7,12 @@ bundled local viewer. It has no package export and is excluded from published
 package files, so an audition cannot become part of the public renderer by
 accident.
 
+The **Mutation badges** audition is decided: What changes what now uses soft
+green creates, gold changes with a clearer border, and Terracotta removals in
+light mode or Muted red in dark mode. The chosen styles live in the stable
+report, including hover, open and focus states. The alternate palettes, preview,
+selector, cookie composable and experiment stylesheet have been removed.
+
 The **Mutation popover** audition is decided: Capability first is now the
 stable reading in What changes what. The header names the Capability with its
 icon; the body names the Entity with its icon, then shows each effect's state
