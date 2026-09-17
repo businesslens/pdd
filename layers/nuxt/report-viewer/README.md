@@ -207,8 +207,8 @@ narrowing (`th`) and focus (`tf`). Matrices scroll vertically with the reading;
 Edge controls, horizontal trackpad gestures, and touch swipes move one column
 at a time beside a fixed subject column. The first visible column uses `tm`;
 moving between columns preserves vertical position and cell details. Each page
-header offers a Legend popover with the visible set’s badge colors and meanings,
-including columns outside the current window. The header and reading share one
+header offers a Legend popover with every possible badge color and meaning for
+that view, regardless of report data, filters or the current column window. The header and reading share one
 projection and render together on the server. Body cells mount only for the
 visible columns and one neighbour on each side; the browser animates their offset. A collection Graph
 draws the facet-filtered set and honours `tf` as a neighbourhood; branch

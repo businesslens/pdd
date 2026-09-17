@@ -616,7 +616,7 @@ const orphanScenarios = computed(() => props.workspace.scenarios
           </h1>
           <div class="ms-auto flex max-w-full shrink-0 flex-wrap items-center gap-1.5">
             <div v-if="matrixSection" class="min-w-0 max-w-full" data-matrix-legend-target>
-              <BlrMatrixLegend :matrix="matrixView.matrix" :mode="matrixView.mode" />
+              <BlrMatrixLegend :mode="matrixView.mode" />
             </div>
             <UTooltip v-else :text="surfaceDocs.label">
               <UButton

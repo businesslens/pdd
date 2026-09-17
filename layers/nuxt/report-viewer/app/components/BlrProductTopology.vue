@@ -143,7 +143,7 @@ function open(key: string) {
           </USelectMenu>
         </template>
       </BlrFilterBar>
-      <BlrMatrixLegend v-if="!matrixView" :matrix="matrix" :mode="matrixMode" />
+      <BlrMatrixLegend v-if="!matrixView" :mode="matrixMode" />
     </div>
     <div ref="pane" class="blr-topology-reading" @scroll.capture.passive="save">
       <BlrTopologyMatrix :workspace="workspace" :matrix="matrix" :column="reading.column" :mode="matrixMode" @column="update({ column: $event })" @open="open" />

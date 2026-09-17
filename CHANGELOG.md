@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Scroll comparison pages naturally and move through columns one at a time with edge controls.
 - Open colored badges for matching Scenarios, state changes, delivery routes and Rule details.
 - Read larger Context paths in resource details and comparison popovers.
-- Open Legend in each comparison page header for badge colors and their meanings, including server-rendered reports.
+- Open Legend in each comparison page header for all possible badge colors and their meanings, including server-rendered reports.
 - Keep large comparison tables responsive and return keyboard focus to the badge after closing resource details.
 
 ## [0.17.0] - 2026-09-16

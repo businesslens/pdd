@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import type { TopologyMatrix } from '../utils/topologyProjections'
 import { matrixBadgeTone, type MatrixBadgeMode } from '../utils/matrixBadges'
 
-const props = defineProps<{ matrix: TopologyMatrix, mode: MatrixBadgeMode }>()
+const props = defineProps<{ mode: MatrixBadgeMode }>()
 const open = ref(false)
 const meanings: Record<MatrixBadgeMode, Record<string, string>> = {
   delivery: {
@@ -24,17 +23,14 @@ const meanings: Record<MatrixBadgeMode, Record<string, string>> = {
     reads: 'The Rule applies when the Entity is read.'
   }
 }
-// Read the whole filtered matrix, independent of the visible column window.
-const entries = computed(() => {
-  const present = new Set(props.matrix.cells.flatMap(cell => cell.labels))
-  return Object.entries(meanings[props.mode]).filter(([label]) => present.has(label))
-    .map(([label, description]) => ({ label, description, tone: matrixBadgeTone(label, props.mode) }))
-})
-watch([() => props.mode, () => entries.value.map(entry => entry.label).join('|')], () => { open.value = false })
+// Explain every possible badge for this view, regardless of report data or filters.
+const entries = computed(() => Object.entries(meanings[props.mode])
+  .map(([label, description]) => ({ label, description, tone: matrixBadgeTone(label, props.mode) })))
+watch(() => props.mode, () => { open.value = false })
 </script>
 
 <template>
-  <div v-if="entries.length" class="blr-matrix-legend">
+  <div class="blr-matrix-legend">
     <UPopover v-model:open="open" :content="{ align: 'end', sideOffset: 8, collisionPadding: 16 }"
       :ui="{ content: 'blr-matrix-legend-popover' }">
       <UButton label="Legend" trailing-icon="i-lucide-chevron-down" color="neutral"
