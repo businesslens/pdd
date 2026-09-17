@@ -194,29 +194,7 @@ costed already.
 - **Every surface names itself, with the name the reader clicked.** The main
   H1 keeps the working view and its count or Product qualifier. A resource
   slideover names its resource and type, with actual ownership shown separately
-  from the return trail. The working view's header is the report's navbar:
-  its heading, coverage, report schema version and date sit above a bottom
-  divider, with more space before the reading than below the heading. Status
-  wraps below the heading on narrow screens. Overview in the sidebar is the
-  way home; there is no separate product home button.
-  A Product picker below the sidebar brand keeps the current Product's logo
-  and name visible on every section. The local viewer lists its one Product;
-  catalog hosts supply links to their available Blueprints. Collapsed mode shows
-  the Product logo with a name tooltip, and the mobile drawer shows the full picker.
-  The local viewer's package version sits beside its logo in the sidebar.
-  Theme lab is a header icon, followed by the color-mode switch at the right
-  edge, aligned with the icon-only Search beside Overview. Header controls and
-  Search stack below their rows when collapsed. Navigation and reference rows
-  are 36px high with 4px gaps; the Product picker has 20px of space below it.
-  Whitespace and the Resources label separate navigation groups. Vocabulary,
-  Documentation and GitHub form the bottom reference group, with one divider
-  above it. The
-  experimentation bar remains above the report when opened.
-- **Desktop navigation can collapse to an icon rail.** Use Nuxt UI's
-  DashboardSidebar and collapse control, with cookie-persisted state and
-  NavigationMenu tooltips for icon-only navigation. Collapsing preserves the
-  current reading, filters, drawing and scroll. The mobile drawer always shows
-  full labels and does not change the desktop preference.
+  from the return trail. Report identity and the way home stay in the sidebar.
 - **Resources open in one complete slideover.** This supersedes the resource-page
   navigation rule. Opening a row, relation, search result or diagram resource
   preserves the underlying section, drawing, filters, expansion and viewport.
@@ -270,9 +248,8 @@ costed already.
   controls in a bottom sheet; its badge counts selected
   values, and individually removable chips remain above the reading. Rows/Graph
   stays beside Filters with the same icons. Page controls, filters and graph
-  buttons use Nuxt UI's `sm` size (28px) at every viewport width. The
-  experimentation bar retains its own sizing; report controls never override
-  global UI defaults.
+  buttons use Nuxt UI's `sm` size (28px) at every viewport width. Host chrome
+  retains its own sizing; report controls never override global UI defaults.
   Filter collapse follows the reading's available width. Report navigation
   sits beside the working view's heading.
 - **The surface names the resource type; the row does not repeat it**, a fact

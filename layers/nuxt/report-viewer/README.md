@@ -117,6 +117,8 @@ The local viewer lists its single Product. Hosts can supply `products` as
 `{ label, to, logoSrc?, active? }[]`, marking the current destination `active`;
 the current report remains the selected entry even while the host's list loads.
 Other entries are native links, with the menu's keyboard type-ahead navigation.
+Hosts can supply `productCatalog: { label, to }` to add a link to the full
+catalog below the Product choices, separated from them by a divider.
 Catalog hosts should key the viewer by Blueprint identity so switching Products
 starts a fresh reading. In the collapsed rail, the picker shows a 17px Product
 logo in a 32px trigger and a name tooltip; the mobile drawer keeps its full label.
@@ -125,6 +127,9 @@ when collapsed. Navigation rows are 36px high with 4px gaps, starting 20px below
 the Product picker. Whitespace and the Resources label separate the navigation
 groups. Vocabulary leads the bottom reference group above Documentation and
 GitHub, with one divider above the whole group.
+Hosts with Vocabulary in their own header can set `sidebarVocabulary` to
+`false` to omit the sidebar entry and its empty reference group. That header
+must keep the Vocabulary panel's tooltip controls available for report readers.
 The working view's header serves as its navbar: the heading shares it with
 coverage, report schema version and generation date, above a bottom divider. Status wraps onto a second line on narrow screens.
 Hosts can supply `sidebar-header` and `sidebar-footer` slots for branding and

@@ -31,9 +31,16 @@ import type { ColumnChoice } from '../composables/useColumns'
 import { KIND_TERM } from '../utils/vocabulary'
 import type { VocabularySlug } from '../utils/vocabulary.generated'
 import { firstSentence } from '../utils/reportMarkdown'
-import type { ReportProductLink } from '../utils/reportProducts'
+import type { ReportProductCatalogLink, ReportProductLink } from '../utils/reportProducts'
 
-const props = defineProps<{ workspace: ReportWorkspace, logoSrc?: string | null, products?: ReportProductLink[], toolsTarget?: string }>()
+const props = withDefaults(defineProps<{
+  workspace: ReportWorkspace
+  logoSrc?: string | null
+  products?: ReportProductLink[]
+  productCatalog?: ReportProductCatalogLink
+  sidebarVocabulary?: boolean
+  toolsTarget?: string
+}>(), { sidebarVocabulary: true })
 
 /* ------------------------------------------------------------------ */
 /* Selection: `activeKind` is what the collection view is about, and */
@@ -575,6 +582,8 @@ const orphanScenarios = computed(() => props.workspace.scenarios
             :workspace="workspace"
             :logo-src="logoSrc"
             :products="products"
+            :product-catalog="productCatalog"
+            :vocabulary="sidebarVocabulary"
             :collapsed="collapsed"
             :active-section="activeSection"
             :counts="kindCounts"
@@ -941,6 +950,8 @@ const orphanScenarios = computed(() => props.workspace.scenarios
           :workspace="workspace"
           :logo-src="logoSrc"
           :products="products"
+          :product-catalog="productCatalog"
+          :vocabulary="sidebarVocabulary"
           :active-section="activeSection"
           :counts="kindCounts"
           tools

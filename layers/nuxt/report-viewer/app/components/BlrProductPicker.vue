@@ -1,18 +1,19 @@
 <script setup lang="ts">
 import type { DropdownMenuItem } from '@nuxt/ui'
-import type { ReportProductLink } from '../utils/reportProducts'
+import type { ReportProductCatalogLink, ReportProductLink } from '../utils/reportProducts'
 
 const props = defineProps<{
   title: string
   logoSrc?: string | null
   products?: ReportProductLink[]
+  productCatalog?: ReportProductCatalogLink
   collapsed?: boolean
 }>()
 const emit = defineEmits<{ navigate: [] }>()
 const open = ref(false)
 
 type ProductItem = DropdownMenuItem & { logoSrc?: string | null, current?: boolean }
-const items = computed<ProductItem[]>(() => [
+const items = computed<ProductItem[][]>(() => [[
   { label: props.title, logoSrc: props.logoSrc, current: true, 'aria-current': 'true' },
   ...(props.products ?? []).filter(product => !product.active).map(product => ({
     label: product.label,
@@ -20,7 +21,11 @@ const items = computed<ProductItem[]>(() => [
     to: product.to,
     onSelect: () => emit('navigate')
   }))
-])
+], ...(props.productCatalog ? [[{
+  ...props.productCatalog,
+  icon: 'i-lucide-arrow-left',
+  onSelect: () => emit('navigate')
+}]] : [])])
 </script>
 
 <template>
@@ -49,7 +54,10 @@ const items = computed<ProductItem[]>(() => [
       </UButton>
     </UTooltip>
     <template #item-leading="{ item }">
-      <BusinessLensProductLogo :src="item.logoSrc" class="size-6 shrink-0 rounded object-contain" />
+      <span v-if="item.icon" class="flex size-6 shrink-0 items-center justify-center">
+        <UIcon :name="item.icon" class="size-4" />
+      </span>
+      <BusinessLensProductLogo v-else :src="item.logoSrc" class="size-6 shrink-0 rounded object-contain" />
     </template>
     <template #item-trailing="{ item }">
       <template v-if="item.current">

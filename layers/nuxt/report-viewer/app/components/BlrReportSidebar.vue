@@ -1,16 +1,18 @@
 <script setup lang="ts">
 import type { ReportResourceKind, ReportWorkspace } from '../utils/reportWorkspace'
-import type { ReportProductLink } from '../utils/reportProducts'
+import type { ReportProductCatalogLink, ReportProductLink } from '../utils/reportProducts'
 
-defineProps<{
+withDefaults(defineProps<{
   workspace: ReportWorkspace
   logoSrc?: string | null
   products?: ReportProductLink[]
+  productCatalog?: ReportProductCatalogLink
   activeSection: string
   counts: Record<ReportResourceKind, number>
   tools?: boolean
+  vocabulary?: boolean
   collapsed?: boolean
-}>()
+}>(), { vocabulary: true })
 
 const emit = defineEmits<{
   kind: [kind: ReportResourceKind]
@@ -33,6 +35,7 @@ const emit = defineEmits<{
         :title="workspace.identity.title"
         :logo-src="logoSrc"
         :products="products"
+        :product-catalog="productCatalog"
         :collapsed="collapsed"
         @navigate="emit('navigate')"
       />
@@ -55,9 +58,9 @@ const emit = defineEmits<{
       </template>
     </BlrRail>
 
-    <div v-if="tools || $slots.footer" data-report-sidebar-footer class="mt-auto shrink-0 pt-6">
+    <div v-if="(tools && vocabulary !== false) || $slots.footer" data-report-sidebar-footer class="mt-auto shrink-0 pt-6">
       <div class="grid gap-1 border-t border-default pt-3">
-        <div v-if="tools" data-report-sidebar-vocabulary>
+        <div v-if="tools && vocabulary !== false" data-report-sidebar-vocabulary>
           <BlrReportTools tool="vocabulary" :collapsed="collapsed" @vocabulary="emit('vocabulary', $event)" />
         </div>
         <slot name="footer" />
