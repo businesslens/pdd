@@ -272,22 +272,22 @@ try {
   await expect(panel).toBeHidden()
   console.log('Passed: every header opening clears stale searches and opens only the current collection, resource, or Topology group.')
 
-  // Alternate surface labels must remain available to heading navigation and
-  // voice control, even when their definitions use a different canonical term.
+  // Resource labels remain available to heading navigation and voice control.
   const orderUrl = new URL(url)
   orderUrl.searchParams.set('s', 'entity')
   orderUrl.searchParams.set('e', 'entity:order')
   await page.goto(orderUrl.href)
   for (const [label, term] of [
-    ['Subject', 'Domain'],
-    ['Relationships', 'Relation'],
-    ['Kept', 'Information kept']
+    ['States', 'State'],
+    ['Arcs', 'Arc'],
+    ['Information kept', 'Information kept']
   ]) {
-    const button = page.locator('button.blr-term').filter({ hasText: new RegExp(`^${label}$`) })
-    await expect(button).toHaveAccessibleName(`${label} — what ${term} means`)
+    const buttons = page.locator('[data-resource-panel] button.blr-term').filter({ hasText: new RegExp(`^${label}$`) })
+    await expect(buttons.first()).toBeVisible()
+    for (const button of await buttons.all()) await expect(button).toHaveAccessibleName(`${label} — what ${term} means`)
   }
-  await expect(page.getByRole('heading', { name: 'Subject — what Domain means', exact: true })).toBeVisible()
-  await expect(page.getByRole('heading', { name: /^Relationships — what Relation means \d+$/ })).toBeVisible()
+  await expect(page.locator('[data-resource-panel] header').getByRole('link', { name: 'Domain: Ordering', exact: true })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /^Information kept — what Information kept means \d+$/ })).toBeVisible()
   console.log('Passed: heading and button names retain their visible labels.')
 
   // The acting Entity's Kind classifies person versus system; it must not
@@ -313,25 +313,28 @@ try {
   // either theme, and dismissing the popover restores focus to its trigger.
   for (const colorScheme of ['light', 'dark']) {
     await page.reload()
-    const subject = page.getByRole('button', { name: 'Subject — what Domain means', exact: true })
-    await expect(subject).toBeVisible()
+    const definitionName = 'Information kept — what Information kept means'
+    const termHelp = page.getByRole('button', { name: definitionName, exact: true }).first()
+    await expect(termHelp).toBeVisible()
     const html = page.locator('html')
     if (!(await html.getAttribute('class') ?? '').split(/\s+/).includes(colorScheme)) {
+      await page.locator('[data-resource-panel]').getByRole('button', { name: 'Close resource', exact: true }).click()
       await page.getByRole('button', { name: 'Toggle color mode', exact: true }).click()
+      await page.goto(orderUrl.href)
     }
     await expect(html).toHaveClass(new RegExp(`(?:^|\\s)${colorScheme}(?:\\s|$)`))
     await page.keyboard.press('Tab')
-    await subject.focus()
-    await expect(subject).toHaveCSS('outline-style', 'solid')
-    await expect(subject).toHaveCSS('outline-width', '2px')
+    await termHelp.focus()
+    await expect(termHelp).toHaveCSS('outline-style', 'solid')
+    await expect(termHelp).toHaveCSS('outline-width', '2px')
     await page.keyboard.press('Enter')
-    const mention = page.getByRole('dialog', { name: 'Subject — what Domain means', exact: true })
+    const mention = page.getByRole('dialog', { name: definitionName, exact: true })
       .getByRole('button', { name: / — show definition$/ }).first()
     await mention.focus()
     await expect(mention).toHaveCSS('outline-style', 'solid')
     await expect(mention).toHaveCSS('outline-width', '2px')
     await page.keyboard.press('Escape')
-    await expect(subject).toBeFocused()
+    await expect(termHelp).toBeFocused()
   }
   console.log('Passed: definition triggers show keyboard focus in light and dark themes.')
 

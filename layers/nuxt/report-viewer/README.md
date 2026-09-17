@@ -13,14 +13,33 @@ A collection row, relation, search result, or topology resource opens one comple
 resource slideover. The underlying collection or comparison keeps its heading,
 rail selection, Rows/Graph drawing, filters, expansion, scroll and graph viewport.
 The modal reading dims and blocks the underlying view; narrow screens use the
-full width. Back restores the previous resource and its tab and reading position.
+full width. Expand fills the window with the same resource reading; Restore
+returns to the panel width while retaining the drawing, selection and viewport.
+Back restores the previous resource and its tab and reading position.
 Close, Escape or a click outside returns to the preserved working view. Resource links support the
 browser's new-tab and copy-link actions. The compact header keeps the resource's
 identity on the left and named-view and documentation actions beside Close.
+Related Domains appear as linked names with their type icons in every resource
+header, keeping that context visible across tabs and separate from ownership.
+Entities and Capabilities show their assigned Domain; other resources show the
+Domains reached through their Capabilities or Rule targets. A Scenario uses its
+own Capabilities, so it does not borrow Domains from its parent's other cases.
 
 Overview contains identity facts, authored detail, Contexts and supporting material,
 with contextual links beside the facts they explain. Capability
-and Journey readings add Scenarios; an Entity with States adds Lifecycle.
+and Journey readings add Scenarios. An Entity's Overview contains Information
+kept; its Lifecycle reading switches between Rows and Graph. Rows groups changes
+under their starting State, using the collection list's parent/child styling.
+Each State carries its definition, including States with no outgoing changes.
+Creation and changes without a starting State have separate groups. Groups and
+changes expand and collapse individually or together, with expansion remembered.
+Rows expand each change's Capabilities, Rules, co-effects and supporting
+Scenarios. Graph nodes and edges open those details in a local inspector;
+selecting a State explains it and lists the Scenarios that leave the Entity
+there. Changes without specified states remain accessible beside the graph.
+The inspector sits below the drawing in a narrow panel and beside it when
+there is room. Drawing, selection and viewport survive tab changes, linked
+resource lookups and refresh.
 Connections follows whenever relationships exist and gives the complete
 relationship list, including links also explained in Overview. References comes
 last when attachments exist, with its count, roles and image previews. Attachments
@@ -305,6 +324,8 @@ actual packed layer.
 ## Navigation regression checks
 
 Against a running built fixture-shop report, run
+`node scripts/check-entity-lifecycle.mjs <url>` for state and change inspection,
+Rows/Graph parity, panel expansion, keyboard access and saved reading state.
 `node scripts/check-resource-slideover.mjs <url>` for desktop and mobile
 inspection, independent Graph/Lifecycle state, nested Back/Forward, Scenario
 position, direct links and keyboard dismissal.

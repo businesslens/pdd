@@ -67,7 +67,7 @@ export function tabsFor(workspace: ReportWorkspace, requestedResource: AnyResour
     tabs.push({ id: 'scenarios', label: 'Scenarios', count: children.length, blocks: [] })
   }
   if (resource.kind === 'entity' && resource.states.length) {
-    tabs.push({ id: 'lifecycle', label: 'Lifecycle', count: resource.states.length, blocks: [] })
+    tabs.push({ id: 'lifecycle', label: 'Lifecycle', blocks: [] })
   }
   if (resourceConnectionRows(workspace, resource).length) {
     tabs.push({ id: 'connections', label: 'Connections', blocks: ['connections'] })
