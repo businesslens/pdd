@@ -12,6 +12,7 @@ const { projectReportWorkspace } = await utility('reportWorkspace')
 const projections = await utility('topologyProjections')
 const { ruleAttachments } = await utility('topologyTargets')
 const { relationshipBadges } = await utility('matrixBadges')
+const { sanitizeMatrixReading } = await utility('matrixFilters')
 const { topologyRelations } = await utility('topologyRelations')
 const state = await utility('topologyState')
 const { PRODUCT_TOPOLOGY_VIEWS } = await utility('productTopologyViews')
@@ -35,8 +36,7 @@ describe('named topology semantics', () => {
     const focused = original.matrix.rows[0].key
     reading.value = { ...reading.value, focus: [focused] }
     expect(view.value.matrix.rows.map((row: any) => row.key)).toEqual([focused])
-    reading.value = { ...reading.value, hiddenKinds: ['entity'] }
-    expect(view.value.matrix.cells).toEqual([])
+    expect(view.value.matrix.columns).toEqual(original.matrix.columns)
     reading.value = { ...reading.value, view: 'delivery-by-interface', hiddenKinds: [], focus: [] }
     expect(view.value.mode).toBe('delivery')
     expect(view.value.matrix.columns.every((column: any) => column.kind === 'interface')).toBe(true)
@@ -44,6 +44,70 @@ describe('named topology semantics', () => {
     workspace.value = workspaceOf(teachingRoot)
     expect(view.value).not.toBe(previous)
     expect(view.value.matrix.rows.length).toBeGreaterThan(0)
+  })
+
+  it.each(['what-changes-what', 'delivery-by-interface', 'rule-attachments'])('filters both axes independently and keeps empty intersections in %s', name => {
+    const reading = shallowRef({ ...state.defaultTopologyReading(), view: name })
+    const view = useBlrMatrixView(workspaceOf(), reading)
+    const { source } = view.value
+    const row = source.rows.find((row: any) => source.columns.some((column: any) => !source.cells.some((cell: any) => cell.row === row.key && cell.column === column.key)))
+    expect(row).toBeDefined()
+    const column = source.columns.find((column: any) => !source.cells.some((cell: any) => cell.row === row.key && cell.column === column.key))
+    reading.value = { ...reading.value, focus: [row.key] }
+    expect(view.value.matrix.rows).toEqual([row])
+    expect(view.value.matrix.columns).toEqual(source.columns)
+    reading.value = { ...reading.value, focus: [column.key] }
+    expect(view.value.matrix.rows).toEqual(source.rows)
+    expect(view.value.matrix.columns).toEqual([column])
+    reading.value = { ...reading.value, focus: [row.key, column.key] }
+    expect(view.value.matrix).toEqual({ rows: [row], columns: [column], cells: [] })
+    reading.value = { ...reading.value, focus: source.rows.slice(0, 2).map((row: any) => row.key) }
+    expect(view.value.matrix.rows).toEqual(source.rows.slice(0, 2))
+    expect(view.value.matrix.columns).toEqual(source.columns)
+    reading.value = { ...reading.value, focus: [] }
+    expect(view.value.matrix).toEqual(source)
+  })
+
+  it('combines Rule targets across resource types and preserves surviving selections after edits', () => {
+    const workspace = workspaceOf()
+    const reading = shallowRef({ ...state.defaultTopologyReading(), view: 'rule-attachments' })
+    const view = useBlrMatrixView(workspace, reading)
+    const { source } = view.value
+    const entity = source.columns.find((resource: any) => resource.kind === 'entity')
+    const other = source.columns.find((resource: any) => resource.kind !== 'entity')
+    expect(entity).toBeDefined()
+    expect(other).toBeDefined()
+    reading.value = { ...reading.value, focus: [entity.key, other.key] }
+    expect(view.value.matrix.rows).toEqual(source.rows)
+    expect(view.value.matrix.columns).toEqual(source.columns.filter((resource: any) => [entity.key, other.key].includes(resource.key)))
+    reading.value = { ...reading.value, focus: [other.key] }
+    expect(view.value.matrix.columns).toEqual([other])
+    reading.value = { ...reading.value, focus: [source.rows[0].key, entity.key, other.key], column: entity.key }
+    expect(view.value.matrix.rows).toEqual([source.rows[0]])
+    const updated = { ...source, columns: source.columns.filter((resource: any) => resource.kind !== 'entity') }
+    const repaired = sanitizeMatrixReading(reading.value, updated)
+    expect(repaired.column).toBe(null)
+    expect(repaired.focus).toEqual([source.rows[0].key, other.key])
+  })
+
+  it('hides Rule target types without hiding Rules, clears excluded selections and restores types', () => {
+    const reading = shallowRef({ ...state.defaultTopologyReading(), view: 'rule-attachments' })
+    const view = useBlrMatrixView(workspaceOf(), reading)
+    const { source } = view.value
+    const entity = source.columns.find((resource: any) => resource.kind === 'entity')
+    reading.value = { ...reading.value, focus: [source.rows[0].key, entity.key], hiddenKinds: ['entity', 'rule'], column: entity.key }
+    const clean = sanitizeMatrixReading(reading.value, source)
+    expect(clean.focus).toEqual([source.rows[0].key])
+    expect(clean.hiddenKinds).toEqual(['entity'])
+    expect(clean.column).toBe(null)
+    expect(view.value.matrix.rows).toEqual([source.rows[0]])
+    expect(view.value.matrix.columns).toEqual(source.columns.filter((resource: any) => resource.kind !== 'entity'))
+    reading.value = { ...clean, hiddenKinds: [] }
+    expect(view.value.matrix.columns).toEqual(source.columns)
+    reading.value = { ...reading.value, hiddenKinds: [...new Set(source.columns.map((resource: any) => resource.kind))] }
+    expect(view.value.matrix.columns).toEqual([])
+    expect(view.value.matrix.cells).toEqual([])
+    expect(view.value.matrix.rows).toEqual([source.rows[0]])
   })
 
   it('keeps nine questions with explicit diagram types and stable view IDs', () => {
@@ -368,6 +432,8 @@ describe('topology reading state', () => {
     expect(state.topologyFromQuery(state.topologyToQuery(reading))).toEqual(reading)
     expect(Object.values(state.topologyToQuery(state.defaultTopologyReading())).every(value => value === undefined)).toBe(true)
     expect(state.topologyFromQuery({ tv: 'made-up', th: ['not-a-kind'] })).toEqual(state.defaultTopologyReading())
+    const matrixReading = { ...state.defaultTopologyReading(), view: 'rule-attachments', focus: ['rule:one', 'entity:a,b', 'screen:web::item'] }
+    expect(state.topologyFromQuery(state.topologyToQuery(matrixReading))).toEqual(matrixReading)
   })
   it('preserves surviving resources after an edit and clears removed selections', () => {
     const workspace = workspaceOf()

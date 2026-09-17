@@ -9,13 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.18.0] - 2026-09-17
 
-- Explore clearer comparison tables with consistent colors, compact row headers and labeled axes.
-- Compare Entity changes across Capabilities and see all Rule attachment targets.
-- Scroll comparison pages naturally and move through columns one at a time with edge controls.
-- Open colored badges for matching Scenarios, state changes, delivery routes and Rule details.
-- Read larger Context paths in resource details and comparison popovers.
-- Open Legend in each comparison page header for all possible badge colors and their meanings, including server-rendered reports.
-- Keep large comparison tables responsive and return keyboard focus to the badge after closing resource details.
+- Clearer comparison tables with independent filters and smoother navigation.
+- Colored badges with details on click and complete legends.
+- Larger Context paths and improved keyboard navigation.
 
 ## [0.17.0] - 2026-09-16
 

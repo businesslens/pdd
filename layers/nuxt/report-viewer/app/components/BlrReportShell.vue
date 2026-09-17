@@ -482,7 +482,7 @@ function openView(sectionId: string, resource?: AnyResourceView) {
   if (!target) return
   mobileNavOpen.value = false
   leavePage()
-  topology.value = { ...topology.value, view: target.view, hiddenKinds: [], query: '', focus: resource ? [resource.key] : [], column: resource?.kind === 'entity' && target.view === 'what-changes-what' ? resource.key : null }
+  topology.value = { ...topology.value, view: target.view, hiddenKinds: [], query: '', focus: resource ? [resource.key] : [], column: null }
   /* A matrix compares two collections, so its rail row is its own. */
   activeSection.value = target.rail
   activeKind.value = isMatrixSection(target.rail) ? 'product' : target.rail as ReportResourceKind

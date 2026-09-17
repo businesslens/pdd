@@ -202,14 +202,22 @@ The cross-collection matrices are rail rows below Overview, each its own
 section with no tabs: `delivery` (Compare delivery, Capability rows by Interface
 columns), `what-changes-what` (Entity rows by Capability columns), and
 `rule-attachments` (Business Rule rows by attachment target columns). Their navigation icons,
-selection accents and heading icons use neutral colors. Each keeps its own type
-narrowing (`th`) and focus (`tf`). Matrices scroll vertically with the reading;
-Edge controls, horizontal trackpad gestures, and touch swipes move one column
+selection accents and heading icons use neutral colors. Searchable multiselects
+name each matrix's axes: Entities and Capabilities, Capabilities and Interfaces,
+or Rules followed by a separate filter for each kind of attachment target
+present in the table. Selected resources (`tf`) narrow only their own axis;
+empty intersections remain visible. Target selections from different types
+combine into one set of columns. Clearing all selections on an axis restores
+all its resources. Rule attachments also offers Resource types (`th`): hiding a target type removes
+its columns, resource filter and any selections of that type. Rules remain
+independently selectable; hidden-type chips restore types individually.
+Matrices scroll vertically with the reading; edge controls, horizontal trackpad
+gestures, and touch swipes move one column
 at a time beside a fixed subject column. The first visible column uses `tm`;
 moving between columns preserves vertical position and cell details. Each page
 header offers a Legend popover with every possible badge color and meaning for
-that view, regardless of report data, filters or the current column window. The header and reading share one
-projection and render together on the server. Body cells mount only for the
+that view, regardless of report data, filters or the current column window.
+The header and reading render together on the server. Body cells mount only for the
 visible columns and one neighbour on each side; the browser animates their offset. A collection Graph
 draws the facet-filtered set and honours `tf` as a neighbourhood; branch
 expansion uses `tx`/`tc`. Entity Lifecycle and resource Connections each keep
