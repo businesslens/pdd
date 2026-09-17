@@ -35,7 +35,7 @@ const overflow = computed(() => resources.value.length - shown.value.length)
 <template>
   <div v-if="resources.length" class="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-sm">
     <span class="blr-field inline-flex items-center gap-1">
-      <UIcon :name="meta.icon" class="size-3" />
+      <BlrKind :kind="kind" :labelled="false" size="xs" />
       {{ label || meta.plural }}
     </span>
     <span class="flex flex-wrap gap-x-2 gap-y-1">

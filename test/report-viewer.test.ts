@@ -188,9 +188,9 @@ describe('stable Product Report', () => {
 
     expect(workspace.byKey.get(order.key)).toBe(order)
     expect(resourceFacts(workspace, order).map((fact: any) => fact.label))
-      .toEqual(['Kept', 'States', 'Arcs', 'Changed by'])
+      .toEqual(['Information kept', 'States', 'Arcs', 'Changed by'])
     expect(resourceFacts(workspace, workspace.entities.find((item: any) => item.id === 'shopper')).map((fact: any) => fact.label))
-      .toEqual(['Kind', 'Acts', 'Journeys', 'Kept'])
+      .toEqual(['Kind', 'Acts', 'Journeys', 'Information kept'])
     expect(hasAuthoredBody(order)).toBe(true)
     const overview = tabsFor(workspace, order).find((tab: any) => tab.id === 'overview')!
     expect(overview.blocks).toContain('detail')
@@ -1245,6 +1245,41 @@ describe('stable Product Report', () => {
 describe('composed lifecycle', () => {
   const lifecycleModulePath = '../layers/nuxt/report-viewer/app/utils/entityLifecycle.ts'
 
+  it('groups every change once by its starting State, keeping creation and unspecified changes separate', async () => {
+    const { groupEntityLifecycle } = await import(lifecycleModulePath)
+    const workspace = workspaceOf(compileReport(loadModel(FIXTURE), '2026-08-08'))
+    const order = entityOf(workspace, 'order')
+    const groups = groupEntityLifecycle(order, order.arcs)
+    expect(groups.filter((group: any) => group.state).map((group: any) => group.title)).toEqual(order.states.map((state: any) => state.name))
+    expect(groups.flatMap((group: any) => group.arcs.map((arc: any) => arc.key)).sort()).toEqual(order.arcs.map((arc: any) => arc.key).sort())
+    expect(groups[0].title).toBe('Creation')
+    expect(groups[0].arcs.every((arc: any) => arc.effect === 'creates')).toBe(true)
+    expect(groups.find((group: any) => group.title === 'Pending').arcs.map((arc: any) => arc.to).sort()).toEqual(['Cancelled', 'Confirmed'])
+    expect(groups.find((group: any) => group.title === 'Confirmed').arcs.map((arc: any) => arc.to).sort()).toEqual(['Cancelled', 'Refunded'])
+    expect(groups.find((group: any) => group.title === 'Cancelled').arcs).toEqual([])
+    expect(groups.find((group: any) => group.title === 'No specified state').arcs.map((arc: any) => arc.effect)).toEqual(['changes'])
+  })
+
+  it('keeps self-changes and removals under their source, including unused States and a State named Creation', async () => {
+    const { groupEntityLifecycle } = await import(lifecycleModulePath)
+    const workspace = workspaceOf(compileReport(loadModel(FIXTURE), '2026-08-08'))
+    const order = entityOf(workspace, 'order')
+    const entity = { ...order, states: ['Creation', 'Unused'].map(name => ({ ...order.states[0], name })) }
+    const arcs = [
+      { ...order.arcs[0], key: 'create', effect: 'creates', from: '', to: 'Creation' },
+      { ...order.arcs[0], key: 'self', effect: 'changes', from: 'Creation', to: 'Creation' },
+      { ...order.arcs[0], key: 'remove', effect: 'removes', from: 'Creation', to: '' },
+      { ...order.arcs[0], key: 'unspecified', effect: 'changes', from: '', to: '' },
+      { ...order.arcs[0], key: 'unresolved', effect: 'changes', from: 'Missing', to: 'Creation' }
+    ]
+    const groups = groupEntityLifecycle(entity, arcs)
+    expect(groups.map((group: any) => [group.title, group.arcs.map((arc: any) => arc.key)])).toEqual([
+      ['Creation', ['create']], ['Creation', ['self', 'remove']], ['Unused', []],
+      ['No specified state', ['unspecified']], ['Unknown starting state', ['unresolved']]
+    ])
+    expect(new Set(groups.map((group: any) => group.key)).size).toBe(groups.length)
+  })
+
   const workspaceOf = (report: any) => projectReportWorkspace(report)
   const entityOf = (workspace: any, id: string) => workspace.entities.find((item: any) => item.id === id)
   const arcOf = (entity: any, from: string, to: string, effect = 'changes') =>
@@ -1302,11 +1337,11 @@ describe('composed lifecycle', () => {
     expect(drawn.has(lifecycleArcEdgeId(order.id, stateless))).toBe(false)
     expect(order.arcs).toHaveLength(6)
     expect(order.arcs.filter((arc: any) => drawn.has(lifecycleArcEdgeId(order.id, arc)))).toHaveLength(5)
-    /* The heading says both numbers when they differ, so "6 arcs" over five edges never happens. */
+    /* Graph keeps changes without specified states accessible alongside its edges. */
     const component = source('app/components/BlrEntityLifecycle.vue')
     expect(component).toContain('drawnEdgeIds.value.has(lifecycleArcEdgeId(props.resource.id, arc))')
-    expect(component).toContain('<template v-if="drawnCount !== arcs.length">, {{ drawnCount }} drawn</template>')
-    expect(component).toContain('· not drawn')
+    expect(component).toContain('Changes without specified states')
+    expect(component).toContain('data-lifecycle-unplaced')
   })
 
   /*
@@ -1352,8 +1387,8 @@ describe('composed lifecycle', () => {
       .toMatchObject({ label: 'Order cancellation · restricted' })
     expect(edges.find((edge: any) => edge.target === 'blr-state:order:Pending')).toMatchObject({ label: 'Checkout', forbidden: false })
 
-    /* The list under the machine links each Rule and says how the Rules compose. */
-    const component = source('app/components/BlrEntityLifecycle.vue')
+    /* Both drawings use the same detail, retaining each Rule and how they compose. */
+    const component = source('app/components/BlrLifecycleChangeDetails.vue')
     expect(component).toContain('v-for="rule in arc.rules"')
     expect(component).toContain("@open=\"open('rule', rule.id)\"")
     expect(component).toContain('<span v-if="index" class="blr-meta"> or </span>')

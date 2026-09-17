@@ -54,14 +54,14 @@ export function resourceFacts(workspace: ReportWorkspace, resource: AnyResourceV
       const item = resource as ExperienceView
       return [
         { label: 'Interface', value: one('interface', item.interfaceIds), wide: true, term: KIND_TERM.interface },
-        { label: 'Access', value: item.accessMode, term: 'access-mode' },
+        { label: 'Access mode', value: item.accessMode, term: 'access-mode' },
         { label: 'Screens', value: String(item.screenIds.length), term: KIND_TERM.screen }
       ]
     }
     case 'screen': {
       const screen = resource as ScreenView
       return [
-        { label: 'States', value: String(screen.states.length), term: 'view-state' },
+        { label: 'View states', value: String(screen.states.length), term: 'view-state' },
         { label: 'Actions', value: String(screen.actions.length) }
       ]
     }
@@ -72,11 +72,11 @@ export function resourceFacts(workspace: ReportWorkspace, resource: AnyResourceV
           { label: 'Kind', value: entity.entityKind ?? '', term: 'entity-kind' },
           { label: 'Acts', value: entity.acts, term: 'acts' },
           { label: 'Journeys', value: String(entity.journeyIds.length), term: KIND_TERM.journey },
-          { label: 'Kept', value: String(entity.informationKept.length), term: 'information-kept' }
+          { label: 'Information kept', value: String(entity.informationKept.length), term: 'information-kept' }
         ]
       }
       return [
-        { label: 'Kept', value: String(entity.informationKept.length), term: 'information-kept' },
+        { label: 'Information kept', value: String(entity.informationKept.length), term: 'information-kept' },
         { label: 'States', value: String(entity.states.length), term: 'state' },
         { label: 'Arcs', value: String(entity.arcs.length), term: 'arc' },
         { label: 'Changed by', value: String(entity.changedByIds.length), term: 'changed-by' }
@@ -122,7 +122,7 @@ export function resourceFacts(workspace: ReportWorkspace, resource: AnyResourceV
     case 'rule': {
       const rule = resource as RuleView
       return [
-        { label: 'Bindings', value: String(rule.appliesTo.length), term: 'applies-to' }
+        { label: 'Applies to', value: String(rule.appliesTo.length), term: 'applies-to' }
       ]
     }
     default:

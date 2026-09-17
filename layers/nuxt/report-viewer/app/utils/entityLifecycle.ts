@@ -1,5 +1,5 @@
 /** The Entity's state machine, composed from everything the model holds. */
-import type { EntityArcView, EntityView, ReportWorkspace } from './reportWorkspace'
+import type { EntityArcView, EntityStateView, EntityView, ReportWorkspace } from './reportWorkspace'
 import { resolveResource } from './reportWorkspace'
 import type { Diagram, DiagramNode, DiagramEdge } from './diagram'
 
@@ -16,6 +16,7 @@ function stateNode(entity: EntityView, data: LifecycleState): DiagramNode {
   return {
     id: data.terminal ? (data.terminal === 'start' ? LIFECYCLE_START : LIFECYCLE_END) : stateNodeId(entity.id, data.name),
     title: data.terminal === 'start' ? 'Created' : data.terminal === 'end' ? 'Removed' : data.name,
+    ...(!data.terminal ? { inspectionKey: stateNodeId(entity.id, data.name) } : {}),
     unreached: !data.reached,
     ...(data.terminal ? { terminal: data.terminal } : {})
   }
@@ -66,6 +67,36 @@ export function lifecycleArcEdgeId(entityId: string, arc: Pick<EntityArcView, 'k
   return `blr-arc:${entityId}:${arc.key}`
 }
 
+export function lifecycleArcTitle(arc: Pick<EntityArcView, 'effect' | 'from' | 'to'>): string {
+  if (arc.effect === 'creates') return `Created → ${arc.to}`
+  if (arc.effect === 'removes') return `${arc.from} → Removed`
+  return arc.to ? `${arc.from} → ${arc.to}` : 'Information changed'
+}
+
+export interface LifecycleRowGroup<T extends EntityArcView = EntityArcView> {
+  key: string
+  title: string
+  state?: EntityStateView
+  explanation?: string
+  arcs: T[]
+}
+
+/** A change belongs to its starting State exactly once. Creation is not a State. */
+export function groupEntityLifecycle<T extends EntityArcView>(entity: Pick<EntityView, 'id' | 'states'>, arcs: T[]): LifecycleRowGroup<T>[] {
+  const states: LifecycleRowGroup<T>[] = entity.states.map(state => ({
+    key: stateNodeId(entity.id, state.name), title: state.name, state, arcs: []
+  }))
+  const byName = new Map(states.map(group => [group.title, group]))
+  const creation: LifecycleRowGroup<T> = { key: `blr-creation:${entity.id}`, title: 'Creation', explanation: 'Creation has no starting state.', arcs: [] }
+  const unspecified: LifecycleRowGroup<T> = { key: `blr-unspecified:${entity.id}`, title: 'No specified state', explanation: 'These changes do not name a starting state.', arcs: [] }
+  const unresolved: LifecycleRowGroup<T> = { key: `blr-unresolved:${entity.id}`, title: 'Unknown starting state', explanation: 'These changes name a starting state that is not declared in this Entity.', arcs: [] }
+  for (const arc of arcs) {
+    const group = arc.effect === 'creates' ? creation : arc.from ? byName.get(arc.from) ?? unresolved : unspecified
+    group.arcs.push(arc)
+  }
+  return [creation, ...states, unspecified, unresolved].filter(group => group.state || group.arcs.length)
+}
+
 /** Build the placed graph for one Entity's composed lifecycle. */
 export function buildEntityLifecycle(workspace: ReportWorkspace, entity: EntityView): Diagram {
   const nodes: DiagramNode[] = entity.states.map((state) => stateNode(entity, {
@@ -78,7 +109,7 @@ export function buildEntityLifecycle(workspace: ReportWorkspace, entity: EntityV
   let hasStart = false
   let hasEnd = false
 
-  /* The canvas carries the Capability and one word for the Rule's presence; the sentence — who may, and what else the Step does — is the list under it. */
+  /* The canvas carries a short label; selecting it reads the complete change. */
   const caption = (label: LifecycleArcLabel): string => {
     if (label.forbidden) return 'forbidden'
     const [first = '', ...rest] = label.capabilities
@@ -99,6 +130,8 @@ export function buildEntityLifecycle(workspace: ReportWorkspace, entity: EntityV
     edges.push({
       source, target, label: caption(label),
       id: lifecycleArcEdgeId(entity.id, arc),
+      inspectionKey: lifecycleArcEdgeId(entity.id, arc),
+      inspectionLabel: lifecycleArcTitle(arc),
       forbidden: label.forbidden
     })
   })
@@ -117,6 +150,8 @@ export function buildEntityLifecycle(workspace: ReportWorkspace, entity: EntityV
     edges.push({
       source, target, label: 'forbidden',
       id: `blr-forbidden:${entity.id}:${prohibition.ruleId}:${prohibition.from}:${prohibition.to}`,
+      inspectionKey: `blr-forbidden:${entity.id}:${prohibition.ruleId}:${prohibition.from}:${prohibition.to}`,
+      inspectionLabel: `Forbidden: ${prohibition.from || 'Created'} → ${prohibition.to || 'Removed'}`,
       forbidden: true
     })
   }
