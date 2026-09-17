@@ -7,16 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- Context paths are easier to read in resource details and comparison popovers.
-- Compare delivery, What changes what, and Rule attachments now use list colors and omit introductory text and the "About this view" section.
-- Rule attachments includes every target and offers attachment details only when they add information.
-- What changes what lists Entities down the side and Capabilities across the top.
-- What changes what badges open their matching Scenarios and state details in popovers.
-- What changes what uses soft green and gold badges, with Terracotta removals in light mode and Muted red in dark mode.
-- Compare delivery and Rule attachments use soft-colored badges with popovers for matching routes, rule statements and attachment details.
-- Table corners name both axes diagonally with inset labels, removing repeated column labels where every column has the same type.
-- Compare delivery uses the same compact first-column width as the other comparison views.
-- Comparison tables use the full available width, scroll with the page and use subtle edge handles to move one column at a time, preserving expanded details.
+## [0.18.0] - 2026-09-17
+
+- Explore clearer comparison tables with consistent colors, compact row headers and labeled axes.
+- Compare Entity changes across Capabilities and see all Rule attachment targets.
+- Scroll comparison pages naturally and move through columns one at a time with edge controls.
+- Open colored badges for matching Scenarios, state changes, delivery routes and Rule details.
+- Read larger Context paths in resource details and comparison popovers.
+- Open Legend in each comparison page header for badge colors and their meanings.
 
 ## [0.17.0] - 2026-09-16
 

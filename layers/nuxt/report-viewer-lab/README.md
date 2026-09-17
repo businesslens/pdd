@@ -7,6 +7,13 @@ bundled local viewer. It has no package export and is excluded from published
 package files, so an audition cannot become part of the public renderer by
 accident.
 
+The **Comparison legend** audition is decided: Explained is the stable Legend
+popover on Compare delivery, What changes what and Rule attachments. Its button
+replaces Docs in these page headers; each colored badge has a short meaning.
+Entries follow the filtered matrix, independent of the visible columns. The
+shadow, alternatives, selector, cookie composable and experiment stylesheet have
+been removed. The background audition remains independently owned by `theme-lab`.
+
 The **Context sizing** audition is decided: Roomier is the stable Context
 renderer, at 13 px in resource drilldowns and 12 px in the three comparison
 views' popovers. Icons scale with the text; the chosen border, spacing, path

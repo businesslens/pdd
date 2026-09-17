@@ -32,7 +32,7 @@ function onCloseAutoFocus(event: Event) {
   <UPopover v-model:open="open"
     :content="{ align: 'start', collisionPadding: 16, onCloseAutoFocus }"
     :ui="{ content: 'blr-matrix-popover' }">
-    <button type="button" class="blr-matrix-badge" :data-effect="label" :data-tone="tone" :aria-label="accessibleLabel">
+    <button type="button" class="blr-matrix-badge blr-matrix-tone" :data-effect="label" :data-tone="tone" :aria-label="accessibleLabel">
       {{ label }}<UIcon name="i-lucide-chevron-down" aria-hidden="true" />
     </button>
     <template #content>

@@ -16,7 +16,7 @@ import { deliveryMatrixProjection, mutationProjection, ruleAttachmentsProjection
 import { topologyNeighbourhood } from '../utils/topologyFocus'
 import type { TopologyMatrix } from '../utils/topologyProjections'
 
-const props = defineProps<{ workspace: ReportWorkspace }>()
+const props = defineProps<{ workspace: ReportWorkspace, legendTarget?: string }>()
 const emit = defineEmits<{ select: [resource: AnyResourceView] }>()
 const reading = defineModel<TopologyReading>('reading', { default: defaultTopologyReading })
 const view = computed(() => findProductTopologyView(reading.value.view))
@@ -91,7 +91,7 @@ function open(key: string) {
 </script>
 <template>
   <div class="blr-product-topology">
-    <div class="px-5 pt-4">
+    <div class="blr-topology-toolbar px-5 pt-4">
       <BlrFilterBar :key="view.id" :chips="filterChips" @remove="removeFilter" @clear="update({ focus: [], hiddenKinds: [] })">
         <template #default="{ inSheet }">
           <USelectMenu
@@ -158,6 +158,11 @@ function open(key: string) {
           </USelectMenu>
         </template>
       </BlrFilterBar>
+      <!-- Keep the legend bound to this filtered matrix while the shell places
+           it beside the working view's heading. Standalone readings keep it here. -->
+      <Teleport :to="legendTarget || 'body'" :disabled="!legendTarget" defer>
+        <BlrMatrixLegend :matrix="matrix" :mode="matrixMode" />
+      </Teleport>
     </div>
     <div ref="pane" class="blr-topology-reading" @scroll.capture.passive="save">
       <BlrTopologyMatrix :workspace="workspace" :matrix="matrix" :column="reading.column" :mode="matrixMode" @column="update({ column: $event })" @open="open" />

@@ -25,6 +25,12 @@ describe('private Product Report viewer lab', () => {
     expect(readme).toContain('The **Table navigation** audition is decided')
     expect(readme).toContain('The **Mutation popover** audition is decided')
     expect(readme).toContain('The **Context sizing** audition is decided')
+    expect(readme).toContain('The **Comparison legend** audition is decided')
+    for (const name of ['BlrMatrixLegend', 'BlrMatrixLegendLabRow']) {
+      expect(existsSync(join(lab, `app/components/${name}.vue`))).toBe(false)
+    }
+    expect(existsSync(join(lab, 'app/composables/useBlrMatrixLegendLab.ts'))).toBe(false)
+    expect(existsSync(join(lab, 'app/assets/matrix-legend-lab.css'))).toBe(false)
     for (const name of ['BlrContextPlace', 'BlrContextLabRow', 'BlrContextLabDock']) {
       expect(existsSync(join(lab, `app/components/${name}.vue`))).toBe(false)
     }
@@ -51,6 +57,7 @@ describe('private Product Report viewer lab', () => {
     const stable = readFileSync(join(root, 'layers/nuxt/report-viewer/app/components/BlrTopologyMatrix.vue'), 'utf8')
 
     expect(app).toContain('<BusinessLensThemeLabBar />')
+    expect(app).not.toContain('BlrMatrixLegendLabRow')
     expect(app).not.toContain('BlrContextLab')
     expect(app).not.toContain('BlrMutationPopoverLabRow')
     expect(app).not.toContain('useBlrMatrixNavigationLab')

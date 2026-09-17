@@ -1,5 +1,16 @@
 /* Named readings share typography and spacing, not one forced graph shape. */
 .businesslens-report .blr-product-topology { display: flex; flex-direction: column; height: 100%; min-height: 0; min-width: 0; }
+.blr-topology-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; flex-shrink: 0; }
+.blr-topology-toolbar > [data-blr-filter-bar] { flex: 1 1 360px; min-width: 0; }
+.blr-matrix-legend { margin-inline-start: auto; }
+.blr-matrix-legend-popover { display: flex; flex-direction: column; width: 360px; max-width: calc(100vw - 32px); max-height: var(--reka-popover-content-available-height, 80vh); overflow: hidden; }
+.blr-matrix-legend-heading { display: flex; flex-shrink: 0; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 12px; border-bottom: 1px solid var(--ui-border); }
+.blr-matrix-legend-heading h3 { font-size: 14px; font-weight: 600; color: var(--ui-text-highlighted); }
+.blr-matrix-legend-entries { display: grid; gap: 14px; min-height: 0; overflow-y: auto; padding: 14px; }
+.blr-matrix-legend-entries li { display: grid; grid-template-columns: 90px minmax(0, 1fr); align-items: start; gap: 12px; }
+.blr-matrix-legend-entries .blr-matrix-legend-badge { justify-self: start; white-space: nowrap; line-height: calc(20 / 14); }
+.blr-matrix-legend-entries p { font-size: 13px; line-height: 1.5; color: var(--ui-text-muted); overflow-wrap: anywhere; }
+.blr-matrix-legend-badge { display: inline-flex; align-items: center; }
 .blr-topology-header { padding: 16px 20px 12px; border-bottom: 1px solid var(--ui-border); flex-shrink: 0; }
 /* A filter row costs nothing when the surface has nothing to narrow. */
 [data-blr-filter-row]:has(> [data-blr-filter-slot]:empty) { display: none; }
@@ -80,11 +91,11 @@
 .blr-topology-matrix tbody th { position: relative; z-index: 1; }
 .blr-matrix-kind { display: block; color: var(--ui-text-muted); font-weight: 400; font-size: 12px; margin-bottom: 6px; }
 .blr-matrix-effects { display: flex; flex-wrap: wrap; gap: 5px; }
-.blr-matrix-effects > .blr-matrix-badge { border: 1px solid var(--ui-border-accented); padding: 2px 6px; border-radius: 5px; font-size: 12px; }
+.blr-matrix-effects > .blr-matrix-badge, .blr-matrix-legend-badge { border-width: 1px; border-style: solid; padding: 2px 6px; border-radius: 5px; font-size: 12px; }
 .blr-matrix-badge { display: inline-flex; align-items: center; gap: 4px; color: var(--ui-text); cursor: pointer; }
 .blr-matrix-badge:focus-visible { outline: 2px solid var(--ui-primary); outline-offset: 3px; }
 .blr-matrix-badge > .iconify { width: 12px; height: 12px; }
-.blr-matrix-effects > .blr-matrix-badge {
+.blr-matrix-tone {
   --blr-badge-ink: var(--ui-color-neutral-700);
   --blr-badge-tint: var(--blr-badge-ink);
   --blr-badge-border-strength: 30%;
@@ -94,42 +105,42 @@
   background: color-mix(in srgb, var(--blr-badge-tint) var(--blr-badge-fill), var(--ui-bg));
   border-color: color-mix(in srgb, var(--blr-badge-ink) var(--blr-badge-border-strength), var(--ui-bg));
 }
-.blr-matrix-effects > .blr-matrix-badge[data-tone='changes'] {
+.blr-matrix-tone[data-tone='changes'] {
   --blr-badge-ink: var(--color-yellow-800);
   --blr-badge-tint: var(--color-yellow-400);
   --blr-badge-border-strength: 40%;
 }
-.blr-matrix-effects > .blr-matrix-badge[data-tone='info'] {
+.blr-matrix-tone[data-tone='info'] {
   --blr-badge-ink: var(--color-blue-800);
   --blr-badge-tint: var(--color-blue-500);
 }
-.blr-matrix-effects > .blr-matrix-badge[data-tone='violet'] {
+.blr-matrix-tone[data-tone='violet'] {
   --blr-badge-ink: var(--color-violet-800);
   --blr-badge-tint: var(--color-violet-500);
 }
-.blr-matrix-effects > .blr-matrix-badge[data-tone='creates'] {
+.blr-matrix-tone[data-tone='creates'] {
   --blr-badge-ink: var(--ui-color-success-800);
   --blr-badge-tint: var(--blr-badge-ink);
   --blr-badge-border-strength: 30%;
   --blr-badge-fill: 8%;
   --blr-badge-fill-active: 14%;
 }
-.blr-matrix-effects > .blr-matrix-badge[data-tone='removes'] {
+.blr-matrix-tone[data-tone='removes'] {
   --blr-badge-ink: #805234;
   --blr-badge-background: #efe0d1;
   --blr-badge-outline: #c4a58c;
   background: var(--blr-badge-background);
   border-color: var(--blr-badge-outline);
 }
-.dark .blr-matrix-effects > .blr-matrix-badge {
+.dark .blr-matrix-tone {
   --blr-badge-ink: var(--ui-color-neutral-300);
   --blr-badge-tint: var(--blr-badge-ink);
 }
-.dark .blr-matrix-effects > .blr-matrix-badge[data-tone='changes'] { --blr-badge-ink: var(--color-yellow-300); }
-.dark .blr-matrix-effects > .blr-matrix-badge[data-tone='info'] { --blr-badge-ink: var(--color-blue-300); }
-.dark .blr-matrix-effects > .blr-matrix-badge[data-tone='violet'] { --blr-badge-ink: var(--color-violet-300); }
-.dark .blr-matrix-effects > .blr-matrix-badge[data-tone='creates'] { --blr-badge-ink: var(--ui-color-success-300); }
-.dark .blr-matrix-effects > .blr-matrix-badge[data-tone='removes'] {
+.dark .blr-matrix-tone[data-tone='changes'] { --blr-badge-ink: var(--color-yellow-300); }
+.dark .blr-matrix-tone[data-tone='info'] { --blr-badge-ink: var(--color-blue-300); }
+.dark .blr-matrix-tone[data-tone='violet'] { --blr-badge-ink: var(--color-violet-300); }
+.dark .blr-matrix-tone[data-tone='creates'] { --blr-badge-ink: var(--ui-color-success-300); }
+.dark .blr-matrix-tone[data-tone='removes'] {
   --blr-badge-ink: #e6b0a6;
   --blr-badge-background: #342424;
   --blr-badge-outline: #76514b;

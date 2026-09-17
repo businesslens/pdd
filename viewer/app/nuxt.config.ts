@@ -52,7 +52,7 @@ export default defineNuxtConfig({
     // the landing application. Keep the composition here so report-viewer
     // stays neutral for consumers that want only the approved theme.
     // `report-viewer-lab` extends `report-viewer` and remains the private hook
-    // for future report auditions, with no active experiment.
+    // for future Product Report auditions.
     resolve('../../layers/nuxt/report-viewer-lab'),
     resolve('../../layers/nuxt/theme-lab')
   ],
