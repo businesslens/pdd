@@ -12,15 +12,13 @@ import { destinationForLocation } from '../utils/reportDestinations'
  * navigation and a pull command. Those differences arrive as slots and a
  * bindable section, so the Product Report stays one implementation.
  */
-import type { ProductReportV16, RepositoryInventoryLoader, RepositoryFileLoader } from 'businesslens/report'
+import type { ProductReportV16, RepositoryFileLoader } from 'businesslens/report'
 import { projectReportWorkspace } from '../utils/reportWorkspace'
 import type { ReportProductCatalogLink, ReportProductLink } from '../utils/reportProducts'
 import type { ReportChanges } from '../utils/reportChanges'
 
 const props = withDefaults(defineProps<{
   report: ProductReportV16
-  /** Optional live file inventory supplied by the local host, outside the report. */
-  loadRepository?: RepositoryInventoryLoader
   loadRepositoryFile?: RepositoryFileLoader
   /** Host-resolved `.businesslens/product/logo.svg`; used in the picker and Overview. */
   logoSrc?: string | null
@@ -126,7 +124,6 @@ onMounted(() => { mounted = true; synchronizeLocation() })
       v-model:route-columns="routeColumns"
       :topology="location.topology"
       :workspace="workspace"
-      :load-repository="loadRepository"
       :logo-src="logoSrc"
       :products="products"
       :product-catalog="productCatalog"

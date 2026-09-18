@@ -8,7 +8,6 @@ import { fileURLToPath } from 'node:url'
 import { createRequire } from 'node:module'
 import type { ProductReportV16 } from './portable.js'
 import { MAX_PRODUCT_LOGO_BYTES, validateProductLogo } from '../logo.js'
-import { repositoryContext } from './repository-coverage.js'
 import { createRepositoryComparison } from './repository-diff.js'
 import { diffReports, type ReportBaseline } from './report-diff.js'
 import { createReferenceFileSource } from './reference-files.js'
@@ -21,7 +20,6 @@ const REPORT_PATH = '/_businesslens/report.json'
 const EVENTS_PATH = '/_businesslens/events'
 const HEALTH_PATH = '/_businesslens/health'
 const LOGO_PATH = '/_businesslens/logo.svg'
-const REPOSITORY_PATH = '/_businesslens/repository.json'
 const ASSET_PREFIX = '/_businesslens/file/'
 const CODE_PATH = '/_businesslens/code'
 const VIEWER_ROOT = fileURLToPath(new URL('./viewer/', import.meta.url))
@@ -86,7 +84,7 @@ export interface LocalViewer {
 
 /** Everything about one model: what to compile, and where to watch and read. */
 export type LocalViewerBinding = Pick<LocalViewerOptions,
-  'compile' | 'initialReport' | 'watchRoot' | 'logoFile' | 'assetRoot' | 'referenceRoot' | 'modelRoot' | 'history'>
+  'compile' | 'initialReport' | 'watchRoot' | 'logoFile' | 'assetRoot' | 'referenceRoot' | 'history'>
 
 export interface LocalViewerOptions {
   port?: number
@@ -109,8 +107,6 @@ export interface LocalViewerOptions {
   assetRoot?: string
   /** Root for local Reference file comparisons, including code and documents. */
   referenceRoot?: string
-  /** Selected model root, which may be nested within the repository. */
-  modelRoot?: string
   history?: GitHistory
 }
 
@@ -328,7 +324,7 @@ class LocalReportStore {
     // macOS reports the watched directory's basename for some direct-child
     // changes when recursive mode is enabled, rather than the child filename.
     if (this.options.watchRoot && normalized === basename(this.options.watchRoot)) return true
-    return normalized === 'coverage.json' || /\.(?:md|ya?ml|svg)$/i.test(normalized)
+    return /\.(?:md|ya?ml|svg)$/i.test(normalized)
   }
 
   private isLogoSource(filename: string | Buffer | null): boolean {
@@ -598,12 +594,6 @@ function requestHandler(
     if (pathname === '/_businesslens/review/file') {
       void store.repositoryFile(url.searchParams.get('base') ?? '', url.searchParams.get('target') ?? 'working', url.searchParams.get('path') ?? '')
         .then(value => json(response, 200, value, head)).catch(error => json(response, 422, { message: error.message }, head))
-      return
-    }
-    if (pathname === REPOSITORY_PATH) {
-      if (!options.assetRoot) json(response, 404, { message: 'This report has no local repository inventory.' }, head)
-      else void repositoryContext(options.assetRoot, url.searchParams.get('includeIgnored') === 'true', options.modelRoot)
-        .then(value => json(response, 200, value, head)).catch(error => json(response, 503, { message: error.message }, head))
       return
     }
     if (pathname === REPORT_PATH) {

@@ -109,7 +109,7 @@ describe('end to end on a real git repo', () => {
     )].flat()
     expect(references.some(reference => reference.kind === 'code')).toBe(false)
     expect(references.some(reference => reference.role === 'implementation')).toBe(false)
-    expect(parsed.coverage.sourceAreas).toEqual([])
+    expect(parsed.coverage.covered).toEqual([{ description: 'Customer shopping, checkout and staff order management.', paths: [] }])
     expect(parsed.model.businessRules.find(rule => rule.id === 'payment-before-confirmation')?.appliesTo)
       .toContainEqual({ type: 'entity', entityId: 'order', effect: 'changes', from: null, to: 'Confirmed', facts: [], contexts: [] })
     expect(parsed.model.capabilityScenarios.find(scenario => scenario.id === 'complete-checkout')?.decisionPoints)
@@ -125,13 +125,25 @@ describe('end to end on a real git repo', () => {
     expect(JSON.stringify(second.report)).toBe(JSON.stringify(first.report))
   })
 
-  it('builds a draft planned model', () => {
-    const isolated = mkdtempSync(join(tmpdir(), 'bl-e2e-draft-'))
+  it('builds a planned model with known gaps and no status', () => {
+    const isolated = mkdtempSync(join(tmpdir(), 'bl-e2e-planned-'))
     try {
       cpSync(FIXTURE, isolated, { recursive: true })
       writeFileSync(
-        join(isolated, '.businesslens/coverage.json'),
-        JSON.stringify({ status: 'draft', scope: 'The intended Product behavior.', exclusions: [], method: ['Planned before implementation'], sourceAreas: [], unmapped: [], limitations: [], rationale: 'Planned map.', review: null })
+        join(isolated, '.businesslens/coverage.md'),
+        `---
+scope: The intended Product behavior.
+exclusions: []
+method: Planned before implementation
+covered: []
+unmapped:
+  - description: Subscription purchases are not modeled.
+    paths: []
+limitations: []
+---
+
+# Coverage
+`
       )
       sh(isolated, 'git', 'init', '--initial-branch=main')
       sh(isolated, 'git', 'config', 'user.email', 'fixture@example.com')
@@ -139,7 +151,9 @@ describe('end to end on a real git repo', () => {
       sh(isolated, 'git', 'remote', 'add', 'origin', 'https://github.com/example/fixture-shop.git')
       sh(isolated, 'git', 'add', '.')
       sh(isolated, 'git', 'commit', '-m', 'fixture')
-      expect(buildProject(isolated).report.coverage.status).toBe('draft')
+      const { coverage } = buildProject(isolated).report
+      expect(coverage).not.toHaveProperty('status')
+      expect(coverage.unmapped).toEqual([{ description: 'Subscription purchases are not modeled.', paths: [] }])
     } finally {
       rmSync(isolated, { recursive: true, force: true })
     }

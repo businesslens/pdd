@@ -26,7 +26,7 @@ can change, and the receiving model's Method describes its expansion.
 - **Schema version** — the report contract it was written under, which a reader refuses rather than migrates
 - **Product identity** — name, summary, category, tags, authors, and licence, as a catalog would list it
 - **Product meaning** — every resource of the model with its relations, Contexts, Scenarios, Steps, and Business Rules
-- **Coverage** — the declared Scope, Status, Exclusion and Unmapped descriptions, Method, Limitations and Rationale; Source areas and exclusion or gap paths are removed, and repository reviews do not travel
+- **Coverage** — the declared Scope, Covered, Exclusion, Unmapped and Limitation descriptions, and Method; repository paths are removed
 
 ## States
 

@@ -25,7 +25,6 @@ function bindingFor(resolved: ModelRoot): LocalViewerBinding {
     // repository has no repository-relative targets, so it gets no mount.
     assetRoot: resolved.gitRoot,
     referenceRoot: resolved.gitRoot ?? resolved.modelRoot,
-    modelRoot: resolved.modelRoot,
     history: createGitHistory(resolved)
   }
 }
@@ -60,7 +59,12 @@ export async function runView(cwd: string, options: ViewOptions): Promise<number
     const viewer = await startLocalViewer({
       port: options.port,
       waitingMessage: `No Product Model yet. The report will appear when ${expected.join(' or ')} is created — use businesslens-map for established code or businesslens-ideate for a new product.`,
-      ...(resolved ? bindingFor(resolved) : {})
+      ...(resolved ? bindingFor(resolved) : {
+        // Repository Review remains usable before model creation or after removal.
+        // Model compilation and watching attach separately when a model appears.
+        assetRoot: gitRoot,
+        history: createGitHistory({ gitRoot, modelRoot: cwd })
+      })
     })
     console.log(`Viewing the local Product Model at ${viewer.url}`)
     if (!resolved) {

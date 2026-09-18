@@ -129,15 +129,12 @@ describe('projectPortableReport', () => {
     expect(report.referenceProfile).toBe('workspace')
     expect(allReferences(report).some(reference => reference.kind === 'code')).toBe(true)
     expect(report.coverage).toEqual({
-      status: 'complete',
       scope: 'Customer shopping, checkout and staff order management.',
       exclusions: [],
-      method: ['Hand-authored golden fixture covering every source file.'],
-      sourceAreas: ['src'],
+      method: 'Hand-authored golden fixture for the toy shop.',
       unmapped: [],
       limitations: [],
-      rationale: 'The fixture map intentionally covers the whole toy codebase.',
-      review: null
+      covered: [{ description: 'Customer shopping, checkout and staff order management.', paths: ['src/'] }],
     })
     expect(report.supportingSections).toEqual([{
       heading: 'Teaching note',
@@ -275,7 +272,7 @@ describe('projectPortableReport', () => {
     expect(JSON.stringify(portable)).not.toContain('src/services/payments.ts')
   })
 
-  it('drops repository Screen entry points and Coverage source areas', () => {
+  it('drops repository Screen entry points and Coverage paths, retaining area descriptions', () => {
     const enriched = structuredClone(report)
     enriched.model.screens[0]!.entryPoints = [
       { type: 'relative', path: 'src/routes/storefront.ts' },
@@ -295,7 +292,7 @@ describe('projectPortableReport', () => {
       { type: 'mobile', path: 'fixture-shop://checkout' },
       { type: 'cli', path: 'shop checkout' }
     ])
-    expect(portable.coverage.sourceAreas).toEqual([])
+    expect(portable.coverage.covered).toEqual([{ description: 'Customer shopping, checkout and staff order management.', paths: [] }])
   })
 
   it('rejects portable reports that still expose workspace references', () => {
@@ -313,10 +310,10 @@ describe('projectPortableReport', () => {
       )
     }
 
-    const withSourceAreas = structuredClone(base)
-    withSourceAreas.coverage.sourceAreas = ['src']
-    expect(sdk.validateProductReport(withSourceAreas)).toContain(
-      'referenceProfile is portable but coverage.sourceAreas names repository areas'
+    const withCoveredAreas = structuredClone(base)
+    withCoveredAreas.coverage.covered = [{ description: 'Shopping', paths: ['src/'] }]
+    expect(sdk.validateProductReport(withCoveredAreas)).toContain(
+      'referenceProfile is portable but coverage.covered paths name repository areas'
     )
   })
 
@@ -368,7 +365,6 @@ describe('projectPortableReport', () => {
     expect(sdk.ProductReportSchema.safeParse(nestedIntent).success).toBe(false)
 
     const nestedRationale = structuredClone(report)
-    nestedRationale.coverage.rationale = '## Injected coverage section'
     nestedRationale.model.businessRules[0]!.rationale = '# Injected Rule title'
     expect(sdk.ProductReportSchema.safeParse(nestedRationale).success).toBe(false)
 
@@ -463,13 +459,13 @@ describe('projectPortableReport', () => {
       'interface "customer-web": actor "store-admin" needs at least one Experience context'
     )
 
-    const emptyComplete = structuredClone(report)
-    emptyComplete.model.capabilities = []
-    emptyComplete.counts.capabilities = 0
-    expect(sdk.validateProductReport(emptyComplete)).toContain('a complete model needs at least one capability')
+    const emptyModel = structuredClone(report)
+    emptyModel.model.capabilities = []
+    emptyModel.counts.capabilities = 0
+    expect(sdk.validateProductReport(emptyModel)).toContain('the model needs at least one capability')
   })
 
-  it('requires public Blueprint Capability coverage in every availability Context', () => {
+  it('requires Capability coverage in every declared Context despite known model gaps', () => {
     const incomplete = structuredClone(report)
     for (const scenario of incomplete.model.capabilityScenarios.filter(item => item.capabilityId === 'place-order')) {
       scenario.routes = scenario.routes.filter(route => route.id !== 'mobile')
@@ -477,6 +473,10 @@ describe('projectPortableReport', () => {
     }
     incomplete.model.screens = incomplete.model.screens
       .filter(screen => !screen.id.startsWith('customer-mobile::'))
+    incomplete.coverage.unmapped = [{ description: 'Subscription purchases are not modeled.', paths: [] }]
+    expect(sdk.validateProductReport(incomplete)).toContain(
+      'capability "place-order": availability Context place "customer-mobile::storefront" needs Capability Scenario coverage'
+    )
     expect(sdk.validateBlueprintReport(incomplete)).toContain(
       'capability "place-order" availability Context place "customer-mobile::storefront" needs Capability Scenario coverage for a public Blueprint'
     )

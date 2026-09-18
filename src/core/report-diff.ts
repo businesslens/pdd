@@ -88,7 +88,7 @@ export function diffFields(before: Record<string, unknown>, after: Record<string
   const changes: FieldChange[] = []
   const keys = [...new Set([...Object.keys(before), ...Object.keys(after)])].sort()
   for (const key of keys) {
-    if ((!prefix && ignore.has(key)) || (prefix === 'coverage' && key === 'review')) continue
+    if (!prefix && ignore.has(key)) continue
     const left = before[key]
     const right = after[key]
     const field = prefix ? `${prefix}.${key}` : key

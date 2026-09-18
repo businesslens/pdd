@@ -1053,13 +1053,11 @@ export function validateProductReport(report: ProductReportV16): string[] {
       }
     }
   }
-  if (report.coverage.status === 'complete') {
-    for (const capability of model.capabilities) {
-      const covered = coveredCapabilityPlaces.get(capability.id) || new Set<string>()
-      for (const place of capabilityAvailability.get(capability.id) || []) {
-        if (!covered.has(place)) {
-          issues.push(`capability "${capability.id}": availability Context place "${place}" needs Capability Scenario coverage`)
-        }
+  for (const capability of model.capabilities) {
+    const covered = coveredCapabilityPlaces.get(capability.id) || new Set<string>()
+    for (const place of capabilityAvailability.get(capability.id) || []) {
+      if (!covered.has(place)) {
+        issues.push(`capability "${capability.id}": availability Context place "${place}" needs Capability Scenario coverage`)
       }
     }
   }
@@ -1549,8 +1547,8 @@ export function validateProductReport(report: ProductReportV16): string[] {
     })
   }))
 
-  if (report.coverage.status === 'complete' && model.capabilities.length === 0) {
-    issues.push('a complete model needs at least one capability')
+  if (model.capabilities.length === 0) {
+    issues.push('the model needs at least one capability')
   }
 
   const expectedCounts = {
@@ -1580,15 +1578,10 @@ export function validateProductReport(report: ProductReportV16): string[] {
   }
 
   if (report.referenceProfile === 'portable') {
-    if (report.coverage.review !== null) issues.push('referenceProfile is portable but coverage.review contains repository inspection history')
-    if (report.coverage.sourceAreas.length) {
-      issues.push('referenceProfile is portable but coverage.sourceAreas names repository areas')
-    }
-    if (report.coverage.unmapped.some(area => area.paths.length)) {
-      issues.push('referenceProfile is portable but coverage.unmapped paths name repository areas')
-    }
-    if (report.coverage.exclusions.some(area => area.paths.length)) {
-      issues.push('referenceProfile is portable but coverage.exclusions paths name repository areas')
+    for (const kind of ['covered', 'exclusions', 'unmapped', 'limitations'] as const) {
+      if (report.coverage[kind].some(area => area.paths.length)) {
+        issues.push(`referenceProfile is portable but coverage.${kind} paths name repository areas`)
+      }
     }
     const entryPointHosts = [...model.interfaces, ...model.experiences, ...model.screens]
     for (const host of entryPointHosts) {
@@ -1682,10 +1675,10 @@ export function projectPortableReport(report: ProductReportV16): ProductReportV1
     },
     coverage: {
       ...report.coverage,
-      review: null,
-      sourceAreas: [],
+      covered: report.coverage.covered.map(area => ({ ...area, paths: [] })),
       exclusions: report.coverage.exclusions.map(area => ({ ...area, paths: [] })),
-      unmapped: report.coverage.unmapped.map(area => ({ ...area, paths: [] }))
+      unmapped: report.coverage.unmapped.map(area => ({ ...area, paths: [] })),
+      limitations: report.coverage.limitations.map(area => ({ ...area, paths: [] }))
     }
   }
 }

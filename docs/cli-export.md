@@ -29,8 +29,9 @@ not travel with the Product contract:
 | --- | --- |
 | `references` | Keep only HTTP(S) intent and context References |
 | `entryPoints` | Remove repository paths and `file:` URLs; keep Product routes, HTTP(S) URLs, non-file deep links, and commands |
-| `coverage.sourceAreas` | Empty the list |
+| `coverage.covered[].paths` | Empty each list; retain every description |
 | `coverage.exclusions[].paths` | Empty lists; exclusion descriptions remain |
+| `coverage.limitations[].paths` | Empty lists; uncertainty descriptions remain |
 | `coverage.unmapped[].paths` | Empty each list; retain every description |
 | `referenceProfile` | Set to `portable` |
 

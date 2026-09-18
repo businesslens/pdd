@@ -55,7 +55,7 @@ describe('report diff', () => {
     const scenario = after.model.capabilityScenarios[0]!
     const step = { ...scenario.steps[0]!, text: 'The customer waves goodbye' }
     scenario.steps = [...scenario.steps, step]
-    after.coverage = { ...after.coverage, status: 'draft' }
+    after.coverage = { ...after.coverage, scope: 'Shopping and subscriptions.' }
 
     const diff = diffReports(before, after)
     const steps = diff.resources.find(item => item.id === scenario.id)!.fields.find(field => field.field === `steps[${scenario.steps.length}]`)!
@@ -63,7 +63,7 @@ describe('report diff', () => {
     expect(steps.after).toContain('The customer waves goodbye')
     expect(steps.before).toBeNull()
     expect(diff.product).toEqual([
-      { field: 'coverage.status', change: 'changed', before: before.coverage.status, after: 'draft' }
+      { field: 'coverage.scope', change: 'changed', before: before.coverage.scope, after: 'Shopping and subscriptions.' }
     ])
   })
 

@@ -26,6 +26,3 @@ needs new product meaning and then go invoke a different workflow themselves.
 Current semantic findings are re-derived on every pass: a stored verdict
 would survive the code, runtime assumptions, and inspection method that produced
 it, and would imply a certainty the next commit has already ended.
-
-A completed Coverage review can retain exact inspected inputs and historical
-accounting. It never replaces a fresh semantic comparison or enters the model.

@@ -191,4 +191,4 @@ portable projection. `open`, `pull`, and `contribute` apply the same projection.
 | asset metadata names a missing file | Expand the resource and add the file, or remove the stale metadata. |
 | asset state does not name a View state | Name an authored Screen H3 or remove `state`. |
 
-There is no missing-Reference finding. A complete model may contain none.
+There is no missing-Reference finding. A model may contain none.

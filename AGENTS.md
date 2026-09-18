@@ -23,7 +23,7 @@ were costed and then chosen against, so the same argument is not had twice.
 
 ## Layout
 
-- `src/cli.ts` — public command dispatch: `install`, `update`, `lint`, `view`, `coverage`,
+- `src/cli.ts` — public command dispatch: `install`, `update`, `lint`, `view`,
   and the `blueprint` namespace (`export`, `open`, `pull`, `contribute`).
   Only documented commands and options are accepted. Removed spellings use
   normal usage errors; there are no hidden migration commands or scope aliases.
@@ -143,14 +143,12 @@ costed already.
   under its own normal permissions; it is not a BusinessLens skill. If no
   builder is available, verify stops with a complete handoff packet.
 - Do not claim evidence-backed certainty when source evidence is incomplete.
-- **Current verification findings are re-derived.** Each verify run derives
-  findings from the model and current repository state. Git diffs and saved
-  reviews identify leads, never authority or semantic correctness. The explicit
-  exception to model-only meaning is `coverage.json.review`, governed by
-  `spec/coverage.md`: one completed exact-input review is committed with the
-  model. Pending work stays in worktree Git metadata. Neither travels in a
-  Blueprint. This supersedes the former local-only assessment rule. Refreshing
-  a report never advances a review.
+- **Verification findings are re-derived, never persisted.** Each
+  `businesslens-verify` run derives findings from the model and current
+  repository state. A tracked ledger would create merge conflicts and imply
+  durable certainty after the surrounding code, runtime assumptions, or
+  inspection method changed. Git diffs may narrow the worklist but never supply
+  authority. `.businesslens/` holds product meaning, not workflow receipts.
 
 ## Installer standards
 
@@ -176,14 +174,10 @@ costed already.
 
 - **The rendered report is for humans only.** An agent that needs the model
   reads `.businesslens/` directly.
-- **Every authored field has a visible home.** Organize the model into named
-  readings with the model's own field names. A source path accompanies the
-  rendered information; it does not replace it. Product fields are visible
-  without expanding disclosures within their named reading. Coverage uses one
-  repository tree: its root opens all authored fields under Model scope and
-  saved accounting under Repository review in a slideover. This supersedes the
-  Files, Coverage details and Review inner readings. Keep generated statistics
-  separate from authored meaning.
+- **Every authored field has a visible home.** Use the model's field names and
+  show source paths alongside content. Keep derived statistics separate from
+  authored meaning. Detailed viewer behavior and host APIs belong in the
+  [report layer README](layers/nuxt/report-viewer/README.md).
 - **The report explains itself.** A reading that needs prose elsewhere to be
   understood is not finished. It links out only to the documentation for a
   resource *type*.
@@ -212,19 +206,9 @@ costed already.
   the full width. Refresh and valid recompilation preserve the reading.
   Expand fills the window with the same resource reading; Restore returns to
   the panel width without losing its drawing, selected detail or graph viewport.
-- **Review is a read-only comparison opened from the header beside Coverage.**
-  Overview retains its Coverage tab for current model breadth and repository
-  inspection context. Review compares any two Git states or the working state,
-  showing one changed-file tree containing authored model and project files. State
-  selection, filtering and inspection never write model or repository data.
-  There are no checkpoints, review checklists, approval or completion actions.
-  Coverage and Review share the repository tree and selection behavior while
-  retaining their own annotations and explicitly named comparison baselines.
-  Review has no separate resource-level change list. Model files appear once at
-  their repository paths, independently of References. Selected files open
-  before/after contents with related resources; an unreadable model limits
-  those links, never the file comparison. Historical file and
-  resource readings use the selected immutable commit, never current contents.
+- **Review compares Git states without writes.** Model and project files share
+  one changed-file tree. Missing or invalid models limit resource links, never
+  file comparisons; historical readings use the selected commit.
 - **The rail lists Overview, three cross-collection views, then six
   collections.** The views — Compare delivery, What changes what, Rule
   attachments — each compare two collections, so no collection owns them and
@@ -250,30 +234,10 @@ costed already.
   including a Scenario's own attachments. This supersedes the limit
   of one peer tab. A view comparing resources belongs to the collection, never
   to one of them.
-- **The Product's page is the report Overview** — headed `Overview` like the rail row that opens it and qualified by
-  `Product`. Its readings are About, Coverage and References. About presents
-  the complete Product narrative and labeled metadata; Coverage presents
-  Status, Scope, Rationale, Exclusions, Unmapped, Limitations, Method and Source areas. Empty
-  lists say "None recorded" and never imply completeness. Content uses the
-  full page width, with columns that stack on narrow screens. It never
-  reprints a collection or its counts. Additional authored sections retain
-  their headings, and derived Actors are identified as a model relation.
-  Coverage combines live repository paths with declared Source areas,
-  Unmapped paths, and model References. Inspection, references, and absent
-  annotations never imply file-level completeness. The live inventory is host
-  context and never enters a Product Report or Blueprint; Unmapped descriptions
-  survive portability while their repository paths are emptied.
-  Coverage opens directly into a full-width tree whose Product-named root remains
-  available with no paths or matching search results. Its inline summary names
-  model Status, review date, model changes, pending progress and gaps or exclusions
-  without paths; those indicators open their sections in the root slideover.
-  Every existing tree indicator remains visible, with
-  review states distinguished from authored annotations, on the same line
-  as the filename. Selected-path details open in a dismissible slideover that
-  leaves the tree's layout intact. The selected location lives in the URL, with
-  `.` identifying the root. The root slideover contains all authored entries,
-  including those without paths, alongside review history and inventory policy.
-  Folder and file slideovers narrow this context to their selected locations.
+- **The Product's page is the report Overview** — headed `Overview` like the
+  rail row that opens it and qualified by
+  `Product`. Its readings are About, Coverage and References, and it never
+  reprints a collection that has a rail row of its own.
 - **Named views, not a view builder.** A named view picks one derivation, states
   it, and is accountable for it. A new correlation costs code, which is the
   point.
@@ -317,15 +281,3 @@ costed already.
   Claude CLI is available.
 - Keep `.claude-plugin/plugin.json` and `package.json` versions in sync.
 - Do not publish, tag, or push unless explicitly asked.
-
-### Coverage reviews
-
-`spec/coverage.md` governs snapshots and accounting. The latest completed review
-lives in `.businesslens/coverage.json`, shared through Git. Pending work remains
-in worktree Git metadata, separately per model. Completion preserves authored
-Coverage fields and replaces only `review`; snapshots never enter Blueprints.
-Every captured input requires a conclusion before completion. Fingerprints
-identify changes, never semantic correctness. Model identity includes authored
-Coverage fields but excludes `review` and generated build/cache contents.
-No file inherits a review from its parent directory. The viewer reads and
-compares reviews but never advances them.

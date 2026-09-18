@@ -1,11 +1,10 @@
 #!/usr/bin/env node
-/** Exercise the Coverage root, scoped details, path history and unavailable host context. */
+/** Exercise Coverage disclosure, shared tree, path context and portable models. */
 import { chromium, expect as playwrightExpect } from '@playwright/test'
-
-const expect = playwrightExpect.configure({ timeout: 30_000 })
 import { mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 
+const expect = playwrightExpect.configure({ timeout: 30_000 })
 const origin = process.argv[2]
 if (!origin) throw new Error('Pass a running CLI report URL.')
 const report = await fetch(new URL('/_businesslens/report.json', origin)).then(response => response.json())
@@ -15,109 +14,166 @@ const browser = await chromium.launch()
 const errors = []
 const capture = async (page, name) => { if (screenshots) await page.screenshot({ path: join(screenshots, `${name}.png`), animations: 'disabled' }) }
 const samplePath = 'coverage-fixture/selected.ts'
-const deletedPath = 'coverage-fixture/deleted.ts'
-const policy = { version: 'project-files-v1', includePaths: [] }
-const entry = { paths: [samplePath], outcome: 'uncertain', summary: 'The selected file still needs investigation.', resources: [], exclusions: [], gaps: ['A known gap with a file.'] }
-const baseline = { id: '00000000-0000-4000-8000-000000000000', startedAt: '2026-09-15T09:00:00Z', completedAt: '2026-09-15T10:00:00Z', modelDigest: 'a'.repeat(64), policy, files: [samplePath, deletedPath].map(path => ({ path, digest: 'b'.repeat(64) })), entries: [entry, { ...entry, paths: [deletedPath], outcome: 'reviewed', summary: 'A historical file reviewed before deletion.', gaps: [] }] }
-const inventory = {
-  paths: [samplePath, ...Array.from({ length: 40 }, (_, index) => `coverage-fixture/file-${index}.ts`)],
-  coverage: { policy, baseline, pending: { ...baseline, completedAt: null, modelDigest: null }, modelChanged: true, pendingChanged: true, files: [
-    { path: samplePath, change: 'modified' }, { path: deletedPath, change: 'deleted' }
-  ] }
-}
+const plannedPath = 'coverage-fixture/nested/planned.ts'
 const annotated = structuredClone(report)
-annotated.coverage.review = structuredClone(baseline)
-annotated.coverage.status = 'partial'
-annotated.coverage.sourceAreas = ['coverage-fixture/']
-annotated.coverage.exclusions = [{ description: 'An approved exclusion with a file.', paths: [samplePath] }, { description: 'An exclusion with no location.', paths: [] }]
-annotated.coverage.unmapped = [{ description: 'A known gap with a file.', paths: [samplePath] }, { description: 'A known gap with no location.', paths: [] }]
+annotated.coverage.scope = 'Shopping, checkout and customer refunds.'
+annotated.coverage.method = 'Static source inspection.'
+annotated.coverage.limitations = [{ description: 'Model-wide policy uncertainty.', paths: [] }, { description: 'Local retry policy could not be established.', paths: [samplePath] }, { description: 'A limitation with its own location.', paths: ['coverage-fixture/uncertain.ts'] }]
+annotated.coverage.covered = [{ description: 'Shopping behavior.', paths: ['coverage-fixture/'] }, { description: 'Fulfillment behavior.', paths: ['coverage-fixture/nested/'] }, { description: 'Selected behavior.', paths: [samplePath] }, { description: 'Planned behavior with no location.', paths: [] }]
+annotated.coverage.exclusions = [{ description: 'An approved exclusion with a file.', paths: [samplePath, 'coverage-fixture/help/guide.md'] }, { description: 'An exclusion with no location.', paths: [] }]
+annotated.coverage.unmapped = [{ description: 'A known gap with a file.', paths: [samplePath] }, { description: 'Another gap at the same location.', paths: [samplePath] }, { description: 'A known gap with no location.', paths: [] }, { description: 'Planned behavior without a current file.', paths: [plannedPath] }]
 annotated.references.push({ kind: 'code', role: 'implementation', target: samplePath })
 const linkedResource = annotated.model.capabilities[0]
 linkedResource.references.push({ kind: 'code', role: 'implementation', target: samplePath })
 
 try {
-  for (const width of [1440, 390]) {
+  for (const width of [1440, 390, 320]) {
     const context = await browser.newContext({ viewport: { width, height: 1000 }, reducedMotion: 'reduce' })
     const page = await context.newPage()
     page.on('pageerror', error => errors.push(error.message))
     let currentReport = annotated
+    let inventoryRequests = 0
     await page.route('**/_businesslens/report.json', route => route.fulfill({ json: currentReport }))
-    let response = inventory
-    let failInventory = false
-    await page.route('**/_businesslens/repository.json*', route => failInventory
-      ? route.fulfill({ status: 503, json: { message: 'Repository unavailable for this check.' } })
-      : route.fulfill({ json: response }))
+    await page.route('**/_businesslens/repository.json*', route => {
+      inventoryRequests++
+      return route.fulfill({ status: 503, json: { message: 'No repository access.' } })
+    })
     await page.goto(`${origin}/?t=coverage`)
-    await expect(page.locator('[data-coverage-root]')).toBeVisible()
-    await expect(page.getByRole('navigation', { name: 'Coverage readings' })).toHaveCount(0)
-    await expect(page.locator('[data-coverage-root-indicators]')).toContainText('Model changed')
-    await expect(page.locator('[data-coverage-root-indicators]')).toContainText('Review in progress · 2/2 files recorded')
-    await expect(page.locator('[data-unlocated="unmapped"]')).toContainText('1')
-    await expect(page.locator('[data-unlocated="exclusions"]')).toContainText('1')
-    await expect(page.locator('[data-repository-tree]')).toBeVisible()
-    await expect(page.locator('[data-coverage-annotations]')).toHaveCount(0)
-    await expect(page.locator('[data-coverage-review]')).toHaveCount(0)
-    await expect(page.getByRole('heading', { name: 'Coverage', exact: true })).toHaveCount(0)
-    await expect(page.getByRole('region', { name: 'Scope', exact: true })).toHaveCount(0)
-    const folder = page.getByRole('treeitem').filter({ has: page.locator('[data-repository-path="coverage-fixture"]') }).last()
-    for (const kind of ['source-areas', 'exclusions', 'references', 'unmapped']) await expect(folder.locator(`[data-annotation="${kind}"]`).first()).toBeVisible()
-    for (const state of ['modified', 'deleted']) await expect(folder.locator(`[data-file-state="${state}"]`).first()).toBeVisible()
-    const filenameBox = await folder.locator('[data-repository-path="coverage-fixture"]').boundingBox()
-    for (const badge of await folder.locator('[data-slot="link"]').first().locator('[data-annotation], [data-file-state]').all()) {
-      const box = await badge.boundingBox()
-      expect(Math.abs((box.y + box.height / 2) - (filenameBox.y + filenameBox.height / 2))).toBeLessThan(2)
-    }
-    const treeWidth = (await page.locator('[data-repository-tree]').boundingBox()).width
-    expect(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)).toBe(false)
-    await capture(page, `${width}-files`)
-
-    await page.getByRole('textbox', { name: 'Find repository paths' }).fill('no-such-path')
-    await expect(page.getByText(/No paths match this search/)).toBeVisible()
-    await expect(page.locator('[data-coverage-root]')).toBeVisible()
-    await page.locator('[data-unlocated="unmapped"]').click()
-    await expect(page.getByRole('dialog').getByText('A known gap with no location.', { exact: true })).toBeInViewport()
-    await page.keyboard.press('Escape')
-    await page.getByRole('textbox', { name: 'Find repository paths' }).fill('')
-
-    const pathsBeforeFolder = await page.locator('[data-repository-path]').count()
-    await page.locator('[data-repository-path="coverage-fixture"]').click()
-    await expect(page).toHaveURL(url => url.searchParams.get('cp') === 'coverage-fixture')
-    await expect(page.locator('[data-coverage-annotations]')).toContainText(entry.summary)
-    await expect(page.locator('[data-coverage-annotations]')).toContainText('A historical file reviewed before deletion.')
-    await expect(page.locator('[data-repository-path]')).toHaveCount(pathsBeforeFolder)
-    await page.keyboard.press('Escape')
+    const coverage = page.locator('[data-product-coverage]')
+    const details = coverage.locator('[data-coverage-details]')
+    const sources = coverage.locator('[data-coverage-sources]')
+    const methodToggle = coverage.getByRole('button', { name: 'How this model was authored', exact: true })
+    const methodDetails = coverage.locator('[data-coverage-method]')
+    await expect(details).toBeVisible()
+    await expect(sources).toBeVisible()
+    await expect(coverage.getByRole('tab')).toHaveCount(0)
+    await expect(details.getByRole('region', { name: 'Model scope', exact: true })).toBeVisible()
+    await expect(details.getByRole('region', { name: 'Status', exact: true })).toHaveCount(0)
+    await expect(page.locator('[data-report-status]')).not.toContainText(/Coverage:|draft|partial|complete/i)
+    await expect(methodToggle).toHaveAttribute('aria-expanded', 'false')
+    await expect(methodDetails).toBeHidden()
     await expect(page.getByRole('dialog')).toHaveCount(0)
+    await capture(page, `${width}-summary`)
+    const initialUrl = page.url()
+    const initialHistory = await page.evaluate(() => history.length)
+    await methodToggle.focus()
+    await page.keyboard.press('Enter')
+    await expect(methodToggle).toHaveAttribute('aria-expanded', 'true')
+    await expect(methodDetails).toHaveText('Static source inspection.')
+    await expect(details.getByRole('region', { name: 'Model-wide limitations', exact: true })).toContainText('Model-wide policy uncertainty.')
+    await expect(details).not.toContainText('Local retry policy')
+    await expect(sources).toBeVisible()
+    await capture(page, `${width}-method`)
+    await methodToggle.click()
+    await expect(methodDetails).toBeHidden()
+    await expect(page).toHaveURL(initialUrl)
+    expect(await page.evaluate(() => history.length)).toBe(initialHistory)
+    const tree = sources.getByRole('tree', { name: 'Repository paths', exact: true })
+    const search = sources.getByRole('textbox', { name: 'Find repository paths' })
+    const summary = kind => sources.locator(`[data-coverage-summary="${kind}"]`)
+    const path = value => sources.locator(`[data-repository-path="${value}"]`)
+    const row = value => path(value).locator('xpath=ancestor::*[@role="treeitem"][1]')
+    const chooseFilter = async label => {
+      const active = sources.locator('[data-coverage-summary][aria-pressed="true"]')
+      if (label === 'All source areas') { if (await active.count()) await active.click() }
+      else {
+        const card = summary(label.toLowerCase())
+        if (await card.getAttribute('aria-pressed') !== 'true') await card.click()
+      }
+    }
+    await expect(tree).toBeVisible()
+    await expect(sources.locator('[data-repository-tree]')).toHaveCount(1)
+    await expect(sources.locator('[data-repository-root]')).toHaveText('Repository')
+    await expect(search).toBeVisible()
+    await expect(sources.getByRole('combobox')).toHaveCount(0)
+    await expect(sources.locator('[data-coverage-summary]')).toHaveCount(3)
+    for (const [kind, count] of [['covered', 4], ['exclusions', 2], ['unmapped', 4]]) {
+      await expect(summary(kind).locator('[data-coverage-summary-count]')).toHaveText(String(count))
+      await expect(summary(kind)).toHaveAttribute('aria-pressed', 'false')
+    }
+    await expect(sources.getByRole('region', { name: 'No location recorded', exact: true }).locator('[data-coverage-entry]')).toHaveCount(3)
+    await sources.getByRole('button', { name: 'Expand all', exact: true }).click()
+    await expect(path(samplePath)).toHaveCount(1)
+    await expect(row(samplePath).locator('[data-coverage-kind="covered"]')).toHaveText('Covered')
+    await expect(row(samplePath).locator('[data-coverage-kind="exclusions"]')).toHaveText('Exclusions')
+    await expect(row(samplePath).locator('[data-coverage-kind="unmapped"]')).toHaveText(/Unmapped\s*2/)
+    await capture(page, `${width}-sources`)
 
-    const pathRow = page.locator(`[data-repository-path="${samplePath}"]`)
-    await pathRow.scrollIntoViewIfNeeded()
-    const pane = page.locator('.blr-pane').filter({ has: page.locator('[data-repository-tree]') })
-    const scrollBefore = await pane.evaluate(element => element.scrollTop)
-    expect(scrollBefore).toBeGreaterThan(0)
-    await pathRow.click()
-    await expect(page.locator('[data-coverage-annotations]')).toBeVisible()
-    await expect(page).toHaveURL(url => url.searchParams.get('cp') === samplePath)
+    // Summary totals include unlocated entries; cards are the sole category filter.
+    await summary('exclusions').click()
+    await expect(summary('exclusions')).toHaveAttribute('aria-pressed', 'true')
+    await expect(path(plannedPath)).toHaveCount(0)
+    await expect(sources.locator('[data-coverage-entry]')).toHaveCount(1)
+    await capture(page, `${width}-active-summary`)
+    await summary('exclusions').click()
+    await expect(summary('exclusions')).toHaveAttribute('aria-pressed', 'false')
+    await expect(sources.locator('[data-coverage-entry]')).toHaveCount(3)
+    await summary('covered').focus()
+    await page.keyboard.press('Space')
+    await expect(summary('covered')).toHaveAttribute('aria-pressed', 'true')
+    await page.keyboard.press('Space')
+
+    // Filters narrow paths and unlocated entries, preserving overlapping labels.
+    await chooseFilter('Exclusions')
+    await expect(summary('exclusions')).toHaveAttribute('aria-pressed', 'true')
+    await expect(path(plannedPath)).toHaveCount(0)
+    await expect(path(samplePath)).toBeVisible()
+    await expect(row(samplePath).locator('[data-coverage-kind="unmapped"]')).toHaveText(/Unmapped\s*2/)
+    await expect(sources.locator('[data-coverage-entry]')).toHaveCount(1)
+    await expect(sources.locator('[data-coverage-entry]')).toContainText('An exclusion with no location.')
+    await chooseFilter('Unmapped')
+    await expect(summary('unmapped')).toHaveAttribute('aria-pressed', 'true')
+    await expect(summary('exclusions')).toHaveAttribute('aria-pressed', 'false')
+    await sources.getByRole('button', { name: 'Expand all', exact: true }).click()
+    await expect(path(plannedPath)).toBeVisible()
+    await expect(path('coverage-fixture/help/guide.md')).toHaveCount(0)
+    await chooseFilter('Covered')
+    await expect(sources.locator('[data-coverage-entry]')).toHaveCount(1)
+    await expect(path(plannedPath)).toHaveCount(0)
+    await chooseFilter('All source areas')
+    await search.fill('planned.ts')
+    await expect(path(plannedPath)).toBeVisible()
+    await expect(path(samplePath)).toHaveCount(0)
+    await summary('exclusions').click()
+    await expect(search).toHaveValue('planned.ts')
+    await expect(path(plannedPath)).toHaveCount(0)
+    await expect(summary('exclusions').locator('[data-coverage-summary-count]')).toHaveText('2')
+    await summary('exclusions').click()
+    await expect(path(plannedPath)).toBeVisible()
+    await methodToggle.click()
+    await expect(methodDetails).toBeVisible()
+    await expect(path(plannedPath)).toBeVisible()
+    await methodToggle.click()
+    await expect(methodDetails).toBeHidden()
+    await expect(search).toHaveValue('planned.ts')
+    await expect(path(plannedPath)).toBeVisible()
+    await search.fill('no-such-recorded-path')
+    await expect(sources.locator('[data-repository-root]')).toBeVisible()
+    await expect(sources.getByText('No paths match this search.', { exact: true })).toBeVisible()
+    await search.fill('')
+    await sources.getByRole('button', { name: 'Collapse all', exact: true }).click()
+    await expect(path(samplePath)).toHaveCount(0)
+    await row('coverage-fixture').focus()
+    await page.keyboard.press('ArrowRight')
+    await expect(row('coverage-fixture')).toHaveAttribute('aria-expanded', 'true')
+    await sources.getByRole('button', { name: 'Expand all', exact: true }).click()
+
+    await path(samplePath).click()
     await expect(page.getByRole('dialog', { name: samplePath, exact: true })).toBeVisible()
-    expect((await page.locator('[data-repository-tree]').boundingBox()).width).toBe(treeWidth)
-    await expect.poll(() => pane.evaluate(element => element.scrollTop)).toBe(scrollBefore)
-    await expect(page.locator('[data-coverage-annotations]').getByText('A known gap with a file.', { exact: true }).first()).toBeVisible()
-    await capture(page, `${width}-selected-path`)
+    await expect(page).toHaveURL(url => url.searchParams.get('cp') === samplePath)
+    const pathDetails = page.locator('[data-coverage-annotations]')
+    for (const text of ['Selected behavior.', 'A known gap with a file.', 'Another gap at the same location.', 'An approved exclusion with a file.', 'Local retry policy could not be established.']) await expect(pathDetails).toContainText(text)
     const selectedUrl = page.url()
-    const resourceLink = page.locator('[data-coverage-annotations]').getByRole('button', { name: linkedResource.title, exact: true })
+    const resourceLink = pathDetails.getByRole('button', { name: linkedResource.title, exact: true })
     await resourceLink.click()
     await expect(page.locator('[data-resource-panel]')).toBeVisible()
-    await expect(page).toHaveURL(url => url.searchParams.get('t') === 'coverage' && url.searchParams.get('cp') === samplePath && url.searchParams.get('e') === `capability:${linkedResource.id}`)
     await page.getByRole('button', { name: 'Close resource', exact: true }).click()
-    await expect(page.locator('[data-resource-panel]')).toHaveCount(0)
     await expect(page).toHaveURL(selectedUrl)
     await expect(resourceLink).toBeFocused()
-    await expect.poll(() => pane.evaluate(element => element.scrollTop)).toBe(scrollBefore)
     await page.keyboard.press('Escape')
     await expect(page.getByRole('dialog')).toHaveCount(0)
-    const selectedRow = page.getByRole('treeitem').filter({ has: page.locator(`[data-repository-path="${samplePath}"]`) }).last()
-    await expect(selectedRow).toBeFocused()
-    await expect.poll(() => pane.evaluate(element => element.scrollTop)).toBe(scrollBefore)
-    await selectedRow.press('Enter')
-    await expect(page.getByRole('dialog', { name: samplePath, exact: true })).toBeVisible()
+    await expect(row(samplePath)).toBeFocused()
+    await page.keyboard.press('Enter')
     await expect(page).toHaveURL(selectedUrl)
     await page.reload()
     await expect(page.getByRole('dialog', { name: samplePath, exact: true })).toBeVisible()
@@ -127,88 +183,74 @@ try {
     await expect(page).toHaveURL(selectedUrl)
     await expect(page.getByRole('dialog', { name: samplePath, exact: true })).toBeVisible()
     await page.keyboard.press('Escape')
-    await expect(page.getByRole('dialog')).toHaveCount(0)
-    const pathsBeforeRoot = await page.locator('[data-repository-path]').count()
-    await page.locator('[data-coverage-root]').click()
-    await expect(page.locator('[data-repository-path]')).toHaveCount(pathsBeforeRoot)
+    await sources.getByRole('button', { name: 'Expand all', exact: true }).click()
+    await path(plannedPath).click()
+    await expect(pathDetails).toContainText('Planned behavior without a current file.')
+    await capture(page, `${width}-planned-path`)
+    await page.keyboard.press('Escape')
+    await path('coverage-fixture/uncertain.ts').click()
+    await expect(pathDetails).toContainText('A limitation with its own location.')
+    await page.keyboard.press('Escape')
+    await sources.locator('[data-repository-root]').click()
     await expect(page).toHaveURL(url => url.searchParams.get('cp') === '.')
-    await expect(page.locator('[data-coverage-details]')).toContainText('A known gap with no location.')
-    await expect(page.locator('[data-coverage-details]')).toContainText('An exclusion with no location.')
-    await expect(page.locator('[data-coverage-details]').getByRole('region', { name: 'Scope', exact: true })).toBeVisible()
-    await expect(page.locator('[data-coverage-details]').getByRole('region', { name: 'Status', exact: true })).toBeVisible()
-    await capture(page, `${width}-details`)
-    await page.goBack()
-    await expect(page.locator('[data-coverage-root]')).toBeVisible()
-    await expect(page.locator('[data-repository-tree]')).toBeVisible()
+    await expect(pathDetails).toContainText('Planned behavior with no location.')
+    await expect(pathDetails).toContainText('Model-wide policy uncertainty.')
+    await expect(pathDetails).toContainText('Planned behavior without a current file.')
+    await page.keyboard.press('Escape')
 
-    await page.getByRole('button', { name: 'Read repository review', exact: true }).click()
-    await expect(page.locator('[data-coverage-review]')).toContainText('Inventory policy')
-    await expect(page.locator('[data-coverage-review]')).toContainText('Review in progress')
-    await expect(page.locator('[data-coverage-review]')).toContainText(entry.summary)
-    await capture(page, `${width}-review`)
+    await sources.getByRole('button', { name: 'Collapse all', exact: true }).click()
+    await methodToggle.click()
+    await expect(methodDetails).toBeVisible()
+    await expect(path(samplePath)).toHaveCount(0)
+    await methodToggle.click()
+    await expect(methodDetails).toBeHidden()
+    await expect(row('coverage-fixture')).toHaveAttribute('aria-expanded', 'false')
+    await expect(page).not.toHaveURL(/[?&]cv=/)
     await page.reload()
-    await expect(page).toHaveURL(url => url.searchParams.get('cp') === '.')
-    await page.locator('[data-coverage-review]').getByRole('button', { name: deletedPath, exact: true }).first().click()
-    await expect(page.locator('[data-coverage-root]')).toBeVisible()
-    await expect(page.getByRole('dialog', { name: deletedPath, exact: true })).toBeVisible()
-    await expect(page.locator('[data-coverage-annotations] [data-file-state="deleted"]')).toBeVisible()
-    await expect(page).toHaveURL(url => url.searchParams.get('cp') === deletedPath)
+    await expect(sources).toBeVisible()
+    await expect(methodToggle).toHaveAttribute('aria-expanded', 'false')
+    await expect(path(samplePath)).toHaveCount(0)
+    await expect(row('coverage-fixture')).toHaveAttribute('aria-expanded', 'false')
 
-    response = { paths: [samplePath], coverageError: 'Review record could not be read.' }
-    await page.reload()
-    await expect(page.getByRole('dialog', { name: deletedPath, exact: true })).toBeVisible()
-    await page.getByRole('button', { name: 'Close path details', exact: true }).click()
-    await expect(page.getByRole('dialog')).toHaveCount(0)
-    await page.getByRole('button', { name: 'Read repository review', exact: true }).click()
-    await expect(page.locator('[data-coverage-review]')).toContainText('Review record could not be read.')
-    response = { paths: [samplePath] }
-    await page.getByRole('button', { name: 'Refresh review', exact: true }).click()
-    await expect(page.locator('[data-coverage-review]')).toContainText('.businesslens/coverage.json')
-    await expect(page.locator('[data-coverage-review]')).toContainText('A live repository comparison is needed')
-    await expect(page.locator('[data-coverage-review]')).toContainText(entry.summary)
-    await expect(page.getByText('The Product Model files match the completed review.', { exact: true })).toHaveCount(0)
-    await page.getByRole('button', { name: 'Close path details', exact: true }).click()
-    await page.locator(`[data-repository-path="${deletedPath}"]`).scrollIntoViewIfNeeded()
-    await expect(page.locator(`[data-repository-path="${deletedPath}"]`)).toBeVisible()
-    await expect(page.locator('[data-repository-tree] [data-file-state]')).toHaveCount(0)
-    await expect(page.getByRole('combobox', { name: 'Filter file states' })).toHaveCount(0)
-    await page.getByRole('button', { name: 'Read repository review', exact: true }).click()
-    response = { paths: [samplePath], coverage: { ...inventory.coverage, baseline: null, pending: null, modelChanged: null, pendingChanged: null, files: [{ path: samplePath, change: 'unreviewed' }] } }
-    await page.getByRole('button', { name: 'Refresh review', exact: true }).click()
-    await expect(page.locator('[data-coverage-review]')).toContainText('No completed repository review yet.')
-    await expect(page.locator('[data-coverage-root-indicators]')).not.toContainText('Live comparison unavailable')
-    failInventory = true
-    await page.getByRole('button', { name: 'Refresh review', exact: true }).click()
-    await expect(page.locator('[data-coverage-review]')).toContainText('Repository unavailable for this check.')
-    await expect(page.locator('[data-coverage-details]')).toContainText('A known gap with no location.')
-    await page.locator('[data-coverage-details]').getByRole('button', { name: samplePath, exact: true }).first().click()
-    await expect(page.locator('[data-coverage-annotations]')).toContainText('A known gap with a file.')
-    const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)
-    expect(overflow).toBe(false)
-    // A planned or portable model has meaningful root context even with no paths.
     currentReport = structuredClone(annotated)
-    function clearReferences(value) {
-      if (!value || typeof value !== 'object') return
-      for (const [key, child] of Object.entries(value)) {
-        if (key === 'references') value[key] = []
-        else clearReferences(child)
-      }
-    }
-    clearReferences(currentReport)
-    currentReport.coverage.review = null
-    currentReport.coverage.sourceAreas = []
-    for (const area of [...currentReport.coverage.exclusions, ...currentReport.coverage.unmapped]) area.paths = []
-    response = { paths: [] }
-    failInventory = false
+    for (const kind of ['covered', 'exclusions', 'unmapped', 'limitations']) for (const area of currentReport.coverage[kind]) area.paths = []
     await page.goto(`${origin}/?t=coverage`)
-    await expect(page.getByText(/No paths to show/)).toBeVisible()
-    await expect(page.getByRole('treeitem')).toHaveCount(1)
-    await page.locator('[data-coverage-root]').click()
-    await expect(page.locator('[data-coverage-details]')).toContainText('A known gap with no location.')
-    await expect(page.locator('[data-coverage-review]')).toContainText('No completed review is saved in this model.')
+    await expect(sources.locator('[data-repository-root]')).toBeVisible()
+    await expect(sources.locator('[data-repository-path]')).toHaveCount(0)
+    await expect(sources.getByText('No repository paths recorded.', { exact: true })).toBeVisible()
+    await expect(sources).toContainText('A known gap with no location.')
     await capture(page, `${width}-no-paths`)
+    currentReport = structuredClone(currentReport)
+    for (const key of ['covered', 'exclusions', 'unmapped', 'limitations']) currentReport.coverage[key] = []
+    currentReport.coverage.method = ''
+    await page.reload()
+    await expect(details.getByRole('region', { name: 'Status', exact: true })).toHaveCount(0)
+    await expect(page.locator('[data-report-status]')).not.toContainText(/Coverage:|draft|partial|complete/i)
+    for (const kind of ['covered', 'exclusions', 'unmapped']) await expect(summary(kind).locator('[data-coverage-summary-count]')).toHaveText('0')
+    await summary('unmapped').click()
+    await expect(summary('unmapped')).toHaveAttribute('aria-pressed', 'true')
+    await expect(sources.getByText('No recorded paths match this filter.', { exact: true })).toBeVisible()
+    await summary('unmapped').click()
+    await expect(methodToggle).toHaveCount(0)
+    await expect(details.getByRole('region', { name: 'Model-wide limitations', exact: true })).toHaveCount(0)
+    expect(inventoryRequests).toBe(0)
+
+    currentReport = report
+    await page.goto(`${origin}/?t=coverage`)
+    await expect(details).toBeVisible()
+    await expect(tree).toBeVisible()
+    expect(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)).toBe(false)
+    await capture(page, `${width}-actual-summary`)
+    await methodToggle.click()
+    await expect(methodDetails).toBeVisible()
+    expect(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)).toBe(false)
+    await capture(page, `${width}-actual-method`)
+    await methodToggle.click()
+    await sources.getByRole('button', { name: 'Expand all', exact: true }).click()
+    expect(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)).toBe(false)
+    await capture(page, `${width}-actual-sources`)
     await context.close()
   }
   expect(errors).toEqual([])
-  console.log('Coverage root, single-line badges, slideover selection/dismissal/focus/history, mobile layout, historical paths, and host failures passed.')
+  console.log('Coverage scope, authoring note, contextual limitations, summary cards, shared Review tree, filters, search, keyboard, focus/history, mobile layout and portable/empty states passed.')
 } finally { await browser.close() }

@@ -119,23 +119,9 @@ Read before authoring:
     and preserve existing References only where they remain useful. Keep every
     role honest and add no invented local targets: an intended-behavior model
     has no implementation to point at yet, and a `role: implementation` target
-    that does not exist is a claim, not a link. Preserve an existing `coverage.json.review` when editing authored Coverage
-    fields; use `review: null` when creating a model. Never invent a review for
-    intended behavior without implementation. Coverage status describes model breadth,
-    not whether the plan is built; use `draft` only while the model itself
-    remains under review.
-
-    Write in slices that each lint on their own, so a `businesslens view` left
-    open shows the model as it grows instead of an error until the last file:
-    - first README, `.gitignore`, product, coverage as `draft`, and one
-      Interface with its actors and Capability boundary;
-    - then one Capability at a time, together with its availability Context,
-      one Scenario, and the Entities that Scenario changes — an Entity nothing
-      changes, presents or names is a lint error on its own;
-    - then each Journey with one achieved Scenario;
-    - then each Business Rule once the two or more behaviors it governs exist.
-    Never write a resource whose targets are not written yet. Raise coverage
-    only at the end.
+    that does not exist is a claim, not a link. Coverage describes scope, represented behavior, exclusions, known gaps and
+    uncertainty. Never author a Coverage status or infer completeness from an
+    empty Unmapped list.
 11. Run the bundled linter outside the untrusted target:
 
     ```bash
@@ -171,7 +157,7 @@ Read before authoring:
 - Keep visuals and research external through References. Use `role: intent` for
   curated inputs and `role: context` for background; neither is an acceptance
   receipt.
-- Never infer implementation state from References or `coverage.status`.
+- Never infer implementation state from References or Coverage.
 - Never execute target code, stage, commit, submit, or contribute.
 - Never write outside `.businesslens/`; leave target `AGENTS.md`, `CLAUDE.md`,
   and root README byte-identical.

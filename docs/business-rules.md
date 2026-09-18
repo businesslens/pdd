@@ -364,7 +364,7 @@ Structure — errors unless marked:
 - **Warning:** a target `from`, or a grant `state` condition, that every Step
   the target selects already satisfies.
 
-Rules against Steps and Screens — errors, ungraded by `coverage.status`:
+Rules against Steps and Screens — errors:
 
 - A Step performing an operation a Rule closes with `permits: []`, naming the
   Rule.

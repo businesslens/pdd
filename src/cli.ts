@@ -10,7 +10,6 @@ import { runPull } from './commands/pull.js'
 import { runUpdate } from './commands/update.js'
 import { runView } from './commands/view.js'
 import { cliVersion } from './version.js'
-import { runCoverage } from './commands/coverage.js'
 
 interface InstallCliOptions {
   providers?: string
@@ -141,38 +140,6 @@ function createProgram(setExitCode: (code: number) => void): Command {
     .option('--port <port>', 'Port to listen on', port)
     .action(async (options: ViewCliOptions, command: Command) => {
       setExitCode(await runView(cwdFor(command), options))
-    })
-
-  const review = program.command('coverage')
-    .usage('<command> [options]')
-    .summary('Account for repository files and compare later changes')
-    .description('Capture, record and complete a shared Coverage review. All output is JSON.')
-    .argument('[command]')
-    .action((unknown: string | undefined, _options: Record<string, never>, command: Command) => {
-      if (unknown) command.error(`error: unknown command '${unknown}' for 'businesslens coverage'`)
-      command.outputHelp()
-    })
-  review.command('start')
-    .description('Capture project files; an existing pending review must first be finished or cancelled.')
-    .option('--include <path>', 'Also inspect an ignored file or directory; repeat for multiple paths', (value: string, previous: string[]) => [...previous, value], [])
-    .action(async (options: { include: string[] }, command: Command) => {
-      setExitCode(await runCoverage(cwdFor(command), 'start', undefined, options.include))
-    })
-  review.command('record <input>')
-    .description('Record conclusions for exact captured files from a JSON packet; use - for stdin.')
-    .action(async (input: string, _options: object, command: Command) => {
-      setExitCode(await runCoverage(cwdFor(command), 'record', input))
-    })
-  for (const action of ['finish', 'cancel'] as const) {
-    review.command(`${action} <id>`)
-      .description(action === 'finish' ? 'Complete an accounted-for, unchanged snapshot against the current model.' : 'Discard only the named pending review.')
-      .action(async (id: string, _options: object, command: Command) => {
-        setExitCode(await runCoverage(cwdFor(command), action, id))
-      })
-  }
-  review.command('status').description('Compare current files and model with the saved review without writing.')
-    .action(async (_options: object, command: Command) => {
-      setExitCode(await runCoverage(cwdFor(command), 'status'))
     })
 
   const blueprint = program

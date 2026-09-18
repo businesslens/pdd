@@ -23,20 +23,6 @@ Read before work:
 - [references/build-handoff.md](references/build-handoff.md) — the required
   packet for an injected builder.
 
-## Repository accounting
-
-Read [references/coverage-review.md](references/coverage-review.md)
-when assessing repository inputs or detecting changes. Whole-repository mapping
-captures an exact file worklist and accounts for every file before completing
-a Coverage review. Source areas and References never replace this accounting.
-Named reviews preserve their actual scope; they cannot finish whole-repository
-accounting without inspecting the remaining inputs. Report-only mode reads
-coverage status but never starts, records, finishes or cancels a review.
-Coverage commands write completed reviews to `.businesslens/coverage.json`;
-only pending work lives outside the model in worktree Git metadata. Product
-meaning still requires approval. Preserve the saved review when editing scope
-or gaps; the CLI replaces it only after a new inspection completes.
-
 ## 1. Establish scope and mode
 
 1. Require an existing Product Model. If none exists and repository behavior is
@@ -59,7 +45,8 @@ or gaps; the CLI replaces it only after a new inspection completes.
 
 Git never decides whether model or code is right. A Blueprint or approved model
 committed before a feature branch remains a plan even when only code changed in
-the diff.
+the diff. For every scope, follow behaviorally necessary dependencies even when
+Git reports no changes to those files.
 
 ## 2. Lint, then inspect
 
@@ -185,8 +172,7 @@ the diff.
 9. After every mutation, discard the earlier findings and inspect again. Keep
    only an in-memory signature of build-directed gaps during this invocation.
    If the same gap returns unchanged after a build attempt, stop and report it;
-   do not loop. Persist no current-finding ledger or model lifecycle state. The local
-   exact-input accounting record is the exception described above.
+   do not loop. Persist no receipt, ledger, or lifecycle state.
 
 ## 4. Finish
 
@@ -221,11 +207,7 @@ the diff.
   proof by themselves.
 - Never capture, compare, or certify screenshots. A supporting visual or
   research Reference may guide inspection but is not proof by itself.
-- Write model changes in slices that each lint on their own — a resource
-  together with the Contexts, Scenarios and Entities it needs — so an open
-  `businesslens view` follows the change rather than showing an error until
-  the last file.
-- Except for the local review commands described above, never write outside `.businesslens/`; model-resolution writes must leave target
+- Never write outside `.businesslens/`; model-resolution writes must leave target
   `AGENTS.md`, `CLAUDE.md`, and root README byte-identical.
 - Never stage, commit, publish, submit, or contribute.
 - Never ask the user to manually invoke map or ideate to continue this run.

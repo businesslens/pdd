@@ -34,13 +34,12 @@ import { firstSentence } from '../utils/reportMarkdown'
 import type { ReportProductCatalogLink, ReportProductLink } from '../utils/reportProducts'
 import type { ReportChanges } from '../utils/reportChanges'
 import { projectReportWorkspace } from '../utils/reportWorkspace'
-import type { RepositoryInventoryLoader, RepositoryFileLoader } from 'businesslens/report'
+import type { RepositoryFileLoader } from 'businesslens/report'
 import { defaultCoverageReading, type CoverageReading } from '../utils/coverageState'
 import { baselineTitle, changesByKey } from '../utils/reportChanges'
 
 const props = withDefaults(defineProps<{
   workspace: ReportWorkspace
-  loadRepository?: RepositoryInventoryLoader
   loadRepositoryFile?: RepositoryFileLoader
   logoSrc?: string | null
   products?: ReportProductLink[]
@@ -713,7 +712,6 @@ const orphanScenarios = computed(() => props.workspace.scenarios
             </h1>
           </div>
           <div data-report-status class="row-start-2 flex items-center gap-2.5 md:col-start-2 md:row-start-1" :class="matrixSection ? 'col-span-2 md:col-span-1' : undefined">
-            <BlrCoverageBadge :status="workspace.coverage.status" named size="md" />
             <UTooltip v-if="changes" text="Compare working and saved states">
               <UButton
                 icon="i-lucide-history"
@@ -870,7 +868,6 @@ const orphanScenarios = computed(() => props.workspace.scenarios
           <!-- OVERVIEW: the Product, and what it promises -->
           <BlrOverview
             v-model:coverage="coverage"
-            :load-repository="loadRepository"
             v-else-if="activeKind === 'product'"
             :workspace="workspace"
             :logo-src="logoSrc"

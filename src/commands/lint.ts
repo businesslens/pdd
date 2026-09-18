@@ -27,7 +27,6 @@ export interface LintResult {
 }
 
 const ACCESS_MODES = new Set(['public', 'authenticated', 'restricted'])
-const COVERAGE_STATUSES = new Set(['complete', 'partial', 'draft'])
 const JOURNEY_RESULTS = new Set(['achieved', 'not-achieved'])
 const INTERFACE_TYPE_SET = new Set<string>(INTERFACE_TYPES)
 
@@ -122,13 +121,9 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     }
   }
 
-  if (!isUnmappedDescription(model.coverage.scope)) errors.push('coverage.json: scope must be non-empty single-line Markdown without a heading')
-  const coverageDescriptions = [...model.coverage.exclusions, ...model.coverage.unmapped].map(area => area.description)
-  if (new Set(coverageDescriptions).size !== coverageDescriptions.length) errors.push('coverage.json: descriptions must be unique across exclusions and unmapped')
-  if (model.coverage.status === 'complete' && model.coverage.unmapped.length) errors.push('coverage.json: complete coverage cannot have known unmapped behavior')
-  if (!COVERAGE_STATUSES.has(model.coverage.status)) {
-    errors.push(`coverage.json: status "${model.coverage.status}" must be complete|partial|draft`)
-  }
+  if (!isUnmappedDescription(model.coverage.scope)) errors.push('coverage.md: scope must be non-empty single-line Markdown without a heading')
+  const coverageDescriptions = [...model.coverage.covered, ...model.coverage.exclusions, ...model.coverage.unmapped, ...model.coverage.limitations].map(area => area.description)
+  if (new Set(coverageDescriptions).size !== coverageDescriptions.length) errors.push('coverage.md: descriptions must be unique across covered, exclusions, unmapped and limitations')
 
   const collections: Array<[string, Array<{ id: string }>]> = [
     ...Object.entries(resourceCollections(model)),
@@ -890,8 +885,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
           !covered.some(([from, to]) => from <= start && end <= to))
         if (!exposed) continue
         const finding = `${label}: text names "${entity.doc.title}" and "entities" does not declare it`
-        if (model.coverage.status === 'complete') errors.push(finding)
-        else warnings.push(finding)
+        errors.push(finding)
       }
 
       const capabilityId = implicitCapability || step.capability
@@ -1070,8 +1064,7 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     for (const place of required) {
       if (covered.has(place)) continue
       const finding = `${capability.file}: availability Context place "${place}" needs Capability Scenario coverage`
-      if (model.coverage.status === 'complete') errors.push(finding)
-      else warnings.push(finding)
+      errors.push(finding)
     }
   }
 
@@ -1599,8 +1592,8 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
   }))
 
   if (model.interfaces.length === 0) errors.push('interfaces/: the model needs at least one interface')
-  if (model.coverage.status === 'complete' && model.capabilities.length === 0) {
-    errors.push('capabilities/: a complete model needs at least one capability')
+  if (model.capabilities.length === 0) {
+    errors.push('capabilities/: the model needs at least one capability')
   }
 
   const resources = allResources(model)

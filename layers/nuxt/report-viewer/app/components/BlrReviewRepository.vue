@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { RepositoryDiff, RepositoryFileComparison, RepositoryFileLoader, RepositoryFileReading, RepositoryChange } from 'businesslens/report'
 import type { ReportWorkspace } from '../utils/reportWorkspace'
-import { referenceFile } from '../utils/coverageRepository'
+import { referencePath } from '../utils/referenceNavigation'
 import { repositoryTree } from '../utils/repositoryTree'
 
 const props = defineProps<{
@@ -58,7 +58,7 @@ const connections = computed(() => [
   { label: 'Base', workspace: props.before, state: props.base },
   { label: 'Compare to', workspace: props.after, state: props.target }
 ].map(side => ({ ...side, resources: [...new Map((side.workspace?.references ?? [])
-  .filter(reference => { const file = referenceFile(reference); return file && contained(file) })
+  .filter(reference => { const file = referencePath(reference.reference); return file && contained(file) })
   .map(reference => [reference.ownerKey, reference])).values()] })))
 const sides = computed(() => reading.value ? [
   { label: 'Base', value: reading.value.before }, { label: 'Compare to', value: reading.value.after }

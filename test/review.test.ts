@@ -1,4 +1,5 @@
-import { execFileSync } from 'node:child_process'
+import { execFileSync, spawn } from 'node:child_process'
+import { once } from 'node:events'
 import { chmodSync, cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -92,13 +93,58 @@ describe('repository Review', () => {
 })
 
 describe('read-only Review API', () => {
+  it.each([false, true])('starts CLI Review without a working model (historical model: %s)', { timeout: 30_000 }, async (hadModel) => {
+    const root = repository(hadModel), base = commit(root)
+    if (hadModel) rmSync(join(root, '.businesslens'), { recursive: true })
+    writeFileSync(join(root, 'source.ts'), 'export const value = 2\n')
+    const status = git(root, 'status', '--porcelain')
+    const index = git(root, 'ls-files', '--stage')
+    const child = spawn(process.execPath, [join(__dirname, '../dist/cli.js'), '--cwd', root, 'view', '--no-open'], { stdio: ['ignore', 'pipe', 'pipe'] })
+    const closed = once(child, 'close')
+    try {
+      const url = await new Promise<string>((resolve, reject) => {
+        let output = ''
+        const timeout = setTimeout(() => reject(new Error(`Viewer did not start: ${output}`)), 10_000)
+        child.stdout.on('data', chunk => {
+          output += chunk.toString()
+          const match = output.match(/http:\/\/127\.0\.0\.1:\d+/)
+          if (match) { clearTimeout(timeout); resolve(match[0]) }
+        })
+        child.stderr.on('data', chunk => { output += chunk.toString() })
+        child.once('error', error => { clearTimeout(timeout); reject(error) })
+        child.once('exit', () => { clearTimeout(timeout); reject(new Error(`Viewer exited: ${output}`)) })
+      })
+      const get = async (path: string) => {
+        const response = await fetch(url + path)
+        expect(response.status).toBe(200)
+        return response.json() as Promise<any>
+      }
+      expect((await fetch(url + '/_businesslens/report.json')).status).toBe(422)
+      expect((await get('/_businesslens/history/defaults')).base).toBe('head')
+      expect((await get('/_businesslens/history')).states).toContainEqual(expect.objectContaining({ id: base }))
+      const result = await get(`/_businesslens/history/diff?base=${base}&target=working`)
+      expect(result.diff).toBeNull()
+      expect(result.modelNotice).toBeTruthy()
+      expect(result.repository.files).toContainEqual(expect.objectContaining({ path: 'source.ts', change: 'modified' }))
+      const file = await get(`/_businesslens/review/file?base=${base}&target=working&path=source.ts`)
+      expect(file.before).toMatchObject({ text: 'export const value = 1\n' })
+      expect(file.after).toMatchObject({ text: 'export const value = 2\n' })
+      if (hadModel) expect((await get(`/_businesslens/state?state=${base}`)).report.id).toBeTruthy()
+      expect(git(root, 'status', '--porcelain')).toBe(status)
+      expect(git(root, 'ls-files', '--stage')).toBe(index)
+    } finally {
+      child.kill('SIGTERM')
+      await closed
+    }
+  })
+
   it('compares model and unreferenced source changes, pins Git identities, and refuses all writes', { timeout: 30_000 }, async () => {
     const root = repository(true), resolved = resolveModelRoot(root), base = commit(root)
     git(root, 'branch', 'original')
     const resource = join(root, '.businesslens/capabilities/place-order/capability.md')
     writeFileSync(resource, readFileSync(resource, 'utf8').replace(/^# (.*)$/m, '# Submit order'))
     writeFileSync(join(root, 'source.ts'), 'export const value = 2\n')
-    const viewer = await startLocalViewer({ port: 0, compile: () => compileResolvedWorkspaceReport(resolved), history: createGitHistory(resolved), assetRoot: root, referenceRoot: root, modelRoot: root })
+    const viewer = await startLocalViewer({ port: 0, compile: () => compileResolvedWorkspaceReport(resolved), history: createGitHistory(resolved), assetRoot: root, referenceRoot: root })
     viewers.push(viewer)
     const get = async (path: string) => (await fetch(viewer.url + path)).json() as Promise<any>
     const result = await get('/_businesslens/history/diff?base=branch:refs/heads/original&target=working')
@@ -112,7 +158,7 @@ describe('read-only Review API', () => {
     for (const path of ['/_businesslens/changes', '/_businesslens/changes/diff?base=head', '/_businesslens/checkpoints']) {
       expect((await fetch(viewer.url + path)).status).toBe(404)
     }
-    for (const path of ['/_businesslens/checkpoints', '/_businesslens/history/diff', '/_businesslens/repository.json', '/_businesslens/report.json']) {
+    for (const path of ['/_businesslens/checkpoints', '/_businesslens/history/diff', '/_businesslens/report.json']) {
       expect((await fetch(viewer.url + path, { method: 'POST', headers: { 'content-type': 'application/json', 'x-businesslens-pin': '1' }, body: '{}' })).status).toBe(405)
     }
     expect(git(root, 'status', '--porcelain')).toBe('')
@@ -124,7 +170,7 @@ describe('read-only Review API', () => {
     const root = repository(), base = commit(root)
     cpSync(join(__dirname, 'fixtures/fixture-shop/.businesslens'), join(root, '.businesslens'), { recursive: true })
     const resolved = resolveModelRoot(root)
-    const viewer = await startLocalViewer({ port: 0, compile: () => { throw new Error('Invalid working model') }, history: createGitHistory(resolved), assetRoot: root, modelRoot: root })
+    const viewer = await startLocalViewer({ port: 0, compile: () => { throw new Error('Invalid working model') }, history: createGitHistory(resolved), assetRoot: root })
     viewers.push(viewer)
     const response = await fetch(`${viewer.url}/_businesslens/history/diff?base=${base}&target=working`)
     expect(response.status).toBe(200)
@@ -136,11 +182,8 @@ describe('read-only Review API', () => {
     expect(defaults.base).toBe('head')
   })
 
-  it('excludes saved review accounting from model changes while retaining authored Coverage changes', () => {
+  it('compares authored Coverage changes', () => {
     const root = repository(true), report = compileResolvedWorkspaceReport(resolveModelRoot(root)), after = structuredClone(report)
-    // A record is already schema-validated before diffing; this exercises only projection boundaries.
-    after.coverage.review = { id: 'different-review' } as any
-    expect(diffReports(report, after)).toEqual({ product: [], resources: [], counts: { added: 0, removed: 0, changed: 0 } })
     after.coverage.scope = 'New model scope'
     expect(diffReports(report, after).product).toContainEqual(expect.objectContaining({ field: 'coverage.scope' }))
   })

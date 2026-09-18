@@ -31,9 +31,3 @@ For machine-readable structural findings:
 ```bash
 npx businesslens lint --json
 ```
-
-Repository reviews can separately retain historical accounting tied to exact
-source and model inputs in the committed Coverage document. A fresh checkout can
-compare against that shared review. Pending work stays local and is not shared
-with CI. A clean comparison never replaces semantic verification. See
-[`coverage`](./cli-coverage.md).

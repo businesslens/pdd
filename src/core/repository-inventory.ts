@@ -2,12 +2,11 @@ import { execFile } from 'node:child_process'
 import { lstatSync } from 'node:fs'
 import { join } from 'node:path'
 import { promisify } from 'node:util'
-import type { RepositoryInventory } from './coverage.js'
 
 const execute = promisify(execFile)
 
-/** List names only. Git excludes its administrative files and does not follow symlinks. */
-export async function repositoryInventory(root: string, includeIgnored: boolean): Promise<RepositoryInventory> {
+/** List names for Git comparisons without traversing symbolic links. */
+export async function repositoryInventory(root: string, includeIgnored: boolean): Promise<{ paths: string[] }> {
   const [{ stdout }, { stdout: stages }] = await Promise.all([execute('git', [
     '-C', root, 'ls-files', '--cached', '--others',
     ...(includeIgnored ? [] : ['--exclude-standard']), '-z'
@@ -18,8 +17,7 @@ export async function repositoryInventory(root: string, includeIgnored: boolean)
       const stat = lstatSync(join(root, path))
       return stat.isFile() || stat.isSymbolicLink() || submodules.has(path)
     } catch (error) {
-      // An inaccessible tracked file is still an input. Only an actually
-      // missing path can disappear; review will report unreadable contents.
+      // Keep inaccessible paths so Review can report unreadable contents.
       const code = (error as NodeJS.ErrnoException).code
       return submodules.has(path) || (code !== 'ENOENT' && code !== 'ENOTDIR')
     }

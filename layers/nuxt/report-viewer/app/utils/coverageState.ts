@@ -1,10 +1,9 @@
-/** Navigation only: no repository accounting enters the report document. */
+/** Navigation only: the selected path is separate from authored Coverage. */
 export interface CoverageReading {
-  /** `.` selects model-wide context at the repository root. */
+  /** A repository location whose recorded context is open. */
   path: string | null
 }
 
-export const COVERAGE_ROOT = '.'
 export const defaultCoverageReading = (): CoverageReading => ({ path: null })
 
 export function coverageFromQuery(query: Record<string, unknown>): CoverageReading {

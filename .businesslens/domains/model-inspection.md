@@ -9,8 +9,8 @@ references:
 # Model inspection
 
 Looking at a Product Model without changing it: checking that it is structurally
-sound, presenting it so a person can read what it says, and accounting for
-repository inputs against an explicit captured state.
+sound, presenting it so a person can read what it says, and comparing repository
+files between selected Git or working states.
 
 ## Boundary
 

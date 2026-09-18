@@ -2,7 +2,9 @@ import { cpSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, renameSync, 
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
+import { stringify } from 'yaml'
 import { lintModel } from '../src/commands/lint.js'
+import { splitFrontmatter } from '../src/core/frontmatter.js'
 import { loadModel } from '../src/core/model.js'
 
 const FIXTURE = join(__dirname, 'fixtures', 'fixture-shop')
@@ -30,7 +32,9 @@ function run(cwd: string, tracked = TRACKED) {
 }
 
 function editCoverage(file: string, changes: Record<string, unknown>) {
-  writeFileSync(file, JSON.stringify({ ...JSON.parse(readFileSync(file, 'utf8')), ...changes }, null, 2))
+  const { data, body } = splitFrontmatter(readFileSync(file, 'utf8'), [], 'coverage.md')
+  const { rationale, ...fields } = changes
+  writeFileSync(file, `---\n${stringify({ ...data, ...fields })}---\n\n${rationale === undefined ? body : `# Coverage\n\n${rationale}\n`}`)
 }
 
 /** Write a compact or expanded resource file, creating its parent path. */
@@ -222,13 +226,32 @@ describe('lintModel', () => {
     })
   })
 
-  it('requires coverage.json and rejects the retired coverage.md even alongside it', () => {
+  it('requires coverage.md and rejects coverage.json even alongside it', () => {
     const cwd = fixtureCopy()
-    const legacy = join(cwd, '.businesslens/coverage.md')
-    writeFileSync(legacy, '# Coverage\n')
-    expect(run(cwd).errors.join('\n')).toContain('coverage.md is no longer supported')
-    rmSync(join(cwd, '.businesslens/coverage.json'))
-    expect(run(cwd).errors).toContain('coverage.json is missing')
+    const legacy = join(cwd, '.businesslens/coverage.json')
+    writeFileSync(legacy, '{}\n')
+    expect(run(cwd).errors.join('\n')).toContain('coverage.json is not supported')
+    rmSync(join(cwd, '.businesslens/coverage.md'))
+    expect(run(cwd).errors).toContain('coverage.md is missing')
+  })
+
+  it('requires Coverage frontmatter and rejects unstructured body prose', () => {
+    const cwd = fixtureCopy()
+    const file = join(cwd, '.businesslens/coverage.md')
+    const original = readFileSync(file, 'utf8')
+    for (const [source, error] of [
+      [original.replace('exclusions: []\n', ''), 'coverage.md: exclusions:'],
+      [original.replace('exclusions: []', 'exclusions: ['), 'frontmatter YAML failed to parse'],
+      [original.replace('exclusions: []', 'exclusions: []\nstatus: draft'), 'Unrecognized key: "status"'],
+      [original.replace('exclusions: []', 'exclusions: []\nreview: null'), 'Unrecognized key: "review"'],
+      [original.replace('exclusions: []', 'exclusions: []\nrationale: Hidden prose'), 'Unrecognized key: "rationale"'],
+      [original.replace('# Coverage', 'Unheaded prose'), 'body must contain only "# Coverage"'],
+      [original + '\n# Another title\n', 'body must contain only "# Coverage"'],
+      [original + '\n## Notes\n', 'body must contain only "# Coverage"']
+    ]) {
+      writeFileSync(file, source!)
+      expect(run(cwd).errors.join('\n')).toContain(error)
+    }
   })
 
   it('rejects historical folder schemas', () => {
@@ -727,7 +750,7 @@ Reads status only. It changes nothing.
     expect(result.errors).toEqual([])
   })
 
-  it('grades missing Capability Scenario coverage by model coverage status', () => {
+  it('requires Scenario coverage for declared Capabilities even with known unmapped behavior', () => {
     const cwd = fixtureCopy()
     rmSync(join(cwd, '.businesslens/capabilities/manage-orders/scenarios'), { recursive: true })
     compactResource(
@@ -737,11 +760,11 @@ Reads status only. It changes nothing.
 
     expect(run(cwd).errors.join('\n')).toContain('availability Context place "operator-cli" needs Capability Scenario coverage')
 
-    const coverage = join(cwd, '.businesslens/coverage.json')
-    editCoverage(coverage, { status: 'partial' })
-    const partial = run(cwd)
-    expect(partial.errors.some(error => error.includes('needs Capability Scenario coverage'))).toBe(false)
-    expect(partial.warnings.some(warning => warning.includes('needs Capability Scenario coverage'))).toBe(true)
+    const coverage = join(cwd, '.businesslens/coverage.md')
+    editCoverage(coverage, { unmapped: [{ description: 'Subscription purchases are not modeled.', paths: [] }] })
+    const result = run(cwd)
+    expect(result.errors.some(error => error.includes('needs Capability Scenario coverage'))).toBe(true)
+    expect(result.warnings.some(warning => warning.includes('needs Capability Scenario coverage'))).toBe(false)
   })
 
   /*
@@ -781,7 +804,7 @@ Filed away.
    * `entities` key exists to end. Titles only, and the Step's own actor and
    * "The Product" are exempt.
    */
-  it('grades a Step whose text names an Entity it does not declare', () => {
+  it('rejects undeclared Entity references in Steps even with known unmapped behavior', () => {
     const cwd = fixtureCopy()
     const scenario = join(cwd, '.businesslens/capabilities/browse-catalog/scenarios/browse-catalog.md')
     writeFileSync(scenario, readFileSync(scenario, 'utf8').replace(
@@ -794,11 +817,11 @@ Filed away.
     // "the shopper" is the Step's actor on step 2 only; on step 1 it is another Entity named and undeclared.
     expect(run(cwd).errors.join('\n')).toContain('step 1: text names "Shopper" and "entities" does not declare it')
 
-    const coverage = join(cwd, '.businesslens/coverage.json')
-    editCoverage(coverage, { status: 'partial' })
-    const partial = run(cwd)
-    expect(partial.errors.some(error => error.includes('does not declare it'))).toBe(false)
-    expect(partial.warnings.some(warning => warning.includes('does not declare it'))).toBe(true)
+    const coverage = join(cwd, '.businesslens/coverage.md')
+    editCoverage(coverage, { unmapped: [{ description: 'Subscription purchases are not modeled.', paths: [] }] })
+    const result = run(cwd)
+    expect(result.errors.some(error => error.includes('does not declare it'))).toBe(true)
+    expect(result.warnings.some(warning => warning.includes('does not declare it'))).toBe(false)
   })
 
   /*
@@ -1070,7 +1093,7 @@ Filed away.
       '- Product name and description',
       '- Product name and description\n  with a continuation that is not a second item'
     ))
-    const coverage = join(cwd, '.businesslens/coverage.json')
+    const coverage = join(cwd, '.businesslens/coverage.md')
     editCoverage(coverage, { rationale: '## Notes\n\nThis section would be dropped.' })
 
     const errors = run(cwd).errors.join('\n')
@@ -1082,7 +1105,7 @@ Filed away.
     expect(errors).toContain('"## Edge cases" needs at least one bullet item when present')
     expect(errors).toContain('"## Recovery note" content must not contain an H1 or H2 heading')
     expect(errors).toContain('"## Information presented" must contain only single-line bullet-list items')
-    expect(errors).toContain('coverage.json: rationale: Rationale must not contain an H1 or H2 heading')
+    expect(errors).toContain('coverage.md: body must contain only "# Coverage"')
   })
 
   it('rejects duplicate values in every set-valued frontmatter list', () => {
@@ -1434,18 +1457,18 @@ An order exists.
     expect(result.errors.some(error => error.includes('src/services/payments.ts'))).toBe(true)
   })
 
-  it('allows missing references at every coverage status', () => {
-    for (const status of ['draft', 'partial', 'complete']) {
+  it('allows missing references and known unmapped behavior without a status', () => {
+    for (const unmapped of [[], [{ description: 'Subscription purchases are not modeled.', paths: [] }]]) {
       const cwd = fixtureCopy()
-      editCoverage(join(cwd, '.businesslens/coverage.json'), { status, scope: 'The fixture Product.', method: ['Authored model'], sourceAreas: [], rationale: 'Model breadth.' })
+      editCoverage(join(cwd, '.businesslens/coverage.md'), { unmapped, scope: 'The fixture Product.', method: 'Authored model', covered: [] })
       const journeyFile = join(cwd, '.businesslens/journeys/browse-and-buy/journey.md')
       const scenarioFile = join(cwd, '.businesslens/capabilities/manage-orders/scenarios/refund-order.md')
       const referenceBlock = /references:\n(?:  - kind: .*\n    role: .*\n    target: .*\n)+/
       writeFileSync(journeyFile, readFileSync(journeyFile, 'utf8').replace(referenceBlock, ''))
       writeFileSync(scenarioFile, readFileSync(scenarioFile, 'utf8').replace(referenceBlock, ''))
       const result = run(cwd)
-      expect(result.errors, status).toEqual([])
-      expect(result.warnings.some(warning => warning.includes('reference')), status).toBe(false)
+      expect(result.errors).toEqual([])
+      expect(result.warnings.some(warning => warning.includes('reference'))).toBe(false)
       rmSync(cwd, { recursive: true, force: true })
       dir = undefined
     }
@@ -1561,7 +1584,7 @@ Lead.
     ))
     expect(run(cwd).errors).toEqual([])
 
-    const coverage = join(cwd, '.businesslens/coverage.json')
+    const coverage = join(cwd, '.businesslens/coverage.md')
     editCoverage(coverage, { references: [] })
     expect(run(cwd).errors.join('\n')).toContain('Unrecognized key: "references"')
   })

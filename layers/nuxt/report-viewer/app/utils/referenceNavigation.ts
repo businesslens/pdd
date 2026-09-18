@@ -2,6 +2,14 @@ import type { InjectionKey, Ref } from 'vue'
 import type { ReportReference } from 'businesslens/report'
 
 export const isExternalReference = (target: string) => /^https?:\/\//i.test(target)
+
+/** Repository location of a Reference, without its symbol, line or fragment. */
+export function referencePath(reference: Pick<ReportReference, 'target'>): string | undefined {
+  const target = reference.target
+  if (/^[a-z][a-z0-9+.-]*:/i.test(target) || target.startsWith('/')) return undefined
+  return target.split(/[?#]/, 1)[0]?.replace(/:\d+(?:-\d+)?$/, '').replace(/^\.\//, '') || undefined
+}
+
 export const referenceFileHref = (target: string) => `/_businesslens/file/${target.split('/').map(encodeURIComponent).join('/')}`
 export const referenceHref = (reference: ReportReference) => isExternalReference(reference.target)
   ? reference.target : reference.kind === 'code'

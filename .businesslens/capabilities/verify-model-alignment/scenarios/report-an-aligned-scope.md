@@ -45,9 +45,8 @@ says, after a change or before a release.
 ## Outcome
 
 The Developer knows exactly which contracts were checked and that they hold.
-No product meaning or implementation changed. When repository accounting is
-requested, an exact-input Coverage review may be completed; it remains distinct
-from the current semantic findings, which are re-derived on the next run.
+No product meaning or implementation changed. Findings remain within the
+invocation and are re-derived from current evidence on the next run.
 
 ## Edge cases
 

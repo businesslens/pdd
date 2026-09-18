@@ -7,7 +7,7 @@ const props = defineProps<{ nodes: RepositoryTreeNode[], rootLabel: string, load
 const emit = defineEmits<{ select: [event: Event, node: RepositoryTreeNode] }>()
 const path = defineModel<string | null>('path', { default: null })
 const query = ref('')
-const expanded = ref<string[]>(['.'])
+const expanded = defineModel<string[]>('expanded', { default: () => ['.'] })
 const visible = computed(() => filterRepositoryTree(props.nodes, query.value))
 const root = computed<RepositoryTreeNode>(() => ({ value: '.', label: props.rootLabel, directory: true, children: visible.value }))
 const all = computed(() => repositoryTreeNodes(props.nodes))
@@ -70,7 +70,7 @@ function toggle(event: CustomEvent<{ originalEvent: Event }>) {
           <UIcon v-else :name="item.value === '.' ? 'i-lucide-folder-root' : item.directory ? open ? 'i-lucide-folder-open' : 'i-lucide-folder' : 'i-lucide-file'" class="size-4 shrink-0 text-muted" />
         </template>
         <template #item-label="{ item }">
-          <span :title="item.value === '.' ? rootLabel : item.value" :data-coverage-root="item.value === '.' ? '' : undefined" :data-repository-path="item.value === '.' ? undefined : item.value" :class="[path === item.value ? 'font-semibold text-primary' : 'text-default', item.value === '.' && 'font-sans text-sm font-semibold']">{{ item.label }}{{ item.directory && item.value !== '.' ? '/' : '' }}</span>
+          <span :title="item.value === '.' ? rootLabel : item.value" :data-repository-root="item.value === '.' ? '' : undefined" :data-repository-path="item.value === '.' ? undefined : item.value" :class="[path === item.value ? 'font-semibold text-primary' : 'text-default', item.value === '.' && 'font-sans text-sm font-semibold']">{{ item.label }}{{ item.directory && item.value !== '.' ? '/' : '' }}</span>
         </template>
         <template #item-trailing="{ item }"><slot name="indicators" :node="item" /></template>
       </UTree>

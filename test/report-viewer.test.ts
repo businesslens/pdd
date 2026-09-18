@@ -791,29 +791,6 @@ describe('stable Product Report', () => {
     expect(source('app/utils/pageSections.ts')).not.toContain('hint')
   })
 
-  /*
-    Coverage is one fact on two surfaces, so it is one component. It is drawn
-    in umber at every status: an amber partial and a green complete spent two
-    ramps this theme never chose, and told the reader that the honest
-    declaration the format asks for was a fault to clear.
-  */
-  it('reads coverage as one umber mark on both surfaces that carry it', () => {
-    const badge = source('app/components/BlrCoverageBadge.vue')
-    const shell = source('app/components/BlrReportShell.vue')
-    const overview = source('app/components/BlrCoverageDetails.vue')
-
-    expect(badge).toContain("color=\"neutral\"")
-    expect(badge).toContain('rounded-full')
-    expect(shell).toContain('<BlrCoverageBadge :status="workspace.coverage.status" named size="md"')
-    expect(overview).toContain('<BlrCoverageBadge :status="workspace.coverage.status" size="md" />')
-    for (const [label, file] of [['badge', badge], ['shell', shell], ['overview', overview]] as const) {
-      expect(file, label).not.toContain('COVERAGE_TONE')
-      for (const offPalette of ["'warning'", "'success'", '"warning"', '"success"']) {
-        expect(file, `${label} ${offPalette}`).not.toContain(offPalette)
-      }
-    }
-  })
-
   it('keeps Search and Vocabulary visible in the sidebar at every width', () => {
     const tools = source('app/components/BlrReportTools.vue')
     const sidebar = tools.slice(tools.indexOf('<template v-else>'))
@@ -1472,7 +1449,6 @@ describe('what changed', () => {
     const header = shell.slice(shell.indexOf('<header'), shell.indexOf('</header>'))
     expect(header).toContain('<UTooltip v-if="changes"')
     expect(header).toContain('data-header-changes')
-    expect(header.indexOf('<BlrCoverageBadge')).toBeLessThan(header.indexOf('data-header-changes'))
     expect(rail).not.toContain('What changed')
     // A live host puts its pulse in the status bar in place of the generated date.
     expect(shell).toContain('<slot v-if="$slots.status" name="status" />')

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ProductReportV16, ReportBaseline, ReportDiff, RepositoryDiff, RepositoryInventory, RepositoryFileLoader } from 'businesslens/report'
+import type { ProductReportV16, ReportBaseline, ReportDiff, RepositoryDiff, RepositoryFileLoader } from 'businesslens/report'
 import type { ReportChanges } from '../../../../layers/nuxt/report-viewer/app/utils/reportChanges'
 import { projectReportWorkspace, resolveResourceKey } from '../../../../layers/nuxt/report-viewer/app/utils/reportWorkspace'
 import { baselineTitle } from '../../../../layers/nuxt/report-viewer/app/utils/reportChanges'
@@ -9,11 +9,6 @@ const { data, error, refresh, status } = await useFetch<ProductReportV16>(
   { server: false, cache: 'no-store' }
 )
 
-async function loadRepository(includeIgnored: boolean): Promise<RepositoryInventory> {
-  try {
-    return await $fetch('/_businesslens/repository.json', { query: { includeIgnored }, cache: 'no-store' })
-  } catch (failure) { throw new Error(message(failure)) }
-}
 const loadRepositoryFile: RepositoryFileLoader = async (base, target, path) => {
   try {
     return await $fetch('/_businesslens/review/file', { query: { base, target, path }, cache: 'no-store' })
@@ -281,7 +276,7 @@ const errorMessage = computed(() => {
         v-model:topology="topology"
         :report="data"
         v-model:coverage="coverage" v-model:review-path="reviewPath"
-        :load-repository="loadRepository" :load-repository-file="loadRepositoryFile"
+        :load-repository-file="loadRepositoryFile"
         :logo-src="logoSrc"
         :changes="changes"
         class="businesslens-local-report min-h-0 flex-1"

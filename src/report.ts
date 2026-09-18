@@ -109,6 +109,5 @@ export type {
   ReportSupportingSection
 } from './core/portable.js'
 
-export type { RepositoryInventory, RepositoryInventoryLoader, CoverageReview, CoverageComparison, CoverageReviewPolicy, CoverageReviewFile, CoverageReviewEntry, CoverageChange } from './core/coverage.js'
 
 export type { RepositoryChange, RepositoryFileChange, RepositoryDiff, RepositoryFileReading, RepositoryFileComparison, RepositoryFileLoader } from './core/repository-diff-types.js'

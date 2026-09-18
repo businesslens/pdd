@@ -71,7 +71,7 @@ describe('resolveModelRoot', () => {
     cpSync(BLUEPRINT, join(loose, '.businesslens'), { recursive: true })
 
     const { report } = buildProject(loose)
-    expect(report.coverage.sourceAreas).toEqual([])
+    expect(report.coverage.covered).toEqual([{ description: 'Feed subscription, entry collection and reader organization of saved content.', paths: [] }])
     expect(Object.values(report.model).flatMap(value =>
       Array.isArray(value) ? value.flatMap(item => item.references || []) : []
     ).every(reference => /^https?:\/\//.test(reference.target))).toBe(true)

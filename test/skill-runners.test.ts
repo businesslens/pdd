@@ -1,4 +1,4 @@
-import { execFileSync } from 'node:child_process'
+import { execFileSync, spawnSync } from 'node:child_process'
 import {
   chmodSync,
   mkdirSync,
@@ -192,27 +192,10 @@ console.log(${JSON.stringify(cli)})
     expect(recorded.args).toEqual(['--cwd', realpathSync(repo), 'lint', '--json'])
     expect(recorded.apiKey).toBeNull()
   })
-  it.each(LINT_RUNNERS)('$name passes review packets through the isolated runner', ({ file }) => {
-    const repo = temporary('bl-review-runner-repo-')
-    const developmentRoot = temporary('bl-review-runner-cli-')
-    const bin = temporary('bl-review-runner-bin-')
-    const capture = join(temporary('bl-review-runner-capture-'), 'packet.json')
-    execFileSync('git', ['init', '-q', repo])
-    mkdirSync(join(developmentRoot, 'dist'))
-    writeFileSync(join(developmentRoot, 'package.json'), JSON.stringify({ name: 'businesslens' }))
-    const cli = join(developmentRoot, 'dist/cli.js')
-    writeFileSync(cli, `const fs = require('node:fs'); fs.writeFileSync(process.env.CAPTURE_FILE, JSON.stringify({ args: process.argv.slice(2), input: fs.readFileSync(0, 'utf8'), cwd: process.cwd() }))`)
-    writeFileSync(join(bin, 'bl'), `#!/usr/bin/env node\nconsole.log(${JSON.stringify(cli)})\n`)
-    chmodSync(join(bin, 'bl'), 0o755)
-    const packet = JSON.stringify({ reviewId: 'test', entries: [] })
-    execFileSync(process.execPath, [file, '--root', repo, 'coverage', 'record', '-'], {
-      input: packet, encoding: 'utf8',
-      env: { ...process.env, BUSINESSLENS_DEV_BIN_DIR: bin, CAPTURE_FILE: capture }
-    })
-    const result = JSON.parse(readFileSync(capture, 'utf8'))
-    expect(result.input).toBe(packet)
-    expect(result.args).toEqual(['--cwd', realpathSync(repo), 'coverage', 'record', '-'])
-    expect(result.cwd).not.toBe(realpathSync(repo))
+  it.each(LINT_RUNNERS)('$name rejects removed accounting commands', ({ file }) => {
+    const repo = temporary('bl-runner-repo-')
+    const result = spawnSync(process.execPath, [file, '--root', repo, 'coverage', 'start'], { encoding: 'utf8' })
+    expect(result.status).toBe(2)
+    expect(result.stderr).toContain('supports only lint')
   })
-
 })

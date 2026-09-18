@@ -52,6 +52,6 @@ inspection record, approval, checkpoint or commit has been written by the report
 - Changed repository files remain visible even when no model resource names them.
 - A revision with no readable model retains its file tree and contents; only related resource links are unavailable.
 - Added, deleted, binary, oversized and unreadable files are distinguished explicitly.
-- Scope, gaps, saved inspection accounting, configuration and formatting changes remain inspectable in their file diffs.
+- Scope, gaps, configuration and formatting changes remain inspectable in their file diffs.
 - A moved branch does not change a historical reading already opened at its resolved commit.
 - Comparing or refreshing never establishes semantic agreement or completes an inspection.

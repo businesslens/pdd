@@ -262,19 +262,24 @@ try {
         await expect(coverage).toBeVisible()
         await expect(about).toHaveCount(0)
         await expect(coverage.locator('details')).toHaveCount(0)
-        await expect(coverage.getByRole('tree', { name: 'Repository paths' })).toBeVisible()
-        await coverage.locator('[data-coverage-root]').click()
-        await expect(page).toHaveURL(url => url.searchParams.get('cp') === '.')
+        await expect(coverage.locator('[data-repository-tree]')).toBeVisible()
+        await expect(page.getByRole('dialog')).toHaveCount(0)
         const details = page.locator('[data-coverage-details]')
-        await expect(details.getByRole('heading', { name: 'Rationale', exact: true })).toBeVisible()
-        for (const key of ['exclusions', 'unmapped', 'limitations', 'method', 'sourceAreas']) {
-          const field = details.locator(`[data-coverage-field="${key}"]`)
-          await expect(field).toBeVisible()
-          await expect(field.locator(':scope > ul > li')).toHaveCount(report.coverage[key].length)
-          if (!report.coverage[key].length) await expect(field.getByText('None recorded.', { exact: true })).toBeVisible()
+        await expect(details.getByRole('heading', { name: 'Model scope', exact: true })).toBeVisible()
+        await expect(details.getByRole('region', { name: 'Status', exact: true })).toHaveCount(0)
+        await expect(coverage.getByRole('tab')).toHaveCount(0)
+        await expect(coverage.getByRole('combobox', { name: 'Filter coverage sources' })).toHaveCount(0)
+        for (const kind of ['covered', 'exclusions', 'unmapped']) {
+          await expect(coverage.locator(`[data-coverage-summary="${kind}"] [data-coverage-summary-count]`)).toHaveText(String(report.coverage[kind].length))
         }
-        await expect(details.getByText('.businesslens/coverage.json', { exact: true })).toHaveCount(1)
-        await page.getByRole('button', { name: 'Close path details', exact: true }).click()
+        const authoring = details.getByRole('button', { name: 'How this model was authored', exact: true })
+        if (report.coverage.method) {
+          await expect(authoring).toHaveAttribute('aria-expanded', 'false')
+          await authoring.click()
+          await expect(details.locator('[data-coverage-method]')).toBeVisible()
+          await authoring.click()
+        } else await expect(authoring).toHaveCount(0)
+
       }
       await capture(page, `${width}-product-${mode}`)
     }

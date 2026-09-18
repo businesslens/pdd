@@ -20,7 +20,7 @@ import {
 import { counterpartKey, interfaceOf, isId, qualify } from './ids.js'
 import { readProductLogo } from './logo-file.js'
 import {
-  bulletList, containsStructuralHeading, decisionPoints, parseMarkdown, screenStates, section
+  bulletList, decisionPoints, parseMarkdown, screenStates, section
 } from './markdown.js'
 
 export interface ResourceFile {
@@ -1192,20 +1192,18 @@ export function loadModel(cwd: string): PddModel {
   }
 
   let coverage: CoverageDocument = {
-    status: 'draft', scope: '', exclusions: [], method: [], sourceAreas: [], unmapped: [], limitations: [], rationale: '', review: null
+    scope: '', exclusions: [], method: '', covered: [], unmapped: [], limitations: []
   }
-  const coverageFile = join(root, 'coverage.json')
-  if (existsSync(join(root, 'coverage.md'))) issues.push('coverage.md is no longer supported; use coverage.json (folder schema 11)')
+  const coverageFile = join(root, 'coverage.md')
+  if (existsSync(join(root, 'coverage.json'))) issues.push('coverage.json is not supported; use coverage.md (folder schema 11)')
   if (existsSync(coverageFile)) {
-    try {
-      const parsed = CoverageDocumentSchema.safeParse(JSON.parse(readFileSync(coverageFile, 'utf8')))
-      if (parsed.success) coverage = parsed.data
-      else for (const issue of parsed.error.issues) issues.push(`coverage.json: ${issue.path.join('.') || 'document'}: ${issue.message}`)
-    } catch (error) {
-      issues.push(`coverage.json: invalid JSON (${(error as Error).message})`)
-    }
+    const { data, body } = splitFrontmatter(readFileSync(coverageFile, 'utf8'), issues, 'coverage.md')
+    if (body.trim() !== '# Coverage') issues.push('coverage.md: body must contain only "# Coverage"; put scope, reasons and limitations in frontmatter')
+    const parsed = CoverageDocumentSchema.safeParse(data)
+    if (parsed.success) coverage = parsed.data
+    else for (const issue of parsed.error.issues) issues.push(`coverage.md: ${issue.path.join('.') || 'document'}: ${issue.message}`)
   } else if (existsSync(root)) {
-    issues.push('coverage.json is missing')
+    issues.push('coverage.md is missing')
   }
 
   /* There is no `actors/`. A folder that still has one is reported as the

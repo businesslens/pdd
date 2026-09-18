@@ -35,9 +35,9 @@ product serves, what they accomplish, the things it keeps and changes, and the
 rules governing behavior and permission. Agent skills author the model and
 check its agreement with implementation. The command-line tool installs those
 skills, checks the model's structure, opens a private local report, and moves
-models between repositories as portable Blueprints. It also records which exact
-repository inputs an inspection considered and shows later changes to those
-files or the model, without treating unchanged inputs as proof of alignment.
+models between repositories as portable Blueprints. The report presents authored
+model scope and known gaps, and compares model and project files between selected
+Git states without treating file changes as proof of alignment.
 
 ## Intent
 

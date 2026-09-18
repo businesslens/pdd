@@ -37,8 +37,9 @@ or swap the comparison direction without changing the checkout.
 
 The default base is the repository's known default branch on a feature branch,
 otherwise the last commit. Explicit selections take precedence. A revision with
-no readable model still supports file comparison; unavailable resource links are
-explained in the selected file's Model references. With no commits, there is no
+no readable model, including a missing working model, still supports file
+comparison; unavailable resource links are explained in the selected file's
+Model references. With no commits, there is no
 saved comparison state.
 
 One changed-file tree includes model files under `.businesslens/` alongside
@@ -49,10 +50,13 @@ model connections. Open a related resource for that state's complete reading.
 Historical contents never fall back to current files. Text previews are bounded;
 binary, oversized, unreadable and submodule contents are identified explicitly.
 
-Overview retains **Coverage** for current model scope, exclusions, gaps and
-recorded inspection. Coverage and Review share the repository tree. Coverage's
-changes since inspection have their own baseline; Review compares only its two
-selected states. A changed file does not establish whether model and code agree.
+Overview’s **Coverage** presents Model scope, with a
+short authoring note and any model-wide limitations. Covered, Exclusions and
+Unmapped describe behavior with optional repository paths. Their cards filter a
+shared source tree; selecting a path opens descriptions, local limitations and
+related References. Entries without paths remain readable below the tree.
+Folder counts summarize authored entries, not completeness. Review compares selected Git or working states; neither
+reading establishes whether model and code agree.
 
 The report is read-only. Selecting, filtering, inspecting and refreshing never
 record a review, approve changes, save a snapshot or alter the repository.

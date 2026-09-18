@@ -48,12 +48,3 @@ Optional implementation References can provide useful navigation, not proof.
 
 Do not schedule map daily. Use [`businesslens-verify`](./skill-businesslens-verify.md)
 for freshness, refactors, drift, release checks, and current-state audits.
-
-## Account for repository inputs
-
-Whole-repository mapping captures a [Coverage review](./cli-coverage.md)
-before inspection. Every captured file receives a conclusion: reviewed behavior
-or supporting material, an approved exclusion, or explicit uncertainty. Known
-missing behavior remains a Coverage gap. Completion binds the accounted-for
-snapshot to the final model; files changed during inspection require a new
-snapshot. A named expansion cannot imply that unrelated files were assessed.

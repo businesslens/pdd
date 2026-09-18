@@ -7,13 +7,13 @@ order: 7
 terms:
   - term: Product Model
     anchor: the-shape-of-a-model
-    definition: "The .businesslens/ folder: one product described in Markdown with structured Coverage, tracked in Git, and free to cite repository code."
+    definition: "The .businesslens/ folder: one product described in Markdown, tracked in Git, and free to cite repository code."
   - term: Intent
     anchor: authoring-conventions
     definition: "Why a resource exists and which outcome it protects, never a restatement of what it does."
   - term: Coverage
     anchor: coverage
-    definition: "The model’s declared scope, breadth, exclusions and known gaps, together with its latest completed repository review."
+    definition: "The model’s declared scope, breadth, approved exclusions and known gaps."
   - term: Resource type
     anchor: what-belongs-in-a-model
     definition: "A category of resource, such as Entity or Capability, determined by the file's location in the Product Model."
@@ -77,7 +77,7 @@ sections it can contain.
 | [Experience](./interfaces.md#experiences) | When its Interface requires or justifies division | A stable context for using the Product within one Interface, with a defined audience, access mode, and capability boundary |
 | [Screen](./interfaces.md#screens) | Optional | A meaningful visual view; non-visual Products do not need one |
 | [Domain](./domains.md) | Optional | A Product-language grouping that makes a larger Capability set easier to navigate |
-| [Capability](./capabilities.md) | At least one in a complete model | A durable Product ability reused across views, behavior contracts, or goals |
+| [Capability](./capabilities.md) | At least one | A durable Product ability reused across views, behavior contracts, or goals |
 | [Journey](./journeys.md) | Optional | An Actor goal whose successful completion requires several Capabilities working together |
 | [Business Rule](./business-rules.md) | Optional | A durable assertion that must remain true, and the only place that says who may act |
 
@@ -91,7 +91,7 @@ payloads belong in an API contract such as OpenAPI. Attach those artifacts as
 
 `taxonomies.yaml` defines the categories available as Scenario kinds, such as
 `primary` and `edge`. `config.yaml` records folder schema
-and SDD roots. `coverage.json` records model breadth and the latest completed repository review.
+and SDD roots. `coverage.md` records authored model breadth, exclusions and known gaps.
 `.businesslens/README.md` orients an agent that encounters the model.
 
 Use [`businesslens view`](./cli-view.md) to browse the current model as a local
@@ -231,18 +231,17 @@ shared code, routes, packages, or protocols.
 ## Behavioral core
 
 Capabilities state what the Product can durably do. Capability Scenarios make
-each ability observable and verifiable. In a complete model, every Capability
+each ability observable and verifiable. Every Capability
 availability Context must be covered by at least one Capability Scenario;
 appearing in a Journey Scenario does not satisfy that local acceptance
-coverage. A complete model has at least one Capability.
+coverage. Every model has at least one Capability.
 
 Journeys are optional high-level goals. A Journey authors only the Actors, Goal,
 and Success criterion. Journey Scenarios own concrete Capability selection,
 order, branches, repetition, correlated context routes, and terminal results.
 Every Journey needs at least one achieved Journey Scenario using at least two
 distinct Capabilities, and every Journey Actor must appear in an achieved
-Scenario. A
-complete Product Model may have zero Journeys.
+Scenario. A Product Model may have zero Journeys.
 
 A Journey's primary Capabilities and Domains are derived from achieved Journey
 Scenario Steps. Capabilities found only in not-achieved paths are
@@ -306,85 +305,73 @@ Domain as the optional umbrella.
 
 ## Coverage
 
-`coverage.json` is one committed document containing the model's declared breadth
-and its latest completed repository review. It is required even when the Product
-has no implementation yet; use `review: null` until code has been reviewed.
+`coverage.md` declares the model's intended breadth. It is required even before
+implementation exists. **Scope** defines the intended boundary; Covered,
+Exclusions, Unmapped and Limitations explain what is represented, deliberately
+omitted, missing or uncertain. There is no Coverage or Product Model status.
+An empty Unmapped list means only that no gaps have been recorded.
 
-```json
-{
-  "status": "partial",
-  "scope": "Customer purchasing and order fulfillment.",
-  "exclusions": [
-    { "description": "Staff payroll is deliberately outside this model.", "paths": ["server/payroll/"] }
-  ],
-  "method": ["Static source inspection without executing code"],
-  "sourceAreas": ["src/", "server/"],
-  "unmapped": [
-    { "description": "Background fulfillment jobs are not modeled.", "paths": ["server/jobs/"] }
-  ],
-  "limitations": ["Runtime scheduling policy could not be established"],
-  "rationale": "Purchasing is modeled; background work remains.",
-  "review": null
-}
+```markdown
+---
+scope: Customer purchasing and order fulfillment.
+method: Static inspection of source and supporting documentation.
+covered:
+  - description: Customer checkout and order tracking.
+    paths: [src/checkout/, src/orders/]
+exclusions:
+  - description: Staff payroll is deliberately outside this model.
+    paths: [server/payroll/]
+unmapped:
+  - description: Background fulfillment jobs are not modeled.
+    paths: [server/jobs/]
+limitations:
+  - description: The retry policy for failed deliveries could not be established.
+    paths: [src/orders/]
+---
+
+# Coverage
 ```
 
-Every field shown is required. `lint` rejects unknown keys, invalid JSON and the
-retired `coverage.md` file. `rationale` may contain Markdown prose, but no H1 or
-H2 headings. The remaining resources continue to use Markdown.
+All six fields are required. The body contains only `# Coverage`; there is no
+separate rationale. `lint` rejects unknown keys, invalid YAML and `coverage.json`.
+Scope is non-empty single-line Markdown. Method is one short single-line
+authoring note, or an empty string when not recorded.
 
-`scope` states the model's intended breadth. `exclusions` names approved omissions;
-`unmapped` names known missing behavior inside that scope. An agent can propose
-scope and exclusions, but skipped work never becomes an approved exclusion on
-its own. `limitations` records what could not be established. Product constraints
-belong in the Product's own limitations. `method` describes how the model was
-authored; `sourceAreas` records broad inspection context; `rationale` explains
-its breadth and remaining gaps.
+Covered, Exclusions, Unmapped and Limitations each contain descriptions with
+paths. Covered describes represented behavior, Exclusions explains approved
+omissions, and Unmapped identifies missing behavior inside scope. Skipped work
+never becomes an approved exclusion on its own. Describe each coherent behavior
+once with all its relevant paths; these are authored statements, not file counts
+or a completeness percentage. The same directory can contain distinct behavior
+in different categories.
 
-Status describes model breadth, never whether code is implemented or verified:
+Limitations identify material uncertainty in what could be established. Give a
+limitation paths to locate the affected area, or `[]` to present it at model
+scope. Missing modeled behavior belongs in Unmapped; do not duplicate it as a
+limitation. Routine statements about code not being executed belong in Method.
+Product constraints belong in the Product's own limitations. Put reasons for
+boundaries and gaps in the affected descriptions.
 
-- `draft`: the model itself is still being authored or reviewed.
-- `partial`: the model is useful and has known unmapped areas.
-- `complete`: the declared scope is modeled, with approved exclusions explicit
-  and no known Unmapped entries. A complete model needs at least one Capability.
+Every entry requires exactly `description` and `paths`. Descriptions are
+non-empty single-line Markdown without structural headings, unique within and
+across all four lists. Paths are unique repository-relative POSIX paths, with
+trailing `/` for directories. Use `[]` when a behavior has no known location,
+including product design. Paths may name intended files; they cannot contain
+absolute paths, URLs, backslashes, traversal, globs or fragment/line suffixes.
+Covered paths, References and absent annotations never establish file-level
+completeness or implementation alignment.
 
-Exclusions and Unmapped entries each require exactly `description` and `paths`.
-Descriptions are non-empty single-line Markdown without a structural heading,
-unique within and across both lists. Paths use repository-relative POSIX spelling;
-directories end in `/`. Use `[]` when a location is unknown or code does not yet
-exist. `lint` rejects duplicate paths, absolute paths, URLs, backslashes,
-traversal, globs, and fragment or line suffixes. A path need not currently exist.
-Paths locate described behavior; no directory annotation classifies every file
-beneath it. Source areas and References do not establish file-level completeness.
+Every model has at least one Capability and must satisfy the structural
+requirements for its declared resources, including Capability and Journey
+Scenario coverage. Known Unmapped areas are valid and do not relax these checks.
+Structural checks cannot establish that every behavior has been discovered.
+A model may describe planned behavior before code exists. Use
+[`businesslens-verify`](./skill-businesslens-verify.md) to compare the model with
+current implementation; findings are re-derived on each run.
 
-The nullable `review` contains the latest completed inspection:
-
-- `id`, `startedAt`, and `completedAt` identify and date the review.
-- `policy` states which repository files were eligible, including explicitly
-  selected ignored paths.
-- `files` records exact repository-relative paths and content fingerprints;
-  unreadable inputs retain an explicit error.
-- `entries` groups exact paths with a `reviewed`, `excluded`, or `uncertain`
-  conclusion, a summary, model resource paths, and known exclusions or gaps.
-- `modelDigest` identifies the model contents against which review completed.
-
-The [coverage commands](./cli-coverage.md) capture files, record conclusions and
-write this block on completion. Do not invent fingerprints or mark uninspected
-files reviewed. Every captured file requires a conclusion before completion;
-known gaps and uncertainty remain visible. Completed review and complete model
-coverage are independent. Subsequent resource edits can make historical links
-stale without erasing the recorded review.
-
-Pending work stays local to each worktree. Commit the completed `coverage.json`
-to share it with other agents and clones. Current file and model changes are
-computed against that saved snapshot, never stored as a freshness flag.
-The model fingerprint includes authored Coverage fields but excludes the review
-itself, JSON formatting, and generated `build/` and `cache/` contents. Matching
-fingerprints establish content identity, not semantic correctness.
-
-Blueprints retain authored scope, exclusions, gaps, limitations, and rationale;
-repository paths and inspection context are removed. The review is cleared to
-`null`, including after expansion into another repository. A newly designed model
-can have complete breadth without having code or a completed review.
+Blueprints preserve scope and every area or limitation description,
+emptying only repository paths. Opening a Blueprint replaces Method with a short
+account of its origin in the new repository.
 
 Resource files, config, taxonomy, Coverage, and orientation are committed.
 The model's `.gitignore` ignores generated `build/` and `cache/` directories.

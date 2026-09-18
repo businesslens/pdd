@@ -19,7 +19,6 @@ npx businesslens <command> [options]
 | [`install`](./cli-install.md) | Install map, ideate, and verify |
 | [`update`](./cli-update.md) | Refresh marked skill installations |
 | [`lint`](./cli-lint.md) | Check Product Model structure without semantic claims |
-| [`coverage`](./cli-coverage.md) | Account for repository files and compare changes with an assessed snapshot |
 | [`view`](./cli-view.md) | Render the current Product Model on localhost without exporting it |
 | [`blueprint export`](./cli-export.md) | Compile a portable Product Report (a Blueprint) |
 | [`blueprint open`](./cli-open.md) | Expand a local Blueprint into `.businesslens/` |

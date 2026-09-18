@@ -197,10 +197,10 @@ describe('local Product Report server', () => {
     }
   })
 
-  it('watches model sources and announces a new report over server-sent events', { timeout: WATCH_TEST_TIMEOUT_MS }, async () => {
+  it.each(['product.md', 'coverage.md'])('watches %s and announces a new report over server-sent events', { timeout: WATCH_TEST_TIMEOUT_MS }, async (filename) => {
     const model = mkdtempSync(join(tmpdir(), 'businesslens-model-'))
     directories.push(model)
-    const product = join(model, 'product.md')
+    const product = join(model, filename)
     writeFileSync(product, 'First title')
 
     const viewer = await startLocalViewer({

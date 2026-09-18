@@ -23,6 +23,6 @@ navigated the repository it came from.
 ## Intent
 
 A Product Model should be able to leave the repository that authored it without
-carrying repository-navigation fields or repository reviews. A
-Blueprint is a contract someone else can start from, not a copy of this
+carrying repository-navigation fields. A Blueprint is a contract someone else
+can start from, not a copy of this
 repository's file tree.

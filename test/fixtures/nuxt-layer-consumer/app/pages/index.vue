@@ -70,15 +70,12 @@ const report: ProductReportV16 = {
     businessRules: []
   },
   coverage: {
-    status: 'complete',
     scope: 'The fixture Product.',
     exclusions: [],
-    method: ['Static packed-artifact smoke fixture.'],
-    sourceAreas: [],
+    method: 'Static packed-artifact smoke fixture.',
+    covered: [],
     unmapped: [],
-    limitations: [],
-    review: null,
-    rationale: 'The fixture exercises package resolution, not a Product claim.'
+    limitations: []
   }
 }
 // Opt in to comparison data without changing the graph/lifecycle smoke fixture.

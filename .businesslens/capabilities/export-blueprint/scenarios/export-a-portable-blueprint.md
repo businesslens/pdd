@@ -38,6 +38,6 @@ inspect what would travel, or to prepare a contribution.
 
 A Blueprint exists as a generated file that the repository ignores and that is
 replaced on every run. It holds no code references, no implementation
-references, no repository-relative Reference targets, and no Source areas,
-Exclusion paths or Unmapped paths. Scope, exclusion and known-gap descriptions
-remain. Repository reviews are not part of the Blueprint.
+references, no repository-relative Reference targets, and no repository paths
+in Covered, Exclusions, Unmapped or Limitations. Scope and all behavior and
+uncertainty descriptions remain.

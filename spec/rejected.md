@@ -139,6 +139,10 @@ inputs without repeating the target.
 
 ## The Product Report
 
+**Persistent inspection receipts.** Per-file hashes and saved conclusions grow
+with the repository without establishing semantic correctness. Keep inspection
+worklists temporary; Git already supplies change history.
+
 **A provenance field.** `derivedFrom: implementation | intent | mixed`, carried
 through the portable projection so a catalog reader could tell a Blueprint
 mapped from a working product from one authored as intent. Neutrality is the

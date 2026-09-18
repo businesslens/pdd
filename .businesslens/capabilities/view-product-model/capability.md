@@ -23,9 +23,8 @@ reload.
 Review compares model and project files in one tree between selected Git states,
 including the working state. Selecting a file opens its before and after
 contents with related resource links. Coverage in Overview explains current breadth,
-exclusions, known gaps and recorded inspection. Both readings share repository
-navigation while naming their own comparison context. Reading never records
-inspection or changes the repository.
+exclusions and known gaps directly, with recorded paths linking to related
+context and References. Reading never records inspection or changes the repository.
 
 ## Intent
 

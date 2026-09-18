@@ -66,12 +66,10 @@ function workspaceMaterial(report) {
       ) found.push(`${host.id}: non-portable reference ${JSON.stringify(reference)}`)
     }
   }
-  if (report.coverage?.review) found.push('coverage.review contains repository inspection history')
-  if (report.coverage?.sourceAreas?.length) {
-    found.push(`coverage.sourceAreas ${JSON.stringify(report.coverage.sourceAreas)}`)
-  }
-  if (report.coverage?.unmapped?.some(area => area.paths?.length)) {
-    found.push('coverage.unmapped paths contain repository locations')
+  for (const kind of ['covered', 'exclusions', 'unmapped', 'limitations']) {
+    if (report.coverage?.[kind]?.some(area => area.paths?.length)) {
+      found.push(`coverage.${kind} paths contain repository locations`)
+    }
   }
   if (report.repository?.link) found.push(`repository.link ${report.repository.link}`)
   if (report.repository?.entryPoint) found.push(`repository.entryPoint ${report.repository.entryPoint}`)

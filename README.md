@@ -24,7 +24,7 @@ resolution loop.
 ├── capabilities/<id>.md      # or <id>/capability.md with scenarios/ or assets
 ├── journeys/<id>.md          # or <id>/journey.md with scenarios/ or assets; optional
 ├── business-rules/<id>.md    # or <id>/business-rule.md with assets
-└── coverage.json
+└── coverage.md
 ```
 
 Leaf resources stay compact as `<id>.md`. A resource expands to
@@ -96,10 +96,9 @@ Catalog contribution stays in the CLI; there is no contribution skill.
 - `references` optionally attach intent, implementation, or context artifacts
   to any semantic resource. They are navigation and supporting material, not
   proof or verification receipts.
-- `coverage.status` describes model breadth: `draft` while the model itself is
-  under review, `partial` with known unmapped areas, and `complete` when the
-  declared model scope is modeled, with exclusions explicit and no known gaps.
-- A complete model may contain zero References.
+- Coverage describes scope, represented behavior, exclusions, known gaps and
+  uncertainty. No recorded gaps does not establish completeness.
+- A model may contain zero References.
 - A Product may expose several Interfaces—such as web, mobile, CLI, and a
   supported API—without being classified as one of those delivery forms.
 - Experiences are optional coherent usage contexts, each belonging to exactly

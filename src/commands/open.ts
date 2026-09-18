@@ -29,14 +29,8 @@ import { validateProductLogo } from '../logo.js'
 const MAX_REPORT_BYTES = 8 * 1024 * 1024
 /* `method` is the one coverage field expansion rewrites: it states how the
    model was derived, which is a claim about origin, and a Blueprint carries
-   none. Both sentences below are origin claims — where the model came from and
-   that nobody has yet checked it against this repository — so both live here
-   and nowhere else. The author's `unmapped`, `limitations`, and `rationale`
-   pass through untouched. */
-const OPEN_COVERAGE_METHOD = [
-  'Opened from a portable Product Report; source-repository navigation was intentionally removed.',
-  'Implementation alignment has not been verified in this repository.'
-]
+   none. Authored descriptions pass through untouched. */
+const OPEN_COVERAGE_METHOD = 'Opened from a portable Product Report; implementation alignment has not been verified in this repository.'
 
 function readReportSource(source: string): unknown {
   if (/^https?:\/\//i.test(source)) {
@@ -218,13 +212,11 @@ function writeReport(root: string, report: ProductReportV16, hasLogo: boolean): 
     })) + body(report.title, report.description, report.intent, [], report.supportingSections)
   )
   write(
-    join(root, 'coverage.json'),
-    JSON.stringify({
+    join(root, 'coverage.md'),
+    frontmatter({
       ...report.coverage,
-      method: OPEN_COVERAGE_METHOD,
-      sourceAreas: [],
-      review: null
-    }, null, 2) + '\n'
+      method: OPEN_COVERAGE_METHOD
+    }) + body('Coverage', '', '', [], [])
   )
 
   for (const productInterface of report.model.interfaces) {

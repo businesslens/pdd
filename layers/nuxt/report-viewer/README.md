@@ -131,9 +131,9 @@ Hosts with Vocabulary in their own header can set `sidebarVocabulary` to
 `false` to omit the sidebar entry and its empty reference group. That header
 must keep the Vocabulary panel's tooltip controls available for report readers.
 The working view's header serves as its navbar: the heading shares it with
-Coverage, Review when the host provides comparisons, report schema version and
+Review when the host provides comparisons, report schema version and
 generation date, above a bottom divider. A host's `status` slot replaces the
-generation date with its live connection state. Status wraps onto a second line
+generation date with its live connection state. Header metadata wraps onto a second line
 on narrow screens.
 Hosts can supply `sidebar-header` and `sidebar-footer` slots for branding and
 utilities; both also appear in the mobile navigation drawer. The bundled local
@@ -200,7 +200,7 @@ where it left:
 | `resourceTab` | resource reading: `overview`, `scenarios`, `lifecycle`, `connections`, or `references`; independent of `tab` | `overview` |
 | `scenarioRoute` | the first route in the visible Scenario route window, or `null` | `null` |
 | `routeColumns` | `auto`, or the reader's preferred number of visible route columns | `auto` |
-| `coverage` | `{ path: string \| null }` (`.` selects the repository root) | No path |
+| `coverage` | `{ path: string \| null }` | No path |
 | `topology` | selected view, Journey, Scenario window, matrix column, focus, hidden kinds, expanded/collapsed groups, directory search | Domain map; no filters |
 
 Every one is optional; bind the ones the host wants in its URL. A Scenario key
@@ -385,46 +385,37 @@ Run `node scripts/check-comparison-tables.mjs <CLI viewer URL>` against this
 repository's report or fixture-shop to check badge-to-panel keyboard focus,
 bounded cell rendering on a large matrix, column navigation and mobile resizing.
 
-### Repository context
+### Coverage
 
-A host may pass `loadRepository: RepositoryInventoryLoader`, exported from
-`businesslens/report`, to provide `{ paths: string[] }` for the current workspace.
-Its boolean argument requests ignored files as well as tracked and untracked
-project files. The local host calls `/_businesslens/repository.json`; the stable
-layer never assumes that endpoint exists. This inventory is separate from the
-Product Report and is never exported. Without a loader, Coverage still shows
-all authored source areas and structured Unmapped entries. Folder annotations
-aggregate distinct source areas, gaps, and referencing resources; they do not
-classify files as fully mapped. Selecting a path reveals its annotations and
-resource links. Coverage opens directly into one full-width tree. Search, filters,
-the standard Expand all / Collapse all controls, refresh and file count share
-one horizontally scrollable row. Expansion preserves the active filters.
-Its Product-named
-root stays available with no paths or matching search results, and summarizes
-model Status, the saved review date, changes and pending work. Indicators for
-Unmapped and Exclusions entries without paths open their root sections. Selecting
-the root opens all authored fields under Model scope and the complete Repository
-review. Folder and file selections scope their details to that location.
-Every existing file-state and annotation indicator remains beside its filename
-on a single line, distinguished by labels, icons and styling. The tree scrolls
-horizontally when needed. The slideover never resizes the tree; closing it clears
-the selection. The bindable Coverage state holds `path` (`.` for the root, a
-repository-relative path, or `null`); `cp` preserves it through history and reloads.
+Coverage opens with **Model scope**. Model-wide Limitations (entries with no
+paths) appear immediately below. There is no Coverage status badge or derived
+completeness indicator, in the navbar or the Coverage reading. A small
+**How this model was authored** disclosure reveals the short Method note when
+recorded. There is no separate Rationale or Mapping details.
 
-### Coverage reviews
+**Source areas** contains three compact filter cards counting described Covered,
+Exclusions and Unmapped entries, including those without paths. Selecting a card
+activates its filter; selecting it again restores all areas. Cards are the only
+category filter and totals remain unchanged by search or filtering.
 
-The optional `loadRepository(includeIgnored)` loader can also return
-`coverage` (a `CoverageComparison`) or `coverageError`. The CLI host
-provides comparison against the shared completed review and local pending work, an explicit inventory policy,
-file comparisons and model-change state. Coverage distinguishes this generated
-accounting from authored Scope, Exclusions and Unmapped entries. The tree keeps
-deleted paths selectable and shows recorded conclusions for selected paths.
-File-state filtering narrows the displayed paths; folder annotation counts still
-refer to the full subtree. The renderer never writes or completes a review.
-A host without live comparison retains all authored information.
-Completed review data is carried by workspace `ProductReportV16.coverage.review`.
-A host without live repository context still renders saved conclusions, with
-current freshness unknown. Portable Blueprints require `coverage.review: null`.
+These annotations share `BlrRepositoryTree` with Review: search, expand/collapse,
+a Repository root and compact annotation badges. Each recorded location appears
+once. Descriptions explain distinct behavior, so the same location can be
+covered, excluded and unmapped. Folders summarize distinct entries at or below
+them, never file completeness or inherited meaning. Paths recorded only by a
+Limitation remain reachable in the unfiltered tree, with a Limitations badge.
+No live repository inventory is added.
+
+Covered, Exclusions and Unmapped entries without paths remain visible under
+**No location recorded**, narrowed by the card filter. Empty category lists show
+zero in the cards. Selecting a path opens the recorded descriptions, local
+Limitations, authored path spellings and related resource References in a
+slideover. The root includes every entry, including unlocated ones. Closing
+restores focus. Method disclosure preserves search, filters and expansion.
+
+`coverage.path` is navigation state, encoded as `cp` for refresh and browser
+history. Method disclosure does not change the URL. Tree expansion is remembered
+for the report. Narrow screens scroll the tree within its frame, as in Review.
 
 ## Navigation regression checks
 
@@ -452,12 +443,11 @@ file's bounded before/after contents. The `compare`, `historySearch` and
 `historyMore` events request read-only host data. No event records inspection,
 approves work or writes a saved state. Hosts without Git context omit Review.
 
-Overview retains Coverage and its independent `loadRepository` input. The shared
-`BlrRepositoryTree` renders both pages' trees, search, expansion and selection.
+Overview presents authored Coverage directly. Review uses `BlrRepositoryTree`
+for changed files, search, expansion and selection.
 It marks `.businesslens/` folders with the shared brand logo and recognized
 resource paths with the same kind icons and colours used throughout the report.
-Coverage supplies current scope and inspection context; Review supplies changes
-between its selected states. There is no separate resource or field change list.
+Review supplies changes between its selected states. There is no separate resource or field change list.
 File details use the two models for related resource links; unavailable models
 limit these links, not the tree or file previews. The navigation composable persists `reviewPath` as `rp`,
-`resourceState` as `v`, and Coverage's path separately as `cp`.
+`resourceState` as `v`, and Coverage's selected path as `cp`.

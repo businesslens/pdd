@@ -49,8 +49,7 @@ describe('public workflow contract', () => {
     expect(source).toContain('injected external builder')
     expect(source).toContain('same gap returns unchanged')
     expect(source).toContain('Report-only mode forbids writes')
-    expect(source).toContain('Persist no current-finding ledger')
-    expect(source).toContain('local exact-input accounting record is the exception')
+    expect(source).toContain('Persist no receipt')
   })
 
   it('keeps the complete verify classification and routing structure', () => {
@@ -84,12 +83,8 @@ describe('public workflow contract', () => {
   it('forbids workflow writes to repository-owned instructions', () => {
     for (const name of publicSkills()) {
       const source = skill(name)
-      expect(source.toLowerCase(), name).toContain('never write outside `.businesslens/`')
+      expect(source, name).toContain('Never write outside `.businesslens/`')
       expect(source, name).toContain('`AGENTS.md`, `CLAUDE.md`')
-      if (name !== 'businesslens-ideate') {
-        expect(source, name).toContain('local review commands')
-        expect(source, name).toContain('worktree Git metadata')
-      }
     }
   })
 })

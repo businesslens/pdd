@@ -1,6 +1,5 @@
 <script setup lang="ts">
 /** Complete Product and Coverage readings, using the authored field names. */
-import type { RepositoryInventoryLoader } from 'businesslens/report'
 import type { AnyResourceView, ReportWorkspace } from '../utils/reportWorkspace'
 import { defaultCoverageReading, type CoverageReading } from '../utils/coverageState'
 import { entityFacetOf, resolveResourceKey } from '../utils/reportWorkspace'
@@ -11,7 +10,6 @@ const props = defineProps<{
   logoSrc?: string | null
   /** The open reading: `overview` (About), `coverage`, or `references`. */
   tab: string
-  loadRepository?: RepositoryInventoryLoader
 }>()
 
 const emit = defineEmits<{
@@ -46,16 +44,16 @@ function referenceEntity(ownerKey?: string) {
       <div class="grid gap-8 @3xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <div class="min-w-0 space-y-7" data-product-narrative>
           <section class="space-y-2" aria-label="Description">
-            <h3 class="text-sm font-semibold text-highlighted">Description</h3>
+            <h3 class="text-base font-semibold text-highlighted">Description</h3>
             <BlrProse :text="workspace.identity.description" />
           </section>
           <section class="space-y-2" aria-label="Intent">
-            <h3 class="text-sm font-semibold text-highlighted">Intent</h3>
+            <h3 class="text-base font-semibold text-highlighted">Intent</h3>
             <BlrProse v-if="workspace.identity.intent" :text="workspace.identity.intent" />
             <p v-else class="text-sm text-muted">Not recorded.</p>
           </section>
           <section class="space-y-2" aria-label="Product limitations">
-            <h3 class="flex items-baseline gap-2 text-sm font-semibold text-highlighted">
+            <h3 class="flex items-baseline gap-2 text-base font-semibold text-highlighted">
               Limitations <span class="blr-meta">{{ workspace.identity.limitations.length }}</span>
             </h3>
             <p class="text-xs text-muted">Deliberate exclusions or constraints of the Product.</p>
@@ -67,50 +65,50 @@ function referenceEntity(ownerKey?: string) {
             <p v-else class="text-sm text-muted">None recorded.</p>
           </section>
           <section v-for="(section, index) in workspace.identity.supportingSections" :key="index" class="space-y-2" data-product-supporting-section>
-            <h3 class="text-sm font-semibold text-highlighted">{{ section.heading }}</h3>
+            <h3 class="text-base font-semibold text-highlighted">{{ section.heading }}</h3>
             <BlrProse :text="section.content" />
           </section>
         </div>
 
         <aside class="min-w-0 space-y-6 border-t border-default pt-6 @3xl:border-t-0 @3xl:border-s @3xl:pt-0 @3xl:ps-7" aria-label="Product details">
-          <h3 class="text-sm font-semibold text-highlighted">Product details</h3>
+          <h3 class="text-base font-semibold text-highlighted">Product details</h3>
           <dl class="space-y-4 text-sm">
             <div>
-              <dt class="text-xs font-medium text-muted">ID</dt>
+              <dt class="text-sm font-medium text-muted">ID</dt>
               <dd class="mt-1 font-mono">{{ workspace.identity.id }}</dd>
             </div>
             <div>
-              <dt class="text-xs font-medium text-muted">Category</dt>
+              <dt class="text-sm font-medium text-muted">Category</dt>
               <dd class="mt-1">{{ workspace.identity.category || 'None recorded.' }}</dd>
             </div>
             <div>
-              <dt class="text-xs font-medium text-muted">Tags</dt>
+              <dt class="text-sm font-medium text-muted">Tags</dt>
               <dd class="mt-1">
                 <ul v-if="workspace.identity.tags.length" class="flex flex-wrap gap-1.5">
-                  <li v-for="tag in workspace.identity.tags" :key="tag" class="rounded border border-default px-2 py-0.5 text-xs">{{ tag }}</li>
+                  <li v-for="tag in workspace.identity.tags" :key="tag" class="rounded border border-default px-2 py-0.5 text-sm">{{ tag }}</li>
                 </ul>
                 <span v-else class="text-muted">None recorded.</span>
               </dd>
             </div>
             <div>
-              <dt class="text-xs font-medium text-muted">Authors</dt>
+              <dt class="text-sm font-medium text-muted">Authors</dt>
               <dd class="mt-1">
                 <ul v-if="workspace.identity.authors.length" class="space-y-3">
                   <li v-for="(author, index) in workspace.identity.authors" :key="index" class="space-y-0.5">
                     <p>{{ author.name }}</p>
-                    <a v-if="author.url" :href="author.url" target="_blank" rel="noopener noreferrer" class="block text-xs text-primary underline underline-offset-2">{{ author.url }}</a>
+                    <a v-if="author.url" :href="author.url" target="_blank" rel="noopener noreferrer" class="block text-sm text-primary underline underline-offset-2">{{ author.url }}</a>
                   </li>
                 </ul>
                 <span v-else class="text-muted">None recorded.</span>
               </dd>
             </div>
             <div>
-              <dt class="text-xs font-medium text-muted">License</dt>
+              <dt class="text-sm font-medium text-muted">License</dt>
               <dd class="mt-1">{{ workspace.identity.license || 'None recorded.' }}</dd>
             </div>
           </dl>
           <section class="space-y-2 border-t border-default pt-5" aria-label="Actors">
-            <h3 class="text-sm font-semibold text-highlighted">Actors</h3>
+            <h3 class="text-base font-semibold text-highlighted">Actors</h3>
             <p class="text-xs text-muted">Derived from Entities that act on the Product.</p>
             <div v-if="workspace.actingEntities.length" class="flex flex-wrap items-center gap-2">
               <UButton
@@ -118,8 +116,8 @@ function referenceEntity(ownerKey?: string) {
                 :key="actor.key"
                 color="neutral"
                 variant="outline"
-                size="xs"
-                class="rounded-full"
+                size="sm"
+                class="rounded-full text-sm"
                 @click="emit('select', actor)"
               >
                 <BlrKind kind="entity" :facet="entityFacetOf(actor)" :acts="actor.acts" :labelled="false" size="xs" />
@@ -135,7 +133,7 @@ function referenceEntity(ownerKey?: string) {
       </div>
     </div>
 
-    <BlrCoverage v-else-if="tab === 'coverage'" v-model:reading="coverage" :workspace="workspace" :load-repository="loadRepository" @select-key="emit('selectKey', $event, 'overview')" />
+    <BlrCoverage v-else-if="tab === 'coverage'" v-model:reading="coverage" :workspace="workspace" @select-key="emit('selectKey', $event, 'overview')" />
 
     <!-- REFERENCES: everything the model points at, and who points at it. -->
     <template v-else-if="tab === 'references'">

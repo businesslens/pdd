@@ -176,7 +176,7 @@ describe('cli dispatch', () => {
   })
 
   it('refuses removed commands and options as ordinary usage errors', { timeout: 15_000 }, () => {
-    for (const command of ['export', 'open', 'pull', 'contribute', 'build', 'validate']) {
+    for (const command of ['export', 'open', 'pull', 'contribute', 'build', 'validate', 'coverage']) {
       const result = cli(ROOT, process.env, '--cwd', repo, command)
       expect(result.status, command).toBe(2)
       expect(result.stderr, command).toContain(`unknown command '${command}'`)
