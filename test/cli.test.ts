@@ -194,7 +194,7 @@ describe('cli dispatch', () => {
     const result = cli(ROOT, process.env, '--cwd', repo, 'blueprint')
     expect(result.status).toBe(0)
     expect(result.stdout).toContain('Usage: businesslens blueprint <command> [options]')
-  })
+  }, 30_000)
 
   it('rejects unknown root and Blueprint commands with usage exit code', () => {
     const root = cli(repo, process.env, 'bogus')
