@@ -194,9 +194,9 @@ describe('stable Product Report', () => {
 
     expect(workspace.byKey.get(order.key)).toBe(order)
     expect(resourceFacts(workspace, order).map((fact: any) => fact.label))
-      .toEqual(['Kept', 'States', 'Arcs', 'Changed by'])
+      .toEqual(['Information kept', 'States', 'Arcs', 'Changed by'])
     expect(resourceFacts(workspace, workspace.entities.find((item: any) => item.id === 'shopper')).map((fact: any) => fact.label))
-      .toEqual(['Kind', 'Acts', 'Journeys', 'Kept'])
+      .toEqual(['Kind', 'Acts', 'Journeys', 'Information kept'])
     expect(hasAuthoredBody(order)).toBe(true)
     const overview = tabsFor(workspace, order).find((tab: any) => tab.id === 'overview')!
     expect(overview.blocks).toContain('detail')
@@ -480,8 +480,9 @@ describe('stable Product Report', () => {
     expect(body).not.toContain('{{ column.id }}')
     expect(context).toContain('<BlrContextPlace')
     for (const kind of ['experience', 'screen']) {
-      expect(contextPlace).toContain(`<BlrKind kind="${kind}"`)
+      expect(contextPlace).toContain(`kind: '${kind}', id: context.${kind}Id`)
     }
+    expect(contextPlace).toContain(':kind="segment.kind"')
     expect(contextPlace).toContain('<BlrInterfaceType')
     expect(source('app/components/BlrInterfaceType.vue')).toContain(":role=\"labelled ? undefined : 'img'\"")
     expect(body).toContain("asScenario.scenarioType === 'journey' && step.capabilityId")
@@ -510,11 +511,12 @@ describe('stable Product Report', () => {
     expect(body.match(/aria-label="Show next route"/g)).toHaveLength(2)
     expect(body).toContain('compact')
     expect(body).not.toContain('Context ·')
-    expect(contextPlace).toContain(':type="productInterface.interfaceType"')
-    expect(contextPlace).toContain('whitespace-nowrap')
-    expect(contextPlace).toContain("compact ? 'max-w-24'")
-    expect(contextPlace).toContain('truncate')
-    expect(contextPlace.match(/<UTooltip/g)).toHaveLength(3)
+    expect(contextPlace).toContain(':type="segment.resource.interfaceType"')
+    expect(contextPlace).toContain('white-space: nowrap')
+    expect(contextPlace).toContain('.blr-context-place[data-compact] .blr-context-place-label { max-width: 10rem; }')
+    expect(contextPlace).toContain('text-overflow: ellipsis')
+    expect(contextPlace).toContain('v-for="(segment, index) in segments"')
+    expect(contextPlace).toContain('<UTooltip :text="segment.title"')
     expect(contextPlace).not.toContain(':title="place.')
     expect(links).toContain('inline-flex min-h-6 items-center')
     for (const icon of ['align-justify', 'circle-dot-dashed', 'user-round']) {
@@ -618,7 +620,7 @@ describe('stable Product Report', () => {
 
     /* A collection or relation heading means the Interface kind, not one
        concrete Interface, so its generic plug remains deliberately generic. */
-    expect(source('app/components/BlrRail.vue')).toContain(':name="meta.icon"')
+    expect(source('app/components/BlrRail.vue')).toContain('icon: meta.icon')
   })
 
   it('fits and pages an authored-order route window without empty columns', async () => {
@@ -771,20 +773,19 @@ describe('stable Product Report', () => {
     expect(graph).toContain('visibleKeys')
   })
 
-  it('keeps the question-and-derivation bar exclusive to Topology', () => {
+  it('keeps matrix readings focused on their filters and data', () => {
     const reportShell = source('app/components/BlrReportShell.vue')
     const topology = source('app/components/BlrProductTopology.vue')
 
     expect(existsSync(join(VIEWER, 'app/utils/browseSurfaces.ts'))).toBe(false)
     expect(reportShell).not.toContain('surface.question')
     expect(reportShell).not.toContain('surface.flow')
-    /* The surface heading names the subject and the tab names the reading, so
-       a view neither titles itself nor spends a row restating its question:
-       that belongs with the derivation it qualifies, behind About this view. */
+    /* The shell names the view; the matrix adds no title or explanation. */
     expect(topology).not.toContain('{{ view.name }}')
     expect(topology).not.toContain('blr-topology-title-row')
-    expect(topology).toContain('{{ view.diagramType }}')
-    expect(topology).toContain('{{ view.question }}')
+    expect(topology).not.toContain('{{ view.diagramType }}')
+    expect(topology).not.toContain('{{ view.question }}')
+    expect(topology).not.toContain('About this view')
     expect(reportShell).not.toContain('surfaceHint')
     expect(source('app/components/BlrResourcePage.vue')).not.toContain('current.hint')
     expect(source('app/utils/pageSections.ts')).not.toContain('hint')
@@ -813,19 +814,14 @@ describe('stable Product Report', () => {
     }
   })
 
-  /*
-    Embedded reports without a host-header target keep the bordered controls
-    that fit their report row. A host can instead move them into its header.
-  */
-  it('keeps the bordered Vocabulary control when the host has no tools target', () => {
+  it('keeps Search and Vocabulary visible in the sidebar at every width', () => {
     const tools = source('app/components/BlrReportTools.vue')
-    const shell = tools.slice(tools.indexOf('<template v-else>'))
-    const vocabulary = shell.indexOf('label="Vocabulary"')
-    const button = shell.lastIndexOf('<UButton', vocabulary)
+    const sidebar = tools.slice(tools.indexOf('<template v-else>'))
 
-    expect(vocabulary).toBeGreaterThan(-1)
-    expect(shell.slice(button, vocabulary)).toContain('variant="outline"')
-    expect(shell.slice(vocabulary, vocabulary + 200)).toContain('rounded-full')
+    expect(sidebar).toContain('aria-label="Search Product Model"')
+    expect(sidebar).toContain('label="Vocabulary"')
+    expect(sidebar).not.toContain('hidden')
+    expect(source('app/components/BlrReportSidebar.vue')).toContain('<BlrReportTools')
   })
 
   /*
@@ -1004,7 +1000,6 @@ describe('stable Product Report', () => {
        and the switch between drawings is at the bar's end, not a tab. */
     expect(toolbar).toBeGreaterThan(-1)
     expect(reportShell.indexOf('<BlrFilterBar', toolbar)).toBeLessThan(pane)
-    expect(reportShell.indexOf(':to="surfaceDocs.url"')).toBeLessThan(toolbar)
     expect(reportShell.indexOf('v-for="link in exits"')).toBeLessThan(toolbar)
     expect(reportShell.indexOf('data-drawing-switch', toolbar)).toBeLessThan(pane)
     /* Tabs stay on the Overview and on pages; a collection has none. */
@@ -1085,8 +1080,9 @@ describe('stable Product Report', () => {
     expect(contexts).toContain('<BlrContextPlace')
     expect(source('app/components/BlrStepContext.vue')).toContain('<BlrContextPlace')
     expect(contextPlace).toContain('<BlrInterfaceType')
-    expect(contextPlace).toContain('<BlrKind kind="experience"')
-    expect(contextPlace).toContain('<BlrKind kind="screen"')
+    expect(contextPlace).toContain("if (context.experienceId)")
+    expect(contextPlace).toContain("if (context.screenId)")
+    expect(contextPlace).toContain(':kind="segment.kind"')
     expect(contexts).toContain("props.contexts.length === 1 ? 'Context' : 'Contexts'")
     expect(contexts).not.toContain('CONTEXT_NOTE')
     expect(contexts).not.toContain('Derived from achieved Scenarios')
@@ -1121,8 +1117,8 @@ describe('stable Product Report', () => {
     /* The rail changes the subject. A collection's Graph is reached inside it;
        a matrix compares two collections, so it is a rail row of its own. */
     expect(rail).toContain('view: [section: string]')
-    expect(rail).toContain('v-for="item in MATRIX_DESTINATIONS"')
-    expect(rail.indexOf('MATRIX_DESTINATIONS"')).toBeLessThan(rail.indexOf('v-for="meta in RAIL_KINDS"'))
+    expect(rail).toContain('MATRIX_DESTINATIONS.map')
+    expect(rail.indexOf('MATRIX_DESTINATIONS.map')).toBeLessThan(rail.indexOf('RAIL_KINDS.map'))
     expect(reportShell).not.toContain('SCENARIO_OF')
     expect(reportShell).not.toContain('parentTabs')
     expect(reportShell).not.toContain('class="blr-tab"')
@@ -1226,20 +1222,17 @@ describe('stable Product Report', () => {
     expect(host).toContain('v-model:tab="tab"')
   })
 
-  it('moves product identity into a desktop-equivalent mobile rail', () => {
+  it('uses the same sidebar and Overview navigation on desktop and mobile', () => {
     const reportShell = source('app/components/BlrReportShell.vue')
+    const sidebar = source('app/components/BlrReportSidebar.vue')
 
-    /* The way home is one affordance at both widths: the same house, the same
-       name, the same target. A mark that changes shape with the model — a logo
-       here, a glyph there — is two affordances wearing one slot, so a Product's
-       own logo is content and lives on the reading that names it. */
-    expect(reportShell.match(/i-lucide-house/g)).toHaveLength(2)
-    expect(reportShell.match(/title="Open the Overview"/g)).toHaveLength(2)
-    expect(reportShell).not.toContain('v-if="logoSrc"')
+    expect(reportShell.match(/<BlrReportSidebar/g)).toHaveLength(2)
+    expect(sidebar).not.toContain('data-report-home')
+    expect(source('app/components/BlrRail.vue')).toContain("emit('kind', 'product')")
+    expect(sidebar).not.toContain('v-if="logoSrc"')
     expect(source('app/components/BlrOverview.vue')).toContain('v-if="logoSrc"')
-    expect(reportShell).toContain(":ui=\"{ content: 'w-64 max-w-[85vw]', body: 'p-2' }\"")
-    expect(reportShell).toContain('class="blr-report-shell flex min-w-0 flex-1 items-center gap-3"')
-    expect(reportShell).toContain('class="blr-report-shell min-h-full"')
+    expect(reportShell).toContain(":ui=\"{ content: 'w-72 max-w-[90vw]' }\"")
+    expect(reportShell).toContain('class="blr-report-shell"')
   })
 })
 
@@ -1250,6 +1243,41 @@ describe('stable Product Report', () => {
  */
 describe('composed lifecycle', () => {
   const lifecycleModulePath = '../layers/nuxt/report-viewer/app/utils/entityLifecycle.ts'
+
+  it('groups every change once by its starting State, keeping creation and unspecified changes separate', async () => {
+    const { groupEntityLifecycle } = await import(lifecycleModulePath)
+    const workspace = workspaceOf(compileReport(loadModel(FIXTURE), '2026-08-08'))
+    const order = entityOf(workspace, 'order')
+    const groups = groupEntityLifecycle(order, order.arcs)
+    expect(groups.filter((group: any) => group.state).map((group: any) => group.title)).toEqual(order.states.map((state: any) => state.name))
+    expect(groups.flatMap((group: any) => group.arcs.map((arc: any) => arc.key)).sort()).toEqual(order.arcs.map((arc: any) => arc.key).sort())
+    expect(groups[0].title).toBe('Creation')
+    expect(groups[0].arcs.every((arc: any) => arc.effect === 'creates')).toBe(true)
+    expect(groups.find((group: any) => group.title === 'Pending').arcs.map((arc: any) => arc.to).sort()).toEqual(['Cancelled', 'Confirmed'])
+    expect(groups.find((group: any) => group.title === 'Confirmed').arcs.map((arc: any) => arc.to).sort()).toEqual(['Cancelled', 'Refunded'])
+    expect(groups.find((group: any) => group.title === 'Cancelled').arcs).toEqual([])
+    expect(groups.find((group: any) => group.title === 'No specified state').arcs.map((arc: any) => arc.effect)).toEqual(['changes'])
+  })
+
+  it('keeps self-changes and removals under their source, including unused States and a State named Creation', async () => {
+    const { groupEntityLifecycle } = await import(lifecycleModulePath)
+    const workspace = workspaceOf(compileReport(loadModel(FIXTURE), '2026-08-08'))
+    const order = entityOf(workspace, 'order')
+    const entity = { ...order, states: ['Creation', 'Unused'].map(name => ({ ...order.states[0], name })) }
+    const arcs = [
+      { ...order.arcs[0], key: 'create', effect: 'creates', from: '', to: 'Creation' },
+      { ...order.arcs[0], key: 'self', effect: 'changes', from: 'Creation', to: 'Creation' },
+      { ...order.arcs[0], key: 'remove', effect: 'removes', from: 'Creation', to: '' },
+      { ...order.arcs[0], key: 'unspecified', effect: 'changes', from: '', to: '' },
+      { ...order.arcs[0], key: 'unresolved', effect: 'changes', from: 'Missing', to: 'Creation' }
+    ]
+    const groups = groupEntityLifecycle(entity, arcs)
+    expect(groups.map((group: any) => [group.title, group.arcs.map((arc: any) => arc.key)])).toEqual([
+      ['Creation', ['create']], ['Creation', ['self', 'remove']], ['Unused', []],
+      ['No specified state', ['unspecified']], ['Unknown starting state', ['unresolved']]
+    ])
+    expect(new Set(groups.map((group: any) => group.key)).size).toBe(groups.length)
+  })
 
   const workspaceOf = (report: any) => projectReportWorkspace(report)
   const entityOf = (workspace: any, id: string) => workspace.entities.find((item: any) => item.id === id)
@@ -1308,11 +1336,11 @@ describe('composed lifecycle', () => {
     expect(drawn.has(lifecycleArcEdgeId(order.id, stateless))).toBe(false)
     expect(order.arcs).toHaveLength(6)
     expect(order.arcs.filter((arc: any) => drawn.has(lifecycleArcEdgeId(order.id, arc)))).toHaveLength(5)
-    /* The heading says both numbers when they differ, so "6 arcs" over five edges never happens. */
+    /* Graph keeps changes without specified states accessible alongside its edges. */
     const component = source('app/components/BlrEntityLifecycle.vue')
     expect(component).toContain('drawnEdgeIds.value.has(lifecycleArcEdgeId(props.resource.id, arc))')
-    expect(component).toContain('<template v-if="drawnCount !== arcs.length">, {{ drawnCount }} drawn</template>')
-    expect(component).toContain('· not drawn')
+    expect(component).toContain('Changes without specified states')
+    expect(component).toContain('data-lifecycle-unplaced')
   })
 
   /*
@@ -1358,8 +1386,8 @@ describe('composed lifecycle', () => {
       .toMatchObject({ label: 'Order cancellation · restricted' })
     expect(edges.find((edge: any) => edge.target === 'blr-state:order:Pending')).toMatchObject({ label: 'Checkout', forbidden: false })
 
-    /* The list under the machine links each Rule and says how the Rules compose. */
-    const component = source('app/components/BlrEntityLifecycle.vue')
+    /* Both drawings use the same detail, retaining each Rule and how they compose. */
+    const component = source('app/components/BlrLifecycleChangeDetails.vue')
     expect(component).toContain('v-for="rule in arc.rules"')
     expect(component).toContain("@open=\"open('rule', rule.id)\"")
     expect(component).toContain('<span v-if="index" class="blr-meta"> or </span>')

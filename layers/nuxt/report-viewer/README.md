@@ -13,14 +13,33 @@ A collection row, relation, search result, or topology resource opens one comple
 resource slideover. The underlying collection or comparison keeps its heading,
 rail selection, Rows/Graph drawing, filters, expansion, scroll and graph viewport.
 The modal reading dims and blocks the underlying view; narrow screens use the
-full width. Back restores the previous resource and its tab and reading position.
+full width. Expand fills the window with the same resource reading; Restore
+returns to the panel width while retaining the drawing, selection and viewport.
+Back restores the previous resource and its tab and reading position.
 Close, Escape or a click outside returns to the preserved working view. Resource links support the
 browser's new-tab and copy-link actions. The compact header keeps the resource's
 identity on the left and named-view and documentation actions beside Close.
+Related Domains appear as linked names with their type icons in every resource
+header, keeping that context visible across tabs and separate from ownership.
+Entities and Capabilities show their assigned Domain; other resources show the
+Domains reached through their Capabilities or Rule targets. A Scenario uses its
+own Capabilities, so it does not borrow Domains from its parent's other cases.
 
 Overview contains identity facts, authored detail, Contexts and supporting material,
 with contextual links beside the facts they explain. Capability
-and Journey readings add Scenarios; an Entity with States adds Lifecycle.
+and Journey readings add Scenarios. An Entity's Overview contains Information
+kept; its Lifecycle reading switches between Rows and Graph. Rows groups changes
+under their starting State, using the collection list's parent/child styling.
+Each State carries its definition, including States with no outgoing changes.
+Creation and changes without a starting State have separate groups. Groups and
+changes expand and collapse individually or together, with expansion remembered.
+Rows expand each change's Capabilities, Rules, co-effects and supporting
+Scenarios. Graph nodes and edges open those details in a local inspector;
+selecting a State explains it and lists the Scenarios that leave the Entity
+there. Changes without specified states remain accessible beside the graph.
+The inspector sits below the drawing in a narrow panel and beside it when
+there is room. Drawing, selection and viewport survive tab changes, linked
+resource lookups and refresh.
 Connections follows whenever relationships exist and gives the complete
 relationship list, including links also explained in Overview. References comes
 last when attachments exist, with its count, roles and image previews. Attachments
@@ -88,7 +107,50 @@ and actions outside the report.
 
 The layer renders the report and nothing around it. Site chrome — the header,
 the footer, and any brand or legal links — belongs to the host, which already
-has the navigation, routing, and legal context the report does not.
+has the navigation, routing, and legal context the report does not. The report's
+sidebar holds search, Vocabulary and sections, with Overview as the way home.
+A Product picker below the host brand shows the current Product's logo and name.
+It uses Nuxt UI's DropdownMenu with keyboard navigation and a selected-item check.
+The trigger uses the selected Hairline treatment: a faint outline and transparent
+background. Menu rows center the logo, Product name and checkmark vertically.
+The local viewer lists its single Product. Hosts can supply `products` as
+`{ label, to, logoSrc?, active? }[]`, marking the current destination `active`;
+the current report remains the selected entry even while the host's list loads.
+Other entries are native links, with the menu's keyboard type-ahead navigation.
+Hosts can supply `productCatalog: { label, to }` to add a link to the full
+catalog below the Product choices, separated from them by a divider.
+Catalog hosts should key the viewer by Blueprint identity so switching Products
+starts a fresh reading. In the collapsed rail, the picker shows a 17px Product
+logo in a 32px trigger and a name tooltip; the mobile drawer keeps its full label.
+An icon-only Search button sits beside Overview, stacking directly below it
+when collapsed. Navigation rows are 36px high with 4px gaps, starting 20px below
+the Product picker. Whitespace and the Resources label separate the navigation
+groups. Vocabulary leads the bottom reference group above Documentation and
+GitHub, with one divider above the whole group.
+Hosts with Vocabulary in their own header can set `sidebarVocabulary` to
+`false` to omit the sidebar entry and its empty reference group. That header
+must keep the Vocabulary panel's tooltip controls available for report readers.
+The working view's header serves as its navbar: the heading shares it with
+Coverage, Review when the host provides comparisons, report schema version and
+generation date, above a bottom divider. A host's `status` slot replaces the
+generation date with its live connection state. Status wraps onto a second line
+on narrow screens.
+Hosts can supply `sidebar-header` and `sidebar-footer` slots for branding and
+utilities; both also appear in the mobile navigation drawer. The bundled local
+viewer places its version beside the brand in the sidebar header, followed by
+an icon-only Theme lab button and the color-mode switch at the right edge,
+aligned with Search. Header controls stack below the mark when collapsed.
+Documentation and GitHub stay in the sidebar footer. There is no
+separate host navbar; the theme lab bar appears above the report only when
+opened. Desktop navigation uses Nuxt UI's
+`DashboardSidebar` and `DashboardSidebarCollapse`, expanding to 288px or
+collapsing to a 64px icon rail. The choice is saved in a cookie. Navigation and
+utility icons keep accessible labels and tooltips; the mobile drawer always
+shows the full menu. Collapsing keeps the current reading and its state.
+Collapsed navigation and utility icons use 17px glyphs. Navigation, Search and
+reference rows have 36px-high targets; brand controls and the picker retain 32px.
+The `sidebar-header`, `sidebar-footer` and `navigation` slots receive
+`{ collapsed }`, so host branding and utilities can follow the rail's width.
 
 Extend the layer from a Nuxt application:
 
@@ -186,10 +248,26 @@ the heading count, the filter controls and the chips are the same in both.
 | `rule` | one row per Business Rule, grouped by Domain | Rule reach: Rule, then its attachment targets and Contexts |
 
 The cross-collection matrices are rail rows below Overview, each its own
-section with no tabs: `delivery` (Compare delivery, a Capability by Interface
-matrix), `what-changes-what` and `rule-attachments`. Their navigation icons,
-selection accents and heading icons use neutral colors. Each keeps its own type
-narrowing (`th`) and focus (`tf`). A collection Graph
+section with no tabs: `delivery` (Compare delivery, Capability rows by Interface
+columns), `what-changes-what` (Entity rows by Capability columns), and
+`rule-attachments` (Business Rule rows by attachment target columns). Their navigation icons,
+selection accents and heading icons use neutral colors. Searchable multiselects
+name each matrix's axes: Entities and Capabilities, Capabilities and Interfaces,
+or Rules followed by a separate filter for each kind of attachment target
+present in the table. Selected resources (`tf`) narrow only their own axis;
+empty intersections remain visible. Target selections from different types
+combine into one set of columns. Clearing all selections on an axis restores
+all its resources. Rule attachments also offers Resource types (`th`): hiding a target type removes
+its columns, resource filter and any selections of that type. Rules remain
+independently selectable; hidden-type chips restore types individually.
+Matrices scroll vertically with the reading; edge controls, horizontal trackpad
+gestures, and touch swipes move one column
+at a time beside a fixed subject column. The first visible column uses `tm`;
+moving between columns preserves vertical position and cell details. Each page
+header offers a Legend popover with every possible badge color and meaning for
+that view, regardless of report data, filters or the current column window.
+The header and reading render together on the server. Body cells mount only for the
+visible columns and one neighbour on each side; the browser animates their offset. A collection Graph
 draws the facet-filtered set and honours `tf` as a neighbourhood; branch
 expansion uses `tx`/`tc`. Entity Lifecycle and resource Connections each keep
 their own tab and reading position, including after following a link and returning.
@@ -280,8 +358,8 @@ See [third-party notices](THIRD_PARTY.md).
 
 The Product Report needs a bounded viewport. By default it fills the browser
 height. A host with persistent chrome can set `--businesslens-report-chrome`
-to the chrome height. The bundled local viewer sets it to `4rem` for its
-header.
+to the chrome height. The bundled local viewer fills a bounded flex viewport,
+with only the optional theme lab bar above it.
 
 The report viewer extends the stable BusinessLens theme because the Product
 Report is the canonical BusinessLens report experience. The theme remains a
@@ -302,6 +380,10 @@ repository root. The publish workflow also runs
 `scripts/check-packed-diagrams.mjs` against built npm and pnpm consumers to check
 SSR, hydration, worker loading, multiple instances, and navigation from the
 actual packed layer.
+
+Run `node scripts/check-comparison-tables.mjs <CLI viewer URL>` against this
+repository's report or fixture-shop to check badge-to-panel keyboard focus,
+bounded cell rendering on a large matrix, column navigation and mobile resizing.
 
 ### Repository context
 
@@ -347,6 +429,8 @@ current freshness unknown. Portable Blueprints require `coverage.review: null`.
 ## Navigation regression checks
 
 Against a running built fixture-shop report, run
+`node scripts/check-entity-lifecycle.mjs <url>` for state and change inspection,
+Rows/Graph parity, panel expansion, keyboard access and saved reading state.
 `node scripts/check-resource-slideover.mjs <url>` for desktop and mobile
 inspection, independent Graph/Lifecycle state, nested Back/Forward, Scenario
 position, direct links and keyboard dismissal.
@@ -355,6 +439,9 @@ counts, previews, browser history and scrolling tabs on desktop and narrow scree
 `node scripts/check-report-navigation.mjs <url>` covers the collections, trees,
 filters and named-view exits. Set `BLR_NAV_SCREENSHOTS` to a directory outside
 the Product Model to save layout captures.
+`node scripts/check-report-sidebar.mjs <url>` checks desktop collapse, keyboard
+access, tooltips, saved state, utilities and the independent mobile drawer.
+
 
 ## Read-only Review
 

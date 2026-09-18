@@ -6,6 +6,8 @@ export interface DiagramNode {
   id: string
   title: string
   resourceKey?: string
+  /** Select local diagram detail without navigating to another resource. */
+  inspectionKey?: string
   note?: string
   description?: string
   colorSlot?: number
@@ -33,6 +35,8 @@ export interface DiagramEdge {
   label: string
   forbidden?: boolean
   arrow?: boolean
+  inspectionKey?: string
+  inspectionLabel?: string
 }
 
 export interface Diagram {

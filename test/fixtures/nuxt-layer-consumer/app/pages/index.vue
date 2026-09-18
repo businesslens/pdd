@@ -81,6 +81,22 @@ const report: ProductReportV16 = {
     rationale: 'The fixture exercises package resolution, not a Product claim.'
   }
 }
+// Opt in to comparison data without changing the graph/lifecycle smoke fixture.
+if (route.query.matrices === '1') {
+  const content = { intent: '', supportingSections: [], references: [] }
+  report.model.taxonomies.scenarioKinds.push({ id: 'success', name: 'Success', description: 'The intended outcome.' })
+  report.model.capabilities.push({ id: 'register-reader', title: 'Register a Reader', description: 'Create a Reader.', availability: [{ placeId: 'web' }], ...content })
+  report.model.capabilityScenarios.push({
+    id: 'register-reader', capabilityId: 'register-reader', title: 'Register a Reader', kindId: 'success', actorIds: ['reader'],
+    routes: [{ id: 'web', name: 'Web' }], trigger: 'A Reader registers.', outcome: 'The Reader is active.', decisionPoints: [], edgeCases: [],
+    steps: [{ text: 'Create the Reader.', kind: 'product', actorId: 'reader', capabilityId: null, unattended: false,
+      entities: [{ entityId: 'reader', as: null, effect: 'creates', from: null, to: 'Active' }], contexts: [{ routeId: 'web', placeId: 'web' }] }],
+    ...content
+  })
+  report.model.businessRules.push({ id: 'readers-start-active', title: 'Readers start active', statement: 'A new Reader is active.', rationale: '', permits: null,
+    appliesTo: [{ type: 'entity', entityId: 'reader', effect: 'creates', from: null, to: 'Active', facts: [], contexts: [] }], ...content })
+  Object.assign(report.counts, { capabilities: 1, capabilityScenarios: 1, businessRules: 1 })
+}
 </script>
 
 <template>

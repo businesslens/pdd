@@ -42,7 +42,7 @@ try {
       await title(page, 'Order')
     }
     await panel.getByRole('tab', { name: /^Lifecycle/ }).click()
-    expect(urlValue(page, 'rt')).toBe('lifecycle')
+    await expect.poll(() => urlValue(page, 'rt')).toBe('lifecycle')
     await expect(panel.locator('[data-flow-ready=true]')).toBeVisible()
     await page.reload()
     await title(page, 'Order')
@@ -156,6 +156,8 @@ try {
     await expect.poll(() => urlValue(page, 's')).toBe('entity')
     await expect(panel.getByRole('button', { name: /^Back to / })).toHaveCount(0)
     expect(urlValue(page, 'rt')).toBe('lifecycle')
+    await panel.getByRole('button', { name: 'Draw as rows', exact: true }).click()
+    await panel.getByRole('button', { name: /Confirmed → Cancelled/ }).click()
     const link = panel.locator('a[data-resource-key^="rule:"]').first()
     const href = await link.getAttribute('href')
     expect(href).toContain('e=rule')

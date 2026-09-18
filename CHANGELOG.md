@@ -14,6 +14,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Open the local report before a model exists and follow it from its first valid state.
 - Clearer About information, report badges and live connection status.
 
+## [0.19.0] - 2026-09-17
+
+- Clearer comparison tables with independent filters and smoother navigation.
+- Colored badges with details on click and complete legends.
+- Larger Context paths and improved keyboard navigation.
+
+## [0.18.0] - 2026-09-17
+
+- Navigate reports with a collapsible sidebar and clearer page headers.
+- See the current Product and switch between catalog Blueprints from the sidebar.
+
+## [0.17.0] - 2026-09-16
+
+- Select lifecycle states by clicking anywhere on their cards, with consistent highlighting.
+- Explore entity lifecycles as States with their outgoing changes, or as an interactive graph.
+- Expand resource panels to the full window without losing your place.
+- Use consistent model terms in resource headings and summaries.
+- Show consistent resource icon colors in lifecycle details and relationship lists.
+- Keep related Domains visible in resource headers across tabs.
+
 ## [0.16.0] - 2026-09-16
 
 - Responsive filters and consistent report controls across screen sizes.
@@ -783,7 +803,9 @@ Initial public launch of the repository.
   `docs/format.md`.
 - Claude plugin manifest and marketplace entry.
 
-[Unreleased]: https://github.com/businesslens/pdd/compare/v0.16.0...HEAD
+[Unreleased]: https://github.com/businesslens/pdd/compare/v0.18.0...HEAD
+[0.18.0]: https://github.com/businesslens/pdd/compare/v0.17.0...v0.18.0
+[0.17.0]: https://github.com/businesslens/pdd/compare/v0.16.0...v0.17.0
 [0.16.0]: https://github.com/businesslens/pdd/compare/v0.15.0...v0.16.0
 [0.15.0]: https://github.com/businesslens/pdd/compare/v0.14.0...v0.15.0
 [0.14.0]: https://github.com/businesslens/pdd/compare/v0.13.0...v0.14.0

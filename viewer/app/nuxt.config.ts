@@ -68,7 +68,7 @@ export default defineNuxtConfig({
     // the landing application. Keep the composition here so report-viewer
     // stays neutral for consumers that want only the approved theme.
     // `report-viewer-lab` extends `report-viewer` and remains the private hook
-    // for future report auditions. It currently adds no experiment behavior.
+    // for future Product Report auditions.
     resolve('../../layers/nuxt/report-viewer-lab'),
     resolve('../../layers/nuxt/theme-lab')
   ],
@@ -91,6 +91,7 @@ export default defineNuxtConfig({
   icon: {
     clientBundle: {
       icons: [
+        'lucide:arrow-up-right',
         'lucide:loader-circle',
         'lucide:pin',
         'lucide:refresh-cw',

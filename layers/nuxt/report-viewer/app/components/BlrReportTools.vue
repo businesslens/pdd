@@ -1,5 +1,5 @@
 <script setup lang="ts">
-defineProps<{ inHeader?: boolean }>()
+defineProps<{ inHeader?: boolean, collapsed?: boolean, tool?: 'search' | 'vocabulary' }>()
 const emit = defineEmits<{ search: [], vocabulary: [originId: string] }>()
 const vocabularyId = useId()
 </script>
@@ -31,54 +31,34 @@ const vocabularyId = useId()
     </UTooltip>
   </template>
   <template v-else>
-    <UButton
-      icon="i-lucide-search"
-      color="neutral"
-      variant="outline"
-      size="sm"
-      label="Search"
-      class="hidden rounded-full sm:inline-flex"
-      @click="emit('search')"
-    >
-      <template #trailing>
-        <span class="hidden items-center gap-0.5 sm:flex">
-          <UKbd value="meta" />
-          <UKbd value="K" />
-        </span>
-      </template>
-    </UButton>
-    <UButton
-      icon="i-lucide-search"
-      color="neutral"
-      variant="ghost"
-      size="sm"
-      class="sm:hidden"
-      aria-label="Search Product Model"
-      @click="emit('search')"
-    />
-    <!-- The same offer as Docs, which is the other way out of a word you
-         do not know: a bordered neutral button, in the pill of its row. -->
-    <UTooltip text="Look up Product Model terms">
+    <UTooltip v-if="tool !== 'vocabulary'" text="Search Product Model" :kbds="['meta', 'k']" :content="{ side: 'right' }">
+      <UButton
+        icon="i-lucide-search"
+        color="neutral"
+        variant="ghost"
+        size="sm"
+        square
+        aria-label="Search Product Model"
+        class="min-h-9 min-w-9 justify-center text-muted hover:text-highlighted"
+        :class="{ 'w-full': collapsed }"
+        :ui="{ leadingIcon: collapsed ? 'size-[17px]' : 'size-4' }"
+        @click="emit('search')"
+      />
+    </UTooltip>
+    <UTooltip v-if="tool !== 'search'" text="Vocabulary" :disabled="!collapsed" :content="{ side: 'right' }">
       <UButton
         :id="vocabularyId"
         icon="i-lucide-book-a"
         color="neutral"
-        variant="outline"
-        size="sm"
-        label="Vocabulary"
-        class="hidden rounded-full lg:inline-flex"
-        @click="emit('vocabulary', vocabularyId)"
-      />
-    </UTooltip>
-    <UTooltip text="Look up Product Model terms" class="lg:hidden">
-      <UButton
-        icon="i-lucide-book-a"
-        color="neutral"
         variant="ghost"
         size="sm"
-        :id="`${vocabularyId}-compact`"
-        aria-label="Open the vocabulary"
-        @click="emit('vocabulary', `${vocabularyId}-compact`)"
+        :label="collapsed ? undefined : 'Vocabulary'"
+        :square="collapsed"
+        aria-label="Vocabulary"
+        class="min-h-9 w-full gap-2.5 text-sm font-normal text-muted hover:text-highlighted"
+        :class="collapsed ? 'justify-center' : 'justify-start'"
+        :ui="{ leadingIcon: collapsed ? 'size-[17px]' : 'size-4' }"
+        @click="emit('vocabulary', vocabularyId)"
       />
     </UTooltip>
   </template>

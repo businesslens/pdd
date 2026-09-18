@@ -1,11 +1,22 @@
 /* Named readings share typography and spacing, not one forced graph shape. */
 .businesslens-report .blr-product-topology { display: flex; flex-direction: column; height: 100%; min-height: 0; min-width: 0; }
+.blr-topology-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; flex-shrink: 0; }
+.blr-topology-toolbar > [data-blr-filter-bar] { flex: 1 1 360px; min-width: 0; }
+.blr-matrix-legend { margin-inline-start: auto; }
+.blr-matrix-legend-popover { display: flex; flex-direction: column; width: 360px; max-width: calc(100vw - 32px); max-height: var(--reka-popover-content-available-height, 80vh); overflow: hidden; }
+.blr-matrix-legend-heading { display: flex; flex-shrink: 0; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 12px; border-bottom: 1px solid var(--ui-border); }
+.blr-matrix-legend-heading h3 { font-size: 14px; font-weight: 600; color: var(--ui-text-highlighted); }
+.blr-matrix-legend-entries { display: grid; gap: 14px; min-height: 0; overflow-y: auto; padding: 14px; }
+.blr-matrix-legend-entries li { display: grid; grid-template-columns: 90px minmax(0, 1fr); align-items: start; gap: 12px; }
+.blr-matrix-legend-entries .blr-matrix-legend-badge { justify-self: start; white-space: nowrap; line-height: calc(20 / 14); }
+.blr-matrix-legend-entries p { font-size: 13px; line-height: 1.5; color: var(--ui-text-muted); overflow-wrap: anywhere; }
+.blr-matrix-legend-badge { display: inline-flex; align-items: center; }
 .blr-topology-header { padding: 16px 20px 12px; border-bottom: 1px solid var(--ui-border); flex-shrink: 0; }
 /* A filter row costs nothing when the surface has nothing to narrow. */
 [data-blr-filter-row]:has(> [data-blr-filter-slot]:empty) { display: none; }
 .blr-topology-title-row { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
 .blr-topology-title-row > button { margin-inline-start: auto; }
-.blr-topology-header select, .blr-topology-window select, .blr-topology-filters input[type='search'], .blr-topology-filters select { max-width: 100%; min-width: 0; padding: 8px 30px 8px 10px; border: 1px solid var(--ui-border-accented); border-radius: 8px; background: var(--ui-bg); color: var(--ui-text-highlighted); font-size: 14px; }
+.blr-topology-header select, .blr-topology-filters input[type='search'], .blr-topology-filters select { max-width: 100%; min-width: 0; padding: 8px 30px 8px 10px; border: 1px solid var(--ui-border-accented); border-radius: 8px; background: var(--ui-bg); color: var(--ui-text-highlighted); font-size: 14px; }
 .blr-topology-view-picker select { font-weight: 600; }
 .blr-topology-diagram-type { font-family: var(--font-mono); font-size: 12px; color: var(--ui-text-muted); }
 .blr-topology-question { margin-top: 10px; font-size: 14px; color: var(--ui-text); line-height: 1.5; }
@@ -36,8 +47,6 @@
 .blr-topology-contexts li { margin-top: 5px; overflow-wrap: anywhere; }
 .blr-topology-access { margin-bottom: 24px; }
 .blr-topology-section-title { font-size: 12px; font-family: var(--font-mono); color: var(--ui-text-muted); margin-bottom: 12px; }
-.blr-topology-window { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding-top: 12px; font-size: 12px; color: var(--ui-text-muted); }
-.blr-topology-window > select { flex: 0 1 360px; }
 .blr-topology-filters { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; padding-top: 12px; }
 .blr-topology-filters fieldset { display: flex; flex-wrap: wrap; gap: 8px 14px; width: 100%; }
 .blr-topology-filters legend { margin-bottom: 6px; color: var(--ui-text-muted); }
@@ -46,31 +55,141 @@
 .blr-topology-neighbourhood { margin-top: 24px; }
 .blr-topology-neighbourhood li { display: flex; align-items: start; flex-wrap: wrap; gap: 8px; padding: 10px 0; border-bottom: 1px solid var(--ui-border); }
 .blr-topology-neighbourhood li > span { font-size: 12px; color: var(--ui-text-muted); padding-top: 2px; }
-.blr-matrix-scroll { overflow: auto; max-height: 68vh; border: 1px solid var(--ui-border); border-radius: 10px; }
-.blr-topology-matrix table { border-collapse: separate; border-spacing: 0; width: 100%; font-size: 14px; }
-.blr-topology-matrix caption { text-align: start; padding: 12px; font-size: 12px; color: var(--ui-text-muted); }
-.blr-topology-matrix th, .blr-topology-matrix td { min-width: 180px; max-width: 320px; padding: 14px; border-top: 1px solid var(--ui-border); border-inline-end: 1px solid var(--ui-border); vertical-align: top; text-align: start; background: var(--ui-bg); overflow-wrap: anywhere; }
+@property --blr-matrix-offset { syntax: '<length>'; inherits: true; initial-value: 0px; }
+.blr-topology-matrix { position: relative; transition: none; }
+.blr-topology-matrix[data-column-motion='true'] { transition: --blr-matrix-offset 180ms ease-out; }
+@media (prefers-reduced-motion: reduce) { .blr-topology-matrix[data-column-motion='true'] { transition: none; } }
+.blr-matrix-navigation { position: sticky; top: 0; z-index: 4; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 8px; min-height: 36px; padding-bottom: 8px; }
+.blr-topology-matrix[data-edge-handles='true'] .blr-matrix-navigation { display: flex; justify-content: center; }
+.blr-matrix-range { font-size: 13px; font-weight: 600; color: var(--ui-text); text-align: center; white-space: nowrap; font-variant-numeric: tabular-nums; }
+/* Fade disabled icons and outlines while keeping the fill opaque over the divider. */
+.blr-topology-matrix :is(.blr-matrix-navigation, .blr-matrix-edge-handles) > button { background: var(--ui-bg); color: var(--ui-text-dimmed); }
+.blr-topology-matrix :is(.blr-matrix-navigation, .blr-matrix-edge-handles) > button:enabled:is(:hover, :active) { background: var(--ui-bg-elevated); }
+.blr-topology-matrix :is(.blr-matrix-navigation, .blr-matrix-edge-handles) > button:disabled { color: color-mix(in srgb, var(--ui-text-dimmed) 40%, transparent); --tw-ring-color: color-mix(in srgb, var(--ui-border-accented) 40%, transparent); opacity: 1; }
+.blr-matrix-edge-handles { position: absolute; top: 0; inset-inline: 0; height: 0; z-index: 5; pointer-events: none; }
+.blr-matrix-edge-handles > button { position: absolute; top: var(--blr-matrix-handle-top, 200px); transform: translateY(-50%); height: 64px; width: 28px; padding: 0; justify-content: center; border-radius: 999px; pointer-events: auto; }
+.blr-matrix-left-handle { inset-inline-start: calc(196px + 1px - 14px); }
+.blr-matrix-right-handle { inset-inline-end: -14px; }
+/* Clip sideways without another scrolling container. Only the visible body
+   columns and their neighbours are mounted; the fixed subject stays in place. */
+.blr-matrix-viewport { overflow: clip; border: 1px solid var(--ui-border); border-radius: 10px; touch-action: pan-y pinch-zoom; }
+.blr-matrix-viewport:focus-visible { outline: 2px solid var(--ui-primary); outline-offset: 3px; }
+.blr-topology-matrix table { table-layout: fixed; border-collapse: separate; border-spacing: 0; width: var(--blr-matrix-table-width); transform: translateX(calc(-1 * var(--blr-matrix-offset))); font-size: 14px; }
+.blr-topology-matrix th, .blr-topology-matrix td { min-width: 0; padding: 14px; border-top: 1px solid var(--ui-border); border-inline-end: 1px solid var(--ui-border); vertical-align: top; text-align: start; overflow-wrap: anywhere; }
+/* The inherited animated offset clips columns before they reach the translucent corner. */
+.blr-matrix-column { clip-path: inset(0 0 0 max(0px, calc(var(--blr-matrix-offset) - var(--blr-matrix-column-index) * var(--blr-matrix-column-width)))); }
+.blr-topology-matrix td.blr-matrix-spacer { padding: 0; border: 0; visibility: hidden; }
+.blr-topology-matrix tbody th, .blr-topology-matrix td { background: var(--ui-bg); }
 .blr-topology-matrix th { font-weight: 600; }
-.blr-topology-matrix thead th { position: sticky; top: 0; z-index: 2; background: var(--ui-bg-elevated); }
-.blr-topology-matrix tbody th { position: sticky; left: 0; z-index: 1; }
+/* Keep the subject column the same width even when few comparison columns fill the table. */
+.blr-topology-matrix th:first-child { width: 196px; min-width: 196px; max-width: 196px; transform: translateX(var(--blr-matrix-offset)); }
+/* Headers use the same bg-elevated/20 class as collection parents. */
+.blr-topology-matrix thead th { position: sticky; top: var(--blr-matrix-navigation-height, 0px); z-index: 2; border-top: 0; }
+.blr-topology-matrix thead th:first-child { left: 0; z-index: 3; }
+.blr-topology-matrix th.blr-matrix-corner { padding: 0; }
+.blr-matrix-corner-space { display: block; height: 98px; }
+.blr-matrix-corner-line { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.blr-matrix-corner-line line { stroke: var(--ui-border-accented); stroke-width: 1; }
+.blr-matrix-axis-column, .blr-matrix-axis-row { position: absolute; font-size: 14px; line-height: 22px; font-weight: 700; color: var(--ui-text-highlighted); white-space: nowrap; }
+.blr-matrix-axis-column { top: 16%; right: 10%; }
+.blr-matrix-axis-row { bottom: 16%; left: 10%; }
+.blr-topology-matrix tbody th { position: relative; z-index: 1; }
 .blr-matrix-kind { display: block; color: var(--ui-text-muted); font-weight: 400; font-size: 12px; margin-bottom: 6px; }
 .blr-matrix-effects { display: flex; flex-wrap: wrap; gap: 5px; }
-.blr-matrix-effects > span { border: 1px solid var(--ui-border-accented); padding: 2px 6px; border-radius: 5px; font-size: 12px; }
-.blr-matrix-effects > span[data-effect='creates'] { border-color: var(--ui-success); }
-.blr-matrix-effects > span[data-effect='removes'] { border-color: var(--ui-error); }
-.blr-topology-matrix details { font-size: 12px; color: var(--ui-text-muted); margin-top: 8px; }
-.blr-topology-matrix details summary { cursor: pointer; }
-.blr-matrix-detail { display: grid; gap: 6px; margin-top: 8px; }
-.blr-topology-matrix details .blr-topology-link { font-size: 12px; margin-top: 6px; }
+.blr-matrix-effects > .blr-matrix-badge, .blr-matrix-legend-badge { border-width: 1px; border-style: solid; padding: 2px 6px; border-radius: 5px; font-size: 12px; }
+.blr-matrix-badge { display: inline-flex; align-items: center; gap: 4px; color: var(--ui-text); cursor: pointer; }
+.blr-matrix-badge:focus-visible { outline: 2px solid var(--ui-primary); outline-offset: 3px; }
+.blr-matrix-badge > .iconify { width: 12px; height: 12px; }
+.blr-matrix-tone {
+  --blr-badge-ink: var(--ui-color-neutral-700);
+  --blr-badge-tint: var(--blr-badge-ink);
+  --blr-badge-border-strength: 30%;
+  --blr-badge-fill: 10%;
+  --blr-badge-fill-active: 16%;
+  color: var(--blr-badge-ink);
+  background: color-mix(in srgb, var(--blr-badge-tint) var(--blr-badge-fill), var(--ui-bg));
+  border-color: color-mix(in srgb, var(--blr-badge-ink) var(--blr-badge-border-strength), var(--ui-bg));
+}
+.blr-matrix-tone[data-tone='changes'] {
+  --blr-badge-ink: var(--color-yellow-800);
+  --blr-badge-tint: var(--color-yellow-400);
+  --blr-badge-border-strength: 40%;
+}
+.blr-matrix-tone[data-tone='info'] {
+  --blr-badge-ink: var(--color-blue-800);
+  --blr-badge-tint: var(--color-blue-500);
+}
+.blr-matrix-tone[data-tone='violet'] {
+  --blr-badge-ink: var(--color-violet-800);
+  --blr-badge-tint: var(--color-violet-500);
+}
+.blr-matrix-tone[data-tone='creates'] {
+  --blr-badge-ink: var(--ui-color-success-800);
+  --blr-badge-tint: var(--blr-badge-ink);
+  --blr-badge-border-strength: 30%;
+  --blr-badge-fill: 8%;
+  --blr-badge-fill-active: 14%;
+}
+.blr-matrix-tone[data-tone='removes'] {
+  --blr-badge-ink: #805234;
+  --blr-badge-background: #efe0d1;
+  --blr-badge-outline: #c4a58c;
+  background: var(--blr-badge-background);
+  border-color: var(--blr-badge-outline);
+}
+.dark .blr-matrix-tone {
+  --blr-badge-ink: var(--ui-color-neutral-300);
+  --blr-badge-tint: var(--blr-badge-ink);
+}
+.dark .blr-matrix-tone[data-tone='changes'] { --blr-badge-ink: var(--color-yellow-300); }
+.dark .blr-matrix-tone[data-tone='info'] { --blr-badge-ink: var(--color-blue-300); }
+.dark .blr-matrix-tone[data-tone='violet'] { --blr-badge-ink: var(--color-violet-300); }
+.dark .blr-matrix-tone[data-tone='creates'] { --blr-badge-ink: var(--ui-color-success-300); }
+.dark .blr-matrix-tone[data-tone='removes'] {
+  --blr-badge-ink: #e6b0a6;
+  --blr-badge-background: #342424;
+  --blr-badge-outline: #76514b;
+}
+.blr-matrix-effects > .blr-matrix-badge:is(:hover, [data-state='open']) {
+  background: color-mix(in srgb, var(--blr-badge-tint) var(--blr-badge-fill-active), var(--ui-bg));
+  border-color: color-mix(in srgb, var(--blr-badge-ink) 60%, var(--ui-bg));
+}
+.blr-matrix-effects > .blr-matrix-badge[data-tone='removes']:is(:hover, [data-state='open']) {
+  background: color-mix(in srgb, var(--blr-badge-ink) 6%, var(--blr-badge-background));
+  border-color: color-mix(in srgb, var(--blr-badge-ink) 25%, var(--blr-badge-outline));
+}
+.blr-matrix-popover { --blr-context-font: 12px; display: flex; flex-direction: column; width: 340px; max-width: calc(100vw - 32px); max-height: var(--reka-popover-content-available-height, 80vh); overflow: hidden; }
+.blr-matrix-popover-heading { display: flex; flex-shrink: 0; align-items: start; justify-content: space-between; gap: 12px; padding: 16px; border-bottom: 1px solid var(--ui-border); }
+.blr-matrix-popover-resource { display: flex; align-items: start; gap: 8px; min-width: 0; font-size: 14px; font-weight: 600; color: var(--ui-text-highlighted); }
+.blr-matrix-popover-resource > .blr-kind { flex-shrink: 0; margin-top: 2px; }
+.blr-matrix-popover-resource > span:last-child { min-width: 0; overflow-wrap: anywhere; }
+.blr-matrix-popover-subject { margin-bottom: 10px; }
+.blr-matrix-popover :is(p, strong) { overflow-wrap: anywhere; }
+.blr-matrix-popover-body { max-height: 360px; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+.blr-matrix-popover-section { padding: 16px; font-size: 13px; }
+.blr-matrix-popover-section + .blr-matrix-popover-section { border-top: 1px solid var(--ui-border); }
+.blr-matrix-popover-state { color: var(--ui-text); margin-bottom: 12px; }
+.blr-matrix-popover-state strong { font-weight: 600; }
+.blr-matrix-popover-caption { font-size: 12px; color: var(--ui-text-muted); margin-bottom: 8px; }
+.blr-matrix-popover-links { display: grid; gap: 8px; }
+.blr-matrix-popover-section .blr-topology-link { font-size: 13px; }
+.blr-matrix-popover-resource > .blr-topology-link { font-size: 14px; font-weight: 600; }
+.blr-matrix-popover-heading .blr-topology-link { align-items: start; }
+.blr-matrix-attachment-facts { margin-bottom: 12px; }
 @media (max-width: 640px) {
   .blr-topology-header { padding: 12px; }
   .blr-topology-reading { padding: 12px; }
+  /* Leave room for half of the 28px handle without horizontal page overflow. */
+  .blr-topology-reading:has(.blr-topology-matrix) { padding-inline-end: 14px; }
   .blr-topology-title-row { gap: 8px; }
-  .blr-topology-matrix th, .blr-topology-matrix td { min-width: 120px; padding: 10px; }
-  .blr-topology-matrix tbody th { width: 42%; }
+  .blr-topology-matrix th, .blr-topology-matrix td { padding: 10px; }
   .blr-topology-toggle { min-height: 36px; min-width: 36px; }
   .blr-topology-link { min-height: 24px; }
 }
 
 .blr-topology-reading--graph { padding: 0; overflow: hidden; }
 .blr-topology-reading--graph > .blr-diagram { min-height: 0; }
+
+/* Keep handles clear of row labels, resource links, and cell content. */
+.blr-topology-matrix[data-edge-handles='true'] tbody th { padding-inline-end: 20px; }
+.blr-topology-matrix[data-edge-handles='true'] :is(thead th:not(.blr-matrix-corner), td) { padding-inline: 20px; }

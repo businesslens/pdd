@@ -284,17 +284,17 @@ const errorMessage = computed(() => {
         :load-repository="loadRepository" :load-repository-file="loadRepositoryFile"
         :logo-src="logoSrc"
         :changes="changes"
-        tools-target="#businesslens-report-tools"
         class="businesslens-local-report min-h-0 flex-1"
         @compare="chooseComparison"
         @history-search="searchHistory"
         @history-more="refreshChanges(true)"
-
       >
         <!-- The pulse sits with the report's other state facts, beside Coverage. -->
         <template #status>
           <LocalLivePulse />
         </template>
+        <template #sidebar-header="{ collapsed }"><LocalViewerBrand :collapsed="collapsed" /></template>
+        <template #sidebar-footer="{ collapsed }"><LocalViewerTools :collapsed="collapsed" /></template>
       </BusinessLensReportViewer>
     </template>
   </div>

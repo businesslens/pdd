@@ -1,102 +1,117 @@
 <script setup lang="ts">
+import type { NavigationMenuItem } from '@nuxt/ui'
 import type { ReportResourceKind, ReportWorkspace } from '../utils/reportWorkspace'
 import { MAIN_RESOURCE_KINDS, MATRIX_DESTINATIONS } from '../utils/reportDestinations'
 import { ENTITY_KIND_META } from '../utils/reportWorkspace'
 
-defineProps<{
+const props = defineProps<{
   workspace: ReportWorkspace
   activeSection: string
   counts: Record<ReportResourceKind, number>
+  collapsed?: boolean
 }>()
 
-/* The rail changes the subject, and only that. A collection's Graph is reached
-   inside it; a matrix compares two collections, so it is a row of its own. */
+/* The rail changes the subject. A collection's Graph stays inside it. */
 const emit = defineEmits<{ kind: [kind: ReportResourceKind], view: [section: string] }>()
 
+type RailItem = NavigationMenuItem & { iconColor?: string, count?: number }
 const RAIL_KINDS = MAIN_RESOURCE_KINDS.map(kind => ENTITY_KIND_META[kind])
-const isCurrent = (kind: ReportResourceKind, section: string) => kind === section
-const overviewColor = `var(--blr-slot-${ENTITY_KIND_META.product.slot})`
+const activeColor = computed(() => {
+  const meta = props.activeSection === 'overview'
+    ? ENTITY_KIND_META.product
+    : RAIL_KINDS.find(kind => kind.kind === props.activeSection)
+  return meta ? `var(--blr-slot-${meta.slot})` : 'var(--ui-text-muted)'
+})
+const overviewItems = computed<RailItem[]>(() => [{
+  label: 'Overview',
+  icon: ENTITY_KIND_META.product.icon,
+  iconColor: `var(--blr-slot-${ENTITY_KIND_META.product.slot})`,
+  active: props.activeSection === 'overview',
+  'data-current': props.activeSection === 'overview',
+  'aria-label': 'Overview',
+  onSelect: () => emit('kind', 'product')
+}])
+const items = computed<RailItem[][]>(() => [
+  [
+    ...MATRIX_DESTINATIONS.map(item => ({
+      label: item.name,
+      icon: item.icon,
+      active: props.activeSection === item.section,
+      'data-current': props.activeSection === item.section,
+      'aria-label': item.name,
+      onSelect: () => emit('view', item.section)
+    }))
+  ],
+  [
+    { label: 'Resources', type: 'label' },
+    ...RAIL_KINDS.map(meta => ({
+      label: meta.plural,
+      icon: meta.icon,
+      iconColor: `var(--blr-slot-${meta.slot})`,
+      count: props.counts[meta.kind],
+      active: props.activeSection === meta.kind,
+      'data-current': props.activeSection === meta.kind,
+      'aria-label': meta.plural,
+      onSelect: () => emit('kind', meta.kind)
+    }))
+  ]
+])
+const menuUi = computed(() => ({
+  root: 'gap-1',
+  list: 'flex flex-col gap-1',
+  link: ['blr-navitem min-h-9 gap-2.5 font-normal data-[current=true]:font-semibold', props.collapsed ? 'justify-center' : 'px-2.5'],
+  label: 'px-2.5 pt-0 pb-1 font-mono text-[10px] tracking-widest uppercase text-dimmed',
+  separator: 'h-4 bg-transparent'
+}))
 </script>
 
 <template>
-  <nav>
-    <div v-if="$slots.navigation" class="mb-1 border-b border-default px-1 pb-2">
-      <slot name="navigation" />
+  <div :style="{ '--blr-rail-active-color': activeColor }">
+    <div v-if="$slots.navigation" class="mb-4 px-1">
+      <slot name="navigation" :collapsed="collapsed" />
     </div>
-
-    <button
-      type="button"
-      class="blr-navitem"
-      :data-current="activeSection === 'overview'"
-      :style="{ '--kind-color': overviewColor }"
-      @click="emit('kind', 'product')"
+    <UNavigationMenu
+      :items="items"
+      :collapsed="collapsed"
+      orientation="vertical"
+      color="neutral"
+      tooltip
+      aria-label="Report sections"
+      :ui="menuUi"
     >
-      <UIcon :name="ENTITY_KIND_META.product.icon" class="size-4 shrink-0" :style="{ color: overviewColor }" />
-      <span class="flex-1 truncate text-start">Overview</span>
-    </button>
-    <button
-      v-for="item in MATRIX_DESTINATIONS"
-      :key="item.section"
-      type="button"
-      class="blr-navitem"
-      :data-current="activeSection === item.section"
-      :aria-current="activeSection === item.section ? 'page' : undefined"
-      style="--kind-color: var(--ui-text-muted)"
-      @click="emit('view', item.section)"
-    >
-      <UIcon :name="item.icon" class="size-4 shrink-0" />
-      <span class="flex-1 truncate text-start">{{ item.name }}</span>
-    </button>
-    <p class="blr-navgroup mt-3">Resources</p>
-    <button
-      v-for="meta in RAIL_KINDS"
-      :key="meta.kind"
-      type="button"
-      class="blr-navitem"
-      :data-current="isCurrent(meta.kind, activeSection)"
-      :aria-current="isCurrent(meta.kind, activeSection) ? 'page' : undefined"
-      :style="{ '--kind-color': `var(--blr-slot-${meta.slot})` }"
-      @click="emit('kind', meta.kind)"
-    >
-      <UIcon :name="meta.icon" class="size-4 shrink-0" :style="{ color: `var(--blr-slot-${meta.slot})` }" />
-      <span class="flex-1 truncate text-start">{{ meta.plural }}</span>
-      <span class="blr-meta">{{ counts[meta.kind] }}</span>
-    </button>
-  </nav>
+      <template #list-leading>
+        <div data-report-overview-actions class="flex gap-1" :class="collapsed ? 'flex-col' : 'items-center'">
+          <UNavigationMenu
+            :items="overviewItems"
+            :collapsed="collapsed"
+            orientation="vertical"
+            color="neutral"
+            tooltip
+            aria-label="Report overview"
+            :class="collapsed ? 'w-full' : 'min-w-0 flex-1'"
+            :ui="menuUi"
+          >
+            <template #item-leading="{ item }">
+              <UIcon v-if="item.icon" :name="item.icon" class="shrink-0" :class="collapsed ? 'size-[17px]' : 'size-4'" :style="{ color: item.iconColor }" />
+            </template>
+          </UNavigationMenu>
+          <slot name="overview-action" />
+        </div>
+      </template>
+      <template #item-leading="{ item }">
+        <UIcon v-if="item.icon" :name="item.icon" class="shrink-0" :class="collapsed ? 'size-[17px]' : 'size-4'" :style="{ color: item.iconColor }" />
+      </template>
+      <template #item-trailing="{ item }">
+        <span v-if="!collapsed && item.count !== undefined" class="blr-meta">{{ item.count }}</span>
+      </template>
+    </UNavigationMenu>
+  </div>
 </template>
 
 <style scoped>
-.blr-navgroup {
-  padding: 0.4rem 0.625rem 0.25rem;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: var(--ui-text-dimmed);
-}
-
-.blr-navitem {
-  display: flex;
-  align-items: center;
-  gap: 0.625rem;
-  width: 100%;
-  padding: 0.375rem 0.625rem;
-  border-radius: 0.375rem;
-  font-size: var(--text-sm);
-  color: var(--ui-text-muted);
-  transition: background 0.12s ease, color 0.12s ease;
-}
-
-.blr-navitem:hover {
-  background: var(--ui-bg-elevated);
-  color: var(--ui-text-highlighted);
-}
-
-.blr-navitem[data-current='true'] {
-  background: color-mix(in srgb, var(--kind-color) 10%, var(--ui-bg-elevated));
-  box-shadow: inset 2px 0 0 var(--kind-color);
-  color: var(--ui-text-highlighted);
-  font-weight: 600;
+/* Keep Nuxt UI's navigation and focus treatment, with the original rail tint. */
+:deep(.blr-navitem[data-current='true']::before) {
+  background: color-mix(in srgb, var(--blr-rail-active-color) 10%, var(--ui-bg-elevated));
+  box-shadow: inset 2px 0 0 var(--blr-rail-active-color);
 }
 </style>

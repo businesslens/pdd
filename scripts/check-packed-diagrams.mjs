@@ -82,7 +82,20 @@ try {
       await page.reload()
       await expect(page.getByRole('heading', { level: 1 })).toContainText('Interfaces')
       await expect(page.getByRole('button', { name: 'Draw as graph', exact: true })).toHaveAttribute('aria-pressed', 'true')
-      console.log(`Passed ${consumer}: SSR, hydration, lazy worker, multiple instances, navigation and isolated States.`)
+      // Header legends must be present in SSR HTML, not recovered by hydration.
+      for (const section of ['delivery', 'what-changes-what', 'rule-attachments']) {
+        const url = `${origin}/?s=${section}&matrices=1&multi=1`
+        const html = await fetch(url).then(response => response.text())
+        expect(html.match(/class="blr-matrix-legend"/g)).toHaveLength(2)
+        await page.goto(url)
+        const legends = page.getByRole('button', { name: 'Legend', exact: true })
+        await expect(legends).toHaveCount(2)
+        await legends.first().click()
+        await expect(page.getByRole('list', { name: 'Badge color legend' })).toBeVisible()
+        await page.keyboard.press('Escape')
+        await expect(legends.first()).toBeFocused()
+      }
+      console.log(`Passed ${consumer}: SSR, hydration, lazy worker, multiple instances, navigation, isolated States and comparison legends.`)
     } finally {
       await context.close()
       server.kill('SIGTERM')

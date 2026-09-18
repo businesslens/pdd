@@ -201,7 +201,7 @@ costed already.
 - **Every surface names itself, with the name the reader clicked.** The main
   H1 keeps the working view and its count or Product qualifier. A resource
   slideover names its resource and type, with actual ownership shown separately
-  from the return trail. Report identity and the way home stay in the header.
+  from the return trail. Report identity and the way home stay in the sidebar.
 - **Resources open in one complete slideover.** This supersedes the resource-page
   navigation rule. Opening a row, relation, search result or diagram resource
   preserves the underlying section, drawing, filters, expansion and viewport.
@@ -210,6 +210,8 @@ costed already.
   view. The slideover dims and blocks the background; clicking outside or
   pressing Escape closes it and restores the working view. Narrow screens use
   the full width. Refresh and valid recompilation preserve the reading.
+  Expand fills the window with the same resource reading; Restore returns to
+  the panel width without losing its drawing, selected detail or graph viewport.
 - **Review is a read-only comparison opened from the header beside Coverage.**
   Overview retains its Coverage tab for current model breadth and repository
   inspection context. Review compares any two Git states or the working state,
@@ -231,8 +233,17 @@ costed already.
   through Interfaces, Scenarios through their parent, and a collection's Graph
   through its drawing switch.
 - **A resource reading separates meaning, behavior, connections and references.** Overview
-  carries the resource's explanation and contextual links. Scenarios follows
-  for a Capability or Journey, Lifecycle for an Entity with States. Connections
+  carries the resource's explanation and contextual links, including an Entity's
+  Information kept. Scenarios follows for a Capability or
+  Journey, Lifecycle for an Entity with States. Lifecycle switches between Rows
+  and Graph; selecting a change reads its Rules and supporting Scenarios, and
+  selecting a State reads its definition and the Scenarios that leave it there.
+  Rows uses the collection list's parent/child styling: each State contains its
+  definition and outgoing changes, including States with none. Creation and
+  changes without a starting State have separate groups. This supersedes placing
+  State definitions in Overview or stacking separate State cards below the graph.
+  Changes without specified states remain accessible beside the graph.
+  Connections
   follows when relationships exist and includes the complete relationship
   list, including links also explained in Overview. References comes last when
   attachments exist, with a count and attribution to the inspected resource,
@@ -277,7 +288,7 @@ costed already.
   controls in a bottom sheet; its badge counts selected
   values, and individually removable chips remain above the reading. Rows/Graph
   stays beside Filters with the same icons. Page controls, filters and graph
-  buttons use Nuxt UI's `sm` size (28px) at every viewport width. The top navbar
+  buttons use Nuxt UI's `sm` size (28px) at every viewport width. Host chrome
   retains its own sizing; report controls never override global UI defaults.
   Filter collapse follows the reading's available width. Report navigation
   sits beside the working view's heading.

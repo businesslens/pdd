@@ -14,15 +14,22 @@ import { destinationForLocation } from '../utils/reportDestinations'
  */
 import type { ProductReportV16, RepositoryInventoryLoader, RepositoryFileLoader } from 'businesslens/report'
 import { projectReportWorkspace } from '../utils/reportWorkspace'
+import type { ReportProductCatalogLink, ReportProductLink } from '../utils/reportProducts'
 import type { ReportChanges } from '../utils/reportChanges'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   report: ProductReportV16
   /** Optional live file inventory supplied by the local host, outside the report. */
   loadRepository?: RepositoryInventoryLoader
   loadRepositoryFile?: RepositoryFileLoader
-  /** Host-resolved `.businesslens/product/logo.svg`; rendered in the product header. */
+  /** Host-resolved `.businesslens/product/logo.svg`; used in the picker and Overview. */
   logoSrc?: string | null
+  /** Other products available in this host; mark the current destination active. */
+  products?: ReportProductLink[]
+  /** Optional link below the product choices to the host's full catalog. */
+  productCatalog?: ReportProductCatalogLink
+  /** Set false when the host already provides Vocabulary in its header. */
+  sidebarVocabulary?: boolean
   /** Mounted host-header element receiving the report's search and Vocabulary controls. */
   toolsTarget?: string
   /**
@@ -33,7 +40,7 @@ const props = defineProps<{
   readingReport?: ProductReportV16 | null
   readingLabel?: string
   readingError?: string | null
-}>()
+}>(), { sidebarVocabulary: true })
 
 const emit = defineEmits<{
   /** The reader chose another baseline to compare against. */
@@ -121,6 +128,9 @@ onMounted(() => { mounted = true; synchronizeLocation() })
       :workspace="workspace"
       :load-repository="loadRepository"
       :logo-src="logoSrc"
+      :products="products"
+      :product-catalog="productCatalog"
+      :sidebar-vocabulary="sidebarVocabulary"
       :tools-target="toolsTarget"
       :changes="changes"
       @compare="(base, target) => emit('compare', base, target)"
@@ -131,8 +141,14 @@ onMounted(() => { mounted = true; synchronizeLocation() })
       @update:tab="tab = $event"
       @update:topology="topology = $event"
     >
-      <template v-if="$slots.navigation" #navigation>
-        <slot name="navigation" />
+      <template v-if="$slots['sidebar-header']" #sidebar-header="{ collapsed }">
+        <slot name="sidebar-header" :collapsed="collapsed" />
+      </template>
+      <template v-if="$slots['sidebar-footer']" #sidebar-footer="{ collapsed }">
+        <slot name="sidebar-footer" :collapsed="collapsed" />
+      </template>
+      <template v-if="$slots.navigation" #navigation="{ collapsed }">
+        <slot name="navigation" :collapsed="collapsed" />
       </template>
       <template v-if="$slots['primary-action']" #primary-action>
         <slot name="primary-action" />

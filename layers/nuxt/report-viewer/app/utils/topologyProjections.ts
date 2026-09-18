@@ -1,5 +1,5 @@
 /** Named semantic readings. No coordinates, hover state, or renderer types. */
-import type { AnyResourceView, ContextView, DomainView, ReportWorkspace, RuleView } from './reportWorkspace'
+import type { AnyResourceView, ContextView, DomainView, ReportWorkspace, RuleView, ScenarioView } from './reportWorkspace'
 import { ENTITY_KIND_META, resourceKey } from './reportWorkspace'
 import { ruleAttachments, topologyPlace } from './topologyTargets'
 import type { TopologyAttachment } from './topologyTargets'
@@ -201,12 +201,18 @@ export function sitemapProjection(workspace: ReportWorkspace): TopologyBranch {
     children: interfaceProjection(workspace), references: [] }
 }
 
+export interface TopologyMutation {
+  effect: 'creates' | 'changes' | 'removes'
+  variants: Array<{ from: string, to: string, evidence: ScenarioView[] }>
+}
+
 export interface TopologyMatrixCell {
   id: string
   row: string
   column: string
   labels: string[]
   attachments?: TopologyAttachment[]
+  mutations?: TopologyMutation[]
   evidence: AnyResourceView[]
   details: string[]
 }
@@ -237,16 +243,28 @@ export function mutationProjection(workspace: ReportWorkspace): TopologyMatrix {
   const cells = workspace.capabilities.flatMap(capability => capability.entityEffects.flatMap(line => {
     const entity = workspace.byKey.get(resourceKey('entity', line.entityId))
     if (!entity) return []
-    return [{ id: `${capability.key}->${entity.key}`, row: capability.key, column: entity.key,
-      labels: [...new Set(line.effects.map(effect => effect.effect))],
-      evidence: line.scenarioIds.flatMap(id => workspace.scenarios.filter(scenario => scenario.id === id && scenario.steps.some(step =>
-        (scenario.scenarioType === 'capability' ? scenario.capabilityId : step.capabilityId) === capability.id &&
-        step.entities.some(entity => entity.entityId === line.entityId && entity.effect !== 'reads')))),
-      details: line.effects.filter(effect => effect.from || effect.to).map(effect => `${effect.effect}${effect.from ? ` from ${effect.from}` : ''}${effect.to ? ` to ${effect.to}` : ''}`)
+    // Journey Steps can name different Capabilities. Match the whole occurrence,
+    // not just a Scenario that happens to mention this Entity somewhere.
+    const occurrences = workspace.scenarios.map(scenario => ({ scenario, effects: scenario.steps
+      .filter(step => (scenario.scenarioType === 'capability' ? scenario.capabilityId : step.capabilityId) === capability.id)
+      .flatMap(step => step.entities.filter(item => item.entityId === line.entityId && item.effect !== 'reads'))
+    })).filter(item => item.effects.length)
+    const mutations: TopologyMutation[] = [...new Set(line.effects.map(item => item.effect))].map(effect => ({
+      effect,
+      variants: line.effects.filter(item => item.effect === effect).map(item => ({
+        from: item.from, to: item.to,
+        evidence: occurrences.filter(({ effects }) => effects.some(candidate =>
+          candidate.effect === effect && candidate.from === item.from && candidate.to === item.to
+        )).map(({ scenario }) => scenario)
+      }))
+    }))
+    return [{ id: `${entity.key}->${capability.key}`, row: entity.key, column: capability.key,
+      labels: mutations.map(item => item.effect), mutations,
+      evidence: occurrences.map(({ scenario }) => scenario), details: []
     }]
   }))
-  return { rows: workspace.capabilities.filter(item => cells.some(cell => cell.row === item.key)),
-    columns: workspace.entities.filter(item => cells.some(cell => cell.column === item.key)), cells }
+  return { rows: workspace.entities.filter(item => cells.some(cell => cell.row === item.key)),
+    columns: workspace.capabilities.filter(item => cells.some(cell => cell.column === item.key)), cells }
 }
 
 export function entityRelationsProjection(workspace: ReportWorkspace): Diagram {

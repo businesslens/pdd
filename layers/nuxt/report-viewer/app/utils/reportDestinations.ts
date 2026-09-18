@@ -1,6 +1,7 @@
 import type { AnyResourceView, ReportResourceKind, ReportWorkspace } from './reportWorkspace'
 import type { ProductTopologyViewId } from './productTopologyViews'
 import { ruleAttachments } from './topologyTargets'
+import { relatedIds } from './resourceFacets'
 
 /**
  * Where each named view lives.
@@ -45,6 +46,20 @@ export function resourceAncestors(workspace: ReportWorkspace, resource: AnyResou
   }
   if (resource.kind === 'capability-scenario' || resource.kind === 'journey-scenario') keys = [resource.scenarioType === 'capability' ? `capability:${resource.capabilityId}` : `journey:${resource.journeyId}`]
   return keys.flatMap(key => { const item = workspace.byKey.get(key); return item ? [item] : [] })
+}
+
+/** Domain context is separate from ownership, whether assigned or reached. */
+export function resourceDomains(workspace: ReportWorkspace, resource: AnyResourceView) {
+  const ids = new Set(relatedIds(resource, 'domain'))
+  // Interfaces and Scenarios reach Domains through their own Capabilities.
+  // A Scenario must not inherit unrelated Domains from its parent's other cases.
+  if (resource.kind === 'interface' || resource.kind === 'capability-scenario' || resource.kind === 'journey-scenario') {
+    for (const id of relatedIds(resource, 'capability')) {
+      const capability = workspace.byKey.get(`capability:${id}`)
+      if (capability?.kind === 'capability' && capability.domainId) ids.add(capability.domainId)
+    }
+  }
+  return workspace.domains.filter(domain => ids.has(domain.id))
 }
 
 export function resourceViewLinks(resource: AnyResourceView, workspace: ReportWorkspace) {

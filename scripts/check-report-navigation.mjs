@@ -228,8 +228,10 @@ try {
     await expect(page.locator('.blr-report-shell')).toBeVisible()
     await expect(page.getByRole('heading', { level: 1 })).toContainText('Overview')
     await expect(tab(page, 'About').first()).toHaveAttribute('aria-selected', 'true')
-    /* The way home is chrome: it is on every surface, this one included. */
-    await expect(page.locator('.blr-report-header')).toContainText(report.title)
+    /* Overview in the shared rail is the way home at every width. */
+    if (width < 1024) await page.getByRole('button', { name: 'Open report navigation', exact: true }).click()
+    await expect(page.locator('[data-report-sidebar]:visible').getByRole('button', { name: 'Overview', exact: true })).toHaveAttribute('aria-current', 'page')
+    if (width < 1024) await page.getByRole('button', { name: 'Close report navigation', exact: true }).click()
     /* The Product's authored fields keep their names and remain visible in
        the reading they belong to. Every field uses the available pane width. */
     await expect(page.getByRole('tab', { name: 'Scope', exact: true })).toHaveCount(0)

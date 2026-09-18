@@ -5,8 +5,8 @@ import type { Node, Edge, ViewportTransform } from '@vue-flow/core'
 import type { DiagramLayout, DiagramNode } from '../utils/diagram'
 import { diagramBounds, diagramContext } from '../utils/diagramInteraction'
 
-const props = defineProps<{ layout: DiagramLayout, title: string, viewportKey: string, tree?: boolean, direction?: 'RIGHT' | 'DOWN', quiet?: boolean, branches?: boolean }>()
-const emit = defineEmits<{ open: [key: string], toggle: [id: string, open: boolean], toggleAll: [open: boolean], ready: [] }>()
+const props = defineProps<{ layout: DiagramLayout, title: string, viewportKey: string, tree?: boolean, direction?: 'RIGHT' | 'DOWN', quiet?: boolean, branches?: boolean, selected?: string | null }>()
+const emit = defineEmits<{ open: [key: string], inspect: [key: string], toggle: [id: string, open: boolean], toggleAll: [open: boolean], ready: [] }>()
 const id = useId()
 const viewerId = inject<string>('businesslens:viewer', '')
 const shell = ref<HTMLElement>()
@@ -34,13 +34,13 @@ const nodes = computed<Node<DiagramNode & { dimmed: boolean, highlighted: boolea
       sourcePosition: props.direction === 'DOWN' ? Position.Bottom : Position.Right,
       targetPosition: props.direction === 'DOWN' ? Position.Top : Position.Left,
       selectable: false, draggable: false, connectable: false, focusable: false, zIndex: 10,
-      data: { ...node, dimmed: Boolean(context.value && !context.value.nodes.has(node.id)), highlighted: Boolean(context.value?.occurrences.has(node.id)) } }
+      data: { ...node, dimmed: Boolean(context.value && !context.value.nodes.has(node.id)), highlighted: Boolean(context.value?.occurrences.has(node.id) || (node.inspectionKey && node.inspectionKey === props.selected)) } }
   })
 })
 const edges = computed<Edge[]>(() => props.layout.edges.map(edge => ({ id: edge.id, source: edge.source, target: edge.target, type: 'blr-routed',
   markerEnd: edge.arrow === false ? undefined : { type: MarkerType.ArrowClosed, color: 'var(--ui-text-muted)', width: 14, height: 14 },
   selectable: false, focusable: false, data: { ...edge,
-    dimmed: Boolean(context.value && !context.value.edges.has(edge.id)), quiet: Boolean(props.quiet && !context.value) } })))
+    dimmed: Boolean(context.value && !context.value.edges.has(edge.id)), quiet: Boolean(props.quiet && !context.value), selected: Boolean(edge.inspectionKey && edge.inspectionKey === props.selected) } })))
 
 function hoverNode(id: string | null) {
   hovered = id
@@ -163,8 +163,8 @@ onBeforeUnmount(() => { save(); mounted = false; cancelCentering(); resize?.disc
     <VueFlow :id="id" class="blr-flow" :nodes="nodes" :edges="edges" :min-zoom="0.08" :max-zoom="2"
       :nodes-connectable="false" :nodes-draggable="false" :edges-updatable="false" :zoom-on-double-click="false"
       :prevent-scrolling="true" @node-mouse-enter="hoverNode($event.node.id)" @node-mouse-leave="hoverNode(null)">
-      <template #node-blr="nodeProps"><BlrFlowNode v-bind="nodeProps" @open="save(); emit('open', $event)" @toggle="toggle" @focus="focusNode" /></template>
-      <template #edge-blr-routed="edgeProps"><BlrFlowRoutedEdge v-bind="edgeProps" /></template>
+      <template #node-blr="nodeProps"><BlrFlowNode v-bind="nodeProps" @open="save(); emit('open', $event)" @inspect="save(); emit('inspect', $event)" @toggle="toggle" @focus="focusNode" /></template>
+      <template #edge-blr-routed="edgeProps"><BlrFlowRoutedEdge v-bind="edgeProps" @inspect="save(); emit('inspect', $event)" /></template>
       <Background :gap="30" :size="1.5" variant="dots" pattern-color="var(--blr-flow-dot)" />
     </VueFlow>
     <UFieldGroup class="blr-flow-controls bg-default" orientation="vertical" size="sm" role="group" aria-label="Map controls">
