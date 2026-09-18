@@ -14,35 +14,29 @@ const { interfaceProjection } = await utility('topologyProjections')
 const workspace = projectReportWorkspace(compileReport(loadModel(join(__dirname, '../test/fixtures/fixture-shop')), '2026-09-08'))
 
 describe('report destinations', () => {
-  it('gives each named view one home: a collection Graph, or a rail row of its own for a matrix', () => {
+  it('gives every drawing one collection home, with matrices owned by their row subject', () => {
     expect(MAIN_RESOURCE_KINDS).toEqual(['entity', 'interface', 'domain', 'capability', 'journey', 'rule'])
-    /* A collection's Graph is the second drawing of its own set. A matrix
-       compares two collections, so no single one owns it: each is a rail row
-       below Overview, whose section is its rail. Nothing redraws the whole index. */
     const homes = new Set<string>(MAIN_RESOURCE_KINDS)
-    const matrices = REPORT_DESTINATIONS.filter((item: any) => item.mode === 'overview')
-    expect(matrices.map((item: any) => item.section).sort()).toEqual(['delivery', 'rule-attachments', 'what-changes-what'])
+    const matrices = REPORT_DESTINATIONS.filter((item: any) => item.mode === 'matrix')
+    expect(matrices.map((item: any) => [item.rail, item.view])).toEqual([
+      ['capability', 'delivery-by-interface'], ['entity', 'what-changes-what'], ['rule', 'rule-attachments']
+    ])
     for (const item of REPORT_DESTINATIONS) {
-      if (item.mode === 'overview') expect(item.rail).toBe(item.section)
-      else expect(homes.has(item.rail), `${item.section} has no home`).toBe(true)
+      expect(homes.has(item.rail), `${item.section} has no home`).toBe(true)
       expect(destinationForLocation(item.rail, item.mode)?.section).toBe(item.section)
       expect(findProductTopologyView(item.view).question).toBeTruthy()
     }
-    /* One Graph per collection, never a second drawing answering to Rows' URL. */
     for (const rail of homes) {
       const modes = REPORT_DESTINATIONS.filter((item: any) => item.rail === rail).map((item: any) => item.mode)
-      expect(modes, rail).toEqual(['graph'])
+      expect(modes, rail).toEqual(['entity', 'capability', 'rule'].includes(rail) ? ['graph', 'matrix'] : ['graph'])
     }
   })
 
-  it('leaves an address it cannot place on the Overview rather than guessing', () => {
-    /* Every standalone view URL changed shape with the restructure. A shim that
-       silently lands a reader somewhere else is worse than a clean landing. */
-    expect(destinationForLocation('topology', 'overview')).toBeUndefined()
-    expect(destinationForLocation('capability', 'mutations')).toBeUndefined()
-    /* A matrix is its own section, so its bare address is exactly its home. */
-    expect(destinationForLocation('what-changes-what', 'overview')?.view).toBe('what-changes-what')
-    expect(destinationForLocation('what-changes-what', 'graph')).toBeUndefined()
+  it('does not keep standalone matrix sections or offer matrices to other collections', () => {
+    for (const section of ['topology', 'delivery', 'what-changes-what', 'rule-attachments']) {
+      expect(destinationForLocation(section, 'overview')).toBeUndefined()
+    }
+    for (const kind of ['interface', 'domain', 'journey']) expect(destinationForLocation(kind, 'matrix')).toBeUndefined()
   })
 
   it('finds the owning collection of children and derives actual ownership', () => {
@@ -57,7 +51,7 @@ describe('report destinations', () => {
   it('offers a resource only the views its own subject appears in', () => {
     const sections = (resource: any) => resourceViewLinks(resource, workspace).map((item: any) => item.section)
     expect(sections(workspace.entities[0])).toContain('entity-relationships')
-    expect(sections(workspace.interfaces[0])).toContain('interface-map')
+    expect(sections(workspace.interfaces[0])).toEqual(expect.arrayContaining(['interface-map', 'delivery']))
     expect(sections(workspace.domains[0])).toContain('domain-reach')
     expect(sections(workspace.journeys[0])).toContain('journey-reach')
     expect(sections(workspace.rules[0])).toEqual(['rule-reach', 'rule-attachments'])

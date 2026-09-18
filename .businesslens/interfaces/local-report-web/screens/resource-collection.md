@@ -27,10 +27,13 @@ references:
 # Resource collection
 
 The six main resource collections let the reader find the resource they came
-for, and each one also holds the named visualizations of its own subject. A tab
-changes which set is on screen; there is no second control changing how that set
-is drawn, because a relationship graph and a list were never the same rows drawn
-differently. Scenarios are read from the Capability or Journey that owns them
+for, and each one also holds the named visualizations of its own subject.
+Rows and Graph share the collection's filters and count. Entities, Capabilities
+and Business Rules offer Matrix as a third drawing, respectively showing What
+changes what, Compare delivery and Rule attachments. Each Matrix keeps all
+matching subjects as rows. Shared relationship filters select the subjects and
+comparison columns; without a selection, disconnected subjects remain visible. The rail lists Overview and the six collections.
+Scenarios are read from the Capability or Journey that owns them
 rather than listed here, because a kind with a mandatory single parent is
 reached through that parent. The things that act lead the Entity collection in a
 group of their own, because a reader arrives asking who this is for.
@@ -44,7 +47,8 @@ group of their own, because a reader arrives asking who this is for.
 - The authored Domain grouping, wherever the type carries one
 - The filters that narrow this collection, one control per axis, over every relation its own rows print
 - How many values each filter holds, and the chosen values themselves, each removable on its own
-- The open view's question and the note explaining how it derives its answer, beneath the reading
+- The current view in a dropdown with preview cards and short explanatory subtitles, without a separate help button or About section
+- A Graph's question beneath the drawing
 - Every resource a named view includes, labelled and shaped by kind, with the things that act marked as Actors
 - A named view's groups, ordered occurrences, attachments, effects, containment, or Entity relationships
 - Interface map's Product root, connected containment branches, and distinct Interface, Experience, and Screen nodes
@@ -55,7 +59,7 @@ group of their own, because a reader arrives asking who this is for.
 ## Available actions
 
 - Open a resource’s reading
-- Open a named view of this collection as a tab beside its List
+- Choose List, the named Graph, or the named Matrix from preview cards without changing the collection scope
 - Read Domain-classified Capabilities and Entities, including unassigned resources
 - Reach any Experience, Screen or Scenario through the collection that owns it
 - Read which Interfaces deliver each Capability and by what route, and compose every Journey's Scenarios side by side
@@ -71,13 +75,22 @@ group of their own, because a reader arrives asking who this is for.
 
 ### Populated collection
 
-Resources are listed under their authored grouping and, where the collection is
-large enough to need them, filter controls.
+Resources are listed under their authored grouping, with controls for every
+available filter axis.
 
 ### Named view open
 
-The tab's reading at a readable size, with its question stated once above it and
-every included resource reachable.
+The selected drawing at a readable size, with its question stated once and
+every included resource reachable. Matrix rows preserve the collection scope
+with one toolbar shared across drawings. Changed by, Available in and Attached to
+select matching resources. Available in groups Interfaces, Experiences and Screens,
+including delivery through descendants. Capabilities have no separate Screen or
+Scenario filter. Their Matrix compares the containing Interfaces and matching
+routes. Entities offer only Entities, Domains and Changed by, with the Capabilities
+icon on Changed by. Actor access through Interfaces or Experiences and Journey
+participation are read in individual resources. Attached to is one searchable picker grouped by type,
+combining whole types and exact authored targets with OR; other axes combine with
+AND. Context restrictions on another attachment and inherited reach do not match.
 
 ### Collapsed groups
 

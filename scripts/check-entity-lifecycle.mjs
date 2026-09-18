@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /** Lifecycle drawings, local inspection and panel expansion preserve the reading. */
 import { chromium, expect } from '@playwright/test'
+import { expectCollectionDrawing } from './report-view-controls.mjs'
 import { mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 const origin = process.argv[2]
@@ -147,7 +148,7 @@ try {
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true)
     await page.keyboard.press('Escape')
     await expect(panel).toHaveCount(0)
-    await expect(page.getByRole('button', { name: 'Draw as graph', exact: true })).toHaveAttribute('aria-pressed', 'true')
+    await expectCollectionDrawing(page, 'graph')
     console.log(`Passed ${width}px: whole-card selection and highlight, States with outgoing changes, empty States, group/child expansion and persistence, keyboard inspection, panel expansion, Graph/Rows selection, linked-resource Back and stateless changes.`)
     await context.close()
   }

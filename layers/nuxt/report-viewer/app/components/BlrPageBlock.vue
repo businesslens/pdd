@@ -65,6 +65,13 @@ const facts = computed(() => resourceFacts(props.workspace, props.resource).filt
     @select="emit('open', $event)"
   />
 
+  <section v-else-if="id === 'boundary' && resource.kind === 'screen' && resource.capabilityBoundary" class="space-y-2">
+    <h2 class="text-base font-[650] tracking-[-0.015em] text-highlighted"><BlrTerm slug="capability-boundary" /></h2>
+    <div class="max-w-3xl rounded-xl border border-default bg-elevated/35 p-4 text-default">
+      <BlrProse :text="resource.capabilityBoundary" />
+    </div>
+  </section>
+
   <div v-else-if="id === 'counterparts' && counterparts.length" class="space-y-2">
     <p v-if="heading" class="blr-block-heading">
       Also on

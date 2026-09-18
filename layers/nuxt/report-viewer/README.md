@@ -11,14 +11,14 @@ the documentation's `terms:` frontmatter.
 
 A collection row, relation, search result, or topology resource opens one complete
 resource slideover. The underlying collection or comparison keeps its heading,
-rail selection, Rows/Graph drawing, filters, expansion, scroll and graph viewport.
+rail selection, Rows/Graph/Matrix drawing, filters, expansion, scroll and graph viewport.
 The modal reading dims and blocks the underlying view; narrow screens use the
 full width. Expand fills the window with the same resource reading; Restore
 returns to the panel width while retaining the drawing, selection and viewport.
 Back restores the previous resource and its tab and reading position.
 Close, Escape or a click outside returns to the preserved working view. Resource links support the
 browser's new-tab and copy-link actions. The compact header keeps the resource's
-identity on the left and named-view and documentation actions beside Close.
+identity on the left and named-view actions beside Expand and Close.
 Related Domains appear as linked names with their type icons in every resource
 header, keeping that context visible across tabs and separate from ownership.
 The first Domain always appears by name; any remaining Domains open from a
@@ -32,7 +32,15 @@ own Capabilities, so it does not borrow Domains from its parent's other cases.
 
 Overview contains identity facts, authored detail, Contexts and supporting material,
 with contextual links beside the facts they explain. Capability
-and Journey readings add Scenarios. An Entity's Overview contains Information
+and Journey readings add Scenarios. A Screen's Overview keeps its description,
+Intent and Information presented, with a compact Presents row naming the Entities
+above that information and Capability boundary last. Behavior follows whenever
+actions or view states exist: Available actions is a separate list, and View states
+are expandable rows with Expand all and Collapse all controls. Descriptions start
+closed; expansion is remembered per host, report and Screen across tab changes,
+resource lookups, refresh and valid recompilation. Counts appear beside these
+lists, without a separate Overview counter strip. A Screen's Also on counterparts
+appear in Connections. An Entity's Overview contains Information
 kept; its Lifecycle reading switches between Rows and Graph. Rows groups changes
 under their starting State, using the collection list's parent/child styling.
 Each State carries its definition, including States with no outgoing changes.
@@ -193,10 +201,10 @@ where it left:
 
 | Model | Value | Default |
 | --- | --- | --- |
-| `section` | `overview`; a cross-collection view: `delivery`, `what-changes-what`, or `rule-attachments`; or a collection: `entity`, `interface`, `domain`, `capability`, `journey`, or `rule` | `overview` |
+| `section` | `overview`; or a collection: `entity`, `interface`, `domain`, `capability`, `journey`, or `rule` | `overview` |
 | `resource` | the stable key of the inspected resource (`screen:reader-web::…`), or `null` for the section's collection | `null` |
-| `tab` | underlying collection: `overview` (Rows) or `graph`; Product Overview: `overview` (About), `coverage`, or `references` | `overview` |
-| `resourceTab` | resource reading: `overview`, `scenarios`, `lifecycle`, `connections`, or `references`; independent of `tab` | `overview` |
+| `tab` | underlying collection: `overview` (Rows), `graph`, or `matrix` (Entities, Capabilities and Business Rules); Product Overview: `overview` (About), `coverage`, or `references` | `overview` |
+| `resourceTab` | resource reading: `overview`, `scenarios`, `lifecycle`, `behavior`, `connections`, or `references`; independent of `tab` | `overview` |
 | `scenarioRoute` | the first route in the visible Scenario route window, or `null` | `null` |
 | `routeColumns` | `auto`, or the reader's preferred number of visible route columns | `auto` |
 | `topology` | selected view, Journey, Scenario window, matrix column, focus, hidden kinds, expanded/collapsed groups, directory search | Domain map; no filters |
@@ -231,38 +239,54 @@ four; rows start at one, tree cards at three). Nothing else is kept, because
 nothing else is configurable: the reading and its grouping are decided by the
 report rather than auditioned on every visit.
 
-A collection is one set with two drawings, selected with `section` and `tab`
-and no resource key. The rail changes the subject, the filters narrow the set,
-and a Rows/Graph switch beside the filters changes only how that set is drawn:
-the heading count, the filter controls and the chips are the same in both.
+A collection is one set with shared drawings, selected with `section` and `tab`
+and no resource key. The rail lists Overview and six collections. The filters
+narrow the collection, and a dropdown beside them changes how
+that set is drawn. Its preview cards name each view and explain it with a short
+subtitle, without a separate help button or About section. The picker stays at
+the right edge; the desktop legend and list controls sit to its left. On phones,
+list expansion and the legend are available inside the picker. The heading, count, collection filters and chips stay the same.
+Matrix is offered only by the three collections whose resources supply its rows.
 
-| Section | Rows (`overview`) | Graph (`graph`) |
-| --- | --- | --- |
-| `entity` | one row per Entity, grouped by Domain; Actors lead | Entity relationships |
-| `interface` | one tree card per Interface: its Experiences, each with its Screens, and its direct Screens | Interface map |
-| `domain` | one tree card per Domain: its Capabilities and its Entities, Unassigned trailing | Domain reach: Domain, then the places its Capabilities are available in, then the Capabilities, Journeys and Rules reached there |
-| `capability` | one row per Capability, grouped by Domain | Capability reach: Capability, then its places and Rules |
-| `journey` | one row per Journey | Journey reach: Journey, then its places and Rules |
-| `rule` | one row per Business Rule, grouped by Domain | Rule reach: Rule, then its attachment targets and Contexts |
+| Section | Rows (`overview`) | Graph (`graph`) | Matrix (`matrix`) |
+| --- | --- | --- | --- |
+| `entity` | one row per Entity, grouped by Domain; Actors lead | Entity relationships | What changes what: Entities × Capabilities |
+| `interface` | one tree card per Interface, its Experiences and Screens | Interface map | — |
+| `domain` | one tree card per Domain, its Capabilities and Entities | Domain reach | — |
+| `capability` | one row per Capability, grouped by Domain | Capability reach | Compare delivery: Capabilities × Interfaces |
+| `journey` | one row per Journey | Journey reach | — |
+| `rule` | one row per Business Rule, grouped by Domain | Rule reach | Rule attachments: Business Rules × attachment targets |
 
-The cross-collection matrices are rail rows below Overview, each its own
-section with no tabs: `delivery` (Compare delivery, Capability rows by Interface
-columns), `what-changes-what` (Entity rows by Capability columns), and
-`rule-attachments` (Business Rule rows by attachment target columns). Their navigation icons,
-selection accents and heading icons use neutral colors. Searchable multiselects
-name each matrix's axes: Entities and Capabilities, Capabilities and Interfaces,
-or Rules followed by a separate filter for each kind of attachment target
-present in the table. Selected resources (`tf`) narrow only their own axis;
-empty intersections remain visible. Target selections from different types
-combine into one set of columns. Clearing all selections on an axis restores
-all its resources. Rule attachments also offers Resource types (`th`): hiding a target type removes
-its columns, resource filter and any selections of that type. Rules remain
-independently selectable; hidden-type chips restore types individually.
+Each Matrix keeps the collection heading. Its preview card names the view and
+states its question in the subtitle. One toolbar owns the scope in all three
+drawings: primary resource selection, Domains and other existing axes, plus
+Changed by (Entities), Available in (Capabilities), or Attached to (Business Rules).
+Relationship selections narrow the primary resources and the Matrix columns using
+the same authored relationship. With no selections, disconnected subjects remain.
+Selections persist per collection across drawings and refresh; contextual links
+select the same shared scope.
+
+Entities offer only Entities, Domains and Changed by. Changed by uses the
+Capabilities icon and includes creation, change and removal, never reads. Actor
+access through Interfaces or Experiences and Journey participation remain in
+resource readings. Available in uses
+the authored delivery routes shown by the Matrix, with one grouped picker for
+Interfaces, Experiences and Screens. An Interface includes delivery through its
+Experiences and Screens; an Experience includes its Screens. Parent availability
+does not invent delivery on every child Screen. Whole types and exact locations
+combine with OR. The Matrix keeps Interface columns and shows only matching
+routes. Capabilities have no separate Screen or Scenario filter. Attached to is one searchable
+picker grouped by resource type, with whole-type and individual-resource choices.
+These choices combine with OR; different axes combine with AND. Attachments mean
+exact authored targets, excluding inherited reach and context restrictions on
+another target. Rows carry compact relationship summaries explaining the filters.
+Every selection has a removable chip; Clear resets the complete collection scope.
+
 Matrices scroll vertically with the reading; edge controls, horizontal trackpad
 gestures, and touch swipes move one column
 at a time beside a fixed subject column. The first visible column uses `tm`;
 moving between columns preserves vertical position and cell details. Each matrix's
-filter bar offers a Legend popover with every possible badge color and meaning for
+shared toolbar offers a Legend popover with every possible badge color and meaning for
 that view, regardless of report data, filters or the current column window.
 The header and reading render together on the server. Body cells mount only for the
 visible columns and one neighbour on each side; the browser animates their offset. A collection Graph
@@ -387,14 +411,21 @@ bounded cell rendering on a large matrix, column navigation and mobile resizing.
 
 Against a running built fixture-shop report, run
 `node scripts/check-entity-lifecycle.mjs <url>` for state and change inspection,
-Rows/Graph parity, panel expansion, keyboard access and saved reading state.
+Rows/Graph/Matrix parity, panel expansion, keyboard access and saved reading state.
 `node scripts/check-resource-slideover.mjs <url>` for desktop and mobile
 inspection, independent Graph/Lifecycle state, nested Back/Forward, Scenario
 position, direct links and keyboard dismissal.
 `node scripts/check-resource-references.mjs <url>` covers reference ownership,
 counts, previews, browser history and scrolling tabs on desktop and narrow screens.
+`node scripts/check-screen-behavior.mjs <url>` covers Screen tab separation,
+counterparts, optional lists, keyboard and bulk expansion, Back and refresh.
 `node scripts/check-report-navigation.mjs <url>` covers the collections, trees,
 filters and named-view exits. Set `BLR_NAV_SCREENSHOTS` to a directory outside
 the Product Model to save layout captures.
 `node scripts/check-report-sidebar.mjs <url>` checks desktop collapse, keyboard
 access, tooltips, saved state, utilities and the independent mobile drawer.
+
+Check the collection preview picker against a running local viewer with
+`node scripts/check-collection-views.mjs <viewer-url>`. This covers all six
+collections, desktop and phone layouts, subtitles without About, saved filters,
+keyboard selection and the fixed position beside the legend.

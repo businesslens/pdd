@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /** Complete resource content reused inside the URL-addressable slideover.
- * Scenarios remain inside their parent; Lifecycle belongs to an Entity.
+ * Scenarios remain inside their parent; Entities have Lifecycle, Screens have Behavior.
  * The host places tabs above the scrolling reading and owns navigation.
  */
 import type { AnyResourceView, EntityView, ReportWorkspace } from '../utils/reportWorkspace'
@@ -126,6 +126,12 @@ const columnItems = COLUMN_CHOICES.map(value => ({ value, label: `${value} per r
         @ready="emit('ready')"
       />
 
+      <BlrScreenBehavior
+        v-else-if="current?.id === 'behavior' && subject.kind === 'screen'"
+        :workspace="workspace"
+        :resource="subject"
+      />
+
       <template v-else>
         <BlrPageBlock
           v-for="id in current?.blocks ?? []"
@@ -134,7 +140,7 @@ const columnItems = COLUMN_CHOICES.map(value => ({ value, label: `${value} per r
           :workspace="workspace"
           :resource="current?.id === 'references' ? resource : subject"
           :id="id"
-          :heading="current?.id === 'overview'"
+          :heading="current?.id === 'overview' || id === 'counterparts'"
           @open="emit('open', $event)"
         />
       </template>

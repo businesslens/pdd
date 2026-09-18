@@ -141,14 +141,13 @@ const FACET_ORDER: ReportResourceKind[] = [
 ]
 
 /**
- * The kinds a collection can be filtered by: exactly the relations its own rows
- * already print.
+ * The generic relation filters a collection offers, drawn from its row metrics.
  *
  * A facet the reader cannot see on a card is a correlation they have to take on
  * trust, and a hand-kept list drifts from the card the moment either changes.
- * So the offer is derived from the card itself — every metric that names a kind,
- * plus the Domain a card carries as its badge — and a collection that prints
- * nothing relational offers no filter at all.
+ * Start with metrics that name a kind and the Domain badge, then apply each
+ * collection's scope. Actor access and participation do not filter Entities;
+ * the named relationship controls own their axes separately.
  */
 export function facetKindsFor(workspace: ReportWorkspace, kind: ReportResourceKind): ReportResourceKind[] {
   const printed = new Set<ReportResourceKind>()
@@ -158,7 +157,12 @@ export function facetKindsFor(workspace: ReportWorkspace, kind: ReportResourceKi
       if (metric.kind) printed.add(metric.kind)
     }
   }
-  return FACET_ORDER.filter(item => item !== kind && printed.has(item))
+  // These relations have one named control shared with the Matrix, rather
+  // than a second generic facet with different combination semantics.
+  return FACET_ORDER.filter(item => item !== kind && printed.has(item)
+    && !(kind === 'entity' && item !== 'domain')
+    && !(kind === 'capability' && ['interface', 'experience', 'screen', 'capability-scenario'].includes(item))
+    && !(kind === 'rule' && item !== 'domain'))
 }
 
 /**

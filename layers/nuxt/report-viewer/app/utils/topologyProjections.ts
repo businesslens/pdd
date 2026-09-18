@@ -188,8 +188,8 @@ export function deliveryMatrixProjection(workspace: ReportWorkspace): TopologyMa
     }
   }
   return {
-    rows: workspace.capabilities.filter(item => cells.some(cell => cell.row === item.key)),
-    columns: workspace.interfaces.filter(item => cells.some(cell => cell.column === item.key)),
+    rows: workspace.capabilities,
+    columns: workspace.interfaces,
     cells
   }
 }
@@ -263,8 +263,8 @@ export function mutationProjection(workspace: ReportWorkspace): TopologyMatrix {
       evidence: occurrences.map(({ scenario }) => scenario), details: []
     }]
   }))
-  return { rows: workspace.entities.filter(item => cells.some(cell => cell.row === item.key)),
-    columns: workspace.capabilities.filter(item => cells.some(cell => cell.column === item.key)), cells }
+  return { rows: workspace.entities,
+    columns: workspace.capabilities, cells }
 }
 
 export function entityRelationsProjection(workspace: ReportWorkspace): Diagram {

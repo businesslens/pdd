@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /** Resource inspection preserves the live working view and supports real browser history. */
 import { chromium, expect } from '@playwright/test'
+import { expectCollectionDrawing } from './report-view-controls.mjs'
 import { mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 const origin = process.argv[2]
@@ -18,25 +19,25 @@ try {
     const page = await context.newPage()
     page.on('pageerror', error => errors.push(error.message))
     const panel = panelOf(page)
-    await page.goto(`${origin}/?s=what-changes-what&tm=entity:order`)
+    await page.goto(`${origin}/?s=entity&t=matrix`)
     const source = page.locator('.blr-topology-matrix a[data-resource-key="entity:order"]').first()
     await expect(source).toBeVisible()
     await source.click()
     await title(page, 'Order')
-    expect(urlValue(page, 's')).toBe('what-changes-what')
+    expect(urlValue(page, 's')).toBe('entity')
     await expect(page.locator('.blr-topology-matrix')).toBeAttached()
     await expect(page.locator('.blr-resource-overlay')).toBeVisible()
     // Focus stays inside the reading while the working view remains mounted.
     await page.keyboard.press('Shift+Tab')
     await expect.poll(() => panel.evaluate(element => element.contains(document.activeElement))).toBe(true)
     if (width >= 768) {
-      await expect(page.getByRole('heading', { level: 1, includeHidden: true })).toContainText('What changes what')
-      await expect(page.locator('.blr-navitem[data-current=true]')).toContainText('What changes what')
+      await expect(page.getByRole('heading', { level: 1, includeHidden: true })).toContainText('Entities')
+      await expect(page.locator('.blr-navitem[data-current=true]')).toContainText('Entities')
       // A click over the rail dismisses the reading without navigating underneath.
       await page.mouse.click(24, 140)
       await expect(panel).toHaveCount(0)
       await expect.poll(() => urlValue(page, 'e')).toBeNull()
-      expect(urlValue(page, 's')).toBe('what-changes-what')
+      expect(urlValue(page, 's')).toBe('entity')
       await expect(source).toBeFocused()
       await source.click()
       await title(page, 'Order')
@@ -46,13 +47,13 @@ try {
     await expect(panel.locator('[data-flow-ready=true]')).toBeVisible()
     await page.reload()
     await title(page, 'Order')
-    expect(urlValue(page, 's')).toBe('what-changes-what')
+    expect(urlValue(page, 's')).toBe('entity')
     await expect(panel.getByRole('tab', { name: /^Lifecycle/ })).toHaveAttribute('aria-selected', 'true')
     await expect(panel.locator('[data-flow-ready=true]')).toBeVisible()
     if (screenshots) await page.screenshot({ animations: 'disabled', path: join(screenshots, `${width}-resource-lifecycle.png`) })
     await panel.getByRole('button', { name: 'Close resource', exact: true }).click()
     await expect(panel).toHaveCount(0)
-    await expect(page.getByRole('heading', { level: 1 })).toContainText('What changes what')
+    await expect(page.getByRole('heading', { level: 1 })).toContainText('Entities')
     await page.goBack()
     await title(page, 'Order')
     await page.keyboard.press('Escape')
@@ -82,7 +83,12 @@ try {
     await panel.getByRole('tab', { name: 'Overview', exact: true }).click()
     await expect(connections).toHaveCount(0)
     await expect.poll(() => urlValue(page, 'rt')).toBeNull()
-    await expect(panel.locator('a[data-resource-key="domain:ordering"]')).toBeVisible()
+    const domainOverflow = panel.locator('[data-domain-overflow]')
+    if (await domainOverflow.isVisible()) {
+      await domainOverflow.click()
+      await expect(page.getByRole('link', { name: 'Domain: Ordering', exact: true })).toBeVisible()
+      await page.keyboard.press('Escape')
+    } else await expect(panel.locator('a[data-resource-key="domain:ordering"]')).toBeVisible()
     await page.goBack()
     await expect(connections).toBeVisible()
 
@@ -108,7 +114,7 @@ try {
     await expect(page.locator('[data-flow-ready=true]')).toHaveCount(2)
     await panel.getByRole('button', { name: 'Close resource', exact: true }).click()
     await expect(page.locator('[data-flow-ready=true]')).toHaveCount(1)
-    await expect(page.getByRole('button', { name: 'Draw as graph', exact: true })).toHaveAttribute('aria-pressed', 'true')
+    await expectCollectionDrawing(page, 'graph')
 
     // Return to the precise expanded Scenario and scroll after two linked-resource lookups.
     await page.goto(`${origin}/?s=journey&e=journey:browse-and-buy&rt=scenarios`)
@@ -140,6 +146,7 @@ try {
 
     // Search from the Product Overview must retain Overview as the working view.
     await page.goto(origin)
+    if (width < 1024) await page.getByRole('button', { name: 'Open report navigation', exact: true }).click()
     await page.getByRole('button', { name: /Search/ }).first().click()
     await page.getByPlaceholder('Search every resource in this model…').fill('Order')
     await page.getByRole('option').filter({ hasText: /^Order/ }).first().click()

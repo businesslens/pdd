@@ -42,6 +42,7 @@ its owning collection when it names no working view.
 - Its References, with the role explaining why each is attached
 - For a Capability or a Journey, its Scenarios with their Steps, routes, Context places, and what each Step does to the Product's things
 - For an Entity, its named facts with the Rules that govern them, and, on its Lifecycle tab, its lifecycle composed from every Step that creates, moves, or removes it, with the Capability on each arc and the Rules that restrict or forbid it
+- For a Screen, its purpose and Information presented in Overview, with presented Entities above the information and Capability boundary last; its Available actions and expandable View states in Behavior; and its counterpart Screens in Connections
 - For a Business Rule, who may perform each operation it governs, as sentences
 
 ## Available actions
@@ -54,10 +55,10 @@ its owning collection when it names no working view.
 - Open a Code Reference inside the slideover while preserving the resource reading
 - Open a Markdown Reference as a formatted document while keeping the resource reading open
 - Open a named view of another subject, focused on this resource, from the heading row
-- Read the documentation for this resource type
 - Read an Interface’s delivered Capabilities and contained resources in Overview
 - Follow actual ownership through Interfaces, an Interface, an optional Experience, and a Screen
 - Open an Experience’s own Screens and references to shared Screens
+- Read a Screen's actions and view states in Behavior, expanding state descriptions individually or all together
 - Return to the previous resource reading, or close to the preserved working view
 - Open a resource link in another browser tab
 - Search the whole model by name
@@ -74,11 +75,21 @@ Rules governing individual facts.
 
 The resource's complete relationship list, grouped by direction and relationship.
 Relationships remain available here when their targets also appear in Overview.
-Connections follows Lifecycle or Scenarios when that reading exists, otherwise
+Connections follows Lifecycle, Scenarios or Behavior when that reading exists, otherwise
 Overview. It is offered only when relationships are present. Its address and
 reading position survive refresh and following a related resource then returning
 with Back. Selecting Connections while reading a Scenario opens its parent's
 Connections.
+
+### Behavior open
+
+A Screen reading with Available actions as a list, followed by expandable View
+state rows. Behavior is offered when either list has content, with no empty
+sections. Counts sit beside the lists rather than in Overview. State descriptions
+start closed, and Expand all and Collapse all sit beside the View states heading.
+Expansion is remembered per Screen across tab changes, related-resource lookups,
+refresh and valid recompilation. Actions and states remain independent lists;
+the reading does not infer transitions or assign actions to states.
 
 ### References open
 
@@ -104,8 +115,7 @@ Expansion is remembered for this resource when changing readings, returning with
 Back or refreshing. References is the last reading and names its count;
 it is offered only when attachments exist. A Scenario's References belongs to
 that Scenario, while its behavioral reading stays inside its parent. The selected
-reading survives Back and refresh. Documentation explaining the resource type
-remains available from the heading.
+reading survives Back and refresh.
 
 ### Scenarios open
 
@@ -128,7 +138,9 @@ and the ways out sit on the heading row whichever reading is open.
 One resource’s authored meaning, relations, and resource-specific readings.
 Overview contains the resource's explanation and Interface delivery; Connections
 contains its relationships, References contains its attached material, and an
-Entity reads its state machine in Lifecycle.
+Entity reads its state machine in Lifecycle. A Screen reads its actions and
+view states in Behavior, keeping its explanation and presented information in
+Overview and its counterpart Screens in Connections.
 Every comparison across resources — how Journeys compose,
 how Interfaces deliver — belongs to the owning collection, because a page
 showing one resource cannot answer a question about how several compare.

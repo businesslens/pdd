@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /** Exercise report destinations and resource readings against a running built CLI. */
 import { chromium, expect } from '@playwright/test'
+import { selectCollectionDrawing, expectCollectionDrawing, expandCollection } from './report-view-controls.mjs'
 import { mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 const origin = process.argv[2]
@@ -10,10 +11,9 @@ const browser = await chromium.launch()
 const errors = []
 const screenshots = process.env.BLR_NAV_SCREENSHOTS
 if (screenshots) mkdirSync(screenshots, { recursive: true })
-/* A collection's Graph is reached by the switch inside it; the three matrices
-   compare collections and are rail rows of their own below Overview. */
+/* Graph and Matrix drawings share their collection navigation. */
 const graphs = ['Domains', 'Interfaces', 'Entities']
-const matrices = [['Compare delivery', 'delivery'], ['Rule attachments', 'rule-attachments'], ['What changes what', 'what-changes-what']]
+const matrices = [['Compare delivery', 'capability', 'Capabilities'], ['Rule attachments', 'rule', 'Business Rules'], ['What changes what', 'entity', 'Entities']]
 const sectionOf = { Domains: 'domain', Interfaces: 'interface', Entities: 'entity' }
 const resourceUrl = (kind, id, suffix = '') => `${origin}/?s=${kind}&e=${encodeURIComponent(`${kind}:${id}`)}${suffix}`
 /* A tab is its label and, at most, a count: `Scenarios 3` is Scenarios, `Scenarios v2` is not. */
@@ -43,36 +43,41 @@ try {
       await expect(page.getByRole('heading', { level: 1 })).toContainText(collection)
       await expect(page.locator('.blr-surface-tab')).toHaveCount(0)
       const count = await page.getByRole('heading', { level: 1 }).locator('.blr-meta').textContent()
-      await expect(page.getByRole('button', { name: 'Draw as rows', exact: true })).toHaveAttribute('aria-pressed', 'true')
-      await page.getByRole('button', { name: 'Draw as graph', exact: true }).click()
+      await expectCollectionDrawing(page, 'rows')
+      await selectCollectionDrawing(page, 'graph')
       await expect(page).toHaveURL(new RegExp(`[?&]t=graph(?:&|$)`))
       await expect(page).toHaveURL(new RegExp(`[?&]s=${section}(?:&|$)`))
-      await expect(page.getByRole('button', { name: 'Draw as graph', exact: true })).toHaveAttribute('aria-pressed', 'true')
+      await expectCollectionDrawing(page, 'graph')
       /* The set is the same set: its count does not change with the drawing. */
       await expect(page.getByRole('heading', { level: 1 }).locator('.blr-meta')).toHaveText(count)
       await page.reload()
-      await expect(page.getByRole('button', { name: 'Draw as graph', exact: true })).toHaveAttribute('aria-pressed', 'true')
+      await expectCollectionDrawing(page, 'graph')
       if (['interface', 'entity'].includes(section)) {
         await expect(page.locator('[data-flow-ready=true]')).toBeVisible({ timeout: 15000 })
       }
       if (width >= 1024) await expect(page.locator('.blr-navitem[data-current=true]')).toContainText(collection)
       await capture(page, `${width}-${section}-graph`)
-      await page.getByRole('button', { name: 'Draw as rows', exact: true }).click()
+      await selectCollectionDrawing(page, 'rows')
       await expect(page).not.toHaveURL(/[?&]t=/)
       await choose(page, 'Overview')
     }
-    for (const [label, section] of matrices) {
-      await choose(page, label)
-      /* A matrix is a section of its own: the rail row names it, the heading
-         repeats that name, and it has no tabs. */
+    for (const [label, section, collection] of matrices) {
+      await choose(page, collection)
+      const count = await page.getByRole('heading', { level: 1 }).locator('.blr-meta').textContent()
+      await selectCollectionDrawing(page, 'matrix')
       await expect(page).toHaveURL(new RegExp(`[?&]s=${section}(?:&|$)`))
-      await expect(page).not.toHaveURL(/[?&]t=/)
-      await expect(page.getByRole('heading', { level: 1 })).toContainText(label)
+      await expect(page).toHaveURL(/[?&]t=matrix(?:&|$)/)
+      await expect(page.getByRole('heading', { level: 1 })).toContainText(collection)
+      await expect(page.getByRole('heading', { level: 1 }).locator('.blr-meta')).toHaveText(count)
+      await expect(page.locator('[data-view-trigger]')).toBeVisible()
+      await expect(page.getByRole('button', { name: 'About this matrix', exact: true })).toHaveCount(0)
+      await expect(page.locator('[data-matrix-heading]')).toHaveCount(0)
       await expect(page.locator('.blr-surface-tab')).toHaveCount(0)
+      await expect(page.locator('.blr-navitem').filter({ hasText: new RegExp(`^${label}$`) })).toHaveCount(0)
       await page.reload()
-      await expect(page.getByRole('heading', { level: 1 })).toContainText(label)
-      if (width >= 1024) await expect(page.locator('.blr-navitem[data-current=true]')).toContainText(label)
-      await capture(page, `${width}-${section}`)
+      await expectCollectionDrawing(page, 'matrix')
+      if (width >= 1024) await expect(page.locator('.blr-navitem[data-current=true]')).toContainText(collection)
+      await capture(page, `${width}-${section}-matrix`)
       const link = page.locator('.blr-topology-matrix [data-resource-key]').first()
       if (await link.count()) {
         const matrixUrl = page.url()
@@ -80,7 +85,7 @@ try {
         await expect(page).toHaveURL(/[?&]e=/)
         await page.goBack()
         await expect(page).toHaveURL(matrixUrl)
-        await expect(page.getByRole('heading', { level: 1 })).toContainText(label)
+        await expect(page.getByRole('heading', { level: 1 })).toContainText(collection)
       }
     }
     /* Branch rows only toggle. Each resource root contains an Overview link,
@@ -94,7 +99,7 @@ try {
       const roots = page.locator('[data-tree-card] [role="treeitem"][aria-level="1"][aria-expanded]')
       await page.getByRole('button', { name: 'Collapse all', exact: true }).click()
       for (const root of await roots.all()) await expect(root).toHaveAttribute('aria-expanded', 'false')
-      await page.getByRole('button', { name: 'Expand all', exact: true }).click()
+      await expandCollection(page)
       for (const root of await roots.all()) await expect(root).toHaveAttribute('aria-expanded', 'true')
       for (const resource of resources) {
         const title = kind === 'domain' ? resource.name : resource.title
@@ -297,7 +302,7 @@ try {
       await choose(page, 'Journeys')
       await expect(page).toHaveURL(/[?&]s=journey(?:&|$)/)
       await expect(page).not.toHaveURL(/[?&]tf=/)
-      await page.getByRole('button', { name: 'Draw as graph', exact: true }).click()
+      await selectCollectionDrawing(page, 'graph')
       await expect(page).toHaveURL(/[?&]t=graph(?:&|$)/)
       await expect(page).not.toHaveURL(/[?&]tf=/)
       await page.goBack()
@@ -343,7 +348,7 @@ try {
     if (width >= 1024) await expect(page.locator('.blr-navitem[data-current=true]')).toHaveText('Overview')
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true)
     await context.close()
-    console.log(`Passed ${width}px: Rows/Graph, matrix Back, collection focus, Scenario persistence, tree toggles, reload, exits and Interface delivery.`)
+    console.log(`Passed ${width}px: Rows/Graph/Matrix, matrix Back, collection focus, Scenario persistence, tree toggles, reload, exits and Interface delivery.`)
   }
   expect(errors).toEqual([])
 } finally { await browser.close() }

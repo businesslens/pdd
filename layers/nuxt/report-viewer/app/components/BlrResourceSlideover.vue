@@ -2,7 +2,6 @@
 import type { AnyResourceView, ReportWorkspace } from '../utils/reportWorkspace'
 import { ENTITY_KIND_META } from '../utils/reportWorkspace'
 import { resourceViewLinks } from '../utils/reportDestinations'
-import { docsForResourceKind } from '../utils/resourceDocs'
 import { KIND_TERM } from '../utils/vocabulary'
 import { parentOf } from '../utils/pageSections'
 import { defaultTopologyReading } from '../utils/topologyState'
@@ -25,7 +24,6 @@ const scenarioRoute = defineModel<string | null>('scenarioRoute', { default: nul
 const routeColumns = defineModel<string>('routeColumns', { default: 'auto' })
 const subject = computed(() => props.resource ? parentOf(props.workspace, props.resource) ?? props.resource : null)
 const exits = computed(() => subject.value ? resourceViewLinks(subject.value, props.workspace) : [])
-const docs = computed(() => docsForResourceKind(subject.value?.kind ?? 'product'))
 const tabsTarget = useTemplateRef('tabsTarget')
 const heading = useTemplateRef('heading')
 const referenceHeading = useTemplateRef('referenceHeading')
@@ -132,9 +130,6 @@ function open(resource: AnyResourceView) { save(); emit('open', resource) }
           <div class="blr-resource-actions flex shrink-0 items-center gap-1">
             <UTooltip v-for="link in exits" :key="link.section" :text="link.name">
               <UButton :label="link.name" :aria-label="link.name" :icon="link.icon" color="neutral" variant="ghost" size="sm" :ui="{ label: 'blr-resource-action-label text-xs' }" @click="subject && emit('view', link.section, subject)" />
-            </UTooltip>
-            <UTooltip :text="docs.label">
-              <UButton :to="docs.url" external target="_blank" rel="noopener noreferrer" icon="i-lucide-book-open" color="neutral" variant="ghost" size="sm" label="Docs" :aria-label="docs.label" :ui="{ label: 'blr-resource-action-label text-xs' }" />
             </UTooltip>
             <UTooltip :text="expandLabel">
               <UButton :icon="expanded ? 'i-lucide-minimize' : 'i-lucide-maximize'" :aria-label="expandLabel" :aria-pressed="expanded" class="hidden md:inline-flex" color="neutral" variant="ghost" size="sm" @click="expanded = !expanded" />

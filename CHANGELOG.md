@@ -7,9 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Choose collection views from a dropdown with larger preview titles and subtitles, without a separate help button or About section.
+
+- Simplify Entity filters to Entities, Domains and Changed by, marked with the Capabilities icon.
+
+- Simplify Capability filters with one Available in picker for Interfaces, Experiences and Screens.
+
+- Find comparison matrices beside Rows and Graph in Entities, Capabilities and Business Rules, with one shared filter bar, consistent counts and no duplicate headings.
+
 - Show the first Domain in resource headers, with extra Domains available through a “more” button.
+- Remove the Docs button from resource slideovers.
+- Give Screens a Behavior tab for actions and expandable view states, with a simpler Overview.
 - Start Overview references collapsed, with Expand all and Collapse all controls.
 - Keep legends beside the filters in all three comparison views.
+- Use warmer Sand fills for filter chips and neutral badges in both themes.
 
 ## [0.20.0] - 2026-09-18
 

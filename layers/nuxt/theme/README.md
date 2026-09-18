@@ -36,6 +36,10 @@ export default defineNuxtConfig({
   family from `public/brand/icons`, including the manifest and Apple touch
   icon. Call it once in the host's root component.
 - **Nuxt UI defaults**: `size: 'sm'` and `color: 'primary'`.
+- **Neutral badges** use Sand: a parchment fill and warm outline in light mode,
+  with a subdued brown fill in dark mode. Outline, soft and subtle badges share
+  `--businesslens-badge-bg`; Product Report filter and resource-link chips use
+  the same token. Colored badges retain their semantic palettes.
 
 Nuxt, Vue, Nuxt UI, Tailwind, icons, and fonts are optional peer dependencies
 of the `businesslens` package; install the ones your host uses. Hosts retain
