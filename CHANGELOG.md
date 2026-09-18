@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.20.0] - 2026-09-18
+
+- View the Product Model of a GitHub repository, branch, or pull request without cloning it yourself.
+
 ## [0.19.0] - 2026-09-17
 
 - Clearer comparison tables with independent filters and smoother navigation.

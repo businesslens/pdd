@@ -31,6 +31,8 @@ interface LintCliOptions {
 interface ViewCliOptions {
   open: boolean
   port?: number
+  branch?: string
+  pr?: number
 }
 
 interface ForceCliOptions {
@@ -67,6 +69,13 @@ function port(value: string): number {
     throw new InvalidArgumentError('expected an integer from 1 to 65535')
   }
   return parsed
+}
+
+function pullRequestNumber(value: string): number {
+  if (!/^[1-9]\d*$/.test(value)) {
+    throw new InvalidArgumentError('expected a positive pull request number')
+  }
+  return Number(value)
 }
 
 function commandsBeforeOptions(output: string): string {
@@ -133,13 +142,20 @@ function createProgram(setExitCode: (code: number) => void): Command {
     })
 
   program
-    .command('view')
+    .command('view [repository]')
     .summary('View a Product Model locally')
-    .description('View the current Product Model on localhost.')
+    .description('View the current Product Model, or a GitHub repository\'s, on localhost.')
     .option('--no-open', 'Do not open the default browser')
     .option('--port <port>', 'Port to listen on', port)
-    .action(async (options: ViewCliOptions, command: Command) => {
-      setExitCode(await runView(cwdFor(command), options))
+    .option('--branch <name>', 'Branch or tag of the GitHub repository')
+    .option('--pr <number>', 'Pull request of the GitHub repository to view', pullRequestNumber)
+    .action(async (repository: string | undefined, options: ViewCliOptions, command: Command) => {
+      const { cwd } = command.optsWithGlobals() as { cwd?: string }
+      setExitCode(await runView(cwdFor(command), {
+        ...options,
+        repository,
+        explicitCwd: cwd !== undefined
+      }))
     })
 
   const blueprint = program
