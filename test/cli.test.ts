@@ -76,9 +76,11 @@ describe('cli help', () => {
     const result = cli(repo, process.env, 'view', '--help')
     expect(result.status).toBe(0)
     expect(result.stderr).toBe('')
-    expect(result.stdout).toContain('Usage: businesslens view [options]')
+    expect(result.stdout).toContain('Usage: businesslens view [options] [repository]')
     expect(result.stdout).toContain('--no-open')
     expect(result.stdout).toContain('--port <port>')
+    expect(result.stdout).toContain('--branch <name>')
+    expect(result.stdout).toContain('--pr <number>')
     expect(result.stdout).toContain('--cwd <path>')
     expect(result.stdout).not.toContain('--providers')
     expect(result.stdout).not.toContain('--catalog')
@@ -247,6 +249,27 @@ describe('cli dispatch', () => {
       rmSync(empty, { recursive: true, force: true })
     }
   })
+
+  it('rejects remote view spellings that cannot be fetched, before touching the network', () => {
+    const cases: Array<[string[], string]> = [
+      [['view', '--no-open', '--pr', '12'], '--branch and --pr apply to a GitHub repository'],
+      [['view', '--no-open', '--branch', 'main'], '--branch and --pr apply to a GitHub repository'],
+      [['view', '--no-open', 'example/fixture-shop', '--branch', 'main', '--pr', '12'], 'either --branch or --pr'],
+      [['view', '--no-open', 'https://github.com/example/fixture-shop/pull/12', '--branch', 'main'], 'already names a pull request #12'],
+      [['view', '--no-open', 'https://github.com/example/fixture-shop/tree/main', '--pr', '12'], 'already names a branch main'],
+      [['view', '--no-open', '--cwd', '.', 'example/fixture-shop'], '--cwd selects a local model'],
+      [['view', '--no-open', 'https://gitlab.com/example/fixture-shop'], 'is not a GitHub repository'],
+      [['view', '--no-open', 'https://github.com/example/fixture-shop/issues/3'], 'is not a repository, branch, or pull request URL'],
+      [['view', '--no-open', 'example/fixture-shop', '--pr', '0'], 'expected a positive pull request number'],
+      [['view', '--no-open', 'example/fixture-shop', '--pr', 'twelve'], 'expected a positive pull request number']
+    ]
+    for (const [args, message] of cases) {
+      const result = cli(repo, process.env, ...args)
+      expect(result.status, args.join(' ')).toBe(2)
+      expect(result.stderr, args.join(' ')).toContain(message)
+      expect(result.stderr, args.join(' ')).not.toContain('Fetching')
+    }
+  }, 30_000)
 
   it('does not accept retired commands or options as aliases', () => {
     rmSync(join(repo, '.businesslens', 'build'), { recursive: true, force: true })
