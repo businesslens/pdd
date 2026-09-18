@@ -98,8 +98,10 @@ function open(key: string) {
             :resources="filter.resources" :in-sheet="inSheet"
             @update:model-value="selectAxis(filter.resources, $event, true)" />
         </template>
+        <template #end>
+          <BlrMatrixLegend :mode="matrixMode" />
+        </template>
       </BlrFilterBar>
-      <BlrMatrixLegend v-if="!matrixView" :mode="matrixMode" />
     </div>
     <div ref="pane" class="blr-topology-reading" @scroll.capture.passive="save">
       <BlrTopologyMatrix :workspace="workspace" :matrix="matrix" :column="reading.column" :mode="matrixMode" @column="update({ column: $event })" @open="open" />

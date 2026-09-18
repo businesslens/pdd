@@ -610,8 +610,7 @@ const orphanScenarios = computed(() => props.workspace.scenarios
         <header
           v-if="surfaceHeading"
           data-report-page-header
-          class="mb-2 grid shrink-0 items-center gap-x-3 gap-y-2 border-b border-default px-4 py-2 sm:px-5"
-          :class="matrixSection ? 'grid-cols-[minmax(0,1fr)_auto] md:grid-cols-[minmax(0,1fr)_auto_auto]' : 'grid-cols-[minmax(0,1fr)] md:grid-cols-[minmax(0,1fr)_auto]'"
+          class="mb-2 grid shrink-0 grid-cols-[minmax(0,1fr)] items-center gap-x-3 gap-y-2 border-b border-default px-4 py-2 sm:px-5 md:grid-cols-[minmax(0,1fr)_auto]"
         >
           <div class="flex min-w-0 items-center gap-2 sm:gap-3">
             <UDashboardSidebarCollapse
@@ -636,13 +635,10 @@ const orphanScenarios = computed(() => props.workspace.scenarios
               <BlrTerm v-if="surfaceHeading.term" :slug="surfaceHeading.term" :text="surfaceHeading.termText" icon-only />
             </h1>
           </div>
-          <div data-report-status class="row-start-2 flex items-center gap-2.5 md:col-start-2 md:row-start-1" :class="matrixSection ? 'col-span-2 md:col-span-1' : undefined">
+          <div data-report-status class="row-start-2 flex items-center gap-2.5 md:col-start-2 md:row-start-1">
             <BlrCoverageBadge :status="workspace.coverage.status" named size="md" />
             <span class="blr-meta" :title="`Report schema ${workspace.identity.schemaVersion}`">{{ workspace.identity.schemaVersion }}</span>
             <time class="blr-meta" :datetime="workspace.identity.generatedAt" :title="`Generated ${workspace.identity.generatedAt}`">{{ workspace.identity.generatedAt.slice(0, 10) }}</time>
-          </div>
-          <div v-if="matrixSection" class="col-start-2 row-start-1 min-w-0 justify-self-end md:col-start-3" data-matrix-legend-target>
-            <BlrMatrixLegend :mode="matrixView.mode" />
           </div>
         </header>
 

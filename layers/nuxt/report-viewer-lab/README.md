@@ -25,7 +25,7 @@ brand controls and the collapsed Product picker retain 32px targets.
 
 The **Comparison legend** audition is decided: Explained is the stable Legend
 popover on Compare delivery, What changes what and Rule attachments. Its button
-lives in these page headers; each colored badge has a short meaning.
+lives beside these views' filters; each colored badge has a short meaning.
 Entries cover every possible badge for the view, regardless of filters. The
 shadow, alternatives, selector, cookie composable and experiment stylesheet have
 been removed. The background audition remains independently owned by `theme-lab`.

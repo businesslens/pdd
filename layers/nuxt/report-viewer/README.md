@@ -254,8 +254,8 @@ independently selectable; hidden-type chips restore types individually.
 Matrices scroll vertically with the reading; edge controls, horizontal trackpad
 gestures, and touch swipes move one column
 at a time beside a fixed subject column. The first visible column uses `tm`;
-moving between columns preserves vertical position and cell details. Each page
-header offers a Legend popover with every possible badge color and meaning for
+moving between columns preserves vertical position and cell details. Each matrix's
+filter bar offers a Legend popover with every possible badge color and meaning for
 that view, regardless of report data, filters or the current column window.
 The header and reading render together on the server. Body cells mount only for the
 visible columns and one neighbour on each side; the browser animates their offset. A collection Graph
