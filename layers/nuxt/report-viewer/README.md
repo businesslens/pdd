@@ -454,6 +454,8 @@ approves work or writes a saved state. Hosts without Git context omit Review.
 
 Overview retains Coverage and its independent `loadRepository` input. The shared
 `BlrRepositoryTree` renders both pages' trees, search, expansion and selection.
+It marks `.businesslens/` folders with the shared brand logo and recognized
+resource paths with the same kind icons and colours used throughout the report.
 Coverage supplies current scope and inspection context; Review supplies changes
 between its selected states. There is no separate resource or field change list.
 File details use the two models for related resource links; unavailable models

@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { filterRepositoryTree, repositoryTreeNodes, type RepositoryTreeNode } from '../utils/repositoryTree'
+import { filterRepositoryTree, repositoryModelKind, repositoryTreeNodes, type RepositoryTreeNode } from '../utils/repositoryTree'
+import { ENTITY_KIND_META } from '../utils/reportWorkspace'
+import { slotColor } from '../utils/reportPalette'
 
 const props = defineProps<{ nodes: RepositoryTreeNode[], rootLabel: string, loading?: boolean, emptyMessage?: string }>()
 const emit = defineEmits<{ select: [event: Event, node: RepositoryTreeNode] }>()
@@ -9,6 +11,12 @@ const expanded = ref<string[]>(['.'])
 const visible = computed(() => filterRepositoryTree(props.nodes, query.value))
 const root = computed<RepositoryTreeNode>(() => ({ value: '.', label: props.rootLabel, directory: true, children: visible.value }))
 const all = computed(() => repositoryTreeNodes(props.nodes))
+const modelIcons = computed(() => new Map(all.value.map(node => {
+  const kind = repositoryModelKind(node)
+  return [node.value, kind ? ENTITY_KIND_META[kind] : null]
+})))
+const colorMode = useColorMode()
+const modelLogo = computed(() => `/brand/logo/mark${colorMode.value === 'dark' ? '-dark' : ''}.svg`)
 const selected = computed(() => path.value === '.' ? root.value : all.value.find(node => node.value === path.value))
 let initialized = false
 watch([all, path], () => {
@@ -57,7 +65,9 @@ function toggle(event: CustomEvent<{ originalEvent: Event }>) {
         <template #item-leading="{ item, expanded: open, handleToggle }">
           <button v-if="item.children.length" type="button" class="shrink-0 rounded p-0.5 focus-visible:outline-2 focus-visible:outline-primary" :aria-label="`${open ? 'Collapse' : 'Expand'} ${item.value}`" :aria-expanded="open" @click.stop="handleToggle()" @keydown.stop><UIcon name="i-lucide-chevron-right" class="size-3 transition-transform" :class="open && 'rotate-90'" /></button>
           <span v-else class="size-4 shrink-0" />
-          <UIcon :name="item.value === '.' ? 'i-lucide-folder-root' : item.directory ? open ? 'i-lucide-folder-open' : 'i-lucide-folder' : 'i-lucide-file'" class="size-4 shrink-0 text-muted" />
+          <img v-if="item.directory && item.value.split('/').at(-1) === '.businesslens'" :src="modelLogo" alt="" title="BusinessLens Product Model" class="size-4 shrink-0 object-contain" data-model-folder-logo>
+          <UIcon v-else-if="modelIcons.get(item.value)" :name="modelIcons.get(item.value)!.icon" :title="modelIcons.get(item.value)!.label" :style="{ color: slotColor(modelIcons.get(item.value)!.slot, colorMode.value === 'dark') }" class="size-4 shrink-0" :data-model-kind="modelIcons.get(item.value)!.kind" />
+          <UIcon v-else :name="item.value === '.' ? 'i-lucide-folder-root' : item.directory ? open ? 'i-lucide-folder-open' : 'i-lucide-folder' : 'i-lucide-file'" class="size-4 shrink-0 text-muted" />
         </template>
         <template #item-label="{ item }">
           <span :title="item.value === '.' ? rootLabel : item.value" :data-coverage-root="item.value === '.' ? '' : undefined" :data-repository-path="item.value === '.' ? undefined : item.value" :class="[path === item.value ? 'font-semibold text-primary' : 'text-default', item.value === '.' && 'font-sans text-sm font-semibold']">{{ item.label }}{{ item.directory && item.value !== '.' ? '/' : '' }}</span>

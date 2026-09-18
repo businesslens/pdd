@@ -51,6 +51,13 @@ or field summary. The heading counts changed files. It shares Coverage's
 repository tree, expansion, search and path selection, with change indicators
 in place of inspection-age indicators. Model References enrich a selected
 location with resource links; they never determine which files appear.
+In the shared repository tree, `.businesslens/` folders wear the BusinessLens
+brand mark. Resource collections, resource folders and authored resource files
+use their existing report kind icons and colours, including the distinct
+Capability and Journey Scenario marks. Their authored paths identify the kind,
+so historical or deleted resources do not require a compilable model. Other
+repository paths, model configuration and resource assets keep ordinary file
+and folder icons.
 Coverage's changes since the last completed inspection are distinct from Review's
 changes between the selected states. Neither establishes semantic alignment.
 
