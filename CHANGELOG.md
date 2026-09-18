@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Start Overview references collapsed, with Expand all and Collapse all controls.
 - Keep legends beside the filters in all three comparison views.
 
 ## [0.20.0] - 2026-09-18

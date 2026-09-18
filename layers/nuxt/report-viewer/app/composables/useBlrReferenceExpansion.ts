@@ -14,7 +14,7 @@ export function useBlrReferenceExpansion(scope: Ref<string>, keys: Ref<string[]>
       ? Object.fromEntries(Object.entries(saved).filter(([key, value]) => keys.value.includes(key) && typeof value === 'boolean'))
       : {}
   }
-  // Newly added groups still open by default after a report recompile.
+  // Newly added branches follow this reading's defaults after a report recompile.
   const open = computed({
     get: () => keys.value.filter(key => choices.value[key] ?? defaults.value.includes(key)),
     set: (values: string[]) => {

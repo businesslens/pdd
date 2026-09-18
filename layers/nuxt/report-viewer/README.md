@@ -57,7 +57,9 @@ Scenario's attachments under its own title.
 The Product Overview's References reading uses the same tree for every attachment
 in the model, including the Product's own. Each item names its owner, and resource
 owner links open that resource's References tab over the current reading. The
-catalog keeps its own expansion separately from individual resource trees.
+catalog starts collapsed, with Expand all and Collapse all controls beside its
+count that also toggle image previews. It remembers its own expansion separately
+from individual resource trees.
 Local References always lead with the file path; a distinct authored title follows
 inline as muted context. External References use their authored title with the URL
 below it, or the URL alone when untitled. A title identical to the target is not repeated.
