@@ -34,6 +34,7 @@ its owning collection when it names no working view.
 
 - The resource's title and type, stated once, above the reading
 - Actual ownership, separate from the trail through previously inspected resources
+- The first related Domain by name on the header line, with a “+N more” button for any remaining Domains
 - The identifying facts of that kind
 - Its authored description, Intent, and any supporting sections
 - Its Contexts, where the resource type carries them
@@ -46,6 +47,7 @@ its owning collection when it names no working view.
 ## Available actions
 
 - Open any related resource’s reading
+- Reveal additional header Domains from the “more” button, then open any of their readings
 - Read a Scenario, and compare its named routes side by side
 - Read this resource’s complete incoming and outgoing relationships in Connections
 - Read the resource's attached material in References, including each attachment's role and available image preview

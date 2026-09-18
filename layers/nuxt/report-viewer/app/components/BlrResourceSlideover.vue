@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { AnyResourceView, ReportWorkspace } from '../utils/reportWorkspace'
 import { ENTITY_KIND_META } from '../utils/reportWorkspace'
-import { resourceAncestors, resourceDomains, resourceViewLinks } from '../utils/reportDestinations'
+import { resourceViewLinks } from '../utils/reportDestinations'
 import { docsForResourceKind } from '../utils/resourceDocs'
 import { KIND_TERM } from '../utils/vocabulary'
 import { parentOf } from '../utils/pageSections'
@@ -24,8 +24,6 @@ const expandLabel = computed(() => expanded.value ? 'Restore resource size' : 'E
 const scenarioRoute = defineModel<string | null>('scenarioRoute', { default: null })
 const routeColumns = defineModel<string>('routeColumns', { default: 'auto' })
 const subject = computed(() => props.resource ? parentOf(props.workspace, props.resource) ?? props.resource : null)
-const ancestors = computed(() => props.resource ? resourceAncestors(props.workspace, props.resource) : [])
-const domains = computed(() => props.resource ? resourceDomains(props.workspace, props.resource) : [])
 const exits = computed(() => subject.value ? resourceViewLinks(subject.value, props.workspace) : [])
 const docs = computed(() => docsForResourceKind(subject.value?.kind ?? 'product'))
 const tabsTarget = useTemplateRef('tabsTarget')
@@ -118,7 +116,7 @@ function open(resource: AnyResourceView) { save(); emit('open', resource) }
           </header>
           <BlrReferencePreview :href="reference" :title="file.title" :scope="workspace.identity.id" @details="referenceDetails = $event" @navigate="emit('referenceOpen', $event)" @close="emit('close')" />
         </template>
-        <header v-if="resource" v-show="!reference" class="flex shrink-0 items-start gap-2 border-b border-default px-5 py-3">
+        <header v-if="resource" v-show="!reference" class="blr-resource-header grid shrink-0 items-start gap-x-2 border-b border-default px-5 py-3" :class="previous ? 'grid-cols-[auto_minmax(0,1fr)_auto]' : 'grid-cols-[minmax(0,1fr)_auto]'">
           <UTooltip v-if="previous" :text="`Back to ${previous.title}`">
             <UButton icon="i-lucide-arrow-left" color="neutral" variant="ghost" size="sm" class="-ms-1 shrink-0" :aria-label="`Back to ${previous.title}`" @click="save(); emit('back')" />
           </UTooltip>
@@ -126,23 +124,9 @@ function open(resource: AnyResourceView) { save(); emit('open', resource) }
             <BlrKind :kind="resource.kind" :interface-type="resource.kind === 'interface' ? resource.interfaceType : undefined" :labelled="false" class="mt-0.5 shrink-0" />
             <div class="min-w-0 flex-1">
               <h2 ref="heading" tabindex="-1" class="flex min-w-0 items-start gap-2 text-base leading-6 font-semibold text-highlighted outline-none" data-resource-heading>
-                <span class="min-w-0 break-words">{{ resource.title }}</span>
+                <span class="min-w-0 break-words" data-resource-title>{{ resource.title }}</span>
                 <BlrTerm :slug="KIND_TERM[resource.kind]" :text="resource.title" icon-only />
               </h2>
-              <div class="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-muted">
-                <span>{{ ENTITY_KIND_META[resource.kind].label }}</span>
-                <template v-for="ancestor in ancestors" :key="ancestor.key">
-                  <UIcon name="i-lucide-chevron-right" class="size-3 shrink-0" />
-                  <BlrResourceLink :resource-key="ancestor.key" class="min-w-0 break-words hover:underline" @open="open(ancestor)">{{ ancestor.title }}</BlrResourceLink>
-                </template>
-                <template v-for="domain in domains" :key="domain.key">
-                  <span aria-hidden="true">·</span>
-                  <BlrResourceLink :resource-key="domain.key" :aria-label="`Domain: ${domain.title}`" class="inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-sm text-default hover:underline" @open="open(domain)">
-                    <BlrKind kind="domain" :labelled="false" size="xs" class="shrink-0" />
-                    <span class="min-w-0 [overflow-wrap:anywhere]">{{ domain.title }}</span>
-                  </BlrResourceLink>
-                </template>
-              </div>
             </div>
           </div>
           <div class="blr-resource-actions flex shrink-0 items-center gap-1">
@@ -159,6 +143,7 @@ function open(resource: AnyResourceView) { save(); emit('open', resource) }
               <UButton icon="i-lucide-x" color="neutral" variant="ghost" size="sm" aria-label="Close resource" @click="save(); emit('close')" />
             </UTooltip>
           </div>
+          <BlrResourceContext :key="resource.key" :workspace="workspace" :resource="resource" class="blr-resource-context mt-0.5 ps-[calc(var(--blr-resource-mark-regular)+0.5rem)]" :class="previous ? 'col-start-2' : 'col-start-1'" @open="open" />
         </header>
         <div ref="tabsTarget" v-show="!reference" class="blr-resource-tabs shrink-0" data-page-tabs-host />
         <div ref="pane" v-show="!reference" class="blr-pane min-h-0 flex-1 p-5" data-resource-scroll @scroll.capture.passive="!reference && save()">
@@ -221,5 +206,7 @@ function open(resource: AnyResourceView) { save(); emit('open', resource) }
 @container (max-width: 479px) {
   .blr-resource-panel > header { gap: 0.25rem; padding-inline: 0.75rem; }
   .blr-resource-actions { gap: 0; }
+  /* Long type names and ownership still need room beside the Domain count. */
+  .blr-resource-context { grid-column: 1 / -1; }
 }
 </style>

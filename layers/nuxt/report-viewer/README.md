@@ -21,6 +21,11 @@ browser's new-tab and copy-link actions. The compact header keeps the resource's
 identity on the left and named-view and documentation actions beside Close.
 Related Domains appear as linked names with their type icons in every resource
 header, keeping that context visible across tabs and separate from ownership.
+The first Domain always appears by name; any remaining Domains open from a
+`+N more` button. A single Domain needs no overflow button. The same first Domain
+stays visible at every panel width, with an ellipsis for a long name when space
+is tight and its full name available on hover. The popover preserves normal resource links;
+Escape dismisses it before the resource reading.
 Entities and Capabilities show their assigned Domain; other resources show the
 Domains reached through their Capabilities or Rule targets. A Scenario uses its
 own Capabilities, so it does not borrow Domains from its parent's other cases.
