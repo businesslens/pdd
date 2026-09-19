@@ -3,6 +3,7 @@ import type { RepositoryDiff, RepositoryFileComparison, RepositoryFileLoader, Re
 import type { ReportWorkspace } from '../utils/reportWorkspace'
 import { referencePath } from '../utils/referenceNavigation'
 import { repositoryTree } from '../utils/repositoryTree'
+import type { MatrixBadgeTone } from '../utils/matrixBadges'
 
 const props = defineProps<{
   diff: RepositoryDiff, base: string, target: string, before: ReportWorkspace | null, after: ReportWorkspace | null,
@@ -12,11 +13,17 @@ const emit = defineEmits<{ inspect: [key: string, state: string] }>()
 const path = defineModel<string | null>('path', { default: null })
 const showContext = ref(false)
 const filter = ref('all')
+const legendOpen = ref(false)
+const changeMeta = {
+  added: { label: 'Added', tone: 'creates', description: 'Exists in Compare to, but not in Base.' },
+  modified: { label: 'Modified', tone: 'changes', description: 'File contents or mode changed between Base and Compare to.' },
+  deleted: { label: 'Deleted', tone: 'removes', description: 'Exists in Base, but not in Compare to.' },
+  unavailable: { label: 'Unavailable', tone: 'neutral', description: 'The change could not be determined because a file could not be read.' }
+} satisfies Record<RepositoryChange, { label: string, tone: MatrixBadgeTone, description: string }>
 const states = [
-  { label: 'All changes', value: 'all' }, { label: 'Added', value: 'added' },
-  { label: 'Modified', value: 'modified' }, { label: 'Deleted', value: 'deleted' }, { label: 'Unavailable', value: 'unavailable' }
+  { label: 'All changes', value: 'all' },
+  ...Object.entries(changeMeta).map(([value, meta]) => ({ label: meta.label, value }))
 ]
-const labels: Record<RepositoryChange, string> = { added: 'Added', modified: 'Modified', deleted: 'Deleted', unavailable: 'Unavailable' }
 const files = computed(() => props.diff.files.filter(file => filter.value === 'all' || file.change === filter.value))
 const tree = computed(() => repositoryTree(showContext.value && filter.value === 'all' ? props.diff.paths : files.value.map(file => file.path)))
 const changes = computed(() => new Map(props.diff.files.map(file => [file.path, file])))
@@ -79,13 +86,31 @@ function counts(prefix: string) {
 
 <template>
   <section class="space-y-3" data-review-repository>
-    <p class="text-sm text-muted">Changed files, including the Product Model in <code>.businesslens/</code>. Select a file to compare its contents.</p>
+    <div class="flex flex-wrap items-center gap-3">
+      <p class="min-w-0 flex-1 basis-80 text-sm text-muted">Changed files, including the Product Model in <code>.businesslens/</code>. Select a file to compare its contents.</p>
+      <UPopover v-model:open="legendOpen" :content="{ align: 'end', sideOffset: 8, collisionPadding: 16 }" :ui="{ content: 'blr-matrix-legend-popover' }" class="ms-auto">
+        <UButton label="Legend" trailing-icon="i-lucide-chevron-down" color="neutral" variant="outline" size="sm" />
+        <template #content>
+          <div class="blr-matrix-legend-heading">
+            <h3>Legend</h3>
+            <UButton icon="i-lucide-x" color="neutral" variant="ghost" size="sm" aria-label="Close legend" @click="legendOpen = false" />
+          </div>
+          <ul class="blr-matrix-legend-entries" aria-label="File change legend" data-review-legend>
+            <li v-for="(meta, state) in changeMeta" :key="state" :data-legend-label="meta.label">
+              <span class="blr-matrix-legend-badge blr-matrix-tone" :data-tone="meta.tone">{{ meta.label }}</span>
+              <p>{{ meta.description }}</p>
+            </li>
+          </ul>
+          <p class="border-t border-default px-3 py-2 text-xs text-muted">Folder badges count changed files at or below that folder.</p>
+        </template>
+      </UPopover>
+    </div>
     <BlrRepositoryTree v-model:path="path" :nodes="tree" root-label="Repository" :empty-message="diff.files.length ? 'No changed files match this filter.' : 'No file changes between these states.'">
       <template #filters><USelect v-model="filter" :items="states" aria-label="Filter repository changes" size="sm" class="w-40 shrink-0" /></template>
       <template #controls><UCheckbox v-model="showContext" label="Show unchanged context" class="shrink-0 whitespace-nowrap" /></template>
       <template #status><p v-if="!diff.files.length && tree.length" class="text-sm text-muted">No file changes between these states.</p></template>
       <template #indicators="{ node }">
-        <span v-for="(count, state) in counts(node.value)" :key="state" class="rounded border border-default px-1 text-[10px]" :data-repository-change="state">{{ labels[state] }}<span v-if="node.directory" class="ms-1">{{ count }}</span></span>
+        <span v-for="(count, state) in counts(node.value)" :key="state" class="blr-matrix-tone rounded border px-1 text-[10px]" :data-tone="changeMeta[state].tone" :data-repository-change="state">{{ changeMeta[state].label }}<span v-if="node.directory" class="ms-1">{{ count }}</span></span>
       </template>
     </BlrRepositoryTree>
     <USlideover v-model:open="open" :title="path === '.' ? 'Repository changes' : path ?? 'File changes'" :description="directory ? 'Changes within this location between the selected states.' : 'File contents at Base and Compare to.'" :content="{ onCloseAutoFocus: closeFocus }" :ui="{ content: 'w-full max-w-full sm:max-w-5xl', title: 'break-all pe-8 font-mono text-sm', body: 'min-w-0' }">
@@ -93,7 +118,7 @@ function counts(prefix: string) {
         <div class="space-y-6" data-review-file-details>
           <template v-if="directory">
             <p v-if="!selectedFiles.length" class="text-sm text-muted">No changed files in this location.</p>
-            <ul class="space-y-2"><li v-for="file in selectedFiles" :key="file.path" class="flex gap-3 text-sm"><span class="text-muted">{{ labels[file.change] }}</span><button class="break-all text-start font-mono text-primary underline" @click="path = file.path">{{ file.path }}</button></li></ul>
+            <ul class="space-y-2"><li v-for="file in selectedFiles" :key="file.path" class="flex items-start gap-3 text-sm"><span class="blr-matrix-legend-badge blr-matrix-tone shrink-0" :data-tone="changeMeta[file.change].tone">{{ changeMeta[file.change].label }}</span><button class="break-all text-start font-mono text-primary underline" @click="path = file.path">{{ file.path }}</button></li></ul>
           </template>
           <template v-else>
             <p v-if="changes.get(path!)?.beforeMode !== changes.get(path!)?.afterMode" class="text-xs text-muted">File mode: {{ changes.get(path!)?.beforeMode ?? 'absent' }} → {{ changes.get(path!)?.afterMode ?? 'absent' }}</p>

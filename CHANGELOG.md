@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Review model and source changes in one file tree between Git states, with before/after contents and related resource links.
 - Recognize Product Model folders and files by their BusinessLens logo and resource icons in repository trees.
 - Coverage describes modeled areas consistently, keeps uncertainties beside their source areas, and simplifies scope and authoring details.
+- Recognize Coverage categories by consistent colors in summary cards and tree badges.
+- Review file changes with matching badge colors and a legend explaining each change type.
 - Removed the Coverage status badge; known gaps stay explicit and structural checks apply consistently to every model.
 - The report stays read-only and updates while models and source files change.
 - Open the local report before a model exists, compare Git changes, and follow the model from its first valid state.
