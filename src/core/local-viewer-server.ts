@@ -168,7 +168,7 @@ class LocalReportStore {
   private attach(): void {
     const options = this.options
     if (options.assetRoot) {
-      try { this.repository = createRepositoryComparison(options.assetRoot) } catch { /* No Git inventory. */ }
+      try { this.repository = createRepositoryComparison(options.assetRoot, options.history?.modelPath) } catch { /* No Git inventory. */ }
     }
     if (options.referenceRoot) this.readReferenceFiles = createReferenceFileSource(options.referenceRoot)
 
@@ -237,6 +237,7 @@ class LocalReportStore {
   }
 
   private identity(id: string): ReportBaseline {
+    if (id === 'empty' && this.repository) return { id, kind: 'empty', available: true }
     if (id === 'working') return { id, kind: 'working', available: true }
     if (this.options.history) return this.options.history.resolve(id)
     throw new Error('This Git state is unavailable.')
@@ -260,6 +261,7 @@ class LocalReportStore {
     const targetState = base === target ? baseState : this.identity(target)
     const modelNotices: string[] = []
     const model = (state: ReportBaseline, side: string) => {
+      if (state.kind === 'empty') return null
       try { return this.state(state.id) }
       catch (error) { modelNotices.push(`${side}: ${(error as Error).message}`); return null }
     }

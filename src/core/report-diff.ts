@@ -44,6 +44,7 @@ export interface ReportDiff {
 
 /** Git identities used by the read-only Review page. */
 export type ReportBaseline =
+  | { id: 'empty', kind: 'empty', available: true }
   | { id: 'head', kind: 'committed', available: true, at: string, detail: string }
   | { id: 'head', kind: 'committed', available: false, reason: string }
   | { id: 'working', kind: 'working', available: true }

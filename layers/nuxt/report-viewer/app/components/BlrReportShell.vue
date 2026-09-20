@@ -36,6 +36,7 @@ import type { ReportChanges } from '../utils/reportChanges'
 import { projectReportWorkspace } from '../utils/reportWorkspace'
 import type { RepositoryFileLoader } from 'businesslens/report'
 import { defaultCoverageReading, type CoverageReading } from '../utils/coverageState'
+import { reviewModelFiles } from '../utils/reviewModel'
 import { baselineTitle, changesByKey } from '../utils/reportChanges'
 
 const props = withDefaults(defineProps<{
@@ -57,7 +58,7 @@ const props = withDefaults(defineProps<{
   readingError?: string | null
 }>(), { sidebarVocabulary: true })
 
-const emit = defineEmits<{ compare: [base: string, target: string], historySearch: [query: string], historyMore: [] }>()
+const emit = defineEmits<{ uncommitted: [], compare: [base: string, target: string], historySearch: [query: string], historyMore: [] }>()
 const resourceState = defineModel<string>('resourceState', { default: 'working' })
 const readingWorkspace = computed(() => resourceState.value === 'working' ? props.workspace : props.readingWorkspace)
 
@@ -373,7 +374,9 @@ const matrixSection = computed(() => isMatrixSection(activeSection.value) ? dest
 const changesOpen = computed(() => isChangesSection(activeSection.value))
 /* Every changed resource by key, so a row or a page can wear its standing. */
 const changeByKey = computed(() => changesByKey((props.changes?.target ?? 'working') === 'working' ? props.changes?.diff : null))
-const changesLabel = 'Review model and repository changes'
+const modelChangeCount = computed(() => props.changes?.repository ? reviewModelFiles(props.changes.repository).length : null)
+const changesComparison = computed(() => props.changes?.mode !== 'uncommitted' ? 'between the selected versions'
+  : props.changes?.baseline === 'empty' ? 'before the first commit' : 'since the last commit')
 const changesBaseline = computed(() => {
   const baseline = props.changes?.baselines.find(item => item.id === props.changes?.baseline)
   return baseline ? baselineTitle(baseline) : ''
@@ -407,11 +410,11 @@ const surfaceHeading = computed(() => {
     return { icon: matrix.icon, slot: undefined, title: matrix.name,
       meta: findProductTopologyView(matrix.view).diagramType, term: undefined, termText: '' }
   }
-  /* Review counts changed files, including authored model files. */
+  /* Review counts changed files within the active Product Model. */
   if (changesOpen.value) {
-    const count = props.changes?.repository?.files.length
+    const count = modelChangeCount.value
     return { icon: 'i-lucide-history', slot: ENTITY_KIND_META.product.slot, title: 'Review',
-      meta: count === undefined ? '' : `${count} ${count === 1 ? 'file' : 'files'}`, term: undefined, termText: '' }
+      meta: count === null ? '' : `${count} ${count === 1 ? 'model file' : 'model files'}`, term: undefined, termText: '' }
   }
   if (activeKind.value === 'product') {
     const meta = ENTITY_KIND_META.product
@@ -712,20 +715,7 @@ const orphanScenarios = computed(() => props.workspace.scenarios
             </h1>
           </div>
           <div data-report-status class="row-start-2 flex items-center gap-2.5 md:col-start-2 md:row-start-1" :class="matrixSection ? 'col-span-2 md:col-span-1' : undefined">
-            <UTooltip v-if="changes" text="Compare working and saved states">
-              <UButton
-                icon="i-lucide-history"
-                color="neutral"
-                :variant="changesOpen ? 'soft' : 'outline'"
-                size="sm"
-                :aria-label="changesLabel"
-                :aria-current="changesOpen ? 'page' : undefined"
-                data-header-changes
-                @click="openChanges"
-              >
-                <span class="hidden md:inline">Review</span>
-              </UButton>
-            </UTooltip>
+            <BlrReviewButton v-if="changes" :repository="changes.repository" :active="changesOpen" :comparison="changesComparison" @open="openChanges" />
             <span class="blr-meta" :title="`Report schema ${workspace.identity.schemaVersion}`">{{ workspace.identity.schemaVersion }}</span>
             <slot v-if="$slots.status" name="status" />
             <time v-else class="blr-meta" :datetime="workspace.identity.generatedAt" :title="`Generated ${workspace.identity.generatedAt}`">{{ workspace.identity.generatedAt.slice(0, 10) }}</time>
@@ -860,6 +850,7 @@ const orphanScenarios = computed(() => props.workspace.scenarios
             :load-repository-file="loadRepositoryFile"
             :resource-reading-open="Boolean(openResource || reference)"
             @compare="(base, target) => emit('compare', base, target)"
+            @uncommitted="emit('uncommitted')"
             @search="emit('historySearch', $event)"
             @more="emit('historyMore')"
             @inspect="inspectHistory"

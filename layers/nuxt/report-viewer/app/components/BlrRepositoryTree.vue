@@ -3,13 +3,16 @@ import { filterRepositoryTree, repositoryModelKind, repositoryTreeNodes, type Re
 import { ENTITY_KIND_META } from '../utils/reportWorkspace'
 import { slotColor } from '../utils/reportPalette'
 
-const props = defineProps<{ nodes: RepositoryTreeNode[], rootLabel: string, loading?: boolean, emptyMessage?: string }>()
+const props = defineProps<{ nodes: RepositoryTreeNode[], rootLabel: string, loading?: boolean, emptyMessage?: string, canSelect?: (node: RepositoryTreeNode) => boolean }>()
 const emit = defineEmits<{ select: [event: Event, node: RepositoryTreeNode] }>()
 const path = defineModel<string | null>('path', { default: null })
 const query = ref('')
 const expanded = defineModel<string[]>('expanded', { default: () => ['.'] })
 const visible = computed(() => filterRepositoryTree(props.nodes, query.value))
-const root = computed<RepositoryTreeNode>(() => ({ value: '.', label: props.rootLabel, directory: true, children: visible.value }))
+const withSelection = (nodes: RepositoryTreeNode[]): RepositoryTreeNode[] => nodes.map(node => ({
+  ...node, disabled: props.canSelect ? !props.canSelect(node) : false, children: withSelection(node.children)
+}))
+const root = computed<RepositoryTreeNode>(() => ({ value: '.', label: props.rootLabel, directory: true, children: withSelection(visible.value) }))
 const all = computed(() => repositoryTreeNodes(props.nodes))
 const modelIcons = computed(() => new Map(all.value.map(node => {
   const kind = repositoryModelKind(node)
@@ -40,6 +43,7 @@ function expand(all: boolean) {
 }
 function select(event: Event, node: RepositoryTreeNode) {
   event.preventDefault()
+  if (props.canSelect && !props.canSelect(node)) return
   path.value = node.value
   emit('select', event, node)
 }

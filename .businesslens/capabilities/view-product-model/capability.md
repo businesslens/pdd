@@ -20,9 +20,12 @@ resources by kind, opens any resource’s reading, reads a thing's lifecycle as 
 Steps compose it, searches by name, and keeps their place across a save and a
 reload.
 
-Review compares model and project files in one tree between selected Git states,
-including the working state. Selecting a file opens its before and after
-contents with related resource links. Coverage in Overview explains current breadth,
+Review opens on uncommitted Product Model changes since the last commit.
+Comparing selected Git versions is an explicit action. Authored model files
+form one tree, which can also show other repository changes as path-only context.
+The Review header badge counts changed Product Model files.
+Selecting a model file exposes its highlighted edits and links to the resource
+at either selected version. Coverage in Overview explains current breadth,
 exclusions and known gaps directly, with recorded paths linking to related
 context and References. Reading never records inspection or changes the repository.
 

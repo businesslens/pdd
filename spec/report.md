@@ -298,14 +298,15 @@ and navigation are documented in the [report layer](../layers/nuxt/report-viewer
 
 ### Git Review
 
-Either comparison state may be Working state or a local commit, branch or tag.
+Either comparison state may be Working state, an empty state (`empty`, before
+the first commit), or a local commit, branch or tag.
 Resolve Git references to immutable commits and use those identities for every
 historical model, file and Reference reading; never fall back to current files.
-Default to the known default branch versus Working state on feature branches,
-otherwise HEAD versus Working state. Remote selection prefers the configured
-remote, then origin, then a sole remote. Explicit selections take precedence;
-unknown revisions are errors. Distinguish absent Git history from an empty
-comparison.
+Default to uncommitted changes: HEAD versus Working state on every branch, or
+empty versus Working state before the first commit. An empty result never
+switches to another baseline. Comparing versions is an explicit choice;
+explicit selections and comparison links take precedence. Unknown revisions
+are errors. Outside Git, comparison is unavailable.
 
 Compare the union of paths and file modes in the selected states. Working state
 uses current contents, including staged and unstaged edits, nonignored untracked
@@ -314,12 +315,24 @@ build/cache directories and model backups. Changes are added, modified or delete
 renames are additions and deletions, and type or executable-mode changes count.
 Compare symlinks as link text; treat submodules as opaque entries.
 
+Repository comparison metadata names the active model's repository-relative
+`modelPath` (for example `.businesslens` or `apps/shop/.businesslens`). The
+Review tree defaults to authored files within that model. An optional tree
+control includes other repository changes as path-only context in the same
+tree; they do not open file comparisons in Review. The heading and header
+Review badge count changed files within the active model, independently of
+tree filters, and identify the selected comparison. This also applies when the
+model has been removed or cannot be parsed.
+
 Return change metadata first and fetch selected file contents on demand. Reads
 are bounded to 25 MiB, with text previews limited to 256 KiB; distinguish binary,
 oversized, missing and unreadable contents. Reject symlinked parents in working
 reads and retain the existing asset and code-preview restrictions. A missing or
-invalid model limits resource links, never repository file comparisons. Source
-changes must be visible without a model edit. Comparison and refresh never write
+invalid model limits resource links, never authored file comparisons. Render
+text changes with line numbers, addition/removal markers, inline edit highlights
+and expandable unchanged context. Resource links read the selected side, with
+deleted resources available from Base. Source changes remain visible as context
+without a model edit. Comparison and refresh never write
 model data, inspection receipts or snapshots.
 
 ## Portable projection

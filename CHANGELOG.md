@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- Review model and source changes in one file tree between Git states, with before/after contents and related resource links.
+- Review uncommitted Product Model edits with highlighted diffs, resource links and colored header counts by change type; compare saved versions explicitly and optionally show other repository changes in the same tree.
 - Recognize Product Model folders and files by their BusinessLens logo and resource icons in repository trees.
 - Coverage describes modeled areas consistently, keeps uncertainties beside their source areas, and simplifies scope and authoring details.
 - Recognize Coverage categories by consistent colors in summary cards and tree badges.

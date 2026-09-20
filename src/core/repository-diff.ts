@@ -39,7 +39,7 @@ function committedFiles(root: string, commit: string): Map<string, FileIdentity>
 }
 
 /** Read-only inventories; Git owns saved bytes, and working identities are stat-cached. */
-export function createRepositoryComparison(root: string) {
+export function createRepositoryComparison(root: string, modelPath = '.businesslens') {
   const algorithm = git(root, 'rev-parse', '--show-object-format') === 'sha256' ? 'sha256' : 'sha1'
   const cache = new Map<string, { stamp: string, file: FileIdentity }>()
   const blob = (body: Buffer) => createHash(algorithm).update(`blob ${body.length}\0`).update(body).digest('hex')
@@ -72,6 +72,7 @@ export function createRepositoryComparison(root: string) {
     } catch (error) { return { mode: '', error: (error as Error).message } }
   }
   async function inventory(state: string): Promise<Map<string, FileIdentity>> {
+    if (state === 'empty') return new Map()
     if (state !== 'working') {
       return committedFiles(root, state.replace(/^commit:/, ''))
     }
@@ -139,7 +140,7 @@ export function createRepositoryComparison(root: string) {
         else if (!right) files.push({ path, change: 'deleted', beforeMode: left.mode })
         else if (left.oid !== right.oid || left.mode !== right.mode) files.push({ path, change: 'modified', beforeMode: left.mode, afterMode: right.mode })
       }
-      return { paths, files }
+      return { modelPath, paths, files }
     },
     async file(base: string, target: string, path: string): Promise<RepositoryFileComparison> {
       if (!validPath(path)) throw new Error('This repository path cannot be read.')

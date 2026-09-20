@@ -15,6 +15,7 @@ const tabs = [
   { value: 'tag', label: 'Tags', placeholder: 'Find a tag…' }
 ]
 const marks = {
+  empty: { icon: 'i-lucide-file', label: 'Empty state' },
   working: { icon: 'i-lucide-file-pen-line', label: 'Working state' },
   branch: { icon: 'i-lucide-git-branch', label: 'Branch' },
   commit: { icon: 'i-lucide-git-commit-horizontal', label: 'Commit' },
@@ -28,12 +29,12 @@ const selectedLabel = computed(() => selected.value ? baselineTitle(selected.val
 const selectedMark = computed(() => selected.value ? marks[selected.value.kind] : { icon: 'i-lucide-history', label: 'State' })
 const activeTab = computed(() => tabs.find(tab => tab.value === category.value)!)
 const items = computed(() => (props.changes.historyStates ?? props.changes.baselines)
-  .filter(state => (state.kind === 'committed' ? 'commit' : state.kind) === category.value))
+  .filter(state => (state.kind === 'committed' || state.kind === 'empty' ? 'commit' : state.kind) === category.value))
 
 function onOpen(value: boolean) {
   if (!value) return
   const kind = selected.value?.kind
-  category.value = kind === 'committed' ? 'commit' : kind && kind !== 'working' ? kind : 'branch'
+  category.value = kind === 'committed' || kind === 'empty' ? 'commit' : kind && kind !== 'working' ? kind : 'branch'
   if (props.changes.historyQuery) emit('search', '')
 }
 function focusSearch(event: Event) {

@@ -8,6 +8,8 @@ export interface RepositoryFileChange {
   reason?: string
 }
 export interface RepositoryDiff {
+  /** Repository-relative directory of the active Product Model. */
+  modelPath: string
   /** Union of both inventories, including unchanged context and deleted files. */
   paths: string[]
   files: RepositoryFileChange[]

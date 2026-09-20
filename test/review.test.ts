@@ -93,6 +93,38 @@ describe('repository Review', () => {
 })
 
 describe('read-only Review API', () => {
+  it('reviews a new nested model against an empty state and follows its first commit', { timeout: 30_000 }, async () => {
+    const root = mkdtempSync(join(tmpdir(), 'bl-review-unborn-')), nested = join(root, 'app')
+    roots.push(root)
+    cpSync(join(__dirname, 'fixtures/fixture-shop'), root, { recursive: true, filter: path => !path.split('/').includes('.git') })
+    git(root, 'init', '--initial-branch=main')
+    git(root, 'config', 'user.email', 'fixture@example.com')
+    git(root, 'config', 'user.name', 'Fixture')
+    mkdirSync(nested)
+    cpSync(join(__dirname, 'fixtures/fixture-shop/.businesslens'), join(nested, '.businesslens'), { recursive: true })
+    rmSync(join(root, '.businesslens'), { recursive: true })
+    git(root, 'add', '.')
+    const resolved = resolveModelRoot(nested)
+    const viewer = await startLocalViewer({ port: 0, compile: () => compileResolvedWorkspaceReport(resolved), history: createGitHistory(resolved), assetRoot: root })
+    viewers.push(viewer)
+    const get = async (path: string) => {
+      const response = await fetch(viewer.url + path)
+      expect(response.status).toBe(200)
+      return response.json() as Promise<any>
+    }
+    expect((await get('/_businesslens/history/defaults')).base).toBe('empty')
+    const result = await get('/_businesslens/history/diff?base=empty&target=working')
+    expect(result.repository.modelPath).toBe('app/.businesslens')
+    expect(result.before).toBeNull()
+    expect(result.modelNotice).toBeUndefined()
+    expect(result.repository.files.every((file: any) => file.change === 'added')).toBe(true)
+    const path = 'app/.businesslens/config.yaml'
+    expect((await get(`/_businesslens/review/file?base=empty&target=working&path=${path}`)).before.status).toBe('missing')
+    git(root, 'commit', '-m', 'First model')
+    expect((await get('/_businesslens/history/defaults')).base).toBe('head')
+    expect((await get('/_businesslens/history/diff?base=head&target=working')).repository.files).toEqual([])
+  })
+
   it.each([false, true])('starts CLI Review without a working model (historical model: %s)', { timeout: 30_000 }, async (hadModel) => {
     const root = repository(hadModel), base = commit(root)
     if (hadModel) rmSync(join(root, '.businesslens'), { recursive: true })

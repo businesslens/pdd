@@ -436,18 +436,38 @@ access, tooltips, saved state, utilities and the independent mobile drawer.
 
 ## Read-only Review
 
-The optional `changes` prop supplies a repository comparison and models for two
-selected Git states. Review displays one changed-file tree, including authored
-model files at their repository paths. `loadRepositoryFile(base, target, path)` reads a selected
-file's bounded before/after contents. The `compare`, `historySearch` and
-`historyMore` events request read-only host data. No event records inspection,
-approves work or writes a saved state. Hosts without Git context omit Review.
+The optional `changes` prop supplies a comparison and models for two Git states.
+`mode: 'uncommitted'` opens HEAD versus Working state on every branch, or an empty
+state before the first commit. It includes staged, unstaged and new model files.
+An empty result stays empty; **Compare versions…** explicitly opens the Base and
+Compare to selectors. Returning to uncommitted changes clears the explicit
+comparison. Comparison URLs preserve the chosen versions.
 
-Overview presents authored Coverage directly. Review uses `BlrRepositoryTree`
-for changed files, search, expansion and selection.
-It marks `.businesslens/` folders with the shared brand logo and recognized
-resource paths with the same kind icons and colours used throughout the report.
-Review supplies changes between its selected states. There is no separate resource or field change list.
-File details use the two models for related resource links; unavailable models
-limit these links, not the tree or file previews. The navigation composable persists `reviewPath` as `rp`,
+Review's tree defaults to authored files within the active
+`repository.modelPath`, including nested models. Generated build/cache files
+are excluded. **Show other repository changes** includes their paths and change
+badges in the same tree, with the same search, filters and expansion controls,
+and no file-opening actions. The heading and top-bar Review badge count changed
+model files independently of tree filters. The header shows nonzero Added (`+`),
+Modified (`~`), Deleted (`−`) and Unavailable (`?`) counts in their existing colors,
+or `0` for an empty comparison. On narrow screens it shows the total. Hovering
+explains each count; clicking or tapping the counts opens the named breakdown
+and comparison context. The Review button still opens Review directly.
+Coverage keeps its own
+recorded source areas and shares the tree's search and expansion behavior.
+
+`loadRepositoryFile(base, target, path)` reads bounded before/after contents on
+demand. Unified diffs are the default, with line numbers, addition/removal
+markers, inline edit highlights and expandable unchanged context. Side-by-side
+diffs use aligned rows, and the file panel can expand. Large rewrites have a
+bounded fallback; long blocks reveal more lines on demand. Empty files, line
+endings, mode changes and unavailable contents remain explicit. Resource buttons
+open the authored resource itself at either selected version, including deleted
+resources from Base. Missing or invalid models limit those links, not file diffs.
+
+The `compare`, `uncommitted`, `historySearch` and `historyMore` events request
+read-only host data. No event records inspection, approves work or writes a saved
+state. Hosts without Git context omit Review.
+
+The navigation composable persists `reviewPath` as `rp`,
 `resourceState` as `v`, and Coverage's selected path as `cp`.

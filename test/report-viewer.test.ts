@@ -1447,8 +1447,8 @@ describe('what changed', () => {
     expect(shell).toContain('<BlrChanges')
     expect(shell).toContain(':change="changeByKey.get(resource.key)?.change"')
     const header = shell.slice(shell.indexOf('<header'), shell.indexOf('</header>'))
-    expect(header).toContain('<UTooltip v-if="changes"')
-    expect(header).toContain('data-header-changes')
+    expect(header).toContain('<BlrReviewButton v-if="changes"')
+    expect(source('app/components/BlrReviewButton.vue')).toContain('data-header-changes')
     expect(rail).not.toContain('What changed')
     // A live host puts its pulse in the status bar in place of the generated date.
     expect(shell).toContain('<slot v-if="$slots.status" name="status" />')

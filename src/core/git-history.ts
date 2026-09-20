@@ -1,5 +1,7 @@
 /** Read historical models and files from Git objects, without touching the checkout. */
 import { spawnSync } from 'node:child_process'
+import { join, relative } from 'node:path'
+import { realpathSync } from 'node:fs'
 import { compileCommittedReport, type CommittedReport } from './committed-report.js'
 import { git } from './git.js'
 import type { ModelRoot } from './model-root.js'
@@ -9,6 +11,7 @@ import { excludedReferencePath, localReferencePath } from './report-reference-fi
 
 export interface HistoryPage { states: ReportBaseline[], more: boolean }
 export interface GitHistory {
+  modelPath: string
   list: (query?: string, offset?: number) => HistoryPage
   defaults: () => { base: string | null, hasModelHistory: boolean }
   resolve: (id: string) => Extract<ReportBaseline, { kind: 'commit' }>
@@ -51,24 +54,22 @@ export function createGitHistory(resolved: ModelRoot): GitHistory {
       label: `${commit.slice(0, 7)} ${subject.join(' ')}`, detail: at }
   }
   return {
+    modelPath: relative(realpathSync(root ?? resolved.modelRoot), join(realpathSync(resolved.modelRoot), '.businesslens')).split('\\').join('/'),
     revision() {
       if (!root) return ''
       return `${optionalGit('show-ref', '--head')}\n${JSON.stringify(branches())}`
     },
     defaults() {
       if (!root) return { base: null, hasModelHistory: false }
-      const context = branches()
-      const candidates = context.defaultBranch && !context.onDefault ? [`branch:${context.defaultBranch}`, 'head'] : ['head']
-      for (const id of candidates) {
-        try { resolveCommit(id); return { base: id, hasModelHistory: true } } catch { /* Unborn revision. */ }
-      }
-      return { base: null, hasModelHistory: !!optionalGit('log', '--all', '--max-count=1', '--format=%H') }
+      try { resolveCommit('head'); return { base: 'head', hasModelHistory: true } }
+      catch { return { base: 'empty', hasModelHistory: !!optionalGit('log', '--all', '--max-count=1', '--format=%H') } }
     },
     list(query = '', offset = 0) {
       if (!root) return { states: [], more: false }
       const states: ReportBaseline[] = []
       const search = query.trim().slice(0, 200)
       if (offset === 0) {
+        if (!search) states.push({ id: 'empty', kind: 'empty', available: true })
         const context = branches()
         try {
           const [commit, at, subject] = git(root, 'show', '-s', '--format=%H%x00%cI%x00%s', 'HEAD').split('\0')

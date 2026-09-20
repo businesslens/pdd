@@ -14,7 +14,7 @@ const { shown } = useTooltips()
     <template #content>
       <div class="space-y-2 p-4">
         <p class="text-sm font-semibold text-highlighted">Review</p>
-        <p class="text-sm leading-relaxed text-muted">Compare two Git states in one file tree, including Product Model files under .businesslens/. Select a file to read its before and after contents and related model resources. Added and deleted are measured from Base to Compare to. Browsing does not record or approve a review.</p>
+        <p class="text-sm leading-relaxed text-muted">Review uncommitted Product Model edits since the last commit, or choose Compare versions to select two Git states. Select a model file to inspect highlighted changes and open its resource at either version. Show other repository changes to include their paths in the same tree. The Review badge counts changed model files in the selected comparison. Browsing does not record or approve a review.</p>
       </div>
     </template>
   </UPopover>

@@ -41,6 +41,7 @@ const props = withDefaults(defineProps<{
 }>(), { sidebarVocabulary: true })
 
 const emit = defineEmits<{
+  uncommitted: []
   /** The reader chose another baseline to compare against. */
   compare: [base: string, target: string]
   historySearch: [query: string]
@@ -131,6 +132,7 @@ onMounted(() => { mounted = true; synchronizeLocation() })
       :tools-target="toolsTarget"
       :changes="changes"
       @compare="(base, target) => emit('compare', base, target)"
+      @uncommitted="emit('uncommitted')"
       @history-search="emit('historySearch', $event)"
       @history-more="emit('historyMore')"
       @update:section="section = $event"

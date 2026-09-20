@@ -206,9 +206,12 @@ costed already.
   the full width. Refresh and valid recompilation preserve the reading.
   Expand fills the window with the same resource reading; Restore returns to
   the panel width without losing its drawing, selected detail or graph viewport.
-- **Review compares Git states without writes.** Model and project files share
-  one changed-file tree. Missing or invalid models limit resource links, never
-  file comparisons; historical readings use the selected commit.
+- **Review shows Product Model changes without writes.** It defaults to
+  uncommitted edits; comparing versions is explicit. Authored model files have
+  one changed-file tree and highlighted diffs. The tree can include other
+  repository changes as path-only context. Missing or invalid models limit
+  resource links, never authored file comparisons; historical readings use the
+  selected commit.
 - **The rail lists Overview, three cross-collection views, then six
   collections.** The views — Compare delivery, What changes what, Rule
   attachments — each compare two collections, so no collection owns them and

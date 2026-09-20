@@ -4,6 +4,7 @@ import type { ReportResourceKind } from './reportWorkspace'
 import { resourceKey } from './reportWorkspace'
 
 export interface ReportChanges {
+  mode?: 'uncommitted' | 'compare'
   /** Every baseline the host can compare against; empty when it has none yet. */
   baselines: ReportBaseline[]
   /** The chosen baseline's id, or null when there is nothing to choose. */
@@ -59,12 +60,14 @@ export function changesByKey(diff: ReportDiff | null | undefined): Map<string, R
 
 /** The selected Git state, used wherever its contents are read. */
 export function baselineTitle(baseline: ReportBaseline): string {
+  if (baseline.kind === 'empty') return 'Before first commit'
   if (baseline.kind === 'working') return 'Working state'
   if (baseline.kind === 'committed') return 'Last commit'
   return baseline.label
 }
 
 export function baselineDetail(baseline: ReportBaseline): string {
+  if (baseline.kind === 'empty') return 'An empty model and repository'
   if (baseline.kind === 'working') return 'Current files, including uncommitted edits'
   if (baseline.kind === 'committed') return baseline.available ? baseline.detail : baseline.reason
   return baseline.detail

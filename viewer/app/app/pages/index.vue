@@ -2,6 +2,7 @@
 import type { ProductReportV16, ReportBaseline, ReportDiff, RepositoryDiff, RepositoryFileLoader } from 'businesslens/report'
 import type { ReportChanges } from '../../../../layers/nuxt/report-viewer/app/utils/reportChanges'
 import { projectReportWorkspace, resolveResourceKey } from '../../../../layers/nuxt/report-viewer/app/utils/reportWorkspace'
+import { reviewModelFiles } from '../../../../layers/nuxt/report-viewer/app/utils/reviewModel'
 import { baselineTitle } from '../../../../layers/nuxt/report-viewer/app/utils/reportChanges'
 
 const { data, error, refresh, status } = await useFetch<ProductReportV16>(
@@ -64,11 +65,11 @@ const message = (failure: unknown) => {
   return detail.data?.message ?? detail.message ?? 'The selected state is unavailable.'
 }
 async function refreshDefaults() {
-  if (queryState('base') || initialBaseline.value) { defaultsReady.value = true; defaultsError.value = null; return }
+  if (queryState('base')) { defaultsReady.value = true; defaultsError.value = null; return }
   const request = ++defaultsRequest
   try {
     const defaults = await $fetch<{ base: string | null, emptyReason: ReportChanges['emptyReason'] }>('/_businesslens/history/defaults', { cache: 'no-store' })
-    if (request !== defaultsRequest || queryState('base') || initialBaseline.value) return
+    if (request !== defaultsRequest || queryState('base')) return
     initialBaseline.value = defaults.base
     emptyReason.value = defaults.emptyReason
     defaultsError.value = null
@@ -121,7 +122,10 @@ function chooseComparison(base: string, target: string) {
   defaultsRequest += 1
   defaultsReady.value = true
   defaultsError.value = null
-  return router.push({ query: { ...route.query, base, target } })
+  return router.push({ query: { ...route.query, base, target, rp: undefined, e: undefined, v: undefined, f: undefined } })
+}
+function showUncommitted() {
+  return router.push({ query: { ...route.query, base: undefined, target: undefined, rp: undefined, e: undefined, v: undefined, f: undefined } })
 }
 function searchHistory(query: string) {
   listingRequest += 1
@@ -161,6 +165,7 @@ function inspectHistorical(key: string, state: string) {
   resourceTab.value = 'overview'
 }
 const changes = computed<ReportChanges>(() => ({
+  mode: queryState('base') || queryState('target') ? 'compare' : 'uncommitted',
   baselines: baselines.value, historyStates: historyStates.value, baseline: baseline.value, target: target.value,
   diff: comparison.value?.diff ?? null, before: comparison.value?.before, after: comparison.value?.after,
   baseState: comparison.value?.base, targetState: comparison.value?.target,
@@ -170,6 +175,7 @@ const changes = computed<ReportChanges>(() => ({
   repository: comparison.value?.repository, modelNotice: comparison.value?.modelNotice
 }))
 
+watch(() => queryState('base'), () => { if (!queryState('base')) void refreshDefaults() })
 watch(section, value => { if (value === 'review') void refreshDiff() })
 onMounted(() => {
   repositoryTimer = setInterval(() => {
@@ -208,6 +214,7 @@ onMounted(() => {
     } catch {
       liveError.value = 'The Product Model could not be compiled.'
     }
+    void refreshDiff()
   })
 })
 
@@ -238,29 +245,31 @@ const errorMessage = computed(() => {
       </div>
     </UContainer>
 
-    <UContainer v-else-if="error && !data" class="py-16">
+    <UContainer v-else-if="error && !data" class="min-h-0 flex-1 overflow-y-auto py-8">
       <UAlert
         icon="i-lucide-triangle-alert"
         color="error"
         variant="subtle"
         title="The Product Model is not ready to view."
         :description="errorMessage"
+        :ui="{ description: 'max-h-24 overflow-auto break-words' }"
         :actions="[{ label: 'Try again', icon: 'i-lucide-refresh-cw', onClick: () => refresh() }]"
       />
-      <h1 class="mt-8 mb-4 flex items-center gap-2 text-2xl font-semibold">Review <span v-if="changes.repository" class="text-sm font-normal text-muted">{{ changes.repository.files.length }} {{ changes.repository.files.length === 1 ? 'file' : 'files' }}</span><BlrHistoryHelp /></h1>
-      <BlrChanges v-model:path="reviewPath" :load-repository-file="loadRepositoryFile" :changes="changes" :resource-reading-open="Boolean(resource || reference)" @compare="chooseComparison" @search="searchHistory" @more="refreshChanges(true)" @inspect="inspectHistorical" />
+      <h1 class="mt-8 mb-4 flex items-center gap-2 text-2xl font-semibold">Review <span v-if="changes.repository" class="text-sm font-normal text-muted">{{ reviewModelFiles(changes.repository).length }} model files</span><BlrHistoryHelp /></h1>
+      <BlrChanges v-model:path="reviewPath" :load-repository-file="loadRepositoryFile" :changes="changes" :resource-reading-open="Boolean(resource || reference)" @compare="chooseComparison" @uncommitted="showUncommitted" @search="searchHistory" @more="refreshChanges(true)" @inspect="inspectHistorical" />
       <BlrResourceSlideover v-if="fallbackWorkspace" v-model:tab="resourceTab" :workspace="fallbackWorkspace" :resource="fallbackResource" :state-label="readingLabel" :state-id="resourceState" :reference="reference" :previous-reference="previousReference" @reference-open="reference = $event" @reference-back="backReference" @open="resource = $event.key; reference = null" @close="resource = null; reference = null; resourceState = 'working'" />
       <UAlert v-if="readingError" class="mt-4" title="Historical state unavailable" :description="readingError" />
     </UContainer>
 
     <template v-else-if="data">
-      <UContainer v-if="liveError" class="pt-6">
+      <UContainer v-if="liveError" class="shrink-0 pt-4">
         <UAlert
           icon="i-lucide-triangle-alert"
           color="warning"
           variant="subtle"
           title="The latest model edit is not valid yet."
           :description="liveError"
+          :ui="{ description: 'max-h-24 overflow-auto break-words' }"
         />
       </UContainer>
       <BusinessLensReportViewer
@@ -281,6 +290,7 @@ const errorMessage = computed(() => {
         :changes="changes"
         class="businesslens-local-report min-h-0 flex-1"
         @compare="chooseComparison"
+        @uncommitted="showUncommitted"
         @history-search="searchHistory"
         @history-more="refreshChanges(true)"
       >
