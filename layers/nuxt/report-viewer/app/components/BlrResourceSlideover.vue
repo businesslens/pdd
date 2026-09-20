@@ -4,7 +4,6 @@ import { ENTITY_KIND_META } from '../utils/reportWorkspace'
 import { resourceViewLinks } from '../utils/reportDestinations'
 import { KIND_TERM } from '../utils/vocabulary'
 import { parentOf } from '../utils/pageSections'
-import { defaultTopologyReading } from '../utils/topologyState'
 import { referenceHref } from '../utils/referenceNavigation'
 
 const props = defineProps<{
@@ -48,20 +47,6 @@ const fileBackTitle = computed(() => props.previousReference ? referenceInfo(pro
 const readingKey = computed(() => JSON.stringify([props.workspace.identity.id, 'resource', props.resource?.key, tab.value]))
 const { element: pane, save, restore, hasSaved } = useBlrTopologyScroll(readingKey)
 const restorePosition = computed(() => { void readingKey.value; return hasSaved() })
-
-/* Interface delivery expansion belongs to this resource, never the graph behind it. */
-const reading = ref(defaultTopologyReading())
-let storageKey = ''
-watch([() => props.workspace.identity.id, () => props.resource?.key], ([reportId, key]) => {
-  storageKey = `blr:resource:${reportId}:${key}`
-  reading.value = defaultTopologyReading()
-  if (!import.meta.client) return
-  try { reading.value = { ...reading.value, ...JSON.parse(sessionStorage.getItem(`${location.pathname}:${storageKey}`) ?? '{}') } } catch { /* Optional persistence. */ }
-}, { immediate: true })
-watch(reading, value => {
-  if (!import.meta.client) return
-  try { sessionStorage.setItem(`${location.pathname}:${storageKey}`, JSON.stringify(value)) } catch { /* Optional persistence. */ }
-}, { deep: true })
 
 function focusReading(event?: Event) {
   event?.preventDefault()
@@ -148,7 +133,6 @@ function open(resource: AnyResourceView) { save(); emit('open', resource) }
             v-model:tab="tab"
             v-model:scenario-route="scenarioRoute"
             v-model:route-columns="routeColumns"
-            v-model:reading="reading"
             :workspace="workspace"
             :resource="resource"
             :tabs-target="tabsTarget"

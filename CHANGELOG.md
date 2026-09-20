@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Browse Interfaces and Experiences in a shared Structure tree, with clearer counts and shared Screen ownership.
+
 - Choose collection views from a dropdown with larger preview titles and subtitles, without a separate help button or About section.
 
 - Simplify Entity filters to Entities, Domains and Changed by, marked with the Capabilities icon.

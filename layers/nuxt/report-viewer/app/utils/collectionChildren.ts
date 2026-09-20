@@ -26,6 +26,8 @@ export interface TreeCardNode {
   title: string
   resource?: AnyResourceView
   groupKind?: ReportResourceKind
+  /** An available Screen reference, not a child owned by this reading. */
+  sharedFrom?: AnyResourceView
   children: TreeCardNode[]
 }
 
@@ -38,6 +40,36 @@ export interface TreeCard {
 
 const leaf = (resource: AnyResourceView, children: TreeCardNode[] = []): TreeCardNode => ({ id: resource.key, title: resource.title, resource, children })
 const group = (id: string, kind: ReportResourceKind, children: TreeCardNode[]): TreeCardNode => ({ id, title: ENTITY_KIND_META[kind].plural, groupKind: kind, children })
+
+/** One hierarchy for collection cards and focused Structure readings. */
+export function structureChildren(workspace: ReportWorkspace, resource: AnyResourceView): TreeCardNode[] {
+  const screensOf = (owner: AnyResourceView) => workspace.screens.filter(screen => screen.contexts.some(context =>
+    owner.kind === 'experience' ? context.experienceId === owner.id : context.interfaceId === owner.id && !context.experienceId))
+  const screenGroup = (owner: AnyResourceView) => group(`${owner.key}:screens`, 'screen', screensOf(owner).map(screen => leaf(screen)))
+  if (resource.kind === 'interface') {
+    const experiences = workspace.experiences.filter(item => item.interfaceIds.includes(resource.id))
+    const screens = screenGroup(resource)
+    if (experiences.length) screens.title = 'Shared Screens'
+    return [
+      group(`${resource.key}:experiences`, 'experience', experiences.map(experience => leaf(experience, [screenGroup(experience)].filter(node => node.children.length)))),
+      screens
+    ].filter(node => node.children.length)
+  }
+  if (resource.kind === 'experience') {
+    const shared = workspace.interfaces.filter(iface => resource.interfaceIds.includes(iface.id)).flatMap(iface =>
+      screensOf(iface).map(screen => ({ ...leaf(screen), sharedFrom: iface })))
+    return [screenGroup(resource), { ...group(`${resource.key}:shared-screens`, 'screen', shared), title: 'Shared Screens' }].filter(node => node.children.length)
+  }
+  return []
+}
+
+/** The same compact expansion defaults wherever a hierarchy is read. */
+export function treeBranchKeys(nodes: TreeCardNode[], defaults = false): string[] {
+  return nodes.flatMap(node => [
+    ...(node.children.length && (!defaults || node.children.length <= 8) ? [node.id] : []),
+    ...treeBranchKeys(node.children, defaults)
+  ])
+}
 
 /**
  * A Domain card groups its Capabilities and its Entities; an Interface card its
@@ -56,13 +88,9 @@ export function treeCards(workspace: ReportWorkspace, kind: ReportResourceKind, 
     return [...cards, ...(!narrowed && unassigned.children.length ? [unassigned] : [])]
   }
   if (kind === 'interface') {
-    return resources.filter(item => item.kind === 'interface').map((iface) => {
-      const rows = rowChildren(workspace, iface)
-      const experiences = rows.filter(row => row.resource.kind === 'experience').map(row => leaf(row.resource, row.children.map(child => leaf(child.resource))))
-      const screens = rows.filter(row => row.resource.kind === 'screen').map(row => leaf(row.resource))
-      return { key: iface.key, title: iface.title, resource: iface,
-        children: [group(`${iface.key}:experiences`, 'experience', experiences), group(`${iface.key}:screens`, 'screen', screens)].filter(group => group.children.length) }
-    })
+    return resources.filter(item => item.kind === 'interface').map(iface => ({
+      key: iface.key, title: iface.title, resource: iface, children: structureChildren(workspace, iface)
+    }))
   }
   return []
 }
