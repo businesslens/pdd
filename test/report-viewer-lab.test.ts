@@ -23,6 +23,10 @@ describe('private Product Report viewer lab', () => {
     const readme = readFileSync(join(lab, 'README.md'), 'utf8')
 
     expect(readme).toContain('There are no active report experiments in this layer.')
+    expect(readme).toContain('The **View controls** audition is decided')
+    for (const file of ['components/BlrCollectionControls.vue', 'components/BlrDrawingPreview.vue', 'components/BlrDrawingRowTools.vue', 'components/BlrDrawingControlsLabRow.vue', 'composables/useBlrDrawingControlsLab.ts', 'utils/drawingControlsLab.ts', 'assets/drawing-controls-lab.css']) {
+      expect(existsSync(join(lab, 'app', file))).toBe(false)
+    }
     expect(readme).toContain('The **Table navigation** audition is decided')
     expect(readme).toContain('The **Mutation popover** audition is decided')
     expect(readme).toContain('The **Context sizing** audition is decided')
@@ -80,5 +84,7 @@ describe('private Product Report viewer lab', () => {
     expect(stable).not.toContain('data-left-handle-placement')
     expect(app).not.toContain('BlrControlSizeLabRow')
     expect(app).not.toContain('BlrStepCardLabRow')
+    expect(app).not.toContain('BlrDrawingControlsLabRow')
+    expect(app).not.toContain(':row-count="2"')
   })
 })

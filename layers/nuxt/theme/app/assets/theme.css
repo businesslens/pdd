@@ -60,6 +60,7 @@
   --ui-bg-muted: #f8f2e5;
   --ui-bg-elevated: #fcf8ef;
   --ui-bg-accented: #e9ddc4;
+  --businesslens-badge-bg: var(--ui-bg-accented);
   --ui-border: #dbcfb4;
   --ui-border-muted: #e5dac2;
   --ui-border-accented: #c9b898;
@@ -88,6 +89,7 @@
   --ui-bg-muted: #342b23;
   --ui-bg-elevated: #342b23;
   --ui-bg-accented: #4c4133;
+  --businesslens-badge-bg: color-mix(in srgb, var(--ui-bg-accented) 65%, var(--ui-bg));
   --ui-border: var(--ui-color-neutral-800);
   --ui-border-muted: var(--ui-color-neutral-700);
   --ui-border-accented: var(--ui-color-neutral-700);
@@ -97,6 +99,12 @@
   --ui-secondary: var(--ui-color-secondary-400);
   --ui-success: var(--ui-color-success-400);
   color-scheme: dark;
+}
+
+/* Approved Sand treatment for neutral labels on every BusinessLens surface. */
+.businesslens-neutral-badge {
+  background: var(--businesslens-badge-bg);
+  --tw-ring-color: var(--ui-border-accented);
 }
 
 @layer base {

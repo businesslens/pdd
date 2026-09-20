@@ -3,7 +3,7 @@ kind: primary
 routes:
   local: Local
 steps:
-  - text: The Developer opens the collection that owns their question and switches its drawing from Rows to Graph
+  - text: The Developer opens the collection that owns their question and switches its drawing from Rows to Graph or Matrix
     kind: actor
     actor: developer
     entities: []
@@ -50,5 +50,10 @@ page.
 - A delayed or unavailable diagram arrangement leaves the complete resource and relationship reading available.
 
 - A Graph states its question once, below the drawing: the collection heading names the subject and the switch names the drawing, so the reading never titles itself a third time. Switching back to Rows keeps the filters and the count.
-- Compare delivery, What changes what and Rule attachments compare two collections at once, so each is a rail row of its own below Overview, with no tabs.
+- Matrix is the third drawing in Capabilities for Compare delivery, Entities for What changes what, and Business Rules for Rule attachments. The rail lists Overview and the six collections.
+- Switching drawings preserves the collection heading, count, filters and selections. Shared relationship filters select matching subjects in every drawing and the Matrix columns. With no relationship filter, resources without relationships remain visible.
+- Each Matrix keeps only the collection heading. A dropdown presents each available drawing as a named preview card with a short explanatory subtitle. It has no separate help button or About section, and stays in place when the legend appears. One toolbar offers Changed by, Available in or Attached to in every drawing. Attached to combines whole resource types and individual exact targets with OR, and other axes with AND.
+- A contextual comparison link from an Interface opens Compare delivery in Capabilities, narrowed to that Interface's column.
 - An address naming a view this report does not have opens the Overview rather than guessing at a replacement.
+
+- Available in groups Interfaces, Experiences and Screens, with whole-type and individual choices. Interface and Experience selections include delivery through their descendants. Capabilities have no separate Screen or Scenario filter; the Matrix compares the containing Interfaces and only matching routes.

@@ -169,6 +169,7 @@ describe('cli dispatch', () => {
     expect(existsSync(join(repo, '.businesslens', 'build', 'report.json'))).toBe(true)
   })
 
+  // Fifteen real CLI processes can exceed the default 5s on a busy CI runner.
   it('refuses removed commands and options as ordinary usage errors', () => {
     for (const command of ['export', 'open', 'pull', 'contribute', 'build', 'validate']) {
       const result = cli(ROOT, process.env, '--cwd', repo, command)
@@ -188,7 +189,7 @@ describe('cli dispatch', () => {
     const cwd = cli(ROOT, process.env, '-C', repo, 'lint')
     expect(cwd.status).toBe(2)
     expect(cwd.stderr).toContain("unknown option '-C'")
-  })
+  }, 30_000)
 
   it('shows Blueprint help without running anything when the group is bare', () => {
     const result = cli(ROOT, process.env, '--cwd', repo, 'blueprint')

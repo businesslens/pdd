@@ -363,6 +363,7 @@ describe('stable Product Report', () => {
     for (const kind of ['interface', 'journey', 'capability']) {
       expect(facetKindsFor(workspace, kind), kind).toContain('entity')
     }
+    expect(facetKindsFor(workspace, 'entity')).toEqual(['domain'])
     expect(facetKindsFor(workspace, 'domain')).not.toContain('entity')
     expect(facetKindsFor(workspace, 'capability').length).toBeLessThan(6)
     for (const kind of ['entity', 'capability', 'journey', 'interface', 'domain', 'screen', 'rule']) {
@@ -757,14 +758,24 @@ describe('stable Product Report', () => {
 
   it('keeps structured readings beside the shared Vue Flow diagram canvas', () => {
     expect(existsSync(join(VIEWER, 'app/components/BlrFlowCanvas.vue'))).toBe(true)
-    /* The Overview's matrices and a collection's Graph are two components: one
-       narrows on its own two axes, the other draws the set the filters left. */
+    /* Matrix and Graph share the collection scope, with separate renderers. */
     const topology = source('app/components/BlrProductTopology.vue')
     expect(topology).toContain('BlrTopologyMatrix')
     const graph = source('app/components/BlrCollectionGraph.vue')
     for (const family of ['BlrTopologyTree', 'BlrDiagram']) expect(graph).toContain(family)
     expect(graph).not.toContain('<BlrFilterBar')
     expect(graph).toContain('visibleKeys')
+  })
+
+  it('offers explanatory preview cards for each collection drawing', async () => {
+    const modulePath = '../layers/nuxt/report-viewer/app/utils/collectionDrawings.ts'
+    const { collectionDrawingChoices } = await import(modulePath)
+    for (const kind of ['entity', 'interface', 'domain', 'capability', 'journey', 'rule']) {
+      const choices = collectionDrawingChoices(kind)
+      expect(choices.map((item: any) => item.id)).toEqual(['entity', 'capability', 'rule'].includes(kind) ? ['rows', 'graph', 'matrix'] : ['rows', 'graph'])
+      expect(new Set(choices.map((item: any) => item.label)).size).toBe(choices.length)
+      expect(choices.every((item: any) => item.description && item.shortLabel && item.icon)).toBe(true)
+    }
   })
 
   it('keeps matrix readings focused on their filters and data', () => {
@@ -774,11 +785,12 @@ describe('stable Product Report', () => {
     expect(existsSync(join(VIEWER, 'app/utils/browseSurfaces.ts'))).toBe(false)
     expect(reportShell).not.toContain('surface.question')
     expect(reportShell).not.toContain('surface.flow')
-    /* The shell names the view; the matrix adds no title or explanation. */
-    expect(topology).not.toContain('{{ view.name }}')
+    /* The shell names the collection; preview subtitles explain the available drawings. */
+    expect(source('app/components/BlrCollectionControls.vue')).toContain('{{ choice.label }}')
+    expect(topology).not.toContain('data-matrix-heading')
     expect(topology).not.toContain('blr-topology-title-row')
     expect(topology).not.toContain('{{ view.diagramType }}')
-    expect(topology).not.toContain('{{ view.question }}')
+    expect(source('app/components/BlrCollectionControls.vue')).toContain('{{ choice.description }}')
     expect(topology).not.toContain('About this view')
     expect(reportShell).not.toContain('surfaceHint')
     expect(source('app/components/BlrResourcePage.vue')).not.toContain('current.hint')
@@ -995,7 +1007,9 @@ describe('stable Product Report', () => {
     expect(toolbar).toBeGreaterThan(-1)
     expect(reportShell.indexOf('<BlrFilterBar', toolbar)).toBeLessThan(pane)
     expect(reportShell.indexOf('v-for="link in exits"')).toBeLessThan(toolbar)
-    expect(reportShell.indexOf('data-drawing-switch', toolbar)).toBeLessThan(pane)
+    expect(reportShell.indexOf('<BlrCollectionControls', toolbar)).toBeGreaterThan(toolbar)
+    expect(reportShell.indexOf('<BlrCollectionControls', toolbar)).toBeLessThan(pane)
+    expect(source('app/components/BlrCollectionControls.vue')).toContain('data-drawing-switch')
     /* Tabs stay on the Overview and on pages; a collection has none. */
     expect(reportShell).toContain("activeKind.value !== 'product' ? [] : [")
 
@@ -1003,7 +1017,8 @@ describe('stable Product Report', () => {
        while selected values stay visible above the reading. */
     expect(reportShell).toContain('v-for="kind in facetKinds"')
     expect(reportShell).not.toContain('label="Filter"')
-    expect(reportShell).not.toContain('<UPopover')
+    expect(source('app/components/BlrCollectionControls.vue')).not.toContain('<details')
+    expect(source('app/components/BlrCollectionControls.vue')).not.toContain('About this matrix')
 
     /* A control says how many values it holds; the values sit on a second row,
        so the control line keeps a fixed width however much is selected. */
@@ -1016,8 +1031,8 @@ describe('stable Product Report', () => {
 
     /* A named view narrows on its own axes, in the same shape — and no longer
        through a bare search box and a native select inside a popover. */
-    expect(topology).toContain('<BlrFilterBar')
-    expect(topology).not.toContain('<UPopover')
+    expect(topology).not.toContain('<BlrFilterBar')
+    expect(reportShell).toContain('<BlrRelationFilter')
     expect(topology).not.toContain("type=\"search\"")
     expect(topology).not.toContain('<select')
     expect(topology).not.toContain("'Filters'")
@@ -1108,11 +1123,10 @@ describe('stable Product Report', () => {
     const scenarios = source('app/components/BlrScenariosList.vue')
 
     expect(rail).not.toContain('blr-navchild')
-    /* The rail changes the subject. A collection's Graph is reached inside it;
-       a matrix compares two collections, so it is a rail row of its own. */
-    expect(rail).toContain('view: [section: string]')
-    expect(rail).toContain('MATRIX_DESTINATIONS.map')
-    expect(rail.indexOf('MATRIX_DESTINATIONS.map')).toBeLessThan(rail.indexOf('RAIL_KINDS.map'))
+    /* Additional drawings live inside their subject collection. */
+    expect(rail).not.toContain('MATRIX_DESTINATIONS')
+    expect(rail).not.toContain('view: [section: string]')
+    expect(source('app/components/BlrCollectionControls.vue')).toContain(':aria-label="`Draw as ${choice.id}`"')
     expect(reportShell).not.toContain('SCENARIO_OF')
     expect(reportShell).not.toContain('parentTabs')
     expect(reportShell).not.toContain('class="blr-tab"')

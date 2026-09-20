@@ -1,11 +1,11 @@
-/** Reference groups and previews keep their expansion per host/report/owner. */
-export function useBlrReferenceExpansion(scope: Ref<string>, keys: Ref<string[]>, defaults: Ref<string[]>) {
+/** Structure trees keep their expansion per host/report/owner. */
+export function useBlrStructureExpansion(scope: Ref<string>, keys: Ref<string[]>, defaults: Ref<string[]>) {
   const choices = ref<Record<string, boolean>>({})
-  const memory = useState<Record<string, Record<string, boolean>>>('blr:reference-expansion', () => ({}))
+  const memory = useState<Record<string, Record<string, boolean>>>('blr:structure-expansion', () => ({}))
   let mounted = false
   let currentKey = ''
   function restore() {
-    currentKey = `blr:references:${location.pathname}:${scope.value}`
+    currentKey = `blr:structure:${location.pathname}:${scope.value}`
     let saved: unknown = memory.value[currentKey]
     if (saved === undefined) {
       try { saved = JSON.parse(sessionStorage.getItem(currentKey) ?? 'null') } catch { /* Optional persistence. */ }

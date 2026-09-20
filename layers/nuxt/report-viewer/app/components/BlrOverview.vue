@@ -214,6 +214,8 @@ function referenceEntity(ownerKey?: string) {
         :references="references"
         :scope="JSON.stringify([workspace.identity.id, 'all-references'])"
         label="All references in the model"
+        expand-controls
+        :default-expanded="false"
         data-reference-catalog
       >
         <template #reference-owner="{ index }">

@@ -12,7 +12,9 @@ const { projectReportWorkspace } = await utility('reportWorkspace')
 const projections = await utility('topologyProjections')
 const { ruleAttachments } = await utility('topologyTargets')
 const { relationshipBadges } = await utility('matrixBadges')
-const { sanitizeMatrixReading } = await utility('matrixFilters')
+const { collectionRelation, collectionRelationDrawing, filterCollectionRelation, pruneRelationSelections } = await utility('collectionRelations')
+const { filterResources, facetKindsFor } = await utility('resourceFacets')
+const { resourceCardPresentation } = await utility('resourceCards')
 const { topologyRelations } = await utility('topologyRelations')
 const state = await utility('topologyState')
 const { PRODUCT_TOPOLOGY_VIEWS } = await utility('productTopologyViews')
@@ -24,90 +26,123 @@ const workspaceOf = (root = teachingRoot) => projectReportWorkspace(reportOf(roo
 const flatten = (branches: any[]): any[] => branches.flatMap(item => [item, ...flatten(item.children)])
 
 describe('named topology semantics', () => {
-  it('shares a stable matrix through column navigation while reacting to scope and report changes', () => {
+  it('keeps projections stable across selection changes and refreshes them with the report', () => {
     const workspace = shallowRef(workspaceOf(shopRoot))
-    const reading = shallowRef({ ...state.defaultTopologyReading(), view: 'what-changes-what' })
-    const view = useBlrMatrixView(workspace, reading)
+    const kind = shallowRef('entity')
+    const selections = shallowRef<string[]>([])
+    const view = useBlrMatrixView(workspace, kind, selections)
     const original = view.value
     expect(original.mode).toBe('mutations')
-    expect(original.matrix.columns.length).toBeGreaterThan(0)
-    reading.value = { ...reading.value, column: original.matrix.columns.at(-1).key, focus: [], hiddenKinds: [] }
-    expect(view.value).toBe(original)
-    const focused = original.matrix.rows[0].key
-    reading.value = { ...reading.value, focus: [focused] }
-    expect(view.value.matrix.rows.map((row: any) => row.key)).toEqual([focused])
-    expect(view.value.matrix.columns).toEqual(original.matrix.columns)
-    reading.value = { ...reading.value, view: 'delivery-by-interface', hiddenKinds: [], focus: [] }
+    selections.value = [original.source.columns[0].key]
+    expect(view.value.source).toBe(original.source)
+    kind.value = 'capability'
     expect(view.value.mode).toBe('delivery')
-    expect(view.value.matrix.columns.every((column: any) => column.kind === 'interface')).toBe(true)
-    const previous = view.value
+    selections.value = []
+    const previous = view.value.source
     workspace.value = workspaceOf(teachingRoot)
-    expect(view.value).not.toBe(previous)
+    expect(view.value.source).not.toBe(previous)
     expect(view.value.matrix.rows.length).toBeGreaterThan(0)
   })
 
-  it.each(['what-changes-what', 'delivery-by-interface', 'rule-attachments'])('filters both axes independently and keeps empty intersections in %s', name => {
-    const reading = shallowRef({ ...state.defaultTopologyReading(), view: name })
-    const view = useBlrMatrixView(workspaceOf(), reading)
-    const { source } = view.value
-    const row = source.rows.find((row: any) => source.columns.some((column: any) => !source.cells.some((cell: any) => cell.row === row.key && cell.column === column.key)))
-    expect(row).toBeDefined()
-    const column = source.columns.find((column: any) => !source.cells.some((cell: any) => cell.row === row.key && cell.column === column.key))
-    reading.value = { ...reading.value, focus: [row.key] }
-    expect(view.value.matrix.rows).toEqual([row])
-    expect(view.value.matrix.columns).toEqual(source.columns)
-    reading.value = { ...reading.value, focus: [column.key] }
-    expect(view.value.matrix.rows).toEqual(source.rows)
-    expect(view.value.matrix.columns).toEqual([column])
-    reading.value = { ...reading.value, focus: [row.key, column.key] }
-    expect(view.value.matrix).toEqual({ rows: [row], columns: [column], cells: [] })
-    reading.value = { ...reading.value, focus: source.rows.slice(0, 2).map((row: any) => row.key) }
-    expect(view.value.matrix.rows).toEqual(source.rows.slice(0, 2))
-    expect(view.value.matrix.columns).toEqual(source.columns)
-    reading.value = { ...reading.value, focus: [] }
-    expect(view.value.matrix).toEqual(source)
+  it.each(['entity', 'capability', 'rule'])('uses the same %s relation for matching subjects, columns and row explanations', kind => {
+    const workspace = workspaceOf(shopRoot)
+    const relation = collectionRelation(workspace, kind)
+    const { source } = relation
+    expect(filterCollectionRelation(source, [])).toEqual(source)
+    const target = source.columns.find((column: any) => source.cells.some((cell: any) => cell.column === column.key))
+    const filtered = filterCollectionRelation(source, [target.key])
+    const expected = new Set(source.cells.filter((cell: any) => cell.column === target.key).map((cell: any) => cell.row))
+    expect(filtered.rows.map((row: any) => row.key)).toEqual(source.rows.filter((row: any) => expected.has(row.key)).map((row: any) => row.key))
+    expect(filtered.columns).toEqual([target])
+    for (const row of filtered.rows) expect(resourceCardPresentation(workspace, row).hookLabel).toBe(relation.label)
+    // AND with a primary selection or other collection facet, including zero results.
+    expect(filterCollectionRelation(source, [target.key], []).rows).toEqual([])
+    const domain = workspace.domains[0]
+    const domainRows = filterResources(source.rows, { domain: [domain.id] })
+    expect(filterCollectionRelation(source, [target.key], domainRows).rows)
+      .toEqual(filtered.rows.filter((row: any) => domainRows.includes(row)))
+    expect(filterCollectionRelation(source, ['missing:resource']).rows).toEqual([])
+    expect(facetKindsFor(workspace, kind)).not.toContain(kind === 'entity' ? 'capability' : 'interface')
   })
 
-  it('combines Rule targets across resource types and preserves surviving selections after edits', () => {
+  it('offers one Capability availability axis and removes separate Screen and Scenario facets', () => {
+    const workspace = workspaceOf(shopRoot)
+    const relation = collectionRelation(workspace, 'capability')
+    expect([...new Set(relation.source.columns.map((resource: any) => resource.kind))]).toEqual(['interface', 'experience', 'screen'])
+    expect(facetKindsFor(workspace, 'capability')).toEqual(['domain', 'entity'])
+    expect(collectionRelationDrawing(relation, [])).toEqual(projections.deliveryMatrixProjection(workspace))
+  })
+
+  it('filters Screen availability exactly while comparing only its containing Interfaces and routes', () => {
+    const workspace = workspaceOf(shopRoot)
+    const relation = collectionRelation(workspace, 'capability')
+    for (const screen of workspace.screens) {
+      const matrix = collectionRelationDrawing(relation, [screen.key])
+      expect(matrix.rows).toEqual(workspace.capabilities.filter((capability: any) => screen.capabilityIds.includes(capability.id)))
+      expect(matrix.columns).toEqual(workspace.interfaces.filter((iface: any) => screen.interfaceIds.includes(iface.id)))
+      for (const cell of matrix.cells) {
+        expect(cell.evidence).toEqual([screen])
+        expect(cell.labels).toEqual(['on screen'])
+      }
+    }
+  })
+
+  it('includes an Experience’s Screens, unions location types, and never expands parent delivery to every child', () => {
+    const workspace = workspaceOf(shopRoot)
+    const relation = collectionRelation(workspace, 'capability')
+    for (const experience of workspace.experiences) {
+      const screens = workspace.screens.filter((screen: any) => screen.experienceIds.includes(experience.id))
+      const expected = workspace.capabilities.filter((capability: any) =>
+        capability.contexts.some((context: any) => context.experienceId === experience.id)
+        || screens.some((screen: any) => screen.capabilityIds.includes(capability.id)))
+      const matrix = collectionRelationDrawing(relation, [experience.key])
+      expect(matrix.rows).toEqual(expected)
+      expect(matrix.columns).toEqual(workspace.interfaces.filter((iface: any) => experience.interfaceIds.includes(iface.id)))
+      expect(matrix.cells.every((cell: any) => cell.evidence.every((item: any) => item.key === experience.key || screens.includes(item)))).toBe(true)
+    }
+    const selections = ['type:screen', workspace.interfaces[0].key]
+    const screenRows = collectionRelationDrawing(relation, ['type:screen']).rows
+    const interfaceRows = collectionRelationDrawing(relation, [workspace.interfaces[0].key]).rows
+    expect(collectionRelationDrawing(relation, selections).rows).toEqual(workspace.capabilities.filter((capability: any) => screenRows.includes(capability) || interfaceRows.includes(capability)))
+    for (const kind of ['interface', 'experience', 'screen']) {
+      const individual = relation.source.columns.filter((item: any) => item.kind === kind).map((item: any) => item.key)
+      expect(collectionRelationDrawing(relation, [`type:${kind}`])).toEqual(collectionRelationDrawing(relation, individual))
+    }
+    const empty = collectionRelationDrawing(relation, ['screen:missing'])
+    expect(empty.rows).toEqual([])
+    expect(empty.cells).toEqual([])
+  })
+
+  it('unions exact Rule targets and whole types, without treating attachment restrictions as targets', () => {
     const workspace = workspaceOf()
-    const reading = shallowRef({ ...state.defaultTopologyReading(), view: 'rule-attachments' })
-    const view = useBlrMatrixView(workspace, reading)
-    const { source } = view.value
-    const entity = source.columns.find((resource: any) => resource.kind === 'entity')
+    const { source } = collectionRelation(workspace, 'rule')
     const other = source.columns.find((resource: any) => resource.kind !== 'entity')
-    expect(entity).toBeDefined()
-    expect(other).toBeDefined()
-    reading.value = { ...reading.value, focus: [entity.key, other.key] }
-    expect(view.value.matrix.rows).toEqual(source.rows)
-    expect(view.value.matrix.columns).toEqual(source.columns.filter((resource: any) => [entity.key, other.key].includes(resource.key)))
-    reading.value = { ...reading.value, focus: [other.key] }
-    expect(view.value.matrix.columns).toEqual([other])
-    reading.value = { ...reading.value, focus: [source.rows[0].key, entity.key, other.key], column: entity.key }
-    expect(view.value.matrix.rows).toEqual([source.rows[0]])
+    const selected = ['type:entity', other.key]
+    const matrix = filterCollectionRelation(source, selected)
+    expect(matrix.columns).toEqual(source.columns.filter((resource: any) => resource.kind === 'entity' || resource.key === other.key))
+    const expected = workspace.rules.filter((rule: any) => ruleAttachments(workspace, rule)
+      .some((attachment: any) => attachment.resource.kind === 'entity' || attachment.resource.key === other.key))
+    expect(matrix.rows).toEqual(expected)
+    for (const target of source.columns) {
+      expect(filterCollectionRelation(source, [target.key]).rows).toEqual(workspace.rules.filter((rule: any) =>
+        ruleAttachments(workspace, rule).some((attachment: any) => attachment.resource.key === target.key)))
+    }
     const updated = { ...source, columns: source.columns.filter((resource: any) => resource.kind !== 'entity') }
-    const repaired = sanitizeMatrixReading(reading.value, updated)
-    expect(repaired.column).toBe(null)
-    expect(repaired.focus).toEqual([source.rows[0].key, other.key])
+    expect(pruneRelationSelections(updated, [...selected, 'missing:key', other.key])).toEqual([other.key])
+    expect(filterCollectionRelation(source, []).rows).toEqual(workspace.rules)
   })
 
-  it('hides Rule target types without hiding Rules, clears excluded selections and restores types', () => {
-    const reading = shallowRef({ ...state.defaultTopologyReading(), view: 'rule-attachments' })
-    const view = useBlrMatrixView(workspaceOf(), reading)
-    const { source } = view.value
-    const entity = source.columns.find((resource: any) => resource.kind === 'entity')
-    reading.value = { ...reading.value, focus: [source.rows[0].key, entity.key], hiddenKinds: ['entity', 'rule'], column: entity.key }
-    const clean = sanitizeMatrixReading(reading.value, source)
-    expect(clean.focus).toEqual([source.rows[0].key])
-    expect(clean.hiddenKinds).toEqual(['entity'])
-    expect(clean.column).toBe(null)
-    expect(view.value.matrix.rows).toEqual([source.rows[0]])
-    expect(view.value.matrix.columns).toEqual(source.columns.filter((resource: any) => resource.kind !== 'entity'))
-    reading.value = { ...clean, hiddenKinds: [] }
-    expect(view.value.matrix.columns).toEqual(source.columns)
-    reading.value = { ...reading.value, hiddenKinds: [...new Set(source.columns.map((resource: any) => resource.kind))] }
-    expect(view.value.matrix.columns).toEqual([])
-    expect(view.value.matrix.cells).toEqual([])
-    expect(view.value.matrix.rows).toEqual([source.rows[0]])
+  it('retains subjects without relationships even when there are no comparison columns', () => {
+    const workspace = workspaceOf(shopRoot)
+    const sparse = { ...workspace, capabilities: [], interfaces: [], rules: workspace.rules.map((rule: any) => ({ ...rule, appliesTo: [] })) }
+    const entities = projections.mutationProjection(sparse)
+    expect(entities.rows).toEqual(workspace.entities)
+    expect(entities.columns).toEqual([])
+    expect(entities.cells).toEqual([])
+    const delivery = projections.deliveryMatrixProjection({ ...workspace, interfaces: [] })
+    expect(delivery.rows).toEqual(workspace.capabilities)
+    expect(delivery.columns).toEqual([])
+    expect(delivery.cells).toEqual([])
   })
 
   it('keeps nine questions with explicit diagram types and stable view IDs', () => {
