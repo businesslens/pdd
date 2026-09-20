@@ -15,6 +15,16 @@ const observeErrors = page => page.on('pageerror', error => errors.push(error.me
 const settled = async page => {
   await expect(page.locator('.blr-topology-matrix')).not.toHaveAttribute('data-column-motion', 'true')
 }
+async function closeFilterSheet(page) {
+  const toolbar = page.locator('[data-collection-toolbar]')
+  await toolbar.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))
+  // Clearing selections can make the controls fit inline again, which closes
+  // the drawer automatically. Otherwise close it through its normal action.
+  if (await toolbar.locator('[data-blr-filter-bar]').getAttribute('data-filters-collapsed') === 'true') {
+    await page.getByRole('button', { name: 'Show results', exact: true }).click()
+  }
+  await expect(page.locator('[data-mobile-filter-controls]')).toHaveCount(0)
+}
 async function selectCollectionResource(page, label, title) {
   const toolbar = page.locator('[data-collection-toolbar]')
   await expect(toolbar).toBeVisible()
@@ -33,7 +43,9 @@ async function selectCollectionResource(page, label, title) {
   if (inSheet) await sheet.getByRole('button', { name: label, exact: true }).click()
   await page.getByRole('option').filter({ has: page.getByText(title, { exact: true }) }).first().click()
   await page.keyboard.press('Escape')
-  if (inSheet) await page.getByRole('button', { name: 'Show results', exact: true }).click()
+  // Let the select restore focus before opening another popover or drawer.
+  await expect(page.getByRole('listbox')).toHaveCount(0)
+  if (inSheet) await closeFilterSheet(page)
 }
 try {
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } })
@@ -193,7 +205,8 @@ try {
     if (inSheet) {
       await collectionFilters.locator('[data-mobile-filters]').click()
       await scoped.getByRole('button', { name: 'Clear all', exact: true }).click()
-      await scoped.getByRole('button', { name: 'Show results', exact: true }).click()
+      await expect(collectionFilters.locator('.blr-chip')).toHaveCount(0)
+      await closeFilterSheet(scoped)
     } else await collectionFilters.getByRole('button', { name: 'Clear every filter', exact: true }).click()
     await expect(scoped.locator('.blr-topology-matrix tbody tr')).toHaveCount(report.model.capabilities.length)
     await expect(scoped.locator('.blr-topology-matrix thead [data-resource-key]')).toHaveCount(report.model.interfaces.length)
