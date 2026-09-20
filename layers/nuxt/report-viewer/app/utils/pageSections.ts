@@ -1,21 +1,22 @@
 /** Resource readings separate explanation, behavior, relationships and references. */
 import type { AnyResourceView, ReportWorkspace } from './reportWorkspace'
 import { counterpartsOf, isScenarioKind } from './reportWorkspace'
+import { structureChildren } from './collectionChildren'
 import { resourceConnectionRows } from './resourceConnections'
 
 export type PageBlockId =
   | 'lead'
   | 'facts'
+  | 'audience'
   | 'contexts'
   | 'detail'
   | 'counterparts'
   | 'connections'
-  | 'delivery'
-  | 'screens'
+  | 'structure'
   | 'supporting'
   | 'references'
 
-export type PageTabId = 'overview' | 'scenarios' | 'lifecycle' | 'connections' | 'references'
+export type PageTabId = 'overview' | 'scenarios' | 'lifecycle' | 'structure' | 'connections' | 'references'
 
 export interface PageTab {
   id: PageTabId
@@ -43,6 +44,7 @@ export function childrenOf(workspace: ReportWorkspace, resource: AnyResourceView
 export function tabsFor(workspace: ReportWorkspace, requestedResource: AnyResourceView): PageTab[] {
   const resource = parentOf(workspace, requestedResource) ?? requestedResource
   const overviewBlocks: PageBlockId[] = ['lead', 'facts']
+  if ((resource.kind === 'interface' || resource.kind === 'experience') && resource.actorIds.length) overviewBlocks.push('audience')
 
   /* Only authored Capability Contexts belong in an Overview. */
   const hasOverviewContexts = resource.kind === 'capability' && resource.contexts.length > 0
@@ -52,8 +54,6 @@ export function tabsFor(workspace: ReportWorkspace, requestedResource: AnyResour
   if (hasAuthoredBody(resource)) overviewBlocks.push('detail')
 
   if (counterpartsOf(workspace, resource).length) overviewBlocks.push('counterparts')
-  if (resource.kind === 'interface') overviewBlocks.push('delivery')
-  if (resource.kind === 'experience') overviewBlocks.push('screens')
   if (resource.supportingContent) overviewBlocks.push('supporting')
 
   const tabs: PageTab[] = [{
@@ -69,6 +69,7 @@ export function tabsFor(workspace: ReportWorkspace, requestedResource: AnyResour
   if (resource.kind === 'entity' && resource.states.length) {
     tabs.push({ id: 'lifecycle', label: 'Lifecycle', blocks: [] })
   }
+  if (structureChildren(workspace, resource).length) tabs.push({ id: 'structure', label: 'Structure', blocks: ['structure'] })
   if (resourceConnectionRows(workspace, resource).length) {
     tabs.push({ id: 'connections', label: 'Connections', blocks: ['connections'] })
   }

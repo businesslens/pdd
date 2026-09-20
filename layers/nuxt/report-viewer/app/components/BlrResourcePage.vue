@@ -5,8 +5,6 @@
  */
 import type { AnyResourceView, EntityView, ReportWorkspace } from '../utils/reportWorkspace'
 import { ENTITY_KIND_META } from '../utils/reportWorkspace'
-import type { TopologyReading } from '../utils/topologyState'
-import { defaultTopologyReading } from '../utils/topologyState'
 import { parentOf, tabsFor, type PageTabId } from '../utils/pageSections'
 import { COLUMN_CHOICES, type ColumnChoice } from '../composables/useColumns'
 
@@ -24,7 +22,6 @@ const emit = defineEmits<{
 
 const scenarioRoute = defineModel<string | null>('scenarioRoute', { default: null })
 const routeColumns = defineModel<string>('routeColumns', { default: 'auto' })
-const reading = defineModel<TopologyReading>('reading', { default: defaultTopologyReading })
 
 const parent = computed(() => parentOf(props.workspace, props.resource))
 const subject = computed(() => parent.value ?? props.resource)
@@ -130,7 +127,6 @@ const columnItems = COLUMN_CHOICES.map(value => ({ value, label: `${value} per r
         <BlrPageBlock
           v-for="id in current?.blocks ?? []"
           :key="id"
-          v-model:reading="reading"
           :workspace="workspace"
           :resource="current?.id === 'references' ? resource : subject"
           :id="id"

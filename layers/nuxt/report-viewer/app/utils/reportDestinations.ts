@@ -54,7 +54,7 @@ export function resourceDomains(workspace: ReportWorkspace, resource: AnyResourc
 
 export function resourceViewLinks(resource: AnyResourceView, workspace: ReportWorkspace) {
   const sections = resource.kind === 'entity' ? ['entity-relationships', 'what-changes-what']
-    : ['interface', 'experience', 'screen'].includes(resource.kind) ? ['interface-map']
+    : ['interface', 'experience', 'screen'].includes(resource.kind) ? ['interface-map', ...(resource.kind === 'interface' ? ['delivery'] : [])]
       : resource.kind === 'domain' ? ['domain-reach']
         : resource.kind === 'capability' ? ['capability-reach', 'delivery', 'what-changes-what']
           : resource.kind === 'journey' ? ['journey-reach']

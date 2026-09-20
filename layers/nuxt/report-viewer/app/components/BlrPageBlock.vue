@@ -5,11 +5,9 @@
  * The page owns arrangement; this switchboard keeps each authored or derived
  * reading in one implementation.
  */
-import type { AnyResourceView, ReportWorkspace, InterfaceView } from '../utils/reportWorkspace'
+import type { AnyResourceView, ReportWorkspace } from '../utils/reportWorkspace'
 import { ENTITY_KIND_META, counterpartsOf } from '../utils/reportWorkspace'
 import { resourceFacts } from '../utils/resourceFacts'
-import type { TopologyReading } from '../utils/topologyState'
-import { defaultTopologyReading } from '../utils/topologyState'
 import type { PageBlockId } from '../utils/pageSections'
 
 const props = defineProps<{
@@ -24,16 +22,13 @@ const emit = defineEmits<{
   open: [resource: AnyResourceView]
 }>()
 
-const reading = defineModel<TopologyReading>('reading', { default: defaultTopologyReading })
-function openKey(key: string) {
-  const resource = props.workspace.byKey.get(key)
-  if (resource) emit('open', resource)
-}
 const meta = computed(() => ENTITY_KIND_META[props.resource.kind])
 const contexts = computed(() => props.resource.kind === 'capability' ? props.resource.contexts : [])
 const entryPoints = computed(() => props.resource.kind === 'journey' ? props.resource.entryPoints : [])
 const counterparts = computed(() => counterpartsOf(props.workspace, props.resource))
 const facts = computed(() => resourceFacts(props.workspace, props.resource).filter(fact => fact.value))
+const audience = computed(() => (props.resource.kind === 'interface' || props.resource.kind === 'experience')
+  ? props.resource.actorIds.flatMap(id => { const actor = props.workspace.byKey.get(`entity:${id}`); return actor ? [actor] : [] }) : [])
 </script>
 
 <template>
@@ -49,6 +44,11 @@ const facts = computed(() => resourceFacts(props.workspace, props.resource).filt
       <dd class="mt-0.5 truncate text-sm font-medium text-highlighted">{{ fact.value }}</dd>
     </div>
   </dl>
+
+  <div v-else-if="id === 'audience' && audience.length" class="flex flex-wrap items-center gap-2" data-resource-audience>
+    <span class="text-xs text-muted">Entered by</span>
+    <BlrTopologyResource v-for="actor in audience" :key="actor.key" :resource="actor" @open="emit('open', actor)" />
+  </div>
 
   <BlrContexts
     v-else-if="id === 'contexts' && (contexts.length || entryPoints.length)"
@@ -81,9 +81,7 @@ const facts = computed(() => resourceFacts(props.workspace, props.resource).filt
     />
   </div>
 
-  <BlrInterfaceDelivery v-else-if="id === 'delivery' && resource.kind === 'interface'" v-model:reading="reading" :workspace="workspace" :resource="resource as InterfaceView" @open="openKey" />
-
-  <BlrExperienceContents v-else-if="id === 'screens' && resource.kind === 'experience'" :workspace="workspace" :resource="resource" @open="openKey" />
+  <BlrResourceStructure v-else-if="id === 'structure'" :workspace="workspace" :resource="resource" @open="emit('open', $event)" />
 
   <div v-else-if="id === 'connections'" data-resource-connections class="space-y-2.5">
     <p v-if="heading" class="blr-block-heading">Connections</p>
