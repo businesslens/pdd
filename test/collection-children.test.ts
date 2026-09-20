@@ -5,8 +5,7 @@ import { loadModel } from '../src/core/model.js'
 
 const utility = (name: string) => import(`../layers/nuxt/report-viewer/app/utils/${name}.ts`)
 const { projectReportWorkspace } = await utility('reportWorkspace')
-const { rowChildren, treeCards, structureChildren, treeBranchKeys, TREE_CARD_KINDS } = await utility('collectionChildren')
-const { tabsFor } = await utility('pageSections')
+const { rowChildren, treeCards, TREE_CARD_KINDS } = await utility('collectionChildren')
 const { interfaceProjection } = await utility('topologyProjections')
 const workspace = projectReportWorkspace(compileReport(loadModel(join(__dirname, '../blueprints/content-feed-reader')), '2026-09-12'))
 const flatten = (rows: any[]): any[] => rows.flatMap(row => [row, ...flatten(row.children)])
@@ -32,7 +31,7 @@ describe('collection rows that expand', () => {
     /* An Interface card groups its Experiences, each with its Screens, and its direct Screens. */
     for (const card of treeCards(workspace, 'interface', workspace.interfaces, false)) {
       expect(card.children.map((group: any) => group.title)).toEqual(
-        [['experience', 'Experiences'], ['screen', rowChildren(workspace, card.resource).some((row: any) => row.resource.kind === 'experience') ? 'Shared Screens' : 'Screens']]
+        [['experience', 'Experiences'], ['screen', 'Screens']]
           .filter(([kind]) => rowChildren(workspace, card.resource).some((row: any) => row.resource.kind === kind)).map(([, title]) => title))
       const screens = flatten(card.children).filter((node: any) => node.resource?.kind === 'screen').map((node: any) => node.resource.key)
       expect(screens.sort()).toEqual(flatten(rowChildren(workspace, card.resource)).filter((row: any) => row.resource.kind === 'screen').map((row: any) => row.resource.key).sort())
@@ -77,43 +76,6 @@ describe('collection rows that expand', () => {
       for (const row of rows) {
         if (row.resource.kind === 'experience') expect(row.children.every((child: any) => child.resource.kind === 'screen')).toBe(true)
       }
-    }
-  })
-
-  it('uses the identical containment tree in an Interface card and its Structure tab', () => {
-    for (const card of treeCards(workspace, 'interface', workspace.interfaces, false)) {
-      expect(structureChildren(workspace, card.resource)).toEqual(card.children)
-      const nodes = flatten(card.children)
-      expect(nodes.some(node => node.sharedFrom)).toBe(false)
-      expect(new Set(nodes.map(node => node.id)).size).toBe(nodes.length)
-      expect(treeBranchKeys(card.children)).toEqual(nodes.filter(node => node.children.length).map(node => node.id))
-      expect(tabsFor(workspace, card.resource).map((tab: any) => tab.id).includes('structure')).toBe(card.children.length > 0)
-    }
-  })
-
-  it('shows an Experience’s own Screens and shared references without changing ownership', () => {
-    const experience = workspace.experiences.find((item: any) => item.id === 'reader-web::personal-library')
-    const groups = structureChildren(workspace, experience)
-    expect(groups.map((group: any) => [group.title, group.children.length])).toEqual([['Screens', 4], ['Shared Screens', 1]])
-    expect(groups[0].children.every((node: any) => !node.sharedFrom)).toBe(true)
-    const shared = groups[1].children[0]
-    expect(shared.resource.title).toBe('Item reader')
-    expect(shared.sharedFrom.title).toBe('Reader web application')
-    expect(shared.resource.experienceIds).toEqual([])
-    const owner = shared.sharedFrom
-    const canonical = flatten(structureChildren(workspace, owner)).filter((node: any) => node.resource?.key === shared.resource.key)
-    expect(canonical).toHaveLength(1)
-    expect(canonical[0].sharedFrom).toBeUndefined()
-    expect(tabsFor(workspace, experience).map((tab: any) => tab.id)).toEqual(['overview', 'structure', 'connections'])
-    expect(structureChildren(workspace, shared.resource)).toEqual([])
-    expect(tabsFor(workspace, shared.resource).map((tab: any) => tab.id)).not.toContain('structure')
-  })
-
-  it('omits Structure and its empty groups on childless places', () => {
-    const empty = { ...workspace, experiences: [], screens: [] }
-    for (const resource of [...workspace.interfaces, ...workspace.experiences]) {
-      expect(structureChildren(empty, resource)).toEqual([])
-      expect(tabsFor(empty, resource).map((tab: any) => tab.id)).not.toContain('structure')
     }
   })
 

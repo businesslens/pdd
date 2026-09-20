@@ -51,7 +51,7 @@ describe('report destinations', () => {
   it('offers a resource only the views its own subject appears in', () => {
     const sections = (resource: any) => resourceViewLinks(resource, workspace).map((item: any) => item.section)
     expect(sections(workspace.entities[0])).toContain('entity-relationships')
-    expect(sections(workspace.interfaces[0])).toEqual(expect.arrayContaining(['interface-map', 'delivery']))
+    expect(sections(workspace.interfaces[0])).toContain('interface-map')
     expect(sections(workspace.domains[0])).toContain('domain-reach')
     expect(sections(workspace.journeys[0])).toContain('journey-reach')
     expect(sections(workspace.rules[0])).toEqual(['rule-reach', 'rule-attachments'])

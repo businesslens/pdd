@@ -1,23 +1,21 @@
 /** Resource readings separate explanation, behavior, relationships and references. */
 import type { AnyResourceView, ReportWorkspace } from './reportWorkspace'
 import { counterpartsOf, isScenarioKind } from './reportWorkspace'
-import { structureChildren } from './collectionChildren'
 import { resourceConnectionRows } from './resourceConnections'
 
 export type PageBlockId =
   | 'lead'
   | 'facts'
-  | 'audience'
   | 'contexts'
   | 'detail'
-  | 'boundary'
   | 'counterparts'
   | 'connections'
-  | 'structure'
+  | 'delivery'
+  | 'screens'
   | 'supporting'
   | 'references'
 
-export type PageTabId = 'overview' | 'scenarios' | 'lifecycle' | 'behavior' | 'structure' | 'connections' | 'references'
+export type PageTabId = 'overview' | 'scenarios' | 'lifecycle' | 'connections' | 'references'
 
 export interface PageTab {
   id: PageTabId
@@ -45,7 +43,6 @@ export function childrenOf(workspace: ReportWorkspace, resource: AnyResourceView
 export function tabsFor(workspace: ReportWorkspace, requestedResource: AnyResourceView): PageTab[] {
   const resource = parentOf(workspace, requestedResource) ?? requestedResource
   const overviewBlocks: PageBlockId[] = ['lead', 'facts']
-  if ((resource.kind === 'interface' || resource.kind === 'experience') && resource.actorIds.length) overviewBlocks.push('audience')
 
   /* Only authored Capability Contexts belong in an Overview. */
   const hasOverviewContexts = resource.kind === 'capability' && resource.contexts.length > 0
@@ -54,10 +51,10 @@ export function tabsFor(workspace: ReportWorkspace, requestedResource: AnyResour
 
   if (hasAuthoredBody(resource)) overviewBlocks.push('detail')
 
-  const hasCounterparts = counterpartsOf(workspace, resource).length > 0
-  if (hasCounterparts && resource.kind !== 'screen') overviewBlocks.push('counterparts')
+  if (counterpartsOf(workspace, resource).length) overviewBlocks.push('counterparts')
+  if (resource.kind === 'interface') overviewBlocks.push('delivery')
+  if (resource.kind === 'experience') overviewBlocks.push('screens')
   if (resource.supportingContent) overviewBlocks.push('supporting')
-  if (resource.kind === 'screen') overviewBlocks.push('boundary')
 
   const tabs: PageTab[] = [{
     id: 'overview',
@@ -72,14 +69,8 @@ export function tabsFor(workspace: ReportWorkspace, requestedResource: AnyResour
   if (resource.kind === 'entity' && resource.states.length) {
     tabs.push({ id: 'lifecycle', label: 'Lifecycle', blocks: [] })
   }
-  if (structureChildren(workspace, resource).length) tabs.push({ id: 'structure', label: 'Structure', blocks: ['structure'] })
-  if (resource.kind === 'screen' && (resource.actions.length || resource.states.length)) {
-    tabs.push({ id: 'behavior', label: 'Behavior', blocks: [] })
-  }
-  const connections: PageBlockId[] = resourceConnectionRows(workspace, resource).length ? ['connections'] : []
-  if (resource.kind === 'screen' && hasCounterparts) connections.push('counterparts')
-  if (connections.length) {
-    tabs.push({ id: 'connections', label: 'Connections', blocks: connections })
+  if (resourceConnectionRows(workspace, resource).length) {
+    tabs.push({ id: 'connections', label: 'Connections', blocks: ['connections'] })
   }
   if (requestedResource.references.length) {
     tabs.push({ id: 'references', label: 'References', count: requestedResource.references.length, blocks: ['references'] })

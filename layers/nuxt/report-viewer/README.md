@@ -32,23 +32,7 @@ own Capabilities, so it does not borrow Domains from its parent's other cases.
 
 Overview contains identity facts, authored detail, Contexts and supporting material,
 with contextual links beside the facts they explain. Capability
-and Journey readings add Scenarios. A Screen's Overview keeps its description,
-Intent and Information presented, with a compact Presents row naming the Entities
-above that information and Capability boundary last. Behavior follows whenever
-actions or view states exist: Available actions is a separate list, and View states
-are expandable rows with Expand all and Collapse all controls. Descriptions start
-closed; expansion is remembered per host, report and Screen across tab changes,
-resource lookups, refresh and valid recompilation. Counts appear beside these
-lists, without a separate Overview counter strip.
-Interfaces and Experiences share a Structure tab, using the collection's tree
-rows, chevrons, resource links and expansion controls. The selected resource is
-already named in the header, so Structure starts with its children. Shared Screens
-occur once under their Interface in the full tree; an Experience's Structure shows
-shared references with “From” and an owner link. Structure holds containment and
-availability; Overview holds audience and Connections holds capability exposure.
-Screens have no Structure tab.
-A Screen's Also on counterparts
-appear in Connections. An Entity's Overview contains Information
+and Journey readings add Scenarios. An Entity's Overview contains Information
 kept; its Lifecycle reading switches between Rows and Graph. Rows groups changes
 under their starting State, using the collection list's parent/child styling.
 Each State carries its definition, including States with no outgoing changes.
@@ -212,7 +196,7 @@ where it left:
 | `section` | `overview`; or a collection: `entity`, `interface`, `domain`, `capability`, `journey`, or `rule` | `overview` |
 | `resource` | the stable key of the inspected resource (`screen:reader-web::…`), or `null` for the section's collection | `null` |
 | `tab` | underlying collection: `overview` (Rows), `graph`, or `matrix` (Entities, Capabilities and Business Rules); Product Overview: `overview` (About), `coverage`, or `references` | `overview` |
-| `resourceTab` | resource reading: `overview`, `structure`, `scenarios`, `lifecycle`, `behavior`, `connections`, or `references`; independent of `tab` | `overview` |
+| `resourceTab` | resource reading: `overview`, `scenarios`, `lifecycle`, `connections`, or `references`; independent of `tab` | `overview` |
 | `scenarioRoute` | the first route in the visible Scenario route window, or `null` | `null` |
 | `routeColumns` | `auto`, or the reader's preferred number of visible route columns | `auto` |
 | `topology` | selected view, Journey, Scenario window, matrix column, focus, hidden kinds, expanded/collapsed groups, directory search | Domain map; no filters |
@@ -235,7 +219,7 @@ Back/Forward; shared URLs carry the current reading without the sender's trail.
 The composable also supplies native resource URLs to descendant viewer links.
 Hosts providing their own routing should adopt `resourceTab` independently of
 `tab`; uncontrolled embedded readers retain a local return trail.
-Hosts can instead bind their own state. Structure expansion is stored per resource, separately from the underlying collection or graph.
+Hosts can instead bind their own state. Interface delivery expansion is stored per resource, separately from the underlying graph.
 Collection facets, collapsed groups,
 expanded tree nodes, scroll anchors and graph position use session storage when
 available, isolated by report and host path. They survive refresh and
@@ -331,17 +315,20 @@ page and graph toolbars.
 
 Domain and Interface cards are trees inside translucent containers, without a
 separate header. Their borderless tree rows fill each card's width and use the
-parent's background, with a subtle row highlight on hover. Structure uses the
-same component. Each group has its matching resource-type icon and a count beside
-its name: Experiences, Screens, Shared Screens, Capabilities or Entities. Resource
-roots have no mixed total. Expansion chevrons sit before the type icons.
-
-A resource name opens its reading directly, including roots with no children.
-Chevrons toggle expansion; group labels also toggle their group. Arrow keys
-navigate the tree and expand or collapse branches; Enter opens a resource or
-toggles a group. There are no synthetic Overview children. Closing a root
-preserves its folders' expansion state. Empty groups are omitted. Unassigned
-appears only when it contains resources and has no resource link.
+parent's background, with a subtle row highlight on hover. Each group has its
+matching resource-type icon. Expansion chevrons sit before
+these icons; counts align at the right edge. Resource entries retain
+their type marks. The named Domain or Interface is the tree root. Clicking any
+branch row, including its name or chevron, only expands or collapses its children;
+Enter, Space and arrow keys also control expansion. A resource branch starts
+with an icon-free Overview link to its reading, including an Experience with Screens.
+Resource leaves open their readings directly. Closing a root preserves its folders'
+expansion state. Counts exclude Overview links. Unassigned only expands and
+collapses and has no Overview link.
+Experiences and Screens folders appear in Interfaces only when they contain
+items; the same applies to Capabilities and Entities folders in Domains. An
+empty Domain or Interface expands to show just its Overview link.
+Unassigned appears only when it contains resources.
 Scenarios v3 and its table drawing have been retired.
 
 Backgrounds follow the item's role, independently of which levels are visible:
@@ -422,8 +409,6 @@ inspection, independent Graph/Lifecycle state, nested Back/Forward, Scenario
 position, direct links and keyboard dismissal.
 `node scripts/check-resource-references.mjs <url>` covers reference ownership,
 counts, previews, browser history and scrolling tabs on desktop and narrow screens.
-`node scripts/check-screen-behavior.mjs <url>` covers Screen tab separation,
-counterparts, optional lists, keyboard and bulk expansion, Back and refresh.
 `node scripts/check-report-navigation.mjs <url>` covers the collections, trees,
 filters and named-view exits. Set `BLR_NAV_SCREENSHOTS` to a directory outside
 the Product Model to save layout captures.

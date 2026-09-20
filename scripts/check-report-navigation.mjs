@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /** Exercise report destinations and resource readings against a running built CLI. */
 import { chromium, expect } from '@playwright/test'
-import { selectCollectionDrawing, expectCollectionDrawing, expandCollection, setCollectionExpanded } from './report-view-controls.mjs'
+import { selectCollectionDrawing, expectCollectionDrawing, expandCollection } from './report-view-controls.mjs'
 import { mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 const origin = process.argv[2]
@@ -88,7 +88,8 @@ try {
         await expect(page.getByRole('heading', { level: 1 })).toContainText(collection)
       }
     }
-    /* Chevrons expand branches; resource names open readings, including empty roots. */
+    /* Branch rows only toggle. Each resource root contains an Overview link,
+       including roots with no modeled children. */
     for (const [collection, kind, resources] of [
       ['Domains', 'domain', report.model.domains],
       ['Interfaces', 'interface', report.model.interfaces]
@@ -96,7 +97,7 @@ try {
       await choose(page, collection)
       await expect(page.locator('[data-tree-card] [data-group-header]')).toHaveCount(0)
       const roots = page.locator('[data-tree-card] [role="treeitem"][aria-level="1"][aria-expanded]')
-      await setCollectionExpanded(page, false)
+      await page.getByRole('button', { name: 'Collapse all', exact: true }).click()
       for (const root of await roots.all()) await expect(root).toHaveAttribute('aria-expanded', 'false')
       await expandCollection(page)
       for (const root of await roots.all()) await expect(root).toHaveAttribute('aria-expanded', 'true')
@@ -118,30 +119,38 @@ try {
           await folder.press('Enter')
           await expect(folder).toHaveAttribute('aria-expanded', 'true')
         }
-        const hasChildren = await subject.getAttribute('aria-expanded') !== null
-        if (hasChildren) {
-          await toggle.click()
-          await expect(subject).toHaveAttribute('aria-expanded', 'false')
-          await expect(card.getByRole('treeitem')).toHaveCount(1)
-          await expect(page).not.toHaveURL(/[?&]e=/)
-          await page.reload()
-          await expect(subject).toHaveAttribute('aria-expanded', 'false')
-          await toggle.press('Space')
-          await expect(subject).toHaveAttribute('aria-expanded', 'true')
-          await expect.poll(folderStates).toEqual(before)
-          await subject.press('ArrowLeft')
-          await expect(subject).toHaveAttribute('aria-expanded', 'false')
-          await subject.press('ArrowRight')
-          await expect(subject).toHaveAttribute('aria-expanded', 'true')
-        }
-        await expect(card.getByText('Overview', { exact: true })).toHaveCount(0)
-        await subject.getByRole('link', { name: title, exact: true }).click()
+        await subject.getByText(title, { exact: true }).click()
+        await expect(subject).toHaveAttribute('aria-expanded', 'false')
+        await expect(card.getByRole('treeitem')).toHaveCount(1)
+        await expect(page).not.toHaveURL(/[?&]e=/)
+        await page.reload()
+        await expect(subject).toHaveAttribute('aria-expanded', 'false')
+        await subject.press('Enter')
+        await expect(subject).toHaveAttribute('aria-expanded', 'true')
+        await expect.poll(folderStates).toEqual(before)
+        await subject.press('Space')
+        await expect(subject).toHaveAttribute('aria-expanded', 'false')
+        await toggle.press('Space')
+        await expect(subject).toHaveAttribute('aria-expanded', 'true')
+        await toggle.click()
+        await expect(subject).toHaveAttribute('aria-expanded', 'false')
+        await toggle.click()
+        await expect(subject).toHaveAttribute('aria-expanded', 'true')
+        await subject.press('ArrowLeft')
+        await expect(subject).toHaveAttribute('aria-expanded', 'false')
+        await subject.press('ArrowRight')
+        await expect(subject).toHaveAttribute('aria-expanded', 'true')
+        const overview = card.locator('[role="treeitem"][aria-level="2"]').filter({ has: page.getByText('Overview', { exact: true }) })
+        await expect(overview).toHaveCount(1)
+        await expect(overview.locator('.iconify')).toHaveCount(0)
+        if (!before.length) await expect(card.getByRole('treeitem')).toHaveCount(2)
+        await overview.click()
         await expect.poll(() => new URL(page.url()).searchParams.get('e')).toBe(`${kind}:${resource.id}`)
         await expect(page.locator('[data-resource-heading]')).toContainText(title)
         await page.reload()
         await expect(page.locator('[data-resource-heading]')).toContainText(title)
         await page.goBack()
-        if (hasChildren) await expect(subject).toHaveAttribute('aria-expanded', 'true')
+        await expect(subject).toHaveAttribute('aria-expanded', 'true')
         await expect.poll(folderStates).toEqual(before)
       }
       const unassigned = page.locator('[data-card-key="unassigned"] [role="treeitem"]').first()
@@ -174,7 +183,14 @@ try {
       await expect(item).toHaveAttribute('aria-expanded', 'false')
       await item.press('ArrowRight')
       await expect(item).toHaveAttribute('aria-expanded', 'true')
-      await item.getByRole('link', { name: experience.title, exact: true }).click()
+      await item.getByText(experience.title, { exact: true }).click()
+      await expect(item).toHaveAttribute('aria-expanded', 'false')
+      await expect(page).not.toHaveURL(/[?&]e=/)
+      await item.press('Enter')
+      await expect(item).toHaveAttribute('aria-expanded', 'true')
+      const overview = item.locator('..').getByRole('treeitem').filter({ has: page.getByText('Overview', { exact: true }) }).first()
+      await expect(overview.locator('.iconify')).toHaveCount(0)
+      await overview.click()
       await expect(page).toHaveURL(/[?&]e=experience/)
       await page.goBack()
       await expect(item).toHaveAttribute('aria-expanded', 'true')
@@ -296,10 +312,10 @@ try {
     }
     const iface = report.model.interfaces.find(item => report.model.experiences.some(experience => experience.id.startsWith(`${item.id}::`))) ?? report.model.interfaces[0]
     if (iface) {
-      await page.goto(resourceUrl('interface', iface.id, '&rt=structure'))
-      await expect(page.locator('[data-resource-structure]')).toBeVisible()
+      await page.goto(resourceUrl('interface', iface.id))
+      await expect(page.locator('[data-interface-delivery]')).toBeVisible()
       await expect(page.locator('[data-resource-connections]')).toHaveCount(0)
-      const toggle = page.locator('[data-resource-structure] button[aria-expanded]').first()
+      const toggle = page.locator('[data-interface-delivery] button[aria-expanded]').first()
       if (await toggle.count()) {
         const old = await toggle.getAttribute('aria-expanded')
         await toggle.click()
@@ -308,12 +324,12 @@ try {
         await page.reload()
         await expect(toggle).toHaveAttribute('aria-expanded', old === 'true' ? 'false' : 'true')
       }
-      await capture(page, `${width}-interface-structure`)
+      await capture(page, `${width}-interface-delivery`)
       await page.getByRole('button', { name: 'Interface map', exact: true }).click()
       await expect(page).toHaveURL(/s=interface.*t=graph.*tf=interface/)
       await expect(page.locator('[data-flow-ready=true]')).toBeVisible()
       await page.goBack()
-      await expect(page.locator('[data-resource-structure]')).toBeVisible()
+      await expect(page.locator('[data-interface-delivery]')).toBeVisible()
     }
     const entity = report.model.entities.find(item => item.relations.length) ?? report.model.entities[0]
     if (entity) {
@@ -332,7 +348,7 @@ try {
     if (width >= 1024) await expect(page.locator('.blr-navitem[data-current=true]')).toHaveText('Overview')
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true)
     await context.close()
-    console.log(`Passed ${width}px: Rows/Graph/Matrix, matrix Back, collection focus, Scenario persistence, tree toggles, reload, exits and Interface Structure.`)
+    console.log(`Passed ${width}px: Rows/Graph/Matrix, matrix Back, collection focus, Scenario persistence, tree toggles, reload, exits and Interface delivery.`)
   }
   expect(errors).toEqual([])
 } finally { await browser.close() }

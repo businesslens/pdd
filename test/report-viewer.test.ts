@@ -12,7 +12,7 @@ const routeWindowModulePath = '../layers/nuxt/report-viewer/app/utils/scenarioRo
 const pageSectionsModulePath = '../layers/nuxt/report-viewer/app/utils/pageSections.ts'
 const { projectReportWorkspace } = await import(workspaceModulePath)
 const { resourceFacts } = await import(resourceFactsModulePath)
-const { REPORT_ENTITY_KINDS, ENTITY_KIND_META, INTERFACE_TYPE_META, counterpartsOf } = await import(workspaceModulePath)
+const { REPORT_ENTITY_KINDS, ENTITY_KIND_META, INTERFACE_TYPE_META } = await import(workspaceModulePath)
 const { hasAuthoredBody, tabsFor } = await import(pageSectionsModulePath)
 const FIXTURE = join(__dirname, 'fixtures', 'fixture-shop')
 
@@ -1057,7 +1057,7 @@ describe('stable Product Report', () => {
     expect(reportShell).toContain('@select="openResourcePage"')
     expect(page).toContain('<BlrPageBlock')
     expect(source('app/components/BlrPageBlock.vue')).toContain('<BlrResourceBody')
-    for (const marker of ['stepMatrix.steps', 'asScreen.information', 'asRule.statement']) {
+    for (const marker of ['stepMatrix.steps', 'asScreen.states', 'asRule.statement']) {
       expect(body, marker).toContain(marker)
     }
   })
@@ -1161,10 +1161,7 @@ describe('stable Product Report', () => {
       const connections = tabs.find((tab: any) => tab.id === 'connections')
       if (connections) {
         expect(tabs.at(resource.references.length ? -2 : -1)).toBe(connections)
-        expect(connections.blocks).toEqual([
-          'connections',
-          ...(resource.kind === 'screen' && counterpartsOf(workspace, resource).length ? ['counterparts'] : [])
-        ])
+        expect(connections.blocks).toEqual(['connections'])
       }
       if (resource.references.length) {
         expect(tabs.at(-1)).toMatchObject({ id: 'references', count: resource.references.length, blocks: ['references'] })
@@ -1183,26 +1180,6 @@ describe('stable Product Report', () => {
     expect(source('app/components/BlrReportShell.vue')).toContain('<BlrPageTabs')
     expect(source('app/components/BlrResourceSlideover.vue')).toContain(':tabs-target="tabsTarget"')
     expect(source('app/components/BlrPageTabs.vue')).toContain('<UTabs')
-  })
-
-  it('gives Screens a Behavior reading only when actions or view states exist, with counterparts in Connections', () => {
-    const workspace = projectReportWorkspace(compileReport(loadModel(FIXTURE), '2026-09-18'))
-    const screen = workspace.screens.find((item: any) => item.id === 'customer-web::storefront::product-record')!
-    const tabs = tabsFor(workspace, screen)
-    expect(tabs.map((tab: any) => tab.id)).toEqual(['overview', 'behavior', 'connections', 'references'])
-    expect(tabs[0].blocks).not.toContain('counterparts')
-    expect(tabs[0].blocks.at(-1)).toBe('boundary')
-    expect(tabs.find((tab: any) => tab.id === 'connections').blocks).toContain('counterparts')
-    expect(resourceFacts(workspace, screen)).toEqual([])
-
-    for (const [actions, states, hasBehavior] of [
-      [screen.actions, [], true], [[], screen.states, true], [[], [], false]
-    ] as const) {
-      expect(tabsFor(workspace, { ...screen, actions, states }).some((tab: any) => tab.id === 'behavior')).toBe(hasBehavior)
-    }
-    // Moving Screen counterparts must not move an Experience's contextual links.
-    const experience = workspace.experiences.find((item: any) => counterpartsOf(workspace, item).length)!
-    expect(tabsFor(workspace, experience)[0].blocks).toContain('counterparts')
   })
 
   /*

@@ -25,7 +25,7 @@ import {
   filterResources,
   hasSelections
 } from '../utils/resourceFacets'
-import { TREE_CARD_KINDS, treeCards, treeBranchKeys } from '../utils/collectionChildren'
+import { TREE_CARD_KINDS, treeCards } from '../utils/collectionChildren'
 import type { ColumnChoice } from '../composables/useColumns'
 import { KIND_TERM } from '../utils/vocabulary'
 import type { VocabularySlug } from '../utils/vocabulary.generated'
@@ -494,7 +494,10 @@ function toggleAllRows(open: boolean) {
     closedGroups.value = [...closedGroups.value.filter(id => !id.startsWith(prefix)), ...(open ? [] : cards.map(card => `${prefix}${card.key}`))]
     const next = { ...treeExpansion.value }
     for (const card of cards) {
-      next[`${prefix}${card.key}`] = open ? treeBranchKeys(card.children) : []
+      const ids: string[] = []
+      const walk = (node: { id: string, children: any[] }) => { if (node.children.length) ids.push(node.id); node.children.forEach(walk) }
+      card.children.forEach(walk)
+      next[`${prefix}${card.key}`] = open ? ids : []
     }
     treeExpansion.value = next
   }

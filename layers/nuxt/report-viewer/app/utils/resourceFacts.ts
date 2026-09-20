@@ -17,7 +17,8 @@ import type {
   ReportResourceKind,
   ReportWorkspace,
   RuleView,
-  ScenarioView
+  ScenarioView,
+  ScreenView
 } from './reportWorkspace'
 import { INTERFACE_TYPE_META, resolveResource } from './reportWorkspace'
 import type { VocabularySlug } from './vocabulary.generated'
@@ -57,8 +58,13 @@ export function resourceFacts(workspace: ReportWorkspace, resource: AnyResourceV
         { label: 'Screens', value: String(item.screenIds.length), term: KIND_TERM.screen }
       ]
     }
-    // Screen counts belong beside their lists in Behavior.
-    case 'screen': return []
+    case 'screen': {
+      const screen = resource as ScreenView
+      return [
+        { label: 'View states', value: String(screen.states.length), term: 'view-state' },
+        { label: 'Actions', value: String(screen.actions.length) }
+      ]
+    }
     case 'entity': {
       const entity = resource as EntityView
       if (entity.acts) {

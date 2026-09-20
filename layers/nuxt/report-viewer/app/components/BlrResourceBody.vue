@@ -62,6 +62,7 @@ const scenarioWord = (word: 'trigger' | 'outcome' | 'route' | 'decision-point' |
 const capabilityBoundary = computed(() => {
   if (props.resource.kind === 'interface') return (props.resource as InterfaceView).capabilityBoundary
   if (props.resource.kind === 'experience') return (props.resource as ExperienceView).capabilityBoundary
+  if (props.resource.kind === 'screen') return asScreen.value.capabilityBoundary
   return ''
 })
 
@@ -868,27 +869,28 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
       </section>
     </template>
 
-    <!-- SCREEN: what it presents. Actions and view states belong to Behavior. -->
+    <!-- SCREEN: what it is about, what it shows, what can be done, what states it has. -->
     <template v-if="resource.kind === 'screen'">
       <!--
         `## Information presented` is what *this view* shows and never a
         restatement of what the Entity keeps, so the Entity has to be named
         before that list can be read as the narrower thing it is.
       -->
-      <section v-if="asScreen.entityIds.length || asScreen.information.length" class="space-y-2">
+      <section v-if="asScreen.entityIds.length" class="space-y-2">
+        <h2 class="blr-page-heading">Presents</h2>
         <BlrLinks
-          v-if="asScreen.entityIds.length"
           :workspace="workspace"
           :ids="asScreen.entityIds"
           kind="entity"
-          label="Presents"
           interactive
           @select="emit('select', $event)"
         />
-        <h2 v-if="asScreen.information.length" class="blr-page-heading">
+      </section>
+      <section v-if="asScreen.information.length" class="space-y-2">
+        <h2 class="blr-page-heading">
           Information presented <span class="blr-meta ms-1">{{ asScreen.information.length }}</span>
         </h2>
-        <ul v-if="asScreen.information.length" class="grid gap-2 @min-[480px]:grid-cols-2 @min-[720px]:grid-cols-3">
+        <ul class="grid gap-2 @min-[480px]:grid-cols-2 @min-[720px]:grid-cols-3">
           <li
             v-for="item in asScreen.information"
             :key="item"
@@ -897,6 +899,32 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
             {{ item }}
           </li>
         </ul>
+      </section>
+      <section v-if="asScreen.actions.length" class="space-y-2">
+        <h2 class="blr-page-heading">
+          Available actions <span class="blr-meta ms-1">{{ asScreen.actions.length }}</span>
+        </h2>
+        <ul class="grid gap-x-8 gap-y-2 @min-[480px]:grid-cols-2">
+          <li v-for="item in asScreen.actions" :key="item" class="flex items-start gap-2 text-sm text-default">
+            <UIcon name="i-lucide-mouse-pointer-click" class="mt-0.5 size-4 shrink-0 text-muted" />{{ item }}
+          </li>
+        </ul>
+      </section>
+      <section v-if="asScreen.states.length" class="space-y-2">
+        <h2 class="blr-page-heading">
+          <BlrTerm slug="view-state" text="View states" />
+          <span class="blr-meta ms-1">{{ asScreen.states.length }}</span>
+        </h2>
+        <div class="grid gap-3 @min-[480px]:grid-cols-2 @min-[720px]:grid-cols-3">
+          <div
+            v-for="state in asScreen.states"
+            :key="state.title"
+            class="rounded-xl border border-default bg-elevated/30 p-4"
+          >
+            <p class="text-sm font-semibold text-highlighted">{{ state.title }}</p>
+            <BlrProse :text="state.description" class="mt-1.5" />
+          </div>
+        </div>
       </section>
     </template>
 

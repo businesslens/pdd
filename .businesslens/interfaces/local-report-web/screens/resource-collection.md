@@ -42,7 +42,7 @@ group of their own, because a reader arrives asking who this is for.
 
 - The collection's name, its type mark, its definition, and how many resources it holds
 - Every resource of the collection, as one row shape whatever the kind
-- Interface containment as Experiences and Screens in an expandable tree, matching their Structure readings; shared Screens occur once under their owning Interface
+- What an Interface contains, on its row, alongside the Actors who enter it
 - The identifying facts that distinguish resources of that kind from each other
 - The authored Domain grouping, wherever the type carries one
 - The filters that narrow this collection, one control per axis, over every relation its own rows print
@@ -76,10 +76,7 @@ group of their own, because a reader arrives asking who this is for.
 ### Populated collection
 
 Resources are listed under their authored grouping, with controls for every
-available filter axis. Interface and Domain trees use chevrons to expand and
-collapse, while resource names open readings directly. Group counts name the set
-they count; resource roots have no mixed total or synthetic Overview child.
-Empty groups are omitted, and a resource without children remains a direct link.
+available filter axis.
 
 ### Named view open
 

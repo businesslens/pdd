@@ -42,8 +42,6 @@ its owning collection when it names no working view.
 - Its References, with the role explaining why each is attached
 - For a Capability or a Journey, its Scenarios with their Steps, routes, Context places, and what each Step does to the Product's things
 - For an Entity, its named facts with the Rules that govern them, and, on its Lifecycle tab, its lifecycle composed from every Step that creates, moves, or removes it, with the Capability on each arc and the Rules that restrict or forbid it
-- For a Screen, its purpose and Information presented in Overview, with presented Entities above the information and Capability boundary last; its Available actions and expandable View states in Behavior; and its counterpart Screens in Connections
-- For Interfaces and Experiences, their Structure in a tree with labelled group counts and shared Screen ownership
 - For a Business Rule, who may perform each operation it governs, as sentences
 
 ## Available actions
@@ -56,9 +54,9 @@ its owning collection when it names no working view.
 - Open a Code Reference inside the slideover while preserving the resource reading
 - Open a Markdown Reference as a formatted document while keeping the resource reading open
 - Open a named view of another subject, focused on this resource, from the heading row
-- Read an Interface or Experience’s contained resources and shared Screen references in Structure, expanding branches or opening resource names
+- Read an Interface’s delivered Capabilities and contained resources in Overview
 - Follow actual ownership through Interfaces, an Interface, an optional Experience, and a Screen
-- Read a Screen's actions and view states in Behavior, expanding state descriptions individually or all together
+- Open an Experience’s own Screens and references to shared Screens
 - Return to the previous resource reading, or close to the preserved working view
 - Open a resource link in another browser tab
 - Search the whole model by name
@@ -75,37 +73,11 @@ Rules governing individual facts.
 
 The resource's complete relationship list, grouped by direction and relationship.
 Relationships remain available here when their targets also appear in Overview.
-Connections follows Structure, Lifecycle, Scenarios or Behavior when that reading exists, otherwise
+Connections follows Lifecycle or Scenarios when that reading exists, otherwise
 Overview. It is offered only when relationships are present. Its address and
 reading position survive refresh and following a related resource then returning
 with Back. Selecting Connections while reading a Scenario opens its parent's
 Connections.
-
-### Behavior open
-
-A Screen reading with Available actions as a list, followed by expandable View
-state rows. Behavior is offered when either list has content, with no empty
-sections. Counts sit beside the lists rather than in Overview. State descriptions
-start closed, and Expand all and Collapse all sit beside the View states heading.
-Expansion is remembered per Screen across tab changes, related-resource lookups,
-refresh and valid recompilation. Actions and states remain independent lists;
-the reading does not infer transitions or assign actions to states.
-
-### Structure open
-
-An Interface's contained Experiences and Screens, or an Experience's own Screens
-and shared Screen references, using the same expandable tree as the Interfaces
-collection. The tree starts with the inspected resource's children. Group labels
-name the counted sets: Experiences, Screens and Shared Screens. Empty groups are
-omitted. Chevrons expand and collapse; resource names open complete readings.
-There are no synthetic Overview children. Expand all and Collapse all use the
-same controls as the collection, with expansion retained across tab changes,
-related-resource lookups, refresh and valid recompilation.
-
-A shared Screen occurs once under its owning Interface in the full hierarchy.
-An Experience's Structure identifies each shared reference with “From” and a link
-to that Interface. Audience remains in Overview; capability exposure and other
-relationships remain in Connections. Screens have no Structure reading.
 
 ### References open
 
@@ -152,12 +124,9 @@ and the ways out sit on the heading row whichever reading is open.
 ## Capability boundary
 
 One resource’s authored meaning, relations, and resource-specific readings.
-Overview contains the resource's explanation. Interfaces and Experiences read
-their contained resources and available shared Screen references in Structure. Connections
+Overview contains the resource's explanation and Interface delivery; Connections
 contains its relationships, References contains its attached material, and an
-Entity reads its state machine in Lifecycle. A Screen reads its actions and
-view states in Behavior, keeping its explanation and presented information in
-Overview and its counterpart Screens in Connections.
+Entity reads its state machine in Lifecycle.
 Every comparison across resources — how Journeys compose,
 how Interfaces deliver — belongs to the owning collection, because a page
 showing one resource cannot answer a question about how several compare.
