@@ -181,33 +181,18 @@ costed already.
   understood is not finished. It links out only to the documentation for a
   resource *type*.
 - **A collection is one set with shared drawings.** The rail changes the subject,
-  the filters narrow the set, and a preview-card dropdown beside the filters
-  changes only how the same set is drawn: the heading count, collection controls
-  and chips stay the same. Matrix is offered on Entities, Capabilities and
-  Business Rules, whose resources supply its rows, including rows with no
-  relationships. One toolbar owns the scope in every drawing. Changed by (Entities),
-  Available in (Capabilities), and Attached to (Business Rules) select matching
-  subjects and the Matrix's comparison columns. Entities offer only resource
-  selection, Domains and Changed by, with the Capabilities icon on Changed by.
-  Actor access and Journey participation remain in resource readings. Available in groups Interfaces,
-  Experiences and Screens, including delivery through descendants. Capabilities
-  have no separate Screen or Scenario filter. Their Matrix keeps Interface
-  columns and shows the matching routes. Attached to is one searchable
-  picker grouped by type; exact targets and whole types combine with OR, and
-  other axes combine with AND. Only authored attachments count, not inherited
-  reach or context restrictions on another attachment. Unfiltered drawings keep
-  disconnected resources. Each Graph states its derivation. The dropdown names each drawing and
-  explains it with a short subtitle, without a separate help button, About
-  section, second heading or toolbar. The current view stays at the right edge
-  while its desktop legend and list controls grow to the left. This supersedes the two-drawing
-  rule and separate comparison destinations. Tabs exist only on the Overview and in resource readings,
-  where they change which set is on screen.
+  the filters narrow the set, and a Rows/Graph/Matrix selector beside the filters
+  changes only how the same set is drawn: the heading count, controls and chips
+  stay the same. Each collection's Graph states one derivation and is accountable
+  for it. Tabs exist only on the Overview and in resource readings, where they
+  change which set is on screen. Filter and control details belong in the
+  [report viewer README](layers/nuxt/report-viewer/README.md).
 - **Row density is the reader's, per collection.** How many columns the Rows
   drawing uses is a cookie keyed by collection, so the first paint is right;
   nothing else about a drawing is configurable. Phones use one column and hide
   the density control without changing the saved preference. Expand all and
   Collapse all sit beside the drawing controls on desktop and inside the view
-  picker on phones, alongside the Matrix legend when relevant.
+  picker on phones.
 - **Every surface names itself, with the name the reader clicked.** The main
   H1 keeps the working view and its count or Product qualifier. A resource
   slideover names its resource and type, with actual ownership shown separately
@@ -223,12 +208,10 @@ costed already.
   Expand fills the window with the same resource reading; Restore returns to
   the panel width without losing its drawing, selected detail or graph viewport.
 - **The rail lists Overview, then six collections.** Matrix comparisons live
-  with their row subject: What changes what in Entities, Compare delivery in
-  Capabilities, and Rule attachments in Business Rules. This supersedes their
-  separate rail entries. The collections are Entities, Interfaces, Domains,
-  Capabilities, Journeys, Business Rules. Experiences and Screens are reached
-  through Interfaces, Scenarios through their parent, and a collection's Graph or Matrix
-  through its drawing switch.
+  within the collection supplying their rows. The collections are Entities,
+  Interfaces, Domains, Capabilities, Journeys, Business Rules. Experiences and
+  Screens are reached through Interfaces, Scenarios through their parent, and
+  a collection's Graph or Matrix through its drawing selector.
 - **A resource reading separates meaning, behavior, connections and references.** Overview
   carries the resource's explanation and contextual links, including an Entity's
   Information kept. Scenarios follows for a Capability or
