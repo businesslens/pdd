@@ -33,13 +33,13 @@ own Capabilities, so it does not borrow Domains from its parent's other cases.
 Overview contains identity facts, authored detail, Contexts and supporting material,
 with contextual links beside the facts they explain. Capability
 and Journey readings add Scenarios.
-Interfaces and Experiences share a Structure tab, using the collection's tree
-rows, chevrons, resource links and expansion controls. The selected resource is
-already named in the header, so Structure starts with its children. Shared Screens
-occur once under their Interface in the full tree; an Experience's Structure shows
-shared references with “From” and an owner link. Structure holds containment and
-availability; Overview holds audience and Connections holds capability exposure.
-Screens have no Structure tab.
+Interfaces have an Experiences & Screens tab; Experiences have a Screens tab.
+Both use the collection's tree rows, chevrons, resource links and expansion
+controls. The selected resource is already named in the header, so each tree
+starts with its children. Shared Screens occur once under their Interface in the
+full tree; an Experience's Screens tab shows shared references with “From” and
+an owner link. These tabs hold containment and availability; Overview holds
+audience and Connections holds capability exposure. Screens have no containment tab.
 An Entity's Overview contains Information
 kept; its Lifecycle reading switches between Rows and Graph. Rows groups changes
 under their starting State, using the collection list's parent/child styling.
@@ -227,7 +227,7 @@ Back/Forward; shared URLs carry the current reading without the sender's trail.
 The composable also supplies native resource URLs to descendant viewer links.
 Hosts providing their own routing should adopt `resourceTab` independently of
 `tab`; uncontrolled embedded readers retain a local return trail.
-Hosts can instead bind their own state. Structure expansion is stored per resource, separately from the underlying collection or graph.
+Hosts can instead bind their own state. Containment tree expansion is stored per resource, separately from the underlying collection or graph.
 Collection facets, collapsed groups,
 expanded tree nodes, scroll anchors and graph position use session storage when
 available, isolated by report and host path. They survive refresh and
@@ -323,7 +323,7 @@ page and graph toolbars.
 
 Domain and Interface cards are trees inside translucent containers, without a
 separate header. Their borderless tree rows fill each card's width and use the
-parent's background, with a subtle row highlight on hover. Structure uses the
+parent's background, with a subtle row highlight on hover. The Experiences & Screens and Screens tabs use the
 same component. Each group has its matching resource-type icon and a count beside
 its name: Experiences, Screens, Shared Screens, Capabilities or Entities. Resource
 roots have no mixed total. Expansion chevrons sit before the type icons.
@@ -408,7 +408,7 @@ bounded cell rendering on a large matrix, column navigation and mobile resizing.
 
 Against a running built fixture-shop report, run
 `node scripts/check-entity-lifecycle.mjs <url>` for state and change inspection,
-Rows/Graph/Matrix parity, panel expansion, keyboard access and saved reading state.
+Rows/Graph parity, panel expansion, keyboard access and saved reading state.
 `node scripts/check-resource-slideover.mjs <url>` for desktop and mobile
 inspection, independent Graph/Lifecycle state, nested Back/Forward, Scenario
 position, direct links and keyboard dismissal.

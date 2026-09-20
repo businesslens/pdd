@@ -1,7 +1,7 @@
 /** Resource readings separate explanation, behavior, relationships and references. */
 import type { AnyResourceView, ReportWorkspace } from './reportWorkspace'
 import { counterpartsOf, isScenarioKind } from './reportWorkspace'
-import { structureChildren } from './collectionChildren'
+import { structureChildren, structureLabel } from './collectionChildren'
 import { resourceConnectionRows } from './resourceConnections'
 
 export type PageBlockId =
@@ -69,7 +69,7 @@ export function tabsFor(workspace: ReportWorkspace, requestedResource: AnyResour
   if (resource.kind === 'entity' && resource.states.length) {
     tabs.push({ id: 'lifecycle', label: 'Lifecycle', blocks: [] })
   }
-  if (structureChildren(workspace, resource).length) tabs.push({ id: 'structure', label: 'Structure', blocks: ['structure'] })
+  if (structureChildren(workspace, resource).length) tabs.push({ id: 'structure', label: structureLabel(resource), blocks: ['structure'] })
   if (resourceConnectionRows(workspace, resource).length) {
     tabs.push({ id: 'connections', label: 'Connections', blocks: ['connections'] })
   }

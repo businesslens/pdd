@@ -107,8 +107,7 @@ const openPageKey = openResource
 /* Filter state is kept per kind: moving to another kind and back returns to
    the narrowing you left, which is the point of a persistent working view.
    Nothing else is kept, because nothing else is configurable — the reading and
-   its grouping are decided by the report, not audition
-   ed on every visit. */
+   its grouping are decided by the report, not auditioned on every visit. */
 const facetState = reactive<Partial<Record<ReportResourceKind, FacetSelections>>>({})
 const collectionSelections = reactive<Partial<Record<ReportResourceKind, string[]>>>({})
 const relationSelections = reactive<Partial<Record<ReportResourceKind, string[]>>>({})

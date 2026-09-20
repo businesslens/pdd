@@ -41,7 +41,12 @@ export interface TreeCard {
 const leaf = (resource: AnyResourceView, children: TreeCardNode[] = []): TreeCardNode => ({ id: resource.key, title: resource.title, resource, children })
 const group = (id: string, kind: ReportResourceKind, children: TreeCardNode[]): TreeCardNode => ({ id, title: ENTITY_KIND_META[kind].plural, groupKind: kind, children })
 
-/** One hierarchy for collection cards and focused Structure readings. */
+/** Name the contained resource types in tabs and accessible tree labels. */
+export function structureLabel(resource: AnyResourceView): string {
+  return resource.kind === 'interface' ? 'Experiences & Screens' : 'Screens'
+}
+
+/** One hierarchy for collection cards and focused containment readings. */
 export function structureChildren(workspace: ReportWorkspace, resource: AnyResourceView): TreeCardNode[] {
   const screensOf = (owner: AnyResourceView) => workspace.screens.filter(screen => screen.contexts.some(context =>
     owner.kind === 'experience' ? context.experienceId === owner.id : context.interfaceId === owner.id && !context.experienceId))

@@ -42,7 +42,7 @@ group of their own, because a reader arrives asking who this is for.
 
 - The collection's name, its type mark, its definition, and how many resources it holds
 - Every resource of the collection, as one row shape whatever the kind
-- Interface containment as Experiences and Screens in an expandable tree, matching their Structure readings; shared Screens occur once under their owning Interface
+- Interface containment as Experiences and Screens in an expandable tree, matching the Experiences & Screens and Screens tabs in their readings; shared Screens occur once under their owning Interface
 - The identifying facts that distinguish resources of that kind from each other
 - The authored Domain grouping, wherever the type carries one
 - The filters that narrow this collection, one control per axis, over every relation its own rows print

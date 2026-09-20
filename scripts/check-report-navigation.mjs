@@ -332,7 +332,7 @@ try {
     if (width >= 1024) await expect(page.locator('.blr-navitem[data-current=true]')).toHaveText('Overview')
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true)
     await context.close()
-    console.log(`Passed ${width}px: Rows/Graph/Matrix, matrix Back, collection focus, Scenario persistence, tree toggles, reload, exits and Interface Structure.`)
+    console.log(`Passed ${width}px: Rows/Graph/Matrix, matrix Back, collection focus, Scenario persistence, tree toggles, reload, exits and Interface Experiences & Screens.`)
   }
   expect(errors).toEqual([])
 } finally { await browser.close() }

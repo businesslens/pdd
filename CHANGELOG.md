@@ -7,21 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- Browse Interfaces and Experiences in a shared Structure tree, with clearer counts and shared Screen ownership.
+## [0.21.0] - 2026-09-21
 
-- Choose collection views from a dropdown with larger preview titles and subtitles, without a separate help button or About section.
-
-- Simplify Entity filters to Entities, Domains and Changed by, marked with the Capabilities icon.
-
-- Simplify Capability filters with one Available in picker for Interfaces, Experiences and Screens.
-
-- Find comparison matrices beside Rows and Graph in Entities, Capabilities and Business Rules, with one shared filter bar, consistent counts and no duplicate headings.
-
-- Show the first Domain in resource headers, with extra Domains available through a “more” button.
-- Remove the Docs button from resource slideovers.
-- Start Overview references collapsed, with Expand all and Collapse all controls.
-- Keep legends beside the filters in all three comparison views.
-- Use warmer Sand fills for filter chips and neutral badges in both themes.
+- Choose lists, graphs and comparisons from preview cards, keeping the same filters and counts.
+- Find comparison tables within Entities, Capabilities and Business Rules, with simpler relationship filters.
+- Browse Interfaces and Domains in consistent trees with clearer counts and indentation.
+- Explore an Interface's Experiences & Screens or an Experience's Screens, including shared Screens and ownership links.
+- Keep resource headers compact, with additional Domains behind a “more” button.
+- Expand or collapse all Overview references, which start collapsed.
+- Keep comparison legends beside filters, with warmer neutral badges in both themes.
 
 ## [0.20.0] - 2026-09-18
 

@@ -80,7 +80,7 @@ describe('collection rows that expand', () => {
     }
   })
 
-  it('uses the identical containment tree in an Interface card and its Structure tab', () => {
+  it('uses the identical containment tree in an Interface card and its Experiences & Screens tab', () => {
     for (const card of treeCards(workspace, 'interface', workspace.interfaces, false)) {
       expect(structureChildren(workspace, card.resource)).toEqual(card.children)
       const nodes = flatten(card.children)
@@ -109,7 +109,7 @@ describe('collection rows that expand', () => {
     expect(tabsFor(workspace, shared.resource).map((tab: any) => tab.id)).not.toContain('structure')
   })
 
-  it('omits Structure and its empty groups on childless places', () => {
+  it('omits containment tabs and their empty groups on childless places', () => {
     const empty = { ...workspace, experiences: [], screens: [] }
     for (const resource of [...workspace.interfaces, ...workspace.experiences]) {
       expect(structureChildren(empty, resource)).toEqual([])

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-/** Collection cards and resource Structure readings use the same tree rows. */
+/** Collection cards and resource containment readings use the same tree rows. */
 import type { AnyResourceView, ReportResourceKind, ReportWorkspace } from '../utils/reportWorkspace'
 import type { TreeCard } from '../utils/collectionChildren'
 import { treeCards, treeBranchKeys } from '../utils/collectionChildren'
