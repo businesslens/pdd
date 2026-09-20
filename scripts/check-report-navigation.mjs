@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /** Exercise report destinations and resource readings against a running built CLI. */
 import { chromium, expect } from '@playwright/test'
-import { selectCollectionDrawing, expectCollectionDrawing, expandCollection } from './report-view-controls.mjs'
+import { selectCollectionDrawing, expectCollectionDrawing, expandCollection, setCollectionExpanded } from './report-view-controls.mjs'
 import { mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 const origin = process.argv[2]
@@ -97,7 +97,7 @@ try {
       await choose(page, collection)
       await expect(page.locator('[data-tree-card] [data-group-header]')).toHaveCount(0)
       const roots = page.locator('[data-tree-card] [role="treeitem"][aria-level="1"][aria-expanded]')
-      await page.getByRole('button', { name: 'Collapse all', exact: true }).click()
+      await setCollectionExpanded(page, false)
       for (const root of await roots.all()) await expect(root).toHaveAttribute('aria-expanded', 'false')
       await expandCollection(page)
       for (const root of await roots.all()) await expect(root).toHaveAttribute('aria-expanded', 'true')
