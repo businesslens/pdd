@@ -78,6 +78,7 @@ const scenarioRoute = defineModel<string | null>('scenarioRoute', { default: nul
 const routeColumns = defineModel<string>('routeColumns', { default: 'auto' })
 const topology = defineModel<TopologyReading>('topology', { default: defaultTopologyReading })
 const reviewPath = defineModel<string | null>('reviewPath', { default: null })
+const reviewTab = defineModel<string>('reviewTab', { default: '' })
 const coverage = defineModel<CoverageReading>('coverage', { default: defaultCoverageReading })
 
 const workspace = computed(() => projectReportWorkspace(props.report))
@@ -118,6 +119,7 @@ onMounted(() => { mounted = true; synchronizeLocation() })
       :tab="location.tab"
       v-model:coverage="coverage"
       v-model:review-path="reviewPath"
+      v-model:review-tab="reviewTab"
       :load-repository-file="loadRepositoryFile"
 
       v-model:resource-tab="resourceTab"

@@ -9,6 +9,8 @@ import { ENTITY_KIND_META } from '../utils/reportWorkspace'
 import type { TopologyReading } from '../utils/topologyState'
 import { defaultTopologyReading } from '../utils/topologyState'
 import { parentOf, tabsFor, type PageTabId } from '../utils/pageSections'
+import { resourceReviewKey, reviewResource } from '../utils/resourceReview'
+import { comparisonReadings, readingChanged } from '../utils/resourceComparison'
 import { COLUMN_CHOICES, type ColumnChoice } from '../composables/useColumns'
 
 const props = defineProps<{
@@ -31,7 +33,31 @@ const reading = defineModel<TopologyReading>('reading', { default: defaultTopolo
 const parent = computed(() => parentOf(props.workspace, props.resource))
 const subject = computed(() => parent.value ?? props.resource)
 const requestedChild = computed(() => parent.value ? props.resource.key : null)
-const tabs = computed(() => tabsFor(props.workspace, props.resource))
+const review = inject(resourceReviewKey, computed(() => null))
+const earlierResource = computed(() => reviewResource(review.value, 'before', props.resource.key))
+const earlierSubject = computed(() => earlierResource.value && review.value?.before ? parentOf(review.value.before.workspace, earlierResource.value) ?? earlierResource.value : null)
+const tabs = computed(() => {
+  const current = tabsFor(props.workspace, props.resource)
+  if (!review.value) return current
+  const before = earlierResource.value && review.value.before ? tabsFor(review.value.before.workspace, earlierResource.value) : []
+  const order = ['overview', 'scenarios', 'lifecycle', 'connections', 'references']
+  return [...new Set([...current, ...before].map(tab => tab.id))].sort((a, b) => order.indexOf(a) - order.indexOf(b)).map(id => {
+    const afterTab = current.find(tab => tab.id === id), beforeTab = before.find(tab => tab.id === id)
+    const key = id === 'references' ? props.resource.key : subject.value.key
+    const earlier = comparisonReadings(review.value!.before, key).find(tab => tab.id === id)
+    const later = comparisonReadings(review.value!.after, key).find(tab => tab.id === id)
+    return { ...(afterTab ?? beforeTab)!, blocks: [...new Set([...(afterTab?.blocks ?? []), ...(beforeTab?.blocks ?? [])])], changed: readingChanged(earlier, later) }
+  })
+})
+const showEarlier = ref(false)
+const earlierSide = computed(() => showEarlier.value ? review.value?.before ?? null : null)
+const displayedWorkspace = computed(() => earlierSide.value?.workspace ?? props.workspace)
+const displayedSubject = computed(() => earlierSide.value && earlierSubject.value ? earlierSubject.value : subject.value)
+const displayedResource = computed(() => earlierSide.value && earlierResource.value ? earlierResource.value : props.resource)
+function openDisplayed(resource: AnyResourceView) {
+  if (earlierSide.value && review.value) review.value.inspect(resource.key, earlierSide.value.state)
+  else emit('open', resource)
+}
 
 /**
  * The reader's chosen tab, as the host keeps it. `overview` is the default and
@@ -55,12 +81,14 @@ watch([tabs, requestedChild, tab], () => {
 }, { immediate: true })
 
 function select(id: string) {
+  showEarlier.value = false
   if (!isTab(id)) return
   if (id !== 'scenarios' && id !== 'references' && requestedChild.value) emit('open', subject.value)
   active.value = id
   tab.value = id
 }
 
+watch([() => props.resource.key, review], () => { if (!review.value) showEarlier.value = false })
 const current = computed(() => tabs.value.find(tab => tab.id === active.value) ?? tabs.value[0])
 const scenariosList = useTemplateRef('scenariosList')
 const scenarioKind = computed(() => subject.value.kind === 'journey' ? 'journey-scenario' as const : 'capability-scenario' as const)
@@ -108,6 +136,11 @@ const columnItems = COLUMN_CHOICES.map(value => ({ value, label: `${value} per r
       </BlrPageTabs>
     </Teleport>
 
+    <div v-if="review && earlierSubject && (active === 'lifecycle' || active === 'connections') && current && 'changed' in current && current.changed" class="mb-3 flex shrink-0 flex-wrap items-center gap-3 text-xs text-muted" data-review-version>
+      <span>{{ showEarlier ? 'Earlier version' : 'Current version' }} · {{ current.label }} changed</span>
+      <UButton :label="showEarlier ? 'Show current' : 'Show previous'" color="neutral" variant="outline" size="sm" @click="showEarlier = !showEarlier" />
+    </div>
+    <BlrReviewSnapshot :side="earlierSide">
     <div class="min-w-0" :class="current?.id === 'lifecycle' ? 'min-h-0 flex-1' : 'space-y-5'">
       <BlrScenariosList
         v-if="current?.id === 'scenarios'"
@@ -118,14 +151,14 @@ const columnItems = COLUMN_CHOICES.map(value => ({ value, label: `${value} per r
         :columns="scenarioColumns"
         :selected-key="requestedChild"
         :reveal-selected="!restorePosition"
-        @open="emit('open', $event)"
+        @open="openDisplayed"
       />
 
       <BlrEntityLifecycle
         v-else-if="current?.id === 'lifecycle' && subject.kind === 'entity'"
-        :workspace="workspace"
-        :resource="(subject as EntityView)"
-        @open="emit('open', $event)"
+        :workspace="displayedWorkspace"
+        :resource="(displayedSubject as EntityView)"
+        @open="openDisplayed"
         @ready="emit('ready')"
       />
 
@@ -134,13 +167,14 @@ const columnItems = COLUMN_CHOICES.map(value => ({ value, label: `${value} per r
           v-for="id in current?.blocks ?? []"
           :key="id"
           v-model:reading="reading"
-          :workspace="workspace"
-          :resource="current?.id === 'references' ? resource : subject"
+          :workspace="displayedWorkspace"
+          :resource="current?.id === 'references' ? displayedResource : displayedSubject"
           :id="id"
           :heading="current?.id === 'overview'"
-          @open="emit('open', $event)"
+          @open="openDisplayed"
         />
       </template>
     </div>
+    </BlrReviewSnapshot>
   </div>
 </template>

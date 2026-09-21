@@ -22,10 +22,11 @@ export function useBlrReportNavigation(options: { sectionKey?: string, tabKey?: 
   const routeColumns = ref('auto')
   const coverage = ref(defaultCoverageReading())
   const reviewPath = ref<string | null>(null)
+  const reviewTab = ref('')
   const topology = ref(defaultTopologyReading())
   const one = (key: string) => typeof route.query[key] === 'string' && route.query[key] ? route.query[key] as string : null
   const baseSection = () => one(sectionKey) ?? (one('e') ? collectionForKey(one('e')!) : 'overview')
-  const read = () => ({ coverage: coverageFromQuery(route.query), reviewPath: one('rp'), section: baseSection(), resource: one('e'), tab: one(tabKey) ?? 'overview', resourceTab: one('rt') ?? 'overview',
+  const read = () => ({ coverage: coverageFromQuery(route.query), reviewPath: one('rp'), reviewTab: one('rv') ?? '', section: baseSection(), resource: one('e'), tab: one(tabKey) ?? 'overview', resourceTab: one('rt') ?? 'overview',
     resourceState: one('v') ?? (one('f') ? new URL(one('f')!, 'http://businesslens.local').searchParams.get('state') : null) ?? 'working',
     reference: localReferenceHref(one('f')), scenarioRoute: one('r'), routeColumns: one('rc') ?? 'auto',
     topology: { ...topologyFromQuery(route.query), view: (destinationForLocation(baseSection(), one(tabKey) ?? 'overview') ?? destinationForSection(one(sectionKey) ?? ''))?.view ?? topologyFromQuery(route.query).view } })
@@ -34,6 +35,7 @@ export function useBlrReportNavigation(options: { sectionKey?: string, tabKey?: 
     const next = read()
     section.value = next.section
     reviewPath.value = next.reviewPath
+    reviewTab.value = next.reviewTab
     if (!same(coverage.value, next.coverage)) coverage.value = next.coverage
     resource.value = next.resource
     resourceState.value = next.resourceState
@@ -46,11 +48,11 @@ export function useBlrReportNavigation(options: { sectionKey?: string, tabKey?: 
     routeColumns.value = next.routeColumns
     if (!same(topology.value, next.topology)) topology.value = next.topology
   }, { immediate: true })
-  watch([section, resource, resourceState, tab, resourceTab, reference, scenarioRoute, routeColumns, topology, coverage, reviewPath], () => {
+  watch([section, resource, resourceState, tab, resourceTab, reference, scenarioRoute, routeColumns, topology, coverage, reviewPath, reviewTab], () => {
     const before = read()
-    const next = { coverage: coverage.value, reviewPath: reviewPath.value, section: section.value, resource: resource.value, resourceState: resourceState.value, tab: tab.value, resourceTab: resourceTab.value, reference: reference.value, scenarioRoute: scenarioRoute.value, routeColumns: routeColumns.value, topology: topology.value }
-    const push = !same(before.coverage, next.coverage) || before.reviewPath !== next.reviewPath || before.resourceState !== next.resourceState || before.section !== next.section || before.resource !== next.resource || before.tab !== next.tab || before.resourceTab !== next.resourceTab || before.reference !== next.reference || before.scenarioRoute !== next.scenarioRoute || before.routeColumns !== next.routeColumns || topologyPushesHistory(before.topology, next.topology)
-    const query = { ...route.query, ...coverageToQuery(next.coverage), rp: next.reviewPath ?? undefined, [sectionKey]: next.section === 'overview' && !next.resource ? undefined : next.section,
+    const next = { coverage: coverage.value, reviewPath: reviewPath.value, reviewTab: reviewTab.value, section: section.value, resource: resource.value, resourceState: resourceState.value, tab: tab.value, resourceTab: resourceTab.value, reference: reference.value, scenarioRoute: scenarioRoute.value, routeColumns: routeColumns.value, topology: topology.value }
+    const push = !same(before.coverage, next.coverage) || before.reviewPath !== next.reviewPath || before.reviewTab !== next.reviewTab || before.resourceState !== next.resourceState || before.section !== next.section || before.resource !== next.resource || before.tab !== next.tab || before.resourceTab !== next.resourceTab || before.reference !== next.reference || before.scenarioRoute !== next.scenarioRoute || before.routeColumns !== next.routeColumns || topologyPushesHistory(before.topology, next.topology)
+    const query = { ...route.query, ...coverageToQuery(next.coverage), rp: next.reviewPath ?? undefined, rv: next.reviewPath && next.reviewTab ? next.reviewTab : undefined, [sectionKey]: next.section === 'overview' && !next.resource ? undefined : next.section,
       e: next.resource ?? undefined, v: (next.resource || next.reference) && next.resourceState !== 'working' ? next.resourceState : undefined, [tabKey]: next.tab === 'overview' ? undefined : next.tab,
       rt: next.resource && next.resourceTab !== 'overview' ? next.resourceTab : undefined,
       f: next.reference ?? undefined,
@@ -91,7 +93,7 @@ export function useBlrReportNavigation(options: { sectionKey?: string, tabKey?: 
     }
   }
   provide(referenceNavigationKey, referenceNavigation)
-  return { reference, previousReference, backReference: referenceNavigation.back, section, resource, resourceState, tab, resourceTab, scenarioRoute, routeColumns, topology, coverage, reviewPath }
+  return { reference, previousReference, backReference: referenceNavigation.back, section, resource, resourceState, tab, resourceTab, scenarioRoute, routeColumns, topology, coverage, reviewPath, reviewTab }
 }
 
 /** A direct resource address has a useful closing destination even without s. */

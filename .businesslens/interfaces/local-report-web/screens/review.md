@@ -23,7 +23,9 @@ comparing selected versions is an explicit choice. Coverage remains in Overview.
 - Added, modified and deleted authored files within the active Product Model, with a count and change legend
 - Uncommitted changes since the last commit, including staged, unstaged and new files
 - The selected Base and Compare to states when comparing versions
-- Highlighted file edits, line numbers, inline changes and expandable unchanged context
+- Rendered resource comparisons with changed fields, rows and tabs, including Product and Coverage
+- Previous and current values with unchanged context, and derived effects distinguished from direct edits
+- File diffs with line numbers and expandable context as a secondary reading or fallback
 - Resource readings at either selected version when the model can be read
 - Other repository changes optionally included as paths and change badges in the same tree
 - A top-bar Review badge breaking down changed Product Model files by change type, with a compact total on narrow screens
@@ -36,7 +38,9 @@ comparing selected versions is an explicit choice. Coverage remains in Overview.
 - Search, filter and expand the model file tree
 - Include or hide other repository changes in the same tree
 - Read the header's change counts and their comparison context
-- Read a model file's changes, expand unchanged context, and choose unified or side-by-side presentation
+- Read changes in the resource's named readings, including removed sections and scenario steps
+- Show or hide the diff inside the normal resource reading, and inspect previous values in place
+- Open the file diff, expand unchanged context, and choose unified or side-by-side presentation
 - Open a resource's complete reading at either version, including deleted resources from the earlier version
 - Return to the previous reading with navigation and selection preserved
 
@@ -45,8 +49,10 @@ comparing selected versions is an explicit choice. Coverage remains in Overview.
 ### Changes available
 
 Changed authored files appear once within the active model. Other repository
-changes can appear in the same tree as context. Selecting a model file exposes its edits and
-resource readings without moving the underlying tree.
+changes can appear in the same tree as context. Selecting a model file opens its
+normal resource slideover without moving the underlying tree. Show diff reveals
+changes in that reading and names the comparison baseline; Hide diff restores
+the normal reading.
 
 ### Model unavailable
 
@@ -65,9 +71,11 @@ commit, uncommitted changes use that latest commit.
 
 ### File selected
 
-A dismissible reading highlights the file's changes with expandable context.
-Deleted files remain inspectable from the earlier version. Historical reads
-never substitute current contents. Empty-file and file-mode changes remain visible.
+A dismissible reading highlights changes within the resource's named readings.
+Deleted resources and removed sections remain inspectable from the earlier
+version. File diffs remain available and open directly for configuration,
+formatting-only edits or unavailable models. Historical reads never substitute
+current contents. Empty-file and file-mode changes remain visible.
 
 ## Capability boundary
 

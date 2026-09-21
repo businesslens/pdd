@@ -5,6 +5,7 @@ import type { ReportChanges } from '../utils/reportChanges'
 
 const props = defineProps<{ changes: ReportChanges, loadRepositoryFile?: RepositoryFileLoader, resourceReadingOpen?: boolean }>()
 const path = defineModel<string | null>('path', { default: null })
+const tab = defineModel<string>('tab', { default: '' })
 const emit = defineEmits<{
   uncommitted: []
   compare: [base: string, target: string]
@@ -43,6 +44,6 @@ const targetId = computed(() => props.changes.targetState?.id ?? target.value)
       <p v-else class="max-w-md text-sm leading-relaxed text-muted">There isn’t an earlier saved Git state. Commit your model and relevant source files to make a saved state available.</p>
     </div>
     <p v-else-if="!changes.repository" class="text-sm text-muted" role="status">Comparing states…</p>
-    <BlrReviewRepository v-if="changes.repository" v-model:path="path" :diff="changes.repository" :uncommitted="changes.mode === 'uncommitted'" :base="baseId" :target="targetId" :before="before" :after="after" :model-notice="changes.modelNotice" :load-file="loadRepositoryFile" :resource-reading-open="resourceReadingOpen" @inspect="(key, state) => emit('inspect', key, state)" />
+    <BlrReviewRepository v-if="changes.repository" v-model:path="path" v-model:tab="tab" :diff="changes.repository" :uncommitted="changes.mode === 'uncommitted'" :base="baseId" :target="targetId" :before="before" :after="after" :before-report="changes.before" :after-report="changes.after" :model-notice="changes.modelNotice" :load-file="loadRepositoryFile" :resource-reading-open="resourceReadingOpen" @inspect="(key, state) => emit('inspect', key, state)" />
   </div>
 </template>

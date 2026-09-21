@@ -208,7 +208,8 @@ costed already.
   the panel width without losing its drawing, selected detail or graph viewport.
 - **Review shows Product Model changes without writes.** It defaults to
   uncommitted edits; comparing versions is explicit. Authored model files have
-  one changed-file tree and highlighted diffs. The tree can include other
+  one changed-file tree and rendered resource comparisons, with file diffs as
+  a secondary reading or fallback. The tree can include other
   repository changes as path-only context. Missing or invalid models limit
   resource links, never authored file comparisons; historical readings use the
   selected commit.

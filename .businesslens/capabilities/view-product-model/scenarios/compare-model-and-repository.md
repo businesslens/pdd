@@ -18,7 +18,7 @@ steps:
     contexts:
       local:
         place: local-report-web::review
-  - text: The Developer opens a changed Product Model file and inspects highlighted edits, surrounding context and the resource at either version
+  - text: The Developer opens a changed Product Model file, then selects Show diff to read changed values within its normal resource reading, with the file diff available as a secondary reading
     kind: actor
     actor: developer
     entities:
@@ -57,6 +57,9 @@ inspection record, approval, checkpoint or commit has been written by the report
 - Nested models restrict the review tree and its count to the active model.
 - A revision with no readable model retains its file tree and contents; only its resource readings are unavailable.
 - Added, deleted, binary, oversized and unreadable files are distinguished explicitly.
-- Scope, gaps, configuration and formatting changes remain inspectable in their file diffs.
+- Product, Coverage and all resource types expose changed values in their named readings, retaining removed sections and unchanged context.
+- Scenario steps align around unchanged steps; ambiguous matches remain removed and added rows.
+- Derived relationships and lifecycle effects remain distinct from direct authored edits.
+- Configuration, formatting-only edits and unavailable models retain file diffs; an unreadable version never implies deletion.
 - A moved branch does not change a historical reading already opened at its resolved commit.
 - Comparing or refreshing never establishes semantic agreement or completes an inspection.

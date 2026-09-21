@@ -328,10 +328,25 @@ Return change metadata first and fetch selected file contents on demand. Reads
 are bounded to 25 MiB, with text previews limited to 256 KiB; distinguish binary,
 oversized, missing and unreadable contents. Reject symlinked parents in working
 reads and retain the existing asset and code-preview restrictions. A missing or
-invalid model limits resource links, never authored file comparisons. Render
-text changes with line numbers, addition/removal markers, inline edit highlights
-and expandable unchanged context. Resource links read the selected side, with
-deleted resources available from Base. Source changes remain visible as context
+invalid model limits resource comparisons, never authored file comparisons.
+Model resource files open their ordinary slideover first. An explicit Show diff
+button reveals the comparison in that reading, also when opened from a collection
+or resource link. Product and authored Coverage retain their named comparisons. Preserve the resource's named readings and
+unchanged context; mark added, removed and modified fields and rows, retaining
+removed sections. Scenario lists align unchanged steps before comparing edits;
+ambiguous matches remain additions and removals. Derived relationships and
+lifecycle rows identify effects of model edits separately from authored changes.
+Graph overlays are not part of comparison. Show diff adds annotations that
+accompany the existing fields and step cards; previous values are available in
+place, and removed entries remain visible while annotations are enabled. Hide
+diff restores the normal reading without changing its selected tab. The
+comparison baseline stays explicit. Lifecycle and connection comparisons may
+switch between the ordinary readings of each version instead of overlaying
+their diagrams. File differences remain a secondary reading and the fallback for configuration, formatting-only edits and unavailable
+models. An unavailable version is never an empty or deleted resource. Render
+file changes with line numbers, addition/removal markers, inline edit highlights
+and expandable unchanged context. Resource and Reference links read the selected
+side, with deleted resources available from Base. Source changes remain visible as context
 without a model edit. Comparison and refresh never write
 model data, inspection receipts or snapshots.
 

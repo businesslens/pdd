@@ -35,7 +35,7 @@ async function refreshLogo() {
   }
 }
 
-const { reference, previousReference, backReference, section, resource, resourceState, tab, resourceTab, scenarioRoute, routeColumns, topology, coverage, reviewPath } = useBlrReportNavigation()
+const { reference, previousReference, backReference, section, resource, resourceState, tab, resourceTab, scenarioRoute, routeColumns, topology, coverage, reviewPath, reviewTab } = useBlrReportNavigation()
 const route = useRoute()
 const router = useRouter()
 const queryState = (key: string) => typeof route.query[key] === 'string' ? route.query[key] as string : null
@@ -138,7 +138,9 @@ const readingReport = shallowRef<ProductReportV16 | null>(null)
 const readingLabel = ref('')
 const readingError = ref<string | null>(null)
 let readingRequest = 0
-watch([resourceState, comparison], async () => {
+// Historical readings are pinned to an immutable commit, independently of
+// background updates to the working comparison.
+watch(resourceState, async () => {
   const request = ++readingRequest
   const id = resourceState.value
   readingReport.value = null
@@ -256,7 +258,7 @@ const errorMessage = computed(() => {
         :actions="[{ label: 'Try again', icon: 'i-lucide-refresh-cw', onClick: () => refresh() }]"
       />
       <h1 class="mt-8 mb-4 flex items-center gap-2 text-2xl font-semibold">Review <span v-if="changes.repository" class="text-sm font-normal text-muted">{{ reviewModelFiles(changes.repository).length }} model files</span><BlrHistoryHelp /></h1>
-      <BlrChanges v-model:path="reviewPath" :load-repository-file="loadRepositoryFile" :changes="changes" :resource-reading-open="Boolean(resource || reference)" @compare="chooseComparison" @uncommitted="showUncommitted" @search="searchHistory" @more="refreshChanges(true)" @inspect="inspectHistorical" />
+      <BlrChanges v-model:path="reviewPath" v-model:tab="reviewTab" :load-repository-file="loadRepositoryFile" :changes="changes" :resource-reading-open="Boolean(resource || reference)" @compare="chooseComparison" @uncommitted="showUncommitted" @search="searchHistory" @more="refreshChanges(true)" @inspect="inspectHistorical" />
       <BlrResourceSlideover v-if="fallbackWorkspace" v-model:tab="resourceTab" :workspace="fallbackWorkspace" :resource="fallbackResource" :state-label="readingLabel" :state-id="resourceState" :reference="reference" :previous-reference="previousReference" @reference-open="reference = $event" @reference-back="backReference" @open="resource = $event.key; reference = null" @close="resource = null; reference = null; resourceState = 'working'" />
       <UAlert v-if="readingError" class="mt-4" title="Historical state unavailable" :description="readingError" />
     </UContainer>
@@ -284,7 +286,7 @@ const errorMessage = computed(() => {
         v-model:route-columns="routeColumns"
         v-model:topology="topology"
         :report="data"
-        v-model:coverage="coverage" v-model:review-path="reviewPath"
+        v-model:coverage="coverage" v-model:review-path="reviewPath" v-model:review-tab="reviewTab"
         :load-repository-file="loadRepositoryFile"
         :logo-src="logoSrc"
         :changes="changes"

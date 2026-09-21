@@ -24,8 +24,10 @@ Review opens on uncommitted Product Model changes since the last commit.
 Comparing selected Git versions is an explicit action. Authored model files
 form one tree, which can also show other repository changes as path-only context.
 The Review header badge counts changed Product Model files.
-Selecting a model file exposes its highlighted edits and links to the resource
-at either selected version. Coverage in Overview explains current breadth,
+Selecting a model resource opens its normal slideover. Show diff reveals changes
+in that reading, retaining previous values and unchanged context. The same action
+is available when opening a changed resource elsewhere in the report. File diffs remain available for exact edits and
+unavailable resource readings. Coverage in Overview explains current breadth,
 exclusions and known gaps directly, with recorded paths linking to related
 context and References. Reading never records inspection or changes the repository.
 

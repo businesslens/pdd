@@ -9,6 +9,7 @@ import { parentOf } from '../utils/pageSections'
 import { defaultTopologyReading } from '../utils/topologyState'
 import { resourceNavigationKey } from '../utils/resourceNavigation'
 import { referenceHref, referenceStateKey } from '../utils/referenceNavigation'
+import { resourceReviewKey, reviewResource, type ResourceReview } from '../utils/resourceReview'
 
 const props = defineProps<{
   workspace: ReportWorkspace
@@ -23,11 +24,21 @@ const props = defineProps<{
   previous?: Pick<AnyResourceView, 'title'> | null
   returnFocus?: HTMLElement | null
   fallbackFocus?: HTMLElement | null
+  review?: ResourceReview | null
+  reviewLabel?: string
+  reviewSource?: string
+  fileDiffAvailable?: boolean
 }>()
+const showChanges = ref(false)
+watch([() => props.review?.resourceKey ?? props.resource?.key, () => props.review?.before?.state, () => props.review?.after?.state], () => { showChanges.value = false })
+const review = computed(() => showChanges.value ? props.review ?? null : null)
+provide(resourceReviewKey, review)
+const beforeResource = computed(() => props.resource && reviewResource(review.value, 'before', props.resource.key))
+const afterResource = computed(() => props.resource && reviewResource(review.value, 'after', props.resource.key))
 provide(referenceStateKey, computed(() => props.stateId ?? 'working'))
 const resourceNavigation = inject(resourceNavigationKey, null)
 if (resourceNavigation) provide(resourceNavigationKey, { ...resourceNavigation, href: (key, tab) => resourceNavigation.href(key, tab, props.stateId ?? 'working') })
-const emit = defineEmits<{ close: [], back: [], open: [resource: AnyResourceView], view: [section: string, resource: AnyResourceView], referenceBack: [], referenceOpen: [href: string] }>()
+const emit = defineEmits<{ close: [], back: [], open: [resource: AnyResourceView], view: [section: string, resource: AnyResourceView], referenceBack: [], referenceOpen: [href: string], fileDiff: [] }>()
 const tab = defineModel<string>('tab', { default: 'overview' })
 const expanded = useCookie<boolean>('blr-resource-expanded', { default: () => false, sameSite: 'lax' })
 const expandLabel = computed(() => expanded.value ? 'Restore resource size' : 'Expand resource')
@@ -35,6 +46,8 @@ const scenarioRoute = defineModel<string | null>('scenarioRoute', { default: nul
 const routeColumns = defineModel<string>('routeColumns', { default: 'auto' })
 const subject = computed(() => props.resource ? parentOf(props.workspace, props.resource) ?? props.resource : null)
 const ancestors = computed(() => props.resource ? resourceAncestors(props.workspace, props.resource) : [])
+const previousDomains = computed(() => beforeResource.value && review.value?.before ? resourceDomains(review.value.before.workspace, beforeResource.value) : [])
+const domainIds = (values: Array<{ id: string }>) => values.map(value => value.id)
 const domains = computed(() => props.resource ? resourceDomains(props.workspace, props.resource) : [])
 const exits = computed(() => subject.value ? resourceViewLinks(subject.value, props.workspace) : [])
 const docs = computed(() => docsForResourceKind(subject.value?.kind ?? 'product'))
@@ -137,7 +150,7 @@ function open(resource: AnyResourceView) { save(); emit('open', resource) }
             <BlrKind :kind="resource.kind" :interface-type="resource.kind === 'interface' ? resource.interfaceType : undefined" :labelled="false" class="mt-0.5 shrink-0" />
             <div class="min-w-0 flex-1">
               <h2 ref="heading" tabindex="-1" class="flex min-w-0 items-start gap-2 text-base leading-6 font-semibold text-highlighted outline-none" data-resource-heading>
-                <span class="min-w-0 break-words">{{ resource.title }}</span>
+                <BlrReviewValue inline :before="beforeResource?.title" :after="afterResource?.title" label="Title"><span class="min-w-0 break-words">{{ resource.title }}</span></BlrReviewValue>
                 <BlrTerm :slug="KIND_TERM[resource.kind]" :text="resource.title" icon-only />
               </h2>
               <div class="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-muted">
@@ -146,6 +159,7 @@ function open(resource: AnyResourceView) { save(); emit('open', resource) }
                   <UIcon name="i-lucide-chevron-right" class="size-3 shrink-0" />
                   <BlrResourceLink :resource-key="ancestor.key" class="min-w-0 break-words hover:underline" @open="open(ancestor)">{{ ancestor.title }}</BlrResourceLink>
                 </template>
+                <BlrReviewValue v-if="domains.length || previousDomains.length" inline :before="domainIds(previousDomains)" :after="domainIds(domains)" label="Domain">
                 <template v-for="domain in domains" :key="domain.key">
                   <span aria-hidden="true">·</span>
                   <BlrResourceLink :resource-key="domain.key" :aria-label="`Domain: ${domain.title}`" class="inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-sm text-default hover:underline" @open="open(domain)">
@@ -153,14 +167,22 @@ function open(resource: AnyResourceView) { save(); emit('open', resource) }
                     <span class="min-w-0 [overflow-wrap:anywhere]">{{ domain.title }}</span>
                   </BlrResourceLink>
                 </template>
+                <span v-if="!domains.length">{{ previousDomains.map(domain => domain.title).join(', ') }}</span>
+                <template #before>{{ previousDomains.map(domain => domain.title).join(', ') }}</template>
+                </BlrReviewValue>
               </div>
-              <div v-if="change" class="mt-2 flex min-w-0">
+              <div v-if="props.review" class="mt-2 flex flex-wrap items-center gap-2" data-inline-review-controls>
+                <UButton :label="showChanges ? 'Hide diff' : 'Show diff'" icon="i-lucide-file-diff" color="neutral" variant="outline" size="sm" :aria-pressed="showChanges" @click="showChanges = !showChanges" />
+                <span class="text-xs text-muted">{{ reviewLabel }}</span>
+                <UButton v-if="showChanges && fileDiffAvailable" label="View file diff" color="neutral" variant="ghost" size="sm" @click="emit('fileDiff')" />
+              </div>
+              <div v-else-if="change" class="mt-2 flex min-w-0">
                 <BlrChangeMark :change="change" :since="since" size="md" />
               </div>
             </div>
           </div>
           <div class="blr-resource-actions flex shrink-0 items-center gap-1">
-            <UTooltip v-for="link in (stateLabel ? [] : exits)" :key="link.section" :text="link.name">
+            <UTooltip v-for="link in (stateLabel || fileDiffAvailable ? [] : exits)" :key="link.section" :text="link.name">
               <UButton :label="link.name" :aria-label="link.name" :icon="link.icon" color="neutral" variant="ghost" size="sm" :ui="{ label: 'blr-resource-action-label text-xs' }" @click="subject && emit('view', link.section, subject)" />
             </UTooltip>
             <UTooltip :text="docs.label">
@@ -174,6 +196,7 @@ function open(resource: AnyResourceView) { save(); emit('open', resource) }
             </UTooltip>
           </div>
         </header>
+        <div v-if="props.review && !props.review.after?.workspace.byKey.has(props.review.resourceKey)" class="border-b border-default px-5 py-2 text-sm text-muted">Removed resource · showing the earlier version.</div>
         <div ref="tabsTarget" v-show="!reference" class="blr-resource-tabs shrink-0" data-page-tabs-host />
         <div ref="pane" v-show="!reference" class="blr-pane min-h-0 flex-1 p-5" data-resource-scroll @scroll.capture.passive="!reference && save()">
           <BlrResourcePage

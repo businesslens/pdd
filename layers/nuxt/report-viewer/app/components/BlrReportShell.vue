@@ -38,6 +38,7 @@ import type { RepositoryFileLoader } from 'businesslens/report'
 import { defaultCoverageReading, type CoverageReading } from '../utils/coverageState'
 import { reviewModelFiles } from '../utils/reviewModel'
 import { baselineTitle, changesByKey } from '../utils/reportChanges'
+import type { ResourceReview } from '../utils/resourceReview'
 
 const props = withDefaults(defineProps<{
   workspace: ReportWorkspace
@@ -83,6 +84,7 @@ const scenarioRoute = defineModel<string | null>('scenarioRoute', { default: nul
 const routeColumns = defineModel<string>('routeColumns', { default: 'auto' })
 const coverage = defineModel<CoverageReading>('coverage', { default: defaultCoverageReading })
 const reviewPath = defineModel<string | null>('reviewPath', { default: null })
+const reviewTab = defineModel<string>('reviewTab', { default: '' })
 const topology = defineModel<TopologyReading>('topology', { default: defaultTopologyReading })
 
 const activeKind = ref<ReportResourceKind>('product')
@@ -380,6 +382,17 @@ const changesComparison = computed(() => props.changes?.mode !== 'uncommitted' ?
 const changesBaseline = computed(() => {
   const baseline = props.changes?.baselines.find(item => item.id === props.changes?.baseline)
   return baseline ? baselineTitle(baseline) : ''
+})
+const reviewBefore = computed(() => props.changes?.before && props.changes.baseState
+  ? { report: props.changes.before, workspace: projectReportWorkspace(props.changes.before), state: props.changes.baseState.id } : null)
+const reviewAfter = computed(() => props.changes?.after && props.changes.targetState
+  ? { report: props.changes.after, workspace: projectReportWorkspace(props.changes.after), state: props.changes.targetState.id } : null)
+const openReview = computed<ResourceReview | null>(() => {
+  const key = openPage.value?.key
+  if (!key || resourceState.value !== 'working' || reviewAfter.value?.state !== 'working' || !changeByKey.value.has(key)) return null
+  // A missing baseline is unknown unless the host explicitly compared an empty state.
+  if (!reviewBefore.value && props.changes?.baseState?.kind !== 'empty') return null
+  return { before: reviewBefore.value, after: reviewAfter.value, resourceKey: key, inspect: inspectHistory }
 })
 /* The collection's Graph, when it has one. Absent, not disabled, when it does
    not: the switch appears only where a second drawing exists. */
@@ -847,6 +860,7 @@ const orphanScenarios = computed(() => props.workspace.scenarios
             v-if="changesOpen && changes"
             :changes="changes"
             v-model:path="reviewPath"
+            v-model:tab="reviewTab"
             :load-repository-file="loadRepositoryFile"
             :resource-reading-open="Boolean(openResource || reference)"
             @compare="(base, target) => emit('compare', base, target)"
@@ -1028,6 +1042,8 @@ const orphanScenarios = computed(() => props.workspace.scenarios
       :change="resourceState === 'working' && openPage ? changeByKey.get(openPage.key)?.change : undefined"
       :changes="resourceState === 'working' ? changeByKey : undefined"
       :since="changesBaseline"
+      :review="openReview"
+      :review-label="`Compared with ${changesBaseline}`"
       :return-focus="returnFocus"
       :fallback-focus="workingHeading"
       @open="openResourcePage($event, resourceState)"

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Open resources in their familiar layout, then use Show diff to reveal changes and previous values in place.
+
 - Review uncommitted Product Model edits with highlighted diffs, resource links and colored header counts by change type; compare saved versions explicitly and optionally show other repository changes in the same tree.
 - Recognize Product Model folders and files by their BusinessLens logo and resource icons in repository trees.
 - Coverage describes modeled areas consistently, keeps uncertainties beside their source areas, and simplifies scope and authoring details.

@@ -195,6 +195,7 @@ where it left:
 | `section` | `overview`; `review` when the host supplies comparisons; a cross-collection view: `delivery`, `what-changes-what`, or `rule-attachments`; or a collection: `entity`, `interface`, `domain`, `capability`, `journey`, or `rule` | `overview` |
 | `resourceState` | `working` or an immutable `commit:<SHA>` for a historical resource reading | `working` |
 | `reviewPath` | selected repository path in Review, `.` for its root, or `null` | `null` |
+| `reviewTab` | selected resource reading; empty uses its normal initial reading | `''` |
 | `resource` | the stable key of the inspected resource (`screen:reader-web::…`), or `null` for the section's collection | `null` |
 | `tab` | underlying collection: `overview` (Rows) or `graph`; Product Overview: `overview` (About), `coverage`, or `references` | `overview` |
 | `resourceTab` | resource reading: `overview`, `scenarios`, `lifecycle`, `connections`, or `references`; independent of `tab` | `overview` |
@@ -456,18 +457,36 @@ and comparison context. The Review button still opens Review directly.
 Coverage keeps its own
 recorded source areas and shares the tree's search and expansion behavior.
 
-`loadRepositoryFile(base, target, path)` reads bounded before/after contents on
-demand. Unified diffs are the default, with line numbers, addition/removal
+Selecting a model resource opens the ordinary resource slideover first, just as
+opening it from a collection or a resource link does. **Show diff** explicitly
+reveals changes in that same layout, with the baseline named beside the button.
+Added and removed rows retain their usual layout, modified fields or sections
+show previous values in place, and the existing tabs identify affected readings.
+**Hide diff** restores the normal reading without changing the selected tab.
+Lifecycle and Connections can show the earlier version using the same components,
+without graph overlays.
+Product and Coverage retain their named Before/After comparisons. Removed resources,
+sections and References remain readable. Scenario comparisons stay under their
+parent and align unchanged steps before comparing edits; ambiguous rewrites
+remain removed and added rows. Derived connections and lifecycle transitions
+are labeled separately and reuse the ordinary drawings without graph overlays. The selected
+comparison and tree location remain in place when inspecting a related resource.
+Reference and resource links resolve in the version whose value they accompany.
+
+**View file diff** opens the secondary file comparison. Configuration,
+formatting-only changes and unavailable models open it directly; an unavailable
+model is never presented as a deletion. `loadRepositoryFile(base, target, path)`
+reads bounded before/after contents on demand. Unified diffs use line numbers, addition/removal
 markers, inline edit highlights and expandable unchanged context. Side-by-side
 diffs use aligned rows, and the file panel can expand. Large rewrites have a
 bounded fallback; long blocks reveal more lines on demand. Empty files, line
 endings, mode changes and unavailable contents remain explicit. Resource buttons
 open the authored resource itself at either selected version, including deleted
-resources from Base. Missing or invalid models limit those links, not file diffs.
+resources from Base. Missing or invalid models limit rendered comparisons, not file diffs.
 
 The `compare`, `uncommitted`, `historySearch` and `historyMore` events request
 read-only host data. No event records inspection, approves work or writes a saved
 state. Hosts without Git context omit Review.
 
-The navigation composable persists `reviewPath` as `rp`,
+The navigation composable persists `reviewPath` as `rp`, its comparison reading `reviewTab` as `rv`,
 `resourceState` as `v`, and Coverage's selected path as `cp`.

@@ -3,6 +3,7 @@
 import type { AnyResourceView, ReportWorkspace, ScenarioView } from '../utils/reportWorkspace'
 import type { ChangeKind } from 'businesslens/report'
 import { ENTITY_KIND_META, entityFacetOf, resolveResource } from '../utils/reportWorkspace'
+import { resourceReviewKey, reviewResource } from '../utils/resourceReview'
 import { scenarioTerm } from '../utils/vocabulary'
 
 const props = defineProps<{
@@ -12,6 +13,10 @@ const props = defineProps<{
   expanded: boolean
 }>()
 const emit = defineEmits<{ open: [resource: AnyResourceView], toggle: [] }>()
+const review = inject(resourceReviewKey, computed(() => null))
+const before = computed(() => { const value = reviewResource(review.value, 'before', props.scenario.key); return value?.kind === 'capability-scenario' || value?.kind === 'journey-scenario' ? value : null })
+const after = computed(() => { const value = reviewResource(review.value, 'after', props.scenario.key); return value?.kind === 'capability-scenario' || value?.kind === 'journey-scenario' ? value : null })
+const previousDetails = computed(() => !!before.value && (before.value.decisionPoints.length > 0 || before.value.edgeCases.length > 0))
 const expansionId = useId()
 const trigger = computed(() => props.scenario.trigger || props.scenario.lead)
 const word = (name: 'trigger' | 'outcome') => scenarioTerm(props.scenario.scenarioType, name)
@@ -46,8 +51,8 @@ const open = (key: string) => { const resource = props.workspace.byKey.get(key);
       <div class="blr-summary-identity">
         <BlrKind :kind="scenario.kind" :labelled="false" class="mt-0.5 shrink-0" />
         <div class="blr-summary-heading">
-          <h3 class="blr-summary-title">{{ scenario.title }}</h3>
-          <UBadge v-if="scenario.kindName" color="neutral" variant="subtle" size="sm">{{ scenario.kindName }}</UBadge>
+          <h3 class="blr-summary-title"><BlrReviewValue inline :before="before?.title" :after="after?.title" label="Scenario title">{{ scenario.title }}</BlrReviewValue></h3>
+          <BlrReviewValue v-if="scenario.kindName || before?.kindName" inline :before="before?.kindName" :after="after?.kindName" label="Kind"><UBadge color="neutral" variant="subtle" size="sm">{{ scenario.kindName || before?.kindName }}</UBadge></BlrReviewValue>
           <BlrChangeMark v-if="change" :change="change" />
         </div>
       </div>
@@ -68,17 +73,17 @@ const open = (key: string) => { const resource = props.workspace.byKey.get(key);
       </div>
     </div>
 
-    <dl v-if="trigger || scenario.outcome || scenario.result" class="blr-summary-story">
-      <div v-if="trigger">
+    <dl v-if="trigger || scenario.outcome || scenario.result || before?.trigger || before?.outcome || before?.result" class="blr-summary-story">
+      <div v-if="trigger || before?.trigger">
         <dt class="blr-summary-label"><BlrTerm :slug="word('trigger')" text="Trigger" /></dt>
-        <dd>{{ trigger }}</dd>
+        <dd><BlrReviewValue :before="before?.trigger || before?.lead" :after="after?.trigger || after?.lead" label="Trigger">{{ trigger || before?.trigger }}</BlrReviewValue></dd>
       </div>
-      <div v-if="scenario.outcome || scenario.result">
+      <div v-if="scenario.outcome || scenario.result || before?.outcome || before?.result">
         <dt class="blr-summary-label blr-summary-outcome-label">
           <BlrTerm :slug="word('outcome')" text="Outcome" />
-          <span v-if="scenario.result" class="blr-summary-result">{{ scenario.result === 'achieved' ? 'Goal achieved' : 'Goal not achieved' }}</span>
+          <BlrReviewValue v-if="scenario.result || before?.result" inline :before="before?.result" :after="after?.result" label="Result"><span class="blr-summary-result">{{ (scenario.result || before?.result) === 'achieved' ? 'Goal achieved' : 'Goal not achieved' }}</span></BlrReviewValue>
         </dt>
-        <dd v-if="scenario.outcome">{{ scenario.outcome }}</dd>
+        <dd v-if="scenario.outcome || before?.outcome"><BlrReviewValue :before="before?.outcome" :after="after?.outcome" label="Outcome">{{ scenario.outcome || before?.outcome }}</BlrReviewValue></dd>
       </div>
     </dl>
 
@@ -113,7 +118,7 @@ const open = (key: string) => { const resource = props.workspace.byKey.get(key);
   <div v-show="expanded" :id="expansionId" class="border-t border-muted" data-scenario-content>
     <template v-if="expanded">
       <div class="p-4" data-scenario-steps><slot /></div>
-      <div v-if="detailLabel" class="border-t border-muted p-4 space-y-4" data-scenario-details><slot name="details" /></div>
+      <div v-if="detailLabel || previousDetails" class="border-t border-muted p-4 space-y-4" data-scenario-details><slot name="details" /></div>
     </template>
   </div>
   </div>
