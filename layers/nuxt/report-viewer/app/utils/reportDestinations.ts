@@ -6,7 +6,7 @@ import { relatedIds } from './resourceFacets'
 /** Each named drawing belongs to the collection supplying its subjects. */
 export const REPORT_DESTINATIONS = [
   { section: 'entity-relationships', view: 'what-it-keeps', name: 'Entity relationships', label: 'Graph', icon: 'i-lucide-network', rail: 'entity', mode: 'graph' },
-  { section: 'interface-map', view: 'sitemap', name: 'Interface map', label: 'Graph', icon: 'i-lucide-git-branch', rail: 'interface', mode: 'graph' },
+  { section: 'interface-map', view: 'ui-map', name: 'UI map', label: 'Graph', icon: 'i-lucide-waypoints', rail: 'interface', mode: 'graph' },
   { section: 'domain-reach', view: 'domain-reach', name: 'Domain reach', label: 'Graph', icon: 'i-lucide-git-branch', rail: 'domain', mode: 'graph' },
   { section: 'capability-reach', view: 'capability-reach', name: 'Capability reach', label: 'Graph', icon: 'i-lucide-git-branch', rail: 'capability', mode: 'graph' },
   { section: 'journey-reach', view: 'journey-reach', name: 'Journey reach', label: 'Graph', icon: 'i-lucide-git-branch', rail: 'journey', mode: 'graph' },
@@ -26,13 +26,15 @@ export const graphForCollection = (kind: ReportResourceKind) => REPORT_DESTINATI
 export const matrixForCollection = (kind: ReportResourceKind) => REPORT_DESTINATIONS.find(item => item.rail === kind && item.mode === 'matrix')
 export const collectionKindFor = (kind: ReportResourceKind): ReportResourceKind => kind === 'experience' || kind === 'screen' ? 'interface' : kind === 'capability-scenario' ? 'capability' : kind === 'journey-scenario' ? 'journey' : kind
 
-/** Actual ownership only: a shared Screen has an Interface parent. */
+/** Actual ownership only: a shared Screen has an Interface parent, a nested Screen its parent Screens. */
 export function resourceAncestors(workspace: ReportWorkspace, resource: AnyResourceView): AnyResourceView[] {
   let keys: string[] = []
   if (resource.kind === 'experience') keys = [`interface:${resource.interfaceIds[0]}`]
   if (resource.kind === 'screen') {
     const context = resource.contexts[0]
-    keys = [`interface:${context?.interfaceId}`, ...(context?.experienceId ? [`experience:${context.experienceId}`] : [])]
+    const parents: string[] = []
+    for (let id = resource.parentScreenId; id; id = (workspace.byKey.get(`screen:${id}`) as { parentScreenId?: string } | undefined)?.parentScreenId ?? '') parents.unshift(`screen:${id}`)
+    keys = [`interface:${context?.interfaceId}`, ...(context?.experienceId ? [`experience:${context.experienceId}`] : []), ...parents]
   }
   if (resource.kind === 'capability-scenario' || resource.kind === 'journey-scenario') keys = [resource.scenarioType === 'capability' ? `capability:${resource.capabilityId}` : `journey:${resource.journeyId}`]
   return keys.flatMap(key => { const item = workspace.byKey.get(key); return item ? [item] : [] })

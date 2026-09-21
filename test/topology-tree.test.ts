@@ -5,7 +5,7 @@ import { loadModel } from '../src/core/model.js'
 
 const utility = (name: string) => import(`../layers/nuxt/report-viewer/app/utils/${name}.ts`)
 const { projectReportWorkspace } = await utility('reportWorkspace')
-const { sitemapProjection } = await utility('topologyProjections')
+const { interfaceProjection } = await utility('topologyProjections')
 const { layoutTopologyTree } = await utility('topologyTree')
 const flatten = (tree: any): any[] => [tree, ...tree.children.flatMap(flatten)]
 const epsilon = 0.001
@@ -56,20 +56,25 @@ function verifyTree(tree: any) {
   expect(layoutTopologyTree(tree, sizes)).toEqual(graph)
 }
 
-describe('connected Sitemap tree', () => {
+/* The containment tree behind the Rows drawing and the UI map's frames, rooted at the Product for the layout. */
+const containmentTree = (workspace: any) => ({ id: `product:${workspace.identity.id}`, title: workspace.identity.title, children: interfaceProjection(workspace), references: [] })
+
+describe('connected containment tree', () => {
   it.each(['.', 'blueprints/content-feed-reader', 'test/fixtures/fixture-shop'])('connects the complete qualified containment hierarchy: %s', root => {
     const workspace = projectReportWorkspace(compileReport(loadModel(join(__dirname, '..', root)), '2026-09-07'))
-    const tree = sitemapProjection(workspace)
+    const tree = containmentTree(workspace)
     expect(tree.id).toBe(`product:${workspace.identity.id}`)
     expect(tree.title).toBe(workspace.identity.title)
     expect(tree.children.map((node: any) => node.id)).toEqual(workspace.interfaces.map((resource: any) => resource.key))
     const nodes = flatten(tree)
     expect(new Set(nodes.map(node => node.id))).toEqual(new Set([tree.id, ...[...workspace.byKey.values()].filter((resource: any) => ['interface', 'experience', 'screen'].includes(resource.kind)).map((resource: any) => resource.key)]))
-    if (root === '.') {
-      expect(nodes.length).toBe(7)
-      expect(tree.children.filter((node: any) => !node.children.length).length).toBe(2)
-      expect(tree.children.flatMap((node: any) => node.children).map((node: any) => node.resource.kind)).toEqual(['screen', 'screen', 'screen'])
+    // One node per place, and a nested Screen is contained by its parent Screen, never listed beside it.
+    expect(nodes.length).toBe(1 + workspace.interfaces.length + workspace.experiences.length + workspace.screens.length)
+    const parentOf = new Map(nodes.flatMap(node => node.children.map((child: any) => [child.id, node.id])))
+    for (const screen of workspace.screens) {
+      expect(parentOf.get(screen.key)).toBe(screen.parentScreenId ? `screen:${screen.parentScreenId}` : screen.contexts[0].experienceId ? `experience:${screen.contexts[0].experienceId}` : `interface:${screen.contexts[0].interfaceId}`)
     }
+    if (root === '.') expect(workspace.screens.some((screen: any) => screen.parentScreenId)).toBe(true)
     verifyTree(tree)
   })
   it('keeps a single root and uneven deep/wide branches readable', () => {

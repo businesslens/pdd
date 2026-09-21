@@ -3,25 +3,30 @@ import { EdgeLabelRenderer } from '@vue-flow/core'
 import type { EdgeProps } from '@vue-flow/core'
 import type { DiagramLayout } from '../utils/diagram'
 defineProps<EdgeProps<DiagramLayout['edges'][number] & { dimmed?: boolean, quiet?: boolean, selected?: boolean }>>()
-const emit = defineEmits<{ inspect: [key: string] }>()
+const emit = defineEmits<{ open: [key: string], inspect: [key: string] }>()
+/* The label opens what the edge stands for: a Capability page, or a local inspection. */
+function activate(data: { resourceKey?: string, inspectionKey?: string }) {
+  if (data.resourceKey) emit('open', data.resourceKey)
+  else if (data.inspectionKey) emit('inspect', data.inspectionKey)
+}
 </script>
 <template>
-  <g :opacity="data?.dimmed ? 0.08 : data?.quiet ? 0.25 : 1">
+  <g :opacity="data?.dimmed ? 0.08 : data?.quiet ? 0.25 : data?.faint ? 0.55 : 1">
     <path v-for="(points, index) in data?.paths" :key="index" class="vue-flow__edge-path blr-flow-route"
       :d="points.map((point, i) => `${i ? 'L' : 'M'} ${point.x} ${point.y}`).join(' ')"
-      fill="none" :style="data?.selected ? { stroke: 'var(--ui-primary)', strokeWidth: 2.5 } : undefined" :stroke-dasharray="data?.forbidden ? '5 4' : undefined" :marker-end="markerEnd" />
-    <template v-if="data?.inspectionKey">
+      fill="none" :style="data?.selected ? { stroke: 'var(--ui-primary)', strokeWidth: 2.5 } : undefined" :stroke-dasharray="data?.forbidden ? '5 4' : data?.faint ? '2 4' : undefined" :marker-end="markerEnd" />
+    <template v-if="data?.inspectionKey || data?.resourceKey">
       <path v-for="(points, index) in data.paths" :key="`hit:${index}`" class="blr-flow-edge-hit nodrag nopan"
         :d="points.map((point, i) => `${i ? 'L' : 'M'} ${point.x} ${point.y}`).join(' ')"
-        fill="none" stroke="transparent" stroke-width="16" @click.stop="emit('inspect', data.inspectionKey!)" />
+        fill="none" stroke="transparent" stroke-width="16" @click.stop="activate(data)"><title v-if="data.note">{{ data.note }}</title></path>
     </template>
   </g>
   <EdgeLabelRenderer v-if="data?.labelBox && !data?.quiet && !data?.dimmed">
-    <component :is="data.inspectionKey ? 'button' : 'div'" :type="data.inspectionKey ? 'button' : undefined"
-      class="blr-flow-edge-label nodrag nopan" :class="data.inspectionKey && 'blr-flow-edge-button'" :data-edge-id="id"
-      :aria-label="data.inspectionKey ? `Inspect ${data.inspectionLabel || data.label}` : undefined" :aria-pressed="data.inspectionKey ? Boolean(data.selected) : undefined"
+    <component :is="data.inspectionKey || data.resourceKey ? 'button' : 'div'" :type="data.inspectionKey || data.resourceKey ? 'button' : undefined"
+      class="blr-flow-edge-label nodrag nopan" :class="(data.inspectionKey || data.resourceKey) && 'blr-flow-edge-button'" :data-edge-id="id" :title="data.note"
+      :aria-label="data.resourceKey ? `Open ${data.label}` : data.inspectionKey ? `Inspect ${data.inspectionLabel || data.label}` : undefined" :aria-pressed="data.inspectionKey ? Boolean(data.selected) : undefined"
       :style="{ position: 'absolute', transform: `translate(${data.labelBox.x}px, ${data.labelBox.y}px)`, width: `${data.labelBox.width}px`, minHeight: `${data.labelBox.height}px` }"
-      @click.stop="data.inspectionKey && emit('inspect', data.inspectionKey)">{{ data.label }}</component>
+      @click.stop="activate(data)">{{ data.label }}</component>
   </EdgeLabelRenderer>
 </template>
 

@@ -13,7 +13,8 @@
  * Drawn as a reference to a resource, exactly as the Step's Actor is — the
  * Entity's own mark inside a chip that opens it. States are not resources, so
  * they stay plain terminal readings rather than second targets competing with
- * the first.
+ * the first. The facts a read or change cites follow the chip as small marks;
+ * an end-state summary says where a thing was left and names none.
  */
 import type { AnyResourceView, EntityView, ReportWorkspace, ScenarioStepEntityView } from '../utils/reportWorkspace'
 import { entityFacetOf, resolveResource } from '../utils/reportWorkspace'
@@ -54,6 +55,8 @@ const label = computed(() => {
   return props.mention.as ? `${title} (${props.mention.as})` : title
 })
 
+const facts = computed(() => props.outcome ? [] : props.mention.facts ?? [])
+
 const description = computed(() => {
   const name = label.value
   if (props.mention.effect === 'reads') return `This Step reads ${name} without changing it`
@@ -74,10 +77,14 @@ const description = computed(() => {
   if (!props.mention.to) return `This Step changes ${name}`
   return `This Step moves ${name} from "${props.mention.from}" to "${props.mention.to}"`
 })
+
+const factsDescription = computed(() => facts.value.length
+  ? `${description.value}; the facts it ${props.mention.effect === 'reads' ? 'reads' : 'edits'}: ${facts.value.join(', ')}`
+  : description.value)
 </script>
 
 <template>
-  <UTooltip v-if="entity" :text="description" :delay-duration="150">
+  <UTooltip v-if="entity" :text="factsDescription" :delay-duration="150">
     <BlrResourceLink
       :resource-key="entity.key"
       class="inline-flex max-w-full items-center gap-1.5 rounded-full border px-2 py-0.5 font-sans text-xs transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
@@ -102,6 +109,10 @@ const description = computed(() => {
         <span class="min-w-0 truncate text-default">{{ mention.to }}</span>
       </template>
       <span v-else-if="mention.from && !outcome" class="min-w-0 truncate font-normal text-muted">{{ mention.from }}</span>
+      <template v-if="facts.length">
+        <span aria-hidden="true" class="shrink-0 text-dimmed">·</span>
+        <span v-for="fact in facts" :key="fact" class="shrink-0 rounded-sm bg-muted px-1 font-normal text-muted" data-step-fact>{{ fact }}</span>
+      </template>
     </BlrResourceLink>
   </UTooltip>
 </template>

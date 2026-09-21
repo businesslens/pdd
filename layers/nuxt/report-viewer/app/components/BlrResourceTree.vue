@@ -75,6 +75,7 @@ const items = computed(() => props.nodes.map(toNode))
         @open="emit('open', item.source.resource)"
       >{{ item.label }}</BlrResourceLink>
       <span v-else :class="item.value === rootKey ? 'font-semibold text-highlighted' : 'text-muted'">{{ item.label }} <span v-if="item.source.groupKind" class="ms-1.5 text-xs text-dimmed">{{ item.source.children.length }}</span></span>
+      <BlrNavigationMark v-if="item.source.resource?.kind === 'screen' && item.source.resource.alwaysReachable" class="ms-1.5 align-middle" />
       <span v-if="item.source.sharedFrom" class="block whitespace-normal text-xs font-normal text-muted">
         From <BlrResourceLink :resource-key="item.source.sharedFrom.key" @keydown.stop @open="emit('open', item.source.sharedFrom)">{{ item.source.sharedFrom.title }}</BlrResourceLink>
       </span>

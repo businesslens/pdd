@@ -121,7 +121,8 @@ onBeforeUnmount(() => { mounted = false; requestId++; stopWorker(); observer?.di
 <template>
   <div class="blr-diagram" :aria-label="title" :data-diagram-pending="pending || undefined" :aria-busy="pending || undefined">
     <div ref="measure" class="blr-flow-measure" aria-hidden="true" inert>
-      <div v-for="node in diagram.nodes" :key="node.id" :data-measure="`node:${node.id}`" :style="{ width: node.terminal ? '132px' : '236px' }">
+      <!-- A frame is measured by its header alone; ELK sizes the frame around what it holds. -->
+      <div v-for="node in diagram.nodes" :key="node.id" :data-measure="`node:${node.id}`" :style="node.group ? { width: 'max-content', maxWidth: '320px' } : { width: node.terminal ? '132px' : '236px' }">
         <BlrFlowNodeContent :node="node" />
       </div>
       <div v-for="edge in diagram.edges" :key="edge.id" :data-measure="`edge:${edge.id}`" class="blr-flow-edge-label">{{ edge.label }}</div>

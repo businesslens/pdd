@@ -19,6 +19,7 @@ import type {
 import { entityFacetOf, isScenarioKind, resolveResource, scenarioStepMatrix } from '../utils/reportWorkspace'
 import { scenarioTerm } from '../utils/vocabulary'
 import { hasAuthoredBody } from '../utils/pageSections'
+import { deliveryOf, screenChanges } from '../utils/placeReadings'
 import {
   SCENARIO_ROUTE_INLINE_WIDTH,
   scenarioRouteCapacity,
@@ -59,12 +60,25 @@ function entityChip(id: string) {
 const scenarioWord = (word: 'trigger' | 'outcome' | 'route' | 'decision-point' | 'edge-case') =>
   scenarioTerm(asScenario.value.scenarioType, word)
 
-const capabilityBoundary = computed(() => {
-  if (props.resource.kind === 'interface') return (props.resource as InterfaceView).capabilityBoundary
-  if (props.resource.kind === 'experience') return (props.resource as ExperienceView).capabilityBoundary
-  if (props.resource.kind === 'screen') return asScreen.value.capabilityBoundary
-  return ''
-})
+/* DELIVERY: what is available in this container, and on which Screen. The
+   model holds it once — availability on the Capability, capabilities on the
+   Screen — and this is the same fact read from the place's side. */
+const delivery = computed(() => props.resource.kind === 'interface' || props.resource.kind === 'experience'
+  ? deliveryOf(props.workspace, props.resource as InterfaceView | ExperienceView)
+  : null)
+
+/* PRESENTS: each Entity with the facts on screen. A bare entry names the Entity alone. */
+const presents = computed(() => props.resource.kind !== 'screen'
+  ? []
+  : asScreen.value.entities.map(entry => ({
+      ...entry,
+      entity: entityChip(entry.entityId),
+      title: resolveResource(props.workspace, 'entity', entry.entityId)?.title ?? entry.entityId
+    })))
+
+/* CHANGES MADE HERE: every Step that changes something on this Screen or one nested inside it. */
+const changes = computed(() => props.resource.kind === 'screen' ? screenChanges(props.workspace, asScreen.value) : [])
+const changeCount = computed(() => changes.value.reduce((total, group) => total + group.steps.length, 0))
 
 function openRule(id: string) {
   const rule = resolveResource(props.workspace, 'rule', id)
@@ -300,6 +314,65 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
 
 <template>
   <div v-if="!empty" class="space-y-10">
+    <!-- INTERFACE / EXPERIENCE: what is delivered here, before why it exists. -->
+    <section v-if="delivery && delivery.count" class="space-y-3" data-delivery>
+      <h2 class="blr-page-heading">
+        Delivery
+        <span class="blr-meta ms-1">{{ delivery.count }} {{ delivery.count === 1 ? 'Capability' : 'Capabilities' }}</span>
+      </h2>
+      <div v-for="group in delivery.groups" :key="group.domain?.key ?? 'unassigned'" class="space-y-1.5" data-delivery-group>
+        <p class="blr-field flex items-center gap-1.5">
+          <template v-if="group.domain">
+            <BlrKind kind="domain" :labelled="false" size="xs" />
+            <BlrResourceLink :resource-key="group.domain.key" class="hover:underline" @open="emit('select', group.domain!)">{{ group.domain.title }}</BlrResourceLink>
+          </template>
+          <template v-else>No Domain</template>
+        </p>
+        <ul class="space-y-1.5">
+          <li
+            v-for="row in group.rows"
+            :key="row.capability.key"
+            class="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border border-default bg-elevated/30 px-3 py-2 text-sm"
+            data-delivery-row
+          >
+            <BlrResourceLink :resource-key="row.capability.key" class="blr-chip" @open="emit('select', row.capability)">
+              <BlrKind kind="capability" :labelled="false" size="xs" />{{ row.capability.title }}
+            </BlrResourceLink>
+            <template v-if="row.screens.length">
+              <span class="blr-meta">on</span>
+              <BlrResourceLink
+                v-for="screen in row.screens"
+                :key="screen.key"
+                :resource-key="screen.key"
+                class="blr-chip"
+                @open="emit('select', screen)"
+              >
+                <BlrKind kind="screen" :labelled="false" size="xs" />{{ screen.title }}
+              </BlrResourceLink>
+            </template>
+          </li>
+        </ul>
+      </div>
+      <!-- Available here, exposed nowhere inside: the reader sees the gap the linter reports. -->
+      <div v-if="delivery.unexposed.length" class="space-y-1.5" data-delivery-unexposed>
+        <h3 class="text-sm font-semibold text-highlighted">
+          Available, not on a Screen
+          <span class="blr-meta ms-1">{{ delivery.unexposed.length }}</span>
+        </h3>
+        <div class="flex flex-wrap gap-1.5">
+          <BlrResourceLink
+            v-for="capability in delivery.unexposed"
+            :key="capability.key"
+            :resource-key="capability.key"
+            class="blr-chip"
+            @open="emit('select', capability)"
+          >
+            <BlrKind kind="capability" :labelled="false" size="xs" />{{ capability.title }}
+          </BlrResourceLink>
+        </div>
+      </div>
+    </section>
+
     <section v-if="resource.kind === 'rule'" class="space-y-3">
       <h2 class="blr-page-heading">Rule statement</h2>
       <div class="rounded-xl border-s-3 border-primary bg-elevated/45 p-5">
@@ -422,13 +495,6 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
         <span>Reads only</span>
         <BlrLinks :workspace="workspace" :ids="asCapability.readEntityIds" kind="entity" interactive @select="emit('select', $event)" />
       </p>
-    </section>
-
-    <section v-if="capabilityBoundary" class="space-y-2">
-      <h2 class="blr-page-heading"><BlrTerm slug="capability-boundary" /></h2>
-      <div class="max-w-3xl rounded-xl border border-default bg-elevated/35 p-4 text-default">
-        <BlrProse :text="capabilityBoundary" />
-      </div>
     </section>
 
     <!-- SCENARIO: the ordered reading, in the order it happens. -->
@@ -869,62 +935,92 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
       </section>
     </template>
 
-    <!-- SCREEN: what it is about, what it shows, what can be done, what states it has. -->
+    <!-- SCREEN: what it presents, and what changes here. -->
     <template v-if="resource.kind === 'screen'">
       <!--
-        `## Information presented` is what *this view* shows and never a
-        restatement of what the Entity keeps, so the Entity has to be named
-        before that list can be read as the narrower thing it is.
+        "Presents" means the fact is on screen, read or entered. The Entity is
+        named before its facts so the list reads as the narrower thing it is:
+        what this Screen shows of the thing, never what the Product keeps.
       -->
-      <section v-if="asScreen.entityIds.length" class="space-y-2">
-        <h2 class="blr-page-heading">Presents</h2>
-        <BlrLinks
-          :workspace="workspace"
-          :ids="asScreen.entityIds"
-          kind="entity"
-          interactive
-          @select="emit('select', $event)"
-        />
-      </section>
-      <section v-if="asScreen.information.length" class="space-y-2">
+      <section v-if="presents.length" class="space-y-2" data-screen-presents>
         <h2 class="blr-page-heading">
-          Information presented <span class="blr-meta ms-1">{{ asScreen.information.length }}</span>
+          Presents
+          <span class="blr-meta ms-1">{{ presents.length }}</span>
         </h2>
-        <ul class="grid gap-2 @min-[480px]:grid-cols-2 @min-[720px]:grid-cols-3">
+        <ul class="space-y-1.5">
           <li
-            v-for="item in asScreen.information"
-            :key="item"
-            class="rounded-lg border border-default px-3 py-2.5 text-sm text-default"
+            v-for="entry in presents"
+            :key="entry.entityId"
+            class="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border border-default bg-elevated/30 px-3 py-2 text-sm"
+            :data-entity-id="entry.entityId"
           >
-            {{ item }}
+            <BlrResourceLink :resource-key="`entity:${entry.entityId}`" class="blr-chip" @open="openEntity(entry.entityId)">
+              <BlrEntityMark
+                :facet="entityFacetOf(entry.entity) ?? 'kept'"
+                :acts="entry.entity?.acts"
+                size="xs"
+              />{{ entry.title }}
+            </BlrResourceLink>
+            <template v-if="entry.facts">
+              <UBadge v-for="fact in entry.facts" :key="fact" color="neutral" variant="outline" size="sm" class="font-normal" data-screen-fact>{{ fact }}</UBadge>
+            </template>
+            <span v-else class="blr-meta">no facts named</span>
           </li>
         </ul>
       </section>
-      <section v-if="asScreen.actions.length" class="space-y-2">
+
+      <!--
+        The lifecycle join, per Screen: what changes here and into which
+        states, summed over nested Screens with the Screen it happens on named.
+        A Step is placed exactly once, so a change counted here is counted on
+        no sibling.
+      -->
+      <section v-if="changes.length" class="space-y-3" data-screen-changes>
         <h2 class="blr-page-heading">
-          Available actions <span class="blr-meta ms-1">{{ asScreen.actions.length }}</span>
+          Changes made here
+          <span class="blr-meta ms-1">{{ changeCount }} {{ changeCount === 1 ? 'Step' : 'Steps' }}</span>
         </h2>
-        <ul class="grid gap-x-8 gap-y-2 @min-[480px]:grid-cols-2">
-          <li v-for="item in asScreen.actions" :key="item" class="flex items-start gap-2 text-sm text-default">
-            <UIcon name="i-lucide-mouse-pointer-click" class="mt-0.5 size-4 shrink-0 text-muted" />{{ item }}
-          </li>
-        </ul>
-      </section>
-      <section v-if="asScreen.states.length" class="space-y-2">
-        <h2 class="blr-page-heading">
-          <BlrTerm slug="view-state" text="View states" />
-          <span class="blr-meta ms-1">{{ asScreen.states.length }}</span>
-        </h2>
-        <div class="grid gap-3 @min-[480px]:grid-cols-2 @min-[720px]:grid-cols-3">
-          <div
-            v-for="state in asScreen.states"
-            :key="state.title"
-            class="rounded-xl border border-default bg-elevated/30 p-4"
-          >
-            <p class="text-sm font-semibold text-highlighted">{{ state.title }}</p>
-            <BlrProse :text="state.description" class="mt-1.5" />
-          </div>
-        </div>
+        <article
+          v-for="group in changes"
+          :key="group.scenario.key"
+          class="space-y-2 rounded-lg border border-default bg-elevated/25 px-3.5 py-3"
+          data-screen-change-group
+        >
+          <BlrLinks
+            :workspace="workspace"
+            :ids="[group.scenario.id]"
+            :kind="group.scenario.kind"
+            interactive
+            @select="emit('select', $event)"
+          />
+          <ul class="space-y-2">
+            <li v-for="step in group.steps" :key="step.index" class="text-sm" data-screen-change-step>
+              <p class="font-medium text-highlighted">{{ step.index + 1 }}. {{ step.text }}</p>
+              <span class="blr-meta mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1">
+                <BlrStepEntity
+                  v-for="mention in step.entities"
+                  :key="`${mention.effect}-${mention.entityId}-${mention.as}`"
+                  :workspace="workspace"
+                  :mention="mention"
+                  @select="emit('select', $event)"
+                />
+                <template v-if="step.placedOn.length">
+                  <span>on</span>
+                  <BlrResourceLink
+                    v-for="place in step.placedOn"
+                    :key="place.key"
+                    :resource-key="place.key"
+                    class="blr-chip"
+                    data-screen-change-place
+                    @open="emit('select', place)"
+                  >
+                    <BlrKind kind="screen" :labelled="false" size="xs" />{{ place.title }}
+                  </BlrResourceLink>
+                </template>
+              </span>
+            </li>
+          </ul>
+        </article>
       </section>
     </template>
 

@@ -49,6 +49,23 @@ describe('diagram context', () => {
     expect(context.edges).toEqual(new Set(['a->b', 'c->a', 'a->a', 'parallel']))
   })
 
+  it('reads a frame as what it holds, and never dims a frame around a highlighted node', () => {
+    const map = {
+      nodes: [node('entry'), { ...node('web'), group: true }, { ...node('web::store'), group: true, parent: 'web' }, { ...node('web::catalog'), parent: 'web' },
+        { ...node('web::store::product'), parent: 'web::store' }, { ...node('web::store::status'), parent: 'web::store' }, node('hook'), node('cli')],
+      edges: [edge('entry', 'web::catalog'), edge('web::catalog', 'web::store::product'), edge('web::store::product', 'hook'), edge('hook', 'web::store::status')]
+    }
+    const leaf = diagramContext(map, 'hook')
+    expect(leaf.occurrences).toEqual(new Set(['hook']))
+    expect(leaf.nodes).toEqual(new Set(['hook', 'web::store::product', 'web::store::status', 'web::store', 'web']))
+    expect(leaf.edges).toEqual(new Set(['web::store::product->hook', 'hook->web::store::status']))
+    const frame = diagramContext(map, 'web::store')
+    expect(frame.occurrences).toEqual(new Set(['web::store', 'web::store::product', 'web::store::status']))
+    expect(frame.nodes).toEqual(new Set(['web::store', 'web::store::product', 'web::store::status', 'web::catalog', 'hook', 'web']))
+    expect(frame.edges).toEqual(new Set(['web::catalog->web::store::product', 'web::store::product->hook', 'hook->web::store::status']))
+    expect(diagramContext(map, 'cli').nodes).toEqual(new Set(['cli']))
+  })
+
   it('clears context for a removed node and handles an isolated node', () => {
     expect(diagramContext(tree, null)).toBeNull()
     expect(diagramContext(tree, 'removed')).toBeNull()

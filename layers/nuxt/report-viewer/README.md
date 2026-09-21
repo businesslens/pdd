@@ -1,6 +1,6 @@
 # BusinessLens Product Report
 
-The stable Product Report v13 renderer used by `businesslens view` and exported
+The stable Product Report v14 renderer used by `businesslens view` and exported
 from the `businesslens` package. It projects the complete portable report into
 six main resource collections: Entities, Interfaces, Domains, Capabilities,
 Journeys, and Business Rules. Overview sits above Resources. Experiences and
@@ -33,13 +33,36 @@ own Capabilities, so it does not borrow Domains from its parent's other cases.
 Overview contains identity facts, authored detail, Contexts and supporting material,
 with contextual links beside the facts they explain. Capability
 and Journey readings add Scenarios.
+An Interface or Experience Overview opens with Delivery: the Capabilities
+available there, grouped by Domain, each naming the Screen or Screens inside
+the container that expose it. Capabilities available but exposed on no Screen
+are listed under an “Available, not on a Screen” sub-heading; a container with
+no Screens at all lists its Capabilities plainly. The facts strip adds
+Languages to an Interface that narrows the Product's list and Version to an
+Experience that carries one; the Product Overview's About reading lists the
+Product's languages.
+A Screen Overview has a Presents block — each Entity with the facts on screen
+as chips, or the Entity alone for a bare entry — and a Changes made here block:
+every Step that changes something on this Screen or a Screen nested inside it,
+grouped by Scenario, with its Entity effects and, where the Step is placed on a
+nested Screen, that Screen named. A Screen's facts strip counts what it
+presents and the Capabilities it exposes. There are no Information presented,
+Available actions, View states or Capability boundary readings, and References
+carry no state badge.
+Screens nest. A nested Screen appears as a child of its parent Screen in the
+Experiences & Screens and Screens tabs, in the Interfaces tree card and inside
+its parent's frame on the UI map; its header trail names the parent Screens
+after the container. A Screen named in its container's `navigation` wears an
+Always reachable mark — a small anchor badge, an unreserved glyph — in those
+trees, on its map node, in its own header and in its facts strip. Navigation is
+never drawn as an edge.
 Interfaces have an Experiences & Screens tab; Experiences have a Screens tab.
 Both use the collection's tree rows, chevrons, resource links and expansion
 controls. The selected resource is already named in the header, so each tree
 starts with its children. Shared Screens occur once under their Interface in the
 full tree; an Experience's Screens tab shows shared references with “From” and
 an owner link. These tabs hold containment and availability; Overview holds
-audience and Connections holds capability exposure. Screens have no containment tab.
+audience and Delivery, and Connections holds capability exposure. Screens have no containment tab.
 An Entity's Overview contains Information
 kept; its Lifecycle reading switches between Rows and Graph. Rows groups changes
 under their starting State, using the collection list's parent/child styling.
@@ -179,7 +202,7 @@ the canonical report inside a page:
 <BusinessLensReportViewer :report="report" :logo-src="logoSrc" />
 ```
 
-`report` must be a `ProductReportV13` from `businesslens/report`. There is
+`report` must be a `ProductReportV14` from `businesslens/report`. There is
 no second, lossy public view-model contract.
 
 Where the reader is, is bindable, so a host can keep it in its own router and
@@ -251,7 +274,7 @@ Matrix is offered only by the three collections whose resources supply its rows.
 | Section | Rows (`overview`) | Graph (`graph`) | Matrix (`matrix`) |
 | --- | --- | --- | --- |
 | `entity` | one row per Entity, grouped by Domain; Actors lead | Entity relationships | What changes what: Entities × Capabilities |
-| `interface` | one tree card per Interface, its Experiences and Screens | Interface map | — |
+| `interface` | one tree card per Interface, its Experiences and Screens | UI map | — |
 | `domain` | one tree card per Domain, its Capabilities and Entities | Domain reach | — |
 | `capability` | one row per Capability, grouped by Domain | Capability reach | Compare delivery: Capabilities × Interfaces |
 | `journey` | one row per Journey | Journey reach | — |
@@ -303,6 +326,8 @@ expansion control includes the Step and detail counts; there is no separate
 details toggle. Resource links and definitions work independently of expansion.
 Each Entity appears once in the terminal reading, with its
 last creation, change or removal, and Entities only read sit separately.
+The facts a Step cites on a read or change follow the Entity inside its chip;
+the terminal reading names none.
 Scenario titles use 16px semibold text, section labels 13px semibold, and body
 text 14px regular. Step cards use the selected Guided flow layout: visible labels for
 Action or Condition, Who, Entity effects, Where and Capability, with effects
@@ -326,7 +351,9 @@ separate header. Their borderless tree rows fill each card's width and use the
 parent's background, with a subtle row highlight on hover. The Experiences & Screens and Screens tabs use the
 same component. Each group has its matching resource-type icon and a count beside
 its name: Experiences, Screens, Shared Screens, Capabilities or Entities. Resource
-roots have no mixed total. Expansion chevrons sit before the type icons.
+roots have no mixed total. Expansion chevrons sit before the type icons. A nested
+Screen sits directly under its parent Screen with no group between, and an
+always-reachable Screen carries its mark after its name.
 
 A resource name opens its reading directly, including roots with no children.
 Chevrons toggle expansion; group labels also toggle their group. Arrow keys
@@ -357,17 +384,34 @@ report has no home for opens the Overview rather than landing the reader
 somewhere else without saying so. Resource links retain their ids, and
 Inspecting an Experience or Screen preserves the originating rail selection.
 
-Interface map and the four reach graphs follow a containment tree: measured
-nodes in horizontal tiers, parents above children, shared orthogonal branches,
-and a distinct Product root. A reach graph draws occurrences, so a Screen
-reached by three Capabilities appears under each of them.
+The four reach graphs follow a containment tree: measured nodes in horizontal
+tiers, parents above children, shared orthogonal branches, and a distinct
+Product root. A reach graph draws occurrences, so a Screen reached by three
+Capabilities appears under each of them.
+
+The Interfaces Graph is the UI map, and it is derived: nothing in the model
+draws it. Its frames are containment — every Screen sits inside its parent
+Screen, Experience or Interface, and an Interface with no Screens, a CLI or a
+webhook, is a single node. Its arrows come from exactly two sources. A move is
+a place change between two consecutive Steps of one Scenario route that both
+name a place, labelled with the Capability of the Step that arrives — the
+Capability Scenario's own, or the Journey Step's; a Step with no Context on that
+route is skipped rather than counted as a change, the same change walked by
+several Scenarios is one arrow whose tooltip names them all, and the label opens
+the Capability. Entry points arrive from an Entry node outside the Product,
+labelled with their paths. `navigation` is never an arrow: an always-reachable
+Screen carries its anchor mark on the node instead. A place no Scenario walks
+stays an island, which is a visible absence. Hovering a frame reads every
+arrow in or out of what it holds; a frame closes into one node that stands in
+for its contents, and the Rows tree remains the containment drawing.
 Vue Flow provides its canvas, resource styling, zoom, and pan. Collapsed branches
 show corner count badges, with the expansion choice preserved in the URL.
 Expansion, collapse, and Fit smoothly centre the visible graph after layout;
 centering is immediate when the reader prefers reduced motion.
 The renderer never runs Diagram Design or generates model-controlled HTML.
 HTML readings remain available while graph geometry loads. A locally bundled
-ELK worker arranges Entity relationships and Lifecycle; it loads on demand and
+ELK worker arranges Entity relationships, Lifecycle and the UI map — the map as
+a hierarchy, frames sized around their contents; it loads on demand and
 its returned routes and label positions are drawn by Vue Flow. Layout uses the
 measured dimensions of the rendered cards and labels. Hover never rearranges the
 graph; resizing preserves zoom, and Back and refresh restore the viewport.

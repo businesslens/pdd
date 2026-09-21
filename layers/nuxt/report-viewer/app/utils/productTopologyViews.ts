@@ -24,7 +24,7 @@ export type ProductTopologyViewId =
   | 'capability-reach'
   | 'journey-reach'
   | 'rule-reach'
-  | 'sitemap'
+  | 'ui-map'
   | 'what-it-keeps'
   | 'delivery-by-interface'
   | 'rule-attachments'
@@ -76,12 +76,14 @@ export const PRODUCT_TOPOLOGY_VIEWS: ProductTopologyView[] = [
     note: 'Each Business Rule branches into its authored attachment targets — Entities, Capabilities, Journeys and Scenarios — and the places its Contexts restrict it to. Derived Domains and inherited reach are excluded.',
     kinds: ['product', 'rule', 'entity', 'capability', 'journey', 'capability-scenario', 'journey-scenario', 'interface', 'experience', 'screen']
   },
+  /* The UI map is derived, and the Rows tree already draws containment; the
+     map draws movement inside it. */
   {
-    id: 'sitemap',
-    diagramType: 'Containment tree',
-    name: 'Interface map',
-    question: 'What does each Interface contain?',
-    note: 'The Product root branches into Interfaces, their Experiences and Screens. Lines show actual containment, not Screen-to-Screen navigation. Similar names remain distinct. Expand a branch to reveal its children; select a node to open its page.',
+    id: 'ui-map',
+    diagramType: 'UI map',
+    name: 'UI map',
+    question: 'Where do Scenario Steps move between places, and what arrives from outside?',
+    note: 'Frames are containment: every Screen sits inside its parent Screen, Experience or Interface, and an Interface with no Screens is a single node. An arrow is a place change between consecutive Steps of one Scenario route that both name a place, labelled with the Capability of the Step that arrives; Steps with no Context are skipped, and the arrow names every Scenario that walks it. Entry points arrive from the Entry node outside the Product. Always reachable Screens carry a mark, never an arrow. A place no Scenario walks stays an island.',
     kinds: ['product', 'interface', 'experience', 'screen']
   },
   {

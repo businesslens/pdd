@@ -47,7 +47,9 @@ export function resourceFacts(workspace: ReportWorkspace, resource: AnyResourceV
       return [
         { label: 'Type', value: INTERFACE_TYPE_META[item.interfaceType].label, term: 'interface-type' },
         { label: 'Experiences', value: String(item.experienceIds.length), term: KIND_TERM.experience },
-        { label: 'Screens', value: String(item.screenIds.length), term: KIND_TERM.screen }
+        { label: 'Screens', value: String(item.screenIds.length), term: KIND_TERM.screen },
+        /* Only where the Interface narrows the Product's list; an empty list says nothing. */
+        ...(item.languages.length ? [{ label: 'Languages', value: item.languages.join(', '), wide: true }] : [])
       ]
     }
     case 'experience': {
@@ -55,14 +57,17 @@ export function resourceFacts(workspace: ReportWorkspace, resource: AnyResourceV
       return [
         { label: 'Interface', value: one('interface', item.interfaceIds), wide: true, term: KIND_TERM.interface },
         { label: 'Access mode', value: item.accessMode, term: 'access-mode' },
-        { label: 'Screens', value: String(item.screenIds.length), term: KIND_TERM.screen }
+        { label: 'Screens', value: String(item.screenIds.length), term: KIND_TERM.screen },
+        ...(item.version !== null ? [{ label: 'Version', value: item.version, term: 'version' as const }] : [])
       ]
     }
     case 'screen': {
       const screen = resource as ScreenView
       return [
-        { label: 'View states', value: String(screen.states.length), term: 'view-state' },
-        { label: 'Actions', value: String(screen.actions.length) }
+        { label: 'Presents', value: String(screen.entityIds.length), term: KIND_TERM.entity },
+        { label: 'Capabilities', value: String(screen.capabilityIds.length), term: KIND_TERM.capability },
+        /* The navigation mark, in words: the strip is where a reader asks what it means. */
+        ...(screen.alwaysReachable ? [{ label: 'Navigation', value: 'Always reachable', term: 'navigation' as const }] : [])
       ]
     }
     case 'entity': {

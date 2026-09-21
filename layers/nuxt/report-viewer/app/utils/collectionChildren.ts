@@ -8,8 +8,8 @@
  * Every other collection lists plain rows; a Capability's or Journey's
  * Scenarios are read on its page.
  */
-import type { AnyResourceView, ReportResourceKind, ReportWorkspace } from './reportWorkspace'
-import { ENTITY_KIND_META } from './reportWorkspace'
+import type { AnyResourceView, ReportResourceKind, ReportWorkspace, ScreenView } from './reportWorkspace'
+import { ENTITY_KIND_META, resourceKey } from './reportWorkspace'
 import { interfaceProjection } from './topologyProjections'
 import type { TopologyBranch } from './topologyProjections'
 
@@ -46,11 +46,26 @@ export function structureLabel(resource: AnyResourceView): string {
   return resource.kind === 'interface' ? 'Experiences & Screens' : 'Screens'
 }
 
+/** A Screen's nested Screens, resolved in authored order. */
+export function childScreens(workspace: ReportWorkspace, screen: ScreenView): ScreenView[] {
+  return screen.childScreenIds.flatMap((id) => {
+    const child = workspace.byKey.get(resourceKey('screen', id))
+    return child?.kind === 'screen' ? [child] : []
+  })
+}
+
+/** The Screens a container holds directly; a nested Screen is its parent's child, not the container's. */
+export function ownedScreens(workspace: ReportWorkspace, owner: AnyResourceView): ScreenView[] {
+  return workspace.screens.filter(screen => !screen.parentScreenId && screen.contexts.some(context =>
+    owner.kind === 'experience' ? context.experienceId === owner.id : context.interfaceId === owner.id && !context.experienceId))
+}
+
 /** One hierarchy for collection cards and focused containment readings. */
 export function structureChildren(workspace: ReportWorkspace, resource: AnyResourceView): TreeCardNode[] {
-  const screensOf = (owner: AnyResourceView) => workspace.screens.filter(screen => screen.contexts.some(context =>
-    owner.kind === 'experience' ? context.experienceId === owner.id : context.interfaceId === owner.id && !context.experienceId))
-  const screenGroup = (owner: AnyResourceView) => group(`${owner.key}:screens`, 'screen', screensOf(owner).map(screen => leaf(screen)))
+  /* A nested Screen sits under its parent Screen with no group between: the parent already says what kind it holds. */
+  const screenLeaf = (screen: ScreenView): TreeCardNode => leaf(screen, childScreens(workspace, screen).map(screenLeaf))
+  const screensOf = (owner: AnyResourceView) => ownedScreens(workspace, owner)
+  const screenGroup = (owner: AnyResourceView) => group(`${owner.key}:screens`, 'screen', screensOf(owner).map(screenLeaf))
   if (resource.kind === 'interface') {
     const experiences = workspace.experiences.filter(item => item.interfaceIds.includes(resource.id))
     const screens = screenGroup(resource)
@@ -62,7 +77,7 @@ export function structureChildren(workspace: ReportWorkspace, resource: AnyResou
   }
   if (resource.kind === 'experience') {
     const shared = workspace.interfaces.filter(iface => resource.interfaceIds.includes(iface.id)).flatMap(iface =>
-      screensOf(iface).map(screen => ({ ...leaf(screen), sharedFrom: iface })))
+      screensOf(iface).map(screen => ({ ...screenLeaf(screen), sharedFrom: iface })))
     return [screenGroup(resource), { ...group(`${resource.key}:shared-screens`, 'screen', shared), title: 'Shared Screens' }].filter(node => node.children.length)
   }
   return []

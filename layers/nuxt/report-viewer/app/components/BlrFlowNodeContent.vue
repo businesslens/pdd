@@ -20,7 +20,7 @@ const branchLabel = computed(() => props.node.branch
 </script>
 
 <template>
-  <div class="blr-flow-node" :class="{ 'blr-flow-node--state': !node.kind, 'blr-flow-node--terminal': node.terminal, 'blr-flow-node--highlighted': highlighted }"
+  <div class="blr-flow-node" :class="{ 'blr-flow-node--state': !node.kind, 'blr-flow-node--terminal': node.terminal, 'blr-flow-node--group': node.group, 'blr-flow-node--highlighted': highlighted }"
     :data-unreached="node.unreached || undefined" :data-resource-key="node.resourceKey" :style="{ '--node-color': color }">
     <component :is="href ? 'a' : node.resourceKey || node.inspectionKey ? 'button' : 'div'" :href="href" :type="(node.resourceKey || node.inspectionKey) && !href ? 'button' : undefined" :tabindex="node.resourceKey || node.inspectionKey ? undefined : 0" class="blr-flow-node__main" :aria-description="node.description"
     @click.stop="activate">
@@ -35,6 +35,7 @@ const branchLabel = computed(() => props.node.branch
       <span v-if="node.note || meta" class="blr-flow-node__sub" :title="node.note || meta?.label">{{ node.note || meta?.label }}</span>
       <span v-if="node.unreached" class="blr-flow-node__sub">unreached</span>
     </span>
+    <BlrNavigationMark v-if="node.navigation" :labelled="false" class="shrink-0" />
     </component>
     <UTooltip v-if="node.branch" :text="branchLabel">
       <button type="button" class="blr-flow-node__count nodrag nopan" :aria-expanded="node.branch.open" :aria-label="branchLabel" @click.stop="emit('toggle', node.branch.id, !node.branch.open)">
@@ -65,6 +66,14 @@ button.blr-flow-node__main { cursor: pointer; }
 .blr-flow-node--state { --node-border: var(--ui-border-accented); }
 .blr-flow-node--state > .blr-flow-node__main { border-radius: 12px; background: var(--ui-bg); }
 .blr-flow-node--terminal > .blr-flow-node__main { min-height: 48px; border-radius: 999px; }
+/* A frame's header: the same card, compact and borderless, on the frame's own tint. */
+.blr-flow-node--group > .blr-flow-node__main { min-height: 0; padding: 8px 12px; border: 0; border-radius: 12px 0 12px 0; background: transparent; }
+.blr-flow-node--group .blr-flow-node__icon { width: 26px; height: 26px; border-radius: 6px; }
+.blr-flow-node--group .blr-flow-node__icon :deep(.size-5) { width: 1rem; height: 1rem; }
+.blr-flow-node--group .blr-flow-node__title { font-size: 13px; }
+.blr-flow-node--group:has(.blr-flow-node__main:hover) > .blr-flow-node__main,
+.blr-flow-node--group:focus-within > .blr-flow-node__main,
+.blr-flow-node--group.blr-flow-node--highlighted > .blr-flow-node__main { box-shadow: none; background: color-mix(in srgb, var(--node-color) 10%, transparent); }
 .blr-flow-node[data-unreached] > .blr-flow-node__main { border-style: dashed; }
 .blr-flow-node:has(.blr-flow-node__main:hover) > .blr-flow-node__main,
 .blr-flow-node:focus-within > .blr-flow-node__main,

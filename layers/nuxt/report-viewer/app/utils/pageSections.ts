@@ -30,7 +30,8 @@ export function hasAuthoredBody(resource: AnyResourceView): boolean {
   if (isScenarioKind(resource.kind)) return true
   if (resource.kind === 'screen' || resource.kind === 'entity' || resource.kind === 'rule' || resource.kind === 'journey') return true
   if (resource.intent) return true
-  if ('capabilityBoundary' in resource && (resource as { capabilityBoundary: string }).capabilityBoundary) return true
+  /* Delivery: what is available in the container, and on which Screen. */
+  if (resource.kind === 'interface' || resource.kind === 'experience') return resource.capabilityIds.length > 0
   return resource.kind === 'capability'
 }
 

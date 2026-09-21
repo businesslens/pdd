@@ -1,6 +1,6 @@
 
 import type {
-  ProductReportV13,
+  ProductReportV14,
   ReportContext,
   ReportBusinessRule,
   ReportBusinessRuleTarget,
@@ -19,7 +19,6 @@ import type {
   ReportJourneyScenario,
   ReportReference,
   ReportScreen,
-  ReportScreenState,
   ReportSupportingSection
 } from 'businesslens/report'
 
@@ -141,7 +140,16 @@ export const ACTOR_ACTS_META: Record<ActingSide, { label: string }> = {
   internal: { label: 'Internal' }
 }
 
-/** One resolved Context place; an empty Experience id means an Interface place. */
+/** The place one segment up: `a::b::c` → `a::b`, `a` → ``. */
+export function parentPlace(id: string): string {
+  return id.split('::').slice(0, -1).join('::')
+}
+
+/**
+ * One resolved Context place; an empty Experience id means an Interface place.
+ * A Screen's place is the Screen itself; its Interface and Experience are the
+ * nearest container above it, however many parent Screens sit between.
+ */
 export interface ContextView {
   placeId: string
   placeKind: 'interface' | 'experience' | 'screen'
@@ -180,9 +188,13 @@ export interface InterfaceView extends ResourceBase {
   interfaceType: ReportInterface['type']
   actorIds: string[]
   entryPoints: EntryPointView[]
-  capabilityBoundary: string
+  /** Narrows the Product's languages; empty means the Product's list applies. */
+  languages: string[]
+  /** Screens reachable from every place inside, by full id. A mark, never an edge. */
+  navigationIds: string[]
   experienceIds: string[]
   capabilityIds: string[]
+  /** Every Screen inside, nested ones included. */
   screenIds: string[]
   journeyIds: string[]
 }
@@ -193,28 +205,43 @@ export interface ExperienceView extends ResourceBase {
   interfaceIds: string[]
   accessMode: 'public' | 'authenticated' | 'restricted'
   entryPoints: EntryPointView[]
-  capabilityBoundary: string
+  /** Screens reachable from every place inside, by full id. A mark, never an edge. */
+  navigationIds: string[]
+  /** Non-null only where another Experience of the Interface carries a different one. */
+  version: string | null
   capabilityIds: string[]
+  /** Every Screen inside, nested ones included. */
   screenIds: string[]
   journeyIds: string[]
   /** Subject regions reached through the Capabilities available here. Never authored. */
   domainIds: string[]
 }
 
+/** One Entity a Screen presents; `facts` is null for a bare entry. */
+export interface ScreenEntityView {
+  entityId: string
+  facts: string[] | null
+}
+
 export interface ScreenView extends ResourceBase {
-  /** The Entities this view presents, as authored. */
+  /** The Entities this Screen presents, in authored order. */
   entityIds: string[]
+  /** What it presents, with the facts on screen where the model names them. */
+  entities: ScreenEntityView[]
   kind: 'screen'
+  /** The nearest Interface or Experience above it. */
   contexts: ContextView[]
+  /** The parent Screen's id, or empty where the parent is the container. */
+  parentScreenId: string
+  /** Screens nested directly inside this one, in authored order. */
+  childScreenIds: string[]
+  /** Named in its container's `navigation`: reachable from everywhere inside. */
+  alwaysReachable: boolean
   capabilityIds: string[]
   capabilityScenarioIds: string[]
   journeyScenarioIds: string[]
   scenarioIds: string[]
   entryPoints: EntryPointView[]
-  information: string[]
-  actions: string[]
-  states: ReportScreenState[]
-  capabilityBoundary: string
   /** Journeys reached through explicitly linked Journey Scenarios. */
   scenarioJourneyIds: string[]
   /** Journeys inferred from the Capabilities the Screen exposes. */
@@ -390,6 +417,8 @@ export interface ScenarioStepEntityView {
   effect: 'creates' | 'changes' | 'removes' | 'reads'
   from: string
   to: string
+  /** The facts the Step reads or edits; empty when none are cited. */
+  facts: string[]
 }
 
 export interface ScenarioView extends ResourceBase {
@@ -514,6 +543,8 @@ export interface ReportIdentity {
   supportingContent: string
   references: ReportReference[]
   referenceProfile: 'workspace' | 'portable'
+  /** The languages the Product is delivered in; empty when the model says nothing. */
+  languages: string[]
   limitations: string[]
   generatedAt: string
   generator: { name: string, version: string }
@@ -539,7 +570,6 @@ export interface WorkspaceCounts {
   decisionPoints: number
   branches: number
   edgeCases: number
-  screenStates: number
   entryPoints: number
   references: number
   availabilityContexts: number
@@ -590,6 +620,13 @@ export interface ReportWorkspace {
 const titleOf = (items: Array<{ id: string, title?: string, name?: string }>, id: string): string =>
   items.find(item => item.id === id)?.title ?? items.find(item => item.id === id)?.name ?? id
 
+/** Append in place: the bucket is built before any view reads it, and copying it per push made a long bucket quadratic. */
+const push = (table: Map<string, string[]>, key: string, value: string) => {
+  const bucket = table.get(key)
+  if (bucket) bucket.push(value)
+  else table.set(key, [value])
+}
+
 /** One context, keyed by its own id. */
 export function contextKey(interfaceId: string, experienceId: string): string {
   return experienceId || interfaceId
@@ -615,30 +652,85 @@ export function humanize(value: string): string {
   return `${label.charAt(0).toUpperCase()}${label.slice(1)}`
 }
 
-function expandContexts(
-  contexts: ReportContext[],
-  interfaces: ReportInterface[],
-  experiences: ReportExperience[],
-  screens: ReportScreen[]
-): ContextView[] {
-  return contexts.map((context) => {
-    const screen = screens.find(item => item.id === context.placeId)
-    const containerId = screen ? context.placeId.split('::').slice(0, -1).join('::') : context.placeId
-    const experience = experiences.find(item => item.id === containerId)
+/**
+ * Every place the model can name, indexed once. A projection resolves a place
+ * per Step Context and per Screen, so each lookup must cost a map read, never a
+ * scan of the Screen list: the Screen count and the Step count grow together.
+ */
+interface PlaceIndex {
+  interfaceById: Map<string, ReportInterface>
+  experienceById: Map<string, ReportExperience>
+  screenById: Map<string, ReportScreen>
+  /** The parent segment of each Screen id, split once. */
+  parentOfScreen: Map<string, string>
+  /** Screens nested directly inside each place, in authored order. */
+  childScreensByParent: Map<string, string[]>
+  /** The nearest Interface or Experience above each Screen. */
+  containerOfScreen: Map<string, string>
+}
+
+function indexPlaces(interfaces: ReportInterface[], experiences: ReportExperience[], screens: ReportScreen[]): PlaceIndex {
+  const screenById = new Map(screens.map(item => [item.id, item]))
+  const parentOfScreen = new Map<string, string>()
+  const childScreensByParent = new Map<string, string[]>()
+  const containerOfScreen = new Map<string, string>()
+  for (const screen of screens) {
+    const parentId = parentPlace(screen.id)
+    parentOfScreen.set(screen.id, parentId)
+    push(childScreensByParent, parentId, screen.id)
+  }
+  /* A parent's container is its child's; walking up memoised makes the whole pass linear in Screens. */
+  const containerOf = (screenId: string): string => {
+    const known = containerOfScreen.get(screenId)
+    if (known !== undefined) return known
+    const parentId = parentOfScreen.get(screenId) ?? parentPlace(screenId)
+    const container = parentId && screenById.has(parentId) ? containerOf(parentId) : parentId
+    containerOfScreen.set(screenId, container)
+    return container
+  }
+  for (const screen of screens) containerOf(screen.id)
+  return {
+    interfaceById: new Map(interfaces.map(item => [item.id, item])),
+    experienceById: new Map(experiences.map(item => [item.id, item])),
+    screenById,
+    parentOfScreen,
+    childScreensByParent,
+    containerOfScreen
+  }
+}
+
+/** One Context per distinct place: the same place resolves to the same view however many Steps name it. */
+function contextResolver(places: PlaceIndex): (context: ReportContext) => ContextView {
+  const views = new Map<string, ContextView>()
+  return (context) => {
+    const known = views.get(context.placeId)
+    if (known) return known
+    const screen = places.screenById.get(context.placeId)
+    const containerId = screen ? places.containerOfScreen.get(screen.id)! : context.placeId
+    const experience = places.experienceById.get(containerId)
     const interfaceId = experience?.interfaceIds[0] || containerId
     const experienceId = experience?.id || ''
-    return {
+    const view: ContextView = {
       placeId: context.placeId,
       placeKind: screen ? 'screen' : experience ? 'experience' : 'interface',
       interfaceId,
       experienceId,
       screenId: screen?.id || '',
-      interfaceTitle: titleOf(interfaces, interfaceId),
+      interfaceTitle: places.interfaceById.get(interfaceId)?.title ?? interfaceId,
       experienceTitle: experience?.title || '',
       screenTitle: screen?.title || '',
       key: context.placeId
     }
-  })
+    views.set(context.placeId, view)
+    return view
+  }
+}
+
+/** The nearest Interface or Experience above a Screen: its parent may be a Screen. */
+export function containerOf(screenId: string, isScreen: (id: string) => boolean): string {
+  let place = parentPlace(screenId)
+  while (place && isScreen(place)) place = parentPlace(place)
+  return place
 }
 
 function entryPoints(
@@ -656,21 +748,29 @@ function entryPoints(
 }
 
 /** Build the complete renderable projection of a Product Report. */
-export function projectReportWorkspace(report: ProductReportV13): ReportWorkspace {
+export function projectReportWorkspace(report: ProductReportV14): ReportWorkspace {
   const model = report.model
+  const places = indexPlaces(model.interfaces, model.experiences, model.screens)
   const interfaceOf = (interfaceId: string): ReportInterface => {
-    const productInterface = model.interfaces.find(item => item.id === interfaceId)
+    const productInterface = places.interfaceById.get(interfaceId)
     if (!productInterface) throw new Error(`Unknown Interface "${interfaceId}" in Context place`)
     return productInterface
   }
-  const contextsOf = (contexts: ReportContext[]) =>
-    expandContexts(contexts, model.interfaces, model.experiences, model.screens)
-  const resolveContext = (context: ReportContext): ContextView => contextsOf([context])[0]!
+  const resolveContext = contextResolver(places)
+  const contextsOf = (contexts: ReportContext[]) => contexts.map(resolveContext)
+  const isScreen = (id: string) => places.screenById.has(id)
+  const resolvedPlaces = new Map<string, ResolvedContextView>()
   const placeOf = (placeId: string): ResolvedContextView => {
-    const screen = model.screens.find(item => item.id === placeId)
+    const known = resolvedPlaces.get(placeId)
+    if (known) return known
+    const place = resolvePlace(placeId)
+    resolvedPlaces.set(placeId, place)
+    return place
+  }
+  const resolvePlace = (placeId: string): ResolvedContextView => {
+    const screen = places.screenById.get(placeId)
     if (screen) {
-      const containerId = screen.id.split('::').slice(0, -1).join('::')
-      const context = resolveContext({ placeId: containerId })
+      const context = resolveContext({ placeId: places.containerOfScreen.get(screen.id)! })
       const productInterface = interfaceOf(context.interfaceId)
       return {
         id: placeId,
@@ -685,7 +785,7 @@ export function projectReportWorkspace(report: ProductReportV13): ReportWorkspac
         boundary: context
       }
     }
-    const experience = model.experiences.find(item => item.id === placeId)
+    const experience = places.experienceById.get(placeId)
     if (experience) {
       const interfaceId = experience.interfaceIds[0] || ''
       const productInterface = interfaceOf(interfaceId)
@@ -724,12 +824,25 @@ export function projectReportWorkspace(report: ProductReportV13): ReportWorkspac
 
   const kindBySlot = new Map(model.taxonomies.scenarioKinds.map(kind => [kind.id, kind]))
   const allReportScenarios = [...model.capabilityScenarios, ...model.journeyScenarios]
-  const journeyScenariosOf = (journeyId: string) =>
-    model.journeyScenarios.filter(scenario => scenario.journeyId === journeyId)
-  const journeyContexts = (journeyId: string) => uniqueContexts(
-    journeyScenariosOf(journeyId).filter(scenario => scenario.result === 'achieved').flatMap(scenario =>
-      scenarioContexts(scenario))
-  )
+  const journeyScenariosByJourney = new Map<string, ReportJourneyScenario[]>()
+  for (const scenario of model.journeyScenarios) {
+    const bucket = journeyScenariosByJourney.get(scenario.journeyId)
+    if (bucket) bucket.push(scenario)
+    else journeyScenariosByJourney.set(scenario.journeyId, [scenario])
+  }
+  const journeyScenariosOf = (journeyId: string) => journeyScenariosByJourney.get(journeyId) ?? []
+  /* Asked once per Journey by the Journey, and again by every Interface and Experience. */
+  const journeyContextsById = new Map<string, ContextView[]>()
+  const journeyContexts = (journeyId: string) => {
+    const known = journeyContextsById.get(journeyId)
+    if (known) return known
+    const contexts = uniqueContexts(
+      journeyScenariosOf(journeyId).filter(scenario => scenario.result === 'achieved').flatMap(scenario =>
+        scenarioContexts(scenario))
+    )
+    journeyContextsById.set(journeyId, contexts)
+    return contexts
+  }
   const journeyEntryPoints = (journeyId: string): EntryPointView[] => {
     const points = journeyScenariosOf(journeyId)
       .filter(scenario => scenario.result === 'achieved')
@@ -739,14 +852,13 @@ export function projectReportWorkspace(report: ProductReportV13): ReportWorkspac
         return first.contexts.flatMap((context) => {
           const place = placeOf(context.placeId)
           const contextual = place.experienceId
-            ? model.experiences.find(item => item.id === place.experienceId)
+            ? places.experienceById.get(place.experienceId)
               ?.entryPoints.filter(point => point.type === place.interfaceId) ?? []
             : []
           const available = contextual.length
             ? contextual
-            : model.interfaces
-                .find(item => item.id === place.interfaceId)
-                ?.entryPoints.filter(point => point.type === place.interfaceId) ?? []
+            : places.interfaceById.get(place.interfaceId)
+              ?.entryPoints.filter(point => point.type === place.interfaceId) ?? []
           return entryPoints(available, model.interfaces, place)
         })
       })
@@ -757,15 +869,19 @@ export function projectReportWorkspace(report: ProductReportV13): ReportWorkspac
   // never depends on the order the collections happen to be projected in.
   const experiencesByInterface = new Map<string, string[]>()
   for (const experience of model.experiences) {
-    for (const interfaceId of experience.interfaceIds) {
-      experiencesByInterface.set(interfaceId, [...(experiencesByInterface.get(interfaceId) || []), experience.id])
-    }
+    for (const interfaceId of experience.interfaceIds) push(experiencesByInterface, interfaceId, experience.id)
   }
 
   const capabilityById = new Map(model.capabilities.map(item => [item.id, item]))
   const journeyById = new Map(model.journeys.map(item => [item.id, item]))
+  const entityById = new Map(model.entities.map(item => [item.id, item]))
   const capabilityScenarioById = new Map(model.capabilityScenarios.map(item => [item.id, item]))
   const journeyScenarioById = new Map(model.journeyScenarios.map(item => [item.id, item]))
+  /* Authored positions, so a set gathered through an index lists in the collection's own order. */
+  const journeyIndex = new Map(model.journeys.map((item, index) => [item.id, index]))
+  const journeyScenarioIndex = new Map(model.journeyScenarios.map((item, index) => [item.id, index]))
+  const capabilityScenariosByCapability = new Map<string, string[]>()
+  const screensByEntity = new Map<string, string[]>()
   const journeysByCapability = new Map<string, string[]>()
   const screensByCapability = new Map<string, string[]>()
   const rulesByCapability = new Map<string, string[]>()
@@ -780,10 +896,6 @@ export function projectReportWorkspace(report: ProductReportV13): ReportWorkspac
   const capabilityScenariosByActor = new Map<string, string[]>()
   const journeyScenariosByActor = new Map<string, string[]>()
   const journeyScenariosByCapability = new Map<string, string[]>()
-
-  const push = (table: Map<string, string[]>, key: string, value: string) => {
-    table.set(key, [...(table.get(key) || []), value])
-  }
 
   const ruleRelationsById = new Map(model.businessRules.map((rule) => {
     const targetIds = (type: 'capability' | 'capability-scenario' | 'journey' | 'journey-scenario') =>
@@ -815,7 +927,7 @@ export function projectReportWorkspace(report: ProductReportV13): ReportWorkspac
     ])
     const domainIds = unique([
       ...domainCapabilityIds.map(id => capabilityById.get(id)?.domainId),
-      ...entityIds.map(id => model.entities.find(entity => entity.id === id)?.domainId)
+      ...entityIds.map(id => entityById.get(id)?.domainId)
     ].filter((id): id is string => Boolean(id)))
     const contexts = uniqueContexts(rule.appliesTo.flatMap((target) => {
       if (target.type === 'context') return [resolveContext(target.context)]
@@ -865,9 +977,12 @@ export function projectReportWorkspace(report: ProductReportV13): ReportWorkspac
     for (const scenarioId of [...screen.capabilityScenarioIds, ...screen.journeyScenarioIds]) {
       push(screensByScenario, scenarioId, screen.id)
     }
+    /* A Screen presents a thing once however many entries name it. */
+    for (const entityId of new Set(screen.entities.map(entry => entry.entityId))) push(screensByEntity, entityId, screen.id)
   }
   for (const scenario of model.capabilityScenarios) {
     for (const actorId of scenario.actorIds) push(capabilityScenariosByActor, actorId, scenario.id)
+    push(capabilityScenariosByCapability, scenario.capabilityId, scenario.id)
   }
   for (const scenario of model.journeyScenarios) {
     for (const actorId of scenario.actorIds) push(journeyScenariosByActor, actorId, scenario.id)
@@ -903,7 +1018,8 @@ export function projectReportWorkspace(report: ProductReportV13): ReportWorkspac
       references: item.references,
       actorIds: item.actorIds,
       entryPoints: entryPoints(item.entryPoints, model.interfaces, placeOf(item.id)),
-      capabilityBoundary: item.capabilityBoundary,
+      languages: item.languages,
+      navigationIds: item.navigation,
       experienceIds,
       capabilityIds: model.capabilities.filter(c => declares(c.availability)).map(c => c.id),
       screenIds: model.screens.filter(containsScreen).map(s => s.id),
@@ -919,6 +1035,7 @@ export function projectReportWorkspace(report: ProductReportV13): ReportWorkspac
     const declares = (contexts: ReportContext[]) =>
       contexts.some(context => context.placeId === item.id)
     const containsScreen = (screen: ReportScreen) => screen.id.startsWith(`${item.id}::`)
+    const capabilityIds = model.capabilities.filter(c => declares(c.availability)).map(c => c.id)
     return {
       key: resourceKey('experience', item.id),
       id: item.id,
@@ -932,25 +1049,32 @@ export function projectReportWorkspace(report: ProductReportV13): ReportWorkspac
       interfaceIds: item.interfaceIds,
       accessMode: item.accessMode,
       entryPoints: entryPoints(item.entryPoints, model.interfaces, placeOf(item.id)),
-      capabilityBoundary: item.capabilityBoundary,
-      capabilityIds: model.capabilities.filter(c => declares(c.availability)).map(c => c.id),
+      navigationIds: item.navigation,
+      version: item.version,
+      capabilityIds,
       screenIds: model.screens.filter(containsScreen).map(s => s.id),
       journeyIds: model.journeys.filter(j => journeyContexts(j.id).some(context => context.experienceId === item.id)).map(j => j.id),
-      domainIds: domainsOfCapabilities(model.capabilities.filter(c => declares(c.availability)).map(c => c.id))
+      domainIds: domainsOfCapabilities(capabilityIds)
     }
   })
 
+  /* A container's `navigation` names full Screen ids, so one set answers for every Screen. */
+  const navigationIds = new Set([...model.interfaces, ...model.experiences].flatMap(item => item.navigation))
+  const byIndex = (index: Map<string, number>) => (left: string, right: string) => index.get(left)! - index.get(right)!
   const screens: ScreenView[] = model.screens.map((screen: ReportScreen) => {
-    const contexts = contextsOf([{ placeId: screen.id.split('::').slice(0, -1).join('::') }])
-    const scenarioJourneyIds = unique(model.journeyScenarios
-      .filter(scenario => screen.journeyScenarioIds.includes(scenario.id))
-      .map(scenario => scenario.journeyId))
-    const capabilityJourneyIds = unique(model.journeys
-      .filter(journey => journey.capabilityIds.some(id => screen.capabilityIds.includes(id)))
-      .map(journey => journey.id))
+    const parentId = places.parentOfScreen.get(screen.id)!
+    const contexts = contextsOf([{ placeId: places.containerOfScreen.get(screen.id)! }])
+    /* Both lists read in the collection's own order, as a scan of it would. */
+    const scenarioJourneyIds = unique(unique(screen.journeyScenarioIds)
+      .filter(id => journeyScenarioIndex.has(id))
+      .sort(byIndex(journeyScenarioIndex))
+      .map(id => journeyScenarioById.get(id)!.journeyId))
+    const capabilityJourneyIds = unique(screen.capabilityIds.flatMap(id => journeysByCapability.get(id) ?? []))
+      .sort(byIndex(journeyIndex))
     return {
       key: resourceKey('screen', screen.id),
-      entityIds: screen.entityIds,
+      entityIds: screen.entities.map(entry => entry.entityId),
+      entities: screen.entities.map(entry => ({ entityId: entry.entityId, facts: entry.facts })),
       id: screen.id,
       kind: 'screen',
       title: screen.title,
@@ -959,15 +1083,14 @@ export function projectReportWorkspace(report: ProductReportV13): ReportWorkspac
       supportingContent: supportingMarkdown(screen.supportingSections),
       references: screen.references,
       contexts,
+      parentScreenId: isScreen(parentId) ? parentId : '',
+      childScreenIds: [...(places.childScreensByParent.get(screen.id) ?? [])],
+      alwaysReachable: navigationIds.has(screen.id),
       capabilityIds: screen.capabilityIds,
       capabilityScenarioIds: screen.capabilityScenarioIds,
       journeyScenarioIds: screen.journeyScenarioIds,
       scenarioIds: [...screen.capabilityScenarioIds, ...screen.journeyScenarioIds],
       entryPoints: entryPoints(screen.entryPoints, model.interfaces, placeOf(screen.id)),
-      information: screen.information,
-      actions: screen.actions,
-      states: screen.states,
-      capabilityBoundary: screen.capabilityBoundary,
       scenarioJourneyIds,
       capabilityJourneyIds,
       journeyIds: unique([...scenarioJourneyIds, ...capabilityJourneyIds]),
@@ -992,15 +1115,28 @@ export function projectReportWorkspace(report: ProductReportV13): ReportWorkspac
     coEffects: Map<string, EntityArcView['coEffects'][number]>
   }
   const arcsByEntity = new Map<string, Map<string, ArcAccumulator>>()
+  const addTo = (table: Map<string, Set<string>>, key: string, value: string) => {
+    const bucket = table.get(key)
+    if (bucket) bucket.add(value)
+    else table.set(key, new Set([value]))
+  }
+  /* Every Step each Capability owns, in Scenario order: its own Scenarios' Steps and the Journey Steps that name it. */
+  type OwnedStep = { scenario: ReportCapabilityScenario | ReportJourneyScenario, step: (ReportCapabilityScenario | ReportJourneyScenario)['steps'][number] }
+  const stepsByCapability = new Map<string, OwnedStep[]>()
   for (const scenario of allReportScenarios) {
     for (const step of scenario.steps) {
       const owner = scenarioOwner(scenario, step)
+      if (owner) {
+        const owned = stepsByCapability.get(owner)
+        if (owned) owned.push({ scenario, step })
+        else stepsByCapability.set(owner, [{ scenario, step }])
+      }
       for (const entry of step.entities) {
         if (entry.effect === 'reads') {
-          if (owner) readBy.set(entry.entityId, new Set([...(readBy.get(entry.entityId) ?? []), owner]))
+          if (owner) addTo(readBy, entry.entityId, owner)
           continue
         }
-        if (owner) changedBy.set(entry.entityId, new Set([...(changedBy.get(entry.entityId) ?? []), owner]))
+        if (owner) addTo(changedBy, entry.entityId, owner)
         if (entry.to) {
           const key = `${entry.entityId}\u0000${entry.to}`
           const found = scenariosByState.get(key) ?? { capability: [], journey: [] }
@@ -1113,7 +1249,7 @@ export function projectReportWorkspace(report: ProductReportV13): ReportWorkspac
           }))),
       changedByIds: [...(changedBy.get(entity.id) ?? [])].sort(),
       readByIds: [...(readBy.get(entity.id) ?? [])].filter(id => !changedBy.get(entity.id)?.has(id)).sort(),
-      presentedOnIds: model.screens.filter(sc => sc.entityIds.includes(entity.id)).map(sc => sc.id),
+      presentedOnIds: screensByEntity.get(entity.id) || [],
       ruleIds: rulesByEntity.get(entity.id) || [],
       states: entity.states.map(state => ({
         name: state.name,
@@ -1154,7 +1290,7 @@ export function projectReportWorkspace(report: ProductReportV13): ReportWorkspac
       experienceIds: unique(model.capabilities
         .filter(c => c.domainId === domain.id)
         .flatMap(c => c.availability.map(context => context.placeId))
-        .filter(placeId => model.experiences.some(experience => experience.id === placeId))),
+        .filter(placeId => places.experienceById.has(placeId))),
       ruleIds: unique([
         ...(rulesByDomain.get(domain.id) || []),
         ...capabilityIds.flatMap(id => rulesByCapability.get(id) || [])
@@ -1167,21 +1303,18 @@ export function projectReportWorkspace(report: ProductReportV13): ReportWorkspac
     /* What a Capability does to each thing, read off every Step of every Scenario that belongs to it — its own, and Journey Steps that name it. */
     const effects = new Map<string, CapabilityEntityEffectView>()
     const readIds = new Set<string>()
-    for (const scenario of allReportScenarios) {
-      for (const step of scenario.steps) {
-        if (scenarioOwner(scenario, step) !== capability.id) continue
-        for (const entry of step.entities) {
-          if (entry.effect === 'reads') {
-            readIds.add(entry.entityId)
-            continue
-          }
-          const line = effects.get(entry.entityId) ?? { entityId: entry.entityId, effects: [], scenarioIds: [] }
-          if (!line.effects.some(item => item.effect === entry.effect && item.from === (entry.from ?? '') && item.to === (entry.to ?? ''))) {
-            line.effects.push({ effect: entry.effect, from: entry.from ?? '', to: entry.to ?? '' })
-          }
-          if (!line.scenarioIds.includes(scenario.id)) line.scenarioIds.push(scenario.id)
-          effects.set(entry.entityId, line)
+    for (const { scenario, step } of stepsByCapability.get(capability.id) ?? []) {
+      for (const entry of step.entities) {
+        if (entry.effect === 'reads') {
+          readIds.add(entry.entityId)
+          continue
         }
+        const line = effects.get(entry.entityId) ?? { entityId: entry.entityId, effects: [], scenarioIds: [] }
+        if (!line.effects.some(item => item.effect === entry.effect && item.from === (entry.from ?? '') && item.to === (entry.to ?? ''))) {
+          line.effects.push({ effect: entry.effect, from: entry.from ?? '', to: entry.to ?? '' })
+        }
+        if (!line.scenarioIds.includes(scenario.id)) line.scenarioIds.push(scenario.id)
+        effects.set(entry.entityId, line)
       }
     }
     const entityIds = [...effects.keys()].sort()
@@ -1199,9 +1332,7 @@ export function projectReportWorkspace(report: ProductReportV13): ReportWorkspac
       references: capability.references,
       domainId: capability.domainId,
       contexts,
-      scenarioIds: model.capabilityScenarios
-        .filter(scenario => scenario.capabilityId === capability.id)
-        .map(scenario => scenario.id),
+      scenarioIds: capabilityScenariosByCapability.get(capability.id) || [],
       journeyScenarioIds: journeyScenariosByCapability.get(capability.id) || [],
       journeyIds: journeysByCapability.get(capability.id) || [],
       screenIds: screensByCapability.get(capability.id) || [],
@@ -1236,7 +1367,8 @@ export function projectReportWorkspace(report: ProductReportV13): ReportWorkspac
         as: entry.as ?? '',
         effect: entry.effect,
         from: entry.from ?? '',
-        to: entry.to ?? ''
+        to: entry.to ?? '',
+        facts: entry.facts
       })),
       contexts: step.contexts.map(context => ({
         routeId: context.routeId,
@@ -1289,6 +1421,7 @@ export function projectReportWorkspace(report: ProductReportV13): ReportWorkspac
 
   const capabilityScenarios: ScenarioView[] = model.capabilityScenarios.map((scenario: ReportCapabilityScenario) => {
     const kind = kindBySlot.get(scenario.kindId)
+    const steps = scenarioSteps(scenario)
     return {
       key: resourceKey('capability-scenario', scenario.id),
       id: scenario.id,
@@ -1303,7 +1436,7 @@ export function projectReportWorkspace(report: ProductReportV13): ReportWorkspac
       references: scenario.references,
       scenarioType: 'capability',
       capabilityId: scenario.capabilityId,
-      capabilityTitle: titleOf(model.capabilities, scenario.capabilityId),
+      capabilityTitle: capabilityById.get(scenario.capabilityId)?.title ?? scenario.capabilityId,
       actorIds: scenario.actorIds,
       journeyId: '',
       journeyTitle: '',
@@ -1313,8 +1446,8 @@ export function projectReportWorkspace(report: ProductReportV13): ReportWorkspac
       contexts: scenarioContexts(scenario),
       trigger: scenario.trigger,
       routes: scenario.routes,
-      steps: scenarioSteps(scenario),
-      outcomeStates: outcomeStates(scenarioSteps(scenario)),
+      steps,
+      outcomeStates: outcomeStates(steps),
       decisionPoints: scenario.decisionPoints,
       outcome: scenario.outcome,
       edgeCases: scenario.edgeCases,
@@ -1326,6 +1459,7 @@ export function projectReportWorkspace(report: ProductReportV13): ReportWorkspac
 
   const journeyScenarios: ScenarioView[] = model.journeyScenarios.map((scenario: ReportJourneyScenario) => {
     const kind = kindBySlot.get(scenario.kindId)
+    const steps = scenarioSteps(scenario)
     return {
       key: resourceKey('journey-scenario', scenario.id),
       id: scenario.id,
@@ -1343,15 +1477,15 @@ export function projectReportWorkspace(report: ProductReportV13): ReportWorkspac
       capabilityTitle: '',
       actorIds: scenario.actorIds,
       journeyId: scenario.journeyId,
-      journeyTitle: titleOf(model.journeys, scenario.journeyId),
+      journeyTitle: journeyById.get(scenario.journeyId)?.title ?? scenario.journeyId,
       kindId: scenario.kindId,
       kindName: kind?.name ?? humanize(scenario.kindId),
       kindSlot: kind?.colorSlot ?? 1,
       contexts: scenarioContexts(scenario),
       trigger: scenario.trigger,
       routes: scenario.routes,
-      steps: scenarioSteps(scenario),
-      outcomeStates: outcomeStates(scenarioSteps(scenario)),
+      steps,
+      outcomeStates: outcomeStates(steps),
       decisionPoints: scenario.decisionPoints,
       outcome: scenario.outcome,
       edgeCases: scenario.edgeCases,
@@ -1363,7 +1497,7 @@ export function projectReportWorkspace(report: ProductReportV13): ReportWorkspac
 
   const scenarios: ScenarioView[] = [...capabilityScenarios, ...journeyScenarios]
 
-  const entityTitle = (id: string) => titleOf(model.entities, id)
+  const entityTitle = (id: string) => entityById.get(id)?.title ?? id
   const describeValue = (value: ReportGrantCondition['value']): string => {
     if (value === null) return ''
     if (typeof value === 'object') return `the ${entityTitle(value.configuredByEntityId)} threshold`
@@ -1523,7 +1657,6 @@ export function projectReportWorkspace(report: ProductReportV13): ReportWorkspac
       0
     ),
     edgeCases: allReportScenarios.reduce((total, item) => total + item.edgeCases.length, 0),
-    screenStates: model.screens.reduce((total, item) => total + item.states.length, 0),
     entryPoints: [...model.interfaces, ...model.experiences, ...model.screens]
       .reduce((total, item) => total + item.entryPoints.length, 0),
     references: references.length,
@@ -1538,33 +1671,28 @@ export function projectReportWorkspace(report: ProductReportV13): ReportWorkspac
     count: allReportScenarios.filter(scenario => scenario.kindId === kind.id).length
   }))
 
+  const group = <T>(table: Map<string, T[]>, key: string, value: T) => {
+    const bucket = table.get(key)
+    if (bucket) bucket.push(value)
+    else table.set(key, [value])
+  }
   const scenariosByJourney = new Map<string, ScenarioView[]>()
   for (const scenario of scenarios) {
-    if (!scenario.journeyId) continue
-    scenariosByJourney.set(scenario.journeyId, [...(scenariosByJourney.get(scenario.journeyId) || []), scenario])
+    if (scenario.journeyId) group(scenariosByJourney, scenario.journeyId, scenario)
   }
 
   /* Both parents index their children the same way: the Product Report reads a
      Capability's Scenarios exactly where it reads a Journey's. */
   const scenariosByCapability = new Map<string, ScenarioView[]>()
   for (const scenario of scenarios) {
-    if (!scenario.capabilityId) continue
-    scenariosByCapability.set(
-      scenario.capabilityId,
-      [...(scenariosByCapability.get(scenario.capabilityId) || []), scenario]
-    )
+    if (scenario.capabilityId) group(scenariosByCapability, scenario.capabilityId, scenario)
   }
 
   const capabilitiesByDomain = new Map<string, CapabilityView[]>()
-  for (const capability of capabilities) {
-    const key = capability.domainId ?? ''
-    capabilitiesByDomain.set(key, [...(capabilitiesByDomain.get(key) || []), capability])
-  }
+  for (const capability of capabilities) group(capabilitiesByDomain, capability.domainId ?? '', capability)
 
   const resourcesById = new Map<string, AnyResourceView[]>()
-  for (const resource of allResources) {
-    resourcesById.set(resource.id, [...(resourcesById.get(resource.id) ?? []), resource])
-  }
+  for (const resource of allResources) group(resourcesById, resource.id, resource)
 
   return {
     identity: {
@@ -1581,6 +1709,7 @@ export function projectReportWorkspace(report: ProductReportV13): ReportWorkspac
       supportingContent: supportingMarkdown(report.supportingSections),
       references: report.references,
       referenceProfile: report.referenceProfile,
+      languages: report.languages,
       limitations: report.limitations,
       generatedAt: report.generatedAt,
       generator: report.generator,

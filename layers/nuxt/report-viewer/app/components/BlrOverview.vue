@@ -52,7 +52,6 @@ const derivedCounts = computed<Array<[string, number]>>(() => [
   ['Decision points', props.workspace.counts.decisionPoints],
   ['Branches', props.workspace.counts.branches],
   ['Edge cases', props.workspace.counts.edgeCases],
-  ['Screen states', props.workspace.counts.screenStates],
   ['Entry points', props.workspace.counts.entryPoints],
   ['References', props.workspace.counts.references],
   ['Availability contexts', props.workspace.counts.availabilityContexts]
@@ -125,6 +124,11 @@ function referenceEntity(ownerKey?: string) {
           {{ tag }}
         </UBadge>
         <span v-if="workspace.identity.license" class="blr-meta">license: {{ workspace.identity.license }}</span>
+      </div>
+      <!-- A closed vocabulary of tags, never a name: the Product says which languages it is delivered in. -->
+      <div v-if="workspace.identity.languages.length" class="flex flex-wrap items-center gap-1.5" data-product-languages>
+        <span class="blr-field me-1">Languages</span>
+        <UBadge v-for="tag in workspace.identity.languages" :key="tag" color="neutral" variant="outline" size="sm">{{ tag }}</UBadge>
       </div>
       <section v-if="workspace.identity.authors.length" class="space-y-1.5">
         <h2 class="blr-field">Authors</h2>

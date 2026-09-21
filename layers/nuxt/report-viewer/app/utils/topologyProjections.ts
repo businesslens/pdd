@@ -1,5 +1,5 @@
 /** Named semantic readings. No coordinates, hover state, or renderer types. */
-import type { AnyResourceView, ContextView, DomainView, ReportWorkspace, RuleView, ScenarioView } from './reportWorkspace'
+import type { AnyResourceView, CapabilityView, ContextView, DomainView, ReportWorkspace, RuleView, ScenarioView } from './reportWorkspace'
 import { ENTITY_KIND_META, resourceKey } from './reportWorkspace'
 import { ruleAttachments, topologyPlace } from './topologyTargets'
 import type { TopologyAttachment } from './topologyTargets'
@@ -123,20 +123,27 @@ export function reachTreeProjection(workspace: ReportWorkspace, kind: ReachKind)
  * different question and a different shape: see `deliveryMatrixProjection`.
  */
 export function interfaceProjection(workspace: ReportWorkspace, delivery = false): TopologyBranch[] {
+  type Screen = typeof workspace.screens[number]
+  const childScreens = (screen: Screen): Screen[] => screen.childScreenIds.flatMap((id) => {
+    const child = workspace.byKey.get(resourceKey('screen', id))
+    return child?.kind === 'screen' ? [child] : []
+  })
+  /* A nested Screen is contained by its parent Screen; the navigation mark is a note on the node, never an edge. */
+  const screenBranch = (screen: Screen, note?: string): TopologyBranch => ({ ...branch(screen, childScreens(screen).map(child => screenBranch(child))),
+    references: delivery ? workspace.capabilities.filter(capability => screen.capabilityIds.includes(capability.id)) : [],
+    referenceLabel: 'Exposes',
+    note: [note, screen.alwaysReachable ? 'Always reachable' : undefined].filter(Boolean).join(' · ') || undefined
+  })
   return workspace.interfaces.map(resource => {
-    const screenBranch = (screen: typeof workspace.screens[number]) => ({ ...branch(screen),
-      references: delivery ? workspace.capabilities.filter(capability => screen.capabilityIds.includes(capability.id)) : [],
-      referenceLabel: 'Exposes'
-    })
     const experiences = workspace.experiences.filter(experience => experience.interfaceIds.includes(resource.id))
     const children = [
       ...experiences.map(experience => {
         const screens = workspace.screens.filter(screen => screen.contexts.some(context => context.interfaceId === resource.id && context.experienceId === experience.id))
-        return { ...branch(experience, screens.map(screenBranch)),
+        return { ...branch(experience, screens.filter(screen => !screen.parentScreenId).map(screen => screenBranch(screen))),
           references: delivery ? workspace.capabilities.filter(capability => capability.contexts.some(context => context.experienceId === experience.id) && !screens.some(screen => screen.capabilityIds.includes(capability.id))) : [],
           referenceLabel: 'Delivers' }
       }),
-      ...workspace.screens.filter(screen => screen.contexts.some(context => context.interfaceId === resource.id && !context.experienceId)).map(screen => ({ ...screenBranch(screen), note: experiences.length ? 'Shared Screen' : undefined })),
+      ...workspace.screens.filter(screen => !screen.parentScreenId && screen.contexts.some(context => context.interfaceId === resource.id && !context.experienceId)).map(screen => screenBranch(screen, experiences.length ? 'Shared Screen' : undefined)),
       ...(delivery ? workspace.capabilities.filter(capability =>
         capability.contexts.some(context => context.interfaceId === resource.id && !context.experienceId) && !workspace.screens.some(screen => screen.contexts.some(context => context.interfaceId === resource.id) && screen.capabilityIds.includes(capability.id))).map(capability => ({ ...branch(capability), note: 'Delivered directly' })) : [])
     ]
@@ -194,11 +201,60 @@ export function deliveryMatrixProjection(workspace: ReportWorkspace): TopologyMa
   }
 }
 
-/** A Product-rooted containment tree, with no synthetic Experience level. */
-export function sitemapProjection(workspace: ReportWorkspace): TopologyBranch {
-  // Product identity belongs to the report itself, outside the resource index.
-  return { id: resourceKey('product', workspace.identity.id), title: workspace.identity.title,
-    children: interfaceProjection(workspace), references: [] }
+/** One place change, and every Scenario whose route walks it. */
+export interface UiMapMove {
+  id: string
+  from: AnyResourceView
+  to: AnyResourceView
+  capabilityId: string
+  capability?: CapabilityView
+  scenarios: ScenarioView[]
+}
+/** A place addressable from outside, with the paths that reach it. */
+export interface UiMapEntry { place: AnyResourceView, paths: string[] }
+export interface UiMap { places: TopologyBranch[], moves: UiMapMove[], entries: UiMapEntry[] }
+
+/**
+ * The UI map is derived: nothing in the model draws it.
+ *
+ * Places are the containment tree — every Screen inside its parent Screen,
+ * Experience or Interface. A move is a place change between two consecutive
+ * Steps of one Scenario route that both name a place; a Step with no Context
+ * on that route is skipped, not a change, so a condition Step between two
+ * placed Steps does not break the walk. The move carries the Capability of the
+ * Step that arrives — the Capability Scenario's own, or the Journey Step's —
+ * and the same change walked by several Scenarios is one move that names them
+ * all. Entry points say what is addressable from outside. `navigation` is a
+ * mark on the Screen and never a move, so a place no Scenario walks is an
+ * island, which is a visible absence.
+ */
+export function uiMapProjection(workspace: ReportWorkspace): UiMap {
+  const moves = new Map<string, UiMapMove>()
+  for (const scenario of workspace.scenarios) {
+    const routeIds = [...new Set([...scenario.routes.map(route => route.id), ...scenario.steps.flatMap(step => step.contexts.map(context => context.routeId))])]
+    for (const routeId of routeIds) {
+      let previous: AnyResourceView | undefined
+      for (const step of scenario.steps) {
+        const context = step.contexts.find(item => item.routeId === routeId)
+        if (!context) continue
+        const place = topologyPlace(workspace, context.context.id)
+        if (!place) continue
+        if (previous && previous.key !== place.key) {
+          const capabilityId = scenario.scenarioType === 'capability' ? scenario.capabilityId : step.capabilityId
+          const id = `${previous.key}->${place.key}:${capabilityId}`
+          const capability = workspace.byKey.get(resourceKey('capability', capabilityId))
+          const move = moves.get(id) ?? { id, from: previous, to: place, capabilityId, capability: capability?.kind === 'capability' ? capability : undefined, scenarios: [] }
+          if (!move.scenarios.includes(scenario)) move.scenarios.push(scenario)
+          moves.set(id, move)
+        }
+        previous = place
+      }
+    }
+  }
+  const entries = [...workspace.interfaces, ...workspace.experiences, ...workspace.screens]
+    .filter(place => place.entryPoints.length)
+    .map(place => ({ place, paths: [...new Set(place.entryPoints.map(point => point.path))] }))
+  return { places: interfaceProjection(workspace), moves: [...moves.values()], entries }
 }
 
 export interface TopologyMutation {

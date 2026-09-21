@@ -198,9 +198,10 @@ describe('stable Product Report', () => {
     expect(tabsFor(workspace, order).map((tab: any) => tab.id)).toEqual(['overview', 'lifecycle', 'connections'])
     expect(tabsFor(workspace, workspace.entities.find((item: any) => item.id === 'cart')).map((tab: any) => tab.id)).toEqual(['overview', 'connections'])
 
-    // A Screen's own states stay the view's, never the thing's lifecycle.
-    const screen = workspace.screens.find((item: any) => item.states.length)
-    expect(screen.states.map((state: any) => state.title)).not.toContain('Pending')
+    // A Screen is relations only: it has no view states of its own to count.
+    const screen = workspace.screens.find((item: any) => item.id === 'customer-web::storefront::product-record')!
+    expect(screen).not.toHaveProperty('states')
+    expect(resourceFacts(workspace, screen).map((fact: any) => fact.label)).toEqual(['Presents', 'Capabilities'])
   })
 
   /*
@@ -264,7 +265,7 @@ describe('stable Product Report', () => {
     // The row the page renders carries changes and reads together, told apart.
     const row = scenarioStepMatrix(browse).steps[0]!
     expect(row.mentions).toEqual([
-      { entityId: 'catalog-product', as: '', effect: 'reads', from: '', to: '' }
+      { entityId: 'catalog-product', as: '', effect: 'reads', from: '', to: '', facts: [] }
     ])
 
     // "What can alter this thing" keeps its answer: browsing is not in it.
@@ -307,7 +308,7 @@ describe('stable Product Report', () => {
     const cancelStep = cancel.steps.at(-1)!
     cancel.steps[cancel.steps.length - 1] = {
       ...cancelStep,
-      entities: [{ entityId: 'order', as: null, effect: 'changes' as const, from: 'Confirmed', to: 'Refunded' }]
+      entities: [{ entityId: 'order', as: null, effect: 'changes' as const, from: 'Confirmed', to: 'Refunded', facts: [] }]
     }
     const workspace = projectReportWorkspace(report)
 
@@ -699,7 +700,7 @@ describe('stable Product Report', () => {
     const reportShell = source('app/components/BlrReportShell.vue')
     const layer = source('nuxt.config.ts')
 
-    expect(renderer).toContain('ProductReportV13')
+    expect(renderer).toContain('ProductReportV14')
     expect(renderer).toContain('projectReportWorkspace')
     expect(renderer).toContain('<BlrReportShell')
     expect(source('app/components/BlrResourceBody.vue')).toContain('scenarioStepMatrix')
@@ -1057,7 +1058,7 @@ describe('stable Product Report', () => {
     expect(reportShell).toContain('@select="openResourcePage"')
     expect(page).toContain('<BlrPageBlock')
     expect(source('app/components/BlrPageBlock.vue')).toContain('<BlrResourceBody')
-    for (const marker of ['stepMatrix.steps', 'asScreen.states', 'asRule.statement']) {
+    for (const marker of ['stepMatrix.steps', 'data-screen-presents', 'data-screen-changes', 'asRule.statement']) {
       expect(body, marker).toContain(marker)
     }
   })
@@ -1445,5 +1446,216 @@ describe('composed lifecycle', () => {
     expect(workspaceSource).not.toContain('ScenarioStepMentionView')
     expect(workspaceSource).toContain('mentions: ScenarioStepEntityView[]')
     expect(source('app/components/BlrStepEntity.vue')).toContain('mention: ScenarioStepEntityView')
+  })
+})
+
+/*
+ * Product Report v14: a Screen presents facts, Screens nest, a container leads
+ * with what it delivers, and navigation is a mark. The nested Screen is built by
+ * hand on top of the fixture so the reading is pinned to the wire, not to
+ * whichever fixture happens to nest today.
+ */
+describe('Screens on the v14 wire', () => {
+  const placeReadingsModulePath = '../layers/nuxt/report-viewer/app/utils/placeReadings.ts'
+  const collectionChildrenModulePath = '../layers/nuxt/report-viewer/app/utils/collectionChildren.ts'
+  const projectionsModulePath = '../layers/nuxt/report-viewer/app/utils/topologyProjections.ts'
+  const destinationsModulePath = '../layers/nuxt/report-viewer/app/utils/reportDestinations.ts'
+  const uiMapModulePath = '../layers/nuxt/report-viewer/app/utils/uiMap.ts'
+  const topologyStateModulePath = '../layers/nuxt/report-viewer/app/utils/topologyState.ts'
+  const PARENT = 'customer-web::storefront::product-record'
+  const CHILD = `${PARENT}::reviews`
+
+  /* One Step that changes something moves from the parent Screen to a child nested inside it. */
+  function nestedReport() {
+    const report = compileReport(loadModel(FIXTURE), '2026-09-21')
+    const parent = report.model.screens.find(screen => screen.id === PARENT)!
+    const scenario = report.model.capabilityScenarios.find(item => item.steps.some(step =>
+      step.entities.some(entry => entry.effect !== 'reads') && step.contexts.some(context => context.placeId === PARENT)))!
+    const step = scenario.steps.find(step =>
+      step.entities.some(entry => entry.effect !== 'reads') && step.contexts.some(context => context.placeId === PARENT))!
+    for (const context of step.contexts) if (context.placeId === PARENT) context.placeId = CHILD
+    report.model.screens.push({
+      ...parent,
+      id: CHILD,
+      title: 'Reviews',
+      description: 'What other shoppers said about the product.',
+      capabilityIds: [scenario.capabilityId],
+      entities: [{ entityId: 'catalog-product', facts: null }],
+      capabilityScenarioIds: [scenario.id],
+      journeyScenarioIds: [],
+      entryPoints: [],
+      references: []
+    })
+    report.model.experiences.find(item => item.id === 'customer-web::storefront')!.navigation = [CHILD]
+    return { report, scenario, step }
+  }
+
+  it('reads what a Screen presents as Entities with the facts on screen', () => {
+    const workspace = projectReportWorkspace(compileReport(loadModel(FIXTURE), '2026-09-21'))
+    const screen = workspace.screens.find((item: any) => item.id === 'customer-web::catalog')!
+    expect(screen.entities).toEqual([{ entityId: 'catalog-product', facts: ['Name and description', 'Price'] }])
+    expect(screen.entityIds).toEqual(['catalog-product'])
+    expect(workspace.entities.find((item: any) => item.id === 'catalog-product')!.presentedOnIds).toContain(screen.id)
+    const body = source('app/components/BlrResourceBody.vue')
+    expect(body).toContain('data-screen-fact')
+    expect(body).toContain('no facts named')
+    for (const removed of ['Information presented', 'Available actions', 'View states', 'capability-boundary', 'view-state']) {
+      expect(body).not.toContain(removed)
+    }
+    expect(source('app/components/BlrRefs.vue')).not.toContain('reference.state')
+  })
+
+  it('carries the facts a Step cites into its Entity chip', () => {
+    const workspace = projectReportWorkspace(compileReport(loadModel(FIXTURE), '2026-09-21'))
+    const cited = workspace.scenarios.flatMap((scenario: any) => scenario.steps.flatMap((step: any) => step.entities))
+      .filter((entry: any) => entry.facts.length)
+    expect(cited.length).toBeGreaterThan(0)
+    expect(cited.every((entry: any) => entry.effect === 'reads' || entry.effect === 'changes')).toBe(true)
+    const chip = source('app/components/BlrStepEntity.vue')
+    expect(chip).toContain('data-step-fact')
+    expect(chip).toContain("props.outcome ? [] : props.mention.facts")
+  })
+
+  it('files a nested Screen under its parent Screen in every containment reading', async () => {
+    const { structureChildren, childScreens } = await import(collectionChildrenModulePath)
+    const { interfaceProjection, uiMapProjection } = await import(projectionsModulePath)
+    const { uiMapDiagram } = await import(uiMapModulePath)
+    const { defaultTopologyReading } = await import(topologyStateModulePath)
+    const { resourceAncestors } = await import(destinationsModulePath)
+    const workspace = projectReportWorkspace(nestedReport().report)
+    const child = workspace.screens.find((item: any) => item.id === CHILD)!
+    const parent = workspace.screens.find((item: any) => item.id === PARENT)!
+    expect(child.parentScreenId).toBe(PARENT)
+    expect(parent.childScreenIds).toEqual([CHILD])
+    expect(childScreens(workspace, parent)).toEqual([child])
+    // The nearest container is found through the parent Screen, not assumed one segment up.
+    expect(child.contexts.map((context: any) => [context.interfaceId, context.experienceId, context.screenId]))
+      .toEqual([['customer-web', 'customer-web::storefront', '']])
+    expect(child.interfaceIds).toEqual(['customer-web'])
+    expect(resourceAncestors(workspace, child).map((item: any) => item.key))
+      .toEqual(['interface:customer-web', 'experience:customer-web::storefront', `screen:${PARENT}`])
+
+    const flatten = (nodes: any[]): any[] => nodes.flatMap(node => [node, ...flatten(node.children)])
+    const experience = workspace.experiences.find((item: any) => item.id === 'customer-web::storefront')!
+    const tree = structureChildren(workspace, experience)
+    const parentNode = flatten(tree).find((node: any) => node.resource?.key === parent.key)!
+    expect(parentNode.children.map((node: any) => node.resource.key)).toEqual([child.key])
+    expect(tree[0].children.some((node: any) => node.resource?.key === child.key)).toBe(false)
+    const branch = interfaceProjection(workspace).find((item: any) => item.id === 'interface:customer-web')!
+    const parentBranch = flatten(branch.children).find((node: any) => node.resource?.key === parent.key)!
+    expect(parentBranch.children.map((node: any) => node.resource.key)).toEqual([child.key])
+    /* On the UI map the child sits inside its parent's frame, and the parent inside the Experience's. */
+    const map = uiMapProjection(workspace)
+    expect(flatten(map.places).filter((node: any) => node.resource?.key === child.key)).toHaveLength(1)
+    const diagram = uiMapDiagram(map.places, map, defaultTopologyReading())
+    const node = (key: string) => diagram.nodes.find((item: any) => item.id === key)!
+    expect(node(child.key).parent).toBe(parent.key)
+    expect(node(parent.key)).toMatchObject({ group: true, parent: experience.key, navigation: undefined })
+    expect(node(child.key)).toMatchObject({ group: undefined, navigation: true })
+    expect(node(experience.key)).toMatchObject({ group: true, parent: 'interface:customer-web' })
+    expect(node('interface:customer-web').parent).toBeUndefined()
+  })
+
+  it('sums the changes made on a Screen over the Screens nested inside it, and says where', async () => {
+    const { screenChanges } = await import(placeReadingsModulePath)
+    const { report, scenario, step } = nestedReport()
+    const workspace = projectReportWorkspace(report)
+    const parent = workspace.screens.find((item: any) => item.id === PARENT)!
+    const child = workspace.screens.find((item: any) => item.id === CHILD)!
+    const onParent = screenChanges(workspace, parent)
+    const moved = onParent.find((group: any) => group.scenario.id === scenario.id)!
+    const change = moved.steps.find((item: any) => item.text === step.text)!
+    expect(change.placedOn.map((item: any) => item.key)).toEqual([child.key])
+    expect(change.entities.some((entry: any) => entry.effect !== 'reads')).toBe(true)
+    const onChild = screenChanges(workspace, child)
+    expect(onChild.map((group: any) => group.scenario.id)).toEqual([scenario.id])
+    expect(onChild[0].steps.map((item: any) => [item.text, item.placedOn])).toEqual([[step.text, []]])
+    // A Step that only reads is not a change.
+    for (const group of onParent) for (const item of group.steps) expect(item.entities.some((entry: any) => entry.effect !== 'reads')).toBe(true)
+  })
+
+  it('leads an Interface or Experience with what it delivers, grouped by Domain', async () => {
+    const { deliveryOf } = await import(placeReadingsModulePath)
+    const workspace = projectReportWorkspace(compileReport(loadModel(FIXTURE), '2026-09-21'))
+    const customerWeb = workspace.interfaces.find((item: any) => item.id === 'customer-web')!
+    const delivery = deliveryOf(workspace, customerWeb)
+    expect(delivery.ownsScreens).toBe(true)
+    expect(delivery.count).toBe(workspace.capabilities.filter((capability: any) =>
+      capability.contexts.some((context: any) => context.placeId === 'customer-web' || context.placeId.startsWith('customer-web::'))).length)
+    // Domain order, with what no Domain claims last.
+    const domainOrder = [...workspace.domains.map((domain: any) => domain.id), '']
+    const seen = delivery.groups.map((group: any) => group.domain?.id ?? '')
+    expect([...seen].sort((a, b) => domainOrder.indexOf(a) - domainOrder.indexOf(b))).toEqual(seen)
+    for (const group of delivery.groups) {
+      for (const row of group.rows) {
+        expect(row.capability.domainId ?? '').toBe(group.domain?.id ?? '')
+        expect(row.screens.length).toBeGreaterThan(0)
+        for (const screen of row.screens) {
+          expect(screen.id.startsWith('customer-web::')).toBe(true)
+          expect(screen.capabilityIds).toContain(row.capability.id)
+        }
+      }
+    }
+    const exposed = delivery.groups.flatMap((group: any) => group.rows.map((row: any) => row.capability.id))
+    expect(new Set([...exposed, ...delivery.unexposed.map((capability: any) => capability.id)]).size).toBe(delivery.count)
+    // A container with no Screens delivers directly: nothing is a finding.
+    const cli = workspace.interfaces.find((item: any) => item.id === 'operator-cli')!
+    const direct = deliveryOf(workspace, cli)
+    expect(direct.ownsScreens).toBe(false)
+    expect(direct.unexposed).toEqual([])
+    expect(direct.groups.flatMap((group: any) => group.rows).every((row: any) => row.screens.length === 0)).toBe(true)
+    expect(hasAuthoredBody(customerWeb)).toBe(true)
+    expect(tabsFor(workspace, customerWeb).find((tab: any) => tab.id === 'overview')!.blocks).toContain('detail')
+    expect(source('app/components/BlrResourceBody.vue')).toContain('Available, not on a Screen')
+  })
+
+  it('marks a Screen named in its container\'s navigation as always reachable, and never draws it as an edge', async () => {
+    const { interfaceProjection } = await import(projectionsModulePath)
+    const { report } = nestedReport()
+    const workspace = projectReportWorkspace(report)
+    const catalog = workspace.screens.find((item: any) => item.id === 'customer-web::catalog')!
+    const nested = workspace.screens.find((item: any) => item.id === CHILD)!
+    expect(catalog.alwaysReachable).toBe(true)
+    expect(nested.alwaysReachable).toBe(true)
+    expect(workspace.screens.filter((item: any) => item.alwaysReachable).map((item: any) => item.id).sort()).toEqual([CHILD, 'customer-web::catalog'].sort())
+    expect(resourceFacts(workspace, catalog).map((fact: any) => [fact.label, fact.value])).toEqual([
+      ['Presents', '1'], ['Capabilities', String(catalog.capabilityIds.length)], ['Navigation', 'Always reachable']
+    ])
+    const flatten = (nodes: any[]): any[] => nodes.flatMap(node => [node, ...flatten(node.children)])
+    const branches = flatten(interfaceProjection(workspace))
+    expect(branches.find((node: any) => node.resource?.key === catalog.key).note).toBe('Shared Screen · Always reachable')
+    expect(branches.find((node: any) => node.resource?.key === nested.key).note).toBe('Always reachable')
+    const mark = source('app/components/BlrNavigationMark.vue')
+    expect(mark).toContain('i-lucide-anchor')
+    expect(source('nuxt.config.ts')).toContain("'lucide:anchor'")
+    expect(source('app/components/BlrResourceTree.vue')).toContain('<BlrNavigationMark')
+    expect(source('app/components/BlrResourceSlideover.vue')).toContain('<BlrNavigationMark')
+    for (const file of ['app/utils/topologyProjections.ts', 'app/utils/placeReadings.ts', 'app/utils/uiMap.ts']) expect(source(file)).not.toContain('navigationIds')
+    /* The map marks the node and draws no arrow for it. */
+    expect(source('app/components/BlrFlowNodeContent.vue')).toContain('<BlrNavigationMark v-if="node.navigation"')
+    const { uiMapProjection } = await import(projectionsModulePath)
+    const map = uiMapProjection(workspace)
+    const walks = (place: string) => map.moves.filter((move: any) => move.from.key === place || move.to.key === place)
+    for (const place of [catalog, nested]) for (const move of walks(place.key)) {
+      expect(move.scenarios.every((scenario: any) => scenario.steps.some((step: any) => step.contexts.some((item: any) => item.context.id === place.id))), move.id).toBe(true)
+    }
+  })
+
+  it('reads languages and versions where the model states them', () => {
+    const report = compileReport(loadModel(FIXTURE), '2026-09-21')
+    report.languages = ['en', 'de-DE']
+    report.model.interfaces.find(item => item.id === 'customer-web')!.languages = ['en']
+    const [storefront, other] = report.model.experiences
+    storefront!.version = 'v2'
+    other!.version = 'v1'
+    const workspace = projectReportWorkspace(report)
+    expect(workspace.identity.languages).toEqual(['en', 'de-DE'])
+    expect(resourceFacts(workspace, workspace.interfaces.find((item: any) => item.id === 'customer-web')).map((fact: any) => fact.label))
+      .toEqual(['Type', 'Experiences', 'Screens', 'Languages'])
+    expect(resourceFacts(workspace, workspace.interfaces.find((item: any) => item.id === 'admin-web')).map((fact: any) => fact.label))
+      .toEqual(['Type', 'Experiences', 'Screens'])
+    expect(resourceFacts(workspace, workspace.experiences.find((item: any) => item.id === storefront!.id)).map((fact: any) => [fact.label, fact.value]))
+      .toContainEqual(['Version', 'v2'])
+    expect(workspace.counts).not.toHaveProperty('screenStates')
   })
 })

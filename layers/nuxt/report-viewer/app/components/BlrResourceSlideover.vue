@@ -109,6 +109,7 @@ function open(resource: AnyResourceView) { save(); emit('open', resource) }
               <h2 ref="heading" tabindex="-1" class="flex min-w-0 items-start gap-2 text-base leading-6 font-semibold text-highlighted outline-none" data-resource-heading>
                 <span class="min-w-0 break-words" data-resource-title>{{ resource.title }}</span>
                 <BlrTerm :slug="KIND_TERM[resource.kind]" :text="resource.title" icon-only />
+                <BlrNavigationMark v-if="resource.kind === 'screen' && resource.alwaysReachable" class="mt-1 shrink-0" />
               </h2>
             </div>
           </div>
