@@ -27,33 +27,6 @@ introduces a lint error, the browser keeps the last valid report visible and
 recovers after the error is fixed. A pulse in the header says the viewer is
 connected and when the model last changed on screen.
 
-## Review
-
-**Review** opens on uncommitted Product Model changes since the last commit,
-including staged, unstaged and nonignored new files. Before the first commit,
-model files appear as additions. An empty result does not switch baselines.
-
-Choose **Compare versions…** to compare local commits, branches, tags or the
-working state. Explicit selections stay in the URL. Historical models must use
-the current format; earlier formats are not converted. Saved versions resolve to
-exact commits and never fall back to current contents.
-
-The active model's authored files can be inspected even when the model does not
-compile. Other repository changes can appear in the same tree as path-only
-context. Browsing comparisons
-never changes the checkout or establishes agreement between model and code.
-
-Overview’s **Coverage** presents Model scope, with a
-short authoring note and any model-wide limitations. Covered, Exclusions and
-Unmapped describe behavior with optional repository paths. Their cards filter a
-shared source tree; selecting a path opens descriptions, local limitations and
-related References. Entries without paths remain readable below the tree.
-Folder counts summarize authored entries, not completeness. Review compares selected Git or working states; neither
-reading establishes whether model and code agree.
-
-The report is read-only. Selecting, filtering, inspecting and refreshing never
-record a review, approve changes, save a snapshot or alter the repository.
-
 The server listens only on `127.0.0.1` and stops when the command exits.
 
 ## Options

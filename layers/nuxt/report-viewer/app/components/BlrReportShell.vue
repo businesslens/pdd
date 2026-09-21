@@ -31,47 +31,23 @@ import { KIND_TERM } from '../utils/vocabulary'
 import type { VocabularySlug } from '../utils/vocabulary.generated'
 import { firstSentence } from '../utils/reportMarkdown'
 import type { ReportProductCatalogLink, ReportProductLink } from '../utils/reportProducts'
-import type { ReportChanges } from '../utils/reportChanges'
-import { projectReportWorkspace } from '../utils/reportWorkspace'
-import type { RepositoryFileLoader } from 'businesslens/report'
 import { defaultCoverageReading, type CoverageReading } from '../utils/coverageState'
-import { reviewModelFiles } from '../utils/reviewModel'
-import { baselineTitle, changesByKey } from '../utils/reportChanges'
-import type { ResourceReview } from '../utils/resourceReview'
 
 const props = withDefaults(defineProps<{
   workspace: ReportWorkspace
-  loadRepositoryFile?: RepositoryFileLoader
   logoSrc?: string | null
   products?: ReportProductLink[]
   productCatalog?: ReportProductCatalogLink
   sidebarVocabulary?: boolean
   toolsTarget?: string
-  /**
-   * The host's comparison of this model against a baseline. The local viewer
-   * has one; a host with no notion of an earlier state passes nothing, and
-   * the header, the rows and the pages show no trace of it.
-   */
-  changes?: ReportChanges | null
-  readingWorkspace?: ReportWorkspace | null
-  readingLabel?: string
-  readingError?: string | null
 }>(), { sidebarVocabulary: true })
-
-const emit = defineEmits<{ uncommitted: [], compare: [base: string, target: string], historySearch: [query: string], historyMore: [] }>()
-const resourceState = defineModel<string>('resourceState', { default: 'working' })
-const readingWorkspace = computed(() => resourceState.value === 'working' ? props.workspace : props.readingWorkspace)
 
 /* ------------------------------------------------------------------ */
 /* Selection: `activeKind` is what the collection view is about, and */
 /* `openResource` is inspected over that working view.                   */
 /* ------------------------------------------------------------------ */
 
-/* Review compares two states of the repository. Its section has the
-   Product as its subject and opens from the header beside Coverage. */
-const CHANGES_SECTION = 'review'
-
-type ReportSection = 'overview' | ReportResourceKind | typeof CHANGES_SECTION
+type ReportSection = 'overview' | ReportResourceKind
 
 const section = defineModel<string>('section', { default: 'overview' })
 
@@ -82,25 +58,20 @@ const resourceTab = defineModel<string>('resourceTab', { default: 'overview' })
 const scenarioRoute = defineModel<string | null>('scenarioRoute', { default: null })
 const routeColumns = defineModel<string>('routeColumns', { default: 'auto' })
 const coverage = defineModel<CoverageReading>('coverage', { default: defaultCoverageReading })
-const reviewPath = defineModel<string | null>('reviewPath', { default: null })
-const reviewTab = defineModel<string>('reviewTab', { default: '' })
 const topology = defineModel<TopologyReading>('topology', { default: defaultTopologyReading })
 
 const activeKind = ref<ReportResourceKind>('product')
 const activeSection = ref<ReportSection>('overview')
 
 const KNOWN_SECTIONS = new Set<string>(['overview', ...REPORT_ENTITY_KINDS.map(meta => meta.kind)])
-const isChangesSection = (value: string) => value === CHANGES_SECTION && Boolean(props.changes)
-/* A section whose subject is the Product rather than a collection's set. */
-const isProductSection = (value: string) => value === 'overview' || isChangesSection(value)
 
 /* Two-way, but never fighting: each side only writes when the value differs. */
-watch([section, () => Boolean(props.changes)], ([value]) => {
+watch(section, (value) => {
   if (value === activeSection.value) return
-  const known = (KNOWN_SECTIONS.has(value) || isChangesSection(value) ? value : 'overview') as ReportSection
-  const next = isProductSection(known) ? known : collectionKindFor(known as ReportResourceKind)
+  const known = (KNOWN_SECTIONS.has(value) ? value : 'overview') as ReportSection
+  const next = known === 'overview' ? known : collectionKindFor(known as ReportResourceKind)
   activeSection.value = next
-  activeKind.value = isProductSection(next) ? 'product' : next as ReportResourceKind
+  activeKind.value = next === 'overview' ? 'product' : next as ReportResourceKind
 }, { immediate: true })
 
 watch(activeSection, (value) => {
@@ -340,8 +311,9 @@ const multiGroupNote = computed(() => {
     + `Domain and ${count === 1 ? 'appears' : 'appear'} under each.`
 })
 
-const openPage = computed<AnyResourceView | null>(() => openPageKey.value && readingWorkspace.value
-  ? resolveResourceKey(readingWorkspace.value, openPageKey.value) ?? null : null)
+const openPage = computed<AnyResourceView | null>(() => openPageKey.value
+  ? resolveResourceKey(props.workspace, openPageKey.value) ?? null
+  : null)
 
 /* The resource is inspected over the working view; it never selects a rail row. */
 const navigation = inject(resourceNavigationKey, null)
@@ -351,7 +323,6 @@ const localReferenceTrail = ref<Array<string | null>>([])
 const previousReference = referenceNavigation?.previous ?? computed(() => localReferenceTrail.value.at(-1) ?? null)
 function openReference(href: string) {
   const target = localReferenceHref(href)
-  if (target) resourceState.value = new URL(target, 'http://businesslens.local').searchParams.get('state') ?? 'working'
   if (!target || target === reference.value) return
   if (!openResource.value && !reference.value) returnFocus.value = document.activeElement as HTMLElement | null
   if (referenceNavigation) referenceNavigation.open(target)
@@ -370,17 +341,9 @@ const returnFocus = shallowRef<HTMLElement | null>(null)
 const workingHeading = useTemplateRef('workingHeading')
 const localTrail = ref<Array<{ key: string, tab: string }>>([])
 const previousResource = computed(() => {
-  const visit = navigation?.previous.value
-  const key = navigation ? visit?.resource : localTrail.value.at(-1)?.key
-  if (!key) return null
-  const state = visit?.state ?? 'working'
-  const report = props.changes?.baseState?.id === state ? props.changes.before
-    : props.changes?.targetState?.id === state ? props.changes.after : null
-  const workspace = state === resourceState.value ? readingWorkspace.value
-    : state === 'working' ? props.workspace : report ? projectReportWorkspace(report) : null
-  return workspace ? resolveResourceKey(workspace, key) ?? { title: 'previous resource' } : { title: 'previous resource' }
+  const key = navigation ? navigation.previous.value?.resource : localTrail.value.at(-1)?.key
+  return key ? resolveResourceKey(props.workspace, key) : null
 })
-
 function backResource() {
   if (navigation) { navigation.back(); return }
   const previous = localTrail.value.pop()
@@ -388,34 +351,12 @@ function backResource() {
 }
 /* Live recompiles replace the projection. Rehydrate selection by stable key so
    focus, filters, and the open page survive ordinary model edits. */
-watch([readingWorkspace, openResource], ([workspace]) => {
-  if (resourceState.value === 'working' && workspace && openResource.value && !workspace.byKey.has(openResource.value)) leavePage()
+watch([() => props.workspace, openResource], ([workspace]) => {
+  if (openResource.value && !workspace.byKey.has(openResource.value)) leavePage()
 }, { immediate: true })
 
 const destination = computed(() => destinationForLocation(activeSection.value, pageTab.value))
 const topologyActive = computed(() => Boolean(destination.value))
-/* Review, when it is the open surface and the host has a comparison. */
-const changesOpen = computed(() => isChangesSection(activeSection.value))
-/* Every changed resource by key, so a row or a page can wear its standing. */
-const changeByKey = computed(() => changesByKey((props.changes?.target ?? 'working') === 'working' ? props.changes?.diff : null))
-const modelChangeCount = computed(() => props.changes?.repository ? reviewModelFiles(props.changes.repository).length : null)
-const changesComparison = computed(() => props.changes?.mode !== 'uncommitted' ? 'between the selected versions'
-  : props.changes?.baseline === 'empty' ? 'before the first commit' : 'since the last commit')
-const changesBaseline = computed(() => {
-  const baseline = props.changes?.baselines.find(item => item.id === props.changes?.baseline)
-  return baseline ? baselineTitle(baseline) : ''
-})
-const reviewBefore = computed(() => props.changes?.before && props.changes.baseState
-  ? { report: props.changes.before, workspace: projectReportWorkspace(props.changes.before), state: props.changes.baseState.id } : null)
-const reviewAfter = computed(() => props.changes?.after && props.changes.targetState
-  ? { report: props.changes.after, workspace: projectReportWorkspace(props.changes.after), state: props.changes.targetState.id } : null)
-const openReview = computed<ResourceReview | null>(() => {
-  const key = openPage.value?.key
-  if (!key || resourceState.value !== 'working' || reviewAfter.value?.state !== 'working' || !changeByKey.value.has(key)) return null
-  // A missing baseline is unknown unless the host explicitly compared an empty state.
-  if (!reviewBefore.value && props.changes?.baseState?.kind !== 'empty') return null
-  return { before: reviewBefore.value, after: reviewAfter.value, resourceKey: key, inspect: inspectHistory }
-})
 /* The collection's Graph, when it has one. Absent, not disabled, when it does
    not: the switch appears only where a second drawing exists. */
 const collectionGraph = computed(() => activeKind.value === 'product' ? undefined : graphForCollection(activeKind.value))
@@ -440,12 +381,6 @@ const vocabularyContext = computed(() => {
  * in one line while the tooltip defined a fourth thing.
  */
 const surfaceHeading = computed(() => {
-  /* Review counts changed files within the active Product Model. */
-  if (changesOpen.value) {
-    const count = modelChangeCount.value
-    return { icon: 'i-lucide-history', slot: ENTITY_KIND_META.product.slot, title: 'Review',
-      meta: count === null ? '' : `${count} ${count === 1 ? 'model file' : 'model files'}`, term: undefined, termText: '' }
-  }
   if (activeKind.value === 'product') {
     const meta = ENTITY_KIND_META.product
     return { icon: meta.icon, slot: meta.slot, title: 'Overview', meta: meta.label,
@@ -483,7 +418,7 @@ const PRODUCT_TABS = [
   { id: 'references', label: 'References' }
 ]
 
-const surfaceTabs = computed(() => changesOpen.value || activeKind.value !== 'product' ? [] : [
+const surfaceTabs = computed(() => activeKind.value !== 'product' ? [] : [
   { id: 'overview', label: 'About' },
   ...PRODUCT_TABS
 ])
@@ -597,7 +532,6 @@ function leavePage() {
   reference.value = null
   localReferenceTrail.value = []
   openResource.value = null
-  resourceState.value = 'working'
   resourceTab.value = 'overview'
   scenarioRoute.value = null
   routeColumns.value = 'auto'
@@ -613,16 +547,6 @@ function setKind(kind: ReportResourceKind) {
   activeSection.value = kind === 'product' ? 'overview' : kind
   pageTab.value = 'overview'
   leavePage()
-}
-
-/** Review: a section with the Product as its subject, from the header. */
-function openChanges() {
-  if (!props.changes) return
-  mobileNavOpen.value = false
-  leavePage()
-  topology.value = { ...topology.value, focus: [] }
-  activeSection.value = CHANGES_SECTION
-  activeKind.value = 'product'
 }
 
 function openView(sectionId: string, resource?: AnyResourceView) {
@@ -652,26 +576,14 @@ function openResourceKey(key: string, tab = 'overview') {
 }
 
 /** Inspection preserves the working view, including a graph's drawing and focus. */
-function openResourcePage(resource: AnyResourceView, state = 'working') {
-  const sameState = resourceState.value === state
-  resourceState.value = state
+function openResourcePage(resource: AnyResourceView) {
   reference.value = null
   localReferenceTrail.value = []
-  if (resource.key === openResource.value && sameState) return
+  if (resource.key === openResource.value) return
   mobileNavOpen.value = false
   if (!openResource.value) returnFocus.value = document.activeElement as HTMLElement | null
   else if (!navigation) localTrail.value.push({ key: openResource.value, tab: resourceTab.value })
   openResource.value = resource.key
-  resourceTab.value = 'overview'
-  scenarioRoute.value = null
-  routeColumns.value = 'auto'
-}
-
-function inspectHistory(key: string, state: string) {
-  if (!openResource.value && !reference.value) returnFocus.value = document.activeElement as HTMLElement | null
-  reference.value = null
-  resourceState.value = state
-  openResource.value = key
   resourceTab.value = 'overview'
   scenarioRoute.value = null
   routeColumns.value = 'auto'
@@ -771,11 +683,9 @@ const orphanScenarios = computed(() => props.workspace.scenarios
               <span class="truncate text-lg font-semibold tracking-tight text-highlighted">{{ surfaceHeading.title }}</span>
               <span class="blr-meta shrink-0">{{ surfaceHeading.meta }}</span>
               <BlrTerm v-if="surfaceHeading.term" :slug="surfaceHeading.term" :text="surfaceHeading.termText" icon-only />
-              <BlrHistoryHelp v-else-if="changesOpen" />
             </h1>
           </div>
           <div data-report-status class="row-start-2 flex items-center gap-2.5 md:col-start-2 md:row-start-1">
-            <BlrReviewButton v-if="changes" :repository="changes.repository" :active="changesOpen" :comparison="changesComparison" @open="openChanges" />
             <span class="blr-meta" :title="`Report schema ${workspace.identity.schemaVersion}`">{{ workspace.identity.schemaVersion }}</span>
             <slot v-if="$slots.status" name="status" />
             <time v-else class="blr-meta" :datetime="workspace.identity.generatedAt" :title="`Generated ${workspace.identity.generatedAt}`">{{ workspace.identity.generatedAt.slice(0, 10) }}</time>
@@ -860,25 +770,10 @@ const orphanScenarios = computed(() => props.workspace.scenarios
         <div v-if="!topologyActive" ref="resourcePane" class="blr-pane min-h-0 flex-1" @scroll.capture.passive="savePageScroll">
           <div class="p-5">
 
-          <!-- Review model and repository changes between the host's states. -->
-          <BlrChanges
-            v-if="changesOpen && changes"
-            :changes="changes"
-            v-model:path="reviewPath"
-            v-model:tab="reviewTab"
-            :load-repository-file="loadRepositoryFile"
-            :resource-reading-open="Boolean(openResource || reference)"
-            @compare="(base, target) => emit('compare', base, target)"
-            @uncommitted="emit('uncommitted')"
-            @search="emit('historySearch', $event)"
-            @more="emit('historyMore')"
-            @inspect="inspectHistory"
-          />
-
           <!-- OVERVIEW: the Product, and what it promises -->
           <BlrOverview
             v-model:coverage="coverage"
-            v-else-if="activeKind === 'product'"
+            v-if="activeKind === 'product'"
             :workspace="workspace"
             :logo-src="logoSrc"
             :tab="activeSurfaceTab"
@@ -905,7 +800,6 @@ const orphanScenarios = computed(() => props.workspace.scenarios
                 :narrowed="filtersActive"
                 :closed="closedCards"
                 :expansion="cardExpansion"
-                :changes="changeByKey"
                 @open="openResourcePage"
                 @close="(key, closed) => setCollectionGroupOpen(key, !closed)"
                 @expand="setCardExpansion"
@@ -964,7 +858,6 @@ const orphanScenarios = computed(() => props.workspace.scenarios
                     :resource="resource"
                     :badge="group.kind !== 'domain'"
                     :stacked="columns > 1"
-                    :change="changeByKey.get(resource.key)?.change"
                     @open="openResourcePage"
                   />
                 </div>
@@ -1031,27 +924,18 @@ const orphanScenarios = computed(() => props.workspace.scenarios
 
     </UDashboardGroup>
 
-    <UAlert v-if="resourceState !== 'working' && !readingWorkspace && (openResource || reference)" class="fixed bottom-4 right-4 z-50 max-w-md" :title="readingError ? 'Historical state unavailable' : 'Loading historical state…'" :description="readingError ?? undefined" :actions="[{ label: 'Close', onClick: leavePage }]" />
-
     <BlrResourceSlideover
       v-model:tab="resourceTab"
       v-model:scenario-route="scenarioRoute"
       v-model:route-columns="routeColumns"
-      :workspace="readingWorkspace ?? workspace"
-      :state-label="resourceState !== 'working' ? readingLabel ?? resourceState : undefined"
-      :state-id="resourceState"
+      :workspace="workspace"
       :resource="openPage"
-      :reference="resourceState === 'working' || readingWorkspace ? reference : null"
+      :reference="reference"
       :previous-reference="previousReference"
       :previous="previousResource"
-      :change="resourceState === 'working' && openPage ? changeByKey.get(openPage.key)?.change : undefined"
-      :changes="resourceState === 'working' ? changeByKey : undefined"
-      :since="changesBaseline"
-      :review="openReview"
-      :review-label="`Compared with ${changesBaseline}`"
       :return-focus="returnFocus"
       :fallback-focus="workingHeading"
-      @open="openResourcePage($event, resourceState)"
+      @open="openResourcePage"
       @back="backResource"
       @reference-back="backReference"
       @reference-open="openReference"

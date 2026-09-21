@@ -1,12 +1,11 @@
 <script setup lang="ts">
 /** Shared hierarchy rows: chevrons expand, resource links open readings. */
-import type { ResourceChange } from 'businesslens/report'
 import type { TreeItem } from '@nuxt/ui'
 import type { AnyResourceView } from '../utils/reportWorkspace'
 import { entityFacetOf } from '../utils/reportWorkspace'
 import type { TreeCardNode } from '../utils/collectionChildren'
 
-const props = defineProps<{ nodes: TreeCardNode[], label: string, rootKey?: string, changes?: ReadonlyMap<string, ResourceChange> }>()
+const props = defineProps<{ nodes: TreeCardNode[], label: string, rootKey?: string }>()
 const expanded = defineModel<string[]>('expanded', { required: true })
 const emit = defineEmits<{ open: [resource: AnyResourceView] }>()
 interface Node extends TreeItem { value: string, label: string, source: TreeCardNode, children?: Node[] }
@@ -76,7 +75,6 @@ const items = computed(() => props.nodes.map(toNode))
         @open="emit('open', item.source.resource)"
       >{{ item.label }}</BlrResourceLink>
       <span v-else :class="item.value === rootKey ? 'font-semibold text-highlighted' : 'text-muted'">{{ item.label }} <span v-if="item.source.groupKind" class="ms-1.5 text-xs text-dimmed">{{ item.source.children.length }}</span></span>
-      <BlrChangeMark v-if="item.source.resource && changes?.get(item.source.resource.key)" :change="changes!.get(item.source.resource.key)!.change" class="ms-2" />
       <span v-if="item.source.sharedFrom" class="block whitespace-normal text-xs font-normal text-muted">
         From <BlrResourceLink :resource-key="item.source.sharedFrom.key" @keydown.stop @open="emit('open', item.source.sharedFrom)">{{ item.source.sharedFrom.title }}</BlrResourceLink>
       </span>

@@ -1,6 +1,5 @@
 <script setup lang="ts">
 /** Collection cards and resource containment readings use the same tree rows. */
-import type { ResourceChange } from 'businesslens/report'
 import type { AnyResourceView, ReportResourceKind, ReportWorkspace } from '../utils/reportWorkspace'
 import type { TreeCard } from '../utils/collectionChildren'
 import { treeCards, treeBranchKeys } from '../utils/collectionChildren'
@@ -12,8 +11,6 @@ const props = defineProps<{
   narrowed: boolean
   closed: string[]
   expansion: Record<string, string[]>
-  /** Each resource's standing against the host's baseline, by key, where the host has one. */
-  changes?: Map<string, ResourceChange>
 }>()
 const emit = defineEmits<{ open: [resource: AnyResourceView], close: [key: string, closed: boolean], expand: [key: string, values: string[]] }>()
 const cards = computed(() => treeCards(props.workspace, props.kind, props.resources, props.narrowed))
@@ -42,7 +39,6 @@ const setExpanded = (card: TreeCard, values: string[]) => {
       :label="card.title"
       :root-key="card.key"
       :expanded="expandedOf(card)"
-      :changes="changes"
       @update:expanded="setExpanded(card, $event)"
       @open="emit('open', $event)"
     />

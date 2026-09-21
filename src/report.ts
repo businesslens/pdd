@@ -58,24 +58,7 @@ export {
   canonicalReportJson
 } from './core/portable.js'
 
-export {
-  diffReports,
-  diffIsEmpty,
-  describeValue
-} from './core/report-diff.js'
-
-export type { ReferenceFileSnapshot, ReportReferenceFiles } from './core/report-reference-files.js'
-
 export type {
-  ChangeKind,
-  FieldChange,
-  ReportBaseline,
-  ReportDiff,
-  ResourceChange
-} from './core/report-diff.js'
-
-export type {
-  ReportCollectionName,
   ProductReportV16,
   ProductReport,
   ReportCoverage,
@@ -108,6 +91,3 @@ export type {
   ReportReference,
   ReportSupportingSection
 } from './core/portable.js'
-
-
-export type { RepositoryChange, RepositoryFileChange, RepositoryDiff, RepositoryFileReading, RepositoryFileComparison, RepositoryFileLoader } from './core/repository-diff-types.js'

@@ -1,5 +1,4 @@
 import { compileResolvedWorkspaceReport } from './export.js'
-import { createGitHistory } from '../core/git-history.js'
 import { repoRoot } from '../core/git.js'
 import { openBrowser, startLocalViewer, type LocalViewerBinding } from '../core/local-viewer-server.js'
 import { resolveModelRoot, type ModelRoot } from '../core/model-root.js'
@@ -91,9 +90,7 @@ function bindingFor(resolved: ModelRoot): LocalViewerBinding {
     // the same base `lint` lists tracked files from — and implementation
     // captures legitimately live outside `.businesslens/`. A model outside a
     // repository has no repository-relative targets, so it gets no mount.
-    assetRoot: resolved.gitRoot,
-    referenceRoot: resolved.gitRoot ?? resolved.modelRoot,
-    history: createGitHistory(resolved)
+    assetRoot: resolved.gitRoot
   }
 }
 
@@ -131,12 +128,7 @@ export async function runView(cwd: string, options: ViewOptions): Promise<number
       port: options.port,
       initialReport,
       waitingMessage: `No Product Model yet. The report will appear when ${expected.join(' or ')} is created — use businesslens-map for established code or businesslens-ideate for a new product.`,
-      ...(resolved ? { ...bindingFor(resolved), ...(snapshot ? { watchRoot: undefined, history: undefined } : {}) } : {
-        // Repository Review remains usable before model creation or after removal.
-        // Model compilation and watching attach separately when a model appears.
-        assetRoot: gitRoot,
-        history: createGitHistory({ gitRoot, modelRoot: cwd })
-      })
+      ...(resolved ? { ...bindingFor(resolved), ...(snapshot ? { watchRoot: undefined } : {}) } : {})
     })
     console.log(`Viewing ${source.subject} at ${viewer.url}`)
     if (!resolved) {

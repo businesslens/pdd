@@ -3,8 +3,7 @@
  * The pulse: the report is being built while you watch, and this says so.
  *
  * A dot for the stream, and the moment the model last changed on screen — not
- * the count of edits, which no reader asked for. Review opens beside
- * Coverage; this only says that something did, and how long ago.
+ * the count of edits. It shows when the current report last refreshed.
  */
 const live = useLocalLive()
 const now = ref(Date.now())
@@ -22,7 +21,7 @@ const ago = computed(() => {
   return `${Math.round(minutes / 60)}h ago`
 })
 const title = computed(() => live.value.connected
-  ? (ago.value ? `Live · the report changed ${ago.value}` : 'Live · watching the model and its local References for edits')
+  ? (ago.value ? `Live · the report changed ${ago.value}` : 'Live · watching the model for edits')
   : 'Not connected · restart businesslens view')
 </script>
 

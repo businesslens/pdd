@@ -31,8 +31,21 @@ try {
     const context = await browser.newContext({ viewport: { width, height: 1000 }, reducedMotion: 'reduce' })
     const page = await context.newPage()
     page.on('pageerror', error => errors.push(error.message))
+    const closePathWithEscape = async () => {
+      const dialog = page.getByRole('dialog').last()
+      // Wait for the modal's entry/focus transition before sending dismissal.
+      await dialog.evaluate(async element => {
+        await Promise.all(element.getAnimations({ subtree: true }).map(animation => animation.finished.catch(() => {})))
+      })
+      await dialog.press('Escape')
+      await expect(page.getByRole('dialog')).toHaveCount(0)
+    }
     let currentReport = annotated
     let inventoryRequests = 0
+    const comparisonRequests = []
+    page.on('request', request => {
+      if (/\/_businesslens\/(history|review|state)(?:[/?]|$)/.test(request.url())) comparisonRequests.push(request.url())
+    })
     await page.route('**/_businesslens/report.json', route => route.fulfill({ json: currentReport }))
     await page.route('**/_businesslens/repository.json*', route => {
       inventoryRequests++
@@ -45,6 +58,7 @@ try {
     const methodToggle = coverage.getByRole('button', { name: 'How this model was authored', exact: true })
     const methodDetails = coverage.locator('[data-coverage-method]')
     await expect(details).toBeVisible()
+    await expect(page.getByRole('button', { name: /^(Review|Show diff|Compare versions)/ })).toHaveCount(0)
     await expect(sources).toBeVisible()
     await expect(coverage.getByRole('tab')).toHaveCount(0)
     await expect(details.getByRole('region', { name: 'Model scope', exact: true })).toBeVisible()
@@ -170,8 +184,7 @@ try {
     await page.getByRole('button', { name: 'Close resource', exact: true }).click()
     await expect(page).toHaveURL(selectedUrl)
     await expect(resourceLink).toBeFocused()
-    await page.keyboard.press('Escape')
-    await expect(page.getByRole('dialog')).toHaveCount(0)
+    await closePathWithEscape()
     await expect(row(samplePath)).toBeFocused()
     await page.keyboard.press('Enter')
     await expect(page).toHaveURL(selectedUrl)
@@ -182,21 +195,21 @@ try {
     await page.goBack()
     await expect(page).toHaveURL(selectedUrl)
     await expect(page.getByRole('dialog', { name: samplePath, exact: true })).toBeVisible()
-    await page.keyboard.press('Escape')
+    await closePathWithEscape()
     await sources.getByRole('button', { name: 'Expand all', exact: true }).click()
     await path(plannedPath).click()
     await expect(pathDetails).toContainText('Planned behavior without a current file.')
     await capture(page, `${width}-planned-path`)
-    await page.keyboard.press('Escape')
+    await closePathWithEscape()
     await path('coverage-fixture/uncertain.ts').click()
     await expect(pathDetails).toContainText('A limitation with its own location.')
-    await page.keyboard.press('Escape')
+    await closePathWithEscape()
     await sources.locator('[data-repository-root]').click()
     await expect(page).toHaveURL(url => url.searchParams.get('cp') === '.')
     await expect(pathDetails).toContainText('Planned behavior with no location.')
     await expect(pathDetails).toContainText('Model-wide policy uncertainty.')
     await expect(pathDetails).toContainText('Planned behavior without a current file.')
-    await page.keyboard.press('Escape')
+    await closePathWithEscape()
 
     await sources.getByRole('button', { name: 'Collapse all', exact: true }).click()
     await methodToggle.click()
@@ -249,8 +262,9 @@ try {
     await sources.getByRole('button', { name: 'Expand all', exact: true }).click()
     expect(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)).toBe(false)
     await capture(page, `${width}-actual-sources`)
+    expect(comparisonRequests).toEqual([])
     await context.close()
   }
   expect(errors).toEqual([])
-  console.log('Coverage scope, authoring note, contextual limitations, summary cards, shared Review tree, filters, search, keyboard, focus/history, mobile layout and portable/empty states passed.')
+  console.log('Coverage scope, authoring note, contextual limitations, summary cards, repository tree, filters, search, keyboard, focus/history, mobile layout and portable/empty states passed; no comparison controls or requests.')
 } finally { await browser.close() }

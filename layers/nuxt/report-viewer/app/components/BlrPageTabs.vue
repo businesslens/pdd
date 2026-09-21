@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /** One transparent reading switch, with optional controls for the active set. */
 const props = defineProps<{
-  items: { id: string, label: string, count?: number, changed?: boolean }[]
+  items: { id: string, label: string, count?: number }[]
   label: string
 }>()
 const model = defineModel<string>({ required: true })
@@ -52,7 +52,6 @@ onBeforeUnmount(() => resize?.disconnect())
       }"
     >
       <template #trailing="{ item }">
-        <span v-if="item.changed" class="blr-matrix-tone rounded border px-1 text-[10px]" data-tone="changes" aria-label="Contains changes">~</span>
         <span v-if="item.count !== undefined" class="blr-meta">{{ item.count }}</span>
       </template>
     </UTabs>

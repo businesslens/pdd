@@ -34,22 +34,6 @@ const devHandlers = [
     })
   },
   {
-    // No CLI or committed model: the Review button
-    // draws with nothing to compare against, which is a state worth seeing.
-    route: '/_businesslens/history',
-    handler: defineEventHandler((event) => {
-      setHeader(event, 'cache-control', 'no-store')
-      return { states: [{ id: 'working', kind: 'working', available: true }], more: false, nextOffset: 50 }
-    })
-  },
-  {
-    route: '/_businesslens/history/defaults',
-    handler: defineEventHandler((event) => {
-      setHeader(event, 'cache-control', 'no-store')
-      return { base: null, target: 'working', emptyReason: 'no-saved-model' }
-    })
-  },
-  {
     // The viewer opens a stream immediately; without this the dev console fills
     // with reconnect noise that hides real errors.
     route: '/_businesslens/events',
@@ -93,7 +77,6 @@ export default defineNuxtConfig({
       icons: [
         'lucide:arrow-up-right',
         'lucide:loader-circle',
-        'lucide:pin',
         'lucide:refresh-cw',
         'lucide:sliders-horizontal',
         'lucide:triangle-alert',

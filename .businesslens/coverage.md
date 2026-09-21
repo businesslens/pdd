@@ -6,7 +6,7 @@ covered:
     paths: [src/cli.ts, src/commands/]
   - description: Agent workflows for mapping established behavior, defining intended behavior and verifying model alignment.
     paths: [skills/]
-  - description: Local Product Report navigation, resource readings and Git comparisons.
+  - description: Local Product Report navigation, resource readings and Coverage context.
     paths: [layers/nuxt/report-viewer/, viewer/]
   - description: Blueprint export, opening, pulling and contribution between repositories.
     paths: [src/commands/, src/core/portable.ts]

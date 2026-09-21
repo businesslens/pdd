@@ -7,17 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- Open resources in their familiar layout, then use Show diff to reveal changes and previous values in place.
-
-- Review uncommitted Product Model edits with highlighted diffs, resource links and colored header counts by change type; compare saved versions explicitly and optionally show other repository changes in the same tree.
-- Recognize Product Model folders and files by their BusinessLens logo and resource icons in repository trees.
-- Coverage describes modeled areas consistently, keeps uncertainties beside their source areas, and simplifies scope and authoring details.
-- Recognize Coverage categories by consistent colors in summary cards and tree badges.
-- Review file changes with matching badge colors and a legend explaining each change type.
-- Removed the Coverage status badge; known gaps stay explicit and structural checks apply consistently to every model.
-- The report stays read-only and updates while models and source files change.
-- Open the local report before a model exists, compare Git changes, and follow the model from its first valid state.
-- Larger About headings and product details, with clearer report badges and live connection status.
+- Coverage now records scope, modeled behavior, approved exclusions, gaps, and uncertainty instead of a completeness status. Existing models need the new Coverage format.
+- Browse Coverage in a searchable, filterable source tree with related References and recognizable Product Model icons.
+- Blueprints preserve Coverage descriptions while leaving repository paths behind; older Blueprint formats are no longer accepted.
+- Apply the same structural checks to every model, including those with known gaps.
+- Open the local report before a model exists and follow valid edits as they arrive, with visible connection status.
+- Read clearer Product details and larger headings in About.
 
 ## [0.21.0] - 2026-09-21
 

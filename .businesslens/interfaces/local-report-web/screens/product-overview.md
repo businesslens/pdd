@@ -65,7 +65,7 @@ including those without paths. Selecting a card filters the tree and unlocated
 entries; selecting it again restores all sources. No duplicate category dropdown
 is shown. Totals remain independent of filtering and search.
 
-The tree shares Review's search and expand/collapse controls. Each recorded
+The tree offers search and expand/collapse controls. Each recorded
 location appears once, with all its annotation types. Folder counts summarize
 distinct entries, never file completeness or inherited meaning. Paths recorded
 only by a limitation remain reachable in the unfiltered tree. No live inventory
@@ -77,7 +77,7 @@ and related resources in a slideover; the Repository root includes all entries.
 Closing restores focus. Method disclosure preserves the tree's search, filter
 and expansion without adding browser history. Refresh and browser history retain
 the selected path; expansion is remembered for the report. Narrow screens scroll
-the tree within its frame, like Review.
+the tree within its frame.
 
 ### References open
 

@@ -1,13 +1,10 @@
 <script setup lang="ts">
 import type { TreeItem } from '@nuxt/ui'
-import { resourceReviewKey, reviewRows } from '../utils/resourceReview'
-import { reviewChangeMeta } from '../utils/reviewModel'
 import type { ReportReference } from 'businesslens/report'
-import { referenceNavigationKey, referenceStateKey, withReferenceState, referenceHref as unscopedReferenceHref, referenceFileHref, isExternalReference as isExternal } from '../utils/referenceNavigation'
+import { referenceNavigationKey, referenceHref, referenceFileHref, isExternalReference as isExternal } from '../utils/referenceNavigation'
 
 const props = withDefaults(defineProps<{
   references: ReportReference[]
-  previous?: ReportReference[]
   /** Isolates expansion by report and the resource that owns the attachments. */
   scope: string
   label?: string
@@ -24,15 +21,8 @@ const KIND_LABEL: Record<ReportReference['kind'], string> = {
 const ROLE_TONE: Record<string, 'primary' | 'neutral' | 'secondary'> = {
   intent: 'primary', implementation: 'secondary', context: 'neutral'
 }
-const review = inject(resourceReviewKey, computed(() => null))
-const compared = computed(() => reviewRows(props.previous, props.references, !!review.value && props.previous !== undefined, item => item, item => `${item.kind}:${item.target}`))
-const referenceChanges = computed(() => new Map(compared.value.map(row => [(row.after ?? row.before)!, row])))
-const visibleReferences = computed(() => compared.value.map(row => (row.after ?? row.before)!))
-const referenceState = (reference: ReportReference) => referenceChanges.value.get(reference)?.change === 'deleted' ? review.value?.before?.state ?? state.value : state.value
 const navigation = inject(referenceNavigationKey, null)
-const state = inject(referenceStateKey, ref('working'))
-const localHref = (reference: ReportReference) => withReferenceState(referenceFileHref(reference.target), referenceState(reference))
-const referenceHref = (reference: ReportReference) => withReferenceState(unscopedReferenceHref(reference), referenceState(reference))
+const localHref = referenceFileHref
 const isLocalImage = (reference: ReportReference) => !isExternal(reference.target)
   && reference.kind !== 'code' && /\.(png|jpe?g|gif|webp|avif|svg)$/i.test(reference.target.split(/[?#]/)[0] ?? '')
 const hrefFor = (reference: ReportReference) => isExternal(reference.target)
@@ -55,7 +45,7 @@ interface Node extends TreeItem {
   children?: Node[]
 }
 const items = computed<Node[]>(() => Object.entries(KIND_LABEL).flatMap(([kind, label]) => {
-  const children = visibleReferences.value.flatMap((reference, index): Node[] => {
+  const children = props.references.flatMap((reference, index): Node[] => {
     if (reference.kind !== kind) return []
     const value = JSON.stringify([reference.kind, reference.target, reference.role, reference.state, index])
     return [{ value, kind: reference.kind, label: isExternal(reference.target) ? reference.title || reference.target : reference.target, reference, referenceIndex: index,
@@ -82,10 +72,10 @@ const select = (event: Event, item: Node) => {
 </script>
 
 <template>
-  <div v-if="visibleReferences.length" class="min-w-0 space-y-2">
+  <div v-if="references.length" class="min-w-0 space-y-2">
     <div v-if="label || expandControls" class="flex flex-wrap items-center justify-between gap-2">
       <p v-if="label" class="blr-field flex items-center gap-2">
-        <BlrReferenceIcon class="size-3.5" />{{ label }} · {{ visibleReferences.length }}
+        <BlrReferenceIcon class="size-3.5" />{{ label }} · {{ references.length }}
       </p>
       <UFieldGroup v-if="expandControls" size="sm">
         <UTooltip text="Expand all">
@@ -153,8 +143,6 @@ const select = (event: Event, item: Node) => {
                 class="blr-meta w-full min-w-0 [overflow-wrap:anywhere]"
                 data-reference-location
               >{{ item.reference.target }}</span>
-              <span v-if="referenceChanges.get(item.reference)?.change" class="blr-matrix-tone rounded border px-1.5 py-0.5 text-xs" :data-tone="reviewChangeMeta[referenceChanges.get(item.reference)!.change!].tone" :data-inline-change="referenceChanges.get(item.reference)!.change">{{ referenceChanges.get(item.reference)!.change === 'deleted' ? 'Removed' : reviewChangeMeta[referenceChanges.get(item.reference)!.change!].label }}</span>
-              <span v-if="referenceChanges.get(item.reference)?.change === 'modified'" class="w-full text-xs text-muted">Previously: {{ referenceChanges.get(item.reference)?.before?.title || item.reference.target }} · {{ referenceChanges.get(item.reference)?.before?.role }}<template v-if="referenceChanges.get(item.reference)?.before?.state"> · {{ referenceChanges.get(item.reference)?.before?.state }}</template></span>
               <slot name="reference-owner" :index="item.referenceIndex!" :reference="item.reference" />
             </span>
 
@@ -162,7 +150,7 @@ const select = (event: Event, item: Node) => {
           </template>
           <div v-else class="min-w-0 flex-1 rounded-md py-1" data-reference-preview>
             <a :href="hrefFor(item.reference!)" class="block w-fit max-w-full" @click="follow($event, item.reference!)" @keydown.stop>
-              <img :src="localHref(item.reference!)" :alt="item.reference!.title || item.reference!.target" loading="lazy" class="max-h-96 w-auto max-w-full rounded border border-default">
+              <img :src="localHref(item.reference!.target)" :alt="item.reference!.title || item.reference!.target" loading="lazy" class="max-h-96 w-auto max-w-full rounded border border-default">
             </a>
           </div>
         </template>

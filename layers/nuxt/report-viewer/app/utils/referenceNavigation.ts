@@ -2,12 +2,13 @@ import type { InjectionKey, Ref } from 'vue'
 import type { ReportReference } from 'businesslens/report'
 
 export const isExternalReference = (target: string) => /^https?:\/\//i.test(target)
-
 /** Repository location of a Reference, without its symbol, line or fragment. */
 export function referencePath(reference: Pick<ReportReference, 'target'>): string | undefined {
-  const target = reference.target
+  // A root-level code target such as `README.md:20` has a line suffix,
+  // not a URI scheme. Remove location suffixes before checking the path.
+  const target = reference.target.split(/[?#]/, 1)[0]?.replace(/:\d+(?:-\d+)?$/, '') ?? ''
   if (/^[a-z][a-z0-9+.-]*:/i.test(target) || target.startsWith('/')) return undefined
-  return target.split(/[?#]/, 1)[0]?.replace(/:\d+(?:-\d+)?$/, '').replace(/^\.\//, '') || undefined
+  return target.replace(/^\.\//, '') || undefined
 }
 
 export const referenceFileHref = (target: string) => `/_businesslens/file/${target.split('/').map(encodeURIComponent).join('/')}`
@@ -41,12 +42,3 @@ export interface ReferenceNavigation {
   back: () => void
 }
 export const referenceNavigationKey: InjectionKey<ReferenceNavigation> = Symbol('businesslens:reference-navigation')
-
-/** Apply state only to local Reference routes, preserving raw mode and fragments. */
-export function withReferenceState(href: string, state: string): string {
-  if (!localReferenceHref(href) || state === 'working') return href
-  const url = new URL(href, 'http://businesslens.local')
-  url.searchParams.set('state', state)
-  return url.pathname + url.search + url.hash
-}
-export const referenceStateKey: InjectionKey<Ref<string>> = Symbol('businesslens:reference-state')

@@ -1,15 +1,12 @@
 import { request } from 'node:http'
-import { execFileSync } from 'node:child_process'
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import { startLocalViewer, type LocalViewer } from '../src/core/local-viewer-server.js'
 import type { ProductReportV16 } from '../src/core/portable.js'
-import { compileReport, compileResolvedWorkspaceReport } from '../src/commands/export.js'
-import { createGitHistory } from '../src/core/git-history.js'
+import { compileReport } from '../src/commands/export.js'
 import { loadModel } from '../src/core/model.js'
-import { resolveModelRoot } from '../src/core/model-root.js'
 
 const FIXTURE = join(__dirname, 'fixtures', 'fixture-shop')
 
@@ -140,6 +137,15 @@ function report(): ProductReportV16 {
 const logo = (color = '#80552b') => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" fill="${color}"/></svg>`
 
 describe('local Product Report server', () => {
+  it('does not expose Git history or comparison endpoints', async () => {
+    const viewer = await startLocalViewer({ viewerRoot: staticViewer(), compile: report })
+    viewers.push(viewer)
+    for (const path of ['history', 'history/defaults', 'history/diff?base=head&target=working', 'state?state=head', 'review/file?base=head&target=working&path=README.md']) {
+      expect((await get(viewer.url, `/_businesslens/${path}`)).status).toBe(404)
+    }
+    expect((await get(viewer.url, '/_businesslens/report.json')).status).toBe(200)
+  })
+
   it('serves the static application and caches the compiled report', async () => {
     let compileCount = 0
     const root = staticViewer()
@@ -227,6 +233,30 @@ describe('local Product Report server', () => {
 
     expect(JSON.parse(updated.body).title).toBe('Updated title')
     expect(event).toMatch(/"revision":\d+/)
+  })
+
+  it('recovers when the retired Coverage file is removed and reports its return', { timeout: WATCH_TEST_TIMEOUT_MS * 2 }, async () => {
+    const root = mkdtempSync(join(tmpdir(), 'businesslens-retired-coverage-'))
+    directories.push(root)
+    cpSync(FIXTURE, root, { recursive: true })
+    const legacy = join(root, '.businesslens', 'coverage.json')
+    writeFileSync(legacy, '{}')
+    const viewer = await startLocalViewer({
+      viewerRoot: staticViewer(),
+      watchRoot: join(root, '.businesslens'),
+      debounceMs: 10,
+      compile: () => {
+        const model = loadModel(root)
+        if (model.issues.length) throw new Error(model.issues.join('\n'))
+        return compileReport(model, '2026-09-21')
+      }
+    })
+    viewers.push(viewer)
+    expect(viewer.status().error).toContain('coverage.json is not supported')
+    await eventAfter(viewer.url, 'report', () => rmSync(legacy), WATCH_TEST_TIMEOUT_MS - 500)
+    expect(viewer.status()).toEqual({ ready: true, error: undefined })
+    await eventAfter(viewer.url, 'compile-error', () => writeFileSync(legacy, '{}'), WATCH_TEST_TIMEOUT_MS - 500)
+    expect(viewer.status().error).toContain('coverage.json is not supported')
   })
 
   it('announces a valid logo edit even when the semantic report is unchanged', { timeout: WATCH_TEST_TIMEOUT_MS }, async () => {
@@ -402,49 +432,4 @@ describe('local Product Report server', () => {
     expect((await get(viewer.url)).status).toBe(200)
   })
 
-  describe('Git comparison updates', () => {
-    it.each([false, true])('announces a commit without a model file edit (existing commit: %s)', { timeout: WATCH_TEST_TIMEOUT_MS }, async (initialCommit) => {
-      const root = mkdtempSync(join(tmpdir(), 'businesslens-commit-events-'))
-      directories.push(root)
-      cpSync(FIXTURE, root, { recursive: true })
-      const git = (...args: string[]) => execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: 'pipe' }).trim()
-      git('init', '--initial-branch=main')
-      git('config', 'user.email', 'fixture@example.com')
-      git('config', 'user.name', 'Fixture')
-      git('add', '.')
-      if (initialCommit) git('commit', '-m', 'initial model')
-      const file = join(root, '.businesslens', 'capabilities', 'place-order', 'capability.md')
-      writeFileSync(file, readFileSync(file, 'utf8').replace(/^# (.*)$/m, '# $1 (edited)'))
-      const reference = join(root, 'src', 'services', 'catalog.ts')
-      writeFileSync(reference, `${readFileSync(reference, 'utf8')}\n// Reference changed\n`)
-      git('add', '.')
-
-      const resolved = resolveModelRoot(root)
-      let compileCount = 0
-      const viewer = await startLocalViewer({
-        viewerRoot: staticViewer(),
-        compile: () => { compileCount += 1; return compileResolvedWorkspaceReport(resolved) },
-        history: createGitHistory(resolved),
-        referenceRoot: root,
-        debounceMs: 10
-      })
-      viewers.push(viewer)
-      const before = JSON.parse((await get(viewer.url, '/_businesslens/history')).body)
-      expect(before.states.find((state: { id: string }) => state.id === 'head').available).toBe(initialCommit)
-      if (initialCommit) {
-        const comparison = JSON.parse((await get(viewer.url, '/_businesslens/history/diff?base=head&target=working')).body)
-        expect(comparison.diff.counts.changed).toBeGreaterThan(1)
-        expect(comparison.diff.resources.some((resource: { fields: Array<{ referenceFile?: string }> }) =>
-          resource.fields.some(field => field.referenceFile === 'src/services/catalog.ts'))).toBe(true)
-      }
-
-      await eventAfter(viewer.url, 'baselines', () => { git('commit', '-m', 'commit current model') }, WATCH_TEST_TIMEOUT_MS - 1000)
-      const listing = JSON.parse((await get(viewer.url, '/_businesslens/history')).body)
-      expect(listing.states.find((state: { id: string }) => state.id === 'head')).toMatchObject({ available: true, detail: `${git('rev-parse', '--short=7', 'HEAD')} commit current model` })
-      const comparison = JSON.parse((await get(viewer.url, '/_businesslens/history/diff?base=head&target=working')).body)
-      expect(comparison.diff).toEqual({ product: [], resources: [], counts: { added: 0, removed: 0, changed: 0 } })
-      expect(compileCount).toBe(1)
-    })
-
-  })
 })

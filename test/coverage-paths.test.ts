@@ -25,6 +25,16 @@ const workspace = {
 }
 
 describe('Coverage path context', () => {
+  it('includes root-file line references while excluding external URLs', () => {
+    const references = ['README.md:20', 'README.md:20-30', 'README.md#usage:20', 'https://example.com/README.md:20']
+      .map(target => ({ ownerKey: 'capability:read', ownerTitle: 'Read', reference: { target } }))
+    const context = coveragePathContext({ ...workspace, references }, 'README.md')
+    expect(context.owners).toHaveLength(1)
+    expect(context.owners[0].references.map((reference: any) => reference.target)).toEqual([
+      'README.md:20', 'README.md:20-30', 'README.md#usage:20'
+    ])
+  })
+
   it('groups recorded descendant context without duplicating gaps or resource owners', () => {
     const context = coveragePathContext(workspace, 'src/')
     expect(context.covered).toEqual([workspace.coverage.covered[0]])

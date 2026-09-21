@@ -8,7 +8,6 @@
  * Scenario's parent, an Experience's Interface. Without it a collection of
  * counterparts reads as a list of duplicates.
  */
-import type { ChangeKind } from 'businesslens/report'
 import { resourceNavigationKey } from '../utils/resourceNavigation'
 import type { AnyResourceView, ReportWorkspace } from '../utils/reportWorkspace'
 import { ENTITY_KIND_META, entityFacetOf, resolveResource } from '../utils/reportWorkspace'
@@ -33,9 +32,7 @@ const props = withDefaults(defineProps<{
   expandable?: boolean
   open?: boolean
   count?: number
-  /** The row's standing against the host's baseline, where the host has one. */
-  change?: ChangeKind | null
-}>(), { badge: true, stacked: false, expandable: false, open: false, count: 0, change: null })
+}>(), { badge: true, stacked: false, expandable: false, open: false, count: 0 })
 
 const navigation = inject(resourceNavigationKey, null)
 const href = computed(() => props.expandable ? undefined : navigation?.href(props.resource.key))
@@ -118,7 +115,6 @@ function metricEntity(metric: ResourceCardMetric, id: string) {
           >
             {{ presentation.badge }}
           </UBadge>
-          <BlrChangeMark v-if="change" :change="change" />
         </span>
         <span v-if="resource.lead" class="mt-0.5 block truncate text-sm leading-5 text-default">{{ resource.lead }}</span>
         <!-- The discriminating fact. Absent rather than empty when there is none. -->

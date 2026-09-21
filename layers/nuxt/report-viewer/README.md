@@ -146,7 +146,7 @@ Hosts with Vocabulary in their own header can set `sidebarVocabulary` to
 `false` to omit the sidebar entry and its empty reference group. That header
 must keep the Vocabulary panel's tooltip controls available for report readers.
 The working view's header serves as its navbar: the heading shares it with
-Review when the host provides comparisons, report schema version and
+report schema version and
 generation date, above a bottom divider. A host's `status` slot replaces the
 generation date with its live connection state. Header metadata wraps onto a second line
 on narrow screens.
@@ -193,8 +193,6 @@ where it left:
 <BusinessLensReportViewer
   v-model:section="section"
   v-model:resource="resource"
-  v-model:resource-state="resourceState"
-  v-model:review-path="reviewPath"
   v-model:tab="tab"
   v-model:resource-tab="resourceTab"
   v-model:scenario-route="scenarioRoute"
@@ -207,10 +205,7 @@ where it left:
 
 | Model | Value | Default |
 | --- | --- | --- |
-| `section` | `overview`; `review` when the host supplies comparisons; or a collection: `entity`, `interface`, `domain`, `capability`, `journey`, or `rule` | `overview` |
-| `resourceState` | `working` or an immutable `commit:<SHA>` for a historical resource reading | `working` |
-| `reviewPath` | selected repository path in Review, `.` for its root, or `null` | `null` |
-| `reviewTab` | selected resource reading; empty uses its normal initial reading | `''` |
+| `section` | `overview` or a collection: `entity`, `interface`, `domain`, `capability`, `journey`, or `rule` | `overview` |
 | `resource` | the stable key of the inspected resource (`screen:reader-web::…`), or `null` for the section's collection | `null` |
 | `tab` | underlying collection: `overview` (Rows), `graph`, or `matrix` (Entities, Capabilities and Business Rules); Product Overview: `overview` (About), `coverage`, or `references` | `overview` |
 | `resourceTab` | resource reading: `overview`, `structure`, `scenarios`, `lifecycle`, `connections`, or `references`; independent of `tab` | `overview` |
@@ -427,7 +422,7 @@ Exclusions and Unmapped entries, including those without paths. Selecting a card
 activates its filter; selecting it again restores all areas. Cards are the only
 category filter and totals remain unchanged by search or filtering.
 
-These annotations share `BlrRepositoryTree` with Review: search, expand/collapse,
+These annotations use `BlrRepositoryTree`: search, expand/collapse,
 a Repository root and compact annotation badges. Each recorded location appears
 once. Descriptions explain distinct behavior, so the same location can be
 covered, excluded and unmapped. Folders summarize distinct entries at or below
@@ -444,7 +439,7 @@ restores focus. Method disclosure preserves search, filters and expansion.
 
 `coverage.path` is navigation state, encoded as `cp` for refresh and browser
 history. Method disclosure does not change the URL. Tree expansion is remembered
-for the report. Narrow screens scroll the tree within its frame, as in Review.
+for the report. Narrow screens scroll the tree within its frame.
 
 ## Navigation regression checks
 
@@ -462,62 +457,6 @@ the Product Model to save layout captures.
 `node scripts/check-report-sidebar.mjs <url>` checks desktop collapse, keyboard
 access, tooltips, saved state, utilities and the independent mobile drawer.
 
-
-## Read-only Review
-
-The optional `changes` prop supplies a comparison and models for two Git states.
-`mode: 'uncommitted'` opens HEAD versus Working state on every branch, or an empty
-state before the first commit. It includes staged, unstaged and new model files.
-An empty result stays empty; **Compare versions…** explicitly opens the Base and
-Compare to selectors. Returning to uncommitted changes clears the explicit
-comparison. Comparison URLs preserve the chosen versions.
-
-Review's tree defaults to authored files within the active
-`repository.modelPath`, including nested models. Generated build/cache files
-are excluded. **Show other repository changes** includes their paths and change
-badges in the same tree, with the same search, filters and expansion controls,
-and no file-opening actions. The heading and top-bar Review badge count changed
-model files independently of tree filters. The header shows nonzero Added (`+`),
-Modified (`~`), Deleted (`−`) and Unavailable (`?`) counts in their existing colors,
-or `0` for an empty comparison. On narrow screens it shows the total. Hovering
-explains each count; clicking or tapping the counts opens the named breakdown
-and comparison context. The Review button still opens Review directly.
-Coverage keeps its own
-recorded source areas and shares the tree's search and expansion behavior.
-
-Selecting a model resource opens the ordinary resource slideover first, just as
-opening it from a collection or a resource link does. **Show diff** explicitly
-reveals changes in that same layout, with the baseline named beside the button.
-Added and removed rows retain their usual layout, modified fields or sections
-show previous values in place, and the existing tabs identify affected readings.
-**Hide diff** restores the normal reading without changing the selected tab.
-Lifecycle and Connections can show the earlier version using the same components,
-without graph overlays.
-Product and Coverage retain their named Before/After comparisons. Removed resources,
-sections and References remain readable. Scenario comparisons stay under their
-parent and align unchanged steps before comparing edits; ambiguous rewrites
-remain removed and added rows. Derived connections and lifecycle transitions
-are labeled separately and reuse the ordinary drawings without graph overlays. The selected
-comparison and tree location remain in place when inspecting a related resource.
-Reference and resource links resolve in the version whose value they accompany.
-
-**View file diff** opens the secondary file comparison. Configuration,
-formatting-only changes and unavailable models open it directly; an unavailable
-model is never presented as a deletion. `loadRepositoryFile(base, target, path)`
-reads bounded before/after contents on demand. Unified diffs use line numbers, addition/removal
-markers, inline edit highlights and expandable unchanged context. Side-by-side
-diffs use aligned rows, and the file panel can expand. Large rewrites have a
-bounded fallback; long blocks reveal more lines on demand. Empty files, line
-endings, mode changes and unavailable contents remain explicit. Resource buttons
-open the authored resource itself at either selected version, including deleted
-resources from Base. Missing or invalid models limit rendered comparisons, not file diffs.
-
-The `compare`, `uncommitted`, `historySearch` and `historyMore` events request
-read-only host data. No event records inspection, approves work or writes a saved
-state. Hosts without Git context omit Review.
-
-The navigation composable persists `reviewPath` as `rp`, its comparison reading `reviewTab` as `rv`,
-`resourceState` as `v`, and Coverage's selected path as `cp`.
 
 Check the collection preview picker against a running local viewer with
 `node scripts/check-collection-views.mjs <viewer-url>`. This covers all six

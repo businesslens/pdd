@@ -1,5 +1,3 @@
-import { isUtf8 } from 'node:buffer'
-import type { GitHistory } from './git-history.js'
 import { spawn } from 'node:child_process'
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http'
 import { lstatSync, readFileSync, watch, type FSWatcher } from 'node:fs'
@@ -8,10 +6,6 @@ import { fileURLToPath } from 'node:url'
 import { createRequire } from 'node:module'
 import type { ProductReportV16 } from './portable.js'
 import { MAX_PRODUCT_LOGO_BYTES, validateProductLogo } from '../logo.js'
-import { createRepositoryComparison } from './repository-diff.js'
-import { diffReports, type ReportBaseline } from './report-diff.js'
-import { createReferenceFileSource } from './reference-files.js'
-import type { ReportReferenceFiles } from './report-reference-files.js'
 import { localCodePreview } from './local-code-preview.js'
 import { localMarkdownPreview } from './local-markdown-preview.js'
 
@@ -84,7 +78,7 @@ export interface LocalViewer {
 
 /** Everything about one model: what to compile, and where to watch and read. */
 export type LocalViewerBinding = Pick<LocalViewerOptions,
-  'compile' | 'initialReport' | 'watchRoot' | 'logoFile' | 'assetRoot' | 'referenceRoot' | 'history'>
+  'compile' | 'initialReport' | 'watchRoot' | 'logoFile' | 'assetRoot'>
 
 export interface LocalViewerOptions {
   port?: number
@@ -105,9 +99,6 @@ export interface LocalViewerOptions {
    * rather than only from `.businesslens/`. Omit it and the mount is off.
    */
   assetRoot?: string
-  /** Root for local Reference file comparisons, including code and documents. */
-  referenceRoot?: string
-  history?: GitHistory
 }
 
 interface ReportSnapshot {
@@ -117,7 +108,7 @@ interface ReportSnapshot {
 }
 
 interface ReportEvent {
-  type: 'report' | 'compile-error' | 'baselines' | 'references'
+  type: 'report' | 'compile-error'
   revision: number
   message?: string
 }
@@ -135,14 +126,7 @@ class LocalReportStore {
   private error?: string
   private revision = 0
   private timer?: ReturnType<typeof setTimeout>
-  private baselineTimer?: ReturnType<typeof setTimeout>
-  private committedTimer?: ReturnType<typeof setInterval>
-  private referenceTimer?: ReturnType<typeof setInterval>
-  private referenceFiles?: ReportReferenceFiles
-  private referenceRevision?: string
-  private readReferenceFiles?: (report: ProductReportV16) => ReportReferenceFiles
   private watcher?: FSWatcher
-  private repository?: ReturnType<typeof createRepositoryComparison>
   private readonly listeners = new Set<(event: ReportEvent) => void>()
 
   constructor(private readonly options: LocalViewerOptions) {
@@ -167,11 +151,6 @@ class LocalReportStore {
 
   private attach(): void {
     const options = this.options
-    if (options.assetRoot) {
-      try { this.repository = createRepositoryComparison(options.assetRoot, options.history?.modelPath) } catch { /* No Git inventory. */ }
-    }
-    if (options.referenceRoot) this.readReferenceFiles = createReferenceFileSource(options.referenceRoot)
-
     if (options.watchRoot) {
       this.watcher = watch(options.watchRoot, { recursive: true }, (_event, filename) => {
         if (!this.isModelSource(filename)) return
@@ -184,114 +163,17 @@ class LocalReportStore {
       })
       this.watcher.on('error', error => this.reject(`File watching failed: ${error.message}`))
     }
-
-    // Watch Git refs without compiling or retaining historical reports.
-    if (options.history) {
-      const history = options.history
-      const readRevision = () => history.revision()
-      let revision = readRevision()
-      this.committedTimer = setInterval(() => {
-        const next = readRevision()
-        if (next === revision) return
-        revision = next
-        this.announceBaselines()
-      }, 1000)
-      this.committedTimer.unref()
-    }
-    // Only referenced paths are polled. This covers files outside the model,
-    // binary assets and atomic replacements without watching the entire repo.
-    if (this.readReferenceFiles) {
-      this.referenceTimer = setInterval(() => this.refreshReferences(), 1000)
-      this.referenceTimer.unref()
-    }
   }
 
   private detach(): void {
     if (this.timer) clearTimeout(this.timer)
-    if (this.baselineTimer) clearTimeout(this.baselineTimer)
-    if (this.committedTimer) clearInterval(this.committedTimer)
-    if (this.referenceTimer) clearInterval(this.referenceTimer)
-    this.timer = this.baselineTimer = this.committedTimer = this.referenceTimer = undefined
+    this.timer = undefined
     this.watcher?.close()
     this.watcher = undefined
-    this.repository = undefined
-    this.readReferenceFiles = undefined
-    this.referenceFiles = undefined
-    this.referenceRevision = undefined
   }
 
   snapshot(): ReportSnapshot {
     return { report: this.report, error: this.error, revision: this.revision }
-  }
-
-  historyDefaults() {
-    const git = this.options.history?.defaults()
-    const base = git?.base ?? null
-    return { base, target: 'working', emptyReason: base ? null : git?.hasModelHistory ? 'choose-state' : 'no-saved-model' }
-  }
-
-  history(query = '', offset = 0) {
-    const page = this.options.history?.list(query, offset) ?? { states: [], more: false }
-    const states: ReportBaseline[] = offset ? [] : [{ id: 'working', kind: 'working', available: true }]
-    return { states: [...states, ...page.states], more: page.more, nextOffset: offset + 50 }
-  }
-
-  private identity(id: string): ReportBaseline {
-    if (id === 'empty' && this.repository) return { id, kind: 'empty', available: true }
-    if (id === 'working') return { id, kind: 'working', available: true }
-    if (this.options.history) return this.options.history.resolve(id)
-    throw new Error('This Git state is unavailable.')
-  }
-
-  state(id: string): { id: string, state: ReportBaseline, report: ProductReportV16, referenceFiles?: ReportReferenceFiles } {
-    if (id === 'working') {
-      if (!this.report || this.error) throw new Error(this.error ?? 'The working model is not ready.')
-      this.refreshReferences()
-      return { id, state: { id: 'working', kind: 'working', available: true }, report: this.report, referenceFiles: this.referenceFiles }
-    }
-    const value = this.options.history?.read(id)
-    if (!value) throw new Error('This Git state is unavailable.')
-    const resolvedId = `commit:${value.commit}`
-    return { ...value, id: resolvedId, state: { id: resolvedId, kind: 'commit', available: true,
-      commit: value.commit, at: value.committedAt, label: `${value.commit.slice(0, 7)} ${value.subject}`, detail: value.committedAt } }
-  }
-
-  async compare(base: string, target: string) {
-    const baseState = this.identity(base)
-    const targetState = base === target ? baseState : this.identity(target)
-    const modelNotices: string[] = []
-    const model = (state: ReportBaseline, side: string) => {
-      if (state.kind === 'empty') return null
-      try { return this.state(state.id) }
-      catch (error) { modelNotices.push(`${side}: ${(error as Error).message}`); return null }
-    }
-    const before = model(baseState, 'Base')
-    const after = baseState.id === targetState.id ? before : model(targetState, 'Compare to')
-    const files = before?.referenceFiles && after?.referenceFiles ? { before: before.referenceFiles, after: after.referenceFiles } : undefined
-    const repository = this.repository ? await this.repository.compare(baseState.id, targetState.id) : undefined
-    return { base: baseState, target: targetState, before: before?.report ?? null, after: after?.report ?? null,
-      diff: before && after ? diffReports(before.report, after.report, files) : null, repository,
-      modelNotice: modelNotices.length ? modelNotices.join('\n') : undefined, revision: this.revision }
-  }
-
-  async repositoryFile(base: string, target: string, path: string) {
-    if (!this.repository) throw new Error('Repository comparison is unavailable.')
-    const before = this.identity(base), after = base === target ? before : this.identity(target)
-    return this.repository.file(before.id, after.id, path)
-  }
-
-  historicalBody(id: string, path: string): Buffer {
-    const state = this.identity(id)
-    if (state.kind !== 'commit' || !this.options.history) throw new Error('Select a historical Git state.')
-    return this.options.history.body(state.commit, path)
-  }
-
-  private announceBaselines(): void {
-    if (this.baselineTimer) clearTimeout(this.baselineTimer)
-    this.baselineTimer = setTimeout(
-      () => this.emit({ type: 'baselines', revision: this.revision }),
-      this.options.debounceMs ?? 180
-    )
   }
 
   subscribe(listener: (event: ReportEvent) => void): () => void {
@@ -326,6 +208,9 @@ class LocalReportStore {
     // macOS reports the watched directory's basename for some direct-child
     // changes when recursive mode is enabled, rather than the child filename.
     if (this.options.watchRoot && normalized === basename(this.options.watchRoot)) return true
+    // Its presence is a lint error, so adding or removing the retired Coverage
+    // file must refresh the report even when no Markdown changes.
+    if (normalized === 'coverage.json') return true
     return /\.(?:md|ya?ml|svg)$/i.test(normalized)
   }
 
@@ -342,27 +227,11 @@ class LocalReportStore {
     const recovered = this.error !== undefined
     const changed = serialized !== this.serialized
     this.report = report
-    this.refreshReferences(false)
     this.serialized = serialized
     this.error = undefined
     if (!notify || (!changed && !recovered && !forceNotify)) return
     this.revision += 1
     this.emit({ type: 'report', revision: this.revision })
-  }
-
-  private refreshReferences(notify = true): void {
-    if (!this.report || !this.readReferenceFiles) return
-    const files = this.readReferenceFiles(this.report)
-    // Content is cached separately; the revision only needs fingerprints and failures.
-    const revision = JSON.stringify(Object.entries(files).map(([path, file]) =>
-      [path, file.status === 'present' ? file.digest : file]))
-    const changed = revision !== this.referenceRevision
-    this.referenceFiles = files
-    this.referenceRevision = revision
-    if (changed && notify) {
-      this.revision += 1
-      this.emit({ type: 'references', revision: this.revision })
-    }
   }
 
   private reject(message: string, notify = true): void {
@@ -487,11 +356,8 @@ function assetFile(assetRoot: string, pathname: string): string | undefined {
 }
 
 function repositoryAsset(response: ServerResponse, file: string, head: boolean): void {
-  assetBody(response, file, readFileSync(file), head)
-}
-
-function assetBody(response: ServerResponse, file: string, body: Buffer, head: boolean): void {
   const extension = extname(file).toLowerCase()
+  const body = readFileSync(file)
   if (extension === '.svg') {
     const issues = validateProductLogo(body)
     if (issues.length) {
@@ -551,51 +417,6 @@ function requestHandler(
 
     if (pathname === HEALTH_PATH) {
       json(response, 200, { ok: true }, head)
-      return
-    }
-    if (pathname === '/_businesslens/history' || pathname === '/_businesslens/history/diff' || pathname === '/_businesslens/history/defaults' || pathname === '/_businesslens/state') {
-      try {
-        if (pathname.endsWith('/defaults')) json(response, 200, store.historyDefaults(), head)
-        else if (pathname.endsWith('/diff')) {
-          void store.compare(url.searchParams.get('base') ?? '', url.searchParams.get('target') ?? 'working')
-            .then(value => json(response, 200, value, head)).catch(error => json(response, 422, { message: error.message }, head))
-        }
-        else if (pathname.endsWith('/state')) {
-          const value = store.state(url.searchParams.get('state') ?? '')
-          json(response, 200, { id: value.id, state: value.state, report: value.report }, head)
-        } else {
-          const offset = Number(url.searchParams.get('offset') ?? 0)
-          if (!Number.isSafeInteger(offset) || offset < 0) throw new Error('Invalid history offset.')
-          json(response, 200, store.history((url.searchParams.get('q') ?? '').slice(0, 200), offset), head)
-        }
-      } catch (error) { json(response, 422, { message: (error as Error).message }, head) }
-      return
-    }
-    const historicalState = url.searchParams.get('state')
-    if (historicalState && historicalState !== 'working' && (pathname === CODE_PATH || pathname.startsWith(ASSET_PREFIX))) {
-      try {
-        // Resolve movable refs once, then carry the immutable id into nested links.
-        const snapshot = store.state(historicalState)
-        const textBody = (path: string) => {
-          const body = store.historicalBody(snapshot.id, path)
-          if (body.length > 2 * 1024 * 1024 || body.includes(0) || !isUtf8(body)) return undefined
-          return body.toString('utf8')
-        }
-        if (pathname === CODE_PATH) {
-          referencePreview(request, response, url, head, () => localCodePreview(snapshot.report, undefined, url.searchParams.get('target') ?? '', textBody))
-        } else {
-          const path = decodeURIComponent(pathname.slice(ASSET_PREFIX.length))
-          if (!(extname(path).toLowerCase() in ASSET_CONTENT_TYPES)) throw new Error('This file type cannot be previewed.')
-          if (extname(path).toLowerCase() === '.md' && url.searchParams.get('raw') !== '1') {
-            referencePreview(request, response, url, head, () => localMarkdownPreview('', path, textBody, snapshot.id))
-          } else assetBody(response, path, store.historicalBody(snapshot.id, path), head)
-        }
-      } catch (error) { json(response, 404, { message: (error as Error).message }, head) }
-      return
-    }
-    if (pathname === '/_businesslens/review/file') {
-      void store.repositoryFile(url.searchParams.get('base') ?? '', url.searchParams.get('target') ?? 'working', url.searchParams.get('path') ?? '')
-        .then(value => json(response, 200, value, head)).catch(error => json(response, 422, { message: error.message }, head))
       return
     }
     if (pathname === REPORT_PATH) {

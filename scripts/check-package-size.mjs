@@ -33,8 +33,8 @@ for (const budget of budgets) {
   }
 }
 
-// Check the compressed artifact here as well as in Publish. The combined Git
-// Review, Coverage, sidebar and matrix UI fit within this shared archive budget.
+// Check the compressed artifact here as well as in Publish. Coverage, sidebar
+// and matrix UI fit within this shared archive budget.
 const maximumTarballBytes = 2240 * 1024
 const tarballBytes = process.argv[2]
   ? (await stat(resolve(process.argv[2]))).size

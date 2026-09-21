@@ -17,7 +17,6 @@ import type {
   ScreenView
 } from '../utils/reportWorkspace'
 import { entityFacetOf, isScenarioKind, resolveResource, scenarioStepMatrix } from '../utils/reportWorkspace'
-import { resourceReviewKey, reviewResource, reviewRows } from '../utils/resourceReview'
 import { scenarioTerm } from '../utils/vocabulary'
 import { hasAuthoredBody } from '../utils/pageSections'
 import {
@@ -41,16 +40,6 @@ const routeColumns = defineModel<string>('routeColumns', { default: 'auto' })
 
 const asScreen = computed(() => props.resource as ScreenView)
 const asEntity = computed(() => props.resource as EntityView)
-const review = inject(resourceReviewKey, computed(() => null))
-const beforeEntity = computed(() => { const resource = reviewResource(review.value, 'before', props.resource.key); return resource?.kind === 'entity' ? resource : null })
-const afterEntity = computed(() => { const resource = reviewResource(review.value, 'after', props.resource.key); return resource?.kind === 'entity' ? resource : null })
-const entityFacts = computed(() => props.resource.kind === 'entity' ? reviewRows(beforeEntity.value?.informationKept,
-  review.value ? afterEntity.value?.informationKept ?? [] : asEntity.value.informationKept, !!review.value,
-  fact => ({ name: fact.name, description: fact.description }), fact => fact.name).map(row => ({ ...row, value: (row.after ?? row.before)! })) : [])
-function openFactRule(id: string, removed: boolean) {
-  if (removed && review.value?.before) review.value.inspect(`rule:${id}`, review.value.before.state)
-  else openRule(id)
-}
 const asCapability = computed(() => props.resource as CapabilityView)
 const asJourney = computed(() => props.resource as JourneyView)
 const asScenario = computed(() => props.resource as ScenarioView)
@@ -383,9 +372,9 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
       </div>
     </section>
 
-    <section v-if="resource.intent || beforeEntity?.intent" class="space-y-2">
+    <section v-if="resource.intent" class="space-y-2">
       <h2 class="blr-page-heading"><BlrTerm slug="intent" /></h2>
-      <BlrReviewValue :before="beforeEntity?.intent" :after="afterEntity?.intent" long label="Intent"><BlrProse :text="resource.intent || beforeEntity?.intent || ''" class="max-w-3xl" /></BlrReviewValue>
+      <BlrProse :text="resource.intent" class="max-w-3xl" />
     </section>
 
     <section v-if="resource.kind === 'journey'" class="space-y-2">
@@ -941,40 +930,36 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
 
     <!-- ENTITY: what the Product keeps. States and their changes are in Lifecycle. -->
     <template v-if="resource.kind === 'entity'">
-      <section v-if="asEntity.acts || beforeEntity?.acts" class="flex flex-wrap items-center gap-2 text-sm text-default">
+      <section v-if="asEntity.acts" class="flex flex-wrap items-center gap-2 text-sm text-default">
         <BlrEntityMark :facet="asEntity.entityKind!" :acts="asEntity.acts" size="xs" />
-        <BlrReviewValue :before="beforeEntity?.acts ? `${beforeEntity.acts} ${beforeEntity.entityKind}` : undefined" :after="afterEntity?.acts ? `${afterEntity.acts} ${afterEntity.entityKind}` : undefined" label="Acts">
-          Acts on the Product as {{ (asEntity.acts || beforeEntity?.acts) === 'external' ? 'an external' : 'an internal' }} {{ asEntity.entityKind || beforeEntity?.entityKind }}.
-        </BlrReviewValue>
+        <span>
+          Acts on the Product as {{ asEntity.acts === 'external' ? 'an external' : 'an internal' }} {{ asEntity.entityKind }}.
+        </span>
       </section>
 
-      <section v-if="entityFacts.length" class="space-y-2">
+      <section v-if="asEntity.informationKept.length" class="space-y-2">
         <h2 class="blr-page-heading">
           <BlrTerm slug="information-kept" text="Information kept" />
           <span class="blr-meta ms-1">{{ asEntity.informationKept.length }}</span>
         </h2>
         <ul class="grid gap-2 @min-[480px]:grid-cols-2">
           <li
-            v-for="row in entityFacts"
-            :key="row.value.name + (row.after ? 'current' : 'removed')"
+            v-for="fact in asEntity.informationKept"
+            :key="fact.name"
             class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 rounded-lg border border-default bg-elevated/30 px-3 py-2 text-sm"
           >
-            <BlrReviewValue :before="row.before ? row.before.description || row.before.name : undefined" :after="row.after ? row.after.description || row.after.name : undefined" :label="row.value.name">
-              <span class="font-medium text-highlighted">{{ row.value.name }}</span>
-              <span class="ms-2 text-default">{{ row.value.description }}</span>
-            </BlrReviewValue>
-            <BlrReviewSnapshot :side="!row.after ? review?.before : null">
+            <span class="font-medium text-highlighted">{{ fact.name }}</span>
+            <span class="text-default">{{ fact.description }}</span>
             <!-- A fact a Rule governs says so here and nothing more; the Rule page is the reading. -->
             <BlrResourceLink
-              v-if="row.value.ruleIds.length"
-              :resource-key="`rule:${row.value.ruleIds[0]!}`"
+              v-if="fact.ruleIds.length"
+              :resource-key="`rule:${fact.ruleIds[0]!}`"
               class="blr-chip ms-auto"
-              :title="factRuleTitles(row.value.ruleIds)"
-              @open="openFactRule(row.value.ruleIds[0]!, !row.after)"
+              :title="factRuleTitles(fact.ruleIds)"
+              @open="openRule(fact.ruleIds[0]!)"
             >
-              <UIcon name="i-lucide-scale" class="size-3.5" />{{ row.value.ruleIds.length }} {{ row.value.ruleIds.length === 1 ? 'Rule' : 'Rules' }}
+              <UIcon name="i-lucide-scale" class="size-3.5" />{{ fact.ruleIds.length }} {{ fact.ruleIds.length === 1 ? 'Rule' : 'Rules' }}
             </BlrResourceLink>
-            </BlrReviewSnapshot>
           </li>
         </ul>
       </section>

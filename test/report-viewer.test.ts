@@ -32,12 +32,6 @@ describe('bundled icons', () => {
   )
   const asBundleName = (icon: string) => icon.replace(/^i-([a-z0-9-]+?)-/, '$1:')
 
-  it('bundles the glyphs What changed and its marks wear', () => {
-    for (const icon of ['lucide:history', 'lucide:pencil', 'lucide:pin', 'lucide:git-commit-horizontal', 'lucide:plus', 'lucide:minus']) {
-      expect(bundled.has(icon), icon).toBe(true)
-    }
-  })
-
   it('bundles the icon of every resource kind and every Interface type', () => {
     const icons = (record: unknown) =>
       Object.values(record as Record<string, { icon: string }>).map(meta => meta.icon)
@@ -57,7 +51,8 @@ describe('stable Product Report', () => {
       id: report.id,
       title: report.title,
       description: report.description,
-      schemaVersion: report.schemaVersion
+      schemaVersion: report.schemaVersion,
+      supportingSections: report.supportingSections
     })
     // An Actor is an Entity that acts: a facet of one collection, not a collection.
     expect(workspace.actingEntities).toHaveLength(report.model.entities.filter(item => item.acts !== null).length)
@@ -1428,46 +1423,5 @@ describe('composed lifecycle', () => {
     expect(workspaceSource).not.toContain('ScenarioStepMentionView')
     expect(workspaceSource).toContain('mentions: ScenarioStepEntityView[]')
     expect(source('app/components/BlrStepEntity.vue')).toContain('mention: ScenarioStepEntityView')
-  })
-})
-
-describe('what changed', () => {
-  const changesModulePath = '../layers/nuxt/report-viewer/app/utils/reportChanges.ts'
-
-  it('keys every change the way the surfaces address resources and names the compared states', async () => {
-    const { changesByKey, baselineTitle } = await import(changesModulePath)
-    const diff = {
-      product: [],
-      resources: [
-        { collection: 'capabilityScenarios', id: 'browse-catalog', title: 'Browse catalog', change: 'changed', fields: [] },
-        { collection: 'businessRules', id: 'new-rule', title: 'New rule', change: 'added', fields: [] }
-      ],
-      counts: { added: 1, removed: 0, changed: 1 }
-    }
-    const byKey = changesByKey(diff)
-    expect([...byKey.keys()]).toEqual(['capability-scenario:browse-catalog', 'rule:new-rule'])
-
-    const committed = { id: 'head', kind: 'committed', available: true, at: '2026-08-08T00:00:00Z', detail: 'abcdef0 fixture' }
-    const branch = { id: 'branch:refs/heads/main', kind: 'branch', available: true, label: 'main' }
-    expect(baselineTitle(committed)).toBe('Last commit')
-    expect(baselineTitle({ ...branch, label: 'feature/billing' })).toBe('feature/billing')
-  })
-
-  it('draws the header action, the surface and the marks only where the host holds a comparison', () => {
-    const shell = source('app/components/BlrReportShell.vue')
-    const rail = source('app/components/BlrRail.vue')
-    const entry = source('app/components/BusinessLensReportViewer.vue')
-    expect(entry).toContain('changes?: ReportChanges | null')
-    expect(shell).toContain('<BlrChanges')
-    expect(shell).toContain(':change="changeByKey.get(resource.key)?.change"')
-    const header = shell.slice(shell.indexOf('<header'), shell.indexOf('</header>'))
-    expect(header).toContain('<BlrReviewButton v-if="changes"')
-    expect(source('app/components/BlrReviewButton.vue')).toContain('data-header-changes')
-    expect(rail).not.toContain('What changed')
-    // A live host puts its pulse in the status bar in place of the generated date.
-    expect(shell).toContain('<slot v-if="$slots.status" name="status" />')
-    expect(entry).toContain('#status')
-    expect(existsSync(join(VIEWER, 'app/components/BlrChanges.vue'))).toBe(true)
-    expect(existsSync(join(VIEWER, 'app/components/BlrChangeMark.vue'))).toBe(true)
   })
 })

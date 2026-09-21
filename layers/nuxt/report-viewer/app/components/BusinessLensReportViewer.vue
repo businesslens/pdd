@@ -12,14 +12,12 @@ import { destinationForLocation } from '../utils/reportDestinations'
  * navigation and a pull command. Those differences arrive as slots and a
  * bindable section, so the Product Report stays one implementation.
  */
-import type { ProductReportV16, RepositoryFileLoader } from 'businesslens/report'
+import type { ProductReportV16 } from 'businesslens/report'
 import { projectReportWorkspace } from '../utils/reportWorkspace'
 import type { ReportProductCatalogLink, ReportProductLink } from '../utils/reportProducts'
-import type { ReportChanges } from '../utils/reportChanges'
 
 const props = withDefaults(defineProps<{
   report: ProductReportV16
-  loadRepositoryFile?: RepositoryFileLoader
   /** Host-resolved `.businesslens/product/logo.svg`; used in the picker and Overview. */
   logoSrc?: string | null
   /** Other products available in this host; mark the current destination active. */
@@ -30,23 +28,7 @@ const props = withDefaults(defineProps<{
   sidebarVocabulary?: boolean
   /** Mounted host-header element receiving the report's search and Vocabulary controls. */
   toolsTarget?: string
-  /**
-   * The host's comparison against an earlier state of this model, where it
-   * keeps one. The local viewer does; the catalog does not, and passes nothing.
-   */
-  changes?: ReportChanges | null
-  readingReport?: ProductReportV16 | null
-  readingLabel?: string
-  readingError?: string | null
 }>(), { sidebarVocabulary: true })
-
-const emit = defineEmits<{
-  uncommitted: []
-  /** The reader chose another baseline to compare against. */
-  compare: [base: string, target: string]
-  historySearch: [query: string]
-  historyMore: []
-}>()
 
 /**
  * The open section: `overview` or a main resource collection. Bindable so a
@@ -60,8 +42,6 @@ const section = defineModel<string>('section', { default: 'overview' })
  * deep links, a working back button, and a refresh that lands where it left.
  */
 const resource = defineModel<string | null>('resource', { default: null })
-const resourceState = defineModel<string>('resourceState', { default: 'working' })
-const readingWorkspace = computed(() => props.readingReport ? projectReportWorkspace(props.readingReport) : null)
 
 /**
  * The underlying view's drawing or Product tab; independent of the resource.
@@ -76,10 +56,8 @@ const scenarioRoute = defineModel<string | null>('scenarioRoute', { default: nul
 
 /** `auto`, or the reader's preferred number of visible route columns. */
 const routeColumns = defineModel<string>('routeColumns', { default: 'auto' })
-const topology = defineModel<TopologyReading>('topology', { default: defaultTopologyReading })
-const reviewPath = defineModel<string | null>('reviewPath', { default: null })
-const reviewTab = defineModel<string>('reviewTab', { default: '' })
 const coverage = defineModel<CoverageReading>('coverage', { default: defaultCoverageReading })
+const topology = defineModel<TopologyReading>('topology', { default: defaultTopologyReading })
 
 const workspace = computed(() => projectReportWorkspace(props.report))
 
@@ -112,16 +90,8 @@ onMounted(() => { mounted = true; synchronizeLocation() })
     <BlrReportShell
       :section="location.section"
       :resource="location.resource"
-      v-model:resource-state="resourceState"
-      :reading-workspace="readingWorkspace"
-      :reading-label="readingLabel"
-      :reading-error="readingError"
       :tab="location.tab"
       v-model:coverage="coverage"
-      v-model:review-path="reviewPath"
-      v-model:review-tab="reviewTab"
-      :load-repository-file="loadRepositoryFile"
-
       v-model:resource-tab="resourceTab"
       v-model:scenario-route="scenarioRoute"
       v-model:route-columns="routeColumns"
@@ -132,11 +102,6 @@ onMounted(() => { mounted = true; synchronizeLocation() })
       :product-catalog="productCatalog"
       :sidebar-vocabulary="sidebarVocabulary"
       :tools-target="toolsTarget"
-      :changes="changes"
-      @compare="(base, target) => emit('compare', base, target)"
-      @uncommitted="emit('uncommitted')"
-      @history-search="emit('historySearch', $event)"
-      @history-more="emit('historyMore')"
       @update:section="section = $event"
       @update:resource="resource = $event"
       @update:tab="tab = $event"

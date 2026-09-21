@@ -18,7 +18,7 @@ const CHILD_COLLECTIONS: Partial<Record<ReportResourceKind, Record<string, Repor
   journey: { scenarios: 'journey-scenario' }
 }
 
-/** Recognize authored model paths, including deleted files and nested models. */
+/** Recognize authored model paths, including nested models. */
 export function repositoryModelKind(node: Pick<RepositoryTreeNode, 'value' | 'directory'>): ReportResourceKind | null {
   const parts = node.value.split('/')
   const model = parts.lastIndexOf('.businesslens')

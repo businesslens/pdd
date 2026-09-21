@@ -1,17 +1,12 @@
 <script setup lang="ts">
 import type { AnyResourceView, ReportWorkspace } from '../utils/reportWorkspace'
 import { ENTITY_KIND_META } from '../utils/reportWorkspace'
-import { resourceReviewKey, reviewResource } from '../utils/resourceReview'
 import { resourceAncestors, resourceDomains } from '../utils/reportDestinations'
 
 const props = defineProps<{ workspace: ReportWorkspace, resource: AnyResourceView }>()
 const emit = defineEmits<{ open: [resource: AnyResourceView] }>()
 const ancestors = computed(() => resourceAncestors(props.workspace, props.resource))
 const domains = computed(() => resourceDomains(props.workspace, props.resource))
-const review = inject(resourceReviewKey, computed(() => null))
-const beforeResource = computed(() => reviewResource(review.value, 'before', props.resource.key))
-const previousDomains = computed(() => beforeResource.value && review.value?.before ? resourceDomains(review.value.before.workspace, beforeResource.value) : [])
-const domainIds = (values: Array<{ id: string }>) => values.map(value => value.id)
 const label = computed(() => ENTITY_KIND_META[props.resource.kind].label)
 const open = ref(false)
 const domain = computed(() => domains.value[0])
@@ -29,7 +24,6 @@ function select(domain: AnyResourceView) { open.value = false; emit('open', doma
         <UIcon name="i-lucide-chevron-right" class="size-3 shrink-0" />
         <BlrResourceLink :resource-key="ancestor.key" :title="ancestor.title" class="min-w-0 truncate hover:underline" @open="emit('open', ancestor)">{{ ancestor.title }}</BlrResourceLink>
       </span>
-      <BlrReviewValue v-if="domains.length || previousDomains.length" inline :before="domainIds(previousDomains)" :after="domainIds(domains)" label="Domain">
       <span v-if="domain" class="inline-flex min-w-0 items-center gap-1.5" data-inline-domain>
         <span aria-hidden="true" class="shrink-0">·</span>
         <BlrResourceLink :resource-key="domain.key" :aria-label="`Domain: ${domain.title}`" :title="domain.title" class="inline-flex min-w-0 items-center gap-1.5 rounded-sm text-default hover:underline" @open="emit('open', domain)">
@@ -51,9 +45,6 @@ function select(domain: AnyResourceView) { open.value = false; emit('open', doma
           </ul>
         </template>
       </UPopover>
-      <span v-if="!domains.length">{{ previousDomains.map(domain => domain.title).join(', ') }}</span>
-      <template #before>{{ previousDomains.map(domain => domain.title).join(', ') }}</template>
-      </BlrReviewValue>
     </div>
   </div>
 </template>

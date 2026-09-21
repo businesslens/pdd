@@ -3,17 +3,10 @@
 import type { AnyResourceView, ReportWorkspace, ScenarioView } from '../utils/reportWorkspace'
 import { entityFacetOf, resolveResource } from '../utils/reportWorkspace'
 import type { ScenarioStep } from '../utils/scenarioSteps'
-import { resourceReviewKey, reviewStepValue } from '../utils/resourceReview'
 import { stepActor, stepCapability } from '../utils/scenarioSteps'
 
-const props = defineProps<{ workspace: ReportWorkspace, scenario: ScenarioView, step: ScenarioStep, index: number, previous?: ScenarioStep, compared?: boolean }>()
+const props = defineProps<{ workspace: ReportWorkspace, scenario: ScenarioView, step: ScenarioStep, index: number }>()
 const emit = defineEmits<{ open: [resource: AnyResourceView] }>()
-const review = inject(resourceReviewKey, computed(() => null))
-const previous = computed(() => props.compared ? props.previous : props.step)
-const oldWorkspace = computed(() => review.value?.before?.workspace ?? props.workspace)
-const oldWho = computed(() => previous.value?.stepKind === 'product' ? 'Performed by the Product' : previous.value?.actorId ? `${previous.value.stepKind === 'condition' ? 'Applies to' : 'Performed by'} ${stepActor(oldWorkspace.value, previous.value)?.title ?? previous.value.actorId}` : 'No actor recorded')
-const oldEffects = computed(() => previous.value?.entities.map(effect => `${oldWorkspace.value.byKey.get(`entity:${effect.entityId}`)?.title ?? effect.entityId}${effect.as ? ` (${effect.as})` : ''}: ${effect.effect}${effect.from ? ` from ${effect.from}` : ''}${effect.to ? ` to ${effect.to}` : ''}`).join('; '))
-const oldPlaces = computed(() => previous.value?.contexts.map(item => `${item.routeId}: ${item.context.screenTitle || item.context.experienceTitle || item.context.interfaceTitle}`).join('; '))
 const actor = computed(() => stepActor(props.workspace, props.step))
 const capability = computed(() => stepCapability(props.workspace, props.scenario, props.step))
 const effects = computed(() => props.step.entities.map(mention => {
@@ -30,26 +23,24 @@ const open = (key: string) => { const resource = props.workspace.byKey.get(key);
     <dl class="blr-guided-fields">
       <div class="blr-guided-field blr-guided-action">
         <dt>{{ step.stepKind === 'condition' ? 'Condition' : 'Action' }}</dt>
-        <dd class="blr-guided-sentence"><BlrReviewValue :before="previous?.text" :after="step.text" label="Action">{{ step.text }}</BlrReviewValue></dd>
+        <dd class="blr-guided-sentence">{{ step.text }}</dd>
       </div>
 
-      <div v-if="step.stepKind === 'product' || actor || step.actorId || (compared && previous?.actorId)" class="blr-guided-field">
+      <div v-if="step.stepKind === 'product' || actor || step.actorId" class="blr-guided-field">
         <dt>Who</dt>
-        <dd><BlrReviewValue :before="previous ? { kind: previous.stepKind, actor: previous.actorId } : undefined" :after="{ kind: step.stepKind, actor: step.actorId }" label="Who"><span class="blr-guided-who">
+        <dd class="blr-guided-who">
           <span v-if="step.stepKind === 'product'" class="blr-guided-phrase"><span class="blr-guided-cue">Performed by</span><span>the Product</span></span>
           <span v-if="actor || step.actorId" class="blr-guided-phrase">
             <span class="blr-guided-cue">{{ step.stepKind === 'actor' ? 'Performed by' : step.stepKind === 'condition' ? 'Applies to' : 'For' }}</span>
             <BlrTopologyResource v-if="actor" :resource="actor" @open="open" />
             <span v-else>{{ step.actorId }}</span>
           </span>
-          </span><template #before><p>{{ oldWho }}</p></template></BlrReviewValue>
         </dd>
       </div>
 
-      <div v-if="effects.length || (compared && previous?.entities.length)" class="blr-guided-field">
+      <div v-if="effects.length" class="blr-guided-field">
         <dt>Entity effects</dt>
-        <dd><BlrReviewValue :before="previous?.entities" :after="step.entities" label="Entity effects">
-          <p v-if="!effects.length">{{ oldEffects }}</p>
+        <dd>
           <ul class="blr-guided-effects">
             <li v-for="(effect, position) in effects" :key="`${position}-${effect.entityId}-${effect.as}`" class="blr-guided-effect" :data-effect="effect.effect">
               <span class="blr-guided-verb">{{ effectVerb[effect.effect] }}</span>
@@ -71,13 +62,12 @@ const open = (key: string) => { const resource = props.workspace.byKey.get(key);
               </template>
             </li>
           </ul>
-          <template #before><p>{{ oldEffects }}</p></template></BlrReviewValue>
         </dd>
       </div>
 
-      <div v-if="step.contexts.length || (compared && previous?.contexts.length)" class="blr-guided-field">
+      <div v-if="step.contexts.length" class="blr-guided-field">
         <dt>Where</dt>
-        <dd><BlrReviewValue :before="previous ? reviewStepValue(previous).contexts : undefined" :after="reviewStepValue(step).contexts" label="Where"><span class="blr-guided-places"><span v-if="!step.contexts.length">{{ oldPlaces }}</span>
+        <dd class="blr-guided-places">
           <BlrStepContext
             v-for="context in step.contexts"
             :key="context.routeId"
@@ -85,13 +75,12 @@ const open = (key: string) => { const resource = props.workspace.byKey.get(key);
             :context="context.context"
             @select="emit('open', $event)"
           />
-          </span><template #before><p>{{ oldPlaces }}</p></template></BlrReviewValue>
         </dd>
       </div>
 
-      <div v-if="capability || (compared && previous?.capabilityId && scenario.scenarioType === 'journey')" class="blr-guided-field">
+      <div v-if="capability" class="blr-guided-field">
         <dt>Capability</dt>
-        <dd><BlrReviewValue :before="previous?.capabilityId" :after="step.capabilityId" label="Capability"><BlrTopologyResource v-if="capability" :resource="capability" @open="open" /><span v-else>{{ previous?.capabilityId }}</span><template #before>{{ previous ? stepCapability(oldWorkspace, scenario, previous)?.title ?? previous.capabilityId : '' }}</template></BlrReviewValue></dd>
+        <dd><BlrTopologyResource :resource="capability" @open="open" /></dd>
       </div>
     </dl>
   </div>

@@ -1,16 +1,14 @@
 <script setup lang="ts">
 /** A parent's Scenarios as expandable cards with labelled Steps in authored order. */
 import type { AnyResourceView, ReportWorkspace, ScenarioView } from '../utils/reportWorkspace'
-import type { ResourceChange } from 'businesslens/report'
 import { ENTITY_KIND_META } from '../utils/reportWorkspace'
 import { childrenOf } from '../utils/pageSections'
 import type { ColumnChoice } from '../composables/useColumns'
-import { resourceReviewKey, reviewResource, reviewRows, reviewStepValue } from '../utils/resourceReview'
+import { scenarioTerm } from '../utils/vocabulary'
 
 const props = defineProps<{
   workspace: ReportWorkspace
   resource: AnyResourceView
-  changes?: ReadonlyMap<string, ResourceChange>
   columns: ColumnChoice
   /** A Scenario reached by URL or search opens its card inside the parent. */
   selectedKey?: string | null
@@ -18,22 +16,7 @@ const props = defineProps<{
 }>()
 const emit = defineEmits<{ open: [resource: AnyResourceView] }>()
 
-const review = inject(resourceReviewKey, computed(() => null))
-const beforeParent = computed(() => reviewResource(review.value, 'before', props.resource.key))
-const afterParent = computed(() => reviewResource(review.value, 'after', props.resource.key))
-const scenarioRows = computed(() => reviewRows(
-  beforeParent.value && review.value?.before ? childrenOf(review.value.before.workspace, beforeParent.value) as ScenarioView[] : [],
-  review.value ? afterParent.value && review.value.after ? childrenOf(review.value.after.workspace, afterParent.value) as ScenarioView[] : [] : childrenOf(props.workspace, props.resource) as ScenarioView[],
-  !!review.value, scenario => ({ title: scenario.title, trigger: scenario.trigger, outcome: scenario.outcome, steps: scenario.steps.map(reviewStepValue), decisionPoints: scenario.decisionPoints, edgeCases: scenario.edgeCases, result: scenario.result }), scenario => scenario.key))
-const scenarios = computed(() => scenarioRows.value.map(row => (row.after ?? row.before)!))
-const changeKind = (change?: 'added' | 'modified' | 'deleted' | null) => change === 'modified' ? 'changed' as const : change === 'deleted' ? 'removed' as const : change ?? undefined
-const scenarioRow = (key: string) => scenarioRows.value.find(row => (row.after ?? row.before)!.key === key)
-const detailsValue = (scenario?: ScenarioView) => scenario && (scenario.decisionPoints.length || scenario.edgeCases.length) ? [scenario.decisionPoints, scenario.edgeCases] : undefined
-const stepsFor = (scenario: ScenarioView) => reviewRows(scenarioRow(scenario.key)?.before?.steps, scenarioRow(scenario.key)?.after?.steps ?? [], !!review.value, reviewStepValue)
-function openStepResource(resource: AnyResourceView, removed: boolean) {
-  if (removed && review.value?.before) review.value.inspect(resource.key, review.value.before.state)
-  else emit('open', resource)
-}
+const scenarios = computed(() => childrenOf(props.workspace, props.resource) as ScenarioView[])
 const scenarioKind = computed(() => props.resource.kind === 'journey' ? 'journey-scenario' as const : 'capability-scenario' as const)
 
 /* One expansion opens Steps, decisions and edge cases.
@@ -74,6 +57,10 @@ const rowGrid = computed(() => props.columns > 1
   ? { display: 'grid', gridTemplateColumns: `repeat(${props.columns}, minmax(0, 1fr))`, gap: '0.5rem', alignItems: 'start' }
   : undefined)
 
+/* The vocabulary slug for a Scenario word, as the page resolves it. */
+const scenarioWord = (word: 'trigger' | 'outcome' | 'decision-point' | 'edge-case') =>
+  scenarioTerm(scenarioKind.value === 'journey-scenario' ? 'journey' : 'capability', word)
+
 </script>
 
 <template>
@@ -89,26 +76,43 @@ const rowGrid = computed(() => props.columns > 1
         <BlrScenarioSummary
           :workspace="workspace"
           :scenario="scenario"
-          :change="review ? changeKind(scenarioRow(scenario.key)?.change) : changes?.get(scenario.key)?.change"
           :expanded="isOpen(scenario)"
           @toggle="toggleScenario(scenario)"
           @open="emit('open', $event)"
         >
           <ol class="blr-steps-list">
-            <li v-for="(row, index) in stepsFor(scenario)" :key="index" :data-step="(row.afterIndex ?? row.beforeIndex ?? 0) + 1">
-              <span class="blr-steps-number">{{ (row.afterIndex ?? row.beforeIndex ?? 0) + 1 }}</span>
-              <BlrReviewValue class="min-w-0 flex-1" :before="row.before ? 'Step' : undefined" :after="row.after ? 'Step' : undefined" label="Step">
-                <BlrReviewSnapshot :side="!row.after ? review?.before : null">
-                  <BlrScenarioStep :workspace="!row.after && review?.before ? review.before.workspace : workspace" :scenario="scenario" :step="(row.after ?? row.before)!" :index="index" :previous="row.before" :compared="row.change === 'modified'" @open="openStepResource($event, !row.after)" />
-                </BlrReviewSnapshot>
-              </BlrReviewValue>
+            <li v-for="(step, index) in scenario.steps" :key="index" :data-step="index + 1">
+              <span class="blr-steps-number">{{ index + 1 }}</span>
+              <BlrScenarioStep :workspace="workspace" :scenario="scenario" :step="step" :index="index" @open="emit('open', $event)" />
             </li>
           </ol>
           <template #details>
-            <BlrReviewValue :before="detailsValue(scenarioRow(scenario.key)?.before)" :after="detailsValue(scenarioRow(scenario.key)?.after)" label="Scenario details">
-              <BlrScenarioDetails :scenario="detailsValue(scenario) ? scenario : scenarioRow(scenario.key)?.before ?? scenario" />
-              <template #before><BlrScenarioDetails v-if="scenarioRow(scenario.key)?.before" :scenario="scenarioRow(scenario.key)!.before!" /></template>
-            </BlrReviewValue>
+            <section v-if="scenario.decisionPoints.length" class="space-y-2">
+              <h4 class="text-[0.8125rem] font-semibold text-highlighted"><BlrTerm :slug="scenarioWord('decision-point')" text="Decision points" /></h4>
+              <div class="grid gap-3 @min-[640px]:grid-cols-2">
+                <div v-for="point in scenario.decisionPoints" :key="point.title" class="rounded-xl border border-dashed border-accented p-4">
+                  <p class="flex items-center gap-2 text-sm font-semibold text-highlighted">
+                    <UIcon name="i-lucide-git-branch" class="size-4 text-muted" />{{ point.title }}
+                  </p>
+                  <BlrProse :text="point.question" class="mt-2" />
+                  <ul class="mt-3 space-y-2">
+                    <li v-for="branch in point.branches" :key="branch.condition" class="flex items-start gap-2 text-sm">
+                      <code class="shrink-0 rounded bg-muted px-1.5 py-0.5 font-mono text-xs text-highlighted">{{ branch.condition }}</code>
+                      <UIcon name="i-lucide-arrow-right" class="mt-1 size-3 shrink-0 text-dimmed" />
+                      <span class="text-default">{{ branch.outcome }}</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </section>
+            <section v-if="scenario.edgeCases.length" class="space-y-1">
+              <h4 class="text-[0.8125rem] font-semibold text-highlighted"><BlrTerm :slug="scenarioWord('edge-case')" text="Edge cases" /></h4>
+              <ul class="max-w-3xl space-y-1.5 text-sm text-default">
+                <li v-for="edgeCase in scenario.edgeCases" :key="edgeCase" class="flex gap-2">
+                  <span class="mt-2 size-1.5 shrink-0 rounded-full bg-(--ui-border-accented)" />{{ edgeCase }}
+                </li>
+              </ul>
+            </section>
           </template>
         </BlrScenarioSummary>
       </div>

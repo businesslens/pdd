@@ -208,13 +208,6 @@ costed already.
   the full width. Refresh and valid recompilation preserve the reading.
   Expand fills the window with the same resource reading; Restore returns to
   the panel width without losing its drawing, selected detail or graph viewport.
-- **Review shows Product Model changes without writes.** It defaults to
-  uncommitted edits; comparing versions is explicit. Authored model files have
-  one changed-file tree and rendered resource comparisons, with file diffs as
-  a secondary reading or fallback. The tree can include other
-  repository changes as path-only context. Missing or invalid models limit
-  resource links, never authored file comparisons; historical readings use the
-  selected commit.
 - **The rail lists Overview, then six collections.** Matrix comparisons live
   within the collection supplying their rows. The collections are Entities,
   Interfaces, Domains, Capabilities, Journeys, Business Rules. Experiences and
