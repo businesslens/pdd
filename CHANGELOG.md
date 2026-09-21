@@ -19,6 +19,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Open the local report before a model exists, compare Git changes, and follow the model from its first valid state.
 - Larger About headings and product details, with clearer report badges and live connection status.
 
+## [0.21.0] - 2026-09-21
+
+- Choose lists, graphs and comparisons from preview cards, keeping the same filters and counts.
+- Find comparison tables within Entities, Capabilities and Business Rules, with simpler relationship filters.
+- Browse Interfaces and Domains in consistent trees with clearer counts and indentation.
+- Explore an Interface's Experiences & Screens or an Experience's Screens, including shared Screens and ownership links.
+- Keep resource headers compact, with additional Domains behind a “more” button.
+- Expand or collapse all Overview references, which start collapsed.
+- Keep comparison legends beside filters, with warmer neutral badges in both themes.
+
+## [0.20.0] - 2026-09-18
+
+- View the Product Model of a GitHub repository, branch, or pull request without cloning it yourself.
+
 ## [0.19.0] - 2026-09-17
 
 - Clearer comparison tables with independent filters and smoother navigation.

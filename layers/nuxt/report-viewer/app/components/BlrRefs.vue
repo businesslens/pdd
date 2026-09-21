@@ -11,7 +11,9 @@ const props = withDefaults(defineProps<{
   /** Isolates expansion by report and the resource that owns the attachments. */
   scope: string
   label?: string
-}>(), { label: 'References' })
+  expandControls?: boolean
+  defaultExpanded?: boolean
+}>(), { label: 'References', defaultExpanded: true })
 
 const KIND_LABEL: Record<ReportReference['kind'], string> = {
   code: 'Code', visual: 'Visuals', doc: 'Documentation',
@@ -64,7 +66,7 @@ const items = computed<Node[]>(() => Object.entries(KIND_LABEL).flatMap(([kind, 
   return children.length ? [{ value: kind, kind: kind as ReportReference['kind'], label, count: children.length, children }] : []
 }))
 const branchKeys = computed(() => items.value.flatMap(group => [group.value, ...group.children!.filter(item => item.children).map(item => item.value)]))
-const expanded = useBlrReferenceExpansion(computed(() => props.scope), branchKeys, computed(() => items.value.map(item => item.value)))
+const expanded = useBlrReferenceExpansion(computed(() => props.scope), branchKeys, computed(() => props.defaultExpanded ? items.value.map(item => item.value) : []))
 
 const select = (event: Event, item: Node) => {
   event.preventDefault()
@@ -81,9 +83,19 @@ const select = (event: Event, item: Node) => {
 
 <template>
   <div v-if="visibleReferences.length" class="min-w-0 space-y-2">
-    <p v-if="label" class="blr-field flex items-center gap-2">
-      <BlrReferenceIcon class="size-3.5" />{{ label }} · {{ visibleReferences.length }}
-    </p>
+    <div v-if="label || expandControls" class="flex flex-wrap items-center justify-between gap-2">
+      <p v-if="label" class="blr-field flex items-center gap-2">
+        <BlrReferenceIcon class="size-3.5" />{{ label }} · {{ visibleReferences.length }}
+      </p>
+      <UFieldGroup v-if="expandControls" size="sm">
+        <UTooltip text="Expand all">
+          <UButton icon="i-lucide-maximize-2" color="neutral" variant="outline" aria-label="Expand all" @click="expanded = [...branchKeys]" />
+        </UTooltip>
+        <UTooltip text="Collapse all">
+          <UButton icon="i-lucide-minimize-2" color="neutral" variant="outline" aria-label="Collapse all" @click="expanded = []" />
+        </UTooltip>
+      </UFieldGroup>
+    </div>
     <div class="min-w-0 rounded-xl border border-default bg-elevated/20 px-3 py-2">
       <UTree
         v-model:expanded="expanded"

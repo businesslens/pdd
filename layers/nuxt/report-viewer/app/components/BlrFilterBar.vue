@@ -27,7 +27,8 @@ export interface BlrFilterChip {
 withDefaults(defineProps<{
   chips: BlrFilterChip[]
   filtersOffered?: boolean
-}>(), { filtersOffered: true })
+  label?: string
+}>(), { filtersOffered: true, label: 'Filters' })
 const emit = defineEmits<{ remove: [key: string], clear: [] }>()
 const sheetOpen = ref(false)
 const bar = useTemplateRef('bar')
@@ -68,7 +69,7 @@ onBeforeUnmount(() => {
       <UDrawer
         v-if="filtersOffered || chips.length"
         v-model:open="sheetOpen"
-        title="Filters"
+        :title="label"
         :close="{ size: 'sm' }"
         :ui="{
           content: 'blr-report-shell max-h-[85dvh]',
@@ -85,7 +86,7 @@ onBeforeUnmount(() => {
           size="sm"
           data-mobile-filters
         >
-          Filters
+          {{ label }}
           <span v-if="chips.length" class="blr-meta">{{ chips.length }}</span>
         </UButton>
         <template #body>

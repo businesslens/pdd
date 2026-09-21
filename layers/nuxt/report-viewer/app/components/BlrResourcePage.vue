@@ -6,8 +6,6 @@
 import type { AnyResourceView, EntityView, ReportWorkspace } from '../utils/reportWorkspace'
 import type { ResourceChange } from 'businesslens/report'
 import { ENTITY_KIND_META } from '../utils/reportWorkspace'
-import type { TopologyReading } from '../utils/topologyState'
-import { defaultTopologyReading } from '../utils/topologyState'
 import { parentOf, tabsFor, type PageTabId } from '../utils/pageSections'
 import { resourceReviewKey, reviewResource } from '../utils/resourceReview'
 import { comparisonReadings, readingChanged } from '../utils/resourceComparison'
@@ -28,7 +26,6 @@ const emit = defineEmits<{
 
 const scenarioRoute = defineModel<string | null>('scenarioRoute', { default: null })
 const routeColumns = defineModel<string>('routeColumns', { default: 'auto' })
-const reading = defineModel<TopologyReading>('reading', { default: defaultTopologyReading })
 
 const parent = computed(() => parentOf(props.workspace, props.resource))
 const subject = computed(() => parent.value ?? props.resource)
@@ -40,7 +37,7 @@ const tabs = computed(() => {
   const current = tabsFor(props.workspace, props.resource)
   if (!review.value) return current
   const before = earlierResource.value && review.value.before ? tabsFor(review.value.before.workspace, earlierResource.value) : []
-  const order = ['overview', 'scenarios', 'lifecycle', 'connections', 'references']
+  const order = ['overview', 'structure', 'scenarios', 'lifecycle', 'connections', 'references']
   return [...new Set([...current, ...before].map(tab => tab.id))].sort((a, b) => order.indexOf(a) - order.indexOf(b)).map(id => {
     const afterTab = current.find(tab => tab.id === id), beforeTab = before.find(tab => tab.id === id)
     const key = id === 'references' ? props.resource.key : subject.value.key
@@ -166,7 +163,6 @@ const columnItems = COLUMN_CHOICES.map(value => ({ value, label: `${value} per r
         <BlrPageBlock
           v-for="id in current?.blocks ?? []"
           :key="id"
-          v-model:reading="reading"
           :workspace="displayedWorkspace"
           :resource="current?.id === 'references' ? displayedResource : displayedSubject"
           :id="id"

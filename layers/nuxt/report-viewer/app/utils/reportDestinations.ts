@@ -3,14 +3,7 @@ import type { ProductTopologyViewId } from './productTopologyViews'
 import { ruleAttachments } from './topologyTargets'
 import { relatedIds } from './resourceFacets'
 
-/**
- * Where each named view lives.
- *
- * A collection's Graph is the second drawing of its own set, reached by the
- * Rows/Graph switch as `mode: 'graph'`. The three cross-collection matrices
- * compare two collections at once, so no single collection owns them: each is
- * a rail row of its own, below Overview, and its section is its rail.
- */
+/** Each named drawing belongs to the collection supplying its subjects. */
 export const REPORT_DESTINATIONS = [
   { section: 'entity-relationships', view: 'what-it-keeps', name: 'Entity relationships', label: 'Graph', icon: 'i-lucide-network', rail: 'entity', mode: 'graph' },
   { section: 'interface-map', view: 'sitemap', name: 'Interface map', label: 'Graph', icon: 'i-lucide-git-branch', rail: 'interface', mode: 'graph' },
@@ -19,21 +12,18 @@ export const REPORT_DESTINATIONS = [
   { section: 'journey-reach', view: 'journey-reach', name: 'Journey reach', label: 'Graph', icon: 'i-lucide-git-branch', rail: 'journey', mode: 'graph' },
   { section: 'rule-reach', view: 'rule-reach', name: 'Rule reach', label: 'Graph', icon: 'i-lucide-git-branch', rail: 'rule', mode: 'graph' },
   /* Unreserved glyphs: a kind's mark names that kind, and a matrix names two. */
-  { section: 'delivery', view: 'delivery-by-interface', name: 'Compare delivery', label: 'Compare delivery', icon: 'i-lucide-grid-2x2', rail: 'delivery', mode: 'overview' },
-  { section: 'what-changes-what', view: 'what-changes-what', name: 'What changes what', label: 'What changes what', icon: 'i-lucide-table', rail: 'what-changes-what', mode: 'overview' },
-  { section: 'rule-attachments', view: 'rule-attachments', name: 'Rule attachments', label: 'Rule attachments', icon: 'i-lucide-link-2', rail: 'rule-attachments', mode: 'overview' }
+  { section: 'delivery', view: 'delivery-by-interface', name: 'Compare delivery', label: 'Matrix', icon: 'i-lucide-grid-2x2', rail: 'capability', mode: 'matrix' },
+  { section: 'what-changes-what', view: 'what-changes-what', name: 'What changes what', label: 'Matrix', icon: 'i-lucide-table', rail: 'entity', mode: 'matrix' },
+  { section: 'rule-attachments', view: 'rule-attachments', name: 'Rule attachments', label: 'Matrix', icon: 'i-lucide-link-2', rail: 'rule', mode: 'matrix' }
 ] as const
-
-/** The cross-collection views: rail rows below Overview, each its own section. */
-export const MATRIX_DESTINATIONS = REPORT_DESTINATIONS.filter(item => item.mode === 'overview')
-export const MATRIX_SECTIONS = new Set<string>(MATRIX_DESTINATIONS.map(item => item.section))
 
 export const MAIN_RESOURCE_KINDS = ['entity', 'interface', 'domain', 'capability', 'journey', 'rule'] as const
 export const destinationForSection = (section: string) => REPORT_DESTINATIONS.find(item => item.section === section)
 export const destinationForView = (view: ProductTopologyViewId) => REPORT_DESTINATIONS.find(item => item.view === view)
 export const destinationForLocation = (section: string, tab: string) => REPORT_DESTINATIONS.find(item => item.rail === section && item.mode === tab)
-/** The Graph drawing of one collection, if it has one. */
+/** The additional drawings offered by a collection. */
 export const graphForCollection = (kind: ReportResourceKind) => REPORT_DESTINATIONS.find(item => item.rail === kind && item.mode === 'graph')
+export const matrixForCollection = (kind: ReportResourceKind) => REPORT_DESTINATIONS.find(item => item.rail === kind && item.mode === 'matrix')
 export const collectionKindFor = (kind: ReportResourceKind): ReportResourceKind => kind === 'experience' || kind === 'screen' ? 'interface' : kind === 'capability-scenario' ? 'capability' : kind === 'journey-scenario' ? 'journey' : kind
 
 /** Actual ownership only: a shared Screen has an Interface parent. */
@@ -64,9 +54,9 @@ export function resourceDomains(workspace: ReportWorkspace, resource: AnyResourc
 
 export function resourceViewLinks(resource: AnyResourceView, workspace: ReportWorkspace) {
   const sections = resource.kind === 'entity' ? ['entity-relationships', 'what-changes-what']
-    : ['interface', 'experience', 'screen'].includes(resource.kind) ? ['interface-map']
+    : ['interface', 'experience', 'screen'].includes(resource.kind) ? ['interface-map', ...(resource.kind === 'interface' ? ['delivery'] : [])]
       : resource.kind === 'domain' ? ['domain-reach']
-        : resource.kind === 'capability' ? ['capability-reach', 'what-changes-what']
+        : resource.kind === 'capability' ? ['capability-reach', 'delivery', 'what-changes-what']
           : resource.kind === 'journey' ? ['journey-reach']
             : resource.kind === 'rule' ? ['rule-reach'] : []
   if (resource.kind === 'rule' || workspace.rules.some(rule => ruleAttachments(workspace, rule).some(item => item.resource.key === resource.key))) sections.push('rule-attachments')

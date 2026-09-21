@@ -7,6 +7,7 @@ import { createServer } from 'node:net'
 import { resolve } from 'node:path'
 import { setTimeout as delay } from 'node:timers/promises'
 import { chromium, expect } from '@playwright/test'
+import { selectCollectionDrawing, expectCollectionDrawing } from './report-view-controls.mjs'
 
 const consumers = process.argv.slice(2)
 if (!consumers.length) throw new Error('Pass the directories of built packed Nuxt consumers.')
@@ -42,8 +43,7 @@ try {
       page.on('pageerror', error => errors.push({ consumer, message: error.message }))
       page.on('console', message => { if (/hydration/i.test(message.text())) errors.push({ consumer, message: message.text() }) })
       page.on('request', request => { if (request.url().includes('diagram.worker')) workers.push(request.url()) })
-      /* A named view is a tab of its collection, and the surface is headed by the
-         collection, not by the view. */
+      /* A named drawing belongs to its collection and keeps that heading. */
       await page.goto(`${origin}/?s=domain&t=graph`)
       await expect(page.getByRole('heading', { level: 1 })).toContainText('Domains')
       await expect(page.getByRole('button', { name: 'Topology', exact: true })).toHaveCount(0)
@@ -73,7 +73,7 @@ try {
       await page.goto(`${origin}/?catalog=1&tab=interface&t=graph`)
       await expect(page.locator('[data-flow-ready="true"]')).toHaveCount(1)
       await page.locator('.blr-navitem').filter({ hasText: /^Entities/ }).click()
-      await page.getByRole('button', { name: 'Draw as graph', exact: true }).click()
+      await selectCollectionDrawing(page, 'graph')
       await expect(page).toHaveURL(/tab=entity.*t=graph/)
       await page.goBack()
       await expect(page).toHaveURL(/tab=entity/)
@@ -81,12 +81,12 @@ try {
       await expect(page).toHaveURL(/tab=interface.*t=graph/)
       await page.reload()
       await expect(page.getByRole('heading', { level: 1 })).toContainText('Interfaces')
-      await expect(page.getByRole('button', { name: 'Draw as graph', exact: true })).toHaveAttribute('aria-pressed', 'true')
-      // Header legends must be present in SSR HTML, not recovered by hydration.
-      for (const section of ['delivery', 'what-changes-what', 'rule-attachments']) {
-        const url = `${origin}/?s=${section}&matrices=1&multi=1`
+      await expectCollectionDrawing(page, 'graph')
+      // Toolbar legends must be present in SSR HTML, not recovered by hydration.
+      for (const section of ['capability', 'entity', 'rule']) {
+        const url = `${origin}/?s=${section}&t=matrix&matrices=1&multi=1`
         const html = await fetch(url).then(response => response.text())
-        expect(html.match(/class="blr-matrix-legend"/g)).toHaveLength(2)
+        expect(html.match(/class="[^"]*\bblr-matrix-legend(?=[\s"])[^"]*"/g)).toHaveLength(2)
         await page.goto(url)
         const legends = page.getByRole('button', { name: 'Legend', exact: true })
         await expect(legends).toHaveCount(2)

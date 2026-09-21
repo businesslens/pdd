@@ -10,17 +10,17 @@ const words = computed(() => ({
   rules: {
     row: 'Business Rule',
     column: 'Target',
-    empty: 'No direct Rule attachments in this scope.'
+    empty: 'No Business Rules match the collection filters.'
   },
   mutations: {
     row: 'Entity',
     column: 'Capability',
-    empty: 'No modeled mutations in this scope.'
+    empty: 'No Entities match the collection filters.'
   },
   delivery: {
     row: 'Capability',
     column: 'Interface',
-    empty: 'No modeled delivery in this scope.'
+    empty: 'No Capabilities match the collection filters.'
   }
 }[props.mode]))
 const emit = defineEmits<{ open: [key: string], column: [key: string] }>()
@@ -167,7 +167,8 @@ watch([matrixViewport, navigation], ([viewport], _, onCleanup) => {
       <UButton class="blr-matrix-left-handle" icon="i-lucide-chevron-left" color="neutral" variant="outline" size="sm" aria-label="Previous columns" title="Previous columns" :aria-controls="tableId" :disabled="window.previous === null" @click="move(window.previous)" />
       <UButton class="blr-matrix-right-handle" icon="i-lucide-chevron-right" color="neutral" variant="outline" size="sm" aria-label="Next columns" title="Next columns" :aria-controls="tableId" :disabled="window.next === null" @click="move(window.next)" />
     </div>
-    <div v-if="matrix.columns.length" ref="matrixViewport" class="blr-matrix-viewport" :tabindex="paged ? 0 : undefined" role="region" aria-label="Relationship table" @keydown="onKeydown" @wheel="onWheel" @touchstart.passive="onTouchStart" @touchend.passive="onTouchEnd" @touchcancel.passive="touchStart = null" @click.capture="onClick">
+    <div v-if="matrix.rows.length" ref="matrixViewport" class="blr-matrix-viewport" :tabindex="paged ? 0 : undefined" role="region" aria-label="Relationship table" @keydown="onKeydown" @wheel="onWheel" @touchstart.passive="onTouchStart" @touchend.passive="onTouchEnd" @touchcancel.passive="touchStart = null" @click.capture="onClick">
+      <p v-if="!matrix.columns.length" class="p-3 text-sm text-muted">No comparison columns in this scope. All matching resources remain below.</p>
       <table :id="tableId" :aria-colcount="matrix.columns.length + 1">
         <colgroup>
           <col :style="{ width: `${window.subjectWidth}px` }">

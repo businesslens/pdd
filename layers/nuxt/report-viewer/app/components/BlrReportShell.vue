@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { MATRIX_SECTIONS, MATRIX_DESTINATIONS, destinationForSection, destinationForLocation, graphForCollection, collectionKindFor } from '../utils/reportDestinations'
-import { findProductTopologyView } from '../utils/productTopologyViews'
+import { destinationForSection, destinationForLocation, graphForCollection, matrixForCollection, collectionKindFor } from '../utils/reportDestinations'
 import { resourceNavigationKey } from '../utils/resourceNavigation'
 import { referenceNavigationKey, localReferenceHref } from '../utils/referenceNavigation'
 import type { TopologyReading } from '../utils/topologyState'
 import { defaultTopologyReading } from '../utils/topologyState'
+import { collectionRelation, pruneRelationSelections } from '../utils/collectionRelations'
 import type {
   AnyResourceView,
   ReportResourceKind,
@@ -25,8 +25,7 @@ import {
   filterResources,
   hasSelections
 } from '../utils/resourceFacets'
-import { TREE_CARD_KINDS, treeCards } from '../utils/collectionChildren'
-import { COLUMN_CHOICES } from '../composables/useColumns'
+import { TREE_CARD_KINDS, treeCards, treeBranchKeys } from '../utils/collectionChildren'
 import type { ColumnChoice } from '../composables/useColumns'
 import { KIND_TERM } from '../utils/vocabulary'
 import type { VocabularySlug } from '../utils/vocabulary.generated'
@@ -72,7 +71,7 @@ const readingWorkspace = computed(() => resourceState.value === 'working' ? prop
    Product as its subject and opens from the header beside Coverage. */
 const CHANGES_SECTION = 'review'
 
-type ReportSection = 'overview' | ReportResourceKind | typeof MATRIX_DESTINATIONS[number]['section'] | typeof CHANGES_SECTION
+type ReportSection = 'overview' | ReportResourceKind | typeof CHANGES_SECTION
 
 const section = defineModel<string>('section', { default: 'overview' })
 
@@ -90,12 +89,10 @@ const topology = defineModel<TopologyReading>('topology', { default: defaultTopo
 const activeKind = ref<ReportResourceKind>('product')
 const activeSection = ref<ReportSection>('overview')
 
-const KNOWN_SECTIONS = new Set<string>(['overview', ...MATRIX_SECTIONS, ...REPORT_ENTITY_KINDS.map(meta => meta.kind)])
-/* A matrix is a section with the Product as its subject: no collection's set. */
-const isMatrixSection = (value: string) => MATRIX_SECTIONS.has(value)
+const KNOWN_SECTIONS = new Set<string>(['overview', ...REPORT_ENTITY_KINDS.map(meta => meta.kind)])
 const isChangesSection = (value: string) => value === CHANGES_SECTION && Boolean(props.changes)
 /* A section whose subject is the Product rather than a collection's set. */
-const isProductSection = (value: string) => value === 'overview' || isMatrixSection(value) || isChangesSection(value)
+const isProductSection = (value: string) => value === 'overview' || isChangesSection(value)
 
 /* Two-way, but never fighting: each side only writes when the value differs. */
 watch([section, () => Boolean(props.changes)], ([value]) => {
@@ -141,9 +138,10 @@ const openPageKey = openResource
 /* Filter state is kept per kind: moving to another kind and back returns to
    the narrowing you left, which is the point of a persistent working view.
    Nothing else is kept, because nothing else is configurable — the reading and
-   its grouping are decided by the report, not audition
-   ed on every visit. */
+   its grouping are decided by the report, not auditioned on every visit. */
 const facetState = reactive<Partial<Record<ReportResourceKind, FacetSelections>>>({})
+const collectionSelections = reactive<Partial<Record<ReportResourceKind, string[]>>>({})
+const relationSelections = reactive<Partial<Record<ReportResourceKind, string[]>>>({})
 const closedGroups = ref<string[]>([])
 /* Rows open to their children on request and stay open for the session, keyed
    by collection and resource so a Screen open under one Interface is not open
@@ -154,10 +152,17 @@ const collectionStateReady = ref(false)
 const collectionStorageKey = () => `blr:collections:${location.pathname}:${props.workspace.identity.id}`
 
 function pruneFacets() {
+  for (const kind of Object.keys(relationSelections) as ReportResourceKind[]) {
+    const relation = collectionRelation(props.workspace, kind)
+    relationSelections[kind] = relation ? pruneRelationSelections(relation.source, relationSelections[kind] ?? []) : []
+  }
+  for (const kind of Object.keys(collectionSelections) as ReportResourceKind[]) {
+    collectionSelections[kind] = collectionSelections[kind]?.filter(key => props.workspace.byKey.get(key)?.kind === kind)
+  }
   for (const kind of Object.keys(facetState) as ReportResourceKind[]) {
     for (const facet of Object.keys(facetState[kind] ?? {}) as ReportResourceKind[]) {
       const ids = facetState[kind]![facet] ?? []
-      const valid = ids.filter(id => resolveResource(props.workspace, facet, id))
+      const valid = facetKindsFor(props.workspace, kind).includes(facet) ? ids.filter(id => resolveResource(props.workspace, facet, id)) : []
       if (ids.length !== valid.length) facetState[kind]![facet] = valid
     }
   }
@@ -166,12 +171,16 @@ function pruneFacets() {
 function restoreCollectionState() {
   collectionStateReady.value = false
   for (const key of Object.keys(facetState)) delete (facetState as Record<string, unknown>)[key]
+  for (const kind of Object.keys(collectionSelections) as ReportResourceKind[]) delete collectionSelections[kind]
+  for (const kind of Object.keys(relationSelections) as ReportResourceKind[]) delete relationSelections[kind]
   closedGroups.value = []
   treeExpansion.value = {}
   try {
     const saved = JSON.parse(sessionStorage.getItem(collectionStorageKey()) ?? 'null')
     if (saved) {
       for (const { kind } of REPORT_ENTITY_KINDS) {
+        if (Array.isArray(saved.relations?.[kind])) relationSelections[kind] = saved.relations[kind].filter((key: unknown): key is string => typeof key === 'string')
+        if (Array.isArray(saved.selections?.[kind])) collectionSelections[kind] = saved.selections[kind].filter((key: unknown): key is string => typeof key === 'string')
         for (const facet of facetKindsFor(props.workspace, kind)) {
           const ids = saved.facets?.[kind]?.[facet]
           if (Array.isArray(ids)) {
@@ -194,9 +203,9 @@ function restoreCollectionState() {
 onMounted(restoreCollectionState)
 watch(() => props.workspace.identity.id, () => { if (collectionStateReady.value) restoreCollectionState() })
 watch(() => props.workspace, pruneFacets)
-watch([facetState, closedGroups, treeExpansion], () => {
+watch([facetState, collectionSelections, relationSelections, closedGroups, treeExpansion], () => {
   if (!collectionStateReady.value) return
-  try { sessionStorage.setItem(collectionStorageKey(), JSON.stringify({ facets: facetState, closed: closedGroups.value, trees: treeExpansion.value })) } catch { /* Optional persistence. */ }
+  try { sessionStorage.setItem(collectionStorageKey(), JSON.stringify({ facets: facetState, selections: collectionSelections, relations: relationSelections, closed: closedGroups.value, trees: treeExpansion.value })) } catch { /* Optional persistence. */ }
 }, { deep: true })
 
 const collectionGroupKey = (key: string) => `${activeKind.value}:${key}`
@@ -233,7 +242,17 @@ const kindCounts = computed<Record<ReportResourceKind, number>>(() => ({
 }))
 
 const facets = computed<FacetSelections>(() => facetState[activeKind.value] ?? {})
-const filtersActive = computed(() => hasSelections(facets.value))
+const selectedRows = computed({
+  get: () => collectionSelections[activeKind.value] ?? [],
+  set: (keys: string[]) => { collectionSelections[activeKind.value] = keys }
+})
+const selectedRelations = computed({
+  get: () => relationSelections[activeKind.value] ?? [],
+  set: (keys: string[]) => { relationSelections[activeKind.value] = keys }
+})
+const relationView = useBlrMatrixView(() => props.workspace, activeKind, selectedRelations)
+const relationRowKeys = computed(() => relationView.value ? new Set(relationView.value.matrix.rows.map(row => row.key)) : null)
+const filtersActive = computed(() => hasSelections(facets.value) || selectedRows.value.length > 0 || selectedRelations.value.length > 0)
 
 function facetValues(kind: ReportResourceKind): string[] {
   return facets.value[kind] ?? []
@@ -244,6 +263,8 @@ function setFacet(kind: ReportResourceKind, ids: string[]) {
 }
 
 function clearFacets() {
+  selectedRows.value = []
+  selectedRelations.value = []
   facetState[activeKind.value] = {}
 }
 
@@ -272,7 +293,7 @@ function facetOptions(kind: ReportResourceKind) {
   the reader can narrow by; the only reason not to draw a control is that there
   is nothing behind it.
 */
-const filtersOffered = computed(() => facetKinds.value.length > 0)
+const filtersOffered = computed(() => facetKinds.value.length > 0 || Boolean(collectionMatrix.value && kindResources.value.length))
 
 /** Each selected value has its own way out, including multiple values on one axis. */
 const facetChips = computed(() => facetKinds.value
@@ -295,7 +316,9 @@ const facetChips = computed(() => facetKinds.value
 const kindResources = computed<AnyResourceView[]>(() => resourcesOfKind(props.workspace, activeKind.value))
 
 /** What every surface shows: the rows, and the counts beside the heading. */
-const visibleResources = computed(() => filterResources(kindResources.value, facets.value))
+const visibleResources = computed(() => filterResources(kindResources.value, facets.value)
+  .filter(resource => (!selectedRows.value.length || selectedRows.value.includes(resource.key))
+    && (!relationRowKeys.value || relationRowKeys.value.has(resource.key))))
 
 /* Grouping is a property of the collection, not a control on it. */
 const resourceGroups = computed(() => collectionGroups(props.workspace, activeKind.value, visibleResources.value))
@@ -371,7 +394,6 @@ watch([readingWorkspace, openResource], ([workspace]) => {
 
 const destination = computed(() => destinationForLocation(activeSection.value, pageTab.value))
 const topologyActive = computed(() => Boolean(destination.value))
-const matrixSection = computed(() => isMatrixSection(activeSection.value) ? destinationForSection(activeSection.value) : undefined)
 /* Review, when it is the open surface and the host has a comparison. */
 const changesOpen = computed(() => isChangesSection(activeSection.value))
 /* Every changed resource by key, so a row or a page can wear its standing. */
@@ -397,7 +419,9 @@ const openReview = computed<ResourceReview | null>(() => {
 /* The collection's Graph, when it has one. Absent, not disabled, when it does
    not: the switch appears only where a second drawing exists. */
 const collectionGraph = computed(() => activeKind.value === 'product' ? undefined : graphForCollection(activeKind.value))
-const drawing = computed<'rows' | 'graph'>(() => collectionGraph.value && pageTab.value === 'graph' ? 'graph' : 'rows')
+const collectionMatrix = computed(() => matrixForCollection(activeKind.value))
+const drawing = computed<'rows' | 'graph' | 'matrix'>(() => collectionMatrix.value && pageTab.value === 'matrix' ? 'matrix'
+  : collectionGraph.value && pageTab.value === 'graph' ? 'graph' : 'rows')
 const vocabularyContext = computed(() => {
   if (openPage.value) return KIND_TERM[openPage.value.kind]
   return KIND_TERM[activeKind.value]
@@ -416,13 +440,6 @@ const vocabularyContext = computed(() => {
  * in one line while the tooltip defined a fourth thing.
  */
 const surfaceHeading = computed(() => {
-  /* A matrix names itself with the name its rail row wears; its qualifier is
-     the shape it draws, since it is no resource type. */
-  const matrix = matrixSection.value
-  if (matrix) {
-    return { icon: matrix.icon, slot: undefined, title: matrix.name,
-      meta: findProductTopologyView(matrix.view).diagramType, term: undefined, termText: '' }
-  }
   /* Review counts changed files within the active Product Model. */
   if (changesOpen.value) {
     const count = modelChangeCount.value
@@ -441,13 +458,21 @@ const surfaceHeading = computed(() => {
     term: KIND_TERM[activeKind.value], termText: activeMeta.value.plural }
 })
 
-const matrixView = useBlrMatrixView(() => props.workspace, topology)
+// Preserve collection order (Actors first, then authored Domains) without
+// duplicating a Rule that belongs to more than one Domain.
+const matrixRows = computed(() => [...new Map(resourceGroups.value.flatMap(group => group.resources)
+  .map(resource => [resource.key, resource])).values()])
+const matrixView = computed(() => {
+  const relation = relationView.value
+  if (!relation) return undefined
+  const keys = new Set(matrixRows.value.map(row => row.key))
+  return { ...relation, matrix: { ...relation.matrix, rows: matrixRows.value, cells: relation.matrix.cells.filter(cell => keys.has(cell.row)) } }
+})
 
 /**
  * Tabs belong to the Overview and to resource pages, where they change which
- * set is on screen. A collection has no tabs: its two drawings show one set,
- * and the switch between them sits beside the filters that narrow it. A matrix
- * has none either: it is one reading, reached from its own rail row.
+ * set is on screen. A collection has no tabs: its drawings show one set,
+ * and the switch between them sits beside the filters that narrow it.
  *
  * The Product's own readings are tabs. They were four collapsed disclosures
  * stacked below the identity — a reader had to open each one to learn whether it
@@ -458,7 +483,7 @@ const PRODUCT_TABS = [
   { id: 'references', label: 'References' }
 ]
 
-const surfaceTabs = computed(() => matrixSection.value || changesOpen.value || activeKind.value !== 'product' ? [] : [
+const surfaceTabs = computed(() => changesOpen.value || activeKind.value !== 'product' ? [] : [
   { id: 'overview', label: 'About' },
   ...PRODUCT_TABS
 ])
@@ -467,8 +492,8 @@ const activeSurfaceTab = computed(() => {
   return surfaceTabs.value.some(tab => tab.id === pageTab.value) ? pageTab.value : 'overview'
 })
 
-/* One bar for both drawings: a filter narrows the set, and the set is what
-   either drawing shows. The bar exists when there is something to narrow by or
+/* One bar for all drawings: a filter narrows the set, and the set is what
+   every drawing shows. The bar exists when there is something to narrow by or
    a second drawing to switch to. */
 const showToolbar = computed(() => activeKind.value !== 'product'
   && (filtersOffered.value || Boolean(collectionGraph.value)))
@@ -482,9 +507,24 @@ const focusChips = computed(() => drawing.value !== 'graph' ? [] : topology.valu
     acts: resource?.kind === 'entity' ? resource.acts ?? undefined : undefined,
     interfaceType: resource?.kind === 'interface' ? resource.interfaceType : undefined }
 }))
-const toolbarChips = computed(() => [...facetChips.value, ...focusChips.value])
+const selectionChips = computed(() => selectedRows.value.map(key => {
+  const resource = props.workspace.byKey.get(key)
+  return { key: `selection:${key}`, label: activeMeta.value.label, value: resource?.title ?? key, kind: activeKind.value }
+}))
+const relationChips = computed(() => selectedRelations.value.map(key => {
+  const resource = props.workspace.byKey.get(key)
+  const kind = key.startsWith('type:') ? key.slice(5) as ReportResourceKind : resource?.kind
+  return { key: `relation:${key}`, label: relationView.value?.label ?? '',
+    value: resource?.title ?? (kind ? `Any ${ENTITY_KIND_META[kind].label}` : key), kind,
+    facet: resource ? entityFacetOf(resource) : null,
+    acts: resource?.kind === 'entity' ? resource.acts : undefined,
+    interfaceType: resource?.kind === 'interface' ? resource.interfaceType : undefined }
+}))
+const toolbarChips = computed(() => [...selectionChips.value, ...facetChips.value, ...relationChips.value, ...focusChips.value])
 function removeChip(key: string) {
-  if (key.startsWith('focus:')) topology.value = { ...topology.value, focus: topology.value.focus.filter(item => `focus:${item}` !== key) }
+  if (key.startsWith('selection:')) selectedRows.value = selectedRows.value.filter(item => `selection:${item}` !== key)
+  else if (key.startsWith('relation:')) selectedRelations.value = selectedRelations.value.filter(item => `relation:${item}` !== key)
+  else if (key.startsWith('focus:')) topology.value = { ...topology.value, focus: topology.value.focus.filter(item => `focus:${item}` !== key) }
   else {
     const kind = facetKinds.value.find(kind => key.startsWith(`${kind}:`))
     if (kind) setFacet(kind, facetValues(kind).filter(id => `${kind}:${id}` !== key))
@@ -492,9 +532,9 @@ function removeChip(key: string) {
 }
 function clearToolbar() {
   clearFacets()
-  topology.value = { ...topology.value, focus: [] }
+  if (drawing.value === 'graph') topology.value = { ...topology.value, focus: [] }
 }
-/** The keys the filters left in the set: what both drawings show. */
+/** The keys the filters left in the set: what every drawing shows. */
 const visibleKeys = computed(() => visibleResources.value.map(resource => resource.key))
 
 /* Row density is the reader's, per collection, and only for Rows: a graph has
@@ -502,7 +542,6 @@ const visibleKeys = computed(() => visibleResources.value.map(resource => resour
 const { columnsFor, setColumns } = useColumns()
 /* Rows start one per line; tree cards start three abreast, as the Domain map did. */
 const columns = computed(() => columnsFor(activeKind.value, treeCardsShown.value ? 3 : 1))
-const columnItems = COLUMN_CHOICES.map(value => ({ value, label: `${value} per row` }))
 const rowGrid = computed(() => columns.value > 1
   ? { display: 'grid', gridTemplateColumns: `repeat(${columns.value}, minmax(0, 1fr))`, gap: '0.5rem', alignItems: 'start' }
   : undefined)
@@ -521,10 +560,7 @@ function toggleAllRows(open: boolean) {
     closedGroups.value = [...closedGroups.value.filter(id => !id.startsWith(prefix)), ...(open ? [] : cards.map(card => `${prefix}${card.key}`))]
     const next = { ...treeExpansion.value }
     for (const card of cards) {
-      const ids: string[] = []
-      const walk = (node: { id: string, children: any[] }) => { if (node.children.length) ids.push(node.id); node.children.forEach(walk) }
-      card.children.forEach(walk)
-      next[`${prefix}${card.key}`] = open ? ids : []
+      next[`${prefix}${card.key}`] = open ? treeBranchKeys(card.children) : []
     }
     treeExpansion.value = next
   }
@@ -533,15 +569,22 @@ function toggleAllRows(open: boolean) {
 /* Tree cards keep their own gap; only the column count is the reader's. */
 const cardGrid = computed(() => ({ gridTemplateColumns: `repeat(${columns.value}, minmax(0, 1fr))` }))
 
-function setDrawing(next: 'rows' | 'graph') {
-  const target = collectionGraph.value
+// Drawing-specific focus and column choices survive switching drawings.
+const drawingReadings = new Map<string, TopologyReading>()
+function rememberDrawing() {
+  if (drawing.value !== 'rows') drawingReadings.set(`${props.workspace.identity.id}:${activeKind.value}:${drawing.value}`, { ...topology.value })
+}
+function setDrawing(next: 'rows' | 'graph' | 'matrix') {
+  if (next === drawing.value) return
+  const target = next === 'matrix' ? collectionMatrix.value : collectionGraph.value
+  rememberDrawing()
   leavePage()
-  if (next === 'graph' && target) {
-    topology.value = { ...topology.value, view: target.view, hiddenKinds: [] }
-    pageTab.value = 'graph'
+  if (next !== 'rows' && target) {
+    topology.value = { ...(drawingReadings.get(`${props.workspace.identity.id}:${activeKind.value}:${next}`) ?? defaultTopologyReading()), view: target.view }
+    pageTab.value = next
     return
   }
-  topology.value = { ...topology.value, focus: [] }
+  topology.value = { ...defaultTopologyReading(), expanded: topology.value.expanded, collapsed: topology.value.collapsed }
   pageTab.value = 'overview'
 }
 
@@ -562,6 +605,7 @@ function leavePage() {
 }
 
 function setKind(kind: ReportResourceKind) {
+  rememberDrawing()
   mobileNavOpen.value = false
   kind = collectionKindFor(kind)
   topology.value = { ...topology.value, focus: [] }
@@ -585,11 +629,16 @@ function openView(sectionId: string, resource?: AnyResourceView) {
   const target = destinationForSection(sectionId)
   if (!target) return
   mobileNavOpen.value = false
+  rememberDrawing()
   leavePage()
-  topology.value = { ...topology.value, view: target.view, hiddenKinds: [], query: '', focus: resource ? [resource.key] : [], column: null }
-  /* A matrix compares two collections, so its rail row is its own. */
+  if (target.mode === 'matrix' && resource) {
+    facetState[target.rail] = {}
+    collectionSelections[target.rail] = resource.kind === target.rail ? [resource.key] : []
+    relationSelections[target.rail] = resource.kind !== target.rail ? [resource.key] : []
+  }
+  topology.value = { ...defaultTopologyReading(), view: target.view, hiddenKinds: [], query: '', focus: resource && target.mode !== 'matrix' ? [resource.key] : [], column: null }
   activeSection.value = target.rail
-  activeKind.value = isMatrixSection(target.rail) ? 'product' : target.rail as ReportResourceKind
+  activeKind.value = target.rail
   pageTab.value = target.mode
 }
 
@@ -681,7 +730,6 @@ const orphanScenarios = computed(() => props.workspace.scenarios
             :counts="kindCounts"
             :tools="!toolsTarget"
             @kind="setKind"
-            @view="openView"
             @search="openSidebarTool(() => searchOpen = true)"
             @vocabulary="openVocabulary"
             @navigate="mobileNavOpen = false"
@@ -700,8 +748,7 @@ const orphanScenarios = computed(() => props.workspace.scenarios
         <header
           v-if="surfaceHeading"
           data-report-page-header
-          class="mb-2 grid shrink-0 items-center gap-x-3 gap-y-2 border-b border-default px-4 py-2 sm:px-5"
-          :class="matrixSection ? 'grid-cols-[minmax(0,1fr)_auto] md:grid-cols-[minmax(0,1fr)_auto_auto]' : 'grid-cols-[minmax(0,1fr)] md:grid-cols-[minmax(0,1fr)_auto]'"
+          class="mb-2 grid shrink-0 grid-cols-[minmax(0,1fr)] items-center gap-x-3 gap-y-2 border-b border-default px-4 py-2 sm:px-5 md:grid-cols-[minmax(0,1fr)_auto]"
         >
           <div class="flex min-w-0 items-center gap-2 sm:gap-3">
             <UDashboardSidebarCollapse
@@ -722,19 +769,16 @@ const orphanScenarios = computed(() => props.workspace.scenarios
             <h1 v-if="surfaceHeading" ref="workingHeading" tabindex="-1" class="flex min-w-0 flex-1 items-center gap-2">
               <UIcon :name="surfaceHeading.icon" class="size-5 shrink-0 text-muted" :style="surfaceHeading.slot === undefined ? undefined : { color: `var(--blr-slot-${surfaceHeading.slot})` }" />
               <span class="truncate text-lg font-semibold tracking-tight text-highlighted">{{ surfaceHeading.title }}</span>
-              <span class="blr-meta shrink-0" :class="matrixSection ? 'hidden xl:inline' : undefined">{{ surfaceHeading.meta }}</span>
+              <span class="blr-meta shrink-0">{{ surfaceHeading.meta }}</span>
               <BlrTerm v-if="surfaceHeading.term" :slug="surfaceHeading.term" :text="surfaceHeading.termText" icon-only />
               <BlrHistoryHelp v-else-if="changesOpen" />
             </h1>
           </div>
-          <div data-report-status class="row-start-2 flex items-center gap-2.5 md:col-start-2 md:row-start-1" :class="matrixSection ? 'col-span-2 md:col-span-1' : undefined">
+          <div data-report-status class="row-start-2 flex items-center gap-2.5 md:col-start-2 md:row-start-1">
             <BlrReviewButton v-if="changes" :repository="changes.repository" :active="changesOpen" :comparison="changesComparison" @open="openChanges" />
             <span class="blr-meta" :title="`Report schema ${workspace.identity.schemaVersion}`">{{ workspace.identity.schemaVersion }}</span>
             <slot v-if="$slots.status" name="status" />
             <time v-else class="blr-meta" :datetime="workspace.identity.generatedAt" :title="`Generated ${workspace.identity.generatedAt}`">{{ workspace.identity.generatedAt.slice(0, 10) }}</time>
-          </div>
-          <div v-if="matrixSection" class="col-start-2 row-start-1 min-w-0 justify-self-end md:col-start-3" data-matrix-legend-target>
-            <BlrMatrixLegend :mode="matrixView.mode" />
           </div>
         </header>
 
@@ -749,9 +793,7 @@ const orphanScenarios = computed(() => props.workspace.scenarios
           @update:model-value="openSurfaceTab"
         />
 
-        <!-- One bar above both drawings of a collection. It narrows the set,
-             and the set is what Rows lists and Graph draws; the switch at its
-             end changes only the drawing. -->
+        <!-- Collection filters and the count stay the same in every drawing. -->
         <div v-if="showToolbar" class="shrink-0 px-4 pt-2 sm:px-5 sm:pt-3" data-collection-toolbar>
           <BlrFilterBar
             :key="activeKind"
@@ -761,6 +803,8 @@ const orphanScenarios = computed(() => props.workspace.scenarios
             @clear="clearToolbar"
           >
             <template #default="{ inSheet }">
+              <BlrMatrixResourceFilter v-if="collectionMatrix && kindResources.length" v-model="selectedRows"
+                :label="activeMeta.plural" :kind="activeKind" :resources="kindResources" :in-sheet="inSheet" />
               <USelectMenu
                 v-for="kind in facetKinds"
                 :key="kind"
@@ -802,51 +846,12 @@ const orphanScenarios = computed(() => props.workspace.scenarios
                   />
                 </template>
               </USelectMenu>
+              <BlrRelationFilter v-if="relationView?.source.columns.length" v-model="selectedRelations"
+                :label="relationView.label" :kind="activeKind === 'entity' ? 'capability' : undefined" :resources="relationView.source.columns" :grouped="activeKind === 'rule' || activeKind === 'capability'" :show-parents="activeKind === 'capability'" :in-sheet="inSheet" />
             </template>
             <template v-if="collectionGraph || drawing === 'rows'" #end>
-              <UFieldGroup v-if="drawing === 'rows' && expandsAnything" size="sm" data-expand-all>
-                <UTooltip text="Expand all">
-                  <UButton icon="i-lucide-maximize-2" color="neutral" variant="outline" aria-label="Expand all" @click="toggleAllRows(true)" />
-                </UTooltip>
-                <UTooltip text="Collapse all">
-                  <UButton icon="i-lucide-minimize-2" color="neutral" variant="outline" aria-label="Collapse all" @click="toggleAllRows(false)" />
-                </UTooltip>
-              </UFieldGroup>
-              <USelect
-                v-if="drawing === 'rows'"
-                :model-value="columns"
-                :items="columnItems"
-                value-key="value"
-                size="sm"
-                variant="outline"
-                class="hidden w-36 sm:inline-flex"
-                icon="i-lucide-layout-grid"
-                aria-label="Rows per line"
-                data-columns-control
-                @update:model-value="setColumns(activeKind, $event as ColumnChoice)"
-              />
-              <UFieldGroup v-if="collectionGraph" size="sm" data-drawing-switch>
-                <UTooltip text="Rows">
-                  <UButton
-                    icon="i-lucide-rows-3"
-                    :color="drawing === 'rows' ? 'primary' : 'neutral'"
-                    :variant="drawing === 'rows' ? 'soft' : 'outline'"
-                    :aria-pressed="drawing === 'rows'"
-                    aria-label="Draw as rows"
-                    @click="setDrawing('rows')"
-                  />
-                </UTooltip>
-                <UTooltip text="Graph">
-                  <UButton
-                    icon="i-lucide-waypoints"
-                    :color="drawing === 'graph' ? 'primary' : 'neutral'"
-                    :variant="drawing === 'graph' ? 'soft' : 'outline'"
-                    :aria-pressed="drawing === 'graph'"
-                    aria-label="Draw as graph"
-                    @click="setDrawing('graph')"
-                  />
-                </UTooltip>
-              </UFieldGroup>
+              <BlrCollectionControls :kind="activeKind" :drawing="drawing" :columns="columns" :expands-anything="expandsAnything"
+                @drawing="setDrawing" @columns="setColumns(activeKind, $event)" @toggle-all="toggleAllRows" />
             </template>
           </BlrFilterBar>
         </div>
@@ -1000,7 +1005,7 @@ const orphanScenarios = computed(() => props.workspace.scenarios
         </div>
 
         <!-- GRAPH: the collection's second drawing of the same set. -->
-        <div v-else-if="collectionGraph" class="min-h-0 flex-1">
+        <div v-else-if="drawing === 'graph' && collectionGraph" class="min-h-0 flex-1">
           <BlrCollectionGraph
             v-model:reading="topology"
             :workspace="workspace"
@@ -1013,9 +1018,9 @@ const orphanScenarios = computed(() => props.workspace.scenarios
           />
         </div>
 
-        <!-- A matrix: one reading comparing two collections, from its rail row. -->
+        <!-- MATRIX: the shared relationship scope selects subjects and columns. -->
         <div v-else class="min-h-0 flex-1">
-          <BlrProductTopology
+          <BlrProductTopology v-if="matrixView"
             :workspace="workspace"
             :matrix-view="matrixView"
             v-model:reading="topology"
@@ -1082,7 +1087,6 @@ const orphanScenarios = computed(() => props.workspace.scenarios
           :counts="kindCounts"
           tools
           @kind="setKind"
-          @view="openView"
           @search="openSidebarTool(() => searchOpen = true)"
           @vocabulary="openVocabulary"
           @navigate="mobileNavOpen = false"

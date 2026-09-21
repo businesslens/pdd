@@ -4,6 +4,7 @@
  * Chromium is required. Optional BLR_DIAGRAM_SCREENSHOTS writes review PNGs outside the model.
  */
 import { chromium, expect } from '@playwright/test'
+import { expectCollectionDrawing } from './report-view-controls.mjs'
 import { mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 
@@ -13,8 +14,7 @@ const browser = await chromium.launch()
 const failures = []
 const measurements = []
 const views = ['domain-reach', 'capability-reach', 'journey-reach', 'rule-reach', 'sitemap', 'what-it-keeps', 'delivery-by-interface', 'rule-attachments', 'what-changes-what']
-/* A collection's Graph is the second drawing of its own set; the matrices are
-   readings of the Overview. */
+/* Each drawing keeps the collection supplying its primary subjects. */
 const LOCATION = {
   'domain-reach': ['domain', 'graph'],
   'capability-reach': ['capability', 'graph'],
@@ -22,19 +22,18 @@ const LOCATION = {
   'rule-reach': ['rule', 'graph'],
   'sitemap': ['interface', 'graph'],
   'what-it-keeps': ['entity', 'graph'],
-  'delivery-by-interface': ['delivery', 'overview'],
-  'what-changes-what': ['what-changes-what', 'overview'],
-  'rule-attachments': ['rule-attachments', 'overview']
+  'delivery-by-interface': ['capability', 'matrix'],
+  'what-changes-what': ['entity', 'matrix'],
+  'rule-attachments': ['rule', 'matrix']
 }
-const isMatrix = view => LOCATION[view][1] === 'overview'
+const isMatrix = view => LOCATION[view][1] === 'matrix'
 const NAMES = { 'delivery-by-interface': 'Compare delivery', 'what-changes-what': 'What changes what', 'rule-attachments': 'Rule attachments' }
-const viewUrl = (origin, view, query = '') => `${origin}/?s=${LOCATION[view][0]}${isMatrix(view) ? '' : `&t=${LOCATION[view][1]}`}${query}`
+const viewUrl = (origin, view, query = '') => `${origin}/?s=${LOCATION[view][0]}&t=${LOCATION[view][1]}${query}`
 const openTab = page => page.locator('.blr-surface-tab[data-current="true"]')
 /* A collection Graph is chosen by the switch beside the filters, not a tab. */
-const graphOn = page => page.getByRole('button', { name: 'Draw as graph', exact: true })
 const expectOpen = async (page, view) => {
-  if (isMatrix(view)) await expect(page.getByRole('heading', { level: 1 })).toContainText(NAMES[view])
-  else await expect(graphOn(page)).toHaveAttribute('aria-pressed', 'true')
+  if (isMatrix(view)) await expectCollectionDrawing(page, 'matrix')
+  else await expectCollectionDrawing(page, 'graph')
 }
 const screenshotRoot = process.env.BLR_DIAGRAM_SCREENSHOTS
 if (screenshotRoot) mkdirSync(screenshotRoot, { recursive: true })
@@ -307,7 +306,7 @@ try {
       await page.keyboard.press('Enter')
       await expect(page).toHaveURL(new RegExp(`e=${key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`))
       await page.goBack()
-      await expect(graphOn(page)).toHaveAttribute('aria-pressed', 'true')
+      await expectCollectionDrawing(page, 'graph')
       await checkSitemap(page)
       await expect(page.locator('.vue-flow__node')).toHaveCount(before)
       await page.reload()

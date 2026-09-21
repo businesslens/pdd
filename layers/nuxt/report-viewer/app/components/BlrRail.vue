@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { NavigationMenuItem } from '@nuxt/ui'
 import type { ReportResourceKind, ReportWorkspace } from '../utils/reportWorkspace'
-import { MAIN_RESOURCE_KINDS, MATRIX_DESTINATIONS } from '../utils/reportDestinations'
+import { MAIN_RESOURCE_KINDS } from '../utils/reportDestinations'
 import { ENTITY_KIND_META } from '../utils/reportWorkspace'
 
 const props = defineProps<{
@@ -11,8 +11,8 @@ const props = defineProps<{
   collapsed?: boolean
 }>()
 
-/* The rail changes the subject. A collection's Graph stays inside it. */
-const emit = defineEmits<{ kind: [kind: ReportResourceKind], view: [section: string] }>()
+/* The rail changes the subject. Each collection keeps its drawings inside it. */
+const emit = defineEmits<{ kind: [kind: ReportResourceKind] }>()
 
 type RailItem = NavigationMenuItem & { iconColor?: string, count?: number }
 const RAIL_KINDS = MAIN_RESOURCE_KINDS.map(kind => ENTITY_KIND_META[kind])
@@ -32,16 +32,6 @@ const overviewItems = computed<RailItem[]>(() => [{
   onSelect: () => emit('kind', 'product')
 }])
 const items = computed<RailItem[][]>(() => [
-  [
-    ...MATRIX_DESTINATIONS.map(item => ({
-      label: item.name,
-      icon: item.icon,
-      active: props.activeSection === item.section,
-      'data-current': props.activeSection === item.section,
-      'aria-label': item.name,
-      onSelect: () => emit('view', item.section)
-    }))
-  ],
   [
     { label: 'Resources', type: 'label' },
     ...RAIL_KINDS.map(meta => ({

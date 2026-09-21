@@ -47,7 +47,7 @@ The Developer wants to inspect one Journey's Scenarios and their Capability chai
 
 ## Outcome
 
-The reading appears with its owning resource — Scenarios are read on their parent Journey's page, and an Interface page keeps its delivery tree — and every referenced resource can be opened. Product-wide comparisons remain available through each collection's Graph and the rail's Compare delivery.
+The reading appears with its owning resource — Scenarios are read on their parent Journey's page, and an Interface's Experiences & Screens tab shows its containment tree — and every referenced resource can be opened. Product-wide comparisons remain available through each collection's Graph and the Capabilities collection's Matrix drawing.
 
 ## Edge cases
 

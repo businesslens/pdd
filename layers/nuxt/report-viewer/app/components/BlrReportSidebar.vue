@@ -16,7 +16,6 @@ withDefaults(defineProps<{
 
 const emit = defineEmits<{
   kind: [kind: ReportResourceKind]
-  view: [section: string]
   search: []
   vocabulary: [originId: string]
   navigate: []
@@ -48,7 +47,6 @@ const emit = defineEmits<{
       :counts="counts"
       class="shrink-0"
       @kind="emit('kind', $event)"
-      @view="emit('view', $event)"
     >
       <template v-if="tools" #overview-action>
         <BlrReportTools tool="search" :collapsed="collapsed" @search="emit('search')" />

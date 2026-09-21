@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /** Exercise report destinations and resource readings against a running built CLI. */
 import { chromium, expect } from '@playwright/test'
+import { selectCollectionDrawing, expectCollectionDrawing, expandCollection, setCollectionExpanded } from './report-view-controls.mjs'
 import { mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 const origin = process.argv[2]
@@ -10,10 +11,9 @@ const browser = await chromium.launch()
 const errors = []
 const screenshots = process.env.BLR_NAV_SCREENSHOTS
 if (screenshots) mkdirSync(screenshots, { recursive: true })
-/* A collection's Graph is reached by the switch inside it; the three matrices
-   compare collections and are rail rows of their own below Overview. */
+/* Graph and Matrix drawings share their collection navigation. */
 const graphs = ['Domains', 'Interfaces', 'Entities']
-const matrices = [['Compare delivery', 'delivery'], ['Rule attachments', 'rule-attachments'], ['What changes what', 'what-changes-what']]
+const matrices = [['Compare delivery', 'capability', 'Capabilities'], ['Rule attachments', 'rule', 'Business Rules'], ['What changes what', 'entity', 'Entities']]
 const sectionOf = { Domains: 'domain', Interfaces: 'interface', Entities: 'entity' }
 const resourceUrl = (kind, id, suffix = '') => `${origin}/?s=${kind}&e=${encodeURIComponent(`${kind}:${id}`)}${suffix}`
 /* A tab is its label and, at most, a count: `Scenarios 3` is Scenarios, `Scenarios v2` is not. */
@@ -43,36 +43,41 @@ try {
       await expect(page.getByRole('heading', { level: 1 })).toContainText(collection)
       await expect(page.locator('.blr-surface-tab')).toHaveCount(0)
       const count = await page.getByRole('heading', { level: 1 }).locator('.blr-meta').textContent()
-      await expect(page.getByRole('button', { name: 'Draw as rows', exact: true })).toHaveAttribute('aria-pressed', 'true')
-      await page.getByRole('button', { name: 'Draw as graph', exact: true }).click()
+      await expectCollectionDrawing(page, 'rows')
+      await selectCollectionDrawing(page, 'graph')
       await expect(page).toHaveURL(new RegExp(`[?&]t=graph(?:&|$)`))
       await expect(page).toHaveURL(new RegExp(`[?&]s=${section}(?:&|$)`))
-      await expect(page.getByRole('button', { name: 'Draw as graph', exact: true })).toHaveAttribute('aria-pressed', 'true')
+      await expectCollectionDrawing(page, 'graph')
       /* The set is the same set: its count does not change with the drawing. */
       await expect(page.getByRole('heading', { level: 1 }).locator('.blr-meta')).toHaveText(count)
       await page.reload()
-      await expect(page.getByRole('button', { name: 'Draw as graph', exact: true })).toHaveAttribute('aria-pressed', 'true')
+      await expectCollectionDrawing(page, 'graph')
       if (['interface', 'entity'].includes(section)) {
         await expect(page.locator('[data-flow-ready=true]')).toBeVisible({ timeout: 15000 })
       }
       if (width >= 1024) await expect(page.locator('.blr-navitem[data-current=true]')).toContainText(collection)
       await capture(page, `${width}-${section}-graph`)
-      await page.getByRole('button', { name: 'Draw as rows', exact: true }).click()
+      await selectCollectionDrawing(page, 'rows')
       await expect(page).not.toHaveURL(/[?&]t=/)
       await choose(page, 'Overview')
     }
-    for (const [label, section] of matrices) {
-      await choose(page, label)
-      /* A matrix is a section of its own: the rail row names it, the heading
-         repeats that name, and it has no tabs. */
+    for (const [label, section, collection] of matrices) {
+      await choose(page, collection)
+      const count = await page.getByRole('heading', { level: 1 }).locator('.blr-meta').textContent()
+      await selectCollectionDrawing(page, 'matrix')
       await expect(page).toHaveURL(new RegExp(`[?&]s=${section}(?:&|$)`))
-      await expect(page).not.toHaveURL(/[?&]t=/)
-      await expect(page.getByRole('heading', { level: 1 })).toContainText(label)
+      await expect(page).toHaveURL(/[?&]t=matrix(?:&|$)/)
+      await expect(page.getByRole('heading', { level: 1 })).toContainText(collection)
+      await expect(page.getByRole('heading', { level: 1 }).locator('.blr-meta')).toHaveText(count)
+      await expect(page.locator('[data-view-trigger]')).toBeVisible()
+      await expect(page.getByRole('button', { name: 'About this matrix', exact: true })).toHaveCount(0)
+      await expect(page.locator('[data-matrix-heading]')).toHaveCount(0)
       await expect(page.locator('.blr-surface-tab')).toHaveCount(0)
+      await expect(page.locator('.blr-navitem').filter({ hasText: new RegExp(`^${label}$`) })).toHaveCount(0)
       await page.reload()
-      await expect(page.getByRole('heading', { level: 1 })).toContainText(label)
-      if (width >= 1024) await expect(page.locator('.blr-navitem[data-current=true]')).toContainText(label)
-      await capture(page, `${width}-${section}`)
+      await expectCollectionDrawing(page, 'matrix')
+      if (width >= 1024) await expect(page.locator('.blr-navitem[data-current=true]')).toContainText(collection)
+      await capture(page, `${width}-${section}-matrix`)
       const link = page.locator('.blr-topology-matrix [data-resource-key]').first()
       if (await link.count()) {
         const matrixUrl = page.url()
@@ -80,11 +85,10 @@ try {
         await expect(page).toHaveURL(/[?&]e=/)
         await page.goBack()
         await expect(page).toHaveURL(matrixUrl)
-        await expect(page.getByRole('heading', { level: 1 })).toContainText(label)
+        await expect(page.getByRole('heading', { level: 1 })).toContainText(collection)
       }
     }
-    /* Branch rows only toggle. Each resource root contains an Overview link,
-       including roots with no modeled children. */
+    /* Chevrons expand branches; resource names open readings, including empty roots. */
     for (const [collection, kind, resources] of [
       ['Domains', 'domain', report.model.domains],
       ['Interfaces', 'interface', report.model.interfaces]
@@ -92,9 +96,9 @@ try {
       await choose(page, collection)
       await expect(page.locator('[data-tree-card] [data-group-header]')).toHaveCount(0)
       const roots = page.locator('[data-tree-card] [role="treeitem"][aria-level="1"][aria-expanded]')
-      await page.getByRole('button', { name: 'Collapse all', exact: true }).click()
+      await setCollectionExpanded(page, false)
       for (const root of await roots.all()) await expect(root).toHaveAttribute('aria-expanded', 'false')
-      await page.getByRole('button', { name: 'Expand all', exact: true }).click()
+      await expandCollection(page)
       for (const root of await roots.all()) await expect(root).toHaveAttribute('aria-expanded', 'true')
       for (const resource of resources) {
         const title = kind === 'domain' ? resource.name : resource.title
@@ -114,38 +118,30 @@ try {
           await folder.press('Enter')
           await expect(folder).toHaveAttribute('aria-expanded', 'true')
         }
-        await subject.getByText(title, { exact: true }).click()
-        await expect(subject).toHaveAttribute('aria-expanded', 'false')
-        await expect(card.getByRole('treeitem')).toHaveCount(1)
-        await expect(page).not.toHaveURL(/[?&]e=/)
-        await page.reload()
-        await expect(subject).toHaveAttribute('aria-expanded', 'false')
-        await subject.press('Enter')
-        await expect(subject).toHaveAttribute('aria-expanded', 'true')
-        await expect.poll(folderStates).toEqual(before)
-        await subject.press('Space')
-        await expect(subject).toHaveAttribute('aria-expanded', 'false')
-        await toggle.press('Space')
-        await expect(subject).toHaveAttribute('aria-expanded', 'true')
-        await toggle.click()
-        await expect(subject).toHaveAttribute('aria-expanded', 'false')
-        await toggle.click()
-        await expect(subject).toHaveAttribute('aria-expanded', 'true')
-        await subject.press('ArrowLeft')
-        await expect(subject).toHaveAttribute('aria-expanded', 'false')
-        await subject.press('ArrowRight')
-        await expect(subject).toHaveAttribute('aria-expanded', 'true')
-        const overview = card.locator('[role="treeitem"][aria-level="2"]').filter({ has: page.getByText('Overview', { exact: true }) })
-        await expect(overview).toHaveCount(1)
-        await expect(overview.locator('.iconify')).toHaveCount(0)
-        if (!before.length) await expect(card.getByRole('treeitem')).toHaveCount(2)
-        await overview.click()
+        const hasChildren = await subject.getAttribute('aria-expanded') !== null
+        if (hasChildren) {
+          await toggle.click()
+          await expect(subject).toHaveAttribute('aria-expanded', 'false')
+          await expect(card.getByRole('treeitem')).toHaveCount(1)
+          await expect(page).not.toHaveURL(/[?&]e=/)
+          await page.reload()
+          await expect(subject).toHaveAttribute('aria-expanded', 'false')
+          await toggle.press('Space')
+          await expect(subject).toHaveAttribute('aria-expanded', 'true')
+          await expect.poll(folderStates).toEqual(before)
+          await subject.press('ArrowLeft')
+          await expect(subject).toHaveAttribute('aria-expanded', 'false')
+          await subject.press('ArrowRight')
+          await expect(subject).toHaveAttribute('aria-expanded', 'true')
+        }
+        await expect(card.getByText('Overview', { exact: true })).toHaveCount(0)
+        await subject.getByRole('link', { name: title, exact: true }).click()
         await expect.poll(() => new URL(page.url()).searchParams.get('e')).toBe(`${kind}:${resource.id}`)
         await expect(page.locator('[data-resource-heading]')).toContainText(title)
         await page.reload()
         await expect(page.locator('[data-resource-heading]')).toContainText(title)
         await page.goBack()
-        await expect(subject).toHaveAttribute('aria-expanded', 'true')
+        if (hasChildren) await expect(subject).toHaveAttribute('aria-expanded', 'true')
         await expect.poll(folderStates).toEqual(before)
       }
       const unassigned = page.locator('[data-card-key="unassigned"] [role="treeitem"]').first()
@@ -178,14 +174,7 @@ try {
       await expect(item).toHaveAttribute('aria-expanded', 'false')
       await item.press('ArrowRight')
       await expect(item).toHaveAttribute('aria-expanded', 'true')
-      await item.getByText(experience.title, { exact: true }).click()
-      await expect(item).toHaveAttribute('aria-expanded', 'false')
-      await expect(page).not.toHaveURL(/[?&]e=/)
-      await item.press('Enter')
-      await expect(item).toHaveAttribute('aria-expanded', 'true')
-      const overview = item.locator('..').getByRole('treeitem').filter({ has: page.getByText('Overview', { exact: true }) }).first()
-      await expect(overview.locator('.iconify')).toHaveCount(0)
-      await overview.click()
+      await item.getByRole('link', { name: experience.title, exact: true }).click()
       await expect(page).toHaveURL(/[?&]e=experience/)
       await page.goBack()
       await expect(item).toHaveAttribute('aria-expanded', 'true')
@@ -339,7 +328,7 @@ try {
       await choose(page, 'Journeys')
       await expect(page).toHaveURL(/[?&]s=journey(?:&|$)/)
       await expect(page).not.toHaveURL(/[?&]tf=/)
-      await page.getByRole('button', { name: 'Draw as graph', exact: true }).click()
+      await selectCollectionDrawing(page, 'graph')
       await expect(page).toHaveURL(/[?&]t=graph(?:&|$)/)
       await expect(page).not.toHaveURL(/[?&]tf=/)
       await page.goBack()
@@ -349,10 +338,10 @@ try {
     }
     const iface = report.model.interfaces.find(item => report.model.experiences.some(experience => experience.id.startsWith(`${item.id}::`))) ?? report.model.interfaces[0]
     if (iface) {
-      await page.goto(resourceUrl('interface', iface.id))
-      await expect(page.locator('[data-interface-delivery]')).toBeVisible()
+      await page.goto(resourceUrl('interface', iface.id, '&rt=structure'))
+      await expect(page.locator('[data-resource-structure]')).toBeVisible()
       await expect(page.locator('[data-resource-connections]')).toHaveCount(0)
-      const toggle = page.locator('[data-interface-delivery] button[aria-expanded]').first()
+      const toggle = page.locator('[data-resource-structure] button[aria-expanded]').first()
       if (await toggle.count()) {
         const old = await toggle.getAttribute('aria-expanded')
         await toggle.click()
@@ -361,12 +350,12 @@ try {
         await page.reload()
         await expect(toggle).toHaveAttribute('aria-expanded', old === 'true' ? 'false' : 'true')
       }
-      await capture(page, `${width}-interface-delivery`)
+      await capture(page, `${width}-interface-structure`)
       await page.getByRole('button', { name: 'Interface map', exact: true }).click()
       await expect(page).toHaveURL(/s=interface.*t=graph.*tf=interface/)
       await expect(page.locator('[data-flow-ready=true]')).toBeVisible()
       await page.goBack()
-      await expect(page.locator('[data-interface-delivery]')).toBeVisible()
+      await expect(page.locator('[data-resource-structure]')).toBeVisible()
     }
     const entity = report.model.entities.find(item => item.relations.length) ?? report.model.entities[0]
     if (entity) {
@@ -385,7 +374,7 @@ try {
     if (width >= 1024) await expect(page.locator('.blr-navitem[data-current=true]')).toHaveText('Overview')
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true)
     await context.close()
-    console.log(`Passed ${width}px: Rows/Graph, matrix Back, collection focus, Scenario persistence, tree toggles, reload, exits and Interface delivery.`)
+    console.log(`Passed ${width}px: Rows/Graph/Matrix, matrix Back, collection focus, Scenario persistence, tree toggles, reload, exits and Interface Experiences & Screens.`)
   }
   expect(errors).toEqual([])
 } finally { await browser.close() }

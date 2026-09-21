@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /** Exercise the desktop rail and its independent mobile drawer on a built report. */
 import { chromium, expect } from '@playwright/test'
+import { selectCollectionDrawing, expectCollectionDrawing } from './report-view-controls.mjs'
 import { mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 
@@ -46,7 +47,7 @@ try {
   await expect(page.getByRole('menu')).toHaveCount(0)
   await expect(product).toBeFocused()
   await rail.getByRole('button', { name: 'Entities', exact: true }).click()
-  await page.getByRole('button', { name: 'Draw as graph', exact: true }).click()
+  await selectCollectionDrawing(page, 'graph')
   await expect(page.locator('[data-flow-ready=true]')).toBeVisible()
   const graphUrl = page.url()
   const heading = await page.getByRole('heading', { level: 1 }).textContent()
@@ -61,7 +62,7 @@ try {
   await expect(page.getByRole('button', { name: 'Expand sidebar', exact: true })).toBeFocused()
   await expect(page).toHaveURL(graphUrl)
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(heading)
-  await expect(page.getByRole('button', { name: 'Draw as graph', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  await expectCollectionDrawing(page, 'graph')
   await expect(rail.locator('[data-logo-wordmark], [data-pdd-version]')).toHaveCount(0)
   await expect(product.locator('[data-businesslens-logo]')).toHaveCSS('width', '17px')
 
@@ -83,7 +84,7 @@ try {
   await expect(page.getByRole('menu')).toHaveCount(0)
   await page.reload()
   await expect(desktop).toHaveCSS('width', '64px')
-  await expect(page.getByRole('button', { name: 'Draw as graph', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  await expectCollectionDrawing(page, 'graph')
 
   await rail.getByRole('button', { name: 'Search Product Model', exact: true }).click()
   const search = page.getByPlaceholder('Search every resource in this model…')

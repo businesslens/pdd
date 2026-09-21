@@ -77,9 +77,11 @@ describe('cli help', () => {
     const result = cli(repo, process.env, 'view', '--help')
     expect(result.status).toBe(0)
     expect(result.stderr).toBe('')
-    expect(result.stdout).toContain('Usage: businesslens view [options]')
+    expect(result.stdout).toContain('Usage: businesslens view [options] [repository]')
     expect(result.stdout).toContain('--no-open')
     expect(result.stdout).toContain('--port <port>')
+    expect(result.stdout).toContain('--branch <name>')
+    expect(result.stdout).toContain('--pr <number>')
     expect(result.stdout).toContain('--cwd <path>')
     expect(result.stdout).not.toContain('--providers')
     expect(result.stdout).not.toContain('--catalog')
@@ -175,7 +177,8 @@ describe('cli dispatch', () => {
     expect(existsSync(join(repo, '.businesslens', 'build', 'report.json'))).toBe(true)
   })
 
-  it('refuses removed commands and options as ordinary usage errors', { timeout: 15_000 }, () => {
+  // Real CLI processes need room on busy CI runners.
+  it('refuses removed commands and options as ordinary usage errors', () => {
     for (const command of ['export', 'open', 'pull', 'contribute', 'build', 'validate', 'coverage']) {
       const result = cli(ROOT, process.env, '--cwd', repo, command)
       expect(result.status, command).toBe(2)
@@ -194,13 +197,13 @@ describe('cli dispatch', () => {
     const cwd = cli(ROOT, process.env, '-C', repo, 'lint')
     expect(cwd.status).toBe(2)
     expect(cwd.stderr).toContain("unknown option '-C'")
-  })
+  }, 30_000)
 
   it('shows Blueprint help without running anything when the group is bare', () => {
     const result = cli(ROOT, process.env, '--cwd', repo, 'blueprint')
     expect(result.status).toBe(0)
     expect(result.stdout).toContain('Usage: businesslens blueprint <command> [options]')
-  })
+  }, 30_000)
 
   it('rejects unknown root and Blueprint commands with usage exit code', () => {
     const root = cli(repo, process.env, 'bogus')
@@ -255,6 +258,27 @@ describe('cli dispatch', () => {
       rmSync(empty, { recursive: true, force: true })
     }
   })
+
+  it('rejects remote view spellings that cannot be fetched, before touching the network', () => {
+    const cases: Array<[string[], string]> = [
+      [['view', '--no-open', '--pr', '12'], '--branch and --pr apply to a GitHub repository'],
+      [['view', '--no-open', '--branch', 'main'], '--branch and --pr apply to a GitHub repository'],
+      [['view', '--no-open', 'example/fixture-shop', '--branch', 'main', '--pr', '12'], 'either --branch or --pr'],
+      [['view', '--no-open', 'https://github.com/example/fixture-shop/pull/12', '--branch', 'main'], 'already names a pull request #12'],
+      [['view', '--no-open', 'https://github.com/example/fixture-shop/tree/main', '--pr', '12'], 'already names a branch main'],
+      [['view', '--no-open', '--cwd', '.', 'example/fixture-shop'], '--cwd selects a local model'],
+      [['view', '--no-open', 'https://gitlab.com/example/fixture-shop'], 'is not a GitHub repository'],
+      [['view', '--no-open', 'https://github.com/example/fixture-shop/issues/3'], 'is not a repository, branch, or pull request URL'],
+      [['view', '--no-open', 'example/fixture-shop', '--pr', '0'], 'expected a positive pull request number'],
+      [['view', '--no-open', 'example/fixture-shop', '--pr', 'twelve'], 'expected a positive pull request number']
+    ]
+    for (const [args, message] of cases) {
+      const result = cli(repo, process.env, ...args)
+      expect(result.status, args.join(' ')).toBe(2)
+      expect(result.stderr, args.join(' ')).toContain(message)
+      expect(result.stderr, args.join(' ')).not.toContain('Fetching')
+    }
+  }, 30_000)
 
   it('does not accept retired commands or options as aliases', () => {
     rmSync(join(repo, '.businesslens', 'build'), { recursive: true, force: true })

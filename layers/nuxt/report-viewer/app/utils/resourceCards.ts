@@ -13,6 +13,7 @@ import type {
   ScreenView
 } from './reportWorkspace'
 import { resolveResource } from './reportWorkspace'
+import { collectionRelation } from './collectionRelations'
 
 /*
   One row shape, not three.
@@ -91,7 +92,7 @@ function ruleReachCount(workspace: ReportWorkspace, rule: RuleView): number {
   return capabilities.size + journeys.size + screens.size
 }
 
-export function resourceCardPresentation(
+function baseResourceCardPresentation(
   workspace: ReportWorkspace,
   resource: AnyResourceView
 ): ResourceCardPresentation {
@@ -283,4 +284,17 @@ export function resourceCardPresentation(
       }
     }
   }
+}
+
+/** Relationship hooks explain the shared filters, including exact Rule targets. */
+export function resourceCardPresentation(workspace: ReportWorkspace, resource: AnyResourceView): ResourceCardPresentation {
+  const presentation = baseResourceCardPresentation(workspace, resource)
+  const relation = collectionRelation(workspace, resource.kind)
+  if (!relation) return presentation
+  const source = relation.drawing ?? relation.source
+  const keys = new Set(source.cells.filter(cell => cell.row === resource.key).map(cell => cell.column))
+  const names = source.columns.filter(column => keys.has(column.key)).map(column => column.title)
+  if (!names.length && resource.kind !== 'rule') return presentation
+  return { ...presentation, hookLabel: relation.label,
+    hook: names.slice(0, 2).join(' · ') + (names.length > 2 ? ` +${names.length - 2}` : '') }
 }

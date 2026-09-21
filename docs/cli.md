@@ -19,7 +19,7 @@ npx businesslens <command> [options]
 | [`install`](./cli-install.md) | Install map, ideate, and verify |
 | [`update`](./cli-update.md) | Refresh marked skill installations |
 | [`lint`](./cli-lint.md) | Check Product Model structure without semantic claims |
-| [`view`](./cli-view.md) | Render the current Product Model on localhost without exporting it |
+| [`view`](./cli-view.md) | Render a Product Model on localhost without exporting it, local or from GitHub |
 | [`blueprint export`](./cli-export.md) | Compile a portable Product Report (a Blueprint) |
 | [`blueprint open`](./cli-open.md) | Expand a local Blueprint into `.businesslens/` |
 | [`blueprint pull`](./cli-pull.md) | Pull a catalog Blueprint by name |
@@ -54,6 +54,10 @@ npx businesslens view --cwd ./blueprints/example-product
 # A model in another directory or repository
 npx businesslens lint --cwd ../fixture-shop --json
 ```
+
+`view` can instead take a GitHub repository, branch, or pull request; the model
+is then looked up from that snapshot's root, and `--cwd` does not apply. See
+[`view`](./cli-view.md#a-github-repository).
 
 For `blueprint open` and `blueprint pull`, `--cwd` is instead the exact target
 directory where `.businesslens/` will be created. For `install` and `update`, it

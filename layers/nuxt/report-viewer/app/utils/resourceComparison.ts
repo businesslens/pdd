@@ -4,6 +4,7 @@ import type { ProductReport, ReportReference } from 'businesslens/report'
 import type { ReportResourceKind, ReportWorkspace } from './reportWorkspace'
 import { COLLECTION_KIND } from './reportChanges'
 import { reviewFileResource } from './reviewModel'
+import { structureChildren, structureLabel, type TreeCardNode } from './collectionChildren'
 import { resourceConnectionRows } from './resourceConnections'
 
 export interface ComparisonSide { report: ProductReport, workspace: ReportWorkspace, state: string }
@@ -197,6 +198,13 @@ export function comparisonReadings(side: ComparisonSide | null, key: string): Co
   const kind = resource.kind
   const readings: ComparisonReading[] = [{ id: 'overview', label: 'Overview', fields: [...fields(resourceOverviewFields[kind]), ...supporting()] }]
   if (kind === 'capability-scenario' || kind === 'journey-scenario') readings[0]!.fields.push(...fields(['actorIds']).map(field => ({ ...field, derived: true })))
+  if (kind === 'interface' || kind === 'experience') {
+    const nodes = structureChildren(side.workspace, resource)
+    const values = (nodes: TreeCardNode[]): unknown[] => nodes.map(node => ({ id: node.id, title: node.title, sharedFrom: node.sharedFrom?.key, children: values(node.children) }))
+    if (nodes.length) readings.push({ id: 'structure', label: structureLabel(resource), fields: [
+      fieldOf('structure', values(nodes), side, { label: structureLabel(resource), derived: true })
+    ] })
+  }
   if (kind === 'screen') {
     const states = readings[0]!.fields.find(field => field.id === 'states')
     if (states) states.label = 'View states'

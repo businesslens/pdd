@@ -181,17 +181,19 @@ costed already.
 - **The report explains itself.** A reading that needs prose elsewhere to be
   understood is not finished. It links out only to the documentation for a
   resource *type*.
-- **A collection is one set with two drawings.** The rail changes the subject,
-  the filters narrow the set, and a Rows/Graph switch beside the filters changes
-  only how the same set is drawn: the heading count, the controls and the chips
-  are identical in both. Each collection's Graph states one derivation and is
-  accountable for it. Tabs exist only on the Overview and in resource readings,
-  where they change which set is on screen.
+- **A collection is one set with shared drawings.** The rail changes the subject,
+  the filters narrow the set, and a Rows/Graph/Matrix selector beside the filters
+  changes only how the same set is drawn: the heading count, controls and chips
+  stay the same. Each collection's Graph states one derivation and is accountable
+  for it. Tabs exist only on the Overview and in resource readings, where they
+  change which set is on screen. Filter and control details belong in the
+  [report viewer README](layers/nuxt/report-viewer/README.md).
 - **Row density is the reader's, per collection.** How many columns the Rows
   drawing uses is a cookie keyed by collection, so the first paint is right;
   nothing else about a drawing is configurable. Phones use one column and hide
   the density control without changing the saved preference. Expand all and
-  Collapse all stay directly beside the drawing controls at every width.
+  Collapse all sit beside the drawing controls on desktop and inside the view
+  picker on phones.
 - **Every surface names itself, with the name the reader clicked.** The main
   H1 keeps the working view and its count or Product qualifier. A resource
   slideover names its resource and type, with actual ownership shown separately
@@ -213,13 +215,11 @@ costed already.
   repository changes as path-only context. Missing or invalid models limit
   resource links, never authored file comparisons; historical readings use the
   selected commit.
-- **The rail lists Overview, three cross-collection views, then six
-  collections.** The views — Compare delivery, What changes what, Rule
-  attachments — each compare two collections, so no collection owns them and
-  each is a row of its own. The collections are Entities, Interfaces, Domains,
-  Capabilities, Journeys, Business Rules. Experiences and Screens are reached
-  through Interfaces, Scenarios through their parent, and a collection's Graph
-  through its drawing switch.
+- **The rail lists Overview, then six collections.** Matrix comparisons live
+  within the collection supplying their rows. The collections are Entities,
+  Interfaces, Domains, Capabilities, Journeys, Business Rules. Experiences and
+  Screens are reached through Interfaces, Scenarios through their parent, and
+  a collection's Graph or Matrix through its drawing selector.
 - **A resource reading separates meaning, behavior, connections and references.** Overview
   carries the resource's explanation and contextual links, including an Entity's
   Information kept. Scenarios follows for a Capability or
@@ -254,7 +254,7 @@ costed already.
   two reports differ for a reason no reader can see. On phones, and whenever
   inline filters plus actions would wrap, a Filters button opens those same axis
   controls in a bottom sheet; its badge counts selected
-  values, and individually removable chips remain above the reading. Rows/Graph
+  values, and individually removable chips remain above the reading. The drawing switch
   stays beside Filters with the same icons. Page controls, filters and graph
   buttons use Nuxt UI's `sm` size (28px) at every viewport width. Host chrome
   retains its own sizing; report controls never override global UI defaults.

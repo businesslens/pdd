@@ -4,7 +4,7 @@ import { compileReport } from '../src/commands/export.js'
 import { loadModel } from '../src/core/model.js'
 const utilPath = '../layers/nuxt/report-viewer/app/utils/resourceComparison.ts'
 const workspacePath = '../layers/nuxt/report-viewer/app/utils/reportWorkspace.ts'
-const { comparisonRows, comparisonReadings, pairedFields, comparisonFileKey, comparisonResource } = await import(utilPath)
+const { comparisonRows, comparisonReadings, pairedFields, comparisonFileKey, comparisonResource, readingChanged } = await import(utilPath)
 const { projectReportWorkspace } = await import(workspacePath)
 const report = compileReport(loadModel(join(__dirname, 'fixtures', 'fixture-shop')), '2026-08-08')
 const side = (model = report, state = 'working') => ({ report: model, workspace: projectReportWorkspace(model), state })
@@ -53,6 +53,15 @@ describe('rendered resource comparison', () => {
       }
     }
     expect(kinds.size).toBe(10)
+  })
+  it('compares the new containment reading when a child title changes', () => {
+    const changed = structuredClone(report)
+    const screen = changed.model.screens[0]!
+    screen.title += ' updated'
+    const structure = (model: typeof report) => comparisonReadings(side(model), `interface:${screen.id.split('::')[0]}`).find((item: any) => item.id === 'structure')
+    expect(structure(report)).toBeDefined()
+    expect(readingChanged(structure(report), structure(changed))).toBe(true)
+    expect(readingChanged(structure(report), structure(report))).toBe(false)
   })
   it('retains removed references and lifecycle fields from the earlier version', () => {
     const original = structuredClone(report)

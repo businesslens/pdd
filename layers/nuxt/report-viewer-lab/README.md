@@ -9,6 +9,22 @@ accident.
 
 There are no active report experiments in this layer.
 
+The **View controls** audition is decided: option 4's dropdown with preview
+cards is the stable collection view picker. Each choice keeps its short
+explanatory subtitle; the separate help button and About section are removed.
+The picker stays at the right edge, with the desktop legend and list controls
+to its left. On phones, expansion and the legend remain inside the picker.
+The shadow, alternatives, selector, preference composable and experiment styles
+have been removed. The background audition remains owned by `theme-lab`.
+
+The **Badges** audition is decided: Sand is the stable treatment for neutral
+badges in the shared theme and filter and resource-link chips in the report.
+Light mode uses a parchment fill and warm outline; dark mode uses a subdued
+brown fill. Colored badges retain their semantic palettes. The alternatives,
+selector, cookie composable, local app-config hook and experimental stylesheet
+have been removed. The background audition remains independently owned by
+`theme-lab`.
+
 The **Product picker** audition is decided: Hairline is the stable treatment,
 with a faint outline, transparent background and a quiet hover highlight.
 Collapsed navigation keeps a 32px trigger and 17px logo. The dropdown centers
@@ -25,7 +41,7 @@ brand controls and the collapsed Product picker retain 32px targets.
 
 The **Comparison legend** audition is decided: Explained is the stable Legend
 popover on Compare delivery, What changes what and Rule attachments. Its button
-lives in these page headers; each colored badge has a short meaning.
+lives beside these views' filters; each colored badge has a short meaning.
 Entries cover every possible badge for the view, regardless of filters. The
 shadow, alternatives, selector, cookie composable and experiment stylesheet have
 been removed. The background audition remains independently owned by `theme-lab`.

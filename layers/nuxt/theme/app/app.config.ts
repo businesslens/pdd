@@ -9,6 +9,15 @@ export default defineAppConfig({
       warning: 'amber',
       error: 'red',
       neutral: 'umber'
+    },
+    badge: {
+      // Sand is shared by neutral labels, including those in teleported
+      // readings and tooltips. Colored badges retain their semantic palettes.
+      compoundVariants: [{
+        color: 'neutral',
+        variant: ['outline', 'soft', 'subtle'],
+        class: 'businesslens-neutral-badge'
+      }]
     }
   }
 })
