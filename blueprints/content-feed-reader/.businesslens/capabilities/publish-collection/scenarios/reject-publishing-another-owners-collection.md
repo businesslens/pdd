@@ -10,7 +10,7 @@ steps:
       - { entity: collection, effect: reads }
     contexts:
       web:
-        place: reader-web::personal-library::collection-workspace
+        place: reader-web::personal-library::collection-workspace::settings::sharing
   - text: The Product checks collection ownership
     kind: product
     actor: reader
@@ -18,13 +18,13 @@ steps:
       - { entity: collection, effect: reads }
     contexts:
       web:
-        place: reader-web::personal-library::collection-workspace
+        place: reader-web::personal-library::collection-workspace::settings::sharing
   - text: The attempted publication change is rejected
     kind: condition
     entities: []
     contexts:
       web:
-        place: reader-web::personal-library::collection-workspace
+        place: reader-web::personal-library::collection-workspace::settings::sharing
 ---
 
 # Reject publishing another owner's collection

@@ -17,6 +17,8 @@ steps:
         place: reader-web::personal-library::unread-library
       mobile:
         place: reader-mobile::personal-library::unread-library
+      mobile-next:
+        place: reader-mobile::personal-library-next::unread-library
   - text: The item is marked read
     kind: product
     actor: reader
@@ -28,9 +30,12 @@ steps:
         place: reader-web::personal-library::unread-library
       mobile:
         place: reader-mobile::personal-library::unread-library
+      mobile-next:
+        place: reader-mobile::personal-library-next::unread-library
 routes:
   web: Web
   mobile: Mobile
+  mobile-next: Mobile (next)
 ---
 
 # Work through the unread backlog

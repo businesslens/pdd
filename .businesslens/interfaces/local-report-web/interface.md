@@ -19,12 +19,3 @@ no account and nothing sent anywhere. It is a place to return to during
 authoring rather than a document to read once: the open section, resource, and
 Scenario route live in the address bar, so a reading survives a link, the back
 button, and a reload.
-
-## Capability boundary
-
-Reading: browsing resources by kind, opening any resource’s reading, reading a
-thing's composed lifecycle and who may move it, searching by name, and reading
-named visualizations in their subject collections and resource-specific readings. It presents what the model already says and never
-edits it, never accepts an account, and never publishes or transmits the report.
-It shows the model, not the code — it makes no claim about whether the
-repository agrees with what it displays.

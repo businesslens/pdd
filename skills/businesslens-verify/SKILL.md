@@ -75,9 +75,16 @@ the diff.
    implementation flag, and that each declared relation and its cardinality
    hold. Confirm every Step's `entities`: the code performs each declared effect
    on that thing, moves it between exactly the states the Step names, and
-   touches nothing the Step leaves out; confirm each Screen's `entities` the
-   same way. An overstatement either way is a `code-right` finding like any
-   other.
+   touches nothing the Step leaves out, and reads or changes exactly the `facts`
+   it cites. Confirm each Screen against the view's code: it renders or
+   collects exactly the facts named for each Entity it lists, each Capability
+   it lists is one a Step placed there uses, each child Screen's content
+   depends on an act inside its parent, and every `navigation` Screen is
+   reachable from every place in its container; confirm `languages` against
+   the locales the code serves. An overstatement either way is a `code-right`
+   finding like any other. Looks are never a finding — components, layout,
+   theme, copy, viewport — because the model claims none of it; the rubric's
+   redesign test decides which side a difference falls on.
 
    Verify who may. For each Business Rule with `permits`, confirm the code lets
    exactly the granted actors perform the operation, under the stated
@@ -85,7 +92,8 @@ the diff.
    `permits: []` must be refused. A grant the code does not enforce is a
    `model-right` gap reported as **not established** — a green structural check
    never stands in for it. Confirm a fact-scoped Rule — a derivation, a field's
-   visibility — against the code that computes or shows the fact.
+   visibility — against the code that computes or shows the fact, at every
+   Screen presenting it and every Step citing it.
    Compare the one authored Journey Steps claim directly with repository
    behavior. Shared code does not
    establish Interface parity. Distinguish a missing Interface commitment from
@@ -155,7 +163,11 @@ the diff.
      the undetermined calls in rounds, then draft only the missing model area
      and necessary relationships, state coverage and uncertainty, and get
      approval before writing. This branch is mapping, so it faces every call
-     mapping faces.
+     mapping faces. Screens it drafts are places — reach, facts on screen,
+     abilities, conditions — nested where a region's content depends on an act
+     inside its parent, never design; every ability a Screen exposes gets a
+     Scenario with a Step placed on it. The rubric's scoped-mapping section
+     carries the rest.
    - Write the approved delta, then return to step 4.
 
    **Unverifiable**
@@ -206,6 +218,12 @@ the diff.
   proof by themselves.
 - Never capture, compare, or certify screenshots. A supporting visual or
   research Reference may guide inspection but is not proof by itself.
+- Never report design as drift. The model says what an Actor can reach, see,
+  do and trigger at each place, never how it looks or is built; component
+  libraries, theming, layout, typography, color, iconography, motion, copy,
+  gestures, breakpoints, loading and hover states, navigation chrome and
+  order belong in `visual` References with `role: intent` and are never
+  compared.
 - Never write outside `.businesslens/`; model-resolution writes must leave target
   `AGENTS.md`, `CLAUDE.md`, and root README byte-identical.
 - Never stage, commit, publish, submit, or contribute.

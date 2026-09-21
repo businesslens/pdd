@@ -3,6 +3,7 @@ kind: validation
 routes:
   web: Web
   mobile: Mobile
+  mobile-next: Mobile (next)
 steps:
   - text: The Product confirms that the item is unavailable
     kind: product
@@ -13,6 +14,8 @@ steps:
         place: reader-web::personal-library::unread-library
       mobile:
         place: reader-mobile::personal-library::unread-library
+      mobile-next:
+        place: reader-mobile::personal-library-next::unread-library
   - text: No saved record is created
     kind: condition
     entities: []
@@ -21,6 +24,8 @@ steps:
         place: reader-web::personal-library::unread-library
       mobile:
         place: reader-mobile::personal-library::unread-library
+      mobile-next:
+        place: reader-mobile::personal-library-next::unread-library
   - text: The Reader sees that the item cannot be saved
     kind: actor
     actor: reader
@@ -31,6 +36,8 @@ steps:
         place: reader-web::personal-library::unread-library
       mobile:
         place: reader-mobile::personal-library::unread-library
+      mobile-next:
+        place: reader-mobile::personal-library-next::unread-library
 ---
 
 # Reject saving an unavailable item

@@ -3,6 +3,7 @@ kind: primary
 routes:
   web: Web
   mobile: Mobile
+  mobile-next: Mobile (next)
 steps:
   - text: The Product presents the readable item with its source and publication context
     kind: product
@@ -14,6 +15,8 @@ steps:
         place: reader-web::item-reader
       mobile:
         place: reader-mobile::personal-library::saved-items
+      mobile-next:
+        place: reader-mobile::personal-library-next::saved-items
   - text: The Reader consumes the item from the saved library
     kind: actor
     actor: reader
@@ -24,6 +27,8 @@ steps:
         place: reader-web::item-reader
       mobile:
         place: reader-mobile::personal-library::saved-items
+      mobile-next:
+        place: reader-mobile::personal-library-next::saved-items
   - text: The saved state remains unchanged unless the Reader explicitly removes it
     kind: product
     actor: reader
@@ -33,6 +38,8 @@ steps:
         place: reader-web::personal-library::saved-items
       mobile:
         place: reader-mobile::personal-library::saved-items
+      mobile-next:
+        place: reader-mobile::personal-library-next::saved-items
 ---
 
 # Read a saved library item

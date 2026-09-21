@@ -13,6 +13,8 @@ steps:
         place: reader-web::personal-library::unread-library
       mobile:
         place: reader-mobile::personal-library::unread-library
+      mobile-next:
+        place: reader-mobile::personal-library-next::unread-library
   - text: The Reader saves it
     kind: actor
     actor: reader
@@ -24,6 +26,8 @@ steps:
         place: reader-web::personal-library::unread-library
       mobile:
         place: reader-mobile::personal-library::unread-library
+      mobile-next:
+        place: reader-mobile::personal-library-next::unread-library
   - text: The Reader marks it read
     kind: actor
     actor: reader
@@ -35,12 +39,15 @@ steps:
         place: reader-web::personal-library::unread-library
       mobile:
         place: reader-mobile::personal-library::unread-library
+      mobile-next:
+        place: reader-mobile::personal-library-next::unread-library
   - text: The Product removes it from the unread backlog without removing the saved copy
     kind: product
     entities: []
 routes:
   web: Web
   mobile: Mobile
+  mobile-next: Mobile (next)
 ---
 
 # Save an item while catching up

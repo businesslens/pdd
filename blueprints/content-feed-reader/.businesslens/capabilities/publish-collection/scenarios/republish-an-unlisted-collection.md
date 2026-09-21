@@ -10,7 +10,7 @@ steps:
       - { entity: collection, effect: reads }
     contexts:
       web:
-        place: reader-web::personal-library::collection-workspace
+        place: reader-web::personal-library::collection-workspace::settings::sharing
   - text: The Product explains that the former public address will serve the collection again
     kind: product
     actor: reader
@@ -18,7 +18,7 @@ steps:
       - { entity: collection, effect: reads }
     contexts:
       web:
-        place: reader-web::personal-library::collection-workspace
+        place: reader-web::personal-library::collection-workspace::settings::sharing
   - text: The Reader confirms publication
     kind: actor
     actor: reader
@@ -26,7 +26,7 @@ steps:
       - { entity: collection, from: Unlisted, to: Published }
     contexts:
       web:
-        place: reader-web::personal-library::collection-workspace
+        place: reader-web::personal-library::collection-workspace::settings::sharing
   - text: The public address serves the collection contents again
     kind: condition
     actor: reader
@@ -34,7 +34,7 @@ steps:
       - { entity: collection, effect: reads }
     contexts:
       web:
-        place: reader-web::personal-library::collection-workspace
+        place: reader-web::personal-library::collection-workspace::settings::sharing
 ---
 
 # Republish an unlisted collection

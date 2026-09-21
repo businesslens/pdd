@@ -22,14 +22,14 @@ steps:
       - { entity: screen, effect: reads }
     contexts:
       local:
-        place: local-report-web::resource-reading
+        place: local-report-web::resource-reading::structure
   - text: The Product uses the same tree rows and group counts, identifying shared references by their owning Interface
     kind: product
     entities:
       - { entity: interface, effect: reads }
     contexts:
       local:
-        place: local-report-web::resource-reading
+        place: local-report-web::resource-reading::structure
 ---
 
 # Browse Interface structure

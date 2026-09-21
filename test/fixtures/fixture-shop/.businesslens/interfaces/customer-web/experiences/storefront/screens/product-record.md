@@ -3,8 +3,9 @@ capabilities:
   - browse-catalog
   - place-order
 entities:
-  - catalog-product
-  - cart
+  - { entity: catalog-product, facts: [Name and description, Price, Stock remaining] }
+  - { entity: cart, facts: [Quantity chosen] }
+  - { entity: shopper, facts: [Delivery address] }
 entryPoints:
   - customer-web: /products/:id
 references:
@@ -19,33 +20,9 @@ references:
 
 # Product record
 
-Shows the information a shopper needs to evaluate one product.
+Shows the information a shopper needs to evaluate one product and, when it can
+be bought, lets them add it to the cart and check out.
 
 ## Intent
 
 Help a shopper decide whether to add the product to the cart.
-
-## Information presented
-
-- Product name and description
-- Price and availability
-
-## Available actions
-
-- Add the product to the cart
-- Return to the catalog
-
-## View states
-
-### Ready to buy
-
-The price and stock are shown with an active control for adding to the cart.
-
-### Purchase blocked
-
-The control is inert and the reason the product cannot be bought is explained
-in its place.
-
-## Capability boundary
-
-The screen does not change product or inventory data.

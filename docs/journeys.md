@@ -67,10 +67,14 @@ Create a Journey only when all of these are true:
    approved as intended behavior during ideation; and
 5. the Journey is not merely a plausible sequence or an administrative grouping.
 
-A wizard is strong Journey evidence, but it is not required. Product
-documentation, controller orchestration, integration tests, UI handoffs, and a
-supported transition from Git transport to a web pull-request flow can also
-establish one.
+A wizard is not Journey evidence. It is
+[nested Screens](./interfaces.md#screens-nest) on the structure side, and the
+Scenario walking its steps is a Journey Scenario only where it crosses
+Capabilities; otherwise it is a
+[Capability Scenario](./capabilities.md#capability-scenarios). The two axes are
+independent. Product documentation, controller orchestration, integration
+tests, UI handoffs, and a supported transition from Git transport to a web
+pull-request flow can establish a Journey.
 
 “Publish a branch and open it for review” can be a Journey when the Product
 supports that handoff. “Browse source and later change notification settings”
@@ -148,8 +152,10 @@ Every Journey Actor must participate in at least one achieved Scenario.
 
 ## Relationship to code
 
-A Journey does not need one matching class, controller, route, test, or wizard.
-Like other Product resources, it is a Product-level projection over code. During
+A Journey does not need one matching class, controller, route, or test, and a
+wizard does not make one: a wizard is nested Screens, walked by whichever
+Scenario type its Capabilities call for. Like other Product resources, a
+Journey is a Product-level projection over code. During
 mapping, however, its Goal, Capability handoffs, and achieved path must remain
 traceable through supported behavior rather than invented from plausible
 actions.
@@ -250,6 +256,7 @@ The Journey goal is achieved: a reviewable change proposal exists.
 | `steps` | yes | Give a non-empty ordered list with one-line `text` and `kind: actor|product|condition`. A Step may name a Capability independently of its kind. |
 | `steps[].actor` | for Actor Steps | Name the Entity that acts and performs the Step when `kind: actor`; optional on a `product` or `condition` Step, where it says who the Step is attributable to. |
 | `steps[].entities` | yes | List what this Step does to the Product's things, exactly as on a [Capability Scenario Step](./capabilities.md#what-a-step-does-to-the-products-things), or `[]`. A Step whose effect is anything but a read must name the `capability` it exercises, because a Journey Step that changes a thing on its own would be behavior no Capability owns. |
+| `steps[].entities[].facts` | no | As on a Capability Scenario Step: the Entity's named facts a `reads` or `changes` entry uses, by exact name, and never on `creates` or `removes`. |
 | `steps[].contexts` | when contextualized | Map every declared route to a strict Context whose `place` is the most-specific occurrence. Omit it only when the Step is shared by all routes and has no Context. |
 | `references` | no | Use the documented [Reference](./references.md) shape. |
 | Lead paragraph | no | Start with a named H2; move starting-condition prose into `## Trigger`. |

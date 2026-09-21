@@ -231,10 +231,14 @@ stay outside the model.
 
 Each fact is `- **Name** — prose`: the name in bold, an em dash with a space on
 each side as the separator, and non-empty prose after it. Names are unique
-within the Entity and are cited by exact match — a
-[Business Rule](./business-rules.md)'s `facts` target and its `when` condition
-are the only places that cite one. It is the idiom `## States` already uses,
-where an H3 titled `Pending` is cited as `from: Pending`.
+within the Entity and are cited by exact match, from three places: a
+[Business Rule](./business-rules.md)'s `facts` target and its `when` condition,
+a [Screen](./interfaces.md#what-a-screen-presents)'s `entities` entry naming
+the facts it presents, and a
+[Step](./capabilities.md#what-a-step-does-to-the-products-things)'s `reads` or
+`changes` entry naming the facts it uses. A name none of them can resolve is an
+error. It is the idiom `## States` already uses, where an H3 titled `Pending`
+is cited as `from: Pending`.
 
 Write *When placed* instead of `created_at TIMESTAMP`. Describe *Items ordered*
 in prose; declare relationships between Entities in `relations`. Business Rules
@@ -360,8 +364,8 @@ write a type, you have left product meaning.**
 when the Product promises it. The mechanism is never product meaning; what the
 Product undertakes to know is.
 
-**Not a view's states.** "Empty list" belongs to a [Screen](./interfaces.md#screens).
-"Archived" belongs to the thing.
+**Not a view's conditions.** "Empty list" is a condition a Scenario meets on a
+[Screen](./interfaces.md#screens). "Archived" belongs to the thing.
 
 **Not a representation of another Entity.** A serialization, export or rendering
 is that thing in another shape. If you can regenerate it from an Entity, it
@@ -395,9 +399,9 @@ use it declare the relationship, and every backlink is derived.
 
 | | |
 | --- | --- |
-| **Scenario Step** | declares what it does to the Entity in `entities` — creates, changes, removes, or reads — and the states it leaves and lands in |
+| **Scenario Step** | declares what it does to the Entity in `entities` — creates, changes, removes, or reads — the states it leaves and lands in, and the facts a read or change uses |
 | **Capability** | nothing; what it changes is derived from its Scenarios' Steps |
-| **Screen** | declares the Entities it presents, in `entities` |
+| **Screen** | declares the Entities it presents, and which of their facts, in `entities` |
 | **Another Entity** | related by a declared edge with a verb and both cardinality ends; the inverse is derived |
 | **Interface, Experience, Journey** | name it in `actors` when it acts |
 | **Business Rule** | targets an operation on it, cites one of its facts, walks its relations to find who may, or reads a settings Entity's fact as a condition |

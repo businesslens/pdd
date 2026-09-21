@@ -3,48 +3,69 @@ kind: validation
 routes:
   web: Web
   mobile: Mobile
+  mobile-next: Mobile (next)
 steps:
-  - text: The Reader submits an address that does not return a supported feed.
+  - text: The Reader starts following a new feed
     kind: actor
     actor: reader
     entities: []
     contexts:
       web:
-        place: reader-web::personal-library::source-list
+        place: reader-web::personal-library::add-source
       mobile:
         place: reader-mobile::personal-library::source-list
+      mobile-next:
+        place: reader-mobile::personal-library-next::source-list
+  - text: The Reader enters an address that does not return a supported feed
+    kind: actor
+    actor: reader
+    entities: []
+    contexts:
+      web:
+        place: reader-web::personal-library::add-source::feed-address
+      mobile:
+        place: reader-mobile::personal-library::source-list
+      mobile-next:
+        place: reader-mobile::personal-library-next::source-list
   - text: The Product inspects the submitted address
     kind: product
     entities: []
     contexts:
       web:
-        place: reader-web::personal-library::source-list
+        place: reader-web::personal-library::add-source::feed-address
       mobile:
         place: reader-mobile::personal-library::source-list
+      mobile-next:
+        place: reader-mobile::personal-library-next::source-list
   - text: No supported feed is found
     kind: condition
     entities: []
     contexts:
       web:
-        place: reader-web::personal-library::source-list
+        place: reader-web::personal-library::add-source::feed-address
       mobile:
         place: reader-mobile::personal-library::source-list
+      mobile-next:
+        place: reader-mobile::personal-library-next::source-list
   - text: The Product explains that the address cannot be followed
     kind: product
     entities: []
     contexts:
       web:
-        place: reader-web::personal-library::source-list
+        place: reader-web::personal-library::add-source::feed-address
       mobile:
         place: reader-mobile::personal-library::source-list
+      mobile-next:
+        place: reader-mobile::personal-library-next::source-list
 ---
 
 # Reject an address with no readable feed
 
 ## Trigger
 
-The Reader submits an address that does not return a supported feed.
+The Reader enters an address that does not return a supported feed.
 
 ## Outcome
 
-No source is added and the submitted address remains available to correct.
+No source is added, the Reader does not get past the address, and the
+submitted address remains available to correct.

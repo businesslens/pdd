@@ -5,7 +5,7 @@ import { containsStructuralHeading, statesAnExclusion } from './markdown.js'
 import { INTERFACE_TYPES } from './interface-types.js'
 import { operationPlaces, validatePermissionBehavior } from './permission-validation.js'
 
-export const REPORT_SCHEMA_VERSION = '13.0.0'
+export const REPORT_SCHEMA_VERSION = '14.0.0'
 
 const IdSchema = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
 /**
@@ -50,9 +50,7 @@ export const ReportReferenceSchema = z.strictObject({
   kind: z.enum(['code', 'prd', 'spec', 'proposal', 'doc', 'adr', 'visual', 'research']),
   role: z.enum(['intent', 'implementation', 'context']),
   target: SingleLineTextSchema,
-  title: SingleLineTextSchema.optional(),
-  /** Screens only: the `## View states` H3 this artefact depicts. */
-  state: SingleLineTextSchema.optional()
+  title: SingleLineTextSchema.optional()
 }).superRefine((reference, context) => {
   if (reference.kind === 'code') {
     const issues: string[] = []
@@ -122,6 +120,9 @@ export const ReportContextSchema = z.strictObject({
   placeId: QualifiedIdSchema
 })
 
+/** A language tag: `en`, `de-DE`, `pt-BR`. A closed vocabulary, never a name. */
+export const LanguageTagSchema = z.string().regex(/^[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/)
+
 export const ReportInterfaceSchema = z.strictObject({
   id: QualifiedIdSchema,
   title: SingleLineTextSchema,
@@ -129,7 +130,14 @@ export const ReportInterfaceSchema = z.strictObject({
   type: z.enum(INTERFACE_TYPES),
   actorIds: z.array(IdSchema).min(1),
   entryPoints: z.array(ReportEntryPointSchema),
-  capabilityBoundary: RequiredMarkdownFragmentSchema,
+  /** Narrows the Product's languages; empty means the Product's list applies. */
+  languages: z.array(LanguageTagSchema),
+  /**
+   * Screens reachable from every place inside this Interface, by full id.
+   * Structure, not a relation: it says nothing about movement and its order
+   * carries no meaning.
+   */
+  navigation: z.array(QualifiedIdSchema),
   ...ResourceContentSchema
 })
 
@@ -141,7 +149,9 @@ export const ReportExperienceSchema = z.strictObject({
   interfaceIds: z.array(QualifiedIdSchema).min(1),
   accessMode: z.enum(['public', 'authenticated', 'restricted']),
   entryPoints: z.array(ReportEntryPointSchema),
-  capabilityBoundary: RequiredMarkdownFragmentSchema,
+  navigation: z.array(QualifiedIdSchema),
+  /** Non-null only where another Experience of the Interface carries a different one. */
+  version: SingleLineTextSchema.nullable(),
   ...ResourceContentSchema
 })
 
@@ -219,25 +229,29 @@ export const ReportCapabilitySchema = z.strictObject({
   ...ResourceContentSchema
 })
 
-export const ReportScreenStateSchema = z.strictObject({
-  title: SingleLineTextSchema,
-  description: RequiredMarkdownFragmentSchema
+/**
+ * One Entity a Screen presents and the facts on screen, read or entered.
+ * `facts` is null for a bare entry — presence claimed, no fact named — which a
+ * complete model never carries for an Entity that has named facts.
+ */
+export const ReportScreenEntitySchema = z.strictObject({
+  entityId: IdSchema,
+  facts: z.array(SingleLineTextSchema).min(1).nullable()
 })
 
+/**
+ * A Screen is relations only: what it shows, what it offers, where it is
+ * entered. Its id carries its whole placement, and a parent may be a Screen.
+ */
 export const ReportScreenSchema = z.strictObject({
   id: QualifiedIdSchema,
   title: SingleLineTextSchema,
   description: RequiredMarkdownFragmentSchema,
   capabilityIds: z.array(IdSchema).min(1),
-  /** The Entities this view presents. */
-  entityIds: z.array(IdSchema),
+  entities: z.array(ReportScreenEntitySchema),
   capabilityScenarioIds: z.array(IdSchema),
   journeyScenarioIds: z.array(IdSchema),
   entryPoints: z.array(ReportEntryPointSchema),
-  information: z.array(SingleLineTextSchema).min(1),
-  actions: z.array(SingleLineTextSchema),
-  states: z.array(ReportScreenStateSchema),
-  capabilityBoundary: RequiredMarkdownFragmentSchema,
   ...ResourceContentSchema
 })
 
@@ -286,7 +300,9 @@ export const ReportScenarioStepEntitySchema = z.strictObject({
   as: IdSchema.nullable(),
   effect: z.enum(STEP_EFFECTS),
   from: SingleLineTextSchema.nullable(),
-  to: SingleLineTextSchema.nullable()
+  to: SingleLineTextSchema.nullable(),
+  /** The facts this Step reads or edits; `reads` and `changes` only, empty when none cited. */
+  facts: z.array(SingleLineTextSchema)
 })
 
 export const ReportScenarioStepSchema = z.strictObject({
@@ -413,7 +429,7 @@ export const ReportCoverageSchema = z.strictObject({
   rationale: MarkdownFragmentSchema
 })
 
-export const ProductReportV13Schema = z.strictObject({
+export const ProductReportV14Schema = z.strictObject({
   schemaVersion: z.literal(REPORT_SCHEMA_VERSION),
   id: ProductIdSchema,
   title: SingleLineTextSchema.max(160),
@@ -427,6 +443,8 @@ export const ProductReportV13Schema = z.strictObject({
   references: z.array(ReportReferenceSchema),
   referenceProfile: z.enum(['workspace', 'portable']),
   tags: z.array(z.string().min(1).max(48)).max(24),
+  /** Language tags the Product serves. */
+  languages: z.array(LanguageTagSchema),
   generatedAt: z.iso.date(),
   generator: ReportGeneratorSchema,
   counts: ReportCountsSchema,
@@ -449,12 +467,12 @@ export const ProductReportV13Schema = z.strictObject({
   coverage: ReportCoverageSchema
 })
 
-export const ProductReportSchema = ProductReportV13Schema
+export const ProductReportSchema = ProductReportV14Schema
 
-export type ProductReportV13 = z.infer<typeof ProductReportV13Schema>
-export type ProductReport = ProductReportV13
+export type ProductReportV14 = z.infer<typeof ProductReportV14Schema>
+export type ProductReport = ProductReportV14
 export type ReportDecisionPoint = z.infer<typeof ReportDecisionPointSchema>
-export type ReportScreenState = z.infer<typeof ReportScreenStateSchema>
+export type ReportScreenEntity = z.infer<typeof ReportScreenEntitySchema>
 export type ReportCoverage = z.infer<typeof ReportCoverageSchema>
 export type ReportCounts = z.infer<typeof ReportCountsSchema>
 export type ReportAuthor = z.infer<typeof ReportAuthorSchema>
@@ -482,7 +500,7 @@ export type ReportBusinessRuleTarget = z.infer<typeof ReportBusinessRuleTargetSc
 export type ReportReference = z.infer<typeof ReportReferenceSchema>
 export type ReportSupportingSection = z.infer<typeof ReportSupportingSectionSchema>
 
-export type ReportModel = ProductReportV13['model']
+export type ReportModel = ProductReportV14['model']
 
 /** One resource in the report, reduced to what every "for every resource" check needs. */
 type ReportResource = { id: string, references: ReportReference[] }
@@ -491,7 +509,7 @@ type ReportResource = { id: string, references: ReportReference[] }
  * Every resource collection in a report, keyed by its own name.
  *
  * The key union is read off the schema rather than written out, so a new
- * collection in `ProductReportV13Schema` leaves this record incomplete and fails
+ * collection in `ProductReportV14Schema` leaves this record incomplete and fails
  * the build. `taxonomies` is an object, not an array of resources, so it drops
  * out on its own. See the same reasoning in `resourceCollections` — Entity was
  * added to the report and its ids and References went unchecked for a release
@@ -612,7 +630,7 @@ function requireEntryPointInterfaces(
 }
 
 /** Cross-resource and computed-field validation, shared with every report consumer. */
-export function validateProductReport(report: ProductReportV13): string[] {
+export function validateProductReport(report: ProductReportV14): string[] {
   const issues: string[] = []
   const { model } = report
   /* An Actor is an Entity that acts. Every actor reference resolves here. */
@@ -649,6 +667,9 @@ export function validateProductReport(report: ProductReportV13): string[] {
   ])
 
   requireUniqueValues(issues, 'product', 'tags', report.tags)
+  requireUniqueValues(issues, 'product', 'languages', report.languages)
+  const productLanguages = new Set(report.languages)
+  const complete = report.coverage.status === 'complete'
   validateSupportingSections(issues, 'product', report.supportingSections, ['Intent'])
 
   const collections: Array<[string, string[]]> = [
@@ -672,8 +693,34 @@ export function validateProductReport(report: ProductReportV13): string[] {
     }
   }
 
+  const screensById = new Map(model.screens.map(screen => [screen.id, screen]))
+  /* The nearest Interface or Experience above a Screen: its parent may be a Screen. */
+  const containerForScreen = (screen: ReportScreen): string => {
+    let place = parentPlace(screen.id)
+    while (place && screensById.has(place)) place = parentPlace(place)
+    return place || ''
+  }
+  /* Relative to its container, landing on a Screen the container itself holds. */
+  const validateNavigation = (label: string, containerId: string, entries: string[]) => {
+    requireUniqueValues(issues, label, 'navigation', entries)
+    for (const entry of entries) {
+      const screen = screensById.get(entry)
+      if (screen && containerForScreen(screen) === containerId) continue
+      issues.push(`${label}: navigation "${entry}" does not resolve to a Screen inside "${containerId}"`)
+    }
+  }
   for (const productInterface of model.interfaces) {
     requireUniqueValues(issues, `interface "${productInterface.id}"`, 'actorIds', productInterface.actorIds)
+    requireUniqueValues(issues, `interface "${productInterface.id}"`, 'languages', productInterface.languages)
+    if (productInterface.languages.length && !productLanguages.size) {
+      issues.push(`interface "${productInterface.id}": lists languages, and the Product declares none`)
+    }
+    for (const tag of productInterface.languages) {
+      if (productLanguages.size && !productLanguages.has(tag)) {
+        issues.push(`interface "${productInterface.id}": language "${tag}" is not one of the Product's languages`)
+      }
+    }
+    validateNavigation(`interface "${productInterface.id}"`, productInterface.id, productInterface.navigation)
     /* The folder has always checked this and the wire never did. A key is the
        Interface's own type, or another Interface's id for a surface a reader
        arrives from; its own id is refused because `type` already says it. */
@@ -711,6 +758,15 @@ export function validateProductReport(report: ProductReportV13): string[] {
       experience.supportingSections,
       ['Intent', 'Capability boundary']
     )
+    validateNavigation(`experience "${experience.id}"`, experience.id, experience.navigation)
+    if (experience.version !== null) {
+      const rival = model.experiences.some(other =>
+        other.id !== experience.id && other.interfaceIds[0] === parentInterfaceId
+        && other.version !== null && other.version !== experience.version)
+      if (!rival) {
+        issues.push(`experience "${experience.id}": version needs another Experience of "${parentInterfaceId}" with a different version`)
+      }
+    }
     requireActing(`experience "${experience.id}"`, experience.actorIds)
     missingRelation(issues, `experience "${experience.id}"`, 'interface', experience.interfaceIds, interfaceIds)
     for (const interfaceId of experience.interfaceIds) {
@@ -766,7 +822,6 @@ export function validateProductReport(report: ProductReportV13): string[] {
     return productInterface ? new Set(productInterface.actorIds) : undefined
   }
 
-  const screensById = new Map(model.screens.map(screen => [screen.id, screen]))
   const screensByContainer = new Map<string, ReportScreen[]>()
   /*
    * A Screen beside `experiences/` is shared: it is inside every Experience of
@@ -789,7 +844,6 @@ export function validateProductReport(report: ProductReportV13): string[] {
   const insideEvery = (supported: Set<string>, containerId: string) =>
     availabilityPlacesOf(containerId).every(place => supported.has(place))
 
-  const containerForScreen = (screen: ReportScreen): string => parentPlace(screen.id) || ''
   for (const screen of model.screens) {
     const container = containerForScreen(screen)
     const siblings = screensByContainer.get(container) || []
@@ -904,6 +958,15 @@ export function validateProductReport(report: ProductReportV13): string[] {
           issues.push(`${stepLabel}: "${entry.entityId}" is ${priorMode === 'aliased' ? 'aliased' : 'bare'} elsewhere in this Scenario; once an Entity is aliased, every mention of it is`)
         }
         aliasModes.set(entry.entityId, mode)
+        requireUniqueValues(issues, stepLabel, 'facts', entry.facts)
+        if (entry.facts.length && entry.effect !== 'reads' && entry.effect !== 'changes') {
+          issues.push(`${stepLabel}: facts are valid on a "reads" or "changes" entry only`)
+        }
+        for (const fact of entry.facts) {
+          if (!entity.informationKept.some(item => item.name === fact)) {
+            issues.push(`${stepLabel}: "${fact}" is not a fact of entity "${entry.entityId}"`)
+          }
+        }
         if (entry.effect === 'reads' && (entry.from !== null || entry.to !== null)) {
           issues.push(`${stepLabel}: a "reads" entry carries no state`)
           continue
@@ -1133,13 +1196,42 @@ export function validateProductReport(report: ProductReportV13): string[] {
     if (!sameIds(journey.domainIds, domains)) issues.push(`${label}: domainIds must equal the Domains derived from achieved-step Capabilities`)
   }
 
+  /* Every Step placed exactly on a Screen, by Screen id. */
+  const stepsOnScreen = new Map<string, Array<{ label: string, step: ReportScenarioStep }>>()
+  for (const scenario of [...model.capabilityScenarios, ...model.journeyScenarios]) {
+    const scenarioLabel = 'capabilityId' in scenario ? `capability scenario "${scenario.id}"` : `journey scenario "${scenario.id}"`
+    for (const [index, step] of scenario.steps.entries()) {
+      for (const place of new Set(step.contexts.map(context => context.placeId))) {
+        if (!screensById.has(place)) continue
+        const placed = stepsOnScreen.get(place) || []
+        placed.push({ label: `${scenarioLabel}: step ${index + 1}`, step })
+        stepsOnScreen.set(place, placed)
+      }
+    }
+  }
+
   for (const screen of model.screens) {
     const label = `screen "${screen.id}"`
     requireUniqueValues(issues, label, 'capabilityIds', screen.capabilityIds)
     requireUniqueValues(issues, label, 'capabilityScenarioIds', screen.capabilityScenarioIds)
     requireUniqueValues(issues, label, 'journeyScenarioIds', screen.journeyScenarioIds)
-    requireUniqueValues(issues, label, 'entityIds', screen.entityIds)
-    missingRelation(issues, label, 'entity', screen.entityIds, entityIds)
+    requireUniqueValues(issues, label, 'entities', screen.entities.map(entry => entry.entityId))
+    for (const entry of screen.entities) {
+      const entity = entitiesById.get(entry.entityId)
+      if (!entity) {
+        issues.push(`${label}: references missing entity "${entry.entityId}"`)
+        continue
+      }
+      requireUniqueValues(issues, label, `facts of "${entry.entityId}"`, entry.facts ?? [])
+      for (const fact of entry.facts ?? []) {
+        if (!entity.informationKept.some(item => item.name === fact)) {
+          issues.push(`${label}: "${fact}" is not a fact of entity "${entry.entityId}"`)
+        }
+      }
+      if (entry.facts === null && complete && entity.informationKept.length) {
+        issues.push(`${label}: presents "${entry.entityId}" without naming its facts; a complete model says which facts are on screen`)
+      }
+    }
     validateSupportingSections(
       issues,
       label,
@@ -1175,11 +1267,44 @@ export function validateProductReport(report: ProductReportV13): string[] {
     if (!sameIds(screen.journeyScenarioIds, expectedJourneyScenarios)) {
       issues.push(`${label}: journeyScenarioIds must equal the Scenario Step Screen backlinks`)
     }
-    const stateTitles = new Set<string>()
-    for (const state of screen.states) {
-      const normalized = state.title.toLowerCase()
-      if (stateTitles.has(normalized)) issues.push(`${label}: duplicate view state "${state.title}"`)
-      stateTitles.add(normalized)
+    /* The authored list is the claim; the Steps placed here make it honest. */
+    const placed = stepsOnScreen.get(screen.id) || []
+    if (complete) {
+      for (const capabilityId of screen.capabilityIds) {
+        if (!capabilityIds.has(capabilityId)) continue
+        if (placed.some(item => item.step.capabilityId === capabilityId)) continue
+        issues.push(`${label}: exposes capability "${capabilityId}", and no Step is placed on this Screen for it`)
+      }
+    }
+    const presented = new Map(screen.entities.map(entry => [entry.entityId, entry]))
+    for (const { label: stepLabel, step } of placed) {
+      for (const entry of step.entities) {
+        const shown = presented.get(entry.entityId)
+        if (entry.effect === 'reads' && !shown && step.kind === 'actor' && !actorIds.has(entry.entityId)) {
+          issues.push(`${stepLabel}: reads "${entry.entityId}" on Screen "${screen.id}", which does not present it`)
+          continue
+        }
+        if (!shown?.facts) continue
+        for (const fact of entry.facts) {
+          if (!shown.facts.includes(fact)) {
+            issues.push(`${stepLabel}: cites "${fact}" of "${entry.entityId}" on Screen "${screen.id}", which presents it without that fact`)
+          }
+        }
+      }
+    }
+  }
+  if (complete) {
+    const ownsScreens = (interfaceId: string) => model.screens.some(screen => interfaceOf(containerForScreen(screen)) === interfaceId)
+    for (const capability of model.capabilities) {
+      for (const place of capabilityAvailability.get(capability.id) || []) {
+        if (!ownsScreens(interfaceOf(place))) continue
+        const exposed = model.screens.some(screen => {
+          const containerId = containerForScreen(screen)
+          return screen.capabilityIds.includes(capability.id)
+            && (containerId === place || (experiencesById.has(place) && containerId === interfaceOf(place)))
+        })
+        if (!exposed) issues.push(`capability "${capability.id}": availability Context place "${place}" exposes it on no Screen`)
+      }
     }
   }
 
@@ -1197,7 +1322,7 @@ export function validateProductReport(report: ProductReportV13): string[] {
       }
     }
   }
-  const entityPresentedOn = new Set(model.screens.flatMap(screen => screen.entityIds))
+  const entityPresentedOn = new Set(model.screens.flatMap(screen => screen.entities.map(entry => entry.entityId)))
   const namedAsActor = new Set<string>([
     ...[...model.capabilityScenarios, ...model.journeyScenarios].flatMap(scenario => scenario.actorIds),
     ...model.interfaces.flatMap(item => item.actorIds),
@@ -1338,7 +1463,22 @@ export function validateProductReport(report: ProductReportV13): string[] {
             }
           }
         }
-        const presenting = model.screens.filter(screen => screen.entityIds.includes(target.entityId)).map(screen => screen.id)
+        const presenting = model.screens.filter(screen => screen.entities.some(entry =>
+          entry.entityId === target.entityId
+          && (!target.facts.length || entry.facts === null || entry.facts.some(fact => target.facts.includes(fact)))
+        )).map(screen => screen.id)
+        if (complete && target.facts.length && (target.effect === null || target.effect === 'reads')) {
+          for (const fact of target.facts) {
+            const shown = model.screens.some(screen => screen.entities.some(entry =>
+              entry.entityId === target.entityId && entry.facts?.includes(fact)))
+            const cited = [...model.capabilityScenarios, ...model.journeyScenarios].some(scenario =>
+              scenario.steps.some(step => step.entities.some(entry =>
+                entry.entityId === target.entityId && entry.facts.includes(fact))))
+            if (!shown && !cited) {
+              issues.push(`${targetLabel}: governs "${fact}" of "${target.entityId}", which no Screen presents and no Step cites`)
+            }
+          }
+        }
         const seenEntityPlaces: string[] = []
         for (const [contextIndex, context] of target.contexts.entries()) {
           const contextLabel = `${targetLabel}: Context ${contextIndex + 1}`
@@ -1538,6 +1678,7 @@ export function validateProductReport(report: ProductReportV13): string[] {
         effect: entry.effect,
         from: entry.from,
         to: entry.to,
+        facts: entry.facts,
         contextPlaces: operationPlaces(step.contexts.map(context => context.placeId), places)
       })))
     }),
@@ -1547,7 +1688,7 @@ export function validateProductReport(report: ProductReportV13): string[] {
         label: `screen "${screen.id}"`,
         id: screen.id,
         containerId,
-        entityIds: screen.entityIds,
+        entities: screen.entities,
         actorIds: [...(supportedActorsForContainer(containerId) ?? [])]
       }
     })
@@ -1639,7 +1780,7 @@ function isRepositoryEntryPoint(value: string): boolean {
 }
 
 /** Project a report into the source-free profile delivered outside its repository. */
-export function projectPortableReport(report: ProductReportV13): ProductReportV13 {
+export function projectPortableReport(report: ProductReportV14): ProductReportV14 {
   const portableReferences = <T extends { kind: string, role: string, target: string }>(items: T[]): T[] =>
     items.filter(reference =>
       reference.kind !== 'code'
@@ -1681,8 +1822,8 @@ export function projectPortableReport(report: ProductReportV13): ProductReportV1
   }
 }
 
-export function parseProductReport(input: unknown): ProductReportV13 {
-  const parsed = ProductReportV13Schema.safeParse(input)
+export function parseProductReport(input: unknown): ProductReportV14 {
+  const parsed = ProductReportV14Schema.safeParse(input)
   if (!parsed.success) throw new Error(describeReportShapeError(input, parsed.error))
   const report = parsed.data
   const issues = validateProductReport(report)
@@ -1708,7 +1849,7 @@ function describeReportShapeError(input: unknown, error: z.ZodError): string {
 }
 
 /** Additional publication policy for a Product Report entering the public Blueprint catalog. */
-export function validateBlueprintReport(report: ProductReportV13): string[] {
+export function validateBlueprintReport(report: ProductReportV14): string[] {
   const issues: string[] = []
   if (!report.category) issues.push('category is required for a public Blueprint')
   if (!report.tags.length) issues.push('at least one tag is required for a public Blueprint')
@@ -1727,9 +1868,10 @@ export function validateBlueprintReport(report: ProductReportV13): string[] {
     }
   }
   const availabilityPlaces = (placeId: string): string[] => {
-    const container = screenIds.has(placeId) ? parentPlace(placeId) || '' : placeId
-    const shared = experienceIdsByInterface.get(container)
-    return shared?.length ? shared : [container]
+    let container: string | undefined = placeId
+    while (container && screenIds.has(container)) container = parentPlace(container)
+    const shared = experienceIdsByInterface.get(container || '')
+    return shared?.length ? shared : [container || '']
   }
   for (const scenario of report.model.capabilityScenarios) {
     const places = covered.get(scenario.capabilityId) || new Set<string>()

@@ -10,23 +10,23 @@ steps:
       - { entity: collection, effect: reads }
     contexts:
       web:
-        place: reader-web::personal-library::collection-workspace
+        place: reader-web::personal-library::collection-workspace::settings
   - text: The Reader provides the replacement name
     kind: actor
     actor: reader
     entities: []
     contexts:
       web:
-        place: reader-web::personal-library::collection-workspace
+        place: reader-web::personal-library::collection-workspace::settings
   - text: The Product preserves the collection's items and order under the new name
     kind: product
     actor: reader
     entities:
-      - { entity: collection }
+      - { entity: collection, facts: [Name] }
       - { entity: item, effect: reads }
     contexts:
       web:
-        place: reader-web::personal-library::collection-workspace
+        place: reader-web::personal-library::collection-workspace::settings
 ---
 
 # Rename an owned collection

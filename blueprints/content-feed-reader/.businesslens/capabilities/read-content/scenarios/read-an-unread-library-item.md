@@ -3,6 +3,7 @@ kind: primary
 routes:
   web: Web
   mobile: Mobile
+  mobile-next: Mobile (next)
 steps:
   - text: The Product presents the readable item with its source and publication context
     kind: product
@@ -14,6 +15,8 @@ steps:
         place: reader-web::item-reader
       mobile:
         place: reader-mobile::personal-library::unread-library
+      mobile-next:
+        place: reader-mobile::personal-library-next::unread-library
   - text: The Reader consumes the item
     kind: actor
     actor: reader
@@ -24,6 +27,8 @@ steps:
         place: reader-web::item-reader
       mobile:
         place: reader-mobile::personal-library::unread-library
+      mobile-next:
+        place: reader-mobile::personal-library-next::unread-library
   - text: The item remains available for an explicit track-reading-state or saving decision
     kind: condition
     entities:
@@ -33,6 +38,8 @@ steps:
         place: reader-web::personal-library::unread-library
       mobile:
         place: reader-mobile::personal-library::unread-library
+      mobile-next:
+        place: reader-mobile::personal-library-next::unread-library
 ---
 
 # Read an unread library item

@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Screens now say which Entity facts are on screen instead of describing them in prose, and lint checks those facts against Entities, Steps and Business Rules.
+- Screens can nest inside Screens, so tabs, panels, wizard steps and detail views have a place of their own.
+- Interfaces and Experiences can name the Screens reachable from everywhere, the languages they serve, and which of two concurrently served versions they are.
+- Scenario Steps can cite the facts they read or edit.
+- The Information presented, Available actions, View states and Capability boundary sections are gone, along with screenshot state labels.
+- The report shows what each Screen presents and changes, opens Interfaces and Experiences with the Capabilities delivered there, and draws nested Screens in trees.
+- Product Reports are now version 14.
+
 ## [0.21.0] - 2026-09-21
 
 - Choose lists, graphs and comparisons from preview cards, keeping the same filters and counts.

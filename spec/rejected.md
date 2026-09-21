@@ -147,3 +147,69 @@ product decision, not an omission: such a field becomes a ranking signal —
 shipped product is not better than a well-reasoned one nobody has built.
 Stripping every `kind: code` reference and every repository-relative target is
 therefore the point rather than a lossy compromise.
+
+## Interfaces, Experiences and Screens
+
+**Keeping View states, derived from a new Step context dimension.** A lot of
+machinery for a screenshot label; every view state already has a home — a
+`condition` Step, an Edge case, a Rule outcome, or a child Screen.
+
+**Authored transitions on Screens** — `next`, `parent`, `over`. Unbounded, a
+second encoding of what Steps already say, and the reason the sitemap ban
+exists.
+
+**A `presentation: page | overlay` field on Screens.** Design vocabulary; the
+product fact — the parent's state survives — is a Scenario Outcome.
+
+**Co-visibility or addressability as the child-Screen test.** The first flips
+with the breakpoint; the second is routing. Selection-dependence is decidable
+from code alone.
+
+**Filters as Capabilities.** Same purpose and outcome as the presenting
+Capability, so a Scenario by the format's own split rule.
+
+**A cheaper positive claim for abilities without a Scenario.** Two valid
+spellings of *this ability exists here*; a partial model's map is islands, and
+that absence is visible.
+
+**`creates` Steps citing facts.** The Screen presents what a form collects; a
+second home for the same claim.
+
+**A bare Entity id meaning "all facts".** Two spellings for one claim, and the
+bare form would lint clean while saying nothing.
+
+**Renaming Experience.** The name invites design talk, but the border sentence
+uses it well — who is there and what they can do — and the churn is large.
+
+**Deriving Screen `capabilities` from Steps.** A partial model needs the claim
+before coverage exists; the coverage check makes the authored list honest
+instead.
+
+**Capability boundary kept on Interfaces and Experiences.** The argument that
+removes it from Screens applies one level up: `availability` is already the
+positive claim, and a prose boundary beside it is a second authority.
+
+**Meaningful `navigation` order.** An author might reasonably want it either
+way, which argues against modeling it.
+
+**Counterpart inheritance for twin Screens.** A Screen served by two versions,
+or on two Interfaces, is written twice. An existing cost of counterparts, not
+one nesting or versions introduced, and inheritance would hide where they
+diverge.
+
+**A `messages/` collection for outbound messages — deferred, not rejected.** A
+confirmation email, push or SMS is a Product Step that `reads` what it
+carries, and its content beyond those facts is copy. No Step runs *on* a
+message, so none of the place-and-transition machinery applies to one.
+
+## Variation
+
+**A variant dimension on Contexts** for flags and experiments. Doubles every
+Context check for a mechanism a Rule's `when` fact condition already covers.
+
+**A Product-level version registry with a `version` key on Contexts.**
+Versions that differ in what an Actor can do are places; containment and
+counterparts already draw them.
+
+**A cohort concept on Experiences.** Who is in the beta is a fact on an Entity,
+read by a Rule.

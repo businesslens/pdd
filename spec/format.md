@@ -108,7 +108,7 @@ collection differ:
 | Product | `product.md` | `product/product.md` beside `logo.svg` | — |
 | Interface | `interfaces/<id>.md` | `interfaces/<id>/interface.md` | `screens/`, `experiences/`, or both |
 | Experience | `interfaces/<interface-id>/experiences/<id>.md` | `interfaces/<interface-id>/experiences/<id>/experience.md` | `screens/` |
-| Screen | `<screen-parent>/screens/<id>.md` | `<screen-parent>/screens/<id>/screen.md` | — |
+| Screen | `<screen-parent>/screens/<id>.md` | `<screen-parent>/screens/<id>/screen.md` | `screens/` |
 | Domain | `domains/<id>.md` | `domains/<id>/domain.md` | — |
 | Entity | `entities/<id>.md` | `entities/<id>/entity.md` | — |
 | Capability | `capabilities/<id>.md` | `capabilities/<id>/capability.md` | `scenarios/` |
@@ -117,8 +117,10 @@ collection differ:
 | Journey Scenario | `journeys/<journey-id>/scenarios/<id>.md` | `journeys/<journey-id>/scenarios/<id>/journey-scenario.md` | — |
 | Business Rule | `business-rules/<id>.md` | `business-rules/<id>/business-rule.md` | — |
 
-Here `<screen-parent>` is the Interface or Experience folder that contains the
-Screen. A representative model can therefore look like this:
+Here `<screen-parent>` is the Interface, Experience, or expanded Screen folder
+that contains the Screen. Screens nest: an expanded Screen may hold `screens/`,
+and the rule is the same at every level, so depth is unlimited. A
+representative model can therefore look like this:
 
 ```
 .businesslens/
@@ -140,7 +142,8 @@ Screen. A representative model can therefore look like this:
 │           ├── <screen-id>.md                    # compact Screen
 │           └── <illustrated-screen-id>/          # expanded Screen
 │               ├── screen.md
-│               └── mockup.svg
+│               ├── mockup.svg
+│               └── screens/<child-screen-id>.md  # nested Screen
 │
 │   ── subject axis: what it is about ──
 ├── domains/<domain-id>.md                       # optional
@@ -182,32 +185,38 @@ Screen:
 The use of the Context determines how specific its place must be. A Capability
 availability Context names an undivided Interface or an Experience. A Scenario
 Context is a concrete occurrence and names the most-specific available place:
-a Screen when one exists, otherwise the leaf Experience or Interface. A
-Business Rule Context is a selector and may name any of the three; an Interface
-or Experience selector includes its descendant places.
+a Screen, at any depth, when the container owns Screens, otherwise the leaf
+Experience or Interface. A parent Screen is a place of its own: a Step placed
+there occurs on the parent and in none of its children. A Business Rule
+Context is a selector and may name any of the three; an Interface, Experience,
+or parent Screen selector includes its descendant places.
 
-Filesystem paths supply containment. For example,
-`customer-web::storefront::checkout` is contained by
+Filesystem paths supply containment, and containment is read by id prefix at
+every depth. For example, `customer-web::storefront::checkout` is contained by
 `customer-web::storefront`, so a Step there is inside that Capability
-availability Context. Authors never repeat the containing Interface or
-Experience in another field.
+availability Context; `customer-web::storefront::onboarding::choose-plan` is
+contained by `customer-web::storefront::onboarding`, so a Step on the child is
+inside the parent Screen. Authors never repeat the containing Interface,
+Experience, or Screen in another field.
 
 A Capability that is available through an Interface divided into Experiences
 names the intended Experiences explicitly; an undivided Interface names itself.
 
 **Whether an Interface is divided is derived, never judged.** An Interface must
-hold Experiences when either of the following is true of it, and must not when
-neither is:
+hold Experiences when any of the following is true of it, and must not when
+none is:
 
 - it serves more than one `access` value; or
 - it serves two or more Actor sets whose Capability coverage is disjoint — no
-  Capability available there lists Actors from both sets.
+  Capability available there lists Actors from both sets; or
+- it serves two or more versions at once — Experiences carrying distinct
+  `version` values.
 
-Both inputs are already authored: `actors` on the Interface, `access` on the
-Experience, and `availability` on each Capability. `lint` therefore decides the
-question, and an author never applies a prose test to it. An Interface serving
-one audience through one access mode is one coherent context and takes direct
-Interface availability.
+Every input is already authored: `actors` on the Interface, `access` and
+`version` on the Experience, and `availability` on each Capability. `lint`
+therefore decides the question, and an author never applies a prose test to it.
+An Interface serving one audience through one access mode, in one version, is
+one coherent context and takes direct Interface availability.
 
 "Disjoint" is read over the whole Interface, not Capability by Capability: the
 Actors split into groups when no Capability available there lists Actors from
@@ -231,7 +240,8 @@ Interface, and two Screens with the same name below different Experiences of one
 Interface are counterparts exactly as they are across Interfaces.
 
 **A shared Screen is inside every Experience of its Interface.** Its id is
-`interface::screen`, and its Interface is never an availability place, so
+`interface::screen`, its descendants are `interface::screen::child` and so on,
+and its Interface is never an availability place, so
 containment reads the Interface as the set of its Experiences: a Capability the
 Screen exposes must be available in each of them, a Step that occurs on it is
 inside a Capability's availability only when every Experience is, and that
@@ -272,9 +282,12 @@ future format revision, but Context is not an arbitrary metadata bag.
   reader-web
   reader-web::personal-library
   reader-web::personal-library::unread-library
+  reader-web::personal-library::unread-library::item-detail
   ```
 
-  Each segment is lowercase kebab-case, `^[a-z0-9]+(?:-[a-z0-9]+)*$`. Never
+  Each segment is lowercase kebab-case, `^[a-z0-9]+(?:-[a-z0-9]+)*$`. A Screen
+  nested in a Screen adds one segment per level, so the id says the whole
+  placement and containment is a prefix test. Never
   write `id:` in frontmatter — the filesystem is the id authority.
 
   **Behavioral ids are verb-noun; cross-cutting ids are the bare noun.** A
@@ -336,21 +349,23 @@ future format revision, but Context is not an arbitrary metadata bag.
   expanded resource folder. Files under its reserved `implementation/`
   subdirectory describe this repository's realization instead. Typed child
   directories (`experiences/`, `screens/`, and `scenarios/`) are structural,
-  not assets; any other nested directory is invalid. Plain asset files need no
+  not assets — `screens/` under an expanded Screen included; any other nested
+  directory is invalid. Plain asset files need no
   declaration. Optional `assets:` frontmatter annotates files already present:
 
   ```yaml
   assets:
     - file: mockup.svg
-      title: Approved empty state
-      state: Empty                 # Screens only; resolves to an H3 View state
+      title: Approved product record
   ```
 
   `file` is relative to the expanded resource folder and cannot escape it.
   Metadata entries are unique and must name an existing asset. `title` is
-  optional. `state` is valid only on a Screen and must name one of that Screen's
-  `## View states`. Unlisted assets remain valid so external tools can write
-  captures without editing BusinessLens frontmatter.
+  optional, and there is no other key: a capture of a view in one condition —
+  empty, unauthorized, validation failed — attaches to the Scenario or Edge
+  case that reaches that condition, through its `references`, not to the
+  Screen under a state label. Unlisted assets remain valid so external tools
+  can write captures without editing BusinessLens frontmatter.
 - **H1 = title/name.** The first `# Heading` in the body is the resource's
   title (domains call it `name`) and is the file's only H1. Lead and
   section-body Markdown fragments cannot contain another H1 or H2; an H2 begins
@@ -376,8 +391,7 @@ future format revision, but Context is not an arbitrary metadata bag.
   frontmatter `steps` list.
   Unrecognized H2 sections are supporting content and retain their heading and
   body through report export and expansion.
-- **Structured list items are single-line.** Every item in `## Edge cases`,
-  `## Information presented`, and `## Available actions` must
+- **Structured list items are single-line.** Every item in `## Edge cases` must
   occupy one physical line. Prose and continuation lines are invalid because
   they cannot be represented as report list items.
 - **Set-valued lists are unique.** Product `tags` and every frontmatter relation
@@ -419,9 +433,6 @@ Unknown keys are invalid.
 - `target` is the artifact address. Duplicate targets on one resource are
   invalid, even when their kinds or roles differ.
 - `title` is an optional non-empty display label.
-- `state` is optional and **valid only on a Screen**. It names one of that
-  Screen's `## View states` H3 titles, case-insensitively, and says which
-  state the artefact depicts. Nowhere else has a state set to resolve against.
 
 For `kind: code`, `target` uses the compact
 `path[#symbol][:start[-end]]` grammar. The line suffix is the last `:` whose
@@ -436,11 +447,12 @@ file set and warns when the path is missing. HTTP(S) targets are syntax-checked
 but never fetched. Absolute filesystem paths, `file:` URLs, other URL schemes,
 and backslash paths are invalid.
 
-One Screen commonly collects several captures of the same view — one per
-View state, sometimes doubled for light and dark. Without `state` they arrive
-as a flat list distinguishable only by free-text title; with it, each capture is
-placed beside the state it shows. Themes are deliberately not View states, so
-a light and a dark capture of one state are two references sharing one `state`.
+There is no `state` key. A capture shows a view in one condition — empty,
+unauthorized, validation failed, completed — and that condition is a Step, an
+Edge case, or a Rule outcome, so the capture attaches to the Scenario that
+reaches it. A Screen's own `references` show the view as such. Themes are
+design, so a light and a dark capture of one condition are two references on
+the same resource, told apart by `title`.
 
 References connect the self-contained Product Model to material maintained
 outside it. A model may contain no references at any Coverage status.
@@ -478,6 +490,7 @@ authors:
     url: https://example.com
 license: MIT
 limitations: []
+languages: [en, de-DE]
 ---
 
 # Acme Shop
@@ -503,6 +516,14 @@ characters maximum), `category` is a lowercase kebab-case classification,
 `authors` is a list of `{ name, url? }` records, and `license` is an SPDX
 license identifier. The H1 remains the Product title and the lead prose remains
 its full description.
+
+`languages` is an optional unique list of the language tags the Product
+serves, each matching `^[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$` — `en`, `de-DE`,
+`pt-BR`. A malformed tag is a `lint` error. A language is product, not design:
+a redesign cannot drop German. The vocabulary is closed, so `verify` can hold
+it against the repository's i18n configuration. An Interface may narrow the
+list; Experiences and Screens never carry one, because a language is a fact
+about a surface, not about a context or a view inside it.
 
 The compact form is `.businesslens/product.md`. Adding a Product logo expands
 it to `.businesslens/product/product.md`, with the identity asset at
@@ -552,15 +573,13 @@ type: web
 actors: [shopper, guest]
 entryPoints:
   - web: /
+languages: [en]
+navigation: [catalog, cart]
 ---
 
 # Customer web application
 
 The browser interface through which shoppers use the store.
-
-## Capability boundary
-
-Supports customer-facing behavior. It does not expose store operations.
 ```
 
 `type` is required and is one of `web`, `mobile-app`, `desktop-app`, `cli`,
@@ -581,9 +600,40 @@ a reader arrives from. A local web report opened by an operator command declares
 a fact about the surface reached, and it has nowhere else to live. Its own id is
 not a key: that is what `type` already says. On an Experience or a Screen the key
 names the containing Interface's id, unchanged. One field,
-one rule per resource type, both checked by `lint`. H1, lead
-description, and `## Capability boundary` are required. An Interface has no
+one rule per resource type, both checked by `lint`. H1 and lead
+description are required; `## Intent` is optional. An Interface has no
 access mode or exit contract.
+
+**There is no `## Capability boundary`**, and one that is still authored is a
+`lint` error naming the resource type. `availability` on each Capability is
+already the positive claim of what an Interface offers, and a prose boundary
+beside it is a second authority that can disagree with the first. What an
+Interface does not offer is what no Capability is available on.
+
+`languages` is optional and, when present, is a unique list of language tags
+that is a subset of the Product's `languages`; an Interface listing languages
+while the Product declares none is a `lint` error, as is a tag outside the
+Product's list. It narrows the Product's list to what this surface serves. An
+Interface that omits it serves every language the Product declares.
+
+`navigation` is optional and names Screens that are reachable from every place
+inside the Interface — a cart, a search, an account menu. Each entry is a
+Screen path relative to this Interface — `catalog`, or
+`library::by-source` for a nested Screen — and must resolve to a Screen
+whose nearest Interface-or-Experience container is this Interface: on an
+undivided Interface any of its Screens; on a divided Interface only shared
+Screens, those beside `experiences/`, and their descendants. A Screen inside a
+restricted Experience cannot be reachable from a public one, so an entry that
+names one is a `lint` error. Entries are unique, and **order carries no
+meaning**: `lint` ignores it, and a report sorts these Screens as it sorts
+everything else. `navigation` is **structure, not a relation**, in the same
+sense as folder containment: it states a fact about the container, and the
+derived UI map draws it as an always-reachable mark on the Screen, never as
+edges. It therefore creates no relation and narrows none, which keeps the rule
+that an authored list only ever narrows a derived relation. It is the one
+thing a Step cannot say — a Step says where behavior moves, not what is
+reachable from everywhere — and the only navigation the model authors: menus,
+back links, route trees, and the order of navigation items are design.
 
 ### Outbound dependencies
 
@@ -614,7 +664,8 @@ Capabilities is described by each Capability that depends on it.
 ### `interfaces/<interface-id>/experiences/<id>.md` or `<id>/experience.md`
 
 An Experience is a coherent context of Product use with a stable audience,
-access boundary, and capability boundary. **It belongs to exactly one
+access boundary, and set of available Capabilities. It says who is there and
+what they can do, never what it looks like. **It belongs to exactly one
 Interface** — the one whose folder holds it. Experiences are optional: create
 them only when named contexts distinguish meaningful Product behavior inside an
 Interface.
@@ -631,21 +682,20 @@ actors: [store-admin]
 access: restricted              # public | authenticated | restricted
 entryPoints:
   - admin-web: /admin
+navigation: [order-console, settings]
 ---
 
 # Administration
 
 Where authorized operators manage the store and its orders.
-
-## Capability boundary
-
-Supports store operations. It does not expose a shopper's private account.
 ```
 
 `actors` is a non-empty list of Entities that `acts` — who uses the Experience —
 and every one must be supported by the owning Interface. `access` is required. Optional `entryPoints` key the
-owning Interface only. H1, lead description, and `## Capability boundary` are
-required. There is no `exit` field and no `interfaces` field — the path names
+owning Interface only. H1 and lead description are required; `## Intent` is
+optional. There is no `## Capability boundary`, for the reason given on the
+Interface, and one still authored is a `lint` error. There is no `exit` field
+and no `interfaces` field — the path names
 the Interface. An Interface with one undivided usage context does not need a
 ceremonial Experience.
 
@@ -654,11 +704,28 @@ that holds them. The union of their Actors must equal that Interface's Actor
 list, so no Interface Actor becomes unreachable when Screens move under
 Experiences.
 
-An optional ordered `screens:` list names this Experience's own Screen ids
-and declares **reading order only** — reachability stays with the tree. Entries
-must resolve to children and be unique; unlisted children sort after,
-alphabetically. The same field is available on `interface.md` for an Interface
-that holds Screens directly.
+`navigation` is the Interface's field, relative to the Experience: each entry
+is a path to one of this Experience's own Screens, nested ones by their child
+path — `order-console`, `library::by-source` — reachable from every place
+inside the Experience. The same rules hold: entries resolve or are a `lint`
+error, they are unique, order carries no meaning, and the list is structure
+rather than a relation.
+
+`version` is an optional single-line string naming which of several
+concurrently served versions this Experience is. It is valid only where at
+least one other Experience of the same Interface carries a different `version`;
+a single version is never written, and a `version` with no differing sibling
+is a `lint` error. Versions that differ in what an Actor can do are places: a
+version with its own entry point — `/api/v2`, a separate app — is its own
+Interface, and versions sharing an entry point are Experiences under one
+Interface, each carrying `version`. That is the third reason an Interface must
+divide. A Screen both versions serve with the same Capabilities is shared
+beside `experiences/`, as any Screen every Experience of an Interface serves
+is; a Screen that differs between versions is written under each, as
+counterparts are, and the duplication is the visible cost of two things being
+live at once. Who
+sees which version is a fact on the Actor or tenant Entity read by a Rule's
+`when`, exactly like a flag; there is no cohort concept.
 
 ### Availability
 
@@ -678,6 +745,46 @@ Scenarios and Journeys do not declare availability either. A Scenario Step
 names one concrete Context per route, and the Context's `place` is its resolved
 Interface, Experience, or Screen. Business Rules use the same Context object as
 a selector.
+
+### Where the model stops
+
+**The model says what an Actor can reach, see, do and trigger at each place. It
+never says how that looks or is built.** The test, which `docs/` and the
+rubrics state the same way:
+
+> Rebuild a view with a different component library, layout, typography,
+> colors, spacing, icons, motion and copy. Everything that would still have to
+> be true is the model's: who can reach the view, what facts it shows, what
+> abilities it offers, what conditions change that, and what happens next.
+> Everything the redesign is free to change is design's, and the model says
+> nothing about it.
+
+In the model: which surfaces exist and their interaction type; which languages
+they serve; who is in each context and with what access; which views exist,
+nested how, and what facts and abilities each has, including the facts an
+Actor enters; what is always reachable inside a context; where behavior moves
+between views; the conditions and outcomes an Actor meets; who may act; and
+the Product's own vocabulary for all of it.
+
+Out of the model: component libraries, theming, layout, typography, color,
+radius and borders, iconography, motion, microcopy and tone, gestures versus
+buttons, breakpoints, loading and hover states, navigation chrome, the order
+of navigation items, and quality attributes such as accessibility or
+performance unless they change what an Actor can do. These live in a design
+system and design files, attached as `kind: visual` References with
+`role: intent`.
+
+**Text.** The model says that an Actor is told something and under which
+condition — a Step, an Edge case, or a Rule outcome. It never says the words.
+Legally required text is a Business Rule (*consent is captured before
+creation*) whose wording lives in a Reference. There is no carve-out.
+
+An outbound message — a confirmation email, a push, an SMS — is a Product Step
+that `reads` what it carries, and its content beyond those facts is copy. A
+feature flag or A/B test that changes what an Actor can do is a fact on a
+settings Entity read by a Rule's `when`, as the Business Rule section states;
+one that changes only looks is design, and the experiment itself is not
+modeled.
 
 ### `domains/<id>.md` or `domains/<id>/domain.md`
 
@@ -922,8 +1029,9 @@ must name an Entity that `acts`, and `lint` errors otherwise.
 Product keeps about the thing. Each is `- **Name** — prose`: the name in bold,
 an em dash with a space on each side and nothing else as the separator, and
 non-empty prose after it. Names are unique within the Entity and are cited by
-exact match — a Business Rule's `facts` target and its `when` condition are the
-only places that cite one; Steps and Screens never do. The idiom is the one
+exact match — by a Business Rule's `facts` target and its `when` condition, by
+a Screen's `entities` entry, and by a Step's `entities` entry, and a name that
+does not resolve is a `lint` error wherever it is cited. The idiom is the one
 `## States` already uses, where an H3 titled `Pending` is cited as
 `from: Pending`.
 
@@ -1003,11 +1111,10 @@ Step can say — and it stated a second time what a Step already states.
 
 `domain` is optional and single. H1 = name and the lead paragraph = description.
 
-Neither an asset nor a `references` entry may carry `state` here; `state` stays
-valid only on a Screen. A Screen's View states are what a view *looks like*, and
-a capture depicts one of them. An Entity's states are lifecycle, and no artifact
-depicts "Confirmed" — it depicts the screen that shows a confirmed thing, which
-is where the annotation already belongs.
+No asset or `references` entry carries `state`, here or on any other resource.
+An Entity's states are lifecycle, and no artifact depicts "Confirmed" — it
+depicts the view a Scenario reaches after confirming, and the Reference
+attaches to that Scenario.
 
 **No orphans.** An Entity must be changed by a Step, presented by a Screen,
 named as an actor — on a Step, an Interface, an Experience, a Journey, or a
@@ -1020,8 +1127,8 @@ declare.
 An Entity never declares Capabilities, Screens, availability, or who may act on
 it. Steps say what changes it, a Screen says what presents it, a Business Rule
 says who may; every other Entity relation is derived. Entity states are the
-authority for a lifecycle, and a Screen's `## View states` describes what that
-**view** looks like — the two are never merged.
+only states in the model: a Screen has none of its own, because the condition
+a view meets is a `condition` Step, an Edge case, or a Rule outcome.
 
 ### `capabilities/<id>.md` or `capabilities/<id>/capability.md`
 
@@ -1082,7 +1189,10 @@ example, `manage-repositories` is too broad when its cases are actually create,
 configure, archive, and delete behaviors with distinct contracts. Splitting it
 does not create a need for a Domain: those four Capabilities were already about
 the Repositories subject region before the split, and a Domain that exists only
-to re-gather them is a folder, not a region.
+to re-gather them is a folder, not a region. The split runs the other way too:
+filtering, sorting and searching a set a Capability presents share its purpose
+and outcome, so they are its Scenarios, never Capabilities of their own — the
+Scenario sections say how they cite what they use.
 
 ### `business-rules/<id>.md` or `business-rules/<id>/business-rule.md`
 
@@ -1220,7 +1330,9 @@ in some state *when the operation happens* is a condition and lives in a grant's
 Rule governs information — a derivation, or field-level visibility — not an
 operation. `contexts` scopes the Rule to places; an Entity has no availability,
 so the selector must name a Screen that presents the Entity, or an ancestor of
-one.
+one. On a fact-scoped target the Screen must present one of the governed
+facts — its `entities` entry lists it, or is bare while the model is not
+`complete` — or the selector names an ancestor of such a Screen.
 
 **A place-scoped Rule is not escaped by omitting `contexts`.** A Step that omits
 them is shared by every route, which puts its operations inside the Scenario's
@@ -1379,6 +1491,15 @@ nor `to`. *Anyone may read a Published collection* and *the shopper edits
 delivery details only while Pending* are both `when` state conditions. A
 defaulted `fact` or a `state` needs exactly one Entity target to resolve against.
 
+**Flags, A/B tests and dynamic configuration are this condition and nothing
+more.** A settings Entity holds the flag as a fact, and a Rule reads it through
+`entity` and `fact` while targeting the Entity operation or Capability the flag
+gates — the `Approval required` line above. An A/B test that changes what an
+Actor can do is a flag; one that changes only looks is design. Who is in the
+cohort is a fact on the Actor or tenant Entity, read the same way. The
+experiment itself — assignment, cohorts, metrics — is not modeled: it is how
+the Product decides, not what an Actor can do, and no Step runs on it.
+
 **A modelled product's own RBAC** is product behaviour, not this layer. A fixed,
 shipped set of roles is a closed vocabulary: Entities that act, and
 `permits.actors` works directly. User-defined roles created at runtime are
@@ -1429,7 +1550,7 @@ Structure — errors unless marked:
 - An Entity target whose `id`, `from`, `to`, `facts` entry, or `contexts` place
   does not resolve; `from` on a `creates` or `reads` target; `to` on a
   `removes` or `reads` target; a `contexts` place that presents the Entity
-  nowhere.
+  nowhere, or, on a fact-scoped target, presents none of its governed facts.
 - **Warning:** two permission Rules with identical target selectors.
 - **Warning:** a target `from`, or a grant `state` condition, that every Step
   the target selects already satisfies.
@@ -1446,8 +1567,18 @@ Rules against Steps and Screens — errors, ungraded by `coverage.status`:
 - A Screen presenting an Entity whose `reads` are governed, where no Actor using
   the Screen's container has a possible grant.
 
-Fact-scoped Rules are checked by Screen reach only, since a Step cannot cite a
-fact; the rest is `verify`'s. A derivation is prose plus `facts`; there is no
+**A fact-scoped read Rule** — an Entity target with `facts` whose `effect` is
+`reads` or absent — is checked against Screen facts and Step facts, never
+against Entity presence alone. A Screen is selected when its `entities` entry
+for that Entity lists a governed fact, and the check above then runs on it; a
+bare entry, one with no `facts`, is never selected, which is why a `complete`
+model may not write one for an Entity with named facts. A Step whose `entities`
+entry cites a governed fact is selected like any other governed operation and
+needs an actor with a possible grant. A read Rule governing a fact that no
+Screen presents and no Step cites is a `lint` finding graded by
+`coverage.status` — a warning, and an error for a `complete` model — because a
+visibility claim about information nobody is shown governs nothing. The rest
+is `verify`'s. A derivation is prose plus `facts`; there is no
 machine-readable arithmetic, because one would need defined behaviour for types,
 units, money, rounding, collections, missing values and time.
 
@@ -1460,8 +1591,10 @@ The whole `screens/` collection is optional so non-visual products remain valid.
 
 ```markdown
 ---
-capabilities: [browse-catalog]
-entities: [catalog-product]
+capabilities: [browse-catalog, place-order]
+entities:
+  - { entity: catalog-product, facts: [Name, Price, Availability] }
+  - { entity: cart, facts: [Item count] }
 entryPoints:
   - customer-web: /products/:id
   - customer-mobile: acme-shop://products/:id
@@ -1474,73 +1607,130 @@ references:
 
 # Product record
 
-Shows the information a shopper needs to evaluate one product.
+Shows what a shopper needs to evaluate one product.
 
 ## Intent
 
 Help a shopper decide whether to add the product to the cart.
-
-## Information presented
-
-- Product name and description
-- Price and availability
-
-## Available actions
-
-- Add the product to the cart
-- Return to the catalog
-
-## View states
-
-### Available
-
-The product can be added to the cart.
-
-### Unavailable
-
-The reason it cannot be purchased is explained.
-
-## Capability boundary
-
-The screen does not change product or inventory data.
 ```
 
-`capabilities` needs at least one item. A Screen has no `availability` field:
-its path names its containing Interface or Experience, and every referenced
-Capability must declare an availability Context containing the Screen — for a
-Screen an Interface shares beside its `experiences/`, one for every Experience
-of that Interface.
+**A Screen is relations only.** Its frontmatter says which Capabilities it
+exposes, which Entities and facts it presents, and where it is entered; its
+body is the H1, the lead description, and an optional `## Intent`. Nothing
+else about a view is the model's — the section above says where the model
+stops — so the four prose sections a Screen once carried are gone, and each is
+a `lint` error naming the resource type when still authored:
+
+| Removed | Now lives in |
+| --- | --- |
+| `## Information presented` | `entities[].facts` — a fact of an Entity the Screen presents, or a Rule derivation, or not product |
+| `## Available actions` | `capabilities`, plus the Steps placed on the Screen |
+| `## View states` | `condition` Steps, Edge cases, Rule outcomes, or a child Screen |
+| `## Capability boundary` | nothing; `capabilities` is already the positive claim, and Steps settle the rest |
+
+Each of those connected to nothing, so two lint-clean models of one product
+diverged there silently. What replaces them is checkable.
+
+`capabilities` is required and needs at least one item. A Screen has no
+`availability` field: its path names its containing Interface or Experience,
+and every referenced Capability must declare an availability Context
+containing the Screen — for a Screen an Interface shares beside its
+`experiences/`, one for every Experience of that Interface. **A Screen lists
+only the Capabilities its own Steps use.** Capabilities flow neither up nor
+down a nest of Screens: a child lists what its own Steps use and the parent
+does not repeat it; a report sums the subtree. The list stays authored rather
+than derived because a partial model needs the claim before coverage exists,
+and coverage is what keeps it honest: a Capability a Screen exposes with no
+Step placed exactly on that Screen is a `lint` finding graded by
+`coverage.status` — an error for a `complete` model, a warning otherwise. The
+converse holds one level up: a Capability available on an Interface or
+Experience that owns Screens, which no Screen there exposes, is graded the
+same way. There is no cheaper encoding of *this ability exists here* than a
+Step, an export button included, because a second spelling of one claim is two
+valid encodings. A partial model's map is islands, which is a visible absence.
+
+`entities` is optional and names the Entities the Screen presents. Each entry
+is `{ entity, facts }` or a bare Entity id. `facts` is a non-empty unique list
+of that Entity's `## Information kept` names, cited exactly as a Business
+Rule's `facts` target cites them; a name that does not resolve is a `lint`
+error. **A bare id is allowed only while `coverage.status` is not `complete`**:
+in a complete model a bare id for an Entity that has named facts is a `lint`
+error, and an Entity with no named facts is always cited bare. A bare id never
+means *all facts* — that would be two spellings of one claim. **"Presents"
+means the fact is on screen**, whether the Actor reads it or enters it: a
+sign-up form lists `{ entity: account, facts: [Email, Password] }`, and the
+Step that creates the Account cites nothing. Reading versus entering is design.
+A Screen has no acceptance surface, so its `entities` list is authored, where
+a Capability's is derived; a Step placed on the Screen is held to it — an
+`actor` Step that `reads` an Entity the Screen does not present, and a Step
+citing a fact on a Screen whose entry for that Entity lists facts without it,
+are `lint` errors. A Product or condition Step reads what the Product
+consults, and a read of an Entity that acts names a participant; neither is a
+claim about what is on screen, so neither is checked.
+
 `entryPoints` is optional; entry-point keys must name the Interface containing
 the Screen. Scenario participation is derived from Scenario Step Contexts whose
-place names the Screen; a Screen never authors
-Capability or Journey Scenario ids. The H1, lead description,
-`## Information presented` bullet list, and `## Capability boundary` prose are
-required. `## Information presented` is prose about what *this view* shows; it
-never cites an Entity fact by name — a Screen names the Entities it presents in
-`entities`, and only a Business Rule cites a fact. A Screen has no acceptance
-surface, so its `entities` list is authored, where a Capability's is derived. `## Available actions` is optional but, when present, must contain a
-bullet list. `## View states` is optional; each state is an H3 name followed
-by non-empty prose. States remain embedded in the Screen report resource.
+place names the Screen; a Screen never authors Capability or Journey Scenario
+ids. Unrecognized H2 sections remain supporting content.
 
-Only product-significant states belong here: a state changes what the user
-understands, can do, or achieves. Empty, unavailable, unauthorized,
-validation-failure, and completed states commonly qualify. Themes, viewport
-variants, hover states, skeletons, component variants, and screenshot baselines
-do not. Model-owned visuals expand the Screen and sit beside `screen.md`;
-generated captures live under its `implementation/` directory. External or
-separately maintained visuals attach as `kind: visual` References, whose role
-distinguishes curated intent from implementation or supporting context.
+Model-owned visuals expand the Screen and sit beside `screen.md`; generated
+captures live under its `implementation/` directory. External or separately
+maintained visuals attach as `kind: visual` References, whose role
+distinguishes curated intent from implementation or supporting context. A
+capture of the view in one condition attaches to the Scenario or Edge case
+that reaches it, as the References section says.
 
-A Screen has one structural parent. The same view on another Interface is
-another Screen with the same name — counterparts, distinguished by their path. They may
-share purpose, information and actions, and stating each one separately is what
-makes a divergence between them visible instead of silent.
+**Screens nest.** An expanded Screen may hold `screens/`, and a child's id is
+its parent's id plus one segment — `customer-web::storefront::onboarding::choose-plan`.
+Containment keeps its meaning at every level: a Step on a child is inside the
+parent, a Rule selector on the parent covers the child, `navigation` may name
+a nested Screen by its child path, and the derived map is hierarchical. Depth
+is unlimited because the rule is the same at every level. A Screen has one
+structural parent — an Interface, an Experience, or a Screen — and it is the
+folder that holds it.
 
-Screens do not author a sitemap or transition graph. A screen inventory is a
-generated projection grouped by Interface and Experience; observable movement
-belongs in Capability Scenarios and Journey Scenarios. XML sitemaps remain
-implementation artifacts, and UX sitemaps may be external `doc` or `visual`
-references.
+**What is a child Screen is decidable**: a region whose content depends on an
+act inside its parent — picking a row, choosing a tab, advancing a step.
+Whether it is visible at the same time as the parent, and whether it has an
+address of its own, do not decide it: the first flips with the breakpoint and
+the second is routing. A region with the same content drawn differently is
+design. The test reads from code without judging layout.
+
+**A parent Screen is a place.** A Step placed on the parent occurs on the
+parent and in none of its children, so the list of a master-detail and the
+shell of a wizard have Steps of their own.
+
+| Case | Modeling |
+| --- | --- |
+| Confirmation dialog | two Steps on the host Screen: ask, confirm |
+| Slideover or panel with its own facts | a child Screen of the view it opens over |
+| Tabs showing different facts | child Screens |
+| Rows / Graph drawing of one set | design; one Screen |
+| Wizard | one parent Screen, one child per step, a Scenario walking them in order |
+| Master-detail | detail is a child Screen of the list |
+| Overlay preserving the parent's state | a Scenario Outcome, not structure |
+| Modal versus page versus inline | design; not modeled |
+
+A wizard is nested Screens on the structure axis and says nothing about
+Journeys: the Scenario walking it is a Journey Scenario only where it crosses
+Capabilities, otherwise a Capability Scenario. The two axes are independent.
+
+The same view on another Interface is another Screen with the same name —
+counterparts, distinguished by their path. They may share purpose, facts and
+Capabilities, and stating each one separately is what makes a divergence
+between them visible instead of silent.
+
+**Places are authored; transitions are derived.** Screens are the places. The
+UI map is Scenario Steps projected onto places, exactly as an Entity's
+lifecycle is Steps projected onto one Entity: its edges are the place changes
+between consecutive contextualized Steps, labelled with their Capability, plus
+the entry points from outside, and an edge no Scenario walks is not a product
+commitment. The two things Steps cannot say are authored on the structure
+side — what is always reachable, through `navigation`, and which views sit
+inside which, through nesting — and those are the only structural additions.
+Screens therefore never author a sitemap, a transition graph, a `next`, a
+`parent`, or an `over`. XML sitemaps remain implementation artifacts, and UX
+sitemaps may be external `doc` or `visual` references.
 
 ### `journeys/<id>.md` or `journeys/<id>/journey.md`
 
@@ -1600,10 +1790,12 @@ This is Journey acceptance coverage, not the source of its identity.
 **A Journey exists when an achieved Journey Scenario carries its Actor through
 two or more Capabilities toward one outcome.** That is the whole test, and it
 is structural, so it reads the same way for a Journey mapped from code and one
-decided before any code exists: a wizard, an orchestration, shared state, or a
+decided before any code exists: an orchestration, shared state, or a
 cross-Interface hand-off is how a product usually earns one, but none is
 required, and a merely plausible sequence of independent Product actions has
-no achieved Scenario and is not a Journey. Whether the repository implements
+no achieved Scenario and is not a Journey. A wizard is not evidence either
+way: it is nested Screens on the structure axis, and the Scenario walking it
+is a Journey Scenario only where it crosses Capabilities. Whether the repository implements
 the Journey is `coverage.status`'s claim and `verify`'s finding, never the
 Journey's own. The number of Journey Scenario variations does not define it;
 one achieved variation provides valid coverage. A goal with no achieved
@@ -1729,7 +1921,7 @@ Its Actor set is derived from those Steps rather than authored on the Scenario.
 **`entities` is required on every Step**, and a Step that touches nothing
 writes `entities: []`. Silence is impossible; an omission is a claim that can
 be reviewed, linted, and contradicted by code. Each entry is
-`{ entity, as, effect, from, to }`:
+`{ entity, as, effect, from, to, facts }`:
 
 ```yaml
 - text: The Reader moves the item from one collection to another
@@ -1787,6 +1979,39 @@ alternative was a Step whose text says *the Reader chooses a saved item and an
 owned collection* while the model says nothing at all, leaving a reader to parse
 English to learn what the Step is about.
 
+**A `reads` or `changes` entry may cite `facts`**: a non-empty unique list of
+that Entity's `## Information kept` names, each of which must exist — a name
+that does not resolve is a `lint` error. `creates` and `removes` entries may
+not carry `facts`, and one that does is an error: what a creation collects is
+presented by the Screen the Step is placed on, and a second home for that claim
+would be two spellings of one thing.
+
+```yaml
+- text: The shopper narrows the catalog by category and price
+  kind: actor
+  actor: shopper
+  entities:
+    - { entity: catalog-product, effect: reads, facts: [Category, Price] }
+  contexts:
+    web: { place: customer-web::storefront::catalog }
+```
+
+**Filters, sorting and search are Scenarios of the Capability that presents
+the set**, never Capabilities of their own, and the facts they use are cited on
+the Step as above. Which filters exist is product; how they are drawn is not.
+Search that presents a set nothing else does — a global search returning
+products, orders and customers at once — is a Capability, because its purpose
+differs from every presenting Capability's. Fact-scoped read Rules are checked
+against these Steps as well as against Screens.
+
+**Every ability has a Scenario.** A complete model has a Step behind every
+Capability a Screen exposes; the Screen section grades the check. A Step
+placed on a Screen is also held to what that Screen presents: an `actor`
+Step that `reads` an Entity the Screen does not present, and a Step citing a
+fact on a Screen whose entry for that Entity lists facts without it, are
+`lint` errors; Product and condition Steps, and reads of an Entity that acts,
+are not checked.
+
 A Scenario's Entity set is derived from its Steps, exactly as its Actor set is,
 and a Capability's Entities are derived from its Scenarios' Steps: a Capability
 declares nothing about Entities itself.
@@ -1801,8 +2026,10 @@ longer title the Step declares is covered by it: with `product-model` declared,
 A Step may author `contexts`, mapping every declared route id to exactly one
 strict Context object. Its `place` is the most-specific Interface, Experience,
 or Screen where that Step occurs. When an Interface or Experience owns Screens,
-the place must name a Screen; otherwise it names the leaf Experience or
-Interface. A Step on a Screen the Interface shares beside its `experiences/`
+the place must name a Screen, at any depth; otherwise it names the leaf
+Experience or Interface. A parent Screen is a place of its own, and a Step
+placed there occurs on the parent and in none of its children. A Step on a
+Screen the Interface shares beside its `experiences/`
 names that Screen, `interface::screen`, and is inside a Capability's
 availability only when every Experience of the Interface is.
 A Step either maps every route or omits `contexts` completely when
@@ -1811,7 +2038,13 @@ Context on at least one Step.
 
 Two routes cannot repeat the same place sequence. A place change between
 consecutive contextualized Steps is an explicit transition, including
-Screen-to-Screen movement inside one Experience. Step Contexts own Scenario
+Screen-to-Screen movement inside one Experience, and **these transitions are
+the derived UI map**: its nodes are the Screens, nested as their paths nest;
+its edges are every such place change in any Scenario, labelled with the
+Step's Capability, plus the entry points from outside; `navigation` is a mark
+on a node, never an edge. Conditions such as empty, unauthorized or blocked
+are `condition` Steps and Rule outcomes, and appear as the Scenario branch
+that meets them. Step Contexts own Scenario
 participation; Screens do not duplicate Scenario ids.
 
 `## Decision points` is optional. Each decision uses an H3 title, a non-empty

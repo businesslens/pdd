@@ -3,18 +3,16 @@ actors: [reader]
 access: authenticated
 entryPoints:
   - reader-web: /unread
-screens: [unread-library, saved-items, source-list, collection-workspace]
+navigation: [unread-library, saved-items, source-list, collection-workspace, search, add-source]
 ---
 
 # Personal library
 
 The private context in which a Reader follows sources, reads, saves, organizes,
-and publishes selected collections on the web.
-
-## Capability boundary
-
-Every item, track-reading-state change, saved item, and collection belongs to the
-signed-in Reader. This context never exposes another Reader's library.
+searches, and publishes selected collections on the web. Every item, reading-state
+change, saved item, and collection belongs to the signed-in Reader. Its six
+top-level views are reachable from every place inside it; every other view is
+reached only by an act in the view that holds it.
 
 ## Counterpart note
 

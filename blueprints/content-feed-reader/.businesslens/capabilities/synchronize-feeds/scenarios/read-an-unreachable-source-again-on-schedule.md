@@ -3,6 +3,7 @@ kind: edge
 routes:
   web: Web
   mobile: Mobile
+  mobile-next: Mobile (next)
 steps:
   - text: The Product's own polling schedule comes due for a followed source that could not be read last time
     kind: condition
@@ -26,6 +27,8 @@ steps:
         place: reader-web::personal-library::source-list
       mobile:
         place: reader-mobile::personal-library::source-list
+      mobile-next:
+        place: reader-mobile::personal-library-next::source-list
 ---
 
 # Read an unreachable source again on schedule

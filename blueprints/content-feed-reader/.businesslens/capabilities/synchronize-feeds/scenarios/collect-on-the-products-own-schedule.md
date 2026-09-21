@@ -3,6 +3,7 @@ kind: primary
 routes:
   web: Web
   mobile: Mobile
+  mobile-next: Mobile (next)
 steps:
   - text: The Product's own polling schedule comes due for a followed source
     kind: condition
@@ -26,6 +27,8 @@ steps:
         place: reader-web::personal-library::unread-library
       mobile:
         place: reader-mobile::personal-library::unread-library
+      mobile-next:
+        place: reader-mobile::personal-library-next::unread-library
 ---
 
 # Collect on the Product's own schedule

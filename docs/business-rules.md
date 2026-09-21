@@ -141,7 +141,8 @@ in some state *when the operation happens* is a condition and lives in a grant's
 governs information — a derivation, or field-level visibility — not an
 operation. `contexts` scopes the Rule to places; an Entity has no availability,
 so the selector must name a Screen that presents the Entity, or an ancestor of
-one.
+one — and for a fact-scoped Rule, a Screen presenting that fact, or one citing
+the Entity bare while Coverage is not `complete`.
 
 **A place-scoped Rule is not escaped by omitting `contexts`.** A Step that omits
 them is shared by every route, which puts its operations inside the Scenario's
@@ -298,7 +299,13 @@ scalar or `{ configuredBy: <entity-id> }`.
 `fact` defaults to a fact of the targeted Entity and may name another through
 `entity`, which is how thresholds and feature flags work: the value is a fact of
 a settings Entity and the Rule reads it — which is also what keeps that settings
-Entity from being an orphan. `state` says *the instance is in state X when the
+Entity from being an orphan. An A/B test that changes what an Actor can do is
+the same shape, a flag read by a Rule, while one that changes only looks is
+design and not modeled. Dynamic configuration is the same shape again: the
+setting is a fact, and the Rule that reads it says what it changes. Who is in
+which cohort is a fact on the Actor or tenant Entity read the same way; the
+experiment itself — assignment, cohorts, metrics — is never modeled.
+`state` says *the instance is in state X when the
 operation happens*: it must be a state of the targeted Entity, it is valid on
 every target but `creates`, and it cannot be combined with `entity`. It exists
 because two kinds of Step carry no state for a target to select by — a `reads`
@@ -357,7 +364,7 @@ Structure — errors unless marked:
 - An Entity target whose `id`, `from`, `to`, `facts` entry, or `contexts` place
   does not resolve; `from` on a `creates` or `reads` target; `to` on a
   `removes` or `reads` target; a `contexts` place that presents the Entity
-  nowhere.
+  nowhere — or, on a fact-scoped target, presents none of its facts.
 - A behavioral target resolving to exactly one resource with no `contexts` —
   a warning naming the Capability that should own it.
 - **Warning:** two permission Rules with identical target selectors.
@@ -376,6 +383,15 @@ Rules against Steps and Screens — errors, ungraded by `coverage.status`:
 - A Screen presenting an Entity whose reads are governed, where no Actor using
   the Screen's container has a possible grant.
 
-Fact-scoped Rules are checked by Screen reach only, since a Step cannot cite a
-fact; the rest is `verify`'s. A derivation is prose plus `facts`; there is no
-machine-readable arithmetic.
+A fact-scoped read Rule — an Entity target with `facts` and effect `reads` or
+none — is checked against the facts Screens present and Steps cite, never
+against Entity presence alone. A [Screen](./interfaces.md#what-a-screen-presents)
+whose entry for the Entity lists a governed fact must have an Actor of its
+container with a possible grant; a bare entry, naming the Entity without facts,
+is never selected by a fact-scoped target; and a
+[Step](./capabilities.md#what-a-step-does-to-the-products-things) whose entry
+cites a governed fact is selected like any operation. A read Rule governing a
+fact that no Screen presents and no Step cites is a warning, and an error when
+Coverage is `complete`: it governs information the model says nobody meets.
+Whether a value is actually shown is `verify`'s. A derivation is prose plus
+`facts`; there is no machine-readable arithmetic.

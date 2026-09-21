@@ -77,6 +77,14 @@ really create, configure, archive, and delete behaviors with distinct
 contracts. Split those into Capabilities and, when navigation benefits, group
 them under a Repository administration [Domain](./domains.md).
 
+**Filters, sorting and search are Scenarios of the Capability that presents
+the set**, never Capabilities of their own: they share its purpose and its
+outcome, which is the format's own split rule. The facts they narrow by are
+cited on the Step. Which filters exist is product; how they are drawn is not.
+**Search that presents a set nothing else does** — a global search returning
+products, orders and customers at once — is a Capability, because its purpose
+differs from every presenting Capability's.
+
 Every Capability declares explicit availability Contexts, naming
 [Experiences](./interfaces.md#experiences) only where the Interface uses them. An optional
 [Domain](./domains.md) can organize it, but Domains are not required.
@@ -130,7 +138,17 @@ Context the Capability declares through its Step Contexts; use by a Journey Scen
 does not satisfy that requirement. A missing Context is an error for a `complete`
 model, a warning for `partial` or `draft`, and an error when publishing a public
 Blueprint. A single-Capability goal remains local Capability behavior and never
-requires a Journey wrapper.
+requires a Journey wrapper. A wizard is
+[nested Screens](./interfaces.md#screens-nest) on the structure side, and the
+Scenario walking its steps is a Capability Scenario unless it crosses
+Capabilities, which makes it a [Journey Scenario](./journeys.md#journey-scenarios).
+
+**Every ability has a Scenario.** A complete model has a Step behind every
+Capability a [Screen](./interfaces.md#screens) exposes, an export button
+included; a Screen's `capabilities` with no Step placed exactly on that Screen
+is a warning, and an error when Coverage is `complete`. There is no cheaper
+encoding of "this ability exists here", because that would be two valid
+spellings of one claim.
 
 ## Availability
 
@@ -217,6 +235,27 @@ change, and never saves an Entity from being an orphan. It exists so a Step
 whose text says *the Reader chooses a saved item* also says so where a tool can
 read it. A Step whose text names an Entity's title and declares it nowhere is a
 finding — an error in a `complete` model, a warning otherwise.
+
+**A Step cites the facts it uses.** A `reads` or `changes` entry may carry
+`facts`, naming the Entity's [named facts](./entities.md#named-facts) exactly:
+
+```yaml
+- text: The shopper narrows the catalog by category and price
+  kind: actor
+  actor: shopper
+  entities:
+    - { entity: catalog-product, effect: reads, facts: [Category, Price] }
+  contexts:
+    web: { place: customer-web::storefront::catalog }
+```
+
+`creates` and `removes` never carry `facts`: what a creation collects is what
+the [Screen presents](./interfaces.md#what-a-screen-presents), and a second
+home for that claim is an error. A fact a Step cites must exist on the Entity,
+and where the Step is placed on a Screen, that Screen must present the Entity
+— with the cited fact, when its entry lists facts. A
+[Business Rule](./business-rules.md) governing who may read a fact selects a
+Step citing it like any operation.
 
 **Ends with** is the last creation, change, or removal of each Entity instance
 in Step order. It includes the resulting State when
@@ -340,6 +379,7 @@ else.
 | `steps[].entities[].as` | no | A scenario-local alias telling two instances of one Entity apart. Once an Entity is aliased in a Scenario, every mention of it is. |
 | `steps[].entities[].effect` | no | Use `creates`, `changes`, `removes`, or `reads`. Defaults to `changes`. |
 | `steps[].entities[].from`, `to` | by effect | Name states the Entity declares: `to` with `creates`, `from` with `removes`, both or neither with `changes`, and neither with `reads`. Required for `creates` and `removes` when the Entity has states. |
+| `steps[].entities[].facts` | no | On a `reads` or `changes` entry, a non-empty unique list of the Entity's named facts this Step uses, by exact name. An error on `creates` and `removes`. |
 | `steps[].contexts` | when contextualized | Map every declared route to a strict Context whose `place` is the most-specific occurrence: a Screen when one exists, otherwise the leaf Experience or Interface. Omit it only when the Step is shared by all routes and has no Context. |
 | `references` | no | Use the documented [Reference](./references.md) shape. |
 | Lead paragraph | no | Start with a named H2; move starting-condition prose into `## Trigger`. |
@@ -378,8 +418,13 @@ contextualized Steps is an explicit Context transition, including movement betwe
 Experience.
 
 A Step Context is concrete and most-specific. If its availability boundary owns
-Screens, its `place` names the Screen. Otherwise it names the leaf Experience
-or undivided Interface. A Step on a Screen an Interface shares across its
+Screens, its `place` names the Screen, at any depth — a
+[parent Screen](./interfaces.md#screens-nest) is a place of its own, meaning
+on it and in none of its children. Otherwise it names the leaf Experience or
+undivided Interface. An `actor` Step placed on a Screen that `reads` an
+Entity the Screen does not present is an error; a Product or condition Step
+reads what the Product consults, and a read of an Entity that acts names a
+participant, so neither is checked. A Step on a Screen an Interface shares across its
 Experiences names that Screen as `interface-id::screen-id`; it is inside the
 Capability's availability only when every Experience of that Interface is, and
 it counts as coverage for each. Actor support, Screen participation, and

@@ -1,14 +1,15 @@
 import type { ResourceFile, PddModel } from '../core/model.js'
-import type { ProductReportV13 } from '../core/portable.js'
+import type { ProductReportV14 } from '../core/portable.js'
 import { join, relative, sep } from 'node:path'
 import { writeGeneratedFile } from '../core/generated-files.js'
 import { lsFiles } from '../core/git.js'
 import { section, supportingSections } from '../core/markdown.js'
 import type { InterfaceType } from '../core/interface-types.js'
 import { loadModel } from '../core/model.js'
+import { qualify } from '../core/ids.js'
 import { resolveModelRoot, type ModelRoot } from '../core/model-root.js'
 import {
-  ProductReportV13Schema,
+  ProductReportV14Schema,
   REPORT_SCHEMA_VERSION,
   projectPortableReport,
   validateProductReport
@@ -39,8 +40,7 @@ function assetReferences(resource: ResourceFile, modelRoot: string) {
       kind: (IMAGE_ASSET.test(file) ? 'visual' : 'doc') as 'visual' | 'doc',
       role: (file.startsWith('implementation/') ? 'implementation' : 'intent') as 'implementation' | 'intent',
       target: relative(modelRoot, join(resource.directory, file)).split(sep).join('/'),
-      ...(declared?.title ? { title: declared.title } : {}),
-      ...(declared?.state ? { state: declared.state } : {})
+      ...(declared?.title ? { title: declared.title } : {})
     }
   })
 }
@@ -53,8 +53,7 @@ function resourceContent(resource: ResourceFile, recognized: string[], modelRoot
       kind: reference.kind,
       role: reference.role,
       target: reference.target,
-      ...(reference.title ? { title: reference.title } : {}),
-      ...(reference.state ? { state: reference.state } : {})
+      ...(reference.title ? { title: reference.title } : {})
     }))
   }
 }
@@ -74,7 +73,7 @@ export function compileReport(
    * nested model's assets stay addressable from the repository root.
    */
   assetBase = model.root
-): ProductReportV13 {
+): ProductReportV14 {
   const capabilityById = new Map(model.capabilities.map(capability => [capability.id, capability]))
   const journeyScenariosByJourney = new Map(model.journeys.map(journey => [
     journey.id,
@@ -99,7 +98,8 @@ export function compileReport(
       as: entry.as ?? null,
       effect: entry.effect ?? 'changes' as const,
       from: entry.from ?? null,
-      to: entry.to ?? null
+      to: entry.to ?? null,
+      facts: entry.facts ?? []
     })),
     unattended: step.unattended === true,
     contexts: scenario.routes.flatMap(route => {
@@ -113,7 +113,7 @@ export function compileReport(
       .map(scenario => scenario.id)
   )
 
-  const report: ProductReportV13 = {
+  const report: ProductReportV14 = {
     schemaVersion: REPORT_SCHEMA_VERSION,
     id: model.product.id,
     title: model.product.doc.title,
@@ -128,11 +128,11 @@ export function compileReport(
       kind: reference.kind,
       role: reference.role,
       target: reference.target,
-      ...(reference.title ? { title: reference.title } : {}),
-      ...(reference.state ? { state: reference.state } : {})
+      ...(reference.title ? { title: reference.title } : {})
     })),
     referenceProfile: 'workspace',
     tags: sorted(model.product.tags),
+    languages: sorted(model.product.languages),
     generatedAt: today,
     generator: { name: 'businesslens-cli', version: cliVersion() },
     counts: {
@@ -164,8 +164,9 @@ export function compileReport(
         type: productInterface.type as InterfaceType,
         actorIds: sorted(productInterface.actors),
         entryPoints: productInterface.entryPoints,
-        capabilityBoundary: productInterface.capabilityBoundary,
-        ...resourceContent(productInterface, ['Capability boundary'], assetBase)
+        languages: sorted(productInterface.languages),
+        navigation: sorted(productInterface.navigation.map(entry => qualify(productInterface.id, entry))),
+        ...resourceContent(productInterface, [], assetBase)
       })),
       experiences: byId(model.experiences).map(experience => ({
         id: experience.id,
@@ -175,23 +176,22 @@ export function compileReport(
         interfaceIds: [experience.interface],
         accessMode: experience.access as 'public' | 'authenticated' | 'restricted',
         entryPoints: experience.entryPoints,
-        capabilityBoundary: experience.capabilityBoundary,
-        ...resourceContent(experience, ['Capability boundary'], assetBase)
+        navigation: sorted(experience.navigation.map(entry => qualify(experience.id, entry))),
+        version: experience.version ?? null,
+        ...resourceContent(experience, [], assetBase)
       })),
       screens: byId(model.screens).map(screen => ({
         id: screen.id,
         title: screen.doc.title,
         description: screen.doc.lead,
         capabilityIds: sorted(screen.capabilities),
-        entityIds: sorted(screen.entities),
+        entities: [...screen.entities]
+          .sort((left, right) => left.entity.localeCompare(right.entity))
+          .map(entry => ({ entityId: entry.entity, facts: entry.facts ?? null })),
         capabilityScenarioIds: screenScenarioIds(screen.id, 'capability'),
         journeyScenarioIds: screenScenarioIds(screen.id, 'journey'),
         entryPoints: screen.entryPoints,
-        information: screen.information,
-        actions: screen.actions,
-        states: screen.states,
-        capabilityBoundary: screen.capabilityBoundary,
-        ...resourceContent(screen, ['Information presented', 'Available actions', 'View states', 'Capability boundary'], assetBase)
+        ...resourceContent(screen, [], assetBase)
       })),
       domains: byId(model.domains).map(domain => ({
         id: domain.id,
@@ -331,24 +331,24 @@ export function compileReport(
     }
   }
 
-  const parsed = ProductReportV13Schema.parse(report)
+  const parsed = ProductReportV14Schema.parse(report)
   const issues = validateProductReport(parsed)
   if (issues.length) throw new Error(`Report validation failed:\n- ${issues.join('\n- ')}`)
   return parsed
 }
 
 export interface BuildOutcome {
-  report: ProductReportV13
+  report: ProductReportV14
   outputFile: string
 }
 
 /** Compile the current workspace without writing generated artifacts. */
-export function compileWorkspaceReport(cwd: string): ProductReportV13 {
+export function compileWorkspaceReport(cwd: string): ProductReportV14 {
   return compileResolvedWorkspaceReport(resolveModelRoot(cwd))
 }
 
 /** Compile a model whose ownership boundary has already been resolved. */
-export function compileResolvedWorkspaceReport({ modelRoot, gitRoot }: ModelRoot): ProductReportV13 {
+export function compileResolvedWorkspaceReport({ modelRoot, gitRoot }: ModelRoot): ProductReportV14 {
   const model = loadModel(modelRoot)
   const tracked = gitRoot ? lsFiles(gitRoot) : []
   const result = lintModel(model, tracked)

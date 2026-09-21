@@ -11,7 +11,7 @@ steps:
       - { entity: collection, effect: reads }
     contexts:
       web:
-        place: reader-web::personal-library::collection-workspace
+        place: reader-web::personal-library::collection-workspace::items
   - text: The Product confirms collection ownership
     kind: product
     actor: reader
@@ -19,7 +19,7 @@ steps:
       - { entity: collection, effect: reads }
     contexts:
       web:
-        place: reader-web::personal-library::collection-workspace
+        place: reader-web::personal-library::collection-workspace::items
   - text: The item is removed from that collection
     kind: product
     actor: reader
@@ -28,14 +28,14 @@ steps:
       - { entity: item, effect: reads }
     contexts:
       web:
-        place: reader-web::personal-library::collection-workspace
+        place: reader-web::personal-library::collection-workspace::items
   - text: The remaining item order and the item's saved state are preserved
     kind: condition
     entities:
       - { entity: item, effect: reads }
     contexts:
       web:
-        place: reader-web::personal-library::collection-workspace
+        place: reader-web::personal-library::collection-workspace::items
 ---
 
 # Remove an item from an owned collection

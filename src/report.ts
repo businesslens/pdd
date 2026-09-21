@@ -31,7 +31,7 @@ export {
   ReportEntityFactSchema,
   ReportEntityRelationSchema,
   ReportCapabilitySchema,
-  ReportScreenStateSchema,
+  ReportScreenEntitySchema,
   ReportScreenSchema,
   ReportJourneySchema,
   ReportDecisionPointSchema,
@@ -48,7 +48,7 @@ export {
   ReportBusinessRuleTargetSchema,
   ReportBusinessRuleSchema,
   ReportCoverageSchema,
-  ProductReportV13Schema,
+  ProductReportV14Schema,
   ProductReportSchema,
   validateProductReport,
   validateBlueprintReport,
@@ -58,7 +58,7 @@ export {
 } from './core/portable.js'
 
 export type {
-  ProductReportV13,
+  ProductReportV14,
   ProductReport,
   ReportCoverage,
   ReportCounts,
@@ -73,7 +73,7 @@ export type {
   ReportCapability,
   ReportContext,
   ReportScreen,
-  ReportScreenState,
+  ReportScreenEntity,
   ReportJourney,
   ReportCapabilityScenario,
   ReportScenarioRoute,

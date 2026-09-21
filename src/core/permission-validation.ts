@@ -37,14 +37,22 @@ export interface PermissionOperation {
   effect: PermissionEffect
   from: string | null
   to: string | null
+  /** The facts the Step cites on this Entity; empty when it cites none. */
+  facts: string[]
   contextPlaces: string[]
+}
+
+/** One Entity a Screen presents. `facts` is null for a bare entry. */
+export interface PermissionScreenEntity {
+  entityId: string
+  facts: string[] | null
 }
 
 export interface PermissionScreen {
   label: string
   id: string
   containerId: string
-  entityIds: string[]
+  entities: PermissionScreenEntity[]
   actorIds: string[]
 }
 
@@ -81,13 +89,20 @@ function operationInPlaces(operation: PermissionOperation, selectors: string[]):
     selectors.some(selector => containsPlace(selector, place)))
 }
 
-/** The shared selector algebra used by validation and lint's canonicality warnings. */
+/**
+ * The shared selector algebra used by validation and lint's canonicality warnings.
+ *
+ * A fact-scoped target selects a Step only where the Step cites one of those
+ * facts: a Step that names the Entity without facts makes no claim about any
+ * fact, and what a Screen shows is the Screen's own claim, checked below.
+ */
 export function permissionTargetSelectsOperation(
   target: PermissionTarget,
   operation: PermissionOperation,
   ignoreFrom = false
 ): boolean {
-  if (target.entityId !== operation.entityId || target.facts.length) return false
+  if (target.entityId !== operation.entityId) return false
+  if (target.facts.length && !target.facts.some(fact => operation.facts.includes(fact))) return false
   if (target.effect !== null && target.effect !== operation.effect) return false
   if (!ignoreFrom && target.from !== null && target.from !== operation.from) return false
   if (target.to !== null && target.to !== operation.to) return false
@@ -108,11 +123,14 @@ function grantCanPermitOperation(
   return stateHolds
 }
 
-function targetSelectsScreen(target: PermissionTarget, entityId: string, screenId: string): boolean {
+function targetSelectsScreen(target: PermissionTarget, entity: PermissionScreenEntity, screenId: string): boolean {
   // A read carries no state, so a target that selects by `from` or `to` is
-  // about a state move and can never govern what a Screen presents.
-  return target.entityId === entityId
-    && (target.effect === null || target.effect === 'reads')
+  // about a state move and can never govern what a Screen presents. A
+  // fact-scoped target governs a Screen only where the Screen says it shows
+  // that fact; a bare entry claims presence alone and is never selected.
+  if (target.entityId !== entity.entityId) return false
+  if (target.facts.length && (entity.facts === null || !target.facts.some(fact => entity.facts!.includes(fact)))) return false
+  return (target.effect === null || target.effect === 'reads')
     && target.from === null
     && target.to === null
     && (!target.contextPlaces.length || target.contextPlaces.some(place => containsPlace(place, screenId)))
@@ -156,17 +174,20 @@ export function validatePermissionBehavior(behavior: PermissionBehavior): string
   }
 
   for (const screen of behavior.screens) {
-    for (const entityId of screen.entityIds) {
+    for (const entity of screen.entities) {
       for (const rule of behavior.rules) {
-        if (!rule.targets.some(target => targetSelectsScreen(target, entityId, screen.id))) continue
+        const targets = rule.targets.filter(target => targetSelectsScreen(target, entity, screen.id))
+        if (!targets.length) continue
+        const governed = targets.flatMap(target => target.facts).filter(fact => entity.facts?.includes(fact))
+        const what = governed.length ? `"${entity.entityId}" facts "${[...new Set(governed)].join('", "')}"` : `"${entity.entityId}"`
         if (!rule.grants.length) {
-          issues.push(`${screen.label}: presents "${entityId}", which rule "${rule.id}" forbids anyone to read`)
+          issues.push(`${screen.label}: presents ${what}, which rule "${rule.id}" forbids anyone to read`)
           continue
         }
         const permitted = screen.actorIds.some(actorId =>
-          rule.grants.some(grant => grantCanPermitScreen(grant, actorId, entityId)))
+          rule.grants.some(grant => grantCanPermitScreen(grant, actorId, entity.entityId)))
         if (!permitted) {
-          issues.push(`${screen.label}: presents "${entityId}", and no actor of "${screen.containerId}" has a grant to read it in rule "${rule.id}"`)
+          issues.push(`${screen.label}: presents ${what}, and no actor of "${screen.containerId}" has a grant to read it in rule "${rule.id}"`)
         }
       }
     }

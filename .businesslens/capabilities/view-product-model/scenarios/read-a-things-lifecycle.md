@@ -3,14 +3,14 @@ kind: edge
 routes:
   local: Local
 steps:
-  - text: The Developer opens an Entity's page and its Lifecycle tab
+  - text: The Developer opens an Entity's page and its Lifecycle reading
     kind: actor
     actor: developer
     entities:
       - { entity: entity, effect: reads }
     contexts:
       local:
-        place: local-report-web::resource-reading
+        place: local-report-web::resource-reading::lifecycle
   - text: The Product draws its states as one machine composed from every Step that creates, moves, or removes it, labels each arc with the Capability whose Step draws it, and marks the arcs a Business Rule restricts or forbids
     kind: product
     entities:
@@ -19,14 +19,14 @@ steps:
       - { entity: business-rule, effect: reads }
     contexts:
       local:
-        place: local-report-web::resource-reading
+        place: local-report-web::resource-reading::lifecycle
   - text: The Developer reads who may move it on the arc, and follows it to the Rule's own page for the full grant
     kind: actor
     actor: developer
     entities: []
     contexts:
       local:
-        place: local-report-web::resource-reading
+        place: local-report-web::resource-reading::lifecycle
 ---
 
 # Read a thing's lifecycle and who may move it

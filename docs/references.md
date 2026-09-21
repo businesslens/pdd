@@ -60,7 +60,7 @@ screens/unread-library/
 ```
 
 An asset needs no frontmatter entry. Add optional `assets:` metadata only when
-it needs a title or, on a Screen, a View state:
+it needs a title:
 
 ```yaml
 assets:
@@ -68,7 +68,6 @@ assets:
     title: Approved unread backlog
   - file: implementation/backlog-dark.png
     title: Implemented backlog, dark
-    state: Backlog
 ```
 
 Use a Reference when another system or repository owns the material: source
@@ -110,27 +109,25 @@ along with every `kind: code` reference and every repository-relative target,
 whatever its role. That is not a limitation to work around; it is what makes the
 role meaningful.
 
-## Naming the state a capture shows
+## Where a capture of a condition attaches
 
-A [Screen](./interfaces.md#screens) often collects several captures of the same view — one
-per View state, sometimes doubled for light and dark. An optional `state` on
-either asset metadata or a Reference names which one:
+A [Screen](./interfaces.md#screens) carries the captures of the place itself: a
+mockup, the implemented view, light and dark. A capture of a *condition* of
+that view — empty, unauthorized, caught-up — attaches instead to the Scenario
+that reaches it, whose Step or Edge case meets that condition, through the
+Scenario's own `references`:
 
 ```yaml
 references:
   - kind: visual
     role: implementation
-    target: docs/design/screenshots/overview-dark.png
-    title: Overview tab, dark
-    state: Journeys
+    target: docs/design/screenshots/library-empty.png
+    title: Library with nothing saved yet
 ```
 
-`state` is valid only on a Screen and must match one of its `## View states`
-H3 titles. Themes are not View states, so a light and a dark capture of the
-same state are two attachments sharing one `state` value.
-
-Without it, six captures of one Screen arrive as a flat list distinguishable
-only by free-text title. With it, each one is placed beside the state it shows.
+The condition is then named by the behavior that produces it rather than by a
+label on the Screen, so a reader arriving from either side finds the same
+capture. A Reference or asset carries no `state` key.
 
 The distinction answers the screenshot question directly. A design screenshot
 used to define a Screen is `visual` + `intent`; a screenshot captured from the
@@ -180,15 +177,13 @@ portable projection. `open`, `pull`, and `contribute` apply the same projection.
 | Finding | Meaning |
 | --- | --- |
 | missing `kind`, `role`, or `target` | Every Reference needs all three fields. |
-| unknown Reference key | Use only `kind`, `role`, `target`, and optional `title` and `state`. |
+| unknown Reference key | Use only `kind`, `role`, `target`, and optional `title`. |
 | invalid kind or role | Choose one of the documented values. |
 | invalid code target | Use the compact grammar and a repository-relative path. |
 | `code reference path "…" is not a tracked file` | Fix or remove stale navigation. |
 | duplicate Reference target | Keep only one attachment to that target on the resource. |
 | missing local target warning | Fix the target or remove it; warnings do not fail lint. |
-| `reference state "…" is not a view state of this Screen` | Name an authored `## View states` H3, or drop the key. |
-| `reference "state" is only valid on a Screen` | No other resource type has a state set for it to resolve against. |
 | asset metadata names a missing file | Expand the resource and add the file, or remove the stale metadata. |
-| asset state does not name a View state | Name an authored Screen H3 or remove `state`. |
+| unknown asset key | Use only `file` and optional `title`. |
 
 There is no missing-Reference finding. A complete model may contain none.

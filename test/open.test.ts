@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process'
-import { cpSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { cpSync, existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
@@ -7,7 +7,7 @@ import { buildProject } from '../src/commands/export.js'
 import { runOpen } from '../src/commands/open.js'
 import { lsFiles } from '../src/core/git.js'
 import { loadModel } from '../src/core/model.js'
-import { projectPortableReport, type ProductReportV13 } from '../src/core/portable.js'
+import { projectPortableReport, type ProductReportV14 } from '../src/core/portable.js'
 import { lintModel } from '../src/commands/lint.js'
 
 const FIXTURE = join(__dirname, 'fixtures', 'fixture-shop')
@@ -25,7 +25,7 @@ function initialize(cwd: string): void {
   git(cwd, 'commit', '--allow-empty', '-m', 'fixture')
 }
 
-function withoutRepositoryEvidence(report: ProductReportV13): Record<string, any> {
+function withoutRepositoryEvidence(report: ProductReportV14): Record<string, any> {
   const portable = projectPortableReport(report)
   return {
     ...portable,
@@ -146,8 +146,56 @@ describe('open report', () => {
       .toContain('## Recovery note')
     expect(readFileSync(join(target, '.businesslens/product.md'), 'utf8'))
       .toContain('## Teaching note')
+    // A Screen comes back as relations only: the facts on screen travel by Entity.
     expect(readFileSync(join(target, '.businesslens/interfaces/customer-web/experiences/storefront/screens/product-record.md'), 'utf8'))
-      .toContain('## View states')
+      .toMatch(/  - entity: catalog-product\n    facts:/)
+  })
+
+  it('round-trips nested Screens and container-relative navigation', async () => {
+    const fresh = mkdtempSync(join(tmpdir(), 'bl-open-nested-'))
+    initialize(fresh)
+    try {
+      const report = structuredClone(buildProject(source).report)
+      const parent = report.model.screens.find(screen => screen.id === 'customer-web::storefront::product-record')!
+      report.model.screens.push({
+        ...structuredClone(parent),
+        id: 'customer-web::storefront::product-record::reviews',
+        title: 'Reviews',
+        description: 'What other shoppers said.',
+        capabilityIds: ['browse-catalog'],
+        capabilityScenarioIds: ['browse-catalog'],
+        journeyScenarioIds: [],
+        entryPoints: [],
+        references: []
+      })
+      report.counts.screens += 1
+      const browse = report.model.capabilityScenarios.find(scenario => scenario.id === 'browse-catalog')!
+      browse.steps.push({
+        ...structuredClone(browse.steps.at(-1)!),
+        text: 'The shopper reads its reviews',
+        contexts: browse.routes.map(route => ({
+          routeId: route.id,
+          placeId: route.id === 'web'
+            ? 'customer-web::storefront::product-record::reviews'
+            : 'customer-mobile::storefront::product-record'
+        }))
+      })
+      const storefront = report.model.experiences.find(experience => experience.id === 'customer-web::storefront')!
+      storefront.navigation = ['customer-web::storefront::product-record::reviews']
+      const file = join(fresh, 'nested.json')
+      writeFileSync(file, JSON.stringify(report))
+
+      expect(await runOpen(fresh, file, false)).toBe(0)
+      const imported = loadModel(fresh)
+      const child = imported.screens.find(screen => screen.id === 'customer-web::storefront::product-record::reviews')
+      expect(child).toMatchObject({ parentId: 'customer-web::storefront::product-record', containerId: 'customer-web::storefront' })
+      expect(existsSync(join(fresh, '.businesslens/interfaces/customer-web/experiences/storefront/screens/product-record/screen.md'))).toBe(true)
+      expect(existsSync(join(fresh, '.businesslens/interfaces/customer-web/experiences/storefront/screens/product-record/screens/reviews.md'))).toBe(true)
+      expect(imported.experiences.find(experience => experience.id === 'customer-web::storefront')?.navigation)
+        .toEqual(['product-record::reviews'])
+    } finally {
+      rmSync(fresh, { recursive: true, force: true })
+    }
   })
 
   it('preserves known unmapped product areas as model-breadth context', async () => {

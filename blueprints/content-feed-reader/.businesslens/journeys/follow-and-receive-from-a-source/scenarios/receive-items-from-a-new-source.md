@@ -13,6 +13,8 @@ steps:
         place: reader-web::personal-library::source-list
       mobile:
         place: reader-mobile::personal-library::source-list
+      mobile-next:
+        place: reader-mobile::personal-library-next::source-list
   - text: The Reader refreshes their followed sources
     kind: actor
     actor: reader
@@ -24,6 +26,8 @@ steps:
         place: reader-web::personal-library::source-list
       mobile:
         place: reader-mobile::personal-library::source-list
+      mobile-next:
+        place: reader-mobile::personal-library-next::source-list
   - text: The Product reads the followed feed and collects its available new items
     kind: product
     actor: reader
@@ -39,6 +43,7 @@ steps:
 routes:
   web: Web
   mobile: Mobile
+  mobile-next: Mobile (next)
 ---
 
 # Receive items from a new source

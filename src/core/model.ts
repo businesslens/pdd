@@ -19,7 +19,7 @@ import {
 import { counterpartKey, interfaceOf, isId, qualify } from './ids.js'
 import { readProductLogo } from './logo-file.js'
 import {
-  bulletList, containsStructuralHeading, decisionPoints, parseMarkdown, screenStates, section
+  bulletList, containsStructuralHeading, decisionPoints, namedStates, parseMarkdown, section
 } from './markdown.js'
 
 export interface ResourceFile {
@@ -48,9 +48,17 @@ export interface InterfaceResource extends ResourceFile {
   type: string
   actors: string[]
   entryPoints: CompactEntryPoint[]
-  capabilityBoundary: string
-  /** Optional reading order over this Interface's own direct Screens. */
-  screens: string[]
+  /**
+   * Language tags this Interface serves, narrowing the Product's. Empty means
+   * the Product's list applies unchanged.
+   */
+  languages: string[]
+  /**
+   * Screens reachable from every place inside this Interface, as paths relative
+   * to it. Structure, not a relation: it says nothing about movement, and its
+   * order carries no meaning.
+   */
+  navigation: string[]
 }
 
 export interface ExperienceResource extends ResourceFile {
@@ -59,9 +67,13 @@ export interface ExperienceResource extends ResourceFile {
   interface: string
   access: string
   entryPoints: CompactEntryPoint[]
-  capabilityBoundary: string
-  /** Optional reading order over this Experience's own Screens. */
-  screens: string[]
+  /** Screens reachable from every place inside this Experience, as paths relative to it. */
+  navigation: string[]
+  /**
+   * Which concurrently served version of the context this is. Written only
+   * where another Experience of the same Interface carries a different one.
+   */
+  version?: string
 }
 
 export interface DomainResource extends ResourceFile {
@@ -137,20 +149,33 @@ export interface EntityResource extends ResourceFile {
    */
   acts?: string
   relations: EntityRelation[]
-  states: ReturnType<typeof screenStates>
+  states: ReturnType<typeof namedStates>
+}
+
+/**
+ * One Entity a Screen presents, and which of its facts are on screen.
+ *
+ * `facts` names the Entity's `## Information kept` facts by exact name, read or
+ * entered. Absent, the Screen claims presence only — allowed while the model is
+ * not complete, and always the spelling for an Entity with no named facts.
+ */
+export interface ScreenEntity {
+  entity: string
+  facts?: string[]
 }
 
 export interface ScreenResource extends ResourceFile {
-  /** The Entities this view presents. */
-  entities: string[]
-  /** The Interface or Experience that owns it, read from the path. Never authored. */
+  /** The Entities this view presents, with the facts on screen. */
+  entities: ScreenEntity[]
+  /**
+   * The nearest Interface or Experience above it, read from the path. Never
+   * authored. Availability, audience and sharing resolve against this.
+   */
   containerId: string
+  /** The direct parent: the container, or the Screen this one nests inside. */
+  parentId: string
   capabilities: string[]
   entryPoints: CompactEntryPoint[]
-  information: string[]
-  actions: string[]
-  states: ReturnType<typeof screenStates>
-  capabilityBoundary: string
 }
 
 interface ScenarioResource extends ResourceFile {
@@ -211,6 +236,12 @@ export interface ScenarioStepEntity {
   effect?: ScenarioStepEffect
   from?: string
   to?: string
+  /**
+   * The Entity's facts this Step reads or edits, by exact name. Valid on
+   * `reads` and `changes` only: what a creation collects is what the Screen
+   * presents.
+   */
+  facts?: string[]
 }
 
 export interface ScenarioStep {
@@ -355,6 +386,8 @@ export interface PddModel {
     authors: ProductAuthor[]
     license?: string
     limitations: string[]
+    /** Language tags the Product serves. Interfaces may narrow the list. */
+    languages: string[]
     doc: MarkdownDoc
     references: ResourceReference[]
   }
@@ -708,7 +741,7 @@ function stepEntities(raw: unknown, issues: string[], label: string): ScenarioSt
       continue
     }
     const item = entry as Record<string, unknown>
-    rejectUnknownKeys(item, ['entity', 'as', 'effect', 'from', 'to'], issues, entryLabel)
+    rejectUnknownKeys(item, ['entity', 'as', 'effect', 'from', 'to', 'facts'], issues, entryLabel)
     const entity = stringField(item, 'entity', issues, entryLabel) || ''
     if (!entity) {
       issues.push(`${entryLabel}: needs an "entity"`)
@@ -753,7 +786,69 @@ function stepEntities(raw: unknown, issues: string[], label: string): ScenarioSt
       issues.push(`${entryLabel}: a "changes" entry carries both "from" and "to", or neither`)
       continue
     }
-    entries.push({ entity, as: alias, effect: effect as ScenarioStepEffect | undefined, from, to })
+    /* A fact is something read or edited; a creation collects what the Screen
+       presents, and a removal touches no fact in particular. */
+    const facts = factsField(item, issues, entryLabel)
+    if (facts !== undefined && resolved !== 'reads' && resolved !== 'changes') {
+      issues.push(`${entryLabel}: "facts" is valid on a "reads" or "changes" entry only`)
+      continue
+    }
+    entries.push({ entity, as: alias, effect: effect as ScenarioStepEffect | undefined, from, to, facts })
+  }
+  return entries
+}
+
+/**
+ * An optional `facts` list: absent, or a non-empty unique list of fact names.
+ * Whether each is a fact of the Entity is a model-wide question `lint` answers.
+ */
+function factsField(item: Record<string, unknown>, issues: string[], label: string): string[] | undefined {
+  if (item.facts === undefined || item.facts === null) return undefined
+  const facts = uniqueStringListField(item, 'facts', issues, label)
+  if (!facts.length) {
+    issues.push(`${label}: "facts" is a non-empty list when present; an Entity presented without facts is written as its bare id`)
+    return undefined
+  }
+  return facts
+}
+
+/**
+ * A Screen's `entities`: bare ids, or `{ entity, facts }` naming what is on
+ * screen. One entry per Entity — two would be two authorities for one claim.
+ */
+function screenEntitiesField(data: Record<string, unknown>, issues: string[], label: string): ScreenEntity[] {
+  const value = data.entities
+  if (value === undefined || value === null) return []
+  if (!Array.isArray(value)) {
+    issues.push(`${label}: "entities" must be a list`)
+    return []
+  }
+  const entries: ScreenEntity[] = []
+  const seen = new Set<string>()
+  for (const [index, raw] of value.entries()) {
+    const entryLabel = `${label}: entity ${index + 1}`
+    let entry: ScreenEntity | undefined
+    if (typeof raw === 'string') {
+      entry = { entity: raw }
+    } else if (typeof raw === 'object' && raw !== null && !Array.isArray(raw)) {
+      const item = raw as Record<string, unknown>
+      rejectUnknownKeys(item, ['entity', 'facts'], issues, entryLabel)
+      const entity = stringField(item, 'entity', issues, entryLabel) || ''
+      if (!entity) {
+        issues.push(`${entryLabel}: needs an "entity"`)
+        continue
+      }
+      entry = { entity, facts: factsField(item, issues, entryLabel) }
+    } else {
+      issues.push(`${entryLabel}: must be an Entity id or { entity, facts }`)
+      continue
+    }
+    if (seen.has(entry.entity)) {
+      issues.push(`${entryLabel}: "${entry.entity}" already appears in this Screen's entities`)
+      continue
+    }
+    seen.add(entry.entity)
+    entries.push(entry)
   }
   return entries
 }
@@ -1116,7 +1211,7 @@ export function loadModel(cwd: string): PddModel {
   }
 
   let product: PddModel['product'] = {
-    id: '', tags: [], authors: [], limitations: [], doc: { title: '', lead: '', sections: [] }, references: []
+    id: '', tags: [], authors: [], limitations: [], languages: [], doc: { title: '', lead: '', sections: [] }, references: []
   }
   const compactProductFile = join(root, 'product.md')
   const productDirectory = join(root, 'product')
@@ -1152,7 +1247,7 @@ export function loadModel(cwd: string): PddModel {
     const { data, body } = splitFrontmatter(source, issues, 'product.md')
     rejectUnknownKeys(
       data,
-      ['id', 'summary', 'category', 'tags', 'authors', 'license', 'limitations', 'references'],
+      ['id', 'summary', 'category', 'tags', 'authors', 'license', 'limitations', 'languages', 'references'],
       issues,
       'product.md'
     )
@@ -1190,6 +1285,7 @@ export function loadModel(cwd: string): PddModel {
       authors,
       license: stringField(data, 'license', issues, 'product.md'),
       limitations: stringListField(data, 'limitations', issues, 'product.md'),
+      languages: uniqueStringListField(data, 'languages', issues, 'product.md'),
       doc: parseMarkdown(body),
       references: referencesField(data, issues, 'product.md')
     }
@@ -1240,16 +1336,23 @@ export function loadModel(cwd: string): PddModel {
   const experiences: ExperienceResource[] = []
   const screens: ScreenResource[] = []
 
-  const readScreens = (parent: string, containerId: string, label: string) => {
-    for (const location of listResources(join(parent, 'screens'), 'screen', findings, `${label}/screens`)) {
+  /*
+    Screens nest. An expanded Screen may hold `screens/`, and a child's id adds
+    one segment to its parent's, so containment stays a prefix test at every
+    depth. The container — the nearest Interface or Experience — is carried down
+    unchanged, since availability and audience never belong to a Screen.
+  */
+  const readScreens = (parent: string, containerId: string, parentId: string, label: string) => {
+    for (const location of listResources(join(parent, 'screens'), 'screen', findings, `${label}/screens`, ['screens'])) {
       const { data, doc, references, directory, assets, assetMeta } = readResource(
         location,
         ['capabilities', 'entities', 'entryPoints'],
         issues
       )
+      const id = qualify(parentId, location.id)
       screens.push({
-        entities: uniqueStringListField(data, 'entities', issues, location.file),
-        id: qualify(containerId, location.id),
+        entities: screenEntitiesField(data, issues, location.file),
+        id,
         file: location.file,
         doc,
         references,
@@ -1257,13 +1360,11 @@ export function loadModel(cwd: string): PddModel {
         assets,
         assetMeta,
         containerId,
+        parentId,
         capabilities: uniqueStringListField(data, 'capabilities', issues, location.file),
-        entryPoints: entryPointsField(data, issues, location.file),
-        information: bulletList(section(doc, 'Information presented') || ''),
-        actions: bulletList(section(doc, 'Available actions') || ''),
-        states: screenStates(section(doc, 'View states') || '', issues, location.file),
-        capabilityBoundary: section(doc, 'Capability boundary') || ''
+        entryPoints: entryPointsField(data, issues, location.file)
       })
+      if (location.expanded) readScreens(location.directory, containerId, id, `${label}/screens/${location.id}`)
     }
   }
 
@@ -1276,7 +1377,7 @@ export function loadModel(cwd: string): PddModel {
   )) {
     const { data, doc, references, directory, assets, assetMeta } = readResource(
       productInterface,
-      ['type', 'actors', 'entryPoints', 'screens'],
+      ['type', 'actors', 'entryPoints', 'languages', 'navigation'],
       issues
     )
     interfaces.push({
@@ -1290,8 +1391,8 @@ export function loadModel(cwd: string): PddModel {
       type: stringField(data, 'type', issues, productInterface.file) || '',
       actors: uniqueStringListField(data, 'actors', issues, productInterface.file),
       entryPoints: entryPointsField(data, issues, productInterface.file),
-      capabilityBoundary: section(doc, 'Capability boundary') || '',
-      screens: uniqueStringListField(data, 'screens', issues, productInterface.file)
+      languages: uniqueStringListField(data, 'languages', issues, productInterface.file),
+      navigation: uniqueStringListField(data, 'navigation', issues, productInterface.file)
     })
 
     const experienceLocations = listResources(
@@ -1304,7 +1405,11 @@ export function loadModel(cwd: string): PddModel {
 
     for (const location of experienceLocations) {
       const experienceId = qualify(productInterface.id, location.id)
-      const parsed = readResource(location, ['actors', 'access', 'entryPoints', 'screens'], issues)
+      const parsed = readResource(location, ['actors', 'access', 'entryPoints', 'navigation', 'version'], issues)
+      const version = stringField(parsed.data, 'version', issues, location.file)
+      if (version !== undefined && (!version.trim() || /[\r\n]/.test(version))) {
+        issues.push(`${location.file}: "version" must be a non-empty single line`)
+      }
       experiences.push({
         id: experienceId,
         file: location.file,
@@ -1317,17 +1422,17 @@ export function loadModel(cwd: string): PddModel {
         interface: productInterface.id,
         access: stringField(parsed.data, 'access', issues, location.file) || '',
         entryPoints: entryPointsField(parsed.data, issues, location.file),
-        capabilityBoundary: section(parsed.doc, 'Capability boundary') || '',
-        screens: uniqueStringListField(parsed.data, 'screens', issues, location.file)
+        navigation: uniqueStringListField(parsed.data, 'navigation', issues, location.file),
+        version: version === undefined ? undefined : version.trim()
       })
-      readScreens(location.directory, experienceId, `interfaces/${productInterface.id}/experiences/${location.id}`)
+      readScreens(location.directory, experienceId, experienceId, `interfaces/${productInterface.id}/experiences/${location.id}`)
     }
 
     // Screens beside experiences/ are shared across every Experience of this
     // Interface. A view common to several Experiences would otherwise have to be
     // duplicated into each of them.
     if (existsSync(join(productInterface.directory, 'screens'))) {
-      readScreens(productInterface.directory, productInterface.id, `interfaces/${productInterface.id}`)
+      readScreens(productInterface.directory, productInterface.id, productInterface.id, `interfaces/${productInterface.id}`)
     }
   }
 
@@ -1353,7 +1458,7 @@ export function loadModel(cwd: string): PddModel {
         issues.push(`${file}: "transitions" is gone; a Step's "entities" entry says which state it moves the thing from and to`)
       }
       const informationKept = entityFacts(section(doc, 'Information kept'), issues, file)
-      const states = screenStates(section(doc, 'States') || '', issues, file, 'States', 'entity state')
+      const states = namedStates(section(doc, 'States') || '', issues, file, 'States', 'entity state')
       const hasStates = section(doc, 'States') !== undefined
 
       const kind = stringField(data, 'kind', issues, file)

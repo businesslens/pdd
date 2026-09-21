@@ -7,7 +7,7 @@ import { buildProject } from '../src/commands/export.js'
 import { loadModel } from '../src/core/model.js'
 import { lintModel } from '../src/commands/lint.js'
 import { lsFiles } from '../src/core/git.js'
-import { ProductReportV13Schema } from '../src/core/portable.js'
+import { ProductReportV14Schema } from '../src/core/portable.js'
 
 const FIXTURE = join(__dirname, 'fixtures', 'fixture-shop')
 
@@ -41,10 +41,10 @@ describe('end to end on a real git repo', () => {
   it('builds a schema-valid source-free report deterministically', () => {
     const first = buildProject(repo)
     const output = JSON.parse(readFileSync(first.outputFile, 'utf8'))
-    const parsed = ProductReportV13Schema.parse(output)
+    const parsed = ProductReportV14Schema.parse(output)
     expect(parsed.id).toBe('fixture-shop')
     expect(parsed).toMatchObject({
-      schemaVersion: '13.0.0',
+      schemaVersion: '14.0.0',
       summary: 'Browse a product catalog, buy products, and manage the resulting orders.',
       category: 'commerce',
       authors: [{ name: 'BusinessLens' }],
@@ -86,9 +86,12 @@ describe('end to end on a real git repo', () => {
     expect(screen).toMatchObject({
       capabilityIds: ['browse-catalog', 'place-order'],
       capabilityScenarioIds: ['browse-catalog', 'complete-checkout', 'decline-checkout-payment', 'sell-the-last-available-unit'],
-      journeyScenarioIds: ['browse-and-complete-checkout', 'cancel-an-order-before-fulfilment'],
-      information: ['Product name and description', 'Price and availability']
+      journeyScenarioIds: ['browse-and-complete-checkout', 'cancel-an-order-before-fulfilment']
     })
+    // A Screen names the facts on screen; the wire carries them by Entity.
+    expect(screen?.entities.find(entry => entry.entityId === 'catalog-product')?.facts).toEqual(
+      expect.arrayContaining(['Price'])
+    )
     expect(parsed.model.capabilities.find(item => item.id === 'place-order')?.availability).toEqual([
       { placeId: 'customer-mobile::storefront' },
       { placeId: 'customer-web::storefront' }

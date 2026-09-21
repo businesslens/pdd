@@ -6,6 +6,7 @@ tags: [content, reading, syndication]
 authors:
   - name: BusinessLens
 license: MIT
+languages: [en, de, fr]
 limitations:
   - Public collection links open on the web; the mobile application serves the reader's private library.
   - Sharing is read-only. There is no commenting, co-editing, or social graph.

@@ -41,6 +41,7 @@ or Journey owns its Scenarios. All remain distinct resource types.
 Interface
 ├── Experience (when the Interface is divided)
 │   └── Screen (optional)
+│       └── Screen (nested, to any depth)
 └── Screen (direct, or shared across its Experiences)
 
 Capability ── Capability Scenario
@@ -71,8 +72,8 @@ sections it can contain.
 | [Product](./product.md) | Exactly one | The coherent value promise and its boundary |
 | [Entity](./entities.md) | At least one that acts, because every Interface names an Actor | A thing the Product keeps or reasons about — what it holds about it, the states it moves through, and whether it acts on the Product |
 | [Interface](./interfaces.md) | At least one | An independently supported interaction contract |
-| [Experience](./interfaces.md#experiences) | When its Interface requires or justifies division | A stable context for using the Product within one Interface, with a defined audience, access mode, and capability boundary |
-| [Screen](./interfaces.md#screens) | Optional | A meaningful visual view; non-visual Products do not need one |
+| [Experience](./interfaces.md#experiences) | When its Interface requires or justifies division | A stable context for using the Product within one Interface, defined by who is there, what they can do, and its access mode |
+| [Screen](./interfaces.md#screens) | Optional | A place where an Actor meets facts and abilities: the Capabilities exposed and the Entity facts presented there, nested where a region depends on an act in its parent; non-visual Products do not need one |
 | [Domain](./domains.md) | Optional | A Product-language grouping that makes a larger Capability set easier to navigate |
 | [Capability](./capabilities.md) | At least one in a complete model | A durable Product ability reused across views, behavior contracts, or goals |
 | [Journey](./journeys.md) | Optional | An Actor goal whose successful completion requires several Capabilities working together |
@@ -81,10 +82,13 @@ sections it can contain.
 Do not add an Experience, Domain, Screen, or any other resource type to make the model
 look complete. A small model can be both valid and honest.
 
-Screens are deliberately visual. A CLI or supported API does not need parallel
-Command or Endpoint resource types: syntax belongs in CLI help, and endpoints and
-payloads belong in an API contract such as OpenAPI. Attach those artifacts as
-[References](./references.md) when they help explain intent or implementation.
+Screens are deliberately visual, and deliberately not design: they say what is
+reachable, presented and possible at a place, never how it looks — see
+[Is this a design spec?](./interfaces.md#is-this-a-design-spec). A CLI or
+supported API does not need parallel Command or Endpoint resource types: syntax
+belongs in CLI help, and endpoints and payloads belong in an API contract such
+as OpenAPI. Attach those artifacts as [References](./references.md) when they
+help explain intent or implementation.
 
 `taxonomies.yaml` defines the categories available as Scenario kinds, such as
 `primary` and `edge`. `config.yaml` records folder schema
@@ -155,11 +159,11 @@ and Journey-only sections cannot appear on Scenarios or vice versa. Other H2
 sections are preserved as structured supporting sections through export and
 expansion. Lead and H2-section bodies cannot contain another H1 or H2 heading.
 
-Relations and navigation belong in frontmatter; Product meaning belongs in
+Relations and structure belong in frontmatter; Product meaning belongs in
 prose. Product tags and every relation list contain unique values. Structured
-Steps, Edge cases, Screen information, and Screen actions use one complete list
-item per physical line. The frontmatter schema is a strict allowlist, so `lint`
-reports unknown keys rather than silently ignoring them.
+Steps and Edge cases use one complete list item per physical line. The
+frontmatter schema is a strict allowlist, so `lint` reports unknown keys rather
+than silently ignoring them.
 
 `## Intent` prose explains why a resource exists and which outcome it
 protects. It is optional where documented. A Journey uses required `## Goal`
@@ -180,8 +184,10 @@ of Context, and its value names an Interface, Experience, or Screen by
 qualified id:
 `Interface`, `Interface::Experience`, or
 `Interface::Experience::Screen` (with Screens directly under an undivided
-Interface using `Interface::Screen`). `place` is the only Context property, so
-misspelled or speculative keys are reported instead of ignored.
+Interface using `Interface::Screen`, and a
+[nested Screen](./interfaces.md#screens-nest) adding one segment per level).
+`place` is the only Context property, so misspelled or speculative keys are
+reported instead of ignored.
 
 Different fields use the same Context shape at the precision their meaning
 requires:
@@ -189,8 +195,9 @@ requires:
 - Capability `availability` lists Contexts whose places are undivided
   Interfaces or Experiences. These are the durable availability boundaries.
 - Scenario `steps[].contexts` maps every route to a Context. Its place is the
-  most-specific occurrence: a Screen when the boundary contains Screens,
-  otherwise the leaf Experience or Interface.
+  most-specific occurrence: a Screen when the boundary contains Screens — a
+  parent Screen is a place of its own, meaning on it and in none of its
+  children — otherwise the leaf Experience or Interface.
 - Business Rule Context selectors may name an Interface, Experience, or
   Screen. An ancestor place includes its descendants, so an Interface selector
   can deliberately cover Contexts beneath that Interface.
@@ -265,7 +272,8 @@ one. Where a rule can be computed, an author never has to argue it.
 | Interface, or Experience of one? | The [Experience rules](./interfaces.md#when-to-create-an-experience) determine when an Interface must be divided and when existing Experiences are justified. Otherwise, use direct Interface availability. |
 | Interface, or nothing? | Interfaces are **inbound**. Something the Product calls out to is a dependency of the Capability that calls it, and gets no resource type. |
 | Acts, or dependency? | Direction decides. An external system acts only when it **initiates**. The same third party can be a dependency one way and an Actor the other. |
-| Screen, or Entity state? | A Screen's `## View states` are that **view's** states. A thing's own lifecycle, and what the Product keeps about it, belong to an [Entity](./entities.md). |
+| Screen, or Entity state? | A condition of a **view** — empty, unauthorized, caught-up — is the `condition` Step, Edge case, or Rule outcome of the Scenario that meets it there. A thing's own lifecycle, and what the Product keeps about it, belong to an [Entity](./entities.md). |
+| Screen, or Child Screen? | A region is a [Child Screen](./interfaces.md#screens-nest) when its content depends on an act inside its parent — picking a row, choosing a tab, advancing a step. The same content drawn differently is design, and one Screen. |
 | Entity, or nothing? | The naming test: a thing an Actor would call *"this one"*. Containers and parts are not Entities, and an Entity nothing changes, presents, names as an actor, or reads by Rule is an error. |
 | Business Rule, or Scenario condition? | A Rule governs **two or more** behaviors, a Context independent of any behavior, or an operation on a thing — and it is the only place permission is said. Anything else true of exactly one Capability is a `condition` Step or its Outcome. |
 | Domain, or no grouping? | A Domain states a `## Boundary` naming what it does **not** own, and holds at least two Capabilities. Otherwise it is a folder. |

@@ -10,7 +10,7 @@ import { reportDigest } from '../src/report-digest.js'
 import { compileReport } from '../src/commands/export.js'
 import { loadModel } from '../src/core/model.js'
 import { resolveModelRoot } from '../src/core/model-root.js'
-import type { ProductReportV13, ReportReference } from '../src/core/portable.js'
+import type { ProductReportV14, ReportReference } from '../src/core/portable.js'
 
 const packageJson = JSON.parse(
   await readFile(fileURLToPath(new URL('../package.json', import.meta.url)), 'utf8')
@@ -29,9 +29,9 @@ describe('report SDK entry point', () => {
   })
 
   it('exports the schema, semantic validator, portable projection, and digest', () => {
-    expect(sdk.REPORT_SCHEMA_VERSION).toBe('13.0.0')
+    expect(sdk.REPORT_SCHEMA_VERSION).toBe('14.0.0')
     for (const name of [
-      'ProductReportV13Schema',
+      'ProductReportV14Schema',
       'ReportScenarioStepEntitySchema',
       'ReportEntityFactSchema',
       'ReportGrantSchema',
@@ -45,7 +45,7 @@ describe('report SDK entry point', () => {
       'ReportCapabilitySchema',
       'ReportCapabilityScenarioSchema',
       'ReportScreenSchema',
-      'ReportScreenStateSchema',
+      'ReportScreenEntitySchema',
       'ReportJourneyScenarioSchema',
       'ReportScenarioRouteSchema',
       'ReportScenarioStepContextSchema',
@@ -99,9 +99,9 @@ describe('report SDK entry point', () => {
 describe('projectPortableReport', () => {
   const FIXTURE = join(fileURLToPath(new URL('.', import.meta.url)), 'fixtures', 'fixture-shop')
   let repo: string
-  let report: ProductReportV13
+  let report: ProductReportV14
 
-  const allReferences = (value: ProductReportV13): ReportReference[] => [
+  const allReferences = (value: ProductReportV14): ReportReference[] => [
     ...value.references,
     ...Object.values(value.model).flatMap(entry =>
       Array.isArray(entry) ? entry.flatMap(item => item.references ?? []) : [])
@@ -497,19 +497,19 @@ describe('projectPortableReport', () => {
    * checked when the Entity collection shipped.
    */
   it('resolves every Entity edge the folder rules resolve', () => {
-    const cart = (value: ProductReportV13) => value.model.entities.find(item => item.id === 'cart')!
+    const cart = (value: ProductReportV14) => value.model.entities.find(item => item.id === 'cart')!
 
-    const cases: Array<[string, (value: ProductReportV13) => void]> = [
+    const cases: Array<[string, (value: ProductReportV14) => void]> = [
       ['relation references missing entity "ghost"', (value) => {
         value.model.entities[0]!.relations.push({ entityId: 'ghost', verb: 'holds', cardinality: 'many-to-many' })
       }],
       ['references missing entity "ghost"', (value) => {
-        value.model.screens[0]!.entityIds = ['ghost']
+        value.model.screens[0]!.entities = [{ entityId: 'ghost', facts: null }]
       }],
       ['no step changes it, no Screen presents it, nothing names it as an actor, and no Rule reads it', (value) => {
         const entity = cart(value)
         for (const screen of value.model.screens) {
-          screen.entityIds = screen.entityIds.filter(entityId => entityId !== entity.id)
+          screen.entities = screen.entities.filter(entry => entry.entityId !== entity.id)
         }
         for (const scenario of [...value.model.capabilityScenarios, ...value.model.journeyScenarios]) {
           for (const step of scenario.steps) {
@@ -542,7 +542,7 @@ describe('projectPortableReport', () => {
   })
 
   it('checks what a Scenario step claims against the Entity it names', () => {
-    const moveOf = (value: ProductReportV13) => {
+    const moveOf = (value: ProductReportV14) => {
       for (const scenario of [...value.model.capabilityScenarios, ...value.model.journeyScenarios]) {
         for (const step of scenario.steps) {
           const entry = step.entities.find(item => item.from !== null && item.to !== null)
@@ -620,7 +620,7 @@ describe('projectPortableReport', () => {
    * every path, every fact — and never a claim that a grant is satisfied.
    */
   it('resolves a permission Rule the way the folder does', () => {
-    const rule = (value: ProductReportV13, id: string) => value.model.businessRules.find(item => item.id === id)!
+    const rule = (value: ProductReportV14, id: string) => value.model.businessRules.find(item => item.id === id)!
 
     const behavioural = structuredClone(report)
     rule(behavioural, 'payment-before-confirmation').appliesTo = [
@@ -650,7 +650,7 @@ describe('projectPortableReport', () => {
   })
 
   it('applies permission Rules to the Steps and Screens they govern', () => {
-    const rule = (value: ProductReportV13, id: string) => value.model.businessRules.find(item => item.id === id)!
+    const rule = (value: ProductReportV14, id: string) => value.model.businessRules.find(item => item.id === id)!
 
     const forbidden = structuredClone(report)
     rule(forbidden, 'orders-are-never-deleted').appliesTo = [{
@@ -702,7 +702,7 @@ describe('projectPortableReport', () => {
     const unreadable = structuredClone(report)
     rule(unreadable, 'margin-is-for-operators').permits = []
     expect(sdk.validateProductReport(unreadable).join('\n')).toContain(
-      'screen "admin-web::order-detail": presents "order", which rule "margin-is-for-operators" forbids anyone to read'
+      'screen "admin-web::order-detail": presents "order" facts "Margin", which rule "margin-is-for-operators" forbids anyone to read'
     )
   })
 
@@ -789,7 +789,7 @@ describe('projectPortableReport', () => {
       legacy.schemaVersion = schemaVersion
       expect(sdk.ProductReportSchema.safeParse(legacy).success).toBe(false)
       expect(() => sdk.parseProductReport(legacy)).toThrow(
-        `This is a Product Report of schema version ${schemaVersion}; only 13.0.0 is accepted`
+        `This is a Product Report of schema version ${schemaVersion}; only 14.0.0 is accepted`
       )
     }
     // Any other shape failure names the first offending path, never Zod's issue array.

@@ -69,10 +69,12 @@ Read before authoring:
    schema. Make supported web/mobile/CLI/API/integration Interfaces an explicit
    Product decision; do not treat technologies or internal APIs as Interfaces.
    Whether an Interface is divided into Experiences is derived, never judged,
-   from two inputs: divide it when it serves more than one `access` value, or
+   from three inputs: divide it when it serves more than one `access` value,
    when its Actors split into groups no Capability available there bridges (a
-   Capability bridges the Actors its Scenario Steps name). Otherwise it holds
-   no Experiences and availability names the Interface directly. `lint` decides
+   Capability bridges the Actors its Scenario Steps name), or when it serves
+   two or more versions at once through one entry point, each Experience
+   carrying `version`. Otherwise it holds no Experiences and availability
+   names the Interface directly. `lint` decides
    and reports a violation as an error; the one exception is an Experience
    whose name also exists under another Interface, a counterpart that justifies
    itself. Do not apply a prose test of your own.
@@ -82,9 +84,10 @@ Read before authoring:
    Product can tell apart from another, one Entity per thing the Product treats
    differently, name its facts, and say on each Step what it does to which
    Entities — creates, changes, removes, or reads, with the states it leaves and
-   lands in, or `[]` — and on each Screen the Entities it presents. A Capability
-   declares none, and an Entity nothing changes, presents, names as an actor, or
-   reads by Rule is unused vocabulary. Sweep the nouns after the verbs: every
+   lands in, or `[]` — and on each Screen the Entities it presents, with the
+   facts on screen. A Capability declares none, and an Entity nothing changes,
+   presents, names as an actor, or reads by Rule is unused vocabulary. Sweep
+   the nouns after the verbs: every
    new thing has a Step that creates it and a Step for each state it can reach,
    or the delta says why not. Decide who may as deliberately as what: a
    permission is a grant on a Business Rule targeting the operation, never a
@@ -94,6 +97,35 @@ Read before authoring:
    goal path crosses at least two distinct Capabilities; define its Scenario as
    one ordered typed Steps list, annotating responsible Actors and Capabilities
    while named routes select most-specific Context places.
+
+   **Screens are places, never designs.** The model says what an Actor can
+   reach, see, do and trigger at each place, never how it looks or is built;
+   the rubric's redesign test decides which side a decision falls on. Nest a
+   child Screen for a region whose content depends on an act inside its parent
+   (picking a row, choosing a tab, advancing a wizard step); co-visibility and
+   an own URL do not decide it, and the same content drawn differently — modal
+   or page, Rows or Graph — is one Screen. A confirmation dialog is two Steps
+   on the host Screen: ask, confirm. For each Entity a Screen presents, name
+   the facts on screen — read or entered, a form included — as
+   `{ entity, facts }`; a bare id only while the model is not complete. List
+   on each Screen only the Capabilities its own Steps use. **Every ability a
+   Screen exposes has a Scenario with a Step placed on that Screen**, an
+   export button included; there is no cheaper spelling. Filters, sorting and
+   search are Scenarios of the Capability that presents the set, the facts
+   they use cited as `facts` on the `reads` Step; search that presents a set
+   nothing else does is a Capability. A wizard is a parent Screen with one
+   child per step and a Scenario walking them, a Journey only where it crosses
+   Capabilities. Author `navigation` on an Interface or Experience only for
+   Screens reachable from every place inside it — a cart, a global search;
+   nothing else about navigation is authored. Never write the words an Actor
+   is told: decide that they are told and under which condition — a Step, an
+   Edge case, a Rule outcome — and make legally required text a Rule whose
+   wording is a Reference. Decide `languages` on the Product, narrowed on an
+   Interface. A flag or A/B test that changes what an Actor can do is a fact
+   on a settings Entity read by a Rule `when`; the experiment itself is not
+   modeled. Versions served at once are places: an own entry point is an
+   Interface, a shared one is Experiences carrying `version`; who sees which is
+   a fact on the Actor or tenant Entity; historical versions are never modeled.
 8. In resolution mode, do not reopen broad ideation. Use the supplied finding,
    inspected files, and authority decision to draft the smallest exact model
    delta that makes the intended behavior unambiguous.
@@ -151,9 +183,13 @@ Read before authoring:
 - Treat availability as intended Product meaning. Author Contexts whose places
   are an undivided Interface or an Experience, and never use them as
   implementation status.
-- Model a Screen only when a stable user-visible product view clarifies intended
-  information, actions, meaningful states, or boundaries. Do not design
-  components, layouts, themes, responsive variants, or screenshot workflows.
+- Model a Screen only for a stable view an Actor reaches, as a place: what is
+  reachable, which facts are on screen, which abilities it offers, which
+  conditions change that. Never write design: component libraries, theming,
+  layout, typography, color, iconography, motion, microcopy and tone, gestures
+  versus buttons, breakpoints, loading and hover states, navigation chrome and
+  the order of navigation items, and quality attributes that do not change
+  what an Actor can do belong in `visual` References with `role: intent`.
 - Keep visuals and research external through References. Use `role: intent` for
   curated inputs and `role: context` for background; neither is an acceptance
   receipt.

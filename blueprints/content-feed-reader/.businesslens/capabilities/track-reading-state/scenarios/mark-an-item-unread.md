@@ -3,6 +3,7 @@ kind: edge
 routes:
   web: Web
   mobile: Mobile
+  mobile-next: Mobile (next)
 steps:
   - text: The Reader marks the item unread
     kind: actor
@@ -14,6 +15,8 @@ steps:
         place: reader-web::personal-library::unread-library
       mobile:
         place: reader-mobile::personal-library::unread-library
+      mobile-next:
+        place: reader-mobile::personal-library-next::unread-library
   - text: The Product updates the item's private reading state
     kind: product
     actor: reader
@@ -24,6 +27,8 @@ steps:
         place: reader-web::personal-library::unread-library
       mobile:
         place: reader-mobile::personal-library::unread-library
+      mobile-next:
+        place: reader-mobile::personal-library-next::unread-library
   - text: The unread count increases
     kind: condition
     entities: []
@@ -32,6 +37,8 @@ steps:
         place: reader-web::personal-library::unread-library
       mobile:
         place: reader-mobile::personal-library::unread-library
+      mobile-next:
+        place: reader-mobile::personal-library-next::unread-library
 ---
 
 # Mark an item unread

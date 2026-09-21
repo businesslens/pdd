@@ -3,6 +3,7 @@ kind: primary
 routes:
   web: Web
   mobile: Mobile
+  mobile-next: Mobile (next)
 steps:
   - text: The Reader refreshes their followed sources.
     kind: actor
@@ -14,6 +15,8 @@ steps:
         place: reader-web::personal-library::source-list
       mobile:
         place: reader-mobile::personal-library::source-list
+      mobile-next:
+        place: reader-mobile::personal-library-next::source-list
   - text: The Product reads each followed feed
     kind: product
     entities:
@@ -23,6 +26,8 @@ steps:
         place: reader-web::personal-library::source-list
       mobile:
         place: reader-mobile::personal-library::source-list
+      mobile-next:
+        place: reader-mobile::personal-library-next::source-list
   - text: Items the Reader's library does not already hold are collected
     kind: product
     actor: reader
@@ -33,6 +38,8 @@ steps:
         place: reader-web::personal-library::source-list
       mobile:
         place: reader-mobile::personal-library::source-list
+      mobile-next:
+        place: reader-mobile::personal-library-next::source-list
   - text: The newly collected items enter the Reader's unread backlog
     kind: product
     actor: reader
@@ -43,6 +50,8 @@ steps:
         place: reader-web::personal-library::source-list
       mobile:
         place: reader-mobile::personal-library::source-list
+      mobile-next:
+        place: reader-mobile::personal-library-next::source-list
 ---
 
 # Collect new items from a followed source

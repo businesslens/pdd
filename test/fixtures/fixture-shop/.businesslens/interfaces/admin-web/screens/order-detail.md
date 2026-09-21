@@ -3,8 +3,8 @@ capabilities:
   - manage-orders
   - cancel-order
 entities:
-  - order
-  - refund
+  - { entity: order, facts: [Items ordered, Subtotal, Tax, Discount, Total charged, Margin] }
+  - { entity: refund, facts: [Amount, Reason] }
 entryPoints:
   - admin-web: /admin/orders/:id
 references:
@@ -15,19 +15,5 @@ references:
 
 # Order detail
 
-The console page where an operator resolves one order.
-
-## Information presented
-
-- The items ordered, the totals and the margin
-- The order's state and any refund in progress
-
-## Available actions
-
-- Issue a refund
-- Cancel the order
-- Merge a duplicate into it
-
-## Capability boundary
-
-The page does not change catalog information or payment details.
+The console page where an operator resolves one order: what was ordered, what
+it cost and earned, where it stands, and any refund in progress.

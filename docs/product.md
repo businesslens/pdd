@@ -44,6 +44,7 @@ authors:
   - name: Acme
     url: https://example.com
 license: MIT
+languages: [en, de-DE]
 limitations: [In-store purchasing is outside this Product]
 references:
   - kind: doc
@@ -69,6 +70,7 @@ Let shoppers move from discovery to a confirmed order with confidence.
 | `tags` | no | List unique Product classification tags. |
 | `authors` | no | List attribution records with a required `name` and optional HTTP(S) `url`. |
 | `license` | no | Use one SPDX license identifier such as `MIT`. |
+| `languages` | no | List the unique language tags the Product serves, such as `en`, `de-DE`, or `pt-BR`. An [Interface](./interfaces.md#the-file) may narrow the list; Experiences and Screens never carry one. A malformed tag is an error. |
 | `limitations` | no | State known Product boundaries. |
 | `references` | no | Use the documented [Reference](./references.md) shape. |
 | H1 and lead paragraph | yes | Name and describe the Product. |

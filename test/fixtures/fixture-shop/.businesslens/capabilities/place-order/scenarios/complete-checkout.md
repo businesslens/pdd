@@ -18,7 +18,7 @@ steps:
     kind: actor
     actor: shopper
     entities:
-      - { entity: shopper, effect: changes }
+      - { entity: shopper, effect: changes, facts: [Delivery address] }
     contexts:
       web:
         place: customer-web::storefront::product-record

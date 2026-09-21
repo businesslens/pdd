@@ -4,7 +4,9 @@ routes:
   web-saved-items: Web — Saved items
   web-unread-library: Web — Unread library
   mobile-saved-items: Mobile — Saved items
+  mobile-next-saved-items: Mobile (next) — Saved items
   mobile-unread-library: Mobile — Unread library
+  mobile-next-unread-library: Mobile (next) — Unread library
 steps:
   - text: The Reader removes the item's saved state
     kind: actor
@@ -18,8 +20,12 @@ steps:
         place: reader-web::personal-library::unread-library
       mobile-saved-items:
         place: reader-mobile::personal-library::saved-items
+      mobile-next-saved-items:
+        place: reader-mobile::personal-library-next::saved-items
       mobile-unread-library:
         place: reader-mobile::personal-library::unread-library
+      mobile-next-unread-library:
+        place: reader-mobile::personal-library-next::unread-library
   - text: The Product preserves the item's reading state
     kind: product
     entities:
@@ -31,8 +37,12 @@ steps:
         place: reader-web::personal-library::unread-library
       mobile-saved-items:
         place: reader-mobile::personal-library::saved-items
+      mobile-next-saved-items:
+        place: reader-mobile::personal-library-next::saved-items
       mobile-unread-library:
         place: reader-mobile::personal-library::unread-library
+      mobile-next-unread-library:
+        place: reader-mobile::personal-library-next::unread-library
   - text: Collection membership is left for the Reader to change separately
     kind: condition
     actor: reader
@@ -45,8 +55,12 @@ steps:
         place: reader-web::personal-library::unread-library
       mobile-saved-items:
         place: reader-mobile::personal-library::saved-items
+      mobile-next-saved-items:
+        place: reader-mobile::personal-library-next::saved-items
       mobile-unread-library:
         place: reader-mobile::personal-library::unread-library
+      mobile-next-unread-library:
+        place: reader-mobile::personal-library-next::unread-library
 ---
 
 # Remove a saved item

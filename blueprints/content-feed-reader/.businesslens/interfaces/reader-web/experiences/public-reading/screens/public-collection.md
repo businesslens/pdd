@@ -1,7 +1,7 @@
 ---
 entities:
-  - collection
-  - item
+  - { entity: collection, facts: [Name, Item order] }
+  - { entity: item, facts: [Title, Published at] }
 capabilities:
   - read-public-collection
 entryPoints:
@@ -10,31 +10,6 @@ entryPoints:
 
 # Public collection
 
-Presents one published collection to anyone holding its web address.
-
-## Information presented
-
-- Collection name and description
-- Owner display name
-- Ordered items the owner chose to publish
-
-## Available actions
-
-- Read an item in the collection
-- Leave the collection
-
-## View states
-
-### Published
-
-The complete collection is readable without an account.
-
-### Unlisted
-
-The collection contents are no longer served and no private owner information
-is revealed.
-
-## Capability boundary
-
-Read-only and limited to one published collection. It records no Visitor
-reading state and exposes no private library content.
+Presents one published collection — its name, its owner, and the items in the
+owner's order — to anyone holding its web address, and nothing once the owner
+has unlisted it.

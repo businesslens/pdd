@@ -3,7 +3,7 @@ import { formatCodeTarget, parseCodeTarget } from '../src/core/coderefs.js'
 import { entryPointsField, referencesField, repositoryReferencePath, splitFrontmatter } from '../src/core/frontmatter.js'
 import { isId, slugify, stem } from '../src/core/ids.js'
 import {
-  bulletList, decisionPoints, orderedList, parseMarkdown, screenStates, section, supportingSections
+  bulletList, decisionPoints, namedStates, orderedList, parseMarkdown, section, supportingSections
 } from '../src/core/markdown.js'
 
 describe('ids', () => {
@@ -147,17 +147,17 @@ describe('markdown', () => {
       { heading: 'Notes', content: 'Keep this context.' }
     ])
   })
-  it('parses embedded Screen view states', () => {
+  it('parses named Entity states', () => {
     const body = '### Available\n\nThe item can be selected.\n\n### Unavailable\n\nThe reason is shown.'
     const issues: string[] = []
-    expect(screenStates(body, issues, 'screen')).toEqual([
+    expect(namedStates(body, issues, 'entity')).toEqual([
       { title: 'Available', description: 'The item can be selected.' },
       { title: 'Unavailable', description: 'The reason is shown.' }
     ])
     expect(issues).toEqual([])
 
     const invalid: string[] = []
-    screenStates('Prose before a state.', invalid, 'screen')
+    namedStates('Prose before a state.', invalid, 'entity')
     expect(invalid.join('\n')).toContain('must begin with an H3 title')
   })
 })
