@@ -158,6 +158,14 @@ machinery for a screenshot label; every view state already has a home — a
 second encoding of what Steps already say, and the reason the sitemap ban
 exists.
 
+**Authored mockups, wireframes or layout hints on a Screen** — an ASCII
+sketch, a `layout` key, "the price sits on the left". Layout is design by the
+redesign test: two mappers would draw it differently, lint could say nothing,
+and a pull-request diff cannot review a picture. Design files already attach
+as `visual` References. The rough view a reader wants is derived instead — the
+report's Sketch and Storyboard, bound in `report.md` — with the same skeleton
+for every Screen so it is never read as a proposal.
+
 **A `presentation: page | overlay` field on Screens.** Design vocabulary; the
 product fact — the parent's state survives — is a Scenario Outcome.
 

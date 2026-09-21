@@ -12,7 +12,8 @@ export default defineNuxtConfig({
   css: [
     join(currentDir, './app/assets/report-structure.css'),
     join(currentDir, './app/assets/report-viewer.css'),
-    join(currentDir, './app/assets/report-topology.css')
+    join(currentDir, './app/assets/report-topology.css'),
+    join(currentDir, './app/assets/report-sketch.css')
   ],
   // The bundled local viewer is a generated SPA with no icon endpoint at
   // runtime. Explicitly include icons referenced by inherited components.
@@ -57,6 +58,7 @@ export default defineNuxtConfig({
         'lucide:file-text',
         'lucide:filter-x',
         'lucide:funnel',
+        'lucide:gallery-horizontal',
         'lucide:focus',
         'lucide:gavel',
         'lucide:git-branch',

@@ -277,6 +277,49 @@ reference. Present references use `kind: code|prd|spec|proposal|doc|adr|visual|r
 and `role: intent|implementation|context`, carry no `state`, and remain subject to the same strict
 shape and target rules defined in [`format.md`](./format.md).
 
+## Sketches and storyboards
+
+The report derives two drawings from the model that no file authors. A Sketch
+is a wireframe with the same skeleton for every place, so it can never be read
+as a design proposal, the way an ERD is not a schema. A Storyboard is a
+Scenario route drawn as a sequence of Sketches. Neither adds a field, a lint
+finding, or a sentence to [`format.md`](./format.md); both are report content
+and this section binds their derivation.
+
+**Sketch.** The frame comes from the Interface `type`: a browser window for
+`web`, a window with a side rail for `desktop-app`, a phone for `mobile-app`,
+a terminal for `cli`, a request-and-response pane for `api` and `webhook`, a
+transcript for `messaging`, `agent` and `voice`, a panel for `device`. The
+entry point is the address, prompt, route or first line the frame carries. The
+strip is the `navigation` of the Interface and the containing Experience,
+sorted by title, since order carries no meaning. Inside the frame, in this
+order and nothing else: the Screen's title; one group per `entities` record in
+authored order, labelled with the Entity's title, holding one line per fact in
+authored order — a field where a step placed exactly on that Screen `changes`
+the fact, a placeholder otherwise, one unlabelled placeholder for a bare
+record; one action per `capabilityIds` entry labelled with the Capability's
+title, dashed where no step is placed on the Screen for it; a tab per child
+Screen, ordered by the first Scenario route that visits two or more children in
+sequence, else by authored order. An Interface or Experience Sketch is its
+frame and strip around a wall of its top-level Screens as miniatures of the
+same drawing; a container with no Screens lists the Capabilities available
+there as what its frame would list — a help listing in a terminal, operations
+in a request pane, a first system line in a transcript — and invents no
+command, path or payload.
+
+**Storyboard.** One route of one Scenario: one frame per step that has a
+Context on that route, in step order, each the Sketch of the step's place;
+steps with no `contexts` draw as interstitials between frames; a condition
+step draws as a note; a place with no Screen draws its container's frame with
+the step as a transcript line. On an actor step the action of the step's
+Capability and the facts the step cites are lit; on a Product step the
+Entities it creates or changes are lit. Consecutive steps on one place repeat
+the frame with different lighting.
+
+Both drawings state this derivation once, on the drawing. Relative placement,
+emphasis, and grouping beyond Entity are design and are never drawn; a
+reader who wants them opens the `visual` References.
+
 ## Media type and version negotiation
 
 A report served over HTTP is `application/vnd.businesslens.report+json`, and its

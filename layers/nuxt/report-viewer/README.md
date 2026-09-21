@@ -49,6 +49,34 @@ nested Screen, that Screen named. A Screen's facts strip counts what it
 presents and the Capabilities it exposes. There are no Information presented,
 Available actions, View states or Capability boundary readings, and References
 carry no state badge.
+A Screen reading has a Sketch tab after Overview, and so do an Interface and an
+Experience with Screens or Capabilities to draw. A Sketch is the same skeleton
+for every Screen: the frame comes from the Interface type, always-reachable
+Screens form the strip, presented facts are placeholders grouped by Entity,
+facts a Step edits here are fields, exposed Capabilities are actions, child
+Screens are tabs. It arranges nothing the model does not say. The frame is a
+browser window for `web`, a window with a side rail for `desktop-app`, a phone
+for `mobile-app`, a terminal for `cli`, a request pane for `api`, an inbound
+request pane for `webhook`, a transcript for `messaging`, `agent` and `voice`,
+and a panel with a display for `device`; its entry line carries the entry point
+paths, and the strip lists the container's `navigation` sorted by title with
+the current Screen marked. A fact draws as a field only when a Step placed
+exactly on that Screen changes it; a bare entry is one unlabelled bar noted
+"facts not named". Hovering an action names the actor Steps placed on the
+Screen for it, and a Capability with no Step placed there draws dashed. Tabs
+follow the first Scenario route that walks two children in sequence, else the
+report's order; selecting one draws that child's own Sketch in the same
+reading, `rt=sketch/<child Screen id>` addresses it, and a trail above the
+drawing leads back. A container's Sketch is a wall of miniature Screen
+Sketches — shared Screens first on an Interface, then one group per
+Experience — each opening its Screen, with nested Screens as tabs on their
+parent's miniature; a container with no Screens lists the Capabilities
+available there as the frame would list them, inventing no command, path or
+payload. The wireframe draws only from theme tokens: hairlines in the line
+token, bars in the muted token, bordered fields and pills, underlined tabs,
+and the report's primary as the storyboard's one accent. Miniatures are the
+same markup at a smaller font. Each Sketch states its derivation in the About
+this view note below the drawing.
 Screens nest. A nested Screen appears as a child of its parent Screen in the
 Experiences & Screens and Screens tabs, in the Interfaces tree card and inside
 its parent's frame on the UI map; its header trail names the parent Screens
@@ -227,7 +255,7 @@ where it left:
 | `section` | `overview`; or a collection: `entity`, `interface`, `domain`, `capability`, `journey`, or `rule` | `overview` |
 | `resource` | the stable key of the inspected resource (`screen:reader-web::…`), or `null` for the section's collection | `null` |
 | `tab` | underlying collection: `overview` (Rows), `graph`, or `matrix` (Entities, Capabilities and Business Rules); Product Overview: `overview` (About), `coverage`, or `references` | `overview` |
-| `resourceTab` | resource reading: `overview`, `structure`, `scenarios`, `lifecycle`, `connections`, or `references`; independent of `tab` | `overview` |
+| `resourceTab` | resource reading: `overview`, `sketch` (or `sketch/<child Screen id>` for a child's Sketch), `structure`, `scenarios`, `lifecycle`, `connections`, or `references`; independent of `tab` | `overview` |
 | `scenarioRoute` | the first route in the visible Scenario route window, or `null` | `null` |
 | `routeColumns` | `auto`, or the reader's preferred number of visible route columns | `auto` |
 | `topology` | selected view, Journey, Scenario window, matrix column, focus, hidden kinds, expanded/collapsed groups, directory search | Domain map; no filters |
@@ -334,6 +362,24 @@ Action or Condition, Who, Entity effects, Where and Capability, with effects
 spelled out in words. Where reuses the original Context breadcrumbs — Interface,
 Experience and Screen — without route-name prefixes. The Step card variant
 selector has been retired.
+Beside the Steps of an expanded Scenario, a Steps / Storyboard selector changes
+how the same Steps are drawn, with the route selector beside it when the
+Scenario has more than one route (`r`). A Storyboard is one route of one
+Scenario: one frame per Step that names a place, that place's Sketch with the
+Step's facts and Capability lit. Storyboard adds the route's frames above the
+Steps list; the set on screen is unchanged. A Step with no Context on the
+route is a narrow interstitial card carrying its text, a condition Step a note
+frame; a Step on a Screen-less place is that container's frame with the Step as
+a transcript line, `$` for an actor and output for the Product; a Product
+Step's frame wears a Product badge and lights the Entities it changes.
+Consecutive Steps on one place repeat the frame with different lighting. The
+caption is the Step's index and text, with the Capability above it on a
+Journey Scenario. Selecting a frame scrolls the Steps list to that Step, and a
+Step's number scrolls the storyboard to its frame; both honour reduced motion.
+The drawing and the selected Step are remembered per Scenario in session
+storage, as Lifecycle remembers its drawing, so they survive refresh, Back and
+route changes. The Storyboard states its derivation in the About this view
+note below the frames.
 Resource readings and the Product Overview share Nuxt UI's link-style tabs on a
 transparent header. The slideover places the resource tab strip above its scroll
 pane, with a subtle upper divider and a full-width lower separator aligned with

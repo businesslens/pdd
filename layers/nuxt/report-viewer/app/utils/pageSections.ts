@@ -3,6 +3,7 @@ import type { AnyResourceView, ReportWorkspace } from './reportWorkspace'
 import { counterpartsOf, isScenarioKind } from './reportWorkspace'
 import { structureChildren, structureLabel } from './collectionChildren'
 import { resourceConnectionRows } from './resourceConnections'
+import { hasContainerSketch } from './sketch'
 
 export type PageBlockId =
   | 'lead'
@@ -16,7 +17,7 @@ export type PageBlockId =
   | 'supporting'
   | 'references'
 
-export type PageTabId = 'overview' | 'scenarios' | 'lifecycle' | 'structure' | 'connections' | 'references'
+export type PageTabId = 'overview' | 'sketch' | 'scenarios' | 'lifecycle' | 'structure' | 'connections' | 'references'
 
 export interface PageTab {
   id: PageTabId
@@ -62,6 +63,11 @@ export function tabsFor(workspace: ReportWorkspace, requestedResource: AnyResour
     label: 'Overview',
     blocks: overviewBlocks
   }]
+
+  /* The derived drawing of a place: every Screen has one; a container has one where it holds Screens or Capabilities. */
+  if (resource.kind === 'screen' || ((resource.kind === 'interface' || resource.kind === 'experience') && hasContainerSketch(resource))) {
+    tabs.push({ id: 'sketch', label: 'Sketch', blocks: [] })
+  }
 
   const children = childrenOf(workspace, resource)
   if (resource.kind === 'capability' || resource.kind === 'journey') {

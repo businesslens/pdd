@@ -256,6 +256,17 @@ contradiction between the two lists a lint finding as well.
 - **Experiments and cohorts.** See D9.
 - **Historical versions.** Git is the model's history.
 
+### D10. Sketches are derived, never authored
+
+Added after the round shipped its first two commits. A reader wants a rough
+view of a Screen; an authored one is design by the redesign test and is
+rejected. The report derives one instead, with the same skeleton for every
+place: frame from the Interface type, strip from `navigation`, presented facts
+as placeholders grouped by Entity, edited facts as fields, Capabilities as
+actions, child Screens as tabs; and a Storyboard draws a Scenario route as a
+sequence of them. Report only, bound in `spec/report.md`; nothing in
+`spec/format.md` changes.
+
 ### D9. Variation
 
 - **Languages.** `languages` is a list of language tags on the Product. An

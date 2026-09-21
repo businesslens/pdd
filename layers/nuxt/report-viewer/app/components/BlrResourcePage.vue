@@ -3,7 +3,7 @@
  * Scenarios remain inside their parent; Lifecycle belongs to an Entity.
  * The host places tabs above the scrolling reading and owns navigation.
  */
-import type { AnyResourceView, EntityView, ReportWorkspace } from '../utils/reportWorkspace'
+import type { AnyResourceView, EntityView, ExperienceView, InterfaceView, ReportWorkspace, ScreenView } from '../utils/reportWorkspace'
 import { ENTITY_KIND_META } from '../utils/reportWorkspace'
 import { parentOf, tabsFor, type PageTabId } from '../utils/pageSections'
 import { COLUMN_CHOICES, type ColumnChoice } from '../composables/useColumns'
@@ -38,16 +38,24 @@ const tabs = computed(() => tabsFor(props.workspace, props.resource))
 const tab = defineModel<string>('tab', { default: 'overview' })
 const active = ref<PageTabId>('overview')
 const isTab = (id: string): id is PageTabId => tabs.value.some(item => item.id === id)
+/* A tab may carry a detail after a slash: `sketch/<child Screen id>` draws that child's Sketch. */
+const tabId = (value: string) => value.split('/')[0] ?? value
+const tabDetail = computed(() => tab.value.includes('/') ? tab.value.slice(tab.value.indexOf('/') + 1) : '')
 
 /* A Scenario address defaults to its parent's Scenarios reading. An explicit
    References address reads the attachments owned by that Scenario. */
 watch([tabs, requestedChild, tab], () => {
-  if (requestedChild.value && (tab.value !== 'references' || !isTab('references')) && isTab('scenarios')) {
+  if (requestedChild.value && (tabId(tab.value) !== 'references' || !isTab('references')) && isTab('scenarios')) {
     active.value = 'scenarios'
     return
   }
-  active.value = isTab(tab.value) ? tab.value : 'overview'
+  const requested = tabId(tab.value)
+  active.value = isTab(requested) ? requested : 'overview'
 }, { immediate: true })
+
+function setSketchChild(child: string) {
+  tab.value = child ? `sketch/${child}` : 'sketch'
+}
 
 function select(id: string) {
   if (!isTab(id)) return
@@ -107,11 +115,21 @@ const columnItems = COLUMN_CHOICES.map(value => ({ value, label: `${value} per r
       <BlrScenariosList
         v-if="current?.id === 'scenarios'"
         ref="scenariosList"
+        v-model:scenario-route="scenarioRoute"
         :workspace="workspace"
         :resource="subject"
         :columns="scenarioColumns"
         :selected-key="requestedChild"
         :reveal-selected="!restorePosition"
+        @open="emit('open', $event)"
+      />
+
+      <BlrSketchReading
+        v-else-if="current?.id === 'sketch' && (subject.kind === 'screen' || subject.kind === 'interface' || subject.kind === 'experience')"
+        :workspace="workspace"
+        :resource="(subject as ScreenView | InterfaceView | ExperienceView)"
+        :child="tabDetail"
+        @update:child="setSketchChild"
         @open="emit('open', $event)"
       />
 

@@ -104,7 +104,7 @@ describe('collection rows that expand', () => {
     const canonical = flatten(structureChildren(workspace, owner)).filter((node: any) => node.resource?.key === shared.resource.key)
     expect(canonical).toHaveLength(1)
     expect(canonical[0].sharedFrom).toBeUndefined()
-    expect(tabsFor(workspace, experience).map((tab: any) => tab.id)).toEqual(['overview', 'structure', 'connections'])
+    expect(tabsFor(workspace, experience).map((tab: any) => tab.id)).toEqual(['overview', 'sketch', 'structure', 'connections'])
     expect(structureChildren(workspace, shared.resource)).toEqual([])
     expect(tabsFor(workspace, shared.resource).map((tab: any) => tab.id)).not.toContain('structure')
   })

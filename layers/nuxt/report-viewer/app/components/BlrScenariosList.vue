@@ -15,6 +15,8 @@ const props = defineProps<{
   revealSelected?: boolean
 }>()
 const emit = defineEmits<{ open: [resource: AnyResourceView] }>()
+/* The route a Storyboard draws, as the host keeps it. */
+const scenarioRoute = defineModel<string | null>('scenarioRoute', { default: null })
 
 const scenarios = computed(() => childrenOf(props.workspace, props.resource) as ScenarioView[])
 const scenarioKind = computed(() => props.resource.kind === 'journey' ? 'journey-scenario' as const : 'capability-scenario' as const)
@@ -80,12 +82,7 @@ const scenarioWord = (word: 'trigger' | 'outcome' | 'decision-point' | 'edge-cas
           @toggle="toggleScenario(scenario)"
           @open="emit('open', $event)"
         >
-          <ol class="blr-steps-list">
-            <li v-for="(step, index) in scenario.steps" :key="index" :data-step="index + 1">
-              <span class="blr-steps-number">{{ index + 1 }}</span>
-              <BlrScenarioStep :workspace="workspace" :scenario="scenario" :step="step" :index="index" @open="emit('open', $event)" />
-            </li>
-          </ol>
+          <BlrScenarioSteps v-model:scenario-route="scenarioRoute" :workspace="workspace" :scenario="scenario" @open="emit('open', $event)" />
           <template #details>
             <section v-if="scenario.decisionPoints.length" class="space-y-2">
               <h4 class="text-[0.8125rem] font-semibold text-highlighted"><BlrTerm :slug="scenarioWord('decision-point')" text="Decision points" /></h4>

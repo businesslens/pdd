@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The Information presented, Available actions, View states and Capability boundary sections are gone, along with screenshot state labels.
 - The report shows what each Screen presents and changes, opens Interfaces and Experiences with the Capabilities delivered there, and draws nested Screens in trees.
 - Product Reports are now version 14.
+- Every Screen, Interface and Experience has a Sketch, a rough view derived from the model, and every Scenario route can be read as a Storyboard of Sketches.
 
 ## [0.21.0] - 2026-09-21
 
