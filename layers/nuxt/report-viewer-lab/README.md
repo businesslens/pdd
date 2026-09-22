@@ -9,6 +9,17 @@ accident.
 
 There are no active report experiments in this layer.
 
+The **Coverage** audition is decided: Locations is the stable Coverage
+reading. Every authored statement is written under the path it names, so
+nothing is behind a click. A row carries coloured dots for the categories
+recorded at that exact path and never rolls up what sits beneath it; the
+path slideover, its Model references block and the "entries at or below"
+folder counts are gone, and model References keep their home in the Product
+Overview's own References reading. Four category cards filter whole
+statements, including unlocated ones, and search matches a statement by its
+own words or by where it is recorded. The alternatives, the selector, the
+cookie composable and the `BlrCoverage` shadow have been removed.
+
 The **View controls** audition is decided: option 4's dropdown with preview
 cards is the stable collection view picker. Each choice keeps its short
 explanatory subtitle; the separate help button and About section are removed.

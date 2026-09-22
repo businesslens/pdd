@@ -70,13 +70,3 @@ export function repositoryTree(paths: string[]): RepositoryTreeNode[] {
 export function repositoryTreeNodes<T extends RepositoryTreeNode>(nodes: T[]): T[] {
   return nodes.flatMap(node => [node, ...repositoryTreeNodes(node.children as T[])])
 }
-
-export function filterRepositoryTree<T extends RepositoryTreeNode>(nodes: T[], query: string): T[] {
-  const needle = query.trim().toLowerCase()
-  if (!needle) return nodes
-  return nodes.flatMap(node => {
-    if (node.value.toLowerCase().includes(needle)) return [node]
-    const children = filterRepositoryTree(node.children, query)
-    return children.length ? [{ ...node, children }] : []
-  })
-}

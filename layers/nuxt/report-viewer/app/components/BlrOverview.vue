@@ -133,7 +133,7 @@ function referenceEntity(ownerKey?: string) {
       </div>
     </div>
 
-    <BlrCoverage v-else-if="tab === 'coverage'" v-model:reading="coverage" :workspace="workspace" @select-key="emit('selectKey', $event, 'overview')" />
+    <BlrCoverage v-else-if="tab === 'coverage'" v-model:reading="coverage" :workspace="workspace" />
 
     <!-- REFERENCES: everything the model points at, and who points at it. -->
     <template v-else-if="tab === 'references'">

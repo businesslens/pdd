@@ -1997,8 +1997,10 @@ uncertainty is presented at model scope; otherwise it accompanies its recorded
 locations. All descriptions survive portability; repository paths do not.
 Paths locate behavior, never classify every behavior in a directory. The same
 path may locate distinct Covered, Excluded or Unmapped behavior. Counts summarize
-authored entries, not files or a completeness percentage. Source areas groups
-Covered, Exclusions and Unmapped; it is not another authored field.
+authored entries, not files or a completeness percentage, and a folder never
+inherits or totals what is recorded beneath it. A report may group these four
+lists as one set of statements and draw each under the path it names; that
+grouping is a reading of the authored fields, not another authored field.
 
 `method` is one short single-line Markdown authoring note, or an empty string
 when not recorded. Describe how the model was authored without an inspection

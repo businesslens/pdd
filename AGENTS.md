@@ -258,6 +258,25 @@ costed already.
   set is many, names where it is one.
 - **A resource type's mark is reserved.** Chrome wears a kind's icon only where
   it names that kind; reach for an unreserved glyph otherwise.
+- **Coverage is one set of statements, drawn where they are recorded.** The
+  four authored Coverage lists are read as one set whose category is an
+  attribute, so an empty category renders nothing and an unlocated statement is
+  one with no paths rather than a section of its own. Every statement is written
+  under the path it names: Coverage has no path panel, and this supersedes the
+  rule that selecting a path opens its recorded context in a slideover. A row
+  shows only what is recorded at that exact path — a folder never inherits
+  meaning from beneath it, because a count of "entries at or below" presented as
+  a folder's own annotation is neither files nor a share of what it holds. A
+  **closed** folder may say how many distinct statements are recorded inside it,
+  drawn apart from its own and counting one claim once however many paths below
+  carry it; that is a way in, so it goes when the folder opens and selecting it
+  expands the folder rather than reading anything. **An explanation is asked for.** A row
+  states how many statements it holds and discloses them on its own; opening a
+  folder reveals the paths inside it and nothing else, so structure stays
+  browsable without the prose that would bury it. Expand all and Collapse all
+  cover both axes, and a search reveals the explanations it matched. A statement recorded at several paths is
+  written in full under each, listing its other locations. Model References are
+  not repeated in Coverage; they belong to the Overview's References reading.
 - **A teaching affordance can be turned off, and never hides the way back.**
   Term tooltips are restored from the Vocabulary panel; the choice is a cookie,
   so the first paint is right.

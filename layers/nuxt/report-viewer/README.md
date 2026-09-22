@@ -411,35 +411,51 @@ bounded cell rendering on a large matrix, column navigation and mobile resizing.
 
 ### Coverage
 
-Coverage opens with **Model scope**. Model-wide Limitations (entries with no
-paths) appear immediately below. There is no Coverage status badge or derived
-completeness indicator, in the navbar or the Coverage reading. A small
-**How this model was authored** disclosure reveals the short Method note when
-recorded. There is no separate Rationale or Mapping details.
+Coverage opens with **Model scope**, then a small **How this model was
+authored** disclosure revealing the short Method note when recorded. There is no
+Coverage status badge or derived completeness indicator, in the navbar or the
+Coverage reading, and no separate Rationale or Mapping details.
 
-**Source areas** contains three compact filter cards counting described Covered,
-Exclusions and Unmapped entries, including those without paths. Selecting a card
-activates its filter; selecting it again restores all areas. Cards are the only
-category filter and totals remain unchanged by search or filtering.
+**Recorded locations** reads the four authored lists as one set of statements
+whose category is an attribute. Its heading counts whole authored statements.
+Four compact cards count Covered, Exclusions, Unmapped and Limitations,
+including entries with no location, and are the only category filter; selecting
+a card activates it, selecting it again restores every category. Card totals
+never change with search or filtering.
 
-These annotations use `BlrRepositoryTree`: search, expand/collapse,
-a Repository root and compact annotation badges. Each recorded location appears
-once. Descriptions explain distinct behavior, so the same location can be
-covered, excluded and unmapped. Folders summarize distinct entries at or below
-them, never file completeness or inherited meaning. Paths recorded only by a
-Limitation remain reachable in the unfiltered tree, with a Limitations badge.
-No live repository inventory is added.
+Every statement is written under the path it names, and there is no path panel.
+A row carries a filled dot per category recorded at that **exact** path, and
+beside it how many statements that is: a folder never inherits meaning from
+beneath it, because a count of "entries at or below" presented as a folder's own
+annotation is neither files nor a share of what the folder contains. A **closed**
+folder additionally says how many distinct statements are recorded inside it,
+drawn as hollow dots and a muted `N inside`. That is a way in, not a claim about
+the folder: it disappears when the folder opens, selecting it expands the folder
+rather than reading anything, and one statement recorded at three paths below
+counts once. The explanation itself waits behind the row's own count — opening a folder
+reveals the paths inside it and nothing else, so structure stays browsable
+without the prose that would bury it. Selecting the row's path or its count
+reads them in place; selecting again puts them away. A statement recorded at
+several paths is written in full under each of them, with its other locations
+listed as **also recorded at** — one claim about several places, printed where
+each place is read. Recognizable Product Model icons and the `.businesslens`
+mark still mark authored model paths.
 
-Covered, Exclusions and Unmapped entries without paths remain visible under
-**No location recorded**, narrowed by the card filter. Empty category lists show
-zero in the cards. Selecting a path opens the recorded descriptions, local
-Limitations, authored path spellings and related resource References in a
-slideover. The root includes every entry, including unlocated ones. Closing
-restores focus. Method disclosure preserves search, filters and expansion.
+Search matches a statement by its own words or by where it is recorded, and
+reveals the explanations it matched — a hidden answer is not an answer. Expand
+all and Collapse all sit beside it and cover both axes: the folders and the
+explanations. Expansion is remembered per report. Statements with no recorded location stay
+visible under **No location recorded**, narrowed by the same card filter and
+search; this includes model-wide Limitations, which have no separate section of
+their own. Model References are not repeated here — they have their home in the
+Product Overview's own References reading. No live repository inventory is
+added.
 
-`coverage.path` is navigation state, encoded as `cp` for refresh and browser
-history. Method disclosure does not change the URL. Tree expansion is remembered
-for the report. Narrow screens scroll the tree within its frame.
+`coverage.path` is navigation state, encoded as `cp`, and deep-links one
+location: its ancestors open, its explanation is read, and the row is marked
+current. Selecting that row
+again clears it. Method disclosure does not change the URL. Tree expansion is
+remembered for the report. Narrow screens scroll the reading within its frame.
 
 ## Navigation regression checks
 
