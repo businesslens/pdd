@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /** One expandable box for a Scenario's story, Entity results and ordered Steps. */
-import type { AnyResourceView, ReportWorkspace, ScenarioView } from '../utils/reportWorkspace'
-import { ENTITY_KIND_META, entityFacetOf, resolveResource } from '../utils/reportWorkspace'
+import type { AnyResourceView, EntityView, ReportWorkspace, ScenarioView } from '../utils/reportWorkspace'
+import { ENTITY_KIND_META, resolveResource } from '../utils/reportWorkspace'
 import { scenarioTerm } from '../utils/vocabulary'
 
 const props = defineProps<{
@@ -13,8 +13,12 @@ const emit = defineEmits<{ open: [resource: AnyResourceView], toggle: [] }>()
 const expansionId = useId()
 const trigger = computed(() => props.scenario.trigger || props.scenario.lead)
 const word = (name: 'trigger' | 'outcome') => scenarioTerm(props.scenario.scenarioType, name)
+const entityOf = (id: string): EntityView | undefined => {
+  const resource = resolveResource(props.workspace, 'entity', id)
+  return resource?.kind === 'entity' ? resource : undefined
+}
 const results = computed(() => props.scenario.outcomeStates.map(ending => {
-  const entity = resolveResource(props.workspace, 'entity', ending.entityId)
+  const entity = entityOf(ending.entityId)
   const title = entity?.title ?? ending.entityId
   const result = ending.effect === 'removes' ? 'Removed'
     : ending.effect === 'creates' ? (ending.to ? `Created in ${ending.to}` : 'Created')
@@ -23,9 +27,7 @@ const results = computed(() => props.scenario.outcomeStates.map(ending => {
 }))
 /* These are the Entities the Scenario only reads; changed instances already
    appear once above, with their last creation, change or removal. */
-const reads = computed(() => props.scenario.readEntityIds.map(id => ({
-  id, entity: resolveResource(props.workspace, 'entity', id)
-})))
+const reads = computed(() => props.scenario.readEntityIds.map(id => ({ id, entity: entityOf(id) })))
 const detailLabel = computed(() => [
   props.scenario.decisionPoints.length ? `${props.scenario.decisionPoints.length} ${props.scenario.decisionPoints.length === 1 ? 'decision' : 'decisions'}` : '',
   props.scenario.edgeCases.length ? `${props.scenario.edgeCases.length} ${props.scenario.edgeCases.length === 1 ? 'edge case' : 'edge cases'}` : ''
@@ -34,7 +36,6 @@ const expansionLabel = computed(() => [
   `${props.scenario.steps.length} ${props.scenario.steps.length === 1 ? 'step' : 'steps'}`,
   detailLabel.value
 ].filter(Boolean).join(' · '))
-const open = (key: string) => { const resource = props.workspace.byKey.get(key); if (resource) emit('open', resource) }
 </script>
 
 <template>
@@ -85,10 +86,7 @@ const open = (key: string) => { const resource = props.workspace.byKey.get(key);
         <dd>
           <ul class="blr-summary-endings">
             <li v-for="ending in results" :key="`${ending.entityId}-${ending.as}`" class="blr-summary-ending">
-              <BlrResourceLink v-if="ending.entity" :resource-key="ending.entity.key" class="blr-topology-link" :aria-label="`Open Entity ${ending.label}`" @open="emit('open', ending.entity)">
-                <BlrEntityMark :facet="entityFacetOf(ending.entity) ?? 'kept'" :acts="ending.entity.kind === 'entity' ? ending.entity.acts : undefined" size="xs" />
-                <span>{{ ending.label }}</span>
-              </BlrResourceLink>
+              <BlrEntityChip v-if="ending.entity" :entity="ending.entity" :label="ending.label" @select="emit('open', $event)" />
               <span v-else>{{ ending.label }}</span>
               <span class="blr-summary-ending-result">{{ ending.result }}</span>
             </li>
@@ -99,7 +97,7 @@ const open = (key: string) => { const resource = props.workspace.byKey.get(key);
         <dt class="blr-summary-label">Reads</dt>
         <dd class="blr-summary-reads">
           <template v-for="read in reads" :key="read.id">
-            <BlrTopologyResource v-if="read.entity" :resource="read.entity" @open="open" />
+            <BlrEntityChip v-if="read.entity" :entity="read.entity" muted @select="emit('open', $event)" />
             <span v-else>{{ read.id }}</span>
           </template>
         </dd>
@@ -140,9 +138,9 @@ const open = (key: string) => { const resource = props.workspace.byKey.get(key);
 .blr-summary-entity-row { display: grid; grid-template-columns: 6rem minmax(0, 1fr); gap: 0.25rem 1rem; align-items: start; }
 .blr-summary-entity-row > dd { min-width: 0; }
 .blr-summary-endings, .blr-summary-reads { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0.5rem 1.5rem; margin: 0; padding: 0; list-style: none; }
-.blr-summary-ending { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0.25rem 0.5rem; min-width: 0; max-width: 100%; }
+.blr-summary-ending { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.5rem; min-width: 0; max-width: 100%; }
 .blr-summary-ending-result { color: var(--ui-text-muted); overflow-wrap: anywhere; }
-.blr-summary-entities :deep(.blr-topology-link) { font-size: inherit; line-height: inherit; }
+.blr-summary-endings, .blr-summary-reads { align-items: center; }
 @container (min-width: 48rem) {
   .blr-summary-story:has(> div:nth-child(2)) { grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); }
 }

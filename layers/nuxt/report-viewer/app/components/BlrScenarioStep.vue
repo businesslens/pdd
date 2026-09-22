@@ -1,16 +1,20 @@
 <script setup lang="ts">
 /** A Scenario Step with named parts and explicit Entity effect phrases. */
 import type { AnyResourceView, ReportWorkspace, ScenarioView } from '../utils/reportWorkspace'
-import { entityFacetOf, resolveResource } from '../utils/reportWorkspace'
+import { resolveResource } from '../utils/reportWorkspace'
 import type { ScenarioStep } from '../utils/scenarioSteps'
 import { stepActor, stepCapability } from '../utils/scenarioSteps'
 
 const props = defineProps<{ workspace: ReportWorkspace, scenario: ScenarioView, step: ScenarioStep, index: number }>()
 const emit = defineEmits<{ open: [resource: AnyResourceView] }>()
-const actor = computed(() => stepActor(props.workspace, props.step))
+const actor = computed(() => {
+  const resource = stepActor(props.workspace, props.step)
+  return resource?.kind === 'entity' ? resource : undefined
+})
 const capability = computed(() => stepCapability(props.workspace, props.scenario, props.step))
 const effects = computed(() => props.step.entities.map(mention => {
-  const entity = resolveResource(props.workspace, 'entity', mention.entityId)
+  const resource = resolveResource(props.workspace, 'entity', mention.entityId)
+  const entity = resource?.kind === 'entity' ? resource : undefined
   const title = entity?.title ?? mention.entityId
   return { ...mention, entity, label: mention.as ? `${title} (${mention.as})` : title }
 }))
@@ -32,7 +36,7 @@ const open = (key: string) => { const resource = props.workspace.byKey.get(key);
           <span v-if="step.stepKind === 'product'" class="blr-guided-phrase"><span class="blr-guided-cue">Performed by</span><span>the Product</span></span>
           <span v-if="actor || step.actorId" class="blr-guided-phrase">
             <span class="blr-guided-cue">{{ step.stepKind === 'actor' ? 'Performed by' : step.stepKind === 'condition' ? 'Applies to' : 'For' }}</span>
-            <BlrTopologyResource v-if="actor" :resource="actor" @open="open" />
+            <BlrEntityChip v-if="actor" :entity="actor" @select="emit('open', $event)" />
             <span v-else>{{ step.actorId }}</span>
           </span>
         </dd>
@@ -44,10 +48,7 @@ const open = (key: string) => { const resource = props.workspace.byKey.get(key);
           <ul class="blr-guided-effects">
             <li v-for="(effect, position) in effects" :key="`${position}-${effect.entityId}-${effect.as}`" class="blr-guided-effect" :data-effect="effect.effect">
               <span class="blr-guided-verb">{{ effectVerb[effect.effect] }}</span>
-              <BlrResourceLink v-if="effect.entity" :resource-key="effect.entity.key" class="blr-topology-link" :aria-label="`Open Entity ${effect.label}`" @open="emit('open', effect.entity)">
-                <BlrEntityMark :facet="entityFacetOf(effect.entity) ?? 'kept'" :acts="effect.entity.kind === 'entity' ? effect.entity.acts : undefined" size="xs" />
-                <span>{{ effect.label }}</span>
-              </BlrResourceLink>
+              <BlrEntityChip v-if="effect.entity" :entity="effect.entity" :label="effect.label" :muted="effect.effect === 'reads'" @select="emit('open', $event)" />
               <span v-else>{{ effect.label }}</span>
               <span v-if="effect.effect === 'reads'" class="blr-guided-cue">without changing it</span>
               <template v-else-if="effect.effect === 'creates' && effect.to">
@@ -94,7 +95,7 @@ const open = (key: string) => { const resource = props.workspace.byKey.get(key);
 .blr-guided-field > dd { min-width: 0; margin: 0; overflow-wrap: anywhere; }
 .blr-guided-sentence { font-size: 0.875rem; font-weight: 600; color: var(--ui-text-highlighted); }
 .blr-guided-who, .blr-guided-places, .blr-guided-effects { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0.5rem 1.5rem; margin: 0; padding: 0; list-style: none; }
-.blr-guided-phrase, .blr-guided-effect { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0.25rem 0.375rem; min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
+.blr-guided-phrase, .blr-guided-effect { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.375rem; min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
 .blr-guided-state-phrase { display: inline-flex; align-items: flex-start; gap: 0.375rem; min-width: 0; max-width: 100%; }
 .blr-guided-state-phrase > span { min-width: 0; overflow-wrap: anywhere; }
 .blr-guided-state-phrase > .blr-guided-cue { flex-shrink: 0; white-space: nowrap; }

@@ -16,7 +16,7 @@ import type {
   EntityView,
   ScreenView
 } from '../utils/reportWorkspace'
-import { entityFacetOf, isScenarioKind, resolveResource, scenarioStepMatrix } from '../utils/reportWorkspace'
+import { isScenarioKind, resolveResource, scenarioStepMatrix } from '../utils/reportWorkspace'
 import { scenarioTerm } from '../utils/vocabulary'
 import { hasAuthoredBody } from '../utils/pageSections'
 import { deliveryOf, screenChanges } from '../utils/placeReadings'
@@ -47,9 +47,7 @@ const asScenario = computed(() => props.resource as ScenarioView)
 const asRule = computed(() => props.resource as RuleView)
 const isScenario = computed(() => isScenarioKind(props.resource.kind))
 
-/* An Entity chip is drawn by the facet the thing plays. The relation beside it
-   already says it is an Entity, so the type glyph would spend the mark on the
-   sentence it sits inside. */
+/* The resolved Entity behind an id, for the shared chip that names it. */
 function entityChip(id: string) {
   const resource = resolveResource(props.workspace, 'entity', id)
   return resource?.kind === 'entity' ? resource : undefined
@@ -100,10 +98,20 @@ const capabilityEffects = computed(() => props.resource.kind !== 'capability'
           : item.to ? `${item.from} → ${item.to}` : 'changes')
     })))
 
-function openEntity(id: string) {
-  const entity = resolveResource(props.workspace, 'entity', id)
-  if (entity) emit('select', entity)
-}
+/* The Entities a Capability only reads, as one row beneath the changes; and
+   how many of its Scenarios — its own, or a Journey's Steps naming it — read
+   any of them, counted the way each change row counts its Scenarios. */
+const capabilityReads = computed(() => props.resource.kind !== 'capability'
+  ? []
+  : asCapability.value.readEntityIds.map(id => ({ id, entity: entityChip(id) })))
+const readScenarioCount = computed(() => {
+  if (props.resource.kind !== 'capability' || !capabilityReads.value.length) return 0
+  const capabilityId = asCapability.value.id
+  const readIds = new Set(capabilityReads.value.map(read => read.id))
+  return props.workspace.scenarios.filter(scenario => scenario.steps.some(step =>
+    (scenario.scenarioType === 'journey' ? step.capabilityId : scenario.capabilityId) === capabilityId
+    && step.entities.some(entry => entry.effect === 'reads' && readIds.has(entry.entityId)))).length
+})
 /* One authored Scenario sequence, with named Context routes as columns. */
 const stepMatrix = computed(() => (isScenario.value ? scenarioStepMatrix(asScenario.value) : null))
 
@@ -245,11 +253,6 @@ const stepActor = (actorId: string | undefined): EntityView | undefined => {
   if (!actorId) return undefined
   const resource = resolveResource(props.workspace, 'entity', actorId)
   return resource?.kind === 'entity' && resource.acts ? resource : undefined
-}
-
-const selectStepActor = (actorId: string | undefined) => {
-  const actor = stepActor(actorId)
-  if (actor) emit('select', actor)
 }
 
 const contextLabel = (context: { screenTitle: string, experienceTitle: string, interfaceTitle: string }) =>
@@ -469,10 +472,10 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
     </section>
 
     <!-- CAPABILITY: what it does to each thing, one line per Entity. -->
-    <section v-if="resource.kind === 'capability' && capabilityEffects.length" class="space-y-2">
+    <section v-if="resource.kind === 'capability' && (capabilityEffects.length || capabilityReads.length)" class="space-y-2">
       <h2 class="blr-page-heading">
         <BlrTerm slug="operation" text="What it changes" />
-        <span class="blr-meta ms-1">{{ capabilityEffects.length }}</span>
+        <span class="blr-meta ms-1">{{ capabilityEffects.length + (capabilityReads.length ? 1 : 0) }}</span>
       </h2>
       <ul class="space-y-1.5">
         <li
@@ -480,21 +483,27 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
           :key="line.entityId"
           class="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border border-default bg-elevated/30 px-3 py-2 text-sm"
         >
-          <BlrResourceLink :resource-key="`entity:${line.entityId}`" class="blr-chip" @open="openEntity(line.entityId)">
-            <BlrEntityMark
-              :facet="entityFacetOf(entityChip(line.entityId)) ?? 'kept'"
-              :acts="entityChip(line.entityId)?.acts"
-              size="xs"
-            />{{ line.title }}
-          </BlrResourceLink>
+          <BlrEntityChip v-if="entityChip(line.entityId)" :entity="entityChip(line.entityId)!" @select="emit('select', $event)" />
+          <span v-else class="text-default">{{ line.title }}</span>
           <span v-for="reading in line.readings" :key="reading" class="text-default">{{ reading }}</span>
           <span class="blr-meta ms-auto">{{ line.scenarioIds.length }} {{ line.scenarioIds.length === 1 ? 'Scenario' : 'Scenarios' }}</span>
         </li>
+        <!-- Reads share the list's shape: one left edge, the chips first, the
+             reading where the changes put theirs. Dashed, so a row of reads
+             is never mistaken for a row of changes. -->
+        <li
+          v-if="capabilityReads.length"
+          class="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border border-default bg-elevated/30 px-3 py-2 text-sm"
+          data-capability-reads
+        >
+          <template v-for="read in capabilityReads" :key="read.id">
+            <BlrEntityChip v-if="read.entity" :entity="read.entity" muted @select="emit('select', $event)" />
+            <span v-else class="text-default">{{ read.id }}</span>
+          </template>
+          <span class="text-default">reads only</span>
+          <span v-if="readScenarioCount" class="blr-meta ms-auto">{{ readScenarioCount }} {{ readScenarioCount === 1 ? 'Scenario' : 'Scenarios' }}</span>
+        </li>
       </ul>
-      <p v-if="asCapability.readEntityIds.length" class="flex flex-wrap items-baseline gap-x-2 blr-meta">
-        <span>Reads only</span>
-        <BlrLinks :workspace="workspace" :ids="asCapability.readEntityIds" kind="entity" interactive @select="emit('select', $event)" />
-      </p>
     </section>
 
     <!-- SCENARIO: the ordered reading, in the order it happens. -->
@@ -670,7 +679,10 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
                   context="row"
                   class="border-e border-default bg-default px-4 py-3 font-normal"
                 >
-                  <p class="text-sm font-medium text-highlighted">{{ step.index + 1 }}. {{ step.text }}</p>
+                  <div class="blr-numbered-step">
+                  <span class="blr-numbered-step__number">{{ step.index + 1 }}.</span>
+                  <div class="min-w-0">
+                  <p class="text-sm font-medium text-highlighted">{{ step.text }}</p>
 
                   <span class="blr-meta mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1">
                     <template v-if="stepActor(step.actorId)">
@@ -681,19 +693,7 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
                         </span>
                       </UTooltip>
                       <span v-if="step.stepKind !== 'actor'">for</span>
-                      <BlrResourceLink
-                        :resource-key="`entity:${step.actorId}`"
-                        class="inline-flex max-w-full items-center gap-1.5 rounded-full border border-default bg-elevated/60 py-0.5 pe-2 ps-1 font-sans text-xs font-medium text-highlighted transition hover:border-accented hover:bg-elevated focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                        :aria-label="`Open ${stepActor(step.actorId)!.title}`"
-                        @open="selectStepActor(step.actorId)"
-                      >
-                        <BlrEntityMark
-                          :facet="stepActor(step.actorId)!.entityKind!"
-                          :acts="stepActor(step.actorId)!.acts!"
-                          size="xs"
-                        />
-                        <span class="min-w-0 truncate">{{ stepActor(step.actorId)!.title }}</span>
-                      </BlrResourceLink>
+                      <BlrEntityChip :entity="stepActor(step.actorId)!" @select="emit('select', $event)" />
                       <UTooltip v-if="step.stepKind === 'actor'" :text="stepKindDescription('actor')" :delay-duration="150">
                         <span>action</span>
                       </UTooltip>
@@ -730,6 +730,8 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
                     interactive
                     @select="emit('select', $event)"
                   />
+                  </div>
+                  </div>
                 </th>
                 <td
                   v-if="step.routeNeutral"
@@ -778,7 +780,10 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
         <div v-else class="divide-y divide-default overflow-hidden rounded-xl border border-default">
           <article v-for="step in stepMatrix.steps" :key="step.index">
             <div class="bg-default px-4 py-3">
-              <p class="text-sm font-medium text-highlighted">{{ step.index + 1 }}. {{ step.text }}</p>
+              <div class="blr-numbered-step">
+              <span class="blr-numbered-step__number">{{ step.index + 1 }}.</span>
+              <div class="min-w-0">
+              <p class="text-sm font-medium text-highlighted">{{ step.text }}</p>
 
               <span class="blr-meta mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1">
                 <template v-if="stepActor(step.actorId)">
@@ -789,19 +794,7 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
                     </span>
                   </UTooltip>
                   <span v-if="step.stepKind !== 'actor'">for</span>
-                  <BlrResourceLink
-                    :resource-key="`entity:${step.actorId}`"
-                    class="inline-flex max-w-full items-center gap-1.5 rounded-full border border-default bg-elevated/60 py-0.5 pe-2 ps-1 font-sans text-xs font-medium text-highlighted transition hover:border-accented hover:bg-elevated focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                    :aria-label="`Open ${stepActor(step.actorId)!.title}`"
-                    @open="selectStepActor(step.actorId)"
-                  >
-                    <BlrEntityMark
-                      :facet="stepActor(step.actorId)!.entityKind!"
-                      :acts="stepActor(step.actorId)!.acts!"
-                      size="xs"
-                    />
-                    <span class="min-w-0 truncate">{{ stepActor(step.actorId)!.title }}</span>
-                  </BlrResourceLink>
+                  <BlrEntityChip :entity="stepActor(step.actorId)!" @select="emit('select', $event)" />
                   <UTooltip v-if="step.stepKind === 'actor'" :text="stepKindDescription('actor')" :delay-duration="150">
                     <span>action</span>
                   </UTooltip>
@@ -838,6 +831,8 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
                 interactive
                 @select="emit('select', $event)"
               />
+              </div>
+              </div>
             </div>
 
             <div class="border-t border-muted bg-elevated/20 px-4 py-3">
@@ -954,13 +949,8 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
             class="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border border-default bg-elevated/30 px-3 py-2 text-sm"
             :data-entity-id="entry.entityId"
           >
-            <BlrResourceLink :resource-key="`entity:${entry.entityId}`" class="blr-chip" @open="openEntity(entry.entityId)">
-              <BlrEntityMark
-                :facet="entityFacetOf(entry.entity) ?? 'kept'"
-                :acts="entry.entity?.acts"
-                size="xs"
-              />{{ entry.title }}
-            </BlrResourceLink>
+            <BlrEntityChip v-if="entry.entity" :entity="entry.entity" @select="emit('select', $event)" />
+            <span v-else class="text-default">{{ entry.title }}</span>
             <template v-if="entry.facts">
               <UBadge v-for="fact in entry.facts" :key="fact" color="neutral" variant="outline" size="sm" class="font-normal" data-screen-fact>{{ fact }}</UBadge>
             </template>
@@ -994,8 +984,10 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
             @select="emit('select', $event)"
           />
           <ul class="space-y-2">
-            <li v-for="step in group.steps" :key="step.index" class="text-sm" data-screen-change-step>
-              <p class="font-medium text-highlighted">{{ step.index + 1 }}. {{ step.text }}</p>
+            <li v-for="step in group.steps" :key="step.index" class="blr-numbered-step text-sm" data-screen-change-step>
+              <span class="blr-numbered-step__number">{{ step.index + 1 }}.</span>
+              <div class="min-w-0">
+              <p class="font-medium text-highlighted">{{ step.text }}</p>
               <span class="blr-meta mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1">
                 <BlrStepEntity
                   v-for="mention in step.entities"
@@ -1018,6 +1010,7 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
                   </BlrResourceLink>
                 </template>
               </span>
+              </div>
             </li>
           </ul>
         </article>

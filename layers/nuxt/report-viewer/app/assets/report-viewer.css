@@ -196,6 +196,15 @@
 
 /* The cards drawing of Steps: numbers on one connector line, as the
    Composition drew them, each Step a card beside its number. */
+/*
+  A numbered Step in a reading: the number keeps a narrow column of its own,
+  so the Step's text and the chip row beneath it share one left edge instead
+  of the chips falling back under the number. The Scenario reading's Steps
+  and a Screen's Changes made here draw the same grid.
+*/
+.blr-numbered-step { display: grid; grid-template-columns: 1.5rem minmax(0, 1fr); column-gap: 0.5rem; align-items: baseline; }
+.blr-numbered-step__number { font-variant-numeric: tabular-nums; text-align: end; font-weight: 500; color: var(--ui-text-muted); }
+
 .blr-steps-list { display: grid; gap: 0.75rem; }
 .blr-steps-list > li { position: relative; display: flex; align-items: flex-start; gap: 0.625rem; }
 .blr-steps-list > li:not(:last-child)::after { content: ''; position: absolute; inset-inline-start: 11px; top: 2.25rem; bottom: -0.75rem; border-inline-start: 1px solid var(--ui-border-accented); }

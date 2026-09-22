@@ -81,24 +81,12 @@ function referenceEntity(ownerKey?: string) {
 
       <div class="flex flex-wrap items-center gap-1.5">
         <span class="blr-field me-1">Made for</span>
-        <UButton
+        <BlrEntityChip
           v-for="actor in workspace.actingEntities"
           :key="actor.key"
-          color="neutral"
-          variant="outline"
-          size="xs"
-          class="rounded-full"
-          @click="emit('select', actor)"
-        >
-          <BlrKind
-            kind="entity"
-            :facet="entityFacetOf(actor)"
-            :acts="actor.acts"
-            :labelled="false"
-            size="xs"
-          />
-          {{ actor.title }}
-        </UButton>
+          :entity="actor"
+          @select="emit('select', $event)"
+        />
         <span v-if="!workspace.actingEntities.length" class="text-sm text-muted italic">No Entity acts on this Product.</span>
       </div>
 

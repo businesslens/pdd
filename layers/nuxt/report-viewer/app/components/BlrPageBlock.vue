@@ -28,7 +28,7 @@ const entryPoints = computed(() => props.resource.kind === 'journey' ? props.res
 const counterparts = computed(() => counterpartsOf(props.workspace, props.resource))
 const facts = computed(() => resourceFacts(props.workspace, props.resource).filter(fact => fact.value))
 const audience = computed(() => (props.resource.kind === 'interface' || props.resource.kind === 'experience')
-  ? props.resource.actorIds.flatMap(id => { const actor = props.workspace.byKey.get(`entity:${id}`); return actor ? [actor] : [] }) : [])
+  ? props.resource.actorIds.flatMap(id => { const actor = props.workspace.byKey.get(`entity:${id}`); return actor?.kind === 'entity' ? [actor] : [] }) : [])
 </script>
 
 <template>
@@ -47,7 +47,7 @@ const audience = computed(() => (props.resource.kind === 'interface' || props.re
 
   <div v-else-if="id === 'audience' && audience.length" class="flex flex-wrap items-center gap-2" data-resource-audience>
     <span class="text-xs text-muted">Entered by</span>
-    <BlrTopologyResource v-for="actor in audience" :key="actor.key" :resource="actor" @open="emit('open', actor)" />
+    <BlrEntityChip v-for="actor in audience" :key="actor.key" :entity="actor" @select="emit('open', $event)" />
   </div>
 
   <BlrContexts

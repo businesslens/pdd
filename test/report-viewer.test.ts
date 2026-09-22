@@ -486,7 +486,7 @@ describe('stable Product Report', () => {
        a Product or condition Step, and the chip is the same reference. */
     expect(body).toContain('v-if="stepActor(step.actorId)"')
     expect(body).toContain('<span v-if="step.stepKind !== \'actor\'">for</span>')
-    expect(body).toContain('{{ stepActor(step.actorId)!.title }}')
+    expect(body).toContain('<BlrEntityChip :entity="stepActor(step.actorId)!"')
     expect(body).not.toContain('label="Performed by"')
     expect(body).toContain('Product action')
     expect(body).toContain('Condition')
@@ -602,10 +602,10 @@ describe('stable Product Report', () => {
     expect(cardPresentation).not.toContain('`${entity.entityKind} · ${entity.acts}`')
     expect(cardPresentation).toContain('badge: entity.acts')
 
-    /* A Step names an Actor, so it renders one: the Actor's own mark in a chip
-       that opens it, not a dimmed generic glyph beside plain text. */
-    expect(resourceBody).toContain('<BlrEntityMark')
-    expect(resourceBody).toContain(':facet="stepActor(step.actorId)!.entityKind!"')
+    /* A Step names an Actor, so it renders one: the shared Entity chip, which
+       carries the Actor's own mark and opens it. */
+    expect(resourceBody).toContain('<BlrEntityChip :entity="stepActor(step.actorId)!"')
+    expect(resourceBody).not.toContain(':facet="stepActor(step.actorId)!.entityKind!"')
     /* The Entity page draws its composed state machine on the shared canvas,
        on its own tab, with every arc routed along the layout's points. */
     const lifecycle = source('app/components/BlrEntityLifecycle.vue')
@@ -1503,6 +1503,44 @@ describe('Screens on the v14 wire', () => {
       expect(body).not.toContain(removed)
     }
     expect(source('app/components/BlrRefs.vue')).not.toContain('reference.state')
+  })
+
+  it('names an Entity with one chip wherever it is a reference', () => {
+    const chip = source('app/components/BlrEntityChip.vue')
+    expect(chip).toContain('entity: EntityView')
+    expect(chip).toContain('data-entity-chip')
+    expect(chip).toContain('<BlrEntityMark')
+    expect(chip).toContain('rounded-full border')
+    expect(chip).toContain("'border-dashed border-muted")
+    const body = source('app/components/BlrResourceBody.vue')
+    /* Presents, What it changes and its reads row, the Step Actor. */
+    const presents = body.slice(body.indexOf('data-screen-presents'), body.indexOf('data-screen-changes'))
+    expect(presents).toContain('<BlrEntityChip v-if="entry.entity" :entity="entry.entity"')
+    const changes = body.slice(body.indexOf('text="What it changes"'), body.indexOf('<!-- SCENARIO:'))
+    expect(changes).toContain('<BlrEntityChip v-if="entityChip(line.entityId)"')
+    expect(changes).toContain('data-capability-reads')
+    expect(changes).toContain('<BlrEntityChip v-if="read.entity" :entity="read.entity" muted')
+    expect(changes).toContain('reads only')
+    expect(changes).not.toContain('<BlrLinks')
+    expect(changes).not.toContain('blr-chip')
+    /* Entity effects on a Step, the Scenario summary's endings and reads,
+       the Step's own chip, and every Entity relation row. */
+    expect(source('app/components/BlrScenarioStep.vue')).toContain('<BlrEntityChip v-if="effect.entity"')
+    expect(source('app/components/BlrScenarioStep.vue')).toContain('<BlrEntityChip v-if="actor"')
+    expect(source('app/components/BlrScenarioSummary.vue')).toContain('<BlrEntityChip v-if="ending.entity"')
+    expect(source('app/components/BlrScenarioSummary.vue')).toContain('<BlrEntityChip v-if="read.entity" :entity="read.entity" muted')
+    expect(source('app/components/BlrStepEntity.vue')).toContain('<BlrEntityChip :entity="entity" :label="label" :muted="isRead"')
+    expect(source('app/components/BlrLinks.vue')).toContain('<BlrEntityChip v-if="interactive && asEntity(resource)"')
+    expect(source('app/components/BlrOverview.vue')).toContain('<BlrEntityChip')
+    expect(source('app/components/BlrPageBlock.vue')).toContain('<BlrEntityChip v-for="actor in audience"')
+    for (const file of ['BlrScenarioStep.vue', 'BlrScenarioSummary.vue', 'BlrStepEntity.vue', 'BlrResourceBody.vue', 'BlrLinks.vue']) {
+      expect(source(`app/components/${file}`), file).not.toContain('entityFacetOf')
+    }
+    /* A numbered Step keeps its number in a column of its own, so the chip
+       row lines up with the text in the Scenario reading and in Changes made here. */
+    expect(source('app/assets/report-viewer.css')).toContain('.blr-numbered-step {')
+    expect(body.match(/class="blr-numbered-step[ "]/g)).toHaveLength(3)
+    expect(body).not.toContain('{{ step.index + 1 }}. {{ step.text }}')
   })
 
   it('carries the facts a Step cites into its Entity chip', () => {

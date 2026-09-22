@@ -11,13 +11,13 @@
  * tells two instances of one thing apart: `Collection (source)`.
  *
  * Drawn as a reference to a resource, exactly as the Step's Actor is — the
- * Entity's own mark inside a chip that opens it. States are not resources, so
- * they stay plain terminal readings rather than second targets competing with
- * the first. The facts a read or change cites follow the chip as small marks;
- * an end-state summary says where a thing was left and names none.
+ * shared Entity chip, which opens it. States are not resources, so they stay
+ * plain terminal readings inside the chip rather than second targets competing
+ * with the first. The facts a read or change cites follow as small marks; an
+ * end-state summary says where a thing was left and names none.
  */
 import type { AnyResourceView, EntityView, ReportWorkspace, ScenarioStepEntityView } from '../utils/reportWorkspace'
-import { entityFacetOf, resolveResource } from '../utils/reportWorkspace'
+import { resolveResource } from '../utils/reportWorkspace'
 
 const props = defineProps<{
   workspace: ReportWorkspace
@@ -85,23 +85,7 @@ const factsDescription = computed(() => facts.value.length
 
 <template>
   <UTooltip v-if="entity" :text="factsDescription" :delay-duration="150">
-    <BlrResourceLink
-      :resource-key="entity.key"
-      class="inline-flex max-w-full items-center gap-1.5 rounded-full border px-2 py-0.5 font-sans text-xs transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-      :class="isRead
-        ? 'border-dashed border-muted bg-transparent font-normal text-muted hover:border-default hover:text-default'
-        : 'border-default bg-elevated/60 font-medium text-highlighted hover:border-accented hover:bg-elevated'"
-      :aria-label="`Open Entity ${entity.title}`"
-      @open="emit('select', entity)"
-    >
-      <BlrEntityMark
-        :facet="entityFacetOf(entity) ?? 'kept'"
-        :acts="entity?.acts"
-        size="xs"
-        class="shrink-0"
-        :style="{ opacity: isRead ? 0.55 : 1 }"
-      />
-      <span class="min-w-0 truncate">{{ label }}</span>
+    <BlrEntityChip :entity="entity" :label="label" :muted="isRead" @select="emit('select', $event)">
       <span v-if="effectLabel" class="shrink-0 font-normal text-muted">{{ effectLabel }}</span>
       <template v-if="mention.to">
         <span v-if="mention.from && !outcome" class="min-w-0 truncate font-normal text-muted">{{ mention.from }}</span>
@@ -113,6 +97,6 @@ const factsDescription = computed(() => facts.value.length
         <span aria-hidden="true" class="shrink-0 text-dimmed">·</span>
         <span v-for="fact in facts" :key="fact" class="shrink-0 rounded-sm bg-muted px-1 font-normal text-muted" data-step-fact>{{ fact }}</span>
       </template>
-    </BlrResourceLink>
+    </BlrEntityChip>
   </UTooltip>
 </template>
