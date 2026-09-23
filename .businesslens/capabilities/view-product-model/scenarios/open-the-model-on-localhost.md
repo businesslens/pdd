@@ -60,7 +60,7 @@ address bar, and nothing has been written or transmitted.
 - Valid edits update the open report automatically; an invalid edit keeps the last valid reading visible until corrected.
 - Asking for a specific port, or for the address to be printed without opening a browser, changes only how the report is reached.
 - Searching by name lands on the resource's reading directly, for the same reason a collection row does.
-- Coverage presents Model scope and model-wide Limitations above the source tree. A small disclosure reveals the authoring Method. Three cards count described areas and filter Covered, Exclusions and Unmapped; path details include local Limitations.
-- Covered, Exclusions and Unmapped use a repository tree with search and expansion controls, with an annotation filter and counts beside each row. Paths open explanations and related model resources; entries without paths remain visible below the tree.
+- Coverage presents Scope, Method and four cards counting and filtering Covered, Exclusions, Unmapped and Limitations in one summary above the location tree.
+- The location tree marks each path with its categories' icons, finds paths by name, and reads a path's statements in place; statements without paths remain visible below the tree.
 - Coverage paths and References never establish file-level completeness or implementation alignment.
 - Planned paths and gaps without locations remain readable without repository access.

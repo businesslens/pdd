@@ -25,10 +25,9 @@ that opens it and the resource type it presents.
 - The Product's full Description, Intent, Limitations, and additional authored sections under their original headings
 - Product ID, Category, Tags, License, and Authors with their URLs, as labeled details
 - Actors as a relation derived from the model
-- The declared Model scope
-- Every Covered, Exclusions, Unmapped and Limitations description, and the short Method note when recorded
-- Recorded repository paths alongside exclusions, gaps and covered areas, with related context and resource links available on selection
-- Covered, Exclusions and Unmapped entries with no known repository location, readable below the tree
+- The declared Scope and, when recorded, the short Method note, together with the four category counts
+- Every Covered, Exclusions, Unmapped and Limitations description, each under every path it names and marked by its category's icon
+- Statements with no known repository location, readable below the tree
 - Every Reference in the model, including the Product's own, grouped by type with the resource that carries it
 - Which generator and schema version produced the report, and when
 
@@ -36,11 +35,9 @@ that opens it and the resource type it presents.
 
 - Open Entities, Interfaces, Domains, Capabilities, Journeys, or Business Rules
 - Read About, Coverage, or References
-- Expand or collapse How this model was authored while keeping the Coverage tree visible
-- Filter sources through their summary cards; select an active card again to show all sources
-- Search the Source areas tree and use its compact cards to filter Covered, Exclusions or Unmapped
-- Select a recorded path to read its context, and restore that selection after refresh or Back navigation
-- Open a model resource that references the selected location
+- Filter statements through the four category cards; select an active card again to show every category
+- Find a recorded path by name
+- Read the statements recorded at a path in place, and restore that reading after refresh or Back navigation
 - Expand Reference groups and local image previews
 - Open the References reading of any resource that carries a reference
 - Open the page of a thing that acts on the Product
@@ -57,27 +54,24 @@ their field names and values; Actors identify a derived model relation.
 
 ### Coverage open
 
-Coverage starts with Model scope. It has no status or derived completeness
-badge. Model-wide Limitations appear near Scope. A small How this model was
-authored disclosure reveals Method when recorded. Source areas contains
-three compact cards counting described Covered, Exclusions and Unmapped entries,
-including those without paths. Selecting a card filters the tree and unlocated
-entries; selecting it again restores all sources. No duplicate category dropdown
-is shown. Totals remain independent of filtering and search.
+Coverage starts with one summary panel: Scope, then Method when recorded,
+then four cards counting Covered, Exclusions, Unmapped and Limitations,
+including statements without paths. It has no status or derived completeness
+badge. Selecting a card filters the tree and unlocated statements; selecting it
+again restores every category. Totals remain independent of filtering and search.
 
-The tree offers search and expand/collapse controls. Each recorded
-location appears once, with all its annotation types. Folder counts summarize
-distinct entries, never file completeness or inherited meaning. Paths recorded
-only by a limitation remain reachable in the unfiltered tree. No live inventory
-is added. Entries without paths remain readable below the tree; empty categories
-show zero in the cards. Model-wide limitations remain visible above it.
+Below the panel, the tree offers path search and expand/collapse controls. Each
+recorded location appears once, marked with the icon of every category recorded
+at exactly that path; a closed folder says how many statements are inside it,
+never file completeness or inherited meaning. Search matches paths by name,
+never statement prose, and opens the folders above what it found. No live
+inventory is added. Statements without paths remain readable below the tree;
+empty categories show zero in the cards.
 
-Selecting a path opens behavior descriptions, local Limitations, recorded paths
-and related resources in a slideover; the Repository root includes all entries.
-Closing restores focus. Method disclosure preserves the tree's search, filter
-and expansion without adding browser history. Refresh and browser history retain
-the selected path; expansion is remembered for the report. Narrow screens scroll
-the tree within its frame.
+Selecting a path reads its statements in place; a statement recorded at several
+paths lists its other locations. Refresh and browser history retain the read
+path; expansion is remembered for the report. Narrow screens scroll the tree
+within its frame.
 
 ### References open
 

@@ -1,27 +1,23 @@
 <script setup lang="ts">
+/**
+ * The authored description of the model's breadth, under the field names the
+ * model uses. Method is one short line by format, so it is read, not disclosed.
+ */
 import type { ReportWorkspace } from '../utils/reportWorkspace'
 
 defineProps<{ workspace: ReportWorkspace }>()
 </script>
 
 <template>
-  <div class="min-w-0 space-y-3" data-coverage-details>
-    <section class="min-w-0 space-y-2" aria-label="Model scope" data-coverage-field="scope">
-      <h2 class="text-base font-semibold text-highlighted">Model scope</h2>
+  <!-- Titled like the About reading's sections, so both Overview readings share one grammar. -->
+  <div class="min-w-0 space-y-6" data-coverage-details>
+    <section class="min-w-0 space-y-2" aria-label="Scope" data-coverage-field="scope">
+      <h2 class="text-base font-semibold text-highlighted">Scope</h2>
       <BlrProse :text="workspace.coverage.scope" />
     </section>
-    <UCollapsible v-if="workspace.coverage.method">
-      <template #default="{ open }">
-        <UButton color="neutral" variant="link" size="sm" class="h-auto px-0 text-muted" aria-label="How this model was authored">
-          <span class="text-sm font-medium">How this model was authored</span>
-          <UIcon name="i-lucide-chevron-down" class="size-4 shrink-0 transition-transform" :class="open && 'rotate-180'" />
-        </UButton>
-      </template>
-      <template #content>
-        <section class="pt-2" aria-label="Method" data-coverage-method>
-          <BlrProse :text="workspace.coverage.method" />
-        </section>
-      </template>
-    </UCollapsible>
+    <section v-if="workspace.coverage.method" class="min-w-0 space-y-2" aria-label="Method" data-coverage-method>
+      <h2 class="text-base font-semibold text-highlighted">Method</h2>
+      <BlrProse :text="workspace.coverage.method" />
+    </section>
   </div>
 </template>

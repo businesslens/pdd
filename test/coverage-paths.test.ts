@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 const statementsModule = '../layers/nuxt/report-viewer/app/utils/coverageStatements.ts'
-const { coverageStatements, coverageStatementIndex, coverageStatementMatches } = await import(statementsModule)
+const { coverageStatements, coverageStatementIndex, coveragePathMatches } = await import(statementsModule)
 const treeModule = '../layers/nuxt/report-viewer/app/utils/coverageTree.ts'
 const { coverageStatementTree } = await import(treeModule)
 const repositoryModule = '../layers/nuxt/report-viewer/app/utils/repositoryTree.ts'
@@ -60,12 +60,13 @@ describe('Coverage as one set of statements', () => {
     expect(at(coverage, '.')).toEqual([])
   })
 
-  it('finds a statement by its own words or by where it is recorded', () => {
-    const [missing] = coverageStatements(coverage).filter((statement: any) => statement.description === 'A missing behavior')
-    expect(coverageStatementMatches(missing, '')).toBe(true)
-    expect(coverageStatementMatches(missing, 'MISSING behavior')).toBe(true)
-    expect(coverageStatementMatches(missing, 'src/b.ts')).toBe(true)
-    expect(coverageStatementMatches(missing, 'future')).toBe(false)
+  it('finds recorded paths as a file finder would, never prose', () => {
+    expect(coveragePathMatches('src/a.ts', '')).toBe(true)
+    expect(coveragePathMatches('src/a.ts', 'SRC/A')).toBe(true)
+    expect(coveragePathMatches('src/', 'src/')).toBe(true)
+    expect(coveragePathMatches('src/a.ts', 'src/')).toBe(true)
+    expect(coveragePathMatches('src', 'src/')).toBe(false)
+    expect(coveragePathMatches('future/new.ts', 'missing behavior')).toBe(false)
   })
 })
 

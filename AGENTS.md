@@ -268,9 +268,9 @@ costed already.
   slideover. A folder never inherits or totals meaning from beneath it. A closed
   folder may point to what is recorded inside it, counting each statement once,
   as a way in rather than a claim about the folder. **An explanation is asked
-  for:** opening a folder reveals paths, not prose, and a search reveals what it
-  matched. Model References are not repeated in Coverage; they belong to the
-  Overview's References reading.
+  for:** opening a folder reveals paths, not prose, and a search finds paths
+  by name and reveals them, never matching prose. Model References are not
+  repeated in Coverage; they belong to the Overview's References reading.
 - **A teaching affordance can be turned off, and never hides the way back.**
   Term tooltips are restored from the Vocabulary panel; the choice is a cookie,
   so the first paint is right.

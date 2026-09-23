@@ -411,14 +411,15 @@ bounded cell rendering on a large matrix, column navigation and mobile resizing.
 
 ### Coverage
 
-Coverage opens with **Model scope**, then a small **How this model was
-authored** disclosure revealing the short Method note when recorded. There is no
+Coverage opens with one summary panel: **Scope**, then **Method** when
+recorded, under the model's own field names, then the four category cards as the
+panel's last row. Method is one short line by format, so it is read rather than
+disclosed. The search and the location tree follow the panel. There is no
 Coverage status badge or derived completeness indicator, in the navbar or the
 Coverage reading, and no separate Rationale or Mapping details.
 
-**Recorded locations** reads the four authored lists as one set of statements
-whose category is an attribute. Its heading counts whole authored statements.
-Four compact cards count Covered, Exclusions, Unmapped and Limitations,
+The reading takes the four authored lists as one set of statements whose
+category is an attribute. Four compact cards count Covered, Exclusions, Unmapped and Limitations,
 including entries with no location, and are the only category filter; selecting
 a card activates it, selecting it again restores every category. Card totals
 never change with search or filtering.
@@ -456,23 +457,27 @@ with its other locations listed as **also recorded at** — one claim about
 several places, printed where each place is read. Recognizable Product Model
 icons and the `.businesslens` mark still mark authored model paths.
 
-Search matches a statement by its own words or by where it is recorded, and
-reveals the explanations it matched and the folders above them — a hidden
-answer is not an answer. The reveal does not rewrite remembered expansion: what
-a reader puts away during a search stays away until the search changes, and
-clearing the search restores the expansion they had. Expand all and Collapse
-all sit beside it and cover both axes: the folders and the explanations.
-Expansion is remembered per report. Statements with no recorded location stay
-visible under **No location recorded**, narrowed by the same card filter and
-search; this includes model-wide Limitations, which have no separate section of
-their own. Model References are not repeated here — they have their home in the
+Search finds recorded paths, as a file finder would: it keeps the paths whose
+name, as written, contains what was typed, and opens every folder above them —
+a hidden answer is not an answer. It never matches statement prose, and it
+narrows paths rather than statements, so a statement recorded at a matched path
+and elsewhere does not bring its other locations into the result; reading it
+still lists them. A matched path's explanation waits to be asked for like any
+other. The reveal does not rewrite remembered expansion: a folder put away
+during a search stays away until the search changes, and clearing the search
+restores the expansion the reader had. Expand all and Collapse all sit beside
+it and cover both axes: the folders and the explanations. Expansion is
+remembered per report. Statements with no recorded location stay visible under
+**No location recorded**, narrowed by the same card filter and set aside while a
+search is active, since they have no path to match; this includes model-wide
+Limitations, which have no separate section of their own. Model References are not repeated here — they have their home in the
 Product Overview's own References reading. No live repository inventory is
 added.
 
 `coverage.path` is navigation state, encoded as `cp`, and deep-links one
 location: its ancestors open, its explanation is read, and the row is marked
 current — on a fresh load too, with no expansion remembered. Selecting that row
-again clears it. Method disclosure does not change the URL. Tree expansion is
+again clears it. Tree expansion is
 remembered for the report. Narrow screens scroll the reading within its frame.
 
 ## Navigation regression checks

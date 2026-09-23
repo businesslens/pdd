@@ -1,12 +1,12 @@
 <script setup lang="ts">
 /**
- * Recorded locations: every authored Coverage statement, written under the path
- * it names.
+ * Coverage in one reading: a summary panel of Scope, Method and the four
+ * category cards, then every authored statement written under the path it names.
  *
  * The four category cards are the only category filter and count whole authored
- * statements, including those with no location. Search matches a statement by
- * its own words or by where it is recorded, so a reader who knows neither the
- * wording nor the folder can still find it.
+ * statements, including those with no location. Search finds recorded paths,
+ * as a file finder would: it narrows the tree to the paths whose name contains
+ * what was typed and opens the folders above them, and never matches prose.
  */
 import type { ReportWorkspace } from '../utils/reportWorkspace'
 import { coverageStatementTree } from '../utils/coverageTree'
@@ -15,7 +15,7 @@ import { repositoryTreeNodes } from '../utils/repositoryTree'
 import {
   COVERAGE_KIND_META,
   COVERAGE_KIND_ORDER,
-  coverageStatementMatches,
+  coveragePathMatches,
   coverageStatements,
   coverageStatementIndex,
   type CoverageStatementKind
@@ -28,16 +28,24 @@ const filter = ref<CoverageStatementKind | null>(null)
 const query = ref('')
 
 const all = computed(() => coverageStatements(props.workspace.coverage))
-const shown = computed(() => all.value
-  .filter(statement => !filter.value || statement.kind === filter.value)
-  .filter(statement => coverageStatementMatches(statement, query.value)))
-const located = computed(() => shown.value.filter(statement => statement.paths.length))
-const unlocated = computed(() => shown.value.filter(statement => !statement.paths.length))
+const searching = computed(() => Boolean(query.value.trim()))
+const shown = computed(() => all.value.filter(statement => !filter.value || statement.kind === filter.value))
+// A search narrows paths, not statements: a statement also recorded elsewhere
+// never drags its other locations into the result.
+const located = computed(() => shown.value
+  .map(statement => ({ ...statement, paths: statement.paths.filter(path => coveragePathMatches(path, query.value)) }))
+  .filter(statement => statement.paths.length))
+// With no path, a statement cannot answer a path search.
+const unlocated = computed(() => searching.value ? [] : shown.value.filter(statement => !statement.paths.length))
 const nodes = computed(() => coverageStatementTree(located.value))
 const branches = computed(() => repositoryTreeNodes(nodes.value).filter(node => node.children.length).map(node => node.value))
 // Indexed once per reading, so each row looks its statements up rather than
-// filtering every statement for every node it draws.
-const index = computed(() => coverageStatementIndex(located.value))
+// filtering every statement for every node it draws. Rows read the authored
+// statements, so "also recorded at" still names every other location.
+const index = computed(() => {
+  const matched = new Set(located.value.flatMap(statement => statement.paths.map(normalizeCoveragePath)))
+  return new Map([...coverageStatementIndex(shown.value)].filter(([path]) => matched.has(path)))
+})
 const statementsAt = (path: string) => index.value.get(normalizeCoveragePath(path)) ?? []
 
 // An explanation is disclosed by its own row, keyed apart from its folder so a
@@ -60,12 +68,12 @@ const expansion = useBlrReferenceExpansion(
   branches
 )
 
-// A search reveals what it matched — every matched explanation and the folders
-// above it, since the narrowed tree holds nothing else — without rewriting the
-// reader's own expansion: what the reader puts away during a search stays away
-// until the search changes, and clearing it restores what they had open.
-const searching = computed(() => Boolean(query.value.trim()))
-const revealed = computed(() => searching.value ? [...branches.value, ...readable.value] : [])
+// A search reveals the paths it matched by opening every folder above them,
+// since the narrowed tree holds nothing else; their explanations still wait to
+// be asked for. It never rewrites the reader's own expansion: a folder put away
+// during a search stays away until the search changes, and clearing it
+// restores what they had open.
+const revealed = computed(() => searching.value ? branches.value : [])
 const dismissed = ref<string[]>([])
 watch(query, () => { dismissed.value = [] })
 const expanded = computed(() => searching.value
@@ -115,42 +123,41 @@ onMounted(() => reveal(props.path))
 
 <template>
   <section class="min-w-0 space-y-3" aria-label="Recorded locations" data-coverage-sources>
-    <div class="flex flex-wrap items-baseline gap-x-2">
-      <h2 class="text-base font-semibold text-highlighted">Recorded locations</h2>
-      <span class="blr-meta">{{ all.length }} statements</span>
-    </div>
-
-    <div class="grid grid-cols-2 gap-2 @xl/coverage:grid-cols-4 @xl/coverage:gap-3" role="group" aria-label="Coverage categories">
-      <button
-        v-for="kind in COVERAGE_KIND_ORDER"
-        :key="kind"
-        type="button"
-        class="blr-coverage-card flex min-w-0 cursor-pointer flex-col items-start gap-0.5 rounded-lg border p-2 text-start transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current @xl/coverage:px-3"
-        :class="COVERAGE_KIND_META[kind].tone"
-        :aria-label="`${COVERAGE_KIND_META[kind].label}: ${workspace.coverage[kind].length}`"
-        :aria-description="COVERAGE_KIND_META[kind].blurb"
-        :aria-pressed="filter === kind"
-        :title="`${COVERAGE_KIND_META[kind].blurb}. ${filter === kind ? 'Click to show every category.' : 'Click to show only these.'}`"
-        :data-coverage-summary="kind"
-        @click="filter = filter === kind ? null : kind"
-      >
-        <span class="flex w-full items-center gap-2">
-          <UIcon :name="COVERAGE_KIND_META[kind].icon" class="size-4.5 shrink-0" />
-          <span class="text-xl font-semibold tabular-nums" data-coverage-summary-count>{{ workspace.coverage[kind].length }}</span>
-          <span class="hidden text-sm font-medium @xl/coverage:inline">{{ COVERAGE_KIND_META[kind].label }}</span>
-          <UIcon name="i-lucide-check" class="ms-auto size-4 shrink-0" :class="filter !== kind && 'invisible'" />
-        </span>
-        <span class="block text-xs font-medium @xl/coverage:hidden">{{ COVERAGE_KIND_META[kind].label }}</span>
-        <span class="hidden text-xs text-muted @xl/coverage:block">{{ COVERAGE_KIND_META[kind].blurb }}</span>
-      </button>
+    <!-- One summary of what the model covers: its authored scope and method, then the four categories. -->
+    <div class="min-w-0 space-y-6 rounded-xl border border-default bg-elevated/20 p-4 @xl/coverage:p-5" data-coverage-summary-panel>
+      <BlrCoverageDetails :workspace="workspace" />
+      <div class="grid grid-cols-2 gap-2 @xl/coverage:grid-cols-4 @xl/coverage:gap-3" role="group" aria-label="Coverage categories">
+        <button
+          v-for="kind in COVERAGE_KIND_ORDER"
+          :key="kind"
+          type="button"
+          class="blr-coverage-card flex min-w-0 cursor-pointer flex-col items-start gap-0.5 rounded-lg border p-2 text-start transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current @xl/coverage:px-3"
+          :class="COVERAGE_KIND_META[kind].tone"
+          :aria-label="`${COVERAGE_KIND_META[kind].label}: ${workspace.coverage[kind].length}`"
+          :aria-description="COVERAGE_KIND_META[kind].blurb"
+          :aria-pressed="filter === kind"
+          :title="`${COVERAGE_KIND_META[kind].blurb}. ${filter === kind ? 'Click to show every category.' : 'Click to show only these.'}`"
+          :data-coverage-summary="kind"
+          @click="filter = filter === kind ? null : kind"
+        >
+          <span class="flex w-full items-center gap-2">
+            <UIcon :name="COVERAGE_KIND_META[kind].icon" class="size-4.5 shrink-0" />
+            <span class="text-xl font-semibold tabular-nums" data-coverage-summary-count>{{ workspace.coverage[kind].length }}</span>
+            <span class="hidden text-sm font-medium @xl/coverage:inline">{{ COVERAGE_KIND_META[kind].label }}</span>
+            <UIcon name="i-lucide-check" class="ms-auto size-4 shrink-0" :class="filter !== kind && 'invisible'" />
+          </span>
+          <span class="block text-xs font-medium @xl/coverage:hidden">{{ COVERAGE_KIND_META[kind].label }}</span>
+          <span class="hidden text-xs text-muted @xl/coverage:block">{{ COVERAGE_KIND_META[kind].blurb }}</span>
+        </button>
+      </div>
     </div>
 
     <div class="flex min-w-0 items-center gap-2 py-1" role="group" aria-label="Location controls">
       <UInput
         v-model="query"
         icon="i-lucide-search"
-        placeholder="Find a statement or a path…"
-        aria-label="Find Coverage statements"
+        placeholder="Find a path…"
+        aria-label="Find recorded paths"
         size="sm"
         class="min-w-48 flex-1"
       />
@@ -180,7 +187,7 @@ onMounted(() => reveal(props.path))
       </ul>
     </div>
     <p v-else class="text-sm text-muted">
-      {{ query ? 'No statements match this search.' : filter ? 'No recorded locations in this category.' : 'No repository paths recorded.' }}
+      {{ query ? 'No recorded path matches this search.' : filter ? 'No recorded locations in this category.' : 'No repository paths recorded.' }}
     </p>
 
     <section v-if="unlocated.length" class="min-w-0 space-y-3 border-t border-default pt-4" aria-label="No location recorded">

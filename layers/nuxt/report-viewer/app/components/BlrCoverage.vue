@@ -14,7 +14,6 @@ function selectPath(path: string | null) {
 
 <template>
   <section class="@container/coverage min-w-0 space-y-5 pb-4" aria-label="Coverage" data-product-coverage>
-    <BlrCoverageDetails :workspace="workspace" />
     <BlrCoverageSources :workspace="workspace" :path="reading.path" @select-path="selectPath" />
   </section>
 </template>

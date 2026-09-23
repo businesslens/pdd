@@ -254,20 +254,15 @@ try {
         await expect(coverage.locator('[data-repository-tree]')).toBeVisible()
         await expect(page.getByRole('dialog')).toHaveCount(0)
         const details = page.locator('[data-coverage-details]')
-        await expect(details.getByRole('heading', { name: 'Model scope', exact: true })).toBeVisible()
+        await expect(details.getByRole('heading', { name: 'Scope', exact: true })).toBeVisible()
         await expect(details.getByRole('region', { name: 'Status', exact: true })).toHaveCount(0)
         await expect(coverage.getByRole('tab')).toHaveCount(0)
         await expect(coverage.getByRole('combobox', { name: 'Filter coverage sources' })).toHaveCount(0)
         for (const kind of ['covered', 'exclusions', 'unmapped']) {
           await expect(coverage.locator(`[data-coverage-summary="${kind}"] [data-coverage-summary-count]`)).toHaveText(String(report.coverage[kind].length))
         }
-        const authoring = details.getByRole('button', { name: 'How this model was authored', exact: true })
-        if (report.coverage.method) {
-          await expect(authoring).toHaveAttribute('aria-expanded', 'false')
-          await authoring.click()
-          await expect(details.locator('[data-coverage-method]')).toBeVisible()
-          await authoring.click()
-        } else await expect(authoring).toHaveCount(0)
+        // Method is read, not disclosed, and absent when not recorded.
+        await expect(details.locator('[data-coverage-method]')).toHaveCount(report.coverage.method ? 1 : 0)
 
       }
       await capture(page, `${width}-product-${mode}`)

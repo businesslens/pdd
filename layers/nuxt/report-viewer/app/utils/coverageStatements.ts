@@ -85,10 +85,11 @@ export function coverageStatementIndex(statements: CoverageStatement[]) {
   return index
 }
 
-/** Statements a search matches, by their own words or by where they are recorded. */
-export function coverageStatementMatches(statement: CoverageStatement, query: string) {
+/**
+ * A recorded path a search finds: its name contains the query, as in a file
+ * finder. It is matched as written, so a folder keeps its trailing `/`.
+ */
+export function coveragePathMatches(path: string, query: string) {
   const needle = query.trim().toLowerCase()
-  if (!needle) return true
-  return statement.description.toLowerCase().includes(needle)
-    || statement.paths.some(location => location.toLowerCase().includes(needle))
+  return !needle || path.toLowerCase().includes(needle)
 }
