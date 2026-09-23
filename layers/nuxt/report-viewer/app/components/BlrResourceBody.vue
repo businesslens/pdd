@@ -18,6 +18,7 @@ import type {
 } from '../utils/reportWorkspace'
 import { isScenarioKind, resolveResource, scenarioStepMatrix } from '../utils/reportWorkspace'
 import { scenarioTerm } from '../utils/vocabulary'
+import { joinStateMoves } from '../utils/entityEffectPhrase'
 import { hasAuthoredBody } from '../utils/pageSections'
 import { deliveryOf, screenChanges } from '../utils/placeReadings'
 import {
@@ -90,7 +91,9 @@ const capabilityEffects = computed(() => props.resource.kind !== 'capability'
   ? []
   : asCapability.value.entityEffects.map(line => ({
       ...line,
-      title: resolveResource(props.workspace, 'entity', line.entityId)?.title ?? line.entityId
+      title: resolveResource(props.workspace, 'entity', line.entityId)?.title ?? line.entityId,
+      /* Moves that meet join into one run, so no State is named twice in a row. */
+      effects: joinStateMoves(line.effects)
     })))
 
 /* The Entities a Capability only reads, as one row beneath the changes; and
@@ -480,7 +483,7 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
         >
           <BlrEntityChip v-if="entityChip(line.entityId)" :entity="entityChip(line.entityId)!" @select="emit('select', $event)" />
           <span v-else class="text-default">{{ line.title }}</span>
-          <template v-for="(effect, index) in line.effects" :key="`${effect.effect}-${effect.from}-${effect.to}`">
+          <template v-for="(effect, index) in line.effects" :key="`${effect.effect}-${(effect.path ?? [effect.from, effect.to]).join('>')}`">
             <span v-if="index" aria-hidden="true" class="text-dimmed">·</span>
             <BlrEntityEffect :mention="effect" />
           </template>

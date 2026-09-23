@@ -359,6 +359,8 @@ Changes made here and a Capability's What it changes — reads Entity first: the
 Entity chip, a plain verb, then each State as a badge, as in
 `[Source] created [Reachable]`, `[Item] changed [Read] → [Unread]` or
 `[Collection] read`. An ending names where the thing rests: `[Item] in [Unread]`.
+What it changes joins a Capability's moves where one ends and the next begins,
+so no State is named twice in a row: `[Item] changed [Unread] → [Read] → [Unread]`.
 The facts a Step cites on a read or change follow the phrase; the terminal
 reading names none.
 Scenario titles use 16px semibold text, section labels 13px semibold, and body

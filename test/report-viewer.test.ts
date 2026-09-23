@@ -1558,6 +1558,16 @@ describe('Screens on the v14 wire', () => {
     expect(words(entityEffectParts({ effect: 'removes', from: 'Archived', to: '' }, true))).toBe('removed')
     expect(words(entityEffectParts({ effect: 'reads', from: '', to: '' }))).toBe('read')
     expect(entityEffectParts({ effect: 'changes', from: 'Read', to: 'Unread' }).filter((part: any) => part.from)).toHaveLength(1)
+    expect(words(entityEffectParts({ effect: 'changes', from: 'Unread', to: 'Unread', path: ['Unread', 'Read', 'Unread'] }))).toBe('changed [Unread] → [Read] → [Unread]')
+    /* A Capability's moves join where one ends and the next begins. */
+    const { joinStateMoves } = await import(entityEffectPhraseModulePath)
+    const run = (effects: any[]) => joinStateMoves(effects).map((item: any) => item.path ? item.path.join('→') : `${item.effect}:${item.from}→${item.to}`)
+    const move = (from: string, to: string) => ({ effect: 'changes', from, to })
+    expect(run([move('Unread', 'Read'), move('Read', 'Unread')])).toEqual(['Unread→Read→Unread'])
+    expect(run([move('Read', 'Archived'), move('Unread', 'Read')])).toEqual(['Unread→Read→Archived'])
+    expect(run([{ effect: 'creates', from: '', to: 'Draft' }, move('Draft', 'Live'), move('Draft', 'Gone')]))
+      .toEqual(['creates:→Draft', 'changes:Draft→Live', 'changes:Draft→Gone'])
+    expect(run([move('A', 'B')])).toEqual(['changes:A→B'])
     /* Every surface that says what happened to an Entity draws this one phrase. */
     expect(source('app/components/BlrScenarioStep.vue')).not.toContain('in state')
     expect(source('app/components/BlrScenarioSummary.vue')).not.toContain('Created in')
