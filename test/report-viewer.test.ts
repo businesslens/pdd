@@ -1698,7 +1698,7 @@ describe('Screens on the v14 wire', () => {
     expect(mark).toContain('i-lucide-anchor')
     expect(source('nuxt.config.ts')).toContain("'lucide:anchor'")
     expect(source('app/components/BlrResourceTree.vue')).toContain('<BlrNavigationMark')
-    expect(source('app/components/BlrResourceSlideover.vue')).toContain('<BlrNavigationMark')
+    expect(source('app/components/BlrResourceHeading.vue')).toContain('<BlrNavigationMark')
     for (const file of ['app/utils/topologyProjections.ts', 'app/utils/placeReadings.ts', 'app/utils/uiMap.ts']) expect(source(file)).not.toContain('navigationIds')
     /* The map marks the node and draws no arrow for it. */
     expect(source('app/components/BlrFlowNodeContent.vue')).toContain('<BlrNavigationMark v-if="node.navigation"')

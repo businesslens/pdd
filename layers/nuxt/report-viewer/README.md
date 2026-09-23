@@ -19,12 +19,12 @@ Back restores the previous resource and its tab and reading position.
 Close, Escape or a click outside returns to the preserved working view. Resource links support the
 browser's new-tab and copy-link actions. The compact header keeps the resource's
 identity on the left and named-view actions beside Expand and Close.
-Related Domains appear as linked names with their type icons in every resource
-header, keeping that context visible across tabs and separate from ownership.
-The first Domain always appears by name; any remaining Domains open from a
-`+N more` button. A single Domain needs no overflow button. The same first Domain
-stays visible at every panel width, with an ellipsis for a long name when space
-is tight and its full name available on hover. The popover preserves normal resource links;
+Under the title, one short line says where the resource belongs: its type, then
+the nearest place containing it with that place's own mark — `Screen in [Screen]
+Add source` — and its related Domains as marks. The full containing path is the
+nearest place's tooltip, and the place opens. The first Domain mark opens its
+Domain and names it on hover; any remaining Domains open from a `+N` count, and
+a single Domain needs none. The popover preserves normal resource links;
 Escape dismisses it before the resource reading.
 Entities and Capabilities show their assigned Domain; other resources show the
 Domains reached through their Capabilities or Rule targets. A Scenario uses its

@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Product Reports are now version 14.
 - Every Screen, Interface and Experience has a Sketch, a rough view derived from the model, and every Scenario route can be read as a Storyboard of Sketches.
 - The report says what happens to an Entity the same way everywhere: the Entity, what happened to it, then its State.
+- Resource headers take one short line to say where a resource belongs: its type, the nearest place holding it, and its Domains.
 
 ## [0.21.0] - 2026-09-21
 

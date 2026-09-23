@@ -2,7 +2,6 @@
 import type { AnyResourceView, ReportWorkspace } from '../utils/reportWorkspace'
 import { ENTITY_KIND_META } from '../utils/reportWorkspace'
 import { resourceViewLinks } from '../utils/reportDestinations'
-import { KIND_TERM } from '../utils/vocabulary'
 import { parentOf } from '../utils/pageSections'
 import { referenceHref } from '../utils/referenceNavigation'
 
@@ -103,16 +102,7 @@ function open(resource: AnyResourceView) { save(); emit('open', resource) }
           <UTooltip v-if="previous" :text="`Back to ${previous.title}`">
             <UButton icon="i-lucide-arrow-left" color="neutral" variant="ghost" size="sm" class="-ms-1 shrink-0" :aria-label="`Back to ${previous.title}`" @click="save(); emit('back')" />
           </UTooltip>
-          <div class="flex min-w-0 flex-1 items-start gap-2 pt-0.5">
-            <BlrKind :kind="resource.kind" :interface-type="resource.kind === 'interface' ? resource.interfaceType : undefined" :labelled="false" class="mt-0.5 shrink-0" />
-            <div class="min-w-0 flex-1">
-              <h2 ref="heading" tabindex="-1" class="flex min-w-0 items-start gap-2 text-base leading-6 font-semibold text-highlighted outline-none" data-resource-heading>
-                <span class="min-w-0 break-words" data-resource-title>{{ resource.title }}</span>
-                <BlrTerm :slug="KIND_TERM[resource.kind]" :text="resource.title" icon-only />
-                <BlrNavigationMark v-if="resource.kind === 'screen' && resource.alwaysReachable" class="mt-1 shrink-0" />
-              </h2>
-            </div>
-          </div>
+          <BlrResourceHeading ref="heading" :workspace="workspace" :resource="resource" @open="open" />
           <div class="blr-resource-actions flex shrink-0 items-center gap-1">
             <UTooltip v-for="link in exits" :key="link.section" :text="link.name">
               <UButton :label="link.name" :aria-label="link.name" :icon="link.icon" color="neutral" variant="ghost" size="sm" :ui="{ label: 'blr-resource-action-label text-xs' }" @click="subject && emit('view', link.section, subject)" />
@@ -124,7 +114,6 @@ function open(resource: AnyResourceView) { save(); emit('open', resource) }
               <UButton icon="i-lucide-x" color="neutral" variant="ghost" size="sm" aria-label="Close resource" @click="save(); emit('close')" />
             </UTooltip>
           </div>
-          <BlrResourceContext :key="resource.key" :workspace="workspace" :resource="resource" class="blr-resource-context mt-0.5 ps-[calc(var(--blr-resource-mark-regular)+0.5rem)]" :class="previous ? 'col-start-2' : 'col-start-1'" @open="open" />
         </header>
         <div ref="tabsTarget" v-show="!reference" class="blr-resource-tabs shrink-0" data-page-tabs-host />
         <div ref="pane" v-show="!reference" class="blr-pane min-h-0 flex-1 p-5" data-resource-scroll @scroll.capture.passive="!reference && save()">
@@ -186,7 +175,5 @@ function open(resource: AnyResourceView) { save(); emit('open', resource) }
 @container (max-width: 479px) {
   .blr-resource-panel > header { gap: 0.25rem; padding-inline: 0.75rem; }
   .blr-resource-actions { gap: 0; }
-  /* Long type names and ownership still need room beside the Domain count. */
-  .blr-resource-context { grid-column: 1 / -1; }
 }
 </style>

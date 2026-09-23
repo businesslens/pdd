@@ -9,6 +9,15 @@ accident.
 
 There are no active report experiments in this layer.
 
+The **Resource heading** audition is decided: Nearest place is the stable
+header. Under the title, one short line names the type and the nearest place
+containing the resource, with that place's own mark — `Screen in [Screen] Add
+source` — and the Domains as marks, the first opening its Domain and the rest
+behind a count. The full containing path is the nearest place's tooltip. The
+stable `BlrResourceContext` draws it inside `BlrResourceHeading`; the two-line
+path, eyebrow, path title and type chip alternatives, the row, cookie
+composable, variant list and shadows have been removed.
+
 The **Entity effect** audition is decided: Entity first is the stable phrasing.
 The Entity chip comes first, then a plain verb, then each State as a badge —
 `[Source] created [Reachable]`, `[Item] changed [Read] → [Unread]`,
