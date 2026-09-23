@@ -1,4 +1,5 @@
 import * as z from 'zod'
+import { undeclaredEntityMentions } from './entity-mentions.js'
 import { parseCodeTarget } from './coderefs.js'
 import { containsPlace, interfaceOf, parentPlace } from './ids.js'
 import { containsStructuralHeading, statesAnExclusion } from './markdown.js'
@@ -940,6 +941,12 @@ export function validateProductReport(report: ProductReportV14): string[] {
         }
         if (entry.effect === 'removes') instanceStates.delete(instance)
         else if (entry.to !== null) instanceStates.set(instance, entry.to)
+      }
+
+      for (const entity of undeclaredEntityMentions(
+        step.text, model.entities, step.entities.map(entry => entry.entityId), step.actorId
+      )) {
+        issues.push(`${stepLabel}: text names "${entity.title}" and "entities" does not declare it`)
       }
 
       requireUniqueValues(issues, stepLabel, 'routeIds', step.contexts.map(context => context.routeId))

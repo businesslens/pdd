@@ -544,6 +544,17 @@ describe('projectPortableReport', () => {
     }
   })
 
+  it.each(['capabilityScenarios', 'journeyScenarios'] as const)('rejects undeclared Entity titles in %s before expansion', collection => {
+    const tampered = structuredClone(report)
+    const step = tampered.model[collection][0]!.steps[0]!
+    const entity = tampered.model.entities.find(entity => entity.id !== step.actorId
+      && !step.entities.some(entry => entry.entityId === entity.id))!
+    step.text += ` beside the ${entity.title}`
+    const message = `text names "${entity.title}" and "entities" does not declare it`
+    expect(sdk.validateProductReport(tampered).join('\n')).toContain(message)
+    expect(() => sdk.parseProductReport(sdk.projectPortableReport(tampered))).toThrow(message)
+  })
+
   it('checks what a Scenario step claims against the Entity it names', () => {
     const moveOf = (value: ProductReportV14) => {
       for (const scenario of [...value.model.capabilityScenarios, ...value.model.journeyScenarios]) {

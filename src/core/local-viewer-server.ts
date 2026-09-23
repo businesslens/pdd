@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process'
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http'
-import { lstatSync, readFileSync, watch, type FSWatcher } from 'node:fs'
+import { lstatSync, readFileSync, watch, watchFile, unwatchFile, type FSWatcher, type Stats } from 'node:fs'
 import { basename, extname, relative, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { createRequire } from 'node:module'
@@ -78,8 +78,8 @@ export interface LocalViewer {
 
 /** Everything about one model: what to compile, and where to watch and read. */
 export type LocalViewerBinding = Pick<LocalViewerOptions,
-  'compile' | 'initialReport' | 'watchRoot' | 'logoFile' | 'assetRoot'>
-const BINDING_KEYS = ['compile', 'initialReport', 'watchRoot', 'logoFile', 'assetRoot'] as const
+  'compile' | 'initialReport' | 'watchRoot' | 'gitIndexFile' | 'logoFile' | 'assetRoot'>
+const BINDING_KEYS = ['compile', 'initialReport', 'watchRoot', 'gitIndexFile', 'logoFile', 'assetRoot'] as const
 
 export interface LocalViewerOptions {
   port?: number
@@ -89,6 +89,8 @@ export interface LocalViewerOptions {
   waitingMessage?: string
   initialReport?: ProductReportV14
   watchRoot?: string
+  /** Git's resolved index path, including a linked worktree's private index. */
+  gitIndexFile?: string
   debounceMs?: number
   viewerRoot?: string
   logoFile?: string
@@ -128,6 +130,7 @@ class LocalReportStore {
   private revision = 0
   private timer?: ReturnType<typeof setTimeout>
   private watcher?: FSWatcher
+  private indexWatcher?: (current: Stats, previous: Stats) => void
   private readonly listeners = new Set<(event: ReportEvent) => void>()
 
   constructor(private readonly options: LocalViewerOptions) {
@@ -158,21 +161,36 @@ class LocalReportStore {
 
   private attach(): void {
     const options = this.options
+    let forceNotify = false
+    const schedule = (force = false) => {
+      forceNotify ||= force
+      if (this.timer) clearTimeout(this.timer)
+      this.timer = setTimeout(() => {
+        const force = forceNotify
+        forceNotify = false
+        this.refresh(true, force)
+      }, options.debounceMs ?? 180)
+    }
     if (options.watchRoot) {
       this.watcher = watch(options.watchRoot, { recursive: true }, (_event, filename) => {
         if (!this.isModelSource(filename)) return
-        const forceNotify = this.isLogoSource(filename)
-        if (this.timer) clearTimeout(this.timer)
-        this.timer = setTimeout(
-          () => this.refresh(true, forceNotify),
-          options.debounceMs ?? 180
-        )
+        schedule(this.isLogoSource(filename))
       })
       this.watcher.on('error', error => this.reject(`File watching failed: ${error.message}`))
+    }
+    if (options.gitIndexFile) {
+      // Git replaces its index atomically; stat polling follows replacements
+      // and also handles an unborn repository whose index does not exist yet.
+      this.indexWatcher = () => schedule()
+      watchFile(options.gitIndexFile, { interval: 500, persistent: false }, this.indexWatcher)
     }
   }
 
   private detach(): void {
+    if (this.indexWatcher && this.options.gitIndexFile) {
+      unwatchFile(this.options.gitIndexFile, this.indexWatcher)
+    }
+    this.indexWatcher = undefined
     if (this.timer) clearTimeout(this.timer)
     this.timer = undefined
     this.watcher?.close()

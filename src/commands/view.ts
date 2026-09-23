@@ -1,5 +1,5 @@
 import { compileResolvedWorkspaceReport } from './export.js'
-import { repoRoot } from '../core/git.js'
+import { git, repoRoot } from '../core/git.js'
 import { openBrowser, startLocalViewer, type LocalViewerBinding } from '../core/local-viewer-server.js'
 import { findModelRoot, resolveModelRoot, type ModelRoot } from '../core/model-root.js'
 
@@ -11,8 +11,8 @@ import {
   type GithubSnapshot
 } from '../core/github-repository.js'
 import { UsageError } from '../core/usage-error.js'
-import { statSync } from 'node:fs'
-import { join } from 'node:path'
+import { existsSync, statSync } from 'node:fs'
+import { dirname, join, resolve } from 'node:path'
 
 export interface ViewOptions {
   port?: number
@@ -86,8 +86,7 @@ function resolveSource(cwd: string, options: ViewOptions): ViewSource {
 }
 
 /**
- * How often a viewer with no model yet looks for one. Cheap: at most two
- * `existsSync` calls against a repository root resolved once, never Git.
+ * Look for a model or a newly initialized repository without polling Git.
  */
 const LOCATE_INTERVAL_MS = 500
 
@@ -96,6 +95,9 @@ function bindingFor(resolved: ModelRoot): LocalViewerBinding {
   return {
     compile: () => compileResolvedWorkspaceReport(resolved),
     watchRoot: join(resolved.modelRoot, '.businesslens'),
+    gitIndexFile: resolved.gitRoot
+      ? resolve(resolved.gitRoot, git(resolved.gitRoot, 'rev-parse', '--git-path', 'index'))
+      : undefined,
     logoFile: join(resolved.modelRoot, '.businesslens', 'product', 'logo.svg'),
     // Reference targets resolve against the repository, not the model root —
     // the same base `lint` lists tracked files from — and implementation
@@ -126,7 +128,7 @@ export async function runView(cwd: string, options: ViewOptions): Promise<number
       port: options.port,
       initialReport,
       waitingMessage: `No Product Model yet. The report will appear when ${expected.join(' or ')} is created — use businesslens-map for established code or businesslens-ideate for a new product.`,
-      ...(resolved ? { ...bindingFor(resolved), ...(snapshot ? { watchRoot: undefined } : {}) } : {})
+      ...(resolved ? { ...bindingFor(resolved), ...(snapshot ? { watchRoot: undefined, gitIndexFile: undefined } : {}) } : {})
     })
     console.log(`Viewing ${source.subject} at ${viewer.url}`)
     if (!resolved) {
@@ -138,20 +140,36 @@ export async function runView(cwd: string, options: ViewOptions): Promise<number
     if (options.open) openBrowser(viewer.url)
 
     let locating: ReturnType<typeof setInterval> | undefined
-    if (!resolved) {
+    if (!snapshot && (!resolved || !resolved.gitRoot)) {
+      let bound = resolved
+      let discoveredGitRoot = gitRoot
+      // Git can be initialized after the model, including in a parent folder.
+      // Filesystem probes keep loose models cheap; run Git only when a marker exists.
+      const markers: string[] = []
+      for (let directory = resolve(cwd); ; directory = dirname(directory)) {
+        markers.push(join(directory, '.git'))
+        if (dirname(directory) === directory) break
+      }
       locating = setInterval(() => {
-        const found = findModelRoot(cwd, gitRoot)
-        if (!found) return
         try {
+          if (!discoveredGitRoot && markers.some(marker => existsSync(marker))) {
+            discoveredGitRoot = repoRoot(cwd)
+          }
+          const found = bound
+            ? { ...bound, gitRoot: discoveredGitRoot }
+            : findModelRoot(cwd, discoveredGitRoot)
+          if (!found || (bound && bound.gitRoot === found.gitRoot)) return
           viewer.bind(bindingFor(found))
+          bound = found
+          if (found.gitRoot) {
+            clearInterval(locating)
+            locating = undefined
+          }
+          console.log(`Found the Product Model at ${join(found.modelRoot, '.businesslens')}.`)
         } catch (error) {
           // The directory can vanish between finding and watching it; keep waiting.
-          console.error(`Could not open ${join(found.modelRoot, '.businesslens')}: ${(error as Error).message}`)
-          return
+          console.error(`Could not open the Product Model: ${(error as Error).message}`)
         }
-        clearInterval(locating)
-        locating = undefined
-        console.log(`Found the Product Model at ${join(found.modelRoot, '.businesslens')}.`)
       }, LOCATE_INTERVAL_MS)
     }
 

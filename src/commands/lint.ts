@@ -1,3 +1,4 @@
+import { undeclaredEntityMentions } from '../core/entity-mentions.js'
 import type { Context } from '../core/frontmatter.js'
 import { repositoryReferencePath } from '../core/frontmatter.js'
 import type {
@@ -31,10 +32,6 @@ const INTERFACE_TYPE_SET = new Set<string>(INTERFACE_TYPES)
 
 function sameSet(left: Set<string>, right: Set<string>): boolean {
   return left.size === right.size && [...left].every(value => right.has(value))
-}
-
-function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
 /** Pure structural rule engine over a loaded model; trackedFiles injected for testability. */
@@ -863,27 +860,13 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
        * actor is exempt, and so is "The Product", which every Product Step opens
        * with by convention.
        */
-      const declared = new Set(step.entities.map(entry => entry.entity))
-      const scrubbed = step.text.replace(/\bthe Product\b/gi, ' ')
-      const titleSpans = (title: string): Array<[number, number]> => {
-        const pattern = new RegExp(`(?:^|[^a-z0-9])(${escapeRegExp(title)}(?:'s|s)?)(?=$|[^a-z0-9])`, 'gi')
-        return [...scrubbed.matchAll(pattern)].map(match => {
-          const start = match.index + match[0].length - match[1]!.length
-          return [start, start + match[1]!.length]
-        })
-      }
-      /* A declared title that contains the match covers it: "Product Model"
-         declared says nothing about "Product". */
-      const covered = model.entities
-        .filter(entity => entity.doc.title && (declared.has(entity.id) || entity.id === step.actor))
-        .flatMap(entity => titleSpans(entity.doc.title))
-      for (const entity of model.entities) {
-        if (!entity.doc.title || declared.has(entity.id) || entity.id === step.actor) continue
-        const exposed = titleSpans(entity.doc.title).some(([start, end]) =>
-          !covered.some(([from, to]) => from <= start && end <= to))
-        if (!exposed) continue
-        const finding = `${label}: text names "${entity.doc.title}" and "entities" does not declare it`
-        errors.push(finding)
+      for (const entity of undeclaredEntityMentions(
+        step.text,
+        model.entities.map(entity => ({ id: entity.id, title: entity.doc.title })),
+        step.entities.map(entry => entry.entity),
+        step.actor
+      )) {
+        errors.push(`${label}: text names "${entity.title}" and "entities" does not declare it`)
       }
 
       const capabilityId = implicitCapability || step.capability

@@ -37,6 +37,8 @@ the Git repository root. Valid edits appear automatically while the viewer is
 open; a lint error keeps the last valid report on screen until it is fixed.
 With no model yet, or one that does not lint, the page waits and shows the
 report once there is a valid one.
+Initializing Git after opening the viewer, or staging referenced files, also
+updates the report without restarting it.
 See [Choosing the Product Model](./cli.md#choosing-the-product-model) for
 `--cwd`.
 

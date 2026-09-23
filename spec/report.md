@@ -119,6 +119,11 @@ invalid. The report is expanded straight into an authored folder, so a report
 that carries an edge the folder rules reject would produce a `.businesslens/`
 that fails `lint` on arrival.
 
+Validation also rejects Step text naming an Entity title without declaring it
+in `entities`, using the folder rule's same title matching and exceptions:
+the Step's own Actor, “the Product”, and a title contained within a longer
+declared Entity or Actor title do not require another declaration.
+
 Two Entities declaring relations at each other is **not** refused here. It is
 usually one relationship written twice, and sometimes two genuinely different
 relationships between one pair, and nothing structural tells those apart.
