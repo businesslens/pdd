@@ -9,6 +9,26 @@
 }
 
 /*
+  Coverage categories keep their families — green, blue, orange, red — at
+  saturations chosen to stay apart from each other at icon size, not borrowed
+  from the semantic palette, whose deep shades of green and sky, and of amber
+  and terracotta, read alike. Each clears 4.5:1 on its own background.
+*/
+:root {
+  --blr-coverage-covered: #137436;
+  --blr-coverage-exclusions: #1560b3;
+  --blr-coverage-unmapped: #ad4d08;
+  --blr-coverage-limitations: #b0241b;
+}
+
+.dark {
+  --blr-coverage-covered: #4ade80;
+  --blr-coverage-exclusions: #6cb2f8;
+  --blr-coverage-unmapped: #fda34b;
+  --blr-coverage-limitations: #f7766b;
+}
+
+/*
   One scale owns resource identity everywhere in the Product Report. A concrete
   Interface needs a slightly larger frame because its authored type sits on top
   of the kind icon. An Actor does not: its second authored axis is written as a

@@ -26,6 +26,7 @@ export interface CoverageKindMeta {
   singular: string
   /** What the category means, in the format's own terms. */
   blurb: string
+  /** One mark per category wherever it appears, each with its own outline. */
   icon: string
   tone: string
 }
@@ -36,28 +37,28 @@ export const COVERAGE_KIND_META: Record<CoverageStatementKind, CoverageKindMeta>
     singular: 'Covered',
     blurb: 'Represented in the model',
     icon: 'i-lucide-circle-check',
-    tone: '[--coverage-accent:var(--ui-color-success-800)] dark:[--coverage-accent:var(--ui-color-success-300)]'
+    tone: '[--coverage-accent:var(--blr-coverage-covered)]'
   },
   exclusions: {
     label: 'Exclusions',
     singular: 'Excluded',
     blurb: 'Approved omissions',
-    icon: 'i-lucide-circle-slash',
-    tone: '[--coverage-accent:var(--ui-color-info-800)] dark:[--coverage-accent:var(--ui-color-info-300)]'
+    icon: 'i-lucide-square-minus',
+    tone: '[--coverage-accent:var(--blr-coverage-exclusions)]'
   },
   unmapped: {
     label: 'Unmapped',
     singular: 'Unmapped',
     blurb: 'Known modeling gaps',
     icon: 'i-lucide-circle-dashed',
-    tone: '[--coverage-accent:var(--ui-color-warning-800)] dark:[--coverage-accent:var(--ui-color-warning-300)]'
+    tone: '[--coverage-accent:var(--blr-coverage-unmapped)]'
   },
   limitations: {
     label: 'Limitations',
     singular: 'Limitation',
     blurb: 'Uncertainty in what could be established',
-    icon: 'i-lucide-circle-help',
-    tone: '[--coverage-accent:var(--ui-color-secondary-800)] dark:[--coverage-accent:var(--ui-color-secondary-300)]'
+    icon: 'i-lucide-triangle-alert',
+    tone: '[--coverage-accent:var(--blr-coverage-limitations)]'
   }
 }
 

@@ -423,11 +423,18 @@ including entries with no location, and are the only category filter; selecting
 a card activates it, selecting it again restores every category. Card totals
 never change with search or filtering.
 
+Each category has one mark, drawn wherever the category appears — on its card,
+beside a path and on a statement's chip — and each has its own outline, so a
+category reads by shape as well as colour: Covered a checked circle, Exclusions
+a square with a minus, Unmapped a dashed circle and Limitations a warning
+triangle. Their colours keep the green, blue, orange and red families at
+saturations chosen to stay apart from one another at icon size.
+
 Every statement is written under the path it names, and there is no path panel.
-A row carries a filled dot per category recorded at that **exact** path, beside
-how many statements that is when there are several — one dot already says there
-is one, so a lone `1` is not printed, though the control still names the count
-to a screen reader. Those dots, that count and the chevron are the row's one
+A row carries the mark of each category recorded at that **exact** path, beside
+how many statements that is when there are several — one mark already says
+there is one, so a lone `1` is not printed, though the control still names the
+count to a screen reader. Those marks, that count and the chevron are the row's one
 control: a row's own marks are what a reader reaches for to read it, and they
 exist exactly when it has something to disclose. The row's path is a larger
 pointer target for the same control, not a second tab stop. Selecting either
@@ -437,7 +444,7 @@ path of a folder with nothing recorded at it opens or closes the folder.
 A folder never inherits meaning from beneath it, because a count of "entries at
 or below" presented as a folder's own annotation is neither files nor a share of
 what the folder contains. A **closed** folder additionally says how many
-distinct statements are recorded inside it, drawn as hollow dots and a muted
+distinct statements are recorded inside it, drawn as faded marks and a muted
 `N inside`. That is a way in, not a claim about the folder: it disappears when
 the folder opens, selecting it expands the folder rather than reading anything,
 and one statement recorded at three paths below counts once. Opening a folder

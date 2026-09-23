@@ -3,9 +3,9 @@
  * One recorded location, with everything authored about it kept behind its own
  * disclosure.
  *
- * A row carries filled dots for the categories recorded at that exact path.
- * A closed folder also says how much is hidden under it, drawn hollow and
- * muted: that is navigation — a reason to open the folder — and never the
+ * A row carries the icons of the categories recorded at that exact path. A
+ * closed folder also says how much is hidden under it, drawn faded and muted:
+ * that is navigation — a reason to open the folder — and never the
  * folder's own meaning, which is why it disappears the moment the folder opens
  * and why selecting it expands the folder rather than reading anything. It
  * counts distinct statements, so one claim recorded at three paths below counts
@@ -110,7 +110,7 @@ function select() {
         @click="select"
       >{{ label }}</span>
       <!--
-        The dots, the count and the chevron are the row's one control: its
+        The icons, the count and the chevron are the row's one control: its
         marks are what a reader reaches for, and they exist exactly when there
         is something to disclose. The path above is only a larger pointer target
         for it, so keyboard and screen-reader users meet one stop per row.
@@ -125,16 +125,17 @@ function select() {
         @click="read"
       >
         <span class="flex shrink-0 items-center gap-1">
-          <span
+          <UIcon
             v-for="kind in kinds"
             :key="kind"
-            class="blr-coverage-dot size-2 rounded-full"
+            :name="COVERAGE_KIND_META[kind].icon"
+            class="blr-coverage-mark size-3.5 shrink-0"
             :class="COVERAGE_KIND_META[kind].tone"
             :title="`${COVERAGE_KIND_META[kind].label} recorded here`"
             :data-coverage-kind="kind"
           />
         </span>
-        <!-- Counts where the set is many: one dot already says there is one. -->
+        <!-- Counts where the set is many: one icon already says there is one. -->
         <span v-if="here.length > 1" class="blr-meta">{{ here.length }}</span>
         <UIcon name="i-lucide-chevron-down" class="size-3.5 shrink-0 transition-transform" :class="reading && 'rotate-180'" />
       </button>
@@ -148,10 +149,11 @@ function select() {
         @click="emit('toggle', node.value)"
       >
         <span class="flex items-center gap-1">
-          <span
+          <UIcon
             v-for="kind in kindsBelow"
             :key="kind"
-            class="blr-coverage-hollow size-2 rounded-full"
+            :name="COVERAGE_KIND_META[kind].icon"
+            class="blr-coverage-inside size-3.5 shrink-0"
             :class="COVERAGE_KIND_META[kind].tone"
             :data-coverage-kind-inside="kind"
           />
@@ -183,12 +185,12 @@ function select() {
 </template>
 
 <style scoped>
-.blr-coverage-dot {
-  background-color: var(--coverage-accent);
+.blr-coverage-mark {
+  color: var(--coverage-accent);
 }
 
-/* Hollow: recorded below, not here. */
-.blr-coverage-hollow {
-  border: 1.5px solid color-mix(in oklab, var(--coverage-accent) 60%, transparent);
+/* Faded: recorded below, not here. */
+.blr-coverage-inside {
+  color: color-mix(in oklab, var(--coverage-accent) 50%, transparent);
 }
 </style>

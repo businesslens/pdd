@@ -108,7 +108,7 @@ try {
     // Unlocated statements have no row to hide behind, so scope to the tree.
     const inTree = sources.locator('[data-repository-tree] [data-coverage-statement]')
     await expect(reveal(samplePath)).toHaveAttribute('aria-expanded', 'false')
-    // Counts where the set is many; one dot already says there is one.
+    // Counts where the set is many; one mark already says there is one.
     await expect(reveal(samplePath)).toContainText('5')
     await expect(reveal('coverage-fixture')).not.toContainText(/\d/)
     await expect(reveal('coverage-fixture')).toHaveAttribute('aria-label', 'Read 1 statement recorded at coverage-fixture')
@@ -133,7 +133,7 @@ try {
     await expect(inTree).toHaveCount(0)
     // One control per row: the path is only a larger pointer target for it.
     await expect(row(samplePath).locator('> div button')).toHaveCount(1)
-    // A row's own marks are the way to read it: the dots open it too.
+    // A row's own marks are the way to read it: the icons open it too.
     await row(samplePath).locator('[data-coverage-kind="covered"]').click()
     await expect(reveal(samplePath)).toHaveAttribute('aria-expanded', 'true')
     await expect(statementsAt(samplePath)).toHaveCount(5)

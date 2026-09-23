@@ -135,6 +135,7 @@ onMounted(() => reveal(props.path))
         @click="filter = filter === kind ? null : kind"
       >
         <span class="flex w-full items-center gap-2">
+          <UIcon :name="COVERAGE_KIND_META[kind].icon" class="size-4.5 shrink-0" />
           <span class="text-xl font-semibold tabular-nums" data-coverage-summary-count>{{ workspace.coverage[kind].length }}</span>
           <span class="hidden text-sm font-medium @xl/coverage:inline">{{ COVERAGE_KIND_META[kind].label }}</span>
           <UIcon name="i-lucide-check" class="ms-auto size-4 shrink-0" :class="filter !== kind && 'invisible'" />

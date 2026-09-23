@@ -9,6 +9,15 @@ accident.
 
 There are no active report experiments in this layer.
 
+The **Coverage icons** audition is decided: Signals is the stable Coverage mark.
+Each category is drawn as its own icon with its own outline — a checked circle
+for Covered, a square with a minus for Exclusions, a dashed circle for Unmapped
+and a warning triangle for Limitations — on its card, beside each path (faded
+inside a closed folder) and on statement chips. The approved hues stay in their
+families at clearer saturations, as report tokens rather than semantic shades.
+A palette and a dot-drawing audition preceded it; their alternatives, the icon
+sets, selector row, cookie composable and host slot have been removed.
+
 The **Coverage** audition is decided: Locations is the stable Coverage
 reading. Every authored statement is written under the path it names, so
 nothing is behind a click. A row carries coloured dots for the categories
