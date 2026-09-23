@@ -19,7 +19,7 @@ defineExpose({ focus: (options?: FocusOptions) => heading.value?.focus(options) 
       <h2 ref="heading" tabindex="-1" class="flex min-w-0 items-start gap-2 text-base leading-6 font-semibold text-highlighted outline-none" data-resource-heading>
         <span class="min-w-0 break-words" data-resource-title>{{ resource.title }}</span>
         <BlrTerm :slug="KIND_TERM[resource.kind]" :text="resource.title" icon-only />
-        <BlrNavigationMark v-if="resource.kind === 'screen' && resource.alwaysReachable" class="mt-1 shrink-0" />
+        <BlrNavigationMark v-if="resource.kind === 'screen' && resource.alwaysReachable" class="mt-0.5 shrink-0" />
       </h2>
       <BlrResourceContext :key="resource.key" :workspace="workspace" :resource="resource" class="mt-0.5" @open="emit('open', $event)" />
     </div>
