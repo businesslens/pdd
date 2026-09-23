@@ -1,7 +1,7 @@
 import type { ReportReference } from 'businesslens/report'
 import type { ReferenceGroup } from './reportWorkspace'
 import { isExternalReference } from './referenceNavigation'
-import { repositoryTree, type RepositoryTreeNode } from './repositoryTree'
+import { locationTree, type RepositoryTreeNode } from './repositoryTree'
 
 /**
  * The References catalog: every attachment in the model, read by where it
@@ -75,10 +75,7 @@ export function referenceCitationIndex(citations: ReferenceCitation[]) {
 export function referenceRepositoryTree(citations: ReferenceCitation[]): RepositoryTreeNode[] {
   const internal = citations.filter(citation => citation.origin === 'internal')
   const directories = new Set(internal.filter(citation => citation.directory).map(citation => citation.location))
-  const finish = (nodes: RepositoryTreeNode[]): RepositoryTreeNode[] => nodes.map(node => ({
-    ...node, directory: node.directory || directories.has(node.value), children: finish(node.children)
-  })).sort((a, b) => Number(b.directory) - Number(a.directory) || a.label.localeCompare(b.label))
-  return finish(repositoryTree([...new Set(internal.map(citation => citation.location))]))
+  return locationTree(internal.map(citation => citation.location), directories)
 }
 
 /** Sites whose first two path segments name a repository, so pages group by it. */

@@ -67,6 +67,17 @@ export function repositoryTree(paths: string[]): RepositoryTreeNode[] {
   return sort(roots)
 }
 
+/**
+ * A tree of authored locations. A location is a directory when it holds others
+ * or was written as one, even with nothing recorded beneath it.
+ */
+export function locationTree(paths: string[], directories: Set<string>): RepositoryTreeNode[] {
+  const finish = (nodes: RepositoryTreeNode[]): RepositoryTreeNode[] => nodes.map(node => ({
+    ...node, directory: node.directory || directories.has(node.value), children: finish(node.children)
+  })).sort((a, b) => Number(b.directory) - Number(a.directory) || a.label.localeCompare(b.label))
+  return finish(repositoryTree([...new Set(paths)]))
+}
+
 export function repositoryTreeNodes<T extends RepositoryTreeNode>(nodes: T[]): T[] {
   return nodes.flatMap(node => [node, ...repositoryTreeNodes(node.children as T[])])
 }

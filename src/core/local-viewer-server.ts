@@ -79,6 +79,7 @@ export interface LocalViewer {
 /** Everything about one model: what to compile, and where to watch and read. */
 export type LocalViewerBinding = Pick<LocalViewerOptions,
   'compile' | 'initialReport' | 'watchRoot' | 'logoFile' | 'assetRoot'>
+const BINDING_KEYS = ['compile', 'initialReport', 'watchRoot', 'logoFile', 'assetRoot'] as const
 
 export interface LocalViewerOptions {
   port?: number
@@ -138,12 +139,18 @@ class LocalReportStore {
   /**
    * Bind a model to a running viewer, or rebind one.
    *
+   * A binding replaces the previous one whole: a field it omits is cleared, not
+   * inherited, and the previous model's report is dropped, so a rebind that
+   * fails to compile never serves the old model or authorizes its references.
    * The request handler reads the same options object, so the logo file and
    * asset root it serves follow the binding too.
    */
   bind(binding: LocalViewerBinding): void {
     this.detach()
-    Object.assign(this.options, binding)
+    for (const key of BINDING_KEYS) (this.options as Record<string, unknown>)[key] = binding[key]
+    this.report = undefined
+    this.serialized = undefined
+    this.error = undefined
     this.attach()
     if (binding.initialReport) this.accept(binding.initialReport, true)
     else this.refresh(true)
@@ -409,7 +416,14 @@ function requestHandler(
       json(response, 403, { message: 'The local viewer accepts loopback requests only.' }, head)
       return
     }
-    const url = new URL(request.url ?? '/', `http://${LOOPBACK_HOST}:${port}`)
+    let url: URL
+    try {
+      url = new URL(request.url ?? '/', `http://${LOOPBACK_HOST}:${port}`)
+    } catch {
+      // A request target such as `//` is not a URL; answer it rather than crash.
+      json(response, 400, { message: 'Bad request.' }, head)
+      return
+    }
     const pathname = url.pathname
     if (request.method !== 'GET' && !head) {
       response.setHeader('allow', 'GET, HEAD')

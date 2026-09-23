@@ -320,6 +320,27 @@ describe('local Product Report server', () => {
     const response = await fetch(viewer.url, { method: 'POST' })
     expect(response.status).toBe(405)
     expect(response.headers.get('allow')).toBe('GET, HEAD')
+
+    // A request target that is not a URL is answered, never a crash.
+    expect((await get(viewer.url, '//')).status).toBe(400)
+    expect((await get(viewer.url)).status).toBe(200)
+  })
+
+  it('drops the previous model on rebind, even when the new one does not compile', async () => {
+    const repository = mkdtempSync(join(tmpdir(), 'businesslens-rebind-'))
+    directories.push(repository)
+    writeFileSync(join(repository, 'notes.md'), '# Notes')
+    const viewer = await startLocalViewer({ viewerRoot: staticViewer(), compile: report, assetRoot: repository })
+    viewers.push(viewer)
+    expect((await get(viewer.url, '/_businesslens/report.json')).status).toBe(200)
+    expect((await get(viewer.url, '/_businesslens/file/notes.md')).status).toBe(200)
+
+    viewer.bind({ compile: () => { throw new Error('Lint failed: missing actor') } })
+    const rebound = await get(viewer.url, '/_businesslens/report.json')
+    expect(rebound.status).toBe(422)
+    expect(JSON.parse(rebound.body)).toEqual({ message: 'Lint failed: missing actor' })
+    // An omitted asset root is cleared, not inherited from the old binding.
+    expect((await get(viewer.url, '/_businesslens/file/notes.md')).status).toBe(404)
   })
 
   it('serves repository assets from the mount, and refuses everything else', async () => {

@@ -261,8 +261,9 @@ costed already.
   it names that kind; reach for an unreserved glyph otherwise.
 - **Coverage is one set of statements, drawn where they are recorded.** The
   four authored Coverage lists are read as one set whose category is an
-  attribute, so an empty category renders nothing and an unlocated statement is
-  one with no paths rather than a section of its own. Each statement is written
+  attribute: each category is a card that reads zero when empty, a fixed set
+  that never changes shape between models, and an unlocated statement is one
+  with no paths, listed after the tree rather than filed apart by category. Each statement is written
   in full under every path it names; Coverage has no path panel, and this
   supersedes the rule that selecting a path opens its recorded context in a
   slideover. A folder never inherits or totals meaning from beneath it. A closed
@@ -271,6 +272,13 @@ costed already.
   for:** opening a folder reveals paths, not prose, and a search finds paths
   by name and reveals them, never matching prose. Model References are not
   repeated in Coverage; they belong to the Overview's References reading.
+- **References are read by where they point.** The Overview's References reading
+  draws each repository path once in a repository tree and each external page
+  once under its site — and on a code host its repository — with the resources
+  citing it disclosed by its row, never one row per attachment. It works as
+  Coverage does: one neutral card per reference kind the format defines, a fixed
+  set that reads zero, is the only kind filter, and search finds paths and links
+  by name. A resource's own References tab stays a short list.
 - **A teaching affordance can be turned off, and never hides the way back.**
   Term tooltips are restored from the Vocabulary panel; the choice is a cookie,
   so the first paint is right.

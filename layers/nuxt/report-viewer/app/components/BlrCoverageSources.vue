@@ -54,50 +54,27 @@ const readingKey = (path: string) => `statements:${normalizeCoveragePath(path)}`
 const readable = computed(() => [...index.value.keys()].map(readingKey))
 
 // One expansion set over both axes, so Expand all and Collapse all cover each.
-const keys = computed(() => {
-  const everything = coverageStatementTree(all.value.filter(statement => statement.paths.length))
-  return [
-    ...repositoryTreeNodes(everything).filter(node => node.children.length).map(node => node.value),
-    ...new Set(all.value.flatMap(statement => statement.paths.map(readingKey)))
-  ]
-})
+const whole = computed(() => coverageStatementTree(all.value.filter(statement => statement.paths.length)))
+const allBranches = computed(() => repositoryTreeNodes(whole.value).filter(node => node.children.length).map(node => node.value))
+const keys = computed(() => [
+  ...allBranches.value,
+  ...new Set(all.value.flatMap(statement => statement.paths.map(readingKey)))
+])
 // Folders open; an explanation waits to be asked for, so structure stays browsable.
-const expansion = useBlrReferenceExpansion(
-  computed(() => `coverage:${props.workspace.identity.id}:locations`),
+const { expansion, expanded, toggle, expandAll } = useBlrLocationTreeExpansion({
+  scope: computed(() => `coverage:${props.workspace.identity.id}:locations`),
   keys,
-  branches
-)
-
-// A search reveals the paths it matched by opening every folder above them,
-// since the narrowed tree holds nothing else; their explanations still wait to
-// be asked for. It never rewrites the reader's own expansion: a folder put away
-// during a search stays away until the search changes, and clearing it
-// restores what they had open.
-const revealed = computed(() => searching.value ? branches.value : [])
-const dismissed = ref<string[]>([])
-watch(query, () => { dismissed.value = [] })
-const expanded = computed(() => searching.value
-  ? [...new Set([...expansion.value, ...revealed.value])].filter(key => !dismissed.value.includes(key))
-  : expansion.value)
-function toggle(key: string) {
-  if (revealed.value.includes(key)) {
-    dismissed.value = dismissed.value.includes(key)
-      ? dismissed.value.filter(value => value !== key)
-      : [...dismissed.value, key]
-    return
-  }
-  expansion.value = expansion.value.includes(key)
-    ? expansion.value.filter(value => value !== key)
-    : [...expansion.value, key]
-}
-function expandAll(open: boolean) {
-  expansion.value = open ? [...branches.value, ...readable.value] : []
-  dismissed.value = open ? [] : revealed.value
-}
+  defaults: allBranches,
+  branches,
+  readable,
+  query
+})
 
 // A focused path deep-links a location: its ancestors open and it is read. A
 // path this list chose itself has already been toggled by its row, so only a
 // path arriving from elsewhere — a link, Back, a refresh — opens anything.
+// A link may spell a folder as authored, `src/checkout/`; rows are keyed without the slash.
+const focused = computed(() => props.path === null ? null : normalizeCoveragePath(props.path))
 let chosen: string | null = null
 function select(path: string | null) {
   chosen = path === null ? null : normalizeCoveragePath(path)
@@ -111,14 +88,14 @@ function reveal(path: string | null) {
   const reading = readable.value.includes(readingKey(path)) ? [readingKey(path)] : []
   expansion.value = [...new Set([...expansion.value, ...ancestors, ...reading])]
 }
-watch(() => props.path, (path) => {
+watch(focused, (path) => {
   const own = path !== null && path === chosen
   chosen = null
   if (!own) reveal(path)
 })
 // After the saved expansion is restored on mount, never before it, or the
 // restore would replace what the link asked for.
-onMounted(() => reveal(props.path))
+onMounted(() => reveal(focused.value))
 </script>
 
 <template>
@@ -179,7 +156,7 @@ onMounted(() => reveal(props.path))
           :node="node"
           :statements-at="statementsAt"
           :expanded="expanded"
-          :focused="path"
+          :focused="focused"
           :depth="0"
           @toggle="toggle"
           @focus="select"

@@ -490,7 +490,10 @@ still lists them. A matched path's explanation waits to be asked for like any
 other. The reveal does not rewrite remembered expansion: a folder put away
 during a search stays away until the search changes, and clearing the search
 restores the expansion the reader had. Expand all and Collapse all sit beside
-it and cover both axes: the folders and the explanations. Expansion is
+it and cover both axes: the folders and the explanations. A card filter or a
+search only narrows what is drawn: Expand all and Collapse all change what is on
+screen, and whatever the narrowing hides keeps its own state for when it
+returns. The References catalog shares this expansion. Expansion is
 remembered per report. Statements with no recorded location stay visible under
 **No location recorded**, narrowed by the same card filter and set aside while a
 search is active, since they have no path to match; this includes model-wide

@@ -19,15 +19,16 @@ A palette and a dot-drawing audition preceded it; their alternatives, the icon
 sets, selector row, cookie composable and host slot have been removed.
 
 The **Coverage** audition is decided: Locations is the stable Coverage
-reading. Every authored statement is written under the path it names, so
-nothing is behind a click. A row carries coloured dots for the categories
-recorded at that exact path and never rolls up what sits beneath it; the
-path slideover, its Model references block and the "entries at or below"
-folder counts are gone, and model References keep their home in the Product
-Overview's own References reading. Four category cards filter whole
-statements, including unlocated ones, and search matches a statement by its
-own words or by where it is recorded. The alternatives, the selector, the
-cookie composable and the `BlrCoverage` shadow have been removed.
+reading. Every authored statement is written under the path it names and read
+in place from that path's row. A row marks the categories recorded at that
+exact path and never rolls up what sits beneath it; the path slideover, its
+Model references block and the "entries at or below" folder counts are gone,
+and model References keep their home in the Product Overview's own References
+reading. Four category cards filter whole statements, including unlocated ones.
+Its marks, its search and its summary panel have since been refined in the
+stable report; the report layer README describes them as they are. The
+alternatives, the selector, the cookie composable and the `BlrCoverage` shadow
+have been removed.
 
 The **View controls** audition is decided: option 4's dropdown with preview
 cards is the stable collection view picker. Each choice keeps its short
@@ -110,8 +111,8 @@ composable and the Step card selector have been removed.
 
 Earlier experiments are decided: the selected Overview/Scenarios page and
 direct-to-page navigation now live in `report-viewer`; the coverage mark was
-auditioned here across the whole palette and its umber reading is now the stable
-`BlrCoverageBadge`; the filter placement was auditioned across four positions
+auditioned here across the whole palette and its umber reading became the
+stable Coverage badge, since replaced by the Coverage icons above; the filter placement was auditioned across four positions
 and the reading-aligned one is now the only one; the background audition remains
 independently owned by `theme-lab`.
 

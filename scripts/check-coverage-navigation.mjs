@@ -225,6 +225,16 @@ try {
     await expect(statementsAt(plannedPath)).toHaveCount(0)
     await search.fill('')
     await expect(path(plannedPath)).toHaveCount(0)
+    // What a filter hides keeps its own state: a toggle under a filter never
+    // closes the folders the filter set aside.
+    await sources.getByRole('button', { name: 'Expand all', exact: true }).click()
+    await expect(path('coverage-fixture/help/guide.md')).toBeVisible()
+    await summary('unmapped').click()
+    await expect(path('coverage-fixture/help/guide.md')).toHaveCount(0)
+    await reveal(samplePath).click()
+    await summary('unmapped').click()
+    await expect(path('coverage-fixture/help/guide.md')).toBeVisible()
+    await sources.getByRole('button', { name: 'Collapse all', exact: true }).click()
     await search.fill('planned.ts')
     await summary('exclusions').click()
     await expect(search).toHaveValue('planned.ts')
@@ -266,6 +276,11 @@ try {
     await page.goto(selectedUrl)
     await expect(path(samplePath)).toHaveAttribute('aria-current', 'true')
     await expect(statementsAt(samplePath)).toHaveCount(5)
+    // A link may spell a folder as authored, with its trailing slash.
+    await page.goto(`${origin}/?t=coverage&cp=${encodeURIComponent('coverage-fixture/')}`)
+    await expect(path('coverage-fixture')).toHaveAttribute('aria-current', 'true')
+    await expect(statementsAt('coverage-fixture')).toHaveCount(1)
+    await page.goto(selectedUrl)
     await capture(page, `${width}-focused-path`)
 
     // Remembered expansion, with no deep link asking for anything.

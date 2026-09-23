@@ -7,16 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- Coverage now records scope, modeled behavior, approved exclusions, gaps, and uncertainty instead of a completeness status. Existing models need the new Coverage format.
-- Browse every recorded Coverage location at once, each showing how many statements it holds and how many more are inside a closed folder, and read any of them in place without leaving the list.
-- Filter Coverage by Covered, Exclusions, Unmapped or Limitations, and find recorded paths by name.
-- Tell Coverage categories apart at a glance: each has its own icon and a clearer colour on its card, beside each path and on each statement.
-- Browse References by where they point: each repository file or external page appears once, showing which resources cite it, with a card per kind of material to filter by and search by path or link.
-- See References in this repository apart from external links, each with its own count.
-- Blueprints preserve Coverage descriptions while leaving repository paths behind; older Blueprint formats are no longer accepted.
+- Coverage now records scope, modeled behavior, approved exclusions, gaps and uncertainty instead of a completeness status. Existing models need the new Coverage format.
+- Read Coverage on one page: scope and method with a card per category, then every recorded path with its statements available in place.
+- Tell Coverage categories apart at a glance by icon and colour, filter by category, and find recorded paths by name.
+- Browse References by where they point: each file or external page appears once with the resources that cite it, repository files beside external links, with a card per kind to filter by and search by path or link.
+- See each resource's References split into repository files and external links.
+- Blueprints keep Coverage descriptions but leave repository paths behind; older Blueprint formats are no longer accepted.
 - Apply the same structural checks to every model, including those with known gaps.
 - Open the local report before a model exists and follow valid edits as they arrive, with visible connection status.
-- Read clearer Product details and larger headings in About.
+- Read clearer Product details and larger headings in About, under a simpler report header.
 
 ## [0.21.0] - 2026-09-21
 

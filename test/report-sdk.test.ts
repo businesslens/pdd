@@ -477,9 +477,8 @@ describe('projectPortableReport', () => {
     expect(sdk.validateProductReport(incomplete)).toContain(
       'capability "place-order": availability Context place "customer-mobile::storefront" needs Capability Scenario coverage'
     )
-    expect(sdk.validateBlueprintReport(incomplete)).toContain(
-      'capability "place-order" availability Context place "customer-mobile::storefront" needs Capability Scenario coverage for a public Blueprint'
-    )
+    // Coverage binds every report, so publication checks add only publication metadata.
+    expect(sdk.validateBlueprintReport(incomplete).filter((issue: string) => issue.includes('Capability Scenario coverage'))).toEqual([])
   })
 
   it('keeps Coverage independent from References', () => {

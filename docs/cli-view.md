@@ -24,8 +24,7 @@ the current directory or the repository root. With a model that does not lint,
 the page shows the errors and the report appears on the first clean save.
 While it remains open, valid changes appear automatically; if an edit
 introduces a lint error, the browser keeps the last valid report visible and
-recovers after the error is fixed. A pulse in the header says the viewer is
-connected and when the model last changed on screen.
+recovers after the error is fixed.
 
 The server listens only on `127.0.0.1` and stops when the command exits.
 

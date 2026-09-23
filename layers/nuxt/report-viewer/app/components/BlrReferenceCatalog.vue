@@ -27,7 +27,6 @@ const emit = defineEmits<{ selectKey: [key: string, tab: string] }>()
 
 const filter = ref<ReferenceKind | null>(null)
 const query = ref('')
-const searching = computed(() => Boolean(query.value.trim()))
 
 const all = computed(() => referenceCitations(props.workspace.references))
 const cards = computed(() => REFERENCE_KIND_ORDER
@@ -62,43 +61,21 @@ const branches = computed(() => repositoryTreeNodes(nodes.value).filter(node => 
 const readable = computed(() => [...index.value.keys()].map(location => `citations:${location}`))
 
 // One expansion set over both axes, so Expand all and Collapse all cover each.
-const keys = computed(() => {
-  const everything = [...referenceRepositoryTree(all.value), ...referenceSiteTree(all.value)]
-  return [
-    ...repositoryTreeNodes(everything).filter(node => node.children.length).map(node => node.value),
-    ...new Set(all.value.map(citation => `citations:${citation.location}`))
-  ]
-})
+const whole = computed(() => [...referenceRepositoryTree(all.value), ...referenceSiteTree(all.value)])
+const allBranches = computed(() => repositoryTreeNodes(whole.value).filter(node => node.children.length).map(node => node.value))
+const keys = computed(() => [
+  ...allBranches.value,
+  ...new Set(all.value.map(citation => `citations:${citation.location}`))
+])
 // Folders and sites open; citations wait to be asked for, so structure stays browsable.
-const expansion = useBlrReferenceExpansion(
-  computed(() => `references:${props.workspace.identity.id}:catalog`),
+const { expanded, toggle, expandAll } = useBlrLocationTreeExpansion({
+  scope: computed(() => `references:${props.workspace.identity.id}:catalog`),
   keys,
-  branches
-)
-
-// A search reveals the locations it matched by opening every folder above
-// them, without rewriting the reader's own expansion.
-const revealed = computed(() => searching.value ? branches.value : [])
-const dismissed = ref<string[]>([])
-watch(query, () => { dismissed.value = [] })
-const expanded = computed(() => searching.value
-  ? [...new Set([...expansion.value, ...revealed.value])].filter(key => !dismissed.value.includes(key))
-  : expansion.value)
-function toggle(key: string) {
-  if (revealed.value.includes(key)) {
-    dismissed.value = dismissed.value.includes(key)
-      ? dismissed.value.filter(value => value !== key)
-      : [...dismissed.value, key]
-    return
-  }
-  expansion.value = expansion.value.includes(key)
-    ? expansion.value.filter(value => value !== key)
-    : [...expansion.value, key]
-}
-function expandAll(open: boolean) {
-  expansion.value = open ? [...branches.value, ...readable.value] : []
-  dismissed.value = open ? [] : revealed.value
-}
+  defaults: allBranches,
+  branches,
+  readable,
+  query
+})
 </script>
 
 <template>

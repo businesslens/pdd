@@ -24,6 +24,12 @@ it('accepts authored Coverage and rejects retired inspection records in models a
 })
 
 describe('described Coverage areas and limitations', () => {
+  it('reads brackets and braces as file names but refuses wildcards', () => {
+    const at = (path: string) => CoverageDocumentSchema.safeParse({ ...coverage, unmapped: [{ description: 'A gap.', paths: [path] }] }).success
+    for (const path of ['pages/products/[id].vue', 'app/[slug]/page.tsx', 'src/{legacy}/']) expect(at(path)).toBe(true)
+    for (const path of ['src/*.ts', 'src/file?.ts', '../outside', 'src/a.ts#Symbol', 'src/a.ts:12']) expect(at(path)).toBe(false)
+  })
+
   it('accepts located and unlocated gaps with the same shape', () => {
     const unmapped = [{ description: 'Scheduled **refunds** are not modeled.', paths: ['src/refunds.ts', 'jobs/'] }, { description: 'Recurring purchases are not modeled.', paths: [] }]
     for (const kind of ['covered', 'exclusions', 'unmapped', 'limitations'] as const) {

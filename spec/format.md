@@ -463,7 +463,7 @@ sdd:
   paths: [openspec/]               # detected/declared SDD roots; empty if none
 ```
 
-`config.yaml` has no other keys. Schema 11 is the only supported folder format.
+`config.yaml` has no other keys. Schema 9 is the only supported folder format.
 
 ### `product.md` or `product/product.md`
 
@@ -1987,9 +1987,11 @@ structural headings, unique within and across these lists. Describe a coherent
 behavior or uncertainty once, attaching all relevant paths; do not create an
 entry per file or duplicate a gap as a limitation. Paths are unique
 repository-relative POSIX paths; files have no suffix, directories end in `/`.
-Absolute paths, URLs, backslashes, globs, `.` or `..` segments, empty segments,
-surrounding whitespace, control characters, and fragment or line suffixes are
-invalid. Missing workspace paths are not structural errors.
+Absolute paths, URLs, backslashes, glob wildcards (`*` and `?`), `.` or `..`
+segments, empty segments, surrounding whitespace, control characters, and
+fragment or line suffixes are invalid. Brackets and braces are ordinary file-name
+characters, as in a dynamic route such as `pages/[id].vue`. Missing workspace
+paths are not structural errors.
 
 Use `paths: []` for behavior with no known repository location, including
 source-free product design. For Limitations, an empty path list means the

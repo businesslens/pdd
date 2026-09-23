@@ -254,8 +254,9 @@ An empty Unmapped list does not establish completeness.
 
 `paths` contains unique repository-relative POSIX paths; directories end in `/`.
 Use `[]` when no location is known, including product design before code exists.
-Paths may name intended files, but cannot contain traversal, globs, URLs,
-backslashes or fragment/line suffixes. Distinct behavior at one path may be
+Paths may name intended files, but cannot contain traversal, `*` or `?`
+wildcards, URLs, backslashes or fragment/line suffixes; brackets, as in
+`pages/[id].vue`, are ordinary characters. Distinct behavior at one path may be
 covered, excluded or unmapped. Paths never establish file-level completeness.
 Blueprints retain descriptions in all four lists and empty their paths.
 

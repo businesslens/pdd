@@ -40,22 +40,21 @@ const coverage = defineModel<CoverageReading>('coverage', { default: defaultCove
             <h3 class="text-base font-semibold text-highlighted">Description</h3>
             <BlrProse :text="workspace.identity.description" />
           </section>
-          <section class="space-y-2" aria-label="Intent">
+          <!-- A field with nothing recorded is not drawn: nothing renders an empty label. -->
+          <section v-if="workspace.identity.intent" class="space-y-2" aria-label="Intent">
             <h3 class="text-base font-semibold text-highlighted">Intent</h3>
-            <BlrProse v-if="workspace.identity.intent" :text="workspace.identity.intent" />
-            <p v-else class="text-sm text-muted">Not recorded.</p>
+            <BlrProse :text="workspace.identity.intent" />
           </section>
-          <section class="space-y-2" aria-label="Product limitations">
+          <section v-if="workspace.identity.limitations.length" class="space-y-2" aria-label="Product limitations">
             <h3 class="flex items-baseline gap-2 text-base font-semibold text-highlighted">
               Limitations <span class="blr-meta">{{ workspace.identity.limitations.length }}</span>
             </h3>
             <p class="text-xs text-muted">Deliberate exclusions or constraints of the Product.</p>
-            <ul v-if="workspace.identity.limitations.length" class="list-disc space-y-2 ps-4 marker:text-dimmed">
+            <ul class="list-disc space-y-2 ps-4 marker:text-dimmed">
               <li v-for="(item, index) in workspace.identity.limitations" :key="index">
                 <BlrProse :text="item" />
               </li>
             </ul>
-            <p v-else class="text-sm text-muted">None recorded.</p>
           </section>
           <section v-for="(section, index) in workspace.identity.supportingSections" :key="index" class="space-y-2" data-product-supporting-section>
             <h3 class="text-base font-semibold text-highlighted">{{ section.heading }}</h3>
@@ -70,40 +69,38 @@ const coverage = defineModel<CoverageReading>('coverage', { default: defaultCove
               <dt class="text-sm font-medium text-muted">ID</dt>
               <dd class="mt-1 font-mono">{{ workspace.identity.id }}</dd>
             </div>
-            <div>
+            <div v-if="workspace.identity.category">
               <dt class="text-sm font-medium text-muted">Category</dt>
-              <dd class="mt-1">{{ workspace.identity.category || 'None recorded.' }}</dd>
+              <dd class="mt-1">{{ workspace.identity.category }}</dd>
             </div>
-            <div>
+            <div v-if="workspace.identity.tags.length">
               <dt class="text-sm font-medium text-muted">Tags</dt>
               <dd class="mt-1">
-                <ul v-if="workspace.identity.tags.length" class="flex flex-wrap gap-1.5">
+                <ul class="flex flex-wrap gap-1.5">
                   <li v-for="tag in workspace.identity.tags" :key="tag" class="rounded border border-default px-2 py-0.5 text-sm">{{ tag }}</li>
                 </ul>
-                <span v-else class="text-muted">None recorded.</span>
               </dd>
             </div>
-            <div>
+            <div v-if="workspace.identity.authors.length">
               <dt class="text-sm font-medium text-muted">Authors</dt>
               <dd class="mt-1">
-                <ul v-if="workspace.identity.authors.length" class="space-y-3">
+                <ul class="space-y-3">
                   <li v-for="(author, index) in workspace.identity.authors" :key="index" class="space-y-0.5">
                     <p>{{ author.name }}</p>
                     <a v-if="author.url" :href="author.url" target="_blank" rel="noopener noreferrer" class="block text-sm text-primary underline underline-offset-2">{{ author.url }}</a>
                   </li>
                 </ul>
-                <span v-else class="text-muted">None recorded.</span>
               </dd>
             </div>
-            <div>
+            <div v-if="workspace.identity.license">
               <dt class="text-sm font-medium text-muted">License</dt>
-              <dd class="mt-1">{{ workspace.identity.license || 'None recorded.' }}</dd>
+              <dd class="mt-1">{{ workspace.identity.license }}</dd>
             </div>
           </dl>
-          <section class="space-y-2 border-t border-default pt-5" aria-label="Actors">
+          <section v-if="workspace.actingEntities.length" class="space-y-2 border-t border-default pt-5" aria-label="Actors">
             <h3 class="text-base font-semibold text-highlighted">Actors</h3>
             <p class="text-xs text-muted">Derived from Entities that act on the Product.</p>
-            <div v-if="workspace.actingEntities.length" class="flex flex-wrap items-center gap-2">
+            <div class="flex flex-wrap items-center gap-2">
               <UButton
                 v-for="actor in workspace.actingEntities"
                 :key="actor.key"
@@ -117,7 +114,6 @@ const coverage = defineModel<CoverageReading>('coverage', { default: defaultCove
                 {{ actor.title }}
               </UButton>
             </div>
-            <p v-else class="text-sm text-muted">None recorded.</p>
           </section>
         </aside>
       </div>

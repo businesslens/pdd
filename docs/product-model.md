@@ -357,7 +357,8 @@ non-empty single-line Markdown without structural headings, unique within and
 across all four lists. Paths are unique repository-relative POSIX paths, with
 trailing `/` for directories. Use `[]` when a behavior has no known location,
 including product design. Paths may name intended files; they cannot contain
-absolute paths, URLs, backslashes, traversal, globs or fragment/line suffixes.
+absolute paths, URLs, backslashes, traversal, `*` or `?` wildcards, or
+fragment/line suffixes. Brackets are ordinary characters, as in `pages/[id].vue`.
 Covered paths, References and absent annotations never establish file-level
 completeness or implementation alignment.
 

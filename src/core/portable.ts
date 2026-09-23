@@ -1716,38 +1716,8 @@ export function validateBlueprintReport(report: ProductReportV14): string[] {
   if (!report.tags.length) issues.push('at least one tag is required for a public Blueprint')
   if (!report.authors.length) issues.push('at least one author is required for a public Blueprint')
   if (!report.license) issues.push('license is required for a public Blueprint')
-  if (!report.model.capabilities.length) issues.push('a public Blueprint needs at least one capability')
-  const covered = new Map<string, Set<string>>()
-  const screenIds = new Set(report.model.screens.map(item => item.id))
-  /* A Step on a Screen the Interface shares beside its Experiences is inside
-     every one of them, so it covers each — the same reading the validator and
-     the folder linter apply. */
-  const experienceIdsByInterface = new Map<string, string[]>()
-  for (const experience of report.model.experiences) {
-    for (const interfaceId of experience.interfaceIds) {
-      experienceIdsByInterface.set(interfaceId, [...(experienceIdsByInterface.get(interfaceId) || []), experience.id])
-    }
-  }
-  const availabilityPlaces = (placeId: string): string[] => {
-    const container = screenIds.has(placeId) ? parentPlace(placeId) || '' : placeId
-    const shared = experienceIdsByInterface.get(container)
-    return shared?.length ? shared : [container]
-  }
-  for (const scenario of report.model.capabilityScenarios) {
-    const places = covered.get(scenario.capabilityId) || new Set<string>()
-    for (const context of scenario.steps.flatMap(step => step.contexts)) {
-      for (const place of availabilityPlaces(context.placeId)) places.add(place)
-    }
-    covered.set(scenario.capabilityId, places)
-  }
-  for (const capability of report.model.capabilities) {
-    const coveredPlaces = covered.get(capability.id) || new Set<string>()
-    for (const context of capability.availability) {
-      if (!coveredPlaces.has(context.placeId)) {
-        issues.push(`capability "${capability.id}" availability Context place "${context.placeId}" needs Capability Scenario coverage for a public Blueprint`)
-      }
-    }
-  }
+  // Capability and Capability Scenario coverage bind every report, so the
+  // product-report validator has already refused a model without them.
   return issues
 }
 
