@@ -108,7 +108,10 @@ try {
     // Unlocated statements have no row to hide behind, so scope to the tree.
     const inTree = sources.locator('[data-repository-tree] [data-coverage-statement]')
     await expect(reveal(samplePath)).toHaveAttribute('aria-expanded', 'false')
+    // Counts where the set is many; one dot already says there is one.
     await expect(reveal(samplePath)).toContainText('5')
+    await expect(reveal('coverage-fixture')).not.toContainText(/\d/)
+    await expect(reveal('coverage-fixture')).toHaveAttribute('aria-label', 'Read 1 statement recorded at coverage-fixture')
     // A folder that only holds recorded paths has nothing of its own to disclose.
     await expect(reveal('coverage-fixture/help')).toHaveCount(0)
     // A closed folder says what is inside it, so it is never a dead end.
@@ -128,6 +131,14 @@ try {
     await inside('coverage-fixture/help').click()
     await expect(path('coverage-fixture/help/guide.md')).toBeVisible()
     await expect(inTree).toHaveCount(0)
+    // One control per row: the path is only a larger pointer target for it.
+    await expect(row(samplePath).locator('> div button')).toHaveCount(1)
+    // A row's own marks are the way to read it: the dots open it too.
+    await row(samplePath).locator('[data-coverage-kind="covered"]').click()
+    await expect(reveal(samplePath)).toHaveAttribute('aria-expanded', 'true')
+    await expect(statementsAt(samplePath)).toHaveCount(5)
+    await reveal(samplePath).click()
+    await expect(reveal(samplePath)).toHaveAttribute('aria-expanded', 'false')
     await reveal(samplePath).click()
     await expect(reveal(samplePath)).toHaveAttribute('aria-expanded', 'true')
     await expect(statementsAt(samplePath)).toHaveCount(5)
@@ -199,6 +210,21 @@ try {
     // A hidden explanation is not an answer: a search reveals what it matched.
     await expect(statementsAt(samplePath)).toHaveCount(1)
     await expect(statementsAt(samplePath)).toContainText('Another gap at the same location')
+    // What a search reveals can still be put away, until the search changes.
+    await reveal(samplePath).click()
+    await expect(reveal(samplePath)).toHaveAttribute('aria-expanded', 'false')
+    await expect(statementsAt(samplePath)).toHaveCount(0)
+    await reveal(samplePath).click()
+    await expect(statementsAt(samplePath)).toHaveCount(1)
+    // A search opens the folders above what it matched, even after Collapse all.
+    await search.fill('')
+    await sources.getByRole('button', { name: 'Collapse all', exact: true }).click()
+    await expect(path(plannedPath)).toHaveCount(0)
+    await search.fill('Planned behavior without a current file')
+    await expect(path(plannedPath)).toBeVisible()
+    await expect(statementsAt(plannedPath)).toHaveCount(1)
+    await search.fill('')
+    await expect(path(plannedPath)).toHaveCount(0)
     await search.fill('planned.ts')
     await summary('exclusions').click()
     await expect(search).toHaveValue('planned.ts')
@@ -222,7 +248,6 @@ try {
     await expect(inTree).toHaveCount(0)
     await sources.getByRole('button', { name: `Expand coverage-fixture`, exact: true }).click()
     await expect(sources.getByRole('button', { name: `Collapse coverage-fixture`, exact: true })).toHaveAttribute('aria-expanded', 'true')
-    await sources.getByRole('button', { name: 'Expand all', exact: true }).click()
     await path(samplePath).click()
     await expect(page.getByRole('dialog')).toHaveCount(0)
     await expect(page).toHaveURL(url => url.searchParams.get('cp') === samplePath)
@@ -236,11 +261,21 @@ try {
     await expect(page.getByRole('dialog')).toHaveCount(0)
     await path(samplePath).click()
     await expect(page).not.toHaveURL(/[?&]cp=/)
+    await expect(statementsAt(samplePath)).toHaveCount(0)
     await page.goBack()
     await expect(page).toHaveURL(selectedUrl)
     await expect(path(samplePath)).toHaveAttribute('aria-current', 'true')
+    // A shared link opens what it names with nothing remembered in this tab.
+    await sources.getByRole('button', { name: 'Collapse all', exact: true }).click()
+    await page.evaluate(() => sessionStorage.clear())
+    await page.goto(selectedUrl)
+    await expect(path(samplePath)).toHaveAttribute('aria-current', 'true')
+    await expect(statementsAt(samplePath)).toHaveCount(5)
     await capture(page, `${width}-focused-path`)
 
+    // Remembered expansion, with no deep link asking for anything.
+    await path(samplePath).click()
+    await expect(page).not.toHaveURL(/[?&]cp=/)
     await sources.getByRole('button', { name: 'Collapse all', exact: true }).click()
     await methodToggle.click()
     await expect(methodDetails).toBeVisible()

@@ -254,18 +254,39 @@ describe('lintModel', () => {
     }
   })
 
+  it('reports each Coverage problem once, without inventing a scope error', () => {
+    const cwd = fixtureCopy()
+    const file = join(cwd, '.businesslens/coverage.md')
+    const scopeErrors = (errors: string[]) => errors.filter(error => /scope/i.test(error))
+
+    editCoverage(file, { unmapped: [{ description: 'Refunds are not modeled.', paths: ['src/*.ts'] }] })
+    const invalidPath = run(cwd).errors
+    expect(invalidPath.join('\n')).toContain('coverage.md: unmapped.0.paths.0')
+    expect(scopeErrors(invalidPath)).toEqual([])
+
+    editCoverage(file, { unmapped: [{ description: 'Refunds are not modeled.', paths: [] }], limitations: [{ description: 'Refunds are not modeled.', paths: [] }] })
+    const duplicate = run(cwd).errors.filter(error => /unique/.test(error))
+    expect(duplicate).toHaveLength(1)
+    expect(scopeErrors(run(cwd).errors)).toEqual([])
+
+    rmSync(file)
+    const missing = run(cwd).errors
+    expect(missing).toContain('coverage.md is missing')
+    expect(scopeErrors(missing)).toEqual([])
+  })
+
   it('rejects historical folder schemas', () => {
     const cwd = fixtureCopy()
-    for (const schema of [5, 8, 9, 10]) {
+    for (const schema of [5, 8, 10, 11]) {
       writeFileSync(join(cwd, '.businesslens/config.yaml'), `schema: ${schema}\nsdd:\n  paths: []\n`)
-      expect(run(cwd).errors).toContain(`config.yaml: schema ${schema} is not supported (expected 11)`)
+      expect(run(cwd).errors).toContain(`config.yaml: schema ${schema} is not supported (expected 9)`)
     }
   })
 
   it('rejects unsupported future folder schemas explicitly', () => {
     const cwd = fixtureCopy()
     writeFileSync(join(cwd, '.businesslens/config.yaml'), 'schema: 99\nsdd:\n  paths: []\n')
-    expect(run(cwd).errors).toContain('config.yaml: schema 99 is not supported (expected 11)')
+    expect(run(cwd).errors).toContain('config.yaml: schema 99 is not supported (expected 9)')
   })
 
   it('requires the committed orientation and generated-path ignores', () => {

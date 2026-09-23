@@ -1,4 +1,3 @@
-import { isUnmappedDescription } from '../core/coverage.js'
 import type { Context } from '../core/frontmatter.js'
 import { repositoryReferencePath } from '../core/frontmatter.js'
 import type {
@@ -121,9 +120,8 @@ export function lintModel(model: PddModel, trackedFiles: string[]): LintResult {
     }
   }
 
-  if (!isUnmappedDescription(model.coverage.scope)) errors.push('coverage.md: scope must be non-empty single-line Markdown without a heading')
-  const coverageDescriptions = [...model.coverage.covered, ...model.coverage.exclusions, ...model.coverage.unmapped, ...model.coverage.limitations].map(area => area.description)
-  if (new Set(coverageDescriptions).size !== coverageDescriptions.length) errors.push('coverage.md: descriptions must be unique across covered, exclusions, unmapped and limitations')
+  // Coverage scope and description uniqueness are the schema's to report, once,
+  // when the model loads; a Coverage that failed to parse has nothing to recheck.
 
   const collections: Array<[string, Array<{ id: string }>]> = [
     ...Object.entries(resourceCollections(model)),

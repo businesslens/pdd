@@ -414,7 +414,7 @@ const ENTITY_CARDINALITIES = new Set<string>(['one-to-one', 'one-to-many', 'many
 export const FOLDER = '.businesslens'
 
 /** The one folder-format version this release reads and writes. */
-export const FOLDER_SCHEMA = 11
+export const FOLDER_SCHEMA = 9
 
 /**
  * The two channels a model load reports into.
@@ -1024,7 +1024,7 @@ function entityFacts(body: string | undefined, issues: string[], file: string): 
 }
 
 
-/** Load the strict schema 11 .businesslens/ folder, collecting parse issues. */
+/** Load the strict schema 9 .businesslens/ folder, collecting parse issues. */
 export function loadModel(cwd: string): PddModel {
   const root = join(cwd, FOLDER)
   const issues: string[] = []
@@ -1195,7 +1195,7 @@ export function loadModel(cwd: string): PddModel {
     scope: '', exclusions: [], method: '', covered: [], unmapped: [], limitations: []
   }
   const coverageFile = join(root, 'coverage.md')
-  if (existsSync(join(root, 'coverage.json'))) issues.push('coverage.json is not supported; use coverage.md (folder schema 11)')
+  if (existsSync(join(root, 'coverage.json'))) issues.push('coverage.json is not supported; use coverage.md (folder schema 9)')
   if (existsSync(coverageFile)) {
     const { data, body } = splitFrontmatter(readFileSync(coverageFile, 'utf8'), issues, 'coverage.md')
     if (body.trim() !== '# Coverage') issues.push('coverage.md: body must contain only "# Coverage"; put scope, reasons and limitations in frontmatter')

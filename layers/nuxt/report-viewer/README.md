@@ -1,6 +1,6 @@
 # BusinessLens Product Report
 
-The stable Product Report v16 renderer used by `businesslens view` and exported
+The stable Product Report v14 renderer used by `businesslens view` and exported
 from the `businesslens` package. It projects the complete portable report into
 six main resource collections: Entities, Interfaces, Domains, Capabilities,
 Journeys, and Business Rules. Overview sits above Resources. Experiences and
@@ -182,7 +182,7 @@ the canonical report inside a page:
 <BusinessLensReportViewer :report="report" :logo-src="logoSrc" />
 ```
 
-`report` must be a `ProductReportV16` from `businesslens/report`. There is
+`report` must be a `ProductReportV14` from `businesslens/report`. There is
 no second, lossy public view-model contract.
 
 Where the reader is, is bindable, so a host can keep it in its own router and
@@ -424,27 +424,38 @@ a card activates it, selecting it again restores every category. Card totals
 never change with search or filtering.
 
 Every statement is written under the path it names, and there is no path panel.
-A row carries a filled dot per category recorded at that **exact** path, and
-beside it how many statements that is: a folder never inherits meaning from
-beneath it, because a count of "entries at or below" presented as a folder's own
-annotation is neither files nor a share of what the folder contains. A **closed**
-folder additionally says how many distinct statements are recorded inside it,
-drawn as hollow dots and a muted `N inside`. That is a way in, not a claim about
-the folder: it disappears when the folder opens, selecting it expands the folder
-rather than reading anything, and one statement recorded at three paths below
-counts once. The explanation itself waits behind the row's own count — opening a folder
+A row carries a filled dot per category recorded at that **exact** path, beside
+how many statements that is when there are several — one dot already says there
+is one, so a lone `1` is not printed, though the control still names the count
+to a screen reader. Those dots, that count and the chevron are the row's one
+control: a row's own marks are what a reader reaches for to read it, and they
+exist exactly when it has something to disclose. The row's path is a larger
+pointer target for the same control, not a second tab stop. Selecting either
+reads its statements in place; selecting again puts them away. Selecting the
+path of a folder with nothing recorded at it opens or closes the folder.
+
+A folder never inherits meaning from beneath it, because a count of "entries at
+or below" presented as a folder's own annotation is neither files nor a share of
+what the folder contains. A **closed** folder additionally says how many
+distinct statements are recorded inside it, drawn as hollow dots and a muted
+`N inside`. That is a way in, not a claim about the folder: it disappears when
+the folder opens, selecting it expands the folder rather than reading anything,
+and one statement recorded at three paths below counts once. Opening a folder
 reveals the paths inside it and nothing else, so structure stays browsable
-without the prose that would bury it. Selecting the row's path or its count
-reads them in place; selecting again puts them away. A statement recorded at
-several paths is written in full under each of them, with its other locations
-listed as **also recorded at** — one claim about several places, printed where
-each place is read. Recognizable Product Model icons and the `.businesslens`
-mark still mark authored model paths.
+without the prose that would bury it.
+
+A statement recorded at several paths is written in full under each of them,
+with its other locations listed as **also recorded at** — one claim about
+several places, printed where each place is read. Recognizable Product Model
+icons and the `.businesslens` mark still mark authored model paths.
 
 Search matches a statement by its own words or by where it is recorded, and
-reveals the explanations it matched — a hidden answer is not an answer. Expand
-all and Collapse all sit beside it and cover both axes: the folders and the
-explanations. Expansion is remembered per report. Statements with no recorded location stay
+reveals the explanations it matched and the folders above them — a hidden
+answer is not an answer. The reveal does not rewrite remembered expansion: what
+a reader puts away during a search stays away until the search changes, and
+clearing the search restores the expansion they had. Expand all and Collapse
+all sit beside it and cover both axes: the folders and the explanations.
+Expansion is remembered per report. Statements with no recorded location stay
 visible under **No location recorded**, narrowed by the same card filter and
 search; this includes model-wide Limitations, which have no separate section of
 their own. Model References are not repeated here — they have their home in the
@@ -453,7 +464,7 @@ added.
 
 `coverage.path` is navigation state, encoded as `cp`, and deep-links one
 location: its ancestors open, its explanation is read, and the row is marked
-current. Selecting that row
+current — on a fresh load too, with no expansion remembered. Selecting that row
 again clears it. Method disclosure does not change the URL. Tree expansion is
 remembered for the report. Narrow screens scroll the reading within its frame.
 

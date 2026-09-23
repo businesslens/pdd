@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import { buildProject } from '../src/commands/export.js'
-import { resolveModelRoot } from '../src/core/model-root.js'
+import { findModelRoot, resolveModelRoot } from '../src/core/model-root.js'
 
 const FIXTURE = join(__dirname, 'fixtures', 'fixture-shop')
 const BLUEPRINT = join(__dirname, '..', 'blueprints', 'content-feed-reader', '.businesslens')
@@ -87,5 +87,17 @@ describe('resolveModelRoot', () => {
   it('reports a missing model rather than a missing repository', () => {
     const empty = scratch('businesslens-model-root-empty-')
     expect(() => resolveModelRoot(empty)).toThrow(/No \.businesslens\/ Product Model found/)
+  })
+
+  it('finds the model against a known repository root, without asking Git again', () => {
+    const repo = scratch('businesslens-model-root-find-')
+    const deep = join(repo, 'src')
+    mkdirSync(deep, { recursive: true })
+    // Not a repository: only the root handed in can supply the fallback.
+    expect(findModelRoot(deep, repo)).toBeUndefined()
+    cpSync(join(FIXTURE, '.businesslens'), join(repo, '.businesslens'), { recursive: true })
+    expect(findModelRoot(deep, repo)).toEqual({ modelRoot: repo, gitRoot: repo })
+    expect(findModelRoot(deep, undefined)).toBeUndefined()
+    expect(findModelRoot(repo, undefined)).toEqual({ modelRoot: repo })
   })
 })

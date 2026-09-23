@@ -31,14 +31,25 @@ export function resolveModelRoot(cwd: string): ModelRoot {
     gitRoot = undefined
   }
 
+  const found = findModelRoot(cwd, gitRoot)
+  if (found) return found
+
+  throw new Error(
+    'No .businesslens/ Product Model found here or at the repository root — use `businesslens-map` for established code or `businesslens-ideate` for a new product'
+  )
+}
+
+/**
+ * The same resolution against an already known repository root, without
+ * asking Git again — for a caller that looks repeatedly, such as a viewer
+ * waiting for a model to be created.
+ */
+export function findModelRoot(cwd: string, gitRoot: string | undefined): ModelRoot | undefined {
   if (existsSync(join(cwd, '.businesslens'))) {
     return gitRoot ? { modelRoot: cwd, gitRoot } : { modelRoot: cwd }
   }
   if (gitRoot && existsSync(join(gitRoot, '.businesslens'))) {
     return { modelRoot: gitRoot, gitRoot }
   }
-
-  throw new Error(
-    'No .businesslens/ Product Model found here or at the repository root — use `businesslens-map` for established code or `businesslens-ideate` for a new product'
-  )
+  return undefined
 }

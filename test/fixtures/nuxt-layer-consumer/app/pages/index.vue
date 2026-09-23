@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import type { ProductReportV16 } from 'businesslens/report'
+import type { ProductReportV14 } from 'businesslens/report'
 
 const route = useRoute()
 const { section, resource, tab, resourceTab, scenarioRoute, routeColumns, topology, coverage } = useBlrReportNavigation({ sectionKey: route.query.catalog === '1' ? 'tab' : 's' })
 
-const report: ProductReportV16 = {
-  schemaVersion: '16.0.0',
+const report: ProductReportV14 = {
+  schemaVersion: '14.0.0',
   id: 'packed-layer-smoke',
   title: 'Packed Layer Smoke Test',
   summary: 'Builds the public Nuxt layer from the packed businesslens artifact.',

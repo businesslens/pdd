@@ -1,7 +1,7 @@
 import { compileResolvedWorkspaceReport } from './export.js'
 import { repoRoot } from '../core/git.js'
 import { openBrowser, startLocalViewer, type LocalViewerBinding } from '../core/local-viewer-server.js'
-import { resolveModelRoot, type ModelRoot } from '../core/model-root.js'
+import { findModelRoot, resolveModelRoot, type ModelRoot } from '../core/model-root.js'
 
 import {
   describeGithubRef,
@@ -11,6 +11,7 @@ import {
   type GithubSnapshot
 } from '../core/github-repository.js'
 import { UsageError } from '../core/usage-error.js'
+import { statSync } from 'node:fs'
 import { join } from 'node:path'
 
 export interface ViewOptions {
@@ -28,6 +29,8 @@ export interface ViewOptions {
 
 interface ViewSource {
   resolved?: ModelRoot
+  /** The local repository a waiting viewer looks in; absent for a remote snapshot. */
+  gitRoot?: string
   /** Present for a remote snapshot: the model changes only with a new fetch. */
   snapshot?: GithubSnapshot
   subject: string
@@ -53,9 +56,14 @@ function resolveSource(cwd: string, options: ViewOptions): ViewSource {
     if (options.branch !== undefined || options.pr !== undefined) {
       throw new UsageError('--branch and --pr apply to a GitHub repository. Pass one: businesslens view owner/repo --pr 12')
     }
-    let resolved: ModelRoot | undefined
-    try { resolved = resolveModelRoot(cwd) } catch { /* Wait for local model creation. */ }
-    return { resolved, subject: 'the local Product Model' }
+    // Only a missing model is worth waiting for; a directory that does not
+    // exist never gains one.
+    let directory = false
+    try { directory = statSync(cwd).isDirectory() } catch { /* Reported below. */ }
+    if (!directory) throw new UsageError(`${cwd} is not a directory. Pass an existing directory to --cwd.`)
+    let gitRoot: string | undefined
+    try { gitRoot = repoRoot(cwd) } catch { gitRoot = undefined }
+    return { resolved: findModelRoot(cwd, gitRoot), gitRoot, subject: 'the local Product Model' }
   }
   if (options.explicitCwd) {
     throw new UsageError('--cwd selects a local model. A GitHub repository is viewed from its own root.')
@@ -77,7 +85,10 @@ function resolveSource(cwd: string, options: ViewOptions): ViewSource {
   }
 }
 
-/** How often a viewer with no model yet looks for one. Cheap: two `existsSync` calls. */
+/**
+ * How often a viewer with no model yet looks for one. Cheap: at most two
+ * `existsSync` calls against a repository root resolved once, never Git.
+ */
 const LOCATE_INTERVAL_MS = 500
 
 /** Everything the server needs to serve one resolved model. */
@@ -107,21 +118,8 @@ export async function runView(cwd: string, options: ViewOptions): Promise<number
   let source: ViewSource | undefined
   try {
     source = resolveSource(cwd, options)
-    const { resolved, snapshot } = source
+    const { resolved, snapshot, gitRoot } = source
     const initialReport = snapshot && resolved ? compileResolvedWorkspaceReport(resolved) : undefined
-    const locate = (): ModelRoot | undefined => {
-      try {
-        return resolveModelRoot(cwd)
-      } catch {
-        return undefined
-      }
-    }
-    let gitRoot: string | undefined
-    try {
-      gitRoot = repoRoot(cwd)
-    } catch {
-      gitRoot = undefined
-    }
     const expected = [...new Set([cwd, gitRoot].filter((item): item is string => Boolean(item)))]
       .map(directory => join(directory, '.businesslens'))
     const viewer = await startLocalViewer({
@@ -142,11 +140,17 @@ export async function runView(cwd: string, options: ViewOptions): Promise<number
     let locating: ReturnType<typeof setInterval> | undefined
     if (!resolved) {
       locating = setInterval(() => {
-        const found = locate()
+        const found = findModelRoot(cwd, gitRoot)
         if (!found) return
+        try {
+          viewer.bind(bindingFor(found))
+        } catch (error) {
+          // The directory can vanish between finding and watching it; keep waiting.
+          console.error(`Could not open ${join(found.modelRoot, '.businesslens')}: ${(error as Error).message}`)
+          return
+        }
         clearInterval(locating)
         locating = undefined
-        viewer.bind(bindingFor(found))
         console.log(`Found the Product Model at ${join(found.modelRoot, '.businesslens')}.`)
       }, LOCATE_INTERVAL_MS)
     }

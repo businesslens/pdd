@@ -10,7 +10,7 @@ references:
     target: docs/product.md
   - kind: code
     role: implementation
-    target: src/core/portable.ts#ProductReportV16Schema
+    target: src/core/portable.ts#ProductReportV14Schema
 ---
 
 # Product

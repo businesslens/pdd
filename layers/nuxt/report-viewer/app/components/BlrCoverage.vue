@@ -7,9 +7,8 @@ defineProps<{ workspace: ReportWorkspace }>()
 const reading = defineModel<CoverageReading>('reading', { default: defaultCoverageReading })
 
 /** A focused location is a deep link, not a panel: its statements are on the page. */
-function selectPath(path: string) {
-  const next = normalizeCoveragePath(path)
-  reading.value = { path: reading.value.path === next ? null : next }
+function selectPath(path: string | null) {
+  reading.value = { path: path === null ? null : normalizeCoveragePath(path) }
 }
 </script>
 

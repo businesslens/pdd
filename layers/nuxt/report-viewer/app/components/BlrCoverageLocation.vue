@@ -27,7 +27,7 @@ const props = defineProps<{
   focused: string | null
   depth: number
 }>()
-const emit = defineEmits<{ toggle: [key: string], focus: [path: string] }>()
+const emit = defineEmits<{ toggle: [key: string], focus: [path: string | null] }>()
 
 const open = computed(() => props.expanded.includes(props.node.value))
 const here = computed(() => props.statementsAt(props.node.value))
@@ -49,9 +49,17 @@ const modelLogo = computed(() => `/brand/logo/mark${colorMode.value === 'dark' ?
 const label = computed(() => props.node.label + (props.node.directory ? '/' : ''))
 const indent = computed(() => `${props.depth * 1.15}rem`)
 
+/** Reading a location focuses it; putting the focused one away clears the focus. */
 function read() {
-  emit('focus', props.node.value)
-  if (here.value.length) emit('toggle', `statements:${props.node.value}`)
+  if (!here.value.length) return
+  if (!reading.value) emit('focus', props.node.value)
+  else if (props.focused === props.node.value) emit('focus', null)
+  emit('toggle', `statements:${props.node.value}`)
+}
+/** The path is a pointer target for the row's one control, never a second tab stop. */
+function select() {
+  if (here.value.length) read()
+  else if (props.node.children.length) emit('toggle', props.node.value)
 }
 </script>
 
@@ -94,35 +102,40 @@ function read() {
         :name="node.directory ? open && node.children.length ? 'i-lucide-folder-open' : 'i-lucide-folder' : 'i-lucide-file'"
         class="size-4 shrink-0 text-muted"
       />
-      <button
-        type="button"
-        class="min-w-0 truncate rounded-sm text-start font-mono text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-        :class="[here.length ? 'cursor-pointer text-default' : 'cursor-default text-dimmed', reading && 'font-semibold']"
+      <span
+        class="min-w-0 truncate text-start font-mono text-sm"
+        :class="[here.length ? 'cursor-pointer text-default' : node.children.length ? 'cursor-pointer text-dimmed' : 'text-dimmed', reading && 'font-semibold']"
         :aria-current="focused === node.value ? 'true' : undefined"
-        :aria-expanded="here.length ? reading : undefined"
         :data-repository-path="node.value"
-        @click="read"
-      >{{ label }}</button>
-      <span v-if="kinds.length" class="flex shrink-0 items-center gap-1">
-        <span
-          v-for="kind in kinds"
-          :key="kind"
-          class="blr-coverage-dot size-2 rounded-full"
-          :class="COVERAGE_KIND_META[kind].tone"
-          :title="`${COVERAGE_KIND_META[kind].label} recorded here`"
-          :data-coverage-kind="kind"
-        />
-      </span>
+        @click="select"
+      >{{ label }}</span>
+      <!--
+        The dots, the count and the chevron are the row's one control: its
+        marks are what a reader reaches for, and they exist exactly when there
+        is something to disclose. The path above is only a larger pointer target
+        for it, so keyboard and screen-reader users meet one stop per row.
+      -->
       <button
         v-if="here.length"
         type="button"
-        class="flex shrink-0 cursor-pointer items-center gap-1 rounded-md px-1.5 py-0.5 text-muted transition-colors hover:bg-elevated/60 hover:text-default focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-        :aria-label="`${reading ? 'Hide' : 'Read'} ${here.length} recorded at ${node.value}`"
+        class="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md px-1.5 py-0.5 text-muted transition-colors hover:bg-elevated/60 hover:text-default focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        :aria-label="`${reading ? 'Hide' : 'Read'} ${here.length} ${here.length === 1 ? 'statement' : 'statements'} recorded at ${node.value}`"
         :aria-expanded="reading"
         data-coverage-reveal
         @click="read"
       >
-        <span class="blr-meta">{{ here.length }}</span>
+        <span class="flex shrink-0 items-center gap-1">
+          <span
+            v-for="kind in kinds"
+            :key="kind"
+            class="blr-coverage-dot size-2 rounded-full"
+            :class="COVERAGE_KIND_META[kind].tone"
+            :title="`${COVERAGE_KIND_META[kind].label} recorded here`"
+            :data-coverage-kind="kind"
+          />
+        </span>
+        <!-- Counts where the set is many: one dot already says there is one. -->
+        <span v-if="here.length > 1" class="blr-meta">{{ here.length }}</span>
         <UIcon name="i-lucide-chevron-down" class="size-3.5 shrink-0 transition-transform" :class="reading && 'rotate-180'" />
       </button>
       <!-- Only while closed: what opening this folder would find, never its own meaning. -->

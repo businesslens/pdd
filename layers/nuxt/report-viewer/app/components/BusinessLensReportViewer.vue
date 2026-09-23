@@ -12,12 +12,12 @@ import { destinationForLocation } from '../utils/reportDestinations'
  * navigation and a pull command. Those differences arrive as slots and a
  * bindable section, so the Product Report stays one implementation.
  */
-import type { ProductReportV16 } from 'businesslens/report'
+import type { ProductReportV14 } from 'businesslens/report'
 import { projectReportWorkspace } from '../utils/reportWorkspace'
 import type { ReportProductCatalogLink, ReportProductLink } from '../utils/reportProducts'
 
 const props = withDefaults(defineProps<{
-  report: ProductReportV16
+  report: ProductReportV14
   /** Host-resolved `.businesslens/product/logo.svg`; used in the picker and Overview. */
   logoSrc?: string | null
   /** Other products available in this host; mark the current destination active. */

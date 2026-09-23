@@ -67,16 +67,21 @@ export function coverageStatements(coverage: ReportWorkspace['coverage']): Cover
 }
 
 /**
- * The statements recorded at exactly this path.
+ * The statements recorded at each exact path, in authored order.
  *
  * A folder never inherits what sits beneath it and never totals it: an authored
  * path locates a statement, and a count of "entries at or below" is neither
- * files nor completeness.
+ * files nor completeness. A statement naming one location in two spellings is
+ * recorded there once.
  */
-export function coverageStatementsAt(statements: CoverageStatement[], path: string) {
-  const selected = normalizeCoveragePath(path)
-  return statements.filter(statement =>
-    statement.paths.some(location => normalizeCoveragePath(location) === selected))
+export function coverageStatementIndex(statements: CoverageStatement[]) {
+  const index = new Map<string, CoverageStatement[]>()
+  for (const statement of statements) {
+    for (const path of new Set(statement.paths.map(normalizeCoveragePath))) {
+      index.set(path, [...index.get(path) ?? [], statement])
+    }
+  }
+  return index
 }
 
 /** Statements a search matches, by their own words or by where they are recorded. */

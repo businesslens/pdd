@@ -4,7 +4,7 @@ import { lstatSync, readFileSync, watch, type FSWatcher } from 'node:fs'
 import { basename, extname, relative, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { createRequire } from 'node:module'
-import type { ProductReportV16 } from './portable.js'
+import type { ProductReportV14 } from './portable.js'
 import { MAX_PRODUCT_LOGO_BYTES, validateProductLogo } from '../logo.js'
 import { localCodePreview } from './local-code-preview.js'
 import { localMarkdownPreview } from './local-markdown-preview.js'
@@ -83,10 +83,10 @@ export type LocalViewerBinding = Pick<LocalViewerOptions,
 export interface LocalViewerOptions {
   port?: number
   /** Absent until a model is bound: the viewer then serves the waiting message. */
-  compile?: () => ProductReportV16
+  compile?: () => ProductReportV14
   /** What `report.json` and the stream say while no model is bound. */
   waitingMessage?: string
-  initialReport?: ProductReportV16
+  initialReport?: ProductReportV14
   watchRoot?: string
   debounceMs?: number
   viewerRoot?: string
@@ -102,7 +102,7 @@ export interface LocalViewerOptions {
 }
 
 interface ReportSnapshot {
-  report?: ProductReportV16
+  report?: ProductReportV14
   error?: string
   revision: number
 }
@@ -121,7 +121,7 @@ interface ReportEvent {
  * report means one temporarily invalid file never blanks the whole viewer.
  */
 class LocalReportStore {
-  private report?: ProductReportV16
+  private report?: ProductReportV14
   private serialized?: string
   private error?: string
   private revision = 0
@@ -222,7 +222,7 @@ class LocalReportStore {
       || Boolean(this.options.watchRoot && normalized === basename(this.options.watchRoot))
   }
 
-  private accept(report: ProductReportV16, notify: boolean, forceNotify = false): void {
+  private accept(report: ProductReportV14, notify: boolean, forceNotify = false): void {
     const serialized = JSON.stringify(report)
     const recovered = this.error !== undefined
     const changed = serialized !== this.serialized
@@ -388,8 +388,10 @@ function referencePreview(
   }
   void preview().then(result => {
     if (!response.destroyed) json(response, result.status, result.data, head)
-  }).catch((error) => {
-    if (!response.destroyed) json(response, 404, { message: (error as Error).message || 'This reference could not be rendered.' }, head)
+  }).catch(() => {
+    // Previews answer a missing or refused target with their own 404; a throw is
+    // a server fault, and its raw text can carry absolute local paths.
+    if (!response.destroyed) json(response, 500, { message: 'This reference could not be rendered.' }, head)
   })
 }
 

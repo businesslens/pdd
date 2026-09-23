@@ -8,7 +8,7 @@ order: 29
 
 # `businesslens blueprint export`
 
-Compile folder schema 11 `.businesslens/` into a portable Product Report v16:
+Compile folder schema 9 `.businesslens/` into a portable Product Report v14:
 
 ```bash
 npx businesslens blueprint export
@@ -29,10 +29,10 @@ not travel with the Product contract:
 | --- | --- |
 | `references` | Keep only HTTP(S) intent and context References |
 | `entryPoints` | Remove repository paths and `file:` URLs; keep Product routes, HTTP(S) URLs, non-file deep links, and commands |
-| `coverage.covered[].paths` | Empty each list; retain every description |
-| `coverage.exclusions[].paths` | Empty lists; exclusion descriptions remain |
-| `coverage.limitations[].paths` | Empty lists; uncertainty descriptions remain |
-| `coverage.unmapped[].paths` | Empty each list; retain every description |
+| `coverage.covered[].paths` | Empty each list; keep every description |
+| `coverage.exclusions[].paths` | Empty each list; keep every description |
+| `coverage.limitations[].paths` | Empty each list; keep every description |
+| `coverage.unmapped[].paths` | Empty each list; keep every description |
 | `referenceProfile` | Set to `portable` |
 
 `export` lints before it compiles. A model with lint errors does not produce a

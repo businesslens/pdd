@@ -79,7 +79,7 @@ logo does not prevent the Product Model itself from being pulled.
 `pull` asks for the one Product Report version it reads, by name:
 
 ```text
-accept: application/vnd.businesslens.report+json; version=16, application/json
+accept: application/vnd.businesslens.report+json; version=14, application/json
 ```
 
 The `version` parameter is the report schema's major alone, and it is the whole

@@ -1,12 +1,12 @@
 import { parseCodeTarget, type ParsedCodeTarget } from './coderefs.js'
-import { reportResourceCollections, type ProductReportV16, type ReportReference } from './portable.js'
+import { reportResourceCollections, type ProductReportV14, type ReportReference } from './portable.js'
 
 import { previewText } from './local-preview.js'
 import { fileLanguage, highlightedCode } from './syntax-highlighting.js'
 import type { ReferencePreview } from '../../layers/nuxt/report-viewer/app/utils/referencePreview.js'
 
 /** The source mount accepts exact code targets already disclosed by the report. */
-function declaredReference(report: ProductReportV16 | undefined, target: string): ReportReference | undefined {
+function declaredReference(report: ProductReportV14 | undefined, target: string): ReportReference | undefined {
   if (report?.referenceProfile !== 'workspace') return undefined
   const references = [
     ...report.references,
@@ -35,7 +35,7 @@ function focusFor(lines: string[], target: ParsedCodeTarget): { first?: number, 
   return { note: `No text match for ${target.symbol} in this file.` }
 }
 
-export async function localCodePreview(report: ProductReportV16 | undefined, root: string | undefined, target: string): Promise<{ status: number, data: ReferencePreview | { message: string } }> {
+export async function localCodePreview(report: ProductReportV14 | undefined, root: string | undefined, target: string): Promise<{ status: number, data: ReferencePreview | { message: string } }> {
   const reference = declaredReference(report, target)
   const parsed = reference && parseCodeTarget(reference.target, [], 'reference')
   const source = root && parsed ? previewText(root, parsed.path) : undefined

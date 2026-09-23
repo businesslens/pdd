@@ -17,12 +17,12 @@ import {
   COVERAGE_KIND_ORDER,
   coverageStatementMatches,
   coverageStatements,
-  coverageStatementsAt,
+  coverageStatementIndex,
   type CoverageStatementKind
 } from '../utils/coverageStatements'
 
 const props = defineProps<{ workspace: ReportWorkspace, path: string | null }>()
-const emit = defineEmits<{ selectPath: [path: string] }>()
+const emit = defineEmits<{ selectPath: [path: string | null] }>()
 
 const filter = ref<CoverageStatementKind | null>(null)
 const query = ref('')
@@ -35,12 +35,15 @@ const located = computed(() => shown.value.filter(statement => statement.paths.l
 const unlocated = computed(() => shown.value.filter(statement => !statement.paths.length))
 const nodes = computed(() => coverageStatementTree(located.value))
 const branches = computed(() => repositoryTreeNodes(nodes.value).filter(node => node.children.length).map(node => node.value))
-const statementsAt = (path: string) => coverageStatementsAt(located.value, path)
+// Indexed once per reading, so each row looks its statements up rather than
+// filtering every statement for every node it draws.
+const index = computed(() => coverageStatementIndex(located.value))
+const statementsAt = (path: string) => index.value.get(normalizeCoveragePath(path)) ?? []
 
 // An explanation is disclosed by its own row, keyed apart from its folder so a
 // path that is both a folder and a recorded location keeps the two separate.
 const readingKey = (path: string) => `statements:${normalizeCoveragePath(path)}`
-const readable = computed(() => [...new Set(located.value.flatMap(statement => statement.paths.map(readingKey)))])
+const readable = computed(() => [...index.value.keys()].map(readingKey))
 
 // One expansion set over both axes, so Expand all and Collapse all cover each.
 const keys = computed(() => {
@@ -56,28 +59,58 @@ const expansion = useBlrReferenceExpansion(
   keys,
   branches
 )
-// A search reveals what it matched: a hidden explanation is not an answer.
-const expanded = computed(() => query.value.trim()
-  ? [...new Set([...expansion.value, ...readable.value])]
+
+// A search reveals what it matched — every matched explanation and the folders
+// above it, since the narrowed tree holds nothing else — without rewriting the
+// reader's own expansion: what the reader puts away during a search stays away
+// until the search changes, and clearing it restores what they had open.
+const searching = computed(() => Boolean(query.value.trim()))
+const revealed = computed(() => searching.value ? [...branches.value, ...readable.value] : [])
+const dismissed = ref<string[]>([])
+watch(query, () => { dismissed.value = [] })
+const expanded = computed(() => searching.value
+  ? [...new Set([...expansion.value, ...revealed.value])].filter(key => !dismissed.value.includes(key))
   : expansion.value)
 function toggle(key: string) {
+  if (revealed.value.includes(key)) {
+    dismissed.value = dismissed.value.includes(key)
+      ? dismissed.value.filter(value => value !== key)
+      : [...dismissed.value, key]
+    return
+  }
   expansion.value = expansion.value.includes(key)
     ? expansion.value.filter(value => value !== key)
     : [...expansion.value, key]
 }
 function expandAll(open: boolean) {
   expansion.value = open ? [...branches.value, ...readable.value] : []
+  dismissed.value = open ? [] : revealed.value
 }
 
-// A focused path deep-links a location: its ancestors open and it is read.
-watch(() => props.path, path => {
+// A focused path deep-links a location: its ancestors open and it is read. A
+// path this list chose itself has already been toggled by its row, so only a
+// path arriving from elsewhere — a link, Back, a refresh — opens anything.
+let chosen: string | null = null
+function select(path: string | null) {
+  chosen = path === null ? null : normalizeCoveragePath(path)
+  emit('selectPath', path)
+}
+function reveal(path: string | null) {
   if (!path) return
   const ancestors = repositoryTreeNodes(nodes.value)
     .filter(node => node.children.length && path.startsWith(`${node.value}/`))
     .map(node => node.value)
   const reading = readable.value.includes(readingKey(path)) ? [readingKey(path)] : []
   expansion.value = [...new Set([...expansion.value, ...ancestors, ...reading])]
-}, { immediate: true })
+}
+watch(() => props.path, (path) => {
+  const own = path !== null && path === chosen
+  chosen = null
+  if (!own) reveal(path)
+})
+// After the saved expansion is restored on mount, never before it, or the
+// restore would replace what the link asked for.
+onMounted(() => reveal(props.path))
 </script>
 
 <template>
@@ -141,7 +174,7 @@ watch(() => props.path, path => {
           :focused="path"
           :depth="0"
           @toggle="toggle"
-          @focus="emit('selectPath', $event)"
+          @focus="select"
         />
       </ul>
     </div>

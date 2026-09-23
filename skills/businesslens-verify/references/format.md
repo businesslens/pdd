@@ -91,7 +91,7 @@ not contain another H1 or H2.
 
 ## Required shapes
 
-- `config.yaml`: exactly `schema: 11` and `sdd.paths`.
+- `config.yaml`: exactly `schema: 9` and `sdd.paths`.
 - `product.md`: `id`, optional `summary`, `category`, `tags`, `authors`,
   `license`, `limitations`, H1, lead description, and optional `## Intent`.
   `summary` is one line of at most 400 characters, `category` is lowercase
@@ -416,7 +416,7 @@ puts Refunded on the machine. `lint` composes every Scenario and warns on an
 in — and an **unproduced origin** — a Step leaving `from: Confirmed` when
 nothing produces Confirmed and it is not the first state.
 
-Context is the single model concept for where behavior applies. In schema 11 it
+Context is the single model concept for where behavior applies. In schema 9 it
 is a strict object containing one `place` field. A Capability's availability
 Contexts name an undivided Interface or an Experience:
 

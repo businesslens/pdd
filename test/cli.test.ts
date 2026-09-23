@@ -163,7 +163,7 @@ describe('cli dispatch', () => {
         const result = cli(nested, process.env, ...args)
         expect(result.status, args.join(' ')).toBe(1)
         expect(JSON.parse(result.stdout).errors).toContain(
-          'config.yaml: schema 99 is not supported (expected 11)'
+          'config.yaml: schema 99 is not supported (expected 9)'
         )
       }
     } finally {
@@ -253,6 +253,22 @@ describe('cli dispatch', () => {
         expect(result.status, value).toBe(2)
         expect(result.stderr, value).toContain('expected an integer from 1 to 65535')
         expect(result.stderr, value).not.toContain('No .businesslens/')
+      }
+    } finally {
+      rmSync(empty, { recursive: true, force: true })
+    }
+  })
+
+  it('refuses a viewer --cwd that is not a directory instead of waiting for a model there', () => {
+    const empty = mkdtempSync(join(tmpdir(), 'bl-view-cwd-'))
+    try {
+      const file = join(empty, 'notes.txt')
+      writeFileSync(file, 'not a directory\n')
+      for (const target of [join(empty, 'missing'), file]) {
+        const result = cli(empty, process.env, 'view', '--no-open', '--cwd', target)
+        expect(result.status, target).toBe(2)
+        expect(result.stderr, target).toContain('is not a directory')
+        expect(result.stdout, target).not.toContain('Waiting for')
       }
     } finally {
       rmSync(empty, { recursive: true, force: true })

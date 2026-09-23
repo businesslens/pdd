@@ -13,7 +13,7 @@ terms:
     definition: "Why a resource exists and which outcome it protects, never a restatement of what it does."
   - term: Coverage
     anchor: coverage
-    definition: "The model’s declared scope, breadth, approved exclusions and known gaps."
+    definition: "The model's declared scope, breadth, approved exclusions and known gaps."
   - term: Resource type
     anchor: what-belongs-in-a-model
     definition: "A category of resource, such as Entity or Capability, determined by the file's location in the Product Model."

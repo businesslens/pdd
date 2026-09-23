@@ -1,16 +1,17 @@
 import { describe, expect, it } from 'vitest'
 
 const statementsModule = '../layers/nuxt/report-viewer/app/utils/coverageStatements.ts'
-const { coverageStatements, coverageStatementsAt, coverageStatementMatches } = await import(statementsModule)
+const { coverageStatements, coverageStatementIndex, coverageStatementMatches } = await import(statementsModule)
 const treeModule = '../layers/nuxt/report-viewer/app/utils/coverageTree.ts'
-const { coverageTree, coverageStatementTree } = await import(treeModule)
+const { coverageStatementTree } = await import(treeModule)
 const repositoryModule = '../layers/nuxt/report-viewer/app/utils/repositoryTree.ts'
 const { repositoryTreeNodes } = await import(repositoryModule)
 const stateModule = '../layers/nuxt/report-viewer/app/utils/coverageState.ts'
 const { coverageFromQuery, coverageToQuery } = await import(stateModule)
 
 const described = (paths: string[]) => paths.map((path, index) => ({ description: `Represented behavior ${index}`, paths: [path] }))
-const at = (coverage: any, path: string) => coverageStatementsAt(coverageStatements(coverage), path)
+const at = (coverage: any, path: string) => coverageStatementIndex(coverageStatements(coverage)).get(path.replace(/^\.\//, '').replace(/\/$/, '')) ?? []
+const tree = (coverage: any, kind?: string) => coverageStatementTree(coverageStatements(coverage).filter((statement: any) => !kind || statement.kind === kind))
 
 const coverage = {
   covered: described(['src/', './notes/']),
@@ -79,9 +80,14 @@ describe('Coverage location tree', () => {
         { description: 'Second gap', paths: ['src/a.ts'] }
       ]
     }
-    expect(repositoryTreeNodes(coverageTree(merged)).map((node: any) => node.value)).toEqual(['src', 'src/a.ts'])
+    expect(repositoryTreeNodes(tree(merged)).map((node: any) => node.value)).toEqual(['src', 'src/a.ts'])
     expect(at(merged, 'src')).toHaveLength(2)
     expect(at(merged, 'src/a.ts').map((statement: any) => statement.kind)).toEqual(['covered', 'exclusions', 'unmapped', 'unmapped'])
+  })
+
+  it('records a statement once at a location it names in two spellings', () => {
+    const doubled = { limitations: [], covered: [], unmapped: [], exclusions: [{ description: 'Excluded', paths: ['src', 'src/'] }] }
+    expect(at(doubled, 'src')).toHaveLength(1)
   })
 
   it('keeps a directory a directory and locates statements written below one', () => {
@@ -91,7 +97,7 @@ describe('Coverage location tree', () => {
       exclusions: [{ description: 'Excluded', paths: ['src', 'src/'] }, { description: 'Archive', paths: ['archive', 'archive/'] }],
       unmapped: [{ description: 'Missing behavior', paths: ['src/jobs/planned.ts', 'src/jobs/later.ts'] }]
     }
-    const nodes = repositoryTreeNodes(coverageTree(nested))
+    const nodes = repositoryTreeNodes(tree(nested))
     expect(nodes.find((node: any) => node.value === 'archive').directory).toBe(true)
     // `src/jobs/` is structure only; nothing is recorded at it.
     expect(at(nested, 'src/jobs')).toEqual([])
@@ -109,16 +115,15 @@ describe('Coverage location tree', () => {
 
   it('filters Limitations alongside the other three categories', () => {
     const uncertain = { covered: [], exclusions: [], unmapped: [], limitations: [{ description: 'Unknown retry policy', paths: ['jobs/retry.ts'] }] }
-    expect(repositoryTreeNodes(coverageTree(uncertain)).map((node: any) => node.value)).toEqual(['jobs', 'jobs/retry.ts'])
-    expect(repositoryTreeNodes(coverageTree(uncertain, 'limitations')).map((node: any) => node.value)).toEqual(['jobs', 'jobs/retry.ts'])
-    expect(coverageTree(uncertain, 'covered')).toEqual([])
+    expect(repositoryTreeNodes(tree(uncertain)).map((node: any) => node.value)).toEqual(['jobs', 'jobs/retry.ts'])
+    expect(repositoryTreeNodes(tree(uncertain, 'limitations')).map((node: any) => node.value)).toEqual(['jobs', 'jobs/retry.ts'])
+    expect(tree(uncertain, 'covered')).toEqual([])
     expect(at(uncertain, 'jobs/retry.ts').map((statement: any) => statement.kind)).toEqual(['limitations'])
   })
 
   it('does not invent a repository location for unlocated statements', () => {
     const unlocated = { limitations: [], covered: described([]), exclusions: [{ description: 'Outside scope', paths: [] }], unmapped: [{ description: 'Unlocated gap', paths: [] }] }
-    expect(coverageTree(unlocated)).toEqual([])
-    expect(coverageStatementTree(coverageStatements(unlocated))).toEqual([])
+    expect(tree(unlocated)).toEqual([])
   })
 })
 

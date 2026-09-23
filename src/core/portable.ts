@@ -6,7 +6,7 @@ import { INTERFACE_TYPES } from './interface-types.js'
 import { CoverageAreaSchema, CoverageDocumentSchema } from './coverage.js'
 import { operationPlaces, validatePermissionBehavior } from './permission-validation.js'
 
-export const REPORT_SCHEMA_VERSION = '16.0.0'
+export const REPORT_SCHEMA_VERSION = '14.0.0'
 
 const IdSchema = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
 /**
@@ -408,7 +408,7 @@ export const ReportBusinessRuleSchema = z.strictObject({
 export const ReportUnmappedAreaSchema = CoverageAreaSchema
 export const ReportCoverageSchema = CoverageDocumentSchema
 
-export const ProductReportV16Schema = z.strictObject({
+export const ProductReportV14Schema = z.strictObject({
   schemaVersion: z.literal(REPORT_SCHEMA_VERSION),
   id: ProductIdSchema,
   title: SingleLineTextSchema.max(160),
@@ -444,10 +444,10 @@ export const ProductReportV16Schema = z.strictObject({
   coverage: ReportCoverageSchema
 })
 
-export const ProductReportSchema = ProductReportV16Schema
+export const ProductReportSchema = ProductReportV14Schema
 
-export type ProductReportV16 = z.infer<typeof ProductReportV16Schema>
-export type ProductReport = ProductReportV16
+export type ProductReportV14 = z.infer<typeof ProductReportV14Schema>
+export type ProductReport = ProductReportV14
 export type ReportDecisionPoint = z.infer<typeof ReportDecisionPointSchema>
 export type ReportScreenState = z.infer<typeof ReportScreenStateSchema>
 export type ReportCoverage = z.infer<typeof ReportCoverageSchema>
@@ -478,7 +478,7 @@ export type ReportReference = z.infer<typeof ReportReferenceSchema>
 export type ReportSupportingSection = z.infer<typeof ReportSupportingSectionSchema>
 export type ReportUnmappedArea = z.infer<typeof ReportUnmappedAreaSchema>
 
-export type ReportModel = ProductReportV16['model']
+export type ReportModel = ProductReportV14['model']
 
 /** One resource in the report, reduced to what every "for every resource" check needs. */
 type ReportResource = { id: string, references: ReportReference[] }
@@ -487,7 +487,7 @@ type ReportResource = { id: string, references: ReportReference[] }
  * Every resource collection in a report, keyed by its own name.
  *
  * The key union is read off the schema rather than written out, so a new
- * collection in `ProductReportV16Schema` leaves this record incomplete and fails
+ * collection in `ProductReportV14Schema` leaves this record incomplete and fails
  * the build. `taxonomies` is an object, not an array of resources, so it drops
  * out on its own. See the same reasoning in `resourceCollections` — Entity was
  * added to the report and its ids and References went unchecked for a release
@@ -608,7 +608,7 @@ function requireEntryPointInterfaces(
 }
 
 /** Cross-resource and computed-field validation, shared with every report consumer. */
-export function validateProductReport(report: ProductReportV16): string[] {
+export function validateProductReport(report: ProductReportV14): string[] {
   const issues: string[] = []
   const { model } = report
   /* An Actor is an Entity that acts. Every actor reference resolves here. */
@@ -1635,7 +1635,7 @@ function isRepositoryEntryPoint(value: string): boolean {
 }
 
 /** Project a report into the source-free profile delivered outside its repository. */
-export function projectPortableReport(report: ProductReportV16): ProductReportV16 {
+export function projectPortableReport(report: ProductReportV14): ProductReportV14 {
   const portableReferences = <T extends { kind: string, role: string, target: string }>(items: T[]): T[] =>
     items.filter(reference =>
       reference.kind !== 'code'
@@ -1683,8 +1683,8 @@ export function projectPortableReport(report: ProductReportV16): ProductReportV1
   }
 }
 
-export function parseProductReport(input: unknown): ProductReportV16 {
-  const parsed = ProductReportV16Schema.safeParse(input)
+export function parseProductReport(input: unknown): ProductReportV14 {
+  const parsed = ProductReportV14Schema.safeParse(input)
   if (!parsed.success) throw new Error(describeReportShapeError(input, parsed.error))
   const report = parsed.data
   const issues = validateProductReport(report)
@@ -1710,7 +1710,7 @@ function describeReportShapeError(input: unknown, error: z.ZodError): string {
 }
 
 /** Additional publication policy for a Product Report entering the public Blueprint catalog. */
-export function validateBlueprintReport(report: ProductReportV16): string[] {
+export function validateBlueprintReport(report: ProductReportV14): string[] {
   const issues: string[] = []
   if (!report.category) issues.push('category is required for a public Blueprint')
   if (!report.tags.length) issues.push('at least one tag is required for a public Blueprint')
