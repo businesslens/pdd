@@ -33,19 +33,20 @@ own Capabilities, so it does not borrow Domains from its parent's other cases.
 Overview contains identity facts, authored detail, Contexts and supporting material,
 with contextual links beside the facts they explain. Capability
 and Journey readings add Scenarios.
-An Interface or Experience Overview opens with Delivery: the Capabilities
-available there, grouped by Domain, each naming the Screen or Screens inside
-the container that expose it. Capabilities available but exposed on no Screen
-are listed under an “Available, not on a Screen” sub-heading; a container with
-no Screens at all lists its Capabilities plainly. The facts strip adds
+Every place reads itself: what is authored on it and what happens exactly
+there, never a sum of the places nested inside it. An Interface or Experience
+Overview carries no Delivery list; its facts strip counts the Capabilities
+available inside it, and where each is delivered reads in its containment tree.
+The facts strip adds
 Languages to an Interface that narrows the Product's list and Version to an
 Experience that carries one; the Product Overview's About reading lists the
 Product's languages.
 A Screen Overview has a Presents block — each Entity with the facts on screen
-as chips, or the Entity alone for a bare entry — and a Changes made here block:
-every Step that changes something on this Screen or a Screen nested inside it,
-grouped by Scenario, with its Entity effects and, where the Step is placed on a
-nested Screen, that Screen named. A Screen's facts strip counts what it
+as chips, or the Entity alone for a bare entry — and a Delivery block: one row
+per Capability the Screen lists, with what the Steps placed exactly on this
+Screen do (merged per Entity, a change outranking a read) and the Scenarios
+that pass through, Journey Scenarios marked. A nested Screen reads its own
+Delivery, so a parent only names its children under “Also inside”. A Screen's facts strip counts what it
 presents and the Capabilities it exposes. There are no Information presented,
 Available actions, View states or Capability boundary readings, and References
 carry no state badge.
@@ -89,8 +90,18 @@ Both use the collection's tree rows, chevrons, resource links and expansion
 controls. The selected resource is already named in the header, so each tree
 starts with its children. Shared Screens occur once under their Interface in the
 full tree; an Experience's Screens tab shows shared references with “From” and
-an owner link. These tabs hold containment and availability; Overview holds
-audience and Delivery, and Connections holds capability exposure. Screens have no containment tab.
+an owner link. What a place delivers is an ordinary item in its own branch, as
+in the Delivery map: a Screen lists its own Capabilities first, never a
+child's, then the Screens nested inside it; an Experience or Interface lists
+only a gap, a Capability available there and exposed on no Screen of its own,
+noted “Available here, on no Screen”; an Interface with no Screens lists its
+Capabilities noted “Delivered directly”. A containment tab appears only where
+there are places to hold. On the Interfaces collection the Capabilities filter
+marks the matching items. Screens have no containment tab.
+Interfaces, Experiences and Screens have a UI map tab (`ui-map`): the derived
+map of Scenario moves, focused on that place — what it holds and the places one
+move in or out. Movement is read one place at a time; the collection Graph does
+not draw it.
 An Entity's Overview contains Information
 kept; its Lifecycle reading switches between Rows and Graph. Rows groups changes
 under their starting State, using the collection list's parent/child styling.
@@ -255,7 +266,7 @@ where it left:
 | `section` | `overview`; or a collection: `entity`, `interface`, `domain`, `capability`, `journey`, or `rule` | `overview` |
 | `resource` | the stable key of the inspected resource (`screen:reader-web::…`), or `null` for the section's collection | `null` |
 | `tab` | underlying collection: `overview` (Rows), `graph`, or `matrix` (Entities, Capabilities and Business Rules); Product Overview: `overview` (About), `coverage`, or `references` | `overview` |
-| `resourceTab` | resource reading: `overview`, `sketch` (or `sketch/<child Screen id>` for a child's Sketch), `structure`, `scenarios`, `lifecycle`, `connections`, or `references`; independent of `tab` | `overview` |
+| `resourceTab` | resource reading: `overview`, `sketch` (or `sketch/<child Screen id>` for a child's Sketch), `structure`, `ui-map`, `scenarios`, `lifecycle`, `connections`, or `references`; independent of `tab` | `overview` |
 | `scenarioRoute` | the first route in the visible Scenario route window, or `null` | `null` |
 | `routeColumns` | `auto`, or the reader's preferred number of visible route columns | `auto` |
 | `topology` | selected view, Journey, Scenario window, matrix column, focus, hidden kinds, expanded/collapsed groups, directory search | Domain map; no filters |
@@ -302,7 +313,7 @@ Matrix is offered only by the three collections whose resources supply its rows.
 | Section | Rows (`overview`) | Graph (`graph`) | Matrix (`matrix`) |
 | --- | --- | --- | --- |
 | `entity` | one row per Entity, grouped by Domain; Actors lead | Entity relationships | What changes what: Entities × Capabilities |
-| `interface` | one tree card per Interface, its Experiences and Screens | UI map | — |
+| `interface` | one tree card per Interface, its Experiences and Screens | Delivery map | — |
 | `domain` | one tree card per Domain, its Capabilities and Entities | Domain reach | — |
 | `capability` | one row per Capability, grouped by Domain | Capability reach | Compare delivery: Capabilities × Interfaces |
 | `journey` | one row per Journey | Journey reach | — |
@@ -441,7 +452,13 @@ tiers, parents above children, shared orthogonal branches, and a distinct
 Product root. A reach graph draws occurrences, so a Screen reached by three
 Capabilities appears under each of them.
 
-The Interfaces Graph is the UI map, and it is derived: nothing in the model
+The Interfaces Graph is the delivery map: containment rooted at the Product,
+like the reach trees, with each Screen's own Capabilities as leaves, a gap
+leaf under an Experience or Interface for a Capability available there and on
+no Screen of its own, and an Interface with no Screens delivering directly.
+A Capability exposed on five Screens is a leaf under each.
+
+A place's UI map tab draws the UI map, and it is derived: nothing in the model
 draws it. Its frames are containment — every Screen sits inside its parent
 Screen, Experience or Interface, and an Interface with no Screens, a CLI or a
 webhook, is a single node. Its arrows come from exactly two sources. A move is

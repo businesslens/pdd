@@ -1638,7 +1638,7 @@ containing the Screen — for a Screen an Interface shares beside its
 `experiences/`, one for every Experience of that Interface. **A Screen lists
 only the Capabilities its own Steps use.** Capabilities flow neither up nor
 down a nest of Screens: a child lists what its own Steps use and the parent
-does not repeat it; a report sums the subtree. The list stays authored rather
+does not repeat it; a report shows each Screen's own list at its place in the tree. The list stays authored rather
 than derived because a partial model needs the claim before coverage exists,
 and coverage is what keeps it honest: a Capability a Screen exposes with no
 Step placed exactly on that Screen is a `lint` finding graded by

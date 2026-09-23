@@ -390,7 +390,7 @@ any child*. The list of a master-detail and the shell of a wizard have Steps of
 their own.
 
 **Capabilities do not flow up or down.** A Child Screen lists what its own
-Steps use; the parent does not repeat it. The report sums the subtree.
+Steps use; the parent does not repeat it. The report shows each Screen's own list at its place in the tree.
 
 | Case | Modeling |
 | --- | --- |

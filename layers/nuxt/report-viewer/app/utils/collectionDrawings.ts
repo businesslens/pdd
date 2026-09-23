@@ -18,8 +18,8 @@ export function collectionDrawingChoices(kind: ReportResourceKind): DrawingChoic
   const matrix = matrixForCollection(kind)
   if (graph) {
     const view = findProductTopologyView(graph.view)
-    choices.push({ id: 'graph', label: kind === 'entity' ? 'Relationships' : kind === 'interface' ? 'UI map' : 'Reach',
-      shortLabel: kind === 'entity' ? 'Links' : kind === 'interface' ? 'Map' : 'Reach',
+    choices.push({ id: 'graph', label: kind === 'entity' ? 'Relationships' : kind === 'interface' ? 'Delivery map' : 'Reach',
+      shortLabel: kind === 'entity' ? 'Links' : kind === 'interface' ? 'Delivery' : 'Reach',
       icon: 'i-lucide-waypoints', description: view.question })
   }
   if (matrix) {

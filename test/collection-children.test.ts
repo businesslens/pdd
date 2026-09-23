@@ -104,7 +104,7 @@ describe('collection rows that expand', () => {
     const canonical = flatten(structureChildren(workspace, owner)).filter((node: any) => node.resource?.key === shared.resource.key)
     expect(canonical).toHaveLength(1)
     expect(canonical[0].sharedFrom).toBeUndefined()
-    expect(tabsFor(workspace, experience).map((tab: any) => tab.id)).toEqual(['overview', 'sketch', 'structure', 'connections'])
+    expect(tabsFor(workspace, experience).map((tab: any) => tab.id)).toEqual(['overview', 'sketch', 'structure', 'ui-map', 'connections'])
     expect(structureChildren(workspace, shared.resource)).toEqual([])
     expect(tabsFor(workspace, shared.resource).map((tab: any) => tab.id)).not.toContain('structure')
   })
@@ -112,7 +112,8 @@ describe('collection rows that expand', () => {
   it('omits containment tabs and their empty groups on childless places', () => {
     const empty = { ...workspace, experiences: [], screens: [] }
     for (const resource of [...workspace.interfaces, ...workspace.experiences]) {
-      expect(structureChildren(empty, resource)).toEqual([])
+      /* With no place inside, what is left is what it delivers directly. */
+      expect(structureChildren(empty, resource).every((node: any) => node.resource?.kind === 'capability' && !node.children.length)).toBe(true)
       expect(tabsFor(empty, resource).map((tab: any) => tab.id)).not.toContain('structure')
     }
   })

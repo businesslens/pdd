@@ -6,7 +6,7 @@ import { relatedIds } from './resourceFacets'
 /** Each named drawing belongs to the collection supplying its subjects. */
 export const REPORT_DESTINATIONS = [
   { section: 'entity-relationships', view: 'what-it-keeps', name: 'Entity relationships', label: 'Graph', icon: 'i-lucide-network', rail: 'entity', mode: 'graph' },
-  { section: 'interface-map', view: 'ui-map', name: 'UI map', label: 'Graph', icon: 'i-lucide-waypoints', rail: 'interface', mode: 'graph' },
+  { section: 'delivery-map', view: 'delivery-map', name: 'Delivery map', label: 'Graph', icon: 'i-lucide-git-branch', rail: 'interface', mode: 'graph' },
   { section: 'domain-reach', view: 'domain-reach', name: 'Domain reach', label: 'Graph', icon: 'i-lucide-git-branch', rail: 'domain', mode: 'graph' },
   { section: 'capability-reach', view: 'capability-reach', name: 'Capability reach', label: 'Graph', icon: 'i-lucide-git-branch', rail: 'capability', mode: 'graph' },
   { section: 'journey-reach', view: 'journey-reach', name: 'Journey reach', label: 'Graph', icon: 'i-lucide-git-branch', rail: 'journey', mode: 'graph' },
@@ -56,7 +56,7 @@ export function resourceDomains(workspace: ReportWorkspace, resource: AnyResourc
 
 export function resourceViewLinks(resource: AnyResourceView, workspace: ReportWorkspace) {
   const sections = resource.kind === 'entity' ? ['entity-relationships', 'what-changes-what']
-    : ['interface', 'experience', 'screen'].includes(resource.kind) ? ['interface-map', ...(resource.kind === 'interface' ? ['delivery'] : [])]
+    : ['interface', 'experience', 'screen'].includes(resource.kind) ? ['delivery-map', ...(resource.kind === 'interface' ? ['delivery'] : [])]
       : resource.kind === 'domain' ? ['domain-reach']
         : resource.kind === 'capability' ? ['capability-reach', 'delivery', 'what-changes-what']
           : resource.kind === 'journey' ? ['journey-reach']

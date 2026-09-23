@@ -8,10 +8,11 @@
  * Every other collection lists plain rows; a Capability's or Journey's
  * Scenarios are read on its page.
  */
-import type { AnyResourceView, ReportResourceKind, ReportWorkspace, ScreenView } from './reportWorkspace'
+import type { AnyResourceView, ExperienceView, InterfaceView, ReportResourceKind, ReportWorkspace, ScreenView } from './reportWorkspace'
 import { ENTITY_KIND_META, resourceKey } from './reportWorkspace'
 import { interfaceProjection } from './topologyProjections'
 import type { TopologyBranch } from './topologyProjections'
+import { placeCapabilities } from './placeReadings'
 
 export interface RowChild {
   resource: AnyResourceView
@@ -28,6 +29,8 @@ export interface TreeCardNode {
   groupKind?: ReportResourceKind
   /** An available Screen reference, not a child owned by this reading. */
   sharedFrom?: AnyResourceView
+  /** A short qualifier under the title, e.g. a Capability delivered directly. */
+  note?: string
   children: TreeCardNode[]
 }
 
@@ -60,10 +63,25 @@ export function ownedScreens(workspace: ReportWorkspace, owner: AnyResourceView)
     owner.kind === 'experience' ? context.experienceId === owner.id : context.interfaceId === owner.id && !context.experienceId))
 }
 
+/**
+ * What a place delivers, as items in its own branch: a Screen's own
+ * Capabilities; an Experience's or Interface's gap, available there and on no
+ * Screen of its own; or, for an Interface with no Screens, delivered directly.
+ * A Capability is an occurrence, so its id is the place's and its own.
+ */
+function deliveryLeaves(workspace: ReportWorkspace, place: InterfaceView | ExperienceView | ScreenView): TreeCardNode[] {
+  const { capabilities, note } = placeCapabilities(workspace, place)
+  return capabilities.map(capability => ({
+    ...leaf(capability), id: `${place.key}>${capability.key}`,
+    ...(note === 'gap' ? { note: 'Available here, on no Screen' } : note === 'direct' ? { note: 'Delivered directly' } : {})
+  }))
+}
+
 /** One hierarchy for collection cards and focused containment readings. */
 export function structureChildren(workspace: ReportWorkspace, resource: AnyResourceView): TreeCardNode[] {
-  /* A nested Screen sits under its parent Screen with no group between: the parent already says what kind it holds. */
-  const screenLeaf = (screen: ScreenView): TreeCardNode => leaf(screen, childScreens(workspace, screen).map(screenLeaf))
+  /* A nested Screen sits under its parent Screen with no group between: the parent already says what kind it holds.
+     Its own Capabilities come first, then the Screens nested inside it. */
+  const screenLeaf = (screen: ScreenView): TreeCardNode => leaf(screen, [...deliveryLeaves(workspace, screen), ...childScreens(workspace, screen).map(screenLeaf)])
   const screensOf = (owner: AnyResourceView) => ownedScreens(workspace, owner)
   const screenGroup = (owner: AnyResourceView) => group(`${owner.key}:screens`, 'screen', screensOf(owner).map(screenLeaf))
   if (resource.kind === 'interface') {
@@ -71,14 +89,14 @@ export function structureChildren(workspace: ReportWorkspace, resource: AnyResou
     const screens = screenGroup(resource)
     if (experiences.length) screens.title = 'Shared Screens'
     return [
-      group(`${resource.key}:experiences`, 'experience', experiences.map(experience => leaf(experience, [screenGroup(experience)].filter(node => node.children.length)))),
+      group(`${resource.key}:experiences`, 'experience', experiences.map(experience => leaf(experience, [...deliveryLeaves(workspace, experience), ...[screenGroup(experience)].filter(node => node.children.length)]))),
       screens
-    ].filter(node => node.children.length)
+    ].filter(node => node.children.length).concat(deliveryLeaves(workspace, resource))
   }
   if (resource.kind === 'experience') {
     const shared = workspace.interfaces.filter(iface => resource.interfaceIds.includes(iface.id)).flatMap(iface =>
       screensOf(iface).map(screen => ({ ...screenLeaf(screen), sharedFrom: iface })))
-    return [screenGroup(resource), { ...group(`${resource.key}:shared-screens`, 'screen', shared), title: 'Shared Screens' }].filter(node => node.children.length)
+    return [...deliveryLeaves(workspace, resource), ...[screenGroup(resource), { ...group(`${resource.key}:shared-screens`, 'screen', shared), title: 'Shared Screens' }].filter(node => node.children.length)]
   }
   return []
 }

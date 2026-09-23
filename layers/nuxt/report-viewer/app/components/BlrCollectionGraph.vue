@@ -8,9 +8,11 @@
  * narrowing the rows cannot express, which the shell shows as a chip beside
  * the filters so it can be cleared like any other.
  *
- * Entities draw their authored relations, Interfaces the derived UI map —
- * places as nested frames, Scenario moves as arrows — and every other
- * collection a reach tree rooted at the Product.
+ * Entities draw their authored relations, Interfaces the delivery map —
+ * containment with each place's Capabilities as leaves — and every other
+ * collection a reach tree rooted at the Product. The UI map, places as nested
+ * frames with Scenario moves as arrows, is drawn here too, but only inside a
+ * place's own reading, focused on it.
  */
 import type { AnyResourceView, ReportResourceKind, ReportWorkspace } from '../utils/reportWorkspace'
 import { resourceKey } from '../utils/reportWorkspace'
@@ -18,7 +20,7 @@ import { findProductTopologyView } from '../utils/productTopologyViews'
 import type { ProductTopologyViewId } from '../utils/productTopologyViews'
 import type { TopologyReading } from '../utils/topologyState'
 import { defaultTopologyReading, sanitizeTopologyReading, toggleTopologyGroup } from '../utils/topologyState'
-import { entityRelationsProjection, filterBranches, reachTreeProjection, uiMapProjection } from '../utils/topologyProjections'
+import { deliveryMapProjection, entityRelationsProjection, filterBranches, reachTreeProjection, uiMapProjection } from '../utils/topologyProjections'
 import type { ReachKind, TopologyBranch } from '../utils/topologyProjections'
 import { diagramResource } from '../utils/diagram'
 import { topologyNeighbourhood } from '../utils/topologyFocus'
@@ -48,7 +50,8 @@ const keepSubjects = (branches: TopologyBranch[]): TopologyBranch[] => branches
 
 const isMap = computed(() => view.value.id === 'ui-map')
 const isTree = computed(() => !isMap.value && view.value.id !== 'what-it-keeps')
-const tree = computed(() => isTree.value ? keepSubjects([reachTreeProjection(props.workspace, props.kind as ReachKind)])[0]! : null)
+const tree = computed(() => !isTree.value ? null
+  : keepSubjects([view.value.id === 'delivery-map' ? deliveryMapProjection(props.workspace) : reachTreeProjection(props.workspace, props.kind as ReachKind)])[0]!)
 const map = computed(() => isMap.value ? uiMapProjection(props.workspace) : null)
 const places = computed(() => map.value ? keepSubjects(map.value.places) : [])
 /* Focus on the map keeps the places one move away as well as the subtree. */
@@ -87,7 +90,7 @@ function toggleAll(open: boolean, ids: string[]) {
   <div class="blr-product-topology" data-collection-graph>
     <div ref="pane" class="blr-topology-reading blr-topology-reading--graph" @scroll.capture.passive="save">
       <template v-if="isMap"><BlrDiagram v-if="mapDiagram && mapDiagram.nodes.length" :diagram="mapDiagram" :title="`${workspace.identity.title} UI map`" :viewport-key="scrollKey" @open="open" @toggle="toggle" @toggle-all="toggleAll($event, groupIds)" @ready="restore" /><p v-else class="blr-topology-empty">No resources in this scope.</p></template>
-      <template v-else-if="isTree"><BlrTopologyTree v-if="shown && shown.children.length" :tree="shown" :reading="reading" :viewport-key="scrollKey" :label="view.name" relation="Reached from" @open="open" @toggle="toggle" @toggle-all="toggleAll" @ready="restore" /><p v-else class="blr-topology-empty">No resources in this scope.</p></template>
+      <template v-else-if="isTree"><BlrTopologyTree v-if="shown && shown.children.length" :tree="shown" :reading="reading" :viewport-key="scrollKey" :label="view.name" :relation="view.id === 'delivery-map' ? 'Inside' : 'Reached from'" @open="open" @toggle="toggle" @toggle-all="toggleAll" @ready="restore" /><p v-else class="blr-topology-empty">No resources in this scope.</p></template>
       <template v-else><BlrDiagram v-if="diagram.nodes.length" :diagram="diagram" title="Entity relationships" :viewport-key="scrollKey" @open="open" @ready="restore" /><p v-else class="blr-topology-empty">No Entities in this scope.</p></template>
       <details class="blr-topology-about"><summary>About this view</summary><p><strong>{{ view.question }}</strong></p><p><strong>{{ view.diagramType }}.</strong> {{ view.note }}</p></details>
     </div>

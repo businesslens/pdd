@@ -12,7 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Interfaces and Experiences can name the Screens reachable from everywhere, the languages they serve, and which of two concurrently served versions they are.
 - Scenario Steps can cite the facts they read or edit.
 - The Information presented, Available actions, View states and Capability boundary sections are gone, along with screenshot state labels.
-- The report shows what each Screen presents and changes, opens Interfaces and Experiences with the Capabilities delivered there, and draws nested Screens in trees.
+- The report shows what each Screen presents and delivers, puts each Capability beside the Screen that delivers it in the Interfaces tree and its Delivery map, and draws nested Screens in trees.
+- Each Interface, Experience and Screen has its own UI map, showing only the moves in and out of it.
 - Product Reports are now version 14.
 - Every Screen, Interface and Experience has a Sketch, a rough view derived from the model, and every Scenario route can be read as a Storyboard of Sketches.
 - The report says what happens to an Entity the same way everywhere: the Entity, what happened to it, then its State.

@@ -51,6 +51,7 @@ const diagram = computed<Diagram>(() => {
     /* An occurrence keeps its branch id, so the same resource drawn under two
        parents is two nodes; `resourceKey` still opens the one page. */
     nodes: visible.map(node => ({ ...(node.resource ? { ...diagramResource(node.resource), id: node.id } : { id: node.id, resourceKey: node.id, title: node.title, kind: 'product' as const }),
+      ...(node.note ? { note: node.note } : {}),
       description: parents.value.has(node.id) ? `${props.relation} ${parents.value.get(node.id)!.title}.` : 'Product root.',
       branch: originals.get(node.id)!.children.length ? { id: node.id, count: originals.get(node.id)!.children.length, open: isOpen(node), childrenLabel: branchChildrenLabel(originals.get(node.id)!.children) } : undefined })),
     edges: visible.flatMap(node => node.children.map(child => ({ id: `${node.id}->${child.id}`, source: node.id, target: child.id, label: '', arrow: false }))) }

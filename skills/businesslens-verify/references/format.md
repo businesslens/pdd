@@ -207,7 +207,7 @@ not contain another H1 or H2.
   or a `configuredBy`; a Step's read never counts, and neither does a relation
   from another Entity.
 - Screen: at least one `capabilities` relation — only the Capabilities its own
-  Steps use, never a child's or its parent's; the report sums the subtree.
+  Steps use, never a child's or its parent's; the report shows each list at its place in the tree.
   Optional `entities`, each a bare Entity id or `{ entity, facts }` naming the
   facts on screen by their exact `## Information kept` name. "Presents" means
   on screen, read or entered alike: a sign-up form presents

@@ -24,6 +24,7 @@ export type ProductTopologyViewId =
   | 'capability-reach'
   | 'journey-reach'
   | 'rule-reach'
+  | 'delivery-map'
   | 'ui-map'
   | 'what-it-keeps'
   | 'delivery-by-interface'
@@ -75,6 +76,17 @@ export const PRODUCT_TOPOLOGY_VIEWS: ProductTopologyView[] = [
     question: 'What is each Business Rule attached to, and where does it apply?',
     note: 'Each Business Rule branches into its authored attachment targets — Entities, Capabilities, Journeys and Scenarios — and the places its Contexts restrict it to. Derived Domains and inherited reach are excluded.',
     kinds: ['product', 'rule', 'entity', 'capability', 'journey', 'capability-scenario', 'journey-scenario', 'interface', 'experience', 'screen']
+  },
+  /* The Interfaces collection's Graph: containment, like the Rows tree, with
+     what each place delivers as leaves, rooted at the Product like the reach
+     trees. Movement is not drawn here; it is each place's own UI map. */
+  {
+    id: 'delivery-map',
+    diagramType: 'Delivery map',
+    name: 'Delivery map',
+    question: 'Which Capabilities does each Screen deliver, inside which Experience and Interface?',
+    note: 'Each Interface branches into its Experiences and Screens, nested as authored, and each Screen into the Capabilities it lists — its own, never a child\'s, so a Capability exposed on five Screens is a leaf under each. A Capability available in an Experience or Interface that no Screen there exposes is marked as a gap under that place; an Interface with no Screens delivers its Capabilities directly.',
+    kinds: ['product', 'interface', 'experience', 'screen', 'capability']
   },
   /* The UI map is derived, and the Rows tree already draws containment; the
      map draws movement inside it. */

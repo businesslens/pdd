@@ -155,6 +155,30 @@ export function interfaceProjection(workspace: ReportWorkspace, delivery = false
 }
 
 /**
+ * The delivery map: containment, with each place carrying the Capabilities it
+ * delivers as leaves — a Screen its own `capabilities`, never a child's; an
+ * Experience or Interface only what is available there yet on no Screen
+ * inside it, which is a gap, or, for an Interface with no Screens, delivered
+ * directly. A Capability is an occurrence, so one exposed on five Screens is a
+ * leaf under each. Rooted at the Product, like the reach trees.
+ */
+export function deliveryMapProjection(workspace: ReportWorkspace): TopologyBranch {
+  const leaves = (parent: string, capabilities: CapabilityView[], note?: string) =>
+    capabilities.map(capability => ({ ...occurrence(parent, capability), ...(note ? { note } : {}) }))
+  const withLeaves = (item: TopologyBranch): TopologyBranch => {
+    const resource = item.resource
+    const own = resource?.kind === 'screen'
+      ? leaves(item.id, workspace.capabilities.filter(capability => resource.capabilityIds.includes(capability.id)))
+      : leaves(item.id, item.references as CapabilityView[], resource?.kind === 'interface' ? 'Delivered directly' : 'Available here, on no Screen')
+    const places = item.children.filter(child => child.resource?.kind !== 'capability').map(withLeaves)
+    const direct = item.children.filter(child => child.resource?.kind === 'capability').map(child => ({ ...occurrence(item.id, child.resource!), note: 'Delivered directly' }))
+    return { ...item, references: [], referenceLabel: undefined, children: [...own, ...direct, ...places] }
+  }
+  const trees = interfaceProjection(workspace, true).map(item => withLeaves({ ...item, references: [] }))
+  return productRoot(workspace, trees)
+}
+
+/**
  * Which Interface delivers each Capability, and by what route.
  *
  * Delivery is a question about two collections at once — where can I reach this,

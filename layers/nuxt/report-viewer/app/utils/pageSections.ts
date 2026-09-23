@@ -17,7 +17,7 @@ export type PageBlockId =
   | 'supporting'
   | 'references'
 
-export type PageTabId = 'overview' | 'sketch' | 'scenarios' | 'lifecycle' | 'structure' | 'connections' | 'references'
+export type PageTabId = 'overview' | 'sketch' | 'scenarios' | 'lifecycle' | 'structure' | 'ui-map' | 'connections' | 'references'
 
 export interface PageTab {
   id: PageTabId
@@ -31,8 +31,6 @@ export function hasAuthoredBody(resource: AnyResourceView): boolean {
   if (isScenarioKind(resource.kind)) return true
   if (resource.kind === 'screen' || resource.kind === 'entity' || resource.kind === 'rule' || resource.kind === 'journey') return true
   if (resource.intent) return true
-  /* Delivery: what is available in the container, and on which Screen. */
-  if (resource.kind === 'interface' || resource.kind === 'experience') return resource.capabilityIds.length > 0
   return resource.kind === 'capability'
 }
 
@@ -76,7 +74,10 @@ export function tabsFor(workspace: ReportWorkspace, requestedResource: AnyResour
   if (resource.kind === 'entity' && resource.states.length) {
     tabs.push({ id: 'lifecycle', label: 'Lifecycle', blocks: [] })
   }
-  if (structureChildren(workspace, resource).length) tabs.push({ id: 'structure', label: structureLabel(resource), blocks: ['structure'] })
+  /* A containment tab holds places; Capabilities delivered directly with no place to sit in are counted in Overview. */
+  if (structureChildren(workspace, resource).some(node => node.resource?.kind !== 'capability')) tabs.push({ id: 'structure', label: structureLabel(resource), blocks: ['structure'] })
+  /* Movement is read one place at a time: this place, what it holds, and the places one move in or out. */
+  if (resource.kind === 'interface' || resource.kind === 'experience' || resource.kind === 'screen') tabs.push({ id: 'ui-map', label: 'UI map', blocks: [] })
   if (resourceConnectionRows(workspace, resource).length) {
     tabs.push({ id: 'connections', label: 'Connections', blocks: ['connections'] })
   }

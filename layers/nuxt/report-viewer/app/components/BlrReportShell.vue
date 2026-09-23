@@ -797,6 +797,7 @@ const orphanScenarios = computed(() => props.workspace.scenarios
                 :narrowed="filtersActive"
                 :closed="closedCards"
                 :expansion="cardExpansion"
+                :highlight="facets.capability ?? []"
                 @open="openResourcePage"
                 @close="(key, closed) => setCollectionGroupOpen(key, !closed)"
                 @expand="setCardExpansion"

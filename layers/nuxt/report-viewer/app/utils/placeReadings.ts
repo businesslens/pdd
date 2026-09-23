@@ -1,5 +1,6 @@
 /**
- * What a place delivers, and what changes there.
+ * What a place delivers, read on that place alone — never summed over the
+ * places nested inside it, which read their own.
  *
  * Both readings are derived from what the model already holds once, on
  * purpose: a Capability's `availability`, a Screen's `capabilities`, and the
@@ -9,7 +10,6 @@
  */
 import type {
   CapabilityView,
-  DomainView,
   ExperienceView,
   InterfaceView,
   ReportWorkspace,
@@ -18,96 +18,94 @@ import type {
   ScreenView
 } from './reportWorkspace'
 import { resourceKey } from './reportWorkspace'
-
-export interface DeliveryRow {
-  capability: CapabilityView
-  /** The Screens inside the container that expose it, in authored order. */
-  screens: ScreenView[]
-}
-
-export interface DeliveryGroup {
-  /** Null collects the Capabilities no Domain claims. */
-  domain: DomainView | null
-  rows: DeliveryRow[]
-}
-
-export interface DeliveryReading {
-  /** Capabilities exposed on a Screen, grouped by Domain in Domain order. */
-  groups: DeliveryGroup[]
-  /** Available here, yet no Screen inside exposes them — a finding, where the container owns Screens. */
-  unexposed: CapabilityView[]
-  /** False for a container with no Screens at all, where every Capability is delivered directly. */
-  ownsScreens: boolean
-  /** Every Capability available here. */
-  count: number
-}
-
-const inside = (containerId: string, placeId: string) => placeId === containerId || placeId.startsWith(`${containerId}::`)
+import type { EntityEffectLike } from './entityEffectPhrase'
+import { joinStateMoves } from './entityEffectPhrase'
 
 /**
- * The Capabilities available in an Interface or Experience, and the Screen each
- * is exposed on. Availability naming the container, one of its Experiences, or
- * a Screen inside it all count as "available here"; exposure is a Screen inside
- * the container listing the Capability, nested Screens included.
+ * The Capabilities a place carries where it sits in the tree. A Screen carries
+ * its own `capabilities` — never a child's, which the child carries. An
+ * Experience or Interface carries only what is available there and exposed on
+ * no Screen that belongs to it, a gap `lint` grades; an Interface with no
+ * Screens at all carries its available Capabilities as delivered directly.
  */
-export function deliveryOf(workspace: ReportWorkspace, container: InterfaceView | ExperienceView): DeliveryReading {
-  const available = workspace.capabilities.filter(capability =>
-    capability.contexts.some(context => inside(container.id, context.placeId)))
-  const screens = workspace.screens.filter(screen => inside(container.id, screen.id) && screen.id !== container.id)
-  const rows = available.map(capability => ({
-    capability,
-    screens: screens.filter(screen => screen.capabilityIds.includes(capability.id))
-  }))
-  const ownsScreens = screens.length > 0
-  const exposed = ownsScreens ? rows.filter(row => row.screens.length) : rows
-  const groupOf = (domain: DomainView | null): DeliveryGroup => ({
-    domain,
-    rows: exposed.filter(row => (row.capability.domainId ?? '') === (domain?.id ?? ''))
-  })
-  return {
-    groups: [...workspace.domains.map(groupOf), groupOf(null)].filter(group => group.rows.length),
-    unexposed: ownsScreens ? rows.filter(row => !row.screens.length).map(row => row.capability) : [],
-    ownsScreens,
-    count: available.length
+export interface PlaceCapabilities {
+  capabilities: CapabilityView[]
+  note: 'own' | 'gap' | 'direct'
+}
+
+export function placeCapabilities(workspace: ReportWorkspace, place: InterfaceView | ExperienceView | ScreenView): PlaceCapabilities {
+  if (place.kind === 'screen') {
+    return { note: 'own', capabilities: place.capabilityIds.flatMap((id) => {
+      const capability = workspace.byKey.get(resourceKey('capability', id))
+      return capability?.kind === 'capability' ? [capability] : []
+    }) }
   }
+  const available = workspace.capabilities.filter(capability => capability.contexts.some(context => place.kind === 'experience'
+    ? context.experienceId === place.id
+    : context.interfaceId === place.id && !context.experienceId))
+  const screens = workspace.screens.filter(screen => screen.contexts.some(context => place.kind === 'experience'
+    ? context.experienceId === place.id || (place.interfaceIds.includes(context.interfaceId) && !context.experienceId)
+    : context.interfaceId === place.id))
+  if (place.kind === 'interface' && !screens.length) return { note: 'direct', capabilities: available }
+  return { note: 'gap', capabilities: available.filter(capability => !screens.some(screen => screen.capabilityIds.includes(capability.id))) }
 }
 
-export interface ScreenChangeStep {
-  /** Position in its Scenario, for the reader who opens it. */
-  index: number
-  text: string
-  stepKind: 'actor' | 'product' | 'condition'
-  actorId: string
-  /** Changes first, then reads, as the Step authored them. */
-  entities: ScenarioStepEntityView[]
-  /** The descendant Screens the Step is placed on; empty when it is placed on the Screen itself. */
-  placedOn: ScreenView[]
-}
+export type ScreenEffect = EntityEffectLike & { entityId: string }
 
-export interface ScreenChangeGroup {
-  scenario: ScenarioView
-  steps: ScreenChangeStep[]
+/** One Capability a Screen exposes, read on that Screen alone. */
+export interface ScreenDeliveryRow {
+  capability: CapabilityView
+  /**
+   * What the Steps placed exactly on this Screen do to each Entity, merged
+   * across them: an instance alias folds into its Entity, a change outranks a
+   * read of the same Entity, and moves that meet join into one run.
+   */
+  effects: ScreenEffect[]
+  /** The Scenarios with a Step here, Capability Scenarios first. */
+  scenarios: ScenarioView[]
+  /** How many Steps are placed here for this Capability. */
+  steps: number
 }
 
 /**
- * The Steps that change something on this Screen or on a Screen nested inside
- * it, grouped by Scenario in the model's order. A Step placed on a descendant
- * says so; a Step that only reads is not a change and is left to the Scenario.
+ * A Screen's own Delivery: each Capability it lists, with what happens on this
+ * Screen for it — never on a nested Screen, which reads its own. A Step counts
+ * for the Capability its Scenario belongs to, or, in a Journey Scenario, the
+ * Capability the Step names.
  */
-export function screenChanges(workspace: ReportWorkspace, screen: ScreenView): ScreenChangeGroup[] {
-  return workspace.scenarios.flatMap((scenario) => {
-    const steps = scenario.steps.flatMap((step, index): ScreenChangeStep[] => {
-      if (!step.entities.some(entry => entry.effect !== 'reads')) return []
-      const places = [...new Set(step.contexts.map(item => item.context.id).filter(placeId => inside(screen.id, placeId)))]
-      if (!places.length) return []
-      const placedOn = places.includes(screen.id)
-        ? []
-        : places.flatMap((placeId) => {
-            const place = workspace.byKey.get(resourceKey('screen', placeId))
-            return place?.kind === 'screen' ? [place] : []
-          })
-      return [{ index, text: step.text, stepKind: step.stepKind, actorId: step.actorId, entities: step.entities, placedOn }]
+export function screenDelivery(workspace: ReportWorkspace, screen: ScreenView): ScreenDeliveryRow[] {
+  return screen.capabilityIds.flatMap((capabilityId) => {
+    const capability = workspace.byKey.get(resourceKey('capability', capabilityId))
+    if (capability?.kind !== 'capability') return []
+    const scenarios: ScenarioView[] = []
+    const mentions: ScenarioStepEntityView[] = []
+    let steps = 0
+    for (const scenario of workspace.scenarios) {
+      const here = scenario.steps.filter(step =>
+        (scenario.scenarioType === 'capability' ? scenario.capabilityId : step.capabilityId) === capabilityId
+        && step.contexts.some(item => item.context.id === screen.id))
+      if (!here.length) continue
+      scenarios.push(scenario)
+      steps += here.length
+      mentions.push(...here.flatMap(step => step.entities))
+    }
+    scenarios.sort((a, b) => Number(a.scenarioType === 'journey') - Number(b.scenarioType === 'journey'))
+    return [{ capability, effects: mergeEffects(mentions), scenarios, steps }]
+  })
+}
+
+function mergeEffects(mentions: ScenarioStepEntityView[]): ScreenEffect[] {
+  const byEntity = new Map<string, ScenarioStepEntityView[]>()
+  for (const mention of mentions) byEntity.set(mention.entityId, [...byEntity.get(mention.entityId) ?? [], mention])
+  return [...byEntity].flatMap(([entityId, all]) => {
+    const changes = all.filter(item => item.effect !== 'reads')
+    if (!changes.length) return [{ entityId, effect: 'reads' as const, from: '', to: '' }]
+    const seen = new Set<string>()
+    const distinct = changes.filter((item) => {
+      const key = `${item.effect}|${item.from}|${item.to}`
+      return !seen.has(key) && Boolean(seen.add(key))
     })
-    return steps.length ? [{ scenario, steps }] : []
+    return joinStateMoves(distinct.map(item => ({ effect: item.effect, from: item.from, to: item.to })))
+      .map(effect => ({ ...effect, entityId }))
   })
 }

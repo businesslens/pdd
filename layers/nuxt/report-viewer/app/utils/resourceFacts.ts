@@ -48,6 +48,7 @@ export function resourceFacts(workspace: ReportWorkspace, resource: AnyResourceV
         { label: 'Type', value: INTERFACE_TYPE_META[item.interfaceType].label, term: 'interface-type' },
         { label: 'Experiences', value: String(item.experienceIds.length), term: KIND_TERM.experience },
         { label: 'Screens', value: String(item.screenIds.length), term: KIND_TERM.screen },
+        { label: 'Capabilities', value: String(item.capabilityIds.length), term: KIND_TERM.capability },
         /* Only where the Interface narrows the Product's list; an empty list says nothing. */
         ...(item.languages.length ? [{ label: 'Languages', value: item.languages.join(', '), wide: true }] : [])
       ]
@@ -58,6 +59,7 @@ export function resourceFacts(workspace: ReportWorkspace, resource: AnyResourceV
         { label: 'Interface', value: one('interface', item.interfaceIds), wide: true, term: KIND_TERM.interface },
         { label: 'Access mode', value: item.accessMode, term: 'access-mode' },
         { label: 'Screens', value: String(item.screenIds.length), term: KIND_TERM.screen },
+        { label: 'Capabilities', value: String(item.capabilityIds.length), term: KIND_TERM.capability },
         ...(item.version !== null ? [{ label: 'Version', value: item.version, term: 'version' as const }] : [])
       ]
     }

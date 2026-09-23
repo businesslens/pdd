@@ -5,7 +5,13 @@ import type { AnyResourceView } from '../utils/reportWorkspace'
 import { entityFacetOf } from '../utils/reportWorkspace'
 import type { TreeCardNode } from '../utils/collectionChildren'
 
-const props = defineProps<{ nodes: TreeCardNode[], label: string, rootKey?: string }>()
+const props = defineProps<{
+  nodes: TreeCardNode[]
+  label: string
+  rootKey?: string
+  /** Capability ids a filter selected: those items are marked wherever they sit. */
+  highlight?: string[]
+}>()
 const expanded = defineModel<string[]>('expanded', { required: true })
 const emit = defineEmits<{ open: [resource: AnyResourceView] }>()
 interface Node extends TreeItem { value: string, label: string, source: TreeCardNode, children?: Node[] }
@@ -38,14 +44,14 @@ const items = computed(() => props.nodes.map(toNode))
     :expanded="expanded"
     color="neutral"
     size="md"
-    :ui="{ link: 'cursor-pointer gap-2 rounded-md bg-transparent transition hover:bg-elevated/40 hover:before:bg-transparent', linkLabel: 'min-w-0 font-medium' }"
+    :ui="{ link: 'cursor-pointer items-start gap-2 rounded-md bg-transparent transition hover:bg-elevated/40 hover:before:bg-transparent', linkLabel: 'min-w-0 font-medium' }"
     @update:expanded="expanded = $event"
   >
     <template #item-leading="{ item, expanded: isExpanded }">
       <button
         v-if="item.children?.length"
         type="button"
-        class="flex size-4 shrink-0 items-center justify-center rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        class="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         :aria-label="`${isExpanded ? 'Collapse' : 'Expand'} ${item.label}`"
         :aria-expanded="isExpanded"
         @click.stop="toggle(item.value)"
@@ -53,8 +59,8 @@ const items = computed(() => props.nodes.map(toNode))
       >
         <UIcon name="i-lucide-chevron-right" class="size-3.5 shrink-0 text-dimmed transition-transform" :class="isExpanded && 'rotate-90'" />
       </button>
-      <span v-else aria-hidden="true" class="size-4 shrink-0" />
-      <BlrKind v-if="item.source.groupKind" :kind="item.source.groupKind" :labelled="false" size="xs" />
+      <span v-else aria-hidden="true" class="mt-0.5 size-4 shrink-0" />
+      <BlrKind v-if="item.source.groupKind" :kind="item.source.groupKind" :labelled="false" size="xs" class="mt-0.5" />
       <BlrKind
         v-else-if="item.source.resource"
         :kind="item.source.resource.kind"
@@ -63,6 +69,7 @@ const items = computed(() => props.nodes.map(toNode))
         :acts="item.source.resource.kind === 'entity' ? item.source.resource.acts ?? undefined : undefined"
         :labelled="false"
         size="xs"
+        class="mt-0.5"
       />
     </template>
     <template #item-label="{ item }">
@@ -70,12 +77,14 @@ const items = computed(() => props.nodes.map(toNode))
         v-if="item.source.resource"
         :resource-key="item.source.resource.key"
         class="text-highlighted"
-        :class="item.value === rootKey && 'font-semibold'"
+        :class="[item.value === rootKey && 'font-semibold', highlight?.includes(item.source.resource.id) && item.source.resource.kind === 'capability' && 'rounded-sm bg-primary/12 px-1 text-primary']"
+        :data-highlighted="(highlight?.includes(item.source.resource.id) && item.source.resource.kind === 'capability') || undefined"
         @keydown.stop
         @open="emit('open', item.source.resource)"
       >{{ item.label }}</BlrResourceLink>
       <span v-else :class="item.value === rootKey ? 'font-semibold text-highlighted' : 'text-muted'">{{ item.label }} <span v-if="item.source.groupKind" class="ms-1.5 text-xs text-dimmed">{{ item.source.children.length }}</span></span>
       <BlrNavigationMark v-if="item.source.resource?.kind === 'screen' && item.source.resource.alwaysReachable" class="ms-1.5 align-middle" />
+      <span v-if="item.source.note" class="block whitespace-normal text-xs font-normal text-muted" data-tree-note>{{ item.source.note }}</span>
       <span v-if="item.source.sharedFrom" class="block whitespace-normal text-xs font-normal text-muted">
         From <BlrResourceLink :resource-key="item.source.sharedFrom.key" @keydown.stop @open="emit('open', item.source.sharedFrom)">{{ item.source.sharedFrom.title }}</BlrResourceLink>
       </span>

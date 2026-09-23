@@ -147,8 +147,8 @@ describe('named topology semantics', () => {
     expect(delivery.cells).toEqual([])
   })
 
-  it('keeps nine questions with explicit diagram types and stable view IDs', () => {
-    expect(PRODUCT_TOPOLOGY_VIEWS.map((view: any) => view.id)).toEqual(['domain-reach', 'capability-reach', 'journey-reach', 'rule-reach', 'ui-map', 'what-it-keeps', 'delivery-by-interface', 'rule-attachments', 'what-changes-what'])
+  it('keeps ten questions with explicit diagram types and stable view IDs', () => {
+    expect(PRODUCT_TOPOLOGY_VIEWS.map((view: any) => view.id)).toEqual(['domain-reach', 'capability-reach', 'journey-reach', 'rule-reach', 'delivery-map', 'ui-map', 'what-it-keeps', 'delivery-by-interface', 'rule-attachments', 'what-changes-what'])
     expect(PRODUCT_TOPOLOGY_VIEWS.every((view: any) => view.question.endsWith('?') && view.diagramType && view.note)).toBe(true)
   })
 

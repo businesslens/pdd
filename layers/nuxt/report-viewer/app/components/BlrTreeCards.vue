@@ -11,6 +11,8 @@ const props = defineProps<{
   narrowed: boolean
   closed: string[]
   expansion: Record<string, string[]>
+  /** Capability ids the Capabilities filter selected. */
+  highlight?: string[]
 }>()
 const emit = defineEmits<{ open: [resource: AnyResourceView], close: [key: string, closed: boolean], expand: [key: string, values: string[]] }>()
 const cards = computed(() => treeCards(props.workspace, props.kind, props.resources, props.narrowed))
@@ -38,6 +40,7 @@ const setExpanded = (card: TreeCard, values: string[]) => {
       :nodes="[{ id: card.key, title: card.title, resource: card.resource, children: card.children }]"
       :label="card.title"
       :root-key="card.key"
+      :highlight="highlight"
       :expanded="expandedOf(card)"
       @update:expanded="setExpanded(card, $event)"
       @open="emit('open', $event)"
