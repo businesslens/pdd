@@ -198,12 +198,6 @@ onMounted(() => reveal(props.path))
         </li>
       </ul>
     </section>
-
-    <p class="text-xs text-muted">
-      A row shows only what is recorded at that exact path. A closed folder also says how many statements are
-      recorded inside it — a way in, not a claim about the folder, which is why it goes when the folder opens.
-      Paths locate authored context and never establish that a file exists, or that it is completely modeled.
-    </p>
   </section>
 </template>
 

@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Browse every recorded Coverage location at once, each showing how many statements it holds and how many more are inside a closed folder, and read any of them in place without leaving the list.
 - Filter Coverage by Covered, Exclusions, Unmapped or Limitations, and find recorded paths by name.
 - Tell Coverage categories apart at a glance: each has its own icon and a clearer colour on its card, beside each path and on each statement.
+- See References in this repository apart from external links, each with its own count.
 - Blueprints preserve Coverage descriptions while leaving repository paths behind; older Blueprint formats are no longer accepted.
 - Apply the same structural checks to every model, including those with known gaps.
 - Open the local report before a model exists and follow valid edits as they arrive, with visible connection status.

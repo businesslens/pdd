@@ -73,6 +73,12 @@ owner links open that resource's References tab over the current reading. The
 catalog starts collapsed, with Expand all and Collapse all controls beside its
 count that also toggle image previews. It remembers its own expansion separately
 from individual resource trees.
+Every References tree separates **In this repository** from **External**, each
+with its own count and grouped by kind within it, because where material lives
+decides what following it does: a repository file opens in this report and is
+left behind when a Blueprint is exported, while an external link opens in a new
+tab and travels with it. A section with nothing in it is not drawn. The Overview
+ends with its last reading; generator and schema details stay in the header.
 Local References always lead with the file path; a distinct authored title follows
 inline as muted context. External References use their authored title with the URL
 below it, or the URL alone when untitled. A title identical to the target is not repeated.

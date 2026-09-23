@@ -29,7 +29,7 @@ that opens it and the resource type it presents.
 - Every Covered, Exclusions, Unmapped and Limitations description, each under every path it names and marked by its category's icon
 - Statements with no known repository location, readable below the tree
 - Every Reference in the model, including the Product's own, grouped by type with the resource that carries it
-- Which generator and schema version produced the report, and when
+- Which schema version produced the report, and when
 
 ## Available actions
 
@@ -75,8 +75,9 @@ within its frame.
 
 ### References open
 
-All attached material appears once per attachment, grouped by reference type in
-an expandable tree with counts, roles, links and local image previews. Each item
+All attached material appears once per attachment, separated into material in
+this repository and external links, each grouped by reference type in an
+expandable tree with counts, roles, links and local image previews. Each item
 names its owner; a resource owner's link opens its own References reading while
 preserving this Product reading underneath. Groups start open, and expansion is
 remembered across reading changes, Back and refresh independently of resource
