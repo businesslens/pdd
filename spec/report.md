@@ -223,9 +223,9 @@ Compilation produces a `workspace` reference profile. As written by
 `blueprint export`, a report carries the **portable** reference profile: it
 removes every `kind: code` reference, every `role: implementation` reference,
 every repository-relative reference, every repository-relative entry point,
-all Covered, Exclusion, Unmapped and Limitation paths. It also contains
-no repository URL, branch, commit, catalog listing state, pricing, or entitlement
-data. A report that has been through `export` is a Blueprint.
+and every Coverage entry's `paths`. It also contains no repository URL, branch, commit,
+catalog listing state, pricing, or entitlement data. A report that has been
+through `export` is a Blueprint.
 
 A co-located Product Model asset compiles into a repository-relative workspace
 Reference; the report never embeds its bytes. Files under a resource's
@@ -282,19 +282,9 @@ operators in [`docs/cli-pull.md`](../docs/cli-pull.md#catalog-contract).
 
 ## Coverage
 
-`coverage` contains the six frontmatter fields of
-[`coverage.md`](./format.md#coveragemd), with the same strict validation.
-`covered`, `exclusions`, `unmapped` and `limitations` contain descriptions with
-repository paths; `method` is one short authoring note. Neither `status` nor
-`rationale` is accepted. No completeness or readiness status is derived. Portable projection empties every entry's `paths`, retaining descriptions
-in all four lists. Expansion writes the frontmatter and `# Coverage` title,
-preserving authored meaning and replacing only `method` with the model's origin.
-
-## Local host context
-
-The local host serves the current Product Model and its References read-only.
-Renderer APIs, layout and navigation are documented in the
-[report layer](../layers/nuxt/report-viewer/README.md).
+`coverage` carries the fields of [`coverage.md`](./format.md#coveragemd) with the
+same strict validation. Expansion writes them back unchanged except `method`,
+which records the model's origin.
 
 ## Portable projection
 
@@ -313,10 +303,7 @@ serve(projectPortableReport(report))
 | --- | --- |
 | `references` | only HTTP(S) intent/context references kept |
 | `entryPoints` | repository paths and `file:` URLs dropped; routes, HTTP(S) URLs, non-file mobile deep links, and commands kept |
-| `coverage.covered[].paths` | emptied; descriptions retained |
-| `coverage.unmapped[].paths` | emptied; descriptions retained |
-| `coverage.exclusions[].paths` | emptied; descriptions retained |
-| `coverage.limitations[].paths` | emptied; descriptions retained |
+| `coverage` entry `paths` | emptied; descriptions kept |
 | `referenceProfile` | set to `portable` |
 
 Relative POSIX paths, Windows paths, UNC paths, local `file:` URLs, and
@@ -327,8 +314,8 @@ and is also kept. Repository-relative references are dropped. HTTP(S)
 intent/context references are kept. A value with no path separator at all,
 such as a CLI entry point, is not a path and is kept.
 
-Author-written prose — Coverage entry descriptions, Product `limitations`, `intent`,
-and each `supportingSections[].content` value — is never rewritten, by the
+Author-written prose — Coverage descriptions, `intent`, and each
+`supportingSections[].content` value — is never rewritten, by the
 projection or by expansion. It describes the **model's own completeness** rather
 than its origin, it is exactly what a reader receiving a Blueprint needs in
 order to know what they are getting, and it belongs to the author.
@@ -344,7 +331,7 @@ framework and the catalog apply this same exported function, contributors and
 the server cannot disagree about what a delivered report exposes.
 `validateProductReport` rejects a report that declares `referenceProfile:
 portable` while still carrying a code reference, implementation reference,
-repository-relative reference, Coverage entry path.
+repository-relative reference, or Coverage path.
 
 `blueprint export` writes the portable report. Contribution applies
 the same idempotent projection before opening a public pull request. `open` and

@@ -1,7 +1,7 @@
 # Product Model
 
 This directory is a **BusinessLens Product Model**: what this product does and
-for whom. It is Markdown tracked in Git, and it is the source of truth for
+for whom. It is plain Markdown tracked in Git, and it is the source of truth for
 intended product behavior.
 
 ## If you are an agent working in this repository
@@ -22,9 +22,6 @@ intended product behavior.
   for structural checks.
 - Use `businesslens-ideate` to change intended behavior and `businesslens-map`
   only to map established absent or deliberately untrusted behavior.
-- Read `coverage.md` for model scope, approved exclusions, known gaps and
-  limitations. Coverage describes model breadth; it does not record inspection
-  history or establish agreement with implementation.
 - Never edit `cache/`.
 
 Documentation: https://businesslens.io

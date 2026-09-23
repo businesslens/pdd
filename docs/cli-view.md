@@ -15,16 +15,7 @@ npx businesslens view owner/repo --pr 12
 
 `view` opens a Product Model as a read-only report on localhost. It does not
 alter the model, write `.businesslens/build/report.json`, or send report data
-to BusinessLens. A remote model must pass structural lint before the viewer opens.
-
-For a local model, the viewer starts in whatever state it is in, because the report is a
-place to watch a model being built. With no `.businesslens/` yet, the page says
-it is waiting and the report appears the moment the directory is created, at
-the current directory or the repository root. With a model that does not lint,
-the page shows the errors and the report appears on the first clean save.
-While it remains open, valid changes appear automatically; if an edit
-introduces a lint error, the browser keeps the last valid report visible and
-recovers after the error is fixed.
+to BusinessLens.
 
 The server listens only on `127.0.0.1` and stops when the command exits.
 
@@ -44,6 +35,8 @@ The server listens only on `127.0.0.1` and stops when the command exits.
 Without a repository, `view` uses the model in the current directory, or at
 the Git repository root. Valid edits appear automatically while the viewer is
 open; a lint error keeps the last valid report on screen until it is fixed.
+With no model yet, or one that does not lint, the page waits and shows the
+report once there is a valid one.
 See [Choosing the Product Model](./cli.md#choosing-the-product-model) for
 `--cwd`.
 
@@ -67,7 +60,8 @@ a fork shows the fork's content without naming the fork.
 
 The revision is fetched shallowly into a temporary directory and deleted when
 the command exits. Nothing from the repository runs. Private repositories use
-your own Git credentials. The report does not refresh; run the command again
+your own Git credentials. The model must pass structural lint before the viewer
+opens, and the report does not refresh; run the command again
 for a newer revision. `--cwd` does not apply.
 
 Use [`blueprint export`](./cli-export.md) when you need to write a source-free,

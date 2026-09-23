@@ -29,10 +29,7 @@ not travel with the Product contract:
 | --- | --- |
 | `references` | Keep only HTTP(S) intent and context References |
 | `entryPoints` | Remove repository paths and `file:` URLs; keep Product routes, HTTP(S) URLs, non-file deep links, and commands |
-| `coverage.covered[].paths` | Empty each list; keep every description |
-| `coverage.exclusions[].paths` | Empty each list; keep every description |
-| `coverage.limitations[].paths` | Empty each list; keep every description |
-| `coverage.unmapped[].paths` | Empty each list; keep every description |
+| `coverage` entry `paths` | Empty every list; keep the descriptions |
 | `referenceProfile` | Set to `portable` |
 
 `export` lints before it compiles. A model with lint errors does not produce a

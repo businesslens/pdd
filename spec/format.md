@@ -124,7 +124,7 @@ Screen. A representative model can therefore look like this:
 .businesslens/
 ├── config.yaml              # tool config (committed)
 ├── taxonomies.yaml          # scenario kinds (committed)
-├── coverage.md              # authored model scope and known gaps
+├── coverage.md              # model scope and known gaps (committed)
 ├── product.md               # compact Product when it has no logo
 ├── product/                 # expanded Product alternative
 │   ├── product.md
@@ -382,8 +382,7 @@ future format revision, but Context is not an arbitrary metadata bag.
   they cannot be represented as report list items.
 - **Set-valued lists are unique.** Product `tags` and every frontmatter relation
   list contain no duplicate value. Ordered content lists such as Scenario
-  `steps` and Coverage prose are not relation
-  sets and may repeat when the meaning calls for it.
+  `steps` are not relation sets and may repeat when the meaning calls for it.
 - Scenario IDs are globally unique across every `scenarios/` folder.
 
 ## References
@@ -504,12 +503,8 @@ characters maximum), `category` is a lowercase kebab-case classification,
 license identifier. The H1 remains the Product title and the lead prose remains
 its full description.
 
-Give each narrative field its own job: the Summary briefly identifies the
-promise, the Description explains what the Product offers, and Intent explains
-the outcome it exists to protect. Product `limitations` states deliberate
-exclusions or constraints of that promise. Missing modeled behavior belongs in
-Coverage `unmapped`; uncertainty in what could be established belongs in
-Coverage `limitations`.
+Product `limitations` are deliberate constraints of the Product; gaps and
+uncertainty in the model belong in [`coverage.md`](#coveragemd).
 
 The compact form is `.businesslens/product.md`. Adding a Product logo expands
 it to `.businesslens/product/product.md`, with the identity asset at
@@ -1075,8 +1070,8 @@ optional Experience relations. Business Rules own their applicability, so Capabi
 files do not duplicate Rule IDs. Capability Scenario files own the acceptance
 relation, so Capability files do not duplicate Scenario IDs. A Capability
 Scenario is the only direct acceptance coverage for a Capability; Journey
-Scenario use does not satisfy that coverage rule. Missing coverage is always an error, including when the model records
-other behavior as Unmapped.
+Scenario use does not satisfy that coverage rule. Missing coverage is always an
+error.
 
 A Capability is the smallest durable behavior that remains independently
 meaningful, not necessarily the smallest UI action or code operation. Capability
@@ -1610,8 +1605,8 @@ decided before any code exists: a wizard, an orchestration, shared state, or a
 cross-Interface hand-off is how a product usually earns one, but none is
 required, and a merely plausible sequence of independent Product actions has
 no achieved Scenario and is not a Journey. Whether the repository implements
-the Journey is a finding of `verify`, never a claim made by the Journey or
-Coverage. The number of Journey Scenario variations does not define it;
+the Journey is `verify`'s finding, never the Journey's own. The number of
+Journey Scenario variations does not define it;
 one achieved variation provides valid coverage. A goal with no achieved
 multi-Capability path belongs to Capability behavior.
 
@@ -1948,11 +1943,6 @@ applicability, so Journey Scenarios do not duplicate Rule IDs.
 
 ### `coverage.md`
 
-Coverage is committed Markdown with YAML frontmatter. Every key below is
-required; unknown keys are errors. The body contains only `# Coverage`.
-Reasons belong with the affected area, not in a separate rationale.
-`coverage.json` is not accepted.
-
 ```markdown
 ---
 scope: Customer purchasing and order fulfillment.
@@ -1974,55 +1964,36 @@ limitations:
 # Coverage
 ```
 
-`scope` is required non-empty single-line Markdown describing the intended
-breadth of this model. `covered` describes behavior represented in the model;
-`exclusions` declares approved omissions; `unmapped` declares known missing
-behavior within scope. An oversight or unfinished inspection must never become
-an exclusion without approval. Unmapped entries are valid in any model; they do
-not relax the structural requirements for resources already declared.
+Every key is required and unknown keys are errors. The body is only
+`# Coverage`; `coverage.json` is not accepted.
 
-Covered, Exclusions, Unmapped and Limitations use the same entry shape: exactly
-`description` and `paths`. Descriptions are non-empty single-line Markdown without
-structural headings, unique within and across these lists. Describe a coherent
-behavior or uncertainty once, attaching all relevant paths; do not create an
-entry per file or duplicate a gap as a limitation. Paths are unique
-repository-relative POSIX paths; files have no suffix, directories end in `/`.
-Absolute paths, URLs, backslashes, glob wildcards (`*` and `?`), `.` or `..`
-segments, empty segments, surrounding whitespace, control characters, and
-fragment or line suffixes are invalid. Brackets and braces are ordinary file-name
-characters, as in a dynamic route such as `pages/[id].vue`. Missing workspace
-paths are not structural errors.
+- `scope` — the intended breadth of the model: non-empty single-line Markdown.
+- `method` — one short single-line note on how the model was authored, or `""`.
+- `covered` — behavior the model represents.
+- `exclusions` — approved omissions. An oversight or unfinished inspection never
+  becomes an exclusion without approval.
+- `unmapped` — known behavior within scope that is not modeled.
+- `limitations` — material uncertainty in what could be established. Missing
+  behavior belongs in `unmapped`, and not executing code belongs in `method`.
 
-Use `paths: []` for behavior with no known repository location, including
-source-free product design. For Limitations, an empty path list means the
-uncertainty is presented at model scope; otherwise it accompanies its recorded
-locations. All descriptions survive portability; repository paths do not.
-Paths locate behavior, never classify every behavior in a directory. The same
-path may locate distinct Covered, Excluded or Unmapped behavior. Counts summarize
-authored entries, not files or a completeness percentage, and a folder never
-inherits or totals what is recorded beneath it. A report may group these four
-lists as one set of statements and draw each under the path it names; that
-grouping is a reading of the authored fields, not another authored field.
+Each entry is exactly `description` and `paths`. Descriptions are non-empty
+single-line Markdown without an H1 or H2, unique across all four lists. Paths
+are unique repository-relative POSIX paths, directories ending in `/`, or `[]`
+when no location is known. Absolute paths, URLs, backslashes, `*` and `?`
+wildcards, `.` or `..` segments, empty segments, surrounding whitespace, control
+characters, and fragment or line suffixes are invalid; brackets and braces are
+ordinary file-name characters, as in `pages/[id].vue`. A missing workspace path
+is not an error. Descriptions survive the portable projection; paths do not.
 
-`method` is one short single-line Markdown authoring note, or an empty string
-when not recorded. Describe how the model was authored without an inspection
-log. `limitations` records material uncertainty in what could be established;
-missing modeled behavior belongs in Unmapped. Routine statements that code was
-not executed belong in Method, not Limitations. Product constraints belong to
-the Product. Covered paths, References, and silence never establish file-level
-completeness or implementation alignment. Resource totals are derived, not
-authored here.
+Coverage has no status. An empty `unmapped` list means only that no gaps are
+recorded, and known gaps never relax the structural requirements: every model
+has at least one Capability, every Capability availability Context is selected
+by at least one Capability Scenario, and every Journey Actor appears in at least
+one achieved Journey Scenario. Coverage, References and silence never establish
+file-level completeness or implementation alignment.
 
-Coverage has no status or readiness field. An empty Unmapped list means only
-that no gaps are recorded; it never establishes completeness or approval.
-
-Every model has at least one Capability. Every Capability availability Context
-is selected by at least one Capability Scenario, and every Journey Actor appears
-in at least one achieved Journey Scenario. These structural requirements apply
-equally to models with and without known Unmapped behavior.
-
-A model may describe planned, implemented or mixed behavior and contain zero
-References. It may be exported with known gaps. Proposing it as a catalog
+A model may describe planned, implemented or mixed behavior, contain zero
+References, and be exported with known gaps. Proposing it as a catalog
 Blueprint is a separate, explicit action; public listing remains an
 administrator decision.
 

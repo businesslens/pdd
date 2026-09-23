@@ -7,19 +7,16 @@ order: 7
 terms:
   - term: Product Model
     anchor: the-shape-of-a-model
-    definition: "The .businesslens/ folder: one product described in Markdown, tracked in Git, and free to cite repository code."
+    definition: "The .businesslens/ folder: one coherent product described in Markdown, tracked in Git, and free to cite the repository's code."
   - term: Intent
     anchor: authoring-conventions
     definition: "Why a resource exists and which outcome it protects, never a restatement of what it does."
   - term: Coverage
     anchor: coverage
-    definition: "The model's declared scope, breadth, approved exclusions and known gaps."
+    definition: "The model's declared scope, what it covers, approved exclusions and known gaps."
   - term: Resource type
     anchor: what-belongs-in-a-model
     definition: "A category of resource, such as Entity or Capability, determined by the file's location in the Product Model."
-  - term: Report format
-    anchor: report-format
-    definition: "The JSON structure used to exchange a compiled Product Model. Its version identifies the data format."
 ---
 
 # The Product Model
@@ -91,18 +88,11 @@ payloads belong in an API contract such as OpenAPI. Attach those artifacts as
 
 `taxonomies.yaml` defines the categories available as Scenario kinds, such as
 `primary` and `edge`. `config.yaml` records folder schema
-and SDD roots. `coverage.md` records authored model breadth, exclusions and known gaps.
+and SDD roots. `coverage.md` describes model breadth.
 `.businesslens/README.md` orients an agent that encounters the model.
 
 Use [`businesslens view`](./cli-view.md) to browse the current model as a local
 report while editing.
-
-## Report format
-
-A Product Model is compiled into a Product Report for exchange between tools.
-Its `schemaVersion` identifies the **Report format**: the JSON structure a
-consumer can read. This version is separate from the BusinessLens package
-version and any version of the Product itself.
 
 ## Is this replacing my PRD?
 
@@ -305,13 +295,9 @@ Domain as the optional umbrella.
 
 ## Coverage
 
-`coverage.md` declares the model's intended breadth. It is required even before
-implementation exists. **Scope** defines the intended boundary; Covered,
-Exclusions, Unmapped and Limitations explain what is represented, deliberately
-omitted, missing or uncertain. There is no Coverage or Product Model status.
-An empty Unmapped list means only that no gaps have been recorded.
+`coverage.md` records the model's intended breadth and its known gaps:
 
-```markdown
+```md
 ---
 scope: Customer purchasing and order fulfillment.
 method: Static inspection of source and supporting documentation.
@@ -332,48 +318,26 @@ limitations:
 # Coverage
 ```
 
-All six fields are required. The body contains only `# Coverage`; there is no
-separate rationale. `lint` rejects unknown keys, invalid YAML and `coverage.json`.
-Scope is non-empty single-line Markdown. Method is one short single-line
-authoring note, or an empty string when not recorded.
+| Field | Meaning |
+| --- | --- |
+| `scope` | The boundary the model intends to describe |
+| `method` | One short note on how the model was authored, or `""` |
+| `covered` | Behavior the model represents |
+| `exclusions` | Deliberate, approved omissions — never skipped work |
+| `unmapped` | Known behavior inside the scope that is not modeled yet |
+| `limitations` | What could not be established |
 
-Covered, Exclusions, Unmapped and Limitations each contain descriptions with
-paths. Covered describes represented behavior, Exclusions explains approved
-omissions, and Unmapped identifies missing behavior inside scope. Skipped work
-never becomes an approved exclusion on its own. Describe each coherent behavior
-once with all its relevant paths; these are authored statements, not file counts
-or a completeness percentage. The same directory can contain distinct behavior
-in different categories.
+Every field is required and the body is only `# Coverage`. Each entry has a
+unique single-line `description` and its `paths`: repository-relative paths,
+directories ending in `/`, or `[]` when there is no known location. Paths cannot
+be absolute or URLs, or contain `..`, `*`, `?`, or `#` and line suffixes.
 
-Limitations identify material uncertainty in what could be established. Give a
-limitation paths to locate the affected area, or `[]` to present it at model
-scope. Missing modeled behavior belongs in Unmapped; do not duplicate it as a
-limitation. Routine statements about code not being executed belong in Method.
-Product constraints belong in the Product's own limitations. Put reasons for
-boundaries and gaps in the affected descriptions.
+There is no status. An empty `unmapped` list only means no gaps are recorded,
+and known gaps never relax the structural checks. Coverage makes no claim about
+implementation; `businesslens-verify` checks semantic alignment. Blueprints keep
+every description and drop the paths.
 
-Every entry requires exactly `description` and `paths`. Descriptions are
-non-empty single-line Markdown without structural headings, unique within and
-across all four lists. Paths are unique repository-relative POSIX paths, with
-trailing `/` for directories. Use `[]` when a behavior has no known location,
-including product design. Paths may name intended files; they cannot contain
-absolute paths, URLs, backslashes, traversal, `*` or `?` wildcards, or
-fragment/line suffixes. Brackets are ordinary characters, as in `pages/[id].vue`.
-Covered paths, References and absent annotations never establish file-level
-completeness or implementation alignment.
-
-Every model has at least one Capability and must satisfy the structural
-requirements for its declared resources, including Capability and Journey
-Scenario coverage. Known Unmapped areas are valid and do not relax these checks.
-Structural checks cannot establish that every behavior has been discovered.
-A model may describe planned behavior before code exists. Use
-[`businesslens-verify`](./skill-businesslens-verify.md) to compare the model with
-current implementation; findings are re-derived on each run.
-
-Blueprints preserve scope and every area or limitation description,
-emptying only repository paths. Opening a Blueprint replaces Method with a short
-account of its origin in the new repository.
-
-Resource files, config, taxonomy, Coverage, and orientation are committed.
-The model's `.gitignore` ignores generated `build/` and `cache/` directories.
-See [References](./references.md) for optional external artifacts.
+Resource files, config, taxonomy, coverage, and orientation are committed.
+The model's `.gitignore` ignores `build/` and `cache/`, which are generated and
+never committed. See [References](./references.md) for optional external
+artifacts.

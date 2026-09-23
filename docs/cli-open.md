@@ -47,9 +47,9 @@ Capability projections, structured supporting sections, Product routes,
 commands, non-file deep links, and portable References are preserved.
 Repository-specific navigation is removed.
 
-Coverage scope, described areas, known gaps and limitations are preserved. The
-expanded model records that implementation alignment must be verified in its
-new repository. See [Coverage](./product-model.md#coverage) for the meaning of these fields.
+Coverage is preserved without its repository paths. The expanded model records
+that implementation alignment must be verified in its new repository. See
+[Coverage](./product-model.md#coverage).
 
 ## Existing targets
 

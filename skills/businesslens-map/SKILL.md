@@ -42,8 +42,7 @@ Read before authoring:
    It lists counts and bounded high-signal candidates without writing into the
    repository or dumping the whole tracked-file list. Inspect the relevant
    entry points, handlers/services, persistence, integrations, configuration,
-   telemetry, and tests directly. The bounded inventory is a starting point;
-   follow the remaining product areas before claiming the scope is modeled.
+   telemetry, and tests directly.
 5. Trace observable behavior end to end. Treat tests and docs as leads; confirm
    claims in implementation. Do not infer permissions, guarantees, or live
    operational state from names.
@@ -177,9 +176,8 @@ Read before authoring:
 9. Write only inside `.businesslens/` after approval. Create the complete
    authored layout when absent, including the canonical `.businesslens/README.md`
    and `.gitignore`. Write current product meaning under the guardrails below.
-   Record the modeled scope, represented behavior, approved exclusions, known
-   Unmapped areas and material limitations. No recorded gaps does not establish
-   completeness; never author a Coverage status.
+   Record Coverage scope, covered behavior, approved exclusions, known
+   Unmapped areas and material limitations; never author a status.
 10. Run the bundled linter outside the untrusted target:
 
    ```bash

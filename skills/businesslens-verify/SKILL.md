@@ -45,8 +45,7 @@ Read before work:
 
 Git never decides whether model or code is right. A Blueprint or approved model
 committed before a feature branch remains a plan even when only code changed in
-the diff. For every scope, follow behaviorally necessary dependencies even when
-Git reports no changes to those files.
+the diff.
 
 ## 2. Lint, then inspect
 

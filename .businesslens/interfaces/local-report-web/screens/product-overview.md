@@ -38,7 +38,7 @@ that opens it and the resource type it presents.
 - Filter statements through the four category cards; select an active card again to show every category
 - Find a recorded path by name
 - Read the statements recorded at a path in place, and restore that reading after refresh or Back navigation
-- Expand Reference groups and local image previews
+- Filter References by kind, find a path or link, and read which resources cite each location
 - Open the References reading of any resource that carries a reference
 - Open the page of a thing that acts on the Product
 - Read the documentation for the Product resource type

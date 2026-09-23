@@ -78,16 +78,8 @@ Unrecognized H2 sections are kept in order as structured supporting sections
 when the model is exported and expanded. A recognized H2 such as `## Intent`
 may appear only once.
 
-Give the narrative fields distinct jobs: the Summary briefly identifies the
-Product's promise, the Description explains what it offers, and Intent explains
-the outcome it exists to protect.
-
-Product `limitations` describes deliberate exclusions or constraints of the
-Product. For example, a storefront may exclude in-store purchasing. If the
-storefront supports refunds but the model has not described them, that belongs
-in Coverage `unmapped`. If an author could not establish the refund policy,
-that uncertainty belongs in Coverage `limitations`. See
-[Coverage](./product-model.md#coverage) for the full distinction.
+Product `limitations` are deliberate constraints of the Product itself; gaps
+and uncertainty in the model belong in [Coverage](./product-model.md#coverage).
 
 ## Visual identity
 

@@ -119,9 +119,8 @@ Read before authoring:
     and preserve existing References only where they remain useful. Keep every
     role honest and add no invented local targets: an intended-behavior model
     has no implementation to point at yet, and a `role: implementation` target
-    that does not exist is a claim, not a link. Coverage describes scope, represented behavior, exclusions, known gaps and
-    uncertainty. Never author a Coverage status or infer completeness from an
-    empty Unmapped list.
+    that does not exist is a claim, not a link. Coverage describes model breadth
+    and known gaps, not whether the plan is built; never author a status.
 11. Run the bundled linter outside the untrusted target:
 
     ```bash

@@ -159,7 +159,7 @@ targets are syntax-checked but never fetched. A missing local target warns
 without failing lint. Absolute paths, `file:` URLs, unsupported schemes, and
 backslash paths are invalid. Duplicate targets on one resource are invalid.
 
-Structural lint does not fetch or inspect referenced content, and a
+The deterministic CLI does not fetch or inspect referenced content, and a
 Reference never certifies alignment. BusinessLens skills may follow curated
 References as leads while mapping or verifying the repository, but the
 artifact is evidence to assess rather than proof to trust.

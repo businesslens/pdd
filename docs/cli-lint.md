@@ -28,7 +28,7 @@ Lint is deterministic and read-only. It checks:
   Rule is an error;
 - Capability Scenario ownership, named routes, typed Actor/Product/condition
   Steps, most-specific Context places, and direct coverage for every Capability,
-  failing missing Scenario coverage even when other behavior is Unmapped;
+  failing any gap;
 - a Goal and Success criterion plus achieved multi-Capability Scenario coverage
   for every Journey Actor;
 - Journey Scenario results, ordered typed Steps, complete named routes,
@@ -50,6 +50,7 @@ implementation completeness. It warns when a local non-code target is not
 tracked. A green result means the model is structurally sound—not that model
 and code agree. See [References](./references.md) for the full target rules.
 
+Use `businesslens-verify` for semantic alignment.
 
 ## JSON output
 

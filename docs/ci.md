@@ -21,7 +21,7 @@ symbols, lines, runtime behavior, the truth of authored Product meaning, or
 model/code agreement.
 
 Run `businesslens-verify` before merge or release when semantic alignment is
-required. Current verification findings are re-derived on every run:
+required. Verification findings are re-derived on every run and never persisted:
 a tracked ledger would imply durable certainty after the surrounding code or
 inspection method changed. There is no semantic CI command, so CI must not infer
 verification from lint.

@@ -176,9 +176,7 @@ costed already.
   reads `.businesslens/` directly.
 - **It is a place you go, not a document you read.** Completeness is a cost:
   every field rendered competes with the one answering the question the reader
-  arrived with. Where it omits, it names the file path. Detailed viewer
-  behavior and host APIs belong in the
-  [report layer README](layers/nuxt/report-viewer/README.md).
+  arrived with. Where it omits, it names the file path.
 - **The report explains itself.** A reading that needs prose elsewhere to be
   understood is not finished. It links out only to the documentation for a
   resource *type*.
@@ -259,26 +257,11 @@ costed already.
   set is many, names where it is one.
 - **A resource type's mark is reserved.** Chrome wears a kind's icon only where
   it names that kind; reach for an unreserved glyph otherwise.
-- **Coverage is one set of statements, drawn where they are recorded.** The
-  four authored Coverage lists are read as one set whose category is an
-  attribute: each category is a card that reads zero when empty, a fixed set
-  that never changes shape between models, and an unlocated statement is one
-  with no paths, listed after the tree rather than filed apart by category. Each statement is written
-  in full under every path it names; Coverage has no path panel, and this
-  supersedes the rule that selecting a path opens its recorded context in a
-  slideover. A folder never inherits or totals meaning from beneath it. A closed
-  folder may point to what is recorded inside it, counting each statement once,
-  as a way in rather than a claim about the folder. **An explanation is asked
-  for:** opening a folder reveals paths, not prose, and a search finds paths
-  by name and reveals them, never matching prose. Model References are not
-  repeated in Coverage; they belong to the Overview's References reading.
-- **References are read by where they point.** The Overview's References reading
-  draws each repository path once in a repository tree and each external page
-  once under its site — and on a code host its repository — with the resources
-  citing it disclosed by its row, never one row per attachment. It works as
-  Coverage does: one neutral card per reference kind the format defines, a fixed
-  set that reads zero, is the only kind filter, and search finds paths and links
-  by name. A resource's own References tab stays a short list.
+- **Coverage and References are read by location.** Each recorded path or
+  referenced location appears once in a tree and discloses its statements or
+  citations when asked; a folder never inherits meaning from beneath it. Their
+  category and kind cards are fixed sets that read zero, and search matches
+  paths and links, never prose.
 - **A teaching affordance can be turned off, and never hides the way back.**
   Term tooltips are restored from the Vocabulary panel; the choice is a cookie,
   so the first paint is right.

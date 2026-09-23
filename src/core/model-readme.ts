@@ -17,11 +17,13 @@ import { join } from 'node:path'
  * Living inside the directory also kills the greenfield/brownfield variant
  * problem: a file describing the directory is correct in both states, where a
  * block making claims about the whole repository had to pick one.
+ *
+ * BusinessLens now writes nothing outside `.businesslens/`, without exception.
  */
 export const MODEL_README = `# Product Model
 
 This directory is a **BusinessLens Product Model**: what this product does and
-for whom. It is Markdown tracked in Git, and it is the source of truth for
+for whom. It is plain Markdown tracked in Git, and it is the source of truth for
 intended product behavior.
 
 ## If you are an agent working in this repository
@@ -42,9 +44,6 @@ intended product behavior.
   for structural checks.
 - Use \`businesslens-ideate\` to change intended behavior and \`businesslens-map\`
   only to map established absent or deliberately untrusted behavior.
-- Read \`coverage.md\` for model scope, approved exclusions, known gaps and
-  limitations. Coverage describes model breadth; it does not record inspection
-  history or establish agreement with implementation.
 - Never edit \`cache/\`.
 
 Documentation: https://businesslens.io

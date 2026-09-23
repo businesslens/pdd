@@ -107,7 +107,7 @@ describe('vocabulary lookup', () => {
     expect(product.page).toBe('product')
     expect(product.lead.slug).toBe('product')
     expect(product.items.map(item => item.slug)).toEqual([
-      'product-model', 'intent', 'coverage', 'resource-type', 'report-format'
+      'product-model', 'intent', 'coverage', 'resource-type'
     ])
     expect(VOCABULARY_PAGES.some(page => page.page === 'product-model')).toBe(false)
     for (const item of product.items) {

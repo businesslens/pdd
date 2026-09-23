@@ -80,7 +80,7 @@ drift, before release, or for a named/full current-state audit.
 | Terminal | `npx businesslens install` | Install the three skills |
 | Terminal | `npx businesslens update` | Refresh managed skill installations |
 | Terminal | `npx businesslens lint` | Check Product Model structure; no semantic claim |
-| Terminal | `npx businesslens view` | View the current Product Model, or a GitHub repository's, privately on localhost, with Coverage |
+| Terminal | `npx businesslens view` | View the current Product Model, or a GitHub repository's, privately on localhost |
 | Terminal | `npx businesslens blueprint export` | Compile the model into a source-free Blueprint |
 | Terminal | `npx businesslens blueprint pull <name>` | Pull a catalog Blueprint |
 | Terminal | `npx businesslens blueprint open <report>` | Expand a local Blueprint |
@@ -96,8 +96,7 @@ Catalog contribution stays in the CLI; there is no contribution skill.
 - `references` optionally attach intent, implementation, or context artifacts
   to any semantic resource. They are navigation and supporting material, not
   proof or verification receipts.
-- Coverage describes scope, represented behavior, exclusions, known gaps and
-  uncertainty. No recorded gaps does not establish completeness.
+- `coverage.md` describes model scope and known gaps; it has no status.
 - A model may contain zero References.
 - A Product may expose several Interfaces—such as web, mobile, CLI, and a
   supported API—without being classified as one of those delivery forms.

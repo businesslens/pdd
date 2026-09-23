@@ -80,12 +80,11 @@
 
 ## Describe coverage
 
-Record the intended scope, represented behavior, approved exclusions, known
-missing behavior and material uncertainty. Use Unmapped for missing behavior
-and Limitations for uncertainty about what could be established. There is no
-status; an empty gap list never establishes completeness. Check all declared
-resources against the same structural requirements. Coverage does not establish
-implementation or verification.
+Record scope, covered behavior, approved exclusions, known Unmapped behavior
+and material Limitations. There is no status, and an empty Unmapped list never
+means complete. Coverage never states whether behavior is implemented or
+verified. A small, honest model with recorded gaps is better than a broad model
+built from guesses.
 
 ## Decide Entity granularity deliberately
 

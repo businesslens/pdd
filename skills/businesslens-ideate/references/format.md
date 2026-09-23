@@ -120,8 +120,7 @@ not contain another H1 or H2.
   H1 and lead description. **It declares nothing about Entities** — what it
   changes is what its Scenarios' Steps say, and a file still carrying
   `entities` is refused. Every Capability needs a Capability Scenario for every
-  availability Context: a gap is always an error, even when other Product
-  behavior is recorded as Unmapped.
+  availability Context: a gap is always an error.
 - Capability Scenario: taxonomy `kind`, named `routes`, and ordered typed
   `steps`. Its parent Capability is implicit on every Step.
 - Domain: H1, lead description, and `## Boundary`; optional `colorSlot`. A Domain
@@ -224,8 +223,9 @@ not contain another H1 or H2.
   `routes`, and ordered non-empty typed `steps`. A Step may name a Capability,
   and must when its `entities` carries a `creates`, `changes` or `removes`
   effect. An achieved Scenario traverses at least two distinct Capabilities.
-- `coverage.md`: YAML frontmatter with every field below required and no extra
-  keys. There is no status field. The body contains only `# Coverage`.
+- `coverage.md`: frontmatter with exactly `scope`, `method`, `covered`,
+  `exclusions`, `unmapped` and `limitations`, and a body of only `# Coverage`.
+  There is no status.
 
 ```markdown
 ---
@@ -242,33 +242,18 @@ limitations: []
 # Coverage
 ```
 
-`scope` is non-empty single-line Markdown. Covered, Exclusions, Unmapped and
-Limitations contain `{ description, paths }` entries. Descriptions are non-empty
-single-line Markdown without structural headings, unique across all four lists.
-Describe each coherent behavior once with all relevant paths, not once per file.
-Covered names represented behavior; Exclusions explains approved omissions;
-Unmapped identifies missing behavior within scope. Never turn skipped work into
-an exclusion without approval. Every model needs at least one Capability;
-known Unmapped areas are valid and do not relax checks on declared resources.
-An empty Unmapped list does not establish completeness.
-
-`paths` contains unique repository-relative POSIX paths; directories end in `/`.
-Use `[]` when no location is known, including product design before code exists.
-Paths may name intended files, but cannot contain traversal, `*` or `?`
-wildcards, URLs, backslashes or fragment/line suffixes; brackets, as in
-`pages/[id].vue`, are ordinary characters. Distinct behavior at one path may be
-covered, excluded or unmapped. Paths never establish file-level completeness.
-Blueprints retain descriptions in all four lists and empty their paths.
-
-`method` is one short single-line authoring note, or an empty string when not
-recorded. Limitations identify material uncertainty; attach relevant paths or
-use `[]` to present it at model scope. Missing modeled behavior belongs in
-Unmapped, not both lists. Routine non-execution statements belong in Method.
-Put boundary reasons with the affected entry; there is no separate rationale.
-Product limitations instead state constraints of the Product.
-
-Keep Summary, Description and Intent distinct: promise, offered behavior and
-purpose, respectively. Keep inspection worklists and findings out of the model.
+`scope` is the model's intended breadth in one line; `method` is one short line
+on how it was authored, or `""`. `covered` is represented behavior,
+`exclusions` approved omissions (never turn skipped work into one), `unmapped`
+known behavior within scope that is not modeled, and `limitations` material
+uncertainty (not missing behavior, and not "code was not executed"). Each entry
+is `{ description, paths }`: a one-line description, unique across all four
+lists, of one coherent behavior with all its paths. Paths are repository-relative,
+directories end in `/`, and `[]` means no known location; no traversal, `*` or
+`?` wildcards, URLs, backslashes or fragment/line suffixes, while brackets, as
+in `pages/[id].vue`, are ordinary. An empty `unmapped` list never means complete,
+and known gaps never relax structural checks. Blueprints keep descriptions and
+drop paths.
 
 Both Scenario types have no lead prose, author `routes` and `steps` in
 frontmatter, require `## Trigger` and `## Outcome`, and forbid Markdown
@@ -293,7 +278,8 @@ later Step's `from` for it must match. `reads` is a bare mention: no state,
 never a change, never enough to keep an Entity from being an orphan. Author
 the effects on the Step that performs them. After drafting, re-read every
 Step's `text` against the Entity list and complete its `entities`: a Step
-whose text names an Entity title it does not declare is an error, exempting the Step's own `actor` and the phrase "The
+whose text names an Entity title it does not declare is an error,
+exempting the Step's own `actor` and the phrase "The
 Product". A Step performing an operation a Business Rule governs must have an
 actor with a possible grant, and a Step performing one a Rule closes with
 `permits: []` is an error. Optional `## Edge cases` is a non-empty single-line
@@ -482,7 +468,7 @@ Write this orientation for every new Product Model:
 # Product Model
 
 This directory is a **BusinessLens Product Model**: what this product does and
-for whom. It is Markdown tracked in Git, and it is the source of truth for
+for whom. It is plain Markdown tracked in Git, and it is the source of truth for
 intended product behavior.
 
 ## If you are an agent working in this repository
@@ -503,9 +489,6 @@ intended product behavior.
   for structural checks.
 - Use `businesslens-ideate` to change intended behavior and `businesslens-map`
   only to map established absent or deliberately untrusted behavior.
-- Read `coverage.md` for model scope, approved exclusions, known gaps and
-  limitations. Coverage describes model breadth; it does not record inspection
-  history or establish agreement with implementation.
 - Never edit `cache/`.
 
 Documentation: https://businesslens.io
