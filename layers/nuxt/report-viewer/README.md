@@ -354,12 +354,16 @@ expansion control includes the Step and detail counts; there is no separate
 details toggle. Resource links and definitions work independently of expansion.
 Each Entity appears once in the terminal reading, with its
 last creation, change or removal, and Entities only read sit separately.
-The facts a Step cites on a read or change follow the Entity inside its chip;
-the terminal reading names none.
+Every Entity effect — a Step's Entity effects, Ends with, Leaves behind,
+Changes made here and a Capability's What it changes — reads Entity first: the
+Entity chip, a plain verb, then each State as a badge, as in
+`[Source] created [Reachable]`, `[Item] changed [Read] → [Unread]` or
+`[Collection] read`. An ending names where the thing rests: `[Item] in [Unread]`.
+The facts a Step cites on a read or change follow the phrase; the terminal
+reading names none.
 Scenario titles use 16px semibold text, section labels 13px semibold, and body
 text 14px regular. Step cards use the selected Guided flow layout: visible labels for
-Action or Condition, Who, Entity effects, Where and Capability, with effects
-spelled out in words. Where reuses the original Context breadcrumbs — Interface,
+Action or Condition, Who, Entity effects, Where and Capability. Where reuses the original Context breadcrumbs — Interface,
 Experience and Screen — without route-name prefixes. The Step card variant
 selector has been retired.
 Beside the Steps of an expanded Scenario, a Steps / Storyboard selector changes

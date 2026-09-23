@@ -12,6 +12,10 @@
  * A read is a mention, not a claim about what can alter the thing, so the
  * `muted` variant draws it dashed and lighter: a row of reads and changes
  * cannot be misread as a row of changes.
+ *
+ * Its words sit on a shared baseline, one mark tall, and the marks centre on
+ * that line, so the chip's baseline is its label's and the prose around it
+ * lines up with the name rather than with the bottom of an icon.
  */
 import type { EntityView } from '../utils/reportWorkspace'
 import { entityFacetOf } from '../utils/reportWorkspace'
@@ -32,7 +36,7 @@ const text = computed(() => props.label ?? props.entity.title)
 <template>
   <BlrResourceLink
     :resource-key="entity.key"
-    class="inline-flex max-w-full items-center gap-1.5 rounded-full border px-2 py-0.5 font-sans text-xs transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+    class="inline-flex max-w-full items-baseline gap-1.5 rounded-full border px-2 py-0.5 font-sans text-xs leading-[1.125rem] transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
     :class="muted
       ? 'border-dashed border-muted bg-transparent font-normal text-muted hover:border-default hover:text-default'
       : 'border-default bg-elevated/60 font-medium text-highlighted hover:border-accented hover:bg-elevated'"
@@ -45,7 +49,7 @@ const text = computed(() => props.label ?? props.entity.title)
       :facet="entityFacetOf(entity) ?? 'kept'"
       :acts="entity.acts"
       size="xs"
-      class="shrink-0"
+      class="shrink-0 self-center"
       :style="{ opacity: muted ? 0.55 : 1 }"
     />
     <span class="min-w-0 truncate">{{ text }}</span>

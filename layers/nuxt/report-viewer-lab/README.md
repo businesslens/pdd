@@ -9,6 +9,15 @@ accident.
 
 There are no active report experiments in this layer.
 
+The **Entity effect** audition is decided: Entity first is the stable phrasing.
+The Entity chip comes first, then a plain verb, then each State as a badge —
+`[Source] created [Reachable]`, `[Item] changed [Read] → [Unread]`,
+`[Collection] read`; an ending reads `[Item] in [Unread]`. It lives in the
+stable `BlrStepEntity` and `BlrEntityEffect`, so a Step's Entity effects, a
+Scenario's Ends with, Changes made here, Leaves behind and a Capability's What
+it changes all say it the same way. The alternatives, row, cookie composable,
+variant list and shadow have been removed.
+
 The **View controls** audition is decided: option 4's dropdown with preview
 cards is the stable collection view picker. Each choice keeps its short
 explanatory subtitle; the separate help button and About section are removed.

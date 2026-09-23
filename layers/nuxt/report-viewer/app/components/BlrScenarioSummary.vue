@@ -17,14 +17,6 @@ const entityOf = (id: string): EntityView | undefined => {
   const resource = resolveResource(props.workspace, 'entity', id)
   return resource?.kind === 'entity' ? resource : undefined
 }
-const results = computed(() => props.scenario.outcomeStates.map(ending => {
-  const entity = entityOf(ending.entityId)
-  const title = entity?.title ?? ending.entityId
-  const result = ending.effect === 'removes' ? 'Removed'
-    : ending.effect === 'creates' ? (ending.to ? `Created in ${ending.to}` : 'Created')
-      : ending.to ? `In state ${ending.to}` : 'Changed'
-  return { ...ending, entity, label: ending.as ? `${title} (${ending.as})` : title, result }
-}))
 /* These are the Entities the Scenario only reads; changed instances already
    appear once above, with their last creation, change or removal. */
 const reads = computed(() => props.scenario.readEntityIds.map(id => ({ id, entity: entityOf(id) })))
@@ -80,15 +72,13 @@ const expansionLabel = computed(() => [
       </div>
     </dl>
 
-    <dl v-if="results.length || reads.length" class="blr-summary-entities">
-      <div v-if="results.length" class="blr-summary-entity-row">
+    <dl v-if="scenario.outcomeStates.length || reads.length" class="blr-summary-entities">
+      <div v-if="scenario.outcomeStates.length" class="blr-summary-entity-row">
         <dt class="blr-summary-label"><BlrTerm slug="ends-with" /></dt>
         <dd>
           <ul class="blr-summary-endings">
-            <li v-for="ending in results" :key="`${ending.entityId}-${ending.as}`" class="blr-summary-ending">
-              <BlrEntityChip v-if="ending.entity" :entity="ending.entity" :label="ending.label" @select="emit('open', $event)" />
-              <span v-else>{{ ending.label }}</span>
-              <span class="blr-summary-ending-result">{{ ending.result }}</span>
+            <li v-for="ending in scenario.outcomeStates" :key="`${ending.entityId}-${ending.as}`" class="blr-summary-ending">
+              <BlrStepEntity :workspace="workspace" :mention="ending" outcome @select="emit('open', $event)" />
             </li>
           </ul>
         </dd>
@@ -139,7 +129,6 @@ const expansionLabel = computed(() => [
 .blr-summary-entity-row > dd { min-width: 0; }
 .blr-summary-endings, .blr-summary-reads { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0.5rem 1.5rem; margin: 0; padding: 0; list-style: none; }
 .blr-summary-ending { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.5rem; min-width: 0; max-width: 100%; }
-.blr-summary-ending-result { color: var(--ui-text-muted); overflow-wrap: anywhere; }
 .blr-summary-endings, .blr-summary-reads { align-items: center; }
 @container (min-width: 48rem) {
   .blr-summary-story:has(> div:nth-child(2)) { grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); }

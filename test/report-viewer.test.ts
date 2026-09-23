@@ -6,6 +6,7 @@ import { loadModel } from '../src/core/model.js'
 
 const VIEWER = join(__dirname, '..', 'layers', 'nuxt', 'report-viewer')
 const workspaceModulePath = '../layers/nuxt/report-viewer/app/utils/reportWorkspace.ts'
+const entityEffectPhraseModulePath = '../layers/nuxt/report-viewer/app/utils/entityEffectPhrase.ts'
 const resourceFactsModulePath = '../layers/nuxt/report-viewer/app/utils/resourceFacts.ts'
 const resourceFacetsModulePath = '../layers/nuxt/report-viewer/app/utils/resourceFacets.ts'
 const routeWindowModulePath = '../layers/nuxt/report-viewer/app/utils/scenarioRouteWindow.ts'
@@ -1520,16 +1521,18 @@ describe('Screens on the v14 wire', () => {
     expect(changes).toContain('<BlrEntityChip v-if="entityChip(line.entityId)"')
     expect(changes).toContain('data-capability-reads')
     expect(changes).toContain('<BlrEntityChip v-if="read.entity" :entity="read.entity" muted')
-    expect(changes).toContain('reads only')
+    expect(changes).toContain('<BlrEntityEffect :mention="effect" />')
+    expect(changes).toContain(`<BlrEntityEffect :mention="{ effect: 'reads', from: '', to: '' }" />`)
     expect(changes).not.toContain('<BlrLinks')
     expect(changes).not.toContain('blr-chip')
     /* Entity effects on a Step, the Scenario summary's endings and reads,
        the Step's own chip, and every Entity relation row. */
-    expect(source('app/components/BlrScenarioStep.vue')).toContain('<BlrEntityChip v-if="effect.entity"')
+    expect(source('app/components/BlrScenarioStep.vue')).toContain('<BlrStepEntity :workspace="workspace" :mention="effect"')
     expect(source('app/components/BlrScenarioStep.vue')).toContain('<BlrEntityChip v-if="actor"')
-    expect(source('app/components/BlrScenarioSummary.vue')).toContain('<BlrEntityChip v-if="ending.entity"')
+    expect(source('app/components/BlrScenarioSummary.vue')).toContain('<BlrStepEntity :workspace="workspace" :mention="ending" outcome')
     expect(source('app/components/BlrScenarioSummary.vue')).toContain('<BlrEntityChip v-if="read.entity" :entity="read.entity" muted')
-    expect(source('app/components/BlrStepEntity.vue')).toContain('<BlrEntityChip :entity="entity" :label="label" :muted="isRead"')
+    expect(source('app/components/BlrStepEntity.vue')).toContain('<BlrEntityChip v-if="entity" :entity="entity" :label="label" :muted="isRead"')
+    expect(source('app/components/BlrStepEntity.vue')).toContain('<BlrEntityEffect :mention="mention" :outcome="outcome" />')
     expect(source('app/components/BlrLinks.vue')).toContain('<BlrEntityChip v-if="interactive && asEntity(resource)"')
     expect(source('app/components/BlrOverview.vue')).toContain('<BlrEntityChip')
     expect(source('app/components/BlrPageBlock.vue')).toContain('<BlrEntityChip v-for="actor in audience"')
@@ -1541,6 +1544,24 @@ describe('Screens on the v14 wire', () => {
     expect(source('app/assets/report-viewer.css')).toContain('.blr-numbered-step {')
     expect(body.match(/class="blr-numbered-step[ "]/g)).toHaveLength(3)
     expect(body).not.toContain('{{ step.index + 1 }}. {{ step.text }}')
+  })
+
+  it('phrases every Entity effect Entity first, with States as badges', async () => {
+    const { entityEffectParts } = await import(entityEffectPhraseModulePath)
+    const words = (parts: any[]) => parts.map(part => part.t === 'arrow' ? '→' : part.t === 'state' ? `[${part.text}]` : part.text).join(' ')
+    expect(words(entityEffectParts({ effect: 'creates', from: '', to: 'Reachable' }))).toBe('created [Reachable]')
+    expect(words(entityEffectParts({ effect: 'creates', from: '', to: 'Reachable' }, true))).toBe('created [Reachable]')
+    expect(words(entityEffectParts({ effect: 'changes', from: 'Read', to: 'Unread' }))).toBe('changed [Read] → [Unread]')
+    expect(words(entityEffectParts({ effect: 'changes', from: 'Read', to: 'Unread' }, true))).toBe('in [Unread]')
+    expect(words(entityEffectParts({ effect: 'changes', from: '', to: '' }))).toBe('changed')
+    expect(words(entityEffectParts({ effect: 'removes', from: 'Archived', to: '' }))).toBe('removed from [Archived]')
+    expect(words(entityEffectParts({ effect: 'removes', from: 'Archived', to: '' }, true))).toBe('removed')
+    expect(words(entityEffectParts({ effect: 'reads', from: '', to: '' }))).toBe('read')
+    expect(entityEffectParts({ effect: 'changes', from: 'Read', to: 'Unread' }).filter((part: any) => part.from)).toHaveLength(1)
+    /* Every surface that says what happened to an Entity draws this one phrase. */
+    expect(source('app/components/BlrScenarioStep.vue')).not.toContain('in state')
+    expect(source('app/components/BlrScenarioSummary.vue')).not.toContain('Created in')
+    expect(source('app/components/BlrResourceBody.vue')).not.toContain('readings')
   })
 
   it('carries the facts a Step cites into its Entity chip', () => {

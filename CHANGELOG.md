@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The report shows what each Screen presents and changes, opens Interfaces and Experiences with the Capabilities delivered there, and draws nested Screens in trees.
 - Product Reports are now version 14.
 - Every Screen, Interface and Experience has a Sketch, a rough view derived from the model, and every Scenario route can be read as a Storyboard of Sketches.
+- The report says what happens to an Entity the same way everywhere: the Entity, what happened to it, then its State.
 
 ## [0.21.0] - 2026-09-21
 

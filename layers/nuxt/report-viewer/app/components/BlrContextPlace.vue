@@ -48,7 +48,9 @@ const segments = computed(() => {
   --blr-interface-badge-glyph-dense: calc(var(--blr-context-icon) * 0.45);
   display: inline-flex;
   flex-wrap: wrap;
-  align-items: center;
+  /* Baseline, so the path's baseline is its first name's and the prose and
+     labels beside it line up with the words, not with the icons. */
+  align-items: baseline;
   gap: 6px;
   max-width: 100%;
   min-width: 0;
@@ -63,7 +65,7 @@ const segments = computed(() => {
 }
 .blr-context-place-segment {
   display: inline-flex;
-  align-items: center;
+  align-items: baseline;
   gap: 6px;
   min-width: 0;
   max-width: 100%;
@@ -76,6 +78,6 @@ const segments = computed(() => {
 .blr-context-place-segment:focus-visible { outline: 2px solid var(--ui-primary); outline-offset: 3px; }
 .blr-context-place-label { min-width: 0; max-width: 17rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .blr-context-place[data-compact] .blr-context-place-label { max-width: 10rem; }
-.blr-context-place-segment > :first-child { flex-shrink: 0; width: var(--blr-context-icon); height: var(--blr-context-icon); }
-.blr-context-place-separator { width: calc(var(--blr-context-font, 13px) + 1px); height: calc(var(--blr-context-font, 13px) + 1px); flex-shrink: 0; color: var(--ui-text-dimmed); }
+.blr-context-place-segment > :first-child { flex-shrink: 0; align-self: center; width: var(--blr-context-icon); height: var(--blr-context-icon); }
+.blr-context-place-separator { align-self: center; width: calc(var(--blr-context-font, 13px) + 1px); height: calc(var(--blr-context-font, 13px) + 1px); flex-shrink: 0; color: var(--ui-text-dimmed); }
 </style>

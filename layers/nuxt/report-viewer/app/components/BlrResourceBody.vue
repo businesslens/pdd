@@ -90,12 +90,7 @@ const capabilityEffects = computed(() => props.resource.kind !== 'capability'
   ? []
   : asCapability.value.entityEffects.map(line => ({
       ...line,
-      title: resolveResource(props.workspace, 'entity', line.entityId)?.title ?? line.entityId,
-      readings: line.effects.map(item => item.effect === 'creates'
-        ? `creates${item.to ? ` → ${item.to}` : ''}`
-        : item.effect === 'removes'
-          ? `removes${item.from ? ` ${item.from} →` : ''}`
-          : item.to ? `${item.from} → ${item.to}` : 'changes')
+      title: resolveResource(props.workspace, 'entity', line.entityId)?.title ?? line.entityId
     })))
 
 /* The Entities a Capability only reads, as one row beneath the changes; and
@@ -481,11 +476,14 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
         <li
           v-for="line in capabilityEffects"
           :key="line.entityId"
-          class="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border border-default bg-elevated/30 px-3 py-2 text-sm"
+          class="flex flex-wrap items-baseline gap-x-2 gap-y-1 rounded-lg border border-default bg-elevated/30 px-3 py-2 text-sm"
         >
           <BlrEntityChip v-if="entityChip(line.entityId)" :entity="entityChip(line.entityId)!" @select="emit('select', $event)" />
           <span v-else class="text-default">{{ line.title }}</span>
-          <span v-for="reading in line.readings" :key="reading" class="text-default">{{ reading }}</span>
+          <template v-for="(effect, index) in line.effects" :key="`${effect.effect}-${effect.from}-${effect.to}`">
+            <span v-if="index" aria-hidden="true" class="text-dimmed">·</span>
+            <BlrEntityEffect :mention="effect" />
+          </template>
           <span class="blr-meta ms-auto">{{ line.scenarioIds.length }} {{ line.scenarioIds.length === 1 ? 'Scenario' : 'Scenarios' }}</span>
         </li>
         <!-- Reads share the list's shape: one left edge, the chips first, the
@@ -493,14 +491,14 @@ const empty = computed(() => !hasAuthoredBody(props.resource))
              is never mistaken for a row of changes. -->
         <li
           v-if="capabilityReads.length"
-          class="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border border-default bg-elevated/30 px-3 py-2 text-sm"
+          class="flex flex-wrap items-baseline gap-x-2 gap-y-1 rounded-lg border border-default bg-elevated/30 px-3 py-2 text-sm"
           data-capability-reads
         >
           <template v-for="read in capabilityReads" :key="read.id">
             <BlrEntityChip v-if="read.entity" :entity="read.entity" muted @select="emit('select', $event)" />
             <span v-else class="text-default">{{ read.id }}</span>
           </template>
-          <span class="text-default">reads only</span>
+          <BlrEntityEffect :mention="{ effect: 'reads', from: '', to: '' }" />
           <span v-if="readScenarioCount" class="blr-meta ms-auto">{{ readScenarioCount }} {{ readScenarioCount === 1 ? 'Scenario' : 'Scenarios' }}</span>
         </li>
       </ul>
