@@ -67,18 +67,37 @@ from a Scenario reading opens its parent's Connections tab. References stays
 scoped to the inspected resource: a Scenario's `rt=references` reads that
 Scenario's attachments under its own title.
 
-The Product Overview's References reading uses the same tree for every attachment
-in the model, including the Product's own. Each item names its owner, and resource
-owner links open that resource's References tab over the current reading. The
-catalog starts collapsed, with Expand all and Collapse all controls beside its
-count that also toggle image previews. It remembers its own expansion separately
-from individual resource trees.
-Every References tree separates **In this repository** from **External**, each
-with its own count and grouped by kind within it, because where material lives
-decides what following it does: a repository file opens in this report and is
-left behind when a Blueprint is exported, while an external link opens in a new
-tab and travels with it. A section with nothing in it is not drawn. The Overview
-ends with its last reading; generator and schema details stay in the header.
+The Product Overview's References reading is read by where references point,
+not one row per attachment, because many resources cite the same file. It works
+like Coverage. One neutral card per kind of material the format defines counts
+its citations and is the only kind filter; a kind the model does not use reads
+zero rather than vanishing, and the kinds share one tone, since their icons tell
+them apart. Repository paths are drawn once each in a repository tree under
+**In this repository**, and external pages once each under their site under
+**External** — and on a code host such as github.com under their repository
+too, named by their title or their path within it. A repository file opens in
+this report and is left behind when a Blueprint is exported, while an external
+link opens in a new tab and travels with it. Each section counts its paths or
+links and its citations, and the two sit side by side where the reading has
+room for both.
+
+A location's row carries the icon of every kind cited at it and, when there are
+several, how many citations; those marks and the chevron are its one control,
+disclosing the citations in place. A closed folder or site says what opening it
+would find, faded, as a way in. Each citation names the resource that cites it,
+linking to that resource's References tab over the current reading, with its
+role and, when it points at a symbol, line or fragment, a link to exactly that.
+The whole location opens from its row. A title every citation shares is written
+once beside the location; otherwise citations sit under each distinct title.
+Search finds paths and links by name, never titles, and opens the folders above
+what it found. Folders and sites start open and citations closed; Expand all and
+Collapse all cover both, and the reading remembers its own expansion separately
+from resource trees.
+
+A resource's own References tab keeps a short list: it separates **In this
+repository** from **External**, each with its own count and grouped by kind. A
+section with nothing in it is not drawn. The Overview ends with its last reading;
+generator and schema details stay in the header.
 Local References always lead with the file path; a distinct authored title follows
 inline as muted context. External References use their authored title with the URL
 below it, or the URL alone when untitled. A title identical to the target is not repeated.

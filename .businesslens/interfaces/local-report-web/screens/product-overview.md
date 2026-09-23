@@ -75,13 +75,15 @@ within its frame.
 
 ### References open
 
-All attached material appears once per attachment, separated into material in
-this repository and external links, each grouped by reference type in an
-expandable tree with counts, roles, links and local image previews. Each item
-names its owner; a resource owner's link opens its own References reading while
-preserving this Product reading underneath. Groups start open, and expansion is
-remembered across reading changes, Back and refresh independently of resource
-References trees.
+All attached material is read by where it points: one card per reference type
+counts and filters citations, repository paths appear once each in a repository
+tree and external pages once each under their site and, on a code host, their
+repository, side by side where there is room, and each location discloses
+the resources that cite it with their roles and cited symbols or lines. A
+citing resource's link opens its own References reading while preserving this
+Product reading underneath. Search finds paths and links by name. Folders start
+open and citations closed, and expansion is remembered across reading changes,
+Back and refresh independently of resource References trees.
 
 ## Capability boundary
 

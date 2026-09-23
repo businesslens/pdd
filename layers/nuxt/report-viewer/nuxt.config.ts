@@ -61,6 +61,7 @@ export default defineNuxtConfig({
         'lucide:funnel',
         'lucide:focus',
         'lucide:folder',
+        'lucide:folder-git-2',
         'lucide:folder-open',
         'lucide:folder-root',
         'lucide:gavel',

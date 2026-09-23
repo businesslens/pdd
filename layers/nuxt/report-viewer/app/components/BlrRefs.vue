@@ -2,6 +2,7 @@
 import type { TreeItem } from '@nuxt/ui'
 import type { ReportReference } from 'businesslens/report'
 import { referenceNavigationKey, referenceHref, referenceFileHref, isExternalReference as isExternal } from '../utils/referenceNavigation'
+import { REFERENCE_KIND_LABEL as KIND_LABEL } from '../utils/referenceCatalog'
 
 const props = withDefaults(defineProps<{
   references: ReportReference[]
@@ -12,11 +13,6 @@ const props = withDefaults(defineProps<{
   defaultExpanded?: boolean
 }>(), { label: 'References', defaultExpanded: true })
 
-const KIND_LABEL: Record<ReportReference['kind'], string> = {
-  code: 'Code', visual: 'Visuals', doc: 'Documentation',
-  prd: 'Product requirements', spec: 'Specifications', proposal: 'Proposals',
-  adr: 'Architecture decisions', research: 'Research'
-}
 /** Role describes why material is attached, never a verification result. */
 const ROLE_TONE: Record<string, 'primary' | 'neutral' | 'secondary'> = {
   intent: 'primary', implementation: 'secondary', context: 'neutral'

@@ -2,7 +2,7 @@
 /** Complete Product and Coverage readings, using the authored field names. */
 import type { AnyResourceView, ReportWorkspace } from '../utils/reportWorkspace'
 import { defaultCoverageReading, type CoverageReading } from '../utils/coverageState'
-import { entityFacetOf, resolveResourceKey } from '../utils/reportWorkspace'
+import { entityFacetOf } from '../utils/reportWorkspace'
 
 const props = defineProps<{
   workspace: ReportWorkspace
@@ -19,13 +19,6 @@ const emit = defineEmits<{
 
 const coverage = defineModel<CoverageReading>('coverage', { default: defaultCoverageReading })
 
-const references = computed(() => props.workspace.references.map(group => group.reference))
-
-function referenceEntity(ownerKey?: string) {
-  if (!ownerKey) return undefined
-  const resource = resolveResourceKey(props.workspace, ownerKey)
-  return resource?.kind === 'entity' ? resource : undefined
-}
 </script>
 
 <template>
@@ -136,39 +129,7 @@ function referenceEntity(ownerKey?: string) {
     <BlrCoverage v-else-if="tab === 'coverage'" v-model:reading="coverage" :workspace="workspace" />
 
     <!-- REFERENCES: everything the model points at, and who points at it. -->
-    <template v-else-if="tab === 'references'">
-      <BlrRefs
-        :references="references"
-        :scope="JSON.stringify([workspace.identity.id, 'all-references'])"
-        label="All references in the model"
-        expand-controls
-        :default-expanded="false"
-        data-reference-catalog
-      >
-        <template #reference-owner="{ index }">
-          <span class="flex w-full min-w-0 items-start gap-1.5 text-xs text-muted">
-            <BlrKind
-              :kind="workspace.references[index]!.ownerKind"
-              :facet="entityFacetOf(referenceEntity(workspace.references[index]!.ownerKey))"
-              :acts="referenceEntity(workspace.references[index]!.ownerKey)?.acts"
-              :labelled="false"
-              size="xs"
-            />
-            <BlrResourceLink
-              v-if="workspace.references[index]!.ownerKey"
-              :resource-key="workspace.references[index]!.ownerKey"
-              tab="references"
-              class="min-w-0 text-muted hover:text-primary hover:underline [overflow-wrap:anywhere]"
-              @keydown.stop
-              @open="emit('selectKey', workspace.references[index]!.ownerKey, 'references')"
-            >
-              {{ workspace.references[index]!.ownerTitle }}
-            </BlrResourceLink>
-            <span v-else>{{ workspace.references[index]!.ownerTitle }}</span>
-          </span>
-        </template>
-      </BlrRefs>
-    </template>
+    <BlrReferenceCatalog v-else-if="tab === 'references'" :workspace="workspace" @select-key="(key, tab) => emit('selectKey', key, tab)" />
   </div>
 </template>
 
